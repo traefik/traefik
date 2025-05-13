@@ -3,7 +3,7 @@
 set -e -o pipefail
 
 PROJECT_MODULE="github.com/traefik/traefik"
-MODULE_VERSION="v2"
+MODULE_VERSION="v3"
 KUBE_VERSION=v0.30.10
 CURRENT_DIR="$(pwd)"
 
@@ -28,10 +28,9 @@ kube::codegen::gen_client \
 
 echo "# Generating the CRD definitions for the documentation ..."
 controller-gen crd:crdVersions=v1 \
-    paths={./pkg/provider/kubernetes/crd/traefikio/v1alpha1/...,./pkg/provider/kubernetes/crd/traefikcontainous/v1alpha1/...} \
+    paths={./pkg/provider/kubernetes/crd/traefikio/v1alpha1/...} \
     output:dir=./docs/content/reference/dynamic-configuration/
 
 echo "# Concatenate the CRD definitions for publication and integration tests ..."
 cat "${CURRENT_DIR}"/docs/content/reference/dynamic-configuration/traefik.io_*.yaml > "${CURRENT_DIR}"/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml
-cat "${CURRENT_DIR}"/docs/content/reference/dynamic-configuration/traefik.containo.us_*.yaml >> "${CURRENT_DIR}"/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml
 cp -f "${CURRENT_DIR}"/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml "${CURRENT_DIR}"/integration/fixtures/k8s/01-traefik-crd.yml

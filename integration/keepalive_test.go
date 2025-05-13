@@ -8,10 +8,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"github.com/traefik/traefik/v2/integration/try"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v3/integration/try"
 )
 
 type KeepAliveSuite struct {
@@ -64,7 +64,7 @@ func (s *KeepAliveSuite) TestShouldRespectConfiguredBackendHttpKeepAliveTime() {
 			case <-noMoreRequests:
 				moreRequestsExpected = false
 			case <-maxWaitTimeExceeded:
-				log.WithoutContext().Infof("timeout waiting for all connections to close, waited for %v, configured idle timeout was %v", maxWaitDuration, idleTimeout)
+				log.Info().Msgf("timeout waiting for all connections to close, waited for %v, configured idle timeout was %v", maxWaitDuration, idleTimeout)
 				s.T().Fail()
 				close(completed)
 				return

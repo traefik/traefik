@@ -1,0 +1,35 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+  noColor = true
+
+[entryPoints]
+  [entryPoints.web]
+    address = ":8000"
+
+[api]
+  insecure = true
+
+[providers.file]
+  filename = "{{ .SelfFilename }}"
+
+[experimental]
+  [experimental.fastProxy]
+    debug = true
+
+## dynamic configuration ##
+
+[http.routers]
+  [http.routers.router1]
+    entrypoints = ["web"]
+    service = "service1"
+    rule = "PathPrefix(`/`)"
+
+[http.services]
+  [http.services.service1]
+    [http.services.service1.loadBalancer]
+      [[http.services.service1.loadBalancer.servers]]
+        url = "{{ .Server }}"

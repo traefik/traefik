@@ -1,0 +1,220 @@
+{
+  "Stop": true,
+  "Region": "global",
+  "Namespace": "default",
+  "ID": "job9",
+  "ParentID": "",
+  "Name": "job9",
+  "Type": "service",
+  "Priority": 50,
+  "AllAtOnce": false,
+  "Datacenters": [
+    "dc1"
+  ],
+  "NodePool": "default",
+  "Constraints": null,
+  "Affinities": null,
+  "Spreads": null,
+  "TaskGroups": [
+    {
+      "Name": "group1",
+      "Count": 1,
+      "Update": {
+        "Stagger": 30000000000,
+        "MaxParallel": 1,
+        "HealthCheck": "checks",
+        "MinHealthyTime": 10000000000,
+        "HealthyDeadline": 300000000000,
+        "ProgressDeadline": 600000000000,
+        "AutoRevert": false,
+        "AutoPromote": false,
+        "Canary": 0
+      },
+      "Migrate": {
+        "MaxParallel": 1,
+        "HealthCheck": "checks",
+        "MinHealthyTime": 10000000000,
+        "HealthyDeadline": 300000000000
+      },
+      "Constraints": [
+        {
+          "LTarget": "${attr.nomad.service_discovery}",
+          "RTarget": "true",
+          "Operand": "="
+        }
+      ],
+      "Scaling": {
+        "ID": "094d38a7-24cf-d3a4-3a82-cfc50ef7c597",
+        "Type": "horizontal",
+        "Target": {
+          "Group": "group1",
+          "Namespace": "default",
+          "Job": "job9"
+        },
+        "Policy": null,
+        "Min": 0,
+        "Max": 3,
+        "Enabled": true,
+        "CreateIndex": 0,
+        "ModifyIndex": 0
+      },
+      "RestartPolicy": {
+        "Attempts": 2,
+        "Interval": 1800000000000,
+        "Delay": 15000000000,
+        "Mode": "fail",
+        "RenderTemplates": false
+      },
+      "Tasks": [
+        {
+          "Name": "task1",
+          "Driver": "docker",
+          "User": "",
+          "Config": {
+            "image": "nginx",
+            "ports": [
+              "http"
+            ]
+          },
+          "Env": null,
+          "Services": null,
+          "Vault": null,
+          "Templates": null,
+          "Constraints": null,
+          "Affinities": null,
+          "Resources": {
+            "CPU": 100,
+            "Cores": 0,
+            "MemoryMB": 300,
+            "MemoryMaxMB": 0,
+            "DiskMB": 0,
+            "IOPS": 0,
+            "Networks": null,
+            "Devices": null
+          },
+          "RestartPolicy": {
+            "Attempts": 2,
+            "Interval": 1800000000000,
+            "Delay": 15000000000,
+            "Mode": "fail",
+            "RenderTemplates": false
+          },
+          "DispatchPayload": null,
+          "Lifecycle": null,
+          "Meta": null,
+          "KillTimeout": 5000000000,
+          "LogConfig": {
+            "MaxFiles": 10,
+            "MaxFileSizeMB": 10,
+            "Disabled": false
+          },
+          "Artifacts": null,
+          "Leader": false,
+          "ShutdownDelay": 0,
+          "VolumeMounts": null,
+          "ScalingPolicies": null,
+          "KillSignal": "",
+          "Kind": "",
+          "CSIPluginConfig": null,
+          "Identity": null
+        }
+      ],
+      "EphemeralDisk": {
+        "Sticky": false,
+        "SizeMB": 300,
+        "Migrate": false
+      },
+      "Meta": null,
+      "ReschedulePolicy": {
+        "Attempts": 0,
+        "Interval": 0,
+        "Delay": 30000000000,
+        "DelayFunction": "exponential",
+        "MaxDelay": 3600000000000,
+        "Unlimited": true
+      },
+      "Affinities": null,
+      "Spreads": null,
+      "Networks": [
+        {
+          "Mode": "",
+          "Device": "",
+          "CIDR": "",
+          "IP": "",
+          "Hostname": "",
+          "MBits": 0,
+          "DNS": null,
+          "ReservedPorts": null,
+          "DynamicPorts": [
+            {
+              "Label": "http",
+              "Value": 0,
+              "To": 80,
+              "HostNetwork": "default"
+            }
+          ]
+        }
+      ],
+      "Consul": {
+        "Namespace": ""
+      },
+      "Services": [
+        {
+          "Name": "job9",
+          "TaskName": "",
+          "PortLabel": "http",
+          "AddressMode": "auto",
+          "Address": "",
+          "EnableTagOverride": false,
+          "Tags": [
+            "traefik.enable=true"
+          ],
+          "CanaryTags": null,
+          "Checks": null,
+          "Connect": null,
+          "Meta": null,
+          "CanaryMeta": null,
+          "TaggedAddresses": null,
+          "Namespace": "default",
+          "OnUpdate": "require_healthy",
+          "Provider": "nomad"
+        }
+      ],
+      "Volumes": null,
+      "ShutdownDelay": null,
+      "StopAfterClientDisconnect": null,
+      "MaxClientDisconnect": null
+    }
+  ],
+  "Update": {
+    "Stagger": 30000000000,
+    "MaxParallel": 1,
+    "HealthCheck": "",
+    "MinHealthyTime": 0,
+    "HealthyDeadline": 0,
+    "ProgressDeadline": 0,
+    "AutoRevert": false,
+    "AutoPromote": false,
+    "Canary": 0
+  },
+  "Multiregion": null,
+  "Periodic": null,
+  "ParameterizedJob": null,
+  "Dispatched": false,
+  "DispatchIdempotencyToken": "",
+  "Payload": null,
+  "Meta": null,
+  "ConsulToken": "",
+  "ConsulNamespace": "",
+  "VaultToken": "",
+  "VaultNamespace": "",
+  "NomadTokenID": "",
+  "Status": "dead",
+  "StatusDescription": "",
+  "Stable": true,
+  "Version": 3,
+  "SubmitTime": 1705753979676559600,
+  "CreateIndex": 11317,
+  "ModifyIndex": 11346,
+  "JobModifyIndex": 11344
+}

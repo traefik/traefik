@@ -10,11 +10,13 @@ import (
 
 // Metrics provides options to expose and send Traefik metrics to different third party monitoring systems.
 type Metrics struct {
+	AddInternals bool `description:"Enables metrics for internal services (ping, dashboard, etc...)." json:"addInternals,omitempty" toml:"addInternals,omitempty" yaml:"addInternals,omitempty" export:"true"`
+
 	Prometheus *Prometheus `description:"Prometheus metrics exporter type." json:"prometheus,omitempty" toml:"prometheus,omitempty" yaml:"prometheus,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	Datadog    *Datadog    `description:"Datadog metrics exporter type." json:"datadog,omitempty" toml:"datadog,omitempty" yaml:"datadog,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	StatsD     *Statsd     `description:"StatsD metrics exporter type." json:"statsD,omitempty" toml:"statsD,omitempty" yaml:"statsD,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
-	InfluxDB   *InfluxDB   `description:"InfluxDB metrics exporter type." json:"influxDB,omitempty" toml:"influxDB,omitempty" yaml:"influxDB,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	InfluxDB2  *InfluxDB2  `description:"InfluxDB v2 metrics exporter type." json:"influxDB2,omitempty" toml:"influxDB2,omitempty" yaml:"influxDB2,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	OTLP       *OTLP       `description:"OpenTelemetry metrics exporter type." json:"otlp,omitempty" toml:"otlp,omitempty" yaml:"otlp,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 }
 
 // Prometheus can contain specific configuration used by the Prometheus Metrics exporter.
@@ -83,30 +85,6 @@ func (s *Statsd) SetDefaults() {
 	s.Prefix = "traefik"
 }
 
-// InfluxDB contains address, login and metrics pushing interval configuration.
-type InfluxDB struct {
-	Address              string            `description:"InfluxDB address." json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty"`
-	Protocol             string            `description:"InfluxDB address protocol (udp or http)." json:"protocol,omitempty" toml:"protocol,omitempty" yaml:"protocol,omitempty"`
-	PushInterval         types.Duration    `description:"InfluxDB push interval." json:"pushInterval,omitempty" toml:"pushInterval,omitempty" yaml:"pushInterval,omitempty" export:"true"`
-	Database             string            `description:"InfluxDB database used when protocol is http." json:"database,omitempty" toml:"database,omitempty" yaml:"database,omitempty" export:"true"`
-	RetentionPolicy      string            `description:"InfluxDB retention policy used when protocol is http." json:"retentionPolicy,omitempty" toml:"retentionPolicy,omitempty" yaml:"retentionPolicy,omitempty" export:"true"`
-	Username             string            `description:"InfluxDB username (only with http)." json:"username,omitempty" toml:"username,omitempty" yaml:"username,omitempty" loggable:"false"`
-	Password             string            `description:"InfluxDB password (only with http)." json:"password,omitempty" toml:"password,omitempty" yaml:"password,omitempty" loggable:"false"`
-	AddEntryPointsLabels bool              `description:"Enable metrics on entry points." json:"addEntryPointsLabels,omitempty" toml:"addEntryPointsLabels,omitempty" yaml:"addEntryPointsLabels,omitempty" export:"true"`
-	AddRoutersLabels     bool              `description:"Enable metrics on routers." json:"addRoutersLabels,omitempty" toml:"addRoutersLabels,omitempty" yaml:"addRoutersLabels,omitempty" export:"true"`
-	AddServicesLabels    bool              `description:"Enable metrics on services." json:"addServicesLabels,omitempty" toml:"addServicesLabels,omitempty" yaml:"addServicesLabels,omitempty" export:"true"`
-	AdditionalLabels     map[string]string `description:"Additional labels (influxdb tags) on all metrics" json:"additionalLabels,omitempty" toml:"additionalLabels,omitempty" yaml:"additionalLabels,omitempty" export:"true"`
-}
-
-// SetDefaults sets the default values.
-func (i *InfluxDB) SetDefaults() {
-	i.Address = "localhost:8089"
-	i.Protocol = "udp"
-	i.PushInterval = types.Duration(10 * time.Second)
-	i.AddEntryPointsLabels = true
-	i.AddServicesLabels = true
-}
-
 // InfluxDB2 contains address, token and metrics pushing interval configuration.
 type InfluxDB2 struct {
 	Address              string            `description:"InfluxDB v2 address." json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty"`
@@ -126,6 +104,31 @@ func (i *InfluxDB2) SetDefaults() {
 	i.PushInterval = types.Duration(10 * time.Second)
 	i.AddEntryPointsLabels = true
 	i.AddServicesLabels = true
+}
+
+// OTLP contains specific configuration used by the OpenTelemetry Metrics exporter.
+type OTLP struct {
+	GRPC *OTelGRPC `description:"gRPC configuration for the OpenTelemetry collector." json:"grpc,omitempty" toml:"grpc,omitempty" yaml:"grpc,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	HTTP *OTelHTTP `description:"HTTP configuration for the OpenTelemetry collector." json:"http,omitempty" toml:"http,omitempty" yaml:"http,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+
+	AddEntryPointsLabels bool           `description:"Enable metrics on entry points." json:"addEntryPointsLabels,omitempty" toml:"addEntryPointsLabels,omitempty" yaml:"addEntryPointsLabels,omitempty" export:"true"`
+	AddRoutersLabels     bool           `description:"Enable metrics on routers." json:"addRoutersLabels,omitempty" toml:"addRoutersLabels,omitempty" yaml:"addRoutersLabels,omitempty" export:"true"`
+	AddServicesLabels    bool           `description:"Enable metrics on services." json:"addServicesLabels,omitempty" toml:"addServicesLabels,omitempty" yaml:"addServicesLabels,omitempty" export:"true"`
+	ExplicitBoundaries   []float64      `description:"Boundaries for latency metrics." json:"explicitBoundaries,omitempty" toml:"explicitBoundaries,omitempty" yaml:"explicitBoundaries,omitempty" export:"true"`
+	PushInterval         types.Duration `description:"Period between calls to collect a checkpoint." json:"pushInterval,omitempty" toml:"pushInterval,omitempty" yaml:"pushInterval,omitempty" export:"true"`
+	ServiceName          string         `description:"OTEL service name to use." json:"serviceName,omitempty" toml:"serviceName,omitempty" yaml:"serviceName,omitempty" export:"true"`
+}
+
+// SetDefaults sets the default values.
+func (o *OTLP) SetDefaults() {
+	o.HTTP = &OTelHTTP{}
+	o.HTTP.SetDefaults()
+
+	o.AddEntryPointsLabels = true
+	o.AddServicesLabels = true
+	o.ExplicitBoundaries = []float64{.005, .01, .025, .05, .075, .1, .25, .5, .75, 1, 2.5, 5, 7.5, 10}
+	o.PushInterval = types.Duration(10 * time.Second)
+	o.ServiceName = OTelTraefikServiceName
 }
 
 // Statistics provides options for monitoring request and response stats.

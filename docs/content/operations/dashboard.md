@@ -55,7 +55,7 @@ to allow defining:
 
 - One or more security features through [middlewares](../middlewares/overview.md)
   like authentication ([basicAuth](../middlewares/http/basicauth.md), [digestAuth](../middlewares/http/digestauth.md),
-  [forwardAuth](../middlewares/http/forwardauth.md)) or [whitelisting](../middlewares/http/ipwhitelist.md).
+  [forwardAuth](../middlewares/http/forwardauth.md)) or [allowlisting](../middlewares/http/ipallowlist.md).
 
 - A [router rule](#dashboard-router-rule) for accessing the dashboard,
   through Traefik itself (sometimes referred to as "Traefik-ception").
@@ -76,18 +76,54 @@ rule = "Host(`traefik.example.com`)"
 
 ```bash tab="Path Prefix Rule"
 # The dashboard can be accessed on http://example.com/dashboard/ or http://traefik.example.com/dashboard/
-rule = "PathPrefix(`/api`, `/dashboard`)"
+rule = "PathPrefix(`/api`) || PathPrefix(`/dashboard`)"
 ```
 
 ```bash tab="Combination of Rules"
 # The dashboard can be accessed on http://traefik.example.com/dashboard/
-rule = "Host(`traefik.example.com`) && PathPrefix(`/api`, `/dashboard`)"
+rule = "Host(`traefik.example.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
 ```
 
 ??? example "Dashboard Dynamic Configuration Examples"
     --8<-- "content/operations/include-dashboard-examples.md"
 
+### Custom API Base Path
+
+As shown above, by default Traefik exposes its API and Dashboard under the `/` base path,
+which means that respectively the API is served under the `/api` path,
+and the dashboard under the `/dashboard` path.
+
+However, it is possible to configure this base path:
+
+```yaml tab="File (YAML)"
+api:
+  # Customizes the base path:
+  # - Serving API under `/traefik/api`
+  # - Serving Dashboard under `/traefik/dashboard`
+  basePath: /traefik
+```
+
+```toml tab="File (TOML)"
+[api]
+  # Customizes the base path:
+  # - Serving API under `/traefik/api`
+  # - Serving Dashboard under `/traefik/dashboard`
+  basePath = "/traefik"
+```
+
+```bash tab="CLI"
+# Customizes the base path:
+# - Serving API under `/traefik/api`
+# - Serving Dashboard under `/traefik/dashboard`
+--api.basePath=/traefik
+```
+
+??? example "Dashboard Under Custom Path Dynamic Configuration Examples"
+    --8<-- "content/operations/include-dashboard-custom-path-examples.md"
+
 ## Insecure Mode
+
+!!! warning "Please note that this mode is incompatible with the [custom API base path option](#custom-api-base-path)."
 
 When _insecure_ mode is enabled, one can access the dashboard on the `traefik` port (default: `8080`) of the Traefik instance,
 at the following URL: `http://<Traefik IP>:8080/dashboard/` (trailing slash is mandatory).

@@ -6,12 +6,10 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/opentracing/opentracing-go/ext"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/log"
-	"github.com/traefik/traefik/v2/pkg/middlewares"
-	"github.com/traefik/traefik/v2/pkg/middlewares/stripprefix"
-	"github.com/traefik/traefik/v2/pkg/tracing"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/middlewares"
+	"github.com/traefik/traefik/v3/pkg/middlewares/stripprefix"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -27,7 +25,7 @@ type stripPrefixRegex struct {
 
 // New builds a new StripPrefixRegex middleware.
 func New(ctx context.Context, next http.Handler, config dynamic.StripPrefixRegex, name string) (http.Handler, error) {
-	log.FromContext(middlewares.GetLoggerCtx(ctx, name, typeName)).Debug("Creating middleware")
+	middlewares.GetLogger(ctx, name, typeName).Debug().Msg("Creating middleware")
 
 	stripPrefix := stripPrefixRegex{
 		next: next,
@@ -45,8 +43,8 @@ func New(ctx context.Context, next http.Handler, config dynamic.StripPrefixRegex
 	return &stripPrefix, nil
 }
 
-func (s *stripPrefixRegex) GetTracingInformation() (string, ext.SpanKindEnum) {
-	return s.name, tracing.SpanKindNoneEnum
+func (s *stripPrefixRegex) GetTracingInformation() (string, string, trace.SpanKind) {
+	return s.name, typeName, trace.SpanKindInternal
 }
 
 func (s *stripPrefixRegex) ServeHTTP(rw http.ResponseWriter, req *http.Request) {

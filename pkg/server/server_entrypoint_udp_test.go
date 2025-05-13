@@ -9,8 +9,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v2/pkg/config/static"
-	"github.com/traefik/traefik/v2/pkg/udp"
+	"github.com/traefik/traefik/v3/pkg/config/static"
+	"github.com/traefik/traefik/v3/pkg/udp"
 )
 
 func TestShutdownUDPConn(t *testing.T) {
@@ -24,7 +24,7 @@ func TestShutdownUDPConn(t *testing.T) {
 	}
 	ep.SetDefaults()
 
-	entryPoint, err := NewUDPEntryPoint(&ep)
+	entryPoint, err := NewUDPEntryPoint(&ep, "")
 	require.NoError(t, err)
 
 	go entryPoint.Start(context.Background())

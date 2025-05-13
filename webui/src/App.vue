@@ -14,8 +14,10 @@ export default {
     ...mapGetters('core', { coreVersion: 'version' })
   },
   watch: {
-    '$q.dark.isActive' (val) {
-      localStorage.setItem('traefik-dark', val)
+    '$q.dark.mode' (val) {
+      if (val !== null) {
+        localStorage.setItem('traefik-dark', val)
+      }
     }
   },
   beforeCreate () {
@@ -25,7 +27,15 @@ export default {
     // debug
     console.log('Quasar -> ', this.$q.version)
 
-    this.$q.dark.set(localStorage.getItem('traefik-dark') === 'true')
+    // Get stored theme or default to 'auto'
+    const storedTheme = localStorage.getItem('traefik-dark')
+    if (storedTheme === 'true') {
+      this.$q.dark.set(true)
+    } else if (storedTheme === 'false') {
+      this.$q.dark.set(false)
+    } else {
+      this.$q.dark.set('auto')
+    }
   }
 }
 </script>

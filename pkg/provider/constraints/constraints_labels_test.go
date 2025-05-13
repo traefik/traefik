@@ -119,33 +119,6 @@ func TestMatchLabels(t *testing.T) {
 			expected: true,
 		},
 		{
-			expr: `MarathonConstraint("bar")`,
-			labels: map[string]string{
-				"hello":                         "world",
-				MarathonConstraintPrefix + "-1": "bar",
-				MarathonConstraintPrefix + "-2": "foo",
-			},
-			expected: true,
-		},
-		{
-			expr: `MarathonConstraint("bur")`,
-			labels: map[string]string{
-				"hello":                         "world",
-				MarathonConstraintPrefix + "-1": "bar",
-				MarathonConstraintPrefix + "-2": "foo",
-			},
-			expected: false,
-		},
-		{
-			expr: `Label("hello", "world") && MarathonConstraint("bar")`,
-			labels: map[string]string{
-				"hello":                         "world",
-				MarathonConstraintPrefix + "-1": "bar",
-				MarathonConstraintPrefix + "-2": "foo",
-			},
-			expected: true,
-		},
-		{
 			expr: `LabelRegex("hello", "w\\w+")`,
 			labels: map[string]string{
 				"hello": "world",

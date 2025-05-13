@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v2/pkg/log"
 )
 
 func newKeepAliveMiddleware(next http.Handler, maxRequests int, maxTime ptypes.Duration) http.Handler {
@@ -14,12 +14,12 @@ func newKeepAliveMiddleware(next http.Handler, maxRequests int, maxTime ptypes.D
 		if ok {
 			state.HTTPRequestCount++
 			if maxRequests > 0 && state.HTTPRequestCount >= maxRequests {
-				log.WithoutContext().Debug("Close because of too many requests")
+				log.Debug().Msg("Close because of too many requests")
 				state.KeepAliveState = "Close because of too many requests"
 				rw.Header().Set("Connection", "close")
 			}
 			if maxTime > 0 && time.Now().After(state.Start.Add(time.Duration(maxTime))) {
-				log.WithoutContext().Debug("Close because of too long connection")
+				log.Debug().Msg("Close because of too long connection")
 				state.KeepAliveState = "Close because of too long connection"
 				rw.Header().Set("Connection", "close")
 			}

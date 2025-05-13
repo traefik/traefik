@@ -261,6 +261,127 @@ entryPoints:
 --entryPoints.name.allowACMEByPass=true
 ```
 
+### ReusePort
+
+_Optional, Default=false_
+
+The `ReusePort` option enables EntryPoints from the same or different processes
+listening on the same TCP/UDP port by utilizing the `SO_REUSEPORT` socket option.
+It also allows the kernel to act like a load balancer to distribute incoming
+connections between entry points.
+
+For example, you can use it with the [transport.lifeCycle](#lifecycle) to do
+canary deployments against Traefik itself. Like upgrading Traefik version or
+reloading the static configuration without any service downtime.
+
+!!! warning "Supported platforms"
+
+    The `ReusePort` option currently works only on Linux, FreeBSD, OpenBSD and Darwin.
+    It will be ignored on other platforms.
+
+    There is a known bug in the Linux kernel that may cause unintended TCP connection failures when using the `ReusePort` option.
+    For more details, see https://lwn.net/Articles/853637/.
+
+??? example "Listen on the same port"
+
+    ```yaml tab="File (yaml)"
+    entryPoints:
+      web:
+        address: ":80"
+        reusePort: true
+    ```
+
+    ```toml tab="File (TOML)"
+    [entryPoints.web]
+      address = ":80"
+      reusePort = true
+    ```
+
+    ```bash tab="CLI"
+    --entryPoints.web.address=:80
+    --entryPoints.web.reusePort=true
+    ```
+
+    Now it is possible to run multiple Traefik processes with the same EntryPoint configuration.
+
+??? example "Listen on the same port but bind to a different host"
+
+    ```yaml tab="File (yaml)"
+    entryPoints:
+      web:
+        address: ":80"
+        reusePort: true
+      privateWeb:
+        address: "192.168.1.2:80"
+        reusePort: true
+    ```
+
+    ```toml tab="File (TOML)"
+    [entryPoints.web]
+      address = ":80"
+      reusePort = true
+    [entryPoints.privateWeb]
+      address = "192.168.1.2:80"
+      reusePort = true
+    ```
+
+    ```bash tab="CLI"
+    --entryPoints.web.address=:80
+    --entryPoints.web.reusePort=true
+    --entryPoints.privateWeb.address=192.168.1.2:80
+    --entryPoints.privateWeb.reusePort=true
+    ```
+
+    Requests to `192.168.1.2:80` will only be handled by routers that have `privateWeb` as the entry point.
+
+### AsDefault
+
+_Optional, Default=false_
+
+The `AsDefault` option marks the EntryPoint to be in the list of default EntryPoints.
+EntryPoints in this list are used (by default) on HTTP and TCP routers that do not define their own [EntryPoints option](./routers/index.md#entrypoints).
+
+!!! info "List of default EntryPoints"
+
+    If there is no EntryPoint with the `AsDefault` option set to `true`, 
+    then the list of default EntryPoints includes all HTTP/TCP EntryPoints.
+
+    If at least one EntryPoint has the `AsDefault` option set to `true`,
+    then the list of default EntryPoints includes only EntryPoints that have the `AsDefault` option set to `true`.
+
+    Some built-in EntryPoints are always excluded from the list, namely: `traefik`.
+
+!!! warning "Only TCP and HTTP"
+
+    The `AsDefault` option has no effect on UDP EntryPoints.
+    When a UDP router does not define the [EntryPoints option](./routers/index.md#entrypoints_2),
+    it is attached to all available UDP EntryPoints.
+
+??? example "Defining only one EntryPoint as default"
+
+    ```yaml tab="File (yaml)"
+    entryPoints:
+      web:
+        address: ":80"
+      websecure:
+        address: ":443"
+        asDefault: true
+    ```
+
+    ```toml tab="File (TOML)"
+    [entryPoints.web]
+      address = ":80"
+    [entryPoints.websecure]
+      address = ":443"
+      asDefault = true
+    ```
+
+    ```bash tab="CLI"
+    --entryPoints.web.address=:80
+    --entryPoints.websecure.address=:443
+    --entryPoints.websecure.asDefault=true
+    ```
+
 ### HTTP/2
 
 #### `maxConcurrentStreams`
@@ -292,39 +413,32 @@ entryPoints:
 #### `http3`
 
 `http3` enables HTTP/3 protocol on the entryPoint.
-HTTP/3 requires a TCP entryPoint, as HTTP/3 always starts as a TCP connection that then gets upgraded to UDP.
-In most scenarios, this entryPoint is the same as the one used for TLS traffic.
+HTTP/3 requires a TCP entryPoint,
+as HTTP/3 always starts as a TCP connection that then gets upgraded to UDP.
+In most scenarios,
+this entryPoint is the same as the one used for TLS traffic.
+
+```yaml tab="File (YAML)"
+entryPoints:
+  name:
+    http3: {}
+```
+
+```toml tab="File (TOML)"
+[entryPoints.name.http3]
+```
+
+```bash tab="CLI"
+--entryPoints.name.http3
+```
 
 ??? info "HTTP/3 uses UDP+TLS"
 
-    As HTTP/3 uses UDP, you can't have a TCP entryPoint with HTTP/3 on the same port as a UDP entryPoint.
-    Since HTTP/3 requires the use of TLS, only routers with TLS enabled will be usable with HTTP/3.
-
-!!! warning "Enabling Experimental HTTP/3"
-
-    As the HTTP/3 spec is still in draft, HTTP/3 support in Traefik is an experimental feature and needs to be activated 
-    in the experimental section of the static configuration.
-    
-    ```yaml tab="File (YAML)"
-    experimental:
-      http3: true
-
-    entryPoints:
-      name:
-        http3: {}
-    ```
-
-    ```toml tab="File (TOML)"
-    [experimental]
-      http3 = true
-    
-    [entryPoints.name.http3]
-    ```
-    
-    ```bash tab="CLI"
-    --experimental.http3=true 
-    --entryPoints.name.http3
-    ```
+    As HTTP/3 actually uses UDP, when traefik is configured with a TCP entryPoint on port N with HTTP/3 enabled,
+    the underlying HTTP/3 server that is started automatically listens on UDP port N too. As a consequence,
+    it means port N cannot be used by another UDP entryPoint.
+    Since HTTP/3 requires the use of TLS,
+    only routers with TLS enabled will be usable with HTTP/3.
 
 #### `advertisedPort`
 
@@ -335,9 +449,6 @@ It can be used to override the authority in the `alt-svc` header, for example if
 !!! info "http3.advertisedPort"
 
     ```yaml tab="File (YAML)"
-    experimental:
-      http3: true
-
     entryPoints:
       name:
         http3:
@@ -345,15 +456,11 @@ It can be used to override the authority in the `alt-svc` header, for example if
     ```
 
     ```toml tab="File (TOML)"
-    [experimental]
-      http3 = true
-    
     [entryPoints.name.http3]
       advertisedPort = 443
     ```
     
     ```bash tab="CLI"
-    --experimental.http3=true 
     --entryPoints.name.http3.advertisedport=443
     ```
 
@@ -1177,6 +1284,128 @@ entryPoints:
 ```bash tab="CLI"
 --entryPoints.foo.address=:8000/udp
 --entryPoints.foo.udp.timeout=10s
+```
+
+## Systemd Socket Activation
+
+Traefik supports [systemd socket activation](https://www.freedesktop.org/software/systemd/man/latest/systemd-socket-activate.html).
+
+When a socket activation file descriptor name matches an EntryPoint name, the corresponding file descriptor will be used as the TCP/UDP listener for the matching EntryPoint.
+
+```bash
+systemd-socket-activate -l 80 -l 443 --fdname web:websecure  ./traefik --entrypoints.web --entrypoints.websecure
+```
+
+!!! warning "EntryPoint Address"
+
+    When a socket activation file descriptor name matches an EntryPoint name its address configuration is ignored. For support UDP routing, address must have /udp suffix (--entrypoints.my-udp-entrypoint.address=/udp)
+
+!!! warning "Docker Support"
+
+    Socket activation is not supported by Docker but works with Podman containers.
+
+!!! warning "Multiple listeners in socket file"
+
+    Each systemd socket file must contain only one Listen directive, except in the case of HTTP/3, where the file must include both ListenStream and ListenDatagram directives. To set up TCP and UDP listeners on the same port, use multiple socket files with different entrypoints names.
+
+## Observability Options
+
+This section is dedicated to options to control observability for an EntryPoint.
+
+!!! info "Note that you must first enable access-logs, tracing, and/or metrics."
+
+!!! warning "AddInternals option"
+
+    By default, and for any type of signals (access-logs, metrics and tracing),
+    Traefik disables observability for internal resources.
+    The observability options described below cannot interfere with the `AddInternals` ones,
+    and will be ignored.
+
+    For instance, if a router exposes the `api@internal` service and `metrics.AddInternals` is false,
+    it will never produces metrics, even if the EntryPoint observability configuration enables metrics.
+
+### AccessLogs
+
+_Optional, Default=true_
+
+AccessLogs defines whether a router attached to this EntryPoint produces access-logs by default.
+Nonetheless, a router defining its own observability configuration will opt-out from this default.
+
+```yaml tab="File (YAML)"
+entryPoints:
+  foo:
+    address: ':8000/udp'
+    observability:
+      accessLogs: false
+```
+
+```toml tab="File (TOML)"
+[entryPoints.foo]
+  address = ":8000/udp"
+
+    [entryPoints.foo.observability]
+      accessLogs = false
+```
+
+```bash tab="CLI"
+--entryPoints.foo.address=:8000/udp
+--entryPoints.foo.observability.accessLogs=false
+```
+
+### Metrics
+
+_Optional, Default=true_
+
+Metrics defines whether a router attached to this EntryPoint produces metrics by default.
+Nonetheless, a router defining its own observability configuration will opt-out from this default.
+
+```yaml tab="File (YAML)"
+entryPoints:
+  foo:
+    address: ':8000/udp'
+    observability:
+      metrics: false
+```
+
+```toml tab="File (TOML)"
+[entryPoints.foo]
+  address = ":8000/udp"
+
+    [entryPoints.foo.observability]
+      metrics = false
+```
+
+```bash tab="CLI"
+--entryPoints.foo.address=:8000/udp
+--entryPoints.foo.observability.metrics=false
+```
+
+### Tracing
+
+_Optional, Default=true_
+
+Tracing defines whether a router attached to this EntryPoint produces traces by default.
+Nonetheless, a router defining its own observability configuration will opt-out from this default.
+
+```yaml tab="File (YAML)"
+entryPoints:
+  foo:
+    address: ':8000/udp'
+    observability:
+      tracing: false
+```
+
+```toml tab="File (TOML)"
+[entryPoints.foo]
+  address = ":8000/udp"
+
+    [entryPoints.foo.observability]
+      tracing = false
+```
+
+```bash tab="CLI"
+--entryPoints.foo.address=:8000/udp
+--entryPoints.foo.observability.tracing=false
 ```
 
 {!traefik-for-business-applications.md!}

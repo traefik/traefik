@@ -8,7 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 )
 
 func TestNewIPAllowLister(t *testing.T) {
@@ -29,6 +29,14 @@ func TestNewIPAllowLister(t *testing.T) {
 			allowList: dynamic.IPAllowList{
 				SourceRange: []string{"10.10.10.10"},
 			},
+		},
+		{
+			desc: "invalid HTTP status code",
+			allowList: dynamic.IPAllowList{
+				SourceRange:      []string{"10.10.10.10"},
+				RejectStatusCode: 600,
+			},
+			expectedError: true,
 		},
 	}
 
@@ -71,6 +79,24 @@ func TestIPAllowLister_ServeHTTP(t *testing.T) {
 			},
 			remoteAddr: "20.20.20.21:1234",
 			expected:   403,
+		},
+		{
+			desc: "authorized with remote address, reject 404",
+			allowList: dynamic.IPAllowList{
+				SourceRange:      []string{"20.20.20.20"},
+				RejectStatusCode: 404,
+			},
+			remoteAddr: "20.20.20.20:1234",
+			expected:   200,
+		},
+		{
+			desc: "non authorized with remote address, reject 404",
+			allowList: dynamic.IPAllowList{
+				SourceRange:      []string{"20.20.20.20"},
+				RejectStatusCode: 404,
+			},
+			remoteAddr: "20.20.20.21:1234",
+			expected:   404,
 		},
 	}
 

@@ -10,14 +10,16 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/hashicorp/nomad/api"
+	"github.com/mitchellh/hashstructure"
+	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/job"
-	"github.com/traefik/traefik/v2/pkg/log"
-	"github.com/traefik/traefik/v2/pkg/provider"
-	"github.com/traefik/traefik/v2/pkg/provider/constraints"
-	"github.com/traefik/traefik/v2/pkg/safe"
-	"github.com/traefik/traefik/v2/pkg/types"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/job"
+	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/provider"
+	"github.com/traefik/traefik/v3/pkg/provider/constraints"
+	"github.com/traefik/traefik/v3/pkg/safe"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 const (
@@ -47,27 +49,26 @@ type item struct {
 	ExtraConf configuration // global options
 }
 
+// configuration contains information from the service's tags that are globals
+// (not specific to the dynamic configuration).
+type configuration struct {
+	Enable bool // <prefix>.enable is the corresponding label.
+	Canary bool // <prefix>.nomad.canary is the corresponding label.
+}
+
 // ProviderBuilder is responsible for constructing namespaced instances of the Nomad provider.
 type ProviderBuilder struct {
 	Configuration `yaml:",inline" export:"true"`
 
-	// Deprecated: Use Namespaces option instead
-	Namespace  string   `description:"Sets the Nomad namespace used to discover services." json:"namespace,omitempty" toml:"namespace,omitempty" yaml:"namespace,omitempty"`
 	Namespaces []string `description:"Sets the Nomad namespaces used to discover services." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty"`
 }
 
 // BuildProviders builds Nomad provider instances for the given namespaces configuration.
 func (p *ProviderBuilder) BuildProviders() []*Provider {
-	if p.Namespace != "" {
-		log.WithoutContext().Warnf("Namespace option is deprecated, please use the Namespaces option instead.")
-	}
-
 	if len(p.Namespaces) == 0 {
 		return []*Provider{{
 			Configuration: p.Configuration,
 			name:          providerName,
-			// p.Namespace could be empty
-			namespace: p.Namespace,
 		}}
 	}
 
@@ -85,13 +86,16 @@ func (p *ProviderBuilder) BuildProviders() []*Provider {
 
 // Configuration represents the Nomad provider configuration.
 type Configuration struct {
-	DefaultRule      string          `description:"Default rule." json:"defaultRule,omitempty" toml:"defaultRule,omitempty" yaml:"defaultRule,omitempty"`
-	Constraints      string          `description:"Constraints is an expression that Traefik matches against the Nomad service's tags to determine whether to create route(s) for that service." json:"constraints,omitempty" toml:"constraints,omitempty" yaml:"constraints,omitempty" export:"true"`
-	Endpoint         *EndpointConfig `description:"Nomad endpoint settings" json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty" export:"true"`
-	Prefix           string          `description:"Prefix for nomad service tags." json:"prefix,omitempty" toml:"prefix,omitempty" yaml:"prefix,omitempty" export:"true"`
-	Stale            bool            `description:"Use stale consistency for catalog reads." json:"stale,omitempty" toml:"stale,omitempty" yaml:"stale,omitempty" export:"true"`
-	ExposedByDefault bool            `description:"Expose Nomad services by default." json:"exposedByDefault,omitempty" toml:"exposedByDefault,omitempty" yaml:"exposedByDefault,omitempty" export:"true"`
-	RefreshInterval  ptypes.Duration `description:"Interval for polling Nomad API." json:"refreshInterval,omitempty" toml:"refreshInterval,omitempty" yaml:"refreshInterval,omitempty" export:"true"`
+	DefaultRule        string          `description:"Default rule." json:"defaultRule,omitempty" toml:"defaultRule,omitempty" yaml:"defaultRule,omitempty"`
+	Constraints        string          `description:"Constraints is an expression that Traefik matches against the Nomad service's tags to determine whether to create route(s) for that service." json:"constraints,omitempty" toml:"constraints,omitempty" yaml:"constraints,omitempty" export:"true"`
+	Endpoint           *EndpointConfig `description:"Nomad endpoint settings" json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty" export:"true"`
+	Prefix             string          `description:"Prefix for nomad service tags." json:"prefix,omitempty" toml:"prefix,omitempty" yaml:"prefix,omitempty" export:"true"`
+	Stale              bool            `description:"Use stale consistency for catalog reads." json:"stale,omitempty" toml:"stale,omitempty" yaml:"stale,omitempty" export:"true"`
+	ExposedByDefault   bool            `description:"Expose Nomad services by default." json:"exposedByDefault,omitempty" toml:"exposedByDefault,omitempty" yaml:"exposedByDefault,omitempty" export:"true"`
+	RefreshInterval    ptypes.Duration `description:"Interval for polling Nomad API." json:"refreshInterval,omitempty" toml:"refreshInterval,omitempty" yaml:"refreshInterval,omitempty" export:"true"`
+	AllowEmptyServices bool            `description:"Allow the creation of services without endpoints." json:"allowEmptyServices,omitempty" toml:"allowEmptyServices,omitempty" yaml:"allowEmptyServices,omitempty" export:"true"`
+	Watch              bool            `description:"Watch Nomad Service events." json:"watch,omitempty" toml:"watch,omitempty" yaml:"watch,omitempty" export:"true"`
+	ThrottleDuration   ptypes.Duration `description:"Watch throttle duration." json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values for the Nomad Traefik Provider Configuration.
@@ -116,16 +120,7 @@ func (c *Configuration) SetDefaults() {
 	c.ExposedByDefault = true
 	c.RefreshInterval = ptypes.Duration(15 * time.Second)
 	c.DefaultRule = defaultTemplateRule
-}
-
-// Provider holds configuration along with the namespace it will discover services in.
-type Provider struct {
-	Configuration
-
-	name           string
-	namespace      string
-	client         *api.Client        // client for Nomad API
-	defaultRuleTpl *template.Template // default routing rule
+	c.ThrottleDuration = ptypes.Duration(0)
 }
 
 type EndpointConfig struct {
@@ -139,6 +134,18 @@ type EndpointConfig struct {
 	EndpointWaitTime ptypes.Duration  `description:"WaitTime limits how long a Watch will block. If not provided, the agent default values will be used" json:"endpointWaitTime,omitempty" toml:"endpointWaitTime,omitempty" yaml:"endpointWaitTime,omitempty" export:"true"`
 }
 
+// Provider holds configuration along with the namespace it will discover services in.
+type Provider struct {
+	Configuration
+
+	name           string
+	namespace      string
+	client         *api.Client        // client for Nomad API
+	defaultRuleTpl *template.Template // default routing rule
+
+	lastConfiguration safe.Safe
+}
+
 // SetDefaults sets the default values for the Nomad Traefik Provider.
 func (p *Provider) SetDefaults() {
 	p.Configuration.SetDefaults()
@@ -148,6 +155,10 @@ func (p *Provider) SetDefaults() {
 func (p *Provider) Init() error {
 	if p.namespace == api.AllNamespacesNamespace {
 		return errors.New("wildcard namespace not supported")
+	}
+
+	if p.ThrottleDuration > 0 && !p.Watch {
+		return errors.New("throttle duration should not be used with polling mode")
 	}
 
 	defaultRuleTpl, err := provider.MakeDefaultRuleTemplate(p.DefaultRule, nil)
@@ -174,39 +185,70 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	}
 
 	pool.GoCtx(func(routineCtx context.Context) {
-		ctxLog := log.With(routineCtx, log.Str(log.ProviderName, p.name))
-		logger := log.FromContext(ctxLog)
+		logger := log.Ctx(routineCtx).With().Str(logs.ProviderName, p.name).Logger()
+		ctxLog := logger.WithContext(routineCtx)
 
 		operation := func() error {
 			ctx, cancel := context.WithCancel(ctxLog)
 			defer cancel()
 
-			// load initial configuration
-			if err := p.loadConfiguration(ctx, configurationChan); err != nil {
-				return fmt.Errorf("failed to load initial nomad services: %w", err)
+			serviceEventsChan, err := p.pollOrWatch(ctx)
+			if err != nil {
+				return fmt.Errorf("watching Nomad events: %w", err)
 			}
 
-			// issue periodic refreshes in the background
-			// (Nomad does not support Watch style observations)
-			ticker := time.NewTicker(time.Duration(p.RefreshInterval))
-			defer ticker.Stop()
+			throttleDuration := time.Duration(p.ThrottleDuration)
+			throttledChan := throttleEvents(ctx, throttleDuration, pool, serviceEventsChan)
+			if throttledChan != nil {
+				serviceEventsChan = throttledChan
+			}
 
-			// enter loop where we wait for and respond to notifications
+			conf, err := p.loadConfiguration(ctx)
+			if err != nil {
+				return fmt.Errorf("loading configuration: %w", err)
+			}
+			if _, err := p.updateLastConfiguration(conf); err != nil {
+				return fmt.Errorf("updating last configuration: %w", err)
+			}
+
+			configurationChan <- dynamic.Message{
+				ProviderName:  p.name,
+				Configuration: conf,
+			}
+
 			for {
 				select {
 				case <-ctx.Done():
 					return nil
-				case <-ticker.C:
-				}
-				// load services due to refresh
-				if err := p.loadConfiguration(ctx, configurationChan); err != nil {
-					return fmt.Errorf("failed to refresh nomad services: %w", err)
+				case event := <-serviceEventsChan:
+					conf, err = p.loadConfiguration(ctx)
+					if err != nil {
+						return fmt.Errorf("loading configuration: %w", err)
+					}
+					updated, err := p.updateLastConfiguration(conf)
+					if err != nil {
+						return fmt.Errorf("updating last configuration: %w", err)
+					}
+					if !updated {
+						logger.Debug().Msgf("Skipping Nomad event %d with no changes", event.Index)
+						continue
+					}
+
+					configurationChan <- dynamic.Message{
+						ProviderName:  p.name,
+						Configuration: conf,
+					}
+
+					// If we're throttling, we sleep here for the throttle duration to
+					// enforce that we don't refresh faster than our throttle. time.Sleep
+					// returns immediately if p.ThrottleDuration is 0 (no throttle).
+					time.Sleep(throttleDuration)
 				}
 			}
 		}
 
 		failure := func(err error, d time.Duration) {
-			logger.Errorf("Provider connection error %+v, retrying in %s", err, d)
+			logger.Error().Err(err).Msgf("Loading configuration, retrying in %s", d)
 		}
 
 		if retryErr := backoff.RetryNotify(
@@ -214,69 +256,77 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 			backoff.WithContext(job.NewBackOff(backoff.NewExponentialBackOff()), ctxLog),
 			failure,
 		); retryErr != nil {
-			logger.Errorf("Cannot connect to Nomad server %+v", retryErr)
+			logger.Error().Err(retryErr).Msg("Cannot connect to Nomad server")
 		}
 	})
 
 	return nil
 }
 
-func (p *Provider) loadConfiguration(ctx context.Context, configurationC chan<- dynamic.Message) error {
-	items, err := p.getNomadServiceData(ctx)
-	if err != nil {
-		return err
-	}
-	configurationC <- dynamic.Message{
-		ProviderName:  p.name,
-		Configuration: p.buildConfig(ctx, items),
+func (p *Provider) pollOrWatch(ctx context.Context) (<-chan *api.Events, error) {
+	if p.Watch {
+		return p.client.EventStream().Stream(ctx,
+			map[api.Topic][]string{
+				api.TopicService: {"*"},
+			},
+			0,
+			&api.QueryOptions{
+				Namespace: p.namespace,
+			},
+		)
 	}
 
-	return nil
+	serviceEventsChan := make(chan *api.Events, 1)
+
+	go func() {
+		ticker := time.NewTicker(time.Duration(p.RefreshInterval))
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case t := <-ticker.C:
+				serviceEventsChan <- &api.Events{
+					Index: uint64(t.UnixNano()),
+				}
+			}
+		}
+	}()
+
+	return serviceEventsChan, nil
 }
 
-func createClient(namespace string, endpoint *EndpointConfig) (*api.Client, error) {
-	config := api.Config{
-		Address:   endpoint.Address,
-		Namespace: namespace,
-		Region:    endpoint.Region,
-		SecretID:  endpoint.Token,
-		WaitTime:  time.Duration(endpoint.EndpointWaitTime),
-	}
-
-	if endpoint.TLS != nil {
-		config.TLSConfig = &api.TLSConfig{
-			CACert:     endpoint.TLS.CA,
-			ClientCert: endpoint.TLS.Cert,
-			ClientKey:  endpoint.TLS.Key,
-			Insecure:   endpoint.TLS.InsecureSkipVerify,
+func (p *Provider) loadConfiguration(ctx context.Context) (*dynamic.Configuration, error) {
+	var items []item
+	var err error
+	if p.AllowEmptyServices {
+		items, err = p.getNomadServiceDataWithEmptyServices(ctx)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		items, err = p.getNomadServiceData(ctx)
+		if err != nil {
+			return nil, err
 		}
 	}
 
-	return api.NewClient(&config)
+	return p.buildConfig(ctx, items), nil
 }
 
-// configuration contains information from the service's tags that are globals
-// (not specific to the dynamic configuration).
-type configuration struct {
-	Enable bool // <prefix>.enable is the corresponding label.
-	Canary bool // <prefix>.nomad.canary is the corresponding label.
-}
-
-// getExtraConf returns a configuration with settings which are not part of the dynamic configuration (e.g. "<prefix>.enable").
-func (p *Provider) getExtraConf(tags []string) configuration {
-	labels := tagsToLabels(tags, p.Prefix)
-
-	enabled := p.ExposedByDefault
-	if v, exists := labels["traefik.enable"]; exists {
-		enabled = strings.EqualFold(v, "true")
+func (p *Provider) updateLastConfiguration(conf *dynamic.Configuration) (bool, error) {
+	confHash, err := hashstructure.Hash(conf, nil)
+	if err != nil {
+		return false, fmt.Errorf("hashing the configuration: %w", err)
 	}
 
-	var canary bool
-	if v, exists := labels["traefik.nomad.canary"]; exists {
-		canary = strings.EqualFold(v, "true")
+	if p.lastConfiguration.Get() == confHash {
+		return false, nil
 	}
 
-	return configuration{Enable: enabled, Canary: canary}
+	p.lastConfiguration.Set(confHash)
+	return true, nil
 }
 
 func (p *Provider) getNomadServiceData(ctx context.Context) ([]item, error) {
@@ -293,22 +343,22 @@ func (p *Provider) getNomadServiceData(ctx context.Context) ([]item, error) {
 
 	for _, stub := range stubs {
 		for _, service := range stub.Services {
-			logger := log.FromContext(log.With(ctx, log.Str("serviceName", service.ServiceName)))
+			logger := log.Ctx(ctx).With().Str("serviceName", service.ServiceName).Logger()
 
 			extraConf := p.getExtraConf(service.Tags)
 			if !extraConf.Enable {
-				logger.Debug("Filter Nomad service that is not enabled")
+				logger.Debug().Msg("Filter Nomad service that is not enabled")
 				continue
 			}
 
 			matches, err := constraints.MatchTags(service.Tags, p.Constraints)
 			if err != nil {
-				logger.Errorf("Error matching constraint expressions: %v", err)
+				logger.Error().Err(err).Msg("Error matching constraint expressions")
 				continue
 			}
 
 			if !matches {
-				logger.Debugf("Filter Nomad service not matching constraints: %q", p.Constraints)
+				logger.Debug().Msgf("Filter Nomad service not matching constraints: %q", p.Constraints)
 				continue
 			}
 
@@ -336,6 +386,115 @@ func (p *Provider) getNomadServiceData(ctx context.Context) ([]item, error) {
 	return items, nil
 }
 
+func (p *Provider) getNomadServiceDataWithEmptyServices(ctx context.Context) ([]item, error) {
+	jobsOpts := &api.QueryOptions{AllowStale: p.Stale}
+	jobsOpts = jobsOpts.WithContext(ctx)
+
+	jobStubs, _, err := p.client.Jobs().List(jobsOpts)
+	if err != nil {
+		return nil, err
+	}
+
+	var items []item
+
+	// Get Services even when they are scaled down to zero. Currently the nomad service interface does not support this. https://github.com/hashicorp/nomad/issues/19731
+	for _, jobStub := range jobStubs {
+		jobInfoOpts := &api.QueryOptions{}
+		jobInfoOpts = jobInfoOpts.WithContext(ctx)
+
+		job, _, err := p.client.Jobs().Info(jobStub.ID, jobInfoOpts)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, taskGroup := range job.TaskGroups {
+			services := []*api.Service{}
+			// Get all services in job -> taskgroup
+			services = append(services, taskGroup.Services...)
+
+			// Get all services in job -> taskgroup -> tasks
+			for _, task := range taskGroup.Tasks {
+				services = append(services, task.Services...)
+			}
+
+			for _, service := range services {
+				logger := log.Ctx(ctx).With().Str("serviceName", service.TaskName).Logger()
+
+				extraConf := p.getExtraConf(service.Tags)
+				if !extraConf.Enable {
+					logger.Debug().Msg("Filter Nomad service that is not enabled")
+					continue
+				}
+
+				matches, err := constraints.MatchTags(service.Tags, p.Constraints)
+				if err != nil {
+					logger.Error().Err(err).Msg("Error matching constraint expressions")
+					continue
+				}
+
+				if !matches {
+					logger.Debug().Msgf("Filter Nomad service not matching constraints: %q", p.Constraints)
+					continue
+				}
+
+				if nil != taskGroup.Scaling && *taskGroup.Scaling.Enabled && *taskGroup.Count == 0 {
+					// Add items without address
+					items = append(items, item{
+						// Create a unique id for non registered services
+						ID:         fmt.Sprintf("%s-%s-%s-%s-%s", *job.Namespace, *job.Name, *taskGroup.Name, service.TaskName, service.Name),
+						Name:       service.Name,
+						Namespace:  *job.Namespace,
+						Node:       "",
+						Datacenter: "",
+						Address:    "",
+						Port:       -1,
+						Tags:       service.Tags,
+						ExtraConf:  p.getExtraConf(service.Tags),
+					})
+				} else {
+					instances, err := p.fetchService(ctx, service.Name)
+					if err != nil {
+						return nil, err
+					}
+
+					for _, i := range instances {
+						items = append(items, item{
+							ID:         i.ID,
+							Name:       i.ServiceName,
+							Namespace:  i.Namespace,
+							Node:       i.NodeID,
+							Datacenter: i.Datacenter,
+							Address:    i.Address,
+							Port:       i.Port,
+							Tags:       i.Tags,
+							ExtraConf:  p.getExtraConf(i.Tags),
+						})
+					}
+				}
+			}
+		}
+	}
+
+	return items, nil
+}
+
+// getExtraConf returns a configuration with settings which are not part of the dynamic configuration (e.g. "<prefix>.enable").
+func (p *Provider) getExtraConf(tags []string) configuration {
+	labels := tagsToLabels(tags, p.Prefix)
+
+	enabled := p.ExposedByDefault
+	if v, exists := labels["traefik.enable"]; exists {
+		enabled = strings.EqualFold(v, "true")
+	}
+
+	var canary bool
+	if v, exists := labels["traefik.nomad.canary"]; exists {
+		canary = strings.EqualFold(v, "true")
+	}
+
+	return configuration{Enable: enabled, Canary: canary}
+}
+
 // fetchService queries Nomad API for services matching name,
 // that also have the  <prefix>.enable=true set in its tags.
 func (p *Provider) fetchService(ctx context.Context, name string) ([]*api.ServiceRegistration, error) {
@@ -355,4 +514,60 @@ func (p *Provider) fetchService(ctx context.Context, name string) ([]*api.Servic
 		return nil, fmt.Errorf("failed to fetch services: %w", err)
 	}
 	return services, nil
+}
+
+func createClient(namespace string, endpoint *EndpointConfig) (*api.Client, error) {
+	config := api.Config{
+		Address:   endpoint.Address,
+		Namespace: namespace,
+		Region:    endpoint.Region,
+		SecretID:  endpoint.Token,
+		WaitTime:  time.Duration(endpoint.EndpointWaitTime),
+	}
+
+	if endpoint.TLS != nil {
+		config.TLSConfig = &api.TLSConfig{
+			CACert:     endpoint.TLS.CA,
+			ClientCert: endpoint.TLS.Cert,
+			ClientKey:  endpoint.TLS.Key,
+			Insecure:   endpoint.TLS.InsecureSkipVerify,
+		}
+	}
+
+	return api.NewClient(&config)
+}
+
+// Copied from the Kubernetes provider.
+func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *safe.Pool, eventsChan <-chan *api.Events) chan *api.Events {
+	if throttleDuration == 0 {
+		return nil
+	}
+
+	// Create a buffered channel to hold the pending event (if we're delaying processing the event due to throttling).
+	eventsChanBuffered := make(chan *api.Events, 1)
+
+	// Run a goroutine that reads events from eventChan and does a
+	// non-blocking write to pendingEvent. This guarantees that writing to
+	// eventChan will never block, and that pendingEvent will have
+	// something in it if there's been an event since we read from that channel.
+	pool.GoCtx(func(ctxPool context.Context) {
+		for {
+			select {
+			case <-ctxPool.Done():
+				return
+			case nextEvent := <-eventsChan:
+				select {
+				case eventsChanBuffered <- nextEvent:
+				default:
+					// We already have an event in eventsChanBuffered, so we'll
+					// do a refresh as soon as our throttle allows us to. It's fine
+					// to drop the event and keep whatever's in the buffer -- we
+					// don't do different things for different events.
+					log.Ctx(ctx).Debug().Msgf("Dropping event %d due to throttling", nextEvent.Index)
+				}
+			}
+		}
+	})
+
+	return eventsChanBuffered
 }

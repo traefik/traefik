@@ -18,7 +18,7 @@ The Errors middleware returns a custom page in lieu of the default, according to
 
 ## Configuration Examples
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 # Dynamic Custom Error Page for 5XX Status Code
 labels:
   - "traefik.http.middlewares.test-errors.errors.status=500,501,503,505-599"
@@ -49,22 +49,6 @@ spec:
 - "traefik.http.middlewares.test-errors.errors.status=500,501,503,505-599"
 - "traefik.http.middlewares.test-errors.errors.service=serviceError"
 - "traefik.http.middlewares.test-errors.errors.query=/{status}.html"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-errors.errors.status": "500,501,503,505-599",
-  "traefik.http.middlewares.test-errors.errors.service": "serviceError",
-  "traefik.http.middlewares.test-errors.errors.query": "/{status}.html"
-}
-```
-
-```yaml tab="Rancher"
-# Dynamic Custom Error Page for 5XX Status Code excluding 502 and 504
-labels:
-  - "traefik.http.middlewares.test-errors.errors.status=500,501,503,505-599"
-  - "traefik.http.middlewares.test-errors.errors.service=serviceError"
-  - "traefik.http.middlewares.test-errors.errors.query=/{status}.html"
 ```
 
 ```yaml tab="File (YAML)"
@@ -118,6 +102,19 @@ The status code ranges are inclusive (`505-599` will trigger with every code bet
     The comma-separated syntax is only available for label-based providers.
     The examples above demonstrate which syntax is appropriate for each provider.
 
+### `statusRewrites`
+
+An optional mapping of status codes to be rewritten. For example, if a service returns a 418, you might want to rewrite it to a 404.
+You can map individual status codes or even ranges to a different status code. The syntax for ranges follows the same rules as the `status` option.
+
+Here is an example:
+
+```yml
+statusRewrites:
+  "500-503": 500
+  "418": 404
+```
+
 ### `service`
 
 The service that will serve the new requested error page.
@@ -139,7 +136,8 @@ There are multiple variables that can be placed in the `query` option to insert 
 
 The table below lists all the available variables and their associated values.
 
-| Variable   | Value                                                              |
-|------------|--------------------------------------------------------------------|
-| `{status}` | The response status code.                                          |
-| `{url}`    | The [escaped](https://pkg.go.dev/net/url#QueryEscape) request URL. |
+| Variable           | Value                                                                                      |
+|--------------------|--------------------------------------------------------------------------------------------|
+| `{status}`         | The response status code. It may be rewritten when using the `statusRewrites` option.      |
+| `{originalStatus}` | The original response status code, if it has been modified by the `statusRewrites` option. |
+| `{url}`            | The [escaped](https://pkg.go.dev/net/url#QueryEscape) request URL.                         |

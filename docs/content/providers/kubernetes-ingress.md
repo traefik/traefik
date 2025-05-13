@@ -13,7 +13,7 @@ it manages access to cluster services by supporting the [Ingress](https://kubern
 
 ## Requirements
 
-Traefik supports `1.14+` Kubernetes clusters.
+{!kubernetes-requirements.md!}
 
 ## Routing Configuration
 
@@ -68,28 +68,6 @@ spec:
                   number: 80
 ```
 
-```yaml tab="Ingress v1beta1 (deprecated)"
-apiVersion: networking.k8s.io/v1beta1
-kind: Ingress
-metadata:
-  name: foo
-  namespace: production
-
-spec:
-  rules:
-    - host: example.net
-      http:
-        paths:
-          - path: /bar
-            backend:
-              serviceName: service1
-              servicePort: 80
-          - path: /foo
-            backend:
-              serviceName: service1
-              servicePort: 80
-```
-
 ## LetsEncrypt Support with the Ingress Provider
 
 By design, Traefik is a stateless application,
@@ -102,7 +80,7 @@ When using a single instance of Traefik Proxy with Let's Encrypt, you should enc
 However, this could be a single point of failure.
 Unfortunately, it is not possible to run multiple instances of Traefik 2.0 with Let's Encrypt enabled,
 because there is no way to ensure that the correct instance of Traefik receives the challenge request, and subsequent responses.
-Previous versions of Traefik used a [KV store](https://doc.traefik.io/traefik/v1.7/configuration/acme/#storage) to attempt to achieve this,
+Early versions (v1.x) of Traefik used a [KV store](https://doc.traefik.io/traefik/v1.7/configuration/acme/#storage) to attempt to achieve this,
 but due to sub-optimal performance that feature was dropped in 2.0.
 
 If you need Let's Encrypt with high availability in a Kubernetes environment,
@@ -257,46 +235,7 @@ Value of `kubernetes.io/ingress.class` annotation that identifies Ingress object
 If the parameter is set, only Ingresses containing an annotation with the same value are processed.
 Otherwise, Ingresses missing the annotation, having an empty value, or the value `traefik` are processed.
 
-??? info "Kubernetes 1.18+"
-
-    If the Kubernetes cluster version is 1.18+,
-    the new `IngressClass` resource can be leveraged to identify Ingress objects that should be processed.
-    In that case, Traefik will look for an `IngressClass` in the cluster with the controller value equal to *traefik.io/ingress-controller*.
-
-    In addition to the controller value matching mechanism, the property `ingressClass` (if set) will be used to select IngressClasses by applying a strict matching on their name.
-
-    Please see [this article](https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/) for more information or the example below.
-
-    ```yaml tab="IngressClass"
-    apiVersion: networking.k8s.io/v1beta1
-    kind: IngressClass
-    metadata:
-      name: traefik-lb
-    spec:
-      controller: traefik.io/ingress-controller
-    ```
-
-    ```yaml tab="Ingress"
-    apiVersion: networking.k8s.io/v1beta1
-    kind: Ingress
-    metadata:
-      name: example-ingress
-    spec:
-      ingressClassName: traefik-lb
-      rules:
-      - host: "*.example.com"
-        http:
-          paths:
-          - path: /example
-            backend:
-              serviceName: example-service
-              servicePort: 80
-    ```
-
-??? info "Kubernetes 1.19+"
-
-    If the Kubernetes cluster version is 1.19+,
-    prefer using the `networking.k8s.io/v1` [apiVersion](https://v1-19.docs.kubernetes.io/docs/setup/release/notes/#api-change) of `Ingress` and `IngressClass`.
+??? info "Example"
 
     ```yaml tab="IngressClass"
     apiVersion: networking.k8s.io/v1
@@ -342,6 +281,67 @@ providers:
 
 ```bash tab="CLI"
 --providers.kubernetesingress.ingressclass=traefik-internal
+```
+
+### `disableIngressClassLookup`
+
+_Optional, Default: false_
+
+??? warning "Deprecated"
+
+    The Kubernetes Ingress provider option `disableIngressClassLookup` has been deprecated in v3.1, and will be removed in the next major version.
+	Please use the `disableClusterScopeResources` option instead.
+
+If the parameter is set to `true`,
+Traefik will not discover IngressClasses in the cluster.
+By doing so, it alleviates the requirement of giving Traefik the rights to look IngressClasses up.
+Furthermore, when this option is set to `true`,
+Traefik is not able to handle Ingresses with IngressClass references,
+therefore such Ingresses will be ignored.
+Please note that annotations are not affected by this option.
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesIngress:
+    disableIngressClassLookup: true
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesIngress]
+  disableIngressClassLookup = true
+  # ...
+```
+
+```bash tab="CLI"
+--providers.kubernetesingress.disableingressclasslookup=true
+```
+
+### `disableClusterScopeResources`
+
+_Optional, Default: false_
+
+When this parameter is set to `true`,
+Traefik will not discover cluster scope resources (`IngressClass` and `Nodes`).
+By doing so, it alleviates the requirement of giving Traefik the rights to look up for cluster resources.
+Furthermore, Traefik will not handle Ingresses with IngressClass references, therefore such Ingresses will be ignored (please note that annotations are not affected by this option).
+This will also prevent from using the `NodePortLB` options on services.
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesIngress:
+    disableClusterScopeResources: true
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesIngress]
+  disableClusterScopeResources = true
+  # ...
+```
+
+```bash tab="CLI"
+--providers.kubernetesingress.disableClusterScopeResources=true
 ```
 
 ### `ingressEndpoint`
@@ -398,10 +398,16 @@ providers:
 
 _Optional, Default: ""_
 
-The Kubernetes service to copy status from.
-When using third parties tools like External-DNS, this option can be used to copy the service `loadbalancer.status` (containing the service's endpoints IPs) to the ingresses.
-
 Format: `namespace/servicename`.
+
+The Kubernetes service to copy status from, 
+depending on the service type:
+
+- **ClusterIP:** The ExternalIPs of the service will be propagated to the ingress status.
+- **NodePort:** The ExternalIP addresses of the nodes in the cluster will be propagated to the ingress status.
+- **LoadBalancer:** The IPs from the service's `loadBalancer.status` field (which contains the endpoints provided by the load balancer) will be propagated to the ingress status.
+
+When using third-party tools such as External-DNS, this option enables the copying of external service IPs to the ingress resources.
 
 ```yaml tab="File (YAML)"
 providers:
@@ -499,9 +505,33 @@ providers:
 --providers.kubernetesingress.allowexternalnameservices=true
 ```
 
+### `nativeLBByDefault`
+
+_Optional, Default: false_
+
+Defines whether to use Native Kubernetes load-balancing mode by default.
+For more information, please check out the `traefik.ingress.kubernetes.io/service.nativelb` [service annotation documentation](../routing/providers/kubernetes-ingress.md#on-service).
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesIngress:
+    nativeLBByDefault: true
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesIngress]
+  nativeLBByDefault = true
+  # ...
+```
+
+```bash tab="CLI"
+--providers.kubernetesingress.nativeLBByDefault=true
+```
+
 ### Further
 
 To learn more about the various aspects of the Ingress specification that Traefik supports,
-many examples of Ingresses definitions are located in the test [examples](https://github.com/traefik/traefik/tree/v2.11/pkg/provider/kubernetes/ingress/fixtures) of the Traefik repository.
+many examples of Ingresses definitions are located in the test [examples](https://github.com/traefik/traefik/tree/v3.4/pkg/provider/kubernetes/ingress/fixtures) of the Traefik repository.
 
 {!traefik-for-business-applications.md!}

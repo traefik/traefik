@@ -12,8 +12,7 @@ A Story of Labels & Containers
 
 Attach labels to your containers and let Traefik do the rest!
 
-Traefik works with both [Docker (standalone) Engine](https://docs.docker.com/engine/)
-and [Docker Swarm Mode](https://docs.docker.com/engine/swarm/).
+This provider works with [Docker (standalone) Engine](https://docs.docker.com/engine/).
 
 !!! tip "The Quick Start Uses Docker"
 
@@ -47,51 +46,6 @@ and [Docker Swarm Mode](https://docs.docker.com/engine/swarm/).
         # ...
         labels:
           - traefik.http.routers.my-container.rule=Host(`example.com`)
-    ```
-
-??? example "Configuring Docker Swarm & Deploying / Exposing one Service"
-
-    Enabling the docker provider (Swarm Mode)
-
-    ```yaml tab="File (YAML)"
-    providers:
-      docker:
-        # swarm classic (1.12-)
-        # endpoint: "tcp://127.0.0.1:2375"
-        # docker swarm mode (1.12+)
-        endpoint: "tcp://127.0.0.1:2377"
-        swarmMode: true
-    ```
-
-    ```toml tab="File (TOML)"
-    [providers.docker]
-      # swarm classic (1.12-)
-      # endpoint = "tcp://127.0.0.1:2375"
-      # docker swarm mode (1.12+)
-      endpoint = "tcp://127.0.0.1:2377"
-      swarmMode = true
-    ```
-
-    ```bash tab="CLI"
-    # swarm classic (1.12-)
-    # --providers.docker.endpoint=tcp://127.0.0.1:2375
-    # docker swarm mode (1.12+)
-    --providers.docker.endpoint=tcp://127.0.0.1:2377
-    --providers.docker.swarmMode=true
-    ```
-
-    Attach labels to a single service (not containers) while in Swarm mode (in your Docker compose file).
-    When there is only one service, and the router does not specify a service,
-    then that service is automatically assigned to the router.
-
-    ```yaml
-    version: "3"
-    services:
-      my-container:
-        deploy:
-          labels:
-            - traefik.http.routers.my-container.rule=Host(`example.com`)
-            - traefik.http.services.my-container-service.loadbalancer.server.port=8080
     ```
 
 ## Routing Configuration
@@ -128,14 +82,13 @@ Port detection for private communication works as follows:
 - If a container does not expose any port, or the selection from multiple ports does not fit,
   then you must manually specify which port Traefik should use for communication
   by using the label `traefik.http.services.<service_name>.loadbalancer.server.port`
-  (Read more on this label in the dedicated section in [routing](../routing/providers/docker.md#port)).
+  (Read more on this label in the dedicated section in [routing](../routing/providers/docker.md#services)).
 
 ### Host networking
 
 When exposing containers that are configured with [host networking](https://docs.docker.com/network/host/),
 the IP address of the host is resolved as follows:
 
-<!-- TODO: verify and document the swarm mode case with container.Node.IPAddress coming from the API -->
 - try a lookup of `host.docker.internal`
 - if the lookup was unsuccessful, try a lookup of `host.containers.internal`, ([Podman](https://docs.podman.io/en/latest/) equivalent of `host.docker.internal`)
 - if that lookup was also unsuccessful, fall back to `127.0.0.1`
@@ -179,9 +132,9 @@ You can specify which Docker API Endpoint to use with the directive [`endpoint`]
         - Authorization with the [Docker Authorization Plugin Mechanism](https://web.archive.org/web/20190920092526/https://docs.docker.com/engine/extend/plugins_authorization/)
         - Accounting at networking level, by exposing the socket only inside a Docker private network, only available for Traefik.
         - Accounting at container level, by exposing the socket on a another container than Traefik's.
-          With Swarm mode, it allows scheduling of Traefik on worker nodes, with only the "socket exposer" container on the manager nodes.
         - Accounting at kernel level, by enforcing kernel calls with mechanisms like [SELinux](https://en.wikipedia.org/wiki/Security-Enhanced_Linux), to only allows an identified set of actions for Traefik's process (or the "socket exposer" process).
         - SSH public key authentication (SSH is supported with Docker > 18.09)
+        - Authentication using HTTP Basic authentication through an HTTP proxy that exposes the Docker daemon socket.
 
     ??? info "More Resources and Examples"
 
@@ -196,71 +149,13 @@ You can specify which Docker API Endpoint to use with the directive [`endpoint`]
         - [Letting Traefik run on Worker Nodes](https://blog.mikesir87.io/2018/07/letting-traefik-run-on-worker-nodes/)
         - [Docker Socket Proxy from Tecnativa](https://github.com/Tecnativa/docker-socket-proxy)
 
-## Docker Swarm Mode
-
-To enable Docker Swarm (instead of standalone Docker) as a configuration provider,
-set the [`swarmMode`](#swarmmode) directive to `true`.
-
-### Routing Configuration with Labels
-
-While in Swarm Mode, Traefik uses labels found on services, not on individual containers.
-
-Therefore, if you use a compose file with Swarm Mode, labels should be defined in the
-[`deploy`](https://docs.docker.com/compose/compose-file/compose-file-v3/#labels-1) part of your service.
-
-This behavior is only enabled for docker-compose version 3+ ([Compose file reference](https://docs.docker.com/compose/compose-file/compose-file-v3/)).
-
-### Port Detection
-
-Docker Swarm does not provide any [port detection](#port-detection) information to Traefik.
-
-Therefore, you **must** specify the port to use for communication by using the label `traefik.http.services.<service_name>.loadbalancer.server.port`
-(Check the reference for this label in the [routing section for Docker](../routing/providers/docker.md#port)).
-
-### Docker API Access
-
-Docker Swarm Mode follows the same rules as Docker [API Access](#docker-api-access).
-
-Since the Swarm API is only exposed on the [manager nodes](https://docs.docker.com/engine/swarm/how-swarm-mode-works/nodes/#manager-nodes),
-these are the nodes that Traefik should be scheduled on by deploying Traefik with a constraint on the node "role":
-
-```shell tab="With Docker CLI"
-docker service create \
-  --constraint=node.role==manager \
-  #... \
-```
-
-```yml tab="With Docker Compose"
-version: '3'
-
-services:
-  traefik:
-    # ...
-    deploy:
-      placement:
-        constraints:
-          - node.role == manager
-```
-
-!!! tip "Scheduling Traefik on Worker Nodes"
-
-    Following the guidelines given in the previous section ["Docker API Access"](#docker-api-access),
-    if you expose the Docker API through TCP, then Traefik can be scheduled on any node if the TCP
-    socket is reachable.
-
-    Please consider the security implications by reading the [Security Note](#security-note).
-
-    A good example can be found on [Bret Fisher's repository](https://github.com/BretFisher/dogvscat/blob/master/stack-proxy-global.yml#L124).
-
 ## Provider Configuration
 
 ### `endpoint`
 
 _Required, Default="unix:///var/run/docker.sock"_
 
-<!-- markdownlint-disable MD051 -->
-See the sections [Docker API Access](#docker-api-access) and [Docker Swarm API Access](#docker-api-access_1) for more information.
-<!-- markdownlint-restore -->
+See the [Docker API Access](#docker-api-access) section for more information.
 
 ??? example "Using the docker.sock"
 
@@ -271,7 +166,7 @@ See the sections [Docker API Access](#docker-api-access) and [Docker Swarm API A
 
     services:
       traefik:
-         image: traefik:v2.11 # The official v2 Traefik docker image
+         image: traefik:v3.4 # The official v3 Traefik docker image
          ports:
            - "80:80"
          volumes:
@@ -322,6 +217,50 @@ See the sections [Docker API Access](#docker-api-access) and [Docker Swarm API A
     # ...
     ```
 
+??? example "Using HTTP"
+
+    Using Docker Engine API you can connect Traefik to remote daemon using HTTP.
+
+    ```yaml tab="File (YAML)"
+    providers:
+      docker:
+        endpoint: "http://127.0.0.1:2375"
+         # ...
+    ```
+
+    ```toml tab="File (TOML)"
+    [providers.docker]
+      endpoint = "http://127.0.0.1:2375"
+      # ...
+    ```
+
+    ```bash tab="CLI"
+    --providers.docker.endpoint=http://127.0.0.1:2375
+    # ...
+    ```
+
+??? example "Using TCP"
+
+    Using Docker Engine API you can connect Traefik to remote daemon using TCP.
+
+    ```yaml tab="File (YAML)"
+    providers:
+      docker:
+        endpoint: "tcp://127.0.0.1:2375"
+         # ...
+    ```
+
+    ```toml tab="File (TOML)"
+    [providers.docker]
+      endpoint = "tcp://127.0.0.1:2375"
+      # ...
+    ```
+
+    ```bash tab="CLI"
+    --providers.docker.endpoint=tcp://127.0.0.1:2375
+    # ...
+    ```
+
 ```yaml tab="File (YAML)"
 providers:
   docker:
@@ -335,6 +274,56 @@ providers:
 
 ```bash tab="CLI"
 --providers.docker.endpoint=unix:///var/run/docker.sock
+```
+
+### `username`
+
+_Optional, Default=""_
+
+Defines the username for Basic HTTP authentication.
+This should be used when the Docker daemon socket is exposed through an HTTP proxy that requires Basic HTTP authentication.
+
+```yaml tab="File (YAML)"
+providers:
+  docker:
+    username: foo
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.docker]
+  username = "foo"
+  # ...
+```
+
+```bash tab="CLI"
+--providers.docker.username="foo"
+# ...
+```
+
+### `password`
+
+_Optional, Default=""_
+
+Defines the password for Basic HTTP authentication.
+This should be used when the Docker daemon socket is exposed through an HTTP proxy that requires Basic HTTP authentication.
+
+```yaml tab="File (YAML)"
+providers:
+  docker:
+    password: foo
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.docker]
+  password = "foo"
+  # ...
+```
+
+```bash tab="CLI"
+--providers.docker.password="foo"
+# ...
 ```
 
 ### `useBindPortIP`
@@ -476,54 +465,6 @@ providers:
     can lead to create a router targeting itself in a loop.
     In this case, to prevent an infinite loop,
     Traefik adds an internal middleware to refuse the request if it comes from the same router.
-
-### `swarmMode`
-
-_Optional, Default=false_
-
-Enables the Swarm Mode (instead of standalone Docker).
-
-```yaml tab="File (YAML)"
-providers:
-  docker:
-    swarmMode: true
-    # ...
-```
-
-```toml tab="File (TOML)"
-[providers.docker]
-  swarmMode = true
-  # ...
-```
-
-```bash tab="CLI"
---providers.docker.swarmMode=true
-# ...
-```
-
-### `swarmModeRefreshSeconds`
-
-_Optional, Default=15_
-
-Defines the polling interval (in seconds) for Swarm Mode.
-
-```yaml tab="File (YAML)"
-providers:
-  docker:
-    swarmModeRefreshSeconds: 30
-    # ...
-```
-
-```toml tab="File (TOML)"
-[providers.docker]
-  swarmModeRefreshSeconds = 30
-  # ...
-```
-
-```bash tab="CLI"
---providers.docker.swarmModeRefreshSeconds=30
-# ...
-```
 
 ### `httpClientTimeout`
 

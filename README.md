@@ -15,7 +15,7 @@
 [![Twitter](https://img.shields.io/twitter/follow/traefik.svg?style=social)](https://twitter.com/intent/follow?screen_name=traefik)
 
 Traefik (pronounced _traffic_) is a modern HTTP reverse proxy and load balancer that makes deploying microservices easy.
-Traefik integrates with your existing infrastructure components ([Docker](https://www.docker.com/), [Swarm mode](https://docs.docker.com/engine/swarm/), [Kubernetes](https://kubernetes.io), [Marathon](https://mesosphere.github.io/marathon/), [Consul](https://www.consul.io/), [Etcd](https://coreos.com/etcd/), [Rancher](https://rancher.com), [Amazon ECS](https://aws.amazon.com/ecs), ...) and configures itself automatically and dynamically.
+Traefik integrates with your existing infrastructure components ([Docker](https://www.docker.com/), [Swarm mode](https://docs.docker.com/engine/swarm/), [Kubernetes](https://kubernetes.io), [Consul](https://www.consul.io/), [Etcd](https://coreos.com/etcd/), [Rancher v2](https://rancher.com), [Amazon ECS](https://aws.amazon.com/ecs), ...) and configures itself automatically and dynamically.
 Pointing Traefik at your orchestrator should be the _only_ configuration step you need.
 
 ---
@@ -35,7 +35,8 @@ Pointing Traefik at your orchestrator should be the _only_ configuration step yo
 
 ---
 
-:warning: Please be aware that the old configurations for Traefik v1.x are NOT compatible with the v2.x config as of now. If you're running v2, please ensure you are using a [v2 configuration](https://doc.traefik.io/traefik/).
+:warning: When migrating to a new major version of Traefik, please refer to the [migration guide](https://doc.traefik.io/traefik/migration/v2-to-v3/) to ensure a smooth transition and to be aware of any breaking changes.
+
 
 ## Overview
 
@@ -58,11 +59,11 @@ _(But if you'd rather configure some of your routes manually, Traefik supports t
 
 - Continuously updates its configuration (No restarts!)
 - Supports multiple load balancing algorithms
-- Provides HTTPS to your microservices by leveraging [Let's Encrypt](https://letsencrypt.org)  (wildcard certificates support)
+- Provides HTTPS to your microservices by leveraging [Let's Encrypt](https://letsencrypt.org) (wildcard certificates support)
 - Circuit breakers, retry
 - See the magic through its clean web UI
-- WebSocket, HTTP/2, GRPC ready
-- Provides metrics (Rest, Prometheus, Datadog, Statsd, InfluxDB)
+- WebSocket, HTTP/2, gRPC ready
+- Provides metrics (Rest, Prometheus, Datadog, Statsd, InfluxDB 2.X)
 - Keeps access logs (JSON, CLF)
 - Fast
 - Exposes a Rest API
@@ -72,8 +73,6 @@ _(But if you'd rather configure some of your routes manually, Traefik supports t
 
 - [Docker](https://doc.traefik.io/traefik/providers/docker/) / [Swarm mode](https://doc.traefik.io/traefik/providers/docker/)
 - [Kubernetes](https://doc.traefik.io/traefik/providers/kubernetes-crd/)
-- [Marathon](https://doc.traefik.io/traefik/providers/marathon/)
-- [Rancher](https://doc.traefik.io/traefik/providers/rancher/) (Metadata)
 - [ECS](https://doc.traefik.io/traefik/providers/ecs/)
 - [File](https://doc.traefik.io/traefik/providers/file/)
 
@@ -89,7 +88,7 @@ You can access the simple HTML frontend of Traefik.
 
 ## Documentation
 
-You can find the complete documentation of Traefik v2 at [https://doc.traefik.io/traefik/](https://doc.traefik.io/traefik/).
+You can find the complete documentation of Traefik v3 at [https://doc.traefik.io/traefik/](https://doc.traefik.io/traefik/).
 
 ## Support
 

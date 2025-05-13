@@ -5,8 +5,8 @@ import (
 	"crypto/sha256"
 	"errors"
 	"fmt"
-	"net"
 	"os"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -15,68 +15,164 @@ import (
 	"github.com/cenkalti/backoff/v4"
 	"github.com/hashicorp/go-multierror"
 	"github.com/mitchellh/hashstructure"
+	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/job"
-	"github.com/traefik/traefik/v2/pkg/log"
-	"github.com/traefik/traefik/v2/pkg/provider"
-	containousv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefikcontainous/v1alpha1"
-	traefikv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
-	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/k8s"
-	"github.com/traefik/traefik/v2/pkg/safe"
-	"github.com/traefik/traefik/v2/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/job"
+	"github.com/traefik/traefik/v3/pkg/logs"
+	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
+	"github.com/traefik/traefik/v3/pkg/safe"
+	"github.com/traefik/traefik/v3/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/types"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/utils/pointer"
-	"k8s.io/utils/strings/slices"
-	gatev1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
+	ktypes "k8s.io/apimachinery/pkg/types"
+	"k8s.io/utils/ptr"
+	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
+	gatev1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 )
 
 const (
 	providerName = "kubernetesgateway"
 
+	controllerName = "traefik.io/gateway-controller"
+
+	groupCore    = "core"
+	groupGateway = "gateway.networking.k8s.io"
+
 	kindGateway        = "Gateway"
 	kindTraefikService = "TraefikService"
 	kindHTTPRoute      = "HTTPRoute"
+	kindGRPCRoute      = "GRPCRoute"
 	kindTCPRoute       = "TCPRoute"
 	kindTLSRoute       = "TLSRoute"
+	kindService        = "Service"
+
+	appProtocolHTTP  = "http"
+	appProtocolHTTPS = "https"
+	appProtocolH2C   = "kubernetes.io/h2c"
+	appProtocolWS    = "kubernetes.io/ws"
+	appProtocolWSS   = "kubernetes.io/wss"
+
+	schemeHTTP  = "http"
+	schemeHTTPS = "https"
+	schemeH2C   = "h2c"
 )
 
 // Provider holds configurations of the provider.
 type Provider struct {
-	Endpoint         string                `description:"Kubernetes server endpoint (required for external cluster client)." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
-	Token            string                `description:"Kubernetes bearer token (not needed for in-cluster client)." json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty" loggable:"false"`
-	CertAuthFilePath string                `description:"Kubernetes certificate authority file path (not needed for in-cluster client)." json:"certAuthFilePath,omitempty" toml:"certAuthFilePath,omitempty" yaml:"certAuthFilePath,omitempty"`
-	Namespaces       []string              `description:"Kubernetes namespaces." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty" export:"true"`
-	LabelSelector    string                `description:"Kubernetes label selector to select specific GatewayClasses." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
-	ThrottleDuration ptypes.Duration       `description:"Kubernetes refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
-	EntryPoints      map[string]Entrypoint `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
+	Endpoint            string              `description:"Kubernetes server endpoint (required for external cluster client)." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
+	Token               types.FileOrContent `description:"Kubernetes bearer token (not needed for in-cluster client). It accepts either a token value or a file path to the token." json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty" loggable:"false"`
+	CertAuthFilePath    string              `description:"Kubernetes certificate authority file path (not needed for in-cluster client)." json:"certAuthFilePath,omitempty" toml:"certAuthFilePath,omitempty" yaml:"certAuthFilePath,omitempty"`
+	Namespaces          []string            `description:"Kubernetes namespaces." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty" export:"true"`
+	LabelSelector       string              `description:"Kubernetes label selector to select specific GatewayClasses." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
+	ThrottleDuration    ptypes.Duration     `description:"Kubernetes refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
+	ExperimentalChannel bool                `description:"Toggles Experimental Channel resources support (TCPRoute, TLSRoute...)." json:"experimentalChannel,omitempty" toml:"experimentalChannel,omitempty" yaml:"experimentalChannel,omitempty" export:"true"`
+	StatusAddress       *StatusAddress      `description:"Defines the Kubernetes Gateway status address." json:"statusAddress,omitempty" toml:"statusAddress,omitempty" yaml:"statusAddress,omitempty" export:"true"`
+	NativeLBByDefault   bool                `description:"Defines whether to use Native Kubernetes load-balancing by default." json:"nativeLBByDefault,omitempty" toml:"nativeLBByDefault,omitempty" yaml:"nativeLBByDefault,omitempty" export:"true"`
+
+	EntryPoints map[string]Entrypoint `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
+
+	// groupKindFilterFuncs is the list of allowed Group and Kinds for the Filter ExtensionRef objects.
+	groupKindFilterFuncs map[string]map[string]BuildFilterFunc
+	// groupKindBackendFuncs is the list of allowed Group and Kinds for the Backend ExtensionRef objects.
+	groupKindBackendFuncs map[string]map[string]BuildBackendFunc
 
 	lastConfiguration safe.Safe
 
 	routerTransform k8s.RouterTransform
-}
-
-func (p *Provider) SetRouterTransform(routerTransform k8s.RouterTransform) {
-	p.routerTransform = routerTransform
-}
-
-func (p *Provider) applyRouterTransform(ctx context.Context, rt *dynamic.Router, route *gatev1alpha2.HTTPRoute) {
-	if p.routerTransform == nil {
-		return
-	}
-
-	err := p.routerTransform.Apply(ctx, rt, route.Annotations)
-	if err != nil {
-		log.FromContext(ctx).WithError(err).Error("Apply router transform")
-	}
+	client          *clientWrapper
 }
 
 // Entrypoint defines the available entry points.
 type Entrypoint struct {
 	Address        string
 	HasHTTPTLSConf bool
+}
+
+// StatusAddress holds the Gateway Status address configuration.
+type StatusAddress struct {
+	IP       string     `description:"IP used to set Kubernetes Gateway status address." json:"ip,omitempty" toml:"ip,omitempty" yaml:"ip,omitempty"`
+	Hostname string     `description:"Hostname used for Kubernetes Gateway status address." json:"hostname,omitempty" toml:"hostname,omitempty" yaml:"hostname,omitempty"`
+	Service  ServiceRef `description:"Published Kubernetes Service to copy status addresses from." json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty"`
+}
+
+// ServiceRef holds a Kubernetes service reference.
+type ServiceRef struct {
+	Name      string `description:"Name of the Kubernetes service." json:"name,omitempty" toml:"name,omitempty" yaml:"name,omitempty"`
+	Namespace string `description:"Namespace of the Kubernetes service." json:"namespace,omitempty" toml:"namespace,omitempty" yaml:"namespace,omitempty"`
+}
+
+// BuildFilterFunc returns the name of the filter and the related dynamic.Middleware if needed.
+type BuildFilterFunc func(name, namespace string) (string, *dynamic.Middleware, error)
+
+// BuildBackendFunc returns the name of the backend and the related dynamic.Service if needed.
+type BuildBackendFunc func(name, namespace string) (string, *dynamic.Service, error)
+
+type ExtensionBuilderRegistry interface {
+	RegisterFilterFuncs(group, kind string, builderFunc BuildFilterFunc)
+	RegisterBackendFuncs(group, kind string, builderFunc BuildBackendFunc)
+}
+
+type gatewayListener struct {
+	Name string
+
+	Port              gatev1.PortNumber
+	Protocol          gatev1.ProtocolType
+	TLS               *gatev1.GatewayTLSConfig
+	Hostname          *gatev1.Hostname
+	Status            *gatev1.ListenerStatus
+	AllowedNamespaces []string
+	AllowedRouteKinds []string
+
+	Attached bool
+
+	GWName       string
+	GWNamespace  string
+	GWGeneration int64
+	EPName       string
+}
+
+// RegisterFilterFuncs registers an allowed Group, Kind, and builder for the Filter ExtensionRef objects.
+func (p *Provider) RegisterFilterFuncs(group, kind string, builderFunc BuildFilterFunc) {
+	if p.groupKindFilterFuncs == nil {
+		p.groupKindFilterFuncs = map[string]map[string]BuildFilterFunc{}
+	}
+
+	if p.groupKindFilterFuncs[group] == nil {
+		p.groupKindFilterFuncs[group] = map[string]BuildFilterFunc{}
+	}
+
+	p.groupKindFilterFuncs[group][kind] = builderFunc
+}
+
+// RegisterBackendFuncs registers an allowed Group, Kind, and builder for the Backend ExtensionRef objects.
+func (p *Provider) RegisterBackendFuncs(group, kind string, builderFunc BuildBackendFunc) {
+	if p.groupKindBackendFuncs == nil {
+		p.groupKindBackendFuncs = map[string]map[string]BuildBackendFunc{}
+	}
+
+	if p.groupKindBackendFuncs[group] == nil {
+		p.groupKindBackendFuncs[group] = map[string]BuildBackendFunc{}
+	}
+
+	p.groupKindBackendFuncs[group][kind] = builderFunc
+}
+
+func (p *Provider) SetRouterTransform(routerTransform k8s.RouterTransform) {
+	p.routerTransform = routerTransform
+}
+
+func (p *Provider) applyRouterTransform(ctx context.Context, rt *dynamic.Router, route *gatev1.HTTPRoute) {
+	if p.routerTransform == nil {
+		return
+	}
+
+	if err := p.routerTransform.Apply(ctx, rt, route); err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("Apply router transform")
+	}
 }
 
 func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
@@ -86,25 +182,20 @@ func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
 		return nil, fmt.Errorf("invalid label selector: %q", p.LabelSelector)
 	}
 
-	logger := log.FromContext(ctx)
-	logger.Infof("label selector is: %q", p.LabelSelector)
-
-	withEndpoint := ""
-	if p.Endpoint != "" {
-		withEndpoint = fmt.Sprintf(" with endpoint %s", p.Endpoint)
-	}
+	logger := log.Ctx(ctx)
+	logger.Info().Msgf("Label selector is: %q", p.LabelSelector)
 
 	var client *clientWrapper
 	switch {
 	case os.Getenv("KUBERNETES_SERVICE_HOST") != "" && os.Getenv("KUBERNETES_SERVICE_PORT") != "":
-		logger.Infof("Creating in-cluster Provider client%s", withEndpoint)
+		logger.Info().Str("endpoint", p.Endpoint).Msg("Creating in-cluster Provider client")
 		client, err = newInClusterClient(p.Endpoint)
 	case os.Getenv("KUBECONFIG") != "":
-		logger.Infof("Creating cluster-external Provider client from KUBECONFIG %s", os.Getenv("KUBECONFIG"))
+		logger.Info().Msgf("Creating cluster-external Provider client from KUBECONFIG %s", os.Getenv("KUBECONFIG"))
 		client, err = newExternalClusterClientFromFile(os.Getenv("KUBECONFIG"))
 	default:
-		logger.Infof("Creating cluster-external Provider client%s", withEndpoint)
-		client, err = newExternalClusterClient(p.Endpoint, p.Token, p.CertAuthFilePath)
+		logger.Info().Str("endpoint", p.Endpoint).Msg("Creating cluster-external Provider client")
+		client, err = newExternalClusterClient(p.Endpoint, p.CertAuthFilePath, p.Token)
 	}
 
 	if err != nil {
@@ -112,30 +203,34 @@ func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
 	}
 
 	client.labelSelector = p.LabelSelector
+	client.experimentalChannel = p.ExperimentalChannel
 
 	return client, nil
 }
 
 // Init the provider.
 func (p *Provider) Init() error {
+	logger := log.With().Str(logs.ProviderName, providerName).Logger()
+
+	var err error
+	p.client, err = p.newK8sClient(logger.WithContext(context.Background()))
+	if err != nil {
+		return fmt.Errorf("creating k8s client: %w", err)
+	}
+
 	return nil
 }
 
 // Provide allows the k8s provider to provide configurations to traefik using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
-	ctxLog := log.With(context.Background(), log.Str(log.ProviderName, providerName))
-	logger := log.FromContext(ctxLog)
-
-	k8sClient, err := p.newK8sClient(ctxLog)
-	if err != nil {
-		return err
-	}
+	logger := log.With().Str(logs.ProviderName, providerName).Logger()
+	ctxLog := logger.WithContext(context.Background())
 
 	pool.GoCtx(func(ctxPool context.Context) {
 		operation := func() error {
-			eventsChan, err := k8sClient.WatchAll(p.Namespaces, ctxPool.Done())
+			eventsChan, err := p.client.WatchAll(p.Namespaces, ctxPool.Done())
 			if err != nil {
-				logger.Errorf("Error watching kubernetes events: %v", err)
+				logger.Error().Err(err).Msg("Error watching kubernetes events")
 				timer := time.NewTimer(1 * time.Second)
 				select {
 				case <-timer.C:
@@ -159,14 +254,14 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					// Note that event is the *first* event that came in during this throttling interval -- if we're hitting our throttle, we may have dropped events.
 					// This is fine, because we don't treat different event types differently.
 					// But if we do in the future, we'll need to track more information about the dropped events.
-					conf := p.loadConfigurationFromGateway(ctxLog, k8sClient)
+					conf := p.loadConfigurationFromGateways(ctxLog)
 
 					confHash, err := hashstructure.Hash(conf, nil)
 					switch {
 					case err != nil:
-						logger.Error("Unable to hash the configuration")
+						logger.Error().Msg("Unable to hash the configuration")
 					case p.lastConfiguration.Get() == confHash:
-						logger.Debugf("Skipping Kubernetes event kind %T", event)
+						logger.Debug().Msgf("Skipping Kubernetes event kind %T", event)
 					default:
 						p.lastConfiguration.Set(confHash)
 						configurationChan <- dynamic.Message{
@@ -184,11 +279,11 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 		}
 
 		notify := func(err error, time time.Duration) {
-			logger.Errorf("Provider connection error: %v; retrying in %s", err, time)
+			logger.Error().Err(err).Msgf("Provider error, retrying in %s", time)
 		}
 		err := backoff.RetryNotify(safe.OperationWithRecover(operation), backoff.WithContext(job.NewBackOff(backoff.NewExponentialBackOff()), ctxPool), notify)
 		if err != nil {
-			logger.Errorf("Cannot connect to Provider: %v", err)
+			logger.Error().Err(err).Msg("Cannot retrieve data")
 		}
 	})
 
@@ -196,175 +291,220 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 }
 
 // TODO Handle errors and update resources statuses (gatewayClass, gateway).
-func (p *Provider) loadConfigurationFromGateway(ctx context.Context, client Client) *dynamic.Configuration {
-	logger := log.FromContext(ctx)
-
-	gatewayClassNames := map[string]struct{}{}
-
-	gatewayClasses, err := client.GetGatewayClasses()
-	if err != nil {
-		logger.Errorf("Cannot find GatewayClasses: %v", err)
-		return &dynamic.Configuration{
-			UDP: &dynamic.UDPConfiguration{
-				Routers:  map[string]*dynamic.UDPRouter{},
-				Services: map[string]*dynamic.UDPService{},
-			},
-			TCP: &dynamic.TCPConfiguration{
-				Routers:  map[string]*dynamic.TCPRouter{},
-				Services: map[string]*dynamic.TCPService{},
-			},
-			HTTP: &dynamic.HTTPConfiguration{
-				Routers:     map[string]*dynamic.Router{},
-				Middlewares: map[string]*dynamic.Middleware{},
-				Services:    map[string]*dynamic.Service{},
-			},
-			TLS: &dynamic.TLSConfiguration{},
-		}
+func (p *Provider) loadConfigurationFromGateways(ctx context.Context) *dynamic.Configuration {
+	conf := &dynamic.Configuration{
+		HTTP: &dynamic.HTTPConfiguration{
+			Routers:           map[string]*dynamic.Router{},
+			Middlewares:       map[string]*dynamic.Middleware{},
+			Services:          map[string]*dynamic.Service{},
+			ServersTransports: map[string]*dynamic.ServersTransport{},
+		},
+		TCP: &dynamic.TCPConfiguration{
+			Routers:           map[string]*dynamic.TCPRouter{},
+			Middlewares:       map[string]*dynamic.TCPMiddleware{},
+			Services:          map[string]*dynamic.TCPService{},
+			ServersTransports: map[string]*dynamic.TCPServersTransport{},
+		},
+		UDP: &dynamic.UDPConfiguration{
+			Routers:  map[string]*dynamic.UDPRouter{},
+			Services: map[string]*dynamic.UDPService{},
+		},
+		TLS: &dynamic.TLSConfiguration{},
 	}
 
-	for _, gatewayClass := range gatewayClasses {
-		if gatewayClass.Spec.ControllerName == "traefik.io/gateway-controller" {
-			gatewayClassNames[gatewayClass.Name] = struct{}{}
+	addresses, err := p.gatewayAddresses()
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("Unable to get Gateway status addresses")
+		return nil
+	}
 
-			err := client.UpdateGatewayClassStatus(gatewayClass, metav1.Condition{
-				Type:               string(gatev1alpha2.GatewayClassConditionStatusAccepted),
+	gatewayClasses, err := p.client.ListGatewayClasses()
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("Unable to list GatewayClasses")
+		return nil
+	}
+
+	var supportedFeatures []gatev1.SupportedFeature
+	if p.ExperimentalChannel {
+		for _, feature := range SupportedFeatures() {
+			supportedFeatures = append(supportedFeatures, gatev1.SupportedFeature{Name: gatev1.FeatureName(feature)})
+		}
+		slices.SortFunc(supportedFeatures, func(a, b gatev1.SupportedFeature) int {
+			return strings.Compare(string(a.Name), string(b.Name))
+		})
+	}
+
+	gatewayClassNames := map[string]struct{}{}
+	for _, gatewayClass := range gatewayClasses {
+		if gatewayClass.Spec.ControllerName != controllerName {
+			continue
+		}
+
+		gatewayClassNames[gatewayClass.Name] = struct{}{}
+
+		status := gatev1.GatewayClassStatus{
+			Conditions: upsertGatewayClassConditionAccepted(gatewayClass.Status.Conditions, metav1.Condition{
+				Type:               string(gatev1.GatewayClassConditionStatusAccepted),
 				Status:             metav1.ConditionTrue,
+				ObservedGeneration: gatewayClass.Generation,
 				Reason:             "Handled",
 				Message:            "Handled by Traefik controller",
 				LastTransitionTime: metav1.Now(),
-			})
-			if err != nil {
-				logger.Errorf("Failed to update %s condition: %v", gatev1alpha2.GatewayClassConditionStatusAccepted, err)
-			}
+			}),
+			SupportedFeatures: supportedFeatures,
+		}
+
+		if err := p.client.UpdateGatewayClassStatus(ctx, gatewayClass.Name, status); err != nil {
+			log.Ctx(ctx).
+				Warn().
+				Err(err).
+				Str("gateway_class", gatewayClass.Name).
+				Msg("Unable to update GatewayClass status")
 		}
 	}
 
-	cfgs := map[string]*dynamic.Configuration{}
-
-	// TODO check if we can only use the default filtering mechanism
-	for _, gateway := range client.GetGateways() {
-		ctxLog := log.With(ctx, log.Str("gateway", gateway.Name), log.Str("namespace", gateway.Namespace))
-		logger := log.FromContext(ctxLog)
-
+	var gateways []*gatev1.Gateway
+	for _, gateway := range p.client.ListGateways() {
 		if _, ok := gatewayClassNames[string(gateway.Spec.GatewayClassName)]; !ok {
 			continue
 		}
-
-		cfg, err := p.createGatewayConf(ctxLog, client, gateway)
-		if err != nil {
-			logger.Error(err)
-			continue
-		}
-
-		cfgs[gateway.Name+gateway.Namespace] = cfg
+		gateways = append(gateways, gateway)
 	}
 
-	conf := provider.Merge(ctx, cfgs)
+	var gatewayListeners []gatewayListener
+	for _, gateway := range gateways {
+		logger := log.Ctx(ctx).With().
+			Str("gateway", gateway.Name).
+			Str("namespace", gateway.Namespace).
+			Logger()
 
-	conf.TLS = &dynamic.TLSConfiguration{}
+		gatewayListeners = append(gatewayListeners, p.loadGatewayListeners(logger.WithContext(ctx), gateway, conf)...)
+	}
 
-	for _, cfg := range cfgs {
-		if conf.TLS == nil {
-			conf.TLS = &dynamic.TLSConfiguration{}
+	p.loadHTTPRoutes(ctx, gatewayListeners, conf)
+
+	p.loadGRPCRoutes(ctx, gatewayListeners, conf)
+
+	if p.ExperimentalChannel {
+		p.loadTCPRoutes(ctx, gatewayListeners, conf)
+		p.loadTLSRoutes(ctx, gatewayListeners, conf)
+	}
+
+	for _, gateway := range gateways {
+		logger := log.Ctx(ctx).With().
+			Str("gateway", gateway.Name).
+			Str("namespace", gateway.Namespace).
+			Logger()
+
+		var listeners []gatewayListener
+		for _, listener := range gatewayListeners {
+			if listener.GWName == gateway.Name && listener.GWNamespace == gateway.Namespace {
+				listeners = append(listeners, listener)
+			}
 		}
 
-		conf.TLS.Certificates = append(conf.TLS.Certificates, cfg.TLS.Certificates...)
-
-		for name, options := range cfg.TLS.Options {
-			if conf.TLS.Options == nil {
-				conf.TLS.Options = map[string]tls.Options{}
+		gatewayStatus, errConditions := p.makeGatewayStatus(gateway, listeners, addresses)
+		if len(errConditions) > 0 {
+			messages := map[string]struct{}{}
+			for _, condition := range errConditions {
+				messages[condition.Message] = struct{}{}
 			}
-
-			conf.TLS.Options[name] = options
+			var conditionsErr error
+			for message := range messages {
+				conditionsErr = multierror.Append(conditionsErr, errors.New(message))
+			}
+			logger.Error().
+				Err(conditionsErr).
+				Msg("Gateway Not Accepted")
 		}
 
-		for name, store := range cfg.TLS.Stores {
-			if conf.TLS.Stores == nil {
-				conf.TLS.Stores = map[string]tls.Store{}
-			}
-
-			conf.TLS.Stores[name] = store
+		if err = p.client.UpdateGatewayStatus(ctx, ktypes.NamespacedName{Name: gateway.Name, Namespace: gateway.Namespace}, gatewayStatus); err != nil {
+			logger.Warn().
+				Err(err).
+				Msg("Unable to update Gateway status")
 		}
 	}
 
 	return conf
 }
 
-func (p *Provider) createGatewayConf(ctx context.Context, client Client, gateway *gatev1alpha2.Gateway) (*dynamic.Configuration, error) {
-	conf := &dynamic.Configuration{
-		UDP: &dynamic.UDPConfiguration{
-			Routers:  map[string]*dynamic.UDPRouter{},
-			Services: map[string]*dynamic.UDPService{},
-		},
-		TCP: &dynamic.TCPConfiguration{
-			Routers:  map[string]*dynamic.TCPRouter{},
-			Services: map[string]*dynamic.TCPService{},
-		},
-		HTTP: &dynamic.HTTPConfiguration{
-			Routers:     map[string]*dynamic.Router{},
-			Middlewares: map[string]*dynamic.Middleware{},
-			Services:    map[string]*dynamic.Service{},
-		},
-		TLS: &dynamic.TLSConfiguration{},
-	}
-
+func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gateway, conf *dynamic.Configuration) []gatewayListener {
 	tlsConfigs := make(map[string]*tls.CertAndStores)
-
-	// GatewayReasonListenersNotValid is used when one or more
-	// Listeners have an invalid or unsupported configuration
-	// and cannot be configured on the Gateway.
-	listenerStatuses := p.fillGatewayConf(ctx, client, gateway, conf, tlsConfigs)
-
-	gatewayStatus, errG := p.makeGatewayStatus(listenerStatuses)
-
-	err := client.UpdateGatewayStatus(gateway, gatewayStatus)
-	if err != nil {
-		return nil, fmt.Errorf("an error occurred while updating gateway status: %w", err)
-	}
-
-	if errG != nil {
-		return nil, fmt.Errorf("an error occurred while creating gateway status: %w", errG)
-	}
-
-	if len(tlsConfigs) > 0 {
-		conf.TLS.Certificates = append(conf.TLS.Certificates, getTLSConfig(tlsConfigs)...)
-	}
-
-	return conf, nil
-}
-
-func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *gatev1alpha2.Gateway, conf *dynamic.Configuration, tlsConfigs map[string]*tls.CertAndStores) []gatev1alpha2.ListenerStatus {
-	logger := log.FromContext(ctx)
-	listenerStatuses := make([]gatev1alpha2.ListenerStatus, len(gateway.Spec.Listeners))
 	allocatedListeners := make(map[string]struct{})
+	gatewayListeners := make([]gatewayListener, len(gateway.Spec.Listeners))
 
 	for i, listener := range gateway.Spec.Listeners {
-		listenerStatuses[i] = gatev1alpha2.ListenerStatus{
-			Name:           listener.Name,
-			SupportedKinds: []gatev1alpha2.RouteGroupKind{},
-			Conditions:     []metav1.Condition{},
+		gatewayListeners[i] = gatewayListener{
+			Name:         string(listener.Name),
+			GWName:       gateway.Name,
+			GWNamespace:  gateway.Namespace,
+			GWGeneration: gateway.Generation,
+			Port:         listener.Port,
+			Protocol:     listener.Protocol,
+			TLS:          listener.TLS,
+			Hostname:     listener.Hostname,
+			Status: &gatev1.ListenerStatus{
+				Name:           listener.Name,
+				SupportedKinds: []gatev1.RouteGroupKind{},
+				Conditions:     []metav1.Condition{},
+			},
 		}
 
-		supportedKinds, conditions := supportedRouteKinds(listener.Protocol)
-		if len(conditions) > 0 {
-			listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, conditions...)
+		ep, err := p.entryPointName(listener.Port, listener.Protocol)
+		if err != nil {
+			// update "Detached" status with "PortUnavailable" reason
+			gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions, metav1.Condition{
+				Type:               string(gatev1.ListenerConditionAccepted),
+				Status:             metav1.ConditionFalse,
+				ObservedGeneration: gateway.Generation,
+				LastTransitionTime: metav1.Now(),
+				Reason:             string(gatev1.ListenerReasonPortUnavailable),
+				Message:            fmt.Sprintf("Cannot find entryPoint for Gateway: %v", err),
+			})
+
+			continue
+		}
+		gatewayListeners[i].EPName = ep
+
+		allowedRoutes := ptr.Deref(listener.AllowedRoutes, gatev1.AllowedRoutes{Namespaces: &gatev1.RouteNamespaces{From: ptr.To(gatev1.NamespacesFromSame)}})
+		gatewayListeners[i].AllowedNamespaces, err = p.allowedNamespaces(gateway.Namespace, allowedRoutes.Namespaces)
+		if err != nil {
+			// update "ResolvedRefs" status true with "InvalidRoutesRef" reason
+			gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions, metav1.Condition{
+				Type:               string(gatev1.ListenerConditionResolvedRefs),
+				Status:             metav1.ConditionFalse,
+				ObservedGeneration: gateway.Generation,
+				LastTransitionTime: metav1.Now(),
+				Reason:             "InvalidRouteNamespacesSelector", // Should never happen as the selector is validated by kubernetes
+				Message:            fmt.Sprintf("Invalid route namespaces selector: %v", err),
+			})
+
 			continue
 		}
 
-		listenerStatuses[i].SupportedKinds = supportedKinds
-
-		routeKinds, conditions := getAllowedRouteKinds(listener, supportedKinds)
+		supportedKinds, conditions := supportedRouteKinds(listener.Protocol, p.ExperimentalChannel)
 		if len(conditions) > 0 {
-			listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, conditions...)
+			gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions, conditions...)
+			continue
+		}
+
+		routeKinds, conditions := allowedRouteKinds(gateway, listener, supportedKinds)
+		for _, kind := range routeKinds {
+			gatewayListeners[i].AllowedRouteKinds = append(gatewayListeners[i].AllowedRouteKinds, string(kind.Kind))
+		}
+		gatewayListeners[i].Status.SupportedKinds = routeKinds
+		if len(conditions) > 0 {
+			gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions, conditions...)
 			continue
 		}
 
 		listenerKey := makeListenerKey(listener)
 
 		if _, ok := allocatedListeners[listenerKey]; ok {
-			listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, metav1.Condition{
-				Type:               string(gatev1alpha2.ListenerConditionConflicted),
+			gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions, metav1.Condition{
+				Type:               string(gatev1.ListenerConditionConflicted),
 				Status:             metav1.ConditionTrue,
+				ObservedGeneration: gateway.Generation,
 				LastTransitionTime: metav1.Now(),
 				Reason:             "DuplicateListener",
 				Message:            "A listener with same protocol, port and hostname already exists",
@@ -375,24 +515,11 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 
 		allocatedListeners[listenerKey] = struct{}{}
 
-		ep, err := p.entryPointName(listener.Port, listener.Protocol)
-		if err != nil {
-			// update "Detached" status with "PortUnavailable" reason
-			listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, metav1.Condition{
-				Type:               string(gatev1alpha2.ListenerConditionDetached),
-				Status:             metav1.ConditionTrue,
-				LastTransitionTime: metav1.Now(),
-				Reason:             string(gatev1alpha2.ListenerReasonPortUnavailable),
-				Message:            fmt.Sprintf("Cannot find entryPoint for Gateway: %v", err),
-			})
-
-			continue
-		}
-
-		if (listener.Protocol == gatev1alpha2.HTTPProtocolType || listener.Protocol == gatev1alpha2.TCPProtocolType) && listener.TLS != nil {
-			listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, metav1.Condition{
-				Type:               string(gatev1alpha2.ListenerConditionDetached),
-				Status:             metav1.ConditionTrue,
+		if (listener.Protocol == gatev1.HTTPProtocolType || listener.Protocol == gatev1.TCPProtocolType) && listener.TLS != nil {
+			gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions, metav1.Condition{
+				Type:               string(gatev1.ListenerConditionAccepted),
+				Status:             metav1.ConditionFalse,
+				ObservedGeneration: gateway.Generation,
 				LastTransitionTime: metav1.Now(),
 				Reason:             "InvalidTLSConfiguration", // TODO check the spec if a proper reason is introduced at some point
 				Message:            "TLS configuration must no be defined when using HTTP or TCP protocol",
@@ -402,12 +529,13 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 		}
 
 		// TLS
-		if listener.Protocol == gatev1alpha2.HTTPSProtocolType || listener.Protocol == gatev1alpha2.TLSProtocolType {
-			if listener.TLS == nil || (len(listener.TLS.CertificateRefs) == 0 && listener.TLS.Mode != nil && *listener.TLS.Mode != gatev1alpha2.TLSModePassthrough) {
+		if listener.Protocol == gatev1.HTTPSProtocolType || listener.Protocol == gatev1.TLSProtocolType {
+			if listener.TLS == nil || (len(listener.TLS.CertificateRefs) == 0 && listener.TLS.Mode != nil && *listener.TLS.Mode != gatev1.TLSModePassthrough) {
 				// update "Detached" status with "UnsupportedProtocol" reason
-				listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, metav1.Condition{
-					Type:               string(gatev1alpha2.ListenerConditionDetached),
-					Status:             metav1.ConditionTrue,
+				gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions, metav1.Condition{
+					Type:               string(gatev1.ListenerConditionAccepted),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: gateway.Generation,
 					LastTransitionTime: metav1.Now(),
 					Reason:             "InvalidTLSConfiguration", // TODO check the spec if a proper reason is introduced at some point
 					Message: fmt.Sprintf("No TLS configuration for Gateway Listener %s:%d and protocol %q",
@@ -417,28 +545,29 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 				continue
 			}
 
-			var tlsModeType gatev1alpha2.TLSModeType
+			var tlsModeType gatev1.TLSModeType
 			if listener.TLS.Mode != nil {
 				tlsModeType = *listener.TLS.Mode
 			}
 
-			isTLSPassthrough := tlsModeType == gatev1alpha2.TLSModePassthrough
+			isTLSPassthrough := tlsModeType == gatev1.TLSModePassthrough
 
 			if isTLSPassthrough && len(listener.TLS.CertificateRefs) > 0 {
 				// https://gateway-api.sigs.k8s.io/v1alpha2/references/spec/#gateway.networking.k8s.io/v1alpha2.GatewayTLSConfig
-				logger.Warnf("In case of Passthrough TLS mode, no TLS settings take effect as the TLS session from the client is NOT terminated at the Gateway")
+				log.Ctx(ctx).Warn().Msg("In case of Passthrough TLS mode, no TLS settings take effect as the TLS session from the client is NOT terminated at the Gateway")
 			}
 
 			// Allowed configurations:
 			// Protocol TLS -> Passthrough -> TLSRoute/TCPRoute
 			// Protocol TLS -> Terminate -> TLSRoute/TCPRoute
 			// Protocol HTTPS -> Terminate -> HTTPRoute
-			if listener.Protocol == gatev1alpha2.HTTPSProtocolType && isTLSPassthrough {
-				listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, metav1.Condition{
-					Type:               string(gatev1alpha2.ListenerConditionDetached),
-					Status:             metav1.ConditionTrue,
+			if listener.Protocol == gatev1.HTTPSProtocolType && isTLSPassthrough {
+				gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions, metav1.Condition{
+					Type:               string(gatev1.ListenerConditionAccepted),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: gateway.Generation,
 					LastTransitionTime: metav1.Now(),
-					Reason:             string(gatev1alpha2.ListenerReasonUnsupportedProtocol),
+					Reason:             string(gatev1.ListenerReasonUnsupportedProtocol),
 					Message:            "HTTPS protocol is not supported with TLS mode Passthrough",
 				})
 
@@ -448,11 +577,12 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 			if !isTLSPassthrough {
 				if len(listener.TLS.CertificateRefs) == 0 {
 					// update "ResolvedRefs" status true with "InvalidCertificateRef" reason
-					listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, metav1.Condition{
-						Type:               string(gatev1alpha2.ListenerConditionResolvedRefs),
+					gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions, metav1.Condition{
+						Type:               string(gatev1.ListenerConditionResolvedRefs),
 						Status:             metav1.ConditionFalse,
+						ObservedGeneration: gateway.Generation,
 						LastTransitionTime: metav1.Now(),
-						Reason:             string(gatev1alpha2.ListenerReasonInvalidCertificateRef),
+						Reason:             string(gatev1.ListenerReasonInvalidCertificateRef),
 						Message:            "One TLS CertificateRef is required in Terminate mode",
 					})
 
@@ -463,124 +593,153 @@ func (p *Provider) fillGatewayConf(ctx context.Context, client Client, gateway *
 				certificateRef := listener.TLS.CertificateRefs[0]
 
 				if certificateRef.Kind == nil || *certificateRef.Kind != "Secret" ||
-					certificateRef.Group == nil || (*certificateRef.Group != "" && *certificateRef.Group != "core") {
+					certificateRef.Group == nil || (*certificateRef.Group != "" && *certificateRef.Group != groupCore) {
 					// update "ResolvedRefs" status true with "InvalidCertificateRef" reason
-					listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, metav1.Condition{
-						Type:               string(gatev1alpha2.ListenerConditionResolvedRefs),
+					gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions, metav1.Condition{
+						Type:               string(gatev1.ListenerConditionResolvedRefs),
 						Status:             metav1.ConditionFalse,
+						ObservedGeneration: gateway.Generation,
 						LastTransitionTime: metav1.Now(),
-						Reason:             string(gatev1alpha2.ListenerReasonInvalidCertificateRef),
-						Message:            fmt.Sprintf("Unsupported TLS CertificateRef group/kind: %v/%v", certificateRef.Group, certificateRef.Kind),
+						Reason:             string(gatev1.ListenerReasonInvalidCertificateRef),
+						Message:            fmt.Sprintf("Unsupported TLS CertificateRef group/kind: %s/%s", groupToString(certificateRef.Group), kindToString(certificateRef.Kind)),
 					})
 
 					continue
 				}
 
-				// TODO Support ReferencePolicy to support cross namespace references.
+				certificateNamespace := gateway.Namespace
 				if certificateRef.Namespace != nil && string(*certificateRef.Namespace) != gateway.Namespace {
-					listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, metav1.Condition{
-						Type:               string(gatev1alpha2.ListenerConditionResolvedRefs),
+					certificateNamespace = string(*certificateRef.Namespace)
+				}
+
+				if err := p.isReferenceGranted(kindGateway, gateway.Namespace, groupCore, "Secret", string(certificateRef.Name), certificateNamespace); err != nil {
+					gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions, metav1.Condition{
+						Type:               string(gatev1.ListenerConditionResolvedRefs),
 						Status:             metav1.ConditionFalse,
+						ObservedGeneration: gateway.Generation,
 						LastTransitionTime: metav1.Now(),
-						Reason:             string(gatev1alpha2.ListenerReasonInvalidCertificateRef),
-						Message:            "Cross namespace secrets are not supported",
+						Reason:             string(gatev1.ListenerReasonRefNotPermitted),
+						Message:            fmt.Sprintf("Cannot load CertificateRef %s/%s: %s", certificateNamespace, certificateRef.Name, err),
 					})
 
 					continue
 				}
 
-				configKey := gateway.Namespace + "/" + string(certificateRef.Name)
+				configKey := certificateNamespace + "/" + string(certificateRef.Name)
 				if _, tlsExists := tlsConfigs[configKey]; !tlsExists {
-					tlsConf, err := getTLS(client, certificateRef.Name, gateway.Namespace)
+					tlsConf, err := p.getTLS(certificateRef.Name, certificateNamespace)
 					if err != nil {
-						// update "ResolvedRefs" status true with "InvalidCertificateRef" reason
-						listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, metav1.Condition{
-							Type:               string(gatev1alpha2.ListenerConditionResolvedRefs),
-							Status:             metav1.ConditionFalse,
-							LastTransitionTime: metav1.Now(),
-							Reason:             string(gatev1alpha2.ListenerReasonInvalidCertificateRef),
-							Message:            fmt.Sprintf("Error while retrieving certificate: %v", err),
-						})
+						// update "ResolvedRefs" status false with "InvalidCertificateRef" reason
+						// update "Programmed" status false with "Invalid" reason
+						gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions,
+							metav1.Condition{
+								Type:               string(gatev1.ListenerConditionResolvedRefs),
+								Status:             metav1.ConditionFalse,
+								ObservedGeneration: gateway.Generation,
+								LastTransitionTime: metav1.Now(),
+								Reason:             string(gatev1.ListenerReasonInvalidCertificateRef),
+								Message:            fmt.Sprintf("Error while retrieving certificate: %v", err),
+							},
+							metav1.Condition{
+								Type:               string(gatev1.ListenerConditionProgrammed),
+								Status:             metav1.ConditionFalse,
+								ObservedGeneration: gateway.Generation,
+								LastTransitionTime: metav1.Now(),
+								Reason:             string(gatev1.ListenerReasonInvalid),
+								Message:            fmt.Sprintf("Error while retrieving certificate: %v", err),
+							},
+						)
 
 						continue
 					}
-
 					tlsConfigs[configKey] = tlsConf
 				}
 			}
 		}
 
-		for _, routeKind := range routeKinds {
-			switch routeKind.Kind {
-			case kindHTTPRoute:
-				listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, p.gatewayHTTPRouteToHTTPConf(ctx, ep, listener, gateway, client, conf)...)
-			case kindTCPRoute:
-				listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, gatewayTCPRouteToTCPConf(ctx, ep, listener, gateway, client, conf)...)
-			case kindTLSRoute:
-				listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, gatewayTLSRouteToTCPConf(ctx, ep, listener, gateway, client, conf)...)
-			}
-		}
+		gatewayListeners[i].Attached = true
 	}
 
-	return listenerStatuses
+	if len(tlsConfigs) > 0 {
+		conf.TLS.Certificates = append(conf.TLS.Certificates, getTLSConfig(tlsConfigs)...)
+	}
+
+	return gatewayListeners
 }
 
-func (p *Provider) makeGatewayStatus(listenerStatuses []gatev1alpha2.ListenerStatus) (gatev1alpha2.GatewayStatus, error) {
-	// As Status.Addresses are not implemented yet, we initialize an empty array to follow the API expectations.
-	gatewayStatus := gatev1alpha2.GatewayStatus{
-		Addresses: []gatev1alpha2.GatewayAddress{},
-	}
+func (p *Provider) makeGatewayStatus(gateway *gatev1.Gateway, listeners []gatewayListener, addresses []gatev1.GatewayStatusAddress) (gatev1.GatewayStatus, []metav1.Condition) {
+	gatewayStatus := gatev1.GatewayStatus{Addresses: addresses}
 
-	var result error
-	for i, listener := range listenerStatuses {
-		if len(listener.Conditions) == 0 {
-			// GatewayConditionReady "Ready", GatewayConditionReason "ListenerReady"
-			listenerStatuses[i].Conditions = append(listenerStatuses[i].Conditions, metav1.Condition{
-				Type:               string(gatev1alpha2.ListenerConditionReady),
-				Status:             metav1.ConditionTrue,
-				LastTransitionTime: metav1.Now(),
-				Reason:             "ListenerReady",
-				Message:            "No error found",
-			})
+	var errorConditions []metav1.Condition
+	for _, listener := range listeners {
+		if len(listener.Status.Conditions) == 0 {
+			listener.Status.Conditions = append(listener.Status.Conditions,
+				metav1.Condition{
+					Type:               string(gatev1.ListenerConditionAccepted),
+					Status:             metav1.ConditionTrue,
+					ObservedGeneration: gateway.Generation,
+					LastTransitionTime: metav1.Now(),
+					Reason:             string(gatev1.ListenerReasonAccepted),
+					Message:            "No error found",
+				},
+				metav1.Condition{
+					Type:               string(gatev1.ListenerConditionResolvedRefs),
+					Status:             metav1.ConditionTrue,
+					ObservedGeneration: gateway.Generation,
+					LastTransitionTime: metav1.Now(),
+					Reason:             string(gatev1.ListenerReasonResolvedRefs),
+					Message:            "No error found",
+				},
+				metav1.Condition{
+					Type:               string(gatev1.ListenerConditionProgrammed),
+					Status:             metav1.ConditionTrue,
+					ObservedGeneration: gateway.Generation,
+					LastTransitionTime: metav1.Now(),
+					Reason:             string(gatev1.ListenerReasonProgrammed),
+					Message:            "No error found",
+				},
+			)
 
+			// TODO: refactor
+			gatewayStatus.Listeners = append(gatewayStatus.Listeners, *listener.Status)
 			continue
 		}
 
-		for _, condition := range listener.Conditions {
-			result = multierror.Append(result, errors.New(condition.Message))
-		}
+		errorConditions = append(errorConditions, listener.Status.Conditions...)
+		gatewayStatus.Listeners = append(gatewayStatus.Listeners, *listener.Status)
 	}
 
-	if result != nil {
+	if len(errorConditions) > 0 {
 		// GatewayConditionReady "Ready", GatewayConditionReason "ListenersNotValid"
 		gatewayStatus.Conditions = append(gatewayStatus.Conditions, metav1.Condition{
-			Type:               string(gatev1alpha2.GatewayConditionReady),
+			Type:               string(gatev1.GatewayConditionAccepted),
 			Status:             metav1.ConditionFalse,
+			ObservedGeneration: gateway.Generation,
 			LastTransitionTime: metav1.Now(),
-			Reason:             string(gatev1alpha2.GatewayReasonListenersNotValid),
+			Reason:             string(gatev1.GatewayReasonListenersNotValid),
 			Message:            "All Listeners must be valid",
 		})
 
-		return gatewayStatus, result
+		return gatewayStatus, errorConditions
 	}
 
-	gatewayStatus.Listeners = listenerStatuses
-
 	gatewayStatus.Conditions = append(gatewayStatus.Conditions,
-		// update "Scheduled" status with "ResourcesAvailable" reason
+		// update "Accepted" status with "Accepted" reason
 		metav1.Condition{
-			Type:               string(gatev1alpha2.GatewayConditionScheduled),
+			Type:               string(gatev1.GatewayConditionAccepted),
 			Status:             metav1.ConditionTrue,
-			Reason:             "ResourcesAvailable",
-			Message:            "Resources available",
+			ObservedGeneration: gateway.Generation,
+			Reason:             string(gatev1.GatewayReasonAccepted),
+			Message:            "Gateway successfully scheduled",
 			LastTransitionTime: metav1.Now(),
 		},
-		// update "Ready" status with "ListenersValid" reason
+		// update "Programmed" status with "Programmed" reason
 		metav1.Condition{
-			Type:               string(gatev1alpha2.GatewayConditionReady),
+			Type:               string(gatev1.GatewayConditionProgrammed),
 			Status:             metav1.ConditionTrue,
-			Reason:             "ListenersValid",
-			Message:            "Listeners valid",
+			ObservedGeneration: gateway.Generation,
+			Reason:             string(gatev1.GatewayReasonProgrammed),
+			Message:            "Gateway successfully scheduled",
 			LastTransitionTime: metav1.Now(),
 		},
 	)
@@ -588,14 +747,65 @@ func (p *Provider) makeGatewayStatus(listenerStatuses []gatev1alpha2.ListenerSta
 	return gatewayStatus, nil
 }
 
-func (p *Provider) entryPointName(port gatev1alpha2.PortNumber, protocol gatev1alpha2.ProtocolType) (string, error) {
+func (p *Provider) gatewayAddresses() ([]gatev1.GatewayStatusAddress, error) {
+	if p.StatusAddress == nil {
+		return nil, nil
+	}
+
+	if p.StatusAddress.IP != "" {
+		return []gatev1.GatewayStatusAddress{{
+			Type:  ptr.To(gatev1.IPAddressType),
+			Value: p.StatusAddress.IP,
+		}}, nil
+	}
+
+	if p.StatusAddress.Hostname != "" {
+		return []gatev1.GatewayStatusAddress{{
+			Type:  ptr.To(gatev1.HostnameAddressType),
+			Value: p.StatusAddress.Hostname,
+		}}, nil
+	}
+
+	svcRef := p.StatusAddress.Service
+	if svcRef.Name != "" && svcRef.Namespace != "" {
+		svc, exists, err := p.client.GetService(svcRef.Namespace, svcRef.Name)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get service: %w", err)
+		}
+		if !exists {
+			return nil, fmt.Errorf("could not find a service with name %s in namespace %s", svcRef.Name, svcRef.Namespace)
+		}
+
+		var addresses []gatev1.GatewayStatusAddress
+		for _, addr := range svc.Status.LoadBalancer.Ingress {
+			switch {
+			case addr.IP != "":
+				addresses = append(addresses, gatev1.GatewayStatusAddress{
+					Type:  ptr.To(gatev1.IPAddressType),
+					Value: addr.IP,
+				})
+
+			case addr.Hostname != "":
+				addresses = append(addresses, gatev1.GatewayStatusAddress{
+					Type:  ptr.To(gatev1.HostnameAddressType),
+					Value: addr.Hostname,
+				})
+			}
+		}
+		return addresses, nil
+	}
+
+	return nil, errors.New("empty Gateway status address configuration")
+}
+
+func (p *Provider) entryPointName(port gatev1.PortNumber, protocol gatev1.ProtocolType) (string, error) {
 	portStr := strconv.FormatInt(int64(port), 10)
 
 	for name, entryPoint := range p.EntryPoints {
 		if strings.HasSuffix(entryPoint.Address, ":"+portStr) {
 			// If the protocol is HTTP the entryPoint must have no TLS conf
-			// Not relevant for gatev1alpha2.TLSProtocolType && gatev1alpha2.TCPProtocolType
-			if protocol == gatev1alpha2.HTTPProtocolType && entryPoint.HasHTTPTLSConf {
+			// Not relevant for gatev1.TLSProtocolType && gatev1.TCPProtocolType
+			if protocol == gatev1.HTTPProtocolType && entryPoint.HasHTTPTLSConf {
 				continue
 			}
 
@@ -606,763 +816,27 @@ func (p *Provider) entryPointName(port gatev1alpha2.PortNumber, protocol gatev1a
 	return "", fmt.Errorf("no matching entryPoint for port %d and protocol %q", port, protocol)
 }
 
-func supportedRouteKinds(protocol gatev1alpha2.ProtocolType) ([]gatev1alpha2.RouteGroupKind, []metav1.Condition) {
-	group := gatev1alpha2.Group(gatev1alpha2.GroupName)
-
-	switch protocol {
-	case gatev1alpha2.TCPProtocolType:
-		return []gatev1alpha2.RouteGroupKind{{Kind: kindTCPRoute, Group: &group}}, nil
-
-	case gatev1alpha2.HTTPProtocolType, gatev1alpha2.HTTPSProtocolType:
-		return []gatev1alpha2.RouteGroupKind{{Kind: kindHTTPRoute, Group: &group}}, nil
-
-	case gatev1alpha2.TLSProtocolType:
-		return []gatev1alpha2.RouteGroupKind{
-			{Kind: kindTCPRoute, Group: &group},
-			{Kind: kindTLSRoute, Group: &group},
-		}, nil
-	}
-
-	return nil, []metav1.Condition{{
-		Type:               string(gatev1alpha2.ListenerConditionDetached),
-		Status:             metav1.ConditionTrue,
-		LastTransitionTime: metav1.Now(),
-		Reason:             string(gatev1alpha2.ListenerReasonUnsupportedProtocol),
-		Message:            fmt.Sprintf("Unsupported listener protocol %q", protocol),
-	}}
-}
-
-func getAllowedRouteKinds(listener gatev1alpha2.Listener, supportedKinds []gatev1alpha2.RouteGroupKind) ([]gatev1alpha2.RouteGroupKind, []metav1.Condition) {
-	if listener.AllowedRoutes == nil || len(listener.AllowedRoutes.Kinds) == 0 {
-		return supportedKinds, nil
-	}
-
-	var (
-		routeKinds []gatev1alpha2.RouteGroupKind
-		conditions []metav1.Condition
-	)
-
-	uniqRouteKinds := map[gatev1alpha2.Kind]struct{}{}
-	for _, routeKind := range listener.AllowedRoutes.Kinds {
-		var isSupported bool
-		for _, kind := range supportedKinds {
-			if routeKind.Kind == kind.Kind && routeKind.Group != nil && *routeKind.Group == *kind.Group {
-				isSupported = true
-				break
-			}
-		}
-
-		if !isSupported {
-			conditions = append(conditions, metav1.Condition{
-				Type:               string(gatev1alpha2.ListenerConditionDetached),
-				Status:             metav1.ConditionTrue,
-				LastTransitionTime: metav1.Now(),
-				Reason:             string(gatev1alpha2.ListenerReasonInvalidRouteKinds),
-				Message:            fmt.Sprintf("Listener protocol %q does not support RouteGroupKind %v/%s", listener.Protocol, routeKind.Group, routeKind.Kind),
-			})
-			continue
-		}
-
-		if _, exists := uniqRouteKinds[routeKind.Kind]; !exists {
-			routeKinds = append(routeKinds, routeKind)
-			uniqRouteKinds[routeKind.Kind] = struct{}{}
-		}
-	}
-
-	return routeKinds, conditions
-}
-
-func (p *Provider) gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, listener gatev1alpha2.Listener, gateway *gatev1alpha2.Gateway, client Client, conf *dynamic.Configuration) []metav1.Condition {
-	if listener.AllowedRoutes == nil {
-		// Should not happen due to validation.
+func (p *Provider) isReferenceGranted(fromKind, fromNamespace, toGroup, toKind, toName, toNamespace string) error {
+	if toNamespace == fromNamespace {
 		return nil
 	}
 
-	namespaces, err := getRouteBindingSelectorNamespace(client, gateway.Namespace, listener.AllowedRoutes.Namespaces)
+	refGrants, err := p.client.ListReferenceGrants(toNamespace)
 	if err != nil {
-		// update "ResolvedRefs" status true with "InvalidRoutesRef" reason
-		return []metav1.Condition{{
-			Type:               string(gatev1alpha2.ListenerConditionResolvedRefs),
-			Status:             metav1.ConditionFalse,
-			LastTransitionTime: metav1.Now(),
-			Reason:             "InvalidRouteNamespacesSelector", // Should never happen as the selector is validated by kubernetes
-			Message:            fmt.Sprintf("Invalid route namespaces selector: %v", err),
-		}}
+		return fmt.Errorf("listing ReferenceGrant: %w", err)
 	}
 
-	routes, err := client.GetHTTPRoutes(namespaces)
-	if err != nil {
-		// update "ResolvedRefs" status true with "InvalidRoutesRef" reason
-		return []metav1.Condition{{
-			Type:               string(gatev1alpha2.ListenerConditionResolvedRefs),
-			Status:             metav1.ConditionFalse,
-			LastTransitionTime: metav1.Now(),
-			Reason:             string(gatev1alpha2.ListenerReasonRefNotPermitted),
-			Message:            fmt.Sprintf("Cannot fetch HTTPRoutes: %v", err),
-		}}
+	refGrants = filterReferenceGrantsFrom(refGrants, groupGateway, fromKind, fromNamespace)
+	refGrants = filterReferenceGrantsTo(refGrants, toGroup, toKind, toName)
+	if len(refGrants) == 0 {
+		return errors.New("missing ReferenceGrant")
 	}
 
-	if len(routes) == 0 {
-		log.FromContext(ctx).Debugf("No HTTPRoutes found")
-		return nil
-	}
-
-	var conditions []metav1.Condition
-	for _, route := range routes {
-		if !shouldAttach(gateway, listener, route.Namespace, route.Spec.CommonRouteSpec) {
-			continue
-		}
-
-		hostnames := matchingHostnames(listener, route.Spec.Hostnames)
-		if len(hostnames) == 0 && listener.Hostname != nil && *listener.Hostname != "" && len(route.Spec.Hostnames) > 0 {
-			// TODO update the corresponding route parent status
-			// https://gateway-api.sigs.k8s.io/v1alpha2/references/spec/#gateway.networking.k8s.io/v1alpha2.TLSRoute
-			continue
-		}
-
-		hostRule, err := hostRule(hostnames)
-		if err != nil {
-			conditions = append(conditions, metav1.Condition{
-				Type:               string(gatev1alpha2.ListenerConditionResolvedRefs),
-				Status:             metav1.ConditionFalse,
-				LastTransitionTime: metav1.Now(),
-				Reason:             "InvalidRouteHostname", // TODO check the spec if a proper reason is introduced at some point
-				Message:            fmt.Sprintf("Skipping HTTPRoute %s: invalid hostname: %v", route.Name, err),
-			})
-			continue
-		}
-
-		for _, routeRule := range route.Spec.Rules {
-			rule, err := extractRule(routeRule, hostRule)
-			if err != nil {
-				// update "ResolvedRefs" status true with "DroppedRoutes" reason
-				conditions = append(conditions, metav1.Condition{
-					Type:               string(gatev1alpha2.ListenerConditionResolvedRefs),
-					Status:             metav1.ConditionFalse,
-					LastTransitionTime: metav1.Now(),
-					Reason:             "UnsupportedPathOrHeaderType", // TODO check the spec if a proper reason is introduced at some point
-					Message:            fmt.Sprintf("Skipping HTTPRoute %s: cannot generate rule: %v", route.Name, err),
-				})
-			}
-
-			router := dynamic.Router{
-				Rule:        rule,
-				EntryPoints: []string{ep},
-			}
-
-			if listener.Protocol == gatev1alpha2.HTTPSProtocolType && listener.TLS != nil {
-				// TODO support let's encrypt
-				router.TLS = &dynamic.RouterTLSConfig{}
-			}
-
-			// Adding the gateway desc and the entryPoint desc prevents overlapping of routers build from the same routes.
-			routerName := route.Name + "-" + gateway.Name + "-" + ep
-			routerKey, err := makeRouterKey(router.Rule, makeID(route.Namespace, routerName))
-			if err != nil {
-				// update "ResolvedRefs" status true with "DroppedRoutes" reason
-				conditions = append(conditions, metav1.Condition{
-					Type:               string(gatev1alpha2.ListenerConditionResolvedRefs),
-					Status:             metav1.ConditionFalse,
-					LastTransitionTime: metav1.Now(),
-					Reason:             "InvalidRouterKey", // Should never happen
-					Message:            fmt.Sprintf("Skipping HTTPRoute %s: cannot make router's key with rule %s: %v", route.Name, router.Rule, err),
-				})
-
-				// TODO update the RouteStatus condition / deduplicate conditions on listener
-				continue
-			}
-
-			if len(routeRule.BackendRefs) == 0 {
-				continue
-			}
-
-			// Traefik internal service can be used only if there is only one BackendRef service reference.
-			if len(routeRule.BackendRefs) == 1 && isInternalService(routeRule.BackendRefs[0].BackendRef) {
-				router.Service = string(routeRule.BackendRefs[0].Name)
-			} else {
-				wrrService, subServices, err := loadServices(client, route.Namespace, routeRule.BackendRefs)
-				if err != nil {
-					// update "ResolvedRefs" status true with "DroppedRoutes" reason
-					conditions = append(conditions, metav1.Condition{
-						Type:               string(gatev1alpha2.ListenerConditionResolvedRefs),
-						Status:             metav1.ConditionFalse,
-						LastTransitionTime: metav1.Now(),
-						Reason:             "InvalidBackendRefs", // TODO check the spec if a proper reason is introduced at some point
-						Message:            fmt.Sprintf("Cannot load HTTPRoute service %s/%s: %v", route.Namespace, route.Name, err),
-					})
-
-					// TODO update the RouteStatus condition / deduplicate conditions on listener
-					continue
-				}
-
-				for svcName, svc := range subServices {
-					conf.HTTP.Services[svcName] = svc
-				}
-
-				serviceName := provider.Normalize(routerKey + "-wrr")
-				conf.HTTP.Services[serviceName] = wrrService
-
-				router.Service = serviceName
-			}
-
-			rt := &router
-			p.applyRouterTransform(ctx, rt, route)
-
-			routerKey = provider.Normalize(routerKey)
-			conf.HTTP.Routers[routerKey] = rt
-		}
-	}
-
-	return conditions
+	return nil
 }
 
-func gatewayTCPRouteToTCPConf(ctx context.Context, ep string, listener gatev1alpha2.Listener, gateway *gatev1alpha2.Gateway, client Client, conf *dynamic.Configuration) []metav1.Condition {
-	if listener.AllowedRoutes == nil {
-		// Should not happen due to validation.
-		return nil
-	}
-
-	namespaces, err := getRouteBindingSelectorNamespace(client, gateway.Namespace, listener.AllowedRoutes.Namespaces)
-	if err != nil {
-		// update "ResolvedRefs" status true with "InvalidRoutesRef" reason
-		return []metav1.Condition{{
-			Type:               string(gatev1alpha2.ListenerConditionResolvedRefs),
-			Status:             metav1.ConditionFalse,
-			LastTransitionTime: metav1.Now(),
-			Reason:             "InvalidRouteNamespacesSelector", // TODO should never happen as the selector is validated by Kubernetes
-			Message:            fmt.Sprintf("Invalid route namespaces selector: %v", err),
-		}}
-	}
-
-	routes, err := client.GetTCPRoutes(namespaces)
-	if err != nil {
-		// update "ResolvedRefs" status true with "InvalidRoutesRef" reason
-		return []metav1.Condition{{
-			Type:               string(gatev1alpha2.ListenerConditionResolvedRefs),
-			Status:             metav1.ConditionFalse,
-			LastTransitionTime: metav1.Now(),
-			Reason:             string(gatev1alpha2.ListenerReasonRefNotPermitted),
-			Message:            fmt.Sprintf("Cannot fetch TCPRoutes: %v", err),
-		}}
-	}
-
-	if len(routes) == 0 {
-		log.FromContext(ctx).Debugf("No TCPRoutes found")
-		return nil
-	}
-
-	var conditions []metav1.Condition
-	for _, route := range routes {
-		if !shouldAttach(gateway, listener, route.Namespace, route.Spec.CommonRouteSpec) {
-			continue
-		}
-
-		router := dynamic.TCPRouter{
-			Rule:        "HostSNI(`*`)", // Gateway listener hostname not available in TCP
-			EntryPoints: []string{ep},
-		}
-
-		if listener.Protocol == gatev1alpha2.TLSProtocolType && listener.TLS != nil {
-			// TODO support let's encrypt
-			router.TLS = &dynamic.RouterTCPTLSConfig{
-				Passthrough: listener.TLS.Mode != nil && *listener.TLS.Mode == gatev1alpha2.TLSModePassthrough,
-			}
-		}
-
-		// Adding the gateway desc and the entryPoint desc prevents overlapping of routers build from the same routes.
-		routerName := route.Name + "-" + gateway.Name + "-" + ep
-		routerKey, err := makeRouterKey("", makeID(route.Namespace, routerName))
-		if err != nil {
-			// update "ResolvedRefs" status true with "DroppedRoutes" reason
-			conditions = append(conditions, metav1.Condition{
-				Type:               string(gatev1alpha2.ListenerConditionResolvedRefs),
-				Status:             metav1.ConditionFalse,
-				LastTransitionTime: metav1.Now(),
-				Reason:             "InvalidRouterKey", // Should never happen
-				Message:            fmt.Sprintf("Skipping TCPRoute %s: cannot make router's key with rule %s: %v", route.Name, router.Rule, err),
-			})
-
-			// TODO update the RouteStatus condition / deduplicate conditions on listener
-			continue
-		}
-
-		routerKey = provider.Normalize(routerKey)
-
-		var ruleServiceNames []string
-		for i, rule := range route.Spec.Rules {
-			if rule.BackendRefs == nil {
-				// Should not happen due to validation.
-				// https://github.com/kubernetes-sigs/gateway-api/blob/v0.4.0/apis/v1alpha2/tcproute_types.go#L76
-				continue
-			}
-
-			wrrService, subServices, err := loadTCPServices(client, route.Namespace, rule.BackendRefs)
-			if err != nil {
-				// update "ResolvedRefs" status true with "DroppedRoutes" reason
-				conditions = append(conditions, metav1.Condition{
-					Type:               string(gatev1alpha2.ListenerConditionResolvedRefs),
-					Status:             metav1.ConditionFalse,
-					LastTransitionTime: metav1.Now(),
-					Reason:             "InvalidBackendRefs", // TODO check the spec if a proper reason is introduced at some point
-					Message:            fmt.Sprintf("Cannot load TCPRoute service %s/%s: %v", route.Namespace, route.Name, err),
-				})
-
-				// TODO update the RouteStatus condition / deduplicate conditions on listener
-				continue
-			}
-
-			for svcName, svc := range subServices {
-				conf.TCP.Services[svcName] = svc
-			}
-
-			serviceName := fmt.Sprintf("%s-wrr-%d", routerKey, i)
-			conf.TCP.Services[serviceName] = wrrService
-
-			ruleServiceNames = append(ruleServiceNames, serviceName)
-		}
-
-		if len(ruleServiceNames) == 1 {
-			router.Service = ruleServiceNames[0]
-			conf.TCP.Routers[routerKey] = &router
-			continue
-		}
-
-		routeServiceKey := routerKey + "-wrr"
-		routeService := &dynamic.TCPService{Weighted: &dynamic.TCPWeightedRoundRobin{}}
-
-		for _, name := range ruleServiceNames {
-			service := dynamic.TCPWRRService{Name: name}
-			service.SetDefaults()
-
-			routeService.Weighted.Services = append(routeService.Weighted.Services, service)
-		}
-
-		conf.TCP.Services[routeServiceKey] = routeService
-
-		router.Service = routeServiceKey
-		conf.TCP.Routers[routerKey] = &router
-	}
-
-	return conditions
-}
-
-func gatewayTLSRouteToTCPConf(ctx context.Context, ep string, listener gatev1alpha2.Listener, gateway *gatev1alpha2.Gateway, client Client, conf *dynamic.Configuration) []metav1.Condition {
-	if listener.AllowedRoutes == nil {
-		// Should not happen due to validation.
-		return nil
-	}
-
-	namespaces, err := getRouteBindingSelectorNamespace(client, gateway.Namespace, listener.AllowedRoutes.Namespaces)
-	if err != nil {
-		// update "ResolvedRefs" status true with "InvalidRoutesRef" reason
-		return []metav1.Condition{{
-			Type:               string(gatev1alpha2.ListenerConditionResolvedRefs),
-			Status:             metav1.ConditionFalse,
-			LastTransitionTime: metav1.Now(),
-			Reason:             "InvalidRouteNamespacesSelector", // TODO should never happen as the selector is validated by Kubernetes
-			Message:            fmt.Sprintf("Invalid route namespaces selector: %v", err),
-		}}
-	}
-
-	routes, err := client.GetTLSRoutes(namespaces)
-	if err != nil {
-		// update "ResolvedRefs" status true with "InvalidRoutesRef" reason
-		return []metav1.Condition{{
-			Type:               string(gatev1alpha2.ListenerConditionResolvedRefs),
-			Status:             metav1.ConditionFalse,
-			LastTransitionTime: metav1.Now(),
-			Reason:             string(gatev1alpha2.ListenerReasonRefNotPermitted),
-			Message:            fmt.Sprintf("Cannot fetch TLSRoutes: %v", err),
-		}}
-	}
-
-	if len(routes) == 0 {
-		log.FromContext(ctx).Debugf("No TLSRoutes found")
-		return nil
-	}
-
-	var conditions []metav1.Condition
-	for _, route := range routes {
-		if !shouldAttach(gateway, listener, route.Namespace, route.Spec.CommonRouteSpec) {
-			continue
-		}
-
-		hostnames := matchingHostnames(listener, route.Spec.Hostnames)
-		if len(hostnames) == 0 && listener.Hostname != nil && *listener.Hostname != "" && len(route.Spec.Hostnames) > 0 {
-			// TODO update the corresponding route parent status
-			// https://gateway-api.sigs.k8s.io/v1alpha2/references/spec/#gateway.networking.k8s.io/v1alpha2.TLSRoute
-			continue
-		}
-
-		rule, err := hostSNIRule(hostnames)
-		if err != nil {
-			// update "ResolvedRefs" status true with "DroppedRoutes" reason
-			conditions = append(conditions, metav1.Condition{
-				Type:               string(gatev1alpha2.ListenerConditionResolvedRefs),
-				Status:             metav1.ConditionFalse,
-				LastTransitionTime: metav1.Now(),
-				Reason:             "InvalidHostnames", // TODO check the spec if a proper reason is introduced at some point
-				Message:            fmt.Sprintf("Skipping TLSRoute %s: cannot make route's SNI match: %v", route.Name, err),
-			})
-			// TODO update the RouteStatus condition / deduplicate conditions on listener
-			continue
-		}
-
-		router := dynamic.TCPRouter{
-			Rule:        rule,
-			EntryPoints: []string{ep},
-			TLS: &dynamic.RouterTCPTLSConfig{
-				Passthrough: listener.TLS.Mode != nil && *listener.TLS.Mode == gatev1alpha2.TLSModePassthrough,
-			},
-		}
-
-		// Adding the gateway desc and the entryPoint desc prevents overlapping of routers build from the same routes.
-		routerName := route.Name + "-" + gateway.Name + "-" + ep
-		routerKey, err := makeRouterKey(rule, makeID(route.Namespace, routerName))
-		if err != nil {
-			// update "ResolvedRefs" status true with "DroppedRoutes" reason
-			conditions = append(conditions, metav1.Condition{
-				Type:               string(gatev1alpha2.ListenerConditionResolvedRefs),
-				Status:             metav1.ConditionFalse,
-				LastTransitionTime: metav1.Now(),
-				Reason:             "InvalidRouterKey", // Should never happen
-				Message:            fmt.Sprintf("Skipping TLSRoute %s: cannot make router's key with rule %s: %v", route.Name, router.Rule, err),
-			})
-
-			// TODO update the RouteStatus condition / deduplicate conditions on listener
-			continue
-		}
-
-		routerKey = provider.Normalize(routerKey)
-
-		var ruleServiceNames []string
-		for i, routeRule := range route.Spec.Rules {
-			if len(routeRule.BackendRefs) == 0 {
-				// Should not happen due to validation.
-				// https://github.com/kubernetes-sigs/gateway-api/blob/v0.4.0/apis/v1alpha2/tlsroute_types.go#L120
-				continue
-			}
-
-			wrrService, subServices, err := loadTCPServices(client, route.Namespace, routeRule.BackendRefs)
-			if err != nil {
-				// update "ResolvedRefs" status true with "DroppedRoutes" reason
-				conditions = append(conditions, metav1.Condition{
-					Type:               string(gatev1alpha2.ListenerConditionResolvedRefs),
-					Status:             metav1.ConditionFalse,
-					LastTransitionTime: metav1.Now(),
-					Reason:             "InvalidBackendRefs", // TODO check the spec if a proper reason is introduced at some point
-					Message:            fmt.Sprintf("Cannot load TLSRoute service %s/%s: %v", route.Namespace, route.Name, err),
-				})
-
-				// TODO update the RouteStatus condition / deduplicate conditions on listener
-				continue
-			}
-
-			for svcName, svc := range subServices {
-				conf.TCP.Services[svcName] = svc
-			}
-
-			serviceName := fmt.Sprintf("%s-wrr-%d", routerKey, i)
-			conf.TCP.Services[serviceName] = wrrService
-
-			ruleServiceNames = append(ruleServiceNames, serviceName)
-		}
-
-		if len(ruleServiceNames) == 1 {
-			router.Service = ruleServiceNames[0]
-			conf.TCP.Routers[routerKey] = &router
-			continue
-		}
-
-		routeServiceKey := routerKey + "-wrr"
-		routeService := &dynamic.TCPService{Weighted: &dynamic.TCPWeightedRoundRobin{}}
-
-		for _, name := range ruleServiceNames {
-			service := dynamic.TCPWRRService{Name: name}
-			service.SetDefaults()
-
-			routeService.Weighted.Services = append(routeService.Weighted.Services, service)
-		}
-
-		conf.TCP.Services[routeServiceKey] = routeService
-
-		router.Service = routeServiceKey
-		conf.TCP.Routers[routerKey] = &router
-	}
-
-	return conditions
-}
-
-// Because of Kubernetes validation we admit that the given Hostnames are valid.
-// https://github.com/kubernetes-sigs/gateway-api/blob/ff9883da4cad8554cd300394f725ab3a27502785/apis/v1alpha2/shared_types.go#L252
-func matchingHostnames(listener gatev1alpha2.Listener, hostnames []gatev1alpha2.Hostname) []gatev1alpha2.Hostname {
-	if listener.Hostname == nil || *listener.Hostname == "" {
-		return hostnames
-	}
-
-	if len(hostnames) == 0 {
-		return []gatev1alpha2.Hostname{*listener.Hostname}
-	}
-
-	listenerLabels := strings.Split(string(*listener.Hostname), ".")
-
-	var matches []gatev1alpha2.Hostname
-
-	for _, hostname := range hostnames {
-		if hostname == *listener.Hostname {
-			matches = append(matches, hostname)
-			continue
-		}
-
-		hostnameLabels := strings.Split(string(hostname), ".")
-		if len(listenerLabels) != len(hostnameLabels) {
-			continue
-		}
-
-		if !slices.Equal(listenerLabels[1:], hostnameLabels[1:]) {
-			continue
-		}
-
-		if listenerLabels[0] == "*" {
-			matches = append(matches, hostname)
-			continue
-		}
-
-		if hostnameLabels[0] == "*" {
-			matches = append(matches, *listener.Hostname)
-			continue
-		}
-	}
-
-	return matches
-}
-
-func shouldAttach(gateway *gatev1alpha2.Gateway, listener gatev1alpha2.Listener, routeNamespace string, routeSpec gatev1alpha2.CommonRouteSpec) bool {
-	for _, parentRef := range routeSpec.ParentRefs {
-		if parentRef.Group == nil || *parentRef.Group != gatev1alpha2.GroupName {
-			continue
-		}
-
-		if parentRef.Kind == nil || *parentRef.Kind != kindGateway {
-			continue
-		}
-
-		if parentRef.SectionName != nil && *parentRef.SectionName != listener.Name {
-			continue
-		}
-
-		namespace := routeNamespace
-		if parentRef.Namespace != nil {
-			namespace = string(*parentRef.Namespace)
-		}
-
-		if namespace == gateway.Namespace && string(parentRef.Name) == gateway.Name {
-			return true
-		}
-	}
-
-	return false
-}
-
-func getRouteBindingSelectorNamespace(client Client, gatewayNamespace string, routeNamespaces *gatev1alpha2.RouteNamespaces) ([]string, error) {
-	if routeNamespaces == nil || routeNamespaces.From == nil {
-		return []string{gatewayNamespace}, nil
-	}
-
-	switch *routeNamespaces.From {
-	case gatev1alpha2.NamespacesFromAll:
-		return []string{metav1.NamespaceAll}, nil
-
-	case gatev1alpha2.NamespacesFromSame:
-		return []string{gatewayNamespace}, nil
-
-	case gatev1alpha2.NamespacesFromSelector:
-		selector, err := metav1.LabelSelectorAsSelector(routeNamespaces.Selector)
-		if err != nil {
-			return nil, fmt.Errorf("malformed selector: %w", err)
-		}
-
-		return client.GetNamespaces(selector)
-	}
-
-	return nil, fmt.Errorf("unsupported RouteSelectType: %q", *routeNamespaces.From)
-}
-
-func hostRule(hostnames []gatev1alpha2.Hostname) (string, error) {
-	var hostNames []string
-	var hostRegexNames []string
-
-	for _, hostname := range hostnames {
-		host := string(hostname)
-		// When unspecified, "", or *, all hostnames are matched.
-		// This field can be omitted for protocols that don't require hostname based matching.
-		// TODO Refactor this when building support for TLS options.
-		if host == "*" || host == "" {
-			return "", nil
-		}
-
-		wildcard := strings.Count(host, "*")
-		if wildcard == 0 {
-			hostNames = append(hostNames, host)
-			continue
-		}
-
-		// https://gateway-api.sigs.k8s.io/v1alpha2/references/spec/#gateway.networking.k8s.io/v1alpha2.Hostname
-		if !strings.HasPrefix(host, "*.") || wildcard > 1 {
-			return "", fmt.Errorf("invalid rule: %q", host)
-		}
-
-		hostRegexNames = append(hostRegexNames, strings.Replace(host, "*.", "{subdomain:[a-zA-Z0-9-]+}.", 1))
-	}
-
-	var res string
-	if len(hostNames) > 0 {
-		res = "Host(`" + strings.Join(hostNames, "`, `") + "`)"
-	}
-
-	if len(hostRegexNames) == 0 {
-		return res, nil
-	}
-
-	hostRegexp := "HostRegexp(`" + strings.Join(hostRegexNames, "`, `") + "`)"
-
-	if len(res) > 0 {
-		return "(" + res + " || " + hostRegexp + ")", nil
-	}
-
-	return hostRegexp, nil
-}
-
-func hostSNIRule(hostnames []gatev1alpha2.Hostname) (string, error) {
-	var matchers []string
-	uniqHostnames := map[gatev1alpha2.Hostname]struct{}{}
-
-	for _, hostname := range hostnames {
-		if len(hostname) == 0 {
-			continue
-		}
-
-		if _, exists := uniqHostnames[hostname]; exists {
-			continue
-		}
-
-		h := string(hostname)
-
-		// TODO support wildcard hostnames with an HostSNI regexp matcher
-		if strings.Contains(h, "*") {
-			return "", fmt.Errorf("wildcard hostname is not supported: %q", h)
-		}
-
-		matchers = append(matchers, "`"+h+"`")
-		uniqHostnames[hostname] = struct{}{}
-	}
-
-	if len(matchers) == 0 {
-		return "HostSNI(`*`)", nil
-	}
-
-	return "HostSNI(" + strings.Join(matchers, ",") + ")", nil
-}
-
-func extractRule(routeRule gatev1alpha2.HTTPRouteRule, hostRule string) (string, error) {
-	var rule string
-	var matchesRules []string
-
-	for _, match := range routeRule.Matches {
-		if (match.Path == nil || match.Path.Type == nil) && match.Headers == nil {
-			continue
-		}
-
-		var matchRules []string
-
-		if match.Path != nil && match.Path.Type != nil && match.Path.Value != nil {
-			// TODO handle other path types
-			switch *match.Path.Type {
-			case gatev1alpha2.PathMatchExact:
-				matchRules = append(matchRules, fmt.Sprintf("Path(`%s`)", *match.Path.Value))
-			case gatev1alpha2.PathMatchPathPrefix:
-				matchRules = append(matchRules, fmt.Sprintf("PathPrefix(`%s`)", *match.Path.Value))
-			default:
-				return "", fmt.Errorf("unsupported path match %s", *match.Path.Type)
-			}
-		}
-
-		headerRules, err := extractHeaderRules(match.Headers)
-		if err != nil {
-			return "", err
-		}
-
-		matchRules = append(matchRules, headerRules...)
-		matchesRules = append(matchesRules, strings.Join(matchRules, " && "))
-	}
-
-	// If no matches are specified, the default is a prefix
-	// path match on "/", which has the effect of matching every
-	// HTTP request.
-	if len(routeRule.Matches) == 0 {
-		matchesRules = append(matchesRules, "PathPrefix(`/`)")
-	}
-
-	if hostRule != "" {
-		if len(matchesRules) == 0 {
-			return hostRule, nil
-		}
-		rule += hostRule + " && "
-	}
-
-	if len(matchesRules) == 1 {
-		return rule + matchesRules[0], nil
-	}
-
-	if len(rule) == 0 {
-		return strings.Join(matchesRules, " || "), nil
-	}
-
-	return rule + "(" + strings.Join(matchesRules, " || ") + ")", nil
-}
-
-func extractHeaderRules(headers []gatev1alpha2.HTTPHeaderMatch) ([]string, error) {
-	var headerRules []string
-
-	// TODO handle other headers types
-	for _, header := range headers {
-		if header.Type == nil {
-			// Should never happen due to kubernetes validation.
-			continue
-		}
-
-		switch *header.Type {
-		case gatev1alpha2.HeaderMatchExact:
-			headerRules = append(headerRules, fmt.Sprintf("Headers(`%s`,`%s`)", header.Name, header.Value))
-		default:
-			return nil, fmt.Errorf("unsupported header match type %s", *header.Type)
-		}
-	}
-
-	return headerRules, nil
-}
-
-func makeRouterKey(rule, name string) (string, error) {
-	h := sha256.New()
-	if _, err := h.Write([]byte(rule)); err != nil {
-		return "", err
-	}
-
-	key := fmt.Sprintf("%s-%.10x", name, h.Sum(nil))
-
-	return key, nil
-}
-
-func makeID(namespace, name string) string {
-	if namespace == "" {
-		return name
-	}
-
-	return namespace + "-" + name
-}
-
-func getTLS(k8sClient Client, secretName gatev1alpha2.ObjectName, namespace string) (*tls.CertAndStores, error) {
-	secret, exists, err := k8sClient.GetSecret(namespace, string(secretName))
+func (p *Provider) getTLS(secretName gatev1.ObjectName, namespace string) (*tls.CertAndStores, error) {
+	secret, exists, err := p.client.GetSecret(namespace, string(secretName))
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch secret %s/%s: %w", namespace, secretName, err)
 	}
@@ -1377,10 +851,330 @@ func getTLS(k8sClient Client, secretName gatev1alpha2.ObjectName, namespace stri
 
 	return &tls.CertAndStores{
 		Certificate: tls.Certificate{
-			CertFile: tls.FileOrContent(cert),
-			KeyFile:  tls.FileOrContent(key),
+			CertFile: types.FileOrContent(cert),
+			KeyFile:  types.FileOrContent(key),
 		},
 	}, nil
+}
+
+func (p *Provider) allowedNamespaces(gatewayNamespace string, routeNamespaces *gatev1.RouteNamespaces) ([]string, error) {
+	if routeNamespaces == nil || routeNamespaces.From == nil {
+		return []string{gatewayNamespace}, nil
+	}
+
+	switch *routeNamespaces.From {
+	case gatev1.NamespacesFromAll:
+		return []string{metav1.NamespaceAll}, nil
+
+	case gatev1.NamespacesFromSame:
+		return []string{gatewayNamespace}, nil
+
+	case gatev1.NamespacesFromSelector:
+		selector, err := metav1.LabelSelectorAsSelector(routeNamespaces.Selector)
+		if err != nil {
+			return nil, fmt.Errorf("malformed selector: %w", err)
+		}
+
+		return p.client.ListNamespaces(selector)
+	}
+
+	return nil, fmt.Errorf("unsupported RouteSelectType: %q", *routeNamespaces.From)
+}
+
+type backendAddress struct {
+	IP   string
+	Port int32
+}
+
+func (p *Provider) getBackendAddresses(namespace string, ref gatev1.BackendRef) ([]backendAddress, corev1.ServicePort, error) {
+	if ref.Port == nil {
+		return nil, corev1.ServicePort{}, errors.New("port is required for Kubernetes Service reference")
+	}
+
+	service, exists, err := p.client.GetService(namespace, string(ref.Name))
+	if err != nil {
+		return nil, corev1.ServicePort{}, fmt.Errorf("getting service: %w", err)
+	}
+	if !exists {
+		return nil, corev1.ServicePort{}, errors.New("service not found")
+	}
+	if service.Spec.Type == corev1.ServiceTypeExternalName {
+		return nil, corev1.ServicePort{}, errors.New("type ExternalName is not supported for Kubernetes Service reference")
+	}
+
+	var svcPort *corev1.ServicePort
+	for _, p := range service.Spec.Ports {
+		if p.Port == int32(*ref.Port) {
+			svcPort = &p
+			break
+		}
+	}
+	if svcPort == nil {
+		return nil, corev1.ServicePort{}, fmt.Errorf("service port %d not found", *ref.Port)
+	}
+
+	annotationsConfig, err := parseServiceAnnotations(service.Annotations)
+	if err != nil {
+		return nil, corev1.ServicePort{}, fmt.Errorf("parsing service annotations config: %w", err)
+	}
+
+	if p.NativeLBByDefault || annotationsConfig.Service.NativeLB {
+		if service.Spec.ClusterIP == "" || service.Spec.ClusterIP == "None" {
+			return nil, corev1.ServicePort{}, fmt.Errorf("no clusterIP found for service: %s/%s", service.Namespace, service.Name)
+		}
+
+		return []backendAddress{{
+			IP:   service.Spec.ClusterIP,
+			Port: svcPort.Port,
+		}}, *svcPort, nil
+	}
+
+	endpointSlices, err := p.client.ListEndpointSlicesForService(namespace, string(ref.Name))
+	if err != nil {
+		return nil, corev1.ServicePort{}, fmt.Errorf("getting endpointslices: %w", err)
+	}
+	if len(endpointSlices) == 0 {
+		return nil, corev1.ServicePort{}, errors.New("endpointslices not found")
+	}
+
+	uniqAddresses := map[string]struct{}{}
+	backendServers := make([]backendAddress, 0)
+	for _, endpointSlice := range endpointSlices {
+		var port int32
+		for _, p := range endpointSlice.Ports {
+			if svcPort.Name == *p.Name {
+				port = *p.Port
+				break
+			}
+		}
+		if port == 0 {
+			continue
+		}
+
+		for _, endpoint := range endpointSlice.Endpoints {
+			if endpoint.Conditions.Ready == nil || !*endpoint.Conditions.Ready {
+				continue
+			}
+
+			for _, address := range endpoint.Addresses {
+				if _, ok := uniqAddresses[address]; ok {
+					continue
+				}
+
+				uniqAddresses[address] = struct{}{}
+				backendServers = append(backendServers, backendAddress{
+					IP:   address,
+					Port: port,
+				})
+			}
+		}
+	}
+
+	return backendServers, *svcPort, nil
+}
+
+func supportedRouteKinds(protocol gatev1.ProtocolType, experimentalChannel bool) ([]gatev1.RouteGroupKind, []metav1.Condition) {
+	group := gatev1.Group(gatev1.GroupName)
+
+	switch protocol {
+	case gatev1.TCPProtocolType:
+		if experimentalChannel {
+			return []gatev1.RouteGroupKind{{Kind: kindTCPRoute, Group: &group}}, nil
+		}
+
+		return nil, []metav1.Condition{{
+			Type:               string(gatev1.ListenerConditionConflicted),
+			Status:             metav1.ConditionTrue,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(gatev1.ListenerReasonProtocolConflict),
+			Message:            fmt.Sprintf("Protocol %q requires the experimental channel support to be enabled, please use the `experimentalChannel` option", protocol),
+		}}
+
+	case gatev1.HTTPProtocolType, gatev1.HTTPSProtocolType:
+		return []gatev1.RouteGroupKind{
+			{Kind: kindHTTPRoute, Group: &group},
+			{Kind: kindGRPCRoute, Group: &group},
+		}, nil
+
+	case gatev1.TLSProtocolType:
+		if experimentalChannel {
+			return []gatev1.RouteGroupKind{
+				{Kind: kindTCPRoute, Group: &group},
+				{Kind: kindTLSRoute, Group: &group},
+			}, nil
+		}
+
+		return nil, []metav1.Condition{{
+			Type:               string(gatev1.ListenerConditionConflicted),
+			Status:             metav1.ConditionTrue,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(gatev1.ListenerReasonInvalidRouteKinds),
+			Message:            fmt.Sprintf("Protocol %q requires the experimental channel support to be enabled, please use the `experimentalChannel` option", protocol),
+		}}
+	}
+
+	return nil, []metav1.Condition{{
+		Type:               string(gatev1.ListenerConditionConflicted),
+		Status:             metav1.ConditionTrue,
+		LastTransitionTime: metav1.Now(),
+		Reason:             string(gatev1.ListenerReasonUnsupportedProtocol),
+		Message:            fmt.Sprintf("Unsupported listener protocol %q", protocol),
+	}}
+}
+
+func allowedRouteKinds(gateway *gatev1.Gateway, listener gatev1.Listener, supportedKinds []gatev1.RouteGroupKind) ([]gatev1.RouteGroupKind, []metav1.Condition) {
+	if listener.AllowedRoutes == nil || len(listener.AllowedRoutes.Kinds) == 0 {
+		return supportedKinds, nil
+	}
+
+	var conditions []metav1.Condition
+	routeKinds := []gatev1.RouteGroupKind{}
+	uniqRouteKinds := map[gatev1.Kind]struct{}{}
+	for _, routeKind := range listener.AllowedRoutes.Kinds {
+		var isSupported bool
+		for _, kind := range supportedKinds {
+			if routeKind.Kind == kind.Kind && routeKind.Group != nil && *routeKind.Group == *kind.Group {
+				isSupported = true
+				break
+			}
+		}
+
+		if !isSupported {
+			conditions = append(conditions, metav1.Condition{
+				Type:               string(gatev1.ListenerConditionResolvedRefs),
+				Status:             metav1.ConditionFalse,
+				ObservedGeneration: gateway.Generation,
+				LastTransitionTime: metav1.Now(),
+				Reason:             string(gatev1.ListenerReasonInvalidRouteKinds),
+				Message:            fmt.Sprintf("Listener protocol %q does not support RouteGroupKind %s/%s", listener.Protocol, groupToString(routeKind.Group), routeKind.Kind),
+			})
+			continue
+		}
+
+		if _, exists := uniqRouteKinds[routeKind.Kind]; !exists {
+			routeKinds = append(routeKinds, routeKind)
+			uniqRouteKinds[routeKind.Kind] = struct{}{}
+		}
+	}
+
+	return routeKinds, conditions
+}
+
+func findMatchingHostnames(listenerHostname *gatev1.Hostname, routeHostnames []gatev1.Hostname) ([]gatev1.Hostname, bool) {
+	if listenerHostname == nil {
+		return routeHostnames, true
+	}
+
+	if len(routeHostnames) == 0 {
+		return []gatev1.Hostname{*listenerHostname}, true
+	}
+
+	var matches []gatev1.Hostname
+	for _, routeHostname := range routeHostnames {
+		if match := findMatchingHostname(*listenerHostname, routeHostname); match != "" {
+			matches = append(matches, match)
+			continue
+		}
+
+		if match := findMatchingHostname(routeHostname, *listenerHostname); match != "" {
+			matches = append(matches, match)
+			continue
+		}
+	}
+
+	return matches, len(matches) > 0
+}
+
+func findMatchingHostname(h1, h2 gatev1.Hostname) gatev1.Hostname {
+	if h1 == h2 {
+		return h1
+	}
+
+	if !strings.HasPrefix(string(h1), "*.") {
+		return ""
+	}
+
+	trimmedH1 := strings.TrimPrefix(string(h1), "*")
+	// root domain doesn't match subdomain wildcard.
+	if trimmedH1 == string(h2) {
+		return ""
+	}
+
+	if !strings.HasSuffix(string(h2), trimmedH1) {
+		return ""
+	}
+
+	return lessWildcards(h1, h2)
+}
+
+func lessWildcards(h1, h2 gatev1.Hostname) gatev1.Hostname {
+	if strings.Count(string(h1), "*") > strings.Count(string(h2), "*") {
+		return h2
+	}
+
+	return h1
+}
+
+func allowRoute(listener gatewayListener, routeNamespace, routeKind string) bool {
+	if !slices.Contains(listener.AllowedRouteKinds, routeKind) {
+		return false
+	}
+
+	return slices.ContainsFunc(listener.AllowedNamespaces, func(allowedNamespace string) bool {
+		return allowedNamespace == corev1.NamespaceAll || allowedNamespace == routeNamespace
+	})
+}
+
+func matchingGatewayListeners(gatewayListeners []gatewayListener, routeNamespace string, parentRefs []gatev1.ParentReference) []gatewayListener {
+	var listeners []gatewayListener
+
+	for _, listener := range gatewayListeners {
+		for _, parentRef := range parentRefs {
+			if ptr.Deref(parentRef.Group, gatev1.GroupName) != gatev1.GroupName {
+				continue
+			}
+
+			if ptr.Deref(parentRef.Kind, kindGateway) != kindGateway {
+				continue
+			}
+
+			parentRefNamespace := string(ptr.Deref(parentRef.Namespace, gatev1.Namespace(routeNamespace)))
+			if listener.GWNamespace != parentRefNamespace {
+				continue
+			}
+
+			if string(parentRef.Name) != listener.GWName {
+				continue
+			}
+
+			listeners = append(listeners, listener)
+		}
+	}
+
+	return listeners
+}
+
+func matchListener(listener gatewayListener, parentRef gatev1.ParentReference) bool {
+	sectionName := string(ptr.Deref(parentRef.SectionName, ""))
+	if sectionName != "" && sectionName != listener.Name {
+		return false
+	}
+
+	if parentRef.Port != nil && *parentRef.Port != listener.Port {
+		return false
+	}
+
+	return true
+}
+
+func makeRouterName(rule, name string) string {
+	h := sha256.New()
+
+	// As explained in https://pkg.go.dev/hash#Hash,
+	// Write never returns an error.
+	h.Write([]byte(rule))
+
+	return fmt.Sprintf("%s-%.10x", name, h.Sum(nil))
 }
 
 func getTLSConfig(tlsConfigs map[string]*tls.CertAndStores) []*tls.CertAndStores {
@@ -1434,258 +1228,6 @@ func getCertificateBlocks(secret *corev1.Secret, namespace, secretName string) (
 	return cert, key, nil
 }
 
-// loadServices is generating a WRR service, even when there is only one target.
-func loadServices(client Client, namespace string, backendRefs []gatev1alpha2.HTTPBackendRef) (*dynamic.Service, map[string]*dynamic.Service, error) {
-	services := map[string]*dynamic.Service{}
-
-	wrrSvc := &dynamic.Service{
-		Weighted: &dynamic.WeightedRoundRobin{
-			Services: []dynamic.WRRService{},
-		},
-	}
-
-	for _, backendRef := range backendRefs {
-		if backendRef.Group == nil || backendRef.Kind == nil {
-			// Should not happen as this is validated by kubernetes
-			continue
-		}
-
-		if isInternalService(backendRef.BackendRef) {
-			return nil, nil, fmt.Errorf("traefik internal service %s is not allowed in a WRR loadbalancer", backendRef.BackendRef.Name)
-		}
-
-		weight := int(pointer.Int32Deref(backendRef.Weight, 1))
-
-		if isTraefikService(backendRef.BackendRef) {
-			wrrSvc.Weighted.Services = append(wrrSvc.Weighted.Services, dynamic.WRRService{Name: string(backendRef.Name), Weight: &weight})
-			continue
-		}
-
-		if *backendRef.Group != "" && *backendRef.Group != "core" && *backendRef.Kind != "Service" {
-			return nil, nil, fmt.Errorf("unsupported HTTPBackendRef %s/%s/%s", *backendRef.Group, *backendRef.Kind, backendRef.Name)
-		}
-
-		svc := dynamic.Service{
-			LoadBalancer: &dynamic.ServersLoadBalancer{
-				PassHostHeader: pointer.Bool(true),
-			},
-		}
-
-		// TODO support cross namespace through ReferencePolicy
-		service, exists, err := client.GetService(namespace, string(backendRef.Name))
-		if err != nil {
-			return nil, nil, err
-		}
-
-		if !exists {
-			return nil, nil, errors.New("service not found")
-		}
-
-		if len(service.Spec.Ports) > 1 && backendRef.Port == nil {
-			// If the port is unspecified and the backend is a Service
-			// object consisting of multiple port definitions, the route
-			// must be dropped from the Gateway. The controller should
-			// raise the "ResolvedRefs" condition on the Gateway with the
-			// "DroppedRoutes" reason. The gateway status for this route
-			// should be updated with a condition that describes the error
-			// more specifically.
-			log.WithoutContext().Errorf("A multiple ports Kubernetes Service cannot be used if unspecified backendRef.Port")
-			continue
-		}
-
-		var portSpec corev1.ServicePort
-		var match bool
-
-		for _, p := range service.Spec.Ports {
-			if backendRef.Port == nil || p.Port == int32(*backendRef.Port) {
-				portSpec = p
-				match = true
-				break
-			}
-		}
-
-		if !match {
-			return nil, nil, errors.New("service port not found")
-		}
-
-		endpoints, endpointsExists, endpointsErr := client.GetEndpoints(namespace, string(backendRef.Name))
-		if endpointsErr != nil {
-			return nil, nil, endpointsErr
-		}
-
-		if !endpointsExists {
-			return nil, nil, errors.New("endpoints not found")
-		}
-
-		if len(endpoints.Subsets) == 0 {
-			return nil, nil, errors.New("subset not found")
-		}
-
-		var port int32
-		var portStr string
-		for _, subset := range endpoints.Subsets {
-			for _, p := range subset.Ports {
-				if portSpec.Name == p.Name {
-					port = p.Port
-					break
-				}
-			}
-
-			if port == 0 {
-				return nil, nil, errors.New("cannot define a port")
-			}
-
-			protocol := getProtocol(portSpec)
-
-			portStr = strconv.FormatInt(int64(port), 10)
-			for _, addr := range subset.Addresses {
-				svc.LoadBalancer.Servers = append(svc.LoadBalancer.Servers, dynamic.Server{
-					URL: fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(addr.IP, portStr)),
-				})
-			}
-		}
-
-		serviceName := provider.Normalize(makeID(service.Namespace, service.Name) + "-" + portStr)
-		services[serviceName] = &svc
-
-		wrrSvc.Weighted.Services = append(wrrSvc.Weighted.Services, dynamic.WRRService{Name: serviceName, Weight: &weight})
-	}
-
-	if len(wrrSvc.Weighted.Services) == 0 {
-		return nil, nil, errors.New("no service has been created")
-	}
-
-	return wrrSvc, services, nil
-}
-
-// loadTCPServices is generating a WRR service, even when there is only one target.
-func loadTCPServices(client Client, namespace string, backendRefs []gatev1alpha2.BackendRef) (*dynamic.TCPService, map[string]*dynamic.TCPService, error) {
-	services := map[string]*dynamic.TCPService{}
-
-	wrrSvc := &dynamic.TCPService{
-		Weighted: &dynamic.TCPWeightedRoundRobin{
-			Services: []dynamic.TCPWRRService{},
-		},
-	}
-
-	for _, backendRef := range backendRefs {
-		if backendRef.Group == nil || backendRef.Kind == nil {
-			// Should not happen as this is validated by kubernetes
-			continue
-		}
-
-		if isInternalService(backendRef) {
-			return nil, nil, fmt.Errorf("traefik internal service %s is not allowed in a WRR loadbalancer", backendRef.Name)
-		}
-
-		weight := int(pointer.Int32Deref(backendRef.Weight, 1))
-
-		if isTraefikService(backendRef) {
-			wrrSvc.Weighted.Services = append(wrrSvc.Weighted.Services, dynamic.TCPWRRService{Name: string(backendRef.Name), Weight: &weight})
-			continue
-		}
-
-		if *backendRef.Group != "" && *backendRef.Group != "core" && *backendRef.Kind != "Service" {
-			return nil, nil, fmt.Errorf("unsupported BackendRef %s/%s/%s", *backendRef.Group, *backendRef.Kind, backendRef.Name)
-		}
-
-		svc := dynamic.TCPService{
-			LoadBalancer: &dynamic.TCPServersLoadBalancer{},
-		}
-
-		service, exists, err := client.GetService(namespace, string(backendRef.Name))
-		if err != nil {
-			return nil, nil, err
-		}
-
-		if !exists {
-			return nil, nil, errors.New("service not found")
-		}
-
-		if len(service.Spec.Ports) > 1 && backendRef.Port == nil {
-			// If the port is unspecified and the backend is a Service
-			// object consisting of multiple port definitions, the route
-			// must be dropped from the Gateway. The controller should
-			// raise the "ResolvedRefs" condition on the Gateway with the
-			// "DroppedRoutes" reason. The gateway status for this route
-			// should be updated with a condition that describes the error
-			// more specifically.
-			log.WithoutContext().Errorf("A multiple ports Kubernetes Service cannot be used if unspecified backendRef.Port")
-			continue
-		}
-
-		var portSpec corev1.ServicePort
-		var match bool
-
-		for _, p := range service.Spec.Ports {
-			if backendRef.Port == nil || p.Port == int32(*backendRef.Port) {
-				portSpec = p
-				match = true
-				break
-			}
-		}
-
-		if !match {
-			return nil, nil, errors.New("service port not found")
-		}
-
-		endpoints, endpointsExists, endpointsErr := client.GetEndpoints(namespace, string(backendRef.Name))
-		if endpointsErr != nil {
-			return nil, nil, endpointsErr
-		}
-
-		if !endpointsExists {
-			return nil, nil, errors.New("endpoints not found")
-		}
-
-		if len(endpoints.Subsets) == 0 {
-			return nil, nil, errors.New("subset not found")
-		}
-
-		var port int32
-		var portStr string
-		for _, subset := range endpoints.Subsets {
-			for _, p := range subset.Ports {
-				if portSpec.Name == p.Name {
-					port = p.Port
-					break
-				}
-			}
-
-			if port == 0 {
-				return nil, nil, errors.New("cannot define a port")
-			}
-
-			portStr = strconv.FormatInt(int64(port), 10)
-			for _, addr := range subset.Addresses {
-				svc.LoadBalancer.Servers = append(svc.LoadBalancer.Servers, dynamic.TCPServer{
-					Address: net.JoinHostPort(addr.IP, portStr),
-				})
-			}
-		}
-
-		serviceName := provider.Normalize(makeID(service.Namespace, service.Name) + "-" + portStr)
-		services[serviceName] = &svc
-
-		wrrSvc.Weighted.Services = append(wrrSvc.Weighted.Services, dynamic.TCPWRRService{Name: serviceName, Weight: &weight})
-	}
-
-	if len(wrrSvc.Weighted.Services) == 0 {
-		return nil, nil, errors.New("no service has been created")
-	}
-
-	return wrrSvc, services, nil
-}
-
-func getProtocol(portSpec corev1.ServicePort) string {
-	protocol := "http"
-	if portSpec.Port == 443 || strings.HasPrefix(portSpec.Name, "https") {
-		protocol = "https"
-	}
-
-	return protocol
-}
-
 func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *safe.Pool, eventsChan <-chan interface{}) chan interface{} {
 	if throttleDuration == 0 {
 		return nil
@@ -1707,7 +1249,7 @@ func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *s
 				default:
 					// We already have an event in eventsChanBuffered, so we'll do a refresh as soon as our throttle allows us to.
 					// It's fine to drop the event and keep whatever's in the buffer -- we don't do different things for different events
-					log.FromContext(ctx).Debugf("Dropping event kind %T due to throttling", nextEvent)
+					log.Ctx(ctx).Debug().Msgf("Dropping event kind %T due to throttling", nextEvent)
 				}
 			}
 		}
@@ -1716,24 +1258,133 @@ func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *s
 	return eventsChanBuffered
 }
 
-func isTraefikService(ref gatev1alpha2.BackendRef) bool {
+func isTraefikService(ref gatev1.BackendRef) bool {
 	if ref.Kind == nil || ref.Group == nil {
 		return false
 	}
 
-	return (*ref.Group == containousv1alpha1.GroupName || *ref.Group == traefikv1alpha1.GroupName) && *ref.Kind == kindTraefikService
+	return *ref.Group == traefikv1alpha1.GroupName && *ref.Kind == kindTraefikService
 }
 
-func isInternalService(ref gatev1alpha2.BackendRef) bool {
+func isInternalService(ref gatev1.BackendRef) bool {
 	return isTraefikService(ref) && strings.HasSuffix(string(ref.Name), "@internal")
 }
 
 // makeListenerKey joins protocol, hostname, and port of a listener into a string key.
-func makeListenerKey(l gatev1alpha2.Listener) string {
-	var hostname gatev1alpha2.Hostname
+func makeListenerKey(l gatev1.Listener) string {
+	var hostname gatev1.Hostname
 	if l.Hostname != nil {
 		hostname = *l.Hostname
 	}
 
 	return fmt.Sprintf("%s|%s|%d", l.Protocol, hostname, l.Port)
+}
+
+func filterReferenceGrantsFrom(referenceGrants []*gatev1beta1.ReferenceGrant, group, kind, namespace string) []*gatev1beta1.ReferenceGrant {
+	var matchingReferenceGrants []*gatev1beta1.ReferenceGrant
+	for _, referenceGrant := range referenceGrants {
+		if referenceGrantMatchesFrom(referenceGrant, group, kind, namespace) {
+			matchingReferenceGrants = append(matchingReferenceGrants, referenceGrant)
+		}
+	}
+	return matchingReferenceGrants
+}
+
+func referenceGrantMatchesFrom(referenceGrant *gatev1beta1.ReferenceGrant, group, kind, namespace string) bool {
+	for _, from := range referenceGrant.Spec.From {
+		sanitizedGroup := string(from.Group)
+		if sanitizedGroup == "" {
+			sanitizedGroup = groupCore
+		}
+		if string(from.Namespace) != namespace || string(from.Kind) != kind || sanitizedGroup != group {
+			continue
+		}
+		return true
+	}
+	return false
+}
+
+func filterReferenceGrantsTo(referenceGrants []*gatev1beta1.ReferenceGrant, group, kind, name string) []*gatev1beta1.ReferenceGrant {
+	var matchingReferenceGrants []*gatev1beta1.ReferenceGrant
+	for _, referenceGrant := range referenceGrants {
+		if referenceGrantMatchesTo(referenceGrant, group, kind, name) {
+			matchingReferenceGrants = append(matchingReferenceGrants, referenceGrant)
+		}
+	}
+	return matchingReferenceGrants
+}
+
+func referenceGrantMatchesTo(referenceGrant *gatev1beta1.ReferenceGrant, group, kind, name string) bool {
+	for _, to := range referenceGrant.Spec.To {
+		sanitizedGroup := string(to.Group)
+		if sanitizedGroup == "" {
+			sanitizedGroup = groupCore
+		}
+		if string(to.Kind) != kind || sanitizedGroup != group || (to.Name != nil && string(*to.Name) != name) {
+			continue
+		}
+		return true
+	}
+	return false
+}
+
+func groupToString(p *gatev1.Group) string {
+	if p == nil {
+		return "<nil>"
+	}
+	return string(*p)
+}
+
+func kindToString(p *gatev1.Kind) string {
+	if p == nil {
+		return "<nil>"
+	}
+	return string(*p)
+}
+
+func updateRouteConditionAccepted(conditions []metav1.Condition, reason string) []metav1.Condition {
+	var conds []metav1.Condition
+	for _, c := range conditions {
+		if c.Type == string(gatev1.RouteConditionAccepted) && c.Status != metav1.ConditionTrue {
+			c.Reason = reason
+			c.LastTransitionTime = metav1.Now()
+
+			if reason == string(gatev1.RouteReasonAccepted) {
+				c.Status = metav1.ConditionTrue
+			}
+		}
+
+		conds = append(conds, c)
+	}
+
+	return conds
+}
+
+func upsertRouteConditionResolvedRefs(conditions []metav1.Condition, condition metav1.Condition) []metav1.Condition {
+	var (
+		curr  *metav1.Condition
+		conds []metav1.Condition
+	)
+	for _, c := range conditions {
+		if c.Type == string(gatev1.RouteConditionResolvedRefs) {
+			curr = &c
+			continue
+		}
+		conds = append(conds, c)
+	}
+	if curr != nil && curr.Status == metav1.ConditionFalse && condition.Status == metav1.ConditionTrue {
+		return append(conds, *curr)
+	}
+	return append(conds, condition)
+}
+
+func upsertGatewayClassConditionAccepted(conditions []metav1.Condition, condition metav1.Condition) []metav1.Condition {
+	var conds []metav1.Condition
+	for _, c := range conditions {
+		if c.Type == string(gatev1.GatewayClassConditionStatusAccepted) {
+			continue
+		}
+		conds = append(conds, c)
+	}
+	return append(conds, condition)
 }

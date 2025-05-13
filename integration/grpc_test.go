@@ -11,11 +11,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	"github.com/traefik/traefik/v2/integration/helloworld"
-	"github.com/traefik/traefik/v2/integration/try"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v3/integration/helloworld"
+	"github.com/traefik/traefik/v3/integration/try"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
@@ -58,7 +58,7 @@ func (s *myserver) StreamExample(in *helloworld.StreamExampleRequest, server hel
 	}
 
 	if err := server.Send(&helloworld.StreamExampleReply{Data: string(data)}); err != nil {
-		log.WithoutContext().Error(err)
+		log.Error().Err(err).Send()
 	}
 
 	<-s.stopStreamExample

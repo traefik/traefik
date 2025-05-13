@@ -16,7 +16,7 @@ Remove the specified prefixes from the URL path.
 
 ## Configuration Examples
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 # Strip prefix /foobar and /fiibar
 labels:
   - "traefik.http.middlewares.test-stripprefix.stripprefix.prefixes=/foobar,/fiibar"
@@ -38,18 +38,6 @@ spec:
 ```yaml tab="Consul Catalog"
 # Strip prefix /foobar and /fiibar
 - "traefik.http.middlewares.test-stripprefix.stripprefix.prefixes=/foobar,/fiibar"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-stripprefix.stripprefix.prefixes": "/foobar,/fiibar"
-}
-```
-
-```yaml tab="Rancher"
-# Strip prefix /foobar and /fiibar
-labels:
-  - "traefik.http.middlewares.test-stripprefix.stripprefix.prefixes=/foobar,/fiibar"
 ```
 
 ```yaml tab="File (YAML)"
@@ -93,11 +81,11 @@ Using the previous example, the backend should return `/products/shoes/image.png
 
 _Optional, Default=true_
 
+!!! warning
+
+    `forceSlash` option is deprecated and should not be used.
+
 The `forceSlash` option ensures the resulting stripped path is not the empty string, by replacing it with `/` when necessary.
-
-This option was added to keep the initial (non-intuitive) behavior of this middleware, in order to avoid introducing a breaking change.
-
-It is recommended to explicitly set `forceSlash` to `false`.
 
 ??? info "Behavior examples"
 
@@ -139,19 +127,6 @@ spec:
     prefixes:
       - "/foobar"
     forceSlash: false
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.example.stripprefix.prefixes": "/foobar",
-  "traefik.http.middlewares.example.stripprefix.forceSlash": "false"
-}
-```
-
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.example.stripprefix.prefixes=/foobar"
-  - "traefik.http.middlewares.example.stripprefix.forceSlash=false"
 ```
 
 ```yaml tab="File (YAML)"

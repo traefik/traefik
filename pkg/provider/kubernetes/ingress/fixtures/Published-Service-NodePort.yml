@@ -1,0 +1,92 @@
+---
+kind: Node
+apiVersion: v1
+metadata:
+  name: node1
+
+status:
+  addresses:
+    - type: ExternalIP
+      address: 1.2.3.4
+
+---
+kind: Node
+apiVersion: v1
+metadata:
+  name: node2
+
+status:
+  addresses:
+    - type: ExternalIP
+      address: 5.6.7.8
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: published-service
+  namespace: default
+
+spec:
+  type: NodePort
+  ports:
+    - port: 9190
+      protocol: TCP
+      name: first
+      nodePort: 9090
+
+    - port: 9191
+      protocol: TCP
+      name: second
+      nodePort: 9091
+
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: foo
+  namespace: default
+
+spec:
+  rules:
+  - host: "*.foo.com"
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: service1
+            port:
+              number: 80
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: service1
+  namespace: default
+
+spec:
+  ports:
+    - port: 80
+
+  clusterIP: 10.0.0.1
+
+---
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
+metadata:
+  name: service1-abc
+  labels:
+    kubernetes.io/service-name: service1
+
+addressType: IPv4
+ports:
+  - port: 8080
+    name: ""
+endpoints:
+  - addresses:
+      - 10.10.0.1
+    conditions:
+      ready: true

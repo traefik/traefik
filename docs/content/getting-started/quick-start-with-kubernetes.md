@@ -35,10 +35,17 @@ rules:
       - ""
     resources:
       - services
-      - endpoints
       - secrets
+      - nodes
     verbs:
       - get
+      - list
+      - watch
+  - apiGroups:
+      - discovery.k8s.io
+    resources:
+      - endpointslices
+    verbs:
       - list
       - watch
   - apiGroups:
@@ -60,7 +67,6 @@ rules:
       - update
   - apiGroups:
       - traefik.io
-      - traefik.containo.us
     resources:
       - middlewares
       - middlewaretcps
@@ -71,6 +77,7 @@ rules:
       - tlsoptions
       - tlsstores
       - serverstransports
+      - serverstransporttcps
     verbs:
       - get
       - list
@@ -147,7 +154,7 @@ spec:
       serviceAccountName: traefik-account
       containers:
         - name: traefik
-          image: traefik:v2.11
+          image: traefik:v3.4
           args:
             - --api.insecure
             - --providers.kubernetesingress

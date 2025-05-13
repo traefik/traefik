@@ -10,11 +10,12 @@ import (
 	"github.com/cenkalti/backoff/v4"
 	"github.com/kvtools/valkeyrie"
 	"github.com/kvtools/valkeyrie/store"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/config/kv"
-	"github.com/traefik/traefik/v2/pkg/job"
-	"github.com/traefik/traefik/v2/pkg/log"
-	"github.com/traefik/traefik/v2/pkg/safe"
+	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/config/kv"
+	"github.com/traefik/traefik/v3/pkg/job"
+	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/safe"
 )
 
 // Provider holds configurations of the provider.
@@ -34,7 +35,7 @@ func (p *Provider) SetDefaults() {
 
 // Init the provider.
 func (p *Provider) Init(storeType, name string, config valkeyrie.Config) error {
-	ctx := log.With(context.Background(), log.Str(log.ProviderName, name))
+	ctx := log.With().Str(logs.ProviderName, name).Logger().WithContext(context.Background())
 
 	p.name = name
 
@@ -50,8 +51,8 @@ func (p *Provider) Init(storeType, name string, config valkeyrie.Config) error {
 
 // Provide allows the docker provider to provide configurations to traefik using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
-	ctx := log.With(context.Background(), log.Str(log.ProviderName, p.name))
-	logger := log.FromContext(ctx)
+	logger := log.With().Str(logs.ProviderName, p.name).Logger()
+	ctx := logger.WithContext(context.Background())
 
 	operation := func() error {
 		if _, err := p.kvClient.Exists(ctx, path.Join(p.RootKey, "qmslkjdfmqlskdjfmqlksjazçueznbvbwzlkajzebvkwjdcqmlsfj"), nil); err != nil {
@@ -61,8 +62,9 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	}
 
 	notify := func(err error, time time.Duration) {
-		logger.Errorf("KV connection error: %+v, retrying in %s", err, time)
+		logger.Error().Err(err).Msgf("KV connection error, retrying in %s", time)
 	}
+
 	err := backoff.RetryNotify(safe.OperationWithRecover(operation), backoff.WithContext(job.NewBackOff(backoff.NewExponentialBackOff()), ctx), notify)
 	if err != nil {
 		return fmt.Errorf("cannot connect to KV server: %w", err)
@@ -70,7 +72,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 
 	configuration, err := p.buildConfiguration(ctx)
 	if err != nil {
-		logger.Errorf("Cannot build the configuration: %v", err)
+		logger.Error().Err(err).Msg("Cannot build the configuration")
 	} else {
 		configurationChan <- dynamic.Message{
 			ProviderName:  p.name,
@@ -79,11 +81,11 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	}
 
 	pool.GoCtx(func(ctxPool context.Context) {
-		ctxLog := log.With(ctxPool, log.Str(log.ProviderName, p.name))
+		ctxLog := logger.With().Str(logs.ProviderName, p.name).Logger().WithContext(ctxPool)
 
 		err := p.watchKv(ctxLog, configurationChan)
 		if err != nil {
-			logger.Errorf("Cannot watch KV store: %v", err)
+			logger.Error().Err(err).Msg("Cannot retrieve data")
 		}
 	})
 
@@ -122,15 +124,11 @@ func (p *Provider) watchKv(ctx context.Context, configurationChan chan<- dynamic
 	}
 
 	notify := func(err error, time time.Duration) {
-		log.FromContext(ctx).Errorf("KV connection error: %+v, retrying in %s", err, time)
+		log.Ctx(ctx).Error().Err(err).Msgf("Provider error, retrying in %s", time)
 	}
 
-	err := backoff.RetryNotify(safe.OperationWithRecover(operation),
+	return backoff.RetryNotify(safe.OperationWithRecover(operation),
 		backoff.WithContext(job.NewBackOff(backoff.NewExponentialBackOff()), ctx), notify)
-	if err != nil {
-		return fmt.Errorf("cannot connect to KV server: %w", err)
-	}
-	return nil
 }
 
 func (p *Provider) buildConfiguration(ctx context.Context) (*dynamic.Configuration, error) {

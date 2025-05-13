@@ -507,11 +507,11 @@ certificatesResolvers:
 --certificatesresolvers.myresolver.acme.dnschallenge.resolvers=1.1.1.1:53,8.8.8.8:53
 ```
 
-#### `delayBeforeCheck`
+#### `propagation.delayBeforeChecks`
 
 By default, the `provider` verifies the TXT record _before_ letting ACME verify.
 
-You can delay this operation by specifying a delay (in seconds) with `delayBeforeCheck` (value must be greater than zero).
+You can delay this operation by specifying a delay (in seconds) with `delayBeforeChecks` (value must be greater than zero).
 
 This option is useful when internal networks block external DNS queries.
 
@@ -522,7 +522,9 @@ certificatesResolvers:
       # ...
       dnsChallenge:
         # ...
-        delayBeforeCheck: 2s
+        propagation:
+          # ...
+          delayBeforeChecks: 2s
 ```
 
 ```toml tab="File (TOML)"
@@ -530,19 +532,21 @@ certificatesResolvers:
   # ...
   [certificatesResolvers.myresolver.acme.dnsChallenge]
     # ...
-    delayBeforeCheck = "2s"
+    [certificatesResolvers.myresolver.acme.dnsChallenge.propagation]
+      # ...
+      delayBeforeChecks = "2s"
 ```
 
 ```bash tab="CLI"
 # ...
---certificatesresolvers.myresolver.acme.dnschallenge.delayBeforeCheck=2s
+--certificatesresolvers.myresolver.acme.dnschallenge.propagation.delayBeforeChecks=2s
 ```
 
-#### `disablePropagationCheck`
+#### `propagation.disableChecks`
 
-**Not recommended**
+Disables the challenge TXT record propagation checks, before notifying ACME that the DNS challenge is ready. 
 
-Disable the TXT records propagation checks before notifying ACME that the DNS challenge is ready. 
+Please note that disabling checks can prevent the challenge from succeeding.
 
 ```yaml tab="File (YAML)"
 certificatesResolvers:
@@ -551,7 +555,9 @@ certificatesResolvers:
       # ...
       dnsChallenge:
         # ...
-        disablePropagationCheck: true
+        propagation:
+          # ...
+          disableChecks: true
 ```
 
 ```toml tab="File (TOML)"
@@ -559,12 +565,90 @@ certificatesResolvers:
   # ...
   [certificatesResolvers.myresolver.acme.dnsChallenge]
     # ...
-    disablePropagationCheck = true
+    [certificatesResolvers.myresolver.acme.dnsChallenge.propagation]
+      # ...
+      disableChecks = true
 ```
 
 ```bash tab="CLI"
 # ...
---certificatesresolvers.myresolver.acme.dnschallenge.disablePropagationCheck=true
+--certificatesresolvers.myresolver.acme.dnschallenge.propagation.disableChecks=true
+```
+
+#### `propagation.requireAllRNS`
+
+Requires the challenge TXT record to be propagated to all recursive nameservers.
+
+!!! note
+
+    If you have disabled authoritative nameservers checks (with `propagation.disableANSChecks`),
+    it is recommended to check all recursive nameservers instead.
+
+```yaml tab="File (YAML)"
+certificatesResolvers:
+  myresolver:
+    acme:
+      # ...
+      dnsChallenge:
+        # ...
+        propagation:
+          # ...
+          requireAllRNS: true
+```
+
+```toml tab="File (TOML)"
+[certificatesResolvers.myresolver.acme]
+  # ...
+  [certificatesResolvers.myresolver.acme.dnsChallenge]
+    # ...
+    [certificatesResolvers.myresolver.acme.dnsChallenge.propagation]
+      # ...
+      requireAllRNS = true
+```
+
+```bash tab="CLI"
+# ...
+--certificatesresolvers.myresolver.acme.dnschallenge.propagation.requireAllRNS=true
+```
+
+#### `propagation.disableANSChecks`
+
+Disables the challenge TXT record propagation checks against authoritative nameservers.
+
+This option will skip the propagation check against the nameservers of the authority (SOA).
+
+It should be used only if the nameservers of the authority are not reachable.
+
+!!! note
+
+    If you have disabled authoritative nameservers checks,
+    it is recommended to check all recursive nameservers instead.
+
+```yaml tab="File (YAML)"
+certificatesResolvers:
+  myresolver:
+    acme:
+      # ...
+      dnsChallenge:
+        # ...
+        propagation:
+          # ...
+          disableANSChecks: true
+```
+
+```toml tab="File (TOML)"
+[certificatesResolvers.myresolver.acme]
+  # ...
+  [certificatesResolvers.myresolver.acme.dnsChallenge]
+    # ...
+    [certificatesResolvers.myresolver.acme.dnsChallenge.propagation]
+      # ...
+      disableANSChecks = true
+```
+
+```bash tab="CLI"
+# ...
+--certificatesresolvers.myresolver.acme.dnschallenge.propagation.disableANSChecks=true
 ```
 
 #### Wildcard Domains
@@ -694,6 +778,7 @@ It defaults to `2160` (90 days) to follow Let's Encrypt certificates' duration.
 |----------------------|-------------------|-------------------------|
 | >= 1 year            | 4 months          | 1 week                  |
 | >= 90 days           | 30 days           | 1 day                   |
+| >= 30 days           | 10 days           | 12 hours                |
 | >= 7 days            | 1 day             | 1 hour                  |
 | >= 24 hours          | 6 hours           | 10 min                  |
 | < 24 hours           | 20 min            | 1 min                   |
@@ -753,6 +838,66 @@ certificatesResolvers:
 # ...
 ```
 
+### `profile`
+
+_Optional, Default=""_
+
+Certificate profile to use.
+
+For more information, please check out the [Let's Encrypt blog post](https://letsencrypt.org/2025/01/09/acme-profiles/) about certificate profile selection.
+
+```yaml tab="File (YAML)"
+certificatesResolvers:
+  myresolver:
+    acme:
+      # ...
+      profile: tlsserver
+      # ...
+```
+
+```toml tab="File (TOML)"
+[certificatesResolvers.myresolver.acme]
+  # ...
+  profile = "tlsserver"
+  # ...
+```
+
+```bash tab="CLI"
+# ...
+--certificatesresolvers.myresolver.acme.profile=tlsserver
+# ...
+```
+
+### `emailAddresses`
+
+_Optional, Default=""_
+
+CSR email addresses to use.
+
+```yaml tab="File (YAML)"
+certificatesResolvers:
+  myresolver:
+    acme:
+      # ...
+      emailAddresses:
+        - foo@example.com
+        - bar@example.org
+      # ...
+```
+
+```toml tab="File (TOML)"
+[certificatesResolvers.myresolver.acme]
+  # ...
+  emailAddresses = ["foo@example.com", "bar@example.org"]
+  # ...
+```
+
+```bash tab="CLI"
+# ...
+--certificatesresolvers.myresolver.acme.emailaddresses=foo@example.com,bar@example.org
+# ...
+```
+
 ### `keyType`
 
 _Optional, Default="RSA4096"_
@@ -780,6 +925,109 @@ certificatesResolvers:
 --certificatesresolvers.myresolver.acme.keyType=RSA4096
 # ...
 ```
+
+### `caCertificates`
+
+_Optional, Default=[]_
+
+The `caCertificates` option specifies the paths to PEM encoded CA Certificates that can be used to authenticate an ACME server with an HTTPS certificate not issued by a CA in the system-wide trusted root list.
+
+```yaml tab="File (YAML)"
+certificatesResolvers:
+  myresolver:
+    acme:
+      # ...
+      caCertificates:
+        - path/certificates1.pem
+        - path/certificates2.pem
+      # ...
+```
+
+```toml tab="File (TOML)"
+[certificatesResolvers.myresolver.acme]
+  # ...
+  caCertificates = [ "path/certificates1.pem", "path/certificates2.pem" ]
+  # ...
+```
+
+```bash tab="CLI"
+# ...
+--certificatesresolvers.myresolver.acme.caCertificates="path/certificates1.pem,path/certificates2.pem"
+# ...
+```
+
+??? note "LEGO Environment Variable"
+
+    It can be defined globally by using the environment variable `LEGO_CA_CERTIFICATES`.
+    This environment variable is neither a fallback nor an override of the configuration option.
+
+### `caSystemCertPool`
+
+_Optional, Default=false_
+
+The `caSystemCertPool` option defines if the certificates pool must use a copy of the system cert pool.
+
+```yaml tab="File (YAML)"
+certificatesResolvers:
+  myresolver:
+    acme:
+      # ...
+      caSystemCertPool: true
+      # ...
+```
+
+```toml tab="File (TOML)"
+[certificatesResolvers.myresolver.acme]
+  # ...
+  caSystemCertPool = true
+  # ...
+```
+
+```bash tab="CLI"
+# ...
+--certificatesresolvers.myresolver.acme.caSystemCertPool=true
+# ...
+```
+
+??? note "LEGO Environment Variable"
+
+    It can be defined globally by using the environment variable `LEGO_CA_SYSTEM_CERT_POOL`.
+    `LEGO_CA_SYSTEM_CERT_POOL` is ignored if `LEGO_CA_CERTIFICATES` is not set or empty.
+    This environment variable is neither a fallback nor an override of the configuration option.
+
+### `caServerName`
+
+_Optional, Default=""_
+
+The `caServerName` option specifies the CA server name that can be used to authenticate an ACME server with an HTTPS certificate not issued by a CA in the system-wide trusted root list.
+
+```yaml tab="File (YAML)"
+certificatesResolvers:
+  myresolver:
+    acme:
+      # ...
+      caServerName: "my-server"
+      # ...
+```
+
+```toml tab="File (TOML)"
+[certificatesResolvers.myresolver.acme]
+  # ...
+  caServerName = "my-server"
+  # ...
+```
+
+```bash tab="CLI"
+# ...
+--certificatesresolvers.myresolver.acme.caServerName="my-server"
+# ...
+```
+
+??? note "LEGO Environment Variable"
+
+    It can be defined globally by using the environment variable `LEGO_CA_SERVER_NAME`.
+    `LEGO_CA_SERVER_NAME` is ignored if `LEGO_CA_CERTIFICATES` is not set or empty.
+    This environment variable is neither a fallback nor an override of the configuration option.
 
 ## Fallback
 

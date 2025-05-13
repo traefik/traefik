@@ -1,0 +1,21 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+exporters:
+  otlp/tempo:
+    endpoint: http://tempo:4317
+    tls:
+      insecure: true
+service:
+  telemetry:
+    logs:
+      level: "error"
+  extensions: [ health_check ]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [otlp/tempo]
+extensions:
+  health_check:

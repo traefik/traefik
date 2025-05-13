@@ -8,8 +8,9 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/logs"
 )
 
 // GetRoutersByEntryPoints returns all the http routers by entry points name and routers name.
@@ -21,14 +22,14 @@ func (c *Configuration) GetRoutersByEntryPoints(ctx context.Context, entryPoints
 			continue
 		}
 
-		logger := log.FromContext(log.With(ctx, log.Str(log.RouterName, rtName)))
+		logger := log.Ctx(ctx).With().Str(logs.RouterName, rtName).Logger()
 
 		entryPointsCount := 0
 		for _, entryPointName := range rt.EntryPoints {
 			if !slices.Contains(entryPoints, entryPointName) {
 				rt.AddError(fmt.Errorf("entryPoint %q doesn't exist", entryPointName), false)
-				logger.WithField(log.EntryPointName, entryPointName).
-					Errorf("entryPoint %q doesn't exist", entryPointName)
+				logger.Error().Str(logs.EntryPointName, entryPointName).
+					Msg("EntryPoint doesn't exist")
 				continue
 			}
 
@@ -44,7 +45,7 @@ func (c *Configuration) GetRoutersByEntryPoints(ctx context.Context, entryPoints
 
 		if entryPointsCount == 0 {
 			rt.AddError(errors.New("no valid entryPoint for this router"), true)
-			logger.Error("no valid entryPoint for this router")
+			logger.Error().Msg("No valid entryPoint for this router")
 		}
 
 		rt.Using = unique(rt.Using)

@@ -91,6 +91,8 @@ You must run these local verifications before you submit your pull request to pr
 Your PR will not be reviewed until these are green on the CI.
 
 * `make generate`
+* `make generate-crd`
+* `make test-gateway-api-conformance`
 * `make validate`
 * `make pull-images`
 * `make test`

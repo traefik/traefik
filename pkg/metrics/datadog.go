@@ -2,13 +2,23 @@ package metrics
 
 import (
 	"context"
+	"net"
+	"strings"
 	"time"
 
 	"github.com/go-kit/kit/metrics/dogstatsd"
-	kitlog "github.com/go-kit/log"
-	"github.com/traefik/traefik/v2/pkg/log"
-	"github.com/traefik/traefik/v2/pkg/safe"
-	"github.com/traefik/traefik/v2/pkg/types"
+	"github.com/go-kit/kit/util/conn"
+	gokitlog "github.com/go-kit/log"
+	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/safe"
+	"github.com/traefik/traefik/v3/pkg/types"
+)
+
+const (
+	unixAddressPrefix         = "unix://"
+	unixAddressDatagramPrefix = "unixgram://"
+	unixAddressStreamPrefix   = "unixstream://"
 )
 
 var (
@@ -18,23 +28,21 @@ var (
 
 // Metric names consistent with https://github.com/DataDog/integrations-extras/pull/64
 const (
-	ddConfigReloadsName             = "config.reload.total"
-	ddConfigReloadsFailureTagName   = "failure"
-	ddLastConfigReloadSuccessName   = "config.reload.lastSuccessTimestamp"
-	ddLastConfigReloadFailureName   = "config.reload.lastFailureTimestamp"
+	ddConfigReloadsName           = "config.reload.total"
+	ddLastConfigReloadSuccessName = "config.reload.lastSuccessTimestamp"
+	ddOpenConnsName               = "open.connections"
+
 	ddTLSCertsNotAfterTimestampName = "tls.certs.notAfterTimestamp"
 
 	ddEntryPointReqsName        = "entrypoint.request.total"
 	ddEntryPointReqsTLSName     = "entrypoint.request.tls.total"
 	ddEntryPointReqDurationName = "entrypoint.request.duration"
-	ddEntryPointOpenConnsName   = "entrypoint.connections.open"
 	ddEntryPointReqsBytesName   = "entrypoint.requests.bytes.total"
 	ddEntryPointRespsBytesName  = "entrypoint.responses.bytes.total"
 
 	ddRouterReqsName         = "router.request.total"
 	ddRouterReqsTLSName      = "router.request.tls.total"
 	ddRouterReqsDurationName = "router.request.duration"
-	ddRouterOpenConnsName    = "router.connections.open"
 	ddRouterReqsBytesName    = "router.requests.bytes.total"
 	ddRouterRespsBytesName   = "router.responses.bytes.total"
 
@@ -42,7 +50,6 @@ const (
 	ddServiceReqsTLSName      = "service.request.tls.total"
 	ddServiceReqsDurationName = "service.request.duration"
 	ddServiceRetriesName      = "service.retries.total"
-	ddServiceOpenConnsName    = "service.connections.open"
 	ddServiceServerUpName     = "service.server.up"
 	ddServiceReqsBytesName    = "service.requests.bytes.total"
 	ddServiceRespsBytesName   = "service.responses.bytes.total"
@@ -58,18 +65,15 @@ func RegisterDatadog(ctx context.Context, config *types.Datadog) Registry {
 		config.Prefix = defaultMetricsPrefix
 	}
 
-	datadogClient = dogstatsd.New(config.Prefix+".", kitlog.LoggerFunc(func(keyvals ...interface{}) error {
-		log.WithoutContext().WithField(log.MetricsProviderName, "datadog").Info(keyvals...)
-		return nil
-	}))
+	datadogLogger := logs.NewGoKitWrapper(log.Logger.With().Str(logs.MetricsProviderName, "datadog").Logger())
+	datadogClient = dogstatsd.New(config.Prefix+".", datadogLogger)
 
-	initDatadogClient(ctx, config)
+	initDatadogClient(ctx, config, datadogLogger)
 
 	registry := &standardRegistry{
 		configReloadsCounter:           datadogClient.NewCounter(ddConfigReloadsName, 1.0),
-		configReloadsFailureCounter:    datadogClient.NewCounter(ddConfigReloadsName, 1.0).With(ddConfigReloadsFailureTagName, "true"),
 		lastConfigReloadSuccessGauge:   datadogClient.NewGauge(ddLastConfigReloadSuccessName),
-		lastConfigReloadFailureGauge:   datadogClient.NewGauge(ddLastConfigReloadFailureName),
+		openConnectionsGauge:           datadogClient.NewGauge(ddOpenConnsName),
 		tlsCertsNotAfterTimestampGauge: datadogClient.NewGauge(ddTLSCertsNotAfterTimestampName),
 	}
 
@@ -78,7 +82,6 @@ func RegisterDatadog(ctx context.Context, config *types.Datadog) Registry {
 		registry.entryPointReqsCounter = NewCounterWithNoopHeaders(datadogClient.NewCounter(ddEntryPointReqsName, 1.0))
 		registry.entryPointReqsTLSCounter = datadogClient.NewCounter(ddEntryPointReqsTLSName, 1.0)
 		registry.entryPointReqDurationHistogram, _ = NewHistogramWithScale(datadogClient.NewHistogram(ddEntryPointReqDurationName, 1.0), time.Second)
-		registry.entryPointOpenConnsGauge = datadogClient.NewGauge(ddEntryPointOpenConnsName)
 		registry.entryPointReqsBytesCounter = datadogClient.NewCounter(ddEntryPointReqsBytesName, 1.0)
 		registry.entryPointRespsBytesCounter = datadogClient.NewCounter(ddEntryPointRespsBytesName, 1.0)
 	}
@@ -88,7 +91,6 @@ func RegisterDatadog(ctx context.Context, config *types.Datadog) Registry {
 		registry.routerReqsCounter = NewCounterWithNoopHeaders(datadogClient.NewCounter(ddRouterReqsName, 1.0))
 		registry.routerReqsTLSCounter = datadogClient.NewCounter(ddRouterReqsTLSName, 1.0)
 		registry.routerReqDurationHistogram, _ = NewHistogramWithScale(datadogClient.NewHistogram(ddRouterReqsDurationName, 1.0), time.Second)
-		registry.routerOpenConnsGauge = datadogClient.NewGauge(ddRouterOpenConnsName)
 		registry.routerReqsBytesCounter = datadogClient.NewCounter(ddRouterReqsBytesName, 1.0)
 		registry.routerRespsBytesCounter = datadogClient.NewCounter(ddRouterRespsBytesName, 1.0)
 	}
@@ -99,7 +101,6 @@ func RegisterDatadog(ctx context.Context, config *types.Datadog) Registry {
 		registry.serviceReqsTLSCounter = datadogClient.NewCounter(ddServiceReqsTLSName, 1.0)
 		registry.serviceReqDurationHistogram, _ = NewHistogramWithScale(datadogClient.NewHistogram(ddServiceReqsDurationName, 1.0), time.Second)
 		registry.serviceRetriesCounter = datadogClient.NewCounter(ddServiceRetriesName, 1.0)
-		registry.serviceOpenConnsGauge = datadogClient.NewGauge(ddServiceOpenConnsName)
 		registry.serviceServerUpGauge = datadogClient.NewGauge(ddServiceServerUpName)
 		registry.serviceReqsBytesCounter = datadogClient.NewCounter(ddServiceReqsBytesName, 1.0)
 		registry.serviceRespsBytesCounter = datadogClient.NewCounter(ddServiceRespsBytesName, 1.0)
@@ -108,11 +109,8 @@ func RegisterDatadog(ctx context.Context, config *types.Datadog) Registry {
 	return registry
 }
 
-func initDatadogClient(ctx context.Context, config *types.Datadog) {
-	address := config.Address
-	if len(address) == 0 {
-		address = "localhost:8125"
-	}
+func initDatadogClient(ctx context.Context, config *types.Datadog, logger gokitlog.LoggerFunc) {
+	network, address := parseDatadogAddress(config.Address)
 
 	ctx, datadogLoopCancelFunc = context.WithCancel(ctx)
 
@@ -120,7 +118,27 @@ func initDatadogClient(ctx context.Context, config *types.Datadog) {
 		ticker := time.NewTicker(time.Duration(config.PushInterval))
 		defer ticker.Stop()
 
-		datadogClient.SendLoop(ctx, ticker.C, "udp", address)
+		dialer := func(network, address string) (net.Conn, error) {
+			switch network {
+			case "unix":
+				// To mimic the Datadog client when the network is unix we will try to guess the UDS type.
+				newConn, err := net.Dial("unixgram", address)
+				if err != nil && strings.Contains(err.Error(), "protocol wrong type for socket") {
+					return net.Dial("unix", address)
+				}
+				return newConn, err
+
+			case "unixgram":
+				return net.Dial("unixgram", address)
+
+			case "unixstream":
+				return net.Dial("unix", address)
+
+			default:
+				return net.Dial(network, address)
+			}
+		}
+		datadogClient.WriteLoop(ctx, ticker.C, conn.NewManager(dialer, network, address, time.After, logger))
 	})
 }
 
@@ -130,4 +148,27 @@ func StopDatadog() {
 		datadogLoopCancelFunc()
 		datadogLoopCancelFunc = nil
 	}
+}
+
+func parseDatadogAddress(address string) (string, string) {
+	network := "udp"
+
+	var addr string
+	switch {
+	case strings.HasPrefix(address, unixAddressPrefix):
+		network = "unix"
+		addr = address[len(unixAddressPrefix):]
+	case strings.HasPrefix(address, unixAddressDatagramPrefix):
+		network = "unixgram"
+		addr = address[len(unixAddressDatagramPrefix):]
+	case strings.HasPrefix(address, unixAddressStreamPrefix):
+		network = "unixstream"
+		addr = address[len(unixAddressStreamPrefix):]
+	case address != "":
+		addr = address
+	default:
+		addr = "localhost:8125"
+	}
+
+	return network, addr
 }

@@ -27,7 +27,7 @@ THE SOFTWARE.
 package fake
 
 import (
-	v1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned/typed/traefikio/v1alpha1"
+	v1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned/typed/traefikio/v1alpha1"
 	rest "k8s.io/client-go/rest"
 	testing "k8s.io/client-go/testing"
 )
@@ -58,6 +58,10 @@ func (c *FakeTraefikV1alpha1) MiddlewareTCPs(namespace string) v1alpha1.Middlewa
 
 func (c *FakeTraefikV1alpha1) ServersTransports(namespace string) v1alpha1.ServersTransportInterface {
 	return &FakeServersTransports{c, namespace}
+}
+
+func (c *FakeTraefikV1alpha1) ServersTransportTCPs(namespace string) v1alpha1.ServersTransportTCPInterface {
+	return &FakeServersTransportTCPs{c, namespace}
 }
 
 func (c *FakeTraefikV1alpha1) TLSOptions(namespace string) v1alpha1.TLSOptionInterface {

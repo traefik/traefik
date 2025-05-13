@@ -7,9 +7,9 @@ import (
 	"net"
 	"strconv"
 
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/log"
-	traefikv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -20,7 +20,7 @@ func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client 
 	}
 
 	for _, ingressRouteUDP := range client.GetIngressRouteUDPs() {
-		logger := log.FromContext(log.With(ctx, log.Str("ingress", ingressRouteUDP.Name), log.Str("namespace", ingressRouteUDP.Namespace)))
+		logger := log.Ctx(ctx).With().Str("ingress", ingressRouteUDP.Name).Str("namespace", ingressRouteUDP.Namespace).Logger()
 
 		if !shouldProcessIngress(p.IngressClass, ingressRouteUDP.Annotations[annotationKubernetesIngressClass]) {
 			continue
@@ -38,10 +38,11 @@ func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client 
 			for _, service := range route.Services {
 				balancerServerUDP, err := p.createLoadBalancerServerUDP(client, ingressRouteUDP.Namespace, service)
 				if err != nil {
-					logger.
-						WithField("serviceName", service.Name).
-						WithField("servicePort", service.Port).
-						Errorf("Cannot create service: %v", err)
+					logger.Error().
+						Str("serviceName", service.Name).
+						Stringer("servicePort", &service.Port).
+						Err(err).
+						Msg("Cannot create service")
 					continue
 				}
 
@@ -120,53 +121,95 @@ func (p *Provider) loadUDPServers(client Client, namespace string, svc traefikv1
 		return nil, err
 	}
 
-	if svc.NativeLB {
-		address, err := getNativeServiceAddress(*service, *svcPort)
-		if err != nil {
-			return nil, fmt.Errorf("getting native Kubernetes Service address: %w", err)
+	var servers []dynamic.UDPServer
+	if service.Spec.Type == corev1.ServiceTypeNodePort && svc.NodePortLB {
+		if p.DisableClusterScopeResources {
+			return nil, errors.New("nodes lookup is disabled")
 		}
 
-		return []dynamic.UDPServer{{Address: address}}, nil
+		nodes, nodesExists, nodesErr := client.GetNodes()
+		if nodesErr != nil {
+			return nil, nodesErr
+		}
+
+		if !nodesExists || len(nodes) == 0 {
+			return nil, fmt.Errorf("nodes not found for NodePort service %s/%s", svc.Namespace, svc.Name)
+		}
+
+		for _, node := range nodes {
+			for _, addr := range node.Status.Addresses {
+				if addr.Type == corev1.NodeInternalIP {
+					servers = append(servers, dynamic.UDPServer{
+						Address: net.JoinHostPort(addr.Address, strconv.Itoa(int(svcPort.NodePort))),
+					})
+				}
+			}
+		}
+
+		if len(servers) == 0 {
+			return nil, fmt.Errorf("no servers were generated for service %s/%s", svc.Namespace, svc.Name)
+		}
+
+		return servers, nil
 	}
 
-	var servers []dynamic.UDPServer
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
 		servers = append(servers, dynamic.UDPServer{
 			Address: net.JoinHostPort(service.Spec.ExternalName, strconv.Itoa(int(svcPort.Port))),
 		})
 	} else {
-		endpoints, endpointsExists, endpointsErr := client.GetEndpoints(namespace, svc.Name)
-		if endpointsErr != nil {
-			return nil, endpointsErr
+		nativeLB := p.NativeLBByDefault
+		if svc.NativeLB != nil {
+			nativeLB = *svc.NativeLB
+		}
+		if nativeLB {
+			address, err := getNativeServiceAddress(*service, *svcPort)
+			if err != nil {
+				return nil, fmt.Errorf("getting native Kubernetes Service address: %w", err)
+			}
+
+			return []dynamic.UDPServer{{Address: address}}, nil
 		}
 
-		if !endpointsExists {
-			return nil, errors.New("endpoints not found")
+		endpointSlices, err := client.GetEndpointSlicesForService(namespace, svc.Name)
+		if err != nil {
+			return nil, fmt.Errorf("getting endpointslices: %w", err)
 		}
 
-		if len(endpoints.Subsets) == 0 && !p.AllowEmptyServices {
-			return nil, errors.New("subset not found")
-		}
-
-		var port int32
-		for _, subset := range endpoints.Subsets {
-			for _, p := range subset.Ports {
-				if svcPort.Name == p.Name {
-					port = p.Port
+		addresses := map[string]struct{}{}
+		for _, endpointSlice := range endpointSlices {
+			var port int32
+			for _, p := range endpointSlice.Ports {
+				if svcPort.Name == *p.Name {
+					port = *p.Port
 					break
 				}
 			}
-
 			if port == 0 {
-				return nil, errors.New("cannot define a port")
+				continue
 			}
 
-			for _, addr := range subset.Addresses {
-				servers = append(servers, dynamic.UDPServer{
-					Address: net.JoinHostPort(addr.IP, strconv.Itoa(int(port))),
-				})
+			for _, endpoint := range endpointSlice.Endpoints {
+				if endpoint.Conditions.Ready == nil || !*endpoint.Conditions.Ready {
+					continue
+				}
+
+				for _, address := range endpoint.Addresses {
+					if _, ok := addresses[address]; ok {
+						continue
+					}
+
+					addresses[address] = struct{}{}
+					servers = append(servers, dynamic.UDPServer{
+						Address: net.JoinHostPort(address, strconv.Itoa(int(port))),
+					})
+				}
 			}
 		}
+	}
+
+	if len(servers) == 0 && !p.AllowEmptyServices {
+		return nil, fmt.Errorf("no servers found for %s/%s", namespace, svc.Name)
 	}
 
 	return servers, nil

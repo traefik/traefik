@@ -111,6 +111,30 @@ For example, to change the rule, you could add the tag ```traefik.http.routers.m
     traefik.http.routers.myrouter.tls.options=foobar
     ```
 
+??? info "`traefik.http.routers.<router_name>.observability.accesslogs`"
+
+    See accesslogs [option](../routers/index.md#accesslogs) for more information.
+    
+    ```yaml
+    traefik.http.routers.myrouter.observability.accesslogs=true
+    ```
+
+??? info "`traefik.http.routers.<router_name>.observability.metrics`"
+
+    See metrics [option](../routers/index.md#metrics) for more information.
+    
+    ```yaml
+    traefik.http.routers.myrouter.observability.metrics=true
+    ```
+
+??? info "`traefik.http.routers.<router_name>.observability.tracing`"
+
+    See tracing [option](../routers/index.md#tracing) for more information.
+    
+    ```yaml
+    traefik.http.routers.myrouter.observability.tracing=true
+    ```
+
 ??? info "`traefik.http.routers.<router_name>.priority`"
 
     See [priority](../routers/index.md#priority) for more information.
@@ -142,6 +166,15 @@ you'd add the tag `traefik.http.services.{name-of-your-choice}.loadbalancer.pass
     
     ```yaml
     traefik.http.services.myservice.loadbalancer.server.scheme=http
+    ```
+
+??? info "`traefik.http.services.<service_name>.loadbalancer.server.url`"
+
+    Defines the service URL.
+    This option cannot be used in combination with `port` or `scheme` definition.
+
+    ```yaml
+    traefik.http.services.myservice.loadbalancer.server.url=http://foobar:8080
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.serverstransport`"
@@ -201,6 +234,14 @@ you'd add the tag `traefik.http.services.{name-of-your-choice}.loadbalancer.pass
     traefik.http.services.myservice.loadbalancer.healthcheck.method=foobar
     ```
 
+??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.status`"
+    
+    See [health check](../services/index.md#health-check) for more information.
+    
+    ```yaml
+    traefik.http.services.myservice.loadbalancer.healthcheck.status=42
+    ```
+
 ??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.port`"
     
     See [health check](../services/index.md#health-check) for more information.
@@ -257,6 +298,14 @@ you'd add the tag `traefik.http.services.{name-of-your-choice}.loadbalancer.pass
     traefik.http.services.myservice.loadbalancer.sticky.cookie.name=foobar
     ```
 
+??? info "`traefik.http.services.<service_name>.loadbalancer.sticky.cookie.path`"
+    
+    See [sticky sessions](../services/index.md#sticky-sessions) for more information.
+    
+    ```yaml
+    traefik.http.services.myservice.loadbalancer.sticky.cookie.path=/foobar
+    ```
+
 ??? info "`traefik.http.services.<service_name>.loadbalancer.sticky.cookie.secure`"
     
     See [sticky sessions](../services/index.md#sticky-sessions) for more information.
@@ -273,12 +322,36 @@ you'd add the tag `traefik.http.services.{name-of-your-choice}.loadbalancer.pass
     traefik.http.services.myservice.loadbalancer.sticky.cookie.samesite=none
     ```
 
+??? info "`traefik.http.services.<service_name>.loadbalancer.sticky.cookie.domain`"
+    
+    See [sticky sessions](../services/index.md#sticky-sessions) for more information.
+    
+    ```yaml
+    traefik.http.services.myservice.loadbalancer.sticky.cookie.domain=foo.com
+    ```
+
+??? info "`traefik.http.services.<service_name>.loadbalancer.sticky.cookie.maxage`"
+    
+    See [sticky sessions](../services/index.md#sticky-sessions) for more information.
+    
+    ```yaml
+    traefik.http.services.myservice.loadbalancer.sticky.cookie.maxage=42
+    ```
+
 ??? info "`traefik.http.services.<service_name>.loadbalancer.responseforwarding.flushinterval`"
 
     See [response forwarding](../services/index.md#response-forwarding) for more information.
 
     ```yaml
     traefik.http.services.myservice.loadbalancer.responseforwarding.flushinterval=10
+    ```
+
+??? info "`traefik.http.services.<service_name>.loadbalancer.strategy`"
+
+    See [load balancing strategy](../services/index.md#load-balancing-strategy) for more information.
+
+    ```yaml
+    traefik.http.services.myservice.loadbalancer.strategy=p2c
     ```
 
 ### Middleware
@@ -404,12 +477,12 @@ You can declare TCP Routers and/or Services using tags.
     traefik.tcp.services.mytcpservice.loadbalancer.server.port=423
     ```
 
-??? info "`traefik.tcp.services.<service_name>.loadbalancer.terminationdelay`"
-        
-    See [termination delay](../services/index.md#termination-delay) for more information.
+??? info "`traefik.tcp.services.<service_name>.loadbalancer.server.tls`"
+    
+    Determines whether to use TLS when dialing with the backend.
     
     ```yaml
-    traefik.tcp.services.mytcpservice.loadbalancer.terminationdelay=100
+    traefik.tcp.services.mytcpservice.loadbalancer.server.tls=true
     ```
 
 ??? info "`traefik.tcp.services.<service_name>.loadbalancer.proxyprotocol.version`"
@@ -418,6 +491,15 @@ You can declare TCP Routers and/or Services using tags.
     
     ```yaml
     traefik.tcp.services.mytcpservice.loadbalancer.proxyprotocol.version=1
+    ```
+
+??? info "`traefik.tcp.services.<service_name>.loadbalancer.serverstransport`"
+
+    Allows to reference a ServersTransport resource that is defined either with the File provider or the Kubernetes CRD one.
+    See [serverstransport](../services/index.md#serverstransport_2) for more information.
+    
+    ```yaml
+    traefik.tcp.services.myservice.loadbalancer.serverstransport=foobar@file
     ```
 
 ### UDP

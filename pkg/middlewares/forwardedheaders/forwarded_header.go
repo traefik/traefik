@@ -8,7 +8,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/traefik/traefik/v2/pkg/ip"
+	"github.com/traefik/traefik/v3/pkg/ip"
 	"golang.org/x/net/http/httpguts"
 )
 
