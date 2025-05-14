@@ -17,8 +17,6 @@ This guide provides an in-depth walkthrough for installing and configuring Traef
 - Helm v3, 
 - Kubectl 
 
-admin:$$apr1$$mYUXUhhD$$D4stoDMSw1.vmEoQv50oq0
-
 ## Create the Cluster
 
 If you do not have a Kubernetes cluster already, you can spin up one with K3d:
