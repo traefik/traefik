@@ -13,7 +13,7 @@ DATE := $(shell date -u '+%Y-%m-%d_%I:%M:%S%p')
 # Default build target
 GOOS := $(shell go env GOOS)
 GOARCH := $(shell go env GOARCH)
-GOGC ?= off
+GOGC ?=
 
 LINT_EXECUTABLES = misspell shellcheck
 
