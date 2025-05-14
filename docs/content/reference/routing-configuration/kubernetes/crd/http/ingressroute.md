@@ -33,7 +33,7 @@ spec:
       namespace: apps
     # Enable Router observability
     observability:
-      accesslogs: true
+      accessLogs: true
       metrics: true
       tracing: true
     # Set a pirority
