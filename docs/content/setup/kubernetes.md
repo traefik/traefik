@@ -8,7 +8,7 @@ This guide provides an in-depth walkthrough for installing and configuring Traef
 - Configure standard HTTP (`web`) and HTTPS (`websecure`) entry points, 
 - Implement automatic redirection from HTTP to HTTPS
 - Secure the Traefik Dashboard using Basic Authentication.
-- Deploy a demo application to test the setuop
+- Deploy a demo application to test the setup
 - Explore some other key configuration options
 
 ## Prerequisites
