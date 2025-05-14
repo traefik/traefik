@@ -46,7 +46,7 @@ type Route struct {
 	// More info: https://doc.traefik.io/traefik/v3.4/routing/providers/kubernetes-crd/#kind-middleware
 	Middlewares []MiddlewareRef `json:"middlewares,omitempty"`
 	// Observability defines the observability configuration for a router.
-	// More info: https://doc.traefik.io/traefik/v3.2/routing/routers/#observability
+	// More info: https://doc.traefik.io/traefik/v3.4/routing/routers/#observability
 	Observability *dynamic.RouterObservabilityConfig `json:"observability,omitempty"`
 }
 
