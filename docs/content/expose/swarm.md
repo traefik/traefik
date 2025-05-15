@@ -241,13 +241,13 @@ In the response headers, you should see security headers set by the middleware:
 
 2. **Test the IP Allowlist middleware**:
 
-If your request comes from an IP that's in the allowlist (e.g., 127.0.0.1), it should succeed:
+If your request comes from an IP that's in the allow list (e.g., 127.0.0.1), it should succeed:
 
 ```bash
 curl -k -I -H "Host: whoami.swarm.localhost" https://localhost/
 ```
 
-If you try to access from an IP not in the allowlist, the request will be rejected with a `403` Forbidden response. To simulate this in a local environment, you can modify the middleware configuration temporarily to exclude your IP address, then test again.
+If you try to access from an IP not in the allow list, the request will be rejected with a `403` Forbidden response. To simulate this in a local environment, you can modify the middleware configuration temporarily to exclude your IP address, then test again.
 
 ## Generate Certificates with Let's Encrypt
 

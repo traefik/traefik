@@ -257,7 +257,7 @@ spec:
       port: 80
 ```
 
-Update the file `whoami-ingressroute.yaml` with this content and apply it:
+Save this as `whoami-ingressroute.yaml` and apply it:
 
 ```bash
 kubectl apply -f whoami-ingressroute.yaml

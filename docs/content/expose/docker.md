@@ -294,7 +294,7 @@ In the response headers, you should see security headers set by the middleware:
 
 2. **Test the IP Allowlist middleware**:
 
-If your request comes from an IP that's in the allowlist (e.g., 127.0.0.1), it should succeed:
+If your request comes from an IP that's in the allow list (e.g., 127.0.0.1), it should succeed:
 
 ```bash
 curl -k -I -H "Host: whoami.docker.localhost" https://localhost/
