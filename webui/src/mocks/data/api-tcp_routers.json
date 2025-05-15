@@ -6,6 +6,7 @@
     "service": "tcp-all",
     "rule": "HostSNI(`*`)",
     "status": "enabled",
+    "middlewares": ["test-inflightconn", "test-ipwhitelist", "test-ipallowlist"],
     "name": "tcp-all@docker",
     "using": [
       "web-secured",
