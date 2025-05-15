@@ -1,9 +1,9 @@
-import { Tr, VariantProps } from '@traefiklabs/faency'
+import { AriaTr, VariantProps } from '@traefiklabs/faency'
 import { ComponentProps, forwardRef, KeyboardEvent, MouseEvent, ReactNode, useCallback } from 'react'
 import { useHref, useNavigate } from 'react-router-dom'
 
-type ClickableRowProps = ComponentProps<typeof Tr> &
-  VariantProps<typeof Tr> & {
+type ClickableRowProps = ComponentProps<typeof AriaTr> &
+  VariantProps<typeof AriaTr> & {
     children: ReactNode
     to: string
   }
@@ -33,7 +33,7 @@ const ClickableRow = forwardRef<HTMLTableRowElement | null, ClickableRowProps>((
   }
 
   return (
-    <Tr
+    <AriaTr
       ref={ref}
       role="link"
       tabIndex={0}
@@ -44,7 +44,7 @@ const ClickableRow = forwardRef<HTMLTableRowElement | null, ClickableRowProps>((
       {...props}
     >
       {children}
-    </Tr>
+    </AriaTr>
   )
 })
 

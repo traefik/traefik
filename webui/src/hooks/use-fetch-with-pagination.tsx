@@ -1,4 +1,4 @@
-import { Td, Tr } from '@traefiklabs/faency'
+import { AriaTd, AriaTr } from '@traefiklabs/faency'
 import { stringify } from 'query-string'
 import { ReactNode } from 'react'
 import useSWRInfinite, { SWRInfiniteConfiguration } from 'swr/infinite'
@@ -29,9 +29,9 @@ type useFetchWithPaginationType = (
 
 const useFetchWithPagination: useFetchWithPaginationType = (path, opts) => {
   const defaultLoadingFunction = () => (
-    <Tr>
-      <Td>Loading...</Td>
-    </Tr>
+    <AriaTr>
+      <AriaTd>Loading...</AriaTd>
+    </AriaTr>
   )
   const { rowsPerPage = 10, renderLoader = defaultLoadingFunction, renderRow, query } = opts
 

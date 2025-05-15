@@ -1,4 +1,4 @@
-import { Box, Flex, styled, Table, Tbody, Td, Th, Tr, Thead } from '@traefiklabs/faency'
+import { AriaTable, AriaTbody, AriaTd, AriaTh, AriaThead, AriaTr, Box, Flex, styled } from '@traefiklabs/faency'
 import { orderBy } from 'lodash'
 import { useContext, useEffect, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
@@ -25,72 +25,72 @@ const SkeletonContent = styled(Box, {
 export const UsedByRoutersSkeleton = () => (
   <Flex css={{ flexDirection: 'column', mt: '40px' }}>
     <SectionHeader />
-    <Table>
-      <Thead>
-        <Tr>
-          <Th>
+    <AriaTable>
+      <AriaThead>
+        <AriaTr>
+          <AriaTh>
             <SkeletonContent />
-          </Th>
-          <Th>
+          </AriaTh>
+          <AriaTh>
             <SkeletonContent />
-          </Th>
-          <Th>
+          </AriaTh>
+          <AriaTh>
             <SkeletonContent />
-          </Th>
-          <Th>
+          </AriaTh>
+          <AriaTh>
             <SkeletonContent />
-          </Th>
-          <Th>
+          </AriaTh>
+          <AriaTh>
             <SkeletonContent />
-          </Th>
-          <Th>
+          </AriaTh>
+          <AriaTh>
             <SkeletonContent />
-          </Th>
-        </Tr>
-      </Thead>
-      <Tbody>
-        <Tr css={{ pointerEvents: 'none' }}>
-          <Td>
+          </AriaTh>
+        </AriaTr>
+      </AriaThead>
+      <AriaTbody>
+        <AriaTr css={{ pointerEvents: 'none' }}>
+          <AriaTd>
             <SkeletonContent />
-          </Td>
-          <Td>
+          </AriaTd>
+          <AriaTd>
             <SkeletonContent />
-          </Td>
-          <Td>
+          </AriaTd>
+          <AriaTd>
             <SkeletonContent />
-          </Td>
-          <Td>
+          </AriaTd>
+          <AriaTd>
             <SkeletonContent />
-          </Td>
-          <Td>
+          </AriaTd>
+          <AriaTd>
             <SkeletonContent />
-          </Td>
-          <Th>
+          </AriaTd>
+          <AriaTd>
             <SkeletonContent />
-          </Th>
-        </Tr>
-        <Tr css={{ pointerEvents: 'none' }}>
-          <Td>
+          </AriaTd>
+        </AriaTr>
+        <AriaTr css={{ pointerEvents: 'none' }}>
+          <AriaTd>
             <SkeletonContent />
-          </Td>
-          <Td>
+          </AriaTd>
+          <AriaTd>
             <SkeletonContent />
-          </Td>
-          <Td>
+          </AriaTd>
+          <AriaTd>
             <SkeletonContent />
-          </Td>
-          <Td>
+          </AriaTd>
+          <AriaTd>
             <SkeletonContent />
-          </Td>
-          <Td>
+          </AriaTd>
+          <AriaTd>
             <SkeletonContent />
-          </Td>
-          <Th>
+          </AriaTd>
+          <AriaTd>
             <SkeletonContent />
-          </Th>
-        </Tr>
-      </Tbody>
-    </Table>
+          </AriaTd>
+        </AriaTr>
+      </AriaTbody>
+    </AriaTable>
   </Flex>
 )
 
@@ -126,9 +126,9 @@ export const UsedByRoutersSection = ({ data, protocol = 'http' }: UsedByRoutersS
     <Flex css={{ flexDirection: 'column', mt: '$5' }}>
       <SectionHeader title="Used by Routers" />
 
-      <Table data-testid="routers-table" css={{ tableLayout: 'auto' }}>
-        <Thead>
-          <Tr>
+      <AriaTable data-testid="routers-table" css={{ tableLayout: 'auto' }}>
+        <AriaThead>
+          <AriaTr>
             <SortableTh label="Status" css={{ width: '40px' }} isSortable sortByValue="status" />
             {protocol !== 'udp' ? <SortableTh label="TLS" /> : null}
             {protocol !== 'udp' ? <SortableTh label="Rule" isSortable sortByValue="rule" /> : null}
@@ -137,10 +137,10 @@ export const UsedByRoutersSection = ({ data, protocol = 'http' }: UsedByRoutersS
             <SortableTh label="Service" isSortable sortByValue="service" />
             <SortableTh label="Provider" css={{ width: '40px' }} isSortable sortByValue="provider" />
             <SortableTh label="Priority" css={{ width: '64px' }} isSortable sortByValue="priority" />
-          </Tr>
-        </Thead>
-        <Tbody>{routersFound.map(renderRow)}</Tbody>
-      </Table>
+          </AriaTr>
+        </AriaThead>
+        <AriaTbody>{routersFound.map(renderRow)}</AriaTbody>
+      </AriaTable>
     </Flex>
   )
 }

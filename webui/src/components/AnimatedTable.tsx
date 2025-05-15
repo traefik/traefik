@@ -1,4 +1,4 @@
-import { Table, Tbody, Tr } from '@traefiklabs/faency'
+import { AriaTable, AriaTbody, AriaTr } from '@traefiklabs/faency'
 import { motion } from 'framer-motion'
 import { ReactNode } from 'react'
 
@@ -36,11 +36,11 @@ const rowVariants = {
   },
 }
 
-const CustomTable = motion.create(Table)
-const CustomBody = motion.create(Tbody)
+const CustomTable = motion.create(AriaTable)
+const CustomBody = motion.create(AriaTbody)
 const CustomClickableRow = motion.create(ClickableRow)
 
-const CustomRow = motion.create(Tr)
+const CustomRow = motion.create(AriaTr)
 
 type AnimatedTableProps = {
   children: ReactNode

@@ -1,4 +1,4 @@
-import { CSS, Flex, Label, Th } from '@traefiklabs/faency'
+import { AriaTh, CSS, Flex, Label } from '@traefiklabs/faency'
 import { useCallback, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
@@ -43,16 +43,14 @@ export default function SortableTh({ label, isSortable = false, sortByValue, ali
   }, [sortByValue, searchParams, setSearchParams])
 
   return (
-    <Th css={css}>
-      {isSortable ? (
-        <Flex align="center" css={wrapperStyle}>
+    <AriaTh css={css}>
+      <Flex align="center" css={wrapperStyle}>
+        {isSortable ? (
           <SortButton onClick={onSort} order={isActive ? order : undefined} label={label} />
-        </Flex>
-      ) : (
-        <Flex align="center" css={wrapperStyle}>
+        ) : (
           <Label>{label}</Label>
-        </Flex>
-      )}
-    </Th>
+        )}
+      </Flex>
+    </AriaTh>
   )
 }

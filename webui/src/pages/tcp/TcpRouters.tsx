@@ -1,4 +1,4 @@
-import { Box, Flex, Td, Tfoot, Thead, Tr } from '@traefiklabs/faency'
+import { AriaTd, AriaTfoot, AriaThead, AriaTr, Box, Flex } from '@traefiklabs/faency'
 import { useEffect, useMemo, useState } from 'react'
 import { FiShield } from 'react-icons/fi'
 import useInfiniteScroll from 'react-infinite-scroll-hook'
@@ -21,14 +21,14 @@ import Page from 'layout/Page'
 export const makeRowRender = (): RenderRowType => {
   const TcpRoutersRenderRow = (row) => (
     <AnimatedRow key={row.name} to={`/tcp/routers/${row.name}`}>
-      <Td>
+      <AriaTd>
         <Tooltip label={row.status}>
           <Box css={{ width: '32px', height: '32px' }}>
             <ResourceStatus status={row.status} />
           </Box>
         </Tooltip>
-      </Td>
-      <Td>
+      </AriaTd>
+      <AriaTd>
         {row.tls && (
           <Tooltip label="TLS ON">
             <Box css={{ width: 24, height: 24 }} data-testid="tls-on">
@@ -36,27 +36,27 @@ export const makeRowRender = (): RenderRowType => {
             </Box>
           </Tooltip>
         )}
-      </Td>
-      <Td>
+      </AriaTd>
+      <AriaTd>
         <TooltipText text={row.rule} isTruncated variant="wide" />
-      </Td>
-      <Td>{row.entryPoints && row.entryPoints.length > 0 && <Chips items={row.entryPoints} />}</Td>
-      <Td>
+      </AriaTd>
+      <AriaTd>{row.entryPoints && row.entryPoints.length > 0 && <Chips items={row.entryPoints} />}</AriaTd>
+      <AriaTd>
         <TooltipText text={row.name} isTruncated />
-      </Td>
-      <Td>
+      </AriaTd>
+      <AriaTd>
         <TooltipText text={row.service} isTruncated />
-      </Td>
-      <Td>
+      </AriaTd>
+      <AriaTd>
         <Tooltip label={row.provider}>
           <Box css={{ width: '32px', height: '32px' }}>
             <ProviderIcon name={row.provider} />
           </Box>
         </Tooltip>
-      </Td>
-      <Td>
+      </AriaTd>
+      <AriaTd>
         <TooltipText text={row.priority} isTruncated variant="short" />
-      </Td>
+      </AriaTd>
     </AnimatedRow>
   )
   return TcpRoutersRenderRow
@@ -84,8 +84,8 @@ export const TcpRoutersRender = ({
   return (
     <>
       <AnimatedTable>
-        <Thead>
-          <Tr>
+        <AriaThead>
+          <AriaTr>
             <SortableTh label="Status" css={{ width: '40px' }} isSortable sortByValue="status" />
             <SortableTh label="TLS" />
             <SortableTh label="Rule" isSortable sortByValue="rule" />
@@ -94,19 +94,19 @@ export const TcpRoutersRender = ({
             <SortableTh label="Service" isSortable sortByValue="service" />
             <SortableTh label="Provider" css={{ width: '40px' }} isSortable sortByValue="provider" />
             <SortableTh label="Priority" css={{ width: '64px' }} isSortable sortByValue="priority" />
-          </Tr>
-        </Thead>
+          </AriaTr>
+        </AriaThead>
         <AnimatedTBody pageCount={pageCount} isMounted={isMounted}>
           {pages}
         </AnimatedTBody>
         {(isEmpty || !!error) && (
-          <Tfoot>
-            <Tr>
-              <Td colSpan={100}>
+          <AriaTfoot>
+            <AriaTr>
+              <AriaTd fullColSpan>
                 <EmptyPlaceholder message={error ? 'Failed to fetch data' : 'No data available'} />
-              </Td>
-            </Tr>
-          </Tfoot>
+              </AriaTd>
+            </AriaTr>
+          </AriaTfoot>
         )}
       </AnimatedTable>
       <Flex css={{ height: 60, alignItems: 'center', justifyContent: 'center' }} ref={infiniteRef}>

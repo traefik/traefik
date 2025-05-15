@@ -1,4 +1,4 @@
-import { Box, Flex, Td, Tfoot, Thead, Tr } from '@traefiklabs/faency'
+import { AriaTd, AriaTfoot, AriaThead, AriaTr, Box, Flex } from '@traefiklabs/faency'
 import { useEffect, useMemo, useState } from 'react'
 import useInfiniteScroll from 'react-infinite-scroll-hook'
 import { useSearchParams } from 'react-router-dom'
@@ -23,26 +23,26 @@ export const makeRowRender = (): RenderRowType => {
 
     return (
       <AnimatedRow key={row.name} to={`/tcp/middlewares/${row.name}`}>
-        <Td>
+        <AriaTd>
           <Tooltip label={row.status}>
             <Box css={{ width: '32px', height: '32px' }}>
               <ResourceStatus status={row.status} />
             </Box>
           </Tooltip>
-        </Td>
-        <Td>
+        </AriaTd>
+        <AriaTd>
           <TooltipText text={row.name} />
-        </Td>
-        <Td>
+        </AriaTd>
+        <AriaTd>
           <TooltipText text={middlewareType} />
-        </Td>
-        <Td>
+        </AriaTd>
+        <AriaTd>
           <Tooltip label={row.provider}>
             <Box css={{ width: '32px', height: '32px' }}>
               <ProviderIcon name={row.provider} />
             </Box>
           </Tooltip>
-        </Td>
+        </AriaTd>
       </AnimatedRow>
     )
   }
@@ -71,25 +71,25 @@ export const TcpMiddlewaresRender = ({
   return (
     <>
       <AnimatedTable>
-        <Thead>
-          <Tr>
+        <AriaThead>
+          <AriaTr>
             <SortableTh label="Status" css={{ width: '40px' }} isSortable sortByValue="status" />
             <SortableTh label="Name" isSortable sortByValue="name" />
             <SortableTh label="Type" isSortable sortByValue="type" />
             <SortableTh label="Provider" css={{ width: '40px' }} isSortable sortByValue="provider" />
-          </Tr>
-        </Thead>
+          </AriaTr>
+        </AriaThead>
         <AnimatedTBody pageCount={pageCount} isMounted={isMounted}>
           {pages}
         </AnimatedTBody>
         {(isEmpty || !!error) && (
-          <Tfoot>
-            <Tr>
-              <Td colSpan={100}>
+          <AriaTfoot>
+            <AriaTr>
+              <AriaTd fullColSpan>
                 <EmptyPlaceholder message={error ? 'Failed to fetch data' : 'No data available'} />
-              </Td>
-            </Tr>
-          </Tfoot>
+              </AriaTd>
+            </AriaTr>
+          </AriaTfoot>
         )}
       </AnimatedTable>
       <Flex css={{ height: 60, alignItems: 'center', justifyContent: 'center' }} ref={infiniteRef}>
