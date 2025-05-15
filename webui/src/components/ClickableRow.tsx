@@ -1,6 +1,6 @@
 import { AriaTr, VariantProps } from '@traefiklabs/faency'
-import { ComponentProps, forwardRef, KeyboardEvent, MouseEvent, ReactNode, useCallback } from 'react'
-import { useHref, useNavigate } from 'react-router-dom'
+import { ComponentProps, forwardRef, ReactNode } from 'react'
+import { useHref } from 'react-router-dom'
 
 type ClickableRowProps = ComponentProps<typeof AriaTr> &
   VariantProps<typeof AriaTr> & {
@@ -9,40 +9,10 @@ type ClickableRowProps = ComponentProps<typeof AriaTr> &
   }
 
 const ClickableRow = forwardRef<HTMLTableRowElement | null, ClickableRowProps>(({ children, to, ...props }, ref) => {
-  const navigate = useNavigate()
   const href = useHref(to)
 
-  const onClick = useCallback(
-    (event: MouseEvent<HTMLTableRowElement>) => {
-      if (event.ctrlKey || event.metaKey) {
-        window.open(href, '_blank', 'noopener,noreferrer')
-        return
-      }
-
-      event.preventDefault()
-      navigate(to)
-    },
-    [href, navigate, to],
-  )
-
-  const onKeyDown = (event: KeyboardEvent<HTMLTableRowElement>) => {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault()
-      navigate(to)
-    }
-  }
-
   return (
-    <AriaTr
-      ref={ref}
-      role="link"
-      tabIndex={0}
-      onClick={onClick}
-      onKeyDown={onKeyDown}
-      interactive
-      css={{ cursor: 'pointer', ...props.css }}
-      {...props}
-    >
+    <AriaTr as="a" href={href} interactive ref={ref} css={{ textDecoration: 'none', ...props.css }} {...props}>
       {children}
     </AriaTr>
   )
