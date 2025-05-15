@@ -82,8 +82,8 @@ describe('<TcpServicePage />', () => {
     expect(serversList.innerHTML).toContain('http://10.0.1.12:80')
 
     const routersTable = getByTestId('routers-table')
-    const tableBody = routersTable.querySelector('tbody')
-    expect(tableBody?.querySelectorAll('tr').length).toBe(1)
+    const tableBody = routersTable.querySelectorAll('div[role="rowgroup"]')[1]
+    expect(tableBody?.querySelectorAll('a[role="row"]')).toHaveLength(1)
     expect(tableBody?.innerHTML).toContain('router-test1@docker')
   })
 
@@ -135,8 +135,8 @@ describe('<TcpServicePage />', () => {
     expect(serversList.innerHTML).toContain('http://10.0.1.12:81')
 
     const routersTable = getByTestId('routers-table')
-    const tableBody = routersTable.querySelector('tbody')
-    expect(tableBody?.querySelectorAll('tr').length).toBe(2)
+    const tableBody = routersTable.querySelectorAll('div[role="rowgroup"]')[1]
+    expect(tableBody?.querySelectorAll('a[role="row"]')).toHaveLength(2)
     expect(tableBody?.innerHTML).toContain('router-test1@docker')
     expect(tableBody?.innerHTML).toContain('router-test2@docker')
   })

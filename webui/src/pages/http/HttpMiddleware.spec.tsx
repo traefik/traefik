@@ -66,8 +66,8 @@ describe('<HttpMiddlewarePage />', () => {
     expect(middlewareCard.innerHTML).toContain('/foo')
 
     const routersTable = getByTestId('routers-table')
-    const tableBody = routersTable.querySelector('tbody')
-    expect(tableBody?.querySelectorAll('tr').length).toBe(1)
+    const tableBody = routersTable.querySelectorAll('div[role="rowgroup"]')[1]
+    expect(tableBody?.querySelectorAll('a[role="row"]')).toHaveLength(1)
     expect(tableBody?.innerHTML).toContain('router-test-simple@docker')
   })
 
@@ -109,8 +109,8 @@ describe('<HttpMiddlewarePage />', () => {
     expect(middlewareCard.innerHTML).toContain('jwtAuth')
 
     const routersTable = getByTestId('routers-table')
-    const tableBody = routersTable.querySelector('tbody')
-    expect(tableBody?.querySelectorAll('tr').length).toBe(1)
+    const tableBody = routersTable.querySelectorAll('div[role="rowgroup"]')[1]
+    expect(tableBody?.querySelectorAll('a[role="row"]')).toHaveLength(1)
     expect(tableBody?.innerHTML).toContain('router-test-plugin@docker')
   })
 
@@ -432,8 +432,8 @@ describe('<HttpMiddlewarePage />', () => {
     ])
 
     const routersTable = getByTestId('routers-table')
-    const tableBody = routersTable.querySelector('tbody')
-    expect(tableBody?.querySelectorAll('tr').length).toBe(1)
+    const tableBody = routersTable.querySelectorAll('div[role="rowgroup"]')[1]
+    expect(tableBody?.querySelectorAll('a[role="row"]')).toHaveLength(1)
     expect(tableBody?.innerHTML).toContain('router-test-complex@docker')
   })
 

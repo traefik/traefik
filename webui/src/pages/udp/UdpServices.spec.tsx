@@ -40,25 +40,26 @@ describe('<UdpServicesPage />', () => {
 
     expect(mock).toHaveBeenCalled()
     expect(getByTestId('UDP Services page')).toBeInTheDocument()
-    expect(container.querySelectorAll('tbody tr')).toHaveLength(3)
+    const tbody = container.querySelectorAll('div[role="table"] > div[role="rowgroup"]')[1]
+    expect(tbody.querySelectorAll('a[role="row"]')).toHaveLength(3)
 
-    expect(container.querySelectorAll('tbody tr')[0].innerHTML).toContain('testid="enabled"')
-    expect(container.querySelectorAll('tbody tr')[0].innerHTML).toContain('udp-all@docker00')
-    expect(container.querySelectorAll('tbody tr')[0].innerHTML).toContain('loadbalancer')
-    expect(container.querySelectorAll('tbody tr')[0].innerHTML).toContain('1')
-    expect(container.querySelectorAll('tbody tr')[0].innerHTML).toContain('img alt="docker"')
+    expect(tbody.querySelectorAll('a[role="row"]')[0].innerHTML).toContain('testid="enabled"')
+    expect(tbody.querySelectorAll('a[role="row"]')[0].innerHTML).toContain('udp-all@docker00')
+    expect(tbody.querySelectorAll('a[role="row"]')[0].innerHTML).toContain('loadbalancer')
+    expect(tbody.querySelectorAll('a[role="row"]')[0].innerHTML).toContain('1')
+    expect(tbody.querySelectorAll('a[role="row"]')[0].innerHTML).toContain('img alt="docker"')
 
-    expect(container.querySelectorAll('tbody tr')[1].innerHTML).toContain('testid="disabled"')
-    expect(container.querySelectorAll('tbody tr')[1].innerHTML).toContain('udp-all@docker01')
-    expect(container.querySelectorAll('tbody tr')[1].innerHTML).toContain('loadbalancer')
-    expect(container.querySelectorAll('tbody tr')[1].innerHTML).toContain('1')
-    expect(container.querySelectorAll('tbody tr')[1].innerHTML).toContain('img alt="docker"')
+    expect(tbody.querySelectorAll('a[role="row"]')[1].innerHTML).toContain('testid="disabled"')
+    expect(tbody.querySelectorAll('a[role="row"]')[1].innerHTML).toContain('udp-all@docker01')
+    expect(tbody.querySelectorAll('a[role="row"]')[1].innerHTML).toContain('loadbalancer')
+    expect(tbody.querySelectorAll('a[role="row"]')[1].innerHTML).toContain('1')
+    expect(tbody.querySelectorAll('a[role="row"]')[1].innerHTML).toContain('img alt="docker"')
 
-    expect(container.querySelectorAll('tbody tr')[2].innerHTML).toContain('testid="enabled"')
-    expect(container.querySelectorAll('tbody tr')[2].innerHTML).toContain('udp-all@docker02')
-    expect(container.querySelectorAll('tbody tr')[2].innerHTML).toContain('loadbalancer')
-    expect(container.querySelectorAll('tbody tr')[2].innerHTML).toContain('1')
-    expect(container.querySelectorAll('tbody tr')[2].innerHTML).toContain('img alt="docker"')
+    expect(tbody.querySelectorAll('a[role="row"]')[2].innerHTML).toContain('testid="enabled"')
+    expect(tbody.querySelectorAll('a[role="row"]')[2].innerHTML).toContain('udp-all@docker02')
+    expect(tbody.querySelectorAll('a[role="row"]')[2].innerHTML).toContain('loadbalancer')
+    expect(tbody.querySelectorAll('a[role="row"]')[2].innerHTML).toContain('1')
+    expect(tbody.querySelectorAll('a[role="row"]')[2].innerHTML).toContain('img alt="docker"')
   })
 
   it('should render "No data available" when the API returns empty array', async () => {
@@ -74,7 +75,8 @@ describe('<UdpServicesPage />', () => {
       />,
     )
     expect(() => getByTestId('loading')).toThrow('Unable to find an element by: [data-testid="loading"]')
-    expect(container.querySelectorAll('tfoot tr')).toHaveLength(1)
-    expect(container.querySelectorAll('tfoot tr')[0].innerHTML).toContain('No data available')
+    const tfoot = container.querySelectorAll('div[role="table"] > div[role="rowgroup"]')[2]
+    expect(tfoot.querySelectorAll('div[role="row"]')).toHaveLength(1)
+    expect(tfoot.querySelectorAll('div[role="row"]')[0].innerHTML).toContain('No data available')
   })
 })

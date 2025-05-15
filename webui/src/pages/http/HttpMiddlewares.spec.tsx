@@ -80,32 +80,33 @@ describe('<HttpMiddlewaresPage />', () => {
 
     expect(mock).toHaveBeenCalled()
     expect(getByTestId('HTTP Middlewares page')).toBeInTheDocument()
-    expect(container.querySelectorAll('tbody tr')).toHaveLength(5)
+    const tbody = container.querySelectorAll('div[role="table"] > div[role="rowgroup"]')[1]
+    expect(tbody.querySelectorAll('a[role="row"]')).toHaveLength(5)
 
-    expect(container.querySelectorAll('tbody tr')[0].innerHTML).toContain('testid="enabled"')
-    expect(container.querySelectorAll('tbody tr')[0].innerHTML).toContain('add-foo@docker')
-    expect(container.querySelectorAll('tbody tr')[0].innerHTML).toContain('addprefix')
-    expect(container.querySelectorAll('tbody tr')[0].innerHTML).toContain('img alt="docker"')
+    expect(tbody.querySelectorAll('a[role="row"]')[0].innerHTML).toContain('testid="enabled"')
+    expect(tbody.querySelectorAll('a[role="row"]')[0].innerHTML).toContain('add-foo@docker')
+    expect(tbody.querySelectorAll('a[role="row"]')[0].innerHTML).toContain('addprefix')
+    expect(tbody.querySelectorAll('a[role="row"]')[0].innerHTML).toContain('img alt="docker"')
 
-    expect(container.querySelectorAll('tbody tr')[1].innerHTML).toContain('testid="disabled"')
-    expect(container.querySelectorAll('tbody tr')[1].innerHTML).toContain('middleware00@docker')
-    expect(container.querySelectorAll('tbody tr')[1].innerHTML).toContain('addprefix')
-    expect(container.querySelectorAll('tbody tr')[1].innerHTML).toContain('img alt="docker"')
+    expect(tbody.querySelectorAll('a[role="row"]')[1].innerHTML).toContain('testid="disabled"')
+    expect(tbody.querySelectorAll('a[role="row"]')[1].innerHTML).toContain('middleware00@docker')
+    expect(tbody.querySelectorAll('a[role="row"]')[1].innerHTML).toContain('addprefix')
+    expect(tbody.querySelectorAll('a[role="row"]')[1].innerHTML).toContain('img alt="docker"')
 
-    expect(container.querySelectorAll('tbody tr')[2].innerHTML).toContain('testid="enabled"')
-    expect(container.querySelectorAll('tbody tr')[2].innerHTML).toContain('middleware01@docker')
-    expect(container.querySelectorAll('tbody tr')[2].innerHTML).toContain('basicauth')
-    expect(container.querySelectorAll('tbody tr')[2].innerHTML).toContain('img alt="docker"')
+    expect(tbody.querySelectorAll('a[role="row"]')[2].innerHTML).toContain('testid="enabled"')
+    expect(tbody.querySelectorAll('a[role="row"]')[2].innerHTML).toContain('middleware01@docker')
+    expect(tbody.querySelectorAll('a[role="row"]')[2].innerHTML).toContain('basicauth')
+    expect(tbody.querySelectorAll('a[role="row"]')[2].innerHTML).toContain('img alt="docker"')
 
-    expect(container.querySelectorAll('tbody tr')[3].innerHTML).toContain('testid="enabled"')
-    expect(container.querySelectorAll('tbody tr')[3].innerHTML).toContain('middleware02@docker')
-    expect(container.querySelectorAll('tbody tr')[3].innerHTML).toContain('buffering')
-    expect(container.querySelectorAll('tbody tr')[3].innerHTML).toContain('img alt="docker"')
+    expect(tbody.querySelectorAll('a[role="row"]')[3].innerHTML).toContain('testid="enabled"')
+    expect(tbody.querySelectorAll('a[role="row"]')[3].innerHTML).toContain('middleware02@docker')
+    expect(tbody.querySelectorAll('a[role="row"]')[3].innerHTML).toContain('buffering')
+    expect(tbody.querySelectorAll('a[role="row"]')[3].innerHTML).toContain('img alt="docker"')
 
-    expect(container.querySelectorAll('tbody tr')[4].innerHTML).toContain('testid="enabled"')
-    expect(container.querySelectorAll('tbody tr')[4].innerHTML).toContain('middleware03@docker')
-    expect(container.querySelectorAll('tbody tr')[4].innerHTML).toContain('chain')
-    expect(container.querySelectorAll('tbody tr')[4].innerHTML).toContain('img alt="docker"')
+    expect(tbody.querySelectorAll('a[role="row"]')[4].innerHTML).toContain('testid="enabled"')
+    expect(tbody.querySelectorAll('a[role="row"]')[4].innerHTML).toContain('middleware03@docker')
+    expect(tbody.querySelectorAll('a[role="row"]')[4].innerHTML).toContain('chain')
+    expect(tbody.querySelectorAll('a[role="row"]')[4].innerHTML).toContain('img alt="docker"')
   })
 
   it('should render "No data available" when the API returns empty array', async () => {
@@ -121,7 +122,8 @@ describe('<HttpMiddlewaresPage />', () => {
       />,
     )
     expect(() => getByTestId('loading')).toThrow('Unable to find an element by: [data-testid="loading"]')
-    expect(container.querySelectorAll('tfoot tr')).toHaveLength(1)
-    expect(container.querySelectorAll('tfoot tr')[0].innerHTML).toContain('No data available')
+    const tfoot = container.querySelectorAll('div[role="table"] > div[role="rowgroup"]')[2]
+    expect(tfoot.querySelectorAll('div[role="row"]')).toHaveLength(1)
+    expect(tfoot.querySelectorAll('div[role="row"]')[0].innerHTML).toContain('No data available')
   })
 })

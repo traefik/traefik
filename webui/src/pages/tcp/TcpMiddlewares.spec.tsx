@@ -33,17 +33,18 @@ describe('<TcpMiddlewaresPage />', () => {
 
     expect(mock).toHaveBeenCalled()
     expect(getByTestId('TCP Middlewares page')).toBeInTheDocument()
-    expect(container.querySelectorAll('tbody tr')).toHaveLength(2)
+    const tbody = container.querySelectorAll('div[role="table"] > div[role="rowgroup"]')[1]
+    expect(tbody.querySelectorAll('a[role="row"]')).toHaveLength(2)
 
-    expect(container.querySelectorAll('tbody tr')[0].innerHTML).toContain('testid="enabled"')
-    expect(container.querySelectorAll('tbody tr')[0].innerHTML).toContain('inFlightConn-foo@docker')
-    expect(container.querySelectorAll('tbody tr')[0].innerHTML).toContain('inFlightConn')
-    expect(container.querySelectorAll('tbody tr')[0].innerHTML).toContain('img alt="docker"')
+    expect(tbody.querySelectorAll('a[role="row"]')[0].innerHTML).toContain('testid="enabled"')
+    expect(tbody.querySelectorAll('a[role="row"]')[0].innerHTML).toContain('inFlightConn-foo@docker')
+    expect(tbody.querySelectorAll('a[role="row"]')[0].innerHTML).toContain('inFlightConn')
+    expect(tbody.querySelectorAll('a[role="row"]')[0].innerHTML).toContain('img alt="docker"')
 
-    expect(container.querySelectorAll('tbody tr')[1].innerHTML).toContain('testid="disabled"')
-    expect(container.querySelectorAll('tbody tr')[1].innerHTML).toContain('ipWhiteList@docker')
-    expect(container.querySelectorAll('tbody tr')[1].innerHTML).toContain('ipWhiteList')
-    expect(container.querySelectorAll('tbody tr')[1].innerHTML).toContain('img alt="docker"')
+    expect(tbody.querySelectorAll('a[role="row"]')[1].innerHTML).toContain('testid="disabled"')
+    expect(tbody.querySelectorAll('a[role="row"]')[1].innerHTML).toContain('ipWhiteList@docker')
+    expect(tbody.querySelectorAll('a[role="row"]')[1].innerHTML).toContain('ipWhiteList')
+    expect(tbody.querySelectorAll('a[role="row"]')[1].innerHTML).toContain('img alt="docker"')
   })
 
   it('should render "No data available" when the API returns empty array', async () => {
@@ -59,7 +60,8 @@ describe('<TcpMiddlewaresPage />', () => {
       />,
     )
     expect(() => getByTestId('loading')).toThrow('Unable to find an element by: [data-testid="loading"]')
-    expect(container.querySelectorAll('tfoot tr')).toHaveLength(1)
-    expect(container.querySelectorAll('tfoot tr')[0].innerHTML).toContain('No data available')
+    const tfoot = container.querySelectorAll('div[role="table"] > div[role="rowgroup"]')[2]
+    expect(tfoot.querySelectorAll('div[role="row"]')).toHaveLength(1)
+    expect(tfoot.querySelectorAll('div[role="row"]')[0].innerHTML).toContain('No data available')
   })
 })
