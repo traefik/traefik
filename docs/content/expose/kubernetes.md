@@ -6,11 +6,11 @@ This guide will help you expose your services securely through Traefik Proxy on 
 
 - A Kubernetes cluster with Traefik Proxy installed
 - `kubectl` configured to interact with your cluster
-- Completion of the Traefik Kubernetes Setup guide
+- Traefik deployed using the Traefik Kubernetes Setup guide
 
 ## Expose Your First HTTP Service
 
-Let's expose a simple HTTP service using the whoami application. This will demonstrate basic routing to a backend service.
+Let's expose a simple HTTP service using the [whoami](https://github.com/traefik/whoami) application. This will demonstrate basic routing to a backend service.
 
 First, create the deployment and service:
 
@@ -323,7 +323,7 @@ kubectl create secret tls whoami-tls --cert=tls.crt --key=tls.key
               group: ""
     ```
     
-    See the [Traefik Kubernetes Setup Guide](../setup/kubernetes.md) for complete installation details.
+    See the Traefik Kubernetes Setup Guide for complete installation details.
 
 ### Gateway API with TLS
 
@@ -994,5 +994,5 @@ Now that you understand the basics of exposing services with Traefik Proxy, you 
 - [Observability features](../reference/install-configuration/observability/metrics.md) for monitoring and debugging your Traefik deployment
 - [TCP services](../reference/routing-configuration/tcp/service.md)
 - [UDP services](../reference/routing-configuration/udp/service.md)
-
-You can also refer to the [Kubernetes Provider documentation](../providers/kubernetes-crd.md) for more details about the Kubernetes integration.
+- [Kubernetes Provider documentation](../reference/install-configuration/providers/kubernetes/kubernetes-crd.md) for more details about the Kubernetes integration.
+- [Gateway API provider documentation](../reference/install-configuration/providers/kubernetes/kubernetes-gateway.md) for more details about the Gateway API integration.
