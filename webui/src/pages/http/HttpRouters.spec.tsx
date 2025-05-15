@@ -44,7 +44,7 @@ describe('<HttpRoutersPage />', () => {
         name: 'server-secured@docker',
         provider: 'docker',
       },
-    ].map(makeRowRender(() => {}))
+    ].map(makeRowRender())
     const mock = vi
       .spyOn(useFetchWithPagination, 'default')
       .mockImplementation(() => useFetchWithPaginationMock({ pages }))

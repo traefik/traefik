@@ -1,7 +1,7 @@
 import { Box, Flex, styled, Table, Tbody, Td, Th, Tr, Thead } from '@traefiklabs/faency'
 import { orderBy } from 'lodash'
 import { useContext, useEffect, useMemo } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 
 import { SectionHeader } from 'components/resources/DetailSections'
 import SortableTh from 'components/tables/SortableTh'
@@ -95,8 +95,7 @@ export const UsedByRoutersSkeleton = () => (
 )
 
 export const UsedByRoutersSection = ({ data, protocol = 'http' }: UsedByRoutersSectionProps) => {
-  const navigate = useNavigate()
-  const renderRow = makeRowRender(navigate, protocol)
+  const renderRow = makeRowRender(protocol)
   const [searchParams] = useSearchParams()
   const { addToast } = useContext(ToastContext)
 

@@ -2,7 +2,7 @@ import { Box, Flex, Td, Tfoot, Thead, Tr } from '@traefiklabs/faency'
 import { useEffect, useMemo, useState } from 'react'
 import { FiShield } from 'react-icons/fi'
 import useInfiniteScroll from 'react-infinite-scroll-hook'
-import { NavigateFunction, useNavigate, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 
 import { AnimatedRow, AnimatedTable, AnimatedTBody } from 'components/AnimatedTable'
 import { Chips } from 'components/resources/DetailSections'
@@ -18,9 +18,9 @@ import useFetchWithPagination, { pagesResponseInterface, RenderRowType } from 'h
 import { EmptyPlaceholder } from 'layout/EmptyPlaceholder'
 import Page from 'layout/Page'
 
-export const makeRowRender = (navigate: NavigateFunction): RenderRowType => {
+export const makeRowRender = (): RenderRowType => {
   const TcpRoutersRenderRow = (row) => (
-    <AnimatedRow key={row.name} onClick={(): void => navigate(`/tcp/routers/${row.name}`)}>
+    <AnimatedRow key={row.name} to={`/tcp/routers/${row.name}`}>
       <Td>
         <Tooltip label={row.status}>
           <Box css={{ width: '32px', height: '32px' }}>
@@ -102,9 +102,9 @@ export const TcpRoutersRender = ({
         {(isEmpty || !!error) && (
           <Tfoot>
             <Tr>
-              <td colSpan={100}>
+              <Td colSpan={100}>
                 <EmptyPlaceholder message={error ? 'Failed to fetch data' : 'No data available'} />
-              </td>
+              </Td>
             </Tr>
           </Tfoot>
         )}
@@ -117,8 +117,7 @@ export const TcpRoutersRender = ({
 }
 
 export const TcpRouters = () => {
-  const navigate = useNavigate()
-  const renderRow = makeRowRender(navigate)
+  const renderRow = makeRowRender()
   const [searchParams] = useSearchParams()
 
   const query = useMemo(() => searchParamsToState(searchParams), [searchParams])

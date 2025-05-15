@@ -31,7 +31,7 @@ describe('<UdpServicesPage />', () => {
         provider: 'docker',
         type: 'loadbalancer',
       },
-    ].map(makeRowRender(() => {}))
+    ].map(makeRowRender())
     const mock = vi
       .spyOn(useFetchWithPagination, 'default')
       .mockImplementation(() => useFetchWithPaginationMock({ pages }))

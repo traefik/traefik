@@ -1,6 +1,6 @@
 import { Table, Tbody, Tr } from '@traefiklabs/faency'
 import { motion } from 'framer-motion'
-import { ComponentProps, ReactNode } from 'react'
+import { ReactNode } from 'react'
 
 import ClickableRow from './ClickableRow'
 
@@ -39,8 +39,6 @@ const rowVariants = {
 const CustomTable = motion.create(Table)
 const CustomBody = motion.create(Tbody)
 const CustomClickableRow = motion.create(ClickableRow)
-const FixedCustomClickableRow = CustomClickableRow as ComponentProps<typeof CustomClickableRow> &
-  ComponentProps<typeof ClickableRow>
 
 const CustomRow = motion.create(Tr)
 
@@ -74,15 +72,15 @@ export const AnimatedTBody = ({ pageCount, isMounted = true, children }: Animate
 
 type AnimatedRowType = {
   children: ReactNode
-  onClick?: () => void
+  to?: string
 }
 
-export const AnimatedRow = ({ children, onClick }: AnimatedRowType) => {
-  if (onClick) {
+export const AnimatedRow = ({ children, to }: AnimatedRowType) => {
+  if (to) {
     return (
-      <FixedCustomClickableRow onClick={onClick} variants={rowVariants}>
+      <CustomClickableRow to={to} variants={rowVariants}>
         {children}
-      </FixedCustomClickableRow>
+      </CustomClickableRow>
     )
   }
 
