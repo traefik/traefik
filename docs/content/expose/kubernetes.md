@@ -286,8 +286,8 @@ For the `/api` requests, you should see the response showing "API Service" in th
 Let's secure our service with HTTPS by adding TLS. We'll start with a self-signed certificate for local development.
 
 ### Create a Self-Signed Certificate
-
-1. Generate a self-signed certificate:
+ 
+Generate a self-signed certificate:
 
 ```bash
 openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
@@ -295,7 +295,7 @@ openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
   -subj "/CN=whoami.docker.localhost"
 ```
 
-2. Create a TLS secret in Kubernetes:
+Create a TLS secret in Kubernetes:
 
 ```bash
 kubectl create secret tls whoami-tls --cert=tls.crt --key=tls.key

@@ -139,7 +139,7 @@ Let's secure our service with HTTPS by adding TLS. We'll start with a self-signe
 
 ### Create a Self-Signed Certificate
 
-1. Generate a self-signed certificate:
+Generate a self-signed certificate:
 
 ```bash
 mkdir -p certs
@@ -148,7 +148,7 @@ openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
   -subj "/CN=*.docker.localhost"
 ```
 
-2. Create a directory for dynamic configuration and add a TLS configuration file:
+Create a directory for dynamic configuration and add a TLS configuration file:
 
 ```bash
 mkdir -p dynamic
@@ -160,7 +160,7 @@ tls:
 EOF
 ```
 
-3. Update your `docker-compose.yml` file with the following changes:
+Update your `docker-compose.yml` file with the following changes:
 
 ```yaml
 services:
@@ -279,7 +279,7 @@ docker compose up -d
 
 Now let's verify that our middlewares are working correctly:
 
-1. **Test the Secure Headers middleware**:
+Test the Secure Headers middleware:
 
 ```bash
 curl -k -I -H "Host: whoami.docker.localhost" https://localhost/
@@ -292,7 +292,7 @@ In the response headers, you should see security headers set by the middleware:
 - `X-XSS-Protection: 1; mode=block`
 - `Strict-Transport-Security` with the appropriate settings
 
-2. **Test the IP Allowlist middleware**:
+Test the IP Allowlist middleware:
 
 If your request comes from an IP that's in the allow list (e.g., 127.0.0.1), it should succeed:
 
@@ -308,7 +308,7 @@ Let's Encrypt provides free, automated TLS certificates. Let's configure Traefik
 
 Instead of using self-signed certificates, update your existing `docker-compose.yml` file with the following changes:
 
-1. Add the Let's Encrypt certificate resolver to the Traefik service command section:
+Add the Let's Encrypt certificate resolver to the Traefik service command section:
 
 ```yaml
 command:
@@ -328,7 +328,7 @@ command:
   - "--certificatesresolvers.le.acme.httpchallenge.entrypoint=web"
 ```
 
-2. Add a volume for Let's Encrypt certificates:
+Add a volume for Let's Encrypt certificates:
 
 ```yaml
 volumes:
@@ -336,27 +336,27 @@ volumes:
   - "./letsencrypt:/letsencrypt"
 ```
 
-3. Update your service labels to use the certificate resolver:
+Update your service labels to use the certificate resolver:
 
 ```yaml
 labels:
   - "traefik.http.routers.whoami.tls.certresolver=le"
 ```
 
-4. Do the same for any other services you want to secure:
+Do the same for any other services you want to secure:
 
 ```yaml
 labels:
   - "traefik.http.routers.whoami-api.tls.certresolver=le"
 ```
 
-5. Create a directory for storing Let's Encrypt certificates:
+Create a directory for storing Let's Encrypt certificates:
 
 ```bash
 mkdir -p letsencrypt
 ```
 
-6. Apply the changes:
+Apply the changes:
 
 ```bash
 docker compose up -d

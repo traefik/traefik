@@ -121,7 +121,7 @@ Let's secure our service with HTTPS by adding TLS. We'll start with a self-signe
 
 ### Create a Self-Signed Certificate 
 
-1. Generate a self-signed certificate and dynamic config file to tell Traefik where the cert lives:
+Generate a self-signed certificate and dynamic config file to tell Traefik where the cert lives:
 
 ```bash
 mkdir -p certs
@@ -140,7 +140,7 @@ tls:
 EOF
 ```
 
-2. Create a Docker config for the certificate files:
+Create a Docker config for the certificate files:
 
 ```bash
 docker config create swarm-cert.crt certs/local.crt
@@ -148,7 +148,7 @@ docker config create swarm-cert.key certs/local.key
 docker config create swarm-tls.yml certs/tls.yml
 ```
 
-3. Update your `docker-compose.yml` file with the following changes:
+Update your `docker-compose.yml` file with the following changes:
 
 ```yaml
 # Add to the Traefik command section:
@@ -170,7 +170,7 @@ configs:
     file: ./certs/tls.yml
 ```
 
-4. Deploy the stack:
+Deploy the stack:
 
 ```bash
 docker stack deploy -c docker-compose.yml traefik
@@ -226,7 +226,7 @@ docker stack deploy -c docker-compose.yml traefik
 
 Now let's verify that our middlewares are working correctly:
 
-1. **Test the Secure Headers middleware**:
+Test the Secure Headers middleware:
 
 ```bash
 curl -k -I -H "Host: whoami.swarm.localhost" https://localhost/
@@ -239,7 +239,7 @@ In the response headers, you should see security headers set by the middleware:
 - `X-XSS-Protection: 1; mode=block`
 - `Strict-Transport-Security` with the appropriate settings
 
-2. **Test the IP Allowlist middleware**:
+Test the IP Allowlist middleware:
 
 If your request comes from an IP that's in the allow list (e.g., 127.0.0.1), it should succeed:
 
@@ -255,7 +255,7 @@ Let's Encrypt provides free, automated TLS certificates. Let's configure Traefik
 
 Instead of using self-signed certificates, update your existing `docker-compose.yml` file with the following changes:
 
-1. Add the Let's Encrypt certificate resolver to the Traefik service command section:
+Add the Let's Encrypt certificate resolver to the Traefik service command section:
 
 ```yaml
 command:
@@ -266,7 +266,7 @@ command:
   - "--certificatesresolvers.le.acme.httpchallenge.entrypoint=web"
 ```
 
-2. Add a volume for Let's Encrypt certificates:
+Add a volume for Let's Encrypt certificates:
 
 ```yaml
 volumes:
@@ -274,7 +274,7 @@ volumes:
   - letsencrypt:/letsencrypt
 ```
 
-3. Update your service labels to use the certificate resolver:
+Update your service labels to use the certificate resolver:
 
 ```yaml
 labels:
@@ -282,7 +282,7 @@ labels:
   - "traefik.http.routers.whoami.tls.certresolver=le"
 ```
 
-4. Do the same for any other services you want to secure:
+Do the same for any other services you want to secure:
 
 ```yaml
 labels:
@@ -290,7 +290,7 @@ labels:
   - "traefik.http.routers.whoami-api.tls.certresolver=le"
 ```
 
-5. Create a named volume for storing Let's Encrypt certificates by adding to the volumes section:
+Create a named volume for storing Let's Encrypt certificates by adding to the volumes section:
 
 ```yaml
 volumes:
@@ -299,7 +299,7 @@ volumes:
     driver: local
 ```
 
-6. Apply the changes:
+Apply the changes:
 
 ```bash
 docker stack deploy -c docker-compose.yml traefik
