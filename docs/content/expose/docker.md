@@ -441,7 +441,7 @@ In this guide, you've learned how to:
 - Expose HTTP services through Traefik in Docker
 - Set up path-based routing to direct traffic to different backend services
 - Secure your services with TLS using self-signed certificates
-- Add security with middlewares like secure headers and IP allowlisting
+- Add security with middlewares like secure headers and IP allow listing
 - Automate certificate management with Let's Encrypt
 - Implement sticky sessions for stateful applications
 
@@ -454,6 +454,6 @@ Now that you understand the basics of exposing services with Traefik Proxy, you 
 - [Advanced routing options](../reference/routing-configuration/http/router/rules-and-priority.md) like query parameter matching, header-based routing, and more
 - [Additional middlewares](../reference/routing-configuration/http/middlewares/overview.md) for authentication, rate limiting, and request modifications
 - [Observability features](../reference/install-configuration/observability/metrics.md) for monitoring and debugging your Traefik deployment
-- [TCP services](../reference/routing-configuration/tcp/service.md)
-- [UDP services](../reference/routing-configuration/udp/service.md)
+- [TCP services](../reference/routing-configuration/tcp/service.md) for exposing TCP services
+- [UDP services](../reference/routing-configuration/udp/service.md) for exposing UDP services
 - [Docker provider documentation](../reference/install-configuration/providers/docker.md) for more details about the Docker integration
