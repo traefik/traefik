@@ -66,8 +66,8 @@ export const RouterStructure = ({ data, protocol = 'http' }: DetailProps) => {
           icon={<FiLayers size={20} />}
           title={`${protocol.toUpperCase()} Middlewares`}
           cards={data.middlewares?.map((mw) => ({
-            title: 'middleware',
-            description: parseMiddlewareType(mw),
+            title: parseMiddlewareType(mw) ?? 'middleware',
+            description: mw.name,
             link: `/${protocol}/middlewares/${mw.name}`,
           }))}
         />
