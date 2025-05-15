@@ -1,3 +1,47 @@
+## [v3.4.0](https://github.com/traefik/traefik/tree/v3.4.0) (2025-05-05)
+[All Commits](https://github.com/traefik/traefik/compare/v3.3.0-rc1...v3.4.0)
+
+**Enhancements:**
+- **[acme]** Add acme.profile and acme.emailAddresses options ([#11597](https://github.com/traefik/traefik/pull/11597) by [ldez](https://github.com/ldez))
+- **[docker,ecs,docker/swarm,consulcatalog,nomad]** Allow configuring server URLs with label providers ([#11374](https://github.com/traefik/traefik/pull/11374) by [yelvert](https://github.com/yelvert))
+- **[k8s/crd]** Improve CEL validation on Ingress CRD resources ([#11311](https://github.com/traefik/traefik/pull/11311) by [mloiseleur](https://github.com/mloiseleur))
+- **[k8s/crd]** Remove default load-balancing strategy from CRD ([#11701](https://github.com/traefik/traefik/pull/11701) by [kevinpollet](https://github.com/kevinpollet))
+- **[k8s/crd]** Restrict regex validation of HTTP status codes for Ingress CRD resources ([#11670](https://github.com/traefik/traefik/pull/11670) by [jnoordsij](https://github.com/jnoordsij))
+- **[k8s/gatewayapi]** Set rule priority in Gateway API TLSRoute ([#11443](https://github.com/traefik/traefik/pull/11443) by [augustozanellato](https://github.com/augustozanellato))
+- **[k8s/ingress]** Add ingress status for ClusterIP and NodePort Service Type ([#11100](https://github.com/traefik/traefik/pull/11100) by [mlec1](https://github.com/mlec1))
+- **[middleware,authentication]** Add option to preserve request method in forwardAuth ([#11473](https://github.com/traefik/traefik/pull/11473) by [an09mous](https://github.com/an09mous))
+- **[middleware]** Support rewriting status codes in error page middleware ([#11520](https://github.com/traefik/traefik/pull/11520) by [sevensolutions](https://github.com/sevensolutions))
+- **[middleware]** Add Redis rate limiter ([#10211](https://github.com/traefik/traefik/pull/10211) by [longquan0104](https://github.com/longquan0104))
+- **[service]** Add p2c load-balancing strategy for servers load-balancer ([#11547](https://github.com/traefik/traefik/pull/11547) by [rtribotte](https://github.com/rtribotte))
+- **[sticky-session]** Support domain configuration for sticky cookies ([#11556](https://github.com/traefik/traefik/pull/11556) by [jleal52](https://github.com/jleal52))
+- **[tls,k8s/crd,service]** Allow root CA to be added through config maps ([#11475](https://github.com/traefik/traefik/pull/11475) by [Nelwhix](https://github.com/Nelwhix))
+- **[tls]** Add support to disable session ticket ([#11609](https://github.com/traefik/traefik/pull/11609) by [avdhoot](https://github.com/avdhoot))
+- **[udp]** Add support for UDP routing in systemd socket activation ([#11022](https://github.com/traefik/traefik/pull/11022) by [tsiid](https://github.com/tsiid))
+- **[webui]** Add auto webui theme option and default to it ([#11455](https://github.com/traefik/traefik/pull/11455) by [zizzfizzix](https://github.com/zizzfizzix))
+- Replace experimental maps and slices with stdlib ([#11350](https://github.com/traefik/traefik/pull/11350) by [Juneezee](https://github.com/Juneezee))
+- Bump github.com/redis/go-redis/v9 to v9.7.3 ([#11687](https://github.com/traefik/traefik/pull/11687) by [kevinpollet](https://github.com/kevinpollet))
+
+**Documentation:**
+- Prepare release v3.4.0-rc1 ([#11654](https://github.com/traefik/traefik/pull/11654) by [kevinpollet](https://github.com/kevinpollet))
+- Prepare release v3.4.0-rc2 ([#11707](https://github.com/traefik/traefik/pull/11707) by [rtribotte](https://github.com/rtribotte))
+- Deprecate defaultRuleSyntax and ruleSyntax options ([#11619](https://github.com/traefik/traefik/pull/11619) by [rtribotte](https://github.com/rtribotte))
+
+**Misc:**
+- Merge branch v3.3 into master ([#11653](https://github.com/traefik/traefik/pull/11653) by [kevinpollet](https://github.com/kevinpollet))
+- Merge branch v3.3 into master ([#11595](https://github.com/traefik/traefik/pull/11595) by [kevinpollet](https://github.com/kevinpollet))
+- Merge branch v3.3 into master ([#11541](https://github.com/traefik/traefik/pull/11541) by [kevinpollet](https://github.com/kevinpollet))
+- Merge branch v3.3 into master ([#11504](https://github.com/traefik/traefik/pull/11504) by [kevinpollet](https://github.com/kevinpollet))
+- Merge branch v3.3 into master ([#11420](https://github.com/traefik/traefik/pull/11420) by [kevinpollet](https://github.com/kevinpollet))
+- Merge branch v3.3 into master ([#11394](https://github.com/traefik/traefik/pull/11394) by [mmatur](https://github.com/mmatur))
+- Merge branch v3.3 into v3.4 ([#11736](https://github.com/traefik/traefik/pull/11736) by [kevinpollet](https://github.com/kevinpollet))
+- Merge branch v3.3 into v3.4 ([#11705](https://github.com/traefik/traefik/pull/11705) by [kevinpollet](https://github.com/kevinpollet))
+
+## [v3.3.7](https://github.com/traefik/traefik/tree/v3.3.7) (2025-05-05)
+[All Commits](https://github.com/traefik/traefik/compare/v3.3.6...v3.3.7)
+
+**Bug fixes:**
+- **[logs,middleware,accesslogs]** Add SpanID and TraceID accessLogs fields only when tracing is enabled ([#11715](https://github.com/traefik/traefik/pull/11715) by [rtribotte](https://github.com/rtribotte))
+
 ## [v3.4.0-rc2](https://github.com/traefik/traefik/tree/v3.4.0-rc2) (2025-04-18)
 [All Commits](https://github.com/traefik/traefik/compare/v3.4.0-rc1...v3.4.0-rc2)
 
