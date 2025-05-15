@@ -209,34 +209,34 @@ spec:
         Data:
             Version: 3 (0x2)
             Serial Number: 1 (0x1)
-            Signature Algorithm: sha1WithRSAEncryption
-            Issuer: DC=org, DC=cheese, O=Cheese, O=Cheese 2, OU=Simple Signing Section, OU=Simple Signing Section 2, CN=Simple Signing CA, CN=Simple Signing CA 2, C=FR, C=US, L=TOULOUSE, L=LYON, ST=Signing State, ST=Signing State 2/emailAddress=simple@signing.com/emailAddress=simple2@signing.com
+            Signature Algorithm: sha256WithRSAEncryption
+            Issuer: DC=org, DC=cheese, O=Cheese, O=Cheese 2, OU=Simple Signing Section, OU=Simple Signing Section 2, CN=Simple Signing CA, CN=Simple Signing CA 2, C=FR, C=US, L=TOULOUSE, L=LYON, ST=Signing State, ST=Signing State 2, emailAddress=simple@signing.com, emailAddress=simple2@signing.com
             Validity
-                Not Before: Dec  6 11:10:16 2018 GMT
-                Not After : Dec  5 11:10:16 2020 GMT
-            Subject: DC=org, DC=cheese, O=Cheese, O=Cheese 2, OU=Simple Signing Section, OU=Simple Signing Section 2, CN=*.example.org, CN=*.example.com, C=FR, C=US, L=TOULOUSE, L=LYON, ST=Cheese org state, ST=Cheese com statemailAddress=cert@example.org/emailAddress=cert@sexample.com
+                Not Before: May 15 04:13:46 2025 GMT
+                Not After : May 15 04:13:46 2026 GMT
+            Subject: DC=org, DC=cheese, O=Cheese, O=Cheese 2, OU=Simple Signing Section, OU=Simple Signing Section 2, CN=*.example.org, CN=*.example.com, C=FR, C=US, L=TOULOUSE, L=LYON, ST=Cheese org state, ST=Cheese com state, emailAddress=cert@example.org, emailAddress=cert@example.com
             Subject Public Key Info:
                 Public Key Algorithm: rsaEncryption
-                    RSA Public-Key: (2048 bit)
+                    Public-Key: (2048 bit)
                     Modulus:
-                        00:de:77:fa:8d:03:70:30:39:dd:51:1b:cc:60:db:
-                        a9:5a:13:b1:af:fe:2c:c6:38:9b:88:0a:0f:8e:d9:
-                        1b:a1:1d:af:0d:66:e4:13:5b:bc:5d:36:92:d7:5e:
-                        d0:fa:88:29:d3:78:e1:81:de:98:b2:a9:22:3f:bf:
-                        8a:af:12:92:63:d4:a9:c3:f2:e4:7e:d2:dc:a2:c5:
-                        39:1c:7a:eb:d7:12:70:63:2e:41:47:e0:f0:08:e8:
-                        dc:be:09:01:ec:28:09:af:35:d7:79:9c:50:35:d1:
-                        6b:e5:87:7b:34:f6:d2:31:65:1d:18:42:69:6c:04:
-                        11:83:fe:44:ae:90:92:2d:0b:75:39:57:62:e6:17:
-                        2f:47:2b:c7:53:dd:10:2d:c9:e3:06:13:d2:b9:ba:
-                        63:2e:3c:7d:83:6b:d6:89:c9:cc:9d:4d:bf:9f:e8:
-                        a3:7b:da:c8:99:2b:ba:66:d6:8e:f8:41:41:a0:c9:
-                        d0:5e:c8:11:a4:55:4a:93:83:87:63:04:63:41:9c:
-                        fb:68:04:67:c2:71:2f:f2:65:1d:02:5d:15:db:2c:
-                        d9:04:69:85:c2:7d:0d:ea:3b:ac:85:f8:d4:8f:0f:
-                        c5:70:b2:45:e1:ec:b2:54:0b:e9:f7:82:b4:9b:1b:
-                        2d:b9:25:d4:ab:ca:8f:5b:44:3e:15:dd:b8:7f:b7:
-                        ee:f9
+                        00:b3:97:21:03:dd:65:24:43:b2:a7:19:c6:63:42:
+                        9b:24:98:70:6b:d3:fc:1e:e2:7e:23:c4:92:4f:62:
+                        92:7f:c5:68:e4:78:f0:a5:de:b8:f7:37:dc:b4:72:
+                        b0:08:56:62:17:d5:f7:69:dd:94:8d:42:e1:c6:81:
+                        08:3f:7f:f3:40:47:e0:c6:b4:79:30:4b:a8:e7:00:
+                        56:ef:a3:28:27:bb:16:fe:33:24:7b:3a:9f:fd:72:
+                        be:46:46:fd:a7:99:b0:a2:8f:d6:9c:f8:8a:01:ba:
+                        a7:5f:f6:5b:aa:71:34:e2:7a:3b:13:ee:97:48:c8:
+                        02:16:fe:66:5b:3e:b0:47:2d:65:20:5f:6b:83:d1:
+                        51:11:1d:f9:9f:10:38:63:0a:ad:1a:1e:84:fc:95:
+                        f1:4f:2a:91:22:4e:5f:9f:46:47:73:5d:8b:19:3f:
+                        e0:1c:db:1d:13:3b:28:bc:d3:4b:73:28:a1:ad:24:
+                        6a:af:09:1a:f3:54:3c:f3:07:4e:ae:ba:03:89:2c:
+                        55:a4:99:92:d0:8a:ee:c9:54:b6:17:94:b8:76:16:
+                        89:02:97:83:09:79:4a:cc:60:0e:1e:b3:ec:d4:13:
+                        2c:af:0a:44:a8:7b:33:a2:c0:2f:5f:6b:cd:ed:b8:
+                        92:bb:6f:b6:00:bd:9d:13:23:5c:c1:6e:e0:6c:66:
+                        dd:97
                     Exponent: 65537 (0x10001)
             X509v3 extensions:
                 X509v3 Key Usage: critical
@@ -246,30 +246,31 @@ spec:
                 X509v3 Extended Key Usage:
                     TLS Web Server Authentication, TLS Web Client Authentication
                 X509v3 Subject Key Identifier:
-                    94:BA:73:78:A2:87:FB:58:28:28:CF:98:3B:C2:45:70:16:6E:29:2F
+                    92:11:9E:12:92:9D:0F:4E:72:7C:F2:35:32:C2:C7:27:0E:59:A1:90
                 X509v3 Authority Key Identifier:
-                    keyid:1E:52:A2:E8:54:D5:37:EB:D5:A8:1D:E4:C2:04:1D:37:E2:F7:70:03
-
+                    DirName:/DC=org/DC=cheese/O=Cheese/O=Cheese 2/OU=Simple Signing Section/OU=Simple Signing Section 2/CN=Simple Signing CA/CN=Simple Signing CA 2/C=FR/C=US/L=TOULOUSE/L=LYON/ST=Signing State/ST=Signing State 2/emailAddress=simple@signing.com
+                    serial:08:4A:00:44:82:3F:89:0F:B9:70:57:A1:88:47:05:BD:AD:9B:44:DA
                 X509v3 Subject Alternative Name:
                     DNS:*.example.org, DNS:*.example.net, DNS:*.example.com, IP Address:10.0.1.0, IP Address:10.0.1.2, email:test@example.org, email:test@example.net
-        Signature Algorithm: sha1WithRSAEncryption
-            76:6b:05:b0:0e:34:11:b1:83:99:91:dc:ae:1b:e2:08:15:8b:
-            16:b2:9b:27:1c:02:ac:b5:df:1b:d0:d0:75:a4:2b:2c:5c:65:
-            ed:99:ab:f7:cd:fe:38:3f:c3:9a:22:31:1b:ac:8c:1c:c2:f9:
-            5d:d4:75:7a:2e:72:c7:85:a9:04:af:9f:2a:cc:d3:96:75:f0:
-            8e:c7:c6:76:48:ac:45:a4:b9:02:1e:2f:c0:15:c4:07:08:92:
-            cb:27:50:67:a1:c8:05:c5:3a:b3:a6:48:be:eb:d5:59:ab:a2:
-            1b:95:30:71:13:5b:0a:9a:73:3b:60:cc:10:d0:6a:c7:e5:d7:
-            8b:2f:f9:2e:98:f2:ff:81:14:24:09:e3:4b:55:57:09:1a:22:
-            74:f1:f6:40:13:31:43:89:71:0a:96:1a:05:82:1f:83:3a:87:
-            9b:17:25:ef:5a:55:f2:2d:cd:0d:4d:e4:81:58:b6:e3:8d:09:
-            62:9a:0c:bd:e4:e5:5c:f0:95:da:cb:c7:34:2c:34:5f:6d:fc:
-            60:7b:12:5b:86:fd:df:21:89:3b:48:08:30:bf:67:ff:8c:e6:
-            9b:53:cc:87:36:47:70:40:3b:d9:90:2a:d2:d2:82:c6:9c:f5:
-            d1:d8:e0:e6:fd:aa:2f:95:7e:39:ac:fc:4e:d4:ce:65:b3:ec:
-            c6:98:8a:31
+        Signature Algorithm: sha256WithRSAEncryption
+        Signature Value:
+            7d:79:93:0b:0e:2c:d5:43:9a:e5:11:39:f4:fe:14:d5:b0:7f:
+            85:bc:c1:d9:f6:3f:e6:91:44:09:31:c0:c7:c6:6e:9a:6e:c4:
+            91:4f:02:6f:ee:d4:a1:8b:7c:76:16:f3:e0:65:1a:de:1c:6e:
+            06:65:67:8b:9e:ca:e9:d8:0a:52:34:c6:f4:78:5d:b1:07:7a:
+            d2:7d:c0:26:87:ad:2b:7e:cb:02:47:a3:7c:a9:10:b8:8a:6e:
+            11:6f:a7:39:0d:26:ed:d7:65:4a:39:4b:98:5d:62:34:04:33:
+            aa:1e:d5:c1:04:58:5a:a9:b6:0f:d5:34:da:e8:32:6f:db:39:
+            d5:9c:6c:8f:72:4d:d8:77:a7:23:3a:5b:56:41:6c:8b:e7:92:
+            cf:6d:72:1a:c1:12:e1:56:63:38:8a:97:9c:6e:74:d1:b5:29:
+            16:0d:c5:4e:11:a4:e6:3e:14:5e:14:8b:95:e7:c1:37:8d:dd:
+            83:2f:a4:f4:0f:0c:8a:57:d1:20:5e:61:c6:69:10:06:49:3d:
+            dc:2b:ec:fa:98:a9:a4:3b:19:21:7c:01:44:71:87:4b:b5:2e:
+            59:e1:9e:f8:fc:9f:35:e6:0c:f3:e8:22:ae:ab:d5:4b:43:a0:
+            a1:7e:c9:c1:04:27:47:29:b5:ee:d4:34:d7:8d:4a:80:b8:43:
+            48:32:1b:98
     -----BEGIN CERTIFICATE-----
-    MIIGWjCCBUKgAwIBAgIBATANBgkqhkiG9w0BAQUFADCCAYQxEzARBgoJkiaJk/Is
+    MIIH+jCCBuKgAwIBAgIBATANBgkqhkiG9w0BAQsFADCCAYQxEzARBgoJkiaJk/Is
     ZAEZFgNvcmcxFjAUBgoJkiaJk/IsZAEZFgZjaGVlc2UxDzANBgNVBAoMBkNoZWVz
     ZTERMA8GA1UECgwIQ2hlZXNlIDIxHzAdBgNVBAsMFlNpbXBsZSBTaWduaW5nIFNl
     Y3Rpb24xITAfBgNVBAsMGFNpbXBsZSBTaWduaW5nIFNlY3Rpb24gMjEaMBgGA1UE
@@ -277,31 +278,41 @@ spec:
     IDIxCzAJBgNVBAYTAkZSMQswCQYDVQQGEwJVUzERMA8GA1UEBwwIVE9VTE9VU0Ux
     DTALBgNVBAcMBExZT04xFjAUBgNVBAgMDVNpZ25pbmcgU3RhdGUxGDAWBgNVBAgM
     D1NpZ25pbmcgU3RhdGUgMjEhMB8GCSqGSIb3DQEJARYSc2ltcGxlQHNpZ25pbmcu
-    Y29tMSIwIAYJKoZIhvcNAQkBFhNzaW1wbGUyQHNpZ25pbmcuY29tMB4XDTE4MTIw
-    NjExMTAxNloXDTIwMTIwNTExMTAxNlowggF2MRMwEQYKCZImiZPyLGQBGRYDb3Jn
+    Y29tMSIwIAYJKoZIhvcNAQkBFhNzaW1wbGUyQHNpZ25pbmcuY29tMB4XDTI1MDUx
+    NTA0MTM0NloXDTI2MDUxNTA0MTM0NlowggF5MRMwEQYKCZImiZPyLGQBGRYDb3Jn
     MRYwFAYKCZImiZPyLGQBGRYGY2hlZXNlMQ8wDQYDVQQKDAZDaGVlc2UxETAPBgNV
     BAoMCENoZWVzZSAyMR8wHQYDVQQLDBZTaW1wbGUgU2lnbmluZyBTZWN0aW9uMSEw
-    HwYDVQQLDBhTaW1wbGUgU2lnbmluZyBTZWN0aW9uIDIxFTATBgNVBAMMDCouY2hl
-    ZXNlLm9yZzEVMBMGA1UEAwwMKi5jaGVlc2UuY29tMQswCQYDVQQGEwJGUjELMAkG
-    A1UEBhMCVVMxETAPBgNVBAcMCFRPVUxPVVNFMQ0wCwYDVQQHDARMWU9OMRkwFwYD
-    VQQIDBBDaGVlc2Ugb3JnIHN0YXRlMRkwFwYDVQQIDBBDaGVlc2UgY29tIHN0YXRl
-    MR4wHAYJKoZIhvcNAQkBFg9jZXJ0QGNoZWVzZS5vcmcxHzAdBgkqhkiG9w0BCQEW
-    EGNlcnRAc2NoZWVzZS5jb20wggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIB
-    AQDed/qNA3AwOd1RG8xg26laE7Gv/izGOJuICg+O2RuhHa8NZuQTW7xdNpLXXtD6
-    iCnTeOGB3piyqSI/v4qvEpJj1KnD8uR+0tyixTkceuvXEnBjLkFH4PAI6Ny+CQHs
-    KAmvNdd5nFA10Wvlh3s09tIxZR0YQmlsBBGD/kSukJItC3U5V2LmFy9HK8dT3RAt
-    yeMGE9K5umMuPH2Da9aJycydTb+f6KN72siZK7pm1o74QUGgydBeyBGkVUqTg4dj
-    BGNBnPtoBGfCcS/yZR0CXRXbLNkEaYXCfQ3qO6yF+NSPD8VwskXh7LJUC+n3grSb
-    Gy25JdSryo9bRD4V3bh/t+75AgMBAAGjgeAwgd0wDgYDVR0PAQH/BAQDAgWgMAkG
-    A1UdEwQCMAAwHQYDVR0lBBYwFAYIKwYBBQUHAwEGCCsGAQUFBwMCMB0GA1UdDgQW
-    BBSUunN4oof7WCgoz5g7wkVwFm4pLzAfBgNVHSMEGDAWgBQeUqLoVNU369WoHeTC
-    BB034vdwAzBhBgNVHREEWjBYggwqLmNoZWVzZS5vcmeCDCouY2hlZXNlLm5ldIIM
-    Ki5jaGVlc2UuY29thwQKAAEAhwQKAAECgQ90ZXN0QGNoZWVzZS5vcmeBD3Rlc3RA
-    Y2hlZXNlLm5ldDANBgkqhkiG9w0BAQUFAAOCAQEAdmsFsA40EbGDmZHcrhviCBWL
-    FrKbJxwCrLXfG9DQdaQrLFxl7Zmr983+OD/DmiIxG6yMHML5XdR1ei5yx4WpBK+f
-    KszTlnXwjsfGdkisRaS5Ah4vwBXEBwiSyydQZ6HIBcU6s6ZIvuvVWauiG5UwcRNb
-    CppzO2DMENBqx+XXiy/5Lpjy/4EUJAnjS1VXCRoidPH2QBMxQ4lxCpYaBYIfgzqH
-    mxcl71pV8i3NDU3kgVi2440JYpoMveTlXPCV2svHNCw0X238YHsSW4b93yGJO0gI
+    HwYDVQQLDBhTaW1wbGUgU2lnbmluZyBTZWN0aW9uIDIxFjAUBgNVBAMMDSouZXhh
+    bXBsZS5vcmcxFjAUBgNVBAMMDSouZXhhbXBsZS5jb20xCzAJBgNVBAYTAkZSMQsw
+    CQYDVQQGEwJVUzERMA8GA1UEBwwIVE9VTE9VU0UxDTALBgNVBAcMBExZT04xGTAX
+    BgNVBAgMEENoZWVzZSBvcmcgc3RhdGUxGTAXBgNVBAgMEENoZWVzZSBjb20gc3Rh
+    dGUxHzAdBgkqhkiG9w0BCQEWEGNlcnRAZXhhbXBsZS5vcmcxHzAdBgkqhkiG9w0B
+    CQEWEGNlcnRAZXhhbXBsZS5jb20wggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
+    AoIBAQCzlyED3WUkQ7KnGcZjQpskmHBr0/we4n4jxJJPYpJ/xWjkePCl3rj3N9y0
+    crAIVmIX1fdp3ZSNQuHGgQg/f/NAR+DGtHkwS6jnAFbvoygnuxb+MyR7Op/9cr5G
+    Rv2nmbCij9ac+IoBuqdf9luqcTTiejsT7pdIyAIW/mZbPrBHLWUgX2uD0VERHfmf
+    EDhjCq0aHoT8lfFPKpEiTl+fRkdzXYsZP+Ac2x0TOyi800tzKKGtJGqvCRrzVDzz
+    B06uugOJLFWkmZLQiu7JVLYXlLh2FokCl4MJeUrMYA4es+zUEyyvCkSoezOiwC9f
+    a83tuJK7b7YAvZ0TI1zBbuBsZt2XAgMBAAGjggJ8MIICeDAOBgNVHQ8BAf8EBAMC
+    BaAwCQYDVR0TBAIwADAdBgNVHSUEFjAUBggrBgEFBQcDAQYIKwYBBQUHAwIwHQYD
+    VR0OBBYEFJIRnhKSnQ9OcnzyNTLCxycOWaGQMIIBswYDVR0jBIIBqjCCAaahggGM
+    pIIBiDCCAYQxEzARBgoJkiaJk/IsZAEZFgNvcmcxFjAUBgoJkiaJk/IsZAEZFgZj
+    aGVlc2UxDzANBgNVBAoMBkNoZWVzZTERMA8GA1UECgwIQ2hlZXNlIDIxHzAdBgNV
+    BAsMFlNpbXBsZSBTaWduaW5nIFNlY3Rpb24xITAfBgNVBAsMGFNpbXBsZSBTaWdu
+    aW5nIFNlY3Rpb24gMjEaMBgGA1UEAwwRU2ltcGxlIFNpZ25pbmcgQ0ExHDAaBgNV
+    BAMME1NpbXBsZSBTaWduaW5nIENBIDIxCzAJBgNVBAYTAkZSMQswCQYDVQQGEwJV
+    UzERMA8GA1UEBwwIVE9VTE9VU0UxDTALBgNVBAcMBExZT04xFjAUBgNVBAgMDVNp
+    Z25pbmcgU3RhdGUxGDAWBgNVBAgMD1NpZ25pbmcgU3RhdGUgMjEhMB8GCSqGSIb3
+    DQEJARYSc2ltcGxlQHNpZ25pbmcuY29tMSIwIAYJKoZIhvcNAQkBFhNzaW1wbGUy
+    QHNpZ25pbmcuY29tghQISgBEgj+JD7lwV6GIRwW9rZtE2jBmBgNVHREEXzBdgg0q
+    LmV4YW1wbGUub3Jngg0qLmV4YW1wbGUubmV0gg0qLmV4YW1wbGUuY29thwQKAAEA
+    hwQKAAECgRB0ZXN0QGV4YW1wbGUub3JngRB0ZXN0QGV4YW1wbGUubmV0MA0GCSqG
+    SIb3DQEBCwUAA4IBAQB9eZMLDizVQ5rlETn0/hTVsH+FvMHZ9j/mkUQJMcDHxm6a
+    bsSRTwJv7tShi3x2FvPgZRreHG4GZWeLnsrp2ApSNMb0eF2xB3rSfcAmh60rfssC
+    R6N8qRC4im4Rb6c5DSbt12VKOUuYXWI0BDOqHtXBBFhaqbYP1TTa6DJv2znVnGyP
+    ck3Yd6cjOltWQWyL55LPbXIawRLhVmM4ipecbnTRtSkWDcVOEaTmPhReFIuV58E3
+    jd2DL6T0DwyKV9EgXmHGaRAGST3cK+z6mKmkOxkhfAFEcYdLtS5Z4Z74/J815gzz
+    6CKuq9VLQ6ChfsnBBCdHKbXu1DTXjUqAuENIMhuY
     -----END CERTIFICATE-----
     ```
 
@@ -362,5 +373,5 @@ If there are more than one certificate, they are separated by a `,`.
 The following example shows such a concatenation, when all the available fields are selected:
 
 ```text
-Subject="DC=org,DC=cheese,C=FR,C=US,ST=Cheese org state,ST=Cheese com state,L=TOULOUSE,L=LYON,O=Cheese,O=Cheese 2,CN=*.example.com";Issuer="DC=org,DC=cheese,C=FR,C=US,ST=Signing State,ST=Signing State 2,L=TOULOUSE,L=LYON,O=Cheese,O=Cheese 2,CN=Simple Signing CA 2";NB="1544094616";NA="1607166616";SAN="*.example.org,*.example.net,*.example.com,test@example.org,test@example.net,10.0.1.0,10.0.1.2"
+Subject="DC=org,DC=cheese,C=FR,C=US,ST=Cheese org state,ST=Cheese com state,L=TOULOUSE,L=LYON,O=Cheese,O=Cheese 2,CN=*.example.com";Issuer="DC=org,DC=cheese,C=FR,C=US,ST=Signing State,ST=Signing State 2,L=TOULOUSE,L=LYON,O=Cheese,O=Cheese 2,CN=Simple Signing CA 2";NB="1747282426";NA="1778818426"SAN="*.example.org,*.example.net,*.example.com,test@example.org,test@example.net,10.0.1.0,10.0.1.2"
 ```
