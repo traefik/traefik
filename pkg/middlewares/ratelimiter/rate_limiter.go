@@ -150,7 +150,7 @@ func (rl *rateLimiter) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	// ensuring independence between rate limiters,
 	// i.e., rate limit rules are only applied based on traffic
 	// where the rate limiter is active.
-	rlSource := rl.name + ":" + source
+	rlSource := fmt.Sprintf("%s:%s", rl.name, source)
 	delay, err := rl.limiter.Allow(ctx, rlSource)
 	if err != nil {
 		rl.logger.Error().Err(err).Msg("Could not insert/update bucket")
