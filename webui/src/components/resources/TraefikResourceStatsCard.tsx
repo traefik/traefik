@@ -1,5 +1,5 @@
 import { Box, Card, Flex, H3, Skeleton, styled, Text } from '@traefiklabs/faency'
-import { Chart, ArcElement } from 'chart.js'
+import { Chart as ChartJs, ArcElement, Tooltip } from 'chart.js'
 import { ReactNode, useCallback, useEffect, useState } from 'react'
 import { Doughnut } from 'react-chartjs-2'
 import { FaArrowRightLong } from 'react-icons/fa6'
@@ -7,7 +7,7 @@ import { Link as RouterLink } from 'react-router-dom'
 
 import Status, { colorByStatus } from './Status'
 
-Chart.register(ArcElement)
+ChartJs.register(ArcElement, Tooltip)
 
 const Link = styled(RouterLink, {
   textDecoration: 'none',
@@ -147,67 +147,67 @@ const TraefikResourceStatsCard = ({ title, errors, total, warnings, linkTo }: Tr
   if (!errors && !total && !warnings) return null
 
   return (
-    <Link to={linkTo as string}>
-      <StatsCard data-testid="card">
-        {title && (
-          <Flex css={{ pb: '$3', mb: '$2' }}>
-            {title && (
-              <Flex align="center" justify="space-between" css={{ flex: '1' }}>
-                <H3 css={{ fontSize: '$6' }}>{title}</H3>
+    <StatsCard data-testid="card">
+      {title && (
+        <Flex css={{ pb: '$3', mb: '$2' }}>
+          {title && (
+            <Flex align="center" justify="space-between" css={{ flex: '1' }}>
+              <H3 css={{ fontSize: '$6' }}>{title}</H3>
 
+              <Link to={linkTo as string}>
                 <Flex align="center" gap={1} css={{ color: '$linkBlue' }}>
                   <Text css={{ fontWeight: 500, color: '$linkBlue' }}>Explore</Text>
                   <FaArrowRightLong />
                 </Flex>
-              </Flex>
-            )}
-          </Flex>
-        )}
-        <Flex css={{ flex: '1' }}>
-          <Box css={{ width: '50%' }}>
-            <Doughnut data={data} options={options} />
-          </Box>
-          <Box css={{ width: '50%' }}>
-            <Flex css={{ alignItems: 'center', p: '$2' }}>
-              <Status status="enabled" />
-              <Flex css={{ flexDirection: 'column', flex: 1 }}>
-                <Text css={{ fontWeight: 600 }}>Success</Text>
-                <Text size={1} css={{ color: 'hsl(0, 0%, 56%)' }} data-testid="success-pc">
-                  {getSuccess(true)}%
-                </Text>
-              </Flex>
-              <Text size={5} css={{ fontWeight: 700 }} data-testid="success-count">
-                {getSuccess()}
-              </Text>
+              </Link>
             </Flex>
-            <Flex css={{ alignItems: 'center', p: '$2' }}>
-              <Status status="warning" />
-              <Flex css={{ flexDirection: 'column', flex: 1 }}>
-                <Text css={{ fontWeight: 600 }}>Warnings</Text>
-                <Text size={1} css={{ color: 'hsl(0, 0%, 56%)' }} data-testid="warnings-pc">
-                  {getWarnings(true)}%
-                </Text>
-              </Flex>
-              <Text size={5} css={{ fontWeight: 700 }} data-testid="warnings-count">
-                {getWarnings()}
-              </Text>
-            </Flex>
-            <Flex css={{ alignItems: 'center', p: '$2' }}>
-              <Status status="disabled" />
-              <Flex css={{ flexDirection: 'column', flex: 1 }}>
-                <Text css={{ fontWeight: 600 }}>Errors</Text>
-                <Text size={1} css={{ color: 'hsl(0, 0%, 56%)' }} data-testid="errors-pc">
-                  {getErrors(true)}%
-                </Text>
-              </Flex>
-              <Text size={5} css={{ fontWeight: 700 }} data-testid="errors-count">
-                {getErrors()}
-              </Text>
-            </Flex>
-          </Box>
+          )}
         </Flex>
-      </StatsCard>
-    </Link>
+      )}
+      <Flex css={{ flex: '1' }}>
+        <Box css={{ width: '50%' }}>
+          <Doughnut data={data} options={options} />
+        </Box>
+        <Box css={{ width: '50%' }}>
+          <Flex css={{ alignItems: 'center', p: '$2' }}>
+            <Status status="enabled" />
+            <Flex css={{ flexDirection: 'column', flex: 1 }}>
+              <Text css={{ fontWeight: 600 }}>Success</Text>
+              <Text size={1} css={{ color: 'hsl(0, 0%, 56%)' }} data-testid="success-pc">
+                {getSuccess(true)}%
+              </Text>
+            </Flex>
+            <Text size={5} css={{ fontWeight: 700 }} data-testid="success-count">
+              {getSuccess()}
+            </Text>
+          </Flex>
+          <Flex css={{ alignItems: 'center', p: '$2' }}>
+            <Status status="warning" />
+            <Flex css={{ flexDirection: 'column', flex: 1 }}>
+              <Text css={{ fontWeight: 600 }}>Warnings</Text>
+              <Text size={1} css={{ color: 'hsl(0, 0%, 56%)' }} data-testid="warnings-pc">
+                {getWarnings(true)}%
+              </Text>
+            </Flex>
+            <Text size={5} css={{ fontWeight: 700 }} data-testid="warnings-count">
+              {getWarnings()}
+            </Text>
+          </Flex>
+          <Flex css={{ alignItems: 'center', p: '$2' }}>
+            <Status status="disabled" />
+            <Flex css={{ flexDirection: 'column', flex: 1 }}>
+              <Text css={{ fontWeight: 600 }}>Errors</Text>
+              <Text size={1} css={{ color: 'hsl(0, 0%, 56%)' }} data-testid="errors-pc">
+                {getErrors(true)}%
+              </Text>
+            </Flex>
+            <Text size={5} css={{ fontWeight: 700 }} data-testid="errors-count">
+              {getErrors()}
+            </Text>
+          </Flex>
+        </Box>
+      </Flex>
+    </StatsCard>
   )
 }
 
