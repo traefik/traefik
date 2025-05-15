@@ -43,6 +43,7 @@ export default function SortableTh({ label, isSortable = false, sortByValue, ali
   }, [sortByValue, searchParams, setSearchParams])
 
   return (
+    // @ts-expect-error TODO: The CSS type isn't working, we need to investigate the issue.
     <AriaTh css={css}>
       <Flex align="center" css={wrapperStyle}>
         {isSortable ? (
