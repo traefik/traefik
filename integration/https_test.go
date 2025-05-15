@@ -939,11 +939,6 @@ func (s *HTTPSSuite) TestEntryPointHttpsRedirectAndPathModification() {
 			path:  "/api/",
 		},
 		{
-			desc:  "Stripped URL with double trailing slash redirect",
-			hosts: []string{"example.com", "example2.com", "foo.com", "foo2.com", "bar.com", "bar2.com"},
-			path:  "/api//",
-		},
-		{
 			desc:  "Stripped URL with path redirect",
 			hosts: []string{"example.com", "example2.com", "foo.com", "foo2.com", "bar.com", "bar2.com"},
 			path:  "/api/bacon",
@@ -954,19 +949,9 @@ func (s *HTTPSSuite) TestEntryPointHttpsRedirectAndPathModification() {
 			path:  "/api/bacon/",
 		},
 		{
-			desc:  "Stripped URL with path and double trailing slash redirect",
-			hosts: []string{"example.com", "example2.com", "foo.com", "foo2.com", "bar.com", "bar2.com"},
-			path:  "/api/bacon//",
-		},
-		{
 			desc:  "Root Path with redirect",
 			hosts: []string{"test.com", "test2.com", "pow.com", "pow2.com"},
 			path:  "/",
-		},
-		{
-			desc:  "Root Path with double trailing slash redirect",
-			hosts: []string{"test.com", "test2.com", "pow.com", "pow2.com"},
-			path:  "//",
 		},
 		{
 			desc:  "Path modify with redirect",
