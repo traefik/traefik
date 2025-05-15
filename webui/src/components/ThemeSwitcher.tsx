@@ -1,14 +1,23 @@
 import { AccessibleIcon, Button } from '@traefiklabs/faency'
+import { CgDarkMode } from 'react-icons/cg'
 import { FiMoon, FiSun } from 'react-icons/fi'
 
-import { useDarkMode } from 'hooks/use-dark-mode'
+import { useTheme } from 'hooks/use-theme'
 
 export default function ThemeSwitcher() {
-  const { isDarkMode, toggle } = useDarkMode({ initializeWithValue: false })
+  const { selectedTheme, setTheme } = useTheme()
 
   return (
-    <Button ghost css={{ px: '$2' }} onClick={toggle} type="button" data-testid="theme-switcher">
-      <AccessibleIcon label="toggle theme">{isDarkMode ? <FiMoon size={20} /> : <FiSun size={20} />}</AccessibleIcon>
+    <Button ghost css={{ px: '$2' }} onClick={setTheme} type="button" data-testid="theme-switcher">
+      <AccessibleIcon label="toggle theme">
+        {selectedTheme === 'dark' ? (
+          <FiMoon size={20} />
+        ) : selectedTheme === 'light' ? (
+          <FiSun size={20} />
+        ) : (
+          <CgDarkMode size={22} />
+        )}
+      </AccessibleIcon>
     </Button>
   )
 }

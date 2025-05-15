@@ -1,6 +1,6 @@
 import { CSSProperties } from 'react'
 
-import { useDarkMode } from 'hooks/use-dark-mode'
+import { useIsDarkMode } from 'hooks/use-theme'
 
 type LogoProps = {
   width?: number
@@ -9,7 +9,7 @@ type LogoProps = {
 }
 
 const Logo = (props: LogoProps) => {
-  const { isDarkMode } = useDarkMode()
+  const isDarkMode = useIsDarkMode()
 
   if (isDarkMode)
     return (

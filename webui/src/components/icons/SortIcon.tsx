@@ -2,7 +2,7 @@ import { config, Flex } from '@traefiklabs/faency'
 import { useEffect, useState } from 'react'
 
 import { CustomIconProps } from 'components/icons'
-import { useDarkMode } from 'hooks/use-dark-mode'
+import { useIsDarkMode } from 'hooks/use-theme'
 
 type SortIconProps = CustomIconProps & {
   order?: 'asc' | 'desc' | ''
@@ -12,7 +12,7 @@ export default function SortIcon({ css = {}, order, flexProps = {}, ...props }: 
   const [enabledColor, setEnabledColor] = useState<string>((config.theme.colors as Record<string, string>).deepBlue3)
   const [disabledColor, setDisabledColor] = useState<string>((config.theme.colors as Record<string, string>).deepBlue8)
 
-  const { isDarkMode } = useDarkMode()
+  const isDarkMode = useIsDarkMode()
 
   useEffect(() => {
     setEnabledColor((config.theme.colors as Record<string, string>)[isDarkMode ? 'deepBlue3' : 'deepBlue11'])

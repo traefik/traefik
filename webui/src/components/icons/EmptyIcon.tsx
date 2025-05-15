@@ -1,7 +1,7 @@
-import { useDarkMode } from 'hooks/use-dark-mode'
+import { useIsDarkMode } from 'hooks/use-theme'
 
 export const EmptyIcon = () => {
-  const { isDarkMode } = useDarkMode({ initializeWithValue: false })
+  const isDarkMode = useIsDarkMode()
 
   return (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 88 96" preserveAspectRatio="xMidYMid meet">

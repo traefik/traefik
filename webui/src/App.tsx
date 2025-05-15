@@ -7,7 +7,7 @@ import { SWRConfig } from 'swr'
 import Page from './layout/Page'
 import fetch from './libs/fetch'
 
-import { useDarkMode } from 'hooks/use-dark-mode'
+import { useIsDarkMode } from 'hooks/use-theme'
 import ErrorSuspenseWrapper from 'layout/ErrorSuspenseWrapper'
 import { Dashboard, HTTPPages, NotFound, TCPPages, UDPPages } from 'pages'
 import { DashboardSkeleton } from 'pages/dashboard/Dashboard'
@@ -71,7 +71,7 @@ export const Routes = () => {
 const isDev = import.meta.env.NODE_ENV === 'development'
 
 const App = () => {
-  const { isDarkMode } = useDarkMode({ initializeWithValue: false })
+  const isDarkMode = useIsDarkMode()
 
   useEffect(() => {
     if (isDarkMode) {
