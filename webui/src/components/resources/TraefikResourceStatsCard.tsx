@@ -190,7 +190,7 @@ const TraefikResourceStatsCard = ({ title, errors, total, warnings, linkTo }: Tr
         </Box>
         <Box css={{ width: '50%' }}>
           {STATS_ATTRIBUTES.map((i) => (
-            <CustomLegend {...i} count={counts[i.label]} total={total} linkTo={linkTo} />
+            <CustomLegend key={`${title}-${i.label}`} {...i} count={counts[i.label]} total={total} linkTo={linkTo} />
           ))}
         </Box>
       </Flex>
