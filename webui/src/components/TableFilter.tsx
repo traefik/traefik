@@ -1,8 +1,9 @@
 import { Box, Button, Flex, TextField } from '@traefiklabs/faency'
 import { isUndefined, omitBy } from 'lodash'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { FiSearch, FiXCircle } from 'react-icons/fi'
 import { URLSearchParamsInit, useSearchParams } from 'react-router-dom'
+import { useDebounceCallback } from 'usehooks-ts'
 
 import IconButton from 'components/buttons/IconButton'
 
@@ -44,8 +45,7 @@ export const TableFilter = ({ hideStatusFilter }: { hideStatusFilter?: boolean }
   const [searchParams, setSearchParams] = useSearchParams()
 
   const [state, setState] = useState(searchParamsToState(searchParams))
-  const [search, setSearch] = useState(state.search || '')
-  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [displayedValue, setDisplayedValue] = useState(state.search || '')
 
   const onStatusClick = useCallback(
     (status?: string) => {
@@ -56,24 +56,11 @@ export const TableFilter = ({ hideStatusFilter }: { hideStatusFilter?: boolean }
     [setSearchParams, state],
   )
 
-  useEffect(() => setState(searchParamsToState(searchParams)), [searchParams])
-
-  useEffect(() => setSearch(state.search || ''), [state])
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(search)
-    }, 500)
-
-    return () => clearTimeout(timer)
-  }, [search])
-
-  useEffect(() => {
-    const newState = omitBy({ ...state, search: debouncedSearch || undefined }, isUndefined)
+  const onSearch = useDebounceCallback((search: string) => {
+    const newState = omitBy({ ...state, search: search || undefined }, isUndefined)
     setState(newState)
     setSearchParams(newState as URLSearchParamsInit)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearch])
+  }, 500)
 
   return (
     <Flex css={{ alignItems: 'center', justifyContent: 'space-between', mb: '$5' }}>
@@ -94,8 +81,12 @@ export const TableFilter = ({ hideStatusFilter }: { hideStatusFilter?: boolean }
       <Box css={{ maxWidth: 200, position: 'relative' }}>
         <TextField
           data-testid="table-search-input"
-          value={search}
-          onChange={(e) => setSearch(e.target?.value)}
+          defaultValue={state.search || ''}
+          onChange={(e) => {
+            setDisplayedValue(e.target?.value)
+            onSearch(e.target?.value)
+          }}
+          value={displayedValue}
           placeholder="Search"
           css={{ input: { paddingRight: '$6' } }}
           endAdornment={
@@ -105,7 +96,10 @@ export const TableFilter = ({ hideStatusFilter }: { hideStatusFilter?: boolean }
                 css={{ height: '20px', p: 0, color: 'currentColor', '&:before, &:after': { borderRadius: '10px' } }}
                 ghost
                 icon={<FiXCircle size={20} />}
-                onClick={() => setSearch('')}
+                onClick={() => {
+                  setDisplayedValue('')
+                  onSearch('')
+                }}
                 title="Clear search"
               />
             ) : (
