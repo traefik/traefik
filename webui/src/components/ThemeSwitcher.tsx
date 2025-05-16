@@ -1,7 +1,7 @@
 import { AccessibleIcon, Button } from '@traefiklabs/faency'
-import { CgDarkMode } from 'react-icons/cg'
 import { FiMoon, FiSun } from 'react-icons/fi'
 
+import { AutoThemeIcon } from 'components/icons/AutoThemeIcon'
 import { useTheme } from 'hooks/use-theme'
 
 export default function ThemeSwitcher() {
@@ -15,7 +15,7 @@ export default function ThemeSwitcher() {
         ) : selectedTheme === 'light' ? (
           <FiSun size={20} />
         ) : (
-          <CgDarkMode size={22} />
+          <AutoThemeIcon />
         )}
       </AccessibleIcon>
     </Button>
