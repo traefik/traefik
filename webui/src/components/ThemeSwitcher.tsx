@@ -8,7 +8,13 @@ export default function ThemeSwitcher() {
   const { selectedTheme, setTheme } = useTheme()
 
   return (
-    <Button ghost css={{ px: '$2' }} onClick={setTheme} type="button" data-testid="theme-switcher">
+    <Button
+      ghost
+      css={{ px: '$2', color: '$buttonSecondaryText' }}
+      onClick={setTheme}
+      type="button"
+      data-testid="theme-switcher"
+    >
       <AccessibleIcon label="toggle theme">
         {selectedTheme === 'dark' ? (
           <FiMoon size={20} />
