@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import useSWR from 'swr'
 
 export type UseTotalsProps = {
@@ -14,13 +15,17 @@ type TotalsResult = {
 const useTotals = ({ protocol, enabled = true }: UseTotalsProps): TotalsResult => {
   const { data } = useSWR(enabled ? '/overview' : null)
 
-  return data && protocol
-    ? {
-        routers: data[protocol]?.routers?.total,
-        services: data[protocol]?.services?.total,
-        middlewares: data[protocol]?.middlewares?.total,
-      }
-    : ({} as TotalsResult)
+  return useMemo(
+    () =>
+      data && protocol
+        ? {
+            routers: data[protocol]?.routers?.total,
+            services: data[protocol]?.services?.total,
+            middlewares: data[protocol]?.middlewares?.total,
+          }
+        : ({} as TotalsResult),
+    [data, protocol],
+  )
 }
 
 export default useTotals

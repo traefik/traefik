@@ -31,6 +31,12 @@ import ThemeSwitcher from 'components/ThemeSwitcher'
 import useTotals from 'hooks/use-overview-totals'
 import routes, { NavRouteType } from 'routes'
 
+const USE_TOTALS_CONF_BY_PATH: { [key: string]: { protocol: string } } = {
+  '/http/': { protocol: 'http' },
+  '/tcp/': { protocol: 'tcp' },
+  '/udp/': { protocol: 'udp' },
+}
+
 const NavigationDrawer = styled(Flex, {
   width: '100%',
   maxWidth: '100%',
@@ -181,24 +187,22 @@ const Header = () => {
     return !version?.disableDashboardAd
   }, [version])
 
-  const useTotalsConfByPath: { [key: string]: { protocol: string } } = {
-    '/http/': { protocol: 'http' },
-    '/tcp/': { protocol: 'tcp' },
-    '/udp/': { protocol: 'udp' },
-  }
-  const useTotalsConf = currentRoute && useTotalsConfByPath[currentRoute.path]
-  const { routers, services, middlewares } = useTotals(useTotalsConf ? useTotalsConf : { enabled: false })
+  const useTotalsConf = useMemo(() => currentRoute && USE_TOTALS_CONF_BY_PATH[currentRoute.path], [currentRoute])
+  const { middlewares, routers, services } = useTotals(useTotalsConf ? useTotalsConf : { enabled: false })
 
-  const totalValueByPath: { [key: string]: number } = {
-    '/http/routers': routers,
-    '/http/services': services,
-    '/http/middlewares': middlewares,
-    '/tcp/routers': routers,
-    '/tcp/services': services,
-    '/tcp/middlewares': middlewares,
-    '/udp/routers': routers,
-    '/udp/services': services,
-  }
+  const totalValueByPath = useMemo<{ [key: string]: number }>(
+    () => ({
+      '/http/routers': routers,
+      '/http/services': services,
+      '/http/middlewares': middlewares,
+      '/tcp/routers': routers,
+      '/tcp/services': services,
+      '/tcp/middlewares': middlewares,
+      '/udp/routers': routers,
+      '/udp/services': services,
+    }),
+    [middlewares, routers, services],
+  )
 
   return (
     <>
