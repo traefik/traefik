@@ -17,11 +17,9 @@ import {
   Text,
 } from '@traefiklabs/faency'
 import { HTMLAttributeAnchorTarget, ReactNode, useMemo } from 'react'
-import { Helmet } from 'react-helmet-async'
 import { FiBookOpen, FiGithub, FiHelpCircle } from 'react-icons/fi'
 import { matchPath, useNavigate } from 'react-router'
 import { useLocation } from 'react-router-dom'
-import useSWR from 'swr'
 
 import Container from './Container'
 
@@ -29,6 +27,7 @@ import Logo from 'components/icons/Logo'
 import { PluginsIcon } from 'components/icons/PluginsIcon'
 import ThemeSwitcher from 'components/ThemeSwitcher'
 import useTotals from 'hooks/use-overview-totals'
+import useVersion from 'hooks/use-version'
 import routes, { NavRouteType } from 'routes'
 
 const USE_TOTALS_CONF_BY_PATH: { [key: string]: { protocol: string } } = {
@@ -148,8 +147,7 @@ const NavItemWithIcon = ({ icon, label, isActive, href, ...props }: NavItemWithI
 const Header = () => {
   const location = useLocation()
   const navigate = useNavigate()
-
-  const { data: version } = useSWR('/version')
+  const { showHubButton, version } = useVersion()
 
   let currentSubRoute: NavRouteType | undefined
 
@@ -182,11 +180,6 @@ const Header = () => {
     return false
   })
 
-  const showAdButton = useMemo(() => {
-    if (!version) return false
-    return !version?.disableDashboardAd
-  }, [version])
-
   const useTotalsConf = useMemo(() => currentRoute && USE_TOTALS_CONF_BY_PATH[currentRoute.path], [currentRoute])
   const { middlewares, routers, services } = useTotals(useTotalsConf ? useTotalsConf : { enabled: false })
 
@@ -206,11 +199,6 @@ const Header = () => {
 
   return (
     <>
-      {showAdButton && (
-        <Helmet>
-          <script src="https://traefik.github.io/traefiklabs-hub-button-app/main-v1.js"></script>
-        </Helmet>
-      )}
       <NavigationDrawer css={{ position: 'fixed', zIndex: 999, top: 0 }}>
         <NavigationContainer css={{ overflowX: 'auto' }}>
           <Flex align="center" justify="space-between" css={{ flexGrow: 1 }}>
@@ -242,7 +230,7 @@ const Header = () => {
               />
             </Flex>
             <Flex gap={2} align="center" css={{ ml: '$4' }}>
-              {showAdButton && (
+              {showHubButton && (
                 <Box css={{ fontFamily: '$rubik', fontWeight: '500 !important' }}>
                   <hub-button-app />
                 </Box>
