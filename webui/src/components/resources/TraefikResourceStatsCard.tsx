@@ -3,7 +3,7 @@ import { Chart as ChartJs, ArcElement, Tooltip } from 'chart.js'
 import { ReactNode, useEffect, useMemo, useState } from 'react'
 import { Doughnut } from 'react-chartjs-2'
 import { FaArrowRightLong } from 'react-icons/fa6'
-import { Link as RouterLink } from 'react-router-dom'
+import { Link as RouterLink, useNavigate } from 'react-router-dom'
 
 import Status, { colorByStatus, StatusType } from './Status'
 
@@ -105,6 +105,8 @@ const CustomLegend = ({
 }
 
 const TraefikResourceStatsCard = ({ title, errors, total, warnings, linkTo }: TraefikResourceStatsCardProps) => {
+  const navigate = useNavigate()
+
   const defaultData = {
     datasets: [
       {
@@ -157,6 +159,9 @@ const TraefikResourceStatsCard = ({ title, errors, total, warnings, linkTo }: Tr
       enabled: true,
     },
     maintainAspectRatio: false,
+    onClick: (_, activeEl) => {
+      navigate(`${linkTo}?status=${STATS_ATTRIBUTES[activeEl[0].index].status}`)
+    },
   }
 
   if (!errors && !total && !warnings) return null
