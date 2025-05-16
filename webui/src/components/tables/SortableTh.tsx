@@ -29,7 +29,7 @@ export default function SortableTh({ label, isSortable = false, sortByValue, ali
 
   const isActive = useMemo(() => (searchParams.get('sortBy') || 'name') === sortByValue, [searchParams, sortByValue])
 
-  const order = useMemo(() => searchParams.get('direction') || 'asc', [searchParams])
+  const order = useMemo(() => (searchParams.get('direction') as 'asc' | 'desc' | '') || 'asc', [searchParams])
 
   const onSort = useCallback(() => {
     if (!sortByValue) return
@@ -43,7 +43,6 @@ export default function SortableTh({ label, isSortable = false, sortByValue, ali
   }, [sortByValue, searchParams, setSearchParams])
 
   return (
-    // @ts-expect-error TODO: The CSS type isn't working, we need to investigate the issue.
     <AriaTh css={css}>
       <Flex align="center" css={wrapperStyle}>
         {isSortable ? (

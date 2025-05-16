@@ -11,7 +11,7 @@ const THEME_OPTIONS: ThemeOptions[] = [SYSTEM, DARK, LIGHT]
 type UseThemeRes = {
   selectedTheme: ThemeOptions
   appliedTheme: ThemeOptions
-  setTheme: (theme: ThemeOptions) => void
+  setTheme: () => void
 }
 
 export const useTheme = (): UseThemeRes => {

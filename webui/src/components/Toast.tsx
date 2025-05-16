@@ -1,6 +1,6 @@
 import { Box, Button, Flex, styled, Text } from '@traefiklabs/faency'
 import { AnimatePresence, motion } from 'framer-motion'
-import { ComponentProps, ReactNode, useEffect } from 'react'
+import { ReactNode, useEffect } from 'react'
 import { FiX } from 'react-icons/fi'
 
 import { colorByStatus, iconByStatus, StatusType } from 'components/resources/Status'
@@ -21,8 +21,6 @@ const ToastContainer = styled(Flex, {
 })
 
 const AnimatedToastContainer = motion.create(ToastContainer)
-const FixedAnimatedToastContainer = AnimatedToastContainer as ComponentProps<typeof AnimatedToastContainer> &
-  ComponentProps<typeof ToastContainer>
 
 const toastVariants = {
   create: {
@@ -82,7 +80,7 @@ export const Toast = ({ message, dismiss, severity = 'error', icon, isVisible = 
   return (
     <AnimatePresence>
       {isVisible && (
-        <FixedAnimatedToastContainer
+        <AnimatedToastContainer
           css={{ backgroundColor: propsBySeverity[severity].color }}
           gap={2}
           initial="create"
@@ -97,7 +95,7 @@ export const Toast = ({ message, dismiss, severity = 'error', icon, isVisible = 
               <FiX color="#fff" size={20} />
             </CloseButton>
           )}
-        </FixedAnimatedToastContainer>
+        </AnimatedToastContainer>
       )}
     </AnimatePresence>
   )

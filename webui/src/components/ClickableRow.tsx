@@ -1,6 +1,15 @@
-import { AriaTr, VariantProps } from '@traefiklabs/faency'
+import { AriaTr, VariantProps, styled } from '@traefiklabs/faency'
 import { ComponentProps, forwardRef, ReactNode } from 'react'
 import { useHref } from 'react-router-dom'
+
+const UnstyledLink = styled('a', {
+  color: 'inherit',
+  textDecoration: 'inherit',
+  fontWeight: 'inherit',
+  '&:hover': {
+    cursor: 'pointer',
+  },
+})
 
 type ClickableRowProps = ComponentProps<typeof AriaTr> &
   VariantProps<typeof AriaTr> & {
@@ -8,14 +17,12 @@ type ClickableRowProps = ComponentProps<typeof AriaTr> &
     to: string
   }
 
-const ClickableRow = forwardRef<HTMLTableRowElement | null, ClickableRowProps>(({ children, to, ...props }, ref) => {
+export default forwardRef<HTMLTableRowElement | null, ClickableRowProps>(({ children, css, to, ...props }, ref) => {
   const href = useHref(to)
 
   return (
-    <AriaTr as="a" href={href} interactive ref={ref} css={{ textDecoration: 'none', ...props.css }} {...props}>
-      {children}
+    <AriaTr asChild interactive ref={ref} css={css} {...props}>
+      <UnstyledLink href={href}>{children}</UnstyledLink>
     </AriaTr>
   )
 })
-
-export default ClickableRow

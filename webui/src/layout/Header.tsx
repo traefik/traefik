@@ -16,7 +16,7 @@ import {
   styled,
   Text,
 } from '@traefiklabs/faency'
-import { ComponentProps, ReactNode, useMemo } from 'react'
+import { HTMLAttributeAnchorTarget, ReactNode, useMemo } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { FiBookOpen, FiGithub, FiHelpCircle } from 'react-icons/fi'
 import { matchPath, useNavigate } from 'react-router'
@@ -90,18 +90,16 @@ const NavBarItem = ({ path, label, icon, isActive, isDisabled = false }: NavBarI
   )
 }
 
-type NavItemWithIconProps = ComponentProps<typeof NavigationItem> &
-  React.ButtonHTMLAttributes<HTMLButtonElement> & {
-    label: string
-    icon?: ReactNode
-    isActive?: boolean
-  }
+type NavItemWrapper = {
+  children: ReactNode
+  externalLink?: string
+  icon?: ReactNode
+  active?: boolean
+  onClick?: () => void
+  target?: HTMLAttributeAnchorTarget
+}
 
-const NavItemWrapper = ({
-  externalLink,
-  children,
-  ...props
-}: ComponentProps<typeof NavigationItem> & { externalLink?: string; children: ReactNode }) => {
+const NavItemWrapper = ({ children, externalLink, ...props }: NavItemWrapper) => {
   if (externalLink)
     return (
       <NavigationLink
@@ -119,6 +117,11 @@ const NavItemWrapper = ({
       {children}
     </NavigationItem>
   )
+}
+
+type NavItemWithIconProps = Omit<NavItemWrapper, 'active' | 'children'> & {
+  isActive?: boolean
+  label: string
 }
 
 const NavItemWithIcon = ({ icon, label, isActive, href, ...props }: NavItemWithIconProps & { href?: string }) => {
