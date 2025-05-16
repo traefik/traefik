@@ -1,11 +1,13 @@
 import { Box, Card, Flex, H3, Skeleton, styled, Text } from '@traefiklabs/faency'
 import { Chart as ChartJs, ArcElement, Tooltip } from 'chart.js'
-import { ReactNode, useCallback, useEffect, useState } from 'react'
+import { ReactNode, useEffect, useMemo, useState } from 'react'
 import { Doughnut } from 'react-chartjs-2'
 import { FaArrowRightLong } from 'react-icons/fa6'
 import { Link as RouterLink } from 'react-router-dom'
 
-import Status, { colorByStatus } from './Status'
+import Status, { colorByStatus, StatusType } from './Status'
+
+import { capitalizeFirstLetter } from 'utils/string'
 
 ChartJs.register(ArcElement, Tooltip)
 
@@ -43,7 +45,7 @@ export type TraefikResourceStatsType = {
 }
 
 export type TraefikResourceStatsCardProps = TraefikResourceStatsType & {
-  linkTo?: string
+  linkTo: string
 }
 
 export type DataType = {
@@ -52,6 +54,54 @@ export type DataType = {
     data: (string | number)[]
   }[]
   labels?: string[]
+}
+
+const getPercent = (total: number, value: number) => (total > 0 ? ((value * 100) / total).toFixed(0) : 0)
+
+const STATS_ATTRIBUTES: { status: StatusType; label: string }[] = [
+  {
+    status: 'enabled',
+    label: 'success',
+  },
+  {
+    status: 'warning',
+    label: 'warnings',
+  },
+  {
+    status: 'disabled',
+    label: 'errors',
+  },
+]
+
+const CustomLegend = ({
+  status,
+  label,
+  count,
+  total,
+  linkTo,
+}: {
+  status: StatusType
+  label: string
+  count: number
+  total: number
+  linkTo: string
+}) => {
+  return (
+    <Link to={`${linkTo}?status=${status}`}>
+      <Flex css={{ alignItems: 'center', p: '$2' }}>
+        <Status status={status} />
+        <Flex css={{ flexDirection: 'column', flex: 1 }}>
+          <Text css={{ fontWeight: 600 }}>{capitalizeFirstLetter(label)}</Text>
+          <Text size={1} css={{ color: 'hsl(0, 0%, 56%)' }} data-testid={`${label}-pc`}>
+            {getPercent(total, count)}%
+          </Text>
+        </Flex>
+        <Text size={5} css={{ fontWeight: 700 }} data-testid={`${label}-count`}>
+          {count}
+        </Text>
+      </Flex>
+    </Link>
+  )
 }
 
 const TraefikResourceStatsCard = ({ title, errors, total, warnings, linkTo }: TraefikResourceStatsCardProps) => {
@@ -64,53 +114,18 @@ const TraefikResourceStatsCard = ({ title, errors, total, warnings, linkTo }: Tr
     ],
   }
   const [data, setData] = useState<DataType>(defaultData)
-  const getPercent = useCallback((value: number) => (total > 0 ? (value * 100) / total : 0), [total])
 
-  const getSuccess = useCallback(
-    (inPercent = false): number | string => {
-      const num = total - (errors + warnings)
-
-      if (inPercent) {
-        return getPercent(num).toFixed(0)
-      } else {
-        return num
-      }
-    },
-    [errors, total, warnings, getPercent],
-  )
-
-  const getWarnings = useCallback(
-    (inPercent = false): number | string => {
-      const num = warnings
-
-      if (inPercent) {
-        return getPercent(num).toFixed(0)
-      } else {
-        return num
-      }
-    },
-    [warnings, getPercent],
-  )
-
-  const getErrors = useCallback(
-    (inPercent = false): number | string => {
-      const num = errors
-
-      if (inPercent) {
-        return getPercent(num).toFixed(0)
-      } else {
-        return num
-      }
-    },
-    [errors, getPercent],
+  const counts = useMemo(
+    () => ({
+      success: total - (errors + warnings),
+      warnings,
+      errors,
+    }),
+    [errors, total, warnings],
   )
 
   useEffect(() => {
-    const successCount = getSuccess() as number
-    const warningsCount = getWarnings() as number
-    const errorsCount = getErrors() as number
-
-    if (successCount + warningsCount + errorsCount === 0) {
+    if (counts.success + counts.warnings + counts.errors === 0) {
       setData(defaultData)
       return
     }
@@ -119,7 +134,7 @@ const TraefikResourceStatsCard = ({ title, errors, total, warnings, linkTo }: Tr
       datasets: [
         {
           backgroundColor: [colorByStatus.enabled, colorByStatus.warning, colorByStatus.error],
-          data: [successCount, warningsCount, errorsCount],
+          data: [counts.success, counts.warnings, counts.errors],
         },
       ],
       labels: ['Success', 'Warnings', 'Errors'],
@@ -127,7 +142,7 @@ const TraefikResourceStatsCard = ({ title, errors, total, warnings, linkTo }: Tr
 
     setData(newData)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [errors, warnings, total, getSuccess, getWarnings, getErrors])
+  }, [errors, warnings, total, counts])
 
   const options = {
     animation: {
@@ -169,42 +184,9 @@ const TraefikResourceStatsCard = ({ title, errors, total, warnings, linkTo }: Tr
           <Doughnut data={data} options={options} />
         </Box>
         <Box css={{ width: '50%' }}>
-          <Flex css={{ alignItems: 'center', p: '$2' }}>
-            <Status status="enabled" />
-            <Flex css={{ flexDirection: 'column', flex: 1 }}>
-              <Text css={{ fontWeight: 600 }}>Success</Text>
-              <Text size={1} css={{ color: 'hsl(0, 0%, 56%)' }} data-testid="success-pc">
-                {getSuccess(true)}%
-              </Text>
-            </Flex>
-            <Text size={5} css={{ fontWeight: 700 }} data-testid="success-count">
-              {getSuccess()}
-            </Text>
-          </Flex>
-          <Flex css={{ alignItems: 'center', p: '$2' }}>
-            <Status status="warning" />
-            <Flex css={{ flexDirection: 'column', flex: 1 }}>
-              <Text css={{ fontWeight: 600 }}>Warnings</Text>
-              <Text size={1} css={{ color: 'hsl(0, 0%, 56%)' }} data-testid="warnings-pc">
-                {getWarnings(true)}%
-              </Text>
-            </Flex>
-            <Text size={5} css={{ fontWeight: 700 }} data-testid="warnings-count">
-              {getWarnings()}
-            </Text>
-          </Flex>
-          <Flex css={{ alignItems: 'center', p: '$2' }}>
-            <Status status="disabled" />
-            <Flex css={{ flexDirection: 'column', flex: 1 }}>
-              <Text css={{ fontWeight: 600 }}>Errors</Text>
-              <Text size={1} css={{ color: 'hsl(0, 0%, 56%)' }} data-testid="errors-pc">
-                {getErrors(true)}%
-              </Text>
-            </Flex>
-            <Text size={5} css={{ fontWeight: 700 }} data-testid="errors-count">
-              {getErrors()}
-            </Text>
-          </Flex>
+          {STATS_ATTRIBUTES.map((i) => (
+            <CustomLegend {...i} count={counts[i.label]} total={total} linkTo={linkTo} />
+          ))}
         </Box>
       </Flex>
     </StatsCard>

@@ -5,7 +5,7 @@ import { renderWithProviders } from 'utils/test'
 describe('<TraefikResourceStatsCard />', () => {
   it('should render the component and show the expected data (success count is zero)', () => {
     const { getByTestId } = renderWithProviders(
-      <TraefikResourceStatsCard title="test" errors={2} total={5} warnings={3} />,
+      <TraefikResourceStatsCard title="test" errors={2} total={5} warnings={3} linkTo="" />,
     )
     expect(getByTestId('success-pc').innerHTML).toContain('0%')
     expect(getByTestId('success-count').innerHTML).toContain('0')
@@ -17,7 +17,7 @@ describe('<TraefikResourceStatsCard />', () => {
 
   it('should render the component and show the expected data (success count is not zero)', async () => {
     const { getByTestId } = renderWithProviders(
-      <TraefikResourceStatsCard title="test" errors={2} total={7} warnings={4} />,
+      <TraefikResourceStatsCard title="test" errors={2} total={7} warnings={4} linkTo="" />,
     )
     expect(getByTestId('success-pc').innerHTML).toContain('14%')
     expect(getByTestId('success-count').innerHTML).toContain('1')
@@ -29,7 +29,7 @@ describe('<TraefikResourceStatsCard />', () => {
 
   it('should not render the component when everything is zero', async () => {
     const { getByTestId } = renderWithProviders(
-      <TraefikResourceStatsCard title="test" errors={0} total={0} warnings={0} />,
+      <TraefikResourceStatsCard title="test" errors={0} total={0} warnings={0} linkTo="" />,
     )
     expect(() => {
       getByTestId('success-pc')
