@@ -253,7 +253,7 @@ func (m *Manager) getWRRServiceHandler(ctx context.Context, serviceName string, 
 			return nil, err
 		}
 
-		balancer.Add(service.Name, serviceHandler, service.Weight, false)
+		balancer.Add(service.Name, serviceHandler, service.Weight, false, nil)
 
 		if config.HealthCheck == nil {
 			continue
