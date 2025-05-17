@@ -79,9 +79,15 @@ http:
           - url: foobar
             weight: 42
             preservePath: true
+            healthCheck:
+              failTimeout: 42s
+              maxFails: 42
           - url: foobar
             weight: 42
             preservePath: true
+            healthCheck:
+              failTimeout: 42s
+              maxFails: 42
         strategy: foobar
         healthCheck:
           scheme: foobar
