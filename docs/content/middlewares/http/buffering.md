@@ -267,4 +267,4 @@ The retry expression is defined as a logical combination of the functions below 
 
 ### Content-Length
 
-See [Best Practices: Content‑Length](../../security/best-practices/content-length.md)
+See [Best Practices: Content‑Length](../../security/content-length.md)
