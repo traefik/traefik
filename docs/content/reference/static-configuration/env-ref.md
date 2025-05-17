@@ -324,6 +324,18 @@ ReadTimeout is the maximum duration for reading the entire request, including th
 `TRAEFIK_ENTRYPOINTS_<NAME>_TRANSPORT_RESPONDINGTIMEOUTS_WRITETIMEOUT`:  
 WriteTimeout is the maximum duration before timing out writes of the response. If zero, no timeout is set. (Default: ```0```)
 
+`TRAEFIK_ENTRYPOINTS_<NAME>_TSNET`:  
+Tailscale network configuration. (Default: ```false```)
+
+`TRAEFIK_ENTRYPOINTS_<NAME>_TSNET_AUTHKEY`:  
+Auth key for the node (overrides the TS_AUTHKEY env var).
+
+`TRAEFIK_ENTRYPOINTS_<NAME>_TSNET_EPHEMERAL`:  
+Register the node as ephemeral. (Default: ```false```)
+
+`TRAEFIK_ENTRYPOINTS_<NAME>_TSNET_HOSTNAME`:  
+Hostname for the node; if empty, defaults to the endpoint's name
+
 `TRAEFIK_ENTRYPOINTS_<NAME>_UDP_TIMEOUT`:  
 Timeout defines how long to wait on an idle session before releasing the related resources. (Default: ```3```)
 
