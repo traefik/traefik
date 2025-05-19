@@ -32,7 +32,7 @@ func (h *namedHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 }
 
 type rnd interface {
-	Intn(n int) int
+	IntN(n int) int
 }
 
 // Balancer implements the power-of-two-random-choices algorithm for load balancing.
@@ -58,7 +58,7 @@ type Balancer struct {
 
 	sticky *loadbalancer.Sticky
 
-	randMu sync.RWMutex
+	randMu sync.Mutex
 	rand   rnd
 }
 
@@ -157,7 +157,7 @@ func (b *Balancer) nextServer() (*namedHandler, error) {
 	// than the length of the slice. We then have to shift over the second index if it is equal or
 	// greater than the first index, wrapping round if needed.
 	b.randMu.Lock()
-	n1, n2 := b.rand.Intn(len(healthy)), b.rand.Intn(len(healthy))
+	n1, n2 := b.rand.IntN(len(healthy)), b.rand.IntN(len(healthy))
 	b.randMu.Unlock()
 
 	if n2 == n1 {
