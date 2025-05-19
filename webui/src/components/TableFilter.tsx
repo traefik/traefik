@@ -1,6 +1,8 @@
 import { Box, Button, Flex, TextField } from '@traefiklabs/faency'
+// eslint-disable-next-line import/no-unresolved
+import { InputHandle } from '@traefiklabs/faency/dist/components/Input'
 import { isUndefined, omitBy } from 'lodash'
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { FiSearch, FiXCircle } from 'react-icons/fi'
 import { URLSearchParamsInit, useSearchParams } from 'react-router-dom'
 import { useDebounceCallback } from 'usehooks-ts'
@@ -45,7 +47,13 @@ export const TableFilter = ({ hideStatusFilter }: { hideStatusFilter?: boolean }
   const [searchParams, setSearchParams] = useSearchParams()
 
   const [state, setState] = useState(searchParamsToState(searchParams))
-  const [displayedValue, setDisplayedValue] = useState(state.search || '')
+  const searchInputRef = useRef<InputHandle>(null)
+
+  const onSearch = useDebounceCallback((search?: string) => {
+    const newState = omitBy({ ...state, search: search || undefined }, isUndefined)
+    setState(newState)
+    setSearchParams(newState as URLSearchParamsInit)
+  }, 500)
 
   const onStatusClick = useCallback(
     (status?: string) => {
@@ -55,12 +63,6 @@ export const TableFilter = ({ hideStatusFilter }: { hideStatusFilter?: boolean }
     },
     [setSearchParams, state],
   )
-
-  const onSearch = useDebounceCallback((search: string) => {
-    const newState = omitBy({ ...state, search: search || undefined }, isUndefined)
-    setState(newState)
-    setSearchParams(newState as URLSearchParamsInit)
-  }, 500)
 
   return (
     <Flex css={{ alignItems: 'center', justifyContent: 'space-between', mb: '$5' }}>
@@ -80,13 +82,12 @@ export const TableFilter = ({ hideStatusFilter }: { hideStatusFilter?: boolean }
       </Flex>
       <Box css={{ maxWidth: 200, position: 'relative' }}>
         <TextField
+          ref={searchInputRef}
           data-testid="table-search-input"
           defaultValue={state.search || ''}
           onChange={(e) => {
-            setDisplayedValue(e.target?.value)
             onSearch(e.target?.value)
           }}
-          value={displayedValue}
           placeholder="Search"
           css={{ input: { paddingRight: '$6' } }}
           endAdornment={
@@ -97,8 +98,8 @@ export const TableFilter = ({ hideStatusFilter }: { hideStatusFilter?: boolean }
                 ghost
                 icon={<FiXCircle size={20} />}
                 onClick={() => {
-                  setDisplayedValue('')
                   onSearch('')
+                  searchInputRef.current?.clear()
                 }}
                 title="Clear search"
               />
