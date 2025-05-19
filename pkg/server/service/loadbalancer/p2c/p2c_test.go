@@ -268,7 +268,7 @@ type mockRand struct {
 	calls int
 }
 
-func (m *mockRand) Intn(int) int {
+func (m *mockRand) IntN(int) int {
 	defer func() {
 		m.calls++
 	}()
