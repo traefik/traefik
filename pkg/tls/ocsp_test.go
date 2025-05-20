@@ -335,6 +335,65 @@ func TestOCSPStapler_updateStaple(t *testing.T) {
 	}
 }
 
+func TestOCSPStapler_updateStaple_withoutNextUpdate(t *testing.T) {
+	leafCert, err := tls.X509KeyPair([]byte(certWithOCSPServer), []byte(certKey))
+	require.NoError(t, err)
+
+	issuerCert, err := tls.X509KeyPair([]byte(caCert), []byte(caKey))
+	require.NoError(t, err)
+
+	thisUpdate, err := time.Parse("2006-01-02", "2025-01-01")
+	require.NoError(t, err)
+
+	ocspResponseTmpl := ocsp.Response{
+		SerialNumber:    leafCert.Leaf.SerialNumber,
+		TBSResponseData: []byte("foo"),
+		ThisUpdate:      thisUpdate,
+	}
+
+	ocspResponse, err := ocsp.CreateResponse(leafCert.Leaf, leafCert.Leaf, ocspResponseTmpl, issuerCert.PrivateKey.(crypto.Signer))
+	require.NoError(t, err)
+
+	handler := func(rw http.ResponseWriter, req *http.Request) {
+		ct := req.Header.Get("Content-Type")
+		assert.Equal(t, "application/ocsp-request", ct)
+
+		reqBytes, err := io.ReadAll(req.Body)
+		require.NoError(t, err)
+
+		_, err = ocsp.ParseRequest(reqBytes)
+		require.NoError(t, err)
+
+		rw.Header().Set("Content-Type", "application/ocsp-response")
+
+		_, err = rw.Write(ocspResponse)
+		require.NoError(t, err)
+	}
+
+	responder := httptest.NewServer(http.HandlerFunc(handler))
+	t.Cleanup(responder.Close)
+
+	responderStatusNotOK := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	t.Cleanup(responderStatusNotOK.Close)
+
+	ocspStapler := newOCSPStapler(nil)
+	ocspStapler.client = &http.Client{Timeout: time.Second}
+
+	entry := &ocspEntry{
+		leaf:       leafCert.Leaf,
+		issuer:     issuerCert.Leaf,
+		responders: []string{responder.URL},
+	}
+	err = ocspStapler.updateStaple(context.Background(), entry)
+	require.NoError(t, err)
+
+	assert.Equal(t, ocspResponse, entry.staple)
+	assert.NotZero(t, entry.nextUpdate)
+	assert.Greater(t, time.Now(), entry.nextUpdate)
+}
+
 func TestOCSPStapler_updateStaples(t *testing.T) {
 	leafCert, err := tls.X509KeyPair([]byte(certWithOCSPServer), []byte(certKey))
 	require.NoError(t, err)
