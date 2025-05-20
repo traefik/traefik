@@ -11,7 +11,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
 )
 
-var httpFuncsV2 = map[string]func(*matchersTree, ...string) error{
+var httpFuncsV2 = matcherFuncs{
 	"Host":          hostV2,
 	"HostHeader":    hostV2,
 	"HostRegexp":    hostRegexpV2,
