@@ -42,10 +42,11 @@ type Manager struct {
 	middlewaresBuilder middlewareBuilder
 	conf               *runtime.Configuration
 	tlsManager         *tls.Manager
+	parser             httpmuxer.SyntaxParser
 }
 
 // NewManager creates a new Manager.
-func NewManager(conf *runtime.Configuration, serviceManager serviceManager, middlewaresBuilder middlewareBuilder, observabilityMgr *middleware.ObservabilityMgr, tlsManager *tls.Manager) *Manager {
+func NewManager(conf *runtime.Configuration, serviceManager serviceManager, middlewaresBuilder middlewareBuilder, observabilityMgr *middleware.ObservabilityMgr, tlsManager *tls.Manager, parser httpmuxer.SyntaxParser) *Manager {
 	return &Manager{
 		routerHandlers:     make(map[string]http.Handler),
 		serviceManager:     serviceManager,
@@ -53,6 +54,7 @@ func NewManager(conf *runtime.Configuration, serviceManager serviceManager, midd
 		middlewaresBuilder: middlewaresBuilder,
 		conf:               conf,
 		tlsManager:         tlsManager,
+		parser:             parser,
 	}
 }
 
@@ -103,10 +105,7 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string, t
 }
 
 func (m *Manager) buildEntryPointHandler(ctx context.Context, entryPointName string, configs map[string]*runtime.RouterInfo) (http.Handler, error) {
-	muxer, err := httpmuxer.NewMuxer()
-	if err != nil {
-		return nil, err
-	}
+	muxer := httpmuxer.NewMuxer(m.parser)
 
 	defaultHandler, err := m.observabilityMgr.BuildEPChain(ctx, entryPointName, "", nil).Then(http.NotFoundHandler())
 	if err != nil {
