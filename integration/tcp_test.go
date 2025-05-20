@@ -302,7 +302,7 @@ func (s *TCPSuite) TestWRR() {
 		time.Sleep(time.Second)
 	}
 
-	assert.EqualValues(s.T(), map[string]int{"whoami-b": 3, "whoami-ab": 1}, call)
+	assert.Equal(s.T(), map[string]int{"whoami-b": 3, "whoami-ab": 1}, call)
 }
 
 func welcome(addr string) (string, error) {

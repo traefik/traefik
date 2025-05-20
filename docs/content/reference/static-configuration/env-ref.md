@@ -129,6 +129,12 @@ Define if the certificates pool must use a copy of the system cert pool. (Defaul
 `TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_CERTIFICATESDURATION`:  
 Certificates' duration in hours. (Default: ```2160```)
 
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_CLIENTRESPONSEHEADERTIMEOUT`:  
+Timeout for receiving the response headers when communicating with the ACME server. (Default: ```30```)
+
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_CLIENTTIMEOUT`:  
+Timeout for a complete HTTP transaction with the ACME server. (Default: ```120```)
+
 `TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_DNSCHALLENGE`:  
 Activate DNS-01 Challenge. (Default: ```false```)
 
@@ -255,6 +261,9 @@ Scheme used for the redirection. (Default: ```https```)
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_REDIRECTIONS_ENTRYPOINT_TO`:  
 Targeted entry point of the redirection.
 
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_SANITIZEPATH`:  
+Defines whether to enable request path sanitization (removal of /./, /../ and multiple slash sequences). (Default: ```true```)
+
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_TLS`:  
 Default TLS configuration for the routers linked to the entry point. (Default: ```false```)
 
@@ -345,6 +354,9 @@ Environment variables to forward to the wasm guest.
 `TRAEFIK_EXPERIMENTAL_LOCALPLUGINS_<NAME>_SETTINGS_MOUNTS`:  
 Directory to mount to the wasm guest.
 
+`TRAEFIK_EXPERIMENTAL_LOCALPLUGINS_<NAME>_SETTINGS_USEUNSAFE`:  
+Allow the plugin to use unsafe package. (Default: ```false```)
+
 `TRAEFIK_EXPERIMENTAL_OTLPLOGS`:  
 Enables the OpenTelemetry logs integration. (Default: ```false```)
 
@@ -359,6 +371,9 @@ Environment variables to forward to the wasm guest.
 
 `TRAEFIK_EXPERIMENTAL_PLUGINS_<NAME>_SETTINGS_MOUNTS`:  
 Directory to mount to the wasm guest.
+
+`TRAEFIK_EXPERIMENTAL_PLUGINS_<NAME>_SETTINGS_USEUNSAFE`:  
+Allow the plugin to use unsafe package. (Default: ```false```)
 
 `TRAEFIK_EXPERIMENTAL_PLUGINS_<NAME>_VERSION`:  
 plugin's version.

@@ -342,7 +342,7 @@ func TestForwardAuthRemoveHopByHopHeaders(t *testing.T) {
 	assert.Equal(t, http.StatusFound, res.StatusCode, "they should be equal")
 
 	for _, header := range forward.HopHeaders {
-		assert.Equal(t, "", res.Header.Get(header), "hop-by-hop header '%s' mustn't be set", header)
+		assert.Empty(t, res.Header.Get(header), "hop-by-hop header '%s' mustn't be set", header)
 	}
 
 	location, err := res.Location()

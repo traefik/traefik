@@ -1597,3 +1597,88 @@ func (s *SimpleSuite) TestMaxHeaderBytes() {
 		})
 	}
 }
+
+func (s *SimpleSuite) TestSanitizePath() {
+	s.createComposeProject("base")
+
+	s.composeUp()
+	defer s.composeDown()
+
+	whoami1URL := "http://" + net.JoinHostPort(s.getComposeServiceIP("whoami1"), "80")
+
+	file := s.adaptFile("fixtures/simple_clean_path.toml", struct {
+		Server1 string
+	}{whoami1URL})
+
+	s.traefikCmd(withConfigFile(file))
+
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("PathPrefix(`/with`)"))
+	require.NoError(s.T(), err)
+
+	testCases := []struct {
+		desc     string
+		request  string
+		target   string
+		body     string
+		expected int
+	}{
+		{
+			desc:     "Explicit call to the route with a middleware",
+			request:  "GET /with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
+			target:   "127.0.0.1:8000",
+			expected: http.StatusFound,
+		},
+		{
+			desc:     "Explicit call to the route without a middleware",
+			request:  "GET /without HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
+			target:   "127.0.0.1:8000",
+			expected: http.StatusOK,
+			body:     "GET /without HTTP/1.1",
+		},
+		{
+			desc:     "Implicit call to the route with a middleware",
+			request:  "GET /without/../with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
+			target:   "127.0.0.1:8000",
+			expected: http.StatusFound,
+		},
+		{
+			desc:     "Explicit call to the route with a middleware, and disable path sanitization",
+			request:  "GET /with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
+			target:   "127.0.0.1:8001",
+			expected: http.StatusFound,
+		},
+		{
+			desc:     "Explicit call to the route without a middleware, and disable path sanitization",
+			request:  "GET /without HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
+			target:   "127.0.0.1:8001",
+			expected: http.StatusOK,
+			body:     "GET /without HTTP/1.1",
+		},
+		{
+			desc:    "Implicit call to the route with a middleware, and disable path sanitization",
+			request: "GET /without/../with HTTP/1.1\r\nHost: other.localhost\r\n\r\n",
+			target:  "127.0.0.1:8001",
+			// The whoami is redirecting to /with, but the path is not sanitized.
+			expected: http.StatusMovedPermanently,
+		},
+	}
+
+	for _, test := range testCases {
+		conn, err := net.Dial("tcp", test.target)
+		require.NoError(s.T(), err)
+
+		_, err = conn.Write([]byte(test.request))
+		require.NoError(s.T(), err)
+
+		resp, err := http.ReadResponse(bufio.NewReader(conn), nil)
+		require.NoError(s.T(), err)
+
+		assert.Equalf(s.T(), test.expected, resp.StatusCode, "%s failed with %d instead of %d", test.desc, resp.StatusCode, test.expected)
+
+		if test.body != "" {
+			body, err := io.ReadAll(resp.Body)
+			require.NoError(s.T(), err)
+			assert.Contains(s.T(), string(body), test.body)
+		}
+	}
+}

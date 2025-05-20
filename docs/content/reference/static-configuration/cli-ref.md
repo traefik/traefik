@@ -129,6 +129,12 @@ Define if the certificates pool must use a copy of the system cert pool. (Defaul
 `--certificatesresolvers.<name>.acme.certificatesduration`:  
 Certificates' duration in hours. (Default: ```2160```)
 
+`--certificatesresolvers.<name>.acme.clientresponseheadertimeout`:  
+Timeout for receiving the response headers when communicating with the ACME server. (Default: ```30```)
+
+`--certificatesresolvers.<name>.acme.clienttimeout`:  
+Timeout for a complete HTTP transaction with the ACME server. (Default: ```120```)
+
 `--certificatesresolvers.<name>.acme.dnschallenge`:  
 Activate DNS-01 Challenge. (Default: ```false```)
 
@@ -246,6 +252,9 @@ Scheme used for the redirection. (Default: ```https```)
 `--entrypoints.<name>.http.redirections.entrypoint.to`:  
 Targeted entry point of the redirection.
 
+`--entrypoints.<name>.http.sanitizepath`:  
+Defines whether to enable request path sanitization (removal of /./, /../ and multiple slash sequences). (Default: ```true```)
+
 `--entrypoints.<name>.http.tls`:  
 Default TLS configuration for the routers linked to the entry point. (Default: ```false```)
 
@@ -345,6 +354,9 @@ Environment variables to forward to the wasm guest.
 `--experimental.localplugins.<name>.settings.mounts`:  
 Directory to mount to the wasm guest.
 
+`--experimental.localplugins.<name>.settings.useunsafe`:  
+Allow the plugin to use unsafe package. (Default: ```false```)
+
 `--experimental.otlplogs`:  
 Enables the OpenTelemetry logs integration. (Default: ```false```)
 
@@ -359,6 +371,9 @@ Environment variables to forward to the wasm guest.
 
 `--experimental.plugins.<name>.settings.mounts`:  
 Directory to mount to the wasm guest.
+
+`--experimental.plugins.<name>.settings.useunsafe`:  
+Allow the plugin to use unsafe package. (Default: ```false```)
 
 `--experimental.plugins.<name>.version`:  
 plugin's version.

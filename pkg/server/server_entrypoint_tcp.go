@@ -610,7 +610,12 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 		return nil, err
 	}
 
-	handler = denyFragment(handler)
+	if configuration.HTTP.SanitizePath != nil && *configuration.HTTP.SanitizePath {
+		// sanitizePath is used to clean the URL path by removing /../, /./ and duplicate slash sequences,
+		// to make sure the path is interpreted by the backends as it is evaluated inside rule matchers.
+		handler = sanitizePath(handler)
+	}
+
 	if configuration.HTTP.EncodeQuerySemicolons {
 		handler = encodeQuerySemicolons(handler)
 	} else {
@@ -629,6 +634,8 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 			MaxConcurrentStreams: uint32(configuration.HTTP2.MaxConcurrentStreams),
 		})
 	}
+
+	handler = denyFragment(handler)
 
 	serverHTTP := &http.Server{
 		Handler:        handler,
@@ -753,5 +760,22 @@ func denyFragment(h http.Handler) http.Handler {
 		}
 
 		h.ServeHTTP(rw, req)
+	})
+}
+
+// sanitizePath removes the "..", "." and duplicate slash segments from the URL.
+// It cleans the request URL Path and RawPath, and updates the request URI.
+func sanitizePath(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		r2 := new(http.Request)
+		*r2 = *req
+
+		// Cleans the URL raw path and path.
+		r2.URL = r2.URL.JoinPath()
+
+		// Because the reverse proxy director is building query params from requestURI it needs to be updated as well.
+		r2.RequestURI = r2.URL.RequestURI()
+
+		h.ServeHTTP(rw, r2)
 	})
 }
