@@ -849,31 +849,34 @@ func buildRule(strictPrefixMatching bool, matcher string, path string) string {
 	// When enabled, strictPrefixMatching ensures that prefix matching follows
 	// the Kubernetes Ingress spec (path-element-wise instead of character-wise).
 	if strictPrefixMatching && matcher == "PathPrefix" {
-		// To mimic Kubernetes behavior (see:
-		// https://kubernetes.io/docs/concepts/services-networking/ingress/#examples),
+		// According to
+		// https://kubernetes.io/docs/concepts/services-networking/ingress/#examples,
 		// "/v12" should not match "/v1".
 		//
 		// Traefik's default PathPrefix matcher performs a character-wise prefix match,
-		// unlike Kubernetes which matches path elements.
-		// Will use Path and PathPrefix to replicate element-wise behavior.
+		// unlike Kubernetes which matches path elements. To mimic Kubernetes behavior,
+		// we will use Path and PathPrefix to replicate element-wise behavior.
 		//
-		// See TestStrictPrefixMatchingRule() for examples.
+		// "PathPrefix" in Kubernetes Gateway API is semantically equivalent to the "Prefix" path type in the
+		// Kubernetes Ingress API.
 		return buildStrictPrefixMatchingRule(path)
 	}
 
 	return fmt.Sprintf("%s(`%s`)", matcher, path)
 }
 
-// buildStrictPrefixMatchingRule returns a rule that matches the given path and its subpaths.
-// For example, "/v1" matches "/v1" and "/v1/anything", but not "/v12".
-// See TestStrictPrefixMatchingRule() for more examples.
+// buildStrictPrefixMatchingRule is a helper function to build a path prefix rule that matches path prefix split by `/`.
+// For example, the paths `/abc`, `/abc/`, and `/abc/def` would all match the prefix `/abc`,
+// but the path `/abcd` would not. See TestStrictPrefixMatchingRule() for more examples.
+//
+// "PathPrefix" in Kubernetes Gateway API is semantically equivalent to the "Prefix" path type in the
+// Kubernetes Ingress API.
 func buildStrictPrefixMatchingRule(path string) string {
-	path = strings.TrimSuffix(path, "/")
-
-	if path == "" {
+	if path == "/" {
 		return "PathPrefix(`/`)"
 	}
 
+	path = strings.TrimSuffix(path, "/")
 	return fmt.Sprintf("(Path(`%[1]s`) || PathPrefix(`%[1]s/`))", path)
 }
 

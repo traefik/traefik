@@ -2375,8 +2375,8 @@ func TestStrictPrefixMatchingRule(t *testing.T) {
 		},
 	}
 
-	for i, tt := range tests {
-		t.Run(fmt.Sprintf("Prefix match case #%d", i), func(t *testing.T) {
+	for _, tt := range tests {
+		t.Run(fmt.Sprintf("Prefix match case %s", tt.path), func(t *testing.T) {
 			t.Parallel()
 
 			handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
