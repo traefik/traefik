@@ -16,6 +16,7 @@ import (
 	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/tls/generate"
 	"github.com/traefik/traefik/v3/pkg/types"
 )
@@ -65,29 +66,23 @@ type Manager struct {
 }
 
 // NewManager creates a new Manager.
-func NewManager(ocspConfig *OCSPConfig) *Manager {
-	var stapler *ocspStapler
-	if ocspConfig != nil {
-		stapler = newOCSPStapler(ocspConfig.ResponderOverrides)
-	}
-
-	return &Manager{
-		ocspStapler: stapler,
-		stores:      map[string]*CertificateStore{},
+func NewManager(ocspConfig *OCSPConfig, routinesPool *safe.Pool) *Manager {
+	manager := &Manager{
+		stores: map[string]*CertificateStore{},
 		configs: map[string]Options{
 			"default": DefaultTLSOptions,
 		},
 	}
-}
 
-// StartOCSPStapler starts the OCSP stapler routine if enabled.
-func (m *Manager) StartOCSPStapler(ctx context.Context) {
-	// Nothing to do, OCSP stapler is disabled.
-	if m.ocspStapler == nil {
-		return
+	if ocspConfig != nil && routinesPool != nil {
+		manager.ocspStapler = newOCSPStapler(ocspConfig.ResponderOverrides)
+
+		routinesPool.GoCtx(func(ctx context.Context) {
+			manager.ocspStapler.Run(ctx)
+		})
 	}
 
-	m.ocspStapler.Run(ctx)
+	return manager
 }
 
 // UpdateConfigs updates the TLS* configuration options.
@@ -408,7 +403,7 @@ func (m *Manager) buildDefaultCertificate(defaultCertificate *Certificate) (*Cer
 	}
 
 	var certHash string
-	if m.ocspStapler != nil {
+	if m.ocspStapler != nil && len(cert.Leaf.OCSPServer) > 0 {
 		certHash = hashRawCert(cert.Leaf.Raw)
 
 		issuer := cert.Leaf

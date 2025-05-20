@@ -188,12 +188,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 			ResponderOverrides: staticConfiguration.OCSP.ResponderOverrides,
 		}
 	}
-	tlsManager := traefiktls.NewManager(ocspConfig)
-	if ocspConfig != nil {
-		routinesPool.GoCtx(func(ctx context.Context) {
-			tlsManager.StartOCSPStapler(ctx)
-		})
-	}
+	tlsManager := traefiktls.NewManager(ocspConfig, routinesPool)
 
 	httpChallengeProvider := acme.NewChallengeHTTP()
 
