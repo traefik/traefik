@@ -157,6 +157,7 @@ providers:
     disableIngressClassLookup: true
     disableClusterScopeResources: true
     nativeLBByDefault: true
+    strictPrefixMatching: true
   kubernetesCRD:
     endpoint: foobar
     token: foobar

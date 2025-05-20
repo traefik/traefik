@@ -138,6 +138,7 @@
     disableIngressClassLookup = true
     disableClusterScopeResources = true
     nativeLBByDefault = true
+    strictPrefixMatching = true
     [providers.kubernetesIngress.ingressEndpoint]
       ip = "foobar"
       hostname = "foobar"

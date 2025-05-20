@@ -56,6 +56,7 @@ type Provider struct {
 	DisableIngressClassLookup    bool `description:"Disables the lookup of IngressClasses (Deprecated, please use DisableClusterScopeResources)." json:"disableIngressClassLookup,omitempty" toml:"disableIngressClassLookup,omitempty" yaml:"disableIngressClassLookup,omitempty" export:"true"`
 	DisableClusterScopeResources bool `description:"Disables the lookup of cluster scope resources (incompatible with IngressClasses and NodePortLB enabled services)." json:"disableClusterScopeResources,omitempty" toml:"disableClusterScopeResources,omitempty" yaml:"disableClusterScopeResources,omitempty" export:"true"`
 	NativeLBByDefault            bool `description:"Defines whether to use Native Kubernetes load-balancing mode by default." json:"nativeLBByDefault,omitempty" toml:"nativeLBByDefault,omitempty" yaml:"nativeLBByDefault,omitempty" export:"true"`
+	StrictPrefixMatching         bool `description:"Make prefix matching strictly comply with the Kubernetes Ingress specification (path-element-wise matching instead of character-by-character string matching)." json:"strictPrefixMatching,omitempty" toml:"strictPrefixMatching,omitempty" yaml:"strictPrefixMatching,omitempty" export:"true"`
 
 	// The default rule syntax is initialized with the configuration defined by the user with the core.DefaultRuleSyntax option.
 	DefaultRuleSyntax string `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
@@ -698,7 +699,7 @@ func (p *Provider) loadRouter(rule netv1.IngressRule, pa netv1.HTTPIngressPath, 
 			matcher = "Path"
 		}
 
-		rules = append(rules, fmt.Sprintf("%s(`%s`)", matcher, pa.Path))
+		rules = append(rules, buildRule(p.StrictPrefixMatching, matcher, pa.Path))
 	}
 
 	rt.Rule = strings.Join(rules, " && ")
@@ -842,6 +843,41 @@ func makeRouterKeyWithHash(key, rule string) (string, error) {
 	dupKey := fmt.Sprintf("%s-%.10x", key, h.Sum(nil))
 
 	return dupKey, nil
+}
+
+func buildRule(strictPrefixMatching bool, matcher string, path string) string {
+	// When enabled, strictPrefixMatching ensures that prefix matching follows
+	// the Kubernetes Ingress spec (path-element-wise instead of character-wise).
+	if strictPrefixMatching && matcher == "PathPrefix" {
+		// According to
+		// https://kubernetes.io/docs/concepts/services-networking/ingress/#examples,
+		// "/v12" should not match "/v1".
+		//
+		// Traefik's default PathPrefix matcher performs a character-wise prefix match,
+		// unlike Kubernetes which matches path elements. To mimic Kubernetes behavior,
+		// we will use Path and PathPrefix to replicate element-wise behavior.
+		//
+		// "PathPrefix" in Kubernetes Gateway API is semantically equivalent to the "Prefix" path type in the
+		// Kubernetes Ingress API.
+		return buildStrictPrefixMatchingRule(path)
+	}
+
+	return fmt.Sprintf("%s(`%s`)", matcher, path)
+}
+
+// buildStrictPrefixMatchingRule is a helper function to build a path prefix rule that matches path prefix split by `/`.
+// For example, the paths `/abc`, `/abc/`, and `/abc/def` would all match the prefix `/abc`,
+// but the path `/abcd` would not. See TestStrictPrefixMatchingRule() for more examples.
+//
+// "PathPrefix" in Kubernetes Gateway API is semantically equivalent to the "Prefix" path type in the
+// Kubernetes Ingress API.
+func buildStrictPrefixMatchingRule(path string) string {
+	if path == "/" {
+		return "PathPrefix(`/`)"
+	}
+
+	path = strings.TrimSuffix(path, "/")
+	return fmt.Sprintf("(Path(`%[1]s`) || PathPrefix(`%[1]s/`))", path)
 }
 
 func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *safe.Pool, eventsChan <-chan interface{}) chan interface{} {
