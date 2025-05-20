@@ -13,10 +13,12 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
 	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
+	httpmuxer "github.com/traefik/traefik/v3/pkg/muxer/http"
 	"github.com/traefik/traefik/v3/pkg/server/middleware"
 	"github.com/traefik/traefik/v3/pkg/server/service"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
@@ -326,7 +328,10 @@ func TestRouterManager_Get(t *testing.T) {
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
 			tlsManager := traefiktls.NewManager()
 
-			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager)
+			parser, err := httpmuxer.NewSyntaxParser()
+			require.NoError(t, err)
+
+			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager, parser)
 
 			handlers := routerManager.BuildHandlers(context.Background(), test.entryPoints, false)
 
@@ -711,7 +716,10 @@ func TestRuntimeConfiguration(t *testing.T) {
 			tlsManager := traefiktls.NewManager()
 			tlsManager.UpdateConfigs(context.Background(), nil, test.tlsOptions, nil)
 
-			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager)
+			parser, err := httpmuxer.NewSyntaxParser()
+			require.NoError(t, err)
+
+			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager, parser)
 
 			_ = routerManager.BuildHandlers(context.Background(), entryPoints, false)
 			_ = routerManager.BuildHandlers(context.Background(), entryPoints, true)
@@ -789,7 +797,10 @@ func TestProviderOnMiddlewares(t *testing.T) {
 	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
 	tlsManager := traefiktls.NewManager()
 
-	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager)
+	parser, err := httpmuxer.NewSyntaxParser()
+	require.NoError(t, err)
+
+	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager, parser)
 
 	_ = routerManager.BuildHandlers(context.Background(), entryPoints, false)
 
@@ -865,7 +876,10 @@ func BenchmarkRouterServe(b *testing.B) {
 	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
 	tlsManager := traefiktls.NewManager()
 
-	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager)
+	parser, err := httpmuxer.NewSyntaxParser()
+	require.NoError(b, err)
+
+	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager, parser)
 
 	handlers := routerManager.BuildHandlers(context.Background(), entryPoints, false)
 
