@@ -298,8 +298,6 @@ github.com/containous/go-http-auth v0.4.1-0.20200324110947-a37a7636d23e h1:D+uTE
 github.com/containous/go-http-auth v0.4.1-0.20200324110947-a37a7636d23e/go.mod h1:s8kLgBQolDbsJOPVIGCEEv9zGAKUUf/685Gi0Qqg8z8=
 github.com/containous/minheap v0.0.0-20190809180810-6e71eb837595 h1:aPspFRO6b94To3gl4yTDOEtpjFwXI7V2W+z0JcNljQ4=
 github.com/containous/minheap v0.0.0-20190809180810-6e71eb837595/go.mod h1:+lHFbEasIiQVGzhVDVw/cn0ZaOzde2OwNncp1NhXV4c=
-github.com/containous/mux v0.0.0-20220627093034-b2dd784e613f h1:1uEtynq2C0ljy3630jt7EAxg8jZY2gy6YHdGwdqEpWw=
-github.com/containous/mux v0.0.0-20220627093034-b2dd784e613f/go.mod h1:z8WW7n06n8/1xF9Jl9WmuDeZuHAhfL+bwarNjsciwwg=
 github.com/coreos/bbolt v1.3.2/go.mod h1:iRUV2dpdMOn7Bo10OQBFzIJO9kkE559Wcmn+qkEiiKk=
 github.com/coreos/etcd v3.3.13+incompatible/go.mod h1:uF7uidLiAD3TWHmW31ZFd/JWoc32PjwdhPthX9715RE=
 github.com/coreos/go-oidc v2.1.0+incompatible/go.mod h1:CgnwVTmzoESiwO9qyAFEMiHoZ1nMCKZlZ9V6mm3/LKc=
@@ -829,6 +827,8 @@ github.com/k0kubun/go-ansi v0.0.0-20180517002512-3bf9e2903213 h1:qGQQKEcAR99REcM
 github.com/k0kubun/go-ansi v0.0.0-20180517002512-3bf9e2903213/go.mod h1:vNUNkEQ1e29fT/6vq2aBdFsgNPmy8qMdSay1npru+Sw=
 github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 h1:Z9n2FFNUXsshfwJMBgNA0RU6/i7WVaAegv3PtuIHPMs=
 github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51/go.mod h1:CzGEWj7cYgsdH8dAjBGEr58BoE7ScuLd+fwFZ44+/x8=
+github.com/kevinpollet/mux v0.0.0-20250520085621-636877649f8d h1:u3GMPvLfO2SV0KvvMqFhvAEHr91WpDRdJC895JJLEIk=
+github.com/kevinpollet/mux v0.0.0-20250520085621-636877649f8d/go.mod h1:6KrInKwflFGYTH/G5obwg59xGcicU7ZxRP/AtvDtSRY=
 github.com/keybase/go-keychain v0.0.0-20231219164618-57a3676c3af6 h1:IsMZxCuZqKuao2vNdfD82fjjgPLfyHLpR41Z88viRWs=
 github.com/keybase/go-keychain v0.0.0-20231219164618-57a3676c3af6/go.mod h1:3VeWNIJaW+O5xpRQbPp0Ybqu1vJd/pm7s2F473HRrkw=
 github.com/kisielk/errcheck v1.1.0/go.mod h1:EZBBE59ingxPouuu3KfxchcWSUPOHkagtvWXihfKN4Q=
