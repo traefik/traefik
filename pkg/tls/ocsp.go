@@ -110,17 +110,17 @@ func (o *ocspStapler) Upsert(key string, leaf, issuer *x509.Certificate) error {
 	return nil
 }
 
-// ResetTTL resets the expiration time for all items that has no expiration.
-// This allows to set a TTL to cache that do not exist in the dynamic configuration anymore.
-// For those existing, the TTL will be set to zero when the Upsert method will be called during
-// the UpdateConfigs method of the TLS manager.
+// ResetTTL resets the expiration time for all items having no expiration.
+// This allows setting a TTL for certificates that do not exist anymore in the dynamic configuration.
+// For certificates that are still provided by the dynamic configuration,
+// their expiration time will be unset when calling the Upsert method.
 func (o *ocspStapler) ResetTTL() {
 	for key, item := range o.cache.Items() {
 		if item.Expiration > 0 {
 			continue
 		}
 
-		o.cache.Set(key, item.Object, cache.DefaultExpiration)
+		o.cache.Set(key, item.Object, defaultCacheDuration)
 	}
 }
 
@@ -191,7 +191,14 @@ func (o *ocspStapler) updateStaple(ctx context.Context, entry *ocspEntry) error 
 		}
 
 		entry.staple = ocspResBytes
-		entry.nextUpdate = ocspRes.ThisUpdate.Add(ocspRes.NextUpdate.Sub(ocspRes.ThisUpdate) / 2)
+
+		// As per RFC 6960, the nextUpdate field is optional.
+		if ocspRes.NextUpdate.IsZero() {
+			// NextUpdate is not set, the staple should be updated on the next update.
+			entry.nextUpdate = time.Now()
+		} else {
+			entry.nextUpdate = ocspRes.ThisUpdate.Add(ocspRes.NextUpdate.Sub(ocspRes.ThisUpdate) / 2)
+		}
 
 		return nil
 	}

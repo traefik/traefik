@@ -324,7 +324,7 @@ func TestRouterManager_Get(t *testing.T) {
 
 			serviceManager := service.NewManager(rtConf.Services, nil, nil, transportManager, proxyBuilderMock{})
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
-			tlsManager := traefiktls.NewManager(nil)
+			tlsManager := traefiktls.NewManager(nil, nil)
 
 			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager)
 
@@ -708,7 +708,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 
 			serviceManager := service.NewManager(rtConf.Services, nil, nil, transportManager, proxyBuilderMock{})
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
-			tlsManager := traefiktls.NewManager(nil)
+			tlsManager := traefiktls.NewManager(nil, nil)
 			tlsManager.UpdateConfigs(context.Background(), nil, test.tlsOptions, nil)
 
 			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager)
@@ -787,7 +787,7 @@ func TestProviderOnMiddlewares(t *testing.T) {
 
 	serviceManager := service.NewManager(rtConf.Services, nil, nil, transportManager, nil)
 	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
-	tlsManager := traefiktls.NewManager(nil)
+	tlsManager := traefiktls.NewManager(nil, nil)
 
 	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager)
 
@@ -863,7 +863,7 @@ func BenchmarkRouterServe(b *testing.B) {
 
 	serviceManager := service.NewManager(rtConf.Services, nil, nil, staticTransportManager{res}, nil)
 	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
-	tlsManager := traefiktls.NewManager(nil)
+	tlsManager := traefiktls.NewManager(nil, nil)
 
 	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager)
 

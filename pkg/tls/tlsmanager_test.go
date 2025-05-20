@@ -15,6 +15,7 @@ import (
 	"github.com/patrickmn/go-cache"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"golang.org/x/crypto/ocsp"
 )
@@ -84,7 +85,7 @@ func TestTLSInStore(t *testing.T) {
 		},
 	}}
 
-	tlsManager := NewManager(nil)
+	tlsManager := NewManager(nil, nil)
 	tlsManager.UpdateConfigs(context.Background(), nil, nil, dynamicConfigs)
 
 	certs := tlsManager.GetStore("default").DynamicCerts.Get().(map[string]*CertificateData)
@@ -101,7 +102,7 @@ func TestTLSInvalidStore(t *testing.T) {
 		},
 	}}
 
-	tlsManager := NewManager(nil)
+	tlsManager := NewManager(nil, nil)
 	tlsManager.UpdateConfigs(context.Background(),
 		map[string]Store{
 			"default": {
@@ -165,7 +166,7 @@ func TestManager_Get(t *testing.T) {
 		},
 	}
 
-	tlsManager := NewManager(nil)
+	tlsManager := NewManager(nil, nil)
 	tlsManager.UpdateConfigs(context.Background(), nil, tlsConfigs, dynamicConfigs)
 
 	for _, test := range testCases {
@@ -304,7 +305,7 @@ func TestClientAuth(t *testing.T) {
 		},
 	}
 
-	tlsManager := NewManager(nil)
+	tlsManager := NewManager(nil, nil)
 	tlsManager.UpdateConfigs(context.Background(), nil, tlsConfigs, nil)
 
 	for _, test := range testCases {
@@ -376,11 +377,14 @@ func TestManager_UpdateConfigs_OCSPConfig(t *testing.T) {
 	responder := httptest.NewServer(http.HandlerFunc(handler))
 	t.Cleanup(responder.Close)
 
+	testContext, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
 	tlsManager := NewManager(&OCSPConfig{
 		ResponderOverrides: map[string]string{
 			"ocsp.example.com": responder.URL,
 		},
-	})
+	}, safe.NewPool(testContext))
 
 	tlsManager.ocspStapler.cache.Set("existing", &ocspEntry{
 		leaf:       leafCert.Leaf,
@@ -394,10 +398,6 @@ func TestManager_UpdateConfigs_OCSPConfig(t *testing.T) {
 		staple:     []byte("foo"),
 		nextUpdate: time.Now().Add(time.Hour),
 	}, 2*defaultCacheDuration)
-
-	testContext, cancel := context.WithCancel(context.Background())
-	t.Cleanup(cancel)
-	go tlsManager.StartOCSPStapler(testContext)
 
 	tlsManager.UpdateConfigs(testContext, nil, nil, []*CertAndStores{
 		{
@@ -431,7 +431,7 @@ func TestManager_UpdateConfigs_OCSPConfig(t *testing.T) {
 }
 
 func TestManager_Get_DefaultValues(t *testing.T) {
-	tlsManager := NewManager(nil)
+	tlsManager := NewManager(nil, nil)
 
 	// Ensures we won't break things for Traefik users when updating Go
 	config, _ := tlsManager.Get("default", "default")
