@@ -1,9 +1,9 @@
-import { AriaTd, AriaTfoot, AriaThead, AriaTr, Box, Flex } from '@traefiklabs/faency'
-import { useEffect, useMemo, useState } from 'react'
+import { AriaTable, AriaTbody, AriaTd, AriaTfoot, AriaThead, AriaTr, Box, Flex } from '@traefiklabs/faency'
+import { useMemo } from 'react'
 import useInfiniteScroll from 'react-infinite-scroll-hook'
 import { useSearchParams } from 'react-router-dom'
 
-import { AnimatedRow, AnimatedTable, AnimatedTBody } from 'components/AnimatedTable'
+import ClickableRow from 'components/ClickableRow'
 import { Chips } from 'components/resources/DetailSections'
 import { ProviderIcon } from 'components/resources/ProviderIcon'
 import { ResourceStatus } from 'components/resources/ResourceStatus'
@@ -19,7 +19,7 @@ import Page from 'layout/Page'
 
 export const makeRowRender = (): RenderRowType => {
   const UdpRoutersRenderRow = (row) => (
-    <AnimatedRow key={row.name} to={`/udp/routers/${row.name}`}>
+    <ClickableRow key={row.name} to={`/udp/routers/${row.name}`}>
       <AriaTd>
         <Tooltip label={row.status}>
           <Box css={{ width: '32px', height: '32px' }}>
@@ -44,7 +44,7 @@ export const makeRowRender = (): RenderRowType => {
       <AriaTd>
         <TooltipText text={row.priority} isTruncated variant="short" />
       </AriaTd>
-    </AnimatedRow>
+    </ClickableRow>
   )
   return UdpRoutersRenderRow
 }
@@ -58,19 +58,15 @@ export const UdpRoutersRender = ({
   pageCount,
   pages,
 }: pagesResponseInterface) => {
-  const [isMounted, setMounted] = useState(false)
-
   const [infiniteRef] = useInfiniteScroll({
     loading: isLoadingMore,
     hasNextPage: !isReachingEnd && !error,
     onLoadMore: loadMore,
   })
 
-  useEffect(() => setMounted(true), [])
-
   return (
     <>
-      <AnimatedTable>
+      <AriaTable>
         <AriaThead>
           <AriaTr>
             <SortableTh label="Status" css={{ width: '40px' }} isSortable sortByValue="status" />
@@ -81,9 +77,7 @@ export const UdpRoutersRender = ({
             <SortableTh label="Priority" css={{ width: '64px' }} isSortable sortByValue="priority" />
           </AriaTr>
         </AriaThead>
-        <AnimatedTBody pageCount={pageCount} isMounted={isMounted}>
-          {pages}
-        </AnimatedTBody>
+        <AriaTbody>{pages}</AriaTbody>
         {(isEmpty || !!error) && (
           <AriaTfoot>
             <AriaTr>
@@ -93,7 +87,7 @@ export const UdpRoutersRender = ({
             </AriaTr>
           </AriaTfoot>
         )}
-      </AnimatedTable>
+      </AriaTable>
       <Flex css={{ height: 60, alignItems: 'center', justifyContent: 'center' }} ref={infiniteRef}>
         {isLoadingMore ? <SpinnerLoader /> : isReachingEnd && pageCount > 1 && <ScrollTopButton />}
       </Flex>

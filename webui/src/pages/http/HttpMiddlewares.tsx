@@ -1,9 +1,9 @@
-import { AriaTd, AriaTfoot, AriaThead, AriaTr, Box, Flex } from '@traefiklabs/faency'
-import { useEffect, useMemo, useState } from 'react'
+import { AriaTable, AriaTbody, AriaTd, AriaTfoot, AriaThead, AriaTr, Box, Flex } from '@traefiklabs/faency'
+import { useMemo } from 'react'
 import useInfiniteScroll from 'react-infinite-scroll-hook'
 import { useSearchParams } from 'react-router-dom'
 
-import { AnimatedRow, AnimatedTable, AnimatedTBody } from 'components/AnimatedTable'
+import ClickableRow from 'components/ClickableRow'
 import { ProviderIcon } from 'components/resources/ProviderIcon'
 import { ResourceStatus } from 'components/resources/ResourceStatus'
 import { ScrollTopButton } from 'components/ScrollTopButton'
@@ -22,7 +22,7 @@ export const makeRowRender = (): RenderRowType => {
     const middlewareType = parseMiddlewareType(row)
 
     return (
-      <AnimatedRow key={row.name} to={`/http/middlewares/${row.name}`}>
+      <ClickableRow key={row.name} to={`/http/middlewares/${row.name}`}>
         <AriaTd>
           <Tooltip label={row.status}>
             <Box css={{ width: '32px', height: '32px' }}>
@@ -43,7 +43,7 @@ export const makeRowRender = (): RenderRowType => {
             </Box>
           </Tooltip>
         </AriaTd>
-      </AnimatedRow>
+      </ClickableRow>
     )
   }
   return HttpMiddlewaresRenderRow
@@ -58,19 +58,15 @@ export const HttpMiddlewaresRender = ({
   pageCount,
   pages,
 }: pagesResponseInterface) => {
-  const [isMounted, setMounted] = useState(false)
-
   const [infiniteRef] = useInfiniteScroll({
     loading: isLoadingMore,
     hasNextPage: !isReachingEnd && !error,
     onLoadMore: loadMore,
   })
 
-  useEffect(() => setMounted(true), [])
-
   return (
     <>
-      <AnimatedTable>
+      <AriaTable>
         <AriaThead>
           <AriaTr>
             <SortableTh label="Status" css={{ width: '40px' }} isSortable sortByValue="status" />
@@ -79,9 +75,7 @@ export const HttpMiddlewaresRender = ({
             <SortableTh label="Provider" css={{ width: '40px' }} isSortable sortByValue="provider" />
           </AriaTr>
         </AriaThead>
-        <AnimatedTBody pageCount={pageCount} isMounted={isMounted}>
-          {pages}
-        </AnimatedTBody>
+        <AriaTbody>{pages}</AriaTbody>
         {(isEmpty || !!error) && (
           <AriaTfoot>
             <AriaTr>
@@ -91,7 +85,7 @@ export const HttpMiddlewaresRender = ({
             </AriaTr>
           </AriaTfoot>
         )}
-      </AnimatedTable>
+      </AriaTable>
       <Flex css={{ height: 60, alignItems: 'center', justifyContent: 'center' }} ref={infiniteRef}>
         {isLoadingMore ? <SpinnerLoader /> : isReachingEnd && pageCount > 1 && <ScrollTopButton />}
       </Flex>
