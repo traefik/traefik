@@ -314,7 +314,7 @@ type Server struct {
 type PassiveHealthCheck struct {
 	// FailTimeout defines the time window during which a certain number of failed attempts must occur for the server to be marked as unavailable.
 	FailTimeout ptypes.Duration `json:"failTimeout,omitempty" toml:"failTimeout,omitempty" yaml:"failTimeout,omitempty" export:"true"`
-	// MaxFails sets the number of failed attempts that must occur during the fail timeout.
+	// MaxFails is the number of failed attempts allowed within the failure window before marking the server as unhealthy.
 	MaxFails int `json:"maxFails,omitempty" toml:"maxFails,omitempty" yaml:"maxFails,omitempty" export:"true"`
 }
 
