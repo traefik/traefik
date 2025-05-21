@@ -31,8 +31,6 @@ import (
 	"github.com/traefik/traefik/v2/pkg/server/service"
 	"github.com/traefik/traefik/v2/pkg/tcp"
 	"github.com/traefik/traefik/v2/pkg/types"
-	"golang.org/x/net/http2"
-	"golang.org/x/net/http2/h2c"
 )
 
 var httpServerLogger = stdlog.New(log.WithoutContext().WriterLevel(logrus.DebugLevel), "", 0)
@@ -577,11 +575,18 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 		handler = newKeepAliveMiddleware(handler, configuration.Transport.KeepAliveMaxRequests, configuration.Transport.KeepAliveMaxTime)
 	}
 
-	if withH2c {
-		handler = h2c.NewHandler(handler, &http2.Server{
-			MaxConcurrentStreams: uint32(configuration.HTTP2.MaxConcurrentStreams),
-		})
-	}
+	// TODO: With the addition of UnencryptedHTTP2 in http.Server#Protocols in go1.24 setting the h2c might not be necessary anymore.
+	//  Furthermore, this means that maybe it is not required anymore to have an HTTP and HTTPS server.
+	//  See https://tip.golang.org/doc/go1.24#nethttppkgnethttp
+	// if withH2c {
+	//	handler = h2c.NewHandler(handler, &http2.Server{
+	//		MaxConcurrentStreams: uint32(configuration.HTTP2.MaxConcurrentStreams),
+	//	})
+	//}
+	var protocols http.Protocols
+	protocols.SetHTTP1(true)
+	protocols.SetHTTP2(true)
+	protocols.SetUnencryptedHTTP2(withH2c)
 
 	if configuration.HTTP.EncodeQuerySemicolons {
 		handler = encodeQuerySemicolons(handler)
@@ -602,11 +607,15 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 	handler = denyFragment(handler)
 
 	serverHTTP := &http.Server{
+		Protocols:    &protocols,
 		Handler:      handler,
 		ErrorLog:     httpServerLogger,
 		ReadTimeout:  time.Duration(configuration.Transport.RespondingTimeouts.ReadTimeout),
 		WriteTimeout: time.Duration(configuration.Transport.RespondingTimeouts.WriteTimeout),
 		IdleTimeout:  time.Duration(configuration.Transport.RespondingTimeouts.IdleTimeout),
+		HTTP2: &http.HTTP2Config{
+			MaxConcurrentStreams: int(configuration.HTTP2.MaxConcurrentStreams),
+		},
 	}
 	if debugConnection || (configuration.Transport != nil && (configuration.Transport.KeepAliveMaxTime > 0 || configuration.Transport.KeepAliveMaxRequests > 0)) {
 		serverHTTP.ConnContext = func(ctx context.Context, c net.Conn) context.Context {
@@ -638,19 +647,6 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 			return prevConnContext(ctx, c)
 		}
 		return ctx
-	}
-
-	// ConfigureServer configures HTTP/2 with the MaxConcurrentStreams option for the given server.
-	// Also keeping behavior the same as
-	// https://cs.opensource.google/go/go/+/refs/tags/go1.17.7:src/net/http/server.go;l=3262
-	if !strings.Contains(os.Getenv("GODEBUG"), "http2server=0") {
-		err = http2.ConfigureServer(serverHTTP, &http2.Server{
-			MaxConcurrentStreams: uint32(configuration.HTTP2.MaxConcurrentStreams),
-			NewWriteScheduler:    func() http2.WriteScheduler { return http2.NewPriorityWriteScheduler(nil) },
-		})
-		if err != nil {
-			return nil, fmt.Errorf("configure HTTP/2 server: %w", err)
-		}
 	}
 
 	listener := newHTTPForwarder(ln)
