@@ -300,7 +300,7 @@ type Server struct {
 // +k8s:deepcopy-gen=true
 
 type PassiveHealthCheck struct {
-	// FailTimeout sets the time during which a number of failed attempts must happen for the server to be marked unavailable.
+	// FailTimeout defines the time window during which a certain number of failed attempts must occur for the server to be marked as unavailable.
 	FailTimeout ptypes.Duration `json:"failTimeout,omitempty" toml:"failTimeout,omitempty" yaml:"failTimeout,omitempty" export:"true"`
 	// MaxFails sets the number of failed attempts that must occur during the fail timeout.
 	MaxFails int `json:"maxFails,omitempty" toml:"maxFails,omitempty" yaml:"maxFails,omitempty" export:"true"`
