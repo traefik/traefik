@@ -534,16 +534,16 @@ Below are the available options for the health check mechanism:
     ```
 
 #### Passive Health Checks
-Passive health checks rely on real traffic to determine server health. 
-Traefik will forward requests as usual and evaluate each response or timeout, 
-incrementing a failure counter when a request fails. 
-Once the number of failures within a given period exceeds your configuration, 
+Passive health checks rely on real traffic to assess server health.
+Traefik forwards requests as usual and evaluates each response or timeout,
+incrementing a failure counter whenever a request fails.
+If the number of failures within a specified time window exceeds the configured threshold,
 Traefik will automatically stop routing traffic to that server until it recovers.
 
-Below are the available options for passive health checks:
-- maxFails (default: 1) – the number of failed requests that must occur before the server is marked unhealthy.
+The following options are available for passive health checks:
+- maxFails (default: 1) –  The number of failed requests required before the server is considered unhealthy.
 
-- failTimeout (default: 10s) – the window during which failures are counted, and the duration the server remains marked unhealthy.
+- failTimeout (default: 10s) – The time window during which failures are counted, and the duration for which the server remains marked as unhealthy.
 
 ??? example "Using the [File Provider](../../providers/file.md)"
 
