@@ -293,6 +293,22 @@ type Server struct {
 	// Scheme can only be defined with label Providers.
 	Scheme string `json:"-" toml:"-" yaml:"-" file:"-" kv:"-"`
 	Port   string `json:"-" toml:"-" yaml:"-" file:"-" kv:"-"`
+	// HealthCheck enables passive health checks for this server.
+	HealthCheck *PassiveHealthCheck `json:"healthCheck,omitempty" toml:"healthCheck,omitempty" yaml:"healthCheck,omitempty" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
+type PassiveHealthCheck struct {
+	// FailTimeout defines the time window during which a certain number of failed attempts must occur for the server to be marked as unavailable.
+	FailTimeout ptypes.Duration `json:"failTimeout,omitempty" toml:"failTimeout,omitempty" yaml:"failTimeout,omitempty" export:"true"`
+	// MaxFails sets the number of failed attempts that must occur during the fail timeout.
+	MaxFails int `json:"maxFails,omitempty" toml:"maxFails,omitempty" yaml:"maxFails,omitempty" export:"true"`
+}
+
+func (p *PassiveHealthCheck) SetDefaults() {
+	p.FailTimeout = ptypes.Duration(10 * time.Second)
+	p.MaxFails = 1
 }
 
 // +k8s:deepcopy-gen=true
