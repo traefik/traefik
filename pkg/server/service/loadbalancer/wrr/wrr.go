@@ -243,7 +243,7 @@ func (b *Balancer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 // AddServer adds a handler with a server.
 func (b *Balancer) AddServer(name string, handler http.Handler, server dynamic.Server) {
 	if server.HealthCheck != nil {
-		healthChecker := healthcheck.NewPassiveHealthChecker(server.HealthCheck.MaxFails, server.HealthCheck.FailTimeout)
+		healthChecker := healthcheck.NewPassiveHealthChecker(server.HealthCheck.MaxFailedAttempts, server.HealthCheck.FailureWindow)
 		b.Add(name, handler, server.Weight, server.Fenced, healthChecker)
 	} else {
 		b.Add(name, handler, server.Weight, server.Fenced, nil)

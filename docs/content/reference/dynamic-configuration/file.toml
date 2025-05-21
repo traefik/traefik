@@ -74,16 +74,16 @@
           weight = 42
           preservePath = true
           [http.services.Service02.loadBalancer.servers.healthCheck]
-            failTimeout = "42s"
-            maxFails = 42
+            failureWindow = "42s"
+            maxFailedAttempts = 42
 
         [[http.services.Service02.loadBalancer.servers]]
           url = "foobar"
           weight = 42
           preservePath = true
           [http.services.Service02.loadBalancer.servers.healthCheck]
-            failTimeout = "42s"
-            maxFails = 42
+            failureWindow = "42s"
+            maxFailedAttempts = 42
         [http.services.Service02.loadBalancer.healthCheck]
           scheme = "foobar"
           mode = "foobar"

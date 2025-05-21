@@ -312,15 +312,15 @@ type Server struct {
 // +k8s:deepcopy-gen=true
 
 type PassiveHealthCheck struct {
-	// FailTimeout defines the time window during which a certain number of failed attempts must occur for the server to be marked as unavailable.
-	FailTimeout ptypes.Duration `json:"failTimeout,omitempty" toml:"failTimeout,omitempty" yaml:"failTimeout,omitempty" export:"true"`
-	// MaxFails is the number of failed attempts allowed within the failure window before marking the server as unhealthy.
-	MaxFails int `json:"maxFails,omitempty" toml:"maxFails,omitempty" yaml:"maxFails,omitempty" export:"true"`
+	// FailureWindow defines the time window during which a certain number of failed attempts must occur for the server to be marked as unavailable.
+	FailureWindow ptypes.Duration `json:"failureWindow,omitempty" toml:"failureWindow,omitempty" yaml:"failureWindow,omitempty" export:"true"`
+	// MaxFailedAttempts is the number of failed attempts allowed within the failure window before marking the server as unhealthy.
+	MaxFailedAttempts int `json:"maxFailedAttempts,omitempty" toml:"maxFailedAttempts,omitempty" yaml:"maxFailedAttempts,omitempty" export:"true"`
 }
 
 func (p *PassiveHealthCheck) SetDefaults() {
-	p.FailTimeout = ptypes.Duration(10 * time.Second)
-	p.MaxFails = 1
+	p.FailureWindow = ptypes.Duration(10 * time.Second)
+	p.MaxFailedAttempts = 1
 }
 
 // +k8s:deepcopy-gen=true
