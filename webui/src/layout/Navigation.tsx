@@ -34,7 +34,7 @@ import useTotals from 'hooks/use-overview-totals'
 import useVersion from 'hooks/use-version'
 import { Route, ROUTES } from 'routes'
 
-const LAPTOP_BP = 1024
+const LAPTOP_BP = 1025
 
 const NavigationDrawer = styled(Flex, {
   width: '100%',

@@ -6,24 +6,15 @@ import Tooltip from 'components/Tooltip'
 type TooltipTextProps = {
   isTruncated?: boolean
   text?: string
-  variant?: 'short' | 'wide'
 }
 
-export default function TooltipText({ isTruncated = false, text, variant }: TooltipTextProps) {
-  const maxWidth = useMemo(() => {
-    switch (variant) {
-      case 'short':
-        return '60px'
-      case 'wide':
-        return '304px'
-      default:
-        return '208px'
-    }
-  }, [variant])
-
+export default function TooltipText({ isTruncated = false, text }: TooltipTextProps) {
   const css = useMemo(
-    () => (isTruncated ? { whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth } : undefined),
-    [isTruncated, maxWidth],
+    () =>
+      isTruncated
+        ? { whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }
+        : undefined,
+    [isTruncated],
   )
 
   if (typeof text === 'undefined') return <Text>-</Text>

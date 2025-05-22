@@ -1,10 +1,10 @@
-import { SideNav, TopNav } from './NavBar'
+import { SideNav, TopNav } from './Navigation'
 
 import { renderWithProviders } from 'utils/test'
 
 describe('Navigation', () => {
   it('should render the side navigation bar', async () => {
-    const { container } = renderWithProviders(<SideNav />)
+    const { container } = renderWithProviders(<SideNav isExpanded={false} onSidePanelToggle={() => {}} />)
 
     expect(container.innerHTML).toContain('HTTP')
     expect(container.innerHTML).toContain('TCP')

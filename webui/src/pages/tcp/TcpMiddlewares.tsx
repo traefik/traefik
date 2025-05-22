@@ -72,7 +72,7 @@ export const TcpMiddlewaresRender = ({
             <SortableTh label="Status" css={{ width: '40px' }} isSortable sortByValue="status" />
             <SortableTh label="Name" isSortable sortByValue="name" />
             <SortableTh label="Type" isSortable sortByValue="type" />
-            <SortableTh label="Provider" css={{ width: '40px' }} isSortable sortByValue="provider" />
+            <SortableTh label="Provider" css={{ width: '75px' }} isSortable sortByValue="provider" />
           </AriaTr>
         </AriaThead>
         <AriaTbody>{pages}</AriaTbody>

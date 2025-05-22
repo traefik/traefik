@@ -3,7 +3,7 @@ import { ReactNode, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 
 import Container from './Container'
-import { SideBarPanel, SideNav, TopNav } from './NavBar'
+import { SideBarPanel, SideNav, TopNav } from './Navigation'
 
 import { ToastPool } from 'components/ToastPool'
 import { ToastProvider } from 'contexts/toasts'
@@ -19,6 +19,9 @@ const PageContainer = styled(Container, {
   py: '$5',
   px: '$5',
   m: 0,
+  '@media (max-width:1440px)': {
+    maxWidth: '100%',
+  },
 })
 
 export interface Props {

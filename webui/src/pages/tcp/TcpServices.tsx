@@ -32,7 +32,7 @@ export const makeRowRender = (): RenderRowType => {
       <AriaTd>
         <TooltipText text={row.type} />
       </AriaTd>
-      <AriaTd style={{ textAlign: 'right' }}>
+      <AriaTd>
         <Text>{row.loadBalancer?.servers?.length || 0}</Text>
       </AriaTd>
       <AriaTd>
@@ -70,8 +70,8 @@ export const TcpServicesRender = ({
             <SortableTh label="Status" css={{ width: '40px' }} isSortable sortByValue="status" />
             <SortableTh label="Name" isSortable sortByValue="name" />
             <SortableTh label="Type" isSortable sortByValue="type" />
-            <SortableTh label="Servers" css={{ width: '40px' }} isSortable sortByValue="servers" />
-            <SortableTh label="Provider" css={{ width: '40px' }} isSortable sortByValue="provider" />
+            <SortableTh label="Servers" isSortable sortByValue="servers" />
+            <SortableTh label="Provider" css={{ width: '75px' }} isSortable sortByValue="provider" />
           </AriaTr>
         </AriaThead>
         <AriaTbody>{pages}</AriaTbody>

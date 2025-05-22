@@ -38,7 +38,7 @@ export const makeRowRender = (): RenderRowType => {
         )}
       </AriaTd>
       <AriaTd>
-        <TooltipText text={row.rule} isTruncated variant="wide" />
+        <TooltipText text={row.rule} isTruncated />
       </AriaTd>
       <AriaTd>{row.entryPoints && row.entryPoints.length > 0 && <Chips items={row.entryPoints} />}</AriaTd>
       <AriaTd>
@@ -55,7 +55,7 @@ export const makeRowRender = (): RenderRowType => {
         </Tooltip>
       </AriaTd>
       <AriaTd>
-        <TooltipText text={row.priority} isTruncated variant="short" />
+        <TooltipText text={row.priority} isTruncated />
       </AriaTd>
     </ClickableRow>
   )
@@ -83,7 +83,7 @@ export const TcpRoutersRender = ({
         <AriaThead>
           <AriaTr>
             <SortableTh label="Status" css={{ width: '40px' }} isSortable sortByValue="status" />
-            <SortableTh label="TLS" />
+            <SortableTh label="TLS" css={{ width: '40px' }} />
             <SortableTh label="Rule" isSortable sortByValue="rule" />
             <SortableTh label="Entrypoints" isSortable sortByValue="entryPoints" />
             <SortableTh label="Name" isSortable sortByValue="name" />
