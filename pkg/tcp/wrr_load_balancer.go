@@ -25,13 +25,15 @@ type WRRLoadBalancer struct {
 	status sync.Map
 	// updaters is the list of hooks that are run (to update the Balancer
 	// parent(s)), whenever the Balancer status changes.
-	updaters []func(bool)
+	updaters         []func(bool)
+	wantsHealthCheck bool
 }
 
 // NewWRRLoadBalancer creates a new WRRLoadBalancer.
-func NewWRRLoadBalancer() *WRRLoadBalancer {
+func NewWRRLoadBalancer(wantsHealthCheck bool) *WRRLoadBalancer {
 	return &WRRLoadBalancer{
-		index: -1,
+		wantsHealthCheck: wantsHealthCheck,
+		index:            -1,
 	}
 }
 
@@ -68,6 +70,36 @@ func (b *WRRLoadBalancer) AddWeightServer(serverHandler Handler, weight *int) {
 		w = *weight
 	}
 	b.servers = append(b.servers, server{Handler: serverHandler, weight: w})
+}
+
+// SetStatus sets status (UP or DOWN) of a target server.
+func (b *WRRLoadBalancer) SetStatus(ctx context.Context, childName string, up bool) {
+	statusString := "DOWN"
+	if up {
+		statusString = "UP"
+	}
+
+	log.Ctx(ctx).Debug().Msgf("Setting status of %s to %s", childName, statusString)
+
+	currentStatus, _ := b.status.LoadOrStore(childName, true)
+	if b.status.CompareAndSwap(childName, currentStatus, up) {
+		log.Ctx(ctx).Debug().Msgf("Propagating new %s status", statusString)
+		for _, fn := range b.updaters {
+			fn(up)
+		}
+
+		return
+	}
+
+	log.Ctx(ctx).Debug().Msgf("Still %s, no need to propagate", statusString)
+}
+
+func (b *WRRLoadBalancer) RegisterStatusUpdater(fn func(up bool)) error {
+	if !b.wantsHealthCheck {
+		return errors.New("healthCheck not enabled in config for this weighted service")
+	}
+	b.updaters = append(b.updaters, fn)
+	return nil
 }
 
 func (b *WRRLoadBalancer) maxWeight() int {
@@ -130,26 +162,4 @@ func (b *WRRLoadBalancer) next() (Handler, error) {
 			return srv, nil
 		}
 	}
-}
-
-// SetStatus sets status (UP or DOWN) of a target server.
-func (b *WRRLoadBalancer) SetStatus(ctx context.Context, childName string, up bool) {
-	statusString := "DOWN"
-	if up {
-		statusString = "UP"
-	}
-
-	log.Ctx(ctx).Debug().Msgf("Setting status of %s to %s", childName, statusString)
-
-	currentStatus, _ := b.status.LoadOrStore(childName, true)
-	if b.status.CompareAndSwap(childName, currentStatus, up) {
-		log.Ctx(ctx).Debug().Msgf("Propagating new %s status", statusString)
-		for _, fn := range b.updaters {
-			fn(up)
-		}
-
-		return
-	}
-
-	log.Ctx(ctx).Debug().Msgf("Still %s, no need to propagate", statusString)
 }

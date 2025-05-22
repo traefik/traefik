@@ -124,7 +124,7 @@ func TestLoadBalancing(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			balancer := NewWRRLoadBalancer()
+			balancer := NewWRRLoadBalancer(false)
 			for server, weight := range test.serversWeight {
 				balancer.AddWeightServer(HandlerFunc(func(conn WriteCloser) {
 					_, err := conn.Write([]byte(server))

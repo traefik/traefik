@@ -496,6 +496,7 @@
         [[tcp.services.TCPService02.weighted.services]]
           name = "foobar"
           weight = 42
+        [tcp.services.TCPService02.weighted.healthCheck]
   [tcp.middlewares]
     [tcp.middlewares.TCPMiddleware01]
       [tcp.middlewares.TCPMiddleware01.ipAllowList]
