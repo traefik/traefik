@@ -542,6 +542,7 @@ tcp:
             weight: 42
           - name: foobar
             weight: 42
+        healthCheck: {}
   middlewares:
     TCPMiddleware01:
       ipAllowList:

@@ -407,6 +407,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/tcp/services/TCPService01/loadBalancer/servers/1/tls` | `true` |
 | `traefik/tcp/services/TCPService01/loadBalancer/serversTransport` | `foobar` |
 | `traefik/tcp/services/TCPService01/loadBalancer/terminationDelay` | `42` |
+| `traefik/tcp/services/TCPService02/weighted/healthCheck` | `` |
 | `traefik/tcp/services/TCPService02/weighted/services/0/name` | `foobar` |
 | `traefik/tcp/services/TCPService02/weighted/services/0/weight` | `42` |
 | `traefik/tcp/services/TCPService02/weighted/services/1/name` | `foobar` |

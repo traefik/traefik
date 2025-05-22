@@ -55,7 +55,7 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 
 	switch {
 	case conf.LoadBalancer != nil:
-		loadBalancer := tcp.NewWRRLoadBalancer()
+		loadBalancer := tcp.NewWRRLoadBalancer(conf.LoadBalancer.HealthCheck != nil)
 
 		if conf.LoadBalancer.TerminationDelay != nil {
 			log.Ctx(ctx).Warn().Msgf("Service %q load balancer uses `TerminationDelay`, but this option is deprecated, please use ServersTransport configuration instead.", serviceName)
@@ -122,7 +122,7 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 		return loadBalancer, nil
 
 	case conf.Weighted != nil:
-		loadBalancer := tcp.NewWRRLoadBalancer()
+		loadBalancer := tcp.NewWRRLoadBalancer(conf.Weighted.HealthCheck != nil)
 
 		for _, service := range shuffle(conf.Weighted.Services, m.rand) {
 			handler, err := m.BuildTCP(ctx, service.Name)
@@ -132,6 +132,25 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 			}
 
 			loadBalancer.AddWeightServer(handler, service.Weight)
+
+			if conf.Weighted.HealthCheck == nil {
+				continue
+			}
+
+			childName := service.Name
+			updater, ok := handler.(healthcheck.StatusUpdater)
+			if !ok {
+				return nil, fmt.Errorf("child service %v of %v not a healthcheck.StatusUpdater (%T)", childName, serviceName, handler)
+			}
+
+			if err := updater.RegisterStatusUpdater(func(up bool) {
+				loadBalancer.SetStatus(ctx, childName, up)
+			}); err != nil {
+				return nil, fmt.Errorf("cannot register %v as updater for %v: %w", childName, serviceName, err)
+			}
+
+			log.Ctx(ctx).Debug().Str("parent", serviceName).Str("child", childName).
+				Msg("Child service will update parent on status change")
 		}
 
 		return loadBalancer, nil
