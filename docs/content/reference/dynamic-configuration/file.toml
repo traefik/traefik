@@ -465,10 +465,10 @@
           address = "foobar"
           tls = true
         [tcp.services.TCPService01.loadBalancer.healthCheck]
-          address = "foobar"
           tls = true
           serversTransport = "foobar"
           interval = "42s"
+          unhealthyInterval = "42s"
           timeout = "42s"
           payload = "foobar"
           expected = "foobar"
