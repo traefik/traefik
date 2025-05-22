@@ -120,7 +120,7 @@ func (s *TCPServiceInfo) UpdateServerStatus(server string, status bool) {
 	}
 
 	if currentStatus, loaded := s.serverStatus.LoadOrStore(server, status); loaded && currentStatus != status {
-		s.serverStatus.Swap(server, status)
+		s.serverStatus.Store(server, status)
 	}
 }
 

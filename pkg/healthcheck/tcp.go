@@ -27,16 +27,17 @@ type ServiceTCPHealthChecker struct {
 	serviceName string
 }
 
-func NewServiceTCPHealthChecker(dialerManager *tcp.DialerManager, metrics metricsHealthCheck, config *dynamic.TCPServerHealthCheck, service StatusSetter, info *runtime.TCPServiceInfo, targets map[string]*net.TCPAddr, serviceName string) *ServiceTCPHealthChecker {
+func NewServiceTCPHealthChecker(ctx context.Context, dialerManager *tcp.DialerManager, metrics metricsHealthCheck, config *dynamic.TCPServerHealthCheck, service StatusSetter, info *runtime.TCPServiceInfo, targets map[string]*net.TCPAddr, serviceName string) *ServiceTCPHealthChecker {
+	logger := log.Ctx(ctx)
 	interval := time.Duration(config.Interval)
 	if interval <= 0 {
-		log.Error().Msg("Health check interval smaller than zero")
+		logger.Error().Msg("Health check interval smaller than zero")
 		interval = time.Duration(dynamic.DefaultHealthCheckInterval)
 	}
 
 	timeout := time.Duration(config.Timeout)
 	if timeout <= 0 {
-		log.Error().Msg("Health check timeout smaller than zero")
+		logger.Error().Msg("Health check timeout smaller than zero")
 		timeout = time.Duration(dynamic.DefaultHealthCheckTimeout)
 	}
 

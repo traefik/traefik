@@ -113,6 +113,22 @@ func Test_ServiceTCPHealthChecker_Check(t *testing.T) {
 			targetStatus:          truntime.StatusDown,
 		},
 		{
+			desc: "unhealthy server becoming healthy",
+			server: newTCPServer(t,
+				false,
+				tcpMockSequence{accept: false},
+				tcpMockSequence{accept: true},
+			),
+			config: &dynamic.TCPServerHealthCheck{
+				Interval: ptypes.Duration(time.Millisecond * 100),
+				Timeout:  ptypes.Duration(time.Millisecond * 99),
+			},
+			expNumRemovedServers:  1,
+			expNumUpsertedServers: 1,
+			expGaugeValue:         1,
+			targetStatus:          truntime.StatusUp,
+		},
+		{
 			desc: "healthy server with request and response",
 			server: newTCPServer(t,
 				false,
@@ -191,7 +207,7 @@ func Test_ServiceTCPHealthChecker_Check(t *testing.T) {
 					ServerName:         "example.com",
 				},
 			}})
-			service := NewServiceTCPHealthChecker(dialerManager, &MetricsMock{gauge}, test.config, lb, serviceInfo, targets, "serviceName")
+			service := NewServiceTCPHealthChecker(ctx, dialerManager, &MetricsMock{gauge}, test.config, lb, serviceInfo, targets, "serviceName")
 
 			for range test.server.StatusSequence {
 				test.server.Next()

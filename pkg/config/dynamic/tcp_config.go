@@ -189,10 +189,11 @@ func (t *TCPServersTransport) SetDefaults() {
 
 // TCPServerHealthCheck holds the HealthCheck configuration.
 type TCPServerHealthCheck struct {
-	TLS              bool            `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
-	ServersTransport string          `json:"serversTransport,omitempty" toml:"serversTransport,omitempty" yaml:"serversTransport,omitempty" export:"true"`
-	Interval         ptypes.Duration `json:"interval,omitempty" toml:"interval,omitempty" yaml:"interval,omitempty" export:"true"`
-	Timeout          ptypes.Duration `json:"timeout,omitempty" toml:"timeout,omitempty" yaml:"timeout,omitempty" export:"true"`
-	Payload          string          `json:"payload,omitempty" toml:"payload,omitempty" yaml:"payload,omitempty" export:"true"`
-	Expected         string          `json:"expected,omitempty" toml:"expected,omitempty" yaml:"expected,omitempty" export:"true"`
+	TLS               bool             `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
+	ServersTransport  string           `json:"serversTransport,omitempty" toml:"serversTransport,omitempty" yaml:"serversTransport,omitempty" export:"true"`
+	Interval          ptypes.Duration  `json:"interval,omitempty" toml:"interval,omitempty" yaml:"interval,omitempty" export:"true"`
+	UnhealthyInterval *ptypes.Duration `json:"unhealthyInterval,omitempty" toml:"unhealthyInterval,omitempty" yaml:"unhealthyInterval,omitempty" export:"true"`
+	Timeout           ptypes.Duration  `json:"timeout,omitempty" toml:"timeout,omitempty" yaml:"timeout,omitempty" export:"true"`
+	Payload           string           `json:"payload,omitempty" toml:"payload,omitempty" yaml:"payload,omitempty" export:"true"`
+	Expected          string           `json:"expected,omitempty" toml:"expected,omitempty" yaml:"expected,omitempty" export:"true"`
 }

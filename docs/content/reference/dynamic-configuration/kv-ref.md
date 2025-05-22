@@ -407,6 +407,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/tcp/services/TCPService01/loadBalancer/healthCheck/serversTransport` | `foobar` |
 | `traefik/tcp/services/TCPService01/loadBalancer/healthCheck/timeout` | `42s` |
 | `traefik/tcp/services/TCPService01/loadBalancer/healthCheck/tls` | `true` |
+| `traefik/tcp/services/TCPService01/loadBalancer/healthCheck/unhealthyInterval` | `42s` |
 | `traefik/tcp/services/TCPService01/loadBalancer/proxyProtocol/version`</a> | `42` |
 | <a id="traefiktcpservicesTCPService01loadBalancerservers0address" href="#traefiktcpservicesTCPService01loadBalancerservers0address" title="#traefiktcpservicesTCPService01loadBalancerservers0address">`traefik/tcp/services/TCPService01/loadBalancer/servers/0/address`</a> | `foobar` |
 | <a id="traefiktcpservicesTCPService01loadBalancerservers0tls" href="#traefiktcpservicesTCPService01loadBalancerservers0tls" title="#traefiktcpservicesTCPService01loadBalancerservers0tls">`traefik/tcp/services/TCPService01/loadBalancer/servers/0/tls`</a> | `true` |

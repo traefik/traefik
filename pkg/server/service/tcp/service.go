@@ -27,9 +27,10 @@ type Manager struct {
 // NewManager creates a new manager.
 func NewManager(conf *runtime.Configuration, dialerManager *tcp.DialerManager) *Manager {
 	return &Manager{
-		dialerManager: dialerManager,
-		configs:       conf.TCPServices,
-		rand:          rand.New(rand.NewSource(time.Now().UnixNano())),
+		dialerManager:  dialerManager,
+		healthCheckers: make(map[string]*healthcheck.ServiceTCPHealthChecker),
+		configs:        conf.TCPServices,
+		rand:           rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
 }
 
@@ -103,6 +104,7 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 
 		if conf.LoadBalancer.HealthCheck != nil {
 			m.healthCheckers[serviceName] = healthcheck.NewServiceTCPHealthChecker(
+				ctx,
 				m.dialerManager,
 				nil,
 				conf.LoadBalancer.HealthCheck,
