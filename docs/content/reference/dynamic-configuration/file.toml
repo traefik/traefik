@@ -462,6 +462,14 @@
         [[tcp.services.TCPService01.loadBalancer.servers]]
           address = "foobar"
           tls = true
+        [tcp.services.TCPService01.loadBalancer.healthCheck]
+          tls = true
+          serversTransport = "foobar"
+          interval = "42s"
+          unhealthyInterval = "42s"
+          timeout = "42s"
+          payload = "foobar"
+          expected = "foobar"
     [tcp.services.TCPService02]
       [tcp.services.TCPService02.weighted]
 
@@ -472,6 +480,7 @@
         [[tcp.services.TCPService02.weighted.services]]
           name = "foobar"
           weight = 42
+        [tcp.services.TCPService02.weighted.healthCheck]
   [tcp.middlewares]
     [tcp.middlewares.TCPMiddleware01]
       [tcp.middlewares.TCPMiddleware01.ipAllowList]
