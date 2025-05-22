@@ -1,85 +1,94 @@
 import { ReactNode } from 'react'
-import { FiHome } from 'react-icons/fi'
-import { HiOutlineGlobe } from 'react-icons/hi'
-import { TfiWorld } from 'react-icons/tfi'
+import { LiaProjectDiagramSolid, LiaServerSolid, LiaCogsSolid, LiaHomeSolid } from 'react-icons/lia'
 
-export type NavRouteType = {
+export type Route = {
   path: string
-  subPaths?: string[]
   label: string
-  icon?: ReactNode
-  subRoutes?: NavRouteType[]
+  icon?: string | ReactNode
+  activeMatches?: string[]
 }
 
-const httpRoutes: NavRouteType[] = [
+type RouteSections = {
+  section: string
+  items: Route[]
+  sectionLabel?: string
+}
+
+export const ROUTES: RouteSections[] = [
   {
-    path: '/http/routers',
-    subPaths: ['/http/routers/:name'],
-    label: 'HTTP Routers',
+    section: 'dashboard',
+    items: [
+      {
+        path: '/',
+        label: 'Dashboard',
+        icon: <LiaHomeSolid color="currentColor" size={20} />,
+      },
+    ],
   },
   {
-    path: '/http/services',
-    subPaths: ['/http/services/:name'],
-    label: 'HTTP Services',
+    section: 'http',
+    sectionLabel: 'HTTP',
+    items: [
+      {
+        path: '/http/routers',
+        activeMatches: ['/http/routers/:name'],
+        label: 'HTTP Routers',
+        icon: <LiaProjectDiagramSolid color="currentColor" size={20} />,
+      },
+      {
+        path: '/http/services',
+        activeMatches: ['/http/services/:name'],
+        label: 'HTTP Services',
+        icon: <LiaServerSolid color="currentColor" size={20} />,
+      },
+      {
+        path: '/http/middlewares',
+        activeMatches: ['/http/middlewares/:name'],
+        label: 'HTTP Middlewares',
+        icon: <LiaCogsSolid color="currentColor" size={20} />,
+      },
+    ],
   },
   {
-    path: '/http/middlewares',
-    subPaths: ['/http/middlewares/:name'],
-    label: 'HTTP Middlewares',
+    section: 'tcp',
+    sectionLabel: 'TCP',
+    items: [
+      {
+        path: '/tcp/routers',
+        activeMatches: ['/tcp/routers/:name'],
+        label: 'TCP Routers',
+        icon: <LiaProjectDiagramSolid color="currentColor" size={20} />,
+      },
+      {
+        path: '/tcp/services',
+        activeMatches: ['/tcp/services/:name'],
+        label: 'TCP Services',
+        icon: <LiaServerSolid color="currentColor" size={20} />,
+      },
+      {
+        path: '/tcp/middlewares',
+        activeMatches: ['/tcp/middlewares/:name'],
+        label: 'TCP Middlewares',
+        icon: <LiaCogsSolid color="currentColor" size={20} />,
+      },
+    ],
+  },
+  {
+    section: 'udp',
+    sectionLabel: 'UDP',
+    items: [
+      {
+        path: '/udp/routers',
+        activeMatches: ['/udp/routers/:name'],
+        label: 'UDP Routers',
+        icon: <LiaProjectDiagramSolid color="currentColor" size={20} />,
+      },
+      {
+        path: '/udp/services',
+        activeMatches: ['/udp/services/:name'],
+        label: 'UDP Services',
+        icon: <LiaServerSolid color="currentColor" size={20} />,
+      },
+    ],
   },
 ]
-
-const tcpRoutes: NavRouteType[] = [
-  {
-    path: '/tcp/routers',
-    subPaths: ['/tcp/routers/:name'],
-    label: 'TCP Routers',
-  },
-  {
-    path: '/tcp/services',
-    subPaths: ['/tcp/services/:name'],
-    label: 'TCP Services',
-  },
-  {
-    path: '/tcp/middlewares',
-    subPaths: ['/tcp/middlewares/:name'],
-    label: 'TCP Middlewares',
-  },
-]
-
-const udpRoutes: NavRouteType[] = [
-  {
-    path: '/udp/routers',
-    subPaths: ['/udp/routers/:name'],
-    label: 'UDP Routers',
-  },
-  {
-    path: '/udp/services',
-    subPaths: ['/udp/services/:name'],
-    label: 'UDP Services',
-  },
-]
-
-const routes: NavRouteType[] = [
-  { path: '/', label: 'Dashboard', icon: <FiHome color="currentColor" size={20} /> },
-  {
-    path: '/http/',
-    label: 'HTTP',
-    icon: <TfiWorld color="currentColor" size={20} />,
-    subRoutes: httpRoutes,
-  },
-  {
-    path: '/tcp/',
-    label: 'TCP',
-    icon: <HiOutlineGlobe color="currentColor" size={24} />,
-    subRoutes: tcpRoutes,
-  },
-  {
-    path: '/udp/',
-    label: 'UDP',
-    icon: <HiOutlineGlobe color="currentColor" size={24} />,
-    subRoutes: udpRoutes,
-  },
-]
-
-export default routes

@@ -1,9 +1,9 @@
-import { globalCss, styled } from '@traefiklabs/faency'
+import { Flex, globalCss, styled } from '@traefiklabs/faency'
 import { ReactNode } from 'react'
 import { Helmet } from 'react-helmet-async'
 
 import Container from './Container'
-import Header from './Header'
+import { SideNav, TopNav } from './NavBar'
 
 import { ToastPool } from 'components/ToastPool'
 import { ToastProvider } from 'contexts/toasts'
@@ -17,6 +17,10 @@ export const globalStyles = globalCss({
 
 const PageContainer = styled(Container, {
   py: '$5',
+  px: '$5',
+  height: '100vh',
+  overflowY: 'auto',
+  m: 0,
 })
 
 export interface Props {
@@ -31,10 +35,13 @@ const Page = ({ children, title }: Props) => {
       <Helmet>
         <title>{title ? `${title} - ` : ''}Traefik Proxy</title>
       </Helmet>
-      <Header />
-      <PageContainer data-testid={`${title} page`} direction="column">
-        {children}
-      </PageContainer>
+      <Flex>
+        <SideNav />
+        <PageContainer data-testid={`${title} page`} direction="column">
+          <TopNav />
+          {children}
+        </PageContainer>
+      </Flex>
       <ToastPool />
     </ToastProvider>
   )

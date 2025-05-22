@@ -30,14 +30,16 @@ const SectionContainer = ({
   title,
   children,
   childrenContainerCss,
+  css,
 }: {
   icon: ReactNode
   title: string
   children: ReactNode
   childrenContainerCss?: CSS
+  css?: CSS
 }) => {
   return (
-    <Flex direction="column" gap={4} css={{ mt: '$4' }}>
+    <Flex direction="column" gap={4} css={{ mt: '$4', ...css }}>
       <SectionTitle icon={icon} title={title} />
       <Grid
         gap={6}
@@ -89,8 +91,8 @@ export const Dashboard = () => {
 
   return (
     <Page title="Dashboard">
-      <Flex direction="column" gap={6} css={{ mt: '$8' }}>
-        <SectionContainer icon={<FaArrowRightToBracket size={22} />} title="Entrypoints">
+      <Flex direction="column" gap={6}>
+        <SectionContainer icon={<FaArrowRightToBracket size={22} />} title="Entrypoints" css={{ mt: 0 }}>
           {entrypoints?.map((i, idx) => (
             <ResourceCard
               key={`entrypoint-${i.name}-${idx}`}
@@ -198,8 +200,8 @@ export const Dashboard = () => {
 export const DashboardSkeleton = () => {
   return (
     <Page>
-      <Flex direction="column" gap={6} css={{ mt: '$8' }}>
-        <SectionContainer icon={<FaArrowRightToBracket size={22} />} title="Entrypoints">
+      <Flex direction="column" gap={6}>
+        <SectionContainer icon={<FaArrowRightToBracket size={22} />} title="Entrypoints" css={{ mt: 0 }}>
           {[...Array(5)].map((_, i) => (
             <FeatureCardSkeleton key={`entry-skeleton-${i}`} />
           ))}

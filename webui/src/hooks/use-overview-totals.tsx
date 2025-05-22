@@ -1,31 +1,36 @@
-import { useMemo } from 'react'
 import useSWR from 'swr'
 
-export type UseTotalsProps = {
-  protocol?: string
-  enabled?: boolean
+type TotalsResultItem = {
+  routers: number
+  services: number
+  middlewares?: number
 }
 
 type TotalsResult = {
-  routers: number
-  services: number
-  middlewares: number
+  http: TotalsResultItem
+  tcp: TotalsResultItem
+  udp: TotalsResultItem
 }
 
-const useTotals = ({ protocol, enabled = true }: UseTotalsProps): TotalsResult => {
-  const { data } = useSWR(enabled ? '/overview' : null)
+const useTotals = (): TotalsResult => {
+  const { data } = useSWR('/overview')
 
-  return useMemo(
-    () =>
-      data && protocol
-        ? {
-            routers: data[protocol]?.routers?.total,
-            services: data[protocol]?.services?.total,
-            middlewares: data[protocol]?.middlewares?.total,
-          }
-        : ({} as TotalsResult),
-    [data, protocol],
-  )
+  return {
+    http: {
+      routers: data?.http?.routers?.total,
+      services: data?.http?.services?.total,
+      middlewares: data?.http?.middlewares?.total,
+    },
+    tcp: {
+      routers: data?.tcp?.routers?.total,
+      services: data?.tcp?.services?.total,
+      middlewares: data?.tcp?.middlewares?.total,
+    },
+    udp: {
+      routers: data?.udp?.routers?.total,
+      services: data?.udp?.services?.total,
+    },
+  }
 }
 
 export default useTotals
