@@ -48,7 +48,7 @@ func NewMuxer() (*Muxer, error) {
 	}
 
 	return &Muxer{
-		Router: mux.NewRouter().SkipClean(true),
+		Router: mux.NewRouter().UseRoutingPath().SkipClean(true),
 		parser: parser,
 	}, nil
 }
