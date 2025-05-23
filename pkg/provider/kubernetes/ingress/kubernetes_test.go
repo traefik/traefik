@@ -473,6 +473,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			desc:               "Ingress with backend resource",
 			allowEmptyServices: true,
 			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers:     map[string]*dynamic.Router{},
@@ -484,6 +485,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			desc:               "Ingress without backend",
 			allowEmptyServices: true,
 			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{},
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers:     map[string]*dynamic.Router{},
