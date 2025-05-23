@@ -321,6 +321,11 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 					continue
 				}
 
+				if pa.Backend.Service == nil {
+					logger.Error().Msg("Missing service definition")
+					continue
+				}
+
 				service, err := p.loadService(client, ingress.Namespace, pa.Backend)
 				if err != nil {
 					logger.Error().
@@ -498,10 +503,6 @@ func (p *Provider) shouldProcessIngress(ingress *netv1.Ingress, ingressClasses [
 }
 
 func (p *Provider) loadService(client Client, namespace string, backend netv1.IngressBackend) (*dynamic.Service, error) {
-	if backend.Service == nil {
-		return nil, errors.New("missing service definition")
-	}
-
 	service, exists, err := client.GetService(namespace, backend.Service.Name)
 	if err != nil {
 		return nil, err
