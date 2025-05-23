@@ -3,12 +3,16 @@ import { ReactNode, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 
 import Container from './Container'
-import { SideBarPanel, SideNav, TopNav } from './Navigation'
+import { LAPTOP_BP, SideBarPanel, SideNav, TopNav } from './Navigation'
 
 import { ToastPool } from 'components/ToastPool'
 import { ToastProvider } from 'contexts/toasts'
 
 export const globalStyles = globalCss({
+  ':root': {
+    '--colors-primary': '#2AA2C1',
+  },
+
   body: {
     backgroundColor: '$contentBg',
     m: 0,
@@ -41,7 +45,10 @@ const Page = ({ children, title }: Props) => {
       <Flex>
         <SideBarPanel isOpen={isSideBarPanelOpen} onOpenChange={setIsSideBarPanelOpen} />
         <SideNav isExpanded={isSideBarPanelOpen} onSidePanelToggle={() => setIsSideBarPanelOpen(true)} isResponsive />
-        <Flex justify="center" css={{ flex: 1, height: '100vh', overflowY: 'auto', margin: 'auto' }}>
+        <Flex
+          justify="center"
+          css={{ flex: 1, margin: 'auto', ml: 250, [`@media (max-width:${LAPTOP_BP}px)`]: { ml: 60 } }}
+        >
           <PageContainer data-testid={`${title} page`} direction="column">
             <TopNav />
             {children}

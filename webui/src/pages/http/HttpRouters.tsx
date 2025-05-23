@@ -93,7 +93,7 @@ export const HttpRoutersRender = ({
             <SortableTh label="Name" isSortable sortByValue="name" />
             <SortableTh label="Service" isSortable sortByValue="service" />
             <SortableTh label="Provider" css={{ width: '40px' }} isSortable sortByValue="provider" />
-            <SortableTh label="Priority" css={{ width: '64px' }} isSortable sortByValue="priority" />
+            <SortableTh label="Priority" css={{ width: '60px' }} isSortable sortByValue="priority" />
           </AriaTr>
         </AriaThead>
         <AriaTbody>{pages}</AriaTbody>

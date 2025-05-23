@@ -137,10 +137,7 @@ export const CardListSection = ({ icon, title, cards, isLast, bigDescription }: 
             {cards
               ?.filter((c) => !!c.description)
               .map((card) => (
-                <SpacedCard
-                  key={card.description}
-                  css={{ border: card.focus ? `2px solid hsl(220, 91%, 45%)` : '', p: '$3' }}
-                >
+                <SpacedCard key={card.description} css={{ border: card.focus ? `2px solid $primary` : '', p: '$3' }}>
                   <FlexLink
                     data-testid={card.link}
                     onClick={(): false | void => !!card.link && navigate(card.link)}

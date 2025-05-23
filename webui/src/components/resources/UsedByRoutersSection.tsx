@@ -136,7 +136,7 @@ export const UsedByRoutersSection = ({ data, protocol = 'http' }: UsedByRoutersS
             <SortableTh label="Name" isSortable sortByValue="name" />
             <SortableTh label="Service" isSortable sortByValue="service" />
             <SortableTh label="Provider" css={{ width: '40px' }} isSortable sortByValue="provider" />
-            <SortableTh label="Priority" css={{ width: '64px' }} isSortable sortByValue="priority" />
+            <SortableTh label="Priority" isSortable sortByValue="priority" />
           </AriaTr>
         </AriaThead>
         <AriaTbody>{routersFound.map(renderRow)}</AriaTbody>

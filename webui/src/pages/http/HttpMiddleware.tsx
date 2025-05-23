@@ -11,7 +11,7 @@ import breakpoints from 'utils/breakpoints'
 
 const MiddlewareGrid = styled(Box, {
   display: 'grid',
-  gridTemplateColumns: 'repeat(3, minmax(400px, 1fr))',
+  gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))',
 
   [`@media (max-width: ${breakpoints.tablet})`]: {
     gridTemplateColumns: '1fr',

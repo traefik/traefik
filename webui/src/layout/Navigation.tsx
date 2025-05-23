@@ -30,11 +30,12 @@ import IconButton from 'components/buttons/IconButton'
 import Logo from 'components/icons/Logo'
 import { PluginsIcon } from 'components/icons/PluginsIcon'
 import ThemeSwitcher from 'components/ThemeSwitcher'
+import TooltipText from 'components/TooltipText'
 import useTotals from 'hooks/use-overview-totals'
 import useVersion from 'hooks/use-version'
 import { Route, ROUTES } from 'routes'
 
-const LAPTOP_BP = 1025
+export const LAPTOP_BP = 1025
 
 const NavigationDrawer = styled(Flex, {
   width: '100%',
@@ -109,7 +110,7 @@ export const SideBarPanel = ({
       open={isOpen && windowSize.width < LAPTOP_BP}
       onOpenChange={onOpenChange}
       side="left"
-      css={{ width: 260, p: 0 }}
+      css={{ width: 250, p: 0 }}
       description="Expanded side navigation"
       noCloseIcon
     >
@@ -156,10 +157,10 @@ export const SideNav = ({
     <NavigationDrawer
       data-collapsed={isExpanded && isResponsive && isSmallScreen}
       css={{
-        width: 260,
+        width: 250,
         height: '100vh',
         flexDirection: 'column',
-        position: 'relative',
+        position: 'fixed',
         [`@media (max-width:${LAPTOP_BP}px)`]: isResponsive
           ? {
               width: 60,
@@ -193,13 +194,13 @@ export const SideNav = ({
           overflow: 'auto',
           py: '$3',
           flexDirection: 'column',
+          mx: '$3',
           [`@media (max-width:${LAPTOP_BP}px)`]: isResponsive ? { m: 0 } : undefined,
         }}
         data-testid="nav-container"
       >
         <Flex
           as="a"
-          align="center"
           gap={2}
           css={{
             color: '$primary',
@@ -207,16 +208,17 @@ export const SideNav = ({
             mb: '$6',
             textDecoration: 'none',
             height: 'fit-content',
-            [`@media (max-width:${LAPTOP_BP}px)`]: isResponsive ? { mt: '$4' } : undefined,
+            pl: '$3',
+            [`@media (max-width:${LAPTOP_BP}px)`]: isResponsive
+              ? { mt: '$4', px: 0, justifyContent: 'center' }
+              : undefined,
           }}
           href="https://github.com/traefik/traefik/"
           target="_blank"
         >
-          <Logo height={32} isSmallScreen={isSmallScreen} />
+          <Logo height={isSmallScreen ? 36 : 56} isSmallScreen={isSmallScreen} />
           {!!version && !isSmallScreen && (
-            <Text variant="subtle" size="4" css={{ fontWeight: '$semiBold' }}>
-              {version.Version}
-            </Text>
+            <TooltipText text={version.Version} css={{ maxWidth: 50, fontWeight: '$semiBold' }} isTruncated />
           )}
         </Flex>
         {ROUTES.map((section, index) => (

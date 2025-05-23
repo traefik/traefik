@@ -1,10 +1,5 @@
 import { Card, CSS, Flex, Grid, H2, Text } from '@traefiklabs/faency'
 import { ReactNode, useMemo } from 'react'
-import { FaArrowRightToBracket } from 'react-icons/fa6'
-import { FiSettings } from 'react-icons/fi'
-import { HiOutlineGlobe } from 'react-icons/hi'
-import { IoMdCube } from 'react-icons/io'
-import { TfiWorld } from 'react-icons/tfi'
 import useSWR from 'swr'
 
 import FeatureCard, { FeatureCardSkeleton } from 'components/resources/FeatureCard'
@@ -16,23 +11,12 @@ import { capitalizeFirstLetter } from 'utils/string'
 
 const RESOURCES = ['routers', 'services', 'middlewares']
 
-const SectionTitle = ({ icon, title }: { icon: ReactNode; title: string }) => {
-  return (
-    <Flex align="center" gap={2} css={{ color: '$headingDefault', mb: '$4' }}>
-      {icon}
-      <H2 css={{ fontSize: '$8' }}>{title}</H2>
-    </Flex>
-  )
-}
-
 const SectionContainer = ({
-  icon,
   title,
   children,
   childrenContainerCss,
   css,
 }: {
-  icon: ReactNode
   title: string
   children: ReactNode
   childrenContainerCss?: CSS
@@ -40,7 +24,9 @@ const SectionContainer = ({
 }) => {
   return (
     <Flex direction="column" gap={4} css={{ mt: '$4', ...css }}>
-      <SectionTitle icon={icon} title={title} />
+      <Flex align="center" gap={2} css={{ color: '$headingDefault', mb: '$4' }}>
+        <H2 css={{ fontSize: '$8' }}>{title}</H2>
+      </Flex>
       <Grid
         gap={6}
         css={{
@@ -92,7 +78,7 @@ export const Dashboard = () => {
   return (
     <Page title="Dashboard">
       <Flex direction="column" gap={6}>
-        <SectionContainer icon={<FaArrowRightToBracket size={22} />} title="Entrypoints" css={{ mt: 0 }}>
+        <SectionContainer title="Entrypoints" css={{ mt: 0 }}>
           {entrypoints?.map((i, idx) => (
             <ResourceCard
               key={`entrypoint-${i.name}-${idx}`}
@@ -111,7 +97,6 @@ export const Dashboard = () => {
         </SectionContainer>
 
         <SectionContainer
-          icon={<TfiWorld size={22} />}
           title="HTTP"
           childrenContainerCss={{ gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))' }}
         >
@@ -131,7 +116,6 @@ export const Dashboard = () => {
         </SectionContainer>
 
         <SectionContainer
-          icon={<HiOutlineGlobe size={22} />}
           title="TCP"
           childrenContainerCss={{ gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))' }}
         >
@@ -151,7 +135,6 @@ export const Dashboard = () => {
         </SectionContainer>
 
         <SectionContainer
-          icon={<HiOutlineGlobe size={22} />}
           title="UDP"
           childrenContainerCss={{ gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))' }}
         >
@@ -170,7 +153,7 @@ export const Dashboard = () => {
           )}
         </SectionContainer>
 
-        <SectionContainer icon={<FiSettings size={22} />} title="Features">
+        <SectionContainer title="Features">
           {features.length
             ? features.map((i, idx) => {
                 return <FeatureCard key={`feature-${idx}`} feature={i} />
@@ -178,7 +161,7 @@ export const Dashboard = () => {
             : null}
         </SectionContainer>
 
-        <SectionContainer title="Providers" icon={<IoMdCube size={22} />}>
+        <SectionContainer title="Providers">
           {overview?.providers?.length ? (
             overview.providers.map((p, idx) => (
               <Card key={`provider-${idx}`} css={{ height: 125 }}>
@@ -201,14 +184,13 @@ export const DashboardSkeleton = () => {
   return (
     <Page>
       <Flex direction="column" gap={6}>
-        <SectionContainer icon={<FaArrowRightToBracket size={22} />} title="Entrypoints" css={{ mt: 0 }}>
+        <SectionContainer title="Entrypoints" css={{ mt: 0 }}>
           {[...Array(5)].map((_, i) => (
             <FeatureCardSkeleton key={`entry-skeleton-${i}`} />
           ))}
         </SectionContainer>
 
         <SectionContainer
-          icon={<TfiWorld size={22} />}
           title="HTTP"
           childrenContainerCss={{ gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))' }}
         >
@@ -218,7 +200,6 @@ export const DashboardSkeleton = () => {
         </SectionContainer>
 
         <SectionContainer
-          icon={<HiOutlineGlobe size={22} />}
           title="TCP"
           childrenContainerCss={{ gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))' }}
         >
@@ -228,7 +209,6 @@ export const DashboardSkeleton = () => {
         </SectionContainer>
 
         <SectionContainer
-          icon={<HiOutlineGlobe size={22} />}
           title="UDP"
           childrenContainerCss={{ gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))' }}
         >
@@ -237,13 +217,13 @@ export const DashboardSkeleton = () => {
           ))}
         </SectionContainer>
 
-        <SectionContainer icon={<FiSettings size={22} />} title="Features">
+        <SectionContainer title="Features">
           {[...Array(3)].map((_, i) => (
             <FeatureCardSkeleton key={`feature-skeleton-${i}`} />
           ))}
         </SectionContainer>
 
-        <SectionContainer title="Providers" icon={<IoMdCube size={22} />}>
+        <SectionContainer title="Providers">
           {[...Array(3)].map((_, i) => (
             <FeatureCardSkeleton key={`provider-skeleton-${i}`} />
           ))}

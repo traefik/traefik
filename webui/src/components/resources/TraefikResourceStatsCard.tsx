@@ -175,8 +175,8 @@ const TraefikResourceStatsCard = ({ title, errors, total, warnings, linkTo }: Tr
               <H3 css={{ fontSize: '$6' }}>{title}</H3>
 
               <Link to={linkTo as string}>
-                <Flex align="center" gap={1} css={{ color: '$linkBlue' }}>
-                  <Text css={{ fontWeight: 500, color: '$linkBlue' }}>Explore</Text>
+                <Flex align="center" gap={1} css={{ color: '$primary' }}>
+                  <Text css={{ fontWeight: 500, color: '$primary' }}>Explore</Text>
                   <FaArrowRightLong />
                 </Flex>
               </Link>
