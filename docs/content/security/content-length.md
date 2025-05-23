@@ -5,7 +5,7 @@ description: "Enforce strict Content‑Length validation in Traefik by streaming
 
 Traefik acts as a streaming proxy. By default, it checks each chunk of data against the `Content-Length` header as it passes it on to the backend or client. This live check blocks truncated or over‑long streams without holding the entire message.
 
-If you need Traefik to read and verify the full body before any data moves on, add the [buffering middleware](../../reference/routing-configuration/http/middlewares/buffering.md):
+If you need Traefik to read and verify the full body before any data moves on, add the [buffering middleware](../middlewares/http/buffering.md):
 
 ```yaml
 http:

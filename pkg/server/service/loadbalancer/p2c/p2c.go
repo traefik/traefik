@@ -58,7 +58,8 @@ type Balancer struct {
 
 	sticky *loadbalancer.Sticky
 
-	rand rnd
+	randMu sync.Mutex
+	rand   rnd
 }
 
 // New creates a new power-of-two-random-choices load balancer.
@@ -152,10 +153,13 @@ func (b *Balancer) nextServer() (*namedHandler, error) {
 	if len(healthy) == 1 {
 		return healthy[0], nil
 	}
-	// In order to not get the same backend twice, we make the second call to s.rand.IntN one fewer
+	// In order to not get the same backend twice, we make the second call to s.rand.Intn one fewer
 	// than the length of the slice. We then have to shift over the second index if it is equal or
 	// greater than the first index, wrapping round if needed.
+	b.randMu.Lock()
 	n1, n2 := b.rand.Intn(len(healthy)), b.rand.Intn(len(healthy))
+	b.randMu.Unlock()
+
 	if n2 == n1 {
 		n2 = (n2 + 1) % len(healthy)
 	}

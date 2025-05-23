@@ -17,6 +17,7 @@ import (
 
 	"github.com/containous/alice"
 	gokitmetrics "github.com/go-kit/kit/metrics"
+	"github.com/gorilla/mux"
 	"github.com/pires/go-proxyproto"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -610,20 +611,6 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 		return nil, err
 	}
 
-	if configuration.HTTP.SanitizePath != nil && *configuration.HTTP.SanitizePath {
-		// sanitizePath is used to clean the URL path by removing /../, /./ and duplicate slash sequences,
-		// to make sure the path is interpreted by the backends as it is evaluated inside rule matchers.
-		handler = sanitizePath(handler)
-	}
-
-	if configuration.HTTP.EncodeQuerySemicolons {
-		handler = encodeQuerySemicolons(handler)
-	} else {
-		handler = http.AllowQuerySemicolons(handler)
-	}
-
-	handler = contenttype.DisableAutoDetection(handler)
-
 	debugConnection := os.Getenv(debugConnectionEnv) != ""
 	if debugConnection || (configuration.Transport != nil && (configuration.Transport.KeepAliveMaxTime > 0 || configuration.Transport.KeepAliveMaxRequests > 0)) {
 		handler = newKeepAliveMiddleware(handler, configuration.Transport.KeepAliveMaxRequests, configuration.Transport.KeepAliveMaxTime)
@@ -634,6 +621,24 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 			MaxConcurrentStreams: uint32(configuration.HTTP2.MaxConcurrentStreams),
 		})
 	}
+
+	handler = contenttype.DisableAutoDetection(handler)
+
+	if configuration.HTTP.EncodeQuerySemicolons {
+		handler = encodeQuerySemicolons(handler)
+	} else {
+		handler = http.AllowQuerySemicolons(handler)
+	}
+
+	handler = routingPath(handler)
+
+	// Note that the Path sanitization has to be done after the path normalization,
+	// hence the wrapping has to be done before the normalize path wrapping.
+	if configuration.HTTP.SanitizePath != nil && *configuration.HTTP.SanitizePath {
+		handler = sanitizePath(handler)
+	}
+
+	handler = normalizePath(handler)
 
 	handler = denyFragment(handler)
 
@@ -763,7 +768,7 @@ func denyFragment(h http.Handler) http.Handler {
 	})
 }
 
-// sanitizePath removes the "..", "." and duplicate slash segments from the URL.
+// sanitizePath removes the "..", "." and duplicate slash segments from the URL according to https://datatracker.ietf.org/doc/html/rfc3986#section-6.2.2.3.
 // It cleans the request URL Path and RawPath, and updates the request URI.
 func sanitizePath(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -777,5 +782,160 @@ func sanitizePath(h http.Handler) http.Handler {
 		r2.RequestURI = r2.URL.RequestURI()
 
 		h.ServeHTTP(rw, r2)
+	})
+}
+
+// unreservedCharacters contains the mapping of the percent-encoded form to the ASCII form
+// of the unreserved characters according to https://datatracker.ietf.org/doc/html/rfc3986#section-2.3.
+var unreservedCharacters = map[string]rune{
+	"%41": 'A', "%42": 'B', "%43": 'C', "%44": 'D', "%45": 'E', "%46": 'F',
+	"%47": 'G', "%48": 'H', "%49": 'I', "%4A": 'J', "%4B": 'K', "%4C": 'L',
+	"%4D": 'M', "%4E": 'N', "%4F": 'O', "%50": 'P', "%51": 'Q', "%52": 'R',
+	"%53": 'S', "%54": 'T', "%55": 'U', "%56": 'V', "%57": 'W', "%58": 'X',
+	"%59": 'Y', "%5A": 'Z',
+
+	"%61": 'a', "%62": 'b', "%63": 'c', "%64": 'd', "%65": 'e', "%66": 'f',
+	"%67": 'g', "%68": 'h', "%69": 'i', "%6A": 'j', "%6B": 'k', "%6C": 'l',
+	"%6D": 'm', "%6E": 'n', "%6F": 'o', "%70": 'p', "%71": 'q', "%72": 'r',
+	"%73": 's', "%74": 't', "%75": 'u', "%76": 'v', "%77": 'w', "%78": 'x',
+	"%79": 'y', "%7A": 'z',
+
+	"%30": '0', "%31": '1', "%32": '2', "%33": '3', "%34": '4',
+	"%35": '5', "%36": '6', "%37": '7', "%38": '8', "%39": '9',
+
+	"%2D": '-', "%2E": '.', "%5F": '_', "%7E": '~',
+}
+
+// normalizePath removes from the RawPath unreserved percent-encoded characters as they are equivalent to their non-encoded
+// form according to https://datatracker.ietf.org/doc/html/rfc3986#section-2.3 and capitalizes percent-encoded characters
+// according to https://datatracker.ietf.org/doc/html/rfc3986#section-6.2.2.1.
+func normalizePath(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rawPath := req.URL.RawPath
+
+		// When the RawPath is empty the encoded form of the Path is equivalent to the original request Path.
+		// Thus, the normalization is not needed as no unreserved characters were encoded and the encoded version
+		// of Path obtained with URL.EscapedPath contains only percent-encoded characters in upper case.
+		if rawPath == "" {
+			h.ServeHTTP(rw, req)
+			return
+		}
+
+		var normalizedRawPathBuilder strings.Builder
+		for i := 0; i < len(rawPath); i++ {
+			if rawPath[i] != '%' {
+				normalizedRawPathBuilder.WriteString(string(rawPath[i]))
+				continue
+			}
+
+			// This should never happen as the standard library will reject requests containing invalid percent-encodings.
+			// This discards URLs with a percent character at the end.
+			if i+2 >= len(rawPath) {
+				rw.WriteHeader(http.StatusBadRequest)
+				return
+			}
+
+			encodedCharacter := strings.ToUpper(rawPath[i : i+3])
+			if r, unreserved := unreservedCharacters[encodedCharacter]; unreserved {
+				normalizedRawPathBuilder.WriteRune(r)
+			} else {
+				normalizedRawPathBuilder.WriteString(encodedCharacter)
+			}
+
+			i += 2
+		}
+
+		normalizedRawPath := normalizedRawPathBuilder.String()
+
+		// We do not have to alter the request URL as the original RawPath is already normalized.
+		if normalizedRawPath == rawPath {
+			h.ServeHTTP(rw, req)
+			return
+		}
+
+		r2 := new(http.Request)
+		*r2 = *req
+
+		// Decoding unreserved characters only alter the RAW version of the URL,
+		// as unreserved percent-encoded characters are equivalent to their non encoded form.
+		r2.URL.RawPath = normalizedRawPath
+
+		// Because the reverse proxy director is building query params from RequestURI it needs to be updated as well.
+		r2.RequestURI = r2.URL.RequestURI()
+
+		h.ServeHTTP(rw, r2)
+	})
+}
+
+// reservedCharacters contains the mapping of the percent-encoded form to the ASCII form
+// of the reserved characters according to https://datatracker.ietf.org/doc/html/rfc3986#section-2.2.
+// By extension to https://datatracker.ietf.org/doc/html/rfc3986#section-2.1 the percent character is also considered a reserved character.
+// Because decoding the percent character would change the meaning of the URL.
+var reservedCharacters = map[string]rune{
+	"%3A": ':',
+	"%2F": '/',
+	"%3F": '?',
+	"%23": '#',
+	"%5B": '[',
+	"%5D": ']',
+	"%40": '@',
+	"%21": '!',
+	"%24": '$',
+	"%26": '&',
+	"%27": '\'',
+	"%28": '(',
+	"%29": ')',
+	"%2A": '*',
+	"%2B": '+',
+	"%2C": ',',
+	"%3B": ';',
+	"%3D": '=',
+	"%25": '%',
+}
+
+// routingPath decodes non-allowed characters in the EscapedPath and stores it in the context to be able to use it for routing.
+// This allows using the decoded version of the non-allowed characters in the routing rules for a better UX.
+// For example, the rule PathPrefix(`/foo bar`) will match the following request path `/foo%20bar`.
+func routingPath(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		escapedPath := req.URL.EscapedPath()
+
+		var routingPathBuilder strings.Builder
+		for i := 0; i < len(escapedPath); i++ {
+			if escapedPath[i] != '%' {
+				routingPathBuilder.WriteString(string(escapedPath[i]))
+				continue
+			}
+
+			// This should never happen as the standard library will reject requests containing invalid percent-encodings.
+			// This discards URLs with a percent character at the end.
+			if i+2 >= len(escapedPath) {
+				rw.WriteHeader(http.StatusBadRequest)
+				return
+			}
+
+			encodedCharacter := escapedPath[i : i+3]
+			if _, reserved := reservedCharacters[encodedCharacter]; reserved {
+				routingPathBuilder.WriteString(encodedCharacter)
+			} else {
+				// This should never happen as the standard library will reject requests containing invalid percent-encodings.
+				decodedCharacter, err := url.PathUnescape(encodedCharacter)
+				if err != nil {
+					rw.WriteHeader(http.StatusBadRequest)
+					return
+				}
+				routingPathBuilder.WriteString(decodedCharacter)
+			}
+
+			i += 2
+		}
+
+		h.ServeHTTP(rw, req.WithContext(
+			context.WithValue(
+				req.Context(),
+				mux.RoutingPathKey,
+				routingPathBuilder.String(),
+			),
+		))
 	})
 }
