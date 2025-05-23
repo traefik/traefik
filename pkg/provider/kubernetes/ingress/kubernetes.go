@@ -300,6 +300,17 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 			}
 
 			for _, pa := range rule.HTTP.Paths {
+				if pa.Backend.Resource != nil {
+					// https://kubernetes.io/docs/concepts/services-networking/ingress/#resource-backend
+					log.FromContext(ctxIngress).Error("Resource backends are not supported")
+					continue
+				}
+
+				if pa.Backend.Service == nil {
+					log.FromContext(ctxIngress).Error("Missing service definition")
+					continue
+				}
+
 				service, err := p.loadService(client, ingress.Namespace, pa.Backend)
 				if err != nil {
 					log.FromContext(ctxIngress).
@@ -516,15 +527,6 @@ func getTLSConfig(tlsConfigs map[string]*tls.CertAndStores) []*tls.CertAndStores
 }
 
 func (p *Provider) loadService(client Client, namespace string, backend netv1.IngressBackend) (*dynamic.Service, error) {
-	if backend.Resource != nil {
-		// https://kubernetes.io/docs/concepts/services-networking/ingress/#resource-backend
-		return nil, errors.New("resource backends are not supported")
-	}
-
-	if backend.Service == nil {
-		return nil, errors.New("missing service definition")
-	}
-
 	service, exists, err := client.GetService(namespace, backend.Service.Name)
 	if err != nil {
 		return nil, err
