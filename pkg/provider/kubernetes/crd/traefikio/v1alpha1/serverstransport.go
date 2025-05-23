@@ -81,7 +81,7 @@ type ForwardingTimeouts struct {
 
 // RootCA defines a reference to a Secret or a ConfigMap that holds a CA certificate.
 // If both a Secret and a ConfigMap reference are defined, the Secret reference takes precedence.
-// +kubebuilder:validation:XValidation:rule="has(self.secret) && has(self.configMap)",message="RootCA cannot have both Secret and ConfigMap defined."
+// +kubebuilder:validation:XValidation:rule="!has(self.secret) || !has(self.configMap)",message="RootCA cannot have both Secret and ConfigMap defined."
 type RootCA struct {
 	// Secret defines the name of a Secret that holds a CA certificate.
 	// The referenced Secret must contain a certificate under either a tls.ca or a ca.crt key.
