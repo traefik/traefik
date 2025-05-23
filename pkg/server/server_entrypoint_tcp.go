@@ -827,6 +827,8 @@ func normalizePath(h http.Handler) http.Handler {
 
 // reservedCharacters contains the mapping of the percent-encoded form to the ASCII form
 // of the reserved characters according to https://datatracker.ietf.org/doc/html/rfc3986#section-2.2.
+// By extension to https://datatracker.ietf.org/doc/html/rfc3986#section-2.1 the percent character is also considered a reserved character.
+// Because decoding the percent character would change the meaning of the URL.
 var reservedCharacters = map[string]rune{
 	"%3A": ':',
 	"%2F": '/',
