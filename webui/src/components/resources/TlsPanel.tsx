@@ -36,7 +36,7 @@ const TlsPanel = ({ data }: Props) => (
               {data.tls.domains?.map((domain) => (
                 <Flex key={domain.main} css={{ flexWrap: 'wrap' }}>
                   <a href={`//${domain.main}`}>
-                    <Badge variant="blue" css={{ mr: '$2', mb: '$2' }}>
+                    <Badge variant="blue" css={{ mr: '$2', mb: '$2', color: '$primary', borderColor: '$primary' }}>
                       {domain.main}
                     </Badge>
                   </a>
