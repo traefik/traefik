@@ -153,7 +153,7 @@
             </div>
           </q-card-section>
           <!-- EXTRA FIELDS FROM MIDDLEWARES - [basicAuth & digestAuth] - removeHeader -->
-          <q-card-section v-if="middleware.basicAuth || middleware.digestAuth">
+          <q-card-section v-if="exData(middleware).removeHeader">
             <div class="row items-start no-wrap">
               <div class="col">
                 <div class="text-subtitle2">
