@@ -253,8 +253,8 @@ github.com/containous/go-http-auth v0.4.1-0.20200324110947-a37a7636d23e h1:D+uTE
 github.com/containous/go-http-auth v0.4.1-0.20200324110947-a37a7636d23e/go.mod h1:s8kLgBQolDbsJOPVIGCEEv9zGAKUUf/685Gi0Qqg8z8=
 github.com/containous/minheap v0.0.0-20190809180810-6e71eb837595 h1:aPspFRO6b94To3gl4yTDOEtpjFwXI7V2W+z0JcNljQ4=
 github.com/containous/minheap v0.0.0-20190809180810-6e71eb837595/go.mod h1:+lHFbEasIiQVGzhVDVw/cn0ZaOzde2OwNncp1NhXV4c=
-github.com/containous/mux v0.0.0-20220627093034-b2dd784e613f h1:1uEtynq2C0ljy3630jt7EAxg8jZY2gy6YHdGwdqEpWw=
-github.com/containous/mux v0.0.0-20220627093034-b2dd784e613f/go.mod h1:z8WW7n06n8/1xF9Jl9WmuDeZuHAhfL+bwarNjsciwwg=
+github.com/containous/mux v0.0.0-20250523120546-41b6ec3aed59 h1:lJUOWjGohYjLKEfAz2nyI/dpzfKNPQLi5GLH7aaOZkw=
+github.com/containous/mux v0.0.0-20250523120546-41b6ec3aed59/go.mod h1:z8WW7n06n8/1xF9Jl9WmuDeZuHAhfL+bwarNjsciwwg=
 github.com/coreos/bbolt v1.3.2/go.mod h1:iRUV2dpdMOn7Bo10OQBFzIJO9kkE559Wcmn+qkEiiKk=
 github.com/coreos/etcd v3.3.13+incompatible/go.mod h1:uF7uidLiAD3TWHmW31ZFd/JWoc32PjwdhPthX9715RE=
 github.com/coreos/go-semver v0.3.0/go.mod h1:nnelYz7RCh+5ahJtPPxZlU+153eP4D4r3EedlOD2RNk=
