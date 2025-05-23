@@ -215,6 +215,7 @@ export const SideNav = ({
           }}
           href="https://github.com/traefik/traefik/"
           target="_blank"
+          data-testid="proxy-main-nav"
         >
           <Logo height={isSmallScreen ? 36 : 56} isSmallScreen={isSmallScreen} />
           {!!version && !isSmallScreen && (
