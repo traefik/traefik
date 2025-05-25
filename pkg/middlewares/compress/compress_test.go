@@ -39,9 +39,14 @@ func TestNegotiation(t *testing.T) {
 			expEncoding:     "",
 		},
 		{
+			// In this test, the default encodings are defaulted to gzip, brotli, and zstd,
+			// which make gzip the default encoding, and will be selected.
+			// However, the klauspost/compress gzhttp handler does not compress when Accept-Encoding: * is set.
+			// Until klauspost/compress gzhttp package supports the asterisk,
+			// we will not support it when selecting the gzip encoding.
 			desc:            "accept any header",
 			acceptEncHeader: "*",
-			expEncoding:     brotliName,
+			expEncoding:     "",
 		},
 		{
 			desc:            "gzip accept header",
@@ -66,7 +71,7 @@ func TestNegotiation(t *testing.T) {
 		{
 			desc:            "multi accept header list, prefer br",
 			acceptEncHeader: "gzip, br",
-			expEncoding:     brotliName,
+			expEncoding:     gzipName,
 		},
 		{
 			desc:            "zstd accept header",
@@ -79,14 +84,19 @@ func TestNegotiation(t *testing.T) {
 			expEncoding:     zstdName,
 		},
 		{
+			desc:            "multi accept header, prefer brotli",
+			acceptEncHeader: "gzip;q=0.8, br;q=1.0, zstd;q=0.7",
+			expEncoding:     brotliName,
+		},
+		{
 			desc:            "multi accept header, prefer gzip",
 			acceptEncHeader: "gzip;q=1.0, br;q=0.8, zstd;q=0.7",
 			expEncoding:     gzipName,
 		},
 		{
-			desc:            "multi accept header list, prefer zstd",
+			desc:            "multi accept header list, prefer gzip",
 			acceptEncHeader: "gzip, br, zstd",
-			expEncoding:     zstdName,
+			expEncoding:     gzipName,
 		},
 	}
 
@@ -166,7 +176,7 @@ func TestShouldNotCompressWhenContentEncodingHeader(t *testing.T) {
 	assert.Equal(t, gzipName, rw.Header().Get(contentEncodingHeader))
 	assert.Equal(t, acceptEncodingHeader, rw.Header().Get(varyHeader))
 
-	assert.EqualValues(t, rw.Body.Bytes(), fakeCompressedBody)
+	assert.Equal(t, rw.Body.Bytes(), fakeCompressedBody)
 }
 
 func TestShouldNotCompressWhenNoAcceptEncodingHeader(t *testing.T) {
@@ -187,7 +197,29 @@ func TestShouldNotCompressWhenNoAcceptEncodingHeader(t *testing.T) {
 
 	assert.Empty(t, rw.Header().Get(contentEncodingHeader))
 	assert.Empty(t, rw.Header().Get(varyHeader))
-	assert.EqualValues(t, rw.Body.Bytes(), fakeBody)
+	assert.Equal(t, rw.Body.Bytes(), fakeBody)
+}
+
+func TestEmptyAcceptEncoding(t *testing.T) {
+	req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
+	req.Header.Add(acceptEncodingHeader, "")
+
+	fakeBody := generateBytes(gzhttp.DefaultMinSize)
+	next := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		_, err := rw.Write(fakeBody)
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+		}
+	})
+	handler, err := New(context.Background(), next, dynamic.Compress{Encodings: defaultSupportedEncodings}, "testing")
+	require.NoError(t, err)
+
+	rw := httptest.NewRecorder()
+	handler.ServeHTTP(rw, req)
+
+	assert.Empty(t, rw.Header().Get(contentEncodingHeader))
+	assert.Empty(t, rw.Header().Get(varyHeader))
+	assert.Equal(t, rw.Body.Bytes(), fakeBody)
 }
 
 func TestShouldNotCompressWhenIdentityAcceptEncodingHeader(t *testing.T) {
@@ -214,7 +246,7 @@ func TestShouldNotCompressWhenIdentityAcceptEncodingHeader(t *testing.T) {
 
 	assert.Empty(t, rw.Header().Get(contentEncodingHeader))
 	assert.Empty(t, rw.Header().Get(varyHeader))
-	assert.EqualValues(t, rw.Body.Bytes(), fakeBody)
+	assert.Equal(t, rw.Body.Bytes(), fakeBody)
 }
 
 func TestShouldNotCompressWhenEmptyAcceptEncodingHeader(t *testing.T) {
@@ -241,7 +273,7 @@ func TestShouldNotCompressWhenEmptyAcceptEncodingHeader(t *testing.T) {
 
 	assert.Empty(t, rw.Header().Get(contentEncodingHeader))
 	assert.Empty(t, rw.Header().Get(varyHeader))
-	assert.EqualValues(t, rw.Body.Bytes(), fakeBody)
+	assert.Equal(t, rw.Body.Bytes(), fakeBody)
 }
 
 func TestShouldNotCompressHeadRequest(t *testing.T) {
@@ -263,7 +295,7 @@ func TestShouldNotCompressHeadRequest(t *testing.T) {
 
 	assert.Empty(t, rw.Header().Get(contentEncodingHeader))
 	assert.Empty(t, rw.Header().Get(varyHeader))
-	assert.EqualValues(t, rw.Body.Bytes(), fakeBody)
+	assert.Equal(t, rw.Body.Bytes(), fakeBody)
 }
 
 func TestShouldNotCompressWhenSpecificContentType(t *testing.T) {
@@ -353,7 +385,7 @@ func TestShouldNotCompressWhenSpecificContentType(t *testing.T) {
 
 			assert.Empty(t, rw.Header().Get(acceptEncodingHeader))
 			assert.Empty(t, rw.Header().Get(contentEncodingHeader))
-			assert.EqualValues(t, rw.Body.Bytes(), baseBody)
+			assert.Equal(t, rw.Body.Bytes(), baseBody)
 		})
 	}
 }
@@ -399,7 +431,7 @@ func TestShouldCompressWhenSpecificContentType(t *testing.T) {
 
 			assert.Equal(t, gzipName, rw.Header().Get(contentEncodingHeader))
 			assert.Equal(t, acceptEncodingHeader, rw.Header().Get(varyHeader))
-			assert.NotEqualValues(t, rw.Body.Bytes(), baseBody)
+			assert.NotEqual(t, rw.Body.Bytes(), baseBody)
 		})
 	}
 }
@@ -460,7 +492,7 @@ func TestIntegrationShouldNotCompress(t *testing.T) {
 
 			body, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
-			assert.EqualValues(t, fakeCompressedBody, body)
+			assert.Equal(t, fakeCompressedBody, body)
 		})
 	}
 }
@@ -595,12 +627,12 @@ func TestMinResponseBodyBytes(t *testing.T) {
 
 			if test.expectedCompression {
 				assert.Equal(t, gzipName, rw.Header().Get(contentEncodingHeader))
-				assert.NotEqualValues(t, rw.Body.Bytes(), fakeBody)
+				assert.NotEqual(t, rw.Body.Bytes(), fakeBody)
 				return
 			}
 
 			assert.Empty(t, rw.Header().Get(contentEncodingHeader))
-			assert.EqualValues(t, rw.Body.Bytes(), fakeBody)
+			assert.Equal(t, rw.Body.Bytes(), fakeBody)
 		})
 	}
 }
@@ -706,7 +738,7 @@ func Test1xxResponses(t *testing.T) {
 
 			assert.Equal(t, test.encoding, res.Header.Get(contentEncodingHeader))
 			body, _ := io.ReadAll(res.Body)
-			assert.NotEqualValues(t, body, fakeBody)
+			assert.NotEqual(t, body, fakeBody)
 		})
 	}
 }

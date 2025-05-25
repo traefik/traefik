@@ -256,9 +256,7 @@ accessLog:
     | `OriginDuration`        | The time taken (in nanoseconds) by the origin server ('upstream') to return its response.                                                                           |
     | `OriginContentSize`     | The content length specified by the origin server, or 0 if unspecified.                                                                                             |
     | `OriginStatus`          | The HTTP status code returned by the origin server. If the request was handled by this Traefik instance (e.g. with a redirect), then this value will be absent (0). |
-    | `OriginStatusLine`      | `OriginStatus` + Status code explanation                                                                                                                            |
     | `DownstreamStatus`      | The HTTP status code returned to the client.                                                                                                                        |
-    | `DownstreamStatusLine`  | `DownstreamStatus` + Status code explanation                                                                                                                        |
     | `DownstreamContentSize` | The number of bytes in the response entity returned to the client. This is in addition to the "Content-Length" header, which may be present in the origin response. |
     | `RequestCount`          | The number of requests received since the Traefik instance started.                                                                                                 |
     | `GzipRatio`             | The response body compression ratio achieved.                                                                                                                       |
@@ -294,7 +292,7 @@ version: "3.7"
 
 services:
   traefik:
-    image: traefik:v3.3
+    image: traefik:v3.4
     environment:
       - TZ=US/Alaska
     command:

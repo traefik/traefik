@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/rs/zerolog/log"
+	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/provider"
@@ -373,6 +374,17 @@ func (c configBuilder) buildServersLB(namespace string, svc traefikv1alpha1.Load
 				return nil, err
 			}
 		}
+		// If the UnhealthyInterval option is not set, we use the Interval option value,
+		// to check the unhealthy targets as often as the healthy ones.
+		if svc.HealthCheck.UnhealthyInterval == nil {
+			lb.HealthCheck.UnhealthyInterval = &lb.HealthCheck.Interval
+		} else {
+			var unhealthyInterval ptypes.Duration
+			if err := unhealthyInterval.Set(svc.HealthCheck.UnhealthyInterval.String()); err != nil {
+				return nil, err
+			}
+			lb.HealthCheck.UnhealthyInterval = &unhealthyInterval
+		}
 		if svc.HealthCheck.Timeout != nil {
 			if err := lb.HealthCheck.Timeout.Set(svc.HealthCheck.Timeout.String()); err != nil {
 				return nil, err
@@ -598,8 +610,8 @@ func (c configBuilder) nameAndService(ctx context.Context, parentNamespace strin
 		return "", nil, fmt.Errorf("service %s/%s not in the parent resource namespace %s", service.Namespace, service.Name, parentNamespace)
 	}
 
-	switch {
-	case service.Kind == "" || service.Kind == "Service":
+	switch service.Kind {
+	case "", "Service":
 		serversLB, err := c.buildServersLB(namespace, service)
 		if err != nil {
 			return "", nil, err
@@ -608,8 +620,10 @@ func (c configBuilder) nameAndService(ctx context.Context, parentNamespace strin
 		fullName := fullServiceName(svcCtx, namespace, service, service.Port)
 
 		return fullName, serversLB, nil
-	case service.Kind == "TraefikService":
+
+	case "TraefikService":
 		return fullServiceName(svcCtx, namespace, service, intstr.FromInt(0)), nil, nil
+
 	default:
 		return "", nil, fmt.Errorf("unsupported service kind %s", service.Kind)
 	}

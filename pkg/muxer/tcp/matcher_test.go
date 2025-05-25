@@ -133,6 +133,12 @@ func Test_HostSNI(t *testing.T) {
 			serverName: "foo.example.com",
 			match:      true,
 		},
+		{
+			desc:       "Matching hosts with subdomains with _",
+			rule:       "HostSNI(`foo_bar.example.com`)",
+			serverName: "foo_bar.example.com",
+			match:      true,
+		},
 	}
 
 	for _, test := range testCases {

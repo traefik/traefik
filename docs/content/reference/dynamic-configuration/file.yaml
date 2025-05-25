@@ -89,6 +89,7 @@ http:
           status: 42
           port: 42
           interval: 42s
+          unhealthyInterval: 42s
           timeout: 42s
           hostname: foobar
           followRedirects: true
@@ -644,6 +645,7 @@ tls:
       alpnProtocols:
         - foobar
         - foobar
+      disableSessionTickets: true
       preferServerCipherSuites: true
     Options1:
       minVersion: foobar
@@ -663,6 +665,7 @@ tls:
       alpnProtocols:
         - foobar
         - foobar
+      disableSessionTickets: true
       preferServerCipherSuites: true
   stores:
     Store0:

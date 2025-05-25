@@ -53,6 +53,7 @@
     [entryPoints.EntryPoint0.http]
       middlewares = ["foobar", "foobar"]
       encodeQuerySemicolons = true
+      sanitizePath = true
       maxHeaderBytes = 42
       [entryPoints.EntryPoint0.http.redirections]
         [entryPoints.EntryPoint0.http.redirections.entryPoint]
@@ -137,6 +138,7 @@
     disableIngressClassLookup = true
     disableClusterScopeResources = true
     nativeLBByDefault = true
+    strictPrefixMatching = true
     [providers.kubernetesIngress.ingressEndpoint]
       ip = "foobar"
       hostname = "foobar"
@@ -505,9 +507,13 @@
       email = "foobar"
       caServer = "foobar"
       preferredChain = "foobar"
+      profile = "foobar"
+      emailAddresses = ["foobar", "foobar"]
       storage = "foobar"
       keyType = "foobar"
       certificatesDuration = 42
+      clientTimeout = "42s"
+      clientResponseHeaderTimeout = "42s"
       caCertificates = ["foobar", "foobar"]
       caSystemCertPool = true
       caServerName = "foobar"
@@ -526,6 +532,7 @@
           delayBeforeChecks = "42s"
       [certificatesResolvers.CertificateResolver0.acme.httpChallenge]
         entryPoint = "foobar"
+        delay = "42s"
       [certificatesResolvers.CertificateResolver0.acme.tlsChallenge]
     [certificatesResolvers.CertificateResolver0.tailscale]
   [certificatesResolvers.CertificateResolver1]
@@ -533,9 +540,13 @@
       email = "foobar"
       caServer = "foobar"
       preferredChain = "foobar"
+      profile = "foobar"
+      emailAddresses = ["foobar", "foobar"]
       storage = "foobar"
       keyType = "foobar"
       certificatesDuration = 42
+      clientTimeout = "42s"
+      clientResponseHeaderTimeout = "42s"
       caCertificates = ["foobar", "foobar"]
       caSystemCertPool = true
       caServerName = "foobar"
@@ -554,6 +565,7 @@
           delayBeforeChecks = "42s"
       [certificatesResolvers.CertificateResolver1.acme.httpChallenge]
         entryPoint = "foobar"
+        delay = "42s"
       [certificatesResolvers.CertificateResolver1.acme.tlsChallenge]
     [certificatesResolvers.CertificateResolver1.tailscale]
 
@@ -568,23 +580,27 @@
       [experimental.plugins.Descriptor0.settings]
         envs = ["foobar", "foobar"]
         mounts = ["foobar", "foobar"]
+        useUnsafe = true
     [experimental.plugins.Descriptor1]
       moduleName = "foobar"
       version = "foobar"
       [experimental.plugins.Descriptor1.settings]
         envs = ["foobar", "foobar"]
         mounts = ["foobar", "foobar"]
+        useUnsafe = true
   [experimental.localPlugins]
     [experimental.localPlugins.LocalDescriptor0]
       moduleName = "foobar"
       [experimental.localPlugins.LocalDescriptor0.settings]
         envs = ["foobar", "foobar"]
         mounts = ["foobar", "foobar"]
+        useUnsafe = true
     [experimental.localPlugins.LocalDescriptor1]
       moduleName = "foobar"
       [experimental.localPlugins.LocalDescriptor1.settings]
         envs = ["foobar", "foobar"]
         mounts = ["foobar", "foobar"]
+        useUnsafe = true
   [experimental.fastProxy]
     debug = true
 

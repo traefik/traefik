@@ -77,6 +77,11 @@ spec:
 
 ??? info "`traefik.ingress.kubernetes.io/router.rulesyntax`"
 
+    !!! warning
+
+        RuleSyntax option is deprecated and will be removed in the next major version.
+        Please do not use this field and rewrite the router rules to use the v3 syntax.
+
     See [rule syntax](../http/router/rules-and-priority.md#rulesyntax) for more information.
 
     ```yaml
@@ -397,7 +402,7 @@ This way, any Ingress attached to this Entrypoint will have TLS termination by d
           serviceAccountName: traefik-ingress-controller
           containers:
             - name: traefik
-              image: traefik:v3.2
+              image: traefik:v3.4
               args:
                 - --entryPoints.websecure.address=:443
                 - --entryPoints.websecure.http.tls

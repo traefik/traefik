@@ -281,6 +281,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/services/Service02/loadBalancer/healthCheck/scheme` | `foobar` |
 | `traefik/http/services/Service02/loadBalancer/healthCheck/status` | `42` |
 | `traefik/http/services/Service02/loadBalancer/healthCheck/timeout` | `42s` |
+| `traefik/http/services/Service02/loadBalancer/healthCheck/unhealthyInterval` | `42s` |
 | `traefik/http/services/Service02/loadBalancer/passHostHeader` | `true` |
 | `traefik/http/services/Service02/loadBalancer/responseForwarding/flushInterval` | `42s` |
 | `traefik/http/services/Service02/loadBalancer/servers/0/preservePath` | `true` |
@@ -415,6 +416,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/tls/options/Options0/clientAuth/clientAuthType` | `foobar` |
 | `traefik/tls/options/Options0/curvePreferences/0` | `foobar` |
 | `traefik/tls/options/Options0/curvePreferences/1` | `foobar` |
+| `traefik/tls/options/Options0/disableSessionTickets` | `true` |
 | `traefik/tls/options/Options0/maxVersion` | `foobar` |
 | `traefik/tls/options/Options0/minVersion` | `foobar` |
 | `traefik/tls/options/Options0/preferServerCipherSuites` | `true` |
@@ -428,6 +430,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/tls/options/Options1/clientAuth/clientAuthType` | `foobar` |
 | `traefik/tls/options/Options1/curvePreferences/0` | `foobar` |
 | `traefik/tls/options/Options1/curvePreferences/1` | `foobar` |
+| `traefik/tls/options/Options1/disableSessionTickets` | `true` |
 | `traefik/tls/options/Options1/maxVersion` | `foobar` |
 | `traefik/tls/options/Options1/minVersion` | `foobar` |
 | `traefik/tls/options/Options1/preferServerCipherSuites` | `true` |

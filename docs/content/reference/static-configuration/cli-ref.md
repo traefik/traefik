@@ -129,6 +129,12 @@ Define if the certificates pool must use a copy of the system cert pool. (Defaul
 `--certificatesresolvers.<name>.acme.certificatesduration`:  
 Certificates' duration in hours. (Default: ```2160```)
 
+`--certificatesresolvers.<name>.acme.clientresponseheadertimeout`:  
+Timeout for receiving the response headers when communicating with the ACME server. (Default: ```30```)
+
+`--certificatesresolvers.<name>.acme.clienttimeout`:  
+Timeout for a complete HTTP transaction with the ACME server. (Default: ```120```)
+
 `--certificatesresolvers.<name>.acme.dnschallenge`:  
 Activate DNS-01 Challenge. (Default: ```false```)
 
@@ -168,8 +174,14 @@ Key identifier from External CA.
 `--certificatesresolvers.<name>.acme.email`:  
 Email address used for registration.
 
+`--certificatesresolvers.<name>.acme.emailaddresses`:  
+CSR email addresses to use.
+
 `--certificatesresolvers.<name>.acme.httpchallenge`:  
 Activate HTTP-01 Challenge. (Default: ```false```)
+
+`--certificatesresolvers.<name>.acme.httpchallenge.delay`:  
+Delay between the creation of the challenge and the validation. (Default: ```0```)
 
 `--certificatesresolvers.<name>.acme.httpchallenge.entrypoint`:  
 HTTP challenge EntryPoint
@@ -179,6 +191,9 @@ KeyType used for generating certificate private key. Allow value 'EC256', 'EC384
 
 `--certificatesresolvers.<name>.acme.preferredchain`:  
 Preferred chain to use.
+
+`--certificatesresolvers.<name>.acme.profile`:  
+Certificate profile to use.
 
 `--certificatesresolvers.<name>.acme.storage`:  
 Storage to use. (Default: ```acme.json```)
@@ -236,6 +251,9 @@ Scheme used for the redirection. (Default: ```https```)
 
 `--entrypoints.<name>.http.redirections.entrypoint.to`:  
 Targeted entry point of the redirection.
+
+`--entrypoints.<name>.http.sanitizepath`:  
+Defines whether to enable request path sanitization (removal of /./, /../ and multiple slash sequences). (Default: ```true```)
 
 `--entrypoints.<name>.http.tls`:  
 Default TLS configuration for the routers linked to the entry point. (Default: ```false```)
@@ -336,6 +354,9 @@ Environment variables to forward to the wasm guest.
 `--experimental.localplugins.<name>.settings.mounts`:  
 Directory to mount to the wasm guest.
 
+`--experimental.localplugins.<name>.settings.useunsafe`:  
+Allow the plugin to use unsafe package. (Default: ```false```)
+
 `--experimental.otlplogs`:  
 Enables the OpenTelemetry logs integration. (Default: ```false```)
 
@@ -350,6 +371,9 @@ Environment variables to forward to the wasm guest.
 
 `--experimental.plugins.<name>.settings.mounts`:  
 Directory to mount to the wasm guest.
+
+`--experimental.plugins.<name>.settings.useunsafe`:  
+Allow the plugin to use unsafe package. (Default: ```false```)
 
 `--experimental.plugins.<name>.version`:  
 plugin's version.
@@ -1007,6 +1031,9 @@ Kubernetes namespaces.
 
 `--providers.kubernetesingress.nativelbbydefault`:  
 Defines whether to use Native Kubernetes load-balancing mode by default. (Default: ```false```)
+
+`--providers.kubernetesingress.strictprefixmatching`:  
+Make prefix matching strictly comply with the Kubernetes Ingress specification (path-element-wise matching instead of character-by-character string matching). (Default: ```false```)
 
 `--providers.kubernetesingress.throttleduration`:  
 Ingress refresh throttle duration (Default: ```0```)

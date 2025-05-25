@@ -25,6 +25,11 @@ description: "Read the technical documentation to learn the Traefik Routing Conf
 
 ??? info "`traefik/http/routers/<router_name>/ruleSyntax`"
 
+    !!! warning
+
+        RuleSyntax option is deprecated and will be removed in the next major version.
+        Please do not use this field and rewrite the router rules to use the v3 syntax.
+
     See [rule](../http/router/rules-and-priority.md#rulesyntax) for more information.
     
     | Key (Path)                           | Value                      |
@@ -197,6 +202,14 @@ description: "Read the technical documentation to learn the Traefik Routing Conf
     | Key (Path)                                                          | Value |
     |---------------------------------------------------------------------|-------|
     | `traefik/http/services/myservice/loadbalancer/healthcheck/interval` | `10`  |
+
+??? info "`traefik/http/services/<service_name>/loadbalancer/healthcheck/unhealthyinterval`"
+
+    See [health check](../http/load-balancing/service.md#health-check) for more information.
+
+    | Key (Path)                                                                   | Value |
+    |------------------------------------------------------------------------------|-------|
+    | `traefik/http/services/myservice/loadbalancer/healthcheck/unhealthyinterval` | `10`  |
 
 ??? info "`traefik/http/services/<service_name>/loadbalancer/healthcheck/path`"
 
@@ -589,11 +602,12 @@ You can declare UDP Routers and/or Services using KV.
 
 With the KV provider, you configure some parameters of the TLS connection using the `tls/options` key. For example, you can define a basic setup like this:
 
-| Key (Path)                                                                      | Value            |
-|---------------------------------------------------------------------------------|------------------|
-| `traefik/tls/options/Options0/alpnProtocols/0`                                  | `foobar`         |
-| `traefik/tls/options/Options0/cipherSuites/0`                                  | `foobar`         |
-| `traefik/tls/options/Options0/clientAuth/caFiles/0`                            | `foobar`         |
+| Key (Path)                                           | Value    |
+|------------------------------------------------------|----------|
+| `traefik/tls/options/Options0/alpnProtocols/0`       | `foobar` |
+| `traefik/tls/options/Options0/cipherSuites/0`        | `foobar` |
+| `traefik/tls/options/Options0/clientAuth/caFiles/0`  | `foobar` |
+| `traefik/tls/options/Options0/disableSessiontickets` | `true`   |
 
 For more information on the available TLS options that can be configured, please refer to the [TLS Options](../http/tls/tls-options.md) page.
 
@@ -601,9 +615,9 @@ For more information on the available TLS options that can be configured, please
 
 You can configure Traefik to use an ACME provider (like Let's Encrypt) to generate the default certificate. The configuration to resolve the default certificate should be defined in a TLS store:
 
-| Key (Path)                                                                      | Value         |
-|---------------------------------------------------------------------------------|----------------|
-| `traefik/tls/stores/Store0/defaultGeneratedCert/domain/main`                    | `foobar`       |
-| `traefik/tls/stores/Store0/defaultGeneratedCert/domain/sans/0`                  | `foobar`       |
-| `traefik/tls/stores/Store0/defaultGeneratedCert/domain/sans/1`                  | `foobar`       |
-| `traefik/tls/stores/Store0/defaultGeneratedCert/resolver`                       | `foobar`       |
+| Key (Path)                                                     | Value    |
+|----------------------------------------------------------------|----------|
+| `traefik/tls/stores/Store0/defaultGeneratedCert/domain/main`   | `foobar` |
+| `traefik/tls/stores/Store0/defaultGeneratedCert/domain/sans/0` | `foobar` |
+| `traefik/tls/stores/Store0/defaultGeneratedCert/domain/sans/1` | `foobar` |
+| `traefik/tls/stores/Store0/defaultGeneratedCert/resolver`      | `foobar` |

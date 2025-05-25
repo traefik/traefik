@@ -90,7 +90,7 @@ func (s *BaseSuite) displayTraefikLogFile(path string) {
 			// fmt.Printf("%s: Traefik logs: \n", c.TestName())
 			fmt.Print("Traefik logs: \n")
 			if errRead == nil {
-				fmt.Println(content)
+				fmt.Println(string(content))
 			} else {
 				fmt.Println(errRead)
 			}

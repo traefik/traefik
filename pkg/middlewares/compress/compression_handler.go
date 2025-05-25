@@ -233,8 +233,12 @@ func (r *responseWriter) Write(p []byte) (int, error) {
 	// Disable compression according to user wishes in excludedContentTypes or includedContentTypes.
 	if ct := r.rw.Header().Get(contentType); ct != "" {
 		mediaType, params, err := mime.ParseMediaType(ct)
+		// To align the behavior with the klauspost handler for Gzip,
+		// if the MIME type is not parsable the compression is disabled.
 		if err != nil {
-			return 0, fmt.Errorf("parsing content-type media type: %w", err)
+			r.compressionDisabled = true
+			r.rw.WriteHeader(r.statusCode)
+			return r.rw.Write(p)
 		}
 
 		if len(r.includedContentTypes) > 0 {

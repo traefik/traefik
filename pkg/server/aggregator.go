@@ -53,6 +53,15 @@ func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoint
 					router.EntryPoints = defaultEntryPoints
 				}
 
+				// The `ruleSyntax` option is deprecated.
+				// We exclude the "default" value to avoid logging it,
+				// as it is the value used for internal models and computed rules.
+				if router.RuleSyntax != "" && router.RuleSyntax != "default" {
+					log.Warn().
+						Str(logs.RouterName, routerName).
+						Msg("Router's `ruleSyntax` option is deprecated, please remove any usage of this option.")
+				}
+
 				conf.HTTP.Routers[provider.MakeQualifiedName(pvd, routerName)] = router
 			}
 			for middlewareName, middleware := range configuration.HTTP.Middlewares {

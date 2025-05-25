@@ -168,7 +168,12 @@ For example, to change the rule, you could add the label ```traefik.http.routers
     ```
 
 ??? info "`traefik.http.routers.<router_name>.ruleSyntax`"
-    
+
+    !!! warning
+
+        RuleSyntax option is deprecated and will be removed in the next major version.
+        Please do not use this field and rewrite the router rules to use the v3 syntax.
+
     See [ruleSyntax](../http/router/rules-and-priority.md#rulesyntax) for more information.
     
     ```yaml
@@ -346,6 +351,14 @@ you'd add the label `traefik.http.services.<name-of-your-choice>.loadbalancer.pa
     - "traefik.http.services.myservice.loadbalancer.healthcheck.interval=10s"
     ```
 
+??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.unhealthyinterval`"
+
+    See [health check](../http/load-balancing/service.md#health-check) for more information.
+
+    ```yaml
+    - "traefik.http.services.myservice.loadbalancer.healthcheck.unhealthyinterval=10s"
+    ```
+
 ??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.path`"
 
     See [health check](../http/load-balancing/service.md#health-check) for more information.
@@ -517,7 +530,12 @@ You can declare TCP Routers and/or Services using labels.
     ```
 
 ??? info "`traefik.tcp.routers.<router_name>.ruleSyntax`"
-    
+
+    !!! warning
+
+        RuleSyntax option is deprecated and will be removed in the next major version.
+        Please do not use this field and rewrite the router rules to use the v3 syntax.
+
     configure the rule syntax to be used for parsing the rule on a per-router basis.
     
     ```yaml

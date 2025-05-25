@@ -578,6 +578,11 @@ func Test_ExcludedContentTypes(t *testing.T) {
 			expCompression: true,
 		},
 		{
+			desc:           "MIME malformed",
+			contentType:    "application/json;charset=UTF-8;charset=utf-8",
+			expCompression: false,
+		},
+		{
 			desc:                 "MIME match",
 			contentType:          "application/json",
 			excludedContentTypes: []string{"application/json"},
@@ -686,6 +691,11 @@ func Test_IncludedContentTypes(t *testing.T) {
 			desc:           "Always compress when content types are empty",
 			contentType:    "",
 			expCompression: true,
+		},
+		{
+			desc:           "MIME malformed",
+			contentType:    "application/json;charset=UTF-8;charset=utf-8",
+			expCompression: false,
 		},
 		{
 			desc:                 "MIME match",

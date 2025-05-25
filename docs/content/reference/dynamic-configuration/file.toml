@@ -84,6 +84,7 @@
           status = 42
           port = 42
           interval = "42s"
+          unhealthyInterval = "42s"
           timeout = "42s"
           hostname = "foobar"
           followRedirects = true
@@ -570,6 +571,7 @@
       curvePreferences = ["foobar", "foobar"]
       sniStrict = true
       alpnProtocols = ["foobar", "foobar"]
+      disableSessionTickets = true
       preferServerCipherSuites = true
       [tls.options.Options0.clientAuth]
         caFiles = ["foobar", "foobar"]
@@ -581,6 +583,7 @@
       curvePreferences = ["foobar", "foobar"]
       sniStrict = true
       alpnProtocols = ["foobar", "foobar"]
+      disableSessionTickets = true
       preferServerCipherSuites = true
       [tls.options.Options1.clientAuth]
         caFiles = ["foobar", "foobar"]

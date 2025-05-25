@@ -352,7 +352,7 @@ func TestTransferEncodingChunked(t *testing.T) {
 		require.True(t, ok)
 
 		for i := range 3 {
-			_, err := rw.Write([]byte(fmt.Sprintf("chunk %d\n", i)))
+			_, err := fmt.Fprintf(rw, "chunk %d\n", i)
 			require.NoError(t, err)
 
 			flusher.Flush()

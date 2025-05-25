@@ -1,12 +1,15 @@
 package httputil
 
 import (
+	"crypto/tls"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
 )
 
@@ -97,6 +100,49 @@ func Test_directorBuilder(t *testing.T) {
 			assert.Equal(t, 1, req.ProtoMajor)
 			assert.Equal(t, 1, req.ProtoMinor)
 			assert.False(t, !test.passHostHeader && req.Host != req.URL.Host)
+		})
+	}
+}
+
+func Test_isTLSConfigError(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		err      error
+		expected bool
+	}{
+		{
+			desc: "nil",
+		},
+		{
+			desc: "TLS ECHRejectionError",
+			err:  &tls.ECHRejectionError{},
+		},
+		{
+			desc: "TLS AlertError",
+			err:  tls.AlertError(0),
+		},
+		{
+			desc: "Random error",
+			err:  errors.New("random error"),
+		},
+		{
+			desc:     "TLS RecordHeaderError",
+			err:      tls.RecordHeaderError{},
+			expected: true,
+		},
+		{
+			desc:     "TLS CertificateVerificationError",
+			err:      &tls.CertificateVerificationError{},
+			expected: true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			actual := isTLSConfigError(test.err)
+			require.Equal(t, test.expected, actual)
 		})
 	}
 }

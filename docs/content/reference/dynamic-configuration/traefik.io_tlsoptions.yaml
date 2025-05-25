@@ -19,7 +19,7 @@ spec:
       openAPIV3Schema:
         description: |-
           TLSOption is the CRD implementation of a Traefik TLS Option, allowing to configure some parameters of the TLS connection.
-          More info: https://doc.traefik.io/traefik/v3.3/https/tls/#tls-options
+          More info: https://doc.traefik.io/traefik/v3.4/https/tls/#tls-options
         properties:
           apiVersion:
             description: |-
@@ -44,14 +44,14 @@ spec:
               alpnProtocols:
                 description: |-
                   ALPNProtocols defines the list of supported application level protocols for the TLS handshake, in order of preference.
-                  More info: https://doc.traefik.io/traefik/v3.3/https/tls/#alpn-protocols
+                  More info: https://doc.traefik.io/traefik/v3.4/https/tls/#alpn-protocols
                 items:
                   type: string
                 type: array
               cipherSuites:
                 description: |-
                   CipherSuites defines the list of supported cipher suites for TLS versions up to TLS 1.2.
-                  More info: https://doc.traefik.io/traefik/v3.3/https/tls/#cipher-suites
+                  More info: https://doc.traefik.io/traefik/v3.4/https/tls/#cipher-suites
                 items:
                   type: string
                 type: array
@@ -79,10 +79,14 @@ spec:
               curvePreferences:
                 description: |-
                   CurvePreferences defines the preferred elliptic curves in a specific order.
-                  More info: https://doc.traefik.io/traefik/v3.3/https/tls/#curve-preferences
+                  More info: https://doc.traefik.io/traefik/v3.4/https/tls/#curve-preferences
                 items:
                   type: string
                 type: array
+              disableSessionTickets:
+                description: DisableSessionTickets disables TLS session resumption
+                  via session tickets.
+                type: boolean
               maxVersion:
                 description: |-
                   MaxVersion defines the maximum TLS version that Traefik will accept.
