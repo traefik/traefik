@@ -13,7 +13,7 @@ You can configure Traefik to use an ACME provider (like Let's Encrypt) for autom
 !!! warning "Let's Encrypt and Rate Limiting"
     Note that Let's Encrypt API has [rate limiting](https://letsencrypt.org/docs/rate-limits). These last up to **one week**, and cannot be overridden.
     
-    When running Traefik in a container this file should be persisted across restarts. 
+    When running Traefik in a container the `acme.json` file should be persisted across restarts. 
     If Traefik requests new certificates each time it starts up, a crash-looping container can quickly reach Let's Encrypt's ratelimits.
     To configure where certificates are stored, please take a look at the [storage](#storage) configuration.
 
