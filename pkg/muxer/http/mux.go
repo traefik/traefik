@@ -1,10 +1,15 @@
 package http
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"sort"
+	"strings"
 
+	"github.com/gorilla/mux"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/rules"
 	"github.com/vulcand/predicate"
@@ -50,6 +55,16 @@ func NewMuxer() (*Muxer, error) {
 // ServeHTTP forwards the connection to the matching HTTP handler.
 // Serves 404 if no handler is found.
 func (m *Muxer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	logger := log.Ctx(req.Context())
+
+	var err error
+	req, err = withRoutingPath(req)
+	if err != nil {
+		logger.Debug().Err(err).Msg("Unable to add routing rawPath to request context")
+		rw.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
 	for _, route := range m.routes {
 		if route.matchers.match(req) {
 			route.handler.ServeHTTP(rw, req)
@@ -114,6 +129,86 @@ func (m *Muxer) AddRoute(rule string, syntax string, priority int, handler http.
 	sort.Sort(m.routes)
 
 	return nil
+}
+
+// reservedCharacters contains the mapping of the percent-encoded form to the ASCII form
+// of the reserved characters according to https://datatracker.ietf.org/doc/html/rfc3986#section-2.2.
+// By extension to https://datatracker.ietf.org/doc/html/rfc3986#section-2.1 the percent character is also considered a reserved character.
+// Because decoding the percent character would change the meaning of the URL.
+var reservedCharacters = map[string]rune{
+	"%3A": ':',
+	"%2F": '/',
+	"%3F": '?',
+	"%23": '#',
+	"%5B": '[',
+	"%5D": ']',
+	"%40": '@',
+	"%21": '!',
+	"%24": '$',
+	"%26": '&',
+	"%27": '\'',
+	"%28": '(',
+	"%29": ')',
+	"%2A": '*',
+	"%2B": '+',
+	"%2C": ',',
+	"%3B": ';',
+	"%3D": '=',
+	"%25": '%',
+}
+
+// getRoutingPath retrieves the routing path from the request context.
+// It returns nil if the routing path is not set in the context.
+func getRoutingPath(req *http.Request) *string {
+	routingPath := req.Context().Value(mux.RoutingPathKey)
+	if routingPath != nil {
+		rp := routingPath.(string)
+		return &rp
+	}
+	return nil
+}
+
+// withRoutingPath decodes non-allowed characters in the EscapedPath and stores it in the request context to be able to use it for routing.
+// This allows using the decoded version of the non-allowed characters in the routing rules for a better UX.
+// For example, the rule PathPrefix(`/foo bar`) will match the following request path `/foo%20bar`.
+func withRoutingPath(req *http.Request) (*http.Request, error) {
+	escapedPath := req.URL.EscapedPath()
+
+	var routingPathBuilder strings.Builder
+	for i := 0; i < len(escapedPath); i++ {
+		if escapedPath[i] != '%' {
+			routingPathBuilder.WriteString(string(escapedPath[i]))
+			continue
+		}
+
+		// This should never happen as the standard library will reject requests containing invalid percent-encodings.
+		// This discards URLs with a percent character at the end.
+		if i+2 >= len(escapedPath) {
+			return nil, errors.New("invalid percent-encoding at the end of the URL rawPath")
+		}
+
+		encodedCharacter := escapedPath[i : i+3]
+		if _, reserved := reservedCharacters[encodedCharacter]; reserved {
+			routingPathBuilder.WriteString(encodedCharacter)
+		} else {
+			// This should never happen as the standard library will reject requests containing invalid percent-encodings.
+			decodedCharacter, err := url.PathUnescape(encodedCharacter)
+			if err != nil {
+				return nil, errors.New("invalid percent-encoding in URL rawPath")
+			}
+			routingPathBuilder.WriteString(decodedCharacter)
+		}
+
+		i += 2
+	}
+
+	return req.WithContext(
+		context.WithValue(
+			req.Context(),
+			mux.RoutingPathKey,
+			routingPathBuilder.String(),
+		),
+	), nil
 }
 
 // ParseDomains extract domains from rule.
