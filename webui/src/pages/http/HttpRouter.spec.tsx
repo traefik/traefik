@@ -79,7 +79,7 @@ describe('<HttpRouterPage />', () => {
     const routerDetailsPanel = routerDetailsSection.querySelector(':scope > div:nth-child(1)')
     expect(routerDetailsPanel?.innerHTML).toContain('orphan-router@file')
     expect(routerDetailsPanel?.innerHTML).toContain('Error')
-    expect(routerDetailsPanel?.innerHTML).toContain('img alt="file"')
+    expect(routerDetailsPanel?.querySelector('svg[data-testid="file"]')).toBeTruthy()
     expect(routerDetailsPanel?.innerHTML).toContain(
       'Path(`somethingreallyunexpectedbutalsoverylongitgetsoutofthecontainermaybe`)',
     )
@@ -87,7 +87,7 @@ describe('<HttpRouterPage />', () => {
     expect(routerDetailsPanel?.innerHTML).toContain('the service "unexistingservice@file" does not exist')
 
     const middlewaresPanel = routerDetailsSection.querySelector(':scope > div:nth-child(3)')
-    const providers = Array.from(middlewaresPanel?.querySelectorAll('img[alt="docker"]') || [])
+    const providers = Array.from(middlewaresPanel?.querySelectorAll('svg[data-testid="docker"]') || [])
     expect(middlewaresPanel?.innerHTML).toContain('middleware00')
     expect(middlewaresPanel?.innerHTML).toContain('middleware01')
     expect(middlewaresPanel?.innerHTML).toContain('middleware02')

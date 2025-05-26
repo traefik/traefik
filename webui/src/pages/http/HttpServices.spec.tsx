@@ -60,25 +60,25 @@ describe('<HttpServicesPage />', () => {
     expect(tbody.querySelectorAll('a[role="row"]')[0].innerHTML).toContain('api2_v2-example-beta1@docker')
     expect(tbody.querySelectorAll('a[role="row"]')[0].innerHTML).toContain('loadbalancer')
     expect(tbody.querySelectorAll('a[role="row"]')[0].innerHTML).toContain('1')
-    expect(tbody.querySelectorAll('a[role="row"]')[0].innerHTML).toContain('img alt="docker"')
+    expect(tbody.querySelectorAll('a[role="row"]')[0].querySelector('svg[data-testid="docker"]')).toBeTruthy()
 
     expect(tbody.querySelectorAll('a[role="row"]')[1].innerHTML).toContain('testid="enabled"')
     expect(tbody.querySelectorAll('a[role="row"]')[1].innerHTML).toContain('api_v2-example-beta2@docker')
     expect(tbody.querySelectorAll('a[role="row"]')[1].innerHTML).toContain('loadbalancer')
     expect(tbody.querySelectorAll('a[role="row"]')[1].innerHTML).toContain('2')
-    expect(tbody.querySelectorAll('a[role="row"]')[1].innerHTML).toContain('img alt="docker"')
+    expect(tbody.querySelectorAll('a[role="row"]')[1].querySelector('svg[data-testid="docker"]')).toBeTruthy()
 
     expect(tbody.querySelectorAll('a[role="row"]')[2].innerHTML).toContain('testid="enabled"')
     expect(tbody.querySelectorAll('a[role="row"]')[2].innerHTML).toContain('canary1@docker')
     expect(tbody.querySelectorAll('a[role="row"]')[2].innerHTML).toContain('weighted')
     expect(tbody.querySelectorAll('a[role="row"]')[2].innerHTML).toContain('0')
-    expect(tbody.querySelectorAll('a[role="row"]')[2].innerHTML).toContain('img alt="docker"')
+    expect(tbody.querySelectorAll('a[role="row"]')[2].querySelector('svg[data-testid="docker"]')).toBeTruthy()
 
     expect(tbody.querySelectorAll('a[role="row"]')[3].innerHTML).toContain('testid="enabled"')
     expect(tbody.querySelectorAll('a[role="row"]')[3].innerHTML).toContain('canary2@file')
     expect(tbody.querySelectorAll('a[role="row"]')[3].innerHTML).toContain('weighted')
     expect(tbody.querySelectorAll('a[role="row"]')[3].innerHTML).toContain('0')
-    expect(tbody.querySelectorAll('a[role="row"]')[3].innerHTML).toContain('img alt="file"')
+    expect(tbody.querySelectorAll('a[role="row"]')[3].querySelector('svg[data-testid="file"]')).toBeTruthy()
   })
 
   it('should render "No data available" when the API returns empty array', async () => {

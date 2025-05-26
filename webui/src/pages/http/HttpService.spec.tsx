@@ -199,7 +199,7 @@ describe('<HttpServicePage />', () => {
     )
 
     const mirrorServices = getByTestId('mirror-services')
-    const providers = Array.from(mirrorServices.querySelectorAll('img[alt="docker"]'))
+    const providers = Array.from(mirrorServices.querySelectorAll('svg[data-testid="docker"]'))
     expect(mirrorServices.childNodes.length).toBe(3)
     expect(mirrorServices.innerHTML).toContain('two@docker')
     expect(mirrorServices.innerHTML).toContain('three@docker')

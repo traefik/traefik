@@ -62,7 +62,7 @@ describe('<HttpRoutersPage />', () => {
     expect(tbody.querySelectorAll('a[role="row"]')[0].innerHTML).toIncludeMultiple(['web-secured', 'web'])
     expect(tbody.querySelectorAll('a[role="row"]')[0].innerHTML).toContain('jaeger_v2-example-beta1@docker')
     expect(tbody.querySelectorAll('a[role="row"]')[0].innerHTML).toContain('jaeger_v2-example-beta1')
-    expect(tbody.querySelectorAll('a[role="row"]')[0].innerHTML).toContain('img alt="docker"')
+    expect(tbody.querySelectorAll('a[role="row"]')[0].querySelector('svg[data-testid="docker"]')).toBeTruthy()
 
     expect(tbody.querySelectorAll('a[role="row"]')[1].innerHTML).toContain('testid="disabled"')
     expect(tbody.querySelectorAll('a[role="row"]')[1].innerHTML).not.toContain('testid="tls-on"')
@@ -70,7 +70,7 @@ describe('<HttpRoutersPage />', () => {
     expect(tbody.querySelectorAll('a[role="row"]')[1].innerHTML).toIncludeMultiple(['web-secured', 'web'])
     expect(tbody.querySelectorAll('a[role="row"]')[1].innerHTML).toContain('orphan-router@file')
     expect(tbody.querySelectorAll('a[role="row"]')[1].innerHTML).toContain('unexistingservice')
-    expect(tbody.querySelectorAll('a[role="row"]')[1].innerHTML).toContain('img alt="file"')
+    expect(tbody.querySelectorAll('a[role="row"]')[1].querySelector('svg[data-testid="file"]')).toBeTruthy()
 
     expect(tbody.querySelectorAll('a[role="row"]')[2].innerHTML).toContain('testid="enabled"')
     expect(tbody.querySelectorAll('a[role="row"]')[2].innerHTML).not.toContain('testid="tls-on"')
@@ -78,7 +78,7 @@ describe('<HttpRoutersPage />', () => {
     expect(tbody.querySelectorAll('a[role="row"]')[2].innerHTML).toIncludeMultiple(['web-redirect'])
     expect(tbody.querySelectorAll('a[role="row"]')[2].innerHTML).toContain('server-redirect@docker')
     expect(tbody.querySelectorAll('a[role="row"]')[2].innerHTML).toContain('api2_v2-example-beta1')
-    expect(tbody.querySelectorAll('a[role="row"]')[2].innerHTML).toContain('img alt="docker"')
+    expect(tbody.querySelectorAll('a[role="row"]')[2].querySelector('svg[data-testid="docker"]')).toBeTruthy()
 
     expect(tbody.querySelectorAll('a[role="row"]')[3].innerHTML).toContain('testid="enabled"')
     expect(tbody.querySelectorAll('a[role="row"]')[3].innerHTML).toContain('testid="tls-on"')
@@ -86,7 +86,7 @@ describe('<HttpRoutersPage />', () => {
     expect(tbody.querySelectorAll('a[role="row"]')[3].innerHTML).toIncludeMultiple(['web-secured'])
     expect(tbody.querySelectorAll('a[role="row"]')[3].innerHTML).toContain('server-secured@docker')
     expect(tbody.querySelectorAll('a[role="row"]')[3].innerHTML).toContain('api2_v2-example-beta1')
-    expect(tbody.querySelectorAll('a[role="row"]')[3].innerHTML).toContain('img alt="docker"')
+    expect(tbody.querySelectorAll('a[role="row"]')[3].querySelector('svg[data-testid="docker"]')).toBeTruthy()
   })
 
   it('should render "No data available" when the API returns empty array', async () => {

@@ -82,7 +82,7 @@ describe('<TcpRouterPage />', () => {
     expect(routerDetailsPanel?.innerHTML).toContain('Status')
     expect(routerDetailsPanel?.innerHTML).toContain('Success')
     expect(routerDetailsPanel?.innerHTML).toContain('Provider')
-    expect(routerDetailsPanel?.innerHTML).toContain('img alt="docker"')
+    expect(routerDetailsPanel?.querySelector('svg[data-testid="docker"]')).toBeTruthy()
     expect(routerDetailsPanel?.innerHTML).toContain('Name')
     expect(routerDetailsPanel?.innerHTML).toContain('tcp-all@docker')
     expect(routerDetailsPanel?.innerHTML).toContain('Entrypoints')
@@ -91,7 +91,7 @@ describe('<TcpRouterPage />', () => {
     expect(routerDetailsPanel?.innerHTML).toContain('tcp-all</')
 
     const middlewaresPanel = routerDetailsSection.querySelector(':scope > div:nth-child(3)')
-    const providers = Array.from(middlewaresPanel?.querySelectorAll('img[alt="docker"]') || [])
+    const providers = Array.from(middlewaresPanel?.querySelectorAll('svg[data-testid="docker"]') || [])
     expect(middlewaresPanel?.innerHTML).toContain('middleware00')
     expect(middlewaresPanel?.innerHTML).toContain('middleware01')
     expect(middlewaresPanel?.innerHTML).toContain('Success')

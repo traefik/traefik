@@ -67,7 +67,7 @@ describe('<UdpRouterPage />', () => {
     expect(routerDetailsPanel?.innerHTML).toContain('Status')
     expect(routerDetailsPanel?.innerHTML).toContain('Success')
     expect(routerDetailsPanel?.innerHTML).toContain('Provider')
-    expect(routerDetailsPanel?.innerHTML).toContain('img alt="docker"')
+    expect(routerDetailsPanel?.querySelector('svg[data-testid="docker"]')).toBeTruthy()
     expect(routerDetailsPanel?.innerHTML).toContain('Name')
     expect(routerDetailsPanel?.innerHTML).toContain('udp-all@docker')
     expect(routerDetailsPanel?.innerHTML).toContain('Entrypoints')

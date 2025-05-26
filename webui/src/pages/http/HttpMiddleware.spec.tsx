@@ -61,7 +61,7 @@ describe('<HttpMiddlewarePage />', () => {
 
     const middlewareCard = getByTestId('middleware-card')
     expect(middlewareCard.innerHTML).toContain('addprefix')
-    expect(middlewareCard.innerHTML).toContain('img alt="docker"')
+    expect(middlewareCard.querySelector('svg[data-testid="docker"]')).toBeTruthy()
     expect(middlewareCard.innerHTML).toContain('Success')
     expect(middlewareCard.innerHTML).toContain('/foo')
 

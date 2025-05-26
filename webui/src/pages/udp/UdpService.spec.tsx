@@ -69,7 +69,7 @@ describe('<UdpServicePage />', () => {
     expect(serviceDetails.innerHTML).toContain('Type')
     expect(serviceDetails.innerHTML).toContain('loadbalancer')
     expect(serviceDetails.innerHTML).toContain('Provider')
-    expect(serviceDetails.innerHTML).toContain('img alt="docker"')
+    expect(serviceDetails.querySelector('svg[data-testid="docker"]')).toBeTruthy()
     expect(serviceDetails.innerHTML).toContain('Status')
     expect(serviceDetails.innerHTML).toContain('Success')
     expect(serviceDetails.innerHTML).toContain('Pass Host Header')
