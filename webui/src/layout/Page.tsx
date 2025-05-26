@@ -9,7 +9,11 @@ import { ToastPool } from 'components/ToastPool'
 import { ToastProvider } from 'contexts/toasts'
 
 export const globalStyles = globalCss({
-  ':root': {
+  '.light': {
+    '--colors-primary': '#217F97',
+  },
+
+  '.dark': {
     '--colors-primary': '#2AA2C1',
   },
 
