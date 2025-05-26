@@ -13,7 +13,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
 )
 
-var httpFuncs = map[string]func(*matchersTree, ...string) error{
+var httpFuncs = matcherBuilderFuncs{
 	"ClientIP":     expectNParameters(clientIP, 1),
 	"Method":       expectNParameters(method, 1),
 	"Host":         expectNParameters(host, 1),

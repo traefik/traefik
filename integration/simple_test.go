@@ -711,11 +711,11 @@ func (s *SimpleSuite) TestWithDefaultRuleSyntax() {
 	require.NoError(s.T(), err)
 
 	// router2 has an error because it uses the wrong rule syntax (v3 instead of v2)
-	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers/router2@file", 1*time.Second, try.BodyContains("error while parsing rule QueryRegexp(`foo`, `bar`): unsupported function: QueryRegexp"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers/router2@file", 1*time.Second, try.BodyContains("parsing rule QueryRegexp(`foo`, `bar`): unsupported function: QueryRegexp"))
 	require.NoError(s.T(), err)
 
 	// router3 has an error because it uses the wrong rule syntax (v2 instead of v3)
-	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers/router3@file", 1*time.Second, try.BodyContains("error while adding rule PathPrefix: unexpected number of parameters; got 2, expected one of [1]"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers/router3@file", 1*time.Second, try.BodyContains("adding rule PathPrefix: unexpected number of parameters; got 2, expected one of [1]"))
 	require.NoError(s.T(), err)
 }
 
@@ -741,11 +741,11 @@ func (s *SimpleSuite) TestWithoutDefaultRuleSyntax() {
 	require.NoError(s.T(), err)
 
 	// router2 has an error because it uses the wrong rule syntax (v3 instead of v2)
-	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers/router2@file", 1*time.Second, try.BodyContains("error while adding rule PathPrefix: unexpected number of parameters; got 2, expected one of [1]"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers/router2@file", 1*time.Second, try.BodyContains("adding rule PathPrefix: unexpected number of parameters; got 2, expected one of [1]"))
 	require.NoError(s.T(), err)
 
 	// router2 has an error because it uses the wrong rule syntax (v2 instead of v3)
-	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers/router3@file", 1*time.Second, try.BodyContains("error while parsing rule QueryRegexp(`foo`, `bar`): unsupported function: QueryRegexp"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers/router3@file", 1*time.Second, try.BodyContains("parsing rule QueryRegexp(`foo`, `bar`): unsupported function: QueryRegexp"))
 	require.NoError(s.T(), err)
 }
 
