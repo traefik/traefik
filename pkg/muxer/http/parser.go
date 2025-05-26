@@ -16,10 +16,15 @@ type SyntaxParser struct {
 
 type Options func(map[string]matcherFuncs)
 
-func WithMatcher(syntax, matcherName string, matcherFunc MatcherFunc) Options {
+func WithMatcher(syntax, matcherName string, fn func(params ...string) (MatcherFunc, error)) Options {
 	return func(syntaxFuncs map[string]matcherFuncs) {
 		syntax = strings.ToLower(syntax)
-		syntaxFuncs[syntax][matcherName] = matcherFunc
+
+		syntaxFuncs[syntax][matcherName] = func(tree *matchersTree, s ...string) error {
+			var err error
+			tree.matcher, err = fn(s...)
+			return err
+		}
 	}
 }
 
