@@ -7,44 +7,27 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/rules"
-	"github.com/vulcand/predicate"
 )
+
+type matcherFuncs map[string]matcherFunc
+
+type matcherFunc func(*matchersTree, ...string) error
+
+type MatcherFunc func(*http.Request) bool
 
 // Muxer handles routing with rules.
 type Muxer struct {
 	routes         routes
-	parser         predicate.Parser
-	parserV2       predicate.Parser
+	parser         SyntaxParser
 	defaultHandler http.Handler
 }
 
 // NewMuxer returns a new muxer instance.
-func NewMuxer() (*Muxer, error) {
-	var matchers []string
-	for matcher := range httpFuncs {
-		matchers = append(matchers, matcher)
-	}
-
-	parser, err := rules.NewParser(matchers)
-	if err != nil {
-		return nil, fmt.Errorf("error while creating parser: %w", err)
-	}
-
-	var matchersV2 []string
-	for matcher := range httpFuncsV2 {
-		matchersV2 = append(matchersV2, matcher)
-	}
-
-	parserV2, err := rules.NewParser(matchersV2)
-	if err != nil {
-		return nil, fmt.Errorf("error while creating v2 parser: %w", err)
-	}
-
+func NewMuxer(parser SyntaxParser) *Muxer {
 	return &Muxer{
 		parser:         parser,
-		parserV2:       parserV2,
 		defaultHandler: http.NotFoundHandler(),
-	}, nil
+	}
 }
 
 // ServeHTTP forwards the connection to the matching HTTP handler.
@@ -73,36 +56,9 @@ func GetRulePriority(rule string) int {
 
 // AddRoute add a new route to the router.
 func (m *Muxer) AddRoute(rule string, syntax string, priority int, handler http.Handler) error {
-	var parse interface{}
-	var err error
-	var matcherFuncs map[string]func(*matchersTree, ...string) error
-
-	switch syntax {
-	case "v2":
-		parse, err = m.parserV2.Parse(rule)
-		if err != nil {
-			return fmt.Errorf("error while parsing rule %s: %w", rule, err)
-		}
-
-		matcherFuncs = httpFuncsV2
-	default:
-		parse, err = m.parser.Parse(rule)
-		if err != nil {
-			return fmt.Errorf("error while parsing rule %s: %w", rule, err)
-		}
-
-		matcherFuncs = httpFuncs
-	}
-
-	buildTree, ok := parse.(rules.TreeBuilder)
-	if !ok {
-		return fmt.Errorf("error while parsing rule %s", rule)
-	}
-
-	var matchers matchersTree
-	err = matchers.addRule(buildTree(), matcherFuncs)
+	matchers, err := m.parser.parse(syntax, rule)
 	if err != nil {
-		return fmt.Errorf("error while adding rule %s: %w", rule, err)
+		return fmt.Errorf("error while parsing rule %s: %w", rule, err)
 	}
 
 	m.routes = append(m.routes, &route{
@@ -173,7 +129,7 @@ type matchersTree struct {
 	// matcher is a matcher func used to match HTTP request properties.
 	// If matcher is not nil, it means that this matcherTree is a leaf of the tree.
 	// It is therefore mutually exclusive with left and right.
-	matcher func(*http.Request) bool
+	matcher MatcherFunc
 	// operator to combine the evaluation of left and right leaves.
 	operator string
 	// Mutually exclusive with matcher.
@@ -203,8 +159,6 @@ func (m *matchersTree) match(req *http.Request) bool {
 		return false
 	}
 }
-
-type matcherFuncs map[string]func(*matchersTree, ...string) error
 
 func (m *matchersTree) addRule(rule *rules.Tree, funcs matcherFuncs) error {
 	switch rule.Matcher {
