@@ -9,9 +9,9 @@ import (
 	"github.com/traefik/traefik/v3/pkg/rules"
 )
 
-type matcherFuncs map[string]matcherFunc
+type matcherBuilderFuncs map[string]matcherBuilderFunc
 
-type matcherFunc func(*matchersTree, ...string) error
+type matcherBuilderFunc func(*matchersTree, ...string) error
 
 type MatcherFunc func(*http.Request) bool
 
@@ -160,7 +160,7 @@ func (m *matchersTree) match(req *http.Request) bool {
 	}
 }
 
-func (m *matchersTree) addRule(rule *rules.Tree, funcs matcherFuncs) error {
+func (m *matchersTree) addRule(rule *rules.Tree, funcs matcherBuilderFuncs) error {
 	switch rule.Matcher {
 	case "and", "or":
 		m.operator = rule.Matcher

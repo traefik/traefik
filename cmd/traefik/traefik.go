@@ -303,7 +303,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 
 	routerFactory, err := server.NewRouterFactory(*staticConfiguration, managerFactory, tlsManager, observabilityMgr, pluginBuilder, dialerManager)
 	if err != nil {
-		return nil, fmt.Errorf("unable to create router factory: %w", err)
+		return nil, fmt.Errorf("creating router factory: %w", err)
 	}
 
 	// Watcher

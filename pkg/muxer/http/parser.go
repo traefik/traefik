@@ -1,6 +1,7 @@
 package http
 
 import (
+	"errors"
 	"fmt"
 	"maps"
 	"slices"
@@ -14,22 +15,26 @@ type SyntaxParser struct {
 	parsers map[string]*parser
 }
 
-type Options func(map[string]matcherFuncs)
+type Options func(map[string]matcherBuilderFuncs)
 
-func WithMatcher(syntax, matcherName string, fn func(params ...string) (MatcherFunc, error)) Options {
-	return func(syntaxFuncs map[string]matcherFuncs) {
+func WithMatcher(syntax, matcherName string, builderFunc func(params ...string) (MatcherFunc, error)) Options {
+	return func(syntaxFuncs map[string]matcherBuilderFuncs) {
 		syntax = strings.ToLower(syntax)
 
 		syntaxFuncs[syntax][matcherName] = func(tree *matchersTree, s ...string) error {
-			var err error
-			tree.matcher, err = fn(s...)
-			return err
+			matcher, err := builderFunc(s...)
+			if err != nil {
+				return fmt.Errorf("building matcher: %w", err)
+			}
+
+			tree.matcher = matcher
+			return nil
 		}
 	}
 }
 
 func NewSyntaxParser(opts ...Options) (SyntaxParser, error) {
-	syntaxFuncs := map[string]matcherFuncs{
+	syntaxFuncs := map[string]matcherBuilderFuncs{
 		"v2": httpFuncsV2,
 		"v3": httpFuncs,
 	}
@@ -38,9 +43,9 @@ func NewSyntaxParser(opts ...Options) (SyntaxParser, error) {
 		opt(syntaxFuncs)
 	}
 
-	var err error
 	parsers := map[string]*parser{}
 	for syntax, funcs := range syntaxFuncs {
+		var err error
 		parsers[syntax], err = newParser(funcs)
 		if err != nil {
 			return SyntaxParser{}, err
@@ -61,7 +66,7 @@ func (s SyntaxParser) parse(syntax string, rule string) (matchersTree, error) {
 	return parser.parse(rule)
 }
 
-func newParser(funcs matcherFuncs) (*parser, error) {
+func newParser(funcs matcherBuilderFuncs) (*parser, error) {
 	p, err := rules.NewParser(slices.Collect(maps.Keys(funcs)))
 	if err != nil {
 		return nil, err
@@ -75,23 +80,23 @@ func newParser(funcs matcherFuncs) (*parser, error) {
 
 type parser struct {
 	parser       predicate.Parser
-	matcherFuncs matcherFuncs
+	matcherFuncs matcherBuilderFuncs
 }
 
 func (p *parser) parse(rule string) (matchersTree, error) {
 	parse, err := p.parser.Parse(rule)
 	if err != nil {
-		return matchersTree{}, fmt.Errorf("error while parsing rule %s: %w", rule, err)
+		return matchersTree{}, fmt.Errorf("parsing rule %s: %w", rule, err)
 	}
 	buildTree, ok := parse.(rules.TreeBuilder)
 	if !ok {
-		return matchersTree{}, fmt.Errorf("error while parsing rule %s", rule)
+		return matchersTree{}, errors.New("obtaining build tree")
 	}
 
 	var matchers matchersTree
 	err = matchers.addRule(buildTree(), p.matcherFuncs)
 	if err != nil {
-		return matchersTree{}, fmt.Errorf("error while adding rule %s: %w", rule, err)
+		return matchersTree{}, fmt.Errorf("adding rule %s: %w", rule, err)
 	}
 
 	return matchers, nil
