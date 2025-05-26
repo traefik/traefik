@@ -142,7 +142,8 @@ func path(tree *matchersTree, paths ...string) error {
 	}
 
 	tree.matcher = func(req *http.Request) bool {
-		return req.URL.Path == path
+		routingPath := getRoutingPath(req)
+		return routingPath != nil && *routingPath == path
 	}
 
 	return nil
@@ -157,7 +158,8 @@ func pathRegexp(tree *matchersTree, paths ...string) error {
 	}
 
 	tree.matcher = func(req *http.Request) bool {
-		return re.MatchString(req.URL.Path)
+		routingPath := getRoutingPath(req)
+		return routingPath != nil && re.MatchString(*routingPath)
 	}
 
 	return nil
@@ -171,7 +173,8 @@ func pathPrefix(tree *matchersTree, paths ...string) error {
 	}
 
 	tree.matcher = func(req *http.Request) bool {
-		return strings.HasPrefix(req.URL.Path, path)
+		routingPath := getRoutingPath(req)
+		return routingPath != nil && strings.HasPrefix(*routingPath, path)
 	}
 
 	return nil
