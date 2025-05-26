@@ -58,7 +58,7 @@ export default defineComponent({
       .text-h3 {
         font-size: 16px;
         text-align: left;
-        line-height: 16px;
+        line-height: 18px;
       }
     }
     &-focus {
