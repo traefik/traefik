@@ -2,11 +2,12 @@ package wrr
 
 import (
 	"context"
-	"github.com/traefik/traefik/v3/pkg/healthcheck"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"github.com/traefik/traefik/v3/pkg/healthcheck"
 
 	"github.com/stretchr/testify/assert"
 	ptypes "github.com/traefik/paerser/types"
@@ -405,7 +406,7 @@ func TestPassiveHealthCheck(t *testing.T) {
 		recorder := httptest.NewRecorder()
 
 		// Using the weights set, it should hit the unhealthy service thrice
-		for i := 1; i <= 4; i++ {
+		for range 4 {
 			balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 		}
 
@@ -423,7 +424,7 @@ func TestPassiveHealthCheck(t *testing.T) {
 	t.Run("Fail over to healthy service after failures", func(t *testing.T) {
 		recorder := httptest.NewRecorder()
 
-		for i := 0; i < 4; i++ {
+		for range 4 {
 			balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 		}
 
