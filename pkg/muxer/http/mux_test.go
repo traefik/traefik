@@ -225,8 +225,10 @@ func TestMuxer(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			muxer, err := NewMuxer()
+			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
+
+			muxer := NewMuxer(parser)
 
 			handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 			err = muxer.AddRoute(test.rule, "", 0, handler)
@@ -378,8 +380,10 @@ func Test_addRoutePriority(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
-			muxer, err := NewMuxer()
+			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
+
+			muxer := NewMuxer(parser)
 
 			for _, route := range test.cases {
 				handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -510,8 +514,10 @@ func TestEmptyHost(t *testing.T) {
 			t.Parallel()
 
 			handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-			muxer, err := NewMuxer()
+			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
+
+			muxer := NewMuxer(parser)
 
 			err = muxer.AddRoute(test.rule, "", 0, handler)
 			require.NoError(t, err)

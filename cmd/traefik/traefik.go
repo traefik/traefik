@@ -301,7 +301,10 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 
 	// Router factory
 
-	routerFactory := server.NewRouterFactory(*staticConfiguration, managerFactory, tlsManager, observabilityMgr, pluginBuilder, dialerManager)
+	routerFactory, err := server.NewRouterFactory(*staticConfiguration, managerFactory, tlsManager, observabilityMgr, pluginBuilder, dialerManager)
+	if err != nil {
+		return nil, fmt.Errorf("creating router factory: %w", err)
+	}
 
 	// Watcher
 
