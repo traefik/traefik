@@ -1,0 +1,22 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+
+[serversTransport]
+  insecureSkipVerify=true
+
+[entryPoints]
+  [entryPoints.web]
+    address = ":8000"
+    [entryPoints.web.http2]
+      maxConcurrentStreams = 42
+
+[api]
+  insecure = true
+
+[providers.file]
+  filename = "{{ .SelfFilename }}"
+
