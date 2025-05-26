@@ -542,6 +542,7 @@ If the number of failures within a specified time window exceeds the configured 
 Traefik will automatically stop routing traffic to that server until it recovers.
 
 The following options are available for passive health checks:
+
 - maxFailedAttempts (default: 1) –  The number of failed requests required before the server is considered unhealthy.
 
 - failureWindow (default: 10s) – The time window during which failures are counted, and the duration for which the server remains marked as unhealthy.
@@ -581,7 +582,6 @@ The following options are available for passive health checks:
               maxFailedAttempts = 2
               failureWindow = 15
     ```  
-
 
 #### Pass Host Header
 
