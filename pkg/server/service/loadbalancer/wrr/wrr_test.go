@@ -7,11 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/traefik/traefik/v3/pkg/healthcheck"
-
 	"github.com/stretchr/testify/assert"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/healthcheck"
 )
 
 type key string
