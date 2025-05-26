@@ -534,6 +534,7 @@ Below are the available options for the health check mechanism:
     ```
 
 #### Passive Health Checks
+
 Passive health checks rely on real traffic to assess server health.
 Traefik forwards requests as usual and evaluates each response or timeout,
 incrementing a failure counter whenever a request fails.
