@@ -53,10 +53,8 @@
   "providers": [
     "Docker",
     "File",
-    "Marathon",
     "KubernetesIngress",
     "KubernetesCRD",
-    "Rest",
-    "Rancher"
+    "Rest"
   ]
 }
