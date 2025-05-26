@@ -4,7 +4,7 @@ import useInfiniteScroll from 'react-infinite-scroll-hook'
 import { useSearchParams } from 'react-router-dom'
 
 import ClickableRow from 'components/ClickableRow'
-import { ProviderIcon } from 'components/resources/ProviderIcon'
+import ProviderIcon from 'components/icons/providers'
 import { ResourceStatus } from 'components/resources/ResourceStatus'
 import { ScrollTopButton } from 'components/ScrollTopButton'
 import { SpinnerLoader } from 'components/SpinnerLoader'

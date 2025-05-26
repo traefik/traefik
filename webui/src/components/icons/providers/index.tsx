@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { HTMLAttributes, useMemo } from 'react'
 
 import Consul from 'components/icons/providers/Consul'
 import Docker from 'components/icons/providers/Docker'
@@ -14,12 +14,12 @@ import Plugin from 'components/icons/providers/Plugin'
 import Redis from 'components/icons/providers/Redis'
 import Zookeeper from 'components/icons/providers/Zookeeper'
 
-type ProviderIconProps = {
-  name: string
-  size?: number
+export type ProviderIconProps = HTMLAttributes<SVGElement> & {
+  height?: number | string
+  width?: number | string
 }
 
-export const ProviderIcon = ({ name, size = 32 }: ProviderIconProps) => {
+export default function ProviderIcon({ name, size = 32 }: { name: string; size?: number }) {
   const Icon = useMemo(() => {
     if (!name || typeof name !== 'string') return Internal
 

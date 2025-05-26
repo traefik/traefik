@@ -3,11 +3,11 @@ import { FiLayers } from 'react-icons/fi'
 
 import { DetailSection, EmptyPlaceholder, ItemBlock, LayoutTwoCols, ProviderName } from './DetailSections'
 import GenericTable from './GenericTable'
-import { ProviderIcon } from './ProviderIcon'
 import { RenderUnknownProp } from './RenderUnknownProp'
 import { ResourceStatus } from './ResourceStatus'
 
 import { EmptyIcon } from 'components/icons/EmptyIcon'
+import ProviderIcon from 'components/icons/providers'
 import { Middleware, RouterDetailType } from 'hooks/use-resource-detail'
 import { parseMiddlewareType } from 'libs/parsers'
 

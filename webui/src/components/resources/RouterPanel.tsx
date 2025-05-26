@@ -3,9 +3,9 @@ import { FiInfo } from 'react-icons/fi'
 
 import { DetailSection, ItemBlock, LayoutTwoCols, ProviderName } from './DetailSections'
 import GenericTable from './GenericTable'
-import { ProviderIcon } from './ProviderIcon'
 import { ResourceStatus } from './ResourceStatus'
 
+import ProviderIcon from 'components/icons/providers'
 import Tooltip from 'components/Tooltip'
 import { ResourceDetailDataType } from 'hooks/use-resource-detail'
 

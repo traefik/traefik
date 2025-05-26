@@ -3,6 +3,7 @@ import { useMemo } from 'react'
 import { FiGlobe, FiInfo, FiShield } from 'react-icons/fi'
 import { useParams } from 'react-router-dom'
 
+import ProviderIcon from 'components/icons/providers'
 import {
   BooleanState,
   Chips,
@@ -13,7 +14,6 @@ import {
   LayoutTwoCols,
   ProviderName,
 } from 'components/resources/DetailSections'
-import { ProviderIcon } from 'components/resources/ProviderIcon'
 import { ResourceStatus } from 'components/resources/ResourceStatus'
 import { UsedByRoutersSection, UsedByRoutersSkeleton } from 'components/resources/UsedByRoutersSection'
 import Tooltip from 'components/Tooltip'
