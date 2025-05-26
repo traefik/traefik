@@ -30,13 +30,15 @@ const getProviderName = (providerName: string) => {
 }
 
 export const ProviderIcon = ({ name, size = 32 }: ProviderIconProps) => {
-  const src = useMemo(
-    () =>
-      `${import.meta.env.BASE_URL || '/'}img/providers/${getProviderName(name)}.${
-        name?.toLowerCase() === 'ecs' ? 'png' : 'svg'
-      }`,
-    [name],
-  )
+  const src = useMemo(() => `${import.meta.env.BASE_URL || '/'}img/providers/${getProviderName(name)}.svg`, [name])
 
-  return <img alt={name} src={src} width={size} height={size} style={{ borderRadius: '50%' }} />
+  return (
+    <img
+      alt={name}
+      src={src}
+      width={size}
+      height={size}
+      style={{ backgroundColor: 'var(--colors-primary)', borderRadius: '50%' }}
+    />
+  )
 }

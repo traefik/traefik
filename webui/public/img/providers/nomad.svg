@@ -1,7 +1,10 @@
-<svg id="LOGOS" xmlns="http://www.w3.org/2000/svg" width="68" height="68" viewBox="27 38 68 68">
-  <defs>
-    <style>.cls-1{fill:#00ca8e;}</style>
-  </defs>
-  <path class="cls-1"
-        d="M61.14,38.19,32,55V88.63l29.12,16.81L90.26,88.63V55Zm13,37-7.76,4.48L57,74.54V85.26l-8.81,5.59V68.45l7-4.28,9.7,5.11V58.34l9.25-5.56Z"/>
+<svg width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_2127_56)">
+<path d="M36.5084 8L12 21.9979V50.0021L36.4916 64L61 50.0021V21.9979L36.5084 8ZM47.4422 38.8104L40.9155 42.541L33.0264 38.2691V47.1958L25.6167 51.8507V33.1979L31.5041 29.6339L39.6624 33.8891V24.7792L47.4422 20.1493V38.8104Z" fill="white"/>
+</g>
+<defs>
+<clipPath id="clip0_2127_56">
+<rect width="72" height="72" fill="white"/>
+</clipPath>
+</defs>
 </svg>

@@ -51,10 +51,23 @@
     "accessLog": true
   },
   "providers": [
+    "Consul",
+    "ConsulCatalog",
     "Docker",
+    "ECS",
+    "etcd",
     "File",
-    "KubernetesIngress",
+    "Http",
+    "Hub",
+    "Internal",
+    "Kubernetes",
     "KubernetesCRD",
-    "Rest"
+    "KubernetesGateway",
+    "KubernetesIngress",
+    "Nomad",
+    "Plugin",
+    "Redis",
+    "Swarm",
+    "ZooKeeper"
   ]
 }
