@@ -9,9 +9,11 @@ import (
 	"github.com/traefik/traefik/v3/pkg/rules"
 )
 
-type matcherFuncs map[string]MatcherFunc
+type matcherFuncs map[string]matcherFunc
 
-type MatcherFunc func(*matchersTree, ...string) error
+type matcherFunc func(*matchersTree, ...string) error
+
+type MatcherFunc func(*http.Request) bool
 
 // Muxer handles routing with rules.
 type Muxer struct {
@@ -127,7 +129,7 @@ type matchersTree struct {
 	// matcher is a matcher func used to match HTTP request properties.
 	// If matcher is not nil, it means that this matcherTree is a leaf of the tree.
 	// It is therefore mutually exclusive with left and right.
-	matcher func(*http.Request) bool
+	matcher MatcherFunc
 	// operator to combine the evaluation of left and right leaves.
 	operator string
 	// Mutually exclusive with matcher.
