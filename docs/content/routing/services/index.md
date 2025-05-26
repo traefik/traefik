@@ -533,6 +533,56 @@ Below are the available options for the health check mechanism:
             My-Header = "bar"
     ```
 
+#### Passive Health Checks
+
+Passive health checks rely on real traffic to assess server health.
+Traefik forwards requests as usual and evaluates each response or timeout,
+incrementing a failure counter whenever a request fails.
+If the number of failures within a specified time window exceeds the configured threshold,
+Traefik will automatically stop routing traffic to that server until it recovers.
+
+The following options are available for passive health checks:
+
+- maxFailedAttempts (default: 1) –  The number of failed requests required before the server is considered unhealthy.
+
+- failureWindow (default: 10s) – The time window during which failures are counted, and the duration for which the server remains marked as unhealthy.
+
+??? example "Using the [File Provider](../../providers/file.md)"
+
+    ```yaml tab="YAML"
+    ## Dynamic configuration
+    http:
+      services:
+        Service-1:
+          loadBalancer:
+            servers:
+              - url: "http://<private-ip-server-1>:<private-port-server-1>/"
+                healthCheck:
+                  maxFailedAttempts: 3
+                  failureWindow: 30
+              - url: "http://<private-ip-server-2>:<private-port-server-2>/"
+                healthCheck:
+                  maxFailedAttempts: 2
+                  failureWindow: 15
+    ```
+
+    ```toml tab="TOML"
+    ## Dynamic configuration
+    [http.services]
+      [http.services.Service-1]
+        [http.services.Service-1.loadBalancer]
+          [[http.services.Service-1.loadBalancer.servers]]
+            url = "http://<private-ip-server-1>:<private-port-server-1>/"
+            [http.services.Service-1.loadBalancer.servers.healthCheck]
+              maxFailedAttempts = 3
+              failureWindow = 30
+          [[http.services.Service-1.loadBalancer.servers]]
+            url = "http://<private-ip-server-2>:<private-port-server-2>/"
+            [http.services.Service-1.loadBalancer.servers.healthCheck]
+              maxFailedAttempts = 2
+              failureWindow = 15
+    ```  
+
 #### Pass Host Header
 
 The `passHostHeader` allows to forward client Host header to server.
