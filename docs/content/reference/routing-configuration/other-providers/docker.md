@@ -35,7 +35,6 @@ With Docker, Traefik can leverage labels attached to a container to generate rou
     Attaching labels to containers (in your docker compose file)
 
     ```yaml
-    version: "3"
     services:
       my-container:
         # ...
@@ -48,7 +47,6 @@ With Docker, Traefik can leverage labels attached to a container to generate rou
     Forward requests for `http://example.com` to `http://<private IP of container>:12345`:
 
     ```yaml
-    version: "3"
     services:
       my-container:
         # ...
@@ -71,7 +69,6 @@ With Docker, Traefik can leverage labels attached to a container to generate rou
     In this example, requests are forwarded for `http://example-a.com` to `http://<private IP of container>:8000` in addition to `http://example-b.com` forwarding to `http://<private IP of container>:9000`:
 
     ```yaml
-    version: "3"
     services:
       my-container:
         # ...
