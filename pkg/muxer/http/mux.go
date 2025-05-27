@@ -60,7 +60,7 @@ func (m *Muxer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	var err error
 	req, err = withRoutingPath(req)
 	if err != nil {
-		logger.Debug().Err(err).Msg("Unable to add routing rawPath to request context")
+		logger.Debug().Err(err).Msg("Unable to add routing path to request context")
 		rw.WriteHeader(http.StatusBadRequest)
 		return
 	}
