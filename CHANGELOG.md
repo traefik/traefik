@@ -1,3 +1,16 @@
+## [v2.11.25](https://github.com/traefik/traefik/tree/v2.11.25) (2025-05-27)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.24...v2.11.25)
+
+**Bug fixes:**
+- **[k8s/ingress]** Fix panic for ingress with backend resource ([#11777](https://github.com/traefik/traefik/pull/11777) by [rtribotte](https://github.com/rtribotte))
+- **[server]** Normalize request path ([#11768](https://github.com/traefik/traefik/pull/11768) by [kevinpollet](https://github.com/kevinpollet))
+
+**Documentation:**
+- **[middleware,k8s]** Add multi-tenant TLS guidance to the docs ([#11724](https://github.com/traefik/traefik/pull/11724) by [sheddy-traefik](https://github.com/sheddy-traefik))
+- **[service]** Add a note about how to disable connection reuse with backends ([#11716](https://github.com/traefik/traefik/pull/11716) by [rtribotte](https://github.com/rtribotte))
+- Fix broken link in documentation ([#11761](https://github.com/traefik/traefik/pull/11761) by [sheddy-traefik](https://github.com/sheddy-traefik))
+- Change version for path sanitization migration guide ([#11702](https://github.com/traefik/traefik/pull/11702) by [rtribotte](https://github.com/rtribotte))
+
 ## [v3.4.0](https://github.com/traefik/traefik/tree/v3.4.0) (2025-05-05)
 [All Commits](https://github.com/traefik/traefik/compare/v3.3.0-rc1...v3.4.0)
 
