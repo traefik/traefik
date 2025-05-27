@@ -299,7 +299,7 @@ export const TopNav = () => {
     <Flex as="nav" role="navigation" justify="end" align="center" css={{ gap: '$2', mb: '$6' }}>
       {showHubButton && (
         <Box css={{ fontFamily: '$rubik', fontWeight: '500 !important' }}>
-          <hub-button-app style={{ backgroundColor: '#2AA2C1' }} />
+          <hub-button-app style={{ backgroundColor: '#2AA2C1', fontWeight: 'inherit' }} />
         </Box>
       )}
       <ThemeSwitcher />
