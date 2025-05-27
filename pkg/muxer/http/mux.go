@@ -194,7 +194,7 @@ func withRoutingPath(req *http.Request) (*http.Request, error) {
 			// This should never happen as the standard library will reject requests containing invalid percent-encodings.
 			decodedCharacter, err := url.PathUnescape(encodedCharacter)
 			if err != nil {
-				return nil, errors.New("invalid percent-encoding in URL rawPath")
+				return nil, errors.New("invalid percent-encoding in URL path")
 			}
 			routingPathBuilder.WriteString(decodedCharacter)
 		}
