@@ -184,7 +184,7 @@ func withRoutingPath(req *http.Request) (*http.Request, error) {
 		// This should never happen as the standard library will reject requests containing invalid percent-encodings.
 		// This discards URLs with a percent character at the end.
 		if i+2 >= len(escapedPath) {
-			return nil, errors.New("invalid percent-encoding at the end of the URL rawPath")
+			return nil, errors.New("invalid percent-encoding at the end of the URL path")
 		}
 
 		encodedCharacter := escapedPath[i : i+3]
