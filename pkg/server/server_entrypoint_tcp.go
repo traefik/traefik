@@ -575,17 +575,11 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 		handler = newKeepAliveMiddleware(handler, configuration.Transport.KeepAliveMaxRequests, configuration.Transport.KeepAliveMaxTime)
 	}
 
-	// TODO: With the addition of UnencryptedHTTP2 in http.Server#Protocols in go1.24 setting the h2c might not be necessary anymore.
-	//  Furthermore, this means that maybe it is not required anymore to have an HTTP and HTTPS server.
-	//  See https://tip.golang.org/doc/go1.24#nethttppkgnethttp
-	// if withH2c {
-	//	handler = h2c.NewHandler(handler, &http2.Server{
-	//		MaxConcurrentStreams: uint32(configuration.HTTP2.MaxConcurrentStreams),
-	//	})
-	//}
 	var protocols http.Protocols
 	protocols.SetHTTP1(true)
 	protocols.SetHTTP2(true)
+
+	// With the addition of UnencryptedHTTP2 in http.Server#Protocols in go1.24 setting the h2c handler is not necessary anymore.
 	protocols.SetUnencryptedHTTP2(withH2c)
 
 	if configuration.HTTP.EncodeQuerySemicolons {
