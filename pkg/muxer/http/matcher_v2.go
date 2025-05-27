@@ -28,7 +28,7 @@ func pathV2(tree *matchersTree, paths ...string) error {
 	var routes []*mux.Route
 
 	for _, path := range paths {
-		route := mux.NewRouter().NewRoute()
+		route := mux.NewRouter().UseRoutingPath().NewRoute()
 
 		if err := route.Path(path).GetError(); err != nil {
 			return err
@@ -54,7 +54,7 @@ func pathPrefixV2(tree *matchersTree, paths ...string) error {
 	var routes []*mux.Route
 
 	for _, path := range paths {
-		route := mux.NewRouter().NewRoute()
+		route := mux.NewRouter().UseRoutingPath().NewRoute()
 
 		if err := route.PathPrefix(path).GetError(); err != nil {
 			return err
