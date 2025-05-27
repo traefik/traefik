@@ -55,7 +55,6 @@ With Docker Swarm, Traefik can leverage labels attached to a service to generate
     then that service is automatically assigned to the router.
 
     ```yaml
-    version: "3"
     services:
       my-container:
         deploy:
@@ -74,7 +73,6 @@ With Docker Swarm, Traefik can leverage labels attached to a service to generate
     Forward requests for `http://example.com` to `http://<private IP of container>:12345`:
 
     ```yaml
-    version: "3"
     services:
       my-container:
         # ...
@@ -100,7 +98,6 @@ With Docker Swarm, Traefik can leverage labels attached to a service to generate
     In this example, requests are forwarded for `http://example-a.com` to `http://<private IP of container>:8000` in addition to `http://example-b.com` forwarding to `http://<private IP of container>:9000`:
 
     ```yaml
-    version: "3"
     services:
       my-container:
         # ...

@@ -29,7 +29,6 @@ providers:
 Attach labels to containers (in your Docker compose file)
 
 ```yaml
-version: "3"
 services:
   my-container:
     # ...
@@ -67,8 +66,6 @@ See the [Docker API Access](#docker-api-access) section for more information.
     The docker-compose file shares the docker sock with the Traefik container
 
     ```yaml
-    version: '3'
-
     services:
       traefik:
          image: traefik:v3.1 # The official v3 Traefik docker image
