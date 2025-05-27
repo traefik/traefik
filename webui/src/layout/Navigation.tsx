@@ -110,7 +110,7 @@ export const SideBarPanel = ({
       open={isOpen && windowSize.width < LAPTOP_BP}
       onOpenChange={onOpenChange}
       side="left"
-      css={{ width: 250, p: 0 }}
+      css={{ width: 264, p: 0 }}
       description="Expanded side navigation"
       noCloseIcon
     >
@@ -157,14 +157,16 @@ export const SideNav = ({
     <NavigationDrawer
       data-collapsed={isExpanded && isResponsive && isSmallScreen}
       css={{
-        width: 250,
+        width: 264,
         height: '100vh',
-        flexDirection: 'column',
         position: 'fixed',
         [`@media (max-width:${LAPTOP_BP}px)`]: isResponsive
           ? {
-              width: 60,
-              px: '$2',
+              width: 64,
+              'a > div:nth-child(1)': {
+                marginLeft: 0,
+                paddingRight: 0,
+              },
             }
           : undefined,
         transition: '150ms cubic-bezier(0.22, 1, 0.36, 1)',
@@ -181,7 +183,7 @@ export const SideNav = ({
           display: 'none',
           position: 'absolute',
           top: 3,
-          right: 0,
+          right: isExpanded ? 12 : 4,
           color: '$hiContrast',
           [`@media (max-width:${LAPTOP_BP}px)`]: { display: 'inherit' },
           p: '$1',
@@ -192,10 +194,10 @@ export const SideNav = ({
       <Container
         css={{
           overflow: 'auto',
-          py: '$3',
+          p: '$3',
+          m: 0,
           flexDirection: 'column',
-          mx: '$3',
-          [`@media (max-width:${LAPTOP_BP}px)`]: isResponsive ? { m: 0 } : undefined,
+          [`@media (max-width:${LAPTOP_BP}px)`]: isResponsive ? { p: '$2' } : undefined,
         }}
         data-testid="nav-container"
       >
@@ -261,21 +263,19 @@ export const SideNav = ({
             ))}
           </Flex>
         ))}
-        <NavigationLink
-          startAdornment={<PluginsIcon />}
-          css={{
-            whiteSpace: 'nowrap',
-            borderTop: '1px solid $colors$tableRowBorder',
-            mb: '$3',
-            pt: '$3',
-            mt: 0,
-            borderRadius: 0,
-          }}
-          href="https://plugins.traefik.io/"
-          target="_blank"
-        >
-          {!isSmallScreen || isExpanded ? 'Plugins' : ''}
-        </NavigationLink>
+        <Flex direction="column" css={{ borderTop: '1px solid $colors$tableRowBorder', borderRadius: 0, pt: '$3' }}>
+          <NavigationLink
+            startAdornment={<PluginsIcon />}
+            css={{
+              mt: '$3',
+              whiteSpace: 'nowrap',
+            }}
+            href="https://plugins.traefik.io/"
+            target="_blank"
+          >
+            {!isSmallScreen || isExpanded ? 'Plugins' : ''}
+          </NavigationLink>
+        </Flex>
       </Container>
     </NavigationDrawer>
   )

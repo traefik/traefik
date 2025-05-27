@@ -51,7 +51,7 @@ const Page = ({ children, title }: Props) => {
         <SideNav isExpanded={isSideBarPanelOpen} onSidePanelToggle={() => setIsSideBarPanelOpen(true)} isResponsive />
         <Flex
           justify="center"
-          css={{ flex: 1, margin: 'auto', ml: 250, [`@media (max-width:${LAPTOP_BP}px)`]: { ml: 60 } }}
+          css={{ flex: 1, margin: 'auto', ml: 264, [`@media (max-width:${LAPTOP_BP}px)`]: { ml: 60 } }}
         >
           <PageContainer data-testid={`${title} page`} direction="column">
             <TopNav />
