@@ -17,7 +17,6 @@ import (
 
 	"github.com/containous/alice"
 	gokitmetrics "github.com/go-kit/kit/metrics"
-	"github.com/gorilla/mux"
 	"github.com/pires/go-proxyproto"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -630,8 +629,6 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 		handler = http.AllowQuerySemicolons(handler)
 	}
 
-	handler = routingPath(handler)
-
 	// Note that the Path sanitization has to be done after the path normalization,
 	// hence the wrapping has to be done before the normalize path wrapping.
 	if configuration.HTTP.SanitizePath != nil && *configuration.HTTP.SanitizePath {
@@ -864,78 +861,5 @@ func normalizePath(h http.Handler) http.Handler {
 		r2.RequestURI = r2.URL.RequestURI()
 
 		h.ServeHTTP(rw, r2)
-	})
-}
-
-// reservedCharacters contains the mapping of the percent-encoded form to the ASCII form
-// of the reserved characters according to https://datatracker.ietf.org/doc/html/rfc3986#section-2.2.
-// By extension to https://datatracker.ietf.org/doc/html/rfc3986#section-2.1 the percent character is also considered a reserved character.
-// Because decoding the percent character would change the meaning of the URL.
-var reservedCharacters = map[string]rune{
-	"%3A": ':',
-	"%2F": '/',
-	"%3F": '?',
-	"%23": '#',
-	"%5B": '[',
-	"%5D": ']',
-	"%40": '@',
-	"%21": '!',
-	"%24": '$',
-	"%26": '&',
-	"%27": '\'',
-	"%28": '(',
-	"%29": ')',
-	"%2A": '*',
-	"%2B": '+',
-	"%2C": ',',
-	"%3B": ';',
-	"%3D": '=',
-	"%25": '%',
-}
-
-// routingPath decodes non-allowed characters in the EscapedPath and stores it in the context to be able to use it for routing.
-// This allows using the decoded version of the non-allowed characters in the routing rules for a better UX.
-// For example, the rule PathPrefix(`/foo bar`) will match the following request path `/foo%20bar`.
-func routingPath(h http.Handler) http.Handler {
-	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		escapedPath := req.URL.EscapedPath()
-
-		var routingPathBuilder strings.Builder
-		for i := 0; i < len(escapedPath); i++ {
-			if escapedPath[i] != '%' {
-				routingPathBuilder.WriteString(string(escapedPath[i]))
-				continue
-			}
-
-			// This should never happen as the standard library will reject requests containing invalid percent-encodings.
-			// This discards URLs with a percent character at the end.
-			if i+2 >= len(escapedPath) {
-				rw.WriteHeader(http.StatusBadRequest)
-				return
-			}
-
-			encodedCharacter := escapedPath[i : i+3]
-			if _, reserved := reservedCharacters[encodedCharacter]; reserved {
-				routingPathBuilder.WriteString(encodedCharacter)
-			} else {
-				// This should never happen as the standard library will reject requests containing invalid percent-encodings.
-				decodedCharacter, err := url.PathUnescape(encodedCharacter)
-				if err != nil {
-					rw.WriteHeader(http.StatusBadRequest)
-					return
-				}
-				routingPathBuilder.WriteString(decodedCharacter)
-			}
-
-			i += 2
-		}
-
-		h.ServeHTTP(rw, req.WithContext(
-			context.WithValue(
-				req.Context(),
-				mux.RoutingPathKey,
-				routingPathBuilder.String(),
-			),
-		))
 	})
 }

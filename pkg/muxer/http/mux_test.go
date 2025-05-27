@@ -557,3 +557,43 @@ func TestGetRulePriority(t *testing.T) {
 		})
 	}
 }
+
+func TestRoutingPath(t *testing.T) {
+	tests := []struct {
+		desc                string
+		path                string
+		expectedRoutingPath string
+	}{
+		{
+			desc:                "unallowed percent-encoded character is decoded",
+			path:                "/foo%20bar",
+			expectedRoutingPath: "/foo bar",
+		},
+		{
+			desc:                "reserved percent-encoded character is kept encoded",
+			path:                "/foo%2Fbar",
+			expectedRoutingPath: "/foo%2Fbar",
+		},
+		{
+			desc:                "multiple mixed characters",
+			path:                "/foo%20bar%2Fbaz%23qux",
+			expectedRoutingPath: "/foo bar%2Fbaz%23qux",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			req := httptest.NewRequest(http.MethodGet, "http://foo"+test.path, http.NoBody)
+
+			var err error
+			req, err = withRoutingPath(req)
+			require.NoError(t, err)
+
+			gotRoutingPath := getRoutingPath(req)
+			assert.NotNil(t, gotRoutingPath)
+			assert.Equal(t, test.expectedRoutingPath, *gotRoutingPath)
+		})
+	}
+}

@@ -13,7 +13,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
@@ -510,56 +509,7 @@ func TestNormalizePath_malformedPercentEncoding(t *testing.T) {
 	}
 }
 
-func TestRoutingPath(t *testing.T) {
-	tests := []struct {
-		desc           string
-		path           string
-		expRoutingPath string
-		expStatus      int
-	}{
-		{
-			desc:           "unallowed percent-encoded character is decoded",
-			path:           "/foo%20bar",
-			expRoutingPath: "/foo bar",
-			expStatus:      http.StatusOK,
-		},
-		{
-			desc:           "reserved percent-encoded character is kept encoded",
-			path:           "/foo%2Fbar",
-			expRoutingPath: "/foo%2Fbar",
-			expStatus:      http.StatusOK,
-		},
-		{
-			desc:           "multiple mixed characters",
-			path:           "/foo%20bar%2Fbaz%23qux",
-			expRoutingPath: "/foo bar%2Fbaz%23qux",
-			expStatus:      http.StatusOK,
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			var gotRoute string
-			handler := routingPath(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				gotRoute, _ = r.Context().Value(mux.RoutingPathKey).(string)
-				w.WriteHeader(http.StatusOK)
-			}))
-
-			req := httptest.NewRequest(http.MethodGet, "http://foo"+test.path, http.NoBody)
-
-			res := httptest.NewRecorder()
-
-			handler.ServeHTTP(res, req)
-
-			assert.Equal(t, test.expStatus, res.Code)
-			assert.Equal(t, test.expRoutingPath, gotRoute)
-		})
-	}
-}
-
-// TestPathOperations tests the whole behavior of normalizePath, sanitizePath, and routingPath combined through the use of the createHTTPServer func.
+// TestPathOperations tests the whole behavior of normalizePath, and sanitizePath combined through the use of the createHTTPServer func.
 // It aims to guarantee the server entrypoint handler is secure regarding a large variety of cases that could lead to path traversal attacks.
 func TestPathOperations(t *testing.T) {
 	// Create a listener for the server.
@@ -580,7 +530,6 @@ func TestPathOperations(t *testing.T) {
 	server.Switcher.UpdateHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Path", r.URL.Path)
 		w.Header().Set("RawPath", r.URL.EscapedPath())
-		w.Header().Set("RoutingPath", r.Context().Value(mux.RoutingPathKey).(string))
 		w.WriteHeader(http.StatusOK)
 	}))
 
@@ -596,100 +545,88 @@ func TestPathOperations(t *testing.T) {
 	}
 
 	tests := []struct {
-		desc                string
-		rawPath             string
-		expectedPath        string
-		expectedRaw         string
-		expectedRoutingPath string
-		expectedStatus      int
+		desc           string
+		rawPath        string
+		expectedPath   string
+		expectedRaw    string
+		expectedStatus int
 	}{
 		{
-			desc:                "normalize and sanitize path",
-			rawPath:             "/a/../b/%41%42%43//%2f/",
-			expectedPath:        "/b/ABC///",
-			expectedRaw:         "/b/ABC/%2F/",
-			expectedRoutingPath: "/b/ABC/%2F/",
-			expectedStatus:      http.StatusOK,
+			desc:           "normalize and sanitize path",
+			rawPath:        "/a/../b/%41%42%43//%2f/",
+			expectedPath:   "/b/ABC///",
+			expectedRaw:    "/b/ABC/%2F/",
+			expectedStatus: http.StatusOK,
 		},
 		{
-			desc:                "path with traversal attempt",
-			rawPath:             "/../../b/",
-			expectedPath:        "/b/",
-			expectedRaw:         "/b/",
-			expectedRoutingPath: "/b/",
-			expectedStatus:      http.StatusOK,
+			desc:           "path with traversal attempt",
+			rawPath:        "/../../b/",
+			expectedPath:   "/b/",
+			expectedRaw:    "/b/",
+			expectedStatus: http.StatusOK,
 		},
 		{
-			desc:                "path with multiple traversal attempts",
-			rawPath:             "/a/../../b/../c/",
-			expectedPath:        "/c/",
-			expectedRaw:         "/c/",
-			expectedRoutingPath: "/c/",
-			expectedStatus:      http.StatusOK,
+			desc:           "path with multiple traversal attempts",
+			rawPath:        "/a/../../b/../c/",
+			expectedPath:   "/c/",
+			expectedRaw:    "/c/",
+			expectedStatus: http.StatusOK,
 		},
 		{
-			desc:                "path with mixed traversal and valid segments",
-			rawPath:             "/a/../b/./c/../d/",
-			expectedPath:        "/b/d/",
-			expectedRaw:         "/b/d/",
-			expectedRoutingPath: "/b/d/",
-			expectedStatus:      http.StatusOK,
+			desc:           "path with mixed traversal and valid segments",
+			rawPath:        "/a/../b/./c/../d/",
+			expectedPath:   "/b/d/",
+			expectedRaw:    "/b/d/",
+			expectedStatus: http.StatusOK,
 		},
 		{
-			desc:                "path with trailing slash and traversal",
-			rawPath:             "/a/b/../",
-			expectedPath:        "/a/",
-			expectedRaw:         "/a/",
-			expectedRoutingPath: "/a/",
-			expectedStatus:      http.StatusOK,
+			desc:           "path with trailing slash and traversal",
+			rawPath:        "/a/b/../",
+			expectedPath:   "/a/",
+			expectedRaw:    "/a/",
+			expectedStatus: http.StatusOK,
 		},
 		{
-			desc:                "path with encoded traversal sequences",
-			rawPath:             "/a/%2E%2E/%2E%2E/b/",
-			expectedPath:        "/b/",
-			expectedRaw:         "/b/",
-			expectedRoutingPath: "/b/",
-			expectedStatus:      http.StatusOK,
+			desc:           "path with encoded traversal sequences",
+			rawPath:        "/a/%2E%2E/%2E%2E/b/",
+			expectedPath:   "/b/",
+			expectedRaw:    "/b/",
+			expectedStatus: http.StatusOK,
 		},
 		{
-			desc:                "path with over-encoded traversal sequences",
-			rawPath:             "/a/%252E%252E/%252E%252E/b/",
-			expectedPath:        "/a/%2E%2E/%2E%2E/b/",
-			expectedRaw:         "/a/%252E%252E/%252E%252E/b/",
-			expectedRoutingPath: "/a/%252E%252E/%252E%252E/b/",
-			expectedStatus:      http.StatusOK,
+			desc:           "path with over-encoded traversal sequences",
+			rawPath:        "/a/%252E%252E/%252E%252E/b/",
+			expectedPath:   "/a/%2E%2E/%2E%2E/b/",
+			expectedRaw:    "/a/%252E%252E/%252E%252E/b/",
+			expectedStatus: http.StatusOK,
 		},
 		{
-			desc:                "routing path with unallowed percent-encoded character",
-			rawPath:             "/foo%20bar",
-			expectedPath:        "/foo bar",
-			expectedRaw:         "/foo%20bar",
-			expectedRoutingPath: "/foo bar",
-			expectedStatus:      http.StatusOK,
+			desc:           "routing path with unallowed percent-encoded character",
+			rawPath:        "/foo%20bar",
+			expectedPath:   "/foo bar",
+			expectedRaw:    "/foo%20bar",
+			expectedStatus: http.StatusOK,
 		},
 		{
-			desc:                "routing path with reserved percent-encoded character",
-			rawPath:             "/foo%2Fbar",
-			expectedPath:        "/foo/bar",
-			expectedRaw:         "/foo%2Fbar",
-			expectedRoutingPath: "/foo%2Fbar",
-			expectedStatus:      http.StatusOK,
+			desc:           "routing path with reserved percent-encoded character",
+			rawPath:        "/foo%2Fbar",
+			expectedPath:   "/foo/bar",
+			expectedRaw:    "/foo%2Fbar",
+			expectedStatus: http.StatusOK,
 		},
 		{
-			desc:                "routing path with unallowed and reserved percent-encoded character",
-			rawPath:             "/foo%20%2Fbar",
-			expectedPath:        "/foo /bar",
-			expectedRaw:         "/foo%20%2Fbar",
-			expectedRoutingPath: "/foo %2Fbar",
-			expectedStatus:      http.StatusOK,
+			desc:           "routing path with unallowed and reserved percent-encoded character",
+			rawPath:        "/foo%20%2Fbar",
+			expectedPath:   "/foo /bar",
+			expectedRaw:    "/foo%20%2Fbar",
+			expectedStatus: http.StatusOK,
 		},
 		{
-			desc:                "path with traversal and encoded slash",
-			rawPath:             "/a/..%2Fb/",
-			expectedPath:        "/a/../b/",
-			expectedRaw:         "/a/..%2Fb/",
-			expectedRoutingPath: "/a/..%2Fb/",
-			expectedStatus:      http.StatusOK,
+			desc:           "path with traversal and encoded slash",
+			rawPath:        "/a/..%2Fb/",
+			expectedPath:   "/a/../b/",
+			expectedRaw:    "/a/..%2Fb/",
+			expectedStatus: http.StatusOK,
 		},
 	}
 
@@ -706,7 +643,6 @@ func TestPathOperations(t *testing.T) {
 			assert.Equal(t, test.expectedStatus, res.StatusCode)
 			assert.Equal(t, test.expectedPath, res.Header.Get("Path"))
 			assert.Equal(t, test.expectedRaw, res.Header.Get("RawPath"))
-			assert.Equal(t, test.expectedRoutingPath, res.Header.Get("RoutingPath"))
 		})
 	}
 }
