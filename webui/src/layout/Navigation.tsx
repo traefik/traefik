@@ -2,6 +2,7 @@ import {
   Badge,
   Box,
   Button,
+  DialogTitle,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
@@ -16,6 +17,7 @@ import {
   styled,
   Text,
   Tooltip,
+  VisuallyHidden,
 } from '@traefiklabs/faency'
 import { useEffect, useMemo, useState } from 'react'
 import { BsChevronDoubleRight, BsChevronDoubleLeft } from 'react-icons/bs'
@@ -114,6 +116,9 @@ export const SideBarPanel = ({
       description="Expanded side navigation"
       noCloseIcon
     >
+      <VisuallyHidden>
+        <DialogTitle>side navigation</DialogTitle>
+      </VisuallyHidden>
       <SideNav isExpanded={isOpen} onSidePanelToggle={() => onOpenChange(false)} />
     </SidePanel>
   )
