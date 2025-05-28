@@ -4,6 +4,7 @@ import { FiArrowRight, FiToggleLeft, FiToggleRight } from 'react-icons/fi'
 import { useNavigate } from 'react-router-dom'
 
 import { StatusWrapper } from './ResourceStatus'
+import { colorByStatus } from './Status'
 
 import Tooltip from 'components/Tooltip'
 
@@ -323,12 +324,18 @@ export const LayoutThreeCols = styled(LayoutCols, {
 export const BooleanState = ({ enabled }: { enabled: boolean }) => (
   <Flex align="center" gap={2}>
     <StatusWrapper
-      css={{ alignItems: 'center', justifyContent: 'center', backgroundColor: enabled ? '#00a697' : '#ff0039' }}
+      css={{
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: enabled ? colorByStatus.enabled : colorByStatus.disabled,
+      }}
       data-testid={`enabled-${enabled}`}
     >
       {enabled ? <FiToggleRight color="#fff" size={20} /> : <FiToggleLeft color="#fff" size={20} />}
     </StatusWrapper>
-    <Text css={{ color: enabled ? '#00a697' : '#ff0039', fontWeight: 600 }}>{enabled ? 'True' : 'False'}</Text>
+    <Text css={{ color: enabled ? colorByStatus.enabled : colorByStatus.disabled, fontWeight: 600 }}>
+      {enabled ? 'True' : 'False'}
+    </Text>
   </Flex>
 )
 

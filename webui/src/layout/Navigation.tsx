@@ -27,6 +27,7 @@ import { useLocation } from 'react-router-dom'
 import { useWindowSize } from 'usehooks-ts'
 
 import Container from './Container'
+import { DARK_PRIMARY_COLOR, LIGHT_PRIMARY_COLOR } from './Page'
 
 import IconButton from 'components/buttons/IconButton'
 import Logo from 'components/icons/Logo'
@@ -34,6 +35,7 @@ import { PluginsIcon } from 'components/icons/PluginsIcon'
 import ThemeSwitcher from 'components/ThemeSwitcher'
 import TooltipText from 'components/TooltipText'
 import useTotals from 'hooks/use-overview-totals'
+import { useIsDarkMode } from 'hooks/use-theme'
 import useVersion from 'hooks/use-version'
 import { Route, ROUTES } from 'routes'
 
@@ -288,6 +290,7 @@ export const SideNav = ({
 
 export const TopNav = () => {
   const { showHubButton, version } = useVersion()
+  const isDarkMode = useIsDarkMode()
 
   const parsedVersion = useMemo(() => {
     if (!version?.Version) {
@@ -304,7 +307,10 @@ export const TopNav = () => {
     <Flex as="nav" role="navigation" justify="end" align="center" css={{ gap: '$2', mb: '$6' }}>
       {showHubButton && (
         <Box css={{ fontFamily: '$rubik', fontWeight: '500 !important' }}>
-          <hub-button-app style={{ backgroundColor: '#2AA2C1', fontWeight: 'inherit' }} />
+          <hub-button-app
+            key={`dark-mode-${isDarkMode}`}
+            style={{ backgroundColor: isDarkMode ? DARK_PRIMARY_COLOR : LIGHT_PRIMARY_COLOR, fontWeight: 'inherit' }}
+          />
         </Box>
       )}
       <ThemeSwitcher />

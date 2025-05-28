@@ -8,13 +8,16 @@ import { LAPTOP_BP, SideBarPanel, SideNav, TopNav } from './Navigation'
 import { ToastPool } from 'components/ToastPool'
 import { ToastProvider } from 'contexts/toasts'
 
+export const LIGHT_PRIMARY_COLOR = '#217F97'
+export const DARK_PRIMARY_COLOR = '#2AA2C1'
+
 export const globalStyles = globalCss({
   '.light': {
-    '--colors-primary': '#217F97',
+    '--colors-primary': LIGHT_PRIMARY_COLOR,
   },
 
   '.dark': {
-    '--colors-primary': '#2AA2C1',
+    '--colors-primary': DARK_PRIMARY_COLOR,
   },
 
   body: {
