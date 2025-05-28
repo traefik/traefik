@@ -1,0 +1,418 @@
+[
+  {
+    "addPrefix": {
+      "prefix": "/foo"
+    },
+    "status": "enabled",
+    "usedBy": ["web@docker"],
+    "name": "add-foo@docker",
+    "type": "addprefix",
+    "provider": "docker"
+  },
+  {
+    "redirectScheme": {
+      "scheme": "https"
+    },
+    "status": "enabled",
+    "usedBy": ["server-mtls@docker", "server-redirect@docker", "orphan-router@file"],
+    "name": "redirect@file",
+    "type": "redirectscheme",
+    "provider": "file"
+  },
+  {
+    "chain": {
+      "middlewares": ["whitelist", "simple-auth"]
+    },
+    "status": "enabled",
+    "name": "secure-chain@file",
+    "type": "chain",
+    "provider": "file"
+  },
+  {
+    "basicAuth": {
+      "usersFile": ".htpasswd",
+      "removeHeader": true
+    },
+    "status": "enabled",
+    "name": "simple-auth@file",
+    "type": "basicauth",
+    "provider": "file"
+  },
+  {
+    "ipWhiteList": {
+      "sourceRange": ["127.0.0.1/6", "172.8.8.1"],
+      "ipStrategy": {
+        "depth": 3,
+        "excludedIPs": ["172.0.0.1/31"]
+      }
+    },
+    "status": "enabled",
+    "name": "whitelist@file",
+    "type": "ipwhitelist",
+    "provider": "file"
+  },
+  {
+    "addPrefix": {
+      "prefix": "/path",
+      "aCustomObject": {
+        "array of arrays": [[1, 2], [3, 4]],
+        "array of objects": [{ "some": "value" }, { "another": "value" }],
+        "array of booleans": [true, false, true],
+        "array of numbers": [10, 100, 1000],
+        "array of strings": ["value1", "value2"]
+      }
+    },
+    "error": ["message 1", "message 2"],
+    "status": "enabled",
+    "usedBy": ["foo@docker", "bar@file"],
+    "name": "middleware00@docker",
+    "provider": "docker",
+    "type": "addprefix"
+  },
+  {
+    "buffering": {
+      "maxRequestBodyBytes": 42,
+      "memRequestBodyBytes": 42,
+      "maxResponseBodyBytes": 42,
+      "memResponseBodyBytes": 42,
+      "retryExpression": "IsNetworkError() && Attempts() < 2",
+      "oauthIntrospection > clientConfig > url": "https://keycloak.traefiklabs.tech/realms/keycloak-demo/protocol/openid-connect/token/introspect",
+      "oauthIntrospection > clientConfig > headers > authorization": "Basic UZShXHjj2XcRSL8PZjuVDRqyqJ7ThjaZiSwJMoQeMJ2yHTgRyhAgLmfT4A1PvHGh"
+    },
+    "error": ["message 1", "message 2"],
+    "status": "enabled",
+    "usedBy": ["foo@docker", "bar@file"],
+    "name": "middleware02@docker",
+    "provider": "docker",
+    "type": "buffering"
+  },
+  {
+    "errors": {
+      "status": ["500-599", "400-405", "300"],
+      "service": "service@docker",
+      "query": "/{status}.html"
+    },
+    "error": ["message 1", "message 2"],
+    "status": "enabled",
+    "usedBy": ["foo@docker", "bar@file"],
+    "name": "middleware07@docker",
+    "provider": "docker",
+    "type": "errors"
+  },
+  {
+    "inFlightReq": {
+      "amount": 42,
+      "sourceCriterion": {
+        "ipStrategy": {
+          "depth": 42,
+          "excludedIPs": ["10.0.0.1", "11.0.0.1", "12.0.0.1", "13.0.0.1"]
+        },
+        "requestHeaderName": "X-Host-IP",
+        "requestHost": true
+      }
+    },
+    "error": ["message 1", "message 2"],
+    "status": "enabled",
+    "usedBy": ["foo@docker", "bar@file"],
+    "name": "middleware11@docker",
+    "provider": "docker",
+    "type": "inflightreq"
+  },
+  {
+    "redirectScheme": {
+      "scheme": "https",
+      "port": "80",
+      "permanent": true
+    },
+    "error": ["message 1", "message 2"],
+    "status": "enabled",
+    "usedBy": ["foo@docker", "bar@file"],
+    "name": "middleware15@docker",
+    "provider": "docker",
+    "type": "redirectscheme"
+  },
+  {
+    "retry": {
+      "attempts": 42
+    },
+    "error": ["message 1", "message 2"],
+    "status": "enabled",
+    "usedBy": ["foo@docker", "bar@file"],
+    "name": "middleware18@docker",
+    "provider": "docker",
+    "type": "retry"
+  },
+  {
+    "basicAuth": {
+      "users": ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP4HxwgUir3HP4EsggP/QNo0"],
+      "usersFile": "/etc/foo/my/file/path/.htpasswd",
+      "realm": "Hello you are here",
+      "removeHeader": true,
+      "headerField": "X-WebAuth-User"
+    },
+    "error": ["message 1", "message 2"],
+    "status": "enabled",
+    "usedBy": ["foo@docker", "bar@file"],
+    "name": "middleware01@docker",
+    "provider": "docker",
+    "type": "basicauth"
+  },
+  {
+    "chain": {
+      "middlewares": [
+        "middleware01@docker",
+        "middleware021@docker",
+        "middleware03@docker",
+        "middleware06@docker",
+        "middleware10@docker"
+      ]
+    },
+    "error": ["message 1", "message 2"],
+    "status": "enabled",
+    "usedBy": ["foo@docker", "bar@file"],
+    "name": "middleware03@docker",
+    "provider": "docker",
+    "type": "chain"
+  },
+  {
+    "compress": {},
+    "error": ["message 1", "message 2"],
+    "status": "enabled",
+    "usedBy": ["foo@docker", "bar@file"],
+    "name": "middleware05@docker",
+    "provider": "docker",
+    "type": "compress"
+  },
+  {
+    "digestAuth": {
+      "users": ["test:traefik:a2688e031edb4be6a3797f3882655c05", "test2:traefik:518845800f9e2bfb1f1f740ec24f074e"],
+      "usersFile": "/etc/foo/my/file/path/.htpasswd",
+      "realm": "Hello you are here",
+      "removeHeader": true,
+      "headerField": "X-WebAuth-User"
+    },
+    "error": ["message 1", "message 2"],
+    "status": "enabled",
+    "usedBy": ["foo@docker", "bar@file"],
+    "name": "middleware06@docker",
+    "provider": "docker",
+    "type": "digestauth"
+  },
+  {
+    "forwardAuth": {
+      "address": "https://authserver.com/auth",
+      "tls": {
+        "ca": "path/to/local.crt",
+        "caOptional": true,
+        "cert": "path/to/foo.cert",
+        "key": "path/to/foo.key",
+        "insecureSkipVerify": true
+      },
+      "trustForwardHeader": true,
+      "authResponseHeaders": ["X-Auth-User", "X-Secret"]
+    },
+    "error": ["message 1", "message 2"],
+    "status": "enabled",
+    "usedBy": ["foo@docker", "bar@file"],
+    "name": "middleware08@docker",
+    "provider": "docker",
+    "type": "forwardauth"
+  },
+  {
+    "passTLSClientCert": {
+      "pem": true,
+      "info": {
+        "notAfter": true,
+        "notBefore": true,
+        "sans": true,
+        "subject": {
+          "country": true,
+          "province": true,
+          "locality": true,
+          "organization": true,
+          "commonName": true,
+          "serialNumber": true,
+          "domainComponent": true
+        },
+        "issuer": {
+          "country": true,
+          "province": true,
+          "locality": true,
+          "organization": true,
+          "commonName": true,
+          "serialNumber": true,
+          "domainComponent": true
+        }
+      }
+    },
+    "error": ["message 1", "message 2"],
+    "status": "enabled",
+    "usedBy": ["foo@docker", "bar@file"],
+    "name": "middleware12@docker",
+    "provider": "docker",
+    "type": "passtlsclientcert"
+  },
+  {
+    "stripPrefix": {
+      "prefixes": ["/foobar", "/fiibar"]
+    },
+    "error": ["message 1", "message 2"],
+    "status": "enabled",
+    "usedBy": ["foo@docker", "bar@file"],
+    "name": "middleware19@docker",
+    "provider": "docker",
+    "type": "stripprefix"
+  },
+  {
+    "stripPrefixRegex": {
+      "regex": ["^/foo/(.*)", "/b/{regex}/", "/c/{category}/{id:[0-9]+}/"]
+    },
+    "error": ["message 1", "message 2"],
+    "status": "enabled",
+    "usedBy": ["foo@docker", "bar@file"],
+    "name": "middleware20@docker",
+    "provider": "docker",
+    "type": "stripprefixregex"
+  },
+  {
+    "redirectRegex": {
+      "regex": "^http://localhost/(.*)",
+      "replacement": "http://mydomain/${1}",
+      "permanent": true
+    },
+    "error": ["message 1", "message 2"],
+    "status": "enabled",
+    "usedBy": ["foo@docker", "bar@file"],
+    "name": "middleware14@docker",
+    "provider": "docker",
+    "type": "redirectregex"
+  },
+  {
+    "replacePathRegex": {
+      "regex": "^/foo/(.*)",
+      "replacement": "/bar/$1"
+    },
+    "error": ["message 1", "message 2"],
+    "status": "enabled",
+    "usedBy": ["foo@docker", "bar@file"],
+    "name": "middleware17@docker",
+    "provider": "docker",
+    "type": "replacepathregex"
+  },
+  {
+    "circuitBreaker": {
+      "expression": "LatencyAtQuantileMS(50.0) > 100"
+    },
+    "error": ["message 1", "message 2"],
+    "status": "enabled",
+    "usedBy": ["foo@docker", "bar@file"],
+    "name": "middleware04@docker",
+    "provider": "docker",
+    "type": "circuitbreaker"
+  },
+  {
+    "headers": {
+      "customRequestHeaders": {
+        "X-Script-Name1": "test",
+        "X-Script-Name2": "test"
+      },
+      "customResponseHeaders": {
+        "X-Script-Name1": "test",
+        "X-Script-Name2": "test"
+      },
+      "accessControlAllowCredentials": true,
+      "accessControlAllowHeaders": ["origin", "X-Forwarded-For"],
+      "accessControlAllowMethods": ["GET", "OPTIONS"],
+      "accessControlAllowOrigin": "origin-list-or-null",
+      "accessControlExposeHeaders": ["origin", "X-Forwarded-For"],
+      "accessControlMaxAge": 42,
+      "addVaryHeader": true,
+      "allowedHosts": ["foo.com", "bar.com"],
+      "hostsProxyHeaders": ["X-Forwarded-Host", "X-Foo"],
+      "sslRedirect": true,
+      "sslTemporaryRedirect": true,
+      "sslHost": "ssl.example.com",
+      "sslProxyHeaders": {
+        "X-Forwarded-Proto": "https",
+        "X-Name1": "foobar"
+      },
+      "sslForceHost": true,
+      "stsSeconds": 42,
+      "stsIncludeSubdomains": true,
+      "stsPreload": true,
+      "forceSTSHeader": true,
+      "frameDeny": true,
+      "customFrameOptionsValue": "foobar",
+      "contentTypeNosniff": true,
+      "browserXssFilter": true,
+      "customBrowserXSSValue": "1; report=https://example.com/xss-report",
+      "contentSecurityPolicy": "default-src 'self'",
+      "publicKey": "pin-sha256=\"base64+primary==\"; pin-sha256=\"base64+backup==\"; max-age=5184000; includeSubdomains; report-uri=\"https://www.example.com/hpkp-report\"",
+      "referrerPolicy": "same-origin",
+      "featurePolicy": "vibrate 'none';",
+      "isDevelopment": true
+    },
+    "error": ["message 1", "message 2"],
+    "status": "enabled",
+    "usedBy": ["foo@docker", "bar@file"],
+    "name": "middleware09@docker",
+    "provider": "docker",
+    "type": "headers"
+  },
+  {
+    "ipWhiteList": {
+      "sourceRange": ["127.0.0.1/32", "192.168.1.7"],
+      "ipStrategy": {
+        "depth": 42,
+        "excludedIPs": ["10.0.0.1", "11.0.0.1", "12.0.0.1", "13.0.0.1"]
+      }
+    },
+    "error": ["message 1", "message 2"],
+    "status": "enabled",
+    "usedBy": ["foo@docker", "bar@file"],
+    "name": "middleware10@docker",
+    "provider": "docker",
+    "type": "ipwhitelist"
+  },
+  {
+    "rateLimit": {
+      "average": 42,
+      "burst": 42,
+      "sourceCriterion": {
+        "ipStrategy": {
+          "depth": 42,
+          "excludedIPs": ["10.0.0.1", "11.0.0.1", "12.0.0.1", "13.0.0.1"]
+        },
+        "requestHeaderName": "X_Foo_Host",
+        "requestHost": true
+      }
+    },
+    "error": ["message 1", "message 2"],
+    "status": "enabled",
+    "usedBy": ["foo@docker", "bar@file"],
+    "name": "middleware13@docker",
+    "provider": "docker",
+    "type": "ratelimit"
+  },
+  {
+    "replacePath": {
+      "path": "/foobar/goo"
+    },
+    "error": ["message 1", "message 2"],
+    "status": "enabled",
+    "usedBy": ["foo@docker", "bar@file"],
+    "name": "middleware16@docker",
+    "provider": "docker",
+    "type": "replacepath"
+  },
+  {
+    "addPrefix": {
+      "prefix": "/foo"
+    },
+    "status": "enabled",
+    "usedBy": ["web@docker"],
+    "name": "whoami-app-hello-tls-jwt-ef36e528ebdc93bc4f2a-service-middleware",
+    "type": "whoami-app-hello-tls-jwt-ef36e528ebdc93bc4f2a-service-middleware",
+    "provider": "docker"
+  }
+]

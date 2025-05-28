@@ -13,7 +13,6 @@ env:
   GO_VERSION: '1.23'
 
 jobs:
-
   test-unit:
     runs-on: ubuntu-latest
 
@@ -30,7 +29,9 @@ jobs:
           check-latest: true
 
       - name: Avoid generating webui
-        run: touch webui/static/index.html
+        run: |
+          mkdir webui/static
+          touch webui/static/index.html
 
       - name: Tests
         run: make test-unit
@@ -44,6 +45,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Enable corepack
+        run: corepack enable
+
       - name: Set up Node.js ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v4
         with:
@@ -52,6 +56,9 @@ jobs:
           cache-dependency-path: webui/yarn.lock
 
       - name: UI unit tests
+        working-directory: ./webui
+        env:
+          VITE_APP_BASE_API_URL: "/api"
         run: |
-          yarn --cwd webui install
-          yarn --cwd webui test:unit:ci
+          yarn install
+          yarn test:unit:ci

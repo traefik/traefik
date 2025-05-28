@@ -1,1 +1,0 @@
-For more information see `webui/readme.md`
