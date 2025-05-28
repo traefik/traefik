@@ -1,0 +1,41 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[core]
+  defaultRuleSyntax = "v2"
+
+[log]
+  level = "DEBUG"
+  noColor = true
+
+[entryPoints]
+  [entryPoints.web]
+    address = ":8000"
+
+[api]
+  insecure = true
+
+[providers.file]
+  filename = "{{ .SelfFilename }}"
+
+## dynamic configuration ##
+
+[http.routers]
+  [http.routers.router1]
+    service = "service1"
+    rule = "PathPrefix(`/foo`, `/bar`)"
+
+  [http.routers.router2]
+    service = "service1"
+    rule = "QueryRegexp(`foo`, `bar`)"
+
+  [http.routers.router3]
+    service = "service1"
+    rule = "PathPrefix(`/foo`, `/bar`)"
+    ruleSyntax = "v3"
+
+[http.services]
+  [http.services.service1]
+    [http.services.service1.loadBalancer]
+      [http.services.service1.loadBalancer.servers]

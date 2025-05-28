@@ -1,0 +1,94 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoami-svc-multiple-endpointslices
+  namespace: default
+
+spec:
+  ports:
+    - name: web
+      port: 80
+    - name: web2
+      port: 8080
+  selector:
+    app: traefiklabs
+    task: whoami
+
+---
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
+metadata:
+  name: whoami-svc-multiple-endpointslices-abc
+  namespace: default
+  labels:
+    kubernetes.io/service-name: whoami-svc-multiple-endpointslices
+
+addressType: IPv4
+ports:
+  - name: web
+    port: 80
+endpoints:
+  - addresses:
+      - 10.10.0.1
+      - 10.10.0.2
+    conditions:
+      ready: true
+
+---
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
+metadata:
+  name: whoami-svc-multiple-endpointslices-def
+  namespace: default
+  labels:
+    kubernetes.io/service-name: whoami-svc-multiple-endpointslices
+
+addressType: IPv4
+ports:
+  - name: web2
+    port: 8080
+endpoints:
+  - addresses:
+      - 10.10.0.3
+      - 10.10.0.4
+    conditions:
+      ready: true
+
+---
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
+metadata:
+  name: whoami-svc-multiple-endpointslices-ghi
+  namespace: default
+  labels:
+    kubernetes.io/service-name: whoami-svc-multiple-endpointslices
+
+addressType: IPv4
+ports:
+  - name: web2
+    port: 8080
+endpoints:
+  - addresses:
+      - 10.10.0.5
+      - 10.10.0.6
+    conditions:
+      ready: true
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: test.route
+  namespace: default
+
+spec:
+  entryPoints:
+    - foo
+
+  routes:
+    - match: Host(`foo.com`) && PathPrefix(`/bar`)
+      kind: Rule
+      priority: 12
+      services:
+        - name: whoami-svc-multiple-endpointslices
+          port: 8080

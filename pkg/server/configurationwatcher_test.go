@@ -9,11 +9,11 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/provider/aggregator"
-	"github.com/traefik/traefik/v2/pkg/safe"
-	th "github.com/traefik/traefik/v2/pkg/testhelpers"
-	"github.com/traefik/traefik/v2/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/provider/aggregator"
+	"github.com/traefik/traefik/v3/pkg/safe"
+	th "github.com/traefik/traefik/v3/pkg/testhelpers"
+	"github.com/traefik/traefik/v3/pkg/tls"
 )
 
 type mockProvider struct {
@@ -84,14 +84,17 @@ func TestNewConfigurationWatcher(t *testing.T) {
 				th.WithRouters(
 					th.WithRouter("test@mock",
 						th.WithEntryPoints("e"),
-						th.WithServiceName("scv"))),
+						th.WithServiceName("scv"),
+						th.WithObservability())),
 				th.WithMiddlewares(),
 				th.WithLoadBalancerServices(),
 			),
 			TCP: &dynamic.TCPConfiguration{
-				Routers:     map[string]*dynamic.TCPRouter{},
-				Middlewares: map[string]*dynamic.TCPMiddleware{},
-				Services:    map[string]*dynamic.TCPService{},
+				Routers:           map[string]*dynamic.TCPRouter{},
+				Middlewares:       map[string]*dynamic.TCPMiddleware{},
+				Services:          map[string]*dynamic.TCPService{},
+				Models:            map[string]*dynamic.TCPModel{},
+				ServersTransports: map[string]*dynamic.TCPServersTransport{},
 			},
 			TLS: &dynamic.TLSConfiguration{
 				Options: map[string]tls.Options{
@@ -173,14 +176,16 @@ func TestIgnoreTransientConfiguration(t *testing.T) {
 
 	expectedConfig := dynamic.Configuration{
 		HTTP: th.BuildConfiguration(
-			th.WithRouters(th.WithRouter("foo@mock", th.WithEntryPoints("ep"))),
+			th.WithRouters(th.WithRouter("foo@mock", th.WithEntryPoints("ep"), th.WithObservability())),
 			th.WithLoadBalancerServices(th.WithService("bar@mock")),
 			th.WithMiddlewares(),
 		),
 		TCP: &dynamic.TCPConfiguration{
-			Routers:     map[string]*dynamic.TCPRouter{},
-			Middlewares: map[string]*dynamic.TCPMiddleware{},
-			Services:    map[string]*dynamic.TCPService{},
+			Routers:           map[string]*dynamic.TCPRouter{},
+			Middlewares:       map[string]*dynamic.TCPMiddleware{},
+			Services:          map[string]*dynamic.TCPService{},
+			Models:            map[string]*dynamic.TCPModel{},
+			ServersTransports: map[string]*dynamic.TCPServersTransport{},
 		},
 		UDP: &dynamic.UDPConfiguration{
 			Routers:  map[string]*dynamic.UDPRouter{},
@@ -196,14 +201,16 @@ func TestIgnoreTransientConfiguration(t *testing.T) {
 
 	expectedConfig3 := dynamic.Configuration{
 		HTTP: th.BuildConfiguration(
-			th.WithRouters(th.WithRouter("foo@mock", th.WithEntryPoints("ep"))),
+			th.WithRouters(th.WithRouter("foo@mock", th.WithEntryPoints("ep"), th.WithObservability())),
 			th.WithLoadBalancerServices(th.WithService("bar-config3@mock")),
 			th.WithMiddlewares(),
 		),
 		TCP: &dynamic.TCPConfiguration{
-			Routers:     map[string]*dynamic.TCPRouter{},
-			Middlewares: map[string]*dynamic.TCPMiddleware{},
-			Services:    map[string]*dynamic.TCPService{},
+			Routers:           map[string]*dynamic.TCPRouter{},
+			Middlewares:       map[string]*dynamic.TCPMiddleware{},
+			Services:          map[string]*dynamic.TCPService{},
+			Models:            map[string]*dynamic.TCPModel{},
+			ServersTransports: map[string]*dynamic.TCPServersTransport{},
 		},
 		UDP: &dynamic.UDPConfiguration{
 			Routers:  map[string]*dynamic.UDPRouter{},
@@ -441,14 +448,16 @@ func TestListenProvidersDoesNotSkipFlappingConfiguration(t *testing.T) {
 
 	expected := dynamic.Configuration{
 		HTTP: th.BuildConfiguration(
-			th.WithRouters(th.WithRouter("foo@mock", th.WithEntryPoints("ep"))),
+			th.WithRouters(th.WithRouter("foo@mock", th.WithEntryPoints("ep"), th.WithObservability())),
 			th.WithLoadBalancerServices(th.WithService("bar@mock")),
 			th.WithMiddlewares(),
 		),
 		TCP: &dynamic.TCPConfiguration{
-			Routers:     map[string]*dynamic.TCPRouter{},
-			Middlewares: map[string]*dynamic.TCPMiddleware{},
-			Services:    map[string]*dynamic.TCPService{},
+			Routers:           map[string]*dynamic.TCPRouter{},
+			Middlewares:       map[string]*dynamic.TCPMiddleware{},
+			Services:          map[string]*dynamic.TCPService{},
+			Models:            map[string]*dynamic.TCPModel{},
+			ServersTransports: map[string]*dynamic.TCPServersTransport{},
 		},
 		UDP: &dynamic.UDPConfiguration{
 			Routers:  map[string]*dynamic.UDPRouter{},
@@ -530,14 +539,16 @@ func TestListenProvidersIgnoreSameConfig(t *testing.T) {
 
 	expected := dynamic.Configuration{
 		HTTP: th.BuildConfiguration(
-			th.WithRouters(th.WithRouter("foo@mock", th.WithEntryPoints("ep"))),
+			th.WithRouters(th.WithRouter("foo@mock", th.WithEntryPoints("ep"), th.WithObservability())),
 			th.WithLoadBalancerServices(th.WithService("bar@mock")),
 			th.WithMiddlewares(),
 		),
 		TCP: &dynamic.TCPConfiguration{
-			Routers:     map[string]*dynamic.TCPRouter{},
-			Middlewares: map[string]*dynamic.TCPMiddleware{},
-			Services:    map[string]*dynamic.TCPService{},
+			Routers:           map[string]*dynamic.TCPRouter{},
+			Middlewares:       map[string]*dynamic.TCPMiddleware{},
+			Services:          map[string]*dynamic.TCPService{},
+			Models:            map[string]*dynamic.TCPModel{},
+			ServersTransports: map[string]*dynamic.TCPServersTransport{},
 		},
 		UDP: &dynamic.UDPConfiguration{
 			Routers:  map[string]*dynamic.UDPRouter{},
@@ -664,14 +675,16 @@ func TestListenProvidersIgnoreIntermediateConfigs(t *testing.T) {
 
 	expected := dynamic.Configuration{
 		HTTP: th.BuildConfiguration(
-			th.WithRouters(th.WithRouter("final@mock", th.WithEntryPoints("ep"))),
+			th.WithRouters(th.WithRouter("final@mock", th.WithEntryPoints("ep"), th.WithObservability())),
 			th.WithLoadBalancerServices(th.WithService("final@mock")),
 			th.WithMiddlewares(),
 		),
 		TCP: &dynamic.TCPConfiguration{
-			Routers:     map[string]*dynamic.TCPRouter{},
-			Middlewares: map[string]*dynamic.TCPMiddleware{},
-			Services:    map[string]*dynamic.TCPService{},
+			Routers:           map[string]*dynamic.TCPRouter{},
+			Middlewares:       map[string]*dynamic.TCPMiddleware{},
+			Services:          map[string]*dynamic.TCPService{},
+			Models:            map[string]*dynamic.TCPModel{},
+			ServersTransports: map[string]*dynamic.TCPServersTransport{},
 		},
 		UDP: &dynamic.UDPConfiguration{
 			Routers:  map[string]*dynamic.UDPRouter{},
@@ -726,8 +739,8 @@ func TestListenProvidersPublishesConfigForEachProvider(t *testing.T) {
 	expected := dynamic.Configuration{
 		HTTP: th.BuildConfiguration(
 			th.WithRouters(
-				th.WithRouter("foo@mock", th.WithEntryPoints("ep")),
-				th.WithRouter("foo@mock2", th.WithEntryPoints("ep")),
+				th.WithRouter("foo@mock", th.WithEntryPoints("ep"), th.WithObservability()),
+				th.WithRouter("foo@mock2", th.WithEntryPoints("ep"), th.WithObservability()),
 			),
 			th.WithLoadBalancerServices(
 				th.WithService("bar@mock"),
@@ -736,9 +749,11 @@ func TestListenProvidersPublishesConfigForEachProvider(t *testing.T) {
 			th.WithMiddlewares(),
 		),
 		TCP: &dynamic.TCPConfiguration{
-			Routers:     map[string]*dynamic.TCPRouter{},
-			Middlewares: map[string]*dynamic.TCPMiddleware{},
-			Services:    map[string]*dynamic.TCPService{},
+			Routers:           map[string]*dynamic.TCPRouter{},
+			Middlewares:       map[string]*dynamic.TCPMiddleware{},
+			Services:          map[string]*dynamic.TCPService{},
+			Models:            map[string]*dynamic.TCPModel{},
+			ServersTransports: map[string]*dynamic.TCPServersTransport{},
 		},
 		TLS: &dynamic.TLSConfiguration{
 			Options: map[string]tls.Options{

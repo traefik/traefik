@@ -7,11 +7,12 @@ import (
 	"time"
 
 	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/log"
-	"github.com/traefik/traefik/v2/pkg/safe"
-	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
-	"github.com/traefik/traefik/v2/pkg/types"
+	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/safe"
+	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 const providerNameALPN = "tlsalpn.acme"
@@ -37,8 +38,8 @@ func NewChallengeTLSALPN() *ChallengeTLSALPN {
 
 // Present presents a challenge to obtain new ACME certificate.
 func (c *ChallengeTLSALPN) Present(domain, _, keyAuth string) error {
-	logger := log.WithoutContext().WithField(log.ProviderName, providerNameALPN)
-	logger.Debugf("TLS Challenge Present temp certificate for %s", domain)
+	logger := log.With().Str(logs.ProviderName, providerNameALPN).Logger()
+	logger.Debug().Msgf("TLS Challenge Present temp certificate for %s", domain)
 
 	certPEMBlock, keyPEMBlock, err := tlsalpn01.ChallengeBlocks(domain, keyAuth)
 	if err != nil {
@@ -72,7 +73,7 @@ func (c *ChallengeTLSALPN) Present(domain, _, keyAuth string) error {
 
 		err = c.CleanUp(domain, "", keyAuth)
 		if err != nil {
-			logger.Errorf("Failed to clean up TLS challenge: %v", err)
+			logger.Error().Err(err).Msg("Failed to clean up TLS challenge")
 		}
 
 		return fmt.Errorf("timeout %s", t)
@@ -84,8 +85,8 @@ func (c *ChallengeTLSALPN) Present(domain, _, keyAuth string) error {
 
 // CleanUp cleans the challenges when certificate is obtained.
 func (c *ChallengeTLSALPN) CleanUp(domain, _, keyAuth string) error {
-	log.WithoutContext().WithField(log.ProviderName, providerNameALPN).
-		Debugf("TLS Challenge CleanUp temp certificate for %s", domain)
+	log.Debug().Str(logs.ProviderName, providerNameALPN).
+		Msgf("TLS Challenge CleanUp temp certificate for %s", domain)
 
 	c.muCerts.Lock()
 	delete(c.certs, keyAuth)
@@ -152,8 +153,8 @@ func createMessage(certs map[string]*Certificate) dynamic.Message {
 	for _, cert := range certs {
 		certConf := &traefiktls.CertAndStores{
 			Certificate: traefiktls.Certificate{
-				CertFile: traefiktls.FileOrContent(cert.Certificate),
-				KeyFile:  traefiktls.FileOrContent(cert.Key),
+				CertFile: types.FileOrContent(cert.Certificate),
+				KeyFile:  types.FileOrContent(cert.Key),
 			},
 			Stores: []string{tlsalpn01.ACMETLS1Protocol},
 		}

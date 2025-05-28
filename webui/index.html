@@ -1,6 +1,13 @@
 <!DOCTYPE html>
 <html>
   <head>
+
+    {{if .APIUrl}}
+    <script>
+      window.APIURL = "{{.APIUrl}}"
+    </script>
+    {{end}}
+
     <title><%= productName %></title>
 
     <meta charset="utf-8">

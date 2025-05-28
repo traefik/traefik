@@ -1,83 +1,170 @@
 package http
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
+	"sort"
 	"strings"
-	"unicode/utf8"
 
 	"github.com/gorilla/mux"
-	"github.com/traefik/traefik/v2/pkg/ip"
-	"github.com/traefik/traefik/v2/pkg/log"
-	"github.com/traefik/traefik/v2/pkg/middlewares/requestdecorator"
-	"github.com/traefik/traefik/v2/pkg/rules"
-	"github.com/vulcand/predicate"
+	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/rules"
 )
 
-const hostMatcher = "Host"
+type matcherBuilderFuncs map[string]matcherBuilderFunc
 
-var httpFuncs = map[string]func(*mux.Route, ...string) error{
-	hostMatcher:     host,
-	"HostHeader":    host,
-	"HostRegexp":    hostRegexp,
-	"ClientIP":      clientIP,
-	"Path":          path,
-	"PathPrefix":    pathPrefix,
-	"Method":        methods,
-	"Headers":       headers,
-	"HeadersRegexp": headersRegexp,
-	"Query":         query,
-}
+type matcherBuilderFunc func(*matchersTree, ...string) error
+
+type MatcherFunc func(*http.Request) bool
 
 // Muxer handles routing with rules.
 type Muxer struct {
-	*mux.Router
-	parser predicate.Parser
+	routes         routes
+	parser         SyntaxParser
+	defaultHandler http.Handler
 }
 
 // NewMuxer returns a new muxer instance.
-func NewMuxer() (*Muxer, error) {
-	var matchers []string
-	for matcher := range httpFuncs {
-		matchers = append(matchers, matcher)
-	}
-
-	parser, err := rules.NewParser(matchers)
-	if err != nil {
-		return nil, err
-	}
-
+func NewMuxer(parser SyntaxParser) *Muxer {
 	return &Muxer{
-		Router: mux.NewRouter().UseRoutingPath().SkipClean(true),
-		parser: parser,
-	}, nil
+		parser:         parser,
+		defaultHandler: http.NotFoundHandler(),
+	}
+}
+
+// ServeHTTP forwards the connection to the matching HTTP handler.
+// Serves 404 if no handler is found.
+func (m *Muxer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	logger := log.Ctx(req.Context())
+
+	var err error
+	req, err = withRoutingPath(req)
+	if err != nil {
+		logger.Debug().Err(err).Msg("Unable to add routing path to request context")
+		rw.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	for _, route := range m.routes {
+		if route.matchers.match(req) {
+			route.handler.ServeHTTP(rw, req)
+			return
+		}
+	}
+
+	m.defaultHandler.ServeHTTP(rw, req)
+}
+
+// SetDefaultHandler sets the muxer default handler.
+func (m *Muxer) SetDefaultHandler(handler http.Handler) {
+	m.defaultHandler = handler
+}
+
+// GetRulePriority computes the priority for a given rule.
+// The priority is calculated using the length of rule.
+func GetRulePriority(rule string) int {
+	return len(rule)
 }
 
 // AddRoute add a new route to the router.
-func (r *Muxer) AddRoute(rule string, priority int, handler http.Handler) error {
-	parse, err := r.parser.Parse(rule)
+func (m *Muxer) AddRoute(rule string, syntax string, priority int, handler http.Handler) error {
+	matchers, err := m.parser.parse(syntax, rule)
 	if err != nil {
 		return fmt.Errorf("error while parsing rule %s: %w", rule, err)
 	}
 
-	buildTree, ok := parse.(rules.TreeBuilder)
-	if !ok {
-		return fmt.Errorf("error while parsing rule %s", rule)
-	}
+	m.routes = append(m.routes, &route{
+		handler:  handler,
+		matchers: matchers,
+		priority: priority,
+	})
 
-	if priority == 0 {
-		priority = len(rule)
-	}
-
-	route := r.NewRoute().Handler(handler).Priority(priority)
-
-	err = addRuleOnRoute(route, buildTree())
-	if err != nil {
-		route.BuildOnly()
-		return err
-	}
+	sort.Sort(m.routes)
 
 	return nil
+}
+
+// reservedCharacters contains the mapping of the percent-encoded form to the ASCII form
+// of the reserved characters according to https://datatracker.ietf.org/doc/html/rfc3986#section-2.2.
+// By extension to https://datatracker.ietf.org/doc/html/rfc3986#section-2.1 the percent character is also considered a reserved character.
+// Because decoding the percent character would change the meaning of the URL.
+var reservedCharacters = map[string]rune{
+	"%3A": ':',
+	"%2F": '/',
+	"%3F": '?',
+	"%23": '#',
+	"%5B": '[',
+	"%5D": ']',
+	"%40": '@',
+	"%21": '!',
+	"%24": '$',
+	"%26": '&',
+	"%27": '\'',
+	"%28": '(',
+	"%29": ')',
+	"%2A": '*',
+	"%2B": '+',
+	"%2C": ',',
+	"%3B": ';',
+	"%3D": '=',
+	"%25": '%',
+}
+
+// getRoutingPath retrieves the routing path from the request context.
+// It returns nil if the routing path is not set in the context.
+func getRoutingPath(req *http.Request) *string {
+	routingPath := req.Context().Value(mux.RoutingPathKey)
+	if routingPath != nil {
+		rp := routingPath.(string)
+		return &rp
+	}
+	return nil
+}
+
+// withRoutingPath decodes non-allowed characters in the EscapedPath and stores it in the request context to be able to use it for routing.
+// This allows using the decoded version of the non-allowed characters in the routing rules for a better UX.
+// For example, the rule PathPrefix(`/foo bar`) will match the following request path `/foo%20bar`.
+func withRoutingPath(req *http.Request) (*http.Request, error) {
+	escapedPath := req.URL.EscapedPath()
+
+	var routingPathBuilder strings.Builder
+	for i := 0; i < len(escapedPath); i++ {
+		if escapedPath[i] != '%' {
+			routingPathBuilder.WriteString(string(escapedPath[i]))
+			continue
+		}
+
+		// This should never happen as the standard library will reject requests containing invalid percent-encodings.
+		// This discards URLs with a percent character at the end.
+		if i+2 >= len(escapedPath) {
+			return nil, errors.New("invalid percent-encoding at the end of the URL path")
+		}
+
+		encodedCharacter := escapedPath[i : i+3]
+		if _, reserved := reservedCharacters[encodedCharacter]; reserved {
+			routingPathBuilder.WriteString(encodedCharacter)
+		} else {
+			// This should never happen as the standard library will reject requests containing invalid percent-encodings.
+			decodedCharacter, err := url.PathUnescape(encodedCharacter)
+			if err != nil {
+				return nil, errors.New("invalid percent-encoding in URL path")
+			}
+			routingPathBuilder.WriteString(decodedCharacter)
+		}
+
+		i += 2
+	}
+
+	return req.WithContext(
+		context.WithValue(
+			req.Context(),
+			mux.RoutingPathKey,
+			routingPathBuilder.String(),
+		),
+	), nil
 }
 
 // ParseDomains extract domains from rule.
@@ -86,15 +173,18 @@ func ParseDomains(rule string) ([]string, error) {
 	for matcher := range httpFuncs {
 		matchers = append(matchers, matcher)
 	}
+	for matcher := range httpFuncsV2 {
+		matchers = append(matchers, matcher)
+	}
 
 	parser, err := rules.NewParser(matchers)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error while creating parser: %w", err)
 	}
 
 	parse, err := parser.Parse(rule)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error while parsing rule %s: %w", rule, err)
 	}
 
 	buildTree, ok := parse.(rules.TreeBuilder)
@@ -102,229 +192,99 @@ func ParseDomains(rule string) ([]string, error) {
 		return nil, fmt.Errorf("error while parsing rule %s", rule)
 	}
 
-	return buildTree().ParseMatchers([]string{hostMatcher}), nil
+	return buildTree().ParseMatchers([]string{"Host"}), nil
 }
 
-func path(route *mux.Route, paths ...string) error {
-	rt := route.Subrouter()
+// routes implements sort.Interface.
+type routes []*route
 
-	for _, path := range paths {
-		if err := rt.Path(path).GetError(); err != nil {
-			return err
-		}
-	}
+// Len implements sort.Interface.
+func (r routes) Len() int { return len(r) }
 
-	return nil
+// Swap implements sort.Interface.
+func (r routes) Swap(i, j int) { r[i], r[j] = r[j], r[i] }
+
+// Less implements sort.Interface.
+func (r routes) Less(i, j int) bool { return r[i].priority > r[j].priority }
+
+// route holds the matchers to match HTTP route,
+// and the handler that will serve the request.
+type route struct {
+	// matchers tree structure reflecting the rule.
+	matchers matchersTree
+	// handler responsible for handling the route.
+	handler http.Handler
+	// priority is used to disambiguate between two (or more) rules that would all match for a given request.
+	// Computed from the matching rule length, if not user-set.
+	priority int
 }
 
-func pathPrefix(route *mux.Route, paths ...string) error {
-	rt := route.Subrouter()
-
-	for _, path := range paths {
-		if err := rt.PathPrefix(path).GetError(); err != nil {
-			return err
-		}
-	}
-
-	return nil
+// matchersTree represents the matchers tree structure.
+type matchersTree struct {
+	// matcher is a matcher func used to match HTTP request properties.
+	// If matcher is not nil, it means that this matcherTree is a leaf of the tree.
+	// It is therefore mutually exclusive with left and right.
+	matcher MatcherFunc
+	// operator to combine the evaluation of left and right leaves.
+	operator string
+	// Mutually exclusive with matcher.
+	left  *matchersTree
+	right *matchersTree
 }
 
-func host(route *mux.Route, hosts ...string) error {
-	for i, host := range hosts {
-		if !IsASCII(host) {
-			return fmt.Errorf("invalid value %q for \"Host\" matcher, non-ASCII characters are not allowed", host)
-		}
-
-		hosts[i] = strings.ToLower(host)
-	}
-
-	route.MatcherFunc(func(req *http.Request, _ *mux.RouteMatch) bool {
-		reqHost := requestdecorator.GetCanonizedHost(req.Context())
-		if len(reqHost) == 0 {
-			// If the request is an HTTP/1.0 request, then a Host may not be defined.
-			if req.ProtoAtLeast(1, 1) {
-				log.FromContext(req.Context()).Warnf("Could not retrieve CanonizedHost, rejecting %s", req.Host)
-			}
-
-			return false
-		}
-
-		flatH := requestdecorator.GetCNAMEFlatten(req.Context())
-		if len(flatH) > 0 {
-			for _, host := range hosts {
-				if strings.EqualFold(reqHost, host) || strings.EqualFold(flatH, host) {
-					return true
-				}
-				log.FromContext(req.Context()).Debugf("CNAMEFlattening: request %s which resolved to %s, is not matched to route %s", reqHost, flatH, host)
-			}
-			return false
-		}
-
-		for _, host := range hosts {
-			if reqHost == host {
-				return true
-			}
-
-			// Check for match on trailing period on host
-			if last := len(host) - 1; last >= 0 && host[last] == '.' {
-				h := host[:last]
-				if reqHost == h {
-					return true
-				}
-			}
-
-			// Check for match on trailing period on request
-			if last := len(reqHost) - 1; last >= 0 && reqHost[last] == '.' {
-				h := reqHost[:last]
-				if h == host {
-					return true
-				}
-			}
-		}
+func (m *matchersTree) match(req *http.Request) bool {
+	if m == nil {
+		// This should never happen as it should have been detected during parsing.
+		log.Warn().Msg("Rule matcher is nil")
 		return false
-	})
-	return nil
-}
-
-func clientIP(route *mux.Route, clientIPs ...string) error {
-	checker, err := ip.NewChecker(clientIPs)
-	if err != nil {
-		return fmt.Errorf("could not initialize IP Checker for \"ClientIP\" matcher: %w", err)
 	}
 
-	strategy := ip.RemoteAddrStrategy{}
-
-	route.MatcherFunc(func(req *http.Request, _ *mux.RouteMatch) bool {
-		ok, err := checker.Contains(strategy.GetIP(req))
-		if err != nil {
-			log.FromContext(req.Context()).Warnf("\"ClientIP\" matcher: could not match remote address : %w", err)
-			return false
-		}
-
-		return ok
-	})
-
-	return nil
-}
-
-func hostRegexp(route *mux.Route, hosts ...string) error {
-	router := route.Subrouter()
-	for _, host := range hosts {
-		if !IsASCII(host) {
-			return fmt.Errorf("invalid value %q for HostRegexp matcher, non-ASCII characters are not allowed", host)
-		}
-
-		tmpRt := router.Host(host)
-		if tmpRt.GetError() != nil {
-			return tmpRt.GetError()
-		}
-	}
-	return nil
-}
-
-func methods(route *mux.Route, methods ...string) error {
-	return route.Methods(methods...).GetError()
-}
-
-func headers(route *mux.Route, headers ...string) error {
-	return route.Headers(headers...).GetError()
-}
-
-func headersRegexp(route *mux.Route, headers ...string) error {
-	return route.HeadersRegexp(headers...).GetError()
-}
-
-func query(route *mux.Route, query ...string) error {
-	var queries []string
-	for _, elem := range query {
-		queries = append(queries, strings.SplitN(elem, "=", 2)...)
+	if m.matcher != nil {
+		return m.matcher(req)
 	}
 
-	route.Queries(queries...)
-	// Queries can return nil so we can't chain the GetError()
-	return route.GetError()
-}
-
-func addRuleOnRouter(router *mux.Router, rule *rules.Tree) error {
-	switch rule.Matcher {
-	case "and":
-		route := router.NewRoute()
-		err := addRuleOnRoute(route, rule.RuleLeft)
-		if err != nil {
-			return err
-		}
-
-		return addRuleOnRoute(route, rule.RuleRight)
+	switch m.operator {
 	case "or":
-		err := addRuleOnRouter(router, rule.RuleLeft)
+		return m.left.match(req) || m.right.match(req)
+	case "and":
+		return m.left.match(req) && m.right.match(req)
+	default:
+		// This should never happen as it should have been detected during parsing.
+		log.Warn().Str("operator", m.operator).Msg("Invalid rule operator")
+		return false
+	}
+}
+
+func (m *matchersTree) addRule(rule *rules.Tree, funcs matcherBuilderFuncs) error {
+	switch rule.Matcher {
+	case "and", "or":
+		m.operator = rule.Matcher
+		m.left = &matchersTree{}
+		err := m.left.addRule(rule.RuleLeft, funcs)
 		if err != nil {
-			return err
+			return fmt.Errorf("error while adding rule %s: %w", rule.Matcher, err)
 		}
 
-		return addRuleOnRouter(router, rule.RuleRight)
+		m.right = &matchersTree{}
+		return m.right.addRule(rule.RuleRight, funcs)
 	default:
 		err := rules.CheckRule(rule)
 		if err != nil {
-			return err
+			return fmt.Errorf("error while checking rule %s: %w", rule.Matcher, err)
+		}
+
+		err = funcs[rule.Matcher](m, rule.Value...)
+		if err != nil {
+			return fmt.Errorf("error while adding rule %s: %w", rule.Matcher, err)
 		}
 
 		if rule.Not {
-			return not(httpFuncs[rule.Matcher])(router.NewRoute(), rule.Value...)
+			matcherFunc := m.matcher
+			m.matcher = func(req *http.Request) bool {
+				return !matcherFunc(req)
+			}
 		}
-
-		return httpFuncs[rule.Matcher](router.NewRoute(), rule.Value...)
 	}
-}
 
-func not(m func(*mux.Route, ...string) error) func(*mux.Route, ...string) error {
-	return func(r *mux.Route, v ...string) error {
-		router := mux.NewRouter()
-		err := m(router.NewRoute(), v...)
-		if err != nil {
-			return err
-		}
-		r.MatcherFunc(func(req *http.Request, ma *mux.RouteMatch) bool {
-			return !router.Match(req, ma)
-		})
-		return nil
-	}
-}
-
-func addRuleOnRoute(route *mux.Route, rule *rules.Tree) error {
-	switch rule.Matcher {
-	case "and":
-		err := addRuleOnRoute(route, rule.RuleLeft)
-		if err != nil {
-			return err
-		}
-
-		return addRuleOnRoute(route, rule.RuleRight)
-	case "or":
-		subRouter := route.Subrouter()
-
-		err := addRuleOnRouter(subRouter, rule.RuleLeft)
-		if err != nil {
-			return err
-		}
-
-		return addRuleOnRouter(subRouter, rule.RuleRight)
-	default:
-		err := rules.CheckRule(rule)
-		if err != nil {
-			return err
-		}
-
-		if rule.Not {
-			return not(httpFuncs[rule.Matcher])(route, rule.Value...)
-		}
-
-		return httpFuncs[rule.Matcher](route, rule.Value...)
-	}
-}
-
-// IsASCII checks if the given string contains only ASCII characters.
-func IsASCII(s string) bool {
-	return !strings.ContainsFunc(s, func(r rune) bool {
-		return r >= utf8.RuneSelf
-	})
+	return nil
 }

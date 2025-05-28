@@ -1,0 +1,30 @@
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: global-native-lb
+  namespace: default
+spec:
+  rules:
+  - host: traefik.tchouk
+    http:
+      paths:
+      - path: /bar
+        backend:
+          service:
+            name: service1
+            port:
+              number: 8080
+        pathType: Prefix
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: service1
+  namespace: default
+spec:
+  ports:
+    - port: 8080
+  clusterIP: 10.0.0.1
+  type: ClusterIP
+  externalName: traefik.wtf

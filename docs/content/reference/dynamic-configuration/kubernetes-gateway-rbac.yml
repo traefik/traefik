@@ -15,10 +15,17 @@ rules:
       - ""
     resources:
       - services
-      - endpoints
       - secrets
+      - configmaps
     verbs:
       - get
+      - list
+      - watch
+  - apiGroups:
+      - discovery.k8s.io
+    resources:
+      - endpointslices
+    verbs:
       - list
       - watch
   - apiGroups:
@@ -27,8 +34,11 @@ rules:
       - gatewayclasses
       - gateways
       - httproutes
+      - grpcroutes
       - tcproutes
       - tlsroutes
+      - referencegrants
+      - backendtlspolicies
     verbs:
       - get
       - list
@@ -39,8 +49,11 @@ rules:
       - gatewayclasses/status
       - gateways/status
       - httproutes/status
+      - grpcroutes/status
       - tcproutes/status
       - tlsroutes/status
+      - referencegrants/status
+      - backendtlspolicies/status
     verbs:
       - update
 

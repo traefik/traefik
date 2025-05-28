@@ -3,8 +3,9 @@ package consulcatalog
 import (
 	"fmt"
 
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 // connectCert holds our certificates as a client of the Consul Connect protocol.
@@ -13,18 +14,18 @@ type connectCert struct {
 	leaf keyPair
 }
 
-func (c *connectCert) getRoot() []traefiktls.FileOrContent {
-	var result []traefiktls.FileOrContent
+func (c *connectCert) getRoot() []types.FileOrContent {
+	var result []types.FileOrContent
 	for _, r := range c.root {
-		result = append(result, traefiktls.FileOrContent(r))
+		result = append(result, types.FileOrContent(r))
 	}
 	return result
 }
 
 func (c *connectCert) getLeaf() traefiktls.Certificate {
 	return traefiktls.Certificate{
-		CertFile: traefiktls.FileOrContent(c.leaf.cert),
-		KeyFile:  traefiktls.FileOrContent(c.leaf.key),
+		CertFile: types.FileOrContent(c.leaf.cert),
+		KeyFile:  types.FileOrContent(c.leaf.key),
 	}
 }
 
@@ -67,5 +68,27 @@ func (c *connectCert) serversTransport(item itemData) *dynamic.ServersTransport 
 			c.getLeaf(),
 		},
 		PeerCertURI: spiffeID,
+	}
+}
+
+func (c *connectCert) tcpServersTransport(item itemData) *dynamic.TCPServersTransport {
+	spiffeID := fmt.Sprintf("spiffe:///ns/%s/dc/%s/svc/%s",
+		item.Namespace,
+		item.Datacenter,
+		item.Name,
+	)
+
+	return &dynamic.TCPServersTransport{
+		TLS: &dynamic.TLSClientConfig{
+			// This ensures that the config changes whenever the verifier function changes
+			ServerName: fmt.Sprintf("%s-%s-%s", item.Namespace, item.Datacenter, item.Name),
+			// InsecureSkipVerify is needed because Go wants to verify a hostname otherwise
+			InsecureSkipVerify: true,
+			RootCAs:            c.getRoot(),
+			Certificates: traefiktls.Certificates{
+				c.getLeaf(),
+			},
+			PeerCertURI: spiffeID,
+		},
 	}
 }

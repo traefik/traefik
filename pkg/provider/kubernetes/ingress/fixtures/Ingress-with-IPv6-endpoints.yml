@@ -1,0 +1,71 @@
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: example.com
+  namespace: testing
+
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /bar
+            backend:
+              service:
+                name: service-bar
+                port:
+                  number: 8080
+            pathType: Prefix
+          - path: /foo
+            backend:
+              service:
+                name: service-foo
+                port:
+                  number: 8080
+            pathType: Prefix
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: service-bar
+  namespace: testing
+
+spec:
+  ports:
+    - name: http
+      port: 8080
+  clusterIP: "fc00:f853:ccd:e793::1"
+  type: ClusterIP
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: service-foo
+  namespace: testing
+
+spec:
+  ports:
+    - name: http
+      port: 8080
+  type: ExternalName
+  externalName: "2001:0db8:3c4d:0015:0000:0000:1a2f:2a3b"
+
+---
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
+metadata:
+  name: service-bar-abc
+  namespace: testing
+  labels:
+    kubernetes.io/service-name: service-bar
+
+addressType: IPv6
+ports:
+  - name: http
+    port: 8080
+endpoints:
+  - addresses:
+      - "2001:0db8:3c4d:0015:0000:0000:1a2f:1a2b"
+    conditions:
+      ready: true

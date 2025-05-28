@@ -1,4 +1,4 @@
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: test.ingress.https
@@ -11,7 +11,10 @@ spec:
         paths:
           - path: /whoami
             backend:
-              serviceName: whoami
-              servicePort: http
+              service:
+                name: whoami
+                port:
+                  name: http
+            pathType: Prefix
   tls:
     - secretName: tls-cert

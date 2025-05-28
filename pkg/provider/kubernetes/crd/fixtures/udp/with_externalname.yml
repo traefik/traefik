@@ -10,5 +10,5 @@ spec:
 
   routes:
   - services:
-    - name: external-svc
+    - name: external-svc-udp
       port: 8000

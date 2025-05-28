@@ -1,12 +1,12 @@
 [
 	{
-		"ipWhiteList": {
+		"ipAllowList": {
 			"sourceRange": ["127.0.0.1/32"]
 		},
-		"name": "ipwhitelist@anotherprovider",
+		"name": "ipallowlist@anotherprovider",
 		"provider": "anotherprovider",
 		"status": "enabled",
-		"type": "ipwhitelist",
+		"type": "ipallowlist",
 		"usedBy": [
 			"bar@myprovider"
 		]

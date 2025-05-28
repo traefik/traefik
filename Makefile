@@ -58,9 +58,9 @@ generate:
 binary: generate-webui dist
 	@echo SHA: $(VERSION) $(CODENAME) $(DATE)
 	CGO_ENABLED=0 GOGC=${GOGC} GOOS=${GOOS} GOARCH=${GOARCH} go build ${FLAGS[*]} -ldflags "-s -w \
-    -X github.com/traefik/traefik/v2/pkg/version.Version=$(VERSION) \
-    -X github.com/traefik/traefik/v2/pkg/version.Codename=$(CODENAME) \
-    -X github.com/traefik/traefik/v2/pkg/version.BuildDate=$(DATE)" \
+    -X github.com/traefik/traefik/v3/pkg/version.Version=$(VERSION) \
+    -X github.com/traefik/traefik/v3/pkg/version.Codename=$(CODENAME) \
+    -X github.com/traefik/traefik/v3/pkg/version.BuildDate=$(DATE)" \
     -installsuffix nocgo -o "./dist/${GOOS}/${GOARCH}/$(BIN_NAME)" ./cmd/traefik
 
 binary-linux-arm64: export GOOS := linux
@@ -97,6 +97,12 @@ test-unit:
 #? test-integration: Run the integration tests
 test-integration: binary
 	GOOS=$(GOOS) GOARCH=$(GOARCH) go test ./integration -test.timeout=20m -failfast -v $(TESTFLAGS)
+
+.PHONY: test-gateway-api-conformance
+#? test-gateway-api-conformance: Run the conformance tests
+test-gateway-api-conformance: build-image-dirty
+	# In case of a new Minor/Major version, the k8sConformanceTraefikVersion needs to be updated.
+	GOOS=$(GOOS) GOARCH=$(GOARCH) go test ./integration -v -test.run K8sConformanceSuite -k8sConformance -k8sConformanceTraefikVersion="v3.4" $(TESTFLAGS)
 
 .PHONY: test-ui-unit
 #? test-ui-unit: Run the unit tests for the webui

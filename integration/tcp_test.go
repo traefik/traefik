@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"github.com/traefik/traefik/v2/integration/try"
+	"github.com/traefik/traefik/v3/integration/try"
 )
 
 type TCPSuite struct{ BaseSuite }
@@ -238,7 +238,31 @@ func (s *TCPSuite) TestMiddlewareAllowList() {
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`whoami-a.test`)"))
 	require.NoError(s.T(), err)
 
-	// Traefik not passes through, ipWhitelist closes connection
+	// Traefik not passes through, ipAllowList closes connection
+	_, err = guessWhoTLSPassthrough("127.0.0.1:8093", "whoami-a.test")
+	assert.ErrorIs(s.T(), err, io.EOF)
+
+	// Traefik passes through, termination handled by whoami-b
+	out, err := guessWhoTLSPassthrough("127.0.0.1:8093", "whoami-b.test")
+	require.NoError(s.T(), err)
+	assert.Contains(s.T(), out, "whoami-b")
+}
+
+func (s *TCPSuite) TestMiddlewareWhiteList() {
+	file := s.adaptFile("fixtures/tcp/ip-whitelist.toml", struct {
+		WhoamiA string
+		WhoamiB string
+	}{
+		WhoamiA: s.getComposeServiceIP("whoami-a") + ":8080",
+		WhoamiB: s.getComposeServiceIP("whoami-b") + ":8080",
+	})
+
+	s.traefikCmd(withConfigFile(file))
+
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`whoami-a.test`)"))
+	require.NoError(s.T(), err)
+
+	// Traefik not passes through, ipWhiteList closes connection
 	_, err = guessWhoTLSPassthrough("127.0.0.1:8093", "whoami-a.test")
 	assert.ErrorIs(s.T(), err, io.EOF)
 

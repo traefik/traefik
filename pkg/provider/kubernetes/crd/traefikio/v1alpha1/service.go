@@ -1,7 +1,7 @@
 package v1alpha1
 
 import (
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -13,7 +13,7 @@ import (
 // TraefikService object allows to:
 // - Apply weight to Services on load-balancing
 // - Mirror traffic on services
-// More info: https://doc.traefik.io/traefik/v2.11/routing/providers/kubernetes-crd/#kind-traefikservice
+// More info: https://doc.traefik.io/traefik/v3.4/routing/providers/kubernetes-crd/#kind-traefikservice
 type TraefikService struct {
 	metav1.TypeMeta `json:",inline"`
 	// Standard object's metadata.
@@ -49,10 +49,13 @@ type TraefikServiceSpec struct {
 // +k8s:deepcopy-gen=true
 
 // Mirroring holds the mirroring service configuration.
-// More info: https://doc.traefik.io/traefik/v2.11/routing/services/#mirroring-service
+// More info: https://doc.traefik.io/traefik/v3.4/routing/services/#mirroring-service
 type Mirroring struct {
 	LoadBalancerSpec `json:",inline"`
 
+	// MirrorBody defines whether the body of the request should be mirrored.
+	// Default value is true.
+	MirrorBody *bool `json:"mirrorBody,omitempty"`
 	// MaxBodySize defines the maximum size allowed for the body of the request.
 	// If the body is larger, the request is not mirrored.
 	// Default value is -1, which means unlimited size.
@@ -75,11 +78,11 @@ type MirrorService struct {
 // +k8s:deepcopy-gen=true
 
 // WeightedRoundRobin holds the weighted round-robin configuration.
-// More info: https://doc.traefik.io/traefik/v2.11/routing/services/#weighted-round-robin-service
+// More info: https://doc.traefik.io/traefik/v3.4/routing/services/#weighted-round-robin-service
 type WeightedRoundRobin struct {
 	// Services defines the list of Kubernetes Service and/or TraefikService to load-balance, with weight.
 	Services []Service `json:"services,omitempty"`
 	// Sticky defines whether sticky sessions are enabled.
-	// More info: https://doc.traefik.io/traefik/v2.11/routing/providers/kubernetes-crd/#stickiness-and-load-balancing
+	// More info: https://doc.traefik.io/traefik/v3.4/routing/providers/kubernetes-crd/#stickiness-and-load-balancing
 	Sticky *dynamic.Sticky `json:"sticky,omitempty"`
 }

@@ -14,7 +14,7 @@ To proactively prevent services from being overwhelmed with high load, the numbe
 
 ## Configuration Examples
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 labels:
   - "traefik.http.middlewares.test-inflightreq.inflightreq.amount=10"
 ```
@@ -32,18 +32,6 @@ spec:
 ```yaml tab="Consul Catalog"
 # Limiting to 10 simultaneous connections
 - "traefik.http.middlewares.test-inflightreq.inflightreq.amount=10"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-inflightreq.inflightreq.amount": "10"
-}
-```
-
-```yaml tab="Rancher"
-# Limiting to 10 simultaneous connections
-labels:
-  - "traefik.http.middlewares.test-inflightreq.inflightreq.amount=10"
 ```
 
 ```yaml tab="File (YAML)"
@@ -69,7 +57,7 @@ http:
 The `amount` option defines the maximum amount of allowed simultaneous in-flight request.
 The middleware responds with `HTTP 429 Too Many Requests` if there are already `amount` requests in progress (based on the same `sourceCriterion` strategy).
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 labels:
   - "traefik.http.middlewares.test-inflightreq.inflightreq.amount=10"
 ```
@@ -87,18 +75,6 @@ spec:
 ```yaml tab="Consul Catalog"
 # Limiting to 10 simultaneous connections
 - "traefik.http.middlewares.test-inflightreq.inflightreq.amount=10"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-inflightreq.inflightreq.amount": "10"
-}
-```
-
-```yaml tab="Rancher"
-# Limiting to 10 simultaneous connections
-labels:
-  - "traefik.http.middlewares.test-inflightreq.inflightreq.amount=10"
 ```
 
 ```yaml tab="File (YAML)"
@@ -125,7 +101,7 @@ If none are set, the default is to use the `requestHost`.
 
 #### `sourceCriterion.ipStrategy`
 
-The `ipStrategy` option defines two parameters that configures how Traefik determines the client IP: `depth`, and `excludedIPs`.
+The `ipStrategy` option defines three parameters that configures how Traefik determines the client IP: `depth`, `excludedIPs` and `ipv6Subnet`.
 
 !!! important "As a middleware, InFlightReq happens before the actual proxying to the backend takes place. In addition, the previous network hop only gets appended to `X-Forwarded-For` during the last stages of proxying, i.e. after it has already passed through the middleware. Therefore, during InFlightReq, as the previous network hop is not yet present in `X-Forwarded-For`, it cannot be used and/or relied upon."
 
@@ -135,6 +111,9 @@ The `depth` option tells Traefik to use the `X-Forwarded-For` header and select 
 
 - If `depth` is greater than the total number of IPs in `X-Forwarded-For`, then the client IP is empty.
 - `depth` is ignored if its value is less than or equal to 0.
+
+If `ipStrategy.ipv6Subnet` is provided and the selected IP is IPv6, the IP is transformed into the first IP of the subnet it belongs to.  
+See [ipStrategy.ipv6Subnet](#ipstrategyipv6subnet) for more details.
 
 !!! example "Example of Depth & X-Forwarded-For"
 
@@ -146,7 +125,7 @@ The `depth` option tells Traefik to use the `X-Forwarded-For` header and select 
     | `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `3`     | `"11.0.0.1"` |
     | `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `5`     | `""`         |
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 labels:
   - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.depth=2"
 ```
@@ -165,17 +144,6 @@ spec:
 
 ```yaml tab="Consul Catalog"
 - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.depth=2"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.depth": "2"
-}
-```
-
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.depth=2"
 ```
 
 ```yaml tab="File (YAML)"
@@ -211,7 +179,7 @@ http:
     | `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `"15.0.0.1,16.0.0.1"` | `"13.0.0.1"` |
     | `"10.0.0.1,11.0.0.1"`                   | `"10.0.0.1,11.0.0.1"` | `""`         |
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 labels:
   - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
 ```
@@ -234,17 +202,6 @@ spec:
 - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.excludedips": "127.0.0.1/32, 192.168.1.7"
-}
-```
-
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
-```
-
 ```yaml tab="File (YAML)"
 http:
   middlewares:
@@ -264,11 +221,68 @@ http:
       excludedIPs = ["127.0.0.1/32", "192.168.1.7"]
 ```
 
+##### `ipStrategy.ipv6Subnet`
+
+This strategy applies to `Depth` and `RemoteAddr` strategy only.
+If `ipv6Subnet` is provided and the selected IP is IPv6, the IP is transformed into the first IP of the subnet it belongs to.
+
+This is useful for grouping IPv6 addresses into subnets to prevent bypassing this middleware by obtaining a new IPv6.
+
+- `ipv6Subnet` is ignored if its value is outside of 0-128 interval
+
+!!! example "Example of ipv6Subnet"
+
+    If `ipv6Subnet` is provided, the IP is transformed in the following way.
+
+    | `IP`                      | `ipv6Subnet` | clientIP              |
+    |---------------------------|--------------|-----------------------|
+    | `"::abcd:1111:2222:3333"` | `64`         | `"::0:0:0:0"`         |
+    | `"::abcd:1111:2222:3333"` | `80`         | `"::abcd:0:0:0:0"`    |
+    | `"::abcd:1111:2222:3333"` | `96`         | `"::abcd:1111:0:0:0"` |
+
+```yaml tab="Docker & Swarm"
+labels:
+  - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.ipv6Subnet=64"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-inflightreq
+spec:
+  inFlightReq:
+    sourceCriterion:
+      ipStrategy:
+        ipv6Subnet: 64
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.ipstrategy.ipv6Subnet=64"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-inflightreq:
+      inFlightReq:
+        sourceCriterion:
+          ipStrategy:
+            ipv6Subnet: 64
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.test-inflightreq.inflightreq]
+    [http.middlewares.test-inflightreq.inFlightReq.sourceCriterion.ipStrategy]
+      ipv6Subnet = 64
+```
+
 #### `sourceCriterion.requestHeaderName`
 
 Name of the header used to group incoming requests.
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 labels:
   - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requestheadername=username"
 ```
@@ -286,17 +300,6 @@ spec:
 
 ```yaml tab="Consul Catalog"
 - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requestheadername=username"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requestheadername": "username"
-}
-```
-
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requestheadername=username"
 ```
 
 ```yaml tab="File (YAML)"
@@ -319,7 +322,7 @@ http:
 
 Whether to consider the request host as the source.
 
-```yaml tab="Docker"
+```yaml tab="Docker & Swarm"
 labels:
   - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requesthost=true"
 ```
@@ -337,17 +340,6 @@ spec:
 
 ```yaml tab="Consul Catalog"
 - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requesthost=true"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requesthost": "true"
-}
-```
-
-```yaml tab="Rancher"
-labels:
-  - "traefik.http.middlewares.test-inflightreq.inflightreq.sourcecriterion.requesthost=true"
 ```
 
 ```yaml tab="File (YAML)"

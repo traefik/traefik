@@ -4,7 +4,7 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/rs/zerolog/log"
 )
 
 var errNoServersInPool = errors.New("no servers in the pool")
@@ -37,7 +37,7 @@ func (b *WRRLoadBalancer) ServeTCP(conn WriteCloser) {
 
 	if err != nil {
 		if !errors.Is(err, errNoServersInPool) {
-			log.WithoutContext().Errorf("Error during load balancing: %v", err)
+			log.Error().Err(err).Msg("Error during load balancing")
 		}
 		_ = conn.Close()
 		return

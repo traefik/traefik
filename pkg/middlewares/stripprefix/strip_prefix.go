@@ -5,11 +5,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/opentracing/opentracing-go/ext"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/log"
-	"github.com/traefik/traefik/v2/pkg/middlewares"
-	"github.com/traefik/traefik/v2/pkg/tracing"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/middlewares"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -20,25 +18,35 @@ const (
 
 // stripPrefix is a middleware used to strip prefix from an URL request.
 type stripPrefix struct {
-	next       http.Handler
-	prefixes   []string
-	forceSlash bool // TODO Must be removed (breaking), the default behavior must be forceSlash=false
-	name       string
+	next     http.Handler
+	prefixes []string
+	name     string
+
+	// Deprecated: Must be removed (breaking), the default behavior must be forceSlash=false
+	forceSlash bool
 }
 
 // New creates a new strip prefix middleware.
 func New(ctx context.Context, next http.Handler, config dynamic.StripPrefix, name string) (http.Handler, error) {
-	log.FromContext(middlewares.GetLoggerCtx(ctx, name, typeName)).Debug("Creating middleware")
+	logger := middlewares.GetLogger(ctx, name, typeName)
+	logger.Debug().Msg("Creating middleware")
+
+	if config.ForceSlash != nil {
+		logger.Warn().Msgf("`ForceSlash` option is deprecated, please remove any usage of this option.")
+	}
+	// Handle default value (here because of deprecation and the removal of setDefault).
+	forceSlash := config.ForceSlash != nil && *config.ForceSlash
+
 	return &stripPrefix{
 		prefixes:   config.Prefixes,
-		forceSlash: config.ForceSlash,
 		next:       next,
 		name:       name,
+		forceSlash: forceSlash,
 	}, nil
 }
 
-func (s *stripPrefix) GetTracingInformation() (string, ext.SpanKindEnum) {
-	return s.name, tracing.SpanKindNoneEnum
+func (s *stripPrefix) GetTracingInformation() (string, string, trace.SpanKind) {
+	return s.name, typeName, trace.SpanKindUnspecified
 }
 
 func (s *stripPrefix) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
