@@ -15,8 +15,6 @@ A Use Case Using Docker
 Create a `docker-compose.yml` file where you will define a `reverse-proxy` service that uses the official Traefik image:
 
 ```yaml
-version: '3'
-
 services:
   reverse-proxy:
     # The official v3 Traefik docker image
@@ -50,8 +48,6 @@ Now that you have a Traefik instance up and running, you will deploy new service
 Edit your `docker-compose.yml` file and add the following at the end of your file.
 
 ```yaml
-version: '3'
-
 services:
 
   ...

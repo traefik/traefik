@@ -1,4 +1,3 @@
-version: "3.8"
 services:
   server:
     image: rancher/k3s:v1.21.14-k3s1
