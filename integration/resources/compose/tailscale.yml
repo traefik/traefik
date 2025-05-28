@@ -1,4 +1,3 @@
-version: "3.8"
 services:
   tailscaled:
     hostname: traefik-tests-gw             # This will become the tailscale device name

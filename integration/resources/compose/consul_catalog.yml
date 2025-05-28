@@ -1,4 +1,3 @@
-version: "3.8"
 services:
   consul:
     image: consul:1.6.2
