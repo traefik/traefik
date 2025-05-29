@@ -60,6 +60,12 @@ export const RenderUnknownProp = ({ name, prop, removeTitlePrefix }: RenderUnkno
               switch (childName) {
                 case 'ipStrategy':
                   return wrap(<IpStrategyTable ipStrategy={childProp as IpStrategy} />, title, title)
+                case 'statusRewrites':
+                  return wrap(
+                    <GenericTable items={Object.entries(childProp).map((x) => `${x[0]} → ${x[1]}`)} />,
+                    title,
+                    title,
+                  )
                 default:
                   return <RenderUnknownProp key={title} name={title} prop={childProp} />
               }
