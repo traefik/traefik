@@ -8,6 +8,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"regexp"
 	"slices"
 	"time"
 
@@ -45,7 +46,8 @@ type Router struct {
 	httpsTLSConfig *tls.Config // default TLS config
 	// hostHTTPTLSConfig contains TLS configs keyed by SNI.
 	// A nil config is the hint to set up a brokenTLSRouter.
-	hostHTTPTLSConfig map[string]*tls.Config // TLS configs keyed by SNI
+	hostHTTPTLSConfig       map[string]*tls.Config         // TLS configs keyed by SNI
+	hostHTTPRegexpTLSConfig map[*regexp.Regexp]*tls.Config // TLS configs keyed by regexp
 }
 
 // NewRouter returns a new TCP router.
@@ -77,6 +79,12 @@ func (r *Router) GetTLSGetClientInfo() func(info *tls.ClientHelloInfo) (*tls.Con
 	return func(info *tls.ClientHelloInfo) (*tls.Config, error) {
 		if tlsConfig, ok := r.hostHTTPTLSConfig[info.ServerName]; ok {
 			return tlsConfig, nil
+		}
+
+		for re, tlsConfig := range r.hostHTTPRegexpTLSConfig {
+			if re.MatchString(info.ServerName) {
+				return tlsConfig, nil
+			}
 		}
 
 		return r.httpsTLSConfig, nil
@@ -240,6 +248,20 @@ func (r *Router) AddHTTPTLSConfig(sniHost string, config *tls.Config) {
 	r.hostHTTPTLSConfig[sniHost] = config
 }
 
+func (r *Router) AddHTTPRegexpTLSConfig(hostRegexp string, config *tls.Config) {
+	re, err := regexp.Compile(hostRegexp)
+	if err != nil {
+		log.Error().Err(err).Str("host", hostRegexp).Msg("Failed to compile regex")
+		return
+	}
+
+	if r.hostHTTPRegexpTLSConfig == nil {
+		r.hostHTTPRegexpTLSConfig = map[*regexp.Regexp]*tls.Config{}
+	}
+
+	r.hostHTTPRegexpTLSConfig[re] = config
+}
+
 // GetConn creates a connection proxy with a peeked string.
 func (r *Router) GetConn(conn tcp.WriteCloser, peeked string) tcp.WriteCloser {
 	// TODO should it really be on Router ?
@@ -292,6 +314,23 @@ func (r *Router) SetHTTPSForwarder(handler tcp.Handler) {
 		}
 
 		rule := "HostSNI(`" + sniHost + "`)"
+		if err := r.muxerHTTPS.AddRoute(rule, "", tcpmuxer.GetRulePriority(rule), tcpHandler); err != nil {
+			log.Error().Err(err).Msg("Error while adding route for host")
+		}
+	}
+
+	for sniHostRegex, tlsConf := range r.hostHTTPRegexpTLSConfig {
+		var tcpHandler tcp.Handler
+		if tlsConf == nil {
+			tcpHandler = &brokenTLSRouter{}
+		} else {
+			tcpHandler = &tcp.TLSHandler{
+				Next:   handler,
+				Config: tlsConf,
+			}
+		}
+
+		rule := "HostSNIRegexp(`" + sniHostRegex.String() + "`)"
 		if err := r.muxerHTTPS.AddRoute(rule, "", tcpmuxer.GetRulePriority(rule), tcpHandler); err != nil {
 			log.Error().Err(err).Msg("Error while adding route for host")
 		}

@@ -96,6 +96,7 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string) m
 type nameAndConfig struct {
 	routerName string // just so we have it as additional information when logging
 	TLSConfig  *tls.Config
+	regex      bool
 }
 
 func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string]*runtime.TCPRouterInfo, configsHTTP map[string]*runtime.RouterInfo, handlerHTTP, handlerHTTPS http.Handler) (*Router, error) {
@@ -120,6 +121,9 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 	// we set the value to the default TLS conf.
 	tlsOptionsForHost := map[string]string{}
 
+	// Keyed by domain regex. This is a fallback if we cannot match directly the domain.
+	tlsOptionsForHostRegex := map[string]string{}
+
 	// Keyed by domain, then by options reference.
 	// The actual source of truth for what TLS options will actually be used for the connection.
 	// As opposed to tlsOptionsForHost, it keeps track of all the (different) TLS
@@ -140,7 +144,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 			tlsOptionsName = provider.GetQualifiedName(ctxRouter, routerHTTPConfig.TLS.Options)
 		}
 
-		domains, err := httpmuxer.ParseDomains(routerHTTPConfig.Rule)
+		domains, domainRegex, err := httpmuxer.ParseDomainsAndRegex(routerHTTPConfig.Rule)
 		if err != nil {
 			routerErr := fmt.Errorf("invalid rule %s, error: %w", routerHTTPConfig.Rule, err)
 			routerHTTPConfig.AddError(routerErr, true)
@@ -148,7 +152,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 			continue
 		}
 
-		if len(domains) == 0 {
+		if len(domains) == 0 && len(domainRegex) == 0 {
 			// Extra Host(*) rule, for HTTPS routers with no Host rule,
 			// and for requests for which the SNI does not match _any_ of the other existing routers Host.
 			// This is only about choosing the TLS configuration.
@@ -198,6 +202,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 			}
 			tlsOptionsForHostSNI[domain][tlsOptionsName] = nameAndConfig{
 				routerName: routerHTTPName,
+				regex:      false,
 				TLSConfig:  tlsConf,
 			}
 
@@ -208,9 +213,28 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 				tlsOptionsForHost[domain] = tlsOptionsName
 			}
 		}
+
+		for _, regex := range domainRegex {
+			if tlsOptionsForHostSNI[regex] == nil {
+				tlsOptionsForHostSNI[regex] = make(map[string]nameAndConfig)
+			}
+			tlsOptionsForHostSNI[regex][tlsOptionsName] = nameAndConfig{
+				routerName: routerHTTPName,
+				regex:      true,
+				TLSConfig:  tlsConf,
+			}
+
+			// if multiple regex matchers are defined for the same tlsOptions, we fallback to default,
+			// this could still clash if multiple regex matchers would match the same request, but that's a user error and falling back to default is not better.
+			if name, ok := tlsOptionsForHostRegex[regex]; ok && name != tlsOptionsName {
+				tlsOptionsForHostRegex[regex] = traefiktls.DefaultTLSConfigName
+			} else {
+				tlsOptionsForHostRegex[regex] = tlsOptionsName
+			}
+		}
 	}
 
-	sniCheck := snicheck.New(tlsOptionsForHost, handlerHTTPS)
+	sniCheck := snicheck.New(tlsOptionsForHost, tlsOptionsForHostRegex, handlerHTTPS)
 
 	// Keep in mind that defaultTLSConf might be nil here.
 	router.SetHTTPSHandler(sniCheck, defaultTLSConf)
@@ -220,9 +244,11 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		if len(tlsConfigs) == 1 {
 			var optionsName string
 			var config *tls.Config
+			var regex bool
 			for k, v := range tlsConfigs {
 				optionsName = k
 				config = v.TLSConfig
+				regex = v.regex
 				break
 			}
 
@@ -230,12 +256,20 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 				// we use nil config as a signal to insert a handler
 				// that enforces that TLS connection attempts to the corresponding (broken) router should fail.
 				logger.Debug().Msgf("Adding special closing route for %s because broken TLS options %s", hostSNI, optionsName)
-				router.AddHTTPTLSConfig(hostSNI, nil)
+				if regex {
+					router.AddHTTPRegexpTLSConfig(hostSNI, nil)
+				} else {
+					router.AddHTTPTLSConfig(hostSNI, nil)
+				}
 				continue
 			}
 
 			logger.Debug().Msgf("Adding route for %s with TLS options %s", hostSNI, optionsName)
-			router.AddHTTPTLSConfig(hostSNI, config)
+			if regex {
+				router.AddHTTPRegexpTLSConfig(hostSNI, config)
+			} else {
+				router.AddHTTPTLSConfig(hostSNI, config)
+			}
 			continue
 		}
 
