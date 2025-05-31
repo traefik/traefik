@@ -176,7 +176,7 @@ func (b *Balancer) nextServer() (*namedHandler, error) {
 		handler.deadline += 1 / handler.weight
 
 		heap.Push(b, handler)
-		if _, down := b.status[handler.name]; !down {
+		if _, up := b.status[handler.name]; !up {
 			continue
 		}
 		if _, isFenced := b.fenced[handler.name]; isFenced {
