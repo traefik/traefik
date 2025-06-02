@@ -767,6 +767,8 @@ docker run -v "/my/host/acme:/etc/traefik/acme" traefik
 
 _Optional, Default=2160_
 
+`certificatesDuration` specifies the duration (in hours) of the certificates issued by the CA server. It is used to determine when to renew the certificate, but it **doesn't** define the duration of the certificates, that is up to the CA server. 
+
 `certificatesDuration` is used to calculate two durations:
 
 - `Renew Period`: the period before the end of the certificate duration, during which the certificate should be renewed.
