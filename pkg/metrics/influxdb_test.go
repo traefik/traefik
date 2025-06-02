@@ -1,7 +1,6 @@
 package metrics
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -23,7 +22,7 @@ func TestInfluxDB(t *testing.T) {
 	udp.Timeout = 5 * time.Second
 
 	influxDBClient = nil
-	influxDBRegistry := RegisterInfluxDB(context.Background(),
+	influxDBRegistry := RegisterInfluxDB(t.Context(),
 		&types.InfluxDB{
 			Address:              ":8089",
 			PushInterval:         ptypes.Duration(time.Second),
@@ -147,7 +146,7 @@ func TestInfluxDBHTTP(t *testing.T) {
 	defer ts.Close()
 
 	influxDBClient = nil
-	influxDBRegistry := RegisterInfluxDB(context.Background(),
+	influxDBRegistry := RegisterInfluxDB(t.Context(),
 		&types.InfluxDB{
 			Address:              ts.URL,
 			Protocol:             "http",

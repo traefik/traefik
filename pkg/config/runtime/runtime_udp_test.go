@@ -1,7 +1,6 @@
 package runtime
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -192,7 +191,7 @@ func TestGetUDPRoutersByEntryPoints(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 			runtimeConfig := NewConfig(test.conf)
-			actual := runtimeConfig.GetUDPRoutersByEntryPoints(context.Background(), test.entryPoints)
+			actual := runtimeConfig.GetUDPRoutersByEntryPoints(t.Context(), test.entryPoints)
 			assert.Equal(t, test.expected, actual)
 		})
 	}

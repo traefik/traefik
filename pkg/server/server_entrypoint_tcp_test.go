@@ -81,7 +81,7 @@ func testShutdown(t *testing.T, router *tcprouter.Router) {
 	epConfig.RespondingTimeouts.ReadTimeout = ptypes.Duration(5 * time.Second)
 	epConfig.RespondingTimeouts.WriteTimeout = ptypes.Duration(5 * time.Second)
 
-	entryPoint, err := NewTCPEntryPoint(context.Background(), &static.EntryPoint{
+	entryPoint, err := NewTCPEntryPoint(t.Context(), &static.EntryPoint{
 		// We explicitly use an IPV4 address because on Alpine, with an IPV6 address
 		// there seems to be shenanigans related to properly cleaning up file descriptors
 		Address:          "127.0.0.1:0",
@@ -91,7 +91,7 @@ func testShutdown(t *testing.T, router *tcprouter.Router) {
 	}, nil)
 	require.NoError(t, err)
 
-	conn, err := startEntrypoint(entryPoint, router)
+	conn, err := startEntrypoint(t, entryPoint, router)
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = conn.Close() })
 
@@ -114,7 +114,7 @@ func testShutdown(t *testing.T, router *tcprouter.Router) {
 	_, err = reader.Peek(1)
 	require.NoError(t, err)
 
-	go entryPoint.Shutdown(context.Background())
+	go entryPoint.Shutdown(t.Context())
 
 	// Make sure that new connections are not permitted anymore.
 	// Note that this should be true not only after Shutdown has returned,
@@ -145,8 +145,10 @@ func testShutdown(t *testing.T, router *tcprouter.Router) {
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 }
 
-func startEntrypoint(entryPoint *TCPEntryPoint, router *tcprouter.Router) (net.Conn, error) {
-	go entryPoint.Start(context.Background())
+func startEntrypoint(t *testing.T, entryPoint *TCPEntryPoint, router *tcprouter.Router) (net.Conn, error) {
+	t.Helper()
+
+	go entryPoint.Start(t.Context())
 
 	entryPoint.SwitchRouter(router)
 
@@ -168,7 +170,7 @@ func TestReadTimeoutWithoutFirstByte(t *testing.T) {
 	epConfig.SetDefaults()
 	epConfig.RespondingTimeouts.ReadTimeout = ptypes.Duration(2 * time.Second)
 
-	entryPoint, err := NewTCPEntryPoint(context.Background(), &static.EntryPoint{
+	entryPoint, err := NewTCPEntryPoint(t.Context(), &static.EntryPoint{
 		Address:          ":0",
 		Transport:        epConfig,
 		ForwardedHeaders: &static.ForwardedHeaders{},
@@ -183,7 +185,7 @@ func TestReadTimeoutWithoutFirstByte(t *testing.T) {
 		rw.WriteHeader(http.StatusOK)
 	}))
 
-	conn, err := startEntrypoint(entryPoint, router)
+	conn, err := startEntrypoint(t, entryPoint, router)
 	require.NoError(t, err)
 
 	errChan := make(chan error)
@@ -207,7 +209,7 @@ func TestReadTimeoutWithFirstByte(t *testing.T) {
 	epConfig.SetDefaults()
 	epConfig.RespondingTimeouts.ReadTimeout = ptypes.Duration(2 * time.Second)
 
-	entryPoint, err := NewTCPEntryPoint(context.Background(), &static.EntryPoint{
+	entryPoint, err := NewTCPEntryPoint(t.Context(), &static.EntryPoint{
 		Address:          ":0",
 		Transport:        epConfig,
 		ForwardedHeaders: &static.ForwardedHeaders{},
@@ -222,7 +224,7 @@ func TestReadTimeoutWithFirstByte(t *testing.T) {
 		rw.WriteHeader(http.StatusOK)
 	}))
 
-	conn, err := startEntrypoint(entryPoint, router)
+	conn, err := startEntrypoint(t, entryPoint, router)
 	require.NoError(t, err)
 
 	_, err = conn.Write([]byte("GET /some HTTP/1.1\r\n"))
@@ -249,7 +251,7 @@ func TestKeepAliveMaxRequests(t *testing.T) {
 	epConfig.SetDefaults()
 	epConfig.KeepAliveMaxRequests = 3
 
-	entryPoint, err := NewTCPEntryPoint(context.Background(), &static.EntryPoint{
+	entryPoint, err := NewTCPEntryPoint(t.Context(), &static.EntryPoint{
 		Address:          ":0",
 		Transport:        epConfig,
 		ForwardedHeaders: &static.ForwardedHeaders{},
@@ -264,7 +266,7 @@ func TestKeepAliveMaxRequests(t *testing.T) {
 		rw.WriteHeader(http.StatusOK)
 	}))
 
-	conn, err := startEntrypoint(entryPoint, router)
+	conn, err := startEntrypoint(t, entryPoint, router)
 	require.NoError(t, err)
 
 	http.DefaultClient.Transport = &http.Transport{
@@ -297,7 +299,7 @@ func TestKeepAliveMaxTime(t *testing.T) {
 	epConfig.SetDefaults()
 	epConfig.KeepAliveMaxTime = ptypes.Duration(time.Millisecond)
 
-	entryPoint, err := NewTCPEntryPoint(context.Background(), &static.EntryPoint{
+	entryPoint, err := NewTCPEntryPoint(t.Context(), &static.EntryPoint{
 		Address:          ":0",
 		Transport:        epConfig,
 		ForwardedHeaders: &static.ForwardedHeaders{},
@@ -312,7 +314,7 @@ func TestKeepAliveMaxTime(t *testing.T) {
 		rw.WriteHeader(http.StatusOK)
 	}))
 
-	conn, err := startEntrypoint(entryPoint, router)
+	conn, err := startEntrypoint(t, entryPoint, router)
 	require.NoError(t, err)
 
 	http.DefaultClient.Transport = &http.Transport{
@@ -341,7 +343,7 @@ func TestKeepAliveH2c(t *testing.T) {
 	epConfig.SetDefaults()
 	epConfig.KeepAliveMaxRequests = 1
 
-	entryPoint, err := NewTCPEntryPoint(context.Background(), &static.EntryPoint{
+	entryPoint, err := NewTCPEntryPoint(t.Context(), &static.EntryPoint{
 		Address:          ":0",
 		Transport:        epConfig,
 		ForwardedHeaders: &static.ForwardedHeaders{},
@@ -356,7 +358,7 @@ func TestKeepAliveH2c(t *testing.T) {
 		rw.WriteHeader(http.StatusOK)
 	}))
 
-	conn, err := startEntrypoint(entryPoint, router)
+	conn, err := startEntrypoint(t, entryPoint, router)
 	require.NoError(t, err)
 
 	http2Transport := &http2.Transport{
@@ -574,7 +576,7 @@ func TestPathOperations(t *testing.T) {
 	configuration.SetDefaults()
 
 	// Create the HTTP server using createHTTPServer.
-	server, err := createHTTPServer(context.Background(), ln, configuration, false, requestdecorator.New(nil))
+	server, err := createHTTPServer(t.Context(), ln, configuration, false, requestdecorator.New(nil))
 	require.NoError(t, err)
 
 	server.Switcher.UpdateHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

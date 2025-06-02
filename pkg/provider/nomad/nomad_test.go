@@ -1,7 +1,6 @@
 package nomad
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -155,7 +154,7 @@ func Test_getNomadServiceData(t *testing.T) {
 	require.NoError(t, err)
 
 	// make the query for services
-	items, err := p.getNomadServiceData(context.TODO())
+	items, err := p.getNomadServiceData(t.Context())
 	require.NoError(t, err)
 	require.Len(t, items, 2)
 }

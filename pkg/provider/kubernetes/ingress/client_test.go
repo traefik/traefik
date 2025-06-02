@@ -1,7 +1,6 @@
 package ingress
 
 import (
-	"context"
 	"errors"
 	"testing"
 	"time"
@@ -243,7 +242,7 @@ func TestClientIgnoresEmptyEndpointUpdates(t *testing.T) {
 		assert.Fail(t, "expected to receive event for endpoints")
 	}
 
-	emptyEndpoint, err = kubeClient.CoreV1().Endpoints("test").Get(context.TODO(), "empty-endpoint", metav1.GetOptions{})
+	emptyEndpoint, err = kubeClient.CoreV1().Endpoints("test").Get(t.Context(), "empty-endpoint", metav1.GetOptions{})
 	assert.NoError(t, err)
 
 	// Update endpoint annotation and resource version (apparently not done by fake client itself)
@@ -251,7 +250,7 @@ func TestClientIgnoresEmptyEndpointUpdates(t *testing.T) {
 	// This reflects the behavior of kubernetes controllers which use endpoint annotations for leader election.
 	emptyEndpoint.Annotations["test-annotation"] = "___"
 	emptyEndpoint.ResourceVersion = "1245"
-	_, err = kubeClient.CoreV1().Endpoints("test").Update(context.TODO(), emptyEndpoint, metav1.UpdateOptions{})
+	_, err = kubeClient.CoreV1().Endpoints("test").Update(t.Context(), emptyEndpoint, metav1.UpdateOptions{})
 	require.NoError(t, err)
 
 	select {
@@ -263,12 +262,12 @@ func TestClientIgnoresEmptyEndpointUpdates(t *testing.T) {
 	case <-time.After(50 * time.Millisecond):
 	}
 
-	filledEndpoint, err = kubeClient.CoreV1().Endpoints("test").Get(context.TODO(), "filled-endpoint", metav1.GetOptions{})
+	filledEndpoint, err = kubeClient.CoreV1().Endpoints("test").Get(t.Context(), "filled-endpoint", metav1.GetOptions{})
 	assert.NoError(t, err)
 
 	filledEndpoint.Subsets[0].Addresses[0].IP = "10.13.37.2"
 	filledEndpoint.ResourceVersion = "1235"
-	_, err = kubeClient.CoreV1().Endpoints("test").Update(context.TODO(), filledEndpoint, metav1.UpdateOptions{})
+	_, err = kubeClient.CoreV1().Endpoints("test").Update(t.Context(), filledEndpoint, metav1.UpdateOptions{})
 	require.NoError(t, err)
 
 	select {

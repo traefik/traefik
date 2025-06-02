@@ -1,7 +1,6 @@
 package passtlsclientcert
 
 import (
-	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
@@ -313,7 +312,7 @@ func TestPassTLSClientCert_PEM(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			tlsClientHeaders, err := New(context.Background(), next, test.config, "foo")
+			tlsClientHeaders, err := New(t.Context(), next, test.config, "foo")
 			require.NoError(t, err)
 
 			res := httptest.NewRecorder()
@@ -535,7 +534,7 @@ func TestPassTLSClientCert_certInfo(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			tlsClientHeaders, err := New(context.Background(), next, test.config, "foo")
+			tlsClientHeaders, err := New(t.Context(), next, test.config, "foo")
 			require.NoError(t, err)
 
 			res := httptest.NewRecorder()

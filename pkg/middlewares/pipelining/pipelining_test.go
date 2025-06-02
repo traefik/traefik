@@ -1,7 +1,6 @@
 package pipelining
 
 import (
-	"context"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -62,7 +61,7 @@ func TestNew(t *testing.T) {
 				assert.Equal(t, test.implementCloseNotifier, ok)
 				w.WriteHeader(http.StatusOK)
 			})
-			handler := New(context.Background(), nextHandler, "pipe")
+			handler := New(t.Context(), nextHandler, "pipe")
 
 			req := httptest.NewRequest(test.HTTPMethod, "http://localhost", nil)
 
@@ -87,7 +86,7 @@ func Test1xxResponses(t *testing.T) {
 		_, _ = w.Write([]byte("Hello"))
 	})
 
-	pipe := New(context.Background(), next, "pipe")
+	pipe := New(t.Context(), next, "pipe")
 
 	server := httptest.NewServer(pipe)
 	t.Cleanup(server.Close)
@@ -130,7 +129,7 @@ func Test1xxResponses(t *testing.T) {
 			return nil
 		},
 	}
-	req, _ := http.NewRequestWithContext(httptrace.WithClientTrace(context.Background(), trace), http.MethodGet, server.URL, nil)
+	req, _ := http.NewRequestWithContext(httptrace.WithClientTrace(t.Context(), trace), http.MethodGet, server.URL, nil)
 
 	res, err := frontendClient.Do(req)
 	assert.NoError(t, err)

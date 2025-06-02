@@ -926,7 +926,7 @@ func doLoggingWithAbortedStream(t *testing.T, config *types.AccessLog) {
 		require.NoError(t, err, "logger should create "+config.FilePath)
 	}
 
-	reqContext, cancelRequest := context.WithCancel(context.Background())
+	reqContext, cancelRequest := context.WithCancel(t.Context())
 
 	req := &http.Request{
 		Header: map[string][]string{

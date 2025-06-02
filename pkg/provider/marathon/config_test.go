@@ -1,7 +1,6 @@
 package marathon
 
 import (
-	"context"
 	"math"
 	"testing"
 
@@ -22,7 +21,7 @@ func TestGetConfigurationAPIErrors(t *testing.T) {
 		marathonClient: fakeClient,
 	}
 
-	actualConfig := p.getConfigurations(context.Background())
+	actualConfig := p.getConfigurations(t.Context())
 	fakeClient.AssertExpectations(t)
 
 	if actualConfig != nil {
@@ -2051,7 +2050,7 @@ func TestBuildConfiguration(t *testing.T) {
 			err := p.Init()
 			require.NoError(t, err)
 
-			actualConfig := p.buildConfiguration(context.Background(), test.applications)
+			actualConfig := p.buildConfiguration(t.Context(), test.applications)
 
 			assert.NotNil(t, actualConfig)
 			assert.Equal(t, test.expected, actualConfig)
@@ -2097,7 +2096,7 @@ func TestApplicationFilterEnabled(t *testing.T) {
 			extraConf, err := provider.getConfiguration(app)
 			require.NoError(t, err)
 
-			if provider.keepApplication(context.Background(), extraConf, stringValueMap(app.Labels)) != test.expected {
+			if provider.keepApplication(t.Context(), extraConf, stringValueMap(app.Labels)) != test.expected {
 				t.Errorf("got unexpected filtering = %t", !test.expected)
 			}
 		})
