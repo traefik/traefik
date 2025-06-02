@@ -9,9 +9,7 @@ RUN apk --no-cache --no-progress add \
     ruby \
     ruby-bigdecimal \
     ruby-dev \
-    ruby-etc \
     ruby-ffi \
-    ruby-json \
     zlib-dev
 
 RUN gem install nokogiri --version 1.18.6 --no-document -- --use-system-libraries
