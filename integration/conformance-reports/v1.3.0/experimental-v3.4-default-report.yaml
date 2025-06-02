@@ -1,7 +1,7 @@
 apiVersion: gateway.networking.k8s.io/v1
 date: '-'
 gatewayAPIChannel: experimental
-gatewayAPIVersion: v1.2.1
+gatewayAPIVersion: v1.3.0
 implementation:
   contact:
   - '@traefik/maintainers'
@@ -46,6 +46,7 @@ profiles:
     - HTTPRouteResponseHeaderModification
     - HTTPRouteSchemeRedirect
     unsupportedFeatures:
+    - GatewayAddressEmpty
     - GatewayHTTPListenerIsolation
     - GatewayInfrastructurePropagation
     - GatewayStaticAddresses
@@ -54,6 +55,7 @@ profiles:
     - HTTPRouteParentRefPort
     - HTTPRouteRequestMirror
     - HTTPRouteRequestMultipleMirrors
+    - HTTPRouteRequestPercentageMirror
     - HTTPRouteRequestTimeout
   name: GATEWAY-HTTP
   summary: Core tests succeeded. Extended tests succeeded.
