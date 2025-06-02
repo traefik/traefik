@@ -1,7 +1,6 @@
 package aggregator
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -24,7 +23,7 @@ func TestProviderAggregator_Provide(t *testing.T) {
 
 	cfgCh := make(chan dynamic.Message)
 	errCh := make(chan error)
-	pool := safe.NewPool(context.Background())
+	pool := safe.NewPool(t.Context())
 
 	t.Cleanup(pool.Stop)
 

@@ -170,7 +170,7 @@ func TestHandler(t *testing.T) {
 				}
 				_, _ = fmt.Fprintln(w, http.StatusText(test.backendCode))
 			})
-			errorPageHandler, err := New(context.Background(), handler, *test.errorPage, serviceBuilderMock, "test")
+			errorPageHandler, err := New(t.Context(), handler, *test.errorPage, serviceBuilderMock, "test")
 			require.NoError(t, err)
 
 			req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost/test?foo=bar&baz=buz", nil)
@@ -205,7 +205,7 @@ func Test1xxResponses(t *testing.T) {
 
 	config := dynamic.ErrorPage{Service: "error", Query: "/", Status: []string{"200"}}
 
-	errorPageHandler, err := New(context.Background(), next, config, serviceBuilderMock, "test")
+	errorPageHandler, err := New(t.Context(), next, config, serviceBuilderMock, "test")
 	require.NoError(t, err)
 
 	server := httptest.NewServer(errorPageHandler)
@@ -249,7 +249,7 @@ func Test1xxResponses(t *testing.T) {
 			return nil
 		},
 	}
-	req, _ := http.NewRequestWithContext(httptrace.WithClientTrace(context.Background(), trace), http.MethodGet, server.URL, nil)
+	req, _ := http.NewRequestWithContext(httptrace.WithClientTrace(t.Context(), trace), http.MethodGet, server.URL, nil)
 
 	res, err := frontendClient.Do(req)
 	assert.NoError(t, err)

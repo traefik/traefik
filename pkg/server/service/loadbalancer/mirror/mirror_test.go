@@ -2,7 +2,6 @@ package mirror
 
 import (
 	"bytes"
-	"context"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -20,7 +19,7 @@ func TestMirroringOn100(t *testing.T) {
 	handler := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 	})
-	pool := safe.NewPool(context.Background())
+	pool := safe.NewPool(t.Context())
 	mirror := New(handler, pool, true, defaultMaxBodySize, nil)
 	err := mirror.AddMirror(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		atomic.AddInt32(&countMirror1, 1)
@@ -49,7 +48,7 @@ func TestMirroringOn10(t *testing.T) {
 	handler := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 	})
-	pool := safe.NewPool(context.Background())
+	pool := safe.NewPool(t.Context())
 	mirror := New(handler, pool, true, defaultMaxBodySize, nil)
 	err := mirror.AddMirror(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		atomic.AddInt32(&countMirror1, 1)
@@ -74,7 +73,7 @@ func TestMirroringOn10(t *testing.T) {
 }
 
 func TestInvalidPercent(t *testing.T) {
-	mirror := New(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), safe.NewPool(context.Background()), true, defaultMaxBodySize, nil)
+	mirror := New(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), safe.NewPool(t.Context()), true, defaultMaxBodySize, nil)
 	err := mirror.AddMirror(nil, -1)
 	assert.Error(t, err)
 
@@ -92,7 +91,7 @@ func TestHijack(t *testing.T) {
 	handler := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 	})
-	pool := safe.NewPool(context.Background())
+	pool := safe.NewPool(t.Context())
 	mirror := New(handler, pool, true, defaultMaxBodySize, nil)
 
 	var mirrorRequest bool
@@ -116,7 +115,7 @@ func TestFlush(t *testing.T) {
 	handler := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 	})
-	pool := safe.NewPool(context.Background())
+	pool := safe.NewPool(t.Context())
 	mirror := New(handler, pool, true, defaultMaxBodySize, nil)
 
 	var mirrorRequest bool
@@ -144,7 +143,7 @@ func TestMirroringWithBody(t *testing.T) {
 		body        = []byte(`body`)
 	)
 
-	pool := safe.NewPool(context.Background())
+	pool := safe.NewPool(t.Context())
 
 	handler := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		assert.NotNil(t, r.Body)
@@ -186,7 +185,7 @@ func TestMirroringWithIgnoredBody(t *testing.T) {
 		emptyBody   = []byte(``)
 	)
 
-	pool := safe.NewPool(context.Background())
+	pool := safe.NewPool(t.Context())
 
 	handler := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		assert.NotNil(t, r.Body)

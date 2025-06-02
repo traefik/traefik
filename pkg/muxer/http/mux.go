@@ -1,55 +1,53 @@
 package http
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"sort"
+	"strings"
 
+	"github.com/gorilla/mux"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/rules"
-	"github.com/vulcand/predicate"
 )
+
+type matcherBuilderFuncs map[string]matcherBuilderFunc
+
+type matcherBuilderFunc func(*matchersTree, ...string) error
+
+type MatcherFunc func(*http.Request) bool
 
 // Muxer handles routing with rules.
 type Muxer struct {
 	routes         routes
-	parser         predicate.Parser
-	parserV2       predicate.Parser
+	parser         SyntaxParser
 	defaultHandler http.Handler
 }
 
 // NewMuxer returns a new muxer instance.
-func NewMuxer() (*Muxer, error) {
-	var matchers []string
-	for matcher := range httpFuncs {
-		matchers = append(matchers, matcher)
-	}
-
-	parser, err := rules.NewParser(matchers)
-	if err != nil {
-		return nil, fmt.Errorf("error while creating parser: %w", err)
-	}
-
-	var matchersV2 []string
-	for matcher := range httpFuncsV2 {
-		matchersV2 = append(matchersV2, matcher)
-	}
-
-	parserV2, err := rules.NewParser(matchersV2)
-	if err != nil {
-		return nil, fmt.Errorf("error while creating v2 parser: %w", err)
-	}
-
+func NewMuxer(parser SyntaxParser) *Muxer {
 	return &Muxer{
 		parser:         parser,
-		parserV2:       parserV2,
 		defaultHandler: http.NotFoundHandler(),
-	}, nil
+	}
 }
 
 // ServeHTTP forwards the connection to the matching HTTP handler.
 // Serves 404 if no handler is found.
 func (m *Muxer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	logger := log.Ctx(req.Context())
+
+	var err error
+	req, err = withRoutingPath(req)
+	if err != nil {
+		logger.Debug().Err(err).Msg("Unable to add routing path to request context")
+		rw.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
 	for _, route := range m.routes {
 		if route.matchers.match(req) {
 			route.handler.ServeHTTP(rw, req)
@@ -73,36 +71,9 @@ func GetRulePriority(rule string) int {
 
 // AddRoute add a new route to the router.
 func (m *Muxer) AddRoute(rule string, syntax string, priority int, handler http.Handler) error {
-	var parse interface{}
-	var err error
-	var matcherFuncs map[string]func(*matchersTree, ...string) error
-
-	switch syntax {
-	case "v2":
-		parse, err = m.parserV2.Parse(rule)
-		if err != nil {
-			return fmt.Errorf("error while parsing rule %s: %w", rule, err)
-		}
-
-		matcherFuncs = httpFuncsV2
-	default:
-		parse, err = m.parser.Parse(rule)
-		if err != nil {
-			return fmt.Errorf("error while parsing rule %s: %w", rule, err)
-		}
-
-		matcherFuncs = httpFuncs
-	}
-
-	buildTree, ok := parse.(rules.TreeBuilder)
-	if !ok {
-		return fmt.Errorf("error while parsing rule %s", rule)
-	}
-
-	var matchers matchersTree
-	err = matchers.addRule(buildTree(), matcherFuncs)
+	matchers, err := m.parser.parse(syntax, rule)
 	if err != nil {
-		return fmt.Errorf("error while adding rule %s: %w", rule, err)
+		return fmt.Errorf("error while parsing rule %s: %w", rule, err)
 	}
 
 	m.routes = append(m.routes, &route{
@@ -114,6 +85,86 @@ func (m *Muxer) AddRoute(rule string, syntax string, priority int, handler http.
 	sort.Sort(m.routes)
 
 	return nil
+}
+
+// reservedCharacters contains the mapping of the percent-encoded form to the ASCII form
+// of the reserved characters according to https://datatracker.ietf.org/doc/html/rfc3986#section-2.2.
+// By extension to https://datatracker.ietf.org/doc/html/rfc3986#section-2.1 the percent character is also considered a reserved character.
+// Because decoding the percent character would change the meaning of the URL.
+var reservedCharacters = map[string]rune{
+	"%3A": ':',
+	"%2F": '/',
+	"%3F": '?',
+	"%23": '#',
+	"%5B": '[',
+	"%5D": ']',
+	"%40": '@',
+	"%21": '!',
+	"%24": '$',
+	"%26": '&',
+	"%27": '\'',
+	"%28": '(',
+	"%29": ')',
+	"%2A": '*',
+	"%2B": '+',
+	"%2C": ',',
+	"%3B": ';',
+	"%3D": '=',
+	"%25": '%',
+}
+
+// getRoutingPath retrieves the routing path from the request context.
+// It returns nil if the routing path is not set in the context.
+func getRoutingPath(req *http.Request) *string {
+	routingPath := req.Context().Value(mux.RoutingPathKey)
+	if routingPath != nil {
+		rp := routingPath.(string)
+		return &rp
+	}
+	return nil
+}
+
+// withRoutingPath decodes non-allowed characters in the EscapedPath and stores it in the request context to be able to use it for routing.
+// This allows using the decoded version of the non-allowed characters in the routing rules for a better UX.
+// For example, the rule PathPrefix(`/foo bar`) will match the following request path `/foo%20bar`.
+func withRoutingPath(req *http.Request) (*http.Request, error) {
+	escapedPath := req.URL.EscapedPath()
+
+	var routingPathBuilder strings.Builder
+	for i := 0; i < len(escapedPath); i++ {
+		if escapedPath[i] != '%' {
+			routingPathBuilder.WriteString(string(escapedPath[i]))
+			continue
+		}
+
+		// This should never happen as the standard library will reject requests containing invalid percent-encodings.
+		// This discards URLs with a percent character at the end.
+		if i+2 >= len(escapedPath) {
+			return nil, errors.New("invalid percent-encoding at the end of the URL path")
+		}
+
+		encodedCharacter := escapedPath[i : i+3]
+		if _, reserved := reservedCharacters[encodedCharacter]; reserved {
+			routingPathBuilder.WriteString(encodedCharacter)
+		} else {
+			// This should never happen as the standard library will reject requests containing invalid percent-encodings.
+			decodedCharacter, err := url.PathUnescape(encodedCharacter)
+			if err != nil {
+				return nil, errors.New("invalid percent-encoding in URL path")
+			}
+			routingPathBuilder.WriteString(decodedCharacter)
+		}
+
+		i += 2
+	}
+
+	return req.WithContext(
+		context.WithValue(
+			req.Context(),
+			mux.RoutingPathKey,
+			routingPathBuilder.String(),
+		),
+	), nil
 }
 
 // ParseDomains extract domains from rule.
@@ -173,7 +224,7 @@ type matchersTree struct {
 	// matcher is a matcher func used to match HTTP request properties.
 	// If matcher is not nil, it means that this matcherTree is a leaf of the tree.
 	// It is therefore mutually exclusive with left and right.
-	matcher func(*http.Request) bool
+	matcher MatcherFunc
 	// operator to combine the evaluation of left and right leaves.
 	operator string
 	// Mutually exclusive with matcher.
@@ -204,9 +255,7 @@ func (m *matchersTree) match(req *http.Request) bool {
 	}
 }
 
-type matcherFuncs map[string]func(*matchersTree, ...string) error
-
-func (m *matchersTree) addRule(rule *rules.Tree, funcs matcherFuncs) error {
+func (m *matchersTree) addRule(rule *rules.Tree, funcs matcherBuilderFuncs) error {
 	switch rule.Matcher {
 	case "and", "or":
 		m.operator = rule.Matcher

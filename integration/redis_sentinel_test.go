@@ -2,7 +2,6 @@ package integration
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -51,7 +50,7 @@ func (s *RedisSentinelSuite) SetupSuite() {
 		net.JoinHostPort(s.getComposeServiceIP("sentinel3"), "26379"),
 	}
 	kv, err := valkeyrie.NewStore(
-		context.Background(),
+		s.T().Context(),
 		redis.StoreName,
 		s.redisEndpoints,
 		&redis.Config{
@@ -157,7 +156,7 @@ func (s *RedisSentinelSuite) TestSentinelConfiguration() {
 	}
 
 	for k, v := range data {
-		err := s.kvClient.Put(context.Background(), k, []byte(v), nil)
+		err := s.kvClient.Put(s.T().Context(), k, []byte(v), nil)
 		require.NoError(s.T(), err)
 	}
 

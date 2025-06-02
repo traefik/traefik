@@ -6,7 +6,7 @@ on:
       - '*'
 
 env:
-  GO_VERSION: '1.23'
+  GO_VERSION: '1.24'
   GOLANGCI_LINT_VERSION: v2.0.2
   MISSPELL_VERSION: v0.6.0
 

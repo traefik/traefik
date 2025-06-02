@@ -1,7 +1,6 @@
 package gateway
 
 import (
-	"context"
 	"errors"
 	"net/http"
 	"os"
@@ -75,14 +74,14 @@ func TestGatewayClassLabelSelector(t *testing.T) {
 		client:        client,
 	}
 
-	_ = p.loadConfigurationFromGateways(context.Background())
+	_ = p.loadConfigurationFromGateways(t.Context())
 
-	gw, err := gwClient.GatewayV1().Gateways("default").Get(context.Background(), "traefik-external", metav1.GetOptions{})
+	gw, err := gwClient.GatewayV1().Gateways("default").Get(t.Context(), "traefik-external", metav1.GetOptions{})
 	require.NoError(t, err)
 
 	assert.Empty(t, gw.Status.Addresses)
 
-	gw, err = gwClient.GatewayV1().Gateways("default").Get(context.Background(), "traefik-internal", metav1.GetOptions{})
+	gw, err = gwClient.GatewayV1().Gateways("default").Get(t.Context(), "traefik-internal", metav1.GetOptions{})
 	require.NoError(t, err)
 	require.Len(t, gw.Status.Addresses, 1)
 	require.NotNil(t, gw.Status.Addresses[0].Type)
@@ -2556,7 +2555,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 				client:              client,
 			}
 
-			conf := p.loadConfigurationFromGateways(context.Background())
+			conf := p.loadConfigurationFromGateways(t.Context())
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -2983,7 +2982,7 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 					p.RegisterBackendFuncs(group, kind, backendFunc)
 				}
 			}
-			conf := p.loadConfigurationFromGateways(context.Background())
+			conf := p.loadConfigurationFromGateways(t.Context())
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -3269,7 +3268,7 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 					p.RegisterFilterFuncs(group, kind, filterFunc)
 				}
 			}
-			conf := p.loadConfigurationFromGateways(context.Background())
+			conf := p.loadConfigurationFromGateways(t.Context())
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -3561,7 +3560,7 @@ func TestLoadGRPCRoutes_filterExtensionRef(t *testing.T) {
 					p.RegisterFilterFuncs(group, kind, filterFunc)
 				}
 			}
-			conf := p.loadConfigurationFromGateways(context.Background())
+			conf := p.loadConfigurationFromGateways(t.Context())
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -4463,7 +4462,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 				client:              client,
 			}
 
-			conf := p.loadConfigurationFromGateways(context.Background())
+			conf := p.loadConfigurationFromGateways(t.Context())
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -5742,7 +5741,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 				client:              client,
 			}
 
-			conf := p.loadConfigurationFromGateways(context.Background())
+			conf := p.loadConfigurationFromGateways(t.Context())
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -6798,7 +6797,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 				client:              client,
 			}
 
-			conf := p.loadConfigurationFromGateways(context.Background())
+			conf := p.loadConfigurationFromGateways(t.Context())
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -7134,7 +7133,7 @@ func TestLoadRoutesWithReferenceGrants(t *testing.T) {
 				client:              client,
 			}
 
-			conf := p.loadConfigurationFromGateways(context.Background())
+			conf := p.loadConfigurationFromGateways(t.Context())
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -8186,7 +8185,7 @@ func newGatewaySimpleClientSet(t *testing.T, objects ...runtime.Object) *gatefak
 			continue
 		}
 
-		_, err := client.GatewayV1().Gateways(gateway.Namespace).Create(context.Background(), gateway, metav1.CreateOptions{})
+		_, err := client.GatewayV1().Gateways(gateway.Namespace).Create(t.Context(), gateway, metav1.CreateOptions{})
 		require.NoError(t, err)
 	}
 

@@ -19,6 +19,9 @@
 [providers.file]
   filename = "{{ .SelfFilename }}"
 
+[core]
+  defaultRuleSyntax = "{{ .DefaultRuleSyntax }}"
+
 # dynamic configuration
 [http.routers]
   [http.routers.without]

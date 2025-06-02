@@ -1,7 +1,6 @@
 package traefik
 
 import (
-	"context"
 	"encoding/json"
 	"flag"
 	"os"
@@ -269,7 +268,7 @@ func Test_createConfiguration(t *testing.T) {
 
 			provider := Provider{staticCfg: test.staticCfg}
 
-			cfg := provider.createConfiguration(context.Background())
+			cfg := provider.createConfiguration(t.Context())
 
 			filename := filepath.Join("fixtures", test.desc)
 

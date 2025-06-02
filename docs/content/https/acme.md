@@ -13,7 +13,7 @@ You can configure Traefik to use an ACME provider (like Let's Encrypt) for autom
 !!! warning "Let's Encrypt and Rate Limiting"
     Note that Let's Encrypt API has [rate limiting](https://letsencrypt.org/docs/rate-limits). These last up to **one week**, and cannot be overridden.
     
-    When running Traefik in a container this file should be persisted across restarts. 
+    When running Traefik in a container the `acme.json` file should be persisted across restarts. 
     If Traefik requests new certificates each time it starts up, a crash-looping container can quickly reach Let's Encrypt's ratelimits.
     To configure where certificates are stored, please take a look at the [storage](#storage) configuration.
 
@@ -794,6 +794,8 @@ docker run -v "/my/host/acme:/etc/traefik/acme" traefik
 ### `certificatesDuration`
 
 _Optional, Default=2160_
+
+`certificatesDuration` specifies the duration (in hours) of the certificates issued by the CA server. It is used to determine when to renew the certificate, but it **doesn't** define the duration of the certificates, that is up to the CA server. 
 
 `certificatesDuration` is used to calculate two durations:
 

@@ -1,7 +1,6 @@
 package docker
 
 import (
-	"context"
 	"strconv"
 	"testing"
 
@@ -101,7 +100,7 @@ func Test_getPort_swarm(t *testing.T) {
 			var p SwarmProvider
 			require.NoError(t, p.Init())
 
-			dData, err := p.parseService(context.Background(), test.service, test.networks)
+			dData, err := p.parseService(t.Context(), test.service, test.networks)
 			require.NoError(t, err)
 
 			actual := getPort(dData, test.serverPort)

@@ -1,7 +1,6 @@
 package headermodifier
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -103,7 +102,7 @@ func TestRequestHeaderModifier(t *testing.T) {
 				gotHeaders = r.Header
 			})
 
-			handler := NewRequestHeaderModifier(context.Background(), next, test.config, "foo-request-header-modifier")
+			handler := NewRequestHeaderModifier(t.Context(), next, test.config, "foo-request-header-modifier")
 
 			req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
 			for h, v := range test.requestHeaders {

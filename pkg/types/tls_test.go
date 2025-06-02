@@ -1,7 +1,6 @@
 package types
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -105,7 +104,7 @@ func TestClientTLS_CreateTLSConfig(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			tlsConfig, err := test.clientTLS.CreateTLSConfig(context.Background())
+			tlsConfig, err := test.clientTLS.CreateTLSConfig(t.Context())
 			if test.wantErr {
 				require.Error(t, err)
 				return

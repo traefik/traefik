@@ -1,7 +1,6 @@
 package inflightconn
 
 import (
-	"context"
 	"net"
 	"testing"
 	"time"
@@ -27,7 +26,7 @@ func TestInFlightConn_ServeTCP(t *testing.T) {
 		finishCh <- struct{}{}
 	})
 
-	middleware, err := New(context.Background(), next, dynamic.TCPInFlightConn{Amount: 1}, "foo")
+	middleware, err := New(t.Context(), next, dynamic.TCPInFlightConn{Amount: 1}, "foo")
 	require.NoError(t, err)
 
 	// The first connection should succeed and wait.

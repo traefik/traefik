@@ -97,7 +97,7 @@ func TestOTelAccessLog(t *testing.T) {
 			Path: testPath,
 		},
 	}
-	ctx := trace.ContextWithSpanContext(context.Background(), trace.NewSpanContext(trace.SpanContextConfig{
+	ctx := trace.ContextWithSpanContext(t.Context(), trace.NewSpanContext(trace.SpanContextConfig{
 		TraceID: trace.TraceID{0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8},
 		SpanID:  trace.SpanID{0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8},
 	}))
@@ -1055,7 +1055,7 @@ func doLoggingWithAbortedStream(t *testing.T, config *types.AccessLog) {
 		require.NoError(t, err, "logger should create "+config.FilePath)
 	}
 
-	reqContext, cancelRequest := context.WithCancel(context.Background())
+	reqContext, cancelRequest := context.WithCancel(t.Context())
 
 	req := &http.Request{
 		Header: map[string][]string{

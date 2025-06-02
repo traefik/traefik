@@ -33,7 +33,6 @@ When there is only one service, and the router does not specify a service,
 then that service is automatically assigned to the router.
 
 ```yaml tab="Labels"
-version: "3"
 services:
   my-container:
     deploy:
@@ -73,8 +72,6 @@ See the [Docker Swarm API Access](#docker-api-access) section for more informati
     The docker-compose file shares the docker sock with the Traefik container
 
     ```yaml
-    version: '3'
-
     services:
       traefik:
          image: traefik:v3.1 # The official v3 Traefik docker image
@@ -405,8 +402,6 @@ docker service create \
 ```
 
 ```yml tab="With Docker Compose"
-version: '3'
-
 services:
   traefik:
     # ...

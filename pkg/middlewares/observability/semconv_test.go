@@ -1,7 +1,6 @@
 package observability
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -65,7 +64,7 @@ func TestSemConvServerMetrics(t *testing.T) {
 			// force the meter provider with manual reader to collect metrics for the test.
 			metrics.SetMeterProvider(meterProvider)
 
-			semConvMetricRegistry, err := metrics.NewSemConvMetricRegistry(context.Background(), &cfg)
+			semConvMetricRegistry, err := metrics.NewSemConvMetricRegistry(t.Context(), &cfg)
 			require.NoError(t, err)
 			require.NotNil(t, semConvMetricRegistry)
 
@@ -79,7 +78,7 @@ func TestSemConvServerMetrics(t *testing.T) {
 				rw.WriteHeader(test.statusCode)
 			})
 
-			handler := newServerMetricsSemConv(context.Background(), semConvMetricRegistry, next)
+			handler := newServerMetricsSemConv(t.Context(), semConvMetricRegistry, next)
 
 			handler, err = capture.Wrap(handler)
 			require.NoError(t, err)
@@ -87,7 +86,7 @@ func TestSemConvServerMetrics(t *testing.T) {
 			handler.ServeHTTP(rw, req)
 
 			got := metricdata.ResourceMetrics{}
-			err = rdr.Collect(context.Background(), &got)
+			err = rdr.Collect(t.Context(), &got)
 			require.NoError(t, err)
 
 			require.Len(t, got.ScopeMetrics, 1)

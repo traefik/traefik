@@ -1,7 +1,6 @@
 package ecs
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -390,7 +389,7 @@ func TestDefaultRule(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			configuration := p.buildConfiguration(context.Background(), test.instances)
+			configuration := p.buildConfiguration(t.Context(), test.instances)
 
 			assert.Equal(t, test.expected, configuration)
 		})
@@ -3491,7 +3490,7 @@ func Test_buildConfiguration(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			configuration := p.buildConfiguration(context.Background(), test.containers)
+			configuration := p.buildConfiguration(t.Context(), test.containers)
 
 			assert.Equal(t, test.expected, configuration)
 		})

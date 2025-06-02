@@ -1,7 +1,6 @@
 package router
 
 import (
-	"context"
 	"crypto/tls"
 	"io"
 	"math"
@@ -13,10 +12,12 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
 	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
+	httpmuxer "github.com/traefik/traefik/v3/pkg/muxer/http"
 	"github.com/traefik/traefik/v3/pkg/server/middleware"
 	"github.com/traefik/traefik/v3/pkg/server/service"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
@@ -326,9 +327,12 @@ func TestRouterManager_Get(t *testing.T) {
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
 			tlsManager := traefiktls.NewManager()
 
-			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager)
+			parser, err := httpmuxer.NewSyntaxParser()
+			require.NoError(t, err)
 
-			handlers := routerManager.BuildHandlers(context.Background(), test.entryPoints, false)
+			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager, parser)
+
+			handlers := routerManager.BuildHandlers(t.Context(), test.entryPoints, false)
 
 			w := httptest.NewRecorder()
 			req := testhelpers.MustNewRequest(http.MethodGet, "http://foo.bar/", nil)
@@ -709,12 +713,15 @@ func TestRuntimeConfiguration(t *testing.T) {
 			serviceManager := service.NewManager(rtConf.Services, nil, nil, transportManager, proxyBuilderMock{})
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
 			tlsManager := traefiktls.NewManager()
-			tlsManager.UpdateConfigs(context.Background(), nil, test.tlsOptions, nil)
+			tlsManager.UpdateConfigs(t.Context(), nil, test.tlsOptions, nil)
 
-			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager)
+			parser, err := httpmuxer.NewSyntaxParser()
+			require.NoError(t, err)
 
-			_ = routerManager.BuildHandlers(context.Background(), entryPoints, false)
-			_ = routerManager.BuildHandlers(context.Background(), entryPoints, true)
+			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager, parser)
+
+			_ = routerManager.BuildHandlers(t.Context(), entryPoints, false)
+			_ = routerManager.BuildHandlers(t.Context(), entryPoints, true)
 
 			// even though rtConf was passed by argument to the manager builders above,
 			// it's ok to use it as the result we check, because everything worth checking
@@ -789,9 +796,12 @@ func TestProviderOnMiddlewares(t *testing.T) {
 	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
 	tlsManager := traefiktls.NewManager()
 
-	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager)
+	parser, err := httpmuxer.NewSyntaxParser()
+	require.NoError(t, err)
 
-	_ = routerManager.BuildHandlers(context.Background(), entryPoints, false)
+	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager, parser)
+
+	_ = routerManager.BuildHandlers(t.Context(), entryPoints, false)
 
 	assert.Equal(t, []string{"chain@file", "m1@file"}, rtConf.Routers["router@file"].Middlewares)
 	assert.Equal(t, []string{"m1@file", "m2@file", "m1@file"}, rtConf.Middlewares["chain@file"].Chain.Middlewares)
@@ -865,9 +875,12 @@ func BenchmarkRouterServe(b *testing.B) {
 	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
 	tlsManager := traefiktls.NewManager()
 
-	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager)
+	parser, err := httpmuxer.NewSyntaxParser()
+	require.NoError(b, err)
 
-	handlers := routerManager.BuildHandlers(context.Background(), entryPoints, false)
+	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager, parser)
+
+	handlers := routerManager.BuildHandlers(b.Context(), entryPoints, false)
 
 	w := httptest.NewRecorder()
 	req := testhelpers.MustNewRequest(http.MethodGet, "http://foo.bar/", nil)
@@ -907,7 +920,7 @@ func BenchmarkService(b *testing.B) {
 	w := httptest.NewRecorder()
 	req := testhelpers.MustNewRequest(http.MethodGet, "http://foo.bar/", nil)
 
-	handler, _ := serviceManager.BuildHTTP(context.Background(), "foo-service")
+	handler, _ := serviceManager.BuildHTTP(b.Context(), "foo-service")
 	b.ReportAllocs()
 	for range b.N {
 		handler.ServeHTTP(w, req)

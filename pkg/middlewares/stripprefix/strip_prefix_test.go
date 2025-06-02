@@ -1,7 +1,6 @@
 package stripprefix
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -148,7 +147,7 @@ func TestStripPrefix(t *testing.T) {
 			pointer := func(v bool) *bool { return &v }
 			test.config.ForceSlash = pointer(false)
 
-			handler, err := New(context.Background(), next, test.config, "foo-strip-prefix")
+			handler, err := New(t.Context(), next, test.config, "foo-strip-prefix")
 			require.NoError(t, err)
 
 			req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost"+test.path, nil)
