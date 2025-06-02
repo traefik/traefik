@@ -10,7 +10,7 @@ on:
       - 'script/gcg/**'
 
 env:
-  GO_VERSION: '1.23'
+  GO_VERSION: '1.24'
   CGO_ENABLED: 0
 
 jobs:

@@ -1,7 +1,6 @@
 package tls
 
 import (
-	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
@@ -78,7 +77,7 @@ func TestTLSInStore(t *testing.T) {
 	}}
 
 	tlsManager := NewManager()
-	tlsManager.UpdateConfigs(context.Background(), nil, nil, dynamicConfigs)
+	tlsManager.UpdateConfigs(t.Context(), nil, nil, dynamicConfigs)
 
 	certs := tlsManager.GetStore("default").DynamicCerts.Get().(map[string]*tls.Certificate)
 	if len(certs) == 0 {
@@ -95,7 +94,7 @@ func TestTLSInvalidStore(t *testing.T) {
 	}}
 
 	tlsManager := NewManager()
-	tlsManager.UpdateConfigs(context.Background(),
+	tlsManager.UpdateConfigs(t.Context(),
 		map[string]Store{
 			"default": {
 				DefaultCertificate: &Certificate{
@@ -159,7 +158,7 @@ func TestManager_Get(t *testing.T) {
 	}
 
 	tlsManager := NewManager()
-	tlsManager.UpdateConfigs(context.Background(), nil, tlsConfigs, dynamicConfigs)
+	tlsManager.UpdateConfigs(t.Context(), nil, tlsConfigs, dynamicConfigs)
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
@@ -298,7 +297,7 @@ func TestClientAuth(t *testing.T) {
 	}
 
 	tlsManager := NewManager()
-	tlsManager.UpdateConfigs(context.Background(), nil, tlsConfigs, nil)
+	tlsManager.UpdateConfigs(t.Context(), nil, tlsConfigs, nil)
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {

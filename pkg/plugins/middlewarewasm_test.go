@@ -1,7 +1,6 @@
 package plugins
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -21,7 +20,7 @@ func TestSettingsWithoutSocket(t *testing.T) {
 
 	zerolog.SetGlobalLevel(zerolog.DebugLevel)
 
-	ctx := log.Logger.WithContext(context.Background())
+	ctx := log.Logger.WithContext(t.Context())
 
 	t.Setenv("PLUGIN_TEST", "MY-TEST")
 	t.Setenv("PLUGIN_TEST_B", "MY-TEST_B")

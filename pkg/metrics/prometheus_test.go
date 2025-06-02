@@ -1,7 +1,6 @@
 package metrics
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -70,7 +69,7 @@ func TestRegisterPromState(t *testing.T) {
 				if test.initPromState {
 					initStandardRegistry(prom)
 				}
-				if registerPromState(context.Background()) {
+				if registerPromState(t.Context()) {
 					actualNbRegistries++
 				}
 				if test.unregisterPromState {
@@ -91,7 +90,7 @@ func TestPrometheus(t *testing.T) {
 	promRegistry = prometheus.NewRegistry()
 	t.Cleanup(promState.reset)
 
-	prometheusRegistry := RegisterPrometheus(context.Background(), &types.Prometheus{
+	prometheusRegistry := RegisterPrometheus(t.Context(), &types.Prometheus{
 		AddEntryPointsLabels: true,
 		AddRoutersLabels:     true,
 		AddServicesLabels:    true,
@@ -405,7 +404,7 @@ func TestPrometheusMetricRemoval(t *testing.T) {
 	promRegistry = prometheus.NewRegistry()
 	t.Cleanup(promState.reset)
 
-	prometheusRegistry := RegisterPrometheus(context.Background(), &types.Prometheus{AddEntryPointsLabels: true, AddServicesLabels: true, AddRoutersLabels: true})
+	prometheusRegistry := RegisterPrometheus(t.Context(), &types.Prometheus{AddEntryPointsLabels: true, AddServicesLabels: true, AddRoutersLabels: true})
 	defer promRegistry.Unregister(promState)
 
 	conf1 := dynamic.Configuration{
@@ -496,7 +495,7 @@ func TestPrometheusMetricRemoveEndpointForRecoveredService(t *testing.T) {
 	promRegistry = prometheus.NewRegistry()
 	t.Cleanup(promState.reset)
 
-	prometheusRegistry := RegisterPrometheus(context.Background(), &types.Prometheus{AddServicesLabels: true})
+	prometheusRegistry := RegisterPrometheus(t.Context(), &types.Prometheus{AddServicesLabels: true})
 	defer promRegistry.Unregister(promState)
 
 	conf1 := dynamic.Configuration{
@@ -535,7 +534,7 @@ func TestPrometheusMetricRemoveEndpointForRecoveredService(t *testing.T) {
 func TestPrometheusRemovedMetricsReset(t *testing.T) {
 	t.Cleanup(promState.reset)
 
-	prometheusRegistry := RegisterPrometheus(context.Background(), &types.Prometheus{AddEntryPointsLabels: true, AddServicesLabels: true})
+	prometheusRegistry := RegisterPrometheus(t.Context(), &types.Prometheus{AddEntryPointsLabels: true, AddServicesLabels: true})
 	defer promRegistry.Unregister(promState)
 
 	conf1 := dynamic.Configuration{
