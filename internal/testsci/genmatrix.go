@@ -12,7 +12,7 @@ import (
 
 const groupCount = 12
 
-type Group struct {
+type group struct {
 	Group string `json:"group"`
 }
 
@@ -42,7 +42,7 @@ func main() {
 	fmt.Fprintf(os.Stderr, "Total packages: %d\n", total)
 	fmt.Fprintf(os.Stderr, "Packages per group: %d\n", perGroup)
 
-	var matrix []Group
+	var matrix []group
 	for i := range groupCount {
 		start := i * perGroup
 		end := start + perGroup
@@ -52,8 +52,8 @@ func main() {
 		if end > total {
 			end = total
 		}
-		group := strings.Join(packageNames[start:end], " ")
-		matrix = append(matrix, Group{Group: group})
+		g := strings.Join(packageNames[start:end], " ")
+		matrix = append(matrix, group{Group: g})
 	}
 
 	jsonBytes, err := json.Marshal(matrix)
