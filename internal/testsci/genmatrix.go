@@ -26,7 +26,7 @@ func main() {
 
 	pkgs, err := packages.Load(cfg, "./cmd/...", "./pkg/...")
 	if err != nil {
-		logger.Fatalf("loading packages: %v", err)
+		logger.Fatalf("Loading packages: %v", err)
 	}
 
 	var packageNames []string
@@ -58,7 +58,7 @@ func main() {
 
 	jsonBytes, err := json.Marshal(matrix)
 	if err != nil {
-		logger.Fatalf("failed to marshal matrix: %v", err)
+		logger.Fatalf("Failed to marshal matrix: %v", err)
 	}
 
 	// Output for GitHub Actions
