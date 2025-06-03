@@ -265,6 +265,12 @@ http:
 
 The mirroring is able to mirror requests sent to a service to other services. Please note that by default the whole request is buffered in memory while it is being mirrored. See the `maxBodySize` option in the example below for how to modify this behaviour. You can also omit the request body by setting the `mirrorBody` option to false.
 
+!!! warning "Default behavior of `percent`"
+
+    When configuring a `mirror` service, if the `percent` field is not set, it defaults to `0`, meaning **no traffic will be sent to the mirror**.
+    This can be unintuitive: if you define a mirror but forget the `percent`, it will be silently ignored.
+    Be sure to set the `percent` explicitly if you want mirroring to occur.
+
 !!! info "Supported Providers"
 
     This strategy can be defined currently with the [File](../../../install-configuration/providers/others/file.md) or [IngressRoute](../../../install-configuration/providers/kubernetes/kubernetes-ingress.md) providers.
@@ -285,6 +291,8 @@ http:
         maxBodySize: 1024
         mirrors:
         - name: appv2
+        # percent defines the percentage of requests that should be mirrored.
+        # Default value is 0, which means no traffic will be sent to the mirror.
           percent: 10
 
     appv1:

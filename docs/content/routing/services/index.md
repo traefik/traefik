@@ -1285,6 +1285,8 @@ http:
         maxBodySize: 1024
         mirrors:
         - name: appv2
+        # percent defines the percentage of requests that should be mirrored.
+        # Default value is 0, which means no traffic will be sent to the mirror.
           percent: 10
 
     appv1:
