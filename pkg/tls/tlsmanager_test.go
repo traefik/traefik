@@ -377,7 +377,7 @@ func TestManager_UpdateConfigs_OCSPConfig(t *testing.T) {
 	responder := httptest.NewServer(http.HandlerFunc(handler))
 	t.Cleanup(responder.Close)
 
-	testContext, cancel := context.WithCancel(context.Background())
+	testContext, cancel := context.WithCancel(t.Context())
 	t.Cleanup(cancel)
 
 	tlsManager := NewManager(&OCSPConfig{

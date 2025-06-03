@@ -1,7 +1,6 @@
 package tls
 
 import (
-	"context"
 	"crypto"
 	"crypto/tls"
 	"io"
@@ -321,7 +320,7 @@ func TestOCSPStapler_updateStaple(t *testing.T) {
 			ocspStapler := newOCSPStapler(nil)
 			ocspStapler.client = &http.Client{Timeout: time.Second}
 
-			err = ocspStapler.updateStaple(context.Background(), test.entry)
+			err = ocspStapler.updateStaple(t.Context(), test.entry)
 			if test.expectError {
 				require.Error(t, err)
 				return
@@ -386,7 +385,7 @@ func TestOCSPStapler_updateStaple_withoutNextUpdate(t *testing.T) {
 		issuer:     issuerCert.Leaf,
 		responders: []string{responder.URL},
 	}
-	err = ocspStapler.updateStaple(context.Background(), entry)
+	err = ocspStapler.updateStaple(t.Context(), entry)
 	require.NoError(t, err)
 
 	assert.Equal(t, ocspResponse, entry.staple)
@@ -464,7 +463,7 @@ func TestOCSPStapler_updateStaples(t *testing.T) {
 		nextUpdate: inOneHour,
 	}, cache.NoExpiration)
 
-	ocspStapler.updateStaples(context.Background())
+	ocspStapler.updateStaples(t.Context())
 
 	nilStaple, ok := ocspStapler.cache.Get("nilStaple")
 	require.True(t, ok)
