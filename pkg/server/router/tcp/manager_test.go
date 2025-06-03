@@ -1,7 +1,6 @@
 package tcp
 
 import (
-	"context"
 	"crypto/tls"
 	"math"
 	"net/http"
@@ -350,7 +349,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 			serviceManager := tcp.NewManager(conf, dialerManager)
 			tlsManager := traefiktls.NewManager()
 			tlsManager.UpdateConfigs(
-				context.Background(),
+				t.Context(),
 				map[string]traefiktls.Store{},
 				map[string]traefiktls.Options{
 					"default": {
@@ -370,7 +369,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 			routerManager := NewManager(conf, serviceManager, middlewaresBuilder,
 				nil, nil, tlsManager)
 
-			_ = routerManager.BuildHandlers(context.Background(), entryPoints)
+			_ = routerManager.BuildHandlers(t.Context(), entryPoints)
 
 			// even though conf was passed by argument to the manager builders above,
 			// it's ok to use it as the result we check, because everything worth checking
@@ -661,7 +660,7 @@ func TestDomainFronting(t *testing.T) {
 			serviceManager := tcp.NewManager(conf, tcp2.NewDialerManager(nil))
 
 			tlsManager := traefiktls.NewManager()
-			tlsManager.UpdateConfigs(context.Background(), map[string]traefiktls.Store{}, test.tlsOptions, []*traefiktls.CertAndStores{})
+			tlsManager.UpdateConfigs(t.Context(), map[string]traefiktls.Store{}, test.tlsOptions, []*traefiktls.CertAndStores{})
 
 			httpsHandler := map[string]http.Handler{
 				"web": http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {}),
@@ -671,7 +670,7 @@ func TestDomainFronting(t *testing.T) {
 
 			routerManager := NewManager(conf, serviceManager, middlewaresBuilder, nil, httpsHandler, tlsManager)
 
-			routers := routerManager.BuildHandlers(context.Background(), entryPoints)
+			routers := routerManager.BuildHandlers(t.Context(), entryPoints)
 
 			router, ok := routers["web"]
 			require.True(t, ok)

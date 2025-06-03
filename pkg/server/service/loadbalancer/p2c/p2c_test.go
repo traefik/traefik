@@ -1,7 +1,6 @@
 package p2c
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -207,7 +206,7 @@ func TestBalancerPropagate(t *testing.T) {
 	assert.Equal(t, http.StatusOK, recorder.Code)
 
 	// two gets downed, but balancer still up since first is still up.
-	balancer.SetStatus(context.Background(), "second", false)
+	balancer.SetStatus(t.Context(), "second", false)
 	assert.Equal(t, 0, calls)
 
 	recorder = httptest.NewRecorder()
@@ -216,7 +215,7 @@ func TestBalancerPropagate(t *testing.T) {
 	assert.Equal(t, "first", recorder.Header().Get("server"))
 
 	// first gets downed, balancer is down.
-	balancer.SetStatus(context.Background(), "first", false)
+	balancer.SetStatus(t.Context(), "first", false)
 	assert.Equal(t, 1, calls)
 
 	recorder = httptest.NewRecorder()
@@ -224,7 +223,7 @@ func TestBalancerPropagate(t *testing.T) {
 	assert.Equal(t, http.StatusServiceUnavailable, recorder.Code)
 
 	// two gets up, balancer up.
-	balancer.SetStatus(context.Background(), "second", true)
+	balancer.SetStatus(t.Context(), "second", true)
 	assert.Equal(t, 2, calls)
 
 	recorder = httptest.NewRecorder()

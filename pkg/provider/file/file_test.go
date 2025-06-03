@@ -1,7 +1,6 @@
 package file
 
 import (
-	"context"
 	"io"
 	"os"
 	"path/filepath"
@@ -67,7 +66,7 @@ func TestTLSCertificateContent(t *testing.T) {
 	require.NoError(t, err)
 
 	provider := &Provider{}
-	configuration, err := provider.loadFileConfig(context.Background(), fileConfig.Name(), true)
+	configuration, err := provider.loadFileConfig(t.Context(), fileConfig.Name(), true)
 	require.NoError(t, err)
 
 	require.Equal(t, "CONTENT", configuration.TLS.Certificates[0].Certificate.CertFile.String())
@@ -92,7 +91,7 @@ func TestErrorWhenEmptyConfig(t *testing.T) {
 	configChan := make(chan dynamic.Message)
 	errorChan := make(chan struct{})
 	go func() {
-		err := provider.Provide(configChan, safe.NewPool(context.Background()))
+		err := provider.Provide(configChan, safe.NewPool(t.Context()))
 		assert.Error(t, err)
 		close(errorChan)
 	}()
@@ -116,7 +115,7 @@ func TestProvideWithoutWatch(t *testing.T) {
 			provider.DebugLogGeneratedTemplate = true
 
 			go func() {
-				err := provider.Provide(configChan, safe.NewPool(context.Background()))
+				err := provider.Provide(configChan, safe.NewPool(t.Context()))
 				assert.NoError(t, err)
 			}()
 
@@ -146,7 +145,7 @@ func TestProvideWithWatch(t *testing.T) {
 			configChan := make(chan dynamic.Message)
 
 			go func() {
-				err := provider.Provide(configChan, safe.NewPool(context.Background()))
+				err := provider.Provide(configChan, safe.NewPool(t.Context()))
 				assert.NoError(t, err)
 			}()
 

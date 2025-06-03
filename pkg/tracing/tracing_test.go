@@ -2,7 +2,6 @@ package tracing
 
 import (
 	"compress/gzip"
-	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -409,7 +408,7 @@ func TestTracerProvider(t *testing.T) {
 	}
 	closer.Close()
 
-	_, span := tracer.Start(context.Background(), "test")
+	_, span := tracer.Start(t.Context(), "test")
 	defer span.End()
 
 	span.TracerProvider().Tracer("github.com/traefik/traefik")

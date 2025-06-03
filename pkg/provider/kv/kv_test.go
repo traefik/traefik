@@ -1,7 +1,6 @@
 package kv
 
 import (
-	"context"
 	"errors"
 	"testing"
 	"time"
@@ -298,7 +297,7 @@ func Test_buildConfiguration(t *testing.T) {
 		"traefik/tls/certificates/1/stores/1":                                                        "foobar",
 	}))
 
-	cfg, err := provider.buildConfiguration(context.Background())
+	cfg, err := provider.buildConfiguration(t.Context())
 	require.NoError(t, err)
 
 	expected := &dynamic.Configuration{
@@ -958,7 +957,7 @@ func Test_buildConfiguration_KV_error(t *testing.T) {
 		},
 	}
 
-	cfg, err := provider.buildConfiguration(context.Background())
+	cfg, err := provider.buildConfiguration(t.Context())
 	require.Error(t, err)
 	assert.Nil(t, cfg)
 }
@@ -977,7 +976,7 @@ func TestKvWatchTree(t *testing.T) {
 
 	configChan := make(chan dynamic.Message)
 	go func() {
-		err := provider.watchKv(context.Background(), configChan)
+		err := provider.watchKv(t.Context(), configChan)
 		require.NoError(t, err)
 	}()
 

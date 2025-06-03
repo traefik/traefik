@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -1004,8 +1003,8 @@ func TestHandler_HTTP(t *testing.T) {
 			rtConf := &test.conf
 			// To lazily initialize the Statuses.
 			rtConf.PopulateUsedBy()
-			rtConf.GetRoutersByEntryPoints(context.Background(), []string{"web"}, false)
-			rtConf.GetRoutersByEntryPoints(context.Background(), []string{"web"}, true)
+			rtConf.GetRoutersByEntryPoints(t.Context(), []string{"web"}, false)
+			rtConf.GetRoutersByEntryPoints(t.Context(), []string{"web"}, true)
 
 			handler := New(static.Configuration{API: &static.API{}, Global: &static.Global{}}, rtConf)
 			server := httptest.NewServer(handler.createRouter())

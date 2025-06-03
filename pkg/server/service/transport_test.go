@@ -1,7 +1,6 @@
 package service
 
 import (
-	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/tls"
@@ -607,7 +606,7 @@ func TestKerberosRoundTripper(t *testing.T) {
 				}),
 			}
 
-			ctx := AddTransportOnContext(context.Background())
+			ctx := AddTransportOnContext(t.Context())
 			for _, expected := range test.expectedStatusCode {
 				req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://127.0.0.1", http.NoBody)
 				require.NoError(t, err)

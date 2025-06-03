@@ -1,7 +1,6 @@
 package ipallowlist
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -45,7 +44,7 @@ func TestNewIPAllowLister(t *testing.T) {
 			t.Parallel()
 
 			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-			allowLister, err := New(context.Background(), next, test.allowList, "traefikTest")
+			allowLister, err := New(t.Context(), next, test.allowList, "traefikTest")
 
 			if test.expectedError {
 				assert.Error(t, err)
@@ -105,7 +104,7 @@ func TestIPAllowLister_ServeHTTP(t *testing.T) {
 			t.Parallel()
 
 			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-			allowLister, err := New(context.Background(), next, test.allowList, "traefikTest")
+			allowLister, err := New(t.Context(), next, test.allowList, "traefikTest")
 			require.NoError(t, err)
 
 			recorder := httptest.NewRecorder()

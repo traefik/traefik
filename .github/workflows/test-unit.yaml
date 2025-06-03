@@ -10,11 +10,39 @@ on:
       - 'script/gcg/**'
 
 env:
-  GO_VERSION: '1.23'
+  GO_VERSION: '1.24'
 
 jobs:
+  generate-packages:
+    name: List Go Packages
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go ${{ env.GO_VERSION }}
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          check-latest: true
+
+      - name: Generate matrix
+        id: set-matrix
+        run: |
+          matrix_output=$(go run ./internal/testsci/genmatrix.go)
+          echo "$matrix_output"
+          echo "$matrix_output" >> $GITHUB_OUTPUT
+
   test-unit:
     runs-on: ubuntu-latest
+    needs: generate-packages
+    strategy:
+      matrix:
+        package: ${{ fromJson(needs.generate-packages.outputs.matrix) }}
 
     steps:
       - name: Check out code
@@ -34,7 +62,8 @@ jobs:
           touch webui/static/index.html
 
       - name: Tests
-        run: make test-unit
+        run: |
+          go test -v -parallel 8 ${{ matrix.package.group }}
 
   test-ui-unit:
     runs-on: ubuntu-latest

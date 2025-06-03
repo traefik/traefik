@@ -1,4 +1,3 @@
-version: "3.8"
 services:
   simple:
     image: swarm:1.0.0

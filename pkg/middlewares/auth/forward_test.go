@@ -37,7 +37,7 @@ func TestForwardAuthFail(t *testing.T) {
 	}))
 	t.Cleanup(server.Close)
 
-	middleware, err := NewForward(context.Background(), next, dynamic.ForwardAuth{
+	middleware, err := NewForward(t.Context(), next, dynamic.ForwardAuth{
 		Address: server.URL,
 	}, "authTest")
 	require.NoError(t, err)
@@ -90,7 +90,7 @@ func TestForwardAuthSuccess(t *testing.T) {
 		AuthResponseHeadersRegex: "^Foo-",
 		AddAuthCookiesToResponse: []string{"authCookie"},
 	}
-	middleware, err := NewForward(context.Background(), next, auth, "authTest")
+	middleware, err := NewForward(t.Context(), next, auth, "authTest")
 	require.NoError(t, err)
 
 	ts := httptest.NewServer(middleware)
@@ -135,7 +135,7 @@ func TestForwardAuthForwardBody(t *testing.T) {
 	maxBodySize := int64(len(data))
 	auth := dynamic.ForwardAuth{Address: server.URL, ForwardBody: true, MaxBodySize: &maxBodySize}
 
-	middleware, err := NewForward(context.Background(), next, auth, "authTest")
+	middleware, err := NewForward(t.Context(), next, auth, "authTest")
 	require.NoError(t, err)
 
 	ts := httptest.NewServer(middleware)
@@ -170,7 +170,7 @@ func TestForwardAuthForwardBodyEmptyBody(t *testing.T) {
 
 	auth := dynamic.ForwardAuth{Address: server.URL, ForwardBody: true}
 
-	middleware, err := NewForward(context.Background(), next, auth, "authTest")
+	middleware, err := NewForward(t.Context(), next, auth, "authTest")
 	require.NoError(t, err)
 
 	ts := httptest.NewServer(middleware)
@@ -208,7 +208,7 @@ func TestForwardAuthForwardBodySizeLimit(t *testing.T) {
 	maxBodySize := int64(len(data)) - 1
 	auth := dynamic.ForwardAuth{Address: server.URL, ForwardBody: true, MaxBodySize: &maxBodySize}
 
-	middleware, err := NewForward(context.Background(), next, auth, "authTest")
+	middleware, err := NewForward(t.Context(), next, auth, "authTest")
 	require.NoError(t, err)
 
 	ts := httptest.NewServer(middleware)
@@ -245,7 +245,7 @@ func TestForwardAuthNotForwardBody(t *testing.T) {
 
 	auth := dynamic.ForwardAuth{Address: server.URL}
 
-	middleware, err := NewForward(context.Background(), next, auth, "authTest")
+	middleware, err := NewForward(t.Context(), next, auth, "authTest")
 	require.NoError(t, err)
 
 	ts := httptest.NewServer(middleware)
@@ -273,7 +273,7 @@ func TestForwardAuthRedirect(t *testing.T) {
 
 	auth := dynamic.ForwardAuth{Address: authTs.URL}
 
-	authMiddleware, err := NewForward(context.Background(), next, auth, "authTest")
+	authMiddleware, err := NewForward(t.Context(), next, auth, "authTest")
 	require.NoError(t, err)
 
 	ts := httptest.NewServer(authMiddleware)
@@ -324,7 +324,7 @@ func TestForwardAuthRemoveHopByHopHeaders(t *testing.T) {
 
 	auth := dynamic.ForwardAuth{Address: authTs.URL}
 
-	authMiddleware, err := NewForward(context.Background(), next, auth, "authTest")
+	authMiddleware, err := NewForward(t.Context(), next, auth, "authTest")
 	require.NoError(t, err)
 
 	ts := httptest.NewServer(authMiddleware)
@@ -370,7 +370,7 @@ func TestForwardAuthFailResponseHeaders(t *testing.T) {
 	auth := dynamic.ForwardAuth{
 		Address: authTs.URL,
 	}
-	authMiddleware, err := NewForward(context.Background(), next, auth, "authTest")
+	authMiddleware, err := NewForward(t.Context(), next, auth, "authTest")
 	require.NoError(t, err)
 
 	ts := httptest.NewServer(authMiddleware)
@@ -682,7 +682,7 @@ func TestForwardAuthTracing(t *testing.T) {
 				Address:            server.URL,
 				AuthRequestHeaders: []string{"X-Foo"},
 			}
-			next, err := NewForward(context.Background(), next, auth, "authTest")
+			next, err := NewForward(t.Context(), next, auth, "authTest")
 			require.NoError(t, err)
 
 			req := httptest.NewRequest(http.MethodGet, "http://www.test.com/search?q=Opentelemetry", nil)
@@ -725,7 +725,7 @@ func TestForwardAuthPreserveLocationHeader(t *testing.T) {
 		Address:                server.URL,
 		PreserveLocationHeader: true,
 	}
-	middleware, err := NewForward(context.Background(), next, auth, "authTest")
+	middleware, err := NewForward(t.Context(), next, auth, "authTest")
 	require.NoError(t, err)
 
 	ts := httptest.NewServer(middleware)
@@ -779,7 +779,7 @@ func TestForwardAuthPreserveRequestMethod(t *testing.T) {
 				PreserveRequestMethod: test.preserveRequestMethod,
 			}
 
-			middleware, err := NewForward(context.Background(), next, auth, "authTest")
+			middleware, err := NewForward(t.Context(), next, auth, "authTest")
 			require.NoError(t, err)
 
 			ts := httptest.NewServer(middleware)

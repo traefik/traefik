@@ -3,6 +3,7 @@ package integration
 import (
 	"bytes"
 	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"net"
 	"net/http"
@@ -19,6 +20,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
+	"golang.org/x/net/http2"
 )
 
 // HTTPSSuite tests suite.
@@ -1173,4 +1175,39 @@ func (s *HTTPSSuite) TestWithInvalidTLSOption() {
 		assert.Error(s.T(), err, "connected to server successfully")
 		assert.Nil(s.T(), conn)
 	}
+}
+
+func (s *SimpleSuite) TestMaxConcurrentStream() {
+	file := s.adaptFile("fixtures/https/max_concurrent_stream.toml", struct{}{})
+
+	s.traefikCmd(withConfigFile(file), "--log.level=DEBUG", "--accesslog")
+
+	// Wait for traefik.
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("api@internal"))
+	require.NoError(s.T(), err)
+
+	// Add client self-signed cert.
+	roots := x509.NewCertPool()
+	certContent, err := os.ReadFile("./resources/tls/local.cert")
+	require.NoError(s.T(), err)
+
+	roots.AppendCertsFromPEM(certContent)
+
+	// Open a connection to inspect SettingsFrame.
+	conn, err := tls.Dial("tcp", "127.0.0.1:8000", &tls.Config{
+		RootCAs:    roots,
+		NextProtos: []string{"h2"},
+	})
+	require.NoError(s.T(), err)
+
+	framer := http2.NewFramer(nil, conn)
+	frame, err := framer.ReadFrame()
+	require.NoError(s.T(), err)
+
+	fr, ok := frame.(*http2.SettingsFrame)
+	require.True(s.T(), ok)
+
+	maxConcurrentStream, ok := fr.Value(http2.SettingMaxConcurrentStreams)
+	assert.True(s.T(), ok)
+	assert.Equal(s.T(), uint32(42), maxConcurrentStream)
 }
