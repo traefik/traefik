@@ -17,6 +17,7 @@ import (
 
 const (
 	entryPointTypeName = "TracingEntryPoint"
+	entryPointSpanName = "EntryPoint"
 )
 
 type entryPointTracing struct {
@@ -51,7 +52,7 @@ func newEntryPoint(ctx context.Context, tracer *tracing.Tracer, entryPointName s
 func (e *entryPointTracing) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	tracingCtx := tracing.ExtractCarrierIntoContext(req.Context(), req.Header)
 	start := time.Now()
-	// Initialise the span with the entry point name.
+	// Initialize the span with the entry point name.
 	spanName := e.getSpanName(req, e.entryPoint)
 	tracingCtx, span := e.tracer.Start(tracingCtx, spanName, trace.WithSpanKind(trace.SpanKindServer), trace.WithTimestamp(start))
 
@@ -84,14 +85,14 @@ func (e *entryPointTracing) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 func (e *entryPointTracing) getSpanName(req *http.Request, entryPoint string) string {
 	switch e.tracer.TraceNameFormat {
 	case types.Static:
-		return "EntryPoint " + entryPoint
+		return entryPointSpanName + " " + entryPoint
 	case types.Default:
-		return "EntryPoint"
+		return entryPointSpanName
 	case types.HostName:
 		return req.Host
 	case types.MethodAndRoute:
 		return req.Method + " " + entryPoint
 	default:
-		return "EntryPoint"
+		return entryPointSpanName
 	}
 }

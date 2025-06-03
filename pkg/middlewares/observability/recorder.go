@@ -28,7 +28,7 @@ func (s *recorder) Status() int {
 	return s.status
 }
 
-// SetSpanName updates the span name for later retrieval
+// SetSpanName updates the span name for later retrieval.
 func (s *recorder) SetSpanName(spanName string) {
 	s.spanName = spanName
 }

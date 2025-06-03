@@ -125,7 +125,7 @@ func TestNewRouter(t *testing.T) {
 				assert.Equal(t, test.expected[i].name, span.name)
 				assert.Equal(t, test.expected[i].attributes, span.attributes)
 			}
-			assert.Equal(t, len(test.expected), len(tracer.spans), "Expected number of spans does not match actual number of spans")
+			assert.Len(t, tracer.spans, len(test.expected), "Expected number of spans does not match actual number of spans")
 		})
 	}
 }

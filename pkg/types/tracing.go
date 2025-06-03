@@ -24,7 +24,7 @@ import (
 )
 
 const (
-	// Configuration options for SpanName
+	// Configuration options for SpanName.
 	Static         = "static"
 	HostName       = "hostName"
 	MethodAndRoute = "methodAndRoute"
