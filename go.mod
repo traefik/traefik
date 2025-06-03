@@ -1,6 +1,6 @@
 module github.com/traefik/traefik/v3
 
-go 1.23.0
+go 1.24.0
 
 require (
 	github.com/BurntSushi/toml v1.5.0
@@ -391,7 +391,7 @@ require (
 // Containous forks
 replace (
 	github.com/abbot/go-http-auth => github.com/containous/go-http-auth v0.4.1-0.20200324110947-a37a7636d23e
-	github.com/gorilla/mux => github.com/containous/mux v0.0.0-20220627093034-b2dd784e613f
+	github.com/gorilla/mux => github.com/containous/mux v0.0.0-20250523120546-41b6ec3aed59
 	github.com/mailgun/minheap => github.com/containous/minheap v0.0.0-20190809180810-6e71eb837595
 )
 

@@ -1,7 +1,6 @@
 package ingress
 
 import (
-	"context"
 	"errors"
 	"testing"
 	"time"
@@ -249,7 +248,7 @@ func TestClientIgnoresEmptyEndpointSliceUpdates(t *testing.T) {
 		assert.Fail(t, "expected to receive event for endpointslices")
 	}
 
-	emptyEndpointSlice, err = kubeClient.DiscoveryV1().EndpointSlices("test").Get(context.TODO(), "empty-endpointslice", metav1.GetOptions{})
+	emptyEndpointSlice, err = kubeClient.DiscoveryV1().EndpointSlices("test").Get(t.Context(), "empty-endpointslice", metav1.GetOptions{})
 	assert.NoError(t, err)
 
 	// Update endpoint annotation and resource version (apparently not done by fake client itself)
@@ -257,7 +256,7 @@ func TestClientIgnoresEmptyEndpointSliceUpdates(t *testing.T) {
 	// This reflects the behavior of kubernetes controllers which use endpoint annotations for leader election.
 	emptyEndpointSlice.Annotations["test-annotation"] = "___"
 	emptyEndpointSlice.ResourceVersion = "1245"
-	_, err = kubeClient.DiscoveryV1().EndpointSlices("test").Update(context.TODO(), emptyEndpointSlice, metav1.UpdateOptions{})
+	_, err = kubeClient.DiscoveryV1().EndpointSlices("test").Update(t.Context(), emptyEndpointSlice, metav1.UpdateOptions{})
 	require.NoError(t, err)
 
 	select {
@@ -269,12 +268,12 @@ func TestClientIgnoresEmptyEndpointSliceUpdates(t *testing.T) {
 	case <-time.After(50 * time.Millisecond):
 	}
 
-	filledEndpointSlice, err = kubeClient.DiscoveryV1().EndpointSlices("test").Get(context.TODO(), "filled-endpointslice", metav1.GetOptions{})
+	filledEndpointSlice, err = kubeClient.DiscoveryV1().EndpointSlices("test").Get(t.Context(), "filled-endpointslice", metav1.GetOptions{})
 	assert.NoError(t, err)
 
 	filledEndpointSlice.Endpoints[0].Addresses[0] = "10.13.37.2"
 	filledEndpointSlice.ResourceVersion = "1235"
-	_, err = kubeClient.DiscoveryV1().EndpointSlices("test").Update(context.TODO(), filledEndpointSlice, metav1.UpdateOptions{})
+	_, err = kubeClient.DiscoveryV1().EndpointSlices("test").Update(t.Context(), filledEndpointSlice, metav1.UpdateOptions{})
 	require.NoError(t, err)
 
 	select {
@@ -296,7 +295,7 @@ func TestClientIgnoresEmptyEndpointSliceUpdates(t *testing.T) {
 	newPortNumber := int32(42)
 	filledEndpointSlice.Ports[0].Port = &newPortNumber
 	filledEndpointSlice.ResourceVersion = "1236"
-	_, err = kubeClient.DiscoveryV1().EndpointSlices("test").Update(context.TODO(), filledEndpointSlice, metav1.UpdateOptions{})
+	_, err = kubeClient.DiscoveryV1().EndpointSlices("test").Update(t.Context(), filledEndpointSlice, metav1.UpdateOptions{})
 	require.NoError(t, err)
 
 	select {

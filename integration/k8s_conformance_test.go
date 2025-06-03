@@ -1,7 +1,6 @@
 package integration
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"io/fs"
@@ -74,7 +73,7 @@ func (s *K8sConformanceSuite) SetupSuite() {
 		s.T().Fatal(err)
 	}
 
-	ctx := context.Background()
+	ctx := s.T().Context()
 
 	// Ensure image is available locally.
 	images, err := provider.ListImages(ctx)
@@ -146,7 +145,7 @@ func (s *K8sConformanceSuite) SetupSuite() {
 }
 
 func (s *K8sConformanceSuite) TearDownSuite() {
-	ctx := context.Background()
+	ctx := s.T().Context()
 
 	if s.T().Failed() || *showLog {
 		k3sLogs, err := s.k3sContainer.Logs(ctx)
@@ -173,7 +172,7 @@ func (s *K8sConformanceSuite) TearDownSuite() {
 
 func (s *K8sConformanceSuite) TestK8sGatewayAPIConformance() {
 	// Wait for traefik to start
-	k3sContainerIP, err := s.k3sContainer.ContainerIP(context.Background())
+	k3sContainerIP, err := s.k3sContainer.ContainerIP(s.T().Context())
 	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://"+k3sContainerIP+":9000/api/entrypoints", 10*time.Second, try.BodyContains(`"name":"web"`))

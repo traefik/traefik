@@ -2,7 +2,6 @@ package tcp
 
 import (
 	"bytes"
-	"context"
 	"crypto/tls"
 	"errors"
 	"fmt"
@@ -175,7 +174,7 @@ func Test_Routing(t *testing.T) {
 	// Creates the tlsManager and defines the TLS 1.0 and 1.2 TLSOptions.
 	tlsManager := traefiktls.NewManager()
 	tlsManager.UpdateConfigs(
-		context.Background(),
+		t.Context(),
 		map[string]traefiktls.Store{
 			tlsalpn01.ACMETLS1Protocol: {},
 		},
@@ -606,7 +605,7 @@ func Test_Routing(t *testing.T) {
 				router(dynConf)
 			}
 
-			router, err := manager.buildEntryPointHandler(context.Background(), dynConf.TCPRouters, dynConf.Routers, nil, nil)
+			router, err := manager.buildEntryPointHandler(t.Context(), dynConf.TCPRouters, dynConf.Routers, nil, nil)
 			require.NoError(t, err)
 
 			if test.allowACMETLSPassthrough {
