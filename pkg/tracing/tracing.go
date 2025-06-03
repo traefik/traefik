@@ -31,6 +31,13 @@ type Backend interface {
 // NewTracing Creates a Tracing.
 func NewTracing(conf *static.Tracing) (*Tracer, io.Closer, error) {
 	var backend Backend
+	traceNameFormat := "default"
+	if conf.SpanNameFormat != "" {
+		if !slices.Contains(types.SupportedSpanNames, conf.SpanNameFormat) {
+			log.Warn().Msgf("SpanNameFormat %s is not supported, using default value %s", conf.SpanNameFormat, types.Static)
+		}
+		traceNameFormat = conf.SpanNameFormat
+	}
 
 	if conf.OTLP != nil {
 		backend = conf.OTLP
@@ -49,7 +56,7 @@ func NewTracing(conf *static.Tracing) (*Tracer, io.Closer, error) {
 		return nil, nil, err
 	}
 
-	return NewTracer(tr, conf.CapturedRequestHeaders, conf.CapturedResponseHeaders, conf.SafeQueryParams), closer, nil
+	return NewTracer(tr, conf.CapturedRequestHeaders, conf.CapturedResponseHeaders, conf.SafeQueryParams, traceNameFormat), closer, nil
 }
 
 // TracerFromContext extracts the trace.Tracer from the given context.
@@ -127,15 +134,18 @@ type Tracer struct {
 	safeQueryParams         []string
 	capturedRequestHeaders  []string
 	capturedResponseHeaders []string
+
+	TraceNameFormat string
 }
 
 // NewTracer builds and configures a new Tracer.
-func NewTracer(tracer trace.Tracer, capturedRequestHeaders, capturedResponseHeaders, safeQueryParams []string) *Tracer {
+func NewTracer(tracer trace.Tracer, capturedRequestHeaders, capturedResponseHeaders, safeQueryParams []string, spanNameFormat string) *Tracer {
 	return &Tracer{
 		Tracer:                  tracer,
 		safeQueryParams:         safeQueryParams,
 		capturedRequestHeaders:  capturedRequestHeaders,
 		capturedResponseHeaders: capturedResponseHeaders,
+		TraceNameFormat:         spanNameFormat,
 	}
 }
 
