@@ -8,6 +8,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/tracing"
+	"github.com/traefik/traefik/v3/pkg/types"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -60,6 +61,11 @@ func (w *middlewareTracing) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 		tracingCtx, span := tracer.Start(req.Context(), w.typeName, trace.WithSpanKind(w.spanKind))
 		defer span.End()
 
+		// Update the external span with the name of the middleware.
+		if rec, ok := rw.(*recorder); ok {
+			rec.SetSpanName(w.getSpanName(req, w.name, tracer.TraceNameFormat))
+		}
+
 		req = req.WithContext(tracingCtx)
 
 		span.SetAttributes(attribute.String("traefik.middleware.name", w.name))
@@ -67,5 +73,20 @@ func (w *middlewareTracing) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 
 	if w.next != nil {
 		w.next.ServeHTTP(rw, req)
+	}
+}
+
+func (w *middlewareTracing) getSpanName(req *http.Request, middleware string, traceNameFormat string) string {
+	switch traceNameFormat {
+	case types.Static:
+		return "Middleware " + middleware
+	case types.HostName:
+		return req.Host
+	case types.MethodAndRoute:
+		return req.Method + " " + middleware
+	case types.Default:
+		return "EntryPoint"
+	default:
+		return "Middleware"
 	}
 }

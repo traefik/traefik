@@ -59,7 +59,7 @@ func Test_safeFullURL(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			tr := NewTracer(nil, nil, nil, test.safeQueryParams)
+			tr := NewTracer(nil, nil, nil, test.safeQueryParams, "")
 
 			gotURL := tr.safeURL(test.originalURL)
 
