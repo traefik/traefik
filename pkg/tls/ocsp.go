@@ -147,7 +147,6 @@ func (o *ocspStapler) updateStaples(ctx context.Context) {
 
 // obtainStaple obtains the OCSP stable for the given leaf certificate.
 func (o *ocspStapler) updateStaple(ctx context.Context, entry *ocspEntry) error {
-	// TODO: check FIPS compliance for SHA1 used as default hash, if set the hash options.
 	ocspReq, err := ocsp.CreateRequest(entry.leaf, entry.issuer, nil)
 	if err != nil {
 		return fmt.Errorf("creating OCSP request: %w", err)
