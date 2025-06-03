@@ -185,3 +185,31 @@ tracing:
 ```bash tab="CLI"
 --tracing.safeQueryParams=bar,buz
 ```
+
+#### `spanName`
+
+_Optional, Default="EntryPoint"_
+
+Configures the name of spans created as part of tracing.
+Valid values are:
+
+- static (uses "EntryPoint")
+- urlPath
+- url
+- hostName
+
+If not provided, spans will be named "EntryPoint"
+
+```yaml tab="File (YAML)"
+tracing:
+  spanName: "urlPath"
+```
+
+```toml tab="File (TOML)"
+[tracing]
+  spanName = "urlPath"
+```
+
+```bash tab="CLI"
+--tracing.spanName=urlPath
+```
