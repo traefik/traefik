@@ -513,6 +513,7 @@ tracing:
     - foobar
   sampleRate: 42
   addInternals: true
+  spanNameFormat: foobar
   otlp:
     grpc:
       endpoint: foobar

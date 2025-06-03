@@ -17,17 +17,19 @@ func TestNewRouter(t *testing.T) {
 	}
 
 	testCases := []struct {
-		desc       string
-		service    string
-		router     string
-		routerRule string
-		expected   []expected
+		desc            string
+		service         string
+		router          string
+		routerRule      string
+		traceNameFormat string
+		expected        []expected
 	}{
 		{
-			desc:       "base",
-			service:    "myService",
-			router:     "myRouter",
-			routerRule: "Path(`/`)",
+			desc:            "base",
+			service:         "myService",
+			router:          "myRouter",
+			routerRule:      "Path(`/`)",
+			traceNameFormat: "default",
 			expected: []expected{
 				{
 					name: "EntryPoint",
@@ -39,17 +41,57 @@ func TestNewRouter(t *testing.T) {
 					name: "Router",
 					attributes: []attribute.KeyValue{
 						attribute.String("span.kind", "internal"),
-						attribute.String("http.request.method", "GET"),
-						attribute.Int64("http.response.status_code", int64(404)),
-						attribute.String("network.protocol.version", "1.1"),
-						attribute.String("server.address", "www.test.com"),
-						attribute.Int64("server.port", int64(80)),
-						attribute.String("url.full", "http://www.test.com/traces?p=OpenTelemetry"),
-						attribute.String("url.scheme", "http"),
 						attribute.String("traefik.service.name", "myService"),
 						attribute.String("traefik.router.name", "myRouter"),
 						attribute.String("http.route", "Path(`/`)"),
-						attribute.String("user_agent.original", "router-test"),
+					},
+				},
+			},
+		},
+		{
+			desc:            "static span name",
+			service:         "myService",
+			router:          "myRouter",
+			routerRule:      "Path(`/`)",
+			traceNameFormat: "static",
+			expected: []expected{
+				{
+					name: "Router myRouter",
+					attributes: []attribute.KeyValue{
+						attribute.String("span.kind", "server"),
+					},
+				},
+				{
+					name: "Router",
+					attributes: []attribute.KeyValue{
+						attribute.String("span.kind", "internal"),
+						attribute.String("traefik.service.name", "myService"),
+						attribute.String("traefik.router.name", "myRouter"),
+						attribute.String("http.route", "Path(`/`)"),
+					},
+				},
+			},
+		},
+		{
+			desc:            "Method and route span name",
+			service:         "myService",
+			router:          "myRouter",
+			routerRule:      "Path(`/`)",
+			traceNameFormat: "methodAndRoute",
+			expected: []expected{
+				{
+					name: "GET Path(`/`)",
+					attributes: []attribute.KeyValue{
+						attribute.String("span.kind", "server"),
+					},
+				},
+				{
+					name: "Router",
+					attributes: []attribute.KeyValue{
+						attribute.String("span.kind", "internal"),
+						attribute.String("traefik.service.name", "myService"),
+						attribute.String("traefik.router.name", "myRouter"),
+						attribute.String("http.route", "Path(`/`)"),
 					},
 				},
 			},
@@ -63,12 +105,13 @@ func TestNewRouter(t *testing.T) {
 			req.Header.Set("User-Agent", "router-test")
 
 			tracer := &mockTracer{}
+			tracer.TraceNameFormat = test.traceNameFormat
 			tracingCtx, entryPointSpan := tracer.Start(req.Context(), "EntryPoint", trace.WithSpanKind(trace.SpanKindServer))
 			defer entryPointSpan.End()
 
 			req = req.WithContext(tracingCtx)
 
-			rw := httptest.NewRecorder()
+			rw := newRecorder(httptest.NewRecorder(), http.StatusOK, "EntryPoint")
 			next := http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
 				rw.WriteHeader(http.StatusNotFound)
 			})
@@ -76,10 +119,13 @@ func TestNewRouter(t *testing.T) {
 			handler := newRouter(t.Context(), test.router, test.routerRule, test.service, next)
 			handler.ServeHTTP(rw, req)
 
+			entryPointSpan.SetName(rw.SpanName())
+
 			for i, span := range tracer.spans {
 				assert.Equal(t, test.expected[i].name, span.name)
 				assert.Equal(t, test.expected[i].attributes, span.attributes)
 			}
+			assert.Len(t, tracer.spans, len(test.expected), "Expected number of spans does not match actual number of spans")
 		})
 	}
 }
