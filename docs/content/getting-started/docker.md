@@ -34,7 +34,7 @@ Create a Docker Compose file. This configuration:
 # docker-compose.yml
 services:
   traefik:
-    image: traefik:v3.3
+    image: traefik:v3.4
     command:
       - "--api.dashboard=true"
       - "--api.insecure=true"
