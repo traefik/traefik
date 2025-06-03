@@ -43,6 +43,7 @@ var (
 		`CurveP521`:      tls.CurveP521,
 		`x25519`:         tls.X25519,
 		`X25519`:         tls.X25519,
+		`x25519mlkem768`: tls.X25519MLKEM768,
 		`X25519MLKEM768`: tls.X25519MLKEM768,
 	}
 )
