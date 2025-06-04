@@ -422,7 +422,8 @@ func TestForwardAuthClientClosedRequest(t *testing.T) {
 	t.Cleanup(authTs.Close)
 
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		_, _ = fmt.Fprintln(w, "traefik")
+		// next should not be called.
+		t.Fail()
 	})
 
 	auth := dynamic.ForwardAuth{
@@ -452,7 +453,8 @@ func TestForwardAuthClientClosedRequest(t *testing.T) {
 
 func TestForwardAuthForwardError(t *testing.T) {
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		_, _ = fmt.Fprintln(w, "traefik")
+		// next should not be called.
+		t.Fail()
 	})
 
 	auth := dynamic.ForwardAuth{
