@@ -9,14 +9,16 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/healthcheck"
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer"
 )
 
 type namedHandler struct {
 	http.Handler
-	name     string
-	weight   float64
-	deadline float64
+	name                 string
+	weight               float64
+	deadline             float64
+	passiveHealthChecker *healthcheck.PassiveHealthChecker
 }
 
 // Balancer is a WeightedRoundRobin load balancer based on Earliest Deadline First (EDF).
@@ -43,6 +45,16 @@ type Balancer struct {
 	sticky *loadbalancer.Sticky
 
 	curDeadline float64
+}
+
+type StatusRecorder struct {
+	http.ResponseWriter
+	StatusCode int
+}
+
+func (w *StatusRecorder) WriteHeader(statusCode int) {
+	w.StatusCode = statusCode
+	w.ResponseWriter.WriteHeader(statusCode)
 }
 
 // New creates a new load balancer.
@@ -162,12 +174,17 @@ func (b *Balancer) nextServer() (*namedHandler, error) {
 		handler.deadline += 1 / handler.weight
 
 		heap.Push(b, handler)
-		if _, ok := b.status[handler.name]; ok {
-			if _, ok := b.fenced[handler.name]; !ok {
-				// do not select a fenced handler.
-				break
-			}
+		if _, up := b.status[handler.name]; !up {
+			continue
 		}
+		if _, isFenced := b.fenced[handler.name]; isFenced {
+			continue
+		}
+		if handler.passiveHealthChecker != nil && !handler.passiveHealthChecker.AllowRequest() {
+			continue
+		}
+
+		break
 	}
 
 	log.Debug().Msgf("Service selected by WRR: %s", handler.name)
@@ -209,17 +226,28 @@ func (b *Balancer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	server.ServeHTTP(rw, req)
+	recorder := &StatusRecorder{ResponseWriter: rw, StatusCode: http.StatusOK}
+	server.ServeHTTP(recorder, req)
+	if server.passiveHealthChecker != nil {
+		if recorder.StatusCode >= 500 && recorder.StatusCode <= 599 {
+			server.passiveHealthChecker.RecordFailure()
+		}
+	}
 }
 
 // AddServer adds a handler with a server.
 func (b *Balancer) AddServer(name string, handler http.Handler, server dynamic.Server) {
-	b.Add(name, handler, server.Weight, server.Fenced)
+	if server.HealthCheck != nil {
+		healthChecker := healthcheck.NewPassiveHealthChecker(server.HealthCheck.MaxFailedAttempts, server.HealthCheck.FailureWindow)
+		b.Add(name, handler, server.Weight, server.Fenced, healthChecker)
+	} else {
+		b.Add(name, handler, server.Weight, server.Fenced, nil)
+	}
 }
 
 // Add adds a handler.
 // A handler with a non-positive weight is ignored.
-func (b *Balancer) Add(name string, handler http.Handler, weight *int, fenced bool) {
+func (b *Balancer) Add(name string, handler http.Handler, weight *int, fenced bool, pHealthChecker *healthcheck.PassiveHealthChecker) {
 	w := 1
 	if weight != nil {
 		w = *weight
@@ -229,7 +257,12 @@ func (b *Balancer) Add(name string, handler http.Handler, weight *int, fenced bo
 		return
 	}
 
-	h := &namedHandler{Handler: handler, name: name, weight: float64(w)}
+	h := &namedHandler{
+		Handler:              handler,
+		name:                 name,
+		weight:               float64(w),
+		passiveHealthChecker: pHealthChecker,
+	}
 
 	b.handlersMu.Lock()
 	h.deadline = b.curDeadline + 1/h.weight
