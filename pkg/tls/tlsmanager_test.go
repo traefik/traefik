@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -66,6 +67,47 @@ Ckq9yzvP/ib05rvgbvrne00YeOxqJ9gtTrzgh7koqJyX1L4NwdkEza4ilDWpucn0
 xiUZS4SoaJq6ZvcBYS62Yr1t8n09iG47YL8ibgtmH3L+svaotvpVxVK+d7BLevA/
 ZboOWVe3icTy64BT3OQhmg==
 -----END RSA PRIVATE KEY-----`)
+
+
+// LocalhostCert is a PEM-encoded TLS cert with SAN IPs
+// "127.0.0.1" and "[::1]", expiring at Jan 29 16:00:00 2084 GMT.
+// generated from src/crypto/tls:
+// go run generate_cert.go  --rsa-bits 1024 --host 127.0.0.1,::1,example.com --ca --start-date "Jan 1 00:00:00 1970" --duration=1000000h
+
+	localhostCert2 = types.FileOrContent(`-----BEGIN CERTIFICATE-----
+MIICMjCCAZugAwIBAgIQU2ZgpNbD+iY0bT3uguidWDANBgkqhkiG9w0BAQsFADAS
+MRAwDgYDVQQKEwdBY21lIENvMB4XDTAwMDEwMTAwMDAwMFoXDTExMDUyOTE2MDAw
+MFowEjEQMA4GA1UEChMHQWNtZSBDbzCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkC
+gYEAoHPlkXE2KbnrpX/hMBh6N28EOGAIEcyquKUUASU38gJNBH2L302FOfbSl89M
+wW2IzzKeErt2tHmMyRFTY8RrBb9NtBVmCd3u/DOPOxzD2Ixo7bDGTny4lAweWTac
+6n+xaK6j4lqW7InzFeUlKnW2iR/aycZDjCLpBSH86hHIMUsCAwEAAaOBiDCBhTAO
+BgNVHQ8BAf8EBAMCAqQwEwYDVR0lBAwwCgYIKwYBBQUHAwEwDwYDVR0TAQH/BAUw
+AwEB/zAdBgNVHQ4EFgQU5N5PHSuljAXRQLhGXe7rCNcPOxUwLgYDVR0RBCcwJYIL
+ZXhhbXBsZS5jb22HBH8AAAGHEAAAAAAAAAAAAAAAAAAAAAEwDQYJKoZIhvcNAQEL
+BQADgYEAjRCj6e8evJhYx3WAMQ+QncxB45Ck7YpjFT4yAQyLb55c1tqgnQNsdfNh
+M34jKWtGacADNMB5I2/ZPvRK+vrsy2t0WXk0qEdEGsXNQ3amvmkmqdJl6GdSSoBG
+3mv6CmILj46ycaklJl/SGYVJMkAbbFZ+sDvK+oy1xThYpitmXe0=
+-----END CERTIFICATE-----
+`)
+
+	// LocalhostKey is the private key for localhostCert.
+	localhostKey2 = types.FileOrContent(`-----BEGIN PRIVATE KEY-----
+MIICdQIBADANBgkqhkiG9w0BAQEFAASCAl8wggJbAgEAAoGBAKBz5ZFxNim566V/
+4TAYejdvBDhgCBHMqrilFAElN/ICTQR9i99NhTn20pfPTMFtiM8ynhK7drR5jMkR
+U2PEawW/TbQVZgnd7vwzjzscw9iMaO2wxk58uJQMHlk2nOp/sWiuo+JaluyJ8xXl
+JSp1tokf2snGQ4wi6QUh/OoRyDFLAgMBAAECgYA0P6lI5EHL8qP+n5bXz5C0zmzk
+Yrkd+rS5LeBGwzTllMQ5qxxKGfdBOdO35aRL9HwxZH0/AlaUTGSA8Shje4mRsHYd
+G+ScExUCjnvtdnC+lPdRSF1KoVfDFjxHeD4f/BGFILCLioZCv8RDaj0VnOlMeLZa
+kkl7+oCGOG3tyLzTUQJBANIiq/LBwJaRXkWFkTg++bdOLOZIIdRGDbNP4ynWN8o3
+BIwj/Y+8LjtiZTRARg3eCKtT27zBPIMezoVjWVN4CrMCQQDDeTNqalLOmqSwgYyY
+QovHG1NuG3AgSqVeJvT1QepCNJkOppCnX6PtlHRlBwJ9qrvPSd5NmIxAJGmIsn1p
+DWsJAkA8+bSdf51r04jgcY6fHJ8Hktayh9HRL/a/xnmrZS7RLb/TDoqAT+G2d6nY
+TKJHWdt4I6BKmGP/xEu3Jwn/j4DDAkB4y0YVpbykRfYtyPDMCpt8IAvPiA8jNV25
+sBNCGEiePwiygAX2GGkh4NKIt+s3IzHKKBjDFNjermG1Aq/zIkKZAkAvxCCd2umt
+dHxbkSwS7Dl0ihhX38ZYmVpJery7/8g6HyMX0yV2D0/aK+vnzetKWVwrvxlCPgCd
+B0+7l+Zl0B1y
+-----END PRIVATE KEY-----
+`)
 )
 
 func TestTLSInStore(t *testing.T) {
@@ -346,4 +388,36 @@ func TestManager_Get_DefaultValues(t *testing.T) {
 		tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
 		tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
 	}, config.CipherSuites)
+}
+
+
+func TestManager_UpdateConfigs(t *testing.T) {
+	dynamicConfigs := []*CertAndStores{{
+		Certificate: Certificate{
+			CertFile: localhostCert,
+			KeyFile:  localhostKey,
+		},
+	}}
+
+	tlsConfigs := map[string]Options{
+		"foo":     {MinVersion: "VersionTLS12"},
+		"bar":     {MinVersion: "VersionTLS11"},
+		"invalid": {CurvePreferences: []string{"42"}},
+	}
+
+	tlsManager := NewManager()
+	tlsManager.UpdateConfigs(context.Background(), nil, tlsConfigs, dynamicConfigs)
+
+	dynamicConfigs2 := []*CertAndStores{{
+		Certificate: Certificate{
+			CertFile: localhostCert2,
+			KeyFile:  localhostKey2,
+		},
+	}}
+
+	tlsManager.UpdateConfigs(context.Background(), nil, tlsConfigs, dynamicConfigs2)
+
+	for i, cert := range tlsManager.GetServerCertificates() {
+		fmt.Printf("got certificate: %d - %#v\n\n", i, cert.SerialNumber)
+	}
 }
