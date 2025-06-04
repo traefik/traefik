@@ -10,7 +10,7 @@ it manages access to cluster services by supporting the [Ingress](https://kubern
 
 ??? warning "Ingress Backend Resource not supported"
 
-    Referencing backend service endpoints using [`spec.rules.http.paths.backend.resource`](https://kubernetes.io/docs/reference/kubernetes-api/service-resources/ingress-v1/#IngressBackend) [is not supported](https://github.com/traefik/traefik/issues/10022#issuecomment-2554389866).
+    Referencing backend service endpoints using [`spec.rules.http.paths.backend.resource`](https://kubernetes.io/docs/reference/kubernetes-api/service-resources/ingress-v1/#IngressBackend) is not supported.
     Use `spec.rules.http.paths.backend.service` instead.
 
 ## Configuration Example
