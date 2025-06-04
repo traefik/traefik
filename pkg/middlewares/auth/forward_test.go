@@ -422,21 +422,17 @@ func TestForwardAuthClientClosedRequest(t *testing.T) {
 	t.Cleanup(authTs.Close)
 
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "traefik")
+		_, _ = fmt.Fprintln(w, "traefik")
 	})
 
 	auth := dynamic.ForwardAuth{
 		Address: authTs.URL,
 	}
-	authMiddleware, err := NewForward(context.Background(), next, auth, "authTest")
+	authMiddleware, err := NewForward(t.Context(), next, auth, "authTest")
 	require.NoError(t, err)
 
-	ts := httptest.NewServer(authMiddleware)
-	t.Cleanup(ts.Close)
-
-	ctx, cancel := context.WithCancel(context.Background())
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, ts.URL, nil)
-	require.NoError(t, err)
+	ctx, cancel := context.WithCancel(t.Context())
+	req := httptest.NewRequestWithContext(ctx, "GET", "http://foo", http.NoBody)
 
 	recorder := httptest.NewRecorder()
 	go func() {
@@ -455,28 +451,18 @@ func TestForwardAuthClientClosedRequest(t *testing.T) {
 }
 
 func TestForwardAuthForwardError(t *testing.T) {
-	authTs := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		select {}
-	}))
-	t.Cleanup(authTs.Close)
-
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "traefik")
+		_, _ = fmt.Fprintln(w, "traefik")
 	})
 
 	auth := dynamic.ForwardAuth{
-		Address: authTs.URL,
+		Address: "http://non-existing-server",
 	}
-	authMiddleware, err := NewForward(context.Background(), next, auth, "authTest")
+	authMiddleware, err := NewForward(t.Context(), next, auth, "authTest")
 	require.NoError(t, err)
 
-	ts := httptest.NewServer(authMiddleware)
-	t.Cleanup(ts.Close)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Microsecond)
-	defer cancel()
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, ts.URL, nil)
-	require.NoError(t, err)
+	ctx, _ := context.WithTimeout(t.Context(), 1*time.Microsecond)
+	req := httptest.NewRequestWithContext(ctx, http.MethodGet, "http://foo", nil)
 
 	recorder := httptest.NewRecorder()
 	responseComplete := make(chan struct{})

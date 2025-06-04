@@ -196,11 +196,13 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		logger.Debug().Err(forwardErr).Msgf("Error calling %s", fa.address)
 		observability.SetStatusErrorf(req.Context(), "Error calling %s. Cause: %s", fa.address, forwardErr)
 
+		statusCode := http.StatusInternalServerError
 		if errors.Is(forwardErr, context.Canceled) {
-			rw.WriteHeader(httputil.StatusClientClosedRequest)
-		} else {
-			rw.WriteHeader(http.StatusInternalServerError)
+			statusCode = httputil.StatusClientClosedRequest
 		}
+
+		rw.WriteHeader(statusCode)
+
 		return
 	}
 	defer forwardResponse.Body.Close()
