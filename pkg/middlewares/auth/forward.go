@@ -202,7 +202,6 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 
 		rw.WriteHeader(statusCode)
-
 		return
 	}
 	defer forwardResponse.Body.Close()
