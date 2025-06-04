@@ -463,7 +463,8 @@ func TestForwardAuthForwardError(t *testing.T) {
 	authMiddleware, err := NewForward(t.Context(), next, auth, "authTest")
 	require.NoError(t, err)
 
-	ctx, _ := context.WithTimeout(t.Context(), 1*time.Microsecond)
+	ctx, cancel := context.WithTimeout(t.Context(), 1*time.Microsecond)
+	defer cancel()
 	req := httptest.NewRequestWithContext(ctx, http.MethodGet, "http://foo", nil)
 
 	recorder := httptest.NewRecorder()
