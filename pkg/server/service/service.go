@@ -232,7 +232,7 @@ func (m *Manager) getMirrorServiceHandler(ctx context.Context, config *dynamic.M
 			return nil, err
 		}
 
-		err = handler.AddMirror(mirrorHandler, mirrorConfig.Percent)
+		err = handler.AddMirror(mirrorHandler, *mirrorConfig.Percent)
 		if err != nil {
 			return nil, err
 		}
