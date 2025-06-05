@@ -468,15 +468,15 @@ func TestHandler_HTTP(t *testing.T) {
 								Mirrors: []dynamic.MirrorService{
 									{
 										Name:    "two@myprovider",
-										Percent: 10,
+										Percent: pointer(10),
 									},
 									{
 										Name:    "three@myprovider",
-										Percent: 15,
+										Percent: pointer(15),
 									},
 									{
 										Name:    "four@myprovider",
-										Percent: 80,
+										Percent: pointer(80),
 									},
 								},
 							},
