@@ -642,6 +642,12 @@ Prefix to use for metrics collection. (Default: ```traefik```)
 `--metrics.statsd.pushinterval`:  
 StatsD push interval. (Default: ```10```)
 
+`--ocsp`:  
+OCSP configuration. (Default: ```false```)
+
+`--ocsp.responderoverrides.<name>`:  
+Defines a map of OCSP responders to replace for querying OCSP servers.
+
 `--ping`:  
 Enable ping. (Default: ```false```)
 
