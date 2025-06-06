@@ -28,6 +28,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/provider/kv/zk"
 	"github.com/traefik/traefik/v3/pkg/provider/nomad"
 	"github.com/traefik/traefik/v3/pkg/provider/rest"
+	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 )
 
@@ -80,6 +81,8 @@ type Configuration struct {
 	Core *Core `description:"Core controls." json:"core,omitempty" toml:"core,omitempty" yaml:"core,omitempty" export:"true"`
 
 	Spiffe *SpiffeClientConfig `description:"SPIFFE integration configuration." json:"spiffe,omitempty" toml:"spiffe,omitempty" yaml:"spiffe,omitempty" export:"true"`
+
+	OCSP *tls.OCSPConfig `description:"OCSP configuration." json:"ocsp,omitempty" toml:"ocsp,omitempty" yaml:"ocsp,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 }
 
 // Core configures Traefik core behavior.
@@ -422,6 +425,14 @@ func (c *Configuration) ValidateConfiguration() error {
 
 	if c.API != nil && !path.IsAbs(c.API.BasePath) {
 		return errors.New("API basePath must be a valid absolute path")
+	}
+
+	if c.OCSP != nil {
+		for responderURL, url := range c.OCSP.ResponderOverrides {
+			if url == "" {
+				return fmt.Errorf("OCSP responder override value for %s cannot be empty", responderURL)
+			}
+		}
 	}
 
 	return nil
