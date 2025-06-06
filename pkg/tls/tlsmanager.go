@@ -47,7 +47,7 @@ func getCipherSuites() []string {
 
 // OCSPConfig contains the OCSP configuration.
 type OCSPConfig struct {
-	ResponderOverrides map[string]string
+	ResponderOverrides map[string]string `description:"Defines a map of OCSP responders to replace for querying OCSP servers." json:"responderOverrides,omitempty" toml:"responderOverrides,omitempty" yaml:"responderOverrides,omitempty"`
 }
 
 // Manager is the TLS option/store/configuration factory.
