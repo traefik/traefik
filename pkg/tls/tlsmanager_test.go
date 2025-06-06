@@ -15,7 +15,6 @@ import (
 	"github.com/patrickmn/go-cache"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"golang.org/x/crypto/ocsp"
 )
@@ -85,7 +84,7 @@ func TestTLSInStore(t *testing.T) {
 		},
 	}}
 
-	tlsManager := NewManager(nil, nil)
+	tlsManager := NewManager(nil)
 	tlsManager.UpdateConfigs(t.Context(), nil, nil, dynamicConfigs)
 
 	certs := tlsManager.GetStore("default").DynamicCerts.Get().(map[string]*CertificateData)
@@ -102,7 +101,7 @@ func TestTLSInvalidStore(t *testing.T) {
 		},
 	}}
 
-	tlsManager := NewManager(nil, nil)
+	tlsManager := NewManager(nil)
 	tlsManager.UpdateConfigs(t.Context(),
 		map[string]Store{
 			"default": {
@@ -166,7 +165,7 @@ func TestManager_Get(t *testing.T) {
 		},
 	}
 
-	tlsManager := NewManager(nil, nil)
+	tlsManager := NewManager(nil)
 	tlsManager.UpdateConfigs(t.Context(), nil, tlsConfigs, dynamicConfigs)
 
 	for _, test := range testCases {
@@ -305,7 +304,7 @@ func TestClientAuth(t *testing.T) {
 		},
 	}
 
-	tlsManager := NewManager(nil, nil)
+	tlsManager := NewManager(nil)
 	tlsManager.UpdateConfigs(t.Context(), nil, tlsConfigs, nil)
 
 	for _, test := range testCases {
@@ -384,7 +383,9 @@ func TestManager_UpdateConfigs_OCSPConfig(t *testing.T) {
 		ResponderOverrides: map[string]string{
 			"ocsp.example.com": responder.URL,
 		},
-	}, safe.NewPool(testContext))
+	})
+
+	go tlsManager.Run(testContext)
 
 	tlsManager.ocspStapler.cache.Set("existing", &ocspEntry{
 		leaf:       leafCert.Leaf,
@@ -431,7 +432,7 @@ func TestManager_UpdateConfigs_OCSPConfig(t *testing.T) {
 }
 
 func TestManager_Get_DefaultValues(t *testing.T) {
-	tlsManager := NewManager(nil, nil)
+	tlsManager := NewManager(nil)
 
 	// Ensures we won't break things for Traefik users when updating Go
 	config, _ := tlsManager.Get("default", "default")

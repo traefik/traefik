@@ -28,6 +28,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/provider/kv/zk"
 	"github.com/traefik/traefik/v3/pkg/provider/nomad"
 	"github.com/traefik/traefik/v3/pkg/provider/rest"
+	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 )
 
@@ -81,12 +82,7 @@ type Configuration struct {
 
 	Spiffe *SpiffeClientConfig `description:"SPIFFE integration configuration." json:"spiffe,omitempty" toml:"spiffe,omitempty" yaml:"spiffe,omitempty" export:"true"`
 
-	OCSP *OCSP `description:"OCSP configuration." json:"ocsp,omitempty" toml:"ocsp,omitempty" yaml:"ocsp,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
-}
-
-// OCSP contains the OCSP configuration.
-type OCSP struct {
-	ResponderOverrides map[string]string `description:"Defines a map of OCSP responders to replace for querying OCSP servers." json:"responderOverrides,omitempty" toml:"responderOverrides,omitempty" yaml:"responderOverrides,omitempty"`
+	OCSP *tls.OCSPConfig `description:"OCSP configuration." json:"ocsp,omitempty" toml:"ocsp,omitempty" yaml:"ocsp,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 }
 
 // Core configures Traefik core behavior.
