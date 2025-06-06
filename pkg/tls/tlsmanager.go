@@ -16,7 +16,6 @@ import (
 	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/logs"
-	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/tls/generate"
 	"github.com/traefik/traefik/v3/pkg/types"
 )
@@ -66,7 +65,7 @@ type Manager struct {
 }
 
 // NewManager creates a new Manager.
-func NewManager(ocspConfig *OCSPConfig, routinesPool *safe.Pool) *Manager {
+func NewManager(ocspConfig *OCSPConfig) *Manager {
 	manager := &Manager{
 		stores: map[string]*CertificateStore{},
 		configs: map[string]Options{
@@ -74,15 +73,17 @@ func NewManager(ocspConfig *OCSPConfig, routinesPool *safe.Pool) *Manager {
 		},
 	}
 
-	if ocspConfig != nil && routinesPool != nil {
+	if ocspConfig != nil {
 		manager.ocspStapler = newOCSPStapler(ocspConfig.ResponderOverrides)
-
-		routinesPool.GoCtx(func(ctx context.Context) {
-			manager.ocspStapler.Run(ctx)
-		})
 	}
 
 	return manager
+}
+
+func (m *Manager) Run(ctx context.Context) {
+	if m.ocspStapler != nil {
+		m.ocspStapler.Run(ctx)
+	}
 }
 
 // UpdateConfigs updates the TLS* configuration options.
