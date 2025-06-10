@@ -1,12 +1,13 @@
 ---
 title: "Kubernetes and Traefik Quick Start"
 description: "Deploy Traefik in Kubernetes using Helm and expose your first service"
+slug: quick-start-with-kubernetes
 ---
 
 # Getting Started with Kubernetes and Traefik
 
 Kubernetes is a first-class citizen in Traefik, offering native support for Kubernetes resources and the latest Kubernetes standards. 
-Whether you're using Traefik's [IngressRoute CRD](../reference/routing-configuration/kubernetes/crd/http/ingressroute.md) or the Kubernetes Gateway API, 
+Whether you're using Traefik's [IngressRoute CRD](../reference/routing-configuration/kubernetes/crd/http/ingressroute.md), [Ingress](../reference/routing-configuration/kubernetes/ingress.md) or the [Kubernetes Gateway API](../reference/routing-configuration/kubernetes/gateway-api.md), 
 Traefik provides a seamless experience for managing your Kubernetes traffic.
 
 This guide shows you how to:
@@ -22,7 +23,7 @@ This guide shows you how to:
 - Kubernetes
 - Helm 3
 - kubectl
-- kind or k3d (for local cluster creation)
+- k3d (for local cluster creation)
 
 ## Create a Kubernetes Cluster
 
@@ -48,49 +49,6 @@ Configure kubectl:
 kubectl cluster-info --context k3d-traefik
 ```
 
-### Using kind
-
-kind requires specific configuration to use an IngressController on localhost. Create a configuration file:
-
-```yaml
-# kind-config.yaml
-kind: Cluster
-apiVersion: kind.x-k8s.io/v1alpha4
-name: traefik
-nodes:
-- role: control-plane
-  extraPortMappings:
-  - containerPort: 80
-    hostPort: 80
-    protocol: TCP
-  - containerPort: 443
-    hostPort: 443
-    protocol: TCP
-```
-
-Create the cluster:
-
-```bash
-kind create cluster --config=kind-config.yaml
-```
-
-Configure kubectl and wait for the node to be ready:
-
-```bash
-kubectl cluster-info
-kubectl wait --for=condition=ready nodes traefik-control-plane
-```
-
-Add a load balancer like [MetalLB](https://metallb.io/) or [cloud-provider-kind](https://github.com/kubernetes-sigs/cloud-provider-kind) to it:
-
-```bash
-kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.11/config/manifests/metallb-native.yaml
-kubectl wait --namespace metallb-system --for=condition=ready pod --selector=app=metallb --timeout=90s
-```
-
-!!! note
-    If using MetalLB, ensure you assign an IP address pool for the LoadBalancer and advertise it.
-
 ## Install Traefik
 
 ### Using Helm Values File
@@ -104,7 +62,7 @@ helm repo update
 
 Create a values file. This configuration:
 
-- Maps ports 30000 and 30001 to the web and websecure [entrypoints](../reference/install-configuration/entrypoints.md)
+- Maps ports 80 and 443 to the web and websecure [entrypoints](../reference/install-configuration/entrypoints.md)
 - Disables the IngressClass to avoid conflicts with other ingress controllers
 - Enables the [dashboard](../reference/install-configuration/api-dashboard.md) with a specific hostname rule
 - Disables the [Kubernetes Ingress provider](../reference/routing-configuration/kubernetes/ingress.md)
@@ -113,11 +71,6 @@ Create a values file. This configuration:
 
 ```yaml
 # values.yaml
-ports:
-  web:
-    nodePort: 30000
-  websecure:
-    nodePort: 30001
 ingressClass:
   enabled: false
 ingressRoute:
@@ -154,8 +107,6 @@ Alternatively, you can install Traefik using CLI arguments. This command:
 
 ```bash
 helm install traefik traefik/traefik --wait \
-  --set ports.web.nodePort=30000 \
-  --set ports.websecure.nodePort=30001 \
   --set ingressClass.enabled=false \
   --set ingressRoute.dashboard.enabled=true \
   --set ingressRoute.dashboard.matchRule='Host(`dashboard.localhost`)' \
@@ -385,3 +336,5 @@ That's it! You've successfully deployed Traefik and configured routing in a Kube
 - [Enable Metrics](../reference/install-configuration/observability/metrics.md)
 - [Learn more about Kubernetes CRD provider](../reference/install-configuration/providers/kubernetes/kubernetes-crd.md)
 - [Learn more about Kubernetes Gateway API provider](../reference/install-configuration/providers/kubernetes/kubernetes-gateway.md)
+
+{!traefik-for-business-applications.md!}

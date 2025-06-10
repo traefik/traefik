@@ -163,3 +163,5 @@ That's it! You've successfully deployed Traefik and configured routing in Docker
 - [Set up Middlewares](../reference/routing-configuration/http/middlewares/overview.md)
 - [Enable Metrics](../reference/install-configuration/observability/metrics.md)
 - [Learn more about Docker provider](../reference/install-configuration/providers/docker.md)
+
+{!traefik-for-business-applications.md!}
