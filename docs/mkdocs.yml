@@ -115,6 +115,7 @@ nav:
       - 'Let''s Encrypt': 'https/acme.md'
       - 'Tailscale': 'https/tailscale.md'
       - 'SPIFFE': 'https/spiffe.md'
+      - 'OCSP': 'https/ocsp.md'
   - 'Middlewares':
     - 'Overview': 'middlewares/overview.md'
     - 'HTTP':
@@ -232,6 +233,7 @@ nav:
             - "ACME" : 'reference/install-configuration/tls/certificate-resolvers/acme.md'
             - "Tailscale" : 'reference/install-configuration/tls/certificate-resolvers/tailscale.md'
           - "SPIFFE" : 'reference/install-configuration/tls/spiffe.md'
+          - "OCSP" : 'reference/install-configuration/tls/ocsp.md'
       - 'Observability':
           - 'Metrics' : 'reference/install-configuration/observability/metrics.md'
           - 'Tracing': 'reference/install-configuration/observability/tracing.md'

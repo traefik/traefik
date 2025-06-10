@@ -129,6 +129,12 @@ Define if the certificates pool must use a copy of the system cert pool. (Defaul
 `TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_CERTIFICATESDURATION`:  
 Certificates' duration in hours. (Default: ```2160```)
 
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_CLIENTRESPONSEHEADERTIMEOUT`:  
+Timeout for receiving the response headers when communicating with the ACME server. (Default: ```30```)
+
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_CLIENTTIMEOUT`:  
+Timeout for a complete HTTP transaction with the ACME server. (Default: ```120```)
+
 `TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_DNSCHALLENGE`:  
 Activate DNS-01 Challenge. (Default: ```false```)
 
@@ -173,6 +179,9 @@ CSR email addresses to use.
 
 `TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_HTTPCHALLENGE`:  
 Activate HTTP-01 Challenge. (Default: ```false```)
+
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_HTTPCHALLENGE_DELAY`:  
+Delay between the creation of the challenge and the validation. (Default: ```0```)
 
 `TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_HTTPCHALLENGE_ENTRYPOINT`:  
 HTTP challenge EntryPoint
@@ -345,6 +354,9 @@ Environment variables to forward to the wasm guest.
 `TRAEFIK_EXPERIMENTAL_LOCALPLUGINS_<NAME>_SETTINGS_MOUNTS`:  
 Directory to mount to the wasm guest.
 
+`TRAEFIK_EXPERIMENTAL_LOCALPLUGINS_<NAME>_SETTINGS_USEUNSAFE`:  
+Allow the plugin to use unsafe package. (Default: ```false```)
+
 `TRAEFIK_EXPERIMENTAL_OTLPLOGS`:  
 Enables the OpenTelemetry logs integration. (Default: ```false```)
 
@@ -359,6 +371,9 @@ Environment variables to forward to the wasm guest.
 
 `TRAEFIK_EXPERIMENTAL_PLUGINS_<NAME>_SETTINGS_MOUNTS`:  
 Directory to mount to the wasm guest.
+
+`TRAEFIK_EXPERIMENTAL_PLUGINS_<NAME>_SETTINGS_USEUNSAFE`:  
+Allow the plugin to use unsafe package. (Default: ```false```)
 
 `TRAEFIK_EXPERIMENTAL_PLUGINS_<NAME>_VERSION`:  
 plugin's version.
@@ -626,6 +641,12 @@ Prefix to use for metrics collection. (Default: ```traefik```)
 
 `TRAEFIK_METRICS_STATSD_PUSHINTERVAL`:  
 StatsD push interval. (Default: ```10```)
+
+`TRAEFIK_OCSP`:  
+OCSP configuration. (Default: ```false```)
+
+`TRAEFIK_OCSP_RESPONDEROVERRIDES_<NAME>`:  
+Defines a map of OCSP responders to replace for querying OCSP servers.
 
 `TRAEFIK_PING`:  
 Enable ping. (Default: ```false```)
@@ -1016,6 +1037,9 @@ Kubernetes namespaces.
 
 `TRAEFIK_PROVIDERS_KUBERNETESINGRESS_NATIVELBBYDEFAULT`:  
 Defines whether to use Native Kubernetes load-balancing mode by default. (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_KUBERNETESINGRESS_STRICTPREFIXMATCHING`:  
+Make prefix matching strictly comply with the Kubernetes Ingress specification (path-element-wise matching instead of character-by-character string matching). (Default: ```false```)
 
 `TRAEFIK_PROVIDERS_KUBERNETESINGRESS_THROTTLEDURATION`:  
 Ingress refresh throttle duration (Default: ```0```)

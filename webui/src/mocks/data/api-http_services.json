@@ -1,0 +1,245 @@
+[
+  {
+    "loadBalancer": {
+      "servers": [
+        {
+          "url": "http://10.0.1.12:80"
+        }
+      ],
+      "passHostHeader": true
+    },
+    "status": "enabled",
+    "usedBy": [
+      "server-redirect@docker",
+      "server-secured@docker"
+    ],
+    "serverStatus": {
+      "http://10.0.1.12:80": "UP"
+    },
+    "name": "api2_v2-example-beta1@docker",
+    "type": "loadbalancer",
+    "provider": "docker"
+  },
+  {
+    "loadBalancer": {
+      "servers": [
+        {
+          "url": "http://10.0.1.20:80"
+        },
+        {
+          "url": "http://10.0.1.21:80"
+        },
+        {
+          "url": "http://10.0.1.22:80"
+        },
+        {
+          "url": "http://10.0.1.23:80"
+        },
+        {
+          "url": "http://10.0.1.24:80"
+        },
+        {
+          "url": "http://10.0.1.25:80"
+        },
+        {
+          "url": "http://10.0.1.26:80"
+        },
+        {
+          "url": "http://10.0.1.27:80"
+        },
+        {
+          "url": "http://10.0.1.28:80"
+        },
+        {
+          "url": "http://10.0.1.29:80"
+        },
+        {
+          "url": "http://10.0.1.30:80"
+        },
+        {
+          "url": "http://10.0.1.31:80"
+        },
+        {
+          "url": "http://10.0.1.32:80"
+        },
+        {
+          "url": "http://10.0.1.33:80"
+        },
+        {
+          "url": "http://10.0.1.34:80"
+        },
+        {
+          "url": "http://10.0.1.35:80"
+        }
+      ],
+      "passHostHeader": true,
+      "responseForwarding": {
+        "flushInterval": "6s"
+      },
+      "stickiness": {
+        "cookieName": "mycoockie",
+        "secureCookie": true,
+        "httpOnlyCookie": true
+      },
+      "healthCheck": {
+        "scheme": "https",
+        "path": "/health",
+        "port": 80,
+        "interval": "5s",
+        "timeout": "10s",
+        "hostname": "domain.com",
+        "headers": {
+          "X-Custom-A": "foobar,gi,ji;ji,ok",
+          "X-Custom-B": "foobar foobar foobar foobar foobar"
+        }
+      }
+    },
+    "status": "enabled",
+    "usedBy": [
+      "server-mtls@docker"
+    ],
+    "serverStatus": {
+      "http://10.0.1.20:80": "UP",
+      "http://10.0.1.21:80": "UP",
+      "http://10.0.1.22:80": "UP",
+      "http://10.0.1.23:80": "UP",
+      "http://10.0.1.24:80": "UP",
+      "http://10.0.1.25:80": "UP"
+    },
+    "name": "api3_v2-example-beta1@docker",
+    "type": "loadbalancer",
+    "provider": "docker"
+  },
+  {
+    "loadBalancer": {
+      "servers": [
+        {
+          "url": "http://10.0.1.11:80"
+        }
+      ],
+      "passHostHeader": true
+    },
+    "status": "enabled",
+    "usedBy": [
+      "web@docker"
+    ],
+    "serverStatus": {
+      "http://10.0.1.11:80": "UP"
+    },
+    "name": "api_v2-example-beta1@docker",
+    "type": "loadbalancer",
+    "provider": "docker"
+  },
+  {
+    "loadBalancer": {
+      "servers": [
+        {
+          "url": "http://10.0.1.20:5775"
+        }
+      ],
+      "passHostHeader": true
+    },
+    "status": "enabled",
+    "usedBy": [
+      "jaeger_v2-example-beta1@docker"
+    ],
+    "serverStatus": {
+      "http://10.0.1.20:5775": "UP"
+    },
+    "name": "jaeger_v2-example-beta1@docker",
+    "type": "loadbalancer",
+    "provider": "docker"
+  },
+  {
+    "loadBalancer": {
+      "servers": [
+        {
+          "url": "foo"
+        }
+      ],
+      "passHostHeader": false
+    },
+    "status": "enabled",
+    "name": "orphan-service@file",
+    "type": "loadbalancer",
+    "provider": "file"
+  },
+  {
+    "loadBalancer": {
+      "servers": [
+        {
+          "url": "http://10.0.1.10:80"
+        }
+      ],
+      "passHostHeader": true
+    },
+    "status": "enabled",
+    "usedBy": [
+      "traefik_v2-example-beta1@docker"
+    ],
+    "serverStatus": {
+      "http://10.0.1.10:80": "UP"
+    },
+    "name": "traefik_v2-example-beta1@docker",
+    "type": "loadbalancer",
+    "provider": "docker"
+  },
+  {
+    "name": "canary1@docker",
+    "provider": "docker",
+    "status": "enabled",
+    "type": "weighted",
+    "usedBy": [
+      "foo@docker"
+    ],
+    "weighted": {
+      "sticky": {
+        "cookie": {
+          "httpOnly": true,
+          "name": "chocolat",
+          "secure": true
+        }
+      }
+    }
+  },
+  {
+    "name": "canary2@docker",
+    "provider": "docker",
+    "status": "enabled",
+    "type": "weighted",
+    "usedBy": [
+      "fii@docker"
+    ],
+    "weighted": {
+      "sticky": {
+        "cookie": {}
+      }
+    }
+  },
+  {
+    "mirroring": {
+      "mirrors": [
+        {
+          "name": "two@docker",
+          "percent": 10
+        },
+        {
+          "name": "three@docker",
+          "percent": 15
+        },
+        {
+          "name": "four@docker",
+          "percent": 80
+        }
+      ],
+      "service": "one@docker"
+    },
+    "name": "mirror@docker",
+    "provider": "docker",
+    "status": "enabled",
+    "type": "mirroring",
+    "usedBy": [
+      "foo@docker"
+    ]
+  }
+]
