@@ -114,7 +114,7 @@ labels:
 }
 ```
 
-When the `observability` options are not defined on a router, it inherits the behavior from the entrypoint's observability configuration, or the global one.
+When the `observability` options are not defined on a router, it inherits the behavior from the [entrypoint's observability configuration](./overview.md), or the global one.
 
 ## Log Formats
 
