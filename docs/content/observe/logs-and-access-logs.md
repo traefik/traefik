@@ -26,7 +26,22 @@ accessLog:
         Content-Type: keep
 ```
 
-```yaml tab="Helm Values"
+```toml tab="Structured (TOML)"
+[accessLog]
+  format = "json"
+  [accessLog.filters]
+    statusCodes = ["200", "400-404", "500-503"]
+  [accessLog.fields]
+    [accessLog.fields.names]
+      ClientUsername = "drop"
+    [accessLog.fields.headers]
+      defaultMode = "keep"
+      [accessLog.fields.headers.names]
+        "User-Agent" = "redact"
+        "Content-Type" = "keep"
+```
+
+```yaml tab="Helm Chart Values"
 # values.yaml
 logs:
   access:
@@ -38,10 +53,10 @@ logs:
         - "400-404"
         - "500-503"
     fields:
-      general:
-        names:
-          ClientUsername: drop
+      names:
+        ClientUsername: drop
       headers:
+        defaultMode: keep
         names:
           User-Agent: redact
           Content-Type: keep
@@ -61,6 +76,42 @@ http:
       service: my-service
       observability:
         accessLogs: false
+```
+
+```toml tab="Structured (TOML)"
+[http.routers.my-router.observability]
+  accessLogs = false
+```
+
+```yaml tab="Kubernetes"
+# ingressroute.yaml
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: my-router
+spec:
+  routes:
+    - kind: Rule
+      match: Host(`example.com`)
+      services:
+        - name: my-service
+          port: 80
+      observability:
+        accessLogs: false
+```
+
+```bash tab="Labels"
+labels:
+  - "traefik.http.routers.my-router.observability.accesslogs=false"
+```
+
+```json tab="Tags"
+{
+  // ...
+  "Tags": [
+    "traefik.http.routers.my-router.observability.accesslogs=false"
+  ]
+}
 ```
 
 When the `observability` options are not defined on a router, it inherits the behavior from the entrypoint's observability configuration, or the global one.

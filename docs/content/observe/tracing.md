@@ -15,7 +15,12 @@ tracing:
       endpoint: http://myotlpcollector:4318/v1/traces
 ```
 
-```yaml tab="Helm Values"
+```toml tab="Structured (TOML)"
+[tracing.otlp.http]
+  endpoint = "http://myotlpcollector:4318/v1/traces"
+```
+
+```yaml tab="Helm Chart Values"
 # values.yaml
 tracing:
   otlp:
@@ -43,4 +48,40 @@ http:
         tracing: false
 ```
 
-When the `observability` options are not defined on a router, it inherits the behavior from the entrypoint's observability configuration, or the global one.
+```toml tab="Structured (TOML)"
+[http.routers.my-router.observability]
+  tracing = false
+```
+
+```yaml tab="Kubernetes"
+# ingressoute.yaml
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: my-router
+spec:
+  routes:
+    - kind: Rule
+      match: Host(`example.com`)
+      services:
+        - name: my-service
+          port: 80
+      observability:
+        tracing: false
+```
+
+```yaml tab="Labels"
+labels:
+  - "traefik.http.routers.my-router.observability.tracing=false"
+```
+
+```json tab="Tags"
+{
+  // ...
+  "Tags": [
+    "traefik.http.routers.my-router.observability.tracing=false"
+  ]
+}
+```
+
+When the `observability` options are not defined on a router, it inherits the behavior from the [entrypoint's observability configuration](./overview.md), or the global one.

@@ -21,6 +21,28 @@ metrics:
 tracing: {}
 ```
 
+```toml tab="Structured (TOML)"
+[accessLog]
+
+[metrics.otlp]
+
+[tracing.otlp]
+```
+
+```yaml tab="Helm Chart Values"
+# values.yaml
+accessLog:
+  enabled: true
+
+metrics:
+  otlp:
+    enabled: true
+
+tracing:
+  otlp:
+    enabled: true
+```
+
 You can disable access logs, metrics, and tracing for a specific [entrypoint](../reference/install-configuration/entrypoints.md):
 
 ```yaml tab="Structured (YAML)"
@@ -31,6 +53,20 @@ entryPoints:
       accessLogs: false
       tracing: false
       metrics: false
+```
+
+```toml tab="Structured (TOML)"
+[entryPoints.EntryPoint0.observability]
+  accessLogs = false
+  tracing = false
+  metrics = false
+```
+
+```yaml tab="Helm Chart Values"
+additionalArguments:
+  - "--entrypoints.entrypoint0.observability.accesslogs=false"
+  - "--entrypoints.entrypoint0.observability.tracing=false"
+  - "--entrypoints.entrypoint0.observability.metrics=false"
 ```
 
 !!! note
