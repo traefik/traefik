@@ -340,6 +340,11 @@ THIS FILE MUST NOT BE EDITED BY HAND
 -->
 `)
 
+	_, _ = fmt.Fprintf(file, `
+| Key (Path) | Value |
+|------------|-------|
+`)
+
 	for _, k := range keys {
 		_, _ = fmt.Fprintf(file, "| `%s` | `%s` |\n", k, store.data[k])
 	}
