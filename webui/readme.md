@@ -11,7 +11,7 @@ Traefik Web UI provide 2 types of information:
 
 ## How to build (for backend developer)
 
-Use the make file :
+Use the Makefile :
 
 ```shell
 make build-image                # Generate Docker image.
@@ -20,9 +20,13 @@ make clean-webui generate-webui # Generate static contents in `webui/static/` fo
 
 ## How to build (only for frontend developer)
 
-- prerequisite: [Node 20.14+](https://nodejs.org) [Yarn 1.22.22](https://yarnpkg.com/)
+- prerequisite: [Node 22](https://nodejs.org) [Yarn](https://yarnpkg.com/)
 
 - Go to the `webui/` directory
+
+- As we use Yarn v4, you will need to enable corepack before installing dependencies:
+
+  - `corepack enable`
 
 - To install dependencies, execute the following commands:
 
@@ -36,7 +40,7 @@ make clean-webui generate-webui # Generate static contents in `webui/static/` fo
 
 **Do not manually change the files in the `webui/static/` directory**
 
-- The build allows to:
+The build allows to:
   - optimize all JavaScript
   - optimize all CSS
   - add vendor prefixes to CSS (cross-browser support)
@@ -50,15 +54,23 @@ make clean-webui generate-webui # Generate static contents in `webui/static/` fo
 
 - Go to the `webui/` directory
 - Edit files in `webui/src/`
+- Create and populate the `.env` file using the values inside `.env.sample` file.
 - Run in development mode :
   - `yarn dev`
+- The application will be available at `http://localhost:3000/`. On development mode, the application will run with mocked data served by [Mock Service Worker](https://mswjs.io/).
+
+## How to run tests
+
+- Execute the following commands:
+  - `yarn test`
+  - or `yarn test:watch` if you want them in watch mode
 
 ## Libraries
 
 - [Node](https://nodejs.org)
 - [Yarn](https://yarnpkg.com/)
-- [Quasar](https://quasar.dev/)
-- [Vue](https://vuejs.org/)
-- [Bulma](https://bulma.io)
-- [D3](https://d3js.org)
-- [D3 - Documentation](https://github.com/mbostock/d3/wiki)
+- [React](https://reactjs.org/)
+- [Vite](https://vitejs.dev/)
+- [Faency](https://github.com/containous/faency)
+- [Vitest](https://vitest.dev/)
+- [Mock Service Worker](https://mswjs.io/)

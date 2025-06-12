@@ -160,8 +160,8 @@ Here is the list of supported operators:
 
 ### Fallback mechanism
 
-The fallback mechanism returns a `HTTP 503 Service Unavailable` to the client instead of calling the target service.
-This behavior cannot be configured.
+By default the fallback mechanism returns a `HTTP 503 Service Unavailable` to the client instead of calling the target service.
+The response code can be configured.
 
 ### `CheckPeriod`
 

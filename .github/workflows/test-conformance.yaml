@@ -31,7 +31,9 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
 
       - name: Avoid generating webui
-        run: touch webui/static/index.html
+        run: |
+          mkdir webui/static
+          touch webui/static/index.html
 
       - name: K8s Gateway API conformance test and report
         run: |
