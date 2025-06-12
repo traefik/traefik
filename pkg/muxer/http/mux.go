@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/rules"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 type matcherBuilderFuncs map[string]matcherBuilderFunc
@@ -87,32 +88,6 @@ func (m *Muxer) AddRoute(rule string, syntax string, priority int, handler http.
 	return nil
 }
 
-// reservedCharacters contains the mapping of the percent-encoded form to the ASCII form
-// of the reserved characters according to https://datatracker.ietf.org/doc/html/rfc3986#section-2.2.
-// By extension to https://datatracker.ietf.org/doc/html/rfc3986#section-2.1 the percent character is also considered a reserved character.
-// Because decoding the percent character would change the meaning of the URL.
-var reservedCharacters = map[string]rune{
-	"%3A": ':',
-	"%2F": '/',
-	"%3F": '?',
-	"%23": '#',
-	"%5B": '[',
-	"%5D": ']',
-	"%40": '@',
-	"%21": '!',
-	"%24": '$',
-	"%26": '&',
-	"%27": '\'',
-	"%28": '(',
-	"%29": ')',
-	"%2A": '*',
-	"%2B": '+',
-	"%2C": ',',
-	"%3B": ';',
-	"%3D": '=',
-	"%25": '%',
-}
-
 // getRoutingPath retrieves the routing path from the request context.
 // It returns nil if the routing path is not set in the context.
 func getRoutingPath(req *http.Request) *string {
@@ -144,7 +119,7 @@ func withRoutingPath(req *http.Request) (*http.Request, error) {
 		}
 
 		encodedCharacter := escapedPath[i : i+3]
-		if _, reserved := reservedCharacters[encodedCharacter]; reserved {
+		if _, reserved := types.ReservedCharacters[encodedCharacter]; reserved {
 			routingPathBuilder.WriteString(encodedCharacter)
 		} else {
 			// This should never happen as the standard library will reject requests containing invalid percent-encodings.

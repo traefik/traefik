@@ -273,6 +273,9 @@ Subject alternative names.
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_TLS_OPTIONS`:  
 Default TLS options for the routers linked to the entry point.
 
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_ADDITIONALRESERVEDCHARACTERS`:  
+Add new valid encoded chars, map of encoded caracter and decoded caracter.
+
 `TRAEFIK_ENTRYPOINTS_<NAME>_OBSERVABILITY_ACCESSLOGS`:  
  (Default: ```true```)
 

@@ -14,6 +14,7 @@ import (
 	"sync"
 	"syscall"
 	"time"
+	"unicode/utf8"
 
 	"github.com/containous/alice"
 	gokitmetrics "github.com/go-kit/kit/metrics"
@@ -619,6 +620,24 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 
 	// With the addition of UnencryptedHTTP2 in http.Server#Protocols in go1.24 setting the h2c handler is not necessary anymore.
 	protocols.SetUnencryptedHTTP2(withH2c)
+
+	if len(configuration.HTTP.AdditionalReservedCharacters) > 0 {
+		for key, value := range configuration.HTTP.AdditionalReservedCharacters {
+			if _, exists := types.ReservedCharacters[key]; !exists {
+				runes := []rune(value)
+				if len(runes) != 1 {
+					return nil, errors.New("AdditionalReservedCharacters value must be a single valid rune")
+				}
+				if runes[0] == '\uFFFD' {
+					return nil, errors.New("AdditionalReservedCharacters value contains an invalid rune")
+				}
+				if runes[0] < 0 || runes[0] > utf8.MaxRune {
+					return nil, errors.New("AdditionalReservedCharacters value is out of valid Unicode range")
+				}
+				types.ReservedCharacters[key] = runes[0]
+			}
+		}
+	}
 
 	handler = contenttype.DisableAutoDetection(handler)
 
