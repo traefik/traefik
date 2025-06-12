@@ -264,6 +264,9 @@ Subject alternative names.
 `--entrypoints.<name>.http.tls.options`:  
 Default TLS options for the routers linked to the entry point.
 
+`--entrypoints.<name>.http.additionalReservedCharacters`:  
+Add new valid encoded chars.
+
 `--entrypoints.<name>.http2.maxconcurrentstreams`:  
 Specifies the number of concurrent streams per connection that each client is allowed to initiate. (Default: ```250```)
 
