@@ -20,6 +20,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
 	tcprouter "github.com/traefik/traefik/v3/pkg/server/router/tcp"
 	"github.com/traefik/traefik/v3/pkg/tcp"
+	"github.com/traefik/traefik/v3/pkg/types"
 	"golang.org/x/net/http2"
 )
 
@@ -643,6 +644,87 @@ func TestPathOperations(t *testing.T) {
 			assert.Equal(t, test.expectedStatus, res.StatusCode)
 			assert.Equal(t, test.expectedPath, res.Header.Get("Path"))
 			assert.Equal(t, test.expectedRaw, res.Header.Get("RawPath"))
+		})
+	}
+}
+
+func TestAdditionalReservedCharacters(t *testing.T) {
+	tests := []struct {
+		desc        string
+		input       map[string]string
+		expectError bool
+	}{
+		{
+			desc: "valid rune",
+			input: map[string]string{
+				"%2E": ".",
+			},
+			expectError: false,
+		},
+		{
+			desc: "multiple runes",
+			input: map[string]string{
+				"%24": "$$",
+			},
+			expectError: true,
+		},
+		{
+			desc: "invalid rune (replacement character)",
+			input: map[string]string{
+				"%24": string('\uFFFD'),
+			},
+			expectError: true,
+		},
+		{
+			desc: "empty string",
+			input: map[string]string{
+				"%24": "",
+			},
+			expectError: true,
+		},
+		{
+			desc: "already exists in ReservedCharacters",
+			input: map[string]string{
+				"%2F": "/",
+			},
+			expectError: false, // Should silently skip since already exists
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			// Reset types.ReservedCharacters to default
+			types.ReservedCharacters = map[string]rune{
+				"%2E": '.', // pre-defined
+			}
+
+			// Setup dummy EntryPoint config
+			configuration := &static.EntryPoint{
+				HTTP: static.HTTPConfig{
+					AdditionalReservedCharacters: test.input,
+				},
+				Transport:        &static.EntryPointsTransport{},
+				ForwardedHeaders: &static.ForwardedHeaders{},
+				HTTP2:            &static.HTTP2Config{},
+			}
+
+			// Attempt to create HTTP server to trigger logic
+			ln, err := net.Listen("tcp", "127.0.0.1:0")
+			require.NoError(t, err)
+			defer ln.Close()
+
+			_, err = createHTTPServer(context.Background(), ln, configuration, false, requestdecorator.New(nil))
+
+			if test.expectError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				for k, v := range test.input {
+					if _, exists := types.ReservedCharacters[k]; exists {
+						assert.Equal(t, v, string(types.ReservedCharacters[k]))
+					}
+				}
+			}
 		})
 	}
 }
