@@ -86,6 +86,8 @@ entryPoints:
       encodeQuerySemicolons: true
       sanitizePath: true
       maxHeaderBytes: 42
+      additionalReservedCharacters:
+        "%2E" : "."
     http2:
       maxConcurrentStreams: 42
     http3:
