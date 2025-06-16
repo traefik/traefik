@@ -438,6 +438,19 @@ http:
           - foobar
           - foobar
         trustDomain: foobar
+      fastCGI:
+        root: foobar
+        splitPathRegex: foobar
+        env:
+          name0: foobar
+          name1: foobar
+        maxConns: 42
+        acquireConnTimeout: 42s
+        readTimeout: 42s
+        writeTimeout: 42s
+        dialTimeout: 42s
+        logStderr: true
+        resolveSymlink: true
     ServersTransport1:
       serverName: foobar
       insecureSkipVerify: true
@@ -463,6 +476,19 @@ http:
           - foobar
           - foobar
         trustDomain: foobar
+      fastCGI:
+        root: foobar
+        splitPathRegex: foobar
+        env:
+          name0: foobar
+          name1: foobar
+        maxConns: 42
+        acquireConnTimeout: 42s
+        readTimeout: 42s
+        writeTimeout: 42s
+        dialTimeout: 42s
+        logStderr: true
+        resolveSymlink: true
 tcp:
   routers:
     TCPRouter0:
