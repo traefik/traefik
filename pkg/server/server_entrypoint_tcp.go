@@ -163,6 +163,7 @@ type TCPEntryPoint struct {
 	tracker                *connectionTracker
 	httpServer             *httpServer
 	httpsServer            *httpServer
+	gracefullyStopped      bool
 
 	http3Server *http3server
 }
@@ -213,6 +214,7 @@ func NewTCPEntryPoint(ctx context.Context, name string, config *static.EntryPoin
 		httpServer:             httpServer,
 		httpsServer:            httpsServer,
 		http3Server:            h3Server,
+		gracefullyStopped:      false,
 	}, nil
 }
 
@@ -228,7 +230,11 @@ func (e *TCPEntryPoint) Start(ctx context.Context) {
 	for {
 		conn, err := e.listener.Accept()
 		if err != nil {
-			logger.Error().Err(err).Send()
+			if !e.gracefullyStopped {
+				logger.Error().Err(err).Send()
+			} else {
+				err = http.ErrServerClosed
+			}
 
 			var opErr *net.OpError
 			if errors.As(err, &opErr) && opErr.Temporary() {
@@ -311,19 +317,16 @@ func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
 		server.Close()
 	}
 
+	e.gracefullyStopped = true
+
 	if e.httpServer.Server != nil {
 		wg.Add(1)
 		go shutdownServer(e.httpServer.Server)
 	}
 
-	if e.httpsServer.Server != nil {
+	if e.http3Server != nil {
 		wg.Add(1)
-		go shutdownServer(e.httpsServer.Server)
-
-		if e.http3Server != nil {
-			wg.Add(1)
-			go shutdownServer(e.http3Server)
-		}
+		go shutdownServer(e.http3Server)
 	}
 
 	if e.tracker != nil {
