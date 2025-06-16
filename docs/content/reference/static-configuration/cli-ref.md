@@ -129,6 +129,12 @@ Define if the certificates pool must use a copy of the system cert pool. (Defaul
 `--certificatesresolvers.<name>.acme.certificatesduration`:  
 Certificates' duration in hours. (Default: ```2160```)
 
+`--certificatesresolvers.<name>.acme.clientresponseheadertimeout`:  
+Timeout for receiving the response headers when communicating with the ACME server. (Default: ```30```)
+
+`--certificatesresolvers.<name>.acme.clienttimeout`:  
+Timeout for a complete HTTP transaction with the ACME server. (Default: ```120```)
+
 `--certificatesresolvers.<name>.acme.dnschallenge`:  
 Activate DNS-01 Challenge. (Default: ```false```)
 
@@ -173,6 +179,9 @@ CSR email addresses to use.
 
 `--certificatesresolvers.<name>.acme.httpchallenge`:  
 Activate HTTP-01 Challenge. (Default: ```false```)
+
+`--certificatesresolvers.<name>.acme.httpchallenge.delay`:  
+Delay between the creation of the challenge and the validation. (Default: ```0```)
 
 `--certificatesresolvers.<name>.acme.httpchallenge.entrypoint`:  
 HTTP challenge EntryPoint
@@ -345,6 +354,9 @@ Environment variables to forward to the wasm guest.
 `--experimental.localplugins.<name>.settings.mounts`:  
 Directory to mount to the wasm guest.
 
+`--experimental.localplugins.<name>.settings.useunsafe`:  
+Allow the plugin to use unsafe package. (Default: ```false```)
+
 `--experimental.otlplogs`:  
 Enables the OpenTelemetry logs integration. (Default: ```false```)
 
@@ -359,6 +371,9 @@ Environment variables to forward to the wasm guest.
 
 `--experimental.plugins.<name>.settings.mounts`:  
 Directory to mount to the wasm guest.
+
+`--experimental.plugins.<name>.settings.useunsafe`:  
+Allow the plugin to use unsafe package. (Default: ```false```)
 
 `--experimental.plugins.<name>.version`:  
 plugin's version.
@@ -626,6 +641,12 @@ Prefix to use for metrics collection. (Default: ```traefik```)
 
 `--metrics.statsd.pushinterval`:  
 StatsD push interval. (Default: ```10```)
+
+`--ocsp`:  
+OCSP configuration. (Default: ```false```)
+
+`--ocsp.responderoverrides.<name>`:  
+Defines a map of OCSP responders to replace for querying OCSP servers.
 
 `--ping`:  
 Enable ping. (Default: ```false```)
@@ -1016,6 +1037,9 @@ Kubernetes namespaces.
 
 `--providers.kubernetesingress.nativelbbydefault`:  
 Defines whether to use Native Kubernetes load-balancing mode by default. (Default: ```false```)
+
+`--providers.kubernetesingress.strictprefixmatching`:  
+Make prefix matching strictly comply with the Kubernetes Ingress specification (path-element-wise matching instead of character-by-character string matching). (Default: ```false```)
 
 `--providers.kubernetesingress.throttleduration`:  
 Ingress refresh throttle duration (Default: ```0```)
