@@ -324,14 +324,9 @@ func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
 		go shutdownServer(e.httpServer.Server)
 	}
 
-	if e.httpsServer.Server != nil {
+	if e.http3Server != nil {
 		wg.Add(1)
-		go shutdownServer(e.httpsServer.Server)
-
-		if e.http3Server != nil {
-			wg.Add(1)
-			go shutdownServer(e.http3Server)
-		}
+		go shutdownServer(e.http3Server)
 	}
 
 	if e.tracker != nil {
