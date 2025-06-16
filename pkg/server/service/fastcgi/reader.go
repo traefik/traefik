@@ -9,7 +9,7 @@ import (
 
 var (
 	errFastCgiProtocolError = errors.New("fastcgi request ended with error")
-	fastCgiRequestEOF       = errors.New("fastcgi request complete")
+	errFastCgiRequestEOF    = errors.New("fastcgi request complete")
 )
 
 type fastcgiReader struct {
@@ -32,7 +32,7 @@ func newFastCgiReader(src io.Reader) *fastcgiReader {
 func (r *fastcgiReader) Read(p []byte) (int, error) {
 	if r.contentReader.N > 0 {
 		n, err := r.contentReader.Read(p)
-		if err != nil && err != io.EOF {
+		if err != nil && !errors.Is(err, io.EOF) {
 			return 0, err
 		}
 
@@ -96,7 +96,7 @@ func (r *fastcgiReader) readEndRequest() error {
 		return err
 	}
 
-	return fastCgiRequestEOF
+	return errFastCgiRequestEOF
 }
 
 func (r *fastcgiReader) discardPadding() error {

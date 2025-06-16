@@ -69,15 +69,6 @@ func (w *fastcgiWriter) writeStdinReq(stdin io.Reader) error {
 	return w.terminateStream(FastCgiStdinRecord)
 }
 
-func (w *fastcgiWriter) writeGetValuesReq(keys []string) error {
-	pairs := make(map[string]string)
-	for _, k := range keys {
-		pairs[k] = ""
-	}
-
-	return w.writePairs(FastCgiGetValuesRecord, pairs)
-}
-
 func (w *fastcgiWriter) writePairs(recordType uint8, pairs map[string]string) error {
 	w.buff.Reset()
 	// space for header

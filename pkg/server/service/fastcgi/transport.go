@@ -2,6 +2,7 @@ package fastcgi
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -96,7 +97,7 @@ func makeResponse(stdout *ConnReadCloser) (*http.Response, error) {
 	// - missing status header = 200 OK
 	tp := textproto.NewReader(stdout.reader)
 	mimeHeader, err := tp.ReadMIMEHeader()
-	if err != nil && err != io.EOF {
+	if err != nil && !errors.Is(err, io.EOF) {
 		return nil, err
 	}
 	resp := new(http.Response)

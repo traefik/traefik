@@ -198,9 +198,9 @@ type ConnReadCloser struct {
 
 func (crc *ConnReadCloser) Read(p []byte) (int, error) {
 	n, err := crc.reader.Read(p)
-	// fastCgiRequestEOF indicates that FCGI_END_REQUEST has been read
+	// errFastCgiRequestEOF indicates that FCGI_END_REQUEST has been read
 	// in such case connection can be reused
-	if errors.Is(err, fastCgiRequestEOF) {
+	if errors.Is(err, errFastCgiRequestEOF) {
 		crc.drained = true
 		err = io.EOF
 	}
