@@ -27,10 +27,41 @@ const (
 	StatusClientClosedRequestText = "Client Closed Request"
 )
 
+// chunkedPreservingTransport wraps an http.RoundTripper to preserve chunked transfer
+// encoding in responses. This helps prevent connection issues with keep-alive connections
+// when handling chunked responses (addresses Go issue #40747).
+type chunkedPreservingTransport struct {
+	Transport http.RoundTripper
+}
+
+func (c *chunkedPreservingTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	if c.Transport == nil {
+		c.Transport = http.DefaultTransport
+	}
+	resp, err := c.Transport.RoundTrip(req)
+	if err != nil {
+		return resp, err
+	}
+
+	// If the backend sent a chunked response, preserve it
+	if resp.Header.Get("Transfer-Encoding") == "chunked" {
+		// Ensure Content-Length is not set when using chunked encoding
+		resp.Header.Del("Content-Length")
+		resp.ContentLength = -1
+	}
+
+	return resp, nil
+}
+
 func buildSingleHostProxy(target *url.URL, passHostHeader bool, preservePath bool, flushInterval time.Duration, roundTripper http.RoundTripper, bufferPool httputil.BufferPool) http.Handler {
+	// Wrap the round tripper to preserve chunked encoding
+	wrappedTransport := &chunkedPreservingTransport{
+		Transport: roundTripper,
+	}
+
 	return &httputil.ReverseProxy{
 		Director:      directorBuilder(target, passHostHeader, preservePath),
-		Transport:     roundTripper,
+		Transport:     wrappedTransport,
 		FlushInterval: flushInterval,
 		BufferPool:    bufferPool,
 		ErrorLog:      stdlog.New(logs.NoLevel(log.Logger, zerolog.DebugLevel), "", 0),
