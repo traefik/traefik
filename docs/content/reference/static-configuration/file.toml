@@ -143,6 +143,21 @@
       ip = "foobar"
       hostname = "foobar"
       publishedService = "foobar"
+  [providers.kubernetesIngressNGINX]
+    endpoint = "foobar"
+    token = "foobar"
+    certAuthFilePath = "foobar"
+    throttleDuration = "42s"
+    watchNamespace = "foobar"
+    watchNamespaceSelector = "foobar"
+    ingressClass = "foobar"
+    controllerClass = "foobar"
+    watchIngressWithoutClass = true
+    ingressClassByName = true
+    publishService = "foobar"
+    publishStatusAddress = ["foobar", "foobar"]
+    defaultBackendService = "foobar"
+    disableSvcExternalName = true
   [providers.kubernetesCRD]
     endpoint = "foobar"
     token = "foobar"
@@ -572,6 +587,7 @@
 [experimental]
   abortOnPluginFailure = true
   otlplogs = true
+  kubernetesIngressNGINX = true
   kubernetesGateway = true
   [experimental.plugins]
     [experimental.plugins.Descriptor0]

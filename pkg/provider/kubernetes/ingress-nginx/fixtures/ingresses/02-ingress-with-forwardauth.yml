@@ -1,0 +1,24 @@
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: ingress-with-forwardauth
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/auth-url: "http://whoami.default.svc/"
+    nginx.ingress.kubernetes.io/auth-method: "GET"
+    nginx.ingress.kubernetes.io/auth-response-headers: "X-Foo"
+
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: whoami.localhost
+      http:
+        paths:
+          - path: /forwardauth
+            pathType: Exact
+            backend:
+              service:
+                name: whoami
+                port:
+                  number: 80

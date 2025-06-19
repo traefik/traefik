@@ -1,0 +1,24 @@
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: ingress-with-default-backend
+  namespace: default
+
+spec:
+  defaultBackend:
+    service:
+      name: whoami-default
+      port:
+        number: 80
+
+  rules:
+     - http:
+        paths:
+          - path: /
+            pathType: Exact
+            backend:
+              service:
+                name: whoami
+                port:
+                  number: 80
