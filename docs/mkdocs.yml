@@ -79,6 +79,7 @@ nav:
       - 'Swarm': 'providers/swarm.md'
       - 'Kubernetes IngressRoute': 'providers/kubernetes-crd.md'
       - 'Kubernetes Ingress': 'providers/kubernetes-ingress.md'
+      - 'Kubernetes Ingress NGINX': 'reference/install-configuration/providers/kubernetes/kubernetes-ingress-nginx.md'
       - 'Kubernetes Gateway API': 'providers/kubernetes-gateway.md'
       - 'Consul Catalog': 'providers/consul-catalog.md'
       - 'Nomad': 'providers/nomad.md'
@@ -99,6 +100,7 @@ nav:
           - 'Swarm': 'routing/providers/swarm.md'
           - 'Kubernetes IngressRoute': 'routing/providers/kubernetes-crd.md'
           - 'Kubernetes Ingress': 'routing/providers/kubernetes-ingress.md'
+          - 'Kubernetes Ingress NGINX': 'reference/routing-configuration/kubernetes/ingress-nginx.md'
           - 'Kubernetes Gateway API': 'routing/providers/kubernetes-gateway.md'
           - 'Consul Catalog': 'routing/providers/consul-catalog.md'
           - 'Nomad': 'routing/providers/nomad.md'
@@ -205,6 +207,7 @@ nav:
           - 'Kubernetes Gateway API' : 'reference/install-configuration/providers/kubernetes/kubernetes-gateway.md'
           - 'Kubernetes CRD' : 'reference/install-configuration/providers/kubernetes/kubernetes-crd.md'
           - 'Kubernetes Ingress' : 'reference/install-configuration/providers/kubernetes/kubernetes-ingress.md'
+          - 'Kubernetes Ingress NGINX' : 'reference/install-configuration/providers/kubernetes/kubernetes-ingress-nginx.md'
         - 'Docker': 'reference/install-configuration/providers/docker.md'
         - 'Swarm': 'reference/install-configuration/providers/swarm.md'
         - 'Hashicorp':
@@ -307,6 +310,7 @@ nav:
             - 'UDP' :
                 - 'IngressRouteUDP' : 'reference/routing-configuration/kubernetes/crd/udp/ingressrouteudp.md'
           - 'Ingress' : 'reference/routing-configuration/kubernetes/ingress.md'
+          - 'Ingress NGINX' : 'reference/routing-configuration/kubernetes/ingress-nginx.md'
         - 'Label & Tag Providers' :
           - 'Docker' : 'reference/routing-configuration/other-providers/docker.md'
           - 'Swarm' : 'reference/routing-configuration/other-providers/swarm.md'
