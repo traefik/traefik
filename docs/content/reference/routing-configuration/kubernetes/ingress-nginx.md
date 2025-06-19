@@ -285,6 +285,7 @@ Limitations or behavioral differences are indicated where relevant.
 | `nginx.ingress.kubernetes.io/proxy-ssl-name`          |                                                                                            |
 | `nginx.ingress.kubernetes.io/proxy-ssl-verify`        |                                                                                            |
 | `nginx.ingress.kubernetes.io/proxy-ssl-secret`        |                                                                                            |
+| `nginx.ingress.kubernetes.io/service-upstream`        |                                                                                            |
 
 ### Unsupported NGINX Annotations
 

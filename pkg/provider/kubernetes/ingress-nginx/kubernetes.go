@@ -369,7 +369,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 					continue
 				}
 
-				service, err := p.buildPassthroughService(ingress.Namespace, *backend)
+				service, err := p.buildPassthroughService(ingress.Namespace, *backend, ingressConfig)
 				if err != nil {
 					logger.Error().Err(err).Msgf("Cannot create passthrough service for %s", backend.Service.Name)
 					continue
@@ -537,7 +537,7 @@ func (p *Provider) buildServersTransport(namespace, name string, cfg ingressConf
 }
 
 func (p *Provider) buildService(namespace string, backend netv1.IngressBackend, cfg ingressConfig) (*dynamic.Service, error) {
-	backendAddresses, err := p.getBackendAddresses(namespace, backend)
+	backendAddresses, err := p.getBackendAddresses(namespace, backend, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("getting backend addresses: %w", err)
 	}
@@ -571,8 +571,8 @@ func (p *Provider) buildService(namespace string, backend netv1.IngressBackend, 
 	return svc, nil
 }
 
-func (p *Provider) buildPassthroughService(namespace string, backend netv1.IngressBackend) (*dynamic.TCPService, error) {
-	backendAddresses, err := p.getBackendAddresses(namespace, backend)
+func (p *Provider) buildPassthroughService(namespace string, backend netv1.IngressBackend, cfg ingressConfig) (*dynamic.TCPService, error) {
+	backendAddresses, err := p.getBackendAddresses(namespace, backend, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("getting backend addresses: %w", err)
 	}
@@ -587,7 +587,7 @@ func (p *Provider) buildPassthroughService(namespace string, backend netv1.Ingre
 	return &dynamic.TCPService{LoadBalancer: lb}, nil
 }
 
-func (p *Provider) getBackendAddresses(namespace string, backend netv1.IngressBackend) ([]backendAddress, error) {
+func (p *Provider) getBackendAddresses(namespace string, backend netv1.IngressBackend, cfg ingressConfig) ([]backendAddress, error) {
 	service, err := p.k8sClient.GetService(namespace, backend.Service.Name)
 	if err != nil {
 		return nil, fmt.Errorf("getting service: %w", err)
@@ -616,6 +616,11 @@ func (p *Provider) getBackendAddresses(namespace string, backend netv1.IngressBa
 
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
 		return []backendAddress{{Address: net.JoinHostPort(service.Spec.ExternalName, strconv.Itoa(int(portSpec.Port)))}}, nil
+	}
+
+	// When service upstream is set to true we return the service ClusterIP as the backend address.
+	if ptr.Deref(cfg.ServiceUpstream, false) {
+		return []backendAddress{{Address: net.JoinHostPort(service.Spec.ClusterIP, strconv.Itoa(int(portSpec.Port)))}}, nil
 	}
 
 	endpointSlices, err := p.k8sClient.GetEndpointSlicesForService(namespace, backend.Service.Name)

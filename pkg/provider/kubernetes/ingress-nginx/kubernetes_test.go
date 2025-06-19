@@ -463,6 +463,48 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
+			desc: "Service Upstream",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/09-ingress-with-service-upstream.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-service-upstream-rule-0-path-0": {
+							Rule:       "Host(`service-upstream.localhost`) && Path(`/`)",
+							RuleSyntax: "default",
+							Service:    "default-whoami-80",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.10.1:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
 			desc:                           "Default Backend",
 			defaultBackendServiceName:      "whoami",
 			defaultBackendServiceNamespace: "default",
