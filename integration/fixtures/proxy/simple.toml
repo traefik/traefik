@@ -1,0 +1,34 @@
+# Traefik configuration for testing chunked response keep-alive issue
+
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+
+[entryPoints]
+  [entryPoints.web]
+    address = ":8000"
+
+[api]
+  dashboard = true
+  insecure = true
+
+[http]
+  [http.routers]
+    [http.routers.api]
+      rule = "PathPrefix(`/api`)"
+      service = "api@internal"
+      entryPoints = ["web"]
+
+    [http.routers.simple]
+      rule = "PathPrefix(`/`)"
+      service = "simple"
+      entryPoints = ["web"]
+
+  [http.services]
+    [http.services.simple]
+      [http.services.simple.loadBalancer]
+        [[http.services.simple.loadBalancer.servers]]
+          url = "{{ .BackendURL }}"
