@@ -399,7 +399,7 @@ func (c *Configuration) ValidateConfiguration() error {
 		}
 
 		if c.Providers.KubernetesIngressNGINX.WatchNamespace != "" && c.Providers.KubernetesIngressNGINX.WatchNamespaceSelector != "" {
-			return fmt.Errorf("watchNamespace and watchNamespaceSelector options are mutually exclusive")
+			return errors.New("watchNamespace and watchNamespaceSelector options are mutually exclusive")
 		}
 	}
 
