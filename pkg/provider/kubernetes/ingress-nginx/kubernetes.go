@@ -500,7 +500,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 }
 
 func (p *Provider) buildServersTransport(namespace, name string, cfg ingressConfig) (*namedServersTransport, error) {
-	scheme := parseBackendProtocol(ptr.Deref(cfg.BackendProtocol, ""))
+	scheme := parseBackendProtocol(ptr.Deref(cfg.BackendProtocol, "HTTP"))
 	if scheme != "https" {
 		return nil, nil
 	}
@@ -559,7 +559,7 @@ func (p *Provider) buildService(namespace string, backend netv1.IngressBackend, 
 		}
 	}
 
-	scheme := parseBackendProtocol(ptr.Deref(cfg.BackendProtocol, ""))
+	scheme := parseBackendProtocol(ptr.Deref(cfg.BackendProtocol, "HTTP"))
 
 	svc := &dynamic.Service{LoadBalancer: lb}
 	for _, addr := range backendAddresses {
