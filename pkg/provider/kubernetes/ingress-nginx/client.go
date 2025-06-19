@@ -32,20 +32,6 @@ const (
 	defaultTimeout = 5 * time.Second
 )
 
-// Client is a client for the Provider master.
-// WatchAll starts the watch of the Provider resources and updates the stores.
-// The stores can then be accessed via the Get* functions.
-type Client interface {
-	WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error)
-	IngressClassesIgnored() bool
-	ListIngressClasses() ([]*netv1.IngressClass, error)
-	ListIngresses() []*netv1.Ingress
-	GetService(namespace, name string) (*corev1.Service, error)
-	GetSecret(namespace, name string) (*corev1.Secret, error)
-	GetEndpointSlicesForService(namespace, serviceName string) ([]*discoveryv1.EndpointSlice, error)
-	UpdateIngressStatus(ing *netv1.Ingress, ingStatus []netv1.IngressLoadBalancerIngress) error
-}
-
 type clientWrapper struct {
 	clientset           kclientset.Interface
 	clusterScopeFactory kinformers.SharedInformerFactory
