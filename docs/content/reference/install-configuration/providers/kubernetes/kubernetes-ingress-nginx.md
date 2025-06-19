@@ -100,6 +100,6 @@ providers:
 
 ## Routing Configuration
 
-See the dedicated section in [routing](../../../../routing/providers/kubernetes-ingress-nginx.md).
+See the dedicated section in [routing](../../../routing-configuration/kubernetes/ingress-nginx.md).
 
 {!traefik-for-business-applications.md!}

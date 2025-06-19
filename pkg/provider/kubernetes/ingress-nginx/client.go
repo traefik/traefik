@@ -383,15 +383,15 @@ func isLoadBalancerIngressEquals(aSlice, bSlice []netv1.IngressLoadBalancerIngre
 // filterIngressClass return a slice containing IngressClass matching either the annotation name or the controller.
 func filterIngressClass(ingressClasses []*netv1.IngressClass, ingressClassByName bool, ingressClass, controllerClass string) []*netv1.IngressClass {
 	var filteredIngressClasses []*netv1.IngressClass
-
 	for _, ic := range ingressClasses {
 		if ingressClassByName && ic.Name == ingressClass {
 			filteredIngressClasses = append(filteredIngressClasses, ic)
 			continue
 		}
 
-		if controllerClass != "" && ic.Spec.Controller == controllerClass {
+		if ic.Spec.Controller == controllerClass {
 			filteredIngressClasses = append(filteredIngressClasses, ic)
+			continue
 		}
 	}
 

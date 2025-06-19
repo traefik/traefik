@@ -1,253 +1,297 @@
 ---
-title: "Kubernetes Ingress Routing Configuration"
+title: "Kubernetes Ingress NGINX Routing Configuration"
 description: "Understand the routing configuration for the Kubernetes Ingress NGINX Controller and Traefik Proxy. Read the technical documentation."
 ---
 
 # Traefik & Kubernetes
 
-The Kubernetes Ingress Controller.
+The Kubernetes Ingress NGINX Controller.
 {: .subtitle }
 
 ## Routing Configuration
 
-The provider then watches for incoming ingresses events, such as the example below,
+The Kubernetes Ingress NGINX provider watches for incoming ingresses events, such as the example below,
 and derives the corresponding dynamic configuration from it,
 which in turn will create the resulting routers, services, handlers, etc.
 
 ## Configuration Example
 
-??? example "Configuring Kubernetes Ingress Controller"
+??? example "Configuring Kubernetes Ingress NGINX Controller"
 
-    ```yaml tab="RBAC"
-    ---
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: ClusterRole
-    metadata:
-      name: traefik-ingress-controller
-    rules:
-      - apiGroups:
-          - ""
-        resources:
-          - services
-          - secrets
-        verbs:
-          - get
-          - list
-          - watch
-      - apiGroups:
-          - discovery.k8s.io
-        resources:
-          - endpointslices
-        verbs:
-          - list
-          - watch
-      - apiGroups:
-          - extensions
-          - networking.k8s.io
-        resources:
-          - ingresses
-          - ingressclasses
-        verbs:
-          - get
-          - list
-          - watch
-      - apiGroups:
-          - extensions
-          - networking.k8s.io
-        resources:
-          - ingresses/status
-        verbs:
-          - update
-
-    ---
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: ClusterRoleBinding
-    metadata:
-      name: traefik-ingress-controller
-    roleRef:
-      apiGroup: rbac.authorization.k8s.io
+      ```yaml tab="RBAC"
+      ---
+      apiVersion: rbac.authorization.k8s.io/v1
       kind: ClusterRole
-      name: traefik-ingress-controller
-    subjects:
-      - kind: ServiceAccount
+      metadata:
         name: traefik-ingress-controller
-        namespace: default
-    ```
-
-    ```yaml tab="Ingress"
-    apiVersion: networking.k8s.io/v1
-    kind: Ingress
-    metadata:
-      name: myingress
-      annotations:
-        traefik.ingress.kubernetes.io/router.entrypoints: web
-
-    spec:
       rules:
-        - host: example.com
-          http:
-            paths:
-              - path: /bar
-                pathType: Exact
-                backend:
-                  service:
-                    name:  whoami
-                    port:
-                      number: 80
-              - path: /foo
-                pathType: Exact
-                backend:
-                  service:
-                    name:  whoami
-                    port:
-                      number: 80
-    ```
+        - apiGroups:
+            - ""
+          resources:
+            - namespaces
+          verbs:
+            - get
+        - apiGroups:
+            - ""
+          resources:
+            - configmaps
+            - pods
+            - secrets
+            - endpoints
+          verbs:
+            - get
+            - list
+            - watch
+        - apiGroups:
+            - ""
+          resources:
+            - services
+          verbs:
+            - get
+            - list
+            - watch
+        - apiGroups:
+            - networking.k8s.io
+          resources:
+            - ingresses
+          verbs:
+            - get
+            - list
+            - watch
+        - apiGroups:
+            - networking.k8s.io
+          resources:
+            - ingresses/status
+          verbs:
+            - update
+        - apiGroups:
+            - networking.k8s.io
+          resources:
+            - ingressclasses
+          verbs:
+            - get
+            - list
+            - watch
+        - apiGroups:
+            - ""
+          resources:
+            - events
+          verbs:
+            - create
+            - patch
+        - apiGroups:
+            - discovery.k8s.io
+          resources:
+            - endpointslices
+          verbs:
+            - list
+            - watch
+            - get
+        
+          ---
+          apiVersion: rbac.authorization.k8s.io/v1
+          kind: ClusterRoleBinding
+          metadata:
+            name: traefik-ingress-controller
+          roleRef:
+            apiGroup: rbac.authorization.k8s.io
+            kind: ClusterRole
+            name: traefik-ingress-controller
+          subjects:
+            - kind: ServiceAccount
+              name: traefik-ingress-controller
+              namespace: default
+      ```
 
-    ```yaml tab="Traefik"
-    apiVersion: v1
-    kind: ServiceAccount
-    metadata:
-      name: traefik-ingress-controller
+      ```yaml tab="Traefik"
+      ---
+      apiVersion: v1
+      kind: ServiceAccount
+      metadata:
+        name: traefik-ingress-controller
 
-    ---
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
-      name: traefik
-      labels:
-        app: traefik
-
-    spec:
-      replicas: 1
-      selector:
-        matchLabels:
+      ---
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: traefik
+        labels:
           app: traefik
-      template:
-        metadata:
-          labels:
+
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
             app: traefik
-        spec:
-          serviceAccountName: traefik-ingress-controller
-          containers:
-            - name: traefik
-              image: traefik:v3.4
-              args:
-                - --entryPoints.web.address=:80
-                - --providers.kubernetesingress
-              ports:
-                - name: web
-                  containerPort: 80
+        template:
+          metadata:
+            labels:
+              app: traefik
+          spec:
+            serviceAccountName: traefik-ingress-controller
+            containers:
+              - name: traefik
+                image: traefik:v3.4
+                args:
+                  - --entryPoints.web.address=:80
+                  - --providers.kubernetesingressnginx
+                ports:
+                  - name: web
+                    containerPort: 80
 
-    ---
-    apiVersion: v1
-    kind: Service
-    metadata:
-      name: traefik
-    spec:
-      type: LoadBalancer
-      selector:
-        app: traefik
-      ports:
-        - protocol: TCP
-          port: 80
-          name: web
-          targetPort: 80
-    ```
+      ---
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: traefik
+      spec:
+        type: LoadBalancer
+        selector:
+          app: traefik
+        ports:
+          - name: web
+            port: 80
+            targetPort: 80
+      ```
 
-    ```yaml tab="Whoami"
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
-      name: whoami
-      labels:
-        app: traefiklabs
+      ```yaml tab="Whoami"
+      ---
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: whoami
+        labels:
+          app: whoami
+
+      spec:
+        replicas: 2
+        selector:
+          matchLabels:
+            app: whoami
+        template:
+          metadata:
+            labels:
+              app: whoami
+          spec:
+            containers:
+              - name: whoami
+                image: traefik/whoami
+                ports:
+                  - containerPort: 80
+
+      ---
+      apiVersion: v1
+      kind: Service
+      metadata:
         name: whoami
 
-    spec:
-      replicas: 2
-      selector:
-        matchLabels:
-          app: traefiklabs
-          task: whoami
-      template:
-        metadata:
-          labels:
-            app: traefiklabs
-            task: whoami
-        spec:
-          containers:
-            - name: whoami
-              image: traefik/whoami
-              ports:
-                - containerPort: 80
+      spec:
+        selector:
+          app: whoami
+        ports:
+          - name: http
+            port: 80
+      ```
 
-    ---
-    apiVersion: v1
-    kind: Service
-    metadata:
-      name: whoami
+      ```yaml tab="Ingress"
+      ---
+      apiVersion: networking.k8s.io/v1
+      kind: IngressClass
+      metadata:
+        name: nginx
+      spec:
+        controller: k8s.io/ingress-nginx
 
-    spec:
-      ports:
-        - name: http
-          port: 80
-      selector:
-        app: traefiklabs
-        task: whoami
-    ```
+      ---
+      apiVersion: networking.k8s.io/v1
+      kind: Ingress
+      metadata:
+        name: myingress
+        
+      spec:
+        ingressClassName: nginx
+        rules:
+          - host: whoami.localhost
+            http:
+              paths:
+                - path: /bar
+                  pathType: Exact
+                  backend:
+                    service:
+                      name:  whoami
+                      port:
+                        number: 80
+                - path: /foo
+                  pathType: Exact
+                  backend:
+                    service:
+                      name:  whoami
+                      port:
+                        number: 80
+      ```
 
-## NGINX Ingress Annotations Support
+## Annotations Support
 
-This section lists all known NGINX Ingress annotations, split between those currently implemented (with limitations if any) and those not implemented. Limitations or behavioral differences are indicated where relevant.
+This section lists all known NGINX Ingress annotations, split between those currently implemented (with limitations if any) and those not implemented. 
+Limitations or behavioral differences are indicated where relevant.
 
-> **Note:** Traefik does not expose all global configuration options to control default behaviors for ingresses. Some behaviors that are globally configurable in NGINX (such as default SSL redirect, rate limiting, or affinity) are only available in Traefik via entrypoint or provider-level configuration, and cannot be overridden per-ingress as in NGINX.
+!!! warning "Global configuration"
+
+    Traefik does not expose all global configuration options to control default behaviors for ingresses. 
+    
+    Some behaviors that are globally configurable in NGINX (such as default SSL redirect, rate limiting, or affinity) are currently not supported and cannot be overridden per-ingress as in NGINX.
 
 ### Caveats and Key Behavioral Differences
 
-- **Authentication**: Forward auth behaves differently; session caching is not supported. NGINX supports sub-request based auth, while Traefik forwards the original request.
-- **Session Affinity**: Only persistent mode is supported; canary and failure customization are not supported.
+- **Authentication**: Forward auth behaves differently and session caching is not supported. NGINX supports sub-request based auth, while Traefik forwards the original request.
+- **Session Affinity**: Only persistent mode is supported.
 - **Leader Election**: Not supported; no cluster mode with leader election.
 - **Default Backend**: Only `defaultBackend` in Ingress spec is supported; the annotation is ignored.
 - **Load Balancing**: Only round_robin is supported; EWMA and IP hash are not supported.
 - **CORS**: NGINX responds with all configured headers unconditionally; Traefik handles headers differently between pre-flight and regular requests.
-- **TLS/Backend Protocols**: FCGI and some TLS options are not supported in Traefik.
+- **TLS/Backend Protocols**: AUTO_HTTP, FCGI and some TLS options are not supported in Traefik.
 - **Path Handling**: Traefik preserves trailing slashes by default; NGINX removes them unless configured otherwise.
 
 ### Supported NGINX Annotations
 
-| Annotation | Limitations / Notes |
-|------------|--------------------|
-| `nginx.ingress.kubernetes.io/affinity` | Only persistent mode supported; balanced/canary not supported. |
-| `nginx.ingress.kubernetes.io/affinity-mode` | Only persistent mode supported. |
-| `nginx.ingress.kubernetes.io/auth-type` |  |
-| `nginx.ingress.kubernetes.io/auth-secret` |  |
-| `nginx.ingress.kubernetes.io/auth-secret-type` |  |
-| `nginx.ingress.kubernetes.io/auth-realm` |  |
-| `nginx.ingress.kubernetes.io/auth-url` | Only URL and response headers copy supported. Forward auth behaves differently than NGINX. |
-| `nginx.ingress.kubernetes.io/auth-method` |  |
-| `nginx.ingress.kubernetes.io/auth-response-headers` |  |
-| `nginx.ingress.kubernetes.io/ssl-redirect` | Cannot opt-out per route if enabled globally. |
-| `nginx.ingress.kubernetes.io/force-ssl-redirect` | Cannot opt-out per route if enabled globally. |
-| `nginx.ingress.kubernetes.io/ssl-passthrough` | Some differences in SNI/default backend handling. |
-| `nginx.ingress.kubernetes.io/use-regex` |  |
-| `nginx.ingress.kubernetes.io/session-cookie-name` |  |
-| `nginx.ingress.kubernetes.io/session-cookie-path` |  |
-| `nginx.ingress.kubernetes.io/session-cookie-domain` |  |
-| `nginx.ingress.kubernetes.io/session-cookie-samesite` |  |
-| `nginx.ingress.kubernetes.io/load-balance` | Only round_robin supported; ewma and IP hash not supported. |
-| `nginx.ingress.kubernetes.io/backend-protocol` | FCGI and AUTO_HTTP not supported. |
-| `nginx.ingress.kubernetes.io/enable-cors` | Partial support. |
-| `nginx.ingress.kubernetes.io/cors-allow-credentials` |  |
-| `nginx.ingress.kubernetes.io/cors-allow-headers` |  |
-| `nginx.ingress.kubernetes.io/cors-allow-methods` |  |
-| `nginx.ingress.kubernetes.io/cors-allow-origin` |  |
-| `nginx.ingress.kubernetes.io/cors-max-age` |  |
+| Annotation                                            | Limitations / Notes                                                                        |
+|-------------------------------------------------------|--------------------------------------------------------------------------------------------|
+| `nginx.ingress.kubernetes.io/affinity`                |                                                                                            |
+| `nginx.ingress.kubernetes.io/affinity-mode`           | Only persistent mode supported; balanced/canary not supported.                             |
+| `nginx.ingress.kubernetes.io/auth-type`               |                                                                                            |
+| `nginx.ingress.kubernetes.io/auth-secret`             |                                                                                            |
+| `nginx.ingress.kubernetes.io/auth-secret-type`        |                                                                                            |
+| `nginx.ingress.kubernetes.io/auth-realm`              |                                                                                            |
+| `nginx.ingress.kubernetes.io/auth-url`                | Only URL and response headers copy supported. Forward auth behaves differently than NGINX. |
+| `nginx.ingress.kubernetes.io/auth-method`             |                                                                                            |
+| `nginx.ingress.kubernetes.io/auth-response-headers`   |                                                                                            |
+| `nginx.ingress.kubernetes.io/ssl-redirect`            | Cannot opt-out per route if enabled globally.                                              |
+| `nginx.ingress.kubernetes.io/force-ssl-redirect`      | Cannot opt-out per route if enabled globally.                                              |
+| `nginx.ingress.kubernetes.io/ssl-passthrough`         | Some differences in SNI/default backend handling.                                          |
+| `nginx.ingress.kubernetes.io/use-regex`               |                                                                                            |
+| `nginx.ingress.kubernetes.io/session-cookie-name`     |                                                                                            |
+| `nginx.ingress.kubernetes.io/session-cookie-path`     |                                                                                            |
+| `nginx.ingress.kubernetes.io/session-cookie-domain`   |                                                                                            |
+| `nginx.ingress.kubernetes.io/session-cookie-samesite` |                                                                                            |
+| `nginx.ingress.kubernetes.io/load-balance`            | Only round_robin supported; ewma and IP hash not supported.                                |
+| `nginx.ingress.kubernetes.io/backend-protocol`        | FCGI and AUTO_HTTP not supported.                                                          |
+| `nginx.ingress.kubernetes.io/enable-cors`             | Partial support.                                                                           |
+| `nginx.ingress.kubernetes.io/cors-allow-credentials`  |                                                                                            |
+| `nginx.ingress.kubernetes.io/cors-allow-headers`      |                                                                                            |
+| `nginx.ingress.kubernetes.io/cors-allow-methods`      |                                                                                            |
+| `nginx.ingress.kubernetes.io/cors-allow-origin`       |                                                                                            |
+| `nginx.ingress.kubernetes.io/cors-max-age`            |                                                                                            |
+| `nginx.ingress.kubernetes.io/proxy-ssl-server-name`   |                                                                                            |
+| `nginx.ingress.kubernetes.io/proxy-ssl-name`          |                                                                                            |
+| `nginx.ingress.kubernetes.io/proxy-ssl-verify`        |                                                                                            |
+| `nginx.ingress.kubernetes.io/proxy-ssl-secret`        |                                                                                            |
 
 ### Unsupported NGINX Annotations
 
+All other NGINX annotations not listed above, including but not limited to:
+
 | Annotation                                                                  | Notes                                                |
 |-----------------------------------------------------------------------------|------------------------------------------------------|
-| All other NGINX annotations not listed above, including but not limited to: |
 | `nginx.ingress.kubernetes.io/app-root`                                      | Not supported.                                       |
 | `nginx.ingress.kubernetes.io/affinity-canary-behavior`                      | Not supported.                                       |
 | `nginx.ingress.kubernetes.io/auth-tls-secret`                               | Not supported.                                       |
@@ -304,13 +348,9 @@ This section lists all known NGINX Ingress annotations, split between those curr
 | `nginx.ingress.kubernetes.io/proxy-redirect-from`                           | Not supported.                                       |
 | `nginx.ingress.kubernetes.io/proxy-redirect-to`                             | Not supported.                                       |
 | `nginx.ingress.kubernetes.io/proxy-http-version`                            | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/proxy-ssl-secret`                              | Not supported.                                       |
 | `nginx.ingress.kubernetes.io/proxy-ssl-ciphers`                             | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/proxy-ssl-name`                                | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/proxy-ssl-protocols`                           | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/proxy-ssl-verify`                              | Not supported.                                       |
 | `nginx.ingress.kubernetes.io/proxy-ssl-verify-depth`                        | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/proxy-ssl-server-name`                         | Not supported.                                       |
+| `nginx.ingress.kubernetes.io/proxy-ssl-protocols`                           | Not supported.                                       |
 | `nginx.ingress.kubernetes.io/enable-rewrite-log`                            | Not supported.                                       |
 | `nginx.ingress.kubernetes.io/rewrite-target`                                | Not supported.                                       |
 | `nginx.ingress.kubernetes.io/satisfy`                                       | Not supported.                                       |
