@@ -559,7 +559,7 @@ func (p *Provider) buildService(namespace string, backend netv1.IngressBackend, 
 		}
 	}
 
-	scheme := parseBackendProtocol(ptr.Deref(cfg.BackendProtocol, ""))
+	scheme := parseBackendProtocol(ptr.Deref(cfg.BackendProtocol, "HTTP"))
 
 	svc := &dynamic.Service{LoadBalancer: lb}
 	for _, addr := range backendAddresses {
