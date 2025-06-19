@@ -1,0 +1,80 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: whoami
+  namespace: default
+
+spec:
+  clusterIP: 10.10.10.1
+  ports:
+    - name: web2
+      protocol: TCP
+      port: 8000
+      targetPort: web2
+    - name: web
+      protocol: TCP
+      port: 80
+      targetPort: web
+  selector:
+    app: whoami
+    task: whoami
+
+---
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
+metadata:
+  name: whoami
+  namespace: default
+  labels:
+    kubernetes.io/service-name: whoami
+
+addressType: IPv4
+ports:
+  - name: web
+    port: 80
+  - name: web2
+    port: 8000
+endpoints:
+  - addresses:
+      - 10.10.0.1
+      - 10.10.0.2
+    conditions:
+      ready: true
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoami-tls
+  namespace: default
+
+spec:
+  ports:
+    - name: websecure
+      protocol: TCP
+      appProtocol: https
+      port: 443
+      targetPort: websecure
+  selector:
+    app: whoami-tls
+    task: whoami
+
+---
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
+metadata:
+  name: whoami-tls
+  namespace: default
+  labels:
+    kubernetes.io/service-name: whoami-tls
+
+addressType: IPv4
+ports:
+  - name: websecure
+    port: 8443
+endpoints:
+  - addresses:
+      - 10.10.0.5
+      - 10.10.0.6
+    conditions:
+      ready: true

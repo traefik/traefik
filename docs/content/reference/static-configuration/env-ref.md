@@ -339,6 +339,9 @@ Enable debug mode for the FastProxy implementation. (Default: ```false```)
 `TRAEFIK_EXPERIMENTAL_KUBERNETESGATEWAY`:  
 (Deprecated) Allow the Kubernetes gateway api provider usage. (Default: ```false```)
 
+`TRAEFIK_EXPERIMENTAL_KUBERNETESINGRESSNGINX`:  
+Allow the Kubernetes Ingress NGINX provider usage. (Default: ```false```)
+
 `TRAEFIK_EXPERIMENTAL_LOCALPLUGINS_<NAME>`:  
 Local plugins configuration. (Default: ```false```)
 
@@ -998,6 +1001,51 @@ Kubernetes bearer token (not needed for in-cluster client). It accepts either a 
 
 `TRAEFIK_PROVIDERS_KUBERNETESINGRESS`:  
 Enable Kubernetes backend with default settings. (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_KUBERNETESINGRESSNGINX`:  
+Enable Kubernetes Ingress NGINX provider. (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_KUBERNETESINGRESSNGINX_CERTAUTHFILEPATH`:  
+Kubernetes certificate authority file path (not needed for in-cluster client).
+
+`TRAEFIK_PROVIDERS_KUBERNETESINGRESSNGINX_CONTROLLERCLASS`:  
+Ingress Class Controller value this controller satisfies. (Default: ```k8s.io/ingress-nginx```)
+
+`TRAEFIK_PROVIDERS_KUBERNETESINGRESSNGINX_DEFAULTBACKENDSERVICE`:  
+Service used to serve HTTP requests not matching any known server name (catch-all). Takes the form 'namespace/name'.
+
+`TRAEFIK_PROVIDERS_KUBERNETESINGRESSNGINX_DISABLESVCEXTERNALNAME`:  
+Disable support for Services of type ExternalName. (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_KUBERNETESINGRESSNGINX_ENDPOINT`:  
+Kubernetes server endpoint (required for external cluster client).
+
+`TRAEFIK_PROVIDERS_KUBERNETESINGRESSNGINX_INGRESSCLASS`:  
+Name of the ingress class this controller satisfies. (Default: ```nginx```)
+
+`TRAEFIK_PROVIDERS_KUBERNETESINGRESSNGINX_INGRESSCLASSBYNAME`:  
+Define if Ingress Controller should watch for Ingress Class by Name together with Controller Class. (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_KUBERNETESINGRESSNGINX_PUBLISHSERVICE`:  
+Service fronting the Ingress controller. Takes the form 'namespace/name'.
+
+`TRAEFIK_PROVIDERS_KUBERNETESINGRESSNGINX_PUBLISHSTATUSADDRESS`:  
+Customized address (or addresses, separated by comma) to set as the load-balancer status of Ingress objects this controller satisfies.
+
+`TRAEFIK_PROVIDERS_KUBERNETESINGRESSNGINX_THROTTLEDURATION`:  
+Ingress refresh throttle duration. (Default: ```0```)
+
+`TRAEFIK_PROVIDERS_KUBERNETESINGRESSNGINX_TOKEN`:  
+Kubernetes bearer token (not needed for in-cluster client). It accepts either a token value or a file path to the token.
+
+`TRAEFIK_PROVIDERS_KUBERNETESINGRESSNGINX_WATCHINGRESSWITHOUTCLASS`:  
+Define if Ingress Controller should also watch for Ingresses without an IngressClass or the annotation specified. (Default: ```false```)
+
+`TRAEFIK_PROVIDERS_KUBERNETESINGRESSNGINX_WATCHNAMESPACE`:  
+Namespace the controller watches for updates to Kubernetes objects. All namespaces are watched if this parameter is left empty.
+
+`TRAEFIK_PROVIDERS_KUBERNETESINGRESSNGINX_WATCHNAMESPACESELECTOR`:  
+Selector selects namespaces the controller watches for updates to Kubernetes objects.
 
 `TRAEFIK_PROVIDERS_KUBERNETESINGRESS_ALLOWEMPTYSERVICES`:  
 Allow creation of services without endpoints. (Default: ```false```)
