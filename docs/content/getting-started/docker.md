@@ -5,7 +5,8 @@ description: "Deploy Traefik in Docker and expose your first service"
 
 # Getting Started with Docker and Traefik
 
-Docker is a first-class citizen in Traefik, offering native support for Docker containers and services. Whether you're using Docker Compose or running containers directly, Traefik provides a seamless experience for managing your Docker traffic.
+Docker is a first-class citizen in Traefik, offering native support for Docker containers and services. 
+Whether you're using Docker Compose or running containers directly, Traefik provides a seamless experience for managing your Docker traffic.
 
 This guide shows you how to:
 
@@ -23,11 +24,12 @@ This guide shows you how to:
 
 ### Using Docker Compose
 
-Create a Docker Compose file. This configuration:
+Create a Docker Compose file. 
+This configuration:
 
-- Exposes ports 80 and 8080. 
+- Exposes ports 80 and 8080. 
 - Enables the Docker provider
-- Configures the dashboard with basic settings. Port 8080 serves the dashboard because we enabled `--api.insecure=true` (development use only)
+- Configures the dashboard with basic settings. Port 8080 serves the dashboard because we enabled `--api.insecure=true` (development use only)
 - Mounts the Docker socket for container discovery
 
 ```yaml
@@ -54,7 +56,8 @@ docker-compose up -d
 
 ### Using Docker CLI
 
-Alternatively, you can run Traefik directly with Docker. This command:
+Alternatively, you can run Traefik directly with Docker. 
+This command:
 
 - Exposes ports 80 and 8080 for web traffic and dashboard access
 - Mounts the configuration file and Docker socket
@@ -86,7 +89,8 @@ docker run -d \
 
 ## Expose the Dashboard
 
-Because we explicitly enabled insecure mode, the [dashboard](../reference/install-configuration/api-dashboard.md) is reachable on port 8080 without authentication. **Do not enable this flag in production**.
+Because we explicitly enabled insecure mode, the [dashboard](../reference/install-configuration/api-dashboard.md) is reachable on port 8080 without authentication. 
+**Do not enable this flag in production**.
 
 You can access the dashboard at:
 

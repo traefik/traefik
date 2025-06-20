@@ -64,7 +64,6 @@ Create a values file. This configuration:
 
 - Maps ports 80 and 443 to the web and websecure [entrypoints](../reference/install-configuration/entrypoints.md)
 - Enables the [dashboard](../reference/install-configuration/api-dashboard.md) with a specific hostname rule
-- Disables the [Kubernetes Ingress provider](../reference/routing-configuration/kubernetes/ingress.md)
 - Enables the [Kubernetes Gateway API provider](../reference/routing-configuration/kubernetes/gateway-api.md)
 - Allows the Gateway to expose [HTTPRoutes](https://gateway-api.sigs.k8s.io/api-types/httproute/) from all namespaces
 
@@ -77,8 +76,6 @@ ingressRoute:
     entryPoints:
       - web
 providers:
-  kubernetesIngress:
-    enabled: false
   kubernetesGateway:
     enabled: true
 gateway:
@@ -99,14 +96,12 @@ helm install traefik traefik/traefik -f values.yaml --wait
 Alternatively, you can install Traefik using CLI arguments. This command:
 
 - Maps ports `30000` and `30001` to the web and websecure entrypoints
-- Disables the IngressClass to avoid conflicts with other ingress controllers
 - Enables the dashboard with a specific hostname rule
 - Enables the [Kubernetes Gateway API provider](../reference/routing-configuration/kubernetes/gateway-api.md)
 - Allows the Gateway to expose HTTPRoutes from all namespaces
 
 ```bash
 helm install traefik traefik/traefik --wait \
-  --set ingressClass.enabled=false \
   --set ingressRoute.dashboard.enabled=true \
   --set ingressRoute.dashboard.matchRule='Host(`dashboard.localhost`)' \
   --set ingressRoute.dashboard.entryPoints={web} \
@@ -241,7 +236,8 @@ You can also visit [http://whoami.localhost](http://whoami.localhost) in a brows
 
 ## Exposing the Application Using the Gateway API
 
-Traefik supports the Kubernetes Gateway API specification, which provides a more standardized way to configure ingress in Kubernetes. When we installed Traefik earlier, we enabled the Gateway API provider. 
+Traefik supports the Kubernetes Gateway API specification, which provides a more standardized way to configure ingress in Kubernetes.
+When we installed Traefik earlier, we enabled the Gateway API provider. 
 You can verify this in the providers section of the Traefik dashboard.
 
 ![Providers Section Screenshot](../assets/img/getting-started/providers.png)
@@ -258,7 +254,7 @@ Create an HTTPRoute. This configuration:
 
 - Creates an HTTPRoute named "whoami"
 - Attaches it to the default Gateway that Traefik created during installation
-- Configures routing for the hostname "whoami.localhost"
+- Configures routing for the hostname "whoami-gatewayapi.localhost"
 - Routes all traffic to the whoami service on port 80
 
 ```yaml
