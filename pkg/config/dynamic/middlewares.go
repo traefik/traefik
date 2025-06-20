@@ -641,7 +641,7 @@ type RedirectRegex struct {
 	Regex string `json:"regex,omitempty" toml:"regex,omitempty" yaml:"regex,omitempty"`
 	// Replacement defines how to modify the URL to have the new target URL.
 	Replacement string `json:"replacement,omitempty" toml:"replacement,omitempty" yaml:"replacement,omitempty"`
-	// Permanent defines whether the redirection is permanent (301).
+	// Permanent defines whether the redirection is permanent (308).
 	Permanent bool `json:"permanent,omitempty" toml:"permanent,omitempty" yaml:"permanent,omitempty" export:"true"`
 }
 
@@ -655,7 +655,7 @@ type RedirectScheme struct {
 	Scheme string `json:"scheme,omitempty" toml:"scheme,omitempty" yaml:"scheme,omitempty" export:"true"`
 	// Port defines the port of the new URL.
 	Port string `json:"port,omitempty" toml:"port,omitempty" yaml:"port,omitempty" export:"true"`
-	// Permanent defines whether the redirection is permanent (301).
+	// Permanent defines whether the redirection is permanent (308).
 	Permanent bool `json:"permanent,omitempty" toml:"permanent,omitempty" yaml:"permanent,omitempty" export:"true"`
 }
 
