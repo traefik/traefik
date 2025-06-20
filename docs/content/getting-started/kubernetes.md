@@ -12,7 +12,7 @@ Traefik provides a seamless experience for managing your Kubernetes traffic.
 
 This guide shows you how to:
 
-- Create a Kubernetes cluster using kind or k3d
+- Create a Kubernetes cluster using k3d
 - Install Traefik using Helm
 - Expose the Traefik dashboard
 - Deploy a sample application
@@ -63,7 +63,6 @@ helm repo update
 Create a values file. This configuration:
 
 - Maps ports 80 and 443 to the web and websecure [entrypoints](../reference/install-configuration/entrypoints.md)
-- Disables the IngressClass to avoid conflicts with other ingress controllers
 - Enables the [dashboard](../reference/install-configuration/api-dashboard.md) with a specific hostname rule
 - Disables the [Kubernetes Ingress provider](../reference/routing-configuration/kubernetes/ingress.md)
 - Enables the [Kubernetes Gateway API provider](../reference/routing-configuration/kubernetes/gateway-api.md)
@@ -71,8 +70,6 @@ Create a values file. This configuration:
 
 ```yaml
 # values.yaml
-ingressClass:
-  enabled: false
 ingressRoute:
   dashboard:
     enabled: true
@@ -88,6 +85,9 @@ gateway:
   namespacePolicy: All
 ```
 
+!!! info
+    The [KubernetesCRD](../reference/install-configuration/providers/kubernetes/kubernetes-crd.md) provider is enabled by default when using the Helm chart so we don't need to set it in the values file.
+
 Install Traefik:
 
 ```bash
@@ -98,11 +98,10 @@ helm install traefik traefik/traefik -f values.yaml --wait
 
 Alternatively, you can install Traefik using CLI arguments. This command:
 
-- Maps ports 30000 and 30001 to the web and websecure entrypoints
+- Maps ports `30000` and `30001` to the web and websecure entrypoints
 - Disables the IngressClass to avoid conflicts with other ingress controllers
 - Enables the dashboard with a specific hostname rule
-- Disables the Kubernetes Ingress provider
-- Enables the Kubernetes Gateway API provider
+- Enables the [Kubernetes Gateway API provider](../reference/routing-configuration/kubernetes/gateway-api.md)
 - Allows the Gateway to expose HTTPRoutes from all namespaces
 
 ```bash
@@ -111,10 +110,12 @@ helm install traefik traefik/traefik --wait \
   --set ingressRoute.dashboard.enabled=true \
   --set ingressRoute.dashboard.matchRule='Host(`dashboard.localhost`)' \
   --set ingressRoute.dashboard.entryPoints={web} \
-  --set providers.kubernetesIngress.enabled=false \
   --set providers.kubernetesGateway.enabled=true \
   --set gateway.namespacePolicy=All
 ```
+
+!!! info
+    The [KubernetesCRD](../reference/install-configuration/providers/kubernetes/kubernetes-crd.md) provider is enabled by default when using the Helm chart so we don't need to set it in the CLI arguments.
 
 When Traefik is installed with the Gateway API provider enabled, it automatically creates a default GatewayClass named **traefik**:
 
@@ -128,7 +129,7 @@ The dashboard is exposed with an [IngressRoute](../reference/routing-configurati
 
 Access it at:
 
-[http://dashboard.localhost/dashboard](http://dashboard.localhost/dashboard)
+[http://dashboard.localhost/dashboard/](http://dashboard.localhost/dashboard/)
 
 ![Traefik Dashboard Screenshot](../assets/img/getting-started/traefik-dashboard.png)
 
@@ -253,12 +254,6 @@ Install the Gateway API CRDs in your cluster:
 kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/standard-install.yaml
 ```
 
-If you previously created an IngressRoute for the whoami application, remove it:
-
-```bash
-kubectl delete ingressroutes whoami
-```
-
 Create an HTTPRoute. This configuration:
 
 - Creates an HTTPRoute named "whoami"
@@ -276,7 +271,7 @@ spec:
   parentRefs:
     - name: traefik-gateway
   hostnames:
-    - "whoami.localhost"
+    - "whoami-gatewayapi.localhost"
   rules:
     - matches:
         - path:
@@ -298,7 +293,7 @@ kubectl apply -f httproute.yaml
 You can use the following curl command to verify that the application is correctly exposed:
 
 ```bash
-curl http://whoami.localhost
+curl http://whoami-gatewayapi.localhost
 
 Hostname: whoami-76c9859cfc-6v8hh
 IP: 127.0.0.1

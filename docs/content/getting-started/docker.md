@@ -36,16 +36,12 @@ services:
   traefik:
     image: traefik:v3.4
     command:
-      - "--api.dashboard=true"
       - "--api.insecure=true"
       - "--providers.docker=true"
-      - "--providers.docker.exposedByDefault=false"
       - "--entrypoints.web.address=:80"
-      - "--entrypoints.websecure.address=:443"
     ports:
       - "80:80"
       - "8080:8080"
-      - "443:443"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 ```
@@ -69,16 +65,12 @@ Create a configuration file:
 ```yaml
 # traefik.yml
 api:
-  dashboard: true
   insecure: true
 entryPoints:
   web:
     address: ":80"
-  websecure:
-    address: ":443"
 providers:
-  docker:
-    exposedByDefault: false
+  docker: {}
 ```
 
 Start Traefik:
@@ -89,7 +81,7 @@ docker run -d \
   -p 8080:8080 \
   -v $PWD/traefik.yml:/etc/traefik/traefik.yml \
   -v /var/run/docker.sock:/var/run/docker.sock \
-  traefik:v3.3
+  traefik:v3.4
 ```
 
 ## Expose the Dashboard
@@ -112,7 +104,6 @@ services:
   whoami:
     image: traefik/whoami
     labels:
-      - "traefik.enable=true"
       - "traefik.http.routers.whoami.rule=Host(`whoami.localhost`)"
 ```
 
