@@ -918,7 +918,9 @@ func (p *Provider) getBackendAddresses(namespace string, ref gatev1.BackendRef) 
 		return nil, corev1.ServicePort{}, fmt.Errorf("parsing service annotations config: %w", err)
 	}
 
-	if p.NativeLBByDefault || annotationsConfig.Service.NativeLB {
+	// Use the service.nativelb annotation value if explicitly set. If not, use the provider's default value.
+	_, hasNativeLBAnnotation := service.Annotations["traefik.io/service.nativelb"]
+	if (!hasNativeLBAnnotation && p.NativeLBByDefault) || annotationsConfig.Service.NativeLB {
 		if service.Spec.ClusterIP == "" || service.Spec.ClusterIP == "None" {
 			return nil, corev1.ServicePort{}, fmt.Errorf("no clusterIP found for service: %s/%s", service.Namespace, service.Name)
 		}
