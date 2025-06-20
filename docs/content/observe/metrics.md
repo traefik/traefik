@@ -1,3 +1,8 @@
+---
+title: "Metrics"
+description: "Metrics in Traefik Proxy offer a comprehensive view of your infrastructure's health. They allow you to monitor critical indicators like incoming traffic volume. Metrics graphs and visualizations are helpful during incident triage in understanding the causes and implementing proactive measures."
+---
+
 # Metrics
 
 Metrics in Traefik Proxy offer a comprehensive view of your infrastructure's health. They allow you to monitor critical indicators like incoming traffic volume. Metrics graphs and visualizations are helpful during incident triage in understanding the causes and implementing proactive measures.
@@ -95,4 +100,5 @@ labels:
 
 When the `observability` options are not defined on a router, it inherits the behavior from the [entrypoint's observability configuration](./overview.md), or the global one.
 
-For detailed configuration options, refer to the [reference documentation](../reference/install-configuration/observability/metrics.md).
+!!! info
+    For detailed configuration options, refer to the [reference documentation](../reference/install-configuration/observability/metrics.md).

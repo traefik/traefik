@@ -1,3 +1,8 @@
+---
+title: "Observability Overview"
+description: "Traefik Proxy provides comprehensive monitoring and observability capabilities to maintain reliability and efficiency."
+---
+
 # Observability Overview
 
 Traefik Proxy provides comprehensive monitoring and observability capabilities to maintain reliability and efficiency:

@@ -1,8 +1,43 @@
-# Logs and Access Logs
+---
+title: "Logs and Access Logs"
+description: "Logs and Access Logs in Traefik Proxy provide real-time insight into the health of your system. They enable swift error detection and intervention through alerts. By centralizing logs, you can streamline the debugging process during incident resolution."
+---
 
-Logs and Access Logs in Traefik Proxy provide real-time insight into the health of your system. They enable swift error detection and intervention through alerts. By centralizing logs, you can streamline the debugging process during incident resolution.
+## Logs
 
-## Configuration
+Logs concern everything that happens to Traefik itself (startup, configuration, events, shutdown, and so on).
+
+### Configuration Example
+
+To enable and configure logs in Traefik Proxy, you can use the static configuration file or Helm values if you are using the [Helm chart](https://github.com/traefik/traefik-helm-chart).
+
+```yaml tab="Structured (YAML)"
+log:
+  filePath: "/path/to/log-file.log"
+  format: json
+  level: INFO
+```
+
+```toml tab="Structured (TOML)"
+[log]
+  filePath = "/path/to/log-file.log"
+  format = "json"
+  level = "INFO"
+```
+
+```yaml tab="Helm Chart Values"
+logs:
+  general:
+    filePath: "/path/to/log-file.log"
+    format: json
+    level: INFO
+```
+
+## Access Logs
+
+Access logs concern everything that happens to the requests handled by Traefik.
+
+### Configuration Example
 
 To enable and configure access logs in Traefik Proxy, you can use the static configuration file or Helm values if you are using the [Helm chart](https://github.com/traefik/traefik-helm-chart).
 
@@ -140,4 +175,5 @@ When using the `json` format, you can customize which fields are included in you
 - **Request Fields:** You can choose to `keep`, `drop`, or `redact` any of the standard request fields. A complete list of available fields like `ClientHost`, `RequestMethod`, and `Duration` can be found in the [reference documentation](../reference/install-configuration/observability/logs-and-accesslogs.md#available-fields).
 - **Request Headers:** You can also specify which request headers should be included in the logs, and whether their values should be `kept`, `dropped`, or `redacted`.
 
-For detailed configuration options, refer to the [reference documentation](../reference/install-configuration/observability/logs-and-accesslogs.md).
+!!! info
+    For detailed configuration options, refer to the [reference documentation](../reference/install-configuration/observability/logs-and-accesslogs.md).

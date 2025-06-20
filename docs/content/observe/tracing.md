@@ -1,3 +1,8 @@
+---
+title: "Tracing"
+description: "Tracing in Traefik Proxy allows you to track the flow of operations within your system. Using traces and spans, you can identify performance bottlenecks and pinpoint applications causing slowdowns to optimize response times effectively."
+---
+
 # Tracing
 
 Tracing in Traefik Proxy allows you to track the flow of operations within your system. Using traces and spans, you can identify performance bottlenecks and pinpoint applications causing slowdowns to optimize response times effectively.
@@ -6,7 +11,7 @@ Traefik Proxy uses [OpenTelemetry](https://opentelemetry.io/) to export traces. 
 
 ## Configuration
 
-To enable tracing in Traefik Proxy, you need to configure it in your configuration file or helm values if you are using the [Helm chart](https://github.com/traefik/traefik-helm-chart). The following example shows how to configure the OpenTelemetry provider to send traces to a collector via HTTP.
+To enable tracing in Traefik Proxy, you need to configure it in your static configuration file or Helm values if you are using the [Helm chart](https://github.com/traefik/traefik-helm-chart). The following example shows how to configure the OpenTelemetry provider to send traces to a collector via HTTP.
 
 ```yaml tab="Structured (YAML)"
 tracing:
@@ -30,7 +35,8 @@ tracing:
       endpoint: http://myotlpcollector:4318/v1/traces
 ```
 
-For detailed configuration options, refer to the [tracing reference documentation](../reference/install-configuration/observability/tracing.md).
+!!! info
+    For detailed configuration options, refer to the [tracing reference documentation](../reference/install-configuration/observability/tracing.md).
 
 ## Per-Router Tracing
 
