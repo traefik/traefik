@@ -9,6 +9,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/healthcheck"
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer"
 )
 
@@ -42,15 +43,29 @@ type Balancer struct {
 
 	sticky *loadbalancer.Sticky
 
-	curDeadline float64
+	curDeadline           float64
+	passiveHealthCheck    *dynamic.PassiveHealthCheck
+	passiveHealthCheckMap map[string]*healthcheck.PassiveHealthChecker
+}
+
+type StatusRecorder struct {
+	http.ResponseWriter
+	StatusCode int
+}
+
+func (w *StatusRecorder) WriteHeader(statusCode int) {
+	w.StatusCode = statusCode
+	w.ResponseWriter.WriteHeader(statusCode)
 }
 
 // New creates a new load balancer.
-func New(sticky *dynamic.Sticky, wantsHealthCheck bool) *Balancer {
+func New(sticky *dynamic.Sticky, wantsHealthCheck bool, passiveHealthCheck *dynamic.PassiveHealthCheck) *Balancer {
 	balancer := &Balancer{
-		status:           make(map[string]struct{}),
-		fenced:           make(map[string]struct{}),
-		wantsHealthCheck: wantsHealthCheck,
+		status:                make(map[string]struct{}),
+		fenced:                make(map[string]struct{}),
+		wantsHealthCheck:      wantsHealthCheck,
+		passiveHealthCheck:    passiveHealthCheck,
+		passiveHealthCheckMap: make(map[string]*healthcheck.PassiveHealthChecker),
 	}
 	if sticky != nil && sticky.Cookie != nil {
 		balancer.sticky = loadbalancer.NewSticky(*sticky.Cookie)
@@ -162,12 +177,19 @@ func (b *Balancer) nextServer() (*namedHandler, error) {
 		handler.deadline += 1 / handler.weight
 
 		heap.Push(b, handler)
-		if _, ok := b.status[handler.name]; ok {
-			if _, ok := b.fenced[handler.name]; !ok {
-				// do not select a fenced handler.
-				break
+		if _, up := b.status[handler.name]; !up {
+			continue
+		}
+		if _, isFenced := b.fenced[handler.name]; isFenced {
+			continue
+		}
+		if b.passiveHealthCheck != nil {
+			if !b.passiveHealthCheckMap[handler.name].AllowRequest() {
+				continue
 			}
 		}
+
+		break
 	}
 
 	log.Debug().Msgf("Service selected by WRR: %s", handler.name)
@@ -209,7 +231,13 @@ func (b *Balancer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	server.ServeHTTP(rw, req)
+	recorder := &StatusRecorder{ResponseWriter: rw, StatusCode: http.StatusOK}
+	server.ServeHTTP(recorder, req)
+	if b.passiveHealthCheck != nil {
+		if recorder.StatusCode >= 500 && recorder.StatusCode <= 599 {
+			b.passiveHealthCheckMap[server.name].RecordFailure()
+		}
+	}
 }
 
 // AddServer adds a handler with a server.
@@ -238,6 +266,15 @@ func (b *Balancer) Add(name string, handler http.Handler, weight *int, fenced bo
 	if fenced {
 		b.fenced[name] = struct{}{}
 	}
+	if b.passiveHealthCheck != nil {
+		b.passiveHealthCheckMap[name] = healthcheck.NewPassiveHealthChecker(
+			b,
+			name,
+			b.passiveHealthCheck.MaxFailedAttempts,
+			b.passiveHealthCheck.FailureWindow,
+		)
+	}
+
 	b.handlersMu.Unlock()
 
 	if b.sticky != nil {

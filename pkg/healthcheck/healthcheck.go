@@ -8,10 +8,12 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"sync"
 	"time"
 
 	gokitmetrics "github.com/go-kit/kit/metrics"
 	"github.com/rs/zerolog/log"
+	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
 	"google.golang.org/grpc"
@@ -321,4 +323,68 @@ func (shc *ServiceHealthChecker) checkHealthGRPC(ctx context.Context, serverURL 
 	}
 
 	return nil
+}
+
+type PassiveHealthChecker struct {
+	balancer     StatusSetter
+	childService string
+	info         *runtime.ServiceInfo
+	mu           sync.Mutex
+	failures     []time.Time
+	maxFail      int
+	failTimeout  ptypes.Duration
+	timer        *time.Timer
+}
+
+func NewPassiveHealthChecker(balancer StatusSetter, childService string, maxFail int, failTimeout ptypes.Duration) *PassiveHealthChecker {
+	return &PassiveHealthChecker{
+		balancer:     balancer,
+		childService: childService,
+		failures:     []time.Time{},
+		maxFail:      maxFail,
+		failTimeout:  failTimeout,
+	}
+}
+
+func (p *PassiveHealthChecker) AllowRequest() bool {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	// Clean up old failures outside the sliding window
+	now := time.Now()
+	threshold := now.Add(time.Duration(-p.failTimeout))
+
+	var filteredFailures []time.Time
+	for _, t := range p.failures {
+		if t.After(threshold) {
+			filteredFailures = append(filteredFailures, t)
+		}
+	}
+	p.failures = filteredFailures
+
+	// Check if failures exceed maxFail
+	allowRequest := len(p.failures) < p.maxFail
+	if !allowRequest {
+		p.balancer.SetStatus(context.Background(), p.childService, false)
+		p.failures = []time.Time{}
+
+		if p.timer != nil {
+			p.timer.Stop()
+		}
+
+		p.timer = time.AfterFunc(time.Duration(p.failTimeout), func() {
+			p.mu.Lock()
+			p.balancer.SetStatus(context.Background(), p.childService, true)
+			p.mu.Unlock()
+		})
+	}
+
+	return allowRequest
+}
+
+func (p *PassiveHealthChecker) RecordFailure() {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	p.failures = append(p.failures, time.Now())
 }
