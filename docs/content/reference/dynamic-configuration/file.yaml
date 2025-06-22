@@ -100,6 +100,9 @@ http:
         responseForwarding:
           flushInterval: 42s
         serversTransport: foobar
+        passiveHealthCheck:
+          failureWindow: 42s
+          maxFailedAttempts: 42
     Service03:
       mirroring:
         service: foobar
