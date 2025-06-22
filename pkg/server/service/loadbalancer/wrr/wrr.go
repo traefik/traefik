@@ -15,10 +15,9 @@ import (
 
 type namedHandler struct {
 	http.Handler
-	name                 string
-	weight               float64
-	deadline             float64
-	passiveHealthChecker *healthcheck.PassiveHealthChecker
+	name     string
+	weight   float64
+	deadline float64
 }
 
 // Balancer is a WeightedRoundRobin load balancer based on Earliest Deadline First (EDF).
@@ -44,7 +43,9 @@ type Balancer struct {
 
 	sticky *loadbalancer.Sticky
 
-	curDeadline float64
+	curDeadline           float64
+	passiveHealthCheck    *dynamic.PassiveHealthCheck
+	passiveHealthCheckMap map[string]*healthcheck.PassiveHealthChecker
 }
 
 type StatusRecorder struct {
@@ -58,11 +59,13 @@ func (w *StatusRecorder) WriteHeader(statusCode int) {
 }
 
 // New creates a new load balancer.
-func New(sticky *dynamic.Sticky, wantsHealthCheck bool) *Balancer {
+func New(sticky *dynamic.Sticky, wantsHealthCheck bool, passiveHealthCheck *dynamic.PassiveHealthCheck) *Balancer {
 	balancer := &Balancer{
-		status:           make(map[string]struct{}),
-		fenced:           make(map[string]struct{}),
-		wantsHealthCheck: wantsHealthCheck,
+		status:                make(map[string]struct{}),
+		fenced:                make(map[string]struct{}),
+		wantsHealthCheck:      wantsHealthCheck,
+		passiveHealthCheck:    passiveHealthCheck,
+		passiveHealthCheckMap: make(map[string]*healthcheck.PassiveHealthChecker),
 	}
 	if sticky != nil && sticky.Cookie != nil {
 		balancer.sticky = loadbalancer.NewSticky(*sticky.Cookie)
@@ -180,8 +183,10 @@ func (b *Balancer) nextServer() (*namedHandler, error) {
 		if _, isFenced := b.fenced[handler.name]; isFenced {
 			continue
 		}
-		if handler.passiveHealthChecker != nil && !handler.passiveHealthChecker.AllowRequest() {
-			continue
+		if b.passiveHealthCheck != nil {
+			if !b.passiveHealthCheckMap[handler.name].AllowRequest() {
+				continue
+			}
 		}
 
 		break
@@ -228,26 +233,21 @@ func (b *Balancer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	recorder := &StatusRecorder{ResponseWriter: rw, StatusCode: http.StatusOK}
 	server.ServeHTTP(recorder, req)
-	if server.passiveHealthChecker != nil {
+	if b.passiveHealthCheck != nil {
 		if recorder.StatusCode >= 500 && recorder.StatusCode <= 599 {
-			server.passiveHealthChecker.RecordFailure()
+			b.passiveHealthCheckMap[server.name].RecordFailure()
 		}
 	}
 }
 
 // AddServer adds a handler with a server.
 func (b *Balancer) AddServer(name string, handler http.Handler, server dynamic.Server) {
-	if server.HealthCheck != nil {
-		healthChecker := healthcheck.NewPassiveHealthChecker(server.HealthCheck.MaxFailedAttempts, server.HealthCheck.FailureWindow)
-		b.Add(name, handler, server.Weight, server.Fenced, healthChecker)
-	} else {
-		b.Add(name, handler, server.Weight, server.Fenced, nil)
-	}
+	b.Add(name, handler, server.Weight, server.Fenced)
 }
 
 // Add adds a handler.
 // A handler with a non-positive weight is ignored.
-func (b *Balancer) Add(name string, handler http.Handler, weight *int, fenced bool, pHealthChecker *healthcheck.PassiveHealthChecker) {
+func (b *Balancer) Add(name string, handler http.Handler, weight *int, fenced bool) {
 	w := 1
 	if weight != nil {
 		w = *weight
@@ -257,12 +257,7 @@ func (b *Balancer) Add(name string, handler http.Handler, weight *int, fenced bo
 		return
 	}
 
-	h := &namedHandler{
-		Handler:              handler,
-		name:                 name,
-		weight:               float64(w),
-		passiveHealthChecker: pHealthChecker,
-	}
+	h := &namedHandler{Handler: handler, name: name, weight: float64(w)}
 
 	b.handlersMu.Lock()
 	h.deadline = b.curDeadline + 1/h.weight
@@ -271,6 +266,15 @@ func (b *Balancer) Add(name string, handler http.Handler, weight *int, fenced bo
 	if fenced {
 		b.fenced[name] = struct{}{}
 	}
+	if b.passiveHealthCheck != nil {
+		b.passiveHealthCheckMap[name] = healthcheck.NewPassiveHealthChecker(
+			b,
+			name,
+			b.passiveHealthCheck.MaxFailedAttempts,
+			b.passiveHealthCheck.FailureWindow,
+		)
+	}
+
 	b.handlersMu.Unlock()
 
 	if b.sticky != nil {

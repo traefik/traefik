@@ -1428,11 +1428,6 @@ func (in *Server) DeepCopyInto(out *Server) {
 		*out = new(int)
 		**out = **in
 	}
-	if in.HealthCheck != nil {
-		in, out := &in.HealthCheck, &out.HealthCheck
-		*out = new(PassiveHealthCheck)
-		**out = **in
-	}
 	return
 }
 
@@ -1507,6 +1502,11 @@ func (in *ServersLoadBalancer) DeepCopyInto(out *ServersLoadBalancer) {
 	if in.ResponseForwarding != nil {
 		in, out := &in.ResponseForwarding, &out.ResponseForwarding
 		*out = new(ResponseForwarding)
+		**out = **in
+	}
+	if in.PassiveHealthCheck != nil {
+		in, out := &in.PassiveHealthCheck, &out.PassiveHealthCheck
+		*out = new(PassiveHealthCheck)
 		**out = **in
 	}
 	return

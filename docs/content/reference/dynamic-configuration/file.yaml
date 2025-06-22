@@ -77,15 +77,9 @@ http:
           - url: foobar
             weight: 42
             preservePath: true
-            healthCheck:
-              failureWindow: 42s
-              maxFailedAttempts: 42
           - url: foobar
             weight: 42
             preservePath: true
-            healthCheck:
-              failureWindow: 42s
-              maxFailedAttempts: 42
         strategy: foobar
         healthCheck:
           scheme: foobar
@@ -106,6 +100,9 @@ http:
         responseForwarding:
           flushInterval: 42s
         serversTransport: foobar
+        passiveHealthCheck:
+          failureWindow: 42s
+          maxFailedAttempts: 42
     Service03:
       mirroring:
         service: foobar

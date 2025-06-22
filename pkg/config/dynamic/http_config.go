@@ -236,6 +236,8 @@ type ServersLoadBalancer struct {
 	PassHostHeader     *bool               `json:"passHostHeader" toml:"passHostHeader" yaml:"passHostHeader" export:"true"`
 	ResponseForwarding *ResponseForwarding `json:"responseForwarding,omitempty" toml:"responseForwarding,omitempty" yaml:"responseForwarding,omitempty" export:"true"`
 	ServersTransport   string              `json:"serversTransport,omitempty" toml:"serversTransport,omitempty" yaml:"serversTransport,omitempty" export:"true"`
+	// PassiveHealthCheck enables passive health checks for children servers of this load-balancer.
+	PassiveHealthCheck *PassiveHealthCheck `json:"passiveHealthCheck,omitempty" toml:"passiveHealthCheck,omitempty" yaml:"passiveHealthCheck,omitempty" export:"true"`
 }
 
 // Mergeable tells if the given service is mergeable.
@@ -293,8 +295,6 @@ type Server struct {
 	// Scheme can only be defined with label Providers.
 	Scheme string `json:"-" toml:"-" yaml:"-" file:"-" kv:"-"`
 	Port   string `json:"-" toml:"-" yaml:"-" file:"-" kv:"-"`
-	// HealthCheck enables passive health checks for this server.
-	HealthCheck *PassiveHealthCheck `json:"healthCheck,omitempty" toml:"healthCheck,omitempty" yaml:"healthCheck,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
