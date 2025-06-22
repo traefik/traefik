@@ -326,17 +326,23 @@ func (shc *ServiceHealthChecker) checkHealthGRPC(ctx context.Context, serverURL 
 }
 
 type PassiveHealthChecker struct {
-	mu          sync.Mutex
-	failures    []time.Time
-	maxFail     int
-	failTimeout ptypes.Duration
+	balancer     StatusSetter
+	childService string
+	info         *runtime.ServiceInfo
+	mu           sync.Mutex
+	failures     []time.Time
+	maxFail      int
+	failTimeout  ptypes.Duration
+	timer        *time.Timer
 }
 
-func NewPassiveHealthChecker(maxFail int, failTimeout ptypes.Duration) *PassiveHealthChecker {
+func NewPassiveHealthChecker(balancer StatusSetter, childService string, maxFail int, failTimeout ptypes.Duration) *PassiveHealthChecker {
 	return &PassiveHealthChecker{
-		failures:    []time.Time{},
-		maxFail:     maxFail,
-		failTimeout: failTimeout,
+		balancer:     balancer,
+		childService: childService,
+		failures:     []time.Time{},
+		maxFail:      maxFail,
+		failTimeout:  failTimeout,
 	}
 }
 
@@ -357,7 +363,23 @@ func (p *PassiveHealthChecker) AllowRequest() bool {
 	p.failures = filteredFailures
 
 	// Check if failures exceed maxFail
-	return len(p.failures) < p.maxFail
+	allowRequest := len(p.failures) < p.maxFail
+	if !allowRequest {
+		p.balancer.SetStatus(context.Background(), p.childService, false)
+		p.failures = []time.Time{}
+
+		if p.timer != nil {
+			p.timer.Stop()
+		}
+
+		p.timer = time.AfterFunc(time.Duration(p.failTimeout), func() {
+			p.mu.Lock()
+			p.balancer.SetStatus(context.Background(), p.childService, true)
+			p.mu.Unlock()
+		})
+	}
+
+	return allowRequest
 }
 
 func (p *PassiveHealthChecker) RecordFailure() {

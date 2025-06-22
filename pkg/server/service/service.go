@@ -245,14 +245,14 @@ func (m *Manager) getWRRServiceHandler(ctx context.Context, serviceName string, 
 		config.Sticky.Cookie.Name = cookie.GetName(config.Sticky.Cookie.Name, serviceName)
 	}
 
-	balancer := wrr.New(config.Sticky, config.HealthCheck != nil)
+	balancer := wrr.New(config.Sticky, config.HealthCheck != nil, nil)
 	for _, service := range shuffle(config.Services, m.rand) {
 		serviceHandler, err := m.getServiceHandler(ctx, service)
 		if err != nil {
 			return nil, err
 		}
 
-		balancer.Add(service.Name, serviceHandler, service.Weight, false, nil)
+		balancer.Add(service.Name, serviceHandler, service.Weight, false)
 
 		if config.HealthCheck == nil {
 			continue
@@ -343,7 +343,7 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 	// Here we are handling the empty value to comply with providers that are not applying defaults (e.g. REST provider)
 	// TODO: remove this when all providers apply default values.
 	case dynamic.BalancerStrategyWRR, "":
-		lb = wrr.New(service.Sticky, service.HealthCheck != nil)
+		lb = wrr.New(service.Sticky, service.HealthCheck != nil, service.PassiveHealthCheck)
 	case dynamic.BalancerStrategyP2C:
 		lb = p2c.New(service.Sticky, service.HealthCheck != nil)
 	default:
