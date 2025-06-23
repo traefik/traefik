@@ -305,7 +305,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 			}
 		}
 
-		if len(ingress.Spec.Rules) == 0 {
+		if defaultBackendService != nil && len(ingress.Spec.Rules) == 0 {
 			rt := &dynamic.Router{
 				Rule: "PathPrefix(`/`)",
 				// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
