@@ -20,14 +20,13 @@ func NewCmd(traefikConfiguration *static.Configuration, loaders []cli.ResourceLo
 		Configuration: traefikConfiguration,
 		Run:           runCmd(traefikConfiguration),
 		Resources:     loaders,
-		AllowArg:      true,
 	}
 }
 
 func runCmd(traefikConfiguration *static.Configuration) func(args []string) error {
 	return func(args []string) error {
 		fs := flag.NewFlagSet("healthcheck", flag.ContinueOnError)
-		urlFlag := fs.String("url", "", "override the healthcheck path (e.g. https://test.traefik.com/healthz")
+		urlFlag := fs.String("url", "", "")
 		fs.SetOutput(os.Stderr)
 		if err := fs.Parse(args); err != nil {
 			return err
