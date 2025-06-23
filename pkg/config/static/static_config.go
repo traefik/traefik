@@ -55,6 +55,9 @@ const (
 	// DefaultUDPTimeout defines how long to wait by default on an idle session,
 	// before releasing all resources related to that session.
 	DefaultUDPTimeout = 3 * time.Second
+
+	// DefaultGatewayAPIControllerName is the default controller name for the Gateway API provider.
+	DefaultGatewayAPIControllerName = "traefik.io/gateway-controller"
 )
 
 // Configuration is the static configuration.
@@ -309,6 +312,10 @@ func (c *Configuration) SetEffectiveConfiguration() {
 
 		if c.Providers.KubernetesCRD != nil {
 			c.Providers.KubernetesCRD.FillExtensionBuilderRegistry(c.Providers.KubernetesGateway)
+		}
+
+		if c.Providers.KubernetesGateway.ControllerName == "" {
+			c.Providers.KubernetesGateway.ControllerName = DefaultGatewayAPIControllerName
 		}
 
 		c.Providers.KubernetesGateway.EntryPoints = entryPoints

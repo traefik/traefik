@@ -44,7 +44,7 @@ func (p *Provider) loadHTTPRoutes(ctx context.Context, gatewayListeners []gatewa
 		for _, parentRef := range route.Spec.ParentRefs {
 			parentStatus := &gatev1.RouteParentStatus{
 				ParentRef:      parentRef,
-				ControllerName: controllerName,
+				ControllerName: gatev1.GatewayController(p.ControllerName),
 				Conditions: []metav1.Condition{
 					{
 						Type:               string(gatev1.RouteConditionAccepted),
@@ -94,7 +94,7 @@ func (p *Provider) loadHTTPRoutes(ctx context.Context, gatewayListeners []gatewa
 				Parents: parentStatuses,
 			},
 		}
-		if err := p.client.UpdateHTTPRouteStatus(ctx, ktypes.NamespacedName{Namespace: route.Namespace, Name: route.Name}, status); err != nil {
+		if err := p.client.UpdateHTTPRouteStatus(ctx, ktypes.NamespacedName{Namespace: route.Namespace, Name: route.Name}, status, gatev1.GatewayController(p.ControllerName)); err != nil {
 			logger.Warn().
 				Err(err).
 				Msg("Unable to update HTTPRoute status")
@@ -447,7 +447,7 @@ func (p *Provider) loadHTTPServers(ctx context.Context, namespace string, route 
 					Name:        gatev1.ObjectName(listener.GWName),
 					SectionName: ptr.To(gatev1.SectionName(listener.Name)),
 				},
-				ControllerName: controllerName,
+				ControllerName: gatev1.GatewayController(p.ControllerName),
 			}
 
 			// Multiple BackendTLSPolicies can match the same service port, meaning that there is a conflict.
@@ -472,7 +472,7 @@ func (p *Provider) loadHTTPServers(ctx context.Context, namespace string, route 
 				status := gatev1.PolicyStatus{
 					Ancestors: []gatev1.PolicyAncestorStatus{policyAncestorStatus},
 				}
-				if err := p.client.UpdateBackendTLSPolicyStatus(ctx, ktypes.NamespacedName{Namespace: policy.Namespace, Name: policy.Name}, status); err != nil {
+				if err := p.client.UpdateBackendTLSPolicyStatus(ctx, ktypes.NamespacedName{Namespace: policy.Namespace, Name: policy.Name}, status, gatev1.GatewayController(p.ControllerName)); err != nil {
 					log.Ctx(ctx).Warn().Err(err).Msg("Unable to update conflicting BackendTLSPolicy status")
 				}
 
@@ -504,7 +504,7 @@ func (p *Provider) loadHTTPServers(ctx context.Context, namespace string, route 
 			status := gatev1.PolicyStatus{
 				Ancestors: []gatev1.PolicyAncestorStatus{policyAncestorStatus},
 			}
-			if err := p.client.UpdateBackendTLSPolicyStatus(ctx, ktypes.NamespacedName{Namespace: policy.Namespace, Name: policy.Name}, status); err != nil {
+			if err := p.client.UpdateBackendTLSPolicyStatus(ctx, ktypes.NamespacedName{Namespace: policy.Namespace, Name: policy.Name}, status, gatev1.GatewayController(p.ControllerName)); err != nil {
 				log.Ctx(ctx).Warn().Err(err).Msg("Unable to update BackendTLSPolicy status")
 			}
 

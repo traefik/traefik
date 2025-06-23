@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -107,6 +108,62 @@ func TestGatewayClassLabelSelector(t *testing.T) {
 
 	assert.Equal(t, gatev1.IPAddressType, *gw.Status.Addresses[0].Type)
 	assert.Equal(t, "1.2.3.4", gw.Status.Addresses[0].Value)
+}
+
+func TestCustomGatewayClassControllerName(t *testing.T) {
+	testCases := []struct {
+		desc           string
+		gatewayClass   string
+		controllerName string
+	}{
+		{
+			desc:           "Custom controller name set in kubernetes provider",
+			gatewayClass:   "traefik-custom",
+			controllerName: "traefik.io/internal-gateway-controller",
+		},
+		{
+			desc:         "Default controller name used in kubernetes provider",
+			gatewayClass: "traefik",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			k8sObjects, gwObjects := readResources(t, []string{"gatewayclass_customcontrollername.yaml"})
+
+			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
+
+			client := newClientImpl(kubeClient, gwClient)
+
+			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			require.NoError(t, err)
+
+			if len(k8sObjects) > 0 || len(gwObjects) > 0 {
+				// just wait for the first event
+				<-eventCh
+			}
+
+			if test.controllerName == "" {
+				test.controllerName = "traefik.io/gateway-controller" // default behavior from pkg/config/static/static_config.go
+			}
+
+			p := Provider{
+				EntryPoints:    map[string]Entrypoint{"http": {Address: ":9080"}},
+				StatusAddress:  &StatusAddress{IP: "1.2.3.4"},
+				client:         client,
+				ControllerName: test.controllerName,
+			}
+
+			_ = p.loadConfigurationFromGateways(t.Context())
+
+			gwClass, err := gwClient.GatewayV1().GatewayClasses().Get(t.Context(), test.gatewayClass, metav1.GetOptions{})
+			assert.Equal(t, fmt.Sprintf("Handled by Traefik controller %s", test.controllerName), gwClass.Status.Conditions[0].Message)
+			require.NoError(t, err)
+		})
+	}
 }
 
 func TestLoadHTTPRoutes(t *testing.T) {

@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/traefik/traefik/v3/pkg/provider/acme"
+	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/gateway"
 )
 
 func pointer[T any](v T) *T { return &v }
@@ -264,6 +265,108 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 								Propagation: &acme.Propagation{
 									DisableChecks: true,
 								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "custom Kubernetes Gateway controller name",
+			conf: &Configuration{
+				Providers: &Providers{
+					KubernetesGateway: &gateway.Provider{
+						ControllerName: "custom.controller/name",
+					},
+				},
+			},
+			expected: &Configuration{
+				EntryPoints: EntryPoints{"http": &EntryPoint{
+					Address:         ":80",
+					AllowACMEByPass: false,
+					ReusePort:       false,
+					AsDefault:       false,
+					Transport: &EntryPointsTransport{
+						LifeCycle: &LifeCycle{
+							GraceTimeOut: 10000000000,
+						},
+						RespondingTimeouts: &RespondingTimeouts{
+							ReadTimeout: 60000000000,
+							IdleTimeout: 180000000000,
+						},
+					},
+					ProxyProtocol:    nil,
+					ForwardedHeaders: &ForwardedHeaders{},
+					HTTP: HTTPConfig{
+						SanitizePath:   pointer(true),
+						MaxHeaderBytes: 1048576,
+					},
+					HTTP2: &HTTP2Config{
+						MaxConcurrentStreams:      250,
+						MaxDecoderHeaderTableSize: 4096,
+						MaxEncoderHeaderTableSize: 4096,
+					},
+					HTTP3: nil,
+					UDP: &UDPConfig{
+						Timeout: 3000000000,
+					},
+				}},
+				Providers: &Providers{
+					KubernetesGateway: &gateway.Provider{
+						ControllerName: "custom.controller/name",
+						EntryPoints: map[string]gateway.Entrypoint{
+							"http": {
+								Address: ":80",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "default Kubernetes Gateway controller name",
+			conf: &Configuration{
+				Providers: &Providers{
+					KubernetesGateway: &gateway.Provider{},
+				},
+			},
+			expected: &Configuration{
+				EntryPoints: EntryPoints{"http": &EntryPoint{
+					Address:         ":80",
+					AllowACMEByPass: false,
+					ReusePort:       false,
+					AsDefault:       false,
+					Transport: &EntryPointsTransport{
+						LifeCycle: &LifeCycle{
+							GraceTimeOut: 10000000000,
+						},
+						RespondingTimeouts: &RespondingTimeouts{
+							ReadTimeout: 60000000000,
+							IdleTimeout: 180000000000,
+						},
+					},
+					ProxyProtocol:    nil,
+					ForwardedHeaders: &ForwardedHeaders{},
+					HTTP: HTTPConfig{
+						SanitizePath:   pointer(true),
+						MaxHeaderBytes: 1048576,
+					},
+					HTTP2: &HTTP2Config{
+						MaxConcurrentStreams:      250,
+						MaxDecoderHeaderTableSize: 4096,
+						MaxEncoderHeaderTableSize: 4096,
+					},
+					HTTP3: nil,
+					UDP: &UDPConfig{
+						Timeout: 3000000000,
+					},
+				}},
+				Providers: &Providers{
+					KubernetesGateway: &gateway.Provider{
+						ControllerName: DefaultGatewayAPIControllerName,
+						EntryPoints: map[string]gateway.Entrypoint{
+							"http": {
+								Address: ":80",
 							},
 						},
 					},
