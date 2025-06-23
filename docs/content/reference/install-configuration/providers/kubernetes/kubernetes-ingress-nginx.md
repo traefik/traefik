@@ -3,11 +3,18 @@ title: "Traefik Kubernetes Ingress NGINX Documentation"
 description: "Understand the requirements, routing configuration, and how to set up the Kubernetes Ingress NGINX provider. Read the technical documentation."
 ---
 
-# Traefik & Kubernetes 
+# Traefik & Ingresses with NGINX Annotations 
 
 The experimental Traefik Kubernetes Ingress NGINX provider is a Kubernetes Ingress controller; i.e,
 it manages access to cluster services by supporting the [Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/) specification.
 It also supports some of the [ingress-nginx](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/) annotations on ingresses to customize their behavior.
+
+!!! warning "Ingress Discovery"
+
+    The Kubernetes Ingress NGINX provider is discovering by default all Ingresses in the cluster,
+    which may lead to duplicated routers if you are also using the Kubernetes Ingress provider.
+    We recommend to use IngressClass for the Ingresses you want to be handled by this provider,
+    or to use the `watchNamespace` or `watchNamespaceSelector` options to limit the discovery of Ingresses to a specific namespace or set of namespaces.
 
 ## Configuration Example
 

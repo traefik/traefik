@@ -1,12 +1,19 @@
 ---
-title: "Kubernetes Ingress NGINX Routing Configuration"
+title: "Traefik Kubernetes Ingress NGINX Routing Configuration"
 description: "Understand the routing configuration for the Kubernetes Ingress NGINX Controller and Traefik Proxy. Read the technical documentation."
 ---
 
-# Traefik & Kubernetes
+# Traefik & Ingresses with NGINX Annotations
 
-The Kubernetes Ingress NGINX Controller.
+The experimental Kubernetes Controller for Ingresses with NGINX annotations.
 {: .subtitle }
+
+!!! warning "Ingress Discovery"
+
+    The Kubernetes Ingress NGINX provider is discovering by default all Ingresses in the cluster,
+    which may lead to duplicated routers if you are also using the Kubernetes Ingress provider.
+    We recommend to use IngressClass for the Ingresses you want to be handled by this provider,
+    or to use the `watchNamespace` or `watchNamespaceSelector` options to limit the discovery of Ingresses to a specific namespace or set of namespaces.
 
 ## Routing Configuration
 
