@@ -371,8 +371,7 @@ func filterIngressClass(ingressClasses []*netv1.IngressClass, ingressClassByName
 	var filteredIngressClasses []*netv1.IngressClass
 	for _, ic := range ingressClasses {
 		if ingressClassByName && ic.Name == ingressClass {
-			filteredIngressClasses = append(filteredIngressClasses, ic)
-			continue
+			return append(filteredIngressClasses, ic)
 		}
 
 		if ic.Spec.Controller == controllerClass {
