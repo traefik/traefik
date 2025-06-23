@@ -230,11 +230,11 @@ func (c *clientWrapper) WatchAll(ctx context.Context, namespace, namespaceSelect
 	return eventCh, nil
 }
 
-func (c *clientWrapper) IngressClassesIgnored() bool {
-	return c.ignoreIngressClasses
-}
-
 func (c *clientWrapper) ListIngressClasses() ([]*netv1.IngressClass, error) {
+	if c.ignoreIngressClasses {
+		return []*netv1.IngressClass{}, nil
+	}
+
 	return c.clusterScopeFactory.Networking().V1().IngressClasses().Lister().List(labels.Everything())
 }
 

@@ -250,13 +250,11 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 	}
 
 	var ingressClasses []*netv1.IngressClass
-	if !p.k8sClient.IngressClassesIgnored() {
-		ics, err := p.k8sClient.ListIngressClasses()
-		if err != nil {
-			log.Ctx(ctx).Warn().Err(err).Msg("Failed to list ingress classes")
-		}
-		ingressClasses = filterIngressClass(ics, p.IngressClassByName, p.IngressClass, p.ControllerClass)
+	ics, err := p.k8sClient.ListIngressClasses()
+	if err != nil {
+		log.Ctx(ctx).Warn().Err(err).Msg("Failed to list ingress classes")
 	}
+	ingressClasses = filterIngressClass(ics, p.IngressClassByName, p.IngressClass, p.ControllerClass)
 
 	ingresses := p.k8sClient.ListIngresses()
 
@@ -269,8 +267,8 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 			continue
 		}
 
-		var ingressConfig ingressConfig
-		if err := parseIngressConfig(&ingressConfig, ingress); err != nil {
+		ingressConfig, err := parseIngressConfig(ingress)
+		if err != nil {
 			logger.Error().Err(err).Msg("Error parsing ingress configuration")
 			continue
 		}
@@ -444,6 +442,8 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 				// As NGINX we are ignoring resource backend.
 				// An Ingress backend must have se service or a resource definition.
 				if pa.Backend.Service == nil {
+					logger.Error().Str("path", pa.Path).
+						Err(err).Msg("Ignoring path with no service backend")
 					continue
 				}
 
@@ -745,7 +745,7 @@ func (p *Provider) updateIngressStatus(ing *netv1.Ingress) error {
 }
 
 func (p *Provider) shouldProcessIngress(ingress *netv1.Ingress, ingressClasses []*netv1.IngressClass) bool {
-	if !p.k8sClient.IngressClassesIgnored() && ingress.Spec.IngressClassName != nil {
+	if len(ingressClasses) > 0 && ingress.Spec.IngressClassName != nil {
 		return slices.ContainsFunc(ingressClasses, func(ic *netv1.IngressClass) bool {
 			return *ingress.Spec.IngressClassName == ic.ObjectMeta.Name
 		})

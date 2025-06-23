@@ -52,9 +52,10 @@ type ingressConfig struct {
 }
 
 // parseIngressConfig parses the annotations from an Ingress object into an ingressConfig struct.
-func parseIngressConfig(cfg *ingressConfig, ing *netv1.Ingress) error {
-	cfgType := reflect.TypeOf(*cfg)
-	cfgValue := reflect.ValueOf(cfg).Elem()
+func parseIngressConfig(ing *netv1.Ingress) (ingressConfig, error) {
+	cfg := ingressConfig{}
+	cfgType := reflect.TypeOf(cfg)
+	cfgValue := reflect.ValueOf(&cfg).Elem()
 
 	for i := range cfgType.NumField() {
 		field := cfgType.Field(i)
@@ -91,14 +92,14 @@ func parseIngressConfig(cfg *ingressConfig, ing *netv1.Ingress) error {
 				}
 				cfgValue.Field(i).Set(reflect.ValueOf(&slice))
 			} else {
-				return errors.New("unsupported slice type in annotations")
+				return cfg, errors.New("unsupported slice type in annotations")
 			}
 		default:
-			return errors.New("unsupported kind")
+			return cfg, errors.New("unsupported kind")
 		}
 	}
 
-	return nil
+	return cfg, nil
 }
 
 // parseBackendProtocol parses the backend protocol annotation and returns the corresponding protocol string.
