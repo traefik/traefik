@@ -587,6 +587,7 @@ type httpServer struct {
 	Server    stoppableServer
 	Forwarder *httpForwarder
 	Switcher  *middlewares.HTTPHandlerSwitcher
+	err       *error
 }
 
 func createHTTPServer(ctx context.Context, ln net.Listener, configuration *static.EntryPoint, withH2c bool, reqDecorator *requestdecorator.RequestDecorator) (*httpServer, error) {
@@ -687,15 +688,17 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 
 	listener := newHTTPForwarder(ln)
 	go func() {
-		err := serverHTTP.Serve(listener)
+		err = serverHTTP.Serve(listener)
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Ctx(ctx).Error().Err(err).Msg("Error while starting server")
 		}
+
 	}()
 	return &httpServer{
 		Server:    serverHTTP,
 		Forwarder: listener,
 		Switcher:  httpSwitcher,
+		err:       &err,
 	}, nil
 }
 

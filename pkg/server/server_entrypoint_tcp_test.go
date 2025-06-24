@@ -137,11 +137,15 @@ func testShutdown(t *testing.T, router *tcprouter.Router) {
 		t.Fatal("entry point never closed")
 	}
 
-	// And make sure that the connection we had opened before shutting things down is still operational
+	// Make sure that the connection we had opened before shutting things down is still operational
 
 	resp, err := http.ReadResponse(reader, request)
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+	// Make sure that the closed server returns the expected error
+	assert.Equal(t, http.ErrServerClosed, *entryPoint.httpServer.err)
+	assert.Equal(t, http.ErrServerClosed, *entryPoint.httpsServer.err)
 }
 
 func startEntrypoint(t *testing.T, entryPoint *TCPEntryPoint, router *tcprouter.Router) (net.Conn, error) {
