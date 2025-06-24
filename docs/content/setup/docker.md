@@ -194,7 +194,7 @@ X-Real-Ip: 10.42.0.1
 Making the same request to the HTTP entrypoint will return the following:
 
 ```bash
-curl -k http://whomai.docker.localhost
+curl -k http://whoami.docker.localhost
 
 Moved Permanently
 ```
