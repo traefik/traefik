@@ -269,6 +269,8 @@ const (
 	BalancerStrategyHRW BalancerStrategy = "hrw"
 	// BalancerStrategyLeastTime is the least-time strategy.
 	BalancerStrategyLeastTime BalancerStrategy = "leasttime"
+	// BalancerStrategyEWMA is the ewma peek strategy.
+	BalancerStrategyEWMA BalancerStrategy = "ewma"
 )
 
 // +k8s:deepcopy-gen=true
