@@ -219,6 +219,8 @@ const (
 	BalancerStrategyWRR BalancerStrategy = "wrr"
 	// BalancerStrategyP2C is the power of two choices strategy.
 	BalancerStrategyP2C BalancerStrategy = "p2c"
+	// BalancerStrategyEWMA is the ewma peek strategy.
+	BalancerStrategyEWMA BalancerStrategy = "ewma"
 )
 
 // +k8s:deepcopy-gen=true

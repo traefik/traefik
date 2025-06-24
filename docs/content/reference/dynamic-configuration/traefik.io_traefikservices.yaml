@@ -334,11 +334,12 @@ spec:
                         strategy:
                           description: |-
                             Strategy defines the load balancing strategy between the servers.
-                            Supported values are: wrr (Weighed round-robin) and p2c (Power of two choices).
+                            Supported values are: wrr (Weighed round-robin), p2c (Power of two choices) and ewma (Exponentially weighted moving average).
                             RoundRobin value is deprecated and supported for backward compatibility.
                           enum:
                           - wrr
                           - p2c
+                          - ewma
                           - RoundRobin
                           type: string
                         weight:
@@ -461,11 +462,12 @@ spec:
                   strategy:
                     description: |-
                       Strategy defines the load balancing strategy between the servers.
-                      Supported values are: wrr (Weighed round-robin) and p2c (Power of two choices).
+                      Supported values are: wrr (Weighed round-robin), p2c (Power of two choices) and ewma (Exponentially weighted moving average).
                       RoundRobin value is deprecated and supported for backward compatibility.
                     enum:
                     - wrr
                     - p2c
+                    - ewma
                     - RoundRobin
                     type: string
                   weight:
@@ -675,11 +677,12 @@ spec:
                         strategy:
                           description: |-
                             Strategy defines the load balancing strategy between the servers.
-                            Supported values are: wrr (Weighed round-robin) and p2c (Power of two choices).
+                            Supported values are: wrr (Weighed round-robin), p2c (Power of two choices) and ewma (Exponentially weighted moving average).
                             RoundRobin value is deprecated and supported for backward compatibility.
                           enum:
                           - wrr
                           - p2c
+                          - ewma
                           - RoundRobin
                           type: string
                         weight:

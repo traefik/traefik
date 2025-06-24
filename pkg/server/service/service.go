@@ -28,6 +28,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/server/cookie"
 	"github.com/traefik/traefik/v3/pkg/server/middleware"
 	"github.com/traefik/traefik/v3/pkg/server/provider"
+	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/ewma"
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/failover"
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/mirror"
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/p2c"
@@ -347,6 +348,8 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 		lb = wrr.New(service.Sticky, service.HealthCheck != nil)
 	case dynamic.BalancerStrategyP2C:
 		lb = p2c.New(service.Sticky, service.HealthCheck != nil)
+	case dynamic.BalancerStrategyEWMA:
+		lb = ewma.New(service.Sticky, service.HealthCheck != nil)
 	default:
 		return nil, fmt.Errorf("unsupported load-balancer strategy %q", service.Strategy)
 	}
