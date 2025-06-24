@@ -15,7 +15,7 @@ func TestNewPoolContext(t *testing.T) {
 
 	testKey := testKeyType("test")
 
-	ctx := context.WithValue(context.Background(), testKey, "test")
+	ctx := context.WithValue(t.Context(), testKey, "test")
 	p := NewPool(ctx)
 
 	p.GoCtx(func(ctx context.Context) {
@@ -66,7 +66,7 @@ func TestPoolWithCtx(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			// These subtests cannot be run in parallel, since the testRoutine
 			// is shared across the subtests.
-			p := NewPool(context.Background())
+			p := NewPool(t.Context())
 			timer := time.NewTimer(500 * time.Millisecond)
 			defer timer.Stop()
 
@@ -93,7 +93,7 @@ func TestPoolWithCtx(t *testing.T) {
 }
 
 func TestPoolCleanupWithGoPanicking(t *testing.T) {
-	p := NewPool(context.Background())
+	p := NewPool(t.Context())
 
 	timer := time.NewTimer(500 * time.Millisecond)
 	defer timer.Stop()

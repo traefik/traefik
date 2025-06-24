@@ -108,7 +108,9 @@ func getHelloClientGRPCh2c() (helloworld.GreeterClient, func() error, error) {
 	return helloworld.NewGreeterClient(conn), conn.Close, nil
 }
 
-func callHelloClientGRPC(name string, secure bool) (string, error) {
+func callHelloClientGRPC(t *testing.T, name string, secure bool) (string, error) {
+	t.Helper()
+
 	var client helloworld.GreeterClient
 	var closer func() error
 	var err error
@@ -123,24 +125,26 @@ func callHelloClientGRPC(name string, secure bool) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	r, err := client.SayHello(context.Background(), &helloworld.HelloRequest{Name: name})
+	r, err := client.SayHello(t.Context(), &helloworld.HelloRequest{Name: name})
 	if err != nil {
 		return "", err
 	}
 	return r.GetMessage(), nil
 }
 
-func callStreamExampleClientGRPC() (helloworld.Greeter_StreamExampleClient, func() error, error) {
+func callStreamExampleClientGRPC(t *testing.T) (helloworld.Greeter_StreamExampleClient, func() error, error) {
+	t.Helper()
+
 	client, closer, err := getHelloClientGRPC()
 	if err != nil {
 		return nil, closer, err
 	}
-	t, err := client.StreamExample(context.Background(), &helloworld.StreamExampleRequest{})
+	s, err := client.StreamExample(t.Context(), &helloworld.StreamExampleRequest{})
 	if err != nil {
 		return nil, closer, err
 	}
 
-	return t, closer, nil
+	return s, closer, nil
 }
 
 func (s *GRPCSuite) TestGRPC() {
@@ -172,7 +176,7 @@ func (s *GRPCSuite) TestGRPC() {
 
 	var response string
 	err = try.Do(1*time.Second, func() error {
-		response, err = callHelloClientGRPC("World", true)
+		response, err = callHelloClientGRPC(s.T(), "World", true)
 		return err
 	})
 	assert.NoError(s.T(), err)
@@ -204,7 +208,7 @@ func (s *GRPCSuite) TestGRPCh2c() {
 
 	var response string
 	err = try.Do(1*time.Second, func() error {
-		response, err = callHelloClientGRPC("World", false)
+		response, err = callHelloClientGRPC(s.T(), "World", false)
 		return err
 	})
 	assert.NoError(s.T(), err)
@@ -240,7 +244,7 @@ func (s *GRPCSuite) TestGRPCh2cTermination() {
 
 	var response string
 	err = try.Do(1*time.Second, func() error {
-		response, err = callHelloClientGRPC("World", true)
+		response, err = callHelloClientGRPC(s.T(), "World", true)
 		return err
 	})
 	assert.NoError(s.T(), err)
@@ -276,7 +280,7 @@ func (s *GRPCSuite) TestGRPCInsecure() {
 
 	var response string
 	err = try.Do(1*time.Second, func() error {
-		response, err = callHelloClientGRPC("World", true)
+		response, err = callHelloClientGRPC(s.T(), "World", true)
 		return err
 	})
 	assert.NoError(s.T(), err)
@@ -314,7 +318,7 @@ func (s *GRPCSuite) TestGRPCBuffer() {
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`127.0.0.1`)"))
 	assert.NoError(s.T(), err)
 	var client helloworld.Greeter_StreamExampleClient
-	client, closer, err := callStreamExampleClientGRPC()
+	client, closer, err := callStreamExampleClientGRPC(s.T())
 	defer func() { _ = closer() }()
 	assert.NoError(s.T(), err)
 
@@ -367,7 +371,7 @@ func (s *GRPCSuite) TestGRPCBufferWithFlushInterval() {
 	assert.NoError(s.T(), err)
 
 	var client helloworld.Greeter_StreamExampleClient
-	client, closer, err := callStreamExampleClientGRPC()
+	client, closer, err := callStreamExampleClientGRPC(s.T())
 	defer func() {
 		_ = closer()
 		stopStreamExample <- true
@@ -422,7 +426,7 @@ func (s *GRPCSuite) TestGRPCWithRetry() {
 
 	var response string
 	err = try.Do(1*time.Second, func() error {
-		response, err = callHelloClientGRPC("World", true)
+		response, err = callHelloClientGRPC(s.T(), "World", true)
 		return err
 	})
 	assert.NoError(s.T(), err)

@@ -1,3 +1,39 @@
+## [v3.4.1](https://github.com/traefik/traefik/tree/v3.4.1) (2025-05-27)
+[All Commits](https://github.com/traefik/traefik/compare/v3.4.0...v3.4.1)
+
+**Bug fixes:**
+- **[docker]** Do not warn network missing if connected to a container network ([#11698](https://github.com/traefik/traefik/pull/11698) by [holysoles](https://github.com/holysoles))
+- **[k8s/crd]** Fix CEL validation for RootCA in ServersTransport ([#11775](https://github.com/traefik/traefik/pull/11775) by [rtribotte](https://github.com/rtribotte))
+- **[middleware]** Scope the rate limit counter key by source and by middleware ([#11753](https://github.com/traefik/traefik/pull/11753) by [aromeyer](https://github.com/aromeyer))
+- **[server]** Use routing path in v3 matchers ([#11790](https://github.com/traefik/traefik/pull/11790) by [kevinpollet](https://github.com/kevinpollet))
+- **[service]** Make P2C strategy thread-safe ([#11762](https://github.com/traefik/traefik/pull/11762) by [lbenguigui](https://github.com/lbenguigui))
+- **[webui]** Do not display RemoveHeader option when not defined ([#11782](https://github.com/traefik/traefik/pull/11782) by [kevinpollet](https://github.com/kevinpollet))
+
+**Documentation:**
+- **[acme]** Fix ambiguous wording in ACME page ([#11789](https://github.com/traefik/traefik/pull/11789) by [joshka](https://github.com/joshka))
+- **[k8s]** Fix incorrect case and missing rbac in documentation ([#11742](https://github.com/traefik/traefik/pull/11742) by [mmatur](https://github.com/mmatur))
+- **[middleware]** Match encoded certificate to example data for TLS passthrough ([#11759](https://github.com/traefik/traefik/pull/11759) by [holysoles](https://github.com/holysoles))
+
+**Misc:**
+- Merge branch v2.11 into v3.4 ([#11799](https://github.com/traefik/traefik/pull/11799) by [kevinpollet](https://github.com/kevinpollet))
+- Merge branch v2.11 into v3.4 ([#11796](https://github.com/traefik/traefik/pull/11796) by [kevinpollet](https://github.com/kevinpollet))
+- Merge branch v2.11 into v3.4 ([#11783](https://github.com/traefik/traefik/pull/11783) by [kevinpollet](https://github.com/kevinpollet))
+- Merge branch v2.11 into v3.4 ([#11757](https://github.com/traefik/traefik/pull/11757) by [mmatur](https://github.com/mmatur))
+- Merge v2.11 into v3.4 ([#11751](https://github.com/traefik/traefik/pull/11751) by [mmatur](https://github.com/mmatur))
+
+## [v2.11.25](https://github.com/traefik/traefik/tree/v2.11.25) (2025-05-27)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.24...v2.11.25)
+
+**Bug fixes:**
+- **[k8s/ingress]** Fix panic for ingress with backend resource ([#11777](https://github.com/traefik/traefik/pull/11777) by [rtribotte](https://github.com/rtribotte))
+- **[server]** Normalize request path ([#11768](https://github.com/traefik/traefik/pull/11768) by [kevinpollet](https://github.com/kevinpollet))
+
+**Documentation:**
+- **[middleware,k8s]** Add multi-tenant TLS guidance to the docs ([#11724](https://github.com/traefik/traefik/pull/11724) by [sheddy-traefik](https://github.com/sheddy-traefik))
+- **[service]** Add a note about how to disable connection reuse with backends ([#11716](https://github.com/traefik/traefik/pull/11716) by [rtribotte](https://github.com/rtribotte))
+- Fix broken link in documentation ([#11761](https://github.com/traefik/traefik/pull/11761) by [sheddy-traefik](https://github.com/sheddy-traefik))
+- Change version for path sanitization migration guide ([#11702](https://github.com/traefik/traefik/pull/11702) by [rtribotte](https://github.com/rtribotte))
+
 ## [v3.4.0](https://github.com/traefik/traefik/tree/v3.4.0) (2025-05-05)
 [All Commits](https://github.com/traefik/traefik/compare/v3.3.0-rc1...v3.4.0)
 

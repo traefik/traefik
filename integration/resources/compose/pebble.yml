@@ -1,4 +1,3 @@
-version: "3.8"
 services:
   pebble:
     image: letsencrypt/pebble:v2.3.1

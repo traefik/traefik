@@ -2,7 +2,6 @@ package metrics
 
 import (
 	"compress/gzip"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -338,7 +337,7 @@ func TestOpenTelemetry(t *testing.T) {
 				wantServiceName = test.serviceName
 			}
 
-			registry := RegisterOpenTelemetry(context.Background(), &cfg)
+			registry := RegisterOpenTelemetry(t.Context(), &cfg)
 			require.NotNil(t, registry)
 
 			if !registry.IsEpEnabled() || !registry.IsRouterEnabled() || !registry.IsSvcEnabled() {

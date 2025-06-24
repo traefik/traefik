@@ -66,17 +66,21 @@ markdown_extensions:
 nav:
   - 'What is Traefik': 'index.md'
   - 'Getting Started':
-      - 'Concepts' : 'getting-started/concepts.md'
+      - 'Overview': 'getting-started/index.md'
       - 'Quick Start':
-          - 'Docker': 'getting-started/quick-start.md'
-          - 'Kubernetes': 'getting-started/quick-start-with-kubernetes.md'
+        - 'Kubernetes': 'getting-started/kubernetes.md'
+        - 'Docker': 'getting-started/docker.md'
       - 'Configuration Introduction': 'getting-started/configuration-overview.md'
-      - 'Install Traefik': 'getting-started/install-traefik.md'
       - 'Frequently Asked Questions': 'getting-started/faq.md'
   - 'Setup':
       - 'Kubernetes': 'setup/kubernetes.md'
       - 'Docker': 'setup/docker.md'
       - 'Swarm': 'setup/swarm.md'
+  - 'Observe':
+      - 'Overview': 'observe/overview.md'
+      - 'Logs & Access Logs': 'observe/logs-and-access-logs.md'
+      - 'Metrics': 'observe/metrics.md'
+      - 'Tracing': 'observe/tracing.md'
   - 'Configuration Discovery':
       - 'Overview': 'providers/overview.md'
       - 'Docker': 'providers/docker.md'
@@ -175,6 +179,7 @@ nav:
       - 'Kubernetes and Let''s Encrypt': 'user-guides/crd-acme/index.md'
       - 'Kubernetes and cert-manager': 'user-guides/cert-manager.md'
       - 'gRPC Examples': 'user-guides/grpc.md'
+      - 'WebSocket Examples': 'user-guides/websocket.md'
       - 'Docker':
         - 'Basic Example': 'user-guides/docker-compose/basic-example/index.md'
         - 'HTTPS with Let''s Encrypt':

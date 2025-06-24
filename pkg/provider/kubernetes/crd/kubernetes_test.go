@@ -1,7 +1,6 @@
 package crd
 
 import (
-	"context"
 	"os"
 	"path/filepath"
 	"strings"
@@ -1677,7 +1676,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 				AllowEmptyServices:        test.allowEmptyServices,
 			}
 
-			conf := p.loadConfigurationFromCRD(context.Background(), client)
+			conf := p.loadConfigurationFromCRD(t.Context(), client)
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -5309,7 +5308,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 				AllowEmptyServices:        test.allowEmptyServices,
 			}
 
-			conf := p.loadConfigurationFromCRD(context.Background(), client)
+			conf := p.loadConfigurationFromCRD(t.Context(), client)
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -5385,7 +5384,7 @@ func TestLoadIngressRoutes_multipleEndpointAddresses(t *testing.T) {
 	}
 
 	p := Provider{}
-	conf := p.loadConfigurationFromCRD(context.Background(), client)
+	conf := p.loadConfigurationFromCRD(t.Context(), client)
 
 	service, ok := conf.HTTP.Services["default-test-route-6b204d94623b3df4370c"]
 	require.True(t, ok)
@@ -5900,7 +5899,7 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 				AllowEmptyServices:        test.allowEmptyServices,
 			}
 
-			conf := p.loadConfigurationFromCRD(context.Background(), client)
+			conf := p.loadConfigurationFromCRD(t.Context(), client)
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -7398,7 +7397,7 @@ func TestCrossNamespace(t *testing.T) {
 
 			p := Provider{AllowCrossNamespace: test.allowCrossNamespace}
 
-			conf := p.loadConfigurationFromCRD(context.Background(), client)
+			conf := p.loadConfigurationFromCRD(t.Context(), client)
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -7668,7 +7667,7 @@ func TestExternalNameService(t *testing.T) {
 
 			p := Provider{AllowExternalNameServices: test.allowExternalNameService}
 
-			conf := p.loadConfigurationFromCRD(context.Background(), client)
+			conf := p.loadConfigurationFromCRD(t.Context(), client)
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -7850,7 +7849,7 @@ func TestNativeLB(t *testing.T) {
 
 			p := Provider{}
 
-			conf := p.loadConfigurationFromCRD(context.Background(), client)
+			conf := p.loadConfigurationFromCRD(t.Context(), client)
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -8118,7 +8117,7 @@ func TestNodePortLB(t *testing.T) {
 				DisableClusterScopeResources: test.disableClusterScope,
 			}
 
-			conf := p.loadConfigurationFromCRD(context.Background(), client)
+			conf := p.loadConfigurationFromCRD(t.Context(), client)
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -8630,7 +8629,7 @@ func TestGlobalNativeLB(t *testing.T) {
 
 			p := Provider{NativeLBByDefault: test.NativeLBByDefault}
 
-			conf := p.loadConfigurationFromCRD(context.Background(), client)
+			conf := p.loadConfigurationFromCRD(t.Context(), client)
 			assert.Equal(t, test.expected, conf)
 		})
 	}

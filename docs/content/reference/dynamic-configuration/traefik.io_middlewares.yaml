@@ -1163,7 +1163,7 @@ spec:
                 properties:
                   permanent:
                     description: Permanent defines whether the redirection is permanent
-                      (301).
+                      (308).
                     type: boolean
                   regex:
                     description: Regex defines the regex used to match and capture
@@ -1182,7 +1182,7 @@ spec:
                 properties:
                   permanent:
                     description: Permanent defines whether the redirection is permanent
-                      (301).
+                      (308).
                     type: boolean
                   port:
                     description: Port defines the port of the new URL.
