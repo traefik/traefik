@@ -37,6 +37,8 @@ Check the context:
 kubectl cluster-info --context k3d-traefik
 ```
 
+You should see something like this:
+
 ```bash
 Kubernetes control plane is running at https://0.0.0.0:56049
 CoreDNS is running at https://0.0.0.0:56049/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
@@ -179,6 +181,7 @@ logs:
   # This enables access logs, outputting them to Traefik's standard output by default. The [Access Logs Documentation](https://doc.traefik.io/traefik/observability/access-logs/) covers formatting, filtering, and output options.
   access:
     enabled: true
+
 # Enables Prometheus for Metrics
 metrics:
   prometheus:
@@ -282,7 +285,7 @@ Apply the manifest:
 kubectl apply -f whoami-route.yaml
 ```
 
-After you apply the manifest, navigate to  the Routes in the Traefik Dashboard; you’ll see that the [https://whoami.docker.localhost](https://whoami.docker.localhost) route has been created.
+After you apply the manifest, navigate to the Routes in the Traefik Dashboard; you’ll see that the [https://whoami.docker.localhost](https://whoami.docker.localhost) route has been created.
 
 ![Route](../assets/img/setup/route-in-dashboard.png)
 

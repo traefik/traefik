@@ -3,9 +3,9 @@ title: Setup Traefik Proxy in Docker Standalone
 description: "Learn how to Setup Traefik on Docker with HTTP/HTTPS entrypoints, redirects, secure dashboard, basic TLS, metrics, tracing, access‑logs."
 ---
 
-This guide provides an in-depth walkthrough for installing and configuring Traefik Proxy within a Docker container with using the official Traefik Docker image & Docker compose. In this guide, we'll cover the following:
+This guide provides an in-depth walkthrough for installing and configuring Traefik Proxy within a Docker container using the official Traefik Docker image & Docker Compose. In this guide, we'll cover the following:
 
-- Enable the Docker provider
+- Enable the [Docker provider](../reference/install-configuration/providers/docker.md)
 - Expose **web** (HTTP :80) and **websecure** (HTTPS :443) entrypoints  
 - Redirect all HTTP traffic to HTTPS
 - Secure the Traefik dashboard with **basic‑auth**  
@@ -18,7 +18,7 @@ This guide provides an in-depth walkthrough for installing and configuring Traef
 - Docker Desktop / Engine 
 - Docker Compose 
 - `openssl`
-- `htpasswd`
+- `htpasswd` from `apache2-utils`
 
 ## Create a self‑signed certificate
 
@@ -35,7 +35,7 @@ The `certs` folder now holds `local.crt` and `local.key`, which will be mounted 
 
 ## Create the Traefik Dashboard Credentials
 
-In production, it is advisable to have some form of authentication/security for the Traefik dashboared. We can secure the Traefik with the [basic‑auth middleware](../reference/routing-configuration/http/middlewares/basicauth.md). To do this, Generate a hashed username / password pair that Traefik’s middleware will validate:
+In production, it is advisable to have some form of authentication/security for the Traefik dashboard. Traefik can be secured with the [basic‑auth middleware](../reference/routing-configuration/http/middlewares/basicauth.md). To do this, generate a hashed username / password pair that Traefik’s middleware will validate:
 
 ```bash
 htpasswd -nb admin "P@ssw0rd" | sed -e 's/\$/\$\$/g'
@@ -43,23 +43,23 @@ htpasswd -nb admin "P@ssw0rd" | sed -e 's/\$/\$\$/g'
 
 Copy the full output (e.g., admin:$$apr1$$…) — we'll need this for the middleware configuration.
 
-## Create a docker-compose.yml
+## Create a docker-compose.yaml
 
 Now define the whole stack in a Compose file. This file declares Traefik, mounts the certificate, sets up a dedicated network, and later hosts the whoami demo service.
 
 !!! note
     You can also choose to use the Docker CLI and a configuration file to run Traefik, but for this tutorial, we'll be using Docker Compose.
 
-First, create a folder named `dynamic` and create a file name `tls.yml` for dynamic configuration. Paste the configuration for our tls certs in the file:
+First, create a folder named `dynamic` and create a file named `tls.yaml` for dynamic configuration. Paste the TLS certificate configuration into the file:
     
-```bash
+```yaml
 tls:
   certificates:
     - certFile: /certs/local.crt
       keyFile:  /certs/local.key
 ```
 
-In the same folder as the `dynamic/tls.yml` file, create a docker-compose.yml file and include the following:
+In the same folder as the `dynamic/tls.yaml` file, create a `docker-compose.yaml` file and include the following:
 
 ```yaml
 services:
@@ -93,8 +93,8 @@ services:
       - "--entrypoints.websecure.address=:443"
       - "--entrypoints.websecure.http.tls=true"
 
-      # Attach the static configuration tls.yml file that contains the tls configuration settings
-      - "--providers.file.filename=/dynamic/tls.yml"
+      # Attach the static configuration tls.yaml file that contains the tls configuration settings
+      - "--providers.file.filename=/dynamic/tls.yaml"
 
       # Providers 
       - "--providers.docker=true"
@@ -142,6 +142,10 @@ networks:
   proxy:
     name: proxy
 ```
+
+!!! info
+    - Remember to replace `<PASTE_HASH_HERE>` with the hash generated earlier.
+    - The `--api.insecure=false` flag is used to secure the API and prevent the dashboard from being exposed on port 8080. This is done because we are exposing the dashboard with a HTTPS router.
 
 ## Launch the stack
 
@@ -200,6 +204,9 @@ The above confirms that a redirection has taken place which means our setup work
 You can also open a browser and navigate to [https://whoami.docker.localhost](https://whoami.docker.localhost) to see a JSON dump from the service:
 
 ![Whoami](../assets/img/setup/whoami-json-dump.png)
+
+!!! info
+    You can also navigate to the Traefik Dashboard at [https://dashboard.docker.localhost](https://dashboard.docker.localhost) to see that the route has been created.
 
 ### Other Key Configuration Areas
 

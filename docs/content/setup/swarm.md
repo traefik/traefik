@@ -5,7 +5,7 @@ description: "Learn how to run Traefik v3 in Docker Swarm with HTTP/HTTPS entry
 
 This guide provides an in‑depth walkthrough for installing and configuring Traefik Proxy as a **Swarm service** using `docker stack deploy`. It follows the same structure as the standalone‑Docker tutorial and covers:
 
-- Enable the **Swarm provider**  
+- Enable the [Swarm provider](../reference/install-configuration/providers/swarm.md)
 - Expose **web** (HTTP :80) and **websecure** (HTTPS :443) entrypoints  
 - Redirect all HTTP traffic to HTTPS  
 - Secure the Traefik dashboard with **basic‑auth**  
@@ -41,22 +41,22 @@ htpasswd -nb admin "P@ssw0rd" | sed -e 's/\$/\$\$/g'
 
 Copy the full output (e.g., `admin:$$apr1$$…`) — we’ll paste it into the middleware label.
 
-## Create a docker‑compose‑swarm.yml
+## Create a docker‑compose‑swarm.yaml
 
 !!! note
-    Swarm uses `docker stack deploy`. The compose file can be named anything; we’ll use **docker‑compose‑swarm.yml**.
+    Swarm uses `docker stack deploy`. The compose file can be named anything; we’ll use `docker‑compose‑swarm.yaml`.
 
-First, create a folder named **dynamic** and add **tls.yml** for dynamic TLS configuration:
+First, create a folder named **dynamic** and add **tls.yaml** for dynamic TLS configuration:
 
 ```yaml
-# dynamic/tls.yml
+# dynamic/tls.yaml
 tls:
   certificates:
     - certFile: /certs/local.crt
       keyFile:  /certs/local.key
 ```
 
-In the same directory, create **docker‑compose‑swarm.yml**:
+In the same directory, create `docker‑compose‑swarm.yaml`:
 
 ```yaml
 services:
@@ -104,7 +104,7 @@ services:
       - "--entrypoints.websecure.http.tls=true"
 
       # Attach dynamic TLS file
-      - "--providers.file.filename=/dynamic/tls.yml"
+      - "--providers.file.filename=/dynamic/tls.yaml"
 
       # Providers
 
@@ -157,7 +157,7 @@ services:
         # Service hint
         - "traefik.http.services.traefik.loadbalancer.server.port=8080"
   
-  # Deploy the Whomai application
+  # Deploy the Whoami application
   whoami:
     image: traefik/whoami
     networks:
@@ -183,7 +183,8 @@ networks:
 ```
 
 !!! info
-    Replace `<PASTE_HASH_HERE>` with the escaped hash from the previous step.
+    - Replace `<PASTE_HASH_HERE>` with the escaped hash from the previous step.
+    - The password hash is stored directly in a service label. This is fine for local development, but anyone with access to the Docker API can view it using `docker service inspect`. For production, use a more secure method to store secrets.
 
 ## Launch the stack
 
@@ -191,7 +192,7 @@ Create the overlay network once (if it doesn’t exist) and deploy:
 
 ```bash
 docker network create --driver overlay --attachable traefik_proxy || true
-docker stack deploy -c docker-compose-swarm.yml traefik
+docker stack deploy -c docker-compose-swarm.yaml traefik
 ```
 
 Swarm schedules the services on a manager node and binds ports 80/443.
@@ -207,7 +208,7 @@ Open **https://dashboard.swarm.localhost/** in your browser — the dashboard sh
 You can test the application using curl:
 
 ```bash
-curl -k https://whoami.docker.localhost/
+curl -k https://whoami.swarm.localhost/
 ```
 
 ```bash
@@ -218,12 +219,12 @@ IP: 10.42.0.59
 IP: fe80::50d7:a2ff:fed5:2530
 RemoteAddr: 10.42.0.60:54148
 GET / HTTP/1.1
-Host: whoami.docker.localhost
+Host: whoami.swarm.localhost
 User-Agent: curl/8.7.1
 Accept: */*
 Accept-Encoding: gzip
 X-Forwarded-For: 10.42.0.1
-X-Forwarded-Host: whoami.docker.localhost
+X-Forwarded-Host: whoami.swarm.localhost
 X-Forwarded-Port: 443
 X-Forwarded-Proto: https
 X-Forwarded-Server: traefik-644b7c67d9-f2tn9
@@ -233,7 +234,7 @@ X-Real-Ip: 10.42.0.1
 Making the same request to the HTTP entrypoint will return the following:
 
 ```bash
-curl -k http://whomai.swarm.localhost
+curl -k http://whoami.swarm.localhost
 
 Moved Permanently
 ```
@@ -265,7 +266,8 @@ This defines a resolver named `le`, sets the required email and storage path (wi
 
 !!! note
 
-    Ensure the `/letsencrypt` path is on a **shared volume** or NFS so all nodes can read certificates.
+    - Ensure the `/letsencrypt` path is on a **shared volume** or NFS so all nodes can read certificates.
+    - Ensure to mount the `/letsencrypt` volume in the `traefik` service in the `docker-compose-swarm.yaml` file.
 
 #### Metrics (Prometheus)
 
