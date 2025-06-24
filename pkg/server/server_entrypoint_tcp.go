@@ -163,6 +163,7 @@ type TCPEntryPoint struct {
 	tracker                *connectionTracker
 	httpServer             *httpServer
 	httpsServer            *httpServer
+	gracefullyStopped      bool
 
 	http3Server *http3server
 }
@@ -213,6 +214,7 @@ func NewTCPEntryPoint(ctx context.Context, name string, config *static.EntryPoin
 		httpServer:             httpServer,
 		httpsServer:            httpsServer,
 		http3Server:            h3Server,
+		gracefullyStopped:      false,
 	}, nil
 }
 
@@ -228,7 +230,11 @@ func (e *TCPEntryPoint) Start(ctx context.Context) {
 	for {
 		conn, err := e.listener.Accept()
 		if err != nil {
-			logger.Error().Err(err).Send()
+			if !e.gracefullyStopped {
+				logger.Error().Err(err).Send()
+			} else {
+				err = http.ErrServerClosed
+			}
 
 			var opErr *net.OpError
 			if errors.As(err, &opErr) && opErr.Temporary() {
@@ -311,19 +317,16 @@ func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
 		server.Close()
 	}
 
+	e.gracefullyStopped = true
+
 	if e.httpServer.Server != nil {
 		wg.Add(1)
 		go shutdownServer(e.httpServer.Server)
 	}
 
-	if e.httpsServer.Server != nil {
+	if e.http3Server != nil {
 		wg.Add(1)
-		go shutdownServer(e.httpsServer.Server)
-
-		if e.http3Server != nil {
-			wg.Add(1)
-			go shutdownServer(e.http3Server)
-		}
+		go shutdownServer(e.http3Server)
 	}
 
 	if e.tracker != nil {
@@ -584,6 +587,7 @@ type httpServer struct {
 	Server    stoppableServer
 	Forwarder *httpForwarder
 	Switcher  *middlewares.HTTPHandlerSwitcher
+	err       *error
 }
 
 func createHTTPServer(ctx context.Context, ln net.Listener, configuration *static.EntryPoint, withH2c bool, reqDecorator *requestdecorator.RequestDecorator) (*httpServer, error) {
@@ -684,15 +688,17 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 
 	listener := newHTTPForwarder(ln)
 	go func() {
-		err := serverHTTP.Serve(listener)
+		err = serverHTTP.Serve(listener)
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Ctx(ctx).Error().Err(err).Msg("Error while starting server")
 		}
+
 	}()
 	return &httpServer{
 		Server:    serverHTTP,
 		Forwarder: listener,
 		Switcher:  httpSwitcher,
+		err:       &err,
 	}, nil
 }
 
