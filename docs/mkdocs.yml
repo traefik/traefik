@@ -66,13 +66,17 @@ markdown_extensions:
 nav:
   - 'What is Traefik': 'index.md'
   - 'Getting Started':
-      - 'Concepts' : 'getting-started/concepts.md'
+      - 'Overview': 'getting-started/index.md'
       - 'Quick Start':
-          - 'Docker': 'getting-started/quick-start.md'
-          - 'Kubernetes': 'getting-started/quick-start-with-kubernetes.md'
+        - 'Kubernetes': 'getting-started/kubernetes.md'
+        - 'Docker': 'getting-started/docker.md'
       - 'Configuration Introduction': 'getting-started/configuration-overview.md'
-      - 'Install Traefik': 'getting-started/install-traefik.md'
       - 'Frequently Asked Questions': 'getting-started/faq.md'
+  - 'Observe':
+      - 'Overview': 'observe/overview.md'
+      - 'Logs & Access Logs': 'observe/logs-and-access-logs.md'
+      - 'Metrics': 'observe/metrics.md'
+      - 'Tracing': 'observe/tracing.md'
   - 'Configuration Discovery':
       - 'Overview': 'providers/overview.md'
       - 'Docker': 'providers/docker.md'
