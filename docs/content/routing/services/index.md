@@ -1260,6 +1260,10 @@ Please note that by default the whole request is buffered in memory while it is 
 See the maxBodySize option in the example below for how to modify this behaviour.
 You can also omit the request body by setting the mirrorBody option to `false`.
 
+!!! warning "Default behavior of `percent`"
+
+    When configuring a `mirror` service, if the `percent` field is not set, it defaults to `0`, meaning **no traffic will be sent to the mirror**.
+
 !!! info "Supported Providers"
 
     This strategy can be defined currently with the [File](../../providers/file.md) or [IngressRoute](../../providers/kubernetes-crd.md) providers.
@@ -1280,6 +1284,8 @@ http:
         maxBodySize: 1024
         mirrors:
         - name: appv2
+          # Percent defines the percentage of requests that should be mirrored.
+          # Default value is 0, which means no traffic will be sent to the mirror.
           percent: 10
 
     appv1:
