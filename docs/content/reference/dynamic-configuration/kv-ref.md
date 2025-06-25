@@ -199,6 +199,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/routers/Router0/middlewares/1` | `foobar` |
 | `traefik/http/routers/Router0/observability/accessLogs` | `true` |
 | `traefik/http/routers/Router0/observability/metrics` | `true` |
+| `traefik/http/routers/Router0/observability/traceVerbosity` | `foobar` |
 | `traefik/http/routers/Router0/observability/tracing` | `true` |
 | `traefik/http/routers/Router0/priority` | `42` |
 | `traefik/http/routers/Router0/rule` | `foobar` |
@@ -218,6 +219,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/routers/Router1/middlewares/1` | `foobar` |
 | `traefik/http/routers/Router1/observability/accessLogs` | `true` |
 | `traefik/http/routers/Router1/observability/metrics` | `true` |
+| `traefik/http/routers/Router1/observability/traceVerbosity` | `foobar` |
 | `traefik/http/routers/Router1/observability/tracing` | `true` |
 | `traefik/http/routers/Router1/priority` | `42` |
 | `traefik/http/routers/Router1/rule` | `foobar` |
