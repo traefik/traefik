@@ -1335,13 +1335,13 @@ func (in *RouterObservabilityConfig) DeepCopyInto(out *RouterObservabilityConfig
 		*out = new(bool)
 		**out = **in
 	}
-	if in.Tracing != nil {
-		in, out := &in.Tracing, &out.Tracing
+	if in.Metrics != nil {
+		in, out := &in.Metrics, &out.Metrics
 		*out = new(bool)
 		**out = **in
 	}
-	if in.Metrics != nil {
-		in, out := &in.Metrics, &out.Metrics
+	if in.Tracing != nil {
+		in, out := &in.Tracing, &out.Tracing
 		*out = new(bool)
 		**out = **in
 	}
