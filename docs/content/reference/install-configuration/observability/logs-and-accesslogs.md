@@ -99,7 +99,7 @@ log:
 | Field      | Description   | Default | Required |
 |:-----------|:-----------------------------------------------------------------------------|:--------|:---------|
 | `log.otlp.http` | This instructs the exporter to send logs to the OpenTelemetry Collector using HTTP.|      | No      |
-| `log.otlp.http.endpoint` | The endpoint of the OpenTelemetry Collector. |  `https://localhost:4318/v1/logs` (format=`<scheme>://<host>:<port><path>`)  | No |
+| `log.otlp.http.endpoint` | The endpoint of the OpenTelemetry Collector. (format=`<scheme>://<host>:<port><path>`) |  `https://localhost:4318/v1/logs`   | No |
 | `log.otlp.http.headers` | Additional headers sent with logs by the exporter to the OpenTelemetry Collector. |      | No      |
 | `log.otlp.http.tls` | Defines the Client TLS configuration used by the exporter to send logs to the OpenTelemetry Collector. |      | No      |
 | `log.otlp.http.tls.ca` | The path to the certificate authority used for the secure connection to the OpenTelemetry Collector, it defaults to the system bundle. |      | No      |
