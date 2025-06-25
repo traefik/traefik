@@ -6,7 +6,7 @@ This section guides you through exposing services securely with Traefik Proxy. Y
 
 Following these guides, you'll learn how to:
 
-- Route HTTP traffic to your services
+- Route HTTP traffic to your services with [Gateway API](../reference/routing-configuration/kubernetes/gateway-api.md) and [IngressRoute](../reference/routing-configuration/kubernetes/crd/http/ingressroute.md)
 - Configure routing rules to direct requests
 - Enable HTTPS with TLS
 - Add security middlewares

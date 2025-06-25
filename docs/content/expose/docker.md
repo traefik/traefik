@@ -378,15 +378,7 @@ You should see that your certificate is issued by Let's Encrypt.
 
 Sticky sessions ensure that a user's requests always go to the same backend server, which is essential for applications that maintain session state. Let's implement sticky sessions for our whoami service.
 
-### First, Scale Up the Service
-
-To demonstrate sticky sessions with Docker, we'll use Docker Compose's scale feature:
-
-```bash
-docker compose up -d --scale whoami=3
-```
-
-This creates multiple instances of the whoami service.
+### First, Add Sticky Session Labels
 
 Add the following labels to your whoami service in the `docker-compose.yml` file:
 
@@ -403,6 +395,19 @@ Apply the changes:
 ```bash
 docker compose up -d
 ```
+
+### Then, Scale Up the Service
+
+To demonstrate sticky sessions with Docker, use Docker Compose's scale feature:
+
+```bash
+docker compose up -d --scale whoami=3
+```
+
+This creates multiple instances of the whoami service.
+
+!!! important "Scaling After Configuration Changes"
+    If you run `docker compose up -d` after scaling, it will reset the number of whoami instances back to 1. Always scale after applying configuration changes and starting the services.
 
 ### Test Sticky Sessions
 

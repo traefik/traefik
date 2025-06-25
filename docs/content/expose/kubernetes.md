@@ -1,6 +1,11 @@
 # Exposing Services with Traefik on Kubernetes
 
-This guide will help you expose your services securely through Traefik Proxy on Kubernetes. We'll cover routing HTTP and HTTPS traffic, implementing TLS, adding security middleware, and configuring sticky sessions.
+This guide will help you expose your services securely through Traefik Proxy on Kubernetes. We'll cover routing HTTP and HTTPS traffic, implementing TLS, adding security middleware, and configuring sticky sessions. For routing, this guide gives you two options:
+
+- [Gateway API](../reference/routing-configuration/kubernetes/gateway-api.md)
+- [IngressRoute](../reference/routing-configuration/kubernetes/crd/http/ingressroute.md)
+
+Feel free to choose the one that fits your needs best.
 
 ## Prerequisites
 
@@ -117,6 +122,15 @@ Your service is now available at http://whoami.docker.localhost/. Test that it w
 ```bash
 curl -H "Host: whoami.docker.localhost" http://localhost/
 ```
+
+!!! info
+    Make sure to remove the `ports.web.redirections` block from the `values.yaml` file if you followed the Kubernetes Setup Guide to install Traefik otherwise you will be redirected to the HTTPS entrypoint:
+
+    ```yaml
+    redirections:
+      entryPoint:
+        to: websecure
+    ```
 
 You should see output similar to:
 
