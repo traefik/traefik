@@ -94,8 +94,9 @@ entryPoints:
       timeout: 42s
     observability:
       accessLogs: true
-      tracing: true
       metrics: true
+      tracing: true
+      traceVerbosity: foobar
 providers:
   providersThrottleDuration: 42s
   docker:
