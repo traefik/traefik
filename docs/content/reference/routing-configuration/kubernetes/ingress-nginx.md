@@ -138,7 +138,7 @@ which in turn will create the resulting routers, services, handlers, etc.
             serviceAccountName: traefik-ingress-controller
             containers:
               - name: traefik
-                image: traefik:v3.4
+                image: traefik:v3.5
                 args:
                   - --entryPoints.web.address=:80
                   - --providers.kubernetesingressnginx
