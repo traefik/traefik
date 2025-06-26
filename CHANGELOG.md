@@ -1,3 +1,33 @@
+## [v3.4.2](https://github.com/traefik/traefik/tree/v3.4.2) (2025-06-26)
+[All Commits](https://github.com/traefik/traefik/compare/v3.4.1...v3.4.2)
+
+**Documentation:**
+- **[acme]** Add a note to certificatesDuration ([#11808](https://github.com/traefik/traefik/pull/11808) by [sMteX](https://github.com/sMteX))
+- **[docker,k8s]** Update Getting started Section with New Docker and Kubernetes Tutorial ([#11714](https://github.com/traefik/traefik/pull/11714) by [sheddy-traefik](https://github.com/sheddy-traefik))
+- **[docker]** Remove obsolete version field in compose files ([#11798](https://github.com/traefik/traefik/pull/11798) by [thomas-mauran](https://github.com/thomas-mauran))
+- **[k8s]** Add a note about Ingress Backend Resource support ([#11785](https://github.com/traefik/traefik/pull/11785) by [edysli](https://github.com/edysli))
+- **[logs,metrics,tracing,accesslogs]** Update the EntryPoints Documentation ([#11856](https://github.com/traefik/traefik/pull/11856) by [sheddy-traefik](https://github.com/sheddy-traefik))
+- **[logs,metrics,tracing,accesslogs]** Add New Observe Guides to the Documentation ([#11828](https://github.com/traefik/traefik/pull/11828) by [sheddy-traefik](https://github.com/sheddy-traefik))
+- **[middleware]** Remove conflicting information from the CircuitBreaker documentation. ([#11835](https://github.com/traefik/traefik/pull/11835) by [adk-swisstopo](https://github.com/adk-swisstopo))
+- **[service]** Clarify mirroring service default percent value ([#11804](https://github.com/traefik/traefik/pull/11804) by [Alexy-vda](https://github.com/Alexy-vda))
+- **[websocket]** Add WebSocket guide ([#11623](https://github.com/traefik/traefik/pull/11623) by [NX211](https://github.com/NX211))
+
+**Misc:**
+- Merge branch v2.11 into v3.4 ([#11859](https://github.com/traefik/traefik/pull/11859) by [rtribotte](https://github.com/rtribotte))
+- Merge branch v2.11 into v3.4 ([#11831](https://github.com/traefik/traefik/pull/11831) by [rtribotte](https://github.com/rtribotte))
+- Merge branch v2.11 into v3.4 ([#11810](https://github.com/traefik/traefik/pull/11810) by [rtribotte](https://github.com/rtribotte))
+
+## [v2.11.26](https://github.com/traefik/traefik/tree/v2.11.26) (2025-06-26)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.25...v2.11.26)
+
+**Bug fixes:**
+- **[middleware]** Do not log redis sentinel username and password ([#11819](https://github.com/traefik/traefik/pull/11819) by [kevinpollet](https://github.com/kevinpollet))
+
+**Documentation:**
+- **[kv]** Fix KV reference rendering ([#11815](https://github.com/traefik/traefik/pull/11815) by [rtribotte](https://github.com/rtribotte))
+- **[middleware,k8s/crd]** Fix typo in redirect middleware documentation ([#11830](https://github.com/traefik/traefik/pull/11830) by [rtribotte](https://github.com/rtribotte))
+- Update supported versions ([#11811](https://github.com/traefik/traefik/pull/11811) by [jnoordsij](https://github.com/jnoordsij))
+
 ## [v3.4.1](https://github.com/traefik/traefik/tree/v3.4.1) (2025-05-27)
 [All Commits](https://github.com/traefik/traefik/compare/v3.4.0...v3.4.1)
 
