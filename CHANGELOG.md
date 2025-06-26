@@ -1,3 +1,14 @@
+## [v2.11.26](https://github.com/traefik/traefik/tree/v2.11.26) (2025-06-26)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.25...v2.11.26)
+
+**Bug fixes:**
+- **[middleware]** Do not log redis sentinel username and password ([#11819](https://github.com/traefik/traefik/pull/11819) by [kevinpollet](https://github.com/kevinpollet))
+
+**Documentation:**
+- **[kv]** Fix KV reference rendering ([#11815](https://github.com/traefik/traefik/pull/11815) by [rtribotte](https://github.com/rtribotte))
+- **[middleware,k8s/crd]** Fix typo in redirect middleware documentation ([#11830](https://github.com/traefik/traefik/pull/11830) by [rtribotte](https://github.com/rtribotte))
+- Update supported versions ([#11811](https://github.com/traefik/traefik/pull/11811) by [jnoordsij](https://github.com/jnoordsij))
+
 ## [v2.11.25](https://github.com/traefik/traefik/tree/v2.11.25) (2025-05-27)
 [All Commits](https://github.com/traefik/traefik/compare/v2.11.24...v2.11.25)
 
