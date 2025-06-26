@@ -100,7 +100,7 @@ log:
 |:-----------|:-----------------------------------------------------------------------------|:--------|:---------|
 | `log.otlp.http` | This instructs the exporter to send logs to the OpenTelemetry Collector using HTTP.|      | No      |
 | `log.otlp.http.endpoint` | The endpoint of the OpenTelemetry Collector. (format=`<scheme>://<host>:<port><path>`) |  `https://localhost:4318/v1/logs`   | No |
-| `log.otlp.http.headers` | Additional headers sent with logs by the exporter to the OpenTelemetry Collector. |      | No      |
+| `log.otlp.http.headers` | Additional headers sent with logs by the exporter to the OpenTelemetry Collector. | [ ] | No      |
 | `log.otlp.http.tls` | Defines the Client TLS configuration used by the exporter to send logs to the OpenTelemetry Collector. |      | No      |
 | `log.otlp.http.tls.ca` | The path to the certificate authority used for the secure connection to the OpenTelemetry Collector, it defaults to the system bundle. |      | No      |
 | `log.otlp.http.tls.cert` | The path to the certificate to use for the OpenTelemetry Collector. |      | No      |
@@ -108,7 +108,7 @@ log:
 | `log.otlp.http.tls.insecureSkipVerify` | Instructs the OpenTelemetry Collector to accept any certificate presented by the server regardless of the hostname in the certificate. |   false   | No      |
 | `log.otlp.grpc` | This instructs the exporter to send logs to the OpenTelemetry Collector using gRPC.|      | No      |
 | `log.otlp.grpc.endpoint` | The endpoint of the OpenTelemetry Collector. (format=`<host>:<port>`) |  `localhost:4317`   | No      |
-| `log.otlp.grpc.headers` | Additional headers sent with logs by the exporter to the OpenTelemetry Collector. |      | No      |
+| `log.otlp.grpc.headers` | Additional headers sent with logs by the exporter to the OpenTelemetry Collector. | [ ] | No      |
 | `log.otlp.grpc.insecure` | Instructs the exporter to send logs to the OpenTelemetry Collector using an insecure protocol. |   false   | No      |
 | `log.otlp.grpc.tls` | Defines the Client TLS configuration used by the exporter to send logs to the OpenTelemetry Collector. |      | No      |
 | `log.otlp.grpc.tls.ca` | The path to the certificate authority used for the secure connection to the OpenTelemetry Collector, it defaults to the system bundle. |      | No      |
@@ -196,13 +196,13 @@ The section below describes how to configure Traefik access logs using the stati
 | `accesslog.format` | By default, logs are written using the Common Log Format (CLF).<br />To write logs in JSON, use `json` in the `format` option.<br />If the given format is unsupported, the default (CLF) is used instead.<br />More information about CLF fields [here](#clf-format-fields). | "common" | No      |
 | `accesslog.bufferingSize` | To write the logs in an asynchronous fashion, specify a  `bufferingSize` option.<br />This option represents the number of log lines Traefik will keep in memory before writing them to the selected output.<br />In some cases, this option can greatly help performances.| 0 | No      |
 | `accesslog.addInternals` | Enables access logs for internal resources (e.g.: `ping@internal`). | false  | No      |
-| `accesslog.filters.statusCodes` | Limit the access logs to requests with a status codes in the specified range. | false      | No      |
+| `accesslog.filters.statusCodes` | Limit the access logs to requests with a status codes in the specified range. | [ ]      | No      |
 | `accesslog.filters.retryAttempts` | Keep the access logs when at least one retry has happened. | false      | No      |
 | `accesslog.filters.minDuration` | Keep access logs when requests take longer than the specified duration (provided in seconds or as a valid duration format, see [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration)).  |  0   | No      |
 | `accesslog.fields.defaultMode` | Mode to apply by default to the access logs fields (`keep`, `redact` or `drop`). | keep | No      |
-| `accesslog.fields.names` | Set the fields list to display in the access logs (format `name:mode`).<br /> Available fields list [here](#available-fields). |  -    | No      |
+| `accesslog.fields.names` | Set the fields list to display in the access logs (format `name:mode`).<br /> Available fields list [here](#available-fields). |  [ ]    | No      |
 | `accesslog.headers.defaultMode` | Mode to apply by default to the access logs headers (`keep`, `redact` or `drop`).  | drop | No      |
-| `accesslog.headers.names` | Set the headers list to display in the access logs (format `name:mode`). |   -   | No      |
+| `accesslog.headers.names` | Set the headers list to display in the access logs (format `name:mode`). |   [ ]   | No      |
 
 ### OpenTelemetry
 
@@ -260,7 +260,7 @@ accesslog:
 |:-----------|:--------------------------|:--------|:---------|
 | `accesslog.otlp.http` | This instructs the exporter to send access logs to the OpenTelemetry Collector using HTTP.|      | No      |
 | `accesslog.otlp.http.endpoint` | The endpoint of the OpenTelemetry Collector. (format=`<scheme>://<host>:<port><path>`) |  `https://localhost:4318/v1/logs`   | No      |
-| `accesslog.otlp.http.headers` | Additional headers sent with access logs by the exporter to the OpenTelemetry Collector. |      | No      |
+| `accesslog.otlp.http.headers` | Additional headers sent with access logs by the exporter to the OpenTelemetry Collector. |  [ ]    | No      |
 | `accesslog.otlp.http.tls` | Defines the Client TLS configuration used by the exporter to send access logs to the OpenTelemetry Collector. |      | No      |
 | `accesslog.otlp.http.tls.ca` | The path to the certificate authority used for the secure connection to the OpenTelemetry Collector, it defaults to the system bundle. |      | No      |
 | `accesslog.otlp.http.tls.cert` | The path to the certificate to use for the OpenTelemetry Collector. |      | No      |
@@ -268,7 +268,7 @@ accesslog:
 | `accesslog.otlp.http.tls.insecureSkipVerify` | Instructs the OpenTelemetry Collector to accept any certificate presented by the server regardless of the hostname in the certificate. |   false   | No      |
 | `accesslog.otlp.grpc` | This instructs the exporter to send access logs to the OpenTelemetry Collector using gRPC.|      | No      |
 | `accesslog.otlp.grpc.endpoint` | The endpoint of the OpenTelemetry Collector. (format=`<host>:<port>`) |  `localhost:4317`   | No      |
-| `accesslog.otlp.grpc.headers` | Additional headers sent with access logs by the exporter to the OpenTelemetry Collector. |      | No      |
+| `accesslog.otlp.grpc.headers` | Additional headers sent with access logs by the exporter to the OpenTelemetry Collector. | [ ] | No      |
 | `accesslog.otlp.grpc.insecure` | Instructs the exporter to send access logs to the OpenTelemetry Collector using an insecure protocol. |   false   | No      |
 | `accesslog.otlp.grpc.tls` | Defines the Client TLS configuration used by the exporter to send access logs to the OpenTelemetry Collector. |      | No      |
 | `accesslog.otlp.grpc.tls.ca` | The path to the certificate authority used for the secure connection to the OpenTelemetry Collector, it defaults to the system bundle. |      | No      |
