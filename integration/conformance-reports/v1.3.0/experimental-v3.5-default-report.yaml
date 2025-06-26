@@ -8,7 +8,7 @@ implementation:
   organization: traefik
   project: traefik
   url: https://traefik.io/
-  version: v3.4
+  version: v3.5
 kind: ConformanceReport
 mode: default
 profiles:

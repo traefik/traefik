@@ -290,7 +290,7 @@ Example utilizing Docker Compose:
 ```yaml
 services:
   traefik:
-    image: traefik:v3.4
+    image: traefik:v3.5
     environment:
       - TZ=US/Alaska
     command:
