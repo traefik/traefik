@@ -3,13 +3,9 @@ kind: IngressRouteTCP
 metadata:
   name: global-native-lb
   namespace: default
-
 spec:
-  entryPoints:
-    - foo
-
   routes:
   - match: HostSNI(`foo.com`)
     services:
     - name: native-svc-tcp
-      port: 8000
+      port: 9000
