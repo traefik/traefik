@@ -293,7 +293,8 @@ kind: Service
 metadata:
   name: native-svc
   namespace: default
-
+  annotations:
+    traefik.ingress.kubernetes.io/service.nativelb: "true"
 spec:
   ports:
     - name: web

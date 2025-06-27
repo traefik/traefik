@@ -295,11 +295,13 @@ kind: Service
 metadata:
   name: native-svc-tcp
   namespace: default
-
+  annotations:
+    traefik.ingress.kubernetes.io/service.nativelb: "true"
 spec:
   ports:
-    - name: myapp
-      port: 8000
+    - name: tcp
+      protocol: TCP
+      port: 9000
   type: ClusterIP
   clusterIP: 10.10.0.1
 

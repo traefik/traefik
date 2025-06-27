@@ -1,0 +1,47 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRouteUDP
+metadata:
+  name: udp.route.native-disabled
+  namespace: default
+spec:
+  routes:
+  - services:
+    - name: native-disabled-svc-udp
+      port: 8000
+      nativeLB: false
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: native-disabled-svc-udp
+  namespace: default
+  annotations:
+    traefik.ingress.kubernetes.io/service.nativelb: "false"
+spec:
+  ports:
+    - name: udp
+      protocol: UDP
+      port: 8000
+  type: ClusterIP
+  clusterIP: 10.10.0.1
+
+---
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
+metadata:
+  name: native-disabled-udp
+  namespace: default
+  labels:
+    kubernetes.io/service-name: native-disabled-svc-udp
+addressType: IPv4
+ports:
+  - name: udp
+    protocol: UDP
+    port: 8000
+endpoints:
+  - addresses:
+      - 10.10.0.30
+      - 10.10.0.31
+    conditions:
+      ready: true

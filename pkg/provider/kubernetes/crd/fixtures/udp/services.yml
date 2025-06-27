@@ -252,7 +252,8 @@ metadata:
 
 spec:
   ports:
-    - name: myapp
+    - name: udp
+      protocol: UDP
       port: 8000
   type: ClusterIP
   clusterIP: 10.10.0.1
