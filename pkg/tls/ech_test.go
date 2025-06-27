@@ -41,9 +41,23 @@ func TestECH(t *testing.T) {
 		t.Fatalf("Failed to load certs: %v", err)
 	}
 
+	echConfigList, err := ECHConfigToConfigList(echKey.Config)
+	if err != nil {
+		t.Fatalf("Failed to convert ECH config to config list: %v", err)
+	}
+
 	go startECHServer("localhost:8443", testCert, *echKey)
 	time.Sleep(1 * time.Second) // Wait for the server to start
-	response := RequestWithECH("https://localhost:8443/", commonName, *echKey)
+	response, err := RequestWithECH(ECHRequestConf[[]byte]{
+		URL:      "https://localhost:8443/",
+		Host:     commonName,
+		ECH:      echConfigList,
+		Insecure: true,
+	})
+
+	if err != nil {
+		t.Fatalf("Failed to make ECH request: %v", err)
+	}
 	if string(response) != "Hello, ECH-enabled TLS server!" {
 		t.Fatalf("Unexpected response from ECH server: %s", response)
 	}
