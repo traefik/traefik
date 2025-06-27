@@ -127,6 +127,8 @@ require (
 
 require github.com/go-acme/lego/v4 v4.35.2
 
+require github.com/cloudflare/circl v1.3.7
+
 require (
 	cloud.google.com/go/auth v0.23.2 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.8 // indirect
