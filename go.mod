@@ -125,6 +125,8 @@ require (
 	sigs.k8s.io/yaml v1.6.0
 )
 
+require github.com/cloudflare/circl v1.3.7
+
 require (
 	cloud.google.com/go/auth v0.23.2 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.8 // indirect
