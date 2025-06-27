@@ -593,7 +593,7 @@ _Optional_
 
 The `ECH Keys` option enables the server-side ECH feature. This option does not impact clients that do not support ECH.
 
-The configuration file should be in PEM format, and requires both a private key and an ECH configuration block.
+The configuration file should be in PEM format and requires both a private key and an ECH configuration block.
 [Reference](https://www.ietf.org/archive/id/draft-farrell-tls-pemesni-09.html)
 
 Below is an example of the configuration file:
@@ -606,6 +606,12 @@ AD7+DQA65wAgACA8wVN2BtscOl3vQheUzHeIkVmKIiydUhDCliA4iyQRCwAEAAEA
 AQALZXhhbXBsZS5jb20AAA==
 -----END ECHCONFIG-----
 ```
+
+To generate the ECH configuration, you can run:
+```bash
+traefik ech generate example.com
+```
+
 
 ```yaml tab="File (YAML)"
 # Dynamic configuration
