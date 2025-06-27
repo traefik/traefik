@@ -362,4 +362,54 @@ spec:
   disableSessionTickets: true
 ```
 
+### Encrypted Client Hello Keys
+
+_Optional_
+
+The `echKeys` option enables server-side Encrypted Client Hello (ECH).
+Clients that do not support ECH can still connect normally.
+
+Each configured file must be PEM-encoded and contain both a private key and an ECH configuration block.
+See the [ECH PEM file format draft](https://www.ietf.org/archive/id/draft-farrell-tls-pemesni-09.html).
+
+```text
+-----BEGIN PRIVATE KEY-----
+MC4CAQAwBQYDK2VuBCIEICjd4yGRdsoP9gU7YT7My8DHx1Tjme8GYDXrOMCi8v1V
+-----END PRIVATE KEY-----
+-----BEGIN ECHCONFIG-----
+AD7+DQA65wAgACA8wVN2BtscOl3vQheUzHeIkVmKIiydUhDCliA4iyQRCwAEAAEA
+AQALZXhhbXBsZS5jb20AAA==
+-----END ECHCONFIG-----
+```
+
+```yaml tab="Structured (YAML)"
+# Routing configuration
+
+tls:
+  options:
+    default:
+      echKeys:
+        - example.pem
+```
+
+```toml tab="Structured (TOML)"
+# Routing configuration
+
+[tls.options]
+  [tls.options.default]
+    echKeys = ["example.pem"]
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: TLSOption
+metadata:
+  name: default
+  namespace: default
+
+spec:
+  echKeys:
+    - example.pem
+```
+
 {% include-markdown "includes/traefik-for-business-applications.md" %}
