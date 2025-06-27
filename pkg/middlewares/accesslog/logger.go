@@ -381,8 +381,35 @@ func (h *Handler) logTheRoundTrip(ctx context.Context, logDataTable *LogData) {
 
 		h.mu.Lock()
 		defer h.mu.Unlock()
-		h.logger.WithContext(ctx).WithFields(fields).Println()
+
+		// If OTEL is configured, provide a formatted log body
+		if h.config.OTLP != nil {
+			h.logOTEL(ctx, fields)
+		} else {
+			// Original behavior for file logging
+			h.logger.WithContext(ctx).WithFields(fields).Println()
+		}
 	}
+}
+
+// logOTEL logs the log entry to the OTEL collector.
+// If the formatter fails, it logs the entry to the file.
+func (h *Handler) logOTEL(ctx context.Context, fields logrus.Fields) {
+	// Create a log entry to format the body using the configured formatter
+	entry := &logrus.Entry{
+		Logger: h.logger,
+		Data:   fields,
+		Time:   time.Now(),
+		Level:  logrus.InfoLevel,
+	}
+
+	formattedEntry, err := h.logger.Formatter.Format(entry)
+	if err != nil {
+		h.logger.WithContext(ctx).WithFields(fields).Println()
+		return
+	}
+
+	h.logger.WithContext(ctx).WithFields(fields).Info(strings.TrimSuffix(string(formattedEntry), "\n"))
 }
 
 func (h *Handler) redactHeaders(headers http.Header, fields logrus.Fields, prefix string) {
