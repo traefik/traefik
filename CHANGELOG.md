@@ -1,3 +1,9 @@
+## [v3.4.3](https://github.com/traefik/traefik/tree/v3.4.3) (2025-06-26)
+[All Commits](https://github.com/traefik/traefik/compare/v3.4.2...v3.4.3)
+
+**Bug fixes:**
+- **[http3]** Bump quic-go to v.0.49.0 ([#11848](https://github.com/traefik/traefik/pull/11848) by [joshua-siw](https://github.com/joshua-siw))
+
 ## [v3.4.2](https://github.com/traefik/traefik/tree/v3.4.2) (2025-06-26)
 [All Commits](https://github.com/traefik/traefik/compare/v3.4.1...v3.4.2)
 
