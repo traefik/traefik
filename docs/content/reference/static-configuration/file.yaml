@@ -92,6 +92,10 @@ entryPoints:
       advertisedPort: 42
     udp:
       timeout: 42s
+    tsnet:
+      hostname: foobar
+      ephemeral: true
+      authKey: foobar
     observability:
       accessLogs: true
       tracing: true
