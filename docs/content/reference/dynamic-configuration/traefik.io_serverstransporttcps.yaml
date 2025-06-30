@@ -21,7 +21,7 @@ spec:
           ServersTransportTCP is the CRD implementation of a TCPServersTransport.
           If no tcpServersTransport is specified, a default one named default@internal will be used.
           The default@internal tcpServersTransport can be configured in the static configuration.
-          More info: https://doc.traefik.io/traefik/v3.4/routing/services/#serverstransport_3
+          More info: https://doc.traefik.io/traefik/v3.5/routing/services/#serverstransport_3
         properties:
           apiVersion:
             description: |-
@@ -110,7 +110,7 @@ spec:
                       type: object
                       x-kubernetes-validations:
                       - message: RootCA cannot have both Secret and ConfigMap defined.
-                        rule: has(self.secret) && has(self.configMap)
+                        rule: '!has(self.secret) || !has(self.configMap)'
                     type: array
                   rootCAsSecrets:
                     description: |-

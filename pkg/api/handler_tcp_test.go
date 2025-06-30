@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -880,7 +879,7 @@ func TestHandler_TCP(t *testing.T) {
 			rtConf := &test.conf
 			// To lazily initialize the Statuses.
 			rtConf.PopulateUsedBy()
-			rtConf.GetTCPRoutersByEntryPoints(context.Background(), []string{"web"})
+			rtConf.GetTCPRoutersByEntryPoints(t.Context(), []string{"web"})
 
 			handler := New(static.Configuration{API: &static.API{}, Global: &static.Global{}}, rtConf)
 			server := httptest.NewServer(handler.createRouter())

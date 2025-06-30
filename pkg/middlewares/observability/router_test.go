@@ -1,7 +1,6 @@
 package observability
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -74,7 +73,7 @@ func TestNewRouter(t *testing.T) {
 				rw.WriteHeader(http.StatusNotFound)
 			})
 
-			handler := newRouter(context.Background(), test.router, test.routerRule, test.service, next)
+			handler := newRouter(t.Context(), test.router, test.routerRule, test.service, next)
 			handler.ServeHTTP(rw, req)
 
 			for i, span := range tracer.spans {

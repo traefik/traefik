@@ -40,7 +40,6 @@ This provider works with [Docker (standalone) Engine](https://docs.docker.com/en
     Attaching labels to containers (in your docker compose file)
 
     ```yaml
-    version: "3"
     services:
       my-container:
         # ...
@@ -162,11 +161,9 @@ See the [Docker API Access](#docker-api-access) section for more information.
     The docker-compose file shares the docker sock with the Traefik container
 
     ```yaml
-    version: '3'
-
     services:
       traefik:
-         image: traefik:v3.4 # The official v3 Traefik docker image
+         image: traefik:v3.5 # The official v3 Traefik docker image
          ports:
            - "80:80"
          volumes:

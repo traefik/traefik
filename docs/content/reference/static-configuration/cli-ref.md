@@ -351,6 +351,9 @@ Enable debug mode for the FastProxy implementation. (Default: ```false```)
 `--experimental.kubernetesgateway`:  
 (Deprecated) Allow the Kubernetes gateway api provider usage. (Default: ```false```)
 
+`--experimental.kubernetesingressnginx`:  
+Allow the Kubernetes Ingress NGINX provider usage. (Default: ```false```)
+
 `--experimental.localplugins.<name>`:  
 Local plugins configuration. (Default: ```false```)
 
@@ -653,6 +656,12 @@ Prefix to use for metrics collection. (Default: ```traefik```)
 
 `--metrics.statsd.pushinterval`:  
 StatsD push interval. (Default: ```10```)
+
+`--ocsp`:  
+OCSP configuration. (Default: ```false```)
+
+`--ocsp.responderoverrides.<name>`:  
+Defines a map of OCSP responders to replace for querying OCSP servers.
 
 `--ping`:  
 Enable ping. (Default: ```false```)
@@ -1044,11 +1053,59 @@ Kubernetes namespaces.
 `--providers.kubernetesingress.nativelbbydefault`:  
 Defines whether to use Native Kubernetes load-balancing mode by default. (Default: ```false```)
 
+`--providers.kubernetesingress.strictprefixmatching`:  
+Make prefix matching strictly comply with the Kubernetes Ingress specification (path-element-wise matching instead of character-by-character string matching). (Default: ```false```)
+
 `--providers.kubernetesingress.throttleduration`:  
 Ingress refresh throttle duration (Default: ```0```)
 
 `--providers.kubernetesingress.token`:  
 Kubernetes bearer token (not needed for in-cluster client). It accepts either a token value or a file path to the token.
+
+`--providers.kubernetesingressnginx`:  
+Enable Kubernetes Ingress NGINX provider. (Default: ```false```)
+
+`--providers.kubernetesingressnginx.certauthfilepath`:  
+Kubernetes certificate authority file path (not needed for in-cluster client).
+
+`--providers.kubernetesingressnginx.controllerclass`:  
+Ingress Class Controller value this controller satisfies. (Default: ```k8s.io/ingress-nginx```)
+
+`--providers.kubernetesingressnginx.defaultbackendservice`:  
+Service used to serve HTTP requests not matching any known server name (catch-all). Takes the form 'namespace/name'.
+
+`--providers.kubernetesingressnginx.disablesvcexternalname`:  
+Disable support for Services of type ExternalName. (Default: ```false```)
+
+`--providers.kubernetesingressnginx.endpoint`:  
+Kubernetes server endpoint (required for external cluster client).
+
+`--providers.kubernetesingressnginx.ingressclass`:  
+Name of the ingress class this controller satisfies. (Default: ```nginx```)
+
+`--providers.kubernetesingressnginx.ingressclassbyname`:  
+Define if Ingress Controller should watch for Ingress Class by Name together with Controller Class. (Default: ```false```)
+
+`--providers.kubernetesingressnginx.publishservice`:  
+Service fronting the Ingress controller. Takes the form 'namespace/name'.
+
+`--providers.kubernetesingressnginx.publishstatusaddress`:  
+Customized address (or addresses, separated by comma) to set as the load-balancer status of Ingress objects this controller satisfies.
+
+`--providers.kubernetesingressnginx.throttleduration`:  
+Ingress refresh throttle duration. (Default: ```0```)
+
+`--providers.kubernetesingressnginx.token`:  
+Kubernetes bearer token (not needed for in-cluster client). It accepts either a token value or a file path to the token.
+
+`--providers.kubernetesingressnginx.watchingresswithoutclass`:  
+Define if Ingress Controller should also watch for Ingresses without an IngressClass or the annotation specified. (Default: ```false```)
+
+`--providers.kubernetesingressnginx.watchnamespace`:  
+Namespace the controller watches for updates to Kubernetes objects. All namespaces are watched if this parameter is left empty.
+
+`--providers.kubernetesingressnginx.watchnamespaceselector`:  
+Selector selects namespaces the controller watches for updates to Kubernetes objects.
 
 `--providers.nomad`:  
 Enable Nomad backend with default settings. (Default: ```false```)

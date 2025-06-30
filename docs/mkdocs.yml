@@ -66,19 +66,24 @@ markdown_extensions:
 nav:
   - 'What is Traefik': 'index.md'
   - 'Getting Started':
-      - 'Concepts' : 'getting-started/concepts.md'
+      - 'Overview': 'getting-started/index.md'
       - 'Quick Start':
-          - 'Docker': 'getting-started/quick-start.md'
-          - 'Kubernetes': 'getting-started/quick-start-with-kubernetes.md'
+        - 'Kubernetes': 'getting-started/kubernetes.md'
+        - 'Docker': 'getting-started/docker.md'
       - 'Configuration Introduction': 'getting-started/configuration-overview.md'
-      - 'Install Traefik': 'getting-started/install-traefik.md'
       - 'Frequently Asked Questions': 'getting-started/faq.md'
+  - 'Observe':
+      - 'Overview': 'observe/overview.md'
+      - 'Logs & Access Logs': 'observe/logs-and-access-logs.md'
+      - 'Metrics': 'observe/metrics.md'
+      - 'Tracing': 'observe/tracing.md'
   - 'Configuration Discovery':
       - 'Overview': 'providers/overview.md'
       - 'Docker': 'providers/docker.md'
       - 'Swarm': 'providers/swarm.md'
       - 'Kubernetes IngressRoute': 'providers/kubernetes-crd.md'
       - 'Kubernetes Ingress': 'providers/kubernetes-ingress.md'
+      - 'Kubernetes Ingress NGINX': 'reference/install-configuration/providers/kubernetes/kubernetes-ingress-nginx.md'
       - 'Kubernetes Gateway API': 'providers/kubernetes-gateway.md'
       - 'Consul Catalog': 'providers/consul-catalog.md'
       - 'Nomad': 'providers/nomad.md'
@@ -99,6 +104,7 @@ nav:
           - 'Swarm': 'routing/providers/swarm.md'
           - 'Kubernetes IngressRoute': 'routing/providers/kubernetes-crd.md'
           - 'Kubernetes Ingress': 'routing/providers/kubernetes-ingress.md'
+          - 'Kubernetes Ingress NGINX': 'reference/routing-configuration/kubernetes/ingress-nginx.md'
           - 'Kubernetes Gateway API': 'routing/providers/kubernetes-gateway.md'
           - 'Consul Catalog': 'routing/providers/consul-catalog.md'
           - 'Nomad': 'routing/providers/nomad.md'
@@ -110,6 +116,7 @@ nav:
       - 'Let''s Encrypt': 'https/acme.md'
       - 'Tailscale': 'https/tailscale.md'
       - 'SPIFFE': 'https/spiffe.md'
+      - 'OCSP': 'https/ocsp.md'
   - 'Middlewares':
     - 'Overview': 'middlewares/overview.md'
     - 'HTTP':
@@ -171,6 +178,7 @@ nav:
       - 'Kubernetes and Let''s Encrypt': 'user-guides/crd-acme/index.md'
       - 'Kubernetes and cert-manager': 'user-guides/cert-manager.md'
       - 'gRPC Examples': 'user-guides/grpc.md'
+      - 'WebSocket Examples': 'user-guides/websocket.md'
       - 'Docker':
         - 'Basic Example': 'user-guides/docker-compose/basic-example/index.md'
         - 'HTTPS with Let''s Encrypt':
@@ -203,6 +211,7 @@ nav:
           - 'Kubernetes Gateway API' : 'reference/install-configuration/providers/kubernetes/kubernetes-gateway.md'
           - 'Kubernetes CRD' : 'reference/install-configuration/providers/kubernetes/kubernetes-crd.md'
           - 'Kubernetes Ingress' : 'reference/install-configuration/providers/kubernetes/kubernetes-ingress.md'
+          - 'Kubernetes Ingress NGINX' : 'reference/install-configuration/providers/kubernetes/kubernetes-ingress-nginx.md'
         - 'Docker': 'reference/install-configuration/providers/docker.md'
         - 'Swarm': 'reference/install-configuration/providers/swarm.md'
         - 'Hashicorp':
@@ -226,6 +235,7 @@ nav:
             - "ACME" : 'reference/install-configuration/tls/certificate-resolvers/acme.md'
             - "Tailscale" : 'reference/install-configuration/tls/certificate-resolvers/tailscale.md'
           - "SPIFFE" : 'reference/install-configuration/tls/spiffe.md'
+          - "OCSP" : 'reference/install-configuration/tls/ocsp.md'
       - 'Observability':
           - 'Metrics' : 'reference/install-configuration/observability/metrics.md'
           - 'Tracing': 'reference/install-configuration/observability/tracing.md'
@@ -304,6 +314,7 @@ nav:
             - 'UDP' :
                 - 'IngressRouteUDP' : 'reference/routing-configuration/kubernetes/crd/udp/ingressrouteudp.md'
           - 'Ingress' : 'reference/routing-configuration/kubernetes/ingress.md'
+          - 'Ingress NGINX' : 'reference/routing-configuration/kubernetes/ingress-nginx.md'
         - 'Label & Tag Providers' :
           - 'Docker' : 'reference/routing-configuration/other-providers/docker.md'
           - 'Swarm' : 'reference/routing-configuration/other-providers/swarm.md'

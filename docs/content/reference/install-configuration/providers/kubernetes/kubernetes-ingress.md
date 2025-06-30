@@ -8,6 +8,11 @@ description: "Understand the requirements, routing configuration, and how to set
 The Traefik Kubernetes Ingress provider is a Kubernetes Ingress controller; i.e,
 it manages access to cluster services by supporting the [Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/) specification.
 
+??? warning "Ingress Backend Resource not supported"
+
+    Referencing backend service endpoints using [`spec.rules.http.paths.backend.resource`](https://kubernetes.io/docs/reference/kubernetes-api/service-resources/ingress-v1/#IngressBackend) is not supported.
+    Use `spec.rules.http.paths.backend.service` instead.
+
 ## Configuration Example
 
 You can enable the `kubernetesIngress` provider as detailed below:
@@ -58,6 +63,7 @@ which in turn creates the resulting routers, services, handlers, etc.
 | `providers.kubernetesIngress.allowExternalNameServices`                | Allows the `Ingress` to reference ExternalName services.                                                                                                                                                                                                                                                                                                                                                                                                               | false   | No       |
 | `providers.kubernetesIngress.nativeLBByDefault`                        | Allow using the Kubernetes Service load balancing between the pods instead of the one provided by Traefik for every `Ingress` by default.<br />It can br overridden in the [`ServerTransport`](../../../../routing/services/index.md#serverstransport).                                                                                                                                                                                                                | false   | No       |
 | `providers.kubernetesIngress.disableClusterScopeResources`             | Prevent from discovering cluster scope resources (`IngressClass` and `Nodes`).<br />By doing so, it alleviates the requirement of giving Traefik the rights to look up for cluster resources.<br />Furthermore, Traefik  will not handle Ingresses with IngressClass references, therefore such Ingresses will be ignored (please note that annotations are not affected by this option).<br />This will also prevent from using the `NodePortLB` options on services. | false   | No       |
+| `providers.kubernetesIngress.strictPrefixMatching`                     | Make prefix matching strictly comply with the Kubernetes Ingress specification (path-element-wise matching instead of character-by-character string matching). For example, a PathPrefix of `/foo` will match `/foo`, `/foo/`, and `/foo/bar` but not `/foobar`.                                                                                                                                                                                                       | false   | No       |
 
 <!-- markdownlint-enable MD013 -->
 

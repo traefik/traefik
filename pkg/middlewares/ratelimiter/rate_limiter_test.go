@@ -110,7 +110,7 @@ func TestNewRateLimiter(t *testing.T) {
 
 			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
-			h, err := New(context.Background(), next, test.config, "rate-limiter")
+			h, err := New(t.Context(), next, test.config, "rate-limiter")
 			if test.expectedError != "" {
 				assert.EqualError(t, err, test.expectedError)
 			} else {
@@ -274,7 +274,7 @@ func TestInMemoryRateLimit(t *testing.T) {
 			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				reqCount++
 			})
-			h, err := New(context.Background(), next, test.config, "rate-limiter")
+			h, err := New(t.Context(), next, test.config, "rate-limiter")
 			require.NoError(t, err)
 
 			loadPeriod := time.Duration(1e9 / test.incomingLoad)
@@ -477,7 +477,7 @@ func TestRedisRateLimit(t *testing.T) {
 			test.config.Redis = &dynamic.Redis{
 				Endpoints: []string{"localhost:6379"},
 			}
-			h, err := New(context.Background(), next, test.config, "rate-limiter")
+			h, err := New(t.Context(), next, test.config, "rate-limiter")
 			require.NoError(t, err)
 
 			l := h.(*rateLimiter)

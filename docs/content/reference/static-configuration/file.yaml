@@ -161,6 +161,24 @@ providers:
     disableIngressClassLookup: true
     disableClusterScopeResources: true
     nativeLBByDefault: true
+    strictPrefixMatching: true
+  kubernetesIngressNGINX:
+    endpoint: foobar
+    token: foobar
+    certAuthFilePath: foobar
+    throttleDuration: 42s
+    watchNamespace: foobar
+    watchNamespaceSelector: foobar
+    ingressClass: foobar
+    controllerClass: foobar
+    watchIngressWithoutClass: true
+    ingressClassByName: true
+    publishService: foobar
+    publishStatusAddress:
+      - foobar
+      - foobar
+    defaultBackendService: foobar
+    disableSvcExternalName: true
   kubernetesCRD:
     endpoint: foobar
     token: foobar
@@ -673,8 +691,13 @@ experimental:
   fastProxy:
     debug: true
   otlplogs: true
+  kubernetesIngressNGINX: true
   kubernetesGateway: true
 core:
   defaultRuleSyntax: foobar
 spiffe:
   workloadAPIAddr: foobar
+ocsp:
+  responderOverrides:
+    name0: foobar
+    name1: foobar

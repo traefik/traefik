@@ -8,6 +8,4 @@ description: "Read the technical documentation to learn the Traefik Dynamic Conf
 Dynamic configuration with KV stores.
 {: .subtitle }
 
-| Key (Path)                                                                                   | Value       |
-|----------------------------------------------------------------------------------------------|-------------|
 --8<-- "content/reference/dynamic-configuration/kv-ref.md"

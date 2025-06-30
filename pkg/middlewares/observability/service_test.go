@@ -1,7 +1,6 @@
 package observability
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -68,7 +67,7 @@ func TestNewService(t *testing.T) {
 				rw.WriteHeader(http.StatusNotFound)
 			})
 
-			handler := NewService(context.Background(), test.service, next)
+			handler := NewService(t.Context(), test.service, next)
 			handler.ServeHTTP(rw, req)
 
 			for i, span := range tracer.spans {

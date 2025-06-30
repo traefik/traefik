@@ -1,9 +1,11 @@
 package ingress
 
 import (
-	"context"
 	"errors"
+	"fmt"
 	"math"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
@@ -14,6 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	traefikhttp "github.com/traefik/traefik/v3/pkg/muxer/http"
 	"github.com/traefik/traefik/v3/pkg/provider"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/tls"
@@ -38,6 +41,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 		disableIngressClassLookup    bool
 		disableClusterScopeResources bool
 		defaultRuleSyntax            string
+		strictPrefixMatching         bool
 	}{
 		{
 			desc: "Empty ingresses",
@@ -519,6 +523,28 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							},
 						},
 					},
+				},
+			},
+		},
+		{
+			desc:               "Ingress with backend resource",
+			allowEmptyServices: true,
+			expected: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Routers:     map[string]*dynamic.Router{},
+					Services:    map[string]*dynamic.Service{},
+				},
+			},
+		},
+		{
+			desc:               "Ingress without backend",
+			allowEmptyServices: true,
+			expected: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Routers:     map[string]*dynamic.Router{},
+					Services:    map[string]*dynamic.Service{},
 				},
 			},
 		},
@@ -1621,6 +1647,40 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "Ingress with strict prefix matching",
+			expected: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Routers: map[string]*dynamic.Router{
+						"testing-bar": {
+							Rule:    "(Path(`/bar`) || PathPrefix(`/bar/`))",
+							Service: "testing-service1-80",
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"testing-service1-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       dynamic.BalancerStrategyWRR,
+								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:8080",
+									},
+									{
+										URL: "http://10.21.0.1:8080",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			strictPrefixMatching: true,
+		},
 	}
 
 	for _, test := range testCases {
@@ -1634,8 +1694,9 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				DisableIngressClassLookup:    test.disableIngressClassLookup,
 				DisableClusterScopeResources: test.disableClusterScopeResources,
 				DefaultRuleSyntax:            test.defaultRuleSyntax,
+				StrictPrefixMatching:         test.strictPrefixMatching,
 			}
-			conf := p.loadConfigurationFromIngresses(context.Background(), clientMock)
+			conf := p.loadConfigurationFromIngresses(t.Context(), clientMock)
 
 			assert.Equal(t, test.expected, conf)
 		})
@@ -1761,7 +1822,7 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 
 			p := Provider{IngressClass: test.ingressClass}
 			p.AllowExternalNameServices = test.allowExternalNameServices
-			conf := p.loadConfigurationFromIngresses(context.Background(), clientMock)
+			conf := p.loadConfigurationFromIngresses(t.Context(), clientMock)
 
 			assert.Equal(t, test.expected, conf)
 		})
@@ -1811,7 +1872,7 @@ func TestLoadConfigurationFromIngressesWithNativeLB(t *testing.T) {
 			clientMock := newClientMock(generateTestFilename(test.desc))
 
 			p := Provider{IngressClass: test.ingressClass}
-			conf := p.loadConfigurationFromIngresses(context.Background(), clientMock)
+			conf := p.loadConfigurationFromIngresses(t.Context(), clientMock)
 
 			assert.Equal(t, test.expected, conf)
 		})
@@ -1872,7 +1933,7 @@ func TestLoadConfigurationFromIngressesWithNodePortLB(t *testing.T) {
 			clientMock := newClientMock(generateTestFilename(test.desc))
 
 			p := Provider{DisableClusterScopeResources: test.clusterScopeDisabled}
-			conf := p.loadConfigurationFromIngresses(context.Background(), clientMock)
+			conf := p.loadConfigurationFromIngresses(t.Context(), clientMock)
 
 			assert.Equal(t, test.expected, conf)
 		})
@@ -2044,7 +2105,7 @@ func TestGetCertificates(t *testing.T) {
 			t.Parallel()
 
 			tlsConfigs := map[string]*tls.CertAndStores{}
-			err := getCertificates(context.Background(), test.ingress, test.client, tlsConfigs)
+			err := getCertificates(t.Context(), test.ingress, test.client, tlsConfigs)
 
 			if test.errResult != "" {
 				assert.EqualError(t, err, test.errResult)
@@ -2130,7 +2191,7 @@ func TestLoadConfigurationFromIngressesWithNativeLBByDefault(t *testing.T) {
 				IngressClass:      test.ingressClass,
 				NativeLBByDefault: true,
 			}
-			conf := p.loadConfigurationFromIngresses(context.Background(), clientMock)
+			conf := p.loadConfigurationFromIngresses(t.Context(), clientMock)
 
 			assert.Equal(t, test.expected, conf)
 		})
@@ -2230,9 +2291,9 @@ func TestIngressEndpointPublishedService(t *testing.T) {
 					PublishedService: "default/published-service",
 				},
 			}
-			p.loadConfigurationFromIngresses(context.Background(), client)
+			p.loadConfigurationFromIngresses(t.Context(), client)
 
-			ingress, err := kubeClient.NetworkingV1().Ingresses(metav1.NamespaceDefault).Get(context.Background(), "foo", metav1.GetOptions{})
+			ingress, err := kubeClient.NetworkingV1().Ingresses(metav1.NamespaceDefault).Get(t.Context(), "foo", metav1.GetOptions{})
 			require.NoError(t, err)
 
 			assert.Equal(t, test.expected, ingress.Status.LoadBalancer.Ingress)
@@ -2255,4 +2316,109 @@ func readResources(t *testing.T, paths []string) []runtime.Object {
 	}
 
 	return k8sObjects
+}
+
+func TestStrictPrefixMatchingRule(t *testing.T) {
+	tests := []struct {
+		path        string
+		requestPath string
+		match       bool
+	}{ // The tests are taken from https://kubernetes.io/docs/concepts/services-networking/ingress/#examples
+		{
+			path:        "/foo",
+			requestPath: "/foo",
+			match:       true,
+		},
+		{
+			path:        "/foo",
+			requestPath: "/foo/",
+			match:       true,
+		},
+		{
+			path:        "/foo/",
+			requestPath: "/foo",
+			match:       true,
+		},
+		{
+			path:        "/foo/",
+			requestPath: "/foo/",
+			match:       true,
+		},
+		{
+			path:        "/aaa/bb",
+			requestPath: "/aaa/bbb",
+			match:       false,
+		},
+		{
+			path:        "/aaa/bbb",
+			requestPath: "/aaa/bbb",
+			match:       true,
+		},
+		{
+			path:        "/aaa/bbb/",
+			requestPath: "/aaa/bbb",
+			match:       true,
+		},
+		{
+			path:        "/aaa/bbb",
+			requestPath: "/aaa/bbb/",
+			match:       true,
+		},
+		{
+			path:        "/aaa/bbb",
+			requestPath: "/aaa/bbb/ccc",
+			match:       true,
+		},
+		{
+			path:        "/aaa/bbb",
+			requestPath: "/aaa/bbbxyz",
+			match:       false,
+		},
+		{
+			path:        "/",
+			requestPath: "/aaa/ccc",
+			match:       true,
+		},
+		{
+			path:        "/aaa",
+			requestPath: "/aaa/ccc",
+			match:       true,
+		},
+		{
+			path:        "/...",
+			requestPath: "/aaa",
+			match:       false,
+		},
+		{
+			path:        "/...",
+			requestPath: "/.../",
+			match:       true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(fmt.Sprintf("Prefix match case %s", tt.path), func(t *testing.T) {
+			t.Parallel()
+
+			handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+			parser, err := traefikhttp.NewSyntaxParser()
+			require.NoError(t, err)
+
+			muxer := traefikhttp.NewMuxer(parser)
+
+			rule := buildStrictPrefixMatchingRule(tt.path)
+			err = muxer.AddRoute(rule, "", 0, handler)
+			require.NoError(t, err)
+
+			w := httptest.NewRecorder()
+			req := httptest.NewRequest(http.MethodGet, tt.requestPath, http.NoBody)
+			muxer.ServeHTTP(w, req)
+
+			if tt.match {
+				assert.Equal(t, http.StatusOK, w.Code)
+			} else {
+				assert.Equal(t, http.StatusNotFound, w.Code)
+			}
+		})
+	}
 }

@@ -1,7 +1,6 @@
 package observability
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -68,7 +67,7 @@ func TestEntryPointMiddleware_tracing(t *testing.T) {
 
 			tracer := &mockTracer{}
 
-			handler := newEntryPoint(context.Background(), tracing.NewTracer(tracer, []string{"X-Foo"}, []string{"X-Bar"}, []string{"q"}), test.entryPoint, next)
+			handler := newEntryPoint(t.Context(), tracing.NewTracer(tracer, []string{"X-Foo"}, []string{"X-Bar"}, []string{"q"}), test.entryPoint, next)
 			handler.ServeHTTP(rw, req)
 
 			for _, span := range tracer.spans {

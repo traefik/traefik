@@ -17,6 +17,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
+	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
 	"github.com/traefik/traefik/v3/pkg/tracing"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"github.com/vulcand/oxy/v2/forward"
@@ -195,7 +196,12 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		logger.Debug().Err(forwardErr).Msgf("Error calling %s", fa.address)
 		observability.SetStatusErrorf(req.Context(), "Error calling %s. Cause: %s", fa.address, forwardErr)
 
-		rw.WriteHeader(http.StatusInternalServerError)
+		statusCode := http.StatusInternalServerError
+		if errors.Is(forwardErr, context.Canceled) {
+			statusCode = httputil.StatusClientClosedRequest
+		}
+
+		rw.WriteHeader(statusCode)
 		return
 	}
 	defer forwardResponse.Body.Close()

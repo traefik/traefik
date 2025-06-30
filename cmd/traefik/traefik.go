@@ -182,7 +182,9 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 
 	// ACME
 
-	tlsManager := traefiktls.NewManager()
+	tlsManager := traefiktls.NewManager(staticConfiguration.OCSP)
+	routinesPool.GoCtx(tlsManager.Run)
+
 	httpChallengeProvider := acme.NewChallengeHTTP()
 
 	tlsChallengeProvider := acme.NewChallengeTLSALPN()
@@ -301,7 +303,10 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 
 	// Router factory
 
-	routerFactory := server.NewRouterFactory(*staticConfiguration, managerFactory, tlsManager, observabilityMgr, pluginBuilder, dialerManager)
+	routerFactory, err := server.NewRouterFactory(*staticConfiguration, managerFactory, tlsManager, observabilityMgr, pluginBuilder, dialerManager)
+	if err != nil {
+		return nil, fmt.Errorf("creating router factory: %w", err)
+	}
 
 	// Watcher
 

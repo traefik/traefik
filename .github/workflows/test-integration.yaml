@@ -10,7 +10,7 @@ on:
       - 'script/gcg/**'
 
 env:
-  GO_VERSION: '1.23'
+  GO_VERSION: '1.24'
   CGO_ENABLED: 0
 
 jobs:
@@ -31,7 +31,9 @@ jobs:
           check-latest: true
 
       - name: Avoid generating webui
-        run: touch webui/static/index.html
+        run: |
+          mkdir webui/static
+          touch webui/static/index.html
 
       - name: Build binary
         run: make binary
@@ -59,7 +61,9 @@ jobs:
           check-latest: true
 
       - name: Avoid generating webui
-        run: touch webui/static/index.html
+        run: |
+          mkdir webui/static
+          touch webui/static/index.html
 
       - name: Build binary
         run: make binary

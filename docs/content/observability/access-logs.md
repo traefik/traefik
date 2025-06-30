@@ -288,11 +288,9 @@ It is possible to configure the Traefik to timestamp in a specific timezone by e
 Example utilizing Docker Compose:
 
 ```yaml
-version: "3.7"
-
 services:
   traefik:
-    image: traefik:v3.4
+    image: traefik:v3.5
     environment:
       - TZ=US/Alaska
     command:

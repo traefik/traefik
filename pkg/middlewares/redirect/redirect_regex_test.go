@@ -1,7 +1,6 @@
 package redirect
 
 import (
-	"context"
 	"crypto/tls"
 	"net/http"
 	"net/http/httptest"
@@ -158,7 +157,7 @@ func TestRedirectRegexHandler(t *testing.T) {
 			t.Parallel()
 
 			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-			handler, err := NewRedirectRegex(context.Background(), next, test.config, "traefikTest")
+			handler, err := NewRedirectRegex(t.Context(), next, test.config, "traefikTest")
 
 			if test.errorExpected {
 				require.Error(t, err)
