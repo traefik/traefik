@@ -25,7 +25,6 @@ services:
     networks:
       - proxy
     command:
-      - "--api.insecure=true"
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
       - "--providers.docker.network=proxy"
