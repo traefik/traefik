@@ -97,6 +97,7 @@ entryPoints:
       ephemeral: true
       authKey: foobar
       controlUrl: foobar
+      dir: foobar
     observability:
       accessLogs: true
       tracing: true

@@ -164,12 +164,13 @@ func (u *UDPConfig) SetDefaults() {
 	u.Timeout = ptypes.Duration(DefaultUDPTimeout)
 }
 
+// TSNetConfig configures exposing an entry point over a Tailscale network (using tsnet).
 type TSNetConfig struct {
 	Hostname   string `description:"Hostname for the node; if empty, defaults to the endpoint's name" json:"hostname,omitempty" toml:"hostname,omitempty" yaml:"hostname,omitempty" export:"true"`
 	Ephemeral  bool   `description:"Register the node as ephemeral." json:"ephemeral,omitempty" toml:"ephemeral,omitempty" yaml:"ephemeral,omitempty" export:"true"`
 	AuthKey    string `description:"Auth key for the node (overrides the TS_AUTHKEY env var)." json:"authKey,omitempty" toml:"authKey,omitempty" yaml:"authKey,omitempty" export:"true"`
 	ControlURL string `description:"URL for the Tailscale control plane, when not using the default one." json:"controlUrl,omitempty" toml:"controlUrl,omitempty" yaml:"controlUrl,omitempty" export:"true"`
-	// TODO: Funnel to enable listening on a funnel
+	Dir        string `description:"Path where Tailscale stores its state. Set it to a persistent volume to allow Traefik to remain authenticated with Tailscale. Defaults to /var/tailscale." json:"dir,omitempty" toml:"dir,omitempty" yaml:"dir,omitempty" export:"true"`
 }
 
 // ObservabilityConfig holds the observability configuration for an entry point.

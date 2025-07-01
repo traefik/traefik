@@ -333,6 +333,9 @@ Auth key for the node (overrides the TS_AUTHKEY env var).
 `--entrypoints.<name>.tsnet.controlurl`:  
 URL for the Tailscale control plane, when not using the default one.
 
+`--entrypoints.<name>.tsnet.dir`:  
+Path where Tailscale stores its state. Set it to a persistent volume to allow Traefik to remain authenticated with Tailscale. Defaults to /var/tailscale.
+
 `--entrypoints.<name>.tsnet.ephemeral`:  
 Register the node as ephemeral. (Default: ```false```)
 

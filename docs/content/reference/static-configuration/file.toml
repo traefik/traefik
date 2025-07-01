@@ -83,6 +83,7 @@
       ephemeral = true
       authKey = "foobar"
       controlUrl = "foobar"
+      dir = "foobar"
     [entryPoints.EntryPoint0.observability]
       accessLogs = true
       tracing = true

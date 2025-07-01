@@ -180,10 +180,15 @@ func NewTCPEntryPoint(ctx context.Context, name string, config *static.EntryPoin
 			Ephemeral:  config.TSNet.Ephemeral,
 			AuthKey:    config.TSNet.AuthKey,
 			ControlURL: config.TSNet.ControlURL,
+			Dir:        config.TSNet.Dir,
 		}
 		if ts.Hostname == "" {
 			// Default to the name of the endpoint if there's no explicit hostname
 			ts.Hostname = name
+		}
+		if ts.Dir == "" {
+			// Default path to store Tailscale's state
+			ts.Dir = "/var/tailscale"
 		}
 	}
 
