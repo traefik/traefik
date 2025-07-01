@@ -16,6 +16,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ssm v1.56.13
 	github.com/aws/smithy-go v1.28.1
 	github.com/cenkalti/backoff/v4 v4.3.0
+	github.com/cloudflare/circl v1.3.7
 	github.com/containerd/errdefs v1.0.0
 	github.com/containous/alice v0.0.0-20181107144136-d83ebdd94cbd // No tag on the repo.
 	github.com/coreos/go-systemd/v22 v22.7.0
@@ -53,6 +54,7 @@ require (
 	github.com/moby/moby/client v0.4.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pires/go-proxyproto v0.12.0
+	github.com/pkg/errors v0.9.1
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // No tag on the repo.
 	github.com/prometheus/client_golang v1.23.2
 	github.com/prometheus/client_model v0.6.2
@@ -126,8 +128,6 @@ require (
 )
 
 require github.com/go-acme/lego/v4 v4.35.2
-
-require github.com/cloudflare/circl v1.3.7
 
 require (
 	cloud.google.com/go/auth v0.23.2 // indirect
@@ -326,7 +326,6 @@ require (
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
 	github.com/peterhellberg/link v1.2.0 // indirect
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/power-devops/perfstat v0.0.0-20240221224432-82ca36839d55 // indirect
 	github.com/pquerna/otp v1.5.0 // indirect
 	github.com/prometheus/common v0.67.5 // indirect
