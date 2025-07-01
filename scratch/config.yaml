@@ -1,0 +1,23 @@
+providers:
+  file:
+    filename: "scratch/dynamic-conf.yaml"
+log:
+  level: "INFO"
+  #format: "json"
+#accessLog: {}
+#tracing: {}
+entryPoints:
+  traefik:
+    address: ":8081"
+  web:
+    address: ":80"
+    http3: {}
+  ts:
+    address: ":8000"
+    http3: {}
+    tsnet:
+      hostname: "traefik-dev"
+      authKey: "tskey-auth-kYtgTP11CD21CNTRL-x1JCHDoFxt3K1aQw5KAJz3xyApMtmZmW7"
+api:
+  insecure: true
+  dashboard: true

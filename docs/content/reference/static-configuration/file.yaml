@@ -96,6 +96,7 @@ entryPoints:
       hostname: foobar
       ephemeral: true
       authKey: foobar
+      controlUrl: foobar
     observability:
       accessLogs: true
       tracing: true

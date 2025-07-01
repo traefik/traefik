@@ -106,6 +106,7 @@ require (
 	google.golang.org/grpc v1.71.1
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gopkg.in/yaml.v3 v3.0.1
+	gvisor.dev/gvisor v0.0.0-20250205023644-9414b50a5633
 	k8s.io/api v0.32.3
 	k8s.io/apiextensions-apiserver v0.32.3
 	k8s.io/apimachinery v0.32.3
@@ -117,8 +118,6 @@ require (
 	sigs.k8s.io/yaml v1.4.0
 	tailscale.com v1.84.3
 )
-
-require gvisor.dev/gvisor v0.0.0-20250205023644-9414b50a5633
 
 require (
 	cloud.google.com/go/auth v0.15.0 // indirect

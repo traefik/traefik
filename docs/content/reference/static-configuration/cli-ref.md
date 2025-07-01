@@ -330,6 +330,9 @@ Tailscale network configuration. (Default: ```false```)
 `--entrypoints.<name>.tsnet.authkey`:  
 Auth key for the node (overrides the TS_AUTHKEY env var).
 
+`--entrypoints.<name>.tsnet.controlurl`:  
+URL for the Tailscale control plane, when not using the default one.
+
 `--entrypoints.<name>.tsnet.ephemeral`:  
 Register the node as ephemeral. (Default: ```false```)
 

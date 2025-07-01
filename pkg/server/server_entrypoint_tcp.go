@@ -176,9 +176,10 @@ func NewTCPEntryPoint(ctx context.Context, name string, config *static.EntryPoin
 	var ts *tsnet.Server
 	if config.TSNet != nil {
 		ts = &tsnet.Server{
-			Hostname:  config.TSNet.Hostname,
-			Ephemeral: config.TSNet.Ephemeral,
-			AuthKey:   config.TSNet.AuthKey,
+			Hostname:   config.TSNet.Hostname,
+			Ephemeral:  config.TSNet.Ephemeral,
+			AuthKey:    config.TSNet.AuthKey,
+			ControlURL: config.TSNet.ControlURL,
 		}
 		if ts.Hostname == "" {
 			// Default to the name of the endpoint if there's no explicit hostname

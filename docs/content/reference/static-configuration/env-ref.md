@@ -330,6 +330,9 @@ Tailscale network configuration. (Default: ```false```)
 `TRAEFIK_ENTRYPOINTS_<NAME>_TSNET_AUTHKEY`:  
 Auth key for the node (overrides the TS_AUTHKEY env var).
 
+`TRAEFIK_ENTRYPOINTS_<NAME>_TSNET_CONTROLURL`:  
+URL for the Tailscale control plane, when not using the default one.
+
 `TRAEFIK_ENTRYPOINTS_<NAME>_TSNET_EPHEMERAL`:  
 Register the node as ephemeral. (Default: ```false```)
 
