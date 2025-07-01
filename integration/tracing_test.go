@@ -238,7 +238,7 @@ func (s *TracingSuite) TestOpenTelemetryBasic_gRPC() {
 			"batches.0.scopeSpans.0.spans.3.name": "Router",
 			"batches.0.scopeSpans.0.spans.3.kind": "SPAN_KIND_INTERNAL",
 			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"traefik.service.name\").value.stringValue": "service0@file",
-			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"traefik.router.name\").value.stringValue":  "router0@file",
+			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"traefik.router.name\").value.stringValue":  "web-router0@file",
 			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"http.route\").value.stringValue":           "Path(`/basic`)",
 
 			"batches.0.scopeSpans.0.spans.4.name": "Metrics",
@@ -300,7 +300,7 @@ func (s *TracingSuite) TestOpenTelemetryRateLimit() {
 			"batches.0.scopeSpans.0.spans.1.name": "Router",
 			"batches.0.scopeSpans.0.spans.1.kind": "SPAN_KIND_INTERNAL",
 			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"traefik.service.name\").value.stringValue": "service1@file",
-			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"traefik.router.name\").value.stringValue":  "router1@file",
+			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"traefik.router.name\").value.stringValue":  "web-router1@file",
 			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"http.route\").value.stringValue":           "Path(`/ratelimit`)",
 
 			"batches.0.scopeSpans.0.spans.2.name": "Metrics",
@@ -348,7 +348,7 @@ func (s *TracingSuite) TestOpenTelemetryRateLimit() {
 			"batches.0.scopeSpans.0.spans.4.name": "Router",
 			"batches.0.scopeSpans.0.spans.4.kind": "SPAN_KIND_INTERNAL",
 			"batches.0.scopeSpans.0.spans.4.attributes.#(key=\"traefik.service.name\").value.stringValue": "service1@file",
-			"batches.0.scopeSpans.0.spans.4.attributes.#(key=\"traefik.router.name\").value.stringValue":  "router1@file",
+			"batches.0.scopeSpans.0.spans.4.attributes.#(key=\"traefik.router.name\").value.stringValue":  "web-router1@file",
 			"batches.0.scopeSpans.0.spans.4.attributes.#(key=\"http.route\").value.stringValue":           "Path(`/ratelimit`)",
 
 			"batches.0.scopeSpans.0.spans.5.name": "Metrics",
@@ -472,7 +472,7 @@ func (s *TracingSuite) TestOpenTelemetryRetry() {
 			"batches.0.scopeSpans.0.spans.12.name":                                                         "Router",
 			"batches.0.scopeSpans.0.spans.12.kind":                                                         "SPAN_KIND_INTERNAL",
 			"batches.0.scopeSpans.0.spans.12.attributes.#(key=\"traefik.service.name\").value.stringValue": "service2@file",
-			"batches.0.scopeSpans.0.spans.12.attributes.#(key=\"traefik.router.name\").value.stringValue":  "router2@file",
+			"batches.0.scopeSpans.0.spans.12.attributes.#(key=\"traefik.router.name\").value.stringValue":  "web-router2@file",
 
 			"batches.0.scopeSpans.0.spans.13.name": "Metrics",
 			"batches.0.scopeSpans.0.spans.13.kind": "SPAN_KIND_INTERNAL",
@@ -524,7 +524,7 @@ func (s *TracingSuite) TestOpenTelemetryAuth() {
 			"batches.0.scopeSpans.0.spans.1.name": "Router",
 			"batches.0.scopeSpans.0.spans.1.kind": "SPAN_KIND_INTERNAL",
 			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"traefik.service.name\").value.stringValue": "service3@file",
-			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"traefik.router.name\").value.stringValue":  "router3@file",
+			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"traefik.router.name\").value.stringValue":  "web-router3@file",
 			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"http.route\").value.stringValue":           "Path(`/auth`)",
 
 			"batches.0.scopeSpans.0.spans.2.name": "Metrics",
@@ -581,7 +581,7 @@ func (s *TracingSuite) TestOpenTelemetryAuthWithRetry() {
 			"batches.0.scopeSpans.0.spans.2.name": "Router",
 			"batches.0.scopeSpans.0.spans.2.kind": "SPAN_KIND_INTERNAL",
 			"batches.0.scopeSpans.0.spans.2.attributes.#(key=\"traefik.service.name\").value.stringValue": "service4@file",
-			"batches.0.scopeSpans.0.spans.2.attributes.#(key=\"traefik.router.name\").value.stringValue":  "router4@file",
+			"batches.0.scopeSpans.0.spans.2.attributes.#(key=\"traefik.router.name\").value.stringValue":  "web-router4@file",
 			"batches.0.scopeSpans.0.spans.2.attributes.#(key=\"http.route\").value.stringValue":           "Path(`/retry-auth`)",
 
 			"batches.0.scopeSpans.0.spans.3.name": "Metrics",
@@ -650,7 +650,7 @@ func (s *TracingSuite) TestOpenTelemetrySafeURL() {
 			"batches.0.scopeSpans.0.spans.4.name": "Router",
 			"batches.0.scopeSpans.0.spans.4.kind": "SPAN_KIND_INTERNAL",
 			"batches.0.scopeSpans.0.spans.4.attributes.#(key=\"traefik.service.name\").value.stringValue": "service3@file",
-			"batches.0.scopeSpans.0.spans.4.attributes.#(key=\"traefik.router.name\").value.stringValue":  "router3@file",
+			"batches.0.scopeSpans.0.spans.4.attributes.#(key=\"traefik.router.name\").value.stringValue":  "web-router3@file",
 			"batches.0.scopeSpans.0.spans.4.attributes.#(key=\"http.route\").value.stringValue":           "Path(`/auth`)",
 
 			"batches.0.scopeSpans.0.spans.5.name": "Metrics",
