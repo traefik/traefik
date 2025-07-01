@@ -342,7 +342,7 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 		middleware = func(next http.Handler) (http.Handler, error) {
 			// TODO missing metrics / accessLog
-			return retry.New(ctx, next, *config.Retry, retry.Listeners{}, middlewareName)
+			return retry.New(ctx, next, *config.Retry, retry.Listeners{}, middlewareName, DetailedTraceEnabled(ctx))
 		}
 	}
 
@@ -428,8 +428,9 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		return nil, fmt.Errorf("invalid middleware %q configuration: invalid middleware type or middleware does not exist", middlewareName)
 	}
 
-	// The tracing middleware is a NOOP if tracing is not setup on the middleware chain.
-	// Hence, regarding internal resources' observability deactivation,
-	// this would not enable tracing.
-	return observability.WrapMiddleware(ctx, middleware), nil
+	if DetailedTraceEnabled(ctx) {
+		return observability.WrapMiddleware(ctx, middleware), nil
+	}
+
+	return middleware, nil
 }
