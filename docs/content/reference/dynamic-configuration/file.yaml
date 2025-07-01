@@ -690,6 +690,9 @@ tls:
         - foobar
         - foobar
       disableSessionTickets: true
+      echKeys:
+        - foobar
+        - foobar
       preferServerCipherSuites: true
     Options1:
       minVersion: foobar
@@ -710,6 +713,9 @@ tls:
         - foobar
         - foobar
       disableSessionTickets: true
+      echKeys:
+        - foobar
+        - foobar
       preferServerCipherSuites: true
   stores:
     Store0:
