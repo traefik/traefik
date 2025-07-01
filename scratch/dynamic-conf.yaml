@@ -1,0 +1,18 @@
+http:
+  # Add the router
+  routers:
+    whoami:
+      entryPoints:
+        - web
+        - ts
+      service: whoami
+      rule: Path(`/`)
+      tls: {}
+
+  # Add the service
+  services:
+    whoami:
+      loadBalancer:
+        servers:
+          - url: http://localhost:9000/
+        passHostHeader: false
