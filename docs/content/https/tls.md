@@ -597,6 +597,7 @@ The configuration file should be in PEM format and requires both a private key a
 [Reference](https://www.ietf.org/archive/id/draft-farrell-tls-pemesni-09.html)
 
 Below is an example of the configuration file:
+
 ```text
 -----BEGIN PRIVATE KEY-----
 MC4CAQAwBQYDK2VuBCIEICjd4yGRdsoP9gU7YT7My8DHx1Tjme8GYDXrOMCi8v1V
@@ -608,10 +609,10 @@ AQALZXhhbXBsZS5jb20AAA==
 ```
 
 To generate the ECH configuration, you can run:
+
 ```bash
 traefik ech generate example.com
 ```
-
 
 ```yaml tab="File (YAML)"
 # Dynamic configuration

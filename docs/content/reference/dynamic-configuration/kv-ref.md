@@ -420,6 +420,8 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/tls/options/Options0/curvePreferences/0` | `foobar` |
 | `traefik/tls/options/Options0/curvePreferences/1` | `foobar` |
 | `traefik/tls/options/Options0/disableSessionTickets` | `true` |
+| `traefik/tls/options/Options0/echKeys/0` | `foobar` |
+| `traefik/tls/options/Options0/echKeys/1` | `foobar` |
 | `traefik/tls/options/Options0/maxVersion` | `foobar` |
 | `traefik/tls/options/Options0/minVersion` | `foobar` |
 | `traefik/tls/options/Options0/preferServerCipherSuites` | `true` |
@@ -434,6 +436,8 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/tls/options/Options1/curvePreferences/0` | `foobar` |
 | `traefik/tls/options/Options1/curvePreferences/1` | `foobar` |
 | `traefik/tls/options/Options1/disableSessionTickets` | `true` |
+| `traefik/tls/options/Options1/echKeys/0` | `foobar` |
+| `traefik/tls/options/Options1/echKeys/1` | `foobar` |
 | `traefik/tls/options/Options1/maxVersion` | `foobar` |
 | `traefik/tls/options/Options1/minVersion` | `foobar` |
 | `traefik/tls/options/Options1/preferServerCipherSuites` | `true` |
