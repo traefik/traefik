@@ -221,7 +221,7 @@ func (o *ObservabilityMgr) shouldAccessLog(serviceName string, observabilityConf
 	return observabilityConfig == nil || observabilityConfig.AccessLogs == nil || *observabilityConfig.AccessLogs
 }
 
-// shouldMeter returns whether the metrics should be enabled for the given resource and the observability config.
+// shouldMeter returns whether the metrics should be enabled for the given serviceName and the observability config.
 func (o *ObservabilityMgr) shouldMeter(serviceName string, observabilityConfig *dynamic.RouterObservabilityConfig) bool {
 	if o == nil || o.metricsRegistry == nil {
 		return false
@@ -242,7 +242,7 @@ func (o *ObservabilityMgr) shouldMeter(serviceName string, observabilityConfig *
 	return observabilityConfig == nil || observabilityConfig.Metrics == nil || *observabilityConfig.Metrics
 }
 
-// shouldMeterSemConv returns whether the OTel semantic convention metrics should be enabled for the given resource and the observability config.
+// shouldMeterSemConv returns whether the OTel semantic convention metrics should be enabled for the given serviceName and the observability config.
 func (o *ObservabilityMgr) shouldMeterSemConv(serviceName string, observabilityConfig *dynamic.RouterObservabilityConfig) bool {
 	if o == nil {
 		return false
