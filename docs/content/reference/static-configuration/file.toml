@@ -82,6 +82,7 @@
       hostname = "foobar"
       ephemeral = true
       authKey = "foobar"
+      controlUrl = "foobar"
     [entryPoints.EntryPoint0.observability]
       accessLogs = true
       tracing = true

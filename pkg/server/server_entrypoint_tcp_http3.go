@@ -62,6 +62,7 @@ func newHTTP3Server(ctx context.Context, name string, config *static.EntryPoint,
 			}
 			addr = ip.String() + addr
 			found = true
+			break
 		}
 		if !found {
 			return nil, errors.New("did not find an IPv4 address for Tailscale")
