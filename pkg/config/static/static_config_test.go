@@ -80,6 +80,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 					UDP: &UDPConfig{
 						Timeout: 3000000000,
 					},
+					TSNet: nil,
 				}},
 				Providers: &Providers{},
 			},
@@ -126,6 +127,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 					UDP: &UDPConfig{
 						Timeout: 3000000000,
 					},
+					TSNet: nil,
 				}},
 				Providers: &Providers{},
 				CertificatesResolvers: map[string]CertificateResolver{
@@ -183,6 +185,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 					UDP: &UDPConfig{
 						Timeout: 3000000000,
 					},
+					TSNet: nil,
 				}},
 				Providers: &Providers{},
 				CertificatesResolvers: map[string]CertificateResolver{
@@ -244,6 +247,7 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 					UDP: &UDPConfig{
 						Timeout: 3000000000,
 					},
+					TSNet: nil,
 				}},
 				Providers: &Providers{},
 				CertificatesResolvers: map[string]CertificateResolver{
