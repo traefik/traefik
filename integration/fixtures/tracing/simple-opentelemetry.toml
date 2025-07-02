@@ -16,7 +16,7 @@
     address = ":8000"
     [entryPoints.web.observability]
       traceVerbosity = "detailed"
-  [entryPoints.webminimal]
+  [entryPoints.web-minimal]
     address = ":8001"
 
 # Adding metrics to confirm that there is no wrong interaction with tracing.
