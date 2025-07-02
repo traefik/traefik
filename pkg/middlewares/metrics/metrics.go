@@ -131,11 +131,6 @@ func (m *metricsMiddleware) GetTracingInformation() (string, string, trace.SpanK
 }
 
 func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	if val := req.Context().Value(observability.DisableMetricsKey); val != nil {
-		m.next.ServeHTTP(rw, req)
-		return
-	}
-
 	proto := getRequestProtocol(req)
 
 	var labels []string
