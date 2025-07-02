@@ -677,8 +677,6 @@ func (s *AccessLogSuite) checkAccessLogOutput() int {
 func (s *AccessLogSuite) checkAccessLogExactValuesOutput(values []accessLogValue) int {
 	s.T().Helper()
 
-	time.Sleep(500 * time.Millisecond)
-
 	lines := s.extractLines()
 	count := 0
 	for i, line := range lines {
