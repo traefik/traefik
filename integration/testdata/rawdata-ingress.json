@@ -10,8 +10,9 @@
 			"priority": 9223372036854775806,
 			"observability": {
 				"accessLogs": true,
+				"metrics": true,
 				"tracing": true,
-				"metrics": true
+				"traceVerbosity": "minimal"
 			},
 			"status": "enabled",
 			"using": [
@@ -32,8 +33,9 @@
 			"priority": 9223372036854775805,
 			"observability": {
 				"accessLogs": true,
+				"metrics": true,
 				"tracing": true,
-				"metrics": true
+				"traceVerbosity": "minimal"
 			},
 			"status": "enabled",
 			"using": [
@@ -44,13 +46,14 @@
 			"entryPoints": [
 				"web"
 			],
-			"service": "default-whoami-http",
+			"service": "default-whoami-http@kubernetes",
 			"rule": "Host(`whoami.test.https`) \u0026\u0026 PathPrefix(`/whoami`)",
 			"priority": 50,
 			"observability": {
 				"accessLogs": true,
+				"metrics": true,
 				"tracing": true,
-				"metrics": true
+				"traceVerbosity": "minimal"
 			},
 			"status": "enabled",
 			"using": [
@@ -61,13 +64,14 @@
 			"entryPoints": [
 				"web"
 			],
-			"service": "default-whoami-http",
+			"service": "default-whoami-http@kubernetes",
 			"rule": "Host(`whoami.test`) \u0026\u0026 PathPrefix(`/whoami`)",
 			"priority": 44,
 			"observability": {
 				"accessLogs": true,
+				"metrics": true,
 				"tracing": true,
-				"metrics": true
+				"traceVerbosity": "minimal"
 			},
 			"status": "enabled",
 			"using": [
@@ -78,13 +82,14 @@
 			"entryPoints": [
 				"web"
 			],
-			"service": "default-whoami-80",
+			"service": "default-whoami-80@kubernetes",
 			"rule": "Host(`whoami.test.drop`) \u0026\u0026 PathPrefix(`/drop`)",
 			"priority": 47,
 			"observability": {
 				"accessLogs": true,
+				"metrics": true,
 				"tracing": true,
-				"metrics": true
+				"traceVerbosity": "minimal"
 			},
 			"status": "enabled",
 			"using": [
@@ -95,13 +100,14 @@
 			"entryPoints": [
 				"web"
 			],
-			"service": "default-whoami-80",
+			"service": "default-whoami-80@kubernetes",
 			"rule": "Host(`whoami.test.keep`) \u0026\u0026 PathPrefix(`/keep`)",
 			"priority": 47,
 			"observability": {
 				"accessLogs": true,
+				"metrics": true,
 				"tracing": true,
-				"metrics": true
+				"traceVerbosity": "minimal"
 			},
 			"status": "enabled",
 			"using": [
