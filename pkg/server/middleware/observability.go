@@ -131,11 +131,6 @@ func (o *ObservabilityMgr) BuildEPChain(ctx context.Context, entryPointName stri
 		})
 	}
 
-	// Semantic convention server metrics handler.
-	if SemConvMetricsEnabled(ctx) {
-		chain = chain.Append(observability.SemConvServerMetricsHandler(ctx, o.semConvMetricRegistry))
-	}
-
 	if MetricsEnabled(ctx) {
 		metricsHandler := mmetrics.WrapEntryPointHandler(ctx, o.metricsRegistry, entryPointName)
 
@@ -144,17 +139,12 @@ func (o *ObservabilityMgr) BuildEPChain(ctx context.Context, entryPointName stri
 		} else {
 			chain = chain.Append(metricsHandler)
 		}
-
-		return chain
 	}
 
-	// Inject context keys to control whether to produce metrics further downstream (services, round-tripper),
-	// because the router configuration cannot be evaluated during build time for services.
-	chain = chain.Append(func(next http.Handler) (http.Handler, error) {
-		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-			next.ServeHTTP(rw, req.WithContext(context.WithValue(req.Context(), observability.DisableMetricsKey, true)))
-		}), nil
-	})
+	// Semantic convention server metrics handler.
+	if SemConvMetricsEnabled(ctx) {
+		chain = chain.Append(observability.SemConvServerMetricsHandler(ctx, o.semConvMetricRegistry))
+	}
 
 	return chain
 }
