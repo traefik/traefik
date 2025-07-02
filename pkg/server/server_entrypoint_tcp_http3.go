@@ -14,6 +14,8 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/static"
 	tcprouter "github.com/traefik/traefik/v3/pkg/server/router/tcp"
+	"tailscale.com/ipn/ipnstate"
+	"tailscale.com/tsnet"
 )
 
 type http3server struct {
@@ -25,7 +27,7 @@ type http3server struct {
 	getter func(info *tls.ClientHelloInfo) (*tls.Config, error)
 }
 
-func newHTTP3Server(ctx context.Context, name string, config *static.EntryPoint, httpsServer *httpServer) (*http3server, error) {
+func newHTTP3Server(ctx context.Context, name string, config *static.EntryPoint, httpsServer *httpServer, ts *tsnet.Server) (*http3server, error) {
 	var conn net.PacketConn
 	var err error
 
@@ -37,19 +39,54 @@ func newHTTP3Server(ctx context.Context, name string, config *static.EntryPoint,
 		return nil, errors.New("advertised port must be greater than or equal to zero")
 	}
 
-	// if we have predefined connections from socket activation
-	if socketActivation.isEnabled() {
-		conn, err = socketActivation.getConn(name)
-		if err != nil {
-			log.Ctx(ctx).Warn().Err(err).Str("name", name).Msg("Unable to use socket activation for entrypoint")
-		}
-	}
+	addr := config.GetAddress()
 
-	if conn == nil {
-		listenConfig := newListenConfig(config)
-		conn, err = listenConfig.ListenPacket(ctx, "udp", config.GetAddress())
+	if ts != nil {
+		// ListenPacket for a tsnet.Server requires an explicit IP
+		// Since the IP is determined by the Tailscale service, we want to make sure that we don't have an IP specified in the address
+		// We then connect to the Tailscale network and get the IP from there
+		if len(addr) == 0 || addr[0] != ':' {
+			return nil, errors.New("endpoint's address is not valid for a tsnet endpoint: must include the port only")
+		}
+
+		var status *ipnstate.Status
+		status, err = ts.Up(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("starting listener: %w", err)
+			return nil, fmt.Errorf("failed to connect to the Tailscale network: %w", err)
+		}
+
+		var found bool
+		for _, ip := range status.TailscaleIPs {
+			if !ip.Is4() {
+				continue
+			}
+			addr = ip.String() + addr
+			found = true
+			break
+		}
+		if !found {
+			return nil, errors.New("did not find an IPv4 address for Tailscale")
+		}
+
+		conn, err = ts.ListenPacket("udp4", addr)
+		if err != nil {
+			return nil, fmt.Errorf("starting tsnet listener: %w", err)
+		}
+	} else {
+		// if we have predefined connections from socket activation
+		if socketActivation.isEnabled() {
+			conn, err = socketActivation.getConn(name)
+			if err != nil {
+				log.Ctx(ctx).Warn().Err(err).Str("name", name).Msg("Unable to use socket activation for entrypoint")
+			}
+		}
+
+		if conn == nil {
+			listenConfig := newListenConfig(config)
+			conn, err = listenConfig.ListenPacket(ctx, "udp", addr)
+			if err != nil {
+				return nil, fmt.Errorf("starting listener: %w", err)
+			}
 		}
 	}
 
@@ -61,7 +98,7 @@ func newHTTP3Server(ctx context.Context, name string, config *static.EntryPoint,
 	}
 
 	h3.Server = &http3.Server{
-		Addr:      config.GetAddress(),
+		Addr:      addr,
 		Port:      config.HTTP3.AdvertisedPort,
 		Handler:   httpsServer.Server.(*http.Server).Handler,
 		TLSConfig: &tls.Config{GetConfigForClient: h3.getGetConfigForClient},

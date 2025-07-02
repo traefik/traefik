@@ -324,6 +324,24 @@ ReadTimeout is the maximum duration for reading the entire request, including th
 `--entrypoints.<name>.transport.respondingtimeouts.writetimeout`:  
 WriteTimeout is the maximum duration before timing out writes of the response. If zero, no timeout is set. (Default: ```0```)
 
+`--entrypoints.<name>.tsnet`:  
+Tailscale network configuration. (Default: ```false```)
+
+`--entrypoints.<name>.tsnet.authkey`:  
+Auth key for the node (overrides the TS_AUTHKEY env var).
+
+`--entrypoints.<name>.tsnet.controlurl`:  
+URL for the Tailscale control plane, when not using the default one.
+
+`--entrypoints.<name>.tsnet.dir`:  
+Path where Tailscale stores its state. Set it to a persistent volume to allow Traefik to remain authenticated with Tailscale. Defaults to /var/lib/tailscale.
+
+`--entrypoints.<name>.tsnet.ephemeral`:  
+Register the node as ephemeral. (Default: ```false```)
+
+`--entrypoints.<name>.tsnet.hostname`:  
+Hostname for the node; if empty, defaults to the endpoint's name
+
 `--entrypoints.<name>.udp.timeout`:  
 Timeout defines how long to wait on an idle session before releasing the related resources. (Default: ```3```)
 
