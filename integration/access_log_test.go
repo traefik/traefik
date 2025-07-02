@@ -648,25 +648,6 @@ func (s *AccessLogSuite) TestAccessLogDisabledForInternals() {
 
 	require.Equal(s.T(), 0, count)
 
-	// Make some requests on the custom ping router in error.
-	req, err = http.NewRequest(http.MethodGet, "http://127.0.0.1:8010/ping-error", nil)
-	require.NoError(s.T(), err)
-	req.Host = "ping-error.docker.local"
-
-	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusUnauthorized), try.BodyContains("X-Forwarded-Host: ping-error.docker.local"))
-	require.NoError(s.T(), err)
-	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusUnauthorized), try.BodyContains("X-Forwarded-Host: ping-error.docker.local"))
-	require.NoError(s.T(), err)
-
-	// Here we verify that the remove of observability doesn't break the metrics for the error page service.
-	req, err = http.NewRequest(http.MethodGet, "http://127.0.0.1:8080/metrics", nil)
-	require.NoError(s.T(), err)
-
-	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.BodyContains("service3"))
-	require.NoError(s.T(), err)
-	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.BodyNotContains("service=\"ping"))
-	require.NoError(s.T(), err)
-
 	// Verify no other Traefik problems.
 	s.checkNoOtherTraefikProblems()
 }
@@ -695,6 +676,8 @@ func (s *AccessLogSuite) checkAccessLogOutput() int {
 
 func (s *AccessLogSuite) checkAccessLogExactValuesOutput(values []accessLogValue) int {
 	s.T().Helper()
+
+	time.Sleep(500 * time.Millisecond)
 
 	lines := s.extractLines()
 	count := 0

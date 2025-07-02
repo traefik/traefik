@@ -283,13 +283,16 @@ HTTP/3 configuration. (Default: ```false```)
 UDP port to advertise, on which HTTP/3 is available. (Default: ```0```)
 
 `--entrypoints.<name>.observability.accesslogs`:  
- (Default: ```true```)
+Enables access-logs for this entryPoint. (Default: ```true```)
 
 `--entrypoints.<name>.observability.metrics`:  
- (Default: ```true```)
+Enables metrics for this entryPoint. (Default: ```true```)
+
+`--entrypoints.<name>.observability.traceverbosity`:  
+Defines the verbosity level of the tracing for this entryPoint. (Default: ```minimal```)
 
 `--entrypoints.<name>.observability.tracing`:  
- (Default: ```true```)
+Enables tracing for this entryPoint. (Default: ```true```)
 
 `--entrypoints.<name>.proxyprotocol`:  
 Proxy-Protocol configuration. (Default: ```false```)
