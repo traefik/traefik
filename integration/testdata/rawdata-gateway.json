@@ -10,8 +10,9 @@
 			"priority": 9223372036854775806,
 			"observability": {
 				"accessLogs": true,
+				"metrics": true,
 				"tracing": true,
-				"metrics": true
+				"traceVerbosity": "minimal"
 			},
 			"status": "enabled",
 			"using": [
@@ -32,8 +33,9 @@
 			"priority": 9223372036854775805,
 			"observability": {
 				"accessLogs": true,
+				"metrics": true,
 				"tracing": true,
-				"metrics": true
+				"traceVerbosity": "minimal"
 			},
 			"status": "enabled",
 			"using": [
@@ -44,14 +46,15 @@
 			"entryPoints": [
 				"web"
 			],
-			"service": "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-1c0cf64bde37d9d0df06-wrr",
+			"service": "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-1c0cf64bde37d9d0df06-wrr@kubernetesgateway",
 			"rule": "Host(`foo.com`) \u0026\u0026 Path(`/bar`)",
 			"ruleSyntax": "default",
 			"priority": 100008,
 			"observability": {
 				"accessLogs": true,
+				"metrics": true,
 				"tracing": true,
-				"metrics": true
+				"traceVerbosity": "minimal"
 			},
 			"status": "enabled",
 			"using": [
@@ -62,15 +65,16 @@
 			"entryPoints": [
 				"websecure"
 			],
-			"service": "httproute-default-http-app-1-gw-default-my-https-gateway-ep-websecure-0-1c0cf64bde37d9d0df06-wrr",
+			"service": "httproute-default-http-app-1-gw-default-my-https-gateway-ep-websecure-0-1c0cf64bde37d9d0df06-wrr@kubernetesgateway",
 			"rule": "Host(`foo.com`) \u0026\u0026 Path(`/bar`)",
 			"ruleSyntax": "default",
 			"priority": 100008,
 			"tls": {},
 			"observability": {
 				"accessLogs": true,
+				"metrics": true,
 				"tracing": true,
-				"metrics": true
+				"traceVerbosity": "minimal"
 			},
 			"status": "enabled",
 			"using": [
