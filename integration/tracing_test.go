@@ -77,7 +77,7 @@ func (s *TracingSuite) TearDownTest() {
 	s.composeStop("tempo")
 }
 
-func (s *TracingSuite) TestOpenTelemetryBasic_HTTP_minimal() {
+func (s *TracingSuite) TestOpenTelemetryBasic_HTTP_router_minimalVerbosity() {
 	file := s.adaptFile("fixtures/tracing/simple-opentelemetry.toml", TracingTemplate{
 		WhoamiIP:   s.whoamiIP,
 		WhoamiPort: s.whoamiPort,
@@ -118,6 +118,55 @@ func (s *TracingSuite) TestOpenTelemetryBasic_HTTP_minimal() {
 			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"url.query\").value.stringValue":              "",
 			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"user_agent.original\").value.stringValue":    "Go-http-client/1.1",
 			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"server.address\").value.stringValue":         "127.0.0.1:8000",
+			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"network.peer.address\").value.stringValue":   "127.0.0.1",
+			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"http.response.status_code\").value.intValue": "200",
+		},
+	}
+
+	s.checkTraceContent(contains)
+}
+
+func (s *TracingSuite) TestOpenTelemetryBasic_HTTP_entrypoint_minimalVerbosity() {
+	file := s.adaptFile("fixtures/tracing/simple-opentelemetry.toml", TracingTemplate{
+		WhoamiIP:   s.whoamiIP,
+		WhoamiPort: s.whoamiPort,
+		IP:         s.otelCollectorIP,
+		IsHTTP:     true,
+	})
+
+	s.traefikCmd(withConfigFile(file))
+
+	// wait for traefik
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
+	require.NoError(s.T(), err)
+
+	err = try.GetRequest("http://127.0.0.1:8001/basic", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
+	require.NoError(s.T(), err)
+
+	contains := []map[string]string{
+		{
+			"batches.0.scopeSpans.0.scope.name": "github.com/traefik/traefik",
+
+			"batches.0.scopeSpans.0.spans.0.name":                                                             "ReverseProxy",
+			"batches.0.scopeSpans.0.spans.0.kind":                                                             "SPAN_KIND_CLIENT",
+			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"http.request.method\").value.stringValue":      "GET",
+			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"network.protocol.version\").value.stringValue": "1.1",
+			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"url.full\").value.stringValue":                 fmt.Sprintf("http://%s/basic", net.JoinHostPort(s.whoamiIP, "80")),
+			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"user_agent.original\").value.stringValue":      "Go-http-client/1.1",
+			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"network.peer.address\").value.stringValue":     s.whoamiIP,
+			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"network.peer.port\").value.intValue":           "80",
+			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"server.address\").value.stringValue":           s.whoamiIP,
+			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"server.port\").value.intValue":                 "80",
+			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"http.response.status_code\").value.intValue":   "200",
+
+			"batches.0.scopeSpans.0.spans.1.name":                                                           "EntryPoint",
+			"batches.0.scopeSpans.0.spans.1.kind":                                                           "SPAN_KIND_SERVER",
+			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"entry_point\").value.stringValue":            "web-minimal",
+			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"http.request.method\").value.stringValue":    "GET",
+			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"url.path\").value.stringValue":               "/basic",
+			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"url.query\").value.stringValue":              "",
+			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"user_agent.original\").value.stringValue":    "Go-http-client/1.1",
+			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"server.address\").value.stringValue":         "127.0.0.1:8001",
 			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"network.peer.address\").value.stringValue":   "127.0.0.1",
 			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"http.response.status_code\").value.intValue": "200",
 		},
