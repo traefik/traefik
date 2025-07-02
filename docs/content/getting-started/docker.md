@@ -108,7 +108,9 @@ services:
   whoami:
     image: traefik/whoami
     labels:
-      - "traefik.http.routers.whoami.rule=Host(`whoami.localhost`)"
+      - "traefik.http.routers.whoami.rule=PathPrefix(`/whoami`)"
+    ports:
+      - "80"
 ```
 
 Apply the configuration:
