@@ -246,7 +246,6 @@ Add the following labels to your whoami service in `docker-compose.yml`:
 
 ```yaml
 labels:
-  - "traefik.http.routers.whoami.middlewares=secure-headers,ip-allowlist"
   
   # Secure Headers Middleware
   - "traefik.http.middlewares.secure-headers.headers.frameDeny=true"
