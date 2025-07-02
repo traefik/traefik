@@ -95,7 +95,7 @@ test-unit:
 
 .PHONY: test-integration
 #? test-integration: Run the integration tests
-test-integration: binary
+test-integration:
 	GOOS=$(GOOS) GOARCH=$(GOARCH) go test ./integration -test.timeout=20m -failfast -v $(TESTFLAGS)
 
 .PHONY: test-ui-unit
