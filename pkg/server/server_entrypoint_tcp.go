@@ -188,7 +188,7 @@ func NewTCPEntryPoint(ctx context.Context, name string, config *static.EntryPoin
 		}
 		if ts.Dir == "" {
 			// Default path to store Tailscale's state
-			ts.Dir = "/var/tailscale"
+			ts.Dir = "/var/lib/tailscale"
 		}
 	}
 

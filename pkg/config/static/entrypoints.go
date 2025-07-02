@@ -170,7 +170,7 @@ type TSNetConfig struct {
 	Ephemeral  bool   `description:"Register the node as ephemeral." json:"ephemeral,omitempty" toml:"ephemeral,omitempty" yaml:"ephemeral,omitempty" export:"true"`
 	AuthKey    string `description:"Auth key for the node (overrides the TS_AUTHKEY env var)." json:"authKey,omitempty" toml:"authKey,omitempty" yaml:"authKey,omitempty" export:"true"`
 	ControlURL string `description:"URL for the Tailscale control plane, when not using the default one." json:"controlUrl,omitempty" toml:"controlUrl,omitempty" yaml:"controlUrl,omitempty" export:"true"`
-	Dir        string `description:"Path where Tailscale stores its state. Set it to a persistent volume to allow Traefik to remain authenticated with Tailscale. Defaults to /var/tailscale." json:"dir,omitempty" toml:"dir,omitempty" yaml:"dir,omitempty" export:"true"`
+	Dir        string `description:"Path where Tailscale stores its state. Set it to a persistent volume to allow Traefik to remain authenticated with Tailscale. Defaults to /var/lib/tailscale." json:"dir,omitempty" toml:"dir,omitempty" yaml:"dir,omitempty" export:"true"`
 }
 
 // ObservabilityConfig holds the observability configuration for an entry point.
