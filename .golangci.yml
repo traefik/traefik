@@ -245,6 +245,10 @@ linters:
         text: Function 'buildConstructor' has too many statements
         linters:
           - funlen
+      - path: pkg/provider/kubernetes/ingress-nginx/kubernetes.go
+        text: Function 'loadConfiguration' has too many statements
+        linters:
+          - funlen
       - path: pkg/tracing/haystack/logger.go
         linters:
           - goprintffuncname

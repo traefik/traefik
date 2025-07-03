@@ -180,6 +180,14 @@ A Story of key & values
     |---------------------------------------------------------------------|-------|
     | `traefik/http/services/myservice/loadbalancer/healthcheck/interval` | `10`  |
 
+??? info "`traefik/http/services/<service_name>/loadbalancer/healthcheck/unhealthyinterval`"
+
+    See [health check](../services/index.md#health-check) for more information.
+
+    | Key (Path)                                                                   | Value |
+    |------------------------------------------------------------------------------|-------|
+    | `traefik/http/services/myservice/loadbalancer/healthcheck/unhealthyinterval` | `10`  |
+
 ??? info "`traefik/http/services/<service_name>/loadbalancer/healthcheck/path`"
 
     See [health check](../services/index.md#health-check) for more information.

@@ -11,10 +11,12 @@ import (
 	"net/url"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
 	"github.com/traefik/traefik/v3/pkg/tracing"
 	"github.com/vulcand/oxy/v2/forward"
@@ -406,6 +408,75 @@ func TestForwardAuthFailResponseHeaders(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, "Forbidden\n", string(body))
+}
+
+func TestForwardAuthClientClosedRequest(t *testing.T) {
+	requestStarted := make(chan struct{})
+	requestCancelled := make(chan struct{})
+	responseComplete := make(chan struct{})
+
+	authTs := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		close(requestStarted)
+		<-requestCancelled
+	}))
+	t.Cleanup(authTs.Close)
+
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// next should not be called.
+		t.Fail()
+	})
+
+	auth := dynamic.ForwardAuth{
+		Address: authTs.URL,
+	}
+	authMiddleware, err := NewForward(t.Context(), next, auth, "authTest")
+	require.NoError(t, err)
+
+	ctx, cancel := context.WithCancel(t.Context())
+	req := httptest.NewRequestWithContext(ctx, "GET", "http://foo", http.NoBody)
+
+	recorder := httptest.NewRecorder()
+	go func() {
+		authMiddleware.ServeHTTP(recorder, req)
+		close(responseComplete)
+	}()
+
+	<-requestStarted
+
+	cancel()
+	close(requestCancelled)
+
+	<-responseComplete
+
+	assert.Equal(t, httputil.StatusClientClosedRequest, recorder.Result().StatusCode)
+}
+
+func TestForwardAuthForwardError(t *testing.T) {
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// next should not be called.
+		t.Fail()
+	})
+
+	auth := dynamic.ForwardAuth{
+		Address: "http://non-existing-server",
+	}
+	authMiddleware, err := NewForward(t.Context(), next, auth, "authTest")
+	require.NoError(t, err)
+
+	ctx, cancel := context.WithTimeout(t.Context(), 1*time.Microsecond)
+	defer cancel()
+	req := httptest.NewRequestWithContext(ctx, http.MethodGet, "http://foo", nil)
+
+	recorder := httptest.NewRecorder()
+	responseComplete := make(chan struct{})
+	go func() {
+		authMiddleware.ServeHTTP(recorder, req)
+		close(responseComplete)
+	}()
+
+	<-responseComplete
+
+	assert.Equal(t, http.StatusInternalServerError, recorder.Result().StatusCode)
 }
 
 func Test_writeHeader(t *testing.T) {

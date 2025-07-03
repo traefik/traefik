@@ -1280,6 +1280,11 @@ func (in *ServerHealthCheck) DeepCopyInto(out *ServerHealthCheck) {
 		*out = new(intstr.IntOrString)
 		**out = **in
 	}
+	if in.UnhealthyInterval != nil {
+		in, out := &in.UnhealthyInterval, &out.UnhealthyInterval
+		*out = new(intstr.IntOrString)
+		**out = **in
+	}
 	if in.Timeout != nil {
 		in, out := &in.Timeout, &out.Timeout
 		*out = new(intstr.IntOrString)

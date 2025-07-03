@@ -60,7 +60,7 @@ func NewBuilder(client *Client, plugins map[string]Descriptor, localPlugins map[
 			pb.middlewareBuilders[pName] = middleware
 
 		case typeProvider:
-			pBuilder, err := newProviderBuilder(logCtx, manifest, client.GoPath())
+			pBuilder, err := newProviderBuilder(logCtx, manifest, client.GoPath(), desc.Settings)
 			if err != nil {
 				return nil, fmt.Errorf("%s: %w", desc.ModuleName, err)
 			}
@@ -95,7 +95,7 @@ func NewBuilder(client *Client, plugins map[string]Descriptor, localPlugins map[
 			pb.middlewareBuilders[pName] = middleware
 
 		case typeProvider:
-			builder, err := newProviderBuilder(logCtx, manifest, localGoPath)
+			builder, err := newProviderBuilder(logCtx, manifest, localGoPath, desc.Settings)
 			if err != nil {
 				return nil, fmt.Errorf("%s: %w", desc.ModuleName, err)
 			}
@@ -139,7 +139,7 @@ func newMiddlewareBuilder(ctx context.Context, goPath string, manifest *Manifest
 		return newWasmMiddlewareBuilder(goPath, moduleName, wasmPath, settings)
 
 	case runtimeYaegi, "":
-		i, err := newInterpreter(ctx, goPath, manifest.Import)
+		i, err := newInterpreter(ctx, goPath, manifest, settings)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create Yaegi interpreter: %w", err)
 		}
@@ -151,10 +151,10 @@ func newMiddlewareBuilder(ctx context.Context, goPath string, manifest *Manifest
 	}
 }
 
-func newProviderBuilder(ctx context.Context, manifest *Manifest, goPath string) (providerBuilder, error) {
+func newProviderBuilder(ctx context.Context, manifest *Manifest, goPath string, settings Settings) (providerBuilder, error) {
 	switch manifest.Runtime {
 	case runtimeYaegi, "":
-		i, err := newInterpreter(ctx, goPath, manifest.Import)
+		i, err := newInterpreter(ctx, goPath, manifest, settings)
 		if err != nil {
 			return providerBuilder{}, err
 		}

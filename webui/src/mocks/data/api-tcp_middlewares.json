@@ -1,0 +1,32 @@
+[
+  {
+    "inFlightConn": {
+      "amount": 10
+    },
+    "status": "enabled",
+    "usedBy": ["tcp-all@docker"],
+    "name": "test-inflightconn",
+    "type": "inflightconn",
+    "provider": "docker"
+  },
+  {
+    "ipWhiteList": {
+      "sourceRange": ["127.0.0.1/32", "192.168.1.7"]
+    },
+    "status": "enabled",
+    "usedBy": ["tcp-all@docker"],
+    "name": "test-ipwhitelist",
+    "type": "ipwhitelist",
+    "provider": "docker"
+  },
+  {
+    "ipAllowList": {
+      "sourceRange": ["127.0.0.1/32", "192.168.1.7"]
+    },
+    "status": "enabled",
+    "usedBy": ["tcp-all@docker"],
+    "name": "test-ipallowlist",
+    "type": "ipallowlist",
+    "provider": "docker"
+  }
+]
