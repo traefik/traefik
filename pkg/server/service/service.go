@@ -19,7 +19,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/healthcheck"
 	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
-	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
 	metricsMiddle "github.com/traefik/traefik/v3/pkg/middlewares/metrics"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/middlewares/retry"
@@ -37,7 +36,7 @@ import (
 
 // ProxyBuilder builds reverse proxy handlers.
 type ProxyBuilder interface {
-	Build(cfgName string, targetURL *url.URL, shouldObserve, passHostHeader, preservePath bool, flushInterval time.Duration) (http.Handler, error)
+	Build(cfgName string, targetURL *url.URL, passHostHeader, preservePath bool, flushInterval time.Duration) (http.Handler, error)
 	Update(configs map[string]*dynamic.ServersTransport)
 }
 
@@ -54,7 +53,6 @@ type Manager struct {
 	proxyBuilder     ProxyBuilder
 	serviceBuilders  []ServiceBuilder
 
-	services       map[string]http.Handler
 	configs        map[string]*runtime.ServiceInfo
 	healthCheckers map[string]*healthcheck.ServiceHealthChecker
 	rand           *rand.Rand // For the initial shuffling of load-balancers.
@@ -68,7 +66,6 @@ func NewManager(configs map[string]*runtime.ServiceInfo, observabilityMgr *middl
 		transportManager: transportManager,
 		proxyBuilder:     proxyBuilder,
 		serviceBuilders:  serviceBuilders,
-		services:         make(map[string]http.Handler),
 		configs:          configs,
 		healthCheckers:   make(map[string]*healthcheck.ServiceHealthChecker),
 		rand:             rand.New(rand.NewSource(time.Now().UnixNano())),
@@ -82,11 +79,6 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string) (http.H
 	ctx := log.Ctx(rootCtx).With().Str(logs.ServiceName, serviceName).Logger().
 		WithContext(provider.AddInContext(rootCtx, serviceName))
 
-	handler, ok := m.services[serviceName]
-	if ok {
-		return handler, nil
-	}
-
 	// Must be before we get configs to handle services without config.
 	for _, builder := range m.serviceBuilders {
 		handler, err := builder.BuildHTTP(rootCtx, serviceName)
@@ -94,7 +86,6 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string) (http.H
 			return nil, err
 		}
 		if handler != nil {
-			m.services[serviceName] = handler
 			return handler, nil
 		}
 	}
@@ -157,8 +148,6 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string) (http.H
 		conf.AddError(sErr, true)
 		return nil, sErr
 	}
-
-	m.services[serviceName] = lb
 
 	return lb, nil
 }
@@ -364,8 +353,7 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 
 		qualifiedSvcName := provider.GetQualifiedName(ctx, serviceName)
 
-		shouldObserve := m.observabilityMgr.ShouldAddTracing(qualifiedSvcName, nil) || m.observabilityMgr.ShouldAddMetrics(qualifiedSvcName, nil)
-		proxy, err := m.proxyBuilder.Build(service.ServersTransport, target, shouldObserve, passHostHeader, server.PreservePath, flushInterval)
+		proxy, err := m.proxyBuilder.Build(service.ServersTransport, target, passHostHeader, server.PreservePath, flushInterval)
 		if err != nil {
 			return nil, fmt.Errorf("error building proxy for server URL %s: %w", server.URL, err)
 		}
@@ -374,39 +362,29 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 		// middlewares in the chain.
 		proxy = retry.WrapHandler(proxy)
 
-		// Prevents from enabling observability for internal resources.
-
-		if m.observabilityMgr.ShouldAddAccessLogs(qualifiedSvcName, nil) {
+		if middleware.AccessLogsEnabled(ctx) {
 			proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceURL, target.String(), nil)
 			proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceAddr, target.Host, nil)
-			proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceName, serviceName, accesslog.AddServiceFields)
+			proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceName, qualifiedSvcName, accesslog.AddServiceFields)
 		}
 
-		if m.observabilityMgr.MetricsRegistry() != nil && m.observabilityMgr.MetricsRegistry().IsSvcEnabled() &&
-			m.observabilityMgr.ShouldAddMetrics(qualifiedSvcName, nil) {
-			metricsHandler := metricsMiddle.WrapServiceHandler(ctx, m.observabilityMgr.MetricsRegistry(), serviceName)
+		if middleware.MetricsEnabled(ctx) {
+			metricsHandler := metricsMiddle.WrapServiceHandler(ctx, m.observabilityMgr.MetricsRegistry(), qualifiedSvcName)
+
+			if middleware.DetailedTraceEnabled(ctx) {
+				metricsHandler = observability.WrapMiddleware(ctx, metricsHandler)
+			}
 
 			proxy, err = alice.New().
-				Append(observability.WrapMiddleware(ctx, metricsHandler)).
+				Append(metricsHandler).
 				Then(proxy)
 			if err != nil {
 				return nil, fmt.Errorf("error wrapping metrics handler: %w", err)
 			}
 		}
 
-		if m.observabilityMgr.ShouldAddTracing(qualifiedSvcName, nil) {
-			proxy = observability.NewService(ctx, serviceName, proxy)
-		}
-
-		if m.observabilityMgr.ShouldAddAccessLogs(qualifiedSvcName, nil) || m.observabilityMgr.ShouldAddMetrics(qualifiedSvcName, nil) {
-			// Some piece of middleware, like the ErrorPage, are relying on this serviceBuilder to get the handler for a given service,
-			// to re-target the request to it.
-			// Those pieces of middleware can be configured on routes that expose a Traefik internal service.
-			// In such a case, observability for internals being optional, the capture probe could be absent from context (no wrap via the entrypoint).
-			// But if the service targeted by this piece of middleware is not an internal one,
-			// and requires observability, we still want the capture probe to be present in the request context.
-			// Makes sure a capture probe is in the request context.
-			proxy, _ = capture.Wrap(proxy)
+		if middleware.DetailedTraceEnabled(ctx) {
+			proxy = observability.NewService(ctx, qualifiedSvcName, proxy)
 		}
 
 		lb.AddServer(server.URL, proxy, server)

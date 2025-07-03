@@ -9,8 +9,9 @@
 			"priority": 18,
 			"observability": {
 				"accessLogs": true,
+				"metrics": true,
 				"tracing": true,
-				"metrics": true
+				"traceVerbosity": "minimal"
 			},
 			"status": "enabled",
 			"using": [
@@ -21,7 +22,7 @@
 			"entryPoints": [
 				"web"
 			],
-			"service": "default-test-route-6b204d94623b3df4370c",
+			"service": "default-test-route-6b204d94623b3df4370c@kubernetescrd",
 			"rule": "Host(`foo.com`) \u0026\u0026 PathPrefix(`/bar`)",
 			"priority": 12,
 			"tls": {
@@ -29,8 +30,9 @@
 			},
 			"observability": {
 				"accessLogs": true,
+				"metrics": true,
 				"tracing": true,
-				"metrics": true
+				"traceVerbosity": "minimal"
 			},
 			"status": "enabled",
 			"using": [
@@ -44,13 +46,14 @@
 			"middlewares": [
 				"default-mychain@kubernetescrd"
 			],
-			"service": "default-test2-route-23c7f4c450289ee29016",
+			"service": "default-test2-route-23c7f4c450289ee29016@kubernetescrd",
 			"rule": "Host(`foo.com`) \u0026\u0026 PathPrefix(`/tobestripped`)",
 			"priority": 46,
 			"observability": {
 				"accessLogs": true,
+				"metrics": true,
 				"tracing": true,
-				"metrics": true
+				"traceVerbosity": "minimal"
 			},
 			"status": "enabled",
 			"using": [
@@ -61,13 +64,14 @@
 			"entryPoints": [
 				"web"
 			],
-			"service": "default-wrr1",
+			"service": "default-wrr1@kubernetescrd",
 			"rule": "Host(`foo.com`) \u0026\u0026 PathPrefix(`/wrr1`)",
 			"priority": 38,
 			"observability": {
 				"accessLogs": true,
+				"metrics": true,
 				"tracing": true,
-				"metrics": true
+				"traceVerbosity": "minimal"
 			},
 			"status": "enabled",
 			"using": [
@@ -78,13 +82,14 @@
 			"entryPoints": [
 				"web"
 			],
-			"service": "default-testst-route-60ad45fcb5fc1f5f3629",
+			"service": "default-testst-route-60ad45fcb5fc1f5f3629@kubernetescrd",
 			"rule": "Host(`foo.com`) \u0026\u0026 PathPrefix(`/serverstransport`)",
 			"priority": 50,
 			"observability": {
 				"accessLogs": true,
+				"metrics": true,
 				"tracing": true,
-				"metrics": true
+				"traceVerbosity": "minimal"
 			},
 			"status": "enabled",
 			"using": [
@@ -95,13 +100,14 @@
 			"entryPoints": [
 				"web"
 			],
-			"service": "other-ns-wrr3",
+			"service": "other-ns-wrr3@kubernetescrd",
 			"rule": "Host(`foo.com`) \u0026\u0026 PathPrefix(`/c`)",
 			"priority": 35,
 			"observability": {
 				"accessLogs": true,
+				"metrics": true,
 				"tracing": true,
-				"metrics": true
+				"traceVerbosity": "minimal"
 			},
 			"error": [
 				"the service \"other-ns-wrr3@kubernetescrd\" does not exist"
