@@ -13,7 +13,7 @@ import (
 // TraefikService object allows to:
 // - Apply weight to Services on load-balancing
 // - Mirror traffic on services
-// More info: https://doc.traefik.io/traefik/v3.4/routing/providers/kubernetes-crd/#kind-traefikservice
+// More info: https://doc.traefik.io/traefik/v3.5/routing/providers/kubernetes-crd/#kind-traefikservice
 type TraefikService struct {
 	metav1.TypeMeta `json:",inline"`
 	// Standard object's metadata.
@@ -49,7 +49,7 @@ type TraefikServiceSpec struct {
 // +k8s:deepcopy-gen=true
 
 // Mirroring holds the mirroring service configuration.
-// More info: https://doc.traefik.io/traefik/v3.4/routing/services/#mirroring-service
+// More info: https://doc.traefik.io/traefik/v3.5/routing/services/#mirroring-service
 type Mirroring struct {
 	LoadBalancerSpec `json:",inline"`
 
@@ -78,11 +78,11 @@ type MirrorService struct {
 // +k8s:deepcopy-gen=true
 
 // WeightedRoundRobin holds the weighted round-robin configuration.
-// More info: https://doc.traefik.io/traefik/v3.4/routing/services/#weighted-round-robin-service
+// More info: https://doc.traefik.io/traefik/v3.5/routing/services/#weighted-round-robin-service
 type WeightedRoundRobin struct {
 	// Services defines the list of Kubernetes Service and/or TraefikService to load-balance, with weight.
 	Services []Service `json:"services,omitempty"`
 	// Sticky defines whether sticky sessions are enabled.
-	// More info: https://doc.traefik.io/traefik/v3.4/routing/providers/kubernetes-crd/#stickiness-and-load-balancing
+	// More info: https://doc.traefik.io/traefik/v3.5/routing/providers/kubernetes-crd/#stickiness-and-load-balancing
 	Sticky *dynamic.Sticky `json:"sticky,omitempty"`
 }

@@ -172,7 +172,7 @@ func Test_Routing(t *testing.T) {
 	require.NoError(t, err)
 
 	// Creates the tlsManager and defines the TLS 1.0 and 1.2 TLSOptions.
-	tlsManager := traefiktls.NewManager()
+	tlsManager := traefiktls.NewManager(nil)
 	tlsManager.UpdateConfigs(
 		t.Context(),
 		map[string]traefiktls.Store{
