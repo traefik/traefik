@@ -53,7 +53,6 @@ type Manager struct {
 	proxyBuilder     ProxyBuilder
 	serviceBuilders  []ServiceBuilder
 
-	services       map[string]http.Handler
 	configs        map[string]*runtime.ServiceInfo
 	healthCheckers map[string]*healthcheck.ServiceHealthChecker
 	rand           *rand.Rand // For the initial shuffling of load-balancers.
@@ -67,7 +66,6 @@ func NewManager(configs map[string]*runtime.ServiceInfo, observabilityMgr *middl
 		transportManager: transportManager,
 		proxyBuilder:     proxyBuilder,
 		serviceBuilders:  serviceBuilders,
-		services:         make(map[string]http.Handler),
 		configs:          configs,
 		healthCheckers:   make(map[string]*healthcheck.ServiceHealthChecker),
 		rand:             rand.New(rand.NewSource(time.Now().UnixNano())),
@@ -81,11 +79,6 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string) (http.H
 	ctx := log.Ctx(rootCtx).With().Str(logs.ServiceName, serviceName).Logger().
 		WithContext(provider.AddInContext(rootCtx, serviceName))
 
-	handler, ok := m.services[serviceName]
-	if ok {
-		return handler, nil
-	}
-
 	// Must be before we get configs to handle services without config.
 	for _, builder := range m.serviceBuilders {
 		handler, err := builder.BuildHTTP(rootCtx, serviceName)
@@ -93,7 +86,6 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string) (http.H
 			return nil, err
 		}
 		if handler != nil {
-			m.services[serviceName] = handler
 			return handler, nil
 		}
 	}
@@ -156,8 +148,6 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string) (http.H
 		conf.AddError(sErr, true)
 		return nil, sErr
 	}
-
-	m.services[serviceName] = lb
 
 	return lb, nil
 }
