@@ -189,10 +189,12 @@ func (o *OTelLog) NewLoggerProvider() (*otelsdk.LoggerProvider, error) {
 
 	res, err := resource.New(context.Background(),
 		resource.WithAttributes(attr...),
+		resource.WithContainer(),
 		resource.WithFromEnv(),
+		resource.WithHost(),
+		resource.WithOS(),
+		resource.WithProcess(),
 		resource.WithTelemetrySDK(),
-		resource.WithOSType(),
-		resource.WithProcessCommandArgs(),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("building resource: %w", err)
