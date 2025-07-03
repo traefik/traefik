@@ -14,6 +14,10 @@
 [entryPoints]
   [entryPoints.web]
     address = ":8000"
+    [entryPoints.web.observability]
+      traceVerbosity = "detailed"
+  [entryPoints.web-minimal]
+    address = ":8001"
 
 # Adding metrics to confirm that there is no wrong interaction with tracing.
 [metrics]
@@ -44,9 +48,13 @@
 ## dynamic configuration ##
 
 [http.routers]
+  [http.routers.routerBasicMinimal]
+    Service = "service0"
+    Rule = "Path(`/basic-minimal`)"
+    [http.routers.routerBasicMinimal.observability]
+      traceVerbosity = "minimal"
   [http.routers.router0]
     Service = "service0"
-    Middlewares = []
     Rule = "Path(`/basic`)"
   [http.routers.router1]
     Service = "service1"
