@@ -138,10 +138,26 @@
     disableIngressClassLookup = true
     disableClusterScopeResources = true
     nativeLBByDefault = true
+    strictPrefixMatching = true
     [providers.kubernetesIngress.ingressEndpoint]
       ip = "foobar"
       hostname = "foobar"
       publishedService = "foobar"
+  [providers.kubernetesIngressNGINX]
+    endpoint = "foobar"
+    token = "foobar"
+    certAuthFilePath = "foobar"
+    throttleDuration = "42s"
+    watchNamespace = "foobar"
+    watchNamespaceSelector = "foobar"
+    ingressClass = "foobar"
+    controllerClass = "foobar"
+    watchIngressWithoutClass = true
+    ingressClassByName = true
+    publishService = "foobar"
+    publishStatusAddress = ["foobar", "foobar"]
+    defaultBackendService = "foobar"
+    disableSvcExternalName = true
   [providers.kubernetesCRD]
     endpoint = "foobar"
     token = "foobar"
@@ -511,6 +527,8 @@
       storage = "foobar"
       keyType = "foobar"
       certificatesDuration = 42
+      clientTimeout = "42s"
+      clientResponseHeaderTimeout = "42s"
       caCertificates = ["foobar", "foobar"]
       caSystemCertPool = true
       caServerName = "foobar"
@@ -529,6 +547,7 @@
           delayBeforeChecks = "42s"
       [certificatesResolvers.CertificateResolver0.acme.httpChallenge]
         entryPoint = "foobar"
+        delay = "42s"
       [certificatesResolvers.CertificateResolver0.acme.tlsChallenge]
     [certificatesResolvers.CertificateResolver0.tailscale]
   [certificatesResolvers.CertificateResolver1]
@@ -541,6 +560,8 @@
       storage = "foobar"
       keyType = "foobar"
       certificatesDuration = 42
+      clientTimeout = "42s"
+      clientResponseHeaderTimeout = "42s"
       caCertificates = ["foobar", "foobar"]
       caSystemCertPool = true
       caServerName = "foobar"
@@ -559,12 +580,14 @@
           delayBeforeChecks = "42s"
       [certificatesResolvers.CertificateResolver1.acme.httpChallenge]
         entryPoint = "foobar"
+        delay = "42s"
       [certificatesResolvers.CertificateResolver1.acme.tlsChallenge]
     [certificatesResolvers.CertificateResolver1.tailscale]
 
 [experimental]
   abortOnPluginFailure = true
   otlplogs = true
+  kubernetesIngressNGINX = true
   kubernetesGateway = true
   [experimental.plugins]
     [experimental.plugins.Descriptor0]
@@ -573,23 +596,27 @@
       [experimental.plugins.Descriptor0.settings]
         envs = ["foobar", "foobar"]
         mounts = ["foobar", "foobar"]
+        useUnsafe = true
     [experimental.plugins.Descriptor1]
       moduleName = "foobar"
       version = "foobar"
       [experimental.plugins.Descriptor1.settings]
         envs = ["foobar", "foobar"]
         mounts = ["foobar", "foobar"]
+        useUnsafe = true
   [experimental.localPlugins]
     [experimental.localPlugins.LocalDescriptor0]
       moduleName = "foobar"
       [experimental.localPlugins.LocalDescriptor0.settings]
         envs = ["foobar", "foobar"]
         mounts = ["foobar", "foobar"]
+        useUnsafe = true
     [experimental.localPlugins.LocalDescriptor1]
       moduleName = "foobar"
       [experimental.localPlugins.LocalDescriptor1.settings]
         envs = ["foobar", "foobar"]
         mounts = ["foobar", "foobar"]
+        useUnsafe = true
   [experimental.fastProxy]
     debug = true
 
@@ -598,3 +625,8 @@
 
 [spiffe]
   workloadAPIAddr = "foobar"
+
+[ocsp]
+  [ocsp.responderOverrides]
+    name0 = "foobar"
+    name1 = "foobar"
