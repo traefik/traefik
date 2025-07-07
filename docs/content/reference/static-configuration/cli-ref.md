@@ -171,6 +171,9 @@ Email address used for registration.
 `--certificatesresolvers.<name>.acme.emailaddresses`:  
 CSR email addresses to use.
 
+`--certificatesresolvers.<name>.acme.gracefulperiod`:  
+Time before considering deleting a certificate. (Default: ```0s```)
+
 `--certificatesresolvers.<name>.acme.httpchallenge`:  
 Activate HTTP-01 Challenge. (Default: ```false```)
 
