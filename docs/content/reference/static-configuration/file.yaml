@@ -562,6 +562,7 @@ certificatesResolvers:
         - foobar
       caSystemCertPool: true
       caServerName: foobar
+      gracefulPeriod: 42ns
       dnsChallenge:
         provider: foobar
         resolvers:
@@ -598,6 +599,7 @@ certificatesResolvers:
         - foobar
       caSystemCertPool: true
       caServerName: foobar
+      gracefulPeriod: 42ns
       dnsChallenge:
         provider: foobar
         resolvers:

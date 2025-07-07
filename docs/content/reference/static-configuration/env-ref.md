@@ -171,6 +171,9 @@ Email address used for registration.
 `TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_EMAILADDRESSES`:  
 CSR email addresses to use.
 
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_GRACEFULPERIOD`:  
+Time before considering deleting a certificate. (Default: ```0s```)
+
 `TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_HTTPCHALLENGE`:  
 Activate HTTP-01 Challenge. (Default: ```false```)
 
