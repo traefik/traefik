@@ -11,9 +11,19 @@
             <th
               v-for="column in columns"
               :key="column.name"
-              :class="`text-${column.align}`"
+              :class="getColumn(column.name).sortable ? `text-${column.align} cursor-pointer`: `text-${column.align}`"
+              @click="getColumn(column.name).sortable ? onSortClick(column.name) : null"
             >
               {{ column.label }}
+              <i
+                v-if="currentSort === column.name"
+                class="material-icons"
+              >{{ currentSortDir === 'asc' ? 'arrow_drop_down' : 'arrow_drop_up' }}</i>
+              <i
+                v-else
+                style="opacity: 0"
+                class="material-icons"
+              >{{ currentSortDir === 'asc' ? 'arrow_drop_down' : 'arrow_drop_up' }}</i>
             </th>
           </tr>
         </thead>
@@ -44,8 +54,22 @@
                   :is="getColumn(column.name).component"
                   v-bind="getColumn(column.name).fieldToProps(row)"
                 >
-                  <template v-if="getColumn(column.name).content">
+                  <template v-if="getColumn(column.name).content && column.name !== 'priority'">
                     {{ getColumn(column.name).content(row) }}
+                  </template>
+                  <template v-if="getColumn(column.name).content && column.name === 'priority'">
+                    <div>
+                      {{ getColumn(column.name).content(row).short }}
+                    </div>
+                    <q-tooltip
+                      anchor="top middle"
+                      self="bottom middle"
+                      :offset="[10, 10]"
+                    >
+                      <div class="priority-tooltip">
+                        {{ getColumn(column.name).content(row).long }}
+                      </div>
+                    </q-tooltip>
                   </template>
                 </component>
               </td>
@@ -111,6 +135,13 @@ export default defineComponent({
     endReached: Boolean,
     onRowClick: { type: Function, default: undefined, required: false }
   },
+  emits: ['update:currentSort', 'update:currentSortDir'],
+  data () {
+    return {
+      currentSort: 'name',
+      currentSortDir: 'asc'
+    }
+  },
   methods: {
     getColumn (columnName) {
       return this.columns.find(c => c.name === columnName) || {}
@@ -123,6 +154,14 @@ export default defineComponent({
           .then(() => done())
           .catch(() => done(true))
       }
+    },
+    onSortClick (s) {
+      if (s === this.currentSort) {
+        this.currentSortDir = this.currentSortDir === 'asc' ? 'desc' : 'asc'
+      }
+      this.currentSort = s
+      this.$emit('update:currentSort', s)
+      this.$emit('update:currentSortDir', this.currentSortDir)
     }
   }
 })
@@ -169,5 +208,9 @@ export default defineComponent({
   .servers-label {
     font-size: 14px;
     font-weight: 600;
+  }
+
+  .priority-tooltip{
+    font-size: larger;
   }
 </style>

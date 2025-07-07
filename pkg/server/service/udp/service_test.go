@@ -5,9 +5,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/config/runtime"
-	"github.com/traefik/traefik/v2/pkg/server/provider"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/config/runtime"
+	"github.com/traefik/traefik/v3/pkg/server/provider"
 )
 
 func TestManager_BuildUDP(t *testing.T) {
@@ -22,7 +22,7 @@ func TestManager_BuildUDP(t *testing.T) {
 			desc:          "without configuration",
 			serviceName:   "test",
 			configs:       nil,
-			expectedError: `the udp service "test" does not exist`,
+			expectedError: `the UDP service "test" does not exist`,
 		},
 		{
 			desc:        "missing lb configuration",
@@ -32,7 +32,7 @@ func TestManager_BuildUDP(t *testing.T) {
 					UDPService: &dynamic.UDPService{},
 				},
 			},
-			expectedError: `the udp service "test" does not have any type defined`,
+			expectedError: `the UDP service "test" does not have any type defined`,
 		},
 		{
 			desc:        "no such host, server is skipped, error is logged",

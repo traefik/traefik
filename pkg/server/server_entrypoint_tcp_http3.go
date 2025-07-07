@@ -11,9 +11,9 @@ import (
 
 	"github.com/quic-go/quic-go"
 	"github.com/quic-go/quic-go/http3"
-	"github.com/traefik/traefik/v2/pkg/config/static"
-	"github.com/traefik/traefik/v2/pkg/log"
-	tcprouter "github.com/traefik/traefik/v2/pkg/server/router/tcp"
+	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/config/static"
+	tcprouter "github.com/traefik/traefik/v3/pkg/server/router/tcp"
 )
 
 type http3server struct {
@@ -25,18 +25,32 @@ type http3server struct {
 	getter func(info *tls.ClientHelloInfo) (*tls.Config, error)
 }
 
-func newHTTP3Server(ctx context.Context, configuration *static.EntryPoint, httpsServer *httpServer) (*http3server, error) {
-	if configuration.HTTP3 == nil {
+func newHTTP3Server(ctx context.Context, name string, config *static.EntryPoint, httpsServer *httpServer) (*http3server, error) {
+	var conn net.PacketConn
+	var err error
+
+	if config.HTTP3 == nil {
 		return nil, nil
 	}
 
-	if configuration.HTTP3.AdvertisedPort < 0 {
+	if config.HTTP3.AdvertisedPort < 0 {
 		return nil, errors.New("advertised port must be greater than or equal to zero")
 	}
 
-	conn, err := net.ListenPacket("udp", configuration.GetAddress())
-	if err != nil {
-		return nil, fmt.Errorf("starting listener: %w", err)
+	// if we have predefined connections from socket activation
+	if socketActivation.isEnabled() {
+		conn, err = socketActivation.getConn(name)
+		if err != nil {
+			log.Ctx(ctx).Warn().Err(err).Str("name", name).Msg("Unable to use socket activation for entrypoint")
+		}
+	}
+
+	if conn == nil {
+		listenConfig := newListenConfig(config)
+		conn, err = listenConfig.ListenPacket(ctx, "udp", config.GetAddress())
+		if err != nil {
+			return nil, fmt.Errorf("starting listener: %w", err)
+		}
 	}
 
 	h3 := &http3server{
@@ -47,8 +61,8 @@ func newHTTP3Server(ctx context.Context, configuration *static.EntryPoint, https
 	}
 
 	h3.Server = &http3.Server{
-		Addr:      configuration.GetAddress(),
-		Port:      configuration.HTTP3.AdvertisedPort,
+		Addr:      config.GetAddress(),
+		Port:      config.HTTP3.AdvertisedPort,
 		Handler:   httpsServer.Server.(*http.Server).Handler,
 		TLSConfig: &tls.Config{GetConfigForClient: h3.getGetConfigForClient},
 		QUICConfig: &quic.Config{
@@ -60,7 +74,7 @@ func newHTTP3Server(ctx context.Context, configuration *static.EntryPoint, https
 
 	httpsServer.Server.(*http.Server).Handler = http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		if err := h3.Server.SetQUICHeaders(rw.Header()); err != nil {
-			log.FromContext(ctx).Errorf("Failed to set HTTP3 headers: %v", err)
+			log.Ctx(ctx).Error().Err(err).Msg("Failed to set HTTP3 headers")
 		}
 
 		previousHandler.ServeHTTP(rw, req)

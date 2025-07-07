@@ -2,12 +2,14 @@ package nomad
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/tls"
-	"github.com/traefik/traefik/v2/pkg/types"
+	ptypes "github.com/traefik/paerser/types"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 func Test_defaultRule(t *testing.T) {
@@ -32,9 +34,10 @@ func Test_defaultRule(t *testing.T) {
 			rule: "Host(`example.com`)",
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -52,12 +55,16 @@ func Test_defaultRule(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Test": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:9999",
 									},
 								},
 								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -86,9 +93,10 @@ func Test_defaultRule(t *testing.T) {
 			rule: `Host("{{ .Name }}.{{ index .Labels "traefik.domain" }}")`,
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -106,12 +114,16 @@ func Test_defaultRule(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Test": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:9999",
 									},
 								},
 								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -137,9 +149,10 @@ func Test_defaultRule(t *testing.T) {
 			rule: `Host"{{ .Invalid }}")`,
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -151,12 +164,16 @@ func Test_defaultRule(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Test": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:9999",
 									},
 								},
 								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -182,9 +199,10 @@ func Test_defaultRule(t *testing.T) {
 			rule: defaultTemplateRule,
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -202,12 +220,16 @@ func Test_defaultRule(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Test": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:9999",
 									},
 								},
 								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -255,9 +277,10 @@ func Test_buildConfig(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -275,12 +298,16 @@ func Test_buildConfig(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"dev-Test": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:9999",
 									},
 								},
 								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -313,9 +340,10 @@ func Test_buildConfig(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -338,22 +366,30 @@ func Test_buildConfig(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Test1": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://192.168.1.101:9999",
 									},
 								},
 								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 						"Test2": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://192.168.1.102:9999",
 									},
 								},
 								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -388,9 +424,10 @@ func Test_buildConfig(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -408,6 +445,7 @@ func Test_buildConfig(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Test": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:9999",
@@ -417,6 +455,9 @@ func Test_buildConfig(t *testing.T) {
 									},
 								},
 								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -451,9 +492,10 @@ func Test_buildConfig(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -471,12 +513,16 @@ func Test_buildConfig(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Test": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.2:9999",
 									},
 								},
 								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -511,9 +557,10 @@ func Test_buildConfig(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -531,6 +578,7 @@ func Test_buildConfig(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Test": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:9999",
@@ -540,6 +588,9 @@ func Test_buildConfig(t *testing.T) {
 									},
 								},
 								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -566,9 +617,10 @@ func Test_buildConfig(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -586,12 +638,16 @@ func Test_buildConfig(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Service1": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:9999",
 									},
 								},
 								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -620,9 +676,10 @@ func Test_buildConfig(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -639,15 +696,55 @@ func Test_buildConfig(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Service1": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:9999",
 									},
 								},
 								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
+				},
+			},
+		},
+		{
+			desc: "empty service",
+			items: []item{
+				{
+					ID:   "id1",
+					Name: "Test",
+					Tags: []string{
+						"traefik.enable=true",
+					},
+					Address:   "",
+					Port:      -1,
+					ExtraConf: configuration{Enable: true},
+				},
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{
@@ -671,9 +768,10 @@ func Test_buildConfig(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -684,12 +782,16 @@ func Test_buildConfig(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Test": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:9999",
 									},
 								},
 								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -723,9 +825,10 @@ func Test_buildConfig(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -742,12 +845,16 @@ func Test_buildConfig(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Service1": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:9999",
 									},
 								},
 								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -776,9 +883,10 @@ func Test_buildConfig(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -790,22 +898,30 @@ func Test_buildConfig(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Service1": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:9999",
 									},
 								},
 								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 						"Service2": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:9999",
 									},
 								},
 								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -842,9 +958,10 @@ func Test_buildConfig(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -903,9 +1020,10 @@ func Test_buildConfig(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -954,9 +1072,10 @@ func Test_buildConfig(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -974,6 +1093,7 @@ func Test_buildConfig(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Service1": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:9999",
@@ -983,6 +1103,9 @@ func Test_buildConfig(t *testing.T) {
 									},
 								},
 								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -1009,9 +1132,10 @@ func Test_buildConfig(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -1028,12 +1152,16 @@ func Test_buildConfig(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Test": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:9999",
 									},
 								},
 								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -1077,9 +1205,10 @@ func Test_buildConfig(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -1103,6 +1232,7 @@ func Test_buildConfig(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Test": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:9999",
@@ -1112,6 +1242,9 @@ func Test_buildConfig(t *testing.T) {
 									},
 								},
 								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -1148,9 +1281,10 @@ func Test_buildConfig(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -1168,6 +1302,7 @@ func Test_buildConfig(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Test": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:9999",
@@ -1177,6 +1312,9 @@ func Test_buildConfig(t *testing.T) {
 									},
 								},
 								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -1213,9 +1351,10 @@ func Test_buildConfig(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -1227,6 +1366,7 @@ func Test_buildConfig(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Test": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:9999",
@@ -1236,6 +1376,9 @@ func Test_buildConfig(t *testing.T) {
 									},
 								},
 								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -1272,9 +1415,10 @@ func Test_buildConfig(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -1291,6 +1435,7 @@ func Test_buildConfig(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Test": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:9999",
@@ -1300,6 +1445,9 @@ func Test_buildConfig(t *testing.T) {
 									},
 								},
 								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -1326,9 +1474,10 @@ func Test_buildConfig(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -1346,12 +1495,16 @@ func Test_buildConfig(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Test": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:9999",
 									},
 								},
 								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -1379,9 +1532,10 @@ func Test_buildConfig(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -1399,15 +1553,209 @@ func Test_buildConfig(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Service1": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "h2c://127.0.0.1:8080",
 									},
 								},
 								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
+				},
+			},
+		},
+		{
+			desc: "one service with label url",
+			items: []item{
+				{
+					ID:   "id1",
+					Name: "Test",
+					Tags: []string{
+						"traefik.http.services.Service1.LoadBalancer.server.url = http://1.2.3.4:5678",
+					},
+					Address:   "127.0.0.1",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
+				},
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"Test": {
+							Service:     "Service1",
+							Rule:        "Host(`Test.traefik.test`)",
+							DefaultRule: true,
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"Service1": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://1.2.3.4:5678",
+									},
+								},
+								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
+				},
+			},
+		},
+		{
+			desc: "one service with label url and preserve path",
+			items: []item{
+				{
+					ID:   "id1",
+					Name: "Test",
+					Tags: []string{
+						"traefik.http.services.Service1.LoadBalancer.server.url = http://1.2.3.4:5678",
+						"traefik.http.services.Service1.LoadBalancer.server.preservepath = true",
+					},
+					Address:   "127.0.0.1",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
+				},
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"Test": {
+							Service:     "Service1",
+							Rule:        "Host(`Test.traefik.test`)",
+							DefaultRule: true,
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"Service1": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL:          "http://1.2.3.4:5678",
+										PreservePath: true,
+									},
+								},
+								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
+				},
+			},
+		},
+		{
+			desc: "one service with label url and port",
+			items: []item{
+				{
+					ID:   "id1",
+					Name: "Test",
+					Tags: []string{
+						"traefik.http.services.Service1.LoadBalancer.server.url = http://1.2.3.4:5678",
+						"traefik.http.services.Service1.LoadBalancer.server.port = 1234",
+					},
+					Address:   "127.0.0.1",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
+				},
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
+				},
+			},
+		},
+		{
+			desc: "one service with label url and scheme",
+			items: []item{
+				{
+					ID:   "id1",
+					Name: "Test",
+					Tags: []string{
+						"traefik.http.services.Service1.LoadBalancer.server.url = http://1.2.3.4:5678",
+						"traefik.http.services.Service1.LoadBalancer.server.scheme = https",
+					},
+					Address:   "127.0.0.1",
+					Port:      9999,
+					ExtraConf: configuration{Enable: true},
+				},
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
 				TLS: &dynamic.TLSConfiguration{
@@ -1432,9 +1780,10 @@ func Test_buildConfig(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -1446,22 +1795,30 @@ func Test_buildConfig(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Service1": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:9999",
 									},
 								},
 								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 						"Service2": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:8080",
 									},
 								},
 								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -1486,9 +1843,10 @@ func Test_buildConfig(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -1520,9 +1878,10 @@ func Test_buildConfig(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -1555,9 +1914,10 @@ func Test_buildConfig(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -1591,9 +1951,10 @@ func Test_buildConfig(t *testing.T) {
 			constraints: `Tag("traefik.tags=bar")`,
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -1627,9 +1988,10 @@ func Test_buildConfig(t *testing.T) {
 			constraints: `Tag("traefik.tags=foo")`,
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -1647,12 +2009,16 @@ func Test_buildConfig(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Test": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:9999",
 									},
 								},
 								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -1680,9 +2046,10 @@ func Test_buildConfig(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -1710,12 +2077,16 @@ func Test_buildConfig(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Test": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:9999",
 									},
 								},
 								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -1734,7 +2105,7 @@ func Test_buildConfig(t *testing.T) {
 					Name: "Test",
 					Tags: []string{
 						"traefik.tcp.routers.Test.rule = HostSNI(`foo.bar`)",
-						"traefik.tcp.middlewares.Middleware1.ipwhitelist.sourcerange = foobar, fiibar",
+						"traefik.tcp.middlewares.Middleware1.ipallowlist.sourcerange = foobar, fiibar",
 						"traefik.tcp.routers.Test.middlewares = Middleware1",
 					},
 					Address:   "127.0.0.1",
@@ -1753,7 +2124,7 @@ func Test_buildConfig(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.TCPMiddleware{
 						"Middleware1": {
-							IPWhiteList: &dynamic.TCPIPWhiteList{
+							IPAllowList: &dynamic.TCPIPAllowList{
 								SourceRange: []string{"foobar", "fiibar"},
 							},
 						},
@@ -1766,10 +2137,10 @@ func Test_buildConfig(t *testing.T) {
 										Address: "127.0.0.1:9999",
 									},
 								},
-								TerminationDelay: pointer(100),
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -1819,10 +2190,10 @@ func Test_buildConfig(t *testing.T) {
 										Address: "127.0.0.1:9999",
 									},
 								},
-								TerminationDelay: pointer(100),
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -1874,9 +2245,10 @@ func Test_buildConfig(t *testing.T) {
 					},
 				},
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers:           map[string]*dynamic.Router{},
@@ -1915,10 +2287,10 @@ func Test_buildConfig(t *testing.T) {
 										Address: "127.0.0.1:9999",
 									},
 								},
-								TerminationDelay: pointer(100),
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -1971,10 +2343,10 @@ func Test_buildConfig(t *testing.T) {
 										Address: "127.0.0.1:80",
 									},
 								},
-								TerminationDelay: pointer(100),
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -2027,9 +2399,10 @@ func Test_buildConfig(t *testing.T) {
 					},
 				},
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers:           map[string]*dynamic.Router{},
@@ -2093,10 +2466,10 @@ func Test_buildConfig(t *testing.T) {
 										Address: "127.0.0.2:80",
 									},
 								},
-								TerminationDelay: pointer(100),
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -2114,6 +2487,7 @@ func Test_buildConfig(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Service1": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:9999",
@@ -2123,6 +2497,9 @@ func Test_buildConfig(t *testing.T) {
 									},
 								},
 								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -2185,9 +2562,10 @@ func Test_buildConfig(t *testing.T) {
 					},
 				},
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
@@ -2201,6 +2579,7 @@ func Test_buildConfig(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Service1": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:9999",
@@ -2210,6 +2589,9 @@ func Test_buildConfig(t *testing.T) {
 									},
 								},
 								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -2246,10 +2628,10 @@ func Test_buildConfig(t *testing.T) {
 										Address: "127.0.0.1:80",
 									},
 								},
-								TerminationDelay: pointer(100),
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -2296,9 +2678,10 @@ func Test_buildConfig(t *testing.T) {
 					},
 				},
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers:           map[string]*dynamic.Router{},
@@ -2312,6 +2695,7 @@ func Test_buildConfig(t *testing.T) {
 			},
 		},
 		{
+			// TODO: replace or delete?
 			desc: "tcp with label for tcp service, with termination delay",
 			items: []item{
 				{
@@ -2319,7 +2703,6 @@ func Test_buildConfig(t *testing.T) {
 					Name: "Test",
 					Tags: []string{
 						"traefik.tcp.services.foo.loadbalancer.server.port = 80",
-						"traefik.tcp.services.foo.loadbalancer.terminationdelay = 200",
 					},
 					Address:   "127.0.0.1",
 					Port:      80,
@@ -2338,10 +2721,10 @@ func Test_buildConfig(t *testing.T) {
 										Address: "127.0.0.1:80",
 									},
 								},
-								TerminationDelay: pointer(200),
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -2391,9 +2774,10 @@ func Test_buildConfig(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -2416,22 +2800,30 @@ func Test_buildConfig(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"Test": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:80",
 									},
 								},
 								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 						"Test-1234154071633021619": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.2:80",
 									},
 								},
 								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -2495,7 +2887,6 @@ func Test_buildConfig(t *testing.T) {
 								Servers: []dynamic.TCPServer{
 									{Address: "127.0.0.1:80"},
 								},
-								TerminationDelay: pointer(100),
 							},
 						},
 						"Test-8769860286750522282": {
@@ -2503,10 +2894,10 @@ func Test_buildConfig(t *testing.T) {
 								Servers: []dynamic.TCPServer{
 									{Address: "127.0.0.2:80"},
 								},
-								TerminationDelay: pointer(100),
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -2559,9 +2950,10 @@ func Test_buildConfig(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers: map[string]*dynamic.UDPRouter{
@@ -2621,9 +3013,10 @@ func Test_buildConfig(t *testing.T) {
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
-					Routers:     map[string]*dynamic.TCPRouter{},
-					Middlewares: map[string]*dynamic.TCPMiddleware{},
-					Services:    map[string]*dynamic.TCPService{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -2641,12 +3034,16 @@ func Test_buildConfig(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"dev-Test": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1:9999",
 									},
 								},
 								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
@@ -2664,6 +3061,306 @@ func Test_buildConfig(t *testing.T) {
 							},
 						},
 					},
+				},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			p := new(Provider)
+			p.SetDefaults()
+			p.DefaultRule = "Host(`{{ normalize .Name }}.traefik.test`)"
+			p.Constraints = test.constraints
+			err := p.Init()
+			require.NoError(t, err)
+
+			c := p.buildConfig(t.Context(), test.items)
+			require.Equal(t, test.expected, c)
+		})
+	}
+}
+
+func Test_buildConfigAllowEmptyServicesTrue(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		items       []item
+		constraints string
+		expected    *dynamic.Configuration
+	}{
+		{
+			desc: "empty service http",
+			items: []item{
+				{
+					ID:   "id1",
+					Name: "Test",
+					Tags: []string{
+						"traefik.enable=true",
+					},
+					Address:   "",
+					Port:      -1,
+					ExtraConf: configuration{Enable: true},
+				},
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"Test": {
+							Service:     "Test",
+							Rule:        "Host(`Test.traefik.test`)",
+							DefaultRule: true,
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"Test": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       dynamic.BalancerStrategyWRR,
+								Servers:        nil,
+								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
+				},
+			},
+		},
+		{
+			desc: "empty service tcp",
+			items: []item{
+				{
+					ID:   "id1",
+					Name: "Test",
+					Tags: []string{
+						"traefik.tcp.routers.test.rule = HostSNI(`foobar`)",
+					},
+					Address:   "",
+					Port:      -1,
+					ExtraConf: configuration{Enable: true},
+				},
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
+						"test": {
+							Rule:    "HostSNI(`foobar`)",
+							Service: "Test",
+						},
+					},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services: map[string]*dynamic.TCPService{
+						"Test": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{},
+						},
+					},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
+				},
+			},
+		},
+		{
+			desc: "empty service udp",
+			items: []item{
+				{
+					ID:   "id1",
+					Name: "Test",
+					Tags: []string{
+						"traefik.udp.routers.test.entrypoints = udp",
+					},
+					Address:   "",
+					Port:      -1,
+					ExtraConf: configuration{Enable: true},
+				},
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers: map[string]*dynamic.UDPRouter{
+						"test": {
+							EntryPoints: []string{"udp"},
+							Service:     "Test",
+						},
+					},
+					Services: map[string]*dynamic.UDPService{
+						"Test": {
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{},
+						},
+					},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
+				},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			p := new(Provider)
+			p.SetDefaults()
+			p.AllowEmptyServices = true
+			p.DefaultRule = "Host(`{{ normalize .Name }}.traefik.test`)"
+			p.Constraints = test.constraints
+			err := p.Init()
+			require.NoError(t, err)
+
+			c := p.buildConfig(t.Context(), test.items)
+			require.Equal(t, test.expected, c)
+		})
+	}
+}
+
+func Test_buildConfigAllowEmptyServicesFalseDefault(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		items       []item
+		constraints string
+		expected    *dynamic.Configuration
+	}{
+		{
+			desc: "empty service http",
+			items: []item{
+				{
+					ID:   "id1",
+					Name: "Test",
+					Tags: []string{
+						"traefik.enable=true",
+					},
+					Address:   "",
+					Port:      -1,
+					ExtraConf: configuration{Enable: true},
+				},
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
+				},
+			},
+		},
+		{
+			desc: "empty service tcp",
+			items: []item{
+				{
+					ID:   "id1",
+					Name: "Test",
+					Tags: []string{
+						"traefik.tcp.routers.test.rule = HostSNI(`foobar`)",
+					},
+					Address:   "",
+					Port:      -1,
+					ExtraConf: configuration{Enable: true},
+				},
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
+				},
+			},
+		},
+		{
+			desc: "empty service udp",
+			items: []item{
+				{
+					ID:   "id1",
+					Name: "Test",
+					Tags: []string{
+						"traefik.udp.routers.test.entrypoints = udp",
+					},
+					Address:   "",
+					Port:      -1,
+					ExtraConf: configuration{Enable: true},
+				},
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
 				},
 			},
 		},
@@ -2736,18 +3433,12 @@ func Test_keepItem(t *testing.T) {
 func TestNamespaces(t *testing.T) {
 	testCases := []struct {
 		desc               string
-		namespace          string
 		namespaces         []string
 		expectedNamespaces []string
 	}{
 		{
 			desc:               "no defined namespaces",
 			expectedNamespaces: []string{""},
-		},
-		{
-			desc:               "deprecated: use of defined namespace",
-			namespace:          "test-ns",
-			expectedNamespaces: []string{"test-ns"},
 		},
 		{
 			desc:               "use of 1 defined namespaces",
@@ -2766,7 +3457,6 @@ func TestNamespaces(t *testing.T) {
 			t.Parallel()
 
 			pb := &ProviderBuilder{
-				Namespace:  test.namespace,
 				Namespaces: test.namespaces,
 			}
 

@@ -12,19 +12,18 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	"github.com/opentracing/opentracing-go/ext"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/log"
-	"github.com/traefik/traefik/v2/pkg/middlewares"
-	"github.com/traefik/traefik/v2/pkg/tracing"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/middlewares"
+	"github.com/traefik/traefik/v3/pkg/tracing"
+	"go.opentelemetry.io/otel/attribute"
+	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // Compile time validation that the response writer implements http interfaces correctly.
-var _ middlewares.Stateful = &responseWriterWithCloseNotify{}
+var _ middlewares.Stateful = &responseWriter{}
 
-const (
-	typeName = "Retry"
-)
+const typeName = "Retry"
 
 // Listener is used to inform about retry attempts.
 type Listener interface {
@@ -90,7 +89,7 @@ type retry struct {
 
 // New returns a new retry middleware.
 func New(ctx context.Context, next http.Handler, config dynamic.Retry, listener Listener, name string) (http.Handler, error) {
-	log.FromContext(middlewares.GetLoggerCtx(ctx, name, typeName)).Debug("Creating middleware")
+	middlewares.GetLogger(ctx, name, typeName).Debug().Msg("Creating middleware")
 
 	if config.Attempts <= 0 {
 		return nil, fmt.Errorf("incorrect (or empty) value for attempt (%d)", config.Attempts)
@@ -103,10 +102,6 @@ func New(ctx context.Context, next http.Handler, config dynamic.Retry, listener 
 		listener:        listener,
 		name:            name,
 	}, nil
-}
-
-func (r *retry) GetTracingInformation() (string, ext.SpanKindEnum) {
-	return r.name, tracing.SpanKindNoneEnum
 }
 
 func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
@@ -124,7 +119,30 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	attempts := 1
 
+	initialCtx := req.Context()
+	tracer := tracing.TracerFromContext(initialCtx)
+
+	var currentSpan trace.Span
 	operation := func() error {
+		if tracer != nil {
+			if currentSpan != nil {
+				currentSpan.End()
+			}
+			// Because multiple tracing spans may need to be created,
+			// the Retry middleware does not implement trace.Traceable,
+			// and creates directly a new span for each retry operation.
+			var tracingCtx context.Context
+			tracingCtx, currentSpan = tracer.Start(initialCtx, typeName, trace.WithSpanKind(trace.SpanKindInternal))
+
+			currentSpan.SetAttributes(attribute.String("traefik.middleware.name", r.name))
+			// Only add the attribute "http.resend_count" defined by semantic conventions starting from second attempt.
+			if attempts > 1 {
+				currentSpan.SetAttributes(semconv.HTTPRequestResendCount(attempts - 1))
+			}
+
+			req = req.WithContext(tracingCtx)
+		}
+
 		remainAttempts := attempts < r.attempts
 		retryResponseWriter := newResponseWriter(rw)
 
@@ -144,19 +162,23 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return fmt.Errorf("attempt %d failed", attempts-1)
 	}
 
+	logger := middlewares.GetLogger(req.Context(), r.name, typeName)
+
 	backOff := backoff.WithContext(r.newBackOff(), req.Context())
 
 	notify := func(err error, d time.Duration) {
-		log.FromContext(middlewares.GetLoggerCtx(req.Context(), r.name, typeName)).
-			Debugf("New attempt %d for request: %v", attempts, req.URL)
+		logger.Debug().Msgf("New attempt %d for request: %v", attempts, req.URL)
 
 		r.listener.Retried(req, attempts)
 	}
 
 	err := backoff.RetryNotify(operation, backOff, notify)
 	if err != nil {
-		log.FromContext(middlewares.GetLoggerCtx(req.Context(), r.name, typeName)).
-			Debugf("Final retry attempt failed: %v", err.Error())
+		logger.Debug().Err(err).Msg("Final retry attempt failed")
+	}
+
+	if currentSpan != nil {
+		currentSpan.End()
 	}
 }
 
@@ -178,50 +200,37 @@ func (r *retry) newBackOff() backoff.BackOff {
 	return b
 }
 
-type responseWriter interface {
-	http.ResponseWriter
-	http.Flusher
-	ShouldRetry() bool
-	SetShouldRetry(shouldRetry bool)
-}
-
-func newResponseWriter(rw http.ResponseWriter) responseWriter {
-	responseWriter := &responseWriterWithoutCloseNotify{
+func newResponseWriter(rw http.ResponseWriter) *responseWriter {
+	return &responseWriter{
 		responseWriter: rw,
 		headers:        make(http.Header),
 	}
-	if _, ok := rw.(http.CloseNotifier); ok {
-		return &responseWriterWithCloseNotify{
-			responseWriterWithoutCloseNotify: responseWriter,
-		}
-	}
-	return responseWriter
 }
 
-type responseWriterWithoutCloseNotify struct {
+type responseWriter struct {
 	responseWriter http.ResponseWriter
 	headers        http.Header
 	shouldRetry    bool
 	written        bool
 }
 
-func (r *responseWriterWithoutCloseNotify) ShouldRetry() bool {
+func (r *responseWriter) ShouldRetry() bool {
 	return r.shouldRetry
 }
 
-func (r *responseWriterWithoutCloseNotify) SetShouldRetry(shouldRetry bool) {
+func (r *responseWriter) SetShouldRetry(shouldRetry bool) {
 	r.shouldRetry = shouldRetry
 }
 
-func (r *responseWriterWithoutCloseNotify) Header() http.Header {
+func (r *responseWriter) Header() http.Header {
 	if r.written {
 		return r.responseWriter.Header()
 	}
 	return r.headers
 }
 
-func (r *responseWriterWithoutCloseNotify) Write(buf []byte) (int, error) {
-	if r.shouldRetry {
+func (r *responseWriter) Write(buf []byte) (int, error) {
+	if r.ShouldRetry() {
 		return len(buf), nil
 	}
 	if !r.written {
@@ -230,7 +239,7 @@ func (r *responseWriterWithoutCloseNotify) Write(buf []byte) (int, error) {
 	return r.responseWriter.Write(buf)
 }
 
-func (r *responseWriterWithoutCloseNotify) WriteHeader(code int) {
+func (r *responseWriter) WriteHeader(code int) {
 	if r.shouldRetry || r.written {
 		return
 	}
@@ -255,7 +264,7 @@ func (r *responseWriterWithoutCloseNotify) WriteHeader(code int) {
 	r.written = true
 }
 
-func (r *responseWriterWithoutCloseNotify) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+func (r *responseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	hijacker, ok := r.responseWriter.(http.Hijacker)
 	if !ok {
 		return nil, nil, fmt.Errorf("%T is not a http.Hijacker", r.responseWriter)
@@ -263,16 +272,8 @@ func (r *responseWriterWithoutCloseNotify) Hijack() (net.Conn, *bufio.ReadWriter
 	return hijacker.Hijack()
 }
 
-func (r *responseWriterWithoutCloseNotify) Flush() {
+func (r *responseWriter) Flush() {
 	if flusher, ok := r.responseWriter.(http.Flusher); ok {
 		flusher.Flush()
 	}
-}
-
-type responseWriterWithCloseNotify struct {
-	*responseWriterWithoutCloseNotify
-}
-
-func (r *responseWriterWithCloseNotify) CloseNotify() <-chan bool {
-	return r.responseWriter.(http.CloseNotifier).CloseNotify()
 }

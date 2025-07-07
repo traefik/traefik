@@ -1,0 +1,77 @@
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: ""
+  namespace: testing
+  annotations:
+    ingress.kubernetes.io/foo: bar
+    traefik.ingress.kubernetes.io/foo: bar
+    traefik.ingress.kubernetes.io/router.pathmatcher: Path
+    traefik.ingress.kubernetes.io/router.entrypoints: ep1,ep2
+    traefik.ingress.kubernetes.io/router.middlewares: md1,md2
+    traefik.ingress.kubernetes.io/router.priority: "42"
+    traefik.ingress.kubernetes.io/router.rulesyntax: "v2"
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.tls.certresolver:   foobar
+    traefik.ingress.kubernetes.io/router.tls.domains.0.main: domain.com
+    traefik.ingress.kubernetes.io/router.tls.domains.0.sans: one.domain.com,two.domain.com
+    traefik.ingress.kubernetes.io/router.tls.domains.1.main: example.com
+    traefik.ingress.kubernetes.io/router.tls.domains.1.sans: one.example.com,two.example.com
+    traefik.ingress.kubernetes.io/router.tls.options: foobar
+    traefik.ingress.kubernetes.io/router.observability.accesslogs: "true"
+    traefik.ingress.kubernetes.io/router.observability.metrics: "true"
+    traefik.ingress.kubernetes.io/router.observability.tracing: "true"
+
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /bar
+            backend:
+              service:
+                name: service1
+                port:
+                  number: 80
+            pathType: Exact
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: service1
+  namespace: testing
+  annotations:
+    ingress.kubernetes.io/foo: bar
+    traefik.ingress.kubernetes.io/foo: bar
+    traefik.ingress.kubernetes.io/service.serversscheme: protocol
+    traefik.ingress.kubernetes.io/service.serverstransport: foobar@file
+    traefik.ingress.kubernetes.io/service.passhostheader: "true"
+    traefik.ingress.kubernetes.io/service.sticky.cookie: "true"
+    traefik.ingress.kubernetes.io/service.sticky.cookie.httponly: "true"
+    traefik.ingress.kubernetes.io/service.sticky.cookie.name: foobar
+    traefik.ingress.kubernetes.io/service.sticky.cookie.secure: "true"
+
+spec:
+  ports:
+    - port: 80
+  clusterIP: 10.0.0.1
+
+---
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
+metadata:
+  name: service1-abc
+  namespace: testing
+  labels:
+    kubernetes.io/service-name: service1
+
+addressType: IPv4
+ports:
+  - port: 8080
+    name: ""
+endpoints:
+  - addresses:
+      - 10.10.0.1
+      - 10.21.0.1
+    conditions:
+      ready: true

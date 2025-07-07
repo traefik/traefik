@@ -35,18 +35,6 @@ spec:
 - "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourcerange": "127.0.0.1/32,192.168.1.7"
-}
-```
-
-```yaml tab="Rancher"
-# Accepts request from defined IP
-labels:
-  - "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
-```
-
 ```yaml tab="File (YAML)"
 # Accepts request from defined IP
 http:
@@ -87,6 +75,9 @@ The `depth` option tells Traefik to use the `X-Forwarded-For` header and take th
 - If `depth` is greater than the total number of IPs in `X-Forwarded-For`, then the client IP will be empty.
 - `depth` is ignored if its value is less than or equal to 0.
 
+If `ipStrategy.ipv6Subnet` is provided and the selected IP is IPv6, the IP is transformed into the first IP of the subnet it belongs to.  
+See [ipStrategy.ipv6Subnet](#ipstrategyipv6subnet) for more details.
+
 !!! example "Examples of Depth & X-Forwarded-For"
 
     If `depth` is set to 2, and the request `X-Forwarded-For` header is `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` then the "real" client IP is `"10.0.0.1"` (at depth 4) but the IP used is `"12.0.0.1"` (`depth=2`).
@@ -123,20 +114,6 @@ spec:
 # Allowlisting Based on `X-Forwarded-For` with `depth=2`
 - "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
 - "traefik.http.middlewares.test-ipallowlist.ipallowlist.ipstrategy.depth=2"
-```
-
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourcerange": "127.0.0.1/32, 192.168.1.7",
-  "traefik.http.middlewares.test-ipallowlist.ipallowlist.ipstrategy.depth": "2"
-}
-```
-
-```yaml tab="Rancher"
-# Whitelisting Based on `X-Forwarded-For` with `depth=2`
-labels:
-  - "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
-  - "traefik.http.middlewares.test-ipallowlist.ipallowlist.ipstrategy.depth=2"
 ```
 
 ```yaml tab="File (YAML)"
@@ -207,20 +184,6 @@ spec:
 - "traefik.http.middlewares.test-ipallowlist.ipallowlist.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
 ```
 
-```json tab="Marathon"
-"labels": {
-  "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourceRange=127.0.0.1/32, 192.168.1.0/24"
-  "traefik.http.middlewares.test-ipallowlist.ipallowlist.ipstrategy.excludedips": "127.0.0.1/32, 192.168.1.7"
-}
-```
-
-```yaml tab="Rancher"
-# Exclude from `X-Forwarded-For`
-labels:
-  - "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourceRange=127.0.0.1/32, 192.168.1.0/24"
-  - "traefik.http.middlewares.test-ipallowlist.ipallowlist.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
-```
-
 ```yaml tab="File (YAML)"
 # Exclude from `X-Forwarded-For`
 http:
@@ -243,4 +206,61 @@ http:
     sourceRange = ["127.0.0.1/32", "192.168.1.0/24"]
     [http.middlewares.test-ipallowlist.ipAllowList.ipStrategy]
       excludedIPs = ["127.0.0.1/32", "192.168.1.7"]
+```
+
+#### `ipStrategy.ipv6Subnet`
+
+This strategy applies to `Depth` and `RemoteAddr` strategy only.
+If `ipv6Subnet` is provided and the selected IP is IPv6, the IP is transformed into the first IP of the subnet it belongs to.
+
+This is useful for grouping IPv6 addresses into subnets to prevent bypassing this middleware by obtaining a new IPv6.
+
+- `ipv6Subnet` is ignored if its value is outside of 0-128 interval
+
+!!! example "Example of ipv6Subnet"
+
+    If `ipv6Subnet` is provided, the IP is transformed in the following way.
+
+    | `IP`                      | `ipv6Subnet` | clientIP              |
+    |---------------------------|--------------|-----------------------|
+    | `"::abcd:1111:2222:3333"` | `64`         | `"::0:0:0:0"`         |
+    | `"::abcd:1111:2222:3333"` | `80`         | `"::abcd:0:0:0:0"`    |
+    | `"::abcd:1111:2222:3333"` | `96`         | `"::abcd:1111:0:0:0"` |
+
+```yaml tab="Docker & Swarm"
+labels:
+  - "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourcecriterion.ipstrategy.ipv6Subnet=64"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-ipallowlist
+spec:
+  ipallowlist:
+    sourceCriterion:
+      ipStrategy:
+        ipv6Subnet: 64
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-ipallowlist.ipallowlist.sourcecriterion.ipstrategy.ipv6Subnet=64"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-ipallowlist:
+      ipallowlist:
+        sourceCriterion:
+          ipStrategy:
+            ipv6Subnet: 64
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.test-ipallowlist.ipallowlist]
+    [http.middlewares.test-ipallowlist.ipallowlist.sourceCriterion.ipStrategy]
+      ipv6Subnet = 64
 ```

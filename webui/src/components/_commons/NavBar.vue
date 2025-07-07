@@ -91,9 +91,9 @@
                 flat
                 no-caps
                 icon="invert_colors"
-                :label="`${$q.dark.isActive ? 'Light' : 'Dark'} theme`"
+                :label="themeLabel"
                 class="btn-menu"
-                @click="$q.dark.toggle()"
+                @click="cycleTheme"
               />
               <q-btn
                 stretch
@@ -187,6 +187,12 @@ export default defineComponent({
     },
     disableDashboardAd () {
       return this.coreVersion.disableDashboardAd
+    },
+    themeLabel () {
+      const mode = this.$q.dark.mode
+      if (mode === false) return 'Light theme'
+      if (mode === true) return 'Dark theme'
+      return 'Auto theme'
     }
   },
   watch: {
@@ -217,7 +223,18 @@ export default defineComponent({
     this.getVersion()
   },
   methods: {
-    ...mapActions('core', { getVersion: 'getVersion' })
+    ...mapActions('core', { getVersion: 'getVersion' }),
+    cycleTheme () {
+      const currentMode = this.$q.dark.mode
+      let newMode
+
+      if (currentMode === 'auto') newMode = false
+      else if (currentMode === false) newMode = true
+      else newMode = 'auto'
+
+      this.$q.dark.set(newMode)
+      localStorage.setItem('traefik-dark', newMode)
+    }
   }
 })
 </script>

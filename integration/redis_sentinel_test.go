@@ -2,7 +2,6 @@ package integration
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -19,11 +18,11 @@ import (
 	"github.com/kvtools/valkeyrie"
 	"github.com/kvtools/valkeyrie/store"
 	"github.com/pmezard/go-difflib/difflib"
+	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"github.com/traefik/traefik/v2/integration/try"
-	"github.com/traefik/traefik/v2/pkg/api"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v3/integration/try"
+	"github.com/traefik/traefik/v3/pkg/api"
 )
 
 // Redis test suites.
@@ -51,7 +50,7 @@ func (s *RedisSentinelSuite) SetupSuite() {
 		net.JoinHostPort(s.getComposeServiceIP("sentinel3"), "26379"),
 	}
 	kv, err := valkeyrie.NewStore(
-		context.Background(),
+		s.T().Context(),
 		redis.StoreName,
 		s.redisEndpoints,
 		&redis.Config{
@@ -157,7 +156,7 @@ func (s *RedisSentinelSuite) TestSentinelConfiguration() {
 	}
 
 	for k, v := range data {
-		err := s.kvClient.Put(context.Background(), k, []byte(v), nil)
+		err := s.kvClient.Put(s.T().Context(), k, []byte(v), nil)
 		require.NoError(s.T(), err)
 	}
 
@@ -199,6 +198,6 @@ func (s *RedisSentinelSuite) TestSentinelConfiguration() {
 
 		text, err := difflib.GetUnifiedDiffString(diff)
 		require.NoError(s.T(), err)
-		log.WithoutContext().Info(text)
+		log.Info().Msg(text)
 	}
 }

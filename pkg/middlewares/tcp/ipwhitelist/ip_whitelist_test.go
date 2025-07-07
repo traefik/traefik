@@ -1,4 +1,4 @@
-package tcpipwhitelist
+package ipwhitelist
 
 import (
 	"context"
@@ -8,8 +8,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/tcp"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/tcp"
 )
 
 func TestNewIPWhiteLister(t *testing.T) {

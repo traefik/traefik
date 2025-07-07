@@ -8,8 +8,7 @@ import (
 	"net/http"
 	"runtime"
 
-	"github.com/traefik/traefik/v2/pkg/log"
-	"github.com/traefik/traefik/v2/pkg/middlewares"
+	"github.com/traefik/traefik/v3/pkg/middlewares"
 )
 
 const (
@@ -23,7 +22,7 @@ type recovery struct {
 
 // New creates recovery middleware.
 func New(ctx context.Context, next http.Handler) (http.Handler, error) {
-	log.FromContext(middlewares.GetLoggerCtx(ctx, middlewareName, typeName)).Debug("Creating middleware")
+	middlewares.GetLogger(ctx, middlewareName, typeName).Debug().Msg("Creating middleware")
 
 	return &recovery{
 		next: next,
@@ -37,21 +36,21 @@ func (re *recovery) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	re.next.ServeHTTP(recoveryRW, req)
 }
 
-func recoverFunc(rw recoveryResponseWriter, r *http.Request) {
+func recoverFunc(rw recoveryResponseWriter, req *http.Request) {
 	if err := recover(); err != nil {
 		defer rw.finalizeResponse()
 
-		logger := log.FromContext(middlewares.GetLoggerCtx(r.Context(), middlewareName, typeName))
+		logger := middlewares.GetLogger(req.Context(), middlewareName, typeName)
 		if !shouldLogPanic(err) {
-			logger.Debugf("Request has been aborted [%s - %s]: %v", r.RemoteAddr, r.URL, err)
+			logger.Debug().Msgf("Request has been aborted [%s - %s]: %v", req.RemoteAddr, req.URL, err)
 			return
 		}
 
-		logger.Errorf("Recovered from panic in HTTP handler [%s - %s]: %+v", r.RemoteAddr, r.URL, err)
+		logger.Error().Msgf("Recovered from panic in HTTP handler [%s - %s]: %+v", req.RemoteAddr, req.URL, err)
 		const size = 64 << 10
 		buf := make([]byte, size)
 		buf = buf[:runtime.Stack(buf, false)]
-		logger.Errorf("Stack: %s", buf)
+		logger.Error().Msgf("Stack: %s", buf)
 	}
 }
 

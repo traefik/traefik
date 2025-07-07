@@ -27,11 +27,9 @@ THE SOFTWARE.
 package fake
 
 import (
-	clientset "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned"
-	traefikcontainousv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned/typed/traefikcontainous/v1alpha1"
-	faketraefikcontainousv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned/typed/traefikcontainous/v1alpha1/fake"
-	traefikv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned/typed/traefikio/v1alpha1"
-	faketraefikv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned/typed/traefikio/v1alpha1/fake"
+	clientset "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned"
+	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned/typed/traefikio/v1alpha1"
+	faketraefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned/typed/traefikio/v1alpha1/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"
@@ -88,11 +86,6 @@ var (
 	_ clientset.Interface = &Clientset{}
 	_ testing.FakeClient  = &Clientset{}
 )
-
-// TraefikContainousV1alpha1 retrieves the TraefikContainousV1alpha1Client
-func (c *Clientset) TraefikContainousV1alpha1() traefikcontainousv1alpha1.TraefikContainousV1alpha1Interface {
-	return &faketraefikcontainousv1alpha1.FakeTraefikContainousV1alpha1{Fake: &c.Fake}
-}
 
 // TraefikV1alpha1 retrieves the TraefikV1alpha1Client
 func (c *Clientset) TraefikV1alpha1() traefikv1alpha1.TraefikV1alpha1Interface {

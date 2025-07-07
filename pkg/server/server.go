@@ -7,21 +7,18 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/traefik/traefik/v2/pkg/log"
-	"github.com/traefik/traefik/v2/pkg/metrics"
-	"github.com/traefik/traefik/v2/pkg/middlewares/accesslog"
-	"github.com/traefik/traefik/v2/pkg/safe"
-	"github.com/traefik/traefik/v2/pkg/server/middleware"
+	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/metrics"
+	"github.com/traefik/traefik/v3/pkg/safe"
+	"github.com/traefik/traefik/v3/pkg/server/middleware"
 )
 
 // Server is the reverse-proxy/load-balancer engine.
 type Server struct {
-	watcher        *ConfigurationWatcher
-	tcpEntryPoints TCPEntryPoints
-	udpEntryPoints UDPEntryPoints
-	chainBuilder   *middleware.ChainBuilder
-
-	accessLoggerMiddleware *accesslog.Handler
+	watcher          *ConfigurationWatcher
+	tcpEntryPoints   TCPEntryPoints
+	udpEntryPoints   UDPEntryPoints
+	observabilityMgr *middleware.ObservabilityMgr
 
 	signals  chan os.Signal
 	stopChan chan bool
@@ -30,18 +27,15 @@ type Server struct {
 }
 
 // NewServer returns an initialized Server.
-func NewServer(routinesPool *safe.Pool, entryPoints TCPEntryPoints, entryPointsUDP UDPEntryPoints, watcher *ConfigurationWatcher,
-	chainBuilder *middleware.ChainBuilder, accessLoggerMiddleware *accesslog.Handler,
-) *Server {
+func NewServer(routinesPool *safe.Pool, entryPoints TCPEntryPoints, entryPointsUDP UDPEntryPoints, watcher *ConfigurationWatcher, observabilityMgr *middleware.ObservabilityMgr) *Server {
 	srv := &Server{
-		watcher:                watcher,
-		tcpEntryPoints:         entryPoints,
-		chainBuilder:           chainBuilder,
-		accessLoggerMiddleware: accessLoggerMiddleware,
-		signals:                make(chan os.Signal, 1),
-		stopChan:               make(chan bool, 1),
-		routinesPool:           routinesPool,
-		udpEntryPoints:         entryPointsUDP,
+		watcher:          watcher,
+		tcpEntryPoints:   entryPoints,
+		observabilityMgr: observabilityMgr,
+		signals:          make(chan os.Signal, 1),
+		stopChan:         make(chan bool, 1),
+		routinesPool:     routinesPool,
+		udpEntryPoints:   entryPointsUDP,
 	}
 
 	srv.configureSignals()
@@ -53,9 +47,9 @@ func NewServer(routinesPool *safe.Pool, entryPoints TCPEntryPoints, entryPointsU
 func (s *Server) Start(ctx context.Context) {
 	go func() {
 		<-ctx.Done()
-		logger := log.FromContext(ctx)
-		logger.Info("I have to go...")
-		logger.Info("Stopping server gracefully")
+		logger := log.Ctx(ctx)
+		logger.Info().Msg("I have to go...")
+		logger.Info().Msg("Stopping server gracefully")
 		s.Stop()
 	}()
 
@@ -73,7 +67,7 @@ func (s *Server) Wait() {
 
 // Stop stops the server.
 func (s *Server) Stop() {
-	defer log.WithoutContext().Info("Server stopped")
+	defer log.Info().Msg("Server stopped")
 
 	s.tcpEntryPoints.Stop()
 	s.udpEntryPoints.Stop()
@@ -103,7 +97,7 @@ func (s *Server) Close() {
 
 	close(s.stopChan)
 
-	s.chainBuilder.Close()
+	s.observabilityMgr.Close()
 
 	cancel()
 }
@@ -111,6 +105,6 @@ func (s *Server) Close() {
 func stopMetricsClients() {
 	metrics.StopDatadog()
 	metrics.StopStatsd()
-	metrics.StopInfluxDB()
 	metrics.StopInfluxDB2()
+	metrics.StopOpenTelemetry()
 }

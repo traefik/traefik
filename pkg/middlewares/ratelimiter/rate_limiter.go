@@ -8,45 +8,46 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/mailgun/ttlmap"
-	"github.com/opentracing/opentracing-go/ext"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/log"
-	"github.com/traefik/traefik/v2/pkg/middlewares"
-	"github.com/traefik/traefik/v2/pkg/tracing"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/middlewares"
+	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/vulcand/oxy/v2/utils"
+	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/time/rate"
 )
 
 const (
-	typeName   = "RateLimiterType"
+	typeName   = "RateLimiter"
 	maxSources = 65536
 )
+
+type limiter interface {
+	Allow(ctx context.Context, token string) (*time.Duration, error)
+}
 
 // rateLimiter implements rate limiting and traffic shaping with a set of token buckets;
 // one for each traffic source. The same parameters are applied to all the buckets.
 type rateLimiter struct {
-	name  string
-	rate  rate.Limit // reqs/s
-	burst int64
+	name string
+	rate rate.Limit // reqs/s
 	// maxDelay is the maximum duration we're willing to wait for a bucket reservation to become effective, in nanoseconds.
 	// For now it is somewhat arbitrarily set to 1/(2*rate).
-	maxDelay time.Duration
-	// each rate limiter for a given source is stored in the buckets ttlmap.
-	// To keep this ttlmap constrained in size,
-	// each ratelimiter is "garbage collected" when it is considered expired.
-	// It is considered expired after it hasn't been used for ttl seconds.
-	ttl           int
+	maxDelay      time.Duration
 	sourceMatcher utils.SourceExtractor
 	next          http.Handler
+	logger        *zerolog.Logger
 
-	buckets *ttlmap.TtlMap // actual buckets, keyed by source.
+	limiter limiter
 }
 
 // New returns a rate limiter middleware.
 func New(ctx context.Context, next http.Handler, config dynamic.RateLimit, name string) (http.Handler, error) {
-	ctxLog := log.With(ctx, log.Str(log.MiddlewareName, name), log.Str(log.MiddlewareType, typeName))
-	log.FromContext(ctxLog).Debug("Creating middleware")
+	logger := middlewares.GetLogger(ctx, name, typeName)
+	logger.Debug().Msg("Creating middleware")
+
+	ctxLog := logger.WithContext(ctx)
 
 	if config.SourceCriterion == nil ||
 		config.SourceCriterion.IPStrategy == nil &&
@@ -58,12 +59,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.RateLimit, name 
 
 	sourceMatcher, err := middlewares.GetSourceExtractor(ctxLog, config.SourceCriterion)
 	if err != nil {
-		return nil, err
-	}
-
-	buckets, err := ttlmap.NewConcurrent(maxSources)
-	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getting source extractor: %w", err)
 	}
 
 	burst := config.Burst
@@ -107,69 +103,83 @@ func New(ctx context.Context, next http.Handler, config dynamic.RateLimit, name 
 	} else if rtl > 0 {
 		ttl += int(1 / rtl)
 	}
+	var limiter limiter
+	if config.Redis != nil {
+		limiter, err = newRedisLimiter(ctx, rate.Limit(rtl), burst, maxDelay, ttl, config, logger)
+		if err != nil {
+			return nil, fmt.Errorf("creating redis limiter: %w", err)
+		}
+	} else {
+		limiter, err = newInMemoryRateLimiter(rate.Limit(rtl), burst, maxDelay, ttl, logger)
+		if err != nil {
+			return nil, fmt.Errorf("creating in-memory limiter: %w", err)
+		}
+	}
 
 	return &rateLimiter{
+		logger:        logger,
 		name:          name,
 		rate:          rate.Limit(rtl),
-		burst:         burst,
 		maxDelay:      maxDelay,
 		next:          next,
 		sourceMatcher: sourceMatcher,
-		buckets:       buckets,
-		ttl:           ttl,
+		limiter:       limiter,
 	}, nil
 }
 
-func (rl *rateLimiter) GetTracingInformation() (string, ext.SpanKindEnum) {
-	return rl.name, tracing.SpanKindNoneEnum
+func (rl *rateLimiter) GetTracingInformation() (string, string, trace.SpanKind) {
+	return rl.name, typeName, trace.SpanKindInternal
 }
 
-func (rl *rateLimiter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx := middlewares.GetLoggerCtx(r.Context(), rl.name, typeName)
-	logger := log.FromContext(ctx)
+func (rl *rateLimiter) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	logger := middlewares.GetLogger(req.Context(), rl.name, typeName)
+	ctx := logger.WithContext(req.Context())
 
-	source, amount, err := rl.sourceMatcher.Extract(r)
+	source, amount, err := rl.sourceMatcher.Extract(req)
 	if err != nil {
-		logger.Errorf("could not extract source of request: %v", err)
-		http.Error(w, "could not extract source of request", http.StatusInternalServerError)
+		logger.Error().Err(err).Msg("Could not extract source of request")
+		http.Error(rw, "could not extract source of request", http.StatusInternalServerError)
 		return
 	}
 
 	if amount != 1 {
-		logger.Infof("ignoring token bucket amount > 1: %d", amount)
+		logger.Info().Msgf("ignoring token bucket amount > 1: %d", amount)
 	}
 
-	var bucket *rate.Limiter
-	if rlSource, exists := rl.buckets.Get(source); exists {
-		bucket = rlSource.(*rate.Limiter)
-	} else {
-		bucket = rate.NewLimiter(rl.rate, int(rl.burst))
-	}
-
-	// We Set even in the case where the source already exists,
-	// because we want to update the expiryTime every time we get the source,
-	// as the expiryTime is supposed to reflect the activity (or lack thereof) on that source.
-	if err := rl.buckets.Set(source, bucket, rl.ttl); err != nil {
-		logger.Errorf("could not insert/update bucket: %v", err)
-		http.Error(w, "could not insert/update bucket", http.StatusInternalServerError)
+	// Each rate limiter has its own source space,
+	// ensuring independence between rate limiters,
+	// i.e., rate limit rules are only applied based on traffic
+	// where the rate limiter is active.
+	rlSource := fmt.Sprintf("%s:%s", rl.name, source)
+	delay, err := rl.limiter.Allow(ctx, rlSource)
+	if err != nil {
+		rl.logger.Error().Err(err).Msg("Could not insert/update bucket")
+		observability.SetStatusErrorf(ctx, "Could not insert/update bucket")
+		http.Error(rw, "Could not insert/update bucket", http.StatusInternalServerError)
 		return
 	}
 
-	res := bucket.Reserve()
-	if !res.OK() {
-		http.Error(w, "No bursty traffic allowed", http.StatusTooManyRequests)
+	if delay == nil {
+		observability.SetStatusErrorf(ctx, "No bursty traffic allowed")
+		http.Error(rw, "No bursty traffic allowed", http.StatusTooManyRequests)
 		return
 	}
 
-	delay := res.Delay()
-	if delay > rl.maxDelay {
-		res.Cancel()
-		rl.serveDelayError(ctx, w, delay)
+	if *delay > rl.maxDelay {
+		rl.serveDelayError(ctx, rw, *delay)
 		return
 	}
 
-	time.Sleep(delay)
-	rl.next.ServeHTTP(w, r)
+	select {
+	case <-ctx.Done():
+		observability.SetStatusErrorf(ctx, "Context canceled")
+		http.Error(rw, "context canceled", http.StatusInternalServerError)
+		return
+
+	case <-time.After(*delay):
+	}
+
+	rl.next.ServeHTTP(rw, req)
 }
 
 func (rl *rateLimiter) serveDelayError(ctx context.Context, w http.ResponseWriter, delay time.Duration) {
@@ -178,6 +188,6 @@ func (rl *rateLimiter) serveDelayError(ctx context.Context, w http.ResponseWrite
 	w.WriteHeader(http.StatusTooManyRequests)
 
 	if _, err := w.Write([]byte(http.StatusText(http.StatusTooManyRequests))); err != nil {
-		log.FromContext(ctx).Errorf("could not serve 429: %v", err)
+		log.Ctx(ctx).Error().Err(err).Msg("Could not serve 429")
 	}
 }

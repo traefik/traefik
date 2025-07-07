@@ -23,15 +23,13 @@ Create a `docker-compose.yml` file with the following content:
     You can use a [pre-existing network](https://docs.docker.com/compose/networking/#use-a-pre-existing-network "Link to Docker Compose networking docs") too.
 
     ```yaml
-    version: "3.3"
-
     networks:
       traefiknet: {}
 
     services:
 
       traefik:
-        image: "traefik:v2.11"
+        image: "traefik:v3.4"
         ...
         networks:
           - traefiknet

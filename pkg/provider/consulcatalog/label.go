@@ -1,7 +1,7 @@
 package consulcatalog
 
 import (
-	"github.com/traefik/traefik/v2/pkg/config/label"
+	"github.com/traefik/traefik/v3/pkg/config/label"
 )
 
 // configuration contains information from the labels that are globals (not related to the dynamic configuration) or specific to the provider.

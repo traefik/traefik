@@ -11,9 +11,9 @@ import (
 	"github.com/quic-go/quic-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v2/pkg/config/static"
-	tcprouter "github.com/traefik/traefik/v2/pkg/server/router/tcp"
-	traefiktls "github.com/traefik/traefik/v2/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/config/static"
+	tcprouter "github.com/traefik/traefik/v3/pkg/server/router/tcp"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 // LocalhostCert is a PEM-encoded TLS cert with SAN IPs
@@ -21,7 +21,7 @@ import (
 // generated from src/crypto/tls:
 // go run generate_cert.go  --rsa-bits 2048 --host 127.0.0.1,::1,example.com --ca --start-date "Jan 1 00:00:00 1970" --duration=1000000h
 var (
-	localhostCert = traefiktls.FileOrContent(`-----BEGIN CERTIFICATE-----
+	localhostCert = types.FileOrContent(`-----BEGIN CERTIFICATE-----
 MIIDOTCCAiGgAwIBAgIQSRJrEpBGFc7tNb1fb5pKFzANBgkqhkiG9w0BAQsFADAS
 MRAwDgYDVQQKEwdBY21lIENvMCAXDTcwMDEwMTAwMDAwMFoYDzIwODQwMTI5MTYw
 MDAwWjASMRAwDgYDVQQKEwdBY21lIENvMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A
@@ -43,7 +43,7 @@ WkBKOclmOV2xlTVuPw==
 -----END CERTIFICATE-----`)
 
 	// LocalhostKey is the private key for localhostCert.
-	localhostKey = traefiktls.FileOrContent(`-----BEGIN RSA PRIVATE KEY-----
+	localhostKey = types.FileOrContent(`-----BEGIN RSA PRIVATE KEY-----
 MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQDoZtrm0dXV0Aqi
 4Bpc7f95sNRTiu/AJSD8I1onY9PnEsPg3VVxvytsVJbYdcqr4w99V3AgpH/UNzMS
 gAZ/8lZBNbsSDOVesJ3euVqMRfYPvd9pYl6QPRRpSDPm+2tNdn3QFAvta9EgJ3sW
@@ -86,7 +86,7 @@ func TestHTTP3AdvertisedPort(t *testing.T) {
 	epConfig := &static.EntryPointsTransport{}
 	epConfig.SetDefaults()
 
-	entryPoint, err := NewTCPEntryPoint(t.Context(), &static.EntryPoint{
+	entryPoint, err := NewTCPEntryPoint(t.Context(), "foo", &static.EntryPoint{
 		Address:          "127.0.0.1:0",
 		Transport:        epConfig,
 		ForwardedHeaders: &static.ForwardedHeaders{},
@@ -94,7 +94,7 @@ func TestHTTP3AdvertisedPort(t *testing.T) {
 		HTTP3: &static.HTTP3Config{
 			AdvertisedPort: 8080,
 		},
-	}, nil)
+	}, nil, nil)
 	require.NoError(t, err)
 
 	router, err := tcprouter.NewRouter()
@@ -150,13 +150,13 @@ func TestHTTP30RTT(t *testing.T) {
 	epConfig := &static.EntryPointsTransport{}
 	epConfig.SetDefaults()
 
-	entryPoint, err := NewTCPEntryPoint(t.Context(), &static.EntryPoint{
+	entryPoint, err := NewTCPEntryPoint(t.Context(), "foo", &static.EntryPoint{
 		Address:          "127.0.0.1:8090",
 		Transport:        epConfig,
 		ForwardedHeaders: &static.ForwardedHeaders{},
 		HTTP2:            &static.HTTP2Config{},
 		HTTP3:            &static.HTTP3Config{},
-	}, nil)
+	}, nil, nil)
 	require.NoError(t, err)
 
 	router, err := tcprouter.NewRouter()

@@ -184,8 +184,10 @@
           <div class="col-12">
             <main-table
               v-bind="getTableProps({ type: `${protocol}-routers` })"
-              v-model:pagination="routersPagination"
+              v-model:current-sort="sortBy"
+              v-model:current-sort-dir="sortDir"
               :data="allRouters"
+              :on-load-more="onGetAll"
               :request="()=>{}"
               :loading="routersLoading"
               :filter="routersFilter"
@@ -224,8 +226,16 @@ export default defineComponent({
   },
   mixins: [GetTablePropsMixin],
   props: {
-    name: { type: String, default: undefined, required: false },
-    type: { type: String, default: undefined, required: false }
+    name: {
+      type: String,
+      default: '',
+      required: false
+    },
+    type: {
+      type: String,
+      default: '',
+      required: false
+    }
   },
   data () {
     return {
@@ -241,7 +251,11 @@ export default defineComponent({
         page: 1,
         rowsPerPage: 1000,
         rowsNumber: 0
-      }
+      },
+      filter: '',
+      status: '',
+      sortBy: 'name',
+      sortDir: 'asc'
     }
   },
   computed: {
@@ -259,11 +273,23 @@ export default defineComponent({
     },
     getRouterByName () {
       return this[`${this.protocol}_getRouterByName`]
+    },
+    getAllRouters () {
+      return this[`${this.protocol}_getAllRouters`]
+    }
+  },
+  watch: {
+    'sortBy' () {
+      this.refreshAll()
+    },
+    'sortDir' () {
+      this.refreshAll()
     }
   },
   created () {
     this.refreshAll()
   },
+  mounted () {},
   beforeUnmount () {
     clearInterval(this.timeOutGetAll)
     this.$store.commit('http/getServiceByNameClear')
@@ -271,9 +297,9 @@ export default defineComponent({
     this.$store.commit('udp/getServiceByNameClear')
   },
   methods: {
-    ...mapActions('http', { http_getServiceByName: 'getServiceByName', http_getRouterByName: 'getRouterByName' }),
-    ...mapActions('tcp', { tcp_getServiceByName: 'getServiceByName', tcp_getRouterByName: 'getRouterByName' }),
-    ...mapActions('udp', { udp_getServiceByName: 'getServiceByName', udp_getRouterByName: 'getRouterByName' }),
+    ...mapActions('http', { http_getServiceByName: 'getServiceByName', http_getRouterByName: 'getRouterByName', http_getAllRouters: 'getAllRouters' }),
+    ...mapActions('tcp', { tcp_getServiceByName: 'getServiceByName', tcp_getRouterByName: 'getRouterByName', tcp_getAllRouters: 'getAllRouters' }),
+    ...mapActions('udp', { udp_getServiceByName: 'getServiceByName', udp_getRouterByName: 'getRouterByName', udp_getAllRouters: 'getAllRouters' }),
     refreshAll () {
       if (this.serviceByName.loading) {
         return
@@ -288,22 +314,26 @@ export default defineComponent({
             return
           }
           // Get routers
-          if (body.usedBy) {
-            for (const router in body.usedBy) {
-              if (Object.getOwnPropertyDescriptor(body.usedBy, router)) {
-                this.getRouterByName(body.usedBy[router])
-                  .then(body => {
-                    if (body) {
-                      this.routersLoading = false
-                      this.allRouters.push(body)
-                    }
-                  })
-                  .catch(error => {
-                    console.log('Error -> routers/byName', error)
-                  })
+          this.getAllRouters({
+            query: this.filter,
+            status: this.status,
+            page: 1,
+            limit: 1000,
+            middlewareName: '',
+            serviceName: this.name,
+            sortBy: this.sortBy,
+            direction: this.sortDir
+          })
+            .then(body => {
+              this.allRouters = []
+              if (body) {
+                this.routersLoading = false
+                this.allRouters.push(...body.data)
               }
-            }
-          }
+            })
+            .catch(error => {
+              console.log('Error -> getAllRouters', error)
+            })
           clearTimeout(this.timeOutGetAll)
           this.timeOutGetAll = setTimeout(() => {
             this.loading = false

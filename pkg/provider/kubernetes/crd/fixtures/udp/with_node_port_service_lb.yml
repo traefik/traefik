@@ -1,0 +1,25 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRouteUDP
+metadata:
+  name: test.route
+  namespace: default
+
+spec:
+  entryPoints:
+    - foo
+
+  routes:
+  - services:
+    - name: nodeport-svc-udp
+      port: 8000
+      nodePortLB: true
+
+---
+kind: Node
+apiVersion: v1
+metadata:
+  name: traefik-node
+status:
+  addresses:
+    - type: InternalIP
+      address: 172.16.4.4

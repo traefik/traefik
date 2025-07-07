@@ -7,11 +7,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"github.com/traefik/traefik/v2/integration/try"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v3/integration/try"
 )
 
 type UDPSuite struct{ BaseSuite }
@@ -103,6 +103,6 @@ func (s *UDPSuite) TestWRR() {
 	select {
 	case <-stop:
 	case <-time.Tick(5 * time.Second):
-		log.WithoutContext().Info("Timeout")
+		log.Info().Msg("Timeout")
 	}
 }

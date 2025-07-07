@@ -1,0 +1,45 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+  noColor = true
+
+[entryPoints]
+  [entryPoints.web]
+    address = ":8080"
+
+[providers.file]
+  filename = "{{ .SelfFilename }}"
+
+## dynamic configuration ##
+
+[http.routers]
+  [http.routers.router1]
+    rule = "Host(`test502.local`)"
+    service = "service1"
+    middlewares = ["error"]
+  [http.routers.router2]
+    rule = "Host(`test418.local`)"
+    service = "noop@internal"
+    middlewares = ["error"]
+
+[http.middlewares]
+  [http.middlewares.error.errors]
+    status = ["500-502", "503-599", "418"]
+    service = "error"
+    query = "/50x.html"
+    [http.middlewares.error.errors.statusRewrites]
+      "418" = 400
+      "500-502" = 404
+
+[http.services]
+  [http.services.service1.loadBalancer]
+    passHostHeader = true
+    [[http.services.service1.loadBalancer.servers]]
+      url = "http://{{.Server1}}:8989474"
+
+  [http.services.error.loadBalancer]
+    [[http.services.error.loadBalancer.servers]]
+      url = "http://{{.Server2}}:80"

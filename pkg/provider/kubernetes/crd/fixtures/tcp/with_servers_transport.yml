@@ -1,0 +1,193 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: root-ca0
+  namespace: foo
+
+data:
+  foobar: VEVTVFJPT1RDQVMw
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: root-ca1
+  namespace: foo
+
+data:
+  tls.ca: VEVTVFJPT1RDQVMx
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: root-ca2
+  namespace: foo
+
+data:
+  tls.ca: VEVTVFJPT1RDQVMy
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: root-ca3
+  namespace: foo
+
+data:
+  ca.crt: VEVTVFJPT1RDQVMz
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: root-ca4
+  namespace: foo
+
+data:
+  ca.crt: VEVTVFJPT1RDQVM0
+  tls.ca: VEVTVFJPT1RDQVM1 # <-- This should be the preferred one.
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: root-ca5
+  namespace: foo
+
+data:
+  ca.crt: VEVTVFJPT1RDQVM2
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: root-ca6
+  namespace: foo
+
+data:
+  ca.crt: VEVTVFJPT1RDQVM3
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mtls1
+  namespace: foo
+
+data:
+  tls.crt: VEVTVENFUlQx
+  tls.key: VEVTVEtFWTE=
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mtls2
+  namespace: foo
+
+data:
+  tls.crt: VEVTVENFUlQy
+  tls.key: VEVTVEtFWTI=
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: allcerts
+  namespace: foo
+
+data:
+  ca.crt: VEVTVEFMTENFUlRT
+  tls.crt: VEVTVENFUlQz
+  tls.key: VEVTVEtFWTM=
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: root-ca-as-config-map
+  namespace: foo
+
+data:
+  ca.crt: "TESTROOTCASFROMCONFIGMAP"
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: root-ca-as-config-map-2
+  namespace: foo
+
+data:
+  ca.crt: "TESTROOTCASFROMCONFIGMAP2"
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: ServersTransportTCP
+metadata:
+  name: test
+  namespace: foo
+
+spec:
+  tls:
+    serverName: "test"
+    insecureSkipVerify: true
+    peerCertURI: foo://bar
+    rootCAsSecrets:
+      - root-ca0
+      - root-ca1
+      - root-ca2
+      - root-ca3
+      - root-ca4
+      - allcerts
+    rootCAs:
+      - configMap: root-ca-as-config-map
+      - secret: root-ca5
+        # referencing both a ConfigMap and a Secret should fail.
+      - configMap: root-ca-as-config-map-2
+        secret: root-ca6
+    certificatesSecrets:
+      - mtls1
+      - mtls2
+      - allcerts
+    spiffe:
+      ids:
+        - spiffe://foo/buz
+        - spiffe://bar/biz
+      trustDomain: spiffe://lol
+  dialTimeout: 42
+  dialKeepAlive: 42
+  terminationDelay: 42
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: ServersTransportTCP
+metadata:
+  name: test
+  namespace: default
+
+spec:
+  tls:
+    serverName: "test"
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: test.route
+  namespace: default
+
+spec:
+  entryPoints:
+    - foo
+
+  routes:
+  - match: HostSNI(`foo.com`)
+    services:
+    - name: whoamitcp
+      port: 8000
+      serversTransport: test
+    - name: whoamitcp2
+      port: 8080
+      serversTransport: default-test

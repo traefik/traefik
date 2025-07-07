@@ -11,5 +11,5 @@ spec:
   routes:
     - match: HostSNI(`foo.com`)
       services:
-        - name: whoamitcp-without-endpoints-subsets
+        - name: whoamitcp-without-endpointslice-endpoints
           port: 8000

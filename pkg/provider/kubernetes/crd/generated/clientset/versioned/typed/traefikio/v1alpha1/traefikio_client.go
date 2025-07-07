@@ -29,8 +29,8 @@ package v1alpha1
 import (
 	"net/http"
 
-	"github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned/scheme"
-	v1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned/scheme"
+	v1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	rest "k8s.io/client-go/rest"
 )
 
@@ -42,6 +42,7 @@ type TraefikV1alpha1Interface interface {
 	MiddlewaresGetter
 	MiddlewareTCPsGetter
 	ServersTransportsGetter
+	ServersTransportTCPsGetter
 	TLSOptionsGetter
 	TLSStoresGetter
 	TraefikServicesGetter
@@ -74,6 +75,10 @@ func (c *TraefikV1alpha1Client) MiddlewareTCPs(namespace string) MiddlewareTCPIn
 
 func (c *TraefikV1alpha1Client) ServersTransports(namespace string) ServersTransportInterface {
 	return newServersTransports(c, namespace)
+}
+
+func (c *TraefikV1alpha1Client) ServersTransportTCPs(namespace string) ServersTransportTCPInterface {
+	return newServersTransportTCPs(c, namespace)
 }
 
 func (c *TraefikV1alpha1Client) TLSOptions(namespace string) TLSOptionInterface {

@@ -3,7 +3,7 @@
   "version": "2.0.0",
   "description": "Traefik UI",
   "productName": "Traefik",
-  "cordovaId": "us.containo.traefik",
+  "cordovaId": "io.traefik.traefik",
   "private": true,
   "scripts": {
     "transfer": "node dev/scripts/transfer.js",

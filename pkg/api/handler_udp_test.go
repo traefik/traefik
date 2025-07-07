@@ -11,9 +11,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/config/runtime"
-	"github.com/traefik/traefik/v2/pkg/config/static"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/config/runtime"
+	"github.com/traefik/traefik/v3/pkg/config/static"
 )
 
 func TestHandler_UDP(t *testing.T) {
@@ -170,6 +170,40 @@ func TestHandler_UDP(t *testing.T) {
 				statusCode: http.StatusOK,
 				nextPage:   "1",
 				jsonFile:   "testdata/udprouters-filtered-search.json",
+			},
+		},
+		{
+			desc: "UDP routers filtered by service",
+			path: "/api/udp/routers?serviceName=foo-service@myprovider",
+			conf: runtime.Configuration{
+				UDPRouters: map[string]*runtime.UDPRouterInfo{
+					"test@myprovider": {
+						UDPRouter: &dynamic.UDPRouter{
+							EntryPoints: []string{"web"},
+							Service:     "foo-service@myprovider",
+						},
+						Status: runtime.StatusEnabled,
+					},
+					"bar@myprovider": {
+						UDPRouter: &dynamic.UDPRouter{
+							EntryPoints: []string{"web"},
+							Service:     "foo-service",
+						},
+						Status: runtime.StatusWarning,
+					},
+					"foo@myprovider": {
+						UDPRouter: &dynamic.UDPRouter{
+							EntryPoints: []string{"web"},
+							Service:     "bar-service@myprovider",
+						},
+						Status: runtime.StatusDisabled,
+					},
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				nextPage:   "1",
+				jsonFile:   "testdata/udprouters-filtered-serviceName.json",
 			},
 		},
 		{

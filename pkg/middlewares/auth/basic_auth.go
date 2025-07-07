@@ -8,16 +8,16 @@ import (
 	"strings"
 
 	goauth "github.com/abbot/go-http-auth"
-	"github.com/opentracing/opentracing-go/ext"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/log"
-	"github.com/traefik/traefik/v2/pkg/middlewares"
-	"github.com/traefik/traefik/v2/pkg/middlewares/accesslog"
-	"github.com/traefik/traefik/v2/pkg/tracing"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/middlewares"
+	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
+	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
+	"go.opentelemetry.io/otel/trace"
+	"golang.org/x/sync/singleflight"
 )
 
 const (
-	basicTypeName = "BasicAuth"
+	typeNameBasic = "BasicAuth"
 )
 
 type basicAuth struct {
@@ -27,22 +27,28 @@ type basicAuth struct {
 	headerField  string
 	removeHeader bool
 	name         string
+
+	checkSecret       func(password, secret string) bool
+	singleflightGroup *singleflight.Group
 }
 
 // NewBasic creates a basicAuth middleware.
 func NewBasic(ctx context.Context, next http.Handler, authConfig dynamic.BasicAuth, name string) (http.Handler, error) {
-	log.FromContext(middlewares.GetLoggerCtx(ctx, name, basicTypeName)).Debug("Creating middleware")
+	middlewares.GetLogger(ctx, name, typeNameBasic).Debug().Msg("Creating middleware")
+
 	users, err := getUsers(authConfig.UsersFile, authConfig.Users, basicUserParser)
 	if err != nil {
 		return nil, err
 	}
 
 	ba := &basicAuth{
-		next:         next,
-		users:        users,
-		headerField:  authConfig.HeaderField,
-		removeHeader: authConfig.RemoveHeader,
-		name:         name,
+		next:              next,
+		users:             users,
+		headerField:       authConfig.HeaderField,
+		removeHeader:      authConfig.RemoveHeader,
+		name:              name,
+		checkSecret:       goauth.CheckSecret,
+		singleflightGroup: new(singleflight.Group),
 	}
 
 	realm := defaultRealm
@@ -55,19 +61,16 @@ func NewBasic(ctx context.Context, next http.Handler, authConfig dynamic.BasicAu
 	return ba, nil
 }
 
-func (b *basicAuth) GetTracingInformation() (string, ext.SpanKindEnum) {
-	return b.name, tracing.SpanKindNoneEnum
+func (b *basicAuth) GetTracingInformation() (string, string, trace.SpanKind) {
+	return b.name, typeNameBasic, trace.SpanKindInternal
 }
 
 func (b *basicAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	logger := log.FromContext(middlewares.GetLoggerCtx(req.Context(), b.name, basicTypeName))
+	logger := middlewares.GetLogger(req.Context(), b.name, typeNameBasic)
 
 	user, password, ok := req.BasicAuth()
 	if ok {
-		secret := b.auth.Secrets(user, b.auth.Realm)
-		if secret == "" || !goauth.CheckSecret(password, secret) {
-			ok = false
-		}
+		ok = b.checkPassword(user, password)
 	}
 
 	logData := accesslog.GetLogData(req)
@@ -76,14 +79,14 @@ func (b *basicAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	if !ok {
-		logger.Debug("Authentication failed")
-		tracing.SetErrorWithEvent(req, "Authentication failed")
+		logger.Debug().Msg("Authentication failed")
+		observability.SetStatusErrorf(req.Context(), "Authentication failed")
 
 		b.auth.RequireAuth(rw, req)
 		return
 	}
 
-	logger.Debug("Authentication succeeded")
+	logger.Debug().Msg("Authentication succeeded")
 	req.URL.User = url.User(user)
 
 	if b.headerField != "" {
@@ -91,10 +94,24 @@ func (b *basicAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	if b.removeHeader {
-		logger.Debug("Removing authorization header")
+		logger.Debug().Msg("Removing authorization header")
 		req.Header.Del(authorizationHeader)
 	}
 	b.next.ServeHTTP(rw, req)
+}
+
+func (b *basicAuth) checkPassword(user, password string) bool {
+	secret := b.auth.Secrets(user, b.auth.Realm)
+	if secret == "" {
+		return false
+	}
+
+	key := password + secret
+	match, _, _ := b.singleflightGroup.Do(key, func() (any, error) {
+		return b.checkSecret(password, secret), nil
+	})
+
+	return match.(bool)
 }
 
 func (b *basicAuth) secretBasic(user, realm string) string {

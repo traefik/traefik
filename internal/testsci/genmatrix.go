@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/rs/zerolog/log"
 	"golang.org/x/tools/go/packages"
 )
 
@@ -17,8 +17,6 @@ type group struct {
 }
 
 func main() {
-	logger := log.WithoutContext()
-
 	cfg := &packages.Config{
 		Mode: packages.NeedName,
 		Dir:  ".",
@@ -26,7 +24,7 @@ func main() {
 
 	pkgs, err := packages.Load(cfg, "./cmd/...", "./pkg/...")
 	if err != nil {
-		logger.Fatalf("Loading packages: %v", err)
+		log.Fatal().Err(err).Msg("Loading packages")
 	}
 
 	var packageNames []string
@@ -58,7 +56,7 @@ func main() {
 
 	jsonBytes, err := json.Marshal(matrix)
 	if err != nil {
-		logger.Fatalf("Failed to marshal matrix: %v", err)
+		log.Fatal().Err(err).Msg("Failed to marshal matrix")
 	}
 
 	// Output for GitHub Actions

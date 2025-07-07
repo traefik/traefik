@@ -2,7 +2,6 @@ package integration
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -19,8 +18,8 @@ import (
 	"github.com/pmezard/go-difflib/difflib"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"github.com/traefik/traefik/v2/integration/try"
-	"github.com/traefik/traefik/v2/pkg/api"
+	"github.com/traefik/traefik/v3/integration/try"
+	"github.com/traefik/traefik/v3/pkg/api"
 )
 
 // Consul test suites.
@@ -43,7 +42,7 @@ func (s *ConsulSuite) SetupSuite() {
 	s.consulURL = fmt.Sprintf("http://%s", consulAddr)
 
 	kv, err := valkeyrie.NewStore(
-		context.Background(),
+		s.T().Context(),
 		consul.StoreName,
 		[]string{consulAddr},
 		&consul.Config{
@@ -63,7 +62,7 @@ func (s *ConsulSuite) TearDownSuite() {
 }
 
 func (s *ConsulSuite) TearDownTest() {
-	err := s.kvClient.DeleteTree(context.Background(), "traefik")
+	err := s.kvClient.DeleteTree(s.T().Context(), "traefik")
 	if err != nil && !errors.Is(err, store.ErrKeyNotFound) {
 		require.ErrorIs(s.T(), err, store.ErrKeyNotFound)
 	}
@@ -115,11 +114,10 @@ func (s *ConsulSuite) TestSimpleConfiguration() {
 		"traefik/http/middlewares/compressor/compress":            "",
 		"traefik/http/middlewares/striper/stripPrefix/prefixes/0": "foo",
 		"traefik/http/middlewares/striper/stripPrefix/prefixes/1": "bar",
-		"traefik/http/middlewares/striper/stripPrefix/forceSlash": "true",
 	}
 
 	for k, v := range data {
-		err := s.kvClient.Put(context.Background(), k, []byte(v), nil)
+		err := s.kvClient.Put(s.T().Context(), k, []byte(v), nil)
 		require.NoError(s.T(), err)
 	}
 
@@ -179,7 +177,7 @@ func (s *ConsulSuite) TestDeleteRootKey() {
 
 	file := s.adaptFile("fixtures/consul/simple.toml", struct{ ConsulAddress string }{s.consulURL})
 
-	ctx := context.Background()
+	ctx := s.T().Context()
 	svcaddr := net.JoinHostPort(s.getComposeServiceIP("whoami"), "80")
 
 	data := map[string]string{

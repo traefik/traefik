@@ -2,7 +2,6 @@ package integration
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"net"
 	"net/http"
@@ -15,11 +14,11 @@ import (
 	"github.com/kvtools/valkeyrie/store"
 	"github.com/kvtools/zookeeper"
 	"github.com/pmezard/go-difflib/difflib"
+	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"github.com/traefik/traefik/v2/integration/try"
-	"github.com/traefik/traefik/v2/pkg/api"
-	"github.com/traefik/traefik/v2/pkg/log"
+	"github.com/traefik/traefik/v3/integration/try"
+	"github.com/traefik/traefik/v3/pkg/api"
 )
 
 // Zk test suites.
@@ -43,7 +42,7 @@ func (s *ZookeeperSuite) SetupSuite() {
 
 	var err error
 	s.kvClient, err = valkeyrie.NewStore(
-		context.Background(),
+		s.T().Context(),
 		zookeeper.StoreName,
 		[]string{s.zookeeperAddr},
 		&zookeeper.Config{
@@ -107,11 +106,10 @@ func (s *ZookeeperSuite) TestSimpleConfiguration() {
 		"traefik/http/middlewares/compressor/compress":            "",
 		"traefik/http/middlewares/striper/stripPrefix/prefixes/0": "foo",
 		"traefik/http/middlewares/striper/stripPrefix/prefixes/1": "bar",
-		"traefik/http/middlewares/striper/stripPrefix/forceSlash": "true",
 	}
 
 	for k, v := range data {
-		err := s.kvClient.Put(context.Background(), k, []byte(v), nil)
+		err := s.kvClient.Put(s.T().Context(), k, []byte(v), nil)
 		require.NoError(s.T(), err)
 	}
 
@@ -153,6 +151,6 @@ func (s *ZookeeperSuite) TestSimpleConfiguration() {
 
 		text, err := difflib.GetUnifiedDiffString(diff)
 		require.NoError(s.T(), err)
-		log.WithoutContext().Info(text)
+		log.Info().Msg(text)
 	}
 }

@@ -2,7 +2,6 @@ package integration
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"net"
 	"net/http"
@@ -18,8 +17,8 @@ import (
 	"github.com/pmezard/go-difflib/difflib"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"github.com/traefik/traefik/v2/integration/try"
-	"github.com/traefik/traefik/v2/pkg/api"
+	"github.com/traefik/traefik/v3/integration/try"
+	"github.com/traefik/traefik/v3/pkg/api"
 )
 
 // Redis test suites.
@@ -43,7 +42,7 @@ func (s *RedisSuite) SetupSuite() {
 	s.redisEndpoints = append(s.redisEndpoints, net.JoinHostPort(s.getComposeServiceIP("redis"), "6379"))
 
 	kv, err := valkeyrie.NewStore(
-		context.Background(),
+		s.T().Context(),
 		redis.StoreName,
 		s.redisEndpoints,
 		&redis.Config{},
@@ -109,11 +108,10 @@ func (s *RedisSuite) TestSimpleConfiguration() {
 		"traefik/http/middlewares/compressor/compress":            "true",
 		"traefik/http/middlewares/striper/stripPrefix/prefixes/0": "foo",
 		"traefik/http/middlewares/striper/stripPrefix/prefixes/1": "bar",
-		"traefik/http/middlewares/striper/stripPrefix/forceSlash": "true",
 	}
 
 	for k, v := range data {
-		err := s.kvClient.Put(context.Background(), k, []byte(v), nil)
+		err := s.kvClient.Put(s.T().Context(), k, []byte(v), nil)
 		require.NoError(s.T(), err)
 	}
 

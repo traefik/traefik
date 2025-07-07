@@ -7,8 +7,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v2/pkg/config/dynamic"
-	"github.com/traefik/traefik/v2/pkg/testhelpers"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/testhelpers"
 )
 
 func TestStripPrefix(t *testing.T) {
@@ -31,17 +31,6 @@ func TestStripPrefix(t *testing.T) {
 			expectedPath:       "/noprefixes",
 		},
 		{
-			desc: "wildcard (.*) requests (ForceSlash)",
-			config: dynamic.StripPrefix{
-				Prefixes:   []string{"/"},
-				ForceSlash: true,
-			},
-			path:               "/",
-			expectedStatusCode: http.StatusOK,
-			expectedPath:       "/",
-			expectedHeader:     "/",
-		},
-		{
 			desc: "wildcard (.*) requests",
 			config: dynamic.StripPrefix{
 				Prefixes: []string{"/"},
@@ -52,17 +41,6 @@ func TestStripPrefix(t *testing.T) {
 			expectedHeader:     "/",
 		},
 		{
-			desc: "prefix and path matching (ForceSlash)",
-			config: dynamic.StripPrefix{
-				Prefixes:   []string{"/stat"},
-				ForceSlash: true,
-			},
-			path:               "/stat",
-			expectedStatusCode: http.StatusOK,
-			expectedPath:       "/",
-			expectedHeader:     "/stat",
-		},
-		{
 			desc: "prefix and path matching",
 			config: dynamic.StripPrefix{
 				Prefixes: []string{"/stat"},
@@ -71,17 +49,6 @@ func TestStripPrefix(t *testing.T) {
 			expectedStatusCode: http.StatusOK,
 			expectedPath:       "",
 			expectedHeader:     "/stat",
-		},
-		{
-			desc: "path prefix on exactly matching path (ForceSlash)",
-			config: dynamic.StripPrefix{
-				Prefixes:   []string{"/stat/"},
-				ForceSlash: true,
-			},
-			path:               "/stat/",
-			expectedStatusCode: http.StatusOK,
-			expectedPath:       "/",
-			expectedHeader:     "/stat/",
 		},
 		{
 			desc: "path prefix on exactly matching path",
@@ -133,17 +100,6 @@ func TestStripPrefix(t *testing.T) {
 			expectedHeader:     "/stat",
 		},
 		{
-			desc: "later prefix matching (ForceSlash)",
-			config: dynamic.StripPrefix{
-				Prefixes:   []string{"/mismatch", "/stat"},
-				ForceSlash: true,
-			},
-			path:               "/stat",
-			expectedStatusCode: http.StatusOK,
-			expectedPath:       "/",
-			expectedHeader:     "/stat",
-		},
-		{
 			desc: "later prefix matching",
 			config: dynamic.StripPrefix{
 				Prefixes: []string{"/mismatch", "/stat"},
@@ -187,6 +143,9 @@ func TestStripPrefix(t *testing.T) {
 				actualHeader = r.Header.Get(ForwardedPrefixHeader)
 				requestURI = r.RequestURI
 			})
+
+			pointer := func(v bool) *bool { return &v }
+			test.config.ForceSlash = pointer(false)
 
 			handler, err := New(t.Context(), next, test.config, "foo-strip-prefix")
 			require.NoError(t, err)

@@ -75,6 +75,13 @@ const (
 	TLSVersion = "TLSVersion"
 	// TLSCipher is the cipher used in the request.
 	TLSCipher = "TLSCipher"
+	// TLSClientSubject is the string representation of the TLS client certificate's Subject.
+	TLSClientSubject = "TLSClientSubject"
+
+	// TraceID is the consistent identifier for tracking requests across services, including upstream ones managed by Traefik, shown as a 32-hex digit string.
+	TraceID = "TraceId"
+	// SpanID is the unique identifier for Traefik’s root span (EntryPoint) within a request trace, formatted as a 16-hex digit string.
+	SpanID = "SpanId"
 )
 
 // These are written out in the default case when no config is provided to specify keys of interest.
@@ -118,6 +125,7 @@ func init() {
 	allCoreKeys[RetryAttempts] = struct{}{}
 	allCoreKeys[TLSVersion] = struct{}{}
 	allCoreKeys[TLSCipher] = struct{}{}
+	allCoreKeys[TLSClientSubject] = struct{}{}
 }
 
 // CoreLogData holds the fields computed from the request/response.

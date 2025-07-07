@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 // LocalhostCert is a PEM-encoded TLS cert with SAN IPs
@@ -15,7 +16,7 @@ import (
 // generated from src/crypto/tls:
 // go run generate_cert.go  --rsa-bits 1024 --host 127.0.0.1,::1,example.com --ca --start-date "Jan 1 00:00:00 1970" --duration=1000000h
 var (
-	localhostCert = FileOrContent(`-----BEGIN CERTIFICATE-----
+	localhostCert = types.FileOrContent(`-----BEGIN CERTIFICATE-----
 MIIDOTCCAiGgAwIBAgIQSRJrEpBGFc7tNb1fb5pKFzANBgkqhkiG9w0BAQsFADAS
 MRAwDgYDVQQKEwdBY21lIENvMCAXDTcwMDEwMTAwMDAwMFoYDzIwODQwMTI5MTYw
 MDAwWjASMRAwDgYDVQQKEwdBY21lIENvMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A
@@ -37,7 +38,7 @@ WkBKOclmOV2xlTVuPw==
 -----END CERTIFICATE-----`)
 
 	// LocalhostKey is the private key for localhostCert.
-	localhostKey = FileOrContent(`-----BEGIN RSA PRIVATE KEY-----
+	localhostKey = types.FileOrContent(`-----BEGIN RSA PRIVATE KEY-----
 MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQDoZtrm0dXV0Aqi
 4Bpc7f95sNRTiu/AJSD8I1onY9PnEsPg3VVxvytsVJbYdcqr4w99V3AgpH/UNzMS
 gAZ/8lZBNbsSDOVesJ3euVqMRfYPvd9pYl6QPRRpSDPm+2tNdn3QFAvta9EgJ3sW
@@ -195,7 +196,7 @@ func TestClientAuth(t *testing.T) {
 		},
 		"vccig": {
 			ClientAuth: ClientAuth{
-				CAFiles:        []FileOrContent{localhostCert},
+				CAFiles:        []types.FileOrContent{localhostCert},
 				ClientAuthType: "VerifyClientCertIfGiven",
 			},
 		},
@@ -207,13 +208,13 @@ func TestClientAuth(t *testing.T) {
 		},
 		"ravccwca": {
 			ClientAuth: ClientAuth{
-				CAFiles:        []FileOrContent{localhostCert},
+				CAFiles:        []types.FileOrContent{localhostCert},
 				ClientAuthType: "RequireAndVerifyClientCert",
 			},
 		},
 		"ravccwbca": {
 			ClientAuth: ClientAuth{
-				CAFiles:        []FileOrContent{"Bad content"},
+				CAFiles:        []types.FileOrContent{"Bad content"},
 				ClientAuthType: "RequireAndVerifyClientCert",
 			},
 		},
@@ -329,6 +330,7 @@ func TestManager_Get_DefaultValues(t *testing.T) {
 	config, _ := tlsManager.Get("default", "default")
 	assert.Equal(t, uint16(tls.VersionTLS12), config.MinVersion)
 	assert.Equal(t, []string{"h2", "http/1.1", "acme-tls/1"}, config.NextProtos)
+	assert.False(t, config.SessionTicketsDisabled)
 	assert.Equal(t, []uint16{
 		tls.TLS_AES_128_GCM_SHA256,
 		tls.TLS_AES_256_GCM_SHA384,

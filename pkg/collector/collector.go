@@ -10,14 +10,14 @@ import (
 	"time"
 
 	"github.com/mitchellh/hashstructure"
-	"github.com/traefik/traefik/v2/pkg/config/static"
-	"github.com/traefik/traefik/v2/pkg/log"
-	"github.com/traefik/traefik/v2/pkg/redactor"
-	"github.com/traefik/traefik/v2/pkg/version"
+	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/config/static"
+	"github.com/traefik/traefik/v3/pkg/redactor"
+	"github.com/traefik/traefik/v3/pkg/version"
 )
 
 // collectorURL URL where the stats are sent.
-const collectorURL = "https://collect.traefik.io/9vxmmkcdmalbdi635d4jgc5p5rx0h7h8"
+const collectorURL = "https://collect.traefik.io/yYaUej3P42cziRVzv6T5w2aYy9po2Mrn"
 
 // Collected data.
 type data struct {
@@ -49,7 +49,7 @@ func createBody(staticConfiguration *static.Configuration) (*bytes.Buffer, error
 		return nil, err
 	}
 
-	log.WithoutContext().Infof("Anonymous stats sent to %s: %s", collectorURL, anonConfig)
+	log.Debug().Msgf("Anonymous stats sent to %s: %s", collectorURL, anonConfig)
 
 	hashConf, err := hashstructure.Hash(staticConfiguration, nil)
 	if err != nil {
