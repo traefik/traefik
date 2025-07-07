@@ -1,3 +1,31 @@
+## [v3.5.0-rc1](https://github.com/traefik/traefik/tree/v3.5.0-rc1) (2025-06-26)
+[All Commits](https://github.com/traefik/traefik/compare/v3.4.0-rc1...v3.5.0-rc1)
+
+**Enhancements:**
+- **[acme]** OCSP stapling ([#8393](https://github.com/traefik/traefik/pull/8393) by [alekitto](https://github.com/alekitto))
+- **[acme]** Add acme.httpChallenge.delay option ([#11643](https://github.com/traefik/traefik/pull/11643) by [ldez](https://github.com/ldez))
+- **[acme]** Allow configuration of ACME provider http timeout ([#11637](https://github.com/traefik/traefik/pull/11637) by [tkw1536](https://github.com/tkw1536))
+- **[healthcheck]** Add url option to healthcheck command ([#11711](https://github.com/traefik/traefik/pull/11711) by [Nelwhix](https://github.com/Nelwhix))
+- **[healthcheck]** Add unhealthy Interval to the health check configuration ([#10610](https://github.com/traefik/traefik/pull/10610) by [sswastik02](https://github.com/sswastik02))
+- **[k8s/gatewayapi]** Bump sigs.k8s.io/gateway-api to v1.3.0 ([#11719](https://github.com/traefik/traefik/pull/11719) by [rtribotte](https://github.com/rtribotte))
+- **[k8s/ingress]** Make the behavior of prefix matching in Ingress consistent with Kubernetes doc ([#11203](https://github.com/traefik/traefik/pull/11203) by [charlie0129](https://github.com/charlie0129))
+- **[k8s]** NGINX Ingress Provider ([#11844](https://github.com/traefik/traefik/pull/11844) by [rtribotte](https://github.com/rtribotte))
+- **[middleware,authentication]** Handle context canceled in ForwardAuth middleware ([#11817](https://github.com/traefik/traefik/pull/11817) by [bengentree](https://github.com/bengentree))
+- **[plugins]** Ability to enable unsafe in yaegi through plugin manifest ([#11589](https://github.com/traefik/traefik/pull/11589) by [Rydez](https://github.com/Rydez))
+- **[tls]** Introduce X25519MLKEM768 for Post-Quantum-Secure TLS ([#11731](https://github.com/traefik/traefik/pull/11731) by [fzoli](https://github.com/fzoli))
+- **[webui]** Migrate Traefik Proxy dashboard UI to React ([#11674](https://github.com/traefik/traefik/pull/11674) by [gndz07](https://github.com/gndz07))
+- **[webui]** Improve visualization for StatusRewrites option of errors middleware ([#11806](https://github.com/traefik/traefik/pull/11806) by [sevensolutions](https://github.com/sevensolutions))
+
+**Misc:**
+- Merge branch v3.4 into master ([#11863](https://github.com/traefik/traefik/pull/11863) by [rtribotte](https://github.com/rtribotte))
+- Merge branch v3.4 into master ([#11861](https://github.com/traefik/traefik/pull/11861) by [rtribotte](https://github.com/rtribotte))
+- Merge branch v3.4 into master ([#11857](https://github.com/traefik/traefik/pull/11857) by [rtribotte](https://github.com/rtribotte))
+- Merge branch v3.4 into master ([#11855](https://github.com/traefik/traefik/pull/11855) by [rtribotte](https://github.com/rtribotte))
+- Merge branch v3.4 into master ([#11813](https://github.com/traefik/traefik/pull/11813) by [kevinpollet](https://github.com/kevinpollet))
+- Merge branch v3.4 into master ([#11758](https://github.com/traefik/traefik/pull/11758) by [mmatur](https://github.com/mmatur))
+- Merge v3.4 into master ([#11752](https://github.com/traefik/traefik/pull/11752) by [mmatur](https://github.com/mmatur))
+- Merge branch v3.4 into master ([#11708](https://github.com/traefik/traefik/pull/11708) by [kevinpollet](https://github.com/kevinpollet))
+
 ## [v3.4.3](https://github.com/traefik/traefik/tree/v3.4.3) (2025-06-26)
 [All Commits](https://github.com/traefik/traefik/compare/v3.4.2...v3.4.3)
 

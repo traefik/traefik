@@ -1,32 +1,61 @@
-.quasar
-.DS_Store
-.thumbs.db
-node_modules
+# See http://help.github.com/ignore-files/ for more about ignoring files.
+
+# compiled output
 /dist
-/dev_local
-/src-cordova/node_modules
-/src-cordova/platforms
-/src-cordova/plugins
-/src-cordova/www
+/build
+/dist-server
+/tmp
+/out-tsc
 
-# Log files
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# dependencies
+/node_modules
+.yalc
 
-# Editor directories and files
-.idea
-.vscode
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+# IDEs and editors
+/.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
 
-# local env files
-.env.local
-.env.*.local
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
 
-# static assets (ignore all except the DO NOT EDIT file)
+# misc
+/.sass-cache
+/connect.lock
+/coverage
+/libpeerconnection.log
+npm-debug.log
+yarn-error.log
+testem.log
+/typings
+
+# e2e
+/e2e/*.js
+/e2e/*.map
+
+# System Files
+.DS_Store
+Thumbs.db
+
+# env
+.env
+
+# yarn berry with no zero-installs
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
+# static assets
 static/*
-!static/DONT-EDIT-FILES-IN-THIS-DIRECTORY.md

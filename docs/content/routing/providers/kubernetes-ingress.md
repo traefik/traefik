@@ -130,7 +130,7 @@ which in turn will create the resulting routers, services, handlers, etc.
           serviceAccountName: traefik-ingress-controller
           containers:
             - name: traefik
-              image: traefik:v3.4
+              image: traefik:v3.5
               args:
                 - --entryPoints.web.address=:80
                 - --providers.kubernetesingress
@@ -439,7 +439,7 @@ If the Kubernetes cluster version is 1.18+,
 the new `pathType` property can be leveraged to define the rules matchers:
 
 - `Exact`: This path type forces the rule matcher to `Path`
-- `Prefix`: This path type forces the rule matcher to `PathPrefix`
+- `Prefix`: This path type forces the rule matcher to `PathPrefix`. Note that if you want the matching behavior to strictly comply with Kubernetes Ingress specification (request path is matched on an element-by-element basis), consider enabling [`strictPrefixMatching`](../../providers/kubernetes-ingress.md#strictprefixmatching) in the Ingress Provider configuration.
 
 Please see [this documentation](https://kubernetes.io/docs/concepts/services-networking/ingress/#path-types) for more information.
 
@@ -593,7 +593,7 @@ This way, any Ingress attached to this Entrypoint will have TLS termination by d
           serviceAccountName: traefik-ingress-controller
           containers:
             - name: traefik
-              image: traefik:v3.4
+              image: traefik:v3.5
               args:
                 - --entryPoints.websecure.address=:443
                 - --entryPoints.websecure.http.tls
@@ -786,7 +786,7 @@ For more options, please refer to the available [annotations](#on-ingress).
           serviceAccountName: traefik-ingress-controller
           containers:
             - name: traefik
-              image: traefik:v3.4
+              image: traefik:v3.5
               args:
                 - --entryPoints.websecure.address=:443
                 - --providers.kubernetesingress

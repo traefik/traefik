@@ -1,0 +1,22 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-with-service-upstream
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/service-upstream: "true"
+
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: service-upstream.localhost
+      http:
+        paths:
+          - path: /
+            pathType: Exact
+            backend:
+              service:
+                name: whoami
+                port:
+                  number: 80

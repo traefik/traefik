@@ -32,6 +32,20 @@ certificatesResolvers:
       #
       # certificatesDuration: 2160
 
+      # Timeout for a complete HTTP transaction with the ACME server.
+      #
+      # Optional
+      # Default: 2m
+      #
+      # clientTimeout: "2m"
+
+      # Timeout for receiving the response headers when communicating with the ACME server.
+      #
+      # Optional
+      # Default: 30s
+      #
+      # clientResponseHeaderTimeout: "30s"
+
       # Preferred chain to use.
       #
       # If the CA offers multiple certificate chains, prefer the chain with an issuer matching this Subject Common Name.

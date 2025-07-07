@@ -163,7 +163,7 @@ See the [Docker API Access](#docker-api-access) section for more information.
     ```yaml
     services:
       traefik:
-         image: traefik:v3.4 # The official v3 Traefik docker image
+         image: traefik:v3.5 # The official v3 Traefik docker image
          ports:
            - "80:80"
          volumes:
