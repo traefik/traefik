@@ -33,12 +33,11 @@ spec:
   type: ClusterIP
   externalName: traefik.wtf
 
-
 ---
 kind: EndpointSlice
 apiVersion: discovery.k8s.io/v1
 metadata:
-  name: native-disabled
+  name: native-disabled-svc-abc
   namespace: default
   labels:
     kubernetes.io/service-name: native-disabled-svc
