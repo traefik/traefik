@@ -2523,7 +2523,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 			},
 		},
 		{
-			desc:     "Simple HTTPRoute with NativeLBByDefault enabled but service has nativelb=false annotation",
+			desc:     "Simple HTTPRoute with NativeLBByDefault enabled but service has disabled nativelb",
 			paths:    []string{"services.yml", "httproute/simple_nativelb_disabled.yml"},
 			nativeLB: true,
 			entryPoints: map[string]Entrypoint{"web": {
@@ -4493,7 +4493,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 			},
 		},
 		{
-			desc:     "Simple TCPRoute with NativeLBByDefault enabled but service has nativelb=false annotation",
+			desc:     "Simple TCPRoute with NativeLBByDefault enabled but service has disabled nativelb",
 			paths:    []string{"services.yml", "tcproute/simple_nativelb_disabled.yml"},
 			nativeLB: true,
 			entryPoints: map[string]Entrypoint{

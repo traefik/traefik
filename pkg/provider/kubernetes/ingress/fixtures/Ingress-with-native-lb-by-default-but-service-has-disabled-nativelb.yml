@@ -33,7 +33,6 @@ spec:
   type: ClusterIP
   externalName: traefik.wtf
 
-
 ---
 kind: EndpointSlice
 apiVersion: discovery.k8s.io/v1
