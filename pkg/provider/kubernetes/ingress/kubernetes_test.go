@@ -2140,7 +2140,7 @@ func TestLoadConfigurationFromIngressesWithNativeLBByDefault(t *testing.T) {
 			},
 		},
 		{
-			desc: "Ingress with native lb by default but service has nativelb=false annotation",
+			desc: "Ingress with native lb by default but service has disabled nativelb",
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
