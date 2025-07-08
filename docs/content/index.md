@@ -7,18 +7,15 @@ description: "Traefik Proxy, an open-source Edge Router, auto-discovers configur
 
 ![Architecture](assets/img/traefik-architecture.png)
 
-Traefik is an [open-source](https://github.com/traefik/traefik) *Application Proxy* that makes publishing your services a fun and easy experience. 
-It receives requests on behalf of your system, identifies which components are responsible for handling them, and routes them securely. 
+Traefik is an [open-source](https://github.com/traefik/traefik) Application Proxy and the core of the Traefik Hub Runtime Platform.
 
-What sets Traefik apart, besides its many features, is that it automatically discovers the right configuration for your services. 
-The magic happens when Traefik inspects your infrastructure, where it finds relevant information and discovers which service serves which request. 
+If you start with Traefik for service discovery and routing, you can seamlessly add [API management](https://traefik.io/solutions/api-management/), [API gateway](https://traefik.io/solutions/api-gateway/), [AI gateway](https://traefik.io/solutions/ai-gateway/), and [API mocking](https://traefik.io/solutions/api-mocking/) capabilities as needed.
 
-Traefik is natively compliant with every major cluster technology, such as Kubernetes, Docker Swarm, AWS, and [the list goes on](./reference/install-configuration/providers/overview.md); and can handle many at the same time. (It even works for legacy software running on bare metal.)
- 
-With Traefik, there is no need to maintain and synchronize a separate configuration file: everything happens automatically, in real time (no restarts, no connection interruptions).
-With Traefik, you spend time developing and deploying new features to your system, not on configuring and maintaining its working state.
+With 3.3 billion downloads and over 55k stars on GitHub, Traefik is used globally across hybrid cloud, multi-cloud, on prem, and bare metal environments running Kuberentes, Docker Swarm, AWS, [the list goes on](https://doc.traefik.io/traefik/reference/install-configuration/providers/overview/).
 
-And if your needs change, you can add API gateway and API management capabilities seamlessly to your existing Traefik deployments. It takes less than a minute, there’s no rip-and-replace, and all your configurations are preserved. See this in action in [our API gateway demo video](https://info.traefik.io/watch-traefik-api-gw-demo?cta=docs).
+Here’s how it works—Traefik receives requests on behalf of your system, identifies which components are responsible for handling them, and routes them securely. It automatically discovers the right configuration for your services by inspecting your infrastructure to identify relevant information and which service serves which request.
+
+Because everything happens automatically, in real time (no restarts, no connection interruptions), you can focus on developing and deploying new features to your system, instead of configuring and maintaining its working state.
 
 !!! quote "From the Traefik Maintainer Team" 
     When developing Traefik, our main goal is to make it easy to use, and we're sure you'll enjoy it.
@@ -53,6 +50,6 @@ Use the sidebar to navigate to the section that is most appropriate for your nee
 
     Have a question? Join our [Community Forum](https://community.traefik.io "Link to Traefik Community Forum") to discuss, learn, and connect with the Traefik community.
 
-    Using Traefik OSS in Production? Consider our enterprise-grade [API Gateway](https://info.traefik.io/watch-traefik-api-gw-demo?cta=doc) or our [24/7/365 OSS Support](https://info.traefik.io/request-commercial-support?cta=doc).
+    Using Traefik OSS in production? Consider upgrading to our API gateway ([watch demo video](https://info.traefik.io/watch-traefik-api-gw-demo)) for better security, control, and 24/7 support.
 
-    Explore our API Gateway upgrade via [this short demo video](https://info.traefik.io/watch-traefik-api-gw-demo?cta=doc).
+    Just need support? Explore our [24/7/365 support for Traefik OSS](https://info.traefik.io/request-commercial-support?cta=doc).
