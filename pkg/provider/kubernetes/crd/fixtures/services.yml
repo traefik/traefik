@@ -305,6 +305,38 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
+  name: native-disabled-svc
+  namespace: default
+spec:
+  ports:
+    - name: web
+      port: 80
+  type: ClusterIP
+  clusterIP: 10.10.0.1
+
+---
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
+metadata:
+  name: native-disabled-svc-abc
+  namespace: default
+  labels:
+    kubernetes.io/service-name: native-disabled-svc
+addressType: IPv4
+ports:
+  - name: web
+    port: 80
+endpoints:
+  - addresses:
+      - 10.10.0.20
+      - 10.10.0.21
+    conditions:
+      ready: true
+
+---
+apiVersion: v1
+kind: Service
+metadata:
   name: nodeport-svc
   namespace: default
 

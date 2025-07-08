@@ -918,7 +918,12 @@ func (p *Provider) getBackendAddresses(namespace string, ref gatev1.BackendRef) 
 		return nil, corev1.ServicePort{}, fmt.Errorf("parsing service annotations config: %w", err)
 	}
 
-	if p.NativeLBByDefault || annotationsConfig.Service.NativeLB {
+	nativeLB := p.NativeLBByDefault
+	if annotationsConfig.Service.NativeLB != nil {
+		nativeLB = *annotationsConfig.Service.NativeLB
+	}
+
+	if nativeLB {
 		if service.Spec.ClusterIP == "" || service.Spec.ClusterIP == "None" {
 			return nil, corev1.ServicePort{}, fmt.Errorf("no clusterIP found for service: %s/%s", service.Namespace, service.Name)
 		}
