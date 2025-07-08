@@ -342,7 +342,7 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 		middleware = func(next http.Handler) (http.Handler, error) {
 			// TODO missing metrics / accessLog
-			return retry.New(ctx, next, *config.Retry, retry.Listeners{}, middlewareName, DetailedTraceEnabled(ctx))
+			return retry.New(ctx, next, *config.Retry, retry.Listeners{}, middlewareName)
 		}
 	}
 
@@ -428,9 +428,5 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		return nil, fmt.Errorf("invalid middleware %q configuration: invalid middleware type or middleware does not exist", middlewareName)
 	}
 
-	if DetailedTraceEnabled(ctx) {
-		return observability.WrapMiddleware(ctx, middleware), nil
-	}
-
-	return middleware, nil
+	return observability.WrapMiddleware(ctx, middleware), nil
 }

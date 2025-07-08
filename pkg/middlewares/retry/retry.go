@@ -14,6 +14,7 @@ import (
 	"github.com/cenkalti/backoff/v4"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
+	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/tracing"
 	"go.opentelemetry.io/otel/attribute"
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
@@ -85,11 +86,10 @@ type retry struct {
 	next            http.Handler
 	listener        Listener
 	name            string
-	tracing         bool
 }
 
 // New returns a new retry middleware.
-func New(ctx context.Context, next http.Handler, config dynamic.Retry, listener Listener, name string, tracing bool) (http.Handler, error) {
+func New(ctx context.Context, next http.Handler, config dynamic.Retry, listener Listener, name string) (http.Handler, error) {
 	middlewares.GetLogger(ctx, name, typeName).Debug().Msg("Creating middleware")
 
 	if config.Attempts <= 0 {
@@ -102,7 +102,6 @@ func New(ctx context.Context, next http.Handler, config dynamic.Retry, listener 
 		next:            next,
 		listener:        listener,
 		name:            name,
-		tracing:         tracing,
 	}, nil
 }
 
@@ -126,7 +125,7 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	var currentSpan trace.Span
 	operation := func() error {
-		if r.tracing && tracer != nil {
+		if tracer != nil && observability.DetailedTraceEnabled(req.Context()) {
 			if currentSpan != nil {
 				currentSpan.End()
 			}
