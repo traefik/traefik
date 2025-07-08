@@ -4,7 +4,6 @@ import (
 	"context"
 	"io"
 	"net/http"
-	"strings"
 
 	"github.com/containous/alice"
 	"github.com/rs/zerolog/log"
@@ -19,61 +18,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/tracing"
 	"github.com/traefik/traefik/v3/pkg/types"
 )
-
-type contextKey int
-
-const (
-	accessLogsKey     contextKey = iota
-	metricsKey        contextKey = iota
-	semConvMetricsKey contextKey = iota
-	minimalTracing    contextKey = iota
-	detailedTracing   contextKey = iota
-)
-
-// AccessLogsEnabled returns whether metrics are enabled.
-func AccessLogsEnabled(ctx context.Context) bool {
-	if enabled, ok := ctx.Value(accessLogsKey).(bool); ok {
-		return enabled
-	}
-
-	return false
-}
-
-// MetricsEnabled returns whether metrics are enabled.
-func MetricsEnabled(ctx context.Context) bool {
-	if enabled, ok := ctx.Value(metricsKey).(bool); ok {
-		return enabled
-	}
-
-	return false
-}
-
-// SemConvMetricsEnabled returns whether metrics are enabled.
-func SemConvMetricsEnabled(ctx context.Context) bool {
-	if enabled, ok := ctx.Value(semConvMetricsKey).(bool); ok {
-		return enabled
-	}
-
-	return false
-}
-
-// MinimalTraceEnabled returns whether minimal tracing is enabled.
-func MinimalTraceEnabled(ctx context.Context) bool {
-	if enabled, ok := ctx.Value(minimalTracing).(bool); ok {
-		return enabled
-	}
-
-	return false
-}
-
-// DetailedTraceEnabled returns whether detailed tracing is enabled.
-func DetailedTraceEnabled(ctx context.Context) bool {
-	if enabled, ok := ctx.Value(detailedTracing).(bool); ok {
-		return enabled
-	}
-
-	return false
-}
 
 // ObservabilityMgr is a manager for observability (AccessLogs, Metrics and Tracing) enablement.
 type ObservabilityMgr struct {
@@ -97,54 +41,41 @@ func NewObservabilityMgr(config static.Configuration, metricsRegistry metrics.Re
 	}
 }
 
-// BuildContext returns a context with the observability configuration.
-func (o *ObservabilityMgr) BuildContext(ctx context.Context, serviceName string, config *dynamic.RouterObservabilityConfig) context.Context {
-	ctx = context.WithValue(ctx, accessLogsKey, o.shouldAccessLog(serviceName, config))
-	ctx = context.WithValue(ctx, metricsKey, o.shouldMeter(serviceName, config))
-	ctx = context.WithValue(ctx, semConvMetricsKey, o.shouldMeterSemConv(serviceName, config))
-	ctx = context.WithValue(ctx, minimalTracing, o.shouldTrace(serviceName, config, types.MinimalVerbosity))
-	return context.WithValue(ctx, detailedTracing, o.shouldTrace(serviceName, config, types.DetailedVerbosity))
-}
-
 // BuildEPChain an observability middleware chain by entry point.
-func (o *ObservabilityMgr) BuildEPChain(ctx context.Context, entryPointName string) alice.Chain {
+func (o *ObservabilityMgr) BuildEPChain(ctx context.Context, entryPointName string, internal bool, config dynamic.RouterObservabilityConfig) alice.Chain {
 	chain := alice.New()
 
 	if o == nil {
 		return chain
 	}
 
-	if AccessLogsEnabled(ctx) || MetricsEnabled(ctx) {
+	// Injection of the observability variables in the request context.
+	// This injection must be the first step in order for other observability middlewares to rely on it.
+	chain = chain.Append(func(next http.Handler) (http.Handler, error) {
+		return o.observabilityContextHandler(next, internal, config), nil
+	})
+
+	// Capture middleware for accessLogs or metrics.
+	if o.shouldAccessLog(internal, config) || o.shouldMeter(internal, config) || o.shouldMeterSemConv(internal, config) {
 		chain = chain.Append(capture.Wrap)
 	}
 
 	// As the Entry point observability middleware ensures that the tracing is added to the request and logger context,
 	// it needs to be added before the access log middleware to ensure that the trace ID is logged.
-	if o.tracer != nil && MinimalTraceEnabled(ctx) {
-		chain = chain.Append(observability.EntryPointHandler(ctx, o.tracer, entryPointName))
-	}
+	chain = chain.Append(observability.EntryPointHandler(ctx, o.tracer, entryPointName))
 
-	if o.accessLoggerMiddleware != nil && AccessLogsEnabled(ctx) {
-		chain = chain.Append(accesslog.WrapHandler(o.accessLoggerMiddleware))
-		chain = chain.Append(func(next http.Handler) (http.Handler, error) {
-			return accesslog.NewFieldHandler(next, logs.EntryPointName, entryPointName, accesslog.InitServiceFields), nil
-		})
-	}
+	// Access log handlers.
+	chain = chain.Append(accesslog.WrapHandler(o.accessLoggerMiddleware))
+	chain = chain.Append(func(next http.Handler) (http.Handler, error) {
+		return accesslog.NewFieldHandler(next, logs.EntryPointName, entryPointName, accesslog.InitServiceFields), nil
+	})
 
-	if MetricsEnabled(ctx) {
-		metricsHandler := mmetrics.WrapEntryPointHandler(ctx, o.metricsRegistry, entryPointName)
-
-		if DetailedTraceEnabled(ctx) {
-			chain = chain.Append(observability.WrapMiddleware(ctx, metricsHandler))
-		} else {
-			chain = chain.Append(metricsHandler)
-		}
-	}
+	// Entrypoint metrics handler.
+	metricsHandler := mmetrics.WrapEntryPointHandler(ctx, o.metricsRegistry, entryPointName)
+	chain = chain.Append(observability.WrapMiddleware(ctx, metricsHandler))
 
 	// Semantic convention server metrics handler.
-	if SemConvMetricsEnabled(ctx) {
-		chain = chain.Append(observability.SemConvServerMetricsHandler(ctx, o.semConvMetricRegistry))
-	}
+	chain = chain.Append(observability.SemConvServerMetricsHandler(ctx, o.semConvMetricRegistry))
 
 	return chain
 }
@@ -194,8 +125,18 @@ func (o *ObservabilityMgr) RotateAccessLogs() error {
 	return o.accessLoggerMiddleware.Rotate()
 }
 
+func (o *ObservabilityMgr) observabilityContextHandler(next http.Handler, internal bool, config dynamic.RouterObservabilityConfig) http.Handler {
+	handler := observability.WithAccessLogEnabledHandler(next, o.shouldAccessLog(internal, config))
+	handler = observability.WithMetricsEnabledHandler(handler, o.shouldMeter(internal, config))
+	handler = observability.WithSemConvMetricsEnabledHandler(handler, o.shouldMeterSemConv(internal, config))
+	handler = observability.WithMinimalTraceEnabledHandler(handler, o.shouldTrace(internal, config, types.MinimalVerbosity))
+	handler = observability.WithDetailedTraceEnabledHandler(handler, o.shouldTrace(internal, config, types.DetailedVerbosity))
+
+	return handler
+}
+
 // shouldAccessLog returns whether the access logs should be enabled for the given serviceName and the observability config.
-func (o *ObservabilityMgr) shouldAccessLog(serviceName string, observabilityConfig *dynamic.RouterObservabilityConfig) bool {
+func (o *ObservabilityMgr) shouldAccessLog(internal bool, observabilityConfig dynamic.RouterObservabilityConfig) bool {
 	if o == nil {
 		return false
 	}
@@ -204,15 +145,15 @@ func (o *ObservabilityMgr) shouldAccessLog(serviceName string, observabilityConf
 		return false
 	}
 
-	if strings.HasSuffix(serviceName, "@internal") && !o.config.AccessLog.AddInternals {
+	if internal && !o.config.AccessLog.AddInternals {
 		return false
 	}
 
-	return observabilityConfig == nil || observabilityConfig.AccessLogs == nil || *observabilityConfig.AccessLogs
+	return observabilityConfig.AccessLogs == nil || *observabilityConfig.AccessLogs
 }
 
 // shouldMeter returns whether the metrics should be enabled for the given serviceName and the observability config.
-func (o *ObservabilityMgr) shouldMeter(serviceName string, observabilityConfig *dynamic.RouterObservabilityConfig) bool {
+func (o *ObservabilityMgr) shouldMeter(internal bool, observabilityConfig dynamic.RouterObservabilityConfig) bool {
 	if o == nil || o.metricsRegistry == nil {
 		return false
 	}
@@ -225,16 +166,16 @@ func (o *ObservabilityMgr) shouldMeter(serviceName string, observabilityConfig *
 		return false
 	}
 
-	if strings.HasSuffix(serviceName, "@internal") && !o.config.Metrics.AddInternals {
+	if internal && !o.config.Metrics.AddInternals {
 		return false
 	}
 
-	return observabilityConfig == nil || observabilityConfig.Metrics == nil || *observabilityConfig.Metrics
+	return observabilityConfig.Metrics == nil || *observabilityConfig.Metrics
 }
 
 // shouldMeterSemConv returns whether the OTel semantic convention metrics should be enabled for the given serviceName and the observability config.
-func (o *ObservabilityMgr) shouldMeterSemConv(serviceName string, observabilityConfig *dynamic.RouterObservabilityConfig) bool {
-	if o == nil {
+func (o *ObservabilityMgr) shouldMeterSemConv(internal bool, observabilityConfig dynamic.RouterObservabilityConfig) bool {
+	if o == nil || o.semConvMetricRegistry == nil {
 		return false
 	}
 
@@ -242,15 +183,15 @@ func (o *ObservabilityMgr) shouldMeterSemConv(serviceName string, observabilityC
 		return false
 	}
 
-	if strings.HasSuffix(serviceName, "@internal") && !o.config.Metrics.AddInternals {
+	if internal && !o.config.Metrics.AddInternals {
 		return false
 	}
 
-	return observabilityConfig == nil || observabilityConfig.Metrics == nil || *observabilityConfig.Metrics
+	return observabilityConfig.Metrics == nil || *observabilityConfig.Metrics
 }
 
 // shouldTrace returns whether the tracing should be enabled for the given serviceName and the observability config.
-func (o *ObservabilityMgr) shouldTrace(serviceName string, observabilityConfig *dynamic.RouterObservabilityConfig, verbosity types.TracingVerbosity) bool {
+func (o *ObservabilityMgr) shouldTrace(internal bool, observabilityConfig dynamic.RouterObservabilityConfig, verbosity types.TracingVerbosity) bool {
 	if o == nil {
 		return false
 	}
@@ -259,7 +200,7 @@ func (o *ObservabilityMgr) shouldTrace(serviceName string, observabilityConfig *
 		return false
 	}
 
-	if strings.HasSuffix(serviceName, "@internal") && !o.config.Tracing.AddInternals {
+	if internal && !o.config.Tracing.AddInternals {
 		return false
 	}
 

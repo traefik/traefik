@@ -96,7 +96,7 @@ func NewServiceMiddleware(ctx context.Context, next http.Handler, registry metri
 // WrapEntryPointHandler Wraps metrics entrypoint to alice.Constructor.
 func WrapEntryPointHandler(ctx context.Context, registry metrics.Registry, entryPointName string) alice.Constructor {
 	return func(next http.Handler) (http.Handler, error) {
-		if !registry.IsEpEnabled() {
+		if registry == nil || !registry.IsEpEnabled() {
 			return next, nil
 		}
 
@@ -107,7 +107,7 @@ func WrapEntryPointHandler(ctx context.Context, registry metrics.Registry, entry
 // WrapRouterHandler Wraps metrics router to alice.Constructor.
 func WrapRouterHandler(ctx context.Context, registry metrics.Registry, routerName string, serviceName string) alice.Constructor {
 	return func(next http.Handler) (http.Handler, error) {
-		if !registry.IsRouterEnabled() {
+		if registry == nil || !registry.IsRouterEnabled() {
 			return next, nil
 		}
 
@@ -118,7 +118,7 @@ func WrapRouterHandler(ctx context.Context, registry metrics.Registry, routerNam
 // WrapServiceHandler Wraps metrics service to alice.Constructor.
 func WrapServiceHandler(ctx context.Context, registry metrics.Registry, serviceName string) alice.Constructor {
 	return func(next http.Handler) (http.Handler, error) {
-		if !registry.IsSvcEnabled() {
+		if registry == nil || !registry.IsSvcEnabled() {
 			return next, nil
 		}
 
@@ -131,6 +131,11 @@ func (m *metricsMiddleware) GetTracingInformation() (string, string, trace.SpanK
 }
 
 func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	if !observability.MetricsEnabled(req.Context()) {
+		m.next.ServeHTTP(rw, req)
+		return
+	}
+
 	proto := getRequestProtocol(req)
 
 	var labels []string

@@ -79,14 +79,14 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string, t
 		// TODO: Improve this part. Relying on models is a shortcut to get the entrypoint observability configuration.
 		// When the entry point has no observability configuration no model is produced,
 		// and we need to create the default configuration is this case.
-		var obsConfig dynamic.RouterObservabilityConfig
+		var epObsConfig dynamic.RouterObservabilityConfig
 		if model, ok := m.conf.Models[entryPointName+"@internal"]; ok && model != nil {
-			obsConfig = model.Observability
+			epObsConfig = model.Observability
 		} else {
 			defaultEPObsConfig := static.ObservabilityConfig{}
 			defaultEPObsConfig.SetDefaults()
 
-			obsConfig = dynamic.RouterObservabilityConfig{
+			epObsConfig = dynamic.RouterObservabilityConfig{
 				AccessLogs:     defaultEPObsConfig.AccessLogs,
 				Metrics:        defaultEPObsConfig.Metrics,
 				Tracing:        defaultEPObsConfig.Tracing,
@@ -94,12 +94,7 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string, t
 			}
 		}
 
-		// Add to the context the observability configuration for the entryPoint.
-		// This is used to control whether to produce access logs, metrics, and tracing for the entryPoint.
-		// It will be used if a router has no configuration and on the default handler (404).
-		ctx = m.observabilityMgr.BuildContext(ctx, "default", &obsConfig)
-
-		handler, err := m.buildEntryPointHandler(ctx, entryPointName, routers)
+		handler, err := m.buildEntryPointHandler(ctx, entryPointName, routers, epObsConfig)
 		if err != nil {
 			logger.Error().Err(err).Send()
 			continue
@@ -118,7 +113,25 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string, t
 			continue
 		}
 
-		defaultHandler, err := m.observabilityMgr.BuildEPChain(ctx, entryPointName).Then(BuildDefaultHTTPRouter())
+		// TODO: Improve this part. Relying on models is a shortcut to get the entrypoint observability configuration.
+		// When the entry point has no observability configuration no model is produced,
+		// and we need to create the default configuration is this case.
+		var epObsConfig dynamic.RouterObservabilityConfig
+		if model, ok := m.conf.Models[entryPointName+"@internal"]; ok && model != nil {
+			epObsConfig = model.Observability
+		} else {
+			defaultEPObsConfig := static.ObservabilityConfig{}
+			defaultEPObsConfig.SetDefaults()
+
+			epObsConfig = dynamic.RouterObservabilityConfig{
+				AccessLogs:     defaultEPObsConfig.AccessLogs,
+				Metrics:        defaultEPObsConfig.Metrics,
+				Tracing:        defaultEPObsConfig.Tracing,
+				TraceVerbosity: defaultEPObsConfig.TraceVerbosity,
+			}
+		}
+
+		defaultHandler, err := m.observabilityMgr.BuildEPChain(ctx, entryPointName, false, epObsConfig).Then(http.NotFoundHandler())
 		if err != nil {
 			logger.Error().Err(err).Send()
 			continue
@@ -129,10 +142,10 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string, t
 	return entryPointHandlers
 }
 
-func (m *Manager) buildEntryPointHandler(ctx context.Context, entryPointName string, configs map[string]*runtime.RouterInfo) (http.Handler, error) {
+func (m *Manager) buildEntryPointHandler(ctx context.Context, entryPointName string, configs map[string]*runtime.RouterInfo, config dynamic.RouterObservabilityConfig) (http.Handler, error) {
 	muxer := httpmuxer.NewMuxer(m.parser)
 
-	defaultHandler, err := m.observabilityMgr.BuildEPChain(ctx, entryPointName).Then(http.NotFoundHandler())
+	defaultHandler, err := m.observabilityMgr.BuildEPChain(ctx, entryPointName, false, config).Then(http.NotFoundHandler())
 	if err != nil {
 		return nil, err
 	}
@@ -142,13 +155,6 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, entryPointName str
 	for routerName, routerConfig := range configs {
 		logger := log.Ctx(ctx).With().Str(logs.RouterName, routerName).Logger()
 		ctxRouter := logger.WithContext(provider.AddInContext(ctx, routerName))
-
-		if routerConfig.Observability != nil {
-			// Add to the context the observability configuration for the router.
-			// This is used to control whether to produce access logs, metrics, and tracing for the router,
-			// later in the middleware chain.
-			ctxRouter = m.observabilityMgr.BuildContext(ctxRouter, routerConfig.Service, routerConfig.Observability)
-		}
 
 		if routerConfig.Priority == 0 {
 			routerConfig.Priority = httpmuxer.GetRulePriority(routerConfig.Rule)
@@ -168,7 +174,11 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, entryPointName str
 			continue
 		}
 
-		observabilityChain := m.observabilityMgr.BuildEPChain(ctxRouter, entryPointName)
+		if routerConfig.Observability != nil {
+			config = *routerConfig.Observability
+		}
+
+		observabilityChain := m.observabilityMgr.BuildEPChain(ctxRouter, entryPointName, strings.HasSuffix(routerConfig.Service, "@internal"), config)
 		handler, err = observabilityChain.Then(handler)
 		if err != nil {
 			routerConfig.AddError(err, true)
@@ -212,22 +222,7 @@ func (m *Manager) buildRouterHandler(ctx context.Context, routerName string, rou
 		return nil, err
 	}
 
-	// Prevents from enabling observability for internal resources.
-	if !middleware.AccessLogsEnabled(ctx) {
-		m.routerHandlers[routerName] = handler
-		return m.routerHandlers[routerName], nil
-	}
-
-	handlerWithAccessLog, err := alice.New(func(next http.Handler) (http.Handler, error) {
-		return accesslog.NewFieldHandler(next, accesslog.RouterName, routerName, nil), nil
-	}).Then(handler)
-	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Send()
-		m.routerHandlers[routerName] = handler
-	} else {
-		m.routerHandlers[routerName] = handlerWithAccessLog
-	}
-
+	m.routerHandlers[routerName] = handler
 	return m.routerHandlers[routerName], nil
 }
 
@@ -242,6 +237,7 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 		return nil, errors.New("the service is missing on the router")
 	}
 
+	// FIXME ensure qualifying the service name is correct. This have impact on the runtime configuration.
 	router.Service = provider.GetQualifiedName(ctx, router.Service)
 
 	chain := alice.New()
@@ -250,21 +246,14 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 		chain = chain.Append(denyrouterrecursion.WrapHandler(routerName))
 	}
 
-	// Span for the router handler is only added if detailed tracing is enabled.
-	if middleware.DetailedTraceEnabled(ctx) {
-		chain = chain.Append(observability.WrapRouterHandler(ctx, routerName, router.Rule, router.Service))
-	}
+	// Access logs, metrics, and tracing middlewares are idempotent if the associated signal is disabled.
+	chain = chain.Append(observability.WrapRouterHandler(ctx, routerName, router.Rule, router.Service))
+	metricsHandler := metricsMiddle.WrapRouterHandler(ctx, m.observabilityMgr.MetricsRegistry(), routerName, router.Service)
 
-	if middleware.MetricsEnabled(ctx) {
-		metricsHandler := metricsMiddle.WrapRouterHandler(ctx, m.observabilityMgr.MetricsRegistry(), routerName, router.Service)
-
-		// Span for the metrics handler is only added if detailed tracing is enabled.
-		if middleware.DetailedTraceEnabled(ctx) {
-			chain = chain.Append(observability.WrapMiddleware(ctx, metricsHandler))
-		} else {
-			chain = chain.Append(metricsHandler)
-		}
-	}
+	chain = chain.Append(observability.WrapMiddleware(ctx, metricsHandler))
+	chain = chain.Append(func(next http.Handler) (http.Handler, error) {
+		return accesslog.NewFieldHandler(next, accesslog.RouterName, routerName, nil), nil
+	})
 
 	mHandler := m.middlewaresBuilder.BuildChain(ctx, router.Middlewares)
 
@@ -274,9 +263,4 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 	}
 
 	return chain.Extend(*mHandler).Then(sHandler)
-}
-
-// BuildDefaultHTTPRouter creates a default HTTP router.
-func BuildDefaultHTTPRouter() http.Handler {
-	return http.NotFoundHandler()
 }

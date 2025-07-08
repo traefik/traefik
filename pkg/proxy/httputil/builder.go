@@ -45,7 +45,7 @@ func (r *ProxyBuilder) Build(cfgName string, targetURL *url.URL, passHostHeader,
 	}
 
 	// Wrapping the roundTripper with the Tracing roundTripper,
-	// to create, if necessary, the reverseProxy client span creation and the semConv client metric.
+	// to create, if necessary, the reverseProxy client span and the semConv client metric.
 	roundTripper = newObservabilityRoundTripper(r.semConvMetricsRegistry, roundTripper)
 
 	return buildSingleHostProxy(targetURL, passHostHeader, preservePath, flushInterval, roundTripper, r.bufferPool), nil

@@ -367,35 +367,28 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 		if err != nil {
 			return nil, fmt.Errorf("error building proxy for server URL %s: %w", server.URL, err)
 		}
+
 		// The retry wrapping must be done just before the proxy handler,
 		// to make sure that the retry will not be triggered/disabled by
 		// middlewares in the chain.
 		proxy = retry.WrapHandler(proxy)
 
-		if middleware.AccessLogsEnabled(ctx) {
-			proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceURL, target.String(), nil)
-			proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceAddr, target.Host, nil)
-			proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceName, qualifiedSvcName, accesslog.AddServiceFields)
+		// Access logs, metrics, and tracing middlewares are idempotent if the associated signal is disabled.
+		proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceURL, target.String(), nil)
+		proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceAddr, target.Host, nil)
+		proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceName, qualifiedSvcName, accesslog.AddServiceFields)
+
+		metricsHandler := metricsMiddle.WrapServiceHandler(ctx, m.observabilityMgr.MetricsRegistry(), qualifiedSvcName)
+		metricsHandler = observability.WrapMiddleware(ctx, metricsHandler)
+
+		proxy, err = alice.New().
+			Append(metricsHandler).
+			Then(proxy)
+		if err != nil {
+			return nil, fmt.Errorf("error wrapping metrics handler: %w", err)
 		}
 
-		if middleware.MetricsEnabled(ctx) {
-			metricsHandler := metricsMiddle.WrapServiceHandler(ctx, m.observabilityMgr.MetricsRegistry(), qualifiedSvcName)
-
-			if middleware.DetailedTraceEnabled(ctx) {
-				metricsHandler = observability.WrapMiddleware(ctx, metricsHandler)
-			}
-
-			proxy, err = alice.New().
-				Append(metricsHandler).
-				Then(proxy)
-			if err != nil {
-				return nil, fmt.Errorf("error wrapping metrics handler: %w", err)
-			}
-		}
-
-		if middleware.DetailedTraceEnabled(ctx) {
-			proxy = observability.NewService(ctx, qualifiedSvcName, proxy)
-		}
+		proxy = observability.NewService(ctx, qualifiedSvcName, proxy)
 
 		lb.AddServer(server.URL, proxy, server)
 
