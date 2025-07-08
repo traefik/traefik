@@ -1,0 +1,11 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRouteUDP
+metadata:
+  name: udp.route.native-disabled
+  namespace: default
+spec:
+  routes:
+  - services:
+    - name: native-disabled-svc-udp
+      port: 8000
+      nativeLB: false
