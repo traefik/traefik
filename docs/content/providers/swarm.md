@@ -621,6 +621,10 @@ as well as the usual boolean logic, as shown in examples below.
     constraints = "LabelRegex(`a.label.name`, `a.+`)"
     ```
 
+!!! tip "Constraints key limitations"
+
+    Note that `traefik.*` is a reserved label namespace and can not be used as key for custom constraints.
+
 For additional information, refer to [Restrict the Scope of Service Discovery](./overview.md#restrict-the-scope-of-service-discovery).
 
 ```yaml tab="File (YAML)"
