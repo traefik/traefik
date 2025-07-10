@@ -350,7 +350,7 @@ func TestTracing(t *testing.T) {
 				},
 			}
 
-			tracer, closer, err := NewTracing(tracingConfig)
+			tracer, closer, err := NewTracing(t.Context(), tracingConfig)
 			require.NoError(t, err)
 			t.Cleanup(func() {
 				_ = closer.Close()
@@ -402,7 +402,7 @@ func TestTracerProvider(t *testing.T) {
 	otlpConfig.SetDefaults()
 
 	config := &static.Tracing{OTLP: otlpConfig}
-	tracer, closer, err := NewTracing(config)
+	tracer, closer, err := NewTracing(t.Context(), config)
 	if err != nil {
 		t.Fatal(err)
 	}
