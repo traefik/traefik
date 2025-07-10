@@ -25,11 +25,11 @@ import (
 
 // Backend is an abstraction for tracking backend (OpenTelemetry, ...).
 type Backend interface {
-	Setup(serviceName string, sampleRate float64, resourceAttributes map[string]string) (trace.Tracer, io.Closer, error)
+	Setup(ctx context.Context, serviceName string, sampleRate float64, resourceAttributes map[string]string) (trace.Tracer, io.Closer, error)
 }
 
 // NewTracing Creates a Tracing.
-func NewTracing(conf *static.Tracing) (*Tracer, io.Closer, error) {
+func NewTracing(ctx context.Context, conf *static.Tracing) (*Tracer, io.Closer, error) {
 	var backend Backend
 
 	if conf.OTLP != nil {
@@ -44,7 +44,7 @@ func NewTracing(conf *static.Tracing) (*Tracer, io.Closer, error) {
 
 	otel.SetTextMapPropagator(autoprop.NewTextMapPropagator())
 
-	tr, closer, err := backend.Setup(conf.ServiceName, conf.SampleRate, conf.ResourceAttributes)
+	tr, closer, err := backend.Setup(ctx, conf.ServiceName, conf.SampleRate, conf.ResourceAttributes)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -82,13 +82,6 @@ func ExtractCarrierIntoContext(ctx context.Context, headers http.Header) context
 func InjectContextIntoCarrier(req *http.Request) {
 	propagator := otel.GetTextMapPropagator()
 	propagator.Inject(req.Context(), propagation.HeaderCarrier(req.Header))
-}
-
-// SetStatusErrorf flags the span as in error and log an event.
-func SetStatusErrorf(ctx context.Context, format string, args ...interface{}) {
-	if span := trace.SpanFromContext(ctx); span != nil {
-		span.SetStatus(codes.Error, fmt.Sprintf(format, args...))
-	}
 }
 
 // Span is trace.Span wrapping the Traefik TracerProvider.
