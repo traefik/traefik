@@ -90,7 +90,7 @@ Complete documentation is available at https://traefik.io`,
 }
 
 func runCmd(staticConfiguration *static.Configuration) error {
-	if err := setupLogger(staticConfiguration); err != nil {
+	if err := setupLogger(context.Background(), staticConfiguration); err != nil {
 		return fmt.Errorf("setting up logger: %w", err)
 	}
 
@@ -210,8 +210,8 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		}
 	}
 	metricsRegistry := metrics.NewMultiRegistry(metricRegistries)
-	accessLog := setupAccessLog(staticConfiguration.AccessLog)
-	tracer, tracerCloser := setupTracing(staticConfiguration.Tracing)
+	accessLog := setupAccessLog(ctx, staticConfiguration.AccessLog)
+	tracer, tracerCloser := setupTracing(ctx, staticConfiguration.Tracing)
 	observabilityMgr := middleware.NewObservabilityMgr(*staticConfiguration, metricsRegistry, semConvMetricRegistry, accessLog, tracer, tracerCloser)
 
 	// Entrypoints
@@ -586,12 +586,12 @@ func appendCertMetric(gauge gokitmetrics.Gauge, certificate *x509.Certificate) {
 	gauge.With(labels...).Set(notAfter)
 }
 
-func setupAccessLog(conf *types.AccessLog) *accesslog.Handler {
+func setupAccessLog(ctx context.Context, conf *types.AccessLog) *accesslog.Handler {
 	if conf == nil {
 		return nil
 	}
 
-	accessLoggerMiddleware, err := accesslog.NewHandler(conf)
+	accessLoggerMiddleware, err := accesslog.NewHandler(ctx, conf)
 	if err != nil {
 		log.Warn().Err(err).Msg("Unable to create access logger")
 		return nil
@@ -600,12 +600,12 @@ func setupAccessLog(conf *types.AccessLog) *accesslog.Handler {
 	return accessLoggerMiddleware
 }
 
-func setupTracing(conf *static.Tracing) (*tracing.Tracer, io.Closer) {
+func setupTracing(ctx context.Context, conf *static.Tracing) (*tracing.Tracer, io.Closer) {
 	if conf == nil {
 		return nil, nil
 	}
 
-	tracer, closer, err := tracing.NewTracing(conf)
+	tracer, closer, err := tracing.NewTracing(ctx, conf)
 	if err != nil {
 		log.Warn().Err(err).Msg("Unable to create tracer")
 		return nil, nil
