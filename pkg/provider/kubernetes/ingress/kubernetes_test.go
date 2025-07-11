@@ -2179,6 +2179,37 @@ func TestLoadConfigurationFromIngressesWithNativeLBByDefault(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "Ingress with native lb by default but service has disabled nativelb",
+			expected: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Routers: map[string]*dynamic.Router{
+						"default-global-native-lb-traefik-tchouk-bar": {
+							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
+							Service: "default-native-disabled-svc-web",
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-native-disabled-svc-web": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:           dynamic.BalancerStrategyWRR,
+								ResponseForwarding: &dynamic.ResponseForwarding{FlushInterval: dynamic.DefaultFlushInterval},
+								PassHostHeader:     pointer(true),
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.20:8080",
+									},
+									{
+										URL: "http://10.10.0.21:8080",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range testCases {

@@ -450,10 +450,7 @@ _Optional, Default=""_
 
 Defines a default docker network to use for connections to all containers.
 
-This option can be overridden on a per-container basis with the `traefik.docker.network` [routing label](../routing/providers/swarm.md#traefikdockernetwork).
-
-!!! warning
-    The Docker Swarm provider still uses the same per-container mechanism as the Docker provider, so therefore the label still uses the `docker` keyword intentionally.
+This option can be overridden on a per-container basis with the `traefik.swarm.network` [routing label](../routing/providers/swarm.md#traefikswarmnetwork).
 
 ```yaml tab="File (YAML)"
 providers:
