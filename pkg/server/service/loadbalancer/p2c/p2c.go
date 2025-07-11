@@ -43,6 +43,7 @@ type rnd interface {
 type Balancer struct {
 	wantsHealthCheck bool
 
+	// handlersMu is a mutex to protect the handlers slice, the status and the fenced maps.
 	handlersMu sync.RWMutex
 	handlers   []*namedHandler
 	// status is a record of which child services of the Balancer are healthy, keyed
@@ -50,11 +51,12 @@ type Balancer struct {
 	// created via Add, and it is later removed or added to the map as needed,
 	// through the SetStatus method.
 	status map[string]struct{}
+	// fenced is the list of terminating yet still serving child services.
+	fenced map[string]struct{}
+
 	// updaters is the list of hooks that are run (to update the Balancer
 	// parent(s)), whenever the Balancer status changes.
 	updaters []func(bool)
-	// fenced is the list of terminating yet still serving child services.
-	fenced map[string]struct{}
 
 	sticky *loadbalancer.Sticky
 
@@ -181,7 +183,10 @@ func (b *Balancer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			log.Error().Err(err).Msg("Error while getting sticky handler")
 		} else if h != nil {
-			if _, ok := b.status[h.Name]; ok {
+			b.handlersMu.RLock()
+			_, ok := b.status[h.Name]
+			b.handlersMu.RUnlock()
+			if ok {
 				if rewrite {
 					if err := b.sticky.WriteStickyCookie(rw, h.Name); err != nil {
 						log.Error().Err(err).Msg("Writing sticky cookie")

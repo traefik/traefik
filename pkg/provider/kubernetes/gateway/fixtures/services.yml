@@ -471,3 +471,82 @@ spec:
     - protocol: TCP
       port: 10000
       name: tcp-2
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoami-native-disabled
+  namespace: default
+  annotations:
+    traefik.io/service.nativelb: "false"
+spec:
+  clusterIP: 10.10.10.2
+  ports:
+    - name: web
+      protocol: TCP
+      port: 80
+      targetPort: web
+  selector:
+    app: containous
+    task: whoami
+
+---
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
+metadata:
+  name: whoami-native-disabled-abc
+  namespace: default
+  labels:
+    kubernetes.io/service-name: whoami-native-disabled
+addressType: IPv4
+ports:
+  - name: web
+    port: 80
+endpoints:
+  - addresses:
+      - 10.10.0.20
+      - 10.10.0.21
+    conditions:
+      ready: true
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoamitcp-native-disabled
+  namespace: default
+  annotations:
+    traefik.io/service.nativelb: "false"
+spec:
+  clusterIP: 10.10.10.3
+  ports:
+    - protocol: TCP
+      port: 9000
+      name: tcp-1
+    - protocol: TCP
+      port: 10000
+      name: tcp-2
+
+---
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
+metadata:
+  name: whoamitcp-native-disabled-abc
+  namespace: default
+  labels:
+    kubernetes.io/service-name: whoamitcp-native-disabled
+addressType: IPv4
+ports:
+  - name: tcp-1
+    protocol: TCP
+    port: 9000
+  - name: tcp-2
+    protocol: TCP
+    port: 10000
+endpoints:
+  - addresses:
+      - 10.10.0.30
+      - 10.10.0.31
+    conditions:
+      ready: true
