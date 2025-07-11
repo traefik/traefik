@@ -1,3 +1,9 @@
+## [v2.11.27](https://github.com/traefik/traefik/tree/v2.11.27) (2025-07-11)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.26...v2.11.27)
+
+**Bug fixes:**
+- Bump github.com/go-viper/mapstructure/v2 to v2.3.0 ([#11880](https://github.com/traefik/traefik/pull/11880) by [kevinpollet](https://github.com/kevinpollet))
+
 ## [v2.11.26](https://github.com/traefik/traefik/tree/v2.11.26) (2025-06-26)
 [All Commits](https://github.com/traefik/traefik/compare/v2.11.25...v2.11.26)
 
