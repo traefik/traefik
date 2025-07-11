@@ -23,6 +23,7 @@ type EntryPoint struct {
 	HTTP2            *HTTP2Config          `description:"HTTP/2 configuration." json:"http2,omitempty" toml:"http2,omitempty" yaml:"http2,omitempty" export:"true"`
 	HTTP3            *HTTP3Config          `description:"HTTP/3 configuration." json:"http3,omitempty" toml:"http3,omitempty" yaml:"http3,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	UDP              *UDPConfig            `description:"UDP configuration." json:"udp,omitempty" toml:"udp,omitempty" yaml:"udp,omitempty"`
+	TSNet            *TSNetConfig          `description:"Tailscale network configuration." json:"tsnet,omitempty" toml:"tsnet,omitempty" yaml:"tsnet,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	Observability    *ObservabilityConfig  `description:"Observability configuration." json:"observability,omitempty" toml:"observability,omitempty" yaml:"observability,omitempty" export:"true"`
 }
 
@@ -161,6 +162,15 @@ type UDPConfig struct {
 // SetDefaults sets the default values.
 func (u *UDPConfig) SetDefaults() {
 	u.Timeout = ptypes.Duration(DefaultUDPTimeout)
+}
+
+// TSNetConfig configures exposing an entry point over a Tailscale network (using tsnet).
+type TSNetConfig struct {
+	Hostname   string `description:"Hostname for the node; if empty, defaults to the endpoint's name" json:"hostname,omitempty" toml:"hostname,omitempty" yaml:"hostname,omitempty" export:"true"`
+	Ephemeral  bool   `description:"Register the node as ephemeral." json:"ephemeral,omitempty" toml:"ephemeral,omitempty" yaml:"ephemeral,omitempty" export:"true"`
+	AuthKey    string `description:"Auth key for the node (overrides the TS_AUTHKEY env var)." json:"authKey,omitempty" toml:"authKey,omitempty" yaml:"authKey,omitempty" export:"true"`
+	ControlURL string `description:"URL for the Tailscale control plane, when not using the default one." json:"controlUrl,omitempty" toml:"controlUrl,omitempty" yaml:"controlUrl,omitempty" export:"true"`
+	Dir        string `description:"Path where Tailscale stores its state. Set it to a persistent volume to allow Traefik to remain authenticated with Tailscale. Defaults to /var/lib/tailscale." json:"dir,omitempty" toml:"dir,omitempty" yaml:"dir,omitempty" export:"true"`
 }
 
 // ObservabilityConfig holds the observability configuration for an entry point.
