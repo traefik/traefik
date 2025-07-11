@@ -1,3 +1,12 @@
+## [v3.5.0-rc2](https://github.com/traefik/traefik/tree/v3.5.0-rc2) (2025-07-11)
+[All Commits](https://github.com/traefik/traefik/compare/v3.5.0-rc1...v3.5.0-rc2)
+
+**Bug fixes:**
+- **[logs,metrics,tracing,accesslogs,otel]** Add missing resource attributes detectors ([#11874](https://github.com/traefik/traefik/pull/11874) by [rtribotte](https://github.com/rtribotte))
+
+**Misc:**
+- Merge branch v3.4 into v3.5 ([#11898](https://github.com/traefik/traefik/pull/11898) by [kevinpollet](https://github.com/kevinpollet))
+
 ## [v3.4.4](https://github.com/traefik/traefik/tree/v3.4.4) (2025-07-11)
 [All Commits](https://github.com/traefik/traefik/compare/v3.4.3...v3.4.4)
 
