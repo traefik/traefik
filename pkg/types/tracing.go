@@ -61,10 +61,12 @@ func (c *OTelTracing) Setup(serviceName string, sampleRate float64, resourceAttr
 
 	res, err := resource.New(context.Background(),
 		resource.WithAttributes(attr...),
+		resource.WithContainer(),
 		resource.WithFromEnv(),
+		resource.WithHost(),
+		resource.WithOS(),
+		resource.WithProcess(),
 		resource.WithTelemetrySDK(),
-		resource.WithOSType(),
-		resource.WithProcessCommandArgs(),
 	)
 	if err != nil {
 		return nil, nil, fmt.Errorf("building resource: %w", err)

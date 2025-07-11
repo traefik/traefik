@@ -1,3 +1,35 @@
+## [v3.5.0-rc2](https://github.com/traefik/traefik/tree/v3.5.0-rc2) (2025-07-11)
+[All Commits](https://github.com/traefik/traefik/compare/v3.5.0-rc1...v3.5.0-rc2)
+
+**Bug fixes:**
+- **[logs,metrics,tracing,accesslogs,otel]** Add missing resource attributes detectors ([#11874](https://github.com/traefik/traefik/pull/11874) by [rtribotte](https://github.com/rtribotte))
+
+**Misc:**
+- Merge branch v3.4 into v3.5 ([#11898](https://github.com/traefik/traefik/pull/11898) by [kevinpollet](https://github.com/kevinpollet))
+
+## [v3.4.4](https://github.com/traefik/traefik/tree/v3.4.4) (2025-07-11)
+[All Commits](https://github.com/traefik/traefik/compare/v3.4.3...v3.4.4)
+
+**Bug fixes:**
+- **[k8s/gatewayapi]** Respect service.nativelb=false annotation when nativeLBByDefault is enabled ([#11847](https://github.com/traefik/traefik/pull/11847) by [sdelicata](https://github.com/sdelicata))
+- **[service]** Fix concurrent access to balancer status map in WRR and P2C strategies ([#11887](https://github.com/traefik/traefik/pull/11887) by [kevinpollet](https://github.com/kevinpollet))
+
+**Documentation:**
+- **[docker,k8s]** Add New Expose Guides ([#11760](https://github.com/traefik/traefik/pull/11760) by [sheddy-traefik](https://github.com/sheddy-traefik))
+- **[docker,k8s]** Add New Setup Guides ([#11741](https://github.com/traefik/traefik/pull/11741) by [sheddy-traefik](https://github.com/sheddy-traefik))
+- **[docker/swarm]** Fix label for overriding swarm network on container ([#11881](https://github.com/traefik/traefik/pull/11881) by [kevinpollet](https://github.com/kevinpollet))
+- **[logs,accesslogs]** Update Logs and Accesslogs Reference documentation with OTLP Options ([#11845](https://github.com/traefik/traefik/pull/11845) by [sheddy-traefik](https://github.com/sheddy-traefik))
+- Update what is Traefik page to include full Traefik Platform context ([#11885](https://github.com/traefik/traefik/pull/11885) by [tomatokoolaid](https://github.com/tomatokoolaid))
+
+**Misc:**
+- Merge branch v2.11 into v3.4 ([#11896](https://github.com/traefik/traefik/pull/11896) by [kevinpollet](https://github.com/kevinpollet))
+
+## [v2.11.27](https://github.com/traefik/traefik/tree/v2.11.27) (2025-07-11)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.26...v2.11.27)
+
+**Bug fixes:**
+- Bump github.com/go-viper/mapstructure/v2 to v2.3.0 ([#11880](https://github.com/traefik/traefik/pull/11880) by [kevinpollet](https://github.com/kevinpollet))
+
 ## [v3.5.0-rc1](https://github.com/traefik/traefik/tree/v3.5.0-rc1) (2025-06-26)
 [All Commits](https://github.com/traefik/traefik/compare/v3.4.0-rc1...v3.5.0-rc1)
 

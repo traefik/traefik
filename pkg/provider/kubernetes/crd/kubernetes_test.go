@@ -7778,7 +7778,7 @@ func TestNativeLB(t *testing.T) {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
-										Address: "10.10.0.1:8000",
+										Address: "10.10.0.1:9000",
 										Port:    "",
 									},
 								},
@@ -8376,6 +8376,52 @@ func TestGlobalNativeLB(t *testing.T) {
 			},
 		},
 		{
+			desc:              "HTTP with global native Service LB but service reference has nativeLB disabled",
+			paths:             []string{"services.yml", "with_native_service_lb_disabled.yml"},
+			NativeLBByDefault: true,
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+					Routers: map[string]*dynamic.Router{
+						"default-test-route-native-disabled-6f97418635c7e18853da": {
+							Service:  "default-test-route-native-disabled-6f97418635c7e18853da",
+							Rule:     "Host(`foo.com`)",
+							Priority: 0,
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-test-route-native-disabled-6f97418635c7e18853da": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:           dynamic.BalancerStrategyWRR,
+								ResponseForwarding: &dynamic.ResponseForwarding{FlushInterval: dynamic.DefaultFlushInterval},
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.20:80",
+									},
+									{
+										URL: "http://10.10.0.21:80",
+									},
+								},
+								PassHostHeader: pointer(true),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
 			desc:  "HTTP with native Service LB in ingressroute",
 			paths: []string{"services.yml", "with_native_service_lb.yml"},
 			expected: &dynamic.Configuration{
@@ -8448,7 +8494,51 @@ func TestGlobalNativeLB(t *testing.T) {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
-										Address: "10.10.0.1:8000",
+										Address: "10.10.0.1:9000",
+										Port:    "",
+									},
+								},
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:              "TCP with global native Service LB but service reference has nativeLB disabled",
+			paths:             []string{"tcp/services.yml", "tcp/with_native_service_lb_disabled.yml"},
+			NativeLBByDefault: true,
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+					Routers: map[string]*dynamic.TCPRouter{
+						"default-tcp.route.native-disabled-fdd3e9338e47a45efefc": {
+							Service: "default-tcp.route.native-disabled-fdd3e9338e47a45efefc",
+							Rule:    "HostSNI(`foo.com`)",
+						},
+					},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services: map[string]*dynamic.TCPService{
+						"default-tcp.route.native-disabled-fdd3e9338e47a45efefc": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "10.10.0.30:9000",
+										Port:    "",
+									},
+									{
+										Address: "10.10.0.31:9000",
 										Port:    "",
 									},
 								},
@@ -8488,7 +8578,7 @@ func TestGlobalNativeLB(t *testing.T) {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
-										Address: "10.10.0.1:8000",
+										Address: "10.10.0.1:9000",
 										Port:    "",
 									},
 								},
@@ -8578,6 +8668,49 @@ func TestGlobalNativeLB(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
+		{
+			desc:              "UDP with global native Service LB but service reference has nativeLB disabled",
+			paths:             []string{"udp/services.yml", "udp/with_native_service_lb_disabled.yml"},
+			NativeLBByDefault: true,
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers: map[string]*dynamic.UDPRouter{
+						"default-udp.route.native-disabled-0": {
+							Service: "default-udp.route.native-disabled-0",
+						},
+					},
+					Services: map[string]*dynamic.UDPService{
+						"default-udp.route.native-disabled-0": {
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{
+								Servers: []dynamic.UDPServer{
+									{
+										Address: "10.10.0.30:8000",
+										Port:    "",
+									},
+									{
+										Address: "10.10.0.31:8000",
+										Port:    "",
+									},
+								},
+							},
+						},
+					},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -8595,8 +8728,6 @@ func TestGlobalNativeLB(t *testing.T) {
 				objects := k8s.MustParseYaml(yamlContent)
 				for _, obj := range objects {
 					switch o := obj.(type) {
-					case *corev1.Service, *corev1.Endpoints, *corev1.Secret:
-						k8sObjects = append(k8sObjects, o)
 					case *traefikv1alpha1.IngressRoute:
 						crdObjects = append(crdObjects, o)
 					case *traefikv1alpha1.IngressRouteTCP:
@@ -8612,6 +8743,7 @@ func TestGlobalNativeLB(t *testing.T) {
 					case *traefikv1alpha1.TLSStore:
 						crdObjects = append(crdObjects, o)
 					default:
+						k8sObjects = append(k8sObjects, o)
 					}
 				}
 			}
