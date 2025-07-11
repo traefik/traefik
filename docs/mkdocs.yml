@@ -50,6 +50,7 @@ markdown_extensions:
   - pymdownx.inlinehilite
   - pymdownx.highlight:
       use_pygments: false # hljs is used instead of pygment for TOML highlighting support
+
   - pymdownx.smartsymbols
   - pymdownx.superfences
   - pymdownx.tabbed
@@ -72,6 +73,15 @@ nav:
         - 'Docker': 'getting-started/docker.md'
       - 'Configuration Introduction': 'getting-started/configuration-overview.md'
       - 'Frequently Asked Questions': 'getting-started/faq.md'
+  - 'Setup':
+      - 'Kubernetes': 'setup/kubernetes.md'
+      - 'Docker': 'setup/docker.md'
+      - 'Swarm': 'setup/swarm.md'
+  - 'Expose':
+      - 'Overview': 'expose/overview.md'
+      - 'Kubernetes': 'expose/kubernetes.md'
+      - 'Docker': 'expose/docker.md'
+      - 'Swarm': 'expose/swarm.md'
   - 'Observe':
       - 'Overview': 'observe/overview.md'
       - 'Logs & Access Logs': 'observe/logs-and-access-logs.md'

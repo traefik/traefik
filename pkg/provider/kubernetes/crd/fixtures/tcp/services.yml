@@ -298,10 +298,45 @@ metadata:
 
 spec:
   ports:
-    - name: myapp
-      port: 8000
+    - name: tcp
+      protocol: TCP
+      port: 9000
   type: ClusterIP
   clusterIP: 10.10.0.1
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: native-disabled-svc-tcp
+  namespace: default
+spec:
+  ports:
+    - name: tcp
+      protocol: TCP
+      port: 9000
+  type: ClusterIP
+  clusterIP: 10.10.0.1
+
+---
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
+metadata:
+  name: native-disabled-tcp-abc
+  namespace: default
+  labels:
+    kubernetes.io/service-name: native-disabled-svc-tcp
+addressType: IPv4
+ports:
+  - name: tcp
+    protocol: TCP
+    port: 9000
+endpoints:
+  - addresses:
+      - 10.10.0.30
+      - 10.10.0.31
+    conditions:
+      ready: true
 
 ---
 apiVersion: v1

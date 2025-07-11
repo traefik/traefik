@@ -1,0 +1,53 @@
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: global-native-lb
+  namespace: default
+spec:
+  rules:
+  - host: traefik.tchouk
+    http:
+      paths:
+      - path: /bar
+        backend:
+          service:
+            name: native-disabled-svc
+            port:
+              name: web
+              number: 8080
+        pathType: Prefix
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: native-disabled-svc
+  namespace: default
+  annotations:
+    traefik.ingress.kubernetes.io/service.nativelb: "false"
+spec:
+  ports:
+    - name: web
+      port: 8080
+  clusterIP: 10.0.0.1
+  type: ClusterIP
+  externalName: traefik.wtf
+
+---
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
+metadata:
+  name: native-disabled-svc-abc
+  namespace: default
+  labels:
+    kubernetes.io/service-name: native-disabled-svc
+addressType: IPv4
+ports:
+  - name: web
+    port: 8080
+endpoints:
+  - addresses:
+      - 10.10.0.20
+      - 10.10.0.21
+    conditions:
+      ready: true
