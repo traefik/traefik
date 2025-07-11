@@ -11,6 +11,7 @@ import (
 	"github.com/containous/alice"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
+	traefikcontext "github.com/traefik/traefik/v3/pkg/context"
 	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
 	"github.com/traefik/traefik/v3/pkg/middlewares/denyrouterrecursion"
@@ -215,7 +216,10 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 		return nil, err
 	}
 
-	mHandler := m.middlewaresBuilder.BuildChain(ctx, router.Middlewares)
+	// Add router name and service name to context for middleware builders
+	ctxWithRouter := traefikcontext.AddRouterInContext(ctx, routerName)
+	ctxWithService := traefikcontext.AddServiceInContext(ctxWithRouter, router.Service)
+	mHandler := m.middlewaresBuilder.BuildChain(ctxWithService, router.Middlewares)
 
 	chain := alice.New()
 
