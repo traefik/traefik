@@ -87,6 +87,7 @@ nav:
       - 'Logs & Access Logs': 'observe/logs-and-access-logs.md'
       - 'Metrics': 'observe/metrics.md'
       - 'Tracing': 'observe/tracing.md'
+  - 'Extend': 'extend/extend-traefik.md'
   - 'Configuration Discovery':
       - 'Overview': 'providers/overview.md'
       - 'Docker': 'providers/docker.md'
