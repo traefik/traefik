@@ -2,7 +2,6 @@ package observability
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -32,10 +31,6 @@ type semConvServerMetrics struct {
 // SemConvServerMetricsHandler return the alice.Constructor for semantic conventions servers metrics.
 func SemConvServerMetricsHandler(ctx context.Context, semConvMetricRegistry *metrics.SemConvMetricsRegistry) alice.Constructor {
 	return func(next http.Handler) (http.Handler, error) {
-		if next == nil {
-			return nil, errors.New("next handler is nil for SemConvServerMetrics middleware")
-		}
-
 		return newServerMetricsSemConv(ctx, semConvMetricRegistry, next), nil
 	}
 }

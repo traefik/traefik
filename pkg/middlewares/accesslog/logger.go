@@ -2,7 +2,6 @@ package accesslog
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -74,10 +73,6 @@ type Handler struct {
 // WrapHandler Wraps access log handler into an Alice Constructor.
 func WrapHandler(handler *Handler) alice.Constructor {
 	return func(next http.Handler) (http.Handler, error) {
-		if next == nil {
-			return nil, errors.New("next handler is nil for AccessLog middleware")
-		}
-
 		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 			if handler == nil {
 				next.ServeHTTP(rw, req)
