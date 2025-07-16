@@ -79,7 +79,7 @@ func WrapHandler(handler *Handler) alice.Constructor {
 }
 
 // NewHandler creates a new Handler.
-func NewHandler(config *types.AccessLog) (*Handler, error) {
+func NewHandler(ctx context.Context, config *types.AccessLog) (*Handler, error) {
 	var file io.WriteCloser = noopCloser{os.Stdout}
 	if len(config.FilePath) > 0 {
 		f, err := openAccessLogFile(config.FilePath)
@@ -110,7 +110,7 @@ func NewHandler(config *types.AccessLog) (*Handler, error) {
 	}
 
 	if config.OTLP != nil {
-		otelLoggerProvider, err := config.OTLP.NewLoggerProvider()
+		otelLoggerProvider, err := config.OTLP.NewLoggerProvider(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("setting up OpenTelemetry logger provider: %w", err)
 		}

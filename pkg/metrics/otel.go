@@ -207,14 +207,18 @@ func newOpenTelemetryMeterProvider(ctx context.Context, config *types.OTLP) (*sd
 	}
 
 	res, err := resource.New(ctx,
-		resource.WithAttributes(semconv.ServiceNameKey.String(config.ServiceName)),
-		resource.WithAttributes(semconv.ServiceVersionKey.String(version.Version)),
 		resource.WithContainer(),
-		resource.WithFromEnv(),
 		resource.WithHost(),
 		resource.WithOS(),
 		resource.WithProcess(),
 		resource.WithTelemetrySDK(),
+		resource.WithDetectors(types.KubernetesDetector{}),
+		resource.WithAttributes(
+			semconv.ServiceName(config.ServiceName),
+			semconv.ServiceVersion(version.Version),
+		),
+		// Use the environment variables to allow overriding above resource attributes.
+		resource.WithFromEnv(),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("building resource: %w", err)

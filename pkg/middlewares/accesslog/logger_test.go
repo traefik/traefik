@@ -84,7 +84,7 @@ func TestOTelAccessLog(t *testing.T) {
 			},
 		},
 	}
-	logHandler, err := NewHandler(config)
+	logHandler, err := NewHandler(t.Context(), config)
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		err := logHandler.Close()
@@ -129,7 +129,7 @@ func TestLogRotation(t *testing.T) {
 	rotatedFileName := fileName + ".rotated"
 
 	config := &types.AccessLog{FilePath: fileName, Format: CommonFormat}
-	logHandler, err := NewHandler(config)
+	logHandler, err := NewHandler(t.Context(), config)
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		err := logHandler.Close()
@@ -265,7 +265,7 @@ func TestLoggerHeaderFields(t *testing.T) {
 				Fields:   &test.accessLogFields,
 			}
 
-			logger, err := NewHandler(config)
+			logger, err := NewHandler(t.Context(), config)
 			require.NoError(t, err)
 			t.Cleanup(func() {
 				err := logger.Close()
@@ -954,7 +954,7 @@ func captureStdout(t *testing.T) (out *os.File, restoreStdout func()) {
 
 func doLoggingTLSOpt(t *testing.T, config *types.AccessLog, enableTLS, tracing bool) {
 	t.Helper()
-	logger, err := NewHandler(config)
+	logger, err := NewHandler(t.Context(), config)
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		err := logger.Close()
@@ -1043,7 +1043,7 @@ func logWriterTestHandlerFunc(rw http.ResponseWriter, r *http.Request) {
 func doLoggingWithAbortedStream(t *testing.T, config *types.AccessLog) {
 	t.Helper()
 
-	logger, err := NewHandler(config)
+	logger, err := NewHandler(t.Context(), config)
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		err := logger.Close()
