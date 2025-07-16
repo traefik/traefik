@@ -83,6 +83,9 @@ func TestSemConvServerMetrics(t *testing.T) {
 			handler, err = capture.Wrap(handler)
 			require.NoError(t, err)
 
+			// Injection of the observability variables in the request context.
+			handler = WithAccessLogEnabledHandler(handler, true)
+
 			handler.ServeHTTP(rw, req)
 
 			got := metricdata.ResourceMetrics{}
