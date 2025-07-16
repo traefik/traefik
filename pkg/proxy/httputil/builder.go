@@ -38,17 +38,15 @@ func NewProxyBuilder(transportManager TransportManager, semConvMetricsRegistry *
 func (r *ProxyBuilder) Update(_ map[string]*dynamic.ServersTransport) {}
 
 // Build builds a new httputil.ReverseProxy with the given configuration.
-func (r *ProxyBuilder) Build(cfgName string, targetURL *url.URL, shouldObserve, passHostHeader, preservePath bool, flushInterval time.Duration) (http.Handler, error) {
+func (r *ProxyBuilder) Build(cfgName string, targetURL *url.URL, passHostHeader, preservePath bool, flushInterval time.Duration) (http.Handler, error) {
 	roundTripper, err := r.transportManager.GetRoundTripper(cfgName)
 	if err != nil {
 		return nil, fmt.Errorf("getting RoundTripper: %w", err)
 	}
 
-	if shouldObserve {
-		// Wrapping the roundTripper with the Tracing roundTripper,
-		// to handle the reverseProxy client span creation.
-		roundTripper = newObservabilityRoundTripper(r.semConvMetricsRegistry, roundTripper)
-	}
+	// Wrapping the roundTripper with the Tracing roundTripper,
+	// to create, if necessary, the reverseProxy client span and the semConv client metric.
+	roundTripper = newObservabilityRoundTripper(r.semConvMetricsRegistry, roundTripper)
 
 	return buildSingleHostProxy(targetURL, passHostHeader, preservePath, flushInterval, roundTripper, r.bufferPool), nil
 }
