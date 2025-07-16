@@ -101,13 +101,3 @@ services:
       traefik.http.routers.ping.entryPoints: ping
       traefik.http.routers.ping.rule: PathPrefix(`/ping`)
       traefik.http.routers.ping.service: ping@internal
-
-      traefik.http.routers.ping-error.entryPoints: ping
-      traefik.http.routers.ping-error.rule: PathPrefix(`/ping-error`)
-      traefik.http.routers.ping-error.middlewares: errors, basicauth
-      traefik.http.routers.ping-error.service: ping@internal
-      traefik.http.middlewares.basicauth.basicauth.users: "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"
-      traefik.http.middlewares.errors.errors.status: 401
-      traefik.http.middlewares.errors.errors.service: service3
-      traefik.http.middlewares.errors.errors.query: /
-      traefik.http.services.service3.loadbalancer.server.port: 80
