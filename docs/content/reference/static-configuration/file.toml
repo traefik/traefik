@@ -80,8 +80,9 @@
       timeout = "42s"
     [entryPoints.EntryPoint0.observability]
       accessLogs = true
-      tracing = true
       metrics = true
+      tracing = true
+      traceVerbosity = "foobar"
 
 [providers]
   providersThrottleDuration = "42s"
