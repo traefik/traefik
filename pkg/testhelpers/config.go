@@ -2,6 +2,7 @@ package testhelpers
 
 import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 // BuildConfiguration is a helper to create a configuration.
@@ -57,9 +58,10 @@ func WithServiceName(serviceName string) func(*dynamic.Router) {
 func WithObservability() func(*dynamic.Router) {
 	return func(r *dynamic.Router) {
 		r.Observability = &dynamic.RouterObservabilityConfig{
-			AccessLogs: pointer(true),
-			Metrics:    pointer(true),
-			Tracing:    pointer(true),
+			AccessLogs:     pointer(true),
+			Metrics:        pointer(true),
+			Tracing:        pointer(true),
+			TraceVerbosity: types.MinimalVerbosity,
 		}
 	}
 }

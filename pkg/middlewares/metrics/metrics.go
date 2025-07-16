@@ -2,6 +2,7 @@ package metrics
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"slices"
 	"strconv"
@@ -96,6 +97,14 @@ func NewServiceMiddleware(ctx context.Context, next http.Handler, registry metri
 // WrapEntryPointHandler Wraps metrics entrypoint to alice.Constructor.
 func WrapEntryPointHandler(ctx context.Context, registry metrics.Registry, entryPointName string) alice.Constructor {
 	return func(next http.Handler) (http.Handler, error) {
+		if next == nil {
+			return nil, errors.New("next handler is nil for entrypoint metrics middleware")
+		}
+
+		if registry == nil || !registry.IsEpEnabled() {
+			return next, nil
+		}
+
 		return NewEntryPointMiddleware(ctx, next, registry, entryPointName), nil
 	}
 }
@@ -103,6 +112,14 @@ func WrapEntryPointHandler(ctx context.Context, registry metrics.Registry, entry
 // WrapRouterHandler Wraps metrics router to alice.Constructor.
 func WrapRouterHandler(ctx context.Context, registry metrics.Registry, routerName string, serviceName string) alice.Constructor {
 	return func(next http.Handler) (http.Handler, error) {
+		if next == nil {
+			return nil, errors.New("next handler is nil for router metrics middleware")
+		}
+
+		if registry == nil || !registry.IsRouterEnabled() {
+			return next, nil
+		}
+
 		return NewRouterMiddleware(ctx, next, registry, routerName, serviceName), nil
 	}
 }
@@ -110,6 +127,14 @@ func WrapRouterHandler(ctx context.Context, registry metrics.Registry, routerNam
 // WrapServiceHandler Wraps metrics service to alice.Constructor.
 func WrapServiceHandler(ctx context.Context, registry metrics.Registry, serviceName string) alice.Constructor {
 	return func(next http.Handler) (http.Handler, error) {
+		if next == nil {
+			return nil, errors.New("next handler is nil for service metrics middleware")
+		}
+
+		if registry == nil || !registry.IsSvcEnabled() {
+			return next, nil
+		}
+
 		return NewServiceMiddleware(ctx, next, registry, serviceName), nil
 	}
 }
@@ -119,7 +144,7 @@ func (m *metricsMiddleware) GetTracingInformation() (string, string, trace.SpanK
 }
 
 func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	if val := req.Context().Value(observability.DisableMetricsKey); val != nil {
+	if !observability.MetricsEnabled(req.Context()) {
 		m.next.ServeHTTP(rw, req)
 		return
 	}

@@ -23,6 +23,29 @@ import (
 	"google.golang.org/grpc/encoding/gzip"
 )
 
+type TracingVerbosity string
+
+const (
+	MinimalVerbosity  TracingVerbosity = "minimal"
+	DetailedVerbosity TracingVerbosity = "detailed"
+)
+
+func (v TracingVerbosity) Allows(verbosity TracingVerbosity) bool {
+	switch v {
+	case MinimalVerbosity:
+		return verbosity == MinimalVerbosity
+	case DetailedVerbosity:
+		switch verbosity {
+		case MinimalVerbosity, DetailedVerbosity:
+			return true
+		default:
+			return false
+		}
+	default:
+		return false
+	}
+}
+
 // OTelTracing provides configuration settings for the open-telemetry tracer.
 type OTelTracing struct {
 	GRPC *OTelGRPC `description:"gRPC configuration for the OpenTelemetry collector." json:"grpc,omitempty" toml:"grpc,omitempty" yaml:"grpc,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
