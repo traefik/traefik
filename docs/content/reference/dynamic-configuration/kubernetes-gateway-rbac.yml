@@ -11,6 +11,14 @@ rules:
     verbs:
       - list
       - watch
+  # The pods get right is needed to inject k8s.pod.uid and k8s.pod.name in OTel attributes.
+  # When OTel tracing/logs/metrics are not enabled, this rule is not needed.
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs:
+      - get
   - apiGroups:
       - ""
     resources:
