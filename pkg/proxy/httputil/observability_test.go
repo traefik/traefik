@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/metrics"
+	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"go.opentelemetry.io/otel/attribute"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
@@ -76,6 +77,8 @@ func TestObservabilityRoundTripper_metrics(t *testing.T) {
 			req.RemoteAddr = "10.0.0.1:1234"
 			req.Header.Set("User-Agent", "rt-test")
 			req.Header.Set("X-Forwarded-Proto", "http")
+
+			req = req.WithContext(observability.WithSemConvMetricsEnabled(req.Context(), true))
 
 			ort := newObservabilityRoundTripper(semConvMetricRegistry, mockRoundTripper{statusCode: test.statusCode})
 			_, err = ort.RoundTrip(req)
