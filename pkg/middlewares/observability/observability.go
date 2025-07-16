@@ -12,11 +12,11 @@ import (
 type contextKey int
 
 const (
-	accessLogsKey     contextKey = iota
-	metricsKey        contextKey = iota
-	semConvMetricsKey contextKey = iota
-	minimalTracing    contextKey = iota
-	detailedTracing   contextKey = iota
+	accessLogsKey contextKey = iota
+	metricsKey
+	semConvMetricsKey
+	minimalTracingKey
+	detailedTracingKey
 )
 
 // AccessLogsEnabled returns whether metrics are enabled.
@@ -81,7 +81,7 @@ func WithSemConvMetricsEnabledHandler(next http.Handler, enabled bool) http.Hand
 
 // MinimalTraceEnabled returns whether minimal tracing is enabled.
 func MinimalTraceEnabled(ctx context.Context) bool {
-	if enabled, ok := ctx.Value(minimalTracing).(bool); ok {
+	if enabled, ok := ctx.Value(minimalTracingKey).(bool); ok {
 		return enabled
 	}
 
@@ -92,14 +92,14 @@ func MinimalTraceEnabled(ctx context.Context) bool {
 // This is used for testing purposes to control whether minimal tracing is enabled or not.
 func WithMinimalTraceEnabledHandler(next http.Handler, enabled bool) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		ctx := context.WithValue(req.Context(), minimalTracing, enabled)
+		ctx := context.WithValue(req.Context(), minimalTracingKey, enabled)
 		next.ServeHTTP(rw, req.WithContext(ctx))
 	})
 }
 
 // DetailedTraceEnabled returns whether detailed tracing is enabled.
 func DetailedTraceEnabled(ctx context.Context) bool {
-	if enabled, ok := ctx.Value(detailedTracing).(bool); ok {
+	if enabled, ok := ctx.Value(detailedTracingKey).(bool); ok {
 		return enabled
 	}
 
@@ -110,7 +110,7 @@ func DetailedTraceEnabled(ctx context.Context) bool {
 // This is used for testing purposes to control whether detailed tracing is enabled or not.
 func WithDetailedTraceEnabledHandler(next http.Handler, enabled bool) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		ctx := context.WithValue(req.Context(), detailedTracing, enabled)
+		ctx := context.WithValue(req.Context(), detailedTracingKey, enabled)
 		next.ServeHTTP(rw, req.WithContext(ctx))
 	})
 }

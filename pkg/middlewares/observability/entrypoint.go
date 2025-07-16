@@ -2,7 +2,6 @@ package observability
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"time"
 
@@ -29,10 +28,6 @@ type entryPointTracing struct {
 // EntryPointHandler Wraps tracing to alice.Constructor.
 func EntryPointHandler(ctx context.Context, tracer *tracing.Tracer, entryPointName string) alice.Constructor {
 	return func(next http.Handler) (http.Handler, error) {
-		if next == nil {
-			return nil, errors.New("next handler is nil for EntryPoint tracing middleware")
-		}
-
 		return newEntryPoint(ctx, tracer, entryPointName, next), nil
 	}
 }

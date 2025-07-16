@@ -131,7 +131,7 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string, t
 			}
 		}
 
-		defaultHandler, err := m.observabilityMgr.BuildEPChain(ctx, entryPointName, false, epObsConfig).Then(BuildDefaultHTTPRouter())
+		defaultHandler, err := m.observabilityMgr.BuildEPChain(ctx, entryPointName, false, epObsConfig).Then(http.NotFoundHandler())
 		if err != nil {
 			logger.Error().Err(err).Send()
 			continue
@@ -262,9 +262,4 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 	}
 
 	return chain.Extend(*mHandler).Then(sHandler)
-}
-
-// BuildDefaultHTTPRouter creates a default HTTP router.
-func BuildDefaultHTTPRouter() http.Handler {
-	return http.NotFoundHandler()
 }
