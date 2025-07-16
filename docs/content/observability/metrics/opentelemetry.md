@@ -143,7 +143,7 @@ metrics:
 
 _Optional, Default="traefik"_
 
-OTEL service name to use.
+Defines the service name resource attribute.
 
 ```yaml tab="File (YAML)"
 metrics:
@@ -159,6 +159,31 @@ metrics:
 
 ```bash tab="CLI"
 --metrics.otlp.serviceName=name
+```
+#### `ressourceAttributes`
+
+_Optional, Default=empty_
+
+Defines additional resource attributes to be sent to the collector.
+
+```yaml tab="File (YAML)"
+metrics:
+  otlp:
+    resourceAttributes:
+      attr1: foo
+      attr2: bar
+```
+
+```toml tab="File (TOML)"
+[metrics]
+  [metrics.otlp.resourceAttributes]
+    attr1 = "foo"
+    attr2 = "bar"
+```
+
+```bash tab="CLI"
+--metrics.otlp.resourceAttributes.attr1=foo
+--metrics.otlp.resourceAttributes.attr2=bar
 ```
 
 ### HTTP configuration
