@@ -91,7 +91,7 @@ TLS key
 Defines additional resource attributes (key:value).
 
 `--accesslog.otlp.servicename`:  
-Set the name for this service. (Default: ```traefik```)
+Defines the service name resource attribute. (Default: ```traefik```)
 
 `--api`:  
 Enable api/dashboard. (Default: ```false```)
@@ -478,7 +478,7 @@ TLS key
 Defines additional resource attributes (key:value).
 
 `--log.otlp.servicename`:  
-Set the name for this service. (Default: ```traefik```)
+Defines the service name resource attribute. (Default: ```traefik```)
 
 `--metrics.addinternals`:  
 Enables metrics for internal services (ping, dashboard, etc...). (Default: ```false```)
@@ -597,8 +597,11 @@ TLS key
 `--metrics.otlp.pushinterval`:  
 Period between calls to collect a checkpoint. (Default: ```10```)
 
+`--metrics.otlp.resourceattributes.<name>`:  
+Defines additional resource attributes (key:value).
+
 `--metrics.otlp.servicename`:  
-OTEL service name to use. (Default: ```traefik```)
+Defines the service name resource attribute. (Default: ```traefik```)
 
 `--metrics.prometheus`:  
 Prometheus metrics exporter type. (Default: ```false```)
@@ -1411,4 +1414,4 @@ Query params to not redact.
 Sets the rate between 0.0 and 1.0 of requests to trace. (Default: ```1.000000```)
 
 `--tracing.servicename`:  
-Sets the name for this service. (Default: ```traefik```)
+Defines the service name resource attribute. (Default: ```traefik```)

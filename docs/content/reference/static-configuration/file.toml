@@ -387,6 +387,9 @@
       [metrics.otlp.http.headers]
         name0 = "foobar"
         name1 = "foobar"
+    [metrics.otlp.resourceAttributes]
+      name0 = "foobar"
+      name1 = "foobar"
 
 [ping]
   entryPoint = "foobar"

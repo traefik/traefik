@@ -340,6 +340,54 @@ accesslog:
 
     The OpenTelemetry Logger exporter will export access logs to the collector using HTTPS by default to https://localhost:4318/v1/logs, see the [gRPC Section](#grpc-configuration) to use gRPC.
 
+### `serviceName`
+
+_Optional, Default="traefik"_
+
+Defines the service name resource attribute.
+
+```yaml tab="File (YAML)"
+accesslog:
+  otlp:
+    serviceName: name
+```
+
+```toml tab="File (TOML)"
+[accesslog]
+  [accesslog.otlp]
+    serviceName = "name"
+```
+
+```bash tab="CLI"
+--accesslog.otlp.serviceName=name
+```
+
+### `ressourceAttributes`
+
+_Optional, Default=empty_
+
+Defines additional resource attributes to be sent to the collector.
+
+```yaml tab="File (YAML)"
+accesslog:
+  otlp:
+    resourceAttributes:
+      attr1: foo
+      attr2: bar
+```
+
+```toml tab="File (TOML)"
+[accesslog]
+  [accesslog.otlp.resourceAttributes]
+    attr1 = "foo"
+    attr2 = "bar"
+```
+
+```bash tab="CLI"
+--accesslog.otlp.resourceAttributes.attr1=foo
+--accesslog.otlp.resourceAttributes.attr2=bar
+```
+
 ### HTTP configuration
 
 _Optional_

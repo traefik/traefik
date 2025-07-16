@@ -60,29 +60,31 @@ metrics:
 
 ### Configuration Options
 
-| Field     | Description | Default | Required |
-|:-----------|---------------|:--------|:---------|
-| `metrics.addInternals` | Enables metrics for internal resources (e.g.: `ping@internal`). | false      | No      |
-| `metrics.otlp.addEntryPointsLabels` | Enable metrics on entry points. | true      | No      |
-| `metrics.otlp.addRoutersLabels` | Enable metrics on routers. | false      | No      |
-| `metrics.otlp.addServicesLabels` | Enable metrics on services.| true      | No      |
-| `metrics.otlp.explicitBoundaries` | Explicit boundaries for Histogram data points. | ".005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10"   | No      |
-| `metrics.otlp.pushInterval` | Interval at which metrics are sent to the OpenTelemetry Collector. | 10s      | No      |
-| `metrics.otlp.http` | This instructs the exporter to send the metrics to the OpenTelemetry Collector using HTTP.<br /> Setting the sub-options with their default values. | null/false      | No      |
-| `metrics.otlp.http.endpoint` | URL of the OpenTelemetry Collector to send metrics to.<br /> Format="`<scheme>://<host>:<port><path>`" | "http://localhost:4318/v1/metrics"      | Yes      |
-| `metrics.otlp.http.headers` | Additional headers sent with metrics by the exporter to the OpenTelemetry Collector. |  -  | No      |
-| `metrics.otlp.http.tls.ca` | Path to the certificate authority used for the secure connection to the OpenTelemetry Collector,<br />it defaults to the system bundle. | ""  | No      |
-| `metrics.otlp.http.tls.cert` | Path to the public certificate used for the secure connection to the OpenTelemetry Collector.<br />When using this option, setting the `key` option is required. | ""      | No      |
-| `metrics.otlp.http.tls.key` | This instructs the exporter to send the metrics to the OpenTelemetry Collector using HTTP.<br /> Setting the sub-options with their default values. | null/false     | No      |
-| `metrics.otlp.http.tls.insecureskipverify` | Allow the TLS connection to the OpenTelemetry Collector accepts any certificate presented by the server regardless of the hostnames it covers.  | false | Yes      |
-| `metrics.otlp.grpc` | This instructs the exporter to send metrics to the OpenTelemetry Collector using gRPC. | null/false | No      |
-| `metrics.otlp.grpc.endpoint` | Address of the OpenTelemetry Collector to send metrics to.<br /> Format="`<host>:<port>`" | "localhost:4317"      | Yes      |
-| `metrics.otlp.grpc.headers` | Additional headers sent with metrics by the exporter to the OpenTelemetry Collector. |    -   | No      |
-| `metrics.otlp.http.grpc.insecure` |Allows exporter to send metrics to the OpenTelemetry Collector without using a secured protocol.  | false | Yes      |
-| `metrics.otlp.grpc.tls.ca` | Path to the certificate authority used for the secure connection to the OpenTelemetry Collector,<br />it defaults to the system bundle. | -  | No      |
-| `metrics.otlp.grpc.tls.cert` | Path to the public certificate used for the secure connection to the OpenTelemetry Collector.<br />When using this option, setting the `key` option is required. | -  | No      |
-| `metrics.otlp.grpc.tls.key` | This instructs the exporter to send the metrics to the OpenTelemetry Collector using HTTP.<br /> Setting the sub-options with their default values. | null/false     | No      |
-| `metrics.otlp.grpc.tls.insecureskipverify` | Allow the TLS connection to the OpenTelemetry Collector accepts any certificate presented by the server regardless of the hostnames it covers.  | false | Yes      |
+| Field                                      | Description                                                                                                                                                      | Default                                            | Required |
+|:-------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------|:---------------------------------------------------|:---------|
+| `metrics.addInternals`                     | Enables metrics for internal resources (e.g.: `ping@internal`).                                                                                                  | false                                              | No       |
+| `metrics.otlp.serviceName`                 | Defines the service name resource attribute.                                                                                                                     | "traefik"                                          | No       |
+| `metrics.otlp.resourceAttributes`          | Defines additional resource attributes to be sent to the collector.                                                                                              | []                                                 | No       |
+| `metrics.otlp.addEntryPointsLabels`        | Enable metrics on entry points.                                                                                                                                  | true                                               | No       |
+| `metrics.otlp.addRoutersLabels`            | Enable metrics on routers.                                                                                                                                       | false                                              | No       |
+| `metrics.otlp.addServicesLabels`           | Enable metrics on services.                                                                                                                                      | true                                               | No       |
+| `metrics.otlp.explicitBoundaries`          | Explicit boundaries for Histogram data points.                                                                                                                   | ".005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10" | No       |
+| `metrics.otlp.pushInterval`                | Interval at which metrics are sent to the OpenTelemetry Collector.                                                                                               | 10s                                                | No       |
+| `metrics.otlp.http`                        | This instructs the exporter to send the metrics to the OpenTelemetry Collector using HTTP.<br /> Setting the sub-options with their default values.              | null/false                                         | No       |
+| `metrics.otlp.http.endpoint`               | URL of the OpenTelemetry Collector to send metrics to.<br /> Format="`<scheme>://<host>:<port><path>`"                                                           | "http://localhost:4318/v1/metrics"                 | Yes      |
+| `metrics.otlp.http.headers`                | Additional headers sent with metrics by the exporter to the OpenTelemetry Collector.                                                                             | -                                                  | No       |
+| `metrics.otlp.http.tls.ca`                 | Path to the certificate authority used for the secure connection to the OpenTelemetry Collector,<br />it defaults to the system bundle.                          | ""                                                 | No       |
+| `metrics.otlp.http.tls.cert`               | Path to the public certificate used for the secure connection to the OpenTelemetry Collector.<br />When using this option, setting the `key` option is required. | ""                                                 | No       |
+| `metrics.otlp.http.tls.key`                | This instructs the exporter to send the metrics to the OpenTelemetry Collector using HTTP.<br /> Setting the sub-options with their default values.              | null/false                                         | No       |
+| `metrics.otlp.http.tls.insecureskipverify` | Allow the TLS connection to the OpenTelemetry Collector accepts any certificate presented by the server regardless of the hostnames it covers.                   | false                                              | Yes      |
+| `metrics.otlp.grpc`                        | This instructs the exporter to send metrics to the OpenTelemetry Collector using gRPC.                                                                           | null/false                                         | No       |
+| `metrics.otlp.grpc.endpoint`               | Address of the OpenTelemetry Collector to send metrics to.<br /> Format="`<host>:<port>`"                                                                        | "localhost:4317"                                   | Yes      |
+| `metrics.otlp.grpc.headers`                | Additional headers sent with metrics by the exporter to the OpenTelemetry Collector.                                                                             | -                                                  | No       |
+| `metrics.otlp.http.grpc.insecure`          | Allows exporter to send metrics to the OpenTelemetry Collector without using a secured protocol.                                                                 | false                                              | Yes      |
+| `metrics.otlp.grpc.tls.ca`                 | Path to the certificate authority used for the secure connection to the OpenTelemetry Collector,<br />it defaults to the system bundle.                          | -                                                  | No       |
+| `metrics.otlp.grpc.tls.cert`               | Path to the public certificate used for the secure connection to the OpenTelemetry Collector.<br />When using this option, setting the `key` option is required. | -                                                  | No       |
+| `metrics.otlp.grpc.tls.key`                | This instructs the exporter to send the metrics to the OpenTelemetry Collector using HTTP.<br /> Setting the sub-options with their default values.              | null/false                                         | No       |
+| `metrics.otlp.grpc.tls.insecureskipverify` | Allow the TLS connection to the OpenTelemetry Collector accepts any certificate presented by the server regardless of the hostnames it covers.                   | false                                              | Yes      |
 
 ## Vendors
 
