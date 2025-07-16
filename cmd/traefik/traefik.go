@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"crypto/x509"
-	"encoding/json"
 	"fmt"
 	"io"
 	stdlog "log"
@@ -40,6 +39,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/provider/traefik"
 	"github.com/traefik/traefik/v3/pkg/proxy"
 	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
+	"github.com/traefik/traefik/v3/pkg/redactor"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/server"
 	"github.com/traefik/traefik/v3/pkg/server/middleware"
@@ -104,12 +104,11 @@ func runCmd(staticConfiguration *static.Configuration) error {
 	log.Info().Str("version", version.Version).
 		Msgf("Traefik version %s built on %s", version.Version, version.BuildDate)
 
-	jsonConf, err := json.Marshal(staticConfiguration)
+	redactedStaticConfiguration, err := redactor.RemoveCredentials(staticConfiguration)
 	if err != nil {
 		log.Error().Err(err).Msg("Could not marshal static configuration")
-		log.Debug().Interface("staticConfiguration", staticConfiguration).Msg("Static configuration loaded [struct]")
 	} else {
-		log.Debug().RawJSON("staticConfiguration", jsonConf).Msg("Static configuration loaded [json]")
+		log.Debug().Str("staticConfiguration", redactedStaticConfiguration).Msg("Static configuration loaded")
 	}
 
 	if staticConfiguration.Global.CheckNewVersion {
