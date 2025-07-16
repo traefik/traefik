@@ -178,7 +178,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, entryPointName str
 			config = *routerConfig.Observability
 		}
 
-		observabilityChain := m.observabilityMgr.BuildEPChain(ctxRouter, entryPointName, strings.HasSuffix(routerName, "@internal"), config)
+		observabilityChain := m.observabilityMgr.BuildEPChain(ctxRouter, entryPointName, strings.HasSuffix(routerConfig.Service, "@internal"), config)
 		handler, err = observabilityChain.Then(handler)
 		if err != nil {
 			routerConfig.AddError(err, true)
