@@ -237,6 +237,7 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 		return nil, errors.New("the service is missing on the router")
 	}
 
+	// FIXME ensure qualifying the service name is correct. This have impact on the runtime configuration.
 	router.Service = provider.GetQualifiedName(ctx, router.Service)
 
 	chain := alice.New()
