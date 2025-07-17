@@ -22,7 +22,7 @@
 			"entryPoints": [
 				"web"
 			],
-			"service": "default-test-route-6b204d94623b3df4370c@kubernetescrd",
+			"service": "default-test-route-6b204d94623b3df4370c",
 			"rule": "Host(`foo.com`) \u0026\u0026 PathPrefix(`/bar`)",
 			"priority": 12,
 			"tls": {
@@ -46,7 +46,7 @@
 			"middlewares": [
 				"default-mychain@kubernetescrd"
 			],
-			"service": "default-test2-route-23c7f4c450289ee29016@kubernetescrd",
+			"service": "default-test2-route-23c7f4c450289ee29016",
 			"rule": "Host(`foo.com`) \u0026\u0026 PathPrefix(`/tobestripped`)",
 			"priority": 46,
 			"observability": {
@@ -64,7 +64,7 @@
 			"entryPoints": [
 				"web"
 			],
-			"service": "default-wrr1@kubernetescrd",
+			"service": "default-wrr1",
 			"rule": "Host(`foo.com`) \u0026\u0026 PathPrefix(`/wrr1`)",
 			"priority": 38,
 			"observability": {
@@ -82,7 +82,7 @@
 			"entryPoints": [
 				"web"
 			],
-			"service": "default-testst-route-60ad45fcb5fc1f5f3629@kubernetescrd",
+			"service": "default-testst-route-60ad45fcb5fc1f5f3629",
 			"rule": "Host(`foo.com`) \u0026\u0026 PathPrefix(`/serverstransport`)",
 			"priority": 50,
 			"observability": {
@@ -100,7 +100,7 @@
 			"entryPoints": [
 				"web"
 			],
-			"service": "other-ns-wrr3@kubernetescrd",
+			"service": "other-ns-wrr3",
 			"rule": "Host(`foo.com`) \u0026\u0026 PathPrefix(`/c`)",
 			"priority": 35,
 			"observability": {

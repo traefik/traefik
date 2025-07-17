@@ -46,7 +46,7 @@
 			"entryPoints": [
 				"web"
 			],
-			"service": "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-1c0cf64bde37d9d0df06-wrr@kubernetesgateway",
+			"service": "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-1c0cf64bde37d9d0df06-wrr",
 			"rule": "Host(`foo.com`) \u0026\u0026 Path(`/bar`)",
 			"ruleSyntax": "default",
 			"priority": 100008,
@@ -65,7 +65,7 @@
 			"entryPoints": [
 				"websecure"
 			],
-			"service": "httproute-default-http-app-1-gw-default-my-https-gateway-ep-websecure-0-1c0cf64bde37d9d0df06-wrr@kubernetesgateway",
+			"service": "httproute-default-http-app-1-gw-default-my-https-gateway-ep-websecure-0-1c0cf64bde37d9d0df06-wrr",
 			"rule": "Host(`foo.com`) \u0026\u0026 Path(`/bar`)",
 			"ruleSyntax": "default",
 			"priority": 100008,

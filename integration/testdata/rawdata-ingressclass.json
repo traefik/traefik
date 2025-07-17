@@ -46,7 +46,7 @@
 			"entryPoints": [
 				"web"
 			],
-			"service": "default-whoami-80@kubernetes",
+			"service": "default-whoami-80",
 			"rule": "Host(`whoami.test.keep`) \u0026\u0026 PathPrefix(`/keep`)",
 			"priority": 47,
 			"observability": {

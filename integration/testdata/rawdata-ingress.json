@@ -46,7 +46,7 @@
 			"entryPoints": [
 				"web"
 			],
-			"service": "default-whoami-http@kubernetes",
+			"service": "default-whoami-http",
 			"rule": "Host(`whoami.test.https`) \u0026\u0026 PathPrefix(`/whoami`)",
 			"priority": 50,
 			"observability": {
@@ -64,7 +64,7 @@
 			"entryPoints": [
 				"web"
 			],
-			"service": "default-whoami-http@kubernetes",
+			"service": "default-whoami-http",
 			"rule": "Host(`whoami.test`) \u0026\u0026 PathPrefix(`/whoami`)",
 			"priority": 44,
 			"observability": {
@@ -82,7 +82,7 @@
 			"entryPoints": [
 				"web"
 			],
-			"service": "default-whoami-80@kubernetes",
+			"service": "default-whoami-80",
 			"rule": "Host(`whoami.test.drop`) \u0026\u0026 PathPrefix(`/drop`)",
 			"priority": 47,
 			"observability": {
@@ -100,7 +100,7 @@
 			"entryPoints": [
 				"web"
 			],
-			"service": "default-whoami-80@kubernetes",
+			"service": "default-whoami-80",
 			"rule": "Host(`whoami.test.keep`) \u0026\u0026 PathPrefix(`/keep`)",
 			"priority": 47,
 			"observability": {

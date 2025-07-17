@@ -8,7 +8,7 @@
         "compressor@redis",
         "striper@redis"
       ],
-      "service": "simplesvc@redis",
+      "service": "simplesvc",
       "rule": "Host(`kv1.localhost`)",
       "priority": 42,
       "tls": {},
@@ -27,7 +27,7 @@
       "entryPoints": [
         "web"
       ],
-      "service": "simplesvc@redis",
+      "service": "simplesvc",
       "rule": "Host(`kv2.localhost`)",
       "priority": 42,
       "tls": {

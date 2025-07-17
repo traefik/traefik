@@ -237,8 +237,7 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 		return nil, errors.New("the service is missing on the router")
 	}
 
-	// FIXME ensure qualifying the service name is correct. This have impact on the runtime configuration.
-	router.Service = provider.GetQualifiedName(ctx, router.Service)
+	qualifiedService := provider.GetQualifiedName(ctx, router.Service)
 
 	chain := alice.New()
 
@@ -247,8 +246,8 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 	}
 
 	// Access logs, metrics, and tracing middlewares are idempotent if the associated signal is disabled.
-	chain = chain.Append(observability.WrapRouterHandler(ctx, routerName, router.Rule, router.Service))
-	metricsHandler := metricsMiddle.WrapRouterHandler(ctx, m.observabilityMgr.MetricsRegistry(), routerName, router.Service)
+	chain = chain.Append(observability.WrapRouterHandler(ctx, routerName, router.Rule, qualifiedService))
+	metricsHandler := metricsMiddle.WrapRouterHandler(ctx, m.observabilityMgr.MetricsRegistry(), routerName, qualifiedService)
 
 	chain = chain.Append(observability.WrapMiddleware(ctx, metricsHandler))
 	chain = chain.Append(func(next http.Handler) (http.Handler, error) {
@@ -257,7 +256,7 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 
 	mHandler := m.middlewaresBuilder.BuildChain(ctx, router.Middlewares)
 
-	sHandler, err := m.serviceManager.BuildHTTP(ctx, router.Service)
+	sHandler, err := m.serviceManager.BuildHTTP(ctx, qualifiedService)
 	if err != nil {
 		return nil, err
 	}
