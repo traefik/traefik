@@ -240,6 +240,8 @@ func (c *Client) Unzip(pName, pVersion string) error {
 		return nil
 	}
 
+	// Unzip as a generic archive if the module unzip fails.
+	// This is useful for plugins that have vendor directories or other structures.
 	return c.unzipArchive(pName, pVersion)
 }
 
@@ -280,8 +282,28 @@ func unzipFile(f *zipa.File, dest string) error {
 
 	defer func() { _ = rc.Close() }()
 
+	// Split to discard the first part of the path, which is the archive name.
 	pathParts := strings.SplitN(f.Name, "/", 2)
-	p := filepath.Join(dest, pathParts[1])
+
+	// Validate and sanitize the file path
+	cleanName := filepath.Clean(pathParts[1])
+	if strings.Contains(cleanName, "..") {
+		return fmt.Errorf("invalid file path in archive: %s", f.Name)
+	}
+
+	p := filepath.Join(dest, cleanName)
+	absPath, err := filepath.Abs(p)
+	if err != nil {
+		return fmt.Errorf("unable to resolve file path: %w", err)
+	}
+
+	absDest, err := filepath.Abs(dest)
+	if err != nil {
+		return fmt.Errorf("unable to resolve destination directory: %w", err)
+	}
+	if !strings.HasPrefix(absPath, absDest) {
+		return fmt.Errorf("file path escapes destination directory: %s", absPath)
+	}
 
 	if f.FileInfo().IsDir() {
 		err = os.MkdirAll(p, f.Mode())
