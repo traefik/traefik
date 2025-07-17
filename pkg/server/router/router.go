@@ -12,7 +12,6 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
-	"github.com/traefik/traefik/v3/pkg/config/static"
 	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
 	"github.com/traefik/traefik/v3/pkg/middlewares/denyrouterrecursion"
@@ -72,26 +71,19 @@ func (m *Manager) getHTTPRouters(ctx context.Context, entryPoints []string, tls 
 func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string, tls bool) map[string]http.Handler {
 	entryPointHandlers := make(map[string]http.Handler)
 
+	defaultObsConfig := dynamic.RouterObservabilityConfig{}
+	defaultObsConfig.SetDefaults()
+
 	for entryPointName, routers := range m.getHTTPRouters(rootCtx, entryPoints, tls) {
 		logger := log.Ctx(rootCtx).With().Str(logs.EntryPointName, entryPointName).Logger()
 		ctx := logger.WithContext(rootCtx)
 
-		// TODO: Improve this part. Relying on models is a shortcut to get the entrypoint observability configuration.
+		// TODO: Improve this part. Relying on models is a shortcut to get the entrypoint observability configuration. Maybe we should pass down the static configuration.
 		// When the entry point has no observability configuration no model is produced,
 		// and we need to create the default configuration is this case.
-		var epObsConfig dynamic.RouterObservabilityConfig
+		epObsConfig := defaultObsConfig
 		if model, ok := m.conf.Models[entryPointName+"@internal"]; ok && model != nil {
 			epObsConfig = model.Observability
-		} else {
-			defaultEPObsConfig := static.ObservabilityConfig{}
-			defaultEPObsConfig.SetDefaults()
-
-			epObsConfig = dynamic.RouterObservabilityConfig{
-				AccessLogs:     defaultEPObsConfig.AccessLogs,
-				Metrics:        defaultEPObsConfig.Metrics,
-				Tracing:        defaultEPObsConfig.Tracing,
-				TraceVerbosity: defaultEPObsConfig.TraceVerbosity,
-			}
 		}
 
 		handler, err := m.buildEntryPointHandler(ctx, entryPointName, routers, epObsConfig)
@@ -113,22 +105,12 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string, t
 			continue
 		}
 
-		// TODO: Improve this part. Relying on models is a shortcut to get the entrypoint observability configuration.
+		// TODO: Improve this part. Relying on models is a shortcut to get the entrypoint observability configuration. Maybe we should pass down the static configuration.
 		// When the entry point has no observability configuration no model is produced,
 		// and we need to create the default configuration is this case.
-		var epObsConfig dynamic.RouterObservabilityConfig
+		epObsConfig := defaultObsConfig
 		if model, ok := m.conf.Models[entryPointName+"@internal"]; ok && model != nil {
 			epObsConfig = model.Observability
-		} else {
-			defaultEPObsConfig := static.ObservabilityConfig{}
-			defaultEPObsConfig.SetDefaults()
-
-			epObsConfig = dynamic.RouterObservabilityConfig{
-				AccessLogs:     defaultEPObsConfig.AccessLogs,
-				Metrics:        defaultEPObsConfig.Metrics,
-				Tracing:        defaultEPObsConfig.Tracing,
-				TraceVerbosity: defaultEPObsConfig.TraceVerbosity,
-			}
 		}
 
 		defaultHandler, err := m.observabilityMgr.BuildEPChain(ctx, entryPointName, false, epObsConfig).Then(http.NotFoundHandler())
