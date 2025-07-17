@@ -52,8 +52,8 @@ func NewRequestRedirect(ctx context.Context, next http.Handler, conf dynamic.Req
 	}, nil
 }
 
-func (r redirect) GetTracingInformation() (string, string, trace.SpanKind) {
-	return r.name, typeName, trace.SpanKindInternal
+func (r redirect) GetTracingInformation() (string, string) {
+	return r.name, typeName
 }
 
 func (r redirect) ServeHTTP(rw http.ResponseWriter, req *http.Request) {

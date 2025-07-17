@@ -55,8 +55,8 @@ func New(ctx context.Context, next http.Handler, config dynamic.IPWhiteList, nam
 	}, nil
 }
 
-func (wl *ipWhiteLister) GetTracingInformation() (string, string, trace.SpanKind) {
-	return wl.name, typeName, trace.SpanKindInternal
+func (wl *ipWhiteLister) GetTracingInformation() (string, string) {
+	return wl.name, typeName
 }
 
 func (wl *ipWhiteLister) ServeHTTP(rw http.ResponseWriter, req *http.Request) {

@@ -35,8 +35,8 @@ func NewRequestHeaderModifier(ctx context.Context, next http.Handler, config dyn
 	}
 }
 
-func (r *requestHeaderModifier) GetTracingInformation() (string, string, trace.SpanKind) {
-	return r.name, requestHeaderModifierTypeName, trace.SpanKindUnspecified
+func (r *requestHeaderModifier) GetTracingInformation() (string, string) {
+	return r.name, requestHeaderModifierTypeName
 }
 
 func (r *requestHeaderModifier) ServeHTTP(rw http.ResponseWriter, req *http.Request) {

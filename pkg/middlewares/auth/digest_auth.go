@@ -54,8 +54,8 @@ func NewDigest(ctx context.Context, next http.Handler, authConfig dynamic.Digest
 	return da, nil
 }
 
-func (d *digestAuth) GetTracingInformation() (string, string, trace.SpanKind) {
-	return d.name, typeNameDigest, trace.SpanKindInternal
+func (d *digestAuth) GetTracingInformation() (string, string) {
+	return d.name, typeNameDigest
 }
 
 func (d *digestAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {

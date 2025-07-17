@@ -53,8 +53,8 @@ func New(ctx context.Context, next http.Handler, config dynamic.InFlightReq, nam
 	return &inFlightReq{handler: handler, name: name}, nil
 }
 
-func (i *inFlightReq) GetTracingInformation() (string, string, trace.SpanKind) {
-	return i.name, typeName, trace.SpanKindInternal
+func (i *inFlightReq) GetTracingInformation() (string, string) {
+	return i.name, typeName
 }
 
 func (i *inFlightReq) ServeHTTP(rw http.ResponseWriter, req *http.Request) {

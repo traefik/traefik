@@ -55,6 +55,6 @@ func (s *traceablePlugin) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	s.h.ServeHTTP(rw, req)
 }
 
-func (s *traceablePlugin) GetTracingInformation() (string, string, trace.SpanKind) {
-	return s.name, typeName, trace.SpanKindInternal
+func (s *traceablePlugin) GetTracingInformation() (string, string) {
+	return s.name, typeName
 }

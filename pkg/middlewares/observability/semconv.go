@@ -46,7 +46,7 @@ func newServerMetricsSemConv(ctx context.Context, semConvMetricRegistry *metrics
 }
 
 func (e *semConvServerMetrics) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	if e.semConvMetricRegistry == nil || e.semConvMetricRegistry.HTTPServerRequestDuration() == nil {
+	if e.semConvMetricRegistry == nil || e.semConvMetricRegistry.HTTPServerRequestDuration() == nil || !SemConvMetricsEnabled(req.Context()) {
 		e.next.ServeHTTP(rw, req)
 		return
 	}
