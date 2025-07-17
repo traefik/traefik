@@ -29,7 +29,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/forwardedheaders"
 	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
 	"github.com/traefik/traefik/v3/pkg/safe"
-	"github.com/traefik/traefik/v3/pkg/server/router"
 	tcprouter "github.com/traefik/traefik/v3/pkg/server/router/tcp"
 	"github.com/traefik/traefik/v3/pkg/server/service"
 	"github.com/traefik/traefik/v3/pkg/tcp"
@@ -351,7 +350,7 @@ func (e *TCPEntryPoint) SwitchRouter(rt *tcprouter.Router) {
 
 	httpHandler := rt.GetHTTPHandler()
 	if httpHandler == nil {
-		httpHandler = router.BuildDefaultHTTPRouter()
+		httpHandler = http.NotFoundHandler()
 	}
 
 	e.httpServer.Switcher.UpdateHandler(httpHandler)
@@ -360,7 +359,7 @@ func (e *TCPEntryPoint) SwitchRouter(rt *tcprouter.Router) {
 
 	httpsHandler := rt.GetHTTPSHandler()
 	if httpsHandler == nil {
-		httpsHandler = router.BuildDefaultHTTPRouter()
+		httpsHandler = http.NotFoundHandler()
 	}
 
 	e.httpsServer.Switcher.UpdateHandler(httpsHandler)
@@ -591,7 +590,7 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 		return nil, errors.New("max concurrent streams value must be greater than or equal to zero")
 	}
 
-	httpSwitcher := middlewares.NewHandlerSwitcher(router.BuildDefaultHTTPRouter())
+	httpSwitcher := middlewares.NewHandlerSwitcher(http.NotFoundHandler())
 
 	next, err := alice.New(requestdecorator.WrapHandler(reqDecorator)).Then(httpSwitcher)
 	if err != nil {

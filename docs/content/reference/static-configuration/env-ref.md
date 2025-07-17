@@ -283,13 +283,16 @@ Subject alternative names.
 Default TLS options for the routers linked to the entry point.
 
 `TRAEFIK_ENTRYPOINTS_<NAME>_OBSERVABILITY_ACCESSLOGS`:  
- (Default: ```true```)
+Enables access-logs for this entryPoint. (Default: ```true```)
 
 `TRAEFIK_ENTRYPOINTS_<NAME>_OBSERVABILITY_METRICS`:  
- (Default: ```true```)
+Enables metrics for this entryPoint. (Default: ```true```)
+
+`TRAEFIK_ENTRYPOINTS_<NAME>_OBSERVABILITY_TRACEVERBOSITY`:  
+Defines the tracing verbosity level for this entryPoint. (Default: ```minimal```)
 
 `TRAEFIK_ENTRYPOINTS_<NAME>_OBSERVABILITY_TRACING`:  
- (Default: ```true```)
+Enables tracing for this entryPoint. (Default: ```true```)
 
 `TRAEFIK_ENTRYPOINTS_<NAME>_PROXYPROTOCOL`:  
 Proxy-Protocol configuration. (Default: ```false```)

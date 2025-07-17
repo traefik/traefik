@@ -8,7 +8,6 @@ import (
 
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
-	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -38,8 +37,8 @@ func NewURLRewrite(ctx context.Context, next http.Handler, conf dynamic.URLRewri
 	}
 }
 
-func (u urlRewrite) GetTracingInformation() (string, string, trace.SpanKind) {
-	return u.name, typeName, trace.SpanKindInternal
+func (u urlRewrite) GetTracingInformation() (string, string) {
+	return u.name, typeName
 }
 
 func (u urlRewrite) ServeHTTP(rw http.ResponseWriter, req *http.Request) {

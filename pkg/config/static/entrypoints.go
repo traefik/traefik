@@ -165,15 +165,17 @@ func (u *UDPConfig) SetDefaults() {
 
 // ObservabilityConfig holds the observability configuration for an entry point.
 type ObservabilityConfig struct {
-	AccessLogs *bool `json:"accessLogs,omitempty" toml:"accessLogs,omitempty" yaml:"accessLogs,omitempty" export:"true"`
-	Tracing    *bool `json:"tracing,omitempty" toml:"tracing,omitempty" yaml:"tracing,omitempty" export:"true"`
-	Metrics    *bool `json:"metrics,omitempty" toml:"metrics,omitempty" yaml:"metrics,omitempty" export:"true"`
+	AccessLogs     *bool                  `description:"Enables access-logs for this entryPoint." json:"accessLogs,omitempty" toml:"accessLogs,omitempty" yaml:"accessLogs,omitempty" export:"true"`
+	Metrics        *bool                  `description:"Enables metrics for this entryPoint." json:"metrics,omitempty" toml:"metrics,omitempty" yaml:"metrics,omitempty" export:"true"`
+	Tracing        *bool                  `description:"Enables tracing for this entryPoint." json:"tracing,omitempty" toml:"tracing,omitempty" yaml:"tracing,omitempty" export:"true"`
+	TraceVerbosity types.TracingVerbosity `description:"Defines the tracing verbosity level for this entryPoint." json:"traceVerbosity,omitempty" toml:"traceVerbosity,omitempty" yaml:"traceVerbosity,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
 func (o *ObservabilityConfig) SetDefaults() {
 	defaultValue := true
 	o.AccessLogs = &defaultValue
-	o.Tracing = &defaultValue
 	o.Metrics = &defaultValue
+	o.Tracing = &defaultValue
+	o.TraceVerbosity = types.MinimalVerbosity
 }

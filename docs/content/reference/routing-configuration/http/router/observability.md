@@ -36,6 +36,7 @@ http:
         metrics: false
         accessLogs: false
         tracing: false
+        traceVerbosity: detailed
 ```
 
 ```yaml tab="Structured (TOML)"
@@ -47,6 +48,7 @@ http:
     metrics = false
     accessLogs = false
     tracing = false
+    traceVerbosity = "detailed"
 ```
 
 ```yaml tab="Labels"
@@ -56,6 +58,7 @@ labels:
   - "traefik.http.routers.my-router.observability.metrics=false"
   - "traefik.http.routers.my-router.observability.accessLogs=false"
   - "traefik.http.routers.my-router.observability.tracing=false"
+  - "traefik.http.routers.my-router.observability.traceVerbosity=detailed"
 ```
 
 ```json tab="Tags"
@@ -66,15 +69,26 @@ labels:
     "traefik.http.routers.my-router.service=service-foo",
     "traefik.http.routers.my-router.observability.metrics=false",
     "traefik.http.routers.my-router.observability.accessLogs=false",
-    "traefik.http.routers.my-router.observability.tracing=false"
+    "traefik.http.routers.my-router.observability.tracing=false",
+    "traefik.http.routers.my-router.observability.traceVerbosity=detailed"
   ]
 }
 ```
 
 ## Configuration Options
 
-| Field | Description | Default | Required |
-|:------|:------------|:--------|:---------|
-| `accessLogs` | The `accessLogs` option controls whether the router will produce access-logs. | `true` | No |
-| `metrics` | The `metrics` option controls whether the router will produce metrics. | `true` | No |
-| `tracing` | The `tracing` option controls whether the router will produce traces. | `true` | No |
+| Field            | Description                                                                                                                                                                                | Default   | Required |
+|:-----------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:----------|:---------|
+| `accessLogs`     | The `accessLogs` option controls whether the router will produce access-logs.                                                                                                              | `true`    | No       |
+| `metrics`        | The `metrics` option controls whether the router will produce metrics.                                                                                                                     | `true`    | No       |
+| `tracing`        | The `tracing` option controls whether the router will produce traces.                                                                                                                      | `true`    | No       |
+| `traceVerbosity` | The `traceVerbosity` option controls the tracing verbosity level for the router. Possible values: `minimal` (default), `detailed`. If not set, the value is inherited from the entryPoint. | `minimal` | No       |
+
+#### traceVerbosity
+
+`observability.traceVerbosity` defines the tracing verbosity level for the router.
+
+Possible values are:
+
+- `minimal`: produces a single server span and one client span for each request processed by a router.
+- `detailed`: enables the creation of additional spans for each middleware executed for each request processed by a router.
