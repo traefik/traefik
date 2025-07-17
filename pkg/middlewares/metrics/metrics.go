@@ -93,8 +93,8 @@ func NewServiceMiddleware(ctx context.Context, next http.Handler, registry metri
 	}
 }
 
-// WrapEntryPointHandler Wraps metrics entrypoint to alice.Constructor.
-func WrapEntryPointHandler(ctx context.Context, registry metrics.Registry, entryPointName string) alice.Constructor {
+// EntryPointMetricsHandler returns the metrics entrypoint handler.
+func EntryPointMetricsHandler(ctx context.Context, registry metrics.Registry, entryPointName string) alice.Constructor {
 	return func(next http.Handler) (http.Handler, error) {
 		if registry == nil || !registry.IsEpEnabled() {
 			return next, nil
@@ -104,8 +104,8 @@ func WrapEntryPointHandler(ctx context.Context, registry metrics.Registry, entry
 	}
 }
 
-// WrapRouterHandler Wraps metrics router to alice.Constructor.
-func WrapRouterHandler(ctx context.Context, registry metrics.Registry, routerName string, serviceName string) alice.Constructor {
+// RouterMetricsHandler returns the metrics router handler.
+func RouterMetricsHandler(ctx context.Context, registry metrics.Registry, routerName string, serviceName string) alice.Constructor {
 	return func(next http.Handler) (http.Handler, error) {
 		if registry == nil || !registry.IsRouterEnabled() {
 			return next, nil
@@ -115,8 +115,8 @@ func WrapRouterHandler(ctx context.Context, registry metrics.Registry, routerNam
 	}
 }
 
-// WrapServiceHandler Wraps metrics service to alice.Constructor.
-func WrapServiceHandler(ctx context.Context, registry metrics.Registry, serviceName string) alice.Constructor {
+// ServiceMetricsHandler returns the metrics service handler.
+func ServiceMetricsHandler(ctx context.Context, registry metrics.Registry, serviceName string) alice.Constructor {
 	return func(next http.Handler) (http.Handler, error) {
 		if registry == nil || !registry.IsSvcEnabled() {
 			return next, nil

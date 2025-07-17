@@ -168,7 +168,7 @@ type ObservabilityConfig struct {
 	AccessLogs     *bool                  `description:"Enables access-logs for this entryPoint." json:"accessLogs,omitempty" toml:"accessLogs,omitempty" yaml:"accessLogs,omitempty" export:"true"`
 	Metrics        *bool                  `description:"Enables metrics for this entryPoint." json:"metrics,omitempty" toml:"metrics,omitempty" yaml:"metrics,omitempty" export:"true"`
 	Tracing        *bool                  `description:"Enables tracing for this entryPoint." json:"tracing,omitempty" toml:"tracing,omitempty" yaml:"tracing,omitempty" export:"true"`
-	TraceVerbosity types.TracingVerbosity `description:"Defines the verbosity level of the tracing for this entryPoint." json:"traceVerbosity,omitempty" toml:"traceVerbosity,omitempty" yaml:"traceVerbosity,omitempty" export:"true"`
+	TraceVerbosity types.TracingVerbosity `description:"Defines the tracing verbosity level for this entryPoint." json:"traceVerbosity,omitempty" toml:"traceVerbosity,omitempty" yaml:"traceVerbosity,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.

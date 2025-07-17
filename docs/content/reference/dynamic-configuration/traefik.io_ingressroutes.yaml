@@ -98,6 +98,7 @@ spec:
                           description: Metrics enables metrics for this router.
                           type: boolean
                         traceVerbosity:
+                          default: minimal
                           description: TraceVerbosity defines the verbosity level
                             of the tracing for this router.
                           enum:

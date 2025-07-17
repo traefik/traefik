@@ -289,7 +289,7 @@ Enables access-logs for this entryPoint. (Default: ```true```)
 Enables metrics for this entryPoint. (Default: ```true```)
 
 `--entrypoints.<name>.observability.traceverbosity`:  
-Defines the verbosity level of the tracing for this entryPoint. (Default: ```minimal```)
+Defines the tracing verbosity level for this entryPoint. (Default: ```minimal```)
 
 `--entrypoints.<name>.observability.tracing`:  
 Enables tracing for this entryPoint. (Default: ```true```)

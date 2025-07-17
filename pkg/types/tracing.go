@@ -27,7 +27,7 @@ type TracingVerbosity string
 
 const (
 	MinimalVerbosity  TracingVerbosity = "minimal"
-	DetailedVerbosity TracingVerbosity = "detailed"
+	DetailedVerbosity                  = "detailed"
 )
 
 func (v TracingVerbosity) Allows(verbosity TracingVerbosity) bool {
@@ -35,12 +35,7 @@ func (v TracingVerbosity) Allows(verbosity TracingVerbosity) bool {
 	case MinimalVerbosity:
 		return verbosity == MinimalVerbosity
 	case DetailedVerbosity:
-		switch verbosity {
-		case MinimalVerbosity, DetailedVerbosity:
-			return true
-		default:
-			return false
-		}
+		return verbosity == DetailedVerbosity || verbosity == MinimalVerbosity
 	default:
 		return false
 	}

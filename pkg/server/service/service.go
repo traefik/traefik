@@ -378,7 +378,7 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 		proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceAddr, target.Host, nil)
 		proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceName, qualifiedSvcName, accesslog.AddServiceFields)
 
-		metricsHandler := metricsMiddle.WrapServiceHandler(ctx, m.observabilityMgr.MetricsRegistry(), qualifiedSvcName)
+		metricsHandler := metricsMiddle.ServiceMetricsHandler(ctx, m.observabilityMgr.MetricsRegistry(), qualifiedSvcName)
 		metricsHandler = observability.WrapMiddleware(ctx, metricsHandler)
 
 		proxy, err = alice.New().

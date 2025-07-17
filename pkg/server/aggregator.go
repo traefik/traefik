@@ -261,6 +261,7 @@ func applyModel(cfg dynamic.Configuration) dynamic.Configuration {
 // and make sure it is serialized and available in the API.
 // We could have introduced a "default" model, but it would have been more complex to manage for now.
 // This could be generalized in the future.
+// TODO: check if we can remove this and rely on the SetDefaults instead.
 func applyDefaultObservabilityModel(cfg dynamic.Configuration) {
 	if cfg.HTTP != nil {
 		for _, router := range cfg.HTTP.Routers {

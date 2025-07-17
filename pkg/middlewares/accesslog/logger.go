@@ -70,16 +70,16 @@ type Handler struct {
 	wg             sync.WaitGroup
 }
 
-// WrapHandler Wraps access log handler into an Alice Constructor.
-func WrapHandler(handler *Handler) alice.Constructor {
+// AliceConstructor returns an alice.Constructor that wraps the Handler (conditionally) in a middleware chain.
+func (h *Handler) AliceConstructor() alice.Constructor {
 	return func(next http.Handler) (http.Handler, error) {
 		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-			if handler == nil {
+			if h == nil {
 				next.ServeHTTP(rw, req)
 				return
 			}
 
-			handler.ServeHTTP(rw, req, next)
+			h.ServeHTTP(rw, req, next)
 		}), nil
 	}
 }

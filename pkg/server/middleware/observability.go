@@ -65,13 +65,13 @@ func (o *ObservabilityMgr) BuildEPChain(ctx context.Context, entryPointName stri
 	chain = chain.Append(observability.EntryPointHandler(ctx, o.tracer, entryPointName))
 
 	// Access log handlers.
-	chain = chain.Append(accesslog.WrapHandler(o.accessLoggerMiddleware))
+	chain = chain.Append(o.accessLoggerMiddleware.AliceConstructor())
 	chain = chain.Append(func(next http.Handler) (http.Handler, error) {
 		return accesslog.NewFieldHandler(next, logs.EntryPointName, entryPointName, accesslog.InitServiceFields), nil
 	})
 
 	// Entrypoint metrics handler.
-	metricsHandler := mmetrics.WrapEntryPointHandler(ctx, o.metricsRegistry, entryPointName)
+	metricsHandler := mmetrics.EntryPointMetricsHandler(ctx, o.metricsRegistry, entryPointName)
 	chain = chain.Append(observability.WrapMiddleware(ctx, metricsHandler))
 
 	// Semantic convention server metrics handler.

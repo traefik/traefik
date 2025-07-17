@@ -289,7 +289,7 @@ Enables access-logs for this entryPoint. (Default: ```true```)
 Enables metrics for this entryPoint. (Default: ```true```)
 
 `TRAEFIK_ENTRYPOINTS_<NAME>_OBSERVABILITY_TRACEVERBOSITY`:  
-Defines the verbosity level of the tracing for this entryPoint. (Default: ```minimal```)
+Defines the tracing verbosity level for this entryPoint. (Default: ```minimal```)
 
 `TRAEFIK_ENTRYPOINTS_<NAME>_OBSERVABILITY_TRACING`:  
 Enables tracing for this entryPoint. (Default: ```true```)

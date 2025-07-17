@@ -11,9 +11,7 @@ import (
 
 type contextKey int
 
-const (
-	observabilityKey contextKey = iota
-)
+const observabilityKey contextKey = iota
 
 type Observability struct {
 	AccessLogsEnabled      bool

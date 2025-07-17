@@ -247,7 +247,7 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 
 	// Access logs, metrics, and tracing middlewares are idempotent if the associated signal is disabled.
 	chain = chain.Append(observability.WrapRouterHandler(ctx, routerName, router.Rule, qualifiedService))
-	metricsHandler := metricsMiddle.WrapRouterHandler(ctx, m.observabilityMgr.MetricsRegistry(), routerName, qualifiedService)
+	metricsHandler := metricsMiddle.RouterMetricsHandler(ctx, m.observabilityMgr.MetricsRegistry(), routerName, qualifiedService)
 
 	chain = chain.Append(observability.WrapMiddleware(ctx, metricsHandler))
 	chain = chain.Append(func(next http.Handler) (http.Handler, error) {
