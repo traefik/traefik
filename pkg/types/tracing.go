@@ -27,7 +27,7 @@ type TracingVerbosity string
 
 const (
 	MinimalVerbosity  TracingVerbosity = "minimal"
-	DetailedVerbosity                  = "detailed"
+	DetailedVerbosity TracingVerbosity = "detailed"
 )
 
 func (v TracingVerbosity) Allows(verbosity TracingVerbosity) bool {

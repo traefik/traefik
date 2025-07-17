@@ -114,7 +114,7 @@ func TestOTelAccessLog(t *testing.T) {
 		}), nil
 	})
 
-	chain = chain.Append(WrapHandler(logHandler))
+	chain = chain.Append(logHandler.AliceConstructor())
 	handler, err := chain.Then(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 	}))
@@ -155,7 +155,7 @@ func TestLogRotation(t *testing.T) {
 		}), nil
 	})
 
-	chain = chain.Append(WrapHandler(logHandler))
+	chain = chain.Append(logHandler.AliceConstructor())
 	handler, err := chain.Then(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 	}))
@@ -315,7 +315,7 @@ func TestLoggerHeaderFields(t *testing.T) {
 				}), nil
 			})
 
-			chain = chain.Append(WrapHandler(logger))
+			chain = chain.Append(logger.AliceConstructor())
 			handler, err := chain.Then(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				rw.WriteHeader(http.StatusOK)
 			}))
@@ -1031,7 +1031,7 @@ func doLoggingTLSOpt(t *testing.T, config *types.AccessLog, enableTLS, tracing b
 		}), nil
 	})
 
-	chain = chain.Append(WrapHandler(logger))
+	chain = chain.Append(logger.AliceConstructor())
 	handler, err := chain.Then(http.HandlerFunc(logWriterTestHandlerFunc))
 	require.NoError(t, err)
 
@@ -1126,7 +1126,7 @@ func doLoggingWithAbortedStream(t *testing.T, config *types.AccessLog) {
 		}), nil
 	})
 
-	chain = chain.Append(WrapHandler(logger))
+	chain = chain.Append(logger.AliceConstructor())
 
 	service := NewFieldHandler(http.HandlerFunc(streamBackend), ServiceURL, "http://stream", nil)
 	service = NewFieldHandler(service, ServiceAddr, "127.0.0.1", nil)

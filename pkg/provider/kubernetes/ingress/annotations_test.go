@@ -58,9 +58,10 @@ func Test_parseRouterConfig(t *testing.T) {
 						Options: "foobar",
 					},
 					Observability: &dynamic.RouterObservabilityConfig{
-						AccessLogs: pointer(true),
-						Tracing:    pointer(true),
-						Metrics:    pointer(true),
+						AccessLogs:     pointer(true),
+						Tracing:        pointer(true),
+						Metrics:        pointer(true),
+						TraceVerbosity: types.MinimalVerbosity,
 					},
 				},
 			},

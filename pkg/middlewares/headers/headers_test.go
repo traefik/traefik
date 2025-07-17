@@ -13,7 +13,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"go.opentelemetry.io/otel/trace"
 )
 
 func TestNew_withoutOptions(t *testing.T) {
@@ -107,11 +106,10 @@ func Test_headers_getTracingInformation(t *testing.T) {
 		name:    "testing",
 	}
 
-	name, typeName, spanKind := mid.GetTracingInformation()
+	name, typeName := mid.GetTracingInformation()
 
 	assert.Equal(t, "testing", name)
 	assert.Equal(t, "Headers", typeName)
-	assert.Equal(t, trace.SpanKindInternal, spanKind)
 }
 
 // This test is an adapted version of net/http/httputil.Test1xxResponses test.

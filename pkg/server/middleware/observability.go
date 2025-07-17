@@ -130,7 +130,7 @@ func (o *ObservabilityMgr) observabilityContextHandler(next http.Handler, intern
 		AccessLogsEnabled:      o.shouldAccessLog(internal, config),
 		MetricsEnabled:         o.shouldMeter(internal, config),
 		SemConvMetricsEnabled:  o.shouldMeterSemConv(internal, config),
-		MinimalTracingEnabled:  o.shouldTrace(internal, config, types.MinimalVerbosity),
+		TracingEnabled:         o.shouldTrace(internal, config, types.MinimalVerbosity),
 		DetailedTracingEnabled: o.shouldTrace(internal, config, types.DetailedVerbosity),
 	})
 }

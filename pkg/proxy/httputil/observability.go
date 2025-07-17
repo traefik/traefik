@@ -35,7 +35,7 @@ func (t *wrapper) RoundTrip(req *http.Request) (*http.Response, error) {
 	var span trace.Span
 	var tracingCtx context.Context
 	var tracer *tracing.Tracer
-	if tracer = tracing.TracerFromContext(req.Context()); tracer != nil {
+	if tracer = tracing.TracerFromContext(req.Context()); tracer != nil && observability.TracingEnabled(req.Context()) {
 		tracingCtx, span = tracer.Start(req.Context(), "ReverseProxy", trace.WithSpanKind(trace.SpanKindClient))
 		defer span.End()
 
