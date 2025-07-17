@@ -109,7 +109,9 @@ func TestOTelAccessLog(t *testing.T) {
 
 	// Injection of the observability variables in the request context.
 	chain = chain.Append(func(next http.Handler) (http.Handler, error) {
-		return observability.WithAccessLogEnabledHandler(next, true), nil
+		return observability.WithObservabilityHandler(next, observability.Observability{
+			AccessLogsEnabled: true,
+		}), nil
 	})
 
 	chain = chain.Append(WrapHandler(logHandler))
@@ -148,7 +150,9 @@ func TestLogRotation(t *testing.T) {
 
 	// Injection of the observability variables in the request context.
 	chain = chain.Append(func(next http.Handler) (http.Handler, error) {
-		return observability.WithAccessLogEnabledHandler(next, true), nil
+		return observability.WithObservabilityHandler(next, observability.Observability{
+			AccessLogsEnabled: true,
+		}), nil
 	})
 
 	chain = chain.Append(WrapHandler(logHandler))
@@ -306,7 +310,9 @@ func TestLoggerHeaderFields(t *testing.T) {
 
 			// Injection of the observability variables in the request context.
 			chain = chain.Append(func(next http.Handler) (http.Handler, error) {
-				return observability.WithAccessLogEnabledHandler(next, true), nil
+				return observability.WithObservabilityHandler(next, observability.Observability{
+					AccessLogsEnabled: true,
+				}), nil
 			})
 
 			chain = chain.Append(WrapHandler(logger))
@@ -1020,7 +1026,9 @@ func doLoggingTLSOpt(t *testing.T, config *types.AccessLog, enableTLS, tracing b
 
 	// Injection of the observability variables in the request context.
 	chain = chain.Append(func(next http.Handler) (http.Handler, error) {
-		return observability.WithAccessLogEnabledHandler(next, true), nil
+		return observability.WithObservabilityHandler(next, observability.Observability{
+			AccessLogsEnabled: true,
+		}), nil
 	})
 
 	chain = chain.Append(WrapHandler(logger))
@@ -1113,7 +1121,9 @@ func doLoggingWithAbortedStream(t *testing.T, config *types.AccessLog) {
 
 	// Injection of the observability variables in the request context.
 	chain = chain.Append(func(next http.Handler) (http.Handler, error) {
-		return observability.WithAccessLogEnabledHandler(next, true), nil
+		return observability.WithObservabilityHandler(next, observability.Observability{
+			AccessLogsEnabled: true,
+		}), nil
 	})
 
 	chain = chain.Append(WrapHandler(logger))

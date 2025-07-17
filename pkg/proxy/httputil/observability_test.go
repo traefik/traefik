@@ -78,7 +78,10 @@ func TestObservabilityRoundTripper_metrics(t *testing.T) {
 			req.Header.Set("User-Agent", "rt-test")
 			req.Header.Set("X-Forwarded-Proto", "http")
 
-			req = req.WithContext(observability.WithSemConvMetricsEnabled(req.Context(), true))
+			// Injection of the observability variables in the request context.
+			req = req.WithContext(observability.WithObservability(req.Context(), observability.Observability{
+				SemConvMetricsEnabled: true,
+			}))
 
 			ort := newObservabilityRoundTripper(semConvMetricRegistry, mockRoundTripper{statusCode: test.statusCode})
 			_, err = ort.RoundTrip(req)

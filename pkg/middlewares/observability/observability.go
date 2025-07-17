@@ -12,107 +12,58 @@ import (
 type contextKey int
 
 const (
-	accessLogsKey contextKey = iota
-	metricsKey
-	semConvMetricsKey
-	minimalTracingKey
-	detailedTracingKey
+	observabilityKey contextKey = iota
 )
 
-// AccessLogsEnabled returns whether metrics are enabled.
-func AccessLogsEnabled(ctx context.Context) bool {
-	if enabled, ok := ctx.Value(accessLogsKey).(bool); ok {
-		return enabled
-	}
-
-	return false
+type Observability struct {
+	AccessLogsEnabled      bool
+	MetricsEnabled         bool
+	SemConvMetricsEnabled  bool
+	MinimalTracingEnabled  bool
+	DetailedTracingEnabled bool
 }
 
-// WithAccessLogEnabledHandler sets the access log enabled state in the context for the next handler.
-// This is used for testing purposes to control whether access logs are enabled or not.
-func WithAccessLogEnabledHandler(next http.Handler, enabled bool) http.Handler {
+// WithObservabilityHandler sets the observability state in the context for the next handler.
+// This is also used for testing purposes to control whether access logs are enabled or not.
+func WithObservabilityHandler(next http.Handler, obs Observability) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		ctx := context.WithValue(req.Context(), accessLogsKey, enabled)
-		next.ServeHTTP(rw, req.WithContext(ctx))
+		next.ServeHTTP(rw, req.WithContext(WithObservability(req.Context(), obs)))
 	})
+}
+
+// WithObservability injects the observability state into the context.
+func WithObservability(ctx context.Context, obs Observability) context.Context {
+	return context.WithValue(ctx, observabilityKey, obs)
+}
+
+// AccessLogsEnabled returns whether access-logs are enabled.
+func AccessLogsEnabled(ctx context.Context) bool {
+	obs, ok := ctx.Value(observabilityKey).(Observability)
+	return ok && obs.AccessLogsEnabled
 }
 
 // MetricsEnabled returns whether metrics are enabled.
 func MetricsEnabled(ctx context.Context) bool {
-	if enabled, ok := ctx.Value(metricsKey).(bool); ok {
-		return enabled
-	}
-
-	return false
-}
-
-// WithMetricsEnabledHandler sets the metrics enabled state in the context for the next handler.
-// This is used for testing purposes to control whether metrics are enabled or not.
-func WithMetricsEnabledHandler(next http.Handler, enabled bool) http.Handler {
-	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		ctx := context.WithValue(req.Context(), metricsKey, enabled)
-		next.ServeHTTP(rw, req.WithContext(ctx))
-	})
+	obs, ok := ctx.Value(observabilityKey).(Observability)
+	return ok && obs.MetricsEnabled
 }
 
 // SemConvMetricsEnabled returns whether metrics are enabled.
 func SemConvMetricsEnabled(ctx context.Context) bool {
-	if enabled, ok := ctx.Value(semConvMetricsKey).(bool); ok {
-		return enabled
-	}
-
-	return false
-}
-
-// WithSemConvMetricsEnabled sets the semantic conventions metrics enabled state in the context.
-// This is used for testing purposes to control whether semantic conventions metrics are enabled or not.
-func WithSemConvMetricsEnabled(ctx context.Context, enabled bool) context.Context {
-	return context.WithValue(ctx, semConvMetricsKey, enabled)
-}
-
-// WithSemConvMetricsEnabledHandler sets the semantic conventions metrics enabled state in the context for the next handler.
-// This is used for testing purposes to control whether semantic conventions metrics are enabled or not.
-func WithSemConvMetricsEnabledHandler(next http.Handler, enabled bool) http.Handler {
-	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		ctx := context.WithValue(req.Context(), semConvMetricsKey, enabled)
-		next.ServeHTTP(rw, req.WithContext(ctx))
-	})
+	obs, ok := ctx.Value(observabilityKey).(Observability)
+	return ok && obs.SemConvMetricsEnabled
 }
 
 // MinimalTraceEnabled returns whether minimal tracing is enabled.
 func MinimalTraceEnabled(ctx context.Context) bool {
-	if enabled, ok := ctx.Value(minimalTracingKey).(bool); ok {
-		return enabled
-	}
-
-	return false
-}
-
-// WithMinimalTraceEnabledHandler sets the minimal tracing enabled state in the context for the next handler.
-// This is used for testing purposes to control whether minimal tracing is enabled or not.
-func WithMinimalTraceEnabledHandler(next http.Handler, enabled bool) http.Handler {
-	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		ctx := context.WithValue(req.Context(), minimalTracingKey, enabled)
-		next.ServeHTTP(rw, req.WithContext(ctx))
-	})
+	obs, ok := ctx.Value(observabilityKey).(Observability)
+	return ok && obs.MinimalTracingEnabled
 }
 
 // DetailedTraceEnabled returns whether detailed tracing is enabled.
 func DetailedTraceEnabled(ctx context.Context) bool {
-	if enabled, ok := ctx.Value(detailedTracingKey).(bool); ok {
-		return enabled
-	}
-
-	return false
-}
-
-// WithDetailedTraceEnabledHandler sets the detailed tracing enabled state in the context for the next handler.
-// This is used for testing purposes to control whether detailed tracing is enabled or not.
-func WithDetailedTraceEnabledHandler(next http.Handler, enabled bool) http.Handler {
-	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		ctx := context.WithValue(req.Context(), detailedTracingKey, enabled)
-		next.ServeHTTP(rw, req.WithContext(ctx))
-	})
+	obs, ok := ctx.Value(observabilityKey).(Observability)
+	return ok && obs.DetailedTracingEnabled
 }
 
 // SetStatusErrorf flags the span as in error and log an event.

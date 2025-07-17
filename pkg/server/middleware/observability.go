@@ -126,13 +126,13 @@ func (o *ObservabilityMgr) RotateAccessLogs() error {
 }
 
 func (o *ObservabilityMgr) observabilityContextHandler(next http.Handler, internal bool, config dynamic.RouterObservabilityConfig) http.Handler {
-	handler := observability.WithAccessLogEnabledHandler(next, o.shouldAccessLog(internal, config))
-	handler = observability.WithMetricsEnabledHandler(handler, o.shouldMeter(internal, config))
-	handler = observability.WithSemConvMetricsEnabledHandler(handler, o.shouldMeterSemConv(internal, config))
-	handler = observability.WithMinimalTraceEnabledHandler(handler, o.shouldTrace(internal, config, types.MinimalVerbosity))
-	handler = observability.WithDetailedTraceEnabledHandler(handler, o.shouldTrace(internal, config, types.DetailedVerbosity))
-
-	return handler
+	return observability.WithObservabilityHandler(next, observability.Observability{
+		AccessLogsEnabled:      o.shouldAccessLog(internal, config),
+		MetricsEnabled:         o.shouldMeter(internal, config),
+		SemConvMetricsEnabled:  o.shouldMeterSemConv(internal, config),
+		MinimalTracingEnabled:  o.shouldTrace(internal, config, types.MinimalVerbosity),
+		DetailedTracingEnabled: o.shouldTrace(internal, config, types.DetailedVerbosity),
+	})
 }
 
 // shouldAccessLog returns whether the access logs should be enabled for the given serviceName and the observability config.
