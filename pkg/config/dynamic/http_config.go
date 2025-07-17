@@ -88,9 +88,21 @@ type RouterTLSConfig struct {
 
 // RouterObservabilityConfig holds the observability configuration for a router.
 type RouterObservabilityConfig struct {
+	// AccessLogs enables access logs for this router.
 	AccessLogs *bool `json:"accessLogs,omitempty" toml:"accessLogs,omitempty" yaml:"accessLogs,omitempty" export:"true"`
-	Tracing    *bool `json:"tracing,omitempty" toml:"tracing,omitempty" yaml:"tracing,omitempty" export:"true"`
-	Metrics    *bool `json:"metrics,omitempty" toml:"metrics,omitempty" yaml:"metrics,omitempty" export:"true"`
+	// Metrics enables metrics for this router.
+	Metrics *bool `json:"metrics,omitempty" toml:"metrics,omitempty" yaml:"metrics,omitempty" export:"true"`
+	// Tracing enables tracing for this router.
+	Tracing *bool `json:"tracing,omitempty" toml:"tracing,omitempty" yaml:"tracing,omitempty" export:"true"`
+	// TraceVerbosity defines the verbosity level of the tracing for this router.
+	// +kubebuilder:validation:Enum=minimal;detailed
+	// +kubebuilder:default=minimal
+	TraceVerbosity types.TracingVerbosity `json:"traceVerbosity,omitempty" toml:"traceVerbosity,omitempty" yaml:"traceVerbosity,omitempty" export:"true"`
+}
+
+// SetDefaults Default values for a RouterObservabilityConfig.
+func (r *RouterObservabilityConfig) SetDefaults() {
+	r.TraceVerbosity = types.MinimalVerbosity
 }
 
 // +k8s:deepcopy-gen=true

@@ -21,6 +21,7 @@ import (
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
+	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"go.opentelemetry.io/contrib/bridges/otellogrus"
@@ -69,11 +70,16 @@ type Handler struct {
 	wg             sync.WaitGroup
 }
 
-// WrapHandler Wraps access log handler into an Alice Constructor.
-func WrapHandler(handler *Handler) alice.Constructor {
+// AliceConstructor returns an alice.Constructor that wraps the Handler (conditionally) in a middleware chain.
+func (h *Handler) AliceConstructor() alice.Constructor {
 	return func(next http.Handler) (http.Handler, error) {
 		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-			handler.ServeHTTP(rw, req, next)
+			if h == nil {
+				next.ServeHTTP(rw, req)
+				return
+			}
+
+			h.ServeHTTP(rw, req, next)
 		}), nil
 	}
 }
@@ -196,6 +202,12 @@ func GetLogData(req *http.Request) *LogData {
 }
 
 func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http.Handler) {
+	if !observability.AccessLogsEnabled(req.Context()) {
+		next.ServeHTTP(rw, req)
+
+		return
+	}
+
 	now := time.Now().UTC()
 
 	core := CoreLogData{

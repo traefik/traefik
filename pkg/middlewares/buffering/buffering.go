@@ -9,7 +9,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	oxybuffer "github.com/vulcand/oxy/v2/buffer"
-	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -48,8 +47,8 @@ func New(ctx context.Context, next http.Handler, config dynamic.Buffering, name 
 	}, nil
 }
 
-func (b *buffer) GetTracingInformation() (string, string, trace.SpanKind) {
-	return b.name, typeName, trace.SpanKindInternal
+func (b *buffer) GetTracingInformation() (string, string) {
+	return b.name, typeName
 }
 
 func (b *buffer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
