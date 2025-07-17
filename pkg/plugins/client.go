@@ -278,16 +278,26 @@ func unzipFile(f *zipa.File, dest string) error {
 
 	defer func() { _ = rc.Close() }()
 
-	pathParts := strings.SplitN(f.Name, "/", 2)
-
-	var pp string
-	if len(pathParts) < 2 {
-		pp = pathParts[0]
-	} else {
-		pp = pathParts[1]
+	// Validate and sanitize the file path
+	cleanName := filepath.Clean(f.Name)
+	if strings.Contains(cleanName, "..") {
+		return fmt.Errorf("invalid file path in archive: %s", f.Name)
 	}
 
-	p := filepath.Join(dest, pp)
+	p := filepath.Join(dest, cleanName)
+	absDest, err := filepath.Abs(dest)
+	if err != nil {
+		return fmt.Errorf("unable to resolve destination directory: %w", err)
+	}
+
+	absPath, err := filepath.Abs(p)
+	if err != nil {
+		return fmt.Errorf("unable to resolve file path: %w", err)
+	}
+
+	if !strings.HasPrefix(absPath, absDest) {
+		return fmt.Errorf("file path escapes destination directory: %s", absPath)
+	}
 
 	if f.FileInfo().IsDir() {
 		err = os.MkdirAll(p, f.Mode())
