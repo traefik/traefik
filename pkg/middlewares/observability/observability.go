@@ -17,7 +17,7 @@ type Observability struct {
 	AccessLogsEnabled      bool
 	MetricsEnabled         bool
 	SemConvMetricsEnabled  bool
-	MinimalTracingEnabled  bool
+	TracingEnabled         bool
 	DetailedTracingEnabled bool
 }
 
@@ -52,14 +52,14 @@ func SemConvMetricsEnabled(ctx context.Context) bool {
 	return ok && obs.SemConvMetricsEnabled
 }
 
-// MinimalTraceEnabled returns whether minimal tracing is enabled.
-func MinimalTraceEnabled(ctx context.Context) bool {
+// TracingEnabled returns whether tracing is enabled.
+func TracingEnabled(ctx context.Context) bool {
 	obs, ok := ctx.Value(observabilityKey).(Observability)
-	return ok && obs.MinimalTracingEnabled
+	return ok && obs.TracingEnabled
 }
 
-// DetailedTraceEnabled returns whether detailed tracing is enabled.
-func DetailedTraceEnabled(ctx context.Context) bool {
+// DetailedTracingEnabled returns whether detailed tracing is enabled.
+func DetailedTracingEnabled(ctx context.Context) bool {
 	obs, ok := ctx.Value(observabilityKey).(Observability)
 	return ok && obs.DetailedTracingEnabled
 }

@@ -126,8 +126,8 @@ func ServiceMetricsHandler(ctx context.Context, registry metrics.Registry, servi
 	}
 }
 
-func (m *metricsMiddleware) GetTracingInformation() (string, string, trace.SpanKind) {
-	return m.name, typeName, trace.SpanKindInternal
+func (m *metricsMiddleware) GetTracingInformation() (string, string) {
+	return m.name, typeName
 }
 
 func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request) {

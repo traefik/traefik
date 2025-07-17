@@ -181,8 +181,8 @@ func (c *compress) chooseHandler(typ string, rw http.ResponseWriter, req *http.R
 	}
 }
 
-func (c *compress) GetTracingInformation() (string, string, trace.SpanKind) {
-	return c.name, typeName, trace.SpanKindInternal
+func (c *compress) GetTracingInformation() (string, string) {
+	return c.name, typeName
 }
 
 func (c *compress) newGzipHandler() (http.Handler, error) {

@@ -125,7 +125,7 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	var currentSpan trace.Span
 	operation := func() error {
-		if tracer != nil && observability.DetailedTraceEnabled(req.Context()) {
+		if tracer != nil && observability.DetailedTracingEnabled(req.Context()) {
 			if currentSpan != nil {
 				currentSpan.End()
 			}

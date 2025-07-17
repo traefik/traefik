@@ -127,8 +127,8 @@ func New(ctx context.Context, next http.Handler, config dynamic.RateLimit, name 
 	}, nil
 }
 
-func (rl *rateLimiter) GetTracingInformation() (string, string, trace.SpanKind) {
-	return rl.name, typeName, trace.SpanKindInternal
+func (rl *rateLimiter) GetTracingInformation() (string, string) {
+	return rl.name, typeName
 }
 
 func (rl *rateLimiter) ServeHTTP(rw http.ResponseWriter, req *http.Request) {

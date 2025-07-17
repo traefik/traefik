@@ -42,8 +42,8 @@ func New(ctx context.Context, next http.Handler, config dynamic.ReplacePathRegex
 	}, nil
 }
 
-func (rp *replacePathRegex) GetTracingInformation() (string, string, trace.SpanKind) {
-	return rp.name, typeName, trace.SpanKindInternal
+func (rp *replacePathRegex) GetTracingInformation() (string, string) {
+	return rp.name, typeName
 }
 
 func (rp *replacePathRegex) ServeHTTP(rw http.ResponseWriter, req *http.Request) {

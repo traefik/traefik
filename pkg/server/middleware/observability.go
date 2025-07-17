@@ -127,11 +127,11 @@ func (o *ObservabilityMgr) RotateAccessLogs() error {
 
 func (o *ObservabilityMgr) observabilityContextHandler(next http.Handler, internal bool, config dynamic.RouterObservabilityConfig) http.Handler {
 	return observability.WithObservabilityHandler(next, observability.Observability{
-		AccessLogsEnabled:      o.shouldAccessLog(internal, config),
-		MetricsEnabled:         o.shouldMeter(internal, config),
-		SemConvMetricsEnabled:  o.shouldMeterSemConv(internal, config),
-		MinimalTracingEnabled:  o.shouldTrace(internal, config, types.MinimalVerbosity),
-		DetailedTracingEnabled: o.shouldTrace(internal, config, types.DetailedVerbosity),
+		AccessLogsEnabled:     o.shouldAccessLog(internal, config),
+		MetricsEnabled:        o.shouldMeter(internal, config),
+		SemConvMetricsEnabled: o.shouldMeterSemConv(internal, config),
+		MinimalTracingEnabled: o.shouldTrace(internal, config, types.MinimalVerbosity),
+		DetailedTraceEnabled:  o.shouldTrace(internal, config, types.DetailedVerbosity),
 	})
 }
 
