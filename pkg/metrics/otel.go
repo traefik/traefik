@@ -212,7 +212,7 @@ func newOpenTelemetryMeterProvider(ctx context.Context, config *types.OTLP) (*sd
 		resource.WithOS(),
 		resource.WithProcess(),
 		resource.WithTelemetrySDK(),
-		resource.WithDetectors(types.KubernetesDetector{}),
+		resource.WithDetectors(types.K8sAttributesDetector{}),
 		resource.WithAttributes(
 			semconv.ServiceName(config.ServiceName),
 			semconv.ServiceVersion(version.Version),

@@ -90,7 +90,10 @@ Complete documentation is available at https://traefik.io`,
 }
 
 func runCmd(staticConfiguration *static.Configuration) error {
-	if err := setupLogger(context.Background(), staticConfiguration); err != nil {
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer cancel()
+
+	if err := setupLogger(ctx, staticConfiguration); err != nil {
 		return fmt.Errorf("setting up logger: %w", err)
 	}
 
@@ -122,8 +125,6 @@ func runCmd(staticConfiguration *static.Configuration) error {
 	if err != nil {
 		return err
 	}
-
-	ctx, _ := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 
 	if staticConfiguration.Ping != nil {
 		staticConfiguration.Ping.WithContext(ctx)
