@@ -12,7 +12,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/vulcand/oxy/v2/cbreaker"
-	"go.opentelemetry.io/otel/trace"
 )
 
 const typeName = "CircuitBreaker"
@@ -68,8 +67,8 @@ func New(ctx context.Context, next http.Handler, confCircuitBreaker dynamic.Circ
 	}, nil
 }
 
-func (c *circuitBreaker) GetTracingInformation() (string, string, trace.SpanKind) {
-	return c.name, typeName, trace.SpanKindInternal
+func (c *circuitBreaker) GetTracingInformation() (string, string) {
+	return c.name, typeName
 }
 
 func (c *circuitBreaker) ServeHTTP(rw http.ResponseWriter, req *http.Request) {

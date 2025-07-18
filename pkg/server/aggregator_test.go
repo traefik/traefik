@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 func Test_mergeConfiguration(t *testing.T) {
@@ -521,9 +522,10 @@ func Test_applyModel(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"test": {
 							Observability: &dynamic.RouterObservabilityConfig{
-								AccessLogs: pointer(true),
-								Metrics:    pointer(true),
-								Tracing:    pointer(true),
+								AccessLogs:     pointer(true),
+								Metrics:        pointer(true),
+								Tracing:        pointer(true),
+								TraceVerbosity: types.MinimalVerbosity,
 							},
 						},
 					},
@@ -589,9 +591,10 @@ func Test_applyModel(t *testing.T) {
 							Middlewares: []string{"test"},
 							TLS:         &dynamic.RouterTLSConfig{},
 							Observability: &dynamic.RouterObservabilityConfig{
-								AccessLogs: pointer(true),
-								Metrics:    pointer(true),
-								Tracing:    pointer(true),
+								AccessLogs:     pointer(true),
+								Metrics:        pointer(true),
+								Tracing:        pointer(true),
+								TraceVerbosity: types.MinimalVerbosity,
 							},
 						},
 					},
@@ -622,9 +625,10 @@ func Test_applyModel(t *testing.T) {
 							Middlewares: []string{"test"},
 							TLS:         &dynamic.RouterTLSConfig{},
 							Observability: dynamic.RouterObservabilityConfig{
-								AccessLogs: pointer(true),
-								Tracing:    pointer(true),
-								Metrics:    pointer(true),
+								AccessLogs:     pointer(true),
+								Tracing:        pointer(true),
+								Metrics:        pointer(true),
+								TraceVerbosity: types.MinimalVerbosity,
 							},
 						},
 					},
@@ -638,9 +642,10 @@ func Test_applyModel(t *testing.T) {
 							Middlewares: []string{"test"},
 							TLS:         &dynamic.RouterTLSConfig{},
 							Observability: &dynamic.RouterObservabilityConfig{
-								AccessLogs: pointer(true),
-								Tracing:    pointer(true),
-								Metrics:    pointer(true),
+								AccessLogs:     pointer(true),
+								Tracing:        pointer(true),
+								Metrics:        pointer(true),
+								TraceVerbosity: types.MinimalVerbosity,
 							},
 						},
 					},
@@ -651,9 +656,10 @@ func Test_applyModel(t *testing.T) {
 							Middlewares: []string{"test"},
 							TLS:         &dynamic.RouterTLSConfig{},
 							Observability: dynamic.RouterObservabilityConfig{
-								AccessLogs: pointer(true),
-								Tracing:    pointer(true),
-								Metrics:    pointer(true),
+								AccessLogs:     pointer(true),
+								Tracing:        pointer(true),
+								Metrics:        pointer(true),
+								TraceVerbosity: types.MinimalVerbosity,
 							},
 						},
 					},
@@ -688,9 +694,10 @@ func Test_applyModel(t *testing.T) {
 							Middlewares: []string{"test"},
 							TLS:         &dynamic.RouterTLSConfig{CertResolver: "router"},
 							Observability: &dynamic.RouterObservabilityConfig{
-								AccessLogs: pointer(true),
-								Metrics:    pointer(true),
-								Tracing:    pointer(true),
+								AccessLogs:     pointer(true),
+								Metrics:        pointer(true),
+								Tracing:        pointer(true),
+								TraceVerbosity: types.MinimalVerbosity,
 							},
 						},
 					},
@@ -730,9 +737,10 @@ func Test_applyModel(t *testing.T) {
 						"test": {
 							EntryPoints: []string{"web"},
 							Observability: &dynamic.RouterObservabilityConfig{
-								AccessLogs: pointer(true),
-								Metrics:    pointer(true),
-								Tracing:    pointer(true),
+								AccessLogs:     pointer(true),
+								Metrics:        pointer(true),
+								Tracing:        pointer(true),
+								TraceVerbosity: types.MinimalVerbosity,
 							},
 						},
 						"websecure-test": {
@@ -740,9 +748,10 @@ func Test_applyModel(t *testing.T) {
 							Middlewares: []string{"test"},
 							TLS:         &dynamic.RouterTLSConfig{},
 							Observability: &dynamic.RouterObservabilityConfig{
-								AccessLogs: pointer(true),
-								Metrics:    pointer(true),
-								Tracing:    pointer(true),
+								AccessLogs:     pointer(true),
+								Metrics:        pointer(true),
+								Tracing:        pointer(true),
+								TraceVerbosity: types.MinimalVerbosity,
 							},
 						},
 					},

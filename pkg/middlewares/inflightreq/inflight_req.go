@@ -10,7 +10,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/vulcand/oxy/v2/connlimit"
-	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -53,8 +52,8 @@ func New(ctx context.Context, next http.Handler, config dynamic.InFlightReq, nam
 	return &inFlightReq{handler: handler, name: name}, nil
 }
 
-func (i *inFlightReq) GetTracingInformation() (string, string, trace.SpanKind) {
-	return i.name, typeName, trace.SpanKindInternal
+func (i *inFlightReq) GetTracingInformation() (string, string) {
+	return i.name, typeName
 }
 
 func (i *inFlightReq) ServeHTTP(rw http.ResponseWriter, req *http.Request) {

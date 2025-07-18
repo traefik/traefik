@@ -45,7 +45,7 @@ func newRouter(ctx context.Context, router, routerRule, service string, next htt
 }
 
 func (f *routerTracing) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	if tracer := tracing.TracerFromContext(req.Context()); tracer != nil {
+	if tracer := tracing.TracerFromContext(req.Context()); tracer != nil && DetailedTracingEnabled(req.Context()) {
 		tracingCtx, span := tracer.Start(req.Context(), "Router", trace.WithSpanKind(trace.SpanKindInternal))
 		defer span.End()
 

@@ -15,7 +15,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"github.com/vulcand/oxy/v2/utils"
-	"go.opentelemetry.io/otel/trace"
 )
 
 // Compile time validation that the response recorder implements http interfaces correctly.
@@ -83,8 +82,8 @@ func New(ctx context.Context, next http.Handler, config dynamic.ErrorPage, servi
 	}, nil
 }
 
-func (c *customErrors) GetTracingInformation() (string, string, trace.SpanKind) {
-	return c.name, typeName, trace.SpanKindInternal
+func (c *customErrors) GetTracingInformation() (string, string) {
+	return c.name, typeName
 }
 
 func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
