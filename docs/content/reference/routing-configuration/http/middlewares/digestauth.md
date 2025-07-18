@@ -3,8 +3,6 @@ title: "Traefik DigestAuth Documentation"
 description: "Traefik Proxy's HTTP DigestAuth middleware restricts access to your services to known users. Read the technical documentation."
 ---
 
-![DigestAuth](../../../../assets/img/middleware/digestauth.png)
-
 The `DigestAuth` middleware grants access to services to authorized users only.
 
 ## Configuration Examples
