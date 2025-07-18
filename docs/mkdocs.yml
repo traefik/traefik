@@ -188,6 +188,7 @@ nav:
       - 'Metrics': 'observe/metrics.md'
       - 'Tracing': 'observe/tracing.md'
 <<<<<<< HEAD
+<<<<<<< HEAD
   - 'Extend': 'extend/extend-traefik.md'
 =======
 <<<<<<< HEAD
@@ -267,6 +268,8 @@ nav:
         - 'IPAllowList': 'middlewares/tcp/ipallowlist.md'
 =======
 >>>>>>> fb23069a1 (Revamp menu, adding redirects)
+=======
+>>>>>>> f05ce1b93 (Revamp KV store routing configuration reference page)
   - 'Plugins & Plugin Catalog': 'plugins/index.md'
   - 'Security':
         - 'Content-Length': 'security/content-length.md'
