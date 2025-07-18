@@ -96,25 +96,27 @@ log:
 
 #### Configuration Options
 
-| Field      | Description   | Default | Required |
-|:-----------|:-----------------------------------------------------------------------------|:--------|:---------|
-| `log.otlp.http` | This instructs the exporter to send logs to the OpenTelemetry Collector using HTTP.|      | No      |
-| `log.otlp.http.endpoint` | The endpoint of the OpenTelemetry Collector. (format=`<scheme>://<host>:<port><path>`) |  `https://localhost:4318/v1/logs`   | No |
-| `log.otlp.http.headers` | Additional headers sent with logs by the exporter to the OpenTelemetry Collector. | [ ] | No      |
-| `log.otlp.http.tls` | Defines the Client TLS configuration used by the exporter to send logs to the OpenTelemetry Collector. |      | No      |
-| `log.otlp.http.tls.ca` | The path to the certificate authority used for the secure connection to the OpenTelemetry Collector, it defaults to the system bundle. |      | No      |
-| `log.otlp.http.tls.cert` | The path to the certificate to use for the OpenTelemetry Collector. |      | No      |
-| `log.otlp.http.tls.key` | The path to the key to use for the OpenTelemetry Collector. |      | No      |
-| `log.otlp.http.tls.insecureSkipVerify` | Instructs the OpenTelemetry Collector to accept any certificate presented by the server regardless of the hostname in the certificate. |   false   | No      |
-| `log.otlp.grpc` | This instructs the exporter to send logs to the OpenTelemetry Collector using gRPC.|      | No      |
-| `log.otlp.grpc.endpoint` | The endpoint of the OpenTelemetry Collector. (format=`<host>:<port>`) |  `localhost:4317`   | No      |
-| `log.otlp.grpc.headers` | Additional headers sent with logs by the exporter to the OpenTelemetry Collector. | [ ] | No      |
-| `log.otlp.grpc.insecure` | Instructs the exporter to send logs to the OpenTelemetry Collector using an insecure protocol. |   false   | No      |
-| `log.otlp.grpc.tls` | Defines the Client TLS configuration used by the exporter to send logs to the OpenTelemetry Collector. |      | No      |
-| `log.otlp.grpc.tls.ca` | The path to the certificate authority used for the secure connection to the OpenTelemetry Collector, it defaults to the system bundle. |      | No      |
-| `log.otlp.grpc.tls.cert` | The path to the certificate to use for the OpenTelemetry Collector. |      | No      |
-| `log.otlp.grpc.tls.key` | The path to the key to use for the OpenTelemetry Collector. |      | No      |
-| `log.otlp.grpc.tls.insecureSkipVerify` | Instructs the OpenTelemetry Collector to accept any certificate presented by the server regardless of the hostname in the certificate. |   false   | No      |
+| Field                                  | Description                                                                                                                            | Default                          | Required |
+|:---------------------------------------|:---------------------------------------------------------------------------------------------------------------------------------------|:---------------------------------|:---------|
+| `log.otlp.serviceName`                 | Service name used in selected backend.                                                                                                 | "traefik"                        | No       |
+| `log.otlp.resourceAttributes`          | Defines additional resource attributes to be sent to the collector.                                                                    | []                               | No       |
+| `log.otlp.http`                        | This instructs the exporter to send logs to the OpenTelemetry Collector using HTTP.                                                    |                                  | No       |
+| `log.otlp.http.endpoint`               | The endpoint of the OpenTelemetry Collector. (format=`<scheme>://<host>:<port><path>`)                                                 | `https://localhost:4318/v1/logs` | No       |
+| `log.otlp.http.headers`                | Additional headers sent with logs by the exporter to the OpenTelemetry Collector.                                                      | [ ]                              | No       |
+| `log.otlp.http.tls`                    | Defines the Client TLS configuration used by the exporter to send logs to the OpenTelemetry Collector.                                 |                                  | No       |
+| `log.otlp.http.tls.ca`                 | The path to the certificate authority used for the secure connection to the OpenTelemetry Collector, it defaults to the system bundle. |                                  | No       |
+| `log.otlp.http.tls.cert`               | The path to the certificate to use for the OpenTelemetry Collector.                                                                    |                                  | No       |
+| `log.otlp.http.tls.key`                | The path to the key to use for the OpenTelemetry Collector.                                                                            |                                  | No       |
+| `log.otlp.http.tls.insecureSkipVerify` | Instructs the OpenTelemetry Collector to accept any certificate presented by the server regardless of the hostname in the certificate. | false                            | No       |
+| `log.otlp.grpc`                        | This instructs the exporter to send logs to the OpenTelemetry Collector using gRPC.                                                    |                                  | No       |
+| `log.otlp.grpc.endpoint`               | The endpoint of the OpenTelemetry Collector. (format=`<host>:<port>`)                                                                  | `localhost:4317`                 | No       |
+| `log.otlp.grpc.headers`                | Additional headers sent with logs by the exporter to the OpenTelemetry Collector.                                                      | [ ]                              | No       |
+| `log.otlp.grpc.insecure`               | Instructs the exporter to send logs to the OpenTelemetry Collector using an insecure protocol.                                         | false                            | No       |
+| `log.otlp.grpc.tls`                    | Defines the Client TLS configuration used by the exporter to send logs to the OpenTelemetry Collector.                                 |                                  | No       |
+| `log.otlp.grpc.tls.ca`                 | The path to the certificate authority used for the secure connection to the OpenTelemetry Collector, it defaults to the system bundle. |                                  | No       |
+| `log.otlp.grpc.tls.cert`               | The path to the certificate to use for the OpenTelemetry Collector.                                                                    |                                  | No       |
+| `log.otlp.grpc.tls.key`                | The path to the key to use for the OpenTelemetry Collector.                                                                            |                                  | No       |
+| `log.otlp.grpc.tls.insecureSkipVerify` | Instructs the OpenTelemetry Collector to accept any certificate presented by the server regardless of the hostname in the certificate. | false                            | No       |
 
 ## AccessLogs
 
@@ -256,25 +258,27 @@ accesslog:
 
 #### Configuration Options
 
-| Field      | Description   | Default | Required |
-|:-----------|:--------------------------|:--------|:---------|
-| `accesslog.otlp.http` | This instructs the exporter to send access logs to the OpenTelemetry Collector using HTTP.|      | No      |
-| `accesslog.otlp.http.endpoint` | The endpoint of the OpenTelemetry Collector. (format=`<scheme>://<host>:<port><path>`) |  `https://localhost:4318/v1/logs`   | No      |
-| `accesslog.otlp.http.headers` | Additional headers sent with access logs by the exporter to the OpenTelemetry Collector. |  [ ]    | No      |
-| `accesslog.otlp.http.tls` | Defines the Client TLS configuration used by the exporter to send access logs to the OpenTelemetry Collector. |      | No      |
-| `accesslog.otlp.http.tls.ca` | The path to the certificate authority used for the secure connection to the OpenTelemetry Collector, it defaults to the system bundle. |      | No      |
-| `accesslog.otlp.http.tls.cert` | The path to the certificate to use for the OpenTelemetry Collector. |      | No      |
-| `accesslog.otlp.http.tls.key` | The path to the key to use for the OpenTelemetry Collector. |      | No      |
-| `accesslog.otlp.http.tls.insecureSkipVerify` | Instructs the OpenTelemetry Collector to accept any certificate presented by the server regardless of the hostname in the certificate. |   false   | No      |
-| `accesslog.otlp.grpc` | This instructs the exporter to send access logs to the OpenTelemetry Collector using gRPC.|      | No      |
-| `accesslog.otlp.grpc.endpoint` | The endpoint of the OpenTelemetry Collector. (format=`<host>:<port>`) |  `localhost:4317`   | No      |
-| `accesslog.otlp.grpc.headers` | Additional headers sent with access logs by the exporter to the OpenTelemetry Collector. | [ ] | No      |
-| `accesslog.otlp.grpc.insecure` | Instructs the exporter to send access logs to the OpenTelemetry Collector using an insecure protocol. |   false   | No      |
-| `accesslog.otlp.grpc.tls` | Defines the Client TLS configuration used by the exporter to send access logs to the OpenTelemetry Collector. |      | No      |
-| `accesslog.otlp.grpc.tls.ca` | The path to the certificate authority used for the secure connection to the OpenTelemetry Collector, it defaults to the system bundle. |      | No      |
-| `accesslog.otlp.grpc.tls.cert` | The path to the certificate to use for the OpenTelemetry Collector. |      | No      |
-| `accesslog.otlp.grpc.tls.key` | The path to the key to use for the OpenTelemetry Collector. |      | No      |
-| `accesslog.otlp.grpc.tls.insecureSkipVerify` | Instructs the OpenTelemetry Collector to accept any certificate presented by the server regardless of the hostname in the certificate. |   false   | No      |
+| Field                                        | Description                                                                                                                            | Default                          | Required |
+|:---------------------------------------------|:---------------------------------------------------------------------------------------------------------------------------------------|:---------------------------------|:---------|
+| `accesslog.otlp.serviceName`                 | Defines the service name resource attribute.                                                                                           | "traefik"                        | No       |
+| `accesslog.otlp.resourceAttributes`          | Defines additional resource attributes to be sent to the collector.                                                                    | []                               | No       |
+| `accesslog.otlp.http`                        | This instructs the exporter to send access logs to the OpenTelemetry Collector using HTTP.                                             |                                  | No       |
+| `accesslog.otlp.http.endpoint`               | The endpoint of the OpenTelemetry Collector. (format=`<scheme>://<host>:<port><path>`)                                                 | `https://localhost:4318/v1/logs` | No       |
+| `accesslog.otlp.http.headers`                | Additional headers sent with access logs by the exporter to the OpenTelemetry Collector.                                               | [ ]                              | No       |
+| `accesslog.otlp.http.tls`                    | Defines the Client TLS configuration used by the exporter to send access logs to the OpenTelemetry Collector.                          |                                  | No       |
+| `accesslog.otlp.http.tls.ca`                 | The path to the certificate authority used for the secure connection to the OpenTelemetry Collector, it defaults to the system bundle. |                                  | No       |
+| `accesslog.otlp.http.tls.cert`               | The path to the certificate to use for the OpenTelemetry Collector.                                                                    |                                  | No       |
+| `accesslog.otlp.http.tls.key`                | The path to the key to use for the OpenTelemetry Collector.                                                                            |                                  | No       |
+| `accesslog.otlp.http.tls.insecureSkipVerify` | Instructs the OpenTelemetry Collector to accept any certificate presented by the server regardless of the hostname in the certificate. | false                            | No       |
+| `accesslog.otlp.grpc`                        | This instructs the exporter to send access logs to the OpenTelemetry Collector using gRPC.                                             |                                  | No       |
+| `accesslog.otlp.grpc.endpoint`               | The endpoint of the OpenTelemetry Collector. (format=`<host>:<port>`)                                                                  | `localhost:4317`                 | No       |
+| `accesslog.otlp.grpc.headers`                | Additional headers sent with access logs by the exporter to the OpenTelemetry Collector.                                               | [ ]                              | No       |
+| `accesslog.otlp.grpc.insecure`               | Instructs the exporter to send access logs to the OpenTelemetry Collector using an insecure protocol.                                  | false                            | No       |
+| `accesslog.otlp.grpc.tls`                    | Defines the Client TLS configuration used by the exporter to send access logs to the OpenTelemetry Collector.                          |                                  | No       |
+| `accesslog.otlp.grpc.tls.ca`                 | The path to the certificate authority used for the secure connection to the OpenTelemetry Collector, it defaults to the system bundle. |                                  | No       |
+| `accesslog.otlp.grpc.tls.cert`               | The path to the certificate to use for the OpenTelemetry Collector.                                                                    |                                  | No       |
+| `accesslog.otlp.grpc.tls.key`                | The path to the key to use for the OpenTelemetry Collector.                                                                            |                                  | No       |
+| `accesslog.otlp.grpc.tls.insecureSkipVerify` | Instructs the OpenTelemetry Collector to accept any certificate presented by the server regardless of the hostname in the certificate. | false                            | No       |
 
 ### CLF format fields
 
