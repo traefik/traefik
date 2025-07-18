@@ -19,7 +19,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/healthcheck"
 	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
-	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
 	metricsMiddle "github.com/traefik/traefik/v3/pkg/middlewares/metrics"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/middlewares/retry"
@@ -37,7 +36,7 @@ import (
 
 // ProxyBuilder builds reverse proxy handlers.
 type ProxyBuilder interface {
-	Build(cfgName string, targetURL *url.URL, shouldObserve, passHostHeader, preservePath bool, flushInterval time.Duration) (http.Handler, error)
+	Build(cfgName string, targetURL *url.URL, passHostHeader, preservePath bool, flushInterval time.Duration) (http.Handler, error)
 	Update(configs map[string]*dynamic.ServersTransport)
 }
 
@@ -364,50 +363,32 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 
 		qualifiedSvcName := provider.GetQualifiedName(ctx, serviceName)
 
-		shouldObserve := m.observabilityMgr.ShouldAddTracing(qualifiedSvcName, nil) || m.observabilityMgr.ShouldAddMetrics(qualifiedSvcName, nil)
-		proxy, err := m.proxyBuilder.Build(service.ServersTransport, target, shouldObserve, passHostHeader, server.PreservePath, flushInterval)
+		proxy, err := m.proxyBuilder.Build(service.ServersTransport, target, passHostHeader, server.PreservePath, flushInterval)
 		if err != nil {
 			return nil, fmt.Errorf("error building proxy for server URL %s: %w", server.URL, err)
 		}
+
 		// The retry wrapping must be done just before the proxy handler,
 		// to make sure that the retry will not be triggered/disabled by
 		// middlewares in the chain.
 		proxy = retry.WrapHandler(proxy)
 
-		// Prevents from enabling observability for internal resources.
+		// Access logs, metrics, and tracing middlewares are idempotent if the associated signal is disabled.
+		proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceURL, target.String(), nil)
+		proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceAddr, target.Host, nil)
+		proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceName, qualifiedSvcName, accesslog.AddServiceFields)
 
-		if m.observabilityMgr.ShouldAddAccessLogs(qualifiedSvcName, nil) {
-			proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceURL, target.String(), nil)
-			proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceAddr, target.Host, nil)
-			proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceName, serviceName, accesslog.AddServiceFields)
+		metricsHandler := metricsMiddle.ServiceMetricsHandler(ctx, m.observabilityMgr.MetricsRegistry(), qualifiedSvcName)
+		metricsHandler = observability.WrapMiddleware(ctx, metricsHandler)
+
+		proxy, err = alice.New().
+			Append(metricsHandler).
+			Then(proxy)
+		if err != nil {
+			return nil, fmt.Errorf("error wrapping metrics handler: %w", err)
 		}
 
-		if m.observabilityMgr.MetricsRegistry() != nil && m.observabilityMgr.MetricsRegistry().IsSvcEnabled() &&
-			m.observabilityMgr.ShouldAddMetrics(qualifiedSvcName, nil) {
-			metricsHandler := metricsMiddle.WrapServiceHandler(ctx, m.observabilityMgr.MetricsRegistry(), serviceName)
-
-			proxy, err = alice.New().
-				Append(observability.WrapMiddleware(ctx, metricsHandler)).
-				Then(proxy)
-			if err != nil {
-				return nil, fmt.Errorf("error wrapping metrics handler: %w", err)
-			}
-		}
-
-		if m.observabilityMgr.ShouldAddTracing(qualifiedSvcName, nil) {
-			proxy = observability.NewService(ctx, serviceName, proxy)
-		}
-
-		if m.observabilityMgr.ShouldAddAccessLogs(qualifiedSvcName, nil) || m.observabilityMgr.ShouldAddMetrics(qualifiedSvcName, nil) {
-			// Some piece of middleware, like the ErrorPage, are relying on this serviceBuilder to get the handler for a given service,
-			// to re-target the request to it.
-			// Those pieces of middleware can be configured on routes that expose a Traefik internal service.
-			// In such a case, observability for internals being optional, the capture probe could be absent from context (no wrap via the entrypoint).
-			// But if the service targeted by this piece of middleware is not an internal one,
-			// and requires observability, we still want the capture probe to be present in the request context.
-			// Makes sure a capture probe is in the request context.
-			proxy, _ = capture.Wrap(proxy)
-		}
+		proxy = observability.NewService(ctx, qualifiedSvcName, proxy)
 
 		lb.AddServer(server.URL, proxy, server)
 

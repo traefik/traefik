@@ -26,9 +26,10 @@ const (
 type Configuration struct {
 	Routers        map[string]*RouterInfo        `json:"routers,omitempty"`
 	Middlewares    map[string]*MiddlewareInfo    `json:"middlewares,omitempty"`
-	TCPMiddlewares map[string]*TCPMiddlewareInfo `json:"tcpMiddlewares,omitempty"`
 	Services       map[string]*ServiceInfo       `json:"services,omitempty"`
+	Models         map[string]*dynamic.Model     `json:"-"`
 	TCPRouters     map[string]*TCPRouterInfo     `json:"tcpRouters,omitempty"`
+	TCPMiddlewares map[string]*TCPMiddlewareInfo `json:"tcpMiddlewares,omitempty"`
 	TCPServices    map[string]*TCPServiceInfo    `json:"tcpServices,omitempty"`
 	UDPRouters     map[string]*UDPRouterInfo     `json:"udpRouters,omitempty"`
 	UDPServices    map[string]*UDPServiceInfo    `json:"udpServices,omitempty"`
@@ -66,6 +67,8 @@ func NewConfig(conf dynamic.Configuration) *Configuration {
 				runtimeConfig.Middlewares[k] = &MiddlewareInfo{Middleware: v, Status: StatusEnabled}
 			}
 		}
+
+		runtimeConfig.Models = conf.HTTP.Models
 	}
 
 	if conf.TCP != nil {
