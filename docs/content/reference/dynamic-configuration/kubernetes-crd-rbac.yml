@@ -15,6 +15,7 @@ rules:
       - get
       - list
       - watch
+<<<<<<< HEAD
   # The pods right is needed to inject k8s.pod.uid and k8s.pod.name OTel attributes.
   # When OTel tracing/logs/metrics are not enabled, this rule is not needed.
   - apiGroups:
@@ -23,6 +24,8 @@ rules:
        - pods
     verbs:
         - get
+=======
+>>>>>>> e1a59dd94 (Bring back K8S auto-generated files)
   - apiGroups:
       - discovery.k8s.io
     resources:

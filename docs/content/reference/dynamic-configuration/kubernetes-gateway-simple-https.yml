@@ -1,0 +1,50 @@
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: my-gateway-class
+
+spec:
+  controllerName: traefik.io/gateway-controller
+
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: my-gateway
+
+spec:
+  gatewayClassName: my-gateway-class
+  listeners:
+    - name: https
+      protocol: HTTPS
+      port: 443
+      tls:
+        certificateRefs:
+          - kind: Secret
+            name: mysecret
+
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: http-app
+  namespace: default
+
+spec:
+  parentRefs:
+    - name: my-gateway
+
+  hostnames:
+    - whoami
+
+  rules:
+    - matches:
+        - path:
+            type: Exact
+            value: /foo
+
+      backendRefs:
+        - name: whoami
+          port: 80
+          weight: 1
