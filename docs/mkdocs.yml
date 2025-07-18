@@ -133,7 +133,7 @@ plugins:
         'reference/static-configuration/cli.md': 'reference/install-configuration/configuration-options.md'
         'reference/static-configuration/env.md': 'reference/install-configuration/configuration-options.md'
         # Dynamic Configuration
-        'reference/dynamic-configuration/file.md': 
+        'reference/dynamic-configuration/file.md': 'reference/routing-configuration/other-providers/file.md'
         'reference/dynamic-configuration/docker.md': 'reference/routing-configuration/other-providers/docker.md'
         'reference/dynamic-configuration/kubernetes-crd.md': 'reference/routing-configuration/kubernetes/crd/http/ingressroute.md'
         'reference/dynamic-configuration/kubernetes-gateway.md': 'reference/routing-configuration/kubernetes/gateway-api.md'
@@ -152,7 +152,6 @@ markdown_extensions:
   - pymdownx.inlinehilite
   - pymdownx.highlight:
       use_pygments: false # hljs is used instead of pygment for TOML highlighting support
-
   - pymdownx.smartsymbols
   - pymdownx.superfences
   - pymdownx.tabbed
@@ -174,7 +173,6 @@ nav:
         - 'Kubernetes': 'getting-started/kubernetes.md'
         - 'Docker': 'getting-started/docker.md'
       - 'Configuration Introduction': 'getting-started/configuration-overview.md'
-      - 'Frequently Asked Questions': 'getting-started/faq.md'
   - 'Setup':
       - 'Kubernetes': 'setup/kubernetes.md'
       - 'Docker': 'setup/docker.md'
@@ -412,6 +410,8 @@ nav:
           - 'Nomad' : 'reference/routing-configuration/other-providers/nomad.md'
           - 'ECS' : 'reference/routing-configuration/other-providers/ecs.md'
           - 'KV' : 'reference/routing-configuration/other-providers/kv.md'
+        - 'File' : 'reference/routing-configuration/other-providers/file.md'
+  - 'Frequently Asked Questions': 'getting-started/faq.md'
   - 'Deprecation Notices':
       - 'Releases': 'deprecation/releases.md'
       - 'Features': 'deprecation/features.md'
