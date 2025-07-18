@@ -32,12 +32,10 @@ const (
 
 func (v TracingVerbosity) Allows(verbosity TracingVerbosity) bool {
 	switch v {
-	case MinimalVerbosity:
-		return verbosity == MinimalVerbosity
 	case DetailedVerbosity:
 		return verbosity == DetailedVerbosity || verbosity == MinimalVerbosity
 	default:
-		return false
+		return verbosity == MinimalVerbosity
 	}
 }
 

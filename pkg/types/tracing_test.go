@@ -41,7 +41,7 @@ func TestTracingVerbosity_Allows(t *testing.T) {
 			desc:   "unknown vs minimal",
 			from:   TracingVerbosity("unknown"),
 			to:     MinimalVerbosity,
-			allows: false,
+			allows: true,
 		},
 		{
 			desc:   "unknown vs detailed",
