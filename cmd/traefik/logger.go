@@ -40,12 +40,12 @@ func setupLogger(ctx context.Context, staticConfiguration *static.Configuration)
 	zerolog.SetGlobalLevel(logLevel)
 
 	// create logger
-	logCtx := zerolog.New(w).With().Timestamp()
+	logger := zerolog.New(w).With().Timestamp()
 	if logLevel <= zerolog.DebugLevel {
-		logCtx = logCtx.Caller()
+		logger = logger.Caller()
 	}
 
-	log.Logger = logCtx.Logger().Level(logLevel)
+	log.Logger = logger.Logger().Level(logLevel)
 
 	if staticConfiguration.Log != nil && staticConfiguration.Log.OTLP != nil {
 		var err error

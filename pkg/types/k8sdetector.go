@@ -16,11 +16,11 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-// KubernetesDetector detects the metadata of the Traefik pod running in a Kubernetes cluster.
+// K8sAttributesDetector detects the metadata of the Traefik pod running in a Kubernetes cluster.
 // It reads the pod name from the hostname file and the namespace from the service account namespace file and queries the Kubernetes API to get the pod's UID.
-type KubernetesDetector struct{}
+type K8sAttributesDetector struct{}
 
-func (p KubernetesDetector) Detect(ctx context.Context) (*resource.Resource, error) {
+func (K8sAttributesDetector) Detect(ctx context.Context) (*resource.Resource, error) {
 	attrs := os.Getenv("OTEL_RESOURCE_ATTRIBUTES")
 	if strings.Contains(attrs, string(semconv.K8SPodNameKey)) || strings.Contains(attrs, string(semconv.K8SPodUIDKey)) {
 		return resource.Empty(), nil
@@ -38,17 +38,17 @@ func (p KubernetesDetector) Detect(ctx context.Context) (*resource.Resource, err
 
 	client, err := kclientset.NewForConfig(config)
 	if err != nil {
-		return resource.Empty(), fmt.Errorf("creating Kubernetes client: %w", err)
+		return nil, fmt.Errorf("creating Kubernetes client: %w", err)
 	}
 
 	podName, err := os.Hostname()
 	if err != nil {
-		return resource.Empty(), fmt.Errorf("getting pod name: %w", err)
+		return nil, fmt.Errorf("getting pod name: %w", err)
 	}
 
 	podNamespaceBytes, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
 	if err != nil {
-		return resource.Empty(), fmt.Errorf("getting pod namespace: %w", err)
+		return nil, fmt.Errorf("getting pod namespace: %w", err)
 	}
 	podNamespace := string(podNamespaceBytes)
 
@@ -58,7 +58,7 @@ func (p KubernetesDetector) Detect(ctx context.Context) (*resource.Resource, err
 		return resource.Empty(), nil
 	}
 	if err != nil {
-		return resource.Empty(), fmt.Errorf("getting pod metadata: %w", err)
+		return nil, fmt.Errorf("getting pod metadata: %w", err)
 	}
 
 	// To avoid version conflicts with other detectors, we use a Schemaless resource.

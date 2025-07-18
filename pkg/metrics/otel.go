@@ -217,7 +217,7 @@ func newOpenTelemetryMeterProvider(ctx context.Context, config *types.OTLP) (*sd
 		resource.WithOS(),
 		resource.WithProcess(),
 		resource.WithTelemetrySDK(),
-		resource.WithDetectors(types.KubernetesDetector{}),
+		resource.WithDetectors(types.K8sAttributesDetector{}),
 		// The following order allows the user to override the service name and version,
 		// as well as any other attributes set by the above detectors.
 		resource.WithAttributes(
