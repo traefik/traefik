@@ -102,7 +102,7 @@ func runCmd(staticConfiguration *static.Configuration) error {
 
 	redactedStaticConfiguration, err := redactor.RemoveCredentials(staticConfiguration)
 	if err != nil {
-		log.WithoutContext().Errorf("Could not marshal static configuration: %v", err)
+		log.WithoutContext().Errorf("Could not redact static configuration: %v", err)
 	} else {
 		log.WithoutContext().Debugf("Static configuration loaded %s", redactedStaticConfiguration)
 	}
