@@ -1,6 +1,7 @@
 package logs
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"reflect"
@@ -12,12 +13,12 @@ import (
 )
 
 // SetupOTelLogger sets up the OpenTelemetry logger.
-func SetupOTelLogger(logger zerolog.Logger, config *types.OTelLog) (zerolog.Logger, error) {
+func SetupOTelLogger(ctx context.Context, logger zerolog.Logger, config *types.OTelLog) (zerolog.Logger, error) {
 	if config == nil {
 		return logger, nil
 	}
 
-	provider, err := config.NewLoggerProvider()
+	provider, err := config.NewLoggerProvider(ctx)
 	if err != nil {
 		return zerolog.Logger{}, fmt.Errorf("setting up OpenTelemetry logger provider: %w", err)
 	}
