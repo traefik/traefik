@@ -291,6 +291,8 @@ func (p *Provider) getClient() (*lego.Client, error) {
 	if p.DNSChallenge != nil && len(p.DNSChallenge.Provider) > 0 {
 		logger.Debugf("Using DNS Challenge provider: %s", p.DNSChallenge.Provider)
 
+		p.handleDNSProviderDeprecation(ctx)
+
 		var provider challenge.Provider
 		provider, err = dns.NewDNSChallengeProviderByName(p.DNSChallenge.Provider)
 		if err != nil {
@@ -327,6 +329,19 @@ func (p *Provider) getClient() (*lego.Client, error) {
 
 	p.client = client
 	return p.client, nil
+}
+
+func (p *Provider) handleDNSProviderDeprecation(ctx context.Context) {
+	logger := log.FromContext(ctx)
+
+	switch p.DNSChallenge.Provider {
+	case "googledomains", "cloudxns", "brandit":
+		logger.Warnf("%s DNS provider is deprecated.", p.DNSChallenge.Provider)
+	case "dnspod":
+		logger.Warnf("%s provider is deprecated, please use 'tencentcloud' provider instead.", p.DNSChallenge.Provider)
+	case "azure":
+		logger.Warnf("%s provider is deprecated, please use 'azuredns' provider instead.", p.DNSChallenge.Provider)
+	}
 }
 
 func (p *Provider) initAccount(ctx context.Context) (*Account, error) {
