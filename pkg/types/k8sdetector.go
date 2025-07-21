@@ -54,7 +54,7 @@ func (K8sAttributesDetector) Detect(ctx context.Context) (*resource.Resource, er
 
 	pod, err := client.CoreV1().Pods(podNamespace).Get(ctx, podName, metav1.GetOptions{})
 	if err != nil && kerror.IsForbidden(err) {
-		log.Error().Err(err).Msg("Unable to get Traefik pod resource")
+		log.Error().Err(err).Msg("Unable to build K8s resource attributes for Traefik pod")
 		return resource.Empty(), nil
 	}
 	if err != nil {
