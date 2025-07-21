@@ -252,6 +252,19 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	return nil
 }
 
+func (p *Provider) handleDNSProviderDeprecation(ctx context.Context) {
+	logger := log.Ctx(ctx)
+
+	switch p.DNSChallenge.Provider {
+	case "googledomains", "cloudxns", "brandit":
+		logger.Warn().Msgf("%s DNS provider is deprecated.", p.DNSChallenge.Provider)
+	case "dnspod":
+		logger.Warn().Msgf("%s provider is deprecated, please use 'tencentcloud' provider instead.", p.DNSChallenge.Provider)
+	case "azure":
+		logger.Warn().Msgf("%s provider is deprecated, please use 'azuredns' provider instead.", p.DNSChallenge.Provider)
+	}
+}
+
 func (p *Provider) getClient() (*lego.Client, error) {
 	p.clientMutex.Lock()
 	defer p.clientMutex.Unlock()
@@ -317,6 +330,8 @@ func (p *Provider) getClient() (*lego.Client, error) {
 
 	if p.DNSChallenge != nil && len(p.DNSChallenge.Provider) > 0 {
 		logger.Debug().Msgf("Using DNS Challenge provider: %s", p.DNSChallenge.Provider)
+
+		p.handleDNSProviderDeprecation(ctx)
 
 		var provider challenge.Provider
 		provider, err = dns.NewDNSChallengeProviderByName(p.DNSChallenge.Provider)
