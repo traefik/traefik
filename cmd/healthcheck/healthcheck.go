@@ -2,13 +2,13 @@ package healthcheck
 
 import (
 	"errors"
-	"flag"
 	"fmt"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/traefik/paerser/cli"
+	"github.com/traefik/paerser/flag"
 	"github.com/traefik/traefik/v3/pkg/config/static"
 )
 
@@ -23,22 +23,23 @@ func NewCmd(traefikConfiguration *static.Configuration, loaders []cli.ResourceLo
 	}
 }
 
+type urlConfig struct {
+	URL string `json:"url,omitempty" toml:"url,omitempty" yaml:"url,omitempty" `
+}
+
 func runCmd(traefikConfiguration *static.Configuration) func(args []string) error {
 	return func(args []string) error {
-		fs := flag.NewFlagSet("healthcheck", flag.ContinueOnError)
-		urlFlag := fs.String("url", "", "")
-		fs.SetOutput(os.Stderr)
-		if err := fs.Parse(args); err != nil {
-			return err
-		}
+		var urlCfg urlConfig
+		// error linked to url flag parsing is ignored to allow setting Traefik flags.
+		_ = flag.Decode(args, &urlCfg)
 
 		traefikConfiguration.SetEffectiveConfiguration()
 
 		var resp *http.Response
 		var errPing error
-		if *urlFlag != "" {
+		if urlCfg.URL != "" {
 			client := &http.Client{Timeout: 5 * time.Second}
-			resp, errPing = client.Head(*urlFlag)
+			resp, errPing = client.Head(urlCfg.URL)
 		} else {
 			resp, errPing = Do(*traefikConfiguration)
 		}
