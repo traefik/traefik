@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -22,7 +23,7 @@ func init() {
 	zerolog.SetGlobalLevel(zerolog.ErrorLevel)
 }
 
-func setupLogger(staticConfiguration *static.Configuration) error {
+func setupLogger(ctx context.Context, staticConfiguration *static.Configuration) error {
 	// Validate that the experimental flag is set up at this point,
 	// rather than validating the static configuration before the setupLogger call.
 	// This ensures that validation messages are not logged using an un-configured logger.
@@ -39,16 +40,16 @@ func setupLogger(staticConfiguration *static.Configuration) error {
 	zerolog.SetGlobalLevel(logLevel)
 
 	// create logger
-	logCtx := zerolog.New(w).With().Timestamp()
+	logger := zerolog.New(w).With().Timestamp()
 	if logLevel <= zerolog.DebugLevel {
-		logCtx = logCtx.Caller()
+		logger = logger.Caller()
 	}
 
-	log.Logger = logCtx.Logger().Level(logLevel)
+	log.Logger = logger.Logger().Level(logLevel)
 
 	if staticConfiguration.Log != nil && staticConfiguration.Log.OTLP != nil {
 		var err error
-		log.Logger, err = logs.SetupOTelLogger(log.Logger, staticConfiguration.Log.OTLP)
+		log.Logger, err = logs.SetupOTelLogger(ctx, log.Logger, staticConfiguration.Log.OTLP)
 		if err != nil {
 			return fmt.Errorf("setting up OpenTelemetry logger: %w", err)
 		}
