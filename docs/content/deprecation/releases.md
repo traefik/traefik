@@ -33,7 +33,7 @@ Below is a non-exhaustive list of versions and their maintenance status:
 
 This page is maintained and updated periodically to reflect our roadmap and any decisions affecting the end of support for Traefik Proxy.
 
-Please refer to our migration guides for specific instructions on upgrading between versions, an example is the [v2 to v3 migration guide](../migration/v2-to-v3.md).
+Please refer to our migration guides for specific instructions on upgrading between versions, an example is the [v2 to v3 migration guide](../migrate/v2-to-v3.md).
 
 !!! important "All target dates for end of support or feature removal announcements may be subject to change."
 
