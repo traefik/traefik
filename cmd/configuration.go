@@ -43,7 +43,7 @@ type TraefikHealthCheckCmdConfiguration struct {
 	static.Configuration `export:"true"`
 
 	// URL is the url to use for the healthcheck command.
-	URL string `description:"URL to use for the healthcheck command. If specified, the configuration file is ignored." export:"true"`
+	URL string `description:"URL to use for the healthcheck command. If specified all other flags are ignored." export:"true"`
 }
 
 func NewTraefikHealthCheckConfiguration() *TraefikHealthCheckCmdConfiguration {
