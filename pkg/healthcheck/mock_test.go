@@ -54,6 +54,10 @@ type GRPCServer struct {
 	done   func()
 }
 
+func (s *GRPCServer) List(_ context.Context, _ *healthpb.HealthListRequest) (*healthpb.HealthListResponse, error) {
+	return nil, nil
+}
+
 func newGRPCServer(healthSequence ...healthpb.HealthCheckResponse_ServingStatus) *GRPCServer {
 	gRPCService := &GRPCServer{
 		status: HealthSequence[healthpb.HealthCheckResponse_ServingStatus]{
