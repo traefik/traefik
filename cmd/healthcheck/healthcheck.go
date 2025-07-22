@@ -2,45 +2,37 @@ package healthcheck
 
 import (
 	"errors"
-	"flag"
 	"fmt"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/traefik/paerser/cli"
+	"github.com/traefik/traefik/v3/cmd"
 	"github.com/traefik/traefik/v3/pkg/config/static"
 )
 
 // NewCmd builds a new HealthCheck command.
-func NewCmd(traefikConfiguration *static.Configuration, loaders []cli.ResourceLoader) *cli.Command {
+func NewCmd(traefikHealthCheckConfiguration *cmd.TraefikHealthCheckCmdConfiguration, loaders []cli.ResourceLoader) *cli.Command {
 	return &cli.Command{
 		Name:          "healthcheck",
 		Description:   `Calls Traefik /ping endpoint (disabled by default) to check the health of Traefik.`,
-		Configuration: traefikConfiguration,
-		Run:           runCmd(traefikConfiguration),
+		Configuration: traefikHealthCheckConfiguration,
+		Run:           runCmd(traefikHealthCheckConfiguration),
 		Resources:     loaders,
 	}
 }
 
-func runCmd(traefikConfiguration *static.Configuration) func(args []string) error {
+func runCmd(traefikHealthCheckConfiguration *cmd.TraefikHealthCheckCmdConfiguration) func(args []string) error {
 	return func(args []string) error {
-		fs := flag.NewFlagSet("healthcheck", flag.ContinueOnError)
-		urlFlag := fs.String("url", "", "")
-		fs.SetOutput(os.Stderr)
-		if err := fs.Parse(args); err != nil {
-			return err
-		}
-
-		traefikConfiguration.SetEffectiveConfiguration()
-
 		var resp *http.Response
 		var errPing error
-		if *urlFlag != "" {
+		if traefikHealthCheckConfiguration.URL != "" {
 			client := &http.Client{Timeout: 5 * time.Second}
-			resp, errPing = client.Head(*urlFlag)
+			resp, errPing = client.Head(traefikHealthCheckConfiguration.URL)
 		} else {
-			resp, errPing = Do(*traefikConfiguration)
+			traefikHealthCheckConfiguration.Configuration.SetEffectiveConfiguration()
+			resp, errPing = Do(traefikHealthCheckConfiguration.Configuration)
 		}
 
 		if resp != nil {
