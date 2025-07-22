@@ -10,6 +10,7 @@ import (
 // TraefikCmdConfiguration wraps the static configuration and extra parameters.
 type TraefikCmdConfiguration struct {
 	static.Configuration `export:"true"`
+
 	// ConfigFile is the path to the configuration file.
 	ConfigFile string `description:"Configuration file to use. If specified all other flags are ignored." export:"true"`
 }
@@ -34,5 +35,19 @@ func NewTraefikConfiguration() *TraefikCmdConfiguration {
 			},
 		},
 		ConfigFile: "",
+	}
+}
+
+// TraefikHealthCheckCmdConfiguration wraps the static configuration and extra parameters.
+type TraefikHealthCheckCmdConfiguration struct {
+	static.Configuration `export:"true"`
+
+	// URL is the url to use for the healthcheck command.
+	URL string `description:"URL to use for the healthcheck command. If specified all other flags are ignored." export:"true"`
+}
+
+func NewTraefikHealthCheckConfiguration() *TraefikHealthCheckCmdConfiguration {
+	return &TraefikHealthCheckCmdConfiguration{
+		Configuration: NewTraefikConfiguration().Configuration,
 	}
 }

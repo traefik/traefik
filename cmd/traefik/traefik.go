@@ -68,7 +68,7 @@ Complete documentation is available at https://traefik.io`,
 		},
 	}
 
-	err := cmdTraefik.AddCommand(healthcheck.NewCmd(&tConfig.Configuration, loaders))
+	err := cmdTraefik.AddCommand(healthcheck.NewCmd(cmd.NewTraefikHealthCheckConfiguration(), loaders))
 	if err != nil {
 		stdlog.Println(err)
 		os.Exit(1)
