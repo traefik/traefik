@@ -2533,7 +2533,7 @@ spec:
                 type: object
               curvePreferences:
                 description: |-
-                  CurvePreferences defines the preferred elliptic curves in a specific order.
+                  CurvePreferences defines the preferred elliptic curves.
                   More info: https://doc.traefik.io/traefik/v3.4/https/tls/#curve-preferences
                 items:
                   type: string
