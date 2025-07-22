@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -13,11 +14,14 @@ import (
 	traefikinformers "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/informers/externalversions"
 	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
+	"github.com/traefik/traefik/v3/pkg/types"
 	"github.com/traefik/traefik/v3/pkg/version"
 	corev1 "k8s.io/api/core/v1"
+	discoveryv1 "k8s.io/api/discovery/v1"
 	kerror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/selection"
 	kinformers "k8s.io/client-go/informers"
 	kclientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -44,13 +48,18 @@ type Client interface {
 	GetTLSStores() []*traefikv1alpha1.TLSStore
 	GetService(namespace, name string) (*corev1.Service, bool, error)
 	GetSecret(namespace, name string) (*corev1.Secret, bool, error)
-	GetEndpoints(namespace, name string) (*corev1.Endpoints, bool, error)
+	GetEndpointSlicesForService(namespace, serviceName string) ([]*discoveryv1.EndpointSlice, error)
+	GetNodes() ([]*corev1.Node, bool, error)
+	GetConfigMap(namespace, name string) (*corev1.ConfigMap, bool, error)
 }
 
 // TODO: add tests for the clientWrapper (and its methods) itself.
 type clientWrapper struct {
 	csCrd  traefikclientset.Interface
 	csKube kclientset.Interface
+
+	clusterScopeFactory         kinformers.SharedInformerFactory
+	disableClusterScopeInformer bool
 
 	factoriesCrd    map[string]traefikinformers.SharedInformerFactory
 	factoriesKube   map[string]kinformers.SharedInformerFactory
@@ -120,14 +129,19 @@ func newExternalClusterClientFromFile(file string) (*clientWrapper, error) {
 // newExternalClusterClient returns a new Provider client that may run outside
 // of the cluster.
 // The endpoint parameter must not be empty.
-func newExternalClusterClient(endpoint, token, caFilePath string) (*clientWrapper, error) {
+func newExternalClusterClient(endpoint, caFilePath string, token types.FileOrContent) (*clientWrapper, error) {
 	if endpoint == "" {
 		return nil, errors.New("endpoint missing for external cluster client")
 	}
 
+	tokenData, err := token.Read()
+	if err != nil {
+		return nil, fmt.Errorf("read token: %w", err)
+	}
+
 	config := &rest.Config{
 		Host:        endpoint,
-		BearerToken: token,
+		BearerToken: string(tokenData),
 	}
 
 	if caFilePath != "" {
@@ -210,7 +224,11 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		if err != nil {
 			return nil, err
 		}
-		_, err = factoryKube.Core().V1().Endpoints().Informer().AddEventHandler(eventHandler)
+		_, err = factoryKube.Discovery().V1().EndpointSlices().Informer().AddEventHandler(eventHandler)
+		if err != nil {
+			return nil, err
+		}
+		_, err = factoryKube.Core().V1().ConfigMaps().Informer().AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err
 		}
@@ -248,6 +266,22 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		for t, ok := range c.factoriesSecret[ns].WaitForCacheSync(stopCh) {
 			if !ok {
 				return nil, fmt.Errorf("timed out waiting for controller caches to sync %s in namespace %q", t.String(), ns)
+			}
+		}
+	}
+
+	if !c.disableClusterScopeInformer {
+		c.clusterScopeFactory = kinformers.NewSharedInformerFactory(c.csKube, resyncPeriod)
+		_, err := c.clusterScopeFactory.Core().V1().Nodes().Informer().AddEventHandler(eventHandler)
+		if err != nil {
+			return nil, err
+		}
+
+		c.clusterScopeFactory.Start(stopCh)
+
+		for t, ok := range c.clusterScopeFactory.WaitForCacheSync(stopCh) {
+			if !ok {
+				return nil, fmt.Errorf("timed out waiting for controller caches to sync %s", t.String())
 			}
 		}
 	}
@@ -422,15 +456,20 @@ func (c *clientWrapper) GetService(namespace, name string) (*corev1.Service, boo
 	return service, exist, err
 }
 
-// GetEndpoints returns the named endpoints from the given namespace.
-func (c *clientWrapper) GetEndpoints(namespace, name string) (*corev1.Endpoints, bool, error) {
+// GetEndpointSlicesForService returns the EndpointSlices for the given service name in the given namespace.
+func (c *clientWrapper) GetEndpointSlicesForService(namespace, serviceName string) ([]*discoveryv1.EndpointSlice, error) {
 	if !c.isWatchedNamespace(namespace) {
-		return nil, false, fmt.Errorf("failed to get endpoints %s/%s: namespace is not within watched namespaces", namespace, name)
+		return nil, fmt.Errorf("failed to get endpointslices for service %s/%s: namespace is not within watched namespaces", namespace, serviceName)
 	}
 
-	endpoint, err := c.factoriesKube[c.lookupNamespace(namespace)].Core().V1().Endpoints().Lister().Endpoints(namespace).Get(name)
-	exist, err := translateNotFoundError(err)
-	return endpoint, exist, err
+	serviceLabelRequirement, err := labels.NewRequirement(discoveryv1.LabelServiceName, selection.Equals, []string{serviceName})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create service label selector requirement: %w", err)
+	}
+	serviceSelector := labels.NewSelector()
+	serviceSelector = serviceSelector.Add(*serviceLabelRequirement)
+
+	return c.factoriesKube[c.lookupNamespace(namespace)].Discovery().V1().EndpointSlices().Lister().EndpointSlices(namespace).List(serviceSelector)
 }
 
 // GetSecret returns the named secret from the given namespace.
@@ -442,6 +481,23 @@ func (c *clientWrapper) GetSecret(namespace, name string) (*corev1.Secret, bool,
 	secret, err := c.factoriesSecret[c.lookupNamespace(namespace)].Core().V1().Secrets().Lister().Secrets(namespace).Get(name)
 	exist, err := translateNotFoundError(err)
 	return secret, exist, err
+}
+
+// GetConfigMap returns the named config map from the given namespace.
+func (c *clientWrapper) GetConfigMap(namespace, name string) (*corev1.ConfigMap, bool, error) {
+	if !c.isWatchedNamespace(namespace) {
+		return nil, false, fmt.Errorf("failed to get config map %s/%s: namespace is not within watched namespaces", namespace, name)
+	}
+
+	configMap, err := c.factoriesKube[c.lookupNamespace(namespace)].Core().V1().ConfigMaps().Lister().ConfigMaps(namespace).Get(name)
+	exist, err := translateNotFoundError(err)
+	return configMap, exist, err
+}
+
+func (c *clientWrapper) GetNodes() ([]*corev1.Node, bool, error) {
+	nodes, err := c.clusterScopeFactory.Core().V1().Nodes().Lister().List(labels.Everything())
+	exist, err := translateNotFoundError(err)
+	return nodes, exist, err
 }
 
 // lookupNamespace returns the lookup namespace key for the given namespace.
@@ -463,12 +519,8 @@ func (c *clientWrapper) isWatchedNamespace(ns string) bool {
 	if c.isNamespaceAll {
 		return true
 	}
-	for _, watchedNamespace := range c.watchedNamespaces {
-		if watchedNamespace == ns {
-			return true
-		}
-	}
-	return false
+
+	return slices.Contains(c.watchedNamespaces, ns)
 }
 
 // translateNotFoundError will translate a "not found" error to a boolean return

@@ -1,7 +1,6 @@
 package runtime
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -208,11 +207,10 @@ func TestGetTCPRoutersByEntryPoints(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 			runtimeConfig := NewConfig(test.conf)
-			actual := runtimeConfig.GetTCPRoutersByEntryPoints(context.Background(), test.entryPoints)
+			actual := runtimeConfig.GetTCPRoutersByEntryPoints(t.Context(), test.entryPoints)
 			assert.Equal(t, test.expected, actual)
 		})
 	}

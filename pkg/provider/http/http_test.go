@@ -1,10 +1,10 @@
 package http
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -85,8 +85,9 @@ func TestProvider_fetchConfigurationData(t *testing.T) {
 			desc:       "should send configured headers",
 			statusCode: http.StatusOK,
 			headers: map[string]string{
-				"Foo": "bar",
-				"Bar": "baz",
+				"Foo":  "bar",
+				"Bar":  "baz",
+				"Host": "localhost",
 			},
 			expData: []byte("{}"),
 			expErr:  require.NoError,
@@ -105,7 +106,11 @@ func TestProvider_fetchConfigurationData(t *testing.T) {
 				handlerCalled = true
 
 				for k, v := range test.headers {
-					assert.Equal(t, v, req.Header.Get(k))
+					if strings.EqualFold(k, "Host") {
+						assert.Equal(t, v, req.Host)
+					} else {
+						assert.Equal(t, v, req.Header.Get(k))
+					}
 				}
 
 				rw.WriteHeader(test.statusCode)
@@ -229,7 +234,7 @@ func TestProvider_Provide(t *testing.T) {
 		},
 	}
 
-	err = provider.Provide(configurationChan, safe.NewPool(context.Background()))
+	err = provider.Provide(configurationChan, safe.NewPool(t.Context()))
 	require.NoError(t, err)
 
 	timeout := time.After(time.Second)
@@ -263,10 +268,10 @@ func TestProvider_ProvideConfigurationOnlyOnceIfUnchanged(t *testing.T) {
 
 	configurationChan := make(chan dynamic.Message, 10)
 
-	err = provider.Provide(configurationChan, safe.NewPool(context.Background()))
+	err = provider.Provide(configurationChan, safe.NewPool(t.Context()))
 	require.NoError(t, err)
 
 	time.Sleep(time.Second)
 
-	assert.Equal(t, 1, len(configurationChan))
+	assert.Len(t, configurationChan, 1)
 }

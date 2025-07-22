@@ -104,8 +104,6 @@ func TestProxyProtocol(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			backendListener, err := net.Listen("tcp", ":0")
 			require.NoError(t, err)

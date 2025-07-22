@@ -24,7 +24,7 @@ whoami:
     - "traefik.tcp.routers.router1.middlewares=foo-ip-allowlist@docker"
 ```
 
-```yaml tab="Kubernetes IngressRoute"
+```yaml tab="IngressRoute"
 # As a Kubernetes Traefik IngressRoute
 ---
 apiVersion: traefik.io/v1alpha1

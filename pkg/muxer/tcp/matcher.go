@@ -67,7 +67,7 @@ func clientIP(tree *matchersTree, clientIP ...string) error {
 	return nil
 }
 
-var hostOrIP = regexp.MustCompile(`^[[:alnum:]\.\-\:]+$`)
+var hostOrIP = regexp.MustCompile(`^[[:word:]\.\-\:]+$`)
 
 // hostSNI checks if the SNI Host of the connection match the matcher host.
 func hostSNI(tree *matchersTree, hosts ...string) error {
@@ -124,7 +124,7 @@ func hostSNIRegexp(tree *matchersTree, templates ...string) error {
 
 // isASCII checks if the given string contains only ASCII characters.
 func isASCII(s string) bool {
-	for i := 0; i < len(s); i++ {
+	for i := range len(s) {
 		if s[i] >= utf8.RuneSelf {
 			return false
 		}

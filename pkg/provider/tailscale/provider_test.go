@@ -1,7 +1,6 @@
 package tailscale
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -120,13 +119,12 @@ func TestProvider_findDomains(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
 			p := Provider{ResolverName: "foo"}
 
-			got := p.findDomains(context.TODO(), test.config)
+			got := p.findDomains(t.Context(), test.config)
 			assert.Equal(t, test.want, got)
 		})
 	}
@@ -189,7 +187,6 @@ func TestProvider_sendDynamicConfig(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -229,11 +226,10 @@ func Test_sanitizeDomains(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			got := sanitizeDomains(context.TODO(), test.domains)
+			got := sanitizeDomains(t.Context(), test.domains)
 			assert.Equal(t, test.want, got)
 		})
 	}
@@ -268,7 +264,6 @@ func Test_isTailscaleDomain(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 

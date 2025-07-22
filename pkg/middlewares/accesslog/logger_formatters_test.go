@@ -18,7 +18,7 @@ func TestCommonLogFormatter_Format(t *testing.T) {
 		expectedLog string
 	}{
 		{
-			name: "OriginStatus & OriginContentSize are nil",
+			name: "DownstreamStatus & DownstreamContentSize are nil",
 			data: map[string]interface{}{
 				StartUTC:               time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 				Duration:               123 * time.Second,
@@ -27,8 +27,8 @@ func TestCommonLogFormatter_Format(t *testing.T) {
 				RequestMethod:          http.MethodGet,
 				RequestPath:            "/foo",
 				RequestProtocol:        "http",
-				OriginStatus:           nil,
-				OriginContentSize:      nil,
+				DownstreamStatus:       nil,
+				DownstreamContentSize:  nil,
 				RequestRefererHeader:   "",
 				RequestUserAgentHeader: "",
 				RequestCount:           0,
@@ -48,8 +48,8 @@ func TestCommonLogFormatter_Format(t *testing.T) {
 				RequestMethod:          http.MethodGet,
 				RequestPath:            "/foo",
 				RequestProtocol:        "http",
-				OriginStatus:           123,
-				OriginContentSize:      132,
+				DownstreamStatus:       123,
+				DownstreamContentSize:  132,
 				RequestRefererHeader:   "referer",
 				RequestUserAgentHeader: "agent",
 				RequestCount:           nil,
@@ -69,8 +69,8 @@ func TestCommonLogFormatter_Format(t *testing.T) {
 				RequestMethod:          http.MethodGet,
 				RequestPath:            "/foo",
 				RequestProtocol:        "http",
-				OriginStatus:           123,
-				OriginContentSize:      132,
+				DownstreamStatus:       123,
+				DownstreamContentSize:  132,
 				RequestRefererHeader:   "referer",
 				RequestUserAgentHeader: "agent",
 				RequestCount:           nil,
@@ -86,7 +86,6 @@ func TestCommonLogFormatter_Format(t *testing.T) {
 	t.Setenv("TZ", "Etc/GMT+9")
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -150,7 +149,6 @@ func Test_toLog(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 

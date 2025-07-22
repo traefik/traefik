@@ -31,7 +31,7 @@ Our starting point is the docker-compose configuration file, to start the k3s cl
 You can start it with:
 
 ```bash
-docker-compose -f k3s.yml up
+docker compose -f k3s.yml up
 ```
 
 ```yaml
@@ -49,10 +49,10 @@ and the RBAC authorization resources which will be referenced through the `servi
 
 ```bash
 # Install Traefik Resource Definitions:
-kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.0/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml
+kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.5/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml
 
 # Install RBAC for Traefik:
-kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.0/docs/content/reference/dynamic-configuration/kubernetes-crd-rbac.yml
+kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.5/docs/content/reference/dynamic-configuration/kubernetes-crd-rbac.yml
 ```
 
 ### Services
@@ -60,7 +60,7 @@ kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.0/docs/con
 Then, the services. One for Traefik itself, and one for the app it routes for, i.e. in this case our demo HTTP server: [whoami](https://github.com/traefik/whoami).
 
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.0/docs/content/user-guides/crd-acme/02-services.yml
+kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.5/docs/content/user-guides/crd-acme/02-services.yml
 ```
 
 ```yaml
@@ -73,7 +73,7 @@ Next, the deployments, i.e. the actual pods behind the services.
 Again, one pod for Traefik, and one for the whoami app.
 
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.0/docs/content/user-guides/crd-acme/03-deployments.yml
+kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.5/docs/content/user-guides/crd-acme/03-deployments.yml
 ```
 
 ```yaml
@@ -91,7 +91,7 @@ Therefore, for the whole thing to work, we must delay applying the ingressRoute 
 kubectl port-forward --address 0.0.0.0 service/traefik 8000:8000 8080:8080 443:4443 -n default
 ```
 
-Also, and this is out of the scope if this guide, please note that because of the privileged ports limitation on Linux, the above command might fail to listen on port 443.
+Also, and this is out of the scope of this guide, please note that because of the privileged ports limitation on Linux, the above command might fail to listen on port 443.
 In which case you can use tricks such as elevating caps of `kubectl` with `setcaps`, or using `authbind`, or setting up a NAT between your host and the WAN.
 Look it up.
 
@@ -100,7 +100,7 @@ Look it up.
 We can now finally apply the actual ingressRoutes, with:
 
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.0/docs/content/user-guides/crd-acme/04-ingressroutes.yml
+kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.5/docs/content/user-guides/crd-acme/04-ingressroutes.yml
 ```
 
 ```yaml
@@ -126,7 +126,7 @@ Nowadays, TLS v1.0 and v1.1 are deprecated.
 In order to force TLS v1.2 or later on all your IngressRoute, you can define the `default` TLSOption:
 
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.0/docs/content/user-guides/crd-acme/05-tlsoption.yml
+kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.5/docs/content/user-guides/crd-acme/05-tlsoption.yml
 ```
 
 ```yaml

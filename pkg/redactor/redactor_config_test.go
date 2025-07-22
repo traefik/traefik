@@ -30,12 +30,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/provider/kv/zk"
 	"github.com/traefik/traefik/v3/pkg/provider/rest"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
-	"github.com/traefik/traefik/v3/pkg/tracing/datadog"
-	"github.com/traefik/traefik/v3/pkg/tracing/elastic"
-	"github.com/traefik/traefik/v3/pkg/tracing/haystack"
-	"github.com/traefik/traefik/v3/pkg/tracing/instana"
-	"github.com/traefik/traefik/v3/pkg/tracing/jaeger"
-	"github.com/traefik/traefik/v3/pkg/tracing/zipkin"
 	"github.com/traefik/traefik/v3/pkg/types"
 )
 
@@ -63,6 +57,11 @@ func init() {
 						},
 					},
 				},
+				Observability: &dynamic.RouterObservabilityConfig{
+					AccessLogs: pointer(true),
+					Tracing:    pointer(true),
+					Metrics:    pointer(true),
+				},
 			},
 		},
 		Services: map[string]*dynamic.Service{
@@ -83,12 +82,12 @@ func init() {
 						Interval:        ptypes.Duration(111 * time.Second),
 						Timeout:         ptypes.Duration(111 * time.Second),
 						Hostname:        "foo",
-						FollowRedirects: boolPtr(true),
+						FollowRedirects: pointer(true),
 						Headers: map[string]string{
 							"foo": "bar",
 						},
 					},
-					PassHostHeader: boolPtr(true),
+					PassHostHeader: pointer(true),
 					ResponseForwarding: &dynamic.ResponseForwarding{
 						FlushInterval: ptypes.Duration(111 * time.Second),
 					},
@@ -105,7 +104,7 @@ func init() {
 					Services: []dynamic.WRRService{
 						{
 							Name:   "foo",
-							Weight: intPtr(42),
+							Weight: pointer(42),
 						},
 					},
 					Sticky: &dynamic.Sticky{
@@ -121,7 +120,7 @@ func init() {
 			"baz": {
 				Mirroring: &dynamic.Mirroring{
 					Service:     "foo",
-					MaxBodySize: int64Ptr(42),
+					MaxBodySize: pointer[int64](42),
 					Mirrors: []dynamic.MirrorService{
 						{
 							Name:    "foo",
@@ -135,7 +134,7 @@ func init() {
 			"foo": {
 				ServerName:         "foo",
 				InsecureSkipVerify: true,
-				RootCAs:            []traefiktls.FileOrContent{"rootca.pem"},
+				RootCAs:            []types.FileOrContent{"rootca.pem"},
 				Certificates: []traefiktls.Certificate{
 					{
 						CertFile: "cert.pem",
@@ -219,6 +218,7 @@ func init() {
 					BrowserXSSFilter:                  true,
 					CustomBrowserXSSValue:             "foo",
 					ContentSecurityPolicy:             "foo",
+					ContentSecurityPolicyReportOnly:   "foo",
 					PublicKey:                         "foo",
 					ReferrerPolicy:                    "foo",
 					PermissionsPolicy:                 "foo",
@@ -268,7 +268,7 @@ func init() {
 				},
 				ForwardAuth: &dynamic.ForwardAuth{
 					Address: "127.0.0.1",
-					TLS: &types.ClientTLS{
+					TLS: &dynamic.ClientTLS{
 						CA:                 "ca.pem",
 						Cert:               "cert.pem",
 						Key:                "cert.pem",
@@ -384,7 +384,7 @@ func init() {
 					Services: []dynamic.TCPWRRService{
 						{
 							Name:   "foo",
-							Weight: intPtr(42),
+							Weight: pointer(42),
 						},
 					},
 				},
@@ -395,7 +395,7 @@ func init() {
 				TLS: &dynamic.TLSClientConfig{
 					ServerName:         "foo",
 					InsecureSkipVerify: true,
-					RootCAs:            []traefiktls.FileOrContent{"rootca.pem"},
+					RootCAs:            []types.FileOrContent{"rootca.pem"},
 					Certificates: []traefiktls.Certificate{
 						{
 							CertFile: "cert.pem",
@@ -431,7 +431,7 @@ func init() {
 					Services: []dynamic.UDPWRRService{
 						{
 							Name:   "foo",
-							Weight: intPtr(42),
+							Weight: pointer(42),
 						},
 					},
 				},
@@ -446,7 +446,7 @@ func init() {
 				CipherSuites:     []string{"foo"},
 				CurvePreferences: []string{"foo"},
 				ClientAuth: traefiktls.ClientAuth{
-					CAFiles:        []traefiktls.FileOrContent{"ca.pem"},
+					CAFiles:        []types.FileOrContent{"ca.pem"},
 					ClientAuthType: "RequireAndVerifyClientCert",
 				},
 				SniStrict: true,
@@ -488,7 +488,7 @@ func TestAnonymize_dynamicConfiguration(t *testing.T) {
 	}
 
 	expected := strings.TrimSuffix(string(expectedConfiguration), "\n")
-	assert.Equal(t, expected, cleanJSON)
+	assert.JSONEq(t, expected, cleanJSON)
 }
 
 func TestSecure_dynamicConfiguration(t *testing.T) {
@@ -505,7 +505,7 @@ func TestSecure_dynamicConfiguration(t *testing.T) {
 	}
 
 	expected := strings.TrimSuffix(string(expectedConfiguration), "\n")
-	assert.Equal(t, expected, cleanJSON)
+	assert.JSONEq(t, expected, cleanJSON)
 }
 
 func TestDo_staticConfiguration(t *testing.T) {
@@ -516,8 +516,19 @@ func TestDo_staticConfiguration(t *testing.T) {
 		SendAnonymousUsage: true,
 	}
 
+	config.ServersTransport = &static.ServersTransport{
+		InsecureSkipVerify:  true,
+		RootCAs:             []types.FileOrContent{"root.ca"},
+		MaxIdleConnsPerHost: 42,
+		ForwardingTimeouts: &static.ForwardingTimeouts{
+			DialTimeout:           42,
+			ResponseHeaderTimeout: 42,
+			IdleConnTimeout:       42,
+		},
+	}
+
 	config.EntryPoints = static.EntryPoints{
-		"foobar": {
+		"foobar": &static.EntryPoint{
 			Address: "foo Address",
 			Transport: &static.EntryPointsTransport{
 				LifeCycle: &static.LifeCycle{
@@ -565,7 +576,7 @@ func TestDo_staticConfiguration(t *testing.T) {
 
 	config.ServersTransport = &static.ServersTransport{
 		InsecureSkipVerify:  true,
-		RootCAs:             []traefiktls.FileOrContent{"RootCAs 1", "RootCAs 2", "RootCAs 3"},
+		RootCAs:             []types.FileOrContent{"RootCAs 1", "RootCAs 2", "RootCAs 3"},
 		MaxIdleConnsPerHost: 111,
 		ForwardingTimeouts: &static.ForwardingTimeouts{
 			DialTimeout:           ptypes.Duration(111 * time.Second),
@@ -579,7 +590,7 @@ func TestDo_staticConfiguration(t *testing.T) {
 		DialKeepAlive: ptypes.Duration(111 * time.Second),
 		TLS: &static.TLSClientConfig{
 			InsecureSkipVerify: true,
-			RootCAs:            []traefiktls.FileOrContent{"RootCAs 1", "RootCAs 2", "RootCAs 3"},
+			RootCAs:            []types.FileOrContent{"RootCAs 1", "RootCAs 2", "RootCAs 3"},
 		},
 	}
 
@@ -770,7 +781,7 @@ func TestDo_staticConfiguration(t *testing.T) {
 	}
 
 	config.Providers.HTTP = &http.Provider{
-		Endpoint:     "Myenpoint",
+		Endpoint:     "Myendpoint",
 		PollInterval: 42,
 		PollTimeout:  42,
 		TLS: &types.ClientTLS{
@@ -824,6 +835,25 @@ func TestDo_staticConfiguration(t *testing.T) {
 		MaxAge:     3,
 		MaxBackups: 4,
 		Compress:   true,
+		OTLP: &types.OTelLog{
+			ServiceName: "foobar",
+			ResourceAttributes: map[string]string{
+				"foobar": "foobar",
+			},
+			GRPC: &types.OTelGRPC{
+				Endpoint: "foobar",
+				Insecure: true,
+				Headers: map[string]string{
+					"foobar": "foobar",
+				},
+			},
+			HTTP: &types.OTelHTTP{
+				Endpoint: "foobar",
+				Headers: map[string]string{
+					"foobar": "foobar",
+				},
+			},
+		},
 	}
 
 	config.AccessLog = &types.AccessLog{
@@ -847,61 +877,50 @@ func TestDo_staticConfiguration(t *testing.T) {
 			},
 		},
 		BufferingSize: 42,
+		OTLP: &types.OTelLog{
+			ServiceName: "foobar",
+			ResourceAttributes: map[string]string{
+				"foobar": "foobar",
+			},
+			GRPC: &types.OTelGRPC{
+				Endpoint: "foobar",
+				Insecure: true,
+				Headers: map[string]string{
+					"foobar": "foobar",
+				},
+			},
+			HTTP: &types.OTelHTTP{
+				Endpoint: "foobar",
+				Headers: map[string]string{
+					"foobar": "foobar",
+				},
+			},
+		},
 	}
 
 	config.Tracing = &static.Tracing{
-		ServiceName:   "myServiceName",
-		SpanNameLimit: 42,
-		Jaeger: &jaeger.Config{
-			SamplingServerURL:      "foobar",
-			SamplingType:           "foobar",
-			SamplingParam:          42,
-			LocalAgentHostPort:     "foobar",
-			Gen128Bit:              true,
-			Propagation:            "foobar",
-			TraceContextHeaderName: "foobar",
-			Collector: &jaeger.Collector{
+		ServiceName: "myServiceName",
+		ResourceAttributes: map[string]string{
+			"foobar": "foobar",
+		},
+		GlobalAttributes: map[string]string{
+			"foobar": "foobar",
+		},
+		SampleRate: 42,
+		OTLP: &types.OTelTracing{
+			HTTP: &types.OTelHTTP{
 				Endpoint: "foobar",
-				User:     "foobar",
-				Password: "foobar",
+				Headers: map[string]string{
+					"foobar": "foobar",
+				},
 			},
-			DisableAttemptReconnecting: true,
-		},
-		Zipkin: &zipkin.Config{
-			HTTPEndpoint: "foobar",
-			SameSpan:     true,
-			ID128Bit:     true,
-			SampleRate:   42,
-		},
-		Datadog: &datadog.Config{
-			LocalAgentHostPort:         "foobar",
-			LocalAgentSocket:           "foobar",
-			GlobalTags:                 map[string]string{"foobar": "foobar"},
-			Debug:                      true,
-			PrioritySampling:           true,
-			TraceIDHeaderName:          "foobar",
-			ParentIDHeaderName:         "foobar",
-			SamplingPriorityHeaderName: "foobar",
-			BagagePrefixHeaderName:     "foobar",
-		},
-		Instana: &instana.Config{
-			LocalAgentHost: "foobar",
-			LocalAgentPort: 4242,
-			LogLevel:       "foobar",
-		},
-		Haystack: &haystack.Config{
-			LocalAgentHost:          "foobar",
-			LocalAgentPort:          42,
-			GlobalTag:               "foobar",
-			TraceIDHeaderName:       "foobar",
-			ParentIDHeaderName:      "foobar",
-			SpanIDHeaderName:        "foobar",
-			BaggagePrefixHeaderName: "foobar",
-		},
-		Elastic: &elastic.Config{
-			ServerURL:          "foobar",
-			SecretToken:        "foobar",
-			ServiceEnvironment: "foobar",
+			GRPC: &types.OTelGRPC{
+				Endpoint: "foobar",
+				Insecure: true,
+				Headers: map[string]string{
+					"foobar": "foobar",
+				},
+			},
 		},
 	}
 
@@ -939,18 +958,34 @@ func TestDo_staticConfiguration(t *testing.T) {
 			"Descriptor0": {
 				ModuleName: "foobar",
 				Version:    "foobar",
+				Settings: plugins.Settings{
+					Envs:   []string{"a", "b"},
+					Mounts: []string{"a", "b"},
+				},
 			},
 			"Descriptor1": {
 				ModuleName: "foobar",
 				Version:    "foobar",
+				Settings: plugins.Settings{
+					Envs:   []string{"a", "b"},
+					Mounts: []string{"a", "b"},
+				},
 			},
 		},
 		LocalPlugins: map[string]plugins.LocalDescriptor{
 			"Descriptor0": {
 				ModuleName: "foobar",
+				Settings: plugins.Settings{
+					Envs:   []string{"a", "b"},
+					Mounts: []string{"a", "b"},
+				},
 			},
 			"Descriptor1": {
 				ModuleName: "foobar",
+				Settings: plugins.Settings{
+					Envs:   []string{"a", "b"},
+					Mounts: []string{"a", "b"},
+				},
 			},
 		},
 	}
@@ -966,17 +1001,7 @@ func TestDo_staticConfiguration(t *testing.T) {
 	}
 
 	expected := strings.TrimSuffix(string(expectedConfiguration), "\n")
-	assert.Equal(t, expected, cleanJSON)
+	assert.JSONEq(t, expected, cleanJSON)
 }
 
-func boolPtr(value bool) *bool {
-	return &value
-}
-
-func intPtr(value int) *int {
-	return &value
-}
-
-func int64Ptr(value int64) *int64 {
-	return &value
-}
+func pointer[T any](v T) *T { return &v }

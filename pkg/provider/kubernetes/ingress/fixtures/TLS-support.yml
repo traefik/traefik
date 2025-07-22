@@ -83,15 +83,20 @@ spec:
   type: ClusterIP
 
 ---
-kind: Endpoints
-apiVersion: v1
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
 metadata:
-  name: example-com
+  name: example-com-abc
   namespace: testing
+  labels:
+    kubernetes.io/service-name: example-com
 
-subsets:
+addressType: IPv4
+ports:
+  - name: http
+    port: 80
+endpoints:
   - addresses:
-      - ip: 10.11.0.1
-    ports:
-      - name: http
-        port: 80
+      - 10.11.0.1
+    conditions:
+      ready: true

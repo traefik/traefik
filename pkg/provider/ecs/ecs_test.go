@@ -3,13 +3,10 @@ package ecs
 import (
 	"testing"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestChunkIDs(t *testing.T) {
-	provider := &Provider{}
-
 	testCases := []struct {
 		desc     string
 		count    int
@@ -68,17 +65,16 @@ func TestChunkIDs(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			var IDs []*string
-			for v := 0; v < test.count; v++ {
-				IDs = append(IDs, aws.String("a"))
+			var IDs []string
+			for range test.count {
+				IDs = append(IDs, "a")
 			}
 
 			var outCount []int
-			for _, el := range provider.chunkIDs(IDs) {
+			for el := range chunkIDs(IDs) {
 				outCount = append(outCount, len(el))
 			}
 

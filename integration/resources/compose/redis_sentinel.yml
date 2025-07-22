@@ -1,0 +1,52 @@
+services:
+  master:
+    image: redis
+    container_name: redis-master
+    command:
+      - redis-server
+      - --port
+      - 6380
+  node1:
+    image: redis
+    container_name: redis-node-1
+    command:
+      - redis-server
+      - --port
+      - 6381
+      - --slaveof
+      - redis-master
+      - 6380
+  node2:
+    image: redis
+    container_name: redis-node-2
+    command:
+      - redis-server
+      - --port
+      - 6382
+      - --slaveof
+      - redis-master
+      - 6380
+  sentinel1:
+    image: redis
+    container_name: redis-sentinel-1
+    command:
+      - redis-sentinel
+      - /usr/local/etc/redis/conf/sentinel1.conf
+    volumes:
+      - ./resources/compose/config:/usr/local/etc/redis/conf
+  sentinel2:
+    image: redis
+    container_name: redis-sentinel-2
+    command:
+      - redis-sentinel
+      - /usr/local/etc/redis/conf/sentinel2.conf
+    volumes:
+      - ./resources/compose/config:/usr/local/etc/redis/conf
+  sentinel3:
+    image: redis
+    container_name: redis-sentinel-3
+    command:
+      - redis-sentinel
+      - /usr/local/etc/redis/conf/sentinel3.conf
+    volumes:
+      - ./resources/compose/config:/usr/local/etc/redis/conf

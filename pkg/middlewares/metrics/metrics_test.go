@@ -80,7 +80,6 @@ func Test_getMethod(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.method, func(t *testing.T) {
 			t.Parallel()
 
@@ -132,7 +131,6 @@ func Test_getRequestProtocol(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -175,7 +173,6 @@ func Test_grpcStatusCode(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 

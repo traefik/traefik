@@ -12,6 +12,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/provider"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 // ConfigurationWatcher watches configuration changes.
@@ -188,7 +189,7 @@ func logConfiguration(logger zerolog.Logger, configMsg dynamic.Message) {
 		if copyConf.TLS.Options != nil {
 			cleanedOptions := make(map[string]tls.Options, len(copyConf.TLS.Options))
 			for name, option := range copyConf.TLS.Options {
-				option.ClientAuth.CAFiles = []tls.FileOrContent{}
+				option.ClientAuth.CAFiles = []types.FileOrContent{}
 				cleanedOptions[name] = option
 			}
 
@@ -205,7 +206,7 @@ func logConfiguration(logger zerolog.Logger, configMsg dynamic.Message) {
 	if copyConf.HTTP != nil {
 		for _, transport := range copyConf.HTTP.ServersTransports {
 			transport.Certificates = tls.Certificates{}
-			transport.RootCAs = []tls.FileOrContent{}
+			transport.RootCAs = []types.FileOrContent{}
 		}
 	}
 
@@ -213,7 +214,7 @@ func logConfiguration(logger zerolog.Logger, configMsg dynamic.Message) {
 		for _, transport := range copyConf.TCP.ServersTransports {
 			if transport.TLS != nil {
 				transport.TLS.Certificates = tls.Certificates{}
-				transport.TLS.RootCAs = []tls.FileOrContent{}
+				transport.TLS.RootCAs = []types.FileOrContent{}
 			}
 		}
 	}

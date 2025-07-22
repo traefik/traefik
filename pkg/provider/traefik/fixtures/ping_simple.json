@@ -7,7 +7,8 @@
         ],
         "service": "ping@internal",
         "rule": "PathPrefix(`/ping`)",
-        "priority": 2147483647
+        "ruleSyntax": "default",
+        "priority": 9223372036854775807
       }
     },
     "services": {

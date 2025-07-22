@@ -81,7 +81,7 @@ For the list of the providers names, see the [supported providers](#supported-pr
         - "traefik.http.routers.my-container.middlewares=add-foo-prefix@file"
     ```
 
-    ```yaml tab="Kubernetes Ingress Route"
+    ```yaml tab="IngressRoute"
     apiVersion: traefik.io/v1alpha1
     kind: IngressRoute
     metadata:
@@ -103,7 +103,7 @@ For the list of the providers names, see the [supported providers](#supported-pr
             # when the cross-provider syntax is used.
     ```
 
-    ```yaml tab="Kubernetes Ingress"
+    ```yaml tab="Ingress"
     apiVersion: traefik.io/v1alpha1
     kind: Middleware
     metadata:
@@ -150,8 +150,8 @@ Below is the list of the currently supported providers in Traefik.
 
 !!! info "More Providers"
 
-    The current version of Traefik does not yet support every provider that Traefik v1.7 did.
-    See the [previous version (v1.7)](https://doc.traefik.io/traefik/v1.7/) for more providers.
+    The current version of Traefik does not yet support every provider that Traefik v2.11 did.
+    See the [previous version (v2.11)](https://doc.traefik.io/traefik/v2.11/) for more information.
 
 ### Configuration Reload Frequency
 

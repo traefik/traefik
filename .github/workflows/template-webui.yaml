@@ -1,0 +1,40 @@
+name: Build Web UI
+on:
+  workflow_call: {}
+jobs:
+
+  build-webui:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Enable corepack
+        run: corepack enable
+
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: webui/.nvmrc
+          cache: yarn
+          cache-dependency-path: webui/yarn.lock
+
+      - name: Build webui
+        working-directory: ./webui
+        run: |
+          yarn install
+          yarn build
+
+      - name: Package webui
+        run: |
+          tar czvf webui.tar.gz ./webui/static/
+
+      - name: Artifact webui
+        uses: actions/upload-artifact@v4
+        with:
+          name: webui.tar.gz
+          path: webui.tar.gz
+          retention-days: 1

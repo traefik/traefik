@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -59,13 +60,9 @@ func (c *searchCriterion) searchIn(values ...string) bool {
 		return true
 	}
 
-	for _, v := range values {
-		if strings.Contains(strings.ToLower(v), strings.ToLower(c.Search)) {
-			return true
-		}
-	}
-
-	return false
+	return slices.ContainsFunc(values, func(v string) bool {
+		return strings.Contains(strings.ToLower(v), strings.ToLower(c.Search))
+	})
 }
 
 func (c *searchCriterion) filterService(name string) bool {
@@ -96,7 +93,7 @@ func (c *searchCriterion) filterMiddleware(mns []string) bool {
 	return false
 }
 
-func pagination(request *http.Request, max int) (pageInfo, error) {
+func pagination(request *http.Request, maximum int) (pageInfo, error) {
 	perPage, err := getIntParam(request, "per_page", defaultPerPage)
 	if err != nil {
 		return pageInfo{}, err
@@ -108,17 +105,17 @@ func pagination(request *http.Request, max int) (pageInfo, error) {
 	}
 
 	startIndex := (page - 1) * perPage
-	if startIndex != 0 && startIndex >= max {
+	if startIndex != 0 && startIndex >= maximum {
 		return pageInfo{}, fmt.Errorf("invalid request: page: %d, per_page: %d", page, perPage)
 	}
 
 	endIndex := startIndex + perPage
-	if endIndex >= max {
-		endIndex = max
+	if endIndex >= maximum {
+		endIndex = maximum
 	}
 
 	nextPage := 1
-	if page*perPage < max {
+	if page*perPage < maximum {
 		nextPage = page + 1
 	}
 

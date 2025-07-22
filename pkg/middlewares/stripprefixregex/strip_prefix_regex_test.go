@@ -1,7 +1,6 @@
 package stripprefixregex
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -108,7 +107,6 @@ func TestStripPrefixRegex(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.path, func(t *testing.T) {
 			t.Parallel()
 
@@ -119,7 +117,7 @@ func TestStripPrefixRegex(t *testing.T) {
 				actualHeader = r.Header.Get(stripprefix.ForwardedPrefixHeader)
 				requestURI = r.RequestURI
 			})
-			handler, err := New(context.Background(), handlerPath, testPrefixRegex, "foo-strip-prefix-regex")
+			handler, err := New(t.Context(), handlerPath, testPrefixRegex, "foo-strip-prefix-regex")
 			require.NoError(t, err)
 
 			req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost"+test.path, nil)

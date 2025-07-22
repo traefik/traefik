@@ -2,7 +2,6 @@ package buffering
 
 import (
 	"bytes"
-	"context"
 	"crypto/rand"
 	"math"
 	"net/http"
@@ -48,7 +47,6 @@ func TestBuffering(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -58,7 +56,7 @@ func TestBuffering(t *testing.T) {
 				require.NoError(t, err)
 			})
 
-			buffMiddleware, err := New(context.Background(), next, test.config, "foo")
+			buffMiddleware, err := New(t.Context(), next, test.config, "foo")
 			require.NoError(t, err)
 
 			req := httptest.NewRequest(http.MethodPost, "http://localhost", bytes.NewBuffer(test.body))

@@ -1,10 +1,13 @@
 package ecs
 
-import "github.com/aws/aws-sdk-go/service/ecs"
+import (
+	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	ecstypes "github.com/aws/aws-sdk-go-v2/service/ecs/types"
+)
 
 func instance(ops ...func(*ecsInstance)) ecsInstance {
 	e := &ecsInstance{
-		containerDefinition: &ecs.ContainerDefinition{},
+		containerDefinition: &ecstypes.ContainerDefinition{},
 	}
 
 	for _, op := range ops {
@@ -36,7 +39,7 @@ func iMachine(opts ...func(*machine)) func(*ecsInstance) {
 	}
 }
 
-func mState(state string) func(*machine) {
+func mState(state ec2types.InstanceStateName) func(*machine) {
 	return func(m *machine) {
 		m.state = state
 	}
@@ -48,7 +51,7 @@ func mPrivateIP(ip string) func(*machine) {
 	}
 }
 
-func mHealthStatus(status string) func(*machine) {
+func mHealthStatus(status ecstypes.HealthStatus) func(*machine) {
 	return func(m *machine) {
 		m.healthStatus = status
 	}
@@ -64,10 +67,10 @@ func mPorts(opts ...func(*portMapping)) func(*machine) {
 	}
 }
 
-func mPort(containerPort, hostPort int32, protocol string) func(*portMapping) {
+func mPort(containerPort, hostPort int32, protocol ecstypes.TransportProtocol) func(*portMapping) {
 	return func(pm *portMapping) {
-		pm.containerPort = int64(containerPort)
-		pm.hostPort = int64(hostPort)
+		pm.containerPort = containerPort
+		pm.hostPort = hostPort
 		pm.protocol = protocol
 	}
 }

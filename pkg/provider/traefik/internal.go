@@ -32,7 +32,7 @@ func New(staticCfg static.Configuration) *Provider {
 }
 
 // ThrottleDuration returns the throttle duration.
-func (i Provider) ThrottleDuration() time.Duration {
+func (i *Provider) ThrottleDuration() time.Duration {
 	return 0
 }
 
@@ -65,6 +65,7 @@ func (i *Provider) createConfiguration(ctx context.Context) *dynamic.Configurati
 		TCP: &dynamic.TCPConfiguration{
 			Routers:           make(map[string]*dynamic.TCPRouter),
 			Services:          make(map[string]*dynamic.TCPService),
+			Models:            make(map[string]*dynamic.TCPModel),
 			ServersTransports: make(map[string]*dynamic.TCPServersTransport),
 		},
 		TLS: &dynamic.TLSConfiguration{
@@ -90,27 +91,52 @@ func (i *Provider) createConfiguration(ctx context.Context) *dynamic.Configurati
 }
 
 func (i *Provider) acme(cfg *dynamic.Configuration) {
-	var eps []string
+	allowACMEByPass := map[string]bool{}
+	for name, ep := range i.staticCfg.EntryPoints {
+		allowACMEByPass[name] = ep.AllowACMEByPass
+	}
 
+	var eps []string
+	var epsByPass []string
 	uniq := map[string]struct{}{}
 	for _, resolver := range i.staticCfg.CertificatesResolvers {
 		if resolver.ACME != nil && resolver.ACME.HTTPChallenge != nil && resolver.ACME.HTTPChallenge.EntryPoint != "" {
-			if _, ok := uniq[resolver.ACME.HTTPChallenge.EntryPoint]; !ok {
-				eps = append(eps, resolver.ACME.HTTPChallenge.EntryPoint)
-				uniq[resolver.ACME.HTTPChallenge.EntryPoint] = struct{}{}
+			if _, ok := uniq[resolver.ACME.HTTPChallenge.EntryPoint]; ok {
+				continue
 			}
+			uniq[resolver.ACME.HTTPChallenge.EntryPoint] = struct{}{}
+
+			if allowByPass, ok := allowACMEByPass[resolver.ACME.HTTPChallenge.EntryPoint]; ok && allowByPass {
+				epsByPass = append(epsByPass, resolver.ACME.HTTPChallenge.EntryPoint)
+				continue
+			}
+
+			eps = append(eps, resolver.ACME.HTTPChallenge.EntryPoint)
 		}
 	}
 
 	if len(eps) > 0 {
 		rt := &dynamic.Router{
-			Rule:        "PathPrefix(`/.well-known/acme-challenge/`)",
+			Rule: "PathPrefix(`/.well-known/acme-challenge/`)",
+			// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
+			RuleSyntax:  "default",
 			EntryPoints: eps,
 			Service:     "acme-http@internal",
-			Priority:    math.MaxInt32,
+			Priority:    math.MaxInt,
 		}
 
 		cfg.HTTP.Routers["acme-http"] = rt
+		cfg.HTTP.Services["acme-http"] = &dynamic.Service{}
+	}
+
+	if len(epsByPass) > 0 {
+		rt := &dynamic.Router{
+			Rule:        "PathPrefix(`/.well-known/acme-challenge/`)",
+			EntryPoints: epsByPass,
+			Service:     "acme-http@internal",
+		}
+
+		cfg.HTTP.Routers["acme-http-bypass"] = rt
 		cfg.HTTP.Services["acme-http"] = &dynamic.Service{}
 	}
 }
@@ -139,7 +165,9 @@ func (i *Provider) redirection(ctx context.Context, cfg *dynamic.Configuration) 
 		mdName := "redirect-" + rtName
 
 		rt := &dynamic.Router{
-			Rule:        "HostRegexp(`^.+$`)",
+			Rule: "HostRegexp(`^.+$`)",
+			// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
+			RuleSyntax:  "default",
 			EntryPoints: []string{name},
 			Middlewares: []string{mdName},
 			Service:     "noop@internal",
@@ -191,24 +219,44 @@ func (i *Provider) getEntryPointPort(name string, def *static.Redirections) (str
 }
 
 func (i *Provider) entryPointModels(cfg *dynamic.Configuration) {
+	defaultRuleSyntax := ""
+	if i.staticCfg.Core != nil && i.staticCfg.Core.DefaultRuleSyntax != "" {
+		defaultRuleSyntax = i.staticCfg.Core.DefaultRuleSyntax
+	}
+
 	for name, ep := range i.staticCfg.EntryPoints {
-		if len(ep.HTTP.Middlewares) == 0 && ep.HTTP.TLS == nil {
+		if defaultRuleSyntax != "" {
+			cfg.TCP.Models[name] = &dynamic.TCPModel{
+				DefaultRuleSyntax: defaultRuleSyntax,
+			}
+		}
+
+		if len(ep.HTTP.Middlewares) == 0 && ep.HTTP.TLS == nil && defaultRuleSyntax == "" && ep.Observability == nil {
 			continue
 		}
 
-		m := &dynamic.Model{
-			Middlewares: ep.HTTP.Middlewares,
+		httpModel := &dynamic.Model{
+			DefaultRuleSyntax: defaultRuleSyntax,
+			Middlewares:       ep.HTTP.Middlewares,
+		}
+
+		if ep.Observability != nil {
+			httpModel.Observability = dynamic.RouterObservabilityConfig{
+				AccessLogs: ep.Observability.AccessLogs,
+				Tracing:    ep.Observability.Tracing,
+				Metrics:    ep.Observability.Metrics,
+			}
 		}
 
 		if ep.HTTP.TLS != nil {
-			m.TLS = &dynamic.RouterTLSConfig{
+			httpModel.TLS = &dynamic.RouterTLSConfig{
 				Options:      ep.HTTP.TLS.Options,
 				CertResolver: ep.HTTP.TLS.CertResolver,
 				Domains:      ep.HTTP.TLS.Domains,
 			}
 		}
 
-		cfg.HTTP.Models[name] = m
+		cfg.HTTP.Models[name] = httpModel
 	}
 }
 
@@ -221,16 +269,20 @@ func (i *Provider) apiConfiguration(cfg *dynamic.Configuration) {
 		cfg.HTTP.Routers["api"] = &dynamic.Router{
 			EntryPoints: []string{defaultInternalEntryPointName},
 			Service:     "api@internal",
-			Priority:    math.MaxInt32 - 1,
+			Priority:    math.MaxInt - 1,
 			Rule:        "PathPrefix(`/api`)",
+			// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
+			RuleSyntax: "default",
 		}
 
 		if i.staticCfg.API.Dashboard {
 			cfg.HTTP.Routers["dashboard"] = &dynamic.Router{
 				EntryPoints: []string{defaultInternalEntryPointName},
 				Service:     "dashboard@internal",
-				Priority:    math.MaxInt32 - 2,
+				Priority:    math.MaxInt - 2,
 				Rule:        "PathPrefix(`/`)",
+				// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
+				RuleSyntax:  "default",
 				Middlewares: []string{"dashboard_redirect@internal", "dashboard_stripprefix@internal"},
 			}
 
@@ -250,8 +302,10 @@ func (i *Provider) apiConfiguration(cfg *dynamic.Configuration) {
 			cfg.HTTP.Routers["debug"] = &dynamic.Router{
 				EntryPoints: []string{defaultInternalEntryPointName},
 				Service:     "api@internal",
-				Priority:    math.MaxInt32 - 1,
+				Priority:    math.MaxInt - 1,
 				Rule:        "PathPrefix(`/debug`)",
+				// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
+				RuleSyntax: "default",
 			}
 		}
 	}
@@ -272,8 +326,10 @@ func (i *Provider) pingConfiguration(cfg *dynamic.Configuration) {
 		cfg.HTTP.Routers["ping"] = &dynamic.Router{
 			EntryPoints: []string{i.staticCfg.Ping.EntryPoint},
 			Service:     "ping@internal",
-			Priority:    math.MaxInt32,
+			Priority:    math.MaxInt,
 			Rule:        "PathPrefix(`/ping`)",
+			// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
+			RuleSyntax: "default",
 		}
 	}
 
@@ -289,8 +345,10 @@ func (i *Provider) restConfiguration(cfg *dynamic.Configuration) {
 		cfg.HTTP.Routers["rest"] = &dynamic.Router{
 			EntryPoints: []string{defaultInternalEntryPointName},
 			Service:     "rest@internal",
-			Priority:    math.MaxInt32,
+			Priority:    math.MaxInt,
 			Rule:        "PathPrefix(`/api/providers`)",
+			// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
+			RuleSyntax: "default",
 		}
 	}
 
@@ -306,8 +364,10 @@ func (i *Provider) prometheusConfiguration(cfg *dynamic.Configuration) {
 		cfg.HTTP.Routers["prometheus"] = &dynamic.Router{
 			EntryPoints: []string{i.staticCfg.Metrics.Prometheus.EntryPoint},
 			Service:     "prometheus@internal",
-			Priority:    math.MaxInt32,
+			Priority:    math.MaxInt,
 			Rule:        "PathPrefix(`/metrics`)",
+			// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
+			RuleSyntax: "default",
 		}
 	}
 

@@ -11,4 +11,4 @@ spec:
   routes:
   - match: HostSNI(`foo.com`)
     services:
-    - name: external-svc
+    - name: external-svc-tcp

@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -20,7 +19,7 @@ func TestBuilder_BuildChainNilConfig(t *testing.T) {
 	}
 	middlewaresBuilder := NewBuilder(testConfig, nil, nil)
 
-	chain := middlewaresBuilder.BuildChain(context.Background(), []string{"empty"})
+	chain := middlewaresBuilder.BuildChain(t.Context(), []string{"empty"})
 	_, err := chain.Then(nil)
 	require.Error(t, err)
 }
@@ -31,7 +30,7 @@ func TestBuilder_BuildChainNonExistentChain(t *testing.T) {
 	}
 	middlewaresBuilder := NewBuilder(testConfig, nil, nil)
 
-	chain := middlewaresBuilder.BuildChain(context.Background(), []string{"empty"})
+	chain := middlewaresBuilder.BuildChain(t.Context(), []string{"empty"})
 	_, err := chain.Then(nil)
 	require.Error(t, err)
 }
@@ -256,11 +255,10 @@ func TestBuilder_BuildChainWithContext(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			ctx := context.Background()
+			ctx := t.Context()
 			if len(test.contextProvider) > 0 {
 				ctx = provider.AddInContext(ctx, "foobar@"+test.contextProvider)
 			}
@@ -364,11 +362,10 @@ func TestBuilder_buildConstructor(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			constructor, err := middlewaresBuilder.buildConstructor(context.Background(), test.middlewareID)
+			constructor, err := middlewaresBuilder.buildConstructor(t.Context(), test.middlewareID)
 			require.NoError(t, err)
 
 			middleware, err2 := constructor(http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {}))

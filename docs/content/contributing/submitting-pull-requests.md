@@ -17,12 +17,9 @@ or the list of [confirmed bugs](https://github.com/traefik/traefik/labels/kind%2
 
 ## How We Prioritize
 
-We wish we could review every pull request right away.
-Unfortunately, our team has to prioritize pull requests (PRs) for review
-(but we are welcoming new [maintainers](https://github.com/traefik/traefik/blob/master/docs/content/contributing/maintainers-guidelines.md) to speed this up,
-if you are interested, check it out and apply).
+We wish we could review every pull request right away, but because it's a time-consuming operation, it's not always possible.
 
-The PRs we are able to handle fastest are:
+The PRs we are able to handle the fastest are:
 
 * Documentation updates.
 * Bug fixes.
@@ -57,9 +54,10 @@ Merging a PR requires the following steps to be completed before it is merged au
     * Keep "allows edit from maintainer" checked.
     * Use semantic line breaks for documentation.
     * Ensure your PR is not a draft. We do not review drafts, but do answer questions and confer with developers on them as needed.
+    * Ensure that the dependencies in the `go.mod` file reference a tag. If referencing a tag is not possible, add a comment explaining why.
 * Pass the validation check.
 * Pass all tests.
-* Receive 3 approving reviews maintainers.
+* Receive 2 approving reviews from maintainers.
 
 ## Pull Request Review Cycle
 
@@ -92,6 +90,9 @@ in short, it looks like this:
 You must run these local verifications before you submit your pull request to predict the pass or failure of continuous integration.
 Your PR will not be reviewed until these are green on the CI.
 
+* `make generate`
+* `make generate-crd`
+* `make test-gateway-api-conformance`
 * `make validate`
 * `make pull-images`
 * `make test`
@@ -115,7 +116,7 @@ In such a situation, solve the conflicts/CI/... and then remove the label `bot/n
 
 To prevent the bot from automatically merging a PR, add the label `bot/no-merge`.
 
-The label `bot/light-review` decreases the number of required LGTM from 3 to 1.
+The label `bot/light-review` decreases the number of required LGTM from 2 to 1.
 
 This label can be used when:
 
@@ -129,7 +130,7 @@ This label can be used when:
 Traefik Proxy is made by the community for the community,
 as such the goal is to engage the community to make Traefik the best reverse proxy available.
 Part of this goal is maintaining a lean codebase and ensuring code velocity.
-unfortunately, this means that sometimes we will not be able to merge a pull request.
+Unfortunately, this means that sometimes we will not be able to merge a pull request.
 
 Because we respect the work you did, you will always be told why we are closing your pull request.
 If you do not agree with our decision, do not worry; closed pull requests are effortless to recreate,
@@ -198,7 +199,7 @@ here are some things you can do to move the process along:
 * If you have fixed all the issues from a review,
   remember to re-request a review (using the designated button) to let your reviewer know that you are ready.
   You can choose to comment with the changes you made.
-* Ping `@tfny` if you have not been assigned to a reviewer.
+* Kindly comment on the pull request. Doing so will automatically give your PR visibility during the triage process.
 
 For more information on best practices, try these links:
 

@@ -2,10 +2,12 @@ package http
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"hash/fnv"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
@@ -44,11 +46,11 @@ func (p *Provider) SetDefaults() {
 // Init the provider.
 func (p *Provider) Init() error {
 	if p.Endpoint == "" {
-		return fmt.Errorf("non-empty endpoint is required")
+		return errors.New("non-empty endpoint is required")
 	}
 
 	if p.PollInterval <= 0 {
-		return fmt.Errorf("poll interval must be greater than 0")
+		return errors.New("poll interval must be greater than 0")
 	}
 
 	p.httpClient = &http.Client{
@@ -148,7 +150,11 @@ func (p *Provider) fetchConfigurationData() ([]byte, error) {
 	}
 
 	for k, v := range p.Headers {
-		req.Header.Set(k, v)
+		if strings.EqualFold(k, "Host") {
+			req.Host = v
+		} else {
+			req.Header.Set(k, v)
+		}
 	}
 
 	res, err := p.httpClient.Do(req)

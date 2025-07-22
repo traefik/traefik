@@ -37,12 +37,11 @@ func TestDomain_ToStrArray(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
 			domains := test.domain.ToStrArray()
-			assert.EqualValues(t, test.expected, domains)
+			assert.Equal(t, test.expected, domains)
 		})
 	}
 }
@@ -77,7 +76,6 @@ func TestDomain_Set(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -139,7 +137,7 @@ func TestMatchDomain(t *testing.T) {
 			expected:   true,
 		},
 		{
-			desc:       "dot replaced by a cahr",
+			desc:       "dot replaced by a char",
 			certDomain: "sub.sub.traefik.wtf",
 			domain:     "sub.sub.traefikiwtf",
 			expected:   false,
@@ -171,7 +169,6 @@ func TestMatchDomain(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 

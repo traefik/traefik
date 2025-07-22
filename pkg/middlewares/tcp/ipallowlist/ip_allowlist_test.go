@@ -39,12 +39,11 @@ func TestNewIPAllowLister(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
 			next := tcp.HandlerFunc(func(conn tcp.WriteCloser) {})
-			allowLister, err := New(context.Background(), next, test.allowList, "traefikTest")
+			allowLister, err := New(t.Context(), next, test.allowList, "traefikTest")
 
 			if test.expectedError {
 				assert.Error(t, err)
@@ -81,7 +80,6 @@ func TestIPAllowLister_ServeHTTP(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -94,7 +92,7 @@ func TestIPAllowLister_ServeHTTP(t *testing.T) {
 				require.NoError(t, err)
 			})
 
-			allowLister, err := New(context.Background(), next, test.allowList, "traefikTest")
+			allowLister, err := New(t.Context(), next, test.allowList, "traefikTest")
 			require.NoError(t, err)
 
 			server, client := net.Pipe()

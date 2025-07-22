@@ -1,11 +1,11 @@
 ---
 title: "Traefik Docker DNS Challenge Documentation"
-description: "Learn how to create a certificate with the Let's Encrypt DNS challenge to use HTTPS on a Service exposed with Traefik Proxy. Read the tehnical documentation."
+description: "Learn how to create a certificate with the Let's Encrypt DNS challenge to use HTTPS on a Service exposed with Traefik Proxy. Read the technical documentation."
 ---
 
-# Docker-compose with let's encrypt: DNS Challenge
+# Docker-compose with Let's Encrypt: DNS Challenge
 
-This guide aim to demonstrate how to create a certificate with the let's encrypt DNS challenge to use https on a simple service exposed with Traefik.  
+This guide aims to demonstrate how to create a certificate with the Let's Encrypt DNS challenge to use https on a simple service exposed with Traefik.  
 Please also read the [basic example](../basic-example) for details on how to expose such a service.  
 
 ## Prerequisite
@@ -46,13 +46,13 @@ For the DNS challenge, you'll need:
 	#- "--certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
 	```
 
-- Run `docker-compose up -d` within the folder where you created the previous file.
+- Run `docker compose up -d` within the folder where you created the previous file.
 - Wait a bit and visit `https://your_own_domain` to confirm everything went fine.
 
 !!! Note
 
     If you uncommented the `acme.caserver` line, you will get an SSL error, but if you display the certificate and see it was emitted by `Fake LE Intermediate X1` then it means all is good.
-    (It is the staging environment intermediate certificate used by let's encrypt).
+    (It is the staging environment intermediate certificate used by Let's Encrypt).
     You can now safely comment the `acme.caserver` line, remove the `letsencrypt/acme.json` file and restart Traefik to issue a valid certificate.
 
 ## Explanation
@@ -64,12 +64,12 @@ What changed between the initial setup:
 ```yaml
 command:
   # Traefik will listen to incoming request on the port 443 (https)
-  - "--entrypoints.websecure.address=:443"
+  - "--entryPoints.websecure.address=:443"
 ports:
   - "443:443"
 ```
 
-- We configure the DNS let's encrypt challenge:
+- We configure the DNS Let's Encrypt challenge:
 
 ```yaml
 command:
@@ -77,7 +77,7 @@ command:
   - "--certificatesresolvers.myresolver.acme.dnschallenge=true"
   # Tell which provider to use
   - "--certificatesresolvers.myresolver.acme.dnschallenge.provider=ovh"
-  # The email to provide to let's encrypt
+  # The email to provide to Let's Encrypt
   - "--certificatesresolvers.myresolver.acme.email=postmaster@example.com"
 ```
 
@@ -175,7 +175,7 @@ services:
       - "ovh_consumer_key"
 ```
 
-- The environment variable within our `whoami` service are suffixed by `_FILE` which allow us to point to files containing the value, instead of exposing the value itself.  
+- The environment variable within our `traefik` service are suffixed by `_FILE` which allow us to point to files containing the value, instead of exposing the value itself.  
 	The acme client will read the content of those file to get the required configuration values.
 
 ```yaml
@@ -186,3 +186,5 @@ environment:
   - "OVH_APPLICATION_SECRET_FILE=/run/secrets/ovh_application_secret"
   - "OVH_CONSUMER_KEY_FILE=/run/secrets/ovh_consumer_key"
 ```
+
+{!traefik-for-business-applications.md!}

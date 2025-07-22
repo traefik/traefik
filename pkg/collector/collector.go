@@ -20,14 +20,12 @@ import (
 const collectorURL = "https://collect.traefik.io/yYaUej3P42cziRVzv6T5w2aYy9po2Mrn"
 
 // Collected data.
-//
-//nolint:musttag // cannot be changed for historical reasons.
 type data struct {
-	Version       string
-	Codename      string
-	BuildDate     string
-	Configuration string
-	Hash          string
+	Version       string `json:"version"`
+	Codename      string `json:"codename"`
+	BuildDate     string `json:"buildDate"`
+	Configuration string `json:"configuration"`
+	Hash          string `json:"hash"`
 }
 
 // Collect anonymous data.

@@ -25,7 +25,7 @@ The main features include dynamic configuration, automatic service discovery, an
 
 ## Edge Router
 
-Traefik is an *Edge Router*, it means that it's the door to your platform, and that it intercepts and routes every incoming request:
+Traefik is an *Edge Router*; this means that it's the door to your platform, and that it intercepts and routes every incoming request:
 it knows all the logic and every [rule](../routing/routers/index.md#rule "Link to docs about routing rules") that determine which services handle which requests (based on the *path*, the *host*, *headers*, etc.).
 
 ![The Door to Your Infrastructure](../assets/img/traefik-concepts-1.png "Picture explaining the infrastructure")
@@ -38,7 +38,7 @@ Deploying your services, you attach information that tells Traefik the character
 
 ![Decentralized Configuration](../assets/img/traefik-concepts-2.png "Picture about Decentralized Configuration")
 
-It means that when a service is deployed, Traefik detects it immediately and updates the routing rules in real time.
+This means that when a service is deployed, Traefik detects it immediately and updates the routing rules in real time.
 Similarly, when a service is removed from the infrastructure, the corresponding route is deleted accordingly.
 
 You no longer need to create and synchronize configuration files cluttered with IP addresses or other rules.

@@ -27,3 +27,4 @@
     address = ":8443"
 
 [providers.kubernetesGateway]
+    experimentalChannel = true

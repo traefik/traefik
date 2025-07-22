@@ -5,126 +5,129 @@ description: "Traefik supports several tracing backends, including OpenTelemetry
 
 # OpenTelemetry
 
+Traefik Proxy follows [official OpenTelemetry semantic conventions v1.26.0](https://github.com/open-telemetry/semantic-conventions/blob/v1.26.0/docs/http/http-spans.md).
+
 To enable the OpenTelemetry tracer:
 
 ```yaml tab="File (YAML)"
 tracing:
-  openTelemetry: {}
+  otlp: {}
 ```
 
 ```toml tab="File (TOML)"
 [tracing]
-  [tracing.openTelemetry]
+  [tracing.otlp]
 ```
 
 ```bash tab="CLI"
---tracing.openTelemetry=true
+--tracing.otlp=true
 ```
 
-!!! info "The OpenTelemetry trace reporter will export traces to the collector using HTTP by default, see the [gRPC Section](#grpc-configuration) to use gRPC."
+!!! info "Default protocol"
+
+    The OpenTelemetry trace exporter will export traces to the collector using HTTPS by default to https://localhost:4318/v1/traces, see the [gRPC Section](#grpc-configuration) to use gRPC.
 
 !!! info "Trace sampling"
 
-	By default, the OpenTelemetry trace reporter will sample 100% of traces.
+	By default, the OpenTelemetry trace exporter will sample 100% of traces.  
 	See [OpenTelemetry's SDK configuration](https://opentelemetry.io/docs/reference/specification/sdk-environment-variables/#general-sdk-configuration) to customize the sampling strategy.
 
-#### `address`
+!!! info "Propagation"
+    
+    Traefik supports the `OTEL_PROPAGATORS` env variable to set up the propragators. The supported propagators are:
 
-_Required, Default="localhost:4318", Format="`<host>:<port>`"_
+    - tracecontext (default)
+    - baggage (default)
+    - b3
+    - b3multi
+    - jaeger
+    - xray
+    - ottrace
 
-Address of the OpenTelemetry Collector to send spans to.
+    Example of configuration:
+
+        OTEL_PROPAGATORS=b3,jaeger
+
+
+### HTTP configuration
+
+_Optional_
+
+This instructs the exporter to send spans to the OpenTelemetry Collector using HTTP.
 
 ```yaml tab="File (YAML)"
 tracing:
-  openTelemetry:
-    address: localhost:4318
+  otlp:
+    http: {}
 ```
 
 ```toml tab="File (TOML)"
 [tracing]
-  [tracing.openTelemetry]
-    address = "localhost:4318"
+  [tracing.otlp.http]
 ```
 
 ```bash tab="CLI"
---tracing.openTelemetry.address=localhost:4318
+--tracing.otlp.http=true
+```
+
+#### `endpoint`
+
+_Optional, Default="https://localhost:4318/v1/traces", Format="`<scheme>://<host>:<port><path>`"_
+
+URL of the OpenTelemetry Collector to send spans to.
+
+!!! info "Insecure mode"
+
+    To disable TLS, use `http://` instead of `https://` in the `endpoint` configuration.
+
+```yaml tab="File (YAML)"
+tracing:
+  otlp:
+    http:
+      endpoint: https://collector:4318/v1/traces
+```
+
+```toml tab="File (TOML)"
+[tracing]
+  [tracing.otlp.http]
+    endpoint = "https://collector:4318/v1/traces"
+```
+
+```bash tab="CLI"
+--tracing.otlp.http.endpoint=https://collector:4318/v1/traces
 ```
 
 #### `headers`
 
 _Optional, Default={}_
 
-Additional headers sent with spans by the reporter to the OpenTelemetry Collector.
+Additional headers sent with traces by the exporter to the OpenTelemetry Collector.
 
 ```yaml tab="File (YAML)"
 tracing:
-  openTelemetry:
-    headers:
-      foo: bar
-      baz: buz
+  otlp:
+    http:
+      headers:
+        foo: bar
+        baz: buz
 ```
 
 ```toml tab="File (TOML)"
 [tracing]
-  [tracing.openTelemetry.headers]
+  [tracing.otlp.http.headers]
     foo = "bar"
     baz = "buz"
 ```
 
 ```bash tab="CLI"
---tracing.openTelemetry.headers.foo=bar --tracing.openTelemetry.headers.baz=buz
-```
-
-#### `insecure`
-
-_Optional, Default=false_
-
-Allows reporter to send spans to the OpenTelemetry Collector without using a secured protocol.
-
-```yaml tab="File (YAML)"
-tracing:
-  openTelemetry:
-    insecure: true
-```
-
-```toml tab="File (TOML)"
-[tracing]
-  [tracing.openTelemetry]
-    insecure = true
-```
-
-```bash tab="CLI"
---tracing.openTelemetry.insecure=true
-```
-
-#### `path`
-
-_Required, Default="/v1/traces"_
-
-Allows to override the default URL path used for sending traces.
-This option has no effect when using gRPC transport.
-
-```yaml tab="File (YAML)"
-tracing:
-  openTelemetry:
-    path: /foo/v1/traces
-```
-
-```toml tab="File (TOML)"
-[tracing]
-  [tracing.openTelemetry]
-    path = "/foo/v1/traces"
-```
-
-```bash tab="CLI"
---tracing.openTelemetry.path=/foo/v1/traces
+--tracing.otlp.http.headers.foo=bar --tracing.otlp.http.headers.baz=buz
 ```
 
 #### `tls`
 
 _Optional_
 
-Defines the TLS configuration used by the reporter to send spans to the OpenTelemetry Collector.
+Defines the Client TLS configuration used by the exporter to send spans to the OpenTelemetry Collector.
 
 ##### `ca`
 
@@ -135,18 +138,19 @@ it defaults to the system bundle.
 
 ```yaml tab="File (YAML)"
 tracing:
-  openTelemetry:
-    tls:
-      ca: path/to/ca.crt
+  otlp:
+    http:
+      tls:
+        ca: path/to/ca.crt
 ```
 
 ```toml tab="File (TOML)"
-[tracing.openTelemetry.tls]
+[tracing.otlp.http.tls]
   ca = "path/to/ca.crt"
 ```
 
 ```bash tab="CLI"
---tracing.openTelemetry.tls.ca=path/to/ca.crt
+--tracing.otlp.http.tls.ca=path/to/ca.crt
 ```
 
 ##### `cert`
@@ -158,21 +162,22 @@ When using this option, setting the `key` option is required.
 
 ```yaml tab="File (YAML)"
 tracing:
-  openTelemetry:
-    tls:
-      cert: path/to/foo.cert
-      key: path/to/foo.key
+  otlp:
+    http:
+      tls:
+        cert: path/to/foo.cert
+        key: path/to/foo.key
 ```
 
 ```toml tab="File (TOML)"
-[tracing.openTelemetry.tls]
+[tracing.otlp.http.tls]
   cert = "path/to/foo.cert"
   key = "path/to/foo.key"
 ```
 
 ```bash tab="CLI"
---tracing.openTelemetry.tls.cert=path/to/foo.cert
---tracing.openTelemetry.tls.key=path/to/foo.key
+--tracing.otlp.http.tls.cert=path/to/foo.cert
+--tracing.otlp.http.tls.key=path/to/foo.key
 ```
 
 ##### `key`
@@ -184,21 +189,22 @@ When using this option, setting the `cert` option is required.
 
 ```yaml tab="File (YAML)"
 tracing:
-  openTelemetry:
-    tls:
-      cert: path/to/foo.cert
-      key: path/to/foo.key
+  otlp:
+    http:
+      tls:
+        cert: path/to/foo.cert
+        key: path/to/foo.key
 ```
 
 ```toml tab="File (TOML)"
-[tracing.openTelemetry.tls]
+[tracing.otlp.http.tls]
   cert = "path/to/foo.cert"
   key = "path/to/foo.key"
 ```
 
 ```bash tab="CLI"
---tracing.openTelemetry.tls.cert=path/to/foo.cert
---tracing.openTelemetry.tls.key=path/to/foo.key
+--tracing.otlp.http.tls.cert=path/to/foo.cert
+--tracing.otlp.http.tls.key=path/to/foo.key
 ```
 
 ##### `insecureSkipVerify`
@@ -210,37 +216,217 @@ the TLS connection to the OpenTelemetry Collector accepts any certificate presen
 
 ```yaml tab="File (YAML)"
 tracing:
-  openTelemetry:
-    tls:
-      insecureSkipVerify: true
+  otlp:
+    http:
+      tls:
+        insecureSkipVerify: true
 ```
 
 ```toml tab="File (TOML)"
-[tracing.openTelemetry.tls]
+[tracing.otlp.http.tls]
   insecureSkipVerify = true
 ```
 
 ```bash tab="CLI"
---tracing.openTelemetry.tls.insecureSkipVerify=true
+--tracing.otlp.http.tls.insecureSkipVerify=true
 ```
 
-#### gRPC configuration
+### gRPC configuration
 
 _Optional_
 
-This instructs the reporter to send spans to the OpenTelemetry Collector using gRPC.
+This instructs the exporter to send spans to the OpenTelemetry Collector using gRPC.
 
 ```yaml tab="File (YAML)"
 tracing:
-  openTelemetry:
+  otlp:
     grpc: {}
 ```
 
 ```toml tab="File (TOML)"
 [tracing]
-  [tracing.openTelemetry.grpc]
+  [tracing.otlp.grpc]
 ```
 
 ```bash tab="CLI"
---tracing.openTelemetry.grpc=true
+--tracing.otlp.grpc=true
+```
+
+#### `endpoint`
+
+_Required, Default="localhost:4317", Format="`<host>:<port>`"_
+
+Address of the OpenTelemetry Collector to send spans to.
+
+```yaml tab="File (YAML)"
+tracing:
+  otlp:
+    grpc:
+      endpoint: localhost:4317
+```
+
+```toml tab="File (TOML)"
+[tracing]
+  [tracing.otlp.grpc]
+    endpoint = "localhost:4317"
+```
+
+```bash tab="CLI"
+--tracing.otlp.grpc.endpoint=localhost:4317
+```
+#### `insecure`
+
+_Optional, Default=false_
+
+Allows exporter to send spans to the OpenTelemetry Collector without using a secured protocol.
+
+```yaml tab="File (YAML)"
+tracing:
+  otlp:
+    grpc:
+      insecure: true
+```
+
+```toml tab="File (TOML)"
+[tracing]
+  [tracing.otlp.grpc]
+    insecure = true
+```
+
+```bash tab="CLI"
+--tracing.otlp.grpc.insecure=true
+```
+
+#### `headers`
+
+_Optional, Default={}_
+
+Additional headers sent with traces by the exporter to the OpenTelemetry Collector.
+
+```yaml tab="File (YAML)"
+tracing:
+  otlp:
+    grpc:
+      headers:
+        foo: bar
+        baz: buz
+```
+
+```toml tab="File (TOML)"
+[tracing]
+  [tracing.otlp.grpc.headers]
+    foo = "bar"
+    baz = "buz"
+```
+
+```bash tab="CLI"
+--tracing.otlp.grpc.headers.foo=bar --tracing.otlp.grpc.headers.baz=buz
+```
+
+#### `tls`
+
+_Optional_
+
+Defines the Client TLS configuration used by the exporter to send spans to the OpenTelemetry Collector.
+
+##### `ca`
+
+_Optional_
+
+`ca` is the path to the certificate authority used for the secure connection to the OpenTelemetry Collector,
+it defaults to the system bundle.
+
+```yaml tab="File (YAML)"
+tracing:
+  otlp:
+    grpc:
+      tls:
+        ca: path/to/ca.crt
+```
+
+```toml tab="File (TOML)"
+[tracing.otlp.grpc.tls]
+  ca = "path/to/ca.crt"
+```
+
+```bash tab="CLI"
+--tracing.otlp.grpc.tls.ca=path/to/ca.crt
+```
+
+##### `cert`
+
+_Optional_
+
+`cert` is the path to the public certificate used for the secure connection to the OpenTelemetry Collector.
+When using this option, setting the `key` option is required.
+
+```yaml tab="File (YAML)"
+tracing:
+  otlp:
+    grpc:
+      tls:
+        cert: path/to/foo.cert
+        key: path/to/foo.key
+```
+
+```toml tab="File (TOML)"
+[tracing.otlp.grpc.tls]
+  cert = "path/to/foo.cert"
+  key = "path/to/foo.key"
+```
+
+```bash tab="CLI"
+--tracing.otlp.grpc.tls.cert=path/to/foo.cert
+--tracing.otlp.grpc.tls.key=path/to/foo.key
+```
+
+##### `key`
+
+_Optional_
+
+`key` is the path to the private key used for the secure connection to the OpenTelemetry Collector.
+When using this option, setting the `cert` option is required.
+
+```yaml tab="File (YAML)"
+tracing:
+  otlp:
+    grpc:
+      tls:
+        cert: path/to/foo.cert
+        key: path/to/foo.key
+```
+
+```toml tab="File (TOML)"
+[tracing.otlp.grpc.tls]
+  cert = "path/to/foo.cert"
+  key = "path/to/foo.key"
+```
+
+```bash tab="CLI"
+--tracing.otlp.grpc.tls.cert=path/to/foo.cert
+--tracing.otlp.grpc.tls.key=path/to/foo.key
+```
+
+##### `insecureSkipVerify`
+
+_Optional, Default=false_
+
+If `insecureSkipVerify` is `true`,
+the TLS connection to the OpenTelemetry Collector accepts any certificate presented by the server regardless of the hostnames it covers.
+
+```yaml tab="File (YAML)"
+tracing:
+  otlp:
+    grpc:
+      tls:
+        insecureSkipVerify: true
+```
+
+```toml tab="File (TOML)"
+[tracing.otlp.grpc.tls]
+  insecureSkipVerify = true
+```
+
+```bash tab="CLI"
+--tracing.otlp.grpc.tls.insecureSkipVerify=true
 ```

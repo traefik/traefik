@@ -1,7 +1,6 @@
 package replacepathregex
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -42,6 +41,28 @@ func TestReplacePathRegex(t *testing.T) {
 			},
 			expectedPath:    "/who-am-i/and/who-am-i",
 			expectedRawPath: "/who-am-i/and/who-am-i",
+			expectedHeader:  "/whoami/and/whoami",
+		},
+		{
+			desc: "empty replacement",
+			path: "/whoami/and/whoami",
+			config: dynamic.ReplacePathRegex{
+				Replacement: "",
+				Regex:       `/whoami`,
+			},
+			expectedPath:    "/and",
+			expectedRawPath: "/and",
+			expectedHeader:  "/whoami/and/whoami",
+		},
+		{
+			desc: "empty trimmed replacement",
+			path: "/whoami/and/whoami",
+			config: dynamic.ReplacePathRegex{
+				Replacement: " ",
+				Regex:       `/whoami`,
+			},
+			expectedPath:    "/and",
+			expectedRawPath: "/and",
 			expectedHeader:  "/whoami/and/whoami",
 		},
 		{
@@ -128,7 +149,7 @@ func TestReplacePathRegex(t *testing.T) {
 				requestURI = r.RequestURI
 			})
 
-			handler, err := New(context.Background(), next, test.config, "foo-replace-path-regexp")
+			handler, err := New(t.Context(), next, test.config, "foo-replace-path-regexp")
 			if test.expectsError {
 				require.Error(t, err)
 				return

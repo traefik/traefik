@@ -19,7 +19,7 @@ const (
 type timedAction func(timeout time.Duration, operation DoCondition) error
 
 // Sleep pauses the current goroutine for at least the duration d.
-// Deprecated: Use only when use an other Try[...] functions is not possible.
+// Deprecated: Use only when use another Try[...] functions is not possible.
 func Sleep(d time.Duration) {
 	d = applyCIMultiplier(d)
 	time.Sleep(d)

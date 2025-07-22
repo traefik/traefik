@@ -56,6 +56,8 @@ _Optional, Default=15s_
 
 Defines the polling interval.
 
+!!! note "This option is ignored when the [watch](#watch) mode is enabled."
+
 ```yaml tab="File (YAML)"
 providers:
   nomad:
@@ -71,6 +73,62 @@ providers:
 
 ```bash tab="CLI"
 --providers.nomad.refreshInterval=30s
+# ...
+```
+
+### `watch`
+
+_Optional, Default=false_
+
+Enables the watch mode to refresh the configuration on a per-event basis.
+
+```yaml tab="File (YAML)"
+providers:
+  nomad:
+    watch: true
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.nomad]
+  watch = true
+  # ...
+```
+
+```bash tab="CLI"
+--providers.nomad.watch
+# ...
+```
+
+### `throttleDuration`
+
+_Optional, Default=0s_
+
+The `throttleDuration` option defines how often the provider is allowed to handle service events from Nomad.
+This prevents a Nomad cluster that updates many times per second from continuously changing your Traefik configuration.
+
+If left empty, the provider does not apply any throttling and does not drop any Nomad service events.
+
+The value of `throttleDuration` should be provided in seconds or as a valid duration format,
+see [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration).
+
+!!! warning "This option is only compatible with the [watch](#watch) mode."
+
+```yaml tab="File (YAML)"
+providers:
+  nomad:
+    throttleDuration: 2s
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.nomad]
+  throttleDuration = "2s"
+  # ...
+```
+
+```bash tab="CLI"
+--providers.nomad.throttleDuration=2s
 # ...
 ```
 
@@ -163,6 +221,7 @@ providers:
 _Optional, Default=""_
 
 Token is used to provide a per-request ACL token, if Nomad ACLs are enabled.
+The appropriate ACL privilege for this token is 'read-job', as outlined in the [Nomad documentation on ACL](https://developer.hashicorp.com/nomad/tutorials/access-control/access-control-policies).
 
 ```yaml tab="File (YAML)"
 providers:
@@ -373,9 +432,16 @@ providers:
 ```
 
 ```bash tab="CLI"
---providers.nomad.defaultRule="Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
+--providers.nomad.defaultRule='Host(`{{ .Name }}.{{ index .Labels "customLabel"}}`)'
 # ...
 ```
+
+??? info "Default rule and Traefik service"
+
+    The exposure of the Traefik container, combined with the default rule mechanism,
+    can lead to create a router targeting itself in a loop.
+    In this case, to prevent an infinite loop,
+    Traefik adds an internal middleware to refuse the request if it comes from the same router.
 
 ### `constraints`
 
@@ -503,4 +569,28 @@ providers:
 ```bash tab="CLI"
 --providers.nomad.namespaces=ns1,ns2
 # ...
+```
+
+### `allowEmptyServices`
+
+_Optional, Default: false_
+
+If the parameter is set to `true`,
+it allows the creation of an empty [servers load balancer](../routing/services/index.md#servers-load-balancer) if the targeted Nomad service has no endpoints available. This results in a `503` HTTP response instead of a `404`.
+
+```yaml tab="File (YAML)"
+providers:
+  nomad:
+    allowEmptyServices: true
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.nomad]
+  allowEmptyServices = true
+  # ...
+```
+
+```bash tab="CLI"
+--providers.nomad.allowEmptyServices=true
 ```

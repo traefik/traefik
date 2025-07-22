@@ -30,3 +30,5 @@ They need not be compiled, and no complex toolchain is necessary to build them.
 The experience of implementing a Traefik plugin is comparable to writing a web browser extension.
 
 To learn more about Traefik plugin creation, please refer to the [developer documentation](https://plugins.traefik.io/create).
+
+{!traefik-for-business-applications.md!}

@@ -24,10 +24,8 @@ func (s *Server) listenSignals(ctx context.Context) {
 			if sig == syscall.SIGUSR1 {
 				log.Info().Msgf("Closing and re-opening log files for rotation: %+v", sig)
 
-				if s.accessLoggerMiddleware != nil {
-					if err := s.accessLoggerMiddleware.Rotate(); err != nil {
-						log.Error().Err(err).Msg("Error rotating access log")
-					}
+				if err := s.observabilityMgr.RotateAccessLogs(); err != nil {
+					log.Error().Err(err).Msg("Error rotating access log")
 				}
 			}
 		}

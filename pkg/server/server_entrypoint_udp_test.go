@@ -1,7 +1,6 @@
 package server
 
 import (
-	"context"
 	"io"
 	"net"
 	"testing"
@@ -24,10 +23,10 @@ func TestShutdownUDPConn(t *testing.T) {
 	}
 	ep.SetDefaults()
 
-	entryPoint, err := NewUDPEntryPoint(&ep)
+	entryPoint, err := NewUDPEntryPoint(&ep, "")
 	require.NoError(t, err)
 
-	go entryPoint.Start(context.Background())
+	go entryPoint.Start(t.Context())
 	entryPoint.Switch(udp.HandlerFunc(func(conn *udp.Conn) {
 		for {
 			b := make([]byte, 1024*1024)
@@ -56,7 +55,7 @@ func TestShutdownUDPConn(t *testing.T) {
 
 	doneChan := make(chan struct{})
 	go func() {
-		entryPoint.Shutdown(context.Background())
+		entryPoint.Shutdown(t.Context())
 		close(doneChan)
 	}()
 

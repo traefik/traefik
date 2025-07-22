@@ -1,0 +1,12 @@
+{
+  "addPrefix": {
+    "prefix": "/titi"
+  },
+  "name": "foo / bar@myprovider",
+  "provider": "myprovider",
+  "status": "enabled",
+  "type": "addprefix",
+  "usedBy": [
+    "test@myprovider"
+  ]
+}

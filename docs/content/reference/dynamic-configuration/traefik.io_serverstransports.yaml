@@ -1,11 +1,9 @@
-
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.6.2
-  creationTimestamp: null
+    controller-gen.kubebuilder.io/version: v0.16.1
   name: serverstransports.traefik.io
 spec:
   group: traefik.io
@@ -19,20 +17,26 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: 'ServersTransport is the CRD implementation of a ServersTransport.
+        description: |-
+          ServersTransport is the CRD implementation of a ServersTransport.
           If no serversTransport is specified, the default@internal will be used.
           The default@internal serversTransport is created from the static configuration.
-          More info: https://doc.traefik.io/traefik/v3.0/routing/services/#serverstransport_1'
+          More info: https://doc.traefik.io/traefik/v3.5/routing/services/#serverstransport_1
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -59,6 +63,7 @@ spec:
                     - type: string
                     description: DialTimeout is the amount of time to wait until a
                       connection to a backend server can be established.
+                    pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
                     x-kubernetes-int-or-string: true
                   idleConnTimeout:
                     anyOf:
@@ -67,6 +72,7 @@ spec:
                     description: IdleConnTimeout is the maximum period for which an
                       idle HTTP keep-alive connection will remain open before closing
                       itself.
+                    pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
                     x-kubernetes-int-or-string: true
                   pingTimeout:
                     anyOf:
@@ -74,6 +80,7 @@ spec:
                     - type: string
                     description: PingTimeout is the timeout after which the HTTP/2
                       connection will be closed if a response to ping is not received.
+                    pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
                     x-kubernetes-int-or-string: true
                   readIdleTimeout:
                     anyOf:
@@ -82,6 +89,7 @@ spec:
                     description: ReadIdleTimeout is the timeout after which a health
                       check using ping frame will be carried out if no frame is received
                       on the HTTP/2 connection.
+                    pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
                     x-kubernetes-int-or-string: true
                   responseHeaderTimeout:
                     anyOf:
@@ -90,6 +98,7 @@ spec:
                     description: ResponseHeaderTimeout is the amount of time to wait
                       for a server's response headers after fully writing the request
                       (including its body, if any).
+                    pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
                     x-kubernetes-int-or-string: true
                 type: object
               insecureSkipVerify:
@@ -98,14 +107,39 @@ spec:
               maxIdleConnsPerHost:
                 description: MaxIdleConnsPerHost controls the maximum idle (keep-alive)
                   to keep per-host.
+                minimum: 0
                 type: integer
               peerCertURI:
                 description: PeerCertURI defines the peer cert URI used to match against
                   SAN URI during the peer certificate verification.
                 type: string
+              rootCAs:
+                description: RootCAs defines a list of CA certificate Secrets or ConfigMaps
+                  used to validate server certificates.
+                items:
+                  description: |-
+                    RootCA defines a reference to a Secret or a ConfigMap that holds a CA certificate.
+                    If both a Secret and a ConfigMap reference are defined, the Secret reference takes precedence.
+                  properties:
+                    configMap:
+                      description: |-
+                        ConfigMap defines the name of a ConfigMap that holds a CA certificate.
+                        The referenced ConfigMap must contain a certificate under either a tls.ca or a ca.crt key.
+                      type: string
+                    secret:
+                      description: |-
+                        Secret defines the name of a Secret that holds a CA certificate.
+                        The referenced Secret must contain a certificate under either a tls.ca or a ca.crt key.
+                      type: string
+                  type: object
+                  x-kubernetes-validations:
+                  - message: RootCA cannot have both Secret and ConfigMap defined.
+                    rule: '!has(self.secret) || !has(self.configMap)'
+                type: array
               rootCAsSecrets:
-                description: RootCAsSecrets defines a list of CA secret used to validate
-                  self-signed certificate.
+                description: |-
+                  RootCAsSecrets defines a list of CA secret used to validate self-signed certificate.
+                  Deprecated: RootCAsSecrets is deprecated, please use the RootCAs option instead.
                 items:
                   type: string
                 type: array
@@ -133,9 +167,3 @@ spec:
         type: object
     served: true
     storage: true
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []

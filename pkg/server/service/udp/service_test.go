@@ -1,7 +1,6 @@
 package udp
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -174,7 +173,6 @@ func TestManager_BuildUDP(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -182,7 +180,7 @@ func TestManager_BuildUDP(t *testing.T) {
 				UDPServices: test.configs,
 			})
 
-			ctx := context.Background()
+			ctx := t.Context()
 			if len(test.providerName) > 0 {
 				ctx = provider.AddInContext(ctx, "foobar@"+test.providerName)
 			}

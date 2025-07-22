@@ -2,13 +2,21 @@ package tls
 
 import (
 	"context"
+	"crypto"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
+	"io"
+	"net/http"
+	"net/http/httptest"
 	"testing"
+	"time"
 
+	"github.com/patrickmn/go-cache"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/v3/pkg/types"
+	"golang.org/x/crypto/ocsp"
 )
 
 // LocalhostCert is a PEM-encoded TLS cert with SAN IPs
@@ -16,7 +24,7 @@ import (
 // generated from src/crypto/tls:
 // go run generate_cert.go  --rsa-bits 1024 --host 127.0.0.1,::1,example.com --ca --start-date "Jan 1 00:00:00 1970" --duration=1000000h
 var (
-	localhostCert = FileOrContent(`-----BEGIN CERTIFICATE-----
+	localhostCert = types.FileOrContent(`-----BEGIN CERTIFICATE-----
 MIIDOTCCAiGgAwIBAgIQSRJrEpBGFc7tNb1fb5pKFzANBgkqhkiG9w0BAQsFADAS
 MRAwDgYDVQQKEwdBY21lIENvMCAXDTcwMDEwMTAwMDAwMFoYDzIwODQwMTI5MTYw
 MDAwWjASMRAwDgYDVQQKEwdBY21lIENvMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A
@@ -38,7 +46,7 @@ WkBKOclmOV2xlTVuPw==
 -----END CERTIFICATE-----`)
 
 	// LocalhostKey is the private key for localhostCert.
-	localhostKey = FileOrContent(`-----BEGIN RSA PRIVATE KEY-----
+	localhostKey = types.FileOrContent(`-----BEGIN RSA PRIVATE KEY-----
 MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQDoZtrm0dXV0Aqi
 4Bpc7f95sNRTiu/AJSD8I1onY9PnEsPg3VVxvytsVJbYdcqr4w99V3AgpH/UNzMS
 gAZ/8lZBNbsSDOVesJ3euVqMRfYPvd9pYl6QPRRpSDPm+2tNdn3QFAvta9EgJ3sW
@@ -76,10 +84,10 @@ func TestTLSInStore(t *testing.T) {
 		},
 	}}
 
-	tlsManager := NewManager()
-	tlsManager.UpdateConfigs(context.Background(), nil, nil, dynamicConfigs)
+	tlsManager := NewManager(nil)
+	tlsManager.UpdateConfigs(t.Context(), nil, nil, dynamicConfigs)
 
-	certs := tlsManager.GetStore("default").DynamicCerts.Get().(map[string]*tls.Certificate)
+	certs := tlsManager.GetStore("default").DynamicCerts.Get().(map[string]*CertificateData)
 	if len(certs) == 0 {
 		t.Fatal("got error: default store must have TLS certificates.")
 	}
@@ -93,8 +101,8 @@ func TestTLSInvalidStore(t *testing.T) {
 		},
 	}}
 
-	tlsManager := NewManager()
-	tlsManager.UpdateConfigs(context.Background(),
+	tlsManager := NewManager(nil)
+	tlsManager.UpdateConfigs(t.Context(),
 		map[string]Store{
 			"default": {
 				DefaultCertificate: &Certificate{
@@ -104,7 +112,7 @@ func TestTLSInvalidStore(t *testing.T) {
 			},
 		}, nil, dynamicConfigs)
 
-	certs := tlsManager.GetStore("default").DynamicCerts.Get().(map[string]*tls.Certificate)
+	certs := tlsManager.GetStore("default").DynamicCerts.Get().(map[string]*CertificateData)
 	if len(certs) == 0 {
 		t.Fatal("got error: default store must have TLS certificates.")
 	}
@@ -157,11 +165,10 @@ func TestManager_Get(t *testing.T) {
 		},
 	}
 
-	tlsManager := NewManager()
-	tlsManager.UpdateConfigs(context.Background(), nil, tlsConfigs, dynamicConfigs)
+	tlsManager := NewManager(nil)
+	tlsManager.UpdateConfigs(t.Context(), nil, tlsConfigs, dynamicConfigs)
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -173,7 +180,7 @@ func TestManager_Get(t *testing.T) {
 			}
 
 			require.NoError(t, err)
-			assert.Equal(t, config.MinVersion, test.expectedMinVersion)
+			assert.Equal(t, test.expectedMinVersion, config.MinVersion)
 		})
 	}
 }
@@ -197,7 +204,7 @@ func TestClientAuth(t *testing.T) {
 		},
 		"vccig": {
 			ClientAuth: ClientAuth{
-				CAFiles:        []FileOrContent{localhostCert},
+				CAFiles:        []types.FileOrContent{localhostCert},
 				ClientAuthType: "VerifyClientCertIfGiven",
 			},
 		},
@@ -209,13 +216,13 @@ func TestClientAuth(t *testing.T) {
 		},
 		"ravccwca": {
 			ClientAuth: ClientAuth{
-				CAFiles:        []FileOrContent{localhostCert},
+				CAFiles:        []types.FileOrContent{localhostCert},
 				ClientAuthType: "RequireAndVerifyClientCert",
 			},
 		},
 		"ravccwbca": {
 			ClientAuth: ClientAuth{
-				CAFiles:        []FileOrContent{"Bad content"},
+				CAFiles:        []types.FileOrContent{"Bad content"},
 				ClientAuthType: "RequireAndVerifyClientCert",
 			},
 		},
@@ -297,11 +304,10 @@ func TestClientAuth(t *testing.T) {
 		},
 	}
 
-	tlsManager := NewManager()
-	tlsManager.UpdateConfigs(context.Background(), nil, tlsConfigs, nil)
+	tlsManager := NewManager(nil)
+	tlsManager.UpdateConfigs(t.Context(), nil, tlsConfigs, nil)
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -317,26 +323,123 @@ func TestClientAuth(t *testing.T) {
 			if test.expectedRawSubject != nil {
 				subjects := config.ClientCAs.Subjects()
 				assert.Len(t, subjects, 1)
-				assert.Equal(t, subjects[0], test.expectedRawSubject)
+				assert.Equal(t, test.expectedRawSubject, subjects[0])
 			}
 
-			assert.Equal(t, config.ClientAuth, test.expectedClientAuth)
+			assert.Equal(t, test.expectedClientAuth, config.ClientAuth)
 		})
 	}
 }
 
+func TestManager_UpdateConfigs_OCSPConfig(t *testing.T) {
+	leafCert, err := tls.X509KeyPair([]byte(certWithOCSPServer), []byte(certKey))
+	require.NoError(t, err)
+
+	issuerCert, err := tls.X509KeyPair([]byte(caCert), []byte(caKey))
+	require.NoError(t, err)
+
+	thisUpdate, err := time.Parse("2006-01-02", "2025-01-01")
+	require.NoError(t, err)
+	nextUpdate, err := time.Parse("2006-01-02", "2025-01-02")
+	require.NoError(t, err)
+
+	ocspResponseTmpl := ocsp.Response{
+		SerialNumber:    leafCert.Leaf.SerialNumber,
+		TBSResponseData: []byte("foo"),
+		ThisUpdate:      thisUpdate,
+		NextUpdate:      nextUpdate,
+	}
+
+	ocspResponse, err := ocsp.CreateResponse(leafCert.Leaf, leafCert.Leaf, ocspResponseTmpl, issuerCert.PrivateKey.(crypto.Signer))
+	require.NoError(t, err)
+
+	responderCall := make(chan struct{})
+
+	handler := func(rw http.ResponseWriter, req *http.Request) {
+		ct := req.Header.Get("Content-Type")
+		assert.Equal(t, "application/ocsp-request", ct)
+
+		reqBytes, err := io.ReadAll(req.Body)
+		require.NoError(t, err)
+
+		_, err = ocsp.ParseRequest(reqBytes)
+		require.NoError(t, err)
+
+		rw.Header().Set("Content-Type", "application/ocsp-response")
+
+		_, err = rw.Write(ocspResponse)
+		require.NoError(t, err)
+
+		responderCall <- struct{}{}
+	}
+
+	responder := httptest.NewServer(http.HandlerFunc(handler))
+	t.Cleanup(responder.Close)
+
+	testContext, cancel := context.WithCancel(t.Context())
+	t.Cleanup(cancel)
+
+	tlsManager := NewManager(&OCSPConfig{
+		ResponderOverrides: map[string]string{
+			"ocsp.example.com": responder.URL,
+		},
+	})
+
+	go tlsManager.Run(testContext)
+
+	tlsManager.ocspStapler.cache.Set("existing", &ocspEntry{
+		leaf:       leafCert.Leaf,
+		issuer:     issuerCert.Leaf,
+		staple:     []byte("foo"),
+		nextUpdate: time.Now().Add(time.Hour),
+	}, cache.NoExpiration)
+	tlsManager.ocspStapler.cache.Set("existingWithTTL", &ocspEntry{
+		leaf:       leafCert.Leaf,
+		issuer:     issuerCert.Leaf,
+		staple:     []byte("foo"),
+		nextUpdate: time.Now().Add(time.Hour),
+	}, 2*defaultCacheDuration)
+
+	tlsManager.UpdateConfigs(testContext, nil, nil, []*CertAndStores{
+		{
+			Certificate: Certificate{
+				CertFile: certWithOCSPServer,
+				KeyFile:  certKey,
+			},
+		},
+	})
+
+	// Asserting that UpdateConfigs resets the expiration for existing entries.
+	_, expiration, ok := tlsManager.ocspStapler.cache.GetWithExpiration("existing")
+	require.True(t, ok)
+	assert.Greater(t, expiration, time.Now())
+	// But not for entries with TTL already set.
+	_, expiration, ok = tlsManager.ocspStapler.cache.GetWithExpiration("existingWithTTL")
+	require.True(t, ok)
+	assert.Greater(t, expiration, time.Now().Add(defaultCacheDuration))
+
+	select {
+	case <-responderCall:
+	case <-time.After(3 * time.Second):
+		t.Fatal("Timeout waiting for OCSP responder call")
+	}
+
+	assert.Len(t, tlsManager.ocspStapler.cache.Items(), 3)
+
+	certHash := hashRawCert(leafCert.Leaf.Raw)
+	_, ok = tlsManager.ocspStapler.cache.Get(certHash)
+	require.True(t, ok)
+}
+
 func TestManager_Get_DefaultValues(t *testing.T) {
-	tlsManager := NewManager()
+	tlsManager := NewManager(nil)
 
 	// Ensures we won't break things for Traefik users when updating Go
 	config, _ := tlsManager.Get("default", "default")
-	assert.Equal(t, config.MinVersion, uint16(tls.VersionTLS12))
-	assert.Equal(t, config.NextProtos, []string{"h2", "http/1.1", "acme-tls/1"})
-	assert.Equal(t, config.CipherSuites, []uint16{
-		tls.TLS_RSA_WITH_AES_128_CBC_SHA,
-		tls.TLS_RSA_WITH_AES_256_CBC_SHA,
-		tls.TLS_RSA_WITH_AES_128_GCM_SHA256,
-		tls.TLS_RSA_WITH_AES_256_GCM_SHA384,
+	assert.Equal(t, uint16(tls.VersionTLS12), config.MinVersion)
+	assert.Equal(t, []string{"h2", "http/1.1", "acme-tls/1"}, config.NextProtos)
+	assert.False(t, config.SessionTicketsDisabled)
+	assert.Equal(t, []uint16{
 		tls.TLS_AES_128_GCM_SHA256,
 		tls.TLS_AES_256_GCM_SHA384,
 		tls.TLS_CHACHA20_POLY1305_SHA256,
@@ -350,5 +453,5 @@ func TestManager_Get_DefaultValues(t *testing.T) {
 		tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
 		tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
 		tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
-	})
+	}, config.CipherSuites)
 }

@@ -13,7 +13,7 @@ import (
 // ServersTransportTCP is the CRD implementation of a TCPServersTransport.
 // If no tcpServersTransport is specified, a default one named default@internal will be used.
 // The default@internal tcpServersTransport can be configured in the static configuration.
-// More info: https://doc.traefik.io/traefik/v3.0/routing/services/#serverstransport_3
+// More info: https://doc.traefik.io/traefik/v3.5/routing/services/#serverstransport_3
 type ServersTransportTCP struct {
 	metav1.TypeMeta `json:",inline"`
 	// Standard object's metadata.
@@ -28,10 +28,16 @@ type ServersTransportTCP struct {
 // ServersTransportTCPSpec defines the desired state of a ServersTransportTCP.
 type ServersTransportTCPSpec struct {
 	// DialTimeout is the amount of time to wait until a connection to a backend server can be established.
+	// +kubebuilder:validation:Pattern="^([0-9]+(ns|us|µs|ms|s|m|h)?)+$"
+	// +kubebuilder:validation:XIntOrString
 	DialTimeout *intstr.IntOrString `json:"dialTimeout,omitempty"`
 	// DialKeepAlive is the interval between keep-alive probes for an active network connection. If zero, keep-alive probes are sent with a default value (currently 15 seconds), if supported by the protocol and operating system. Network protocols or operating systems that do not support keep-alives ignore this field. If negative, keep-alive probes are disabled.
+	// +kubebuilder:validation:Pattern="^([0-9]+(ns|us|µs|ms|s|m|h)?)+$"
+	// +kubebuilder:validation:XIntOrString
 	DialKeepAlive *intstr.IntOrString `json:"dialKeepAlive,omitempty"`
 	// TerminationDelay defines the delay to wait before fully terminating the connection, after one connected peer has closed its writing capability.
+	// +kubebuilder:validation:Pattern="^([0-9]+(ns|us|µs|ms|s|m|h)?)+$"
+	// +kubebuilder:validation:XIntOrString
 	TerminationDelay *intstr.IntOrString `json:"terminationDelay,omitempty"`
 	// TLS defines the TLS configuration
 	TLS *TLSClientConfig `description:"Defines the TLS configuration." json:"tls,omitempty"`
@@ -43,7 +49,10 @@ type TLSClientConfig struct {
 	ServerName string `json:"serverName,omitempty"`
 	// InsecureSkipVerify disables TLS certificate verification.
 	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
-	// RootCAsSecrets defines a list of CA secret used to validate self-signed certificates.
+	// RootCAs defines a list of CA certificate Secrets or ConfigMaps used to validate server certificates.
+	RootCAs []RootCA `json:"rootCAs,omitempty"`
+	// RootCAsSecrets defines a list of CA secret used to validate self-signed certificate.
+	// Deprecated: RootCAsSecrets is deprecated, please use the RootCAs option instead.
 	RootCAsSecrets []string `json:"rootCAsSecrets,omitempty"`
 	// CertificatesSecrets defines a list of secret storing client certificates for mTLS.
 	CertificatesSecrets []string `json:"certificatesSecrets,omitempty"`

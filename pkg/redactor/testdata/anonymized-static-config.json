@@ -315,7 +315,17 @@
     "maxSize": 5,
     "maxAge": 3,
     "maxBackups": 4,
-    "compress": true
+    "compress": true,
+    "otlp": {
+      "serviceName": "foobar",
+      "grpc": {
+        "endpoint": "xxxx",
+        "insecure": true
+      },
+      "http": {
+        "endpoint": "xxxx"
+      }
+    }
   },
   "accessLog": {
     "filePath": "xxxx",
@@ -340,61 +350,35 @@
         }
       }
     },
-    "bufferingSize": 42
+    "bufferingSize": 42,
+    "otlp": {
+      "serviceName": "foobar",
+      "grpc": {
+        "endpoint": "xxxx",
+        "insecure": true
+      },
+      "http": {
+        "endpoint": "xxxx"
+      }
+    }
   },
   "tracing": {
     "serviceName": "myServiceName",
-    "spanNameLimit": 42,
-    "jaeger": {
-      "samplingServerURL": "xxxx",
-      "samplingType": "foobar",
-      "samplingParam": 42,
-      "localAgentHostPort": "xxxx",
-      "gen128Bit": true,
-      "propagation": "foobar",
-      "traceContextHeaderName": "foobar",
-      "collector": {
+    "resourceAttributes": {
+      "foobar": "foobar"
+    },
+    "sampleRate": 42,
+    "otlp": {
+      "grpc": {
         "endpoint": "xxxx",
-        "user": "xxxx",
-        "password": "xxxx"
+        "insecure": true
       },
-      "disableAttemptReconnecting": true
+      "http": {
+        "endpoint": "xxxx"
+      }
     },
-    "zipkin": {
-      "httpEndpoint": "xxxx",
-      "sameSpan": true,
-      "id128Bit": true,
-      "sampleRate": 42
-    },
-    "datadog": {
-      "localAgentHostPort": "xxxx",
-      "localAgentSocket": "xxxx",
-      "globalTags": {
-        "foobar": "foobar"
-      },
-      "debug": true,
-      "prioritySampling": true,
-      "traceIDHeaderName": "foobar",
-      "parentIDHeaderName": "foobar",
-      "samplingPriorityHeaderName": "foobar",
-      "bagagePrefixHeaderName": "foobar"
-    },
-    "instana": {
-      "localAgentHost": "xxxx",
-      "logLevel": "foobar"
-    },
-    "haystack": {
-      "localAgentHost": "xxxx",
-      "globalTag": "foobar",
-      "traceIDHeaderName": "foobar",
-      "parentIDHeaderName": "foobar",
-      "spanIDHeaderName": "foobar",
-      "baggagePrefixHeaderName": "foobar"
-    },
-    "elastic": {
-      "serverURL": "xxxx",
-      "secretToken": "xxxx",
-      "serviceEnvironment": "foobar"
+    "globalAttributes": {
+      "foobar": "foobar"
     }
   },
   "hostResolver": {
@@ -413,11 +397,11 @@
         "certificatesDuration": 42,
         "dnsChallenge": {
           "provider": "DNSProvider",
-          "delayBeforeCheck": "42ns",
           "resolvers": [
             "xxxx",
             "xxxx"
           ],
+          "delayBeforeCheck": "42ns",
           "disablePropagationCheck": true
         },
         "httpChallenge": {
@@ -431,19 +415,59 @@
     "plugins": {
       "Descriptor0": {
         "moduleName": "foobar",
-        "version": "foobar"
+        "version": "foobar",
+        "settings": {
+          "envs": [
+            "xxxx",
+            "xxxx"
+          ],
+          "mounts": [
+            "xxxx",
+            "xxxx"
+          ]
+        }
       },
       "Descriptor1": {
         "moduleName": "foobar",
-        "version": "foobar"
+        "version": "foobar",
+        "settings": {
+          "envs": [
+            "xxxx",
+            "xxxx"
+          ],
+          "mounts": [
+            "xxxx",
+            "xxxx"
+          ]
+        }
       }
     },
     "localPlugins": {
       "Descriptor0": {
-        "moduleName": "foobar"
+        "moduleName": "foobar",
+        "settings": {
+          "envs": [
+            "xxxx",
+            "xxxx"
+          ],
+          "mounts": [
+            "xxxx",
+            "xxxx"
+          ]
+        }
       },
       "Descriptor1": {
-        "moduleName": "foobar"
+        "moduleName": "foobar",
+        "settings": {
+          "envs": [
+            "xxxx",
+            "xxxx"
+          ],
+          "mounts": [
+            "xxxx",
+            "xxxx"
+          ]
+        }
       }
     }
   }

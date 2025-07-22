@@ -7,7 +7,7 @@
     </picture>
 </p>
 
-[![Build Status SemaphoreCI](https://semaphoreci.com/api/v1/containous/traefik/branches/master/shields_badge.svg)](https://semaphoreci.com/containous/traefik)
+[![Build Status SemaphoreCI](https://traefik-oss.semaphoreci.com/badges/traefik/branches/master.svg?style=shields)](https://traefik-oss.semaphoreci.com/projects/traefik)
 [![Docs](https://img.shields.io/badge/docs-current-brightgreen.svg)](https://doc.traefik.io/traefik)
 [![Go Report Card](https://goreportcard.com/badge/traefik/traefik)](https://goreportcard.com/report/traefik/traefik)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/traefik/traefik/blob/master/LICENSE.md)
@@ -35,7 +35,8 @@ Pointing Traefik at your orchestrator should be the _only_ configuration step yo
 
 ---
 
-:warning: Please be aware that the old configurations for Traefik v1.x are NOT compatible with the v2.x config as of now. If you're running v2, please ensure you are using a [v2 configuration](https://doc.traefik.io/traefik/).
+:warning: When migrating to a new major version of Traefik, please refer to the [migration guide](https://doc.traefik.io/traefik/migration/v2-to-v3/) to ensure a smooth transition and to be aware of any breaking changes.
+
 
 ## Overview
 
@@ -58,10 +59,10 @@ _(But if you'd rather configure some of your routes manually, Traefik supports t
 
 - Continuously updates its configuration (No restarts!)
 - Supports multiple load balancing algorithms
-- Provides HTTPS to your microservices by leveraging [Let's Encrypt](https://letsencrypt.org)  (wildcard certificates support)
+- Provides HTTPS to your microservices by leveraging [Let's Encrypt](https://letsencrypt.org) (wildcard certificates support)
 - Circuit breakers, retry
 - See the magic through its clean web UI
-- Websocket, HTTP/2, gRPC ready
+- WebSocket, HTTP/2, gRPC ready
 - Provides metrics (Rest, Prometheus, Datadog, Statsd, InfluxDB 2.X)
 - Keeps access logs (JSON, CLF)
 - Fast
@@ -72,6 +73,7 @@ _(But if you'd rather configure some of your routes manually, Traefik supports t
 
 - [Docker](https://doc.traefik.io/traefik/providers/docker/) / [Swarm mode](https://doc.traefik.io/traefik/providers/docker/)
 - [Kubernetes](https://doc.traefik.io/traefik/providers/kubernetes-crd/)
+- [ECS](https://doc.traefik.io/traefik/providers/ecs/)
 - [File](https://doc.traefik.io/traefik/providers/file/)
 
 ## Quickstart
@@ -86,9 +88,7 @@ You can access the simple HTML frontend of Traefik.
 
 ## Documentation
 
-You can find the complete documentation of Traefik v2 at [https://doc.traefik.io/traefik/](https://doc.traefik.io/traefik/).
-
-A collection of contributions around Traefik can be found at [https://awesome.traefik.io](https://awesome.traefik.io).
+You can find the complete documentation of Traefik v3 at [https://doc.traefik.io/traefik/](https://doc.traefik.io/traefik/).
 
 ## Support
 
@@ -125,8 +125,8 @@ You can find high level and deep dive videos on [videos.traefik.io](https://vide
 ## Maintainers
 
 We are strongly promoting a philosophy of openness and sharing, and firmly standing against the elitist closed approach. Being part of the core team should be accessible to anyone who is motivated and want to be part of that journey!
-This [document](docs/content/contributing/maintainers-guidelines.md) describes how to be part of the core team as well as various responsibilities and guidelines for Traefik maintainers.
-You can also find more information on our process to review pull requests and manage issues [in this document](docs/content/contributing/maintainers.md).
+This [document](docs/content/contributing/maintainers-guidelines.md) describes how to be part of the [maintainers' team](docs/content/contributing/maintainers.md) as well as various responsibilities and guidelines for Traefik maintainers.
+You can also find more information on our process to review pull requests and manage issues [in this document](https://github.com/traefik/contributors-guide/blob/master/issue_triage.md).
 
 ## Contributing
 

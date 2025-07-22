@@ -11,7 +11,7 @@ data:
 
 ---
 kind: GatewayClass
-apiVersion: gateway.networking.k8s.io/v1alpha2
+apiVersion: gateway.networking.k8s.io/v1
 metadata:
   name: my-gateway-class
 spec:
@@ -19,7 +19,7 @@ spec:
 
 ---
 kind: Gateway
-apiVersion: gateway.networking.k8s.io/v1alpha2
+apiVersion: gateway.networking.k8s.io/v1
 metadata:
   name: my-gateway
   namespace: default

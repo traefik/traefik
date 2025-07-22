@@ -70,8 +70,8 @@ func TestDecodeToNode(t *testing.T) {
 		{
 			desc: "several entries, level 0",
 			in: map[string]string{
-				"traefik": "bar",
-				"traefic": "bur",
+				"traefik":  "bar",
+				"traefik_": "bur",
 			},
 			expected: expected{error: true},
 		},
@@ -120,7 +120,7 @@ func TestDecodeToNode(t *testing.T) {
 			}},
 		},
 		{
-			desc: "several entries, level 2, case insensitive",
+			desc: "several entries, level 2, case-insensitive",
 			in: map[string]string{
 				"traefik/foo/aaa": "bar",
 				"traefik/Foo/bbb": "bur",
@@ -244,7 +244,6 @@ func TestDecodeToNode(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 

@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"net/url"
 	"os"
-	"sort"
 	"strings"
 
 	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 var (
@@ -34,23 +34,18 @@ var (
 	// Available CurveIDs defined at https://godoc.org/crypto/tls#CurveID,
 	// also allowing rfc names defined at https://tools.ietf.org/html/rfc8446#section-4.2.7
 	CurveIDs = map[string]tls.CurveID{
-		`secp256r1`: tls.CurveP256,
-		`CurveP256`: tls.CurveP256,
-		`secp384r1`: tls.CurveP384,
-		`CurveP384`: tls.CurveP384,
-		`secp521r1`: tls.CurveP521,
-		`CurveP521`: tls.CurveP521,
-		`x25519`:    tls.X25519,
-		`X25519`:    tls.X25519,
+		`secp256r1`:      tls.CurveP256,
+		`CurveP256`:      tls.CurveP256,
+		`secp384r1`:      tls.CurveP384,
+		`CurveP384`:      tls.CurveP384,
+		`secp521r1`:      tls.CurveP521,
+		`CurveP521`:      tls.CurveP521,
+		`x25519`:         tls.X25519,
+		`X25519`:         tls.X25519,
+		`x25519mlkem768`: tls.X25519MLKEM768,
+		`X25519MLKEM768`: tls.X25519MLKEM768,
 	}
 )
-
-// Certificate holds a SSL cert/key pair
-// Certs and Key could be either a file path, or the file content itself.
-type Certificate struct {
-	CertFile FileOrContent `json:"certFile,omitempty" toml:"certFile,omitempty" yaml:"certFile,omitempty"`
-	KeyFile  FileOrContent `json:"keyFile,omitempty" toml:"keyFile,omitempty" yaml:"keyFile,omitempty" loggable:"false"`
-}
 
 // Certificates defines traefik certificates type
 // Certs and Keys could be either a file path, or the file content itself.
@@ -73,93 +68,11 @@ func (c Certificates) GetCertificates() []tls.Certificate {
 	return certs
 }
 
-// FileOrContent hold a file path or content.
-type FileOrContent string
-
-func (f FileOrContent) String() string {
-	return string(f)
-}
-
-// IsPath returns true if the FileOrContent is a file path, otherwise returns false.
-func (f FileOrContent) IsPath() bool {
-	_, err := os.Stat(f.String())
-	return err == nil
-}
-
-func (f FileOrContent) Read() ([]byte, error) {
-	var content []byte
-	if f.IsPath() {
-		var err error
-		content, err = os.ReadFile(f.String())
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		content = []byte(f)
-	}
-	return content, nil
-}
-
-// AppendCertificate appends a Certificate to a certificates map keyed by store name.
-func (c *Certificate) AppendCertificate(certs map[string]map[string]*tls.Certificate, storeName string) error {
-	certContent, err := c.CertFile.Read()
-	if err != nil {
-		return fmt.Errorf("unable to read CertFile : %w", err)
-	}
-
-	keyContent, err := c.KeyFile.Read()
-	if err != nil {
-		return fmt.Errorf("unable to read KeyFile : %w", err)
-	}
-	tlsCert, err := tls.X509KeyPair(certContent, keyContent)
-	if err != nil {
-		return fmt.Errorf("unable to generate TLS certificate : %w", err)
-	}
-
-	parsedCert, _ := x509.ParseCertificate(tlsCert.Certificate[0])
-
-	var SANs []string
-	if parsedCert.Subject.CommonName != "" {
-		SANs = append(SANs, strings.ToLower(parsedCert.Subject.CommonName))
-	}
-	if parsedCert.DNSNames != nil {
-		for _, dnsName := range parsedCert.DNSNames {
-			if dnsName != parsedCert.Subject.CommonName {
-				SANs = append(SANs, strings.ToLower(dnsName))
-			}
-		}
-	}
-	if parsedCert.IPAddresses != nil {
-		for _, ip := range parsedCert.IPAddresses {
-			if ip.String() != parsedCert.Subject.CommonName {
-				SANs = append(SANs, strings.ToLower(ip.String()))
-			}
-		}
-	}
-
-	// Guarantees the order to produce a unique cert key.
-	sort.Strings(SANs)
-	certKey := strings.Join(SANs, ",")
-
-	certExists := false
-	if certs[storeName] == nil {
-		certs[storeName] = make(map[string]*tls.Certificate)
-	} else {
-		for domains := range certs[storeName] {
-			if domains == certKey {
-				certExists = true
-				break
-			}
-		}
-	}
-	if certExists {
-		log.Debug().Msgf("Skipping addition of certificate for domain(s) %q, to TLS Store %s, as it already exists for this store.", certKey, storeName)
-	} else {
-		log.Debug().Msgf("Adding certificate for domain(s) %s", certKey)
-		certs[storeName][certKey] = &tlsCert
-	}
-
-	return err
+// Certificate holds a SSL cert/key pair
+// Certs and Key could be either a file path, or the file content itself.
+type Certificate struct {
+	CertFile types.FileOrContent `json:"certFile,omitempty" toml:"certFile,omitempty" yaml:"certFile,omitempty"`
+	KeyFile  types.FileOrContent `json:"keyFile,omitempty" toml:"keyFile,omitempty" yaml:"keyFile,omitempty" loggable:"false"`
 }
 
 // GetCertificate returns a tls.Certificate matching the configured CertFile and KeyFile.
@@ -205,40 +118,31 @@ func (c *Certificate) GetTruncatedCertificateName() string {
 	return certName
 }
 
-// String is the method to format the flag's value, part of the flag.Value interface.
-// The String method's output will be used in diagnostics.
-func (c *Certificates) String() string {
-	if len(*c) == 0 {
-		return ""
-	}
-	var result []string
-	for _, certificate := range *c {
-		result = append(result, certificate.CertFile.String()+","+certificate.KeyFile.String())
-	}
-	return strings.Join(result, ";")
+// FileOrContent hold a file path or content.
+type FileOrContent string
+
+func (f FileOrContent) String() string {
+	return string(f)
 }
 
-// Set is the method to set the flag value, part of the flag.Value interface.
-// Set's argument is a string to be parsed to set the flag.
-// It's a comma-separated list, so we split it.
-func (c *Certificates) Set(value string) error {
-	certificates := strings.Split(value, ";")
-	for _, certificate := range certificates {
-		files := strings.Split(certificate, ",")
-		if len(files) != 2 {
-			return fmt.Errorf("bad certificates format: %s", value)
+// IsPath returns true if the FileOrContent is a file path, otherwise returns false.
+func (f FileOrContent) IsPath() bool {
+	_, err := os.Stat(f.String())
+	return err == nil
+}
+
+func (f FileOrContent) Read() ([]byte, error) {
+	var content []byte
+	if f.IsPath() {
+		var err error
+		content, err = os.ReadFile(f.String())
+		if err != nil {
+			return nil, err
 		}
-		*c = append(*c, Certificate{
-			CertFile: FileOrContent(files[0]),
-			KeyFile:  FileOrContent(files[1]),
-		})
+	} else {
+		content = []byte(f)
 	}
-	return nil
-}
-
-// Type is type of the struct.
-func (c *Certificates) Type() string {
-	return "certificates"
+	return content, nil
 }
 
 // VerifyPeerCertificate verifies the chain certificates and their URI.

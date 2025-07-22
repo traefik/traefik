@@ -1,0 +1,82 @@
+name: Test Integration
+
+on:
+  pull_request:
+    branches:
+      - '*'
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+      - 'script/gcg/**'
+
+env:
+  GO_VERSION: '1.24'
+  CGO_ENABLED: 0
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go ${{ env.GO_VERSION }}
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          check-latest: true
+
+      - name: Avoid generating webui
+        run: |
+          mkdir webui/static
+          touch webui/static/index.html
+
+      - name: Build binary
+        run: make binary
+
+  test-integration:
+    runs-on: ubuntu-latest
+    needs:
+      - build
+    strategy:
+      fail-fast: true
+      matrix:
+        parallel: [12]
+        index: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go ${{ env.GO_VERSION }}
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          check-latest: true
+
+      - name: Avoid generating webui
+        run: |
+          mkdir webui/static
+          touch webui/static/index.html
+
+      - name: Build binary
+        run: make binary
+
+      - name: Generate go test Slice
+        id: test_split
+        uses: hashicorp-forge/go-test-split-action@v2.0.0
+        with:
+          packages: ./integration
+          total: ${{ matrix.parallel }}
+          index: ${{ matrix.index }}
+
+      - name: Run Integration tests
+        run: |
+          TESTS=$(echo "${{ steps.test_split.outputs.run}}" | sed 's/\$/\$\$/g')
+          TESTFLAGS="-run \"${TESTS}\"" make test-integration

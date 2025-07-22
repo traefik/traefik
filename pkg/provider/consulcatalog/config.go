@@ -132,8 +132,8 @@ func (p *Provider) keepContainer(ctx context.Context, item itemData) bool {
 		return false
 	}
 
-	if item.Status != api.HealthPassing && item.Status != api.HealthWarning {
-		logger.Debug().Msg("Filtering unhealthy or starting item")
+	if !p.includesHealthStatus(item.Status) {
+		logger.Debug().Msgf("Status %q is not included in the configured strictChecks of %q", item.Status, strings.Join(p.StrictChecks, ","))
 		return false
 	}
 
@@ -229,6 +229,7 @@ func (p *Provider) addServerTCP(item itemData, loadBalancer *dynamic.TCPServersL
 
 	if item.ExtraConf.ConsulCatalog.Connect {
 		loadBalancer.ServersTransport = itemServersTransportKey(item)
+		loadBalancer.Servers[0].TLS = true
 	}
 
 	loadBalancer.Servers[0].Address = net.JoinHostPort(item.Address, port)
@@ -271,14 +272,18 @@ func (p *Provider) addServer(item itemData, loadBalancer *dynamic.ServersLoadBal
 	}
 
 	if len(loadBalancer.Servers) == 0 {
-		server := dynamic.Server{}
-		server.SetDefaults()
-
-		loadBalancer.Servers = []dynamic.Server{server}
+		loadBalancer.Servers = []dynamic.Server{{}}
 	}
 
 	if item.Address == "" {
 		return errors.New("address is missing")
+	}
+
+	if loadBalancer.Servers[0].URL != "" {
+		if loadBalancer.Servers[0].Scheme != "" || loadBalancer.Servers[0].Port != "" {
+			return errors.New("defining scheme or port is not allowed when URL is defined")
+		}
+		return nil
 	}
 
 	port := loadBalancer.Servers[0].Port
@@ -294,6 +299,9 @@ func (p *Provider) addServer(item itemData, loadBalancer *dynamic.ServersLoadBal
 
 	scheme := loadBalancer.Servers[0].Scheme
 	loadBalancer.Servers[0].Scheme = ""
+	if scheme == "" {
+		scheme = "http"
+	}
 
 	if item.ExtraConf.ConsulCatalog.Connect {
 		loadBalancer.ServersTransport = itemServersTransportKey(item)
@@ -322,4 +330,9 @@ func getName(i itemData) string {
 	hasher := fnv.New64()
 	hasher.Write([]byte(strings.Join(tags, "")))
 	return provider.Normalize(fmt.Sprintf("%s-%d", i.Name, hasher.Sum64()))
+}
+
+// defaultStrictChecks returns the default healthchecks to allow an upstream to be registered a route for loadbalancers.
+func defaultStrictChecks() []string {
+	return []string{api.HealthPassing, api.HealthWarning}
 }

@@ -1,7 +1,6 @@
 package acme
 
 import (
-	"context"
 	"crypto/tls"
 	"testing"
 	"time"
@@ -166,7 +165,6 @@ func TestGetUncheckedCertificates(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -182,8 +180,8 @@ func TestGetUncheckedCertificates(t *testing.T) {
 				resolvingDomains: test.resolvingDomains,
 			}
 
-			domains := acmeProvider.getUncheckedDomains(context.Background(), test.domains, "default")
-			assert.Equal(t, len(test.expectedDomains), len(domains), "Unexpected domains.")
+			domains := acmeProvider.getUncheckedDomains(t.Context(), test.domains, "default")
+			assert.Len(t, domains, len(test.expectedDomains), "Unexpected domains.")
 		})
 	}
 }
@@ -241,18 +239,17 @@ func TestProvider_sanitizeDomains(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
 			acmeProvider := Provider{Configuration: &Configuration{DNSChallenge: test.dnsChallenge}}
 
-			domains, err := acmeProvider.sanitizeDomains(context.Background(), test.domains)
+			domains, err := acmeProvider.sanitizeDomains(t.Context(), test.domains)
 
 			if len(test.expectedErr) > 0 {
 				assert.EqualError(t, err, test.expectedErr, "Unexpected error.")
 			} else {
-				assert.Equal(t, len(test.expectedDomains), len(domains), "Unexpected domains.")
+				assert.Len(t, domains, len(test.expectedDomains), "Unexpected domains.")
 			}
 		})
 	}
@@ -423,11 +420,10 @@ func TestDeleteUnnecessaryDomains(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			domains := deleteUnnecessaryDomains(context.Background(), test.domains)
+			domains := deleteUnnecessaryDomains(t.Context(), test.domains)
 			assert.Equal(t, test.expectedDomains, domains, "unexpected domain")
 		})
 	}
@@ -497,11 +493,10 @@ func TestIsAccountMatchingCaServer(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			result := isAccountMatchingCaServer(context.Background(), test.accountURI, test.serverURI)
+			result := isAccountMatchingCaServer(t.Context(), test.accountURI, test.serverURI)
 
 			assert.Equal(t, test.expected, result)
 		})
@@ -573,14 +568,13 @@ func TestInitAccount(t *testing.T) {
 		},
 	}
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
 			acmeProvider := Provider{account: test.account, Configuration: &Configuration{Email: test.email, KeyType: test.keyType}}
 
-			actualAccount, err := acmeProvider.initAccount(context.Background())
-			assert.Nil(t, err, "Init account in error")
+			actualAccount, err := acmeProvider.initAccount(t.Context())
+			assert.NoError(t, err, "Init account in error")
 			assert.Equal(t, test.expectedAccount.Email, actualAccount.Email, "unexpected email account")
 			assert.Equal(t, test.expectedAccount.KeyType, actualAccount.KeyType, "unexpected keyType account")
 		})
@@ -619,6 +613,12 @@ func Test_getCertificateRenewDurations(t *testing.T) {
 			expectRenewInterval:   time.Hour * 24,
 		},
 		{
+			desc:                  "30 Days certificates: 10 days renew period, 12 hour renew interval",
+			certificatesDurations: 24 * 30,
+			expectRenewPeriod:     time.Hour * 24 * 10,
+			expectRenewInterval:   time.Hour * 12,
+		},
+		{
 			desc:                  "7 Days certificates: 1 days renew period, 1 hour renew interval",
 			certificatesDurations: 24 * 7,
 			expectRenewPeriod:     time.Hour * 24,
@@ -632,7 +632,6 @@ func Test_getCertificateRenewDurations(t *testing.T) {
 		},
 	}
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 

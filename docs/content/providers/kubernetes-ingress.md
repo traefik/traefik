@@ -80,7 +80,7 @@ When using a single instance of Traefik Proxy with Let's Encrypt, you should enc
 However, this could be a single point of failure.
 Unfortunately, it is not possible to run multiple instances of Traefik 2.0 with Let's Encrypt enabled,
 because there is no way to ensure that the correct instance of Traefik receives the challenge request, and subsequent responses.
-Previous versions of Traefik used a [KV store](https://doc.traefik.io/traefik/v1.7/configuration/acme/#storage) to attempt to achieve this,
+Early versions (v1.x) of Traefik used a [KV store](https://doc.traefik.io/traefik/v1.7/configuration/acme/#storage) to attempt to achieve this,
 but due to sub-optimal performance that feature was dropped in 2.0.
 
 If you need Let's Encrypt with high availability in a Kubernetes environment,
@@ -287,6 +287,11 @@ providers:
 
 _Optional, Default: false_
 
+??? warning "Deprecated"
+
+    The Kubernetes Ingress provider option `disableIngressClassLookup` has been deprecated in v3.1, and will be removed in the next major version.
+	Please use the `disableClusterScopeResources` option instead.
+
 If the parameter is set to `true`,
 Traefik will not discover IngressClasses in the cluster.
 By doing so, it alleviates the requirement of giving Traefik the rights to look IngressClasses up.
@@ -310,6 +315,33 @@ providers:
 
 ```bash tab="CLI"
 --providers.kubernetesingress.disableingressclasslookup=true
+```
+
+### `disableClusterScopeResources`
+
+_Optional, Default: false_
+
+When this parameter is set to `true`,
+Traefik will not discover cluster scope resources (`IngressClass` and `Nodes`).
+By doing so, it alleviates the requirement of giving Traefik the rights to look up for cluster resources.
+Furthermore, Traefik will not handle Ingresses with IngressClass references, therefore such Ingresses will be ignored (please note that annotations are not affected by this option).
+This will also prevent from using the `NodePortLB` options on services.
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesIngress:
+    disableClusterScopeResources: true
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesIngress]
+  disableClusterScopeResources = true
+  # ...
+```
+
+```bash tab="CLI"
+--providers.kubernetesingress.disableClusterScopeResources=true
 ```
 
 ### `ingressEndpoint`
@@ -366,10 +398,16 @@ providers:
 
 _Optional, Default: ""_
 
-The Kubernetes service to copy status from.
-When using third parties tools like External-DNS, this option can be used to copy the service `loadbalancer.status` (containing the service's endpoints IPs) to the ingresses.
-
 Format: `namespace/servicename`.
+
+The Kubernetes service to copy status from, 
+depending on the service type:
+
+- **ClusterIP:** The ExternalIPs of the service will be propagated to the ingress status.
+- **NodePort:** The ExternalIP addresses of the nodes in the cluster will be propagated to the ingress status.
+- **LoadBalancer:** The IPs from the service's `loadBalancer.status` field (which contains the endpoints provided by the load balancer) will be propagated to the ingress status.
+
+When using third-party tools such as External-DNS, this option enables the copying of external service IPs to the ingress resources.
 
 ```yaml tab="File (YAML)"
 providers:
@@ -467,9 +505,56 @@ providers:
 --providers.kubernetesingress.allowexternalnameservices=true
 ```
 
+### `nativeLBByDefault`
+
+_Optional, Default: false_
+
+Defines whether to use Native Kubernetes load-balancing mode by default.
+For more information, please check out the `traefik.ingress.kubernetes.io/service.nativelb` [service annotation documentation](../routing/providers/kubernetes-ingress.md#on-service).
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesIngress:
+    nativeLBByDefault: true
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesIngress]
+  nativeLBByDefault = true
+  # ...
+```
+
+```bash tab="CLI"
+--providers.kubernetesingress.nativeLBByDefault=true
+```
+
+### `strictPrefixMatching`
+
+_Optional, Default: false_
+
+Make prefix matching strictly comply with the Kubernetes Ingress specification (path-element-wise matching instead of character-by-character string matching). For example, a PathPrefix of `/foo` will match `/foo`, `/foo/`, and `/foo/bar` but not `/foobar`.
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesIngress:
+    strictPrefixMatching: true
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesIngress]
+  strictPrefixMatching = true
+  # ...
+```
+
+```bash tab="CLI"
+--providers.kubernetesingress.strictPrefixMatching=true
+```
+
 ### Further
 
 To learn more about the various aspects of the Ingress specification that Traefik supports,
-many examples of Ingresses definitions are located in the test [examples](https://github.com/traefik/traefik/tree/v3.0/pkg/provider/kubernetes/ingress/fixtures) of the Traefik repository.
+many examples of Ingresses definitions are located in the test [examples](https://github.com/traefik/traefik/tree/v3.5/pkg/provider/kubernetes/ingress/fixtures) of the Traefik repository.
 
-{!traefik-api-management-kubernetes.md!}
+{!traefik-for-business-applications.md!}

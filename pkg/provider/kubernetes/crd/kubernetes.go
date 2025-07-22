@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -26,6 +27,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/provider"
 	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/gateway"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/tls"
@@ -48,16 +50,18 @@ const (
 
 // Provider holds configurations of the provider.
 type Provider struct {
-	Endpoint                  string          `description:"Kubernetes server endpoint (required for external cluster client)." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
-	Token                     string          `description:"Kubernetes bearer token (not needed for in-cluster client)." json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty" loggable:"false"`
-	CertAuthFilePath          string          `description:"Kubernetes certificate authority file path (not needed for in-cluster client)." json:"certAuthFilePath,omitempty" toml:"certAuthFilePath,omitempty" yaml:"certAuthFilePath,omitempty"`
-	Namespaces                []string        `description:"Kubernetes namespaces." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty" export:"true"`
-	AllowCrossNamespace       bool            `description:"Allow cross namespace resource reference." json:"allowCrossNamespace,omitempty" toml:"allowCrossNamespace,omitempty" yaml:"allowCrossNamespace,omitempty" export:"true"`
-	AllowExternalNameServices bool            `description:"Allow ExternalName services." json:"allowExternalNameServices,omitempty" toml:"allowExternalNameServices,omitempty" yaml:"allowExternalNameServices,omitempty" export:"true"`
-	LabelSelector             string          `description:"Kubernetes label selector to use." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
-	IngressClass              string          `description:"Value of kubernetes.io/ingress.class annotation to watch for." json:"ingressClass,omitempty" toml:"ingressClass,omitempty" yaml:"ingressClass,omitempty" export:"true"`
-	ThrottleDuration          ptypes.Duration `description:"Ingress refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
-	AllowEmptyServices        bool            `description:"Allow the creation of services without endpoints." json:"allowEmptyServices,omitempty" toml:"allowEmptyServices,omitempty" yaml:"allowEmptyServices,omitempty" export:"true"`
+	Endpoint                     string              `description:"Kubernetes server endpoint (required for external cluster client)." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
+	Token                        types.FileOrContent `description:"Kubernetes bearer token (not needed for in-cluster client). It accepts either a token value or a file path to the token." json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty" loggable:"false"`
+	CertAuthFilePath             string              `description:"Kubernetes certificate authority file path (not needed for in-cluster client)." json:"certAuthFilePath,omitempty" toml:"certAuthFilePath,omitempty" yaml:"certAuthFilePath,omitempty"`
+	Namespaces                   []string            `description:"Kubernetes namespaces." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty" export:"true"`
+	AllowCrossNamespace          bool                `description:"Allow cross namespace resource reference." json:"allowCrossNamespace,omitempty" toml:"allowCrossNamespace,omitempty" yaml:"allowCrossNamespace,omitempty" export:"true"`
+	AllowExternalNameServices    bool                `description:"Allow ExternalName services." json:"allowExternalNameServices,omitempty" toml:"allowExternalNameServices,omitempty" yaml:"allowExternalNameServices,omitempty" export:"true"`
+	LabelSelector                string              `description:"Kubernetes label selector to use." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
+	IngressClass                 string              `description:"Value of kubernetes.io/ingress.class annotation to watch for." json:"ingressClass,omitempty" toml:"ingressClass,omitempty" yaml:"ingressClass,omitempty" export:"true"`
+	ThrottleDuration             ptypes.Duration     `description:"Ingress refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
+	AllowEmptyServices           bool                `description:"Allow the creation of services without endpoints." json:"allowEmptyServices,omitempty" toml:"allowEmptyServices,omitempty" yaml:"allowEmptyServices,omitempty" export:"true"`
+	NativeLBByDefault            bool                `description:"Defines whether to use Native Kubernetes load-balancing mode by default." json:"nativeLBByDefault,omitempty" toml:"nativeLBByDefault,omitempty" yaml:"nativeLBByDefault,omitempty" export:"true"`
+	DisableClusterScopeResources bool                `description:"Disables the lookup of cluster scope resources (incompatible with IngressClasses and NodePortLB enabled services)." json:"disableClusterScopeResources,omitempty" toml:"disableClusterScopeResources,omitempty" yaml:"disableClusterScopeResources,omitempty" export:"true"`
 
 	lastConfiguration safe.Safe
 
@@ -73,7 +77,7 @@ func (p *Provider) applyRouterTransform(ctx context.Context, rt *dynamic.Router,
 		return
 	}
 
-	err := p.routerTransform.Apply(ctx, rt, ingress.Annotations)
+	err := p.routerTransform.Apply(ctx, rt, ingress)
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("Apply router transform")
 	}
@@ -101,7 +105,7 @@ func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
 		client, err = newExternalClusterClientFromFile(os.Getenv("KUBECONFIG"))
 	default:
 		log.Ctx(ctx).Info().Msgf("Creating cluster-external Provider client%s", withEndpoint)
-		client, err = newExternalClusterClient(p.Endpoint, p.Token, p.CertAuthFilePath)
+		client, err = newExternalClusterClient(p.Endpoint, p.CertAuthFilePath, p.Token)
 	}
 
 	if err != nil {
@@ -109,6 +113,7 @@ func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
 	}
 
 	client.labelSelector = p.LabelSelector
+	client.disableClusterScopeInformer = p.DisableClusterScopeResources
 	return client, nil
 }
 
@@ -123,8 +128,6 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	logger := log.With().Str(logs.ProviderName, providerName).Logger()
 	ctxLog := logger.WithContext(context.Background())
 
-	logger.Warn().Msg("CRDs API Version \"traefik.io/v1alpha1\" will not be supported in Traefik v3 itself. However, an automatic migration path to the next version will be available.")
-
 	k8sClient, err := p.newK8sClient(ctxLog)
 	if err != nil {
 		return err
@@ -135,7 +138,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	}
 
 	if p.AllowExternalNameServices {
-		logger.Warn().Msg("ExternalName service loading is enabled, please ensure that this is expected (see AllowExternalNameServices option)")
+		logger.Info().Msg("ExternalName service loading is enabled, please ensure that this is expected (see AllowExternalNameServices option)")
 	}
 
 	pool.GoCtx(func(ctxPool context.Context) {
@@ -263,7 +266,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			continue
 		}
 
-		rateLimit, err := createRateLimitMiddleware(middleware.Spec.RateLimit)
+		rateLimit, err := createRateLimitMiddleware(client, middleware.Namespace, middleware.Spec.RateLimit)
 		if err != nil {
 			logger.Error().Err(err).Msg("Error while reading rateLimit middleware")
 			continue
@@ -288,6 +291,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			ReplacePath:       middleware.Spec.ReplacePath,
 			ReplacePathRegex:  middleware.Spec.ReplacePathRegex,
 			Chain:             createChainMiddleware(ctxMid, middleware.Namespace, middleware.Spec.Chain),
+			IPWhiteList:       middleware.Spec.IPWhiteList,
 			IPAllowList:       middleware.Spec.IPAllowList,
 			Headers:           middleware.Spec.Headers,
 			Errors:            errorPage,
@@ -300,7 +304,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			InFlightReq:       middleware.Spec.InFlightReq,
 			Buffering:         middleware.Spec.Buffering,
 			CircuitBreaker:    circuitBreaker,
-			Compress:          middleware.Spec.Compress,
+			Compress:          createCompressMiddleware(middleware.Spec.Compress),
 			PassTLSClientCert: middleware.Spec.PassTLSClientCert,
 			Retry:             retry,
 			ContentType:       middleware.Spec.ContentType,
@@ -314,6 +318,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 
 		conf.TCP.Middlewares[id] = &dynamic.TCPMiddleware{
 			InFlightConn: middlewareTCP.Spec.InFlightConn,
+			IPWhiteList:  middlewareTCP.Spec.IPWhiteList,
 			IPAllowList:  middlewareTCP.Spec.IPAllowList,
 		}
 	}
@@ -335,17 +340,59 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 	}
 
 	for _, serversTransport := range client.GetServersTransports() {
-		logger := log.Ctx(ctx).With().Str(logs.ServersTransportName, serversTransport.Name).Logger()
+		logger := log.Ctx(ctx).With().
+			Str(logs.ServersTransportName, serversTransport.Name).
+			Str("namespace", serversTransport.Namespace).
+			Logger()
 
-		var rootCAs []tls.FileOrContent
+		if len(serversTransport.Spec.RootCAsSecrets) > 0 {
+			logger.Warn().Msg("RootCAsSecrets option is deprecated, please use the RootCA option instead.")
+		}
+
+		var rootCAs []types.FileOrContent
 		for _, secret := range serversTransport.Spec.RootCAsSecrets {
 			caSecret, err := loadCASecret(serversTransport.Namespace, secret, client)
 			if err != nil {
-				logger.Error().Err(err).Msgf("Error while loading rootCAs %s", secret)
+				logger.Error().
+					Err(err).
+					Str("secret", secret).
+					Msg("Error while loading CA Secret")
 				continue
 			}
 
-			rootCAs = append(rootCAs, tls.FileOrContent(caSecret))
+			rootCAs = append(rootCAs, types.FileOrContent(caSecret))
+		}
+
+		for _, rootCA := range serversTransport.Spec.RootCAs {
+			if rootCA.Secret != nil && rootCA.ConfigMap != nil {
+				logger.Error().Msg("Error while loading CA: both Secret and ConfigMap are defined")
+				continue
+			}
+
+			if rootCA.Secret != nil {
+				ca, err := loadCASecret(serversTransport.Namespace, *rootCA.Secret, client)
+				if err != nil {
+					logger.Error().
+						Err(err).
+						Str("secret", *rootCA.Secret).
+						Msg("Error while loading CA Secret")
+					continue
+				}
+
+				rootCAs = append(rootCAs, types.FileOrContent(ca))
+				continue
+			}
+
+			ca, err := loadCAConfigMap(serversTransport.Namespace, *rootCA.ConfigMap, client)
+			if err != nil {
+				logger.Error().
+					Err(err).
+					Str("configMap", *rootCA.ConfigMap).
+					Msg("Error while loading CA ConfigMap")
+				continue
+			}
+
+			rootCAs = append(rootCAs, types.FileOrContent(ca))
 		}
 
 		var certs tls.Certificates
@@ -357,8 +404,8 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			}
 
 			certs = append(certs, tls.Certificate{
-				CertFile: tls.FileOrContent(tlsSecret),
-				KeyFile:  tls.FileOrContent(tlsKey),
+				CertFile: types.FileOrContent(tlsSecret),
+				KeyFile:  types.FileOrContent(tlsKey),
 			})
 		}
 
@@ -444,18 +491,54 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 		}
 
 		if serversTransportTCP.Spec.TLS != nil {
-			var rootCAs []tls.FileOrContent
+			if len(serversTransportTCP.Spec.TLS.RootCAsSecrets) > 0 {
+				logger.Warn().Msg("RootCAsSecrets option is deprecated, please use the RootCA option instead.")
+			}
+
+			var rootCAs []types.FileOrContent
 			for _, secret := range serversTransportTCP.Spec.TLS.RootCAsSecrets {
 				caSecret, err := loadCASecret(serversTransportTCP.Namespace, secret, client)
 				if err != nil {
 					logger.Error().
 						Err(err).
-						Str("rootCAs", secret).
-						Msg("Error while loading rootCAs")
+						Str("secret", secret).
+						Msg("Error while loading CA Secret")
 					continue
 				}
 
-				rootCAs = append(rootCAs, tls.FileOrContent(caSecret))
+				rootCAs = append(rootCAs, types.FileOrContent(caSecret))
+			}
+
+			for _, rootCA := range serversTransportTCP.Spec.TLS.RootCAs {
+				if rootCA.Secret != nil && rootCA.ConfigMap != nil {
+					logger.Error().Msg("Error while loading CA: both Secret and ConfigMap are defined")
+					continue
+				}
+
+				if rootCA.Secret != nil {
+					ca, err := loadCASecret(serversTransportTCP.Namespace, *rootCA.Secret, client)
+					if err != nil {
+						logger.Error().
+							Err(err).
+							Str("secret", *rootCA.Secret).
+							Msg("Error while loading CA Secret")
+						continue
+					}
+
+					rootCAs = append(rootCAs, types.FileOrContent(ca))
+					continue
+				}
+
+				ca, err := loadCAConfigMap(serversTransportTCP.Namespace, *rootCA.ConfigMap, client)
+				if err != nil {
+					logger.Error().
+						Err(err).
+						Str("configMap", *rootCA.ConfigMap).
+						Msg("Error while loading CA ConfigMap")
+					continue
+				}
+
+				rootCAs = append(rootCAs, types.FileOrContent(ca))
 			}
 
 			var certs tls.Certificates
@@ -470,8 +553,8 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 				}
 
 				certs = append(certs, tls.Certificate{
-					CertFile: tls.FileOrContent(tlsCert),
-					KeyFile:  tls.FileOrContent(tlsKey),
+					CertFile: types.FileOrContent(tlsCert),
+					KeyFile:  types.FileOrContent(tlsKey),
 				})
 			}
 
@@ -643,16 +726,55 @@ func createCircuitBreakerMiddleware(circuitBreaker *traefikv1alpha1.CircuitBreak
 		}
 	}
 
+	if circuitBreaker.ResponseCode != 0 {
+		cb.ResponseCode = circuitBreaker.ResponseCode
+	}
+
 	return cb, nil
 }
 
-func createRateLimitMiddleware(rateLimit *traefikv1alpha1.RateLimit) (*dynamic.RateLimit, error) {
+func createCompressMiddleware(compress *traefikv1alpha1.Compress) *dynamic.Compress {
+	if compress == nil {
+		return nil
+	}
+
+	c := &dynamic.Compress{}
+	c.SetDefaults()
+
+	if compress.ExcludedContentTypes != nil {
+		c.ExcludedContentTypes = compress.ExcludedContentTypes
+	}
+
+	if compress.IncludedContentTypes != nil {
+		c.IncludedContentTypes = compress.IncludedContentTypes
+	}
+
+	if compress.MinResponseBodyBytes != nil {
+		c.MinResponseBodyBytes = *compress.MinResponseBodyBytes
+	}
+
+	if compress.Encodings != nil {
+		c.Encodings = compress.Encodings
+	}
+
+	if compress.DefaultEncoding != nil {
+		c.DefaultEncoding = *compress.DefaultEncoding
+	}
+
+	return c
+}
+
+func createRateLimitMiddleware(client Client, namespace string, rateLimit *traefikv1alpha1.RateLimit) (*dynamic.RateLimit, error) {
 	if rateLimit == nil {
 		return nil, nil
 	}
 
-	rl := &dynamic.RateLimit{Average: rateLimit.Average}
+	rl := &dynamic.RateLimit{}
 	rl.SetDefaults()
+
+	if rateLimit.Average != nil {
+		rl.Average = *rateLimit.Average
+	}
 
 	if rateLimit.Burst != nil {
 		rl.Burst = *rateLimit.Burst
@@ -669,7 +791,95 @@ func createRateLimitMiddleware(rateLimit *traefikv1alpha1.RateLimit) (*dynamic.R
 		rl.SourceCriterion = rateLimit.SourceCriterion
 	}
 
+	if rateLimit.Redis != nil {
+		rl.Redis = &dynamic.Redis{
+			DB:             rateLimit.Redis.DB,
+			PoolSize:       rateLimit.Redis.PoolSize,
+			MinIdleConns:   rateLimit.Redis.MinIdleConns,
+			MaxActiveConns: rateLimit.Redis.MaxActiveConns,
+		}
+		rl.Redis.SetDefaults()
+
+		if len(rateLimit.Redis.Endpoints) > 0 {
+			rl.Redis.Endpoints = rateLimit.Redis.Endpoints
+		}
+
+		if rateLimit.Redis.TLS != nil {
+			rl.Redis.TLS = &types.ClientTLS{
+				InsecureSkipVerify: rateLimit.Redis.TLS.InsecureSkipVerify,
+			}
+
+			if len(rateLimit.Redis.TLS.CASecret) > 0 {
+				caSecret, err := loadCASecret(namespace, rateLimit.Redis.TLS.CASecret, client)
+				if err != nil {
+					return nil, fmt.Errorf("failed to load auth ca secret: %w", err)
+				}
+				rl.Redis.TLS.CA = caSecret
+			}
+
+			if len(rateLimit.Redis.TLS.CertSecret) > 0 {
+				authSecretCert, authSecretKey, err := loadAuthTLSSecret(namespace, rateLimit.Redis.TLS.CertSecret, client)
+				if err != nil {
+					return nil, fmt.Errorf("failed to load auth secret: %w", err)
+				}
+				rl.Redis.TLS.Cert = authSecretCert
+				rl.Redis.TLS.Key = authSecretKey
+			}
+		}
+
+		if rateLimit.Redis.DialTimeout != nil {
+			err := rl.Redis.DialTimeout.Set(rateLimit.Redis.DialTimeout.String())
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		if rateLimit.Redis.ReadTimeout != nil {
+			err := rl.Redis.ReadTimeout.Set(rateLimit.Redis.ReadTimeout.String())
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		if rateLimit.Redis.WriteTimeout != nil {
+			err := rl.Redis.WriteTimeout.Set(rateLimit.Redis.WriteTimeout.String())
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		if rateLimit.Redis.Secret != "" {
+			var err error
+			rl.Redis.Username, rl.Redis.Password, err = loadRedisCredentials(namespace, rateLimit.Redis.Secret, client)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
 	return rl, nil
+}
+
+func loadRedisCredentials(namespace, secretName string, k8sClient Client) (string, string, error) {
+	secret, exists, err := k8sClient.GetSecret(namespace, secretName)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to fetch secret '%s/%s': %w", namespace, secretName, err)
+	}
+
+	if !exists {
+		return "", "", fmt.Errorf("secret '%s/%s' not found", namespace, secretName)
+	}
+
+	if secret == nil {
+		return "", "", fmt.Errorf("data for secret '%s/%s' must not be nil", namespace, secretName)
+	}
+
+	username, usernameExists := secret.Data["username"]
+	password, passwordExists := secret.Data["password"]
+	if !usernameExists || !passwordExists {
+		return "", "", fmt.Errorf("secret '%s/%s' must contain both username and password keys", secret.Namespace, secret.Name)
+	}
+	return string(username), string(password), nil
 }
 
 func createRetryMiddleware(retry *traefikv1alpha1.Retry) (*dynamic.Retry, error) {
@@ -693,8 +903,9 @@ func (p *Provider) createErrorPageMiddleware(client Client, namespace string, er
 	}
 
 	errorPageMiddleware := &dynamic.ErrorPage{
-		Status: errorPage.Status,
-		Query:  errorPage.Query,
+		Status:         errorPage.Status,
+		StatusRewrites: errorPage.StatusRewrites,
+		Query:          errorPage.Query,
 	}
 
 	cb := configBuilder{
@@ -712,12 +923,30 @@ func (p *Provider) createErrorPageMiddleware(client Client, namespace string, er
 	return errorPageMiddleware, balancerServerHTTP, nil
 }
 
+func (p *Provider) FillExtensionBuilderRegistry(registry gateway.ExtensionBuilderRegistry) {
+	registry.RegisterFilterFuncs(traefikv1alpha1.GroupName, "Middleware", func(name, namespace string) (string, *dynamic.Middleware, error) {
+		if len(p.Namespaces) > 0 && !slices.Contains(p.Namespaces, namespace) {
+			return "", nil, fmt.Errorf("namespace %q is not allowed", namespace)
+		}
+
+		return makeID(namespace, name) + providerNamespaceSeparator + providerName, nil, nil
+	})
+
+	registry.RegisterBackendFuncs(traefikv1alpha1.GroupName, "TraefikService", func(name, namespace string) (string, *dynamic.Service, error) {
+		if len(p.Namespaces) > 0 && !slices.Contains(p.Namespaces, namespace) {
+			return "", nil, fmt.Errorf("namespace %q is not allowed", namespace)
+		}
+
+		return makeID(namespace, name) + providerNamespaceSeparator + providerName, nil, nil
+	})
+}
+
 func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *traefikv1alpha1.ForwardAuth) (*dynamic.ForwardAuth, error) {
 	if auth == nil {
 		return nil, nil
 	}
 	if len(auth.Address) == 0 {
-		return nil, fmt.Errorf("forward authentication requires an address")
+		return nil, errors.New("forward authentication requires an address")
 	}
 
 	forwardAuth := &dynamic.ForwardAuth{
@@ -726,31 +955,41 @@ func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *traef
 		AuthResponseHeaders:      auth.AuthResponseHeaders,
 		AuthResponseHeadersRegex: auth.AuthResponseHeadersRegex,
 		AuthRequestHeaders:       auth.AuthRequestHeaders,
+		AddAuthCookiesToResponse: auth.AddAuthCookiesToResponse,
+		HeaderField:              auth.HeaderField,
+		ForwardBody:              auth.ForwardBody,
+		PreserveLocationHeader:   auth.PreserveLocationHeader,
+		PreserveRequestMethod:    auth.PreserveRequestMethod,
+	}
+	forwardAuth.SetDefaults()
+
+	if auth.MaxBodySize != nil {
+		forwardAuth.MaxBodySize = auth.MaxBodySize
 	}
 
-	if auth.TLS == nil {
-		return forwardAuth, nil
-	}
-
-	forwardAuth.TLS = &types.ClientTLS{
-		InsecureSkipVerify: auth.TLS.InsecureSkipVerify,
-	}
-
-	if len(auth.TLS.CASecret) > 0 {
-		caSecret, err := loadCASecret(namespace, auth.TLS.CASecret, k8sClient)
-		if err != nil {
-			return nil, fmt.Errorf("failed to load auth ca secret: %w", err)
+	if auth.TLS != nil {
+		forwardAuth.TLS = &dynamic.ClientTLS{
+			InsecureSkipVerify: auth.TLS.InsecureSkipVerify,
 		}
-		forwardAuth.TLS.CA = caSecret
-	}
 
-	if len(auth.TLS.CertSecret) > 0 {
-		authSecretCert, authSecretKey, err := loadAuthTLSSecret(namespace, auth.TLS.CertSecret, k8sClient)
-		if err != nil {
-			return nil, fmt.Errorf("failed to load auth secret: %w", err)
+		if len(auth.TLS.CASecret) > 0 {
+			caSecret, err := loadCASecret(namespace, auth.TLS.CASecret, k8sClient)
+			if err != nil {
+				return nil, fmt.Errorf("failed to load auth ca secret: %w", err)
+			}
+			forwardAuth.TLS.CA = caSecret
 		}
-		forwardAuth.TLS.Cert = authSecretCert
-		forwardAuth.TLS.Key = authSecretKey
+
+		if len(auth.TLS.CertSecret) > 0 {
+			authSecretCert, authSecretKey, err := loadAuthTLSSecret(namespace, auth.TLS.CertSecret, k8sClient)
+			if err != nil {
+				return nil, fmt.Errorf("failed to load auth secret: %w", err)
+			}
+			forwardAuth.TLS.Cert = authSecretCert
+			forwardAuth.TLS.Key = authSecretKey
+		}
+
+		forwardAuth.TLS.CAOptional = auth.TLS.CAOptional
 	}
 
 	return forwardAuth, nil
@@ -775,7 +1014,7 @@ func loadCASecret(namespace, secretName string, k8sClient Client) (string, error
 		return tlsCAData, nil
 	}
 
-	// TODO: remove this behavior in the next major version (v3)
+	// TODO: remove this behavior in the next major version (v4)
 	if len(secret.Data) == 1 {
 		// For backwards compatibility, use the only available secret data as CA if both 'ca.crt' and 'tls.ca' are missing.
 		for _, v := range secret.Data {
@@ -783,7 +1022,29 @@ func loadCASecret(namespace, secretName string, k8sClient Client) (string, error
 		}
 	}
 
-	return "", fmt.Errorf("could not find CA block: %w", err)
+	return "", fmt.Errorf("secret '%s/%s' has no CA block: %w", namespace, secretName, err)
+}
+
+func loadCAConfigMap(namespace, name string, k8sClient Client) (string, error) {
+	configMap, ok, err := k8sClient.GetConfigMap(namespace, name)
+	if err != nil {
+		return "", fmt.Errorf("failed to fetch configMap '%s/%s': %w", namespace, name, err)
+	}
+
+	if !ok {
+		return "", fmt.Errorf("configMap '%s/%s' not found", namespace, name)
+	}
+
+	if configMap == nil {
+		return "", fmt.Errorf("data for configMap '%s/%s' must not be nil", namespace, name)
+	}
+
+	tlsCAData, err := getCABlocksFromConfigMap(configMap, namespace, name)
+	if err == nil {
+		return tlsCAData, nil
+	}
+
+	return "", fmt.Errorf("configMap '%s/%s' has no CA block: %w", namespace, name, err)
 }
 
 func loadAuthTLSSecret(namespace, secretName string, k8sClient Client) (string, string, error) {
@@ -809,7 +1070,7 @@ func createBasicAuthMiddleware(client Client, namespace string, basicAuth *traef
 	}
 
 	if basicAuth.Secret == "" {
-		return nil, fmt.Errorf("auth secret must be set")
+		return nil, errors.New("auth secret must be set")
 	}
 
 	secret, ok, err := client.GetSecret(namespace, basicAuth.Secret)
@@ -856,7 +1117,7 @@ func createDigestAuthMiddleware(client Client, namespace string, digestAuth *tra
 	}
 
 	if digestAuth.Secret == "" {
-		return nil, fmt.Errorf("auth secret must be set")
+		return nil, errors.New("auth secret must be set")
 	}
 
 	secret, ok, err := client.GetSecret(namespace, digestAuth.Secret)
@@ -950,64 +1211,71 @@ func createChainMiddleware(ctx context.Context, namespace string, chain *traefik
 }
 
 func buildTLSOptions(ctx context.Context, client Client) map[string]tls.Options {
-	tlsOptionsCRD := client.GetTLSOptions()
+	tlsOptionsCRDs := client.GetTLSOptions()
 	var tlsOptions map[string]tls.Options
 
-	if len(tlsOptionsCRD) == 0 {
+	if len(tlsOptionsCRDs) == 0 {
 		return tlsOptions
 	}
 	tlsOptions = make(map[string]tls.Options)
 	var nsDefault []string
 
-	for _, tlsOption := range tlsOptionsCRD {
-		logger := log.Ctx(ctx).With().Str("tlsOption", tlsOption.Name).Str("namespace", tlsOption.Namespace).Logger()
-		var clientCAs []tls.FileOrContent
+	for _, tlsOptionsCRD := range tlsOptionsCRDs {
+		logger := log.Ctx(ctx).With().Str("tlsOption", tlsOptionsCRD.Name).Str("namespace", tlsOptionsCRD.Namespace).Logger()
+		var clientCAs []types.FileOrContent
 
-		for _, secretName := range tlsOption.Spec.ClientAuth.SecretNames {
-			secret, exists, err := client.GetSecret(tlsOption.Namespace, secretName)
+		for _, secretName := range tlsOptionsCRD.Spec.ClientAuth.SecretNames {
+			secret, exists, err := client.GetSecret(tlsOptionsCRD.Namespace, secretName)
 			if err != nil {
-				logger.Error().Err(err).Msgf("Failed to fetch secret %s/%s", tlsOption.Namespace, secretName)
+				logger.Error().Err(err).Msgf("Failed to fetch secret %s/%s", tlsOptionsCRD.Namespace, secretName)
 				continue
 			}
 
 			if !exists {
-				logger.Warn().Msgf("Secret %s/%s does not exist", tlsOption.Namespace, secretName)
+				logger.Warn().Msgf("Secret %s/%s does not exist", tlsOptionsCRD.Namespace, secretName)
 				continue
 			}
 
-			cert, err := getCABlocks(secret, tlsOption.Namespace, secretName)
+			cert, err := getCABlocks(secret, tlsOptionsCRD.Namespace, secretName)
 			if err != nil {
-				logger.Error().Err(err).Msgf("Failed to extract CA from secret %s/%s", tlsOption.Namespace, secretName)
+				logger.Error().Err(err).Msgf("Failed to extract CA from secret %s/%s", tlsOptionsCRD.Namespace, secretName)
 				continue
 			}
 
-			clientCAs = append(clientCAs, tls.FileOrContent(cert))
+			clientCAs = append(clientCAs, types.FileOrContent(cert))
 		}
 
-		id := makeID(tlsOption.Namespace, tlsOption.Name)
+		id := makeID(tlsOptionsCRD.Namespace, tlsOptionsCRD.Name)
 		// If the name is default, we override the default config.
-		if tlsOption.Name == tls.DefaultTLSConfigName {
-			id = tlsOption.Name
-			nsDefault = append(nsDefault, tlsOption.Namespace)
+		if tlsOptionsCRD.Name == tls.DefaultTLSConfigName {
+			id = tlsOptionsCRD.Name
+			nsDefault = append(nsDefault, tlsOptionsCRD.Namespace)
 		}
 
-		alpnProtocols := tls.DefaultTLSOptions.ALPNProtocols
-		if len(tlsOption.Spec.ALPNProtocols) > 0 {
-			alpnProtocols = tlsOption.Spec.ALPNProtocols
+		tlsOption := tls.Options{}
+		tlsOption.SetDefaults()
+
+		tlsOption.MinVersion = tlsOptionsCRD.Spec.MinVersion
+		tlsOption.MaxVersion = tlsOptionsCRD.Spec.MaxVersion
+
+		if tlsOptionsCRD.Spec.CipherSuites != nil {
+			tlsOption.CipherSuites = tlsOptionsCRD.Spec.CipherSuites
 		}
 
-		tlsOptions[id] = tls.Options{
-			MinVersion:       tlsOption.Spec.MinVersion,
-			MaxVersion:       tlsOption.Spec.MaxVersion,
-			CipherSuites:     tlsOption.Spec.CipherSuites,
-			CurvePreferences: tlsOption.Spec.CurvePreferences,
-			ClientAuth: tls.ClientAuth{
-				CAFiles:        clientCAs,
-				ClientAuthType: tlsOption.Spec.ClientAuth.ClientAuthType,
-			},
-			SniStrict:     tlsOption.Spec.SniStrict,
-			ALPNProtocols: alpnProtocols,
+		tlsOption.CurvePreferences = tlsOptionsCRD.Spec.CurvePreferences
+		tlsOption.ClientAuth = tls.ClientAuth{
+			CAFiles:        clientCAs,
+			ClientAuthType: tlsOptionsCRD.Spec.ClientAuth.ClientAuthType,
 		}
+		tlsOption.SniStrict = tlsOptionsCRD.Spec.SniStrict
+
+		if tlsOptionsCRD.Spec.ALPNProtocols != nil {
+			tlsOption.ALPNProtocols = tlsOptionsCRD.Spec.ALPNProtocols
+		}
+
+		tlsOption.DisableSessionTickets = tlsOptionsCRD.Spec.DisableSessionTickets
+
+		tlsOptions[id] = tlsOption
 	}
 
 	if len(nsDefault) > 1 {
@@ -1061,8 +1329,8 @@ func buildTLSStores(ctx context.Context, client Client) (map[string]tls.Store, m
 			}
 
 			tlsStore.DefaultCertificate = &tls.Certificate{
-				CertFile: tls.FileOrContent(cert),
-				KeyFile:  tls.FileOrContent(key),
+				CertFile: types.FileOrContent(cert),
+				KeyFile:  types.FileOrContent(key),
 			}
 		}
 
@@ -1147,8 +1415,8 @@ func getTLS(k8sClient Client, secretName, namespace string) (*tls.CertAndStores,
 
 	return &tls.CertAndStores{
 		Certificate: tls.Certificate{
-			CertFile: tls.FileOrContent(cert),
-			KeyFile:  tls.FileOrContent(key),
+			CertFile: types.FileOrContent(cert),
+			KeyFile:  types.FileOrContent(key),
 		},
 	}, nil
 }
@@ -1216,6 +1484,20 @@ func getCABlocks(secret *corev1.Secret, namespace, secretName string) (string, e
 	}
 
 	return "", fmt.Errorf("secret %s/%s contains neither tls.ca nor ca.crt", namespace, secretName)
+}
+
+func getCABlocksFromConfigMap(configMap *corev1.ConfigMap, namespace, name string) (string, error) {
+	tlsCrtData, tlsCrtExists := configMap.Data["tls.ca"]
+	if tlsCrtExists {
+		return tlsCrtData, nil
+	}
+
+	tlsCrtData, tlsCrtExists = configMap.Data["ca.crt"]
+	if tlsCrtExists {
+		return tlsCrtData, nil
+	}
+
+	return "", fmt.Errorf("config map %s/%s contains neither tls.ca nor ca.crt", namespace, name)
 }
 
 func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *safe.Pool, eventsChan <-chan interface{}) chan interface{} {

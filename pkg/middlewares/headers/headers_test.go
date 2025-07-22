@@ -3,7 +3,6 @@ package headers
 // Middleware tests based on https://github.com/unrolled/secure
 
 import (
-	"context"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -14,13 +13,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/tracing"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func TestNew_withoutOptions(t *testing.T) {
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) })
 
-	mid, err := New(context.Background(), next, dynamic.Headers{}, "testing")
+	mid, err := New(t.Context(), next, dynamic.Headers{}, "testing")
 	require.Errorf(t, err, "headers configuration not valid")
 
 	assert.Nil(t, mid)
@@ -55,11 +54,10 @@ func TestNew_allowedHosts(t *testing.T) {
 		AllowedHosts: []string{"foo.com", "bar.com"},
 	}
 
-	mid, err := New(context.Background(), emptyHandler, cfg, "foo")
+	mid, err := New(t.Context(), emptyHandler, cfg, "foo")
 	require.NoError(t, err)
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -87,7 +85,7 @@ func TestNew_customHeaders(t *testing.T) {
 		},
 	}
 
-	mid, err := New(context.Background(), next, cfg, "testing")
+	mid, err := New(t.Context(), next, cfg, "testing")
 	require.NoError(t, err)
 
 	req := httptest.NewRequest(http.MethodGet, "/foo", nil)
@@ -109,10 +107,11 @@ func Test_headers_getTracingInformation(t *testing.T) {
 		name:    "testing",
 	}
 
-	name, trace := mid.GetTracingInformation()
+	name, typeName, spanKind := mid.GetTracingInformation()
 
 	assert.Equal(t, "testing", name)
-	assert.Equal(t, tracing.SpanKindNoneEnum, trace)
+	assert.Equal(t, "Headers", typeName)
+	assert.Equal(t, trace.SpanKindInternal, spanKind)
 }
 
 // This test is an adapted version of net/http/httputil.Test1xxResponses test.
@@ -135,7 +134,7 @@ func Test1xxResponses(t *testing.T) {
 		},
 	}
 
-	mid, err := New(context.Background(), next, cfg, "testing")
+	mid, err := New(t.Context(), next, cfg, "testing")
 	require.NoError(t, err)
 
 	server := httptest.NewServer(mid)
@@ -179,10 +178,10 @@ func Test1xxResponses(t *testing.T) {
 			return nil
 		},
 	}
-	req, _ := http.NewRequestWithContext(httptrace.WithClientTrace(context.Background(), trace), http.MethodGet, server.URL, nil)
+	req, _ := http.NewRequestWithContext(httptrace.WithClientTrace(t.Context(), trace), http.MethodGet, server.URL, nil)
 
 	res, err := frontendClient.Do(req)
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 
 	defer res.Body.Close()
 

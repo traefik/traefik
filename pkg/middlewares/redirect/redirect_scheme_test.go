@@ -1,7 +1,6 @@
 package redirect
 
 import (
-	"context"
 	"crypto/tls"
 	"net/http"
 	"net/http/httptest"
@@ -283,13 +282,11 @@ func TestRedirectSchemeHandler(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
 			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-			handler, err := NewRedirectScheme(context.Background(), next, test.config, "traefikTest")
+			handler, err := NewRedirectScheme(t.Context(), next, test.config, "traefikTest")
 
 			if test.errorExpected {
 				require.Error(t, err)

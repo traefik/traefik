@@ -85,6 +85,7 @@ At specified intervals (`checkPeriod`), the circuit breaker evaluates `expressio
 ### Open
 
 While open, the fallback mechanism takes over the normal service calls for a duration of `FallbackDuration`.
+The fallback mechanism returns a `HTTP 503` (or `ResponseCode`) to the client.
 After this duration, it enters the recovering state.
 
 ### Recovering
@@ -159,8 +160,8 @@ Here is the list of supported operators:
 
 ### Fallback mechanism
 
-The fallback mechanism returns a `HTTP 503 Service Unavailable` to the client instead of calling the target service.
-This behavior cannot be configured.
+By default the fallback mechanism returns a `HTTP 503 Service Unavailable` to the client instead of calling the target service.
+The response code can be configured.
 
 ### `CheckPeriod`
 
@@ -179,3 +180,9 @@ The duration for which the circuit breaker will wait before trying to recover (f
 _Optional, Default="10s"_
 
 The duration for which the circuit breaker will try to recover (as soon as it is in recovering state).
+
+### `ResponseCode`
+
+_Optional, Default="503"_
+
+The status code that the circuit breaker will return while it is in the open state.

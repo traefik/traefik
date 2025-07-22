@@ -10,6 +10,7 @@ metadata:
     traefik.ingress.kubernetes.io/router.entrypoints: ep1,ep2
     traefik.ingress.kubernetes.io/router.middlewares: md1,md2
     traefik.ingress.kubernetes.io/router.priority: "42"
+    traefik.ingress.kubernetes.io/router.rulesyntax: "v2"
     traefik.ingress.kubernetes.io/router.tls: "true"
     traefik.ingress.kubernetes.io/router.tls.certresolver:   foobar
     traefik.ingress.kubernetes.io/router.tls.domains.0.main: domain.com
@@ -17,6 +18,9 @@ metadata:
     traefik.ingress.kubernetes.io/router.tls.domains.1.main: example.com
     traefik.ingress.kubernetes.io/router.tls.domains.1.sans: one.example.com,two.example.com
     traefik.ingress.kubernetes.io/router.tls.options: foobar
+    traefik.ingress.kubernetes.io/router.observability.accesslogs: "true"
+    traefik.ingress.kubernetes.io/router.observability.metrics: "true"
+    traefik.ingress.kubernetes.io/router.observability.tracing: "true"
 
 spec:
   rules:
@@ -53,18 +57,21 @@ spec:
   clusterIP: 10.0.0.1
 
 ---
-kind: Endpoints
-apiVersion: v1
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
 metadata:
-  name: service1
+  name: service1-abc
   namespace: testing
+  labels:
+    kubernetes.io/service-name: service1
 
-subsets:
+addressType: IPv4
+ports:
+  - port: 8080
+    name: ""
+endpoints:
   - addresses:
-      - ip: 10.10.0.1
-    ports:
-      - port: 8080
-  - addresses:
-      - ip: 10.21.0.1
-    ports:
-      - port: 8080
+      - 10.10.0.1
+      - 10.21.0.1
+    conditions:
+      ready: true

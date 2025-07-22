@@ -11,7 +11,16 @@ import (
 	"golang.org/x/net/http2"
 )
 
-func newSmartRoundTripper(transport *http.Transport, forwardingTimeouts *dynamic.ForwardingTimeouts) (http.RoundTripper, error) {
+type h2cTransportWrapper struct {
+	*http2.Transport
+}
+
+func (t *h2cTransportWrapper) RoundTrip(req *http.Request) (*http.Response, error) {
+	req.URL.Scheme = "http"
+	return t.Transport.RoundTrip(req)
+}
+
+func newSmartRoundTripper(transport *http.Transport, forwardingTimeouts *dynamic.ForwardingTimeouts) (*smartRoundTripper, error) {
 	transportHTTP1 := transport.Clone()
 
 	transportHTTP2, err := http2.ConfigureTransports(transport)
@@ -51,6 +60,12 @@ func newSmartRoundTripper(transport *http.Transport, forwardingTimeouts *dynamic
 type smartRoundTripper struct {
 	http2 *http.Transport
 	http  *http.Transport
+}
+
+func (m *smartRoundTripper) Clone() http.RoundTripper {
+	h := m.http.Clone()
+	h2 := m.http2.Clone()
+	return &smartRoundTripper{http: h, http2: h2}
 }
 
 func (m *smartRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {

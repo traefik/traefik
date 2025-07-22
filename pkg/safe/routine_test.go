@@ -2,7 +2,7 @@ package safe
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"sync"
 	"testing"
 	"time"
@@ -15,7 +15,7 @@ func TestNewPoolContext(t *testing.T) {
 
 	testKey := testKeyType("test")
 
-	ctx := context.WithValue(context.Background(), testKey, "test")
+	ctx := context.WithValue(t.Context(), testKey, "test")
 	p := NewPool(ctx)
 
 	p.GoCtx(func(ctx context.Context) {
@@ -63,11 +63,10 @@ func TestPoolWithCtx(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			// These subtests cannot be run in parallel, since the testRoutine
 			// is shared across the subtests.
-			p := NewPool(context.Background())
+			p := NewPool(t.Context())
 			timer := time.NewTimer(500 * time.Millisecond)
 			defer timer.Stop()
 
@@ -94,7 +93,7 @@ func TestPoolWithCtx(t *testing.T) {
 }
 
 func TestPoolCleanupWithGoPanicking(t *testing.T) {
-	p := NewPool(context.Background())
+	p := NewPool(t.Context())
 
 	timer := time.NewTimer(500 * time.Millisecond)
 	defer timer.Stop()
@@ -146,7 +145,7 @@ func TestOperationWithRecoverPanic(t *testing.T) {
 
 func TestOperationWithRecoverError(t *testing.T) {
 	operation := func() error {
-		return fmt.Errorf("ERROR")
+		return errors.New("ERROR")
 	}
 	err := backoff.Retry(OperationWithRecover(operation), &backoff.StopBackOff{})
 	if err == nil {

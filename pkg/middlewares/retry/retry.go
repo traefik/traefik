@@ -12,10 +12,12 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	"github.com/opentracing/opentracing-go/ext"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/tracing"
+	"go.opentelemetry.io/otel/attribute"
+	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // Compile time validation that the response writer implements http interfaces correctly.
@@ -33,6 +35,48 @@ type Listener interface {
 // Listeners is a convenience type to construct a list of Listener and notify
 // each of them about a retry attempt.
 type Listeners []Listener
+
+// Retried exists to implement the Listener interface. It calls Retried on each of its slice entries.
+func (l Listeners) Retried(req *http.Request, attempt int) {
+	for _, listener := range l {
+		listener.Retried(req, attempt)
+	}
+}
+
+type shouldRetryContextKey struct{}
+
+// ShouldRetry is a function allowing to enable/disable the retry middleware mechanism.
+type ShouldRetry func(shouldRetry bool)
+
+// ContextShouldRetry returns the ShouldRetry function if it has been set by the Retry middleware in the chain.
+func ContextShouldRetry(ctx context.Context) ShouldRetry {
+	f, _ := ctx.Value(shouldRetryContextKey{}).(ShouldRetry)
+	return f
+}
+
+// WrapHandler wraps a given http.Handler to inject the httptrace.ClientTrace in the request context when it is needed
+// by the retry middleware.
+func WrapHandler(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		if shouldRetry := ContextShouldRetry(req.Context()); shouldRetry != nil {
+			shouldRetry(true)
+
+			trace := &httptrace.ClientTrace{
+				WroteHeaders: func() {
+					shouldRetry(false)
+				},
+				WroteRequest: func(httptrace.WroteRequestInfo) {
+					shouldRetry(false)
+				},
+			}
+			newCtx := httptrace.WithClientTrace(req.Context(), trace)
+			next.ServeHTTP(rw, req.WithContext(newCtx))
+			return
+		}
+
+		next.ServeHTTP(rw, req)
+	})
+}
 
 // retry is a middleware that retries requests.
 type retry struct {
@@ -60,10 +104,6 @@ func New(ctx context.Context, next http.Handler, config dynamic.Retry, listener 
 	}, nil
 }
 
-func (r *retry) GetTracingInformation() (string, ext.SpanKindEnum) {
-	return r.name, tracing.SpanKindNoneEnum
-}
-
 func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if r.attempts == 1 {
 		r.next.ServeHTTP(rw, req)
@@ -79,22 +119,39 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	attempts := 1
 
+	initialCtx := req.Context()
+	tracer := tracing.TracerFromContext(initialCtx)
+
+	var currentSpan trace.Span
 	operation := func() error {
-		shouldRetry := attempts < r.attempts
-		retryResponseWriter := newResponseWriter(rw, shouldRetry)
+		if tracer != nil {
+			if currentSpan != nil {
+				currentSpan.End()
+			}
+			// Because multiple tracing spans may need to be created,
+			// the Retry middleware does not implement trace.Traceable,
+			// and creates directly a new span for each retry operation.
+			var tracingCtx context.Context
+			tracingCtx, currentSpan = tracer.Start(initialCtx, typeName, trace.WithSpanKind(trace.SpanKindInternal))
 
-		// Disable retries when the backend already received request data
-		trace := &httptrace.ClientTrace{
-			WroteHeaders: func() {
-				retryResponseWriter.DisableRetries()
-			},
-			WroteRequest: func(httptrace.WroteRequestInfo) {
-				retryResponseWriter.DisableRetries()
-			},
+			currentSpan.SetAttributes(attribute.String("traefik.middleware.name", r.name))
+			// Only add the attribute "http.resend_count" defined by semantic conventions starting from second attempt.
+			if attempts > 1 {
+				currentSpan.SetAttributes(semconv.HTTPRequestResendCount(attempts - 1))
+			}
+
+			req = req.WithContext(tracingCtx)
 		}
-		newCtx := httptrace.WithClientTrace(req.Context(), trace)
 
-		r.next.ServeHTTP(retryResponseWriter, req.WithContext(newCtx))
+		remainAttempts := attempts < r.attempts
+		retryResponseWriter := newResponseWriter(rw)
+
+		var shouldRetry ShouldRetry = func(shouldRetry bool) {
+			retryResponseWriter.SetShouldRetry(remainAttempts && shouldRetry)
+		}
+		newCtx := context.WithValue(req.Context(), shouldRetryContextKey{}, shouldRetry)
+
+		r.next.ServeHTTP(retryResponseWriter, req.Clone(newCtx))
 
 		if !retryResponseWriter.ShouldRetry() {
 			return nil
@@ -119,6 +176,10 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		logger.Debug().Err(err).Msg("Final retry attempt failed")
 	}
+
+	if currentSpan != nil {
+		currentSpan.End()
+	}
 }
 
 func (r *retry) newBackOff() backoff.BackOff {
@@ -139,18 +200,10 @@ func (r *retry) newBackOff() backoff.BackOff {
 	return b
 }
 
-// Retried exists to implement the Listener interface. It calls Retried on each of its slice entries.
-func (l Listeners) Retried(req *http.Request, attempt int) {
-	for _, listener := range l {
-		listener.Retried(req, attempt)
-	}
-}
-
-func newResponseWriter(rw http.ResponseWriter, shouldRetry bool) *responseWriter {
+func newResponseWriter(rw http.ResponseWriter) *responseWriter {
 	return &responseWriter{
 		responseWriter: rw,
 		headers:        make(http.Header),
-		shouldRetry:    shouldRetry,
 	}
 }
 
@@ -165,8 +218,8 @@ func (r *responseWriter) ShouldRetry() bool {
 	return r.shouldRetry
 }
 
-func (r *responseWriter) DisableRetries() {
-	r.shouldRetry = false
+func (r *responseWriter) SetShouldRetry(shouldRetry bool) {
+	r.shouldRetry = shouldRetry
 }
 
 func (r *responseWriter) Header() http.Header {
@@ -180,20 +233,14 @@ func (r *responseWriter) Write(buf []byte) (int, error) {
 	if r.ShouldRetry() {
 		return len(buf), nil
 	}
+	if !r.written {
+		r.WriteHeader(http.StatusOK)
+	}
 	return r.responseWriter.Write(buf)
 }
 
 func (r *responseWriter) WriteHeader(code int) {
-	if r.ShouldRetry() && code == http.StatusServiceUnavailable {
-		// We get a 503 HTTP Status Code when there is no backend server in the pool
-		// to which the request could be sent.  Also, note that r.ShouldRetry()
-		// will never return true in case there was a connection established to
-		// the backend server and so we can be sure that the 503 was produced
-		// inside Traefik already and we don't have to retry in this cases.
-		r.DisableRetries()
-	}
-
-	if r.ShouldRetry() || r.written {
+	if r.shouldRetry || r.written {
 		return
 	}
 

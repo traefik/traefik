@@ -1,8 +1,8 @@
 package tcp
 
 import (
-	"context"
 	"crypto/tls"
+	"math"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -265,10 +265,44 @@ func TestRuntimeConfiguration(t *testing.T) {
 						EntryPoints: []string{"web"},
 						Service:     "foo-service",
 						Rule:        "HostSNI(`foo.bar`)",
+						TLS:         &dynamic.RouterTCPTLSConfig{},
 					},
 				},
 			},
 			expectedError: 2,
+		},
+		{
+			desc: "Router with priority exceeding the max user-defined priority",
+			tcpServiceConfig: map[string]*runtime.TCPServiceInfo{
+				"foo-service": {
+					TCPService: &dynamic.TCPService{
+						LoadBalancer: &dynamic.TCPServersLoadBalancer{
+							Servers: []dynamic.TCPServer{
+								{
+									Port:    "8085",
+									Address: "127.0.0.1:8085",
+								},
+								{
+									Address: "127.0.0.1:8086",
+									Port:    "8086",
+								},
+							},
+						},
+					},
+				},
+			},
+			tcpRouterConfig: map[string]*runtime.TCPRouterInfo{
+				"bar": {
+					TCPRouter: &dynamic.TCPRouter{
+						EntryPoints: []string{"web"},
+						Service:     "foo-service",
+						Rule:        "HostSNI(`foo.bar`)",
+						TLS:         &dynamic.RouterTCPTLSConfig{},
+						Priority:    math.MaxInt,
+					},
+				},
+			},
+			expectedError: 1,
 		},
 		{
 			desc: "Router with HostSNI but no TLS",
@@ -299,8 +333,6 @@ func TestRuntimeConfiguration(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
-
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -315,9 +347,9 @@ func TestRuntimeConfiguration(t *testing.T) {
 			dialerManager := tcp2.NewDialerManager(nil)
 			dialerManager.Update(map[string]*dynamic.TCPServersTransport{"default@internal": {}})
 			serviceManager := tcp.NewManager(conf, dialerManager)
-			tlsManager := traefiktls.NewManager()
+			tlsManager := traefiktls.NewManager(nil)
 			tlsManager.UpdateConfigs(
-				context.Background(),
+				t.Context(),
 				map[string]traefiktls.Store{},
 				map[string]traefiktls.Options{
 					"default": {
@@ -337,7 +369,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 			routerManager := NewManager(conf, serviceManager, middlewaresBuilder,
 				nil, nil, tlsManager)
 
-			_ = routerManager.BuildHandlers(context.Background(), entryPoints)
+			_ = routerManager.BuildHandlers(t.Context(), entryPoints)
 
 			// even though conf was passed by argument to the manager builders above,
 			// it's ok to use it as the result we check, because everything worth checking
@@ -627,8 +659,8 @@ func TestDomainFronting(t *testing.T) {
 
 			serviceManager := tcp.NewManager(conf, tcp2.NewDialerManager(nil))
 
-			tlsManager := traefiktls.NewManager()
-			tlsManager.UpdateConfigs(context.Background(), map[string]traefiktls.Store{}, test.tlsOptions, []*traefiktls.CertAndStores{})
+			tlsManager := traefiktls.NewManager(nil)
+			tlsManager.UpdateConfigs(t.Context(), map[string]traefiktls.Store{}, test.tlsOptions, []*traefiktls.CertAndStores{})
 
 			httpsHandler := map[string]http.Handler{
 				"web": http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {}),
@@ -638,7 +670,7 @@ func TestDomainFronting(t *testing.T) {
 
 			routerManager := NewManager(conf, serviceManager, middlewaresBuilder, nil, httpsHandler, tlsManager)
 
-			routers := routerManager.BuildHandlers(context.Background(), entryPoints)
+			routers := routerManager.BuildHandlers(t.Context(), entryPoints)
 
 			router, ok := routers["web"]
 			require.True(t, ok)

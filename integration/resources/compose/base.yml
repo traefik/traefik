@@ -1,4 +1,3 @@
-version: "3.8"
 services:
   whoami1:
     image: traefik/whoami
@@ -11,8 +10,3 @@ services:
     image: traefik/whoami
     labels:
       traefik.enable: false
-
-networks:
-  default:
-    name: traefik-test-network
-    external: true

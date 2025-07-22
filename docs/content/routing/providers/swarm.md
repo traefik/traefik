@@ -12,9 +12,17 @@ A Story of Labels & Containers
 
 Attach labels to your containers and let Traefik do the rest!
 
+One of the best feature of Traefik is to delegate the routing configuration to the application level.
+With Docker Swarm, Traefik can leverage labels attached to a service to generate routing rules.
+
+!!! warning "Labels & sensitive data"
+
+    We recommend to *not* use labels to store sensitive data (certificates, credentials, etc).
+    Instead, we recommend to store sensitive data in a safer storage (secrets, file, etc).
+
 ## Configuration Examples
 
-??? example "Configuring Docker Swarm & Deploying / Exposing Services"
+??? example "Configuring Docker Swarm & Deploying / Exposing one Service"
 
     Enabling the docker provider (Swarm Mode)
 
@@ -42,10 +50,11 @@ Attach labels to your containers and let Traefik do the rest!
     --providers.swarm.endpoint=tcp://127.0.0.1:2377
     ```
 
-    Attach labels to services (not to containers) while in Swarm mode (in your docker compose file)
+    Attach labels to services (not containers) while in Swarm mode (in your Docker compose file).
+    When there is only one service, and the router does not specify a service,
+    then that service is automatically assigned to the router.
 
     ```yaml
-    version: "3"
     services:
       my-container:
         deploy:
@@ -59,6 +68,29 @@ Attach labels to your containers and let Traefik do the rest!
         Therefore, if you use a compose file with Swarm Mode, labels should be defined in the `deploy` part of your service.
         This behavior is only enabled for docker-compose version 3+ ([Compose file reference](https://docs.docker.com/compose/compose-file/compose-file-v3/#labels-1)).
 
+??? example "Specify a Custom Port for the Container"
+
+    Forward requests for `http://example.com` to `http://<private IP of container>:12345`:
+
+    ```yaml
+    services:
+      my-container:
+        # ...
+        deploy:
+          labels:
+            - traefik.http.routers.my-container.rule=Host(`example.com`)
+            - traefik.http.routers.my-container.service=my-service"
+            # Tell Traefik to use the port 12345 to connect to `my-container`
+            - traefik.http.services.my-service.loadbalancer.server.port=12345
+    ```
+
+    !!! important "Traefik Connecting to the Wrong Port: `HTTP/502 Gateway Error`"
+        By default, Traefik uses the lowest exposed port of a container as detailed in
+        [Port Detection](../providers/swarm.md#port-detection) of the Swarm provider.
+
+        Setting the label `traefik.http.services.xxx.loadbalancer.server.port`
+        overrides this behavior.
+
 ??? example "Specifying more than one router and service per container"
 
     Forwarding requests to more than one port on a container requires referencing the service loadbalancer port definition using the service parameter on the router.
@@ -66,7 +98,6 @@ Attach labels to your containers and let Traefik do the rest!
     In this example, requests are forwarded for `http://example-a.com` to `http://<private IP of container>:8000` in addition to `http://example-b.com` forwarding to `http://<private IP of container>:9000`:
 
     ```yaml
-    version: "3"
     services:
       my-container:
         # ...
@@ -84,7 +115,7 @@ Attach labels to your containers and let Traefik do the rest!
 
 !!! info "Labels"
 
-    - Labels are case insensitive.
+    - Labels are case-insensitive.
     - The complete list of labels can be found in [the reference page](../../reference/dynamic-configuration/docker.md).
 
 ### General
@@ -201,6 +232,30 @@ For example, to change the rule, you could add the label ```traefik.http.routers
     - "traefik.http.routers.myrouter.tls.options=foobar"
     ```
 
+??? info "`traefik.http.routers.<router_name>.observability.accesslogs`"
+
+    See accesslogs [option](../routers/index.md#accesslogs) for more information.
+    
+    ```yaml
+    - "traefik.http.routers.myrouter.observability.accesslogs=true"
+    ```
+
+??? info "`traefik.http.routers.<router_name>.observability.metrics`"
+
+    See metrics [option](../routers/index.md#metrics) for more information.
+    
+    ```yaml
+    - "traefik.http.routers.myrouter.observability.metrics=true"
+    ```
+
+??? info "`traefik.http.routers.<router_name>.observability.tracing`"
+
+    See tracing [option](../routers/index.md#tracing) for more information.
+    
+    ```yaml
+    - "traefik.http.routers.myrouter.observability.tracing=true"
+    ```
+
 ??? info "`traefik.http.routers.<router_name>.priority`"
 
     See [priority](../routers/index.md#priority) for more information.
@@ -224,7 +279,7 @@ you'd add the label `traefik.http.services.<name-of-your-choice>.loadbalancer.pa
     Registers a port.
     Useful when the container exposes multiples ports.
 
-    Mandatory for Docker Swarm (see the section ["Port Detection with Docker Swarm"](../../providers/docker.md#port-detection)).
+    Mandatory for Docker Swarm (see the section ["Port Detection with Docker Swarm"](../../providers/swarm.md#port-detection)).
     {: #port }
 
     ```yaml
@@ -237,6 +292,15 @@ you'd add the label `traefik.http.services.<name-of-your-choice>.loadbalancer.pa
 
     ```yaml
     - "traefik.http.services.myservice.loadbalancer.server.scheme=http"
+    ```
+
+??? info "`traefik.http.services.<service_name>.loadbalancer.server.url`"
+
+    Defines the service URL.
+    This option cannot be used in combination with `port` or `scheme` definition.
+
+    ```yaml
+    - "traefik.http.services.myservice.loadbalancer.server.url=http://foobar:8080"
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.serverstransport`"
@@ -278,6 +342,14 @@ you'd add the label `traefik.http.services.<name-of-your-choice>.loadbalancer.pa
 
     ```yaml
     - "traefik.http.services.myservice.loadbalancer.healthcheck.interval=10s"
+    ```
+
+??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.unhealthyinterval`"
+
+    See [health check](../services/index.md#health-check) for more information.
+
+    ```yaml
+    - "traefik.http.services.myservice.loadbalancer.healthcheck.unhealthyinterval=10s"
     ```
 
 ??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.path`"
@@ -360,6 +432,14 @@ you'd add the label `traefik.http.services.<name-of-your-choice>.loadbalancer.pa
     - "traefik.http.services.myservice.loadbalancer.sticky.cookie.name=foobar"
     ```
 
+??? info "`traefik.http.services.<service_name>.loadbalancer.sticky.cookie.path`"
+
+    See [sticky sessions](../services/index.md#sticky-sessions) for more information.
+
+    ```yaml
+    - "traefik.http.services.myservice.loadbalancer.sticky.cookie.path=/foobar"
+    ```
+
 ??? info "`traefik.http.services.<service_name>.loadbalancer.sticky.cookie.secure`"
 
     See [sticky sessions](../services/index.md#sticky-sessions) for more information.
@@ -376,12 +456,28 @@ you'd add the label `traefik.http.services.<name-of-your-choice>.loadbalancer.pa
     - "traefik.http.services.myservice.loadbalancer.sticky.cookie.samesite=none"
     ```
 
+??? info "`traefik.http.services.<service_name>.loadbalancer.sticky.cookie.domain`"
+
+    See [sticky sessions](../services/index.md#sticky-sessions) for more information.
+
+    ```yaml
+    - "traefik.http.services.myservice.loadbalancer.sticky.cookie.domain=foo.com"
+    ```
+
 ??? info "`traefik.http.services.<service_name>.loadbalancer.responseforwarding.flushinterval`"
 
     See [response forwarding](../services/index.md#response-forwarding) for more information.
 
     ```yaml
     - "traefik.http.services.myservice.loadbalancer.responseforwarding.flushinterval=10"
+    ```
+
+??? info "`traefik.http.services.<service_name>.loadbalancer.strategy`"
+
+    See [load balancing strategy](../services/index.md#load-balancing-strategy) for more information.
+
+    ```yaml
+    - "traefik.http.services.myservice.loadbalancer.strategy=p2c"
     ```
 
 ### Middleware
@@ -614,10 +710,10 @@ You can tell Traefik to consider (or not) the container by setting `traefik.enab
 
 This option overrides the value of `exposedByDefault`.
 
-#### `traefik.docker.network`
+#### `traefik.swarm.network`
 
 ```yaml
-- "traefik.docker.network=mynetwork"
+- "traefik.swarm.network=mynetwork"
 ```
 
 Overrides the default docker network to use for connections to the container.
@@ -628,7 +724,7 @@ otherwise it will randomly pick one (depending on how docker is returning them).
 !!! warning
     When deploying a stack from a compose file `stack`, the networks defined are prefixed with `stack`.
 
-#### `traefik.docker.lbswarm`
+#### `traefik.swarm.lbswarm`
 
 ```yaml
 - "traefik.docker.lbswarm=true"

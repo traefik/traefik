@@ -1,9 +1,10 @@
-version: "3.8"
 services:
   whoami1:
     image: traefik/whoami
 
-networks:
-  default:
-    name: traefik-test-network
-    external: true
+  redis:
+    image: redis:5.0
+    command:
+      - redis-server
+      - --port
+      - 6379

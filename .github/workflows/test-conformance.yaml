@@ -1,0 +1,41 @@
+name: Test K8s Gateway API conformance
+
+on:
+  pull_request:
+    branches:
+      - '*'
+    paths:
+      - '.github/workflows/test-conformance.yaml'
+      - 'pkg/provider/kubernetes/gateway/**'
+      - 'integration/fixtures/k8s-conformance/**'
+      - 'integration/k8s_conformance_test.go'
+
+env:
+  GO_VERSION: '1.23'
+  CGO_ENABLED: 0
+
+jobs:
+
+  test-conformance:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go ${{ env.GO_VERSION }}
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Avoid generating webui
+        run: |
+          mkdir webui/static
+          touch webui/static/index.html
+
+      - name: K8s Gateway API conformance test and report
+        run: |
+          make test-gateway-api-conformance
+          git diff --exit-code

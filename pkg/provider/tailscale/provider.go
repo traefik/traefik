@@ -17,6 +17,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/muxer/tcp"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 // Provider is the Tailscale certificates provider implementation. It receives
@@ -254,8 +255,8 @@ func (p *Provider) fetchCerts(ctx context.Context, domains []string) {
 
 		p.certByDomainMu.Lock()
 		p.certByDomain[domain] = traefiktls.Certificate{
-			CertFile: traefiktls.FileOrContent(cert),
-			KeyFile:  traefiktls.FileOrContent(key),
+			CertFile: types.FileOrContent(cert),
+			KeyFile:  types.FileOrContent(key),
 		}
 		p.certByDomainMu.Unlock()
 	}

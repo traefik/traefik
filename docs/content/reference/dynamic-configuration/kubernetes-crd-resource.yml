@@ -63,6 +63,7 @@ spec:
   mirroring:
     name: wrr2
     kind: TraefikService
+    mirrorBody: true
     # Optional
     maxBodySize: 2000000000
     mirrors:

@@ -1,11 +1,11 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"testing"
 
@@ -296,6 +296,25 @@ func TestHandler_TCP(t *testing.T) {
 			},
 		},
 		{
+			desc: "one TCP router by id containing slash",
+			path: "/api/tcp/routers/" + url.PathEscape("foo / bar@myprovider"),
+			conf: runtime.Configuration{
+				TCPRouters: map[string]*runtime.TCPRouterInfo{
+					"foo / bar@myprovider": {
+						TCPRouter: &dynamic.TCPRouter{
+							EntryPoints: []string{"web"},
+							Service:     "foo-service@myprovider",
+							Rule:        "Host(`foo.bar`)",
+						},
+					},
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				jsonFile:   "testdata/tcprouter-foo-slash-bar.json",
+			},
+		},
+		{
 			desc: "one TCP router by id, that does not exist",
 			path: "/api/tcp/routers/foo@myprovider",
 			conf: runtime.Configuration{
@@ -560,6 +579,30 @@ func TestHandler_TCP(t *testing.T) {
 			},
 		},
 		{
+			desc: "one tcp service by id containing slash",
+			path: "/api/tcp/services/" + url.PathEscape("foo / bar@myprovider"),
+			conf: runtime.Configuration{
+				TCPServices: map[string]*runtime.TCPServiceInfo{
+					"foo / bar@myprovider": {
+						TCPService: &dynamic.TCPService{
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "127.0.0.1:2345",
+									},
+								},
+							},
+						},
+						UsedBy: []string{"foo@myprovider", "test@myprovider"},
+					},
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				jsonFile:   "testdata/tcpservice-foo-slash-bar.json",
+			},
+		},
+		{
 			desc: "one tcp service by id, that does not exist",
 			path: "/api/tcp/services/nono@myprovider",
 			conf: runtime.Configuration{
@@ -781,6 +824,26 @@ func TestHandler_TCP(t *testing.T) {
 			},
 		},
 		{
+			desc: "one middleware by id containing slash",
+			path: "/api/tcp/middlewares/" + url.PathEscape("foo / bar@myprovider"),
+			conf: runtime.Configuration{
+				TCPMiddlewares: map[string]*runtime.TCPMiddlewareInfo{
+					"foo / bar@myprovider": {
+						TCPMiddleware: &dynamic.TCPMiddleware{
+							IPWhiteList: &dynamic.TCPIPWhiteList{
+								SourceRange: []string{"127.0.0.1/32"},
+							},
+						},
+						UsedBy: []string{"bar@myprovider", "test@myprovider"},
+					},
+				},
+			},
+			expected: expected{
+				statusCode: http.StatusOK,
+				jsonFile:   "testdata/tcpmiddleware-foo-slash-bar.json",
+			},
+		},
+		{
 			desc: "one middleware by id, that does not exist",
 			path: "/api/tcp/middlewares/foo@myprovider",
 			conf: runtime.Configuration{
@@ -810,14 +873,13 @@ func TestHandler_TCP(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
 			rtConf := &test.conf
 			// To lazily initialize the Statuses.
 			rtConf.PopulateUsedBy()
-			rtConf.GetTCPRoutersByEntryPoints(context.Background(), []string{"web"})
+			rtConf.GetTCPRoutersByEntryPoints(t.Context(), []string{"web"})
 
 			handler := New(static.Configuration{API: &static.API{}, Global: &static.Global{}}, rtConf)
 			server := httptest.NewServer(handler.createRouter())
@@ -833,7 +895,7 @@ func TestHandler_TCP(t *testing.T) {
 				return
 			}
 
-			assert.Equal(t, resp.Header.Get("Content-Type"), "application/json")
+			assert.Equal(t, "application/json", resp.Header.Get("Content-Type"))
 
 			contents, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)

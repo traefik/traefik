@@ -8,101 +8,70 @@ description: "Migrate from Traefik Proxy v2 to v3 and update all the necessary c
 How to Migrate from Traefik v2 to Traefik v3.
 {: .subtitle }
 
-The version 3 of Traefik introduces a number of breaking changes,
-which require one to update their configuration when they migrate from v2 to v3.
-The goal of this page is to recapitulate all of these changes, and in particular to give examples,
-feature by feature, of how the configuration looked like in v2, and how it now looks like in v3.
+With Traefik v3, we are introducing a streamlined transition process from v2. Minimal breaking changes have been made to specific options in the [static configuration](./v2-to-v3-details.md#static-configuration-changes "Link to static configuration changes"), and we are ensuring backward compatibility with v2 syntax in the [dynamic configuration](./v2-to-v3-details.md#dynamic-configuration-changes "Link to dynamic configuration changes"). This will offer a gradual path for adopting the v3 syntax, allowing users to progressively migrate their Kubernetes ingress resources, Docker labels, etc., to the new format.
 
-## IPWhiteList
+Here are the steps to progressively migrate from Traefik v2 to v3:
 
-In v3, we renamed the `IPWhiteList` middleware to `IPAllowList` without changing anything to the configuration. 
+1. [Prepare configurations and test v3](#step-1-prepare-configurations-and-test-v3)
+1. [Migrate production instances to Traefik v3](#step-2-migrate-production-instances-to-traefik-v3)
+1. [Progressively migrate dynamic configuration](#step-3-progressively-migrate-dynamic-configuration)
 
-## gRPC Metrics
+## Step 1: Prepare Configurations and Test v3
 
-In v3, the reported status code for gRPC requests is now the value of the `Grpc-Status` header.  
+Check the changes in [static configurations](./v2-to-v3-details.md#static-configuration-changes "Link to static configuration changes") and [operations](./v2-to-v3-details.md#operations-changes "Link to operations changes") brought by Traefik v3.
+Modify your configurations accordingly.
 
-## Deprecated Options Removal
+Then, add the following snippet to the static configuration:
 
-- The `pilot` option has been removed from the static configuration.
-- The `tracing.datadog.globaltag` option has been removed.
-- The `namespace` option of Consul, Consul Catalog and Nomad providers has been removed.
-- The `tls.caOptional` option has been removed from the ForwardAuth middleware, as well as from the HTTP, Consul, Etcd, Redis, ZooKeeper, Consul Catalog, and Docker providers.
-- `sslRedirect`, `sslTemporaryRedirect`, `sslHost`, `sslForceHost` and `featurePolicy` options of the Headers middleware have been removed.
-- The `forceSlash` option of the StripPrefix middleware has been removed.
-- The `preferServerCipherSuites` option has been removed.
+```yaml
+# static configuration
+core:
+  defaultRuleSyntax: v2
+```
 
-## Matchers
+This snippet in the static configuration makes the [v2 format](../migration/v2-to-v3-details.md#configure-the-default-syntax-in-static-configuration "Link to configure default syntax in static config") the default rule matchers syntax.
 
-In v3, the `Headers` and `HeadersRegexp` matchers have been renamed to `Header` and `HeaderRegexp` respectively.
+Start Traefik v3 with this new configuration to test it.
 
-`PathPrefix` no longer uses regular expressions to match path prefixes.
+If you don’t get any error logs while testing, you are good to go!
+Otherwise, follow the remaining migration options highlighted in the logs.
 
-`QueryRegexp` has been introduced to match query values using a regular expression.
+Once your Traefik test instances are starting and routing to your applications, proceed to the next step.
 
-`HeaderRegexp`, `HostRegexp`, `PathRegexp`, `QueryRegexp`, and `HostSNIRegexp` matchers now uses the [Go regexp syntax](https://golang.org/pkg/regexp/syntax/).
+## Step 2: Migrate Production Instances to Traefik v3
 
-All matchers now take a single value (except `Header`, `HeaderRegexp`, `Query`, and `QueryRegexp` which take two)
-and should be explicitly combined using logical operators to mimic previous behavior.
+We strongly advise you to follow a progressive migration strategy ([Kubernetes rolling update mechanism](https://kubernetes.io/docs/tutorials/kubernetes-basics/update/update-intro/ "Link to the Kubernetes rolling update documentation"), for example) to migrate your production instances to v3.
 
-`Query` can take a single value to match is the query value that has no value (e.g. `/search?mobile`).
+!!! Warning
+    Ensure you have a [real-time monitoring solution](https://traefik.io/blog/capture-traefik-metrics-for-apps-on-kubernetes-with-prometheus/ "Link to the blog on capturing Traefik metrics with Prometheus") for your ingress traffic to detect issues instantly.
 
-`HostHeader` has been removed, use `Host` instead.
+During the progressive migration, monitor your ingress traffic for any errors. Be prepared to rollback to a working state in case of any issues.
 
-## Content-Type Auto-Detection
+If you encounter any issues, leverage debug and access logs provided by Traefik to understand what went wrong and how to fix it.
 
-In v3, the `Content-Type` header is not auto-detected anymore when it is not set by the backend.
-One should use the `ContentType` middleware to enable the `Content-Type` header value auto-detection.
+Once every Traefik instance is updated, you will be on Traefik v3!
 
-## HTTP/3
+## Step 3: Progressively Migrate Dynamic Configuration
 
-In v3, HTTP/3 is no longer an experimental feature.
-The `experimental.http3` option has been removed from the static configuration.
+!!! info
+    This step can be done later in the process, as Traefik v3 is compatible with the v2 format for [dynamic configuration](./v2-to-v3-details.md#dynamic-configuration-changes "Link to dynamic configuration changes").
+    Enable Traefik logs to get some help if any deprecated option is in use.
 
-## TCP ServersTransport
+Check the changes in [dynamic configuration](./v2-to-v3-details.md#dynamic-configuration-changes "Link to dynamic configuration changes").
 
-In v3, the support of `TCPServersTransport` has been introduced.
-When using the KubernetesCRD provider, it is therefore necessary to update [RBAC](../reference/dynamic-configuration/kubernetes-crd.md#rbac) and [CRD](../reference/dynamic-configuration/kubernetes-crd.md) manifests.
+Then, progressively [switch each router to the v3 syntax](./v2-to-v3-details.md#configure-the-syntax-per-router "Link to configuring the syntax per router").
 
-### TCP LoadBalancer `terminationDelay` option
+Test and update each Ingress resource and ensure that ingress traffic is not impacted.
 
-The TCP LoadBalancer `terminationDelay` option has been removed.
-This option can now be configured directly on the `TCPServersTransport` level, please take a look at this [documentation](../routing/services/index.md#terminationdelay)
+Once a v3 Ingress resource migration is validated, deploy the resource and delete the v2 Ingress resource.
+Repeat it until all Ingress resources are migrated.
 
-## Rancher v1
+Now, remove the following snippet added to the static configuration in Step 1:
 
-In v3, the rancher v1 provider has been removed because Rancher v1 is [no longer actively maintaned](https://rancher.com/docs/os/v1.x/en/support/) and v2 is supported as a standard Kubernetes provider.
+```yaml
+# static configuration
+core:
+  defaultRuleSyntax: v2
+```
 
-Rancher 2.x requires Kubernetes and does not have a metadata endpoint of its own for Traefik to query.
-As such, Rancher 2.x users should utilize the [Kubernetes CRD provider](../providers/kubernetes-crd.md) directly.
-
-## Marathon provider
-
-In v3, the Marathon provider has been removed.
-
-## InfluxDB v1
-
-In v3, the InfluxDB v1 metrics provider has been removed because InfluxDB v1.x maintenance [ended in 2021](https://www.influxdata.com/blog/influxdb-oss-and-enterprise-roadmap-update-from-influxdays-emea/).
-
-## Kubernetes CRDs API Group `traefik.containo.us`
-
-In v3, the Kubernetes CRDs API Group `traefik.containo.us` has been removed. 
-Please use the API Group `traefik.io` instead.
-
-## Docker & Docker Swarm
-
-In v3, the provider Docker has been split into 2 providers:
-
-- Docker provider (without Swarm support)
-- Swarm provider  (Swarm support only)
-
-## Kubernetes Ingress API Group `networking.k8s.io/v1beta1`
-
-In v3, the Kubernetes Ingress API Group `networking.k8s.io/v1beta1` ([removed since Kubernetes v1.22](https://kubernetes.io/docs/reference/using-api/deprecation-guide/#ingress-v122)) support has been removed.
-
-Please use the API Group `networking.k8s.io/v1` instead.
-
-## Traefik CRD API Version `apiextensions.k8s.io/v1beta1`
-
-In v3, the Traefik CRD API Version `apiextensions.k8s.io/v1beta1` ([removed since Kubernetes v1.22](https://kubernetes.io/docs/reference/using-api/deprecation-guide/#customresourcedefinition-v122)) support has been removed.
-
-Please use the CRD definition with the API Version `apiextensions.k8s.io/v1` instead.
+You are now fully migrated to Traefik v3 🎉

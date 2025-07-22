@@ -6,9 +6,13 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
+	"net"
+	"net/http"
 	"net/url"
+	"os"
 	"reflect"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -16,6 +20,7 @@ import (
 	"github.com/go-acme/lego/v4/certificate"
 	"github.com/go-acme/lego/v4/challenge"
 	"github.com/go-acme/lego/v4/challenge/dns01"
+	"github.com/go-acme/lego/v4/challenge/http01"
 	"github.com/go-acme/lego/v4/lego"
 	"github.com/go-acme/lego/v4/providers/dns"
 	"github.com/go-acme/lego/v4/registration"
@@ -31,18 +36,26 @@ import (
 	"github.com/traefik/traefik/v3/pkg/version"
 )
 
-// ocspMustStaple enables OCSP stapling as from https://github.com/go-acme/lego/issues/270.
-var ocspMustStaple = false
+const resolverSuffix = ".acme"
 
 // Configuration holds ACME configuration provided by users.
 type Configuration struct {
-	Email                string `description:"Email address used for registration." json:"email,omitempty" toml:"email,omitempty" yaml:"email,omitempty"`
-	CAServer             string `description:"CA server to use." json:"caServer,omitempty" toml:"caServer,omitempty" yaml:"caServer,omitempty"`
-	PreferredChain       string `description:"Preferred chain to use." json:"preferredChain,omitempty" toml:"preferredChain,omitempty" yaml:"preferredChain,omitempty" export:"true"`
-	Storage              string `description:"Storage to use." json:"storage,omitempty" toml:"storage,omitempty" yaml:"storage,omitempty" export:"true"`
-	KeyType              string `description:"KeyType used for generating certificate private key. Allow value 'EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192'." json:"keyType,omitempty" toml:"keyType,omitempty" yaml:"keyType,omitempty" export:"true"`
-	EAB                  *EAB   `description:"External Account Binding to use." json:"eab,omitempty" toml:"eab,omitempty" yaml:"eab,omitempty"`
-	CertificatesDuration int    `description:"Certificates' duration in hours." json:"certificatesDuration,omitempty" toml:"certificatesDuration,omitempty" yaml:"certificatesDuration,omitempty" export:"true"`
+	Email                string   `description:"Email address used for registration." json:"email,omitempty" toml:"email,omitempty" yaml:"email,omitempty"`
+	CAServer             string   `description:"CA server to use." json:"caServer,omitempty" toml:"caServer,omitempty" yaml:"caServer,omitempty"`
+	PreferredChain       string   `description:"Preferred chain to use." json:"preferredChain,omitempty" toml:"preferredChain,omitempty" yaml:"preferredChain,omitempty" export:"true"`
+	Profile              string   `description:"Certificate profile to use." json:"profile,omitempty" toml:"profile,omitempty" yaml:"profile,omitempty" export:"true"`
+	EmailAddresses       []string `description:"CSR email addresses to use." json:"emailAddresses,omitempty" toml:"emailAddresses,omitempty" yaml:"emailAddresses,omitempty"`
+	Storage              string   `description:"Storage to use." json:"storage,omitempty" toml:"storage,omitempty" yaml:"storage,omitempty" export:"true"`
+	KeyType              string   `description:"KeyType used for generating certificate private key. Allow value 'EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192'." json:"keyType,omitempty" toml:"keyType,omitempty" yaml:"keyType,omitempty" export:"true"`
+	EAB                  *EAB     `description:"External Account Binding to use." json:"eab,omitempty" toml:"eab,omitempty" yaml:"eab,omitempty"`
+	CertificatesDuration int      `description:"Certificates' duration in hours." json:"certificatesDuration,omitempty" toml:"certificatesDuration,omitempty" yaml:"certificatesDuration,omitempty" export:"true"`
+
+	ClientTimeout               ptypes.Duration `description:"Timeout for a complete HTTP transaction with the ACME server." json:"clientTimeout,omitempty" toml:"clientTimeout,omitempty" yaml:"clientTimeout,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	ClientResponseHeaderTimeout ptypes.Duration `description:"Timeout for receiving the response headers when communicating with the ACME server." json:"clientResponseHeaderTimeout,omitempty" toml:"clientResponseHeaderTimeout,omitempty" yaml:"clientResponseHeaderTimeout,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+
+	CACertificates   []string `description:"Specify the paths to PEM encoded CA Certificates that can be used to authenticate an ACME server with an HTTPS certificate not issued by a CA in the system-wide trusted root list." json:"caCertificates,omitempty" toml:"caCertificates,omitempty" yaml:"caCertificates,omitempty"`
+	CASystemCertPool bool     `description:"Define if the certificates pool must use a copy of the system cert pool." json:"caSystemCertPool,omitempty" toml:"caSystemCertPool,omitempty" yaml:"caSystemCertPool,omitempty" export:"true"`
+	CAServerName     string   `description:"Specify the CA server name that can be used to authenticate an ACME server with an HTTPS certificate not issued by a CA in the system-wide trusted root list." json:"caServerName,omitempty" toml:"caServerName,omitempty" yaml:"caServerName,omitempty" export:"true"`
 
 	DNSChallenge  *DNSChallenge  `description:"Activate DNS-01 Challenge." json:"dnsChallenge,omitempty" toml:"dnsChallenge,omitempty" yaml:"dnsChallenge,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	HTTPChallenge *HTTPChallenge `description:"Activate HTTP-01 Challenge." json:"httpChallenge,omitempty" toml:"httpChallenge,omitempty" yaml:"httpChallenge,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
@@ -55,6 +68,8 @@ func (a *Configuration) SetDefaults() {
 	a.Storage = "acme.json"
 	a.KeyType = "RSA4096"
 	a.CertificatesDuration = 3 * 30 * 24 // 90 Days
+	a.ClientTimeout = ptypes.Duration(2 * time.Minute)
+	a.ClientResponseHeaderTimeout = ptypes.Duration(30 * time.Second)
 }
 
 // CertAndStore allows mapping a TLS certificate to a TLS store.
@@ -78,15 +93,27 @@ type EAB struct {
 
 // DNSChallenge contains DNS challenge configuration.
 type DNSChallenge struct {
-	Provider                string          `description:"Use a DNS-01 based challenge provider rather than HTTPS." json:"provider,omitempty" toml:"provider,omitempty" yaml:"provider,omitempty" export:"true"`
-	DelayBeforeCheck        ptypes.Duration `description:"Assume DNS propagates after a delay in seconds rather than finding and querying nameservers." json:"delayBeforeCheck,omitempty" toml:"delayBeforeCheck,omitempty" yaml:"delayBeforeCheck,omitempty" export:"true"`
-	Resolvers               []string        `description:"Use following DNS servers to resolve the FQDN authority." json:"resolvers,omitempty" toml:"resolvers,omitempty" yaml:"resolvers,omitempty"`
-	DisablePropagationCheck bool            `description:"Disable the DNS propagation checks before notifying ACME that the DNS challenge is ready. [not recommended]" json:"disablePropagationCheck,omitempty" toml:"disablePropagationCheck,omitempty" yaml:"disablePropagationCheck,omitempty" export:"true"`
+	Provider    string       `description:"Use a DNS-01 based challenge provider rather than HTTPS." json:"provider,omitempty" toml:"provider,omitempty" yaml:"provider,omitempty" export:"true"`
+	Resolvers   []string     `description:"Use following DNS servers to resolve the FQDN authority." json:"resolvers,omitempty" toml:"resolvers,omitempty" yaml:"resolvers,omitempty"`
+	Propagation *Propagation `description:"DNS propagation checks configuration" json:"propagation,omitempty" toml:"propagation,omitempty" yaml:"propagation,omitempty"  label:"allowEmpty" file:"allowEmpty" export:"true"`
+
+	// Deprecated: please use Propagation.DelayBeforeChecks instead.
+	DelayBeforeCheck ptypes.Duration `description:"(Deprecated) Assume DNS propagates after a delay in seconds rather than finding and querying nameservers." json:"delayBeforeCheck,omitempty" toml:"delayBeforeCheck,omitempty" yaml:"delayBeforeCheck,omitempty" export:"true"`
+	// Deprecated: please use Propagation.DisableChecks instead.
+	DisablePropagationCheck bool `description:"(Deprecated) Disable the DNS propagation checks before notifying ACME that the DNS challenge is ready. [not recommended]" json:"disablePropagationCheck,omitempty" toml:"disablePropagationCheck,omitempty" yaml:"disablePropagationCheck,omitempty" export:"true"`
+}
+
+type Propagation struct {
+	DisableChecks     bool            `description:"Disables the challenge TXT record propagation checks (not recommended)." json:"disableChecks,omitempty" toml:"disableChecks,omitempty" yaml:"disableChecks,omitempty" export:"true"`
+	DisableANSChecks  bool            `description:"Disables the challenge TXT record propagation checks against authoritative nameservers." json:"disableANSChecks,omitempty" toml:"disableANSChecks,omitempty" yaml:"disableANSChecks,omitempty" export:"true"`
+	RequireAllRNS     bool            `description:"Requires the challenge TXT record to be propagated to all recursive nameservers." json:"requireAllRNS,omitempty" toml:"requireAllRNS,omitempty" yaml:"requireAllRNS,omitempty" export:"true"`
+	DelayBeforeChecks ptypes.Duration `description:"Defines the delay before checking the challenge TXT record propagation." json:"delayBeforeChecks,omitempty" toml:"delayBeforeChecks,omitempty" yaml:"delayBeforeChecks,omitempty" export:"true"`
 }
 
 // HTTPChallenge contains HTTP challenge configuration.
 type HTTPChallenge struct {
-	EntryPoint string `description:"HTTP challenge EntryPoint" json:"entryPoint,omitempty" toml:"entryPoint,omitempty" yaml:"entryPoint,omitempty"  export:"true"`
+	EntryPoint string          `description:"HTTP challenge EntryPoint" json:"entryPoint,omitempty" toml:"entryPoint,omitempty" yaml:"entryPoint,omitempty" export:"true"`
+	Delay      ptypes.Duration `description:"Delay between the creation of the challenge and the validation." json:"delay,omitempty" toml:"delay,omitempty" yaml:"delay,omitempty" export:"true"`
 }
 
 // TLSChallenge contains TLS challenge configuration.
@@ -130,9 +157,9 @@ func (p *Provider) ListenConfiguration(config dynamic.Configuration) {
 	p.configFromListenerChan <- config
 }
 
-// Init for compatibility reason the BaseProvider implements an empty Init.
+// Init inits the provider.
 func (p *Provider) Init() error {
-	logger := log.With().Str(logs.ProviderName, p.ResolverName+".acme").Logger()
+	logger := log.With().Str(logs.ProviderName, p.ResolverName+resolverSuffix).Logger()
 
 	if len(p.Configuration.Storage) == 0 {
 		return errors.New("unable to initialize ACME provider with no storage location for the certificates")
@@ -140,6 +167,10 @@ func (p *Provider) Init() error {
 
 	if p.CertificatesDuration < 1 {
 		return errors.New("cannot manage certificates with duration lower than 1 hour")
+	}
+
+	if p.ClientTimeout < p.ClientResponseHeaderTimeout {
+		return errors.New("clientTimeout must be at least clientResponseHeaderTimeout")
 	}
 
 	var err error
@@ -194,7 +225,7 @@ func (p *Provider) ThrottleDuration() time.Duration {
 // Provide allows the file provider to provide configurations to traefik
 // using the given Configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
-	logger := log.With().Str(logs.ProviderName, p.ResolverName+".acme").Str("acmeCA", p.Configuration.CAServer).
+	logger := log.With().Str(logs.ProviderName, p.ResolverName+resolverSuffix).Str("acmeCA", p.Configuration.CAServer).
 		Logger()
 	ctx := logger.WithContext(context.Background())
 
@@ -236,7 +267,7 @@ func (p *Provider) getClient() (*lego.Client, error) {
 	p.clientMutex.Lock()
 	defer p.clientMutex.Unlock()
 
-	logger := log.With().Str(logs.ProviderName, p.ResolverName+".acme").Logger()
+	logger := log.With().Str(logs.ProviderName, p.ResolverName+resolverSuffix).Logger()
 
 	ctx := logger.WithContext(context.Background())
 
@@ -261,6 +292,11 @@ func (p *Provider) getClient() (*lego.Client, error) {
 	config.CADirURL = caServer
 	config.Certificate.KeyType = GetKeyType(ctx, p.KeyType)
 	config.UserAgent = fmt.Sprintf("containous-traefik/%s", version.Version)
+
+	config.HTTPClient, err = p.createHTTPClient()
+	if err != nil {
+		return nil, fmt.Errorf("creating HTTP client: %w", err)
+	}
 
 	client, err := lego.NewClient(config)
 	if err != nil {
@@ -299,21 +335,25 @@ func (p *Provider) getClient() (*lego.Client, error) {
 			return nil, err
 		}
 
-		err = client.Challenge.SetDNS01Provider(provider,
-			dns01.CondOption(len(p.DNSChallenge.Resolvers) > 0, dns01.AddRecursiveNameservers(p.DNSChallenge.Resolvers)),
-			dns01.WrapPreCheck(func(domain, fqdn, value string, check dns01.PreCheckFunc) (bool, error) {
-				if p.DNSChallenge.DelayBeforeCheck > 0 {
-					logger.Debug().Msgf("Delaying %d rather than validating DNS propagation now.", p.DNSChallenge.DelayBeforeCheck)
-					time.Sleep(time.Duration(p.DNSChallenge.DelayBeforeCheck))
-				}
+		var opts []dns01.ChallengeOption
 
-				if p.DNSChallenge.DisablePropagationCheck {
-					return true, nil
-				}
+		if len(p.DNSChallenge.Resolvers) > 0 {
+			opts = append(opts, dns01.AddRecursiveNameservers(p.DNSChallenge.Resolvers))
+		}
 
-				return check(fqdn, value)
-			}),
-		)
+		if p.DNSChallenge.Propagation != nil {
+			if p.DNSChallenge.Propagation.RequireAllRNS {
+				opts = append(opts, dns01.RecursiveNSsPropagationRequirement())
+			}
+
+			if p.DNSChallenge.Propagation.DisableANSChecks {
+				opts = append(opts, dns01.DisableAuthoritativeNssPropagationRequirement())
+			}
+
+			opts = append(opts, dns01.PropagationWait(time.Duration(p.DNSChallenge.Propagation.DelayBeforeChecks), p.DNSChallenge.Propagation.DisableChecks))
+		}
+
+		err = client.Challenge.SetDNS01Provider(provider, opts...)
 		if err != nil {
 			return nil, err
 		}
@@ -322,7 +362,7 @@ func (p *Provider) getClient() (*lego.Client, error) {
 	if p.HTTPChallenge != nil && len(p.HTTPChallenge.EntryPoint) > 0 {
 		logger.Debug().Msg("Using HTTP Challenge provider.")
 
-		err = client.Challenge.SetHTTP01Provider(p.HTTPChallengeProvider)
+		err = client.Challenge.SetHTTP01Provider(p.HTTPChallengeProvider, http01.SetDelay(time.Duration(p.HTTPChallenge.Delay)))
 		if err != nil {
 			return nil, err
 		}
@@ -339,6 +379,64 @@ func (p *Provider) getClient() (*lego.Client, error) {
 
 	p.client = client
 	return p.client, nil
+}
+
+func (p *Provider) createHTTPClient() (*http.Client, error) {
+	tlsConfig, err := p.createClientTLSConfig()
+	if err != nil {
+		return nil, fmt.Errorf("creating client TLS config: %w", err)
+	}
+
+	return &http.Client{
+		Timeout: time.Duration(p.ClientTimeout),
+		Transport: &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
+			DialContext: (&net.Dialer{
+				Timeout:   30 * time.Second,
+				KeepAlive: 30 * time.Second,
+			}).DialContext,
+			TLSHandshakeTimeout:   30 * time.Second,
+			ResponseHeaderTimeout: time.Duration(p.ClientResponseHeaderTimeout),
+			TLSClientConfig:       tlsConfig,
+		},
+	}, nil
+}
+
+func (p *Provider) createClientTLSConfig() (*tls.Config, error) {
+	if len(p.CACertificates) > 0 || p.CAServerName != "" {
+		certPool, err := lego.CreateCertPool(p.CACertificates, p.CASystemCertPool)
+		if err != nil {
+			return nil, fmt.Errorf("creating cert pool with custom certificates: %w", err)
+		}
+
+		return &tls.Config{
+			ServerName: p.CAServerName,
+			RootCAs:    certPool,
+		}, nil
+	}
+
+	// Compatibility layer with the lego.
+	// https://github.com/go-acme/lego/blob/834a9089f143e3407b3f5c8b93a0e285ba231fe2/lego/client_config.go#L24-L34
+	// https://github.com/go-acme/lego/blob/834a9089f143e3407b3f5c8b93a0e285ba231fe2/lego/client_config.go#L97-L113
+
+	serverName := os.Getenv("LEGO_CA_SERVER_NAME")
+	customCACertsPath := os.Getenv("LEGO_CA_CERTIFICATES")
+
+	if customCACertsPath == "" && serverName == "" {
+		return nil, nil
+	}
+
+	useSystemCertPool, _ := strconv.ParseBool(os.Getenv("LEGO_CA_SYSTEM_CERT_POOL"))
+
+	certPool, err := lego.CreateCertPool(strings.Split(customCACertsPath, string(os.PathListSeparator)), useSystemCertPool)
+	if err != nil {
+		return nil, fmt.Errorf("creating cert pool: %w", err)
+	}
+
+	return &tls.Config{
+		ServerName: serverName,
+		RootCAs:    certPool,
+	}, nil
 }
 
 func (p *Provider) initAccount(ctx context.Context) (*Account, error) {
@@ -407,7 +505,7 @@ func (p *Provider) resolveDomains(ctx context.Context, domains []string, tlsStor
 }
 
 func (p *Provider) watchNewDomains(ctx context.Context) {
-	rootLogger := log.Ctx(ctx).With().Str(logs.ProviderName, p.ResolverName+".acme").Logger()
+	rootLogger := log.Ctx(ctx).With().Str(logs.ProviderName, p.ResolverName+resolverSuffix).Str("ACME CA", p.Configuration.CAServer).Logger()
 	ctx = rootLogger.WithContext(ctx)
 
 	p.pool.GoCtx(func(ctxPool context.Context) {
@@ -425,8 +523,7 @@ func (p *Provider) watchNewDomains(ctx context.Context) {
 
 						if len(route.TLS.Domains) > 0 {
 							domains := deleteUnnecessaryDomains(ctxRouter, route.TLS.Domains)
-							for i := 0; i < len(domains); i++ {
-								domain := domains[i]
+							for _, domain := range domains {
 								safe.Go(func() {
 									dom, cert, err := p.resolveCertificate(ctx, domain, traefiktls.DefaultTLSStoreName)
 									if err != nil {
@@ -462,8 +559,7 @@ func (p *Provider) watchNewDomains(ctx context.Context) {
 
 						if len(route.TLS.Domains) > 0 {
 							domains := deleteUnnecessaryDomains(ctxRouter, route.TLS.Domains)
-							for i := 0; i < len(domains); i++ {
-								domain := domains[i]
+							for _, domain := range domains {
 								safe.Go(func() {
 									dom, cert, err := p.resolveCertificate(ctx, domain, traefiktls.DefaultTLSStoreName)
 									if err != nil {
@@ -555,8 +651,11 @@ func (p *Provider) resolveDefaultCertificate(ctx context.Context, domains []stri
 
 	p.resolvingDomainsMutex.Lock()
 
-	sort.Strings(domains)
-	domainKey := strings.Join(domains, ",")
+	sortedDomains := make([]string, len(domains))
+	copy(sortedDomains, domains)
+	sort.Strings(sortedDomains)
+
+	domainKey := strings.Join(sortedDomains, ",")
 
 	if _, ok := p.resolvingDomains[domainKey]; ok {
 		p.resolvingDomainsMutex.Unlock()
@@ -583,7 +682,8 @@ func (p *Provider) resolveDefaultCertificate(ctx context.Context, domains []stri
 	request := certificate.ObtainRequest{
 		Domains:        domains,
 		Bundle:         true,
-		MustStaple:     ocspMustStaple,
+		EmailAddresses: p.EmailAddresses,
+		Profile:        p.Profile,
 		PreferredChain: p.PreferredChain,
 	}
 
@@ -628,7 +728,8 @@ func (p *Provider) resolveCertificate(ctx context.Context, domain types.Domain, 
 	request := certificate.ObtainRequest{
 		Domains:        domains,
 		Bundle:         true,
-		MustStaple:     ocspMustStaple,
+		EmailAddresses: p.EmailAddresses,
+		Profile:        p.Profile,
 		PreferredChain: p.PreferredChain,
 	}
 
@@ -699,6 +800,8 @@ func getCertificateRenewDurations(certificatesDuration int) (time.Duration, time
 		return 4 * 30 * 24 * time.Hour, 7 * 24 * time.Hour // 4 month, 1 week
 	case certificatesDuration >= 3*30*24: // >= 90 days
 		return 30 * 24 * time.Hour, 24 * time.Hour // 30 days, 1 day
+	case certificatesDuration >= 30*24: // >= 30 days
+		return 10 * 24 * time.Hour, 12 * time.Hour // 10 days, 12 hours
 	case certificatesDuration >= 7*24: // >= 7 days
 		return 24 * time.Hour, time.Hour // 1 days, 1 hour
 	case certificatesDuration >= 24: // >= 1 days
@@ -733,7 +836,7 @@ func deleteUnnecessaryDomains(ctx context.Context, domains []types.Domain) []typ
 			}
 
 			// Check if CN or SANS to check already exists
-			// or can not be checked by a wildcard
+			// or cannot be checked by a wildcard
 			var newDomainsToCheck []string
 			for _, domainProcessed := range domainToCheck.ToStrArray() {
 				if idxDomain < idxDomainToCheck && isDomainAlreadyChecked(domainProcessed, domain.ToStrArray()) {
@@ -781,8 +884,8 @@ func (p *Provider) buildMessage() dynamic.Message {
 	for _, cert := range p.certificates {
 		certConf := &traefiktls.CertAndStores{
 			Certificate: traefiktls.Certificate{
-				CertFile: traefiktls.FileOrContent(cert.Certificate.Certificate),
-				KeyFile:  traefiktls.FileOrContent(cert.Key),
+				CertFile: types.FileOrContent(cert.Certificate.Certificate),
+				KeyFile:  types.FileOrContent(cert.Key),
 			},
 			Stores: []string{cert.Store},
 		}
@@ -819,11 +922,18 @@ func (p *Provider) renewCertificates(ctx context.Context, renewPeriod time.Durat
 
 		logger.Info().Msgf("Renewing certificate from LE : %+v", cert.Domain)
 
-		renewedCert, err := client.Certificate.Renew(certificate.Resource{
+		res := certificate.Resource{
 			Domain:      cert.Domain.Main,
 			PrivateKey:  cert.Key,
 			Certificate: cert.Certificate.Certificate,
-		}, true, ocspMustStaple, p.PreferredChain)
+		}
+
+		opts := &certificate.RenewOptions{
+			Bundle:         true,
+			PreferredChain: p.PreferredChain,
+		}
+
+		renewedCert, err := client.Certificate.RenewWithOptions(res, opts)
 		if err != nil {
 			logger.Error().Err(err).Msgf("Error renewing certificate from LE: %v", cert.Domain)
 			continue
@@ -951,12 +1061,14 @@ func (p *Provider) certExists(validDomains []string) bool {
 	p.certificatesMu.RLock()
 	defer p.certificatesMu.RUnlock()
 
-	sort.Strings(validDomains)
+	sortedDomains := make([]string, len(validDomains))
+	copy(sortedDomains, validDomains)
+	sort.Strings(sortedDomains)
 
 	for _, cert := range p.certificates {
 		domains := cert.Certificate.Domain.ToStrArray()
 		sort.Strings(domains)
-		if reflect.DeepEqual(domains, validDomains) {
+		if reflect.DeepEqual(domains, sortedDomains) {
 			return true
 		}
 	}

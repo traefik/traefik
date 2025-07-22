@@ -1,7 +1,6 @@
 package metrics
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -64,14 +63,13 @@ func TestRegisterPromState(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			actualNbRegistries := 0
 			for _, prom := range test.prometheusSlice {
 				if test.initPromState {
 					initStandardRegistry(prom)
 				}
-				if registerPromState(context.Background()) {
+				if registerPromState(t.Context()) {
 					actualNbRegistries++
 				}
 				if test.unregisterPromState {
@@ -92,7 +90,7 @@ func TestPrometheus(t *testing.T) {
 	promRegistry = prometheus.NewRegistry()
 	t.Cleanup(promState.reset)
 
-	prometheusRegistry := RegisterPrometheus(context.Background(), &types.Prometheus{
+	prometheusRegistry := RegisterPrometheus(t.Context(), &types.Prometheus{
 		AddEntryPointsLabels: true,
 		AddRoutersLabels:     true,
 		AddServicesLabels:    true,
@@ -381,7 +379,6 @@ func TestPrometheus(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			family := findMetricFamily(test.name, metricsFamilies)
 			if family == nil {
@@ -389,12 +386,12 @@ func TestPrometheus(t *testing.T) {
 				return
 			}
 
-			for _, label := range family.Metric[0].Label {
-				val, ok := test.labels[*label.Name]
+			for _, label := range family.GetMetric()[0].GetLabel() {
+				val, ok := test.labels[label.GetName()]
 				if !ok {
-					t.Errorf("%q metric contains unexpected label %q", test.name, *label.Name)
-				} else if val != *label.Value {
-					t.Errorf("label %q in metric %q has wrong value %q, expected %q", *label.Name, test.name, *label.Value, val)
+					t.Errorf("%q metric contains unexpected label %q", test.name, label.GetName())
+				} else if val != label.GetValue() {
+					t.Errorf("label %q in metric %q has wrong value %q, expected %q", label.GetName(), test.name, label.GetValue(), val)
 				}
 			}
 			test.assert(family)
@@ -407,7 +404,7 @@ func TestPrometheusMetricRemoval(t *testing.T) {
 	promRegistry = prometheus.NewRegistry()
 	t.Cleanup(promState.reset)
 
-	prometheusRegistry := RegisterPrometheus(context.Background(), &types.Prometheus{AddEntryPointsLabels: true, AddServicesLabels: true, AddRoutersLabels: true})
+	prometheusRegistry := RegisterPrometheus(t.Context(), &types.Prometheus{AddEntryPointsLabels: true, AddServicesLabels: true, AddRoutersLabels: true})
 	defer promRegistry.Unregister(promState)
 
 	conf1 := dynamic.Configuration{
@@ -498,7 +495,7 @@ func TestPrometheusMetricRemoveEndpointForRecoveredService(t *testing.T) {
 	promRegistry = prometheus.NewRegistry()
 	t.Cleanup(promState.reset)
 
-	prometheusRegistry := RegisterPrometheus(context.Background(), &types.Prometheus{AddServicesLabels: true})
+	prometheusRegistry := RegisterPrometheus(t.Context(), &types.Prometheus{AddServicesLabels: true})
 	defer promRegistry.Unregister(promState)
 
 	conf1 := dynamic.Configuration{
@@ -537,7 +534,7 @@ func TestPrometheusMetricRemoveEndpointForRecoveredService(t *testing.T) {
 func TestPrometheusRemovedMetricsReset(t *testing.T) {
 	t.Cleanup(promState.reset)
 
-	prometheusRegistry := RegisterPrometheus(context.Background(), &types.Prometheus{AddEntryPointsLabels: true, AddServicesLabels: true})
+	prometheusRegistry := RegisterPrometheus(t.Context(), &types.Prometheus{AddEntryPointsLabels: true, AddServicesLabels: true})
 	defer promRegistry.Unregister(promState)
 
 	conf1 := dynamic.Configuration{
@@ -645,7 +642,7 @@ func findMetricByLabelNamesValues(family *dto.MetricFamily, labelNamesValues ...
 		return nil
 	}
 
-	for _, metric := range family.Metric {
+	for _, metric := range family.GetMetric() {
 		if hasMetricAllLabelPairs(metric, labelNamesValues...) {
 			return metric
 		}
@@ -665,7 +662,7 @@ func hasMetricAllLabelPairs(metric *dto.Metric, labelNamesValues ...string) bool
 }
 
 func hasMetricLabelPair(metric *dto.Metric, labelName, labelValue string) bool {
-	for _, labelPair := range metric.Label {
+	for _, labelPair := range metric.GetLabel() {
 		if labelPair.GetName() == labelName && labelPair.GetValue() == labelValue {
 			return true
 		}
@@ -682,12 +679,12 @@ func assertCounterValue(t *testing.T, want float64, family *dto.MetricFamily, la
 		t.Error("metric must not be nil")
 		return
 	}
-	if metric.Counter == nil {
+	if metric.GetCounter() == nil {
 		t.Errorf("metric %s must be a counter", family.GetName())
 		return
 	}
 
-	if cv := metric.Counter.GetValue(); cv != want {
+	if cv := metric.GetCounter().GetValue(); cv != want {
 		t.Errorf("metric %s has value %v, want %v", family.GetName(), cv, want)
 	}
 }
@@ -696,7 +693,7 @@ func buildCounterAssert(t *testing.T, metricName string, expectedValue int) func
 	t.Helper()
 
 	return func(family *dto.MetricFamily) {
-		if cv := int(family.Metric[0].Counter.GetValue()); cv != expectedValue {
+		if cv := int(family.GetMetric()[0].GetCounter().GetValue()); cv != expectedValue {
 			t.Errorf("metric %s has value %d, want %d", metricName, cv, expectedValue)
 		}
 	}
@@ -706,7 +703,7 @@ func buildGreaterThanCounterAssert(t *testing.T, metricName string, expectedMinV
 	t.Helper()
 
 	return func(family *dto.MetricFamily) {
-		if cv := int(family.Metric[0].Counter.GetValue()); cv < expectedMinValue {
+		if cv := int(family.GetMetric()[0].GetCounter().GetValue()); cv < expectedMinValue {
 			t.Errorf("metric %s has value %d, want at least %d", metricName, cv, expectedMinValue)
 		}
 	}
@@ -716,7 +713,7 @@ func buildHistogramAssert(t *testing.T, metricName string, expectedSampleCount i
 	t.Helper()
 
 	return func(family *dto.MetricFamily) {
-		if sc := int(family.Metric[0].Histogram.GetSampleCount()); sc != expectedSampleCount {
+		if sc := int(family.GetMetric()[0].GetHistogram().GetSampleCount()); sc != expectedSampleCount {
 			t.Errorf("metric %s has sample count value %d, want %d", metricName, sc, expectedSampleCount)
 		}
 	}
@@ -726,7 +723,7 @@ func buildGaugeAssert(t *testing.T, metricName string, expectedValue int) func(f
 	t.Helper()
 
 	return func(family *dto.MetricFamily) {
-		if gv := int(family.Metric[0].Gauge.GetValue()); gv != expectedValue {
+		if gv := int(family.GetMetric()[0].GetGauge().GetValue()); gv != expectedValue {
 			t.Errorf("metric %s has value %d, want %d", metricName, gv, expectedValue)
 		}
 	}
@@ -736,7 +733,7 @@ func buildTimestampAssert(t *testing.T, metricName string) func(family *dto.Metr
 	t.Helper()
 
 	return func(family *dto.MetricFamily) {
-		if ts := time.Unix(int64(family.Metric[0].Gauge.GetValue()), 0); time.Since(ts) > time.Minute {
+		if ts := time.Unix(int64(family.GetMetric()[0].GetGauge().GetValue()), 0); time.Since(ts) > time.Minute {
 			t.Errorf("metric %s has wrong timestamp %v", metricName, ts)
 		}
 	}

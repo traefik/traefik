@@ -525,9 +525,16 @@ providers:
 ```
 
 ```bash tab="CLI"
---providers.consulcatalog.defaultRule=Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)
+--providers.consulcatalog.defaultRule='Host(`{{ .Name }}.{{ index .Labels "customLabel"}}`)'
 # ...
 ```
+
+??? info "Default rule and Traefik service"
+
+    The exposure of the Traefik container, combined with the default rule mechanism,
+    can lead to create a router targeting itself in a loop.
+    In this case, to prevent an infinite loop,
+    Traefik adds an internal middleware to refuse the request if it comes from the same router.
 
 ### `connectAware`
 
@@ -704,6 +711,32 @@ providers:
 
 ```bash tab="CLI"
 --providers.consulcatalog.namespaces=ns1,ns2
+# ...
+```
+
+### `strictChecks`
+
+_Optional, Default="passing,warning"_
+
+Define which [Consul Service health checks](https://developer.hashicorp.com/consul/docs/services/usage/checks#define-initial-health-check-status) are allowed to take on traffic.
+
+```yaml tab="File (YAML)"
+providers:
+  consulCatalog:
+    strictChecks: 
+      - "passing"
+      - "warning"
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.consulCatalog]
+  strictChecks = ["passing", "warning"]
+  # ...
+```
+
+```bash tab="CLI"
+--providers.consulcatalog.strictChecks=passing,warning
 # ...
 ```
 

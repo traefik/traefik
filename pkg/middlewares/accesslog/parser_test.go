@@ -60,13 +60,12 @@ func TestParseAccessLog(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
 			result, err := ParseAccessLog(test.value)
 			assert.NoError(t, err)
-			assert.Equal(t, len(test.expected), len(result))
+			assert.Len(t, result, len(test.expected))
 			for key, value := range test.expected {
 				assert.Equal(t, value, result[key])
 			}

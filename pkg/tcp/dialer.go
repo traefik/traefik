@@ -16,6 +16,7 @@ import (
 	"github.com/spiffe/go-spiffe/v2/svid/x509svid"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/types"
 	"golang.org/x/net/proxy"
 )
 
@@ -156,7 +157,7 @@ func (d *DialerManager) createDialers(name string, cfg *dynamic.TCPServersTransp
 	return nil
 }
 
-func createRootCACertPool(rootCAs []traefiktls.FileOrContent) *x509.CertPool {
+func createRootCACertPool(rootCAs []types.FileOrContent) *x509.CertPool {
 	if len(rootCAs) == 0 {
 		return nil
 	}

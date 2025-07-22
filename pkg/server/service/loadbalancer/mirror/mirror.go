@@ -25,6 +25,7 @@ type Mirroring struct {
 	rw             http.ResponseWriter
 	routinePool    *safe.Pool
 
+	mirrorBody       bool
 	maxBodySize      int64
 	wantsHealthCheck bool
 
@@ -33,11 +34,12 @@ type Mirroring struct {
 }
 
 // New returns a new instance of *Mirroring.
-func New(handler http.Handler, pool *safe.Pool, maxBodySize int64, hc *dynamic.HealthCheck) *Mirroring {
+func New(handler http.Handler, pool *safe.Pool, mirrorBody bool, maxBodySize int64, hc *dynamic.HealthCheck) *Mirroring {
 	return &Mirroring{
 		routinePool:      pool,
 		handler:          handler,
 		rw:               blackHoleResponseWriter{},
+		mirrorBody:       mirrorBody,
 		maxBodySize:      maxBodySize,
 		wantsHealthCheck: hc != nil,
 	}
@@ -83,7 +85,7 @@ func (m *Mirroring) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	logger := log.Ctx(req.Context())
-	rr, bytesRead, err := newReusableRequest(req, m.maxBodySize)
+	rr, bytesRead, err := newReusableRequest(req, m.mirrorBody, m.maxBodySize)
 	if err != nil && !errors.Is(err, errBodyTooLarge) {
 		http.Error(rw, fmt.Sprintf("%s: creating reusable request: %v",
 			http.StatusText(http.StatusInternalServerError), err), http.StatusInternalServerError)
@@ -200,11 +202,11 @@ var errBodyTooLarge = errors.New("request body too large")
 
 // if the returned error is errBodyTooLarge, newReusableRequest also returns the
 // bytes that were already consumed from the request's body.
-func newReusableRequest(req *http.Request, maxBodySize int64) (*reusableRequest, []byte, error) {
+func newReusableRequest(req *http.Request, mirrorBody bool, maxBodySize int64) (*reusableRequest, []byte, error) {
 	if req == nil {
 		return nil, nil, errors.New("nil input request")
 	}
-	if req.Body == nil || req.ContentLength == 0 {
+	if req.Body == nil || req.ContentLength == 0 || !mirrorBody {
 		return &reusableRequest{req: req}, nil, nil
 	}
 

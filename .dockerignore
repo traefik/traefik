@@ -1,5 +1,5 @@
 dist/
-!dist/traefik
+!dist/**/traefik
 site/
 vendor/
 .idea/

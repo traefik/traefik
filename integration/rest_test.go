@@ -5,14 +5,15 @@ import (
 	"encoding/json"
 	"net"
 	"net/http"
-	"os"
 	"strings"
+	"testing"
 	"time"
 
-	"github.com/go-check/check"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 	"github.com/traefik/traefik/v3/integration/try"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	checker "github.com/vdemeester/shakers"
 )
 
 type RestSuite struct {
@@ -20,28 +21,33 @@ type RestSuite struct {
 	whoamiAddr string
 }
 
-func (s *RestSuite) SetUpSuite(c *check.C) {
-	s.createComposeProject(c, "rest")
-	s.composeUp(c)
-
-	s.whoamiAddr = net.JoinHostPort(s.getComposeServiceIP(c, "whoami1"), "80")
+func TestRestSuite(t *testing.T) {
+	suite.Run(t, new(RestSuite))
 }
 
-func (s *RestSuite) TestSimpleConfigurationInsecure(c *check.C) {
-	cmd, display := s.traefikCmd(withConfigFile("fixtures/rest/simple.toml"))
+func (s *RestSuite) SetupSuite() {
+	s.BaseSuite.SetupSuite()
 
-	defer display(c)
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer s.killCmd(cmd)
+	s.createComposeProject("rest")
+	s.composeUp()
+
+	s.whoamiAddr = net.JoinHostPort(s.getComposeServiceIP("whoami1"), "80")
+}
+
+func (s *RestSuite) TearDownSuite() {
+	s.BaseSuite.TearDownSuite()
+}
+
+func (s *RestSuite) TestSimpleConfigurationInsecure() {
+	s.traefikCmd(withConfigFile("fixtures/rest/simple.toml"))
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1000*time.Millisecond, try.BodyContains("rest@internal"))
-	c.Assert(err, checker.IsNil)
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1000*time.Millisecond, try.BodyContains("rest@internal"))
+	require.NoError(s.T(), err)
 
 	// Expected a 404 as we did not configure anything.
 	err = try.GetRequest("http://127.0.0.1:8000/", 1000*time.Millisecond, try.StatusCodeIs(http.StatusNotFound))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	testCase := []struct {
 		desc      string
@@ -105,47 +111,41 @@ func (s *RestSuite) TestSimpleConfigurationInsecure(c *check.C) {
 
 	for _, test := range testCase {
 		data, err := json.Marshal(test.config)
-		c.Assert(err, checker.IsNil)
+		require.NoError(s.T(), err)
 
 		request, err := http.NewRequest(http.MethodPut, "http://127.0.0.1:8080/api/providers/rest", bytes.NewReader(data))
-		c.Assert(err, checker.IsNil)
+		require.NoError(s.T(), err)
 
 		response, err := http.DefaultClient.Do(request)
-		c.Assert(err, checker.IsNil)
-		c.Assert(response.StatusCode, checker.Equals, http.StatusOK)
+		require.NoError(s.T(), err)
+		assert.Equal(s.T(), http.StatusOK, response.StatusCode)
 
 		err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 3*time.Second, try.BodyContains(test.ruleMatch))
-		c.Assert(err, checker.IsNil)
+		require.NoError(s.T(), err)
 
 		err = try.GetRequest("http://127.0.0.1:8000/", 1000*time.Millisecond, try.StatusCodeIs(http.StatusOK))
-		c.Assert(err, checker.IsNil)
+		require.NoError(s.T(), err)
 	}
 }
 
-func (s *RestSuite) TestSimpleConfiguration(c *check.C) {
-	file := s.adaptFile(c, "fixtures/rest/simple_secure.toml", struct{}{})
-	defer os.Remove(file)
+func (s *RestSuite) TestSimpleConfiguration() {
+	file := s.adaptFile("fixtures/rest/simple_secure.toml", struct{}{})
 
-	cmd, display := s.traefikCmd(withConfigFile(file))
-
-	defer display(c)
-	err := cmd.Start()
-	c.Assert(err, checker.IsNil)
-	defer s.killCmd(cmd)
+	s.traefikCmd(withConfigFile(file))
 
 	// Expected a 404 as we did not configure anything.
-	err = try.GetRequest("http://127.0.0.1:8000/", 1000*time.Millisecond, try.StatusCodeIs(http.StatusNotFound))
-	c.Assert(err, checker.IsNil)
+	err := try.GetRequest("http://127.0.0.1:8000/", 1000*time.Millisecond, try.StatusCodeIs(http.StatusNotFound))
+	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2000*time.Millisecond, try.BodyContains("PathPrefix(`/secure`)"))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	request, err := http.NewRequest(http.MethodPut, "http://127.0.0.1:8080/api/providers/rest", strings.NewReader("{}"))
-	c.Assert(err, checker.IsNil)
+	require.NoError(s.T(), err)
 
 	response, err := http.DefaultClient.Do(request)
-	c.Assert(err, checker.IsNil)
-	c.Assert(response.StatusCode, checker.Equals, http.StatusNotFound)
+	require.NoError(s.T(), err)
+	assert.Equal(s.T(), http.StatusNotFound, response.StatusCode)
 
 	testCase := []struct {
 		desc      string
@@ -209,19 +209,19 @@ func (s *RestSuite) TestSimpleConfiguration(c *check.C) {
 
 	for _, test := range testCase {
 		data, err := json.Marshal(test.config)
-		c.Assert(err, checker.IsNil)
+		require.NoError(s.T(), err)
 
 		request, err := http.NewRequest(http.MethodPut, "http://127.0.0.1:8000/secure/api/providers/rest", bytes.NewReader(data))
-		c.Assert(err, checker.IsNil)
+		require.NoError(s.T(), err)
 
 		response, err := http.DefaultClient.Do(request)
-		c.Assert(err, checker.IsNil)
-		c.Assert(response.StatusCode, checker.Equals, http.StatusOK)
+		require.NoError(s.T(), err)
+		assert.Equal(s.T(), http.StatusOK, response.StatusCode)
 
 		err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains(test.ruleMatch))
-		c.Assert(err, checker.IsNil)
+		require.NoError(s.T(), err)
 
 		err = try.GetRequest("http://127.0.0.1:8000/", time.Second, try.StatusCodeIs(http.StatusOK))
-		c.Assert(err, checker.IsNil)
+		require.NoError(s.T(), err)
 	}
 }

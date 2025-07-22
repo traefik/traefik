@@ -1,4 +1,3 @@
-version: "3.8"
 services:
   server0:
     image: traefik/whoami
@@ -40,7 +39,7 @@ services:
       traefik.http.routers.rt-authFrontend.entryPoints: httpFrontendAuth
       traefik.http.routers.rt-authFrontend.rule: Host(`frontend.auth.docker.local`)
       traefik.http.routers.rt-authFrontend.middlewares: basicauth
-      traefik.http.middlewares.basicauth.basicauth.users: test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/
+      traefik.http.middlewares.basicauth.basicauth.users: "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"
       traefik.http.services.service3.loadbalancer.server.port: 80
 
   digestAuthMiddleware:
@@ -85,7 +84,30 @@ services:
       traefik.http.middlewares.wl.ipallowlist.sourcerange: 8.8.8.8/32
       traefik.http.services.service3.loadbalancer.server.port: 80
 
-networks:
-  default:
-    name: traefik-test-network
-    external: true
+  preflightCORS:
+    image: traefik/whoami
+    labels:
+      traefik.enable: true
+      traefik.http.routers.rt-preflightCORS.entryPoints: preflight
+      traefik.http.routers.rt-preflightCORS.rule: Host(`preflight.docker.local`)
+      traefik.http.routers.rt-preflightCORS.middlewares: preflightCORS
+      traefik.http.middlewares.preflightCORS.headers.accessControlAllowMethods: OPTIONS, GET
+      traefik.http.services.preflightCORS.loadbalancer.server.port: 80
+
+  ping:
+    image: traefik/whoami
+    labels:
+      traefik.enable: true
+      traefik.http.routers.ping.entryPoints: ping
+      traefik.http.routers.ping.rule: PathPrefix(`/ping`)
+      traefik.http.routers.ping.service: ping@internal
+
+      traefik.http.routers.ping-error.entryPoints: ping
+      traefik.http.routers.ping-error.rule: PathPrefix(`/ping-error`)
+      traefik.http.routers.ping-error.middlewares: errors, basicauth
+      traefik.http.routers.ping-error.service: ping@internal
+      traefik.http.middlewares.basicauth.basicauth.users: "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"
+      traefik.http.middlewares.errors.errors.status: 401
+      traefik.http.middlewares.errors.errors.service: service3
+      traefik.http.middlewares.errors.errors.query: /
+      traefik.http.services.service3.loadbalancer.server.port: 80

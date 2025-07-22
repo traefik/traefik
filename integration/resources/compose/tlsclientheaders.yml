@@ -1,4 +1,3 @@
-version: "3.8"
 services:
   whoami:
     image: traefik/whoami
@@ -7,8 +6,3 @@ services:
       traefik.http.routers.route1.middlewares: passtls
       traefik.http.routers.route1.tls: true
       traefik.http.middlewares.passtls.passtlsclientcert.pem: true
-
-networks:
-  default:
-    name: traefik-test-network
-    external: true

@@ -1,0 +1,18 @@
+[
+  {
+    "ID": "_nomad-task-a98bac3d-5382-3032-1954-57aff58b20c1-task1-job5task1-http",
+    "ServiceName": "job5task1",
+    "Namespace": "default",
+    "NodeID": "e262ecb6-a7ac-7c3e-4de0-06445559e596",
+    "Datacenter": "dc1",
+    "JobID": "job5",
+    "AllocID": "a98bac3d-5382-3032-1954-57aff58b20c1",
+    "Tags": [
+      "traefik.enable=true"
+    ],
+    "Address": "192.168.1.21",
+    "Port": 24542,
+    "CreateIndex": 10013,
+    "ModifyIndex": 10013
+  }
+]

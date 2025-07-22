@@ -10,12 +10,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/opentracing/opentracing-go/ext"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
-	"github.com/traefik/traefik/v3/pkg/tracing"
+	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"github.com/vulcand/oxy/v2/utils"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // Compile time validation that the response recorder implements http interfaces correctly.
@@ -24,7 +24,7 @@ var (
 	_ middlewares.Stateful = &codeCatcher{}
 )
 
-const typeName = "customError"
+const typeName = "CustomError"
 
 type serviceBuilder interface {
 	BuildHTTP(ctx context.Context, serviceName string) (http.Handler, error)
@@ -37,6 +37,12 @@ type customErrors struct {
 	backendHandler http.Handler
 	httpCodeRanges types.HTTPCodeRanges
 	backendQuery   string
+	statusRewrites []statusRewrite
+}
+
+type statusRewrite struct {
+	fromCodes types.HTTPCodeRanges
+	toCode    int
 }
 
 // New creates a new custom error pages middleware.
@@ -53,25 +59,40 @@ func New(ctx context.Context, next http.Handler, config dynamic.ErrorPage, servi
 		return nil, err
 	}
 
+	// Parse StatusRewrites
+	statusRewrites := make([]statusRewrite, 0, len(config.StatusRewrites))
+	for k, v := range config.StatusRewrites {
+		ranges, err := types.NewHTTPCodeRanges([]string{k})
+		if err != nil {
+			return nil, err
+		}
+
+		statusRewrites = append(statusRewrites, statusRewrite{
+			fromCodes: ranges,
+			toCode:    v,
+		})
+	}
+
 	return &customErrors{
 		name:           name,
 		next:           next,
 		backendHandler: backend,
 		httpCodeRanges: httpCodeRanges,
 		backendQuery:   config.Query,
+		statusRewrites: statusRewrites,
 	}, nil
 }
 
-func (c *customErrors) GetTracingInformation() (string, ext.SpanKindEnum) {
-	return c.name, tracing.SpanKindNoneEnum
+func (c *customErrors) GetTracingInformation() (string, string, trace.SpanKind) {
+	return c.name, typeName, trace.SpanKindInternal
 }
 
 func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	logger := middlewares.GetLogger(req.Context(), c.name, typeName)
 
 	if c.backendHandler == nil {
-		logger.Error().Msg("Error pages: no backend handler.")
-		tracing.SetErrorWithEvent(req, "Error pages: no backend handler.")
+		logger.Error().Msg("No backend handler.")
+		observability.SetStatusErrorf(req.Context(), "No backend handler.")
 		c.next.ServeHTTP(rw, req)
 		return
 	}
@@ -84,24 +105,40 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	// check the recorder code against the configured http status code ranges
 	code := catcher.getCode()
-	logger.Debug().Msgf("Caught HTTP Status Code %d, returning error page", code)
+
+	originalCode := code
+
+	// Check if we need to rewrite the status code
+	for _, rsc := range c.statusRewrites {
+		if rsc.fromCodes.Contains(code) {
+			code = rsc.toCode
+			break
+		}
+	}
+
+	if code != originalCode {
+		logger.Debug().Msgf("Caught HTTP Status Code %d (rewritten to %d), returning error page", originalCode, code)
+	} else {
+		logger.Debug().Msgf("Caught HTTP Status Code %d, returning error page", code)
+	}
 
 	var query string
 	if len(c.backendQuery) > 0 {
 		query = "/" + strings.TrimPrefix(c.backendQuery, "/")
 		query = strings.ReplaceAll(query, "{status}", strconv.Itoa(code))
+		query = strings.ReplaceAll(query, "{originalStatus}", strconv.Itoa(originalCode))
 		query = strings.ReplaceAll(query, "{url}", url.QueryEscape(req.URL.String()))
 	}
 
 	pageReq, err := newRequest("http://" + req.Host + query)
 	if err != nil {
-		logger.Error().Err(err).Send()
+		logger.Error().Msgf("Unable to create error page request: %v", err)
+		observability.SetStatusErrorf(req.Context(), "Unable to create error page request: %v", err)
 		http.Error(rw, http.StatusText(code), code)
 		return
 	}
 
 	utils.CopyHeaders(pageReq.Header, req.Header)
-
 	c.backendHandler.ServeHTTP(newCodeModifier(rw, code),
 		pageReq.WithContext(req.Context()))
 }
@@ -235,7 +272,7 @@ func (cc *codeCatcher) Flush() {
 	// since we want to serve the ones from the error page,
 	// so we just don't flush.
 	// (e.g., To prevent superfluous WriteHeader on request with a
-	// `Transfert-Encoding: chunked` header).
+	// `Transfer-Encoding: chunked` header).
 	if cc.caughtFilteredCode {
 		return
 	}

@@ -12,7 +12,7 @@ A Story of key & values
 
 !!! info "Keys"
 
-    - Keys are case insensitive.
+    - Keys are case-insensitive.
     - The complete list of keys can be found in [the reference page](../../reference/dynamic-configuration/kv.md).
 
 ### Routers
@@ -95,6 +95,30 @@ A Story of key & values
     |---------------------------------------------|----------|
     | `traefik/http/routers/myrouter/tls/options` | `foobar` |
 
+??? info "`traefik/http/routers/<router_name>/observability/accesslogs`"
+
+    See accesslogs [option](../routers/index.md#accesslogs) for more information.
+
+    | Key (Path)                                               | Value  |
+    |----------------------------------------------------------|--------|
+    | `traefik/http/routers/myrouter/observability/accesslogs` | `true` |
+
+??? info "`traefik/http/routers/<router_name>/observability/metrics`"
+
+    See metrics [option](../routers/index.md#metrics) for more information.
+
+    | Key (Path)                                            | Value  |
+    |-------------------------------------------------------|--------|
+    | `traefik/http/routers/myrouter/observability/metrics` | `true` |
+
+??? info "`traefik/http/routers/<router_name>/observability/tracing`"
+
+    See tracing [option](../routers/index.md#tracing) for more information.
+
+    | Key (Path)                                            | Value  |
+    |-------------------------------------------------------|--------|
+    | `traefik/http/routers/myrouter/observability/tracing` | `true` |
+
 ??? info "`traefik/http/routers/<router_name>/priority`"
 
     See [priority](../routers/index.md#priority) for more information.
@@ -155,6 +179,14 @@ A Story of key & values
     | Key (Path)                                                          | Value |
     |---------------------------------------------------------------------|-------|
     | `traefik/http/services/myservice/loadbalancer/healthcheck/interval` | `10`  |
+
+??? info "`traefik/http/services/<service_name>/loadbalancer/healthcheck/unhealthyinterval`"
+
+    See [health check](../services/index.md#health-check) for more information.
+
+    | Key (Path)                                                                   | Value |
+    |------------------------------------------------------------------------------|-------|
+    | `traefik/http/services/myservice/loadbalancer/healthcheck/unhealthyinterval` | `10`  |
 
 ??? info "`traefik/http/services/<service_name>/loadbalancer/healthcheck/path`"
 
@@ -228,6 +260,14 @@ A Story of key & values
     |-------------------------------------------------------------------|----------|
     | `traefik/http/services/myservice/loadbalancer/sticky/cookie/name` | `foobar` |
 
+??? info "`traefik/http/services/<service_name>/loadbalancer/sticky/cookie/path`"
+
+    See [sticky sessions](../services/index.md#sticky-sessions) for more information.
+
+    | Key (Path)                                                        | Value     |
+    |-------------------------------------------------------------------|-----------|
+    | `traefik/http/services/myservice/loadbalancer/sticky/cookie/path` | `/foobar` |
+
 ??? info "`traefik/http/services/<service_name>/loadbalancer/sticky/cookie/secure`"
 
     See [sticky sessions](../services/index.md#sticky-sessions) for more information.
@@ -244,6 +284,22 @@ A Story of key & values
     |-----------------------------------------------------------------------|--------|
     | `traefik/http/services/myservice/loadbalancer/sticky/cookie/samesite` | `none` |
 
+??? info "`traefik/http/services/<service_name>/loadbalancer/sticky/cookie/domain`"
+
+    See [sticky sessions](../services/index.md#sticky-sessions) for more information.
+
+    | Key (Path)                                                            | Value     |
+    |-----------------------------------------------------------------------|-----------|
+    | `traefik/http/services/myservice/loadbalancer/sticky/cookie/domain`   | `foo.com` |
+
+??? info "`traefik/http/services/<service_name>/loadbalancer/sticky/cookie/maxage`"
+
+    See [sticky sessions](../services/index.md#sticky-sessions) for more information.
+
+    | Key (Path)                                                          | Value |
+    |---------------------------------------------------------------------|-------|
+    | `traefik/http/services/myservice/loadbalancer/sticky/cookie/maxage` | `42`  |
+
 ??? info "`traefik/http/services/<service_name>/loadbalancer/responseforwarding/flushinterval`"
 
     See [response forwarding](../services/index.md#response-forwarding) for more information.
@@ -251,6 +307,14 @@ A Story of key & values
     | Key (Path)                                                                      | Value |
     |---------------------------------------------------------------------------------|-------|
     | `traefik/http/services/myservice/loadbalancer/responseforwarding/flushinterval` | `10`  |
+
+??? info "`traefik/http/services/<service_name>/loadbalancer/strategy`"
+
+    See [load balancing strategy](../services/index.md#load-balancing-strategy) for more information.
+
+    | Key (Path)                                              | Value |
+    |---------------------------------------------------------|-------|
+    | `traefik/http/services/myservice/loadbalancer/strategy` | `p2c` |
 
 ??? info "`traefik/http/services/<service_name>/mirroring/service`"
 
@@ -300,11 +364,29 @@ A Story of key & values
     |------------------------------------------------------------------------|--------|
     | `traefik/http/services/<service_name>/weighted/sticky/cookie/samesite` | `none` |
 
+??? info "`traefik/http/services/<service_name>/weighted/sticky/cookie/domain`"
+
+    | Key (Path)                                                             | Value     |
+    |------------------------------------------------------------------------|-----------|
+    | `traefik/http/services/<service_name>/weighted/sticky/cookie/domain`   | `foo.com` |
+
 ??? info "`traefik/http/services/<service_name>/weighted/sticky/cookie/httpOnly`"
 
     | Key (Path)                                                             | Value  |
     |------------------------------------------------------------------------|--------|
     | `traefik/http/services/<service_name>/weighted/sticky/cookie/httpOnly` | `true` |
+
+??? info "`traefik/http/services/<service_name>/weighted/sticky/cookie/maxage`"
+
+    | Key (Path)                                                           | Value |
+    |----------------------------------------------------------------------|-------|
+    | `traefik/http/services/<service_name>/weighted/sticky/cookie/maxage` | `42`  |
+
+??? info "`traefik/http/services/<service_name>/weighted/sticky/cookie/path`"
+
+    | Key (Path)                                                           | Value     |
+    |----------------------------------------------------------------------|-----------|
+    | `traefik/http/services/<service_name>/weighted/sticky/cookie/path`   | `/foobar` |
 
 ### Middleware
 

@@ -29,11 +29,14 @@ func TestNewHeader_customRequestHeader(t *testing.T) {
 			desc: "delete a header",
 			cfg: dynamic.Headers{
 				CustomRequestHeaders: map[string]string{
+					"X-Forwarded-For":         "",
 					"X-Custom-Request-Header": "",
 					"Foo":                     "",
 				},
 			},
-			expected: http.Header{},
+			expected: http.Header{
+				"X-Forwarded-For": nil,
+			},
 		},
 		{
 			desc: "override a header",
@@ -49,7 +52,6 @@ func TestNewHeader_customRequestHeader(t *testing.T) {
 	emptyHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -132,6 +134,7 @@ func TestNewHeader_CORSPreflights(t *testing.T) {
 				"Origin":                         {"https://foo.bar.org"},
 			},
 			expected: map[string][]string{
+				"Content-Length":               {"0"},
 				"Access-Control-Allow-Origin":  {"https://foo.bar.org"},
 				"Access-Control-Max-Age":       {"600"},
 				"Access-Control-Allow-Methods": {"GET,OPTIONS,PUT"},
@@ -150,6 +153,7 @@ func TestNewHeader_CORSPreflights(t *testing.T) {
 				"Origin":                         {"https://foo.bar.org"},
 			},
 			expected: map[string][]string{
+				"Content-Length":               {"0"},
 				"Access-Control-Allow-Origin":  {"*"},
 				"Access-Control-Max-Age":       {"600"},
 				"Access-Control-Allow-Methods": {"GET,OPTIONS,PUT"},
@@ -169,6 +173,7 @@ func TestNewHeader_CORSPreflights(t *testing.T) {
 				"Origin":                         {"https://foo.bar.org"},
 			},
 			expected: map[string][]string{
+				"Content-Length":                   {"0"},
 				"Access-Control-Allow-Origin":      {"*"},
 				"Access-Control-Max-Age":           {"600"},
 				"Access-Control-Allow-Methods":     {"GET,OPTIONS,PUT"},
@@ -189,6 +194,7 @@ func TestNewHeader_CORSPreflights(t *testing.T) {
 				"Origin":                         {"https://foo.bar.org"},
 			},
 			expected: map[string][]string{
+				"Content-Length":               {"0"},
 				"Access-Control-Allow-Origin":  {"*"},
 				"Access-Control-Max-Age":       {"600"},
 				"Access-Control-Allow-Methods": {"GET,OPTIONS,PUT"},
@@ -208,6 +214,7 @@ func TestNewHeader_CORSPreflights(t *testing.T) {
 				"Origin":                        {"https://foo.bar.org"},
 			},
 			expected: map[string][]string{
+				"Content-Length":               {"0"},
 				"Access-Control-Allow-Origin":  {"*"},
 				"Access-Control-Max-Age":       {"600"},
 				"Access-Control-Allow-Methods": {"GET,OPTIONS,PUT"},

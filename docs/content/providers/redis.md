@@ -10,6 +10,12 @@ A Story of KV store & Containers
 
 Store your configuration in Redis and let Traefik do the rest!
 
+!!! tip "Dynamic configuration updates"
+
+    Dynamic configuration updates require Redis [keyspace notifications](https://redis.io/docs/latest/develop/use/keyspace-notifications) to be enabled.
+    Cloud-managed Redis services (e.g., GCP Memorystore, AWS ElastiCache) may disable this by default due to CPU performance issues.
+    For more information, see the [Redis](https://redis.io/docs/latest/develop/use/keyspace-notifications/) documentation or refer to your cloud provider's documentation for specific configuration steps.
+
 ## Routing Configuration
 
 See the dedicated section in [routing](../routing/providers/kv.md).
@@ -103,6 +109,28 @@ providers:
 
 ```bash tab="CLI"
 --providers.redis.password=foo
+```
+
+### `db`
+
+_Optional, Default=0_
+
+Defines the database to be selected after connecting to the Redis.
+
+```yaml tab="File (YAML)"
+providers:
+  redis:
+    # ...
+    db: 0
+```
+
+```toml tab="File (TOML)"
+[providers.redis]
+  db = 0
+```
+
+```bash tab="CLI"
+--providers.redis.db=0
 ```
 
 ### `tls`
@@ -206,4 +234,167 @@ providers:
 
 ```bash tab="CLI"
 --providers.redis.tls.insecureSkipVerify=true
+```
+
+### `sentinel`
+
+_Optional_
+
+Defines the Sentinel configuration used to interact with Redis Sentinel.
+
+#### `masterName`
+
+_Required_
+
+`masterName` is the name of the Sentinel master.
+
+```yaml tab="File (YAML)"
+providers:
+  redis:
+    sentinel:
+      masterName: my-master
+```
+
+```toml tab="File (TOML)"
+[providers.redis.sentinel]
+  masterName = "my-master"
+```
+
+```bash tab="CLI"
+--providers.redis.sentinel.masterName=my-master
+```
+
+#### `username`
+
+_Optional_
+
+`username` is the username for Sentinel authentication.
+
+```yaml tab="File (YAML)"
+providers:
+  redis:
+    sentinel:
+      username: user
+```
+
+```toml tab="File (TOML)"
+[providers.redis.sentinel]
+  username = "user"
+```
+
+```bash tab="CLI"
+--providers.redis.sentinel.username=user
+```
+
+#### `password`
+
+_Optional_
+
+`password` is the password for Sentinel authentication.
+
+```yaml tab="File (YAML)"
+providers:
+  redis:
+    sentinel:
+      password: password
+```
+
+```toml tab="File (TOML)"
+[providers.redis.sentinel]
+  password = "password"
+```
+
+```bash tab="CLI"
+--providers.redis.sentinel.password=password
+```
+
+#### `latencyStrategy`
+
+_Optional, Default=false_
+
+`latencyStrategy` defines whether to route commands to the closest master or replica nodes 
+(mutually exclusive with RandomStrategy and ReplicaStrategy).
+
+```yaml tab="File (YAML)"
+providers:
+  redis:
+    sentinel:
+      latencyStrategy: true
+```
+
+```toml tab="File (TOML)"
+[providers.redis.sentinel]
+latencyStrategy = true
+```
+
+```bash tab="CLI"
+--providers.redis.sentinel.latencyStrategy=true
+```
+
+#### `randomStrategy`
+
+_Optional, Default=false_
+
+`randomStrategy` defines whether to route commands randomly to master or replica nodes 
+(mutually exclusive with LatencyStrategy and ReplicaStrategy).
+
+```yaml tab="File (YAML)"
+providers:
+  redis:
+    sentinel:
+      randomStrategy: true
+```
+
+```toml tab="File (TOML)"
+[providers.redis.sentinel]
+randomStrategy = true
+```
+
+```bash tab="CLI"
+--providers.redis.sentinel.randomStrategy=true
+```
+
+#### `replicaStrategy`
+
+_Optional, Default=false_
+
+`replicaStrategy` Defines whether to route all commands to replica nodes 
+(mutually exclusive with LatencyStrategy and RandomStrategy).
+
+```yaml tab="File (YAML)"
+providers:
+  redis:
+    sentinel:
+      replicaStrategy: true
+```
+
+```toml tab="File (TOML)"
+[providers.redis.sentinel]
+replicaStrategy = true
+```
+
+```bash tab="CLI"
+--providers.redis.sentinel.replicaStrategy=true
+```
+
+#### `useDisconnectedReplicas`
+
+_Optional, Default=false_
+
+`useDisconnectedReplicas` defines whether to use replicas disconnected with master when cannot get connected replicas.
+
+```yaml tab="File (YAML)"
+providers:
+  redis:
+    sentinel:
+      useDisconnectedReplicas: true
+```
+
+```toml tab="File (TOML)"
+[providers.redis.sentinel]
+useDisconnectedReplicas = true
+```
+
+```bash tab="CLI"
+--providers.redis.sentinel.useDisconnectedReplicas=true
 ```

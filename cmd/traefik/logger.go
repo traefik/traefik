@@ -1,18 +1,20 @@
 package main
 
 import (
+	"errors"
+	"fmt"
 	"io"
 	stdlog "log"
 	"os"
 	"strings"
 	"time"
 
-	"github.com/natefinch/lumberjack"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/sirupsen/logrus"
 	"github.com/traefik/traefik/v3/pkg/config/static"
 	"github.com/traefik/traefik/v3/pkg/logs"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 func init() {
@@ -20,12 +22,21 @@ func init() {
 	zerolog.SetGlobalLevel(zerolog.ErrorLevel)
 }
 
-func setupLogger(staticConfiguration *static.Configuration) {
+func setupLogger(staticConfiguration *static.Configuration) error {
+	// Validate that the experimental flag is set up at this point,
+	// rather than validating the static configuration before the setupLogger call.
+	// This ensures that validation messages are not logged using an un-configured logger.
+	if staticConfiguration.Log != nil && staticConfiguration.Log.OTLP != nil &&
+		(staticConfiguration.Experimental == nil || !staticConfiguration.Experimental.OTLPLogs) {
+		return errors.New("the experimental OTLPLogs feature must be enabled to use OTLP logging")
+	}
+
 	// configure log format
 	w := getLogWriter(staticConfiguration)
 
 	// configure log level
 	logLevel := getLogLevel(staticConfiguration)
+	zerolog.SetGlobalLevel(logLevel)
 
 	// create logger
 	logCtx := zerolog.New(w).With().Timestamp()
@@ -34,8 +45,16 @@ func setupLogger(staticConfiguration *static.Configuration) {
 	}
 
 	log.Logger = logCtx.Logger().Level(logLevel)
+
+	if staticConfiguration.Log != nil && staticConfiguration.Log.OTLP != nil {
+		var err error
+		log.Logger, err = logs.SetupOTelLogger(log.Logger, staticConfiguration.Log.OTLP)
+		if err != nil {
+			return fmt.Errorf("setting up OpenTelemetry logger: %w", err)
+		}
+	}
+
 	zerolog.DefaultContextLogger = &log.Logger
-	zerolog.SetGlobalLevel(logLevel)
 
 	// Global logrus replacement (related to lib like go-rancher-metadata, docker, etc.)
 	logrus.StandardLogger().Out = logs.NoLevel(log.Logger, zerolog.DebugLevel)
@@ -43,13 +62,18 @@ func setupLogger(staticConfiguration *static.Configuration) {
 	// configure default standard log.
 	stdlog.SetFlags(stdlog.Lshortfile | stdlog.LstdFlags)
 	stdlog.SetOutput(logs.NoLevel(log.Logger, zerolog.DebugLevel))
+
+	return nil
 }
 
 func getLogWriter(staticConfiguration *static.Configuration) io.Writer {
-	var w io.Writer = os.Stderr
+	if staticConfiguration.Log != nil && staticConfiguration.Log.OTLP != nil {
+		return io.Discard
+	}
 
+	var w io.Writer = os.Stdout
 	if staticConfiguration.Log != nil && len(staticConfiguration.Log.FilePath) > 0 {
-		_, _ = os.Create(staticConfiguration.Log.FilePath)
+		_, _ = os.OpenFile(staticConfiguration.Log.FilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0o666)
 		w = &lumberjack.Logger{
 			Filename:   staticConfiguration.Log.FilePath,
 			MaxSize:    staticConfiguration.Log.MaxSize,

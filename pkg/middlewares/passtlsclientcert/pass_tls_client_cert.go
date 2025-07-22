@@ -11,11 +11,10 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/opentracing/opentracing-go/ext"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
-	"github.com/traefik/traefik/v3/pkg/tracing"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const typeName = "PassClientTLSCert"
@@ -140,8 +139,8 @@ func New(ctx context.Context, next http.Handler, config dynamic.PassTLSClientCer
 	}, nil
 }
 
-func (p *passTLSClientCert) GetTracingInformation() (string, ext.SpanKindEnum) {
-	return p.name, tracing.SpanKindNoneEnum
+func (p *passTLSClientCert) GetTracingInformation() (string, string, trace.SpanKind) {
+	return p.name, typeName, trace.SpanKindInternal
 }
 
 func (p *passTLSClientCert) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
@@ -152,7 +151,7 @@ func (p *passTLSClientCert) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 		if req.TLS != nil && len(req.TLS.PeerCertificates) > 0 {
 			req.Header.Set(xForwardedTLSClientCert, getCertificates(ctx, req.TLS.PeerCertificates))
 		} else {
-			logger.Warn().Msg("Tried to extract a certificate on a request without mutual TLS")
+			logger.Debug().Msg("Tried to extract a certificate on a request without mutual TLS")
 		}
 	}
 
@@ -161,7 +160,7 @@ func (p *passTLSClientCert) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 			headerContent := p.getCertInfo(ctx, req.TLS.PeerCertificates)
 			req.Header.Set(xForwardedTLSClientCertInfo, url.QueryEscape(headerContent))
 		} else {
-			logger.Warn().Msg("Tried to extract a certificate on a request without mutual TLS")
+			logger.Debug().Msg("Tried to extract a certificate on a request without mutual TLS")
 		}
 	}
 
@@ -227,11 +226,11 @@ func getIssuerDNInfo(ctx context.Context, options *IssuerDistinguishedNameOption
 
 	content := &strings.Builder{}
 
-	// Manage non standard attributes
+	// Manage non-standard attributes
 	for _, name := range cs.Names {
 		// Domain Component - RFC 2247
 		if options.DomainComponent && attributeTypeNames[name.Type.String()] == "DC" {
-			content.WriteString(fmt.Sprintf("DC=%s%s", name.Value, subFieldSeparator))
+			_, _ = fmt.Fprintf(content, "DC=%s%s", name.Value, subFieldSeparator)
 		}
 	}
 
@@ -273,7 +272,7 @@ func getSubjectDNInfo(ctx context.Context, options *SubjectDistinguishedNameOpti
 	for _, name := range cs.Names {
 		// Domain Component - RFC 2247
 		if options.DomainComponent && attributeTypeNames[name.Type.String()] == "DC" {
-			content.WriteString(fmt.Sprintf("DC=%s%s", name.Value, subFieldSeparator))
+			_, _ = fmt.Fprintf(content, "DC=%s%s", name.Value, subFieldSeparator)
 		}
 	}
 

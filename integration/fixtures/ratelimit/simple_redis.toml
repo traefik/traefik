@@ -1,0 +1,39 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[api]
+  insecure = true
+
+[log]
+  level = "DEBUG"
+  noColor = true
+
+[entryPoints]
+  [entryPoints.web]
+    address = ":8081"
+
+[providers.file]
+  filename = "{{ .SelfFilename }}"
+
+## dynamic configuration ##
+
+[http.routers]
+  [http.routers.router1]
+    service = "service1"
+    middlewares = [ "ratelimit" ]
+    rule = "Path(`/`)"
+
+[http.middlewares]
+  [http.middlewares.ratelimit.rateLimit]
+    average = 100
+    burst = 1
+    [http.middlewares.ratelimit.rateLimit.redis]
+      endpoints = ["{{ .RedisEndpoint }}"]
+
+[http.services]
+  [http.services.service1]
+    [http.services.service1.loadBalancer]
+      passHostHeader = true
+      [[http.services.service1.loadBalancer.servers]]
+        url = "http://{{.Server1}}:80"

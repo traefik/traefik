@@ -146,9 +146,9 @@ If you want to limit the router scope to a set of entry points, set the `entryPo
 
     ```bash tab="CLI"
     ## Static configuration
-    --entrypoints.web.address=:80
-    --entrypoints.websecure.address=:443
-    --entrypoints.other.address=:9090
+    --entryPoints.web.address=:80
+    --entryPoints.websecure.address=:443
+    --entryPoints.other.address=:9090
     ```
 
 ??? example "Listens to Specific EntryPoints"
@@ -204,9 +204,9 @@ If you want to limit the router scope to a set of entry points, set the `entryPo
 
     ```bash tab="CLI"
     ## Static configuration
-    --entrypoints.web.address=:80
-    --entrypoints.websecure.address=:443
-    --entrypoints.other.address=:9090
+    --entryPoints.web.address=:80
+    --entryPoints.websecure.address=:443
+    --entryPoints.other.address=:9090
     ```
 
 ### Rule
@@ -368,7 +368,7 @@ Path are always starting with a `/`, except for `PathRegexp`.
     [case-insensitively](https://en.wikipedia.org/wiki/Case_sensitivity):
 
     ```yaml
-    HostRegexp(`(?i)^/products`)
+    PathRegexp(`(?i)^/products`)
     ```
 
 #### Query and QueryRegexp
@@ -442,6 +442,14 @@ The priority is directly equal to the length of the rule, and so the longest len
 
 A value of `0` for the priority is ignored: `priority = 0` means that the default rules length sorting is used.
 
+??? warning "Maximum Value"
+  
+    Traefik reserves a range of priorities for its internal routers,
+    the maximum user-defined router priority value is:
+
+      - `(MaxInt32 - 1000)` for 32-bit platforms,
+      - `(MaxInt64 - 1000)` for 64-bit platforms.
+
 ??? info "How default priorities are computed"
 
     ```yaml tab="File (YAML)"
@@ -471,7 +479,7 @@ A value of `0` for the priority is ignored: `priority = 0` means that the defaul
 
     | Name     | Rule                                     | Priority |
     |----------|------------------------------------------|----------|
-    | Router-1 | ```HostRegexp(`[a-z]+\.traefik\.com`)``` | 44       |
+    | Router-1 | ```HostRegexp(`[a-z]+\.traefik\.com`)``` | 34       |
     | Router-2 | ```Host(`foobar.traefik.com`)```         | 26       |
 
     The previous table shows that `Router-1` has a higher priority than `Router-2`.
@@ -514,6 +522,65 @@ A value of `0` for the priority is ignored: `priority = 0` means that the defaul
     ```
 
     In this configuration, the priority is configured to allow `Router-2` to handle requests with the `foobar.traefik.com` host.
+
+### RuleSyntax
+
+_Optional, Default=""_
+
+In Traefik v3 a new rule syntax has been introduced ([migration guide](../../migration/v2-to-v3.md#router-rule-matchers)).
+`ruleSyntax` option allows to configure the rule syntax to be used for parsing the rule on a per-router basis.
+This allows to have heterogeneous router configurations and ease migration.
+
+The default value of the `ruleSyntax` option is inherited from the `defaultRuleSyntax` option in the static configuration.
+By default, the `defaultRuleSyntax` static option is `v3`, meaning that the default rule syntax is also `v3`.
+
+??? example "Set rule syntax -- using the [File Provider](../../providers/file.md)"
+
+    ```yaml tab="File (YAML)"
+    ## Dynamic configuration
+    http:
+      routers:
+        Router-v3:
+          rule: HostRegexp(`[a-z]+\\.traefik\\.com`)
+          ruleSyntax: v3
+        Router-v2:
+          rule: HostRegexp(`{subdomain:[a-z]+}.traefik.com`)
+          ruleSyntax: v2
+    ```
+
+    ```toml tab="File (TOML)"
+    ## Dynamic configuration
+    [http.routers]
+      [http.routers.Router-v3]
+        rule = "HostRegexp(`[a-z]+\\.traefik\\.com`)"
+        ruleSyntax = v3
+      [http.routers.Router-v2]
+        rule = "HostRegexp(`{subdomain:[a-z]+}.traefik.com`)"
+        ruleSyntax = v2
+    ```
+
+    ```yaml tab="Kubernetes traefik.io/v1alpha1"
+    apiVersion: traefik.io/v1alpha1
+    kind: IngressRoute
+    metadata:
+      name: test.route
+      namespace: default
+    
+    spec:
+      routes:
+        # route v3
+        - match: HostRegexp(`[a-z]+\\.traefik\\.com`)
+          syntax: v3
+          kind: Rule
+
+        # route v2
+        - match: HostRegexp(`{subdomain:[a-z]+}.traefik.com`)
+          syntax: v2
+          kind: Rule
+    ```
+
+    In this configuration, the ruleSyntax is configured to allow `Router-v2` to use v2 syntax,
+    while for `Router-v3` it is configured to use v3 syntax.
 
 ### Middlewares
 
@@ -760,7 +827,7 @@ http:
 ```
 
 !!! info "Multiple Hosts in a Rule"
-    The rule ```Host(`test1.example.com`,`test2.example.com`)``` will request a certificate with the main domain `test1.example.com` and SAN `test2.example.com`.
+    The rule ```Host(`test1.example.com`) || Host(`test2.example.com`)``` will request a certificate with the main domain `test1.example.com` and SAN `test2.example.com`.
 
 #### `domains`
 
@@ -810,13 +877,124 @@ The [supported `provider` table](../../https/acme.md#providers) indicates if the
 !!! warning "Double Wildcard Certificates"
     It is not possible to request a double wildcard certificate for a domain (for example `*.*.local.com`).
 
+### Observability
+
+The Observability section defines a per router behavior regarding access-logs, metrics or tracing.
+
+The default router observability configuration is inherited from the attached EntryPoints and can be configured with the observability [options](../../routing/entrypoints.md#observability-options).
+However, a router defining its own observability configuration will opt-out from these defaults.
+
+!!! info "Note that to enable router-level observability, you must first enable access-logs, tracing, and/or metrics."
+    
+!!! warning "AddInternals option"
+
+    By default, and for any type of signals (access-logs, metrics and tracing),
+    Traefik disables observability for internal resources.
+    The observability options described below cannot interfere with the `AddInternals` ones,
+    and will be ignored.
+
+    For instance, if a router exposes the `api@internal` service and `metrics.AddInternals` is false,
+    it will never produces metrics, even if the router observability configuration enables metrics.
+
+#### `accessLogs`
+
+_Optional_
+
+The `accessLogs` option controls whether the router will produce access-logs.
+
+??? example "Disable access-logs for a router using the [File Provider](../../providers/file.md)"
+
+    ```yaml tab="YAML"
+    ## Dynamic configuration
+    http:
+      routers:
+        my-router:
+          rule: "Path(`/foo`)"
+          service: service-foo
+          observability:
+            accessLogs: false
+    ```
+
+    ```toml tab="TOML"
+    ## Dynamic configuration
+    [http.routers]
+      [http.routers.my-router]
+        rule = "Path(`/foo`)"
+        service = "service-foo"
+        [http.routers.my-router.observability]
+          accessLogs = false
+    ```
+
+#### `metrics`
+
+_Optional_
+
+The `metrics` option controls whether the router will produce metrics.
+
+!!! warning "Metrics layers"
+
+    When metrics layers are not enabled with the `addEntryPointsLabels`, `addRoutersLabels` and/or `addServicesLabels` options,
+    enabling metrics for a router will not enable them.
+
+??? example "Disable metrics for a router using the [File Provider](../../providers/file.md)"
+
+    ```yaml tab="YAML"
+    ## Dynamic configuration
+    http:
+      routers:
+        my-router:
+          rule: "Path(`/foo`)"
+          service: service-foo
+          observability:
+            metrics: false
+    ```
+
+    ```toml tab="TOML"
+    ## Dynamic configuration
+    [http.routers]
+      [http.routers.my-router]
+        rule = "Path(`/foo`)"
+        service = "service-foo"
+        [http.routers.my-router.observability]
+          metrics = false
+    ```
+
+#### `tracing`
+
+_Optional_
+
+The `tracing` option controls whether the router will produce traces.
+
+??? example "Disable tracing for a router using the [File Provider](../../providers/file.md)"
+
+    ```yaml tab="YAML"
+    ## Dynamic configuration
+    http:
+      routers:
+        my-router:
+          rule: "Path(`/foo`)"
+          service: service-foo
+          observability:
+            tracing: false
+    ```
+
+    ```toml tab="TOML"
+    ## Dynamic configuration
+    [http.routers]
+      [http.routers.my-router]
+        rule = "Path(`/foo`)"
+        service = "service-foo"
+        [http.routers.my-router.observability]
+          tracing = false
+    ```
+
 ## Configuring TCP Routers
 
 !!! warning "The character `@` is not authorized in the router name"
 
 ### General
 
-If both HTTP routers and TCP routers listen to the same EntryPoint, the TCP routers will apply *before* the HTTP routers.
+If both HTTP routers and TCP routers listen to the same EntryPoint, the TCP routers will apply _before_ the HTTP routers.
 If no matching route is found for the TCP routers, then the HTTP routers will take over.
 
 ### EntryPoints
@@ -892,9 +1070,9 @@ If you want to limit the router scope to a set of entry points, set the entry po
 
     ```bash tab="CLI"
     ## Static configuration
-    --entrypoints.web.address=:80
-    --entrypoints.websecure.address=:443
-    --entrypoints.other.address=:9090
+    --entryPoints.web.address=:80
+    --entryPoints.websecure.address=:443
+    --entryPoints.other.address=:9090
     ```
 
 ??? example "Listens to Specific EntryPoints"
@@ -956,9 +1134,9 @@ If you want to limit the router scope to a set of entry points, set the entry po
 
     ```bash tab="CLI"
     ## Static configuration
-    --entrypoints.web.address=:80
-    --entrypoints.websecure.address=:443
-    --entrypoints.other.address=:9090
+    --entryPoints.web.address=:80
+    --entryPoints.websecure.address=:443
+    --entryPoints.other.address=:9090
     ```
 
 ### Rule
@@ -968,12 +1146,12 @@ If the rule is verified, the router becomes active, calls middlewares, and then 
 
 The table below lists all the available matchers:
 
-| Rule                                                                                                 | Description                                                                                      |
-|------------------------------------------------------------------------------------------------------|:-------------------------------------------------------------------------------------------------|
-| [```HostSNI(`domain`)```](#hostsni-and-hostsniregexp)                                                | Checks if the connection's Server Name Indication is equal to `domain`.                          |
-| [```HostSNIRegexp(`regexp`)```](#hostsni-and-hostsniregexp)                                          | Checks if the connection's Server Name Indication matches `regexp`.                              |
-| <!-- markdownlint-disable MD051 -->[```ClientIP(`ip`)```](#clientip_1)<!-- markdownlint-disable -->  | Checks if the connection's client IP correspond to `ip`. It accepts IPv4, IPv6 and CIDR formats. |
-| [```ALPN(`protocol`)```](#alpn)                                                                      | Checks if the connection's ALPN protocol equals `protocol`.                                      |
+| Rule                                                        | Description                                                                                      |
+|-------------------------------------------------------------|:-------------------------------------------------------------------------------------------------|
+| [```HostSNI(`domain`)```](#hostsni-and-hostsniregexp)       | Checks if the connection's Server Name Indication is equal to `domain`.                          |
+| [```HostSNIRegexp(`regexp`)```](#hostsni-and-hostsniregexp) | Checks if the connection's Server Name Indication matches `regexp`.                              |
+| [```ClientIP(`ip`)```](#clientip_1)                         | Checks if the connection's client IP correspond to `ip`. It accepts IPv4, IPv6 and CIDR formats. |<!-- markdownlint-disable-line MD051 -->
+| [```ALPN(`protocol`)```](#alpn)                             | Checks if the connection's ALPN protocol equals `protocol`.                                      |
 
 !!! tip "Backticks or Quotes?"
 
@@ -1089,6 +1267,14 @@ The priority is directly equal to the length of the rule, and so the longest len
 
 A value of `0` for the priority is ignored: `priority = 0` means that the default rules length sorting is used.
 
+??? warning "Maximum Value"
+
+    Traefik reserves a range of priorities for its internal routers,
+    the maximum user-defined router priority value is:
+
+      - `(MaxInt32 - 1000)` for 32-bit platforms,
+      - `(MaxInt64 - 1000)` for 64-bit platforms.
+
 ??? info "How default priorities are computed"
 
     ```yaml tab="File (YAML)"
@@ -1122,7 +1308,7 @@ A value of `0` for the priority is ignored: `priority = 0` means that the defaul
     | Router-2 | ```ClientIP(`192.168.0.0/24`)```                            | 26       |
 
     Which means that requests from `192.168.0.12` would go to Router-2 even though Router-1 is intended to specifically handle them.
-    To achieve this intention, a priority (higher than 26) should be set on Router-1.
+    To achieve this intention, a priority (greater than 26) should be set on Router-1.
 
 ??? example "Setting priorities -- using the [File Provider](../../providers/file.md)"
 
@@ -1160,6 +1346,65 @@ A value of `0` for the priority is ignored: `priority = 0` means that the defaul
     ```
 
     In this configuration, the priority is configured so that `Router-1` will handle requests from `192.168.0.12`.
+
+### RuleSyntax
+
+_Optional, Default=""_
+
+In Traefik v3 a new rule syntax has been introduced ([migration guide](../../migration/v2-to-v3.md#router-rule-matchers)).
+`ruleSyntax` option allows to configure the rule syntax to be used for parsing the rule on a per-router basis.
+This allows to have heterogeneous router configurations and ease migration.
+
+The default value of the `ruleSyntax` option is inherited from the `defaultRuleSyntax` option in the static configuration.
+By default, the `defaultRuleSyntax` static option is `v3`, meaning that the default rule syntax is also `v3`.
+
+??? example "Set rule syntax -- using the [File Provider](../../providers/file.md)"
+
+    ```yaml tab="File (YAML)"
+    ## Dynamic configuration
+    tcp:
+      routers:
+        Router-v3:
+          rule: ClientIP(`192.168.0.11`) || ClientIP(`192.168.0.12`)
+          ruleSyntax: v3
+        Router-v2:
+          rule: ClientIP(`192.168.0.11`, `192.168.0.12`)
+          ruleSyntax: v2
+    ```
+
+    ```toml tab="File (TOML)"
+    ## Dynamic configuration
+    [tcp.routers]
+      [tcp.routers.Router-v3]
+        rule = "ClientIP(`192.168.0.11`) || ClientIP(`192.168.0.12`)"
+        ruleSyntax = v3
+      [tcp.routers.Router-v2]
+        rule = "ClientIP(`192.168.0.11`, `192.168.0.12`)"
+        ruleSyntax = v2
+    ```
+
+    ```yaml tab="Kubernetes traefik.io/v1alpha1"
+    apiVersion: traefik.io/v1alpha1
+    kind: IngressRouteTCP
+    metadata:
+      name: test.route
+      namespace: default
+    
+    spec:
+      routes:
+        # route v3
+        - match: ClientIP(`192.168.0.11`) || ClientIP(`192.168.0.12`)
+          syntax: v3
+          kind: Rule
+
+        # route v2
+        - match: ClientIP(`192.168.0.11`, `192.168.0.12`)
+          syntax: v2
+          kind: Rule
+    ```
+
+    In this configuration, the ruleSyntax is configured to allow `Router-v2` to use v2 syntax,
+    while for `Router-v3` it is configured to use v3 syntax.
 
 ### Middlewares
 
@@ -1476,9 +1721,9 @@ If one wants to limit the router scope to a set of EntryPoints, one should set t
 
     ```bash tab="CLI"
     ## Static configuration
-    --entrypoints.web.address=":80"
-    --entrypoints.other.address=":9090/udp"
-    --entrypoints.streaming.address=":9191/udp"
+    --entryPoints.web.address=":80"
+    --entryPoints.other.address=":9090/udp"
+    --entryPoints.streaming.address=":9191/udp"
     ```
 
 ??? example "Listens to Specific EntryPoints"
@@ -1533,9 +1778,9 @@ If one wants to limit the router scope to a set of EntryPoints, one should set t
 
     ```bash tab="CLI"
     ## Static configuration
-    --entrypoints.web.address=":80"
-    --entrypoints.other.address=":9090/udp"
-    --entrypoints.streaming.address=":9191/udp"
+    --entryPoints.web.address=":80"
+    --entryPoints.other.address=":9090/udp"
+    --entryPoints.streaming.address=":9191/udp"
     ```
 
 ### Services

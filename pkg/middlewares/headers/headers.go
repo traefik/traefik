@@ -6,11 +6,9 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/opentracing/opentracing-go/ext"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
-	"github.com/traefik/traefik/v3/pkg/middlewares/connectionheader"
-	"github.com/traefik/traefik/v3/pkg/tracing"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -47,12 +45,11 @@ func New(ctx context.Context, next http.Handler, cfg dynamic.Headers, name strin
 
 	if hasCustomHeaders || hasCorsHeaders {
 		logger.Debug().Msgf("Setting up customHeaders/Cors from %v", cfg)
-		h, err := NewHeader(nextHandler, cfg)
+		var err error
+		handler, err = NewHeader(nextHandler, cfg)
 		if err != nil {
 			return nil, err
 		}
-
-		handler = connectionheader.Remover(h)
 	}
 
 	return &headers{
@@ -61,8 +58,8 @@ func New(ctx context.Context, next http.Handler, cfg dynamic.Headers, name strin
 	}, nil
 }
 
-func (h *headers) GetTracingInformation() (string, ext.SpanKindEnum) {
-	return h.name, tracing.SpanKindNoneEnum
+func (h *headers) GetTracingInformation() (string, string, trace.SpanKind) {
+	return h.name, typeName, trace.SpanKindInternal
 }
 
 func (h *headers) ServeHTTP(rw http.ResponseWriter, req *http.Request) {

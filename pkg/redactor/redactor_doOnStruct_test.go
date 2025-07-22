@@ -369,14 +369,13 @@ func Test_doOnStruct(t *testing.T) {
 	}
 
 	for _, test := range testCase {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 			val := reflect.ValueOf(test.base).Elem()
 			err := doOnStruct(val, tagExport, test.redactByDefault)
 			require.NoError(t, err)
 
-			assert.EqualValues(t, test.expected, test.base)
+			assert.Equal(t, test.expected, test.base)
 		})
 	}
 }

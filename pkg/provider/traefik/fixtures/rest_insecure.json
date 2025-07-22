@@ -7,7 +7,8 @@
         ],
         "service": "rest@internal",
         "rule": "PathPrefix(`/api/providers`)",
-        "priority": 2147483647
+        "ruleSyntax": "default",
+        "priority": 9223372036854775807
       }
     },
     "services": {

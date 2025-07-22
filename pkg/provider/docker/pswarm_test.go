@@ -1,13 +1,11 @@
 package docker
 
 import (
-	"context"
 	"strconv"
 	"testing"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
-	dockertypes "github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -19,7 +17,7 @@ func TestListTasks(t *testing.T) {
 		tasks         []swarm.Task
 		isGlobalSVC   bool
 		expectedTasks []string
-		networks      map[string]*dockertypes.NetworkResource
+		networks      map[string]*network.Summary
 	}{
 		{
 			service: swarmService(serviceName("container")),
@@ -54,7 +52,7 @@ func TestListTasks(t *testing.T) {
 				"container.1",
 				"container.4",
 			},
-			networks: map[string]*dockertypes.NetworkResource{
+			networks: map[string]*network.Summary{
 				"1": {
 					Name: "foo",
 				},
@@ -63,19 +61,20 @@ func TestListTasks(t *testing.T) {
 	}
 
 	for caseID, test := range testCases {
-		test := test
 		t.Run(strconv.Itoa(caseID), func(t *testing.T) {
 			t.Parallel()
 
-			p := SwarmProvider{}
-			dockerData, err := p.parseService(context.Background(), test.service, test.networks)
+			var p SwarmProvider
+			require.NoError(t, p.Init())
+
+			dockerData, err := p.parseService(t.Context(), test.service, test.networks)
 			require.NoError(t, err)
 
 			dockerClient := &fakeTasksClient{tasks: test.tasks}
-			taskDockerData, _ := listTasks(context.Background(), dockerClient, test.service.ID, dockerData, test.networks, test.isGlobalSVC)
+			taskDockerData, _ := listTasks(t.Context(), dockerClient, test.service.ID, dockerData, test.networks, test.isGlobalSVC)
 
 			if len(test.expectedTasks) != len(taskDockerData) {
-				t.Errorf("expected tasks %v, got %v", spew.Sdump(test.expectedTasks), spew.Sdump(taskDockerData))
+				t.Errorf("expected tasks %v, got %v", test.expectedTasks, taskDockerData)
 			}
 
 			for i, taskID := range test.expectedTasks {
@@ -93,7 +92,7 @@ func TestSwarmProvider_listServices(t *testing.T) {
 		services         []swarm.Service
 		tasks            []swarm.Task
 		dockerVersion    string
-		networks         []dockertypes.NetworkResource
+		networks         []network.Summary
 		expectedServices []string
 	}{
 		{
@@ -102,8 +101,8 @@ func TestSwarmProvider_listServices(t *testing.T) {
 				swarmService(
 					serviceName("service1"),
 					serviceLabels(map[string]string{
-						"traefik.docker.network": "barnet",
-						"traefik.docker.LBSwarm": "true",
+						"traefik.swarm.network": "barnet",
+						"traefik.swarm.LBSwarm": "true",
 					}),
 					withEndpointSpec(modeVIP),
 					withEndpoint(
@@ -113,13 +112,13 @@ func TestSwarmProvider_listServices(t *testing.T) {
 				swarmService(
 					serviceName("service2"),
 					serviceLabels(map[string]string{
-						"traefik.docker.network": "barnet",
-						"traefik.docker.LBSwarm": "true",
+						"traefik.swarm.network": "barnet",
+						"traefik.swarm.LBSwarm": "true",
 					}),
-					withEndpointSpec(modeDNSSR)),
+					withEndpointSpec(modeDNSRR)),
 			},
 			dockerVersion:    "1.30",
-			networks:         []dockertypes.NetworkResource{},
+			networks:         []network.Summary{},
 			expectedServices: []string{},
 		},
 		{
@@ -128,8 +127,8 @@ func TestSwarmProvider_listServices(t *testing.T) {
 				swarmService(
 					serviceName("service1"),
 					serviceLabels(map[string]string{
-						"traefik.docker.network": "barnet",
-						"traefik.docker.LBSwarm": "true",
+						"traefik.swarm.network": "barnet",
+						"traefik.swarm.LBSwarm": "true",
 					}),
 					withEndpointSpec(modeVIP),
 					withEndpoint(
@@ -139,13 +138,13 @@ func TestSwarmProvider_listServices(t *testing.T) {
 				swarmService(
 					serviceName("service2"),
 					serviceLabels(map[string]string{
-						"traefik.docker.network": "barnet",
-						"traefik.docker.LBSwarm": "true",
+						"traefik.swarm.network": "barnet",
+						"traefik.swarm.LBSwarm": "true",
 					}),
-					withEndpointSpec(modeDNSSR)),
+					withEndpointSpec(modeDNSRR)),
 			},
 			dockerVersion: "1.30",
-			networks: []dockertypes.NetworkResource{
+			networks: []network.Summary{
 				{
 					Name:       "network_name",
 					ID:         "yk6l57rfwizjzxxzftn4amaot",
@@ -175,7 +174,7 @@ func TestSwarmProvider_listServices(t *testing.T) {
 				swarmService(
 					serviceName("service1"),
 					serviceLabels(map[string]string{
-						"traefik.docker.network": "barnet",
+						"traefik.swarm.network": "barnet",
 					}),
 					withEndpointSpec(modeVIP),
 					withEndpoint(
@@ -185,9 +184,9 @@ func TestSwarmProvider_listServices(t *testing.T) {
 				swarmService(
 					serviceName("service2"),
 					serviceLabels(map[string]string{
-						"traefik.docker.network": "barnet",
+						"traefik.swarm.network": "barnet",
 					}),
-					withEndpointSpec(modeDNSSR)),
+					withEndpointSpec(modeDNSRR)),
 			},
 			tasks: []swarm.Task{
 				swarmTask("id1",
@@ -200,7 +199,7 @@ func TestSwarmProvider_listServices(t *testing.T) {
 				),
 			},
 			dockerVersion: "1.30",
-			networks: []dockertypes.NetworkResource{
+			networks: []network.Summary{
 				{
 					Name:       "network_name",
 					ID:         "yk6l57rfwizjzxxzftn4amaot",
@@ -230,18 +229,18 @@ func TestSwarmProvider_listServices(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
 			dockerClient := &fakeServicesClient{services: test.services, tasks: test.tasks, dockerVersion: test.dockerVersion, networks: test.networks}
 
-			p := SwarmProvider{}
+			var p SwarmProvider
+			require.NoError(t, p.Init())
 
-			serviceDockerData, err := p.listServices(context.Background(), dockerClient)
+			serviceDockerData, err := p.listServices(t.Context(), dockerClient)
 			assert.NoError(t, err)
 
-			assert.Equal(t, len(test.expectedServices), len(serviceDockerData))
+			assert.Len(t, serviceDockerData, len(test.expectedServices))
 			for i, serviceName := range test.expectedServices {
 				if len(serviceDockerData) <= i {
 					require.Fail(t, "index", "invalid index %d", i)
@@ -258,7 +257,7 @@ func TestSwarmProvider_parseService_task(t *testing.T) {
 		tasks       []swarm.Task
 		isGlobalSVC bool
 		expected    map[string]dockerData
-		networks    map[string]*dockertypes.NetworkResource
+		networks    map[string]*network.Summary
 	}{
 		{
 			service: swarmService(serviceName("container")),
@@ -279,7 +278,7 @@ func TestSwarmProvider_parseService_task(t *testing.T) {
 					Name: "container.3",
 				},
 			},
-			networks: map[string]*dockertypes.NetworkResource{
+			networks: map[string]*network.Summary{
 				"1": {
 					Name: "foo",
 				},
@@ -304,7 +303,7 @@ func TestSwarmProvider_parseService_task(t *testing.T) {
 					Name: "container.id3",
 				},
 			},
-			networks: map[string]*dockertypes.NetworkResource{
+			networks: map[string]*network.Summary{
 				"1": {
 					Name: "foo",
 				},
@@ -342,7 +341,7 @@ func TestSwarmProvider_parseService_task(t *testing.T) {
 					},
 				},
 			},
-			networks: map[string]*dockertypes.NetworkResource{
+			networks: map[string]*network.Summary{
 				"1": {
 					Name: "vlan",
 				},
@@ -351,17 +350,17 @@ func TestSwarmProvider_parseService_task(t *testing.T) {
 	}
 
 	for caseID, test := range testCases {
-		test := test
 		t.Run(strconv.Itoa(caseID), func(t *testing.T) {
 			t.Parallel()
 
-			p := SwarmProvider{}
+			var p SwarmProvider
+			require.NoError(t, p.Init())
 
-			dData, err := p.parseService(context.Background(), test.service, test.networks)
+			dData, err := p.parseService(t.Context(), test.service, test.networks)
 			require.NoError(t, err)
 
 			for _, task := range test.tasks {
-				taskDockerData := parseTasks(context.Background(), task, dData, test.networks, test.isGlobalSVC)
+				taskDockerData := parseTasks(t.Context(), task, dData, test.networks, test.isGlobalSVC)
 				expected := test.expected[task.ID]
 				assert.Equal(t, expected.Name, taskDockerData.Name)
 			}

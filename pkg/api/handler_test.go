@@ -38,7 +38,7 @@ func TestHandler_RawData(t *testing.T) {
 					"foo-service@myprovider": {
 						Service: &dynamic.Service{
 							LoadBalancer: &dynamic.ServersLoadBalancer{
-								PassHostHeader: Bool(true),
+								PassHostHeader: pointer(true),
 								Servers: []dynamic.Server{
 									{
 										URL: "http://127.0.0.1",
@@ -127,7 +127,6 @@ func TestHandler_RawData(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -143,7 +142,7 @@ func TestHandler_RawData(t *testing.T) {
 			require.NoError(t, err)
 
 			assert.Equal(t, test.expected.statusCode, resp.StatusCode)
-			assert.Equal(t, resp.Header.Get("Content-Type"), "application/json")
+			assert.Equal(t, "application/json", resp.Header.Get("Content-Type"))
 
 			contents, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
@@ -252,7 +251,6 @@ func TestHandler_GetMiddleware(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 

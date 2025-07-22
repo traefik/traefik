@@ -10,4 +10,4 @@ spec:
 
   routes:
   - services:
-    - name: external-svc
+    - name: external-svc-udp

@@ -1,13 +1,14 @@
 package auth
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -23,13 +24,13 @@ func TestBasicAuthFail(t *testing.T) {
 	auth := dynamic.BasicAuth{
 		Users: []string{"test"},
 	}
-	_, err := NewBasic(context.Background(), next, auth, "authName")
+	_, err := NewBasic(t.Context(), next, auth, "authName")
 	require.Error(t, err)
 
 	auth2 := dynamic.BasicAuth{
 		Users: []string{"test:test"},
 	}
-	authMiddleware, err := NewBasic(context.Background(), next, auth2, "authTest")
+	authMiddleware, err := NewBasic(t.Context(), next, auth2, "authTest")
 	require.NoError(t, err)
 
 	ts := httptest.NewServer(authMiddleware)
@@ -52,7 +53,7 @@ func TestBasicAuthSuccess(t *testing.T) {
 	auth := dynamic.BasicAuth{
 		Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"},
 	}
-	authMiddleware, err := NewBasic(context.Background(), next, auth, "authName")
+	authMiddleware, err := NewBasic(t.Context(), next, auth, "authName")
 	require.NoError(t, err)
 
 	ts := httptest.NewServer(authMiddleware)
@@ -83,7 +84,7 @@ func TestBasicAuthUserHeader(t *testing.T) {
 		Users:       []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"},
 		HeaderField: "X-Webauth-User",
 	}
-	middleware, err := NewBasic(context.Background(), next, auth, "authName")
+	middleware, err := NewBasic(t.Context(), next, auth, "authName")
 	require.NoError(t, err)
 
 	ts := httptest.NewServer(middleware)
@@ -114,7 +115,7 @@ func TestBasicAuthHeaderRemoved(t *testing.T) {
 		RemoveHeader: true,
 		Users:        []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"},
 	}
-	middleware, err := NewBasic(context.Background(), next, auth, "authName")
+	middleware, err := NewBasic(t.Context(), next, auth, "authName")
 	require.NoError(t, err)
 
 	ts := httptest.NewServer(middleware)
@@ -145,7 +146,7 @@ func TestBasicAuthHeaderPresent(t *testing.T) {
 	auth := dynamic.BasicAuth{
 		Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"},
 	}
-	middleware, err := NewBasic(context.Background(), next, auth, "authName")
+	middleware, err := NewBasic(t.Context(), next, auth, "authName")
 	require.NoError(t, err)
 
 	ts := httptest.NewServer(middleware)
@@ -165,6 +166,50 @@ func TestBasicAuthHeaderPresent(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, "traefik\n", string(body))
+}
+
+func TestBasicAuthConcurrentHashOnce(t *testing.T) {
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, "traefik")
+	})
+	auth := dynamic.BasicAuth{
+		Users: []string{"test:$2a$04$.8sTYfcxbSplCtoxt5TdJOgpBYkarKtZYsYfYxQ1edbYRuO1DNi0e"},
+	}
+
+	authMiddleware, err := NewBasic(t.Context(), next, auth, "authName")
+	require.NoError(t, err)
+
+	hashCount := 0
+	ba := authMiddleware.(*basicAuth)
+	ba.checkSecret = func(password, secret string) bool {
+		hashCount++
+		// delay to ensure the second request arrives
+		time.Sleep(time.Millisecond)
+		return true
+	}
+
+	ts := httptest.NewServer(authMiddleware)
+	defer ts.Close()
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	for range 2 {
+		go func() {
+			defer wg.Done()
+			req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
+			req.SetBasicAuth("test", "test")
+
+			res, err := http.DefaultClient.Do(req)
+			require.NoError(t, err)
+			defer res.Body.Close()
+
+			assert.Equal(t, http.StatusOK, res.StatusCode, "they should be equal")
+		}()
+	}
+
+	wg.Wait()
+	assert.Equal(t, 1, hashCount)
 }
 
 func TestBasicAuthUsersFromFile(t *testing.T) {
@@ -210,7 +255,6 @@ func TestBasicAuthUsersFromFile(t *testing.T) {
 	}
 
 	for _, test := range testCases {
-		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
@@ -232,7 +276,7 @@ func TestBasicAuthUsersFromFile(t *testing.T) {
 				fmt.Fprintln(w, "traefik")
 			})
 
-			authenticator, err := NewBasic(context.Background(), next, authenticatorConfiguration, "authName")
+			authenticator, err := NewBasic(t.Context(), next, authenticatorConfiguration, "authName")
 			require.NoError(t, err)
 
 			ts := httptest.NewServer(authenticator)

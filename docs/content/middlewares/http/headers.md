@@ -190,7 +190,8 @@ spec:
       - "GET"
       - "OPTIONS"
       - "PUT"
-    accessControlAllowHeaders: "*"
+    accessControlAllowHeaders:
+      - "*"
     accessControlAllowOriginList:
       - "https://foo.bar.org"
       - "https://example.org"
@@ -226,8 +227,8 @@ http:
 ```toml tab="File (TOML)"
 [http.middlewares]
   [http.middlewares.testHeader.headers]
-    accessControlAllowMethods= ["GET", "OPTIONS", "PUT"]
-    accessControlAllowHeaders= "*"
+    accessControlAllowMethods = ["GET", "OPTIONS", "PUT"]
+    accessControlAllowHeaders = [ "*" ]
     accessControlAllowOriginList = ["https://foo.bar.org","https://example.org"]
     accessControlMaxAge = 100
     addVaryHeader = true
@@ -313,10 +314,42 @@ The `allowedHosts` option lists fully qualified domain names that are allowed.
 
 The `hostsProxyHeaders` option is a set of header keys that may hold a proxied hostname value for the request.
 
+### `sslRedirect`
+
+!!! warning
+
+    Deprecated in favor of [EntryPoint redirection](../../routing/entrypoints.md#redirection) or the [RedirectScheme middleware](./redirectscheme.md).
+
+The `sslRedirect` only allow HTTPS requests when set to `true`.
+
+### `sslTemporaryRedirect`
+
+!!! warning
+
+    Deprecated in favor of [EntryPoint redirection](../../routing/entrypoints.md#redirection) or the [RedirectScheme middleware](./redirectscheme.md).
+
+Set `sslTemporaryRedirect` to `true` to force an SSL redirection using a 302 (instead of a 301).
+
+### `sslHost`
+
+!!! warning
+
+    Deprecated in favor of the [RedirectRegex middleware](./redirectregex.md).
+
+The `sslHost` option is the host name that is used to redirect HTTP requests to HTTPS.
+
 ### `sslProxyHeaders`
 
 The `sslProxyHeaders` option is set of header keys with associated values that would indicate a valid HTTPS request.
 It can be useful when using other proxies (example: `"X-Forwarded-Proto": "https"`).
+
+### `sslForceHost`
+
+!!! warning
+
+    Deprecated in favor of the [RedirectRegex middleware](./redirectregex.md).
+
+Set `sslForceHost` to `true` and set `sslHost` to force requests to use `SSLHost` regardless of whether they already use SSL.
 
 ### `stsSeconds`
 
@@ -361,6 +394,10 @@ This overrides the `BrowserXssFilter` option.
 
 The `contentSecurityPolicy` option allows the `Content-Security-Policy` header value to be set with a custom value.
 
+### `contentSecurityPolicyReportOnly`
+
+The `contentSecurityPolicyReportOnly` option allows the `Content-Security-Policy-Report-Only` header value to be set with a custom value.
+
 ### `publicKey`
 
 The `publicKey` implements HPKP to prevent MITM attacks with forged certificates.
@@ -368,6 +405,14 @@ The `publicKey` implements HPKP to prevent MITM attacks with forged certificates
 ### `referrerPolicy`
 
 The `referrerPolicy` allows sites to control whether browsers forward the `Referer` header to other sites.
+
+### `featurePolicy`
+
+!!! warning
+
+    Deprecated in favor of [`permissionsPolicy`](#permissionsPolicy)
+
+The `featurePolicy` allows sites to control browser features.
 
 ### `permissionsPolicy`
 

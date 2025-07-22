@@ -1,58 +1,101 @@
 {
-  "name": "traefik-ui",
-  "version": "2.0.0",
-  "description": "Traefik UI",
-  "productName": "Traefik",
-  "cordovaId": "io.traefik.traefik",
+  "name": "traefik-proxy-dashboard",
+  "version": "0.1.0",
   "private": true,
+  "homepage": ".",
   "scripts": {
-    "transfer": "node dev/scripts/transfer.js",
-    "lint": "eslint --ext .js,.vue src",
-    "test-unit": "mocha-webpack --mode=production './src/**/*.spec.js'",
-    "dev": "export APP_ENV='development' && quasar dev",
-    "build-quasar": "quasar build",
-    "build-staging": "export NODE_ENV='production' && export APP_ENV='development' && yarn build-quasar",
-    "build": "export NODE_ENV='production' && export APP_ENV='production' && yarn build-quasar && yarn transfer spa",
-    "build:nc": "yarn build"
+    "build": "vite build",
+    "build:prod": "yarn test && yarn tsc && yarn lint && yarn build",
+    "dev": "vite",
+    "format": "prettier './src/**/*.{ts,tsx}' --config .prettierrc.json --write",
+    "lint": "eslint './src/**/*.{ts,tsx}'",
+    "lint:fix": "eslint --fix './src/**/*.{ts,tsx}'",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest",
+    "test:unit:ci": "vitest run"
   },
+  "lint-staged": {
+    "**/*.{ts,tsx}": [
+      "yarn format",
+      "eslint --fix",
+      "git add"
+    ]
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "type": "module",
   "dependencies": {
-    "@quasar/extras": "^1.0.0",
-    "axios": "^0.19.0",
-    "bowser": "^2.5.2",
-    "chart.js": "^2.8.0",
-    "dot-prop": "^5.2.0",
-    "iframe-resizer": "^4.2.11",
-    "lodash.isequal": "4.5.0",
-    "moment": "^2.24.0",
-    "quasar": "^1.4.4",
-    "query-string": "^6.13.1",
-    "vh-check": "^2.0.5",
-    "vue-chartjs": "^3.4.2",
-    "vuex-map-fields": "^1.3.4"
+    "@eslint/js": "^9.23.0",
+    "@testing-library/jest-dom": "^6.4.2",
+    "@testing-library/react": "^14.2.1",
+    "@testing-library/user-event": "^14.5.2",
+    "@traefiklabs/faency": "11.1.4",
+    "@types/lodash": "^4.17.16",
+    "@types/node": "^22.15.18",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.19",
+    "@types/react-router-dom": "^5.1.3",
+    "@typescript-eslint/parser": "^8.29.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "@vitest/coverage-v8": "^1.3.1",
+    "chart.js": "^4.4.1",
+    "eslint": "^9.23.0",
+    "eslint-config-prettier": "^10.0.2",
+    "eslint-import-resolver-typescript": "^3.8.3",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react": "^7.37.4",
+    "eslint-plugin-react-hooks": "^5.1.0",
+    "framer-motion": "^11.18.2",
+    "globals": "^16.0.0",
+    "jest-extended": "^4.0.2",
+    "jsdom": "^24.0.0",
+    "lodash": "^4.17.21",
+    "msw": "^2.1.7",
+    "query-string": "^6.9.0",
+    "react": "^18.2.0",
+    "react-chartjs-2": "^5.2.0",
+    "react-dom": "^18.2.0",
+    "react-error-boundary": "^4.0.12",
+    "react-helmet-async": "^2.0.4",
+    "react-icons": "^5.0.1",
+    "react-infinite-scroll-hook": "^4.1.1",
+    "react-router-dom": "6.22.1",
+    "swr": "^2.2.4",
+    "typescript": "^5.2.2",
+    "typescript-eslint": "^8.24.1",
+    "usehooks-ts": "^2.14.0",
+    "vite": "^5.1.4",
+    "vite-tsconfig-paths": "^4.3.1",
+    "vitest": "^1.3.1",
+    "vitest-canvas-mock": "^0.3.3"
   },
   "devDependencies": {
-    "@quasar/app": "^1.2.4",
-    "@vue/eslint-config-standard": "^4.0.0",
-    "@vue/test-utils": "^1.0.0-beta.29",
-    "babel-eslint": "^10.0.1",
-    "chai": "4.2.0",
-    "eslint": "^5.10.0",
-    "eslint-loader": "^2.1.1",
-    "eslint-plugin-prettier": "3.1.1",
-    "eslint-plugin-mocha": "6.2.1",
-    "eslint-plugin-vue": "^5.0.0",
-    "mocha": "^6.2.2",
-    "mocha-webpack": "^2.0.0-beta.0",
-    "node-sass": "^4.12.0",
-    "prettier": "1.19.1",
-    "sass-loader": "^7.1.0"
+    "husky": "^3.1.0",
+    "lint-staged": "^9.5.0",
+    "prettier": "^3.5.3"
   },
-  "engines": {
-    "node": ">= 8.9.0",
-    "npm": ">= 5.6.0",
-    "yarn": ">= 1.6.0"
+  "msw": {
+    "workerDirectory": [
+      "public"
+    ]
   },
-  "browserslist": [
-    "last 1 version, not dead, ie >= 11"
-  ]
+  "packageManager": "yarn@4.9.1"
 }

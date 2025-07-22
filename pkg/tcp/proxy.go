@@ -79,7 +79,7 @@ func (p *Proxy) ServeTCP(conn WriteCloser) {
 	<-errChan
 }
 
-func (p Proxy) dialBackend() (WriteCloser, error) {
+func (p *Proxy) dialBackend() (WriteCloser, error) {
 	conn, err := p.dialer.Dial("tcp", p.address)
 	if err != nil {
 		return nil, err
@@ -88,7 +88,7 @@ func (p Proxy) dialBackend() (WriteCloser, error) {
 	return conn.(WriteCloser), nil
 }
 
-func (p Proxy) connCopy(dst, src WriteCloser, errCh chan error) {
+func (p *Proxy) connCopy(dst, src WriteCloser, errCh chan error) {
 	_, err := io.Copy(dst, src)
 	errCh <- err
 

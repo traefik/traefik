@@ -22,6 +22,11 @@
               ]
             }
           ]
+        },
+        "observability": {
+          "accessLogs": true,
+          "tracing": true,
+          "metrics": true
         }
       }
     },
@@ -173,6 +178,7 @@
           "browserXssFilter": true,
           "customBrowserXSSValue": "foo",
           "contentSecurityPolicy": "foo",
+          "contentSecurityPolicyReportOnly": "foo",
           "publicKey": "foo",
           "referrerPolicy": "foo",
           "permissionsPolicy": "foo",
@@ -329,7 +335,8 @@
               ]
             }
           ]
-        }
+        },
+        "observability": {}
       }
     },
     "serversTransports": {

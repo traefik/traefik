@@ -44,7 +44,7 @@ Then any router can refer to an instance of the wanted middleware.
       - "traefik.frontend.auth.basic.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
     ```
 
-    ```yaml tab="K8s Ingress"
+    ```yaml tab="Ingress"
     apiVersion: networking.k8s.io/v1beta1
     kind: Ingress
     metadata:
@@ -107,7 +107,7 @@ Then any router can refer to an instance of the wanted middleware.
       - "traefik.http.middlewares.auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
     ```
 
-    ```yaml tab="K8s IngressRoute"
+    ```yaml tab="IngressRoute"
     # The definitions below require the definitions for the Middleware and IngressRoute kinds.
     # https://doc.traefik.io/traefik/reference/dynamic-configuration/kubernetes-crd/#definitions
     apiVersion: traefik.io/v1alpha1
@@ -278,7 +278,7 @@ Then, a [router's TLS field](../routing/routers/index.md#tls) can refer to one o
         ]
     ```
 
-    ```yaml tab="K8s IngressRoute"
+    ```yaml tab="IngressRoute"
     # The definitions below require the definitions for the TLSOption and IngressRoute kinds.
     # https://doc.traefik.io/traefik/reference/dynamic-configuration/kubernetes-crd/#definitions
     apiVersion: traefik.io/v1alpha1
@@ -354,7 +354,7 @@ To apply a redirection:
     ```
 
     ```bash tab="CLI"
-    --entrypoints=Name:web Address::80 Redirect.EntryPoint:websecure
+    --entryPoints=Name:web Address::80 Redirect.EntryPoint:websecure
     --entryPoints='Name:websecure Address::443 TLS'
     ```
 
@@ -394,10 +394,10 @@ To apply a redirection:
     ```bash tab="CLI"
     ## static configuration
 
-    --entrypoints.web.address=:80
-    --entrypoints.web.http.redirections.entrypoint.to=websecure
-    --entrypoints.web.http.redirections.entrypoint.scheme=https
-    --entrypoints.websecure.address=:443
+    --entryPoints.web.address=:80
+    --entryPoints.web.http.redirections.entrypoint.to=websecure
+    --entryPoints.web.http.redirections.entrypoint.scheme=https
+    --entryPoints.websecure.address=:443
     --providers.docker=true
     ```
 
@@ -442,7 +442,7 @@ To apply a redirection:
       traefik.http.middlewares.https_redirect.redirectscheme.permanent: true
     ```
 
-    ```yaml tab="K8s IngressRoute"
+    ```yaml tab="IngressRoute"
     apiVersion: traefik.io/v1alpha1
     kind: IngressRoute
     metadata:
@@ -561,7 +561,7 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
       - "traefik.frontend.rule=Host:example.org;PathPrefixStrip:/admin"
     ```
 
-    ```yaml tab="Kubernetes Ingress"
+    ```yaml tab="Ingress"
     apiVersion: networking.k8s.io/v1beta1
     kind: Ingress
     metadata:
@@ -595,7 +595,7 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
       - "traefik.http.middlewares.admin-stripprefix.stripprefix.prefixes=/admin"
     ```
 
-    ```yaml tab="Kubernetes IngressRoute"
+    ```yaml tab="IngressRoute"
     ---
     apiVersion: traefik.io/v1alpha1
     kind: IngressRoute
@@ -750,8 +750,8 @@ with the path `/admin` stripped, e.g. to `http://<IP>:<port>/`. In this case, yo
     ```
 
     ```bash tab="CLI"
-    --entrypoints.web.address=:80
-    --entrypoints.websecure.address=:443
+    --entryPoints.web.address=:80
+    --entryPoints.websecure.address=:443
     --certificatesresolvers.myresolver.acme.email=your-email@example.com
     --certificatesresolvers.myresolver.acme.storage=acme.json
     --certificatesresolvers.myresolver.acme.tlschallenge=true
@@ -1078,7 +1078,7 @@ To activate the dashboard, you can either:
       routers:
         api:
           rule: Host(`traefik.docker.localhost`)
-          entrypoints:
+          entryPoints:
             - websecure
           service: api@internal
           middlewares:
