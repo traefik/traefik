@@ -183,7 +183,9 @@ func NewTCPEntryPoint(ctx context.Context, name string, config *static.EntryPoin
 
 	reqDecorator := requestdecorator.New(hostResolverConfig)
 
-	httpServer, err := createHTTPServer(ctx, listener, config, true, reqDecorator)
+
+	httpServer, err := createHTTPServer(ctx, listener, configuration, false, reqDecorator)
+
 	if err != nil {
 		return nil, fmt.Errorf("error preparing http server: %w", err)
 	}
