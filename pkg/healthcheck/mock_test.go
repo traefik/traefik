@@ -64,6 +64,10 @@ func newGRPCServer(healthSequence ...healthpb.HealthCheckResponse_ServingStatus)
 	return gRPCService
 }
 
+func (s *GRPCServer) List(_ context.Context, _ *healthpb.HealthListRequest) (*healthpb.HealthListResponse, error) {
+	return nil, nil
+}
+
 func (s *GRPCServer) Check(_ context.Context, _ *healthpb.HealthCheckRequest) (*healthpb.HealthCheckResponse, error) {
 	if s.status.IsEmpty() {
 		s.done()
