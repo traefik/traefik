@@ -476,6 +476,13 @@ func buildListener(ctx context.Context, name string, config *static.EntryPoint) 
 
 	if listener == nil {
 		listenConfig := newListenConfig(config)
+
+		// TODO: Look into configuring keepAlive period through listenConfig instead of our custom tcpKeepAliveListener, to reactivate MultipathTCP?
+		// MultipathTCP is not supported on all platforms, and is notably unsupported in combination with TCP keep-alive.
+		if !strings.Contains(os.Getenv("GODEBUG"), "multipathtcp") {
+			listenConfig.SetMultipathTCP(false)
+		}
+
 		listener, err = listenConfig.Listen(ctx, "tcp", config.GetAddress())
 		if err != nil {
 			return nil, fmt.Errorf("error opening listener: %w", err)
