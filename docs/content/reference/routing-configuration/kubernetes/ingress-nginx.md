@@ -296,99 +296,107 @@ Limitations or behavioral differences are indicated where relevant.
 
 ### Unsupported NGINX Annotations
 
-All other NGINX annotations not listed above, including but not limited to:
+!!! question "Want to Add Support for More Annotations?"
+
+    You can help extend support in two ways:
+
+    - [**Open a PR**](../../../contributing/submitting-pull-requests.md) with the new annotation support.
+    - **Reach out** to the [Traefik Labs support team](https://info.traefik.io/request-commercial-support?cta=doc).
+
+    All contributions and suggestions are welcome — let's build this together!
+
 
 | Annotation                                                                  | Notes                                                |
 |-----------------------------------------------------------------------------|------------------------------------------------------|
-| `nginx.ingress.kubernetes.io/app-root`                                      | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/affinity-canary-behavior`                      | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/auth-tls-secret`                               | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/auth-tls-verify-depth`                         | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/auth-tls-verify-client`                        | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/auth-tls-error-page`                           | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/auth-tls-pass-certificate-to-upstream`         | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/auth-tls-match-cn`                             | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/auth-cache-key`                                | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/auth-cache-duration`                           | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/auth-keepalive`                                | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/auth-keepalive-share-vars`                     | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/auth-keepalive-requests`                       | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/auth-keepalive-timeout`                        | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/auth-proxy-set-headers`                        | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/auth-snippet`                                  | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/enable-global-auth`                            | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/canary`                                        | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/canary-by-header`                              | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/canary-by-header-value`                        | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/canary-by-header-pattern`                      | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/canary-by-cookie`                              | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/canary-weight`                                 | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/canary-weight-total`                           | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/client-body-buffer-size`                       | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/configuration-snippet`                         | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/custom-http-errors`                            | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/disable-proxy-intercept-errors`                | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/default-backend`                               | Not supported; use `defaultBackend` in Ingress spec. |
-| `nginx.ingress.kubernetes.io/limit-rate-after`                              | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/limit-rate`                                    | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/limit-whitelist`                               | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/limit-rps`                                     | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/limit-rpm`                                     | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/limit-burst-multiplier`                        | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/limit-connections`                             | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/global-rate-limit`                             | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/global-rate-limit-window`                      | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/global-rate-limit-key`                         | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/global-rate-limit-ignored-cidrs`               | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/permanent-redirect`                            | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/permanent-redirect-code`                       | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/temporal-redirect`                             | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/preserve-trailing-slash`                       | Not supported; Traefik preserves by default.         |
-| `nginx.ingress.kubernetes.io/proxy-cookie-domain`                           | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/proxy-cookie-path`                             | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/proxy-connect-timeout`                         | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/proxy-send-timeout`                            | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/proxy-read-timeout`                            | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/proxy-next-upstream`                           | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/proxy-next-upstream-timeout`                   | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/proxy-next-upstream-tries`                     | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/proxy-request-buffering`                       | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/proxy-redirect-from`                           | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/proxy-redirect-to`                             | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/proxy-http-version`                            | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/proxy-ssl-ciphers`                             | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/proxy-ssl-verify-depth`                        | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/proxy-ssl-protocols`                           | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/enable-rewrite-log`                            | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/rewrite-target`                                | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/satisfy`                                       | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/server-alias`                                  | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/server-snippet`                                | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/session-cookie-conditional-samesite-none`      | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/session-cookie-expires`                        | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/session-cookie-change-on-failure`              | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/ssl-ciphers`                                   | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/ssl-prefer-server-ciphers`                     | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/connection-proxy-header`                       | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/enable-access-log`                             | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/enable-opentracing`                            | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/opentracing-trust-incoming-span`               | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/enable-opentelemetry`                          | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/opentelemetry-trust-incoming-span`             | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/enable-modsecurity`                            | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/enable-owasp-core-rules`                       | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/modsecurity-transaction-id`                    | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/modsecurity-snippet`                           | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/mirror-request-body`                           | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/mirror-target`                                 | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/mirror-host`                                   | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/x-forwarded-prefix`                            | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/upstream-hash-by`                              | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/upstream-vhost`                                | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/denylist-source-range`                         | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/whitelist-source-range`                        | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/proxy-buffering`                               | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/proxy-buffers-number`                          | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/proxy-buffer-size`                             | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/proxy-max-temp-file-size`                      | Not supported.                                       |
-| `nginx.ingress.kubernetes.io/stream-snippet`                                | Not supported.                                       |
+| `nginx.ingress.kubernetes.io/app-root`                                      | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/affinity-canary-behavior`                      | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/auth-tls-secret`                               | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/auth-tls-verify-depth`                         | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/auth-tls-verify-client`                        | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/auth-tls-error-page`                           | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/auth-tls-pass-certificate-to-upstream`         | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/auth-tls-match-cn`                             | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/auth-cache-key`                                | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/auth-cache-duration`                           | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/auth-keepalive`                                | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/auth-keepalive-share-vars`                     | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/auth-keepalive-requests`                       | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/auth-keepalive-timeout`                        | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/auth-proxy-set-headers`                        | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/auth-snippet`                                  | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/enable-global-auth`                            | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/canary`                                        | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/canary-by-header`                              | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/canary-by-header-value`                        | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/canary-by-header-pattern`                      | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/canary-by-cookie`                              | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/canary-weight`                                 | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/canary-weight-total`                           | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/client-body-buffer-size`                       | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/configuration-snippet`                         | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/custom-http-errors`                            | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/disable-proxy-intercept-errors`                | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/default-backend`                               | Not supported yet; use `defaultBackend` in Ingress spec. |
+| `nginx.ingress.kubernetes.io/limit-rate-after`                              | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/limit-rate`                                    | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/limit-whitelist`                               | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/limit-rps`                                     | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/limit-rpm`                                     | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/limit-burst-multiplier`                        | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/limit-connections`                             | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/global-rate-limit`                             | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/global-rate-limit-window`                      | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/global-rate-limit-key`                         | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/global-rate-limit-ignored-cidrs`               | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/permanent-redirect`                            | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/permanent-redirect-code`                       | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/temporal-redirect`                             | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/preserve-trailing-slash`                       | Not supported yet; Traefik preserves by default.         |
+| `nginx.ingress.kubernetes.io/proxy-cookie-domain`                           | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/proxy-cookie-path`                             | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/proxy-connect-timeout`                         | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/proxy-send-timeout`                            | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/proxy-read-timeout`                            | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/proxy-next-upstream`                           | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/proxy-next-upstream-timeout`                   | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/proxy-next-upstream-tries`                     | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/proxy-request-buffering`                       | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/proxy-redirect-from`                           | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/proxy-redirect-to`                             | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/proxy-http-version`                            | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/proxy-ssl-ciphers`                             | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/proxy-ssl-verify-depth`                        | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/proxy-ssl-protocols`                           | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/enable-rewrite-log`                            | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/rewrite-target`                                | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/satisfy`                                       | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/server-alias`                                  | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/server-snippet`                                | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/session-cookie-conditional-samesite-none`      | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/session-cookie-expires`                        | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/session-cookie-change-on-failure`              | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/ssl-ciphers`                                   | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/ssl-prefer-server-ciphers`                     | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/connection-proxy-header`                       | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/enable-access-log`                             | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/enable-opentracing`                            | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/opentracing-trust-incoming-span`               | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/enable-opentelemetry`                          | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/opentelemetry-trust-incoming-span`             | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/enable-modsecurity`                            | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/enable-owasp-core-rules`                       | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/modsecurity-transaction-id`                    | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/modsecurity-snippet`                           | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/mirror-request-body`                           | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/mirror-target`                                 | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/mirror-host`                                   | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/x-forwarded-prefix`                            | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/upstream-hash-by`                              | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/upstream-vhost`                                | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/denylist-source-range`                         | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/whitelist-source-range`                        | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/proxy-buffering`                               | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/proxy-buffers-number`                          | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/proxy-buffer-size`                             | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/proxy-max-temp-file-size`                      | Not supported yet.                                    |
+| `nginx.ingress.kubernetes.io/stream-snippet`                                | Not supported yet.                                    |
