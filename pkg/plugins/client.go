@@ -282,8 +282,11 @@ func unzipFile(f *zipa.File, dest string) error {
 
 	defer func() { _ = rc.Close() }()
 
-	// Split to discard the first part of the path, which is the archive name.
+	// Split to discard the first part of the path, which is [organization]-[project]-[release commit sha1] when the archive is a Yaegi go plugin with vendoring.
 	pathParts := strings.SplitN(f.Name, "/", 2)
+	if len(pathParts) < 2 {
+		return fmt.Errorf("no root directory: %s", f.Name)
+	}
 
 	// Validate and sanitize the file path
 	cleanName := filepath.Clean(pathParts[1])
@@ -291,35 +294,36 @@ func unzipFile(f *zipa.File, dest string) error {
 		return fmt.Errorf("invalid file path in archive: %s", f.Name)
 	}
 
-	p := filepath.Join(dest, cleanName)
-	absPath, err := filepath.Abs(p)
+	filePath := filepath.Join(dest, cleanName)
+	absFilePath, err := filepath.Abs(filePath)
 	if err != nil {
-		return fmt.Errorf("unable to resolve file path: %w", err)
+		return fmt.Errorf("resolving file path: %w", err)
 	}
 
 	absDest, err := filepath.Abs(dest)
 	if err != nil {
-		return fmt.Errorf("unable to resolve destination directory: %w", err)
+		return fmt.Errorf("resolving destination directory: %w", err)
 	}
-	if !strings.HasPrefix(absPath, absDest) {
-		return fmt.Errorf("file path escapes destination directory: %s", absPath)
+
+	if !strings.HasPrefix(absFilePath, absDest) {
+		return fmt.Errorf("file path escapes destination directory: %s", absFilePath)
 	}
 
 	if f.FileInfo().IsDir() {
-		err = os.MkdirAll(p, f.Mode())
+		err = os.MkdirAll(filePath, f.Mode())
 		if err != nil {
-			return fmt.Errorf("unable to create archive directory %s: %w", p, err)
+			return fmt.Errorf("unable to create archive directory %s: %w", filePath, err)
 		}
 
 		return nil
 	}
 
-	err = os.MkdirAll(filepath.Dir(p), 0o750)
+	err = os.MkdirAll(filepath.Dir(filePath), 0o750)
 	if err != nil {
-		return fmt.Errorf("unable to create archive directory %s for file %s: %w", filepath.Dir(p), p, err)
+		return fmt.Errorf("unable to create archive directory %s for file %s: %w", filepath.Dir(filePath), filePath, err)
 	}
 
-	elt, err := os.OpenFile(p, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
+	elt, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
 	if err != nil {
 		return err
 	}
