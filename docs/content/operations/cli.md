@@ -59,6 +59,21 @@ $ traefik healthcheck
 OK: http://:8082/ping
 ```
 
+#### `URL`
+
+The `--url` flag allows you to specify a custom endpoint for the health check instead of the default `/ping`.
+
+Usage:
+
+```bash
+traefik healthcheck --url http://:8082/customPing
+```
+
+!!! info 
+
+    The `--url` flag is only available when using the CLI directly.
+    If a Traefik static configuration file is provided, this option will be ignored.
+
 ### `version`
 
 Shows the current Traefik version.
