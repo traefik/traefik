@@ -288,7 +288,7 @@ func unzipFile(f *zipa.File, dest string) error {
 		return fmt.Errorf("no root directory: %s", f.Name)
 	}
 
-	// Validate and sanitize the file path
+	// Validate and sanitize the file path.
 	cleanName := filepath.Clean(pathParts[1])
 	if strings.Contains(cleanName, "..") {
 		return fmt.Errorf("invalid file path in archive: %s", f.Name)
