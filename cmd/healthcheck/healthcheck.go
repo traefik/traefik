@@ -24,7 +24,7 @@ func NewCmd(traefikConfiguration *static.Configuration, loaders []cli.ResourceLo
 }
 
 type urlConfig struct {
-	URL string `json:"url,omitempty" toml:"url,omitempty" yaml:"url,omitempty" `
+	URL string `json:"url,omitempty" toml:"url,omitempty" yaml:"url,omitempty"`
 }
 
 func runCmd(traefikConfiguration *static.Configuration) func(args []string) error {
