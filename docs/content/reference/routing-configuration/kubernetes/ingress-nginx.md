@@ -305,7 +305,6 @@ Limitations or behavioral differences are indicated where relevant.
 
     All contributions and suggestions are welcome — let's build this together!
 
-All other NGINX annotations not listed in the [section above](#supported-nginx-annotations), including but not limited to:
 
 | Annotation                                                                  | Notes                                                |
 |-----------------------------------------------------------------------------|------------------------------------------------------|
