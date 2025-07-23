@@ -1,6 +1,7 @@
 name: Build and Publish Documentation
 
 on:
+  workflow_dispatch: {}
   push:
     branches:
       - master
