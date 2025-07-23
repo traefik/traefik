@@ -1,3 +1,14 @@
+## [v2.11.28](https://github.com/traefik/traefik/tree/v2.11.28) (2025-07-23)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.27...v2.11.28)
+
+**Bug fixes:**
+- **[logs]** Redact logged install configuration ([#11907](https://github.com/traefik/traefik/pull/11907) by [jspdown](https://github.com/jspdown))
+- **[plugins]** Fix client arbitrary file access during archive extraction zipslip ([#11911](https://github.com/traefik/traefik/pull/11911) by [odaysec](https://github.com/odaysec))
+- **[server]** Disable MPTCP by default ([#11918](https://github.com/traefik/traefik/pull/11918) by [rtribotte](https://github.com/rtribotte))
+
+**Documentation:**
+- **[k8s/crd,k8s]** Remove all mentions of ordering for TLSOption CurvePreferences field ([#11924](https://github.com/traefik/traefik/pull/11924) by [jnoordsij](https://github.com/jnoordsij))
+
 ## [v2.11.27](https://github.com/traefik/traefik/tree/v2.11.27) (2025-07-11)
 [All Commits](https://github.com/traefik/traefik/compare/v2.11.26...v2.11.27)
 
