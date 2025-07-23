@@ -174,11 +174,25 @@ func (t *TransportManager) createTLSConfig(cfg *dynamic.ServersTransport) (*tls.
 			return nil, errors.New("TLS and SPIFFE configuration cannot be defined at the same time")
 		}
 
+		// map and validate the CipherSuite passed in the configuration
+		if cfg.CipherSuites != nil {
+			config.CipherSuites = make([]uint16, 0)
+			for _, cipher := range cfg.CipherSuites {
+				if cipherID, exists := traefiktls.CipherSuites[cipher]; exists {
+					config.CipherSuites = append(config.CipherSuites, cipherID)
+				} else {
+					// CipherSuite listed in the configuration does not exist in our list
+					return nil, fmt.Errorf("invalid CipherSuite: %s", cipher)
+				}
+			}
+		}
+
 		config = &tls.Config{
 			ServerName:         cfg.ServerName,
 			InsecureSkipVerify: cfg.InsecureSkipVerify,
 			RootCAs:            createRootCACertPool(cfg.RootCAs),
 			Certificates:       cfg.Certificates.GetCertificates(),
+			CipherSuites:       config.CipherSuites,
 		}
 
 		if cfg.PeerCertURI != "" {
