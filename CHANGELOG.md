@@ -1,3 +1,16 @@
+## [v3.4.5](https://github.com/traefik/traefik/tree/v3.4.5) (2025-07-23)
+[All Commits](https://github.com/traefik/traefik/compare/v3.4.4...v3.4.5)
+
+**Bug fixes:**
+- **[http3]** Bump github.com/quic-go/quic-go to v0.54.0 ([#11919](https://github.com/traefik/traefik/pull/11919) by [GreyXor](https://github.com/GreyXor))
+
+**Documentation:**
+- Fix typo in entrypoints page ([#11914](https://github.com/traefik/traefik/pull/11914) by [adk-swisstopo](https://github.com/adk-swisstopo))
+
+**Misc:**
+- Merge branch v2.11 into v3.4 ([#11930](https://github.com/traefik/traefik/pull/11930) by [kevinpollet](https://github.com/kevinpollet))
+- Merge branch v2.11 into v3.4 ([#11926](https://github.com/traefik/traefik/pull/11926) by [rtribotte](https://github.com/rtribotte))
+
 ## [v2.11.28](https://github.com/traefik/traefik/tree/v2.11.28) (2025-07-23)
 [All Commits](https://github.com/traefik/traefik/compare/v2.11.27...v2.11.28)
 
