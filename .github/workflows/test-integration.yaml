@@ -36,7 +36,21 @@ jobs:
           touch webui/static/index.html
 
       - name: Build binary
-        run: make binary
+        run: make binary-linux-amd64
+
+      - name: Save go cache build
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.cache/go-build
+          key: ${{ runner.os }}-go-build-cache-${{ env.GO_VERSION }}-${{ hashFiles('**/go.sum') }}
+
+      - name: Artifact traefik binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: traefik
+          path: ./dist/linux/amd64/traefik
+          retention-days: 1
 
   test-integration:
     runs-on: ubuntu-latest
@@ -65,8 +79,21 @@ jobs:
           mkdir webui/static
           touch webui/static/index.html
 
-      - name: Build binary
-        run: make binary
+      - name: Download traefik binary
+        uses: actions/download-artifact@v4
+        with:
+          name: traefik
+          path: ./dist/linux/amd64/
+
+      - name: Make binary executable
+        run: chmod +x ./dist/linux/amd64/traefik
+
+      - name: Restore go cache build
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.cache/go-build
+          key: ${{ runner.os }}-go-build-cache-${{ env.GO_VERSION }}-${{ hashFiles('**/go.sum') }}
 
       - name: Generate go test Slice
         id: test_split

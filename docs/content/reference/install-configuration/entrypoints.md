@@ -214,7 +214,7 @@ only routers with TLS enabled will be usable with HTTP/3.
 
 ### ProxyProtocol and Load-Balancers
 
-The replacement of the remote client address will occur only for IP addresses listed in `trustedIPs`. This is where yoåu specify your load balancer IPs or CIDR ranges.
+The replacement of the remote client address will occur only for IP addresses listed in `trustedIPs`. This is where you specify your load balancer IPs or CIDR ranges.
 
 When queuing Traefik behind another load-balancer, make sure to configure 
 PROXY protocol on both sides.
