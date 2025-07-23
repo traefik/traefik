@@ -38,6 +38,8 @@ type ServersTransportSpec struct {
 	RootCAsSecrets []string `json:"rootCAsSecrets,omitempty"`
 	// CertificatesSecrets defines a list of secret storing client certificates for mTLS.
 	CertificatesSecrets []string `json:"certificatesSecrets,omitempty"`
+	// CipherSuites defines a list of cipher to use to contact backends
+	CipherSuites []string `json:"cipherSuites,omitempty" toml:"cipherSuites,omitempty" yaml:"cipherSuites,omitempty" export:"true"`
 	// MaxIdleConnsPerHost controls the maximum idle (keep-alive) to keep per-host.
 	// +kubebuilder:validation:Minimum=0
 	MaxIdleConnsPerHost int `json:"maxIdleConnsPerHost,omitempty"`
