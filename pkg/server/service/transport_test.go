@@ -118,6 +118,8 @@ PtvuNc5EImfSkuPBYLBslNxtjbBvAYgacEdY+gRhn2TeIUApnND58lCWsKbNHLFZ
 ajIPbTY+Fe9OTOFTN48ujXNn
 -----END PRIVATE KEY-----`)
 
+var ciphers = []string{"TLS_RSA_WITH_AES_128_CBC_SHA256", "TLS_RSA_WITH_AES_128_CBC_SHA256"}
+
 func TestKeepConnectionWhenSameConfiguration(t *testing.T) {
 	srv := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
@@ -181,6 +183,49 @@ func TestKeepConnectionWhenSameConfiguration(t *testing.T) {
 
 	count = atomic.LoadInt32(connCount)
 	assert.EqualValues(t, 2, count)
+}
+
+func TestCipherSuites(t *testing.T) {
+	srv := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+	}))
+
+	cert, err := tls.X509KeyPair(LocalhostCert, LocalhostKey)
+	require.NoError(t, err)
+
+	srv.TLS = &tls.Config{Certificates: []tls.Certificate{cert}}
+	srv.StartTLS()
+
+	transportManager := NewTransportManager(nil)
+
+	dynamicConf := map[string]*dynamic.ServersTransport{
+		"test": {
+			ServerName: "example.com",
+			// For TLS
+			RootCAs: []types.FileOrContent{types.FileOrContent(LocalhostCert)},
+
+			// For mTLS
+			Certificates: traefiktls.Certificates{
+				traefiktls.Certificate{
+					CertFile: types.FileOrContent(mTLSCert),
+					KeyFile:  types.FileOrContent(mTLSKey),
+				},
+			},
+			CipherSuites: ciphers,
+		},
+	}
+
+	transportManager.Update(dynamicConf)
+
+	tr, err := transportManager.GetRoundTripper("test")
+	require.NoError(t, err)
+
+	client := http.Client{Transport: tr}
+
+	resp, err := client.Get(srv.URL)
+	require.NoError(t, err)
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
 }
 
 func TestMTLS(t *testing.T) {
