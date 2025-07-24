@@ -3,6 +3,9 @@ title: 'OAuth 2.0 Token Introspection Authentication'
 description: 'Traefik Hub API Gateway - OAuth 2.0 Token Introspection allows to retrieve metadata about an access token from an OAuth 2.0 server.'
 ---
 
+!!! info "Traefik Hub Feature"
+    This middleware is available exclusively in [Traefik Hub](https://traefik.io/traefik-hub/). Learn more about [Traefik Hub's advanced features](https://doc.traefik.io/traefik-hub/api-gateway/intro).
+
 OAuth 2.0 Token Introspection allows Traefik Hub to retrieve metadata about an access token from an OAuth 2.0 server with the Token Introspection extension.
 
 The metadata can be used to restrict the access to applications. For more information please refer to the [RFC](https://tools.ietf.org/html/rfc7662).

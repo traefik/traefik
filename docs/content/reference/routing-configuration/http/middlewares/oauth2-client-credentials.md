@@ -3,6 +3,9 @@ title: 'OAuth 2.0 Client Credentials Authentication'
 description: 'Traefik Hub API Gateway - The OAuth 2.0 Client Credentials Authentication middleware secures your applications using the client credentials flow'
 ---
 
+!!! info "Traefik Hub Feature"
+    This middleware is available exclusively in [Traefik Hub](https://traefik.io/traefik-hub/). Learn more about [Traefik Hub's advanced features](https://doc.traefik.io/traefik-hub/api-gateway/intro).
+
 The OAuth 2.0 Client Credentials Authentication middleware allows Traefik Hub to secure routes using the OAuth 2.0 Client Credentials flow as described in the [RFC 6749](https://www.rfc-editor.org/rfc/rfc6749.html#section-4.4).
 Access tokens can be cached using an external KV store.
 

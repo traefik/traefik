@@ -3,6 +3,9 @@ title: 'Open Policy Agent'
 description: 'Traefik Hub API Gateway - The Open Policy Agent (OPA) middleware that allows you to restrict access to your services.'
 ---
 
+!!! info "Traefik Hub Feature"
+    This middleware is available exclusively in [Traefik Hub](https://traefik.io/traefik-hub/). Learn more about [Traefik Hub's advanced features](https://doc.traefik.io/traefik-hub/api-gateway/intro).
+
 Traefik Hub comes with an Open Policy Agent middleware that allows you to restrict access to your services. It also allows you to enrich request headers with data extracted from policies.
 The OPA middleware works as an [OPA agent](https://www.openpolicyagent.org/).
 

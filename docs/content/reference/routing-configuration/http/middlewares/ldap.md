@@ -3,6 +3,9 @@ title: 'LDAP Authentication'
 description: 'Traefik Hub API Gateway - The LDAP Authentication middleware secures your applications by delegating the authentication to an external LDAP server.'
 ---
 
+!!! info "Traefik Hub Feature"
+    This middleware is available exclusively in [Traefik Hub](https://traefik.io/traefik-hub/). Learn more about [Traefik Hub's advanced features](https://doc.traefik.io/traefik-hub/api-gateway/intro).
+
 The LDAP Authentication middleware secures your applications by delegating the authentication to an external LDAP server.
 
 The LDAP middleware will look for user credentials in the `Authorization` header of each request. Credentials must be encoded with the following format: `base64(username:password)`.

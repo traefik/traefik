@@ -3,6 +3,9 @@ title: 'OpenID Connect Authentication'
 description: 'Traefik Hub API Gateway - The OIDC Authentication middleware secures your applications by delegating the authentication to an external provider.'
 ---
 
+!!! info "Traefik Hub Feature"
+    This middleware is available exclusively in [Traefik Hub](https://traefik.io/traefik-hub/). Learn more about [Traefik Hub's advanced features](https://doc.traefik.io/traefik-hub/api-gateway/intro).
+
 The OIDC Authentication middleware secures your applications by delegating the authentication to an external provider
 
 ---

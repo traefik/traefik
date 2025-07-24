@@ -3,6 +3,9 @@ title: 'Coraza Web Application Firewall'
 description: 'Traefik Hub API Gateway - The HTTP Coraza middleware in Traefik Proxy provides web application firewall capabilities'
 ---
 
+!!! info "Traefik Hub Feature"
+    This middleware is available exclusively in [Traefik Hub](https://traefik.io/traefik-hub/). Learn more about [Traefik Hub's advanced features](https://doc.traefik.io/traefik-hub/api-gateway/intro).
+
 The [Coraza WAF](https://coraza.io/) middleware in Traefik Hub API Gateway provides web application firewall capabilities.
 
 The native middleware in Hub API Gateway  provides at least 23 times more performance compared to the
