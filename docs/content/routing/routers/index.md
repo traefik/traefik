@@ -527,7 +527,7 @@ A value of `0` for the priority is ignored: `priority = 0` means that the defaul
 
 _Optional, Default=""_
 
-In Traefik v3 a new rule syntax has been introduced ([migration guide](../../migration/v2-to-v3.md#router-rule-matchers)).
+In Traefik v3 a new rule syntax has been introduced ([migration guide](../../migrate/v2-to-v3.md#router-rule-matchers)).
 `ruleSyntax` option allows to configure the rule syntax to be used for parsing the rule on a per-router basis.
 This allows to have heterogeneous router configurations and ease migration.
 
@@ -1351,7 +1351,7 @@ A value of `0` for the priority is ignored: `priority = 0` means that the defaul
 
 _Optional, Default=""_
 
-In Traefik v3 a new rule syntax has been introduced ([migration guide](../../migration/v2-to-v3.md#router-rule-matchers)).
+In Traefik v3 a new rule syntax has been introduced ([migration guide](../../migrate/v2-to-v3.md#router-rule-matchers)).
 `ruleSyntax` option allows to configure the rule syntax to be used for parsing the rule on a per-router basis.
 This allows to have heterogeneous router configurations and ease migration.
 
