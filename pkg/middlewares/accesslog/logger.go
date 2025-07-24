@@ -397,31 +397,21 @@ func (h *Handler) logTheRoundTrip(ctx context.Context, logDataTable *LogData) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
+	entry := h.logger.WithContext(ctx).WithFields(fields)
+
+	var message string
 	if h.config.OTLP != nil {
-		h.logOTLP(ctx, fields)
-	} else {
-		h.logger.WithContext(ctx).WithFields(fields).Println()
-	}
-}
-
-// logOTLP logs the log entry to the OTEL collector.
-// If the formatter fails, it logs the entry to the file.
-func (h *Handler) logOTLP(ctx context.Context, fields logrus.Fields) {
-	// Create a log entry to format the body using the configured formatter
-	entry := &logrus.Entry{
-		Logger: h.logger,
-		Data:   fields,
-		Time:   time.Now(),
-		Level:  logrus.InfoLevel,
+		// If the logger is configured to use OpenTelemetry,
+		// we compute the log body with the formatter.
+		mBytes, err := h.logger.Formatter.Format(entry)
+		if err != nil {
+			message = fmt.Sprintf("Failed to format access log entry: %v", err)
+		} else {
+			message = string(mBytes)
+		}
 	}
 
-	formattedEntry, err := h.logger.Formatter.Format(entry)
-	if err != nil {
-		h.logger.WithContext(ctx).WithFields(fields).Println()
-		return
-	}
-
-	h.logger.WithContext(ctx).WithFields(fields).Info(strings.TrimSuffix(string(formattedEntry), "\n"))
+	entry.Println(message)
 }
 
 func (h *Handler) redactHeaders(headers http.Header, fields logrus.Fields, prefix string) {

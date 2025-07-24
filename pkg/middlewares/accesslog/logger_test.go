@@ -57,8 +57,6 @@ var (
 )
 
 func TestOTelAccessLogWithBody(t *testing.T) {
-	t.Parallel()
-
 	testCases := []struct {
 		desc        string
 		format      string
