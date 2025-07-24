@@ -364,37 +364,54 @@ func (h *Handler) logTheRoundTrip(ctx context.Context, logDataTable *LogData) {
 	totalDuration := time.Now().UTC().Sub(core[StartUTC].(time.Time))
 	core[Duration] = totalDuration
 
-	if h.keepAccessLog(status, retryAttempts, totalDuration) {
-		size := logDataTable.DownstreamResponse.size
-		core[DownstreamContentSize] = size
-		if original, ok := core[OriginContentSize]; ok {
-			o64 := original.(int64)
-			if size != o64 && size != 0 {
-				core[GzipRatio] = float64(o64) / float64(size)
-			}
-		}
-
-		core[Overhead] = totalDuration
-		if origin, ok := core[OriginDuration]; ok {
-			core[Overhead] = totalDuration - origin.(time.Duration)
-		}
-
-		fields := logrus.Fields{}
-
-		for k, v := range logDataTable.Core {
-			if h.config.Fields.Keep(strings.ToLower(k)) {
-				fields[k] = v
-			}
-		}
-
-		h.redactHeaders(logDataTable.Request.headers, fields, "request_")
-		h.redactHeaders(logDataTable.OriginResponse, fields, "origin_")
-		h.redactHeaders(logDataTable.DownstreamResponse.headers, fields, "downstream_")
-
-		h.mu.Lock()
-		defer h.mu.Unlock()
-		h.logger.WithContext(ctx).WithFields(fields).Println()
+	if !h.keepAccessLog(status, retryAttempts, totalDuration) {
+		return
 	}
+
+	size := logDataTable.DownstreamResponse.size
+	core[DownstreamContentSize] = size
+	if original, ok := core[OriginContentSize]; ok {
+		o64 := original.(int64)
+		if size != o64 && size != 0 {
+			core[GzipRatio] = float64(o64) / float64(size)
+		}
+	}
+
+	core[Overhead] = totalDuration
+	if origin, ok := core[OriginDuration]; ok {
+		core[Overhead] = totalDuration - origin.(time.Duration)
+	}
+
+	fields := logrus.Fields{}
+
+	for k, v := range logDataTable.Core {
+		if h.config.Fields.Keep(strings.ToLower(k)) {
+			fields[k] = v
+		}
+	}
+
+	h.redactHeaders(logDataTable.Request.headers, fields, "request_")
+	h.redactHeaders(logDataTable.OriginResponse, fields, "origin_")
+	h.redactHeaders(logDataTable.DownstreamResponse.headers, fields, "downstream_")
+
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	entry := h.logger.WithContext(ctx).WithFields(fields)
+
+	var message string
+	if h.config.OTLP != nil {
+		// If the logger is configured to use OpenTelemetry,
+		// we compute the log body with the formatter.
+		mBytes, err := h.logger.Formatter.Format(entry)
+		if err != nil {
+			message = fmt.Sprintf("Failed to format access log entry: %v", err)
+		} else {
+			message = string(mBytes)
+		}
+	}
+
+	entry.Println(message)
 }
 
 func (h *Handler) redactHeaders(headers http.Header, fields logrus.Fields, prefix string) {
