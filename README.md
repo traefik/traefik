@@ -152,7 +152,7 @@ We use [Semantic Versioning](https://semver.org/).
 
 ## Credits
 
-Kudos to Peka for his awesome work on the gopher's logo!.
+Kudos to [Peka](https://www.instagram.com/pierroks/) for his awesome work on the gopher's logo!.
 
 The gopher's logo of Traefik is licensed under the Creative Commons 3.0 Attributions license.
 
