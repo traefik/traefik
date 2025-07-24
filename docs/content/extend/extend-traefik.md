@@ -12,7 +12,7 @@ Plugins are a powerful feature for extending Traefik with custom features and be
 
 ## Add a new plugin to a Traefik instance
 
-To add a new plugin to a Traefik instance, you must change that instance's install (static) configuration. Each plugin's **Install** section provides an install ( static) configuration example. Many plugins have their own section in the Traefik routing (dynamic) configuration.
+To add a new plugin to a Traefik instance, you must change that instance's install (static) configuration. Each plugin's **Install** section provides an install (static) configuration example. Many plugins have their own section in the Traefik routing (dynamic) configuration.
 
 !!! danger "Experimental Features"
     Plugins can change the behavior of Traefik in unforeseen ways. Exercise caution when adding new plugins to production Traefik instances.
