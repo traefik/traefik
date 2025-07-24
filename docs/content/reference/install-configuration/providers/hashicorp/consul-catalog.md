@@ -112,6 +112,10 @@ created. If the expression is empty, all detected services are included.
 The expression syntax is based on the ```Tag(`tag`)```, and ```TagRegex(`tag`)``` functions,
 as well as the usual boolean logic, as shown in examples below.
 
+!!! tip "Constraints key limitations"
+
+    Note that `traefik.*` is a reserved label namespace for configuration and can not be used as a key for custom constraints.
+
 ??? example "Constraints Expression Examples"
 
     ```toml

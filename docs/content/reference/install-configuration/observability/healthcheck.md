@@ -27,16 +27,6 @@ $ traefik healthcheck
 OK: http://:8082/ping
 ```
 
-### URL Option
-
-The URL to check can be specified with the `--url` flag, which defaults to `http://localhost:8080/ping`.
-
-Example:
-
-```sh
-traefik healthcheck --url=http://localhost:8080/ping
-```
-
 ## Ping
 
 The `/ping` health-check URL is enabled with the command-line `--ping` or config file option `[ping]`.

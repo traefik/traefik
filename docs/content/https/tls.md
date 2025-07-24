@@ -384,11 +384,11 @@ spec:
 
 ### Curve Preferences
 
-This option allows to set the preferred elliptic curves in a specific order.
+This option allows to set the enabled elliptic curves for key exchange.
 
 The names of the curves defined by [`crypto`](https://godoc.org/crypto/tls#CurveID) (e.g. `CurveP521`) and the [RFC defined names](https://tools.ietf.org/html/rfc8446#section-4.2.7) (e. g. `secp521r1`) can be used.
 
-See [CurveID](https://godoc.org/crypto/tls#CurveID) for more information.
+See [CurvePreferences](https://godoc.org/crypto/tls#Config.CurvePreferences) and [CurveID](https://godoc.org/crypto/tls#CurveID) for more information.
 
 ```yaml tab="File (YAML)"
 # Dynamic configuration

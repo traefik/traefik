@@ -6,7 +6,6 @@ import (
 	"regexp"
 
 	"github.com/vulcand/oxy/v2/utils"
-	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -46,8 +45,8 @@ func newRedirect(next http.Handler, regex, replacement string, permanent bool, r
 	}, nil
 }
 
-func (r *redirect) GetTracingInformation() (string, string, trace.SpanKind) {
-	return r.name, typeName, trace.SpanKindInternal
+func (r *redirect) GetTracingInformation() (string, string) {
+	return r.name, typeName
 }
 
 func (r *redirect) ServeHTTP(rw http.ResponseWriter, req *http.Request) {

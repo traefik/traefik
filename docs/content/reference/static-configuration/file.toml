@@ -80,8 +80,9 @@
       timeout = "42s"
     [entryPoints.EntryPoint0.observability]
       accessLogs = true
-      tracing = true
       metrics = true
+      tracing = true
+      traceVerbosity = "foobar"
 
 [providers]
   providersThrottleDuration = "42s"
@@ -387,6 +388,9 @@
       [metrics.otlp.http.headers]
         name0 = "foobar"
         name1 = "foobar"
+    [metrics.otlp.resourceAttributes]
+      name0 = "foobar"
+      name1 = "foobar"
 
 [ping]
   entryPoint = "foobar"

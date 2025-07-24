@@ -25,6 +25,7 @@ import (
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
+	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"go.opentelemetry.io/collector/pdata/plog/plogotlp"
 	"go.opentelemetry.io/otel/attribute"
@@ -84,7 +85,7 @@ func TestOTelAccessLog(t *testing.T) {
 			},
 		},
 	}
-	logHandler, err := NewHandler(config)
+	logHandler, err := NewHandler(t.Context(), config)
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		err := logHandler.Close()
@@ -105,7 +106,15 @@ func TestOTelAccessLog(t *testing.T) {
 
 	chain := alice.New()
 	chain = chain.Append(capture.Wrap)
-	chain = chain.Append(WrapHandler(logHandler))
+
+	// Injection of the observability variables in the request context.
+	chain = chain.Append(func(next http.Handler) (http.Handler, error) {
+		return observability.WithObservabilityHandler(next, observability.Observability{
+			AccessLogsEnabled: true,
+		}), nil
+	})
+
+	chain = chain.Append(logHandler.AliceConstructor())
 	handler, err := chain.Then(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 	}))
@@ -129,7 +138,7 @@ func TestLogRotation(t *testing.T) {
 	rotatedFileName := fileName + ".rotated"
 
 	config := &types.AccessLog{FilePath: fileName, Format: CommonFormat}
-	logHandler, err := NewHandler(config)
+	logHandler, err := NewHandler(t.Context(), config)
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		err := logHandler.Close()
@@ -138,7 +147,15 @@ func TestLogRotation(t *testing.T) {
 
 	chain := alice.New()
 	chain = chain.Append(capture.Wrap)
-	chain = chain.Append(WrapHandler(logHandler))
+
+	// Injection of the observability variables in the request context.
+	chain = chain.Append(func(next http.Handler) (http.Handler, error) {
+		return observability.WithObservabilityHandler(next, observability.Observability{
+			AccessLogsEnabled: true,
+		}), nil
+	})
+
+	chain = chain.Append(logHandler.AliceConstructor())
 	handler, err := chain.Then(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 	}))
@@ -265,7 +282,7 @@ func TestLoggerHeaderFields(t *testing.T) {
 				Fields:   &test.accessLogFields,
 			}
 
-			logger, err := NewHandler(config)
+			logger, err := NewHandler(t.Context(), config)
 			require.NoError(t, err)
 			t.Cleanup(func() {
 				err := logger.Close()
@@ -290,7 +307,15 @@ func TestLoggerHeaderFields(t *testing.T) {
 
 			chain := alice.New()
 			chain = chain.Append(capture.Wrap)
-			chain = chain.Append(WrapHandler(logger))
+
+			// Injection of the observability variables in the request context.
+			chain = chain.Append(func(next http.Handler) (http.Handler, error) {
+				return observability.WithObservabilityHandler(next, observability.Observability{
+					AccessLogsEnabled: true,
+				}), nil
+			})
+
+			chain = chain.Append(logger.AliceConstructor())
 			handler, err := chain.Then(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				rw.WriteHeader(http.StatusOK)
 			}))
@@ -954,7 +979,7 @@ func captureStdout(t *testing.T) (out *os.File, restoreStdout func()) {
 
 func doLoggingTLSOpt(t *testing.T, config *types.AccessLog, enableTLS, tracing bool) {
 	t.Helper()
-	logger, err := NewHandler(config)
+	logger, err := NewHandler(t.Context(), config)
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		err := logger.Close()
@@ -998,7 +1023,15 @@ func doLoggingTLSOpt(t *testing.T, config *types.AccessLog, enableTLS, tracing b
 
 	chain := alice.New()
 	chain = chain.Append(capture.Wrap)
-	chain = chain.Append(WrapHandler(logger))
+
+	// Injection of the observability variables in the request context.
+	chain = chain.Append(func(next http.Handler) (http.Handler, error) {
+		return observability.WithObservabilityHandler(next, observability.Observability{
+			AccessLogsEnabled: true,
+		}), nil
+	})
+
+	chain = chain.Append(logger.AliceConstructor())
 	handler, err := chain.Then(http.HandlerFunc(logWriterTestHandlerFunc))
 	require.NoError(t, err)
 
@@ -1043,7 +1076,7 @@ func logWriterTestHandlerFunc(rw http.ResponseWriter, r *http.Request) {
 func doLoggingWithAbortedStream(t *testing.T, config *types.AccessLog) {
 	t.Helper()
 
-	logger, err := NewHandler(config)
+	logger, err := NewHandler(t.Context(), config)
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		err := logger.Close()
@@ -1085,7 +1118,15 @@ func doLoggingWithAbortedStream(t *testing.T, config *types.AccessLog) {
 		}), nil
 	})
 	chain = chain.Append(capture.Wrap)
-	chain = chain.Append(WrapHandler(logger))
+
+	// Injection of the observability variables in the request context.
+	chain = chain.Append(func(next http.Handler) (http.Handler, error) {
+		return observability.WithObservabilityHandler(next, observability.Observability{
+			AccessLogsEnabled: true,
+		}), nil
+	})
+
+	chain = chain.Append(logger.AliceConstructor())
 
 	service := NewFieldHandler(http.HandlerFunc(streamBackend), ServiceURL, "http://stream", nil)
 	service = NewFieldHandler(service, ServiceAddr, "127.0.0.1", nil)

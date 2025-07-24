@@ -34,7 +34,7 @@ type TLSOptionSpec struct {
 	// CipherSuites defines the list of supported cipher suites for TLS versions up to TLS 1.2.
 	// More info: https://doc.traefik.io/traefik/v3.5/https/tls/#cipher-suites
 	CipherSuites []string `json:"cipherSuites,omitempty"`
-	// CurvePreferences defines the preferred elliptic curves in a specific order.
+	// CurvePreferences defines the preferred elliptic curves.
 	// More info: https://doc.traefik.io/traefik/v3.5/https/tls/#curve-preferences
 	CurvePreferences []string `json:"curvePreferences,omitempty"`
 	// ClientAuth defines the server's policy for TLS Client Authentication.

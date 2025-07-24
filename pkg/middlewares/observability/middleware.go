@@ -14,7 +14,7 @@ import (
 
 // Traceable embeds tracing information.
 type Traceable interface {
-	GetTracingInformation() (name string, typeName string, spanKind trace.SpanKind)
+	GetTracingInformation() (name string, typeName string)
 }
 
 // WrapMiddleware adds traceability to an alice.Constructor.
@@ -29,21 +29,20 @@ func WrapMiddleware(ctx context.Context, constructor alice.Constructor) alice.Co
 		}
 
 		if traceableHandler, ok := handler.(Traceable); ok {
-			name, typeName, spanKind := traceableHandler.GetTracingInformation()
+			name, typeName := traceableHandler.GetTracingInformation()
 			log.Ctx(ctx).Debug().Str(logs.MiddlewareName, name).Msg("Adding tracing to middleware")
-			return NewMiddleware(handler, name, typeName, spanKind), nil
+			return NewMiddleware(handler, name, typeName), nil
 		}
 		return handler, nil
 	}
 }
 
 // NewMiddleware returns a http.Handler struct.
-func NewMiddleware(next http.Handler, name string, typeName string, spanKind trace.SpanKind) http.Handler {
+func NewMiddleware(next http.Handler, name string, typeName string) http.Handler {
 	return &middlewareTracing{
 		next:     next,
 		name:     name,
 		typeName: typeName,
-		spanKind: spanKind,
 	}
 }
 
@@ -52,12 +51,11 @@ type middlewareTracing struct {
 	next     http.Handler
 	name     string
 	typeName string
-	spanKind trace.SpanKind
 }
 
 func (w *middlewareTracing) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	if tracer := tracing.TracerFromContext(req.Context()); tracer != nil {
-		tracingCtx, span := tracer.Start(req.Context(), w.typeName, trace.WithSpanKind(w.spanKind))
+	if tracer := tracing.TracerFromContext(req.Context()); tracer != nil && DetailedTracingEnabled(req.Context()) {
+		tracingCtx, span := tracer.Start(req.Context(), w.typeName, trace.WithSpanKind(trace.SpanKindInternal))
 		defer span.End()
 
 		req = req.WithContext(tracingCtx)

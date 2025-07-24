@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"crypto/x509"
-	"encoding/json"
 	"fmt"
 	"io"
 	stdlog "log"
@@ -40,6 +39,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/provider/traefik"
 	"github.com/traefik/traefik/v3/pkg/proxy"
 	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
+	"github.com/traefik/traefik/v3/pkg/redactor"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/server"
 	"github.com/traefik/traefik/v3/pkg/server/middleware"
@@ -90,7 +90,10 @@ Complete documentation is available at https://traefik.io`,
 }
 
 func runCmd(staticConfiguration *static.Configuration) error {
-	if err := setupLogger(staticConfiguration); err != nil {
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer cancel()
+
+	if err := setupLogger(ctx, staticConfiguration); err != nil {
 		return fmt.Errorf("setting up logger: %w", err)
 	}
 
@@ -104,12 +107,11 @@ func runCmd(staticConfiguration *static.Configuration) error {
 	log.Info().Str("version", version.Version).
 		Msgf("Traefik version %s built on %s", version.Version, version.BuildDate)
 
-	jsonConf, err := json.Marshal(staticConfiguration)
+	redactedStaticConfiguration, err := redactor.RemoveCredentials(staticConfiguration)
 	if err != nil {
-		log.Error().Err(err).Msg("Could not marshal static configuration")
-		log.Debug().Interface("staticConfiguration", staticConfiguration).Msg("Static configuration loaded [struct]")
+		log.Error().Err(err).Msg("Could not redact static configuration")
 	} else {
-		log.Debug().RawJSON("staticConfiguration", jsonConf).Msg("Static configuration loaded [json]")
+		log.Debug().RawJSON("staticConfiguration", []byte(redactedStaticConfiguration)).Msg("Static configuration loaded [json]")
 	}
 
 	if staticConfiguration.Global.CheckNewVersion {
@@ -122,8 +124,6 @@ func runCmd(staticConfiguration *static.Configuration) error {
 	if err != nil {
 		return err
 	}
-
-	ctx, _ := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 
 	if staticConfiguration.Ping != nil {
 		staticConfiguration.Ping.WithContext(ctx)
@@ -210,8 +210,8 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		}
 	}
 	metricsRegistry := metrics.NewMultiRegistry(metricRegistries)
-	accessLog := setupAccessLog(staticConfiguration.AccessLog)
-	tracer, tracerCloser := setupTracing(staticConfiguration.Tracing)
+	accessLog := setupAccessLog(ctx, staticConfiguration.AccessLog)
+	tracer, tracerCloser := setupTracing(ctx, staticConfiguration.Tracing)
 	observabilityMgr := middleware.NewObservabilityMgr(*staticConfiguration, metricsRegistry, semConvMetricRegistry, accessLog, tracer, tracerCloser)
 
 	// Entrypoints
@@ -586,12 +586,12 @@ func appendCertMetric(gauge gokitmetrics.Gauge, certificate *x509.Certificate) {
 	gauge.With(labels...).Set(notAfter)
 }
 
-func setupAccessLog(conf *types.AccessLog) *accesslog.Handler {
+func setupAccessLog(ctx context.Context, conf *types.AccessLog) *accesslog.Handler {
 	if conf == nil {
 		return nil
 	}
 
-	accessLoggerMiddleware, err := accesslog.NewHandler(conf)
+	accessLoggerMiddleware, err := accesslog.NewHandler(ctx, conf)
 	if err != nil {
 		log.Warn().Err(err).Msg("Unable to create access logger")
 		return nil
@@ -600,12 +600,12 @@ func setupAccessLog(conf *types.AccessLog) *accesslog.Handler {
 	return accessLoggerMiddleware
 }
 
-func setupTracing(conf *static.Tracing) (*tracing.Tracer, io.Closer) {
+func setupTracing(ctx context.Context, conf *static.Tracing) (*tracing.Tracer, io.Closer) {
 	if conf == nil {
 		return nil, nil
 	}
 
-	tracer, closer, err := tracing.NewTracing(conf)
+	tracer, closer, err := tracing.NewTracing(ctx, conf)
 	if err != nil {
 		log.Warn().Err(err).Msg("Unable to create tracer")
 		return nil, nil
