@@ -92,10 +92,21 @@ spec:
                         More info: https://doc.traefik.io/traefik/v3.5/routing/routers/#observability
                       properties:
                         accessLogs:
+                          description: AccessLogs enables access logs for this router.
                           type: boolean
                         metrics:
+                          description: Metrics enables metrics for this router.
                           type: boolean
+                        traceVerbosity:
+                          default: minimal
+                          description: TraceVerbosity defines the verbosity level
+                            of the tracing for this router.
+                          enum:
+                          - minimal
+                          - detailed
+                          type: string
                         tracing:
+                          description: Tracing enables tracing for this router.
                           type: boolean
                       type: object
                     priority:
@@ -2551,7 +2562,7 @@ spec:
                 type: object
               curvePreferences:
                 description: |-
-                  CurvePreferences defines the preferred elliptic curves in a specific order.
+                  CurvePreferences defines the preferred elliptic curves.
                   More info: https://doc.traefik.io/traefik/v3.5/https/tls/#curve-preferences
                 items:
                   type: string

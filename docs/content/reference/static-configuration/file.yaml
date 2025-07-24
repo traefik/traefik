@@ -94,8 +94,9 @@ entryPoints:
       timeout: 42s
     observability:
       accessLogs: true
-      tracing: true
       metrics: true
+      tracing: true
+      traceVerbosity: foobar
 providers:
   providersThrottleDuration: 42s
   docker:
@@ -428,6 +429,9 @@ metrics:
       - 42
     pushInterval: 42s
     serviceName: foobar
+    resourceAttributes:
+      name0: foobar
+      name1: foobar
 ping:
   entryPoint: foobar
   manualRouting: true

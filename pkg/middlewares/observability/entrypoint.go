@@ -48,11 +48,17 @@ func newEntryPoint(ctx context.Context, tracer *tracing.Tracer, entryPointName s
 }
 
 func (e *entryPointTracing) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	if e.tracer == nil || !TracingEnabled(req.Context()) {
+		e.next.ServeHTTP(rw, req)
+		return
+	}
+
 	tracingCtx := tracing.ExtractCarrierIntoContext(req.Context(), req.Header)
 	start := time.Now()
 	tracingCtx, span := e.tracer.Start(tracingCtx, "EntryPoint", trace.WithSpanKind(trace.SpanKindServer), trace.WithTimestamp(start))
 
 	// Associate the request context with the logger.
+	// This allows the logger to be aware of the tracing context and log accordingly (TraceID, SpanID, etc.).
 	logger := log.Ctx(tracingCtx).With().Ctx(tracingCtx).Logger()
 	loggerCtx := logger.WithContext(tracingCtx)
 

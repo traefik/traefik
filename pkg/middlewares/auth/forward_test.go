@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
 	"github.com/traefik/traefik/v3/pkg/tracing"
@@ -755,6 +756,10 @@ func TestForwardAuthTracing(t *testing.T) {
 			}
 			next, err := NewForward(t.Context(), next, auth, "authTest")
 			require.NoError(t, err)
+
+			next = observability.WithObservabilityHandler(next, observability.Observability{
+				TracingEnabled: true,
+			})
 
 			req := httptest.NewRequest(http.MethodGet, "http://www.test.com/search?q=Opentelemetry", nil)
 			req.RemoteAddr = "10.0.0.1:1234"

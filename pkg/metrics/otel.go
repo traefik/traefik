@@ -206,15 +206,27 @@ func newOpenTelemetryMeterProvider(ctx context.Context, config *types.OTLP) (*sd
 		return nil, fmt.Errorf("creating exporter: %w", err)
 	}
 
+	var resAttrs []attribute.KeyValue
+	for k, v := range config.ResourceAttributes {
+		resAttrs = append(resAttrs, attribute.String(k, v))
+	}
+
 	res, err := resource.New(ctx,
-		resource.WithAttributes(semconv.ServiceNameKey.String(config.ServiceName)),
-		resource.WithAttributes(semconv.ServiceVersionKey.String(version.Version)),
 		resource.WithContainer(),
-		resource.WithFromEnv(),
 		resource.WithHost(),
 		resource.WithOS(),
 		resource.WithProcess(),
 		resource.WithTelemetrySDK(),
+		resource.WithDetectors(types.K8sAttributesDetector{}),
+		// The following order allows the user to override the service name and version,
+		// as well as any other attributes set by the above detectors.
+		resource.WithAttributes(
+			semconv.ServiceName(config.ServiceName),
+			semconv.ServiceVersion(version.Version),
+		),
+		resource.WithAttributes(resAttrs...),
+		// Use the environment variables to allow overriding above resource attributes.
+		resource.WithFromEnv(),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("building resource: %w", err)

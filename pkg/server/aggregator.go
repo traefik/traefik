@@ -10,6 +10,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/server/provider"
 	"github.com/traefik/traefik/v3/pkg/tls"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoints []string) dynamic.Configuration {
@@ -208,6 +209,10 @@ func applyModel(cfg dynamic.Configuration) dynamic.Configuration {
 						cp.Observability.Tracing = m.Observability.Tracing
 					}
 
+					if cp.Observability.TraceVerbosity == "" {
+						cp.Observability.TraceVerbosity = m.Observability.TraceVerbosity
+					}
+
 					rtName := name
 					if len(eps) > 1 {
 						rtName = epName + "-" + name
@@ -224,7 +229,7 @@ func applyModel(cfg dynamic.Configuration) dynamic.Configuration {
 		cfg.HTTP.Routers = rts
 	}
 
-	// Apply default observability model to HTTP routers.
+	// Apply the default observability model to HTTP routers.
 	applyDefaultObservabilityModel(cfg)
 
 	if cfg.TCP == nil || len(cfg.TCP.Models) == 0 {
@@ -256,14 +261,16 @@ func applyModel(cfg dynamic.Configuration) dynamic.Configuration {
 // and make sure it is serialized and available in the API.
 // We could have introduced a "default" model, but it would have been more complex to manage for now.
 // This could be generalized in the future.
+// TODO: check if we can remove this and rely on the SetDefaults instead.
 func applyDefaultObservabilityModel(cfg dynamic.Configuration) {
 	if cfg.HTTP != nil {
 		for _, router := range cfg.HTTP.Routers {
 			if router.Observability == nil {
 				router.Observability = &dynamic.RouterObservabilityConfig{
-					AccessLogs: pointer(true),
-					Metrics:    pointer(true),
-					Tracing:    pointer(true),
+					AccessLogs:     pointer(true),
+					Metrics:        pointer(true),
+					Tracing:        pointer(true),
+					TraceVerbosity: types.MinimalVerbosity,
 				}
 
 				continue
@@ -273,12 +280,16 @@ func applyDefaultObservabilityModel(cfg dynamic.Configuration) {
 				router.Observability.AccessLogs = pointer(true)
 			}
 
+			if router.Observability.Metrics == nil {
+				router.Observability.Metrics = pointer(true)
+			}
+
 			if router.Observability.Tracing == nil {
 				router.Observability.Tracing = pointer(true)
 			}
 
-			if router.Observability.Metrics == nil {
-				router.Observability.Metrics = pointer(true)
+			if router.Observability.TraceVerbosity == "" {
+				router.Observability.TraceVerbosity = types.MinimalVerbosity
 			}
 		}
 	}

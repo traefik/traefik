@@ -171,7 +171,7 @@ func TestLog(t *testing.T) {
 			out := zerolog.MultiLevelWriter(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339})
 			logger := zerolog.New(out).With().Caller().Logger()
 
-			logger, err := SetupOTelLogger(logger, config)
+			logger, err := SetupOTelLogger(t.Context(), logger, config)
 			require.NoError(t, err)
 
 			ctx := trace.ContextWithSpanContext(t.Context(), trace.NewSpanContext(trace.SpanContextConfig{

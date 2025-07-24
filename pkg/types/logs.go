@@ -13,7 +13,7 @@ import (
 	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
 	otelsdk "go.opentelemetry.io/otel/sdk/log"
 	"go.opentelemetry.io/otel/sdk/resource"
-	semconv "go.opentelemetry.io/otel/semconv/v1.27.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/encoding/gzip"
 )
@@ -150,7 +150,7 @@ func checkFieldHeaderValue(value, defaultValue string) string {
 
 // OTelLog provides configuration settings for the open-telemetry logger.
 type OTelLog struct {
-	ServiceName        string            `description:"Set the name for this service." json:"serviceName,omitempty" toml:"serviceName,omitempty" yaml:"serviceName,omitempty" export:"true"`
+	ServiceName        string            `description:"Defines the service name resource attribute." json:"serviceName,omitempty" toml:"serviceName,omitempty" yaml:"serviceName,omitempty" export:"true"`
 	ResourceAttributes map[string]string `description:"Defines additional resource attributes (key:value)." json:"resourceAttributes,omitempty" toml:"resourceAttributes,omitempty" yaml:"resourceAttributes,omitempty"`
 	GRPC               *OTelGRPC         `description:"gRPC configuration for the OpenTelemetry collector." json:"grpc,omitempty" toml:"grpc,omitempty" yaml:"grpc,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	HTTP               *OTelHTTP         `description:"HTTP configuration for the OpenTelemetry collector." json:"http,omitempty" toml:"http,omitempty" yaml:"http,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
@@ -164,7 +164,7 @@ func (o *OTelLog) SetDefaults() {
 }
 
 // NewLoggerProvider creates a new OpenTelemetry logger provider.
-func (o *OTelLog) NewLoggerProvider() (*otelsdk.LoggerProvider, error) {
+func (o *OTelLog) NewLoggerProvider(ctx context.Context) (*otelsdk.LoggerProvider, error) {
 	var (
 		err      error
 		exporter otelsdk.Exporter
@@ -178,23 +178,27 @@ func (o *OTelLog) NewLoggerProvider() (*otelsdk.LoggerProvider, error) {
 		return nil, fmt.Errorf("setting up exporter: %w", err)
 	}
 
-	attr := []attribute.KeyValue{
-		semconv.ServiceNameKey.String(o.ServiceName),
-		semconv.ServiceVersionKey.String(version.Version),
-	}
-
+	var resAttrs []attribute.KeyValue
 	for k, v := range o.ResourceAttributes {
-		attr = append(attr, attribute.String(k, v))
+		resAttrs = append(resAttrs, attribute.String(k, v))
 	}
 
-	res, err := resource.New(context.Background(),
-		resource.WithAttributes(attr...),
+	res, err := resource.New(ctx,
 		resource.WithContainer(),
-		resource.WithFromEnv(),
 		resource.WithHost(),
 		resource.WithOS(),
 		resource.WithProcess(),
 		resource.WithTelemetrySDK(),
+		resource.WithDetectors(K8sAttributesDetector{}),
+		// The following order allows the user to override the service name and version,
+		// as well as any other attributes set by the above detectors.
+		resource.WithAttributes(
+			semconv.ServiceName(o.ServiceName),
+			semconv.ServiceVersion(version.Version),
+		),
+		resource.WithAttributes(resAttrs...),
+		// Use the environment variables to allow overriding above resource attributes.
+		resource.WithFromEnv(),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("building resource: %w", err)

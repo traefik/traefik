@@ -4,7 +4,6 @@ import (
 	"context"
 	"io"
 	"net/http"
-	"strings"
 
 	"github.com/containous/alice"
 	"github.com/rs/zerolog/log"
@@ -17,6 +16,7 @@ import (
 	mmetrics "github.com/traefik/traefik/v3/pkg/middlewares/metrics"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/tracing"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 // ObservabilityMgr is a manager for observability (AccessLogs, Metrics and Tracing) enablement.
@@ -42,109 +42,42 @@ func NewObservabilityMgr(config static.Configuration, metricsRegistry metrics.Re
 }
 
 // BuildEPChain an observability middleware chain by entry point.
-func (o *ObservabilityMgr) BuildEPChain(ctx context.Context, entryPointName string, resourceName string, observabilityConfig *dynamic.RouterObservabilityConfig) alice.Chain {
+func (o *ObservabilityMgr) BuildEPChain(ctx context.Context, entryPointName string, internal bool, config dynamic.RouterObservabilityConfig) alice.Chain {
 	chain := alice.New()
 
 	if o == nil {
 		return chain
 	}
 
-	if o.accessLoggerMiddleware != nil || o.metricsRegistry != nil && (o.metricsRegistry.IsEpEnabled() || o.metricsRegistry.IsRouterEnabled() || o.metricsRegistry.IsSvcEnabled()) {
-		if o.ShouldAddAccessLogs(resourceName, observabilityConfig) || o.ShouldAddMetrics(resourceName, observabilityConfig) {
-			chain = chain.Append(capture.Wrap)
-		}
+	// Injection of the observability variables in the request context.
+	// This injection must be the first step in order for other observability middlewares to rely on it.
+	chain = chain.Append(func(next http.Handler) (http.Handler, error) {
+		return o.observabilityContextHandler(next, internal, config), nil
+	})
+
+	// Capture middleware for accessLogs or metrics.
+	if o.shouldAccessLog(internal, config) || o.shouldMeter(internal, config) || o.shouldMeterSemConv(internal, config) {
+		chain = chain.Append(capture.Wrap)
 	}
 
 	// As the Entry point observability middleware ensures that the tracing is added to the request and logger context,
 	// it needs to be added before the access log middleware to ensure that the trace ID is logged.
-	if o.tracer != nil && o.ShouldAddTracing(resourceName, observabilityConfig) {
-		chain = chain.Append(observability.EntryPointHandler(ctx, o.tracer, entryPointName))
-	}
+	chain = chain.Append(observability.EntryPointHandler(ctx, o.tracer, entryPointName))
 
-	if o.accessLoggerMiddleware != nil && o.ShouldAddAccessLogs(resourceName, observabilityConfig) {
-		chain = chain.Append(accesslog.WrapHandler(o.accessLoggerMiddleware))
-		chain = chain.Append(func(next http.Handler) (http.Handler, error) {
-			return accesslog.NewFieldHandler(next, logs.EntryPointName, entryPointName, accesslog.InitServiceFields), nil
-		})
-	}
+	// Access log handlers.
+	chain = chain.Append(o.accessLoggerMiddleware.AliceConstructor())
+	chain = chain.Append(func(next http.Handler) (http.Handler, error) {
+		return accesslog.NewFieldHandler(next, logs.EntryPointName, entryPointName, accesslog.InitServiceFields), nil
+	})
+
+	// Entrypoint metrics handler.
+	metricsHandler := mmetrics.EntryPointMetricsHandler(ctx, o.metricsRegistry, entryPointName)
+	chain = chain.Append(observability.WrapMiddleware(ctx, metricsHandler))
 
 	// Semantic convention server metrics handler.
-	if o.semConvMetricRegistry != nil && o.ShouldAddMetrics(resourceName, observabilityConfig) {
-		chain = chain.Append(observability.SemConvServerMetricsHandler(ctx, o.semConvMetricRegistry))
-	}
-
-	if o.metricsRegistry != nil && o.metricsRegistry.IsEpEnabled() && o.ShouldAddMetrics(resourceName, observabilityConfig) {
-		metricsHandler := mmetrics.WrapEntryPointHandler(ctx, o.metricsRegistry, entryPointName)
-
-		if o.tracer != nil && o.ShouldAddTracing(resourceName, observabilityConfig) {
-			chain = chain.Append(observability.WrapMiddleware(ctx, metricsHandler))
-		} else {
-			chain = chain.Append(metricsHandler)
-		}
-	}
-
-	// Inject context keys to control whether to produce metrics further downstream (services, round-tripper),
-	// because the router configuration cannot be evaluated during build time for services.
-	if observabilityConfig != nil && observabilityConfig.Metrics != nil && !*observabilityConfig.Metrics {
-		chain = chain.Append(func(next http.Handler) (http.Handler, error) {
-			return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-				next.ServeHTTP(rw, req.WithContext(context.WithValue(req.Context(), observability.DisableMetricsKey, true)))
-			}), nil
-		})
-	}
+	chain = chain.Append(observability.SemConvServerMetricsHandler(ctx, o.semConvMetricRegistry))
 
 	return chain
-}
-
-// ShouldAddAccessLogs returns whether the access logs should be enabled for the given serviceName and the observability config.
-func (o *ObservabilityMgr) ShouldAddAccessLogs(serviceName string, observabilityConfig *dynamic.RouterObservabilityConfig) bool {
-	if o == nil {
-		return false
-	}
-
-	if o.config.AccessLog == nil {
-		return false
-	}
-
-	if strings.HasSuffix(serviceName, "@internal") && !o.config.AccessLog.AddInternals {
-		return false
-	}
-
-	return observabilityConfig == nil || observabilityConfig.AccessLogs == nil || *observabilityConfig.AccessLogs
-}
-
-// ShouldAddMetrics returns whether the metrics should be enabled for the given resource and the observability config.
-func (o *ObservabilityMgr) ShouldAddMetrics(serviceName string, observabilityConfig *dynamic.RouterObservabilityConfig) bool {
-	if o == nil {
-		return false
-	}
-
-	if o.config.Metrics == nil {
-		return false
-	}
-
-	if strings.HasSuffix(serviceName, "@internal") && !o.config.Metrics.AddInternals {
-		return false
-	}
-
-	return observabilityConfig == nil || observabilityConfig.Metrics == nil || *observabilityConfig.Metrics
-}
-
-// ShouldAddTracing returns whether the tracing should be enabled for the given serviceName and the observability config.
-func (o *ObservabilityMgr) ShouldAddTracing(serviceName string, observabilityConfig *dynamic.RouterObservabilityConfig) bool {
-	if o == nil {
-		return false
-	}
-
-	if o.config.Tracing == nil {
-		return false
-	}
-
-	if strings.HasSuffix(serviceName, "@internal") && !o.config.Tracing.AddInternals {
-		return false
-	}
-
-	return observabilityConfig == nil || observabilityConfig.Tracing == nil || *observabilityConfig.Tracing
 }
 
 // MetricsRegistry is an accessor to the metrics registry.
@@ -190,4 +123,90 @@ func (o *ObservabilityMgr) RotateAccessLogs() error {
 	}
 
 	return o.accessLoggerMiddleware.Rotate()
+}
+
+func (o *ObservabilityMgr) observabilityContextHandler(next http.Handler, internal bool, config dynamic.RouterObservabilityConfig) http.Handler {
+	return observability.WithObservabilityHandler(next, observability.Observability{
+		AccessLogsEnabled:      o.shouldAccessLog(internal, config),
+		MetricsEnabled:         o.shouldMeter(internal, config),
+		SemConvMetricsEnabled:  o.shouldMeterSemConv(internal, config),
+		TracingEnabled:         o.shouldTrace(internal, config, types.MinimalVerbosity),
+		DetailedTracingEnabled: o.shouldTrace(internal, config, types.DetailedVerbosity),
+	})
+}
+
+// shouldAccessLog returns whether the access logs should be enabled for the given serviceName and the observability config.
+func (o *ObservabilityMgr) shouldAccessLog(internal bool, observabilityConfig dynamic.RouterObservabilityConfig) bool {
+	if o == nil {
+		return false
+	}
+
+	if o.config.AccessLog == nil {
+		return false
+	}
+
+	if internal && !o.config.AccessLog.AddInternals {
+		return false
+	}
+
+	return observabilityConfig.AccessLogs == nil || *observabilityConfig.AccessLogs
+}
+
+// shouldMeter returns whether the metrics should be enabled for the given serviceName and the observability config.
+func (o *ObservabilityMgr) shouldMeter(internal bool, observabilityConfig dynamic.RouterObservabilityConfig) bool {
+	if o == nil || o.metricsRegistry == nil {
+		return false
+	}
+
+	if !o.metricsRegistry.IsEpEnabled() && !o.metricsRegistry.IsRouterEnabled() && !o.metricsRegistry.IsSvcEnabled() {
+		return false
+	}
+
+	if o.config.Metrics == nil {
+		return false
+	}
+
+	if internal && !o.config.Metrics.AddInternals {
+		return false
+	}
+
+	return observabilityConfig.Metrics == nil || *observabilityConfig.Metrics
+}
+
+// shouldMeterSemConv returns whether the OTel semantic convention metrics should be enabled for the given serviceName and the observability config.
+func (o *ObservabilityMgr) shouldMeterSemConv(internal bool, observabilityConfig dynamic.RouterObservabilityConfig) bool {
+	if o == nil || o.semConvMetricRegistry == nil {
+		return false
+	}
+
+	if o.config.Metrics == nil {
+		return false
+	}
+
+	if internal && !o.config.Metrics.AddInternals {
+		return false
+	}
+
+	return observabilityConfig.Metrics == nil || *observabilityConfig.Metrics
+}
+
+// shouldTrace returns whether the tracing should be enabled for the given serviceName and the observability config.
+func (o *ObservabilityMgr) shouldTrace(internal bool, observabilityConfig dynamic.RouterObservabilityConfig, verbosity types.TracingVerbosity) bool {
+	if o == nil {
+		return false
+	}
+
+	if o.config.Tracing == nil {
+		return false
+	}
+
+	if internal && !o.config.Tracing.AddInternals {
+		return false
+	}
+
+	if !observabilityConfig.TraceVerbosity.Allows(verbosity) {
+		return false
+	}
+
+	return observabilityConfig.Tracing == nil || *observabilityConfig.Tracing
 }

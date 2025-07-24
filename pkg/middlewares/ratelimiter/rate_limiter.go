@@ -14,7 +14,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/vulcand/oxy/v2/utils"
-	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/time/rate"
 )
 
@@ -127,8 +126,8 @@ func New(ctx context.Context, next http.Handler, config dynamic.RateLimit, name 
 	}, nil
 }
 
-func (rl *rateLimiter) GetTracingInformation() (string, string, trace.SpanKind) {
-	return rl.name, typeName, trace.SpanKindInternal
+func (rl *rateLimiter) GetTracingInformation() (string, string) {
+	return rl.name, typeName
 }
 
 func (rl *rateLimiter) ServeHTTP(rw http.ResponseWriter, req *http.Request) {

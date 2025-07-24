@@ -17,11 +17,27 @@ import (
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-	semconv "go.opentelemetry.io/otel/semconv/v1.27.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/encoding/gzip"
 )
+
+type TracingVerbosity string
+
+const (
+	MinimalVerbosity  TracingVerbosity = "minimal"
+	DetailedVerbosity TracingVerbosity = "detailed"
+)
+
+func (v TracingVerbosity) Allows(verbosity TracingVerbosity) bool {
+	switch v {
+	case DetailedVerbosity:
+		return verbosity == DetailedVerbosity || verbosity == MinimalVerbosity
+	default:
+		return verbosity == MinimalVerbosity
+	}
+}
 
 // OTelTracing provides configuration settings for the open-telemetry tracer.
 type OTelTracing struct {
@@ -36,7 +52,7 @@ func (c *OTelTracing) SetDefaults() {
 }
 
 // Setup sets up the tracer.
-func (c *OTelTracing) Setup(serviceName string, sampleRate float64, resourceAttributes map[string]string) (trace.Tracer, io.Closer, error) {
+func (c *OTelTracing) Setup(ctx context.Context, serviceName string, sampleRate float64, resourceAttributes map[string]string) (trace.Tracer, io.Closer, error) {
 	var (
 		err      error
 		exporter *otlptrace.Exporter
@@ -50,23 +66,27 @@ func (c *OTelTracing) Setup(serviceName string, sampleRate float64, resourceAttr
 		return nil, nil, fmt.Errorf("setting up exporter: %w", err)
 	}
 
-	attr := []attribute.KeyValue{
-		semconv.ServiceNameKey.String(serviceName),
-		semconv.ServiceVersionKey.String(version.Version),
-	}
-
+	var resAttrs []attribute.KeyValue
 	for k, v := range resourceAttributes {
-		attr = append(attr, attribute.String(k, v))
+		resAttrs = append(resAttrs, attribute.String(k, v))
 	}
 
-	res, err := resource.New(context.Background(),
-		resource.WithAttributes(attr...),
+	res, err := resource.New(ctx,
 		resource.WithContainer(),
-		resource.WithFromEnv(),
 		resource.WithHost(),
 		resource.WithOS(),
 		resource.WithProcess(),
 		resource.WithTelemetrySDK(),
+		resource.WithDetectors(K8sAttributesDetector{}),
+		// The following order allows the user to override the service name and version,
+		// as well as any other attributes set by the above detectors.
+		resource.WithAttributes(
+			semconv.ServiceName(serviceName),
+			semconv.ServiceVersion(version.Version),
+		),
+		resource.WithAttributes(resAttrs...),
+		// Use the environment variables to allow overriding above resource attributes.
+		resource.WithFromEnv(),
 	)
 	if err != nil {
 		return nil, nil, fmt.Errorf("building resource: %w", err)

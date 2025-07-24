@@ -238,6 +238,9 @@ func (c *Client) Unzip(pName, pVersion string) error {
 		return nil
 	}
 
+	// Unzip as a generic archive if the module unzip fails.
+	// This is useful for plugins that have vendor directories or other structures.
+	// This is also useful for wasm plugins.
 	return c.unzipArchive(pName, pVersion)
 }
 
@@ -278,32 +281,52 @@ func unzipFile(f *zipa.File, dest string) error {
 
 	defer func() { _ = rc.Close() }()
 
+	// Split to discard the first part of the path when the archive is a Yaegi go plugin with vendoring.
+	// In this case the path starts with `[organization]-[project]-[release commit sha1]/`.
 	pathParts := strings.SplitN(f.Name, "/", 2)
-
-	var pp string
+	var fileName string
 	if len(pathParts) < 2 {
-		pp = pathParts[0]
+		fileName = pathParts[0]
 	} else {
-		pp = pathParts[1]
+		fileName = pathParts[1]
 	}
 
-	p := filepath.Join(dest, pp)
+	// Validate and sanitize the file path.
+	cleanName := filepath.Clean(fileName)
+	if strings.Contains(cleanName, "..") {
+		return fmt.Errorf("invalid file path in archive: %s", f.Name)
+	}
+
+	filePath := filepath.Join(dest, cleanName)
+	absFilePath, err := filepath.Abs(filePath)
+	if err != nil {
+		return fmt.Errorf("resolving file path: %w", err)
+	}
+
+	absDest, err := filepath.Abs(dest)
+	if err != nil {
+		return fmt.Errorf("resolving destination directory: %w", err)
+	}
+
+	if !strings.HasPrefix(absFilePath, absDest) {
+		return fmt.Errorf("file path escapes destination directory: %s", absFilePath)
+	}
 
 	if f.FileInfo().IsDir() {
-		err = os.MkdirAll(p, f.Mode())
+		err = os.MkdirAll(filePath, f.Mode())
 		if err != nil {
-			return fmt.Errorf("unable to create archive directory %s: %w", p, err)
+			return fmt.Errorf("unable to create archive directory %s: %w", filePath, err)
 		}
 
 		return nil
 	}
 
-	err = os.MkdirAll(filepath.Dir(p), 0o750)
+	err = os.MkdirAll(filepath.Dir(filePath), 0o750)
 	if err != nil {
-		return fmt.Errorf("unable to create archive directory %s for file %s: %w", filepath.Dir(p), p, err)
+		return fmt.Errorf("unable to create archive directory %s for file %s: %w", filepath.Dir(filePath), filePath, err)
 	}
 
-	elt, err := os.OpenFile(p, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
+	elt, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
 	if err != nil {
 		return err
 	}
