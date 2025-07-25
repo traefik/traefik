@@ -46,10 +46,10 @@ stringData:
 
 | Field                        | Description   | Default | Required |
 |:-----------------------------|:------------------------------------------------|:--------|:---------|
-| `keySource.header`           | Defines the header name containing the secret sent by the client.<br /> Either `keySource.header` or `keySource.header` or `keySource.header` must be set.                                                 | ""      | No       |
+| `keySource.header`           | Defines the header name containing the secret sent by the client.<br /> Either `keySource.header` or `keySource.query` or `keySource.cookie` must be set.                                                 | ""      | No       |
 | `keySource.headerAuthScheme` | Defines the scheme when using `Authorization` as header name. <br /> Check out the `Authorization` header [documentation](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Authorization#syntax). | ""      | No       |
-| `keySource.query`            | Defines the query parameter name containing the secret sent by the client..<br /> Either `keySource.header` or `keySource.header` or `keySource.header` must be set.                                       | ""      | No       |
-| `keySource.cookie`           | Defines the cookie name containing the secret sent by the client..<br /> Either `keySource.header` or `keySource.header` or `keySource.header` must be set.                                                | ""      | No       |
+| `keySource.query`            | Defines the query parameter name containing the secret sent by the client.<br /> Either `keySource.header` or `keySource.query` or `keySource.cookie` must be set.                                       | ""      | No       |
+| `keySource.cookie`           | Defines the cookie name containing the secret sent by the client.<br /> Either `keySource.header` or `keySource.query` or `keySource.cookie` must be set.                                                | ""      | No       |
 | `secretNonBase64Encoded`     | Defines whether the secret sent by the client is base64 encoded. | false   | No       |
 | `secretValues`               | Contain the hash of the API keys. <br /> Supported hashing algorithms are Bcrypt, SHA1 and MD5. <br /> The hash should be generated using `htpasswd`.<br />Can reference a Kubernetes Secret using the URN format: `urn:k8s:secret:[name]:[valueKey]` | []      | Yes      |
 
