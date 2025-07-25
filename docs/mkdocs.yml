@@ -33,6 +33,9 @@ extra_javascript:
   - assets/js/hljs/highlight.pack.js # Download from https://highlightjs.org/download/ and enable YAML, TOML and Dockerfile
   - assets/js/extra.js
 
+extra_css:
+  - assets/css/menu-icons.css
+
 plugins:
   - search
   - exclude:
@@ -270,6 +273,7 @@ nav:
             - 'Middlewares' :
               - 'Overview' : 'reference/routing-configuration/http/middlewares/overview.md'
               - 'AddPrefix' : 'reference/routing-configuration/http/middlewares/addprefix.md'
+              - '<span class="nav-link-with-icon">APIKey <img src="https://doc.traefik.io/traefik-hub/img/ps-traefik-hub-logo-light.svg" class="menu-icon" alt="Traefik Hub API Gateway"></span>' : 'reference/routing-configuration/http/middlewares/apikey.md'
               - 'BasicAuth' : 'reference/routing-configuration/http/middlewares/basicauth.md'
               - 'Buffering': 'reference/routing-configuration/http/middlewares/buffering.md'
               - 'Chain': 'reference/routing-configuration/http/middlewares/chain.md'
@@ -281,8 +285,15 @@ nav:
               - 'ForwardAuth': 'reference/routing-configuration/http/middlewares/forwardauth.md'
               - 'GrpcWeb': 'reference/routing-configuration/http/middlewares/grpcweb.md'
               - 'Headers': 'reference/routing-configuration/http/middlewares/headers.md'
+              - '<span class="nav-link-with-icon">HMAC <img src="https://doc.traefik.io/traefik-hub/img/ps-traefik-hub-logo-light.svg" class="menu-icon" alt="Traefik Hub API Gateway"></span>' : 'reference/routing-configuration/http/middlewares/hmac.md'
               - 'IPAllowList': 'reference/routing-configuration/http/middlewares/ipallowlist.md'
               - 'InFlightReq': 'reference/routing-configuration/http/middlewares/inflightreq.md'
+              - '<span class="nav-link-with-icon">JWT <img src="https://doc.traefik.io/traefik-hub/img/ps-traefik-hub-logo-light.svg" class="menu-icon" alt="Traefik Hub API Gateway"></span>' : 'reference/routing-configuration/http/middlewares/jwt.md'
+              - '<span class="nav-link-with-icon">LDAP <img src="https://doc.traefik.io/traefik-hub/img/ps-traefik-hub-logo-light.svg" class="menu-icon" alt="Traefik Hub API Gateway"></span>' : 'reference/routing-configuration/http/middlewares/ldap.md'
+              - '<span class="nav-link-with-icon">Token Introspection <img src="https://doc.traefik.io/traefik-hub/img/ps-traefik-hub-logo-light.svg" class="menu-icon" alt="Traefik Hub API Gateway"></span>' : 'reference/routing-configuration/http/middlewares/oauth2-token-introspection.md'
+              - '<span class="nav-link-with-icon">Client Credentials <img src="https://doc.traefik.io/traefik-hub/img/ps-traefik-hub-logo-light.svg" class="menu-icon" alt="Traefik Hub API Gateway"></span>' : 'reference/routing-configuration/http/middlewares/oauth2-client-credentials.md'
+              - '<span class="nav-link-with-icon">OIDC <img src="https://doc.traefik.io/traefik-hub/img/ps-traefik-hub-logo-light.svg" class="menu-icon" alt="Traefik Hub API Gateway"></span>' : 'reference/routing-configuration/http/middlewares/oidc.md'
+              - '<span class="nav-link-with-icon">OPA <img src="https://doc.traefik.io/traefik-hub/img/ps-traefik-hub-logo-light.svg" class="menu-icon" alt="Traefik Hub API Gateway"></span>' : 'reference/routing-configuration/http/middlewares/opa.md'
               - 'PassTLSClientCert': 'reference/routing-configuration/http/middlewares/passtlsclientcert.md'
               - 'RateLimit': 'reference/routing-configuration/http/middlewares/ratelimit.md'
               - 'RedirectRegex': 'reference/routing-configuration/http/middlewares/redirectregex.md'
@@ -292,6 +303,7 @@ nav:
               - 'Retry': 'reference/routing-configuration/http/middlewares/retry.md'
               - 'StripPrefix': 'reference/routing-configuration/http/middlewares/stripprefix.md'
               - 'StripPrefixRegex': 'reference/routing-configuration/http/middlewares/stripprefixregex.md'
+              - '<span class="nav-link-with-icon">WAF <img src="https://doc.traefik.io/traefik-hub/img/ps-traefik-hub-logo-light.svg" class="menu-icon" alt="Traefik Hub API Gateway"></span>' : 'reference/routing-configuration/http/middlewares/waf.md'
           - 'TCP' :
               - 'Router' :
                 - 'Rules & Priority' : 'reference/routing-configuration/tcp/router/rules-and-priority.md'
