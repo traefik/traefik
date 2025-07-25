@@ -8,7 +8,7 @@ description: 'Traefik Hub API Gateway - The HTTP Coraza middleware in Traefik Pr
 
 The [Coraza WAF](https://coraza.io/) middleware in Traefik Hub API Gateway provides web application firewall capabilities.
 
-The native middleware in Hub API Gateway  provides at least 23 times more performance compared to the
+The native middleware in Hub API Gateway provides at least 23 times more performance compared to the
 WASM-based [Coraza plugin](https://plugins.traefik.io/plugins/65f2aea146079255c9ffd1ec/coraza-waf) available with the open-source Traefik Proxy.
 
 To learn how to write rules, please visit [Coraza documentation](https://coraza.io/docs/tutorials/introduction/ "Link to Coraza introduction tutorial") and
