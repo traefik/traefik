@@ -86,6 +86,7 @@ type ServiceTCP struct {
 	TerminationDelay *int `json:"terminationDelay,omitempty"`
 	// ProxyProtocol defines the PROXY protocol configuration.
 	// More info: https://doc.traefik.io/traefik/v3.5/routing/services/#proxy-protocol
+	// Deprecated: ProxyProtocol will not be supported in future APIVersions, please use ServersTransport to configure ProxyProtocol instead.
 	ProxyProtocol *dynamic.ProxyProtocol `json:"proxyProtocol,omitempty"`
 	// ServersTransport defines the name of ServersTransportTCP resource to use.
 	// It allows to configure the transport between Traefik and your servers.
