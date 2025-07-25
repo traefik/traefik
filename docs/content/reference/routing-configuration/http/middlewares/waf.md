@@ -1,6 +1,6 @@
 ---
 title: 'Coraza Web Application Firewall'
-description: 'Traefik Hub API Gateway - The HTTP Coraza middleware in Traefik Proxy provides web application firewall capabilities'
+description: 'Traefik Hub API Gateway - The HTTP Coraza in Traefik Hub API Gateway provides web application firewall capabilities'
 ---
 
 !!! info "Traefik Hub Feature"
