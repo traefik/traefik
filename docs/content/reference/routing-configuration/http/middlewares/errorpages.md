@@ -3,8 +3,6 @@ title: "Traefik Errors Documentation"
 description: "In Traefik Proxy, the Errors middleware returns custom pages according to configured ranges of HTTP Status codes. Read the technical documentation."
 ---
 
-![Errors](../../../../assets/img/middleware/errorpages.png)
-
 The `errors` middleware returns a custom page in lieu of the default, according to configured ranges of HTTP Status codes.
 
 ## Configuration Examples
