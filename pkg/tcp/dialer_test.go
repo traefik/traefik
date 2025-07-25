@@ -131,7 +131,7 @@ func TestConflictingConfig(t *testing.T) {
 
 	dialerManager.Update(dynamicConf)
 
-	_, err := dialerManager.Get("test", false)
+	_, err := dialerManager.Build(&dynamic.TCPServersLoadBalancer{ServersTransport: "test"}, false)
 	require.Error(t, err)
 }
 
@@ -155,7 +155,7 @@ func TestNoTLS(t *testing.T) {
 
 	dialerManager.Update(dynamicConf)
 
-	dialer, err := dialerManager.Get("test", false)
+	dialer, err := dialerManager.Build(&dynamic.TCPServersLoadBalancer{ServersTransport: "test"}, false)
 	require.NoError(t, err)
 
 	conn, err := dialer.Dial("tcp", ":"+port)
@@ -204,7 +204,7 @@ func TestTLS(t *testing.T) {
 
 	dialerManager.Update(dynamicConf)
 
-	dialer, err := dialerManager.Get("test", true)
+	dialer, err := dialerManager.Build(&dynamic.TCPServersLoadBalancer{ServersTransport: "test"}, true)
 	require.NoError(t, err)
 
 	conn, err := dialer.Dial("tcp", ":"+port)
@@ -255,7 +255,7 @@ func TestTLSWithInsecureSkipVerify(t *testing.T) {
 
 	dialerManager.Update(dynamicConf)
 
-	dialer, err := dialerManager.Get("test", true)
+	dialer, err := dialerManager.Build(&dynamic.TCPServersLoadBalancer{ServersTransport: "test"}, true)
 	require.NoError(t, err)
 
 	conn, err := dialer.Dial("tcp", ":"+port)
@@ -324,7 +324,7 @@ func TestMTLS(t *testing.T) {
 
 	dialerManager.Update(dynamicConf)
 
-	dialer, err := dialerManager.Get("test", true)
+	dialer, err := dialerManager.Build(&dynamic.TCPServersLoadBalancer{ServersTransport: "test"}, true)
 	require.NoError(t, err)
 
 	conn, err := dialer.Dial("tcp", ":"+port)
@@ -458,7 +458,7 @@ func TestSpiffeMTLS(t *testing.T) {
 
 			dialerManager.Update(dynamicConf)
 
-			dialer, err := dialerManager.Get("test", true)
+			dialer, err := dialerManager.Build(&dynamic.TCPServersLoadBalancer{ServersTransport: "test"}, true)
 			require.NoError(t, err)
 
 			conn, err := dialer.Dial("tcp", ":"+port)
@@ -485,6 +485,260 @@ func TestSpiffeMTLS(t *testing.T) {
 			assert.Equal(t, "PONG", buffer.String())
 		})
 	}
+}
+
+func TestProxyProtocol(t *testing.T) {
+	testCases := []struct {
+		desc    string
+		version int
+	}{
+		{
+			desc:    "proxy protocol v1",
+			version: 1,
+		},
+		{
+			desc:    "proxy protocol v2",
+			version: 2,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			backendListener, err := net.Listen("tcp", ":0")
+			require.NoError(t, err)
+			defer backendListener.Close()
+
+			receivedData := make([]byte, 1024)
+
+			// Start a server that captures all data including proxy protocol headers
+			go func() {
+				conn, err := backendListener.Accept()
+				require.NoError(t, err)
+				defer conn.Close()
+
+				// Read all initial data
+				_, err = conn.Read(receivedData)
+				require.NoError(t, err)
+
+				// Check if there's ping in the data and respond
+				if bytes.Contains(receivedData, []byte("ping")) {
+					_, _ = conn.Write([]byte("PONG"))
+				}
+			}()
+
+			_, port, err := net.SplitHostPort(backendListener.Addr().String())
+			require.NoError(t, err)
+
+			dialerManager := NewDialerManager(nil)
+
+			dynamicConf := map[string]*dynamic.TCPServersTransport{
+				"test": {
+					ProxyProtocol: &dynamic.ProxyProtocol{
+						Version: test.version,
+					},
+				},
+			}
+
+			dialerManager.Update(dynamicConf)
+
+			dialer, err := dialerManager.Build(&dynamic.TCPServersLoadBalancer{
+				ServersTransport: "test",
+			}, false)
+			require.NoError(t, err)
+
+			conn, err := dialer.Dial("tcp", ":"+port)
+			require.NoError(t, err)
+			defer conn.Close()
+
+			_, err = conn.Write([]byte("ping\n"))
+			require.NoError(t, err)
+
+			buf := make([]byte, 64)
+			n, err := conn.Read(buf)
+			require.NoError(t, err)
+
+			assert.Equal(t, 4, n)
+			assert.Equal(t, "PONG", string(buf[:4]))
+
+			// Verify proxy protocol header was sent
+			assert.NotEmpty(t, receivedData, "Should have received data")
+
+			if test.version == 1 {
+				// For v1, check for "PROXY" prefix
+				assert.True(t, bytes.HasPrefix(receivedData, []byte("PROXY TCP4")), "Should contain PROXY TCP4 header")
+			} else {
+				// For v2, check for binary signature
+				expectedSignature := []byte{0x0D, 0x0A, 0x0D, 0x0A, 0x00, 0x0D, 0x0A, 0x51, 0x55, 0x49, 0x54, 0x0A}
+				assert.True(t, bytes.HasPrefix(receivedData, expectedSignature), "Should contain v2 binary signature")
+			}
+		})
+	}
+}
+
+func TestProxyProtocolWithTLS(t *testing.T) {
+	testCases := []struct {
+		desc    string
+		version int
+	}{
+		{
+			desc:    "proxy protocol v1 with TLS",
+			version: 1,
+		},
+		{
+			desc:    "proxy protocol v2 with TLS",
+			version: 2,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			cert, err := tls.X509KeyPair(LocalhostCert, LocalhostKey)
+			require.NoError(t, err)
+
+			backendListener, err := net.Listen("tcp", ":0")
+			require.NoError(t, err)
+			defer backendListener.Close()
+
+			receivedData := make([]byte, 1024)
+
+			// Create a server that captures proxy protocol headers before TLS
+			go func() {
+				conn, err := backendListener.Accept()
+				require.NoError(t, err)
+				defer conn.Close()
+
+				// Read the proxy protocol header first (before TLS handshake)
+				n, err := conn.Read(receivedData)
+				require.NoError(t, err)
+
+				// Now wrap with TLS and perform handshake
+				tlsConn := tls.Server(conn, &tls.Config{Certificates: []tls.Certificate{cert}})
+				defer tlsConn.Close()
+
+				err = tlsConn.Handshake()
+				require.NoError(t, err)
+
+				n, err = tlsConn.Read(receivedData[n:])
+				require.NoError(t, err)
+
+				// Check if there's ping in the data and respond
+				if bytes.Contains(receivedData, []byte("ping")) {
+					_, _ = tlsConn.Write([]byte("PONG"))
+				}
+			}()
+
+			_, port, err := net.SplitHostPort(backendListener.Addr().String())
+			require.NoError(t, err)
+
+			dialerManager := NewDialerManager(nil)
+
+			dynamicConf := map[string]*dynamic.TCPServersTransport{
+				"test": {
+					TLS: &dynamic.TLSClientConfig{
+						ServerName:         "example.com",
+						RootCAs:            []types.FileOrContent{types.FileOrContent(LocalhostCert)},
+						InsecureSkipVerify: true,
+					},
+					ProxyProtocol: &dynamic.ProxyProtocol{
+						Version: test.version,
+					},
+				},
+			}
+
+			dialerManager.Update(dynamicConf)
+
+			dialer, err := dialerManager.Build(&dynamic.TCPServersLoadBalancer{
+				ServersTransport: "test",
+			}, true)
+			require.NoError(t, err)
+
+			conn, err := dialer.Dial("tcp", ":"+port)
+			require.NoError(t, err)
+			defer conn.Close()
+
+			_, err = conn.Write([]byte("ping\n"))
+			require.NoError(t, err)
+
+			buf := make([]byte, 64)
+			n, err := conn.Read(buf)
+			require.NoError(t, err)
+
+			assert.Equal(t, 4, n)
+			assert.Equal(t, "PONG", string(buf[:4]))
+
+			// Verify proxy protocol header was sent
+			assert.NotEmpty(t, receivedData, "Proxy protocol header should not be empty")
+
+			if test.version == 1 {
+				// For v1, check for "PROXY" prefix
+				assert.True(t, bytes.HasPrefix(receivedData, []byte("PROXY TCP4")), "Should contain PROXY TCP4 header")
+			} else {
+				// For v2, check for binary signature
+				expectedSignature := []byte{0x0D, 0x0A, 0x0D, 0x0A, 0x00, 0x0D, 0x0A, 0x51, 0x55, 0x49, 0x54, 0x0A}
+				assert.True(t, bytes.HasPrefix(receivedData, expectedSignature), "Should contain v2 binary signature")
+			}
+		})
+	}
+}
+
+func TestProxyProtocolDisabled(t *testing.T) {
+	backendListener, err := net.Listen("tcp", ":0")
+	require.NoError(t, err)
+	defer backendListener.Close()
+
+	receivedData := make([]byte, 1024)
+
+	// Start a server that captures all data
+	go func() {
+		conn, err := backendListener.Accept()
+		require.NoError(t, err)
+		defer conn.Close()
+
+		// Read first chunk of data
+		_, err = conn.Read(receivedData)
+		require.NoError(t, err)
+
+		// Handle ping/pong if it's in the data
+		if bytes.Contains(receivedData, []byte("ping")) {
+			_, _ = conn.Write([]byte("PONG"))
+		}
+	}()
+
+	_, port, err := net.SplitHostPort(backendListener.Addr().String())
+	require.NoError(t, err)
+
+	dialerManager := NewDialerManager(nil)
+
+	// No proxy protocol configuration
+	dynamicConf := map[string]*dynamic.TCPServersTransport{
+		"test": {},
+	}
+
+	dialerManager.Update(dynamicConf)
+
+	dialer, err := dialerManager.Build(&dynamic.TCPServersLoadBalancer{
+		ServersTransport: "test",
+	}, false)
+	require.NoError(t, err)
+
+	conn, err := dialer.Dial("tcp", ":"+port)
+	require.NoError(t, err)
+
+	_, err = conn.Write([]byte("ping\n"))
+	require.NoError(t, err)
+
+	buf := make([]byte, 64)
+	n, err := conn.Read(buf)
+	require.NoError(t, err)
+
+	assert.Equal(t, 4, n)
+	assert.Equal(t, "PONG", string(buf[:4]))
+
+	err = conn.Close()
+	require.NoError(t, err)
+
+	// Verify no proxy protocol header was sent - data should start with "ping"
+	assert.False(t, bytes.HasPrefix(receivedData, []byte("PROXY")), "Should not contain PROXY header")
 }
 
 // fakeSpiffePKI simulates a SPIFFE aware PKI and allows generating multiple valid SVIDs.
