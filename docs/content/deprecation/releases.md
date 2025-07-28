@@ -6,7 +6,8 @@ Below is a non-exhaustive list of versions and their maintenance status:
 
 | Version | Release Date | Active Support     | Security Support  |
 |---------|--------------|--------------------|-------------------|
-| 3.4     | May 05, 2025 | Yes                | Yes               |
+| 3.5     | Jul 23, 2025 | Yes                | Yes               |
+| 3.4     | May 05, 2025 | Ended Jul 23, 2025 | No                |
 | 3.3     | Jan 06, 2025 | Ended May 05, 2025 | No                |
 | 3.2     | Oct 28, 2024 | Ended Jan 06, 2025 | No                |
 | 3.1     | Jul 15, 2024 | Ended Oct 28, 2024 | No                |
