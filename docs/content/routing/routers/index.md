@@ -301,7 +301,7 @@ These matchers will match the request's host in lowercase.
     Match requests sent to any subdomain of `example.com`:
 
     ```yaml
-    HostRegexp(`^.+\.example\.com$`)
+    HostRegexp(`.+\.example\.com$`)
     ```
 
     Match requests with `Host` set to either `example.com` or `example.org`:
