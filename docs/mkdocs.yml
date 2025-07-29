@@ -91,6 +91,13 @@ nav:
       - 'Metrics': 'observe/metrics.md'
       - 'Tracing': 'observe/tracing.md'
   - 'Extend': 'extend/extend-traefik.md'
+  - 'Migrate':
+      - 'Traefik v3': 'migrate/v3.md'
+      - 'Traefik v2 to v3':
+        - 'Migration guide': 'migrate/v2-to-v3.md'
+        - 'Configuration changes for v3': 'migrate/v2-to-v3-details.md'
+      - 'Traefik v2': 'migrate/v2.md'
+      - 'Traefik v1 to v2': 'migrate/v1-to-v2.md'
   - 'Configuration Discovery':
       - 'Overview': 'providers/overview.md'
       - 'Docker': 'providers/docker.md'
@@ -199,13 +206,6 @@ nav:
           - 'TLS Challenge': 'user-guides/docker-compose/acme-tls/index.md'
           - 'HTTP Challenge': 'user-guides/docker-compose/acme-http/index.md'
           - 'DNS Challenge': 'user-guides/docker-compose/acme-dns/index.md'
-  - 'Migration':
-      - 'Traefik v3 minor migrations': 'migration/v3.md'
-      - 'Traefik v2 to v3':
-        - 'Migration guide': 'migration/v2-to-v3.md'
-        - 'Configuration changes for v3': 'migration/v2-to-v3-details.md'
-      - 'Traefik v2 minor migrations': 'migration/v2.md'
-      - 'Traefik v1 to v2': 'migration/v1-to-v2.md'
   - 'Contributing':
       - 'Thank You!': 'contributing/thank-you.md'
       - 'Submitting Issues': 'contributing/submitting-issues.md'
