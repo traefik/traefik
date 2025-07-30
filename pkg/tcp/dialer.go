@@ -48,9 +48,7 @@ func (d tcpDialer) Dial(network, addr string) (net.Conn, error) {
 		header := proxyproto.HeaderProxyFromAddrs(byte(d.proxyProtocol.Version), conn.RemoteAddr(), conn.LocalAddr())
 		if _, err := header.WriteTo(conn); err != nil {
 			_ = conn.Close()
-			// FIXME: check the log
-			log.Error().Err(err).Msg("Error while writing TCP proxy protocol headers to backend connection")
-			return nil, err
+			return nil, fmt.Errorf("writing PROXY Protocol header: %w", err)
 		}
 	}
 
