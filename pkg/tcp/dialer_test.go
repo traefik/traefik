@@ -618,7 +618,7 @@ func TestProxyProtocolWithTLS(t *testing.T) {
 				err = tlsConn.Handshake()
 				require.NoError(t, err)
 
-				n, err = tlsConn.Read(receivedData[n:])
+				_, err = tlsConn.Read(receivedData[n:])
 				require.NoError(t, err)
 
 				// Check if there's ping in the data and respond
