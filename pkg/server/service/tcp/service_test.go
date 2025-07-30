@@ -231,7 +231,7 @@ func TestManager_BuildTCP(t *testing.T) {
 				},
 			},
 			providerName:  "provider-1",
-			expectedError: "TCP dialer not found myServersTransport@provider-1",
+			expectedError: "no transport configuration found for \"myServersTransport@provider-1\"",
 		},
 	}
 
