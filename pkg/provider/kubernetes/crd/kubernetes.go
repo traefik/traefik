@@ -409,6 +409,19 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			})
 		}
 
+		sTransport := &dynamic.ServersTransport{}
+		if serversTransport.Spec.CipherSuites != nil {
+			for _, cipher := range serversTransport.Spec.CipherSuites {
+				if _, exists := tls.CipherSuites[cipher]; exists {
+					sTransport.CipherSuites = append(sTransport.CipherSuites, cipher)
+				} else {
+					// CipherSuite listed in the configuration does not exist in our list
+					logger.Error().Msgf("invalid CipherSuite: %s", cipher)
+					continue
+				}
+			}
+		}
+
 		forwardingTimeout := &dynamic.ForwardingTimeouts{}
 		forwardingTimeout.SetDefaults()
 
@@ -455,6 +468,9 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			InsecureSkipVerify:  serversTransport.Spec.InsecureSkipVerify,
 			RootCAs:             rootCAs,
 			Certificates:        certs,
+			CipherSuites:        serversTransport.Spec.CipherSuites,
+			MinVersion:          serversTransport.Spec.MinVersion,
+			MaxVersion:          serversTransport.Spec.MaxVersion,
 			DisableHTTP2:        serversTransport.Spec.DisableHTTP2,
 			MaxIdleConnsPerHost: serversTransport.Spec.MaxIdleConnsPerHost,
 			ForwardingTimeouts:  forwardingTimeout,
