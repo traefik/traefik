@@ -187,16 +187,26 @@ func (t *TransportManager) createTLSConfig(cfg *dynamic.ServersTransport) (*tls.
 			}
 		}
 
-		// Set the minimum TLS version if set in the config
+		// Set the min TLS version if set in the config
 		var minVer uint16
-		if minConst, exists := traefiktls.MinVersion[cfg.MinVersion]; exists {
-			minVer = minConst
+		if cfg.MinVersion != "" {
+			if minConst, exists := traefiktls.MinVersion[cfg.MinVersion]; exists {
+				minVer = minConst
+			} else {
+				// Min TLS version does not exist
+				return nil, fmt.Errorf("invalid TLS minimal version: %v", minVer)
+			}
 		}
 
-		// Set the minimum TLS version if set in the config
+		// Set the min TLS version if set in the config
 		var maxVer uint16
-		if maxConst, exists := traefiktls.MaxVersion[cfg.MaxVersion]; exists {
-			maxVer = maxConst
+		if cfg.MinVersion != "" {
+			if maxConst, exists := traefiktls.MaxVersion[cfg.MaxVersion]; exists {
+				maxVer = maxConst
+			} else {
+				// Max TLS version does not exist
+				return nil, fmt.Errorf("invalid TLS maximal version: %v", maxVer)
+			}
 		}
 
 		config = &tls.Config{
