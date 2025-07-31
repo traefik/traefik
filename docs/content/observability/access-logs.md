@@ -362,7 +362,7 @@ accesslog:
 --accesslog.otlp.serviceName=name
 ```
 
-### `ressourceAttributes`
+### `resourceAttributes`
 
 _Optional, Default=empty_
 

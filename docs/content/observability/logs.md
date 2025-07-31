@@ -241,7 +241,7 @@ log:
 --log.otlp.serviceName=name
 ```
 
-### `ressourceAttributes`
+### `resourceAttributes`
 
 _Optional, Default=empty_
 
