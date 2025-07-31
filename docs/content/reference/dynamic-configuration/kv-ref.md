@@ -365,6 +365,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/tcp/routers/TCPRouter1/tls/passthrough` | `true` |
 | `traefik/tcp/serversTransports/TCPServersTransport0/dialKeepAlive` | `42s` |
 | `traefik/tcp/serversTransports/TCPServersTransport0/dialTimeout` | `42s` |
+| `traefik/tcp/serversTransports/TCPServersTransport0/proxyProtocol/version` | `42` |
 | `traefik/tcp/serversTransports/TCPServersTransport0/terminationDelay` | `42s` |
 | `traefik/tcp/serversTransports/TCPServersTransport0/tls/certificates/0/certFile` | `foobar` |
 | `traefik/tcp/serversTransports/TCPServersTransport0/tls/certificates/0/keyFile` | `foobar` |
@@ -380,6 +381,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/tcp/serversTransports/TCPServersTransport0/tls/spiffe/trustDomain` | `foobar` |
 | `traefik/tcp/serversTransports/TCPServersTransport1/dialKeepAlive` | `42s` |
 | `traefik/tcp/serversTransports/TCPServersTransport1/dialTimeout` | `42s` |
+| `traefik/tcp/serversTransports/TCPServersTransport1/proxyProtocol/version` | `42` |
 | `traefik/tcp/serversTransports/TCPServersTransport1/terminationDelay` | `42s` |
 | `traefik/tcp/serversTransports/TCPServersTransport1/tls/certificates/0/certFile` | `foobar` |
 | `traefik/tcp/serversTransports/TCPServersTransport1/tls/certificates/0/keyFile` | `foobar` |
