@@ -6,6 +6,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"fmt"
 	"math/big"
 	"net"
 	"net/http"
@@ -118,9 +119,6 @@ PtvuNc5EImfSkuPBYLBslNxtjbBvAYgacEdY+gRhn2TeIUApnND58lCWsKbNHLFZ
 ajIPbTY+Fe9OTOFTN48ujXNn
 -----END PRIVATE KEY-----`)
 
-var cipherSuite = []uint16{tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256}
-var cipherSuiteName = []string{"TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256"}
-
 func TestKeepConnectionWhenSameConfiguration(t *testing.T) {
 	srv := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
@@ -196,10 +194,14 @@ func TestCipherSuites(t *testing.T) {
 
 	srv.TLS = &tls.Config{
 		Certificates: []tls.Certificate{cert},
-		CipherSuites: cipherSuite,
 		MaxVersion:   tls.VersionTLS12,
+		CipherSuites: []uint16{
+			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+		},
 	}
 	srv.StartTLS()
+
+	fmt.Printf("cipher: %v, version: %v\n", srv.TLS.CipherSuites, srv.TLS.MaxVersion)
 
 	transportManager := NewTransportManager(nil)
 
@@ -207,7 +209,8 @@ func TestCipherSuites(t *testing.T) {
 		"test": {
 			ServerName:   "example.com",
 			RootCAs:      []types.FileOrContent{types.FileOrContent(LocalhostCert)},
-			CipherSuites: cipherSuiteName,
+			CipherSuites: []string{"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"},
+			MaxVersion:   "VersionTLS12",
 		},
 	}
 
