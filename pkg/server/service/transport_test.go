@@ -6,6 +6,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"fmt"
 	"math/big"
 	"net"
 	"net/http"
@@ -181,6 +182,49 @@ func TestKeepConnectionWhenSameConfiguration(t *testing.T) {
 
 	count = atomic.LoadInt32(connCount)
 	assert.EqualValues(t, 2, count)
+}
+
+func TestCipherSuites(t *testing.T) {
+	srv := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+	}))
+
+	cert, err := tls.X509KeyPair(LocalhostCert, LocalhostKey)
+	require.NoError(t, err)
+
+	srv.TLS = &tls.Config{
+		Certificates: []tls.Certificate{cert},
+		MaxVersion:   tls.VersionTLS12,
+		CipherSuites: []uint16{
+			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+		},
+	}
+	srv.StartTLS()
+
+	fmt.Printf("cipher: %v, version: %v\n", srv.TLS.CipherSuites, srv.TLS.MaxVersion)
+
+	transportManager := NewTransportManager(nil)
+
+	dynamicConf := map[string]*dynamic.ServersTransport{
+		"test": {
+			ServerName:   "example.com",
+			RootCAs:      []types.FileOrContent{types.FileOrContent(LocalhostCert)},
+			CipherSuites: []string{"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"},
+			MaxVersion:   "VersionTLS12",
+		},
+	}
+
+	transportManager.Update(dynamicConf)
+
+	tr, err := transportManager.GetRoundTripper("test")
+	require.NoError(t, err)
+
+	client := http.Client{Transport: tr}
+
+	resp, err := client.Get(srv.URL)
+	require.NoError(t, err)
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
 }
 
 func TestMTLS(t *testing.T) {
