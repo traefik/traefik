@@ -237,6 +237,8 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/serversTransports/ServersTransport0/certificates/0/keyFile` | `foobar` |
 | `traefik/http/serversTransports/ServersTransport0/certificates/1/certFile` | `foobar` |
 | `traefik/http/serversTransports/ServersTransport0/certificates/1/keyFile` | `foobar` |
+| `traefik/http/serversTransports/ServersTransport0/cipherSuites/0` | `foobar` |
+| `traefik/http/serversTransports/ServersTransport0/cipherSuites/1` | `foobar` |
 | `traefik/http/serversTransports/ServersTransport0/disableHTTP2` | `true` |
 | `traefik/http/serversTransports/ServersTransport0/forwardingTimeouts/dialTimeout` | `42s` |
 | `traefik/http/serversTransports/ServersTransport0/forwardingTimeouts/idleConnTimeout` | `42s` |
@@ -245,6 +247,8 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/serversTransports/ServersTransport0/forwardingTimeouts/responseHeaderTimeout` | `42s` |
 | `traefik/http/serversTransports/ServersTransport0/insecureSkipVerify` | `true` |
 | `traefik/http/serversTransports/ServersTransport0/maxIdleConnsPerHost` | `42` |
+| `traefik/http/serversTransports/ServersTransport0/maxVersion` | `foobar` |
+| `traefik/http/serversTransports/ServersTransport0/minVersion` | `foobar` |
 | `traefik/http/serversTransports/ServersTransport0/peerCertURI` | `foobar` |
 | `traefik/http/serversTransports/ServersTransport0/rootCAs/0` | `foobar` |
 | `traefik/http/serversTransports/ServersTransport0/rootCAs/1` | `foobar` |
@@ -256,6 +260,8 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/serversTransports/ServersTransport1/certificates/0/keyFile` | `foobar` |
 | `traefik/http/serversTransports/ServersTransport1/certificates/1/certFile` | `foobar` |
 | `traefik/http/serversTransports/ServersTransport1/certificates/1/keyFile` | `foobar` |
+| `traefik/http/serversTransports/ServersTransport1/cipherSuites/0` | `foobar` |
+| `traefik/http/serversTransports/ServersTransport1/cipherSuites/1` | `foobar` |
 | `traefik/http/serversTransports/ServersTransport1/disableHTTP2` | `true` |
 | `traefik/http/serversTransports/ServersTransport1/forwardingTimeouts/dialTimeout` | `42s` |
 | `traefik/http/serversTransports/ServersTransport1/forwardingTimeouts/idleConnTimeout` | `42s` |
@@ -264,6 +270,8 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/serversTransports/ServersTransport1/forwardingTimeouts/responseHeaderTimeout` | `42s` |
 | `traefik/http/serversTransports/ServersTransport1/insecureSkipVerify` | `true` |
 | `traefik/http/serversTransports/ServersTransport1/maxIdleConnsPerHost` | `42` |
+| `traefik/http/serversTransports/ServersTransport1/maxVersion` | `foobar` |
+| `traefik/http/serversTransports/ServersTransport1/minVersion` | `foobar` |
 | `traefik/http/serversTransports/ServersTransport1/peerCertURI` | `foobar` |
 | `traefik/http/serversTransports/ServersTransport1/rootCAs/0` | `foobar` |
 | `traefik/http/serversTransports/ServersTransport1/rootCAs/1` | `foobar` |
