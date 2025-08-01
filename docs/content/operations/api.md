@@ -46,7 +46,7 @@ And then define a routing configuration on Traefik itself with the
 
 --8<-- "content/operations/include-api-examples.md"
 
-??? warning "The router's [rule](../../routing/routers#rule) must catch requests for the URI path `/api`"
+??? warning "The router's [rule](../../routing/routers/#rule) must catch requests for the URI path `/api`"
     Using an "Host" rule is recommended, by catching all the incoming traffic on this host domain to the API.
     However, you can also use "path prefix" rule or any combination or rules.
 
