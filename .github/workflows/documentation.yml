@@ -1,6 +1,7 @@
 name: Build and Publish Documentation
 
 on:
+  workflow_dispatch: {}
   push:
     branches:
       - master
@@ -39,9 +40,9 @@ jobs:
         run: curl -sSfL https://raw.githubusercontent.com/traefik/mixtus/master/godownloader.sh | sh -s -- -b $HOME/bin ${MIXTUS_VERSION}
 
       - name: Build documentation
-        run: $HOME/bin/structor -o traefik -r traefik --dockerfile-url="https://raw.githubusercontent.com/traefik/traefik/v1.7/docs.Dockerfile" --menu.js-url="https://raw.githubusercontent.com/traefik/structor/master/traefik-menu.js.gotmpl" --rqts-url="https://raw.githubusercontent.com/traefik/structor/master/requirements-override.txt" --force-edit-url --exp-branch=master --debug
-        env:
-          STRUCTOR_LATEST_TAG: ${{ vars.STRUCTOR_LATEST_TAG }}
+        run: |
+          STRUCTOR_LATEST_TAG=$(curl -s https://api.github.com/repos/traefik/traefik/releases/latest | jq -r '.tag_name')
+          $HOME/bin/structor -o traefik -r traefik --dockerfile-url="https://raw.githubusercontent.com/traefik/traefik/v1.7/docs.Dockerfile" --menu.js-url="https://raw.githubusercontent.com/traefik/structor/master/traefik-menu.js.gotmpl" --rqts-url="https://raw.githubusercontent.com/traefik/structor/master/requirements-override.txt" --force-edit-url --exp-branch=master --debug
 
       - name: Apply seo
         run: $HOME/bin/seo -path=./site -product=traefik
