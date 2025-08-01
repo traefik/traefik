@@ -1869,6 +1869,11 @@ Register the `TLSStore` kind in the Kubernetes cluster before creating `TLSStore
         - spiffe://trust-domain/id1
         - spiffe://trust-domain/id2
         trustDomain: "spiffe://trust-domain"    # [14]
+      cipherSuites:                             # [15]
+        - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+        - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+      minVersion: VersionTLS11                  # [16]
+      maxVersion: VersionTLS12                  # [17]
     ```
 
 | Ref  | Attribute               | Purpose                                                                                                                                                                                         |
@@ -1887,6 +1892,9 @@ Register the `TLSStore` kind in the Kubernetes cluster before creating `TLSStore
 | [12] | `spiffe`                | The spiffe configuration.                                                                                                                                                                       |
 | [13] | `ids`                   | Defines the allowed SPIFFE IDs (takes precedence over the SPIFFE TrustDomain).                                                                                                                  |
 | [14] | `trustDomain`           | Defines the allowed SPIFFE trust domain.                                                                                                                                                        |
+| [15] | `cipherSuites`          | Defines a list of cipher to use to contact the backend servers.                                                                                                                                                                                         |
+| [16] | `minVersion`            | Defines TLS minimum version to use to contact the backend servers.                                                                                                                                                                                         |
+| [17] | `maxVersion`            | Defines TLS maximum version to use to contact the backend servers.                                                                                                                                                                                         |
 
 !!! info "CA Secret"
 
