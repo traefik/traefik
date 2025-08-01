@@ -440,6 +440,11 @@ http:
           - foobar
           - foobar
         trustDomain: foobar
+      cipherSuites: 
+        - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+        - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+      minVersion: VersionTLS12
+      maxVersion: VersionTLS12
     ServersTransport1:
       serverName: foobar
       insecureSkipVerify: true
@@ -465,6 +470,11 @@ http:
           - foobar
           - foobar
         trustDomain: foobar
+      cipherSuites: 
+        - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+        - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+      minVersion: VersionTLS12
+      maxVersion: VersionTLS12
 tcp:
   routers:
     TCPRouter0:
