@@ -67,6 +67,21 @@ spec:
 | <a id="opt-serverstransport-forwardingTimeouts-idleConnTimeout" href="#opt-serverstransport-forwardingTimeouts-idleConnTimeout" title="#opt-serverstransport-forwardingTimeouts-idleConnTimeout">`serverstransport.`<br />`forwardingTimeouts.idleConnTimeout`</a> | Maximum amount of time an idle (keep-alive) connection will remain idle before closing itself.<br />Zero means no timeout. | 90s  | No |
 | <a id="opt-serverstransport-spiffe-ids" href="#opt-serverstransport-spiffe-ids" title="#opt-serverstransport-spiffe-ids">`serverstransport.`<br />`spiffe.ids`</a> | Allow SPIFFE IDs.<br />This takes precedence over the SPIFFE TrustDomain. |  | No |
 | <a id="opt-serverstransport-spiffe-trustDomain" href="#opt-serverstransport-spiffe-trustDomain" title="#opt-serverstransport-spiffe-trustDomain">`serverstransport.`<br />`spiffe.trustDomain`</a> | Allow SPIFFE trust domain. | ""  | No |
+| `serverstransport.`<br />`serverName` | Defines the server name that will be used for SNI. |  | No |
+| `serverstransport.`<br />`insecureSkipVerify` | Controls whether the server's certificate chain and host name is verified. | false  | No |
+| `serverstransport.`<br />`rootcas` | Set of root certificate authorities to use when verifying server certificates. (for mTLS connections). |  | No |
+| `serverstransport.`<br />`certificatesSecrets` | Certificates to present to the server for mTLS. |  | No |
+| `serverstransport.`<br />`cipherSuites` | Defines a list of cipher to use to contact the backend servers. | [] | No |
+| `serverstransport.`<br />`minVersion` | Defines a TLS minimum version to use to contact the backend servers. | "" | No |
+| `serverstransport.`<br />`maxVersion` | Defines a TLS maximum version to use to contact the backend servers. | "" | No |
+| `serverstransport.`<br />`maxIdleConnsPerHost` | Maximum idle (keep-alive) connections to keep per-host. | 200 | No |
+| `serverstransport.`<br />`disableHTTP2` | Disables HTTP/2 for connections with servers. | false | No |
+| `serverstransport.`<br />`peerCertURI` | Defines the URI used to match against SAN URIs during the server's certificate verification. | "" | No |
+| `serverstransport.`<br />`forwardingTimeouts.dialTimeout` | Amount of time to wait until a connection to a server can be established.<br />Zero means no timeout. | 30s  | No |
+| `serverstransport.`<br />`forwardingTimeouts.responseHeaderTimeout` | Amount of time to wait for a server's response headers after fully writing the request (including its body, if any).<br />Zero means no timeout | 0s  | No |
+| `serverstransport.`<br />`forwardingTimeouts.idleConnTimeout` | Maximum amount of time an idle (keep-alive) connection will remain idle before closing itself.<br />Zero means no timeout. | 90s  | No |
+| `serverstransport.`<br />`spiffe.ids` | Allow SPIFFE IDs.<br />This takes precedence over the SPIFFE TrustDomain. |  | No |
+| `serverstransport.`<br />`spiffe.trustDomain` | Allow SPIFFE trust domain. | ""  | No |
 
 !!! note "CA Secret"
     The CA secret must contain a base64 encoded certificate under either a tls.ca or a ca.crt key.

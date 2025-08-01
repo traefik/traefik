@@ -169,9 +169,44 @@ func (t *TransportManager) createTLSConfig(cfg *dynamic.ServersTransport) (*tls.
 		config = tlsconfig.MTLSClientConfig(t.spiffeX509Source, t.spiffeX509Source, spiffeAuthorizer)
 	}
 
-	if cfg.InsecureSkipVerify || len(cfg.RootCAs) > 0 || len(cfg.ServerName) > 0 || len(cfg.Certificates) > 0 || cfg.PeerCertURI != "" {
+	if cfg.InsecureSkipVerify || len(cfg.RootCAs) > 0 || len(cfg.ServerName) > 0 || len(cfg.Certificates) > 0 || cfg.PeerCertURI != "" || len(cfg.CipherSuites) > 0 || cfg.MaxVersion != "" || cfg.MinVersion != "" {
 		if config != nil {
 			return nil, errors.New("TLS and SPIFFE configuration cannot be defined at the same time")
+		}
+
+		// map and validate the CipherSuite passed in the configuration
+		ciphersList := make([]uint16, 0)
+		if cfg.CipherSuites != nil {
+			for _, cipher := range cfg.CipherSuites {
+				if cipherID, exists := traefiktls.CipherSuites[cipher]; exists {
+					ciphersList = append(ciphersList, cipherID)
+				} else {
+					// CipherSuite listed in the configuration does not exist in our list
+					return nil, fmt.Errorf("invalid CipherSuite: %s", cipher)
+				}
+			}
+		}
+
+		// Set the min TLS version if set in the config
+		var minVer uint16
+		if cfg.MinVersion != "" {
+			if minConst, exists := traefiktls.MinVersion[cfg.MinVersion]; exists {
+				minVer = minConst
+			} else {
+				// Min TLS version does not exist
+				return nil, fmt.Errorf("invalid TLS minimal version: %v", minVer)
+			}
+		}
+
+		// Set the min TLS version if set in the config
+		var maxVer uint16
+		if cfg.MinVersion != "" {
+			if maxConst, exists := traefiktls.MaxVersion[cfg.MaxVersion]; exists {
+				maxVer = maxConst
+			} else {
+				// Max TLS version does not exist
+				return nil, fmt.Errorf("invalid TLS maximal version: %v", maxVer)
+			}
 		}
 
 		config = &tls.Config{
@@ -179,6 +214,9 @@ func (t *TransportManager) createTLSConfig(cfg *dynamic.ServersTransport) (*tls.
 			InsecureSkipVerify: cfg.InsecureSkipVerify,
 			RootCAs:            createRootCACertPool(cfg.RootCAs),
 			Certificates:       cfg.Certificates.GetCertificates(),
+			CipherSuites:       ciphersList,
+			MinVersion:         minVer,
+			MaxVersion:         maxVer,
 		}
 
 		if cfg.PeerCertURI != "" {
