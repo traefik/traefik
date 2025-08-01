@@ -437,6 +437,11 @@ http:
           keyFile: foobar
         - certFile: foobar
           keyFile: foobar
+      cipherSuites:
+        - foobar
+        - foobar
+      minVersion: foobar
+      maxVersion: foobar
       maxIdleConnsPerHost: 42
       forwardingTimeouts:
         dialTimeout: 42s
@@ -451,11 +456,6 @@ http:
           - foobar
           - foobar
         trustDomain: foobar
-      cipherSuites: 
-        - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
-        - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
-      minVersion: VersionTLS12
-      maxVersion: VersionTLS12
     ServersTransport1:
       serverName: foobar
       insecureSkipVerify: true
@@ -467,6 +467,11 @@ http:
           keyFile: foobar
         - certFile: foobar
           keyFile: foobar
+      cipherSuites:
+        - foobar
+        - foobar
+      minVersion: foobar
+      maxVersion: foobar
       maxIdleConnsPerHost: 42
       forwardingTimeouts:
         dialTimeout: 42s
@@ -481,11 +486,6 @@ http:
           - foobar
           - foobar
         trustDomain: foobar
-      cipherSuites: 
-        - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
-        - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
-      minVersion: VersionTLS12
-      maxVersion: VersionTLS12
 tcp:
   routers:
     TCPRouter0:
