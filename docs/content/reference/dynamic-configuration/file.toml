@@ -381,6 +381,9 @@
       maxIdleConnsPerHost = 42
       disableHTTP2 = true
       peerCertURI = "foobar"
+      cipherSuites = ["TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256","TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384"]
+      minVersion = "VersionTLS12"
+      maxVersion = "VersionTLS12"
 
       [[http.serversTransports.ServersTransport0.certificates]]
         certFile = "foobar"
@@ -405,6 +408,9 @@
       maxIdleConnsPerHost = 42
       disableHTTP2 = true
       peerCertURI = "foobar"
+      cipherSuites = ["TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256","TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384"]
+      minVersion = "VersionTLS12"
+      maxVersion = "VersionTLS12"
 
       [[http.serversTransports.ServersTransport1.certificates]]
         certFile = "foobar"
