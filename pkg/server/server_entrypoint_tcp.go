@@ -647,7 +647,7 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 	serverHTTP := &http.Server{
 		Protocols:      &protocols,
 		Handler:        handler,
-		ErrorLog:       stdlog.New(logs.NoLevel(log.Logger, zerolog.DebugLevel), "", 0),
+		ErrorLog:       stdlog.New(logs.NoLevel(log.Logger, zerolog.ErrorLevel), "", 0),
 		ReadTimeout:    time.Duration(configuration.Transport.RespondingTimeouts.ReadTimeout),
 		WriteTimeout:   time.Duration(configuration.Transport.RespondingTimeouts.WriteTimeout),
 		IdleTimeout:    time.Duration(configuration.Transport.RespondingTimeouts.IdleTimeout),
