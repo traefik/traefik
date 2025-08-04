@@ -12,6 +12,10 @@ import (
 	"github.com/traefik/traefik/v3/pkg/tcp"
 )
 
+const (
+	MaxPayloadSize = 65535 // Maximum size of the payload to send during health checks.
+)
+
 type ServiceTCPHealthChecker struct {
 	dialerManager *tcp.DialerManager
 	balancer      StatusSetter
@@ -39,6 +43,16 @@ func NewServiceTCPHealthChecker(ctx context.Context, dialerManager *tcp.DialerMa
 	if timeout <= 0 {
 		logger.Error().Msg("Health check timeout smaller than zero")
 		timeout = time.Duration(dynamic.DefaultHealthCheckTimeout)
+	}
+
+	if config.Payload != "" && len(config.Payload) > MaxPayloadSize {
+		logger.Error().Msgf("Health check payload size exceeds maximum allowed size of %d bytes, falling back to connect only check.", MaxPayloadSize)
+		config.Payload = ""
+	}
+
+	if config.Expected != "" && len(config.Expected) > MaxPayloadSize {
+		logger.Error().Msgf("Health check expected response size exceeds maximum allowed size of %d bytes, falling back to close without response.", MaxPayloadSize)
+		config.Expected = ""
 	}
 
 	return &ServiceTCPHealthChecker{
@@ -102,7 +116,7 @@ func (thc *ServiceTCPHealthChecker) Check(ctx context.Context) {
 	}
 }
 
-func (thc *ServiceTCPHealthChecker) executeHealthCheck(_ context.Context, config *dynamic.TCPServerHealthCheck, target *net.TCPAddr) error {
+func (thc *ServiceTCPHealthChecker) executeHealthCheck(ctx context.Context, config *dynamic.TCPServerHealthCheck, target *net.TCPAddr) error {
 	dialer, err := thc.dialerManager.Get(config.ServersTransport, config.TLS)
 	if err != nil {
 		return err
@@ -112,7 +126,11 @@ func (thc *ServiceTCPHealthChecker) executeHealthCheck(_ context.Context, config
 	if err != nil {
 		return err
 	}
-	defer conn.Close()
+	defer func() {
+		if err := conn.Close(); err != nil {
+			log.Ctx(ctx).Warn().Err(err).Msg("Failed to close health check connection")
+		}
+	}()
 
 	if config.Payload != "" {
 		_, err = conn.Write([]byte(config.Payload))
