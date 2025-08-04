@@ -124,6 +124,8 @@ func (f *RouterFactory) CreateRouters(rtConf *runtime.Configuration) (map[string
 		}
 	}
 
+	svcTCPManager.LaunchHealthCheck(ctx)
+
 	// UDP
 	svcUDPManager := udpsvc.NewManager(rtConf)
 	rtUDPManager := udprouter.NewManager(rtConf, svcUDPManager)

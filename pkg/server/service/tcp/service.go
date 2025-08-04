@@ -157,6 +157,14 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 	}
 }
 
+// LaunchHealthCheck launches the health checks.
+func (m *Manager) LaunchHealthCheck(ctx context.Context) {
+	for serviceName, hc := range m.healthCheckers {
+		logger := log.Ctx(ctx).With().Str(logs.ServiceName, serviceName).Logger()
+		go hc.Launch(logger.WithContext(ctx))
+	}
+}
+
 func shuffle[T any](values []T, r *rand.Rand) []T {
 	shuffled := make([]T, len(values))
 	copy(shuffled, values)
