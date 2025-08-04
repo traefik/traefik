@@ -527,6 +527,14 @@ tcp:
             tls: true
         serversTransport: foobar
         terminationDelay: 42
+        healthCheck:
+          tls: true
+          serversTransport: foobar
+          interval: 42s
+          unhealthyInterval: 42s
+          timeout: 42s
+          payload: foobar
+          expected: foobar
     TCPService02:
       weighted:
         services:
@@ -534,6 +542,7 @@ tcp:
             weight: 42
           - name: foobar
             weight: 42
+        healthCheck: {}
   middlewares:
     TCPMiddleware01:
       ipAllowList:
