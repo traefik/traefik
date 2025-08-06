@@ -3,6 +3,7 @@ package tcp
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"testing"
@@ -168,6 +169,35 @@ func TestProxyProtocol(t *testing.T) {
 			assert.Equal(t, "PONG", buffer.String())
 
 			assert.Equal(t, test.version, version)
+		})
+	}
+}
+
+func TestIsBenignCloseError(t *testing.T) {
+	tests := []struct {
+		name string
+		err  error
+		want bool
+	}{
+		{name: "nil_error", err: nil, want: false},
+		{name: "EOF", err: io.EOF, want: true},
+		{
+			name: "netErrClosed",
+			err:  fmt.Errorf("something: %w", net.ErrClosed),
+			want: true,
+		},
+		{
+			name: "use_of_closed_network_connection",
+			err:  errors.New("use of closed network connection"),
+			want: true,
+		},
+		{name: "other_error", err: errors.New("kaboom"), want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := isBenignCloseError(tt.err)
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }
