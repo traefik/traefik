@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"strings"
 	"syscall"
 	"time"
 
@@ -100,7 +101,7 @@ func (p *Proxy) connCopy(dst, src WriteCloser, errCh chan error) {
 		// It happens notably when the dst connection has ended receiving an RST packet from the peer (within the other connCopy call).
 		// In that case, logging the error is superfluous,
 		// as in the first place we should not have needed to call CloseWrite.
-		if !isSocketNotConnectedError(errClose) {
+		if !isSocketNotConnectedError(errClose) && !isBenignCloseError(errClose) {
 			log.Debug().Err(errClose).Msg("Error while terminating TCP connection")
 		}
 
@@ -109,7 +110,7 @@ func (p *Proxy) connCopy(dst, src WriteCloser, errCh chan error) {
 
 	if p.dialer.TerminationDelay() >= 0 {
 		err := dst.SetReadDeadline(time.Now().Add(p.dialer.TerminationDelay()))
-		if err != nil {
+		if err != nil && !isBenignCloseError(err) {
 			log.Debug().Err(err).Msg("Error while setting TCP connection deadline")
 		}
 	}
@@ -119,4 +120,28 @@ func (p *Proxy) connCopy(dst, src WriteCloser, errCh chan error) {
 func isSocketNotConnectedError(err error) bool {
 	var oerr *net.OpError
 	return errors.As(err, &oerr) && errors.Is(err, syscall.ENOTCONN)
+}
+
+// isBenignCloseError identifies expected, non-critical TCP close-related errors.
+func isBenignCloseError(err error) bool {
+	// no error → not a close error
+	if err == nil {
+		return false
+	}
+
+	// closed listener/net.Conn
+	if errors.Is(err, net.ErrClosed) {
+		return true
+	}
+
+	// half-close EOF
+	if errors.Is(err, io.EOF) {
+		return true
+	}
+
+	if strings.Contains(err.Error(), "use of closed network connection") {
+		return true
+	}
+
+	return false
 }
