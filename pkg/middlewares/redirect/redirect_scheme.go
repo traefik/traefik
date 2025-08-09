@@ -34,7 +34,7 @@ func NewRedirectScheme(ctx context.Context, next http.Handler, conf dynamic.Redi
 	}
 
 	port := ""
-	if len(conf.Port) > 0 && !(conf.Scheme == schemeHTTP && conf.Port == "80" || conf.Scheme == schemeHTTPS && conf.Port == "443") {
+	if len(conf.Port) > 0 && !(strings.EqualFold(conf.Scheme, schemeHTTP) && conf.Port == "80" || strings.EqualFold(conf.Scheme, schemeHTTPS) && conf.Port == "443") {
 		port = ":" + conf.Port
 	}
 
