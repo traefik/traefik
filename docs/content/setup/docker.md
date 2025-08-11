@@ -137,6 +137,7 @@ services:
       - "traefik.http.routers.whoami.rule=Host(`whoami.docker.localhost`)"
       - "traefik.http.routers.whoami.entrypoints=websecure"
       - "traefik.http.routers.whoami.tls=true"
+      - "traefik.http.services.whoami.loadbalancer.server.port=80"
 
 networks:
   proxy:
