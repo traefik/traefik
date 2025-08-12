@@ -246,7 +246,7 @@ http:
 
 Most of what happens to the connection between the clients and Traefik,
 and then between Traefik and the backend servers, is configured through the
-[entrypoints](../entrypoints) and the [routers](../routers).
+[entrypoints](../entrypoints/) and the [routers](../routers/).
 
 In addition, a few parameters are dedicated to configuring globally
 what happens with the connections between Traefik and the backends.
