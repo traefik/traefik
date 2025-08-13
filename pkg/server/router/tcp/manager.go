@@ -15,6 +15,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/snicheck"
 	httpmuxer "github.com/traefik/traefik/v3/pkg/muxer/http"
 	tcpmuxer "github.com/traefik/traefik/v3/pkg/muxer/tcp"
+	"github.com/traefik/traefik/v3/pkg/server/middleware"
 	"github.com/traefik/traefik/v3/pkg/server/provider"
 	tcpservice "github.com/traefik/traefik/v3/pkg/server/service/tcp"
 	"github.com/traefik/traefik/v3/pkg/tcp"
@@ -34,6 +35,7 @@ func NewManager(conf *runtime.Configuration,
 	httpHandlers map[string]http.Handler,
 	httpsHandlers map[string]http.Handler,
 	tlsManager *traefiktls.Manager,
+	observabilityMgr *middleware.ObservabilityMgr,
 ) *Manager {
 	return &Manager{
 		serviceManager:     serviceManager,
@@ -42,6 +44,7 @@ func NewManager(conf *runtime.Configuration,
 		httpsHandlers:      httpsHandlers,
 		tlsManager:         tlsManager,
 		conf:               conf,
+		observabilityMgr:   observabilityMgr,
 	}
 }
 
@@ -53,6 +56,7 @@ type Manager struct {
 	httpsHandlers      map[string]http.Handler
 	tlsManager         *traefiktls.Manager
 	conf               *runtime.Configuration
+	observabilityMgr   *middleware.ObservabilityMgr
 }
 
 func (m *Manager) getTCPRouters(ctx context.Context, entryPoints []string) map[string]map[string]*runtime.TCPRouterInfo {
@@ -316,6 +320,7 @@ func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtim
 				logger.Error().Err(err).Send()
 				continue
 			}
+			handler = m.observabilityMgr.BuildTCP(ctxRouter, handler)
 		}
 
 		if routerConfig.TLS == nil {
@@ -393,7 +398,7 @@ func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtim
 		}
 
 		handler = &tcp.TLSHandler{
-			Next:   handler,
+			Next:   m.observabilityMgr.BuildTCP(ctxRouter, handler),
 			Config: tlsConf,
 		}
 

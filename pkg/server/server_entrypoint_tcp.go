@@ -86,7 +86,6 @@ func (h *httpForwarder) Accept() (net.Conn, error) {
 // TCPEntryPoints holds a map of TCPEntryPoint (the entrypoint names being the keys).
 type TCPEntryPoints map[string]*TCPEntryPoint
 
-// NewTCPEntryPoints creates a new TCPEntryPoints.
 func NewTCPEntryPoints(entryPointsConfig static.EntryPoints, hostResolverConfig *types.HostResolverConfig, metricsRegistry metrics.Registry) (TCPEntryPoints, error) {
 	if os.Getenv(debugConnectionEnv) != "" {
 		expvar.Publish("clientConnectionStates", expvar.Func(func() any {
@@ -175,11 +174,13 @@ func NewTCPEntryPoint(ctx context.Context, name string, config *static.EntryPoin
 		return nil, fmt.Errorf("error preparing server: %w", err)
 	}
 
+
 	rt, err := tcprouter.NewRouter()
 	if err != nil {
 		return nil, fmt.Errorf("error preparing tcp router: %w", err)
 	}
 
+	var tcpHandler tcp.Handler = rt
 	reqDecorator := requestdecorator.New(hostResolverConfig)
 
 	httpServer, err := createHTTPServer(ctx, listener, config, true, reqDecorator)
@@ -202,7 +203,7 @@ func NewTCPEntryPoint(ctx context.Context, name string, config *static.EntryPoin
 	rt.SetHTTPSForwarder(httpsServer.Forwarder)
 
 	tcpSwitcher := &tcp.HandlerSwitcher{}
-	tcpSwitcher.Switch(rt)
+	tcpSwitcher.Switch(tcpHandler)
 
 	return &TCPEntryPoint{
 		listener:               listener,

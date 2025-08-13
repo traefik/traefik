@@ -268,6 +268,24 @@ accessLog:
     | `TraceId`               | A consistent identifier for tracking requests across services, including upstream ones managed by Traefik, shown as a 32-hex digit string                           |
     | `SpanId`                | A unique identifier for Traefik’s root span (EntryPoint) within a request trace, formatted as a 16-hex digit string.                                                |
 
+## TCP Access Logs
+
+When using TCP routers, Traefik can also generate access logs for TCP connections.
+The format of TCP access logs is always JSON, and it contains the following fields:
+
+| Field             | Description                                                                                             |
+|-------------------|---------------------------------------------------------------------------------------------------------|
+| `event`           | The event type, either `connection_start` or `connection_end`.                                          |
+| `client_addr`     | The remote address of the client.                                                                       |
+| `server_addr`     | The local address of the server.                                                                        |
+| `timestamp`       | The timestamp of the event.                                                                             |
+| `bytes_in`        | The number of bytes received from the client (only for `connection_end` events).                        |
+| `bytes_out`       | The number of bytes sent to the client (only for `connection_end` events).                              |
+| `duration_ms`     | The duration of the connection in milliseconds (only for `connection_end` events).                      |
+| `status`          | The status of the connection, either `success` or `error` (only for `connection_end` events).           |
+| `error`           | The error message if the connection status is `error` (only for `connection_end` events).               |
+| `client_cert_pem` | The PEM-encoded client certificate, if mTLS is used and a client certificate is provided.               |
+
 ## Log Rotation
 
 Traefik will close and reopen its log files, assuming they're configured, on receipt of a USR1 signal.
