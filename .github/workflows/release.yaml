@@ -126,8 +126,6 @@ jobs:
           tar cfz "dist/traefik-${VERSION}.src.tar.gz" \
             --exclude-vcs \
             --exclude .idea \
-            --exclude .travis \
-            --exclude .semaphoreci \
             --exclude .github \
             --exclude dist .
           
