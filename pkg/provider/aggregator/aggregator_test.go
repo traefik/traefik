@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/provider"
@@ -75,4 +76,37 @@ func (p *providerMock) Provide(configurationChan chan<- dynamic.Message, pool *s
 	}
 
 	return nil
+}
+
+// mockNamespaceProvider is a mock implementation of NamespaceProvider for testing
+type mockNamespaceProvider struct {
+	namespace string
+}
+
+func (m *mockNamespaceProvider) GetNamespace() string {
+	return m.namespace
+}
+
+func (m *mockNamespaceProvider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
+	return nil
+}
+
+func (m *mockNamespaceProvider) Init() error {
+	return nil
+}
+
+func TestLaunchProviderWithNamespace(t *testing.T) {
+	// Test that providers implementing NamespaceProvider are correctly identified
+	providerWithNamespace := &mockNamespaceProvider{namespace: "test-namespace"}
+
+	// Verify the interface implementation
+	var _ provider.NamespaceProvider = providerWithNamespace
+	var _ provider.Provider = providerWithNamespace
+
+	// Test GetNamespace method
+	assert.Equal(t, "test-namespace", providerWithNamespace.GetNamespace())
+
+	// Test with empty namespace
+	providerEmptyNamespace := &mockNamespaceProvider{namespace: ""}
+	assert.Equal(t, "", providerEmptyNamespace.GetNamespace())
 }

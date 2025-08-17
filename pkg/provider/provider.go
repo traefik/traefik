@@ -12,3 +12,10 @@ type Provider interface {
 	Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error
 	Init() error
 }
+
+// NamespaceProvider defines methods for providers that have namespace information.
+type NamespaceProvider interface {
+	Provider
+	// GetNamespace returns the namespace of the provider, if any.
+	GetNamespace() string
+}
