@@ -430,7 +430,8 @@ func getGRPCServiceProtocol(portSpec corev1.ServicePort) (string, error) {
 		return schemeH2C, nil
 	}
 
-	switch ap := *portSpec.AppProtocol; ap {
+	ap := strings.ToLower(*portSpec.AppProtocol)
+	switch ap {
 	case appProtocolH2C:
 		return schemeH2C, nil
 	case appProtocolHTTPS:

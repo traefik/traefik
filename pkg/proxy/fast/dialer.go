@@ -183,7 +183,7 @@ func addrFromURL(u *url.URL) string {
 	addr := u.Host
 
 	if u.Port() == "" {
-		switch strings.ToLower(u.Scheme) {
+		switch u.Scheme {
 		case schemeHTTP:
 			return addr + ":80"
 		case schemeHTTPS:
