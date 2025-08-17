@@ -468,3 +468,40 @@ func Test_getNomadServiceData(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, items, 2)
 }
+
+func TestProvider_GetNamespace(t *testing.T) {
+	tests := []struct {
+		name      string
+		namespace string
+		expected  string
+	}{
+		{
+			name:      "empty namespace",
+			namespace: "",
+			expected:  "",
+		},
+		{
+			name:      "default namespace",
+			namespace: "default",
+			expected:  "default",
+		},
+		{
+			name:      "custom namespace",
+			namespace: "production",
+			expected:  "production",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p := &Provider{
+				namespace: tt.namespace,
+			}
+
+			result := p.GetNamespace()
+			if result != tt.expected {
+				t.Errorf("GetNamespace() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
