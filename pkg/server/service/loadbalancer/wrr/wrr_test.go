@@ -5,10 +5,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
-	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 )
 
@@ -19,7 +17,7 @@ const serviceName key = "serviceName"
 func pointer[T any](v T) *T { return &v }
 
 func TestBalancer(t *testing.T) {
-	balancer := New(nil, false, nil)
+	balancer := New(nil, false)
 
 	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "first")
@@ -41,7 +39,7 @@ func TestBalancer(t *testing.T) {
 }
 
 func TestBalancerNoService(t *testing.T) {
-	balancer := New(nil, false, nil)
+	balancer := New(nil, false)
 
 	recorder := httptest.NewRecorder()
 	balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
@@ -50,7 +48,7 @@ func TestBalancerNoService(t *testing.T) {
 }
 
 func TestBalancerOneServerZeroWeight(t *testing.T) {
-	balancer := New(nil, false, nil)
+	balancer := New(nil, false)
 
 	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "first")
@@ -68,7 +66,7 @@ func TestBalancerOneServerZeroWeight(t *testing.T) {
 }
 
 func TestBalancerNoServiceUp(t *testing.T) {
-	balancer := New(nil, false, nil)
+	balancer := New(nil, false)
 
 	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusInternalServerError)
@@ -88,7 +86,7 @@ func TestBalancerNoServiceUp(t *testing.T) {
 }
 
 func TestBalancerOneServerDown(t *testing.T) {
-	balancer := New(nil, false, nil)
+	balancer := New(nil, false)
 
 	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "first")
@@ -109,7 +107,7 @@ func TestBalancerOneServerDown(t *testing.T) {
 }
 
 func TestBalancerDownThenUp(t *testing.T) {
-	balancer := New(nil, false, nil)
+	balancer := New(nil, false)
 
 	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "first")
@@ -138,7 +136,7 @@ func TestBalancerDownThenUp(t *testing.T) {
 }
 
 func TestBalancerPropagate(t *testing.T) {
-	balancer1 := New(nil, true, nil)
+	balancer1 := New(nil, true)
 
 	balancer1.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "first")
@@ -149,7 +147,7 @@ func TestBalancerPropagate(t *testing.T) {
 		rw.WriteHeader(http.StatusOK)
 	}), pointer(1), false)
 
-	balancer2 := New(nil, true, nil)
+	balancer2 := New(nil, true)
 	balancer2.Add("third", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "third")
 		rw.WriteHeader(http.StatusOK)
@@ -159,7 +157,7 @@ func TestBalancerPropagate(t *testing.T) {
 		rw.WriteHeader(http.StatusOK)
 	}), pointer(1), false)
 
-	topBalancer := New(nil, true, nil)
+	topBalancer := New(nil, true)
 	topBalancer.Add("balancer1", balancer1, pointer(1), false)
 	_ = balancer1.RegisterStatusUpdater(func(up bool) {
 		topBalancer.SetStatus(context.WithValue(t.Context(), serviceName, "top"), "balancer1", up)
@@ -211,7 +209,7 @@ func TestBalancerPropagate(t *testing.T) {
 }
 
 func TestBalancerAllServersZeroWeight(t *testing.T) {
-	balancer := New(nil, false, nil)
+	balancer := New(nil, false)
 
 	balancer.Add("test", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), pointer(0), false)
 	balancer.Add("test2", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), pointer(0), false)
@@ -223,7 +221,7 @@ func TestBalancerAllServersZeroWeight(t *testing.T) {
 }
 
 func TestBalancerAllServersFenced(t *testing.T) {
-	balancer := New(nil, false, nil)
+	balancer := New(nil, false)
 
 	balancer.Add("test", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), pointer(1), true)
 	balancer.Add("test2", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), pointer(1), true)
@@ -245,7 +243,7 @@ func TestSticky(t *testing.T) {
 			MaxAge:   42,
 			Path:     func(v string) *string { return &v }("/foo"),
 		},
-	}, false, nil)
+	}, false)
 
 	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "first")
@@ -288,7 +286,7 @@ func TestSticky(t *testing.T) {
 func TestSticky_Fallback(t *testing.T) {
 	balancer := New(&dynamic.Sticky{
 		Cookie: &dynamic.Cookie{Name: "test"},
-	}, false, nil)
+	}, false)
 
 	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "first")
@@ -316,7 +314,7 @@ func TestSticky_Fallback(t *testing.T) {
 
 // TestSticky_Fenced checks that fenced node receive traffic if their sticky cookie matches.
 func TestSticky_Fenced(t *testing.T) {
-	balancer := New(&dynamic.Sticky{Cookie: &dynamic.Cookie{Name: "test"}}, false, nil)
+	balancer := New(&dynamic.Sticky{Cookie: &dynamic.Cookie{Name: "test"}}, false)
 
 	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "first")
@@ -355,7 +353,7 @@ func TestSticky_Fenced(t *testing.T) {
 // TestBalancerBias makes sure that the WRR algorithm spreads elements evenly right from the start,
 // and that it does not "over-favor" the high-weighted ones with a biased start-up regime.
 func TestBalancerBias(t *testing.T) {
-	balancer := New(nil, false, nil)
+	balancer := New(nil, false)
 
 	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "A")
@@ -376,61 +374,6 @@ func TestBalancerBias(t *testing.T) {
 	wantSequence := []string{"A", "A", "A", "B", "A", "A", "A", "A", "B", "A", "A", "A", "B", "A"}
 
 	assert.Equal(t, wantSequence, recorder.sequence)
-}
-
-func TestPassiveHealthCheck(t *testing.T) {
-	healthChecker := &dynamic.PassiveHealthCheck{
-		FailureWindow:     ptypes.Duration(2 * time.Second),
-		MaxFailedAttempts: 3,
-	}
-	balancer := New(nil, false, healthChecker)
-
-	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		rw.WriteHeader(http.StatusInternalServerError) // Simulate unhealthy backend
-	}), pointer(3), false)
-
-	balancer.Add("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		rw.Header().Set("server", "healthy")
-		rw.WriteHeader(http.StatusOK)
-	}), pointer(1), false)
-
-	t.Run("Test health check failure threshold", func(t *testing.T) {
-		recorder := httptest.NewRecorder()
-
-		// Using the weights set, it should hit the unhealthy service thrice
-		for range 4 {
-			balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
-		}
-
-		assert.False(t, balancer.passiveHealthCheckMap["first"].AllowRequest(), "AllowRequest for Server 1 should be false after failure threshold")
-		assert.NotContains(t, balancer.status, "first", "first server should not be in status map after failure threshold")
-		assert.True(t, balancer.passiveHealthCheckMap["second"].AllowRequest(), "AllowRequest for Server 2 should be true")
-	})
-
-	t.Run("Test health check recovery", func(t *testing.T) {
-		// Wait for the recovery window (2s + 1s buffer)
-		time.Sleep(3 * time.Second)
-
-		// After recovery, the backend should allow requests again
-		assert.True(t, balancer.passiveHealthCheckMap["first"].AllowRequest(), "first server should receive requests again after recovery")
-		assert.Contains(t, balancer.status, "first", "first server should be in status map after recovery")
-	})
-
-	t.Run("Fail over to healthy service after failures", func(t *testing.T) {
-		recorder := httptest.NewRecorder()
-
-		for range 4 {
-			balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
-		}
-
-		assert.False(t, balancer.passiveHealthCheckMap["first"].AllowRequest(), "Unhealthy service should no longer accept requests")
-
-		recorder = httptest.NewRecorder()
-		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
-
-		assert.Equal(t, http.StatusOK, recorder.Code, "Request should be routed to the healthy service")
-		assert.Equal(t, "healthy", recorder.Header().Get("server"), "Response should come from the healthy service")
-	})
 }
 
 type responseRecorder struct {

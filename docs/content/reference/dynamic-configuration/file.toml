@@ -93,11 +93,11 @@
           [http.services.Service02.loadBalancer.healthCheck.headers]
             name0 = "foobar"
             name1 = "foobar"
-        [http.services.Service02.loadBalancer.responseForwarding]
-          flushInterval = "42s"
         [http.services.Service02.loadBalancer.passiveHealthCheck]
           failureWindow = "42s"
           maxFailedAttempts = 42
+        [http.services.Service02.loadBalancer.responseForwarding]
+          flushInterval = "42s"
     [http.services.Service03]
       [http.services.Service03.mirroring]
         service = "foobar"

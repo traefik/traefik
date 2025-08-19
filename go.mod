@@ -117,6 +117,8 @@ require (
 	sigs.k8s.io/yaml v1.4.0
 )
 
+require github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da
+
 require (
 	cloud.google.com/go/auth v0.16.2 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.8 // indirect

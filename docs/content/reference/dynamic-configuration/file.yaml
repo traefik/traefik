@@ -98,13 +98,13 @@ http:
           headers:
             name0: foobar
             name1: foobar
+        passiveHealthCheck:
+          failureWindow: 42s
+          maxFailedAttempts: 42
         passHostHeader: true
         responseForwarding:
           flushInterval: 42s
         serversTransport: foobar
-        passiveHealthCheck:
-          failureWindow: 42s
-          maxFailedAttempts: 42
     Service03:
       mirroring:
         service: foobar

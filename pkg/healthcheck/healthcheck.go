@@ -6,16 +6,19 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/http/httptrace"
 	"net/url"
 	"strconv"
 	"sync"
 	"time"
 
 	gokitmetrics "github.com/go-kit/kit/metrics"
+	"github.com/golang/groupcache/singleflight"
 	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
+	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
@@ -325,66 +328,124 @@ func (shc *ServiceHealthChecker) checkHealthGRPC(ctx context.Context, serverURL 
 	return nil
 }
 
-type PassiveHealthChecker struct {
-	balancer     StatusSetter
-	childService string
-	info         *runtime.ServiceInfo
-	mu           sync.Mutex
-	failures     []time.Time
-	maxFail      int
-	failTimeout  ptypes.Duration
-	timer        *time.Timer
+type PassiveServiceHealthChecker struct {
+	serviceName string
+	balancer    StatusSetter
+	metrics     metricsHealthCheck
+
+	maxFailedAttempts    int
+	failureWindow        ptypes.Duration
+	hasActiveHealthCheck bool
+
+	failuresMu sync.RWMutex
+	failures   map[string][]time.Time
+
+	timersGroup singleflight.Group
+	timers      sync.Map
 }
 
-func NewPassiveHealthChecker(balancer StatusSetter, childService string, maxFail int, failTimeout ptypes.Duration) *PassiveHealthChecker {
-	return &PassiveHealthChecker{
-		balancer:     balancer,
-		childService: childService,
-		failures:     []time.Time{},
-		maxFail:      maxFail,
-		failTimeout:  failTimeout,
+func NewPassiveHealthChecker(serviceName string, balancer StatusSetter, maxFailedAttempts int, failureWindow ptypes.Duration, hasActiveHealthCheck bool, metrics metricsHealthCheck) *PassiveServiceHealthChecker {
+	return &PassiveServiceHealthChecker{
+		serviceName:          serviceName,
+		balancer:             balancer,
+		failures:             make(map[string][]time.Time),
+		maxFailedAttempts:    maxFailedAttempts,
+		failureWindow:        failureWindow,
+		hasActiveHealthCheck: hasActiveHealthCheck,
+		metrics:              metrics,
 	}
 }
 
-func (p *PassiveHealthChecker) AllowRequest() bool {
-	p.mu.Lock()
-	defer p.mu.Unlock()
+func (p *PassiveServiceHealthChecker) WrapHandler(ctx context.Context, next http.Handler, targetURL string) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		var backendCalled bool
+		trace := &httptrace.ClientTrace{
+			WroteHeaders: func() {
+				backendCalled = true
+			},
+			WroteRequest: func(httptrace.WroteRequestInfo) {
+				backendCalled = true
+			},
+		}
+		clientTraceCtx := httptrace.WithClientTrace(req.Context(), trace)
 
-	// Clean up old failures outside the sliding window
-	now := time.Now()
-	threshold := now.Add(time.Duration(-p.failTimeout))
+		next.ServeHTTP(rw, req.WithContext(clientTraceCtx))
 
-	var filteredFailures []time.Time
-	for _, t := range p.failures {
-		if t.After(threshold) {
-			filteredFailures = append(filteredFailures, t)
+		capt, err := capture.FromContext(req.Context())
+		if err != nil {
+			log.Error().Err(err).Msg("Capture context failed")
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if backendCalled && capt.StatusCode() < 500 {
+			p.failuresMu.Lock()
+			p.failures[targetURL] = nil
+			p.failuresMu.Unlock()
+			return
+		}
+
+		p.failuresMu.Lock()
+		p.failures[targetURL] = append(p.failures[targetURL], time.Now())
+		p.failuresMu.Unlock()
+
+		if p.healthy(targetURL) {
+			return
+		}
+
+		// We need to guarantee that only one goroutine (request) will update the status and create a timer for the target.
+		_, _ = p.timersGroup.Do(targetURL, func() (interface{}, error) {
+			// A timer is already running for this target;
+			// it means that the target is already considered unhealthy.
+			if _, ok := p.timers.Load(targetURL); ok {
+				return nil, nil
+			}
+
+			p.balancer.SetStatus(ctx, targetURL, false)
+			p.metrics.ServiceServerUpGauge().With("service", p.serviceName, "url", targetURL).Set(0)
+
+			// If the service has an active health check, the passive health checker should not reset the status.
+			// The active health check will handle the status updates.
+			if p.hasActiveHealthCheck {
+				return nil, nil
+			}
+
+			go func() {
+				timer := time.NewTimer(time.Duration(p.failureWindow))
+				defer timer.Stop()
+
+				p.timers.Store(targetURL, timer)
+
+				select {
+				case <-ctx.Done():
+				case <-timer.C:
+					p.timers.Delete(targetURL)
+
+					p.balancer.SetStatus(ctx, targetURL, true)
+					p.metrics.ServiceServerUpGauge().With("service", p.serviceName, "url", targetURL).Set(1)
+				}
+			}()
+
+			return nil, nil
+		})
+	})
+}
+
+func (p *PassiveServiceHealthChecker) healthy(targetURL string) bool {
+	windowStart := time.Now().Add(-time.Duration(p.failureWindow))
+
+	p.failuresMu.Lock()
+	defer p.failuresMu.Unlock()
+
+	// Filter failures within the sliding window
+	failures := p.failures[targetURL]
+	for i, t := range failures {
+		if t.After(windowStart) {
+			p.failures[targetURL] = failures[i:]
+			break
 		}
 	}
-	p.failures = filteredFailures
 
 	// Check if failures exceed maxFail
-	allowRequest := len(p.failures) < p.maxFail
-	if !allowRequest {
-		p.balancer.SetStatus(context.Background(), p.childService, false)
-		p.failures = []time.Time{}
-
-		if p.timer != nil {
-			p.timer.Stop()
-		}
-
-		p.timer = time.AfterFunc(time.Duration(p.failTimeout), func() {
-			p.mu.Lock()
-			p.balancer.SetStatus(context.Background(), p.childService, true)
-			p.mu.Unlock()
-		})
-	}
-
-	return allowRequest
-}
-
-func (p *PassiveHealthChecker) RecordFailure() {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
-	p.failures = append(p.failures, time.Now())
+	return len(p.failures[targetURL]) < p.maxFailedAttempts
 }

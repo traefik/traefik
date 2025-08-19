@@ -74,7 +74,7 @@ func TestGetLoadBalancer(t *testing.T) {
 			serviceName: "test",
 			service: &dynamic.ServersLoadBalancer{
 				Strategy: dynamic.BalancerStrategyWRR,
-				PassiveHealthCheck: &dynamic.PassiveHealthCheck{
+				PassiveHealthCheck: &dynamic.PassiveServerHealthCheck{
 					FailureWindow:     ptypes.Duration(30 * time.Second),
 					MaxFailedAttempts: 3,
 				},

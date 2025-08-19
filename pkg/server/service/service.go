@@ -245,7 +245,7 @@ func (m *Manager) getWRRServiceHandler(ctx context.Context, serviceName string, 
 		config.Sticky.Cookie.Name = cookie.GetName(config.Sticky.Cookie.Name, serviceName)
 	}
 
-	balancer := wrr.New(config.Sticky, config.HealthCheck != nil, nil)
+	balancer := wrr.New(config.Sticky, config.HealthCheck != nil)
 	for _, service := range shuffle(config.Services, m.rand) {
 		serviceHandler, err := m.getServiceHandler(ctx, service)
 		if err != nil {
@@ -341,13 +341,24 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 	var lb serverBalancer
 	switch service.Strategy {
 	// Here we are handling the empty value to comply with providers that are not applying defaults (e.g. REST provider)
-	// TODO: remove this when all providers apply default values.
+	// TODO: remove this empty check when all providers apply default values.
 	case dynamic.BalancerStrategyWRR, "":
-		lb = wrr.New(service.Sticky, service.HealthCheck != nil, service.PassiveHealthCheck)
+		lb = wrr.New(service.Sticky, service.HealthCheck != nil)
 	case dynamic.BalancerStrategyP2C:
 		lb = p2c.New(service.Sticky, service.HealthCheck != nil)
 	default:
 		return nil, fmt.Errorf("unsupported load-balancer strategy %q", service.Strategy)
+	}
+
+	var passiveHealthChecker *healthcheck.PassiveServiceHealthChecker
+	if service.PassiveHealthCheck != nil {
+		passiveHealthChecker = healthcheck.NewPassiveHealthChecker(
+			serviceName,
+			lb,
+			service.PassiveHealthCheck.MaxFailedAttempts,
+			service.PassiveHealthCheck.FailureWindow,
+			service.HealthCheck != nil,
+			m.observabilityMgr.MetricsRegistry())
 	}
 
 	healthCheckTargets := make(map[string]*url.URL)
@@ -366,6 +377,11 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 		proxy, err := m.proxyBuilder.Build(service.ServersTransport, target, passHostHeader, server.PreservePath, flushInterval)
 		if err != nil {
 			return nil, fmt.Errorf("error building proxy for server URL %s: %w", server.URL, err)
+		}
+
+		if passiveHealthChecker != nil {
+			// If passive health check is enabled, we wrap the proxy with the passive health checker.
+			proxy = passiveHealthChecker.WrapHandler(ctx, proxy, target.String())
 		}
 
 		// The retry wrapping must be done just before the proxy handler,
