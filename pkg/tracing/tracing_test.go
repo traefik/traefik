@@ -17,6 +17,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/types"
 	"go.opentelemetry.io/collector/pdata/ptrace/ptraceotlp"
 	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/noop"
 )
 
 func Test_safeFullURL(t *testing.T) {
@@ -413,4 +414,111 @@ func TestTracerProvider(t *testing.T) {
 
 	span.TracerProvider().Tracer("github.com/traefik/traefik")
 	span.TracerProvider().Tracer("other")
+}
+
+// Test_canonicalizeHeaders tests that headers are properly canonicalized.
+func Test_canonicalizeHeaders(t *testing.T) {
+	testCases := []struct {
+		desc           string
+		inputHeaders   []string
+		expectedOutput []string
+	}{
+		{
+			desc:           "Empty slice",
+			inputHeaders:   []string{},
+			expectedOutput: []string{},
+		},
+		{
+			desc:           "Single header - already canonical",
+			inputHeaders:   []string{"Content-Type"},
+			expectedOutput: []string{"Content-Type"},
+		},
+		{
+			desc:           "Single header - lowercase",
+			inputHeaders:   []string{"content-type"},
+			expectedOutput: []string{"Content-Type"},
+		},
+		{
+			desc:           "Single header - mixed case",
+			inputHeaders:   []string{"CoNtEnT-tYpE"},
+			expectedOutput: []string{"Content-Type"},
+		},
+		{
+			desc:           "Multiple headers - mixed cases",
+			inputHeaders:   []string{"content-type", "User-Agent", "aCcEpT-eNcOdInG"},
+			expectedOutput: []string{"Content-Type", "User-Agent", "Accept-Encoding"},
+		},
+		{
+			desc:           "Headers with special characters",
+			inputHeaders:   []string{"x-forwarded-for", "x-real-ip"},
+			expectedOutput: []string{"X-Forwarded-For", "X-Real-Ip"},
+		},
+		{
+			desc:           "Headers with numbers",
+			inputHeaders:   []string{"x-request-id", "x-correlation-id"},
+			expectedOutput: []string{"X-Request-Id", "X-Correlation-Id"},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			result := canonicalizeHeaders(test.inputHeaders)
+
+			assert.Equal(t, test.expectedOutput, result)
+		})
+	}
+}
+
+// TestNewTracer_HeadersCanonicalization tests that NewTracer properly canonicalizes headers.
+func TestNewTracer_HeadersCanonicalization(t *testing.T) {
+	testCases := []struct {
+		desc                     string
+		inputHeaders             []string
+		expectedCanonicalHeaders []string
+	}{
+		{
+			desc:                     "Empty headers",
+			inputHeaders:             []string{},
+			expectedCanonicalHeaders: []string{},
+		},
+		{
+			desc:                     "Already canonical headers",
+			inputHeaders:             []string{"Content-Type", "User-Agent", "Accept-Encoding"},
+			expectedCanonicalHeaders: []string{"Content-Type", "User-Agent", "Accept-Encoding"},
+		},
+		{
+			desc:                     "Lowercase headers",
+			inputHeaders:             []string{"content-type", "user-agent", "accept-encoding"},
+			expectedCanonicalHeaders: []string{"Content-Type", "User-Agent", "Accept-Encoding"},
+		},
+		{
+			desc:                     "Mixed case headers",
+			inputHeaders:             []string{"CoNtEnT-tYpE", "uSeR-aGeNt", "aCcEpT-eNcOdInG"},
+			expectedCanonicalHeaders: []string{"Content-Type", "User-Agent", "Accept-Encoding"},
+		},
+		{
+			desc:                     "Headers with special characters",
+			inputHeaders:             []string{"x-forwarded-for", "x-real-ip", "x-request-id"},
+			expectedCanonicalHeaders: []string{"X-Forwarded-For", "X-Real-Ip", "X-Request-Id"},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			// Create a mock tracer using a no-op tracer from OpenTelemetry
+			mockTracer := noop.NewTracerProvider().Tracer("test")
+
+			// Test capturedRequestHeaders
+			tracer := NewTracer(mockTracer, test.inputHeaders, []string{}, []string{})
+			assert.Equal(t, test.expectedCanonicalHeaders, tracer.capturedRequestHeaders)
+
+			// Test capturedResponseHeaders
+			tracer = NewTracer(mockTracer, []string{}, test.inputHeaders, []string{})
+			assert.Equal(t, test.expectedCanonicalHeaders, tracer.capturedResponseHeaders)
+		})
+	}
 }
