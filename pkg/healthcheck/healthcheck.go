@@ -13,12 +13,12 @@ import (
 	"time"
 
 	gokitmetrics "github.com/go-kit/kit/metrics"
-	"github.com/golang/groupcache/singleflight"
 	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
 	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
+	"golang.org/x/sync/singleflight"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
@@ -394,7 +394,7 @@ func (p *PassiveServiceHealthChecker) WrapHandler(ctx context.Context, next http
 		}
 
 		// We need to guarantee that only one goroutine (request) will update the status and create a timer for the target.
-		_, _ = p.timersGroup.Do(targetURL, func() (interface{}, error) {
+		_, _, _ = p.timersGroup.Do(targetURL, func() (interface{}, error) {
 			// A timer is already running for this target;
 			// it means that the target is already considered unhealthy.
 			if _, ok := p.timers.Load(targetURL); ok {
