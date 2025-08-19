@@ -742,7 +742,7 @@ func createRequestRedirect(filter *gatev1.HTTPRequestRedirectFilter, pathMatch g
 
 	var port *string
 	filterScheme := ptr.Deref(filter.Scheme, "")
-	if strings.EqualFold(filterScheme, schemeHTTP) || strings.EqualFold(filterScheme, schemeHTTPS) {
+	if filterScheme == schemeHTTP || filterScheme == schemeHTTPS {
 		port = ptr.To("")
 	}
 	if filter.Port != nil {
@@ -809,17 +809,15 @@ func getHTTPServiceProtocol(portSpec corev1.ServicePort) (string, error) {
 		return "", errors.New("only TCP protocol is supported")
 	}
 
-	portSpecName := strings.ToLower(portSpec.Name)
 	if portSpec.AppProtocol == nil {
 		protocol := schemeHTTP
-		if portSpec.Port == 443 || strings.HasPrefix(portSpecName, schemeHTTPS) {
+		if portSpec.Port == 443 || strings.HasPrefix(portSpec.Name, schemeHTTPS) {
 			protocol = schemeHTTPS
 		}
 		return protocol, nil
 	}
 
-	ap := strings.ToLower(*portSpec.AppProtocol)
-	switch ap {
+	switch ap := strings.ToLower(*portSpec.AppProtocol); ap {
 	case appProtocolH2C:
 		return schemeH2C, nil
 	case appProtocolHTTP, appProtocolWS:
