@@ -5,8 +5,9 @@ import (
 	"testing"
 
 	docker "github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/network"
-	"github.com/docker/docker/api/types/swarm"
+	dockercontainertypes "github.com/docker/docker/api/types/container"
+	networktypes "github.com/docker/docker/api/types/network"
+	swarmtypes "github.com/docker/docker/api/types/swarm"
 	"github.com/docker/go-connections/nat"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -3519,7 +3520,7 @@ func TestDockerGetIPPort(t *testing.T) {
 
 	testCases := []struct {
 		desc       string
-		container  docker.ContainerJSON
+		container  dockercontainertypes.InspectResponse
 		serverPort string
 		expected   expected
 	}{
@@ -3690,7 +3691,7 @@ func TestDockerGetIPPort(t *testing.T) {
 func TestDockerGetPort(t *testing.T) {
 	testCases := []struct {
 		desc       string
-		container  docker.ContainerJSON
+		container  dockercontainertypes.InspectResponse
 		serverPort string
 		expected   string
 	}{
@@ -3755,8 +3756,9 @@ func TestDockerGetPort(t *testing.T) {
 func TestDockerGetIPAddress(t *testing.T) {
 	testCases := []struct {
 		desc      string
-		container docker.ContainerJSON
+		container dockercontainertypes.InspectResponse
 		network   string
+		nodeIP    string
 		expected  string
 	}{
 		{
@@ -3832,10 +3834,10 @@ func TestDockerGetIPAddress(t *testing.T) {
 			expected: "127.0.0.1",
 		},
 		{
-			desc: "no network, no network label, mode host, node IP",
+			desc:   "no network, no network label, mode host, node IP",
+			nodeIP: "10.0.0.5",
 			container: containerJSON(
 				networkMode("host"),
-				nodeIP("10.0.0.5"),
 			),
 			expected: "10.0.0.5",
 		},
@@ -3850,9 +3852,12 @@ func TestDockerGetIPAddress(t *testing.T) {
 			}
 
 			dData := parseContainer(test.container)
+			if test.nodeIP != "" {
+				dData.NodeIP = test.nodeIP
+			}
 
 			dData.ExtraConf.Docker.Network = provider.Network
-			if len(test.network) > 0 {
+			if test.network != "" {
 				dData.ExtraConf.Docker.Network = test.network
 			}
 
@@ -3864,14 +3869,14 @@ func TestDockerGetIPAddress(t *testing.T) {
 
 func TestSwarmGetIPAddress(t *testing.T) {
 	testCases := []struct {
-		service  swarm.Service
+		service  swarmtypes.Service
 		expected string
-		networks map[string]*network.Summary
+		networks map[string]*networktypes.Summary
 	}{
 		{
 			service:  swarmService(withEndpointSpec(modeDNSRR)),
 			expected: "",
-			networks: map[string]*network.Summary{},
+			networks: map[string]*networktypes.Summary{},
 		},
 		{
 			service: swarmService(
@@ -3879,7 +3884,7 @@ func TestSwarmGetIPAddress(t *testing.T) {
 				withEndpoint(virtualIP("1", "10.11.12.13/24")),
 			),
 			expected: "10.11.12.13",
-			networks: map[string]*network.Summary{
+			networks: map[string]*networktypes.Summary{
 				"1": {
 					Name: "foo",
 				},
@@ -3897,7 +3902,7 @@ func TestSwarmGetIPAddress(t *testing.T) {
 				),
 			),
 			expected: "10.11.12.99",
-			networks: map[string]*network.Summary{
+			networks: map[string]*networktypes.Summary{
 				"1": {
 					Name: "foonet",
 				},
@@ -3927,16 +3932,16 @@ func TestSwarmGetIPAddress(t *testing.T) {
 
 func TestSwarmGetPort(t *testing.T) {
 	testCases := []struct {
-		service    swarm.Service
+		service    swarmtypes.Service
 		serverPort string
-		networks   map[string]*network.Summary
+		networks   map[string]*networktypes.Summary
 		expected   string
 	}{
 		{
 			service: swarmService(
 				withEndpointSpec(modeDNSRR),
 			),
-			networks:   map[string]*network.Summary{},
+			networks:   map[string]*networktypes.Summary{},
 			serverPort: "8080",
 			expected:   "8080",
 		},

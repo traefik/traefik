@@ -1,22 +1,21 @@
 package docker
 
 import (
-	dockertypes "github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/container"
+	dockercontainertypes "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/docker/go-connections/nat"
 )
 
-func containerJSON(ops ...func(*dockertypes.ContainerJSON)) dockertypes.ContainerJSON {
-	c := &dockertypes.ContainerJSON{
-		ContainerJSONBase: &dockertypes.ContainerJSONBase{
+func containerJSON(ops ...func(*dockercontainertypes.InspectResponse)) dockercontainertypes.InspectResponse {
+	c := &dockercontainertypes.InspectResponse{
+		ContainerJSONBase: &dockercontainertypes.ContainerJSONBase{
 			Name:       "fake",
-			HostConfig: &container.HostConfig{},
+			HostConfig: &dockercontainertypes.HostConfig{},
 		},
-		Config: &container.Config{},
-		NetworkSettings: &dockertypes.NetworkSettings{
-			NetworkSettingsBase: dockertypes.NetworkSettingsBase{},
+		Config: &dockercontainertypes.Config{},
+		NetworkSettings: &dockercontainertypes.NetworkSettings{
+			NetworkSettingsBase: dockercontainertypes.NetworkSettingsBase{},
 		},
 	}
 
@@ -27,34 +26,26 @@ func containerJSON(ops ...func(*dockertypes.ContainerJSON)) dockertypes.Containe
 	return *c
 }
 
-func name(name string) func(*dockertypes.ContainerJSON) {
-	return func(c *dockertypes.ContainerJSON) {
+func name(name string) func(*dockercontainertypes.InspectResponse) {
+	return func(c *dockercontainertypes.InspectResponse) {
 		c.ContainerJSONBase.Name = name
 	}
 }
 
-func networkMode(mode string) func(*dockertypes.ContainerJSON) {
-	return func(c *dockertypes.ContainerJSON) {
-		c.ContainerJSONBase.HostConfig.NetworkMode = container.NetworkMode(mode)
+func networkMode(mode string) func(*dockercontainertypes.InspectResponse) {
+	return func(c *dockercontainertypes.InspectResponse) {
+		c.ContainerJSONBase.HostConfig.NetworkMode = dockercontainertypes.NetworkMode(mode)
 	}
 }
 
-func nodeIP(ip string) func(*dockertypes.ContainerJSON) {
-	return func(c *dockertypes.ContainerJSON) {
-		c.ContainerJSONBase.Node = &dockertypes.ContainerNode{
-			IPAddress: ip,
-		}
-	}
-}
-
-func ports(portMap nat.PortMap) func(*dockertypes.ContainerJSON) {
-	return func(c *dockertypes.ContainerJSON) {
+func ports(portMap nat.PortMap) func(*dockercontainertypes.InspectResponse) {
+	return func(c *dockercontainertypes.InspectResponse) {
 		c.NetworkSettings.NetworkSettingsBase.Ports = portMap
 	}
 }
 
-func withNetwork(name string, ops ...func(*network.EndpointSettings)) func(*dockertypes.ContainerJSON) {
-	return func(c *dockertypes.ContainerJSON) {
+func withNetwork(name string, ops ...func(*network.EndpointSettings)) func(*dockercontainertypes.InspectResponse) {
+	return func(c *dockercontainertypes.InspectResponse) {
 		if c.NetworkSettings.Networks == nil {
 			c.NetworkSettings.Networks = map[string]*network.EndpointSettings{}
 		}
@@ -92,6 +83,12 @@ func swarmTask(id string, ops ...func(*swarm.Task)) swarm.Task {
 func taskSlot(slot int) func(*swarm.Task) {
 	return func(task *swarm.Task) {
 		task.Slot = slot
+	}
+}
+
+func taskNodeID(id string) func(*swarm.Task) {
+	return func(task *swarm.Task) {
+		task.NodeID = id
 	}
 }
 
