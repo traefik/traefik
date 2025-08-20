@@ -817,7 +817,7 @@ func getHTTPServiceProtocol(portSpec corev1.ServicePort) (string, error) {
 		return protocol, nil
 	}
 
-	switch ap := *portSpec.AppProtocol; ap {
+	switch ap := strings.ToLower(*portSpec.AppProtocol); ap {
 	case appProtocolH2C:
 		return schemeH2C, nil
 	case appProtocolHTTP, appProtocolWS:

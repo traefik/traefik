@@ -59,3 +59,13 @@ spec:
           weight: 1
           kind: Service
           group: ""
+        - name: whoami-HTTP
+          port: 80
+          weight: 1
+          kind: Service
+          group: ""
+        - name: whoami-HTTPS
+          port: 443
+          weight: 1
+          kind: Service
+          group: ""
