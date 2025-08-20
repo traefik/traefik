@@ -79,7 +79,8 @@ providers:
   kubernetesGateway:
     enabled: true
 gateway:
-  namespacePolicy: All
+  namespacePolicy:
+    from: All
 ```
 
 !!! info
