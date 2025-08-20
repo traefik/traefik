@@ -2959,6 +2959,14 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 										Name:   "default-whoami-wss-http-80",
 										Weight: ptr.To(1),
 									},
+									{
+										Name:   "default-whoami-HTTP-http-80",
+										Weight: ptr.To(1),
+									},
+									{
+										Name:   "default-whoami-HTTPS-http-443",
+										Weight: ptr.To(1),
+									},
 								},
 							},
 						},
@@ -3004,67 +3012,12 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 								},
 							},
 						},
-					},
-					ServersTransports: map[string]*dynamic.ServersTransport{},
-				},
-				TLS: &dynamic.TLSConfiguration{},
-			},
-		},
-		{
-			desc:  "Simple HTTPRoute, with upcase appProtocol service",
-			paths: []string{"services.yml", "httproute/with_upcase_app_protocol.yml"},
-			groupKindBackendFuncs: map[string]map[string]BuildBackendFunc{
-				traefikv1alpha1.GroupName: {"TraefikService": func(name, namespace string) (string, *dynamic.Service, error) {
-					// func should never be executed in case of cross-provider reference.
-					return "", nil, errors.New("BOOM")
-				}},
-			},
-			entryPoints: map[string]Entrypoint{"web": {
-				Address: ":80",
-			}},
-			expected: &dynamic.Configuration{
-				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
-				},
-				TCP: &dynamic.TCPConfiguration{
-					Routers:           map[string]*dynamic.TCPRouter{},
-					Middlewares:       map[string]*dynamic.TCPMiddleware{},
-					Services:          map[string]*dynamic.TCPService{},
-					ServersTransports: map[string]*dynamic.TCPServersTransport{},
-				},
-				HTTP: &dynamic.HTTPConfiguration{
-					Routers: map[string]*dynamic.Router{
-						"httproute-default-http-multi-protocols-gw-default-my-gateway-ep-web-0-1c0cf64bde37d9d0df06": {
-							EntryPoints: []string{"web"},
-							Service:     "httproute-default-http-multi-protocols-gw-default-my-gateway-ep-web-0-1c0cf64bde37d9d0df06-wrr",
-							Rule:        "Host(`foo.com`) && Path(`/bar`)",
-							Priority:    100008,
-							RuleSyntax:  "default",
-						},
-					},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services: map[string]*dynamic.Service{
-						"httproute-default-http-multi-protocols-gw-default-my-gateway-ep-web-0-1c0cf64bde37d9d0df06-wrr": {
-							Weighted: &dynamic.WeightedRoundRobin{
-								Services: []dynamic.WRRService{
-									{
-										Name:   "default-whoami-HTTP-http-80",
-										Weight: ptr.To(1),
-									},
-									{
-										Name:   "default-whoami-HTTPS-http-443",
-										Weight: ptr.To(1),
-									},
-								},
-							},
-						},
-						"default-whoami-HTTP-http-80": {
+						"default-whoami-HTTPS-http-443": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
-										URL: "http://10.10.0.3:8080",
+										URL: "https://10.10.0.16:8443",
 									},
 								},
 								PassHostHeader: ptr.To(true),
@@ -3073,12 +3026,12 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 								},
 							},
 						},
-						"default-whoami-HTTPS-http-443": {
+						"default-whoami-HTTP-http-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Strategy: dynamic.BalancerStrategyWRR,
 								Servers: []dynamic.Server{
 									{
-										URL: "https://10.10.0.5:8443",
+										URL: "http://10.10.0.17:8080",
 									},
 								},
 								PassHostHeader: ptr.To(true),
