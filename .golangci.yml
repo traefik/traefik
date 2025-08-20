@@ -305,8 +305,6 @@ linters:
         text: 'SA1019: cfg.(SSLRedirect|SSLTemporaryRedirect|SSLHost|SSLForceHost|FeaturePolicy) is deprecated'
       - path: (.+)\.go$
         text: 'SA1019: c.Providers.(ConsulCatalog|Consul|Nomad).Namespace is deprecated'
-      - path: (.+)\.go$
-        text: 'SA1019: dockertypes.ContainerNode is deprecated'
     paths:
       - pkg/provider/kubernetes/crd/generated/
 

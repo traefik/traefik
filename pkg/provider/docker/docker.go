@@ -14,7 +14,6 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/docker/cli/cli/connhelper"
-	dockertypes "github.com/docker/docker/api/types"
 	dockercontainertypes "github.com/docker/docker/api/types/container"
 	eventtypes "github.com/docker/docker/api/types/events"
 	"github.com/docker/docker/api/types/filters"
@@ -93,7 +92,7 @@ type dockerData struct {
 	Labels          map[string]string // List of labels set to container or service
 	NetworkSettings networkSettings
 	Health          string
-	Node            *dockertypes.ContainerNode
+	NodeIP          string // Only filled in Swarm mode.
 	ExtraConf       configuration
 }
 
@@ -381,7 +380,7 @@ func inspectContainers(ctx context.Context, dockerClient client.ContainerAPIClie
 	return dockerData{}
 }
 
-func parseContainer(container dockertypes.ContainerJSON) dockerData {
+func parseContainer(container dockercontainertypes.InspectResponse) dockerData {
 	dData := dockerData{
 		NetworkSettings: networkSettings{},
 	}
@@ -390,7 +389,6 @@ func parseContainer(container dockertypes.ContainerJSON) dockerData {
 		dData.ID = container.ContainerJSONBase.ID
 		dData.Name = container.ContainerJSONBase.Name
 		dData.ServiceName = dData.Name // Default ServiceName to be the container's Name.
-		dData.Node = container.ContainerJSONBase.Node
 
 		if container.ContainerJSONBase.HostConfig != nil {
 			dData.NetworkSettings.NetworkMode = container.ContainerJSONBase.HostConfig.NetworkMode
@@ -431,7 +429,7 @@ func parseContainer(container dockertypes.ContainerJSON) dockerData {
 func (p *Provider) listServices(ctx context.Context, dockerClient client.APIClient) ([]dockerData, error) {
 	logger := log.FromContext(ctx)
 
-	serviceList, err := dockerClient.ServiceList(ctx, dockertypes.ServiceListOptions{})
+	serviceList, err := dockerClient.ServiceList(ctx, swarmtypes.ServiceListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -542,7 +540,7 @@ func listTasks(ctx context.Context, dockerClient client.APIClient, serviceID str
 	serviceIDFilter.Add("service", serviceID)
 	serviceIDFilter.Add("desired-state", "running")
 
-	taskList, err := dockerClient.TaskList(ctx, dockertypes.TaskListOptions{Filters: serviceIDFilter})
+	taskList, err := dockerClient.TaskList(ctx, swarmtypes.TaskListOptions{Filters: serviceIDFilter})
 	if err != nil {
 		return nil, err
 	}
@@ -552,7 +550,13 @@ func listTasks(ctx context.Context, dockerClient client.APIClient, serviceID str
 		if task.Status.State != swarmtypes.TaskStateRunning {
 			continue
 		}
-		dData := parseTasks(ctx, task, serviceDockerData, networkMap, isGlobalSvc)
+
+		dData, err := parseTasks(ctx, dockerClient, task, serviceDockerData, networkMap, isGlobalSvc)
+		if err != nil {
+			log.FromContext(ctx).Warn(err)
+			continue
+		}
+
 		if len(dData.NetworkSettings.Networks) > 0 {
 			dockerDataList = append(dockerDataList, dData)
 		}
@@ -560,9 +564,9 @@ func listTasks(ctx context.Context, dockerClient client.APIClient, serviceID str
 	return dockerDataList, err
 }
 
-func parseTasks(ctx context.Context, task swarmtypes.Task, serviceDockerData dockerData,
+func parseTasks(ctx context.Context, dockerClient client.APIClient, task swarmtypes.Task, serviceDockerData dockerData,
 	networkMap map[string]*networktypes.Summary, isGlobalSvc bool,
-) dockerData {
+) (dockerData, error) {
 	dData := dockerData{
 		ID:              task.ID,
 		ServiceName:     serviceDockerData.Name,
@@ -574,6 +578,14 @@ func parseTasks(ctx context.Context, task swarmtypes.Task, serviceDockerData doc
 
 	if isGlobalSvc {
 		dData.Name = serviceDockerData.Name + "." + task.ID
+	}
+
+	if task.NodeID != "" {
+		node, _, err := dockerClient.NodeInspectWithRaw(ctx, task.NodeID)
+		if err != nil {
+			return dockerData{}, fmt.Errorf("inspecting node %s: %w", task.NodeID, err)
+		}
+		dData.NodeIP = node.Status.Addr
 	}
 
 	if task.NetworksAttachments != nil {
@@ -597,5 +609,5 @@ func parseTasks(ctx context.Context, task swarmtypes.Task, serviceDockerData doc
 			}
 		}
 	}
-	return dData
+	return dData, nil
 }
