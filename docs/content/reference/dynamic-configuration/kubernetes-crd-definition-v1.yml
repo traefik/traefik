@@ -236,13 +236,14 @@ spec:
                                 - type: integer
                                 - type: string
                                 description: FailureWindow defines the time window
-                                  during which a certain number of failed attempts
-                                  must occur for the server to be marked as unavailable.
+                                  during which the failed attempts must occur for
+                                  the server to be marked as unhealthy. It also defines
+                                  for how long the server will be considered unhealthy.
                                 x-kubernetes-int-or-string: true
                               maxFailedAttempts:
-                                description: MaxFailedAttempts is the number of failed
-                                  attempts allowed within the failure window before
-                                  marking the server as unhealthy.
+                                description: MaxFailedAttempts is the number of consecutive
+                                  failed attempts allowed within the failure window
+                                  before marking the server as unhealthy.
                                 type: integer
                             type: object
                           port:
@@ -1196,13 +1197,14 @@ spec:
                             - type: integer
                             - type: string
                             description: FailureWindow defines the time window during
-                              which a certain number of failed attempts must occur
-                              for the server to be marked as unavailable.
+                              which the failed attempts must occur for the server
+                              to be marked as unhealthy. It also defines for how long
+                              the server will be considered unhealthy.
                             x-kubernetes-int-or-string: true
                           maxFailedAttempts:
-                            description: MaxFailedAttempts is the number of failed
-                              attempts allowed within the failure window before marking
-                              the server as unhealthy.
+                            description: MaxFailedAttempts is the number of consecutive
+                              failed attempts allowed within the failure window before
+                              marking the server as unhealthy.
                             type: integer
                         type: object
                       port:
@@ -2989,13 +2991,14 @@ spec:
                               - type: integer
                               - type: string
                               description: FailureWindow defines the time window during
-                                which a certain number of failed attempts must occur
-                                for the server to be marked as unavailable.
+                                which the failed attempts must occur for the server
+                                to be marked as unhealthy. It also defines for how
+                                long the server will be considered unhealthy.
                               x-kubernetes-int-or-string: true
                             maxFailedAttempts:
-                              description: MaxFailedAttempts is the number of failed
-                                attempts allowed within the failure window before
-                                marking the server as unhealthy.
+                              description: MaxFailedAttempts is the number of consecutive
+                                failed attempts allowed within the failure window
+                                before marking the server as unhealthy.
                               type: integer
                           type: object
                         percent:
@@ -3141,13 +3144,14 @@ spec:
                         - type: integer
                         - type: string
                         description: FailureWindow defines the time window during
-                          which a certain number of failed attempts must occur for
-                          the server to be marked as unavailable.
+                          which the failed attempts must occur for the server to be
+                          marked as unhealthy. It also defines for how long the server
+                          will be considered unhealthy.
                         x-kubernetes-int-or-string: true
                       maxFailedAttempts:
-                        description: MaxFailedAttempts is the number of failed attempts
-                          allowed within the failure window before marking the server
-                          as unhealthy.
+                        description: MaxFailedAttempts is the number of consecutive
+                          failed attempts allowed within the failure window before
+                          marking the server as unhealthy.
                         type: integer
                     type: object
                   port:
@@ -3371,13 +3375,14 @@ spec:
                               - type: integer
                               - type: string
                               description: FailureWindow defines the time window during
-                                which a certain number of failed attempts must occur
-                                for the server to be marked as unavailable.
+                                which the failed attempts must occur for the server
+                                to be marked as unhealthy. It also defines for how
+                                long the server will be considered unhealthy.
                               x-kubernetes-int-or-string: true
                             maxFailedAttempts:
-                              description: MaxFailedAttempts is the number of failed
-                                attempts allowed within the failure window before
-                                marking the server as unhealthy.
+                              description: MaxFailedAttempts is the number of consecutive
+                                failed attempts allowed within the failure window
+                                before marking the server as unhealthy.
                               type: integer
                           type: object
                         port:

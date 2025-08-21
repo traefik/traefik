@@ -27,6 +27,9 @@ http:
           path: "/health"
           interval: "10s"
           timeout: "3s"
+        passiveHealthcheck:
+          failureWindow: "3s"
+          maxFailedAttempts: "3"
         passHostHeader: true
         serversTransport: "customTransport@file"
         responseForwarding:
@@ -46,6 +49,10 @@ http:
       path = "/health"
       interval = "10s"
       timeout = "3s"
+
+    [http.services.my-service.loadBalancer.passiveHealthcheck]
+      failureWindow = "3s"
+      maxFailedAttempts = "3"
     
     passHostHeader = true
     serversTransport = "customTransport@file"
@@ -63,6 +70,8 @@ labels:
   - "traefik.http.services.my-service.loadBalancer.healthcheck.path=/health"
   - "traefik.http.services.my-service.loadBalancer.healthcheck.interval=10s"
   - "traefik.http.services.my-service.loadBalancer.healthcheck.timeout=3s"
+  - "traefik.http.services.my-service.loadBalancer.passiveHealthcheck.failureWindow=3s"
+  - "traefik.http.services.my-service.loadBalancer.passiveHealthcheck.maxFailedAttempts=3"
   - "traefik.http.services.my-service.loadBalancer.passHostHeader=true"
   - "traefik.http.services.my-service.loadBalancer.serversTransport=customTransport@file"
   - "traefik.http.services.my-service.loadBalancer.responseForwarding.flushInterval=150ms"
@@ -78,6 +87,8 @@ labels:
     "traefik.http.services.my-service.loadBalancer.healthcheck.path=/health",
     "traefik.http.services.my-service.loadBalancer.healthcheck.interval=10s",
     "traefik.http.services.my-service.loadBalancer.healthcheck.timeout=3s",
+    "traefik.http.services.my-service.loadBalancer.passiveHealthcheck.failureWindow=3s",
+    "traefik.http.services.my-service.loadBalancer.passiveHealthcheck.maxFailedAttempts=3",
     "traefik.http.services.my-service.loadBalancer.passHostHeader=true",
     "traefik.http.services.my-service.loadBalancer.serversTransport=customTransport@file",
     "traefik.http.services.my-service.loadBalancer.responseForwarding.flushInterval=150ms"
@@ -92,6 +103,7 @@ labels:
 | `servers`                          | Represents individual backend instances for your service                                                                                                                                                                                                                                                                                                                                      | Yes      |
 | `sticky`                           | Defines a `Set-Cookie` header is set on the initial response to let the client know which server handles the first response.                                                                                                                                                                                                                                                                  | No       |
 | `healthcheck`                      | Configures health check to remove unhealthy servers from the load balancing rotation.                                                                                                                                                                                                                                                                                                         | No       |
+| `passiveHealthcheck`               | Configures the passive health check to remove unhealthy servers from the load balancing rotation.                                                                                                                                                                                                                                                                                             | No       |
 | `passHostHeader`                   | Allows forwarding of the client Host header to server. By default, `passHostHeader` is true.                                                                                                                                                                                                                                                                                                  | No       |
 | `serversTransport`                 | Allows to reference an [HTTP ServersTransport](./serverstransport.md) configuration for the communication between Traefik and your servers. If no `serversTransport` is specified, the `default@internal` will be used.                                                                                                                                                                       | No       |
 | `responseForwarding`               | Configures how Traefik forwards the response from the backend server to the client.                                                                                                                                                                                                                                                                                                           | No       |
@@ -111,7 +123,9 @@ Servers represent individual backend instances for your service. The [service lo
 
 #### Health Check
 
-The `healthcheck` option configures health check to remove unhealthy servers from the load balancing rotation. Traefik will consider HTTP(s) servers healthy as long as they return a status code to the health check request (carried out every interval) between `2XX` and `3XX`, or matching the configured status. For gRPC servers, Traefik will consider them healthy as long as they return SERVING to [gRPC health check v1 requests](https://github.com/grpc/grpc/blob/master/doc/health-checking.md).
+The `healthcheck` option configures health check to remove unhealthy servers from the load balancing rotation.
+Traefik will consider HTTP(s) servers healthy as long as they return a status code to the health check request (carried out every interval) between `2XX` and `3XX`, or matching the configured status.
+For gRPC servers, Traefik will consider them healthy as long as they return SERVING to [gRPC health check v1 requests](https://github.com/grpc/grpc/blob/master/doc/health-checking.md).
 
 To propagate status changes (e.g. all servers of this service are down) upwards, HealthCheck must also be enabled on the parent(s) of this service.
 
@@ -132,6 +146,24 @@ Below are the available options for the health check mechanism:
 | `hostname`          | Defines the value of hostname in the Host header of the health check request.                                                 | ""      | No       |
 | `method`            | Defines the HTTP method that will be used while connecting to the endpoint.                                                   | GET     | No       |
 | `status`            | Defines the expected HTTP status code of the response to the health check request.                                            |         | No       |
+
+#### Passive Health Check
+
+The `passiveHealthcheck` option configures passive health check to remove unhealthy servers from the load balancing rotation.
+
+Passive health checks rely on real traffic to assess server health.
+Traefik forwards requests as usual and evaluates each response or timeout,
+incrementing a failure counter whenever a request fails.
+If the number of successive failures within a specified time window exceeds the configured threshold,
+Traefik will automatically stop routing traffic to that server until it recovers.
+A server will be considered healthy again after the configured failure window has passed.
+
+Below are the available options for the passive health check mechanism:
+
+| Field               | Description                                                                                                                                                                         | Default | Required |
+|---------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------|----------|
+| `failureWindow`     | Defines the time window during which the failed attempts must occur for the server to be marked as unhealthy. It also defines for how long the server will be considered unhealthy. | 10s     | No       |
+| `maxFailedAttempts` | Defines the number of consecutive failed attempts allowed within the failure window before marking the server as unhealthy.                                                         | 1       | No       |
 
 ## Weighted Round Robin (WRR)
 

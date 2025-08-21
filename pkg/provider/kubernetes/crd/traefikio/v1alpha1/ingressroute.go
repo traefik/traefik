@@ -192,9 +192,9 @@ type ServerHealthCheck struct {
 }
 
 type PassiveServerHealthCheck struct {
-	// FailureWindow defines the time window during which a certain number of failed attempts must occur for the server to be marked as unavailable.
+	// FailureWindow defines the time window during which the failed attempts must occur for the server to be marked as unhealthy. It also defines for how long the server will be considered unhealthy.
 	FailureWindow *intstr.IntOrString `json:"failureWindow,omitempty"`
-	// MaxFailedAttempts is the number of failed attempts allowed within the failure window before marking the server as unhealthy.
+	// MaxFailedAttempts is the number of consecutive failed attempts allowed within the failure window before marking the server as unhealthy.
 	MaxFailedAttempts *int `json:"maxFailedAttempts,omitempty"`
 }
 

@@ -339,9 +339,9 @@ func (h *ServerHealthCheck) SetDefaults() {
 // +k8s:deepcopy-gen=true
 
 type PassiveServerHealthCheck struct {
-	// FailureWindow defines the time window during which a certain number of failed attempts must occur for the server to be marked as unavailable.
+	// FailureWindow defines the time window during which the failed attempts must occur for the server to be marked as unhealthy. It also defines for how long the server will be considered unhealthy.
 	FailureWindow ptypes.Duration `json:"failureWindow,omitempty" toml:"failureWindow,omitempty" yaml:"failureWindow,omitempty" export:"true"`
-	// MaxFailedAttempts is the number of failed attempts allowed within the failure window before marking the server as unhealthy.
+	// MaxFailedAttempts is the number of consecutive failed attempts allowed within the failure window before marking the server as unhealthy.
 	MaxFailedAttempts int `json:"maxFailedAttempts,omitempty" toml:"maxFailedAttempts,omitempty" yaml:"maxFailedAttempts,omitempty" export:"true"`
 }
 

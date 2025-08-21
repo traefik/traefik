@@ -1,6 +1,7 @@
 package healthcheck
 
 import (
+	"bufio"
 	"context"
 	"errors"
 	"fmt"
@@ -17,7 +18,6 @@ import (
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
-	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
 	"golang.org/x/sync/singleflight"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -369,16 +369,13 @@ func (p *PassiveServiceHealthChecker) WrapHandler(ctx context.Context, next http
 		}
 		clientTraceCtx := httptrace.WithClientTrace(req.Context(), trace)
 
-		next.ServeHTTP(rw, req.WithContext(clientTraceCtx))
-
-		capt, err := capture.FromContext(req.Context())
-		if err != nil {
-			log.Error().Err(err).Msg("Capture context failed")
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
+		codeCatcher := &codeCatcher{
+			ResponseWriter: rw,
 		}
 
-		if backendCalled && capt.StatusCode() < 500 {
+		next.ServeHTTP(codeCatcher, req.WithContext(clientTraceCtx))
+
+		if backendCalled && codeCatcher.statusCode < http.StatusInternalServerError {
 			p.failuresMu.Lock()
 			p.failures[targetURL] = nil
 			p.failuresMu.Unlock()
@@ -437,7 +434,7 @@ func (p *PassiveServiceHealthChecker) healthy(targetURL string) bool {
 	p.failuresMu.Lock()
 	defer p.failuresMu.Unlock()
 
-	// Filter failures within the sliding window
+	// Filter failures within the sliding window.
 	failures := p.failures[targetURL]
 	for i, t := range failures {
 		if t.After(windowStart) {
@@ -446,6 +443,44 @@ func (p *PassiveServiceHealthChecker) healthy(targetURL string) bool {
 		}
 	}
 
-	// Check if failures exceed maxFail
+	// Check if failures exceed maxFailedAttempts.
 	return len(p.failures[targetURL]) < p.maxFailedAttempts
+}
+
+type codeCatcher struct {
+	http.ResponseWriter
+
+	statusCode int
+}
+
+func (c *codeCatcher) WriteHeader(statusCode int) {
+	// Here we allow the overriding of the status code,
+	// for the health check we care about the last status code written.
+	c.statusCode = statusCode
+	c.ResponseWriter.WriteHeader(statusCode)
+}
+
+func (c *codeCatcher) Write(bytes []byte) (int, error) {
+	// At the time of writing, if the status code is not set,
+	// or set to an informational status code (1xx),
+	// we set it to http.StatusOK (200).
+	if c.statusCode < http.StatusOK {
+		c.statusCode = http.StatusOK
+	}
+
+	return c.ResponseWriter.Write(bytes)
+}
+
+func (c *codeCatcher) Flush() {
+	if flusher, ok := c.ResponseWriter.(http.Flusher); ok {
+		flusher.Flush()
+	}
+}
+
+func (c *codeCatcher) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	if h, ok := c.ResponseWriter.(http.Hijacker); ok {
+		return h.Hijack()
+	}
+
+	return nil, nil, fmt.Errorf("not a hijacker: %T", c.ResponseWriter)
 }
