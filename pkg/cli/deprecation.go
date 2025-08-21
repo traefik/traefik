@@ -53,7 +53,7 @@ func logDeprecation(traefikConfiguration interface{}, arguments []string) bool {
 
 	if node != nil && len(node.Children) > 0 {
 		config := &configuration{}
-		filterUnknownNodes(reflect.TypeFor[*configuration](), node)
+		filterUnknownNodes(reflect.TypeOf(config), node)
 
 		if len(node.Children) > 0 {
 			// Telling parser to look for the label struct tag to allow empty values.
