@@ -47,7 +47,7 @@ func encodeRawValue(labels map[string]string, root string, rawValue interface{})
 
 	if tValue.Kind() == reflect.Map && tValue.Elem().Kind() == reflect.Interface {
 		r := reflect.ValueOf(rawValue).
-			Convert(reflect.TypeOf((map[string]interface{})(nil))).
+			Convert(reflect.TypeFor[map[string]interface{}]()).
 			Interface().(map[string]interface{})
 
 		for k, v := range r {
