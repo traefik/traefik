@@ -55,7 +55,9 @@ func (e *entryPointTracing) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 
 	tracingCtx := tracing.ExtractCarrierIntoContext(req.Context(), req.Header)
 	start := time.Now()
-	tracingCtx, span := e.tracer.Start(tracingCtx, "EntryPoint", trace.WithSpanKind(trace.SpanKindServer), trace.WithTimestamp(start))
+
+	spanName := e.getSpanName(req)
+	tracingCtx, span := e.tracer.Start(tracingCtx, spanName, trace.WithSpanKind(trace.SpanKindServer), trace.WithTimestamp(start))
 
 	// Associate the request context with the logger.
 	// This allows the logger to be aware of the tracing context and log accordingly (TraceID, SpanID, etc.).
@@ -75,4 +77,10 @@ func (e *entryPointTracing) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 
 	end := time.Now()
 	span.End(trace.WithTimestamp(end))
+}
+
+// Follow semantics defined by OTEL: https://opentelemetry.io/docs/specs/semconv/http/http-spans/#name
+// At the moment this implementation only gets the {method} as there is no guarantee {target} is low cardinality.
+func (e *entryPointTracing) getSpanName(req *http.Request) string {
+	return req.Method
 }

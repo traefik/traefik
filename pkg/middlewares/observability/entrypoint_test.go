@@ -19,17 +19,46 @@ func TestEntryPointMiddleware_tracing(t *testing.T) {
 	testCases := []struct {
 		desc       string
 		entryPoint string
+		method     string
 		expected   expected
 	}{
 		{
 			desc:       "basic test",
 			entryPoint: "test",
+			method:     http.MethodGet,
 			expected: expected{
-				name: "EntryPoint",
+				name: "GET",
 				attributes: []attribute.KeyValue{
 					attribute.String("span.kind", "server"),
 					attribute.String("entry_point", "test"),
 					attribute.String("http.request.method", "GET"),
+					attribute.String("network.protocol.version", "1.1"),
+					attribute.Int64("http.request.body.size", int64(0)),
+					attribute.String("url.path", "/search"),
+					attribute.String("url.query", "q=Opentelemetry&token=REDACTED"),
+					attribute.String("url.scheme", "http"),
+					attribute.String("user_agent.original", "entrypoint-test"),
+					attribute.String("server.address", "www.test.com"),
+					attribute.String("network.peer.address", "10.0.0.1"),
+					attribute.String("client.address", "10.0.0.1"),
+					attribute.Int64("client.port", int64(1234)),
+					attribute.Int64("network.peer.port", int64(1234)),
+					attribute.StringSlice("http.request.header.x-foo", []string{"foo", "bar"}),
+					attribute.Int64("http.response.status_code", int64(404)),
+					attribute.StringSlice("http.response.header.x-bar", []string{"foo", "bar"}),
+				},
+			},
+		},
+		{
+			desc:       "post",
+			entryPoint: "test",
+			method:     http.MethodPost,
+			expected: expected{
+				name: "POST",
+				attributes: []attribute.KeyValue{
+					attribute.String("span.kind", "server"),
+					attribute.String("entry_point", "test"),
+					attribute.String("http.request.method", "POST"),
 					attribute.String("network.protocol.version", "1.1"),
 					attribute.Int64("http.request.body.size", int64(0)),
 					attribute.String("url.path", "/search"),
@@ -59,7 +88,7 @@ func TestEntryPointMiddleware_tracing(t *testing.T) {
 			req.Header.Set("X-Foo", "foo")
 			req.Header.Add("X-Foo", "bar")
 
-			next := http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
+			next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				rw.Header().Set("X-Bar", "foo")
 				rw.Header().Add("X-Bar", "bar")
 				rw.WriteHeader(http.StatusNotFound)
