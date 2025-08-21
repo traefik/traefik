@@ -54,7 +54,7 @@ type ingressConfig struct {
 // parseIngressConfig parses the annotations from an Ingress object into an ingressConfig struct.
 func parseIngressConfig(ing *netv1.Ingress) (ingressConfig, error) {
 	cfg := ingressConfig{}
-	cfgType := reflect.TypeOf(cfg)
+	cfgType := reflect.TypeFor[ingressConfig]()
 	cfgValue := reflect.ValueOf(&cfg).Elem()
 
 	for i := range cfgType.NumField() {
