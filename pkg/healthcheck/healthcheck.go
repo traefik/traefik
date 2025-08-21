@@ -1,19 +1,24 @@
 package healthcheck
 
 import (
+	"bufio"
 	"context"
 	"errors"
 	"fmt"
 	"net"
 	"net/http"
+	"net/http/httptrace"
 	"net/url"
 	"strconv"
+	"sync"
 	"time"
 
 	gokitmetrics "github.com/go-kit/kit/metrics"
 	"github.com/rs/zerolog/log"
+	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
+	"golang.org/x/sync/singleflight"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
@@ -321,4 +326,161 @@ func (shc *ServiceHealthChecker) checkHealthGRPC(ctx context.Context, serverURL 
 	}
 
 	return nil
+}
+
+type PassiveServiceHealthChecker struct {
+	serviceName string
+	balancer    StatusSetter
+	metrics     metricsHealthCheck
+
+	maxFailedAttempts    int
+	failureWindow        ptypes.Duration
+	hasActiveHealthCheck bool
+
+	failuresMu sync.RWMutex
+	failures   map[string][]time.Time
+
+	timersGroup singleflight.Group
+	timers      sync.Map
+}
+
+func NewPassiveHealthChecker(serviceName string, balancer StatusSetter, maxFailedAttempts int, failureWindow ptypes.Duration, hasActiveHealthCheck bool, metrics metricsHealthCheck) *PassiveServiceHealthChecker {
+	return &PassiveServiceHealthChecker{
+		serviceName:          serviceName,
+		balancer:             balancer,
+		failures:             make(map[string][]time.Time),
+		maxFailedAttempts:    maxFailedAttempts,
+		failureWindow:        failureWindow,
+		hasActiveHealthCheck: hasActiveHealthCheck,
+		metrics:              metrics,
+	}
+}
+
+func (p *PassiveServiceHealthChecker) WrapHandler(ctx context.Context, next http.Handler, targetURL string) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		var backendCalled bool
+		trace := &httptrace.ClientTrace{
+			WroteHeaders: func() {
+				backendCalled = true
+			},
+			WroteRequest: func(httptrace.WroteRequestInfo) {
+				backendCalled = true
+			},
+		}
+		clientTraceCtx := httptrace.WithClientTrace(req.Context(), trace)
+
+		codeCatcher := &codeCatcher{
+			ResponseWriter: rw,
+		}
+
+		next.ServeHTTP(codeCatcher, req.WithContext(clientTraceCtx))
+
+		if backendCalled && codeCatcher.statusCode < http.StatusInternalServerError {
+			p.failuresMu.Lock()
+			p.failures[targetURL] = nil
+			p.failuresMu.Unlock()
+			return
+		}
+
+		p.failuresMu.Lock()
+		p.failures[targetURL] = append(p.failures[targetURL], time.Now())
+		p.failuresMu.Unlock()
+
+		if p.healthy(targetURL) {
+			return
+		}
+
+		// We need to guarantee that only one goroutine (request) will update the status and create a timer for the target.
+		_, _, _ = p.timersGroup.Do(targetURL, func() (interface{}, error) {
+			// A timer is already running for this target;
+			// it means that the target is already considered unhealthy.
+			if _, ok := p.timers.Load(targetURL); ok {
+				return nil, nil
+			}
+
+			p.balancer.SetStatus(ctx, targetURL, false)
+			p.metrics.ServiceServerUpGauge().With("service", p.serviceName, "url", targetURL).Set(0)
+
+			// If the service has an active health check, the passive health checker should not reset the status.
+			// The active health check will handle the status updates.
+			if p.hasActiveHealthCheck {
+				return nil, nil
+			}
+
+			go func() {
+				timer := time.NewTimer(time.Duration(p.failureWindow))
+				defer timer.Stop()
+
+				p.timers.Store(targetURL, timer)
+
+				select {
+				case <-ctx.Done():
+				case <-timer.C:
+					p.timers.Delete(targetURL)
+
+					p.balancer.SetStatus(ctx, targetURL, true)
+					p.metrics.ServiceServerUpGauge().With("service", p.serviceName, "url", targetURL).Set(1)
+				}
+			}()
+
+			return nil, nil
+		})
+	})
+}
+
+func (p *PassiveServiceHealthChecker) healthy(targetURL string) bool {
+	windowStart := time.Now().Add(-time.Duration(p.failureWindow))
+
+	p.failuresMu.Lock()
+	defer p.failuresMu.Unlock()
+
+	// Filter failures within the sliding window.
+	failures := p.failures[targetURL]
+	for i, t := range failures {
+		if t.After(windowStart) {
+			p.failures[targetURL] = failures[i:]
+			break
+		}
+	}
+
+	// Check if failures exceed maxFailedAttempts.
+	return len(p.failures[targetURL]) < p.maxFailedAttempts
+}
+
+type codeCatcher struct {
+	http.ResponseWriter
+
+	statusCode int
+}
+
+func (c *codeCatcher) WriteHeader(statusCode int) {
+	// Here we allow the overriding of the status code,
+	// for the health check we care about the last status code written.
+	c.statusCode = statusCode
+	c.ResponseWriter.WriteHeader(statusCode)
+}
+
+func (c *codeCatcher) Write(bytes []byte) (int, error) {
+	// At the time of writing, if the status code is not set,
+	// or set to an informational status code (1xx),
+	// we set it to http.StatusOK (200).
+	if c.statusCode < http.StatusOK {
+		c.statusCode = http.StatusOK
+	}
+
+	return c.ResponseWriter.Write(bytes)
+}
+
+func (c *codeCatcher) Flush() {
+	if flusher, ok := c.ResponseWriter.(http.Flusher); ok {
+		flusher.Flush()
+	}
+}
+
+func (c *codeCatcher) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	if h, ok := c.ResponseWriter.(http.Hijacker); ok {
+		return h.Hijack()
+	}
+
+	return nil, nil, fmt.Errorf("not a hijacker: %T", c.ResponseWriter)
 }

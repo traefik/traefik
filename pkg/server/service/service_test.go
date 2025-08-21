@@ -10,9 +10,11 @@ import (
 	"net/textproto"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
 	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
@@ -63,6 +65,19 @@ func TestGetLoadBalancer(t *testing.T) {
 			service: &dynamic.ServersLoadBalancer{
 				Strategy: dynamic.BalancerStrategyWRR,
 				Sticky:   &dynamic.Sticky{Cookie: &dynamic.Cookie{}},
+			},
+			fwd:         &forwarderMock{},
+			expectError: false,
+		},
+		{
+			desc:        "Succeeds when passive health checker is set",
+			serviceName: "test",
+			service: &dynamic.ServersLoadBalancer{
+				Strategy: dynamic.BalancerStrategyWRR,
+				PassiveHealthCheck: &dynamic.PassiveServerHealthCheck{
+					FailureWindow:     ptypes.Duration(30 * time.Second),
+					MaxFailedAttempts: 3,
+				},
 			},
 			fwd:         &forwarderMock{},
 			expectError: false,

@@ -244,10 +244,12 @@ type ServersLoadBalancer struct {
 	// children servers of this load-balancer. To propagate status changes (e.g. all
 	// servers of this service are down) upwards, HealthCheck must also be enabled on
 	// the parent(s) of this service.
-	HealthCheck        *ServerHealthCheck  `json:"healthCheck,omitempty" toml:"healthCheck,omitempty" yaml:"healthCheck,omitempty" export:"true"`
-	PassHostHeader     *bool               `json:"passHostHeader" toml:"passHostHeader" yaml:"passHostHeader" export:"true"`
-	ResponseForwarding *ResponseForwarding `json:"responseForwarding,omitempty" toml:"responseForwarding,omitempty" yaml:"responseForwarding,omitempty" export:"true"`
-	ServersTransport   string              `json:"serversTransport,omitempty" toml:"serversTransport,omitempty" yaml:"serversTransport,omitempty" export:"true"`
+	HealthCheck *ServerHealthCheck `json:"healthCheck,omitempty" toml:"healthCheck,omitempty" yaml:"healthCheck,omitempty" export:"true"`
+	// PassiveHealthCheck enables passive health checks for children servers of this load-balancer.
+	PassiveHealthCheck *PassiveServerHealthCheck `json:"passiveHealthCheck,omitempty" toml:"passiveHealthCheck,omitempty" yaml:"passiveHealthCheck,omitempty" export:"true"`
+	PassHostHeader     *bool                     `json:"passHostHeader" toml:"passHostHeader" yaml:"passHostHeader" export:"true"`
+	ResponseForwarding *ResponseForwarding       `json:"responseForwarding,omitempty" toml:"responseForwarding,omitempty" yaml:"responseForwarding,omitempty" export:"true"`
+	ServersTransport   string                    `json:"serversTransport,omitempty" toml:"serversTransport,omitempty" yaml:"serversTransport,omitempty" export:"true"`
 }
 
 // Mergeable tells if the given service is mergeable.
@@ -332,6 +334,20 @@ func (h *ServerHealthCheck) SetDefaults() {
 	h.Mode = "http"
 	h.Interval = DefaultHealthCheckInterval
 	h.Timeout = DefaultHealthCheckTimeout
+}
+
+// +k8s:deepcopy-gen=true
+
+type PassiveServerHealthCheck struct {
+	// FailureWindow defines the time window during which the failed attempts must occur for the server to be marked as unhealthy. It also defines for how long the server will be considered unhealthy.
+	FailureWindow ptypes.Duration `json:"failureWindow,omitempty" toml:"failureWindow,omitempty" yaml:"failureWindow,omitempty" export:"true"`
+	// MaxFailedAttempts is the number of consecutive failed attempts allowed within the failure window before marking the server as unhealthy.
+	MaxFailedAttempts int `json:"maxFailedAttempts,omitempty" toml:"maxFailedAttempts,omitempty" yaml:"maxFailedAttempts,omitempty" export:"true"`
+}
+
+func (p *PassiveServerHealthCheck) SetDefaults() {
+	p.FailureWindow = ptypes.Duration(10 * time.Second)
+	p.MaxFailedAttempts = 1
 }
 
 // +k8s:deepcopy-gen=true

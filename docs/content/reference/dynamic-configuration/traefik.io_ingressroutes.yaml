@@ -227,6 +227,25 @@ spec:
                               PassHostHeader defines whether the client Host header is forwarded to the upstream Kubernetes Service.
                               By default, passHostHeader is true.
                             type: boolean
+                          passiveHealthCheck:
+                            description: PassiveHealthCheck defines passive health
+                              checks for ExternalName services.
+                            properties:
+                              failureWindow:
+                                anyOf:
+                                - type: integer
+                                - type: string
+                                description: FailureWindow defines the time window
+                                  during which the failed attempts must occur for
+                                  the server to be marked as unhealthy. It also defines
+                                  for how long the server will be considered unhealthy.
+                                x-kubernetes-int-or-string: true
+                              maxFailedAttempts:
+                                description: MaxFailedAttempts is the number of consecutive
+                                  failed attempts allowed within the failure window
+                                  before marking the server as unhealthy.
+                                type: integer
+                            type: object
                           port:
                             anyOf:
                             - type: integer

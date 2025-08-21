@@ -288,6 +288,8 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | `traefik/http/services/Service02/loadBalancer/healthCheck/timeout` | `42s` |
 | `traefik/http/services/Service02/loadBalancer/healthCheck/unhealthyInterval` | `42s` |
 | `traefik/http/services/Service02/loadBalancer/passHostHeader` | `true` |
+| `traefik/http/services/Service02/loadBalancer/passiveHealthCheck/failureWindow` | `42s` |
+| `traefik/http/services/Service02/loadBalancer/passiveHealthCheck/maxFailedAttempts` | `42` |
 | `traefik/http/services/Service02/loadBalancer/responseForwarding/flushInterval` | `42s` |
 | `traefik/http/services/Service02/loadBalancer/servers/0/preservePath` | `true` |
 | `traefik/http/services/Service02/loadBalancer/servers/0/url` | `foobar` |

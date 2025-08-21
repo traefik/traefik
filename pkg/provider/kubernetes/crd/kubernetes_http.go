@@ -392,6 +392,21 @@ func (c configBuilder) buildServersLB(namespace string, svc traefikv1alpha1.Load
 		}
 	}
 
+	if svc.PassiveHealthCheck != nil {
+		lb.PassiveHealthCheck = &dynamic.PassiveServerHealthCheck{}
+		lb.PassiveHealthCheck.SetDefaults()
+
+		if svc.PassiveHealthCheck.MaxFailedAttempts != nil {
+			lb.PassiveHealthCheck.MaxFailedAttempts = *svc.PassiveHealthCheck.MaxFailedAttempts
+		}
+
+		if svc.PassiveHealthCheck.FailureWindow != nil {
+			if err := lb.PassiveHealthCheck.FailureWindow.Set(svc.PassiveHealthCheck.FailureWindow.String()); err != nil {
+				return nil, err
+			}
+		}
+	}
+
 	conf := svc
 	lb.PassHostHeader = conf.PassHostHeader
 	if lb.PassHostHeader == nil {
