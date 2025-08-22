@@ -312,6 +312,7 @@ func (m *Manager) getServiceHandler(ctx context.Context, service dynamic.WRRServ
 		return m.BuildHTTP(ctx, service.Name)
 	}
 }
+
 func (m *Manager) getHRWServiceHandler(ctx context.Context, serviceName string, config *dynamic.HighestRandomWeight) (http.Handler, error) {
 	// TODO Handle accesslog and metrics with multiple service name
 	balancer := hrw.New(config.HealthCheck != nil)

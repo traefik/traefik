@@ -51,7 +51,7 @@ func TestBalancer(t *testing.T) {
 
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		req.RemoteAddr = genIPAddress()
 		balancer.ServeHTTP(recorder, req)
 	}
@@ -79,7 +79,7 @@ func TestBalancerOneServerZeroWeight(t *testing.T) {
 	balancer.Add("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), Int(0), false)
 
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 	}
 
@@ -101,8 +101,8 @@ func TestBalancerNoServiceUp(t *testing.T) {
 		rw.WriteHeader(http.StatusInternalServerError)
 	}), Int(1), false)
 
-	balancer.SetStatus(context.WithValue(context.Background(), serviceName, "parent"), "first", false)
-	balancer.SetStatus(context.WithValue(context.Background(), serviceName, "parent"), "second", false)
+	balancer.SetStatus(context.WithValue(t.Context(), serviceName, "parent"), "first", false)
+	balancer.SetStatus(context.WithValue(t.Context(), serviceName, "parent"), "second", false)
 
 	recorder := httptest.NewRecorder()
 	balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
@@ -121,10 +121,10 @@ func TestBalancerOneServerDown(t *testing.T) {
 	balancer.Add("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusInternalServerError)
 	}), Int(1), false)
-	balancer.SetStatus(context.WithValue(context.Background(), serviceName, "parent"), "second", false)
+	balancer.SetStatus(context.WithValue(t.Context(), serviceName, "parent"), "second", false)
 
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 	}
 
@@ -143,24 +143,23 @@ func TestBalancerDownThenUp(t *testing.T) {
 		rw.Header().Set("server", "second")
 		rw.WriteHeader(http.StatusOK)
 	}), Int(1), false)
-	balancer.SetStatus(context.WithValue(context.Background(), serviceName, "parent"), "second", false)
+	balancer.SetStatus(context.WithValue(t.Context(), serviceName, "parent"), "second", false)
 
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 	}
 	assert.Equal(t, 3, recorder.save["first"])
 
-	balancer.SetStatus(context.WithValue(context.Background(), serviceName, "parent"), "second", true)
+	balancer.SetStatus(context.WithValue(t.Context(), serviceName, "parent"), "second", true)
 	recorder = &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		req.RemoteAddr = genIPAddress()
 		balancer.ServeHTTP(recorder, req)
 	}
 	assert.InDelta(t, 50, recorder.save["first"], 10)
 	assert.InDelta(t, 50, recorder.save["second"], 10)
-
 }
 
 func TestBalancerPropagate(t *testing.T) {
@@ -188,18 +187,18 @@ func TestBalancerPropagate(t *testing.T) {
 	topBalancer := New(true)
 	topBalancer.Add("balancer1", balancer1, Int(1), false)
 	_ = balancer1.RegisterStatusUpdater(func(up bool) {
-		topBalancer.SetStatus(context.WithValue(context.Background(), serviceName, "top"), "balancer1", up)
+		topBalancer.SetStatus(context.WithValue(t.Context(), serviceName, "top"), "balancer1", up)
 		// TODO(mpl): if test gets flaky, add channel or something here to signal that
 		// propagation is done, and wait on it before sending request.
 	})
 	topBalancer.Add("balancer2", balancer2, Int(1), false)
 	_ = balancer2.RegisterStatusUpdater(func(up bool) {
-		topBalancer.SetStatus(context.WithValue(context.Background(), serviceName, "top"), "balancer2", up)
+		topBalancer.SetStatus(context.WithValue(t.Context(), serviceName, "top"), "balancer2", up)
 	})
 
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		req.RemoteAddr = genIPAddress()
 		topBalancer.ServeHTTP(recorder, req)
 	}
@@ -211,10 +210,10 @@ func TestBalancerPropagate(t *testing.T) {
 	assert.Equal(t, wantStatus, recorder.status)
 
 	// fourth gets downed, but balancer2 still up since third is still up.
-	balancer2.SetStatus(context.WithValue(context.Background(), serviceName, "top"), "fourth", false)
+	balancer2.SetStatus(context.WithValue(t.Context(), serviceName, "top"), "fourth", false)
 	recorder = &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
 	req = httptest.NewRequest(http.MethodGet, "/", nil)
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		req.RemoteAddr = genIPAddress()
 		topBalancer.ServeHTTP(recorder, req)
 	}
@@ -227,10 +226,10 @@ func TestBalancerPropagate(t *testing.T) {
 
 	// third gets downed, and the propagation triggers balancer2 to be marked as
 	// down as well for topBalancer.
-	balancer2.SetStatus(context.WithValue(context.Background(), serviceName, "top"), "third", false)
+	balancer2.SetStatus(context.WithValue(t.Context(), serviceName, "top"), "third", false)
 	recorder = &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
 	req = httptest.NewRequest(http.MethodGet, "/", nil)
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		req.RemoteAddr = genIPAddress()
 		topBalancer.ServeHTTP(recorder, req)
 	}
@@ -271,7 +270,7 @@ func TestSticky(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	req.RemoteAddr = genIPAddress()
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		for _, cookie := range recorder.Result().Cookies() {
 			req.AddCookie(cookie)
 		}

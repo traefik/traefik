@@ -242,6 +242,7 @@ Power of two choices algorithm is a load balancing strategy that selects two ser
         [[http.services.my-service.loadBalancer.servers]]
           url = "http://private-ip-server-3/"
     ```
+
 ##### HRW
 
 HighestRandomWeight, also called RendezVous hashing allows to loadbalance clients in a pool of services or servers.
@@ -1403,7 +1404,7 @@ http:
 
   [http.services.appv1]
     [http.services.appv1.loadBalancer]
-      type: hrw
+      type="hrw"
       [http.services.appv1.loadBalancer.healthCheck]
         path = "/health"
         interval = "10s"
@@ -1413,7 +1414,7 @@ http:
 
   [http.services.appv2]
     [http.services.appv2.loadBalancer]
-      type: hrw
+      type="hrw"
       [http.services.appv2.loadBalancer.healthCheck]
         path = "/health"
         interval = "10s"
@@ -1421,7 +1422,6 @@ http:
       [[http.services.appv2.loadBalancer.servers]]
         url = "http://private-ip-server-2/"
 ```
-
 
 ### Mirroring (service)
 

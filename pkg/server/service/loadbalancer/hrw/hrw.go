@@ -6,7 +6,6 @@ import (
 	"hash/fnv"
 	"math"
 	"net/http"
-	"strconv"
 	"sync"
 
 	"github.com/rs/zerolog/log"
@@ -20,10 +19,7 @@ type namedHandler struct {
 	weight float64
 }
 
-// Balancer is a HRW load balancer based on RendezVous hashing Algorithm (HRW).
-// (https://en.m.wikipedia.org/wiki/Rendezvous_hashing)
-// providing weighted stateless sticky session behavior with floating point weights and an O(n) pick time.
-// Client connects to the same server each time based on their IP source
+// Client connects to the same server each time based on their IP source.
 type Balancer struct {
 	wantsHealthCheck bool
 
@@ -59,12 +55,11 @@ func New(wantHealthCheck bool) *Balancer {
 // getNodeScore calcul the score of the couple of src and handler name.
 func getNodeScore(handler *namedHandler, src string) float64 {
 	h := fnv.New32a()
-	h.Write([]byte(src + (*handler).name))
+	h.Write([]byte(src + handler.name))
 	sum := h.Sum32()
 	score := float32(sum) / float32(math.Pow(2, 32))
-	log_score := 1.0 / -math.Log(float64(score))
-	log_weighted_score := log_score * (*handler).weight
-	return log_weighted_score
+	logScore := 1.0 / -math.Log(float64(score))
+	return logScore * handler.weight
 }
 
 // SetStatus sets on the balancer that its given child is now of the given
@@ -149,7 +144,6 @@ func (b *Balancer) nextServer(ip string) (*namedHandler, error) {
 }
 
 func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-
 	// give ip fetched to b.nextServer
 	clientIP := b.strategy.GetIP(req)
 	log.Debug().Msgf("ServeHTTP() clientIP=%s", clientIP)
@@ -193,12 +187,4 @@ func (b *Balancer) Add(name string, handler http.Handler, weight *int, fenced bo
 		b.fenced[name] = struct{}{}
 	}
 	b.handlersMu.Unlock()
-}
-
-func hash(input string) string {
-	hasher := fnv.New64()
-	// We purposely ignore the error because the implementation always returns nil.
-	_, _ = hasher.Write([]byte(input))
-
-	return strconv.FormatUint(hasher.Sum64(), 16)
 }
