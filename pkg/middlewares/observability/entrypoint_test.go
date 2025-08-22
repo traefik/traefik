@@ -89,7 +89,7 @@ func TestEntryPointMiddleware_tracing(t *testing.T) {
 			req.Header.Set("X-Foo", "foo")
 			req.Header.Add("X-Foo", "bar")
 
-			next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			next := http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
 				rw.Header().Set("X-Bar", "foo")
 				rw.Header().Add("X-Bar", "bar")
 				rw.WriteHeader(http.StatusNotFound)
