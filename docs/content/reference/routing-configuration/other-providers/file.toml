@@ -22,8 +22,9 @@
           sans = ["foobar", "foobar"]
       [http.routers.Router0.observability]
         accessLogs = true
-        tracing = true
         metrics = true
+        tracing = true
+        traceVerbosity = "foobar"
     [http.routers.Router1]
       entryPoints = ["foobar", "foobar"]
       middlewares = ["foobar", "foobar"]
@@ -44,8 +45,9 @@
           sans = ["foobar", "foobar"]
       [http.routers.Router1.observability]
         accessLogs = true
-        tracing = true
         metrics = true
+        tracing = true
+        traceVerbosity = "foobar"
   [http.services]
     [http.services.Service01]
       [http.services.Service01.failover]
@@ -84,6 +86,7 @@
           status = 42
           port = 42
           interval = "42s"
+          unhealthyInterval = "42s"
           timeout = "42s"
           hostname = "foobar"
           followRedirects = true

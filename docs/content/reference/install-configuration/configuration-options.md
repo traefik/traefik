@@ -3,7 +3,6 @@ CODE GENERATED AUTOMATICALLY
 THIS FILE MUST NOT BE EDITED BY HAND
 -->
 # Install Configuration Options
-
 ## Configuration Options
 
 | Field | Description | Default | 
@@ -37,7 +36,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | accesslog.otlp.http.tls.insecureskipverify | TLS insecure skip verify | false |
 | accesslog.otlp.http.tls.key | TLS key | |
 | accesslog.otlp.resourceattributes._name_ | Defines additional resource attributes (key:value). | |
-| accesslog.otlp.servicename | Set the name for this service. | traefik |
+| accesslog.otlp.servicename | Defines the service name resource attribute. | traefik |
 | api | Enable api/dashboard. | false |
 | api.basepath | Defines the base path where the API and Dashboard will be exposed. | / |
 | api.dashboard | Activate dashboard. | true |
@@ -50,6 +49,8 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | certificatesresolvers._name_.acme.caservername | Specify the CA server name that can be used to authenticate an ACME server with an HTTPS certificate not issued by a CA in the system-wide trusted root list. | |
 | certificatesresolvers._name_.acme.casystemcertpool | Define if the certificates pool must use a copy of the system cert pool. | false |
 | certificatesresolvers._name_.acme.certificatesduration | Certificates' duration in hours. | 2160 |
+| certificatesresolvers._name_.acme.clientresponseheadertimeout | Timeout for receiving the response headers when communicating with the ACME server. | 30 |
+| certificatesresolvers._name_.acme.clienttimeout | Timeout for a complete HTTP transaction with the ACME server. | 120 |
 | certificatesresolvers._name_.acme.dnschallenge | Activate DNS-01 Challenge. | false |
 | certificatesresolvers._name_.acme.dnschallenge.delaybeforecheck | (Deprecated) Assume DNS propagates after a delay in seconds rather than finding and querying nameservers. | 0 |
 | certificatesresolvers._name_.acme.dnschallenge.disablepropagationcheck | (Deprecated) Disable the DNS propagation checks before notifying ACME that the DNS challenge is ready. [not recommended] | false |
@@ -65,6 +66,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | certificatesresolvers._name_.acme.email | Email address used for registration. | |
 | certificatesresolvers._name_.acme.emailaddresses | CSR email addresses to use. | |
 | certificatesresolvers._name_.acme.httpchallenge | Activate HTTP-01 Challenge. | false |
+| certificatesresolvers._name_.acme.httpchallenge.delay | Delay between the creation of the challenge and the validation. | 0 |
 | certificatesresolvers._name_.acme.httpchallenge.entrypoint | HTTP challenge EntryPoint | |
 | certificatesresolvers._name_.acme.keytype | KeyType used for generating certificate private key. Allow value 'EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192'. | RSA4096 |
 | certificatesresolvers._name_.acme.preferredchain | Preferred chain to use. | |
@@ -98,9 +100,10 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | entrypoints._name_.http2.maxconcurrentstreams | Specifies the number of concurrent streams per connection that each client is allowed to initiate. | 250 |
 | entrypoints._name_.http3 | HTTP/3 configuration. | false |
 | entrypoints._name_.http3.advertisedport | UDP port to advertise, on which HTTP/3 is available. | 0 |
-| entrypoints._name_.observability.accesslogs |  | true |
-| entrypoints._name_.observability.metrics |  | true |
-| entrypoints._name_.observability.tracing |  | true |
+| entrypoints._name_.observability.accesslogs | Enables access-logs for this entryPoint. | true |
+| entrypoints._name_.observability.metrics | Enables metrics for this entryPoint. | true |
+| entrypoints._name_.observability.traceverbosity | Defines the tracing verbosity level for this entryPoint. | minimal |
+| entrypoints._name_.observability.tracing | Enables tracing for this entryPoint. | true |
 | entrypoints._name_.proxyprotocol | Proxy-Protocol configuration. | false |
 | entrypoints._name_.proxyprotocol.insecure | Trust all. | false |
 | entrypoints._name_.proxyprotocol.trustedips | Trust only selected IPs. | |
@@ -117,16 +120,19 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | experimental.fastproxy | Enables the FastProxy implementation. | false |
 | experimental.fastproxy.debug | Enable debug mode for the FastProxy implementation. | false |
 | experimental.kubernetesgateway | (Deprecated) Allow the Kubernetes gateway api provider usage. | false |
+| experimental.kubernetesingressnginx | Allow the Kubernetes Ingress NGINX provider usage. | false |
 | experimental.localplugins._name_ | Local plugins configuration. | false |
 | experimental.localplugins._name_.modulename | Plugin's module name. | |
 | experimental.localplugins._name_.settings | Plugin's settings (works only for wasm plugins). | |
 | experimental.localplugins._name_.settings.envs | Environment variables to forward to the wasm guest. | |
 | experimental.localplugins._name_.settings.mounts | Directory to mount to the wasm guest. | |
+| experimental.localplugins._name_.settings.useunsafe | Allow the plugin to use unsafe package. | false |
 | experimental.otlplogs | Enables the OpenTelemetry logs integration. | false |
 | experimental.plugins._name_.modulename | plugin's module name. | |
 | experimental.plugins._name_.settings | Plugin's settings (works only for wasm plugins). | |
 | experimental.plugins._name_.settings.envs | Environment variables to forward to the wasm guest. | |
 | experimental.plugins._name_.settings.mounts | Directory to mount to the wasm guest. | |
+| experimental.plugins._name_.settings.useunsafe | Allow the plugin to use unsafe package. | false |
 | experimental.plugins._name_.version | plugin's version. | |
 | global.checknewversion | Periodically check if a new version has been released. | true |
 | global.sendanonymoususage | Periodically send anonymous usage statistics. If the option is not specified, it will be disabled by default. | false |
@@ -160,7 +166,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | log.otlp.http.tls.insecureskipverify | TLS insecure skip verify | false |
 | log.otlp.http.tls.key | TLS key | |
 | log.otlp.resourceattributes._name_ | Defines additional resource attributes (key:value). | |
-| log.otlp.servicename | Set the name for this service. | traefik |
+| log.otlp.servicename | Defines the service name resource attribute. | traefik |
 | metrics.addinternals | Enables metrics for internal services (ping, dashboard, etc...). | false |
 | metrics.datadog | Datadog metrics exporter type. | false |
 | metrics.datadog.addentrypointslabels | Enable metrics on entry points. | true |
@@ -200,7 +206,8 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | metrics.otlp.http.tls.insecureskipverify | TLS insecure skip verify | false |
 | metrics.otlp.http.tls.key | TLS key | |
 | metrics.otlp.pushinterval | Period between calls to collect a checkpoint. | 10 |
-| metrics.otlp.servicename | OTEL service name to use. | traefik |
+| metrics.otlp.resourceattributes._name_ | Defines additional resource attributes (key:value). | |
+| metrics.otlp.servicename | Defines the service name resource attribute. | traefik |
 | metrics.prometheus | Prometheus metrics exporter type. | false |
 | metrics.prometheus.addentrypointslabels | Enable metrics on entry points. | true |
 | metrics.prometheus.addrouterslabels | Enable metrics on routers. | false |
@@ -216,6 +223,8 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | metrics.statsd.addserviceslabels | Enable metrics on services. | true |
 | metrics.statsd.prefix | Prefix to use for metrics collection. | traefik |
 | metrics.statsd.pushinterval | StatsD push interval. | 10 |
+| ocsp | OCSP configuration. | false |
+| ocsp.responderoverrides._name_ | Defines a map of OCSP responders to replace for querying OCSP servers. | |
 | ping | Enable ping. | false |
 | ping.entrypoint | EntryPoint | traefik |
 | ping.manualrouting | Manual routing | false |
@@ -346,8 +355,24 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | providers.kubernetesingress.labelselector | Kubernetes Ingress label selector to use. | |
 | providers.kubernetesingress.namespaces | Kubernetes namespaces. | |
 | providers.kubernetesingress.nativelbbydefault | Defines whether to use Native Kubernetes load-balancing mode by default. | false |
+| providers.kubernetesingress.strictprefixmatching | Make prefix matching strictly comply with the Kubernetes Ingress specification (path-element-wise matching instead of character-by-character string matching). | false |
 | providers.kubernetesingress.throttleduration | Ingress refresh throttle duration | 0 |
 | providers.kubernetesingress.token | Kubernetes bearer token (not needed for in-cluster client). It accepts either a token value or a file path to the token. | |
+| providers.kubernetesingressnginx | Enable Kubernetes Ingress NGINX provider. | false |
+| providers.kubernetesingressnginx.certauthfilepath | Kubernetes certificate authority file path (not needed for in-cluster client). | |
+| providers.kubernetesingressnginx.controllerclass | Ingress Class Controller value this controller satisfies. | k8s.io/ingress-nginx |
+| providers.kubernetesingressnginx.defaultbackendservice | Service used to serve HTTP requests not matching any known server name (catch-all). Takes the form 'namespace/name'. | |
+| providers.kubernetesingressnginx.disablesvcexternalname | Disable support for Services of type ExternalName. | false |
+| providers.kubernetesingressnginx.endpoint | Kubernetes server endpoint (required for external cluster client). | |
+| providers.kubernetesingressnginx.ingressclass | Name of the ingress class this controller satisfies. | nginx |
+| providers.kubernetesingressnginx.ingressclassbyname | Define if Ingress Controller should watch for Ingress Class by Name together with Controller Class. | false |
+| providers.kubernetesingressnginx.publishservice | Service fronting the Ingress controller. Takes the form 'namespace/name'. | |
+| providers.kubernetesingressnginx.publishstatusaddress | Customized address (or addresses, separated by comma) to set as the load-balancer status of Ingress objects this controller satisfies. | |
+| providers.kubernetesingressnginx.throttleduration | Ingress refresh throttle duration. | 0 |
+| providers.kubernetesingressnginx.token | Kubernetes bearer token (not needed for in-cluster client). It accepts either a token value or a file path to the token. | |
+| providers.kubernetesingressnginx.watchingresswithoutclass | Define if Ingress Controller should also watch for Ingresses without an IngressClass or the annotation specified. | false |
+| providers.kubernetesingressnginx.watchnamespace | Namespace the controller watches for updates to Kubernetes objects. All namespaces are watched if this parameter is left empty. | |
+| providers.kubernetesingressnginx.watchnamespaceselector | Selector selects namespaces the controller watches for updates to Kubernetes objects. | |
 | providers.nomad | Enable Nomad backend with default settings. | false |
 | providers.nomad.allowemptyservices | Allow the creation of services without endpoints. | false |
 | providers.nomad.constraints | Constraints is an expression that Traefik matches against the Nomad service's tags to determine whether to create route(s) for that service. | |
@@ -453,4 +478,4 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | tracing.resourceattributes._name_ | Defines additional resource attributes (key:value). | |
 | tracing.safequeryparams | Query params to not redact. | |
 | tracing.samplerate | Sets the rate between 0.0 and 1.0 of requests to trace. | 1.000000 |
-| tracing.servicename | Sets the name for this service. | traefik |
+| tracing.servicename | Defines the service name resource attribute. | traefik |

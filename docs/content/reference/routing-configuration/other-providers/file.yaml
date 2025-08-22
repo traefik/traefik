@@ -27,8 +27,9 @@ http:
               - foobar
       observability:
         accessLogs: true
-        tracing: true
         metrics: true
+        tracing: true
+        traceVerbosity: foobar
     Router1:
       entryPoints:
         - foobar
@@ -54,8 +55,9 @@ http:
               - foobar
       observability:
         accessLogs: true
-        tracing: true
         metrics: true
+        tracing: true
+        traceVerbosity: foobar
   services:
     Service01:
       failover:
@@ -89,6 +91,7 @@ http:
           status: 42
           port: 42
           interval: 42s
+          unhealthyInterval: 42s
           timeout: 42s
           hostname: foobar
           followRedirects: true
