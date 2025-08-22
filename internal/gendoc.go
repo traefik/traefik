@@ -28,7 +28,7 @@ func main() {
 	genInstallConfDoc()
 }
 
-// Generate the Routing Configuration YAML and TOML files
+// Generate the Routing Configuration YAML and TOML files.
 func genRoutingConfDoc() {
 	logger := log.With().Logger()
 
@@ -63,7 +63,7 @@ func yamlWrite(outputFile string, element any) error {
 	}
 	defer file.Close()
 
-	// Write the comment at the beginning of the file
+	// Write the comment at the beginning of the file.
 	if _, err := file.WriteString(commentGenerated); err != nil {
 		return err
 	}
@@ -87,7 +87,7 @@ func tomlWrite(outputFile string, element any) error {
 	}
 	defer file.Close()
 
-	// Write the comment at the beginning of the file
+	// Write the comment at the beginning of the file.
 	if _, err := file.WriteString(commentGenerated); err != nil {
 		return err
 	}
@@ -125,9 +125,8 @@ func clean(element any) {
 	valSvcs.SetMapIndex(reflect.ValueOf(fmt.Sprintf("%s1", valueSvcRoot.Type().Name())), reflect.Value{})
 }
 
-// Generate the Install Configuration in a table
+// Generate the Install Configuration in a table.
 func genInstallConfDoc() {
-
 	outputFile := "./docs/content/reference/install-configuration/configuration-options.md"
 	logger := log.With().Str("file", outputFile).Logger()
 
@@ -158,8 +157,7 @@ func genInstallConfDoc() {
 CODE GENERATED AUTOMATICALLY
 THIS FILE MUST NOT BE EDITED BY HAND
 -->`)
-	w.writeln(`# Install Configuration Options
-`)
+	w.writeln(`# Install Configuration Options`)
 	w.writeln(`## Configuration Options`)
 
 	w.writeln(`
@@ -185,7 +183,6 @@ THIS FILE MUST NOT BE EDITED BY HAND
 		}
 
 		w.writeln(line)
-
 	}
 
 	if w.err != nil {
