@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/tracing"
 	"go.opentelemetry.io/otel/attribute"
 )
@@ -23,7 +24,7 @@ func TestEntryPointMiddleware_tracing(t *testing.T) {
 		expected   expected
 	}{
 		{
-			desc:       "basic test",
+			desc:       "GET",
 			entryPoint: "test",
 			method:     http.MethodGet,
 			expected: expected{
@@ -50,7 +51,7 @@ func TestEntryPointMiddleware_tracing(t *testing.T) {
 			},
 		},
 		{
-			desc:       "post",
+			desc:       "POST",
 			entryPoint: "test",
 			method:     http.MethodPost,
 			expected: expected{
@@ -80,7 +81,7 @@ func TestEntryPointMiddleware_tracing(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodGet, "http://www.test.com/search?q=Opentelemetry&token=123", nil)
+			req := httptest.NewRequest(test.method, "http://www.test.com/search?q=Opentelemetry&token=123", nil)
 			rw := httptest.NewRecorder()
 			req.RemoteAddr = "10.0.0.1:1234"
 			req.Header.Set("User-Agent", "entrypoint-test")
@@ -96,13 +97,17 @@ func TestEntryPointMiddleware_tracing(t *testing.T) {
 
 			tracer := &mockTracer{}
 
+			// Injection of the observability variables in the request context.
+			req = req.WithContext(WithObservability(req.Context(), Observability{
+				TracingEnabled: true,
+			}))
+
 			handler := newEntryPoint(t.Context(), tracing.NewTracer(tracer, []string{"X-Foo"}, []string{"X-Bar"}, []string{"q"}), test.entryPoint, next)
 			handler.ServeHTTP(rw, req)
 
-			for _, span := range tracer.spans {
-				assert.Equal(t, test.expected.name, span.name)
-				assert.Equal(t, test.expected.attributes, span.attributes)
-			}
+			require.Len(t, tracer.spans, 1)
+			assert.Equal(t, test.expected.name, tracer.spans[0].name)
+			assert.Equal(t, test.expected.attributes, tracer.spans[0].attributes)
 		})
 	}
 }

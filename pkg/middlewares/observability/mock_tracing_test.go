@@ -3,7 +3,6 @@ package observability
 import (
 	"context"
 
-	"github.com/traefik/traefik/v3/pkg/tracing"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -12,39 +11,25 @@ import (
 
 type mockTracerProvider struct {
 	embedded.TracerProvider
-	tracer *mockTracer
 }
 
-var _ trace.TracerProvider = &mockTracerProvider{}
+var _ trace.TracerProvider = mockTracerProvider{}
 
-func (p *mockTracerProvider) Tracer(string, ...trace.TracerOption) trace.Tracer {
-	if p.tracer == nil {
-		p.tracer = &mockTracer{}
-	}
-	return &tracing.Tracer{
-		Tracer: p.tracer,
-	}
+func (p mockTracerProvider) Tracer(string, ...trace.TracerOption) trace.Tracer {
+	return &mockTracer{}
 }
 
 type mockTracer struct {
 	embedded.Tracer
 
-	spans    []*mockSpan
-	provider *mockTracerProvider
+	spans []*mockSpan
 }
 
 var _ trace.Tracer = &mockTracer{}
 
 func (t *mockTracer) Start(ctx context.Context, name string, opts ...trace.SpanStartOption) (context.Context, trace.Span) {
 	config := trace.NewSpanStartConfig(opts...)
-	if t.provider == nil {
-		t.provider = &mockTracerProvider{
-			tracer: t,
-		}
-	}
-	span := &mockSpan{
-		tracerProvider: t.provider,
-	}
+	span := &mockSpan{}
 	span.SetName(name)
 	span.SetAttributes(attribute.String("span.kind", config.SpanKind().String()))
 	span.SetAttributes(config.Attributes()...)
@@ -56,9 +41,8 @@ func (t *mockTracer) Start(ctx context.Context, name string, opts ...trace.SpanS
 type mockSpan struct {
 	embedded.Span
 
-	name           string
-	attributes     []attribute.KeyValue
-	tracerProvider *mockTracerProvider
+	name       string
+	attributes []attribute.KeyValue
 }
 
 var _ trace.Span = &mockSpan{}
@@ -79,5 +63,5 @@ func (s *mockSpan) AddLink(_ trace.Link)                        {}
 func (s *mockSpan) SetName(name string) { s.name = name }
 
 func (s *mockSpan) TracerProvider() trace.TracerProvider {
-	return s.tracerProvider
+	return nil
 }
