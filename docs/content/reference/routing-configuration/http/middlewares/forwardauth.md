@@ -3,8 +3,6 @@ title: "Traefik ForwardAuth Documentation"
 description: "In Traefik Proxy, the HTTP ForwardAuth middleware delegates authentication to an external Service. Read the technical documentation."
 ---
 
-![AuthForward](../../../../assets/img/middleware/authforward.png)
-
 The `forwardAuth` middleware delegates authentication to an external service.
 If the service answers with a 2XX code, access is granted, and the original request is performed.
 Otherwise, the response from the authentication server is returned.
