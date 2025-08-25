@@ -7,8 +7,8 @@ description: "Read the official Traefik documentation to get started with config
 
 Traefik Proxy’s configuration is divided into two main categories:
 
-- **Install Configuration**: (or static configuration) Defines parameters that require Traefik to restart when changed. This includes entry points, providers, API/dashboard settings, and logging levels.
-- **Routing Configuration**: (or dynamic configuration) Involves elements that can be updated without restarting Traefik, such as routers, services, and middlewares.
+- **Install Configuration**: (formerly known as the static configuration) Defines parameters that require Traefik to restart when changed. This includes entry points, providers, API/dashboard settings, and logging levels.
+- **Routing Configuration**: (formerly known as the dynamic configuration) Involves elements that can be updated without restarting Traefik, such as routers, services, and middlewares.
 
 This section focuses on setting up the install configuration, which is essential for Traefik’s initial boot.
 
