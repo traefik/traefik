@@ -347,12 +347,17 @@ func defaultStatus(code int) (codes.Code, string) {
 	return codes.Unset, ""
 }
 
-// canonicalizeHeaders converts a slice of header names to their canonical form.
+// canonicalizeHeaders converts a slice of header keys to their canonical form.
 // It uses http.CanonicalHeaderKey to ensure that the headers are in a consistent format.
 func canonicalizeHeaders(headers []string) []string {
+	if headers == nil {
+		return nil
+	}
+
 	canonicalHeaders := make([]string, len(headers))
 	for i, header := range headers {
 		canonicalHeaders[i] = http.CanonicalHeaderKey(header)
 	}
+
 	return canonicalHeaders
 }
