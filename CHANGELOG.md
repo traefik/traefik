@@ -1,3 +1,14 @@
+## [v2.11.29](https://github.com/traefik/traefik/tree/v2.11.29) (2025-08-26)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.28...v2.11.29)
+
+**Bug fixes:**
+- **[acme]** Bump github.com/go-acme/lego/v4 to v4.25.2 ([#11983](https://github.com/traefik/traefik/pull/11983) by [ldez](https://github.com/ldez))
+- **[docker]** Bump github.com/docker/docker to v28.3.3 ([#12007](https://github.com/traefik/traefik/pull/12007) by [kevinpollet](https://github.com/kevinpollet))
+
+**Documentation:**
+- Fix invalid links in documentation ([#11960](https://github.com/traefik/traefik/pull/11960) by [mloiseleur](https://github.com/mloiseleur))
+- Update releases docs for v3.5 ([#11949](https://github.com/traefik/traefik/pull/11949) by [jnoordsij](https://github.com/jnoordsij))
+
 ## [v3.5.0](https://github.com/traefik/traefik/tree/v3.5.0) (2025-07-23)
 [All Commits](https://github.com/traefik/traefik/compare/v3.5.0-rc1...v3.5.0)
 

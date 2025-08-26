@@ -181,11 +181,6 @@ generate-crd:
 generate-genconf:
 	go run ./cmd/internal/gen/
 
-.PHONY: release-packages
-#? release-packages: Create packages for the release
-release-packages: generate-webui
-	$(CURDIR)/script/release-packages.sh
-
 .PHONY: fmt
 #? fmt: Format the Code
 fmt:
