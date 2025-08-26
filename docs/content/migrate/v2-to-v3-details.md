@@ -5,7 +5,7 @@ description: "Configuration changes and their details to successfully migrate fr
 
 # Configuration Details for Migrating from Traefik v2 to v3
 
-## Static Configuration Changes
+## Install Configuration Changes
 
 ### SwarmMode
 
@@ -619,7 +619,7 @@ Please take a look at the observability documentation for more information:
 In v3, the `ServiceURL` field is not an object anymore but a string representation.
 An update may be required if you index access logs.
 
-## Dynamic Configuration Changes
+## Routing Configuration Changes
 
 ### Router Rule Matchers
 
