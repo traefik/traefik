@@ -35,7 +35,7 @@ Pointing Traefik at your orchestrator should be the _only_ configuration step yo
 
 ---
 
-:warning: When migrating to a new major version of Traefik, please refer to the [migration guide](https://doc.traefik.io/traefik/migration/v2-to-v3/) to ensure a smooth transition and to be aware of any breaking changes.
+:warning: When migrating to a new major version of Traefik, please refer to the [migration guide](https://doc.traefik.io/traefik/migrate/v2-to-v3/) to ensure a smooth transition and to be aware of any breaking changes.
 
 
 ## Overview
