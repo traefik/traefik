@@ -409,6 +409,7 @@ func TestSwarmTaskParsing(t *testing.T) {
 			},
 			nodes: []swarmtypes.Node{
 				{
+					ID: "id1",
 					Status: swarmtypes.NodeStatus{
 						Addr: "10.11.12.13",
 					},
@@ -437,7 +438,10 @@ func TestSwarmTaskParsing(t *testing.T) {
 			dData, err := p.parseService(t.Context(), test.service, test.networks)
 			require.NoError(t, err)
 
-			dockerClient := &fakeServicesClient{tasks: test.tasks}
+			dockerClient := &fakeServicesClient{
+				tasks: test.tasks,
+				nodes: test.nodes,
+			}
 
 			for _, task := range test.tasks {
 				taskDockerData, err := parseTasks(t.Context(), dockerClient, task, dData, test.networks, test.isGlobalSVC)
@@ -445,6 +449,7 @@ func TestSwarmTaskParsing(t *testing.T) {
 
 				expected := test.expected[task.ID]
 				assert.Equal(t, expected.Name, taskDockerData.Name)
+				assert.Equal(t, expected.NodeIP, taskDockerData.NodeIP)
 			}
 		})
 	}
