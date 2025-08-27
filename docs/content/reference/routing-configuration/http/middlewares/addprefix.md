@@ -54,4 +54,4 @@ spec:
 
 | Field  | Description                                                                                                                                                                                                | Default | Required |
 |:-----------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------|:---------|
-| `prefix` | String to add **before** the current path in the requested URL. It should include a leading slash (`/`). | "" | Yes |
+| <a id="prefix" href="#prefix" title="#prefix">`prefix`</a> | String to add **before** the current path in the requested URL. It should include a leading slash (`/`). | "" | Yes |

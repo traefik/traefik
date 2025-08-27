@@ -171,10 +171,10 @@ Behavior examples:
 
 | EncodeQuerySemicolons | Request Query       | Resulting Request Query |
 |-----------------------|---------------------|-------------------------|
-| false                 | foo=bar;baz=bar     | foo=bar&baz=bar         |
-| true                  | foo=bar;baz=bar     | foo=bar%3Bbaz=bar       |
-| false                 | foo=bar&baz=bar;foo | foo=bar&baz=bar&foo     |
-| true                  | foo=bar&baz=bar;foo | foo=bar&baz=bar%3Bfoo   |
+| <a id="false" href="#false" title="#false">false</a> | foo=bar;baz=bar     | foo=bar&baz=bar         |
+| <a id="true" href="#true" title="#true">true</a> | foo=bar;baz=bar     | foo=bar%3Bbaz=bar       |
+| <a id="false-2" href="#false-2" title="#false-2">false</a> | foo=bar&baz=bar;foo | foo=bar&baz=bar&foo     |
+| <a id="true-2" href="#true-2" title="#true-2">true</a> | foo=bar&baz=bar;foo | foo=bar&baz=bar%3Bfoo   |
 
 ### SanitizePath
 
@@ -194,14 +194,14 @@ it can lead to unsafe routing when the `sanitizePath` option is set to `false`.
 
 | SanitizePath | Request Path    | Resulting Request Path |
 |--------------|-----------------|------------------------|
-| false        | /./foo/bar      | /./foo/bar             |
-| true         | /./foo/bar      | /foo/bar               |
-| false        | /foo/../bar     | /foo/../bar            |
-| true         | /foo/../bar     | /bar                   |
-| false        | /foo/bar//      | /foo/bar//             |
-| true         | /foo/bar//      | /foo/bar/              |
-| false        | /./foo/../bar// | /./foo/../bar//        |
-| true         | /./foo/../bar// | /bar/                  |
+| <a id="false-3" href="#false-3" title="#false-3">false</a> | /./foo/bar      | /./foo/bar             |
+| <a id="true-3" href="#true-3" title="#true-3">true</a> | /./foo/bar      | /foo/bar               |
+| <a id="false-4" href="#false-4" title="#false-4">false</a> | /foo/../bar     | /foo/../bar            |
+| <a id="true-4" href="#true-4" title="#true-4">true</a> | /foo/../bar     | /bar                   |
+| <a id="false-5" href="#false-5" title="#false-5">false</a> | /foo/bar//      | /foo/bar//             |
+| <a id="true-5" href="#true-5" title="#true-5">true</a> | /foo/bar//      | /foo/bar/              |
+| <a id="false-6" href="#false-6" title="#false-6">false</a> | /./foo/../bar// | /./foo/../bar//        |
+| <a id="true-6" href="#true-6" title="#true-6">true</a> | /./foo/../bar// | /bar/                  |
 
 ### HTTP3
 
