@@ -11,13 +11,13 @@ import (
 )
 
 var (
-	// detect any existing <a ...> tag in the cell (case-insensitive)
+	// detect any existing <a ...> tag in the cell (case-insensitive).
 	reExistingAnchor = regexp.MustCompile(`(?i)<\s*a\b`)
-	// separator cell like --- or :---: (3+ dashes, optional leading/trailing colon)
+	// separator cell like --- or :---: (3+ dashes, optional leading/trailing colon).
 	reSepCell = regexp.MustCompile(`^\s*:?-{3,}:?\s*$`)
-	// markdown link [text](url) → text (used to strip link wrappers in id)
+	// markdown link [text](url) → text (used to strip link wrappers in id).
 	reMdLink = regexp.MustCompile(`\[(.*?)\]\((.*?)\)`)
-	// collapse multiple hyphens
+	// collapse multiple hyphens.
 	reMultiHyphens = regexp.MustCompile(`-+`)
 )
 
@@ -127,13 +127,15 @@ func dedupeID(base string, seen map[string]int) string {
 	if base == "" {
 		base = "row"
 	}
-	if count, ok := seen[base]; !ok {
+
+	count, ok := seen[base]
+	if !ok {
 		seen[base] = 1
 		return base
-	} else {
-		seen[base] = count + 1
-		return fmt.Sprintf("%s-%d", base, count+1)
 	}
+
+	seen[base] = count + 1
+	return fmt.Sprintf("%s-%d", base, count+1)
 }
 
 // Inject clickable link that is also the target (id + href on same element).
@@ -181,8 +183,7 @@ func processFile(path string) error {
 	seen := make(map[string]int)
 	out := make([]string, len(lines))
 
-	for i := 0; i < len(lines); i++ {
-		line := lines[i]
+	for i, line := range lines {
 		trim := strings.TrimSpace(line)
 
 		// toggle code fence (``` or ~~~)
@@ -245,7 +246,6 @@ func processFile(path string) error {
 }
 
 func genAnchors() {
-
 	root := "./docs/content/reference/"
 	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
