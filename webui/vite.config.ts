@@ -16,7 +16,7 @@ export default ({ mode }: { mode: string }) => {
       port: 3000,
     },
     build: {
-      emptyOutDir: true,
+      emptyOutDir: false,
       outDir: './static',
     },
     test: {
