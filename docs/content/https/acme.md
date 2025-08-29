@@ -203,6 +203,8 @@ when using the `TLS-ALPN-01` challenge, Traefik must be reachable by Let's Encry
 
 #### `Delay`
 
+_Optional, Default=0_
+
 The delay between the creation of the challenge and the validation.
 A value lower than or equal to zero means no delay.
 
@@ -279,6 +281,8 @@ when using the `HTTP-01` challenge, `certificatesresolvers.myresolver.acme.httpc
     Redirection is fully compatible with the `HTTP-01` challenge.
 
 #### `Delay`
+
+_Optional, Default=0_
 
 The delay between the creation of the challenge and the validation.
 A value lower than or equal to zero means no delay.
