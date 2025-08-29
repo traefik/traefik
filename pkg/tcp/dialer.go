@@ -108,7 +108,7 @@ func (d *DialerManager) Update(configs map[string]*dynamic.TCPServersTransport) 
 // Build builds a dialer by name.
 func (d *DialerManager) Build(config *dynamic.TCPServersLoadBalancer, isTLS bool) (Dialer, error) {
 	name := "default@internal"
-	if len(config.ServersTransport) > 0 {
+	if config.ServersTransport != "" {
 		name = config.ServersTransport
 	}
 
@@ -127,7 +127,7 @@ func (d *DialerManager) Build(config *dynamic.TCPServersLoadBalancer, isTLS bool
 	}
 	proxyProtocol := config.ProxyProtocol
 
-	if len(config.ServersTransport) > 0 {
+	if config.ServersTransport != "" {
 		terminationDelay = st.TerminationDelay
 		proxyProtocol = st.ProxyProtocol
 	}
