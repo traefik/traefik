@@ -18,7 +18,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | accesslog.filters.minduration | Keep access logs when request took longer than the specified duration. | 0 |
 | accesslog.filters.retryattempts | Keep access logs when at least one retry happened. | false |
 | accesslog.filters.statuscodes | Keep access logs with status codes in the specified range. | |
-| accesslog.format | Access log format: json | common | common |
+| accesslog.format | Access log format: json | common | genericCLF | common |
 | accesslog.otlp | Settings for OpenTelemetry. | false |
 | accesslog.otlp.grpc | gRPC configuration for the OpenTelemetry collector. | false |
 | accesslog.otlp.grpc.endpoint | Sets the gRPC endpoint (host:port) of the collector. | localhost:4317 |

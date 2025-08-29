@@ -195,7 +195,7 @@ The section below describes how to configure Traefik access logs using the stati
 | Field      | Description    | Default | Required |
 |:-----------|:--------------------------|:--------|:---------|
 | `accesslog.filePath` | By default, the access logs are written to the standard output.<br />You can configure a file path instead using the `filePath` option.|  | No      |
-| `accesslog.format` | By default, logs are written using the Common Log Format (CLF).<br />To write logs in JSON, use `json` in the `format` option.<br />If the given format is unsupported, the default (CLF) is used instead.<br />More information about CLF fields [here](#clf-format-fields). | "common" | No      |
+| `accesslog.format` | By default, logs are written using the Traefik Common Log Format (CLF).<br />Available formats: `common` (Traefik's extended CLF), `genericCLF` (standard CLF compatible with analyzers), or `json`.<br />If the given format is unsupported, the default (`common`) is used instead.<br />More information about CLF fields [here](#clf-format-fields). | "common" | No      |
 | `accesslog.bufferingSize` | To write the logs in an asynchronous fashion, specify a  `bufferingSize` option.<br />This option represents the number of log lines Traefik will keep in memory before writing them to the selected output.<br />In some cases, this option can greatly help performances.| 0 | No      |
 | `accesslog.addInternals` | Enables access logs for internal resources (e.g.: `ping@internal`). | false  | No      |
 | `accesslog.filters.statusCodes` | Limit the access logs to requests with a status codes in the specified range. | [ ]      | No      |
