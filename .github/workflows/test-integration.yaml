@@ -30,11 +30,6 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
           check-latest: true
 
-      - name: Avoid generating webui
-        run: |
-          mkdir webui/static
-          touch webui/static/index.html
-
       - name: Build binary
         run: make binary-linux-amd64
 
@@ -73,11 +68,6 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
           check-latest: true
-
-      - name: Avoid generating webui
-        run: |
-          mkdir webui/static
-          touch webui/static/index.html
 
       - name: Download traefik binary
         uses: actions/download-artifact@v4
