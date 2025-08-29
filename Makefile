@@ -35,7 +35,9 @@ build-webui-image:
 .PHONY: clean-webui
 #? clean-webui: Clean WebUI static generated assets
 clean-webui:
-	rm -rf webui/static
+	rm -r webui/static
+	mkdir -p webui/static
+	printf 'For more information see `webui/readme.md`' > webui/static/DONT-EDIT-FILES-IN-THIS-DIRECTORY.md
 
 webui/static/index.html:
 	$(MAKE) build-webui-image
