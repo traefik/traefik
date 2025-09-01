@@ -43,6 +43,7 @@ webui/static/index.html:
 	$(MAKE) build-webui-image
 	docker run --rm -v "$(PWD)/webui/static":'/src/webui/static' traefik-webui yarn build:prod
 	docker run --rm -v "$(PWD)/webui/static":'/src/webui/static' traefik-webui chown -R $(shell id -u):$(shell id -g) ./static
+	printf 'For more information see `webui/readme.md`' > webui/static/DONT-EDIT-FILES-IN-THIS-DIRECTORY.md
 
 .PHONY: generate-webui
 #? generate-webui: Generate WebUI
