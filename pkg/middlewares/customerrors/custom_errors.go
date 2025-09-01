@@ -127,13 +127,13 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if req.TLS != nil {
 		scheme = "https"
 	}
-	originalURL := scheme + "://" + req.Host + req.URL.RequestURI()
+	orig := &url.URL{Scheme: scheme, Host: req.Host, Path: req.URL.Path, RawPath: req.URL.RawPath, RawQuery: req.URL.RawQuery, Fragment: req.URL.Fragment}
 
 	if len(c.backendQuery) > 0 {
 		query = "/" + strings.TrimPrefix(c.backendQuery, "/")
 		query = strings.ReplaceAll(query, "{status}", strconv.Itoa(code))
 		query = strings.ReplaceAll(query, "{originalStatus}", strconv.Itoa(originalCode))
-		query = strings.ReplaceAll(query, "{url}", url.QueryEscape(originalURL))
+		query = strings.ReplaceAll(query, "{url}", url.QueryEscape(orig.String()))
 	}
 
 	pageReq, err := newRequest("http://" + req.Host + query)
