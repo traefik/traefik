@@ -203,8 +203,8 @@ The section below describes how to configure Traefik access logs using the stati
 | `accesslog.filters.minDuration` | Keep access logs when requests take longer than the specified duration (provided in seconds or as a valid duration format, see [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration)).  |  0   | No      |
 | `accesslog.fields.defaultMode` | Mode to apply by default to the access logs fields (`keep`, `redact` or `drop`). | keep | No      |
 | `accesslog.fields.names` | Set the fields list to display in the access logs (format `name:mode`).<br /> Available fields list [here](#available-fields). |  [ ]    | No      |
-| `accesslog.headers.defaultMode` | Mode to apply by default to the access logs headers (`keep`, `redact` or `drop`).  | drop | No      |
-| `accesslog.headers.names` | Set the headers list to display in the access logs (format `name:mode`). |   [ ]   | No      |
+| `accesslog.fields.headers.defaultMode` | Mode to apply by default to the access logs headers (`keep`, `redact` or `drop`).  | drop | No      |
+| `accesslog.fields.headers.names` | Set the headers list to display in the access logs (format `name:mode`). |   [ ]   | No      |
 
 ### OpenTelemetry
 
