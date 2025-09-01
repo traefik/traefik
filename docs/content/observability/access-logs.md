@@ -109,23 +109,6 @@ accessLog:
 --accesslog.format=json
 ```
 
-```yaml tab="File (YAML)"
-# Generic CLF format (standard CLF compatible)
-accessLog:
-  format: "genericCLF"
-```
-
-```toml tab="File (TOML)"
-# Generic CLF format (standard CLF compatible)
-[accessLog]
-  format = "genericCLF"
-```
-
-```bash tab="CLI"
-# Generic CLF format (standard CLF compatible)
---accesslog.format=genericCLF
-```
-
 ### `bufferingSize`
 
 To write the logs in an asynchronous fashion, specify a  `bufferingSize` option.
