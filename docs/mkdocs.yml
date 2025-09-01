@@ -146,6 +146,12 @@ plugins:
         'reference/dynamic-configuration/kv.md': 'reference/routing-configuration/other-providers/kv.md'
         ## Plugins
         'plugins/index.md': "extend/extend-traefik.md"
+        ## Migration
+        'migration/v3.md': 'migrate/v3.md'
+        'migration/v2-to-v3.md': 'migrate/v2-to-v3.md'
+        'migration/v2-to-v3-details.md': 'migrate/v2-to-v3-details.md'
+        'migration/v2.md': 'migrate/v2.md'
+        'migration/v1-to-v2.md': 'migrate/v1-to-v2.md'
 # https://squidfunk.github.io/mkdocs-material/extensions/admonition/
 # https://facelessuser.github.io/pymdown-extensions/
 markdown_extensions:
