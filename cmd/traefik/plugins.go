@@ -2,12 +2,18 @@ package main
 
 import (
 	"fmt"
+	"net/http"
+	"time"
 
+	"github.com/hashicorp/go-retryablehttp"
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/static"
+	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/plugins"
 )
 
 const outputDir = "./plugins-storage/"
+const pluginsURL = "https://plugins.traefik.io/public/"
 
 func createPluginBuilder(staticConfiguration *static.Configuration) (*plugins.Builder, error) {
 	client, plgs, localPlgs, err := initPlugins(staticConfiguration)
@@ -28,8 +34,15 @@ func initPlugins(staticCfg *static.Configuration) (*plugins.Client, map[string]p
 	plgs := map[string]plugins.Descriptor{}
 
 	if hasPlugins(staticCfg) {
+		httpClient := retryablehttp.NewClient()
+		httpClient.Logger = logs.NewRetryableHTTPLogger(log.Logger)
+		httpClient.HTTPClient = &http.Client{Timeout: 10 * time.Second}
+		httpClient.RetryMax = 3
+
 		opts := plugins.ClientOptions{
-			Output: outputDir,
+			HTTPClient: httpClient.StandardClient(),
+			BaseURL:    pluginsURL,
+			Output:     outputDir,
 		}
 
 		var err error
