@@ -56,11 +56,6 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
           check-latest: true
 
-      - name: Avoid generating webui
-        run: |
-          mkdir webui/static
-          touch webui/static/index.html
-
       - name: Tests
         run: |
           go test -v -parallel 8 ${{ matrix.package.group }}
