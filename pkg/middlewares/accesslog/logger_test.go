@@ -69,7 +69,7 @@ func TestOTelAccessLogWithBody(t *testing.T) {
 				t.Helper()
 
 				// For common format, verify the body contains the Traefik common log formatted string
-				assert.Regexp(t, `"body":{"stringValue":".*- /health -.*200.* 1 .*ms.*"}`, log)
+				assert.Regexp(t, `"body":{"stringValue":".*- /health -.*200.*[0-9]+ms.*"}`, log)
 			},
 		},
 		{
