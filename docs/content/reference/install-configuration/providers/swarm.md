@@ -97,7 +97,7 @@ See the [Docker Swarm API Access](#docker-api-access) section for more informati
     ```
 
     ```bash tab="CLI"
-    --providers.docker.endpoint=unix:///var/run/docker.sock
+    --providers.swarm.endpoint=unix:///var/run/docker.sock
     # ...
     ```
 
