@@ -178,6 +178,7 @@ markdown_extensions:
 # Page tree
 nav:
   - 'What is Traefik': 'index.md'
+  - 'Features': 'features/index.md'
   - 'Getting Started':
       - 'Overview': 'getting-started/index.md'
       - 'Quick Start':
