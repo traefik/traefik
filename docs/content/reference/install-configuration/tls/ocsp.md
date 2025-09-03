@@ -67,5 +67,5 @@ ocsp:
 
 ```bash tab="CLI"
 ## Static configuration
--ocsp.responderoverrides.foo=bar
+--ocsp.responderoverrides.foo=bar
 ```
