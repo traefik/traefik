@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"path/filepath"
 	"time"
 
 	"github.com/hashicorp/go-retryablehttp"
@@ -13,24 +14,23 @@ import (
 )
 
 const outputDir = "./plugins-storage/"
-const pluginsURL = "https://plugins.traefik.io/public/"
 
 func createPluginBuilder(staticConfiguration *static.Configuration) (*plugins.Builder, error) {
-	client, plgs, localPlgs, err := initPlugins(staticConfiguration)
+	manager, plgs, localPlgs, err := initPlugins(staticConfiguration)
 	if err != nil {
 		return nil, err
 	}
 
-	return plugins.NewBuilder(client, plgs, localPlgs)
+	return plugins.NewBuilder(manager, plgs, localPlgs)
 }
 
-func initPlugins(staticCfg *static.Configuration) (*plugins.Client, map[string]plugins.Descriptor, map[string]plugins.LocalDescriptor, error) {
+func initPlugins(staticCfg *static.Configuration) (*plugins.Manager, map[string]plugins.Descriptor, map[string]plugins.LocalDescriptor, error) {
 	err := checkUniquePluginNames(staticCfg.Experimental)
 	if err != nil {
 		return nil, nil, nil, err
 	}
 
-	var client *plugins.Client
+	var manager *plugins.Manager
 	plgs := map[string]plugins.Descriptor{}
 
 	if hasPlugins(staticCfg) {
@@ -39,19 +39,28 @@ func initPlugins(staticCfg *static.Configuration) (*plugins.Client, map[string]p
 		httpClient.HTTPClient = &http.Client{Timeout: 10 * time.Second}
 		httpClient.RetryMax = 3
 
-		opts := plugins.ClientOptions{
-			HTTPClient: httpClient.StandardClient(),
-			BaseURL:    pluginsURL,
-			Output:     outputDir,
+		opts := plugins.ManagerOptions{
+			Output: outputDir,
 		}
 
 		var err error
-		client, err = plugins.NewClient(opts)
+		manager, err = plugins.NewManager(opts)
 		if err != nil {
-			return nil, nil, nil, fmt.Errorf("unable to create plugins client: %w", err)
+			return nil, nil, nil, fmt.Errorf("unable to create plugins manager: %w", err)
 		}
 
-		err = plugins.SetupRemotePlugins(client, staticCfg.Experimental.Plugins)
+		// Create separate downloader for HTTP operations
+		archivesPath := filepath.Join(outputDir, "archives")
+		downloader, err := plugins.NewRegistryDownloader(plugins.RegistryDownloaderOptions{
+			HTTPClient:   httpClient.HTTPClient,
+			ArchivesPath: archivesPath,
+			Output:       outputDir,
+		})
+		if err != nil {
+			return nil, nil, nil, fmt.Errorf("unable to create plugin downloader: %w", err)
+		}
+
+		err = plugins.SetupRemotePlugins(manager, downloader, staticCfg.Experimental.Plugins)
 		if err != nil {
 			return nil, nil, nil, fmt.Errorf("unable to set up plugins environment: %w", err)
 		}
@@ -70,7 +79,7 @@ func initPlugins(staticCfg *static.Configuration) (*plugins.Client, map[string]p
 		localPlgs = staticCfg.Experimental.LocalPlugins
 	}
 
-	return client, plgs, localPlgs, nil
+	return manager, plgs, localPlgs, nil
 }
 
 func checkUniquePluginNames(e *static.Experimental) error {
