@@ -88,6 +88,8 @@ entryPoints:
       maxHeaderBytes: 42
     http2:
       maxConcurrentStreams: 42
+      maxDecoderHeaderTableSize: 42
+      maxEncoderHeaderTableSize: 42
     http3:
       advertisedPort: 42
     udp:

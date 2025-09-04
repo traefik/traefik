@@ -81,12 +81,16 @@ func (c *HTTPConfig) SetDefaults() {
 
 // HTTP2Config is the HTTP2 configuration of an entry point.
 type HTTP2Config struct {
-	MaxConcurrentStreams int32 `description:"Specifies the number of concurrent streams per connection that each client is allowed to initiate." json:"maxConcurrentStreams,omitempty" toml:"maxConcurrentStreams,omitempty" yaml:"maxConcurrentStreams,omitempty" export:"true"`
+	MaxConcurrentStreams      int32 `description:"Specifies the number of concurrent streams per connection that each client is allowed to initiate." json:"maxConcurrentStreams,omitempty" toml:"maxConcurrentStreams,omitempty" yaml:"maxConcurrentStreams,omitempty" export:"true"`
+	MaxDecoderHeaderTableSize int32 `description:"Specifies the maximum size of the HTTP2 HPACK header table on the decoding (receiving from client) side. Zero uses Golang default." json:"maxDecoderHeaderTableSize,omitempty" toml:"maxDecoderHeaderTableSize,omitempty" yaml:"maxDecoderHeaderTableSize,omitempty" export:"true"`
+	MaxEncoderHeaderTableSize int32 `description:"Specifies the maximum size of the HTTP2 HPACK header table on the encoding (sending to client) side. Zero uses Golang default." json:"maxEncoderHeaderTableSize,omitempty" toml:"maxEncoderHeaderTableSize,omitempty" yaml:"maxEncoderHeaderTableSize,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
 func (c *HTTP2Config) SetDefaults() {
-	c.MaxConcurrentStreams = 250 // https://cs.opensource.google/go/x/net/+/cd36cc07:http2/server.go;l=58
+	c.MaxConcurrentStreams = 250    // https://cs.opensource.google/go/x/net/+/cd36cc07:http2/server.go;l=58
+	c.MaxDecoderHeaderTableSize = 0 // https://cs.opensource.google/go/x/net/+/internal-branch.go1.24-vendor:http2/server.go;l=111
+	c.MaxEncoderHeaderTableSize = 0 // https://cs.opensource.google/go/x/net/+/internal-branch.go1.24-vendor:http2/server.go;l=117
 }
 
 // HTTP3Config is the HTTP3 configuration of an entry point.

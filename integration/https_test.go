@@ -1211,3 +1211,38 @@ func (s *SimpleSuite) TestMaxConcurrentStream() {
 	assert.True(s.T(), ok)
 	assert.Equal(s.T(), uint32(42), maxConcurrentStream)
 }
+
+func (s *SimpleSuite) TestMaxDecoderHeaderTableSize() {
+	file := s.adaptFile("fixtures/https/max_decoder_header_table_size.toml", struct{}{})
+
+	s.traefikCmd(withConfigFile(file), "--log.level=DEBUG", "--accesslog")
+
+	// Wait for traefik.
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("api@internal"))
+	require.NoError(s.T(), err)
+
+	// Add client self-signed cert.
+	roots := x509.NewCertPool()
+	certContent, err := os.ReadFile("./resources/tls/local.cert")
+	require.NoError(s.T(), err)
+
+	roots.AppendCertsFromPEM(certContent)
+
+	// Open a connection to inspect SettingsFrame.
+	conn, err := tls.Dial("tcp", "127.0.0.1:8000", &tls.Config{
+		RootCAs:    roots,
+		NextProtos: []string{"h2"},
+	})
+	require.NoError(s.T(), err)
+
+	framer := http2.NewFramer(nil, conn)
+	frame, err := framer.ReadFrame()
+	require.NoError(s.T(), err)
+
+	fr, ok := frame.(*http2.SettingsFrame)
+	require.True(s.T(), ok)
+
+	maxDecodeHeaderTableSize, ok := fr.Value(http2.SettingHeaderTableSize)
+	assert.True(s.T(), ok)
+	assert.Equal(s.T(), uint32(10000), maxDecodeHeaderTableSize)
+}
