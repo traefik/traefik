@@ -239,7 +239,7 @@ The configuration to resolve the default certificate should be defined in a TLS 
 
 | Key (Path)                                                     | Description                                                     | Value    |
 |----------------------------------------------------------------|----------------------------------------------------------------|----------|
-| `traefik/tls/stores/Store0/defaultGeneratedCert/domain/main`   | See [TLS](../http/tls/tls-certificates/#certificates-stores) for more information. | `foobar` |
-| `traefik/tls/stores/Store0/defaultGeneratedCert/domain/sans/0` | See [TLS](../http/tls/tls-certificates/#certificates-stores) for more information| `foobar` |
-| `traefik/tls/stores/Store0/defaultGeneratedCert/domain/sans/1` | See [TLS](../http/tls/tls-certificates/#certificates-stores) for more information| `foobar` |
-| `traefik/tls/stores/Store0/defaultGeneratedCert/resolver`      | See [TLS](../http/tls/tls-certificates/#certificates-stores) for more information| `foobar` |
+| `traefik/tls/stores/Store0/defaultGeneratedCert/domain/main`   | See [TLS](../http/tls/tls-certificates.md#certificates-stores) for more information. | `foobar` |
+| `traefik/tls/stores/Store0/defaultGeneratedCert/domain/sans/0` | See [TLS](../http/tls/tls-certificates.md#certificates-stores) for more information| `foobar` |
+| `traefik/tls/stores/Store0/defaultGeneratedCert/domain/sans/1` | See [TLS](../http/tls/tls-certificates.md#certificates-stores) for more information| `foobar` |
+| `traefik/tls/stores/Store0/defaultGeneratedCert/resolver`      | See [TLS](../http/tls/tls-certificates.md#certificates-stores) for more information| `foobar` |
