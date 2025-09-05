@@ -121,8 +121,8 @@ metadata:
 spec:
   plugin:
     jwt:
-      # Replace KEYCLOAK_URL and REAL_NAME with your values
-      jwksUrl: https://KEYCLOAK_URL/realms/REAL_NAME/protocol/openid-connect/certs
+      # Replace KEYCLOAK_URL and REALM_NAME with your values
+      jwksUrl: https://KEYCLOAK_URL/realms/REALM_NAME/protocol/openid-connect/certs
       # Forward the content of the claim grp in the header Group
       forwardHeaders:
         Group: grp
