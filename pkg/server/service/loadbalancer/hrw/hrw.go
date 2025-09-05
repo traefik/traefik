@@ -19,7 +19,11 @@ type namedHandler struct {
 	weight float64
 }
 
-// Client connects to the same server each time based on their IP source.
+// Balancer implements the Rendezvous Hashing algorithm for load balancing.
+// The idea is to compute a score for each available backend using a hash of the client's
+// source (for example, IP) combined with the backend's identifier, and assign the client
+// to the backend with the highest score. This ensures that each client consistently
+// connects to the same backend while distributing load evenly across all backends.
 type Balancer struct {
 	wantsHealthCheck bool
 
@@ -52,13 +56,14 @@ func New(wantHealthCheck bool) *Balancer {
 	return balancer
 }
 
-// getNodeScore calcul the score of the couple of src and handler name.
+// getNodeScore calculates the score of the couple of src and handler name.
 func getNodeScore(handler *namedHandler, src string) float64 {
-	h := fnv.New32a()
+	h := fnv.New64a()
 	h.Write([]byte(src + handler.name))
-	sum := h.Sum32()
-	score := float32(sum) / float32(math.Pow(2, 32))
-	logScore := 1.0 / -math.Log(float64(score))
+	sum := h.Sum64()
+	score := float64(sum) / math.Pow(2, 64)
+	logScore := 1.0 / -math.Log(score)
+
 	return logScore * handler.weight
 }
 
@@ -111,35 +116,40 @@ func (b *Balancer) RegisterStatusUpdater(fn func(up bool)) error {
 		return errors.New("healthCheck not enabled in config for this weighted service")
 	}
 	b.updaters = append(b.updaters, fn)
+
 	return nil
 }
 
 var errNoAvailableServer = errors.New("no available server")
 
 func (b *Balancer) nextServer(ip string) (*namedHandler, error) {
-	b.handlersMu.Lock()
-	defer b.handlersMu.Unlock()
+	b.handlersMu.RLock()
+	var healthy []*namedHandler
+	for _, h := range b.handlers {
+		if _, ok := b.status[h.name]; ok {
+			if _, fenced := b.fenced[h.name]; !fenced {
+				healthy = append(healthy, h)
+			}
+		}
+	}
+	b.handlersMu.RUnlock()
 
-	if len(b.handlers) == 0 || len(b.status) == 0 {
-		log.Debug().Msg("nextServer() len = 0")
+	if len(healthy) == 0 {
 		return nil, errNoAvailableServer
 	}
 
 	var handler *namedHandler
 	score := 0.0
-	for _, h := range b.handlers {
-		// if handler healthy we calcul score
-		// fmt.Printf("b.status = %s\n", b.status[h.name])
-		if _, ok := b.status[h.name]; ok {
-			s := getNodeScore(h, ip)
-			if s > score {
-				handler = h
-				score = s
-			}
+	for _, h := range healthy {
+		s := getNodeScore(h, ip)
+		if s > score {
+			handler = h
+			score = s
 		}
 	}
 
 	log.Debug().Msgf("Service selected by HRW: %s", handler.name)
+
 	return handler, nil
 }
 
