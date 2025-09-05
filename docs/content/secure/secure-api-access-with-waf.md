@@ -116,6 +116,7 @@ spec:
     coraza:
       crsEnabled: true
       directives:
+        - SecRuleEngine On
         - SecDefaultAction "phase:1,log,auditlog,deny,status:403"
         - SecDefaultAction "phase:2,log,auditlog,deny,status:403"
         - SecAction "id:900110, phase:1, pass, t:none, nolog, setvar:tx.inbound_anomaly_score_threshold=5, setvar:tx.outbound_anomaly_score_threshold=4"
