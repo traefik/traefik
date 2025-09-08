@@ -55,12 +55,23 @@
         fallback = "foobar"
         [http.services.Service01.failover.healthCheck]
     [http.services.Service02]
-      [http.services.Service02.loadBalancer]
+      [http.services.Service02.highestRandomWeight]
+
+        [[http.services.Service02.highestRandomWeight.services]]
+          name = "foobar"
+          weight = 42
+
+        [[http.services.Service02.highestRandomWeight.services]]
+          name = "foobar"
+          weight = 42
+        [http.services.Service02.highestRandomWeight.healthCheck]
+    [http.services.Service03]
+      [http.services.Service03.loadBalancer]
         strategy = "foobar"
         passHostHeader = true
         serversTransport = "foobar"
-        [http.services.Service02.loadBalancer.sticky]
-          [http.services.Service02.loadBalancer.sticky.cookie]
+        [http.services.Service03.loadBalancer.sticky]
+          [http.services.Service03.loadBalancer.sticky.cookie]
             name = "foobar"
             secure = true
             httpOnly = true
@@ -69,16 +80,16 @@
             path = "foobar"
             domain = "foobar"
 
-        [[http.services.Service02.loadBalancer.servers]]
+        [[http.services.Service03.loadBalancer.servers]]
           url = "foobar"
           weight = 42
           preservePath = true
 
-        [[http.services.Service02.loadBalancer.servers]]
+        [[http.services.Service03.loadBalancer.servers]]
           url = "foobar"
           weight = 42
           preservePath = true
-        [http.services.Service02.loadBalancer.healthCheck]
+        [http.services.Service03.loadBalancer.healthCheck]
           scheme = "foobar"
           mode = "foobar"
           path = "foobar"
@@ -90,40 +101,40 @@
           timeout = "42s"
           hostname = "foobar"
           followRedirects = true
-          [http.services.Service02.loadBalancer.healthCheck.headers]
+          [http.services.Service03.loadBalancer.healthCheck.headers]
             name0 = "foobar"
             name1 = "foobar"
-        [http.services.Service02.loadBalancer.passiveHealthCheck]
+        [http.services.Service03.loadBalancer.passiveHealthCheck]
           failureWindow = "42s"
           maxFailedAttempts = 42
-        [http.services.Service02.loadBalancer.responseForwarding]
+        [http.services.Service03.loadBalancer.responseForwarding]
           flushInterval = "42s"
-    [http.services.Service03]
-      [http.services.Service03.mirroring]
+    [http.services.Service04]
+      [http.services.Service04.mirroring]
         service = "foobar"
         mirrorBody = true
         maxBodySize = 42
 
-        [[http.services.Service03.mirroring.mirrors]]
+        [[http.services.Service04.mirroring.mirrors]]
           name = "foobar"
           percent = 42
 
-        [[http.services.Service03.mirroring.mirrors]]
+        [[http.services.Service04.mirroring.mirrors]]
           name = "foobar"
           percent = 42
-        [http.services.Service03.mirroring.healthCheck]
-    [http.services.Service04]
-      [http.services.Service04.weighted]
+        [http.services.Service04.mirroring.healthCheck]
+    [http.services.Service05]
+      [http.services.Service05.weighted]
 
-        [[http.services.Service04.weighted.services]]
+        [[http.services.Service05.weighted.services]]
           name = "foobar"
           weight = 42
 
-        [[http.services.Service04.weighted.services]]
+        [[http.services.Service05.weighted.services]]
           name = "foobar"
           weight = 42
-        [http.services.Service04.weighted.sticky]
-          [http.services.Service04.weighted.sticky.cookie]
+        [http.services.Service05.weighted.sticky]
+          [http.services.Service05.weighted.sticky.cookie]
             name = "foobar"
             secure = true
             httpOnly = true
@@ -131,7 +142,7 @@
             maxAge = 42
             path = "foobar"
             domain = "foobar"
-        [http.services.Service04.weighted.healthCheck]
+        [http.services.Service05.weighted.healthCheck]
   [http.middlewares]
     [http.middlewares.Middleware01]
       [http.middlewares.Middleware01.addPrefix]

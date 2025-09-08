@@ -65,6 +65,14 @@ http:
         fallback: foobar
         healthCheck: {}
     Service02:
+      highestRandomWeight:
+        services:
+          - name: foobar
+            weight: 42
+          - name: foobar
+            weight: 42
+        healthCheck: {}
+    Service03:
       loadBalancer:
         sticky:
           cookie:
@@ -105,7 +113,7 @@ http:
         responseForwarding:
           flushInterval: 42s
         serversTransport: foobar
-    Service03:
+    Service04:
       mirroring:
         service: foobar
         mirrorBody: true
@@ -116,7 +124,7 @@ http:
           - name: foobar
             percent: 42
         healthCheck: {}
-    Service04:
+    Service05:
       weighted:
         services:
           - name: foobar
