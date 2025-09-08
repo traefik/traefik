@@ -586,11 +586,11 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 			return nil, errors.New("nodes lookup is disabled")
 		}
 
-		nodes, nodesExists, nodesErr := c.client.GetNodes()
+		allnodes, nodesExists, nodesErr := c.client.GetNodes()
 		if nodesErr != nil {
 			return nil, nodesErr
 		}
-		if !nodesExists || len(nodes) == 0 {
+		if !nodesExists || len(allnodes) == 0 {
 			return nil, fmt.Errorf("nodes not found for NodePort service %s/%s", namespace, sanitizedName)
 		}
 
@@ -599,7 +599,34 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 			return nil, err
 		}
 
-		for _, node := range nodes {
+		filteredNodes := allnodes
+		// if service traffic policy is Local, then only use the nodes where pod is running
+		if service.Spec.ExternalTrafficPolicy == corev1.ServiceExternalTrafficPolicyTypeLocal {
+			filteredNodes = make([]*corev1.Node, 0)
+			endpointSlices, err := c.client.GetEndpointSlicesForService(namespace, sanitizedName)
+			if err != nil {
+				return nil, fmt.Errorf("getting endpointslices: %w", err)
+			}
+
+			for _, endpointSlice := range endpointSlices {
+				for _, endpoint := range endpointSlice.Endpoints {
+					// if endpoint is ready, take the node name filter the nodes
+					if endpoint.Conditions.Ready == nil || !*endpoint.Conditions.Ready {
+						continue
+					}
+					// filter nodes by node name
+					for _, node := range allnodes {
+						if node.Name == *endpoint.NodeName {
+							filteredNodes = append(filteredNodes, node)
+							break
+						}
+					}
+				}
+
+			}
+		}
+
+		for _, node := range filteredNodes {
 			for _, addr := range node.Status.Addresses {
 				if addr.Type == corev1.NodeInternalIP {
 					hostPort := net.JoinHostPort(addr.Address, strconv.Itoa(int(svcPort.NodePort)))
