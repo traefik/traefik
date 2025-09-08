@@ -47,8 +47,13 @@ func NewRegistryDownloader(opts RegistryDownloaderOptions) (*RegistryDownloader,
 		return nil, err
 	}
 
+	httpClient := opts.HTTPClient
+	if httpClient == nil {
+		httpClient = http.DefaultClient
+	}
+
 	return &RegistryDownloader{
-		httpClient: opts.HTTPClient,
+		httpClient: httpClient,
 		baseURL:    baseURL,
 		archives:   opts.ArchivesPath,
 		sources:    filepath.Join(filepath.FromSlash(opts.Output), sourcesFolder),
