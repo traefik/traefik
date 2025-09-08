@@ -167,18 +167,17 @@ func TestHTTPPluginDownloader_buildArchivePath(t *testing.T) {
 
 func TestNewHTTPPluginDownloader(t *testing.T) {
 	archivesPath := "/tmp/archives"
-	outputPath := "/tmp/output"
-	expectedSourcesPath := "/tmp/output/sources"
+	sourcesPath := "/tmp/output"
 
 	downloader, err := NewRegistryDownloader(RegistryDownloaderOptions{
 		HTTPClient:   http.DefaultClient,
 		ArchivesPath: archivesPath,
-		Output:       outputPath,
+		SourcesPath:  sourcesPath,
 	})
 	assert.NoError(t, err)
 	assert.NotNil(t, downloader)
 	assert.Equal(t, archivesPath, downloader.archives)
-	assert.Equal(t, expectedSourcesPath, downloader.sources)
+	assert.Equal(t, sourcesPath, downloader.sources)
 	assert.NotNil(t, downloader.httpClient)
 	assert.NotNil(t, downloader.baseURL)
 }

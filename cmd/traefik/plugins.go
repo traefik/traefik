@@ -13,7 +13,10 @@ import (
 	"github.com/traefik/traefik/v3/pkg/plugins"
 )
 
-const outputDir = "./plugins-storage/"
+const (
+	outputDir = "./plugins-storage/"
+	goPathSrc = "src"
+)
 
 func createPluginBuilder(staticConfiguration *static.Configuration) (*plugins.Builder, error) {
 	manager, plgs, localPlgs, err := initPlugins(staticConfiguration)
@@ -54,7 +57,7 @@ func initPlugins(staticCfg *static.Configuration) (*plugins.Manager, map[string]
 		downloader, err := plugins.NewRegistryDownloader(plugins.RegistryDownloaderOptions{
 			HTTPClient:   httpClient.HTTPClient,
 			ArchivesPath: archivesPath,
-			Output:       outputDir,
+			SourcesPath:  filepath.Join(manager.GoPath(), goPathSrc),
 		})
 		if err != nil {
 			return nil, nil, nil, fmt.Errorf("unable to create plugin downloader: %w", err)

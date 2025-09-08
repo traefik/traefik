@@ -29,7 +29,7 @@ type PluginDownloader interface {
 type RegistryDownloaderOptions struct {
 	HTTPClient   *http.Client
 	ArchivesPath string
-	Output       string
+	SourcesPath  string
 }
 
 // RegistryDownloader implements PluginDownloader for HTTP-based plugin downloads.
@@ -56,7 +56,7 @@ func NewRegistryDownloader(opts RegistryDownloaderOptions) (*RegistryDownloader,
 		httpClient: httpClient,
 		baseURL:    baseURL,
 		archives:   opts.ArchivesPath,
-		sources:    filepath.Join(filepath.FromSlash(opts.Output), sourcesFolder),
+		sources:    opts.SourcesPath,
 	}, nil
 }
 
