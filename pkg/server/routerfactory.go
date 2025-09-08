@@ -23,9 +23,10 @@ import (
 
 // RouterFactory the factory of TCP/UDP routers.
 type RouterFactory struct {
-	entryPointsTCP  []string
-	entryPointsUDP  []string
-	allowACMEByPass map[string]bool
+	entryPointsTCP      []string
+	entryPointsUDP      []string
+	allowACMEByPass     map[string]bool
+	entryPointProtocols map[string]string
 
 	managerFactory *service.ManagerFactory
 
@@ -54,6 +55,7 @@ func NewRouterFactory(staticConfiguration static.Configuration, managerFactory *
 	}
 
 	allowACMEByPass := map[string]bool{}
+	entryPointProtocols := map[string]string{}
 	var entryPointsTCP, entryPointsUDP []string
 	for name, ep := range staticConfiguration.EntryPoints {
 		allowACMEByPass[name] = ep.AllowACMEByPass || !handlesTLSChallenge
@@ -63,6 +65,8 @@ func NewRouterFactory(staticConfiguration static.Configuration, managerFactory *
 			// Should never happen because Traefik should not start if protocol is invalid.
 			log.Error().Err(err).Msg("Invalid protocol")
 		}
+
+		entryPointProtocols[name] = protocol
 
 		if protocol == "udp" {
 			entryPointsUDP = append(entryPointsUDP, name)
@@ -77,15 +81,16 @@ func NewRouterFactory(staticConfiguration static.Configuration, managerFactory *
 	}
 
 	return &RouterFactory{
-		entryPointsTCP:   entryPointsTCP,
-		entryPointsUDP:   entryPointsUDP,
-		managerFactory:   managerFactory,
-		observabilityMgr: observabilityMgr,
-		tlsManager:       tlsManager,
-		pluginBuilder:    pluginBuilder,
-		dialerManager:    dialerManager,
-		allowACMEByPass:  allowACMEByPass,
-		parser:           parser,
+		entryPointsTCP:      entryPointsTCP,
+		entryPointsUDP:      entryPointsUDP,
+		entryPointProtocols: entryPointProtocols,
+		managerFactory:      managerFactory,
+		observabilityMgr:    observabilityMgr,
+		tlsManager:          tlsManager,
+		pluginBuilder:       pluginBuilder,
+		dialerManager:       dialerManager,
+		allowACMEByPass:     allowACMEByPass,
+		parser:              parser,
 	}, nil
 }
 
@@ -119,6 +124,11 @@ func (f *RouterFactory) CreateRouters(rtConf *runtime.Configuration) (map[string
 	routersTCP := rtTCPManager.BuildHandlers(ctx, f.entryPointsTCP)
 
 	for ep, r := range routersTCP {
+		// Set the protocol for this router based on entrypoint configuration
+		if protocol, ok := f.entryPointProtocols[ep]; ok {
+			r.SetProtocol(protocol)
+		}
+
 		if allowACMEByPass, ok := f.allowACMEByPass[ep]; ok && allowACMEByPass {
 			r.EnableACMETLSPassthrough()
 		}

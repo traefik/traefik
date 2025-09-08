@@ -46,6 +46,10 @@ type Router struct {
 	// hostHTTPTLSConfig contains TLS configs keyed by SNI.
 	// A nil config is the hint to set up a brokenTLSRouter.
 	hostHTTPTLSConfig map[string]*tls.Config // TLS configs keyed by SNI
+
+	// Protocol indicates the expected protocol for this router (e.g., "tcp", "mysql", "postgres").
+	// Empty string means default TCP behavior.
+	protocol string
 }
 
 // NewRouter returns a new TCP router.
@@ -118,6 +122,17 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 
 	// TODO -- Check if ProxyProtocol changes the first bytes of the request
 	br := bufio.NewReader(conn)
+
+	if r.IsMySQL() {
+		// Remove read/write deadline and delegate this to underlying TCP server.
+		if err := conn.SetDeadline(time.Time{}); err != nil {
+			log.Error().Err(err).Msg("Error while setting deadline")
+		}
+
+		r.serveMySQL(r.GetConn(conn, getPeeked(br)))
+		return
+	}
+
 	postgres, err := isPostgres(br)
 	if err != nil {
 		conn.Close()
@@ -321,6 +336,18 @@ func (r *Router) SetHTTPSHandler(handler http.Handler, config *tls.Config) {
 
 func (r *Router) EnableACMETLSPassthrough() {
 	r.acmeTLSPassthrough = true
+}
+
+func (r *Router) SetProtocol(protocol string) {
+	r.protocol = protocol
+}
+
+func (r *Router) GetProtocol() string {
+	return r.protocol
+}
+
+func (r *Router) IsMySQL() bool {
+	return r.protocol == "mysql"
 }
 
 // Conn is a connection proxy that handles Peeked bytes.

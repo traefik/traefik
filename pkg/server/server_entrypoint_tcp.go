@@ -101,7 +101,7 @@ func NewTCPEntryPoints(entryPointsConfig static.EntryPoints, hostResolverConfig 
 			return nil, fmt.Errorf("error while building entryPoint %s: %w", entryPointName, err)
 		}
 
-		if protocol != "tcp" {
+		if protocol != "tcp" && protocol != "mysql" {
 			continue
 		}
 
@@ -179,6 +179,13 @@ func NewTCPEntryPoint(ctx context.Context, name string, config *static.EntryPoin
 	if err != nil {
 		return nil, fmt.Errorf("error preparing tcp router: %w", err)
 	}
+
+	// Set the protocol based on entrypoint configuration
+	protocol, err := config.GetProtocol()
+	if err != nil {
+		return nil, fmt.Errorf("error getting protocol: %w", err)
+	}
+	rt.SetProtocol(protocol)
 
 	reqDecorator := requestdecorator.New(hostResolverConfig)
 
