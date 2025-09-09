@@ -22,17 +22,17 @@ The table below lists all the available matchers:
 
 | Matcher                                                         | Description                                                                    |
 |-----------------------------------------------------------------|:-------------------------------------------------------------------------------|
-| [```Header(`key`, `value`)```](#header-and-headerregexp)        | Matches requests containing a header named `key` set to `value`.               |
-| [```HeaderRegexp(`key`, `regexp`)```](#header-and-headerregexp) | Matches requests containing a header named `key` matching `regexp`.            |
-| [```Host(`domain`)```](#host-and-hostregexp)                    | Matches requests host set to `domain`.                                         |
-| [```HostRegexp(`regexp`)```](#host-and-hostregexp)              | Matches requests host matching `regexp`.                                       |
-| [```Method(`method`)```](#method)                               | Matches requests method set to `method`.                                       |
-| [```Path(`path`)```](#path-pathprefix-and-pathregexp)           | Matches requests path set to `path`.                                           |
-| [```PathPrefix(`prefix`)```](#path-pathprefix-and-pathregexp)   | Matches requests path prefix set to `prefix`.                                  |
-| [```PathRegexp(`regexp`)```](#path-pathprefix-and-pathregexp)   | Matches request path using `regexp`.                                           |
-| [```Query(`key`, `value`)```](#query-and-queryregexp)           | Matches requests query parameters named `key` set to `value`.                  |
-| [```QueryRegexp(`key`, `regexp`)```](#query-and-queryregexp)    | Matches requests query parameters named `key` matching `regexp`.               |
-| [```ClientIP(`ip`)```](#clientip)                               | Matches requests client IP using `ip`. It accepts IPv4, IPv6 and CIDR formats. |
+| <a id="Headerkey-value" href="#Headerkey-value" title="#Headerkey-value">[```Header(`key`, `value`)```](#header-and-headerregexp)</a> | Matches requests containing a header named `key` set to `value`.               |
+| <a id="HeaderRegexpkey-regexp" href="#HeaderRegexpkey-regexp" title="#HeaderRegexpkey-regexp">[```HeaderRegexp(`key`, `regexp`)```](#header-and-headerregexp)</a> | Matches requests containing a header named `key` matching `regexp`.            |
+| <a id="Hostdomain" href="#Hostdomain" title="#Hostdomain">[```Host(`domain`)```](#host-and-hostregexp)</a> | Matches requests host set to `domain`.                                         |
+| <a id="HostRegexpregexp" href="#HostRegexpregexp" title="#HostRegexpregexp">[```HostRegexp(`regexp`)```](#host-and-hostregexp)</a> | Matches requests host matching `regexp`.                                       |
+| <a id="Methodmethod" href="#Methodmethod" title="#Methodmethod">[```Method(`method`)```](#method)</a> | Matches requests method set to `method`.                                       |
+| <a id="Pathpath" href="#Pathpath" title="#Pathpath">[```Path(`path`)```](#path-pathprefix-and-pathregexp)</a> | Matches requests path set to `path`.                                           |
+| <a id="PathPrefixprefix" href="#PathPrefixprefix" title="#PathPrefixprefix">[```PathPrefix(`prefix`)```](#path-pathprefix-and-pathregexp)</a> | Matches requests path prefix set to `prefix`.                                  |
+| <a id="PathRegexpregexp" href="#PathRegexpregexp" title="#PathRegexpregexp">[```PathRegexp(`regexp`)```](#path-pathprefix-and-pathregexp)</a> | Matches request path using `regexp`.                                           |
+| <a id="Querykey-value" href="#Querykey-value" title="#Querykey-value">[```Query(`key`, `value`)```](#query-and-queryregexp)</a> | Matches requests query parameters named `key` set to `value`.                  |
+| <a id="QueryRegexpkey-regexp" href="#QueryRegexpkey-regexp" title="#QueryRegexpkey-regexp">[```QueryRegexp(`key`, `regexp`)```](#query-and-queryregexp)</a> | Matches requests query parameters named `key` matching `regexp`.               |
+| <a id="ClientIPip" href="#ClientIPip" title="#ClientIPip">[```ClientIP(`ip`)```](#clientip)</a> | Matches requests client IP using `ip`. It accepts IPv4, IPv6 and CIDR formats. |
 
 ### Header and HeaderRegexp
 
@@ -40,9 +40,9 @@ The `Header` and `HeaderRegexp` matchers allow matching requests that contain sp
 
 | Behavior                                                        | Rule                                                                    |
 |-----------------------------------------------------------------|:------------------------------------------------------------------------|
-| Match requests with a `Content-Type` header set to `application/yaml`.| ```Header(`Content-Type`, `application/yaml`)``` |
-| Match requests with a `Content-Type` header set to either `application/json` or `application/yaml`. | ```HeaderRegexp(`Content-Type`, `^application/(json\|yaml)$`)``` |
-| Match headers [case-insensitively](https://en.wikipedia.org/wiki/Case_sensitivity). | ```HeaderRegexp(`Content-Type`, `(?i)^application/(json\|yaml)$`)``` |
+| <a id="Match-requests-with-a-Content-Type-header-set-to-applicationyaml" href="#Match-requests-with-a-Content-Type-header-set-to-applicationyaml" title="#Match-requests-with-a-Content-Type-header-set-to-applicationyaml">Match requests with a `Content-Type` header set to `application/yaml`.</a> | ```Header(`Content-Type`, `application/yaml`)``` |
+| <a id="Match-requests-with-a-Content-Type-header-set-to-either-applicationjson-or-applicationyaml" href="#Match-requests-with-a-Content-Type-header-set-to-either-applicationjson-or-applicationyaml" title="#Match-requests-with-a-Content-Type-header-set-to-either-applicationjson-or-applicationyaml">Match requests with a `Content-Type` header set to either `application/json` or `application/yaml`.</a> | ```HeaderRegexp(`Content-Type`, `^application/(json\|yaml)$`)``` |
+| <a id="Match-headers-case-insensitively" href="#Match-headers-case-insensitively" title="#Match-headers-case-insensitively">Match headers [case-insensitively](https://en.wikipedia.org/wiki/Case_sensitivity).</a> | ```HeaderRegexp(`Content-Type`, `(?i)^application/(json\|yaml)$`)``` |
 
 ### Host and HostRegexp
 
@@ -56,10 +56,10 @@ These matchers will match the request's host in lowercase.
 
 | Behavior                                                        | Rule                                                                    |
 |-----------------------------------------------------------------|:------------------------------------------------------------------------|
-| Match requests with `Host` set to `example.com`. | ```Host(`example.com`)``` |
-| Match requests sent to any subdomain of `example.com`. | ```HostRegexp(`^.+\.example\.com$`)``` |
-| Match requests with `Host` set to either `example.com` or `example.org`. | ```HostRegexp(`^example\.(com\|org)$`)``` |
-| Match `Host` [case-insensitively](https://en.wikipedia.org/wiki/Case_sensitivity). | ```HostRegexp(`(?i)^example\.(com\|org)$`)``` |
+| <a id="Match-requests-with-Host-set-to-example-com" href="#Match-requests-with-Host-set-to-example-com" title="#Match-requests-with-Host-set-to-example-com">Match requests with `Host` set to `example.com`.</a> | ```Host(`example.com`)``` |
+| <a id="Match-requests-sent-to-any-subdomain-of-example-com" href="#Match-requests-sent-to-any-subdomain-of-example-com" title="#Match-requests-sent-to-any-subdomain-of-example-com">Match requests sent to any subdomain of `example.com`.</a> | ```HostRegexp(`^.+\.example\.com$`)``` |
+| <a id="Match-requests-with-Host-set-to-either-example-com-or-example-org" href="#Match-requests-with-Host-set-to-either-example-com-or-example-org" title="#Match-requests-with-Host-set-to-either-example-com-or-example-org">Match requests with `Host` set to either `example.com` or `example.org`.</a> | ```HostRegexp(`^example\.(com\|org)$`)``` |
+| <a id="Match-Host-case-insensitively" href="#Match-Host-case-insensitively" title="#Match-Host-case-insensitively">Match `Host` [case-insensitively](https://en.wikipedia.org/wiki/Case_sensitivity).</a> | ```HostRegexp(`(?i)^example\.(com\|org)$`)``` |
 
 ### Method
 
@@ -67,7 +67,7 @@ The `Method` matchers allows matching requests sent based on their HTTP method (
 
 | Behavior                                                        | Rule                                                                    |
 |-----------------------------------------------------------------|:------------------------------------------------------------------------|
-| Match `OPTIONS` requests. | ```Method(`OPTIONS`)``` |
+| <a id="Match-OPTIONS-requests" href="#Match-OPTIONS-requests" title="#Match-OPTIONS-requests">Match `OPTIONS` requests.</a> | ```Method(`OPTIONS`)``` |
 
 ### Path, PathPrefix, and PathRegexp
 
@@ -79,11 +79,11 @@ Path are always starting with a `/`, except for `PathRegexp`.
 
 | Behavior                                                        | Rule                                                                    |
 |-----------------------------------------------------------------|:------------------------------------------------------------------------|
-| Match `/products` but neither `/products/shoes` nor `/products/`. | ```Path(`/products`)``` |
-| Match `/products` as well as everything under `/products`, such as `/products/shoes`, `/products/` but also `/products-for-sale`. | ```PathPrefix(`/products`)``` |
-| Match both `/products/shoes` and `/products/socks` with and ID like `/products/shoes/31`. | ```PathRegexp(`^/products/(shoes\|socks)/[0-9]+$`)``` |
-| Match requests with a path ending in either `.jpeg`, `.jpg` or `.png`. | ```PathRegexp(`\.(jpeg\|jpg\|png)$`)``` |
-| Match `/products` as well as everything under `/products`, such as `/products/shoes`, `/products/` but also `/products-for-sale`, [case-insensitively](https://en.wikipedia.org/wiki/Case_sensitivity). | ```HostRegexp(`(?i)^/products`)``` |
+| <a id="Match-products-but-neither-productsshoes-nor-products" href="#Match-products-but-neither-productsshoes-nor-products" title="#Match-products-but-neither-productsshoes-nor-products">Match `/products` but neither `/products/shoes` nor `/products/`.</a> | ```Path(`/products`)``` |
+| <a id="Match-products-as-well-as-everything-under-products-such-as-productsshoes-products-but-also-products-for-sale" href="#Match-products-as-well-as-everything-under-products-such-as-productsshoes-products-but-also-products-for-sale" title="#Match-products-as-well-as-everything-under-products-such-as-productsshoes-products-but-also-products-for-sale">Match `/products` as well as everything under `/products`, such as `/products/shoes`, `/products/` but also `/products-for-sale`.</a> | ```PathPrefix(`/products`)``` |
+| <a id="Match-both-productsshoes-and-productssocks-with-and-ID-like-productsshoes31" href="#Match-both-productsshoes-and-productssocks-with-and-ID-like-productsshoes31" title="#Match-both-productsshoes-and-productssocks-with-and-ID-like-productsshoes31">Match both `/products/shoes` and `/products/socks` with and ID like `/products/shoes/31`.</a> | ```PathRegexp(`^/products/(shoes\|socks)/[0-9]+$`)``` |
+| <a id="Match-requests-with-a-path-ending-in-either-jpeg-jpg-or-png" href="#Match-requests-with-a-path-ending-in-either-jpeg-jpg-or-png" title="#Match-requests-with-a-path-ending-in-either-jpeg-jpg-or-png">Match requests with a path ending in either `.jpeg`, `.jpg` or `.png`.</a> | ```PathRegexp(`\.(jpeg\|jpg\|png)$`)``` |
+| <a id="Match-products-as-well-as-everything-under-products-such-as-productsshoes-products-but-also-products-for-sale-case-insensitively" href="#Match-products-as-well-as-everything-under-products-such-as-productsshoes-products-but-also-products-for-sale-case-insensitively" title="#Match-products-as-well-as-everything-under-products-such-as-productsshoes-products-but-also-products-for-sale-case-insensitively">Match `/products` as well as everything under `/products`, such as `/products/shoes`, `/products/` but also `/products-for-sale`, [case-insensitively](https://en.wikipedia.org/wiki/Case_sensitivity).</a> | ```HostRegexp(`(?i)^/products`)``` |
 
 ### Query and QueryRegexp
 
@@ -91,11 +91,11 @@ The `Query` and `QueryRegexp` matchers allow matching requests based on query pa
 
 | Behavior                                                        | Rule                                                                    |
 |-----------------------------------------------------------------|:------------------------------------------------------------------------|
-| Match requests with a `mobile` query parameter set to `true`, such as in `/search?mobile=true`. | ```Query(`mobile`, `true`)``` |
-| Match requests with a query parameter `mobile` that has no value, such as in `/search?mobile`. | ```Query(`mobile`)``` |
-| Match requests with a `mobile` query parameter set to either `true` or `yes`. | ```QueryRegexp(`mobile`, `^(true\|yes)$`)``` |
-| Match requests with a `mobile` query parameter set to any value (including the empty value). | ```QueryRegexp(`mobile`, `^.*$`)``` |
-| Match query parameters [case-insensitively](https://en.wikipedia.org/wiki/Case_sensitivity). | ```QueryRegexp(`mobile`, `(?i)^(true\|yes)$`)``` |
+| <a id="Match-requests-with-a-mobile-query-parameter-set-to-true-such-as-in-searchmobiletrue" href="#Match-requests-with-a-mobile-query-parameter-set-to-true-such-as-in-searchmobiletrue" title="#Match-requests-with-a-mobile-query-parameter-set-to-true-such-as-in-searchmobiletrue">Match requests with a `mobile` query parameter set to `true`, such as in `/search?mobile=true`.</a> | ```Query(`mobile`, `true`)``` |
+| <a id="Match-requests-with-a-query-parameter-mobile-that-has-no-value-such-as-in-searchmobile" href="#Match-requests-with-a-query-parameter-mobile-that-has-no-value-such-as-in-searchmobile" title="#Match-requests-with-a-query-parameter-mobile-that-has-no-value-such-as-in-searchmobile">Match requests with a query parameter `mobile` that has no value, such as in `/search?mobile`.</a> | ```Query(`mobile`)``` |
+| <a id="Match-requests-with-a-mobile-query-parameter-set-to-either-true-or-yes" href="#Match-requests-with-a-mobile-query-parameter-set-to-either-true-or-yes" title="#Match-requests-with-a-mobile-query-parameter-set-to-either-true-or-yes">Match requests with a `mobile` query parameter set to either `true` or `yes`.</a> | ```QueryRegexp(`mobile`, `^(true\|yes)$`)``` |
+| <a id="Match-requests-with-a-mobile-query-parameter-set-to-any-value-including-the-empty-value" href="#Match-requests-with-a-mobile-query-parameter-set-to-any-value-including-the-empty-value" title="#Match-requests-with-a-mobile-query-parameter-set-to-any-value-including-the-empty-value">Match requests with a `mobile` query parameter set to any value (including the empty value).</a> | ```QueryRegexp(`mobile`, `^.*$`)``` |
+| <a id="Match-query-parameters-case-insensitively" href="#Match-query-parameters-case-insensitively" title="#Match-query-parameters-case-insensitively">Match query parameters [case-insensitively](https://en.wikipedia.org/wiki/Case_sensitivity).</a> | ```QueryRegexp(`mobile`, `(?i)^(true\|yes)$`)``` |
 
 ### ClientIP
 
@@ -105,10 +105,10 @@ It only matches the request client IP and does not use the `X-Forwarded-For` hea
 
 | Behavior                                                        | Rule                                                                    |
 |-----------------------------------------------------------------|:------------------------------------------------------------------------|
-| Match requests coming from a given IP (IPv4). | ```ClientIP(`10.76.105.11`)``` |
-| Match requests coming from a given IP (IPv6). | ```ClientIP(`::1`)``` |
-| Match requests coming from a given subnet (IPv4). | ```ClientIP(`192.168.1.0/24`)``` |
-| Match requests coming from a given subnet (IPv6). | ```ClientIP(`fe80::/10`)``` |
+| <a id="Match-requests-coming-from-a-given-IP-IPv4" href="#Match-requests-coming-from-a-given-IP-IPv4" title="#Match-requests-coming-from-a-given-IP-IPv4">Match requests coming from a given IP (IPv4).</a> | ```ClientIP(`10.76.105.11`)``` |
+| <a id="Match-requests-coming-from-a-given-IP-IPv6" href="#Match-requests-coming-from-a-given-IP-IPv6" title="#Match-requests-coming-from-a-given-IP-IPv6">Match requests coming from a given IP (IPv6).</a> | ```ClientIP(`::1`)``` |
+| <a id="Match-requests-coming-from-a-given-subnet-IPv4" href="#Match-requests-coming-from-a-given-subnet-IPv4" title="#Match-requests-coming-from-a-given-subnet-IPv4">Match requests coming from a given subnet (IPv4).</a> | ```ClientIP(`192.168.1.0/24`)``` |
+| <a id="Match-requests-coming-from-a-given-subnet-IPv6" href="#Match-requests-coming-from-a-given-subnet-IPv6" title="#Match-requests-coming-from-a-given-subnet-IPv6">Match requests coming from a given subnet (IPv6).</a> | ```ClientIP(`fe80::/10`)``` |
 
 ### RuleSyntax
 
@@ -213,8 +213,8 @@ labels:
 
     | Name     | Rule                                     | Priority |
     |----------|------------------------------------------|----------|
-    | Router-1 | ```HostRegexp(`[a-z]+\.traefik\.com`)``` | 34       |
-    | Router-2 | ```Host(`foobar.traefik.com`)```         | 26       |
+    | <a id="Router-1" href="#Router-1" title="#Router-1">Router-1</a> | ```HostRegexp(`[a-z]+\.traefik\.com`)``` | 34       |
+    | <a id="Router-2" href="#Router-2" title="#Router-2">Router-2</a> | ```Host(`foobar.traefik.com`)```         | 26       |
 
     The previous table shows that `Router-1` has a higher priority than `Router-2`.
 

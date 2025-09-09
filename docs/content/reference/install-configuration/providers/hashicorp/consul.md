@@ -26,18 +26,18 @@ providers:
 
 | Field | Description                                               | Default              | Required |
 |:------|:----------------------------------------------------------|:---------------------|:---------|
-| `providers.providersThrottleDuration` | Minimum amount of time to wait for, after a configuration reload, before taking into account any new configuration refresh event.<br />If multiple events occur within this time, only the most recent one is taken into account, and all others are discarded.<br />**This option cannot be set per provider, but the throttling algorithm applies to each of them independently.** | 2s  | No |
-| `providers.consul.endpoints` | Defines the endpoint to access Consul. |  "127.0.0.1:8500"     | yes   |
-| `providers.consul.rootKey` | Defines the root key of the configuration. |  "traefik"     | yes   |
-| `providers.consul.namespaces` | Defines the namespaces to query. See [here](#namespaces) for more information |  ""     | no   |
-| `providers.consul.username` | Defines a username to connect to Consul with. |  ""     | no   |
-| `providers.consul.password` | Defines a password with which to connect to Consul. |  ""     | no   |
-| `providers.consul.token` | Defines a token with which to connect to Consul. |  ""     | no   |
-| `providers.consul.tls` | Defines the TLS configuration used for the secure connection to Consul  |  -   | No   |
-| `providers.consul.tls.ca` | Defines the path to the certificate authority used for the secure connection to Consul, it defaults to the system bundle.  |  -   | Yes   |
-| `providers.consul.tls.cert` | Defines the path to the public certificate used for the secure connection to Consul. When using this option, setting the `key` option is required. |  -  | Yes   |
-| `providers.consul.tls.key` | Defines the path to the private key used for the secure connection to Consul. When using this option, setting the `cert` option is required. |  -   | Yes   |
-| `providers.consul.tls.insecureSkipVerify` | Instructs the provider to accept any certificate presented by Consul when establishing a TLS connection, regardless of the hostnames the certificate covers. | false   | No   |
+| <a id="providers-providersThrottleDuration" href="#providers-providersThrottleDuration" title="#providers-providersThrottleDuration">`providers.providersThrottleDuration`</a> | Minimum amount of time to wait for, after a configuration reload, before taking into account any new configuration refresh event.<br />If multiple events occur within this time, only the most recent one is taken into account, and all others are discarded.<br />**This option cannot be set per provider, but the throttling algorithm applies to each of them independently.** | 2s  | No |
+| <a id="providers-consul-endpoints" href="#providers-consul-endpoints" title="#providers-consul-endpoints">`providers.consul.endpoints`</a> | Defines the endpoint to access Consul. |  "127.0.0.1:8500"     | yes   |
+| <a id="providers-consul-rootKey" href="#providers-consul-rootKey" title="#providers-consul-rootKey">`providers.consul.rootKey`</a> | Defines the root key of the configuration. |  "traefik"     | yes   |
+| <a id="providers-consul-namespaces" href="#providers-consul-namespaces" title="#providers-consul-namespaces">`providers.consul.namespaces`</a> | Defines the namespaces to query. See [here](#namespaces) for more information |  ""     | no   |
+| <a id="providers-consul-username" href="#providers-consul-username" title="#providers-consul-username">`providers.consul.username`</a> | Defines a username to connect to Consul with. |  ""     | no   |
+| <a id="providers-consul-password" href="#providers-consul-password" title="#providers-consul-password">`providers.consul.password`</a> | Defines a password with which to connect to Consul. |  ""     | no   |
+| <a id="providers-consul-token" href="#providers-consul-token" title="#providers-consul-token">`providers.consul.token`</a> | Defines a token with which to connect to Consul. |  ""     | no   |
+| <a id="providers-consul-tls" href="#providers-consul-tls" title="#providers-consul-tls">`providers.consul.tls`</a> | Defines the TLS configuration used for the secure connection to Consul  |  -   | No   |
+| <a id="providers-consul-tls-ca" href="#providers-consul-tls-ca" title="#providers-consul-tls-ca">`providers.consul.tls.ca`</a> | Defines the path to the certificate authority used for the secure connection to Consul, it defaults to the system bundle.  |  -   | Yes   |
+| <a id="providers-consul-tls-cert" href="#providers-consul-tls-cert" title="#providers-consul-tls-cert">`providers.consul.tls.cert`</a> | Defines the path to the public certificate used for the secure connection to Consul. When using this option, setting the `key` option is required. |  -  | Yes   |
+| <a id="providers-consul-tls-key" href="#providers-consul-tls-key" title="#providers-consul-tls-key">`providers.consul.tls.key`</a> | Defines the path to the private key used for the secure connection to Consul. When using this option, setting the `cert` option is required. |  -   | Yes   |
+| <a id="providers-consul-tls-insecureSkipVerify" href="#providers-consul-tls-insecureSkipVerify" title="#providers-consul-tls-insecureSkipVerify">`providers.consul.tls.insecureSkipVerify`</a> | Instructs the provider to accept any certificate presented by Consul when establishing a TLS connection, regardless of the hostnames the certificate covers. | false   | No   |
 
 ### `namespaces`
 
