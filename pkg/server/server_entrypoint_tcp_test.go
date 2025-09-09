@@ -511,7 +511,7 @@ func TestNormalizePath_malformedPercentEncoding(t *testing.T) {
 	}
 }
 
-// TestPathOperations tests the whole behavior of normalizePath, and sanitizePath combined through the use of the createHTTPServer func.
+// TestPathOperations tests the whole behavior of normalizePath, and sanitizePath combined through the use of the newHTTPServer func.
 // It aims to guarantee the server entrypoint handler is secure regarding a large variety of cases that could lead to path traversal attacks.
 func TestPathOperations(t *testing.T) {
 	// Create a listener for the server.
@@ -525,8 +525,8 @@ func TestPathOperations(t *testing.T) {
 	configuration := &static.EntryPoint{}
 	configuration.SetDefaults()
 
-	// Create the HTTP server using createHTTPServer.
-	server, err := createHTTPServer(t.Context(), ln, configuration, false, requestdecorator.New(nil))
+	// Create the HTTP server using newHTTPServer.
+	server, err := newHTTPServer(t.Context(), ln, configuration, false, requestdecorator.New(nil))
 	require.NoError(t, err)
 
 	server.Switcher.UpdateHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

@@ -357,6 +357,25 @@ func (c *Configuration) SetEffectiveConfiguration() {
 		}
 	}
 
+	for _, resolver := range c.CertificatesResolvers {
+		if resolver.ACME == nil {
+			continue
+		}
+
+		if resolver.ACME.DNSChallenge == nil {
+			continue
+		}
+
+		switch resolver.ACME.DNSChallenge.Provider {
+		case "googledomains", "cloudxns", "brandit":
+			log.Warn().Msgf("%s DNS provider is deprecated.", resolver.ACME.DNSChallenge.Provider)
+		case "dnspod":
+			log.Warn().Msgf("%s provider is deprecated, please use 'tencentcloud' provider instead.", resolver.ACME.DNSChallenge.Provider)
+		case "azure":
+			log.Warn().Msgf("%s provider is deprecated, please use 'azuredns' provider instead.", resolver.ACME.DNSChallenge.Provider)
+		}
+	}
+
 	c.initACMEProvider()
 }
 

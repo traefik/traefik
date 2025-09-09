@@ -60,61 +60,61 @@ stringData:
 
 | Field | Description | Default | Required |
 |:------|:------------|:--------|:---------|
-| `issuer` | Defines the URL to the OpenID Connect provider (for example, `https://accounts.google.com`). <br /> It should point to the server which provides the OpenID Connect configuration. | "" | Yes |
-| `redirectUrl` | Defines the URL used by the OpenID Connect provider to redirect back to the middleware once the authorization is complete. (More information [here](#redirecturl)) | "" | Yes |
-| `clientID`     | Defines the unique client identifier for an account on the OpenID Connect provider, must be set when the `clientSecret` option is set. (More information [here](#clientid-clientsecret)) | ""      | Yes       |
-| `clientSecret` | Defines the unique client secret for an account on the OpenID Connect provider, must be set when the `clientID` option is set. (More information [here](#clientid-clientsecret)) | ""      | Yes       |
-| `claims` | Defines the claims to validate in order to authorize the request. <br /> The `claims` option can only be used with JWT-formatted token.  (More information [here](#claims)) | ""      | No       |
-| `usernameClaim` | Defines the claim that will be evaluated to populate the `clientusername` in the access logs. <br /> The `usernameClaim` option can only be used with JWT-formatted token.| ""      | No       |
-| `forwardHeaders` | Defines the HTTP headers to add to requests and populates them with values extracted from the access token claims returned by the authorization server. <br /> Claims to be forwarded that are not found in the JWT result in empty headers. <br /> The `forwardHeaders` option can only be used with JWT-formatted token. | []      | No       |
-| `clientConfig.tls.ca` | PEM-encoded certificate bundle or a URN referencing a secret containing the certificate bundle used to establish a TLS connection with the authorization server  (More information [here](#clientconfig)) | ""      | No       |
-| `clientConfig.tls.cert` | PEM-encoded certificate or a URN referencing a secret containing the certificate used to establish a TLS connection with the Vault server (More information [here](#clientconfig)) | ""      | No       |
-| `clientConfig.tls.key`  | PEM-encoded key or a URN referencing a secret containing the key used to establish a TLS connection with the Vault server. (More information [here](#clientconfig)) | ""      | No       |
-| `clientConfig.tls.insecureSkipVerify` | Disables TLS certificate verification when communicating with the authorization server. <br /> Useful for testing purposes but strongly discouraged for production. (More information [here](#clientconfig)) | ""      | No       |
-| `clientConfig.timeoutSeconds` | Defines the time before giving up requests to the authorization server.   | 5       | No       |
-| `clientConfig.maxRetries` | Defines the number of retries for requests to authorization server that fail. | 3       | No       |
-| `pkce` | Defines the Proof Key for Code Exchange as described in [RFC 7636](https://datatracker.ietf.org/doc/html/rfc7636). | false | No |
-| `discoveryParams` | A map of arbitrary query parameters to be added to the openid-configuration well-known URI during the discovery mechanism. | "" | No |
-| `scopes` | The scopes to request. Must include `openid`. | openid | No |
-| `authParams` | A map of the arbitrary query parameters to be passed to the Authentication Provider. <br />When a `prompt` key is set to an empty string in the AuthParams,the prompt parameter is not added to the OAuth2 authorization URL Which means the user won't be prompted for consent.| "" | No |
-| `disableLogin` | Disables redirections to the authentication provider <br /> This can be useful for protecting APIs where redirecting to a login page is undesirable. | false | No |
-| `loginUrl` | Defines the URL used to start authorization when needed. <br /> All other requests that are not already authorized will return a 401 Unauthorized. When left empty, all requests can start authorization. <br /> It can be a path (`/login` for example), a host and a path (`example.com/login`) or a complete URL (`https://example.com/login`). <br /> Only `http` and `https` schemes are supported.| "" | No |
-| `logoutUrl` |Defines the URL on which the session should be deleted in order to log users out. <br /> It can be a path (`/logout` for example), a host and a path (`example.com/logout`) or a complete URL (`https://example.com/logout`). <br /> Only `http` and `https` schemes are supported.| "" | No |
-| `postLoginRedirectUrl` |If set and used in conjunction with `loginUrl`, the middleware will redirect to this URL after successful login. <br /> It can be a path (`/after/login` for example), a host and a path (`example.com/after/login`) or a complete URL (`https://example.com/after/login`). <br /> Only `http` and `https` schemes are supported. | "" | No |
-| `postLogoutRedirectUrl` | If set and used in conjunction with `logoutUrl`, the middleware will redirect to this URL after logout. <br /> It can be a path (`/after/logout` for example), a host and a path (`example.com/after/logout`) or a complete URL (`https://example.com/after/logout`). <br /> Only `http` and `https` schemes are supported. | "" | No |
-| `backchannelLogoutUrl` | Defines the URL called by the OIDC provider when a user logs out (see https://openid.net/specs/openid-connect-rpinitiated-1_0.html#OpenID.BackChannel). <br /> It can be a path (`/backchannel-logout` for example), a host and a path (`example.com/backchannel-logout`) or a complete URL (`https://example.com/backchannel-logout`). <br /> Only `http` and `https` schemes are supported. <br /> This feature is currently in an experimental state and has been tested exclusively with the Keycloak OIDC provider. | "" | No |
-| `backchannelLogoutSessionsRequired` | This specifies whether the OIDC provider includes the sid (session ID) Claim in the Logout Token to identify the user session (see https://openid.net/specs/openid-connect-backchannel-1_0.html#BCRegistration). <br/> If omitted, the default value is false. <br /> This feature is currently in an experimental state and has been tested exclusively with the Keycloak OIDC provider. | false | No |
-| `stateCookie.name` | Defines the name of the state cookie. |"`MIDDLEWARE_NAME`-state" | No |
-| `stateCookie.path` | Defines the URL path that must exist in the requested URL in order to send the Cookie header. <br /> The `%x2F` ('/') character is considered a directory separator, and subdirectories will match as well. <br /> For example, if `stateCookie.path` is set to `/docs`, these paths will match: `/docs`,`/docs/web/`,`/docs/web/http`.| "/" | No |
-| `stateCookie.domain` | Defines the hosts that are allowed to receive the cookie. <br />If specified, then subdomains are always included. <br /> For example, if it is set to `example.com`, then cookies are included on subdomains like `api.example.com`. | "" | No |
-| `stateCookie.maxAge` |Defines the number of seconds after which the state cookie should expire. <br />  A zero or negative number will expire the cookie immediately. | 600 | No |
-| `stateCookie.sameSite` | Informsbrowsers how they should handle the state cookie on cross-site requests. <br /> Setting it to `lax` or `strict` can provide some protection against cross-site request forgery attacks ([CSRF](https://developer.mozilla.org/en-US/docs/Glossary/CSRF)). <br /> More information [here](#samesite---accepted-values). | lax | No |
-| `stateCookie.httpOnly` | Forbids JavaScript from accessing the cookie. <br /> For example, through the `Document.cookie` property, the `XMLHttpRequest` API, or the `Request` API. <br /> This mitigates attacks against cross-site scripting ([XSS](https://developer.mozilla.org/en-US/docs/Glossary/XSS)). | true | No |
-| `stateCookie.secure` | Defines whether the state cookie is only sent to the server when a request is made with the `https` scheme. | false | No |
-| `session.name` | The name of the session cookie. |"`MIDDLEWARE_NAME`-session"| No |
-| `session.path` | Defines the URL path that must exist in the requested URL in order to send the Cookie header. <br />The `%x2F` ('/'') character is considered a directory separator, and subdirectories will match as well. <br /> For example, if `stateCookie.path` is set to `/docs`, these paths will match: `/docs`,`/docs/web/`,`/docs/web/http`.| "/" | No |
-| `session.domain` | Specifies the hosts that are allowed to receive the cookie. If specified, then subdomains are always included. If specified, then subdomains are always included. <br /> For example, if it is set to `example.com`, then cookies are included on subdomains like `api.example.com`.| "" | No |
-| `session.expiry` | Number of seconds after which the session should expire. A zero or negative number is **prohibited**. | 86400 (24h) | No |
-| `session.sliding` | Forces the middleware to renew the session cookie each time an authenticated request is received. | true | No |
-| `session.refresh` | Enables the access token refresh when it expires. | true | No |
-| `session.sameSite` | Inform browsers how they should handle the session cookie on cross-site requests. <br /> Setting it to `lax` or `strict` can provide some protection against cross-site request forgery attacks ([CSRF](https://developer.mozilla.org/en-US/docs/Glossary/CSRF)). <br /> More information [here](#samesite---accepted-values). | lax | No |
-| `session.httpOnly` | Forbids JavaScript from accessing the cookie. <br /> For example, through the `Document.cookie` property, the `XMLHttpRequest` API, or the `Request` API. <br /> This mitigates attacks against cross-site scripting ([XSS](https://developer.mozilla.org/en-US/docs/Glossary/XSS)). | true | No |
-| `session.secure` | Defines whether the session cookie is only sent to the server when a request is made with the `https` scheme. | false | No |
-| `session.store.redis.endpoints`              | Endpoints of the Redis instances to connect to (example: `redis.traefik-hub.svc.cluster.local:6379`) | "" | Yes      |
-| `session.store.redis.username`               | The username Traefik Hub will use to connect to Redis                                                | "" | No       |
-| `session.store.redis.password`               | The password Traefik Hub will use to connect to Redis                                                | "" | No       |
-| `session.store.redis.database`               | The database Traefik Hub will use to sore information (default: `0`)                                 | "" | No       |
-| `session.store.redis.cluster`                | Enable Redis Cluster                                                                                 | "" | No       |
-| `session.store.redis.tls.caBundle`           | Custom CA bundle                                                                                     | "" | No       |
-| `session.store.redis.tls.cert`               | TLS certificate                                                                                      | "" | No       |
-| `session.store.redis.tls.key`                | TLS key                                                                                              | "" | No       |
-| `session.store.redis.tls.insecureSkipVerify` | Allow skipping the TLS verification                                                                  | "" | No       |
-| `session.store.redis.sentinel.masterSet`     | Name of the set of main nodes to use for main selection. Required when using Sentinel.               | "" | No       |
-| `session.store.redis.sentinel.username`      | Username to use for sentinel authentication (can be different from `username`)                       | "" | No       |
-| `session.store.redis.sentinel.password`      | Password to use for sentinel authentication (can be different from `password`)                       | "" | No       |
-| `csrf` | When enabled, a CSRF cookie, named `traefikee-csrf-token`, is bound to the OIDC session to protect service from CSRF attacks. <br /> It is based on the [Signed Double Submit Cookie](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html#signed-double-submit-cookie) implementation as defined by the OWASP Foundation.<br />Moreinformation [here](#csrf). | "" | No |
-| `csrf.secure` | Defines whether the CSRF cookie is only sent to the server when a request is made with the `https` scheme. | false | No |
-| `csrf.headerName` | Defines the name of the header used to send the CSRF token value received previously in the CSRF cookie. | TraefikHub-Csrf-Token | No |
+| <a id="issuer" href="#issuer" title="#issuer">`issuer`</a> | Defines the URL to the OpenID Connect provider (for example, `https://accounts.google.com`). <br /> It should point to the server which provides the OpenID Connect configuration. | "" | Yes |
+| <a id="redirectUrl" href="#redirectUrl" title="#redirectUrl">`redirectUrl`</a> | Defines the URL used by the OpenID Connect provider to redirect back to the middleware once the authorization is complete. (More information [here](#redirecturl)) | "" | Yes |
+| <a id="clientID" href="#clientID" title="#clientID">`clientID`</a> | Defines the unique client identifier for an account on the OpenID Connect provider, must be set when the `clientSecret` option is set. (More information [here](#clientid-clientsecret)) | ""      | Yes       |
+| <a id="clientSecret" href="#clientSecret" title="#clientSecret">`clientSecret`</a> | Defines the unique client secret for an account on the OpenID Connect provider, must be set when the `clientID` option is set. (More information [here](#clientid-clientsecret)) | ""      | Yes       |
+| <a id="claims" href="#claims" title="#claims">`claims`</a> | Defines the claims to validate in order to authorize the request. <br /> The `claims` option can only be used with JWT-formatted token.  (More information [here](#claims)) | ""      | No       |
+| <a id="usernameClaim" href="#usernameClaim" title="#usernameClaim">`usernameClaim`</a> | Defines the claim that will be evaluated to populate the `clientusername` in the access logs. <br /> The `usernameClaim` option can only be used with JWT-formatted token.| ""      | No       |
+| <a id="forwardHeaders" href="#forwardHeaders" title="#forwardHeaders">`forwardHeaders`</a> | Defines the HTTP headers to add to requests and populates them with values extracted from the access token claims returned by the authorization server. <br /> Claims to be forwarded that are not found in the JWT result in empty headers. <br /> The `forwardHeaders` option can only be used with JWT-formatted token. | []      | No       |
+| <a id="clientConfig-tls-ca" href="#clientConfig-tls-ca" title="#clientConfig-tls-ca">`clientConfig.tls.ca`</a> | PEM-encoded certificate bundle or a URN referencing a secret containing the certificate bundle used to establish a TLS connection with the authorization server  (More information [here](#clientconfig)) | ""      | No       |
+| <a id="clientConfig-tls-cert" href="#clientConfig-tls-cert" title="#clientConfig-tls-cert">`clientConfig.tls.cert`</a> | PEM-encoded certificate or a URN referencing a secret containing the certificate used to establish a TLS connection with the Vault server (More information [here](#clientconfig)) | ""      | No       |
+| <a id="clientConfig-tls-key" href="#clientConfig-tls-key" title="#clientConfig-tls-key">`clientConfig.tls.key`</a> | PEM-encoded key or a URN referencing a secret containing the key used to establish a TLS connection with the Vault server. (More information [here](#clientconfig)) | ""      | No       |
+| <a id="clientConfig-tls-insecureSkipVerify" href="#clientConfig-tls-insecureSkipVerify" title="#clientConfig-tls-insecureSkipVerify">`clientConfig.tls.insecureSkipVerify`</a> | Disables TLS certificate verification when communicating with the authorization server. <br /> Useful for testing purposes but strongly discouraged for production. (More information [here](#clientconfig)) | ""      | No       |
+| <a id="clientConfig-timeoutSeconds" href="#clientConfig-timeoutSeconds" title="#clientConfig-timeoutSeconds">`clientConfig.timeoutSeconds`</a> | Defines the time before giving up requests to the authorization server.   | 5       | No       |
+| <a id="clientConfig-maxRetries" href="#clientConfig-maxRetries" title="#clientConfig-maxRetries">`clientConfig.maxRetries`</a> | Defines the number of retries for requests to authorization server that fail. | 3       | No       |
+| <a id="pkce" href="#pkce" title="#pkce">`pkce`</a> | Defines the Proof Key for Code Exchange as described in [RFC 7636](https://datatracker.ietf.org/doc/html/rfc7636). | false | No |
+| <a id="discoveryParams" href="#discoveryParams" title="#discoveryParams">`discoveryParams`</a> | A map of arbitrary query parameters to be added to the openid-configuration well-known URI during the discovery mechanism. | "" | No |
+| <a id="scopes" href="#scopes" title="#scopes">`scopes`</a> | The scopes to request. Must include `openid`. | openid | No |
+| <a id="authParams" href="#authParams" title="#authParams">`authParams`</a> | A map of the arbitrary query parameters to be passed to the Authentication Provider. <br />When a `prompt` key is set to an empty string in the AuthParams,the prompt parameter is not added to the OAuth2 authorization URL Which means the user won't be prompted for consent.| "" | No |
+| <a id="disableLogin" href="#disableLogin" title="#disableLogin">`disableLogin`</a> | Disables redirections to the authentication provider <br /> This can be useful for protecting APIs where redirecting to a login page is undesirable. | false | No |
+| <a id="loginUrl" href="#loginUrl" title="#loginUrl">`loginUrl`</a> | Defines the URL used to start authorization when needed. <br /> All other requests that are not already authorized will return a 401 Unauthorized. When left empty, all requests can start authorization. <br /> It can be a path (`/login` for example), a host and a path (`example.com/login`) or a complete URL (`https://example.com/login`). <br /> Only `http` and `https` schemes are supported.| "" | No |
+| <a id="logoutUrl" href="#logoutUrl" title="#logoutUrl">`logoutUrl`</a> |Defines the URL on which the session should be deleted in order to log users out. <br /> It can be a path (`/logout` for example), a host and a path (`example.com/logout`) or a complete URL (`https://example.com/logout`). <br /> Only `http` and `https` schemes are supported.| "" | No |
+| <a id="postLoginRedirectUrl" href="#postLoginRedirectUrl" title="#postLoginRedirectUrl">`postLoginRedirectUrl`</a> |If set and used in conjunction with `loginUrl`, the middleware will redirect to this URL after successful login. <br /> It can be a path (`/after/login` for example), a host and a path (`example.com/after/login`) or a complete URL (`https://example.com/after/login`). <br /> Only `http` and `https` schemes are supported. | "" | No |
+| <a id="postLogoutRedirectUrl" href="#postLogoutRedirectUrl" title="#postLogoutRedirectUrl">`postLogoutRedirectUrl`</a> | If set and used in conjunction with `logoutUrl`, the middleware will redirect to this URL after logout. <br /> It can be a path (`/after/logout` for example), a host and a path (`example.com/after/logout`) or a complete URL (`https://example.com/after/logout`). <br /> Only `http` and `https` schemes are supported. | "" | No |
+| <a id="backchannelLogoutUrl" href="#backchannelLogoutUrl" title="#backchannelLogoutUrl">`backchannelLogoutUrl`</a> | Defines the URL called by the OIDC provider when a user logs out (see https://openid.net/specs/openid-connect-rpinitiated-1_0.html#OpenID.BackChannel). <br /> It can be a path (`/backchannel-logout` for example), a host and a path (`example.com/backchannel-logout`) or a complete URL (`https://example.com/backchannel-logout`). <br /> Only `http` and `https` schemes are supported. <br /> This feature is currently in an experimental state and has been tested exclusively with the Keycloak OIDC provider. | "" | No |
+| <a id="backchannelLogoutSessionsRequired" href="#backchannelLogoutSessionsRequired" title="#backchannelLogoutSessionsRequired">`backchannelLogoutSessionsRequired`</a> | This specifies whether the OIDC provider includes the sid (session ID) Claim in the Logout Token to identify the user session (see https://openid.net/specs/openid-connect-backchannel-1_0.html#BCRegistration). <br/> If omitted, the default value is false. <br /> This feature is currently in an experimental state and has been tested exclusively with the Keycloak OIDC provider. | false | No |
+| <a id="stateCookie-name" href="#stateCookie-name" title="#stateCookie-name">`stateCookie.name`</a> | Defines the name of the state cookie. |"`MIDDLEWARE_NAME`-state" | No |
+| <a id="stateCookie-path" href="#stateCookie-path" title="#stateCookie-path">`stateCookie.path`</a> | Defines the URL path that must exist in the requested URL in order to send the Cookie header. <br /> The `%x2F` ('/') character is considered a directory separator, and subdirectories will match as well. <br /> For example, if `stateCookie.path` is set to `/docs`, these paths will match: `/docs`,`/docs/web/`,`/docs/web/http`.| "/" | No |
+| <a id="stateCookie-domain" href="#stateCookie-domain" title="#stateCookie-domain">`stateCookie.domain`</a> | Defines the hosts that are allowed to receive the cookie. <br />If specified, then subdomains are always included. <br /> For example, if it is set to `example.com`, then cookies are included on subdomains like `api.example.com`. | "" | No |
+| <a id="stateCookie-maxAge" href="#stateCookie-maxAge" title="#stateCookie-maxAge">`stateCookie.maxAge`</a> |Defines the number of seconds after which the state cookie should expire. <br />  A zero or negative number will expire the cookie immediately. | 600 | No |
+| <a id="stateCookie-sameSite" href="#stateCookie-sameSite" title="#stateCookie-sameSite">`stateCookie.sameSite`</a> | Informsbrowsers how they should handle the state cookie on cross-site requests. <br /> Setting it to `lax` or `strict` can provide some protection against cross-site request forgery attacks ([CSRF](https://developer.mozilla.org/en-US/docs/Glossary/CSRF)). <br /> More information [here](#samesite---accepted-values). | lax | No |
+| <a id="stateCookie-httpOnly" href="#stateCookie-httpOnly" title="#stateCookie-httpOnly">`stateCookie.httpOnly`</a> | Forbids JavaScript from accessing the cookie. <br /> For example, through the `Document.cookie` property, the `XMLHttpRequest` API, or the `Request` API. <br /> This mitigates attacks against cross-site scripting ([XSS](https://developer.mozilla.org/en-US/docs/Glossary/XSS)). | true | No |
+| <a id="stateCookie-secure" href="#stateCookie-secure" title="#stateCookie-secure">`stateCookie.secure`</a> | Defines whether the state cookie is only sent to the server when a request is made with the `https` scheme. | false | No |
+| <a id="session-name" href="#session-name" title="#session-name">`session.name`</a> | The name of the session cookie. |"`MIDDLEWARE_NAME`-session"| No |
+| <a id="session-path" href="#session-path" title="#session-path">`session.path`</a> | Defines the URL path that must exist in the requested URL in order to send the Cookie header. <br />The `%x2F` ('/'') character is considered a directory separator, and subdirectories will match as well. <br /> For example, if `stateCookie.path` is set to `/docs`, these paths will match: `/docs`,`/docs/web/`,`/docs/web/http`.| "/" | No |
+| <a id="session-domain" href="#session-domain" title="#session-domain">`session.domain`</a> | Specifies the hosts that are allowed to receive the cookie. If specified, then subdomains are always included. If specified, then subdomains are always included. <br /> For example, if it is set to `example.com`, then cookies are included on subdomains like `api.example.com`.| "" | No |
+| <a id="session-expiry" href="#session-expiry" title="#session-expiry">`session.expiry`</a> | Number of seconds after which the session should expire. A zero or negative number is **prohibited**. | 86400 (24h) | No |
+| <a id="session-sliding" href="#session-sliding" title="#session-sliding">`session.sliding`</a> | Forces the middleware to renew the session cookie each time an authenticated request is received. | true | No |
+| <a id="session-refresh" href="#session-refresh" title="#session-refresh">`session.refresh`</a> | Enables the access token refresh when it expires. | true | No |
+| <a id="session-sameSite" href="#session-sameSite" title="#session-sameSite">`session.sameSite`</a> | Inform browsers how they should handle the session cookie on cross-site requests. <br /> Setting it to `lax` or `strict` can provide some protection against cross-site request forgery attacks ([CSRF](https://developer.mozilla.org/en-US/docs/Glossary/CSRF)). <br /> More information [here](#samesite---accepted-values). | lax | No |
+| <a id="session-httpOnly" href="#session-httpOnly" title="#session-httpOnly">`session.httpOnly`</a> | Forbids JavaScript from accessing the cookie. <br /> For example, through the `Document.cookie` property, the `XMLHttpRequest` API, or the `Request` API. <br /> This mitigates attacks against cross-site scripting ([XSS](https://developer.mozilla.org/en-US/docs/Glossary/XSS)). | true | No |
+| <a id="session-secure" href="#session-secure" title="#session-secure">`session.secure`</a> | Defines whether the session cookie is only sent to the server when a request is made with the `https` scheme. | false | No |
+| <a id="session-store-redis-endpoints" href="#session-store-redis-endpoints" title="#session-store-redis-endpoints">`session.store.redis.endpoints`</a> | Endpoints of the Redis instances to connect to (example: `redis.traefik-hub.svc.cluster.local:6379`) | "" | Yes      |
+| <a id="session-store-redis-username" href="#session-store-redis-username" title="#session-store-redis-username">`session.store.redis.username`</a> | The username Traefik Hub will use to connect to Redis                                                | "" | No       |
+| <a id="session-store-redis-password" href="#session-store-redis-password" title="#session-store-redis-password">`session.store.redis.password`</a> | The password Traefik Hub will use to connect to Redis                                                | "" | No       |
+| <a id="session-store-redis-database" href="#session-store-redis-database" title="#session-store-redis-database">`session.store.redis.database`</a> | The database Traefik Hub will use to sore information (default: `0`)                                 | "" | No       |
+| <a id="session-store-redis-cluster" href="#session-store-redis-cluster" title="#session-store-redis-cluster">`session.store.redis.cluster`</a> | Enable Redis Cluster                                                                                 | "" | No       |
+| <a id="session-store-redis-tls-caBundle" href="#session-store-redis-tls-caBundle" title="#session-store-redis-tls-caBundle">`session.store.redis.tls.caBundle`</a> | Custom CA bundle                                                                                     | "" | No       |
+| <a id="session-store-redis-tls-cert" href="#session-store-redis-tls-cert" title="#session-store-redis-tls-cert">`session.store.redis.tls.cert`</a> | TLS certificate                                                                                      | "" | No       |
+| <a id="session-store-redis-tls-key" href="#session-store-redis-tls-key" title="#session-store-redis-tls-key">`session.store.redis.tls.key`</a> | TLS key                                                                                              | "" | No       |
+| <a id="session-store-redis-tls-insecureSkipVerify" href="#session-store-redis-tls-insecureSkipVerify" title="#session-store-redis-tls-insecureSkipVerify">`session.store.redis.tls.insecureSkipVerify`</a> | Allow skipping the TLS verification                                                                  | "" | No       |
+| <a id="session-store-redis-sentinel-masterSet" href="#session-store-redis-sentinel-masterSet" title="#session-store-redis-sentinel-masterSet">`session.store.redis.sentinel.masterSet`</a> | Name of the set of main nodes to use for main selection. Required when using Sentinel.               | "" | No       |
+| <a id="session-store-redis-sentinel-username" href="#session-store-redis-sentinel-username" title="#session-store-redis-sentinel-username">`session.store.redis.sentinel.username`</a> | Username to use for sentinel authentication (can be different from `username`)                       | "" | No       |
+| <a id="session-store-redis-sentinel-password" href="#session-store-redis-sentinel-password" title="#session-store-redis-sentinel-password">`session.store.redis.sentinel.password`</a> | Password to use for sentinel authentication (can be different from `password`)                       | "" | No       |
+| <a id="csrf" href="#csrf" title="#csrf">`csrf`</a> | When enabled, a CSRF cookie, named `traefikee-csrf-token`, is bound to the OIDC session to protect service from CSRF attacks. <br /> It is based on the [Signed Double Submit Cookie](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html#signed-double-submit-cookie) implementation as defined by the OWASP Foundation.<br />Moreinformation [here](#csrf). | "" | No |
+| <a id="csrf-secure" href="#csrf-secure" title="#csrf-secure">`csrf.secure`</a> | Defines whether the CSRF cookie is only sent to the server when a request is made with the `https` scheme. | false | No |
+| <a id="csrf-headerName" href="#csrf-headerName" title="#csrf-headerName">`csrf.headerName`</a> | Defines the name of the header used to send the CSRF token value received previously in the CSRF cookie. | TraefikHub-Csrf-Token | No |
 
 ### redirectUrl
 
@@ -154,19 +154,19 @@ See the following examples.
 
 | Request URL | RedirectURL| Result |
 |:------------|:-----------|:-------|
-| `http://expl.co` | `/cback` | `http://expl.co/cback`  |
+| <a id="httpexpl-co" href="#httpexpl-co" title="#httpexpl-co">`http://expl.co`</a> | `/cback` | `http://expl.co/cback`  |
 
 #### Inherit the Protocol from the Request and Uses the Redirecturl’s Domain and Path
 
 | Request URL | RedirectURL| Result |
 |:------------|:-----------|:-------|
-| `https://scur.co` | `expl.co/cback`| `https://expl.co/cback` |
+| <a id="httpsscur-co" href="#httpsscur-co" title="#httpsscur-co">`https://scur.co`</a> | `expl.co/cback`| `https://expl.co/cback` |
 
 #### Replace the Request URL with the Redirect URL since It Is an Absolute URL
 
 | Request URL | RedirectURL| Result |
 |:------------|:-----------|:-------|
-| `https://scur.co` | `http://expl.co/cback` | `http://expl.co/cback` |
+| <a id="httpsscur-co-2" href="#httpsscur-co-2" title="#httpsscur-co-2">`https://scur.co`</a> | `http://expl.co/cback` | `http://expl.co/cback` |
 
 !!! note "Supported Schemes"
 
@@ -205,20 +205,20 @@ The following functions are supported in `claims`:
 
 | Function          | Description        | Example        |
 |-------------------|--------------------|-----------------|
-| Equals            | Validates the equality of the value in `key` with `value`.                     | Equals(\`grp\`, \`admin\`)                   |
-| Prefix            | Validates the value in `key` has the prefix of `value`.                        | Prefix(\`referrer\`, \`http://example.com\`) |
-| Contains (string) | Validates the value in `key` contains `value`.                                 | Contains(\`referrer\`, \`/foo/\`)            |
-| Contains (array)  | Validates the `key` array contains the `value`.                                | Contains(\`areas\`, \`home\`)                |
-| SplitContains     | Validates the value in `key` contains the `value` once split by the separator. | SplitContains(\`scope\`, \` \`, \`writer\`)  |
-| OneOf             | Validates the `key` array contains one of the `values`.                        | OneOf(\`areas\`, \`office\`, \`lab\`)        |
+| <a id="Equals" href="#Equals" title="#Equals">Equals</a> | Validates the equality of the value in `key` with `value`.                     | Equals(\`grp\`, \`admin\`)                   |
+| <a id="Prefix" href="#Prefix" title="#Prefix">Prefix</a> | Validates the value in `key` has the prefix of `value`.                        | Prefix(\`referrer\`, \`http://example.com\`) |
+| <a id="Contains-string" href="#Contains-string" title="#Contains-string">Contains (string)</a> | Validates the value in `key` contains `value`.                                 | Contains(\`referrer\`, \`/foo/\`)            |
+| <a id="Contains-array" href="#Contains-array" title="#Contains-array">Contains (array)</a> | Validates the `key` array contains the `value`.                                | Contains(\`areas\`, \`home\`)                |
+| <a id="SplitContains" href="#SplitContains" title="#SplitContains">SplitContains</a> | Validates the value in `key` contains the `value` once split by the separator. | SplitContains(\`scope\`, \` \`, \`writer\`)  |
+| <a id="OneOf" href="#OneOf" title="#OneOf">OneOf</a> | Validates the `key` array contains one of the `values`.                        | OneOf(\`areas\`, \`office\`, \`lab\`)        |
 
 All functions can be joined by boolean operands. The supported operands are:
 
 | Operand | Description        | Example        |
 |---------|--------------------|-----------------|
-| &&      | Compares two functions and returns true only if both evaluate to true. | Equals(\`grp\`, \`admin\`) && Equals(\`active\`, \`true\`)   |
-| \|\|    | Compares two functions and returns true if either evaluate to true.    | Equals(\`grp\`, \`admin\`) \|\| Equals(\`active\`, \`true\`) |
-| !       | Returns false if the function is true, otherwise returns true.         | !Equals(\`grp\`, \`testers\`)                                |
+| <a id="row" href="#row" title="#row">&&</a> | Compares two functions and returns true only if both evaluate to true. | Equals(\`grp\`, \`admin\`) && Equals(\`active\`, \`true\`)   |
+| <a id="row-2" href="#row-2" title="#row-2">\|\|</a> | Compares two functions and returns true if either evaluate to true.    | Equals(\`grp\`, \`admin\`) \|\| Equals(\`active\`, \`true\`) |
+| <a id="row-3" href="#row-3" title="#row-3">!</a> | Returns false if the function is true, otherwise returns true.         | !Equals(\`grp\`, \`testers\`)                                |
 
 All examples will return true for the following data structure:
 
@@ -279,9 +279,9 @@ If the `key` contains a `\`, it needs to be doubled `\\`.
 
     | Example                                   | Description                                                                    |
     | ----------------------------------------- | ------------------------------------------------------------------------------ |
-    | Equals(\`id_token.grp\`, \`admin\`)            | Checks if the value of claim `grp` in the ID token is `admin`.            |
-    | Prefix(\`access_token.referrer\`, \`http://example.com\`)            | Checks if the value of claim `referrer` in the access token is prefixed by `http://example.com\`.|
-    | OneOf(\`areas\`, \`office\`, \`lab\`) | Checks if the value of claim `areas` in the ID token is `office` or `labs`.                                 |
+    | <a id="Equalsid-token-grp-admin" href="#Equalsid-token-grp-admin" title="#Equalsid-token-grp-admin">Equals(\`id_token.grp\`, \`admin\`)</a> | Checks if the value of claim `grp` in the ID token is `admin`.            |
+    | <a id="Prefixaccess-token-referrer-httpexample-com" href="#Prefixaccess-token-referrer-httpexample-com" title="#Prefixaccess-token-referrer-httpexample-com">Prefix(\`access_token.referrer\`, \`http://example.com\`)</a> | Checks if the value of claim `referrer` in the access token is prefixed by `http://example.com\`.|
+    | <a id="OneOfareas-office-lab" href="#OneOfareas-office-lab" title="#OneOfareas-office-lab">OneOf(\`areas\`, \`office\`, \`lab\`)</a> | Checks if the value of claim `areas` in the ID token is `office` or `labs`.                                 |
 
 ### clientConfig
 

@@ -57,8 +57,8 @@ labels:
 
 | Field                        | Description      | Default | Required |
 |:-----------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------|:---------|
-| `regex` | Regular expression to match and capture the path from the request URL. | | Yes |
-| `replacement` | Replacement path format, which can include captured variables.<br /> `$1x` is equivalent to `${1x}`, not `${1}x` (see [Regexp.Expand](https://golang.org/pkg/regexp/#Regexp.Expand)), so use `${1}` syntax. | | No 
+| <a id="regex" href="#regex" title="#regex">`regex`</a> | Regular expression to match and capture the path from the request URL. | | Yes |
+| <a id="replacement" href="#replacement" title="#replacement">`replacement`</a> | Replacement path format, which can include captured variables.<br /> `$1x` is equivalent to `${1x}`, not `${1}x` (see [Regexp.Expand](https://golang.org/pkg/regexp/#Regexp.Expand)), so use `${1}` syntax. | | No 
 
 !!! tip
 

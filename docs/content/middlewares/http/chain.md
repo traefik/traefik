@@ -8,8 +8,6 @@ description: "The HTTP chain middleware lets you define reusable combinations of
 When One Isn't Enough
 {: .subtitle }
 
-![Chain](../../assets/img/middleware/chain.png)
-
 The Chain middleware enables you to define reusable combinations of other pieces of middleware.
 It makes reusing the same groups easier.
 

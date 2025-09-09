@@ -13,7 +13,7 @@ A Story of key & values
 !!! info "Keys"
 
     - Keys are case-insensitive.
-    - The complete list of keys can be found in [the reference page](../../reference/dynamic-configuration/kv.md).
+    - The complete list of keys can be found in [the reference page](../../reference/routing-configuration/other-providers/kv.md).
 
 ### Routers
 

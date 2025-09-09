@@ -94,7 +94,7 @@ To use this certificate with an Ingress, the [Kubernetes Ingress](../../provider
 
 ### With an IngressRoute
 
-To use this certificate with an IngressRoute, the [Kubernetes CRD](../../providers/kubernetes-crd) provider has to be enabled.
+To use this certificate with an IngressRoute, the [Kubernetes CRD](../../providers/kubernetes-crd/) provider has to be enabled.
 
 !!! info Traefik Helm Chart
 
@@ -124,7 +124,7 @@ To use this certificate with an IngressRoute, the [Kubernetes CRD](../../provide
 
 ### With an HTTPRoute
 
-To use this certificate with an HTTPRoute, the [Kubernetes Gateway](../../routing/providers/kubernetes-gateway) provider has to be enabled.
+To use this certificate with an HTTPRoute, the [Kubernetes Gateway](../../routing/providers/kubernetes-gateway/) provider has to be enabled.
 
 !!! info Traefik Helm Chart
 

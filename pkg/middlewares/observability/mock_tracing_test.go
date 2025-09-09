@@ -37,7 +37,7 @@ func (t *mockTracer) Start(ctx context.Context, name string, opts ...trace.SpanS
 	return trace.ContextWithSpan(ctx, span), span
 }
 
-// mockSpan is an implementation of Span that preforms no operations.
+// mockSpan is an implementation of Span that performs no operations.
 type mockSpan struct {
 	embedded.Span
 

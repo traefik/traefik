@@ -162,12 +162,14 @@ gateway:
     web:           # HTTP listener that matches entryPoint `web`
       port: 80
       protocol: HTTP
-      namespacePolicy: All
+      namespacePolicy:
+        from: All
 
     websecure:         # HTTPS listener that matches entryPoint `websecure`
       port: 443
       protocol: HTTPS  # TLS terminates inside Traefik
-      namespacePolicy: All
+      namespacePolicy:
+        from: All
       mode: Terminate
       certificateRefs:    
         - kind: Secret
