@@ -187,24 +187,23 @@ accessLog:
 --accesslog.fields.headers.names.Authorization=drop
 ```
 
-
 ### Configuration Options
 
 The section below describes how to configure Traefik access logs using the static configuration.
 
 | Field      | Description    | Default | Required |
 |:-----------|:--------------------------|:--------|:---------|
-| `accesslog.filePath` | By default, the access logs are written to the standard output.<br />You can configure a file path instead using the `filePath` option.|  | No      |
-| `accesslog.format` | By default, logs are written using the Traefik Common Log Format (CLF).<br />Available formats: `common` (Traefik's extended CLF), `genericCLF` (standard CLF compatible with analyzers), or `json`.<br />If the given format is unsupported, the default (`common`) is used instead.<br />More information about CLF fields [here](#clf-format-fields). | "common" | No      |
-| `accesslog.bufferingSize` | To write the logs in an asynchronous fashion, specify a  `bufferingSize` option.<br />This option represents the number of log lines Traefik will keep in memory before writing them to the selected output.<br />In some cases, this option can greatly help performances.| 0 | No      |
-| `accesslog.addInternals` | Enables access logs for internal resources (e.g.: `ping@internal`). | false  | No      |
-| `accesslog.filters.statusCodes` | Limit the access logs to requests with a status codes in the specified range. | [ ]      | No      |
-| `accesslog.filters.retryAttempts` | Keep the access logs when at least one retry has happened. | false      | No      |
-| `accesslog.filters.minDuration` | Keep access logs when requests take longer than the specified duration (provided in seconds or as a valid duration format, see [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration)).  |  0   | No      |
-| `accesslog.fields.defaultMode` | Mode to apply by default to the access logs fields (`keep`, `redact` or `drop`). | keep | No      |
-| `accesslog.fields.names` | Set the fields list to display in the access logs (format `name:mode`).<br /> Available fields list [here](#available-fields). |  [ ]    | No      |
-| `accesslog.fields.headers.defaultMode` | Mode to apply by default to the access logs headers (`keep`, `redact` or `drop`).  | drop | No      |
-| `accesslog.fields.headers.names` | Set the headers list to display in the access logs (format `name:mode`). |   [ ]   | No      |
+| <a id="accesslog-filePath" href="#accesslog-filePath" title="#accesslog-filePath">`accesslog.filePath`</a> | By default, the access logs are written to the standard output.<br />You can configure a file path instead using the `filePath` option.|  | No      |
+| <a id="accesslog-format" href="#accesslog-format" title="#accesslog-format">`accesslog.format`</a> | By default, logs are written using the Traefik Common Log Format (CLF).<br />Available formats: [`common`](#traefik-clf-format-fields) (Traefik extended CLF), [`genericCLF`](#generic-clf-format-fields) (standard CLF compatible with analyzers), or [`json`](#json-format-fields).<br />If the given format is unsupported, the default (`common`) is used instead. | "common" | No      |
+| <a id="accesslog-bufferingSize" href="#accesslog-bufferingSize" title="#accesslog-bufferingSize">`accesslog.bufferingSize`</a> | To write the logs in an asynchronous fashion, specify a  `bufferingSize` option.<br />This option represents the number of log lines Traefik will keep in memory before writing them to the selected output.<br />In some cases, this option can greatly help performances.| 0 | No      |
+| <a id="accesslog-addInternals" href="#accesslog-addInternals" title="#accesslog-addInternals">`accesslog.addInternals`</a> | Enables access logs for internal resources (e.g.: `ping@internal`). | false  | No      |
+| <a id="accesslog-filters-statusCodes" href="#accesslog-filters-statusCodes" title="#accesslog-filters-statusCodes">`accesslog.filters.statusCodes`</a> | Limit the access logs to requests with a status codes in the specified range. | [ ]      | No      |
+| <a id="accesslog-filters-retryAttempts" href="#accesslog-filters-retryAttempts" title="#accesslog-filters-retryAttempts">`accesslog.filters.retryAttempts`</a> | Keep the access logs when at least one retry has happened. | false      | No      |
+| <a id="accesslog-filters-minDuration" href="#accesslog-filters-minDuration" title="#accesslog-filters-minDuration">`accesslog.filters.minDuration`</a> | Keep access logs when requests take longer than the specified duration (provided in seconds or as a valid duration format, see [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration)).  |  0   | No      |
+| <a id="accesslog-fields-defaultMode" href="#accesslog-fields-defaultMode" title="#accesslog-fields-defaultMode">`accesslog.fields.defaultMode`</a> | Mode to apply by default to the access logs fields (`keep`, `redact` or `drop`). | keep | No      |
+| <a id="accesslog-fields-names" href="#accesslog-fields-names" title="#accesslog-fields-names">`accesslog.fields.names`</a> | Set the fields list to display in the access logs (format `name:mode`).<br /> Available fields list [here](#available-fields). |  [ ]    | No      |
+| <a id="accesslog-fields-headers-defaultMode" href="#accesslog-fields-headers-defaultMode" title="#accesslog-fields-headers-defaultMode">`accesslog.fields.headers.defaultMode`</a> | Mode to apply by default to the access logs headers (`keep`, `redact` or `drop`).  | drop | No      |
+| <a id="accesslog-fields-headers-names" href="#accesslog-fields-headers-names" title="#accesslog-fields-headers-names">`accesslog.fields.headers.names`</a> | Set the headers list to display in the access logs (format `name:mode`). |   [ ]   | No      |
 
 ### OpenTelemetry
 
@@ -280,9 +279,10 @@ accesslog:
 | <a id="accesslog-otlp-grpc-tls-key" href="#accesslog-otlp-grpc-tls-key" title="#accesslog-otlp-grpc-tls-key">`accesslog.otlp.grpc.tls.key`</a> | The path to the key to use for the OpenTelemetry Collector.                                                                            |                                  | No       |
 | <a id="accesslog-otlp-grpc-tls-insecureSkipVerify" href="#accesslog-otlp-grpc-tls-insecureSkipVerify" title="#accesslog-otlp-grpc-tls-insecureSkipVerify">`accesslog.otlp.grpc.tls.insecureSkipVerify`</a> | Instructs the OpenTelemetry Collector to accept any certificate presented by the server regardless of the hostname in the certificate. | false                            | No       |
 
-### CLF format fields
+### Traefik CLF format fields
 
-Below the fields displayed with the CLF format:
+It's the default format provided by Traefik.
+Below the fields displayed with the Traefik CLF format:
 
 ```html
 <remote_IP_address> - <client_user_name_if_available> [<timestamp>] 
@@ -291,7 +291,17 @@ Below the fields displayed with the CLF format:
 "<Traefik_router_name>" "<Traefik_server_URL>" <request_duration_in_ms>ms
 ```
 
-### Available Fields
+### Generic CLF format fields
+
+Below the fields displayed with the generic CLF format:
+
+```html
+<remote_IP_address> - <client_user_name_if_available> [<timestamp>] 
+"<request_method> <request_path> <request_protocol>" <HTTP_status> <content-length> 
+"<request_referrer>" "<request_user_agent>"
+```
+
+### JSON format fields
 
 | Field                   | Description   |
 |-------------------------|------------------|
