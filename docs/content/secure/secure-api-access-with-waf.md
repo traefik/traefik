@@ -33,7 +33,7 @@ This configuration implements three security directives that work together to pr
 
 - **SecRuleEngine On**: Activates the WAF engine to begin processing incoming requests. Without this directive, all other rules remain inactive regardless of their configuration.
 
-- **Admin Path Protection**: The second rule blocks access to `/admin` paths by examining the request URI. This prevents unauthorized users from accessing administrative interfaces that often contain sensitive functionality like user management, system configuration, or database administration tools. The rule triggers during phase 1 (request headers processing) and applies lowercase transformation to catch variations like `/Admin` or `/ADMIN`.
+- **Admin Path Protection**: The second rule blocks all access to `/admin` paths by examining the request URI. This completely prevents access to administrative interfaces that often contain sensitive functionality like user management, system configuration, or database administration tools. The rule triggers during phase 1 (request headers processing) and applies lowercase transformation to catch variations like `/Admin` or `/ADMIN`.
 
 - **SQL Injection Detection**: The third rule scans request parameters (query strings and form data) for SQL injection patterns using Coraza's built-in detection engine. The `ARGS` variable covers query string parameters like `?id=1` and form data from POST requests like `username=admin&password=123`, but does not include cookies. SQL injection attacks attempt to manipulate database queries by injecting malicious SQL code through user inputs. When detected, the rule blocks the request and logs detailed information about the attempted attack, including which parameter contained the malicious payload.
 
