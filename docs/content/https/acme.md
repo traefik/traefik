@@ -201,6 +201,36 @@ when using the `TLS-ALPN-01` challenge, Traefik must be reachable by Let's Encry
     --certificatesresolvers.myresolver.acme.tlschallenge=true
     ```
 
+#### `Delay`
+
+_Optional, Default=0_
+
+The delay between the creation of the challenge and the validation.
+A value lower than or equal to zero means no delay.
+
+```yaml tab="File (YAML)"
+certificatesResolvers:
+  myresolver:
+    acme:
+      # ...
+      tlsChallenge:
+        # ...
+        delay: 12
+```
+
+```toml tab="File (TOML)"
+[certificatesResolvers.myresolver.acme]
+  # ...
+  [certificatesResolvers.myresolver.acme.tlsChallenge]
+    # ...
+    delay = 12
+```
+
+```bash tab="CLI"
+# ...
+--certificatesresolvers.myresolver.acme.tlschallenge.delay=12
+```
+
 ### `httpChallenge`
 
 Use the `HTTP-01` challenge to generate and renew ACME certificates by provisioning an HTTP resource under a well-known URI.
@@ -251,6 +281,8 @@ when using the `HTTP-01` challenge, `certificatesresolvers.myresolver.acme.httpc
     Redirection is fully compatible with the `HTTP-01` challenge.
 
 #### `Delay`
+
+_Optional, Default=0_
 
 The delay between the creation of the challenge and the validation.
 A value lower than or equal to zero means no delay.
@@ -995,6 +1027,39 @@ certificatesResolvers:
 ```bash tab="CLI"
 # ...
 --certificatesresolvers.myresolver.acme.emailaddresses=foo@example.com,bar@example.org
+# ...
+```
+
+### `disableCommonName`
+
+_Optional, Default=false_
+
+Disable common name inside CSR and certificates.
+
+It's recommended to disable the common name and required to get a certificate for IP.
+
+- https://letsencrypt.org/docs/profiles/#certificate-common-name
+- https://community.letsencrypt.org/t/ip-san-error-csr-contains-ip-address-in-common-name/239012/7
+
+```yaml tab="File (YAML)"
+certificatesResolvers:
+  myresolver:
+    acme:
+      # ...
+      disableCommonName: true
+      # ...
+```
+
+```toml tab="File (TOML)"
+[certificatesResolvers.myresolver.acme]
+  # ...
+  disableCommonName = true
+  # ...
+```
+
+```bash tab="CLI"
+# ...
+--certificatesresolvers.myresolver.acme.disableCommonName=true
 # ...
 ```
 
