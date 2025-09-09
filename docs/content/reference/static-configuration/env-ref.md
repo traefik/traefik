@@ -418,7 +418,7 @@ Determines if the rotated log files should be compressed using gzip. (Default: `
 Traefik log file path. Stdout is used when omitted or empty.
 
 `TRAEFIK_LOG_FORMAT`:  
-Traefik log format: json | common (Default: ```common```)
+Traefik log format: json | genericCLF | common (Default: ```common```)
 
 `TRAEFIK_LOG_LEVEL`:  
 Log level set to traefik logs. (Default: ```ERROR```)
