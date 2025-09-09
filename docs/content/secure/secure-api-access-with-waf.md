@@ -8,18 +8,7 @@ description: 'Traefik Hub API Gateway - Learn how to configure the Coraza Web Ap
 !!! info "Traefik Hub Feature"
     This middleware is available exclusively in [Traefik Hub](https://traefik.io/traefik-hub/). Learn more about [Traefik Hub's advanced features](https://doc.traefik.io/traefik-hub/api-gateway/intro).
 
-The [Coraza Web Application Firewall](https://coraza.io/) middleware in Traefik Hub API Gateway provides comprehensive protection against common web application attacks.
-
-There are two ways to implement Coraza WAF protection with Traefik:
-
-- **Native Middleware** (Traefik Hub exclusive): A high-performance native implementation available exclusively in Traefik Hub API Gateway that provides at least 23 times better performance compared to the community plugin version.
-- **Community WASM Plugin** (Open Source Traefik Proxy): Available as a [community plugin](https://plugins.traefik.io/plugins/65f2aea146079255c9ffd1ec/coraza-waf) in the Traefik Plugin Catalog for open-source Traefik Proxy users through the [coraza-http-wasm-traefik](https://github.com/jcchavezs/coraza-http-wasm-traefik) project.
-
-!!! note "Performance Advantage"
-    The native middleware implementation in Traefik Hub API Gateway delivers significantly superior performance compared to the WASM-based community plugin available for open-source Traefik Proxy. This performance boost ensures that security enforcement does not compromise application responsiveness.
-
-!!! note "Rule Compatibility"
-    The native middleware supports the Coraza rule syntax and is compatible with [OWASP Core Rule Set (CRS)](https://coreruleset.org/docs/), allowing you to leverage proven security rules maintained by the security community.
+The [Coraza Web Application Firewall](https://coraza.io/) middleware in Traefik Hub API Gateway provides comprehensive protection against common web application attacks. The middleware supports the Coraza rule syntax and is compatible with [OWASP Core Rule Set (CRS)](https://coreruleset.org/docs/), allowing you to leverage proven security rules maintained by the security community.
 
 ## Basic WAF Protection
 
