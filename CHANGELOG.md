@@ -1,3 +1,21 @@
+## [v3.5.2](https://github.com/traefik/traefik/tree/v3.5.2) (2025-09-09)
+[All Commits](https://github.com/traefik/traefik/compare/v3.5.1...v3.5.2)
+
+**Bug fixes:**
+- **[middleware,accesslogs]** Add GenericCLF log format for access logs ([#12033](https://github.com/traefik/traefik/pull/12033) by [sdelicata](https://github.com/sdelicata))
+- **[middleware]** Fix customerrors query url replacement ([#11876](https://github.com/traefik/traefik/pull/11876) by [DorianBlues](https://github.com/DorianBlues))
+- **[tls,service]** Send proxy protocol header before TLS handshake ([#11956](https://github.com/traefik/traefik/pull/11956) by [rtribotte](https://github.com/rtribotte))
+- **[webui]** Restore empty webui/static to use traefik as library ([#12025](https://github.com/traefik/traefik/pull/12025) by [youkoulayley](https://github.com/youkoulayley))
+
+**Documentation:**
+- **[accesslogs]** Fix path for access-logs header config ([#12030](https://github.com/traefik/traefik/pull/12030) by [cgatt](https://github.com/cgatt))
+- **[acme]** Fixes typo for OCSP in CLI example ([#12039](https://github.com/traefik/traefik/pull/12039) by [mloiseleur](https://github.com/mloiseleur))
+- **[docker/swarm]** Fixes typo for Swarm mode in CLI example ([#12038](https://github.com/traefik/traefik/pull/12038) by [BilalBudhani](https://github.com/BilalBudhani))
+- **[kv]** Fix broken links in KV store documentation ([#12040](https://github.com/traefik/traefik/pull/12040) by [sheddy-traefik](https://github.com/sheddy-traefik))
+- **[middleware]** Add redis options to ratelimit middleware &amp; Include distributed rate limit middleware ([#12041](https://github.com/traefik/traefik/pull/12041) by [sheddy-traefik](https://github.com/sheddy-traefik))
+- **[server]** Fix link to HTTP3 section in documentation ([#12028](https://github.com/traefik/traefik/pull/12028) by [vincentbernat](https://github.com/vincentbernat))
+- Fix migration path in documentation ([#12032](https://github.com/traefik/traefik/pull/12032) by [nmengin](https://github.com/nmengin))
+
 ## [v3.5.1](https://github.com/traefik/traefik/tree/v3.5.1) (2025-08-27)
 [All Commits](https://github.com/traefik/traefik/compare/v3.5.0...v3.5.1)
 
