@@ -398,6 +398,19 @@
       [http.serversTransports.ServersTransport0.spiffe]
         ids = ["foobar", "foobar"]
         trustDomain = "foobar"
+      [http.serversTransports.ServersTransport0.fastCGI]
+        root = "foobar"
+        splitPathRegex = "foobar"
+        maxConns = 42
+        acquireConnTimeout = "42s"
+        readTimeout = "42s"
+        writeTimeout = "42s"
+        dialTimeout = "42s"
+        logStderr = true
+        resolveSymlink = true
+        [http.serversTransports.ServersTransport0.fastCGI.env]
+          name0 = "foobar"
+          name1 = "foobar"
     [http.serversTransports.ServersTransport1]
       serverName = "foobar"
       insecureSkipVerify = true
@@ -422,6 +435,19 @@
       [http.serversTransports.ServersTransport1.spiffe]
         ids = ["foobar", "foobar"]
         trustDomain = "foobar"
+      [http.serversTransports.ServersTransport1.fastCGI]
+        root = "foobar"
+        splitPathRegex = "foobar"
+        maxConns = 42
+        acquireConnTimeout = "42s"
+        readTimeout = "42s"
+        writeTimeout = "42s"
+        dialTimeout = "42s"
+        logStderr = true
+        resolveSymlink = true
+        [http.serversTransports.ServersTransport1.fastCGI.env]
+          name0 = "foobar"
+          name1 = "foobar"
 
 [tcp]
   [tcp.routers]

@@ -398,6 +398,22 @@ type ServersTransport struct {
 	DisableHTTP2        bool                    `description:"Disables HTTP/2 for connections with backend servers." json:"disableHTTP2,omitempty" toml:"disableHTTP2,omitempty" yaml:"disableHTTP2,omitempty" export:"true"`
 	PeerCertURI         string                  `description:"Defines the URI used to match against SAN URI during the peer certificate verification." json:"peerCertURI,omitempty" toml:"peerCertURI,omitempty" yaml:"peerCertURI,omitempty" export:"true"`
 	Spiffe              *Spiffe                 `description:"Defines the SPIFFE configuration." json:"spiffe,omitempty" toml:"spiffe,omitempty" yaml:"spiffe,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	FastCGI             *FastCGI                `description:"Defines the FastCGI configuration." json:"fastCGI,omitempty" toml:"fastCGI,omitempty" yaml:"fastCGI,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
+type FastCGI struct {
+	Root               string            `description:"FastCGI application root directory." json:"root,omitempty" toml:"root,omitempty" yaml:"root,omitempty"`
+	SplitPathRegex     string            `description:"Regular expression to split SCRIPT_NAME and PATH_INFO." json:"splitPathRegex,omitempty" toml:"splitPathRegex,omitempty" yaml:"splitPathRegex,omitempty"`
+	Env                map[string]string `description:"Environment variables to set for the FastCGI process." json:"env,omitempty" toml:"env,omitempty" yaml:"env,omitempty" label:"env" file:"env" export:"true"`
+	MaxConns           int               `description:"Maximum number of simultaneous FastCGI connections." json:"maxConns" toml:"maxConns" yaml:"maxConns"`
+	AcquireConnTimeout ptypes.Duration   `description:"Timeout to wait for acquiring a connection from the pool." json:"acquireConnTimeout,omitempty" toml:"acquireConnTimeout,omitempty" yaml:"acquireConnTimeout,omitempty"`
+	ReadTimeout        ptypes.Duration   `description:"Maximum duration for reading the FastCGI response." json:"readTimeout,omitempty" toml:"readTimeout,omitempty" yaml:"readTimeout,omitempty"`
+	WriteTimeout       ptypes.Duration   `description:"Maximum duration for writing the FastCGI request." json:"writeTimeout,omitempty" toml:"writeTimeout,omitempty" yaml:"writeTimeout,omitempty"`
+	DialTimeout        ptypes.Duration   `description:"Timeout for dialing the FastCGI application backend." json:"dialTimeout,omitempty" toml:"dialTimeout,omitempty" yaml:"dialTimeout,omitempty"`
+	LogStderr          bool              `description:"Capture FastCGI stderr output to the log." json:"logStderr,omitempty" toml:"logStderr,omitempty" yaml:"logStderr,omitempty"`
+	ResolveSymlink     bool              `description:"Whether to resolve symlinks in the application root path." json:"resolveSymlink,omitempty" toml:"resolveSymlink,omitempty" yaml:"resolveSymlink,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true

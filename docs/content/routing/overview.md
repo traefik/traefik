@@ -469,6 +469,275 @@ serversTransport:
 --serversTransport.forwardingTimeouts.idleConnTimeout=1s
 ```
 
+#### `fastCGI`
+
+_Optional_
+
+`fastCGI` configures FastCGI‐specific options for the transport between Traefik and FastCGI backends.
+When this option is enabled, all other transport options under serversTransport are ignored.
+
+```yaml tab="File (YAML)"
+## Static configuration
+serversTransport:
+  fastCGI:
+    root: /var/www/html
+    splitPathRegex: ^(.+?\.php)(/.*)$
+    env:
+      FOO: bar
+      BAZ: qux
+    maxConns: 10
+    acquireConnTimeout: 2s
+    readTimeout: 15s
+    writeTimeout: 15s
+    dialTimeout: 5s
+    logStderr: true
+    resolveSymlink: true
+```
+
+```toml tab="File (TOML)"
+## Static configuration
+[serversTransport.fastCGI]
+    root              = "/var/www/html"
+    splitPathRegex    = "^(.+?\\.php)(/.*)$"
+    env               = { FOO = "bar", BAZ = "qux" }
+    maxConns          = 10
+    acquireConnTimeout = "2s"
+    readTimeout       = "15s"
+    writeTimeout      = "15s"
+    dialTimeout       = "5s"
+    logStderr         = true
+    resolveSymlink    = true
+```
+
+```bash tab="CLI"
+## Static configuration
+--serversTransport.fastCGI.root=/var/www/html
+--serversTransport.fastCGI.splitPathRegex='^(.+?\.php)(/.*)$'
+--serversTransport.fastCGI.env.FOO=bar
+--serversTransport.fastCGI.env.BAZ=qux
+--serversTransport.fastCGI.maxConns=10
+--serversTransport.fastCGI.acquireConnTimeout=2s
+--serversTransport.fastCGI.readTimeout=15s
+--serversTransport.fastCGI.writeTimeout=15s
+--serversTransport.fastCGI.dialTimeout=5s
+--serversTransport.fastCGI.logStderr=true
+--serversTransport.fastCGI.resolveSymlink=true
+```
+
+#### `fastCGI.root`
+
+_Required_
+
+`root` specifies the FastCGI application’s root directory.  
+
+```yaml tab="File (YAML)"
+serversTransport:
+  fastCGI:
+    root: /var/www/html
+```
+
+```toml tab="File (TOML)"
+[serversTransport.fastCGI]
+  root = "/var/www/html"
+
+```
+
+```bash tab="CLI"
+--serversTransport.fastCGI.root=/var/www/html
+```
+
+#### `fastCGI.splitPathRegex`
+
+_Optional, Default=^(.+\.php)(/.+)$_
+
+`splitPathRegex` is a regular expression used to split `SCRIPT_NAME` and `PATH_INFO` when dispatching requests.  
+
+```yaml tab="File (YAML)"
+serversTransport:
+  fastCGI:
+    splitPathRegex: ^(.+?\.php)(/.*)$
+```
+
+```toml tab="File (TOML)"
+[serversTransport.fastCGI]
+  splitPathRegex = "^(.+?\\.php)(/.*)$"
+```
+
+```bash tab="CLI"
+--serversTransport.fastCGI.splitPathRegex='^(.+?\.php)(/.*)$'
+```
+
+#### `fastCGI.env`
+
+_Optional_
+
+`env` defines additional environment variables to set for the FastCGI process.  
+
+```yaml tab="File (YAML)"
+serversTransport:
+  fastCGI:
+    env:
+      FOO: bar
+      BAZ: qux
+```
+
+```toml tab="File (TOML)"
+[serversTransport.fastCGI]
+  env = { FOO = "bar", BAZ = "qux" }
+```
+
+```bash tab="CLI"
+--serversTransport.fastCGI.env.FOO=bar
+--serversTransport.fastCGI.env.BAZ=qux
+```
+
+#### `fastCGI.maxConns`
+
+_Required_
+
+`maxConns` sets the pool size for FastCGI connections.  
+
+```yaml tab="File (YAML)"
+serversTransport:
+  fastCGI:
+    maxConns: 10
+```
+
+```toml tab="File (TOML)"
+[serversTransport.fastCGI]
+  maxConns = 10
+```
+
+```bash tab="CLI"
+--serversTransport.fastCGI.maxConns=10
+```
+
+#### `fastCGI.acquireConnTimeout`
+
+_Optional, Default=4s_
+
+`acquireConnTimeout` is the maximum duration to wait for acquiring a connection from the pool.
+
+```yaml tab="File (YAML)"
+serversTransport:
+  fastCGI:
+    acquireConnTimeout: 2s
+```
+
+```toml tab="File (TOML)"
+[serversTransport.fastCGI]
+  acquireConnTimeout = "2s"
+```
+
+```bash tab="CLI"
+--serversTransport.fastCGI.acquireConnTimeout=2s
+```
+
+#### `fastCGI.readTimeout`
+
+_Optional, Default=60s_
+
+`readTimeout` is the maximum duration for reading the FastCGI response.   
+
+```yaml tab="File (YAML)"
+serversTransport:
+  fastCGI:
+    readTimeout: 15s
+```
+
+```toml tab="File (TOML)"
+[serversTransport.fastCGI]
+  readTimeout = "15s"
+```
+
+```bash tab="CLI"
+--serversTransport.fastCGI.readTimeout=15s
+```
+
+#### `fastCGI.writeTimeout`
+
+_Optional, Default=60s_
+
+`writeTimeout` is the maximum duration for writing the FastCGI request.
+
+```yaml tab="File (YAML)"
+serversTransport:
+  fastCGI:
+    writeTimeout: 15s
+```
+
+```toml tab="File (TOML)"
+[serversTransport.fastCGI]
+    writeTimeout = "15s"
+```
+
+```bash tab="CLI"
+--serversTransport.fastCGI.writeTimeout=15s
+```
+
+#### `fastCGI.dialTimeout`
+
+_Optional, Default=60s_
+
+`dialTimeout` sets the timeout for dialing the FastCGI application backend.
+
+```yaml tab="File (YAML)"
+serversTransport:
+  fastCGI:
+    dialTimeout: 5s
+```
+
+```toml tab="File (TOML)"
+[serversTransport.fastCGI]
+  dialTimeout = "5s"
+```
+
+```bash tab="CLI"
+--serversTransport.fastCGI.dialTimeout=5s
+```
+
+#### `fastCGI.logStderr`
+
+_Optional, Default=false_
+
+`logStderr`, when true, captures the FastCGI stderr output and sends it to Traefik’s logs.  
+
+```yaml tab="File (YAML)"
+serversTransport:
+  fastCGI:
+    logStderr: true
+```
+
+```toml tab="File (TOML)"
+[serversTransport.fastCGI]
+  logStderr = true
+```
+
+```bash tab="CLI"
+--serversTransport.fastCGI.logStderr=true
+```
+
+#### `fastCGI.resolveSymlink`
+
+_Optional, Default=false_
+
+`resolveSymlink`, when true, resolves symbolic links in the application root path before connecting.
+
+```yaml tab="File (YAML)"
+serversTransport:
+  fastCGI:
+    resolveSymlink: true
+```
+
+```toml tab="File (TOML)"
+[serversTransport.fastCGI]
+  resolveSymlink = true
+```
+
+```bash tab="CLI"
+--serversTransport.fastCGI.resolveSymlink=true
+```
+
 ### TCP Servers Transports
 
 #### `dialTimeout`
