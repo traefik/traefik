@@ -135,6 +135,9 @@ Timeout for receiving the response headers when communicating with the ACME serv
 `--certificatesresolvers.<name>.acme.clienttimeout`:  
 Timeout for a complete HTTP transaction with the ACME server. (Default: ```120```)
 
+`--certificatesresolvers.<name>.acme.disablecommonname`:  
+Disable the common name in the CSR. (Default: ```false```)
+
 `--certificatesresolvers.<name>.acme.dnschallenge`:  
 Activate DNS-01 Challenge. (Default: ```false```)
 
@@ -199,7 +202,10 @@ Certificate profile to use.
 Storage to use. (Default: ```acme.json```)
 
 `--certificatesresolvers.<name>.acme.tlschallenge`:  
-Activate TLS-ALPN-01 Challenge. (Default: ```true```)
+Activate TLS-ALPN-01 Challenge. (Default: ```false```)
+
+`--certificatesresolvers.<name>.acme.tlschallenge.delay`:  
+Delay between the creation of the challenge and the validation. (Default: ```0```)
 
 `--certificatesresolvers.<name>.tailscale`:  
 Enables Tailscale certificate resolution. (Default: ```true```)
