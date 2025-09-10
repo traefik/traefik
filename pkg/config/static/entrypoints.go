@@ -156,11 +156,17 @@ func (t *EntryPointsTransport) SetDefaults() {
 // UDPConfig is the UDP configuration of an entry point.
 type UDPConfig struct {
 	Timeout ptypes.Duration `description:"Timeout defines how long to wait on an idle session before releasing the related resources." json:"timeout,omitempty" toml:"timeout,omitempty" yaml:"timeout,omitempty"`
+	// ProxyProtocol configures the PROXY protocol for the UDP entry point.
+	ProxyProtocol *ProxyProtocol `description:"Proxy-Protocol configuration." json:"proxyProtocol,omitempty" toml:"proxyProtocol,omitempty" yaml:"proxyProtocol,omitempty" export:"true"`
 }
+
+
 
 // SetDefaults sets the default values.
 func (u *UDPConfig) SetDefaults() {
 	u.Timeout = ptypes.Duration(DefaultUDPTimeout)
+	u.ProxyProtocol = &ProxyProtocol{}
+	u.ProxyProtocol.SetDefaults()
 }
 
 // ObservabilityConfig holds the observability configuration for an entry point.
@@ -178,18 +184,4 @@ func (o *ObservabilityConfig) SetDefaults() {
 	o.Metrics = &defaultValue
 	o.Tracing = &defaultValue
 	o.TraceVerbosity = types.MinimalVerbosity
-}
-
-// UDPConfig is the UDP configuration of an entry point.
-type UDPConfig struct {
-	Timeout ptypes.Duration `description:"Timeout defines how long to wait on an idle session before releasing the related resources." json:"timeout,omitempty" toml:"timeout,omitempty" yaml:"timeout,omitempty"`
-	// ProxyProtocol configures the PROXY protocol for the UDP entry point.
-	ProxyProtocol *ProxyProtocol `description:"Proxy-Protocol configuration." json:"proxyProtocol,omitempty" toml:"proxyProtocol,omitempty" yaml:"proxyProtocol,omitempty" export:"true"`
-}
-
-// SetDefaults sets the default values.
-func (u *UDPConfig) SetDefaults() {
-	u.Timeout = ptypes.Duration(DefaultUDPTimeout)
-	u.ProxyProtocol = &ProxyProtocol{}
-	u.ProxyProtocol.SetDefaults()
 }
