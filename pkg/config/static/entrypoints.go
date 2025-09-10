@@ -134,6 +134,13 @@ type ProxyProtocol struct {
 	TrustedIPs []string `description:"Trust only selected IPs." json:"trustedIPs,omitempty" toml:"trustedIPs,omitempty" yaml:"trustedIPs,omitempty"`
 }
 
+// SetDefaults Default values for a ProxyProtocol in the static config.
+func (p *ProxyProtocol) SetDefaults() {
+	// Keep zero-values as sensible defaults: Insecure=false, TrustedIPs=nil.
+	// This method exists so callers can safely invoke SetDefaults() regardless
+	// of whether the type is defined in the static or dynamic package.
+}
+
 // EntryPoints holds the HTTP entry point list.
 type EntryPoints map[string]*EntryPoint
 
@@ -159,8 +166,6 @@ type UDPConfig struct {
 	// ProxyProtocol configures the PROXY protocol for the UDP entry point.
 	ProxyProtocol *ProxyProtocol `description:"Proxy-Protocol configuration." json:"proxyProtocol,omitempty" toml:"proxyProtocol,omitempty" yaml:"proxyProtocol,omitempty" export:"true"`
 }
-
-
 
 // SetDefaults sets the default values.
 func (u *UDPConfig) SetDefaults() {
