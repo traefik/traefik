@@ -6,7 +6,6 @@ import (
 	"net"
 	"time"
 
-	"github.com/mholt/caddy-l4/layer4"
 	"github.com/mastercactapus/proxyprotocol"
 	"github.com/rs/zerolog/log"
 )
