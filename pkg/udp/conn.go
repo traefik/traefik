@@ -219,7 +219,7 @@ func (l *Listener) newConn(rAddr net.Addr) *Conn {
 	}
 }
 
-// allocReadBuffer gets a buffer slice from the sync.Pool
+// allocReadBuffer gets a buffer slice from the sync.Pool.
 func (l *Listener) allocReadBuffer() []byte {
 	return l.readBufferPool.Get().([]byte)
 }
@@ -228,6 +228,7 @@ func (l *Listener) allocReadBuffer() []byte {
 // The slice must have been obtained from readBufferPool using allocReadBuffer()
 // Receivers must call this when done with the buffer.
 func (l *Listener) releaseReadBuffer(buf []byte) {
+	//nolint:SA6002 // slice operation needed to reset capacity for pool reuse
 	l.readBufferPool.Put(buf[:cap(buf)])
 }
 

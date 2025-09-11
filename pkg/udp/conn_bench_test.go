@@ -42,8 +42,8 @@ func BenchmarkReadLoopAllocations(b *testing.B) {
 	// Goroutine to consume from acceptCh
 	go func() {
 		for conn := range listener.acceptCh {
-			// Drain receiveCh to prevent blocking
 			go func(c *Conn) {
+				//nolint:revive // drain receiveCh to prevent blocking
 				for range c.receiveCh {
 				}
 			}(conn)
@@ -54,7 +54,7 @@ func BenchmarkReadLoopAllocations(b *testing.B) {
 	go func() {
 		defer udpConn.Close()
 
-		for i := 0; i < b.N; i++ {
+		for range b.N {
 			_, err := clientConn.Write([]byte("test"))
 			if err != nil {
 				b.Errorf("Failed to send packet: %v", err)
