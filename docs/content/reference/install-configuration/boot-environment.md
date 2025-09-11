@@ -7,14 +7,14 @@ description: "Read the official Traefik documentation to get started with config
 
 Traefik Proxy’s configuration is divided into two main categories:
 
-- **Static Configuration**: Defines parameters that require Traefik to restart when changed. This includes entry points, providers, API/dashboard settings, and logging levels.
-- **Dynamic Configuration**: Involves elements that can be updated without restarting Traefik, such as routers, services, and middlewares.
+- **Install Configuration**: (formerly known as the static configuration) Defines parameters that require Traefik to restart when changed. This includes entry points, providers, API/dashboard settings, and logging levels.
+- **Routing Configuration**: (formerly known as the dynamic configuration) Involves elements that can be updated without restarting Traefik, such as routers, services, and middlewares.
 
-This section focuses on setting up the static configuration, which is essential for Traefik’s initial boot.
+This section focuses on setting up the install configuration, which is essential for Traefik’s initial boot.
 
 ## Configuration Methods
 
-Traefik offers multiple methods to define static configuration. 
+Traefik offers multiple methods to define install configuration. 
 
 !!! warning "Note"
     It’s crucial to choose one method and stick to it, as mixing different configuration options is not supported and can lead to unexpected behavior.
@@ -28,7 +28,7 @@ Here are the methods available for configuring the Traefik proxy:
 
 ## File
 
-You can define the static configuration in a file using formats like YAML or TOML.
+You can define the install configuration in a file using formats like YAML or TOML.
 
 ### Configuration Example
 
@@ -69,7 +69,7 @@ log:
 
 ### Configuration File
 
-At startup, Traefik searches for static configuration in a file named `traefik.yml` (or `traefik.yaml` or `traefik.toml`) in the following directories:
+At startup, Traefik searches for install configuration in a file named `traefik.yml` (or `traefik.yaml` or `traefik.toml`) in the following directories:
 
 - `/etc/traefik/`
 - `$XDG_CONFIG_HOME/`
@@ -84,7 +84,7 @@ traefik --configFile=foo/bar/myconfigfile.yml
 
 ## CLI
 
-Using the CLI, you can pass static configuration directly as command-line arguments when starting Traefik. 
+Using the CLI, you can pass install configuration directly as command-line arguments when starting Traefik. 
 
 ### Configuration Example
 
@@ -99,7 +99,7 @@ traefik \
 
 ## Environment Variables
 
-You can also set the static configuration using environment variables. Each option corresponds to an environment variable prefixed with `TRAEFIK_`.
+You can also set the install configuration using environment variables. Each option corresponds to an environment variable prefixed with `TRAEFIK_`.
 
 ### Configuration Example
 
@@ -109,7 +109,7 @@ TRAEFIK_ENTRYPOINTS_WEB_ADDRESS=":80" TRAEFIK_ENTRYPOINTS_WEBSECURE_ADDRESS=":44
 
 ## Helm
 
-When deploying Traefik Proxy using Helm in a Kubernetes cluster, the static configuration is defined in a `values.yaml` file. 
+When deploying Traefik Proxy using Helm in a Kubernetes cluster, the install configuration is defined in a `values.yaml` file. 
 
 You can find the official Traefik Helm chart on [GitHub](https://github.com/traefik/traefik-helm-chart/blob/master/traefik/VALUES.md)
 

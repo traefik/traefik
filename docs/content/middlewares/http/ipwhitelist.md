@@ -8,8 +8,6 @@ description: "Learn how to use IPWhiteList in HTTP middleware for limiting clien
 Limiting Clients to Specific IPs
 {: .subtitle }
 
-![IPWhiteList](../../assets/img/middleware/ipwhitelist.png)
-
 IPWhiteList limits allowed requests based on the client IP.
 
 !!! warning

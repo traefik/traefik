@@ -4,8 +4,9 @@ import (
 	"strconv"
 	"testing"
 
-	docker "github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/swarm"
+	containertypes "github.com/docker/docker/api/types/container"
+	networktypes "github.com/docker/docker/api/types/network"
+	swarmtypes "github.com/docker/docker/api/types/swarm"
 	"github.com/docker/go-connections/nat"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -14,7 +15,7 @@ import (
 func Test_getPort_docker(t *testing.T) {
 	testCases := []struct {
 		desc       string
-		container  docker.ContainerJSON
+		container  containertypes.InspectResponse
 		serverPort string
 		expected   string
 	}{
@@ -78,16 +79,16 @@ func Test_getPort_docker(t *testing.T) {
 
 func Test_getPort_swarm(t *testing.T) {
 	testCases := []struct {
-		service    swarm.Service
+		service    swarmtypes.Service
 		serverPort string
-		networks   map[string]*docker.NetworkResource
+		networks   map[string]*networktypes.Summary
 		expected   string
 	}{
 		{
 			service: swarmService(
 				withEndpointSpec(modeDNSRR),
 			),
-			networks:   map[string]*docker.NetworkResource{},
+			networks:   map[string]*networktypes.Summary{},
 			serverPort: "8080",
 			expected:   "8080",
 		},

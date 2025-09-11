@@ -56,7 +56,7 @@ spec:
 
 | Field                        | Description         | Default | Required |
 |:-----------------------------|:------------------------------------------|:--------|:---------|
-| `allowOrigins` | List of allowed origins. <br /> A wildcard origin `*` can also be configured to match all requests.<br /> More information [here](#alloworigins). | [] | No |
+| <a id="allowOrigins" href="#allowOrigins" title="#allowOrigins">`allowOrigins`</a> | List of allowed origins. <br /> A wildcard origin `*` can also be configured to match all requests.<br /> More information [here](#alloworigins). | [] | No |
 
 ### allowOrigins
 

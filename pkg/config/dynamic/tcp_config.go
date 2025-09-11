@@ -84,10 +84,12 @@ type RouterTCPTLSConfig struct {
 
 // TCPServersLoadBalancer holds the LoadBalancerService configuration.
 type TCPServersLoadBalancer struct {
-	ProxyProtocol    *ProxyProtocol `json:"proxyProtocol,omitempty" toml:"proxyProtocol,omitempty" yaml:"proxyProtocol,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
-	Servers          []TCPServer    `json:"servers,omitempty" toml:"servers,omitempty" yaml:"servers,omitempty" label-slice-as-struct:"server" export:"true"`
-	ServersTransport string         `json:"serversTransport,omitempty" toml:"serversTransport,omitempty" yaml:"serversTransport,omitempty" export:"true"`
+	Servers          []TCPServer `json:"servers,omitempty" toml:"servers,omitempty" yaml:"servers,omitempty" label-slice-as-struct:"server" export:"true"`
+	ServersTransport string      `json:"serversTransport,omitempty" toml:"serversTransport,omitempty" yaml:"serversTransport,omitempty" export:"true"`
 
+	// ProxyProtocol holds the PROXY Protocol configuration.
+	// Deprecated: use ServersTransport to configure ProxyProtocol instead.
+	ProxyProtocol *ProxyProtocol `json:"proxyProtocol,omitempty" toml:"proxyProtocol,omitempty" yaml:"proxyProtocol,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
 	// TerminationDelay, corresponds to the deadline that the proxy sets, after one
 	// of its connected peers indicates it has closed the writing capability of its
 	// connection, to close the reading capability as well, hence fully terminating the
@@ -131,7 +133,7 @@ type ProxyProtocol struct {
 	// Version defines the PROXY Protocol version to use.
 	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:validation:Maximum=2
-	Version int `json:"version,omitempty" toml:"version,omitempty" yaml:"version,omitempty" export:"true"`
+	Version int `description:"Defines the PROXY Protocol version to use." json:"version,omitempty" toml:"version,omitempty" yaml:"version,omitempty" export:"true"`
 }
 
 // SetDefaults Default values for a ProxyProtocol.
@@ -145,6 +147,8 @@ func (p *ProxyProtocol) SetDefaults() {
 type TCPServersTransport struct {
 	DialKeepAlive ptypes.Duration `description:"Defines the interval between keep-alive probes for an active network connection. If zero, keep-alive probes are sent with a default value (currently 15 seconds), if supported by the protocol and operating system. Network protocols or operating systems that do not support keep-alives ignore this field. If negative, keep-alive probes are disabled" json:"dialKeepAlive,omitempty" toml:"dialKeepAlive,omitempty" yaml:"dialKeepAlive,omitempty" export:"true"`
 	DialTimeout   ptypes.Duration `description:"Defines the amount of time to wait until a connection to a backend server can be established. If zero, no timeout exists." json:"dialTimeout,omitempty" toml:"dialTimeout,omitempty" yaml:"dialTimeout,omitempty" export:"true"`
+	// ProxyProtocol holds the PROXY Protocol configuration.
+	ProxyProtocol *ProxyProtocol `description:"Defines the PROXY Protocol configuration." json:"proxyProtocol,omitempty" toml:"proxyProtocol,omitempty" yaml:"proxyProtocol,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
 	// TerminationDelay, corresponds to the deadline that the proxy sets, after one
 	// of its connected peers indicates it has closed the writing capability of its
 	// connection, to close the reading capability as well, hence fully terminating the
@@ -152,6 +156,13 @@ type TCPServersTransport struct {
 	// means an infinite deadline (i.e. the reading capability is never closed).
 	TerminationDelay ptypes.Duration  `description:"Defines the delay to wait before fully terminating the connection, after one connected peer has closed its writing capability." json:"terminationDelay,omitempty" toml:"terminationDelay,omitempty" yaml:"terminationDelay,omitempty" export:"true"`
 	TLS              *TLSClientConfig `description:"Defines the TLS configuration." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
+}
+
+// SetDefaults sets the default values for a TCPServersTransport.
+func (t *TCPServersTransport) SetDefaults() {
+	t.DialTimeout = ptypes.Duration(30 * time.Second)
+	t.DialKeepAlive = ptypes.Duration(15 * time.Second)
+	t.TerminationDelay = ptypes.Duration(100 * time.Millisecond)
 }
 
 // +k8s:deepcopy-gen=true
@@ -164,11 +175,4 @@ type TLSClientConfig struct {
 	Certificates       traefiktls.Certificates `description:"Defines a list of client certificates for mTLS." json:"certificates,omitempty" toml:"certificates,omitempty" yaml:"certificates,omitempty" export:"true"`
 	PeerCertURI        string                  `description:"Defines the URI used to match against SAN URI during the peer certificate verification." json:"peerCertURI,omitempty" toml:"peerCertURI,omitempty" yaml:"peerCertURI,omitempty" export:"true"`
 	Spiffe             *Spiffe                 `description:"Defines the SPIFFE TLS configuration." json:"spiffe,omitempty" toml:"spiffe,omitempty" yaml:"spiffe,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
-}
-
-// SetDefaults sets the default values for a TCPServersTransport.
-func (t *TCPServersTransport) SetDefaults() {
-	t.DialTimeout = ptypes.Duration(30 * time.Second)
-	t.DialKeepAlive = ptypes.Duration(15 * time.Second)
-	t.TerminationDelay = ptypes.Duration(100 * time.Millisecond)
 }

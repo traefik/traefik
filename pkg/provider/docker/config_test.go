@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	docker "github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/network"
-	"github.com/docker/docker/api/types/swarm"
+	containertypes "github.com/docker/docker/api/types/container"
+	networktypes "github.com/docker/docker/api/types/network"
+	swarmtypes "github.com/docker/docker/api/types/swarm"
 	"github.com/docker/go-connections/nat"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -2746,7 +2746,7 @@ func TestDynConfBuilder_build(t *testing.T) {
 				{
 					ServiceName: "Test",
 					Name:        "Test",
-					Health:      docker.Unhealthy,
+					Health:      containertypes.Unhealthy,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -2778,7 +2778,7 @@ func TestDynConfBuilder_build(t *testing.T) {
 				{
 					ServiceName: "Test",
 					Name:        "Test",
-					Health:      docker.Unhealthy,
+					Health:      containertypes.Unhealthy,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -2825,7 +2825,7 @@ func TestDynConfBuilder_build(t *testing.T) {
 				{
 					ServiceName: "Test",
 					Name:        "Test",
-					Health:      docker.Unhealthy,
+					Health:      containertypes.Unhealthy,
 					Labels: map[string]string{
 						"traefik.tcp.routers.foo.rule": "HostSNI(`foo.bar`)",
 					},
@@ -2860,7 +2860,7 @@ func TestDynConfBuilder_build(t *testing.T) {
 				{
 					ServiceName: "Test",
 					Name:        "Test",
-					Health:      docker.Unhealthy,
+					Health:      containertypes.Unhealthy,
 					Labels: map[string]string{
 						"traefik.tcp.routers.foo.rule": "HostSNI(`foo.bar`)",
 					},
@@ -2903,7 +2903,7 @@ func TestDynConfBuilder_build(t *testing.T) {
 				{
 					ServiceName: "Test",
 					Name:        "Test",
-					Health:      docker.Unhealthy,
+					Health:      containertypes.Unhealthy,
 					Labels: map[string]string{
 						"traefik.udp.routers.foo": "true",
 					},
@@ -2941,7 +2941,7 @@ func TestDynConfBuilder_build(t *testing.T) {
 					Labels: map[string]string{
 						"traefik.udp.routers.foo": "true",
 					},
-					Health: docker.Unhealthy,
+					Health: containertypes.Unhealthy,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -3944,7 +3944,7 @@ func TestDynConfBuilder_getIPPort_docker(t *testing.T) {
 
 	testCases := []struct {
 		desc       string
-		container  docker.ContainerJSON
+		container  containertypes.InspectResponse
 		serverPort string
 		expected   expected
 	}{
@@ -4115,8 +4115,9 @@ func TestDynConfBuilder_getIPPort_docker(t *testing.T) {
 func TestDynConfBuilder_getIPAddress_docker(t *testing.T) {
 	testCases := []struct {
 		desc      string
-		container docker.ContainerJSON
+		container containertypes.InspectResponse
 		network   string
+		nodeIP    string
 		expected  string
 	}{
 		{
@@ -4192,10 +4193,10 @@ func TestDynConfBuilder_getIPAddress_docker(t *testing.T) {
 			expected: "127.0.0.1",
 		},
 		{
-			desc: "no network, no network label, mode host, node IP",
+			desc:   "no network, no network label, mode host, node IP",
+			nodeIP: "10.0.0.5",
 			container: containerJSON(
 				networkMode("host"),
-				nodeIP("10.0.0.5"),
 			),
 			expected: "10.0.0.5",
 		},
@@ -4210,6 +4211,9 @@ func TestDynConfBuilder_getIPAddress_docker(t *testing.T) {
 			}
 
 			dData := parseContainer(test.container)
+			if test.nodeIP != "" {
+				dData.NodeIP = test.nodeIP
+			}
 
 			dData.ExtraConf.Network = conf.Network
 			if len(test.network) > 0 {
@@ -4226,14 +4230,14 @@ func TestDynConfBuilder_getIPAddress_docker(t *testing.T) {
 
 func TestDynConfBuilder_getIPAddress_swarm(t *testing.T) {
 	testCases := []struct {
-		service  swarm.Service
+		service  swarmtypes.Service
 		expected string
-		networks map[string]*network.Summary
+		networks map[string]*networktypes.Summary
 	}{
 		{
 			service:  swarmService(withEndpointSpec(modeDNSRR)),
 			expected: "",
-			networks: map[string]*network.Summary{},
+			networks: map[string]*networktypes.Summary{},
 		},
 		{
 			service: swarmService(
@@ -4241,7 +4245,7 @@ func TestDynConfBuilder_getIPAddress_swarm(t *testing.T) {
 				withEndpoint(virtualIP("1", "10.11.12.13/24")),
 			),
 			expected: "10.11.12.13",
-			networks: map[string]*network.Summary{
+			networks: map[string]*networktypes.Summary{
 				"1": {
 					Name: "foo",
 				},
@@ -4259,7 +4263,7 @@ func TestDynConfBuilder_getIPAddress_swarm(t *testing.T) {
 				),
 			),
 			expected: "10.11.12.99",
-			networks: map[string]*network.Summary{
+			networks: map[string]*networktypes.Summary{
 				"1": {
 					Name: "foonet",
 				},

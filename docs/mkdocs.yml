@@ -41,7 +41,117 @@ plugins:
   - exclude:
       glob:
         - "**/include-*.md"
-
+  - redirects:
+      redirect_maps:
+        # Providers
+        'providers/overview.md': 'reference/install-configuration/providers/overview.md'
+        'providers/docker.md': 'reference/install-configuration/providers/docker.md'
+        'providers/swarm.md': 'reference/install-configuration/providers/swarm.md'
+        'providers/kubernetes-crd.md': 'reference/install-configuration/providers/kubernetes/kubernetes-crd.md'
+        'providers/kubernetes-ingress.md': 'reference/install-configuration/providers/kubernetes/kubernetes-ingress.md'
+        'providers/kubernetes-gateway.md': 'reference/install-configuration/providers/kubernetes/kubernetes-gateway.md'
+        'providers/consul-catalog.md': 'reference/install-configuration/providers/hashicorp/consul-catalog.md'
+        'providers/nomad.md': 'reference/install-configuration/providers/hashicorp/nomad.md'
+        'providers/ecs.md': 'reference/install-configuration/providers/others/ecs.md'
+        'providers/file.md': 'reference/install-configuration/providers/others/file.md'
+        'providers/consul.md': 'reference/install-configuration/providers/kv/consul.md'
+        'providers/etcd.md': 'reference/install-configuration/providers/kv/etcd.md'
+        'providers/zookeeper.md': 'reference/install-configuration/providers/kv/zk.md'
+        'providers/redis.md': 'reference/install-configuration/providers/kv/redis.md'
+        'providers/http.md': 'reference/install-configuration/providers/others/http.md'
+        # Routing
+        'routing/overview.md': 'reference/routing-configuration/dynamic-configuration-methods.md'
+        'routing/entrypoints.md': 'reference/install-configuration/entrypoints.md'
+        'routing/routers/index.md': 'reference/routing-configuration/http/router/rules-and-priority.md'
+        'routing/services/index.md': 'reference/routing-configuration/http/load-balancing/service.md'
+        'routing/providers/docker.md': 'reference/routing-configuration/other-providers/docker.md'
+        'routing/providers/swarm.md': 'reference/routing-configuration/other-providers/swarm.md'
+        'routing/providers/kubernetes-crd.md': 'reference/routing-configuration/kubernetes/crd/http/ingressroute.md'
+        'routing/providers/kubernetes-ingress.md': 'reference/routing-configuration/kubernetes/ingress.md'
+        'routing/providers/kubernetes-gateway.md': 'reference/routing-configuration/kubernetes/gateway-api.md'
+        'routing/providers/consul-catalog.md': 'reference/routing-configuration/other-providers/consul-catalog.md'
+        'routing/providers/nomad.md': 'reference/routing-configuration/other-providers/nomad.md'
+        'routing/providers/ecs.md': 'reference/routing-configuration/other-providers/ecs.md'
+        'routing/providers/kv.md': 'reference/routing-configuration/other-providers/kv.md'
+        # Observability
+        'observability/overview.md': 'observe/overview.md'
+        'observability/logs.md': 'reference/install-configuration/observability/logs-and-accesslogs.md'
+        'observability/access-logs.md': 'reference/install-configuration/observability/logs-and-accesslogs.md'
+        'observability/metrics/overview.md': 'reference/install-configuration/observability/metrics.md'
+        'observability/metrics/datadog.md': 'reference/install-configuration/observability/metrics.md'
+        'observability/metrics/influxdb2.md': 'reference/install-configuration/observability/metrics.md'
+        'observability/metrics/opentelemetry.md': 'reference/install-configuration/observability/metrics.md'
+        'observability/metrics/prometheus.md': 'reference/install-configuration/observability/metrics.md'
+        'observability/metrics/statsd.md': 'reference/install-configuration/observability/metrics.md'
+        'observability/tracing/overview.md': 'reference/install-configuration/observability/tracing.md'
+        'observability/tracing/opentelemetry.md': 'reference/install-configuration/observability/tracing.md'
+        # Operations
+        'operations/cli.md': 'reference/install-configuration/observability/healthcheck.md'
+        'operations/dashboard.md': 'reference/install-configuration/api-dashboard.md'
+        'operations/api.md': 'reference/install-configuration/api-dashboard.md'
+        'operations/ping.md': 'reference/install-configuration/observability/healthcheck.md'
+        # HTTPS & TLS
+        'https/overview.md':  'reference/routing-configuration/http/tls/overview.md'
+        'https/tls.md': 'reference/routing-configuration/http/tls/tls-certificates.md'
+        'https/acme.md': 'reference/install-configuration/tls/certificate-resolvers/acme.md'
+        'https/tailscale.md': 'reference/install-configuration/tls/certificate-resolvers/tailscale.md'
+        'https/spiffe.md': 'reference/install-configuration/tls/spiffe.md'
+        # Middlewares
+        'middlewares/overview.md': 'reference/routing-configuration/http/middlewares/overview.md'
+        # HTTP
+        'middlewares/http/overview.md': 'reference/routing-configuration/http/middlewares/overview.md'
+        'middlewares/http/addprefix.md': 'reference/routing-configuration/http/middlewares/addprefix.md'
+        'middlewares/http/basicauth.md': 'reference/routing-configuration/http/middlewares/basicauth.md'
+        'middlewares/http/buffering.md': 'reference/routing-configuration/http/middlewares/buffering.md'
+        'middlewares/http/chain.md': 'reference/routing-configuration/http/middlewares/chain.md'
+        'middlewares/http/circuitbreaker.md': 'reference/routing-configuration/http/middlewares/circuitbreaker.md'
+        'middlewares/http/compress.md': 'reference/routing-configuration/http/middlewares/compress.md'
+        'middlewares/http/contenttype.md': 'reference/routing-configuration/http/middlewares/contenttype.md'
+        'middlewares/http/digestauth.md': 'reference/routing-configuration/http/middlewares/digestauth.md'
+        'middlewares/http/errorpages.md': 'reference/routing-configuration/http/middlewares/errorpages.md'
+        'middlewares/http/forwardauth.md': 'reference/routing-configuration/http/middlewares/forwardauth.md'
+        'middlewares/http/grpcweb.md': 'reference/routing-configuration/http/middlewares/grpcweb.md'
+        'middlewares/http/headers.md': 'reference/routing-configuration/http/middlewares/headers.md'
+        'middlewares/http/ipwhitelist.md': 'reference/routing-configuration/http/middlewares/ipallowlist.md'
+        'middlewares/http/ipallowlist.md': 'reference/routing-configuration/http/middlewares/ipallowlist.md'
+        'middlewares/http/inflightreq.md': 'reference/routing-configuration/http/middlewares/inflightreq.md'
+        'middlewares/http/passtlsclientcert.md': 'reference/routing-configuration/http/middlewares/passtlsclientcert.md'
+        'middlewares/http/ratelimit.md': 'reference/routing-configuration/http/middlewares/ratelimit.md'
+        'middlewares/http/redirectregex.md': 'reference/routing-configuration/http/middlewares/redirectregex.md'
+        'middlewares/http/redirectscheme.md': 'reference/routing-configuration/http/middlewares/redirectscheme.md'
+        'middlewares/http/replacepath.md': 'reference/routing-configuration/http/middlewares/replacepath.md'
+        'middlewares/http/replacepathregex.md': 'reference/routing-configuration/http/middlewares/replacepathregex.md'
+        'middlewares/http/retry.md': 'reference/routing-configuration/http/middlewares/retry.md'
+        'middlewares/http/stripprefix.md': 'reference/routing-configuration/http/middlewares/stripprefix.md'
+        'middlewares/http/stripprefixregex.md': 'reference/routing-configuration/http/middlewares/stripprefixregex.md'
+        # TCP
+        'middlewares/tcp/overview.md': 'reference/routing-configuration/tcp/middlewares/overview.md'
+        'middlewares/tcp/inflightconn.md': 'reference/routing-configuration/tcp/middlewares/inflightconn.md'
+        'middlewares/tcp/ipwhitelist.md': 'reference/routing-configuration/tcp/middlewares/ipallowlist.md'
+        'middlewares/tcp/ipallowlist.md': 'reference/routing-configuration/tcp/middlewares/ipallowlist.md'
+        # References
+        # Static Configuration
+        'reference/static-configuration/overview.md': 'reference/install-configuration/configuration-options.md'
+        'reference/static-configuration/file.md': 'reference/install-configuration/configuration-options.md'
+        'reference/static-configuration/cli.md': 'reference/install-configuration/configuration-options.md'
+        'reference/static-configuration/env.md': 'reference/install-configuration/configuration-options.md'
+        # Dynamic Configuration
+        'reference/dynamic-configuration/file.md': 'reference/routing-configuration/other-providers/file.md'
+        'reference/dynamic-configuration/docker.md': 'reference/routing-configuration/other-providers/docker.md'
+        'reference/dynamic-configuration/kubernetes-crd.md': 'reference/routing-configuration/kubernetes/crd/http/ingressroute.md'
+        'reference/dynamic-configuration/kubernetes-gateway.md': 'reference/routing-configuration/kubernetes/gateway-api.md'
+        'reference/dynamic-configuration/consul-catalog.md': 'reference/routing-configuration/other-providers/consul-catalog.md'
+        "reference/dynamic-configuration/nomad.md": 'reference/routing-configuration/other-providers/nomad.md'
+        'reference/dynamic-configuration/ecs.md': 'reference/routing-configuration/other-providers/ecs.md'
+        'reference/dynamic-configuration/kv.md': 'reference/routing-configuration/other-providers/kv.md'
+        ## Plugins
+        'plugins/index.md': "extend/extend-traefik.md"
+        ## Migration
+        'migration/v3.md': 'migrate/v3.md'
+        'migration/v2-to-v3.md': 'migrate/v2-to-v3.md'
+        'migration/v2-to-v3-details.md': 'migrate/v2-to-v3-details.md'
+        'migration/v2.md': 'migrate/v2.md'
+        'migration/v1-to-v2.md': 'migrate/v1-to-v2.md'
 # https://squidfunk.github.io/mkdocs-material/extensions/admonition/
 # https://facelessuser.github.io/pymdown-extensions/
 markdown_extensions:
@@ -53,7 +163,6 @@ markdown_extensions:
   - pymdownx.inlinehilite
   - pymdownx.highlight:
       use_pygments: false # hljs is used instead of pygment for TOML highlighting support
-
   - pymdownx.smartsymbols
   - pymdownx.superfences
   - pymdownx.tabbed
@@ -75,7 +184,6 @@ nav:
         - 'Kubernetes': 'getting-started/kubernetes.md'
         - 'Docker': 'getting-started/docker.md'
       - 'Configuration Introduction': 'getting-started/configuration-overview.md'
-      - 'Frequently Asked Questions': 'getting-started/faq.md'
   - 'Setup':
       - 'Kubernetes': 'setup/kubernetes.md'
       - 'Docker': 'setup/docker.md'
@@ -92,130 +200,12 @@ nav:
       - 'Tracing': 'observe/tracing.md'
   - 'Extend': 'extend/extend-traefik.md'
   - 'Migrate':
-      - 'Traefik v3': 'migrate/v3.md'
+      - 'Traefik v3 minor migrations': 'migrate/v3.md'
       - 'Traefik v2 to v3':
         - 'Migration guide': 'migrate/v2-to-v3.md'
         - 'Configuration changes for v3': 'migrate/v2-to-v3-details.md'
-      - 'Traefik v2': 'migrate/v2.md'
+      - 'Traefik v2 minor migrations': 'migrate/v2.md'
       - 'Traefik v1 to v2': 'migrate/v1-to-v2.md'
-  - 'Configuration Discovery':
-      - 'Overview': 'providers/overview.md'
-      - 'Docker': 'providers/docker.md'
-      - 'Swarm': 'providers/swarm.md'
-      - 'Kubernetes IngressRoute': 'providers/kubernetes-crd.md'
-      - 'Kubernetes Ingress': 'providers/kubernetes-ingress.md'
-      - 'Kubernetes Ingress NGINX': 'reference/install-configuration/providers/kubernetes/kubernetes-ingress-nginx.md'
-      - 'Kubernetes Gateway API': 'providers/kubernetes-gateway.md'
-      - 'Consul Catalog': 'providers/consul-catalog.md'
-      - 'Nomad': 'providers/nomad.md'
-      - 'ECS': 'providers/ecs.md'
-      - 'File': 'providers/file.md'
-      - 'Consul': 'providers/consul.md'
-      - 'Etcd': 'providers/etcd.md'
-      - 'ZooKeeper': 'providers/zookeeper.md'
-      - 'Redis': 'providers/redis.md'
-      - 'HTTP': 'providers/http.md'
-  - 'Routing & Load Balancing':
-      - 'Overview': 'routing/overview.md'
-      - 'EntryPoints': 'routing/entrypoints.md'
-      - 'Routers': 'routing/routers/index.md'
-      - 'Services': 'routing/services/index.md'
-      - 'Providers':
-          - 'Docker': 'routing/providers/docker.md'
-          - 'Swarm': 'routing/providers/swarm.md'
-          - 'Kubernetes IngressRoute': 'routing/providers/kubernetes-crd.md'
-          - 'Kubernetes Ingress': 'routing/providers/kubernetes-ingress.md'
-          - 'Kubernetes Ingress NGINX': 'reference/routing-configuration/kubernetes/ingress-nginx.md'
-          - 'Kubernetes Gateway API': 'routing/providers/kubernetes-gateway.md'
-          - 'Consul Catalog': 'routing/providers/consul-catalog.md'
-          - 'Nomad': 'routing/providers/nomad.md'
-          - 'ECS': 'routing/providers/ecs.md'
-          - 'KV': 'routing/providers/kv.md'
-  - 'HTTPS & TLS':
-      - 'Overview': 'https/overview.md'
-      - 'TLS': 'https/tls.md'
-      - 'Let''s Encrypt': 'https/acme.md'
-      - 'Tailscale': 'https/tailscale.md'
-      - 'SPIFFE': 'https/spiffe.md'
-      - 'OCSP': 'https/ocsp.md'
-  - 'Middlewares':
-    - 'Overview': 'middlewares/overview.md'
-    - 'HTTP':
-        - 'Overview': 'middlewares/http/overview.md'
-        - 'AddPrefix': 'middlewares/http/addprefix.md'
-        - 'BasicAuth': 'middlewares/http/basicauth.md'
-        - 'Buffering': 'middlewares/http/buffering.md'
-        - 'Chain': 'middlewares/http/chain.md'
-        - 'CircuitBreaker': 'middlewares/http/circuitbreaker.md'
-        - 'Compress': 'middlewares/http/compress.md'
-        - 'ContentType': 'middlewares/http/contenttype.md'
-        - 'DigestAuth': 'middlewares/http/digestauth.md'
-        - 'Errors': 'middlewares/http/errorpages.md'
-        - 'ForwardAuth': 'middlewares/http/forwardauth.md'
-        - 'GrpcWeb': 'middlewares/http/grpcweb.md'
-        - 'Headers': 'middlewares/http/headers.md'
-        - 'IPWhiteList': 'middlewares/http/ipwhitelist.md'
-        - 'IPAllowList': 'middlewares/http/ipallowlist.md'
-        - 'InFlightReq': 'middlewares/http/inflightreq.md'
-        - 'PassTLSClientCert': 'middlewares/http/passtlsclientcert.md'
-        - 'RateLimit': 'middlewares/http/ratelimit.md'
-        - 'RedirectRegex': 'middlewares/http/redirectregex.md'
-        - 'RedirectScheme': 'middlewares/http/redirectscheme.md'
-        - 'ReplacePath': 'middlewares/http/replacepath.md'
-        - 'ReplacePathRegex': 'middlewares/http/replacepathregex.md'
-        - 'Retry': 'middlewares/http/retry.md'
-        - 'StripPrefix': 'middlewares/http/stripprefix.md'
-        - 'StripPrefixRegex': 'middlewares/http/stripprefixregex.md'
-    - 'TCP':
-        - 'Overview': 'middlewares/tcp/overview.md'
-        - 'InFlightConn': 'middlewares/tcp/inflightconn.md'
-        - 'IPWhiteList': 'middlewares/tcp/ipwhitelist.md'
-        - 'IPAllowList': 'middlewares/tcp/ipallowlist.md'
-  - 'Plugins & Plugin Catalog': 'plugins/index.md'
-  - 'Operations':
-      - 'CLI': 'operations/cli.md'
-      - 'Dashboard' : 'operations/dashboard.md'
-      - 'API': 'operations/api.md'
-      - 'Ping': 'operations/ping.md'
-  - 'Observability':
-      - 'Overview': 'observability/overview.md'
-      - 'Logs': 'observability/logs.md'
-      - 'Access Logs': 'observability/access-logs.md'
-      - 'Metrics':
-          - 'Overview': 'observability/metrics/overview.md'
-          - 'Datadog': 'observability/metrics/datadog.md'
-          - 'InfluxDB2': 'observability/metrics/influxdb2.md'
-          - 'OpenTelemetry': 'observability/metrics/opentelemetry.md'
-          - 'Prometheus': 'observability/metrics/prometheus.md'
-          - 'StatsD': 'observability/metrics/statsd.md'
-      - 'Tracing':
-          - 'Overview': 'observability/tracing/overview.md'
-          - 'OpenTelemetry': 'observability/tracing/opentelemetry.md'
-  - 'Security':
-        - 'Content-Length': 'security/content-length.md'
-        - 'TLS in Multi-Tenant Kubernetes': 'security/tls-certs-in-multi-tenant-kubernetes.md'
-  - 'User Guides':
-      - 'FastProxy': 'user-guides/fastproxy.md'
-      - 'Kubernetes and Let''s Encrypt': 'user-guides/crd-acme/index.md'
-      - 'Kubernetes and cert-manager': 'user-guides/cert-manager.md'
-      - 'gRPC Examples': 'user-guides/grpc.md'
-      - 'WebSocket Examples': 'user-guides/websocket.md'
-      - 'Docker':
-        - 'Basic Example': 'user-guides/docker-compose/basic-example/index.md'
-        - 'HTTPS with Let''s Encrypt':
-          - 'TLS Challenge': 'user-guides/docker-compose/acme-tls/index.md'
-          - 'HTTP Challenge': 'user-guides/docker-compose/acme-http/index.md'
-          - 'DNS Challenge': 'user-guides/docker-compose/acme-dns/index.md'
-  - 'Contributing':
-      - 'Thank You!': 'contributing/thank-you.md'
-      - 'Submitting Issues': 'contributing/submitting-issues.md'
-      - 'Submitting PRs': 'contributing/submitting-pull-requests.md'
-      - 'Security': 'contributing/submitting-security-issues.md'
-      - 'Building and Testing': 'contributing/building-testing.md'
-      - 'Documentation': 'contributing/documentation.md'
-      - 'Data Collection': 'contributing/data-collection.md'
-      - 'Advocating': 'contributing/advocating.md'
-      - 'Maintainers': 'contributing/maintainers.md'
   - 'Reference':
     - 'Install Configuration':
       - 'Boot Environment': 'reference/install-configuration/boot-environment.md'
@@ -255,7 +245,7 @@ nav:
           - 'Tracing': 'reference/install-configuration/observability/tracing.md'
           - 'Logs & AccessLogs': 'reference/install-configuration/observability/logs-and-accesslogs.md'
           - 'Health Check (CLI & Ping)': 'reference/install-configuration/observability/healthcheck.md'
-      # - 'Options List':  'reference/install-configuration/cli-options-list.md' -- Todo
+      - 'Options List': 'reference/install-configuration/configuration-options.md'
     - 'Routing Configuration':
         - 'General' :
           - 'Configuration Methods' : 'reference/routing-configuration/dynamic-configuration-methods.md'
@@ -281,6 +271,7 @@ nav:
               - 'Compress': 'reference/routing-configuration/http/middlewares/compress.md'
               - 'ContentType': 'reference/routing-configuration/http/middlewares/contenttype.md'
               - 'DigestAuth': 'reference/routing-configuration/http/middlewares/digestauth.md'
+              - '<span class="nav-link-with-icon">Distributed RateLimit <img src="https://doc.traefik.io/traefik-hub/img/ps-traefik-hub-logo-light.svg" class="menu-icon" alt="Traefik Hub API Gateway"></span>' : 'reference/routing-configuration/http/middlewares/distributed-ratelimit.md'
               - 'Errors': 'reference/routing-configuration/http/middlewares/errorpages.md'
               - 'ForwardAuth': 'reference/routing-configuration/http/middlewares/forwardauth.md'
               - 'GrpcWeb': 'reference/routing-configuration/http/middlewares/grpcweb.md'
@@ -345,6 +336,33 @@ nav:
           - 'Nomad' : 'reference/routing-configuration/other-providers/nomad.md'
           - 'ECS' : 'reference/routing-configuration/other-providers/ecs.md'
           - 'KV' : 'reference/routing-configuration/other-providers/kv.md'
+        - 'File' : 'reference/routing-configuration/other-providers/file.md'
+  - 'Security':
+        - 'Content-Length': 'security/content-length.md'
+        - 'TLS in Multi-Tenant Kubernetes': 'security/tls-certs-in-multi-tenant-kubernetes.md'
+  - 'User Guides':
+      - 'FastProxy': 'user-guides/fastproxy.md'
+      - 'Kubernetes and Let''s Encrypt': 'user-guides/crd-acme/index.md'
+      - 'Kubernetes and cert-manager': 'user-guides/cert-manager.md'
+      - 'gRPC Examples': 'user-guides/grpc.md'
+      - 'WebSocket Examples': 'user-guides/websocket.md'
+      - 'Docker':
+        - 'Basic Example': 'user-guides/docker-compose/basic-example/index.md'
+        - 'HTTPS with Let''s Encrypt':
+          - 'TLS Challenge': 'user-guides/docker-compose/acme-tls/index.md'
+          - 'HTTP Challenge': 'user-guides/docker-compose/acme-http/index.md'
+          - 'DNS Challenge': 'user-guides/docker-compose/acme-dns/index.md'
   - 'Deprecation Notices':
       - 'Releases': 'deprecation/releases.md'
       - 'Features': 'deprecation/features.md'
+  - 'Contributing':
+      - 'Thank You!': 'contributing/thank-you.md'
+      - 'Submitting Issues': 'contributing/submitting-issues.md'
+      - 'Submitting PRs': 'contributing/submitting-pull-requests.md'
+      - 'Security': 'contributing/submitting-security-issues.md'
+      - 'Building and Testing': 'contributing/building-testing.md'
+      - 'Documentation': 'contributing/documentation.md'
+      - 'Data Collection': 'contributing/data-collection.md'
+      - 'Advocating': 'contributing/advocating.md'
+      - 'Maintainers': 'contributing/maintainers.md'
+  - 'Frequently Asked Questions': 'getting-started/faq.md'

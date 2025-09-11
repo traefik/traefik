@@ -96,9 +96,9 @@ labels:
 
 | Field   | Description  | Default    | Required |
 |:------------------|:--------------------|:-----------------------------------------------|:---------|
-|`passthrough`| Defines whether the requests should be forwarded "as is", keeping all data encrypted. | false | No |
-|`options`| enables fine-grained control of the TLS parameters. It refers to a [TLS Options](../http/tls/tls-certificates.md#tls-options) and will be applied only if a `HostSNI` rule is defined. | "" | No |
-|`domains`| Defines a set of SANs (alternative domains) for each main domain. Every domain must have A/AAAA records pointing to Traefik. Each domain & SAN will lead to a certificate request.| [] | No |
-|`certResolver`| If defined, Traefik will try to generate certificates based on routers `Host` & `HostSNI` rules. | "" | No |
+| <a id="passthrough" href="#passthrough" title="#passthrough">`passthrough`</a> | Defines whether the requests should be forwarded "as is", keeping all data encrypted. | false | No |
+| <a id="options" href="#options" title="#options">`options`</a> | enables fine-grained control of the TLS parameters. It refers to a [TLS Options](../http/tls/tls-certificates.md#tls-options) and will be applied only if a `HostSNI` rule is defined. | "" | No |
+| <a id="domains" href="#domains" title="#domains">`domains`</a> | Defines a set of SANs (alternative domains) for each main domain. Every domain must have A/AAAA records pointing to Traefik. Each domain & SAN will lead to a certificate request.| [] | No |
+| <a id="certResolver" href="#certResolver" title="#certResolver">`certResolver`</a> | If defined, Traefik will try to generate certificates based on routers `Host` & `HostSNI` rules. | "" | No |
 
 {!traefik-for-business-applications.md!}

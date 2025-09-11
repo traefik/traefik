@@ -63,9 +63,9 @@ spec:
 
 | Field                        | Description                                                                                                                                                                                                | Default | Required |
 |:-----------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------|:---------|
-| `regex` | The `regex` option is the regular expression to match and capture elements from the request URL.| "" | Yes |
-| `permanent` | Enable a permanent redirection. | false | No |
-| `replacement` | The `replacement` option defines how to modify the URL to have the new target URL..<br /> `$1x` is equivalent to `${1x}`, not `${1}x` (see [Regexp.Expand](https://golang.org/pkg/regexp/#Regexp.Expand)), so use `${1}` syntax. | "" | No |
+| <a id="regex" href="#regex" title="#regex">`regex`</a> | The `regex` option is the regular expression to match and capture elements from the request URL.| "" | Yes |
+| <a id="permanent" href="#permanent" title="#permanent">`permanent`</a> | Enable a permanent redirection. | false | No |
+| <a id="replacement" href="#replacement" title="#replacement">`replacement`</a> | The `replacement` option defines how to modify the URL to have the new target URL..<br /> `$1x` is equivalent to `${1x}`, not `${1}x` (see [Regexp.Expand](https://golang.org/pkg/regexp/#Regexp.Expand)), so use `${1}` syntax. | "" | No |
 
 ### `regex`
 

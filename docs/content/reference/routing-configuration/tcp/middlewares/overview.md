@@ -108,5 +108,5 @@ spec:
 
 | Middleware                                | Purpose                                           | Area                        |
 |-------------------------------------------|---------------------------------------------------|-----------------------------|
-| [InFlightConn](inflightconn.md)           | Limits the number of simultaneous connections.    | Security, Request lifecycle |
-| [IPAllowList](ipallowlist.md)             | Limit the allowed client IPs.                     | Security, Request lifecycle |
+| <a id="InFlightConn" href="#InFlightConn" title="#InFlightConn">[InFlightConn](inflightconn.md)</a> | Limits the number of simultaneous connections.    | Security, Request lifecycle |
+| <a id="IPAllowList" href="#IPAllowList" title="#IPAllowList">[IPAllowList](ipallowlist.md)</a> | Limit the allowed client IPs.                     | Security, Request lifecycle |

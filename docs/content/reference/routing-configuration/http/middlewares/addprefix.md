@@ -3,8 +3,6 @@ title: "Traefik AddPrefix Documentation"
 description: "Learn how to implement the HTTP AddPrefix middleware in Traefik Proxy to updates request paths before being forwarded. Read the technical documentation."
 ---
 
-![AddPrefix](../../../../assets/img/middleware/addprefix.png)
-
 The `addPrefix` middleware updates the path of a request before forwarding it.
 
 ## Configuration Examples
@@ -56,4 +54,4 @@ spec:
 
 | Field  | Description                                                                                                                                                                                                | Default | Required |
 |:-----------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------|:---------|
-| `prefix` | String to add **before** the current path in the requested URL. It should include a leading slash (`/`). | "" | Yes |
+| <a id="prefix" href="#prefix" title="#prefix">`prefix`</a> | String to add **before** the current path in the requested URL. It should include a leading slash (`/`). | "" | Yes |

@@ -1522,6 +1522,11 @@ func (in *ServersTransportTCPSpec) DeepCopyInto(out *ServersTransportTCPSpec) {
 		*out = new(intstr.IntOrString)
 		**out = **in
 	}
+	if in.ProxyProtocol != nil {
+		in, out := &in.ProxyProtocol, &out.ProxyProtocol
+		*out = new(dynamic.ProxyProtocol)
+		**out = **in
+	}
 	if in.TerminationDelay != nil {
 		in, out := &in.TerminationDelay, &out.TerminationDelay
 		*out = new(intstr.IntOrString)

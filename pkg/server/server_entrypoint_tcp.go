@@ -12,6 +12,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -56,15 +57,19 @@ type connState struct {
 
 type httpForwarder struct {
 	net.Listener
-	connChan chan net.Conn
-	errChan  chan error
+
+	connChan  chan net.Conn
+	errChan   chan error
+	closeChan chan struct{}
+	closeOnce sync.Once
 }
 
 func newHTTPForwarder(ln net.Listener) *httpForwarder {
 	return &httpForwarder{
-		Listener: ln,
-		connChan: make(chan net.Conn),
-		errChan:  make(chan error),
+		Listener:  ln,
+		connChan:  make(chan net.Conn),
+		errChan:   make(chan error),
+		closeChan: make(chan struct{}),
 	}
 }
 
@@ -76,11 +81,21 @@ func (h *httpForwarder) ServeTCP(conn tcp.WriteCloser) {
 // Accept retrieves a served connection in ServeTCP.
 func (h *httpForwarder) Accept() (net.Conn, error) {
 	select {
+	case <-h.closeChan:
+		return nil, errors.New("listener closed")
 	case conn := <-h.connChan:
 		return conn, nil
 	case err := <-h.errChan:
 		return nil, err
 	}
+}
+
+// Close closes the wrapped listener and unblocks Accept.
+func (h *httpForwarder) Close() error {
+	h.closeOnce.Do(func() {
+		close(h.closeChan)
+	})
+	return h.Listener.Close()
 }
 
 // TCPEntryPoints holds a map of TCPEntryPoint (the entrypoint names being the keys).
@@ -162,8 +177,9 @@ type TCPEntryPoint struct {
 	tracker                *connectionTracker
 	httpServer             *httpServer
 	httpsServer            *httpServer
-
-	http3Server *http3server
+	http3Server            *http3server
+	// inShutdown reports whether the Shutdown method has been called.
+	inShutdown atomic.Bool
 }
 
 // NewTCPEntryPoint creates a new TCPEntryPoint.
@@ -172,31 +188,31 @@ func NewTCPEntryPoint(ctx context.Context, name string, config *static.EntryPoin
 
 	listener, err := buildListener(ctx, name, config)
 	if err != nil {
-		return nil, fmt.Errorf("error preparing server: %w", err)
+		return nil, fmt.Errorf("building listener: %w", err)
 	}
 
 	rt, err := tcprouter.NewRouter()
 	if err != nil {
-		return nil, fmt.Errorf("error preparing tcp router: %w", err)
+		return nil, fmt.Errorf("creating TCP router: %w", err)
 	}
 
 	reqDecorator := requestdecorator.New(hostResolverConfig)
 
-	httpServer, err := createHTTPServer(ctx, listener, config, true, reqDecorator)
+	httpServer, err := newHTTPServer(ctx, listener, config, true, reqDecorator)
 	if err != nil {
-		return nil, fmt.Errorf("error preparing http server: %w", err)
+		return nil, fmt.Errorf("creating HTTP server: %w", err)
 	}
 
 	rt.SetHTTPForwarder(httpServer.Forwarder)
 
-	httpsServer, err := createHTTPServer(ctx, listener, config, false, reqDecorator)
+	httpsServer, err := newHTTPServer(ctx, listener, config, false, reqDecorator)
 	if err != nil {
-		return nil, fmt.Errorf("error preparing https server: %w", err)
+		return nil, fmt.Errorf("creating HTTPS server: %w", err)
 	}
 
 	h3Server, err := newHTTP3Server(ctx, name, config, httpsServer)
 	if err != nil {
-		return nil, fmt.Errorf("error preparing http3 server: %w", err)
+		return nil, fmt.Errorf("creating HTTP3 server: %w", err)
 	}
 
 	rt.SetHTTPSForwarder(httpsServer.Forwarder)
@@ -226,6 +242,11 @@ func (e *TCPEntryPoint) Start(ctx context.Context) {
 
 	for {
 		conn, err := e.listener.Accept()
+		// As the Shutdown method has been called, an error is expected.
+		// Thus, it is not necessary to log it.
+		if err != nil && e.inShutdown.Load() {
+			return
+		}
 		if err != nil {
 			logger.Error().Err(err).Send()
 
@@ -276,6 +297,8 @@ func (e *TCPEntryPoint) Start(ctx context.Context) {
 // Shutdown stops the TCP connections.
 func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
 	logger := log.Ctx(ctx)
+
+	e.inShutdown.Store(true)
 
 	reqAcceptGraceTimeOut := time.Duration(e.transportConfiguration.LifeCycle.RequestAcceptGraceTimeout)
 	if reqAcceptGraceTimeOut > 0 {
@@ -461,6 +484,18 @@ func buildProxyProtocolListener(ctx context.Context, entryPoint *static.EntryPoi
 	return proxyListener, nil
 }
 
+type onceCloseListener struct {
+	net.Listener
+
+	once     sync.Once
+	closeErr error
+}
+
+func (oc *onceCloseListener) Close() error {
+	oc.once.Do(func() { oc.closeErr = oc.Listener.Close() })
+	return oc.closeErr
+}
+
 func buildListener(ctx context.Context, name string, config *static.EntryPoint) (net.Listener, error) {
 	var listener net.Listener
 	var err error
@@ -496,7 +531,7 @@ func buildListener(ctx context.Context, name string, config *static.EntryPoint) 
 			return nil, fmt.Errorf("error creating proxy protocol listener: %w", err)
 		}
 	}
-	return listener, nil
+	return &onceCloseListener{Listener: listener}, nil
 }
 
 func newConnectionTracker(openConnectionsGauge gokitmetrics.Gauge) *connectionTracker {
@@ -592,7 +627,7 @@ type httpServer struct {
 	Switcher  *middlewares.HTTPHandlerSwitcher
 }
 
-func createHTTPServer(ctx context.Context, ln net.Listener, configuration *static.EntryPoint, withH2c bool, reqDecorator *requestdecorator.RequestDecorator) (*httpServer, error) {
+func newHTTPServer(ctx context.Context, ln net.Listener, configuration *static.EntryPoint, withH2c bool, reqDecorator *requestdecorator.RequestDecorator) (*httpServer, error) {
 	if configuration.HTTP2.MaxConcurrentStreams < 0 {
 		return nil, errors.New("max concurrent streams value must be greater than or equal to zero")
 	}
@@ -692,7 +727,7 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 	go func() {
 		err := serverHTTP.Serve(listener)
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Ctx(ctx).Error().Err(err).Msg("Error while starting server")
+			log.Ctx(ctx).Error().Err(err).Msg("Error while running HTTP server")
 		}
 	}()
 	return &httpServer{

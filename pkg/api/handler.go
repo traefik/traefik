@@ -156,7 +156,7 @@ func extractType(element interface{}) string {
 	for i := range v.NumField() {
 		field := v.Field(i)
 
-		if field.Kind() == reflect.Map && field.Type().Elem() == reflect.TypeOf(dynamic.PluginConf{}) {
+		if field.Kind() == reflect.Map && field.Type().Elem() == reflect.TypeFor[dynamic.PluginConf]() {
 			if keys := field.MapKeys(); len(keys) == 1 {
 				return keys[0].String()
 			}

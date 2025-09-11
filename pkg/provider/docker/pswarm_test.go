@@ -5,32 +5,32 @@ import (
 	"testing"
 	"time"
 
-	"github.com/docker/docker/api/types/network"
-	"github.com/docker/docker/api/types/swarm"
+	networktypes "github.com/docker/docker/api/types/network"
+	swarmtypes "github.com/docker/docker/api/types/swarm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestListTasks(t *testing.T) {
 	testCases := []struct {
-		service       swarm.Service
-		tasks         []swarm.Task
+		service       swarmtypes.Service
+		tasks         []swarmtypes.Task
 		isGlobalSVC   bool
 		expectedTasks []string
-		networks      map[string]*network.Summary
+		networks      map[string]*networktypes.Summary
 	}{
 		{
 			service: swarmService(serviceName("container")),
-			tasks: []swarm.Task{
+			tasks: []swarmtypes.Task{
 				swarmTask("id1",
 					taskSlot(1),
 					taskNetworkAttachment("1", "network1", "overlay", []string{"127.0.0.1"}),
-					taskStatus(taskState(swarm.TaskStateRunning)),
+					taskStatus(taskState(swarmtypes.TaskStateRunning)),
 				),
 				swarmTask("id2",
 					taskSlot(2),
 					taskNetworkAttachment("1", "network1", "overlay", []string{"127.0.0.2"}),
-					taskStatus(taskState(swarm.TaskStatePending)),
+					taskStatus(taskState(swarmtypes.TaskStatePending)),
 				),
 				swarmTask("id3",
 					taskSlot(3),
@@ -39,12 +39,12 @@ func TestListTasks(t *testing.T) {
 				swarmTask("id4",
 					taskSlot(4),
 					taskNetworkAttachment("1", "network1", "overlay", []string{"127.0.0.4"}),
-					taskStatus(taskState(swarm.TaskStateRunning)),
+					taskStatus(taskState(swarmtypes.TaskStateRunning)),
 				),
 				swarmTask("id5",
 					taskSlot(5),
 					taskNetworkAttachment("1", "network1", "overlay", []string{"127.0.0.5"}),
-					taskStatus(taskState(swarm.TaskStateFailed)),
+					taskStatus(taskState(swarmtypes.TaskStateFailed)),
 				),
 			},
 			isGlobalSVC: false,
@@ -52,7 +52,7 @@ func TestListTasks(t *testing.T) {
 				"container.1",
 				"container.4",
 			},
-			networks: map[string]*network.Summary{
+			networks: map[string]*networktypes.Summary{
 				"1": {
 					Name: "foo",
 				},
@@ -89,15 +89,15 @@ func TestListTasks(t *testing.T) {
 func TestSwarmProvider_listServices(t *testing.T) {
 	testCases := []struct {
 		desc             string
-		services         []swarm.Service
-		tasks            []swarm.Task
+		services         []swarmtypes.Service
+		tasks            []swarmtypes.Task
 		dockerVersion    string
-		networks         []network.Summary
+		networks         []networktypes.Summary
 		expectedServices []string
 	}{
 		{
 			desc: "Should return no service due to no networks defined",
-			services: []swarm.Service{
+			services: []swarmtypes.Service{
 				swarmService(
 					serviceName("service1"),
 					serviceLabels(map[string]string{
@@ -118,12 +118,12 @@ func TestSwarmProvider_listServices(t *testing.T) {
 					withEndpointSpec(modeDNSRR)),
 			},
 			dockerVersion:    "1.30",
-			networks:         []network.Summary{},
+			networks:         []networktypes.Summary{},
 			expectedServices: []string{},
 		},
 		{
 			desc: "Should return only service1",
-			services: []swarm.Service{
+			services: []swarmtypes.Service{
 				swarmService(
 					serviceName("service1"),
 					serviceLabels(map[string]string{
@@ -144,7 +144,7 @@ func TestSwarmProvider_listServices(t *testing.T) {
 					withEndpointSpec(modeDNSRR)),
 			},
 			dockerVersion: "1.30",
-			networks: []network.Summary{
+			networks: []networktypes.Summary{
 				{
 					Name:       "network_name",
 					ID:         "yk6l57rfwizjzxxzftn4amaot",
@@ -156,8 +156,8 @@ func TestSwarmProvider_listServices(t *testing.T) {
 					Ingress:    false,
 					ConfigOnly: false,
 					Options: map[string]string{
-						"com.docker.network.driver.overlay.vxlanid_list": "4098",
-						"com.docker.network.enable_ipv6":                 "false",
+						"com.docker.networktypes.driver.overlay.vxlanid_list": "4098",
+						"com.docker.networktypes.enable_ipv6":                 "false",
 					},
 					Labels: map[string]string{
 						"com.docker.stack.namespace": "test",
@@ -170,7 +170,7 @@ func TestSwarmProvider_listServices(t *testing.T) {
 		},
 		{
 			desc: "Should return service1 and service2",
-			services: []swarm.Service{
+			services: []swarmtypes.Service{
 				swarmService(
 					serviceName("service1"),
 					serviceLabels(map[string]string{
@@ -188,18 +188,18 @@ func TestSwarmProvider_listServices(t *testing.T) {
 					}),
 					withEndpointSpec(modeDNSRR)),
 			},
-			tasks: []swarm.Task{
+			tasks: []swarmtypes.Task{
 				swarmTask("id1",
 					taskNetworkAttachment("yk6l57rfwizjzxxzftn4amaot", "network_name", "overlay", []string{"127.0.0.1"}),
-					taskStatus(taskState(swarm.TaskStateRunning)),
+					taskStatus(taskState(swarmtypes.TaskStateRunning)),
 				),
 				swarmTask("id2",
 					taskNetworkAttachment("yk6l57rfwizjzxxzftn4amaot", "network_name", "overlay", []string{"127.0.0.1"}),
-					taskStatus(taskState(swarm.TaskStateRunning)),
+					taskStatus(taskState(swarmtypes.TaskStateRunning)),
 				),
 			},
 			dockerVersion: "1.30",
-			networks: []network.Summary{
+			networks: []networktypes.Summary{
 				{
 					Name:       "network_name",
 					ID:         "yk6l57rfwizjzxxzftn4amaot",
@@ -211,8 +211,8 @@ func TestSwarmProvider_listServices(t *testing.T) {
 					Ingress:    false,
 					ConfigOnly: false,
 					Options: map[string]string{
-						"com.docker.network.driver.overlay.vxlanid_list": "4098",
-						"com.docker.network.enable_ipv6":                 "false",
+						"com.docker.networktypes.driver.overlay.vxlanid_list": "4098",
+						"com.docker.networktypes.enable_ipv6":                 "false",
 					},
 					Labels: map[string]string{
 						"com.docker.stack.namespace": "test",
@@ -253,15 +253,16 @@ func TestSwarmProvider_listServices(t *testing.T) {
 
 func TestSwarmProvider_parseService_task(t *testing.T) {
 	testCases := []struct {
-		service     swarm.Service
-		tasks       []swarm.Task
+		service     swarmtypes.Service
+		tasks       []swarmtypes.Task
+		nodes       []swarmtypes.Node
 		isGlobalSVC bool
 		expected    map[string]dockerData
-		networks    map[string]*network.Summary
+		networks    map[string]*networktypes.Summary
 	}{
 		{
 			service: swarmService(serviceName("container")),
-			tasks: []swarm.Task{
+			tasks: []swarmtypes.Task{
 				swarmTask("id1", taskSlot(1)),
 				swarmTask("id2", taskSlot(2)),
 				swarmTask("id3", taskSlot(3)),
@@ -278,7 +279,7 @@ func TestSwarmProvider_parseService_task(t *testing.T) {
 					Name: "container.3",
 				},
 			},
-			networks: map[string]*network.Summary{
+			networks: map[string]*networktypes.Summary{
 				"1": {
 					Name: "foo",
 				},
@@ -286,7 +287,7 @@ func TestSwarmProvider_parseService_task(t *testing.T) {
 		},
 		{
 			service: swarmService(serviceName("container")),
-			tasks: []swarm.Task{
+			tasks: []swarmtypes.Task{
 				swarmTask("id1"),
 				swarmTask("id2"),
 				swarmTask("id3"),
@@ -303,7 +304,7 @@ func TestSwarmProvider_parseService_task(t *testing.T) {
 					Name: "container.id3",
 				},
 			},
-			networks: map[string]*network.Summary{
+			networks: map[string]*networktypes.Summary{
 				"1": {
 					Name: "foo",
 				},
@@ -317,12 +318,12 @@ func TestSwarmProvider_parseService_task(t *testing.T) {
 					virtualIP("1", ""),
 				),
 			),
-			tasks: []swarm.Task{
+			tasks: []swarmtypes.Task{
 				swarmTask(
 					"id1",
 					taskNetworkAttachment("1", "vlan", "macvlan", []string{"127.0.0.1"}),
 					taskStatus(
-						taskState(swarm.TaskStateRunning),
+						taskState(swarmtypes.TaskStateRunning),
 						taskContainerStatus("c1"),
 					),
 				),
@@ -341,9 +342,37 @@ func TestSwarmProvider_parseService_task(t *testing.T) {
 					},
 				},
 			},
-			networks: map[string]*network.Summary{
+			networks: map[string]*networktypes.Summary{
 				"1": {
 					Name: "vlan",
+				},
+			},
+		},
+		{
+			service: swarmService(serviceName("container")),
+			tasks: []swarmtypes.Task{
+				swarmTask("id1",
+					taskSlot(1),
+					taskNodeID("id1"),
+				),
+			},
+			nodes: []swarmtypes.Node{
+				{
+					ID: "id1",
+					Status: swarmtypes.NodeStatus{
+						Addr: "10.11.12.13",
+					},
+				},
+			},
+			expected: map[string]dockerData{
+				"id1": {
+					Name:   "container.1",
+					NodeIP: "10.11.12.13",
+				},
+			},
+			networks: map[string]*networktypes.Summary{
+				"1": {
+					Name: "foo",
 				},
 			},
 		},
@@ -359,10 +388,18 @@ func TestSwarmProvider_parseService_task(t *testing.T) {
 			dData, err := p.parseService(t.Context(), test.service, test.networks)
 			require.NoError(t, err)
 
+			dockerClient := &fakeServicesClient{
+				tasks: test.tasks,
+				nodes: test.nodes,
+			}
+
 			for _, task := range test.tasks {
-				taskDockerData := parseTasks(t.Context(), task, dData, test.networks, test.isGlobalSVC)
+				taskDockerData, err := parseTasks(t.Context(), dockerClient, task, dData, test.networks, test.isGlobalSVC)
+				require.NoError(t, err)
+
 				expected := test.expected[task.ID]
 				assert.Equal(t, expected.Name, taskDockerData.Name)
+				assert.Equal(t, expected.NodeIP, taskDockerData.NodeIP)
 			}
 		})
 	}

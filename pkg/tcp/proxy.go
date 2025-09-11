@@ -2,34 +2,25 @@ package tcp
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"net"
 	"syscall"
 	"time"
 
-	"github.com/pires/go-proxyproto"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 )
 
 // Proxy forwards a TCP request to a TCP service.
 type Proxy struct {
-	address       string
-	proxyProtocol *dynamic.ProxyProtocol
-	dialer        Dialer
+	address string
+	dialer  Dialer
 }
 
 // NewProxy creates a new Proxy.
-func NewProxy(address string, proxyProtocol *dynamic.ProxyProtocol, dialer Dialer) (*Proxy, error) {
-	if proxyProtocol != nil && (proxyProtocol.Version < 1 || proxyProtocol.Version > 2) {
-		return nil, fmt.Errorf("unknown proxyProtocol version: %d", proxyProtocol.Version)
-	}
-
+func NewProxy(address string, dialer Dialer) (*Proxy, error) {
 	return &Proxy{
-		address:       address,
-		proxyProtocol: proxyProtocol,
-		dialer:        dialer,
+		address: address,
+		dialer:  dialer,
 	}, nil
 }
 
@@ -52,14 +43,6 @@ func (p *Proxy) ServeTCP(conn WriteCloser) {
 	// maybe not needed, but just in case
 	defer connBackend.Close()
 	errChan := make(chan error)
-
-	if p.proxyProtocol != nil && p.proxyProtocol.Version > 0 && p.proxyProtocol.Version < 3 {
-		header := proxyproto.HeaderProxyFromAddrs(byte(p.proxyProtocol.Version), conn.RemoteAddr(), conn.LocalAddr())
-		if _, err := header.WriteTo(connBackend); err != nil {
-			log.Error().Err(err).Msg("Error while writing TCP proxy protocol headers to backend connection")
-			return
-		}
-	}
 
 	go p.connCopy(conn, connBackend, errChan)
 	go p.connCopy(connBackend, conn, errChan)

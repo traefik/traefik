@@ -168,4 +168,4 @@ spec:
 
 | Field | Description | Default | Required |
 |:------|:------------|:--------|:---------|
-| `middlewares`  | List of middlewares to chain.<br /> The middlewares have to be in the same namespace as the `chain` middleware. | [] | Yes |
+| <a id="middlewares" href="#middlewares" title="#middlewares">`middlewares`</a> | List of middlewares to chain.<br /> The middlewares have to be in the same namespace as the `chain` middleware. | [] | Yes |

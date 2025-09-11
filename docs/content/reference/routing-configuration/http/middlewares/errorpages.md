@@ -3,8 +3,6 @@ title: "Traefik Errors Documentation"
 description: "In Traefik Proxy, the Errors middleware returns custom pages according to configured ranges of HTTP Status codes. Read the technical documentation."
 ---
 
-![Errors](../../../../assets/img/middleware/errorpages.png)
-
 The `errors` middleware returns a custom page in lieu of the default, according to configured ranges of HTTP Status codes.
 
 ## Configuration Examples
@@ -83,9 +81,9 @@ spec:
 
 | Field      | Description                                                                                                                                                                                 | Default | Required |
 |:-----------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------|:---------|
-| `status` | Defines which status or range of statuses should result in an error page.<br/> The status code ranges are inclusive (`505-599` will trigger with every code between `505` and `599`, `505` and `599` included).<br /> You can define either a status code as a number (`500`), as multiple comma-separated numbers (`500,502`), as ranges by separating two codes with a dash (`505-599`), or a combination of the two (`404,418,505-599`).  | []     | No      | 
-| `service` | The service that will serve the new requested error page.<br /> More information [here](#service-and-hostheader). | ""      | No      |
-| `query` | The URL for the error page (hosted by `service`).<br /> More information [here](#query) | ""      | No      |
+| <a id="status" href="#status" title="#status">`status`</a> | Defines which status or range of statuses should result in an error page.<br/> The status code ranges are inclusive (`505-599` will trigger with every code between `505` and `599`, `505` and `599` included).<br /> You can define either a status code as a number (`500`), as multiple comma-separated numbers (`500,502`), as ranges by separating two codes with a dash (`505-599`), or a combination of the two (`404,418,505-599`).  | []     | No      | 
+| <a id="service" href="#service" title="#service">`service`</a> | The service that will serve the new requested error page.<br /> More information [here](#service-and-hostheader). | ""      | No      |
+| <a id="query" href="#query" title="#query">`query`</a> | The URL for the error page (hosted by `service`).<br /> More information [here](#query) | ""      | No      |
 
 ### service and HostHeader
 
@@ -104,5 +102,5 @@ The table below lists all the available variables and their associated values.
 
 | Variable   | Value                                                            |
 |------------|------------------------------------------------------------------|
-| `{status}` | The response status code.                                        |
-| `{url}`    | The [escaped](https://pkg.go.dev/net/url#QueryEscape) request URL.|
+| <a id="status-2" href="#status-2" title="#status-2">`{status}`</a> | The response status code.                                        |
+| <a id="url" href="#url" title="#url">`{url}`</a> | The [escaped](https://pkg.go.dev/net/url#QueryEscape) request URL.|

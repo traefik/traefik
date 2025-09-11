@@ -258,6 +258,9 @@ labels:
   
   # IP Allowlist Middleware
   - "traefik.http.middlewares.ip-allowlist.ipallowlist.sourceRange=127.0.0.1/32,192.168.0.0/16,10.0.0.0/8"
+  
+  # Apply middlewares to whoami router
+  - "traefik.http.routers.whoami.middlewares=secure-headers,ip-allowlist"
 ```
 
 Add the same middleware to your whoami-api service:

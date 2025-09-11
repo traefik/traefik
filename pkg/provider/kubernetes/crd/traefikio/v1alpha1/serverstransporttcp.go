@@ -35,12 +35,14 @@ type ServersTransportTCPSpec struct {
 	// +kubebuilder:validation:Pattern="^([0-9]+(ns|us|µs|ms|s|m|h)?)+$"
 	// +kubebuilder:validation:XIntOrString
 	DialKeepAlive *intstr.IntOrString `json:"dialKeepAlive,omitempty"`
+	// ProxyProtocol holds the PROXY Protocol configuration.
+	ProxyProtocol *dynamic.ProxyProtocol `json:"proxyProtocol,omitempty"`
 	// TerminationDelay defines the delay to wait before fully terminating the connection, after one connected peer has closed its writing capability.
 	// +kubebuilder:validation:Pattern="^([0-9]+(ns|us|µs|ms|s|m|h)?)+$"
 	// +kubebuilder:validation:XIntOrString
 	TerminationDelay *intstr.IntOrString `json:"terminationDelay,omitempty"`
 	// TLS defines the TLS configuration
-	TLS *TLSClientConfig `description:"Defines the TLS configuration." json:"tls,omitempty"`
+	TLS *TLSClientConfig `json:"tls,omitempty"`
 }
 
 // TLSClientConfig defines the desired state of a TLSClientConfig.

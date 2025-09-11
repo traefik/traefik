@@ -13,7 +13,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/server/provider"
 	"github.com/traefik/traefik/v3/pkg/tcp"
-	"golang.org/x/net/proxy"
 )
 
 // Manager is the TCPHandlers factory.
@@ -58,6 +57,10 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 			log.Ctx(ctx).Warn().Msgf("Service %q load balancer uses `TerminationDelay`, but this option is deprecated, please use ServersTransport configuration instead.", serviceName)
 		}
 
+		if conf.LoadBalancer.ProxyProtocol != nil {
+			log.Ctx(ctx).Warn().Msgf("Service %q load balancer uses `ProxyProtocol`, but this option is deprecated, please use ServersTransport configuration instead.", serviceName)
+		}
+
 		if len(conf.LoadBalancer.ServersTransport) > 0 {
 			conf.LoadBalancer.ServersTransport = provider.GetQualifiedName(ctx, conf.LoadBalancer.ServersTransport)
 		}
@@ -72,20 +75,12 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 				continue
 			}
 
-			dialer, err := m.dialerManager.Get(conf.LoadBalancer.ServersTransport, server.TLS)
+			dialer, err := m.dialerManager.Build(conf.LoadBalancer, server.TLS)
 			if err != nil {
 				return nil, err
 			}
 
-			// Handle TerminationDelay deprecated option.
-			if conf.LoadBalancer.ServersTransport == "" && conf.LoadBalancer.TerminationDelay != nil {
-				dialer = &dialerWrapper{
-					Dialer:           dialer,
-					terminationDelay: time.Duration(*conf.LoadBalancer.TerminationDelay),
-				}
-			}
-
-			handler, err := tcp.NewProxy(server.Address, conf.LoadBalancer.ProxyProtocol, dialer)
+			handler, err := tcp.NewProxy(server.Address, dialer)
 			if err != nil {
 				srvLogger.Error().Err(err).Msg("Failed to create server")
 				continue
@@ -125,14 +120,4 @@ func shuffle[T any](values []T, r *rand.Rand) []T {
 	r.Shuffle(len(shuffled), func(i, j int) { shuffled[i], shuffled[j] = shuffled[j], shuffled[i] })
 
 	return shuffled
-}
-
-// dialerWrapper is only used to handle TerminationDelay deprecated option on TCPServersLoadBalancer.
-type dialerWrapper struct {
-	proxy.Dialer
-	terminationDelay time.Duration
-}
-
-func (d dialerWrapper) TerminationDelay() time.Duration {
-	return d.terminationDelay
 }

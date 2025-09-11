@@ -63,6 +63,15 @@ spec:
                   to a backend server can be established.
                 pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
                 x-kubernetes-int-or-string: true
+              proxyProtocol:
+                description: ProxyProtocol holds the PROXY Protocol configuration.
+                properties:
+                  version:
+                    description: Version defines the PROXY Protocol version to use.
+                    maximum: 2
+                    minimum: 1
+                    type: integer
+                type: object
               terminationDelay:
                 anyOf:
                 - type: integer

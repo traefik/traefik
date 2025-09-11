@@ -3,8 +3,6 @@ title: "Traefik CircuitBreaker Documentation"
 description: "The HTTP circuit breaker in Traefik Proxy prevents stacking requests to unhealthy Services, resulting in cascading failures. Read the technical documentation."
 ---
 
-![Circuit Breaker](../../../../assets/img/middleware/circuitbreaker.png)
-
 The HTTP circuit breaker prevents stacking requests to unhealthy Services, resulting in cascading failures.
 
 When your system is healthy, the circuit is closed (normal operations).
@@ -67,11 +65,11 @@ spec:
 
 | Field | Description | Default | Required |
 |:------|:------------|:--------|:---------|
-| `expression` | Condition to open the circuit breaker and applies the fallback mechanism instead of calling your services.<br />More information [here](#expression) | 100ms | No |
-| `checkPeriod` | The interval between successive checks of the circuit breaker condition (when in standby state). | 100ms | No |
-| `fallbackDuration` | The duration for which the circuit breaker will wait before trying to recover (from a tripped state). | 10s | No |
-| `recoveryDuration` | The duration for which the circuit breaker will try to recover (as soon as it is in recovering state). | 10s | No |
-| `responseCode` | The status code that the circuit breaker will return while it is in the open state. | 503 | No |
+| <a id="expression" href="#expression" title="#expression">`expression`</a> | Condition to open the circuit breaker and applies the fallback mechanism instead of calling your services.<br />More information [here](#expression) | 100ms | No |
+| <a id="checkPeriod" href="#checkPeriod" title="#checkPeriod">`checkPeriod`</a> | The interval between successive checks of the circuit breaker condition (when in standby state). | 100ms | No |
+| <a id="fallbackDuration" href="#fallbackDuration" title="#fallbackDuration">`fallbackDuration`</a> | The duration for which the circuit breaker will wait before trying to recover (from a tripped state). | 10s | No |
+| <a id="recoveryDuration" href="#recoveryDuration" title="#recoveryDuration">`recoveryDuration`</a> | The duration for which the circuit breaker will try to recover (as soon as it is in recovering state). | 10s | No |
+| <a id="responseCode" href="#responseCode" title="#responseCode">`responseCode`</a> | The status code that the circuit breaker will return while it is in the open state. | 503 | No |
 
 ### expression
 
@@ -79,9 +77,9 @@ The `expression` option can check three different metrics:
 
 | Metrics | Description | Example |
 |:------|:------------|:--------|
-| `NetworkErrorRatio`   | The network error ratio to open the circuit breaker. | `NetworkErrorRatio() > 0.30` opens the circuit breaker at a 30% ratio of network errors |
-| `ResponseCodeRatio`   | The status code ratio to open the circuit breaker.<br />More information [below](#responsecoderatio) | `ResponseCodeRatio(500, 600, 0, 600) > 0.25` opens the circuit breaker if 25% of the requests returned a 5XX status (amongst the request that returned a status code from 0 to 5XX)  |
-| `LatencyAtQuantileMS` | The latency at a quantile in milliseconds to open the circuit breaker when a given proportion of your requests become too slow.<br /> Only floating point number (with the trailing .0) for the quantile value. | `LatencyAtQuantileMS(50.0) > 100` opens the circuit breaker when the median latency (quantile 50) reaches 100ms. |
+| <a id="NetworkErrorRatio" href="#NetworkErrorRatio" title="#NetworkErrorRatio">`NetworkErrorRatio`</a> | The network error ratio to open the circuit breaker. | `NetworkErrorRatio() > 0.30` opens the circuit breaker at a 30% ratio of network errors |
+| <a id="ResponseCodeRatio" href="#ResponseCodeRatio" title="#ResponseCodeRatio">`ResponseCodeRatio`</a> | The status code ratio to open the circuit breaker.<br />More information [below](#responsecoderatio) | `ResponseCodeRatio(500, 600, 0, 600) > 0.25` opens the circuit breaker if 25% of the requests returned a 5XX status (amongst the request that returned a status code from 0 to 5XX)  |
+| <a id="LatencyAtQuantileMS" href="#LatencyAtQuantileMS" title="#LatencyAtQuantileMS">`LatencyAtQuantileMS`</a> | The latency at a quantile in milliseconds to open the circuit breaker when a given proportion of your requests become too slow.<br /> Only floating point number (with the trailing .0) for the quantile value. | `LatencyAtQuantileMS(50.0) > 100` opens the circuit breaker when the median latency (quantile 50) reaches 100ms. |
 
 #### ResponseCodeRatio
 

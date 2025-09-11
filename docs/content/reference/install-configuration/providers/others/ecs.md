@@ -26,18 +26,18 @@ providers:
 
 | Field | Description                                               | Default              | Required |
 |:------|:----------------------------------------------------------|:---------------------|:---------|
-| `providers.providersThrottleDuration` | Minimum amount of time to wait for, after a configuration reload, before taking into account any new configuration refresh event.<br />If multiple events occur within this time, only the most recent one is taken into account, and all others are discarded.<br />**This option cannot be set per provider, but the throttling algorithm applies to each of them independently.** | 2s  | No |
-| `providers.ecs.autoDiscoverClusters` | Search for services in cluster list. If set to `true` service discovery is enabled for all clusters. |  false  | No   |
-| `providers.ecs.ecsAnywhere` | Enable ECS Anywhere support. |  false    | No   |
-| `providers.ecs.clusters` | Search for services in cluster list. This option is ignored if `autoDiscoverClusters` is set to `true`. |  `["default"]`  | No   |
-| `providers.ecs.exposedByDefault` | Expose ECS services by default in Traefik. | true  | No   |
-| `providers.ecs.constraints` |  Defines an expression that Traefik matches against the container labels to determine whether to create any route for that container. See [here](#constraints) for more information.  | true  | No   |
-| `providers.ecs.healthyTasksOnly` |  Defines whether Traefik discovers only healthy tasks (`HEALTHY` healthStatus).  | false  | No   |
-| `providers.ecs.defaultRule` | The Default Host rule for all services. See [here](#defaultrule) for more information. |   ```"Host(`{{ normalize .Name }}`)"```  | No   |
-| `providers.ecs.refreshSeconds` | Defines the polling interval (in seconds).   | 15   | No |
-| `providers.ecs.region` | Defines the region of the ECS instance. See [here](#credentials) for more information.  | ""   | No |
-| `providers.ecs.accessKeyID` | Defines the Access Key ID for the ECS instance. See [here](#credentials) for more information.  | ""   | No |
-| `providers.ecs.secretAccessKey` | Defines the Secret Access Key for the ECS instance. See [here](#credentials) for more information.  | ""   | No |
+| <a id="providers-providersThrottleDuration" href="#providers-providersThrottleDuration" title="#providers-providersThrottleDuration">`providers.providersThrottleDuration`</a> | Minimum amount of time to wait for, after a configuration reload, before taking into account any new configuration refresh event.<br />If multiple events occur within this time, only the most recent one is taken into account, and all others are discarded.<br />**This option cannot be set per provider, but the throttling algorithm applies to each of them independently.** | 2s  | No |
+| <a id="providers-ecs-autoDiscoverClusters" href="#providers-ecs-autoDiscoverClusters" title="#providers-ecs-autoDiscoverClusters">`providers.ecs.autoDiscoverClusters`</a> | Search for services in cluster list. If set to `true` service discovery is enabled for all clusters. |  false  | No   |
+| <a id="providers-ecs-ecsAnywhere" href="#providers-ecs-ecsAnywhere" title="#providers-ecs-ecsAnywhere">`providers.ecs.ecsAnywhere`</a> | Enable ECS Anywhere support. |  false    | No   |
+| <a id="providers-ecs-clusters" href="#providers-ecs-clusters" title="#providers-ecs-clusters">`providers.ecs.clusters`</a> | Search for services in cluster list. This option is ignored if `autoDiscoverClusters` is set to `true`. |  `["default"]`  | No   |
+| <a id="providers-ecs-exposedByDefault" href="#providers-ecs-exposedByDefault" title="#providers-ecs-exposedByDefault">`providers.ecs.exposedByDefault`</a> | Expose ECS services by default in Traefik. | true  | No   |
+| <a id="providers-ecs-constraints" href="#providers-ecs-constraints" title="#providers-ecs-constraints">`providers.ecs.constraints`</a> |  Defines an expression that Traefik matches against the container labels to determine whether to create any route for that container. See [here](#constraints) for more information.  | true  | No   |
+| <a id="providers-ecs-healthyTasksOnly" href="#providers-ecs-healthyTasksOnly" title="#providers-ecs-healthyTasksOnly">`providers.ecs.healthyTasksOnly`</a> |  Defines whether Traefik discovers only healthy tasks (`HEALTHY` healthStatus).  | false  | No   |
+| <a id="providers-ecs-defaultRule" href="#providers-ecs-defaultRule" title="#providers-ecs-defaultRule">`providers.ecs.defaultRule`</a> | The Default Host rule for all services. See [here](#defaultrule) for more information. |   ```"Host(`{{ normalize .Name }}`)"```  | No   |
+| <a id="providers-ecs-refreshSeconds" href="#providers-ecs-refreshSeconds" title="#providers-ecs-refreshSeconds">`providers.ecs.refreshSeconds`</a> | Defines the polling interval (in seconds).   | 15   | No |
+| <a id="providers-ecs-region" href="#providers-ecs-region" title="#providers-ecs-region">`providers.ecs.region`</a> | Defines the region of the ECS instance. See [here](#credentials) for more information.  | ""   | No |
+| <a id="providers-ecs-accessKeyID" href="#providers-ecs-accessKeyID" title="#providers-ecs-accessKeyID">`providers.ecs.accessKeyID`</a> | Defines the Access Key ID for the ECS instance. See [here](#credentials) for more information.  | ""   | No |
+| <a id="providers-ecs-secretAccessKey" href="#providers-ecs-secretAccessKey" title="#providers-ecs-secretAccessKey">`providers.ecs.secretAccessKey`</a> | Defines the Secret Access Key for the ECS instance. See [here](#credentials) for more information.  | ""   | No |
 
 ### `constraints`
 

@@ -38,16 +38,10 @@ tcp:
 
 | Field | Description                                 | Default |
 |----------|------------------------------------------|--------- |
-| `servers` |  Servers declare a single instance of your program.  | "" |
-| `servers.address` |   The address option (IP:Port) point to a specific instance. | "" |
-| `servers.tls` | The `tls` option determines whether to use TLS when dialing with the backend. | false |
-| `servers.serversTransport` | `serversTransport` allows to reference a TCP [ServersTransport](./serverstransport.md configuration for the communication between Traefik and your servers. If no serversTransport is specified, the default@internal will be used. |  "" |
-| `servers.proxyProtocol.version` | Traefik supports PROXY Protocol version 1 and 2 on TCP Services. More Information [here](#serversproxyprotocolversion) |  2 |
-
-### servers.proxyProtocol.version
-
-Traefik supports [PROXY Protocol](https://www.haproxy.org/download/2.0/doc/proxy-protocol.txt) version 1 and 2 on TCP Services. It can be enabled by setting `proxyProtocol` on the load balancer.
-The option specifies the version of the protocol to be used. Either 1 or 2.
+| <a id="servers" href="#servers" title="#servers">`servers`</a> |  Servers declare a single instance of your program.  | "" |
+| <a id="servers-address" href="#servers-address" title="#servers-address">`servers.address`</a> |   The address option (IP:Port) point to a specific instance. | "" |
+| <a id="servers-tls" href="#servers-tls" title="#servers-tls">`servers.tls`</a> | The `tls` option determines whether to use TLS when dialing with the backend. | false |
+| <a id="servers-serversTransport" href="#servers-serversTransport" title="#servers-serversTransport">`servers.serversTransport`</a> | `serversTransport` allows to reference a TCP [ServersTransport](./serverstransport.md configuration for the communication between Traefik and your servers. If no serversTransport is specified, the default@internal will be used. |  "" |
 
 ## Weighted Round Robin
 

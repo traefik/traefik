@@ -175,6 +175,10 @@ func TestHandler(t *testing.T) {
 
 			req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost/test?foo=bar&baz=buz", nil)
 
+			// Client like browser and curl will issue a relative HTTP request, which not have a host and scheme in the URL. But the http.NewRequest will set them automatically.
+			req.URL.Host = ""
+			req.URL.Scheme = ""
+
 			recorder := httptest.NewRecorder()
 			errorPageHandler.ServeHTTP(recorder, req)
 

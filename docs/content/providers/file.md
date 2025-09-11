@@ -103,7 +103,7 @@ It supports providing configuration through a [single configuration file](#filen
 
 ## Provider Configuration
 
-For an overview of all the options that can be set with the file provider, see the [dynamic configuration](../reference/dynamic-configuration/file.md) and [static configuration](../reference/static-configuration/overview.md) references.
+For an overview of all the options that can be set with the file provider, see the [routing configuration](../reference/routing-configuration/other-providers/file.md) and [install configuration](../reference/install-configuration/configuration-options.md) references.
 
 !!! warning "Limitations"
 
