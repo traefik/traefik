@@ -193,6 +193,10 @@ nav:
       - 'Kubernetes': 'expose/kubernetes.md'
       - 'Docker': 'expose/docker.md'
       - 'Swarm': 'expose/swarm.md'
+  - 'Secure':
+      - '<span class="nav-link-with-icon">Secure Access with JWT <img src="https://doc.traefik.io/traefik-hub/img/ps-traefik-hub-logo-light.svg" class="menu-icon" alt="Traefik Hub API Gateway"></span>': 'secure/secure-api-access-with-jwt.md'
+      - '<span class="nav-link-with-icon">Secure Access with OIDC <img src="https://doc.traefik.io/traefik-hub/img/ps-traefik-hub-logo-light.svg" class="menu-icon" alt="Traefik Hub API Gateway"></span>': 'secure/secure-api-access-with-oidc.md'
+      - '<span class="nav-link-with-icon">Secure Access with a WAF <img src="https://doc.traefik.io/traefik-hub/img/ps-traefik-hub-logo-light.svg" class="menu-icon" alt="Traefik Hub API Gateway"></span>': 'secure/secure-api-access-with-waf.md'
   - 'Observe':
       - 'Overview': 'observe/overview.md'
       - 'Logs & Access Logs': 'observe/logs-and-access-logs.md'
