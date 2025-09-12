@@ -7,6 +7,7 @@ import { SWRConfig } from 'swr'
 import Page from './layout/Page'
 import fetch from './libs/fetch'
 
+import { VersionProvider } from 'contexts/version'
 import { useIsDarkMode } from 'hooks/use-theme'
 import ErrorSuspenseWrapper from 'layout/ErrorSuspenseWrapper'
 import { Dashboard, HTTPPages, NotFound, TCPPages, UDPPages } from 'pages'
@@ -92,10 +93,12 @@ const App = () => {
             fetcher: fetch,
           }}
         >
-          <HashRouter basename={import.meta.env.VITE_APP_BASE_URL || ''}>
-            <ScrollToTop />
-            <Routes />
-          </HashRouter>
+          <VersionProvider>
+            <HashRouter basename={import.meta.env.VITE_APP_BASE_URL || ''}>
+              <ScrollToTop />
+              <Routes />
+            </HashRouter>
+          </VersionProvider>
         </SWRConfig>
       </HelmetProvider>
     </FaencyProvider>

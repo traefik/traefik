@@ -19,7 +19,7 @@ import {
   Tooltip,
   VisuallyHidden,
 } from '@traefiklabs/faency'
-import { useEffect, useMemo, useState } from 'react'
+import { useContext, useEffect, useMemo, useState } from 'react'
 import { BsChevronDoubleRight, BsChevronDoubleLeft } from 'react-icons/bs'
 import { FiBookOpen, FiGithub, FiHelpCircle } from 'react-icons/fi'
 import { matchPath, useHref } from 'react-router'
@@ -34,9 +34,9 @@ import Logo from 'components/icons/Logo'
 import { PluginsIcon } from 'components/icons/PluginsIcon'
 import ThemeSwitcher from 'components/ThemeSwitcher'
 import TooltipText from 'components/TooltipText'
+import { VersionContext } from 'contexts/version'
 import useTotals from 'hooks/use-overview-totals'
 import { useIsDarkMode } from 'hooks/use-theme'
-import useVersion from 'hooks/use-version'
 import { Route, ROUTES } from 'routes'
 
 export const LAPTOP_BP = 1025
@@ -136,7 +136,7 @@ export const SideNav = ({
   isResponsive?: boolean
 }) => {
   const windowSize = useWindowSize()
-  const { version } = useVersion()
+  const { version } = useContext(VersionContext)
 
   const { http, tcp, udp } = useTotals()
 
@@ -228,7 +228,7 @@ export const SideNav = ({
         >
           <Logo height={isSmallScreen ? 36 : 56} isSmallScreen={isSmallScreen} />
           {!!version && !isSmallScreen && (
-            <TooltipText text={version.Version} css={{ maxWidth: 50, fontWeight: '$semiBold' }} isTruncated />
+            <TooltipText text={version} css={{ maxWidth: 50, fontWeight: '$semiBold' }} isTruncated />
           )}
         </Flex>
         {ROUTES.map((section, index) => (
@@ -290,17 +290,17 @@ export const SideNav = ({
 
 export const TopNav = () => {
   const [hasHubButtonComponent, setHasHubButtonComponent] = useState(false)
-  const { showHubButton, version } = useVersion()
+  const { showHubButton, version } = useContext(VersionContext)
   const isDarkMode = useIsDarkMode()
 
   const parsedVersion = useMemo(() => {
-    if (!version?.Version) {
+    if (!version) {
       return 'master'
     }
-    if (version.Version === 'dev') {
+    if (version === 'dev') {
       return 'master'
     }
-    const matches = version.Version.match(/^(v?\d+\.\d+)/)
+    const matches = version.match(/^(v?\d+\.\d+)/)
     return matches ? 'v' + matches[1] : 'master'
   }, [version])
 
