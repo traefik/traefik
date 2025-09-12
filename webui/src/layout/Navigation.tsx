@@ -315,44 +315,37 @@ export const TopNav = () => {
       return
     }
 
-    let hubButtonScriptLocal: HTMLScriptElement
-    const hubButtonScript = document.createElement('script')
-    hubButtonScript.async = true
-    // Source: https://github.com/traefik/traefiklabs-hub-button-app
-    hubButtonScript.src = 'https://traefik.github.io/traefiklabs-hub-button-app/main-v1.js'
-
-    hubButtonScript.onload = () => {
-      setHasHubButtonComponent(customElements.get('hub-button-app') !== undefined)
-    }
-
-    hubButtonScript.onerror = () => {
-      hubButtonScriptLocal = document.createElement('script')
-      hubButtonScriptLocal.async = true
-      // Source: https://github.com/traefik/traefiklabs-hub-button-app
-      hubButtonScriptLocal.src = 'traefiklabs-hub-button-app/main-v1.js'
-
-      hubButtonScriptLocal.onload = () => {
+    const scripts: HTMLScriptElement[] = []
+    const createScript = (scriptSrc: string): HTMLScriptElement => {
+      const script = document.createElement('script')
+      script.src = scriptSrc
+      script.async = true
+      script.onload = () => {
         setHasHubButtonComponent(customElements.get('hub-button-app') !== undefined)
       }
+      scripts.push(script)
+      return script
+    }
 
-      document.head.appendChild(hubButtonScriptLocal)
-
+    // Source: https://github.com/traefik/traefiklabs-hub-button-app
+    const hubButtonScript = createScript('https://traefik.github.io/traefiklabs-hub-button-app/main-v1.js')
+    hubButtonScript.onerror = () => {
+      // Source: https://github.com/traefik/traefiklabs-hub-button-app
+      document.head.appendChild(createScript('traefiklabs-hub-button-app/main-v1.js'))
       // Remove the remote script on error.
       if (hubButtonScript.parentNode) {
         hubButtonScript.parentNode.removeChild(hubButtonScript)
       }
     }
-
     document.head.appendChild(hubButtonScript)
 
     return () => {
       // Remove the scripts on unmount.
-      if (hubButtonScript.parentNode) {
-        hubButtonScript.parentNode.removeChild(hubButtonScript)
-      }
-      if (hubButtonScriptLocal?.parentNode) {
-        hubButtonScriptLocal.parentNode.removeChild(hubButtonScriptLocal)
-      }
+      scripts.forEach((script) => {
+        if (script.parentNode) {
+          script.parentNode.removeChild(script)
+        }
+      })
     }
   }, [showHubButton])
 
