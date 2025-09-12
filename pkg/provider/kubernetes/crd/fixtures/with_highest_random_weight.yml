@@ -1,0 +1,107 @@
+---
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
+metadata:
+  name: whoami1-abc
+  namespace: default
+  labels:
+    kubernetes.io/service-name: whoami1
+
+addressType: IPv4
+ports:
+  - name: web
+    port: 8080
+endpoints:
+  - addresses:
+      - 10.10.0.1
+      - 10.10.0.2
+    conditions:
+      ready: true
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoami1
+  namespace: default
+
+spec:
+  ports:
+    - name: web
+      port: 8080
+  selector:
+    app: traefiklabs
+    task: whoami1
+
+---
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
+metadata:
+  name: whoami2-abc
+  namespace: default
+  labels:
+    kubernetes.io/service-name: whoami2
+
+addressType: IPv4
+ports:
+  - name: web
+    port: 8080
+endpoints:
+  - addresses:
+      - 10.10.0.3
+      - 10.10.0.4
+    conditions:
+      ready: true
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoami2
+  namespace: default
+
+spec:
+  ports:
+    - name: web
+      port: 8080
+  selector:
+    app: traefiklabs
+    task: whoami2
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: TraefikService
+metadata:
+  name: hrw1
+  namespace: default
+
+spec:
+  highestRandomWeight:
+    services:
+      - name: whoami1
+        kind: Service
+        port: 8080
+        weight: 10
+      - name: whoami2
+        kind: Service
+        port: 8080
+        weight: 20
+
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: test.route
+  namespace: default
+
+spec:
+  entryPoints:
+    - web
+
+  routes:
+  - match: Host(`foo.com`) && PathPrefix(`/foo`)
+    kind: Rule
+    priority: 12
+    services:
+    - name: hrw1
+      kind: TraefikService
