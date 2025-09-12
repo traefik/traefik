@@ -289,6 +289,7 @@ export const SideNav = ({
 }
 
 export const TopNav = () => {
+  const [hasHubButtonComponent, setHasHubButtonComponent] = useState(false)
   const { showHubButton, version } = useVersion()
   const isDarkMode = useIsDarkMode()
 
@@ -303,9 +304,50 @@ export const TopNav = () => {
     return matches ? 'v' + matches[1] : 'master'
   }, [version])
 
+  useEffect(() => {
+    if (!showHubButton) {
+      setHasHubButtonComponent(false)
+      return
+    }
+
+    if (customElements.get('hub-button-app')) {
+      setHasHubButtonComponent(true)
+      return
+    }
+
+    const hubButtonScript = document.createElement('script')
+    hubButtonScript.async = true
+    // Source: https://github.com/traefik/traefiklabs-hub-button-app
+    hubButtonScript.src = 'https://traefik.github.io/traefiklabs-hub-button-app/main-v1.js'
+
+    hubButtonScript.onload = () => {
+      setHasHubButtonComponent(customElements.get('hub-button-app') !== undefined)
+    }
+
+    hubButtonScript.onerror = () => {
+      const hubButtonScriptLocal = document.createElement('script')
+      hubButtonScriptLocal.async = true
+      // Source: https://github.com/traefik/traefiklabs-hub-button-app
+      hubButtonScriptLocal.src = 'traefiklabs-hub-button-app/main-v1.js'
+
+      hubButtonScriptLocal.onload = () => {
+        setHasHubButtonComponent(customElements.get('hub-button-app') !== undefined)
+      }
+
+      document.head.appendChild(hubButtonScriptLocal)
+
+      // Remove the remote script.
+      if (hubButtonScript.parentNode) {
+        hubButtonScript.parentNode.removeChild(hubButtonScript)
+      }
+    }
+
+    document.head.appendChild(hubButtonScript)
+  }, [showHubButton])
+
   return (
     <Flex as="nav" role="navigation" justify="end" align="center" css={{ gap: '$2', mb: '$6' }}>
-      {showHubButton && (
+      {hasHubButtonComponent && (
         <Box css={{ fontFamily: '$rubik', fontWeight: '500 !important' }}>
           <hub-button-app
             key={`dark-mode-${isDarkMode}`}
