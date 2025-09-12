@@ -315,6 +315,7 @@ export const TopNav = () => {
       return
     }
 
+    let hubButtonScriptLocal: HTMLScriptElement
     const hubButtonScript = document.createElement('script')
     hubButtonScript.async = true
     // Source: https://github.com/traefik/traefiklabs-hub-button-app
@@ -325,7 +326,7 @@ export const TopNav = () => {
     }
 
     hubButtonScript.onerror = () => {
-      const hubButtonScriptLocal = document.createElement('script')
+      hubButtonScriptLocal = document.createElement('script')
       hubButtonScriptLocal.async = true
       // Source: https://github.com/traefik/traefiklabs-hub-button-app
       hubButtonScriptLocal.src = 'traefiklabs-hub-button-app/main-v1.js'
@@ -336,13 +337,23 @@ export const TopNav = () => {
 
       document.head.appendChild(hubButtonScriptLocal)
 
-      // Remove the remote script.
+      // Remove the remote script on error.
       if (hubButtonScript.parentNode) {
         hubButtonScript.parentNode.removeChild(hubButtonScript)
       }
     }
 
     document.head.appendChild(hubButtonScript)
+
+    return () => {
+      // Remove the scripts on unmount.
+      if (hubButtonScript.parentNode) {
+        hubButtonScript.parentNode.removeChild(hubButtonScript)
+      }
+      if (hubButtonScriptLocal?.parentNode) {
+        hubButtonScriptLocal.parentNode.removeChild(hubButtonScriptLocal)
+      }
+    }
   }, [showHubButton])
 
   return (
