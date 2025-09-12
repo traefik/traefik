@@ -129,18 +129,18 @@ func TestHTTPPluginDownloader_Check(t *testing.T) {
 			expectError: true,
 		},
 		{
-			name:          "hash validation success",
-			pHash:         "correcthash",
-			hash:          "correcthash",
+			name:  "hash validation success",
+			pHash: "correcthash",
+			hash:  "correcthash",
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
 			},
 			expectError: false,
 		},
 		{
-			name:          "hash validation failure",
-			pHash:         "expectedhash",
-			hash:          "actualhash",
+			name:  "hash validation failure",
+			pHash: "expectedhash",
+			hash:  "actualhash",
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
 			},
