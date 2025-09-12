@@ -35,7 +35,7 @@ func SetupRemotePlugins(manager *Manager, downloader PluginDownloader, plugins m
 			return fmt.Errorf("unable to download plugin %s: %w", desc.ModuleName, err)
 		}
 
-		err = downloader.Check(ctx, desc.ModuleName, desc.Version, hash)
+		err = downloader.Check(ctx, desc.ModuleName, desc.Version, desc.Hash, hash)
 		if err != nil {
 			_ = manager.ResetAll()
 			return fmt.Errorf("unable to check archive integrity of the plugin %s: %w", desc.ModuleName, err)

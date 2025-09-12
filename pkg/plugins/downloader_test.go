@@ -104,22 +104,57 @@ func TestHTTPPluginDownloader_Download(t *testing.T) {
 func TestHTTPPluginDownloader_Check(t *testing.T) {
 	tests := []struct {
 		name           string
+		pHash          string
+		hash           string
 		serverResponse func(w http.ResponseWriter, r *http.Request)
 		expectError    bool
+		expectedError  string
 	}{
 		{
-			name: "successful check",
+			name:  "successful check",
+			pHash: "",
+			hash:  "testhash",
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
 			},
 			expectError: false,
 		},
 		{
-			name: "failed check",
+			name:  "failed check",
+			pHash: "",
+			hash:  "testhash",
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusBadRequest)
 			},
 			expectError: true,
+		},
+		{
+			name:          "hash validation success",
+			pHash:         "correcthash",
+			hash:          "correcthash",
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+			},
+			expectError: false,
+		},
+		{
+			name:          "hash validation failure",
+			pHash:         "expectedhash",
+			hash:          "actualhash",
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+			},
+			expectError:   true,
+			expectedError: "invalid hash for plugin test/plugin, expected expectedhash, got actualhash",
+		},
+		{
+			name:  "empty pHash skips validation",
+			pHash: "",
+			hash:  "anyhash",
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+			},
+			expectError: false,
 		},
 	}
 
@@ -144,10 +179,13 @@ func TestHTTPPluginDownloader_Check(t *testing.T) {
 
 			ctx := t.Context()
 
-			err = downloader.Check(ctx, "test/plugin", "v1.0.0", "testhash")
+			err = downloader.Check(ctx, "test/plugin", "v1.0.0", test.pHash, test.hash)
 
 			if test.expectError {
 				assert.Error(t, err)
+				if test.expectedError != "" {
+					assert.Equal(t, test.expectedError, err.Error())
+				}
 			} else {
 				assert.NoError(t, err)
 			}

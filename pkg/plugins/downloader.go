@@ -22,7 +22,7 @@ type PluginDownloader interface {
 	// Download downloads a plugin archive and returns its hash.
 	Download(ctx context.Context, pName, pVersion string) (string, error)
 	// Check checks the plugin archive integrity against a known hash.
-	Check(ctx context.Context, pName, pVersion, hash string) error
+	Check(ctx context.Context, pName, pVersion, pHash, hash string) error
 }
 
 // RegistryDownloaderOptions holds configuration options for creating a RegistryDownloader.
@@ -138,7 +138,11 @@ func (d *RegistryDownloader) Download(ctx context.Context, pName, pVersion strin
 }
 
 // Check checks the plugin archive integrity.
-func (d *RegistryDownloader) Check(ctx context.Context, pName, pVersion, hash string) error {
+func (d *RegistryDownloader) Check(ctx context.Context, pName, pVersion, pHash, hash string) error {
+	if pHash != "" && pHash != hash {
+		return fmt.Errorf("invalid hash for plugin %s, expected %s, got %s", pName, pHash, hash)
+	}
+
 	endpoint, err := d.baseURL.Parse(path.Join(d.baseURL.Path, "validate", pName, pVersion))
 	if err != nil {
 		return fmt.Errorf("failed to parse endpoint URL: %w", err)
