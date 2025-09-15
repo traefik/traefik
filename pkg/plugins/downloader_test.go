@@ -80,7 +80,7 @@ func TestHTTPPluginDownloader_Download(t *testing.T) {
 				httpClient: server.Client(),
 				baseURL:    baseURL,
 				archives:   archivesPath,
-				}
+			}
 
 			ctx := t.Context()
 			hash, err := downloader.Download(ctx, "test/plugin", "v1.0.0")
@@ -171,7 +171,7 @@ func TestHTTPPluginDownloader_Check(t *testing.T) {
 				httpClient: server.Client(),
 				baseURL:    baseURL,
 				archives:   archivesPath,
-				}
+			}
 
 			ctx := t.Context()
 
