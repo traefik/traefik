@@ -325,11 +325,13 @@ kubectl create secret tls whoami-tls --cert=tls.crt --key=tls.key
         web:
           port: 80
           protocol: HTTP
-          namespacePolicy: All
+          namespacePolicy:
+            from: All
         websecure:
           port: 443
           protocol: HTTPS
-          namespacePolicy: All
+          namespacePolicy:
+            from: All
           mode: Terminate
           certificateRefs:
             - kind: Secret

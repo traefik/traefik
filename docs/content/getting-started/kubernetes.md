@@ -79,7 +79,10 @@ providers:
   kubernetesGateway:
     enabled: true
 gateway:
-  namespacePolicy: All
+  listeners:
+    web:
+      namespacePolicy:
+        from: All
 ```
 
 !!! info
@@ -106,7 +109,7 @@ helm install traefik traefik/traefik --wait \
   --set ingressRoute.dashboard.matchRule='Host(`dashboard.localhost`)' \
   --set ingressRoute.dashboard.entryPoints={web} \
   --set providers.kubernetesGateway.enabled=true \
-  --set gateway.namespacePolicy=All
+  --set gateway.listeners.web.namespacePolicy.from=All
 ```
 
 !!! info

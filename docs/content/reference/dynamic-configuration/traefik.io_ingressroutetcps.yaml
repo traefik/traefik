@@ -123,6 +123,7 @@ spec:
                             description: |-
                               ProxyProtocol defines the PROXY protocol configuration.
                               More info: https://doc.traefik.io/traefik/v3.5/routing/services/#proxy-protocol
+                              Deprecated: ProxyProtocol will not be supported in future APIVersions, please use ServersTransport to configure ProxyProtocol instead.
                             properties:
                               version:
                                 description: Version defines the PROXY Protocol version

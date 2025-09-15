@@ -8,8 +8,6 @@ description: "Traefik Proxy's HTTP DigestAuth middleware restricts access to you
 Adding Digest Authentication
 {: .subtitle }
 
-![BasicAuth](../../assets/img/middleware/digestauth.png)
-
 The DigestAuth middleware grants access to services to authorized users only.
 
 ## Configuration Examples

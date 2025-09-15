@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/docker/cli/cli/connhelper"
-	dockertypes "github.com/docker/docker/api/types"
+	containertypes "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
 	"github.com/docker/go-connections/sockets"
@@ -52,7 +52,7 @@ func inspectContainers(ctx context.Context, dockerClient client.ContainerAPIClie
 	return dockerData{}
 }
 
-func parseContainer(container dockertypes.ContainerJSON) dockerData {
+func parseContainer(container containertypes.InspectResponse) dockerData {
 	dData := dockerData{
 		NetworkSettings: networkSettings{},
 	}
@@ -61,7 +61,6 @@ func parseContainer(container dockertypes.ContainerJSON) dockerData {
 		dData.ID = container.ContainerJSONBase.ID
 		dData.Name = container.ContainerJSONBase.Name
 		dData.ServiceName = dData.Name // Default ServiceName to be the container's Name.
-		dData.Node = container.ContainerJSONBase.Node
 
 		if container.ContainerJSONBase.HostConfig != nil {
 			dData.NetworkSettings.NetworkMode = container.ContainerJSONBase.HostConfig.NetworkMode

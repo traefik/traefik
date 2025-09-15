@@ -20,7 +20,7 @@ jobs:
 
     steps:
       - name: Check out code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -29,11 +29,6 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
           check-latest: true
-
-      - name: Avoid generating webui
-        run: |
-          mkdir webui/static
-          touch webui/static/index.html
 
       - name: Build binary
         run: make binary-linux-amd64
@@ -64,7 +59,7 @@ jobs:
 
     steps:
       - name: Check out code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -73,11 +68,6 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
           check-latest: true
-
-      - name: Avoid generating webui
-        run: |
-          mkdir webui/static
-          touch webui/static/index.html
 
       - name: Download traefik binary
         uses: actions/download-artifact@v4

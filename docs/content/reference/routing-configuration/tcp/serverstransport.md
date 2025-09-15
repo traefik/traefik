@@ -84,19 +84,21 @@ labels:
 
 ## Configuration Options
 
-| Field | Description                                               | Default              | Required |
-|:------|:----------------------------------------------------------|:---------------------|:---------|
-| `serverstransport.`<br />`dialTimeout` | Defines the timeout when dialing the backend TCP service. If zero, no timeout exists.  | 30s | No |
-| `serverstransport.`<br />`dialKeepAlive` | Defines the interval between keep-alive probes for an active network connection.  | 15s | No |
-| `serverstransport.`<br />`terminationDelay` | Sets the time limit for the proxy to fully terminate connections on both sides after initiating the termination sequence, with a negative value indicating no deadline. More Information [here](#terminationdelay) | 100ms | No |
-| `serverstransport.`<br />`tls` | Defines the TLS configuration. An empty `tls` section enables TLS. |  | No |
-| `serverstransport.`<br />`tls`<br />`.serverName` | Configures the server name that will be used for SNI. |  | No |
-| `serverstransport.`<br />`tls`<br />`.certificates` | Defines the list of certificates (as file paths, or data bytes) that will be set as client certificates for mTLS. |  | No |
-| `serverstransport.`<br />`tls`<br />`.insecureSkipVerify` | Controls whether the server's certificate chain and host name is verified. | false  | No |
-| `serverstransport.`<br />`tls`<br />`.rootcas` | Defines the root certificate authorities to use when verifying server certificates. (for mTLS connections). |  | No |
-| `serverstransport.`<br />`tls.`<br />`peerCertURI` | Defines the URI used to match against SAN URIs during the server's certificate verification.  | false | No |
-| `serverstransport.`<br />`spiffe`<br />`.ids` | Allow SPIFFE IDs.<br />This takes precedence over the SPIFFE TrustDomain. |  | No |
-| `serverstransport.`<br />`spiffe`<br />`.trustDomain` | Allow SPIFFE trust domain. | ""  | No |
+| Field                                                     | Description                                                                                                                                                                                                        | Default | Required |
+|:----------------------------------------------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------|:---------|
+| <a id="serverstransport-dialTimeout" href="#serverstransport-dialTimeout" title="#serverstransport-dialTimeout">`serverstransport.`<br />`dialTimeout`</a> | Defines the timeout when dialing the backend TCP service. If zero, no timeout exists.                                                                                                                              | 30s     | No       |
+| <a id="serverstransport-dialKeepAlive" href="#serverstransport-dialKeepAlive" title="#serverstransport-dialKeepAlive">`serverstransport.`<br />`dialKeepAlive`</a> | Defines the interval between keep-alive probes for an active network connection.                                                                                                                                   | 15s     | No       |
+| <a id="serverstransport-terminationDelay" href="#serverstransport-terminationDelay" title="#serverstransport-terminationDelay">`serverstransport.`<br />`terminationDelay`</a> | Sets the time limit for the proxy to fully terminate connections on both sides after initiating the termination sequence, with a negative value indicating no deadline. More Information [here](#terminationdelay) | 100ms   | No       |
+| <a id="serverstransport-proxyProtocol" href="#serverstransport-proxyProtocol" title="#serverstransport-proxyProtocol">`serverstransport.`<br />`proxyProtocol`</a> | Defines the Proxy Protocol configuration. An empty `proxyProtocol` section enables Proxy Protocol version 2.                                                                                                       |         | No       |
+| <a id="serverstransport-proxyProtocol-version" href="#serverstransport-proxyProtocol-version" title="#serverstransport-proxyProtocol-version">`serverstransport.`<br />`proxyProtocol.version`</a> | Traefik supports PROXY Protocol version 1 and 2 on TCP Services. More Information [here](#proxyprotocolversion)                                                                                                    | 2       | No       |
+| <a id="serverstransport-tls" href="#serverstransport-tls" title="#serverstransport-tls">`serverstransport.`<br />`tls`</a> | Defines the TLS configuration. An empty `tls` section enables TLS.                                                                                                                                                 |         | No       |
+| <a id="serverstransport-tls-serverName" href="#serverstransport-tls-serverName" title="#serverstransport-tls-serverName">`serverstransport.`<br />`tls`<br />`.serverName`</a> | Configures the server name that will be used for SNI.                                                                                                                                                              |         | No       |
+| <a id="serverstransport-tls-certificates" href="#serverstransport-tls-certificates" title="#serverstransport-tls-certificates">`serverstransport.`<br />`tls`<br />`.certificates`</a> | Defines the list of certificates (as file paths, or data bytes) that will be set as client certificates for mTLS.                                                                                                  |         | No       |
+| <a id="serverstransport-tls-insecureSkipVerify" href="#serverstransport-tls-insecureSkipVerify" title="#serverstransport-tls-insecureSkipVerify">`serverstransport.`<br />`tls`<br />`.insecureSkipVerify`</a> | Controls whether the server's certificate chain and host name is verified.                                                                                                                                         | false   | No       |
+| <a id="serverstransport-tls-rootcas" href="#serverstransport-tls-rootcas" title="#serverstransport-tls-rootcas">`serverstransport.`<br />`tls`<br />`.rootcas`</a> | Defines the root certificate authorities to use when verifying server certificates. (for mTLS connections).                                                                                                        |         | No       |
+| <a id="serverstransport-tls-peerCertURI" href="#serverstransport-tls-peerCertURI" title="#serverstransport-tls-peerCertURI">`serverstransport.`<br />`tls.`<br />`peerCertURI`</a> | Defines the URI used to match against SAN URIs during the server's certificate verification.                                                                                                                       | false   | No       |
+| <a id="serverstransport-spiffe-ids" href="#serverstransport-spiffe-ids" title="#serverstransport-spiffe-ids">`serverstransport.`<br />`spiffe`<br />`.ids`</a> | Allow SPIFFE IDs.<br />This takes precedence over the SPIFFE TrustDomain.                                                                                                                                          |         | No       |
+| <a id="serverstransport-spiffe-trustDomain" href="#serverstransport-spiffe-trustDomain" title="#serverstransport-spiffe-trustDomain">`serverstransport.`<br />`spiffe`<br />`.trustDomain`</a> | Allow SPIFFE trust domain.                                                                                                                                                                                         | ""      | No       |
 
 !!! note "SPIFFE"
 
@@ -114,3 +116,9 @@ To that end, as soon as the proxy enters this termination sequence, it sets a de
 
 The termination delay controls that deadline.
 A negative value means an infinite deadline (i.e. the connection is never fully terminated by the proxy itself).
+
+### `proxyProtocol.version`
+
+Traefik supports [PROXY Protocol](https://www.haproxy.org/download/2.0/doc/proxy-protocol.txt) version 1 and 2 on TCP Services.
+It can be configured by setting `proxyProtocol.version` on the serversTransport.
+The option specifies the version of the protocol to be used. Either 1 or 2.

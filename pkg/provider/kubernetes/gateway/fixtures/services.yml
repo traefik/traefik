@@ -431,6 +431,80 @@ spec:
       appProtocol: kubernetes.io/wss
 
 ---
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
+metadata:
+  name: whoami-HTTPS-abc
+  namespace: default
+  labels:
+    kubernetes.io/service-name: whoami-HTTPS
+
+addressType: IPv4
+ports:
+  - name: websecure
+    port: 8443
+endpoints:
+  - addresses:
+      - 10.10.0.16
+    conditions:
+      ready: true
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoami-HTTPS
+  namespace: default
+
+spec:
+  ports:
+    - name: websecure
+      protocol: TCP
+      appProtocol: HTTPS
+      port: 443
+      targetPort: websecure
+  selector:
+    app: containous
+    task: whoami-HTTPS
+
+---
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
+metadata:
+  name: whoami-HTTP-abc
+  namespace: default
+  labels:
+    kubernetes.io/service-name: whoami-HTTP
+
+addressType: IPv4
+ports:
+  - name: web
+    port: 8080
+endpoints:
+  - addresses:
+      - 10.10.0.17
+    conditions:
+      ready: true
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoami-HTTP
+  namespace: default
+
+spec:
+  ports:
+    - name: web
+      protocol: TCP
+      port: 80
+      appProtocol: HTTP
+      targetPort: web
+  selector:
+    app: containous
+    task: whoami-HTTP
+
+---
 apiVersion: v1
 kind: Service
 metadata:

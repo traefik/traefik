@@ -8,8 +8,6 @@ description: "The HTTP buffering middleware in Traefik Proxy limits the size of 
 How to Read the Request before Forwarding It
 {: .subtitle }
 
-![Buffering](../../assets/img/middleware/buffering.png)
-
 The Buffering middleware limits the size of requests that can be forwarded to services.
 
 With Buffering, Traefik reads the entire request into memory (possibly buffering large requests into disk), and rejects requests that are over a specified size limit.

@@ -93,7 +93,7 @@ With Docker, Traefik can leverage labels attached to a container to generate rou
 !!! info "Labels"
 
     - Labels are case-insensitive.
-    - The complete list of labels can be found in [the reference page](../../reference/dynamic-configuration/docker.md).
+    - The complete list of labels can be found in [the reference page](../../reference/routing-configuration/other-providers/docker.md).
 
 ### General
 

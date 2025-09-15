@@ -81,12 +81,16 @@
   #
   # filePath = "/path/to/log/log.txt"
 
-  # Format is either "json" or "common".
+  # Format is either "json", "common", or "genericCLF".
+  # - "common": Traefik's extended CLF format (default)
+  # - "genericCLF": Standard CLF format compatible with standard log analyzers
+  # - "json": JSON format for structured logging
   #
   # Optional
   # Default: "common"
   #
   # format = "json"
+  # format = "genericCLF"
 
 ################################################################
 # API and dashboard configuration

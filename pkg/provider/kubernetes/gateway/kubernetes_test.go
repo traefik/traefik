@@ -2959,6 +2959,14 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 										Name:   "default-whoami-wss-http-80",
 										Weight: ptr.To(1),
 									},
+									{
+										Name:   "default-whoami-HTTP-http-80",
+										Weight: ptr.To(1),
+									},
+									{
+										Name:   "default-whoami-HTTPS-http-443",
+										Weight: ptr.To(1),
+									},
 								},
 							},
 						},
@@ -2996,6 +3004,34 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 								Servers: []dynamic.Server{
 									{
 										URL: "https://10.10.0.15:80",
+									},
+								},
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"default-whoami-HTTPS-http-443": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "https://10.10.0.16:8443",
+									},
+								},
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"default-whoami-HTTP-http-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.17:8080",
 									},
 								},
 								PassHostHeader: ptr.To(true),
