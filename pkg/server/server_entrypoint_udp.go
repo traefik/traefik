@@ -138,7 +138,6 @@ func (ep *UDPEntryPoint) Start(ctx context.Context) {
 		go ep.switcher.ServeUDP(conn)
 	}
 }
-}
 
 // Shutdown closes ep's listener. It eventually closes all "sessions" and
 // releases associated resources, but only after it has waited for a graceTimeout,

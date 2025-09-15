@@ -15,16 +15,11 @@ var (
 	errNoProxyProtocol = errors.New("not a PROXY protocol connection")
 )
 
-// A Conn wraps an existing UDP connection to handle PROXY protocol.
-type Conn struct {
-	net.Conn
-	proxyAddr net.Addr
-}
 
 // RemoteAddr returns the remote network address.
 func (c *Conn) RemoteAddr() net.Addr {
-	if c.proxyAddr != nil {
-		return c.proxyAddr
+	if c.rAddr != nil {
+		return c.rAddr
 	}
 	return c.Conn.RemoteAddr()
 }
@@ -53,5 +48,5 @@ func HandleProxyProtocol(conn net.Conn, timeout time.Duration) (*Conn, error) {
 		return nil, errNoProxyProtocol
 	}
 
-	return &Conn{Conn: conn, proxyAddr: header.Addr}, nil
+	return &Conn{Conn: conn, rAddr: header.Addr}, nil
 }
