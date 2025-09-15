@@ -328,16 +328,7 @@ export const TopNav = () => {
     }
 
     // Source: https://github.com/traefik/traefiklabs-hub-button-app
-    const hubButtonScript = createScript('https://traefik.github.io/traefiklabs-hub-button-app/main-v1.js')
-    hubButtonScript.onerror = () => {
-      // Source: https://github.com/traefik/traefiklabs-hub-button-app
-      document.head.appendChild(createScript('traefiklabs-hub-button-app/main-v1.js'))
-      // Remove the remote script on error.
-      if (hubButtonScript.parentNode) {
-        hubButtonScript.parentNode.removeChild(hubButtonScript)
-      }
-    }
-    document.head.appendChild(hubButtonScript)
+    document.head.appendChild(createScript('traefiklabs-hub-button-app/main-v1.js'))
 
     return () => {
       // Remove the scripts on unmount.
