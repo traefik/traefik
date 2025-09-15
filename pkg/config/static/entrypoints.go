@@ -171,7 +171,9 @@ type UDPConfig struct {
 func (u *UDPConfig) SetDefaults() {
 	u.Timeout = ptypes.Duration(DefaultUDPTimeout)
 	u.ProxyProtocol = &ProxyProtocol{}
-	u.ProxyProtocol.SetDefaults()
+	if u.ProxyProtocol != nil {
+		u.ProxyProtocol.SetDefaults()
+	}
 }
 
 // ObservabilityConfig holds the observability configuration for an entry point.
