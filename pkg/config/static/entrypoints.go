@@ -132,6 +132,7 @@ type ForwardedHeaders struct {
 type ProxyProtocol struct {
 	Insecure   bool     `description:"Trust all." json:"insecure,omitempty" toml:"insecure,omitempty" yaml:"insecure,omitempty" export:"true"`
 	TrustedIPs []string `description:"Trust only selected IPs." json:"trustedIPs,omitempty" toml:"trustedIPs,omitempty" yaml:"trustedIPs,omitempty"`
+	Timeout ptypes.Duration `description:"Timeout defines how long to wait on an idle session before releasing the related resources." json:"timeout,omitempty" toml:"timeout,omitempty" yaml:"timeout,omitempty"`
 }
 
 // SetDefaults Default values for a ProxyProtocol in the static config.
@@ -170,7 +171,6 @@ type UDPConfig struct {
 // SetDefaults sets the default values.
 func (u *UDPConfig) SetDefaults() {
 	u.Timeout = ptypes.Duration(DefaultUDPTimeout)
-	u.ProxyProtocol = &ProxyProtocol{}
 	if u.ProxyProtocol != nil {
 		u.ProxyProtocol.SetDefaults()
 	}
