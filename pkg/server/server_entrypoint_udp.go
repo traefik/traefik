@@ -126,7 +126,7 @@ func (ep *UDPEntryPoint) Start(ctx context.Context) {
 		}
 
 		if ep.transportConfiguration.UDP.ProxyProtocol.Insecure {
-			connProxy, err := udp.HandleProxyProtocol(conn, time.Duration(ep.transportConfiguration.UDP.ProxyProtocol.Timeout))
+			connProxy, err := udp.HandleProxyProtocol(conn, time.Duration(ep.transportConfiguration.UDP.Timeout))
 			if err != nil {
 				logger.Error().Err(err).Send()
 				_ = conn.Close()
