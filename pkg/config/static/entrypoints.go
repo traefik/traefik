@@ -134,7 +134,7 @@ type ProxyProtocol struct {
 	TrustedIPs []string `description:"Trust only selected IPs." json:"trustedIPs,omitempty" toml:"trustedIPs,omitempty" yaml:"trustedIPs,omitempty"`
 }
 
-// SetDefaults Default values for a ProxyProtocol in the static config.
+// SetDefaults sets default values for a ProxyProtocol in the static config.
 func (p *ProxyProtocol) SetDefaults() {
 	// Keep zero-values as sensible defaults: Insecure=false, TrustedIPs=nil.
 	// This method exists so callers can safely invoke SetDefaults() regardless
