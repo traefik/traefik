@@ -484,6 +484,11 @@ func (p *Provider) updateIngressStatus(ing *netv1.Ingress, k8sClient Client) err
 			}
 		}
 
+	case corev1.ServiceTypeExternalName:
+		ingressStatus = []netv1.IngressLoadBalancerIngress{{
+			Hostname: service.Spec.ExternalName,
+		}}
+
 	default:
 		return fmt.Errorf("unsupported service type: %s", service.Spec.Type)
 	}
