@@ -72,7 +72,6 @@ func TestHTTPPluginDownloader_Download(t *testing.T) {
 
 			tempDir := t.TempDir()
 			archivesPath := filepath.Join(tempDir, "archives")
-			sourcesPath := filepath.Join(tempDir, "sources")
 
 			baseURL, err := url.Parse(server.URL)
 			require.NoError(t, err)
@@ -81,8 +80,7 @@ func TestHTTPPluginDownloader_Download(t *testing.T) {
 				httpClient: server.Client(),
 				baseURL:    baseURL,
 				archives:   archivesPath,
-				sources:    sourcesPath,
-			}
+				}
 
 			ctx := t.Context()
 			hash, err := downloader.Download(ctx, "test/plugin", "v1.0.0")
@@ -165,7 +163,6 @@ func TestHTTPPluginDownloader_Check(t *testing.T) {
 
 			tempDir := t.TempDir()
 			archivesPath := filepath.Join(tempDir, "archives")
-			sourcesPath := filepath.Join(tempDir, "sources")
 
 			baseURL, err := url.Parse(server.URL)
 			require.NoError(t, err)
@@ -174,8 +171,7 @@ func TestHTTPPluginDownloader_Check(t *testing.T) {
 				httpClient: server.Client(),
 				baseURL:    baseURL,
 				archives:   archivesPath,
-				sources:    sourcesPath,
-			}
+				}
 
 			ctx := t.Context()
 
@@ -205,17 +201,14 @@ func TestHTTPPluginDownloader_buildArchivePath(t *testing.T) {
 
 func TestNewHTTPPluginDownloader(t *testing.T) {
 	archivesPath := "/tmp/archives"
-	sourcesPath := "/tmp/output"
 
 	downloader, err := NewRegistryDownloader(RegistryDownloaderOptions{
 		HTTPClient:   http.DefaultClient,
 		ArchivesPath: archivesPath,
-		SourcesPath:  sourcesPath,
 	})
 	assert.NoError(t, err)
 	assert.NotNil(t, downloader)
 	assert.Equal(t, archivesPath, downloader.archives)
-	assert.Equal(t, sourcesPath, downloader.sources)
 	assert.NotNil(t, downloader.httpClient)
 	assert.NotNil(t, downloader.baseURL)
 }

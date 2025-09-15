@@ -13,7 +13,7 @@ import (
 const localGoPath = "./plugins-local/"
 
 // SetupRemotePlugins setup remote plugins environment.
-func SetupRemotePlugins(manager *Manager, downloader PluginDownloader, plugins map[string]Descriptor) error {
+func SetupRemotePlugins(manager *Manager, plugins map[string]Descriptor) error {
 	err := checkRemotePluginsConfiguration(plugins)
 	if err != nil {
 		return fmt.Errorf("invalid configuration: %w", err)
@@ -29,16 +29,8 @@ func SetupRemotePlugins(manager *Manager, downloader PluginDownloader, plugins m
 	for pAlias, desc := range plugins {
 		log.Ctx(ctx).Debug().Msgf("Loading of plugin: %s: %s@%s", pAlias, desc.ModuleName, desc.Version)
 
-		hash, err := downloader.Download(ctx, desc.ModuleName, desc.Version)
-		if err != nil {
-			_ = manager.ResetAll()
-			return fmt.Errorf("unable to download plugin %s: %w", desc.ModuleName, err)
-		}
-
-		err = downloader.Check(ctx, desc.ModuleName, desc.Version, desc.Hash, hash)
-		if err != nil {
-			_ = manager.ResetAll()
-			return fmt.Errorf("unable to check archive integrity of the plugin %s: %w", desc.ModuleName, err)
+		if err = manager.InstallPlugin(ctx, desc); err != nil {
+			return fmt.Errorf("unable to load plugin %s: %w", pAlias, err)
 		}
 	}
 

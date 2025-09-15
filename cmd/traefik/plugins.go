@@ -42,28 +42,25 @@ func initPlugins(staticCfg *static.Configuration) (*plugins.Manager, map[string]
 		httpClient.HTTPClient = &http.Client{Timeout: 10 * time.Second}
 		httpClient.RetryMax = 3
 
-		opts := plugins.ManagerOptions{
-			Output: outputDir,
-		}
-
-		var err error
-		manager, err = plugins.NewManager(opts)
-		if err != nil {
-			return nil, nil, nil, fmt.Errorf("unable to create plugins manager: %w", err)
-		}
-
 		// Create separate downloader for HTTP operations
 		archivesPath := filepath.Join(outputDir, "archives")
 		downloader, err := plugins.NewRegistryDownloader(plugins.RegistryDownloaderOptions{
 			HTTPClient:   httpClient.HTTPClient,
 			ArchivesPath: archivesPath,
-			SourcesPath:  filepath.Join(manager.GoPath(), goPathSrc),
 		})
 		if err != nil {
 			return nil, nil, nil, fmt.Errorf("unable to create plugin downloader: %w", err)
 		}
 
-		err = plugins.SetupRemotePlugins(manager, downloader, staticCfg.Experimental.Plugins)
+		opts := plugins.ManagerOptions{
+			Output: outputDir,
+		}
+		manager, err = plugins.NewManager(downloader, opts)
+		if err != nil {
+			return nil, nil, nil, fmt.Errorf("unable to create plugins manager: %w", err)
+		}
+
+		err = plugins.SetupRemotePlugins(manager, staticCfg.Experimental.Plugins)
 		if err != nil {
 			return nil, nil, nil, fmt.Errorf("unable to set up plugins environment: %w", err)
 		}

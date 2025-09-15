@@ -1,6 +1,8 @@
 package plugins
 
 import (
+	zipa "archive/zip"
+	"context"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -11,11 +13,32 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// mockDownloader is a test implementation of PluginDownloader
+type mockDownloader struct {
+	downloadFunc func(ctx context.Context, pName, pVersion string) (string, error)
+	checkFunc    func(ctx context.Context, pName, pVersion, pHash, hash string) error
+}
+
+func (m *mockDownloader) Download(ctx context.Context, pName, pVersion string) (string, error) {
+	if m.downloadFunc != nil {
+		return m.downloadFunc(ctx, pName, pVersion)
+	}
+	return "mockhash", nil
+}
+
+func (m *mockDownloader) Check(ctx context.Context, pName, pVersion, pHash, hash string) error {
+	if m.checkFunc != nil {
+		return m.checkFunc(ctx, pName, pVersion, pHash, hash)
+	}
+	return nil
+}
+
 func TestNewPluginManager(t *testing.T) {
 	tempDir := t.TempDir()
 	opts := ManagerOptions{Output: tempDir}
+	downloader := &mockDownloader{}
 
-	manager, err := NewManager(opts)
+	manager, err := NewManager(downloader, opts)
 	require.NoError(t, err)
 	assert.NotNil(t, manager)
 
@@ -33,7 +56,8 @@ func TestPluginManager_GoPath(t *testing.T) {
 	tempDir := t.TempDir()
 	opts := ManagerOptions{Output: tempDir}
 
-	manager, err := NewManager(opts)
+	downloader := &mockDownloader{}
+	manager, err := NewManager(downloader, opts)
 	require.NoError(t, err)
 
 	goPath := manager.GoPath()
@@ -45,7 +69,8 @@ func TestPluginManager_ReadManifest(t *testing.T) {
 	tempDir := t.TempDir()
 	opts := ManagerOptions{Output: tempDir}
 
-	manager, err := NewManager(opts)
+	downloader := &mockDownloader{}
+	manager, err := NewManager(downloader, opts)
 	require.NoError(t, err)
 
 	moduleName := "github.com/test/plugin"
@@ -81,7 +106,8 @@ func TestPluginManager_ReadManifest_NotFound(t *testing.T) {
 	tempDir := t.TempDir()
 	opts := ManagerOptions{Output: tempDir}
 
-	manager, err := NewManager(opts)
+	downloader := &mockDownloader{}
+	manager, err := NewManager(downloader, opts)
 	require.NoError(t, err)
 
 	_, err = manager.ReadManifest("nonexistent/plugin")
@@ -124,7 +150,8 @@ func TestPluginManager_CleanArchives(t *testing.T) {
 	tempDir := t.TempDir()
 	opts := ManagerOptions{Output: tempDir}
 
-	manager, err := NewManager(opts)
+	downloader := &mockDownloader{}
+	manager, err := NewManager(downloader, opts)
 	require.NoError(t, err)
 
 	testPlugin1 := "test/plugin1"
@@ -180,7 +207,8 @@ func TestPluginManager_WriteState(t *testing.T) {
 	tempDir := t.TempDir()
 	opts := ManagerOptions{Output: tempDir}
 
-	manager, err := NewManager(opts)
+	downloader := &mockDownloader{}
+	manager, err := NewManager(downloader, opts)
 	require.NoError(t, err)
 
 	plugins := map[string]Descriptor{
@@ -217,7 +245,8 @@ func TestPluginManager_ResetAll(t *testing.T) {
 	tempDir := t.TempDir()
 	opts := ManagerOptions{Output: tempDir}
 
-	manager, err := NewManager(opts)
+	downloader := &mockDownloader{}
+	manager, err := NewManager(downloader, opts)
 	require.NoError(t, err)
 
 	testFile := filepath.Join(manager.GoPath(), "test.txt")
@@ -293,4 +322,245 @@ func Test_resetDirectory_CurrentPath(t *testing.T) {
 	err = resetDirectory(currentDir)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "cannot be deleted")
+}
+
+func TestPluginManager_InstallPlugin(t *testing.T) {
+	tests := []struct {
+		name         string
+		plugin       Descriptor
+		downloadFunc func(ctx context.Context, pName, pVersion string) (string, error)
+		checkFunc    func(ctx context.Context, pName, pVersion, pHash, hash string) error
+		setupArchive func(t *testing.T, archivePath string)
+		expectError  bool
+		errorMsg     string
+	}{
+		{
+			name: "successful installation",
+			plugin: Descriptor{
+				ModuleName: "github.com/test/plugin",
+				Version:    "v1.0.0",
+				Hash:       "expected-hash",
+			},
+			downloadFunc: func(ctx context.Context, pName, pVersion string) (string, error) {
+				return "expected-hash", nil
+			},
+			checkFunc: func(ctx context.Context, pName, pVersion, pHash, hash string) error {
+				return nil
+			},
+			setupArchive: func(t *testing.T, archivePath string) {
+				// Create a valid zip archive
+				err := os.MkdirAll(filepath.Dir(archivePath), 0o755)
+				require.NoError(t, err)
+				
+				file, err := os.Create(archivePath)
+				require.NoError(t, err)
+				defer file.Close()
+				
+				// Write a minimal zip file with a test file
+				writer := zipa.NewWriter(file)
+				defer writer.Close()
+				
+				fileWriter, err := writer.Create("test-module-v1.0.0/main.go")
+				require.NoError(t, err)
+				_, err = fileWriter.Write([]byte("package main\n\nfunc main() {}\n"))
+				require.NoError(t, err)
+			},
+			expectError: false,
+		},
+		{
+			name: "download error",
+			plugin: Descriptor{
+				ModuleName: "github.com/test/plugin",
+				Version:    "v1.0.0",
+			},
+			downloadFunc: func(ctx context.Context, pName, pVersion string) (string, error) {
+				return "", assert.AnError
+			},
+			expectError: true,
+			errorMsg:    "unable to download plugin",
+		},
+		{
+			name: "check error",
+			plugin: Descriptor{
+				ModuleName: "github.com/test/plugin",
+				Version:    "v1.0.0",
+				Hash:       "expected-hash",
+			},
+			downloadFunc: func(ctx context.Context, pName, pVersion string) (string, error) {
+				return "actual-hash", nil
+			},
+			checkFunc: func(ctx context.Context, pName, pVersion, pHash, hash string) error {
+				return assert.AnError
+			},
+			expectError: true,
+			errorMsg:    "unable to check archive integrity",
+		},
+		{
+			name: "unzip error - invalid archive",
+			plugin: Descriptor{
+				ModuleName: "github.com/test/plugin",
+				Version:    "v1.0.0",
+			},
+			downloadFunc: func(ctx context.Context, pName, pVersion string) (string, error) {
+				return "test-hash", nil
+			},
+			checkFunc: func(ctx context.Context, pName, pVersion, pHash, hash string) error {
+				return nil
+			},
+			setupArchive: func(t *testing.T, archivePath string) {
+				// Create an invalid zip archive
+				err := os.MkdirAll(filepath.Dir(archivePath), 0o755)
+				require.NoError(t, err)
+				err = os.WriteFile(archivePath, []byte("invalid zip content"), 0o644)
+				require.NoError(t, err)
+			},
+			expectError: true,
+			errorMsg:    "unable to unzip plugin",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			tempDir := t.TempDir()
+			opts := ManagerOptions{Output: tempDir}
+			
+			downloader := &mockDownloader{
+				downloadFunc: test.downloadFunc,
+				checkFunc:    test.checkFunc,
+			}
+			
+			manager, err := NewManager(downloader, opts)
+			require.NoError(t, err)
+			
+			// Setup archive if needed
+			if test.setupArchive != nil {
+				archivePath := filepath.Join(manager.archives, 
+					filepath.FromSlash(test.plugin.ModuleName), 
+					test.plugin.Version+".zip")
+				test.setupArchive(t, archivePath)
+			}
+			
+			ctx := context.Background()
+			err = manager.InstallPlugin(ctx, test.plugin)
+			
+			if test.expectError {
+				assert.Error(t, err)
+				if test.errorMsg != "" {
+					assert.Contains(t, err.Error(), test.errorMsg)
+				}
+			} else {
+				assert.NoError(t, err)
+				
+				// Verify that plugin sources were extracted
+				sourcePath := filepath.Join(manager.sources, filepath.FromSlash(test.plugin.ModuleName))
+				assert.DirExists(t, sourcePath)
+			}
+		})
+	}
+}
+
+func TestPluginManager_InstallPlugin_Integration(t *testing.T) {
+	tempDir := t.TempDir()
+	opts := ManagerOptions{Output: tempDir}
+	
+	var capturedDownloadName, capturedDownloadVersion string
+	var capturedCheckName, capturedCheckVersion, capturedCheckPHash, capturedCheckHash string
+	
+	downloader := &mockDownloader{
+		downloadFunc: func(ctx context.Context, pName, pVersion string) (string, error) {
+			capturedDownloadName = pName
+			capturedDownloadVersion = pVersion
+			
+			// Create a test archive
+			archivePath := filepath.Join(tempDir, archivesFolder, 
+				filepath.FromSlash(pName), pVersion+".zip")
+			err := os.MkdirAll(filepath.Dir(archivePath), 0o755)
+			if err != nil {
+				return "", err
+			}
+			
+			file, err := os.Create(archivePath)
+			if err != nil {
+				return "", err
+			}
+			defer file.Close()
+			
+			writer := zipa.NewWriter(file)
+			defer writer.Close()
+			
+			// Create a test Go file
+			fileWriter, err := writer.Create("test-module-v1.0.0/main.go")
+			if err != nil {
+				return "", err
+			}
+			_, err = fileWriter.Write([]byte("package main\n\nfunc main() {}\n"))
+			if err != nil {
+				return "", err
+			}
+			
+			// Create a manifest file
+			manifestWriter, err := writer.Create("test-module-v1.0.0/.traefik.yml")
+			if err != nil {
+				return "", err
+			}
+			manifest := `displayName: Test Plugin
+type: middleware
+import: github.com/test/plugin
+summary: A test plugin for integration testing
+`
+			_, err = manifestWriter.Write([]byte(manifest))
+			if err != nil {
+				return "", err
+			}
+			
+			return "integration-test-hash", nil
+		},
+		checkFunc: func(ctx context.Context, pName, pVersion, pHash, hash string) error {
+			capturedCheckName = pName
+			capturedCheckVersion = pVersion
+			capturedCheckPHash = pHash
+			capturedCheckHash = hash
+			return nil
+		},
+	}
+	
+	manager, err := NewManager(downloader, opts)
+	require.NoError(t, err)
+	
+	plugin := Descriptor{
+		ModuleName: "github.com/test/plugin",
+		Version:    "v1.0.0",
+		Hash:       "expected-hash",
+	}
+	
+	ctx := context.Background()
+	err = manager.InstallPlugin(ctx, plugin)
+	require.NoError(t, err)
+	
+	// Verify downloader was called with correct parameters
+	assert.Equal(t, "github.com/test/plugin", capturedDownloadName)
+	assert.Equal(t, "v1.0.0", capturedDownloadVersion)
+	assert.Equal(t, "github.com/test/plugin", capturedCheckName)
+	assert.Equal(t, "v1.0.0", capturedCheckVersion)
+	assert.Equal(t, "expected-hash", capturedCheckPHash)
+	assert.Equal(t, "integration-test-hash", capturedCheckHash)
+	
+	// Verify plugin files were extracted
+	sourcePath := filepath.Join(manager.sources, "github.com", "test", "plugin")
+	assert.DirExists(t, sourcePath)
+	
+	// Verify main.go was extracted
+	mainGoPath := filepath.Join(sourcePath, "main.go")
+	assert.FileExists(t, mainGoPath)
+	
+	// Verify manifest was extracted
+	manifestPath := filepath.Join(sourcePath, ".traefik.yml")
+	assert.FileExists(t, manifestPath)
+	
+	// Test reading the manifest
+	manifest, err := manager.ReadManifest("github.com/test/plugin")
+	require.NoError(t, err)
+	assert.Equal(t, "Test Plugin", manifest.DisplayName)
+	assert.Equal(t, "middleware", manifest.Type)
+	assert.Equal(t, "github.com/test/plugin", manifest.Import)
 }
