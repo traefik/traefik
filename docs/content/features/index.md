@@ -35,12 +35,12 @@ The Traefik ecosystem offers multiple products designed to meet different requir
 | Per-cluster dashboard | ✓ | ✓ | ✓ |
 | GitOps-native declarative configuration | ✓ | ✓ | ✓ |
 | **Authentication & Authorization** | | | |
-| JWT Authentication | ✗ | ✓ | ✗ |
-| OAuth 2.0 Token Introspection Authentication | ✗ | ✓ | ✗ |
-| OAuth 2.0 Client Credentials Authentication | ✗ | ✓ | ✗ |
-| OpenID Connect Authentication | ✗ | ✓ | ✗ |
-| Lightweight Directory Access Protocol (LDAP) | ✗ | ✓ | ✗ |
-| API Key Authentication | ✗ | ✓ | ✗ |
+| JWT Authentication | ✗ | ✓ | ✓ |
+| OAuth 2.0 Token Introspection Authentication | ✗ | ✓ | ✓ |
+| OAuth 2.0 Client Credentials Authentication | ✗ | ✓ | ✓ |
+| OpenID Connect Authentication | ✗ | ✓ | ✓ |
+| Lightweight Directory Access Protocol (LDAP) | ✗ | ✓ | ✓ |
+| API Key Authentication | ✗ | ✓ | ✓ |
 | **Security & Policy** | | | |
 | Open Policy Agent | ✗ | ✓ | ✓ |
 | Native Coraza Web Application Firewall (WAF) | ✗ | ✓ | ✓ |
@@ -51,14 +51,14 @@ The Traefik ecosystem offers multiple products designed to meet different requir
 | HTTP Caching | ✗ | ✓ | ✓ |
 | **Compliance** | | | |
 | FIPS 140-2 Compliance (Linux & Windows) | ✗ | ✓ | ✓ |
-| **AI Gateway (included in Traefik Hub API Gateway)** | | | |
-| Unified Multi-LLM API Access | ✗ | ✓ | ✗ |
-| Centralized AI Credential Management | ✗ | ✓ | ✗ |
-| AI Provider Flexibility (OpenAI, Anthropic, Azure OpenAI, AWS Bedrock, etc.) | ✗ | ✓ | ✗ |
-| Semantic Caching for AI Responses | ✗ | ✓ | ✗ |
-| Content Guard & PII Protection | ✗ | ✓ | ✗ |
-| AI-specific Observability & OpenTelemetry Integration | ✗ | ✓ | ✗ |
-| Support for Local/Self-hosted LLMs & Inference (Ollama, Mistral, etc.) | ✗ | ✓ | ✗ |
+| **AI Gateway Capabilities** | | | |
+| Unified Multi-LLM API Access | ✗ | ✓ | ✓ |
+| Centralized AI Credential Management | ✗ | ✓ | ✓ |
+| AI Provider Flexibility (OpenAI, Anthropic, Azure OpenAI, AWS Bedrock, etc.) | ✗ | ✓ | ✓ |
+| Semantic Caching for AI Responses | ✗ | ✓ | ✓ |
+| Content Guard & PII Protection | ✗ | ✓ | ✓ |
+| AI-specific Observability & OpenTelemetry Integration | ✗ | ✓ | ✓ |
+| Support for Local/Self-hosted LLMs & Inference (Ollama, Mistral, etc.) | ✗ | ✓ | ✓ |
 | **API Management** | | | |
 | Flexible API grouping and versioning | ✗ | ✗ | ✓ |
 | API Developer Portal | ✗ | ✗ | ✓ |
