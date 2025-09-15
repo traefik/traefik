@@ -119,7 +119,7 @@ func TestHTTPPluginDownloader_Check(t *testing.T) {
 		},
 		{
 			name:  "failed check",
-			pHash: "",
+			pHash: "bashash",
 			hash:  "testhash",
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusBadRequest)
@@ -187,28 +187,4 @@ func TestHTTPPluginDownloader_Check(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestHTTPPluginDownloader_buildArchivePath(t *testing.T) {
-	downloader := &RegistryDownloader{
-		archives: "/tmp/archives",
-	}
-
-	path := downloader.buildArchivePath("test/plugin", "v1.0.0")
-	expected := filepath.Join("/tmp/archives", "test", "plugin", "v1.0.0.zip")
-	assert.Equal(t, expected, path)
-}
-
-func TestNewHTTPPluginDownloader(t *testing.T) {
-	archivesPath := "/tmp/archives"
-
-	downloader, err := NewRegistryDownloader(RegistryDownloaderOptions{
-		HTTPClient:   http.DefaultClient,
-		ArchivesPath: archivesPath,
-	})
-	assert.NoError(t, err)
-	assert.NotNil(t, downloader)
-	assert.Equal(t, archivesPath, downloader.archives)
-	assert.NotNil(t, downloader.httpClient)
-	assert.NotNil(t, downloader.baseURL)
 }

@@ -92,6 +92,7 @@ func (d *RegistryDownloader) Download(ctx context.Context, pName, pVersion strin
 
 	switch resp.StatusCode {
 	case http.StatusNotModified:
+		return hash, nil
 	case http.StatusOK:
 		err = os.MkdirAll(filepath.Dir(filename), 0o755)
 		if err != nil {

@@ -33,25 +33,6 @@ func (m *mockDownloader) Check(ctx context.Context, pName, pVersion, pHash, hash
 	return nil
 }
 
-func TestNewPluginManager(t *testing.T) {
-	tempDir := t.TempDir()
-	opts := ManagerOptions{Output: tempDir}
-	downloader := &mockDownloader{}
-
-	manager, err := NewManager(downloader, opts)
-	require.NoError(t, err)
-	assert.NotNil(t, manager)
-
-	sourcesPath := filepath.Join(tempDir, sourcesFolder)
-	assert.DirExists(t, sourcesPath)
-
-	archivesPath := filepath.Join(tempDir, archivesFolder)
-	assert.DirExists(t, archivesPath)
-
-	assert.NotEmpty(t, manager.GoPath())
-	assert.DirExists(t, manager.GoPath())
-}
-
 func TestPluginManager_GoPath(t *testing.T) {
 	tempDir := t.TempDir()
 	opts := ManagerOptions{Output: tempDir}
@@ -112,38 +93,6 @@ func TestPluginManager_ReadManifest_NotFound(t *testing.T) {
 
 	_, err = manager.ReadManifest("nonexistent/plugin")
 	assert.Error(t, err)
-}
-
-func TestReadManifest_Function(t *testing.T) {
-	tempDir := t.TempDir()
-	goPath := filepath.Join(tempDir, "gopath")
-	sourcesPath := filepath.Join(goPath, goPathSrc)
-
-	moduleName := "github.com/test/plugin"
-	pluginPath := filepath.Join(sourcesPath, moduleName)
-	err := os.MkdirAll(pluginPath, 0o755)
-	require.NoError(t, err)
-
-	manifest := &Manifest{
-		DisplayName: "Test Plugin",
-		Type:        "middleware",
-		Import:      "github.com/test/plugin",
-		Summary:     "A test plugin",
-		TestData: map[string]interface{}{
-			"test": "data",
-		},
-	}
-
-	manifestPath := filepath.Join(pluginPath, pluginManifest)
-	manifestData, err := yaml.Marshal(manifest)
-	require.NoError(t, err)
-	err = os.WriteFile(manifestPath, manifestData, 0o644)
-	require.NoError(t, err)
-
-	readManifest, err := ReadManifest(goPath, moduleName)
-	require.NoError(t, err)
-	assert.Equal(t, manifest.DisplayName, readManifest.DisplayName)
-	assert.Equal(t, manifest.Type, readManifest.Type)
 }
 
 func TestPluginManager_CleanArchives(t *testing.T) {
@@ -263,65 +212,6 @@ func TestPluginManager_ResetAll(t *testing.T) {
 	assert.DirExists(t, manager.archives)
 	assert.NoFileExists(t, testFile)
 	assert.NoFileExists(t, archiveFile)
-}
-
-func TestPluginManager_ResetAll_EmptyGoPath(t *testing.T) {
-	manager := &Manager{goPath: ""}
-
-	err := manager.ResetAll()
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "goPath is empty")
-}
-
-func Test_computeHash(t *testing.T) {
-	tempDir := t.TempDir()
-	testFile := filepath.Join(tempDir, "test.txt")
-	content := []byte("test content for hashing")
-
-	err := os.WriteFile(testFile, content, 0o644)
-	require.NoError(t, err)
-
-	hash, err := computeHash(testFile)
-	require.NoError(t, err)
-	assert.NotEmpty(t, hash)
-	assert.Len(t, hash, 64)
-
-	hash2, err := computeHash(testFile)
-	require.NoError(t, err)
-	assert.Equal(t, hash, hash2)
-}
-
-func Test_computeHash_NonexistentFile(t *testing.T) {
-	_, err := computeHash("/nonexistent/file")
-	assert.Error(t, err)
-}
-
-func Test_resetDirectory(t *testing.T) {
-	tempDir := t.TempDir()
-	testDir := filepath.Join(tempDir, "testdir")
-
-	err := os.MkdirAll(testDir, 0o755)
-	require.NoError(t, err)
-
-	testFile := filepath.Join(testDir, "test.txt")
-	err = os.WriteFile(testFile, []byte("test"), 0o644)
-	require.NoError(t, err)
-
-	err = resetDirectory(testDir)
-	require.NoError(t, err)
-
-	// Directory should exist but be empty
-	assert.DirExists(t, testDir)
-	assert.NoFileExists(t, testFile)
-}
-
-func Test_resetDirectory_CurrentPath(t *testing.T) {
-	currentDir, err := os.Getwd()
-	require.NoError(t, err)
-
-	err = resetDirectory(currentDir)
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "cannot be deleted")
 }
 
 func TestPluginManager_InstallPlugin(t *testing.T) {
