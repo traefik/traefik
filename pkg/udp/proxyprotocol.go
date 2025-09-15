@@ -43,6 +43,9 @@ func HandleProxyProtocol(conn net.Conn, timeout time.Duration) (*Conn, error) {
 		return nil, fmt.Errorf("error reading PROXY protocol header: %w", err)
 	}
 
+	// The proxyprotocol library may return a header with a nil Addr field
+	// if the connection does not contain a valid PROXY protocol header.
+	// In this case, we treat it as a non-PROXY protocol connection and return errNoProxyProtocol.
 	if header.Addr == nil {
 		return nil, errNoProxyProtocol
 	}
