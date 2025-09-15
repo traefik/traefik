@@ -106,3 +106,60 @@ func newServer(t *testing.T, addr string, handler Handler) {
 		go handler.ServeUDP(conn)
 	}
 }
+
+
+func TestProxyProtocol_UDP(t *testing.T) {
+	backendAddr := ":8091"
+	received := make(chan struct {
+		addr net.Addr
+		data []byte
+	}, 1)
+
+	// Backend server records remote address and payload
+	go newServer(t, backendAddr, HandlerFunc(func(conn *Conn) {
+		buf := make([]byte, 1024)
+		n, err := conn.Read(buf)
+		require.NoError(t, err)
+		received <- struct {
+			addr net.Addr
+			data []byte
+		}{conn.rAddr, buf[:n]}
+	}))
+
+	proxy, err := NewProxy(backendAddr)
+	require.NoError(t, err)
+
+	proxyAddr := ":8090"
+	go newServer(t, proxyAddr, proxy)
+
+	time.Sleep(time.Second)
+
+	// Prepare a UDP packet with a PROXY protocol v1 header
+
+	srcAddr, err := net.ResolveUDPAddr("udp", "127.0.0.2:55555")
+	require.NoError(t, err)
+	dstAddr, err := net.ResolveUDPAddr("udp", proxyAddr)
+	require.NoError(t, err)
+
+	conn, err := net.DialUDP("udp", srcAddr, dstAddr)
+	require.NoError(t, err)
+
+	header := "PROXY UDP4 127.0.0.2 127.0.0.1 55555 8090\r\n"
+	payload := []byte("PROXYTEST")
+	packet := append([]byte(header), payload...)
+
+	_, err = conn.Write(packet)
+	require.NoError(t, err)
+
+	select {
+	case got := <-received:
+		assert.Equal(t, payload, got.data)
+		// The backend should see the remote address as 127.0.0.2:55555
+		udpAddr, ok := got.addr.(*net.UDPAddr)
+		require.True(t, ok)
+		assert.Equal(t, "127.0.0.2", udpAddr.IP.String())
+		assert.Equal(t, 55555, udpAddr.Port)
+	case <-time.After(2 * time.Second):
+		t.Fatal("timeout waiting for backend to receive packet")
+	}
+}

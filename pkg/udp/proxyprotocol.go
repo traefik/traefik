@@ -15,7 +15,6 @@ var (
 	errNoProxyProtocol = errors.New("not a PROXY protocol connection")
 )
 
-
 // RemoteAddr returns the remote network address.
 func (c *Conn) RemoteAddr() net.Addr {
 	if c.rAddr != nil {
