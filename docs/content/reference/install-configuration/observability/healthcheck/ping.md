@@ -37,9 +37,9 @@ You can define it using the same [configuration methods](../../boot-environment.
 
 | Field | Description                                               | Default              | Required |
 |:------|:----------------------------------------------------------|:---------------------|:---------|
-| `ping.entryPoint` | Enables `/ping` on a dedicated EntryPoint. | traefik  | No   |
-| `ping.manualRouting` | Disables the default internal router in order to allow one to create a custom router for the `ping@internal` service when set to `true`. | false | No   |
-| `ping.terminatingStatusCode` | Defines the status code for the ping handler during a graceful shut down. See more information [here](#terminatingstatuscode) | 503 | No   |
+| <a id="ping-entryPoint" href="#ping-entryPoint" title="#ping-entryPoint">`ping.entryPoint`</a> | Enables `/ping` on a dedicated EntryPoint. | traefik  | No   |
+| <a id="ping-manualRouting" href="#ping-manualRouting" title="#ping-manualRouting">`ping.manualRouting`</a> | Disables the default internal router in order to allow one to create a custom router for the `ping@internal` service when set to `true`. | false | No   |
+| <a id="ping-terminatingStatusCode" href="#ping-terminatingStatusCode" title="#ping-terminatingStatusCode">`ping.terminatingStatusCode`</a> | Defines the status code for the ping handler during a graceful shut down. See more information [here](#terminatingstatuscode) | 503 | No   |
 
 ### `terminatingStatusCode`
 

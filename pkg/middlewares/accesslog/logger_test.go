@@ -68,7 +68,17 @@ func TestOTelAccessLogWithBody(t *testing.T) {
 			bodyCheckFn: func(t *testing.T, log string) {
 				t.Helper()
 
-				// For common format, verify the body contains the CLF formatted string
+				// For common format, verify the body contains the Traefik common log formatted string
+				assert.Regexp(t, `"body":{"stringValue":".*- /health -.*200.*[0-9]+ms.*"}`, log)
+			},
+		},
+		{
+			desc:   "Generic CLF format with log body",
+			format: GenericCLFFormat,
+			bodyCheckFn: func(t *testing.T, log string) {
+				t.Helper()
+
+				// For generic CLF format, verify the body contains the CLF formatted string
 				assert.Regexp(t, `"body":{"stringValue":".*- /health -.*200.*"}`, log)
 			},
 		},
@@ -375,7 +385,7 @@ func TestLoggerHeaderFields(t *testing.T) {
 	}
 }
 
-func TestLoggerCLF(t *testing.T) {
+func TestCommonLogger(t *testing.T) {
 	logFilePath := filepath.Join(t.TempDir(), logFileNameSuffix)
 	config := &types.AccessLog{FilePath: logFilePath, Format: CommonFormat}
 	doLogging(t, config, false)
@@ -384,10 +394,10 @@ func TestLoggerCLF(t *testing.T) {
 	require.NoError(t, err)
 
 	expectedLog := ` TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 1 "testRouter" "http://127.0.0.1/testService" 1ms`
-	assertValidLogData(t, expectedLog, logData)
+	assertValidCommonLogData(t, expectedLog, logData)
 }
 
-func TestLoggerCLFWithBufferingSize(t *testing.T) {
+func TestCommonLoggerWithBufferingSize(t *testing.T) {
 	logFilePath := filepath.Join(t.TempDir(), logFileNameSuffix)
 	config := &types.AccessLog{FilePath: logFilePath, Format: CommonFormat, BufferingSize: 1024}
 	doLogging(t, config, false)
@@ -399,7 +409,34 @@ func TestLoggerCLFWithBufferingSize(t *testing.T) {
 	require.NoError(t, err)
 
 	expectedLog := ` TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 1 "testRouter" "http://127.0.0.1/testService" 1ms`
-	assertValidLogData(t, expectedLog, logData)
+	assertValidCommonLogData(t, expectedLog, logData)
+}
+
+func TestLoggerGenericCLF(t *testing.T) {
+	logFilePath := filepath.Join(t.TempDir(), logFileNameSuffix)
+	config := &types.AccessLog{FilePath: logFilePath, Format: GenericCLFFormat}
+	doLogging(t, config, false)
+
+	logData, err := os.ReadFile(logFilePath)
+	require.NoError(t, err)
+
+	expectedLog := ` TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent"`
+	assertValidGenericCLFLogData(t, expectedLog, logData)
+}
+
+func TestLoggerGenericCLFWithBufferingSize(t *testing.T) {
+	logFilePath := filepath.Join(t.TempDir(), logFileNameSuffix)
+	config := &types.AccessLog{FilePath: logFilePath, Format: GenericCLFFormat, BufferingSize: 1024}
+	doLogging(t, config, false)
+
+	// wait a bit for the buffer to be written in the file.
+	time.Sleep(50 * time.Millisecond)
+
+	logData, err := os.ReadFile(logFilePath)
+	require.NoError(t, err)
+
+	expectedLog := ` TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent"`
+	assertValidGenericCLFLogData(t, expectedLog, logData)
 }
 
 func assertString(exp string) func(t *testing.T, actual interface{}) {
@@ -963,12 +1000,12 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 
 			written, err := os.ReadFile(file.Name())
 			require.NoError(t, err, "unable to read captured stdout from file")
-			assertValidLogData(t, test.expectedLog, written)
+			assertValidCommonLogData(t, test.expectedLog, written)
 		})
 	}
 }
 
-func assertValidLogData(t *testing.T, expected string, logData []byte) {
+func assertValidCommonLogData(t *testing.T, expected string, logData []byte) {
 	t.Helper()
 
 	if len(expected) == 0 {
@@ -999,6 +1036,35 @@ func assertValidLogData(t *testing.T, expected string, logData []byte) {
 	assert.Equal(t, resultExpected[RouterName], result[RouterName], formatErrMessage)
 	assert.Equal(t, resultExpected[ServiceURL], result[ServiceURL], formatErrMessage)
 	assert.Regexp(t, `\d*ms`, result[Duration], formatErrMessage)
+}
+
+func assertValidGenericCLFLogData(t *testing.T, expected string, logData []byte) {
+	t.Helper()
+
+	if len(expected) == 0 {
+		assert.Empty(t, logData)
+		t.Log(string(logData))
+		return
+	}
+
+	result, err := ParseAccessLog(string(logData))
+	require.NoError(t, err)
+
+	resultExpected, err := ParseAccessLog(expected)
+	require.NoError(t, err)
+
+	formatErrMessage := fmt.Sprintf("Expected:\t%q\nActual:\t%q", expected, string(logData))
+
+	require.Len(t, result, len(resultExpected), formatErrMessage)
+	assert.Equal(t, resultExpected[ClientHost], result[ClientHost], formatErrMessage)
+	assert.Equal(t, resultExpected[ClientUsername], result[ClientUsername], formatErrMessage)
+	assert.Equal(t, resultExpected[RequestMethod], result[RequestMethod], formatErrMessage)
+	assert.Equal(t, resultExpected[RequestPath], result[RequestPath], formatErrMessage)
+	assert.Equal(t, resultExpected[RequestProtocol], result[RequestProtocol], formatErrMessage)
+	assert.Equal(t, resultExpected[OriginStatus], result[OriginStatus], formatErrMessage)
+	assert.Equal(t, resultExpected[OriginContentSize], result[OriginContentSize], formatErrMessage)
+	assert.Equal(t, resultExpected[RequestRefererHeader], result[RequestRefererHeader], formatErrMessage)
+	assert.Equal(t, resultExpected[RequestUserAgentHeader], result[RequestUserAgentHeader], formatErrMessage)
 }
 
 func captureStdout(t *testing.T) (out *os.File, restoreStdout func()) {

@@ -51,20 +51,20 @@ Below is the list of the currently supported providers in Traefik.
 
 | Provider                                          | Type         | Configuration Type   | Provider Name       |
 |--------------------------------------------------------------|--------------|----------------------|---------------------|
-| [Docker](./docker.md)                                        | Orchestrator | Label                | `docker`            |
-| [Docker Swarm](./swarm.md)                                   | Orchestrator | Label                | `swarm`             |
-| [Kubernetes IngressRoute](./kubernetes/kubernetes-crd.md)    | Orchestrator | Custom Resource      | `kubernetescrd`     |
-| [Kubernetes Ingress](./kubernetes/kubernetes-ingress.md)     | Orchestrator | Ingress              | `kubernetes`        |
-| [Kubernetes Gateway API](./kubernetes/kubernetes-gateway.md) | Orchestrator | Gateway API Resource | `kubernetesgateway` |
-| [Consul Catalog](./hashicorp/consul-catalog.md)              | Orchestrator | Label                | `consulcatalog`     |
-| [Nomad](./hashicorp/nomad.md)                                | Orchestrator | Label                | `nomad`             |
-| [ECS](./others/ecs.md)                                       | Orchestrator | Label                | `ecs`               |
-| [File](./others/file.md)                                     | Manual       | YAML/TOML format     | `file`              |
-| [Consul](./hashicorp/consul.md)                              | KV           | KV                   | `consul`            |
-| [Etcd](./kv/etcd.md)                                         | KV           | KV                   | `etcd`              |
-| [ZooKeeper](./kv/zk.md)                                      | KV           | KV                   | `zookeeper`         |
-| [Redis](./kv/redis.md)                                       | KV           | KV                   | `redis`             |
-| [HTTP](./others/http.md)                                     | Manual       | JSON/YAML format          | `http`              |
+| <a id="Docker" href="#Docker" title="#Docker">[Docker](./docker.md)</a> | Orchestrator | Label                | `docker`            |
+| <a id="Docker-Swarm" href="#Docker-Swarm" title="#Docker-Swarm">[Docker Swarm](./swarm.md)</a> | Orchestrator | Label                | `swarm`             |
+| <a id="Kubernetes-IngressRoute" href="#Kubernetes-IngressRoute" title="#Kubernetes-IngressRoute">[Kubernetes IngressRoute](./kubernetes/kubernetes-crd.md)</a> | Orchestrator | Custom Resource      | `kubernetescrd`     |
+| <a id="Kubernetes-Ingress" href="#Kubernetes-Ingress" title="#Kubernetes-Ingress">[Kubernetes Ingress](./kubernetes/kubernetes-ingress.md)</a> | Orchestrator | Ingress              | `kubernetes`        |
+| <a id="Kubernetes-Gateway-API" href="#Kubernetes-Gateway-API" title="#Kubernetes-Gateway-API">[Kubernetes Gateway API](./kubernetes/kubernetes-gateway.md)</a> | Orchestrator | Gateway API Resource | `kubernetesgateway` |
+| <a id="Consul-Catalog" href="#Consul-Catalog" title="#Consul-Catalog">[Consul Catalog](./hashicorp/consul-catalog.md)</a> | Orchestrator | Label                | `consulcatalog`     |
+| <a id="Nomad" href="#Nomad" title="#Nomad">[Nomad](./hashicorp/nomad.md)</a> | Orchestrator | Label                | `nomad`             |
+| <a id="ECS" href="#ECS" title="#ECS">[ECS](./others/ecs.md)</a> | Orchestrator | Label                | `ecs`               |
+| <a id="File" href="#File" title="#File">[File](./others/file.md)</a> | Manual       | YAML/TOML format     | `file`              |
+| <a id="Consul" href="#Consul" title="#Consul">[Consul](./hashicorp/consul.md)</a> | KV           | KV                   | `consul`            |
+| <a id="Etcd" href="#Etcd" title="#Etcd">[Etcd](./kv/etcd.md)</a> | KV           | KV                   | `etcd`              |
+| <a id="ZooKeeper" href="#ZooKeeper" title="#ZooKeeper">[ZooKeeper](./kv/zk.md)</a> | KV           | KV                   | `zookeeper`         |
+| <a id="Redis" href="#Redis" title="#Redis">[Redis](./kv/redis.md)</a> | KV           | KV                   | `redis`             |
+| <a id="HTTP" href="#HTTP" title="#HTTP">[HTTP](./others/http.md)</a> | Manual       | JSON/YAML format          | `http`              |
 
 !!! info "More Providers"
 

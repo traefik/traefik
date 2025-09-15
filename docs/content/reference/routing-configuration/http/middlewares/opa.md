@@ -64,9 +64,9 @@ spec:
 
 | Field    | Description   | Default | Required        |
 |:---------|-----------------------|:--------|:----------------------------|
-| `policy` | Path or the content of a [policy file](https://www.openpolicyagent.org/docs/v0.66.0/kubernetes-primer/#writing-policies). | ""      | No (one of `policy` or `bundlePath` must be set) |
-| `bundlePath` | The `bundlePath` option should contain the path to an OPA [bundle](https://www.openpolicyagent.org/docs/v0.66.0/management-bundles/). | ""      | No (one of `policy` or `bundlePath` must be set) |
-| `allow` | The `allow` option sets the expression to evaluate that determines if the request should be authorized. | ""      | No (one of `allow` or `forwardHeaders` must be set) |
-| `forwardHeaders` | The `forwardHeaders` option sets the HTTP headers to add to requests and populates them with the result of the given expression. | ""      | No (one of `allow` or `forwardHeaders` must be set) |   
+| <a id="policy" href="#policy" title="#policy">`policy`</a> | Path or the content of a [policy file](https://www.openpolicyagent.org/docs/v0.66.0/kubernetes-primer/#writing-policies). | ""      | No (one of `policy` or `bundlePath` must be set) |
+| <a id="bundlePath" href="#bundlePath" title="#bundlePath">`bundlePath`</a> | The `bundlePath` option should contain the path to an OPA [bundle](https://www.openpolicyagent.org/docs/v0.66.0/management-bundles/). | ""      | No (one of `policy` or `bundlePath` must be set) |
+| <a id="allow" href="#allow" title="#allow">`allow`</a> | The `allow` option sets the expression to evaluate that determines if the request should be authorized. | ""      | No (one of `allow` or `forwardHeaders` must be set) |
+| <a id="forwardHeaders" href="#forwardHeaders" title="#forwardHeaders">`forwardHeaders`</a> | The `forwardHeaders` option sets the HTTP headers to add to requests and populates them with the result of the given expression. | ""      | No (one of `allow` or `forwardHeaders` must be set) |   
 
 {!traefik-for-business-applications.md!}

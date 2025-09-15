@@ -37,6 +37,9 @@ const (
 	// CommonFormat is the common logging format (CLF).
 	CommonFormat string = "common"
 
+	// GenericCLFFormat is the generic CLF format.
+	GenericCLFFormat string = "genericCLF"
+
 	// JSONFormat is the JSON logging format.
 	JSONFormat string = "json"
 )
@@ -101,6 +104,8 @@ func NewHandler(ctx context.Context, config *types.AccessLog) (*Handler, error) 
 	switch config.Format {
 	case CommonFormat:
 		formatter = new(CommonLogFormatter)
+	case GenericCLFFormat:
+		formatter = new(GenericCLFLogFormatter)
 	case JSONFormat:
 		formatter = new(logrus.JSONFormatter)
 	default:

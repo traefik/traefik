@@ -58,11 +58,11 @@ spec:
 
 | Field | Description | Default | Required |
 |:------|:------------|:--------|:---------|
-| `maxRequestBodyBytes`  | Maximum allowed body size for the request (in bytes). <br /> If the request exceeds the allowed size, it is not forwarded to the Service, and the client gets a `413` (Request Entity Too Large) response. | 0 | No |
-| `memRequestBodyBytes`  | Threshold (in bytes) from which the request will be buffered on disk instead of in memory with the `memRequestBodyBytes` option.| 1048576 | No |
-| `maxResponseBodyBytes` | Maximum allowed response size from the Service (in bytes). <br /> If the response exceeds the allowed size, it is not forwarded to the client. The client gets a `500` (Internal Server Error) response instead. | 0 | No |
-| `memResponseBodyBytes` | Threshold (in bytes) from which the response will be buffered on disk instead of in memory with the `memResponseBodyBytes` option.| 1048576 | No |
-| `retryExpression`      | Replay the request using `retryExpression`.<br /> More information [here](#retryexpression). | "" | No |
+| <a id="maxRequestBodyBytes" href="#maxRequestBodyBytes" title="#maxRequestBodyBytes">`maxRequestBodyBytes`</a> | Maximum allowed body size for the request (in bytes). <br /> If the request exceeds the allowed size, it is not forwarded to the Service, and the client gets a `413` (Request Entity Too Large) response. | 0 | No |
+| <a id="memRequestBodyBytes" href="#memRequestBodyBytes" title="#memRequestBodyBytes">`memRequestBodyBytes`</a> | Threshold (in bytes) from which the request will be buffered on disk instead of in memory with the `memRequestBodyBytes` option.| 1048576 | No |
+| <a id="maxResponseBodyBytes" href="#maxResponseBodyBytes" title="#maxResponseBodyBytes">`maxResponseBodyBytes`</a> | Maximum allowed response size from the Service (in bytes). <br /> If the response exceeds the allowed size, it is not forwarded to the client. The client gets a `500` (Internal Server Error) response instead. | 0 | No |
+| <a id="memResponseBodyBytes" href="#memResponseBodyBytes" title="#memResponseBodyBytes">`memResponseBodyBytes`</a> | Threshold (in bytes) from which the response will be buffered on disk instead of in memory with the `memResponseBodyBytes` option.| 1048576 | No |
+| <a id="retryExpression" href="#retryExpression" title="#retryExpression">`retryExpression`</a> | Replay the request using `retryExpression`.<br /> More information [here](#retryexpression). | "" | No |
 
 ### retryExpression
 

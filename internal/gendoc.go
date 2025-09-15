@@ -26,6 +26,7 @@ var commentGenerated = `## CODE GENERATED AUTOMATICALLY
 func main() {
 	genRoutingConfDoc()
 	genInstallConfDoc()
+	genAnchors()
 }
 
 // Generate the Routing Configuration YAML and TOML files.

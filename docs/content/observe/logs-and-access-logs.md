@@ -155,8 +155,9 @@ When the `observability` options are not defined on a router, it inherits the be
 
 Traefik Proxy supports the following log formats:
 
-- Common Log Format (CLF)
-- JSON
+- `common` - Traefik's extended CLF format (default)
+- `genericCLF` - Generic CLF format compatible with standard log analyzers
+- `json` - JSON format for structured logging
 
 ## Access Log Filters
 

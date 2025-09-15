@@ -69,27 +69,43 @@ accessLog:
 
 _Optional, Default="common"_
 
-By default, logs are written using the Common Log Format (CLF).
-To write logs in JSON, use `json` in the `format` option.
-If the given format is unsupported, the default (CLF) is used instead.
+By default, logs are written using the Traefik Common Log Format (CLF).
+The available log formats are:
 
-!!! info "Common Log Format"
+- `common` - Traefik's extended CLF format (default)
+- `genericCLF` - Generic CLF format compatible with standard log analyzers
+- `json` - JSON format for structured logging
 
+If the given format is unsupported, the default (`common`) is used instead.
+
+!!! info "Traefik Common Log Format vs Generic CLF"
+
+    **Traefik Common Log Format (`common`):**
     ```html
     <remote_IP_address> - <client_user_name_if_available> [<timestamp>] "<request_method> <request_path> <request_protocol>" <HTTP_status> <content-length> "<request_referrer>" "<request_user_agent>" <number_of_requests_received_since_Traefik_started> "<Traefik_router_name>" "<Traefik_server_URL>" <request_duration_in_ms>ms
     ```
+    
+    **Generic CLF Format (`genericCLF`):**
+    ```html
+    <remote_IP_address> - <client_user_name_if_available> [<timestamp>] "<request_method> <request_path> <request_protocol>" <HTTP_status> <content-length> "<request_referrer>" "<request_user_agent>"
+    ```
+    
+    The `genericCLF` format omits Traefik-specific fields (request count, router name, service URL, and duration) for better compatibility with standard CLF parsers.
 
 ```yaml tab="File (YAML)"
+# JSON format
 accessLog:
   format: "json"
 ```
 
 ```toml tab="File (TOML)"
+# JSON format
 [accessLog]
   format = "json"
 ```
 
 ```bash tab="CLI"
+# JSON format
 --accesslog.format=json
 ```
 
