@@ -210,6 +210,7 @@ nav:
       - 'Metrics': 'observe/metrics.md'
       - 'Tracing': 'observe/tracing.md'
   - 'Extend': 'extend/extend-traefik.md'
+  - '<span class="nav-link-with-icon">Govern <img src="https://doc.traefik.io/traefik-hub/img/ps-traefik-hub-logo-light.svg" class="menu-icon" alt="Traefik Hub API Gateway"></span>': 'govern/index.md'
   - 'Migrate':
       - 'Traefik v3 minor migrations': 'migrate/v3.md'
       - 'Traefik v2 to v3':
