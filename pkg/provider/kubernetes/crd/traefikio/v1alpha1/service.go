@@ -91,7 +91,7 @@ type WeightedRoundRobin struct {
 
 // +k8s:deepcopy-gen=true
 
-// HighestRandomWeight holds the highest radom weight configuration.
+// HighestRandomWeight holds the highest random weight configuration.
 // More info: https://doc.traefik.io/traefik/v3.5/routing/services/#highest-random-configuration
 type HighestRandomWeight struct {
 	// Services defines the list of Kubernetes Service and/or TraefikService to load-balance, with weight.
