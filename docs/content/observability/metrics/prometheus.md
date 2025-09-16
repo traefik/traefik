@@ -236,3 +236,102 @@ traefik_entrypoint_requests_total{code="200",entrypoint="web",method="GET",proto
     // Request.Host field and removed from the Header map.
 
     As a workaround, to obtain the Host of a request as a label, one should use instead the `X-Forwarded-Host` header.
+
+#### `responseHeaderLabels`
+
+_Optional_
+
+Defines the extra labels for the `requests_total` metrics, and for each of them, the response header containing the value for this label.
+Please note that if the header is not present in the response it will be added nonetheless with an empty value.
+In addition, the label should be a valid label name for Prometheus metrics, 
+otherwise, the Prometheus metrics provider will fail to serve any Traefik-related metric.
+
+```yaml tab="File (YAML)"
+metrics:
+  prometheus:
+    responseHeaderLabels:
+      label: headerKey
+```
+
+```toml tab="File (TOML)"
+[metrics]
+  [metrics.prometheus]
+    [metrics.prometheus.responseHeaderLabels]
+      label = "headerKey"
+```
+
+```bash tab="CLI"
+--metrics.prometheus.responseheaderlabels.label=headerKey
+```
+
+##### Example
+
+Here is an example of the entryPoint `requests_total` metric with an additional "content_type" label from the response.
+
+When configuring the label in Static Configuration:
+
+```yaml tab="File (YAML)"
+metrics:
+  prometheus:
+    responseHeaderLabels:
+      content_type: Content-Type
+```
+
+```toml tab="File (TOML)"
+[metrics]
+  [metrics.prometheus]
+    [metrics.prometheus.responseHeaderLabels]
+      content_type = "Content-Type"
+```
+
+```bash tab="CLI"
+--metrics.prometheus.responseheaderlabels.content_type=Content-Type
+```
+
+And performing a request that returns a Content-Type header:
+
+```bash
+curl http://localhost
+```
+
+The following metric is produced :
+
+```bash
+traefik_entrypoint_requests_total{code="200",content_type="application/json",entrypoint="web",method="GET",protocol="http"} 1
+```
+
+##### Combining Request and Response Headers
+
+You can use both `headerLabels` and `responseHeaderLabels` together to capture information from both request and response headers:
+
+```yaml tab="File (YAML)"
+metrics:
+  prometheus:
+    headerLabels:
+      useragent: User-Agent
+    responseHeaderLabels:
+      content_type: Content-Type
+      cache_status: X-Cache-Status
+```
+
+```toml tab="File (TOML)"
+[metrics]
+  [metrics.prometheus]
+    [metrics.prometheus.headerLabels]
+      useragent = "User-Agent"
+    [metrics.prometheus.responseHeaderLabels]
+      content_type = "Content-Type"
+      cache_status = "X-Cache-Status"
+```
+
+```bash tab="CLI"
+--metrics.prometheus.headerlabels.useragent=User-Agent
+--metrics.prometheus.responseheaderlabels.content_type=Content-Type
+--metrics.prometheus.responseheaderlabels.cache_status=X-Cache-Status
+```
+
+This produces metrics with labels from both request and response headers:
+
+```bash
+traefik_entrypoint_requests_total{cache_status="HIT",code="200",content_type="application/json",entrypoint="web",method="GET",protocol="http",useragent="curl/7.68.0"} 1
+```
