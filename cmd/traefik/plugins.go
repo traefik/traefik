@@ -15,7 +15,6 @@ import (
 
 const (
 	outputDir = "./plugins-storage/"
-	goPathSrc = "src"
 )
 
 func createPluginBuilder(staticConfiguration *static.Configuration) (*plugins.Builder, error) {
