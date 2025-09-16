@@ -9,7 +9,7 @@ import (
 // CounterWithHeaders represents a counter that can use http.Header values as label values.
 type CounterWithHeaders interface {
 	Add(delta float64)
-	With(headers http.Header, labelValues ...string) CounterWithHeaders
+	With(reqHeaders, respHeaders http.Header, labelValues ...string) CounterWithHeaders
 }
 
 // MultiCounterWithHeaders collects multiple individual CounterWithHeaders and treats them as a unit.
@@ -27,11 +27,11 @@ func (c MultiCounterWithHeaders) Add(delta float64) {
 	}
 }
 
-// With creates a new counter by appending the given label values and http.Header as labels and returns it.
-func (c MultiCounterWithHeaders) With(headers http.Header, labelValues ...string) CounterWithHeaders {
+// With creates a new counter by appending the given label values and both request and response http.Header as labels and returns it.
+func (c MultiCounterWithHeaders) With(reqHeaders, respHeaders http.Header, labelValues ...string) CounterWithHeaders {
 	next := make(MultiCounterWithHeaders, len(c))
 	for i := range c {
-		next[i] = c[i].With(headers, labelValues...)
+		next[i] = c[i].With(reqHeaders, respHeaders, labelValues...)
 	}
 	return next
 }
@@ -51,7 +51,7 @@ func (c CounterWithNoopHeaders) Add(delta float64) {
 	c.counter.Add(delta)
 }
 
-// With creates a new counter by appending the given label values and returns it.
-func (c CounterWithNoopHeaders) With(_ http.Header, labelValues ...string) CounterWithHeaders {
+// With creates a new counter by appending the given label values and returns it (ignoring headers).
+func (c CounterWithNoopHeaders) With(_, _ http.Header, labelValues ...string) CounterWithHeaders {
 	return NewCounterWithNoopHeaders(c.counter.With(labelValues...))
 }

@@ -180,7 +180,7 @@ func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 
 	labels = append(labels, "code", strconv.Itoa(code))
 	m.reqDurationHistogram.With(labels...).ObserveFromStart(start)
-	m.reqsCounter.With(req.Header, labels...).Add(1)
+	m.reqsCounter.With(req.Header, rw.Header(), labels...).Add(1)
 	m.respsBytesCounter.With(labels...).Add(float64(capt.ResponseSize()))
 	m.reqsBytesCounter.With(labels...).Add(float64(capt.RequestSize()))
 }
