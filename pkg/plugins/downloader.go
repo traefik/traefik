@@ -126,7 +126,7 @@ func (d *RegistryDownloader) Download(ctx context.Context, pName, pVersion strin
 
 // Check checks the plugin archive integrity.
 func (d *RegistryDownloader) Check(ctx context.Context, pName, pVersion, pHash, hash string) error {
-	if pHash != "" && pHash != hash {
+	if hash != "" && pHash != hash {
 		return fmt.Errorf("invalid hash for plugin %s, expected %s, got %s", pName, pHash, hash)
 	}
 

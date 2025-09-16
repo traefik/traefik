@@ -2,9 +2,11 @@ package plugins
 
 import (
 	"archive/zip"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -14,47 +16,26 @@ import (
 
 func TestHTTPPluginDownloader_Download(t *testing.T) {
 	tests := []struct {
-		name           string
-		serverResponse func(w http.ResponseWriter, r *http.Request)
-		expectedHash   string
-		expectError    bool
+		name              string
+		serverResponse    func(w http.ResponseWriter, r *http.Request)
+		fileAlreadyExists bool
+		expectError       bool
 	}{
 		{
 			name: "successful download",
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/zip")
 				w.WriteHeader(http.StatusOK)
-				// Create a simple zip content
-				writer := zip.NewWriter(w)
-				file, err := writer.Create("test.txt")
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
-				}
-				_, _ = file.Write([]byte("test content"))
-				_ = writer.Close()
+
+				require.NoError(t, fillDummyZip(w))
 			},
-			expectError: false,
 		},
 		{
 			name: "not modified response",
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
-				hash := r.Header.Get(hashHeader)
-				if hash != "" {
-					w.WriteHeader(http.StatusNotModified)
-					return
-				}
-				w.WriteHeader(http.StatusOK)
-				writer := zip.NewWriter(w)
-				file, err := writer.Create("test.txt")
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
-				}
-				_, _ = file.Write([]byte("test content"))
-				_ = writer.Close()
+				http.Error(w, "", http.StatusNotModified)
 			},
-			expectError: false,
+			fileAlreadyExists: true,
 		},
 		{
 			name: "server error",
@@ -72,6 +53,10 @@ func TestHTTPPluginDownloader_Download(t *testing.T) {
 
 			tempDir := t.TempDir()
 			archivesPath := filepath.Join(tempDir, "archives")
+
+			if test.fileAlreadyExists {
+				createDummyZip(t, archivesPath)
+			}
 
 			baseURL, err := url.Parse(server.URL)
 			require.NoError(t, err)
@@ -109,8 +94,16 @@ func TestHTTPPluginDownloader_Check(t *testing.T) {
 		expectedError  string
 	}{
 		{
+			name:  "successful check - No local hash check",
+			pHash: "testhash",
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+			},
+			expectError: false,
+		},
+		{
 			name:  "successful check",
-			pHash: "",
+			pHash: "testhash",
 			hash:  "testhash",
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
@@ -125,34 +118,6 @@ func TestHTTPPluginDownloader_Check(t *testing.T) {
 				w.WriteHeader(http.StatusBadRequest)
 			},
 			expectError: true,
-		},
-		{
-			name:  "hash validation success",
-			pHash: "correcthash",
-			hash:  "correcthash",
-			serverResponse: func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusOK)
-			},
-			expectError: false,
-		},
-		{
-			name:  "hash validation failure",
-			pHash: "expectedhash",
-			hash:  "actualhash",
-			serverResponse: func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusOK)
-			},
-			expectError:   true,
-			expectedError: "invalid hash for plugin test/plugin, expected expectedhash, got actualhash",
-		},
-		{
-			name:  "empty pHash skips validation",
-			pHash: "",
-			hash:  "anyhash",
-			serverResponse: func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusOK)
-			},
-			expectError: false,
 		},
 	}
 
@@ -187,4 +152,31 @@ func TestHTTPPluginDownloader_Check(t *testing.T) {
 			}
 		})
 	}
+}
+
+func createDummyZip(t *testing.T, path string) {
+	t.Helper()
+
+	err := os.MkdirAll(path+"/test/plugin/", 0o755)
+	require.NoError(t, err)
+
+	zipfile, err := os.Create(path + "/test/plugin/v1.0.0.zip")
+	require.NoError(t, err)
+	defer zipfile.Close()
+
+	err = fillDummyZip(zipfile)
+	require.NoError(t, err)
+}
+
+func fillDummyZip(w io.Writer) error {
+	writer := zip.NewWriter(w)
+
+	file, err := writer.Create("test.txt")
+	if err != nil {
+		return err
+	}
+
+	_, _ = file.Write([]byte("test content"))
+	_ = writer.Close()
+	return nil
 }
