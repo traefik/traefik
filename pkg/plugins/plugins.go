@@ -27,10 +27,11 @@ func SetupRemotePlugins(manager *Manager, plugins map[string]Descriptor) error {
 	ctx := context.Background()
 
 	for pAlias, desc := range plugins {
-		log.Ctx(ctx).Debug().Msgf("Loading of plugin: %s: %s@%s", pAlias, desc.ModuleName, desc.Version)
+		log.Ctx(ctx).Debug().Msgf("Installing plugin: %s: %s@%s", pAlias, desc.ModuleName, desc.Version)
 
 		if err = manager.InstallPlugin(ctx, desc); err != nil {
-			return fmt.Errorf("unable to load plugin %s: %w", pAlias, err)
+			_ = manager.ResetAll()
+			return fmt.Errorf("unable to install plugin %s: %w", pAlias, err)
 		}
 	}
 

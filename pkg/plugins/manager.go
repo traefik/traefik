@@ -80,7 +80,6 @@ func NewManager(downloader PluginDownloader, opts ManagerOptions) (*Manager, err
 func (m *Manager) InstallPlugin(ctx context.Context, plugin Descriptor) error {
 	hash, err := m.downloader.Download(ctx, plugin.ModuleName, plugin.Version)
 	if err != nil {
-		_ = m.ResetAll()
 		return fmt.Errorf("unable to download plugin %s: %w", plugin.ModuleName, err)
 	}
 
@@ -91,7 +90,6 @@ func (m *Manager) InstallPlugin(ctx context.Context, plugin Descriptor) error {
 	} else {
 		err = m.downloader.Check(ctx, plugin.ModuleName, plugin.Version, hash)
 		if err != nil {
-			_ = m.ResetAll()
 			return fmt.Errorf("unable to check archive integrity of the plugin %s: %w", plugin.ModuleName, err)
 		}
 	}
