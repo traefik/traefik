@@ -183,6 +183,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, entryPointName str
 	return chain.Then(muxer)
 }
 
+// FIXME: introduce concept of routing to another router here.
 func (m *Manager) buildRouterHandler(ctx context.Context, routerName string, routerConfig *runtime.RouterInfo) (http.Handler, error) {
 	if handler, ok := m.routerHandlers[routerName]; ok {
 		return handler, nil

@@ -73,6 +73,9 @@ func unique(src []string) []string {
 // RouterInfo holds information about a currently running HTTP router.
 type RouterInfo struct {
 	*dynamic.Router // dynamic configuration
+
+	ChildRouterRefs []string `json:"-"`
+
 	// Err contains all the errors that occurred during router's creation.
 	Err []string `json:"error,omitempty"`
 	// Status reports whether the router is disabled, in a warning state, or all good (enabled).
