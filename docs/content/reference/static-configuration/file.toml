@@ -334,6 +334,9 @@
     [metrics.prometheus.headerLabels]
       name0 = "foobar"
       name1 = "foobar"
+    [metrics.prometheus.responseHeaderLabels]
+      name0 = "foobar"
+      name1 = "foobar"
   [metrics.datadog]
     address = "foobar"
     pushInterval = "42s"
