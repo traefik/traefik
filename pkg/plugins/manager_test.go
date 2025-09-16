@@ -16,7 +16,7 @@ import (
 // mockDownloader is a test implementation of PluginDownloader
 type mockDownloader struct {
 	downloadFunc func(ctx context.Context, pName, pVersion string) (string, error)
-	checkFunc    func(ctx context.Context, pName, pVersion, pHash, hash string) error
+	checkFunc    func(ctx context.Context, pName, pVersion, hash string) error
 }
 
 func (m *mockDownloader) Download(ctx context.Context, pName, pVersion string) (string, error) {
@@ -26,9 +26,9 @@ func (m *mockDownloader) Download(ctx context.Context, pName, pVersion string) (
 	return "mockhash", nil
 }
 
-func (m *mockDownloader) Check(ctx context.Context, pName, pVersion, pHash, hash string) error {
+func (m *mockDownloader) Check(ctx context.Context, pName, pVersion, hash string) error {
 	if m.checkFunc != nil {
-		return m.checkFunc(ctx, pName, pVersion, pHash, hash)
+		return m.checkFunc(ctx, pName, pVersion, hash)
 	}
 	return nil
 }
@@ -206,7 +206,7 @@ func TestPluginManager_InstallPlugin(t *testing.T) {
 		name         string
 		plugin       Descriptor
 		downloadFunc func(ctx context.Context, pName, pVersion string) (string, error)
-		checkFunc    func(ctx context.Context, pName, pVersion, pHash, hash string) error
+		checkFunc    func(ctx context.Context, pName, pVersion, hash string) error
 		setupArchive func(t *testing.T, archivePath string)
 		expectError  bool
 		errorMsg     string
@@ -221,7 +221,7 @@ func TestPluginManager_InstallPlugin(t *testing.T) {
 			downloadFunc: func(ctx context.Context, pName, pVersion string) (string, error) {
 				return "expected-hash", nil
 			},
-			checkFunc: func(ctx context.Context, pName, pVersion, pHash, hash string) error {
+			checkFunc: func(ctx context.Context, pName, pVersion, hash string) error {
 				return nil
 			},
 			setupArchive: func(t *testing.T, archivePath string) {
@@ -268,7 +268,7 @@ func TestPluginManager_InstallPlugin(t *testing.T) {
 			downloadFunc: func(ctx context.Context, pName, pVersion string) (string, error) {
 				return "actual-hash", nil
 			},
-			checkFunc: func(ctx context.Context, pName, pVersion, pHash, hash string) error {
+			checkFunc: func(ctx context.Context, pName, pVersion, hash string) error {
 				return assert.AnError
 			},
 			expectError: true,
@@ -283,7 +283,7 @@ func TestPluginManager_InstallPlugin(t *testing.T) {
 			downloadFunc: func(ctx context.Context, pName, pVersion string) (string, error) {
 				return "test-hash", nil
 			},
-			checkFunc: func(ctx context.Context, pName, pVersion, pHash, hash string) error {
+			checkFunc: func(ctx context.Context, pName, pVersion, hash string) error {
 				return nil
 			},
 			setupArchive: func(t *testing.T, archivePath string) {

@@ -17,7 +17,7 @@ type PluginDownloader interface {
 	// Download downloads a plugin archive and returns its hash.
 	Download(ctx context.Context, pName, pVersion string) (string, error)
 	// Check checks the plugin archive integrity against a known hash.
-	Check(ctx context.Context, pName, pVersion, pHash, hash string) error
+	Check(ctx context.Context, pName, pVersion, hash string) error
 }
 
 // RegistryDownloaderOptions holds configuration options for creating a RegistryDownloader.
