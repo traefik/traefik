@@ -13,9 +13,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/plugins"
 )
 
-const (
-	outputDir = "./plugins-storage/"
-)
+const outputDir = "./plugins-storage/"
 
 func createPluginBuilder(staticConfiguration *static.Configuration) (*plugins.Builder, error) {
 	manager, plgs, localPlgs, err := initPlugins(staticConfiguration)
