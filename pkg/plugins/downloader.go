@@ -125,11 +125,7 @@ func (d *RegistryDownloader) Download(ctx context.Context, pName, pVersion strin
 }
 
 // Check checks the plugin archive integrity.
-func (d *RegistryDownloader) Check(ctx context.Context, pName, pVersion, pHash, hash string) error {
-	if hash != "" && pHash != hash {
-		return fmt.Errorf("invalid hash for plugin %s, expected %s, got %s", pName, pHash, hash)
-	}
-
+func (d *RegistryDownloader) Check(ctx context.Context, pName, pVersion, hash string) error {
 	endpoint, err := d.baseURL.Parse(path.Join(d.baseURL.Path, "validate", pName, pVersion))
 	if err != nil {
 		return fmt.Errorf("failed to parse endpoint URL: %w", err)

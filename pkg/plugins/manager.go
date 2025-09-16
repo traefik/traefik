@@ -84,10 +84,16 @@ func (m *Manager) InstallPlugin(ctx context.Context, plugin Descriptor) error {
 		return fmt.Errorf("unable to download plugin %s: %w", plugin.ModuleName, err)
 	}
 
-	err = m.downloader.Check(ctx, plugin.ModuleName, plugin.Version, plugin.Hash, hash)
-	if err != nil {
-		_ = m.ResetAll()
-		return fmt.Errorf("unable to check archive integrity of the plugin %s: %w", plugin.ModuleName, err)
+	if plugin.Hash != "" {
+		if plugin.Hash != hash {
+			return fmt.Errorf("invalid hash for plugin %s, expected %s, got %s", plugin.ModuleName, plugin.Hash, hash)
+		}
+	} else {
+		err = m.downloader.Check(ctx, plugin.ModuleName, plugin.Version, plugin.Hash, hash)
+		if err != nil {
+			_ = m.ResetAll()
+			return fmt.Errorf("unable to check archive integrity of the plugin %s: %w", plugin.ModuleName, err)
+		}
 	}
 
 	if err = m.unzip(plugin.ModuleName, plugin.Version); err != nil {

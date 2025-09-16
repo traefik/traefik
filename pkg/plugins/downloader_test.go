@@ -87,37 +87,22 @@ func TestHTTPPluginDownloader_Download(t *testing.T) {
 func TestHTTPPluginDownloader_Check(t *testing.T) {
 	tests := []struct {
 		name           string
-		pHash          string
-		hash           string
 		serverResponse func(w http.ResponseWriter, r *http.Request)
-		expectError    bool
-		expectedError  string
+		expectError    require.ErrorAssertionFunc
 	}{
 		{
-			name:  "successful check - No local hash check",
-			pHash: "testhash",
+			name: "successful check",
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
 			},
-			expectError: false,
+			expectError: require.NoError,
 		},
 		{
-			name:  "successful check",
-			pHash: "testhash",
-			hash:  "testhash",
-			serverResponse: func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusOK)
-			},
-			expectError: false,
-		},
-		{
-			name:  "failed check",
-			pHash: "bashash",
-			hash:  "testhash",
+			name: "failed check",
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusBadRequest)
 			},
-			expectError: true,
+			expectError: require.Error,
 		},
 	}
 
@@ -140,16 +125,8 @@ func TestHTTPPluginDownloader_Check(t *testing.T) {
 
 			ctx := t.Context()
 
-			err = downloader.Check(ctx, "test/plugin", "v1.0.0", test.pHash, test.hash)
-
-			if test.expectError {
-				assert.Error(t, err)
-				if test.expectedError != "" {
-					assert.Equal(t, test.expectedError, err.Error())
-				}
-			} else {
-				assert.NoError(t, err)
-			}
+			err = downloader.Check(ctx, "test/plugin", "v1.0.0", "testhash")
+			test.expectError(t, err)
 		})
 	}
 }

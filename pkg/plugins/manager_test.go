@@ -272,7 +272,7 @@ func TestPluginManager_InstallPlugin(t *testing.T) {
 				return assert.AnError
 			},
 			expectError: true,
-			errorMsg:    "unable to check archive integrity",
+			errorMsg:    "invalid hash for plugin",
 		},
 		{
 			name: "unzip error - invalid archive",
