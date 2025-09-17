@@ -32,7 +32,7 @@ spec:
     # Rule on the Host
     match: Host(`test.example.com`)
     services:
-    # Target a Kubernetes Support
+    # Target a Kubernetes Service
     - kind: Service
       name: foo
       namespace: apps
@@ -66,8 +66,6 @@ spec:
         port: 80
         weight: 1
         kind: Service
-        name: foo
-        namespace: apps
         # Customize the connection between Traefik and the backend
         passHostHeader: true
         port: 80
