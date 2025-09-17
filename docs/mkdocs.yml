@@ -325,6 +325,7 @@ nav:
           - 'Kubernetes CRD' :
             - 'HTTP' :
               - 'IngressRoute' : 'reference/routing-configuration/kubernetes/crd/http/ingressroute.md'
+              - 'Service' : 'reference/routing-configuration/kubernetes/crd/http/service.md'
               - 'TraefikService' : 'reference/routing-configuration/kubernetes/crd/http/traefikservice.md'
               - 'ServersTransport' : 'reference/routing-configuration/kubernetes/crd/http/serverstransport.md'
               - 'Middleware' : 'reference/routing-configuration/kubernetes/crd/http/middleware.md'
