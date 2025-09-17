@@ -48,7 +48,6 @@ spec:
           name: cookie
           secure: true
       strategy: RoundRobin
-      weight: 10
 ```
 
 ```yaml tab="TraefikService"
@@ -66,17 +65,21 @@ spec:
         namespace: apps
         port: 80
         weight: 1
-        # Second level WRR service
-      - name: wrr2
-        namespace: apps
-        kind: TraefikService
-        weight: 1
-        # Mirroring service
-        # The service is described in the Mirroring example
-      - name: mirror1
-        namespace: apps
-        kind: TraefikService
-        weight: 1
+kind: Service
+      name: foo
+      namespace: apps
+      # Customize the connection between Traefik and the backend
+      passHostHeader: true
+      port: 80
+      responseForwarding:
+        flushInterval: 1ms
+      scheme: https
+      sticky:
+        cookie:
+          httpOnly: true
+          name: cookie
+          secure: true
+      strategy: RoundRobin
 ```
 
 ## Configuration Options
