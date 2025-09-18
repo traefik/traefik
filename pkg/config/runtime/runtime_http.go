@@ -73,9 +73,6 @@ func unique(src []string) []string {
 // RouterInfo holds information about a currently running HTTP router.
 type RouterInfo struct {
 	*dynamic.Router // dynamic configuration
-
-	ChildRouterRefs []string `json:"-"`
-
 	// Err contains all the errors that occurred during router's creation.
 	Err []string `json:"error,omitempty"`
 	// Status reports whether the router is disabled, in a warning state, or all good (enabled).
@@ -83,6 +80,11 @@ type RouterInfo struct {
 	// It is the caller's responsibility to set the initial status.
 	Status string   `json:"status,omitempty"`
 	Using  []string `json:"using,omitempty"` // Effective entry points used by that router.
+
+	// ChildRefs contains the names of child routers.
+	// This field is only filled during pre-routing reverse computation of parentRefs,
+	// and used when building the runtime configuration.
+	ChildRefs []string `json:"-"`
 }
 
 // AddError adds err to r.Err, if it does not already exist.
