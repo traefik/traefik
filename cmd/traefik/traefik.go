@@ -440,12 +440,6 @@ func switchRouter(routerFactory *server.RouterFactory, serverEntryPointsTCP serv
 	return func(conf dynamic.Configuration) {
 		rtConf := runtime.NewConfig(conf)
 
-		// FIXME: create graph and set ChildRouterRefs
-		// FIXME: detect potential errors and add errors in runtime.RouterInfo for:
-		// - router with a service and referenced by another router
-		// - non-root router with TLS config
-		// - non-root router with Observability config
-
 		routers, udpRouters := routerFactory.CreateRouters(rtConf)
 
 		serverEntryPointsTCP.Switch(routers)
