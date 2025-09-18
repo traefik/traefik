@@ -61,154 +61,6 @@ func NewManager(conf *runtime.Configuration, serviceManager serviceManager, midd
 	}
 }
 
-// Router pre-routing validation and hierarchy setup.
-// This function:
-// - Sets ChildRefs in runtime.RouterInfo for routers that reference another router as a service
-// - Detects and reports errors in runtime.RouterInfo for:
-//   - router with a service and referenced as a parent by another router
-//   - non-root router with TLS config
-//   - non-root router with Observability config
-//   - cyclic references between routers
-
-// ComputePreRouting computes information about routers that is needed before building the handlers.
-// It uses the runtime.RouterInfo.ParentRefs field to set the runtime.RouterInfo.ChildRefs field.
-// It also detects potential errors and adds them to the runtime.RouterInfo.Errors field.
-func (m *Manager) ComputePreRouting() {
-	if m.conf == nil || m.conf.Routers == nil {
-		return
-	}
-
-	// First pass: populate ChildRefs based on ParentRefs
-	for routerName, router := range m.conf.Routers {
-		if router.ParentRefs == nil {
-			continue
-		}
-
-		for _, parentName := range router.ParentRefs {
-			if parentRouter, exists := m.conf.Routers[parentName]; exists {
-				// Add this router as a child of its parent
-				if !slices.Contains(parentRouter.ChildRefs, routerName) {
-					parentRouter.ChildRefs = append(parentRouter.ChildRefs, routerName)
-				}
-			} else {
-				router.AddError(fmt.Errorf("parent router %q does not exist", parentName), true)
-			}
-		}
-	}
-
-	// Second pass: detect cyclic references and other validation errors
-	visited := make(map[string]bool)
-	inStack := make(map[string]bool)
-
-	// Get router names in sorted order for deterministic behavior
-	var routerNames []string
-	for routerName := range m.conf.Routers {
-		routerNames = append(routerNames, routerName)
-	}
-	sort.Strings(routerNames)
-
-	for _, routerName := range routerNames {
-		if !visited[routerName] {
-			m.detectCycles(routerName, visited, inStack, make([]string, 0))
-		}
-	}
-
-	// Third pass: other validation errors
-	for _, router := range m.conf.Routers {
-		// Check for router with service that is referenced as a parent
-		if router.Service != "" && len(router.ChildRefs) > 0 {
-			router.AddError(fmt.Errorf("router has both a service and is referenced as a parent by other routers"), true)
-		}
-
-		// Check for non-root router with TLS config
-		if len(router.ParentRefs) > 0 && router.TLS != nil {
-			router.AddError(fmt.Errorf("non-root router cannot have TLS configuration"), true)
-		}
-
-		// Check for non-root router with Observability config
-		if len(router.ParentRefs) > 0 && router.Observability != nil {
-			router.AddError(fmt.Errorf("non-root router cannot have Observability configuration"), true)
-		}
-	}
-}
-
-// detectCycles detects cyclic references in router hierarchy and marks only the router that closes the cycle with an error.
-func (m *Manager) detectCycles(routerName string, visited, inStack map[string]bool, path []string) {
-	if inStack[routerName] {
-		// Found a cycle - mark only the router that closes the loop with an error
-		cycleStart := -1
-		for i, name := range path {
-			if name == routerName {
-				cycleStart = i
-				break
-			}
-		}
-
-		if cycleStart >= 0 {
-			cyclePath := append(path[cycleStart:], routerName)
-			cycleRouters := strings.Join(cyclePath, " -> ")
-
-			// The router that closes the loop is the one before the repeated router in cyclePath
-			if len(cyclePath) >= 2 {
-				// The router that closes the cycle is the one before the repeated router
-				closingRouter := cyclePath[len(cyclePath)-2]
-				if router, exists := m.conf.Routers[closingRouter]; exists {
-					router.AddError(fmt.Errorf("cyclic reference detected in router hierarchy: %s", cycleRouters), true)
-				}
-			}
-		}
-		return
-	}
-
-	if visited[routerName] {
-		return
-	}
-
-	router, exists := m.conf.Routers[routerName]
-	if !exists || router.ParentRefs == nil {
-		visited[routerName] = true
-		return
-	}
-
-	visited[routerName] = true
-	inStack[routerName] = true
-	newPath := append(path, routerName)
-
-	// Sort ParentRefs for deterministic cycle path generation
-	sortedParentRefs := make([]string, len(router.ParentRefs))
-	copy(sortedParentRefs, router.ParentRefs)
-	sort.Strings(sortedParentRefs)
-
-	for _, parentName := range sortedParentRefs {
-		m.detectCycles(parentName, visited, inStack, newPath)
-	}
-
-	inStack[routerName] = false
-}
-
-//// hasCyclicReference detects cyclic references in router hierarchy using DFS.
-//func (m *Manager) hasCyclicReference(routerName string, visited map[string]bool) bool {
-//	if visited[routerName] {
-//		return true // Found a cycle
-//	}
-//
-//	router, exists := m.conf.Routers[routerName]
-//	if !exists || router.ParentRefs == nil {
-//		return false
-//	}
-//
-//	visited[routerName] = true
-//
-//	for _, parentName := range router.ParentRefs {
-//		if m.hasCyclicReference(parentName, visited) {
-//			return true
-//		}
-//	}
-//
-//	delete(visited, routerName) // Backtrack
-//	return false
-//}
-
 func (m *Manager) getHTTPRouters(ctx context.Context, entryPoints []string, tls bool) map[string]map[string]*runtime.RouterInfo {
 	if m.conf != nil {
 		return m.conf.GetRoutersByEntryPoints(ctx, entryPoints, tls)
@@ -219,6 +71,8 @@ func (m *Manager) getHTTPRouters(ctx context.Context, entryPoints []string, tls 
 
 // BuildHandlers Builds handler for all entry points.
 func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string, tls bool) map[string]http.Handler {
+	m.ComputePreRouting()
+
 	entryPointHandlers := make(map[string]http.Handler)
 
 	defaultObsConfig := dynamic.RouterObservabilityConfig{}
@@ -414,6 +268,169 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 	})
 
 	return chain.Extend(*mHandler).Then(nextHandler)
+}
+
+// ComputePreRouting sets up router hierarchy and validates router configuration.
+// This function performs the following operations in order:
+//
+// 1. Populate ChildRefs: Uses ParentRefs to build the parent-child relationship graph
+// 2. Root-first traversal: Starting from root routers (no ParentRefs), traverses the hierarchy
+// 3. Cycle detection: Detects circular dependencies and removes cyclic links
+// 4. Reachability check: Marks routers unreachable from any root as disabled
+// 5. Dead-end detection: Marks routers with no service and no children as disabled
+// 6. Validation: Checks for configuration errors
+//
+// Router status is set during this process:
+// - Enabled: Reachable routers with valid configuration
+// - Disabled: Unreachable, dead-end, or routers with critical errors
+// - Warning: Routers with non-critical errors (like cycles)
+//
+// The function modifies router.Status, router.ChildRefs, and adds errors to router.Err.
+func (m *Manager) ComputePreRouting() {
+	if m.conf == nil || m.conf.Routers == nil {
+		return
+	}
+
+	// Populate ChildRefs based on ParentRefs and find root routers.
+	var rootRouters []string
+	for routerName, router := range m.conf.Routers {
+		if len(router.ParentRefs) == 0 {
+			rootRouters = append(rootRouters, routerName)
+			continue
+		}
+
+		for _, parentName := range router.ParentRefs {
+			if parentRouter, exists := m.conf.Routers[parentName]; exists {
+				// Add this router as a child of its parent
+				if !slices.Contains(parentRouter.ChildRefs, routerName) {
+					parentRouter.ChildRefs = append(parentRouter.ChildRefs, routerName)
+				}
+			} else {
+				router.AddError(fmt.Errorf("parent router %q does not exist", parentName), true)
+			}
+		}
+
+		// Check for non-root router with TLS config
+		if router.TLS != nil {
+			router.AddError(fmt.Errorf("non-root router cannot have TLS configuration"), true)
+			continue
+		}
+
+		// Check for non-root router with Observability config
+		if router.Observability != nil {
+			router.AddError(fmt.Errorf("non-root router cannot have Observability configuration"), true)
+			continue
+		}
+	}
+	sort.Strings(rootRouters)
+
+	// Root-first traversal with cycle detection
+	visited := make(map[string]bool)
+	currentPath := make(map[string]bool)
+	var path []string
+
+	for _, rootName := range rootRouters {
+		if !visited[rootName] {
+			m.traverse(rootName, visited, currentPath, path)
+		}
+	}
+
+	for routerName, router := range m.conf.Routers {
+		// Set status for all routers based on reachability
+		if !visited[routerName] {
+			router.AddError(fmt.Errorf("router is not reachable"), true)
+			continue
+		}
+
+		// Detect dead-end routers (no service + no children) - AFTER cycle handling
+		if router.Service == "" && len(router.ChildRefs) == 0 {
+			router.AddError(fmt.Errorf("router has no service and no child routers"), true)
+			continue
+		}
+
+		// Check for router with service that is referenced as a parent
+		if router.Service != "" && len(router.ChildRefs) > 0 {
+			router.AddError(fmt.Errorf("router has both a service and is referenced as a parent by other routers"), true)
+			continue
+		}
+	}
+}
+
+// traverse performs a depth-first traversal starting from root routers,
+// detecting cycles and marking visited routers for reachability detection.
+func (m *Manager) traverse(routerName string, visited, currentPath map[string]bool, path []string) {
+	if currentPath[routerName] {
+		// Found a cycle - handle it properly
+		m.handleCycle(routerName, path)
+		return
+	}
+
+	if visited[routerName] {
+		return
+	}
+
+	router, exists := m.conf.Routers[routerName]
+	// Since the ChildRefs population already guarantees router existence, this check is purely defensive.
+	if !exists {
+		visited[routerName] = true
+		return
+	}
+
+	visited[routerName] = true
+	currentPath[routerName] = true
+	newPath := append(path, routerName)
+
+	// Sort ChildRefs for deterministic behavior
+	sortedChildRefs := make([]string, len(router.ChildRefs))
+	copy(sortedChildRefs, router.ChildRefs)
+	sort.Strings(sortedChildRefs)
+
+	// Traverse children
+	for _, childName := range sortedChildRefs {
+		m.traverse(childName, visited, currentPath, newPath)
+	}
+
+	currentPath[routerName] = false
+}
+
+// handleCycle handles cycle detection and removes the victim from guilty router's ChildRefs
+func (m *Manager) handleCycle(victimRouter string, path []string) {
+	// Find where the cycle starts in the path
+	cycleStart := -1
+	for i, name := range path {
+		if name == victimRouter {
+			cycleStart = i
+			break
+		}
+	}
+
+	if cycleStart < 0 {
+		return
+	}
+
+	// Build the cycle path: from cycle start to current + victim
+	cyclePath := append(path[cycleStart:], victimRouter)
+	cycleRouters := strings.Join(cyclePath, " -> ")
+
+	// The guilty router is the last one in the path (the one creating the cycle)
+	if len(path) > 0 {
+		guiltyRouterName := path[len(path)-1]
+		guiltyRouter, exists := m.conf.Routers[guiltyRouterName]
+		if !exists {
+			return
+		}
+
+		// Add cycle error to guilty router
+		guiltyRouter.AddError(fmt.Errorf("cyclic reference detected in router hierarchy: %s", cycleRouters), false)
+
+		// Remove victim from guilty router's ChildRefs
+		for i, childRef := range guiltyRouter.ChildRefs {
+			if childRef == victimRouter {
+				guiltyRouter.ChildRefs = append(guiltyRouter.ChildRefs[:i], guiltyRouter.ChildRefs[i+1:]...)
+				break
+			}
+		}
+	}
 }
 
 // buildChildRoutersMuxer creates a muxer for child routers.

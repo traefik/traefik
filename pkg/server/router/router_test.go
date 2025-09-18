@@ -939,7 +939,7 @@ func TestManager_ComputePreRouting(t *testing.T) {
 		expectedErrorCounts map[string]int
 	}{
 		{
-			desc: "Ok routers",
+			desc: "Simple router",
 			routers: map[string]*dynamic.Router{
 				"A": {
 					Service: "A-service",
@@ -951,10 +951,11 @@ func TestManager_ComputePreRouting(t *testing.T) {
 			expectedChildRefs: map[string][]string{
 				"A": {},
 			},
-			expectedErrors: nil,
 		},
 		{
-			desc: "basic ChildRefs population",
+			// A->B1
+			//  ->B2
+			desc: "Router with two children",
 			routers: map[string]*dynamic.Router{
 				"A": {},
 				"B1": {
@@ -976,10 +977,72 @@ func TestManager_ComputePreRouting(t *testing.T) {
 				"B1": nil,
 				"B2": nil,
 			},
-			expectedErrors: map[string][]string{},
 		},
 		{
-			desc: "Router with no child and no service",
+			desc: "Non-root router with TLS config",
+			routers: map[string]*dynamic.Router{
+				"A": {},
+				"B": {
+					ParentRefs: []string{"A"},
+					Service:    "B-service",
+					TLS:        &dynamic.RouterTLSConfig{},
+				},
+			},
+			expectedStatuses: map[string]string{
+				"A": runtime.StatusEnabled,
+				"B": runtime.StatusDisabled,
+			},
+			expectedChildRefs: map[string][]string{
+				"A": {"B"},
+				"B": nil,
+			},
+			expectedErrors: map[string][]string{
+				"B": {"non-root router cannot have TLS configuration"},
+			},
+		},
+		{
+			desc: "Non-root router with observability config",
+			routers: map[string]*dynamic.Router{
+				"A": {},
+				"B": {
+					ParentRefs:    []string{"A"},
+					Service:       "B-service",
+					Observability: &dynamic.RouterObservabilityConfig{},
+				},
+			},
+			expectedStatuses: map[string]string{
+				"A": runtime.StatusEnabled,
+				"B": runtime.StatusDisabled,
+			},
+			expectedChildRefs: map[string][]string{
+				"A": {"B"},
+				"B": nil,
+			},
+			expectedErrors: map[string][]string{
+				"B": {"non-root router cannot have Observability configuration"},
+			},
+		},
+
+		{
+			desc: "Router with non-existing parent",
+			routers: map[string]*dynamic.Router{
+				"B": {
+					ParentRefs: []string{"A"},
+					Service:    "B-service",
+				},
+			},
+			expectedStatuses: map[string]string{
+				"B": runtime.StatusDisabled,
+			},
+			expectedChildRefs: map[string][]string{
+				"B": nil,
+			},
+			expectedErrors: map[string][]string{
+				"B": {"parent router \"A\" does not exist", "router is not reachable"},
+			},
+		},
+		{
+			desc: "Dead-end router with no child and no service",
 			routers: map[string]*dynamic.Router{
 				"A": {},
 			},
@@ -994,7 +1057,8 @@ func TestManager_ComputePreRouting(t *testing.T) {
 			},
 		},
 		{
-			desc: "Routers have no reachable parent",
+			// A->B->A
+			desc: "Router is not reachable",
 			routers: map[string]*dynamic.Router{
 				"A": {
 					ParentRefs: []string{"B"},
@@ -1013,38 +1077,79 @@ func TestManager_ComputePreRouting(t *testing.T) {
 			},
 			// Cycle detection does not visit unreachable routers (it avoids computing the cycle dependency graph for unreachable routers).
 			expectedErrors: map[string][]string{
-				"A": {"router is not reachable (no reachable parent)"},
-				"B": {"router is not reachable (no reachable parent)"},
+				"A": {"router is not reachable"},
+				"B": {"router is not reachable"},
 			},
 		},
 		{
-			desc: "indirect router cycle A->B->C->D->B",
+			// A->B->C->D->B
+			desc: "Router creating a cycle is a dead-end and should be disabled",
 			routers: map[string]*dynamic.Router{
 				"A": {},
 				"B": {
-					ParentRefs: []string{"A", "routerD"},
+					ParentRefs: []string{"A", "D"},
 				},
-				"routerC": {
+				"C": {
 					ParentRefs: []string{"B"},
 				},
-				"routerD": {
-					ParentRefs: []string{"routerC"},
+				"D": {
+					ParentRefs: []string{"C"},
 				},
 			},
 			expectedStatuses: map[string]string{
-				"A":       runtime.StatusEnabled,
-				"B":       runtime.StatusEnabled,
-				"routerC": runtime.StatusEnabled,
-				"routerD": runtime.StatusEnabled,
+				"A": runtime.StatusEnabled,
+				"B": runtime.StatusEnabled,
+				"C": runtime.StatusEnabled,
+				"D": runtime.StatusDisabled, // Dead-end router is disabled, because the cycle error broke the link with B.
 			},
 			expectedChildRefs: map[string][]string{
-				"A":       {"B"},
-				"B":       {"routerC"},
-				"routerC": {"routerD"},
-				"routerD": {},
+				"A": {"B"},
+				"B": {"C"},
+				"C": {"D"},
+				"D": {},
 			},
 			expectedErrors: map[string][]string{
-				"routerD": {"cyclic reference detected in router hierarchy: B -> routerC -> routerD -> B"},
+				"D": {
+					"cyclic reference detected in router hierarchy: B -> C -> D -> B",
+					"router has no service and no child routers",
+				},
+			},
+		},
+		{
+			// A->B->C->D->B
+			//           ->E
+			desc: "Router creating a cycle A->B->C->D->B but which is referenced elsewhere, must be set to warning status",
+			routers: map[string]*dynamic.Router{
+				"A": {},
+				"B": {
+					ParentRefs: []string{"A", "D"},
+				},
+				"C": {
+					ParentRefs: []string{"B"},
+				},
+				"D": {
+					ParentRefs: []string{"C"},
+				},
+				"E": {
+					ParentRefs: []string{"D"},
+					Service:    "E-service",
+				},
+			},
+			expectedStatuses: map[string]string{
+				"A": runtime.StatusEnabled,
+				"B": runtime.StatusEnabled,
+				"C": runtime.StatusEnabled,
+				"D": runtime.StatusWarning,
+				"E": runtime.StatusEnabled,
+			},
+			expectedChildRefs: map[string][]string{
+				"A": {"B"},
+				"B": {"C"},
+				"C": {"D"},
+				"D": {"E"},
+			},
+			expectedErrors: map[string][]string{
+				"D": {"cyclic reference detected in router hierarchy: B -> C -> D -> B"},
 			},
 		},
 		// Fixme: Here the link between C and Y creates an indirect cycle, it should be detected, and removed from the runtime configuration, removed from the childrefs. Also, C should have a non critical error explaining the cycle.
@@ -1054,35 +1159,35 @@ func TestManager_ComputePreRouting(t *testing.T) {
 		// X->Y->Z->D->service
 		//			C->W
 		//          C->Y->Y->Z->C->Y->Z->C... (cycle)
-		{
-			desc: "indirect router cycle A->B->C->D->B",
-			routers: map[string]*dynamic.Router{
-				"A": {},
-				"B": {
-					ParentRefs: []string{"A", "routerD"},
-				},
-				"routerC": {
-					ParentRefs: []string{"B"},
-				},
-				"routerD": {
-					ParentRefs: []string{"routerC"},
-				},
-			},
-			expectedStatuses: map[string]string{
-				"A":       runtime.StatusEnabled,
-				"B":       runtime.StatusEnabled,
-				"routerC": runtime.StatusEnabled,
-				"routerD": runtime.StatusEnabled,
-			},
-			expectedChildRefs: map[string][]string{
-				"A":       {"B"},
-				"B":       {"routerC"},
-				"routerC": {"routerD"},
-			},
-			expectedErrors: map[string][]string{
-				"routerD": {"cyclic reference detected in router hierarchy: B -> routerC -> routerD -> B"},
-			},
-		},
+		//{
+		//	desc: "indirect router cycle A->B->C->D->B",
+		//	routers: map[string]*dynamic.Router{
+		//		"A": {},
+		//		"B": {
+		//			ParentRefs: []string{"A", "D"},
+		//		},
+		//		"C": {
+		//			ParentRefs: []string{"B"},
+		//		},
+		//		"D": {
+		//			ParentRefs: []string{"C"},
+		//		},
+		//	},
+		//	expectedStatuses: map[string]string{
+		//		"A":       runtime.StatusEnabled,
+		//		"B":       runtime.StatusEnabled,
+		//		"C": runtime.StatusEnabled,
+		//		"D": runtime.StatusEnabled,
+		//	},
+		//	expectedChildRefs: map[string][]string{
+		//		"A":       {"B"},
+		//		"B":       {"C"},
+		//		"C": {"D"},
+		//	},
+		//	expectedErrors: map[string][]string{
+		//		"D": {"cyclic reference detected in router hierarchy: B -> C -> D -> B"},
+		//	},
+		//},
 		//{
 		//	desc: "complex cycle with leaf router - leaf should NOT be marked as cycling",
 		//	routers: map[string]*dynamic.Router{
@@ -1194,6 +1299,7 @@ func TestManager_ComputePreRouting(t *testing.T) {
 			for name, router := range test.routers {
 				runtimeRouters[name] = &runtime.RouterInfo{
 					Router: router,
+					Status: runtime.StatusEnabled,
 				}
 			}
 
@@ -1215,29 +1321,44 @@ func TestManager_ComputePreRouting(t *testing.T) {
 			}
 
 			// Verify statuses are set correctly
-			for routerName, expectedStatus := range test.expectedStatuses {
-				router := runtimeRouters[routerName]
-				assert.Equal(t, expectedStatus, router.Status)
+			var gotStatuses map[string]string
+			for routerName, router := range runtimeRouters {
+				if gotStatuses == nil {
+					gotStatuses = make(map[string]string)
+				}
+				gotStatuses[routerName] = router.Status
 			}
+			assert.Equal(t, test.expectedStatuses, gotStatuses)
 
 			// Verify errors are added correctly
-			for routerName, expectedErrors := range test.expectedErrors {
-				router := runtimeRouters[routerName]
-				if expectedErrors == nil {
-					assert.Empty(t, router.Err)
-				} else {
-					for _, expectedError := range expectedErrors {
-						found := false
-						for _, actualError := range router.Err {
-							if strings.Contains(actualError, expectedError) {
-								found = true
-								break
-							}
-						}
-						assert.True(t, found)
+			var gotErrors map[string][]string
+			for routerName, router := range runtimeRouters {
+				for _, err := range router.Err {
+					if gotErrors == nil {
+						gotErrors = make(map[string][]string)
 					}
+					gotErrors[routerName] = append(gotErrors[routerName], err)
 				}
 			}
+			assert.Equal(t, test.expectedErrors, gotErrors)
+
+			//for routerName, expectedErrors := range test.expectedErrors {
+			//	router := runtimeRouters[routerName]
+			//	if expectedErrors == nil {
+			//		assert.Empty(t, router.Err)
+			//	} else {
+			//		for _, expectedError := range expectedErrors {
+			//			found := false
+			//			for _, actualError := range router.Err {
+			//				if strings.Contains(actualError, expectedError) {
+			//					found = true
+			//					break
+			//				}
+			//			}
+			//			assert.True(t, found)
+			//		}
+			//	}
+			//}
 		})
 	}
 }
