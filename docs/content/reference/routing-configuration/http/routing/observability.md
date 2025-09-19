@@ -3,15 +3,18 @@ title: "Per-Router Observability"
 description: "You can disable access logs, metrics, and tracing for a specific entrypoint attached to a HTTP Router. Read the technical documentation."
 ---
 
-Traefik's observability features include logs, access logs, metrics, and tracing. You can configure these options globally or at more specific levels, such as per router or per entry point.
+Traefik’s observability features include logs, access logs, metrics, and tracing. You can configure these options globally or at more specific levels, such as per router or per entry point.
 
-By default, the router observability configuration is inherited from the attached EntryPoints and can be configured with the observability [options](../../../install-configuration/entrypoints.md#configuration-options)).
+By default, the router observability configuration is inherited from the attached EntryPoints and can be configured with the observability [options](../../../install-configuration/entrypoints.md#configuration-options).
 However, a router defining its own observability configuration will opt-out from these defaults.
 
 !!! info
-    To enable router-level observability, you must first enable access-logs, tracing, and metrics.
+    To enable router-level observability, you must first enable
+    [access-logs](../../../install-configuration/observability/logs-and-accesslogs.md),
+    [tracing](../../../install-configuration/observability/tracing.md),
+    and [metrics](../../../install-configuration/observability/metrics.md).
 
-    When metrics layers are not enabled with the `addEntryPointsLabels`, `addRoutersLabels` and/or `addServicesLabels` options,
+    When metrics layers are not enabled with the [`addEntryPointsLabels`](), `addRoutersLabels` and/or `addServicesLabels` options,
     enabling metrics for a router will not enable them.
 
 !!! warning "AddInternals option"
