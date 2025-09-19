@@ -1,6 +1,7 @@
 package docker
 
 import (
+	"context"
 	"strconv"
 	"testing"
 	"time"
@@ -13,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/provider"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 )
@@ -2819,54 +2821,6 @@ func TestDynConfBuilder_build(t *testing.T) {
 				},
 			},
 		},
-
-		{
-			desc:               "one exited HTTP container with allowEmptyServices",
-			allowEmptyServices: true,
-			containers: []dockerData{
-				{
-					ServiceName: "Test",
-					Name:        "Test",
-					Health:      "",
-				},
-			},
-			expected: &dynamic.Configuration{
-				TCP: &dynamic.TCPConfiguration{
-					Routers:           map[string]*dynamic.TCPRouter{},
-					Middlewares:       map[string]*dynamic.TCPMiddleware{},
-					Services:          map[string]*dynamic.TCPService{},
-					ServersTransports: map[string]*dynamic.TCPServersTransport{},
-				},
-				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
-				},
-				HTTP: &dynamic.HTTPConfiguration{
-					Routers: map[string]*dynamic.Router{
-						"Test": {
-							Service:     "Test",
-							Rule:        "Host(`Test.traefik.wtf`)",
-							DefaultRule: true,
-						},
-					},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services: map[string]*dynamic.Service{
-						"Test": {
-							LoadBalancer: &dynamic.ServersLoadBalancer{
-								PassHostHeader: pointer(true),
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: ptypes.Duration(100 * time.Millisecond),
-								},
-							},
-						},
-					},
-					ServersTransports: map[string]*dynamic.ServersTransport{},
-				},
-				TLS: &dynamic.TLSConfiguration{
-					Stores: map[string]tls.Store{},
-				},
-			},
-		},
 		{
 			desc: "one unhealthy TCP container",
 			containers: []dockerData{
@@ -3977,6 +3931,463 @@ func TestDynConfBuilder_build(t *testing.T) {
 			}
 
 			configuration := builder.build(t.Context(), test.containers)
+
+			assert.Equal(t, test.expected, configuration)
+		})
+	}
+}
+
+func TestDynConfBuilder_build_visibleWhenNotRunning(t *testing.T) {
+	testCases := []struct {
+		desc       string
+		containers []dockerData
+		expected   *dynamic.Configuration
+	}{
+		{
+			desc: "exited container with visibleWhenNotRunning=true should create router and service without servers",
+			containers: []dockerData{
+				{
+					ServiceName: "Test",
+					Name:        "Test",
+					Status:      "exited",
+					Health:      "",
+					ExtraConf: configuration{
+						Enable:                true,
+						VisibleWhenNotRunning: true,
+					},
+					NetworkSettings: networkSettings{
+						NetworkMode: "bridge",
+						Ports: nat.PortMap{
+							"80/tcp": []nat.PortBinding{},
+						},
+						Networks: map[string]*networkData{
+							"bridge": {
+								Name: "bridge",
+								Addr: "127.0.0.1",
+							},
+						},
+					},
+				},
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"Test": {
+							Service:     "Test",
+							Rule:        "Host(`Test`)",
+							DefaultRule: true,
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"Test": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								PassHostHeader: pointer(true),
+								Strategy:       "wrr",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
+				},
+			},
+		},
+		{
+			desc: "exited container with visibleWhenNotRunning=false should not create anything",
+			containers: []dockerData{
+				{
+					ServiceName: "Test",
+					Name:        "Test",
+					Status:      "exited",
+					Health:      "",
+					ExtraConf: configuration{
+						Enable:                true,
+						VisibleWhenNotRunning: false,
+					},
+					NetworkSettings: networkSettings{
+						NetworkMode: "bridge",
+						Ports: nat.PortMap{
+							"80/tcp": []nat.PortBinding{},
+						},
+						Networks: map[string]*networkData{
+							"bridge": {
+								Name: "bridge",
+								Addr: "127.0.0.1",
+							},
+						},
+					},
+				},
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
+				},
+			},
+		},
+		{
+			desc: "running container with visibleWhenNotRunning=true should work normally with servers",
+			containers: []dockerData{
+				{
+					ServiceName: "Test",
+					Name:        "Test",
+					Status:      "running",
+					Health:      "",
+					ExtraConf: configuration{
+						Enable:                true,
+						VisibleWhenNotRunning: true,
+					},
+					NetworkSettings: networkSettings{
+						NetworkMode: "bridge",
+						Ports: nat.PortMap{
+							"80/tcp": []nat.PortBinding{},
+						},
+						Networks: map[string]*networkData{
+							"bridge": {
+								Name: "bridge",
+								Addr: "127.0.0.1",
+							},
+						},
+					},
+				},
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"Test": {
+							Service:     "Test",
+							Rule:        "Host(`Test`)",
+							DefaultRule: true,
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"Test": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://127.0.0.1:80",
+									},
+								},
+								PassHostHeader: pointer(true),
+								Strategy:       "wrr",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
+				},
+			},
+		},
+		{
+			desc: "created container with visibleWhenNotRunning=true should create router and service without servers)",
+			containers: []dockerData{
+				{
+					ServiceName: "Test",
+					Name:        "Test",
+					Status:      "created",
+					Health:      "",
+					ExtraConf: configuration{
+						Enable:                true,
+						VisibleWhenNotRunning: true,
+					},
+					NetworkSettings: networkSettings{
+						NetworkMode: "bridge",
+						Ports: nat.PortMap{
+							"80/tcp": []nat.PortBinding{},
+						},
+						Networks: map[string]*networkData{
+							"bridge": {
+								Name: "bridge",
+								Addr: "127.0.0.1",
+							},
+						},
+					},
+				},
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"Test": {
+							Service:     "Test",
+							Rule:        "Host(`Test`)",
+							DefaultRule: true,
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"Test": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								PassHostHeader: pointer(true),
+								Strategy:       "wrr",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
+				},
+			},
+		},
+		{
+			desc: "dead container with visibleWhenNotRunning=true should create router and service without servers)",
+			containers: []dockerData{
+				{
+					ServiceName: "Test",
+					Name:        "Test",
+					Status:      "dead",
+					Health:      "",
+					ExtraConf: configuration{
+						Enable:                true,
+						VisibleWhenNotRunning: true,
+					},
+					NetworkSettings: networkSettings{
+						NetworkMode: "bridge",
+						Ports: nat.PortMap{
+							"80/tcp": []nat.PortBinding{},
+						},
+						Networks: map[string]*networkData{
+							"bridge": {
+								Name: "bridge",
+								Addr: "127.0.0.1",
+							},
+						},
+					},
+				},
+			}, expected: &dynamic.Configuration{
+			TCP: &dynamic.TCPConfiguration{
+				Routers:           map[string]*dynamic.TCPRouter{},
+				Middlewares:       map[string]*dynamic.TCPMiddleware{},
+				Services:          map[string]*dynamic.TCPService{},
+				ServersTransports: map[string]*dynamic.TCPServersTransport{},
+			},
+			UDP: &dynamic.UDPConfiguration{
+				Routers:  map[string]*dynamic.UDPRouter{},
+				Services: map[string]*dynamic.UDPService{},
+			},
+			HTTP: &dynamic.HTTPConfiguration{
+				Routers: map[string]*dynamic.Router{
+					"Test": {
+						Service:     "Test",
+						Rule:        "Host(`Test`)",
+						DefaultRule: true,
+					},
+				},
+				Middlewares: map[string]*dynamic.Middleware{},
+				Services: map[string]*dynamic.Service{
+					"Test": {
+						LoadBalancer: &dynamic.ServersLoadBalancer{
+							PassHostHeader: pointer(true),
+							Strategy:       "wrr",
+							ResponseForwarding: &dynamic.ResponseForwarding{
+								FlushInterval: ptypes.Duration(100 * time.Millisecond),
+							},
+						},
+					},
+				},
+				ServersTransports: map[string]*dynamic.ServersTransport{},
+			},
+			TLS: &dynamic.TLSConfiguration{
+				Stores: map[string]tls.Store{},
+			},
+		},
+		},
+		{
+			desc: "exited container with TCP configuration and visibleWhenNotRunning=true should create TCP service without servers",
+			containers: []dockerData{
+				{
+					ServiceName: "Test",
+					Name:        "Test",
+					Status:      "exited",
+					Health:      "",
+					Labels: map[string]string{
+						"traefik.tcp.routers.Test.rule": "HostSNI(`test.localhost`)",
+					},
+					ExtraConf: configuration{
+						Enable:                true,
+						VisibleWhenNotRunning: true,
+					},
+					NetworkSettings: networkSettings{
+						NetworkMode: "bridge",
+						Ports: nat.PortMap{
+							"80/tcp": []nat.PortBinding{},
+						},
+						Networks: map[string]*networkData{
+							"bridge": {
+								Name: "bridge",
+								Addr: "127.0.0.1",
+							},
+						},
+					},
+				},
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
+						"Test": {
+							Service: "Test",
+							Rule:    "HostSNI(`test.localhost`)",
+						},
+					},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services: map[string]*dynamic.TCPService{
+						"Test": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{},
+						},
+					},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
+				},
+			},
+		},
+		{
+			desc: "exited container with UDP configuration and visibleWhenNotRunning=true should create UDP service without servers",
+			containers: []dockerData{
+				{
+					ServiceName: "Test",
+					Name:        "Test",
+					Status:      "exited",
+					Health:      "",
+					Labels: map[string]string{
+						"traefik.udp.routers.Test.entrypoints": "udp",
+					},
+					ExtraConf: configuration{
+						Enable:                true,
+						VisibleWhenNotRunning: true,
+					},
+					NetworkSettings: networkSettings{
+						NetworkMode: "bridge",
+						Ports: nat.PortMap{
+							"80/udp": []nat.PortBinding{},
+						},
+						Networks: map[string]*networkData{
+							"bridge": {
+								Name: "bridge",
+								Addr: "127.0.0.1",
+							},
+						},
+					},
+				},
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				UDP: &dynamic.UDPConfiguration{
+					Routers: map[string]*dynamic.UDPRouter{
+						"Test": {
+							Service:     "Test",
+							EntryPoints: []string{"udp"},
+						},
+					},
+					Services: map[string]*dynamic.UDPService{
+						"Test": {
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{},
+						},
+					},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
+				},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			defaultRuleTpl, err := provider.MakeDefaultRuleTemplate(DefaultTemplateRule, nil)
+			require.NoError(t, err)
+
+			p := Shared{
+				ExposedByDefault: true,
+				DefaultRule:      DefaultTemplateRule,
+				defaultRuleTpl:   defaultRuleTpl,
+			}
+
+			builder := NewDynConfBuilder(p, nil, false)
+			configuration := builder.build(context.Background(), test.containers)
 
 			assert.Equal(t, test.expected, configuration)
 		})

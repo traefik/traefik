@@ -713,6 +713,16 @@ You can tell Traefik to consider (or not) the container by setting `traefik.enab
 
 This option overrides the value of `exposedByDefault`.
 
+#### `traefik.swarm.visiblewhennotrunning`
+
+```yaml
+- "traefik.swarm.visiblewhennotrunning=true"
+```
+
+Controls whether containers that are not in "running" state (e.g., stopped, paused, exited) should still be visible to Traefik for service discovery.
+
+By default, Traefik only considers containers in "running" state. 
+
 #### `traefik.swarm.network`
 
 ```yaml

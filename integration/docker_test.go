@@ -32,7 +32,7 @@ func (s *DockerSuite) TearDownSuite() {
 }
 
 func (s *DockerSuite) TearDownTest() {
-	s.composeStop("simple", "withtcplabels", "withlabels1", "withlabels2", "withonelabelmissing", "powpow")
+	s.composeStop("simple", "withtcplabels", "withlabels1", "withlabels2", "withonelabelmissing", "powpow", "visiblewhenStopped")
 }
 
 func (s *DockerSuite) TestSimpleConfiguration() {
@@ -220,5 +220,61 @@ func (s *DockerSuite) TestRestartDockerContainers() {
 
 	s.composeUp("powpow")
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("powpow"))
+	require.NoError(s.T(), err)
+}
+
+func (s *DockerSuite) TestDockerVisibleWhenNotRunning() {
+	tempObjects := struct {
+		DockerHost  string
+		DefaultRule string
+	}{
+		DockerHost:  s.getDockerHost(),
+		DefaultRule: "Host(`{{ normalize .Name }}.docker.localhost`)",
+	}
+
+	file := s.adaptFile("fixtures/docker/simple.toml", tempObjects)
+
+	s.composeUp("visiblewhenStopped")
+
+	// Start traefik
+	s.traefikCmd(withConfigFile(file))
+
+	// Verify the container is working when running
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
+	require.NoError(s.T(), err)
+	req.Host = "visible.stopped.host"
+
+	resp, err := try.ResponseUntilStatusCode(req, 3*time.Second, http.StatusOK)
+	require.NoError(s.T(), err)
+
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(s.T(), err)
+	assert.Contains(s.T(), string(body), "Hostname:")
+
+	// Verify the router exists in Traefik configuration
+	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers", 1*time.Second, try.BodyContains("VisibleStopped"))
+	require.NoError(s.T(), err)
+
+	// Stop the container
+	s.composeStop("visiblewhenStopped")
+
+	// Wait a bit for container stop to be detected
+	time.Sleep(2 * time.Second)
+
+	// Verify the router still exists in configuration even though container is stopped
+	// This is the key test - the router should persist due to visibleWhenNotRunning=true
+	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers", 10*time.Second, try.BodyContains("VisibleStopped"))
+	require.NoError(s.T(), err)
+
+	// Verify the service still exists in configuration
+	err = try.GetRequest("http://127.0.0.1:8080/api/http/services", 1*time.Second, try.BodyContains("visiblewhenStopped"))
+	require.NoError(s.T(), err)
+
+	// HTTP requests should fail (502 Bad Gateway) since container is stopped but router exists
+	req, err = http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
+	require.NoError(s.T(), err)
+	req.Host = "visible.stopped.host"
+
+	err = try.Request(req, 3*time.Second, try.StatusCodeIs(http.StatusServiceUnavailable))
 	require.NoError(s.T(), err)
 }
