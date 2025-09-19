@@ -31,7 +31,7 @@ Traefik Hub API Management provides a complete suite of features designed to str
 ### Developer Experience & Self-Service
 
 - **Customizable Portals**: Easily create one or more dedicated API Portals for developers to discover, understand, and interact with your APIs
-- **Interactive API Testing**: Allow developers to test APIs directly within the portal for faster and real-time feedback
+- **Interactive API Testing**: Allow developers to test APIs directly within the portal for immediate feedback
 - **Branded Experience**: Customize the API portal to house API documentation, clear integration instructions, and personalized content to foster adoption and streamline development
 - **Credential Management**: Generate API access credentials, such as API keys, directly from the portal for simplified access and secure integration
 - **Auto-generated Documentation**: Automatically generated, interactive API documentation from OpenAPI specifications in the portal
