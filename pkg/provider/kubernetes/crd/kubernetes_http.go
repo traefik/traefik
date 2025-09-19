@@ -216,13 +216,17 @@ type configBuilder struct {
 func (c configBuilder) buildTraefikService(ctx context.Context, tService *traefikv1alpha1.TraefikService, conf map[string]*dynamic.Service) error {
 	id := provider.Normalize(makeID(tService.Namespace, tService.Name))
 
-	if tService.Spec.Weighted != nil {
+	switch {
+	case tService.Spec.Weighted != nil:
 		return c.buildServicesLB(ctx, tService.Namespace, tService.Spec, id, conf)
-	} else if tService.Spec.Mirroring != nil {
+	case tService.Spec.Mirroring != nil:
 		return c.buildMirroring(ctx, tService, id, conf)
-	}
+	case tService.Spec.HighestRandomWeight != nil:
+		return c.buildHRW(ctx, tService, id, conf)
+	default:
 
-	return errors.New("unspecified service type")
+		return errors.New("unspecified service type")
+	}
 }
 
 // buildServicesLB creates the configuration for the load-balancer of services named id, and defined in tService.
@@ -329,7 +333,7 @@ func (c configBuilder) buildServersLB(namespace string, svc traefikv1alpha1.Load
 	// TODO: remove this when the fake client apply default values.
 	if svc.Strategy != "" {
 		switch svc.Strategy {
-		case dynamic.BalancerStrategyWRR, dynamic.BalancerStrategyP2C:
+		case dynamic.BalancerStrategyWRR, dynamic.BalancerStrategyP2C, dynamic.BalancerStrategyHRW:
 			lb.Strategy = svc.Strategy
 
 		// Here we are just logging a warning as the default value is already applied.
@@ -642,6 +646,38 @@ func (c configBuilder) nameAndService(ctx context.Context, parentNamespace strin
 	default:
 		return "", nil, fmt.Errorf("unsupported service kind %s", service.Kind)
 	}
+}
+
+func (c configBuilder) buildHRW(ctx context.Context, tService *traefikv1alpha1.TraefikService, id string, conf map[string]*dynamic.Service) error {
+	var hrwServices []dynamic.HRWService
+	for _, hrwService := range tService.Spec.HighestRandomWeight.Services {
+		hrwServiceName, k8sService, err := c.nameAndService(ctx, tService.Namespace, hrwService.LoadBalancerSpec)
+		if err != nil {
+			return err
+		}
+
+		if k8sService != nil {
+			conf[hrwServiceName] = k8sService
+		}
+
+		weight := hrwService.Weight
+		if weight == nil {
+			weight = func(i int) *int { return &i }(1)
+		}
+
+		hrwServices = append(hrwServices, dynamic.HRWService{
+			Name:   hrwServiceName,
+			Weight: weight,
+		})
+	}
+
+	conf[id] = &dynamic.Service{
+		HighestRandomWeight: &dynamic.HighestRandomWeight{
+			Services: hrwServices,
+		},
+	}
+
+	return nil
 }
 
 func splitSvcNameProvider(name string) (string, string) {
