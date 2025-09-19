@@ -193,24 +193,27 @@ func applyModel(cfg dynamic.Configuration) dynamic.Configuration {
 
 					cp.Middlewares = append(m.Middlewares, cp.Middlewares...)
 
-					if cp.Observability == nil {
-						cp.Observability = &dynamic.RouterObservabilityConfig{}
-					}
+					// FIXME: Find a better way to evict non-root routers
+					if router.ParentRefs == nil {
+						if cp.Observability == nil {
+							cp.Observability = &dynamic.RouterObservabilityConfig{}
+						}
 
-					if cp.Observability.AccessLogs == nil {
-						cp.Observability.AccessLogs = m.Observability.AccessLogs
-					}
+						if cp.Observability.AccessLogs == nil {
+							cp.Observability.AccessLogs = m.Observability.AccessLogs
+						}
 
-					if cp.Observability.Metrics == nil {
-						cp.Observability.Metrics = m.Observability.Metrics
-					}
+						if cp.Observability.Metrics == nil {
+							cp.Observability.Metrics = m.Observability.Metrics
+						}
 
-					if cp.Observability.Tracing == nil {
-						cp.Observability.Tracing = m.Observability.Tracing
-					}
+						if cp.Observability.Tracing == nil {
+							cp.Observability.Tracing = m.Observability.Tracing
+						}
 
-					if cp.Observability.TraceVerbosity == "" {
-						cp.Observability.TraceVerbosity = m.Observability.TraceVerbosity
+						if cp.Observability.TraceVerbosity == "" {
+							cp.Observability.TraceVerbosity = m.Observability.TraceVerbosity
+						}
 					}
 
 					rtName := name
@@ -265,6 +268,10 @@ func applyModel(cfg dynamic.Configuration) dynamic.Configuration {
 func applyDefaultObservabilityModel(cfg dynamic.Configuration) {
 	if cfg.HTTP != nil {
 		for _, router := range cfg.HTTP.Routers {
+			// FIXME: Find a better way to evict non-root routers
+			if router.ParentRefs != nil {
+				continue
+			}
 			if router.Observability == nil {
 				router.Observability = &dynamic.RouterObservabilityConfig{
 					AccessLogs:     pointer(true),
