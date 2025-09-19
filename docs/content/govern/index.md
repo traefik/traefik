@@ -21,7 +21,7 @@ Traefik Hub API Management provides a complete suite of features designed to str
 
 ### Comprehensive API Lifecycle Management
 
-- **Centralized API Catalog**: Real-time API inventory for all APIs to provide real-time visibility and control
+- **Centralized API Catalog**: Comprehensive API inventory providing real-time visibility and control
 - **Advanced Versioning**: Utilize the most flexible API versioning and Kubernetes-native labels to logically organize APIs, track their evolution over time, and avoid breaking changes for client applications
 - **Quality Control**: Perform error checks and change impact analysis with Traefik Hub's static analyzer to ensure compliance and prevent misconfiguration by catching errors early
 - **Resource Management**: Centralize rate limits, quotas, and policy enforcement across groups of APIs through Plans & Bundles, ensuring consistent and efficient resource management
