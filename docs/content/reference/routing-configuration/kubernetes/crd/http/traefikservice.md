@@ -3,11 +3,12 @@ title: "Traefik Kubernetes Services Documentation"
 description: "Learn how to configure routing and load balancing in Traefik Proxy to reach Services, which handle incoming requests. Read the technical documentation."
 --- 
 
-A `TraefikService` is a custom resource that sits on top of the Kubernetes Services. It enables advanced load-balancing features such as a [Weighted Round Robin](#weighted-round-robin) load balancing or a [Mirroring](#mirroring) between your Kubernetes Services.
+A `TraefikService` is a custom resource that sits on top of the Kubernetes Services. It enables advanced load-balancing features such as a [Weighted Round Robin](#weighted-round-robin) load balancing, a [Highest Random Weight](#highest-random-weight) load balancing, or a [Mirroring](#mirroring) between your Kubernetes Services.
 
 Services configure how to reach the actual endpoints that will eventually handle incoming requests. In Traefik, the target service can be either a standard [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/)—which exposes a pod—or a TraefikService. The latter allows you to combine advanced load-balancing options like:
 
 - [Weighted Round Robin load balancing](#weighted-round-robin).
+- [Highest Random Weight load balancing](#highest-random-weight).
 - [Mirroring](#mirroring). 
 
 ## Weighted Round Robin
@@ -254,6 +255,143 @@ In the example above, to keep a session open with the same server, the client wo
 # Assuming `10.42.0.6` is the IP address of one of the replicas (a pod then) of the `whoami1` service.
 curl -H Host:example.com -b "lvl1=default-whoami1-80; lvl2=http://10.42.0.6:80" http://localhost:8000/foo
 ```
+
+## Highest Random Weight
+
+The HRW (Highest Random Weight) load balancer uses consistent hashing to ensure that requests from the same client IP are always routed to the same service. Unlike weighted round-robin which distributes requests based on weights, HRW provides consistent routing based on the client's remote address.
+
+This is particularly useful for maintaining session affinity without requiring sticky cookies, as clients will consistently reach the same backend service based on their IP address.
+
+### Configuration Example
+
+```yaml tab="IngressRoute"
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: test-hrw
+  namespace: apps
+
+spec:
+  entryPoints:
+  - websecure
+  routes:
+  - match: Host(`example.com`) && PathPrefix(`/app`)
+    kind: Rule
+    services:
+    # Set an HRW TraefikService
+    - name: hrw1
+      namespace: apps
+      kind: TraefikService
+  tls:
+    secretName: supersecret
+```
+
+```yaml tab="TraefikService HRW"
+apiVersion: traefik.io/v1alpha1
+kind: TraefikService
+metadata:
+  name: hrw1
+  namespace: apps
+
+spec:
+  highestRandomWeight:
+    services:
+      # Kubernetes Service with weight 10
+      - name: svc1
+        namespace: apps
+        port: 80
+        weight: 10
+      # Kubernetes Service with weight 20
+      - name: svc2
+        namespace: apps
+        port: 80
+        weight: 20
+      # Another TraefikService
+      - name: wrr1
+        namespace: apps
+        kind: TraefikService
+        weight: 15
+```
+
+```yaml tab="Kubernetes Services"
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc1
+  namespace: apps
+
+spec:
+  ports:
+  - name: http
+    port: 80
+  selector:
+    app: traefiklabs
+    task: app1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc2
+  namespace: apps
+
+spec:
+  ports:
+  - name: http
+    port: 80
+  selector:
+    app: traefiklabs
+    task: app2
+```
+
+### Configuration Options
+
+| Field                                                          | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | Default                                                              | Required |
+|:---------------------------------------------------------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:---------------------------------------------------------------------|:---------|
+| <a id="hrw-services" href="#hrw-services" title="#hrw-services">`services`</a> | List of any combination of TraefikService and [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/). Each service must have a weight assigned.                                                                                                                                                                                                                                                                                                                                                                                                                                     |                                                                      | Yes      |
+| <a id="hrw-servicesm-kind" href="#hrw-servicesm-kind" title="#hrw-servicesm-kind">`services[m].`<br />`kind`</a> | Kind of the service targeted.<br />Two values allowed:<br />- **Service**: Kubernetes Service<br /> - **TraefikService**: Traefik Service.                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | ""                                                                   | No       |
+| <a id="hrw-servicesm-name" href="#hrw-servicesm-name" title="#hrw-servicesm-name">`services[m].`<br />`name`</a> | Service name.<br />The character `@` is not authorized.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | ""                                                                   | Yes      |
+| <a id="hrw-servicesm-namespace" href="#hrw-servicesm-namespace" title="#hrw-servicesm-namespace">`services[m].`<br />`namespace`</a> | Service namespace.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | ""                                                                   | No       |
+| <a id="hrw-servicesm-port" href="#hrw-servicesm-port" title="#hrw-servicesm-port">`services[m].`<br />`port`</a> | Service port (number or port name).<br />Evaluated only if the kind is **Service**.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | ""                                                                   | No       |
+| <a id="hrw-servicesm-weight" href="#hrw-servicesm-weight" title="#hrw-servicesm-weight">`services[m].`<br />`weight`</a> | Service weight used in the HRW algorithm. Higher weights increase the probability of selection for a given client IP.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | 1                                                                    | No       |
+| <a id="hrw-servicesm-responseForwarding-flushInterval" href="#hrw-servicesm-responseForwarding-flushInterval" title="#hrw-servicesm-responseForwarding-flushInterval">`services[m].`<br />`responseForwarding.`<br />`flushInterval`</a> | Interval, in milliseconds, in between flushes to the client while copying the response body.<br />A negative value means to flush immediately after each write to the client.<br />This configuration is ignored when a response is a streaming response; for such responses, writes are flushed to the client immediately.<br />Evaluated only if the kind is **Service**.                                                                                                                                                                                                                                          | 100ms                                                                | No       |
+| <a id="hrw-servicesm-scheme" href="#hrw-servicesm-scheme" title="#hrw-servicesm-scheme">`services[m].`<br />`scheme`</a> | Scheme to use for the request to the upstream Kubernetes Service.<br />Evaluated only if the kind is **Service**.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | "http"<br />"https" if `port` is 443 or contains the string *https*. | No       |
+| <a id="hrw-servicesm-serversTransport" href="#hrw-servicesm-serversTransport" title="#hrw-servicesm-serversTransport">`services[m].`<br />`serversTransport`</a> | Name of ServersTransport resource to use to configure the transport between Traefik and your servers.<br />Evaluated only if the kind is **Service**.                                                                                                                                                                                                                                                                                                                                                                                                                                                                | ""                                                                   | No       |
+| <a id="hrw-servicesm-passHostHeader" href="#hrw-servicesm-passHostHeader" title="#hrw-servicesm-passHostHeader">`services[m].`<br />`passHostHeader`</a> | Forward client Host header to server.<br />Evaluated only if the kind is **Service**.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | true                                                                 | No       |
+| <a id="hrw-servicesm-healthCheck-scheme" href="#hrw-servicesm-healthCheck-scheme" title="#hrw-servicesm-healthCheck-scheme">`services[m].`<br />`healthCheck.scheme`</a> | Server URL scheme for the health check endpoint.<br />Evaluated only if the kind is **Service**.<br />Only for [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) of type `ExternalName`.                                                                                                                                                                                                                                                                                                                                                                                        | ""                                                                   | No       |
+| <a id="hrw-servicesm-healthCheck-mode" href="#hrw-servicesm-healthCheck-mode" title="#hrw-servicesm-healthCheck-mode">`services[m].`<br />`healthCheck.mode`</a> | Health check mode.<br /> If defined to grpc, will use the gRPC health check protocol to probe the server.<br />Evaluated only if the kind is **Service**.<br />Only for [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) of type `ExternalName`.                                                                                                                                                                                                                                                                                                                               | "http"                                                               | No       |
+| <a id="hrw-servicesm-healthCheck-path" href="#hrw-servicesm-healthCheck-path" title="#hrw-servicesm-healthCheck-path">`services[m].`<br />`healthCheck.path`</a> | Server URL path for the health check endpoint.<br />Evaluated only if the kind is **Service**.<br />Only for [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) of type `ExternalName`.                                                                                                                                                                                                                                                                                                                                                                                          | ""                                                                   | No       |
+| <a id="hrw-servicesm-healthCheck-interval" href="#hrw-servicesm-healthCheck-interval" title="#hrw-servicesm-healthCheck-interval">`services[m].`<br />`healthCheck.interval`</a> | Frequency of the health check calls for healthy targets.<br />Evaluated only if the kind is **Service**.<br />Only for [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) of type `ExternalName`.                                                                                                                                                                                                                                                                                                                                                                                  | "100ms"                                                              | No       |
+| <a id="hrw-servicesm-healthCheck-unhealthyInterval" href="#hrw-servicesm-healthCheck-unhealthyInterval" title="#hrw-servicesm-healthCheck-unhealthyInterval">`services[m].`<br />`healthCheck.unhealthyInterval`</a> | Frequency of the health check calls for unhealthy targets.<br />When not defined, it defaults to the `interval` value.<br />Evaluated only if the kind is **Service**.<br />Only for [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) of type `ExternalName`.                                                                                                                                                                                                                                                                                                                    | "100ms"                                                              | No       |
+| <a id="hrw-servicesm-healthCheck-method" href="#hrw-servicesm-healthCheck-method" title="#hrw-servicesm-healthCheck-method">`services[m].`<br />`healthCheck.method`</a> | HTTP method for the health check endpoint.<br />Evaluated only if the kind is **Service**.<br />Only for [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) of type `ExternalName`.                                                                                                                                                                                                                                                                                                                                                                                              | "GET"                                                                | No       |
+| <a id="hrw-servicesm-healthCheck-status" href="#hrw-servicesm-healthCheck-status" title="#hrw-servicesm-healthCheck-status">`services[m].`<br />`healthCheck.status`</a> | Expected HTTP status code of the response to the health check request.<br />Only for [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) of type ExternalName.<br />If not set, expect a status between 200 and 399.<br />Evaluated only if the kind is **Service**.                                                                                                                                                                                                                                                                                                              |                                                                      | No       |
+| <a id="hrw-servicesm-healthCheck-port" href="#hrw-servicesm-healthCheck-port" title="#hrw-servicesm-healthCheck-port">`services[m].`<br />`healthCheck.port`</a> | URL port for the health check endpoint.<br />Evaluated only if the kind is **Service**.<br />Only for [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) of type `ExternalName`.                                                                                                                                                                                                                                                                                                                                                                                                 |                                                                      | No       |
+| <a id="hrw-servicesm-healthCheck-timeout" href="#hrw-servicesm-healthCheck-timeout" title="#hrw-servicesm-healthCheck-timeout">`services[m].`<br />`healthCheck.timeout`</a> | Maximum duration to wait before considering the server unhealthy.<br />Evaluated only if the kind is **Service**.<br />Only for [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) of type `ExternalName`.                                                                                                                                                                                                                                                                                                                                                                       | "5s"                                                                 | No       |
+| <a id="hrw-servicesm-healthCheck-hostname" href="#hrw-servicesm-healthCheck-hostname" title="#hrw-servicesm-healthCheck-hostname">`services[m].`<br />`healthCheck.hostname`</a> | Value in the Host header of the health check request.<br />Evaluated only if the kind is **Service**.<br />Only for [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) of type `ExternalName`.                                                                                                                                                                                                                                                                                                                                                                                   | ""                                                                   | No       |
+| <a id="hrw-servicesm-healthCheck-followRedirect" href="#hrw-servicesm-healthCheck-followRedirect" title="#hrw-servicesm-healthCheck-followRedirect">`services[m].`<br />`healthCheck.`<br />`followRedirect`</a> | Follow the redirections during the healtchcheck.<br />Evaluated only if the kind is **Service**.<br />Only for [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) of type `ExternalName`.                                                                                                                                                                                                                                                                                                                                                                                        | true                                                                 | No       |
+| <a id="hrw-servicesm-healthCheck-headers" href="#hrw-servicesm-healthCheck-headers" title="#hrw-servicesm-healthCheck-headers">`services[m].`<br />`healthCheck.headers`</a> | Map of header to send to the health check endpoint<br />Evaluated only if the kind is **Service**.<br />Only for [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) of type `ExternalName`.                                                                                                                                                                                                                                                                                                                                                                                      |                                                                      | No       |
+| <a id="hrw-servicesm-sticky-cookie-name" href="#hrw-servicesm-sticky-cookie-name" title="#hrw-servicesm-sticky-cookie-name">`services[m].`<br />`sticky.`<br />`cookie.name`</a> | Name of the cookie used for the stickiness.<br />Evaluated only if the kind is **Service**.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | Abbreviation of a sha1<br />(ex: `_1d52e`).                          | No       |
+| <a id="hrw-servicesm-sticky-cookie-httpOnly" href="#hrw-servicesm-sticky-cookie-httpOnly" title="#hrw-servicesm-sticky-cookie-httpOnly">`services[m].`<br />`sticky.`<br />`cookie.httpOnly`</a> | Allow the cookie can be accessed by client-side APIs, such as JavaScript.<br />Evaluated only if the kind is **Service**.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | false                                                                | No       |
+| <a id="hrw-servicesm-sticky-cookie-secure" href="#hrw-servicesm-sticky-cookie-secure" title="#hrw-servicesm-sticky-cookie-secure">`services[m].`<br />`sticky.`<br />`cookie.secure`</a> | Allow the cookie can only be transmitted over an encrypted connection (i.e. HTTPS).<br />Evaluated only if the kind is **Service**.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | false                                                                | No       |
+| <a id="hrw-servicesm-sticky-cookie-sameSite" href="#hrw-servicesm-sticky-cookie-sameSite" title="#hrw-servicesm-sticky-cookie-sameSite">`services[m].`<br />`sticky.`<br />`cookie.sameSite`</a> | [SameSite](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite) policy.<br />Allowed values:<br />-`none`<br />-`lax`<br />`strict`<br />Evaluated only if the kind is **Service**.                                                                                                                                                                                                                                                                                                                                                                                                        | ""                                                                   | No       |
+| <a id="hrw-servicesm-sticky-cookie-maxAge" href="#hrw-servicesm-sticky-cookie-maxAge" title="#hrw-servicesm-sticky-cookie-maxAge">`services[m].`<br />`sticky.`<br />`cookie.maxAge`</a> | Number of seconds until the cookie expires.<br />Negative number, the cookie expires immediately.<br />0, the cookie never expires.<br />Evaluated only if the kind is **Service**.                                                                                                                                                                                                                                                                                                                                                                                                                                  | 0                                                                    | No       |
+| <a id="hrw-servicesm-strategy" href="#hrw-servicesm-strategy" title="#hrw-servicesm-strategy">`services[m].`<br />`strategy`</a> | Load balancing strategy between the servers.<br />RoundRobin is the only supported value yet.<br />Evaluated only if the kind is **Service**.                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | "RoundRobin"                                                         | No       |
+| <a id="hrw-servicesm-nativeLB" href="#hrw-servicesm-nativeLB" title="#hrw-servicesm-nativeLB">`services[m].`<br />`nativeLB`</a> | Allow using the Kubernetes Service load balancing between the pods instead of the one provided by Traefik.<br />Evaluated only if the kind is **Service**.                                                                                                                                                                                                                                                                                                                                                                                                                                                           | false                                                                | No       |
+| <a id="hrw-servicesm-nodePortLB" href="#hrw-servicesm-nodePortLB" title="#hrw-servicesm-nodePortLB">`services[m].`<br />`nodePortLB`</a> | Use the nodePort IP address when the service type is NodePort.<br />It allows services to be reachable when Traefik runs externally from the Kubernetes cluster but within the same network of the nodes.<br />Evaluated only if the kind is **Service**.                                                                                                                                                                                                                                                                                                                                                            | false                                                                | No       |
+
+### How HRW Works
+
+The Highest Random Weight algorithm combines consistent hashing with weighted load balancing:
+
+1. **Consistent Hashing**: For each incoming request, the client's remote address is hashed to ensure consistent routing.
+2. **Weighted Selection**: Each service is assigned a random value based on both the hash of the client IP and the service's weight.
+3. **Highest Selection**: The service with the highest calculated value receives the request.
+
+This approach provides several benefits:
+
+- **Session Affinity**: Clients consistently reach the same backend service
+- **Weighted Distribution**: Services with higher weights are more likely to be selected
+- **No State Required**: Unlike sticky cookies, no client-side or server-side state is needed
+- **Fault Tolerance**: If a service becomes unavailable, requests are redistributed consistently among remaining services
 
 ## Mirroring
 

@@ -78,6 +78,24 @@
 				"web"
 			]
 		},
+		"default-test4-route-466d8d3a547de55dfe8a@kubernetescrd": {
+			"entryPoints": [
+				"web"
+			],
+			"service": "default-hrw1",
+			"rule": "Host(`foo.com`) \u0026\u0026 PathPrefix(`/hrw1`)",
+			"priority": 38,
+			"observability": {
+				"accessLogs": true,
+				"metrics": true,
+				"tracing": true,
+				"traceVerbosity": "minimal"
+			},
+			"status": "enabled",
+			"using": [
+				"web"
+			]
+		},
 		"default-testst-route-60ad45fcb5fc1f5f3629@kubernetescrd": {
 			"entryPoints": [
 				"web"
@@ -156,6 +174,24 @@
 		},
 		"dashboard@internal": {
 			"status": "enabled"
+		},
+		"default-hrw1@kubernetescrd": {
+			"highestRandomWeight": {
+				"services": [
+					{
+						"name": "default-whoami-80",
+						"weight": 10
+					},
+					{
+						"name": "default-whoami-80",
+						"weight": 20
+					}
+				]
+			},
+			"status": "enabled",
+			"usedBy": [
+				"default-test4-route-466d8d3a547de55dfe8a@kubernetescrd"
+			]
 		},
 		"default-mirror1@kubernetescrd": {
 			"mirroring": {
