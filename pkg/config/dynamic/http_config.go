@@ -259,7 +259,7 @@ const (
 	BalancerStrategyWRR BalancerStrategy = "wrr"
 	// BalancerStrategyP2C is the power of two choices strategy.
 	BalancerStrategyP2C BalancerStrategy = "p2c"
-	// BalancerStrategyHRW is the power of two choices strategy.
+	// BalancerStrategyHRW is the highest random weight strategy.
 	BalancerStrategyHRW BalancerStrategy = "hrw"
 )
 
