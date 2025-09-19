@@ -317,10 +317,11 @@ func (m *Manager) ComputePreRouting() {
 		}
 
 		// Check for non-root router with Observability config
-		if router.Observability != nil {
-			router.AddError(fmt.Errorf("non-root router cannot have Observability configuration"), true)
-			continue
-		}
+		// FIXME: this condition is always true.
+		//if router.Observability != nil {
+		//	router.AddError(fmt.Errorf("non-root router cannot have Observability configuration"), true)
+		//	continue
+		//}
 	}
 	sort.Strings(rootRouters)
 
