@@ -34,7 +34,7 @@ func (p *Proxy) ServeTCP(conn WriteCloser) {
 	// needed because of e.g. server.trackedConnection
 	defer conn.Close()
 
-	connBackend, err := p.dialBackend()
+	connBackend, err := p.dialBackend(conn)
 	if err != nil {
 		log.Error().Err(err).Msg("Error while dialing backend")
 		return
@@ -62,8 +62,10 @@ func (p *Proxy) ServeTCP(conn WriteCloser) {
 	<-errChan
 }
 
-func (p *Proxy) dialBackend() (WriteCloser, error) {
-	conn, err := p.dialer.Dial("tcp", p.address)
+func (p *Proxy) dialBackend(clientConn net.Conn) (WriteCloser, error) {
+	// The clientConn is passed to the dialer so that it can use information from it if needed,
+	// to build a PROXY protocol header.
+	conn, err := p.dialer.Dial("tcp", p.address, clientConn)
 	if err != nil {
 		return nil, err
 	}
