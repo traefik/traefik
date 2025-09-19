@@ -688,6 +688,16 @@ You can tell Traefik to consider (or not) the container by setting `traefik.enab
 
 This option overrides the value of `exposedByDefault`.
 
+#### `traefik.docker.visiblewhennotrunning`
+
+```yaml
+- "traefik.docker.visiblewhennotrunning=true"
+```
+
+Controls whether containers that are not in "running" state (e.g., stopped, paused, exited) should still be visible to Traefik for service discovery.
+
+By default, Traefik only considers containers in "running" state.
+
 #### `traefik.docker.network`
 
 ```yaml

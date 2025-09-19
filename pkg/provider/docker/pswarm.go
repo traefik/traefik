@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
+	containertypes "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	networktypes "github.com/docker/docker/api/types/network"
 	swarmtypes "github.com/docker/docker/api/types/swarm"
@@ -221,9 +222,9 @@ func (p *SwarmProvider) listServices(ctx context.Context, dockerClient client.AP
 func (p *SwarmProvider) parseService(ctx context.Context, service swarmtypes.Service, networkMap map[string]*networktypes.Summary) (dockerData, error) {
 	logger := log.Ctx(ctx)
 
-	status := "running"
+	status := containertypes.StateRunning
 	if service.ServiceStatus.RunningTasks == 0 {
-		status = "stopped"
+		status = containertypes.StateExited
 	}
 
 	dData := dockerData{

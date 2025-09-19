@@ -46,3 +46,9 @@ services:
     labels:
       traefik.http.Routers.wrr-server.Rule: Host(`my.wrr.host`)
       traefik.http.Services.wrr-server.LoadBalancer.server.Weight: 1
+
+  visiblewhenStopped:
+    image: traefik/whoami
+    labels:
+      traefik.http.Routers.VisibleStopped.Rule: Host(`visible.stopped.host`)
+      traefik.docker.visiblewhennotrunning: "true"
