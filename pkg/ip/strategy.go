@@ -87,8 +87,12 @@ func (s *PoolStrategy) GetIP(req *http.Request) string {
 			return xffTrimmed
 		}
 	}
+	
 
-	return ""
+	// if no XFF or all XFF are in the pool, 
+	// return RemoteAddrStrategy.GetIP to fall back to RemoteAddr.
+	// it's better than returning an empty string because empty string is not a valid IP
+	return (&RemoteAddrStrategy{}).GetIP(req)
 }
 
 // getIPv6SubnetIP returns the IPv6 subnet IP.
