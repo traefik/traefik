@@ -159,7 +159,6 @@ func (p *Provider) loadUDPServers(client Client, namespace string, svc traefikv1
 						}
 					}
 				}
-
 			}
 		}
 

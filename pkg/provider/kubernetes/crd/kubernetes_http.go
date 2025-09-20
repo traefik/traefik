@@ -571,7 +571,6 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 						}
 					}
 				}
-
 			}
 		}
 

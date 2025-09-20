@@ -274,7 +274,6 @@ func (p *Provider) loadTCPServers(client Client, namespace string, svc traefikv1
 						}
 					}
 				}
-
 			}
 		}
 
