@@ -114,10 +114,10 @@ type LoadBalancerSpec struct {
 	// It defaults to https when Kubernetes Service port is 443, http otherwise.
 	Scheme string `json:"scheme,omitempty"`
 	// Strategy defines the load balancing strategy between the servers.
-	// Supported values are: wrr (Weighed round-robin) and p2c (Power of two choices).
+	// Supported values are: wrr (Weighed round-robin), p2c (Power of two choices), and hrw (Highest Random Weight).
 	// RoundRobin value is deprecated and supported for backward compatibility.
 	// TODO: when the deprecated RoundRobin value will be removed, set the default value to wrr.
-	// +kubebuilder:validation:Enum=wrr;p2c;RoundRobin
+	// +kubebuilder:validation:Enum=wrr;p2c;hrw;RoundRobin
 	Strategy dynamic.BalancerStrategy `json:"strategy,omitempty"`
 	// PassHostHeader defines whether the client Host header is forwarded to the upstream Kubernetes Service.
 	// By default, passHostHeader is true.
