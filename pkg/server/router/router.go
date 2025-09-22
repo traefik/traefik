@@ -71,7 +71,7 @@ func (m *Manager) getHTTPRouters(ctx context.Context, entryPoints []string, tls 
 
 // BuildHandlers Builds handler for all entry points.
 func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string, tls bool) map[string]http.Handler {
-	m.ComputePreRouting()
+	m.ComputeMultiLayerRouting()
 
 	entryPointHandlers := make(map[string]http.Handler)
 
@@ -270,11 +270,11 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 	return chain.Extend(*mHandler).Then(nextHandler)
 }
 
-// ComputePreRouting sets up router hierarchy and validates router configuration.
+// ComputeMultiLayerRouting sets up router tree and validates router configuration.
 // This function performs the following operations in order:
 //
 // 1. Populate ChildRefs: Uses ParentRefs to build the parent-child relationship graph
-// 2. Root-first traversal: Starting from root routers (no ParentRefs), traverses the hierarchy
+// 2. Root-first traversal: Starting from root routers (no ParentRefs), traverses the tree
 // 3. Cycle detection: Detects circular dependencies and removes cyclic links
 // 4. Reachability check: Marks routers unreachable from any root as disabled
 // 5. Dead-end detection: Marks routers with no service and no children as disabled
@@ -286,7 +286,7 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 // - Warning: Routers with non-critical errors (like cycles)
 //
 // The function modifies router.Status, router.ChildRefs, and adds errors to router.Err.
-func (m *Manager) ComputePreRouting() {
+func (m *Manager) ComputeMultiLayerRouting() {
 	if m.conf == nil || m.conf.Routers == nil {
 		return
 	}
@@ -422,7 +422,7 @@ func (m *Manager) handleCycle(victimRouter string, path []string) {
 		}
 
 		// Add cycle error to guilty router
-		guiltyRouter.AddError(fmt.Errorf("cyclic reference detected in router hierarchy: %s", cycleRouters), false)
+		guiltyRouter.AddError(fmt.Errorf("cyclic reference detected in router tree: %s", cycleRouters), false)
 
 		// Remove victim from guilty router's ChildRefs
 		for i, childRef := range guiltyRouter.ChildRefs {

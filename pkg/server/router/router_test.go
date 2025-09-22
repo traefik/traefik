@@ -929,7 +929,7 @@ func BenchmarkService(b *testing.B) {
 	}
 }
 
-func TestManager_ComputePreRouting(t *testing.T) {
+func TestManager_ComputeMultiLayerRouting(t *testing.T) {
 	testCases := []struct {
 		desc                string
 		routers             map[string]*dynamic.Router
@@ -1312,7 +1312,7 @@ func TestManager_ComputePreRouting(t *testing.T) {
 			}
 
 			// Execute the function we're testing
-			manager.ComputePreRouting()
+			manager.ComputeMultiLayerRouting()
 
 			// Verify ChildRefs are populated correctly
 			for routerName, expectedChildren := range test.expectedChildRefs {
@@ -1523,8 +1523,8 @@ func TestManager_buildChildRoutersMuxer(t *testing.T) {
 
 			manager := NewManager(conf, serviceManager, middlewareBuilder, nil, nil, parser)
 
-			// Compute pre-routing to populate ChildRefs
-			manager.ComputePreRouting()
+			// Compute multi-layer routing to populate ChildRefs
+			manager.ComputeMultiLayerRouting()
 
 			// Build the child routers muxer
 			ctx := context.Background()
@@ -1813,8 +1813,8 @@ func TestManager_BuildHandlers_WithChildRouters(t *testing.T) {
 
 			manager := NewManager(conf, serviceManager, middlewareBuilder, nil, nil, parser)
 
-			// Compute pre-routing to set up parent-child relationships
-			manager.ComputePreRouting()
+			// Compute multi-layer routing to set up parent-child relationships
+			manager.ComputeMultiLayerRouting()
 
 			// Build handlers
 			ctx := context.Background()
