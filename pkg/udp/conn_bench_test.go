@@ -1,12 +1,19 @@
 package udp
 
 import (
+	"flag"
 	"net"
 	"runtime"
 	"sync"
 	"testing"
 	"time"
 )
+
+var packetSize int
+
+func init() {
+	flag.IntVar(&packetSize, "packetSize", 8192, "custom argument for packet size")
+}
 
 func BenchmarkReadLoopAllocations(b *testing.B) {
 	udpAddr, err := net.ResolveUDPAddr("udp", ":0")
@@ -39,6 +46,23 @@ func BenchmarkReadLoopAllocations(b *testing.B) {
 	}
 	b.Cleanup(func() { clientConn.Close() })
 
+	// Send packets and measure readLoop processing
+	packet := make([]byte, packetSize)
+	go func() {
+		defer udpConn.Close()
+
+		for range b.N {
+			n, err := clientConn.Write(packet)
+			if err != nil {
+				b.Errorf("Failed to send packet: %v", err)
+				return
+			}
+			b.SetBytes(int64(n))
+		}
+
+		listener.accepting = false
+	}()
+
 	// Goroutine to consume from acceptCh
 	go func() {
 		for conn := range listener.acceptCh {
@@ -50,27 +74,10 @@ func BenchmarkReadLoopAllocations(b *testing.B) {
 		}
 	}()
 
-	// Send packets and measure readLoop processing
-	go func() {
-		defer udpConn.Close()
-
-		for range b.N {
-			_, err := clientConn.Write([]byte("test"))
-			if err != nil {
-				b.Errorf("Failed to send packet: %v", err)
-				return
-			}
-			time.Sleep(time.Microsecond) // Small delay between packets
-		}
-
-		listener.accepting = false
-	}()
-
 	runtime.GC()
 
 	b.ReportAllocs()
 	b.ResetTimer()
-	b.StartTimer()
 
 	// Run the actual readLoop - it will process b.N packets then exit
 	listener.readLoop()
