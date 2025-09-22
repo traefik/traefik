@@ -35,7 +35,8 @@ func BenchmarkReadLoopAllocations(b *testing.B) {
 		timeout:   3 * time.Second,
 		readBufferPool: sync.Pool{
 			New: func() interface{} {
-				return make([]byte, maxDatagramSize)
+				b := make([]byte, maxDatagramSize)
+				return &b
 			},
 		},
 	}

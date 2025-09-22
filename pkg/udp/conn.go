@@ -56,7 +56,8 @@ func ListenPacketConn(packetConn net.PacketConn, timeout time.Duration) (*Listen
 		timeout:   timeout,
 		readBufferPool: sync.Pool{
 			New: func() interface{} {
-				return make([]byte, maxDatagramSize)
+				b := make([]byte, maxDatagramSize)
+				return &b
 			},
 		},
 	}
@@ -221,15 +222,14 @@ func (l *Listener) newConn(rAddr net.Addr) *Conn {
 
 // allocReadBuffer gets a buffer slice from the sync.Pool.
 func (l *Listener) allocReadBuffer() []byte {
-	return l.readBufferPool.Get().([]byte)
+	return *l.readBufferPool.Get().(*[]byte)
 }
 
 // releaseReadBuffer returns a buffer slice back to the pool.
 // The slice must have been obtained from readBufferPool using allocReadBuffer()
 // Receivers must call this when done with the buffer.
 func (l *Listener) releaseReadBuffer(buf []byte) {
-	//nolint:staticcheck // SA6002: slice operation needed to reset capacity for pool reuse
-	l.readBufferPool.Put(buf[:cap(buf)])
+	l.readBufferPool.Put(&buf)
 }
 
 // Conn represents an on-going session with a client, over UDP packets.
