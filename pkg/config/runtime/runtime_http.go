@@ -82,7 +82,7 @@ type RouterInfo struct {
 	Using  []string `json:"using,omitempty"` // Effective entry points used by that router.
 
 	// ChildRefs contains the names of child routers.
-	// This field is only filled during pre-routing reverse computation of parentRefs,
+	// This field is only filled during multi-layer routing computation of parentRefs,
 	// and used when building the runtime configuration.
 	ChildRefs []string `json:"-"`
 }
