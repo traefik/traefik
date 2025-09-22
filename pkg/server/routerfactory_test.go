@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
 	"github.com/traefik/traefik/v3/pkg/config/static"
@@ -54,11 +55,12 @@ func TestReuseService(t *testing.T) {
 	transportManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
 
 	managerFactory := service.NewManagerFactory(staticConfig, nil, nil, transportManager, proxyBuilderMock{}, nil)
-	tlsManager := tls.NewManager()
+	tlsManager := tls.NewManager(nil)
 
 	dialerManager := tcp.NewDialerManager(nil)
 	dialerManager.Update(map[string]*dynamic.TCPServersTransport{"default@internal": {}})
-	factory := NewRouterFactory(staticConfig, managerFactory, tlsManager, nil, nil, dialerManager)
+	factory, err := NewRouterFactory(staticConfig, managerFactory, tlsManager, nil, nil, dialerManager)
+	require.NoError(t, err)
 
 	entryPointsHandlers, _ := factory.CreateRouters(runtime.NewConfig(dynamic.Configuration{HTTP: dynamicConfigs}))
 
@@ -191,12 +193,13 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 			transportManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
 
 			managerFactory := service.NewManagerFactory(staticConfig, nil, nil, transportManager, proxyBuilderMock{}, nil)
-			tlsManager := tls.NewManager()
+			tlsManager := tls.NewManager(nil)
 
 			dialerManager := tcp.NewDialerManager(nil)
 			dialerManager.Update(map[string]*dynamic.TCPServersTransport{"default@internal": {}})
 			observabiltyMgr := middleware.NewObservabilityMgr(staticConfig, nil, nil, nil, nil, nil)
-			factory := NewRouterFactory(staticConfig, managerFactory, tlsManager, observabiltyMgr, nil, dialerManager)
+			factory, err := NewRouterFactory(staticConfig, managerFactory, tlsManager, observabiltyMgr, nil, dialerManager)
+			require.NoError(t, err)
 
 			entryPointsHandlers, _ := factory.CreateRouters(runtime.NewConfig(dynamic.Configuration{HTTP: test.config(testServer.URL)}))
 
@@ -236,11 +239,12 @@ func TestInternalServices(t *testing.T) {
 	transportManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
 
 	managerFactory := service.NewManagerFactory(staticConfig, nil, nil, transportManager, nil, nil)
-	tlsManager := tls.NewManager()
+	tlsManager := tls.NewManager(nil)
 
 	dialerManager := tcp.NewDialerManager(nil)
 	dialerManager.Update(map[string]*dynamic.TCPServersTransport{"default@internal": {}})
-	factory := NewRouterFactory(staticConfig, managerFactory, tlsManager, nil, nil, dialerManager)
+	factory, err := NewRouterFactory(staticConfig, managerFactory, tlsManager, nil, nil, dialerManager)
+	require.NoError(t, err)
 
 	entryPointsHandlers, _ := factory.CreateRouters(runtime.NewConfig(dynamic.Configuration{HTTP: dynamicConfigs}))
 
@@ -254,7 +258,7 @@ func TestInternalServices(t *testing.T) {
 
 type proxyBuilderMock struct{}
 
-func (p proxyBuilderMock) Build(_ string, _ *url.URL, _, _, _ bool, _ time.Duration) (http.Handler, error) {
+func (p proxyBuilderMock) Build(_ string, _ *url.URL, _, _ bool, _ time.Duration) (http.Handler, error) {
 	return http.HandlerFunc(func(responseWriter http.ResponseWriter, req *http.Request) {}), nil
 }
 

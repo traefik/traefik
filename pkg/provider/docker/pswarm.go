@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	dockertypes "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
+	networktypes "github.com/docker/docker/api/types/network"
 	swarmtypes "github.com/docker/docker/api/types/swarm"
 	"github.com/docker/docker/api/types/versions"
 	"github.com/docker/docker/client"
@@ -161,7 +161,7 @@ func (p *SwarmProvider) Provide(configurationChan chan<- dynamic.Message, pool *
 func (p *SwarmProvider) listServices(ctx context.Context, dockerClient client.APIClient) ([]dockerData, error) {
 	logger := log.Ctx(ctx)
 
-	serviceList, err := dockerClient.ServiceList(ctx, dockertypes.ServiceListOptions{})
+	serviceList, err := dockerClient.ServiceList(ctx, swarmtypes.ServiceListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -179,13 +179,13 @@ func (p *SwarmProvider) listServices(ctx context.Context, dockerClient client.AP
 		networkListArgs.Add("driver", "overlay")
 	}
 
-	networkList, err := dockerClient.NetworkList(ctx, dockertypes.NetworkListOptions{Filters: networkListArgs})
+	networkList, err := dockerClient.NetworkList(ctx, networktypes.ListOptions{Filters: networkListArgs})
 	if err != nil {
 		logger.Debug().Err(err).Msg("Failed to network inspect on client for docker")
 		return nil, err
 	}
 
-	networkMap := make(map[string]*dockertypes.NetworkResource)
+	networkMap := make(map[string]*networktypes.Summary)
 	for _, network := range networkList {
 		networkMap[network.ID] = &network
 	}
@@ -218,7 +218,7 @@ func (p *SwarmProvider) listServices(ctx context.Context, dockerClient client.AP
 	return dockerDataList, err
 }
 
-func (p *SwarmProvider) parseService(ctx context.Context, service swarmtypes.Service, networkMap map[string]*dockertypes.NetworkResource) (dockerData, error) {
+func (p *SwarmProvider) parseService(ctx context.Context, service swarmtypes.Service, networkMap map[string]*networktypes.Summary) (dockerData, error) {
 	logger := log.Ctx(ctx)
 
 	dData := dockerData{
@@ -267,13 +267,13 @@ func (p *SwarmProvider) parseService(ctx context.Context, service swarmtypes.Ser
 }
 
 func listTasks(ctx context.Context, dockerClient client.APIClient, serviceID string,
-	serviceDockerData dockerData, networkMap map[string]*dockertypes.NetworkResource, isGlobalSvc bool,
+	serviceDockerData dockerData, networkMap map[string]*networktypes.Summary, isGlobalSvc bool,
 ) ([]dockerData, error) {
 	serviceIDFilter := filters.NewArgs()
 	serviceIDFilter.Add("service", serviceID)
 	serviceIDFilter.Add("desired-state", "running")
 
-	taskList, err := dockerClient.TaskList(ctx, dockertypes.TaskListOptions{Filters: serviceIDFilter})
+	taskList, err := dockerClient.TaskList(ctx, swarmtypes.TaskListOptions{Filters: serviceIDFilter})
 	if err != nil {
 		return nil, err
 	}
@@ -283,7 +283,11 @@ func listTasks(ctx context.Context, dockerClient client.APIClient, serviceID str
 		if task.Status.State != swarmtypes.TaskStateRunning {
 			continue
 		}
-		dData := parseTasks(ctx, task, serviceDockerData, networkMap, isGlobalSvc)
+		dData, err := parseTasks(ctx, dockerClient, task, serviceDockerData, networkMap, isGlobalSvc)
+		if err != nil {
+			log.Ctx(ctx).Warn().Err(err).Msgf("Error while parsing task %s", getServiceName(dData))
+			continue
+		}
 		if len(dData.NetworkSettings.Networks) > 0 {
 			dockerDataList = append(dockerDataList, dData)
 		}
@@ -291,9 +295,9 @@ func listTasks(ctx context.Context, dockerClient client.APIClient, serviceID str
 	return dockerDataList, err
 }
 
-func parseTasks(ctx context.Context, task swarmtypes.Task, serviceDockerData dockerData,
-	networkMap map[string]*dockertypes.NetworkResource, isGlobalSvc bool,
-) dockerData {
+func parseTasks(ctx context.Context, dockerClient client.APIClient, task swarmtypes.Task, serviceDockerData dockerData,
+	networkMap map[string]*networktypes.Summary, isGlobalSvc bool,
+) (dockerData, error) {
 	dData := dockerData{
 		ID:              task.ID,
 		ServiceName:     serviceDockerData.Name,
@@ -305,6 +309,14 @@ func parseTasks(ctx context.Context, task swarmtypes.Task, serviceDockerData doc
 
 	if isGlobalSvc {
 		dData.Name = serviceDockerData.Name + "." + task.ID
+	}
+
+	if task.NodeID != "" {
+		node, _, err := dockerClient.NodeInspectWithRaw(ctx, task.NodeID)
+		if err != nil {
+			return dockerData{}, fmt.Errorf("inspecting node %s: %w", task.NodeID, err)
+		}
+		dData.NodeIP = node.Status.Addr
 	}
 
 	if task.NetworksAttachments != nil {
@@ -328,5 +340,5 @@ func parseTasks(ctx context.Context, task swarmtypes.Task, serviceDockerData doc
 			}
 		}
 	}
-	return dData
+	return dData, nil
 }

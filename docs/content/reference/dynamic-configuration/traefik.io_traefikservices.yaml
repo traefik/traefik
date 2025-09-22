@@ -22,7 +22,7 @@ spec:
           TraefikService object allows to:
           - Apply weight to Services on load-balancing
           - Mirror traffic on services
-          More info: https://doc.traefik.io/traefik/v3.4/routing/providers/kubernetes-crd/#kind-traefikservice
+          More info: https://doc.traefik.io/traefik/v3.5/routing/providers/kubernetes-crd/#kind-traefikservice
         properties:
           apiVersion:
             description: |-
@@ -71,7 +71,7 @@ spec:
                         - type: integer
                         - type: string
                         description: |-
-                          Interval defines the frequency of the health check calls.
+                          Interval defines the frequency of the health check calls for healthy targets.
                           Default: 30s
                         x-kubernetes-int-or-string: true
                       method:
@@ -106,6 +106,15 @@ spec:
                         description: |-
                           Timeout defines the maximum duration Traefik will wait for a health check request before considering the server unhealthy.
                           Default: 5s
+                        x-kubernetes-int-or-string: true
+                      unhealthyInterval:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        description: |-
+                          UnhealthyInterval defines the frequency of the health check calls for unhealthy targets.
+                          When UnhealthyInterval is not defined, it defaults to the Interval value.
+                          Default: 30s
                         x-kubernetes-int-or-string: true
                     type: object
                   kind:
@@ -156,7 +165,7 @@ spec:
                               - type: integer
                               - type: string
                               description: |-
-                                Interval defines the frequency of the health check calls.
+                                Interval defines the frequency of the health check calls for healthy targets.
                                 Default: 30s
                               x-kubernetes-int-or-string: true
                             method:
@@ -191,6 +200,15 @@ spec:
                               description: |-
                                 Timeout defines the maximum duration Traefik will wait for a health check request before considering the server unhealthy.
                                 Default: 5s
+                              x-kubernetes-int-or-string: true
+                            unhealthyInterval:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              description: |-
+                                UnhealthyInterval defines the frequency of the health check calls for unhealthy targets.
+                                When UnhealthyInterval is not defined, it defaults to the Interval value.
+                                Default: 30s
                               x-kubernetes-int-or-string: true
                           type: object
                         kind:
@@ -227,6 +245,25 @@ spec:
                             PassHostHeader defines whether the client Host header is forwarded to the upstream Kubernetes Service.
                             By default, passHostHeader is true.
                           type: boolean
+                        passiveHealthCheck:
+                          description: PassiveHealthCheck defines passive health checks
+                            for ExternalName services.
+                          properties:
+                            failureWindow:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              description: FailureWindow defines the time window during
+                                which the failed attempts must occur for the server
+                                to be marked as unhealthy. It also defines for how
+                                long the server will be considered unhealthy.
+                              x-kubernetes-int-or-string: true
+                            maxFailedAttempts:
+                              description: MaxFailedAttempts is the number of consecutive
+                                failed attempts allowed within the failure window
+                                before marking the server as unhealthy.
+                              type: integer
+                          type: object
                         percent:
                           description: |-
                             Percent defines the part of the traffic to mirror.
@@ -268,7 +305,7 @@ spec:
                         sticky:
                           description: |-
                             Sticky defines the sticky sessions configuration.
-                            More info: https://doc.traefik.io/traefik/v3.4/routing/services/#sticky-sessions
+                            More info: https://doc.traefik.io/traefik/v3.5/routing/services/#sticky-sessions
                           properties:
                             cookie:
                               description: Cookie defines the sticky cookie configuration.
@@ -314,7 +351,6 @@ spec:
                               type: object
                           type: object
                         strategy:
-                          default: wrr
                           description: |-
                             Strategy defines the load balancing strategy between the servers.
                             Supported values are: wrr (Weighed round-robin) and p2c (Power of two choices).
@@ -362,6 +398,25 @@ spec:
                       PassHostHeader defines whether the client Host header is forwarded to the upstream Kubernetes Service.
                       By default, passHostHeader is true.
                     type: boolean
+                  passiveHealthCheck:
+                    description: PassiveHealthCheck defines passive health checks
+                      for ExternalName services.
+                    properties:
+                      failureWindow:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        description: FailureWindow defines the time window during
+                          which the failed attempts must occur for the server to be
+                          marked as unhealthy. It also defines for how long the server
+                          will be considered unhealthy.
+                        x-kubernetes-int-or-string: true
+                      maxFailedAttempts:
+                        description: MaxFailedAttempts is the number of consecutive
+                          failed attempts allowed within the failure window before
+                          marking the server as unhealthy.
+                        type: integer
+                    type: object
                   port:
                     anyOf:
                     - type: integer
@@ -397,7 +452,7 @@ spec:
                   sticky:
                     description: |-
                       Sticky defines the sticky sessions configuration.
-                      More info: https://doc.traefik.io/traefik/v3.4/routing/services/#sticky-sessions
+                      More info: https://doc.traefik.io/traefik/v3.5/routing/services/#sticky-sessions
                     properties:
                       cookie:
                         description: Cookie defines the sticky cookie configuration.
@@ -442,7 +497,6 @@ spec:
                         type: object
                     type: object
                   strategy:
-                    default: wrr
                     description: |-
                       Strategy defines the load balancing strategy between the servers.
                       Supported values are: wrr (Weighed round-robin) and p2c (Power of two choices).
@@ -495,7 +549,7 @@ spec:
                               - type: integer
                               - type: string
                               description: |-
-                                Interval defines the frequency of the health check calls.
+                                Interval defines the frequency of the health check calls for healthy targets.
                                 Default: 30s
                               x-kubernetes-int-or-string: true
                             method:
@@ -530,6 +584,15 @@ spec:
                               description: |-
                                 Timeout defines the maximum duration Traefik will wait for a health check request before considering the server unhealthy.
                                 Default: 5s
+                              x-kubernetes-int-or-string: true
+                            unhealthyInterval:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              description: |-
+                                UnhealthyInterval defines the frequency of the health check calls for unhealthy targets.
+                                When UnhealthyInterval is not defined, it defaults to the Interval value.
+                                Default: 30s
                               x-kubernetes-int-or-string: true
                           type: object
                         kind:
@@ -566,6 +629,25 @@ spec:
                             PassHostHeader defines whether the client Host header is forwarded to the upstream Kubernetes Service.
                             By default, passHostHeader is true.
                           type: boolean
+                        passiveHealthCheck:
+                          description: PassiveHealthCheck defines passive health checks
+                            for ExternalName services.
+                          properties:
+                            failureWindow:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              description: FailureWindow defines the time window during
+                                which the failed attempts must occur for the server
+                                to be marked as unhealthy. It also defines for how
+                                long the server will be considered unhealthy.
+                              x-kubernetes-int-or-string: true
+                            maxFailedAttempts:
+                              description: MaxFailedAttempts is the number of consecutive
+                                failed attempts allowed within the failure window
+                                before marking the server as unhealthy.
+                              type: integer
+                          type: object
                         port:
                           anyOf:
                           - type: integer
@@ -602,7 +684,7 @@ spec:
                         sticky:
                           description: |-
                             Sticky defines the sticky sessions configuration.
-                            More info: https://doc.traefik.io/traefik/v3.4/routing/services/#sticky-sessions
+                            More info: https://doc.traefik.io/traefik/v3.5/routing/services/#sticky-sessions
                           properties:
                             cookie:
                               description: Cookie defines the sticky cookie configuration.
@@ -648,7 +730,6 @@ spec:
                               type: object
                           type: object
                         strategy:
-                          default: wrr
                           description: |-
                             Strategy defines the load balancing strategy between the servers.
                             Supported values are: wrr (Weighed round-robin) and p2c (Power of two choices).
@@ -671,7 +752,7 @@ spec:
                   sticky:
                     description: |-
                       Sticky defines whether sticky sessions are enabled.
-                      More info: https://doc.traefik.io/traefik/v3.4/routing/providers/kubernetes-crd/#stickiness-and-load-balancing
+                      More info: https://doc.traefik.io/traefik/v3.5/routing/providers/kubernetes-crd/#stickiness-and-load-balancing
                     properties:
                       cookie:
                         description: Cookie defines the sticky cookie configuration.

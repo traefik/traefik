@@ -110,7 +110,7 @@ func TestNewRateLimiter(t *testing.T) {
 
 			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
-			h, err := New(context.Background(), next, test.config, "rate-limiter")
+			h, err := New(t.Context(), next, test.config, "rate-limiter")
 			if test.expectedError != "" {
 				assert.EqualError(t, err, test.expectedError)
 			} else {
@@ -274,7 +274,7 @@ func TestInMemoryRateLimit(t *testing.T) {
 			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				reqCount++
 			})
-			h, err := New(context.Background(), next, test.config, "rate-limiter")
+			h, err := New(t.Context(), next, test.config, "rate-limiter")
 			require.NoError(t, err)
 
 			loadPeriod := time.Duration(1e9 / test.incomingLoad)
@@ -282,11 +282,7 @@ func TestInMemoryRateLimit(t *testing.T) {
 			end := start.Add(test.loadDuration)
 			ticker := time.NewTicker(loadPeriod)
 			defer ticker.Stop()
-			for {
-				if time.Now().After(end) {
-					break
-				}
-
+			for !time.Now().After(end) {
 				req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
 				req.RemoteAddr = "127.0.0.1:1234"
 				w := httptest.NewRecorder()
@@ -481,7 +477,7 @@ func TestRedisRateLimit(t *testing.T) {
 			test.config.Redis = &dynamic.Redis{
 				Endpoints: []string{"localhost:6379"},
 			}
-			h, err := New(context.Background(), next, test.config, "rate-limiter")
+			h, err := New(t.Context(), next, test.config, "rate-limiter")
 			require.NoError(t, err)
 
 			l := h.(*rateLimiter)
@@ -496,11 +492,7 @@ func TestRedisRateLimit(t *testing.T) {
 			end := start.Add(test.loadDuration)
 			ticker := time.NewTicker(loadPeriod)
 			defer ticker.Stop()
-			for {
-				if time.Now().After(end) {
-					break
-				}
-
+			for !time.Now().After(end) {
 				req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
 				req.RemoteAddr = "127.0.0." + strconv.Itoa(randPort) + ":" + strconv.Itoa(randPort)
 				w := httptest.NewRecorder()

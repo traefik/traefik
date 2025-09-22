@@ -21,6 +21,7 @@ import (
 	"github.com/go-acme/lego/v4/challenge"
 	"github.com/go-acme/lego/v4/challenge/dns01"
 	"github.com/go-acme/lego/v4/challenge/http01"
+	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
 	"github.com/go-acme/lego/v4/lego"
 	"github.com/go-acme/lego/v4/providers/dns"
 	"github.com/go-acme/lego/v4/registration"
@@ -45,10 +46,14 @@ type Configuration struct {
 	PreferredChain       string   `description:"Preferred chain to use." json:"preferredChain,omitempty" toml:"preferredChain,omitempty" yaml:"preferredChain,omitempty" export:"true"`
 	Profile              string   `description:"Certificate profile to use." json:"profile,omitempty" toml:"profile,omitempty" yaml:"profile,omitempty" export:"true"`
 	EmailAddresses       []string `description:"CSR email addresses to use." json:"emailAddresses,omitempty" toml:"emailAddresses,omitempty" yaml:"emailAddresses,omitempty"`
+	DisableCommonName    bool     `description:"Disable the common name in the CSR." json:"disableCommonName,omitempty" toml:"disableCommonName,omitempty" yaml:"disableCommonName,omitempty" export:"true"`
 	Storage              string   `description:"Storage to use." json:"storage,omitempty" toml:"storage,omitempty" yaml:"storage,omitempty" export:"true"`
 	KeyType              string   `description:"KeyType used for generating certificate private key. Allow value 'EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192'." json:"keyType,omitempty" toml:"keyType,omitempty" yaml:"keyType,omitempty" export:"true"`
 	EAB                  *EAB     `description:"External Account Binding to use." json:"eab,omitempty" toml:"eab,omitempty" yaml:"eab,omitempty"`
 	CertificatesDuration int      `description:"Certificates' duration in hours." json:"certificatesDuration,omitempty" toml:"certificatesDuration,omitempty" yaml:"certificatesDuration,omitempty" export:"true"`
+
+	ClientTimeout               ptypes.Duration `description:"Timeout for a complete HTTP transaction with the ACME server." json:"clientTimeout,omitempty" toml:"clientTimeout,omitempty" yaml:"clientTimeout,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	ClientResponseHeaderTimeout ptypes.Duration `description:"Timeout for receiving the response headers when communicating with the ACME server." json:"clientResponseHeaderTimeout,omitempty" toml:"clientResponseHeaderTimeout,omitempty" yaml:"clientResponseHeaderTimeout,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 
 	CACertificates   []string `description:"Specify the paths to PEM encoded CA Certificates that can be used to authenticate an ACME server with an HTTPS certificate not issued by a CA in the system-wide trusted root list." json:"caCertificates,omitempty" toml:"caCertificates,omitempty" yaml:"caCertificates,omitempty"`
 	CASystemCertPool bool     `description:"Define if the certificates pool must use a copy of the system cert pool." json:"caSystemCertPool,omitempty" toml:"caSystemCertPool,omitempty" yaml:"caSystemCertPool,omitempty" export:"true"`
@@ -65,6 +70,8 @@ func (a *Configuration) SetDefaults() {
 	a.Storage = "acme.json"
 	a.KeyType = "RSA4096"
 	a.CertificatesDuration = 3 * 30 * 24 // 90 Days
+	a.ClientTimeout = ptypes.Duration(2 * time.Minute)
+	a.ClientResponseHeaderTimeout = ptypes.Duration(30 * time.Second)
 }
 
 // CertAndStore allows mapping a TLS certificate to a TLS store.
@@ -112,7 +119,9 @@ type HTTPChallenge struct {
 }
 
 // TLSChallenge contains TLS challenge configuration.
-type TLSChallenge struct{}
+type TLSChallenge struct {
+	Delay ptypes.Duration `description:"Delay between the creation of the challenge and the validation." json:"delay,omitempty" toml:"delay,omitempty" yaml:"delay,omitempty" export:"true"`
+}
 
 // Provider holds configurations of the provider.
 type Provider struct {
@@ -162,6 +171,10 @@ func (p *Provider) Init() error {
 
 	if p.CertificatesDuration < 1 {
 		return errors.New("cannot manage certificates with duration lower than 1 hour")
+	}
+
+	if p.ClientTimeout < p.ClientResponseHeaderTimeout {
+		return errors.New("clientTimeout must be at least clientResponseHeaderTimeout")
 	}
 
 	var err error
@@ -283,6 +296,7 @@ func (p *Provider) getClient() (*lego.Client, error) {
 	config.CADirURL = caServer
 	config.Certificate.KeyType = GetKeyType(ctx, p.KeyType)
 	config.UserAgent = fmt.Sprintf("containous-traefik/%s", version.Version)
+	config.Certificate.DisableCommonName = p.DisableCommonName
 
 	config.HTTPClient, err = p.createHTTPClient()
 	if err != nil {
@@ -362,7 +376,7 @@ func (p *Provider) getClient() (*lego.Client, error) {
 	if p.TLSChallenge != nil {
 		logger.Debug().Msg("Using TLS Challenge provider.")
 
-		err = client.Challenge.SetTLSALPN01Provider(p.TLSChallengeProvider)
+		err = client.Challenge.SetTLSALPN01Provider(p.TLSChallengeProvider, tlsalpn01.SetDelay(time.Duration(p.TLSChallenge.Delay)))
 		if err != nil {
 			return nil, err
 		}
@@ -379,7 +393,7 @@ func (p *Provider) createHTTPClient() (*http.Client, error) {
 	}
 
 	return &http.Client{
-		Timeout: 2 * time.Minute,
+		Timeout: time.Duration(p.ClientTimeout),
 		Transport: &http.Transport{
 			Proxy: http.ProxyFromEnvironment,
 			DialContext: (&net.Dialer{
@@ -387,7 +401,7 @@ func (p *Provider) createHTTPClient() (*http.Client, error) {
 				KeepAlive: 30 * time.Second,
 			}).DialContext,
 			TLSHandshakeTimeout:   30 * time.Second,
-			ResponseHeaderTimeout: 30 * time.Second,
+			ResponseHeaderTimeout: time.Duration(p.ClientResponseHeaderTimeout),
 			TLSClientConfig:       tlsConfig,
 		},
 	}, nil

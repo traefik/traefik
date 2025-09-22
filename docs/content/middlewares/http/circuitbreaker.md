@@ -8,8 +8,6 @@ description: "The HTTP circuit breaker in Traefik Proxy prevents stacking reques
 Don't Waste Time Calling Unhealthy Services
 {: .subtitle }
 
-![CircuitBreaker](../../assets/img/middleware/circuitbreaker.png)
-
 The circuit breaker protects your system from stacking requests to unhealthy services, resulting in cascading failures.
 
 When your system is healthy, the circuit is closed (normal operations).
@@ -160,8 +158,8 @@ Here is the list of supported operators:
 
 ### Fallback mechanism
 
-The fallback mechanism returns a `HTTP 503 Service Unavailable` to the client instead of calling the target service.
-This behavior cannot be configured.
+By default the fallback mechanism returns a `HTTP 503 Service Unavailable` to the client instead of calling the target service.
+The response code can be configured.
 
 ### `CheckPeriod`
 

@@ -15,7 +15,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"github.com/vulcand/oxy/v2/utils"
-	"go.opentelemetry.io/otel/trace"
 )
 
 // Compile time validation that the response recorder implements http interfaces correctly.
@@ -83,8 +82,8 @@ func New(ctx context.Context, next http.Handler, config dynamic.ErrorPage, servi
 	}, nil
 }
 
-func (c *customErrors) GetTracingInformation() (string, string, trace.SpanKind) {
-	return c.name, typeName, trace.SpanKindInternal
+func (c *customErrors) GetTracingInformation() (string, string) {
+	return c.name, typeName
 }
 
 func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
@@ -123,11 +122,18 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	var query string
+
+	scheme := "http"
+	if req.TLS != nil {
+		scheme = "https"
+	}
+	orig := &url.URL{Scheme: scheme, Host: req.Host, Path: req.URL.Path, RawPath: req.URL.RawPath, RawQuery: req.URL.RawQuery, Fragment: req.URL.Fragment}
+
 	if len(c.backendQuery) > 0 {
 		query = "/" + strings.TrimPrefix(c.backendQuery, "/")
 		query = strings.ReplaceAll(query, "{status}", strconv.Itoa(code))
 		query = strings.ReplaceAll(query, "{originalStatus}", strconv.Itoa(originalCode))
-		query = strings.ReplaceAll(query, "{url}", url.QueryEscape(req.URL.String()))
+		query = strings.ReplaceAll(query, "{url}", url.QueryEscape(orig.String()))
 	}
 
 	pageReq, err := newRequest("http://" + req.Host + query)

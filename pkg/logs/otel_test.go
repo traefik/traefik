@@ -2,7 +2,6 @@ package logs
 
 import (
 	"compress/gzip"
-	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -172,10 +171,10 @@ func TestLog(t *testing.T) {
 			out := zerolog.MultiLevelWriter(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339})
 			logger := zerolog.New(out).With().Caller().Logger()
 
-			logger, err := SetupOTelLogger(logger, config)
+			logger, err := SetupOTelLogger(t.Context(), logger, config)
 			require.NoError(t, err)
 
-			ctx := trace.ContextWithSpanContext(context.Background(), trace.NewSpanContext(trace.SpanContextConfig{
+			ctx := trace.ContextWithSpanContext(t.Context(), trace.NewSpanContext(trace.SpanContextConfig{
 				TraceID: trace.TraceID{0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8},
 				SpanID:  trace.SpanID{0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8},
 			}))

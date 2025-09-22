@@ -10,9 +10,11 @@ import (
 	"net/textproto"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
 	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
@@ -67,6 +69,19 @@ func TestGetLoadBalancer(t *testing.T) {
 			fwd:         &forwarderMock{},
 			expectError: false,
 		},
+		{
+			desc:        "Succeeds when passive health checker is set",
+			serviceName: "test",
+			service: &dynamic.ServersLoadBalancer{
+				Strategy: dynamic.BalancerStrategyWRR,
+				PassiveHealthCheck: &dynamic.PassiveServerHealthCheck{
+					FailureWindow:     ptypes.Duration(30 * time.Second),
+					MaxFailedAttempts: 3,
+				},
+			},
+			fwd:         &forwarderMock{},
+			expectError: false,
+		},
 	}
 
 	for _, test := range testCases {
@@ -74,7 +89,7 @@ func TestGetLoadBalancer(t *testing.T) {
 			t.Parallel()
 
 			serviceInfo := &runtime.ServiceInfo{Service: &dynamic.Service{LoadBalancer: test.service}}
-			handler, err := sm.getLoadBalancerServiceHandler(context.Background(), test.serviceName, serviceInfo)
+			handler, err := sm.getLoadBalancerServiceHandler(t.Context(), test.serviceName, serviceInfo)
 			if test.expectError {
 				require.Error(t, err)
 				assert.Nil(t, handler)
@@ -321,13 +336,13 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
 			serviceInfo := &runtime.ServiceInfo{Service: &dynamic.Service{LoadBalancer: test.service}}
-			handler, err := sm.getLoadBalancerServiceHandler(context.Background(), test.serviceName, serviceInfo)
+			handler, err := sm.getLoadBalancerServiceHandler(t.Context(), test.serviceName, serviceInfo)
 
 			assert.NoError(t, err)
 			assert.NotNil(t, handler)
 
 			req := testhelpers.MustNewRequest(http.MethodGet, "http://callme", nil)
-			assert.Equal(t, "", req.Header.Get("User-Agent"))
+			assert.Empty(t, req.Header.Get("User-Agent"))
 
 			if test.userAgent != "" {
 				req.Header.Set("User-Agent", test.userAgent)
@@ -402,7 +417,7 @@ func Test1xxResponses(t *testing.T) {
 		},
 	}
 
-	handler, err := sm.getLoadBalancerServiceHandler(context.Background(), "foobar", info)
+	handler, err := sm.getLoadBalancerServiceHandler(t.Context(), "foobar", info)
 	assert.NoError(t, err)
 
 	frontend := httptest.NewServer(handler)
@@ -446,7 +461,7 @@ func Test1xxResponses(t *testing.T) {
 			return nil
 		},
 	}
-	req, _ := http.NewRequestWithContext(httptrace.WithClientTrace(context.Background(), trace), http.MethodGet, frontend.URL, nil)
+	req, _ := http.NewRequestWithContext(httptrace.WithClientTrace(t.Context(), trace), http.MethodGet, frontend.URL, nil)
 
 	res, err := frontendClient.Do(req)
 	assert.NoError(t, err)
@@ -496,15 +511,15 @@ func TestManager_ServiceBuilders(t *testing.T) {
 		return nil, nil
 	}))
 
-	h, err := manager.BuildHTTP(context.Background(), "test@internal")
+	h, err := manager.BuildHTTP(t.Context(), "test@internal")
 	require.NoError(t, err)
 	assert.Equal(t, internalHandler, h)
 
-	h, err = manager.BuildHTTP(context.Background(), "test@test")
+	h, err = manager.BuildHTTP(t.Context(), "test@test")
 	require.NoError(t, err)
 	assert.NotNil(t, h)
 
-	_, err = manager.BuildHTTP(context.Background(), "wrong@test")
+	_, err = manager.BuildHTTP(t.Context(), "wrong@test")
 	assert.Error(t, err)
 }
 
@@ -563,7 +578,7 @@ func TestManager_Build(t *testing.T) {
 
 			manager := NewManager(test.configs, nil, nil, &transportManagerMock{}, nil)
 
-			ctx := context.Background()
+			ctx := t.Context()
 			if len(test.providerName) > 0 {
 				ctx = provider.AddInContext(ctx, "foobar@"+test.providerName)
 			}
@@ -586,7 +601,7 @@ func TestMultipleTypeOnBuildHTTP(t *testing.T) {
 
 	manager := NewManager(services, nil, nil, &transportManagerMock{}, nil)
 
-	_, err := manager.BuildHTTP(context.Background(), "test@file")
+	_, err := manager.BuildHTTP(t.Context(), "test@file")
 	assert.Error(t, err, "cannot create service: multi-types service not supported, consider declaring two different pieces of service instead")
 }
 

@@ -14,7 +14,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/vulcand/oxy/v2/utils"
-	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/time/rate"
 )
 
@@ -127,8 +126,8 @@ func New(ctx context.Context, next http.Handler, config dynamic.RateLimit, name 
 	}, nil
 }
 
-func (rl *rateLimiter) GetTracingInformation() (string, string, trace.SpanKind) {
-	return rl.name, typeName, trace.SpanKindInternal
+func (rl *rateLimiter) GetTracingInformation() (string, string) {
+	return rl.name, typeName
 }
 
 func (rl *rateLimiter) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
@@ -146,7 +145,12 @@ func (rl *rateLimiter) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		logger.Info().Msgf("ignoring token bucket amount > 1: %d", amount)
 	}
 
-	delay, err := rl.limiter.Allow(ctx, source)
+	// Each rate limiter has its own source space,
+	// ensuring independence between rate limiters,
+	// i.e., rate limit rules are only applied based on traffic
+	// where the rate limiter is active.
+	rlSource := fmt.Sprintf("%s:%s", rl.name, source)
+	delay, err := rl.limiter.Allow(ctx, rlSource)
 	if err != nil {
 		rl.logger.Error().Err(err).Msg("Could not insert/update bucket")
 		observability.SetStatusErrorf(ctx, "Could not insert/update bucket")

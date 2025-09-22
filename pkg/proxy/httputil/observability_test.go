@@ -1,7 +1,6 @@
 package httputil
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -10,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/metrics"
+	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"go.opentelemetry.io/otel/attribute"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
@@ -69,7 +69,7 @@ func TestObservabilityRoundTripper_metrics(t *testing.T) {
 			// force the meter provider with manual reader to collect metrics for the test.
 			metrics.SetMeterProvider(meterProvider)
 
-			semConvMetricRegistry, err := metrics.NewSemConvMetricRegistry(context.Background(), &cfg)
+			semConvMetricRegistry, err := metrics.NewSemConvMetricRegistry(t.Context(), &cfg)
 			require.NoError(t, err)
 			require.NotNil(t, semConvMetricRegistry)
 
@@ -78,12 +78,17 @@ func TestObservabilityRoundTripper_metrics(t *testing.T) {
 			req.Header.Set("User-Agent", "rt-test")
 			req.Header.Set("X-Forwarded-Proto", "http")
 
+			// Injection of the observability variables in the request context.
+			req = req.WithContext(observability.WithObservability(req.Context(), observability.Observability{
+				SemConvMetricsEnabled: true,
+			}))
+
 			ort := newObservabilityRoundTripper(semConvMetricRegistry, mockRoundTripper{statusCode: test.statusCode})
 			_, err = ort.RoundTrip(req)
 			require.NoError(t, err)
 
 			got := metricdata.ResourceMetrics{}
-			err = rdr.Collect(context.Background(), &got)
+			err = rdr.Collect(t.Context(), &got)
 			require.NoError(t, err)
 
 			require.Len(t, got.ScopeMetrics, 1)

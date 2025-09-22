@@ -13,18 +13,18 @@ type IngressRouteSpec struct {
 	Routes []Route `json:"routes"`
 	// EntryPoints defines the list of entry point names to bind to.
 	// Entry points have to be configured in the static configuration.
-	// More info: https://doc.traefik.io/traefik/v3.4/routing/entrypoints/
+	// More info: https://doc.traefik.io/traefik/v3.5/routing/entrypoints/
 	// Default: all.
 	EntryPoints []string `json:"entryPoints,omitempty"`
 	// TLS defines the TLS configuration.
-	// More info: https://doc.traefik.io/traefik/v3.4/routing/routers/#tls
+	// More info: https://doc.traefik.io/traefik/v3.5/routing/routers/#tls
 	TLS *TLS `json:"tls,omitempty"`
 }
 
 // Route holds the HTTP route configuration.
 type Route struct {
 	// Match defines the router's rule.
-	// More info: https://doc.traefik.io/traefik/v3.4/routing/routers/#rule
+	// More info: https://doc.traefik.io/traefik/v3.5/routing/routers/#rule
 	Match string `json:"match"`
 	// Kind defines the kind of the route.
 	// Rule is the only supported kind.
@@ -32,62 +32,62 @@ type Route struct {
 	// +kubebuilder:validation:Enum=Rule
 	Kind string `json:"kind,omitempty"`
 	// Priority defines the router's priority.
-	// More info: https://doc.traefik.io/traefik/v3.4/routing/routers/#priority
+	// More info: https://doc.traefik.io/traefik/v3.5/routing/routers/#priority
 	// +kubebuilder:validation:Maximum=9223372036854774807
 	Priority int `json:"priority,omitempty"`
 	// Syntax defines the router's rule syntax.
-	// More info: https://doc.traefik.io/traefik/v3.4/routing/routers/#rulesyntax
+	// More info: https://doc.traefik.io/traefik/v3.5/routing/routers/#rulesyntax
 	// Deprecated: Please do not use this field and rewrite the router rules to use the v3 syntax.
 	Syntax string `json:"syntax,omitempty"`
 	// Services defines the list of Service.
 	// It can contain any combination of TraefikService and/or reference to a Kubernetes Service.
 	Services []Service `json:"services,omitempty"`
 	// Middlewares defines the list of references to Middleware resources.
-	// More info: https://doc.traefik.io/traefik/v3.4/routing/providers/kubernetes-crd/#kind-middleware
+	// More info: https://doc.traefik.io/traefik/v3.5/routing/providers/kubernetes-crd/#kind-middleware
 	Middlewares []MiddlewareRef `json:"middlewares,omitempty"`
 	// Observability defines the observability configuration for a router.
-	// More info: https://doc.traefik.io/traefik/v3.2/routing/routers/#observability
+	// More info: https://doc.traefik.io/traefik/v3.5/routing/routers/#observability
 	Observability *dynamic.RouterObservabilityConfig `json:"observability,omitempty"`
 }
 
 // TLS holds the TLS configuration.
-// More info: https://doc.traefik.io/traefik/v3.4/routing/routers/#tls
+// More info: https://doc.traefik.io/traefik/v3.5/routing/routers/#tls
 type TLS struct {
 	// SecretName is the name of the referenced Kubernetes Secret to specify the certificate details.
 	SecretName string `json:"secretName,omitempty"`
 	// Options defines the reference to a TLSOption, that specifies the parameters of the TLS connection.
 	// If not defined, the `default` TLSOption is used.
-	// More info: https://doc.traefik.io/traefik/v3.4/https/tls/#tls-options
+	// More info: https://doc.traefik.io/traefik/v3.5/https/tls/#tls-options
 	Options *TLSOptionRef `json:"options,omitempty"`
 	// Store defines the reference to the TLSStore, that will be used to store certificates.
 	// Please note that only `default` TLSStore can be used.
 	Store *TLSStoreRef `json:"store,omitempty"`
 	// CertResolver defines the name of the certificate resolver to use.
 	// Cert resolvers have to be configured in the static configuration.
-	// More info: https://doc.traefik.io/traefik/v3.4/https/acme/#certificate-resolvers
+	// More info: https://doc.traefik.io/traefik/v3.5/https/acme/#certificate-resolvers
 	CertResolver string `json:"certResolver,omitempty"`
 	// Domains defines the list of domains that will be used to issue certificates.
-	// More info: https://doc.traefik.io/traefik/v3.4/routing/routers/#domains
+	// More info: https://doc.traefik.io/traefik/v3.5/routing/routers/#domains
 	Domains []types.Domain `json:"domains,omitempty"`
 }
 
 // TLSOptionRef is a reference to a TLSOption resource.
 type TLSOptionRef struct {
 	// Name defines the name of the referenced TLSOption.
-	// More info: https://doc.traefik.io/traefik/v3.4/routing/providers/kubernetes-crd/#kind-tlsoption
+	// More info: https://doc.traefik.io/traefik/v3.5/routing/providers/kubernetes-crd/#kind-tlsoption
 	Name string `json:"name"`
 	// Namespace defines the namespace of the referenced TLSOption.
-	// More info: https://doc.traefik.io/traefik/v3.4/routing/providers/kubernetes-crd/#kind-tlsoption
+	// More info: https://doc.traefik.io/traefik/v3.5/routing/providers/kubernetes-crd/#kind-tlsoption
 	Namespace string `json:"namespace,omitempty"`
 }
 
 // TLSStoreRef is a reference to a TLSStore resource.
 type TLSStoreRef struct {
 	// Name defines the name of the referenced TLSStore.
-	// More info: https://doc.traefik.io/traefik/v3.4/routing/providers/kubernetes-crd/#kind-tlsstore
+	// More info: https://doc.traefik.io/traefik/v3.5/routing/providers/kubernetes-crd/#kind-tlsstore
 	Name string `json:"name"`
 	// Namespace defines the namespace of the referenced TLSStore.
-	// More info: https://doc.traefik.io/traefik/v3.4/routing/providers/kubernetes-crd/#kind-tlsstore
+	// More info: https://doc.traefik.io/traefik/v3.5/routing/providers/kubernetes-crd/#kind-tlsstore
 	Namespace string `json:"namespace,omitempty"`
 }
 
@@ -104,7 +104,7 @@ type LoadBalancerSpec struct {
 	// Namespace defines the namespace of the referenced Kubernetes Service or TraefikService.
 	Namespace string `json:"namespace,omitempty"`
 	// Sticky defines the sticky sessions configuration.
-	// More info: https://doc.traefik.io/traefik/v3.4/routing/services/#sticky-sessions
+	// More info: https://doc.traefik.io/traefik/v3.5/routing/services/#sticky-sessions
 	Sticky *dynamic.Sticky `json:"sticky,omitempty"`
 	// Port defines the port of a Kubernetes Service.
 	// This can be a reference to a named port.
@@ -116,8 +116,8 @@ type LoadBalancerSpec struct {
 	// Strategy defines the load balancing strategy between the servers.
 	// Supported values are: wrr (Weighed round-robin) and p2c (Power of two choices).
 	// RoundRobin value is deprecated and supported for backward compatibility.
+	// TODO: when the deprecated RoundRobin value will be removed, set the default value to wrr.
 	// +kubebuilder:validation:Enum=wrr;p2c;RoundRobin
-	// +kubebuilder:default:=wrr
 	Strategy dynamic.BalancerStrategy `json:"strategy,omitempty"`
 	// PassHostHeader defines whether the client Host header is forwarded to the upstream Kubernetes Service.
 	// By default, passHostHeader is true.
@@ -144,6 +144,8 @@ type LoadBalancerSpec struct {
 	NodePortLB bool `json:"nodePortLB,omitempty"`
 	// Healthcheck defines health checks for ExternalName services.
 	HealthCheck *ServerHealthCheck `json:"healthCheck,omitempty"`
+	// PassiveHealthCheck defines passive health checks for ExternalName services.
+	PassiveHealthCheck *PassiveServerHealthCheck `json:"passiveHealthCheck,omitempty"`
 }
 
 type ResponseForwarding struct {
@@ -170,9 +172,13 @@ type ServerHealthCheck struct {
 	Status int `json:"status,omitempty"`
 	// Port defines the server URL port for the health check endpoint.
 	Port int `json:"port,omitempty"`
-	// Interval defines the frequency of the health check calls.
+	// Interval defines the frequency of the health check calls for healthy targets.
 	// Default: 30s
 	Interval *intstr.IntOrString `json:"interval,omitempty"`
+	// UnhealthyInterval defines the frequency of the health check calls for unhealthy targets.
+	// When UnhealthyInterval is not defined, it defaults to the Interval value.
+	// Default: 30s
+	UnhealthyInterval *intstr.IntOrString `json:"unhealthyInterval,omitempty"`
 	// Timeout defines the maximum duration Traefik will wait for a health check request before considering the server unhealthy.
 	// Default: 5s
 	Timeout *intstr.IntOrString `json:"timeout,omitempty"`
@@ -183,6 +189,13 @@ type ServerHealthCheck struct {
 	FollowRedirects *bool `json:"followRedirects,omitempty"`
 	// Headers defines custom headers to be sent to the health check endpoint.
 	Headers map[string]string `json:"headers,omitempty"`
+}
+
+type PassiveServerHealthCheck struct {
+	// FailureWindow defines the time window during which the failed attempts must occur for the server to be marked as unhealthy. It also defines for how long the server will be considered unhealthy.
+	FailureWindow *intstr.IntOrString `json:"failureWindow,omitempty"`
+	// MaxFailedAttempts is the number of consecutive failed attempts allowed within the failure window before marking the server as unhealthy.
+	MaxFailedAttempts *int `json:"maxFailedAttempts,omitempty"`
 }
 
 // Service defines an upstream HTTP service to proxy traffic to.

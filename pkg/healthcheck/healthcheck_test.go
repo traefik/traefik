@@ -66,7 +66,7 @@ func TestNewServiceHealthChecker_durations(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			healthChecker := NewServiceHealthChecker(context.Background(), nil, test.config, nil, nil, http.DefaultTransport, nil, "")
+			healthChecker := NewServiceHealthChecker(t.Context(), nil, test.config, nil, nil, http.DefaultTransport, nil, "")
 			assert.Equal(t, test.expInterval, healthChecker.interval)
 			assert.Equal(t, test.expTimeout, healthChecker.timeout)
 		})
@@ -251,7 +251,7 @@ func TestServiceHealthChecker_newRequest(t *testing.T) {
 			shc := ServiceHealthChecker{config: &test.config}
 
 			u := testhelpers.MustParseURL(test.targetURL)
-			req, err := shc.newRequest(context.Background(), u)
+			req, err := shc.newRequest(t.Context(), u)
 
 			if test.expError {
 				require.Error(t, err)
@@ -276,7 +276,7 @@ func TestServiceHealthChecker_checkHealthHTTP_NotFollowingRedirects(t *testing.T
 	}))
 	defer redirectTestServer.Close()
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(dynamic.DefaultHealthCheckTimeout))
+	ctx, cancel := context.WithTimeout(t.Context(), time.Duration(dynamic.DefaultHealthCheckTimeout))
 	defer cancel()
 
 	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -411,7 +411,7 @@ func TestServiceHealthChecker_Launch(t *testing.T) {
 
 			// The context is passed to the health check and
 			// canonically canceled by the test server once all expected requests have been received.
-			ctx, cancel := context.WithCancel(context.Background())
+			ctx, cancel := context.WithCancel(t.Context())
 			t.Cleanup(cancel)
 
 			targetURL, timeout := test.server.Start(t, cancel)
@@ -419,11 +419,12 @@ func TestServiceHealthChecker_Launch(t *testing.T) {
 			lb := &testLoadBalancer{RWMutex: &sync.RWMutex{}}
 
 			config := &dynamic.ServerHealthCheck{
-				Mode:     test.mode,
-				Status:   test.status,
-				Path:     "/path",
-				Interval: ptypes.Duration(500 * time.Millisecond),
-				Timeout:  ptypes.Duration(499 * time.Millisecond),
+				Mode:              test.mode,
+				Status:            test.status,
+				Path:              "/path",
+				Interval:          ptypes.Duration(500 * time.Millisecond),
+				UnhealthyInterval: pointer(ptypes.Duration(500 * time.Millisecond)),
+				Timeout:           ptypes.Duration(499 * time.Millisecond),
 			}
 
 			gauge := &testhelpers.CollectingGauge{}
@@ -455,4 +456,55 @@ func TestServiceHealthChecker_Launch(t *testing.T) {
 			assert.Equal(t, map[string]string{targetURL.String(): test.targetStatus}, serviceInfo.GetAllStatus())
 		})
 	}
+}
+
+func TestDifferentIntervals(t *testing.T) {
+	// The context is passed to the health check and
+	// canonically canceled by the test server once all expected requests have been received.
+	ctx, cancel := context.WithCancel(t.Context())
+	t.Cleanup(cancel)
+
+	healthyServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	healthyURL := testhelpers.MustParseURL(healthyServer.URL)
+
+	unhealthyServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		w.WriteHeader(http.StatusServiceUnavailable)
+	}))
+	unhealthyURL := testhelpers.MustParseURL(unhealthyServer.URL)
+
+	lb := &testLoadBalancer{RWMutex: &sync.RWMutex{}}
+
+	config := &dynamic.ServerHealthCheck{
+		Mode:              "http",
+		Path:              "/path",
+		Interval:          ptypes.Duration(500 * time.Millisecond),
+		UnhealthyInterval: pointer(ptypes.Duration(50 * time.Millisecond)),
+		Timeout:           ptypes.Duration(499 * time.Millisecond),
+	}
+
+	gauge := &testhelpers.CollectingGauge{}
+	serviceInfo := &runtime.ServiceInfo{}
+	hc := NewServiceHealthChecker(ctx, &MetricsMock{gauge}, config, lb, serviceInfo, http.DefaultTransport, map[string]*url.URL{"healthy": healthyURL, "unhealthy": unhealthyURL}, "foobar")
+
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+
+	go func() {
+		hc.Launch(ctx)
+		wg.Done()
+	}()
+
+	select {
+	case <-time.After(2 * time.Second):
+		break
+	case <-ctx.Done():
+		wg.Wait()
+	}
+
+	lb.Lock()
+	defer lb.Unlock()
+
+	assert.Greater(t, lb.numRemovedServers, lb.numUpsertedServers, "removed servers greater than upserted servers")
 }

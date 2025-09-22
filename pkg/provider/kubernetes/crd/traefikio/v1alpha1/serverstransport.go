@@ -13,7 +13,7 @@ import (
 // ServersTransport is the CRD implementation of a ServersTransport.
 // If no serversTransport is specified, the default@internal will be used.
 // The default@internal serversTransport is created from the static configuration.
-// More info: https://doc.traefik.io/traefik/v3.4/routing/services/#serverstransport_1
+// More info: https://doc.traefik.io/traefik/v3.5/routing/services/#serverstransport_1
 type ServersTransport struct {
 	metav1.TypeMeta `json:",inline"`
 	// Standard object's metadata.
@@ -81,7 +81,7 @@ type ForwardingTimeouts struct {
 
 // RootCA defines a reference to a Secret or a ConfigMap that holds a CA certificate.
 // If both a Secret and a ConfigMap reference are defined, the Secret reference takes precedence.
-// +kubebuilder:validation:XValidation:rule="has(self.secret) && has(self.configMap)",message="RootCA cannot have both Secret and ConfigMap defined."
+// +kubebuilder:validation:XValidation:rule="!has(self.secret) || !has(self.configMap)",message="RootCA cannot have both Secret and ConfigMap defined."
 type RootCA struct {
 	// Secret defines the name of a Secret that holds a CA certificate.
 	// The referenced Secret must contain a certificate under either a tls.ca or a ca.crt key.

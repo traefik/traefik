@@ -101,7 +101,7 @@ func TestSmartBuilder_Build(t *testing.T) {
 			httpProxyBuilder := httputil.NewProxyBuilder(transportManager, nil)
 			proxyBuilder := NewSmartBuilder(transportManager, httpProxyBuilder, test.fastProxyConfig)
 
-			proxyHandler, err := proxyBuilder.Build("test", targetURL, false, false, false, time.Second)
+			proxyHandler, err := proxyBuilder.Build("test", targetURL, false, false, time.Second)
 			require.NoError(t, err)
 
 			rw := httptest.NewRecorder()

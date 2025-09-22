@@ -92,6 +92,10 @@ func NewProviderAggregator(conf static.Providers) *ProviderAggregator {
 		p.quietAddProvider(conf.KubernetesIngress)
 	}
 
+	if conf.KubernetesIngressNGINX != nil {
+		p.quietAddProvider(conf.KubernetesIngressNGINX)
+	}
+
 	if conf.KubernetesCRD != nil {
 		p.quietAddProvider(conf.KubernetesCRD)
 	}

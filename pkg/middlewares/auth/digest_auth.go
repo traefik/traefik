@@ -12,7 +12,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
-	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -54,8 +53,8 @@ func NewDigest(ctx context.Context, next http.Handler, authConfig dynamic.Digest
 	return da, nil
 }
 
-func (d *digestAuth) GetTracingInformation() (string, string, trace.SpanKind) {
-	return d.name, typeNameDigest, trace.SpanKindInternal
+func (d *digestAuth) GetTracingInformation() (string, string) {
+	return d.name, typeNameDigest
 }
 
 func (d *digestAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {

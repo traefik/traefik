@@ -43,6 +43,7 @@ type rnd interface {
 type Balancer struct {
 	wantsHealthCheck bool
 
+	// handlersMu is a mutex to protect the handlers slice, the status and the fenced maps.
 	handlersMu sync.RWMutex
 	handlers   []*namedHandler
 	// status is a record of which child services of the Balancer are healthy, keyed
@@ -50,15 +51,17 @@ type Balancer struct {
 	// created via Add, and it is later removed or added to the map as needed,
 	// through the SetStatus method.
 	status map[string]struct{}
-	// updaters is the list of hooks that are run (to update the Balancer
-	// parent(s)), whenever the Balancer status changes.
-	updaters []func(bool)
 	// fenced is the list of terminating yet still serving child services.
 	fenced map[string]struct{}
 
+	// updaters is the list of hooks that are run (to update the Balancer
+	// parent(s)), whenever the Balancer status changes.
+	updaters []func(bool)
+
 	sticky *loadbalancer.Sticky
 
-	rand rnd
+	randMu sync.Mutex
+	rand   rnd
 }
 
 // New creates a new power-of-two-random-choices load balancer.
@@ -152,10 +155,13 @@ func (b *Balancer) nextServer() (*namedHandler, error) {
 	if len(healthy) == 1 {
 		return healthy[0], nil
 	}
-	// In order to not get the same backend twice, we make the second call to s.rand.IntN one fewer
+	// In order to not get the same backend twice, we make the second call to s.rand.Intn one fewer
 	// than the length of the slice. We then have to shift over the second index if it is equal or
 	// greater than the first index, wrapping round if needed.
+	b.randMu.Lock()
 	n1, n2 := b.rand.Intn(len(healthy)), b.rand.Intn(len(healthy))
+	b.randMu.Unlock()
+
 	if n2 == n1 {
 		n2 = (n2 + 1) % len(healthy)
 	}
@@ -177,7 +183,10 @@ func (b *Balancer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			log.Error().Err(err).Msg("Error while getting sticky handler")
 		} else if h != nil {
-			if _, ok := b.status[h.Name]; ok {
+			b.handlersMu.RLock()
+			_, ok := b.status[h.Name]
+			b.handlersMu.RUnlock()
+			if ok {
 				if rewrite {
 					if err := b.sticky.WriteStickyCookie(rw, h.Name); err != nil {
 						log.Error().Err(err).Msg("Writing sticky cookie")

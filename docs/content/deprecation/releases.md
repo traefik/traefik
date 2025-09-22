@@ -6,11 +6,13 @@ Below is a non-exhaustive list of versions and their maintenance status:
 
 | Version | Release Date | Active Support     | Security Support  |
 |---------|--------------|--------------------|-------------------|
-| 3.3     | Jan 06, 2025 | Yes                | Yes               |
+| 3.5     | Jul 23, 2025 | Yes                | Yes               |
+| 3.4     | May 05, 2025 | Ended Jul 23, 2025 | No                |
+| 3.3     | Jan 06, 2025 | Ended May 05, 2025 | No                |
 | 3.2     | Oct 28, 2024 | Ended Jan 06, 2025 | No                |
 | 3.1     | Jul 15, 2024 | Ended Oct 28, 2024 | No                |
 | 3.0     | Apr 29, 2024 | Ended Jul 15, 2024 | No                |
-| 2.11    | Feb 12, 2024 | Ends  Apr 29, 2025 | Ends Feb 01, 2026 |
+| 2.11    | Feb 12, 2024 | Ended Apr 29, 2025 | Ends Feb 01, 2026 |
 | 2.10    | Apr 24, 2023 | Ended Feb 12, 2024 | No                |
 | 2.9     | Oct 03, 2022 | Ended Apr 24, 2023 | No                |
 | 2.8     | Jun 29, 2022 | Ended Oct 03, 2022 | No                |
@@ -32,7 +34,7 @@ Below is a non-exhaustive list of versions and their maintenance status:
 
 This page is maintained and updated periodically to reflect our roadmap and any decisions affecting the end of support for Traefik Proxy.
 
-Please refer to our migration guides for specific instructions on upgrading between versions, an example is the [v2 to v3 migration guide](../migration/v2-to-v3.md).
+Please refer to our migration guides for specific instructions on upgrading between versions, an example is the [v2 to v3 migration guide](../migrate/v2-to-v3.md).
 
 !!! important "All target dates for end of support or feature removal announcements may be subject to change."
 

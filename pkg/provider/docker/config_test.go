@@ -1,14 +1,13 @@
 package docker
 
 import (
-	"context"
 	"strconv"
 	"testing"
 	"time"
 
-	docker "github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/network"
-	"github.com/docker/docker/api/types/swarm"
+	containertypes "github.com/docker/docker/api/types/container"
+	networktypes "github.com/docker/docker/api/types/network"
+	swarmtypes "github.com/docker/docker/api/types/swarm"
 	"github.com/docker/go-connections/nat"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -421,7 +420,7 @@ func TestDynConfBuilder_DefaultRule(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			configuration := builder.build(context.Background(), test.containers)
+			configuration := builder.build(t.Context(), test.containers)
 
 			assert.Equal(t, test.expected, configuration)
 		})
@@ -2747,7 +2746,7 @@ func TestDynConfBuilder_build(t *testing.T) {
 				{
 					ServiceName: "Test",
 					Name:        "Test",
-					Health:      docker.Unhealthy,
+					Health:      containertypes.Unhealthy,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -2779,7 +2778,7 @@ func TestDynConfBuilder_build(t *testing.T) {
 				{
 					ServiceName: "Test",
 					Name:        "Test",
-					Health:      docker.Unhealthy,
+					Health:      containertypes.Unhealthy,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -2826,7 +2825,7 @@ func TestDynConfBuilder_build(t *testing.T) {
 				{
 					ServiceName: "Test",
 					Name:        "Test",
-					Health:      docker.Unhealthy,
+					Health:      containertypes.Unhealthy,
 					Labels: map[string]string{
 						"traefik.tcp.routers.foo.rule": "HostSNI(`foo.bar`)",
 					},
@@ -2861,7 +2860,7 @@ func TestDynConfBuilder_build(t *testing.T) {
 				{
 					ServiceName: "Test",
 					Name:        "Test",
-					Health:      docker.Unhealthy,
+					Health:      containertypes.Unhealthy,
 					Labels: map[string]string{
 						"traefik.tcp.routers.foo.rule": "HostSNI(`foo.bar`)",
 					},
@@ -2904,7 +2903,7 @@ func TestDynConfBuilder_build(t *testing.T) {
 				{
 					ServiceName: "Test",
 					Name:        "Test",
-					Health:      docker.Unhealthy,
+					Health:      containertypes.Unhealthy,
 					Labels: map[string]string{
 						"traefik.udp.routers.foo": "true",
 					},
@@ -2942,7 +2941,7 @@ func TestDynConfBuilder_build(t *testing.T) {
 					Labels: map[string]string{
 						"traefik.udp.routers.foo": "true",
 					},
-					Health: docker.Unhealthy,
+					Health: containertypes.Unhealthy,
 				},
 			},
 			expected: &dynamic.Configuration{
@@ -3929,7 +3928,7 @@ func TestDynConfBuilder_build(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			configuration := builder.build(context.Background(), test.containers)
+			configuration := builder.build(t.Context(), test.containers)
 
 			assert.Equal(t, test.expected, configuration)
 		})
@@ -3945,7 +3944,7 @@ func TestDynConfBuilder_getIPPort_docker(t *testing.T) {
 
 	testCases := []struct {
 		desc       string
-		container  docker.ContainerJSON
+		container  containertypes.InspectResponse
 		serverPort string
 		expected   expected
 	}{
@@ -4101,7 +4100,7 @@ func TestDynConfBuilder_getIPPort_docker(t *testing.T) {
 				UseBindPortIP: true,
 			}, nil, false)
 
-			actualIP, actualPort, actualError := builder.getIPPort(context.Background(), dData, test.serverPort)
+			actualIP, actualPort, actualError := builder.getIPPort(t.Context(), dData, test.serverPort)
 			if test.expected.error {
 				require.Error(t, actualError)
 			} else {
@@ -4116,8 +4115,9 @@ func TestDynConfBuilder_getIPPort_docker(t *testing.T) {
 func TestDynConfBuilder_getIPAddress_docker(t *testing.T) {
 	testCases := []struct {
 		desc      string
-		container docker.ContainerJSON
+		container containertypes.InspectResponse
 		network   string
+		nodeIP    string
 		expected  string
 	}{
 		{
@@ -4193,10 +4193,10 @@ func TestDynConfBuilder_getIPAddress_docker(t *testing.T) {
 			expected: "127.0.0.1",
 		},
 		{
-			desc: "no network, no network label, mode host, node IP",
+			desc:   "no network, no network label, mode host, node IP",
+			nodeIP: "10.0.0.5",
 			container: containerJSON(
 				networkMode("host"),
-				nodeIP("10.0.0.5"),
 			),
 			expected: "10.0.0.5",
 		},
@@ -4211,6 +4211,9 @@ func TestDynConfBuilder_getIPAddress_docker(t *testing.T) {
 			}
 
 			dData := parseContainer(test.container)
+			if test.nodeIP != "" {
+				dData.NodeIP = test.nodeIP
+			}
 
 			dData.ExtraConf.Network = conf.Network
 			if len(test.network) > 0 {
@@ -4219,7 +4222,7 @@ func TestDynConfBuilder_getIPAddress_docker(t *testing.T) {
 
 			builder := NewDynConfBuilder(conf, nil, false)
 
-			actual := builder.getIPAddress(context.Background(), dData)
+			actual := builder.getIPAddress(t.Context(), dData)
 			assert.Equal(t, test.expected, actual)
 		})
 	}
@@ -4227,14 +4230,14 @@ func TestDynConfBuilder_getIPAddress_docker(t *testing.T) {
 
 func TestDynConfBuilder_getIPAddress_swarm(t *testing.T) {
 	testCases := []struct {
-		service  swarm.Service
+		service  swarmtypes.Service
 		expected string
-		networks map[string]*network.Summary
+		networks map[string]*networktypes.Summary
 	}{
 		{
 			service:  swarmService(withEndpointSpec(modeDNSRR)),
 			expected: "",
-			networks: map[string]*network.Summary{},
+			networks: map[string]*networktypes.Summary{},
 		},
 		{
 			service: swarmService(
@@ -4242,7 +4245,7 @@ func TestDynConfBuilder_getIPAddress_swarm(t *testing.T) {
 				withEndpoint(virtualIP("1", "10.11.12.13/24")),
 			),
 			expected: "10.11.12.13",
-			networks: map[string]*network.Summary{
+			networks: map[string]*networktypes.Summary{
 				"1": {
 					Name: "foo",
 				},
@@ -4260,7 +4263,7 @@ func TestDynConfBuilder_getIPAddress_swarm(t *testing.T) {
 				),
 			),
 			expected: "10.11.12.99",
-			networks: map[string]*network.Summary{
+			networks: map[string]*networktypes.Summary{
 				"1": {
 					Name: "foonet",
 				},
@@ -4278,11 +4281,11 @@ func TestDynConfBuilder_getIPAddress_swarm(t *testing.T) {
 			var p SwarmProvider
 			require.NoError(t, p.Init())
 
-			dData, err := p.parseService(context.Background(), test.service, test.networks)
+			dData, err := p.parseService(t.Context(), test.service, test.networks)
 			require.NoError(t, err)
 
 			builder := NewDynConfBuilder(p.Shared, nil, false)
-			actual := builder.getIPAddress(context.Background(), dData)
+			actual := builder.getIPAddress(t.Context(), dData)
 			assert.Equal(t, test.expected, actual)
 		})
 	}

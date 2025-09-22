@@ -35,7 +35,7 @@ func (t *wrapper) RoundTrip(req *http.Request) (*http.Response, error) {
 	var span trace.Span
 	var tracingCtx context.Context
 	var tracer *tracing.Tracer
-	if tracer = tracing.TracerFromContext(req.Context()); tracer != nil {
+	if tracer = tracing.TracerFromContext(req.Context()); tracer != nil && observability.TracingEnabled(req.Context()) {
 		tracingCtx, span = tracer.Start(req.Context(), "ReverseProxy", trace.WithSpanKind(trace.SpanKindClient))
 		defer span.End()
 
@@ -68,38 +68,42 @@ func (t *wrapper) RoundTrip(req *http.Request) (*http.Response, error) {
 		span.End(trace.WithTimestamp(end))
 	}
 
-	if req.Context().Value(observability.DisableMetricsKey) == nil && t.semConvMetricRegistry != nil && t.semConvMetricRegistry.HTTPClientRequestDuration() != nil {
-		var attrs []attribute.KeyValue
-
-		if statusCode < 100 || statusCode >= 600 {
-			attrs = append(attrs, attribute.Key("error.type").String(fmt.Sprintf("Invalid HTTP status code %d", statusCode)))
-		} else if statusCode >= 400 {
-			attrs = append(attrs, attribute.Key("error.type").String(strconv.Itoa(statusCode)))
-		}
-
-		attrs = append(attrs, semconv.HTTPRequestMethodKey.String(req.Method))
-		attrs = append(attrs, semconv.HTTPResponseStatusCode(statusCode))
-		attrs = append(attrs, semconv.NetworkProtocolName(strings.ToLower(req.Proto)))
-		attrs = append(attrs, semconv.NetworkProtocolVersion(observability.Proto(req.Proto)))
-		attrs = append(attrs, semconv.ServerAddress(req.URL.Host))
-
-		_, port, err := net.SplitHostPort(req.URL.Host)
-		if err != nil {
-			switch req.URL.Scheme {
-			case "http":
-				attrs = append(attrs, semconv.ServerPort(80))
-			case "https":
-				attrs = append(attrs, semconv.ServerPort(443))
-			}
-		} else {
-			intPort, _ := strconv.Atoi(port)
-			attrs = append(attrs, semconv.ServerPort(intPort))
-		}
-
-		attrs = append(attrs, semconv.URLScheme(req.Header.Get("X-Forwarded-Proto")))
-
-		t.semConvMetricRegistry.HTTPClientRequestDuration().Record(req.Context(), end.Sub(start).Seconds(), metric.WithAttributes(attrs...))
+	if !observability.SemConvMetricsEnabled(req.Context()) ||
+		t.semConvMetricRegistry == nil ||
+		t.semConvMetricRegistry.HTTPClientRequestDuration() == nil {
+		return response, err
 	}
+
+	var attrs []attribute.KeyValue
+
+	if statusCode < 100 || statusCode >= 600 {
+		attrs = append(attrs, attribute.Key("error.type").String(fmt.Sprintf("Invalid HTTP status code %d", statusCode)))
+	} else if statusCode >= 400 {
+		attrs = append(attrs, attribute.Key("error.type").String(strconv.Itoa(statusCode)))
+	}
+
+	attrs = append(attrs, semconv.HTTPRequestMethodKey.String(req.Method))
+	attrs = append(attrs, semconv.HTTPResponseStatusCode(statusCode))
+	attrs = append(attrs, semconv.NetworkProtocolName(strings.ToLower(req.Proto)))
+	attrs = append(attrs, semconv.NetworkProtocolVersion(observability.Proto(req.Proto)))
+	attrs = append(attrs, semconv.ServerAddress(req.URL.Host))
+
+	_, port, splitErr := net.SplitHostPort(req.URL.Host)
+	if splitErr != nil {
+		switch req.URL.Scheme {
+		case "http":
+			attrs = append(attrs, semconv.ServerPort(80))
+		case "https":
+			attrs = append(attrs, semconv.ServerPort(443))
+		}
+	} else {
+		intPort, _ := strconv.Atoi(port)
+		attrs = append(attrs, semconv.ServerPort(intPort))
+	}
+
+	attrs = append(attrs, semconv.URLScheme(req.Header.Get("X-Forwarded-Proto")))
+
+	t.semConvMetricRegistry.HTTPClientRequestDuration().Record(req.Context(), end.Sub(start).Seconds(), metric.WithAttributes(attrs...))
 
 	return response, err
 }

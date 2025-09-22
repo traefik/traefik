@@ -13,7 +13,7 @@ A Story of key & values
 !!! info "Keys"
 
     - Keys are case-insensitive.
-    - The complete list of keys can be found in [the reference page](../../reference/dynamic-configuration/kv.md).
+    - The complete list of keys can be found in [the reference page](../../reference/routing-configuration/other-providers/kv.md).
 
 ### Routers
 
@@ -179,6 +179,14 @@ A Story of key & values
     | Key (Path)                                                          | Value |
     |---------------------------------------------------------------------|-------|
     | `traefik/http/services/myservice/loadbalancer/healthcheck/interval` | `10`  |
+
+??? info "`traefik/http/services/<service_name>/loadbalancer/healthcheck/unhealthyinterval`"
+
+    See [health check](../services/index.md#health-check) for more information.
+
+    | Key (Path)                                                                   | Value |
+    |------------------------------------------------------------------------------|-------|
+    | `traefik/http/services/myservice/loadbalancer/healthcheck/unhealthyinterval` | `10`  |
 
 ??? info "`traefik/http/services/<service_name>/loadbalancer/healthcheck/path`"
 

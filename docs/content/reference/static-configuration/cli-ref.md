@@ -91,7 +91,7 @@ TLS key
 Defines additional resource attributes (key:value).
 
 `--accesslog.otlp.servicename`:  
-Set the name for this service. (Default: ```traefik```)
+Defines the service name resource attribute. (Default: ```traefik```)
 
 `--api`:  
 Enable api/dashboard. (Default: ```false```)
@@ -128,6 +128,15 @@ Define if the certificates pool must use a copy of the system cert pool. (Defaul
 
 `--certificatesresolvers.<name>.acme.certificatesduration`:  
 Certificates' duration in hours. (Default: ```2160```)
+
+`--certificatesresolvers.<name>.acme.clientresponseheadertimeout`:  
+Timeout for receiving the response headers when communicating with the ACME server. (Default: ```30```)
+
+`--certificatesresolvers.<name>.acme.clienttimeout`:  
+Timeout for a complete HTTP transaction with the ACME server. (Default: ```120```)
+
+`--certificatesresolvers.<name>.acme.disablecommonname`:  
+Disable the common name in the CSR. (Default: ```false```)
 
 `--certificatesresolvers.<name>.acme.dnschallenge`:  
 Activate DNS-01 Challenge. (Default: ```false```)
@@ -193,7 +202,10 @@ Certificate profile to use.
 Storage to use. (Default: ```acme.json```)
 
 `--certificatesresolvers.<name>.acme.tlschallenge`:  
-Activate TLS-ALPN-01 Challenge. (Default: ```true```)
+Activate TLS-ALPN-01 Challenge. (Default: ```false```)
+
+`--certificatesresolvers.<name>.acme.tlschallenge.delay`:  
+Delay between the creation of the challenge and the validation. (Default: ```0```)
 
 `--certificatesresolvers.<name>.tailscale`:  
 Enables Tailscale certificate resolution. (Default: ```true```)
@@ -246,6 +258,9 @@ Scheme used for the redirection. (Default: ```https```)
 `--entrypoints.<name>.http.redirections.entrypoint.to`:  
 Targeted entry point of the redirection.
 
+`--entrypoints.<name>.http.sanitizepath`:  
+Defines whether to enable request path sanitization (removal of /./, /../ and multiple slash sequences). (Default: ```true```)
+
 `--entrypoints.<name>.http.tls`:  
 Default TLS configuration for the routers linked to the entry point. (Default: ```false```)
 
@@ -274,13 +289,16 @@ HTTP/3 configuration. (Default: ```false```)
 UDP port to advertise, on which HTTP/3 is available. (Default: ```0```)
 
 `--entrypoints.<name>.observability.accesslogs`:  
- (Default: ```true```)
+Enables access-logs for this entryPoint. (Default: ```true```)
 
 `--entrypoints.<name>.observability.metrics`:  
- (Default: ```true```)
+Enables metrics for this entryPoint. (Default: ```true```)
+
+`--entrypoints.<name>.observability.traceverbosity`:  
+Defines the tracing verbosity level for this entryPoint. (Default: ```minimal```)
 
 `--entrypoints.<name>.observability.tracing`:  
- (Default: ```true```)
+Enables tracing for this entryPoint. (Default: ```true```)
 
 `--entrypoints.<name>.proxyprotocol`:  
 Proxy-Protocol configuration. (Default: ```false```)
@@ -330,6 +348,9 @@ Enable debug mode for the FastProxy implementation. (Default: ```false```)
 `--experimental.kubernetesgateway`:  
 (Deprecated) Allow the Kubernetes gateway api provider usage. (Default: ```false```)
 
+`--experimental.kubernetesingressnginx`:  
+Allow the Kubernetes Ingress NGINX provider usage. (Default: ```false```)
+
 `--experimental.localplugins.<name>`:  
 Local plugins configuration. (Default: ```false```)
 
@@ -345,6 +366,9 @@ Environment variables to forward to the wasm guest.
 `--experimental.localplugins.<name>.settings.mounts`:  
 Directory to mount to the wasm guest.
 
+`--experimental.localplugins.<name>.settings.useunsafe`:  
+Allow the plugin to use unsafe package. (Default: ```false```)
+
 `--experimental.otlplogs`:  
 Enables the OpenTelemetry logs integration. (Default: ```false```)
 
@@ -359,6 +383,9 @@ Environment variables to forward to the wasm guest.
 
 `--experimental.plugins.<name>.settings.mounts`:  
 Directory to mount to the wasm guest.
+
+`--experimental.plugins.<name>.settings.useunsafe`:  
+Allow the plugin to use unsafe package. (Default: ```false```)
 
 `--experimental.plugins.<name>.version`:  
 plugin's version.
@@ -460,7 +487,7 @@ TLS key
 Defines additional resource attributes (key:value).
 
 `--log.otlp.servicename`:  
-Set the name for this service. (Default: ```traefik```)
+Defines the service name resource attribute. (Default: ```traefik```)
 
 `--metrics.addinternals`:  
 Enables metrics for internal services (ping, dashboard, etc...). (Default: ```false```)
@@ -579,8 +606,11 @@ TLS key
 `--metrics.otlp.pushinterval`:  
 Period between calls to collect a checkpoint. (Default: ```10```)
 
+`--metrics.otlp.resourceattributes.<name>`:  
+Defines additional resource attributes (key:value).
+
 `--metrics.otlp.servicename`:  
-OTEL service name to use. (Default: ```traefik```)
+Defines the service name resource attribute. (Default: ```traefik```)
 
 `--metrics.prometheus`:  
 Prometheus metrics exporter type. (Default: ```false```)
@@ -626,6 +656,12 @@ Prefix to use for metrics collection. (Default: ```traefik```)
 
 `--metrics.statsd.pushinterval`:  
 StatsD push interval. (Default: ```10```)
+
+`--ocsp`:  
+OCSP configuration. (Default: ```false```)
+
+`--ocsp.responderoverrides.<name>`:  
+Defines a map of OCSP responders to replace for querying OCSP servers.
 
 `--ping`:  
 Enable ping. (Default: ```false```)
@@ -1062,11 +1098,59 @@ Kubernetes namespaces.
 `--providers.kubernetesingress.nativelbbydefault`:  
 Defines whether to use Native Kubernetes load-balancing mode by default. (Default: ```false```)
 
+`--providers.kubernetesingress.strictprefixmatching`:  
+Make prefix matching strictly comply with the Kubernetes Ingress specification (path-element-wise matching instead of character-by-character string matching). (Default: ```false```)
+
 `--providers.kubernetesingress.throttleduration`:  
 Ingress refresh throttle duration (Default: ```0```)
 
 `--providers.kubernetesingress.token`:  
 Kubernetes bearer token (not needed for in-cluster client). It accepts either a token value or a file path to the token.
+
+`--providers.kubernetesingressnginx`:  
+Enable Kubernetes Ingress NGINX provider. (Default: ```false```)
+
+`--providers.kubernetesingressnginx.certauthfilepath`:  
+Kubernetes certificate authority file path (not needed for in-cluster client).
+
+`--providers.kubernetesingressnginx.controllerclass`:  
+Ingress Class Controller value this controller satisfies. (Default: ```k8s.io/ingress-nginx```)
+
+`--providers.kubernetesingressnginx.defaultbackendservice`:  
+Service used to serve HTTP requests not matching any known server name (catch-all). Takes the form 'namespace/name'.
+
+`--providers.kubernetesingressnginx.disablesvcexternalname`:  
+Disable support for Services of type ExternalName. (Default: ```false```)
+
+`--providers.kubernetesingressnginx.endpoint`:  
+Kubernetes server endpoint (required for external cluster client).
+
+`--providers.kubernetesingressnginx.ingressclass`:  
+Name of the ingress class this controller satisfies. (Default: ```nginx```)
+
+`--providers.kubernetesingressnginx.ingressclassbyname`:  
+Define if Ingress Controller should watch for Ingress Class by Name together with Controller Class. (Default: ```false```)
+
+`--providers.kubernetesingressnginx.publishservice`:  
+Service fronting the Ingress controller. Takes the form 'namespace/name'.
+
+`--providers.kubernetesingressnginx.publishstatusaddress`:  
+Customized address (or addresses, separated by comma) to set as the load-balancer status of Ingress objects this controller satisfies.
+
+`--providers.kubernetesingressnginx.throttleduration`:  
+Ingress refresh throttle duration. (Default: ```0```)
+
+`--providers.kubernetesingressnginx.token`:  
+Kubernetes bearer token (not needed for in-cluster client). It accepts either a token value or a file path to the token.
+
+`--providers.kubernetesingressnginx.watchingresswithoutclass`:  
+Define if Ingress Controller should also watch for Ingresses without an IngressClass or the annotation specified. (Default: ```false```)
+
+`--providers.kubernetesingressnginx.watchnamespace`:  
+Namespace the controller watches for updates to Kubernetes objects. All namespaces are watched if this parameter is left empty.
+
+`--providers.kubernetesingressnginx.watchnamespaceselector`:  
+Selector selects namespaces the controller watches for updates to Kubernetes objects.
 
 `--providers.nomad`:  
 Enable Nomad backend with default settings. (Default: ```false```)
@@ -1384,4 +1468,4 @@ Query params to not redact.
 Sets the rate between 0.0 and 1.0 of requests to trace. (Default: ```1.000000```)
 
 `--tracing.servicename`:  
-Sets the name for this service. (Default: ```traefik```)
+Defines the service name resource attribute. (Default: ```traefik```)

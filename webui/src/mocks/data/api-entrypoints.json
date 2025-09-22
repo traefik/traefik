@@ -1,0 +1,144 @@
+[
+  {
+    "address": ":8080",
+    "transport": {
+      "lifeCycle": {
+        "graceTimeOut": 10000000000
+      },
+      "respondingTimeouts": {
+        "idleTimeout": 180000000000
+      }
+    },
+    "forwardedHeaders": {},
+    "name": "traefik"
+  },
+  {
+    "address": ":8000",
+    "transport": {
+      "lifeCycle": {
+        "graceTimeOut": 10000000000
+      },
+      "respondingTimeouts": {
+        "idleTimeout": 180000000000
+      }
+    },
+    "forwardedHeaders": {},
+    "name": "web"
+  },
+  {
+    "address": ":8443",
+    "transport": {
+      "lifeCycle": {
+        "graceTimeOut": 10000000000
+      },
+      "respondingTimeouts": {
+        "idleTimeout": 180000000000
+      }
+    },
+    "forwardedHeaders": {},
+    "name": "web-mtls"
+  },
+  {
+    "address": ":80",
+    "transport": {
+      "lifeCycle": {
+        "graceTimeOut": 10000000000
+      },
+      "respondingTimeouts": {
+        "idleTimeout": 180000000000
+      }
+    },
+    "forwardedHeaders": {},
+    "name": "web-redirect"
+  },
+  {
+    "address": ":443",
+    "transport": {
+      "lifeCycle": {
+        "graceTimeOut": 10000000000
+      },
+      "respondingTimeouts": {
+        "idleTimeout": 180000000000
+      }
+    },
+    "forwardedHeaders": {},
+    "name": "web-secured"
+  },
+  {
+    "address": ":8100",
+    "transport": {
+      "lifeCycle": {
+        "graceTimeOut": 10000000000
+      },
+      "respondingTimeouts": {
+        "idleTimeout": 180000000000
+      }
+    },
+    "forwardedHeaders": {},
+    "name": "web-tcp"
+  },
+  {
+    "address": ":8002",
+    "transport": {
+      "lifeCycle": {
+        "requestAcceptGraceTimeout": 42000000000,
+        "graceTimeOut": 42000000000
+      },
+      "respondingTimeouts": {
+        "readTimeout": 42000000000,
+        "writeTimeout": 42000000000,
+        "idleTimeout": 42000000000
+      }
+    },
+    "forwardedHeaders": {},
+    "name": "web2"
+  },
+  {
+    "address": ":8003",
+    "transport": {
+      "lifeCycle": {
+        "requestAcceptGraceTimeout": 42000000000,
+        "graceTimeOut": 42000000000
+      },
+      "respondingTimeouts": {
+        "readTimeout": 42000000000,
+        "writeTimeout": 42000000000,
+        "idleTimeout": 42000000000
+      }
+    },
+    "forwardedHeaders": {},
+    "name": "web3"
+  },
+  {
+    "address": ":65535/udp",
+    "transport": {
+      "lifeCycle": {
+        "requestAcceptGraceTimeout": 42000000000,
+        "graceTimeOut": 42000000000
+      },
+      "respondingTimeouts": {
+        "readTimeout": 42000000000,
+        "writeTimeout": 42000000000,
+        "idleTimeout": 42000000000
+      }
+    },
+    "forwardedHeaders": {},
+    "name": "a-port-with-a-very-long-name"
+  },
+  {
+    "address": ":65535/tcp",
+    "transport": {
+      "lifeCycle": {
+        "requestAcceptGraceTimeout": 42000000000,
+        "graceTimeOut": 42000000000
+      },
+      "respondingTimeouts": {
+        "readTimeout": 42000000000,
+        "writeTimeout": 42000000000,
+        "idleTimeout": 42000000000
+      }
+    },
+    "forwardedHeaders": {},
+    "name": "supercalifragilisticexpialidocious"
+  }
+]

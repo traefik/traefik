@@ -96,7 +96,7 @@ func (s *BaseSuite) displayTraefikLogFile(path string) {
 			// fmt.Printf("%s: Traefik logs: \n", c.TestName())
 			fmt.Print("Traefik logs: \n")
 			if errRead == nil {
-				fmt.Println(content)
+				fmt.Println(string(content))
 			} else {
 				fmt.Println(errRead)
 			}
@@ -112,7 +112,7 @@ func (s *BaseSuite) displayTraefikLogFile(path string) {
 }
 
 func (s *BaseSuite) SetupSuite() {
-	if isDockerDesktop(context.Background(), s.T()) {
+	if isDockerDesktop(s.T()) {
 		_, err := os.Stat(tailscaleSecretFilePath)
 		require.NoError(s.T(), err, "Tailscale need to be configured when running integration tests with Docker Desktop: (https://doc.traefik.io/traefik/v2.11/contributing/building-testing/#testing)")
 	}
@@ -122,7 +122,6 @@ func (s *BaseSuite) SetupSuite() {
 	// TODO
 	// stdlog.SetOutput(log.Logger)
 
-	ctx := context.Background()
 	// Create docker network
 	// docker network create traefik-test-network --driver bridge --subnet 172.31.42.0/24
 	var opts []network.NetworkCustomizer
@@ -135,18 +134,18 @@ func (s *BaseSuite) SetupSuite() {
 			},
 		},
 	}))
-	dockerNetwork, err := network.New(ctx, opts...)
+	dockerNetwork, err := network.New(s.T().Context(), opts...)
 	require.NoError(s.T(), err)
 
 	s.network = dockerNetwork
 	s.hostIP = "172.31.42.1"
-	if isDockerDesktop(ctx, s.T()) {
-		s.hostIP = getDockerDesktopHostIP(ctx, s.T())
+	if isDockerDesktop(s.T()) {
+		s.hostIP = getDockerDesktopHostIP(s.T())
 		s.setupVPN(tailscaleSecretFilePath)
 	}
 }
 
-func getDockerDesktopHostIP(ctx context.Context, t *testing.T) string {
+func getDockerDesktopHostIP(t *testing.T) string {
 	t.Helper()
 
 	req := testcontainers.ContainerRequest{
@@ -157,13 +156,13 @@ func getDockerDesktopHostIP(ctx context.Context, t *testing.T) string {
 		Cmd: []string{"getent", "hosts", "host.docker.internal"},
 	}
 
-	con, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
+	con, err := testcontainers.GenericContainer(t.Context(), testcontainers.GenericContainerRequest{
 		ContainerRequest: req,
 		Started:          true,
 	})
 	require.NoError(t, err)
 
-	closer, err := con.Logs(ctx)
+	closer, err := con.Logs(t.Context())
 	require.NoError(t, err)
 
 	all, err := io.ReadAll(closer)
@@ -176,15 +175,15 @@ func getDockerDesktopHostIP(ctx context.Context, t *testing.T) string {
 	return matches[0]
 }
 
-func isDockerDesktop(ctx context.Context, t *testing.T) bool {
+func isDockerDesktop(t *testing.T) bool {
 	t.Helper()
 
-	cli, err := testcontainers.NewDockerClientWithOpts(ctx)
+	cli, err := testcontainers.NewDockerClientWithOpts(t.Context())
 	if err != nil {
 		t.Fatalf("failed to create docker client: %s", err)
 	}
 
-	info, err := cli.Info(ctx)
+	info, err := cli.Info(t.Context())
 	if err != nil {
 		t.Fatalf("failed to get docker info: %s", err)
 	}
@@ -197,7 +196,7 @@ func (s *BaseSuite) TearDownSuite() {
 
 	err := try.Do(5*time.Second, func() error {
 		if s.network != nil {
-			err := s.network.Remove(context.Background())
+			err := s.network.Remove(s.T().Context())
 			if err != nil {
 				return err
 			}
@@ -224,7 +223,7 @@ func (s *BaseSuite) createComposeProject(name string) {
 		s.containers = map[string]testcontainers.Container{}
 	}
 
-	ctx := context.Background()
+	ctx := s.T().Context()
 
 	for id, containerConfig := range composeConfigData.Services {
 		var mounts []mount.Mount
@@ -279,7 +278,7 @@ func (s *BaseSuite) createContainer(ctx context.Context, containerConfig compose
 			if containerConfig.CapAdd != nil {
 				config.CapAdd = containerConfig.CapAdd
 			}
-			if !isDockerDesktop(ctx, s.T()) {
+			if !isDockerDesktop(s.T()) {
 				config.ExtraHosts = append(config.ExtraHosts, "host.docker.internal:"+s.hostIP)
 			}
 			config.Mounts = mounts
@@ -298,7 +297,7 @@ func (s *BaseSuite) createContainer(ctx context.Context, containerConfig compose
 func (s *BaseSuite) composeUp(services ...string) {
 	for name, con := range s.containers {
 		if len(services) == 0 || slices.Contains(services, name) {
-			err := con.Start(context.Background())
+			err := con.Start(s.T().Context())
 			require.NoError(s.T(), err)
 		}
 	}
@@ -309,7 +308,7 @@ func (s *BaseSuite) composeStop(services ...string) {
 	for name, con := range s.containers {
 		if len(services) == 0 || slices.Contains(services, name) {
 			timeout := 10 * time.Second
-			err := con.Stop(context.Background(), &timeout)
+			err := con.Stop(s.T().Context(), &timeout)
 			require.NoError(s.T(), err)
 		}
 	}
@@ -318,7 +317,7 @@ func (s *BaseSuite) composeStop(services ...string) {
 // composeDown stops all compose project services and removes the corresponding containers.
 func (s *BaseSuite) composeDown() {
 	for _, c := range s.containers {
-		err := c.Terminate(context.Background())
+		err := c.Terminate(s.T().Context())
 		require.NoError(s.T(), err)
 	}
 	s.containers = map[string]testcontainers.Container{}
@@ -389,7 +388,7 @@ func (s *BaseSuite) displayLogK3S() {
 
 func (s *BaseSuite) displayLogCompose() {
 	for name, ctn := range s.containers {
-		readCloser, err := ctn.Logs(context.Background())
+		readCloser, err := ctn.Logs(s.T().Context())
 		require.NoError(s.T(), err)
 		for {
 			b := make([]byte, 1024)
@@ -457,7 +456,7 @@ func (s *BaseSuite) getComposeServiceIP(name string) string {
 	if !ok {
 		return ""
 	}
-	ip, err := container.ContainerIP(context.Background())
+	ip, err := container.ContainerIP(s.T().Context())
 	if err != nil {
 		return ""
 	}
@@ -507,7 +506,7 @@ func (s *BaseSuite) setupVPN(keyFile string) {
 func (s *BaseSuite) composeExec(service string, args ...string) string {
 	require.Contains(s.T(), s.containers, service)
 
-	_, reader, err := s.containers[service].Exec(context.Background(), args)
+	_, reader, err := s.containers[service].Exec(s.T().Context(), args)
 	require.NoError(s.T(), err)
 
 	content, err := io.ReadAll(reader)

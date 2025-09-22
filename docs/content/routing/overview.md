@@ -10,8 +10,8 @@ What's Happening to the Requests?
 
 Let's zoom in on Traefik's architecture and talk about the components that enable the routes to be created.
 
-First, when you start Traefik, you define [entrypoints](../entrypoints) (in their most basic forms, they are port numbers).
-Then, connected to these entrypoints, [routers](../routers) analyze the incoming requests to see if they match a set of [rules](../routers#rule).
+First, when you start Traefik, you define [entrypoints](../entrypoints/) (in their most basic forms, they are port numbers).
+Then, connected to these entrypoints, [routers](../routers/) analyze the incoming requests to see if they match a set of [rules](../routers/#rule).
 If they do, the router might transform the request using pieces of [middleware](../middlewares/overview.md) before forwarding them to your [services](./services/index.md).
 
 ![Architecture](../assets/img/architecture-overview.png)
@@ -246,7 +246,7 @@ http:
 
 Most of what happens to the connection between the clients and Traefik,
 and then between Traefik and the backend servers, is configured through the
-[entrypoints](../entrypoints) and the [routers](../routers).
+[entrypoints](../entrypoints/) and the [routers](../routers/).
 
 In addition, a few parameters are dedicated to configuring globally
 what happens with the connections between Traefik and the backends.
@@ -326,6 +326,11 @@ serversTransport:
 ## Static configuration
 --serversTransport.maxIdleConnsPerHost=7
 ```
+
+!!! info "Disable connection reuse"
+    
+    The default value of `maxIdleConnsPerHost` is 2, and the zero value is the fallback to the default (2).
+    If you want to disable connection reuse, set `maxIdleConnsPerHost` to -1.
 
 #### `spiffe`
 

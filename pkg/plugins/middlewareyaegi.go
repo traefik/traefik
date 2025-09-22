@@ -2,6 +2,7 @@ package plugins
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -15,6 +16,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/yaegi/interp"
 	"github.com/traefik/yaegi/stdlib"
+	"github.com/traefik/yaegi/stdlib/unsafe"
 )
 
 type yaegiMiddlewareBuilder struct {
@@ -119,7 +121,7 @@ func (m *YaegiMiddleware) NewHandler(ctx context.Context, next http.Handler) (ht
 	return m.builder.newHandler(ctx, next, m.config, m.middlewareName)
 }
 
-func newInterpreter(ctx context.Context, goPath string, manifestImport string) (*interp.Interpreter, error) {
+func newInterpreter(ctx context.Context, goPath string, manifest *Manifest, settings Settings) (*interp.Interpreter, error) {
 	i := interp.New(interp.Options{
 		GoPath: goPath,
 		Env:    os.Environ(),
@@ -132,14 +134,25 @@ func newInterpreter(ctx context.Context, goPath string, manifestImport string) (
 		return nil, fmt.Errorf("failed to load symbols: %w", err)
 	}
 
+	if manifest.UseUnsafe && !settings.UseUnsafe {
+		return nil, errors.New("this plugin uses unsafe import. If you want to use it, you need to allow useUnsafe in the settings")
+	}
+
+	if settings.UseUnsafe && manifest.UseUnsafe {
+		err := i.Use(unsafe.Symbols)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load unsafe symbols: %w", err)
+		}
+	}
+
 	err = i.Use(ppSymbols())
 	if err != nil {
 		return nil, fmt.Errorf("failed to load provider symbols: %w", err)
 	}
 
-	_, err = i.Eval(fmt.Sprintf(`import "%s"`, manifestImport))
+	_, err = i.Eval(fmt.Sprintf(`import "%s"`, manifest.Import))
 	if err != nil {
-		return nil, fmt.Errorf("failed to import plugin code %q: %w", manifestImport, err)
+		return nil, fmt.Errorf("failed to import plugin code %q: %w", manifest.Import, err)
 	}
 
 	return i, nil

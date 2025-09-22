@@ -2,7 +2,6 @@ package server
 
 import (
 	"bufio"
-	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"net/http"
@@ -87,7 +86,7 @@ func TestHTTP3AdvertisedPort(t *testing.T) {
 	epConfig := &static.EntryPointsTransport{}
 	epConfig.SetDefaults()
 
-	entryPoint, err := NewTCPEntryPoint(context.Background(), "foo", &static.EntryPoint{
+	entryPoint, err := NewTCPEntryPoint(t.Context(), "foo", &static.EntryPoint{
 		Address:          "127.0.0.1:0",
 		Transport:        epConfig,
 		ForwardedHeaders: &static.ForwardedHeaders{},
@@ -108,7 +107,7 @@ func TestHTTP3AdvertisedPort(t *testing.T) {
 		rw.WriteHeader(http.StatusOK)
 	}), nil)
 
-	ctx := context.Background()
+	ctx := t.Context()
 	go entryPoint.Start(ctx)
 	entryPoint.SwitchRouter(router)
 
@@ -151,7 +150,7 @@ func TestHTTP30RTT(t *testing.T) {
 	epConfig := &static.EntryPointsTransport{}
 	epConfig.SetDefaults()
 
-	entryPoint, err := NewTCPEntryPoint(context.Background(), "foo", &static.EntryPoint{
+	entryPoint, err := NewTCPEntryPoint(t.Context(), "foo", &static.EntryPoint{
 		Address:          "127.0.0.1:8090",
 		Transport:        epConfig,
 		ForwardedHeaders: &static.ForwardedHeaders{},
@@ -170,7 +169,7 @@ func TestHTTP30RTT(t *testing.T) {
 		rw.WriteHeader(http.StatusOK)
 	}), nil)
 
-	ctx := context.Background()
+	ctx := t.Context()
 	go entryPoint.Start(ctx)
 	entryPoint.SwitchRouter(router)
 
@@ -193,7 +192,7 @@ func TestHTTP30RTT(t *testing.T) {
 	tlsConf.ClientSessionCache = cache
 
 	// This first DialAddrEarly connection is here to populate the cache.
-	earlyConnection, err := quic.DialAddrEarly(context.Background(), "127.0.0.1:8090", tlsConf, &quic.Config{})
+	earlyConnection, err := quic.DialAddrEarly(t.Context(), "127.0.0.1:8090", tlsConf, &quic.Config{})
 	require.NoError(t, err)
 
 	t.Cleanup(func() {
@@ -207,7 +206,7 @@ func TestHTTP30RTT(t *testing.T) {
 	// 0RTT is always false on the first connection.
 	require.False(t, earlyConnection.ConnectionState().Used0RTT)
 
-	earlyConnection, err = quic.DialAddrEarly(context.Background(), "127.0.0.1:8090", tlsConf, &quic.Config{})
+	earlyConnection, err = quic.DialAddrEarly(t.Context(), "127.0.0.1:8090", tlsConf, &quic.Config{})
 	require.NoError(t, err)
 
 	<-earlyConnection.HandshakeComplete()

@@ -14,7 +14,6 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
-	"go.opentelemetry.io/otel/trace"
 )
 
 const typeName = "PassClientTLSCert"
@@ -139,8 +138,8 @@ func New(ctx context.Context, next http.Handler, config dynamic.PassTLSClientCer
 	}, nil
 }
 
-func (p *passTLSClientCert) GetTracingInformation() (string, string, trace.SpanKind) {
-	return p.name, typeName, trace.SpanKindInternal
+func (p *passTLSClientCert) GetTracingInformation() (string, string) {
+	return p.name, typeName
 }
 
 func (p *passTLSClientCert) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
@@ -226,11 +225,11 @@ func getIssuerDNInfo(ctx context.Context, options *IssuerDistinguishedNameOption
 
 	content := &strings.Builder{}
 
-	// Manage non standard attributes
+	// Manage non-standard attributes
 	for _, name := range cs.Names {
 		// Domain Component - RFC 2247
 		if options.DomainComponent && attributeTypeNames[name.Type.String()] == "DC" {
-			content.WriteString(fmt.Sprintf("DC=%s%s", name.Value, subFieldSeparator))
+			_, _ = fmt.Fprintf(content, "DC=%s%s", name.Value, subFieldSeparator)
 		}
 	}
 
@@ -272,7 +271,7 @@ func getSubjectDNInfo(ctx context.Context, options *SubjectDistinguishedNameOpti
 	for _, name := range cs.Names {
 		// Domain Component - RFC 2247
 		if options.DomainComponent && attributeTypeNames[name.Type.String()] == "DC" {
-			content.WriteString(fmt.Sprintf("DC=%s%s", name.Value, subFieldSeparator))
+			_, _ = fmt.Fprintf(content, "DC=%s%s", name.Value, subFieldSeparator)
 		}
 	}
 

@@ -106,7 +106,7 @@ tls:
 
 ### Curve Preferences
 
-This option allows to set the preferred elliptic curves in a specific order.
+This option allows to set the preferred elliptic curves.
 
 The names of the curves defined by [`crypto`](https://godoc.org/crypto/tls#CurveID) (e.g. `CurveP521`) and the [RFC defined names](https://tools.ietf.org/html/rfc8446#section-4.2.7) (e. g. `secp521r1`) can be used.
 
@@ -194,11 +194,11 @@ The `clientAuth.clientAuthType` option governs the behaviour as follows:
 
 | Option    |  Operation | 
 | --------- | ----------- |
-| `NoClientCert` | Disregards any client certificate.| 
-| `RequestClientCert` | Asks for a certificate but proceeds anyway if none is provided. |
-| `RequireAnyClientCert` | Requires a certificate but does not verify if it is signed by a CA listed in `clientAuth.caFiles` or in `clientAuth.secretNames`. |
-| `VerifyClientCertIfGiven` | If a certificate is provided, verifies if it is signed by a CA listed in `clientAuth.caFiles` or in `clientAuth.secretNames`. Otherwise proceeds without any certificate. |
-| `RequireAndVerifyClientCert` |  requires a certificate, which must be signed by a CA listed in `clientAuth.caFiles` or in `clientAuth.secretNames`. |
+| <a id="NoClientCert" href="#NoClientCert" title="#NoClientCert">`NoClientCert`</a> | Disregards any client certificate.| 
+| <a id="RequestClientCert" href="#RequestClientCert" title="#RequestClientCert">`RequestClientCert`</a> | Asks for a certificate but proceeds anyway if none is provided. |
+| <a id="RequireAnyClientCert" href="#RequireAnyClientCert" title="#RequireAnyClientCert">`RequireAnyClientCert`</a> | Requires a certificate but does not verify if it is signed by a CA listed in `clientAuth.caFiles` or in `clientAuth.secretNames`. |
+| <a id="VerifyClientCertIfGiven" href="#VerifyClientCertIfGiven" title="#VerifyClientCertIfGiven">`VerifyClientCertIfGiven`</a> | If a certificate is provided, verifies if it is signed by a CA listed in `clientAuth.caFiles` or in `clientAuth.secretNames`. Otherwise proceeds without any certificate. |
+| <a id="RequireAndVerifyClientCert" href="#RequireAndVerifyClientCert" title="#RequireAndVerifyClientCert">`RequireAndVerifyClientCert`</a> |  requires a certificate, which must be signed by a CA listed in `clientAuth.caFiles` or in `clientAuth.secretNames`. |
 
 ```yaml tab="Structured (YAML)"
 # Dynamic configuration

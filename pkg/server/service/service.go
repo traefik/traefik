@@ -19,7 +19,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/healthcheck"
 	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
-	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
 	metricsMiddle "github.com/traefik/traefik/v3/pkg/middlewares/metrics"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/middlewares/retry"
@@ -29,6 +28,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/server/middleware"
 	"github.com/traefik/traefik/v3/pkg/server/provider"
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/failover"
+	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/hrw"
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/mirror"
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/p2c"
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/wrr"
@@ -37,7 +37,7 @@ import (
 
 // ProxyBuilder builds reverse proxy handlers.
 type ProxyBuilder interface {
-	Build(cfgName string, targetURL *url.URL, shouldObserve, passHostHeader, preservePath bool, flushInterval time.Duration) (http.Handler, error)
+	Build(cfgName string, targetURL *url.URL, passHostHeader, preservePath bool, flushInterval time.Duration) (http.Handler, error)
 	Update(configs map[string]*dynamic.ServersTransport)
 }
 
@@ -134,6 +134,13 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string) (http.H
 	case conf.Weighted != nil:
 		var err error
 		lb, err = m.getWRRServiceHandler(ctx, serviceName, conf.Weighted)
+		if err != nil {
+			conf.AddError(err, true)
+			return nil, err
+		}
+	case conf.HighestRandomWeight != nil:
+		var err error
+		lb, err = m.getHRWServiceHandler(ctx, serviceName, conf.HighestRandomWeight)
 		if err != nil {
 			conf.AddError(err, true)
 			return nil, err
@@ -306,6 +313,40 @@ func (m *Manager) getServiceHandler(ctx context.Context, service dynamic.WRRServ
 	}
 }
 
+func (m *Manager) getHRWServiceHandler(ctx context.Context, serviceName string, config *dynamic.HighestRandomWeight) (http.Handler, error) {
+	// TODO Handle accesslog and metrics with multiple service name
+	balancer := hrw.New(config.HealthCheck != nil)
+	for _, service := range shuffle(config.Services, m.rand) {
+		serviceHandler, err := m.BuildHTTP(ctx, service.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		balancer.Add(service.Name, serviceHandler, service.Weight, false)
+
+		if config.HealthCheck == nil {
+			continue
+		}
+
+		childName := service.Name
+		updater, ok := serviceHandler.(healthcheck.StatusUpdater)
+		if !ok {
+			return nil, fmt.Errorf("child service %v of %v not a healthcheck.StatusUpdater (%T)", childName, serviceName, serviceHandler)
+		}
+
+		if err := updater.RegisterStatusUpdater(func(up bool) {
+			balancer.SetStatus(ctx, childName, up)
+		}); err != nil {
+			return nil, fmt.Errorf("cannot register %v as updater for %v: %w", childName, serviceName, err)
+		}
+
+		log.Ctx(ctx).Debug().Str("parent", serviceName).Str("child", childName).
+			Msg("Child service will update parent on status change")
+	}
+
+	return balancer, nil
+}
+
 type serverBalancer interface {
 	http.Handler
 	healthcheck.StatusSetter
@@ -342,13 +383,26 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 	var lb serverBalancer
 	switch service.Strategy {
 	// Here we are handling the empty value to comply with providers that are not applying defaults (e.g. REST provider)
-	// TODO: remove this when all providers apply default values.
+	// TODO: remove this empty check when all providers apply default values.
 	case dynamic.BalancerStrategyWRR, "":
 		lb = wrr.New(service.Sticky, service.HealthCheck != nil)
 	case dynamic.BalancerStrategyP2C:
 		lb = p2c.New(service.Sticky, service.HealthCheck != nil)
+	case dynamic.BalancerStrategyHRW:
+		lb = hrw.New(service.HealthCheck != nil)
 	default:
 		return nil, fmt.Errorf("unsupported load-balancer strategy %q", service.Strategy)
+	}
+
+	var passiveHealthChecker *healthcheck.PassiveServiceHealthChecker
+	if service.PassiveHealthCheck != nil {
+		passiveHealthChecker = healthcheck.NewPassiveHealthChecker(
+			serviceName,
+			lb,
+			service.PassiveHealthCheck.MaxFailedAttempts,
+			service.PassiveHealthCheck.FailureWindow,
+			service.HealthCheck != nil,
+			m.observabilityMgr.MetricsRegistry())
 	}
 
 	healthCheckTargets := make(map[string]*url.URL)
@@ -364,50 +418,37 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 
 		qualifiedSvcName := provider.GetQualifiedName(ctx, serviceName)
 
-		shouldObserve := m.observabilityMgr.ShouldAddTracing(qualifiedSvcName, nil) || m.observabilityMgr.ShouldAddMetrics(qualifiedSvcName, nil)
-		proxy, err := m.proxyBuilder.Build(service.ServersTransport, target, shouldObserve, passHostHeader, server.PreservePath, flushInterval)
+		proxy, err := m.proxyBuilder.Build(service.ServersTransport, target, passHostHeader, server.PreservePath, flushInterval)
 		if err != nil {
 			return nil, fmt.Errorf("error building proxy for server URL %s: %w", server.URL, err)
 		}
+
+		if passiveHealthChecker != nil {
+			// If passive health check is enabled, we wrap the proxy with the passive health checker.
+			proxy = passiveHealthChecker.WrapHandler(ctx, proxy, target.String())
+		}
+
 		// The retry wrapping must be done just before the proxy handler,
 		// to make sure that the retry will not be triggered/disabled by
 		// middlewares in the chain.
 		proxy = retry.WrapHandler(proxy)
 
-		// Prevents from enabling observability for internal resources.
+		// Access logs, metrics, and tracing middlewares are idempotent if the associated signal is disabled.
+		proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceURL, target.String(), nil)
+		proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceAddr, target.Host, nil)
+		proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceName, qualifiedSvcName, accesslog.AddServiceFields)
 
-		if m.observabilityMgr.ShouldAddAccessLogs(qualifiedSvcName, nil) {
-			proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceURL, target.String(), nil)
-			proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceAddr, target.Host, nil)
-			proxy = accesslog.NewFieldHandler(proxy, accesslog.ServiceName, serviceName, accesslog.AddServiceFields)
+		metricsHandler := metricsMiddle.ServiceMetricsHandler(ctx, m.observabilityMgr.MetricsRegistry(), qualifiedSvcName)
+		metricsHandler = observability.WrapMiddleware(ctx, metricsHandler)
+
+		proxy, err = alice.New().
+			Append(metricsHandler).
+			Then(proxy)
+		if err != nil {
+			return nil, fmt.Errorf("error wrapping metrics handler: %w", err)
 		}
 
-		if m.observabilityMgr.MetricsRegistry() != nil && m.observabilityMgr.MetricsRegistry().IsSvcEnabled() &&
-			m.observabilityMgr.ShouldAddMetrics(qualifiedSvcName, nil) {
-			metricsHandler := metricsMiddle.WrapServiceHandler(ctx, m.observabilityMgr.MetricsRegistry(), serviceName)
-
-			proxy, err = alice.New().
-				Append(observability.WrapMiddleware(ctx, metricsHandler)).
-				Then(proxy)
-			if err != nil {
-				return nil, fmt.Errorf("error wrapping metrics handler: %w", err)
-			}
-		}
-
-		if m.observabilityMgr.ShouldAddTracing(qualifiedSvcName, nil) {
-			proxy = observability.NewService(ctx, serviceName, proxy)
-		}
-
-		if m.observabilityMgr.ShouldAddAccessLogs(qualifiedSvcName, nil) || m.observabilityMgr.ShouldAddMetrics(qualifiedSvcName, nil) {
-			// Some piece of middleware, like the ErrorPage, are relying on this serviceBuilder to get the handler for a given service,
-			// to re-target the request to it.
-			// Those pieces of middleware can be configured on routes that expose a Traefik internal service.
-			// In such a case, observability for internals being optional, the capture probe could be absent from context (no wrap via the entrypoint).
-			// But if the service targeted by this piece of middleware is not an internal one,
-			// and requires observability, we still want the capture probe to be present in the request context.
-			// Makes sure a capture probe is in the request context.
-			proxy, _ = capture.Wrap(proxy)
-		}
+		proxy = observability.NewService(ctx, qualifiedSvcName, proxy)
 
 		lb.AddServer(server.URL, proxy, server)
 

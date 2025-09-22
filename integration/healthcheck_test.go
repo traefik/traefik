@@ -108,6 +108,53 @@ func (s *HealthCheckSuite) TestSimpleConfiguration() {
 	assert.Equal(s.T(), http.StatusNotFound, resp.StatusCode)
 }
 
+func (s *HealthCheckSuite) TestSimpleConfiguration_Passive() {
+	file := s.adaptFile("fixtures/healthcheck/simple_passive.toml", struct {
+		Server1 string
+	}{s.whoami1IP})
+
+	s.traefikCmd(withConfigFile(file))
+
+	// wait for traefik
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("Host(`test.localhost`)"))
+	require.NoError(s.T(), err)
+
+	frontendHealthReq, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/health", nil)
+	require.NoError(s.T(), err)
+	frontendHealthReq.Host = "test.localhost"
+
+	err = try.Request(frontendHealthReq, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
+	require.NoError(s.T(), err)
+
+	// Fix all whoami health to 500
+	client := &http.Client{}
+	whoamiHosts := []string{s.whoami1IP, s.whoami2IP}
+	for _, whoami := range whoamiHosts {
+		statusInternalServerErrorReq, err := http.NewRequest(http.MethodPost, "http://"+whoami+"/health", bytes.NewBufferString("500"))
+		require.NoError(s.T(), err)
+		_, err = client.Do(statusInternalServerErrorReq)
+		require.NoError(s.T(), err)
+	}
+
+	// First call, the passive health check is not yet triggered, so we expect a 500.
+	err = try.Request(frontendHealthReq, 3*time.Second, try.StatusCodeIs(http.StatusInternalServerError))
+	require.NoError(s.T(), err)
+
+	// Verify no backend service is available due to failing health checks
+	err = try.Request(frontendHealthReq, 3*time.Second, try.StatusCodeIs(http.StatusServiceUnavailable))
+	require.NoError(s.T(), err)
+
+	// Change one whoami health to 200
+	statusOKReq1, err := http.NewRequest(http.MethodPost, "http://"+s.whoami1IP+"/health", bytes.NewBufferString("200"))
+	require.NoError(s.T(), err)
+	_, err = client.Do(statusOKReq1)
+	require.NoError(s.T(), err)
+
+	// Verify frontend health : after
+	err = try.Request(frontendHealthReq, 3*time.Second, try.StatusCodeIs(http.StatusOK))
+	require.NoError(s.T(), err)
+}
+
 func (s *HealthCheckSuite) TestMultipleEntrypoints() {
 	file := s.adaptFile("fixtures/healthcheck/multiple-entrypoints.toml", struct {
 		Server1 string

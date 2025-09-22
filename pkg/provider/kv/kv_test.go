@@ -1,7 +1,6 @@
 package kv
 
 import (
-	"context"
 	"errors"
 	"testing"
 	"time"
@@ -45,6 +44,7 @@ func Test_buildConfiguration(t *testing.T) {
 		"traefik/http/services/Service01/loadBalancer/healthCheck/path":                              "foobar",
 		"traefik/http/services/Service01/loadBalancer/healthCheck/port":                              "42",
 		"traefik/http/services/Service01/loadBalancer/healthCheck/interval":                          "1s",
+		"traefik/http/services/Service01/loadBalancer/healthCheck/unhealthyinterval":                 "1s",
 		"traefik/http/services/Service01/loadBalancer/healthCheck/timeout":                           "1s",
 		"traefik/http/services/Service01/loadBalancer/healthCheck/hostname":                          "foobar",
 		"traefik/http/services/Service01/loadBalancer/healthCheck/headers/name0":                     "foobar",
@@ -297,7 +297,7 @@ func Test_buildConfiguration(t *testing.T) {
 		"traefik/tls/certificates/1/stores/1":                                                        "foobar",
 	}))
 
-	cfg, err := provider.buildConfiguration(context.Background())
+	cfg, err := provider.buildConfiguration(t.Context())
 	require.NoError(t, err)
 
 	expected := &dynamic.Configuration{
@@ -665,14 +665,15 @@ func Test_buildConfiguration(t *testing.T) {
 							},
 						},
 						HealthCheck: &dynamic.ServerHealthCheck{
-							Scheme:          "foobar",
-							Mode:            "foobar",
-							Path:            "foobar",
-							Port:            42,
-							Interval:        ptypes.Duration(time.Second),
-							Timeout:         ptypes.Duration(time.Second),
-							Hostname:        "foobar",
-							FollowRedirects: pointer(true),
+							Scheme:            "foobar",
+							Mode:              "foobar",
+							Path:              "foobar",
+							Port:              42,
+							Interval:          ptypes.Duration(time.Second),
+							UnhealthyInterval: pointer(ptypes.Duration(time.Second)),
+							Timeout:           ptypes.Duration(time.Second),
+							Hostname:          "foobar",
+							FollowRedirects:   pointer(true),
 							Headers: map[string]string{
 								"name0": "foobar",
 								"name1": "foobar",
@@ -956,7 +957,7 @@ func Test_buildConfiguration_KV_error(t *testing.T) {
 		},
 	}
 
-	cfg, err := provider.buildConfiguration(context.Background())
+	cfg, err := provider.buildConfiguration(t.Context())
 	require.Error(t, err)
 	assert.Nil(t, cfg)
 }
@@ -975,7 +976,7 @@ func TestKvWatchTree(t *testing.T) {
 
 	configChan := make(chan dynamic.Message)
 	go func() {
-		err := provider.watchKv(context.Background(), configChan)
+		err := provider.watchKv(t.Context(), configChan)
 		require.NoError(t, err)
 	}()
 

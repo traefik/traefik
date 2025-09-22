@@ -6,7 +6,7 @@ description: "Learn how to create a certificate with the Let's Encrypt HTTP chal
 # Docker-compose with Let's Encrypt : HTTP Challenge
 
 This guide aims to demonstrate how to create a certificate with the Let's Encrypt HTTP challenge to use https on a simple service exposed with Traefik.  
-Please also read the [basic example](../basic-example) for details on how to expose such a service.  
+Please also read the [basic example](../basic-example/) for details on how to expose such a service.  
 
 ## Prerequisite
 
@@ -55,7 +55,7 @@ ports:
   - "443:443"
 ```
 
-- We configure the HTTPS Let's Encrypt challenge:
+- We configure the HTTP Let's Encrypt challenge:
 
 ```yaml
 command:

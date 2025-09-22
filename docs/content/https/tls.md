@@ -234,7 +234,7 @@ The TLS options allow one to configure some parameters of the TLS connection.
 
 !!! important "TLSOption in Kubernetes"
 
-    When using the [TLSOption resource](../../routing/providers/kubernetes-crd#kind-tlsoption) in Kubernetes, one might setup a default set of options that,
+    When using the [TLSOption resource](../../routing/providers/kubernetes-crd/#kind-tlsoption) in Kubernetes, one might setup a default set of options that,
     if not explicitly overwritten, should apply to all ingresses.  
     To achieve that, you'll have to create a TLSOption resource with the name `default`.
     There may exist only one TLSOption with the name `default` (across all namespaces) - otherwise they will be dropped.  
@@ -384,11 +384,11 @@ spec:
 
 ### Curve Preferences
 
-This option allows to set the preferred elliptic curves in a specific order.
+This option allows to set the enabled elliptic curves for key exchange.
 
 The names of the curves defined by [`crypto`](https://godoc.org/crypto/tls#CurveID) (e.g. `CurveP521`) and the [RFC defined names](https://tools.ietf.org/html/rfc8446#section-4.2.7) (e. g. `secp521r1`) can be used.
 
-See [CurveID](https://godoc.org/crypto/tls#CurveID) for more information.
+See [CurvePreferences](https://godoc.org/crypto/tls#Config.CurvePreferences) and [CurveID](https://godoc.org/crypto/tls#CurveID) for more information.
 
 ```yaml tab="File (YAML)"
 # Dynamic configuration
@@ -503,7 +503,7 @@ Traefik supports mutual authentication, through the `clientAuth` section.
 
 For authentication policies that require verification of the client certificate, the certificate authority for the certificates should be set in `clientAuth.caFiles`.
 
-In Kubernetes environment, CA certificate can be set in `clientAuth.secretNames`. See [TLSOption resource](../../routing/providers/kubernetes-crd#kind-tlsoption) for more details.
+In Kubernetes environment, CA certificate can be set in `clientAuth.secretNames`. See [TLSOption resource](../../routing/providers/kubernetes-crd/#kind-tlsoption) for more details.
 
 The `clientAuth.clientAuthType` option governs the behaviour as follows:
 

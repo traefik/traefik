@@ -1,7 +1,6 @@
 package gateway
 
 import (
-	"context"
 	"errors"
 	"net/http"
 	"os"
@@ -75,14 +74,14 @@ func TestGatewayClassLabelSelector(t *testing.T) {
 		client:        client,
 	}
 
-	_ = p.loadConfigurationFromGateways(context.Background())
+	_ = p.loadConfigurationFromGateways(t.Context())
 
-	gw, err := gwClient.GatewayV1().Gateways("default").Get(context.Background(), "traefik-external", metav1.GetOptions{})
+	gw, err := gwClient.GatewayV1().Gateways("default").Get(t.Context(), "traefik-external", metav1.GetOptions{})
 	require.NoError(t, err)
 
 	assert.Empty(t, gw.Status.Addresses)
 
-	gw, err = gwClient.GatewayV1().Gateways("default").Get(context.Background(), "traefik-internal", metav1.GetOptions{})
+	gw, err = gwClient.GatewayV1().Gateways("default").Get(t.Context(), "traefik-internal", metav1.GetOptions{})
 	require.NoError(t, err)
 	require.Len(t, gw.Status.Addresses, 1)
 	require.NotNil(t, gw.Status.Addresses[0].Type)
@@ -2523,6 +2522,69 @@ func TestLoadHTTPRoutes(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
+		{
+			desc:     "Simple HTTPRoute with NativeLBByDefault enabled but service has disabled nativelb",
+			paths:    []string{"services.yml", "httproute/simple_nativelb_disabled.yml"},
+			nativeLB: true,
+			entryPoints: map[string]Entrypoint{"web": {
+				Address: ":80",
+			}},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-1c0cf64bde37d9d0df06": {
+							EntryPoints: []string{"web"},
+							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-1c0cf64bde37d9d0df06-wrr",
+							Rule:        "Host(`foo.com`) && Path(`/bar`)",
+							Priority:    100008,
+							RuleSyntax:  "default",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-1c0cf64bde37d9d0df06-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-whoami-native-disabled-http-80",
+										Weight: ptr.To(1),
+									},
+								},
+							},
+						},
+						"default-whoami-native-disabled-http-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.20:80",
+									},
+									{
+										URL: "http://10.10.0.21:80",
+									},
+								},
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -2556,7 +2618,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 				client:              client,
 			}
 
-			conf := p.loadConfigurationFromGateways(context.Background())
+			conf := p.loadConfigurationFromGateways(t.Context())
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -2897,6 +2959,14 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 										Name:   "default-whoami-wss-http-80",
 										Weight: ptr.To(1),
 									},
+									{
+										Name:   "default-whoami-HTTP-http-80",
+										Weight: ptr.To(1),
+									},
+									{
+										Name:   "default-whoami-HTTPS-http-443",
+										Weight: ptr.To(1),
+									},
 								},
 							},
 						},
@@ -2934,6 +3004,34 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 								Servers: []dynamic.Server{
 									{
 										URL: "https://10.10.0.15:80",
+									},
+								},
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"default-whoami-HTTPS-http-443": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "https://10.10.0.16:8443",
+									},
+								},
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"default-whoami-HTTP-http-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.17:8080",
 									},
 								},
 								PassHostHeader: ptr.To(true),
@@ -2983,7 +3081,7 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 					p.RegisterBackendFuncs(group, kind, backendFunc)
 				}
 			}
-			conf := p.loadConfigurationFromGateways(context.Background())
+			conf := p.loadConfigurationFromGateways(t.Context())
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -3269,7 +3367,7 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 					p.RegisterFilterFuncs(group, kind, filterFunc)
 				}
 			}
-			conf := p.loadConfigurationFromGateways(context.Background())
+			conf := p.loadConfigurationFromGateways(t.Context())
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -3561,7 +3659,7 @@ func TestLoadGRPCRoutes_filterExtensionRef(t *testing.T) {
 					p.RegisterFilterFuncs(group, kind, filterFunc)
 				}
 			}
-			conf := p.loadConfigurationFromGateways(context.Background())
+			conf := p.loadConfigurationFromGateways(t.Context())
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -4430,6 +4528,63 @@ func TestLoadTCPRoutes(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
+		{
+			desc:     "Simple TCPRoute with NativeLBByDefault enabled but service has disabled nativelb",
+			paths:    []string{"services.yml", "tcproute/simple_nativelb_disabled.yml"},
+			nativeLB: true,
+			entryPoints: map[string]Entrypoint{
+				"tcp": {Address: ":9000"},
+			},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
+						"tcproute-default-tcp-app-1-gw-default-my-tcp-gateway-ep-tcp-0-e3b0c44298fc1c149afb": {
+							EntryPoints: []string{"tcp"},
+							Service:     "tcproute-default-tcp-app-1-gw-default-my-tcp-gateway-ep-tcp-0-e3b0c44298fc1c149afb-wrr",
+							Rule:        "HostSNI(`*`)",
+							RuleSyntax:  "default",
+						},
+					},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services: map[string]*dynamic.TCPService{
+						"tcproute-default-tcp-app-1-gw-default-my-tcp-gateway-ep-tcp-0-e3b0c44298fc1c149afb-wrr": {
+							Weighted: &dynamic.TCPWeightedRoundRobin{
+								Services: []dynamic.TCPWRRService{
+									{
+										Name:   "default-whoamitcp-native-disabled-9000",
+										Weight: ptr.To(1),
+									},
+								},
+							},
+						},
+						"default-whoamitcp-native-disabled-9000": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "10.10.0.30:9000",
+									},
+									{
+										Address: "10.10.0.31:9000",
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -4463,7 +4618,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 				client:              client,
 			}
 
-			conf := p.loadConfigurationFromGateways(context.Background())
+			conf := p.loadConfigurationFromGateways(t.Context())
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -5742,7 +5897,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 				client:              client,
 			}
 
-			conf := p.loadConfigurationFromGateways(context.Background())
+			conf := p.loadConfigurationFromGateways(t.Context())
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -6798,7 +6953,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 				client:              client,
 			}
 
-			conf := p.loadConfigurationFromGateways(context.Background())
+			conf := p.loadConfigurationFromGateways(t.Context())
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -7134,7 +7289,7 @@ func TestLoadRoutesWithReferenceGrants(t *testing.T) {
 				client:              client,
 			}
 
-			conf := p.loadConfigurationFromGateways(context.Background())
+			conf := p.loadConfigurationFromGateways(t.Context())
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -8186,7 +8341,7 @@ func newGatewaySimpleClientSet(t *testing.T, objects ...runtime.Object) *gatefak
 			continue
 		}
 
-		_, err := client.GatewayV1().Gateways(gateway.Namespace).Create(context.Background(), gateway, metav1.CreateOptions{})
+		_, err := client.GatewayV1().Gateways(gateway.Namespace).Create(t.Context(), gateway, metav1.CreateOptions{})
 		require.NoError(t, err)
 	}
 

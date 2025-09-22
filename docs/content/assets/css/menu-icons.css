@@ -1,0 +1,58 @@
+/* Traefik Hub Menu icon base styles */
+.menu-icon {
+  height: 18px;
+  width: 18px;
+  vertical-align: middle;
+  margin-left: 6px;
+  transition: all 0.2s ease;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.1));
+  display: inline;
+  white-space: nowrap;
+}
+
+/* Ensure parent container keeps items inline */
+.nav-link-with-icon {
+  white-space: nowrap !important;
+  display: inline-flex !important;
+  align-items: center !important;
+}
+
+/* Hover effects */
+.menu-icon:hover {
+  transform: scale(1.05);
+  opacity: 0.8;
+}
+
+/* Tablet responsive */
+@media (max-width: 1024px) {
+  .menu-icon {
+    height: 14px;
+    width: 14px;
+    margin-left: 4px;
+  }
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .menu-icon {
+    height: 12px;
+    width: 12px;
+    margin-left: 3px;
+    vertical-align: middle;
+  }
+  
+  /* Keep mobile navigation items inline */
+  .nav-link-with-icon {
+    display: inline-flex !important;
+    align-items: center !important;
+    width: auto !important;
+  }
+}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .menu-icon {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+}

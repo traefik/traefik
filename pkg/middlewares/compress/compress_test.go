@@ -2,7 +2,6 @@ package compress
 
 import (
 	"compress/gzip"
-	"context"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -116,7 +115,7 @@ func TestNegotiation(t *testing.T) {
 				MinResponseBodyBytes: 1,
 				Encodings:            defaultSupportedEncodings,
 			}
-			handler, err := New(context.Background(), next, cfg, "testing")
+			handler, err := New(t.Context(), next, cfg, "testing")
 			require.NoError(t, err)
 
 			rw := httptest.NewRecorder()
@@ -137,7 +136,7 @@ func TestShouldCompressWhenNoContentEncodingHeader(t *testing.T) {
 		_, err := rw.Write(baseBody)
 		assert.NoError(t, err)
 	})
-	handler, err := New(context.Background(), next, dynamic.Compress{Encodings: defaultSupportedEncodings}, "testing")
+	handler, err := New(t.Context(), next, dynamic.Compress{Encodings: defaultSupportedEncodings}, "testing")
 	require.NoError(t, err)
 
 	rw := httptest.NewRecorder()
@@ -167,7 +166,7 @@ func TestShouldNotCompressWhenContentEncodingHeader(t *testing.T) {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 		}
 	})
-	handler, err := New(context.Background(), next, dynamic.Compress{Encodings: defaultSupportedEncodings}, "testing")
+	handler, err := New(t.Context(), next, dynamic.Compress{Encodings: defaultSupportedEncodings}, "testing")
 	require.NoError(t, err)
 
 	rw := httptest.NewRecorder()
@@ -176,7 +175,7 @@ func TestShouldNotCompressWhenContentEncodingHeader(t *testing.T) {
 	assert.Equal(t, gzipName, rw.Header().Get(contentEncodingHeader))
 	assert.Equal(t, acceptEncodingHeader, rw.Header().Get(varyHeader))
 
-	assert.EqualValues(t, rw.Body.Bytes(), fakeCompressedBody)
+	assert.Equal(t, rw.Body.Bytes(), fakeCompressedBody)
 }
 
 func TestShouldNotCompressWhenNoAcceptEncodingHeader(t *testing.T) {
@@ -189,7 +188,7 @@ func TestShouldNotCompressWhenNoAcceptEncodingHeader(t *testing.T) {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 		}
 	})
-	handler, err := New(context.Background(), next, dynamic.Compress{Encodings: defaultSupportedEncodings}, "testing")
+	handler, err := New(t.Context(), next, dynamic.Compress{Encodings: defaultSupportedEncodings}, "testing")
 	require.NoError(t, err)
 
 	rw := httptest.NewRecorder()
@@ -197,7 +196,7 @@ func TestShouldNotCompressWhenNoAcceptEncodingHeader(t *testing.T) {
 
 	assert.Empty(t, rw.Header().Get(contentEncodingHeader))
 	assert.Empty(t, rw.Header().Get(varyHeader))
-	assert.EqualValues(t, rw.Body.Bytes(), fakeBody)
+	assert.Equal(t, rw.Body.Bytes(), fakeBody)
 }
 
 func TestEmptyAcceptEncoding(t *testing.T) {
@@ -211,7 +210,7 @@ func TestEmptyAcceptEncoding(t *testing.T) {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 		}
 	})
-	handler, err := New(context.Background(), next, dynamic.Compress{Encodings: defaultSupportedEncodings}, "testing")
+	handler, err := New(t.Context(), next, dynamic.Compress{Encodings: defaultSupportedEncodings}, "testing")
 	require.NoError(t, err)
 
 	rw := httptest.NewRecorder()
@@ -219,7 +218,7 @@ func TestEmptyAcceptEncoding(t *testing.T) {
 
 	assert.Empty(t, rw.Header().Get(contentEncodingHeader))
 	assert.Empty(t, rw.Header().Get(varyHeader))
-	assert.EqualValues(t, rw.Body.Bytes(), fakeBody)
+	assert.Equal(t, rw.Body.Bytes(), fakeBody)
 }
 
 func TestShouldNotCompressWhenIdentityAcceptEncodingHeader(t *testing.T) {
@@ -238,7 +237,7 @@ func TestShouldNotCompressWhenIdentityAcceptEncodingHeader(t *testing.T) {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 		}
 	})
-	handler, err := New(context.Background(), next, dynamic.Compress{Encodings: defaultSupportedEncodings}, "testing")
+	handler, err := New(t.Context(), next, dynamic.Compress{Encodings: defaultSupportedEncodings}, "testing")
 	require.NoError(t, err)
 
 	rw := httptest.NewRecorder()
@@ -246,7 +245,7 @@ func TestShouldNotCompressWhenIdentityAcceptEncodingHeader(t *testing.T) {
 
 	assert.Empty(t, rw.Header().Get(contentEncodingHeader))
 	assert.Empty(t, rw.Header().Get(varyHeader))
-	assert.EqualValues(t, rw.Body.Bytes(), fakeBody)
+	assert.Equal(t, rw.Body.Bytes(), fakeBody)
 }
 
 func TestShouldNotCompressWhenEmptyAcceptEncodingHeader(t *testing.T) {
@@ -265,7 +264,7 @@ func TestShouldNotCompressWhenEmptyAcceptEncodingHeader(t *testing.T) {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 		}
 	})
-	handler, err := New(context.Background(), next, dynamic.Compress{Encodings: defaultSupportedEncodings}, "testing")
+	handler, err := New(t.Context(), next, dynamic.Compress{Encodings: defaultSupportedEncodings}, "testing")
 	require.NoError(t, err)
 
 	rw := httptest.NewRecorder()
@@ -273,7 +272,7 @@ func TestShouldNotCompressWhenEmptyAcceptEncodingHeader(t *testing.T) {
 
 	assert.Empty(t, rw.Header().Get(contentEncodingHeader))
 	assert.Empty(t, rw.Header().Get(varyHeader))
-	assert.EqualValues(t, rw.Body.Bytes(), fakeBody)
+	assert.Equal(t, rw.Body.Bytes(), fakeBody)
 }
 
 func TestShouldNotCompressHeadRequest(t *testing.T) {
@@ -287,7 +286,7 @@ func TestShouldNotCompressHeadRequest(t *testing.T) {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 		}
 	})
-	handler, err := New(context.Background(), next, dynamic.Compress{Encodings: defaultSupportedEncodings}, "testing")
+	handler, err := New(t.Context(), next, dynamic.Compress{Encodings: defaultSupportedEncodings}, "testing")
 	require.NoError(t, err)
 
 	rw := httptest.NewRecorder()
@@ -295,7 +294,7 @@ func TestShouldNotCompressHeadRequest(t *testing.T) {
 
 	assert.Empty(t, rw.Header().Get(contentEncodingHeader))
 	assert.Empty(t, rw.Header().Get(varyHeader))
-	assert.EqualValues(t, rw.Body.Bytes(), fakeBody)
+	assert.Equal(t, rw.Body.Bytes(), fakeBody)
 }
 
 func TestShouldNotCompressWhenSpecificContentType(t *testing.T) {
@@ -377,7 +376,7 @@ func TestShouldNotCompressWhenSpecificContentType(t *testing.T) {
 				}
 			})
 
-			handler, err := New(context.Background(), next, test.conf, "test")
+			handler, err := New(t.Context(), next, test.conf, "test")
 			require.NoError(t, err)
 
 			rw := httptest.NewRecorder()
@@ -385,7 +384,7 @@ func TestShouldNotCompressWhenSpecificContentType(t *testing.T) {
 
 			assert.Empty(t, rw.Header().Get(acceptEncodingHeader))
 			assert.Empty(t, rw.Header().Get(contentEncodingHeader))
-			assert.EqualValues(t, rw.Body.Bytes(), baseBody)
+			assert.Equal(t, rw.Body.Bytes(), baseBody)
 		})
 	}
 }
@@ -423,7 +422,7 @@ func TestShouldCompressWhenSpecificContentType(t *testing.T) {
 				}
 			})
 
-			handler, err := New(context.Background(), next, test.conf, "test")
+			handler, err := New(t.Context(), next, test.conf, "test")
 			require.NoError(t, err)
 
 			rw := httptest.NewRecorder()
@@ -431,7 +430,7 @@ func TestShouldCompressWhenSpecificContentType(t *testing.T) {
 
 			assert.Equal(t, gzipName, rw.Header().Get(contentEncodingHeader))
 			assert.Equal(t, acceptEncodingHeader, rw.Header().Get(varyHeader))
-			assert.NotEqualValues(t, rw.Body.Bytes(), baseBody)
+			assert.NotEqual(t, rw.Body.Bytes(), baseBody)
 		})
 	}
 }
@@ -473,7 +472,7 @@ func TestIntegrationShouldNotCompress(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
-			compress, err := New(context.Background(), test.handler, dynamic.Compress{Encodings: defaultSupportedEncodings}, "testing")
+			compress, err := New(t.Context(), test.handler, dynamic.Compress{Encodings: defaultSupportedEncodings}, "testing")
 			require.NoError(t, err)
 
 			ts := httptest.NewServer(compress)
@@ -492,7 +491,7 @@ func TestIntegrationShouldNotCompress(t *testing.T) {
 
 			body, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
-			assert.EqualValues(t, fakeCompressedBody, body)
+			assert.Equal(t, fakeCompressedBody, body)
 		})
 	}
 }
@@ -508,7 +507,7 @@ func TestShouldWriteHeaderWhenFlush(t *testing.T) {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 		}
 	})
-	handler, err := New(context.Background(), next, dynamic.Compress{Encodings: defaultSupportedEncodings}, "testing")
+	handler, err := New(t.Context(), next, dynamic.Compress{Encodings: defaultSupportedEncodings}, "testing")
 	require.NoError(t, err)
 
 	ts := httptest.NewServer(handler)
@@ -559,7 +558,7 @@ func TestIntegrationShouldCompress(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
-			compress, err := New(context.Background(), test.handler, dynamic.Compress{Encodings: defaultSupportedEncodings}, "testing")
+			compress, err := New(t.Context(), test.handler, dynamic.Compress{Encodings: defaultSupportedEncodings}, "testing")
 			require.NoError(t, err)
 
 			ts := httptest.NewServer(compress)
@@ -619,7 +618,7 @@ func TestMinResponseBodyBytes(t *testing.T) {
 				MinResponseBodyBytes: test.minResponseBodyBytes,
 				Encodings:            defaultSupportedEncodings,
 			}
-			handler, err := New(context.Background(), next, cfg, "testing")
+			handler, err := New(t.Context(), next, cfg, "testing")
 			require.NoError(t, err)
 
 			rw := httptest.NewRecorder()
@@ -627,12 +626,12 @@ func TestMinResponseBodyBytes(t *testing.T) {
 
 			if test.expectedCompression {
 				assert.Equal(t, gzipName, rw.Header().Get(contentEncodingHeader))
-				assert.NotEqualValues(t, rw.Body.Bytes(), fakeBody)
+				assert.NotEqual(t, rw.Body.Bytes(), fakeBody)
 				return
 			}
 
 			assert.Empty(t, rw.Header().Get(contentEncodingHeader))
-			assert.EqualValues(t, rw.Body.Bytes(), fakeBody)
+			assert.Equal(t, rw.Body.Bytes(), fakeBody)
 		})
 	}
 }
@@ -679,7 +678,7 @@ func Test1xxResponses(t *testing.T) {
 				MinResponseBodyBytes: 1024,
 				Encodings:            defaultSupportedEncodings,
 			}
-			compress, err := New(context.Background(), next, cfg, "testing")
+			compress, err := New(t.Context(), next, cfg, "testing")
 			require.NoError(t, err)
 
 			server := httptest.NewServer(compress)
@@ -723,7 +722,7 @@ func Test1xxResponses(t *testing.T) {
 					return nil
 				},
 			}
-			req, _ := http.NewRequestWithContext(httptrace.WithClientTrace(context.Background(), trace), http.MethodGet, server.URL, nil)
+			req, _ := http.NewRequestWithContext(httptrace.WithClientTrace(t.Context(), trace), http.MethodGet, server.URL, nil)
 			req.Header.Add(acceptEncodingHeader, test.encoding)
 
 			res, err := frontendClient.Do(req)
@@ -738,7 +737,7 @@ func Test1xxResponses(t *testing.T) {
 
 			assert.Equal(t, test.encoding, res.Header.Get(contentEncodingHeader))
 			body, _ := io.ReadAll(res.Body)
-			assert.NotEqualValues(t, body, fakeBody)
+			assert.NotEqual(t, body, fakeBody)
 		})
 	}
 }
@@ -779,7 +778,7 @@ func runCompressionBenchmark(b *testing.B, algorithm string) {
 				_, err := rw.Write(baseBody)
 				assert.NoError(b, err)
 			})
-			handler, _ := New(context.Background(), next, dynamic.Compress{}, "testing")
+			handler, _ := New(b.Context(), next, dynamic.Compress{}, "testing")
 
 			req, _ := http.NewRequest(http.MethodGet, "/whatever", nil)
 			req.Header.Set("Accept-Encoding", algorithm)
