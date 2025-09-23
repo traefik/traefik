@@ -1,7 +1,6 @@
 package crd
 
 import (
-	"context"
 	"errors"
 	"testing"
 
@@ -77,7 +76,7 @@ func TestBuildKnativeService(t *testing.T) {
 	conf := make(map[string]*dynamic.Service)
 
 	// Call the method
-	results := cb.buildKnativeService(context.Background(), ingressRoute, middleware, conf, "test-service")
+	results := cb.buildKnativeService(t.Context(), ingressRoute, middleware, conf, "test-service")
 
 	// Assertions
 	require.Len(t, results, 1)
@@ -227,7 +226,7 @@ func TestLoadKnativeIngressRouteConfiguration(t *testing.T) {
 
 	tlsConfigs := make(map[string]*tls.CertAndStores)
 
-	ctx := context.Background()
+	ctx := t.Context()
 	conf, ingressStatusList := provider.loadKnativeIngressRouteConfiguration(ctx, mockClient, tlsConfigs)
 
 	require.NotNil(t, conf)

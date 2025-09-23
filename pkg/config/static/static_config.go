@@ -3,7 +3,6 @@ package static
 import (
 	"errors"
 	"fmt"
-	"github.com/traefik/traefik/v3/pkg/tls"
 	"path"
 	"strings"
 	"time"
@@ -31,6 +30,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/provider/kv/zk"
 	"github.com/traefik/traefik/v3/pkg/provider/nomad"
 	"github.com/traefik/traefik/v3/pkg/provider/rest"
+	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 )
 
