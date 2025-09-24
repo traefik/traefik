@@ -97,17 +97,16 @@ test-unit:
 .PHONY: test-integration
 #? test-integration: Run the integration tests
 test-integration:
-	GOOS=$(GOOS) GOARCH=$(GOARCH) go test -tags '!kNativeConformance' ./integration -test.timeout=20m -failfast -v $(TESTFLAGS)
+	GOOS=$(GOOS) GOARCH=$(GOARCH) go test ./integration -test.timeout=20m -failfast -v $(TESTFLAGS)
 
 .PHONY: test-gateway-api-conformance
 #? test-gateway-api-conformance: Run the conformance tests
 test-gateway-api-conformance: build-image-dirty
 	# In case of a new Minor/Major version, the k8sConformanceTraefikVersion needs to be updated.
-	GOOS=$(GOOS) GOARCH=$(GOARCH) go test -tags !kNativeConformance ./integration -v -test.run K8sConformanceSuite -k8sConformance -k8sConformanceTraefikVersion="v3.5" $(TESTFLAGS)
+	GOOS=$(GOOS) GOARCH=$(GOARCH) go test ./integration -v -test.run K8sConformanceSuite -k8sConformance -k8sConformanceTraefikVersion="v3.5" $(TESTFLAGS)
 
 test-knative-conformance: build-image-dirty
-	# In case of a new Minor/Major version, the k8sConformanceTraefikVersion needs to be updated.
-	GOOS=$(GOOS) GOARCH=$(GOARCH) go test -tags kNativeConformance -parallel=1 -failfast -count=1 -timeout=20m ./integration/knative_conformance_test.go ./integration/integration_test.go -v -test.run KNativeConformanceSuite -ingressClass=traefik.ingress.networking.knative.dev  -spoofinterval=3s
+	GOOS=$(GOOS) GOARCH=$(GOARCH) go test ./integration/integration_test.go ./integration/knative_conformance_test.go -tags knativeConformance -parallel=1 -failfast -count=1 -timeout=20m  -v -test.run KnativeConformanceSuite -ingressClass=traefik.ingress.networking.knative.dev -spoofinterval=3s
 
 .PHONY: test-ui-unit
 #? test-ui-unit: Run the unit tests for the webui

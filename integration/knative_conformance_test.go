@@ -1,4 +1,7 @@
-//go:build kNativeConformance
+// Use a build tag to include and run Knative conformance tests.
+// The Knative conformance toolkit redefines the skip-tests flag,
+// which conflicts with the testing library and causes a panic.
+//go:build knativeConformance
 
 package integration
 
@@ -27,15 +30,14 @@ import (
 )
 
 const (
-	k3sImageKNative         = "docker.io/rancher/k3s:v1.32.1-k3s1"
-	kNativeNamespace        = "knative-serving"
-	kNativeActivator        = "deployment/activator"
-	kNativeAutoscaler       = "deployment/autoscaler"
-	kNativeController       = "deployment/controller"
-	kNativeWebhook          = "deployment/webhook"
-	kNativeNetworkConfigMap = "configmap/config-network"
-	kNativeDomainConfigMap  = "configmap/config-domain"
-	KNativeSkipTests        = "visibility/split,visibility/path,visibility,update,headers/probe,hosts/multiple,tls"
+	knativeNamespace        = "knative-serving"
+	knativeActivator        = "deployment/activator"
+	knativeAutoscaler       = "deployment/autoscaler"
+	knativeController       = "deployment/controller"
+	knativeWebhook          = "deployment/webhook"
+	knativeNetworkConfigMap = "configmap/config-network"
+	knativeDomainConfigMap  = "configmap/config-domain"
+	knativeSkipTests        = "visibility/split,visibility/path,visibility,update,headers/probe,hosts/multiple,tls"
 )
 
 var imageNames = []string{
@@ -48,7 +50,7 @@ var imageNames = []string{
 	"ko.local/timeout:latest",
 }
 
-type KNativeConformanceSuite struct {
+type KnativeConformanceSuite struct {
 	BaseSuite
 
 	k3sContainer *k3s.K3sContainer
@@ -57,12 +59,11 @@ type KNativeConformanceSuite struct {
 	clientSet    *kclientset.Clientset
 }
 
-func TestKNativeConformanceSuite(t *testing.T) {
-	suite.Run(t, new(KNativeConformanceSuite))
+func TestKnativeConformanceSuite(t *testing.T) {
+	suite.Run(t, new(KnativeConformanceSuite))
 }
 
-func (s *KNativeConformanceSuite) SetupSuite() {
-
+func (s *KnativeConformanceSuite) SetupSuite() {
 	s.BaseSuite.SetupSuite()
 
 	// Avoid panic.
@@ -73,7 +74,7 @@ func (s *KNativeConformanceSuite) SetupSuite() {
 		s.T().Fatal(err)
 	}
 
-	ctx := context.Background()
+	ctx := s.T().Context()
 
 	// Ensure image is available locally.
 	images, err := provider.ListImages(ctx)
@@ -88,7 +89,7 @@ func (s *KNativeConformanceSuite) SetupSuite() {
 	}
 
 	s.k3sContainer, err = k3s.Run(ctx,
-		k3sImageKNative,
+		k3sImage,
 		k3s.WithManifest("./fixtures/knative/00-knative-crd-v1.17.0.yml"),
 		k3s.WithManifest("./fixtures/knative/01-rbac.yml"),
 		k3s.WithManifest("./fixtures/knative/02-traefik.yml"),
@@ -111,32 +112,32 @@ func (s *KNativeConformanceSuite) SetupSuite() {
 		s.T().Fatalf("Traefik pod is not ready: %v", err)
 	}
 
-	exitCode, _, err = s.k3sContainer.Exec(ctx, []string{"kubectl", "patch", "-n", kNativeNamespace, kNativeNetworkConfigMap, "--type", "merge", "-p", `{"data":{"ingress.class":"traefik.ingress.networking.knative.dev"}}`})
+	exitCode, _, err = s.k3sContainer.Exec(ctx, []string{"kubectl", "patch", "-n", knativeNamespace, knativeNetworkConfigMap, "--type", "merge", "-p", `{"data":{"ingress.class":"traefik.ingress.networking.knative.dev"}}`})
 	if err != nil || exitCode > 0 {
 		s.T().Fatalf("Failed to update network config map: %v", err)
 	}
 
-	exitCode, _, err = s.k3sContainer.Exec(ctx, []string{"kubectl", "patch", "-n", kNativeNamespace, kNativeDomainConfigMap, "--type", "merge", "-p", `{"data":{"example.com":""}}`})
+	exitCode, _, err = s.k3sContainer.Exec(ctx, []string{"kubectl", "patch", "-n", knativeNamespace, knativeDomainConfigMap, "--type", "merge", "-p", `{"data":{"example.com":""}}`})
 	if err != nil || exitCode > 0 {
 		s.T().Fatalf("Failed to update network config map: %v", err)
 	}
 
-	exitCode, _, err = s.k3sContainer.Exec(ctx, []string{"kubectl", "wait", "-n", kNativeNamespace, kNativeActivator, "--for=condition=Available", "--timeout=30s"})
+	exitCode, _, err = s.k3sContainer.Exec(ctx, []string{"kubectl", "wait", "-n", knativeNamespace, knativeActivator, "--for=condition=Available", "--timeout=30s"})
 	if err != nil || exitCode > 0 {
 		s.T().Fatalf("Activator pod is not ready: %v", err)
 	}
 
-	exitCode, _, err = s.k3sContainer.Exec(ctx, []string{"kubectl", "wait", "-n", kNativeNamespace, kNativeController, "--for=condition=Available", "--timeout=30s"})
+	exitCode, _, err = s.k3sContainer.Exec(ctx, []string{"kubectl", "wait", "-n", knativeNamespace, knativeController, "--for=condition=Available", "--timeout=30s"})
 	if err != nil || exitCode > 0 {
 		s.T().Fatalf("Controller pod is not ready: %v", err)
 	}
 
-	exitCode, _, err = s.k3sContainer.Exec(ctx, []string{"kubectl", "wait", "-n", kNativeNamespace, kNativeAutoscaler, "--for=condition=Available", "--timeout=30s"})
+	exitCode, _, err = s.k3sContainer.Exec(ctx, []string{"kubectl", "wait", "-n", knativeNamespace, knativeAutoscaler, "--for=condition=Available", "--timeout=30s"})
 	if err != nil || exitCode > 0 {
 		s.T().Fatalf("Autoscaler pod is not ready: %v", err)
 	}
 
-	exitCode, _, err = s.k3sContainer.Exec(ctx, []string{"kubectl", "wait", "-n", kNativeNamespace, kNativeWebhook, "--for=condition=Available", "--timeout=30s"})
+	exitCode, _, err = s.k3sContainer.Exec(ctx, []string{"kubectl", "wait", "-n", knativeNamespace, knativeWebhook, "--for=condition=Available", "--timeout=30s"})
 	if err != nil || exitCode > 0 {
 		s.T().Fatalf("Webhook pod is not ready: %v", err)
 	}
@@ -161,7 +162,7 @@ func (s *KNativeConformanceSuite) SetupSuite() {
 	}
 }
 
-func (s *KNativeConformanceSuite) TearDownSuite() {
+func (s *KnativeConformanceSuite) TearDownSuite() {
 	ctx := context.Background()
 
 	if s.T().Failed() || *showLog {
@@ -187,7 +188,7 @@ func (s *KNativeConformanceSuite) TearDownSuite() {
 	s.BaseSuite.TearDownSuite()
 }
 
-func (s *KNativeConformanceSuite) TestKNativeConformance() {
+func (s *KnativeConformanceSuite) TestKnativeConformance() {
 	// Wait for traefik to start
 	k3sContainerIP, err := s.k3sContainer.ContainerIP(context.Background())
 	require.NoError(s.T(), err)
@@ -228,10 +229,10 @@ func (s *KNativeConformanceSuite) TestKNativeConformance() {
 		s.T().Fatal(err)
 	}
 
-	err = flag.CommandLine.Set("skip-tests", KNativeSkipTests)
+	err = flag.CommandLine.Set("skip-tests", knativeSkipTests)
 	if err != nil {
 		s.T().Fatal(err)
 	}
-	ingress.RunConformance(s.T())
 
+	ingress.RunConformance(s.T())
 }

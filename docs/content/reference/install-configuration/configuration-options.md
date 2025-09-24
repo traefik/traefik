@@ -495,4 +495,4 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | <a id="tracing-resourceattributes-name" href="#tracing-resourceattributes-name" title="#tracing-resourceattributes-name">tracing.resourceattributes._name_</a> | Defines additional resource attributes (key:value). | |
 | <a id="tracing-safequeryparams" href="#tracing-safequeryparams" title="#tracing-safequeryparams">tracing.safequeryparams</a> | Query params to not redact. | |
 | <a id="tracing-samplerate" href="#tracing-samplerate" title="#tracing-samplerate">tracing.samplerate</a> | Sets the rate between 0.0 and 1.0 of requests to trace. | 1.000000 |
-| <a id="tracing-servicename" href="#tracing-servicename" title="#tracing-servicename">tracing.servicename</a> | Sets the name for this service. | traefik |
+| <a id="tracing-servicename" href="#tracing-servicename" title="#tracing-servicename">tracing.servicename</a> | Defines the service name resource attribute. | traefik |

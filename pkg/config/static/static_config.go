@@ -19,11 +19,11 @@ import (
 	"github.com/traefik/traefik/v3/pkg/provider/ecs"
 	"github.com/traefik/traefik/v3/pkg/provider/file"
 	"github.com/traefik/traefik/v3/pkg/provider/http"
-	knativecrd "github.com/traefik/traefik/v3/pkg/provider/knative/crd"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/gateway"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/ingress"
 	ingressnginx "github.com/traefik/traefik/v3/pkg/provider/kubernetes/ingress-nginx"
+	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/knative"
 	"github.com/traefik/traefik/v3/pkg/provider/kv/consul"
 	"github.com/traefik/traefik/v3/pkg/provider/kv/etcd"
 	"github.com/traefik/traefik/v3/pkg/provider/kv/redis"
@@ -206,7 +206,7 @@ func (a *LifeCycle) SetDefaults() {
 
 // Tracing holds the tracing configuration.
 type Tracing struct {
-	ServiceName             string             `description:"Sets the name for this service." json:"serviceName,omitempty" toml:"serviceName,omitempty" yaml:"serviceName,omitempty" export:"true"`
+	ServiceName             string             `description:"Defines the service name resource attribute." json:"serviceName,omitempty" toml:"serviceName,omitempty" yaml:"serviceName,omitempty" export:"true"`
 	ResourceAttributes      map[string]string  `description:"Defines additional resource attributes (key:value)." json:"resourceAttributes,omitempty" toml:"resourceAttributes,omitempty" yaml:"resourceAttributes,omitempty" export:"true"`
 	CapturedRequestHeaders  []string           `description:"Request headers to add as attributes for server and client spans." json:"capturedRequestHeaders,omitempty" toml:"capturedRequestHeaders,omitempty" yaml:"capturedRequestHeaders,omitempty" export:"true"`
 	CapturedResponseHeaders []string           `description:"Response headers to add as attributes for server and client spans." json:"capturedResponseHeaders,omitempty" toml:"capturedResponseHeaders,omitempty" yaml:"capturedResponseHeaders,omitempty" export:"true"`
@@ -239,7 +239,7 @@ type Providers struct {
 	KubernetesIngress      *ingress.Provider              `description:"Enable Kubernetes backend with default settings." json:"kubernetesIngress,omitempty" toml:"kubernetesIngress,omitempty" yaml:"kubernetesIngress,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	KubernetesIngressNGINX *ingressnginx.Provider         `description:"Enable Kubernetes Ingress NGINX provider." json:"kubernetesIngressNGINX,omitempty" toml:"kubernetesIngressNGINX,omitempty" yaml:"kubernetesIngressNGINX,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	KubernetesCRD          *crd.Provider                  `description:"Enable Kubernetes backend with default settings." json:"kubernetesCRD,omitempty" toml:"kubernetesCRD,omitempty" yaml:"kubernetesCRD,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
-	Knative                *knativecrd.Provider           `description:"Enable Knative backend with default settings." json:"knative,omitempty" toml:"knative,omitempty" yaml:"knative,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	Knative                *knative.Provider              `description:"Enable Knative backend with default settings." json:"knative,omitempty" toml:"knative,omitempty" yaml:"knative,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	KubernetesGateway      *gateway.Provider              `description:"Enable Kubernetes gateway api provider with default settings." json:"kubernetesGateway,omitempty" toml:"kubernetesGateway,omitempty" yaml:"kubernetesGateway,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	Rest                   *rest.Provider                 `description:"Enable Rest backend with default settings." json:"rest,omitempty" toml:"rest,omitempty" yaml:"rest,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	ConsulCatalog          *consulcatalog.ProviderBuilder `description:"Enable ConsulCatalog backend with default settings." json:"consulCatalog,omitempty" toml:"consulCatalog,omitempty" yaml:"consulCatalog,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`

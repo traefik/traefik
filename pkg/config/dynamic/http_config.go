@@ -173,8 +173,11 @@ type HighestRandomWeight struct {
 
 // WRRService is a reference to a service load-balanced with weighted round-robin.
 type WRRService struct {
-	Name    string            `json:"name,omitempty" toml:"name,omitempty" yaml:"name,omitempty" export:"true"`
-	Weight  *int              `json:"weight,omitempty" toml:"weight,omitempty" yaml:"weight,omitempty" export:"true"`
+	Name   string `json:"name,omitempty" toml:"name,omitempty" yaml:"name,omitempty" export:"true"`
+	Weight *int   `json:"weight,omitempty" toml:"weight,omitempty" yaml:"weight,omitempty" export:"true"`
+
+	// Headers defines the HTTP headers that should be added to the request when calling the service.
+	// This is required by the Knative implementation which expects specific headers to be sent.
 	Headers map[string]string `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
 
 	// Status defines an HTTP status code that should be returned when calling the service.
