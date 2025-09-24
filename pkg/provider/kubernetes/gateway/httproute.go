@@ -563,7 +563,8 @@ func (p *Provider) loadHTTPServers(ctx context.Context, namespace string, route 
 
 	for _, ba := range backendAddresses {
 		lb.Servers = append(lb.Servers, dynamic.Server{
-			URL: fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(ba.IP, strconv.Itoa(int(ba.Port)))),
+			URL:    fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(ba.IP, strconv.Itoa(int(ba.Port)))),
+			Weight: ba.Weight,
 		})
 	}
 	return lb, serversTransport, nil
