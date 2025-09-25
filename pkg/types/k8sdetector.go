@@ -44,9 +44,9 @@ func (K8sAttributesDetector) Detect(ctx context.Context) (*resource.Resource, er
 	podName := os.Getenv("POD_NAME")
 	if podName == "" {
 		podName, err = os.Hostname()
-	}
-	if err != nil {
-		return nil, fmt.Errorf("getting pod name: %w", err)
+		if err != nil {
+			return nil, fmt.Errorf("getting pod name: %w", err)
+		}
 	}
 
 	podNamespaceBytes, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
