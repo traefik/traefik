@@ -16,6 +16,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/tls"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	knativenetworking "knative.dev/networking/pkg/apis/networking"
 	knativenetworkingv1alpha1 "knative.dev/networking/pkg/apis/networking/v1alpha1"
 )
 
@@ -36,7 +37,7 @@ func (p *Provider) loadKnativeIngressRouteConfiguration(ctx context.Context, cli
 	}
 	var ingressStatusList []*knativenetworkingv1alpha1.Ingress
 
-	for _, ingressRoute := range client.GetKnativeIngressRoutes() {
+	for _, ingressRoute := range client.ListIngresses() {
 		logger := log.Ctx(ctx).With().Str("KNativeIngress", ingressRoute.Name).Str("namespace",
 			ingressRoute.Namespace).Logger()
 
@@ -46,7 +47,7 @@ func (p *Provider) loadKnativeIngressRouteConfiguration(ctx context.Context, cli
 			continue
 		}
 
-		if !(traefikDefaultIngressClass == ingressRoute.Annotations[annotationKubernetesIngressClass]) {
+		if !(traefikDefaultIngressClass == ingressRoute.Annotations[knativenetworking.IngressClassAnnotationKey]) {
 			logger.Debug().Msgf("Skipping Ingress %s/%s", ingressRoute.Namespace, ingressRoute.Name)
 			continue
 		}

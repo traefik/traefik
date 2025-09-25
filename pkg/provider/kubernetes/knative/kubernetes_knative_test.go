@@ -17,7 +17,7 @@ import (
 
 func TestBuildKnativeService(t *testing.T) {
 	// Create a mock client
-	client := &MockClient{
+	client := &clientMock{
 		services: []*corev1.Service{
 			{
 				ObjectMeta: metav1.ObjectMeta{
@@ -88,7 +88,7 @@ func TestBuildKnativeService(t *testing.T) {
 }
 
 func TestLoadKnativeServers(t *testing.T) {
-	mockClient := &MockClient{
+	mockClient := &clientMock{
 		services: []*corev1.Service{
 			{
 				ObjectMeta: metav1.ObjectMeta{
@@ -152,7 +152,7 @@ func TestLoadKnativeServers(t *testing.T) {
 }
 
 func TestLoadKnativeIngressRouteConfiguration(t *testing.T) {
-	mockClient := &MockClient{
+	mockClient := &clientMock{
 		services: []*corev1.Service{
 			{
 				ObjectMeta: metav1.ObjectMeta{

@@ -20,18 +20,12 @@ import (
 	"github.com/traefik/traefik/v3/pkg/types"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	knativenetworking "knative.dev/networking/pkg/apis/networking"
 	knativenetworkingv1alpha1 "knative.dev/networking/pkg/apis/networking/v1alpha1"
 )
 
 const (
-	annotationKubernetesIngressClass = knativenetworking.IngressClassAnnotationKey
-	traefikDefaultIngressClass       = "traefik.ingress.networking.knative.dev"
-)
-
-const (
 	providerName               = "knative"
-	providerNamespaceSeparator = "@"
+	traefikDefaultIngressClass = "traefik.ingress.networking.knative.dev"
 )
 
 // Provider holds configurations of the provider.
@@ -84,64 +78,6 @@ func (p *Provider) newK8sClient(ctx context.Context, labelSelector string) (*cli
 	}
 
 	return client, err
-}
-
-func getTLS(k8sClient Client, secretName, namespace string) (*tls.CertAndStores, error) {
-	secret, exists, err := k8sClient.GetSecret(namespace, secretName)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch secret %s/%s: %w", namespace, secretName, err)
-	}
-	if !exists {
-		return nil, fmt.Errorf("secret %s/%s does not exist", namespace, secretName)
-	}
-
-	cert, key, err := getCertificateBlocks(secret, namespace, secretName)
-	if err != nil {
-		return nil, err
-	}
-
-	return &tls.CertAndStores{
-		Certificate: tls.Certificate{
-			CertFile: types.FileOrContent(cert),
-			KeyFile:  types.FileOrContent(key),
-		},
-	}, nil
-}
-
-func getCertificateBlocks(secret *corev1.Secret, namespace, secretName string) (string, string, error) {
-	var missingEntries []string
-
-	tlsCrtData, tlsCrtExists := secret.Data["tls.crt"]
-	if !tlsCrtExists {
-		missingEntries = append(missingEntries, "tls.crt")
-	}
-
-	tlsKeyData, tlsKeyExists := secret.Data["tls.key"]
-	if !tlsKeyExists {
-		missingEntries = append(missingEntries, "tls.key")
-	}
-
-	if len(missingEntries) > 0 {
-		return "", "", fmt.Errorf("secret %s/%s is missing the following TLS data entries: %s",
-			namespace, secretName, strings.Join(missingEntries, ", "))
-	}
-
-	cert := string(tlsCrtData)
-	if cert == "" {
-		missingEntries = append(missingEntries, "tls.crt")
-	}
-
-	key := string(tlsKeyData)
-	if key == "" {
-		missingEntries = append(missingEntries, "tls.key")
-	}
-
-	if len(missingEntries) > 0 {
-		return "", "", fmt.Errorf("secret %s/%s contains the following empty TLS data entries: %s",
-			namespace, secretName, strings.Join(missingEntries, ", "))
-	}
-
-	return cert, key, nil
 }
 
 // Init the provider.
@@ -264,9 +200,82 @@ func (p *Provider) updateKnativeIngressStatus(client Client, ingressRoute *knati
 
 		ingressRoute.Status.MarkNetworkConfigured()
 		ingressRoute.Status.ObservedGeneration = ingressRoute.GetGeneration()
-		return client.UpdateKnativeIngressStatus(ingressRoute)
+		return client.UpdateIngressStatus(ingressRoute)
 	}
 	return nil
+}
+
+func getTLS(k8sClient Client, secretName, namespace string) (*tls.CertAndStores, error) {
+	secret, exists, err := k8sClient.GetSecret(namespace, secretName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch secret %s/%s: %w", namespace, secretName, err)
+	}
+	if !exists {
+		return nil, fmt.Errorf("secret %s/%s does not exist", namespace, secretName)
+	}
+
+	cert, key, err := getCertificateBlocks(secret, namespace, secretName)
+	if err != nil {
+		return nil, err
+	}
+
+	return &tls.CertAndStores{
+		Certificate: tls.Certificate{
+			CertFile: types.FileOrContent(cert),
+			KeyFile:  types.FileOrContent(key),
+		},
+	}, nil
+}
+
+func getCertificateBlocks(secret *corev1.Secret, namespace, secretName string) (string, string, error) {
+	var missingEntries []string
+
+	tlsCrtData, tlsCrtExists := secret.Data["tls.crt"]
+	if !tlsCrtExists {
+		missingEntries = append(missingEntries, "tls.crt")
+	}
+
+	tlsKeyData, tlsKeyExists := secret.Data["tls.key"]
+	if !tlsKeyExists {
+		missingEntries = append(missingEntries, "tls.key")
+	}
+
+	if len(missingEntries) > 0 {
+		return "", "", fmt.Errorf("secret %s/%s is missing the following TLS data entries: %s",
+			namespace, secretName, strings.Join(missingEntries, ", "))
+	}
+
+	cert := string(tlsCrtData)
+	if cert == "" {
+		missingEntries = append(missingEntries, "tls.crt")
+	}
+
+	key := string(tlsKeyData)
+	if key == "" {
+		missingEntries = append(missingEntries, "tls.key")
+	}
+
+	if len(missingEntries) > 0 {
+		return "", "", fmt.Errorf("secret %s/%s contains the following empty TLS data entries: %s",
+			namespace, secretName, strings.Join(missingEntries, ", "))
+	}
+
+	return cert, key, nil
+}
+
+func getTLSConfig(tlsConfigs map[string]*tls.CertAndStores) []*tls.CertAndStores {
+	var secretNames []string
+	for secretName := range tlsConfigs {
+		secretNames = append(secretNames, secretName)
+	}
+	sort.Strings(secretNames)
+
+	var configs []*tls.CertAndStores
+	for _, secretName := range secretNames {
+		configs = append(configs, tlsConfigs[secretName])
+	}
+
+	return configs
 }
 
 func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *safe.Pool, eventsChan <-chan interface{}) chan interface{} {
@@ -298,19 +307,4 @@ func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *s
 	})
 
 	return eventsChanBuffered
-}
-
-func getTLSConfig(tlsConfigs map[string]*tls.CertAndStores) []*tls.CertAndStores {
-	var secretNames []string
-	for secretName := range tlsConfigs {
-		secretNames = append(secretNames, secretName)
-	}
-	sort.Strings(secretNames)
-
-	var configs []*tls.CertAndStores
-	for _, secretName := range secretNames {
-		configs = append(configs, tlsConfigs[secretName])
-	}
-
-	return configs
 }

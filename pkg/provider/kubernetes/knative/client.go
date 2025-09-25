@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	corev1 "k8s.io/api/core/v1"
 	kerror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,7 +16,6 @@ import (
 	kinformers "k8s.io/client-go/informers"
 	kclientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
 	knativenetworkingv1alpha1 "knative.dev/networking/pkg/apis/networking/v1alpha1"
 	knativenetworkingclientset "knative.dev/networking/pkg/client/clientset/versioned"
@@ -24,35 +24,18 @@ import (
 
 const resyncPeriod = 10 * time.Minute
 
-type resourceEventHandler struct {
-	ev chan<- interface{}
-}
-
-func (reh *resourceEventHandler) OnAdd(obj interface{}, isInInitialList bool) {
-	eventHandlerFunc(reh.ev, obj)
-}
-
-func (reh *resourceEventHandler) OnUpdate(oldObj, newObj interface{}) {
-	eventHandlerFunc(reh.ev, newObj)
-}
-
-func (reh *resourceEventHandler) OnDelete(obj interface{}) {
-	eventHandlerFunc(reh.ev, obj)
-}
-
 // Client is a client for the Provider master.
 // WatchAll starts the watch of the Provider resources and updates the stores.
 // The stores can then be accessed via the Get* functions.
 type Client interface {
 	WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error)
-
-	GetKnativeIngressRoute(namespace, name string) (*knativenetworkingv1alpha1.Ingress, bool, error)
-	UpdateKnativeIngressStatus(ingress *knativenetworkingv1alpha1.Ingress) error
-	GetKnativeIngressRoutes() []*knativenetworkingv1alpha1.Ingress
+	ListIngresses() []*knativenetworkingv1alpha1.Ingress
+	GetIngress(namespace, name string) (*knativenetworkingv1alpha1.Ingress, bool, error)
 	GetServerlessService(namespace, name string) (*knativenetworkingv1alpha1.ServerlessService, bool, error)
 	GetService(namespace, name string) (*corev1.Service, bool, error)
 	GetSecret(namespace, name string) (*corev1.Secret, bool, error)
 	GetEndpoints(namespace, name string) (*corev1.Endpoints, bool, error)
+	UpdateIngressStatus(ingress *knativenetworkingv1alpha1.Ingress) error
 }
 
 // TODO: add tests for the clientWrapper (and its methods) itself.
@@ -143,7 +126,7 @@ func newExternalClusterClient(endpoint, token, caFilePath string) (*clientWrappe
 // WatchAll starts namespace-specific controllers for all relevant kinds.
 func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error) {
 	eventCh := make(chan interface{}, 1)
-	eventHandler := c.newResourceEventHandler(eventCh)
+	eventHandler := &k8s.ResourceEventHandler{Ev: eventCh}
 
 	if len(namespaces) == 0 {
 		namespaces = []string{metav1.NamespaceAll}
@@ -205,7 +188,7 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 	return eventCh, nil
 }
 
-func (c *clientWrapper) GetKnativeIngressRoutes() []*knativenetworkingv1alpha1.Ingress {
+func (c *clientWrapper) ListIngresses() []*knativenetworkingv1alpha1.Ingress {
 	var result []*knativenetworkingv1alpha1.Ingress
 
 	for ns, factory := range c.factoriesKnativeNetworking {
@@ -219,7 +202,7 @@ func (c *clientWrapper) GetKnativeIngressRoutes() []*knativenetworkingv1alpha1.I
 	return result
 }
 
-func (c *clientWrapper) UpdateKnativeIngressStatus(ingressRoute *knativenetworkingv1alpha1.Ingress) error {
+func (c *clientWrapper) UpdateIngressStatus(ingressRoute *knativenetworkingv1alpha1.Ingress) error {
 	_, err := c.csKnativeNetworking.NetworkingV1alpha1().Ingresses(ingressRoute.Namespace).UpdateStatus(context.TODO(), ingressRoute, metav1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to update knative ingress status %s/%s: %w", ingressRoute.Namespace,
@@ -272,15 +255,27 @@ func (c *clientWrapper) GetSecret(namespace, name string) (*corev1.Secret, bool,
 	return secret, exist, err
 }
 
-func (c *clientWrapper) GetKnativeIngressRoute(namespace, name string) (*knativenetworkingv1alpha1.Ingress, bool,
-	error,
-) {
+func (c *clientWrapper) GetIngress(namespace, name string) (*knativenetworkingv1alpha1.Ingress, bool, error) {
 	if !c.isWatchedNamespace(namespace) {
 		return nil, false, fmt.Errorf("failed to get ingress %s/%s: namespace is not within watched namespaces", namespace, name)
 	}
 	ingress, err := c.factoriesKnativeNetworking[c.lookupNamespace(namespace)].Networking().V1alpha1().Ingresses().Lister().Ingresses(namespace).Get(name)
 	exist, err := translateNotFoundError(err)
 	return ingress, exist, err
+}
+
+// isWatchedNamespace checks to ensure that the namespace is being watched before we request
+// it to ensure we don't panic by requesting an out-of-watch object.
+func (c *clientWrapper) isWatchedNamespace(ns string) bool {
+	if c.isNamespaceAll {
+		return true
+	}
+	for _, watchedNamespace := range c.watchedNamespaces {
+		if watchedNamespace == ns {
+			return true
+		}
+	}
+	return false
 }
 
 // lookupNamespace returns the lookup namespace key for the given namespace.
@@ -296,30 +291,6 @@ func (c *clientWrapper) lookupNamespace(ns string) string {
 	return ns
 }
 
-func (c *clientWrapper) newResourceEventHandler(events chan<- interface{}) cache.ResourceEventHandler {
-	return &cache.FilteringResourceEventHandler{
-		FilterFunc: func(obj interface{}) bool {
-			// Ignore Ingresses that do not match our custom label selector.
-			// switch v := obj.(type) {
-			// default:
-			// 	return true
-			// }
-			return true
-		},
-		Handler: &resourceEventHandler{ev: events},
-	}
-}
-
-// eventHandlerFunc will pass the obj on to the events channel or drop it.
-// This is so passing the events along won't block in the case of high volume.
-// The events are only used for signaling anyway so dropping a few is ok.
-func eventHandlerFunc(events chan<- interface{}, obj interface{}) {
-	select {
-	case events <- obj:
-	default:
-	}
-}
-
 // translateNotFoundError will translate a "not found" error to a boolean return
 // value which indicates if the resource exists and a nil error.
 func translateNotFoundError(err error) (bool, error) {
@@ -327,18 +298,4 @@ func translateNotFoundError(err error) (bool, error) {
 		return false, nil
 	}
 	return err == nil, err
-}
-
-// isWatchedNamespace checks to ensure that the namespace is being watched before we request
-// it to ensure we don't panic by requesting an out-of-watch object.
-func (c *clientWrapper) isWatchedNamespace(ns string) bool {
-	if c.isNamespaceAll {
-		return true
-	}
-	for _, watchedNamespace := range c.watchedNamespaces {
-		if watchedNamespace == ns {
-			return true
-		}
-	}
-	return false
 }
