@@ -160,7 +160,7 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 			serviceName: "test",
 			service: &dynamic.ServersLoadBalancer{
 				Strategy:       dynamic.BalancerStrategyWRR,
-				PassHostHeader: boolPtr(true),
+				PassHostHeader: pointer(true),
 				Servers: []dynamic.Server{
 					{
 						URL: server1.URL,
@@ -479,16 +479,6 @@ func Test1xxResponses(t *testing.T) {
 	}
 }
 
-type serviceBuilderFunc func(ctx context.Context, serviceName string) (http.Handler, error)
-
-func (s serviceBuilderFunc) BuildHTTP(ctx context.Context, serviceName string) (http.Handler, error) {
-	return s(ctx, serviceName)
-}
-
-type internalHandler struct{}
-
-func (internalHandler) ServeHTTP(_ http.ResponseWriter, _ *http.Request) {}
-
 func TestManager_ServiceBuilders(t *testing.T) {
 	var internalHandler internalHandler
 
@@ -605,7 +595,15 @@ func TestMultipleTypeOnBuildHTTP(t *testing.T) {
 	assert.Error(t, err, "cannot create service: multi-types service not supported, consider declaring two different pieces of service instead")
 }
 
-func boolPtr(v bool) *bool { return &v }
+type serviceBuilderFunc func(ctx context.Context, serviceName string) (http.Handler, error)
+
+func (s serviceBuilderFunc) BuildHTTP(ctx context.Context, serviceName string) (http.Handler, error) {
+	return s(ctx, serviceName)
+}
+
+type internalHandler struct{}
+
+func (internalHandler) ServeHTTP(_ http.ResponseWriter, _ *http.Request) {}
 
 type forwarderMock struct{}
 
