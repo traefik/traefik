@@ -211,6 +211,7 @@ nav:
       - 'Metrics': 'observe/metrics.md'
       - 'Tracing': 'observe/tracing.md'
   - 'Extend': 'extend/extend-traefik.md'
+  - '<span class="nav-link-with-icon">Govern <img src="https://doc.traefik.io/traefik-hub/img/ps-traefik-hub-logo-light.svg" class="menu-icon" alt="Traefik Hub API Gateway"></span>': 'govern/index.md'
   - 'Migrate':
       - 'Traefik v3 minor migrations': 'migrate/v3.md'
       - 'Traefik v2 to v3':
@@ -326,6 +327,7 @@ nav:
           - 'Kubernetes CRD' :
             - 'HTTP' :
               - 'IngressRoute' : 'reference/routing-configuration/kubernetes/crd/http/ingressroute.md'
+              - 'Service' : 'reference/routing-configuration/kubernetes/crd/http/service.md'
               - 'TraefikService' : 'reference/routing-configuration/kubernetes/crd/http/traefikservice.md'
               - 'ServersTransport' : 'reference/routing-configuration/kubernetes/crd/http/serverstransport.md'
               - 'Middleware' : 'reference/routing-configuration/kubernetes/crd/http/middleware.md'
