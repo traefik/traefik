@@ -41,7 +41,10 @@ func (K8sAttributesDetector) Detect(ctx context.Context) (*resource.Resource, er
 		return nil, fmt.Errorf("creating Kubernetes client: %w", err)
 	}
 
-	podName, err := os.Hostname()
+	podName := os.Getenv("POD_NAME")
+	if podName == "" {
+		podName, err = os.Hostname()
+	}
 	if err != nil {
 		return nil, fmt.Errorf("getting pod name: %w", err)
 	}
@@ -53,7 +56,7 @@ func (K8sAttributesDetector) Detect(ctx context.Context) (*resource.Resource, er
 	podNamespace := string(podNamespaceBytes)
 
 	pod, err := client.CoreV1().Pods(podNamespace).Get(ctx, podName, metav1.GetOptions{})
-	if err != nil && kerror.IsForbidden(err) {
+	if err != nil && (kerror.IsForbidden(err) || kerror.IsNotFound(err)) {
 		log.Error().Err(err).Msg("Unable to build K8s resource attributes for Traefik pod")
 		return resource.Empty(), nil
 	}
