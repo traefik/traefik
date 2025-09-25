@@ -113,8 +113,6 @@ The `sourceCriterion` option defines what criterion is used to group requests as
 If several strategies are defined at the same time, an error will be raised.
 If none are set, the default is to use the request's remote address field (as an `ipStrategy`).
 
-Check out the [OIDC + RateLimit & DistributedRateLimit guide](../../../../secure/middleware/drl-oidc.md) to see this option in action.
-
 ### ipStrategy
 
 The `ipStrategy` option defines two parameters that configures how Traefik determines the client IP: `depth`, and `excludedIPs`.

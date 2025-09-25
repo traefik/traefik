@@ -19,7 +19,7 @@ import {
   Tooltip,
   VisuallyHidden,
 } from '@traefiklabs/faency'
-import { useEffect, useMemo, useState } from 'react'
+import { useContext, useEffect, useMemo, useState } from 'react'
 import { BsChevronDoubleRight, BsChevronDoubleLeft } from 'react-icons/bs'
 import { FiBookOpen, FiGithub, FiHelpCircle } from 'react-icons/fi'
 import { matchPath, useHref } from 'react-router'
@@ -34,9 +34,9 @@ import Logo from 'components/icons/Logo'
 import { PluginsIcon } from 'components/icons/PluginsIcon'
 import ThemeSwitcher from 'components/ThemeSwitcher'
 import TooltipText from 'components/TooltipText'
+import { VersionContext } from 'contexts/version'
 import useTotals from 'hooks/use-overview-totals'
 import { useIsDarkMode } from 'hooks/use-theme'
-import useVersion from 'hooks/use-version'
 import { Route, ROUTES } from 'routes'
 
 export const LAPTOP_BP = 1025
@@ -136,7 +136,7 @@ export const SideNav = ({
   isResponsive?: boolean
 }) => {
   const windowSize = useWindowSize()
-  const { version } = useVersion()
+  const { version } = useContext(VersionContext)
 
   const { http, tcp, udp } = useTotals()
 
@@ -228,7 +228,7 @@ export const SideNav = ({
         >
           <Logo height={isSmallScreen ? 36 : 56} isSmallScreen={isSmallScreen} />
           {!!version && !isSmallScreen && (
-            <TooltipText text={version.Version} css={{ maxWidth: 50, fontWeight: '$semiBold' }} isTruncated />
+            <TooltipText text={version} css={{ maxWidth: 50, fontWeight: '$semiBold' }} isTruncated />
           )}
         </Flex>
         {ROUTES.map((section, index) => (
@@ -289,23 +289,60 @@ export const SideNav = ({
 }
 
 export const TopNav = () => {
-  const { showHubButton, version } = useVersion()
+  const [hasHubButtonComponent, setHasHubButtonComponent] = useState(false)
+  const { showHubButton, version } = useContext(VersionContext)
   const isDarkMode = useIsDarkMode()
 
   const parsedVersion = useMemo(() => {
-    if (!version?.Version) {
+    if (!version) {
       return 'master'
     }
-    if (version.Version === 'dev') {
+    if (version === 'dev') {
       return 'master'
     }
-    const matches = version.Version.match(/^(v?\d+\.\d+)/)
+    const matches = version.match(/^(v?\d+\.\d+)/)
     return matches ? 'v' + matches[1] : 'master'
   }, [version])
 
+  useEffect(() => {
+    if (!showHubButton) {
+      setHasHubButtonComponent(false)
+      return
+    }
+
+    if (customElements.get('hub-button-app')) {
+      setHasHubButtonComponent(true)
+      return
+    }
+
+    const scripts: HTMLScriptElement[] = []
+    const createScript = (scriptSrc: string): HTMLScriptElement => {
+      const script = document.createElement('script')
+      script.src = scriptSrc
+      script.async = true
+      script.onload = () => {
+        setHasHubButtonComponent(customElements.get('hub-button-app') !== undefined)
+      }
+      scripts.push(script)
+      return script
+    }
+
+    // Source: https://github.com/traefik/traefiklabs-hub-button-app
+    document.head.appendChild(createScript('traefiklabs-hub-button-app/main-v1.js'))
+
+    return () => {
+      // Remove the scripts on unmount.
+      scripts.forEach((script) => {
+        if (script.parentNode) {
+          script.parentNode.removeChild(script)
+        }
+      })
+    }
+  }, [showHubButton])
+
   return (
     <Flex as="nav" role="navigation" justify="end" align="center" css={{ gap: '$2', mb: '$6' }}>
-      {showHubButton && (
+      {hasHubButtonComponent && (
         <Box css={{ fontFamily: '$rubik', fontWeight: '500 !important' }}>
           <hub-button-app
             key={`dark-mode-${isDarkMode}`}

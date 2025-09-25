@@ -25,10 +25,11 @@ entryPoints:
 
   websecure:
     address: :443
-    tls: {}
-    middlewares:
-      - auth@kubernetescrd
-      - strip@kubernetescrd
+    http:
+      tls: {}
+      middlewares:
+        - auth@kubernetescrd
+        - strip@kubernetescrd
 ```
 
 ```toml tab="File (TOML)"
@@ -151,18 +152,20 @@ are applied after the ones declared on the Entrypoint)
 entryPoints:
   web:
     address: :80
-    middlewares:
-      - auth@kubernetescrd
-      - strip@file
+    http:
+      middlewares:
+        - auth@kubernetescrd
+        - strip@file
 ```
 
 ```yaml tab="Helm Chart Values"
 ports:
   web:
     port: :80
-    middlewares:
-      - auth@kubernetescrd
-      - strip@file
+    http:
+      middlewares:
+        - auth@kubernetescrd
+        - strip@file
 ```
 
 ### encodeQuerySemicolons
