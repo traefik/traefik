@@ -87,7 +87,7 @@ func (m *mockNamespaceProvider) GetNamespace() string {
 	return m.namespace
 }
 
-func (m *mockNamespaceProvider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
+func (m *mockNamespaceProvider) Provide(_ chan<- dynamic.Message, _ *safe.Pool) error {
 	return nil
 }
 
@@ -108,5 +108,5 @@ func TestLaunchProviderWithNamespace(t *testing.T) {
 
 	// Test with empty namespace
 	providerEmptyNamespace := &mockNamespaceProvider{namespace: ""}
-	assert.Equal(t, "", providerEmptyNamespace.GetNamespace())
+	assert.Empty(t, providerEmptyNamespace.GetNamespace())
 }
