@@ -1,0 +1,21 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: traefik-gc
+spec:
+  controllerName: traefik.io/gateway-controller
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: gw1
+  namespace: default
+spec:
+  gatewayClassName: traefik-gc
+  addresses:
+    - type: Hostname
+      value: gw1.example.com
+  listeners:
+    - name: web
+      port: 80
+      protocol: HTTP

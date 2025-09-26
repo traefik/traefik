@@ -169,6 +169,10 @@ providers:
 
 ### `statusAddress`
 
+Note: If a Gateway resource specifies `spec.addresses`, Traefik will populate `status.addresses` with the same values.
+The provider-level statusAddress options below are used only as a fallback when `spec.addresses` is empty.
+This enables different Gateways to expose different addresses.
+
 #### `ip`
 
 _Optional, Default: ""_

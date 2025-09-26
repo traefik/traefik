@@ -312,12 +312,6 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) *dynamic.C
 		TLS: &dynamic.TLSConfiguration{},
 	}
 
-	addresses, err := p.gatewayAddresses()
-	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Msg("Unable to get Gateway status addresses")
-		return nil
-	}
-
 	gatewayClasses, err := p.client.ListGatewayClasses()
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("Unable to list GatewayClasses")
@@ -400,6 +394,23 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) *dynamic.C
 		for _, listener := range gatewayListeners {
 			if listener.GWName == gateway.Name && listener.GWNamespace == gateway.Namespace {
 				listeners = append(listeners, listener)
+			}
+		}
+
+		// Resolve status addresses: prefer Gateway.spec.addresses when provided; otherwise fall back to provider status address.
+		var addresses []gatev1.GatewayStatusAddress
+		if len(gateway.Spec.Addresses) > 0 {
+			for _, addr := range gateway.Spec.Addresses {
+				addresses = append(addresses, gatev1.GatewayStatusAddress{
+					Type:  addr.Type,
+					Value: addr.Value,
+				})
+			}
+		} else {
+			var err error
+			addresses, err = p.gatewayAddresses()
+			if err != nil {
+				logger.Warn().Err(err).Msg("Unable to get Gateway status addresses")
 			}
 		}
 

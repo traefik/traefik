@@ -8372,3 +8372,49 @@ func readResources(t *testing.T, paths []string) ([]runtime.Object, []runtime.Ob
 
 	return k8sObjects, gwObjects
 }
+
+func Test_GatewaySpecAddressesPopulatesStatus(t *testing.T) {
+	// This test validates that when spec.addresses is set on a Gateway,
+	// Traefik populates status.addresses with the same values.
+	t.Parallel()
+
+	yaml, err := os.ReadFile(filepath.FromSlash("./fixtures/gateway/gateway_spec_addresses.yml"))
+	if err != nil {
+		panic(err)
+	}
+
+	objs := k8s.MustParseYaml([]byte(yaml))
+	var gwObjs []runtime.Object
+	for _, o := range objs {
+		if o.GetObjectKind().GroupVersionKind().Group == "gateway.networking.k8s.io" {
+			gwObjs = append(gwObjs, o)
+		}
+	}
+
+	kubeClient := kubefake.NewSimpleClientset()
+	gwClient := newGatewaySimpleClientSet(t, gwObjs...)
+
+	client := newClientImpl(kubeClient, gwClient)
+
+	stopCh := make(chan struct{})
+	defer close(stopCh)
+
+	_, err = client.WatchAll([]string{"default"}, stopCh)
+	require.NoError(t, err)
+
+	p := Provider{
+		EntryPoints: map[string]Entrypoint{
+			"web": {Address: ":80"},
+		},
+		client: client,
+	}
+
+	// Trigger reconciliation and status update.
+	_ = p.loadConfigurationFromGateways(t.Context())
+
+	// Verify status.addresses reflect spec.addresses
+	updated, err := gwClient.GatewayV1().Gateways("default").Get(t.Context(), "gw1", metav1.GetOptions{})
+	require.NoError(t, err)
+	require.Len(t, updated.Status.Addresses, 1)
+	assert.Equal(t, "gw1.example.com", updated.Status.Addresses[0].Value)
+}
