@@ -27,9 +27,7 @@ const (
 	http2Protocol = "http2"
 )
 
-func (p *Provider) loadKnativeIngressRouteConfiguration(ctx context.Context, client Client,
-	tlsConfigs map[string]*tls.CertAndStores,
-) (*dynamic.HTTPConfiguration, []*knativenetworkingv1alpha1.Ingress) {
+func (p *Provider) loadKnativeIngressRouteConfiguration(ctx context.Context, client Client, tlsConfigs map[string]*tls.CertAndStores) (*dynamic.HTTPConfiguration, []*knativenetworkingv1alpha1.Ingress) {
 	conf := &dynamic.HTTPConfiguration{
 		Routers:     map[string]*dynamic.Router{},
 		Middlewares: map[string]*dynamic.Middleware{},
@@ -47,7 +45,7 @@ func (p *Provider) loadKnativeIngressRouteConfiguration(ctx context.Context, cli
 			continue
 		}
 
-		if !(traefikDefaultIngressClass == ingressRoute.Annotations[knativenetworking.IngressClassAnnotationKey]) {
+		if !(traefikIngressClassName == ingressRoute.Annotations[knativenetworking.IngressClassAnnotationKey]) {
 			logger.Debug().Msgf("Skipping Ingress %s/%s", ingressRoute.Namespace, ingressRoute.Name)
 			continue
 		}
