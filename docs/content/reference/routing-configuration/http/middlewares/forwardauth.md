@@ -81,6 +81,40 @@ The start of string (`^`) and end of string (`$`) anchors should be used to ensu
 
 Regular expressions and replacements can be tested using online tools such as [Go Playground](https://play.golang.org/p/mWU9p-wk2ru) or the [Regex101](https://regex101.com/r/58sIgx/2).
 
+### maxBodySize
+
+The `maxBodySize` option controls the maximum size of request bodies that will be forwarded to the authentication server.
+
+**⚠️ Important Security Consideration**
+
+By default, `maxBodySize` is not set (value: -1), which means request body size is unlimited. This can have significant security and performance implications:
+
+- **Security Risk**: Attackers can send extremely large request bodies, potentially causing DoS attacks or memory exhaustion
+- **Performance Impact**: Large request bodies consume memory and processing resources, affecting overall system performance
+- **Resource Consumption**: Unlimited body size can lead to unexpected resource usage patterns
+
+**Recommended Configuration**
+
+It is strongly recommended to set an appropriate `maxBodySize` value for your use case:
+
+```yaml
+# For most web applications (1MB limit)
+maxBodySize: 1048576  # 1MB in bytes
+
+# For API endpoints expecting larger payloads (10MB limit)  
+maxBodySize: 10485760  # 10MB in bytes
+
+# For file upload authentication (100MB limit)
+maxBodySize: 104857600  # 100MB in bytes
+```
+
+**Guidelines for Setting maxBodySize**
+
+- **Web Forms**: 1-5MB is typically sufficient for most form submissions
+- **API Endpoints**: Consider your largest expected JSON/XML payload + buffer
+- **File Uploads**: Set based on your maximum expected file size
+- **High-Traffic Services**: Use smaller limits to prevent resource exhaustion
+
 ## Forward-Request Headers
 
 The following request properties are provided to the forward-auth target endpoint as `X-Forwarded-` headers.
