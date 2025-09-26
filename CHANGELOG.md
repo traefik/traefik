@@ -1,4 +1,4 @@
-## [v3.5.3](https://github.com/traefik/traefik/tree/v3.5.3) (2025-09-23)
+## [v3.5.3](https://github.com/traefik/traefik/tree/v3.5.3) (2025-09-26)
 [All Commits](https://github.com/traefik/traefik/compare/v3.5.2...v3.5.3)
 
 **Bug fixes:**
