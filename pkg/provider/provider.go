@@ -13,9 +13,13 @@ type Provider interface {
 	Init() error
 }
 
-// NamespaceProvider defines methods for providers that have namespace information.
-type NamespaceProvider interface {
+// NamespacedProvider is implemented by providers that support namespace-scoped configurations,
+// where each configured namespace results in a dedicated provider instance.
+// This enables clear identification of which namespace each provider instance serves during
+// startup logging and operational monitoring.
+type NamespacedProvider interface {
 	Provider
-	// GetNamespace returns the namespace of the provider, if any.
+
+	// GetNamespace returns the specific namespace this provider instance is configured for.
 	GetNamespace() string
 }

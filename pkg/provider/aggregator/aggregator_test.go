@@ -78,35 +78,35 @@ func (p *providerMock) Provide(configurationChan chan<- dynamic.Message, pool *s
 	return nil
 }
 
-// mockNamespaceProvider is a mock implementation of NamespaceProvider for testing
-type mockNamespaceProvider struct {
+// mockNamespacedProvider is a mock implementation of NamespacedProvider for testing
+type mockNamespacedProvider struct {
 	namespace string
 }
 
-func (m *mockNamespaceProvider) GetNamespace() string {
+func (m *mockNamespacedProvider) GetNamespace() string {
 	return m.namespace
 }
 
-func (m *mockNamespaceProvider) Provide(_ chan<- dynamic.Message, _ *safe.Pool) error {
+func (m *mockNamespacedProvider) Provide(_ chan<- dynamic.Message, _ *safe.Pool) error {
 	return nil
 }
 
-func (m *mockNamespaceProvider) Init() error {
+func (m *mockNamespacedProvider) Init() error {
 	return nil
 }
 
 func TestLaunchProviderWithNamespace(t *testing.T) {
-	// Test that providers implementing NamespaceProvider are correctly identified
-	providerWithNamespace := &mockNamespaceProvider{namespace: "test-namespace"}
+	// Test that providers implementing NamespacedProvider are correctly identified
+	providerWithNamespace := &mockNamespacedProvider{namespace: "test-namespace"}
 
 	// Verify the interface implementation
-	var _ provider.NamespaceProvider = providerWithNamespace
+	var _ provider.NamespacedProvider = providerWithNamespace
 	var _ provider.Provider = providerWithNamespace
 
 	// Test GetNamespace method
 	assert.Equal(t, "test-namespace", providerWithNamespace.GetNamespace())
 
 	// Test with empty namespace
-	providerEmptyNamespace := &mockNamespaceProvider{namespace: ""}
+	providerEmptyNamespace := &mockNamespacedProvider{namespace: ""}
 	assert.Empty(t, providerEmptyNamespace.GetNamespace())
 }
