@@ -13,8 +13,8 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/tracing"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/metric"
-	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.37.0"
+	"go.opentelemetry.io/otel/semconv/v1.37.0/httpconv"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -69,8 +69,7 @@ func (t *wrapper) RoundTrip(req *http.Request) (*http.Response, error) {
 	}
 
 	if !observability.SemConvMetricsEnabled(req.Context()) ||
-		t.semConvMetricRegistry == nil ||
-		t.semConvMetricRegistry.HTTPClientRequestDuration() == nil {
+		t.semConvMetricRegistry == nil {
 		return response, err
 	}
 
@@ -89,21 +88,47 @@ func (t *wrapper) RoundTrip(req *http.Request) (*http.Response, error) {
 	attrs = append(attrs, semconv.ServerAddress(req.URL.Host))
 
 	_, port, splitErr := net.SplitHostPort(req.URL.Host)
+	var serverPort int
 	if splitErr != nil {
 		switch req.URL.Scheme {
 		case "http":
+			serverPort = 80
 			attrs = append(attrs, semconv.ServerPort(80))
 		case "https":
+			serverPort = 443
 			attrs = append(attrs, semconv.ServerPort(443))
 		}
 	} else {
 		intPort, _ := strconv.Atoi(port)
+		serverPort = intPort
 		attrs = append(attrs, semconv.ServerPort(intPort))
 	}
 
 	attrs = append(attrs, semconv.URLScheme(req.Header.Get("X-Forwarded-Proto")))
 
-	t.semConvMetricRegistry.HTTPClientRequestDuration().Record(req.Context(), end.Sub(start).Seconds(), metric.WithAttributes(attrs...))
+	// Convert method to httpconv enum
+	var methodAttr httpconv.RequestMethodAttr
+	switch req.Method {
+	case "GET":
+		methodAttr = httpconv.RequestMethodGet
+	case "POST":
+		methodAttr = httpconv.RequestMethodPost
+	case "PUT":
+		methodAttr = httpconv.RequestMethodPut
+	case "DELETE":
+		methodAttr = httpconv.RequestMethodDelete
+	case "HEAD":
+		methodAttr = httpconv.RequestMethodHead
+	case "OPTIONS":
+		methodAttr = httpconv.RequestMethodOptions
+	case "PATCH":
+		methodAttr = httpconv.RequestMethodPatch
+	default:
+		methodAttr = httpconv.RequestMethodOther
+	}
+
+	t.semConvMetricRegistry.HTTPClientRequestDuration().Record(req.Context(), end.Sub(start).Seconds(),
+		methodAttr, req.URL.Host, serverPort, attrs...)
 
 	return response, err
 }
