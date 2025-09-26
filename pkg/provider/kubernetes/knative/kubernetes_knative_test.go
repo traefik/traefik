@@ -68,15 +68,18 @@ func TestBuildKnativeService(t *testing.T) {
 		},
 	}
 
-	// Create a configBuilder instance
-	cb := configBuilder{client: client}
-
 	// Create maps for middleware and services
 	middleware := make(map[string]*dynamic.Middleware)
 	conf := make(map[string]*dynamic.Service)
 
+	provider := &Provider{
+		Entrypoints:         []string{"web"},
+		EntrypointsInternal: []string{"web-internal"},
+		k8sClient:           client,
+	}
+
 	// Call the method
-	results := cb.buildKnativeService(t.Context(), ingressRoute, middleware, conf, "test-service")
+	results := provider.buildKnativeService(t.Context(), ingressRoute, middleware, conf, "test-service")
 
 	// Assertions
 	require.Len(t, results, 1)
@@ -118,8 +121,75 @@ func TestLoadKnativeServers(t *testing.T) {
 			},
 		},
 	}
-
-	cb := configBuilder{client: mockClient}
+	provider := &Provider{
+		Entrypoints:         []string{"web"},
+		EntrypointsInternal: []string{"web-internal"},
+		k8sClient: &clientMock{
+			services: []*corev1.Service{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-service",
+						Namespace: "default",
+					},
+					Spec: corev1.ServiceSpec{
+						ClusterIP: "10.0.0.1",
+						Ports: []corev1.ServicePort{
+							{
+								Name: "http",
+								Port: 80,
+							},
+						},
+					},
+				},
+			},
+			serverlessService: []*knativenetworkingv1alpha1.ServerlessService{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-service",
+						Namespace: "default",
+					},
+					Status: knativenetworkingv1alpha1.ServerlessServiceStatus{
+						ServiceName: "test-service",
+					},
+				},
+			},
+			ingressRoute: []*knativenetworkingv1alpha1.Ingress{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "example-ingress",
+						Namespace: "default",
+						Annotations: map[string]string{
+							"networking.knative.dev/ingress.class": "traefik.ingress.networking.knative.dev",
+						},
+					},
+					Spec: knativenetworkingv1alpha1.IngressSpec{
+						Rules: []knativenetworkingv1alpha1.IngressRule{
+							{
+								Hosts: []string{"example.com"},
+								HTTP: &knativenetworkingv1alpha1.HTTPIngressRuleValue{
+									Paths: []knativenetworkingv1alpha1.HTTPIngressPath{
+										{
+											Path: "/",
+											Splits: []knativenetworkingv1alpha1.IngressBackendSplit{
+												{
+													IngressBackend: knativenetworkingv1alpha1.IngressBackend{
+														ServiceNamespace: "default",
+														ServiceName:      "test-service",
+														ServicePort:      intstr.FromInt(80),
+													},
+													Percent: 100,
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
 
 	t.Run("successful load of servers", func(t *testing.T) {
 		svc := traefikv1alpha1.Service{
@@ -130,7 +200,7 @@ func TestLoadKnativeServers(t *testing.T) {
 			},
 		}
 
-		servers, err := cb.loadKnativeServers("default", svc)
+		servers, err := provider.loadKnativeServers("default", svc)
 		require.NoError(t, err)
 		require.Len(t, servers, 1)
 		assert.Equal(t, "http://10.0.0.1:80", servers[0].URL)
@@ -145,67 +215,71 @@ func TestLoadKnativeServers(t *testing.T) {
 			},
 		}
 
-		_, err := cb.loadKnativeServers("default", svc)
+		_, err := provider.loadKnativeServers("default", svc)
 		require.Error(t, err)
-		assert.Equal(t, "service not found", err.Error())
+		assert.Equal(t, "service not found default/non-existent-service", err.Error())
 	})
 }
 
 func TestLoadKnativeIngressRouteConfiguration(t *testing.T) {
-	mockClient := &clientMock{
-		services: []*corev1.Service{
-			{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-service",
-					Namespace: "default",
-				},
-				Spec: corev1.ServiceSpec{
-					ClusterIP: "10.0.0.1",
-					Ports: []corev1.ServicePort{
-						{
-							Name: "http",
-							Port: 80,
+	provider := &Provider{
+		Entrypoints:         []string{"web"},
+		EntrypointsInternal: []string{"web-internal"},
+		k8sClient: &clientMock{
+			services: []*corev1.Service{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-service",
+						Namespace: "default",
+					},
+					Spec: corev1.ServiceSpec{
+						ClusterIP: "10.0.0.1",
+						Ports: []corev1.ServicePort{
+							{
+								Name: "http",
+								Port: 80,
+							},
 						},
 					},
 				},
 			},
-		},
-		serverlessService: []*knativenetworkingv1alpha1.ServerlessService{
-			{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-service",
-					Namespace: "default",
-				},
-				Status: knativenetworkingv1alpha1.ServerlessServiceStatus{
-					ServiceName: "test-service",
-				},
-			},
-		},
-		ingressRoute: []*knativenetworkingv1alpha1.Ingress{
-			{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "example-ingress",
-					Namespace: "default",
-					Annotations: map[string]string{
-						"networking.knative.dev/ingress.class": "traefik.ingress.networking.knative.dev",
+			serverlessService: []*knativenetworkingv1alpha1.ServerlessService{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-service",
+						Namespace: "default",
+					},
+					Status: knativenetworkingv1alpha1.ServerlessServiceStatus{
+						ServiceName: "test-service",
 					},
 				},
-				Spec: knativenetworkingv1alpha1.IngressSpec{
-					Rules: []knativenetworkingv1alpha1.IngressRule{
-						{
-							Hosts: []string{"example.com"},
-							HTTP: &knativenetworkingv1alpha1.HTTPIngressRuleValue{
-								Paths: []knativenetworkingv1alpha1.HTTPIngressPath{
-									{
-										Path: "/",
-										Splits: []knativenetworkingv1alpha1.IngressBackendSplit{
-											{
-												IngressBackend: knativenetworkingv1alpha1.IngressBackend{
-													ServiceNamespace: "default",
-													ServiceName:      "test-service",
-													ServicePort:      intstr.FromInt(80),
+			},
+			ingressRoute: []*knativenetworkingv1alpha1.Ingress{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "example-ingress",
+						Namespace: "default",
+						Annotations: map[string]string{
+							"networking.knative.dev/ingress.class": "traefik.ingress.networking.knative.dev",
+						},
+					},
+					Spec: knativenetworkingv1alpha1.IngressSpec{
+						Rules: []knativenetworkingv1alpha1.IngressRule{
+							{
+								Hosts: []string{"example.com"},
+								HTTP: &knativenetworkingv1alpha1.HTTPIngressRuleValue{
+									Paths: []knativenetworkingv1alpha1.HTTPIngressPath{
+										{
+											Path: "/",
+											Splits: []knativenetworkingv1alpha1.IngressBackendSplit{
+												{
+													IngressBackend: knativenetworkingv1alpha1.IngressBackend{
+														ServiceNamespace: "default",
+														ServiceName:      "test-service",
+														ServicePort:      intstr.FromInt(80),
+													},
+													Percent: 100,
 												},
-												Percent: 100,
 											},
 										},
 									},
@@ -218,15 +292,10 @@ func TestLoadKnativeIngressRouteConfiguration(t *testing.T) {
 		},
 	}
 
-	provider := &Provider{
-		Entrypoints:         []string{"web"},
-		EntrypointsInternal: []string{"web-internal"},
-	}
-
 	tlsConfigs := make(map[string]*tls.CertAndStores)
 
 	ctx := t.Context()
-	conf, ingressStatusList := provider.loadKnativeIngressRouteConfiguration(ctx, mockClient, tlsConfigs)
+	conf, ingressStatusList := provider.loadKnativeIngressRouteConfiguration(ctx, tlsConfigs)
 
 	require.NotNil(t, conf)
 	assert.NotEmpty(t, conf.Routers)

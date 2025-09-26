@@ -318,7 +318,6 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | <a id="providers-http-tls-insecureskipverify" href="#providers-http-tls-insecureskipverify" title="#providers-http-tls-insecureskipverify">providers.http.tls.insecureskipverify</a> | TLS insecure skip verify | false |
 | <a id="providers-http-tls-key" href="#providers-http-tls-key" title="#providers-http-tls-key">providers.http.tls.key</a> | TLS key | |
 | <a id="providers-knative" href="#providers-knative" title="#providers-knative">providers.knative</a> | Enable Knative backend with default settings. | false |
-| <a id="providers-knative-allowcrossnamespace" href="#providers-knative-allowcrossnamespace" title="#providers-knative-allowcrossnamespace">providers.knative.allowcrossnamespace</a> | Allow cross namespace resource reference. | false |
 | <a id="providers-knative-certauthfilepath" href="#providers-knative-certauthfilepath" title="#providers-knative-certauthfilepath">providers.knative.certauthfilepath</a> | Kubernetes certificate authority file path (not needed for in-cluster client). | |
 | <a id="providers-knative-endpoint" href="#providers-knative-endpoint" title="#providers-knative-endpoint">providers.knative.endpoint</a> | Kubernetes server endpoint (required for external cluster client). | |
 | <a id="providers-knative-entrypoints" href="#providers-knative-entrypoints" title="#providers-knative-entrypoints">providers.knative.entrypoints</a> | Entry points for Knative. (default: ["traefik"]) | |

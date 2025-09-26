@@ -41,7 +41,134 @@ type Provider struct {
 	Entrypoints                []string        `description:"Entry points for Knative. (default: [\"traefik\"])" json:"entrypoints,omitempty" toml:"entrypoints,omitempty" yaml:"entrypoints,omitempty" export:"true"`
 	EntrypointsInternal        []string        `description:"Entry points for Knative." json:"entrypointsInternal,omitempty" toml:"entrypointsInternal,omitempty" yaml:"entrypointsInternal,omitempty" export:"true"`
 	ThrottleDuration           ptypes.Duration `description:"Ingress refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty"`
-	lastConfiguration          safe.Safe
+
+	k8sClient         Client
+	lastConfiguration safe.Safe
+}
+
+// Init the provider.
+func (p *Provider) Init() error {
+	// Initializes Kubernetes client.
+	var err error
+	p.k8sClient, err = p.newK8sClient(context.Background(), p.LabelSelector)
+	if err != nil {
+		return fmt.Errorf("creating kubernetes client: %w", err)
+	}
+
+	return nil
+}
+
+// Provide allows the k8s provider to provide configurations to traefik
+// using the given configuration channel.
+func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
+	logger := log.Ctx(context.Background()).With().Str(logs.ProviderName, providerName).Logger()
+
+	pool.GoCtx(func(ctxPool context.Context) {
+		operation := func() error {
+			eventsChan, err := p.k8sClient.WatchAll(p.Namespaces, ctxPool.Done())
+			if err != nil {
+				logger.Error().Msgf("Error watching kubernetes events: %v", err)
+				timer := time.NewTimer(1 * time.Second)
+				select {
+				case <-timer.C:
+					return err
+				case <-ctxPool.Done():
+					return nil
+				}
+			}
+
+			throttleDuration := time.Duration(p.ThrottleDuration)
+			throttledChan := throttleEvents(context.Background(), throttleDuration, pool, eventsChan)
+			if throttledChan != nil {
+				eventsChan = throttledChan
+			}
+
+			for {
+				select {
+				case <-ctxPool.Done():
+					return nil
+				case event := <-eventsChan:
+					// Note that event is the *first* event that came in during this throttling interval -- if we're hitting our throttle, we may have dropped events.
+					// This is fine, because we don't treat different event types differently.
+					// But if we do in the future, we'll need to track more information about the dropped events.
+					tlsConfigs := make(map[string]*tls.CertAndStores)
+					httpConf, ingressStatusList := p.loadKnativeIngressRouteConfiguration(context.Background(), tlsConfigs)
+					conf := &dynamic.Configuration{
+						HTTP: httpConf,
+					}
+
+					if len(tlsConfigs) > 0 {
+						conf.TLS = &dynamic.TLSConfiguration{}
+						conf.TLS.Certificates = append(conf.TLS.Certificates, getTLSConfig(tlsConfigs)...)
+					}
+
+					confHash, err := hashstructure.Hash(conf, nil)
+					switch {
+					case err != nil:
+						logger.Error().Msg("Unable to hash the configuration")
+					case p.lastConfiguration.Get() == confHash:
+						logger.Debug().Msgf("Skipping Kubernetes event kind %T", event)
+					default:
+						p.lastConfiguration.Set(confHash)
+						configurationChan <- dynamic.Message{
+							ProviderName:  providerName,
+							Configuration: conf,
+						}
+						time.Sleep(5 * time.Second) // Wait for the routes to be updated before updating ingress
+						// status. Not having this can lead to conformance tests failing intermittently as the routes
+						// are queried as soon as the status is set to ready.
+						for _, ingress := range ingressStatusList {
+							if err := p.updateKnativeIngressStatus(ingress); err != nil {
+								logger.Error().Err(err).Msgf("Error updating status for Ingress %s/%s", ingress.Namespace, ingress.Name)
+							}
+						}
+					}
+
+					// If we're throttling,
+					// we sleep here for the throttle duration to enforce that we don't refresh faster than our throttle.
+					// time.Sleep returns immediately if p.ThrottleDuration is 0 (no throttle).
+					time.Sleep(throttleDuration)
+				}
+			}
+		}
+
+		notify := func(err error, time time.Duration) {
+			logger.Error().Msgf("Provider connection error: %v; retrying in %s", err, time)
+		}
+		err := backoff.RetryNotify(safe.OperationWithRecover(operation), backoff.WithContext(job.NewBackOff(backoff.NewExponentialBackOff()), ctxPool), notify)
+		if err != nil {
+			logger.Error().Msgf("Cannot connect to Provider: %v", err)
+		}
+	})
+
+	return nil
+}
+
+func (p *Provider) updateKnativeIngressStatus(ingressRoute *knativenetworkingv1alpha1.Ingress) error {
+	log.Ctx(context.Background()).Debug().Msgf("Updating status for Ingress %s/%s", ingressRoute.Namespace, ingressRoute.Name)
+	if ingressRoute.GetStatus() == nil ||
+		!ingressRoute.GetStatus().GetCondition(knativenetworkingv1alpha1.IngressConditionNetworkConfigured).IsTrue() ||
+		ingressRoute.GetGeneration() != ingressRoute.GetStatus().ObservedGeneration {
+		ingressRoute.Status.MarkLoadBalancerReady(
+			// public lbs
+			[]knativenetworkingv1alpha1.LoadBalancerIngressStatus{{
+				Domain:         p.LoadBalancerDomain,
+				DomainInternal: p.LoadBalancerDomainInternal,
+				IP:             p.LoadBalancerIP,
+			}},
+			// private lbs
+			[]knativenetworkingv1alpha1.LoadBalancerIngressStatus{{
+				Domain:         p.LoadBalancerDomain,
+				DomainInternal: p.LoadBalancerDomainInternal,
+				IP:             p.LoadBalancerIP,
+			}},
+		)
+
+		ingressRoute.Status.MarkNetworkConfigured()
+		ingressRoute.Status.ObservedGeneration = ingressRoute.GetGeneration()
+		return p.k8sClient.UpdateIngressStatus(ingressRoute)
+	}
+	return nil
 }
 
 func (p *Provider) newK8sClient(ctx context.Context, labelSelector string) (*clientWrapper, error) {
@@ -75,131 +202,6 @@ func (p *Provider) newK8sClient(ctx context.Context, labelSelector string) (*cli
 	}
 
 	return client, err
-}
-
-// Init the provider.
-func (p *Provider) Init() error {
-	return nil
-}
-
-// Provide allows the k8s provider to provide configurations to traefik
-// using the given configuration channel.
-func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
-	logger := log.Ctx(context.Background()).With().Str(logs.ProviderName, providerName).Logger()
-
-	logger.Debug().Msgf("Using label selector: %q", p.LabelSelector)
-	k8sClient, err := p.newK8sClient(context.Background(), p.LabelSelector)
-	if err != nil {
-		return err
-	}
-
-	pool.GoCtx(func(ctxPool context.Context) {
-		operation := func() error {
-			eventsChan, err := k8sClient.WatchAll(p.Namespaces, ctxPool.Done())
-			if err != nil {
-				logger.Error().Msgf("Error watching kubernetes events: %v", err)
-				timer := time.NewTimer(1 * time.Second)
-				select {
-				case <-timer.C:
-					return err
-				case <-ctxPool.Done():
-					return nil
-				}
-			}
-
-			throttleDuration := time.Duration(p.ThrottleDuration)
-			throttledChan := throttleEvents(context.Background(), throttleDuration, pool, eventsChan)
-			if throttledChan != nil {
-				eventsChan = throttledChan
-			}
-
-			for {
-				select {
-				case <-ctxPool.Done():
-					return nil
-				case event := <-eventsChan:
-					// Note that event is the *first* event that came in during this throttling interval -- if we're hitting our throttle, we may have dropped events.
-					// This is fine, because we don't treat different event types differently.
-					// But if we do in the future, we'll need to track more information about the dropped events.
-					tlsConfigs := make(map[string]*tls.CertAndStores)
-					httpConf, ingressStatusList := p.loadKnativeIngressRouteConfiguration(context.Background(), k8sClient,
-						tlsConfigs)
-					conf := &dynamic.Configuration{
-						HTTP: httpConf,
-					}
-
-					if len(tlsConfigs) > 0 {
-						conf.TLS = &dynamic.TLSConfiguration{}
-						conf.TLS.Certificates = append(conf.TLS.Certificates, getTLSConfig(tlsConfigs)...)
-					}
-
-					confHash, err := hashstructure.Hash(conf, nil)
-					switch {
-					case err != nil:
-						logger.Error().Msg("Unable to hash the configuration")
-					case p.lastConfiguration.Get() == confHash:
-						logger.Debug().Msgf("Skipping Kubernetes event kind %T", event)
-					default:
-						p.lastConfiguration.Set(confHash)
-						configurationChan <- dynamic.Message{
-							ProviderName:  providerName,
-							Configuration: conf,
-						}
-						time.Sleep(5 * time.Second) // Wait for the routes to be updated before updating ingress
-						// status. Not having this can lead to conformance tests failing intermittently as the routes
-						// are queried as soon as the status is set to ready.
-						for _, ingress := range ingressStatusList {
-							if err := p.updateKnativeIngressStatus(k8sClient, ingress); err != nil {
-								logger.Error().Err(err).Msgf("Error updating status for Ingress %s/%s", ingress.Namespace, ingress.Name)
-							}
-						}
-					}
-
-					// If we're throttling,
-					// we sleep here for the throttle duration to enforce that we don't refresh faster than our throttle.
-					// time.Sleep returns immediately if p.ThrottleDuration is 0 (no throttle).
-					time.Sleep(throttleDuration)
-				}
-			}
-		}
-
-		notify := func(err error, time time.Duration) {
-			logger.Error().Msgf("Provider connection error: %v; retrying in %s", err, time)
-		}
-		err := backoff.RetryNotify(safe.OperationWithRecover(operation), backoff.WithContext(job.NewBackOff(backoff.NewExponentialBackOff()), ctxPool), notify)
-		if err != nil {
-			logger.Error().Msgf("Cannot connect to Provider: %v", err)
-		}
-	})
-
-	return nil
-}
-
-func (p *Provider) updateKnativeIngressStatus(client Client, ingressRoute *knativenetworkingv1alpha1.Ingress) error {
-	log.Ctx(context.Background()).Debug().Msgf("Updating status for Ingress %s/%s", ingressRoute.Namespace, ingressRoute.Name)
-	if ingressRoute.GetStatus() == nil ||
-		!ingressRoute.GetStatus().GetCondition(knativenetworkingv1alpha1.IngressConditionNetworkConfigured).IsTrue() ||
-		ingressRoute.GetGeneration() != ingressRoute.GetStatus().ObservedGeneration {
-		ingressRoute.Status.MarkLoadBalancerReady(
-			// public lbs
-			[]knativenetworkingv1alpha1.LoadBalancerIngressStatus{{
-				Domain:         p.LoadBalancerDomain,
-				DomainInternal: p.LoadBalancerDomainInternal,
-				IP:             p.LoadBalancerIP,
-			}},
-			// private lbs
-			[]knativenetworkingv1alpha1.LoadBalancerIngressStatus{{
-				Domain:         p.LoadBalancerDomain,
-				DomainInternal: p.LoadBalancerDomainInternal,
-				IP:             p.LoadBalancerIP,
-			}},
-		)
-
-		ingressRoute.Status.MarkNetworkConfigured()
-		ingressRoute.Status.ObservedGeneration = ingressRoute.GetGeneration()
-		return client.UpdateIngressStatus(ingressRoute)
-	}
-	return nil
 }
 
 func getTLS(k8sClient Client, secretName, namespace string) (*tls.CertAndStores, error) {

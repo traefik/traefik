@@ -27,7 +27,7 @@ const (
 	http2Protocol = "http2"
 )
 
-func (p *Provider) loadKnativeIngressRouteConfiguration(ctx context.Context, client Client, tlsConfigs map[string]*tls.CertAndStores) (*dynamic.HTTPConfiguration, []*knativenetworkingv1alpha1.Ingress) {
+func (p *Provider) loadKnativeIngressRouteConfiguration(ctx context.Context, tlsConfigs map[string]*tls.CertAndStores) (*dynamic.HTTPConfiguration, []*knativenetworkingv1alpha1.Ingress) {
 	conf := &dynamic.HTTPConfiguration{
 		Routers:     map[string]*dynamic.Router{},
 		Middlewares: map[string]*dynamic.Middleware{},
@@ -35,12 +35,13 @@ func (p *Provider) loadKnativeIngressRouteConfiguration(ctx context.Context, cli
 	}
 	var ingressStatusList []*knativenetworkingv1alpha1.Ingress
 
-	for _, ingressRoute := range client.ListIngresses() {
-		logger := log.Ctx(ctx).With().Str("KNativeIngress", ingressRoute.Name).Str("namespace",
-			ingressRoute.Namespace).Logger()
+	for _, ingressRoute := range p.k8sClient.ListIngresses() {
+		logger := log.Ctx(ctx).With().
+			Str("KNativeIngress", ingressRoute.Name).
+			Str("namespace", ingressRoute.Namespace).
+			Logger()
 
-		err := getTLSHTTP(ctx, ingressRoute, client, tlsConfigs)
-		if err != nil {
+		if err := p.getTLSHTTP(ctx, ingressRoute, tlsConfigs); err != nil {
 			logger.Error().Err(err).Send()
 			continue
 		}
@@ -51,7 +52,6 @@ func (p *Provider) loadKnativeIngressRouteConfiguration(ctx context.Context, cli
 		}
 
 		ingressName := getIngressName(ingressRoute)
-		cb := configBuilder{client: client}
 
 		serviceKey, err := makeServiceKey(ingressRoute.Namespace, ingressName)
 		if err != nil {
@@ -60,7 +60,7 @@ func (p *Provider) loadKnativeIngressRouteConfiguration(ctx context.Context, cli
 		}
 
 		serviceName := provider.Normalize(makeID(ingressRoute.Namespace, serviceKey))
-		knativeResult := cb.buildKnativeService(ctx, ingressRoute, conf.Middlewares, conf.Services, serviceName)
+		knativeResult := p.buildKnativeService(ctx, ingressRoute, conf.Middlewares, conf.Services, serviceName)
 
 		for _, result := range knativeResult {
 			var entrypoints []string
@@ -103,14 +103,8 @@ func (p *Provider) loadKnativeIngressRouteConfiguration(ctx context.Context, cli
 	return conf, ingressStatusList
 }
 
-type configBuilder struct {
-	client Client
-}
-
-func (c configBuilder) createKnativeLoadBalancerServerHTTP(namespace string,
-	service traefikv1alpha1.Service,
-) (*dynamic.Service, error) {
-	servers, err := c.loadKnativeServers(namespace, service)
+func (p *Provider) createKnativeLoadBalancerServerHTTP(namespace string, service traefikv1alpha1.Service) (*dynamic.Service, error) {
+	servers, err := p.loadKnativeServers(namespace, service)
 	if err != nil {
 		return nil, err
 	}
@@ -140,19 +134,10 @@ func (c configBuilder) createKnativeLoadBalancerServerHTTP(namespace string,
 	}, nil
 }
 
-func (c configBuilder) loadKnativeServers(namespace string,
-	svc traefikv1alpha1.Service,
-) ([]dynamic.Server, error) {
+func (p *Provider) loadKnativeServers(namespace string, svc traefikv1alpha1.Service) ([]dynamic.Server, error) {
 	logger := log.With().Logger()
-	strategy := ""
-	if strategy == "" {
-		strategy = "RoundRobin"
-	}
-	if strategy != "RoundRobin" {
-		return nil, fmt.Errorf("load balancing strategy %v is not supported", strategy)
-	}
 
-	serverlessservice, exists, err := c.client.GetServerlessService(namespace, svc.Name)
+	serverlessservice, exists, err := p.k8sClient.GetServerlessService(namespace, svc.Name)
 	if err != nil {
 		logger.Info().Msgf("Unable to find serverlessservice, trying to find service %s/%s", namespace, svc.Name)
 	}
@@ -162,7 +147,7 @@ func (c configBuilder) loadKnativeServers(namespace string,
 		serviceName = serverlessservice.Status.ServiceName
 	}
 
-	service, exists, err := c.client.GetService(namespace, serviceName)
+	service, exists, err := p.k8sClient.GetService(namespace, serviceName)
 	if err != nil {
 		return nil, err
 	}
@@ -195,17 +180,7 @@ func (c configBuilder) loadKnativeServers(namespace string,
 	return servers, nil
 }
 
-func makeServiceKey(rule, ingressName string) (string, error) {
-	h := sha256.New()
-	if _, err := h.Write([]byte(rule)); err != nil {
-		return "", err
-	}
-
-	key := fmt.Sprintf("%s-%.10x", ingressName, h.Sum(nil))
-	return key, nil
-}
-
-type ServiceResult struct {
+type serviceResult struct {
 	ServiceKey string
 	Hosts      []string
 	Middleware []string
@@ -214,13 +189,14 @@ type ServiceResult struct {
 	Err        error
 }
 
-func (c configBuilder) buildKnativeService(ctx context.Context, ingressRoute *knativenetworkingv1alpha1.Ingress,
-	middleware map[string]*dynamic.Middleware, conf map[string]*dynamic.Service, serviceName string,
-) []*ServiceResult {
-	logger := log.Ctx(ctx).With().Str("ingressknative", ingressRoute.Name).Str("service", serviceName).
-		Str("namespace", ingressRoute.Namespace).Logger()
-	var results []*ServiceResult
+func (p *Provider) buildKnativeService(ctx context.Context, ingressRoute *knativenetworkingv1alpha1.Ingress, middleware map[string]*dynamic.Middleware, conf map[string]*dynamic.Service, serviceName string) []*serviceResult {
+	logger := log.Ctx(ctx).With().
+		Str("ingressknative", ingressRoute.Name).
+		Str("service", serviceName).
+		Str("namespace", ingressRoute.Namespace).
+		Logger()
 
+	var results []*serviceResult
 	for ruleIndex, route := range ingressRoute.Spec.Rules {
 		if route.HTTP == nil {
 			logger.Warn().Msgf("No HTTP rule defined for Knative service %s", ingressRoute.Name)
@@ -229,11 +205,11 @@ func (c configBuilder) buildKnativeService(ctx context.Context, ingressRoute *kn
 
 		for pathIndex, pathroute := range route.HTTP.Paths {
 			var tagServiceName string
-			headers := c.buildHeaders(middleware, serviceName, ruleIndex, pathIndex, pathroute.AppendHeaders)
+			headers := p.buildHeaders(middleware, serviceName, ruleIndex, pathIndex, pathroute.AppendHeaders)
 			path := pathroute.Path
 
 			for _, service := range pathroute.Splits {
-				balancerServerHTTP, err := c.createKnativeLoadBalancerServerHTTP(service.ServiceNamespace, traefikv1alpha1.Service{
+				balancerServerHTTP, err := p.createKnativeLoadBalancerServerHTTP(service.ServiceNamespace, traefikv1alpha1.Service{
 					LoadBalancerSpec: traefikv1alpha1.LoadBalancerSpec{
 						Name: service.ServiceName,
 						Port: service.ServicePort,
@@ -274,10 +250,58 @@ func (c configBuilder) buildKnativeService(ctx context.Context, ingressRoute *kn
 				}
 				conf[tagServiceName].Weighted.Services = append(conf[tagServiceName].Weighted.Services, srv)
 			}
-			results = append(results, &ServiceResult{tagServiceName, route.Hosts, headers, path, route.Visibility, nil})
+			results = append(results, &serviceResult{tagServiceName, route.Hosts, headers, path, route.Visibility, nil})
 		}
 	}
 	return results
+}
+
+func (p *Provider) buildHeaders(middleware map[string]*dynamic.Middleware, serviceName string, ruleIndex, pathIndex int, appendHeaders map[string]string) []string {
+	if appendHeaders == nil {
+		return nil
+	}
+
+	headerID := provider.Normalize(makeID(serviceName, fmt.Sprintf("PreHeader-%d-%d", ruleIndex, pathIndex)))
+	middleware[headerID] = &dynamic.Middleware{
+		Headers: &dynamic.Headers{
+			CustomRequestHeaders: appendHeaders,
+		},
+	}
+
+	return []string{headerID}
+}
+
+// getTLSHTTP mutates tlsConfigs.
+func (p *Provider) getTLSHTTP(ctx context.Context, ingressRoute *knativenetworkingv1alpha1.Ingress, tlsConfigs map[string]*tls.CertAndStores) error {
+	if ingressRoute.Spec.TLS != nil {
+		for _, tls := range ingressRoute.Spec.TLS {
+			if tls.SecretName == "" {
+				log.Ctx(ctx).Debug().Msg("No secret name provided")
+				continue
+			}
+
+			configKey := ingressRoute.Namespace + "/" + tls.SecretName
+			if _, tlsExists := tlsConfigs[configKey]; !tlsExists {
+				tlsConf, err := getTLS(p.k8sClient, tls.SecretName, ingressRoute.Namespace)
+				if err != nil {
+					return err
+				}
+
+				tlsConfigs[configKey] = tlsConf
+			}
+		}
+	}
+	return nil
+}
+
+func makeServiceKey(rule, ingressName string) (string, error) {
+	h := sha256.New()
+	if _, err := h.Write([]byte(rule)); err != nil {
+		return "", err
+	}
+
+	key := fmt.Sprintf("%s-%.10x", ingressName, h.Sum(nil))
+	return key, nil
 }
 
 func makeID(s1, s2 string) string {
@@ -325,42 +349,4 @@ func buildMatchRule(hosts []string, path string) string {
 		match += fmt.Sprintf(" && PathPrefix(`%v`)", path)
 	}
 	return match
-}
-
-func (c configBuilder) buildHeaders(middleware map[string]*dynamic.Middleware, serviceName string, ruleIndex, pathIndex int, appendHeaders map[string]string) []string {
-	if appendHeaders == nil {
-		return nil
-	}
-
-	headerID := provider.Normalize(makeID(serviceName, fmt.Sprintf("PreHeader-%d-%d", ruleIndex, pathIndex)))
-	middleware[headerID] = &dynamic.Middleware{
-		Headers: &dynamic.Headers{
-			CustomRequestHeaders: appendHeaders,
-		},
-	}
-
-	return []string{headerID}
-}
-
-// getTLSHTTP mutates tlsConfigs.
-func getTLSHTTP(ctx context.Context, ingressRoute *knativenetworkingv1alpha1.Ingress, k8sClient Client, tlsConfigs map[string]*tls.CertAndStores) error {
-	if ingressRoute.Spec.TLS != nil {
-		for _, tls := range ingressRoute.Spec.TLS {
-			if tls.SecretName == "" {
-				log.Ctx(ctx).Debug().Msg("No secret name provided")
-				continue
-			}
-
-			configKey := ingressRoute.Namespace + "/" + tls.SecretName
-			if _, tlsExists := tlsConfigs[configKey]; !tlsExists {
-				tlsConf, err := getTLS(k8sClient, tls.SecretName, ingressRoute.Namespace)
-				if err != nil {
-					return err
-				}
-
-				tlsConfigs[configKey] = tlsConf
-			}
-		}
-	}
-	return nil
 }
