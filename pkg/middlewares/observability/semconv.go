@@ -79,19 +79,19 @@ func (e *semConvServerMetrics) ServeHTTP(rw http.ResponseWriter, req *http.Reque
 	// Convert method to httpconv enum
 	var methodAttr httpconv.RequestMethodAttr
 	switch req.Method {
-	case "GET":
+	case http.MethodGet:
 		methodAttr = httpconv.RequestMethodGet
-	case "POST":
+	case http.MethodPost:
 		methodAttr = httpconv.RequestMethodPost
-	case "PUT":
+	case http.MethodPut:
 		methodAttr = httpconv.RequestMethodPut
-	case "DELETE":
+	case http.MethodDelete:
 		methodAttr = httpconv.RequestMethodDelete
-	case "HEAD":
+	case http.MethodHead:
 		methodAttr = httpconv.RequestMethodHead
-	case "OPTIONS":
+	case http.MethodOptions:
 		methodAttr = httpconv.RequestMethodOptions
-	case "PATCH":
+	case http.MethodPatch:
 		methodAttr = httpconv.RequestMethodPatch
 	default:
 		methodAttr = httpconv.RequestMethodOther

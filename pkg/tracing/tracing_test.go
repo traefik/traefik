@@ -493,10 +493,8 @@ func getResourceAttributes(traces ptrace.Traces) map[string]string {
 
 // getMainSpan gets the main span from traces (assumes single span for testing)
 func getMainSpan(traces ptrace.Traces) ptrace.Span {
-	for i := 0; i < traces.ResourceSpans().Len(); i++ {
-		resourceSpans := traces.ResourceSpans().At(i)
-		for j := 0; j < resourceSpans.ScopeSpans().Len(); j++ {
-			scopeSpans := resourceSpans.ScopeSpans().At(j)
+	for _, resourceSpans := range traces.ResourceSpans().All() {
+		for _, scopeSpans := range resourceSpans.ScopeSpans().All() {
 			if scopeSpans.Spans().Len() > 0 {
 				return scopeSpans.Spans().At(0)
 			}
