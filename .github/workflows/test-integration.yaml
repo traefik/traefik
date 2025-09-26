@@ -30,6 +30,10 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
           check-latest: true
 
+      - name: Avoid generating webui
+        run: |
+          touch webui/static/index.html
+
       - name: Build binary
         run: make binary-linux-amd64
 

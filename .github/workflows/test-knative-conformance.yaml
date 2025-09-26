@@ -1,4 +1,4 @@
-name: Test K8s Gateway API conformance
+name: Test Knative conformance
 
 on:
   pull_request:
@@ -11,7 +11,7 @@ on:
       - 'integration/knative_conformance_test.go'
 
 env:
-  GO_VERSION: '1.23'
+  GO_VERSION: '1.24'
   CGO_ENABLED: 0
 
 jobs:
@@ -42,6 +42,10 @@ jobs:
           go build -tags tools
           # Build and Publish our test images to the docker daemon.
           ./integration/fixtures/knative/upload-test-images.sh
+
+      - name: Avoid generating webui
+        run: |
+          touch webui/static/index.html
 
       - name: Knative conformance test
         run: |
