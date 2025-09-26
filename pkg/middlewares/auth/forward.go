@@ -88,7 +88,7 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 
 	if config.MaxBodySize != nil {
 		fa.maxBodySize = *config.MaxBodySize
-	} else {
+	} else if config.ForwardBody {
 		logger.Warn().Msgf("Leaving 'maxBodySize' unset can have performance or security implications as the request body size is unrestricted.")
 	}
 
