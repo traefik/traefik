@@ -24,6 +24,9 @@ type Descriptor struct {
 	// Version (required)
 	Version string `description:"plugin's version." json:"version,omitempty" toml:"version,omitempty" yaml:"version,omitempty" export:"true"`
 
+	// Hash (optional)
+	Hash string `description:"plugin's hash to validate'" json:"hash,omitempty" toml:"hash,omitempty" yaml:"hash,omitempty" export:"true"`
+
 	// Settings (optional)
 	Settings Settings `description:"Plugin's settings (works only for wasm plugins)." json:"settings,omitempty" toml:"settings,omitempty" yaml:"settings,omitempty" export:"true"`
 }
