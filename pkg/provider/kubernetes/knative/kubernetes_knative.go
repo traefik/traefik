@@ -51,7 +51,7 @@ func (p *Provider) loadKnativeIngressRouteConfiguration(ctx context.Context, cli
 		}
 
 		ingressName := getIngressName(ingressRoute)
-		cb := configBuilder{client: client, allowCrossNamespace: p.AllowCrossNamespace}
+		cb := configBuilder{client: client}
 
 		serviceKey, err := makeServiceKey(ingressRoute.Namespace, ingressName)
 		if err != nil {
@@ -104,8 +104,7 @@ func (p *Provider) loadKnativeIngressRouteConfiguration(ctx context.Context, cli
 }
 
 type configBuilder struct {
-	client              Client
-	allowCrossNamespace bool
+	client Client
 }
 
 func (c configBuilder) createKnativeLoadBalancerServerHTTP(namespace string,

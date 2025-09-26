@@ -50,7 +50,6 @@ spec:
             - --entrypoints.websecure.address=:443
             - --entrypoints.web8080.address=:8080
             - --entrypoints.traefik.address=:9000
-            - --providers.knative.allowCrossNamespace=true
             - --providers.knative.namespaces=default,traefik,serving-tests
             - --providers.knative.loadbalancerdomaininternal=traefik.traefik.svc.cluster.local
 

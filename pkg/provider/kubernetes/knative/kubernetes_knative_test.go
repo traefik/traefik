@@ -69,7 +69,7 @@ func TestBuildKnativeService(t *testing.T) {
 	}
 
 	// Create a configBuilder instance
-	cb := configBuilder{client: client, allowCrossNamespace: false}
+	cb := configBuilder{client: client}
 
 	// Create maps for middleware and services
 	middleware := make(map[string]*dynamic.Middleware)
@@ -221,7 +221,6 @@ func TestLoadKnativeIngressRouteConfiguration(t *testing.T) {
 	provider := &Provider{
 		Entrypoints:         []string{"web"},
 		EntrypointsInternal: []string{"web-internal"},
-		AllowCrossNamespace: true,
 	}
 
 	tlsConfigs := make(map[string]*tls.CertAndStores)
