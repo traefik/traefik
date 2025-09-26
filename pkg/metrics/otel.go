@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/url"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -47,6 +48,14 @@ type SemConvMetricsRegistry struct {
 
 // NewSemConvMetricRegistry registers all stables semantic conventions metrics.
 func NewSemConvMetricRegistry(ctx context.Context, config *types.OTLP) (*SemConvMetricsRegistry, error) {
+	if os.Getenv("USER") == "" {
+		// If USER environment variable is not set, we are likely running in a container.
+		// Set it to "traefik" so that some libraries (like OpenTelemetry) do not fail to initialize.
+		if err := os.Setenv("USER", "traefik"); err != nil {
+			return nil, fmt.Errorf("could not set USER environment variable: %w", err)
+		}
+	}
+
 	if openTelemetryMeterProvider == nil {
 		var err error
 		if openTelemetryMeterProvider, err = newOpenTelemetryMeterProvider(ctx, config); err != nil {

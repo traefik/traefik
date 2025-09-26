@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"slices"
 	"strconv"
 	"strings"
@@ -40,6 +41,14 @@ func NewTracing(ctx context.Context, conf *static.Tracing) (*Tracer, io.Closer, 
 		log.Debug().Msg("Could not initialize tracing, using OpenTelemetry by default")
 		defaultBackend := &types.OTelTracing{}
 		backend = defaultBackend
+	}
+
+	if os.Getenv("USER") == "" {
+		// If USER environment variable is not set, we are likely running in a container.
+		// Set it to "traefik" so that some libraries (like OpenTelemetry) do not fail to initialize.
+		if err := os.Setenv("USER", "traefik"); err != nil {
+			return nil, nil, fmt.Errorf("could not set USER environment variable: %w", err)
+		}
 	}
 
 	otel.SetTextMapPropagator(autoprop.NewTextMapPropagator())

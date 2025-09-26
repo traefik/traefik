@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"reflect"
 	"time"
 
@@ -16,6 +17,14 @@ import (
 func SetupOTelLogger(ctx context.Context, logger zerolog.Logger, config *types.OTelLog) (zerolog.Logger, error) {
 	if config == nil {
 		return logger, nil
+	}
+
+	if os.Getenv("USER") == "" {
+		// If USER environment variable is not set, we are likely running in a container.
+		// Set it to "traefik" so that some libraries (like OpenTelemetry) do not fail to initialize.
+		if err := os.Setenv("USER", "traefik"); err != nil {
+			return zerolog.Logger{}, fmt.Errorf("could not set USER environment variable: %w", err)
+		}
 	}
 
 	provider, err := config.NewLoggerProvider(ctx)
