@@ -85,7 +85,6 @@ func (t *wrapper) RoundTrip(req *http.Request) (*http.Response, error) {
 	attrs = append(attrs, semconv.HTTPResponseStatusCode(statusCode))
 	attrs = append(attrs, semconv.NetworkProtocolName(strings.ToLower(req.Proto)))
 	attrs = append(attrs, semconv.NetworkProtocolVersion(observability.Proto(req.Proto)))
-	attrs = append(attrs, semconv.ServerAddress(req.URL.Host))
 
 	_, port, splitErr := net.SplitHostPort(req.URL.Host)
 	var serverPort int

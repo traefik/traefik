@@ -75,7 +75,6 @@ func (e *semConvServerMetrics) ServeHTTP(rw http.ResponseWriter, req *http.Reque
 	attrs = append(attrs, semconv.NetworkProtocolName(strings.ToLower(req.Proto)))
 	attrs = append(attrs, semconv.NetworkProtocolVersion(Proto(req.Proto)))
 	attrs = append(attrs, semconv.ServerAddress(req.Host))
-	attrs = append(attrs, semconv.URLScheme(req.Header.Get("X-Forwarded-Proto")))
 
 	// Convert method to httpconv enum
 	var methodAttr httpconv.RequestMethodAttr
@@ -99,5 +98,5 @@ func (e *semConvServerMetrics) ServeHTTP(rw http.ResponseWriter, req *http.Reque
 	}
 
 	e.semConvMetricRegistry.HTTPServerRequestDuration().Record(req.Context(), end.Sub(start).Seconds(),
-		methodAttr, req.Host, attrs...)
+		methodAttr, req.Header.Get("X-Forwarded-Proto"), attrs...)
 }
