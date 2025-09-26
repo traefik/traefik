@@ -244,6 +244,8 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 			return nil, fmt.Errorf("building child routers muxer: %w", err)
 		}
 		nextHandler = childMuxer
+		// FIXME: this must be improved.
+		// Ex: muxer@parentName→routerName (length considerations)
 		serviceName = fmt.Sprintf("muxer@%s", routerName)
 	} else if router.Service != "" {
 		// This router routes to a service
@@ -260,9 +262,10 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 
 	// Access logs, metrics, and tracing middlewares are idempotent if the associated signal is disabled.
 	chain = chain.Append(observability.WrapRouterHandler(ctx, routerName, router.Rule, serviceName))
-	metricsHandler := metricsMiddle.RouterMetricsHandler(ctx, m.observabilityMgr.MetricsRegistry(), routerName, serviceName)
 
+	metricsHandler := metricsMiddle.RouterMetricsHandler(ctx, m.observabilityMgr.MetricsRegistry(), routerName, serviceName)
 	chain = chain.Append(observability.WrapMiddleware(ctx, metricsHandler))
+
 	chain = chain.Append(func(next http.Handler) (http.Handler, error) {
 		return accesslog.NewFieldHandler(next, accesslog.RouterName, routerName, nil), nil
 	})
