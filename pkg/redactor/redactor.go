@@ -70,7 +70,7 @@ func doOnJSON(input string) string {
 }
 
 func doOnStruct(field reflect.Value, tag string, redactByDefault bool) error {
-	if field.Type().AssignableTo(reflect.TypeOf(dynamic.PluginConf{})) {
+	if field.Type().AssignableTo(reflect.TypeFor[dynamic.PluginConf]()) {
 		resetPlugin(field)
 		return nil
 	}
@@ -164,7 +164,7 @@ func reset(field reflect.Value, name string) error {
 		}
 	case reflect.String:
 		if field.String() != "" {
-			if field.Type().AssignableTo(reflect.TypeOf(types.FileOrContent(""))) {
+			if field.Type().AssignableTo(reflect.TypeFor[types.FileOrContent]()) {
 				field.Set(reflect.ValueOf(types.FileOrContent(maskShort)))
 			} else {
 				field.Set(reflect.ValueOf(maskShort))

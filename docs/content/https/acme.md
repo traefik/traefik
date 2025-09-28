@@ -201,6 +201,36 @@ when using the `TLS-ALPN-01` challenge, Traefik must be reachable by Let's Encry
     --certificatesresolvers.myresolver.acme.tlschallenge=true
     ```
 
+#### `Delay`
+
+_Optional, Default=0_
+
+The delay between the creation of the challenge and the validation.
+A value lower than or equal to zero means no delay.
+
+```yaml tab="File (YAML)"
+certificatesResolvers:
+  myresolver:
+    acme:
+      # ...
+      tlsChallenge:
+        # ...
+        delay: 12
+```
+
+```toml tab="File (TOML)"
+[certificatesResolvers.myresolver.acme]
+  # ...
+  [certificatesResolvers.myresolver.acme.tlsChallenge]
+    # ...
+    delay = 12
+```
+
+```bash tab="CLI"
+# ...
+--certificatesresolvers.myresolver.acme.tlschallenge.delay=12
+```
+
 ### `httpChallenge`
 
 Use the `HTTP-01` challenge to generate and renew ACME certificates by provisioning an HTTP resource under a well-known URI.
@@ -251,6 +281,8 @@ when using the `HTTP-01` challenge, `certificatesresolvers.myresolver.acme.httpc
     Redirection is fully compatible with the `HTTP-01` challenge.
 
 #### `Delay`
+
+_Optional, Default=0_
 
 The delay between the creation of the challenge and the validation.
 A value lower than or equal to zero means no delay.
@@ -352,7 +384,7 @@ For complete details, refer to your provider's _Additional configuration_ link.
 | [Auroradns](https://www.pcextreme.com/dns-health-checks)               | `auroradns`        | `AURORA_USER_ID`, `AURORA_KEY`, `AURORA_ENDPOINT`                                                                                                                                | [Additional configuration](https://go-acme.github.io/lego/dns/auroradns)        |
 | [Autodns](https://www.internetx.com/domains/autodns/)                  | `autodns`          | `AUTODNS_API_USER`, `AUTODNS_API_PASSWORD`                                                                                                                                       | [Additional configuration](https://go-acme.github.io/lego/dns/autodns)          |
 | [Axelname](https://axelname.ru)                                        | `axelname`         | `AXELNAME_NICKNAME`, `AXELNAME_TOKEN`                                                                                                                                            | [Additional configuration](https://go-acme.github.io/lego/dns/axelname)         |
-| [Azion](https://zonomi.com)                                            | `azion`            | `AZION_PERSONAL_TOKEN`                                                                                                                                                           | [Additional configuration](https://go-acme.github.io/lego/dns/azion)            |
+| [Azion](https://www.azion.com/en/products/edge-dns/)                   | `azion`            | `AZION_PERSONAL_TOKEN`                                                                                                                                                           | [Additional configuration](https://go-acme.github.io/lego/dns/azion)            |
 | [Azure](https://azure.microsoft.com/services/dns/) (DEPRECATED)        | `azure`            | DEPRECATED use `azuredns` instead.                                                                                                                                               | [Additional configuration](https://go-acme.github.io/lego/dns/azure)            |
 | [AzureDNS](https://azure.microsoft.com/services/dns/)                  | `azuredns`         | `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `AZURE_RESOURCE_GROUP`, `[AZURE_ENVIRONMENT]`, `[AZURE_PRIVATE_ZONE]`, `[AZURE_ZONE_NAME]` | [Additional configuration](https://go-acme.github.io/lego/dns/azuredns)         |
 | [Baidu Cloud](https://cloud.baidu.com)                                 | `baiducloud`       | `BAIDUCLOUD_ACCESS_KEY_ID`, `BAIDUCLOUD_SECRET_ACCESS_KEY`                                                                                                                       | [Additional configuration](https://go-acme.github.io/lego/dns/baiducloud)       |
@@ -995,6 +1027,39 @@ certificatesResolvers:
 ```bash tab="CLI"
 # ...
 --certificatesresolvers.myresolver.acme.emailaddresses=foo@example.com,bar@example.org
+# ...
+```
+
+### `disableCommonName`
+
+_Optional, Default=false_
+
+Disable common name inside CSR and certificates.
+
+It's recommended to disable the common name and required to get a certificate for IP.
+
+- https://letsencrypt.org/docs/profiles/#certificate-common-name
+- https://community.letsencrypt.org/t/ip-san-error-csr-contains-ip-address-in-common-name/239012/7
+
+```yaml tab="File (YAML)"
+certificatesResolvers:
+  myresolver:
+    acme:
+      # ...
+      disableCommonName: true
+      # ...
+```
+
+```toml tab="File (TOML)"
+[certificatesResolvers.myresolver.acme]
+  # ...
+  disableCommonName = true
+  # ...
+```
+
+```bash tab="CLI"
+# ...
+--certificatesresolvers.myresolver.acme.disableCommonName=true
 # ...
 ```
 

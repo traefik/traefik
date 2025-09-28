@@ -28,7 +28,7 @@ The OCSP response is cached in memory and is not persisted between Traefik resta
 
 ### General
 
-Enabling OCSP is part of the [static configuration](../getting-started/configuration-overview.md#the-static-configuration).
+Enabling OCSP is part of the [install configuration](../boot-environment.md).
 It can be defined by using a file (YAML or TOML) or CLI arguments:
 
 ```yaml tab="File (YAML)"
@@ -67,5 +67,5 @@ ocsp:
 
 ```bash tab="CLI"
 ## Static configuration
--ocsp.responderoverrides.foo=bar
+--ocsp.responderoverrides.foo=bar
 ```

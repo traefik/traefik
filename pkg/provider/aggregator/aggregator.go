@@ -206,7 +206,7 @@ func (p *ProviderAggregator) launchProvider(configurationChan chan<- dynamic.Mes
 
 	// Check if provider has namespace information
 	var namespaceInfo string
-	if namespaceProvider, ok := prd.(provider.NamespaceProvider); ok {
+	if namespaceProvider, ok := prd.(provider.NamespacedProvider); ok {
 		if namespace := namespaceProvider.GetNamespace(); namespace != "" {
 			namespaceInfo = fmt.Sprintf(" (namespace: %s)", namespace)
 		}

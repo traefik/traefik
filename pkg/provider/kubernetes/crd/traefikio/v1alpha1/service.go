@@ -44,6 +44,8 @@ type TraefikServiceSpec struct {
 	Weighted *WeightedRoundRobin `json:"weighted,omitempty"`
 	// Mirroring defines the Mirroring service configuration.
 	Mirroring *Mirroring `json:"mirroring,omitempty"`
+	// HighestRandomWeight defines the highest random weight service configuration.
+	HighestRandomWeight *HighestRandomWeight `json:"highestRandomWeight,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -85,4 +87,13 @@ type WeightedRoundRobin struct {
 	// Sticky defines whether sticky sessions are enabled.
 	// More info: https://doc.traefik.io/traefik/v3.5/routing/providers/kubernetes-crd/#stickiness-and-load-balancing
 	Sticky *dynamic.Sticky `json:"sticky,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// HighestRandomWeight holds the highest random weight configuration.
+// More info: https://doc.traefik.io/traefik/v3.5/routing/services/#highest-random-configuration
+type HighestRandomWeight struct {
+	// Services defines the list of Kubernetes Service and/or TraefikService to load-balance, with weight.
+	Services []Service `json:"services,omitempty"`
 }

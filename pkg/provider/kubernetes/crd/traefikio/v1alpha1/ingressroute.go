@@ -114,10 +114,10 @@ type LoadBalancerSpec struct {
 	// It defaults to https when Kubernetes Service port is 443, http otherwise.
 	Scheme string `json:"scheme,omitempty"`
 	// Strategy defines the load balancing strategy between the servers.
-	// Supported values are: wrr (Weighed round-robin) and p2c (Power of two choices).
+	// Supported values are: wrr (Weighed round-robin), p2c (Power of two choices), and hrw (Highest Random Weight).
 	// RoundRobin value is deprecated and supported for backward compatibility.
 	// TODO: when the deprecated RoundRobin value will be removed, set the default value to wrr.
-	// +kubebuilder:validation:Enum=wrr;p2c;RoundRobin
+	// +kubebuilder:validation:Enum=wrr;p2c;hrw;RoundRobin
 	Strategy dynamic.BalancerStrategy `json:"strategy,omitempty"`
 	// PassHostHeader defines whether the client Host header is forwarded to the upstream Kubernetes Service.
 	// By default, passHostHeader is true.
@@ -144,6 +144,8 @@ type LoadBalancerSpec struct {
 	NodePortLB bool `json:"nodePortLB,omitempty"`
 	// Healthcheck defines health checks for ExternalName services.
 	HealthCheck *ServerHealthCheck `json:"healthCheck,omitempty"`
+	// PassiveHealthCheck defines passive health checks for ExternalName services.
+	PassiveHealthCheck *PassiveServerHealthCheck `json:"passiveHealthCheck,omitempty"`
 }
 
 type ResponseForwarding struct {
@@ -187,6 +189,13 @@ type ServerHealthCheck struct {
 	FollowRedirects *bool `json:"followRedirects,omitempty"`
 	// Headers defines custom headers to be sent to the health check endpoint.
 	Headers map[string]string `json:"headers,omitempty"`
+}
+
+type PassiveServerHealthCheck struct {
+	// FailureWindow defines the time window during which the failed attempts must occur for the server to be marked as unhealthy. It also defines for how long the server will be considered unhealthy.
+	FailureWindow *intstr.IntOrString `json:"failureWindow,omitempty"`
+	// MaxFailedAttempts is the number of consecutive failed attempts allowed within the failure window before marking the server as unhealthy.
+	MaxFailedAttempts *int `json:"maxFailedAttempts,omitempty"`
 }
 
 // Service defines an upstream HTTP service to proxy traffic to.

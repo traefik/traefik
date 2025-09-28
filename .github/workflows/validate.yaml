@@ -17,7 +17,7 @@ jobs:
 
     steps:
       - name: Check out code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -26,11 +26,6 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
           check-latest: true
-
-      - name: Avoid generating webui
-        run: |
-          mkdir webui/static
-          touch webui/static/index.html
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v7
@@ -42,7 +37,7 @@ jobs:
 
     steps:
       - name: Check out code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -55,11 +50,6 @@ jobs:
       - name: Install misspell ${{ env.MISSPELL_VERSION }}
         run: curl -sfL https://raw.githubusercontent.com/golangci/misspell/HEAD/install-misspell.sh | sh -s -- -b $(go env GOPATH)/bin ${MISSPELL_VERSION}
 
-      - name: Avoid generating webui
-        run: |
-          mkdir webui/static
-          touch webui/static/index.html
-
       - name: Validate
         run: make validate-files
 
@@ -68,7 +58,7 @@ jobs:
 
     steps:
       - name: Check out code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 

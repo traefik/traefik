@@ -81,20 +81,20 @@ func (p *providerMock) Provide(configurationChan chan<- dynamic.Message, pool *s
 	return nil
 }
 
-// mockNamespaceProvider is a mock implementation of NamespaceProvider for testing
-type mockNamespaceProvider struct {
+// mockNamespacedProvider is a mock implementation of NamespacedProvider for testing
+type mockNamespacedProvider struct {
 	namespace string
 }
 
-func (m *mockNamespaceProvider) GetNamespace() string {
+func (m *mockNamespacedProvider) GetNamespace() string {
 	return m.namespace
 }
 
-func (m *mockNamespaceProvider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
+func (m *mockNamespacedProvider) Provide(_ chan<- dynamic.Message, _ *safe.Pool) error {
 	return nil
 }
 
-func (m *mockNamespaceProvider) Init() error {
+func (m *mockNamespacedProvider) Init() error {
 	return nil
 }
 
@@ -108,9 +108,9 @@ func TestLaunchProviderWithNamespace(t *testing.T) {
 	log.Logger = zerolog.New(&buf).With().Timestamp().Logger()
 	zerolog.SetGlobalLevel(zerolog.InfoLevel)
 
-	providerWithNamespace := &mockNamespaceProvider{namespace: "test-namespace"}
+	providerWithNamespace := &mockNamespacedProvider{namespace: "test-namespace"}
 
-	var _ provider.NamespaceProvider = providerWithNamespace
+	var _ provider.NamespacedProvider = providerWithNamespace
 	var _ provider.Provider = providerWithNamespace
 
 	aggregator := ProviderAggregator{
@@ -134,5 +134,5 @@ func TestLaunchProviderWithNamespace(t *testing.T) {
 	require.NoError(t, <-errCh)
 
 	output := buf.String()
-	assert.Contains(t, output, "Starting provider *aggregator.mockNamespaceProvider (namespace: test-namespace)")
+	assert.Contains(t, output, "Starting provider *aggregator.mockNamespacedProvider (namespace: test-namespace)")
 }

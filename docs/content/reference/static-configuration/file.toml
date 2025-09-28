@@ -528,6 +528,7 @@
       preferredChain = "foobar"
       profile = "foobar"
       emailAddresses = ["foobar", "foobar"]
+      disableCommonName = true
       storage = "foobar"
       keyType = "foobar"
       certificatesDuration = 42
@@ -553,6 +554,7 @@
         entryPoint = "foobar"
         delay = "42s"
       [certificatesResolvers.CertificateResolver0.acme.tlsChallenge]
+        delay = "42s"
     [certificatesResolvers.CertificateResolver0.tailscale]
   [certificatesResolvers.CertificateResolver1]
     [certificatesResolvers.CertificateResolver1.acme]
@@ -561,6 +563,7 @@
       preferredChain = "foobar"
       profile = "foobar"
       emailAddresses = ["foobar", "foobar"]
+      disableCommonName = true
       storage = "foobar"
       keyType = "foobar"
       certificatesDuration = 42
@@ -586,6 +589,7 @@
         entryPoint = "foobar"
         delay = "42s"
       [certificatesResolvers.CertificateResolver1.acme.tlsChallenge]
+        delay = "42s"
     [certificatesResolvers.CertificateResolver1.tailscale]
 
 [experimental]

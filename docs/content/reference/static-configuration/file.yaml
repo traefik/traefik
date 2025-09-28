@@ -573,6 +573,7 @@ certificatesResolvers:
       emailAddresses:
         - foobar
         - foobar
+      disableCommonName: true
       storage: foobar
       keyType: foobar
       eab:
@@ -601,7 +602,8 @@ certificatesResolvers:
       httpChallenge:
         entryPoint: foobar
         delay: 42s
-      tlsChallenge: {}
+      tlsChallenge:
+        delay: 42s
     tailscale: {}
   CertificateResolver1:
     acme:
@@ -612,6 +614,7 @@ certificatesResolvers:
       emailAddresses:
         - foobar
         - foobar
+      disableCommonName: true
       storage: foobar
       keyType: foobar
       eab:
@@ -640,7 +643,8 @@ certificatesResolvers:
       httpChallenge:
         entryPoint: foobar
         delay: 42s
-      tlsChallenge: {}
+      tlsChallenge:
+        delay: 42s
     tailscale: {}
 experimental:
   plugins:

@@ -175,6 +175,7 @@ Two load balancing algorithms are supported:
 
 - Weighed round-robin (wrr)
 - Power of two choices (p2c)
+- Highest Random Weight (hrw)
 
 ##### WRR
 
@@ -240,6 +241,34 @@ Power of two choices algorithm is a load balancing strategy that selects two ser
           url = "http://private-ip-server-2/"       
         [[http.services.my-service.loadBalancer.servers]]
           url = "http://private-ip-server-3/"
+    ```
+
+##### HRW
+
+HighestRandomWeight, also called RendezVous hashing allows to loadbalance clients in a pool of services or servers.
+
+??? example "Load Balancing HRW with-- Using the [File Provider](../../providers/file.md)"
+
+    ```yaml tab="YAML"
+    ## Dynamic configuration
+    http:
+      services:
+        my-service:
+          loadBalancer:
+            type: hrw
+            servers:
+            - url: "http://private-ip-server-1/"
+            - url: "http://private-ip-server-2/"
+    ```
+
+    ```toml tab="TOML"
+    ## Dynamic configuration
+    [http.services]
+      [http.services.my-service.loadBalancer]
+        [[http.services.my-service.loadBalancer.servers]]
+          url = "http://private-ip-server-1/"
+        [[http.services.my-service.loadBalancer.servers]]
+          url = "http://private-ip-server-2/"
     ```
 
 #### Sticky sessions
@@ -1253,6 +1282,147 @@ http:
         url = "http://private-ip-server-2/"
 ```
 
+### Highest Random Weight (service)
+
+The HRW is able to load balance the requests between multiple services based on weights.
+
+This strategy is only available to load balance between [services](./index.md) and not between [servers](./index.md#servers).
+
+!!! info "Supported Providers"
+
+    This strategy can be defined currently with the [File](../../providers/file.md) or [IngressRoute](../../providers/kubernetes-crd.md) providers.
+
+```yaml tab="YAML"
+## Dynamic configuration
+http:
+  services:
+    app:
+      highestRandomWeight:
+        services:
+        - name: appv1
+          weight: 3
+        - name: appv2
+          weight: 1
+
+    appv1:
+      loadBalancer:
+        type: hrw
+        servers:
+        - url: "http://private-ip-server-1/"
+
+    appv2:
+      loadBalancer:
+        type: hrw
+        servers:
+        - url: "http://private-ip-server-2/"
+```
+
+```toml tab="TOML"
+## Dynamic configuration
+[http.services]
+  [http.services.app]
+    [[http.services.app.highestRandomWeight.services]]
+      name = "appv1"
+      weight = 3
+    [[http.services.app.highestRandomWeight.services]]
+      name = "appv2"
+      weight = 1
+
+  [http.services.appv1]
+    [http.services.appv1.loadBalancer]
+      type = "hrw"
+      [[http.services.appv1.loadBalancer.servers]]
+        url = "http://private-ip-server-1/"
+
+  [http.services.appv2]
+    [http.services.appv2.loadBalancer]
+      type = "hrw"
+      [[http.services.appv2.loadBalancer.servers]]
+        url = "http://private-ip-server-2/"
+```
+
+#### Health Check
+
+HealthCheck enables automatic self-healthcheck for this service, i.e. whenever
+one of its children is reported as down, this service becomes aware of it, and
+takes it into account (i.e. it ignores the down child) when running the
+load-balancing algorithm. In addition, if the parent of this service also has
+HealthCheck enabled, this service reports to its parent any status change.
+
+!!! info "All or nothing"
+
+    If HealthCheck is enabled for a given service, but any of its descendants does
+    not have it enabled, the creation of the service will fail.
+
+    HealthCheck on Weighted services can be defined currently only with the [File](../../providers/file.md) provider.
+
+```yaml tab="YAML"
+## Dynamic configuration
+http:
+  services:
+    app:
+      highestRandomWeight:
+        healthCheck: {}
+        services:
+        - name: appv1
+          weight: 3
+        - name: appv2
+          weight: 1
+
+    appv1:
+      loadBalancer:
+        type: hrw
+        healthCheck:
+          path: /status
+          interval: 10s
+          timeout: 3s
+        servers:
+        - url: "http://private-ip-server-1/"
+
+    appv2:
+      loadBalancer:
+        type: hrw
+        healthCheck:
+          path: /status
+          interval: 10s
+          timeout: 3s
+        servers:
+        - url: "http://private-ip-server-2/"
+```
+
+```toml tab="TOML"
+## Dynamic configuration
+[http.services]
+  [http.services.app]
+    [http.services.app.highestRandomWeight.healthCheck]
+    [[http.services.app.highestRandomWeight.services]]
+      name = "appv1"
+      weight = 3
+    [[http.services.app.highestRandomWeight.services]]
+      name = "appv2"
+      weight = 1
+
+  [http.services.appv1]
+    [http.services.appv1.loadBalancer]
+      type="hrw"
+      [http.services.appv1.loadBalancer.healthCheck]
+        path = "/health"
+        interval = "10s"
+        timeout = "3s"
+      [[http.services.appv1.loadBalancer.servers]]
+        url = "http://private-ip-server-1/"
+
+  [http.services.appv2]
+    [http.services.appv2.loadBalancer]
+      type="hrw"
+      [http.services.appv2.loadBalancer.healthCheck]
+        path = "/health"
+        interval = "10s"
+        timeout = "3s"
+      [[http.services.appv2.loadBalancer.servers]]
+        url = "http://private-ip-server-2/"
+```
+
 ### Mirroring (service)
 
 The mirroring is able to mirror requests sent to a service to other services.
@@ -1647,79 +1817,6 @@ The `tls` determines whether to use TLS when dialing with the backend.
 
     If no serversTransport is specified, the `default@internal` will be used.
     The `default@internal` serversTransport is created from the [static configuration](../overview.md#tcp-servers-transports).
-
-#### PROXY Protocol
-
-Traefik supports [PROXY Protocol](https://www.haproxy.org/download/2.0/doc/proxy-protocol.txt) version 1 and 2 on TCP Services.
-It can be enabled by setting `proxyProtocol` on the load balancer.
-
-Below are the available options for the PROXY protocol:
-
-- `version` specifies the version of the protocol to be used. Either `1` or `2`.
-
-!!! info "Version"
-
-    Specifying a version is optional. By default the version 2 will be used.
-
-??? example "A Service with Proxy Protocol v1 -- Using the [File Provider](../../providers/file.md)"
-
-    ```yaml tab="YAML"
-    ## Dynamic configuration
-    tcp:
-      services:
-        my-service:
-          loadBalancer:
-            proxyProtocol:
-              version: 1
-    ```
-
-    ```toml tab="TOML"
-    ## Dynamic configuration
-    [tcp.services]
-      [tcp.services.my-service.loadBalancer]
-        [tcp.services.my-service.loadBalancer.proxyProtocol]
-          version = 1
-    ```
-
-#### Termination Delay
-
-!!! warning
-
-    Deprecated in favor of [`serversTransport.terminationDelay`](#terminationdelay).
-    Please note that if any `serversTransport` configuration on the servers load balancer is found,
-    it will take precedence over the servers load balancer `terminationDelay` value,
-    even if the `serversTransport.terminationDelay` is undefined.
-
-As a proxy between a client and a server, it can happen that either side (e.g. client side) decides to terminate its writing capability on the connection (i.e. issuance of a FIN packet).
-The proxy needs to propagate that intent to the other side, and so when that happens, it also does the same on its connection with the other side (e.g. backend side).
-
-However, if for some reason (bad implementation, or malicious intent) the other side does not eventually do the same as well,
-the connection would stay half-open, which would lock resources for however long.
-
-To that end, as soon as the proxy enters this termination sequence, it sets a deadline on fully terminating the connections on both sides.
-
-The termination delay controls that deadline.
-It is a duration in milliseconds, defaulting to 100.
-A negative value means an infinite deadline (i.e. the connection is never fully terminated by the proxy itself).
-
-??? example "A Service with a termination delay -- Using the [File Provider](../../providers/file.md)"
-
-    ```yaml tab="YAML"
-    ## Dynamic configuration
-    tcp:
-      services:
-        my-service:
-          loadBalancer:
-            terminationDelay: 200
-    ```
-
-    ```toml tab="TOML"
-    ## Dynamic configuration
-    [tcp.services]
-      [tcp.services.my-service.loadBalancer]
-        [[tcp.services.my-service.loadBalancer]]
-          terminationDelay = 200
-    ```
 
 ### Weighted Round Robin
 

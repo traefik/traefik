@@ -54,12 +54,12 @@ spec:
 
 | Field      | Description                                                                                                                                                                                 | Default | Required |
 |:-----------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------|:---------|
-| `amount` | The `amount` option defines the maximum amount of allowed simultaneous in-flight request. <br /> The middleware responds with `HTTP 429 Too Many Requests` if there are already `amount` requests in progress (based on the same `sourceCriterion` strategy). | 0      | No      |
-| `sourceCriterion.requestHost` | Whether to consider the request host as the source.<br /> More information about `sourceCriterion`[here](#sourcecriterion). | false      | No      |
-| `sourceCriterion.requestHeaderName` | Name of the header used to group incoming requests.<br /> More information about `sourceCriterion`[here](#sourcecriterion). | ""      | No      |
-| `sourceCriterion.ipStrategy.depth` | Depth position of the IP to select in the `X-Forwarded-For` header (starting from the right).<br />0 means no depth.<br />If greater than the total number of IPs in `X-Forwarded-For`, then the client IP is empty<br />If higher than 0, the `excludedIPs` options is not evaluated.<br /> More information about [`sourceCriterion`](#sourcecriterion), [`ipStrategy](#ipstrategy), and [`depth`](#example-of-depth--x-forwarded-for) below. | 0      | No      |
-| `sourceCriterion.ipStrategy.excludedIPs` | Allows Traefik to scan the `X-Forwarded-For` header and select the first IP not in the list.<br />If `depth` is specified, `excludedIPs` is ignored.<br /> More information about [`sourceCriterion`](#sourcecriterion), [`ipStrategy](#ipstrategy), and [`excludedIPs`](#example-of-excludedips--x-forwarded-for) below. | | No      |
-| `sourceCriterion.ipStrategy.ipv6Subnet` |  If `ipv6Subnet` is provided and the selected IP is IPv6, the IP is transformed into the first IP of the subnet it belongs to. <br /> More information about [`sourceCriterion`](#sourcecriterion), [`ipStrategy.ipv6Subnet`](#ipstrategyipv6subnet), and [`excludedIPs`](#example-of-excludedips--x-forwarded-for) below. |  | No      |
+| <a id="amount" href="#amount" title="#amount">`amount`</a> | The `amount` option defines the maximum amount of allowed simultaneous in-flight request. <br /> The middleware responds with `HTTP 429 Too Many Requests` if there are already `amount` requests in progress (based on the same `sourceCriterion` strategy). | 0      | No      |
+| <a id="sourceCriterion-requestHost" href="#sourceCriterion-requestHost" title="#sourceCriterion-requestHost">`sourceCriterion.requestHost`</a> | Whether to consider the request host as the source.<br /> More information about `sourceCriterion`[here](#sourcecriterion). | false      | No      |
+| <a id="sourceCriterion-requestHeaderName" href="#sourceCriterion-requestHeaderName" title="#sourceCriterion-requestHeaderName">`sourceCriterion.requestHeaderName`</a> | Name of the header used to group incoming requests.<br /> More information about `sourceCriterion`[here](#sourcecriterion). | ""      | No      |
+| <a id="sourceCriterion-ipStrategy-depth" href="#sourceCriterion-ipStrategy-depth" title="#sourceCriterion-ipStrategy-depth">`sourceCriterion.ipStrategy.depth`</a> | Depth position of the IP to select in the `X-Forwarded-For` header (starting from the right).<br />0 means no depth.<br />If greater than the total number of IPs in `X-Forwarded-For`, then the client IP is empty<br />If higher than 0, the `excludedIPs` options is not evaluated.<br /> More information about [`sourceCriterion`](#sourcecriterion), [`ipStrategy](#ipstrategy), and [`depth`](#example-of-depth--x-forwarded-for) below. | 0      | No      |
+| <a id="sourceCriterion-ipStrategy-excludedIPs" href="#sourceCriterion-ipStrategy-excludedIPs" title="#sourceCriterion-ipStrategy-excludedIPs">`sourceCriterion.ipStrategy.excludedIPs`</a> | Allows Traefik to scan the `X-Forwarded-For` header and select the first IP not in the list.<br />If `depth` is specified, `excludedIPs` is ignored.<br /> More information about [`sourceCriterion`](#sourcecriterion), [`ipStrategy](#ipstrategy), and [`excludedIPs`](#example-of-excludedips--x-forwarded-for) below. | | No      |
+| <a id="sourceCriterion-ipStrategy-ipv6Subnet" href="#sourceCriterion-ipStrategy-ipv6Subnet" title="#sourceCriterion-ipStrategy-ipv6Subnet">`sourceCriterion.ipStrategy.ipv6Subnet`</a> |  If `ipv6Subnet` is provided and the selected IP is IPv6, the IP is transformed into the first IP of the subnet it belongs to. <br /> More information about [`sourceCriterion`](#sourcecriterion), [`ipStrategy.ipv6Subnet`](#ipstrategyipv6subnet), and [`excludedIPs`](#example-of-excludedips--x-forwarded-for) below. |  | No      |
 
 ### sourceCriterion
 
@@ -90,9 +90,9 @@ If `ipv6Subnet` is provided, the IP is transformed in the following way.
 
 | IP                     | ipv6Subnet | clientIP              |
 |---------------------------|--------------|-----------------------|
-| `"::abcd:1111:2222:3333"` | `64`         | `"::0:0:0:0"`         |
-| `"::abcd:1111:2222:3333"` | `80`         | `"::abcd:0:0:0:0"`    |
-| `"::abcd:1111:2222:3333"` | `96`         | `"::abcd:1111:0:0:0"` |
+| <a id="abcd111122223333" href="#abcd111122223333" title="#abcd111122223333">`"::abcd:1111:2222:3333"`</a> | `64`         | `"::0:0:0:0"`         |
+| <a id="abcd111122223333-2" href="#abcd111122223333-2" title="#abcd111122223333-2">`"::abcd:1111:2222:3333"`</a> | `80`         | `"::abcd:0:0:0:0"`    |
+| <a id="abcd111122223333-3" href="#abcd111122223333-3" title="#abcd111122223333-3">`"::abcd:1111:2222:3333"`</a> | `96`         | `"::abcd:1111:0:0:0"` |
 
 ### Example of Depth & X-Forwarded-For
 
@@ -100,16 +100,16 @@ If `depth` is set to 2, and the request `X-Forwarded-For` header is `"10.0.0.1,1
 
 | X-Forwarded-For                      | depth | clientIP     |
 |-----------------------------------------|---------|--------------|
-| `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `1`     | `"13.0.0.1"` |
-| `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `3`     | `"11.0.0.1"` |
-| `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `5`     | `""`         |
+| <a id="10-0-0-111-0-0-112-0-0-113-0-0-1" href="#10-0-0-111-0-0-112-0-0-113-0-0-1" title="#10-0-0-111-0-0-112-0-0-113-0-0-1">`"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"`</a> | `1`     | `"13.0.0.1"` |
+| <a id="10-0-0-111-0-0-112-0-0-113-0-0-1-2" href="#10-0-0-111-0-0-112-0-0-113-0-0-1-2" title="#10-0-0-111-0-0-112-0-0-113-0-0-1-2">`"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"`</a> | `3`     | `"11.0.0.1"` |
+| <a id="10-0-0-111-0-0-112-0-0-113-0-0-1-3" href="#10-0-0-111-0-0-112-0-0-113-0-0-1-3" title="#10-0-0-111-0-0-112-0-0-113-0-0-1-3">`"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"`</a> | `5`     | `""`         |
 
 ### Example of ExcludedIPs & X-Forwarded-For
 
 | X-Forwarded-For                       | excludedIPs        | clientIP     |
 |-----------------------------------------|-----------------------|--------------|
-| `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `"12.0.0.1,13.0.0.1"` | `"11.0.0.1"` |
-| `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `"15.0.0.1,13.0.0.1"` | `"12.0.0.1"` |
-| `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `"10.0.0.1,13.0.0.1"` | `"12.0.0.1"` |
-| `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `"15.0.0.1,16.0.0.1"` | `"13.0.0.1"` |
-| `"10.0.0.1,11.0.0.1"`                   | `"10.0.0.1,11.0.0.1"` | `""`         |
+| <a id="10-0-0-111-0-0-112-0-0-113-0-0-1-4" href="#10-0-0-111-0-0-112-0-0-113-0-0-1-4" title="#10-0-0-111-0-0-112-0-0-113-0-0-1-4">`"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"`</a> | `"12.0.0.1,13.0.0.1"` | `"11.0.0.1"` |
+| <a id="10-0-0-111-0-0-112-0-0-113-0-0-1-5" href="#10-0-0-111-0-0-112-0-0-113-0-0-1-5" title="#10-0-0-111-0-0-112-0-0-113-0-0-1-5">`"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"`</a> | `"15.0.0.1,13.0.0.1"` | `"12.0.0.1"` |
+| <a id="10-0-0-111-0-0-112-0-0-113-0-0-1-6" href="#10-0-0-111-0-0-112-0-0-113-0-0-1-6" title="#10-0-0-111-0-0-112-0-0-113-0-0-1-6">`"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"`</a> | `"10.0.0.1,13.0.0.1"` | `"12.0.0.1"` |
+| <a id="10-0-0-111-0-0-112-0-0-113-0-0-1-7" href="#10-0-0-111-0-0-112-0-0-113-0-0-1-7" title="#10-0-0-111-0-0-112-0-0-113-0-0-1-7">`"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"`</a> | `"15.0.0.1,16.0.0.1"` | `"13.0.0.1"` |
+| <a id="10-0-0-111-0-0-1" href="#10-0-0-111-0-0-1" title="#10-0-0-111-0-0-1">`"10.0.0.1,11.0.0.1"`</a> | `"10.0.0.1,11.0.0.1"` | `""`         |

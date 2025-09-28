@@ -490,6 +490,10 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			}
 		}
 
+		if serversTransportTCP.Spec.ProxyProtocol != nil {
+			tcpServerTransport.ProxyProtocol = serversTransportTCP.Spec.ProxyProtocol
+		}
+
 		if serversTransportTCP.Spec.TLS != nil {
 			if len(serversTransportTCP.Spec.TLS.RootCAsSecrets) > 0 {
 				logger.Warn().Msg("RootCAsSecrets option is deprecated, please use the RootCA option instead.")
