@@ -500,7 +500,7 @@ func TestProvider_GetNamespace(t *testing.T) {
 
 			result := p.GetNamespace()
 			if result != tt.expected {
-				t.Errorf("GetNamespace() = %v, want %v", result, tt.expected)
+				assert.Equal(t, tt.expected, result)
 			}
 		})
 	}
