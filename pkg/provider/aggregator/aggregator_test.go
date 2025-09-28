@@ -1,9 +1,12 @@
 package aggregator
 
 import (
+	"bytes"
 	"testing"
 	"time"
 
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
@@ -96,17 +99,40 @@ func (m *mockNamespaceProvider) Init() error {
 }
 
 func TestLaunchProviderWithNamespace(t *testing.T) {
-	// Test that providers implementing NamespaceProvider are correctly identified
+	// Capture log output
+	var buf bytes.Buffer
+
+	originalLogger := log.Logger
+	originalLevel := zerolog.GlobalLevel()
+
+	log.Logger = zerolog.New(&buf).With().Timestamp().Logger()
+	zerolog.SetGlobalLevel(zerolog.InfoLevel)
+
 	providerWithNamespace := &mockNamespaceProvider{namespace: "test-namespace"}
 
-	// Verify the interface implementation
 	var _ provider.NamespaceProvider = providerWithNamespace
 	var _ provider.Provider = providerWithNamespace
 
-	// Test GetNamespace method
-	assert.Equal(t, "test-namespace", providerWithNamespace.GetNamespace())
+	aggregator := ProviderAggregator{
+		internalProvider: providerWithNamespace,
+	}
 
-	// Test with empty namespace
-	providerEmptyNamespace := &mockNamespaceProvider{namespace: ""}
-	assert.Equal(t, "", providerEmptyNamespace.GetNamespace())
+	cfgCh := make(chan dynamic.Message)
+	errCh := make(chan error)
+	pool := safe.NewPool(t.Context())
+
+	t.Cleanup(func() {
+		pool.Stop()
+		log.Logger = originalLogger
+		zerolog.SetGlobalLevel(originalLevel)
+	})
+
+	go func() {
+		errCh <- aggregator.Provide(cfgCh, pool)
+	}()
+
+	require.NoError(t, <-errCh)
+
+	output := buf.String()
+	assert.Contains(t, output, "Starting provider *aggregator.mockNamespaceProvider (namespace: test-namespace)")
 }
