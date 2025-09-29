@@ -27,40 +27,46 @@ const (
 	http2Protocol = "http2"
 )
 
-func (p *Provider) loadKnativeIngressRouteConfiguration(ctx context.Context, tlsConfigs map[string]*tls.CertAndStores) (*dynamic.HTTPConfiguration, []*knativenetworkingv1alpha1.Ingress) {
-	conf := &dynamic.HTTPConfiguration{
-		Routers:     map[string]*dynamic.Router{},
-		Middlewares: map[string]*dynamic.Middleware{},
-		Services:    map[string]*dynamic.Service{},
+func (p *Provider) loadConfiguration(ctx context.Context) (*dynamic.Configuration, []*knativenetworkingv1alpha1.Ingress) {
+	conf := &dynamic.Configuration{
+		HTTP: &dynamic.HTTPConfiguration{
+			Routers:           map[string]*dynamic.Router{},
+			Middlewares:       map[string]*dynamic.Middleware{},
+			Services:          map[string]*dynamic.Service{},
+			ServersTransports: map[string]*dynamic.ServersTransport{},
+		},
 	}
-	var ingressStatusList []*knativenetworkingv1alpha1.Ingress
 
-	for _, ingressRoute := range p.k8sClient.ListIngresses() {
+	tlsConfigs := make(map[string]*tls.CertAndStores)
+
+	var ingressStatuses []*knativenetworkingv1alpha1.Ingress
+
+	for _, ingress := range p.k8sClient.ListIngresses() {
 		logger := log.Ctx(ctx).With().
-			Str("KNativeIngress", ingressRoute.Name).
-			Str("namespace", ingressRoute.Namespace).
+			Str("ingress", ingress.Name).
+			Str("namespace", ingress.Namespace).
 			Logger()
 
-		if err := p.getTLSHTTP(ctx, ingressRoute, tlsConfigs); err != nil {
+		if ingress.Annotations[knativenetworking.IngressClassAnnotationKey] != traefikIngressClassName {
+			logger.Debug().Msgf("Skipping Ingress %s/%s", ingress.Namespace, ingress.Name)
+			continue
+		}
+
+		if err := p.getTLSHTTP(ctx, ingress, tlsConfigs); err != nil {
 			logger.Error().Err(err).Send()
 			continue
 		}
 
-		if !(traefikIngressClassName == ingressRoute.Annotations[knativenetworking.IngressClassAnnotationKey]) {
-			logger.Debug().Msgf("Skipping Ingress %s/%s", ingressRoute.Namespace, ingressRoute.Name)
-			continue
-		}
+		ingressName := getIngressName(ingress)
 
-		ingressName := getIngressName(ingressRoute)
-
-		serviceKey, err := makeServiceKey(ingressRoute.Namespace, ingressName)
+		serviceKey, err := makeServiceKey(ingress.Namespace, ingressName)
 		if err != nil {
 			logger.Error().Err(err).Send()
 			continue
 		}
 
-		serviceName := provider.Normalize(makeID(ingressRoute.Namespace, serviceKey))
-		knativeResult := p.buildKnativeService(ctx, ingressRoute, conf.Middlewares, conf.Services, serviceName)
+		serviceName := provider.Normalize(makeID(ingress.Namespace, serviceKey))
+		knativeResult := p.buildKnativeService(ctx, ingress, conf.HTTP.Middlewares, conf.HTTP.Services, serviceName)
 
 		for _, result := range knativeResult {
 			var entrypoints []string
@@ -91,16 +97,22 @@ func (p *Provider) loadKnativeIngressRouteConfiguration(ctx context.Context, tls
 			if entrypoints != nil {
 				r.EntryPoints = entrypoints
 			}
-			if ingressRoute.Spec.TLS != nil {
+			if ingress.Spec.TLS != nil {
 				r.TLS = &dynamic.RouterTLSConfig{
 					CertResolver: "default", // setting to default as we will only have secretName for KNative's.
 				}
 			}
-			conf.Routers[provider.Normalize(result.ServiceKey)] = r
-			ingressStatusList = append(ingressStatusList, ingressRoute)
+			conf.HTTP.Routers[provider.Normalize(result.ServiceKey)] = r
+			ingressStatuses = append(ingressStatuses, ingress)
 		}
 	}
-	return conf, ingressStatusList
+
+	if len(tlsConfigs) > 0 {
+		conf.TLS = &dynamic.TLSConfiguration{}
+		conf.TLS.Certificates = append(conf.TLS.Certificates, getTLSConfig(tlsConfigs)...)
+	}
+
+	return conf, ingressStatuses
 }
 
 func (p *Provider) createKnativeLoadBalancerServerHTTP(namespace string, service traefikv1alpha1.Service) (*dynamic.Service, error) {

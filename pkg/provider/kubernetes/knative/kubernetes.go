@@ -64,6 +64,7 @@ func (p *Provider) Init() error {
 // using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	logger := log.With().Str(logs.ProviderName, providerName).Logger()
+	ctxLog := logger.WithContext(context.Background())
 
 	pool.GoCtx(func(ctxPool context.Context) {
 		operation := func() error {
@@ -80,7 +81,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 			}
 
 			throttleDuration := time.Duration(p.ThrottleDuration)
-			throttledChan := throttleEvents(context.Background(), throttleDuration, pool, eventsChan)
+			throttledChan := throttleEvents(ctxLog, throttleDuration, pool, eventsChan)
 			if throttledChan != nil {
 				eventsChan = throttledChan
 			}
@@ -93,16 +94,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					// Note that event is the *first* event that came in during this throttling interval -- if we're hitting our throttle, we may have dropped events.
 					// This is fine, because we don't treat different event types differently.
 					// But if we do in the future, we'll need to track more information about the dropped events.
-					tlsConfigs := make(map[string]*tls.CertAndStores)
-					httpConf, ingressStatusList := p.loadKnativeIngressRouteConfiguration(context.Background(), tlsConfigs)
-					conf := &dynamic.Configuration{
-						HTTP: httpConf,
-					}
-
-					if len(tlsConfigs) > 0 {
-						conf.TLS = &dynamic.TLSConfiguration{}
-						conf.TLS.Certificates = append(conf.TLS.Certificates, getTLSConfig(tlsConfigs)...)
-					}
+					conf, ingressStatuses := p.loadConfiguration(ctxLog)
 
 					confHash, err := hashstructure.Hash(conf, nil)
 					switch {
@@ -119,7 +111,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 						time.Sleep(5 * time.Second) // Wait for the routes to be updated before updating ingress
 						// status. Not having this can lead to conformance tests failing intermittently as the routes
 						// are queried as soon as the status is set to ready.
-						for _, ingress := range ingressStatusList {
+						for _, ingress := range ingressStatuses {
 							if err := p.updateKnativeIngressStatus(ingress); err != nil {
 								logger.Error().Err(err).Msgf("Error updating status for Ingress %s/%s", ingress.Namespace, ingress.Name)
 							}

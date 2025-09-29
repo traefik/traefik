@@ -295,7 +295,7 @@ func TestLoadKnativeIngressRouteConfiguration(t *testing.T) {
 	tlsConfigs := make(map[string]*tls.CertAndStores)
 
 	ctx := t.Context()
-	conf, ingressStatusList := provider.loadKnativeIngressRouteConfiguration(ctx, tlsConfigs)
+	conf, ingressStatusList := provider.loadConfiguration(ctx, tlsConfigs)
 
 	require.NotNil(t, conf)
 	assert.NotEmpty(t, conf.Routers)
