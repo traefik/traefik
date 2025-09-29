@@ -89,7 +89,7 @@ When the bucket is not full, on token is generated every 10 seconds (6 every 1 m
 | <a id="period" href="#period" title="#period">`period`</a> | Period of time used to define the rate.<br />More information [here](#rate-and-burst).| 1s | No |
 | <a id="burst" href="#burst" title="#burst">`burst`</a> | Maximum number of requests allowed to go through at the very same moment.<br />More information [here](#rate-and-burst). | 1 | No |
 | <a id="denyOnError" href="#denyOnError" title="#denyOnError">`denyOnError`</a> | Forces to return a 429 error if the number of remaining requests accepted cannot be get.<br /> Set to `false`, this option allows the request to reach the backend. | true    | No       |
-| <a id="responseHeaders" href="#responseHeaders" title="#responseHeaders">`responseHeaders`</a> | Injects the following rate limiting headers in the response:<br />- X-Rate-Limit-Remaining<br />- X-Rate-Limit-Limit<br />- X-Rate-Limit-Period<br />- X-Rate-Limit-Reset<br />The added headers indicate how many tokens are left in the bucket (in the token bucket analogy) after the reservation for the request was made. | false   | No       |
+| <a id="responseHeaders" href="#responseHeaders" title="#responseHeaders">`responseHeaders`</a> | Injects the following rate limiting headers in the response:<br />- `X-Rate-Limit-Remaining`<br />- `X-Rate-Limit-Limit`<br />- `X-Rate-Limit-Period`<br />- `X-Rate-Limit-Reset`<br />The added headers indicate how many tokens are left in the bucket (in the token bucket analogy) after the reservation for the request was made. | false   | No       |
 | <a id="store-redis-endpoints" href="#store-redis-endpoints" title="#store-redis-endpoints">`store.redis.endpoints`</a> | Endpoints of the Redis instances to connect to (example: `redis.traefik-hub.svc.cluster.local:6379`) | "" | Yes      |
 | <a id="store-redis-username" href="#store-redis-username" title="#store-redis-username">`store.redis.username`</a> | The username Traefik Hub will use to connect to Redis                                                | "" | No       |
 | <a id="store-redis-password" href="#store-redis-password" title="#store-redis-password">`store.redis.password`</a> | The password Traefik Hub will use to connect to Redis                                                | "" | No       |
@@ -142,7 +142,7 @@ In this case, `excludedIPs` should be set to match the list of `X-Forwarded-For 
 
 Example to use each IP as a distinct source:
 
-| X-Forwarded-For                | excludedIPs           | clientIP     |
+| `X-Forwarded-For`              | excludedIPs           | clientIP     |
 |--------------------------------|-----------------------|--------------|
 | <a id="10-0-0-111-0-0-112-0-0-1" href="#10-0-0-111-0-0-112-0-0-1" title="#10-0-0-111-0-0-112-0-0-1">`"10.0.0.1,11.0.0.1,12.0.0.1"`</a> | `"11.0.0.1,12.0.0.1"` | `"10.0.0.1"` |
 | <a id="10-0-0-211-0-0-112-0-0-1" href="#10-0-0-211-0-0-112-0-0-1" title="#10-0-0-211-0-0-112-0-0-1">`"10.0.0.2,11.0.0.1,12.0.0.1"`</a> | `"11.0.0.1,12.0.0.1"` | `"10.0.0.2"` |
@@ -151,7 +151,7 @@ Example to use each IP as a distinct source:
 
 Example to group IPs together as same source:
 
-|  X-Forwarded-For               |  excludedIPs | clientIP     |
+| `X-Forwarded-For`              | excludedIPs  | clientIP     |
 |--------------------------------|--------------|--------------|
 | <a id="10-0-0-111-0-0-112-0-0-1-2" href="#10-0-0-111-0-0-112-0-0-1-2" title="#10-0-0-111-0-0-112-0-0-1-2">`"10.0.0.1,11.0.0.1,12.0.0.1"`</a> | `"12.0.0.1"` | `"11.0.0.1"` |
 | <a id="10-0-0-211-0-0-112-0-0-1-2" href="#10-0-0-211-0-0-112-0-0-1-2" title="#10-0-0-211-0-0-112-0-0-1-2">`"10.0.0.2,11.0.0.1,12.0.0.1"`</a> | `"12.0.0.1"` | `"11.0.0.1"` |

@@ -113,7 +113,7 @@ The `depth` option tells Traefik to use the `X-Forwarded-For` header and select 
 If `ipStrategy.ipv6Subnet` is provided and the selected IP is IPv6, the IP is transformed into the first IP of the subnet it belongs to.  
 See [ipStrategy.ipv6Subnet](#ipstrategyipv6subnet) for more details.
 
-!!! example "Example of Depth & X-Forwarded-For"
+!!! example "Example of Depth & `X-Forwarded-For`"
 
     If `depth` is set to 2, and the request `X-Forwarded-For` header is `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` then the "real" client IP is `"10.0.0.1"` (at depth 4) but the IP used as the criterion is `"12.0.0.1"` (`depth=2`).
 
@@ -167,7 +167,7 @@ http:
 
 !!! important "If `depth` is specified, `excludedIPs` is ignored."
 
-!!! example "Example of ExcludedIPs & X-Forwarded-For"
+!!! example "Example of ExcludedIPs & `X-Forwarded-For`"
 
     | `X-Forwarded-For`                       | `excludedIPs`         | clientIP     |
     |-----------------------------------------|-----------------------|--------------|

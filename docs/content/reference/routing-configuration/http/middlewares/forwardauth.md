@@ -87,10 +87,10 @@ The following request properties are provided to the forward-auth target endpoin
 
 | Property          | Forward-Request Header |
 |-------------------|------------------------|
-| <a id="HTTP-Method" href="#HTTP-Method" title="#HTTP-Method">HTTP Method</a> | X-Forwarded-Method     |
-| <a id="Protocol" href="#Protocol" title="#Protocol">Protocol</a> | X-Forwarded-Proto      |
-| <a id="Host" href="#Host" title="#Host">Host</a> | X-Forwarded-Host       |
-| <a id="Request-URI" href="#Request-URI" title="#Request-URI">Request URI</a> | X-Forwarded-Uri        |
-| <a id="Source-IP-Address" href="#Source-IP-Address" title="#Source-IP-Address">Source IP-Address</a> | X-Forwarded-For        |
+| <a id="HTTP-Method" href="#HTTP-Method" title="#HTTP-Method">HTTP Method</a> | `X-Forwarded-Method`     |
+| <a id="Protocol" href="#Protocol" title="#Protocol">Protocol</a> | `X-Forwarded-Proto`      |
+| <a id="Host" href="#Host" title="#Host">Host</a> | `X-Forwarded-Host`       |
+| <a id="Request-URI" href="#Request-URI" title="#Request-URI">Request URI</a> | `X-Forwarded-Uri`        |
+| <a id="Source-IP-Address" href="#Source-IP-Address" title="#Source-IP-Address">Source IP-Address</a> | `X-Forwarded-For`        |
 
 {!traefik-for-business-applications.md!}
