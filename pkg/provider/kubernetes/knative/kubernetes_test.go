@@ -72,8 +72,8 @@ func TestBuildKnativeService(t *testing.T) {
 	conf := make(map[string]*dynamic.Service)
 
 	provider := &Provider{
-		Entrypoints:         []string{"web"},
-		EntrypointsInternal: []string{"web-internal"},
+		ExternalEntrypoints: []string{"web"},
+		InternalEntrypoints: []string{"web-internal"},
 		k8sClient:           client,
 	}
 
@@ -121,8 +121,8 @@ func TestLoadKnativeServers(t *testing.T) {
 		},
 	}
 	provider := &Provider{
-		Entrypoints:         []string{"web"},
-		EntrypointsInternal: []string{"web-internal"},
+		ExternalEntrypoints: []string{"web"},
+		InternalEntrypoints: []string{"web-internal"},
 		k8sClient: &clientMock{
 			services: []*corev1.Service{
 				{
@@ -222,8 +222,8 @@ func TestLoadKnativeServers(t *testing.T) {
 
 func TestLoadKnativeIngressRouteConfiguration(t *testing.T) {
 	provider := &Provider{
-		Entrypoints:         []string{"web"},
-		EntrypointsInternal: []string{"web-internal"},
+		ExternalEntrypoints: []string{"web"},
+		InternalEntrypoints: []string{"web-internal"},
 		k8sClient: &clientMock{
 			services: []*corev1.Service{
 				{

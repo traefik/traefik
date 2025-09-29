@@ -51,11 +51,11 @@ type Provider struct {
 	CertAuthFilePath           string          `description:"Kubernetes certificate authority file path (not needed for in-cluster client)." json:"certAuthFilePath,omitempty" toml:"certAuthFilePath,omitempty" yaml:"certAuthFilePath,omitempty"`
 	Namespaces                 []string        `description:"Kubernetes namespaces." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty" export:"true"`
 	LabelSelector              string          `description:"Kubernetes label selector to use." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
+	ExternalEntrypoints        []string        `description:"Entrypoint names used to expose the Ingress externally. If empty an Ingress is exposed on all entrypoints." json:"externalEntrypoints,omitempty" toml:"externalEntrypoints,omitempty" yaml:"externalEntrypoints,omitempty" export:"true"`
+	InternalEntrypoints        []string        `description:"Entrypoint names used to expose the Ingress locally. If empty local Ingresses are skipped." json:"internalEntrypoints,omitempty" toml:"internalEntrypoints,omitempty" yaml:"internalEntrypoints,omitempty" export:"true"`
 	LoadBalancerIP             string          `description:"set for load-balancer ingress points that are IP based." json:"loadBalancerIP,omitempty" toml:"loadBalancerIP,omitempty" yaml:"loadBalancerIP,omitempty"`
 	LoadBalancerDomain         string          `description:"set for load-balancer ingress points that are DNS based." json:"loadBalancerDomain,omitempty" toml:"loadBalancerDomain,omitempty" yaml:"loadBalancerDomain,omitempty"`
 	LoadBalancerDomainInternal string          `description:"set if there is a cluster-local DNS name to access the Ingress." json:"loadBalancerDomainInternal,omitempty" toml:"loadBalancerDomainInternal,omitempty" yaml:"loadBalancerDomainInternal,omitempty"`
-	Entrypoints                []string        `description:"Entry points for Knative. (default: [\"traefik\"])" json:"entrypoints,omitempty" toml:"entrypoints,omitempty" yaml:"entrypoints,omitempty" export:"true"`
-	EntrypointsInternal        []string        `description:"Entry points for Knative." json:"entrypointsInternal,omitempty" toml:"entrypointsInternal,omitempty" yaml:"entrypointsInternal,omitempty" export:"true"`
 	ThrottleDuration           ptypes.Duration `description:"Ingress refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty"`
 
 	k8sClient         Client
@@ -218,26 +218,18 @@ func (p *Provider) loadConfiguration(ctx context.Context) (*dynamic.Configuratio
 		}
 
 		ingressName := getIngressName(ingress)
-
-		serviceKey, err := makeServiceKey(ingress.Namespace, ingressName)
-		if err != nil {
-			logger.Error().Err(err).Send()
-			continue
-		}
-
+		serviceKey := makeServiceKey(ingress.Namespace, ingressName)
 		serviceName := provider.Normalize(makeID(ingress.Namespace, serviceKey))
+
 		knativeResult := p.buildKnativeService(ctx, ingress, conf.HTTP.Middlewares, conf.HTTP.Services, serviceName)
 
 		for _, result := range knativeResult {
-			var entrypoints []string
-
+			entrypoints := p.ExternalEntrypoints
 			if result.Visibility == knativenetworkingv1alpha1.IngressVisibilityClusterLocal {
-				if p.EntrypointsInternal == nil {
+				if p.InternalEntrypoints == nil {
 					continue // skip route creation as no internal entrypoints are defined for cluster local visibility
 				}
-				entrypoints = p.EntrypointsInternal
-			} else {
-				entrypoints = p.Entrypoints
+				entrypoints = p.InternalEntrypoints
 			}
 
 			if result.Err != nil {
@@ -252,11 +244,9 @@ func (p *Provider) loadConfiguration(ctx context.Context) (*dynamic.Configuratio
 				Middlewares: mds,
 				Rule:        match,
 				Service:     result.ServiceKey,
+				EntryPoints: entrypoints,
 			}
 
-			if entrypoints != nil {
-				r.EntryPoints = entrypoints
-			}
 			if ingress.Spec.TLS != nil {
 				r.TLS = &dynamic.RouterTLSConfig{
 					CertResolver: "default", // setting to default as we will only have secretName for KNative's.
@@ -552,14 +542,11 @@ func buildMatchRule(hosts []string, path string) string {
 	return match
 }
 
-func makeServiceKey(rule, ingressName string) (string, error) {
+func makeServiceKey(rule, ingressName string) string {
 	h := sha256.New()
-	if _, err := h.Write([]byte(rule)); err != nil {
-		return "", err
-	}
-
-	key := fmt.Sprintf("%s-%.10x", ingressName, h.Sum(nil))
-	return key, nil
+	// As explained in hash.Hash documentation, Write never returns an error.
+	_, _ = h.Write([]byte(rule))
+	return fmt.Sprintf("%s-%.10x", ingressName, h.Sum(nil))
 }
 
 func makeID(s1, s2 string) string {
