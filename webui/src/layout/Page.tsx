@@ -1,4 +1,4 @@
-import { Flex, globalCss, styled } from '@traefiklabs/faency'
+import { Flex, globalCss, styled, Text } from '@traefiklabs/faency'
 import { ReactNode, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 
@@ -38,9 +38,10 @@ const PageContainer = styled(Container, {
 export interface Props {
   title?: string
   children?: ReactNode
+  isDemoContent?: boolean
 }
 
-const Page = ({ children, title }: Props) => {
+const Page = ({ children, title, isDemoContent = false }: Props) => {
   const [isSideBarPanelOpen, setIsSideBarPanelOpen] = useState(false)
 
   return (
@@ -57,7 +58,10 @@ const Page = ({ children, title }: Props) => {
           css={{ flex: 1, margin: 'auto', ml: 264, [`@media (max-width:${LAPTOP_BP}px)`]: { ml: 60 } }}
         >
           <PageContainer data-testid={`${title} page`} direction="column">
-            <TopNav />
+            <Flex align="center" justify={isDemoContent ? 'space-between' : 'end'}>
+              {isDemoContent && <Text css={{ fontSize: '$8', color: '$primary' }}>DEMO CONTENT</Text>}
+              <TopNav />
+            </Flex>
             {children}
           </PageContainer>
         </Flex>
