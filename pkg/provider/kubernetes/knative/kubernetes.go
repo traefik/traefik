@@ -34,10 +34,10 @@ type Provider struct {
 	Token                      string          `description:"Kubernetes bearer token (not needed for in-cluster client)." json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty"`
 	CertAuthFilePath           string          `description:"Kubernetes certificate authority file path (not needed for in-cluster client)." json:"certAuthFilePath,omitempty" toml:"certAuthFilePath,omitempty" yaml:"certAuthFilePath,omitempty"`
 	Namespaces                 []string        `description:"Kubernetes namespaces." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty" export:"true"`
+	LabelSelector              string          `description:"Kubernetes label selector to use." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
 	LoadBalancerIP             string          `description:"set for load-balancer ingress points that are IP based." json:"loadBalancerIP,omitempty" toml:"loadBalancerIP,omitempty" yaml:"loadBalancerIP,omitempty"`
 	LoadBalancerDomain         string          `description:"set for load-balancer ingress points that are DNS based." json:"loadBalancerDomain,omitempty" toml:"loadBalancerDomain,omitempty" yaml:"loadBalancerDomain,omitempty"`
 	LoadBalancerDomainInternal string          `description:"set if there is a cluster-local DNS name to access the Ingress." json:"loadBalancerDomainInternal,omitempty" toml:"loadBalancerDomainInternal,omitempty" yaml:"loadBalancerDomainInternal,omitempty"`
-	LabelSelector              string          `description:"Kubernetes label selector to use." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
 	Entrypoints                []string        `description:"Entry points for Knative. (default: [\"traefik\"])" json:"entrypoints,omitempty" toml:"entrypoints,omitempty" yaml:"entrypoints,omitempty" export:"true"`
 	EntrypointsInternal        []string        `description:"Entry points for Knative." json:"entrypointsInternal,omitempty" toml:"entrypointsInternal,omitempty" yaml:"entrypointsInternal,omitempty" export:"true"`
 	ThrottleDuration           ptypes.Duration `description:"Ingress refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty"`
@@ -48,9 +48,11 @@ type Provider struct {
 
 // Init the provider.
 func (p *Provider) Init() error {
+	logger := log.With().Str(logs.ProviderName, providerName).Logger()
+
 	// Initializes Kubernetes client.
 	var err error
-	p.k8sClient, err = p.newK8sClient(context.Background(), p.LabelSelector)
+	p.k8sClient, err = p.newK8sClient(logger.WithContext(context.Background()))
 	if err != nil {
 		return fmt.Errorf("creating kubernetes client: %w", err)
 	}
@@ -61,7 +63,7 @@ func (p *Provider) Init() error {
 // Provide allows the k8s provider to provide configurations to traefik
 // using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
-	logger := log.Ctx(context.Background()).With().Str(logs.ProviderName, providerName).Logger()
+	logger := log.With().Str(logs.ProviderName, providerName).Logger()
 
 	pool.GoCtx(func(ctxPool context.Context) {
 		operation := func() error {
@@ -171,13 +173,14 @@ func (p *Provider) updateKnativeIngressStatus(ingressRoute *knativenetworkingv1a
 	return nil
 }
 
-func (p *Provider) newK8sClient(ctx context.Context, labelSelector string) (*clientWrapper, error) {
+func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
 	logger := log.Ctx(ctx).With().Logger()
-	labelSel, err := labels.Parse(labelSelector)
+
+	_, err := labels.Parse(p.LabelSelector)
 	if err != nil {
-		return nil, fmt.Errorf("invalid label selector: %q", labelSelector)
+		return nil, fmt.Errorf("parsing label selector: %q", p.LabelSelector)
 	}
-	logger.Info().Msgf("label selector is: %q", labelSel)
+	logger.Info().Msgf("Label selector is: %q", p.LabelSelector)
 
 	withEndpoint := ""
 	if p.Endpoint != "" {
@@ -196,12 +199,12 @@ func (p *Provider) newK8sClient(ctx context.Context, labelSelector string) (*cli
 		logger.Info().Msgf("Creating cluster-external Provider client%s", withEndpoint)
 		client, err = newExternalClusterClient(p.Endpoint, p.Token, p.CertAuthFilePath)
 	}
-
-	if err == nil {
-		client.labelSelector = labelSel
+	if err != nil {
+		return nil, err
 	}
 
-	return client, err
+	client.labelSelector = p.LabelSelector
+	return client, nil
 }
 
 func getTLS(k8sClient Client, secretName, namespace string) (*tls.CertAndStores, error) {

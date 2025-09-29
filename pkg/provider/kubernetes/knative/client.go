@@ -38,7 +38,6 @@ type Client interface {
 	UpdateIngressStatus(ingress *knativenetworkingv1alpha1.Ingress) error
 }
 
-// TODO: add tests for the clientWrapper (and its methods) itself.
 type clientWrapper struct {
 	csKnativeNetworking knativenetworkingclientset.Interface
 	csKube              kclientset.Interface
@@ -46,7 +45,7 @@ type clientWrapper struct {
 	factoriesKnativeNetworking map[string]knativenetworkinginformers.SharedInformerFactory
 	factoriesKube              map[string]kinformers.SharedInformerFactory
 
-	labelSelector labels.Selector
+	labelSelector string
 
 	isNamespaceAll    bool
 	watchedNamespaces []string
@@ -134,11 +133,10 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 	}
 	c.watchedNamespaces = namespaces
 
-	matchesLabelSelector := func(opts *metav1.ListOptions) {
-		opts.LabelSelector = c.labelSelector.String()
-	}
 	for _, ns := range namespaces {
-		factory := knativenetworkinginformers.NewSharedInformerFactoryWithOptions(c.csKnativeNetworking, resyncPeriod, knativenetworkinginformers.WithNamespace(ns), knativenetworkinginformers.WithTweakListOptions(matchesLabelSelector))
+		factory := knativenetworkinginformers.NewSharedInformerFactoryWithOptions(c.csKnativeNetworking, resyncPeriod, knativenetworkinginformers.WithNamespace(ns), knativenetworkinginformers.WithTweakListOptions(func(opts *metav1.ListOptions) {
+			opts.LabelSelector = c.labelSelector
+		}))
 		_, err := factory.Networking().V1alpha1().Ingresses().Informer().AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err
@@ -149,8 +147,7 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		}
 
 		factoryKube := kinformers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, kinformers.WithNamespace(ns))
-		serviceInformer := factoryKube.Core().V1().Services().Informer()
-		_, err = serviceInformer.AddEventHandler(eventHandler)
+		_, err = factoryKube.Core().V1().Services().Informer().AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err
 		}
