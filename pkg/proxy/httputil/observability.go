@@ -14,7 +14,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/tracing"
 	"go.opentelemetry.io/otel/attribute"
 	semconv "go.opentelemetry.io/otel/semconv/v1.37.0"
-	"go.opentelemetry.io/otel/semconv/v1.37.0/httpconv"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -106,25 +105,7 @@ func (t *wrapper) RoundTrip(req *http.Request) (*http.Response, error) {
 	attrs = append(attrs, semconv.URLScheme(req.Header.Get("X-Forwarded-Proto")))
 
 	// Convert method to httpconv enum
-	var methodAttr httpconv.RequestMethodAttr
-	switch req.Method {
-	case http.MethodGet:
-		methodAttr = httpconv.RequestMethodGet
-	case http.MethodPost:
-		methodAttr = httpconv.RequestMethodPost
-	case http.MethodPut:
-		methodAttr = httpconv.RequestMethodPut
-	case http.MethodDelete:
-		methodAttr = httpconv.RequestMethodDelete
-	case http.MethodHead:
-		methodAttr = httpconv.RequestMethodHead
-	case http.MethodOptions:
-		methodAttr = httpconv.RequestMethodOptions
-	case http.MethodPatch:
-		methodAttr = httpconv.RequestMethodPatch
-	default:
-		methodAttr = httpconv.RequestMethodOther
-	}
+	methodAttr := observability.AttrFromRequestMethod(req.Method)
 
 	t.semConvMetricRegistry.HTTPClientRequestDuration().Record(req.Context(), end.Sub(start).Seconds(),
 		methodAttr, req.URL.Host, serverPort, attrs...)
