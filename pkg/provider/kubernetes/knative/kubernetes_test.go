@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
-	"github.com/traefik/traefik/v3/pkg/tls"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -109,7 +108,7 @@ func TestLoadKnativeServers(t *testing.T) {
 				},
 			},
 		},
-		serverlessService: []*knativenetworkingv1alpha1.ServerlessService{
+		serverlessServices: []*knativenetworkingv1alpha1.ServerlessService{
 			{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "test-service",
@@ -142,7 +141,7 @@ func TestLoadKnativeServers(t *testing.T) {
 					},
 				},
 			},
-			serverlessService: []*knativenetworkingv1alpha1.ServerlessService{
+			serverlessServices: []*knativenetworkingv1alpha1.ServerlessService{
 				{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-service",
@@ -153,7 +152,7 @@ func TestLoadKnativeServers(t *testing.T) {
 					},
 				},
 			},
-			ingressRoute: []*knativenetworkingv1alpha1.Ingress{
+			ingresses: []*knativenetworkingv1alpha1.Ingress{
 				{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "example-ingress",
@@ -243,7 +242,7 @@ func TestLoadKnativeIngressRouteConfiguration(t *testing.T) {
 					},
 				},
 			},
-			serverlessService: []*knativenetworkingv1alpha1.ServerlessService{
+			serverlessServices: []*knativenetworkingv1alpha1.ServerlessService{
 				{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-service",
@@ -254,7 +253,7 @@ func TestLoadKnativeIngressRouteConfiguration(t *testing.T) {
 					},
 				},
 			},
-			ingressRoute: []*knativenetworkingv1alpha1.Ingress{
+			ingresses: []*knativenetworkingv1alpha1.Ingress{
 				{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "example-ingress",
@@ -292,16 +291,14 @@ func TestLoadKnativeIngressRouteConfiguration(t *testing.T) {
 		},
 	}
 
-	tlsConfigs := make(map[string]*tls.CertAndStores)
-
 	ctx := t.Context()
-	conf, ingressStatusList := provider.loadConfiguration(ctx, tlsConfigs)
+	conf, ingressStatusList := provider.loadConfiguration(ctx)
 
 	require.NotNil(t, conf)
-	assert.NotEmpty(t, conf.Routers)
-	assert.NotEmpty(t, conf.Services)
+	assert.NotEmpty(t, conf.HTTP.Routers)
+	assert.NotEmpty(t, conf.HTTP.Services)
 
-	router, ok := conf.Routers["default-test-service-80"]
+	router, ok := conf.HTTP.Routers["default-test-service-80"]
 	require.True(t, ok)
 	assert.Equal(t, "web", router.EntryPoints[0])
 	assert.Equal(t, "(Host(`example.com`)) && PathPrefix(`/`)", router.Rule)

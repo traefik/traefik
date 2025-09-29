@@ -9,9 +9,9 @@ import (
 
 // clientMock is a mock implementation of the client interface.
 type clientMock struct {
-	services          []*corev1.Service
-	serverlessService []*knativenetworkingv1alpha1.ServerlessService
-	ingressRoute      []*knativenetworkingv1alpha1.Ingress
+	services           []*corev1.Service
+	serverlessServices []*knativenetworkingv1alpha1.ServerlessService
+	ingresses          []*knativenetworkingv1alpha1.Ingress
 
 	apiServiceError        error
 	serverlessServiceError error
@@ -22,7 +22,7 @@ func (m *clientMock) WatchAll(namespaces []string, stopCh <-chan struct{}) (<-ch
 }
 
 func (m *clientMock) ListIngresses() []*knativenetworkingv1alpha1.Ingress {
-	return m.ingressRoute
+	return m.ingresses
 }
 
 func (m *clientMock) GetIngress(namespace, name string) (*knativenetworkingv1alpha1.Ingress, bool, error) {
@@ -34,7 +34,7 @@ func (m *clientMock) GetServerlessService(namespace, name string) (*knativenetwo
 		return nil, false, errors.New("no services found")
 	}
 
-	for _, service := range m.serverlessService {
+	for _, service := range m.serverlessServices {
 		if service.Namespace == namespace && service.Name == name {
 			return service, true, nil
 		}
@@ -51,7 +51,7 @@ func (m *clientMock) GetService(namespace, name string) (*corev1.Service, bool, 
 	return nil, false, m.apiServiceError
 }
 
-func (m *clientMock) GetSecret(namespace, name string) (*corev1.Secret, bool, error) {
+func (m *clientMock) GetSecret(namespace, name string) (*corev1.Secret, error) {
 	// TODO implement me
 	panic("implement me")
 }

@@ -30,10 +30,9 @@ const resyncPeriod = 10 * time.Minute
 type Client interface {
 	WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error)
 	ListIngresses() []*knativenetworkingv1alpha1.Ingress
-	GetIngress(namespace, name string) (*knativenetworkingv1alpha1.Ingress, bool, error)
 	GetServerlessService(namespace, name string) (*knativenetworkingv1alpha1.ServerlessService, bool, error)
 	GetService(namespace, name string) (*corev1.Service, bool, error)
-	GetSecret(namespace, name string) (*corev1.Secret, bool, error)
+	GetSecret(namespace, name string) (*corev1.Secret, error)
 	GetEndpoints(namespace, name string) (*corev1.Endpoints, bool, error)
 	UpdateIngressStatus(ingress *knativenetworkingv1alpha1.Ingress) error
 }
@@ -199,13 +198,13 @@ func (c *clientWrapper) ListIngresses() []*knativenetworkingv1alpha1.Ingress {
 	return result
 }
 
-func (c *clientWrapper) UpdateIngressStatus(ingressRoute *knativenetworkingv1alpha1.Ingress) error {
-	_, err := c.csKnativeNetworking.NetworkingV1alpha1().Ingresses(ingressRoute.Namespace).UpdateStatus(context.TODO(), ingressRoute, metav1.UpdateOptions{})
+func (c *clientWrapper) UpdateIngressStatus(ingress *knativenetworkingv1alpha1.Ingress) error {
+	_, err := c.csKnativeNetworking.NetworkingV1alpha1().Ingresses(ingress.Namespace).UpdateStatus(context.TODO(), ingress, metav1.UpdateOptions{})
 	if err != nil {
-		return fmt.Errorf("failed to update knative ingress status %s/%s: %w", ingressRoute.Namespace,
-			ingressRoute.Name, err)
+		return fmt.Errorf("failed to update knative ingress status %s/%s: %w", ingress.Namespace,
+			ingress.Name, err)
 	}
-	log.Info().Msgf("Updated status on knative ingress %s/%s", ingressRoute.Namespace, ingressRoute.Name)
+	log.Info().Msgf("Updated status on knative ingress %s/%s", ingress.Namespace, ingress.Name)
 	return err
 }
 
@@ -242,23 +241,12 @@ func (c *clientWrapper) GetEndpoints(namespace, name string) (*corev1.Endpoints,
 }
 
 // GetSecret returns the named secret from the given namespace.
-func (c *clientWrapper) GetSecret(namespace, name string) (*corev1.Secret, bool, error) {
+func (c *clientWrapper) GetSecret(namespace, name string) (*corev1.Secret, error) {
 	if !c.isWatchedNamespace(namespace) {
-		return nil, false, fmt.Errorf("failed to get secret %s/%s: namespace is not within watched namespaces", namespace, name)
+		return nil, fmt.Errorf("failed to get secret %s/%s: namespace is not within watched namespaces", namespace, name)
 	}
 
-	secret, err := c.factoriesKube[c.lookupNamespace(namespace)].Core().V1().Secrets().Lister().Secrets(namespace).Get(name)
-	exist, err := translateNotFoundError(err)
-	return secret, exist, err
-}
-
-func (c *clientWrapper) GetIngress(namespace, name string) (*knativenetworkingv1alpha1.Ingress, bool, error) {
-	if !c.isWatchedNamespace(namespace) {
-		return nil, false, fmt.Errorf("failed to get ingress %s/%s: namespace is not within watched namespaces", namespace, name)
-	}
-	ingress, err := c.factoriesKnativeNetworking[c.lookupNamespace(namespace)].Networking().V1alpha1().Ingresses().Lister().Ingresses(namespace).Get(name)
-	exist, err := translateNotFoundError(err)
-	return ingress, exist, err
+	return c.factoriesKube[c.lookupNamespace(namespace)].Core().V1().Secrets().Lister().Secrets(namespace).Get(name)
 }
 
 // isWatchedNamespace checks to ensure that the namespace is being watched before we request
