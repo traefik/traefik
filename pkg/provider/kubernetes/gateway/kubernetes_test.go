@@ -8383,7 +8383,7 @@ func Test_GatewaySpecAddressesPopulatesStatus(t *testing.T) {
 		panic(err)
 	}
 
-	objs := k8s.MustParseYaml([]byte(yaml))
+	objs := k8s.MustParseYaml(yaml)
 	var gwObjs []runtime.Object
 	for _, o := range objs {
 		if o.GetObjectKind().GroupVersionKind().Group == "gateway.networking.k8s.io" {

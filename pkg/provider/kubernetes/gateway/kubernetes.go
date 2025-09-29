@@ -401,10 +401,7 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) *dynamic.C
 		var addresses []gatev1.GatewayStatusAddress
 		if len(gateway.Spec.Addresses) > 0 {
 			for _, addr := range gateway.Spec.Addresses {
-				addresses = append(addresses, gatev1.GatewayStatusAddress{
-					Type:  addr.Type,
-					Value: addr.Value,
-				})
+				addresses = append(addresses, gatev1.GatewayStatusAddress(addr))
 			}
 		} else {
 			var err error
