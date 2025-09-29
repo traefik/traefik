@@ -267,7 +267,7 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 	chain = chain.Append(observability.WrapMiddleware(ctx, metricsHandler))
 
 	chain = chain.Append(func(next http.Handler) (http.Handler, error) {
-		return accesslog.NewFieldHandler(next, accesslog.RouterName, routerName, nil), nil
+		return accesslog.NewConcatFieldHandler(next, accesslog.RouterName, routerName, nil), nil
 	})
 
 	return chain.Extend(*mHandler).Then(nextHandler)
