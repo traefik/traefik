@@ -12,6 +12,7 @@ import { useIsDarkMode } from 'hooks/use-theme'
 import ErrorSuspenseWrapper from 'layout/ErrorSuspenseWrapper'
 import { Dashboard, HTTPPages, NotFound, TCPPages, UDPPages } from 'pages'
 import { DashboardSkeleton } from 'pages/dashboard/Dashboard'
+import HubDashboard from 'pages/hub-demo/HubDashboard'
 
 export const LIGHT_THEME = lightTheme('blue')
 export const DARK_THEME = darkTheme('blue')
@@ -63,6 +64,16 @@ export const Routes = () => {
         <Route path="/http" element={<Navigate to="/http/routers" replace />} />
         <Route path="/tcp" element={<Navigate to="/tcp/routers" replace />} />
         <Route path="/udp" element={<Navigate to="/udp/routers" replace />} />
+
+        {/* Hub Dashboard demo content */}
+        <Route path="/hub-dashboard" element={<HubDashboard path="dashboard" />} />
+        <Route path="/hub-dashboard/gateways" element={<HubDashboard path="gateways" />} />
+        <Route path="/hub-dashboard/gateways/:id" element={<HubDashboard path="gateways:id" />} />
+        <Route path="/hub-dashboard/apis" element={<HubDashboard path="apis" />} />
+        <Route path="/hub-dashboard/apis/:id" element={<HubDashboard path="apis:id" />} />
+        <Route path="/hub-dashboard/portals" element={<HubDashboard path="portals" />} />
+        <Route path="/hub-dashboard/portals/:id" element={<HubDashboard path="portals:id" />} />
+
         <Route path="*" element={<NotFound />} />
       </RouterRoutes>
     </Suspense>

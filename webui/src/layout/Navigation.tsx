@@ -37,6 +37,7 @@ import TooltipText from 'components/TooltipText'
 import { VersionContext } from 'contexts/version'
 import useTotals from 'hooks/use-overview-totals'
 import { useIsDarkMode } from 'hooks/use-theme'
+import ApimDemoNavMenu from 'pages/hub-demo/HubDemoNav'
 import { Route, ROUTES } from 'routes'
 
 export const LAPTOP_BP = 1025
@@ -54,7 +55,7 @@ const NavigationDrawer = styled(Flex, {
   },
 })
 
-const BasicNavigationItem = ({
+export const BasicNavigationItem = ({
   route,
   count,
   isSmallScreen,
@@ -283,6 +284,8 @@ export const SideNav = ({
             {!isSmallScreen || isExpanded ? 'Plugins' : ''}
           </NavigationLink>
         </Flex>
+
+        <ApimDemoNavMenu isResponsive={isResponsive} isSmallScreen={isSmallScreen} isExpanded={isExpanded} />
       </Container>
     </NavigationDrawer>
   )
