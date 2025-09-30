@@ -121,6 +121,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | <a id="experimental-abortonpluginfailure" href="#experimental-abortonpluginfailure" title="#experimental-abortonpluginfailure">experimental.abortonpluginfailure</a> | Defines whether all plugins must be loaded successfully for Traefik to start. | false |
 | <a id="experimental-fastproxy" href="#experimental-fastproxy" title="#experimental-fastproxy">experimental.fastproxy</a> | Enables the FastProxy implementation. | false |
 | <a id="experimental-fastproxy-debug" href="#experimental-fastproxy-debug" title="#experimental-fastproxy-debug">experimental.fastproxy.debug</a> | Enable debug mode for the FastProxy implementation. | false |
+| <a id="experimental-knative" href="#experimental-knative" title="#experimental-knative">experimental.knative</a> | Allow the Knative provider usage. | false |
 | <a id="experimental-kubernetesgateway" href="#experimental-kubernetesgateway" title="#experimental-kubernetesgateway">experimental.kubernetesgateway</a> | (Deprecated) Allow the Kubernetes gateway api provider usage. | false |
 | <a id="experimental-kubernetesingressnginx" href="#experimental-kubernetesingressnginx" title="#experimental-kubernetesingressnginx">experimental.kubernetesingressnginx</a> | Allow the Kubernetes Ingress NGINX provider usage. | false |
 | <a id="experimental-localplugins-name" href="#experimental-localplugins-name" title="#experimental-localplugins-name">experimental.localplugins._name_</a> | Local plugins configuration. | false |
