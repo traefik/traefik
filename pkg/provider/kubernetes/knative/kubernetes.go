@@ -2,7 +2,6 @@ package knative
 
 import (
 	"context"
-	"crypto/sha256"
 	"errors"
 	"fmt"
 	"maps"
@@ -20,7 +19,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/job"
 	"github.com/traefik/traefik/v3/pkg/logs"
-	"github.com/traefik/traefik/v3/pkg/provider"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
@@ -28,6 +26,7 @@ import (
 	kerror "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/utils/ptr"
 	knativenetworking "knative.dev/networking/pkg/apis/networking"
 	knativenetworkingv1alpha1 "knative.dev/networking/pkg/apis/networking/v1alpha1"
 )
@@ -190,10 +189,9 @@ func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
 func (p *Provider) loadConfiguration(ctx context.Context) (*dynamic.Configuration, []*knativenetworkingv1alpha1.Ingress) {
 	conf := &dynamic.Configuration{
 		HTTP: &dynamic.HTTPConfiguration{
-			Routers:           map[string]*dynamic.Router{},
-			Middlewares:       map[string]*dynamic.Middleware{},
-			Services:          map[string]*dynamic.Service{},
-			ServersTransports: map[string]*dynamic.ServersTransport{},
+			Routers:     map[string]*dynamic.Router{},
+			Middlewares: map[string]*dynamic.Middleware{},
+			Services:    map[string]*dynamic.Service{},
 		},
 	}
 
@@ -216,45 +214,12 @@ func (p *Provider) loadConfiguration(ctx context.Context) (*dynamic.Configuratio
 			continue
 		}
 
-		ingressName := getIngressName(ingress)
-		serviceKey := makeServiceKey(ingress.Namespace, ingressName)
-		serviceName := provider.Normalize(makeID(ingress.Namespace, serviceKey))
-
-		knativeResult := p.buildKService(ctx, ingress, conf.HTTP.Middlewares, conf.HTTP.Services, serviceName)
-
-		for _, result := range knativeResult {
-			entrypoints := p.ExternalEntrypoints
-			if result.Visibility == knativenetworkingv1alpha1.IngressVisibilityClusterLocal {
-				if p.InternalEntrypoints == nil {
-					continue // skip route creation as no internal entrypoints are defined for cluster local visibility
-				}
-				entrypoints = p.InternalEntrypoints
-			}
-
-			if result.Err != nil {
-				logger.Error().Err(result.Err).Send()
-				continue
-			}
-
-			match := buildMatchRule(result.Hosts, result.Path)
-			mds := append([]string{}, result.Middleware...)
-
-			r := &dynamic.Router{
-				Middlewares: mds,
-				Rule:        match,
-				Service:     result.ServiceKey,
-				EntryPoints: entrypoints,
-			}
-
-			if ingress.Spec.TLS != nil {
-				r.TLS = &dynamic.RouterTLSConfig{
-					CertResolver: "default", // setting to default as we will only have secretName for KNative's.
-				}
-			}
-
-			conf.HTTP.Routers[provider.Normalize(result.ServiceKey)] = r
-			ingressStatuses = append(ingressStatuses, ingress)
-		}
+		conf.HTTP = mergeHTTPConfs(
+			conf.HTTP,
+			p.buildRouters(ctx, ingress),
+		)
+		// TODO: should we handle configuration errors?
+		ingressStatuses = append(ingressStatuses, ingress)
 	}
 
 	if len(uniqCerts) > 0 {
@@ -310,76 +275,101 @@ func (p *Provider) loadCertificate(namespace, secretName string) (tls.Certificat
 	}, nil
 }
 
-type kService struct {
-	ServiceKey string
-	Hosts      []string
-	Middleware []string
-	Path       string
-	Visibility knativenetworkingv1alpha1.IngressVisibility
-	Err        error
-}
+func (p *Provider) buildRouters(ctx context.Context, ingress *knativenetworkingv1alpha1.Ingress) *dynamic.HTTPConfiguration {
+	logger := log.Ctx(ctx).With().Logger()
 
-func (p *Provider) buildKService(ctx context.Context, ingress *knativenetworkingv1alpha1.Ingress, middleware map[string]*dynamic.Middleware, conf map[string]*dynamic.Service, serviceName string) []*kService {
-	logger := log.Ctx(ctx).With().Str("service", serviceName).Logger()
+	conf := &dynamic.HTTPConfiguration{
+		Routers:     map[string]*dynamic.Router{},
+		Middlewares: map[string]*dynamic.Middleware{},
+		Services:    map[string]*dynamic.Service{},
+	}
 
-	var kServices []*kService
 	for ri, rule := range ingress.Spec.Rules {
 		if rule.HTTP == nil {
 			logger.Debug().Msgf("No HTTP rule defined for rule %d in Ingress %s", ri, ingress.Name)
 			continue
 		}
 
-		for pi, path := range rule.HTTP.Paths {
-			var tagServiceName string
-
-			headers := p.buildHeaders(middleware, serviceName, ri, pi, path.AppendHeaders)
-
-			for _, backend := range path.Splits {
-				balancerServerHTTP, err := p.buildService(backend.ServiceNamespace, backend.ServiceName, backend.ServicePort)
-				if err != nil {
-					logger.Err(err).
-						Str("serviceName", backend.ServiceName).
-						Str("servicePort", backend.ServicePort.String()).
-						Msgf("Cannot create service: %v", err)
-
-					continue
-				}
-
-				serviceKey := fmt.Sprintf("%s-%s-%d", backend.ServiceNamespace, backend.ServiceName, int32(backend.ServicePort.IntValue()))
-				conf[serviceKey] = balancerServerHTTP
-
-				if len(path.Splits) == 1 {
-					if len(backend.AppendHeaders) > 0 {
-						headers = append(headers, provider.Normalize(makeID(serviceKey, "KnativeHeader")))
-						middleware[headers[len(headers)-1]] = &dynamic.Middleware{
-							Headers: &dynamic.Headers{
-								CustomRequestHeaders: backend.AppendHeaders,
-							},
-						}
-					}
-					tagServiceName = serviceKey
-					continue
-				}
-
-				tagServiceName = serviceName
-				srv := dynamic.WRRService{Name: serviceKey}
-				srv.SetDefaults()
-				if backend.Percent != 0 {
-					val := backend.Percent
-					srv.Weight = &val
-					srv.Headers = backend.AppendHeaders
-				}
-
-				if conf[tagServiceName] == nil {
-					conf[tagServiceName] = &dynamic.Service{Weighted: &dynamic.WeightedRoundRobin{}}
-				}
-				conf[tagServiceName].Weighted.Services = append(conf[tagServiceName].Weighted.Services, srv)
+		entrypoints := p.ExternalEntrypoints
+		if rule.Visibility == knativenetworkingv1alpha1.IngressVisibilityClusterLocal {
+			if p.InternalEntrypoints == nil {
+				// Skip route creation as no internal entrypoints are defined for cluster local visibility.
+				continue
 			}
-			kServices = append(kServices, &kService{tagServiceName, rule.Hosts, headers, path.Path, rule.Visibility, nil})
+			entrypoints = p.InternalEntrypoints
+		}
+
+		// TODO: support rewrite host
+		for pi, path := range rule.HTTP.Paths {
+			routerKey := fmt.Sprintf("%s-%s-rule-%d-path-%d", ingress.Namespace, ingress.Name, ri, pi)
+			router := &dynamic.Router{
+				EntryPoints: entrypoints,
+				Rule:        buildRule(rule.Hosts, path.Headers, path.Path),
+				Middlewares: make([]string, 0),
+				Service:     routerKey + "-wrr",
+			}
+
+			if len(ingress.Spec.TLS) > 0 {
+				router.TLS = &dynamic.RouterTLSConfig{}
+			}
+
+			if len(path.AppendHeaders) > 0 {
+				midKey := fmt.Sprintf("%s-append-headers", routerKey)
+
+				router.Middlewares = append(router.Middlewares, midKey)
+				conf.Middlewares[midKey] = &dynamic.Middleware{
+					Headers: &dynamic.Headers{
+						CustomRequestHeaders: path.AppendHeaders,
+					},
+				}
+			}
+
+			wrr, services, err := p.buildWeightedRoundRobin(routerKey, path.Splits)
+			if err != nil {
+				logger.Error().Err(err).Msg("Error building weighted round robin")
+				continue
+			}
+
+			conf.Routers[routerKey] = router
+			conf.Services[routerKey+"-wrr"] = &dynamic.Service{Weighted: wrr}
+			for k, v := range services {
+				conf.Services[k] = v
+			}
 		}
 	}
 
-	return kServices
+	return conf
+}
+
+func (p *Provider) buildWeightedRoundRobin(routerKey string, splits []knativenetworkingv1alpha1.IngressBackendSplit) (*dynamic.WeightedRoundRobin, map[string]*dynamic.Service, error) {
+	wrr := &dynamic.WeightedRoundRobin{
+		Services: make([]dynamic.WRRService, 0),
+	}
+
+	services := make(map[string]*dynamic.Service)
+	for si, split := range splits {
+		serviceKey := fmt.Sprintf("%s-split-%d", routerKey, si)
+
+		var err error
+		services[serviceKey], err = p.buildService(split.ServiceNamespace, split.ServiceName, split.ServicePort)
+		if err != nil {
+			return nil, nil, fmt.Errorf("building service: %w", err)
+		}
+
+		// As described in the spec if there is only one split it defaults to 100.
+		percent := split.Percent
+		if len(splits) == 1 {
+			percent = 100
+		}
+
+		wrr.Services = append(wrr.Services, dynamic.WRRService{
+			Name:    serviceKey,
+			Weight:  ptr.To(percent),
+			Headers: split.AppendHeaders,
+		})
+	}
+
+	return wrr, services, nil
 }
 
 func (p *Provider) buildService(namespace, serviceName string, port intstr.IntOrString) (*dynamic.Service, error) {
@@ -434,22 +424,6 @@ func (p *Provider) buildServers(namespace, serviceName string, port intstr.IntOr
 	}}, nil
 }
 
-// Hea
-func (p *Provider) buildHeaders(middleware map[string]*dynamic.Middleware, serviceName string, ruleIndex, pathIndex int, appendHeaders map[string]string) []string {
-	if appendHeaders == nil {
-		return nil
-	}
-
-	headerID := provider.Normalize(makeID(serviceName, fmt.Sprintf("PreHeader-%d-%d", ruleIndex, pathIndex)))
-	middleware[headerID] = &dynamic.Middleware{
-		Headers: &dynamic.Headers{
-			CustomRequestHeaders: appendHeaders,
-		},
-	}
-
-	return []string{headerID}
-}
-
 func (p *Provider) updateKnativeIngressStatus(ctx context.Context, ingress *knativenetworkingv1alpha1.Ingress) error {
 	log.Ctx(ctx).Debug().Msgf("Updating status for Ingress %s/%s", ingress.Namespace, ingress.Name)
 
@@ -496,40 +470,55 @@ func parseServiceProtocol(portName string, portNumber int32) (string, error) {
 	return "", fmt.Errorf("invalid scheme %q specified", portName)
 }
 
-func getIngressName(ingress *knativenetworkingv1alpha1.Ingress) string {
-	if len(ingress.Name) == 0 {
-		return ingress.GenerateName
-	}
-	return ingress.Name
-}
+func buildRule(hosts []string, headers map[string]knativenetworkingv1alpha1.HeaderMatch, path string) string {
+	var operands []string
 
-func buildMatchRule(hosts []string, path string) string {
-	var hostRules []string
-	for _, host := range hosts {
-		hostRules = append(hostRules, fmt.Sprintf("Host(`%v`)", host))
+	if len(hosts) > 0 {
+		var hostRules []string
+		for _, host := range hosts {
+			hostRules = append(hostRules, fmt.Sprintf("Host(`%v`)", host))
+		}
+		operands = append(operands, fmt.Sprintf("(%s)", strings.Join(hostRules, " || ")))
 	}
-	match := fmt.Sprintf("(%v)", strings.Join(hostRules, " || "))
+
+	if len(headers) > 0 {
+		headerKeys := slices.Collect(maps.Keys(headers))
+		slices.Sort(headerKeys)
+
+		var headerRules []string
+		for _, key := range headerKeys {
+			headerRules = append(headerRules, fmt.Sprintf("Header(`%s`,`%s`)", key, headers[key].Exact))
+		}
+		operands = append(operands, fmt.Sprintf("(%s)", strings.Join(headerRules, " && ")))
+	}
+
 	if len(path) > 0 {
-		match += fmt.Sprintf(" && PathPrefix(`%v`)", path)
+		operands = append(operands, fmt.Sprintf("PathPrefix(`%s`)", path))
 	}
-	return match
+
+	return strings.Join(operands, " && ")
 }
 
-func makeServiceKey(rule, ingressName string) string {
-	h := sha256.New()
-	// As explained in hash.Hash documentation, Write never returns an error.
-	_, _ = h.Write([]byte(rule))
-	return fmt.Sprintf("%s-%.10x", ingressName, h.Sum(nil))
-}
+func mergeHTTPConfs(confs ...*dynamic.HTTPConfiguration) *dynamic.HTTPConfiguration {
+	conf := &dynamic.HTTPConfiguration{
+		Routers:     map[string]*dynamic.Router{},
+		Middlewares: map[string]*dynamic.Middleware{},
+		Services:    map[string]*dynamic.Service{},
+	}
 
-func makeID(s1, s2 string) string {
-	if s1 == "" {
-		return s2
+	for _, c := range confs {
+		for k, v := range c.Routers {
+			conf.Routers[k] = v
+		}
+		for k, v := range c.Middlewares {
+			conf.Middlewares[k] = v
+		}
+		for k, v := range c.Services {
+			conf.Services[k] = v
+		}
 	}
-	if s2 == "" {
-		return s1
-	}
-	return fmt.Sprintf("%s-%s", s1, s2)
+
+	return conf
 }
 
 func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *safe.Pool, eventsChan <-chan interface{}) chan interface{} {
