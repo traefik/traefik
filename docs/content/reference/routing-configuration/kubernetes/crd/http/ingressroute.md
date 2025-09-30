@@ -213,6 +213,412 @@ TLS options references, a conflict occurs, such as in the example below.
         ...
     ```
 
-If that happens, both mappings are discarded, and the host name 
+If that happens, both mappings are discarded, and the host name
 (`example.net` in the example) for these routers gets associated with
  the default TLS options instead.
+
+### Load Balancing
+
+You can declare and use Kubernetes Service load balancing as detailed below:
+
+```yaml tab="IngressRoute"
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: ingressroutebar
+  namespace: default
+
+spec:
+  entryPoints:
+    - web
+  routes:
+  - match: Host(`example.com`) && PathPrefix(`/foo`)
+    kind: Rule
+    services:
+    - name: svc1
+      namespace: default
+    - name: svc2
+      namespace: default
+```
+
+```yaml tab="K8s Service"
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc1
+  namespace: default
+
+spec:
+  ports:
+    - name: http
+      port: 80
+  selector:
+    app: traefiklabs
+    task: app1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc2
+  namespace: default
+
+spec:
+  ports:
+    - name: http
+      port: 80
+  selector:
+    app: traefiklabs
+    task: app2
+```
+
+!!! important "Kubernetes Service Native Load-Balancing"
+
+    To avoid creating the server load-balancer with the pod IPs and use Kubernetes Service clusterIP directly,
+    one should set the service `NativeLB` option to true.
+    Please note that, by default, Traefik reuses the established connections to the backends for performance purposes. This can prevent the requests load balancing between the replicas from behaving as one would expect when the option is set.
+    By default, `NativeLB` is false.
+
+    ??? example "Example"
+
+        ```yaml
+        ---
+        apiVersion: traefik.io/v1alpha1
+        kind: IngressRoute
+        metadata:
+          name: test.route
+          namespace: default
+
+        spec:
+          entryPoints:
+            - foo
+
+          routes:
+          - match: Host(`example.net`)
+            kind: Rule
+            services:
+            - name: svc
+              port: 80
+              # Here, nativeLB instructs to build the server load-balancer with the Kubernetes Service clusterIP only.
+              nativeLB: true
+
+        ---
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: svc
+          namespace: default
+        spec:
+          type: ClusterIP
+          ...
+        ```
+
+### Multi-Layer Routing with IngressRoutes
+
+Multi-layer routing allows creating hierarchical relationships between IngressRoutes, where parent IngressRoutes can apply middleware before child IngressRoutes make routing decisions.
+
+This is particularly useful for authentication-based routing, where a parent IngressRoute authenticates requests and adds context (e.g., user roles as headers), and child IngressRoutes route based on that context.
+
+!!! info "Comprehensive Multi-Layer Routing Documentation"
+
+    For detailed information about multi-layer routing concepts, validation rules, and use cases, see the dedicated [Multi-Layer Routing](../../../../routing/multi-layer-routing.md) page.
+
+#### How It Works with IngressRoutes
+
+1. **Child IngressRoute** references parent IngressRoute(s) via `parentRefs` field
+2. **Parent IngressRoute** matches request and applies its middleware
+3. **Child routers** (created from child IngressRoute routes) evaluate rules against the modified request
+4. **Request is routed** to the matching child router's service
+
+#### Router Name Mapping
+
+When a child IngressRoute references a parent IngressRoute:
+- Traefik computes router names from the parent IngressRoute's routes using the existing naming algorithm
+- If the parent IngressRoute has multiple routes, **all** resulting parent routers become parents of **all** child routers
+- The `parentRefs` field of each dynamic router (created from child IngressRoute routes) contains all computed parent router names
+
+#### Configuration Requirements
+
+!!! important "Parent IngressRoute"
+
+    - Can have `entryPoints`, `tls`, and middleware
+    - Routes **must not** have `services` defined
+    - Must exist before child IngressRoutes reference it
+
+!!! important "Child IngressRoute"
+
+    - Must have `parentRefs` defined
+    - Routes **must** have `services` defined
+    - Cannot have `tls` defined (inherited from parent if parent is root)
+    - Route-level `observability` is not allowed
+
+!!! warning "Cross-Namespace References"
+
+    Cross-namespace parent references require the `allowCrossNamespace` provider option to be enabled. If disabled, child IngressRoute creation will be skipped with an error logged.
+
+#### Example: Authentication-Based Routing
+
+??? example "Parent IngressRoute with ForwardAuth and Child IngressRoutes"
+
+    ```yaml tab="Parent IngressRoute"
+    apiVersion: traefik.io/v1alpha1
+    kind: IngressRoute
+    metadata:
+      name: api-parent
+      namespace: default
+    spec:
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+      routes:
+        # Parent route with authentication - no services
+        - match: Host(`api.example.com`) && PathPrefix(`/api`)
+          kind: Rule
+          middlewares:
+            - name: auth-middleware
+              namespace: default
+    ---
+    apiVersion: traefik.io/v1alpha1
+    kind: Middleware
+    metadata:
+      name: auth-middleware
+      namespace: default
+    spec:
+      forwardAuth:
+        address: "http://auth-service.default.svc.cluster.local:8080/auth"
+        authResponseHeaders:
+          - X-User-Role
+          - X-User-Name
+    ```
+
+    ```yaml tab="Child IngressRoutes"
+    # Child IngressRoute for admin users
+    apiVersion: traefik.io/v1alpha1
+    kind: IngressRoute
+    metadata:
+      name: api-admin
+      namespace: default
+    spec:
+      parentRefs:
+        - name: api-parent
+          namespace: default  # Optional - defaults to same namespace
+      routes:
+        - match: HeadersRegexp(`X-User-Role`, `admin`)
+          kind: Rule
+          services:
+            - name: admin-service
+              port: 80
+    ---
+    # Child IngressRoute for regular users
+    apiVersion: traefik.io/v1alpha1
+    kind: IngressRoute
+    metadata:
+      name: api-user
+      namespace: default
+    spec:
+      parentRefs:
+        - name: api-parent
+      routes:
+        - match: HeadersRegexp(`X-User-Role`, `user`)
+          kind: Rule
+          services:
+            - name: user-service
+              port: 80
+    ```
+
+    ```yaml tab="Services"
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: auth-service
+      namespace: default
+    spec:
+      ports:
+        - port: 8080
+      selector:
+        app: auth-service
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: admin-service
+      namespace: default
+    spec:
+      ports:
+        - port: 80
+      selector:
+        app: admin-backend
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: user-service
+      namespace: default
+    spec:
+      ports:
+        - port: 80
+      selector:
+        app: user-backend
+    ```
+
+    **How it works:**
+
+    1. Request to `https://api.example.com/api/endpoint` matches the parent router
+    2. `auth-middleware` (ForwardAuth) validates the request with `auth-service`
+    3. `auth-service` returns 200 OK with `X-User-Role` header (e.g., `admin` or `user`)
+    4. Child routers evaluate rules against the modified request (with `X-User-Role` header)
+    5. Request is routed to `admin-service` or `user-service` based on the role
+
+#### Example: Parent with Multiple Routes
+
+??? example "Parent IngressRoute Creating Multiple Parent Routers"
+
+    ```yaml tab="Parent IngressRoute"
+    apiVersion: traefik.io/v1alpha1
+    kind: IngressRoute
+    metadata:
+      name: api-gateway
+      namespace: default
+    spec:
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+      routes:
+        # First parent route - creates parent router 1
+        - match: Host(`api.example.com`) && PathPrefix(`/api/v1`)
+          kind: Rule
+          middlewares:
+            - name: rate-limit-v1
+        # Second parent route - creates parent router 2
+        - match: Host(`api.example.com`) && PathPrefix(`/api/v2`)
+          kind: Rule
+          middlewares:
+            - name: rate-limit-v2
+    ```
+
+    ```yaml tab="Child IngressRoute"
+    apiVersion: traefik.io/v1alpha1
+    kind: IngressRoute
+    metadata:
+      name: api-users
+      namespace: default
+    spec:
+      parentRefs:
+        - name: api-gateway
+      routes:
+        # This route's router will have BOTH parent routers in its parentRefs
+        - match: Path(`/users`)
+          kind: Rule
+          services:
+            - name: users-service
+              port: 80
+    ```
+
+    In this example:
+    - `api-gateway` IngressRoute creates 2 parent routers (one for each route)
+    - `api-users` IngressRoute creates 1 child router
+    - The child router's `parentRefs` contains **both** parent router names
+    - Requests matching either `/api/v1/users` or `/api/v2/users` will reach the child router after parent middleware
+
+#### Example: Cross-Namespace Parent Reference
+
+??? example "Child IngressRoute Referencing Parent in Different Namespace"
+
+    ```yaml tab="Parent in 'gateway' Namespace"
+    apiVersion: traefik.io/v1alpha1
+    kind: IngressRoute
+    metadata:
+      name: shared-gateway
+      namespace: gateway
+    spec:
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+      routes:
+        - match: Host(`*.example.com`)
+          kind: Rule
+          middlewares:
+            - name: common-auth
+              namespace: gateway
+    ```
+
+    ```yaml tab="Child in 'tenant-a' Namespace"
+    apiVersion: traefik.io/v1alpha1
+    kind: IngressRoute
+    metadata:
+      name: tenant-a-api
+      namespace: tenant-a
+    spec:
+      parentRefs:
+        - name: shared-gateway
+          namespace: gateway  # Cross-namespace reference
+      routes:
+        - match: Host(`tenant-a.example.com`) && PathPrefix(`/api`)
+          kind: Rule
+          services:
+            - name: api-service
+              port: 80
+    ```
+
+    !!! important "Provider Configuration Required"
+
+        For cross-namespace references to work, enable `allowCrossNamespace` in the Kubernetes CRD provider configuration:
+
+        ```yaml
+        providers:
+          kubernetesCRD:
+            allowCrossNamespace: true
+        ```
+
+#### Error Handling
+
+**Parent IngressRoute Not Found:**
+- Child router creation is skipped
+- Error is logged: `Parent IngressRoute {namespace}/{name} does not exist`
+
+**Cross-Namespace Reference Not Allowed:**
+- Child router creation is skipped
+- Error is logged: `Cross-namespace reference to parent IngressRoute {namespace}/{name} not allowed`
+
+**Invalid Configuration:**
+- Parent IngressRoute routes have services: Routers marked as disabled
+- Child IngressRoute has TLS: Configuration ignored, warning logged
+- Circular dependencies: Affected routers marked as disabled
+
+#### Best Practices
+
+!!! tip "Parent IngressRoute Design"
+
+    - Use one parent IngressRoute per logical gateway or entry point
+    - Keep parent IngressRoute routes simple (broad path matching)
+    - Apply common middleware at parent level (authentication, rate limiting, CORS)
+
+!!! tip "Child IngressRoute Design"
+
+    - Child routes should match specific patterns within parent scope
+    - Use headers added by parent middleware for routing decisions
+    - Keep child IngressRoutes focused on specific services or applications
+
+!!! tip "Observability"
+
+    Enable tracing to visualize request flow through parent and child routers:
+    ```yaml
+    # In Traefik static configuration
+    tracing:
+      serviceName: traefik
+      otlp:
+        http:
+          endpoint: http://tempo:4318
+    ```
+
+### Configuring Backend Protocol
+
+There are 3 ways to configure the backend protocol for communication between Traefik and your pods:
+
+- Setting the scheme explicitly (http/https/h2c)
+- Configuring the name of the kubernetes service port to start with https (https)
+- Setting the kubernetes service port to use port 443 (https)
+
+If you do not configure the above, Traefik will assume an http connection.
