@@ -297,6 +297,9 @@ _Optional, Default: false_
 If the parameter is set to `true`,
 IngressRoute are able to reference resources in namespaces other than theirs.
 
+This setting also affects [multi-layer routing](../routing/multi-layer-routing.md) with `parentRefs`:
+when enabled, child IngressRoutes can reference parent IngressRoutes in different namespaces.
+
 ```yaml tab="File (YAML)"
 providers:
   kubernetesCRD:
