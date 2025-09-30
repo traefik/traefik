@@ -1,0 +1,17 @@
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: child-same
+  namespace: default
+
+spec:
+  parentRefs:
+    - name: parent-default
+      # namespace omitted - should default to same namespace as child
+  routes:
+    - match: Path(`/same`)
+      kind: Rule
+      services:
+        - name: same-service
+          port: 9000

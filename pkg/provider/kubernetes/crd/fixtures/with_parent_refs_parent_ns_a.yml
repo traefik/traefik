@@ -1,0 +1,13 @@
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: parent-cross
+  namespace: ns-a
+
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`cross.example.com`)
+      kind: Rule

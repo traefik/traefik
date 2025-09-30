@@ -1,0 +1,17 @@
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: child-cross-allowed
+  namespace: ns-b
+
+spec:
+  parentRefs:
+    - name: parent-cross
+      namespace: ns-a
+  routes:
+    - match: Path(`/cross`)
+      kind: Rule
+      services:
+        - name: cross-child-service
+          port: 9000
