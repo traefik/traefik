@@ -10,7 +10,6 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	corev1 "k8s.io/api/core/v1"
-	kerror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	kinformers "k8s.io/client-go/informers"
@@ -30,10 +29,9 @@ const resyncPeriod = 10 * time.Minute
 type Client interface {
 	WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error)
 	ListIngresses() []*knativenetworkingv1alpha1.Ingress
-	GetServerlessService(namespace, name string) (*knativenetworkingv1alpha1.ServerlessService, bool, error)
-	GetService(namespace, name string) (*corev1.Service, bool, error)
+	GetServerlessService(namespace, name string) (*knativenetworkingv1alpha1.ServerlessService, error)
+	GetService(namespace, name string) (*corev1.Service, error)
 	GetSecret(namespace, name string) (*corev1.Secret, error)
-	GetEndpoints(namespace, name string) (*corev1.Endpoints, bool, error)
 	UpdateIngressStatus(ingress *knativenetworkingv1alpha1.Ingress) error
 }
 
@@ -208,36 +206,21 @@ func (c *clientWrapper) UpdateIngressStatus(ingress *knativenetworkingv1alpha1.I
 	return err
 }
 
-func (c *clientWrapper) GetServerlessService(namespace, name string) (*knativenetworkingv1alpha1.ServerlessService, bool, error) {
+func (c *clientWrapper) GetServerlessService(namespace, name string) (*knativenetworkingv1alpha1.ServerlessService, error) {
 	if !c.isWatchedNamespace(namespace) {
-		return nil, false, fmt.Errorf("failed to get service %s/%s: namespace is not within watched namespaces", namespace, name)
+		return nil, fmt.Errorf("failed to get service %s/%s: namespace is not within watched namespaces", namespace, name)
 	}
 
-	service, err := c.factoriesKnativeNetworking[c.lookupNamespace(namespace)].Networking().V1alpha1().ServerlessServices().Lister().ServerlessServices(namespace).Get(name)
-	exist, err := translateNotFoundError(err)
-	return service, exist, err
+	return c.factoriesKnativeNetworking[c.lookupNamespace(namespace)].Networking().V1alpha1().ServerlessServices().Lister().ServerlessServices(namespace).Get(name)
 }
 
 // GetService returns the named service from the given namespace.
-func (c *clientWrapper) GetService(namespace, name string) (*corev1.Service, bool, error) {
+func (c *clientWrapper) GetService(namespace, name string) (*corev1.Service, error) {
 	if !c.isWatchedNamespace(namespace) {
-		return nil, false, fmt.Errorf("failed to get service %s/%s: namespace is not within watched namespaces", namespace, name)
+		return nil, fmt.Errorf("failed to get service %s/%s: namespace is not within watched namespaces", namespace, name)
 	}
 
-	service, err := c.factoriesKube[c.lookupNamespace(namespace)].Core().V1().Services().Lister().Services(namespace).Get(name)
-	exist, err := translateNotFoundError(err)
-	return service, exist, err
-}
-
-// GetEndpoints returns the named endpoints from the given namespace.
-func (c *clientWrapper) GetEndpoints(namespace, name string) (*corev1.Endpoints, bool, error) {
-	if !c.isWatchedNamespace(namespace) {
-		return nil, false, fmt.Errorf("failed to get endpoints %s/%s: namespace is not within watched namespaces", namespace, name)
-	}
-
-	endpoint, err := c.factoriesKube[c.lookupNamespace(namespace)].Core().V1().Endpoints().Lister().Endpoints(namespace).Get(name)
-	exist, err := translateNotFoundError(err)
-	return endpoint, exist, err
+	return c.factoriesKube[c.lookupNamespace(namespace)].Core().V1().Services().Lister().Services(namespace).Get(name)
 }
 
 // GetSecret returns the named secret from the given namespace.
@@ -274,13 +257,4 @@ func (c *clientWrapper) lookupNamespace(ns string) string {
 		return metav1.NamespaceAll
 	}
 	return ns
-}
-
-// translateNotFoundError will translate a "not found" error to a boolean return
-// value which indicates if the resource exists and a nil error.
-func translateNotFoundError(err error) (bool, error) {
-	if kerror.IsNotFound(err) {
-		return false, nil
-	}
-	return err == nil, err
 }

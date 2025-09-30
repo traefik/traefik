@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -25,6 +24,7 @@ func TestBuildKnativeService(t *testing.T) {
 				},
 				Spec: corev1.ServiceSpec{
 					ExternalName: "traefik.default.svc.cluster.local",
+					ClusterIP:    "1.2.3.4",
 					Ports: []corev1.ServicePort{
 						{
 							Name:       "http2",
@@ -78,7 +78,7 @@ func TestBuildKnativeService(t *testing.T) {
 	}
 
 	// Call the method
-	results := provider.buildKnativeService(t.Context(), ingressRoute, middleware, conf, "test-service")
+	results := provider.buildKService(t.Context(), ingressRoute, middleware, conf, "test-service")
 
 	// Assertions
 	require.Len(t, results, 1)
@@ -119,65 +119,31 @@ func TestLoadKnativeServers(t *testing.T) {
 				},
 			},
 		},
-	}
-	provider := &Provider{
-		ExternalEntrypoints: []string{"web"},
-		InternalEntrypoints: []string{"web-internal"},
-		k8sClient: &clientMock{
-			services: []*corev1.Service{
-				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-service",
-						Namespace: "default",
-					},
-					Spec: corev1.ServiceSpec{
-						ClusterIP: "10.0.0.1",
-						Ports: []corev1.ServicePort{
-							{
-								Name: "http",
-								Port: 80,
-							},
-						},
+		ingresses: []*knativenetworkingv1alpha1.Ingress{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "example-ingress",
+					Namespace: "default",
+					Annotations: map[string]string{
+						"networking.knative.dev/ingress.class": "traefik.ingress.networking.knative.dev",
 					},
 				},
-			},
-			serverlessServices: []*knativenetworkingv1alpha1.ServerlessService{
-				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-service",
-						Namespace: "default",
-					},
-					Status: knativenetworkingv1alpha1.ServerlessServiceStatus{
-						ServiceName: "test-service",
-					},
-				},
-			},
-			ingresses: []*knativenetworkingv1alpha1.Ingress{
-				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "example-ingress",
-						Namespace: "default",
-						Annotations: map[string]string{
-							"networking.knative.dev/ingress.class": "traefik.ingress.networking.knative.dev",
-						},
-					},
-					Spec: knativenetworkingv1alpha1.IngressSpec{
-						Rules: []knativenetworkingv1alpha1.IngressRule{
-							{
-								Hosts: []string{"example.com"},
-								HTTP: &knativenetworkingv1alpha1.HTTPIngressRuleValue{
-									Paths: []knativenetworkingv1alpha1.HTTPIngressPath{
-										{
-											Path: "/",
-											Splits: []knativenetworkingv1alpha1.IngressBackendSplit{
-												{
-													IngressBackend: knativenetworkingv1alpha1.IngressBackend{
-														ServiceNamespace: "default",
-														ServiceName:      "test-service",
-														ServicePort:      intstr.FromInt(80),
-													},
-													Percent: 100,
+				Spec: knativenetworkingv1alpha1.IngressSpec{
+					Rules: []knativenetworkingv1alpha1.IngressRule{
+						{
+							Hosts: []string{"example.com"},
+							HTTP: &knativenetworkingv1alpha1.HTTPIngressRuleValue{
+								Paths: []knativenetworkingv1alpha1.HTTPIngressPath{
+									{
+										Path: "/",
+										Splits: []knativenetworkingv1alpha1.IngressBackendSplit{
+											{
+												IngressBackend: knativenetworkingv1alpha1.IngressBackend{
+													ServiceNamespace: "default",
+													ServiceName:      "test-service",
+													ServicePort:      intstr.FromInt(80),
 												},
+												Percent: 100,
 											},
 										},
 									},
@@ -189,17 +155,14 @@ func TestLoadKnativeServers(t *testing.T) {
 			},
 		},
 	}
+	provider := &Provider{
+		ExternalEntrypoints: []string{"web"},
+		InternalEntrypoints: []string{"web-internal"},
+		k8sClient:           mockClient,
+	}
 
 	t.Run("successful load of servers", func(t *testing.T) {
-		svc := traefikv1alpha1.Service{
-			LoadBalancerSpec: traefikv1alpha1.LoadBalancerSpec{
-				Name:      "test-service",
-				Namespace: "default",
-				Port:      intstr.FromInt(80),
-			},
-		}
-
-		servers, err := provider.loadKnativeServers("default", svc)
+		servers, err := provider.buildServers("default", "test-service", intstr.FromInt32(80))
 		require.NoError(t, err)
 		require.Len(t, servers, 1)
 		assert.Equal(t, "http://10.0.0.1:80", servers[0].URL)
@@ -207,16 +170,10 @@ func TestLoadKnativeServers(t *testing.T) {
 
 	t.Run("service not found", func(t *testing.T) {
 		mockClient.apiServiceError = errors.New("service not found")
-		svc := traefikv1alpha1.Service{
-			LoadBalancerSpec: traefikv1alpha1.LoadBalancerSpec{
-				Name: "non-existent-service",
-				Port: intstr.FromInt(80),
-			},
-		}
 
-		_, err := provider.loadKnativeServers("default", svc)
+		_, err := provider.buildServers("default", "non-existent-service", intstr.FromInt32(80))
 		require.Error(t, err)
-		assert.Equal(t, "service not found default/non-existent-service", err.Error())
+		assert.Equal(t, "getting service default/non-existent-service: service not found", err.Error())
 	})
 }
 

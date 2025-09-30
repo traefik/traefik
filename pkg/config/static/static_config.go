@@ -433,6 +433,12 @@ func (c *Configuration) ValidateConfiguration() error {
 		}
 	}
 
+	if c.Providers != nil && c.Providers.Knative != nil {
+		if c.Experimental == nil || !c.Experimental.Knative {
+			return errors.New("the experimental Knative feature must be enabled to use the Knative provider")
+		}
+	}
+
 	if c.AccessLog != nil && c.AccessLog.OTLP != nil {
 		if c.Experimental == nil || !c.Experimental.OTLPLogs {
 			return errors.New("the experimental OTLPLogs feature must be enabled to use OTLP access logging")

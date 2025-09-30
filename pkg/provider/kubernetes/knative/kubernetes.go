@@ -21,11 +21,11 @@ import (
 	"github.com/traefik/traefik/v3/pkg/job"
 	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/provider"
-	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 	corev1 "k8s.io/api/core/v1"
+	kerror "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	knativenetworking "knative.dev/networking/pkg/apis/networking"
@@ -76,8 +76,7 @@ func (p *Provider) Init() error {
 	return nil
 }
 
-// Provide allows the k8s provider to provide configurations to traefik
-// using the given configuration channel.
+// Provide allows the knative provider to provide configurations to traefik using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	logger := log.With().Str(logs.ProviderName, providerName).Logger()
 	ctxLog := logger.WithContext(context.Background())
@@ -128,7 +127,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 						// status. Not having this can lead to conformance tests failing intermittently as the routes
 						// are queried as soon as the status is set to ready.
 						for _, ingress := range ingressStatuses {
-							if err := p.updateKnativeIngressStatus(ingress); err != nil {
+							if err := p.updateKnativeIngressStatus(ctxLog, ingress); err != nil {
 								logger.Error().Err(err).Msgf("Error updating status for Ingress %s/%s", ingress.Namespace, ingress.Name)
 							}
 						}
@@ -221,7 +220,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) (*dynamic.Configuratio
 		serviceKey := makeServiceKey(ingress.Namespace, ingressName)
 		serviceName := provider.Normalize(makeID(ingress.Namespace, serviceKey))
 
-		knativeResult := p.buildKnativeService(ctx, ingress, conf.HTTP.Middlewares, conf.HTTP.Services, serviceName)
+		knativeResult := p.buildKService(ctx, ingress, conf.HTTP.Middlewares, conf.HTTP.Services, serviceName)
 
 		for _, result := range knativeResult {
 			entrypoints := p.ExternalEntrypoints
@@ -252,6 +251,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) (*dynamic.Configuratio
 					CertResolver: "default", // setting to default as we will only have secretName for KNative's.
 				}
 			}
+
 			conf.HTTP.Routers[provider.Normalize(result.ServiceKey)] = r
 			ingressStatuses = append(ingressStatuses, ingress)
 		}
@@ -310,84 +310,7 @@ func (p *Provider) loadCertificate(namespace, secretName string) (tls.Certificat
 	}, nil
 }
 
-func (p *Provider) createKnativeLoadBalancerServerHTTP(namespace string, service traefikv1alpha1.Service) (*dynamic.Service, error) {
-	servers, err := p.loadKnativeServers(namespace, service)
-	if err != nil {
-		return nil, err
-	}
-
-	// TODO: support other strategies.
-	lb := &dynamic.ServersLoadBalancer{}
-	lb.SetDefaults()
-
-	lb.Servers = servers
-
-	conf := service
-	lb.PassHostHeader = conf.PassHostHeader
-	if lb.PassHostHeader == nil {
-		passHostHeader := true
-		lb.PassHostHeader = &passHostHeader
-	}
-
-	if conf.ResponseForwarding != nil && conf.ResponseForwarding.FlushInterval != "" {
-		err := lb.ResponseForwarding.FlushInterval.Set(conf.ResponseForwarding.FlushInterval)
-		if err != nil {
-			return nil, fmt.Errorf("unable to parse flushInterval: %w", err)
-		}
-	}
-
-	return &dynamic.Service{
-		LoadBalancer: lb,
-	}, nil
-}
-
-func (p *Provider) loadKnativeServers(namespace string, svc traefikv1alpha1.Service) ([]dynamic.Server, error) {
-	logger := log.With().Logger()
-
-	serverlessservice, exists, err := p.k8sClient.GetServerlessService(namespace, svc.Name)
-	if err != nil {
-		logger.Info().Msgf("Unable to find serverlessservice, trying to find service %s/%s", namespace, svc.Name)
-	}
-
-	serviceName := svc.Name
-	if exists {
-		serviceName = serverlessservice.Status.ServiceName
-	}
-
-	service, exists, err := p.k8sClient.GetService(namespace, serviceName)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, fmt.Errorf("service not found %s/%s", namespace, svc.Name)
-	}
-
-	var portSpec *corev1.ServicePort
-	for _, p := range service.Spec.Ports {
-		if svc.Port == intstr.FromInt32(p.Port) {
-			portSpec = p.DeepCopy()
-			break
-		}
-	}
-
-	if portSpec == nil {
-		return nil, errors.New("service port not found")
-	}
-	var servers []dynamic.Server
-	if service.Spec.ClusterIP != "" {
-		protocol, err := parseServiceProtocol(portSpec.Name, portSpec.Port)
-		if err != nil {
-			return nil, err
-		}
-		hostPort := net.JoinHostPort(service.Spec.ClusterIP, strconv.Itoa(int(portSpec.Port)))
-		servers = append(servers, dynamic.Server{
-			URL: fmt.Sprintf("%s://%s", protocol, hostPort),
-		})
-	}
-	return servers, nil
-}
-
-type serviceResult struct {
+type kService struct {
 	ServiceKey string
 	Hosts      []string
 	Middleware []string
@@ -396,60 +319,55 @@ type serviceResult struct {
 	Err        error
 }
 
-func (p *Provider) buildKnativeService(ctx context.Context, ingress *knativenetworkingv1alpha1.Ingress, middleware map[string]*dynamic.Middleware, conf map[string]*dynamic.Service, serviceName string) []*serviceResult {
-	logger := log.Ctx(ctx).With().
-		Str("ingressknative", ingress.Name).
-		Str("service", serviceName).
-		Str("namespace", ingress.Namespace).
-		Logger()
+func (p *Provider) buildKService(ctx context.Context, ingress *knativenetworkingv1alpha1.Ingress, middleware map[string]*dynamic.Middleware, conf map[string]*dynamic.Service, serviceName string) []*kService {
+	logger := log.Ctx(ctx).With().Str("service", serviceName).Logger()
 
-	var results []*serviceResult
-	for ruleIndex, route := range ingress.Spec.Rules {
-		if route.HTTP == nil {
-			logger.Warn().Msgf("No HTTP rule defined for Knative service %s", ingress.Name)
+	var kServices []*kService
+	for ri, rule := range ingress.Spec.Rules {
+		if rule.HTTP == nil {
+			logger.Debug().Msgf("No HTTP rule defined for rule %d in Ingress %s", ri, ingress.Name)
 			continue
 		}
 
-		for pathIndex, pathroute := range route.HTTP.Paths {
+		for pi, path := range rule.HTTP.Paths {
 			var tagServiceName string
-			headers := p.buildHeaders(middleware, serviceName, ruleIndex, pathIndex, pathroute.AppendHeaders)
-			path := pathroute.Path
 
-			for _, service := range pathroute.Splits {
-				balancerServerHTTP, err := p.createKnativeLoadBalancerServerHTTP(service.ServiceNamespace, traefikv1alpha1.Service{
-					LoadBalancerSpec: traefikv1alpha1.LoadBalancerSpec{
-						Name: service.ServiceName,
-						Port: service.ServicePort,
-					},
-				})
+			headers := p.buildHeaders(middleware, serviceName, ri, pi, path.AppendHeaders)
+
+			for _, backend := range path.Splits {
+				balancerServerHTTP, err := p.buildService(backend.ServiceNamespace, backend.ServiceName, backend.ServicePort)
 				if err != nil {
-					logger.Err(err).Str("serviceName", service.ServiceName).Str("servicePort",
-						service.ServicePort.String()).Msgf("Cannot create service: %v", err)
+					logger.Err(err).
+						Str("serviceName", backend.ServiceName).
+						Str("servicePort", backend.ServicePort.String()).
+						Msgf("Cannot create service: %v", err)
+
 					continue
 				}
 
-				serviceKey := fmt.Sprintf("%s-%s-%d", service.ServiceNamespace, service.ServiceName,
-					int32(service.ServicePort.IntValue()))
+				serviceKey := fmt.Sprintf("%s-%s-%d", backend.ServiceNamespace, backend.ServiceName, int32(backend.ServicePort.IntValue()))
 				conf[serviceKey] = balancerServerHTTP
-				if len(pathroute.Splits) == 1 {
-					if len(service.AppendHeaders) > 0 {
+
+				if len(path.Splits) == 1 {
+					if len(backend.AppendHeaders) > 0 {
 						headers = append(headers, provider.Normalize(makeID(serviceKey, "KnativeHeader")))
 						middleware[headers[len(headers)-1]] = &dynamic.Middleware{
 							Headers: &dynamic.Headers{
-								CustomRequestHeaders: service.AppendHeaders,
+								CustomRequestHeaders: backend.AppendHeaders,
 							},
 						}
 					}
 					tagServiceName = serviceKey
 					continue
 				}
+
 				tagServiceName = serviceName
 				srv := dynamic.WRRService{Name: serviceKey}
 				srv.SetDefaults()
-				if service.Percent != 0 {
-					val := service.Percent
+				if backend.Percent != 0 {
+					val := backend.Percent
 					srv.Weight = &val
-					srv.Headers = service.AppendHeaders
+					srv.Headers = backend.AppendHeaders
 				}
 
 				if conf[tagServiceName] == nil {
@@ -457,12 +375,66 @@ func (p *Provider) buildKnativeService(ctx context.Context, ingress *knativenetw
 				}
 				conf[tagServiceName].Weighted.Services = append(conf[tagServiceName].Weighted.Services, srv)
 			}
-			results = append(results, &serviceResult{tagServiceName, route.Hosts, headers, path, route.Visibility, nil})
+			kServices = append(kServices, &kService{tagServiceName, rule.Hosts, headers, path.Path, rule.Visibility, nil})
 		}
 	}
-	return results
+
+	return kServices
 }
 
+func (p *Provider) buildService(namespace, serviceName string, port intstr.IntOrString) (*dynamic.Service, error) {
+	servers, err := p.buildServers(namespace, serviceName, port)
+	if err != nil {
+		return nil, fmt.Errorf("building servers: %w", err)
+	}
+
+	var lb dynamic.ServersLoadBalancer
+	lb.SetDefaults()
+	lb.Servers = servers
+
+	return &dynamic.Service{LoadBalancer: &lb}, nil
+}
+
+func (p *Provider) buildServers(namespace, serviceName string, port intstr.IntOrString) ([]dynamic.Server, error) {
+	serverlessService, err := p.k8sClient.GetServerlessService(namespace, serviceName)
+	if err != nil && !kerror.IsNotFound(err) {
+		return nil, fmt.Errorf("getting ServerlesService %s/%s: %w", namespace, serviceName, err)
+	}
+	if serverlessService != nil {
+		serviceName = serverlessService.Status.ServiceName
+	}
+
+	service, err := p.k8sClient.GetService(namespace, serviceName)
+	if err != nil {
+		return nil, fmt.Errorf("getting service %s/%s: %w", namespace, serviceName, err)
+	}
+
+	var svcPort *corev1.ServicePort
+	for _, p := range service.Spec.Ports {
+		if p.Name == port.String() || strconv.Itoa(int(p.Port)) == port.String() {
+			svcPort = &p
+			break
+		}
+	}
+	if svcPort == nil {
+		return nil, errors.New("service port not found")
+	}
+
+	if service.Spec.ClusterIP == "" {
+		return nil, errors.New("service does not have a ClusterIP")
+	}
+
+	protocol, err := parseServiceProtocol(svcPort.Name, svcPort.Port)
+	if err != nil {
+		return nil, err
+	}
+	hostPort := net.JoinHostPort(service.Spec.ClusterIP, strconv.Itoa(int(svcPort.Port)))
+	return []dynamic.Server{{
+		URL: fmt.Sprintf("%s://%s", protocol, hostPort),
+	}}, nil
+}
+
+// Hea
 func (p *Provider) buildHeaders(middleware map[string]*dynamic.Middleware, serviceName string, ruleIndex, pathIndex int, appendHeaders map[string]string) []string {
 	if appendHeaders == nil {
 		return nil
@@ -478,8 +450,9 @@ func (p *Provider) buildHeaders(middleware map[string]*dynamic.Middleware, servi
 	return []string{headerID}
 }
 
-func (p *Provider) updateKnativeIngressStatus(ingress *knativenetworkingv1alpha1.Ingress) error {
-	log.Ctx(context.Background()).Debug().Msgf("Updating status for Ingress %s/%s", ingress.Namespace, ingress.Name)
+func (p *Provider) updateKnativeIngressStatus(ctx context.Context, ingress *knativenetworkingv1alpha1.Ingress) error {
+	log.Ctx(ctx).Debug().Msgf("Updating status for Ingress %s/%s", ingress.Namespace, ingress.Name)
+
 	if ingress.GetStatus() == nil ||
 		!ingress.GetStatus().GetCondition(knativenetworkingv1alpha1.IngressConditionNetworkConfigured).IsTrue() ||
 		ingress.GetGeneration() != ingress.GetStatus().ObservedGeneration {
