@@ -244,9 +244,7 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 			return nil, fmt.Errorf("building child routers muxer: %w", err)
 		}
 		nextHandler = childMuxer
-		// FIXME: this must be improved.
-		// Ex: muxer@parentName→routerName (length considerations)
-		serviceName = fmt.Sprintf("muxer@%s", routerName)
+		serviceName = fmt.Sprintf("%s-routing", routerName)
 	} else if router.Service != "" {
 		// This router routes to a service
 		qualifiedService := provider.GetQualifiedName(ctx, router.Service)

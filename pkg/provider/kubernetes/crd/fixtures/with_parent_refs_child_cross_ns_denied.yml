@@ -1,0 +1,17 @@
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: child-cross-denied
+  namespace: ns-b
+
+spec:
+  parentRefs:
+    - name: parent-cross
+      namespace: ns-a
+  routes:
+    - match: Path(`/denied`)
+      kind: Rule
+      services:
+        - name: denied-service
+          port: 9000

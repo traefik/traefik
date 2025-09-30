@@ -1,0 +1,19 @@
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: child-multi-parents
+  namespace: default
+
+spec:
+  parentRefs:
+    - name: parent-a
+      namespace: default
+    - name: parent-b
+      namespace: default
+  routes:
+    - match: Path(`/shared`)
+      kind: Rule
+      services:
+        - name: shared-service
+          port: 9000

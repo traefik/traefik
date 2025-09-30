@@ -1369,6 +1369,11 @@ func (in *Router) DeepCopyInto(out *Router) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.ParentRefs != nil {
+		in, out := &in.ParentRefs, &out.ParentRefs
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	if in.TLS != nil {
 		in, out := &in.TLS, &out.TLS
 		*out = new(RouterTLSConfig)
