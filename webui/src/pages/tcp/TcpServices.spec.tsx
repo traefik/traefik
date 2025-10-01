@@ -36,10 +36,13 @@ describe('<TcpServicesPage />', () => {
       .spyOn(useFetchWithPagination, 'default')
       .mockImplementation(() => useFetchWithPaginationMock({ pages }))
 
-    const { container, getByTestId } = renderWithProviders(<TcpServicesPage />)
+    const { container, getByTestId } = renderWithProviders(<TcpServicesPage />, {
+      route: '/tcp/services',
+      withPage: true,
+    })
 
     expect(mock).toHaveBeenCalled()
-    expect(getByTestId('TCP Services page')).toBeInTheDocument()
+    expect(getByTestId('/tcp/services page')).toBeInTheDocument()
     const tbody = container.querySelectorAll('div[role="table"] > div[role="rowgroup"]')[1]
     expect(tbody.querySelectorAll('a[role="row"]')).toHaveLength(3)
 
@@ -73,6 +76,7 @@ describe('<TcpServicesPage />', () => {
         pageCount={1}
         pages={[]}
       />,
+      { route: '/tcp/services', withPage: true },
     )
     expect(() => getByTestId('loading')).toThrow('Unable to find an element by: [data-testid="loading"]')
     const tfoot = container.querySelectorAll('div[role="table"] > div[role="rowgroup"]')[2]

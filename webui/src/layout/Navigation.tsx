@@ -271,7 +271,7 @@ export const SideNav = ({
             ))}
           </Flex>
         ))}
-        <Flex direction="column" css={{ borderTop: '1px solid $colors$tableRowBorder', borderRadius: 0, pt: '$3' }}>
+        <Flex direction="column" css={{ borderTop: '1px solid $colors$tableRowBorder', borderRadius: 0, py: '$3' }}>
           <NavigationLink
             startAdornment={<PluginsIcon />}
             css={{

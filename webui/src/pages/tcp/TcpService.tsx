@@ -1,5 +1,6 @@
 import { Box, Flex, H1, Skeleton, styled, Text } from '@traefiklabs/faency'
 import { useMemo } from 'react'
+import { Helmet } from 'react-helmet-async'
 import { FiGlobe, FiInfo, FiShield } from 'react-icons/fi'
 import { useParams } from 'react-router-dom'
 
@@ -16,7 +17,6 @@ import { ResourceStatus } from 'components/resources/ResourceStatus'
 import { UsedByRoutersSection, UsedByRoutersSkeleton } from 'components/resources/UsedByRoutersSection'
 import Tooltip from 'components/Tooltip'
 import { ResourceDetailDataType, ServiceDetailType, useResourceDetail } from 'hooks/use-resource-detail'
-import Page from 'layout/Page'
 import { NotFound } from 'pages/NotFound'
 
 type TcpDetailProps = {
@@ -238,17 +238,23 @@ type TcpServiceRenderProps = {
 export const TcpServiceRender = ({ data, error, name }: TcpServiceRenderProps) => {
   if (error) {
     return (
-      <Page title={name}>
+      <>
+        <Helmet>
+          <title>{name} - Traefik Proxy</title>
+        </Helmet>
         <Text data-testid="error-text">
           Sorry, we could not fetch detail information for this Service right now. Please, try again later.
         </Text>
-      </Page>
+      </>
     )
   }
 
   if (!data) {
     return (
-      <Page title={name}>
+      <>
+        <Helmet>
+          <title>{name} - Traefik Proxy</title>
+        </Helmet>
         <Skeleton css={{ height: '$7', width: '320px', mb: '$8' }} data-testid="skeleton" />
         <SpacedColumns>
           <DetailSectionSkeleton narrow />
@@ -256,7 +262,7 @@ export const TcpServiceRender = ({ data, error, name }: TcpServiceRenderProps) =
           <DetailSectionSkeleton narrow />
         </SpacedColumns>
         <UsedByRoutersSkeleton />
-      </Page>
+      </>
     )
   }
 
@@ -265,11 +271,14 @@ export const TcpServiceRender = ({ data, error, name }: TcpServiceRenderProps) =
   }
 
   return (
-    <Page title={name}>
+    <>
+      <Helmet>
+        <title>{data.name} - Traefik Proxy</title>
+      </Helmet>
       <H1 css={{ mb: '$7' }}>{data.name}</H1>
       <TcpServicePanels data={data} />
       <UsedByRoutersSection data={data} protocol="tcp" />
-    </Page>
+    </>
   )
 }
 

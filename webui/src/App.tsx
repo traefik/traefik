@@ -35,48 +35,50 @@ const ScrollToTop = () => {
 
 export const Routes = () => {
   return (
-    <Suspense fallback={<PageLoader />}>
-      <RouterRoutes>
-        <Route
-          path="/"
-          element={
-            <ErrorSuspenseWrapper suspenseFallback={<DashboardSkeleton />}>
-              <Dashboard />
-            </ErrorSuspenseWrapper>
-          }
-        />
-        <Route path="/http/routers" element={<HTTPPages.HttpRouters />} />
-        <Route path="/http/services" element={<HTTPPages.HttpServices />} />
-        <Route path="/http/middlewares" element={<HTTPPages.HttpMiddlewares />} />
-        <Route path="/tcp/routers" element={<TCPPages.TcpRouters />} />
-        <Route path="/tcp/services" element={<TCPPages.TcpServices />} />
-        <Route path="/tcp/middlewares" element={<TCPPages.TcpMiddlewares />} />
-        <Route path="/udp/routers" element={<UDPPages.UdpRouters />} />
-        <Route path="/udp/services" element={<UDPPages.UdpServices />} />
-        <Route path="/http/routers/:name" element={<HTTPPages.HttpRouter />} />
-        <Route path="/http/services/:name" element={<HTTPPages.HttpService />} />
-        <Route path="/http/middlewares/:name" element={<HTTPPages.HttpMiddleware />} />
-        <Route path="/tcp/routers/:name" element={<TCPPages.TcpRouter />} />
-        <Route path="/tcp/services/:name" element={<TCPPages.TcpService />} />
-        <Route path="/tcp/middlewares/:name" element={<TCPPages.TcpMiddleware />} />
-        <Route path="/udp/routers/:name" element={<UDPPages.UdpRouter />} />
-        <Route path="/udp/services/:name" element={<UDPPages.UdpService />} />
-        <Route path="/http" element={<Navigate to="/http/routers" replace />} />
-        <Route path="/tcp" element={<Navigate to="/tcp/routers" replace />} />
-        <Route path="/udp" element={<Navigate to="/udp/routers" replace />} />
+    <Page>
+      <Suspense fallback={<PageLoader />}>
+        <RouterRoutes>
+          <Route
+            path="/"
+            element={
+              <ErrorSuspenseWrapper suspenseFallback={<DashboardSkeleton />}>
+                <Dashboard />
+              </ErrorSuspenseWrapper>
+            }
+          />
+          <Route path="/http/routers" element={<HTTPPages.HttpRouters />} />
+          <Route path="/http/services" element={<HTTPPages.HttpServices />} />
+          <Route path="/http/middlewares" element={<HTTPPages.HttpMiddlewares />} />
+          <Route path="/tcp/routers" element={<TCPPages.TcpRouters />} />
+          <Route path="/tcp/services" element={<TCPPages.TcpServices />} />
+          <Route path="/tcp/middlewares" element={<TCPPages.TcpMiddlewares />} />
+          <Route path="/udp/routers" element={<UDPPages.UdpRouters />} />
+          <Route path="/udp/services" element={<UDPPages.UdpServices />} />
+          <Route path="/http/routers/:name" element={<HTTPPages.HttpRouter />} />
+          <Route path="/http/services/:name" element={<HTTPPages.HttpService />} />
+          <Route path="/http/middlewares/:name" element={<HTTPPages.HttpMiddleware />} />
+          <Route path="/tcp/routers/:name" element={<TCPPages.TcpRouter />} />
+          <Route path="/tcp/services/:name" element={<TCPPages.TcpService />} />
+          <Route path="/tcp/middlewares/:name" element={<TCPPages.TcpMiddleware />} />
+          <Route path="/udp/routers/:name" element={<UDPPages.UdpRouter />} />
+          <Route path="/udp/services/:name" element={<UDPPages.UdpService />} />
+          <Route path="/http" element={<Navigate to="/http/routers" replace />} />
+          <Route path="/tcp" element={<Navigate to="/tcp/routers" replace />} />
+          <Route path="/udp" element={<Navigate to="/udp/routers" replace />} />
 
-        {/* Hub Dashboard demo content */}
-        <Route path="/hub-dashboard" element={<HubDashboard path="dashboard" />} />
-        <Route path="/hub-dashboard/gateways" element={<HubDashboard path="gateways" />} />
-        <Route path="/hub-dashboard/gateways/:id" element={<HubDashboard path="gateways:id" />} />
-        <Route path="/hub-dashboard/apis" element={<HubDashboard path="apis" />} />
-        <Route path="/hub-dashboard/apis/:id" element={<HubDashboard path="apis:id" />} />
-        <Route path="/hub-dashboard/portals" element={<HubDashboard path="portals" />} />
-        <Route path="/hub-dashboard/portals/:id" element={<HubDashboard path="portals:id" />} />
+          {/* Hub Dashboard demo content */}
+          <Route path="/hub-dashboard" element={<HubDashboard path="dashboard" />} />
+          <Route path="/hub-dashboard/gateways" element={<HubDashboard path="gateways" />} />
+          <Route path="/hub-dashboard/gateways/:id" element={<HubDashboard path="gateways:id" />} />
+          <Route path="/hub-dashboard/apis" element={<HubDashboard path="apis" />} />
+          <Route path="/hub-dashboard/apis/:id" element={<HubDashboard path="apis:id" />} />
+          <Route path="/hub-dashboard/portals" element={<HubDashboard path="portals" />} />
+          <Route path="/hub-dashboard/portals/:id" element={<HubDashboard path="portals:id" />} />
 
-        <Route path="*" element={<NotFound />} />
-      </RouterRoutes>
-    </Suspense>
+          <Route path="*" element={<NotFound />} />
+        </RouterRoutes>
+      </Suspense>
+    </Page>
   )
 }
 

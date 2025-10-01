@@ -1,6 +1,7 @@
-import { Flex, globalCss, styled, Text } from '@traefiklabs/faency'
+import { Flex, globalCss, styled } from '@traefiklabs/faency'
 import { ReactNode, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
+import { useLocation } from 'react-router-dom'
 
 import Container from './Container'
 import { LAPTOP_BP, SideBarPanel, SideNav, TopNav } from './Navigation'
@@ -38,17 +39,17 @@ const PageContainer = styled(Container, {
 export interface Props {
   title?: string
   children?: ReactNode
-  isDemoContent?: boolean
 }
 
-const Page = ({ children, title, isDemoContent = false }: Props) => {
+const Page = ({ children }: Props) => {
   const [isSideBarPanelOpen, setIsSideBarPanelOpen] = useState(false)
+  const location = useLocation()
 
   return (
     <ToastProvider>
       {globalStyles()}
       <Helmet>
-        <title>{title ? `${title} - ` : ''}Traefik Proxy</title>
+        <title>Traefik Proxy</title>
       </Helmet>
       <Flex>
         <SideBarPanel isOpen={isSideBarPanelOpen} onOpenChange={setIsSideBarPanelOpen} />
@@ -57,11 +58,8 @@ const Page = ({ children, title, isDemoContent = false }: Props) => {
           justify="center"
           css={{ flex: 1, margin: 'auto', ml: 264, [`@media (max-width:${LAPTOP_BP}px)`]: { ml: 60 } }}
         >
-          <PageContainer data-testid={`${title} page`} direction="column">
-            <Flex align="center" justify={isDemoContent ? 'space-between' : 'end'}>
-              {isDemoContent && <Text css={{ fontSize: '$8', color: '$primary' }}>DEMO CONTENT</Text>}
-              <TopNav />
-            </Flex>
+          <PageContainer data-testid={`${location.pathname} page`} direction="column">
+            <TopNav />
             {children}
           </PageContainer>
         </Flex>

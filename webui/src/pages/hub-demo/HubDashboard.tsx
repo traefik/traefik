@@ -7,7 +7,6 @@ import { verifyScriptSignature } from './workers/scriptVerification'
 
 import { SpinnerLoader } from 'components/SpinnerLoader'
 import { useIsDarkMode } from 'hooks/use-theme'
-import Page from 'layout/Page'
 
 const PUBLIC_KEY = 'MCowBQYDK2VwAyEAWMBZ0pMBaL/s8gNXxpAPCIQ8bxjnuz6bQFwGYvjXDfg='
 
@@ -57,31 +56,31 @@ const HubDashboard = ({ path }: { path: string }) => {
 
   if (scriptError) {
     return (
-      <Page title="Hub Demo" isDemoContent>
-        <Flex gap={4} align="center" justify="center" direction="column" css={{ width: '100%', mt: '$8' }}>
-          <Image src="/img/gopher-something-went-wrong.png" width={400} />
-          <Text css={{ fontSize: 24, fontWeight: '$semiBold' }}>
-            Oops, the demo content couldn't be fetched correctly
-          </Text>
-          <Text size={6} css={{ textAlign: 'center', lineHeight: 1.3 }}>
-            But don't worry, you can still read more about Traefik Hub API Management on our{' '}
-            <Link href="https://traefik.io/traefik-hub" target="_blank">
-              website
-            </Link>{' '}
-            and on our{' '}
-            <Link href="https://doc.traefik.io/traefik-hub/" target="_blank">
-              documentation
-            </Link>
-            .
-          </Text>
-        </Flex>
-      </Page>
+      <Flex gap={4} align="center" justify="center" direction="column" css={{ width: '100%', mt: '$8' }}>
+        <Image src="/img/gopher-something-went-wrong.png" width={400} />
+        <Text css={{ fontSize: 24, fontWeight: '$semiBold' }}>
+          Oops, the demo content couldn't be fetched correctly
+        </Text>
+        <Text size={6} css={{ textAlign: 'center', lineHeight: 1.3 }}>
+          But don't worry, you can still read more about Traefik Hub API Management on our{' '}
+          <Link href="https://traefik.io/traefik-hub" target="_blank">
+            website
+          </Link>{' '}
+          and on our{' '}
+          <Link href="https://doc.traefik.io/traefik-hub/" target="_blank">
+            documentation
+          </Link>
+          .
+        </Text>
+      </Flex>
     )
   }
 
   return (
-    <>
+    <Box css={{ mt: '-$7' }}>
+      <Text css={{ fontSize: '$8', color: '$primary', mb: '$7' }}>DEMO CONTENT</Text>
       <Helmet>
+        <title>Hub Demo - Traefik Proxy</title>
         <meta
           httpEquiv="Content-Security-Policy"
           content="script-src 'self' https://traefik.github.io 'unsafe-inline'; object-src 'none'; base-uri 'self';"
@@ -96,21 +95,19 @@ const HubDashboard = ({ path }: { path: string }) => {
         )}
       </Helmet>
 
-      <Page title="Hub Demo" isDemoContent>
-        {verificationInProgress ? (
-          <Box css={{ width: '100%', justifyItems: 'center', mt: '$8' }}>
-            <SpinnerLoader size={48} />
-          </Box>
-        ) : (
-          <hub-ui-demo-app
-            key={usedPath}
-            path={usedPath}
-            theme={isDarkMode ? 'dark' : 'light'}
-            baseurl="#/hub-dashboard"
-          ></hub-ui-demo-app>
-        )}
-      </Page>
-    </>
+      {verificationInProgress ? (
+        <Box css={{ width: '100%', justifyItems: 'center', mt: '$8' }}>
+          <SpinnerLoader size={48} />
+        </Box>
+      ) : (
+        <hub-ui-demo-app
+          key={usedPath}
+          path={usedPath}
+          theme={isDarkMode ? 'dark' : 'light'}
+          baseurl="#/hub-dashboard"
+        ></hub-ui-demo-app>
+      )}
+    </Box>
   )
 }
 
