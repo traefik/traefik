@@ -23,7 +23,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 	corev1 "k8s.io/api/core/v1"
-	kerror "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/ptr"
@@ -386,14 +385,6 @@ func (p *Provider) buildService(namespace, serviceName string, port intstr.IntOr
 }
 
 func (p *Provider) buildServers(namespace, serviceName string, port intstr.IntOrString) ([]dynamic.Server, error) {
-	serverlessService, err := p.k8sClient.GetServerlessService(namespace, serviceName)
-	if err != nil && !kerror.IsNotFound(err) {
-		return nil, fmt.Errorf("getting ServerlesService %s/%s: %w", namespace, serviceName, err)
-	}
-	if serverlessService != nil {
-		serviceName = serverlessService.Status.ServiceName
-	}
-
 	service, err := p.k8sClient.GetService(namespace, serviceName)
 	if err != nil {
 		return nil, fmt.Errorf("getting service %s/%s: %w", namespace, serviceName, err)
@@ -414,14 +405,13 @@ func (p *Provider) buildServers(namespace, serviceName string, port intstr.IntOr
 		return nil, errors.New("service does not have a ClusterIP")
 	}
 
-	protocol, err := parseServiceProtocol(svcPort.Name, svcPort.Port)
-	if err != nil {
-		return nil, err
+	scheme := "http"
+	if svcPort.AppProtocol != nil && *svcPort.AppProtocol == knativenetworking.AppProtocolH2C {
+		scheme = "h2c"
 	}
+
 	hostPort := net.JoinHostPort(service.Spec.ClusterIP, strconv.Itoa(int(svcPort.Port)))
-	return []dynamic.Server{{
-		URL: fmt.Sprintf("%s://%s", protocol, hostPort),
-	}}, nil
+	return []dynamic.Server{{URL: fmt.Sprintf("%s://%s", scheme, hostPort)}}, nil
 }
 
 func (p *Provider) updateKnativeIngressStatus(ctx context.Context, ingress *knativenetworkingv1alpha1.Ingress) error {
@@ -450,24 +440,6 @@ func (p *Provider) updateKnativeIngressStatus(ctx context.Context, ingress *knat
 		return p.k8sClient.UpdateIngressStatus(ingress)
 	}
 	return nil
-}
-
-// parseServiceProtocol parses the scheme, port name, and number to determine the correct protocol.
-// an error is returned if the scheme provided is invalid.
-func parseServiceProtocol(portName string, portNumber int32) (string, error) {
-	switch portName {
-	case httpProtocol, httpsProtocol:
-		return portName, nil
-	case http2Protocol, h2cProtocol:
-		return h2cProtocol, nil
-	case "":
-		if portNumber == 443 || strings.HasPrefix(portName, httpsProtocol) {
-			return httpsProtocol, nil
-		}
-		return httpProtocol, nil
-	}
-
-	return "", fmt.Errorf("invalid scheme %q specified", portName)
 }
 
 func buildRule(hosts []string, headers map[string]knativenetworkingv1alpha1.HeaderMatch, path string) string {

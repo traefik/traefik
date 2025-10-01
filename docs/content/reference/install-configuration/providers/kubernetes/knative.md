@@ -9,7 +9,8 @@ technical documentation."
 The Knative Provider.
 {: .subtitle }
 
-The Traefik Knative provider integrates with Knative to manage service access, enabling the use of Traefik Proxy as a router. It fully supports all routing types.
+The Traefik Knative provider integrates with Knative to manage service access, enabling the use of Traefik Proxy as a router.
+It fully supports all routing types.
 
 ## Requirements
 

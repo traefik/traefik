@@ -108,7 +108,7 @@ test-gateway-api-conformance: build-image-dirty
 .PHONY: test-knative-conformance
 #? test-knative-conformance: Run the Knative conformance tests
 test-knative-conformance: build-image-dirty
-	GOOS=$(GOOS) GOARCH=$(GOARCH) go test ./integration/integration_test.go ./integration/knative_conformance_test.go -tags knativeConformance -parallel=1 -failfast -count=1 -timeout=20m  -v -test.run KnativeConformanceSuite -ingressClass=traefik.ingress.networking.knative.dev -spoofinterval=3s
+	GOOS=$(GOOS) GOARCH=$(GOARCH) go test ./integration/integration_test.go ./integration/knative_conformance_test.go -v -tags knativeConformance -test.run KnativeConformanceSuite
 
 .PHONY: test-ui-unit
 #? test-ui-unit: Run the unit tests for the webui

@@ -29,7 +29,6 @@ const resyncPeriod = 10 * time.Minute
 type Client interface {
 	WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error)
 	ListIngresses() []*knativenetworkingv1alpha1.Ingress
-	GetServerlessService(namespace, name string) (*knativenetworkingv1alpha1.ServerlessService, error)
 	GetService(namespace, name string) (*corev1.Service, error)
 	GetSecret(namespace, name string) (*corev1.Secret, error)
 	UpdateIngressStatus(ingress *knativenetworkingv1alpha1.Ingress) error
@@ -138,17 +137,9 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		if err != nil {
 			return nil, err
 		}
-		_, err = factory.Networking().V1alpha1().ServerlessServices().Informer().AddEventHandler(eventHandler)
-		if err != nil {
-			return nil, err
-		}
 
 		factoryKube := kinformers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, kinformers.WithNamespace(ns))
 		_, err = factoryKube.Core().V1().Services().Informer().AddEventHandler(eventHandler)
-		if err != nil {
-			return nil, err
-		}
-		_, err = factoryKube.Core().V1().Endpoints().Informer().AddEventHandler(eventHandler)
 		if err != nil {
 			return nil, err
 		}
@@ -204,14 +195,6 @@ func (c *clientWrapper) UpdateIngressStatus(ingress *knativenetworkingv1alpha1.I
 	}
 	log.Info().Msgf("Updated status on knative ingress %s/%s", ingress.Namespace, ingress.Name)
 	return err
-}
-
-func (c *clientWrapper) GetServerlessService(namespace, name string) (*knativenetworkingv1alpha1.ServerlessService, error) {
-	if !c.isWatchedNamespace(namespace) {
-		return nil, fmt.Errorf("failed to get service %s/%s: namespace is not within watched namespaces", namespace, name)
-	}
-
-	return c.factoriesKnativeNetworking[c.lookupNamespace(namespace)].Networking().V1alpha1().ServerlessServices().Lister().ServerlessServices(namespace).Get(name)
 }
 
 // GetService returns the named service from the given namespace.

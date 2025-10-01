@@ -7,25 +7,9 @@ rules:
   - apiGroups:
       - ""
     resources:
-      - nodes
-      - endpoints
-    verbs:
-      - get
-      - list
-      - watch
-  - apiGroups:
-      - ""
-    resources:
       - services
     verbs:
       - get
-      - list
-      - watch
-  - apiGroups:
-      - discovery.k8s.io
-    resources:
-      - endpointslices
-    verbs:
       - list
       - watch
   - apiGroups:
@@ -37,36 +21,9 @@ rules:
       - list
       - watch
   - apiGroups:
-      - extensions
-      - networking.k8s.io
+      - networking.internal.knative.dev
     resources:
-      - ingressclasses
       - ingresses
-    verbs:
-      - get
-      - list
-      - watch
-  - apiGroups:
-      - extensions
-      - networking.k8s.io
-    resources:
-      - ingresses/status
-    verbs:
-      - update
-  - apiGroups:
-      - traefik.io
-    resources:
-      - ingressrouteknatives
-      - ingressroutes
-      - ingressroutetcps
-      - ingressrouteudps
-      - middlewares
-      - middlewaretcps
-      - serverstransports
-      - serverstransporttcps
-      - tlsoptions
-      - tlsstores
-      - traefikservices
     verbs:
       - get
       - list
@@ -74,20 +31,7 @@ rules:
   - apiGroups:
       - networking.internal.knative.dev
     resources:
-      - ingresses
-      - serverlessservices
-    verbs:
-      - get
-      - list
-      - watch
-      - patch
-  - apiGroups:
-      - networking.internal.knative.dev
-    resources:
-      - ingresses
-      - clusteringresses
       - ingresses/status
-      - clusteringresses/status
     verbs:
       - update
 

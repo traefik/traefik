@@ -23,15 +23,6 @@ func (m *clientMock) ListIngresses() []*knativenetworkingv1alpha1.Ingress {
 	return m.ingresses
 }
 
-func (m *clientMock) GetServerlessService(namespace, name string) (*knativenetworkingv1alpha1.ServerlessService, error) {
-	for _, service := range m.serverlessServices {
-		if service.Namespace == namespace && service.Name == name {
-			return service, nil
-		}
-	}
-	return nil, m.apiServerlessServiceError
-}
-
 func (m *clientMock) GetService(namespace, name string) (*corev1.Service, error) {
 	for _, service := range m.services {
 		if service.Namespace == namespace && service.Name == name {
