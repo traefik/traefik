@@ -35,13 +35,6 @@ const (
 	traefikIngressClassName = "traefik.ingress.networking.knative.dev"
 )
 
-const (
-	httpsProtocol = "https"
-	httpProtocol  = "http"
-	h2cProtocol   = "h2c"
-	http2Protocol = "http2"
-)
-
 // Provider holds configurations of the provider.
 type Provider struct {
 	Endpoint                   string          `description:"Kubernetes server endpoint (required for external cluster client)." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`

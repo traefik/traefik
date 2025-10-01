@@ -11,8 +11,7 @@ type clientMock struct {
 	serverlessServices []*knativenetworkingv1alpha1.ServerlessService
 	ingresses          []*knativenetworkingv1alpha1.Ingress
 
-	apiServiceError           error
-	apiServerlessServiceError error
+	apiServiceError error
 }
 
 func (m *clientMock) WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error) {
