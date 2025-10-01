@@ -112,7 +112,7 @@ require (
 	k8s.io/client-go v0.32.3
 	k8s.io/utils v0.0.0-20241104100929-3ea5e8cea738 // No tag on the repo.
 	knative.dev/networking v0.0.0-20241022012959-60e29ff520dc
-	knative.dev/pkg v0.0.0-20241021183759-9b9d535af5ad // indirect
+	knative.dev/pkg v0.0.0-20241021183759-9b9d535af5ad
 	mvdan.cc/xurls/v2 v2.5.0
 	sigs.k8s.io/controller-runtime v0.20.4
 	sigs.k8s.io/gateway-api v1.3.0

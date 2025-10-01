@@ -70,8 +70,8 @@ import (
 //	conf := make(map[string]*dynamic.Service)
 //
 //	provider := &Provider{
-//		ExternalEntrypoints: []string{"web"},
-//		InternalEntrypoints: []string{"web-internal"},
+//		PublicEntrypoints: []string{"web"},
+//		PrivateEntrypoints: []string{"web-internal"},
 //		k8sClient:           client,
 //	}
 //
@@ -154,9 +154,9 @@ func TestLoadKnativeServers(t *testing.T) {
 		},
 	}
 	provider := &Provider{
-		ExternalEntrypoints: []string{"web"},
-		InternalEntrypoints: []string{"web-internal"},
-		k8sClient:           mockClient,
+		PublicEntrypoints:  []string{"web"},
+		PrivateEntrypoints: []string{"web-internal"},
+		k8sClient:          mockClient,
 	}
 
 	t.Run("successful load of servers", func(t *testing.T) {
@@ -177,8 +177,8 @@ func TestLoadKnativeServers(t *testing.T) {
 
 //  func TestLoadKnativeIngressRouteConfiguration(t *testing.T) {
 //	provider := &Provider{
-//		ExternalEntrypoints: []string{"web"},
-//		InternalEntrypoints: []string{"web-internal"},
+//		PublicEntrypoints: []string{"web"},
+//		PrivateEntrypoints: []string{"web-internal"},
 //		k8sClient: &clientMock{
 //			services: []*corev1.Service{
 //				{

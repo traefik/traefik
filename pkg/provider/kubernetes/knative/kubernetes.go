@@ -28,6 +28,7 @@ import (
 	"k8s.io/utils/ptr"
 	knativenetworking "knative.dev/networking/pkg/apis/networking"
 	knativenetworkingv1alpha1 "knative.dev/networking/pkg/apis/networking/v1alpha1"
+	"knative.dev/pkg/network"
 )
 
 const (
@@ -35,19 +36,24 @@ const (
 	traefikIngressClassName = "traefik.ingress.networking.knative.dev"
 )
 
+// ServiceRef holds a Kubernetes service reference.
+type ServiceRef struct {
+	Name      string `description:"Name of the Kubernetes service." json:"name,omitempty" toml:"name,omitempty" yaml:"name,omitempty"`
+	Namespace string `description:"Namespace of the Kubernetes service." json:"namespace,omitempty" toml:"namespace,omitempty" yaml:"namespace,omitempty"`
+}
+
 // Provider holds configurations of the provider.
 type Provider struct {
-	Endpoint                   string          `description:"Kubernetes server endpoint (required for external cluster client)." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
-	Token                      string          `description:"Kubernetes bearer token (not needed for in-cluster client)." json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty"`
-	CertAuthFilePath           string          `description:"Kubernetes certificate authority file path (not needed for in-cluster client)." json:"certAuthFilePath,omitempty" toml:"certAuthFilePath,omitempty" yaml:"certAuthFilePath,omitempty"`
-	Namespaces                 []string        `description:"Kubernetes namespaces." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty" export:"true"`
-	LabelSelector              string          `description:"Kubernetes label selector to use." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
-	ExternalEntrypoints        []string        `description:"Entrypoint names used to expose the Ingress externally. If empty an Ingress is exposed on all entrypoints." json:"externalEntrypoints,omitempty" toml:"externalEntrypoints,omitempty" yaml:"externalEntrypoints,omitempty" export:"true"`
-	InternalEntrypoints        []string        `description:"Entrypoint names used to expose the Ingress locally. If empty local Ingresses are skipped." json:"internalEntrypoints,omitempty" toml:"internalEntrypoints,omitempty" yaml:"internalEntrypoints,omitempty" export:"true"`
-	LoadBalancerIP             string          `description:"set for load-balancer ingress points that are IP based." json:"loadBalancerIP,omitempty" toml:"loadBalancerIP,omitempty" yaml:"loadBalancerIP,omitempty"`
-	LoadBalancerDomain         string          `description:"set for load-balancer ingress points that are DNS based." json:"loadBalancerDomain,omitempty" toml:"loadBalancerDomain,omitempty" yaml:"loadBalancerDomain,omitempty"`
-	LoadBalancerDomainInternal string          `description:"set if there is a cluster-local DNS name to access the Ingress." json:"loadBalancerDomainInternal,omitempty" toml:"loadBalancerDomainInternal,omitempty" yaml:"loadBalancerDomainInternal,omitempty"`
-	ThrottleDuration           ptypes.Duration `description:"Ingress refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty"`
+	Endpoint           string          `description:"Kubernetes server endpoint (required for external cluster client)." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
+	Token              string          `description:"Kubernetes bearer token (not needed for in-cluster client)." json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty"`
+	CertAuthFilePath   string          `description:"Kubernetes certificate authority file path (not needed for in-cluster client)." json:"certAuthFilePath,omitempty" toml:"certAuthFilePath,omitempty" yaml:"certAuthFilePath,omitempty"`
+	Namespaces         []string        `description:"Kubernetes namespaces." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty" export:"true"`
+	LabelSelector      string          `description:"Kubernetes label selector to use." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
+	PublicEntrypoints  []string        `description:"Entrypoint names used to expose the Ingress publicly. If empty an Ingress is exposed on all entrypoints." json:"publicEntrypoints,omitempty" toml:"publicEntrypoints,omitempty" yaml:"publicEntrypoints,omitempty" export:"true"`
+	PublicService      ServiceRef      `description:"Kubernetes service used to expose the networking controller publicly." json:"publicService,omitempty" toml:"publicService,omitempty" yaml:"publicService,omitempty" export:"true"`
+	PrivateEntrypoints []string        `description:"Entrypoint names used to expose the Ingress privately. If empty local Ingresses are skipped." json:"privateEntrypoints,omitempty" toml:"privateEntrypoints,omitempty" yaml:"privateEntrypoints,omitempty" export:"true"`
+	PrivateService     ServiceRef      `description:"Kubernetes service used to expose the networking controller privately." json:"privateService,omitempty" toml:"privateService,omitempty" yaml:"privateService,omitempty" export:"true"`
+	ThrottleDuration   ptypes.Duration `description:"Ingress refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty"`
 
 	k8sClient         Client
 	lastConfiguration safe.Safe
@@ -282,13 +288,13 @@ func (p *Provider) buildRouters(ctx context.Context, ingress *knativenetworkingv
 			continue
 		}
 
-		entrypoints := p.ExternalEntrypoints
+		entrypoints := p.PublicEntrypoints
 		if rule.Visibility == knativenetworkingv1alpha1.IngressVisibilityClusterLocal {
-			if p.InternalEntrypoints == nil {
+			if p.PrivateEntrypoints == nil {
 				// Skip route creation as no internal entrypoints are defined for cluster local visibility.
 				continue
 			}
-			entrypoints = p.InternalEntrypoints
+			entrypoints = p.PrivateEntrypoints
 		}
 
 		// TODO: support rewrite host
@@ -410,26 +416,25 @@ func (p *Provider) buildServers(namespace, serviceName string, port intstr.IntOr
 func (p *Provider) updateKnativeIngressStatus(ctx context.Context, ingress *knativenetworkingv1alpha1.Ingress) error {
 	log.Ctx(ctx).Debug().Msgf("Updating status for Ingress %s/%s", ingress.Namespace, ingress.Name)
 
-	if ingress.GetStatus() == nil ||
-		!ingress.GetStatus().GetCondition(knativenetworkingv1alpha1.IngressConditionNetworkConfigured).IsTrue() ||
-		ingress.GetGeneration() != ingress.GetStatus().ObservedGeneration {
-		ingress.Status.MarkLoadBalancerReady(
-			// public lbs
-			[]knativenetworkingv1alpha1.LoadBalancerIngressStatus{{
-				Domain:         p.LoadBalancerDomain,
-				DomainInternal: p.LoadBalancerDomainInternal,
-				IP:             p.LoadBalancerIP,
-			}},
-			// private lbs
-			[]knativenetworkingv1alpha1.LoadBalancerIngressStatus{{
-				Domain:         p.LoadBalancerDomain,
-				DomainInternal: p.LoadBalancerDomainInternal,
-				IP:             p.LoadBalancerIP,
-			}},
-		)
+	var publicLbs []knativenetworkingv1alpha1.LoadBalancerIngressStatus
+	if p.PublicService.Name != "" && p.PublicService.Namespace != "" {
+		publicLbs = append(publicLbs, knativenetworkingv1alpha1.LoadBalancerIngressStatus{
+			DomainInternal: network.GetServiceHostname(p.PublicService.Name, p.PublicService.Namespace),
+		})
+	}
 
+	var privateLbs []knativenetworkingv1alpha1.LoadBalancerIngressStatus
+	if p.PrivateService.Name != "" && p.PrivateService.Namespace != "" {
+		publicLbs = append(publicLbs, knativenetworkingv1alpha1.LoadBalancerIngressStatus{
+			DomainInternal: network.GetServiceHostname(p.PrivateService.Name, p.PrivateService.Namespace),
+		})
+	}
+
+	if ingress.GetStatus() == nil || !ingress.GetStatus().GetCondition(knativenetworkingv1alpha1.IngressConditionNetworkConfigured).IsTrue() || ingress.GetGeneration() != ingress.GetStatus().ObservedGeneration {
 		ingress.Status.MarkNetworkConfigured()
+		ingress.Status.MarkLoadBalancerReady(publicLbs, privateLbs)
 		ingress.Status.ObservedGeneration = ingress.GetGeneration()
+
 		return p.k8sClient.UpdateIngressStatus(ingress)
 	}
 	return nil
