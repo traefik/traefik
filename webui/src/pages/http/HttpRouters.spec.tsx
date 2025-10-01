@@ -49,10 +49,13 @@ describe('<HttpRoutersPage />', () => {
       .spyOn(useFetchWithPagination, 'default')
       .mockImplementation(() => useFetchWithPaginationMock({ pages }))
 
-    const { container, getByTestId } = renderWithProviders(<HttpRoutersPage />)
+    const { container, getByTestId } = renderWithProviders(<HttpRoutersPage />, {
+      route: '/http/routers',
+      withPage: true,
+    })
 
     expect(mock).toHaveBeenCalled()
-    expect(getByTestId('HTTP Routers page')).toBeInTheDocument()
+    expect(getByTestId('/http/routers page')).toBeInTheDocument()
     const tbody = container.querySelectorAll('div[role="table"] > div[role="rowgroup"]')[1]
     expect(tbody.querySelectorAll('a[role="row"]')).toHaveLength(4)
 
@@ -100,6 +103,7 @@ describe('<HttpRoutersPage />', () => {
         pageCount={1}
         pages={[]}
       />,
+      { route: '/http/routers', withPage: true },
     )
     expect(() => getByTestId('loading')).toThrow('Unable to find an element by: [data-testid="loading"]')
     const tfoot = container.querySelectorAll('div[role="table"] > div[role="rowgroup"]')[2]
