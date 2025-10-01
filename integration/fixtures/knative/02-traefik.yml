@@ -41,6 +41,7 @@ spec:
             - --entrypoints.web.address=:80
             - --entrypoints.websecure.address=:443
             - --experimental.knative
+            - --providers.knative.throttleduration=2s
             - --providers.knative.loadbalancerdomaininternal=traefik.traefik.svc.cluster.local
 
           ports:

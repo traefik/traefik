@@ -121,20 +121,20 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 							ProviderName:  providerName,
 							Configuration: conf,
 						}
-						time.Sleep(5 * time.Second) // Wait for the routes to be updated before updating ingress
-						// status. Not having this can lead to conformance tests failing intermittently as the routes
-						// are queried as soon as the status is set to ready.
-						for _, ingress := range ingressStatuses {
-							if err := p.updateKnativeIngressStatus(ctxLog, ingress); err != nil {
-								logger.Error().Err(err).Msgf("Error updating status for Ingress %s/%s", ingress.Namespace, ingress.Name)
-							}
-						}
 					}
 
 					// If we're throttling,
 					// we sleep here for the throttle duration to enforce that we don't refresh faster than our throttle.
 					// time.Sleep returns immediately if p.ThrottleDuration is 0 (no throttle).
 					time.Sleep(throttleDuration)
+
+					// Updating the ingress status after the throttleDuration allows to wait to make sure that the dynamic conf is updated before updating the status.
+					// This is needed for the conformance tests to pass, for example.
+					for _, ingress := range ingressStatuses {
+						if err := p.updateKnativeIngressStatus(ctxLog, ingress); err != nil {
+							logger.Error().Err(err).Msgf("Error updating status for Ingress %s/%s", ingress.Namespace, ingress.Name)
+						}
+					}
 				}
 			}
 		}
