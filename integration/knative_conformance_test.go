@@ -37,7 +37,7 @@ const (
 	knativeWebhook          = "deployment/webhook"
 	knativeNetworkConfigMap = "configmap/config-network"
 	knativeDomainConfigMap  = "configmap/config-domain"
-	knativeSkipTests        = "visibility/split,visibility/path,visibility,update,headers/probe,hosts/multiple,tls"
+	knativeSkipTests        = "visibility/split,visibility/path,visibility,update,headers/probe,tls"
 )
 
 var imageNames = []string{
