@@ -26,7 +26,7 @@ import (
 
 const (
 	knativeNamespace = "knative-serving"
-	knativeSkipTests = "visibility/split,visibility/path,visibility,update,headers/probe"
+	knativeSkipTests = "headers/probe"
 )
 
 var imageNames = []string{
@@ -150,7 +150,7 @@ func (s *KnativeConformanceSuite) TestKnativeConformance() {
 	k3sContainerIP, err := s.k3sContainer.ContainerIP(s.T().Context())
 	require.NoError(s.T(), err)
 
-	err = try.GetRequest("http://"+k3sContainerIP+":8080/api/entrypoints", 10*time.Second, try.BodyContains(`"name":"web"`))
+	err = try.GetRequest("http://"+k3sContainerIP+":9000/api/entrypoints", 10*time.Second, try.BodyContains(`"name":"pweb"`))
 	require.NoError(s.T(), err)
 
 	kubeconfig, err := s.k3sContainer.GetKubeConfig(s.T().Context())

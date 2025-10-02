@@ -38,20 +38,31 @@ spec:
           args:
             - --api.insecure
             - --log.level=debug
-            - --entrypoints.web.address=:80
-            - --entrypoints.websecure.address=:443
+            - --entrypoints.pweb.address=:80
+            - --entrypoints.pwebsecure.address=:443
+            - --entrypoints.privweb.address=:8080
+            - --entrypoints.privwebsecure.address=:4443
+            - --entrypoints.traefik.address=:9000
             - --experimental.knative
-            - --providers.knative.throttleduration=2s
+            - --providers.knative.publicEntrypoints=pweb,pwebsecure
             - --providers.knative.publicService.namespace=traefik
             - --providers.knative.publicService.name=traefik
+            - --providers.knative.privateEntrypoints=privweb,privwebsecure
+            - --providers.knative.privateService.namespace=traefik
+            - --providers.knative.privateService.name=privtraefik
+            - --providers.knative.throttleduration=2s
 
           ports:
-            - name: web
+            - name: pweb
               containerPort: 80
-            - name: websecure
+            - name: pwebsecure
               containerPort: 443
-            - name: traefik
+            - name: privweb
               containerPort: 8080
+            - name: privwebsecure
+              containerPort: 4443
+            - name: traefik
+              containerPort: 9000
 
 ---
 apiVersion: v1
@@ -66,10 +77,27 @@ spec:
   ports:
     - port: 80
       name: web
-      targetPort: web
+      targetPort: pweb
     - port: 443
       name: websecure
-      targetPort: websecure
-    - port: 8080
+      targetPort: pwebsecure
+    - port: 9000
       name: traefik
       targetPort: traefik
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: privtraefik
+  namespace: traefik
+spec:
+  selector:
+    app: traefik
+  ports:
+    - port: 80
+      name: web
+      targetPort: privweb
+    - port: 443
+      name: websecure
+      targetPort: privwebsecure

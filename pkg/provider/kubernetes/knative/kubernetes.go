@@ -432,7 +432,7 @@ func (p *Provider) updateKnativeIngressStatus(ctx context.Context, ingress *knat
 
 	var privateLbs []knativenetworkingv1alpha1.LoadBalancerIngressStatus
 	if p.PrivateService.Name != "" && p.PrivateService.Namespace != "" {
-		publicLbs = append(publicLbs, knativenetworkingv1alpha1.LoadBalancerIngressStatus{
+		privateLbs = append(privateLbs, knativenetworkingv1alpha1.LoadBalancerIngressStatus{
 			DomainInternal: network.GetServiceHostname(p.PrivateService.Name, p.PrivateService.Namespace),
 		})
 	}
