@@ -314,9 +314,12 @@ spec:
 
 ### Multi-Layer Routing with IngressRoutes
 
-Multi-layer routing allows creating hierarchical relationships between IngressRoutes, where parent IngressRoutes can apply middleware before child IngressRoutes make routing decisions.
+Multi-layer routing allows creating hierarchical relationships between IngressRoutes,
+where parent IngressRoutes can apply middleware before child IngressRoutes make routing decisions.
 
-This is particularly useful for authentication-based routing, where a parent IngressRoute authenticates requests and adds context (e.g., user roles as headers), and child IngressRoutes route based on that context.
+This is particularly useful for authentication-based routing,
+where a parent IngressRoute authenticates requests and adds context (e.g., user roles as headers),
+and child IngressRoutes route based on that context.
 
 !!! info "Comprehensive Multi-Layer Routing Documentation"
 

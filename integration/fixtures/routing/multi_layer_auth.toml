@@ -37,18 +37,15 @@
   [http.routers.parent-router]
     rule = "PathPrefix(`/whoami`)"
     middlewares = ["auth-middleware"]
-    priority = 1000
 
   # Child router for admin role
   [http.routers.admin-router]
     rule = "Header(`X-User-Role`, `admin`)"
     service = "admin-service"
-    priority = 2000
     parentRefs = ["parent-router@file"]
 
   # Child router for developer role
   [http.routers.developer-router]
     rule = "Header(`X-User-Role`, `developer`)"
     service = "developer-service"
-    priority = 2000
     parentRefs = ["parent-router@file"]

@@ -36,7 +36,7 @@ func TestConcatFieldHandler_ServeHTTP(t *testing.T) {
 		},
 		{
 			desc:           "empty existing value - treat as first",
-			existingValue:  "",
+			existingValue:  "    ",
 			newValue:       "router1",
 			expectedResult: "router1",
 		},
@@ -64,7 +64,7 @@ func TestConcatFieldHandler_ServeHTTP(t *testing.T) {
 			req := httptest.NewRequest("GET", "/test", nil)
 			req = req.WithContext(context.WithValue(req.Context(), DataTableKey, logData))
 
-			handler := NewConcatFieldHandler(nextHandler, RouterName, test.newValue, nil)
+			handler := NewConcatFieldHandler(nextHandler, RouterName, test.newValue)
 
 			rec := httptest.NewRecorder()
 			handler.ServeHTTP(rec, req)
@@ -82,7 +82,7 @@ func TestConcatFieldHandler_ServeHTTP_NoLogData(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	handler := NewConcatFieldHandler(nextHandler, RouterName, "router1", nil)
+	handler := NewConcatFieldHandler(nextHandler, RouterName, "router1")
 
 	// Create request without LogData in context.
 	req := httptest.NewRequest("GET", "/test", nil)
@@ -92,36 +92,5 @@ func TestConcatFieldHandler_ServeHTTP_NoLogData(t *testing.T) {
 
 	// Verify next handler was called and no panic occurred.
 	assert.True(t, nextHandlerCalled)
-	assert.Equal(t, http.StatusOK, rec.Code)
-}
-
-func TestConcatFieldHandler_ServeHTTP_WithApplyFn(t *testing.T) {
-	applyFnCalled := false
-	customApplyFn := func(rw http.ResponseWriter, r *http.Request, next http.Handler, data *LogData) {
-		applyFnCalled = true
-		data.Core["custom_field"] = "custom_value"
-		next.ServeHTTP(rw, r)
-	}
-
-	nextHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	})
-
-	logData := &LogData{
-		Core: CoreLogData{},
-	}
-
-	req := httptest.NewRequest("GET", "/test", nil)
-	req = req.WithContext(context.WithValue(req.Context(), DataTableKey, logData))
-
-	handler := NewConcatFieldHandler(nextHandler, RouterName, "router1", customApplyFn)
-	rec := httptest.NewRecorder()
-
-	handler.ServeHTTP(rec, req)
-
-	// Verify both the concatenation and custom apply function worked
-	assert.True(t, applyFnCalled)
-	assert.Equal(t, "router1", logData.Core[RouterName])
-	assert.Equal(t, "custom_value", logData.Core["custom_field"])
 	assert.Equal(t, http.StatusOK, rec.Code)
 }

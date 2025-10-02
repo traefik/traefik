@@ -1237,9 +1237,9 @@ func TestConcatFieldHandler_LoggerIntegration(t *testing.T) {
 	})
 
 	// Create chain of ConcatFieldHandlers to simulate multi-layer routing
-	handler = NewConcatFieldHandler(handler, RouterName, "child-router", nil)
-	handler = NewConcatFieldHandler(handler, RouterName, "parent-router", nil)
-	handler = NewConcatFieldHandler(handler, RouterName, "root-router", nil)
+	handler = NewConcatFieldHandler(handler, RouterName, "child-router")
+	handler = NewConcatFieldHandler(handler, RouterName, "parent-router")
+	handler = NewConcatFieldHandler(handler, RouterName, "root-router")
 
 	finalHandler, err := chain.Then(handler)
 	require.NoError(t, err)
