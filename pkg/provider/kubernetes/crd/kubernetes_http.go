@@ -27,14 +27,8 @@ const (
 )
 
 // resolveParentRouterNames resolves parent IngressRoute references to router names.
-// It returns the list of parent router names, a skip flag (true if the child should be skipped),
-// and an error if one occurred during processing.
-func resolveParentRouterNames(ctx context.Context, client Client, childIngressRoute *traefikv1alpha1.IngressRoute, allowCrossNamespace bool) ([]string, error) {
-	logger := log.Ctx(ctx).With().
-		Str("ingress", childIngressRoute.Name).
-		Str("namespace", childIngressRoute.Namespace).
-		Logger()
-
+// It returns the list of parent router names and an error if one occurred during processing.
+func resolveParentRouterNames(client Client, childIngressRoute *traefikv1alpha1.IngressRoute, allowCrossNamespace bool) ([]string, error) {
 	// If no parent refs, return empty list (not an error)
 	if len(childIngressRoute.Spec.ParentRefs) == 0 {
 		return nil, nil
@@ -80,11 +74,6 @@ func resolveParentRouterNames(ctx context.Context, client Client, childIngressRo
 		}
 	}
 
-	logger.Debug().
-		Int("count", len(parentRouterNames)).
-		Strs("parentRouters", parentRouterNames).
-		Msg("Resolved parent routers for child IngressRoute")
-
 	return parentRouterNames, nil
 }
 
@@ -123,7 +112,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 			disableClusterScopeResources: p.DisableClusterScopeResources,
 		}
 
-		parentRouterNames, err := resolveParentRouterNames(ctx, client, ingressRoute, p.AllowCrossNamespace)
+		parentRouterNames, err := resolveParentRouterNames(client, ingressRoute, p.AllowCrossNamespace)
 		if err != nil {
 			logger.Error().Err(err).Msg("Error resolving parent routers")
 			continue

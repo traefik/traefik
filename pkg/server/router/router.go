@@ -71,8 +71,6 @@ func (m *Manager) getHTTPRouters(ctx context.Context, entryPoints []string, tls 
 
 // BuildHandlers Builds handler for all entry points.
 func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string, tls bool) map[string]http.Handler {
-	m.ComputeMultiLayerRouting()
-
 	entryPointHandlers := make(map[string]http.Handler)
 
 	defaultObsConfig := dynamic.RouterObservabilityConfig{}
@@ -271,7 +269,7 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 	return chain.Extend(*mHandler).Then(nextHandler)
 }
 
-// ComputeMultiLayerRouting sets up router tree and validates router configuration.
+// ParseRouterTree sets up router tree and validates router configuration.
 // This function performs the following operations in order:
 //
 // 1. Populate ChildRefs: Uses ParentRefs to build the parent-child relationship graph
@@ -287,7 +285,7 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 // - Warning: Routers with non-critical errors (like cycles)
 //
 // The function modifies router.Status, router.ChildRefs, and adds errors to router.Err.
-func (m *Manager) ComputeMultiLayerRouting() {
+func (m *Manager) ParseRouterTree() {
 	if m.conf == nil || m.conf.Routers == nil {
 		return
 	}
@@ -318,11 +316,13 @@ func (m *Manager) ComputeMultiLayerRouting() {
 		}
 
 		// Check for non-root router with Observability config
-		// FIXME: this condition is always true.
-		//if router.Observability != nil {
-		//	router.AddError(fmt.Errorf("non-root router cannot have Observability configuration"), true)
-		//	continue
-		//}
+		if router.Observability != nil {
+			router.AddError(fmt.Errorf("non-root router cannot have Observability configuration"), true)
+			continue
+		}
+
+		// FIXME
+		// Check for non-root router with Entrypoint config
 	}
 	sort.Strings(rootRouters)
 

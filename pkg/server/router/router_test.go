@@ -1110,7 +1110,7 @@ func TestManager_ComputeMultiLayerRouting(t *testing.T) {
 			},
 			expectedErrors: map[string][]string{
 				"D": {
-					"cyclic reference detected in router hierarchy: B -> C -> D -> B",
+					"cyclic reference detected in router tree: B -> C -> D -> B",
 					"router has no service and no child routers",
 				},
 			},
@@ -1149,147 +1149,9 @@ func TestManager_ComputeMultiLayerRouting(t *testing.T) {
 				"D": {"E"},
 			},
 			expectedErrors: map[string][]string{
-				"D": {"cyclic reference detected in router hierarchy: B -> C -> D -> B"},
+				"D": {"cyclic reference detected in router tree: B -> C -> D -> B"},
 			},
 		},
-		// Fixme: Here the link between C and Y creates an indirect cycle, it should be detected, and removed from the runtime configuration, removed from the childrefs. Also, C should have a non critical error explaining the cycle.
-		// A->B->C->D->service
-		//	     C->W
-		//       C->Y->Z->C->Y->Z->C... (cycle)
-		// X->Y->Z->D->service
-		//			C->W
-		//          C->Y->Y->Z->C->Y->Z->C... (cycle)
-		//{
-		//	desc: "indirect router cycle A->B->C->D->B",
-		//	routers: map[string]*dynamic.Router{
-		//		"A": {},
-		//		"B": {
-		//			ParentRefs: []string{"A", "D"},
-		//		},
-		//		"C": {
-		//			ParentRefs: []string{"B"},
-		//		},
-		//		"D": {
-		//			ParentRefs: []string{"C"},
-		//		},
-		//	},
-		//	expectedStatuses: map[string]string{
-		//		"A":       runtime.StatusEnabled,
-		//		"B":       runtime.StatusEnabled,
-		//		"C": runtime.StatusEnabled,
-		//		"D": runtime.StatusEnabled,
-		//	},
-		//	expectedChildRefs: map[string][]string{
-		//		"A":       {"B"},
-		//		"B":       {"C"},
-		//		"C": {"D"},
-		//	},
-		//	expectedErrors: map[string][]string{
-		//		"D": {"cyclic reference detected in router hierarchy: B -> C -> D -> B"},
-		//	},
-		//},
-		//{
-		//	desc: "complex cycle with leaf router - leaf should NOT be marked as cycling",
-		//	routers: map[string]*dynamic.Router{
-		//		"leaf": {
-		//			ParentRefs: []string{"cycleA", "cycleB"},
-		//			Service:    "leaf-service",
-		//		},
-		//		"cycleA": {
-		//			ParentRefs: []string{"cycleB"},
-		//		},
-		//		"cycleB": {
-		//			ParentRefs: []string{"cycleA"},
-		//		},
-		//	},
-		//	expectedChildRefs: map[string][]string{
-		//		"leaf":   nil,
-		//		"cycleA": {"leaf", "cycleB"},
-		//		"cycleB": {"leaf", "cycleA"},
-		//	},
-		//	expectedErrors: map[string][]string{
-		//		"leaf":   nil, // Leaf should NOT have cycle errors
-		//		"cycleA": {"cyclic reference detected in router hierarchy: cycleA -> cycleB -> cycleA"},
-		//		"cycleB": {"cyclic reference detected in router hierarchy: cycleA -> cycleB -> cycleA"},
-		//	},
-		//},
-		//{
-		//	desc: "missing parent router",
-		//	routers: map[string]*dynamic.Router{
-		//		"child": {
-		//			ParentRefs: []string{"nonexistent"},
-		//			Service:    "child-service",
-		//		},
-		//	},
-		//	expectedChildRefs: map[string][]string{
-		//		"child": nil,
-		//	},
-		//	expectedErrors: map[string][]string{
-		//		"child": {"parent router \"nonexistent\" does not exist"},
-		//	},
-		//},
-		//{
-		//	desc: "router with service and children - conflict",
-		//	routers: map[string]*dynamic.Router{
-		//		"parent": {
-		//			Service: "parent-service", // This conflicts with having children
-		//		},
-		//		"child": {
-		//			ParentRefs: []string{"parent"},
-		//			Service:    "child-service",
-		//		},
-		//	},
-		//	expectedChildRefs: map[string][]string{
-		//		"parent": {"child"},
-		//		"child":  nil,
-		//	},
-		//	expectedErrors: map[string][]string{
-		//		"parent": {"router has both a service and is referenced as a parent by other routers"},
-		//		"child":  nil,
-		//	},
-		//},
-		//{
-		//	desc: "non-root router with TLS config",
-		//	routers: map[string]*dynamic.Router{
-		//		"parent": {
-		//			Service: "parent-service",
-		//		},
-		//		"child": {
-		//			ParentRefs: []string{"parent"},
-		//			TLS:        &dynamic.RouterTLSConfig{},
-		//			Service:    "child-service",
-		//		},
-		//	},
-		//	expectedChildRefs: map[string][]string{
-		//		"parent": {"child"},
-		//		"child":  nil,
-		//	},
-		//	expectedErrors: map[string][]string{
-		//		"parent": {"router has both a service and is referenced as a parent by other routers"},
-		//		"child":  {"non-root router cannot have TLS configuration"},
-		//	},
-		//},
-		//{
-		//	desc: "non-root router with Observability config",
-		//	routers: map[string]*dynamic.Router{
-		//		"parent": {
-		//			Service: "parent-service",
-		//		},
-		//		"child": {
-		//			ParentRefs:    []string{"parent"},
-		//			Observability: &dynamic.RouterObservabilityConfig{},
-		//			Service:       "child-service",
-		//		},
-		//	},
-		//	expectedChildRefs: map[string][]string{
-		//		"parent": {"child"},
-		//		"child":  nil,
-		//	},
-		//	expectedErrors: map[string][]string{
-		//		"parent": {"router has both a service and is referenced as a parent by other routers"},
-		//		"child":  {"non-root router cannot have Observability configuration"},
-		//	},
-		//},
 	}
 
 	for _, test := range testCases {
@@ -1312,7 +1174,7 @@ func TestManager_ComputeMultiLayerRouting(t *testing.T) {
 			}
 
 			// Execute the function we're testing
-			manager.ComputeMultiLayerRouting()
+			manager.ParseRouterTree()
 
 			// Verify ChildRefs are populated correctly
 			for routerName, expectedChildren := range test.expectedChildRefs {
@@ -1524,7 +1386,7 @@ func TestManager_buildChildRoutersMuxer(t *testing.T) {
 			manager := NewManager(conf, serviceManager, middlewareBuilder, nil, nil, parser)
 
 			// Compute multi-layer routing to populate ChildRefs
-			manager.ComputeMultiLayerRouting()
+			manager.ParseRouterTree()
 
 			// Build the child routers muxer
 			ctx := context.Background()
@@ -1814,7 +1676,7 @@ func TestManager_BuildHandlers_WithChildRouters(t *testing.T) {
 			manager := NewManager(conf, serviceManager, middlewareBuilder, nil, nil, parser)
 
 			// Compute multi-layer routing to set up parent-child relationships
-			manager.ComputeMultiLayerRouting()
+			manager.ParseRouterTree()
 
 			// Build handlers
 			ctx := context.Background()
