@@ -12,7 +12,7 @@ import (
 	"slices"
 	"testing"
 	"time"
-	
+
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
@@ -26,7 +26,7 @@ import (
 
 const (
 	knativeNamespace = "knative-serving"
-	knativeSkipTests = "visibility/split,visibility/path,visibility,update,headers/probe,tls"
+	knativeSkipTests = "visibility/split,visibility/path,visibility,update,headers/probe"
 )
 
 var imageNames = []string{

@@ -307,10 +307,6 @@ func (p *Provider) buildRouters(ctx context.Context, ingress *knativenetworkingv
 				Service:     routerKey + "-wrr",
 			}
 
-			if len(ingress.Spec.TLS) > 0 {
-				router.TLS = &dynamic.RouterTLSConfig{}
-			}
-
 			if len(path.AppendHeaders) > 0 {
 				midKey := fmt.Sprintf("%s-append-headers", routerKey)
 
@@ -329,6 +325,17 @@ func (p *Provider) buildRouters(ctx context.Context, ingress *knativenetworkingv
 			}
 
 			conf.Routers[routerKey] = router
+			if len(ingress.Spec.TLS) > 0 {
+				// TODO: maybe the rule should be a new one containing the TLS hosts injected by Knative.
+				conf.Routers[routerKey+"-tls"] = &dynamic.Router{
+					EntryPoints: router.EntryPoints,
+					Rule:        router.Rule,
+					Middlewares: router.Middlewares,
+					Service:     router.Service,
+					TLS:         &dynamic.RouterTLSConfig{},
+				}
+			}
+
 			conf.Services[routerKey+"-wrr"] = &dynamic.Service{Weighted: wrr}
 			for k, v := range services {
 				conf.Services[k] = v
