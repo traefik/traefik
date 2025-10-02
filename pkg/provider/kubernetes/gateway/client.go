@@ -28,7 +28,7 @@ type resourceEventHandler struct {
 	ev chan<- interface{}
 }
 
-func (reh *resourceEventHandler) OnAdd(obj interface{}) {
+func (reh *resourceEventHandler) OnAdd(obj interface{}, _ bool) {
 	eventHandlerFunc(reh.ev, obj)
 }
 
