@@ -193,7 +193,7 @@ func applyModel(cfg dynamic.Configuration) dynamic.Configuration {
 
 					cp.Middlewares = append(m.Middlewares, cp.Middlewares...)
 
-					// FIXME: Find a better way to evict non-root routers
+					// TODO: Find a better way to evict non-root routers
 					if router.ParentRefs == nil {
 						if cp.Observability == nil {
 							cp.Observability = &dynamic.RouterObservabilityConfig{}
