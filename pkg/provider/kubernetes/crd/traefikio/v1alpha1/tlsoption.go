@@ -9,7 +9,7 @@ import (
 // +kubebuilder:storageversion
 
 // TLSOption is the CRD implementation of a Traefik TLS Option, allowing to configure some parameters of the TLS connection.
-// More info: https://doc.traefik.io/traefik/v3.5/https/tls/#tls-options
+// More info: https://doc.traefik.io/traefik/v3.5/reference/routing-configuration/http/tls/tls-certificates/#certificates-stores#tls-options
 type TLSOption struct {
 	metav1.TypeMeta `json:",inline"`
 	// Standard object's metadata.
@@ -32,17 +32,17 @@ type TLSOptionSpec struct {
 	// Default: None.
 	MaxVersion string `json:"maxVersion,omitempty"`
 	// CipherSuites defines the list of supported cipher suites for TLS versions up to TLS 1.2.
-	// More info: https://doc.traefik.io/traefik/v3.5/https/tls/#cipher-suites
+	// More info: https://doc.traefik.io/traefik/v3.5/reference/routing-configuration/http/tls/tls-certificates/#certificates-stores#cipher-suites
 	CipherSuites []string `json:"cipherSuites,omitempty"`
 	// CurvePreferences defines the preferred elliptic curves.
-	// More info: https://doc.traefik.io/traefik/v3.5/https/tls/#curve-preferences
+	// More info: https://doc.traefik.io/traefik/v3.5/reference/routing-configuration/http/tls/tls-certificates/#certificates-stores#curve-preferences
 	CurvePreferences []string `json:"curvePreferences,omitempty"`
 	// ClientAuth defines the server's policy for TLS Client Authentication.
 	ClientAuth ClientAuth `json:"clientAuth,omitempty"`
 	// SniStrict defines whether Traefik allows connections from clients connections that do not specify a server_name extension.
 	SniStrict bool `json:"sniStrict,omitempty"`
 	// ALPNProtocols defines the list of supported application level protocols for the TLS handshake, in order of preference.
-	// More info: https://doc.traefik.io/traefik/v3.5/https/tls/#alpn-protocols
+	// More info: https://doc.traefik.io/traefik/v3.5/reference/routing-configuration/http/tls/tls-certificates/#certificates-stores#alpn-protocols
 	ALPNProtocols []string `json:"alpnProtocols,omitempty"`
 	// DisableSessionTickets disables TLS session resumption via session tickets.
 	DisableSessionTickets bool `json:"disableSessionTickets,omitempty"`
