@@ -3,8 +3,6 @@ title: "Traefik ForwardAuth Documentation"
 description: "In Traefik Proxy, the HTTP ForwardAuth middleware delegates authentication to an external Service. Read the technical documentation."
 ---
 
-![AuthForward](../../../../assets/img/middleware/authforward.png)
-
 The `forwardAuth` middleware delegates authentication to an external service.
 If the service answers with a 2XX code, access is granted, and the original request is performed.
 Otherwise, the response from the authentication server is returned.
@@ -57,23 +55,23 @@ spec:
 
 | Field      | Description     | Default | Required |
 |:-----------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------|:---------|
-| `address` | Authentication server address. | "" | Yes      |
-| `trustForwardHeader` | Trust all `X-Forwarded-*` headers. | false | No      |
-| `authResponseHeaders` | List of headers to copy from the authentication server response and set on forwarded request, replacing any existing conflicting headers. | [] | No      |
-| `authResponseHeadersRegex` | Regex to match by the headers to copy from the authentication server response and set on forwarded request, after stripping all headers that match the regex.<br /> More information [here](#authresponseheadersregex). | "" | No      |
-| `authRequestHeaders` | List of the headers to copy from the request to the authentication server. <br /> It allows filtering headers that should not be passed to the authentication server. <br /> If not set or empty, then all request headers are passed. | [] | No      |
-| `addAuthCookiesToResponse` | List of cookies to copy from the authentication server to the response, replacing any existing conflicting cookie from the forwarded response.<br /> Please note that all backend cookies matching the configured list will not be added to the response. | [] | No      |
-| `forwardBody` | Sets the `forwardBody` option to `true` to send the Body. As body is read inside Traefik before forwarding, this breaks streaming. | false | No      |
-| `maxBodySize` | Set the `maxBodySize` to limit the body size in bytes. If body is bigger than this, it returns a 401 (unauthorized). | -1 | No      |
-| `headerField` | Defines a header field to store the authenticated user. | "" | No      |
-| `preserveLocationHeader` | Defines whether to forward the Location header to the client as is or prefix it with the domain name of the authentication server. | false | No      |
-| `PreserveRequestMethod` | Defines whether to preserve the original request method while forwarding the request to the authentication server. | false | No      |
-| `tls.ca` | Sets the path to the certificate authority used for the secured connection to the authentication server, it defaults to the system bundle. | "" | No |
-| `tls.cert` | Sets the path to the public certificate used for the secure connection to the authentication server. When using this option, setting the key option is required. | "" | No |
-| `tls.key` | Sets the path to the private key used for the secure connection to the authentication server. When using this option, setting the `cert` option is required. | "" | No |
-| `tls.caSecret` | Defines the secret that contains the certificate authority used for the secured connection to the authentication server, it defaults to the system bundle. **This option is only available for the Kubernetes CRD**. | | No |
-| `tls.certSecret` | Defines the secret that contains both the private and public certificates used for the secure connection to the authentication server. **This option is only available for the Kubernetes CRD**. |  | No |
-| `tls.insecureSkipVerify` | During TLS connections, if this option is set to `true`, the authentication server will accept any certificate presented by the server regardless of the host names it covers. | false | No |
+| <a id="address" href="#address" title="#address">`address`</a> | Authentication server address. | "" | Yes      |
+| <a id="trustForwardHeader" href="#trustForwardHeader" title="#trustForwardHeader">`trustForwardHeader`</a> | Trust all `X-Forwarded-*` headers. | false | No      |
+| <a id="authResponseHeaders" href="#authResponseHeaders" title="#authResponseHeaders">`authResponseHeaders`</a> | List of headers to copy from the authentication server response and set on forwarded request, replacing any existing conflicting headers. | [] | No      |
+| <a id="authResponseHeadersRegex" href="#authResponseHeadersRegex" title="#authResponseHeadersRegex">`authResponseHeadersRegex`</a> | Regex to match by the headers to copy from the authentication server response and set on forwarded request, after stripping all headers that match the regex.<br /> More information [here](#authresponseheadersregex). | "" | No      |
+| <a id="authRequestHeaders" href="#authRequestHeaders" title="#authRequestHeaders">`authRequestHeaders`</a> | List of the headers to copy from the request to the authentication server. <br /> It allows filtering headers that should not be passed to the authentication server. <br /> If not set or empty, then all request headers are passed. | [] | No      |
+| <a id="addAuthCookiesToResponse" href="#addAuthCookiesToResponse" title="#addAuthCookiesToResponse">`addAuthCookiesToResponse`</a> | List of cookies to copy from the authentication server to the response, replacing any existing conflicting cookie from the forwarded response.<br /> Please note that all backend cookies matching the configured list will not be added to the response. | [] | No      |
+| <a id="forwardBody" href="#forwardBody" title="#forwardBody">`forwardBody`</a> | Sets the `forwardBody` option to `true` to send the Body. As body is read inside Traefik before forwarding, this breaks streaming. | false | No      |
+| <a id="maxBodySize" href="#maxBodySize" title="#maxBodySize">`maxBodySize`</a> | Set the `maxBodySize` to limit the body size in bytes. If body is bigger than this, it returns a 401 (unauthorized). | -1 | No      |
+| <a id="headerField" href="#headerField" title="#headerField">`headerField`</a> | Defines a header field to store the authenticated user. | "" | No      |
+| <a id="preserveLocationHeader" href="#preserveLocationHeader" title="#preserveLocationHeader">`preserveLocationHeader`</a> | Defines whether to forward the Location header to the client as is or prefix it with the domain name of the authentication server. | false | No      |
+| <a id="PreserveRequestMethod" href="#PreserveRequestMethod" title="#PreserveRequestMethod">`PreserveRequestMethod`</a> | Defines whether to preserve the original request method while forwarding the request to the authentication server. | false | No      |
+| <a id="tls-ca" href="#tls-ca" title="#tls-ca">`tls.ca`</a> | Sets the path to the certificate authority used for the secured connection to the authentication server, it defaults to the system bundle. | "" | No |
+| <a id="tls-cert" href="#tls-cert" title="#tls-cert">`tls.cert`</a> | Sets the path to the public certificate used for the secure connection to the authentication server. When using this option, setting the key option is required. | "" | No |
+| <a id="tls-key" href="#tls-key" title="#tls-key">`tls.key`</a> | Sets the path to the private key used for the secure connection to the authentication server. When using this option, setting the `cert` option is required. | "" | No |
+| <a id="tls-caSecret" href="#tls-caSecret" title="#tls-caSecret">`tls.caSecret`</a> | Defines the secret that contains the certificate authority used for the secured connection to the authentication server, it defaults to the system bundle. **This option is only available for the Kubernetes CRD**. | | No |
+| <a id="tls-certSecret" href="#tls-certSecret" title="#tls-certSecret">`tls.certSecret`</a> | Defines the secret that contains both the private and public certificates used for the secure connection to the authentication server. **This option is only available for the Kubernetes CRD**. |  | No |
+| <a id="tls-insecureSkipVerify" href="#tls-insecureSkipVerify" title="#tls-insecureSkipVerify">`tls.insecureSkipVerify`</a> | During TLS connections, if this option is set to `true`, the authentication server will accept any certificate presented by the server regardless of the host names it covers. | false | No |
 
 ### authResponseHeadersRegex
 
@@ -89,10 +87,10 @@ The following request properties are provided to the forward-auth target endpoin
 
 | Property          | Forward-Request Header |
 |-------------------|------------------------|
-| HTTP Method       | X-Forwarded-Method     |
-| Protocol          | X-Forwarded-Proto      |
-| Host              | X-Forwarded-Host       |
-| Request URI       | X-Forwarded-Uri        |
-| Source IP-Address | X-Forwarded-For        |
+| <a id="HTTP-Method" href="#HTTP-Method" title="#HTTP-Method">HTTP Method</a> | X-Forwarded-Method     |
+| <a id="Protocol" href="#Protocol" title="#Protocol">Protocol</a> | X-Forwarded-Proto      |
+| <a id="Host" href="#Host" title="#Host">Host</a> | X-Forwarded-Host       |
+| <a id="Request-URI" href="#Request-URI" title="#Request-URI">Request URI</a> | X-Forwarded-Uri        |
+| <a id="Source-IP-Address" href="#Source-IP-Address" title="#Source-IP-Address">Source IP-Address</a> | X-Forwarded-For        |
 
 {!traefik-for-business-applications.md!}

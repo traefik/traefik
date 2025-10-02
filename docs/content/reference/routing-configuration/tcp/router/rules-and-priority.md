@@ -18,10 +18,10 @@ The table below lists all the available matchers:
 
 | Rule                                                        | Description                                                                                      |
 |-------------------------------------------------------------|:-------------------------------------------------------------------------------------------------|
-| [```HostSNI(`domain`)```](#hostsni-and-hostsniregexp)       | Checks if the connection's Server Name Indication is equal to `domain`.<br /> More information [here](#hostsni-and-hostsniregexp).                          |
-| [```HostSNIRegexp(`regexp`)```](#hostsni-and-hostsniregexp) | Checks if the connection's Server Name Indication matches `regexp`.<br />Use a [Go](https://golang.org/pkg/regexp/) flavored syntax.<br /> More information [here](#hostsni-and-hostsniregexp). |
-| [```ClientIP(`ip`)```](#clientip)                           | Checks if the connection's client IP correspond to `ip`. It accepts IPv4, IPv6 and CIDR formats.<br /> More information [here](#clientip). |
-| [```ALPN(`protocol`)```](#alpn)                             | Checks if the connection's ALPN protocol equals `protocol`.<br /> More information [here](#alpn).          |
+| <a id="HostSNIdomain" href="#HostSNIdomain" title="#HostSNIdomain">[```HostSNI(`domain`)```](#hostsni-and-hostsniregexp)</a> | Checks if the connection's Server Name Indication is equal to `domain`.<br /> More information [here](#hostsni-and-hostsniregexp).                          |
+| <a id="HostSNIRegexpregexp" href="#HostSNIRegexpregexp" title="#HostSNIRegexpregexp">[```HostSNIRegexp(`regexp`)```](#hostsni-and-hostsniregexp)</a> | Checks if the connection's Server Name Indication matches `regexp`.<br />Use a [Go](https://golang.org/pkg/regexp/) flavored syntax.<br /> More information [here](#hostsni-and-hostsniregexp). |
+| <a id="ClientIPip" href="#ClientIPip" title="#ClientIPip">[```ClientIP(`ip`)```](#clientip)</a> | Checks if the connection's client IP correspond to `ip`. It accepts IPv4, IPv6 and CIDR formats.<br /> More information [here](#clientip). |
+| <a id="ALPNprotocol" href="#ALPNprotocol" title="#ALPNprotocol">[```ALPN(`protocol`)```](#alpn)</a> | Checks if the connection's ALPN protocol equals `protocol`.<br /> More information [here](#alpn).          |
 
 !!! tip "Backticks or Quotes?"
 

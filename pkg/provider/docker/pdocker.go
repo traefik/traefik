@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	dockertypes "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	eventtypes "github.com/docker/docker/api/types/events"
 	"github.com/docker/docker/api/types/filters"
@@ -104,7 +103,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 			if p.Watch {
 				f := filters.NewArgs()
 				f.Add("type", "container")
-				options := dockertypes.EventsOptions{
+				options := eventtypes.ListOptions{
 					Filters: f,
 				}
 

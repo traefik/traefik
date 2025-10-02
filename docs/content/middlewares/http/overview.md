@@ -8,8 +8,6 @@ description: "Read the official Traefik Proxy documentation for an overview of t
 Controlling connections
 {: .subtitle }
 
-![Overview](../../assets/img/middleware/overview.png)
-
 ## Configuration Example
 
 ```yaml tab="Docker & Swarm"

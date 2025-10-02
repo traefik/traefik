@@ -109,7 +109,7 @@ api:
 --api.dashboard=true
 ```
 
-!!! warning "With Dashboard enabled, the router [rule](../../routing/routers#rule) must catch requests for both `/api` and `/dashboard`"
+!!! warning "With Dashboard enabled, the router [rule](../../routing/routers/#rule) must catch requests for both `/api` and `/dashboard`"
     Please check the [Dashboard documentation](./dashboard.md#dashboard-router-rule) to learn more about this and to get examples.
 
 ### `debug`

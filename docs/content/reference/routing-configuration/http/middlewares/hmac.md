@@ -52,9 +52,9 @@ spec:
 
 | Field             | Description                | Default | Required |
 |:------------------|:---------------------------------------------|:--------|:---------|
-| `keys`            | A static set of secret keys to be used by HMAC middleware.    |         | Yes      |
-| `validateDigest`  | Determines whether the middleware should validate the digest sum of the request body.      | true    | No  |
-| `enforcedHeaders` | A set of headers that must be included in the computation of the signature of the request. |        | No    |
+| <a id="keys" href="#keys" title="#keys">`keys`</a> | A static set of secret keys to be used by HMAC middleware.    |         | Yes      |
+| <a id="validateDigest" href="#validateDigest" title="#validateDigest">`validateDigest`</a> | Determines whether the middleware should validate the digest sum of the request body.      | true    | No  |
+| <a id="enforcedHeaders" href="#enforcedHeaders" title="#enforcedHeaders">`enforcedHeaders`</a> | A set of headers that must be included in the computation of the signature of the request. |        | No    |
 
 ## Authentication Mechanism
 
@@ -72,12 +72,12 @@ Authorization: Hmac keyId="secret-id-1",algorithm="hmac-sha256",headers="(reques
 
 | Parameter   | Description  | Example                            |
 |-------------|--------------------------------|------------------------------------|
-| `keyId`     | Identifier of the key being used by the sender to build the signature     | `keyId="secret-key-1"`             |
-| `algorithm` | Algorithm used to generate the signature.<br /> Supported values are `hmac-sha1`, `hmac-sha256`, `hmac-sha384` and `hmac-sha512`. | `algorithm="hmac-sha512"`          |
-| `headers`   | List of headers to use in order to build the signature string.<br /> Each item **must** be lowercase.    | `headers="host content-type"`      |
-| `signature` | Digital Signature of the request. See [computing the signature](#computing-the-signature).      | `signature="c29tZXNpZ25hdHVyZQ=="` |
-| `created`   | Unix timestamp of the signature creation.    | `created="1574453022"`     |
-| `expires`   | Unix timestamp of the signature expiration.     | `expires="1574453022"`             |
+| <a id="keyId" href="#keyId" title="#keyId">`keyId`</a> | Identifier of the key being used by the sender to build the signature     | `keyId="secret-key-1"`             |
+| <a id="algorithm" href="#algorithm" title="#algorithm">`algorithm`</a> | Algorithm used to generate the signature.<br /> Supported values are `hmac-sha1`, `hmac-sha256`, `hmac-sha384` and `hmac-sha512`. | `algorithm="hmac-sha512"`          |
+| <a id="headers" href="#headers" title="#headers">`headers`</a> | List of headers to use in order to build the signature string.<br /> Each item **must** be lowercase.    | `headers="host content-type"`      |
+| <a id="signature" href="#signature" title="#signature">`signature`</a> | Digital Signature of the request. See [computing the signature](#computing-the-signature).      | `signature="c29tZXNpZ25hdHVyZQ=="` |
+| <a id="created" href="#created" title="#created">`created`</a> | Unix timestamp of the signature creation.    | `created="1574453022"`     |
+| <a id="expires" href="#expires" title="#expires">`expires`</a> | Unix timestamp of the signature expiration.     | `expires="1574453022"`             |
 
 !!! danger "Time sensitivity"
     If the `created` timestamp is in the future or the `expires` timestamp is in the past, the middleware will refuse the request.
@@ -120,9 +120,9 @@ To allow this, the `headers` parameter accepts special header names that can be 
 
 | Value                 | Description     | Signature String Example         |
 | --------------------- | ------------------------------------------------------------- |------------------------- |
-| `(request-target)`    | Obtained by concatenating the lowercase `:method`, an ASCII space, and the `:path` pseudo-headers ([as specified in HTTP/2](https://tools.ietf.org/html/rfc7540#section-8.1.2.3)).    | `(request-target): get /api/V1/resource?query=foo` |
-| `(created)`           | Value of the authorization header `created` parameter.         | `(created): 1584453022`      |
-| `(expires)`           | Value of the authorization header `expires` parameter.      | `(expires): 1584453082`      |
+| <a id="request-target" href="#request-target" title="#request-target">`(request-target)`</a> | Obtained by concatenating the lowercase `:method`, an ASCII space, and the `:path` pseudo-headers ([as specified in HTTP/2](https://tools.ietf.org/html/rfc7540#section-8.1.2.3)).    | `(request-target): get /api/V1/resource?query=foo` |
+| <a id="created-2" href="#created-2" title="#created-2">`(created)`</a> | Value of the authorization header `created` parameter.         | `(created): 1584453022`      |
+| <a id="expires-2" href="#expires-2" title="#expires-2">`(expires)`</a> | Value of the authorization header `expires` parameter.      | `(expires): 1584453082`      |
 
 Their evaluated value is obtained by appending the special header name with an ASCII colon `:` an ASCII space \` \` then the designated value.
 

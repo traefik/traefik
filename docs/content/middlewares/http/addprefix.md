@@ -8,8 +8,6 @@ description: "Learn how to implement the HTTP AddPrefix middleware in Traefik Pr
 Prefixing the Path
 {: .subtitle }
 
-![AddPrefix](../../assets/img/middleware/addprefix.png)
-
 The AddPrefix middleware updates the path of a request before forwarding it.
 
 ## Configuration Examples

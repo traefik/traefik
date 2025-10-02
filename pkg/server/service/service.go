@@ -28,6 +28,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/server/middleware"
 	"github.com/traefik/traefik/v3/pkg/server/provider"
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/failover"
+	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/hrw"
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/mirror"
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/p2c"
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/wrr"
@@ -133,6 +134,13 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string) (http.H
 	case conf.Weighted != nil:
 		var err error
 		lb, err = m.getWRRServiceHandler(ctx, serviceName, conf.Weighted)
+		if err != nil {
+			conf.AddError(err, true)
+			return nil, err
+		}
+	case conf.HighestRandomWeight != nil:
+		var err error
+		lb, err = m.getHRWServiceHandler(ctx, serviceName, conf.HighestRandomWeight)
 		if err != nil {
 			conf.AddError(err, true)
 			return nil, err
@@ -305,6 +313,40 @@ func (m *Manager) getServiceHandler(ctx context.Context, service dynamic.WRRServ
 	}
 }
 
+func (m *Manager) getHRWServiceHandler(ctx context.Context, serviceName string, config *dynamic.HighestRandomWeight) (http.Handler, error) {
+	// TODO Handle accesslog and metrics with multiple service name
+	balancer := hrw.New(config.HealthCheck != nil)
+	for _, service := range shuffle(config.Services, m.rand) {
+		serviceHandler, err := m.BuildHTTP(ctx, service.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		balancer.Add(service.Name, serviceHandler, service.Weight, false)
+
+		if config.HealthCheck == nil {
+			continue
+		}
+
+		childName := service.Name
+		updater, ok := serviceHandler.(healthcheck.StatusUpdater)
+		if !ok {
+			return nil, fmt.Errorf("child service %v of %v not a healthcheck.StatusUpdater (%T)", childName, serviceName, serviceHandler)
+		}
+
+		if err := updater.RegisterStatusUpdater(func(up bool) {
+			balancer.SetStatus(ctx, childName, up)
+		}); err != nil {
+			return nil, fmt.Errorf("cannot register %v as updater for %v: %w", childName, serviceName, err)
+		}
+
+		log.Ctx(ctx).Debug().Str("parent", serviceName).Str("child", childName).
+			Msg("Child service will update parent on status change")
+	}
+
+	return balancer, nil
+}
+
 type serverBalancer interface {
 	http.Handler
 	healthcheck.StatusSetter
@@ -341,13 +383,26 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 	var lb serverBalancer
 	switch service.Strategy {
 	// Here we are handling the empty value to comply with providers that are not applying defaults (e.g. REST provider)
-	// TODO: remove this when all providers apply default values.
+	// TODO: remove this empty check when all providers apply default values.
 	case dynamic.BalancerStrategyWRR, "":
 		lb = wrr.New(service.Sticky, service.HealthCheck != nil)
 	case dynamic.BalancerStrategyP2C:
 		lb = p2c.New(service.Sticky, service.HealthCheck != nil)
+	case dynamic.BalancerStrategyHRW:
+		lb = hrw.New(service.HealthCheck != nil)
 	default:
 		return nil, fmt.Errorf("unsupported load-balancer strategy %q", service.Strategy)
+	}
+
+	var passiveHealthChecker *healthcheck.PassiveServiceHealthChecker
+	if service.PassiveHealthCheck != nil {
+		passiveHealthChecker = healthcheck.NewPassiveHealthChecker(
+			serviceName,
+			lb,
+			service.PassiveHealthCheck.MaxFailedAttempts,
+			service.PassiveHealthCheck.FailureWindow,
+			service.HealthCheck != nil,
+			m.observabilityMgr.MetricsRegistry())
 	}
 
 	healthCheckTargets := make(map[string]*url.URL)
@@ -366,6 +421,11 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 		proxy, err := m.proxyBuilder.Build(service.ServersTransport, target, passHostHeader, server.PreservePath, flushInterval)
 		if err != nil {
 			return nil, fmt.Errorf("error building proxy for server URL %s: %w", server.URL, err)
+		}
+
+		if passiveHealthChecker != nil {
+			// If passive health check is enabled, we wrap the proxy with the passive health checker.
+			proxy = passiveHealthChecker.WrapHandler(ctx, proxy, target.String())
 		}
 
 		// The retry wrapping must be done just before the proxy handler,

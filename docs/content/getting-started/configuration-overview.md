@@ -12,10 +12,10 @@ How the Magic Happens
 
 Configuration in Traefik can refer to two different things:
 
-- The fully dynamic routing configuration (referred to as the _dynamic configuration_)
-- The startup configuration (referred to as the _static configuration_)
+- The fully dynamic routing configuration (referred to as the _routing configuration_, formerly known as the _dynamic configuration_)
+- The startup configuration (referred to as the _install configuration_, formerly known as the _static configuration_)
 
-Elements in the _static configuration_ set up connections to [providers](../providers/overview.md) and define the [entrypoints](../routing/entrypoints.md) Traefik will listen to (these elements don't change often).
+Elements in the install configuration_ set up connections to [providers](../providers/overview.md) and define the [entrypoints](../routing/entrypoints.md) Traefik will listen to (these elements don't change often).
 
 The _dynamic configuration_ contains everything that defines how the requests are handled by your system.
 This configuration can change and is seamlessly hot-reloaded, without any request interruption or connection loss.
@@ -32,9 +32,9 @@ Since this configuration is specific to your infrastructure choices, we invite y
 
 !!! info ""
 
-    In the [Quick Start example](../getting-started/quick-start.md), the dynamic configuration comes from docker in the form of labels attached to your containers.
+    In the [Quick Start example](../getting-started/quick-start.md), the routing configuration comes from docker in the form of labels attached to your containers.
 
-!!! info "HTTPS Certificates also belong to the dynamic configuration."
+!!! info "HTTPS Certificates also belong to the routing configuration."
 
     You can add / update / remove them without restarting your Traefik instance.
 
@@ -82,11 +82,11 @@ docker run traefik[:version] --help
 # ex: docker run traefik:v3.5 --help
 ```
 
-Check the [CLI reference](../reference/static-configuration/cli.md "Link to CLI reference overview") for an overview about all available arguments.
+Check the [CLI reference](../reference/install-configuration/configuration-options.md "Link to CLI reference overview") for an overview about all available arguments.
 
 ### Environment Variables
 
-All available environment variables can be found in the [static configuration environment overview](../reference/static-configuration/env.md).
+All available environment variables can be found in the [static configuration environment overview](../reference/install-configuration/configuration-options.md).
 
 ## Available Configuration Options
 

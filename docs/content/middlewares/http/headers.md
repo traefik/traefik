@@ -8,8 +8,6 @@ description: "In Traefik Proxy, the HTTP headers middleware manages the headers 
 Managing Request/Response headers
 {: .subtitle }
 
-![Headers](../../assets/img/middleware/headers.png)
-
 The Headers middleware manages the headers of requests and responses.
 
 A set of forwarded headers are automatically added by default. See the [FAQ](../../getting-started/faq.md#what-are-the-forwarded-headers-when-proxying-http-requests) for more information.

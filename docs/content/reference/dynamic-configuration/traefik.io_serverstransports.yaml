@@ -107,7 +107,7 @@ spec:
               maxIdleConnsPerHost:
                 description: MaxIdleConnsPerHost controls the maximum idle (keep-alive)
                   to keep per-host.
-                minimum: 0
+                minimum: -1
                 type: integer
               peerCertURI:
                 description: PeerCertURI defines the peer cert URI used to match against

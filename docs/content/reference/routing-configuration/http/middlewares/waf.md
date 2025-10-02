@@ -58,7 +58,7 @@ spec:
 
 | Field    | Description   | Default | Required |
 |:---------|:-----------------------|:--------|:----------------------------|
-| `directives` | List of WAF rules to enforce. |  | Yes |
-| `crsEnabled` | Enable [CRS rulesets](https://github.com/corazawaf/coraza-coreruleset/tree/main/rules/%40owasp_crs).<br /> Once the ruleset is enabled, it can be used in the middleware. | false |  False |
+| <a id="directives" href="#directives" title="#directives">`directives`</a> | List of WAF rules to enforce. |  | Yes |
+| <a id="crsEnabled" href="#crsEnabled" title="#crsEnabled">`crsEnabled`</a> | Enable [CRS rulesets](https://github.com/corazawaf/coraza-coreruleset/tree/main/rules/%40owasp_crs).<br /> Once the ruleset is enabled, it can be used in the middleware. | false |  False |
 
 {!traefik-for-business-applications.md!}

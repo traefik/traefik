@@ -13,13 +13,13 @@ import (
 const localGoPath = "./plugins-local/"
 
 // SetupRemotePlugins setup remote plugins environment.
-func SetupRemotePlugins(client *Client, plugins map[string]Descriptor) error {
+func SetupRemotePlugins(manager *Manager, plugins map[string]Descriptor) error {
 	err := checkRemotePluginsConfiguration(plugins)
 	if err != nil {
 		return fmt.Errorf("invalid configuration: %w", err)
 	}
 
-	err = client.CleanArchives(plugins)
+	err = manager.CleanArchives(plugins)
 	if err != nil {
 		return fmt.Errorf("unable to clean archives: %w", err)
 	}
@@ -27,33 +27,18 @@ func SetupRemotePlugins(client *Client, plugins map[string]Descriptor) error {
 	ctx := context.Background()
 
 	for pAlias, desc := range plugins {
-		log.Ctx(ctx).Debug().Msgf("Loading of plugin: %s: %s@%s", pAlias, desc.ModuleName, desc.Version)
+		log.Ctx(ctx).Debug().Msgf("Installing plugin: %s: %s@%s", pAlias, desc.ModuleName, desc.Version)
 
-		hash, err := client.Download(ctx, desc.ModuleName, desc.Version)
-		if err != nil {
-			_ = client.ResetAll()
-			return fmt.Errorf("unable to download plugin %s: %w", desc.ModuleName, err)
-		}
-
-		err = client.Check(ctx, desc.ModuleName, desc.Version, hash)
-		if err != nil {
-			_ = client.ResetAll()
-			return fmt.Errorf("unable to check archive integrity of the plugin %s: %w", desc.ModuleName, err)
+		if err = manager.InstallPlugin(ctx, desc); err != nil {
+			_ = manager.ResetAll()
+			return fmt.Errorf("unable to install plugin %s: %w", pAlias, err)
 		}
 	}
 
-	err = client.WriteState(plugins)
+	err = manager.WriteState(plugins)
 	if err != nil {
-		_ = client.ResetAll()
+		_ = manager.ResetAll()
 		return fmt.Errorf("unable to write plugins state: %w", err)
-	}
-
-	for _, desc := range plugins {
-		err = client.Unzip(desc.ModuleName, desc.Version)
-		if err != nil {
-			_ = client.ResetAll()
-			return fmt.Errorf("unable to unzip archive: %w", err)
-		}
 	}
 
 	return nil

@@ -1,14 +1,14 @@
 import { Box, darkTheme, FaencyProvider, lightTheme } from '@traefiklabs/faency'
 import { Suspense, useEffect } from 'react'
-import { Helmet, HelmetProvider } from 'react-helmet-async'
+import { HelmetProvider } from 'react-helmet-async'
 import { HashRouter, Navigate, Route, Routes as RouterRoutes, useLocation } from 'react-router-dom'
 import { SWRConfig } from 'swr'
 
 import Page from './layout/Page'
 import fetch from './libs/fetch'
 
+import { VersionProvider } from 'contexts/version'
 import { useIsDarkMode } from 'hooks/use-theme'
-import useVersion from 'hooks/use-version'
 import ErrorSuspenseWrapper from 'layout/ErrorSuspenseWrapper'
 import { Dashboard, HTTPPages, NotFound, TCPPages, UDPPages } from 'pages'
 import { DashboardSkeleton } from 'pages/dashboard/Dashboard'
@@ -33,15 +33,8 @@ const ScrollToTop = () => {
 }
 
 export const Routes = () => {
-  const { showHubButton } = useVersion()
-
   return (
     <Suspense fallback={<PageLoader />}>
-      {showHubButton && (
-        <Helmet>
-          <script src="https://traefik.github.io/traefiklabs-hub-button-app/main-v1.js"></script>
-        </Helmet>
-      )}
       <RouterRoutes>
         <Route
           path="/"
@@ -100,10 +93,12 @@ const App = () => {
             fetcher: fetch,
           }}
         >
-          <HashRouter basename={import.meta.env.VITE_APP_BASE_URL || ''}>
-            <ScrollToTop />
-            <Routes />
-          </HashRouter>
+          <VersionProvider>
+            <HashRouter basename={import.meta.env.VITE_APP_BASE_URL || ''}>
+              <ScrollToTop />
+              <Routes />
+            </HashRouter>
+          </VersionProvider>
         </SWRConfig>
       </HelmetProvider>
     </FaencyProvider>
