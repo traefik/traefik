@@ -1,7 +1,6 @@
 package healthcheck
 
 import (
-	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"net"
@@ -187,9 +186,7 @@ func Test_ServiceTCPHealthChecker_Check(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			c, cancel := context.WithCancel(context.Background())
-			ctx := log.Logger.WithContext(c)
-			defer t.Cleanup(cancel)
+			ctx := log.Logger.WithContext(t.Context())
 
 			test.server.Start(t)
 

@@ -117,12 +117,12 @@ func (thc *ServiceTCPHealthChecker) Check(ctx context.Context) {
 }
 
 func (thc *ServiceTCPHealthChecker) executeHealthCheck(ctx context.Context, config *dynamic.TCPServerHealthCheck, target *net.TCPAddr) error {
-	dialer, err := thc.dialerManager.Get(config.ServersTransport, config.TLS)
+	dialer, err := thc.dialerManager.Build(thc.info.LoadBalancer, thc.config.TLS)
 	if err != nil {
 		return err
 	}
 
-	conn, err := dialer.Dial("tcp", target.String())
+	conn, err := dialer.Dial("tcp", target.String(), nil)
 	if err != nil {
 		return err
 	}
