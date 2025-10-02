@@ -73,14 +73,24 @@ describe('HubDashboard demo', () => {
   it('should render error state when signature verification fails', async () => {
     mockVerifyScriptSignature.mockResolvedValue(false)
 
-    const { getByText } = renderWithProviders(<HubDashboard path="dashboard" />)
+    const { container, getByText } = renderWithProviders(<HubDashboard path="dashboard" />)
 
     await waitFor(() => {
       expect(mockVerifyScriptSignature).toHaveBeenCalledTimes(1)
+      expect(getByText("Oops, the demo content couldn't be fetched correctly")).toBeInTheDocument()
     })
 
-    expect(getByText("Oops, the demo content couldn't be fetched correctly")).toBeInTheDocument()
     expect(getByText(/you can still read more about Traefik Hub/i)).toBeInTheDocument()
+
+    const errorImage = container.querySelector('img[src="/img/gopher-something-went-wrong.png"]')
+    expect(errorImage).toBeInTheDocument()
+
+    const links = container.querySelectorAll('a')
+    const websiteLink = Array.from(links).find((link) => link.href.includes('traefik.io/traefik-hub'))
+    const docLink = Array.from(links).find((link) => link.href.includes('doc.traefik.io/traefik-hub'))
+
+    expect(websiteLink).toBeInTheDocument()
+    expect(docLink).toBeInTheDocument()
   })
 
   it('should render error state when verification throws an error', async () => {
@@ -89,10 +99,8 @@ describe('HubDashboard demo', () => {
     const { getByText } = renderWithProviders(<HubDashboard path="dashboard" />)
 
     await waitFor(() => {
-      expect(mockVerifyScriptSignature).toHaveBeenCalledTimes(1)
+      expect(getByText("Oops, the demo content couldn't be fetched correctly")).toBeInTheDocument()
     })
-
-    expect(getByText("Oops, the demo content couldn't be fetched correctly")).toBeInTheDocument()
   })
 
   it('should call verifyScriptSignature with correct parameters', async () => {
@@ -107,26 +115,6 @@ describe('HubDashboard demo', () => {
         'https://traefik.github.io/hub-ui-demo-app/scripts/hub-ui-demo.umd.js.sig',
       )
     })
-  })
-
-  it('should render error page with links to documentation', async () => {
-    mockVerifyScriptSignature.mockResolvedValue(false)
-
-    const { container } = renderWithProviders(<HubDashboard path="dashboard" />)
-
-    await waitFor(() => {
-      expect(mockVerifyScriptSignature).toHaveBeenCalledTimes(1)
-    })
-
-    const errorImage = container.querySelector('img[src="/img/gopher-something-went-wrong.png"]')
-    expect(errorImage).toBeInTheDocument()
-
-    const links = container.querySelectorAll('a')
-    const websiteLink = Array.from(links).find((link) => link.href.includes('traefik.io/traefik-hub'))
-    const docLink = Array.from(links).find((link) => link.href.includes('doc.traefik.io/traefik-hub'))
-
-    expect(websiteLink).toBeInTheDocument()
-    expect(docLink).toBeInTheDocument()
   })
 
   it('should set theme attribute based on dark mode', async () => {
