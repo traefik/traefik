@@ -262,9 +262,10 @@ nav:
         - 'Common Configuration' :
           - 'Configuration Methods' : 'reference/routing-configuration/dynamic-configuration-methods.md'
           - 'HTTP' :
-            - 'Router' :
-              - 'Rules & Priority' : 'reference/routing-configuration/http/router/rules-and-priority.md'
-              - 'Observability': 'reference/routing-configuration/http/router/observability.md'
+            - 'Routing' :
+              - 'Router' : 'reference/routing-configuration/http/routing/router.md'
+              - 'Rules & Priority' : 'reference/routing-configuration/http/routing/rules-and-priority.md'
+              - 'Observability': 'reference/routing-configuration/http/routing/observability.md'
             - 'Load Balancing' :
               - 'Service' : 'reference/routing-configuration/http/load-balancing/service.md'
               - 'ServersTransport' : 'reference/routing-configuration/http/load-balancing/serverstransport.md'
@@ -308,8 +309,9 @@ nav:
               - 'StripPrefixRegex': 'reference/routing-configuration/http/middlewares/stripprefixregex.md'
               - '<span class="nav-link-with-icon">WAF <img src="https://doc.traefik.io/traefik-hub/img/ps-traefik-hub-logo-light.svg" class="menu-icon" alt="Traefik Hub API Gateway"></span>' : 'reference/routing-configuration/http/middlewares/waf.md'
           - 'TCP' :
-              - 'Router' :
-                - 'Rules & Priority' : 'reference/routing-configuration/tcp/router/rules-and-priority.md'
+              - 'Routing' :
+                - 'Router' : 'reference/routing-configuration/tcp/routing/router.md'
+                - 'Rules & Priority' : 'reference/routing-configuration/tcp/routing/rules-and-priority.md'
               - 'Service' : 'reference/routing-configuration/tcp/service.md'
               - 'ServersTransport' : 'reference/routing-configuration/tcp/serverstransport.md'
               - 'TLS' : 'reference/routing-configuration/tcp/tls.md'
@@ -318,8 +320,9 @@ nav:
                 - 'InFlightConn' : 'reference/routing-configuration/tcp/middlewares/inflightconn.md'
                 - 'IPAllowList' : 'reference/routing-configuration/tcp/middlewares/ipallowlist.md'
           - 'UDP' :
-            - 'Router' :
-              - 'Rules & Priority' : 'reference/routing-configuration/udp/router/rules-priority.md'
+            - 'Routing' :
+              - 'Router' : 'reference/routing-configuration/udp/routing/router.md'
+              - 'Rules & Priority' : 'reference/routing-configuration/udp/routing/rules-priority.md'
             - 'Service' : 'reference/routing-configuration/udp/service.md'
         - 'Kubernetes':
           - 'Gateway API' : 'reference/routing-configuration/kubernetes/gateway-api.md'
