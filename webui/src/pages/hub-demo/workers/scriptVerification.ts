@@ -1,4 +1,3 @@
-// Script verification using Web Worker in an isolated env
 export async function verifyScriptSignature(
   publicKey: string,
   scriptPath: string,
@@ -37,7 +36,6 @@ export async function verifyScriptSignature(
       resolve(false)
     }
 
-    // Send verification request to worker
     worker.postMessage({
       requestId,
       scriptUrl: scriptPath,

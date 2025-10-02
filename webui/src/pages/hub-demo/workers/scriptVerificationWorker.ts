@@ -65,7 +65,7 @@ function parseSignature(signatureBuffer: ArrayBuffer): Uint8Array {
   // Try to parse as text (base64 or hex)
   const signatureText = new TextDecoder().decode(signatureBytes).trim()
 
-  // Try base64 decoding
+  // base64 decoding
   try {
     const base64Decoded = new Uint8Array(base64ToArrayBuffer(signatureText))
     if (base64Decoded.length === 64) {
@@ -75,7 +75,7 @@ function parseSignature(signatureBuffer: ArrayBuffer): Uint8Array {
     console.error(e)
   }
 
-  // Try hex decoding
+  // hex decoding
   if (signatureText.length === 128 && /^[0-9a-fA-F]+$/.test(signatureText)) {
     const hexDecoded = new Uint8Array(64)
     for (let i = 0; i < 64; i++) {
@@ -106,12 +106,10 @@ async function verifyWithNoble(
   }
 }
 
-// Main worker message handler
 self.onmessage = async function (event) {
   const { requestId, scriptUrl, signatureUrl, publicKey } = event.data
 
   try {
-    // Download files in worker context (isolated from main thread)
     const [scriptResponse, signatureResponse] = await Promise.all([fetch(scriptUrl), fetch(signatureUrl)])
 
     if (!scriptResponse.ok || !signatureResponse.ok) {
@@ -131,11 +129,11 @@ self.onmessage = async function (event) {
 
     // Try Web Crypto API first, fallback to Noble if it fails
     let verified = await verifyWithWebCrypto(publicKey, scriptBuffer, signatureBuffer)
+
     if (!verified) {
       verified = await verifyWithNoble(publicKey, scriptBuffer, signatureBuffer)
     }
 
-    // Send result back to main thread
     self.postMessage({
       requestId,
       success: true,
@@ -154,7 +152,6 @@ self.onmessage = async function (event) {
   }
 }
 
-// Handle worker errors
 self.onerror = function (error) {
   console.error('[Worker] Worker error:', error)
   self.postMessage({
