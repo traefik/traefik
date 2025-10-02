@@ -10,65 +10,55 @@ Hierarchical Router Relationships for Advanced Routing Scenarios
 
 ## Overview
 
-Multi-layer routing enables you to create hierarchical relationships between routers, where parent routers can process requests through middleware before child routers make final routing decisions.
+Multi-layer routing enables you to create hierarchical relationships between routers,
+where parent routers can process requests through middleware before child routers make final routing decisions.
 
 This feature allows middleware at the parent level to modify requests (adding headers, performing authentication, etc.) that influence how child routers evaluate their rules and route traffic to services.
 
-## Use Cases
-
-Multi-layer routing is particularly useful for:
+Multi-layer routing is particularly useful for progressive request enrichment, where each layer adds context to the request, enabling increasingly specific routing decisions:
 
 - **Authentication-Based Routing**: Parent router authenticates requests and adds user context (roles, permissions) as headers, child routers route based on these headers
-- **Staged Middleware Application**: Apply common middleware (rate limiting, CORS) at parent level, specific middleware at child level
-- **Tenant Isolation**: Parent router identifies tenant from domain/path, adds tenant header, child routers route to tenant-specific services
-- **Progressive Request Enrichment**: Each layer adds context to the request, enabling increasingly specific routing decisions
+- **Staged Middleware Application**: Apply common middleware (rate limiting, CORS) at parent level (for a given domain/path), but specific middleware at child level
 
 ## How It Works
 
 ```
-Request → EntryPoint → Parent Router → Middleware → Child Muxer → Child Router → Service
-                                          ↓
-                                  Modified Request
-                                  (e.g., added headers)
+Request → EntryPoint → Parent Router → Middleware → Child Router A → Service A
+                                          ↓       → Child Router B → Service B
+                                     Modify Request
+                                  (e.g., add headers)
 ```
 
 1. **Request arrives** at an entrypoint
-2. **Parent router matches** based on its rule (e.g., `PathPrefix(/api)`)
+2. **Parent router matches** based on its rule (e.g., ```Host(`example.com`)```)
 3. **Parent middleware executes**, potentially modifying the request
-4. **Child muxer evaluates** the modified request against child router rules
-5. **Child router matches** based on its rule (which may use modified request attributes)
-6. **Request is forwarded** to the child router's service
+4. **One child router matches** based on its rule (which may use modified request attributes)
+5. **Request is forwarded** to the matching child router's service
 
-## Key Concepts
-
-### Parent Routers
-
-Parent routers:
-- Have one or more child routers (via `childRefs` computed at runtime)
-- Apply middleware to modify requests before child evaluation
-- **Must not** have a `service` defined
-- **Must not** have `tls` or `observability` configuration
-
-### Child Routers
-
-Child routers:
-- Reference their parent router(s) via `parentRefs`
-- Evaluate rules on the potentially modified request
-- **Must** have a `service` defined
-- **Must not** have `tls` or `observability` configuration
+## Building a Router Hierarchy
 
 ### Root Routers
 
-Root routers:
 - Have no `parentRefs` (top of the hierarchy)
 - **Can** have `tls`, `observability`, and `entryPoints` configuration
 - Can be either parent routers (with children) or standalone routers (with service)
 
+### Intermediate Routers
+
+- Reference their parent router(s) via `parentRefs`
+- Have one or more child routers
+- **Must not** have a `service` defined
+- **Must not** have `tls` or `observability` configuration
+
+### Leaf Routers
+
+- Reference their parent router(s) via `parentRefs`
+- **Must** have a `service` defined
+- **Must not** have `tls` or `observability` configuration
+
 ## Configuration Example
 
-### File Provider
-
-??? example "Authentication-Based Routing with File Provider"
+??? example "Authentication-Based Routing"
 
     ```yaml tab="File (YAML)"
     ## Dynamic configuration
@@ -156,6 +146,27 @@ Root routers:
           url = "http://user-backend:8080"
     ```
 
+    ```json tab="Tags"
+    {
+      "Tags": [
+        "traefik.http.routers.api-parent.rule=PathPrefix(`/api`)",
+        "traefik.http.routers.api-parent.middlewares=auth-middleware",
+        "traefik.http.routers.api-parent.entryPoints=websecure",
+        "traefik.http.routers.api-parent.tls=true",
+        "traefik.http.routers.api-admin.rule=HeadersRegexp(`X-User-Role`, `admin`)",
+        "traefik.http.routers.api-admin.service=admin-service",
+        "traefik.http.routers.api-admin.parentRefs=api-parent",
+        "traefik.http.routers.api-user.rule=HeadersRegexp(`X-User-Role`, `user`)",
+        "traefik.http.routers.api-user.service=user-service",
+        "traefik.http.routers.api-user.parentRefs=api-parent",
+        "traefik.http.middlewares.auth-middleware.forwardAuth.address=http://auth-service:8080/auth",
+        "traefik.http.middlewares.auth-middleware.forwardAuth.authResponseHeaders=X-User-Role,X-User-Name",
+        "traefik.http.services.admin-service.loadBalancer.servers[0].url=http://admin-backend:8080",
+        "traefik.http.services.user-service.loadBalancer.servers[0].url=http://user-backend:8080"
+      ]
+    }
+    ```
+
     **How it works:**
 
     1. Request to `/api/endpoint` matches `api-parent` router
@@ -164,9 +175,6 @@ Root routers:
     4. If `X-User-Role: admin`, `api-admin` router matches and forwards to `admin-service`
     5. If `X-User-Role: user`, `api-user` router matches and forwards to `user-service`
 
-### Kubernetes CRD Provider
-
-For detailed Kubernetes CRD configuration, see the [Kubernetes CRD Multi-Layer Routing](../reference/routing-configuration/kubernetes/crd/http/ingressroute.md#multi-layer-routing-with-ingressroutes) section.
 
 ## Configuration Attributes
 
@@ -198,12 +206,6 @@ http:
     service = "my-service"
     parentRefs = ["parent-router"]
 ```
-
-### `childRefs`
-
-_Computed at runtime, not user-configurable_
-
-The `childRefs` field is automatically computed by Traefik based on the `parentRefs` declarations of other routers. You should never manually configure this field.
 
 ## Validation Rules
 

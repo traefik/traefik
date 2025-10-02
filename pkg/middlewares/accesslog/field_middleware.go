@@ -2,6 +2,7 @@ package accesslog
 
 import (
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -81,15 +82,14 @@ const separator = " -> "
 
 // ConcatFieldHandler concatenates field values instead of overriding them.
 type ConcatFieldHandler struct {
-	next    http.Handler
-	name    string
-	value   string
-	applyFn FieldApply
+	next  http.Handler
+	name  string
+	value string
 }
 
 // NewConcatFieldHandler creates a ConcatField handler that concatenates values.
-func NewConcatFieldHandler(next http.Handler, name, value string, applyFn FieldApply) http.Handler {
-	return &ConcatFieldHandler{next: next, name: name, value: value, applyFn: applyFn}
+func NewConcatFieldHandler(next http.Handler, name, value string) http.Handler {
+	return &ConcatFieldHandler{next: next, name: name, value: value}
 }
 
 func (c *ConcatFieldHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
@@ -101,18 +101,13 @@ func (c *ConcatFieldHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request
 
 	// Check if field already exists and concatenate if so
 	if existingValue, exists := table.Core[c.name]; exists && existingValue != nil {
-		if existingStr, ok := existingValue.(string); ok && existingStr != "" {
+		if existingStr, ok := existingValue.(string); ok && strings.TrimSpace(existingStr) != "" {
 			table.Core[c.name] = existingStr + separator + c.value
-		} else {
-			table.Core[c.name] = c.value
+			c.next.ServeHTTP(rw, req)
+			return
 		}
-	} else {
-		table.Core[c.name] = c.value
 	}
 
-	if c.applyFn != nil {
-		c.applyFn(rw, req, c.next, table)
-	} else {
-		c.next.ServeHTTP(rw, req)
-	}
+	table.Core[c.name] = c.value
+	c.next.ServeHTTP(rw, req)
 }
