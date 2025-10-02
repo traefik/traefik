@@ -57,7 +57,7 @@ type TLSTCP struct {
 	Store *ObjectReference `json:"store,omitempty"`
 	// CertResolver defines the name of the certificate resolver to use.
 	// Cert resolvers have to be configured in the static configuration.
-	// More info: https://doc.traefik.io/traefik/v3.5/reference/install-configuration/providers/acme/
+	// More info: https://doc.traefik.io/traefik/v3.5/reference/install-configuration/tls/certificate-resolvers/acme/
 	CertResolver string `json:"certResolver,omitempty"`
 	// Domains defines the list of domains that will be used to issue certificates.
 	// More info: https://doc.traefik.io/traefik/v3.5/reference/routing-configuration/tcp/tls/#domains

@@ -1007,7 +1007,7 @@ spec:
                   x-kubernetes-preserve-unknown-fields: true
                 description: |-
                   Plugin defines the middleware plugin configuration.
-                  More info: https://doc.traefik.io/traefik/v3.5/plugins/
+                  More info: https://doc.traefik.io/traefik/v3.5/reference/routing-configuration/http/middlewares/overview/#community-middlewares
                 type: object
               rateLimit:
                 description: |-

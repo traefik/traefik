@@ -348,7 +348,7 @@ spec:
                     description: |-
                       CertResolver defines the name of the certificate resolver to use.
                       Cert resolvers have to be configured in the static configuration.
-                      More info: https://doc.traefik.io/traefik/v3.5/reference/install-configuration/providers/acme/
+                      More info: https://doc.traefik.io/traefik/v3.5/reference/install-configuration/tls/certificate-resolvers/acme/
                     type: string
                   domains:
                     description: |-

@@ -52,7 +52,7 @@ type MiddlewareSpec struct {
 	ContentType       *dynamic.ContentType       `json:"contentType,omitempty"`
 	GrpcWeb           *dynamic.GrpcWeb           `json:"grpcWeb,omitempty"`
 	// Plugin defines the middleware plugin configuration.
-	// More info: https://doc.traefik.io/traefik/v3.5/plugins/
+	// More info: https://doc.traefik.io/traefik/v3.5/reference/routing-configuration/http/middlewares/overview/#community-middlewares
 	Plugin map[string]apiextensionv1.JSON `json:"plugin,omitempty"`
 }
 
