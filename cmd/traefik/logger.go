@@ -68,10 +68,6 @@ func setupLogger(ctx context.Context, staticConfiguration *static.Configuration)
 }
 
 func getLogWriter(staticConfiguration *static.Configuration) io.Writer {
-	if staticConfiguration.Log != nil && staticConfiguration.Log.OTLP != nil {
-		return io.Discard
-	}
-
 	var w io.Writer = os.Stdout
 	if staticConfiguration.Log != nil && len(staticConfiguration.Log.FilePath) > 0 {
 		_, _ = os.OpenFile(staticConfiguration.Log.FilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0o666)
