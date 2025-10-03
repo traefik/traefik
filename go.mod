@@ -55,7 +55,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // No tag on the repo.
 	github.com/prometheus/client_golang v1.22.0
 	github.com/prometheus/client_model v0.6.1
-	github.com/quic-go/quic-go v0.54.0
+	github.com/quic-go/quic-go v0.55.0
 	github.com/redis/go-redis/v9 v9.8.0
 	github.com/rs/zerolog v1.33.0
 	github.com/sirupsen/logrus v1.9.3
@@ -376,7 +376,6 @@ require (
 	go.opentelemetry.io/contrib/propagators/ot v1.38.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.7.1 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
-	go.uber.org/mock v0.5.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/ratelimit v0.3.1 // indirect
 	go.uber.org/zap v1.27.0 // indirect
