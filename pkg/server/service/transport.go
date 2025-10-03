@@ -174,38 +174,32 @@ func (t *TransportManager) createTLSConfig(cfg *dynamic.ServersTransport) (*tls.
 			return nil, errors.New("TLS and SPIFFE configuration cannot be defined at the same time")
 		}
 
-		// map and validate the CipherSuite passed in the configuration
-		ciphersList := make([]uint16, 0)
+		cipherSuites := make([]uint16, 0)
 		if cfg.CipherSuites != nil {
 			for _, cipher := range cfg.CipherSuites {
 				if cipherID, exists := traefiktls.CipherSuites[cipher]; exists {
-					ciphersList = append(ciphersList, cipherID)
+					cipherSuites = append(cipherSuites, cipherID)
 				} else {
-					// CipherSuite listed in the configuration does not exist in our list
-					return nil, fmt.Errorf("invalid CipherSuite: %s", cipher)
+					return nil, fmt.Errorf("cipher suite not supported: %s", cipher)
 				}
 			}
 		}
 
-		// Set the min TLS version if set in the config
-		var minVer uint16
+		var minVersion uint16
 		if cfg.MinVersion != "" {
-			if minConst, exists := traefiktls.MinVersion[cfg.MinVersion]; exists {
-				minVer = minConst
+			if value, exists := traefiktls.MinVersion[cfg.MinVersion]; exists {
+				minVersion = value
 			} else {
-				// Min TLS version does not exist
-				return nil, fmt.Errorf("invalid TLS minimal version: %v", minVer)
+				return nil, fmt.Errorf("invalid TLS minimum version: %s", cfg.MinVersion)
 			}
 		}
 
-		// Set the min TLS version if set in the config
-		var maxVer uint16
-		if cfg.MinVersion != "" {
-			if maxConst, exists := traefiktls.MaxVersion[cfg.MaxVersion]; exists {
-				maxVer = maxConst
+		var maxVersion uint16
+		if cfg.MaxVersion != "" {
+			if value, exists := traefiktls.MaxVersion[cfg.MaxVersion]; exists {
+				maxVersion = value
 			} else {
-				// Max TLS version does not exist
-				return nil, fmt.Errorf("invalid TLS maximal version: %v", maxVer)
+				return nil, fmt.Errorf("invalid TLS maximum version: %s", cfg.MaxVersion)
 			}
 		}
 
@@ -214,9 +208,9 @@ func (t *TransportManager) createTLSConfig(cfg *dynamic.ServersTransport) (*tls.
 			InsecureSkipVerify: cfg.InsecureSkipVerify,
 			RootCAs:            createRootCACertPool(cfg.RootCAs),
 			Certificates:       cfg.Certificates.GetCertificates(),
-			CipherSuites:       ciphersList,
-			MinVersion:         minVer,
-			MaxVersion:         maxVer,
+			CipherSuites:       cipherSuites,
+			MinVersion:         minVersion,
+			MaxVersion:         maxVersion,
 		}
 
 		if cfg.PeerCertURI != "" {
