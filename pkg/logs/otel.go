@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/rs/zerolog"
+	"github.com/traefik/traefik/v3/pkg/observability"
 	"github.com/traefik/traefik/v3/pkg/types"
 	otellog "go.opentelemetry.io/otel/log"
 )
@@ -19,14 +20,9 @@ func SetupOTelLogger(ctx context.Context, logger zerolog.Logger, config *types.O
 		return logger, nil
 	}
 
-	if os.Getenv("USER") == "" {
-		// If USER environment variable is not set, we are likely running in a container.
-		// Set it to "traefik" so that some libraries (like OpenTelemetry) do not fail to initialize.
-		if err := os.Setenv("USER", "traefik"); err != nil {
-			return zerolog.Logger{}, fmt.Errorf("could not set USER environment variable: %w", err)
-		}
+	if err := observability.EnsureUserEnvVar(); err != nil {
+		return zerolog.Logger{}, err
 	}
-
 	provider, err := config.NewLoggerProvider(ctx)
 	if err != nil {
 		return zerolog.Logger{}, fmt.Errorf("setting up OpenTelemetry logger provider: %w", err)

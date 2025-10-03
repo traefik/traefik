@@ -14,6 +14,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/static"
+	"github.com/traefik/traefik/v3/pkg/observability"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"go.opentelemetry.io/contrib/propagators/autoprop"
 	"go.opentelemetry.io/otel"
@@ -43,12 +44,8 @@ func NewTracing(ctx context.Context, conf *static.Tracing) (*Tracer, io.Closer, 
 		backend = defaultBackend
 	}
 
-	if os.Getenv("USER") == "" {
-		// If USER environment variable is not set, we are likely running in a container.
-		// Set it to "traefik" so that some libraries (like OpenTelemetry) do not fail to initialize.
-		if err := os.Setenv("USER", "traefik"); err != nil {
-			return nil, nil, fmt.Errorf("could not set USER environment variable: %w", err)
-		}
+	if err := observability.EnsureUserEnvVar(); err != nil {
+		return nil, nil, err
 	}
 
 	otel.SetTextMapPropagator(autoprop.NewTextMapPropagator())

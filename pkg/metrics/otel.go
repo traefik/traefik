@@ -12,6 +12,7 @@ import (
 
 	"github.com/go-kit/kit/metrics"
 	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/observability"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"github.com/traefik/traefik/v3/pkg/version"
 	"go.opentelemetry.io/otel"
@@ -48,12 +49,8 @@ type SemConvMetricsRegistry struct {
 
 // NewSemConvMetricRegistry registers all stables semantic conventions metrics.
 func NewSemConvMetricRegistry(ctx context.Context, config *types.OTLP) (*SemConvMetricsRegistry, error) {
-	if os.Getenv("USER") == "" {
-		// If USER environment variable is not set, we are likely running in a container.
-		// Set it to "traefik" so that some libraries (like OpenTelemetry) do not fail to initialize.
-		if err := os.Setenv("USER", "traefik"); err != nil {
-			return nil, fmt.Errorf("could not set USER environment variable: %w", err)
-		}
+	if err := observability.EnsureUserEnvVar(); err != nil {
+		return nil, err
 	}
 
 	if openTelemetryMeterProvider == nil {
