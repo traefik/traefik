@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net"
 	"net/url"
-	"os"
 	"strings"
 	"sync"
 	"time"
@@ -13,6 +12,7 @@ import (
 	"github.com/go-kit/kit/metrics"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/observability"
+	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"github.com/traefik/traefik/v3/pkg/version"
 	"go.opentelemetry.io/otel"
@@ -48,7 +48,7 @@ type SemConvMetricsRegistry struct {
 }
 
 // NewSemConvMetricRegistry registers all stables semantic conventions metrics.
-func NewSemConvMetricRegistry(ctx context.Context, config *types.OTLP) (*SemConvMetricsRegistry, error) {
+func NewSemConvMetricRegistry(ctx context.Context, config *otypes.OTLP) (*SemConvMetricsRegistry, error) {
 	if err := observability.EnsureUserEnvVar(); err != nil {
 		return nil, err
 	}
@@ -102,7 +102,7 @@ func (s *SemConvMetricsRegistry) HTTPClientRequestDuration() httpconv.ClientRequ
 }
 
 // RegisterOpenTelemetry registers all OpenTelemetry metrics.
-func RegisterOpenTelemetry(ctx context.Context, config *types.OTLP) Registry {
+func RegisterOpenTelemetry(ctx context.Context, config *otypes.OTLP) Registry {
 	if openTelemetryMeterProvider == nil {
 		var err error
 		if openTelemetryMeterProvider, err = newOpenTelemetryMeterProvider(ctx, config); err != nil {
@@ -195,7 +195,7 @@ func StopOpenTelemetry() {
 }
 
 // newOpenTelemetryMeterProvider creates a new controller.Controller.
-func newOpenTelemetryMeterProvider(ctx context.Context, config *types.OTLP) (*sdkmetric.MeterProvider, error) {
+func newOpenTelemetryMeterProvider(ctx context.Context, config *otypes.OTLP) (*sdkmetric.MeterProvider, error) {
 	var (
 		exporter sdkmetric.Exporter
 		err      error
@@ -256,7 +256,7 @@ func newOpenTelemetryMeterProvider(ctx context.Context, config *types.OTLP) (*sd
 	return meterProvider, nil
 }
 
-func newHTTPExporter(ctx context.Context, config *types.OTelHTTP) (sdkmetric.Exporter, error) {
+func newHTTPExporter(ctx context.Context, config *otypes.OTelHTTP) (sdkmetric.Exporter, error) {
 	endpoint, err := url.Parse(config.Endpoint)
 	if err != nil {
 		return nil, fmt.Errorf("invalid collector endpoint %q: %w", config.Endpoint, err)
@@ -288,7 +288,7 @@ func newHTTPExporter(ctx context.Context, config *types.OTelHTTP) (sdkmetric.Exp
 	return otlpmetrichttp.New(ctx, opts...)
 }
 
-func newGRPCExporter(ctx context.Context, config *types.OTelGRPC) (sdkmetric.Exporter, error) {
+func newGRPCExporter(ctx context.Context, config *otypes.OTelGRPC) (sdkmetric.Exporter, error) {
 	host, port, err := net.SplitHostPort(config.Endpoint)
 	if err != nil {
 		return nil, fmt.Errorf("invalid collector endpoint %q: %w", config.Endpoint, err)

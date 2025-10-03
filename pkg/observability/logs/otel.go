@@ -4,13 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
 	"reflect"
 	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/traefik/traefik/v3/pkg/observability"
-	"github.com/traefik/traefik/v3/pkg/types"
+	"github.com/traefik/traefik/v3/pkg/observability/types"
 	otellog "go.opentelemetry.io/otel/log"
 )
 

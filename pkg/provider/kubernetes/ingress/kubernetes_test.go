@@ -17,6 +17,7 @@ import (
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	traefikhttp "github.com/traefik/traefik/v3/pkg/muxer/http"
+	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	"github.com/traefik/traefik/v3/pkg/provider"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/tls"
@@ -127,7 +128,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 								AccessLogs:     pointer(true),
 								Tracing:        pointer(true),
 								Metrics:        pointer(true),
-								TraceVerbosity: types.MinimalVerbosity,
+								TraceVerbosity: otypes.MinimalVerbosity,
 							},
 						},
 					},

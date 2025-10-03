@@ -11,8 +11,8 @@ import (
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	th "github.com/traefik/traefik/v3/pkg/testhelpers"
-	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 func TestRegisterPromState(t *testing.T) {
@@ -20,42 +20,42 @@ func TestRegisterPromState(t *testing.T) {
 
 	testCases := []struct {
 		desc                 string
-		prometheusSlice      []*types.Prometheus
+		prometheusSlice      []*otypes.Prometheus
 		initPromState        bool
 		unregisterPromState  bool
 		expectedNbRegistries int
 	}{
 		{
 			desc:                 "Register once",
-			prometheusSlice:      []*types.Prometheus{{}},
+			prometheusSlice:      []*otypes.Prometheus{{}},
 			initPromState:        true,
 			unregisterPromState:  false,
 			expectedNbRegistries: 1,
 		},
 		{
 			desc:                 "Register once with no promState init",
-			prometheusSlice:      []*types.Prometheus{{}},
+			prometheusSlice:      []*otypes.Prometheus{{}},
 			initPromState:        false,
 			unregisterPromState:  false,
 			expectedNbRegistries: 1,
 		},
 		{
 			desc:                 "Register twice",
-			prometheusSlice:      []*types.Prometheus{{}, {}},
+			prometheusSlice:      []*otypes.Prometheus{{}, {}},
 			initPromState:        true,
 			unregisterPromState:  false,
 			expectedNbRegistries: 2,
 		},
 		{
 			desc:                 "Register twice with no promstate init",
-			prometheusSlice:      []*types.Prometheus{{}, {}},
+			prometheusSlice:      []*otypes.Prometheus{{}, {}},
 			initPromState:        false,
 			unregisterPromState:  false,
 			expectedNbRegistries: 2,
 		},
 		{
 			desc:                 "Register twice with unregister",
-			prometheusSlice:      []*types.Prometheus{{}, {}},
+			prometheusSlice:      []*otypes.Prometheus{{}, {}},
 			initPromState:        true,
 			unregisterPromState:  true,
 			expectedNbRegistries: 2,
@@ -90,7 +90,7 @@ func TestPrometheus(t *testing.T) {
 	promRegistry = prometheus.NewRegistry()
 	t.Cleanup(promState.reset)
 
-	prometheusRegistry := RegisterPrometheus(t.Context(), &types.Prometheus{
+	prometheusRegistry := RegisterPrometheus(t.Context(), &otypes.Prometheus{
 		AddEntryPointsLabels: true,
 		AddRoutersLabels:     true,
 		AddServicesLabels:    true,
@@ -404,7 +404,7 @@ func TestPrometheusMetricRemoval(t *testing.T) {
 	promRegistry = prometheus.NewRegistry()
 	t.Cleanup(promState.reset)
 
-	prometheusRegistry := RegisterPrometheus(t.Context(), &types.Prometheus{AddEntryPointsLabels: true, AddServicesLabels: true, AddRoutersLabels: true})
+	prometheusRegistry := RegisterPrometheus(t.Context(), &otypes.Prometheus{AddEntryPointsLabels: true, AddServicesLabels: true, AddRoutersLabels: true})
 	defer promRegistry.Unregister(promState)
 
 	conf1 := dynamic.Configuration{
@@ -495,7 +495,7 @@ func TestPrometheusMetricRemoveEndpointForRecoveredService(t *testing.T) {
 	promRegistry = prometheus.NewRegistry()
 	t.Cleanup(promState.reset)
 
-	prometheusRegistry := RegisterPrometheus(t.Context(), &types.Prometheus{AddServicesLabels: true})
+	prometheusRegistry := RegisterPrometheus(t.Context(), &otypes.Prometheus{AddServicesLabels: true})
 	defer promRegistry.Unregister(promState)
 
 	conf1 := dynamic.Configuration{
@@ -534,7 +534,7 @@ func TestPrometheusMetricRemoveEndpointForRecoveredService(t *testing.T) {
 func TestPrometheusRemovedMetricsReset(t *testing.T) {
 	t.Cleanup(promState.reset)
 
-	prometheusRegistry := RegisterPrometheus(t.Context(), &types.Prometheus{AddEntryPointsLabels: true, AddServicesLabels: true})
+	prometheusRegistry := RegisterPrometheus(t.Context(), &otypes.Prometheus{AddEntryPointsLabels: true, AddServicesLabels: true})
 	defer promRegistry.Unregister(promState)
 
 	conf1 := dynamic.Configuration{

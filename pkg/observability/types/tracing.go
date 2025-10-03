@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
+	ttypes "github.com/traefik/traefik/v3/pkg/types"
 	"github.com/traefik/traefik/v3/pkg/version"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -77,7 +78,7 @@ func (c *OTelTracing) Setup(ctx context.Context, serviceName string, sampleRate 
 		resource.WithOS(),
 		resource.WithProcess(),
 		resource.WithTelemetrySDK(),
-		resource.WithDetectors(K8sAttributesDetector{}),
+		resource.WithDetectors(ttypes.K8sAttributesDetector{}),
 		// The following order allows the user to override the service name and version,
 		// as well as any other attributes set by the above detectors.
 		resource.WithAttributes(

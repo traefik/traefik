@@ -9,14 +9,14 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/static"
-	"github.com/traefik/traefik/v3/pkg/logs"
-	"github.com/traefik/traefik/v3/pkg/metrics"
 	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
 	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
 	mmetrics "github.com/traefik/traefik/v3/pkg/middlewares/metrics"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
-	"github.com/traefik/traefik/v3/pkg/tracing"
-	"github.com/traefik/traefik/v3/pkg/types"
+	"github.com/traefik/traefik/v3/pkg/observability/logs"
+	"github.com/traefik/traefik/v3/pkg/observability/metrics"
+	"github.com/traefik/traefik/v3/pkg/observability/tracing"
+	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 )
 
 // ObservabilityMgr is a manager for observability (AccessLogs, Metrics and Tracing) enablement.
@@ -130,8 +130,8 @@ func (o *ObservabilityMgr) observabilityContextHandler(next http.Handler, intern
 		AccessLogsEnabled:      o.shouldAccessLog(internal, config),
 		MetricsEnabled:         o.shouldMeter(internal, config),
 		SemConvMetricsEnabled:  o.shouldMeterSemConv(internal, config),
-		TracingEnabled:         o.shouldTrace(internal, config, types.MinimalVerbosity),
-		DetailedTracingEnabled: o.shouldTrace(internal, config, types.DetailedVerbosity),
+		TracingEnabled:         o.shouldTrace(internal, config, otypes.MinimalVerbosity),
+		DetailedTracingEnabled: o.shouldTrace(internal, config, otypes.DetailedVerbosity),
 	})
 }
 
@@ -191,7 +191,7 @@ func (o *ObservabilityMgr) shouldMeterSemConv(internal bool, observabilityConfig
 }
 
 // shouldTrace returns whether the tracing should be enabled for the given serviceName and the observability config.
-func (o *ObservabilityMgr) shouldTrace(internal bool, observabilityConfig dynamic.RouterObservabilityConfig, verbosity types.TracingVerbosity) bool {
+func (o *ObservabilityMgr) shouldTrace(internal bool, observabilityConfig dynamic.RouterObservabilityConfig, verbosity otypes.TracingVerbosity) bool {
 	if o == nil {
 		return false
 	}
