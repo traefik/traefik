@@ -28,7 +28,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	"k8s.io/utils/strings/slices"
 	gatev1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 )
@@ -1454,7 +1454,7 @@ func loadServices(client Client, namespace string, backendRefs []gatev1alpha2.HT
 			return nil, nil, fmt.Errorf("traefik internal service %s is not allowed in a WRR loadbalancer", backendRef.BackendRef.Name)
 		}
 
-		weight := int(pointer.Int32Deref(backendRef.Weight, 1))
+		weight := int(ptr.Deref(backendRef.Weight, 1))
 
 		if isTraefikService(backendRef.BackendRef) {
 			wrrSvc.Weighted.Services = append(wrrSvc.Weighted.Services, dynamic.WRRService{Name: string(backendRef.Name), Weight: &weight})
@@ -1467,7 +1467,7 @@ func loadServices(client Client, namespace string, backendRefs []gatev1alpha2.HT
 
 		svc := dynamic.Service{
 			LoadBalancer: &dynamic.ServersLoadBalancer{
-				PassHostHeader: pointer.Bool(true),
+				PassHostHeader: ptr.To(true),
 			},
 		}
 
@@ -1578,7 +1578,7 @@ func loadTCPServices(client Client, namespace string, backendRefs []gatev1alpha2
 			return nil, nil, fmt.Errorf("traefik internal service %s is not allowed in a WRR loadbalancer", backendRef.Name)
 		}
 
-		weight := int(pointer.Int32Deref(backendRef.Weight, 1))
+		weight := int(ptr.Deref(backendRef.Weight, 1))
 
 		if isTraefikService(backendRef) {
 			wrrSvc.Weighted.Services = append(wrrSvc.Weighted.Services, dynamic.TCPWRRService{Name: string(backendRef.Name), Weight: &weight})
