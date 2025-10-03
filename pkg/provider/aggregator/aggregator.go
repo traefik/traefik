@@ -2,6 +2,7 @@ package aggregator
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -203,8 +204,16 @@ func (p *ProviderAggregator) launchProvider(configurationChan chan<- dynamic.Mes
 		log.Debug().Err(err).Msgf("Cannot marshal the provider configuration %T", prd)
 	}
 
-	log.Info().Msgf("Starting provider %T", prd)
-	log.Debug().RawJSON("config", []byte(jsonConf)).Msgf("%T provider configuration", prd)
+	// Check if provider has namespace information.
+	var namespaceInfo string
+	if namespaceProvider, ok := prd.(provider.NamespacedProvider); ok {
+		if namespace := namespaceProvider.Namespace(); namespace != "" {
+			namespaceInfo = fmt.Sprintf(" (namespace: %s)", namespace)
+		}
+	}
+
+	log.Info().Msgf("Starting provider %T%s", prd, namespaceInfo)
+	log.Debug().RawJSON("config", []byte(jsonConf)).Msgf("%T provider configuration%s", prd, namespaceInfo)
 
 	if err := maybeThrottledProvide(prd, p.providersThrottleDuration)(configurationChan, pool); err != nil {
 		log.Error().Err(err).Msgf("Cannot start the provider %T", prd)

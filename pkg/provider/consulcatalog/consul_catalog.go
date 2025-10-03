@@ -647,3 +647,8 @@ func repeatSend(ctx context.Context, interval time.Duration, c chan<- struct{}) 
 		}
 	}
 }
+
+// Namespace returns the namespace of the ConsulCatalog provider.
+func (p *Provider) Namespace() string {
+	return p.namespace
+}
