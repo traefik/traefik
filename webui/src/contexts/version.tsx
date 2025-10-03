@@ -1,5 +1,7 @@
 import { createContext, ReactNode, useEffect, useState } from 'react'
 
+import { BASE_PATH } from 'libs/utils'
+
 type VersionContextProps = {
   showHubButton: boolean
   version: string
@@ -21,7 +23,7 @@ export const VersionProvider = ({ children }: VersionProviderProps) => {
   useEffect(() => {
     const fetchVersion = async () => {
       try {
-        const response = await fetch('/api/version')
+        const response = await fetch(`${BASE_PATH}/version`)
         if (!response.ok) {
           throw new Error(`Network error: ${response.status}`)
         }
