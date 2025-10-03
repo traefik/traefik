@@ -8,7 +8,7 @@ import (
 
 	"github.com/stvp/go-udp-testing"
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v3/pkg/types"
+	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 )
 
 func TestStatsD(t *testing.T) {
@@ -20,7 +20,7 @@ func TestStatsD(t *testing.T) {
 	// This is needed to make sure that UDP Listener listens for data a bit longer, otherwise it will quit after a millisecond
 	udp.Timeout = 5 * time.Second
 
-	statsdRegistry := RegisterStatsd(t.Context(), &types.Statsd{Address: ":18125", PushInterval: ptypes.Duration(time.Second), AddEntryPointsLabels: true, AddRoutersLabels: true, AddServicesLabels: true})
+	statsdRegistry := RegisterStatsd(t.Context(), &otypes.Statsd{Address: ":18125", PushInterval: ptypes.Duration(time.Second), AddEntryPointsLabels: true, AddRoutersLabels: true, AddServicesLabels: true})
 
 	testRegistry(t, defaultMetricsPrefix, statsdRegistry)
 }
@@ -34,7 +34,7 @@ func TestStatsDWithPrefix(t *testing.T) {
 	// This is needed to make sure that UDP Listener listens for data a bit longer, otherwise it will quit after a millisecond
 	udp.Timeout = 5 * time.Second
 
-	statsdRegistry := RegisterStatsd(t.Context(), &types.Statsd{Address: ":18125", PushInterval: ptypes.Duration(time.Second), AddEntryPointsLabels: true, AddRoutersLabels: true, AddServicesLabels: true, Prefix: "testPrefix"})
+	statsdRegistry := RegisterStatsd(t.Context(), &otypes.Statsd{Address: ":18125", PushInterval: ptypes.Duration(time.Second), AddEntryPointsLabels: true, AddRoutersLabels: true, AddServicesLabels: true, Prefix: "testPrefix"})
 
 	testRegistry(t, "testPrefix", statsdRegistry)
 }

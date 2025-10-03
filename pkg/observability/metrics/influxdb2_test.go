@@ -11,7 +11,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v3/pkg/types"
+	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 )
 
 func TestInfluxDB2(t *testing.T) {
@@ -26,7 +26,7 @@ func TestInfluxDB2(t *testing.T) {
 	}))
 
 	influxDB2Registry := RegisterInfluxDB2(t.Context(),
-		&types.InfluxDB2{
+		&otypes.InfluxDB2{
 			Address:              ts.URL,
 			Token:                "test-token",
 			PushInterval:         ptypes.Duration(10 * time.Millisecond),

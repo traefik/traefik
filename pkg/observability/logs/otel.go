@@ -8,7 +8,8 @@ import (
 	"time"
 
 	"github.com/rs/zerolog"
-	"github.com/traefik/traefik/v3/pkg/types"
+	"github.com/traefik/traefik/v3/pkg/observability"
+	"github.com/traefik/traefik/v3/pkg/observability/types"
 	otellog "go.opentelemetry.io/otel/log"
 )
 
@@ -18,6 +19,9 @@ func SetupOTelLogger(ctx context.Context, logger zerolog.Logger, config *types.O
 		return logger, nil
 	}
 
+	if err := observability.EnsureUserEnvVar(); err != nil {
+		return zerolog.Logger{}, err
+	}
 	provider, err := config.NewLoggerProvider(ctx)
 	if err != nil {
 		return zerolog.Logger{}, fmt.Errorf("setting up OpenTelemetry logger provider: %w", err)

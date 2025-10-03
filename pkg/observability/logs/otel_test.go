@@ -13,7 +13,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v3/pkg/types"
+	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	"go.opentelemetry.io/collector/pdata/plog/plogotlp"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -160,10 +160,10 @@ func TestLog(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			config := &types.OTelLog{
+			config := &otypes.OTelLog{
 				ServiceName:        "test",
 				ResourceAttributes: map[string]string{"resource": "attribute"},
-				HTTP: &types.OTelHTTP{
+				HTTP: &otypes.OTelHTTP{
 					Endpoint: collector.URL,
 				},
 			}

@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/static"
-	"github.com/traefik/traefik/v3/pkg/types"
+	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/ptrace"
 	"go.opentelemetry.io/collector/pdata/ptrace/ptraceotlp"
@@ -355,8 +355,8 @@ func TestTracing(t *testing.T) {
 				ServiceName:        "traefik",
 				SampleRate:         1.0,
 				ResourceAttributes: test.resourceAttributes,
-				OTLP: &types.OTelTracing{
-					HTTP: &types.OTelHTTP{
+				OTLP: &otypes.OTelTracing{
+					HTTP: &otypes.OTelHTTP{
 						Endpoint: collector.URL,
 					},
 				},
@@ -410,7 +410,7 @@ func TestTracing(t *testing.T) {
 func TestTracerProvider(t *testing.T) {
 	t.Parallel()
 
-	otlpConfig := &types.OTelTracing{}
+	otlpConfig := &otypes.OTelTracing{}
 	otlpConfig.SetDefaults()
 
 	config := &static.Tracing{OTLP: otlpConfig}
