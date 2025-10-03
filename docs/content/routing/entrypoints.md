@@ -107,8 +107,8 @@ They can be defined by using a file (YAML or TOML) or CLI arguments.
         address: ":8888" # same as ":8888/tcp"
         http2:
           maxConcurrentStreams: 42
-          maxDecoderHeaderTableSize: 4096
-          maxEncoderHeaderTableSize: 4096
+          maxDecoderHeaderTableSize: 42
+          maxEncoderHeaderTableSize: 42
         http3:
           advertisedPort: 8888
         transport:
@@ -138,8 +138,8 @@ They can be defined by using a file (YAML or TOML) or CLI arguments.
         address = ":8888" # same as ":8888/tcp"
         [entryPoints.name.http2]
           maxConcurrentStreams = 42
-          maxDecoderHeaderTableSize = 4096
-          maxEncoderHeaderTableSize = 4096
+          maxDecoderHeaderTableSize = 42
+          maxEncoderHeaderTableSize = 42
         [entryPoints.name.http3]
           advertisedPort = 8888
         [entryPoints.name.transport]
@@ -162,8 +162,8 @@ They can be defined by using a file (YAML or TOML) or CLI arguments.
     ## Static configuration
     --entryPoints.name.address=:8888 # same as :8888/tcp
     --entryPoints.name.http2.maxConcurrentStreams=42
-    --entryPoints.name.http2.maxDecoderHeaderTableSize=4096
-    --entryPoints.name.http2.maxEncoderHeaderTableSize=4096
+    --entryPoints.name.http2.maxDecoderHeaderTableSize=42
+    --entryPoints.name.http2.maxEncoderHeaderTableSize=42
     --entryPoints.name.http3.advertisedport=8888
     --entryPoints.name.transport.lifeCycle.requestAcceptGraceTimeout=42
     --entryPoints.name.transport.lifeCycle.graceTimeOut=42
@@ -416,48 +416,48 @@ entryPoints:
 
 #### `maxDecoderHeaderTableSize`
 
-_Optional, Default=0_
+_Optional, Default=4096_
 
-`maxDecoderHeaderTableSize` specifies the maximum size of the HTTP2 HPACK header table on the decoding (receiving from client) side. Zero uses the Golang default.
+`maxDecoderHeaderTableSize` specifies the maximum size of the HTTP2 HPACK header table on the decoding (receiving from client) side.
 
 ```yaml tab="File (YAML)"
 entryPoints:
   foo:
     http2:
-      maxDecoderHeaderTableSize: 0
+      maxDecoderHeaderTableSize: 4096
 ```
 
 ```toml tab="File (TOML)"
 [entryPoints.foo]
   [entryPoints.foo.http2]
-    maxDecoderHeaderTableSize = 0
+    maxDecoderHeaderTableSize = 4096
 ```
 
 ```bash tab="CLI"
---entryPoints.name.http2.maxDecoderHeaderTableSize=0
+--entryPoints.name.http2.maxDecoderHeaderTableSize=4096
 ```
 
 #### `maxEncoderHeaderTableSize`
 
-_Optional, Default=0_
+_Optional, Default=4096_
 
-`maxEncoderHeaderTableSize` specifies the maximum size of the HTTP2 HPACK header table on the encoding (sending to client) side. Zero uses the Golang default.
+`maxEncoderHeaderTableSize` specifies the maximum size of the HTTP2 HPACK header table on the encoding (sending to client) side.
 
 ```yaml tab="File (YAML)"
 entryPoints:
   foo:
     http2:
-      maxEncoderHeaderTableSize: 0
+      maxEncoderHeaderTableSize: 4096
 ```
 
 ```toml tab="File (TOML)"
 [entryPoints.foo]
   [entryPoints.foo.http2]
-    maxEncoderHeaderTableSize = 0
+    maxEncoderHeaderTableSize = 4096
 ```
 
 ```bash tab="CLI"
---entryPoints.name.http2.maxEncoderHeaderTableSize=0
+--entryPoints.name.http2.maxEncoderHeaderTableSize=4096
 ```
 
 ### HTTP/3

@@ -282,12 +282,6 @@ Default TLS options for the routers linked to the entry point.
 `--entrypoints.<name>.http2.maxconcurrentstreams`:  
 Specifies the number of concurrent streams per connection that each client is allowed to initiate. (Default: ```250```)
 
-`--entrypoints.<name>.http2.maxdecoderheadertablesize`:  
-Specifies the maximum size of the HTTP2 HPACK header table on the decoding (receiving from client) side. Zero uses Golang default. (Default: ```0```)
-
-`--entrypoints.<name>.http2.maxencoderheadertablesize`:  
-Specifies the maximum size of the HTTP2 HPACK header table on the encoding (sending to client) side. Zero uses Golang default. (Default: ```0```)
-
 `--entrypoints.<name>.http3`:  
 HTTP/3 configuration. (Default: ```false```)
 

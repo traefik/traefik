@@ -240,12 +240,6 @@ HTTP configuration.
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP2_MAXCONCURRENTSTREAMS`:  
 Specifies the number of concurrent streams per connection that each client is allowed to initiate. (Default: ```250```)
 
-`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP2_MAXDECODERHEADERTABLESIZE`:  
-Specifies the maximum size of the HTTP2 HPACK header table on the decoding (receiving from client) side. Zero uses Golang default. (Default: ```0```)
-
-`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP2_MAXENCODERHEADERTABLESIZE`:  
-Specifies the maximum size of the HTTP2 HPACK header table on the encoding (sending to client) side. Zero uses Golang default. (Default: ```0```)
-
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP3`:  
 HTTP/3 configuration. (Default: ```false```)
 

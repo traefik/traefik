@@ -74,8 +74,6 @@
           sans = ["foobar", "foobar"]
     [entryPoints.EntryPoint0.http2]
       maxConcurrentStreams = 42
-      maxDecoderHeaderTableSize = 42
-      maxEncoderHeaderTableSize = 42
     [entryPoints.EntryPoint0.http3]
       advertisedPort = 42
     [entryPoints.EntryPoint0.udp]
