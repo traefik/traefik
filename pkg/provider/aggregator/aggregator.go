@@ -204,10 +204,10 @@ func (p *ProviderAggregator) launchProvider(configurationChan chan<- dynamic.Mes
 		log.Debug().Err(err).Msgf("Cannot marshal the provider configuration %T", prd)
 	}
 
-	// Check if provider has namespace information
+	// Check if provider has namespace information.
 	var namespaceInfo string
 	if namespaceProvider, ok := prd.(provider.NamespacedProvider); ok {
-		if namespace := namespaceProvider.GetNamespace(); namespace != "" {
+		if namespace := namespaceProvider.Namespace(); namespace != "" {
 			namespaceInfo = fmt.Sprintf(" (namespace: %s)", namespace)
 		}
 	}

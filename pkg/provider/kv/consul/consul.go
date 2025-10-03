@@ -98,7 +98,7 @@ func (p *Provider) Init() error {
 	return p.Provider.Init(consul.StoreName, p.name, config)
 }
 
-// GetNamespace returns the namespace of the Consul provider.
-func (p *Provider) GetNamespace() string {
+// Namespace returns the namespace of the Consul provider.
+func (p *Provider) Namespace() string {
 	return p.namespace
 }

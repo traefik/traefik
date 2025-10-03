@@ -20,6 +20,6 @@ type Provider interface {
 type NamespacedProvider interface {
 	Provider
 
-	// GetNamespace returns the specific namespace this provider instance is configured for.
-	GetNamespace() string
+	// Namespace returns the specific namespace this provider instance is configured for.
+	Namespace() string
 }

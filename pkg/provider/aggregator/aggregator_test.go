@@ -44,6 +44,34 @@ func TestProviderAggregator_Provide(t *testing.T) {
 	require.NoError(t, <-errCh)
 }
 
+func TestLaunchNamespacedProvider(t *testing.T) {
+	// Capture log output
+	var buf bytes.Buffer
+
+	originalLogger := log.Logger
+	log.Logger = zerolog.New(&buf).Level(zerolog.InfoLevel)
+
+	providerWithNamespace := &mockNamespacedProvider{namespace: "test-namespace"}
+
+	aggregator := ProviderAggregator{
+		internalProvider: providerWithNamespace,
+	}
+
+	cfgCh := make(chan dynamic.Message)
+	pool := safe.NewPool(t.Context())
+
+	t.Cleanup(func() {
+		pool.Stop()
+		log.Logger = originalLogger
+	})
+
+	err := aggregator.Provide(cfgCh, pool)
+	require.NoError(t, err)
+
+	output := buf.String()
+	assert.Contains(t, output, "Starting provider *aggregator.mockNamespacedProvider (namespace: test-namespace)")
+}
+
 // requireReceivedMessageFromProviders makes sure the given providers have emitted a message on the given message channel.
 // Providers order is not enforced.
 func requireReceivedMessageFromProviders(t *testing.T, cfgCh <-chan dynamic.Message, names []string) {
@@ -81,12 +109,12 @@ func (p *providerMock) Provide(configurationChan chan<- dynamic.Message, pool *s
 	return nil
 }
 
-// mockNamespacedProvider is a mock implementation of NamespacedProvider for testing
+// mockNamespacedProvider is a mock implementation of NamespacedProvider for testing.
 type mockNamespacedProvider struct {
 	namespace string
 }
 
-func (m *mockNamespacedProvider) GetNamespace() string {
+func (m *mockNamespacedProvider) Namespace() string {
 	return m.namespace
 }
 
@@ -96,32 +124,4 @@ func (m *mockNamespacedProvider) Provide(_ chan<- dynamic.Message, _ *safe.Pool)
 
 func (m *mockNamespacedProvider) Init() error {
 	return nil
-}
-
-func TestLaunchNamespacedProvider(t *testing.T) {
-	// Capture log output
-	var buf bytes.Buffer
-
-	originalLogger := log.Logger
-	log.Logger = zerolog.New(&buf).Level(zerolog.InfoLevel)
-
-	providerWithNamespace := &mockNamespacedProvider{namespace: "test-namespace"}
-
-	aggregator := ProviderAggregator{
-		internalProvider: providerWithNamespace,
-	}
-
-	cfgCh := make(chan dynamic.Message)
-	pool := safe.NewPool(t.Context())
-
-	t.Cleanup(func() {
-		pool.Stop()
-		log.Logger = originalLogger
-	})
-
-	err := aggregator.Provide(cfgCh, pool)
-	require.NoError(t, err)
-
-	output := buf.String()
-	assert.Contains(t, output, "Starting provider *aggregator.mockNamespacedProvider (namespace: test-namespace)")
 }
