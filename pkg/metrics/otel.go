@@ -20,7 +20,8 @@ import (
 	"go.opentelemetry.io/otel/metric"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
-	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.37.0"
+	"go.opentelemetry.io/otel/semconv/v1.37.0/httpconv"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/encoding/gzip"
 )
@@ -39,9 +40,9 @@ func SetMeterProvider(meterProvider *sdkmetric.MeterProvider) {
 // SemConvMetricsRegistry holds stables semantic conventions metric instruments.
 type SemConvMetricsRegistry struct {
 	// server metrics
-	httpServerRequestDuration metric.Float64Histogram
+	httpServerRequestDuration httpconv.ServerRequestDuration
 	// client metrics
-	httpClientRequestDuration metric.Float64Histogram
+	httpClientRequestDuration httpconv.ClientRequestDuration
 }
 
 // NewSemConvMetricRegistry registers all stables semantic conventions metrics.
@@ -58,17 +59,13 @@ func NewSemConvMetricRegistry(ctx context.Context, config *types.OTLP) (*SemConv
 	meter := otel.Meter("github.com/traefik/traefik",
 		metric.WithInstrumentationVersion(version.Version))
 
-	httpServerRequestDuration, err := meter.Float64Histogram(semconv.HTTPServerRequestDurationName,
-		metric.WithDescription(semconv.HTTPServerRequestDurationDescription),
-		metric.WithUnit("s"),
+	httpServerRequestDuration, err := httpconv.NewServerRequestDuration(meter,
 		metric.WithExplicitBucketBoundaries(config.ExplicitBoundaries...))
 	if err != nil {
 		return nil, fmt.Errorf("can't build httpServerRequestDuration histogram: %w", err)
 	}
 
-	httpClientRequestDuration, err := meter.Float64Histogram(semconv.HTTPClientRequestDurationName,
-		metric.WithDescription(semconv.HTTPClientRequestDurationDescription),
-		metric.WithUnit("s"),
+	httpClientRequestDuration, err := httpconv.NewClientRequestDuration(meter,
 		metric.WithExplicitBucketBoundaries(config.ExplicitBoundaries...))
 	if err != nil {
 		return nil, fmt.Errorf("can't build httpClientRequestDuration histogram: %w", err)
@@ -81,18 +78,18 @@ func NewSemConvMetricRegistry(ctx context.Context, config *types.OTLP) (*SemConv
 }
 
 // HTTPServerRequestDuration returns the HTTP server request duration histogram.
-func (s *SemConvMetricsRegistry) HTTPServerRequestDuration() metric.Float64Histogram {
+func (s *SemConvMetricsRegistry) HTTPServerRequestDuration() httpconv.ServerRequestDuration {
 	if s == nil {
-		return nil
+		return httpconv.ServerRequestDuration{}
 	}
 
 	return s.httpServerRequestDuration
 }
 
 // HTTPClientRequestDuration returns the HTTP client request duration histogram.
-func (s *SemConvMetricsRegistry) HTTPClientRequestDuration() metric.Float64Histogram {
+func (s *SemConvMetricsRegistry) HTTPClientRequestDuration() httpconv.ClientRequestDuration {
 	if s == nil {
-		return nil
+		return httpconv.ClientRequestDuration{}
 	}
 
 	return s.httpClientRequestDuration
