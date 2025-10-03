@@ -373,6 +373,9 @@ metrics:
     headerLabels:
       name0: foobar
       name1: foobar
+    responseHeaderLabels:
+      name0: foobar
+      name1: foobar
   datadog:
     address: foobar
     pushInterval: 42s
