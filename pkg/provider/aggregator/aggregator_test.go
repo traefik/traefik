@@ -98,40 +98,29 @@ func (m *mockNamespacedProvider) Init() error {
 	return nil
 }
 
-func TestLaunchProviderWithNamespace(t *testing.T) {
+func TestLaunchNamespacedProvider(t *testing.T) {
 	// Capture log output
 	var buf bytes.Buffer
 
 	originalLogger := log.Logger
-	originalLevel := zerolog.GlobalLevel()
-
-	log.Logger = zerolog.New(&buf).With().Timestamp().Logger()
-	zerolog.SetGlobalLevel(zerolog.InfoLevel)
+	log.Logger = zerolog.New(&buf).Level(zerolog.InfoLevel)
 
 	providerWithNamespace := &mockNamespacedProvider{namespace: "test-namespace"}
-
-	var _ provider.NamespacedProvider = providerWithNamespace
-	var _ provider.Provider = providerWithNamespace
 
 	aggregator := ProviderAggregator{
 		internalProvider: providerWithNamespace,
 	}
 
 	cfgCh := make(chan dynamic.Message)
-	errCh := make(chan error)
 	pool := safe.NewPool(t.Context())
 
 	t.Cleanup(func() {
 		pool.Stop()
 		log.Logger = originalLogger
-		zerolog.SetGlobalLevel(originalLevel)
 	})
 
-	go func() {
-		errCh <- aggregator.Provide(cfgCh, pool)
-	}()
-
-	require.NoError(t, <-errCh)
+	err := aggregator.Provide(cfgCh, pool)
+	require.NoError(t, err)
 
 	output := buf.String()
 	assert.Contains(t, output, "Starting provider *aggregator.mockNamespacedProvider (namespace: test-namespace)")
