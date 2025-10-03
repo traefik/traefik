@@ -2,6 +2,7 @@ package logs
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/rs/zerolog"
 )
@@ -32,4 +33,18 @@ func (n NoLevelHook) Run(e *zerolog.Event, level zerolog.Level, _ string) {
 
 func msgFunc(i ...any) func() string {
 	return func() string { return fmt.Sprint(i...) }
+}
+
+func TLSErrors(logger zerolog.Logger) zerolog.Logger {
+	return logger.Hook(
+		zerolog.HookFunc(func(e *zerolog.Event, level zerolog.Level, message string) {
+			if !strings.HasPrefix(message, "http: TLS handshake error from") {
+				e.Discard()
+				return
+			}
+
+			if level == zerolog.NoLevel {
+				e.Str("level", zerolog.ErrorLevel.String())
+			}
+		}))
 }

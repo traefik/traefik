@@ -19,7 +19,6 @@ import (
 	"github.com/containous/alice"
 	gokitmetrics "github.com/go-kit/kit/metrics"
 	"github.com/pires/go-proxyproto"
-	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/static"
 	"github.com/traefik/traefik/v3/pkg/ip"
@@ -682,7 +681,7 @@ func newHTTPServer(ctx context.Context, ln net.Listener, configuration *static.E
 	serverHTTP := &http.Server{
 		Protocols:      &protocols,
 		Handler:        handler,
-		ErrorLog:       stdlog.New(logs.NoLevel(log.Logger, zerolog.DebugLevel), "", 0),
+		ErrorLog:       stdlog.New(logs.TLSErrors(log.Logger), "", 0),
 		ReadTimeout:    time.Duration(configuration.Transport.RespondingTimeouts.ReadTimeout),
 		WriteTimeout:   time.Duration(configuration.Transport.RespondingTimeouts.WriteTimeout),
 		IdleTimeout:    time.Duration(configuration.Transport.RespondingTimeouts.IdleTimeout),
