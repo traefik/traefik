@@ -409,36 +409,32 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			})
 		}
 
-		sTransport := &dynamic.ServersTransport{}
+		var cipherSuites []string
 		if serversTransport.Spec.CipherSuites != nil {
 			for _, cipher := range serversTransport.Spec.CipherSuites {
 				if _, exists := tls.CipherSuites[cipher]; exists {
-					sTransport.CipherSuites = append(sTransport.CipherSuites, cipher)
+					cipherSuites = append(cipherSuites, cipher)
 				} else {
-					// CipherSuite listed in the configuration does not exist in our list
-					logger.Error().Msgf("invalid CipherSuite: %s", cipher)
-					continue
+					logger.Error().Msgf("cipher suite not supported: %s", cipher)
 				}
 			}
 		}
 
+		var minVersion string
 		if serversTransport.Spec.MinVersion != "" {
 			if _, exists := tls.MinVersion[serversTransport.Spec.MinVersion]; exists {
-				sTransport.MinVersion = serversTransport.Spec.MinVersion
+				minVersion = serversTransport.Spec.MinVersion
 			} else {
-				// Min TLS version does not exist
-				logger.Error().Msgf("invalid TLS minimal version: %s", serversTransport.Spec.MinVersion)
-				continue
+				logger.Error().Msgf("invalid TLS minimum version: %s", serversTransport.Spec.MinVersion)
 			}
 		}
 
+		var maxVersion string
 		if serversTransport.Spec.MaxVersion != "" {
 			if _, exists := tls.MaxVersion[serversTransport.Spec.MaxVersion]; exists {
-				sTransport.MaxVersion = serversTransport.Spec.MaxVersion
+				maxVersion = serversTransport.Spec.MaxVersion
 			} else {
-				// Min TLS version does not exist
-				logger.Error().Msgf("invalid TLS maximal version: %s", serversTransport.Spec.MaxVersion)
-				continue
+				logger.Error().Msgf("invalid TLS maximum version: %s", serversTransport.Spec.MaxVersion)
 			}
 		}
 
@@ -488,9 +484,9 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			InsecureSkipVerify:  serversTransport.Spec.InsecureSkipVerify,
 			RootCAs:             rootCAs,
 			Certificates:        certs,
-			CipherSuites:        sTransport.CipherSuites,
-			MinVersion:          sTransport.MinVersion,
-			MaxVersion:          sTransport.MaxVersion,
+			CipherSuites:        cipherSuites,
+			MinVersion:          minVersion,
+			MaxVersion:          maxVersion,
 			DisableHTTP2:        serversTransport.Spec.DisableHTTP2,
 			MaxIdleConnsPerHost: serversTransport.Spec.MaxIdleConnsPerHost,
 			ForwardingTimeouts:  forwardingTimeout,
