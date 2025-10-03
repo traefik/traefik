@@ -738,7 +738,7 @@ otherwise it will randomly pick one (depending on how docker is returning them).
 #### `traefik.swarm.lbswarm`
 
 ```yaml
-- "traefik.docker.lbswarm=true"
+- "traefik.swarm.lbswarm=true"
 ```
 
 Enables Swarm's inbuilt load balancer (only relevant in Swarm Mode).

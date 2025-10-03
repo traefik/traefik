@@ -78,7 +78,7 @@ The `depth` option tells Traefik to use the `X-Forwarded-For` header and take th
 If `ipStrategy.ipv6Subnet` is provided and the selected IP is IPv6, the IP is transformed into the first IP of the subnet it belongs to.  
 See [ipStrategy.ipv6Subnet](#ipstrategyipv6subnet) for more details.
 
-!!! example "Examples of Depth & X-Forwarded-For"
+!!! example "Examples of Depth & `X-Forwarded-For`"
 
     If `depth` is set to 2, and the request `X-Forwarded-For` header is `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` then the "real" client IP is `"10.0.0.1"` (at depth 4) but the IP used is `"12.0.0.1"` (`depth=2`).
 
@@ -144,7 +144,7 @@ http:
 
 !!! important "If `depth` is specified, `excludedIPs` is ignored."
 
-!!! example "Example of ExcludedIPs & X-Forwarded-For"
+!!! example "Example of ExcludedIPs & `X-Forwarded-For`"
 
     | `X-Forwarded-For`                       | `excludedIPs`         | clientIP     |
     |-----------------------------------------|-----------------------|--------------|
@@ -263,4 +263,46 @@ http:
   [http.middlewares.test-ipallowlist.ipallowlist]
     [http.middlewares.test-ipallowlist.ipallowlist.sourceCriterion.ipStrategy]
       ipv6Subnet = 64
+```
+
+### `rejectStatusCode`
+
+The `rejectStatusCode` option sets HTTP status code for refused requests. If not set, the default is 403 (Forbidden).
+
+```yaml tab="Docker & Swarm"
+# Reject requests with a 404 rather than a 403
+labels:
+    - "traefik.http.middlewares.test-ipallowlist.ipallowlist.rejectstatuscode=404"
+```
+
+```yaml tab="Kubernetes"
+# Reject requests with a 404 rather than a 403
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-ipallowlist
+spec:
+  ipAllowList:
+    rejectStatusCode: 404
+```
+
+```yaml tab="Consul Catalog"
+# Reject requests with a 404 rather than a 403
+- "traefik.http.middlewares.test-ipallowlist.ipallowlist.rejectstatuscode=404"
+```
+
+```yaml tab="File (YAML)"
+# Reject requests with a 404 rather than a 403
+http:
+  middlewares:
+    test-ipallowlist:
+      ipAllowList:
+        rejectStatusCode: 404
+```
+
+```toml tab="File (TOML)"
+# Reject requests with a 404 rather than a 403
+[http.middlewares]
+  [http.middlewares.test-ipallowlist.ipAllowList]
+    rejectStatusCode = 404
 ```

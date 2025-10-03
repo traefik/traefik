@@ -36,7 +36,7 @@ spec:
       accessLogs: true
       metrics: true
       tracing: true
-    # Set a pirority
+    # Set a priority
     priority: 10
     services:
     # Target a Kubernetes Support
