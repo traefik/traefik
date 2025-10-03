@@ -108,9 +108,9 @@ labels:
 | <a id="opt-certificates" href="#opt-certificates" title="#opt-certificates">`certificates`</a> | Defines the list of certificates (as file paths, or data bytes) that will be set as client certificates for mTLS.                        | []      | No       |
 | <a id="opt-insecureSkipVerify" href="#opt-insecureSkipVerify" title="#opt-insecureSkipVerify">`insecureSkipVerify`</a> | Controls whether the server's certificate chain and host name is verified.                                                               | false   | No       |
 | <a id="opt-rootcas" href="#opt-rootcas" title="#opt-rootcas">`rootcas`</a> | Set of root certificate authorities to use when verifying server certificates. (for mTLS connections).                                   | []      | No       |
-| `cipherSuites` | Defines a list of cipher to use to contact the backend servers. | [] | No |
-| `minVersion` | Defines a TLS minimum version to use to contact the backend servers. | "" | No |
-| `maxVersion` | Defines a TLS maximum version to use to contact the backend servers. | "" | No |
+| `cipherSuites` | Defines the cipher suites to use when contacting backend servers. | [] | No |
+| `minVersion` | Defines the minimum TLS version to use when contacting backend servers. | "" | No |
+| `maxVersion` | Defines the maximum TLS version to use when contacting backend servers. | "" | No |
 | <a id="opt-maxIdleConnsPerHost" href="#opt-maxIdleConnsPerHost" title="#opt-maxIdleConnsPerHost">`maxIdleConnsPerHost`</a> | Maximum idle (keep-alive) connections to keep per-host.                                                                                  | 200     | No       |
 | <a id="opt-disableHTTP2" href="#opt-disableHTTP2" title="#opt-disableHTTP2">`disableHTTP2`</a> | Disables HTTP/2 for connections with servers.                                                                                            | false   | No       |
 | <a id="opt-peerCertURI" href="#opt-peerCertURI" title="#opt-peerCertURI">`peerCertURI`</a> | Defines the URI used to match against SAN URIs during the server's certificate verification.                                             | ""      | No       |

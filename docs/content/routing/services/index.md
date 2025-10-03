@@ -804,7 +804,14 @@ data:
 
 _Optional_
 
-`cipherSuites` defines a list of cipher to use to contact the backend servers.
+`cipherSuites` defines the cipher suites to use when contacting backend servers.
+
+This option allows you to control the cryptographic algorithms used for backend connections, which is useful for:
+- Connecting to legacy backends that only support specific cipher suites
+- Enforcing security policies (e.g., requiring Perfect Forward Secrecy)
+- Meeting compliance requirements
+
+If not specified, Go's default cipher suites are used.
 
 ```yaml tab="File (YAML)"
 ## Dynamic configuration
@@ -838,7 +845,17 @@ spec:
 
 _Optional_
 
-`minVersion` defines TLS minimum version to use to contact the backend servers.
+`minVersion` defines the minimum TLS version to use when contacting backend servers.
+
+Use this option to enforce a minimum security level for backend connections.
+
+!!! info "Valid Values"
+    - `VersionTLS10` (discouraged - deprecated and insecure)
+    - `VersionTLS11` (discouraged - deprecated and insecure)
+    - `VersionTLS12` (recommended minimum)
+    - `VersionTLS13` (most secure)
+
+If not specified, Go's default minimum version is used.
 
 ```yaml tab="File (YAML)"
 ## Dynamic configuration
@@ -868,7 +885,18 @@ spec:
 
 _Optional_
 
-`maxVersion` defines TLS maximum version to use to contact the backend servers.
+`maxVersion` defines the maximum TLS version to use when contacting backend servers.
+
+!!! warning "Use with Caution"
+    We discourage using this option to disable TLS 1.3. It should only be used for connecting to legacy backends that don't support newer TLS versions.
+
+!!! info "Valid Values"
+    - `VersionTLS10`
+    - `VersionTLS11`
+    - `VersionTLS12`
+    - `VersionTLS13`
+
+If not specified, Go's default maximum version (latest) is used.
 
 ```yaml tab="File (YAML)"
 ## Dynamic configuration

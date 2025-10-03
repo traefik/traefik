@@ -2282,8 +2282,8 @@ spec:
                   type: string
                 type: array
               cipherSuites:
-                description: CipherSuites defines a list of cipher to use to contact
-                  the backend servers.
+                description: CipherSuites defines the cipher suites to use when contacting
+                  backend servers.
                 items:
                   type: string
                 type: array
@@ -2348,12 +2348,12 @@ spec:
                 minimum: -1
                 type: integer
               maxVersion:
-                description: MaxVersion defines TLS maximum version to use to contact
-                  the backend servers.
+                description: MaxVersion defines the maximum TLS version to use when
+                  contacting backend servers.
                 type: string
               minVersion:
-                description: MinVersion defines TLS minimum version to use to contact
-                  the backend servers.
+                description: MinVersion defines the minimum TLS version to use when
+                  contacting backend servers.
                 type: string
               peerCertURI:
                 description: PeerCertURI defines the peer cert URI used to match against
