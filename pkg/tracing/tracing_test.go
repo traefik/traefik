@@ -84,7 +84,7 @@ func TestTracing(t *testing.T) {
 			assertFn: func(t *testing.T, traces ptrace.Traces) {
 				t.Helper()
 
-				attributes := getResourceAttributes(traces)
+				attributes := resourceAttributes(traces)
 				assert.Equal(t, "traefik", attributes["service.name"])
 				assert.Equal(t, "dev", attributes["service.version"])
 			},
@@ -97,7 +97,7 @@ func TestTracing(t *testing.T) {
 			assertFn: func(t *testing.T, traces ptrace.Traces) {
 				t.Helper()
 
-				attributes := getResourceAttributes(traces)
+				attributes := resourceAttributes(traces)
 				assert.Equal(t, "custom", attributes["service.environment"])
 			},
 		},
@@ -117,7 +117,7 @@ func TestTracing(t *testing.T) {
 			assertFn: func(t *testing.T, traces ptrace.Traces) {
 				t.Helper()
 
-				span := getMainSpan(traces)
+				span := mainSpan(traces)
 				assert.Equal(t, "00000000000000000000000000000001", span.TraceID().String())
 				assert.Equal(t, "0000000000000001", span.ParentSpanID().String())
 				assert.Equal(t, "foo=bar", span.TraceState().AsRaw())
@@ -134,7 +134,7 @@ func TestTracing(t *testing.T) {
 			assertFn: func(t *testing.T, traces ptrace.Traces) {
 				t.Helper()
 
-				span := getMainSpan(traces)
+				span := mainSpan(traces)
 				assert.Len(t, span.TraceID().String(), 32)
 				assert.Empty(t, span.ParentSpanID().String())
 			},
@@ -153,7 +153,7 @@ func TestTracing(t *testing.T) {
 			assertFn: func(t *testing.T, traces ptrace.Traces) {
 				t.Helper()
 
-				span := getMainSpan(traces)
+				span := mainSpan(traces)
 				assert.Equal(t, "00000000000000000000000000000001", span.TraceID().String())
 				assert.Equal(t, "0000000000000002", span.ParentSpanID().String())
 			},
@@ -169,7 +169,7 @@ func TestTracing(t *testing.T) {
 			assertFn: func(t *testing.T, traces ptrace.Traces) {
 				t.Helper()
 
-				span := getMainSpan(traces)
+				span := mainSpan(traces)
 				assert.Len(t, span.TraceID().String(), 32)
 				assert.Empty(t, span.ParentSpanID().String())
 			},
@@ -194,7 +194,7 @@ func TestTracing(t *testing.T) {
 			assertFn: func(t *testing.T, traces ptrace.Traces) {
 				t.Helper()
 
-				span := getMainSpan(traces)
+				span := mainSpan(traces)
 				assert.Equal(t, "00000000000000000000000000000001", span.TraceID().String())
 				assert.Equal(t, "0000000000000002", span.ParentSpanID().String())
 			},
@@ -212,7 +212,7 @@ func TestTracing(t *testing.T) {
 			assertFn: func(t *testing.T, traces ptrace.Traces) {
 				t.Helper()
 
-				span := getMainSpan(traces)
+				span := mainSpan(traces)
 				assert.Len(t, span.TraceID().String(), 32)
 				assert.Empty(t, span.ParentSpanID().String())
 			},
@@ -243,7 +243,7 @@ func TestTracing(t *testing.T) {
 			assertFn: func(t *testing.T, traces ptrace.Traces) {
 				t.Helper()
 
-				span := getMainSpan(traces)
+				span := mainSpan(traces)
 				assert.Equal(t, "00000000000000000000000000000001", span.TraceID().String())
 				assert.Len(t, span.ParentSpanID().String(), 16)
 			},
@@ -259,7 +259,7 @@ func TestTracing(t *testing.T) {
 			assertFn: func(t *testing.T, traces ptrace.Traces) {
 				t.Helper()
 
-				span := getMainSpan(traces)
+				span := mainSpan(traces)
 				assert.Len(t, span.TraceID().String(), 32)
 				assert.Empty(t, span.ParentSpanID().String())
 			},
@@ -278,7 +278,7 @@ func TestTracing(t *testing.T) {
 			assertFn: func(t *testing.T, traces ptrace.Traces) {
 				t.Helper()
 
-				span := getMainSpan(traces)
+				span := mainSpan(traces)
 				assert.Equal(t, "5759e988bd862e3fe1be46a994272793", span.TraceID().String())
 				assert.Len(t, span.ParentSpanID().String(), 16)
 			},
@@ -294,7 +294,7 @@ func TestTracing(t *testing.T) {
 			assertFn: func(t *testing.T, traces ptrace.Traces) {
 				t.Helper()
 
-				span := getMainSpan(traces)
+				span := mainSpan(traces)
 				assert.Len(t, span.TraceID().String(), 32)
 				assert.Empty(t, span.ParentSpanID().String())
 			},
@@ -310,7 +310,7 @@ func TestTracing(t *testing.T) {
 			assertFn: func(t *testing.T, traces ptrace.Traces) {
 				t.Helper()
 
-				span := getMainSpan(traces)
+				span := mainSpan(traces)
 				assert.Len(t, span.TraceID().String(), 32)
 				assert.Empty(t, span.ParentSpanID().String())
 			},
@@ -476,8 +476,8 @@ func TestNewTracer_HeadersCanonicalization(t *testing.T) {
 	}
 }
 
-// getResourceAttributes extracts resource attributes as a map
-func getResourceAttributes(traces ptrace.Traces) map[string]string {
+// resourceAttributes extracts resource attributes as a map.
+func resourceAttributes(traces ptrace.Traces) map[string]string {
 	attributes := make(map[string]string)
 	if traces.ResourceSpans().Len() > 0 {
 		resource := traces.ResourceSpans().At(0).Resource()
@@ -491,8 +491,8 @@ func getResourceAttributes(traces ptrace.Traces) map[string]string {
 	return attributes
 }
 
-// getMainSpan gets the main span from traces (assumes single span for testing)
-func getMainSpan(traces ptrace.Traces) ptrace.Span {
+// mainSpan gets the main span from traces (assumes single span for testing).
+func mainSpan(traces ptrace.Traces) ptrace.Span {
 	for _, resourceSpans := range traces.ResourceSpans().All() {
 		for _, scopeSpans := range resourceSpans.ScopeSpans().All() {
 			if scopeSpans.Spans().Len() > 0 {

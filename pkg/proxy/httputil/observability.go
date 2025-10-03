@@ -14,6 +14,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/tracing"
 	"go.opentelemetry.io/otel/attribute"
 	semconv "go.opentelemetry.io/otel/semconv/v1.37.0"
+	"go.opentelemetry.io/otel/semconv/v1.37.0/httpconv"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -67,8 +68,7 @@ func (t *wrapper) RoundTrip(req *http.Request) (*http.Response, error) {
 		span.End(trace.WithTimestamp(end))
 	}
 
-	if !observability.SemConvMetricsEnabled(req.Context()) ||
-		t.semConvMetricRegistry == nil {
+	if !observability.SemConvMetricsEnabled(req.Context()) || t.semConvMetricRegistry == nil {
 		return response, err
 	}
 
@@ -85,30 +85,26 @@ func (t *wrapper) RoundTrip(req *http.Request) (*http.Response, error) {
 	attrs = append(attrs, semconv.NetworkProtocolName(strings.ToLower(req.Proto)))
 	attrs = append(attrs, semconv.NetworkProtocolVersion(observability.Proto(req.Proto)))
 
-	_, port, splitErr := net.SplitHostPort(req.URL.Host)
 	var serverPort int
+	_, port, splitErr := net.SplitHostPort(req.URL.Host)
 	if splitErr != nil {
 		switch req.URL.Scheme {
 		case "http":
 			serverPort = 80
-			attrs = append(attrs, semconv.ServerPort(80))
+			attrs = append(attrs, semconv.ServerPort(serverPort))
 		case "https":
 			serverPort = 443
-			attrs = append(attrs, semconv.ServerPort(443))
+			attrs = append(attrs, semconv.ServerPort(serverPort))
 		}
 	} else {
-		intPort, _ := strconv.Atoi(port)
-		serverPort = intPort
-		attrs = append(attrs, semconv.ServerPort(intPort))
+		serverPort, _ := strconv.Atoi(port)
+		attrs = append(attrs, semconv.ServerPort(serverPort))
 	}
 
 	attrs = append(attrs, semconv.URLScheme(req.Header.Get("X-Forwarded-Proto")))
 
-	// Convert method to httpconv enum
-	methodAttr := observability.AttrFromRequestMethod(req.Method)
-
 	t.semConvMetricRegistry.HTTPClientRequestDuration().Record(req.Context(), end.Sub(start).Seconds(),
-		methodAttr, req.URL.Host, serverPort, attrs...)
+		httpconv.RequestMethodAttr(req.Method), req.URL.Host, serverPort, attrs...)
 
 	return response, err
 }

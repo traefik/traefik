@@ -70,38 +70,12 @@ func (e *semConvServerMetrics) ServeHTTP(rw http.ResponseWriter, req *http.Reque
 		attrs = append(attrs, attribute.Key("error.type").String(strconv.Itoa(capt.StatusCode())))
 	}
 
-	// Additional optional attributes
+	// Additional optional attributes.
 	attrs = append(attrs, semconv.HTTPResponseStatusCode(capt.StatusCode()))
 	attrs = append(attrs, semconv.NetworkProtocolName(strings.ToLower(req.Proto)))
 	attrs = append(attrs, semconv.NetworkProtocolVersion(Proto(req.Proto)))
 	attrs = append(attrs, semconv.ServerAddress(req.Host))
 
-	methodAttr := AttrFromRequestMethod(req.Method)
-
 	e.semConvMetricRegistry.HTTPServerRequestDuration().Record(req.Context(), end.Sub(start).Seconds(),
-		methodAttr, req.Header.Get("X-Forwarded-Proto"), attrs...)
-}
-
-func AttrFromRequestMethod(method string) httpconv.RequestMethodAttr {
-	// Convert method to httpconv enum
-	var methodAttr httpconv.RequestMethodAttr
-	switch method {
-	case http.MethodGet:
-		methodAttr = httpconv.RequestMethodGet
-	case http.MethodPost:
-		methodAttr = httpconv.RequestMethodPost
-	case http.MethodPut:
-		methodAttr = httpconv.RequestMethodPut
-	case http.MethodDelete:
-		methodAttr = httpconv.RequestMethodDelete
-	case http.MethodHead:
-		methodAttr = httpconv.RequestMethodHead
-	case http.MethodOptions:
-		methodAttr = httpconv.RequestMethodOptions
-	case http.MethodPatch:
-		methodAttr = httpconv.RequestMethodPatch
-	default:
-		methodAttr = httpconv.RequestMethodOther
-	}
-	return methodAttr
+		httpconv.RequestMethodAttr(req.Method), req.Header.Get("X-Forwarded-Proto"), attrs...)
 }
