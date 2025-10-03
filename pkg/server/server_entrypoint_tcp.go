@@ -631,6 +631,12 @@ func newHTTPServer(ctx context.Context, ln net.Listener, configuration *static.E
 	if configuration.HTTP2.MaxConcurrentStreams < 0 {
 		return nil, errors.New("max concurrent streams value must be greater than or equal to zero")
 	}
+	if configuration.HTTP2.MaxDecoderHeaderTableSize < 0 {
+		return nil, errors.New("max decoder header table size value must be greater than or equal to zero")
+	}
+	if configuration.HTTP2.MaxEncoderHeaderTableSize < 0 {
+		return nil, errors.New("max encoder header table size value must be greater than or equal to zero")
+	}
 
 	httpSwitcher := middlewares.NewHandlerSwitcher(http.NotFoundHandler())
 
@@ -688,7 +694,9 @@ func newHTTPServer(ctx context.Context, ln net.Listener, configuration *static.E
 		IdleTimeout:    time.Duration(configuration.Transport.RespondingTimeouts.IdleTimeout),
 		MaxHeaderBytes: configuration.HTTP.MaxHeaderBytes,
 		HTTP2: &http.HTTP2Config{
-			MaxConcurrentStreams: int(configuration.HTTP2.MaxConcurrentStreams),
+			MaxConcurrentStreams:      int(configuration.HTTP2.MaxConcurrentStreams),
+			MaxDecoderHeaderTableSize: int(configuration.HTTP2.MaxDecoderHeaderTableSize),
+			MaxEncoderHeaderTableSize: int(configuration.HTTP2.MaxEncoderHeaderTableSize),
 		},
 	}
 	if debugConnection || (configuration.Transport != nil && (configuration.Transport.KeepAliveMaxTime > 0 || configuration.Transport.KeepAliveMaxRequests > 0)) {
