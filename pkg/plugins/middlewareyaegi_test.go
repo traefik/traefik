@@ -19,7 +19,7 @@ func TestNewInterpreter_SyscallErrorCase(t *testing.T) {
 		UseUnsafe: false, // But admin doesn't allow it
 	}
 
-	ctx := context.Background()
+	ctx := t.Context()
 	_, err := newInterpreter(ctx, "/tmp", manifest, settings)
 
 	// This proves our security gate logic works
@@ -70,7 +70,7 @@ func TestNewYaegiMiddlewareBuilder_WithSyscallSupport(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			ctx := context.Background()
+			ctx := t.Context()
 
 			// Set GOPATH to include our fixtures directory
 			goPath := "fixtures"
@@ -135,6 +135,7 @@ func getPluginPackage(pluginType string) string {
 
 // Helper to verify that unsafe/syscall functions actually work by invoking the middleware
 func verifyMiddlewareWorks(t *testing.T, builder *yaegiMiddlewareBuilder) {
+	t.Helper()
 	// Create a middleware instance - this will call the plugin's New() function
 	// which uses unsafe/syscall, proving they work
 	middleware, err := builder.newMiddleware(map[string]interface{}{
