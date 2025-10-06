@@ -61,7 +61,7 @@ func TestConcatFieldHandler_ServeHTTP(t *testing.T) {
 				logData.Core[RouterName] = test.existingValue
 			}
 
-			req := httptest.NewRequest("GET", "/test", nil)
+			req := httptest.NewRequest(http.MethodGet, "/test", nil)
 			req = req.WithContext(context.WithValue(req.Context(), DataTableKey, logData))
 
 			handler := NewConcatFieldHandler(nextHandler, RouterName, test.newValue)
@@ -85,7 +85,7 @@ func TestConcatFieldHandler_ServeHTTP_NoLogData(t *testing.T) {
 	handler := NewConcatFieldHandler(nextHandler, RouterName, "router1")
 
 	// Create request without LogData in context.
-	req := httptest.NewRequest("GET", "/test", nil)
+	req := httptest.NewRequest(http.MethodGet, "/test", nil)
 	rec := httptest.NewRecorder()
 
 	handler.ServeHTTP(rec, req)

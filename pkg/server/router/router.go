@@ -236,14 +236,15 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 	var err error
 
 	// Check if this router has child routers or a service
-	if len(router.ChildRefs) > 0 {
+	switch {
+	case len(router.ChildRefs) > 0:
 		// This router routes to child routers - create a muxer for them
 		nextHandler, err = m.buildChildRoutersMuxer(ctx, router.ChildRefs)
 		if err != nil {
 			return nil, fmt.Errorf("building child routers muxer: %w", err)
 		}
 		serviceName = fmt.Sprintf("%s-routing", routerName)
-	} else if router.Service != "" {
+	case router.Service != "":
 		// This router routes to a service
 		qualifiedService := provider.GetQualifiedName(ctx, router.Service)
 		nextHandler, err = m.serviceManager.BuildHTTP(ctx, qualifiedService)
@@ -251,7 +252,7 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 			return nil, err
 		}
 		serviceName = qualifiedService
-	} else {
+	default:
 		return nil, errors.New("the router must have either a service or child routers")
 	}
 
@@ -310,19 +311,19 @@ func (m *Manager) ParseRouterTree() {
 
 		// Check for non-root router with TLS config
 		if router.TLS != nil {
-			router.AddError(fmt.Errorf("non-root router cannot have TLS configuration"), true)
+			router.AddError(errors.New("non-root router cannot have TLS configuration"), true)
 			continue
 		}
 
 		// Check for non-root router with Observability config
 		if router.Observability != nil {
-			router.AddError(fmt.Errorf("non-root router cannot have Observability configuration"), true)
+			router.AddError(errors.New("non-root router cannot have Observability configuration"), true)
 			continue
 		}
 
 		// Check for non-root router with Entrypoint config
 		if router.EntryPoints != nil {
-			router.AddError(fmt.Errorf("non-root router cannot have Entrypoints configuration"), true)
+			router.AddError(errors.New("non-root router cannot have Entrypoints configuration"), true)
 			continue
 		}
 	}
@@ -342,19 +343,19 @@ func (m *Manager) ParseRouterTree() {
 	for routerName, router := range m.conf.Routers {
 		// Set status for all routers based on reachability
 		if !visited[routerName] {
-			router.AddError(fmt.Errorf("router is not reachable"), true)
+			router.AddError(errors.New("router is not reachable"), true)
 			continue
 		}
 
 		// Detect dead-end routers (no service + no children) - AFTER cycle handling
 		if router.Service == "" && len(router.ChildRefs) == 0 {
-			router.AddError(fmt.Errorf("router has no service and no child routers"), true)
+			router.AddError(errors.New("router has no service and no child routers"), true)
 			continue
 		}
 
 		// Check for router with service that is referenced as a parent
 		if router.Service != "" && len(router.ChildRefs) > 0 {
-			router.AddError(fmt.Errorf("router has both a service and is referenced as a parent by other routers"), true)
+			router.AddError(errors.New("router has both a service and is referenced as a parent by other routers"), true)
 			continue
 		}
 	}
@@ -397,7 +398,7 @@ func (m *Manager) traverse(routerName string, visited, currentPath map[string]bo
 	currentPath[routerName] = false
 }
 
-// handleCycle handles cycle detection and removes the victim from guilty router's ChildRefs
+// handleCycle handles cycle detection and removes the victim from guilty router's ChildRefs.
 func (m *Manager) handleCycle(victimRouter string, path []string) {
 	// Find where the cycle starts in the path
 	cycleStart := -1

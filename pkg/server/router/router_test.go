@@ -1479,7 +1479,7 @@ func TestManager_buildChildRoutersMuxer(t *testing.T) {
 			manager.ParseRouterTree()
 
 			// Build the child routers muxer
-			ctx := context.Background()
+			ctx := t.Context()
 			muxer, err := manager.buildChildRoutersMuxer(ctx, test.childRefs)
 
 			if test.expectedError != "" {
@@ -1499,7 +1499,7 @@ func TestManager_buildChildRoutersMuxer(t *testing.T) {
 			// Test that the muxer routes requests correctly
 			for _, req := range test.expectedRequests {
 				recorder := httptest.NewRecorder()
-				request := httptest.NewRequest("GET", req.path, nil)
+				request := httptest.NewRequest(http.MethodGet, req.path, nil)
 				muxer.ServeHTTP(recorder, request)
 
 				assert.Equal(t, req.statusCode, recorder.Code, "unexpected status code for path %s", req.path)
@@ -1510,12 +1510,15 @@ func TestManager_buildChildRoutersMuxer(t *testing.T) {
 
 func TestManager_buildHTTPHandler_WithChildRouters(t *testing.T) {
 	testCases := []struct {
-		desc           string
-		router         *runtime.RouterInfo
-		childRouters   map[string]*dynamic.Router
-		services       map[string]*dynamic.Service
-		expectedError  string
-		validateResult func(t *testing.T, handler http.Handler)
+		desc             string
+		router           *runtime.RouterInfo
+		childRouters     map[string]*dynamic.Router
+		services         map[string]*dynamic.Service
+		expectedError    string
+		expectedRequests []struct {
+			path       string
+			statusCode int
+		}
 	}{
 		{
 			desc: "router with child routers",
@@ -1547,14 +1550,11 @@ func TestManager_buildHTTPHandler_WithChildRouters(t *testing.T) {
 					},
 				},
 			},
-			validateResult: func(t *testing.T, handler http.Handler) {
-				assert.NotNil(t, handler)
-
-				// Test request to unknown path returns 404
-				recorder := httptest.NewRecorder()
-				request := httptest.NewRequest("GET", "/unknown", nil)
-				handler.ServeHTTP(recorder, request)
-				assert.Equal(t, http.StatusNotFound, recorder.Code)
+			expectedRequests: []struct {
+				path       string
+				statusCode int
+			}{
+				{path: "/unknown", statusCode: http.StatusNotFound},
 			},
 		},
 		{
@@ -1572,9 +1572,10 @@ func TestManager_buildHTTPHandler_WithChildRouters(t *testing.T) {
 					},
 				},
 			},
-			validateResult: func(t *testing.T, handler http.Handler) {
-				assert.NotNil(t, handler)
-			},
+			expectedRequests: []struct {
+				path       string
+				statusCode int
+			}{},
 		},
 		{
 			desc: "router with neither service nor child routers - error",
@@ -1669,7 +1670,7 @@ func TestManager_buildHTTPHandler_WithChildRouters(t *testing.T) {
 			manager.ParseRouterTree()
 
 			// Build the HTTP handler
-			ctx := context.Background()
+			ctx := t.Context()
 			handler, err := manager.buildHTTPHandler(ctx, test.router, "test-router")
 
 			if test.expectedError != "" {
@@ -1679,8 +1680,15 @@ func TestManager_buildHTTPHandler_WithChildRouters(t *testing.T) {
 			}
 
 			require.NoError(t, err)
-			if test.validateResult != nil {
-				test.validateResult(t, handler)
+			require.NotNil(t, handler)
+
+			// Test that the handler routes requests correctly
+			for _, req := range test.expectedRequests {
+				recorder := httptest.NewRecorder()
+				request := httptest.NewRequest(http.MethodGet, req.path, nil)
+				handler.ServeHTTP(recorder, request)
+
+				assert.Equal(t, req.statusCode, recorder.Code, "unexpected status code for path %s", req.path)
 			}
 		})
 	}
@@ -1688,11 +1696,15 @@ func TestManager_buildHTTPHandler_WithChildRouters(t *testing.T) {
 
 func TestManager_BuildHandlers_WithChildRouters(t *testing.T) {
 	testCases := []struct {
-		desc        string
-		routers     map[string]*dynamic.Router
-		services    map[string]*dynamic.Service
-		entryPoints []string
-		validate    func(t *testing.T, handlers map[string]http.Handler)
+		desc               string
+		routers            map[string]*dynamic.Router
+		services           map[string]*dynamic.Service
+		entryPoints        []string
+		expectedEntryPoint string
+		expectedRequests   []struct {
+			path       string
+			statusCode int
+		}
 	}{
 		{
 			desc: "parent router with child routers",
@@ -1724,17 +1736,13 @@ func TestManager_BuildHandlers_WithChildRouters(t *testing.T) {
 					},
 				},
 			},
-			entryPoints: []string{"web"},
-			validate: func(t *testing.T, handlers map[string]http.Handler) {
-				assert.Contains(t, handlers, "web")
-				assert.NotNil(t, handlers["web"])
-
-				// Test that the handler works
-				recorder := httptest.NewRecorder()
-				request := httptest.NewRequest("GET", "/unknown", nil)
-				request.Host = "test.com"
-				handlers["web"].ServeHTTP(recorder, request)
-				assert.Equal(t, http.StatusNotFound, recorder.Code)
+			entryPoints:        []string{"web"},
+			expectedEntryPoint: "web",
+			expectedRequests: []struct {
+				path       string
+				statusCode int
+			}{
+				{path: "/unknown", statusCode: http.StatusNotFound},
 			},
 		},
 		{
@@ -1771,11 +1779,12 @@ func TestManager_BuildHandlers_WithChildRouters(t *testing.T) {
 					},
 				},
 			},
-			entryPoints: []string{"web"},
-			validate: func(t *testing.T, handlers map[string]http.Handler) {
-				assert.Contains(t, handlers, "web")
-				assert.NotNil(t, handlers["web"])
-			},
+			entryPoints:        []string{"web"},
+			expectedEntryPoint: "web",
+			expectedRequests: []struct {
+				path       string
+				statusCode int
+			}{},
 		},
 	}
 
@@ -1814,11 +1823,21 @@ func TestManager_BuildHandlers_WithChildRouters(t *testing.T) {
 			manager.ParseRouterTree()
 
 			// Build handlers
-			ctx := context.Background()
+			ctx := t.Context()
 			handlers := manager.BuildHandlers(ctx, test.entryPoints, false)
 
-			if test.validate != nil {
-				test.validate(t, handlers)
+			require.Contains(t, handlers, test.expectedEntryPoint)
+			handler := handlers[test.expectedEntryPoint]
+			require.NotNil(t, handler)
+
+			// Test that the handler routes requests correctly
+			for _, req := range test.expectedRequests {
+				recorder := httptest.NewRecorder()
+				request := httptest.NewRequest(http.MethodGet, req.path, nil)
+				request.Host = "test.com"
+				handler.ServeHTTP(recorder, request)
+
+				assert.Equal(t, req.statusCode, recorder.Code, "unexpected status code for path %s", req.path)
 			}
 		})
 	}
