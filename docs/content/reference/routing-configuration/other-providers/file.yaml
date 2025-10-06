@@ -11,6 +11,9 @@ http:
         - foobar
       service: foobar
       rule: foobar
+      parentRefs:
+        - foobar
+        - foobar
       ruleSyntax: foobar
       priority: 42
       tls:
@@ -39,6 +42,9 @@ http:
         - foobar
       service: foobar
       rule: foobar
+      parentRefs:
+        - foobar
+        - foobar
       ruleSyntax: foobar
       priority: 42
       tls:
