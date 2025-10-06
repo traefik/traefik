@@ -321,8 +321,11 @@ func (m *Manager) ParseRouterTree() {
 			continue
 		}
 
-		// FIXME
 		// Check for non-root router with Entrypoint config
+		if router.EntryPoints != nil {
+			router.AddError(fmt.Errorf("non-root router cannot have Entrypoints configuration"), true)
+			continue
+		}
 	}
 	sort.Strings(rootRouters)
 
