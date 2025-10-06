@@ -1022,6 +1022,28 @@ func TestManager_ComputeMultiLayerRouting(t *testing.T) {
 				"B": {"non-root router cannot have Observability configuration"},
 			},
 		},
+		{
+			desc: "Non-root router with EntryPoints config",
+			routers: map[string]*dynamic.Router{
+				"A": {},
+				"B": {
+					ParentRefs:  []string{"A"},
+					Service:     "B-service",
+					EntryPoints: []string{"web"},
+				},
+			},
+			expectedStatuses: map[string]string{
+				"A": runtime.StatusEnabled,
+				"B": runtime.StatusDisabled,
+			},
+			expectedChildRefs: map[string][]string{
+				"A": {"B"},
+				"B": nil,
+			},
+			expectedErrors: map[string][]string{
+				"B": {"non-root router cannot have Entrypoints configuration"},
+			},
+		},
 
 		{
 			desc: "Router with non-existing parent",
