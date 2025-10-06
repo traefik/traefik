@@ -1,109 +1,106 @@
 ---
 title: "Traefik Knative Documentation"
-description: "Learn how to use the Knative as a provider for configuration discovery in Traefik Proxy. Read the 
-technical documentation."
+description: "Learn how to use the Knative as a provider for configuration discovery in Traefik Proxy. Read the technical documentation."
 ---
 
 # Traefik & Knative
 
-The Knative Provider.
-{: .subtitle }
-
-The Traefik Knative provider integrates with Knative to manage service access, enabling the use of Traefik Proxy as a router.
-It fully supports all routing types.
+The Traefik Knative provider integrates with Knative to manage service access, enabling the use of Traefik Proxy as a Knative networking layer.
 
 ## Requirements
 
 {!kubernetes-requirements.md!}
 
-## Installation
+1. Install/update the Knative CRDs.
 
-1. Update the cluster role to include necessary permissions.
-
-    ```yaml tab="ClusterRole"
-    
-          - apiGroups: 
-              - networking.internal.knative.dev
-            resources:
-              - ingresses
-              - serverlessservices
-            verbs:
-              - get
-              - list
-              - watch
-              - patch
-          - apiGroups:
-             - networking.internal.knative.dev
-            resources:
-              - ingresses
-              - clusteringresses
-              - ingresses/status
-              - clusteringresses/status
-            verbs:
-              - update
-    ```
-   
-2. Install/update the Knative CRDs.
-
-    ```bash tab="Install CRDs"
-    # Install Knative CRDs from the Standard channel.
+    ```bash
     kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.17.0/serving-crds.yaml
     ```
 
-3. Install the Knative Serving core components.
+2. Install the Knative Serving core components.
 
-    ```bash tab="Install Knative Serving"
-    # Install Knative Serving core components.
+    ```bash
     kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.17.0/serving-core.yaml
     ```
-   
-4. Update the config-network configuration to use the Traefik ingress class.
 
-    ```bash tab="Update config-network"
+3. Update the config-network configuration to use the Traefik ingress class.
+
+    ```bash
        kubectl patch configmap/config-network \
        -n knative-serving \
        --type merge \
        -p '{"data":{"ingress.class":"traefik.ingress.networking.knative.dev"}}'
     ```
-   
-5. (Optional) Add a custom domain to your Knative configuration.
 
-    ```bash tab="Add custom domain"
+4. Add a custom domain to your Knative configuration (Optional).
+
+    ```bash
     kubectl patch configmap config-domain \
       -n knative-serving \
       --type='merge' \
       -p='{"data":{"example.com":""}}'
     ```
-   
-6. Deploy Traefik and enable the `knative` provider in the static configuration as detailed below:
 
-       ```yaml tab="File (YAML)"
-       providers:
-         knative: {}
-       ```
+5. Install/update the Traefik [RBAC](../../../dynamic-configuration/kubernetes-knative-rbac.yml).
 
-       ```toml tab="File (TOML)"
-       [providers.knative]
-       ```
+    ```bash
+    kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.6/docs/content/reference/dynamic-configuration/kubernetes-knative-rbac.yml
+    ```
 
-       ```bash tab="CLI"
-       --providers.knative=true
-       ```
+## Configuration Example
 
-## Routing Configuration
+As this provider is an experimental feature, it needs to be enabled in the experimental and in the provider sections of the configuration.
+You can enable the Knative provider as detailed below:
 
-See the dedicated section in [routing](../../../routing-configuration/kubernetes/knative.md).
+```yaml tab="File (YAML)"
+experimental:
+  knative: true
+
+providers:
+  knative: {}
+```
+
+```toml tab="File (TOML)"
+[experimental.knative]
+
+[providers.knative]
+```
+
+```bash tab="CLI"
+--experimental.knative=true
+--providers.knative=true
+```
 
 The Knative provider uses the Knative API to retrieve its routing configuration.
 The provider then watches for incoming Knative events and derives the corresponding dynamic configuration from it.
 
-## Provider Configuration
+## Configuration Options
+
+<!-- markdownlint-disable MD013 -->
+
+| Field                                                                                                                                                                                                    | Description                                                                                                                                                                                                                                                                                                                                                                          | Default | Required |
+|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------|:---------|
+| <a id="providers-providersThrottleDuration" href="#providers-providersThrottleDuration" title="#providers-providersThrottleDuration">`providers.providersThrottleDuration`</a>                           | Minimum amount of time to wait for, after a configuration reload, before taking into account any new configuration refresh event.<br />If multiple events occur within this time, only the most recent one is taken into account, and all others are discarded.<br />**This option cannot be set per provider, but the throttling algorithm applies to each of them independently.** | 2s      | No       |
+| <a id="providers-knative-certauthfilepath" href="#providers-knative-certauthfilepath" title="#providers-knative-certauthfilepath">providers.knative.certauthfilepath</a>                                 | Kubernetes certificate authority file path (not needed for in-cluster client).                                                                                                                                                                                                                                                                                                       |         |
+| <a id="providers-knative-endpoint" href="#providers-knative-endpoint" title="#providers-knative-endpoint">providers.knative.endpoint</a>                                                                 | Kubernetes server endpoint (required for external cluster client).                                                                                                                                                                                                                                                                                                                   |         |
+| <a id="providers-knative-token" href="#providers-knative-token" title="#providers-knative-token">providers.knative.token</a>                                                                             | Kubernetes bearer token (not needed for in-cluster client).                                                                                                                                                                                                                                                                                                                          |         |
+| <a id="providers-knative-throttleduration" href="#providers-knative-throttleduration" title="#providers-knative-throttleduration">providers.knative.throttleduration</a>                                 | Ingress refresh throttle duration                                                                                                                                                                                                                                                                                                                                                    | 0       |
+| <a id="providers-knative-namespaces" href="#providers-knative-namespaces" title="#providers-knative-namespaces">providers.knative.namespaces</a>                                                         | Kubernetes namespaces.                                                                                                                                                                                                                                                                                                                                                               |         |
+| <a id="providers-knative-labelselector" href="#providers-knative-labelselector" title="#providers-knative-labelselector">providers.knative.labelselector</a>                                             | Kubernetes label selector to use.                                                                                                                                                                                                                                                                                                                                                    |         |
+| <a id="providers-knative-privateentrypoints" href="#providers-knative-privateentrypoints" title="#providers-knative-privateentrypoints">providers.knative.privateentrypoints</a>                         | Entrypoint names used to expose the Ingress privately. If empty local Ingresses are skipped.                                                                                                                                                                                                                                                                                         |         |
+| <a id="providers-knative-privateservice" href="#providers-knative-privateservice" title="#providers-knative-privateservice">providers.knative.privateservice</a>                                         | Kubernetes service used to expose the networking controller privately.                                                                                                                                                                                                                                                                                                               |         |
+| <a id="providers-knative-privateservice-name" href="#providers-knative-privateservice-name" title="#providers-knative-privateservice-name">providers.knative.privateservice.name</a>                     | Name of the Kubernetes service.                                                                                                                                                                                                                                                                                                                                                      |         |
+| <a id="providers-knative-privateservice-namespace" href="#providers-knative-privateservice-namespace" title="#providers-knative-privateservice-namespace">providers.knative.privateservice.namespace</a> | Namespace of the Kubernetes service.                                                                                                                                                                                                                                                                                                                                                 |         |
+| <a id="providers-knative-publicentrypoints" href="#providers-knative-publicentrypoints" title="#providers-knative-publicentrypoints">providers.knative.publicentrypoints</a>                             | Entrypoint names used to expose the Ingress publicly. If empty an Ingress is exposed on all entrypoints.                                                                                                                                                                                                                                                                             |         |
+| <a id="providers-knative-publicservice" href="#providers-knative-publicservice" title="#providers-knative-publicservice">providers.knative.publicservice</a>                                             | Kubernetes service used to expose the networking controller publicly.                                                                                                                                                                                                                                                                                                                |         |
+| <a id="providers-knative-publicservice-name" href="#providers-knative-publicservice-name" title="#providers-knative-publicservice-name">providers.knative.publicservice.name</a>                         | Name of the Kubernetes service.                                                                                                                                                                                                                                                                                                                                                      |         |
+| <a id="providers-knative-publicservice-namespace" href="#providers-knative-publicservice-namespace" title="#providers-knative-publicservice-namespace">providers.knative.publicservice.namespace</a>     | Namespace of the Kubernetes service.                                                                                                                                                                                                                                                                                                                                                 |         |
+
+<!-- markdownlint-enable MD013 -->
 
 ### `endpoint`
 
-_Optional, Default=""_
-
-The Knative server endpoint URL.
+The Kubernetes server endpoint URL.
 
 When deployed into Kubernetes, Traefik reads the environment variables `KUBERNETES_SERVICE_HOST` and `KUBERNETES_SERVICE_PORT` or `KUBECONFIG` to construct the endpoint.
 
@@ -132,184 +129,8 @@ providers:
 ```bash tab="CLI"
 --providers.knative.endpoint=http://localhost:8080
 ```
+## Routing Configuration
 
-### `token`
-
-_Optional, Default=""_
-
-Bearer token used for the Knative client configuration.
-
-```yaml tab="File (YAML)"
-providers:
-  knative:
-    token: "mytoken"
-    # ...
-```
-
-```toml tab="File (TOML)"
-[providers.knative]
-  token = "mytoken"
-  # ...
-```
-
-```bash tab="CLI"
---providers.knative.token=mytoken
-```
-
-### `certAuthFilePath`
-
-_Optional, Default=""_
-
-Path to the certificate authority file.
-Used for the Knative client configuration.
-
-```yaml tab="File (YAML)"
-providers:
-  knative:
-    certAuthFilePath: "/my/ca.crt"
-    # ...
-```
-
-```toml tab="File (TOML)"
-[providers.knative]
-  certAuthFilePath = "/my/ca.crt"
-  # ...
-```
-
-```bash tab="CLI"
---providers.knative.certauthfilepath=/my/ca.crt
-```
-
-### `namespaces`
-
-_Optional, Default: []_
-
-Array of namespaces to watch.
-If left empty, Traefik watches all namespaces.
-
-```yaml tab="File (YAML)"
-providers:
-  knative:
-    namespaces:
-      - "default"
-      - "production"
-    # ...
-```
-
-```toml tab="File (TOML)"
-[providers.knative]
-  namespaces = ["default", "production"]
-  # ...
-```
-
-```bash tab="CLI"
---providers.knative.namespaces=default,production
-```
-
-### `labelSelector`
-
-_Optional, Default: ""_
-
-A label selector can be defined to filter on specific Knative objects only.
-If left empty, Traefik processes all Knative objects in the configured namespaces.
-
-See [label-selectors](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors) for details.
-
-```yaml tab="File (YAML)"
-providers:
-  knative:
-    labelSelector: "app=traefik"
-    # ...
-```
-
-```toml tab="File (TOML)"
-[providers.knative]
-  labelSelector = "app=traefik"
-  # ...
-```
-
-```bash tab="CLI"
---providers.knative.labelselector="app=traefik"
-```
-
-### `throttleDuration`
-
-_Optional, Default: 0_
-
-The `throttleDuration` option defines how often the provider is allowed to handle events from Knative. This prevents
-a Knative cluster that updates many times per second from continuously changing your Traefik configuration.
-
-If left empty, the provider does not apply any throttling and does not drop any Knative events.
-
-The value of `throttleDuration` should be provided in seconds or as a valid duration format,
-see [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration).
-
-```yaml tab="File (YAML)"
-providers:
-  knative:
-    throttleDuration: "10s"
-    # ...
-```
-
-```toml tab="File (TOML)"
-[providers.knative]
-  throttleDuration = "10s"
-  # ...
-```
-
-```bash tab="CLI"
---providers.knative.throttleDuration=10s
-```
-
-### `entrypoints`
-
-If no entrypoints are specified, all entrypoints are used by default.
-
-_Optional, Default: []_
-
-Array of entrypoints to use for the Knative provider.
-
-```yaml tab="File (YAML)"
-providers:
-  knative:
-    entrypoints:
-      - "web"
-      - "websecure"
-    # ...
-```
-
-```toml tab="File (TOML)"
-[providers.knative]
-  entrypoints = ["web", "websecure"]
-  # ...
-```
-
-```bash tab="CLI"
---providers.knative.entrypoints=web,websecure
-```
-
-### `entrypointsinternal`
-
-_Optional, Default: []_
-
-Array of internal entrypoints to use for the Knative provider. This can be used when no external domain is configured. 
-
-```yaml tab="File (YAML)"
-providers:
-  knative:
-    entrypointsinternal:
-      - "internal"
-    # ...
-```
-
-```toml tab="File (TOML)"
-[providers.knative]
-  entrypointsinternal = ["internal"]
-  # ...
-```
-
-```bash tab="CLI"
---providers.knative.entrypointsinternal=internal
-```
+See the dedicated section in [routing](../../../routing-configuration/kubernetes/knative.md).
 
 {!traefik-for-business-applications.md!}
