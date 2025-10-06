@@ -85,35 +85,7 @@ endpoints:
 apiVersion: v1
 kind: Service
 metadata:
-  name: missing-service
-  namespace: default
-spec:
-  ports:
-    - name: web
-      port: 9000
----
-kind: EndpointSlice
-apiVersion: discovery.k8s.io/v1
-metadata:
-  name: missing-service-abc
-  namespace: default
-  labels:
-    kubernetes.io/service-name: missing-service
-addressType: IPv4
-ports:
-  - name: web
-    port: 9000
-endpoints:
-  - addresses:
-      - 10.10.9.1
-      - 10.10.9.2
-    conditions:
-      ready: true
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: cross-child-service
+  name: cross-service
   namespace: ns-b
 spec:
   ports:
@@ -123,10 +95,10 @@ spec:
 kind: EndpointSlice
 apiVersion: discovery.k8s.io/v1
 metadata:
-  name: cross-child-service-abc
+  name: cross-service-abc
   namespace: ns-b
   labels:
-    kubernetes.io/service-name: cross-child-service
+    kubernetes.io/service-name: cross-service
 addressType: IPv4
 ports:
   - name: web
@@ -135,34 +107,6 @@ endpoints:
   - addresses:
       - 10.10.11.1
       - 10.10.11.2
-    conditions:
-      ready: true
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: denied-service
-  namespace: ns-b
-spec:
-  ports:
-    - name: web
-      port: 9000
----
-kind: EndpointSlice
-apiVersion: discovery.k8s.io/v1
-metadata:
-  name: denied-service-abc
-  namespace: ns-b
-  labels:
-    kubernetes.io/service-name: denied-service
-addressType: IPv4
-ports:
-  - name: web
-    port: 9000
-endpoints:
-  - addresses:
-      - 10.10.12.1
-      - 10.10.12.2
     conditions:
       ready: true
 ---

@@ -5353,7 +5353,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 		},
 		{
 			desc:  "IngressRoute with single parent (single route)",
-			paths: []string{"with_parent_refs_services.yml", "with_parent_refs_parent_single_route.yml", "with_parent_refs_child_single_parent.yml"},
+			paths: []string{"parent_refs_services.yml", "parent_refs_single_parent_single_route.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -5404,7 +5404,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 		},
 		{
 			desc:  "IngressRoute with single parent (multiple routes) - all parent routers in ParentRefs",
-			paths: []string{"with_parent_refs_services.yml", "with_parent_refs_parent_multiple_routes.yml", "with_parent_refs_child_multiple_parent_routes.yml"},
+			paths: []string{"parent_refs_services.yml", "parent_refs_single_parent_multiple_routes.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -5459,7 +5459,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 		},
 		{
 			desc:  "IngressRoute with multiple parents",
-			paths: []string{"with_parent_refs_services.yml", "with_parent_refs_parent_a.yml", "with_parent_refs_parent_b.yml", "with_parent_refs_child_multiple_parents.yml"},
+			paths: []string{"parent_refs_services.yml", "parent_refs_multiple_parents.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -5514,7 +5514,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 		},
 		{
 			desc:  "IngressRoute with missing parent - routers skipped",
-			paths: []string{"with_parent_refs_services.yml", "with_parent_refs_child_missing_parent.yml"},
+			paths: []string{"parent_refs_services.yml", "parent_refs_missing_parent.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -5538,7 +5538,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 		{
 			desc:                "IngressRoute with cross-namespace parent allowed",
 			allowCrossNamespace: true,
-			paths:               []string{"with_parent_refs_services.yml", "with_parent_refs_parent_ns_a.yml", "with_parent_refs_child_cross_ns_allowed.yml"},
+			paths:               []string{"parent_refs_services.yml", "parent_refs_cross_namespace_allowed.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -5590,7 +5590,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 		{
 			desc:                "IngressRoute with cross-namespace parent denied",
 			allowCrossNamespace: false,
-			paths:               []string{"with_parent_refs_services.yml", "with_parent_refs_parent_ns_a.yml", "with_parent_refs_child_cross_ns_denied.yml"},
+			paths:               []string{"parent_refs_services.yml", "parent_refs_cross_namespace_denied.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -5618,7 +5618,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 		},
 		{
 			desc:  "IngressRoute with parent namespace defaulting to child namespace",
-			paths: []string{"with_parent_refs_services.yml", "with_parent_refs_parent_default_ns.yml", "with_parent_refs_child_same_ns.yml"},
+			paths: []string{"parent_refs_services.yml", "parent_refs_default_namespace.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
