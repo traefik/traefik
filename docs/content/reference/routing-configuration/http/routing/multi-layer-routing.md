@@ -48,13 +48,13 @@ Request → EntryPoint → Parent Router → Middleware → Child Router A → S
 - Reference their parent router(s) via `parentRefs`
 - Have one or more child routers
 - **Must not** have a `service` defined
-- **Must not** have `tls` or `observability` configuration
+- **Must not** have `entryPoints`, `tls`, or `observability` configuration
 
 ### Leaf Routers
 
 - Reference their parent router(s) via `parentRefs`
 - **Must** have a `service` defined
-- **Must not** have `tls` or `observability` configuration
+- **Must not** have `entryPoints`, `tls`, or `observability` configuration
 
 ## Configuration Example
 
