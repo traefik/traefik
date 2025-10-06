@@ -175,36 +175,4 @@ Request → EntryPoint → Parent Router → Middleware → Child Router A → S
     4. If `X-User-Role: admin`, `api-admin` router matches and forwards to `admin-service`
     5. If `X-User-Role: user`, `api-user` router matches and forwards to `user-service`
 
-
-## Configuration Attributes
-
-### `parentRefs`
-
-_Optional, Default=[]_
-
-List of parent router names (for File provider) or IngressRoute references (for Kubernetes CRD).
-
-When a router has `parentRefs`, it becomes a non-root router and inherits restrictions:
-- Cannot have `tls` configuration
-- Cannot have `observability` configuration
-- Must have a `service` defined
-
-```yaml tab="File (YAML)"
-http:
-  routers:
-    child-router:
-      rule: "Path(`/child`)"
-      service: my-service
-      parentRefs:
-        - parent-router
-```
-
-```toml tab="File (TOML)"
-[http.routers]
-  [http.routers.child-router]
-    rule = "Path(`/child`)"
-    service = "my-service"
-    parentRefs = ["parent-router"]
-```
-
 {!traefik-for-business-applications.md!}

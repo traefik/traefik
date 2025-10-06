@@ -2,13 +2,23 @@
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
+  name: parent-default
+  namespace: default
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`default.example.com`)
+      kind: Rule
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
   name: child-same
   namespace: default
-
 spec:
   parentRefs:
     - name: parent-default
-      # namespace omitted - should default to same namespace as child
   routes:
     - match: Path(`/same`)
       kind: Rule
