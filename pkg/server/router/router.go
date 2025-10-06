@@ -233,24 +233,23 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 
 	var nextHandler http.Handler
 	var serviceName string
+	var err error
 
 	// Check if this router has child routers or a service
 	if len(router.ChildRefs) > 0 {
 		// This router routes to child routers - create a muxer for them
-		childMuxer, err := m.buildChildRoutersMuxer(ctx, router.ChildRefs)
+		nextHandler, err = m.buildChildRoutersMuxer(ctx, router.ChildRefs)
 		if err != nil {
 			return nil, fmt.Errorf("building child routers muxer: %w", err)
 		}
-		nextHandler = childMuxer
 		serviceName = fmt.Sprintf("%s-routing", routerName)
 	} else if router.Service != "" {
 		// This router routes to a service
 		qualifiedService := provider.GetQualifiedName(ctx, router.Service)
-		sHandler, err := m.serviceManager.BuildHTTP(ctx, qualifiedService)
+		nextHandler, err = m.serviceManager.BuildHTTP(ctx, qualifiedService)
 		if err != nil {
 			return nil, err
 		}
-		nextHandler = sHandler
 		serviceName = qualifiedService
 	} else {
 		return nil, errors.New("the router must have either a service or child routers")
@@ -445,13 +444,14 @@ func (m *Manager) buildChildRoutersMuxer(ctx context.Context, childRefs []string
 	// Set a default handler for the child muxer (404 Not Found)
 	childMuxer.SetDefaultHandler(http.NotFoundHandler())
 
+	childCount := 0
+
 	for _, childName := range childRefs {
 		childRouter, exists := m.conf.Routers[childName]
 		if !exists {
 			return nil, fmt.Errorf("child router %q does not exist", childName)
 		}
 
-		// Fixme: risk of building an empty muxer if all child routers have errors.
 		// Skip child routers with errors
 		if len(childRouter.Err) > 0 {
 			continue
@@ -479,6 +479,13 @@ func (m *Manager) buildChildRoutersMuxer(ctx context.Context, childRefs []string
 			logger.Error().Err(err).Send()
 			continue
 		}
+
+		childCount++
+	}
+
+	// Prevent empty muxer
+	if childCount == 0 {
+		return nil, fmt.Errorf("no child routers could be added to muxer (%d skipped)", len(childRefs))
 	}
 
 	return childMuxer, nil

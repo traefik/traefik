@@ -1174,6 +1174,36 @@ func TestManager_ComputeMultiLayerRouting(t *testing.T) {
 				"D": {"cyclic reference detected in router tree: B -> C -> D -> B"},
 			},
 		},
+		{
+			desc: "Parent router with all children having errors",
+			routers: map[string]*dynamic.Router{
+				"parent": {},
+				"child-a": {
+					ParentRefs: []string{"parent"},
+					Service:    "child-a-service",
+					TLS:        &dynamic.RouterTLSConfig{}, // Invalid: non-root cannot have TLS
+				},
+				"child-b": {
+					ParentRefs: []string{"parent"},
+					Service:    "child-b-service",
+					TLS:        &dynamic.RouterTLSConfig{}, // Invalid: non-root cannot have TLS
+				},
+			},
+			expectedStatuses: map[string]string{
+				"parent":  runtime.StatusEnabled, // Enabled during ParseRouterTree (no config errors). Would be disabled during handler building when empty muxer is detected.
+				"child-a": runtime.StatusDisabled,
+				"child-b": runtime.StatusDisabled,
+			},
+			expectedChildRefs: map[string][]string{
+				"parent":  {"child-a", "child-b"},
+				"child-a": nil,
+				"child-b": nil,
+			},
+			expectedErrors: map[string][]string{
+				"child-a": {"non-root router cannot have TLS configuration"},
+				"child-b": {"non-root router cannot have TLS configuration"},
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -1225,24 +1255,6 @@ func TestManager_ComputeMultiLayerRouting(t *testing.T) {
 				}
 			}
 			assert.Equal(t, test.expectedErrors, gotErrors)
-
-			//for routerName, expectedErrors := range test.expectedErrors {
-			//	router := runtimeRouters[routerName]
-			//	if expectedErrors == nil {
-			//		assert.Empty(t, router.Err)
-			//	} else {
-			//		for _, expectedError := range expectedErrors {
-			//			found := false
-			//			for _, actualError := range router.Err {
-			//				if strings.Contains(actualError, expectedError) {
-			//					found = true
-			//					break
-			//				}
-			//			}
-			//			assert.True(t, found)
-			//		}
-			//	}
-			//}
 		})
 	}
 }
@@ -1254,6 +1266,7 @@ func TestManager_buildChildRoutersMuxer(t *testing.T) {
 		routers        map[string]*dynamic.Router
 		services       map[string]*dynamic.Service
 		middlewares    map[string]*dynamic.Middleware
+		expectedError  string
 		expectedStatus int
 		expectedRoutes []string
 	}{
@@ -1365,6 +1378,37 @@ func TestManager_buildChildRoutersMuxer(t *testing.T) {
 			expectedStatus: http.StatusOK,
 			expectedRoutes: []string{"intermediate"},
 		},
+		{
+			desc:      "all child routers have errors - should return error",
+			childRefs: []string{"child1", "child2"},
+			routers: map[string]*dynamic.Router{
+				"child1": {
+					Rule:       "Path(`/api`)",
+					Service:    "child1-service",
+					ParentRefs: []string{"parent"},
+					TLS:        &dynamic.RouterTLSConfig{}, // Invalid: non-root router cannot have TLS
+				},
+				"child2": {
+					Rule:       "Path(`/web`)",
+					Service:    "child2-service",
+					ParentRefs: []string{"parent"},
+					TLS:        &dynamic.RouterTLSConfig{}, // Invalid: non-root router cannot have TLS
+				},
+			},
+			services: map[string]*dynamic.Service{
+				"child1-service": {
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{{URL: "http://localhost:8080"}},
+					},
+				},
+				"child2-service": {
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{{URL: "http://localhost:8081"}},
+					},
+				},
+			},
+			expectedError: "no child routers could be added to muxer (2 skipped)",
+		},
 	}
 
 	for _, test := range testCases {
@@ -1413,6 +1457,12 @@ func TestManager_buildChildRoutersMuxer(t *testing.T) {
 			// Build the child routers muxer
 			ctx := context.Background()
 			muxer, err := manager.buildChildRoutersMuxer(ctx, test.childRefs)
+
+			if test.expectedError != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), test.expectedError)
+				return
+			}
 
 			if len(test.childRefs) == 0 {
 				assert.Error(t, err)
@@ -1521,6 +1571,42 @@ func TestManager_buildHTTPHandler_WithChildRouters(t *testing.T) {
 			},
 			expectedError: "child router \"nonexistent\" does not exist",
 		},
+		{
+			desc: "router with all children having errors - returns empty muxer error",
+			router: &runtime.RouterInfo{
+				Router: &dynamic.Router{
+					Rule: "PathPrefix(`/api`)",
+				},
+				ChildRefs: []string{"child1", "child2"},
+			},
+			childRouters: map[string]*dynamic.Router{
+				"child1": {
+					Rule:       "Path(`/api/v1`)",
+					Service:    "child1-service",
+					ParentRefs: []string{"parent"},
+					TLS:        &dynamic.RouterTLSConfig{}, // Invalid for non-root
+				},
+				"child2": {
+					Rule:       "Path(`/api/v2`)",
+					Service:    "child2-service",
+					ParentRefs: []string{"parent"},
+					TLS:        &dynamic.RouterTLSConfig{}, // Invalid for non-root
+				},
+			},
+			services: map[string]*dynamic.Service{
+				"child1-service": {
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{{URL: "http://localhost:8080"}},
+					},
+				},
+				"child2-service": {
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{{URL: "http://localhost:8081"}},
+					},
+				},
+			},
+			expectedError: "no child routers could be added to muxer (2 skipped)",
+		},
 	}
 
 	for _, test := range testCases {
@@ -1554,6 +1640,9 @@ func TestManager_buildHTTPHandler_WithChildRouters(t *testing.T) {
 			require.NoError(t, err)
 
 			manager := NewManager(conf, serviceManager, middlewareBuilder, nil, nil, parser)
+
+			// Run ParseRouterTree to validate configuration and populate ChildRefs/errors
+			manager.ParseRouterTree()
 
 			// Build the HTTP handler
 			ctx := context.Background()
