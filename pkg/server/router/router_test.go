@@ -1261,14 +1261,16 @@ func TestManager_ComputeMultiLayerRouting(t *testing.T) {
 
 func TestManager_buildChildRoutersMuxer(t *testing.T) {
 	testCases := []struct {
-		desc           string
-		childRefs      []string
-		routers        map[string]*dynamic.Router
-		services       map[string]*dynamic.Service
-		middlewares    map[string]*dynamic.Middleware
-		expectedError  string
-		expectedStatus int
-		expectedRoutes []string
+		desc             string
+		childRefs        []string
+		routers          map[string]*dynamic.Router
+		services         map[string]*dynamic.Service
+		middlewares      map[string]*dynamic.Middleware
+		expectedError    string
+		expectedRequests []struct {
+			path       string
+			statusCode int
+		}
 	}{
 		{
 			desc:      "simple child router with service",
@@ -1286,8 +1288,13 @@ func TestManager_buildChildRoutersMuxer(t *testing.T) {
 					},
 				},
 			},
-			expectedStatus: http.StatusOK,
-			expectedRoutes: []string{"child1"},
+			expectedRequests: []struct {
+				path       string
+				statusCode int
+			}{
+				{path: "/api", statusCode: http.StatusOK},
+				{path: "/unknown", statusCode: http.StatusNotFound},
+			},
 		},
 		{
 			desc:      "multiple child routers with different rules",
@@ -1314,8 +1321,14 @@ func TestManager_buildChildRoutersMuxer(t *testing.T) {
 					},
 				},
 			},
-			expectedStatus: http.StatusOK,
-			expectedRoutes: []string{"child1", "child2"},
+			expectedRequests: []struct {
+				path       string
+				statusCode int
+			}{
+				{path: "/api", statusCode: http.StatusOK},
+				{path: "/web", statusCode: http.StatusOK},
+				{path: "/unknown", statusCode: http.StatusNotFound},
+			},
 		},
 		{
 			desc:      "child router with middleware",
@@ -1341,8 +1354,13 @@ func TestManager_buildChildRoutersMuxer(t *testing.T) {
 					},
 				},
 			},
-			expectedStatus: http.StatusOK,
-			expectedRoutes: []string{"child1"},
+			expectedRequests: []struct {
+				path       string
+				statusCode int
+			}{
+				{path: "/api", statusCode: http.StatusOK},
+				{path: "/unknown", statusCode: http.StatusNotFound},
+			},
 		},
 		{
 			desc:      "nested child routers (child with its own children)",
@@ -1375,8 +1393,14 @@ func TestManager_buildChildRoutersMuxer(t *testing.T) {
 					},
 				},
 			},
-			expectedStatus: http.StatusOK,
-			expectedRoutes: []string{"intermediate"},
+			expectedRequests: []struct {
+				path       string
+				statusCode int
+			}{
+				{path: "/api/v1", statusCode: http.StatusOK},
+				{path: "/api/v2", statusCode: http.StatusOK},
+				{path: "/unknown", statusCode: http.StatusNotFound},
+			},
 		},
 		{
 			desc:      "all child routers have errors - should return error",
@@ -1472,14 +1496,14 @@ func TestManager_buildChildRoutersMuxer(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, muxer)
 
-			// Fixme: always the same call below? we should make more specific requests to test each (sub) route.
-			// Test that the muxer handles requests correctly
-			recorder := httptest.NewRecorder()
-			request := httptest.NewRequest("GET", "/unknown", nil)
-			muxer.ServeHTTP(recorder, request)
+			// Test that the muxer routes requests correctly
+			for _, req := range test.expectedRequests {
+				recorder := httptest.NewRecorder()
+				request := httptest.NewRequest("GET", req.path, nil)
+				muxer.ServeHTTP(recorder, request)
 
-			// For unknown paths, should return 404
-			assert.Equal(t, http.StatusNotFound, recorder.Code)
+				assert.Equal(t, req.statusCode, recorder.Code, "unexpected status code for path %s", req.path)
+			}
 		})
 	}
 }

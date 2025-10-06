@@ -268,7 +268,7 @@ func applyModel(cfg dynamic.Configuration) dynamic.Configuration {
 func applyDefaultObservabilityModel(cfg dynamic.Configuration) {
 	if cfg.HTTP != nil {
 		for _, router := range cfg.HTTP.Routers {
-			// FIXME: Find a better way to evict non-root routers
+			// TODO: Find a better way to evict non-root routers
 			if router.ParentRefs != nil {
 				continue
 			}
