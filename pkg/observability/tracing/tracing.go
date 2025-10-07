@@ -13,13 +13,14 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/static"
-	"github.com/traefik/traefik/v3/pkg/types"
+	"github.com/traefik/traefik/v3/pkg/observability"
+	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	"go.opentelemetry.io/contrib/propagators/autoprop"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/propagation"
-	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.37.0"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -38,8 +39,12 @@ func NewTracing(ctx context.Context, conf *static.Tracing) (*Tracer, io.Closer, 
 
 	if backend == nil {
 		log.Debug().Msg("Could not initialize tracing, using OpenTelemetry by default")
-		defaultBackend := &types.OTelTracing{}
+		defaultBackend := &otypes.OTelTracing{}
 		backend = defaultBackend
+	}
+
+	if err := observability.EnsureUserEnvVar(); err != nil {
+		return nil, nil, err
 	}
 
 	otel.SetTextMapPropagator(autoprop.NewTextMapPropagator())

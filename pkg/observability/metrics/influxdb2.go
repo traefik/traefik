@@ -12,9 +12,9 @@ import (
 	influxdb2log "github.com/influxdata/influxdb-client-go/v2/log"
 	influxdb "github.com/influxdata/influxdb1-client/v2"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/observability/logs"
+	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	"github.com/traefik/traefik/v3/pkg/safe"
-	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 var (
@@ -52,7 +52,7 @@ const (
 )
 
 // RegisterInfluxDB2 creates metrics exporter for InfluxDB2.
-func RegisterInfluxDB2(ctx context.Context, config *types.InfluxDB2) Registry {
+func RegisterInfluxDB2(ctx context.Context, config *otypes.InfluxDB2) Registry {
 	logger := log.Ctx(ctx)
 
 	if influxDB2Client == nil {
@@ -133,7 +133,7 @@ func StopInfluxDB2() {
 }
 
 // newInfluxDB2Client creates an influxdb2.Client.
-func newInfluxDB2Client(config *types.InfluxDB2) (influxdb2.Client, error) {
+func newInfluxDB2Client(config *otypes.InfluxDB2) (influxdb2.Client, error) {
 	if config.Token == "" || config.Org == "" || config.Bucket == "" {
 		return nil, errors.New("token, org or bucket property is missing")
 	}

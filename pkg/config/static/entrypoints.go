@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	ptypes "github.com/traefik/paerser/types"
+	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	"github.com/traefik/traefik/v3/pkg/types"
 )
 
@@ -169,10 +170,10 @@ func (u *UDPConfig) SetDefaults() {
 
 // ObservabilityConfig holds the observability configuration for an entry point.
 type ObservabilityConfig struct {
-	AccessLogs     *bool                  `description:"Enables access-logs for this entryPoint." json:"accessLogs,omitempty" toml:"accessLogs,omitempty" yaml:"accessLogs,omitempty" export:"true"`
-	Metrics        *bool                  `description:"Enables metrics for this entryPoint." json:"metrics,omitempty" toml:"metrics,omitempty" yaml:"metrics,omitempty" export:"true"`
-	Tracing        *bool                  `description:"Enables tracing for this entryPoint." json:"tracing,omitempty" toml:"tracing,omitempty" yaml:"tracing,omitempty" export:"true"`
-	TraceVerbosity types.TracingVerbosity `description:"Defines the tracing verbosity level for this entryPoint." json:"traceVerbosity,omitempty" toml:"traceVerbosity,omitempty" yaml:"traceVerbosity,omitempty" export:"true"`
+	AccessLogs     *bool                   `description:"Enables access-logs for this entryPoint." json:"accessLogs,omitempty" toml:"accessLogs,omitempty" yaml:"accessLogs,omitempty" export:"true"`
+	Metrics        *bool                   `description:"Enables metrics for this entryPoint." json:"metrics,omitempty" toml:"metrics,omitempty" yaml:"metrics,omitempty" export:"true"`
+	Tracing        *bool                   `description:"Enables tracing for this entryPoint." json:"tracing,omitempty" toml:"tracing,omitempty" yaml:"tracing,omitempty" export:"true"`
+	TraceVerbosity otypes.TracingVerbosity `description:"Defines the tracing verbosity level for this entryPoint." json:"traceVerbosity,omitempty" toml:"traceVerbosity,omitempty" yaml:"traceVerbosity,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
@@ -181,5 +182,5 @@ func (o *ObservabilityConfig) SetDefaults() {
 	o.AccessLogs = &defaultValue
 	o.Metrics = &defaultValue
 	o.Tracing = &defaultValue
-	o.TraceVerbosity = types.MinimalVerbosity
+	o.TraceVerbosity = otypes.MinimalVerbosity
 }

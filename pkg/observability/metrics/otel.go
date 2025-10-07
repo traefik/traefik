@@ -11,6 +11,8 @@ import (
 
 	"github.com/go-kit/kit/metrics"
 	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/observability"
+	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"github.com/traefik/traefik/v3/pkg/version"
 	"go.opentelemetry.io/otel"
@@ -20,7 +22,8 @@ import (
 	"go.opentelemetry.io/otel/metric"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
-	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.37.0"
+	"go.opentelemetry.io/otel/semconv/v1.37.0/httpconv"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/encoding/gzip"
 )
@@ -39,13 +42,17 @@ func SetMeterProvider(meterProvider *sdkmetric.MeterProvider) {
 // SemConvMetricsRegistry holds stables semantic conventions metric instruments.
 type SemConvMetricsRegistry struct {
 	// server metrics
-	httpServerRequestDuration metric.Float64Histogram
+	httpServerRequestDuration httpconv.ServerRequestDuration
 	// client metrics
-	httpClientRequestDuration metric.Float64Histogram
+	httpClientRequestDuration httpconv.ClientRequestDuration
 }
 
 // NewSemConvMetricRegistry registers all stables semantic conventions metrics.
-func NewSemConvMetricRegistry(ctx context.Context, config *types.OTLP) (*SemConvMetricsRegistry, error) {
+func NewSemConvMetricRegistry(ctx context.Context, config *otypes.OTLP) (*SemConvMetricsRegistry, error) {
+	if err := observability.EnsureUserEnvVar(); err != nil {
+		return nil, err
+	}
+
 	if openTelemetryMeterProvider == nil {
 		var err error
 		if openTelemetryMeterProvider, err = newOpenTelemetryMeterProvider(ctx, config); err != nil {
@@ -58,17 +65,13 @@ func NewSemConvMetricRegistry(ctx context.Context, config *types.OTLP) (*SemConv
 	meter := otel.Meter("github.com/traefik/traefik",
 		metric.WithInstrumentationVersion(version.Version))
 
-	httpServerRequestDuration, err := meter.Float64Histogram(semconv.HTTPServerRequestDurationName,
-		metric.WithDescription(semconv.HTTPServerRequestDurationDescription),
-		metric.WithUnit("s"),
+	httpServerRequestDuration, err := httpconv.NewServerRequestDuration(meter,
 		metric.WithExplicitBucketBoundaries(config.ExplicitBoundaries...))
 	if err != nil {
 		return nil, fmt.Errorf("can't build httpServerRequestDuration histogram: %w", err)
 	}
 
-	httpClientRequestDuration, err := meter.Float64Histogram(semconv.HTTPClientRequestDurationName,
-		metric.WithDescription(semconv.HTTPClientRequestDurationDescription),
-		metric.WithUnit("s"),
+	httpClientRequestDuration, err := httpconv.NewClientRequestDuration(meter,
 		metric.WithExplicitBucketBoundaries(config.ExplicitBoundaries...))
 	if err != nil {
 		return nil, fmt.Errorf("can't build httpClientRequestDuration histogram: %w", err)
@@ -81,25 +84,25 @@ func NewSemConvMetricRegistry(ctx context.Context, config *types.OTLP) (*SemConv
 }
 
 // HTTPServerRequestDuration returns the HTTP server request duration histogram.
-func (s *SemConvMetricsRegistry) HTTPServerRequestDuration() metric.Float64Histogram {
+func (s *SemConvMetricsRegistry) HTTPServerRequestDuration() httpconv.ServerRequestDuration {
 	if s == nil {
-		return nil
+		return httpconv.ServerRequestDuration{}
 	}
 
 	return s.httpServerRequestDuration
 }
 
 // HTTPClientRequestDuration returns the HTTP client request duration histogram.
-func (s *SemConvMetricsRegistry) HTTPClientRequestDuration() metric.Float64Histogram {
+func (s *SemConvMetricsRegistry) HTTPClientRequestDuration() httpconv.ClientRequestDuration {
 	if s == nil {
-		return nil
+		return httpconv.ClientRequestDuration{}
 	}
 
 	return s.httpClientRequestDuration
 }
 
 // RegisterOpenTelemetry registers all OpenTelemetry metrics.
-func RegisterOpenTelemetry(ctx context.Context, config *types.OTLP) Registry {
+func RegisterOpenTelemetry(ctx context.Context, config *otypes.OTLP) Registry {
 	if openTelemetryMeterProvider == nil {
 		var err error
 		if openTelemetryMeterProvider, err = newOpenTelemetryMeterProvider(ctx, config); err != nil {
@@ -192,7 +195,7 @@ func StopOpenTelemetry() {
 }
 
 // newOpenTelemetryMeterProvider creates a new controller.Controller.
-func newOpenTelemetryMeterProvider(ctx context.Context, config *types.OTLP) (*sdkmetric.MeterProvider, error) {
+func newOpenTelemetryMeterProvider(ctx context.Context, config *otypes.OTLP) (*sdkmetric.MeterProvider, error) {
 	var (
 		exporter sdkmetric.Exporter
 		err      error
@@ -253,7 +256,7 @@ func newOpenTelemetryMeterProvider(ctx context.Context, config *types.OTLP) (*sd
 	return meterProvider, nil
 }
 
-func newHTTPExporter(ctx context.Context, config *types.OTelHTTP) (sdkmetric.Exporter, error) {
+func newHTTPExporter(ctx context.Context, config *otypes.OTelHTTP) (sdkmetric.Exporter, error) {
 	endpoint, err := url.Parse(config.Endpoint)
 	if err != nil {
 		return nil, fmt.Errorf("invalid collector endpoint %q: %w", config.Endpoint, err)
@@ -285,7 +288,7 @@ func newHTTPExporter(ctx context.Context, config *types.OTelHTTP) (sdkmetric.Exp
 	return otlpmetrichttp.New(ctx, opts...)
 }
 
-func newGRPCExporter(ctx context.Context, config *types.OTelGRPC) (sdkmetric.Exporter, error) {
+func newGRPCExporter(ctx context.Context, config *otypes.OTelGRPC) (sdkmetric.Exporter, error) {
 	host, port, err := net.SplitHostPort(config.Endpoint)
 	if err != nil {
 		return nil, fmt.Errorf("invalid collector endpoint %q: %w", config.Endpoint, err)

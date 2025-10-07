@@ -2,7 +2,6 @@ package tracing
 
 import (
 	"compress/gzip"
-	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -14,7 +13,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/static"
-	"github.com/traefik/traefik/v3/pkg/types"
+	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
+	"go.opentelemetry.io/collector/pdata/pcommon"
+	"go.opentelemetry.io/collector/pdata/ptrace"
 	"go.opentelemetry.io/collector/pdata/ptrace/ptraceotlp"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
@@ -76,15 +77,16 @@ func TestTracing(t *testing.T) {
 		headers              map[string]string
 		resourceAttributes   map[string]string
 		wantServiceHeadersFn func(t *testing.T, headers http.Header)
-		assertFn             func(*testing.T, string)
+		assertFn             func(*testing.T, ptrace.Traces)
 	}{
 		{
 			desc: "service name and version",
-			assertFn: func(t *testing.T, trace string) {
+			assertFn: func(t *testing.T, traces ptrace.Traces) {
 				t.Helper()
 
-				assert.Regexp(t, `({"key":"service.name","value":{"stringValue":"traefik"}})`, trace)
-				assert.Regexp(t, `({"key":"service.version","value":{"stringValue":"dev"}})`, trace)
+				attributes := resourceAttributes(traces)
+				assert.Equal(t, "traefik", attributes["service.name"])
+				assert.Equal(t, "dev", attributes["service.version"])
 			},
 		},
 		{
@@ -92,10 +94,11 @@ func TestTracing(t *testing.T) {
 			resourceAttributes: map[string]string{
 				"service.environment": "custom",
 			},
-			assertFn: func(t *testing.T, trace string) {
+			assertFn: func(t *testing.T, traces ptrace.Traces) {
 				t.Helper()
 
-				assert.Regexp(t, `({"key":"service.environment","value":{"stringValue":"custom"}})`, trace)
+				attributes := resourceAttributes(traces)
+				assert.Equal(t, "custom", attributes["service.environment"])
 			},
 		},
 		{
@@ -111,12 +114,13 @@ func TestTracing(t *testing.T) {
 				assert.Regexp(t, `(00-00000000000000000000000000000001-\w{16}-01)`, headers["Traceparent"][0])
 				assert.Equal(t, []string{"foo=bar"}, headers["Tracestate"])
 			},
-			assertFn: func(t *testing.T, trace string) {
+			assertFn: func(t *testing.T, traces ptrace.Traces) {
 				t.Helper()
 
-				assert.Regexp(t, `("traceId":"00000000000000000000000000000001")`, trace)
-				assert.Regexp(t, `("parentSpanId":"0000000000000001")`, trace)
-				assert.Regexp(t, `("traceState":"foo=bar")`, trace)
+				span := mainSpan(traces)
+				assert.Equal(t, "00000000000000000000000000000001", span.TraceID().String())
+				assert.Equal(t, "0000000000000001", span.ParentSpanID().String())
+				assert.Equal(t, "foo=bar", span.TraceState().AsRaw())
 			},
 		},
 		{
@@ -127,11 +131,12 @@ func TestTracing(t *testing.T) {
 
 				assert.Regexp(t, `(00-\w{32}-\w{16}-01)`, headers["Traceparent"][0])
 			},
-			assertFn: func(t *testing.T, trace string) {
+			assertFn: func(t *testing.T, traces ptrace.Traces) {
 				t.Helper()
 
-				assert.Regexp(t, `("traceId":"\w{32}")`, trace)
-				assert.Regexp(t, `("parentSpanId":"\w{16}")`, trace)
+				span := mainSpan(traces)
+				assert.Len(t, span.TraceID().String(), 32)
+				assert.Empty(t, span.ParentSpanID().String())
 			},
 		},
 		{
@@ -145,11 +150,12 @@ func TestTracing(t *testing.T) {
 
 				assert.Regexp(t, `(00000000000000000000000000000001-\w{16}-1)`, headers["B3"][0])
 			},
-			assertFn: func(t *testing.T, trace string) {
+			assertFn: func(t *testing.T, traces ptrace.Traces) {
 				t.Helper()
 
-				assert.Regexp(t, `("traceId":"00000000000000000000000000000001")`, trace)
-				assert.Regexp(t, `("parentSpanId":"0000000000000002")`, trace)
+				span := mainSpan(traces)
+				assert.Equal(t, "00000000000000000000000000000001", span.TraceID().String())
+				assert.Equal(t, "0000000000000002", span.ParentSpanID().String())
 			},
 		},
 		{
@@ -160,11 +166,12 @@ func TestTracing(t *testing.T) {
 
 				assert.Regexp(t, `(\w{32}-\w{16}-1)`, headers["B3"][0])
 			},
-			assertFn: func(t *testing.T, trace string) {
+			assertFn: func(t *testing.T, traces ptrace.Traces) {
 				t.Helper()
 
-				assert.Regexp(t, `("traceId":"\w{32}")`, trace)
-				assert.Regexp(t, `("parentSpanId":"\w{16}")`, trace)
+				span := mainSpan(traces)
+				assert.Len(t, span.TraceID().String(), 32)
+				assert.Empty(t, span.ParentSpanID().String())
 			},
 		},
 		{
@@ -184,11 +191,12 @@ func TestTracing(t *testing.T) {
 				assert.Equal(t, "1", headers["X-B3-Sampled"][0])
 				assert.Len(t, headers["X-B3-Spanid"][0], 16)
 			},
-			assertFn: func(t *testing.T, trace string) {
+			assertFn: func(t *testing.T, traces ptrace.Traces) {
 				t.Helper()
 
-				assert.Regexp(t, `("traceId":"00000000000000000000000000000001")`, trace)
-				assert.Regexp(t, `("parentSpanId":"0000000000000002")`, trace)
+				span := mainSpan(traces)
+				assert.Equal(t, "00000000000000000000000000000001", span.TraceID().String())
+				assert.Equal(t, "0000000000000002", span.ParentSpanID().String())
 			},
 		},
 		{
@@ -201,11 +209,12 @@ func TestTracing(t *testing.T) {
 				assert.Equal(t, "1", headers["X-B3-Sampled"][0])
 				assert.Regexp(t, `(\w{16})`, headers["X-B3-Spanid"][0])
 			},
-			assertFn: func(t *testing.T, trace string) {
+			assertFn: func(t *testing.T, traces ptrace.Traces) {
 				t.Helper()
 
-				assert.Regexp(t, `("traceId":"\w{32}")`, trace)
-				assert.Regexp(t, `("parentSpanId":"")`, trace)
+				span := mainSpan(traces)
+				assert.Len(t, span.TraceID().String(), 32)
+				assert.Empty(t, span.ParentSpanID().String())
 			},
 		},
 		{
@@ -231,11 +240,12 @@ func TestTracing(t *testing.T) {
 
 				assert.Regexp(t, `(00000000000000000000000000000001:\w{16}:0:1)`, headers["Uber-Trace-Id"][0])
 			},
-			assertFn: func(t *testing.T, trace string) {
+			assertFn: func(t *testing.T, traces ptrace.Traces) {
 				t.Helper()
 
-				assert.Regexp(t, `("traceId":"00000000000000000000000000000001")`, trace)
-				assert.Regexp(t, `("parentSpanId":"\w{16}")`, trace)
+				span := mainSpan(traces)
+				assert.Equal(t, "00000000000000000000000000000001", span.TraceID().String())
+				assert.Len(t, span.ParentSpanID().String(), 16)
 			},
 		},
 		{
@@ -246,11 +256,12 @@ func TestTracing(t *testing.T) {
 
 				assert.Regexp(t, `(\w{32}:\w{16}:0:1)`, headers["Uber-Trace-Id"][0])
 			},
-			assertFn: func(t *testing.T, trace string) {
+			assertFn: func(t *testing.T, traces ptrace.Traces) {
 				t.Helper()
 
-				assert.Regexp(t, `("traceId":"\w{32}")`, trace)
-				assert.Regexp(t, `("parentSpanId":"\w{16}")`, trace)
+				span := mainSpan(traces)
+				assert.Len(t, span.TraceID().String(), 32)
+				assert.Empty(t, span.ParentSpanID().String())
 			},
 		},
 		{
@@ -264,11 +275,12 @@ func TestTracing(t *testing.T) {
 
 				assert.Regexp(t, `(Root=1-5759e988-bd862e3fe1be46a994272793;Parent=\w{16};Sampled=1)`, headers["X-Amzn-Trace-Id"][0])
 			},
-			assertFn: func(t *testing.T, trace string) {
+			assertFn: func(t *testing.T, traces ptrace.Traces) {
 				t.Helper()
 
-				assert.Regexp(t, `("traceId":"5759e988bd862e3fe1be46a994272793")`, trace)
-				assert.Regexp(t, `("parentSpanId":"\w{16}")`, trace)
+				span := mainSpan(traces)
+				assert.Equal(t, "5759e988bd862e3fe1be46a994272793", span.TraceID().String())
+				assert.Len(t, span.ParentSpanID().String(), 16)
 			},
 		},
 		{
@@ -279,11 +291,12 @@ func TestTracing(t *testing.T) {
 
 				assert.Regexp(t, `(Root=1-\w{8}-\w{24};Parent=\w{16};Sampled=1)`, headers["X-Amzn-Trace-Id"][0])
 			},
-			assertFn: func(t *testing.T, trace string) {
+			assertFn: func(t *testing.T, traces ptrace.Traces) {
 				t.Helper()
 
-				assert.Regexp(t, `("traceId":"\w{32}")`, trace)
-				assert.Regexp(t, `("parentSpanId":"\w{16}")`, trace)
+				span := mainSpan(traces)
+				assert.Len(t, span.TraceID().String(), 32)
+				assert.Empty(t, span.ParentSpanID().String())
 			},
 		},
 		{
@@ -294,16 +307,17 @@ func TestTracing(t *testing.T) {
 
 				assert.Empty(t, headers)
 			},
-			assertFn: func(t *testing.T, trace string) {
+			assertFn: func(t *testing.T, traces ptrace.Traces) {
 				t.Helper()
 
-				assert.Regexp(t, `("traceId":"\w{32}")`, trace)
-				assert.Regexp(t, `("parentSpanId":"\w{16}")`, trace)
+				span := mainSpan(traces)
+				assert.Len(t, span.TraceID().String(), 32)
+				assert.Empty(t, span.ParentSpanID().String())
 			},
 		},
 	}
 
-	traceCh := make(chan string)
+	traceCh := make(chan ptrace.Traces)
 	collector := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		gzr, err := gzip.NewReader(r.Body)
 		require.NoError(t, err)
@@ -315,10 +329,7 @@ func TestTracing(t *testing.T) {
 		err = req.UnmarshalProto(body)
 		require.NoError(t, err)
 
-		marshalledReq, err := json.Marshal(req)
-		require.NoError(t, err)
-
-		traceCh <- string(marshalledReq)
+		traceCh <- req.Traces()
 	}))
 	t.Cleanup(collector.Close)
 
@@ -344,8 +355,8 @@ func TestTracing(t *testing.T) {
 				ServiceName:        "traefik",
 				SampleRate:         1.0,
 				ResourceAttributes: test.resourceAttributes,
-				OTLP: &types.OTelTracing{
-					HTTP: &types.OTelHTTP{
+				OTLP: &otypes.OTelTracing{
+					HTTP: &otypes.OTelHTTP{
 						Endpoint: collector.URL,
 					},
 				},
@@ -384,10 +395,10 @@ func TestTracing(t *testing.T) {
 			case <-time.After(10 * time.Second):
 				t.Error("Trace not exported")
 
-			case trace := <-traceCh:
+			case traces := <-traceCh:
 				assert.Equal(t, http.StatusOK, rw.Code)
 				if test.assertFn != nil {
-					test.assertFn(t, trace)
+					test.assertFn(t, traces)
 				}
 			}
 		})
@@ -399,7 +410,7 @@ func TestTracing(t *testing.T) {
 func TestTracerProvider(t *testing.T) {
 	t.Parallel()
 
-	otlpConfig := &types.OTelTracing{}
+	otlpConfig := &otypes.OTelTracing{}
 	otlpConfig.SetDefaults()
 
 	config := &static.Tracing{OTLP: otlpConfig}
@@ -463,4 +474,31 @@ func TestNewTracer_HeadersCanonicalization(t *testing.T) {
 			assert.Nil(t, tracer.capturedRequestHeaders)
 		})
 	}
+}
+
+// resourceAttributes extracts resource attributes as a map.
+func resourceAttributes(traces ptrace.Traces) map[string]string {
+	attributes := make(map[string]string)
+	if traces.ResourceSpans().Len() > 0 {
+		resource := traces.ResourceSpans().At(0).Resource()
+		resource.Attributes().Range(func(k string, v pcommon.Value) bool {
+			if v.Type() == pcommon.ValueTypeStr {
+				attributes[k] = v.Str()
+			}
+			return true
+		})
+	}
+	return attributes
+}
+
+// mainSpan gets the main span from traces (assumes single span for testing).
+func mainSpan(traces ptrace.Traces) ptrace.Span {
+	for _, resourceSpans := range traces.ResourceSpans().All() {
+		for _, scopeSpans := range resourceSpans.ScopeSpans().All() {
+			if scopeSpans.Spans().Len() > 0 {
+				return scopeSpans.Spans().At(0)
+			}
+		}
+	}
+	return ptrace.NewSpan()
 }
