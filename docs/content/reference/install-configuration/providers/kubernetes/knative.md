@@ -5,7 +5,13 @@ description: "Learn how to use the Knative as a provider for configuration disco
 
 # Traefik & Knative
 
-The Traefik Knative provider integrates with Knative to manage service access, enabling the use of Traefik Proxy as a Knative networking layer.
+The Traefik Knative provider integrates with Knative Serving to provide advanced traffic management and routing capabilities for serverless applications.
+
+[Knative](https://knative.dev) is a Kubernetes-based platform that enables serverless workloads with features like scale-to-zero, 
+automatic scaling, and revision management.
+
+The provider watches Knative `Ingress` resources and automatically configures Traefik routing rules,
+enabling seamless integration between Traefik's networking capabilities and Knative's serverless platform.
 
 ## Requirements
 
@@ -14,13 +20,13 @@ The Traefik Knative provider integrates with Knative to manage service access, e
 1. Install/update the Knative CRDs.
 
     ```bash
-    kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.17.0/serving-crds.yaml
+    kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.19.0/serving-crds.yaml
     ```
 
 2. Install the Knative Serving core components.
 
     ```bash
-    kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.17.0/serving-core.yaml
+    kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.19.0/serving-core.yaml
     ```
 
 3. Update the config-network configuration to use the Traefik ingress class.

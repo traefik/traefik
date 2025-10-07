@@ -320,7 +320,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | <a id="providers-http-tls-cert" href="#providers-http-tls-cert" title="#providers-http-tls-cert">providers.http.tls.cert</a> | TLS cert | |
 | <a id="providers-http-tls-insecureskipverify" href="#providers-http-tls-insecureskipverify" title="#providers-http-tls-insecureskipverify">providers.http.tls.insecureskipverify</a> | TLS insecure skip verify | false |
 | <a id="providers-http-tls-key" href="#providers-http-tls-key" title="#providers-http-tls-key">providers.http.tls.key</a> | TLS key | |
-| <a id="providers-knative" href="#providers-knative" title="#providers-knative">providers.knative</a> | Enable Knative provider. | false |
+| <a id="providers-knative" href="#providers-knative" title="#providers-knative">providers.knative</a> | Enables Knative provider. | false |
 | <a id="providers-knative-certauthfilepath" href="#providers-knative-certauthfilepath" title="#providers-knative-certauthfilepath">providers.knative.certauthfilepath</a> | Kubernetes certificate authority file path (not needed for in-cluster client). | |
 | <a id="providers-knative-endpoint" href="#providers-knative-endpoint" title="#providers-knative-endpoint">providers.knative.endpoint</a> | Kubernetes server endpoint (required for external cluster client). | |
 | <a id="providers-knative-labelselector" href="#providers-knative-labelselector" title="#providers-knative-labelselector">providers.knative.labelselector</a> | Kubernetes label selector to use. | |
