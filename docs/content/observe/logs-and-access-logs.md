@@ -173,7 +173,7 @@ The available filters are:
 
 When using the `json` format, you can customize which fields are included in your access logs.
 
-- **Request Fields:** You can choose to `keep`, `drop`, or `redact` any of the standard request fields. A complete list of available fields like `ClientHost`, `RequestMethod`, and `Duration` can be found in the [reference documentation](../reference/install-configuration/observability/logs-and-accesslogs.md#available-fields).
+- **Request Fields:** You can choose to `keep`, `drop`, or `redact` any of the standard request fields. A complete list of available fields like `ClientHost`, `RequestMethod`, and `Duration` can be found in the [reference documentation](../reference/install-configuration/observability/logs-and-accesslogs.md#json-format-fields).
 - **Request Headers:** You can also specify which request headers should be included in the logs, and whether their values should be `kept`, `dropped`, or `redacted`.
 
 !!! info

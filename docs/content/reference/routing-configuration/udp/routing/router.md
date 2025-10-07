@@ -60,7 +60,7 @@ Even though UDP is connectionless, Traefik's UDP router implementation relies on
 
 Each session has an associated timeout that cleans up inactive sessions after a specified duration of inactivity.
 
-Session timeout can be configured using the `entryPoints.name.udp.timeout` option in the static configuration. See [EntryPoints documentation](../../install-configuration/entrypoints.md) for details.
+Session timeout can be configured using the `entryPoints.name.udp.timeout` option in the static configuration. See [EntryPoints documentation](../../../install-configuration/entrypoints.md) for details.
 
 ## Router Naming
 

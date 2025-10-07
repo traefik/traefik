@@ -46,7 +46,7 @@ service {
 | <a id="opt-providers-nomad-throttleDuration" href="#opt-providers-nomad-throttleDuration" title="#opt-providers-nomad-throttleDuration">`providers.nomad.throttleDuration`</a> | Defines how often the provider is allowed to handle service events from Nomad. This option is only compatible when the `watch` option is enabled |  0s     | No   |
 | <a id="opt-providers-nomad-defaultRule" href="#opt-providers-nomad-defaultRule" title="#opt-providers-nomad-defaultRule">`providers.nomad.defaultRule`</a> | The Default Host rule for all services. See [here](#defaultrule) for more information |   ```"Host(`{{ normalize .Name }}`)"```   | No   |
 | <a id="opt-providers-nomad-constraints" href="#opt-providers-nomad-constraints" title="#opt-providers-nomad-constraints">`providers.nomad.constraints`</a> | Defines an expression that Traefik matches against the container labels to determine whether to create any route for that container. See [here](#constraints) for more information.  |  ""   | No   |
-| <a id="opt-providers-nomad-exposedByDefault" href="#opt-providers-nomad-exposedByDefault" title="#opt-providers-nomad-exposedByDefault">`providers.nomad.exposedByDefault`</a> | Expose Nomad services by default in Traefik. If set to `false`, services that do not have a `traefik.enable=true` tag will be ignored from the resulting routing configuration. See [here](../overview.md#restrict-the-scope-of-service-discovery) for additional information |  true    | No   |
+| <a id="opt-providers-nomad-exposedByDefault" href="#opt-providers-nomad-exposedByDefault" title="#opt-providers-nomad-exposedByDefault">`providers.nomad.exposedByDefault`</a> | Expose Nomad services by default in Traefik. If set to `false`, services that do not have a `traefik.enable=true` tag will be ignored from the resulting routing configuration. See [here](../overview.md#exposedbydefault-and-traefikenable) for additional information |  true    | No   |
 | <a id="opt-providers-nomad-allowEmptyServices" href="#opt-providers-nomad-allowEmptyServices" title="#opt-providers-nomad-allowEmptyServices">`providers.nomad.allowEmptyServices`</a> |  Instructs the provider to create any [servers load balancer](../../../../routing/services/index.md#servers-load-balancer) defined for Docker containers regardless of the [healthiness](https://docs.docker.com/engine/reference/builder/#healthcheck) of the corresponding containers. |  false   | No   |
 | <a id="opt-providers-nomad-prefix" href="#opt-providers-nomad-prefix" title="#opt-providers-nomad-prefix">`providers.nomad.prefix`</a> | Defines the prefix for Nomad service tags defining Traefik labels. | `traefik`     | yes   |
 | <a id="opt-providers-nomad-stale" href="#opt-providers-nomad-stale" title="#opt-providers-nomad-stale">`providers.nomad.stale`</a> | Instructs Traefik to use stale consistency for Nomad service API reads. See [here](#stale) for more information | false   | No   |
@@ -245,7 +245,7 @@ providers:
 # ...
 ```
 
-For additional information, refer to [Restrict the Scope of Service Discovery](../overview.md#restrict-the-scope-of-service-discovery).
+For additional information, refer to [Restrict the Scope of Service Discovery](../overview.md#exposedbydefault-and-traefikenable).
 
 ## Routing Configuration
 

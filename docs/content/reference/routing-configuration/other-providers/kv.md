@@ -140,7 +140,7 @@ You can declare TCP Routers and/or Services using KV.
 | <a id="opt-traefiktcproutersmytcproutertlsdomains0sans1" href="#opt-traefiktcproutersmytcproutertlsdomains0sans1" title="#opt-traefiktcproutersmytcproutertlsdomains0sans1">`traefik/tcp/routers/mytcprouter/tls/domains/0/sans/1`</a> | See [TLS](../tcp/tls.md) for more information. | `dev.example.org`  |
 | <a id="opt-traefiktcproutersmytcproutertlsoptions" href="#opt-traefiktcproutersmytcproutertlsoptions" title="#opt-traefiktcproutersmytcproutertlsoptions">`traefik/tcp/routers/mytcprouter/tls/options`</a> | See [TLS](../tcp/tls.md) for more information. | `foobar` |
 | <a id="opt-traefiktcproutersmytcproutertlspassthrough" href="#opt-traefiktcproutersmytcproutertlspassthrough" title="#opt-traefiktcproutersmytcproutertlspassthrough">`traefik/tcp/routers/mytcprouter/tls/passthrough`</a> | See [TLS](../tcp/tls.md) for more information. | `true` |
-| <a id="opt-traefiktcproutersmytcprouterpriority" href="#opt-traefiktcproutersmytcprouterpriority" title="#opt-traefiktcproutersmytcprouterpriority">`traefik/tcp/routers/mytcprouter/priority`</a> | See [priority](../tcp/router/rules-and-priority.md#priority) for more information. | `42`  |
+| <a id="opt-traefiktcproutersmytcprouterpriority" href="#opt-traefiktcproutersmytcprouterpriority" title="#opt-traefiktcproutersmytcprouterpriority">`traefik/tcp/routers/mytcprouter/priority`</a> | See [priority](../tcp/routing/rules-and-priority.md#priority-calculation) for more information. | `42`  |
 
 #### Services
 
@@ -148,10 +148,9 @@ You can declare TCP Routers and/or Services using KV.
 |--------------------------------------------------------------------|--------------------------------------------------------------------|------------------|
 | <a id="opt-traefiktcpservicesmytcpserviceloadbalancerservers0address" href="#opt-traefiktcpservicesmytcpserviceloadbalancerservers0address" title="#opt-traefiktcpservicesmytcpserviceloadbalancerservers0address">`traefik/tcp/services/mytcpservice/loadbalancer/servers/0/address`</a> | See [servers](../tcp/service.md#servers-load-balancer) for more information. | `xx.xx.xx.xx:xx` |
 | <a id="opt-traefiktcpservicesmytcpserviceloadbalancerservers0tls" href="#opt-traefiktcpservicesmytcpserviceloadbalancerservers0tls" title="#opt-traefiktcpservicesmytcpserviceloadbalancerservers0tls">`traefik/tcp/services/mytcpservice/loadbalancer/servers/0/tls`</a> | See [servers](../tcp/service.md#servers-load-balancer) for more information. | `true` |
-| <a id="opt-traefiktcpservicesmytcpserviceloadbalancerproxyprotocolversion" href="#opt-traefiktcpservicesmytcpserviceloadbalancerproxyprotocolversion" title="#opt-traefiktcpservicesmytcpserviceloadbalancerproxyprotocolversion">`traefik/tcp/services/mytcpservice/loadbalancer/proxyprotocol/version`</a> | See [PROXY protocol](../tcp/service.md#proxy-protocol) for more information. | `1`   |
 | <a id="opt-traefiktcpservicesmyserviceloadbalancerserverstransport" href="#opt-traefiktcpservicesmyserviceloadbalancerserverstransport" title="#opt-traefiktcpservicesmyserviceloadbalancerserverstransport">`traefik/tcp/services/myservice/loadbalancer/serverstransport`</a> | Allows to reference a ServersTransport resource that is defined either with the File provider or the Kubernetes CRD one.<br/>See [serverstransport](../tcp/serverstransport.md) for more information. | `foobar@file` |
 | <a id="opt-traefiktcpservicesservice-nameweightedservices0name" href="#opt-traefiktcpservicesservice-nameweightedservices0name" title="#opt-traefiktcpservicesservice-nameweightedservices0name">`traefik/tcp/services/<service_name>/weighted/services/0/name`</a> | See [Service](../tcp/service.md#weighted-round-robin) for more information. | `foobar` |
-| <a id="opt-traefiktcpservicesservice-nameweightedservices0weight" href="#opt-traefiktcpservicesservice-nameweightedservices0weight" title="#opt-traefiktcpservicesservice-nameweightedservices0weight">`traefik/tcp/services/<service_name>/weighted/services/0/weight`</a> | See [Service](../tcp/service.md#weighted-round-robin-wrr) for more information. | `42`  |
+| <a id="opt-traefiktcpservicesservice-nameweightedservices0weight" href="#opt-traefiktcpservicesservice-nameweightedservices0weight" title="#opt-traefiktcpservicesservice-nameweightedservices0weight">`traefik/tcp/services/<service_name>/weighted/services/0/weight`</a> | See [Service](../tcp/service.md#weighted-round-robin) for more information. | `42`  |
 
 #### Middleware
 
@@ -205,8 +204,8 @@ You can declare UDP Routers and/or Services using KV.
 
 | Key (Path)                                                       | Description                                                       | Value |
 |------------------------------------------------------------------|------------------------------------------------------------------|-------|
-| <a id="opt-traefikudproutersmyudprouterentrypoints0" href="#opt-traefikudproutersmyudprouterentrypoints0" title="#opt-traefikudproutersmyudprouterentrypoints0">`traefik/udp/routers/myudprouter/entrypoints/0`</a> | See [UDP Router](../udp/router/rules-priority.md#entrypoints) for more information. | `foobar`  |
-| <a id="opt-traefikudproutersmyudprouterservice" href="#opt-traefikudproutersmyudprouterservice" title="#opt-traefikudproutersmyudprouterservice">`traefik/udp/routers/myudprouter/service`</a> | See [UDP Router](../udp/router/rules-priority.md#configuration-example) for more information. | `foobar`  |
+| <a id="opt-traefikudproutersmyudprouterentrypoints0" href="#opt-traefikudproutersmyudprouterentrypoints0" title="#opt-traefikudproutersmyudprouterentrypoints0">`traefik/udp/routers/myudprouter/entrypoints/0`</a> | See [UDP Router](../udp/routing/rules-priority.md#entrypoints) for more information. | `foobar`  |
+| <a id="opt-traefikudproutersmyudprouterservice" href="#opt-traefikudproutersmyudprouterservice" title="#opt-traefikudproutersmyudprouterservice">`traefik/udp/routers/myudprouter/service`</a> | See [UDP Router](../udp/routing/rules-priority.md#configuration-example) for more information. | `foobar`  |
 
 #### Services
 

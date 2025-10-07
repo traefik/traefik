@@ -234,7 +234,7 @@ The TLS options allow one to configure some parameters of the TLS connection.
 
 !!! important "TLSOption in Kubernetes"
 
-    When using the [TLSOption resource](../../routing/providers/kubernetes-crd/#kind-tlsoption) in Kubernetes, one might setup a default set of options that,
+    When using the [TLSOption resource](../routing/providers/kubernetes-crd.md#kind-tlsoption) in Kubernetes, one might setup a default set of options that,
     if not explicitly overwritten, should apply to all ingresses.  
     To achieve that, you'll have to create a TLSOption resource with the name `default`.
     There may exist only one TLSOption with the name `default` (across all namespaces) - otherwise they will be dropped.  
@@ -503,7 +503,7 @@ Traefik supports mutual authentication, through the `clientAuth` section.
 
 For authentication policies that require verification of the client certificate, the certificate authority for the certificates should be set in `clientAuth.caFiles`.
 
-In Kubernetes environment, CA certificate can be set in `clientAuth.secretNames`. See [TLSOption resource](../../routing/providers/kubernetes-crd/#kind-tlsoption) for more details.
+In Kubernetes environment, CA certificate can be set in `clientAuth.secretNames`. See [TLSOption resource](../routing/providers/kubernetes-crd.md#kind-tlsoption) for more details.
 
 The `clientAuth.clientAuthType` option governs the behaviour as follows:
 

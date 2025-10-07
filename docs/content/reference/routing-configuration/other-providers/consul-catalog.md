@@ -385,7 +385,7 @@ You can declare TCP Routers, Middlewares and/or Services using tags.
 
 ??? info "`traefik.tcp.routers.<router_name>.rule`"
     
-    See [rule](../tcp/router/rules-and-priority.md#rules) for more information.
+    See [rule](../tcp/routing/rules-and-priority.md#rules) for more information.
     
     ```yaml
     traefik.tcp.routers.mytcprouter.rule=HostSNI(`example.com`)
@@ -405,7 +405,7 @@ You can declare TCP Routers, Middlewares and/or Services using tags.
     ```
 
 ??? info "`traefik.tcp.routers.<router_name>.priority`"
-    See [priority](../tcp/router/rules-and-priority.md#priority) for more information.
+    See [priority](../tcp/routing/rules-and-priority.md#priority-calculation) for more information.
     ```yaml
     - "traefik.tcp.routers.mytcprouter.priority=42"
     ```
@@ -460,7 +460,7 @@ You can declare TCP Routers, Middlewares and/or Services using tags.
 
 ??? info "`traefik.tcp.routers.<router_name>.tls.passthrough`"
     
-    See [Passthrough](../tcp/tls.md#passthrough) for more information.
+    See [Passthrough](../tcp/tls.md#opt-passthrough) for more information.
     
     ```yaml
     traefik.tcp.routers.mytcprouter.tls.passthrough=true
@@ -483,14 +483,6 @@ You can declare TCP Routers, Middlewares and/or Services using tags.
     
     ```yaml
     traefik.tcp.services.mytcpservice.loadbalancer.server.tls=true
-    ```
-
-??? info "`traefik.tcp.services.<service_name>.loadbalancer.proxyprotocol.version`"
-        
-    See [PROXY protocol](../tcp/service.md#proxy-protocol) for more information.
-    
-    ```yaml
-    traefik.tcp.services.mytcpservice.loadbalancer.proxyprotocol.version=1
     ```
 
 ??? info "`traefik.tcp.services.<service_name>.loadbalancer.serverstransport`"
