@@ -43,7 +43,8 @@ func (c *Configuration) GetRoutersByEntryPoints(ctx context.Context, entryPoints
 			entryPointsRouters[entryPointName][rtName] = rt
 		}
 
-		if entryPointsCount == 0 {
+		// Root routers must have at least one entry point.
+		if entryPointsCount == 0 && rt.ParentRefs == nil {
 			rt.AddError(errors.New("no valid entryPoint for this router"), true)
 			logger.Error().Msg("No valid entryPoint for this router")
 		}

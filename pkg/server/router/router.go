@@ -322,7 +322,7 @@ func (m *Manager) ParseRouterTree() {
 		}
 
 		// Check for non-root router with Entrypoint config
-		if router.EntryPoints != nil {
+		if len(router.EntryPoints) > 0 {
 			router.AddError(errors.New("non-root router cannot have Entrypoints configuration"), true)
 			continue
 		}
