@@ -46,7 +46,9 @@ func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoint
 	for pvd, configuration := range configurations {
 		if configuration.HTTP != nil {
 			for routerName, router := range configuration.HTTP.Routers {
-				if len(router.EntryPoints) == 0 {
+				// If no entrypoint is defined, and the router has no parentRefs (i.e. is not a child router),
+				// we set the default entrypoints.
+				if len(router.EntryPoints) == 0 && router.ParentRefs == nil {
 					log.Debug().
 						Str(logs.RouterName, routerName).
 						Strs(logs.EntryPointName, defaultEntryPoints).
@@ -164,6 +166,11 @@ func applyModel(cfg dynamic.Configuration) dynamic.Configuration {
 		rts := make(map[string]*dynamic.Router)
 
 		for name, rt := range cfg.HTTP.Routers {
+			// Only root routers can have models applied.
+			if rt.ParentRefs != nil {
+				continue
+			}
+
 			router := rt.DeepCopy()
 
 			if !router.DefaultRule && router.RuleSyntax == "" {
@@ -193,27 +200,24 @@ func applyModel(cfg dynamic.Configuration) dynamic.Configuration {
 
 					cp.Middlewares = append(m.Middlewares, cp.Middlewares...)
 
-					// TODO: Find a better way to evict non-root routers
-					if router.ParentRefs == nil {
-						if cp.Observability == nil {
-							cp.Observability = &dynamic.RouterObservabilityConfig{}
-						}
+					if cp.Observability == nil {
+						cp.Observability = &dynamic.RouterObservabilityConfig{}
+					}
 
-						if cp.Observability.AccessLogs == nil {
-							cp.Observability.AccessLogs = m.Observability.AccessLogs
-						}
+					if cp.Observability.AccessLogs == nil {
+						cp.Observability.AccessLogs = m.Observability.AccessLogs
+					}
 
-						if cp.Observability.Metrics == nil {
-							cp.Observability.Metrics = m.Observability.Metrics
-						}
+					if cp.Observability.Metrics == nil {
+						cp.Observability.Metrics = m.Observability.Metrics
+					}
 
-						if cp.Observability.Tracing == nil {
-							cp.Observability.Tracing = m.Observability.Tracing
-						}
+					if cp.Observability.Tracing == nil {
+						cp.Observability.Tracing = m.Observability.Tracing
+					}
 
-						if cp.Observability.TraceVerbosity == "" {
-							cp.Observability.TraceVerbosity = m.Observability.TraceVerbosity
-						}
+					if cp.Observability.TraceVerbosity == "" {
+						cp.Observability.TraceVerbosity = m.Observability.TraceVerbosity
 					}
 
 					rtName := name
@@ -268,10 +272,11 @@ func applyModel(cfg dynamic.Configuration) dynamic.Configuration {
 func applyDefaultObservabilityModel(cfg dynamic.Configuration) {
 	if cfg.HTTP != nil {
 		for _, router := range cfg.HTTP.Routers {
-			// TODO: Find a better way to evict non-root routers
+			// Only root routers can have models applied.
 			if router.ParentRefs != nil {
 				continue
 			}
+
 			if router.Observability == nil {
 				router.Observability = &dynamic.RouterObservabilityConfig{
 					AccessLogs:     pointer(true),
