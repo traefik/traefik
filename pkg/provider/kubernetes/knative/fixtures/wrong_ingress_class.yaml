@@ -6,4 +6,3 @@ metadata:
     networking.knative.dev/ingress.class: foo.ingress.networking.knative.dev
   name: helloworld-go
   namespace: default
-

@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -22,17 +22,6 @@ import (
 )
 
 const resyncPeriod = 10 * time.Minute
-
-// Client is a client for the Provider master.
-// WatchAll starts the watch of the Provider resources and updates the stores.
-// The stores can then be accessed via the Get* functions.
-type Client interface {
-	WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error)
-	ListIngresses() []*knativenetworkingv1alpha1.Ingress
-	GetService(namespace, name string) (*corev1.Service, error)
-	GetSecret(namespace, name string) (*corev1.Secret, error)
-	UpdateIngressStatus(ingress *knativenetworkingv1alpha1.Ingress) error
-}
 
 type clientWrapper struct {
 	csKnativeNetworking knativenetworkingclientset.Interface
@@ -75,7 +64,7 @@ func newClientImpl(csKnativeNetworking knativenetworkingclientset.Interface, csK
 func newInClusterClient(endpoint string) (*clientWrapper, error) {
 	config, err := rest.InClusterConfig()
 	if err != nil {
-		return nil, fmt.Errorf("failed to create in-cluster configuration: %w", err)
+		return nil, fmt.Errorf("creating in-cluster configuration: %w", err)
 	}
 
 	if endpoint != "" {
@@ -107,9 +96,9 @@ func newExternalClusterClient(endpoint, token, caFilePath string) (*clientWrappe
 	}
 
 	if caFilePath != "" {
-		caData, err := ioutil.ReadFile(caFilePath)
+		caData, err := os.ReadFile(caFilePath)
 		if err != nil {
-			return nil, fmt.Errorf("failed to read CA file %s: %w", caFilePath, err)
+			return nil, fmt.Errorf("reading CA file %s: %w", caFilePath, err)
 		}
 
 		config.TLSClientConfig = rest.TLSClientConfig{CAData: caData}
@@ -190,17 +179,17 @@ func (c *clientWrapper) ListIngresses() []*knativenetworkingv1alpha1.Ingress {
 func (c *clientWrapper) UpdateIngressStatus(ingress *knativenetworkingv1alpha1.Ingress) error {
 	_, err := c.csKnativeNetworking.NetworkingV1alpha1().Ingresses(ingress.Namespace).UpdateStatus(context.TODO(), ingress, metav1.UpdateOptions{})
 	if err != nil {
-		return fmt.Errorf("failed to update knative ingress status %s/%s: %w", ingress.Namespace,
-			ingress.Name, err)
+		return fmt.Errorf("updating knative ingress status %s/%s: %w", ingress.Namespace, ingress.Name, err)
 	}
+
 	log.Info().Msgf("Updated status on knative ingress %s/%s", ingress.Namespace, ingress.Name)
-	return err
+	return nil
 }
 
 // GetService returns the named service from the given namespace.
 func (c *clientWrapper) GetService(namespace, name string) (*corev1.Service, error) {
 	if !c.isWatchedNamespace(namespace) {
-		return nil, fmt.Errorf("failed to get service %s/%s: namespace is not within watched namespaces", namespace, name)
+		return nil, fmt.Errorf("getting service %s/%s: namespace is not within watched namespaces", namespace, name)
 	}
 
 	return c.factoriesKube[c.lookupNamespace(namespace)].Core().V1().Services().Lister().Services(namespace).Get(name)
@@ -209,7 +198,7 @@ func (c *clientWrapper) GetService(namespace, name string) (*corev1.Service, err
 // GetSecret returns the named secret from the given namespace.
 func (c *clientWrapper) GetSecret(namespace, name string) (*corev1.Secret, error) {
 	if !c.isWatchedNamespace(namespace) {
-		return nil, fmt.Errorf("failed to get secret %s/%s: namespace is not within watched namespaces", namespace, name)
+		return nil, fmt.Errorf("getting secret %s/%s: namespace is not within watched namespaces", namespace, name)
 	}
 
 	return c.factoriesKube[c.lookupNamespace(namespace)].Core().V1().Secrets().Lister().Secrets(namespace).Get(name)

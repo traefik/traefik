@@ -55,7 +55,7 @@ type Provider struct {
 	PrivateService     ServiceRef      `description:"Kubernetes service used to expose the networking controller privately." json:"privateService,omitempty" toml:"privateService,omitempty" yaml:"privateService,omitempty" export:"true"`
 	ThrottleDuration   ptypes.Duration `description:"Ingress refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty"`
 
-	client            Client
+	client            *clientWrapper
 	lastConfiguration safe.Safe
 }
 

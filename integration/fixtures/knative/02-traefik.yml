@@ -19,7 +19,6 @@ metadata:
   namespace: traefik
   labels:
     app: traefik
-
 spec:
   replicas: 1
   selector:

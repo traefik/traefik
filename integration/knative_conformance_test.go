@@ -24,10 +24,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
-const (
-	knativeNamespace = "knative-serving"
-	knativeSkipTests = "headers/probe"
-)
+const knativeNamespace = "knative-serving"
 
 var imageNames = []string{
 	traefikImage,
@@ -173,7 +170,7 @@ func (s *KnativeConformanceSuite) TestKnativeConformance() {
 		s.T().Fatal(err)
 	}
 
-	if err = flag.CommandLine.Set("skip-tests", knativeSkipTests); err != nil {
+	if err = flag.CommandLine.Set("skip-tests", "headers/probe"); err != nil {
 		s.T().Fatal(err)
 	}
 
