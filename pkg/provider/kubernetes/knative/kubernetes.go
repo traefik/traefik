@@ -38,7 +38,7 @@ const (
 
 // ServiceRef holds a Kubernetes service reference.
 type ServiceRef struct {
-	Name      string `description:"Name of the Kubernetes service." json:"name,omitempty" toml:"name,omitempty" yaml:"name,omitempty"`
+	Name      string `description:"Name of the Kubernetes service." json:"desc,omitempty" toml:"desc,omitempty" yaml:"desc,omitempty"`
 	Namespace string `description:"Namespace of the Kubernetes service." json:"namespace,omitempty" toml:"namespace,omitempty" yaml:"namespace,omitempty"`
 }
 
@@ -55,7 +55,7 @@ type Provider struct {
 	PrivateService     ServiceRef      `description:"Kubernetes service used to expose the networking controller privately." json:"privateService,omitempty" toml:"privateService,omitempty" yaml:"privateService,omitempty" export:"true"`
 	ThrottleDuration   ptypes.Duration `description:"Ingress refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty"`
 
-	k8sClient         Client
+	client            Client
 	lastConfiguration safe.Safe
 }
 
@@ -65,7 +65,7 @@ func (p *Provider) Init() error {
 
 	// Initializes Kubernetes client.
 	var err error
-	p.k8sClient, err = p.newK8sClient(logger.WithContext(context.Background()))
+	p.client, err = p.newK8sClient(logger.WithContext(context.Background()))
 	if err != nil {
 		return fmt.Errorf("creating kubernetes client: %w", err)
 	}
@@ -80,7 +80,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 
 	pool.GoCtx(func(ctxPool context.Context) {
 		operation := func() error {
-			eventsChan, err := p.k8sClient.WatchAll(p.Namespaces, ctxPool.Done())
+			eventsChan, err := p.client.WatchAll(p.Namespaces, ctxPool.Done())
 			if err != nil {
 				logger.Error().Msgf("Error watching kubernetes events: %v", err)
 				timer := time.NewTimer(1 * time.Second)
@@ -187,16 +187,16 @@ func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
 func (p *Provider) loadConfiguration(ctx context.Context) (*dynamic.Configuration, []*knativenetworkingv1alpha1.Ingress) {
 	conf := &dynamic.Configuration{
 		HTTP: &dynamic.HTTPConfiguration{
-			Routers:     map[string]*dynamic.Router{},
-			Middlewares: map[string]*dynamic.Middleware{},
-			Services:    map[string]*dynamic.Service{},
+			Routers:     make(map[string]*dynamic.Router),
+			Middlewares: make(map[string]*dynamic.Middleware),
+			Services:    make(map[string]*dynamic.Service),
 		},
 	}
 
 	var ingressStatuses []*knativenetworkingv1alpha1.Ingress
 
 	uniqCerts := make(map[string]*tls.CertAndStores)
-	for _, ingress := range p.k8sClient.ListIngresses() {
+	for _, ingress := range p.client.ListIngresses() {
 		logger := log.Ctx(ctx).With().
 			Str("ingress", ingress.Name).
 			Str("namespace", ingress.Namespace).
@@ -212,10 +212,8 @@ func (p *Provider) loadConfiguration(ctx context.Context) (*dynamic.Configuratio
 			continue
 		}
 
-		conf.HTTP = mergeHTTPConfs(
-			conf.HTTP,
-			p.buildRouters(ctx, ingress),
-		)
+		conf.HTTP = mergeHTTPConfigs(conf.HTTP, p.buildRouters(ctx, ingress))
+
 		// TODO: should we handle configuration errors?
 		ingressStatuses = append(ingressStatuses, ingress)
 	}
@@ -255,7 +253,7 @@ func (p *Provider) loadCertificates(ctx context.Context, ingress *knativenetwork
 }
 
 func (p *Provider) loadCertificate(namespace, secretName string) (tls.Certificate, error) {
-	secret, err := p.k8sClient.GetSecret(namespace, secretName)
+	secret, err := p.client.GetSecret(namespace, secretName)
 	if err != nil {
 		return tls.Certificate{}, fmt.Errorf("getting secret %s/%s: %w", namespace, secretName, err)
 	}
@@ -277,9 +275,9 @@ func (p *Provider) buildRouters(ctx context.Context, ingress *knativenetworkingv
 	logger := log.Ctx(ctx).With().Logger()
 
 	conf := &dynamic.HTTPConfiguration{
-		Routers:     map[string]*dynamic.Router{},
-		Middlewares: map[string]*dynamic.Middleware{},
-		Services:    map[string]*dynamic.Service{},
+		Routers:     make(map[string]*dynamic.Router),
+		Middlewares: make(map[string]*dynamic.Middleware),
+		Services:    make(map[string]*dynamic.Service),
 	}
 
 	for ri, rule := range ingress.Spec.Rules {
@@ -324,12 +322,15 @@ func (p *Provider) buildRouters(ctx context.Context, ingress *knativenetworkingv
 				continue
 			}
 
+			// TODO: support Ingress#HTTPOption to check if HTTP router should redirect to the HTTPS one.
 			conf.Routers[routerKey] = router
+
+			// TODO: at some point we should allow to define a default TLS secret at the provider level to enable TLS with a custom cert when external-domain-tls is disabled.
+			//       see https://knative.dev/docs/serving/encryption/external-domain-tls/#manually-obtain-and-renew-certificates
 			if len(ingress.Spec.TLS) > 0 {
-				// TODO: maybe the rule should be a new one containing the TLS hosts injected by Knative.
 				conf.Routers[routerKey+"-tls"] = &dynamic.Router{
 					EntryPoints: router.EntryPoints,
-					Rule:        router.Rule,
+					Rule:        router.Rule, // TODO: maybe the rule should be a new one containing the TLS hosts injected by Knative.
 					Middlewares: router.Middlewares,
 					Service:     router.Service,
 					TLS:         &dynamic.RouterTLSConfig{},
@@ -391,7 +392,7 @@ func (p *Provider) buildService(namespace, serviceName string, port intstr.IntOr
 }
 
 func (p *Provider) buildServers(namespace, serviceName string, port intstr.IntOrString) ([]dynamic.Server, error) {
-	service, err := p.k8sClient.GetService(namespace, serviceName)
+	service, err := p.client.GetService(namespace, serviceName)
 	if err != nil {
 		return nil, fmt.Errorf("getting service %s/%s: %w", namespace, serviceName, err)
 	}
@@ -442,7 +443,7 @@ func (p *Provider) updateKnativeIngressStatus(ctx context.Context, ingress *knat
 		ingress.Status.MarkLoadBalancerReady(publicLbs, privateLbs)
 		ingress.Status.ObservedGeneration = ingress.GetGeneration()
 
-		return p.k8sClient.UpdateIngressStatus(ingress)
+		return p.client.UpdateIngressStatus(ingress)
 	}
 	return nil
 }
@@ -476,7 +477,7 @@ func buildRule(hosts []string, headers map[string]knativenetworkingv1alpha1.Head
 	return strings.Join(operands, " && ")
 }
 
-func mergeHTTPConfs(confs ...*dynamic.HTTPConfiguration) *dynamic.HTTPConfiguration {
+func mergeHTTPConfigs(confs ...*dynamic.HTTPConfiguration) *dynamic.HTTPConfiguration {
 	conf := &dynamic.HTTPConfiguration{
 		Routers:     map[string]*dynamic.Router{},
 		Middlewares: map[string]*dynamic.Middleware{},

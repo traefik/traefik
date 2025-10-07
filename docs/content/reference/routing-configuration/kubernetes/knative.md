@@ -91,47 +91,6 @@ Use the default URL to access percentage-based routing:
 
 ### HTTP/HTTPS
 
-The `Ingress` is a core resource in the Knative specification, designed to define how HTTP traffic should be routed within a Kubernetes cluster across Knative resources.
-It allows the specification of routing rules that direct HTTP requests to the appropriate Knative backend services.
-
-!!! Note "Ingress type"
-
-    The `Service` resource should be pre-created before deploying the `Ingress` resource to ensure proper routing and traffic management.
-
-For example, the following manifests configure a helloworld-go backend and its corresponding `Ingress`,
-reachable through the deployed `Service` at the `https://helloworld-go.default.example.com` address.
-
-```yaml tab="Ingress"
----
-apiVersion: networking.internal.knative.dev/v1alpha1
-kind: Ingress
-metadata:
-  name: helloworld-go
-  namespace: default
-spec:
-  tls:
-    - secretName: my-tls-secret
-      secretNamespace: default
-  rules:
-    - hosts:
-        - helloworld-go.default.example.com
-      http:
-        paths:
-          - path: /
-            splits:
-              - backend:
-                  serviceName: helloworld-go
-                  serviceNamespace: default
-                  servicePort: 80
-                percent: 100
-```
-
-Once everything is deployed, sending a `GET` request to the HTTP endpoint should return the following response:
-
-```shell
-$ curl https://helloworld-go.default.example.com
-
-Hello Go Sample v1!
-```
+Check out the Knative documentation for [HTTP/HTTPS configuration](https://knative.dev/docs/serving/encryption/external-domain-tls/#configure-external-domain-encryption).
 
 {!traefik-for-business-applications.md!}

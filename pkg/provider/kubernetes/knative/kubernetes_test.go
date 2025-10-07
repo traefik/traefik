@@ -1,290 +1,321 @@
 package knative
 
 import (
-	"errors"
+	"os"
+	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
+	"github.com/traefik/paerser/types"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
+	"k8s.io/apimachinery/pkg/runtime"
+	kubefake "k8s.io/client-go/kubernetes/fake"
+	kscheme "k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/utils/ptr"
 	knativenetworkingv1alpha1 "knative.dev/networking/pkg/apis/networking/v1alpha1"
+	knfake "knative.dev/networking/pkg/client/clientset/versioned/fake"
 )
 
-//  func TestBuildKnativeService(t *testing.T) {
-//	client := &clientMock{
-//		services: []*corev1.Service{
-//			{
-//				ObjectMeta: metav1.ObjectMeta{
-//					Name:      "test-service",
-//					Namespace: "default",
-//				},
-//				Spec: corev1.ServiceSpec{
-//					ExternalName: "traefik.default.svc.cluster.local",
-//					ClusterIP:    "1.2.3.4",
-//					Ports: []corev1.ServicePort{
-//						{
-//							Name:       "http2",
-//							Port:       80,
-//							Protocol:   corev1.ProtocolTCP,
-//							TargetPort: intstr.FromInt(80),
-//						},
-//					},
-//					SessionAffinity: corev1.ServiceAffinityNone,
-//					Type:            corev1.ServiceTypeExternalName,
-//				},
-//			},
-//		},
-//	}
-//
-//	// Create a sample Knative Ingress
-//	ingressRoute := &knativenetworkingv1alpha1.Ingress{
-//		Spec: knativenetworkingv1alpha1.IngressSpec{
-//			Rules: []knativenetworkingv1alpha1.IngressRule{
-//				{
-//					HTTP: &knativenetworkingv1alpha1.HTTPIngressRuleValue{
-//						Paths: []knativenetworkingv1alpha1.HTTPIngressPath{
-//							{
-//								Path: "/test",
-//								Splits: []knativenetworkingv1alpha1.IngressBackendSplit{
-//									{
-//										IngressBackend: knativenetworkingv1alpha1.IngressBackend{
-//											ServiceNamespace: "default",
-//											ServiceName:      "test-service",
-//											ServicePort:      intstr.FromInt(80),
-//										},
-//										Percent: 100,
-//									},
-//								},
-//							},
-//						},
-//					},
-//				},
-//			},
-//		},
-//	}
-//
-//	// Create maps for middleware and services
-//	middleware := make(map[string]*dynamic.Middleware)
-//	conf := make(map[string]*dynamic.Service)
-//
-//	provider := &Provider{
-//		PublicEntrypoints: []string{"web"},
-//		PrivateEntrypoints: []string{"web-internal"},
-//		k8sClient:           client,
-//	}
-//
-//	// Call the method
-//	results := provider.buildKService(t.Context(), ingressRoute, middleware, conf, "test-service")
-//
-//	// Assertions
-//	require.Len(t, results, 1)
-//	result := results[0]
-//	assert.Equal(t, "default-test-service-80", result.ServiceKey)
-//	assert.Equal(t, "/test", result.Path)
-//	assert.NoError(t, result.Err)
-//	assert.NotNil(t, conf["default-test-service-80"])
-//}
+func init() {
+	// required by k8s.MustParseYaml
+	if err := knativenetworkingv1alpha1.AddToScheme(kscheme.Scheme); err != nil {
+		panic(err)
+	}
+}
 
-func TestLoadKnativeServers(t *testing.T) {
-	mockClient := &clientMock{
-		services: []*corev1.Service{
-			{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-service",
-					Namespace: "default",
+func Test_loadConfiguration(t *testing.T) {
+	testCases := []struct {
+		desc    string
+		paths   []string
+		want    *dynamic.Configuration
+		wantLen int
+	}{
+		{
+			desc:    "Wrong ingress class",
+			paths:   []string{"wrong_ingress_class.yaml"},
+			wantLen: 0,
+			want: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:     map[string]*dynamic.Router{},
+					Services:    map[string]*dynamic.Service{},
+					Middlewares: map[string]*dynamic.Middleware{},
 				},
-				Spec: corev1.ServiceSpec{
-					ClusterIP: "10.0.0.1",
-					Ports: []corev1.ServicePort{
-						{
-							Name: "http",
-							Port: 80,
+			},
+		},
+		{
+			desc:    "Cluster Local",
+			paths:   []string{"cluster_local.yaml", "services.yaml"},
+			wantLen: 1,
+			want: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-helloworld-go-rule-0-path-0": {
+							EntryPoints: []string{"priv-http", "priv-https"},
+							Service:     "default-helloworld-go-rule-0-path-0-wrr",
+							Rule:        "(Host(`helloworld-go.default`) || Host(`helloworld-go.default.svc`) || Host(`helloworld-go.default.svc.cluster.local`))",
+							Middlewares: []string{},
 						},
 					},
-				},
-			},
-		},
-		serverlessServices: []*knativenetworkingv1alpha1.ServerlessService{
-			{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-service",
-					Namespace: "default",
-				},
-				Status: knativenetworkingv1alpha1.ServerlessServiceStatus{
-					ServiceName: "test-service",
-				},
-			},
-		},
-		ingresses: []*knativenetworkingv1alpha1.Ingress{
-			{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "example-ingress",
-					Namespace: "default",
-					Annotations: map[string]string{
-						"networking.knative.dev/ingress.class": "traefik.ingress.networking.knative.dev",
-					},
-				},
-				Spec: knativenetworkingv1alpha1.IngressSpec{
-					Rules: []knativenetworkingv1alpha1.IngressRule{
-						{
-							Hosts: []string{"example.com"},
-							HTTP: &knativenetworkingv1alpha1.HTTPIngressRuleValue{
-								Paths: []knativenetworkingv1alpha1.HTTPIngressPath{
+					Services: map[string]*dynamic.Service{
+						"default-helloworld-go-rule-0-path-0-split-0": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: types.Duration(100 * time.Millisecond),
+								},
+								Servers: []dynamic.Server{
 									{
-										Path: "/",
-										Splits: []knativenetworkingv1alpha1.IngressBackendSplit{
-											{
-												IngressBackend: knativenetworkingv1alpha1.IngressBackend{
-													ServiceNamespace: "default",
-													ServiceName:      "test-service",
-													ServicePort:      intstr.FromInt(80),
-												},
-												Percent: 100,
-											},
+										URL: "http://10.43.38.208:80",
+									},
+								},
+							},
+						},
+						"default-helloworld-go-rule-0-path-0-split-1": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: types.Duration(100 * time.Millisecond),
+								},
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.43.44.18:80",
+									},
+								},
+							},
+						},
+						"default-helloworld-go-rule-0-path-0-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-helloworld-go-rule-0-path-0-split-0",
+										Weight: ptr.To(50),
+										Headers: map[string]string{
+											"Knative-Serving-Namespace": "default",
+											"Knative-Serving-Revision":  "helloworld-go-00001",
+										},
+									},
+									{
+										Name:   "default-helloworld-go-rule-0-path-0-split-1",
+										Weight: ptr.To(50),
+										Headers: map[string]string{
+											"Knative-Serving-Namespace": "default",
+											"Knative-Serving-Revision":  "helloworld-go-00002",
 										},
 									},
 								},
 							},
 						},
 					},
+					Middlewares: map[string]*dynamic.Middleware{},
+				},
+			},
+		},
+		{
+			desc:    "External IP",
+			paths:   []string{"external_ip.yaml", "services.yaml"},
+			wantLen: 1,
+			want: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-helloworld-go-rule-0-path-0": {
+							EntryPoints: []string{"http", "https"},
+							Service:     "default-helloworld-go-rule-0-path-0-wrr",
+							Rule:        "(Host(`helloworld-go.default`) || Host(`helloworld-go.default.svc`) || Host(`helloworld-go.default.svc.cluster.local`))",
+							Middlewares: []string{},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-helloworld-go-rule-0-path-0-split-0": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: types.Duration(100 * time.Millisecond),
+								},
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.43.38.208:80",
+									},
+								},
+							},
+						},
+						"default-helloworld-go-rule-0-path-0-split-1": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: types.Duration(100 * time.Millisecond),
+								},
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.43.44.18:80",
+									},
+								},
+							},
+						},
+						"default-helloworld-go-rule-0-path-0-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-helloworld-go-rule-0-path-0-split-0",
+										Weight: ptr.To(50),
+										Headers: map[string]string{
+											"Knative-Serving-Namespace": "default",
+											"Knative-Serving-Revision":  "helloworld-go-00001",
+										},
+									},
+									{
+										Name:   "default-helloworld-go-rule-0-path-0-split-1",
+										Weight: ptr.To(50),
+										Headers: map[string]string{
+											"Knative-Serving-Namespace": "default",
+											"Knative-Serving-Revision":  "helloworld-go-00002",
+										},
+									},
+								},
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+				},
+			},
+		},
+		{
+			desc:    "TLS",
+			paths:   []string{"tls.yaml", "services.yaml"},
+			wantLen: 1,
+			want: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-helloworld-go-rule-0-path-0": {
+							EntryPoints: []string{"http", "https"},
+							Service:     "default-helloworld-go-rule-0-path-0-wrr",
+							Rule:        "(Host(`helloworld-go.default`) || Host(`helloworld-go.default.svc`) || Host(`helloworld-go.default.svc.cluster.local`))",
+							Middlewares: []string{},
+						},
+						"default-helloworld-go-rule-0-path-0-tls": {
+							EntryPoints: []string{"http", "https"},
+							Service:     "default-helloworld-go-rule-0-path-0-wrr",
+							Rule:        "(Host(`helloworld-go.default`) || Host(`helloworld-go.default.svc`) || Host(`helloworld-go.default.svc.cluster.local`))",
+							Middlewares: []string{},
+							TLS:         &dynamic.RouterTLSConfig{},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-helloworld-go-rule-0-path-0-split-0": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: types.Duration(100 * time.Millisecond),
+								},
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.43.38.208:80",
+									},
+								},
+							},
+						},
+						"default-helloworld-go-rule-0-path-0-split-1": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: types.Duration(100 * time.Millisecond),
+								},
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.43.44.18:80",
+									},
+								},
+							},
+						},
+						"default-helloworld-go-rule-0-path-0-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-helloworld-go-rule-0-path-0-split-0",
+										Weight: ptr.To(50),
+										Headers: map[string]string{
+											"Knative-Serving-Namespace": "default",
+											"Knative-Serving-Revision":  "helloworld-go-00001",
+										},
+									},
+									{
+										Name:   "default-helloworld-go-rule-0-path-0-split-1",
+										Weight: ptr.To(50),
+										Headers: map[string]string{
+											"Knative-Serving-Namespace": "default",
+											"Knative-Serving-Revision":  "helloworld-go-00002",
+										},
+									},
+								},
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
 				},
 			},
 		},
 	}
-	provider := &Provider{
-		PublicEntrypoints:  []string{"web"},
-		PrivateEntrypoints: []string{"web-internal"},
-		k8sClient:          mockClient,
+
+	for _, testCase := range testCases {
+		t.Run(testCase.desc, func(t *testing.T) {
+			t.Parallel()
+
+			k8sObjects, knObjects := readResources(t, testCase.paths)
+
+			k8sClient := kubefake.NewClientset(k8sObjects...)
+			knClient := knfake.NewSimpleClientset(knObjects...)
+
+			client := newClientImpl(knClient, k8sClient)
+
+			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			require.NoError(t, err)
+
+			if len(k8sObjects) > 0 || len(knObjects) > 0 {
+				// just wait for the first event
+				<-eventCh
+			}
+
+			p := Provider{
+				PublicEntrypoints:  []string{"http", "https"},
+				PrivateEntrypoints: []string{"priv-http", "priv-https"},
+				client:             client,
+			}
+
+			got, gotIngresses := p.loadConfiguration(t.Context())
+			assert.Len(t, gotIngresses, testCase.wantLen)
+			assert.Equal(t, testCase.want, got)
+		})
 	}
-
-	t.Run("successful load of servers", func(t *testing.T) {
-		servers, err := provider.buildServers("default", "test-service", intstr.FromInt32(80))
-		require.NoError(t, err)
-		require.Len(t, servers, 1)
-		assert.Equal(t, "http://10.0.0.1:80", servers[0].URL)
-	})
-
-	t.Run("service not found", func(t *testing.T) {
-		mockClient.apiServiceError = errors.New("service not found")
-
-		_, err := provider.buildServers("default", "non-existent-service", intstr.FromInt32(80))
-		require.Error(t, err)
-		assert.Equal(t, "getting service default/non-existent-service: service not found", err.Error())
-	})
 }
 
-//  func TestLoadKnativeIngressRouteConfiguration(t *testing.T) {
-//	provider := &Provider{
-//		PublicEntrypoints: []string{"web"},
-//		PrivateEntrypoints: []string{"web-internal"},
-//		k8sClient: &clientMock{
-//			services: []*corev1.Service{
-//				{
-//					ObjectMeta: metav1.ObjectMeta{
-//						Name:      "test-service",
-//						Namespace: "default",
-//					},
-//					Spec: corev1.ServiceSpec{
-//						ClusterIP: "10.0.0.1",
-//						Ports: []corev1.ServicePort{
-//							{
-//								Name: "http",
-//								Port: 80,
-//							},
-//						},
-//					},
-//				},
-//			},
-//			serverlessServices: []*knativenetworkingv1alpha1.ServerlessService{
-//				{
-//					ObjectMeta: metav1.ObjectMeta{
-//						Name:      "test-service",
-//						Namespace: "default",
-//					},
-//					Status: knativenetworkingv1alpha1.ServerlessServiceStatus{
-//						ServiceName: "test-service",
-//					},
-//				},
-//			},
-//			ingresses: []*knativenetworkingv1alpha1.Ingress{
-//				{
-//					ObjectMeta: metav1.ObjectMeta{
-//						Name:      "example-ingress",
-//						Namespace: "default",
-//						Annotations: map[string]string{
-//							"networking.knative.dev/ingress.class": "traefik.ingress.networking.knative.dev",
-//						},
-//					},
-//					Spec: knativenetworkingv1alpha1.IngressSpec{
-//						Rules: []knativenetworkingv1alpha1.IngressRule{
-//							{
-//								Hosts: []string{"example.com"},
-//								HTTP: &knativenetworkingv1alpha1.HTTPIngressRuleValue{
-//									Paths: []knativenetworkingv1alpha1.HTTPIngressPath{
-//										{
-//											Path: "/",
-//											Splits: []knativenetworkingv1alpha1.IngressBackendSplit{
-//												{
-//													IngressBackend: knativenetworkingv1alpha1.IngressBackend{
-//														ServiceNamespace: "default",
-//														ServiceName:      "test-service",
-//														ServicePort:      intstr.FromInt(80),
-//													},
-//													Percent: 100,
-//												},
-//											},
-//										},
-//									},
-//								},
-//							},
-//						},
-//					},
-//				},
-//			},
-//		},
-//	}
-//
-//	ctx := t.Context()
-//	conf, ingressStatusList := provider.loadConfiguration(ctx)
-//
-//	require.NotNil(t, conf)
-//	assert.NotEmpty(t, conf.HTTP.Routers)
-//	assert.NotEmpty(t, conf.HTTP.Services)
-//
-//	router, ok := conf.HTTP.Routers["default-test-service-80"]
-//	require.True(t, ok)
-//	assert.Equal(t, "web", router.EntryPoints[0])
-//	assert.Equal(t, "(Host(`example.com`)) && PathPrefix(`/`)", router.Rule)
-//	assert.Equal(t, "default-test-service-80", router.Service)
-//
-//	require.NotNil(t, ingressStatusList)
-//	assert.NotEmpty(t, ingressStatusList)
-//	assert.Equal(t, "example-ingress", ingressStatusList[0].Name)
-//	assert.Equal(t, "default", ingressStatusList[0].Namespace)
-//}
-
 func Test_buildRule(t *testing.T) {
-	tests := []struct {
-		name    string
+	testCases := []struct {
+		desc    string
 		hosts   []string
 		headers map[string]knativenetworkingv1alpha1.HeaderMatch
 		path    string
 		want    string
 	}{
 		{
-			name:  "single host, no headers, no path",
+			desc:  "single host, no headers, no path",
 			hosts: []string{"example.com"},
 			want:  "(Host(`example.com`))",
 		},
 		{
-			name:  "multiple hosts, no headers, no path",
+			desc:  "multiple hosts, no headers, no path",
 			hosts: []string{"example.com", "foo.com"},
 			want:  "(Host(`example.com`) || Host(`foo.com`))",
 		},
 		{
-			name:  "single host, single header, no path",
+			desc:  "single host, single header, no path",
 			hosts: []string{"example.com"},
 			headers: map[string]knativenetworkingv1alpha1.HeaderMatch{
 				"X-Header": {Exact: "value"},
@@ -292,7 +323,7 @@ func Test_buildRule(t *testing.T) {
 			want: "(Host(`example.com`)) && (Header(`X-Header`,`value`))",
 		},
 		{
-			name:  "single host, multiple headers, no path",
+			desc:  "single host, multiple headers, no path",
 			hosts: []string{"example.com"},
 			headers: map[string]knativenetworkingv1alpha1.HeaderMatch{
 				"X-Header":  {Exact: "value"},
@@ -301,7 +332,7 @@ func Test_buildRule(t *testing.T) {
 			want: "(Host(`example.com`)) && (Header(`X-Header`,`value`) && Header(`X-Header2`,`value2`))",
 		},
 		{
-			name:  "single host, multiple headers, with path",
+			desc:  "single host, multiple headers, with path",
 			hosts: []string{"example.com"},
 			headers: map[string]knativenetworkingv1alpha1.HeaderMatch{
 				"X-Header":  {Exact: "value"},
@@ -311,19 +342,137 @@ func Test_buildRule(t *testing.T) {
 			want: "(Host(`example.com`)) && (Header(`X-Header`,`value`) && Header(`X-Header2`,`value2`)) && PathPrefix(`/foo`)",
 		},
 		{
-			name:  "single host, no headers, with path",
+			desc:  "single host, no headers, with path",
 			hosts: []string{"example.com"},
 			path:  "/foo",
 			want:  "(Host(`example.com`)) && PathPrefix(`/foo`)",
 		},
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
 			got := buildRule(test.hosts, test.headers, test.path)
 			assert.Equal(t, test.want, got)
 		})
 	}
+}
+
+func Test_mergeHTTPConfigs(t *testing.T) {
+	testCases := []struct {
+		desc    string
+		configs []*dynamic.HTTPConfiguration
+		want    *dynamic.HTTPConfiguration
+	}{
+		{
+			desc: "one empty configuration",
+			configs: []*dynamic.HTTPConfiguration{
+				{
+					Routers: map[string]*dynamic.Router{
+						"router1": {Rule: "Host(`example.com`)"},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"middleware1": {Headers: &dynamic.Headers{CustomRequestHeaders: map[string]string{"X-Test": "value"}}},
+					},
+					Services: map[string]*dynamic.Service{
+						"service1": {LoadBalancer: &dynamic.ServersLoadBalancer{Servers: []dynamic.Server{{URL: "http://example.com"}}}},
+					},
+				},
+				{
+					Routers:     map[string]*dynamic.Router{},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services:    map[string]*dynamic.Service{},
+				},
+			},
+			want: &dynamic.HTTPConfiguration{
+				Routers: map[string]*dynamic.Router{
+					"router1": {Rule: "Host(`example.com`)"},
+				},
+				Middlewares: map[string]*dynamic.Middleware{
+					"middleware1": {Headers: &dynamic.Headers{CustomRequestHeaders: map[string]string{"X-Test": "value"}}},
+				},
+				Services: map[string]*dynamic.Service{
+					"service1": {LoadBalancer: &dynamic.ServersLoadBalancer{Servers: []dynamic.Server{{URL: "http://example.com"}}}},
+				},
+			},
+		},
+		{
+			desc: "merging two non-empty configurations",
+			configs: []*dynamic.HTTPConfiguration{
+				{
+					Routers: map[string]*dynamic.Router{
+						"router1": {Rule: "Host(`example.com`)"},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"middleware1": {Headers: &dynamic.Headers{CustomRequestHeaders: map[string]string{"X-Test": "value"}}},
+					},
+					Services: map[string]*dynamic.Service{
+						"service1": {LoadBalancer: &dynamic.ServersLoadBalancer{Servers: []dynamic.Server{{URL: "http://example.com"}}}},
+					},
+				},
+				{
+					Routers: map[string]*dynamic.Router{
+						"router2": {Rule: "PathPrefix(`/test`)"},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"middleware2": {Headers: &dynamic.Headers{CustomRequestHeaders: map[string]string{"X-Test": "value"}}},
+					},
+					Services: map[string]*dynamic.Service{
+						"service2": {LoadBalancer: &dynamic.ServersLoadBalancer{Servers: []dynamic.Server{{URL: "http://example.com"}}}},
+					},
+				},
+			},
+			want: &dynamic.HTTPConfiguration{
+				Routers: map[string]*dynamic.Router{
+					"router1": {Rule: "Host(`example.com`)"},
+					"router2": {Rule: "PathPrefix(`/test`)"},
+				},
+				Middlewares: map[string]*dynamic.Middleware{
+					"middleware1": {Headers: &dynamic.Headers{CustomRequestHeaders: map[string]string{"X-Test": "value"}}},
+					"middleware2": {Headers: &dynamic.Headers{CustomRequestHeaders: map[string]string{"X-Test": "value"}}},
+				},
+				Services: map[string]*dynamic.Service{
+					"service1": {LoadBalancer: &dynamic.ServersLoadBalancer{Servers: []dynamic.Server{{URL: "http://example.com"}}}},
+					"service2": {LoadBalancer: &dynamic.ServersLoadBalancer{Servers: []dynamic.Server{{URL: "http://example.com"}}}},
+				},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			got := mergeHTTPConfigs(test.configs...)
+			assert.Equal(t, test.want, got)
+		})
+	}
+}
+
+func readResources(t *testing.T, paths []string) ([]runtime.Object, []runtime.Object) {
+	t.Helper()
+
+	var (
+		k8sObjects []runtime.Object
+		knObjects  []runtime.Object
+	)
+	for _, path := range paths {
+		yamlContent, err := os.ReadFile(filepath.FromSlash("./fixtures/" + path))
+		if err != nil {
+			panic(err)
+		}
+
+		objects := k8s.MustParseYaml(yamlContent)
+		for _, obj := range objects {
+			switch obj.GetObjectKind().GroupVersionKind().Group {
+			case "networking.internal.knative.dev":
+				knObjects = append(knObjects, obj)
+			default:
+				k8sObjects = append(k8sObjects, obj)
+			}
+		}
+	}
+
+	return k8sObjects, knObjects
 }
