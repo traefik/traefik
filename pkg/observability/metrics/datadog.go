@@ -10,9 +10,9 @@ import (
 	"github.com/go-kit/kit/util/conn"
 	gokitlog "github.com/go-kit/log"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/observability/logs"
+	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	"github.com/traefik/traefik/v3/pkg/safe"
-	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 const (
@@ -56,7 +56,7 @@ const (
 )
 
 // RegisterDatadog registers the metrics pusher if this didn't happen yet and creates a datadog Registry instance.
-func RegisterDatadog(ctx context.Context, config *types.Datadog) Registry {
+func RegisterDatadog(ctx context.Context, config *otypes.Datadog) Registry {
 	// Ensures there is only one DataDog client sending metrics at any given time.
 	StopDatadog()
 
@@ -109,7 +109,7 @@ func RegisterDatadog(ctx context.Context, config *types.Datadog) Registry {
 	return registry
 }
 
-func initDatadogClient(ctx context.Context, config *types.Datadog, logger gokitlog.LoggerFunc) {
+func initDatadogClient(ctx context.Context, config *otypes.Datadog, logger gokitlog.LoggerFunc) {
 	network, address := parseDatadogAddress(config.Address)
 
 	ctx, datadogLoopCancelFunc = context.WithCancel(ctx)

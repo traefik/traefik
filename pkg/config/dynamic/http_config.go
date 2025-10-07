@@ -5,6 +5,7 @@ import (
 	"time"
 
 	ptypes "github.com/traefik/paerser/types"
+	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"google.golang.org/grpc/codes"
@@ -98,12 +99,12 @@ type RouterObservabilityConfig struct {
 	// TraceVerbosity defines the verbosity level of the tracing for this router.
 	// +kubebuilder:validation:Enum=minimal;detailed
 	// +kubebuilder:default=minimal
-	TraceVerbosity types.TracingVerbosity `json:"traceVerbosity,omitempty" toml:"traceVerbosity,omitempty" yaml:"traceVerbosity,omitempty" export:"true"`
+	TraceVerbosity otypes.TracingVerbosity `json:"traceVerbosity,omitempty" toml:"traceVerbosity,omitempty" yaml:"traceVerbosity,omitempty" export:"true"`
 }
 
 // SetDefaults Default values for a RouterObservabilityConfig.
 func (r *RouterObservabilityConfig) SetDefaults() {
-	r.TraceVerbosity = types.MinimalVerbosity
+	r.TraceVerbosity = otypes.MinimalVerbosity
 }
 
 // +k8s:deepcopy-gen=true

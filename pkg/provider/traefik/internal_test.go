@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/static"
+	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	"github.com/traefik/traefik/v3/pkg/ping"
 	"github.com/traefik/traefik/v3/pkg/provider/rest"
 	"github.com/traefik/traefik/v3/pkg/types"
@@ -41,8 +42,8 @@ func Test_createConfiguration(t *testing.T) {
 						Insecure: true,
 					},
 				},
-				Metrics: &types.Metrics{
-					Prometheus: &types.Prometheus{
+				Metrics: &otypes.Metrics{
+					Prometheus: &otypes.Prometheus{
 						EntryPoint:    "test",
 						ManualRouting: false,
 					},
@@ -65,8 +66,8 @@ func Test_createConfiguration(t *testing.T) {
 						Insecure: false,
 					},
 				},
-				Metrics: &types.Metrics{
-					Prometheus: &types.Prometheus{
+				Metrics: &otypes.Metrics{
+					Prometheus: &otypes.Prometheus{
 						EntryPoint:    "test",
 						ManualRouting: true,
 					},
@@ -150,8 +151,8 @@ func Test_createConfiguration(t *testing.T) {
 		{
 			desc: "prometheus_simple.json",
 			staticCfg: static.Configuration{
-				Metrics: &types.Metrics{
-					Prometheus: &types.Prometheus{
+				Metrics: &otypes.Metrics{
+					Prometheus: &otypes.Prometheus{
 						EntryPoint:    "test",
 						ManualRouting: false,
 					},
@@ -161,8 +162,8 @@ func Test_createConfiguration(t *testing.T) {
 		{
 			desc: "prometheus_custom.json",
 			staticCfg: static.Configuration{
-				Metrics: &types.Metrics{
-					Prometheus: &types.Prometheus{
+				Metrics: &otypes.Metrics{
+					Prometheus: &otypes.Prometheus{
 						EntryPoint:    "test",
 						ManualRouting: true,
 					},

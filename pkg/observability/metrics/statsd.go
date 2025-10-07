@@ -6,9 +6,9 @@ import (
 
 	"github.com/go-kit/kit/metrics/statsd"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/observability/logs"
+	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	"github.com/traefik/traefik/v3/pkg/safe"
-	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 var (
@@ -45,7 +45,7 @@ const (
 )
 
 // RegisterStatsd registers the metrics pusher if this didn't happen yet and creates a statsd Registry instance.
-func RegisterStatsd(ctx context.Context, config *types.Statsd) Registry {
+func RegisterStatsd(ctx context.Context, config *otypes.Statsd) Registry {
 	// just to be sure there is a prefix defined
 	if config.Prefix == "" {
 		config.Prefix = defaultMetricsPrefix
@@ -97,7 +97,7 @@ func RegisterStatsd(ctx context.Context, config *types.Statsd) Registry {
 }
 
 // initStatsdTicker initializes metrics pusher and creates a statsdClient if not created already.
-func initStatsdTicker(ctx context.Context, config *types.Statsd) *time.Ticker {
+func initStatsdTicker(ctx context.Context, config *otypes.Statsd) *time.Ticker {
 	address := config.Address
 	if len(address) == 0 {
 		address = "localhost:8125"

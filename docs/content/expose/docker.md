@@ -90,7 +90,7 @@ This confirms that Traefik is successfully routing requests to your whoami appli
 
 ## Add Routing Rules
 
-Now we'll enhance our routing by directing traffic to different services based on [URL paths](../reference/routing-configuration/http/router/rules-and-priority.md#path-pathprefix-and-pathregexp). This is useful for API versioning, frontend/backend separation, or organizing microservices.
+Now we'll enhance our routing by directing traffic to different services based on [URL paths](../reference/routing-configuration/http/routing/rules-and-priority.md#path-pathprefix-and-pathregexp). This is useful for API versioning, frontend/backend separation, or organizing microservices.
 
 Update your `docker-compose.yml` to add another service:
 
@@ -457,7 +457,7 @@ These fundamental capabilities provide a solid foundation for exposing any appli
 
 Now that you understand the basics of exposing services with Traefik Proxy, you might want to explore:
 
-- [Advanced routing options](../reference/routing-configuration/http/router/rules-and-priority.md) like query parameter matching, header-based routing, and more
+- [Advanced routing options](../reference/routing-configuration/http/routing/rules-and-priority.md) like query parameter matching, header-based routing, and more
 - [Additional middlewares](../reference/routing-configuration/http/middlewares/overview.md) for authentication, rate limiting, and request modifications
 - [Observability features](../reference/install-configuration/observability/metrics.md) for monitoring and debugging your Traefik deployment
 - [TCP services](../reference/routing-configuration/tcp/service.md) for exposing TCP services

@@ -3,13 +3,16 @@ title: "Traefik HTTP Services Documentation"
 description: "A service is in charge of connecting incoming requests to the Servers that can handle them. Read the technical documentation."
 ---
 
+Traefik services define how to distribute incoming traffic across your backend servers.
+Each service implements one of the load balancing strategies detailed on this page to ensure optimal traffic distribution and high availability.
+
 ## Service Load Balancer
 
 The load balancers are able to load balance the requests between multiple instances of your programs.
 
 Each service has a load-balancer, even if there is only one server to forward traffic to.
 
-## Configuration Example
+### Configuration Example
 
 ```yaml tab="Structured (YAML)"
 http:
