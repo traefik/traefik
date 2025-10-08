@@ -1,0 +1,39 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: helloworld-go-00001
+  namespace: default
+spec:
+  clusterIP: 10.43.38.208
+  clusterIPs:
+    - 10.43.38.208
+  ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: 8012
+    - name: https
+      port: 443
+      protocol: TCP
+      targetPort: 8112
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: helloworld-go-00002
+  namespace: default
+spec:
+  clusterIP: 10.43.44.18
+  clusterIPs:
+    - 10.43.44.18
+  ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: 8012
+    - name: https
+      port: 443
+      protocol: TCP
+      targetPort: 8112

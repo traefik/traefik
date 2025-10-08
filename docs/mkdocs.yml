@@ -228,6 +228,7 @@ nav:
           - 'Kubernetes CRD' : 'reference/install-configuration/providers/kubernetes/kubernetes-crd.md'
           - 'Kubernetes Ingress' : 'reference/install-configuration/providers/kubernetes/kubernetes-ingress.md'
           - 'Kubernetes Ingress NGINX' : 'reference/install-configuration/providers/kubernetes/kubernetes-ingress-nginx.md'
+          - 'Knative': 'reference/install-configuration/providers/kubernetes/knative.md'
         - 'Docker': 'reference/install-configuration/providers/docker.md'
         - 'Swarm': 'reference/install-configuration/providers/swarm.md'
         - 'Hashicorp':
@@ -345,6 +346,7 @@ nav:
                 - 'IngressRouteUDP' : 'reference/routing-configuration/kubernetes/crd/udp/ingressrouteudp.md'
           - 'Ingress' : 'reference/routing-configuration/kubernetes/ingress.md'
           - 'Ingress NGINX' : 'reference/routing-configuration/kubernetes/ingress-nginx.md'
+          - 'Knative': 'reference/routing-configuration/kubernetes/knative.md'
         - 'Label & Tag Providers' :
           - 'Docker' : 'reference/routing-configuration/other-providers/docker.md'
           - 'Swarm' : 'reference/routing-configuration/other-providers/swarm.md'

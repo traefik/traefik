@@ -24,6 +24,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/gateway"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/ingress"
 	ingressnginx "github.com/traefik/traefik/v3/pkg/provider/kubernetes/ingress-nginx"
+	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/knative"
 	"github.com/traefik/traefik/v3/pkg/provider/kv/consul"
 	"github.com/traefik/traefik/v3/pkg/provider/kv/etcd"
 	"github.com/traefik/traefik/v3/pkg/provider/kv/redis"
@@ -239,6 +240,7 @@ type Providers struct {
 	KubernetesIngressNGINX *ingressnginx.Provider         `description:"Enables Kubernetes Ingress NGINX provider." json:"kubernetesIngressNGINX,omitempty" toml:"kubernetesIngressNGINX,omitempty" yaml:"kubernetesIngressNGINX,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	KubernetesCRD          *crd.Provider                  `description:"Enables Kubernetes CRD provider." json:"kubernetesCRD,omitempty" toml:"kubernetesCRD,omitempty" yaml:"kubernetesCRD,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	KubernetesGateway      *gateway.Provider              `description:"Enables Kubernetes Gateway API provider." json:"kubernetesGateway,omitempty" toml:"kubernetesGateway,omitempty" yaml:"kubernetesGateway,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	Knative                *knative.Provider              `description:"Enables Knative provider." json:"knative,omitempty" toml:"knative,omitempty" yaml:"knative,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	Rest                   *rest.Provider                 `description:"Enables Rest provider." json:"rest,omitempty" toml:"rest,omitempty" yaml:"rest,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	ConsulCatalog          *consulcatalog.ProviderBuilder `description:"Enables Consul Catalog provider." json:"consulCatalog,omitempty" toml:"consulCatalog,omitempty" yaml:"consulCatalog,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	Nomad                  *nomad.ProviderBuilder         `description:"Enables Nomad provider." json:"nomad,omitempty" toml:"nomad,omitempty" yaml:"nomad,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
@@ -428,6 +430,12 @@ func (c *Configuration) ValidateConfiguration() error {
 
 		if c.Providers.KubernetesIngressNGINX.WatchNamespace != "" && c.Providers.KubernetesIngressNGINX.WatchNamespaceSelector != "" {
 			return errors.New("watchNamespace and watchNamespaceSelector options are mutually exclusive")
+		}
+	}
+
+	if c.Providers != nil && c.Providers.Knative != nil {
+		if c.Experimental == nil || !c.Experimental.Knative {
+			return errors.New("the experimental Knative feature must be enabled to use the Knative provider")
 		}
 	}
 
