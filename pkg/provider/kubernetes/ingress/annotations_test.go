@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	"github.com/traefik/traefik/v3/pkg/types"
 )
 
@@ -61,7 +62,7 @@ func Test_parseRouterConfig(t *testing.T) {
 						AccessLogs:     pointer(true),
 						Tracing:        pointer(true),
 						Metrics:        pointer(true),
-						TraceVerbosity: types.MinimalVerbosity,
+						TraceVerbosity: otypes.MinimalVerbosity,
 					},
 				},
 			},

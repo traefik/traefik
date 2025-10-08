@@ -9,7 +9,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel/sdk/resource"
-	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.37.0"
 	kerror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kclientset "k8s.io/client-go/kubernetes"

@@ -6,8 +6,8 @@ import (
 	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
 	"github.com/stretchr/testify/assert"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	"github.com/traefik/traefik/v3/pkg/tls"
-	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 func Test_mergeConfiguration(t *testing.T) {
@@ -525,7 +525,7 @@ func Test_applyModel(t *testing.T) {
 								AccessLogs:     pointer(true),
 								Metrics:        pointer(true),
 								Tracing:        pointer(true),
-								TraceVerbosity: types.MinimalVerbosity,
+								TraceVerbosity: otypes.MinimalVerbosity,
 							},
 						},
 					},
@@ -594,7 +594,7 @@ func Test_applyModel(t *testing.T) {
 								AccessLogs:     pointer(true),
 								Metrics:        pointer(true),
 								Tracing:        pointer(true),
-								TraceVerbosity: types.MinimalVerbosity,
+								TraceVerbosity: otypes.MinimalVerbosity,
 							},
 						},
 					},
@@ -628,7 +628,7 @@ func Test_applyModel(t *testing.T) {
 								AccessLogs:     pointer(true),
 								Tracing:        pointer(true),
 								Metrics:        pointer(true),
-								TraceVerbosity: types.MinimalVerbosity,
+								TraceVerbosity: otypes.MinimalVerbosity,
 							},
 						},
 					},
@@ -645,7 +645,7 @@ func Test_applyModel(t *testing.T) {
 								AccessLogs:     pointer(true),
 								Tracing:        pointer(true),
 								Metrics:        pointer(true),
-								TraceVerbosity: types.MinimalVerbosity,
+								TraceVerbosity: otypes.MinimalVerbosity,
 							},
 						},
 					},
@@ -659,7 +659,7 @@ func Test_applyModel(t *testing.T) {
 								AccessLogs:     pointer(true),
 								Tracing:        pointer(true),
 								Metrics:        pointer(true),
-								TraceVerbosity: types.MinimalVerbosity,
+								TraceVerbosity: otypes.MinimalVerbosity,
 							},
 						},
 					},
@@ -697,7 +697,7 @@ func Test_applyModel(t *testing.T) {
 								AccessLogs:     pointer(true),
 								Metrics:        pointer(true),
 								Tracing:        pointer(true),
-								TraceVerbosity: types.MinimalVerbosity,
+								TraceVerbosity: otypes.MinimalVerbosity,
 							},
 						},
 					},
@@ -740,7 +740,7 @@ func Test_applyModel(t *testing.T) {
 								AccessLogs:     pointer(true),
 								Metrics:        pointer(true),
 								Tracing:        pointer(true),
-								TraceVerbosity: types.MinimalVerbosity,
+								TraceVerbosity: otypes.MinimalVerbosity,
 							},
 						},
 						"websecure-test": {
@@ -751,7 +751,7 @@ func Test_applyModel(t *testing.T) {
 								AccessLogs:     pointer(true),
 								Metrics:        pointer(true),
 								Tracing:        pointer(true),
-								TraceVerbosity: types.MinimalVerbosity,
+								TraceVerbosity: otypes.MinimalVerbosity,
 							},
 						},
 					},

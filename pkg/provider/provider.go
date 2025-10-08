@@ -12,3 +12,14 @@ type Provider interface {
 	Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error
 	Init() error
 }
+
+// NamespacedProvider is implemented by providers that support namespace-scoped configurations,
+// where each configured namespace results in a dedicated provider instance.
+// This enables clear identification of which namespace each provider instance serves during
+// startup logging and operational monitoring.
+type NamespacedProvider interface {
+	Provider
+
+	// Namespace returns the specific namespace this provider instance is configured for.
+	Namespace() string
+}

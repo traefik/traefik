@@ -7,7 +7,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
-	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	"github.com/traefik/traefik/v3/pkg/server/provider"
 	udpservice "github.com/traefik/traefik/v3/pkg/server/service/udp"
 	"github.com/traefik/traefik/v3/pkg/udp"

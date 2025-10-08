@@ -10,13 +10,13 @@ import (
 
 	"github.com/containous/alice"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v3/pkg/logs"
-	"github.com/traefik/traefik/v3/pkg/metrics"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
+	"github.com/traefik/traefik/v3/pkg/observability/logs"
+	"github.com/traefik/traefik/v3/pkg/observability/metrics"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/metric"
-	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.37.0"
+	"go.opentelemetry.io/otel/semconv/v1.37.0/httpconv"
 )
 
 const (
@@ -46,7 +46,7 @@ func newServerMetricsSemConv(ctx context.Context, semConvMetricRegistry *metrics
 }
 
 func (e *semConvServerMetrics) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	if e.semConvMetricRegistry == nil || e.semConvMetricRegistry.HTTPServerRequestDuration() == nil || !SemConvMetricsEnabled(req.Context()) {
+	if e.semConvMetricRegistry == nil || !SemConvMetricsEnabled(req.Context()) {
 		e.next.ServeHTTP(rw, req)
 		return
 	}
@@ -70,12 +70,12 @@ func (e *semConvServerMetrics) ServeHTTP(rw http.ResponseWriter, req *http.Reque
 		attrs = append(attrs, attribute.Key("error.type").String(strconv.Itoa(capt.StatusCode())))
 	}
 
-	attrs = append(attrs, semconv.HTTPRequestMethodKey.String(req.Method))
+	// Additional optional attributes.
 	attrs = append(attrs, semconv.HTTPResponseStatusCode(capt.StatusCode()))
 	attrs = append(attrs, semconv.NetworkProtocolName(strings.ToLower(req.Proto)))
 	attrs = append(attrs, semconv.NetworkProtocolVersion(Proto(req.Proto)))
 	attrs = append(attrs, semconv.ServerAddress(req.Host))
-	attrs = append(attrs, semconv.URLScheme(req.Header.Get("X-Forwarded-Proto")))
 
-	e.semConvMetricRegistry.HTTPServerRequestDuration().Record(req.Context(), end.Sub(start).Seconds(), metric.WithAttributes(attrs...))
+	e.semConvMetricRegistry.HTTPServerRequestDuration().Record(req.Context(), end.Sub(start).Seconds(),
+		httpconv.RequestMethodAttr(req.Method), req.Header.Get("X-Forwarded-Proto"), attrs...)
 }

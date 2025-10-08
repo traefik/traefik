@@ -74,7 +74,9 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 						MaxHeaderBytes: 1048576,
 					},
 					HTTP2: &HTTP2Config{
-						MaxConcurrentStreams: 250,
+						MaxConcurrentStreams:      250,
+						MaxDecoderHeaderTableSize: 4096,
+						MaxEncoderHeaderTableSize: 4096,
 					},
 					HTTP3: nil,
 					UDP: &UDPConfig{
@@ -120,7 +122,9 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 						MaxHeaderBytes: 1048576,
 					},
 					HTTP2: &HTTP2Config{
-						MaxConcurrentStreams: 250,
+						MaxConcurrentStreams:      250,
+						MaxDecoderHeaderTableSize: 4096,
+						MaxEncoderHeaderTableSize: 4096,
 					},
 					HTTP3: nil,
 					UDP: &UDPConfig{
@@ -177,7 +181,9 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 						MaxHeaderBytes: 1048576,
 					},
 					HTTP2: &HTTP2Config{
-						MaxConcurrentStreams: 250,
+						MaxConcurrentStreams:      250,
+						MaxDecoderHeaderTableSize: 4096,
+						MaxEncoderHeaderTableSize: 4096,
 					},
 					HTTP3: nil,
 					UDP: &UDPConfig{
@@ -238,7 +244,9 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 						MaxHeaderBytes: 1048576,
 					},
 					HTTP2: &HTTP2Config{
-						MaxConcurrentStreams: 250,
+						MaxConcurrentStreams:      250,
+						MaxDecoderHeaderTableSize: 4096,
+						MaxEncoderHeaderTableSize: 4096,
 					},
 					HTTP3: nil,
 					UDP: &UDPConfig{

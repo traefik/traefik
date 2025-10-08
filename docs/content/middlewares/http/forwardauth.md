@@ -58,11 +58,11 @@ The following request properties are provided to the forward-auth target endpoin
 
 | Property          | Forward-Request Header |
 |-------------------|------------------------|
-| HTTP Method       | X-Forwarded-Method     |
-| Protocol          | X-Forwarded-Proto      |
-| Host              | X-Forwarded-Host       |
-| Request URI       | X-Forwarded-Uri        |
-| Source IP-Address | X-Forwarded-For        |
+| HTTP Method       | `X-Forwarded-Method`   |
+| Protocol          | `X-Forwarded-Proto`    |
+| Host              | `X-Forwarded-Host`     |
+| Request URI       | `X-Forwarded-Uri`      |
+| Source IP-Address | `X-Forwarded-For`      |
 
 ## Configuration Options
 

@@ -9,11 +9,11 @@ By default, the following headers are automatically added when proxying requests
 
 | Property                  | HTTP Header                |
 |---------------------------|----------------------------|
-| <a id="Clients-IP" href="#Clients-IP" title="#Clients-IP">Client's IP</a> | X-Forwarded-For, X-Real-Ip |
-| <a id="Host" href="#Host" title="#Host">Host</a> | X-Forwarded-Host           |
-| <a id="Port" href="#Port" title="#Port">Port</a> | X-Forwarded-Port           |
-| <a id="Protocol" href="#Protocol" title="#Protocol">Protocol</a> | X-Forwarded-Proto          |
-| <a id="Proxy-Servers-Hostname" href="#Proxy-Servers-Hostname" title="#Proxy-Servers-Hostname">Proxy Server's Hostname</a> | X-Forwarded-Server         |
+| <a id="Clients-IP" href="#Clients-IP" title="#Clients-IP">Client's IP</a> | `X-Forwarded-For`, `X-Real-Ip` |
+| <a id="Host" href="#Host" title="#Host">Host</a> | `X-Forwarded-Host`           |
+| <a id="Port" href="#Port" title="#Port">Port</a> | `X-Forwarded-Port`           |
+| <a id="Protocol" href="#Protocol" title="#Protocol">Protocol</a> | `X-Forwarded-Proto`          |
+| <a id="Proxy-Servers-Hostname" href="#Proxy-Servers-Hostname" title="#Proxy-Servers-Hostname">Proxy Server's Hostname</a> | `X-Forwarded-Server`         |
 
 ## Configuration Examples
 

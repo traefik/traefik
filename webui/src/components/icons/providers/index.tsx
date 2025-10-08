@@ -8,6 +8,7 @@ import File from 'components/icons/providers/File'
 import Http from 'components/icons/providers/Http'
 import Hub from 'components/icons/providers/Hub'
 import Internal from 'components/icons/providers/Internal'
+import Knative from "components/icons/providers/Knative";
 import Kubernetes from 'components/icons/providers/Kubernetes'
 import Nomad from 'components/icons/providers/Nomad'
 import Plugin from 'components/icons/providers/Plugin'
@@ -48,6 +49,9 @@ export default function ProviderIcon({ name, size = 32 }: { name: string; size?:
     }
     if (['kubernetes'].some((prefix) => nameLowerCase.startsWith(prefix))) {
       return Kubernetes
+    }
+    if (['knative'].some((prefix) => nameLowerCase.startsWith(prefix))) {
+      return Knative
     }
     if (['nomad', 'nomad-'].some((prefix) => nameLowerCase.startsWith(prefix))) {
       return Nomad

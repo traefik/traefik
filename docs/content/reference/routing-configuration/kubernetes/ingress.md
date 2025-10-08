@@ -69,7 +69,7 @@ spec:
 
 ??? info "`traefik.ingress.kubernetes.io/router.priority`"
 
-    See [priority](../http/router/rules-and-priority.md#priority-calculation) for more information.
+    See [priority](../http/routing/rules-and-priority.md#priority-calculation) for more information.
 
     ```yaml
     traefik.ingress.kubernetes.io/router.priority: "42"
@@ -82,7 +82,7 @@ spec:
         RuleSyntax option is deprecated and will be removed in the next major version.
         Please do not use this field and rewrite the router rules to use the v3 syntax.
 
-    See [rule syntax](../http/router/rules-and-priority.md#rulesyntax) for more information.
+    See [rule syntax](../http/routing/rules-and-priority.md#rulesyntax) for more information.
 
     ```yaml
     traefik.ingress.kubernetes.io/router.rulesyntax: "v2"
@@ -141,7 +141,7 @@ spec:
 
 ??? info "`traefik.ingress.kubernetes.io/router.observability.accesslogs`"
 
-    See [here](../http/router/observability.md) for more information.
+    See [here](../http/routing/observability.md) for more information.
 
     ```yaml
     traefik.ingress.kubernetes.io/router.observability.accesslogs: true
@@ -149,7 +149,7 @@ spec:
 
 ??? info "`traefik.ingress.kubernetes.io/router.observability.metrics`"
 
-    See [here](../http/router/observability.md) for more information.
+    See [here](../http/routing/observability.md) for more information.
 
     ```yaml
     traefik.ingress.kubernetes.io/router.observability.metrics: true
@@ -157,7 +157,7 @@ spec:
 
 ??? info "`traefik.ingress.kubernetes.io/router.observability.tracing`"
 
-    See [here](../http/router/observability.md) for more information.
+    See [here](../http/routing/observability.md) for more information.
 
     ```yaml
     traefik.ingress.kubernetes.io/router.observability.tracing: true

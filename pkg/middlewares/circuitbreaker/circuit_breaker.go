@@ -8,9 +8,9 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
+	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	"github.com/vulcand/oxy/v2/cbreaker"
 )
 

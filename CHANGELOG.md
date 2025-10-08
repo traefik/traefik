@@ -1,3 +1,22 @@
+## [v3.5.3](https://github.com/traefik/traefik/tree/v3.5.3) (2025-09-26)
+[All Commits](https://github.com/traefik/traefik/compare/v3.5.2...v3.5.3)
+
+**Bug fixes:**
+- **[k8s/crd]** ServersTransport: set minimum MaxIdleConnsPerHost=-1 ([#12077](https://github.com/traefik/traefik/pull/12077) by [xe-leon](https://github.com/xe-leon))
+- **[plugins]** Refactor plugins system ([#12035](https://github.com/traefik/traefik/pull/12035) by [jspdown](https://github.com/jspdown))
+- **[server]** Use client conn to build the proxy protocol header ([#12069](https://github.com/traefik/traefik/pull/12069) by [rtribotte](https://github.com/rtribotte))
+- **[webui]** Update hub-button-app to use a local script ([#12060](https://github.com/traefik/traefik/pull/12060) by [mdeliatf](https://github.com/mdeliatf))
+
+**Documentation:**
+- **[acme,middleware]** Fix broken links in documentation ([#12057](https://github.com/traefik/traefik/pull/12057) by [mloiseleur](https://github.com/mloiseleur))
+- **[k8s]** Create Traefik Service CRD sub-resource documentation page ([#12080](https://github.com/traefik/traefik/pull/12080) by [nmengin](https://github.com/nmengin))
+- **[k8s]** Fix conflict in IngressRouteTCP documentation ([#12064](https://github.com/traefik/traefik/pull/12064) by [MatBon01](https://github.com/MatBon01))
+- Fix typo in rules and priority documentation ([#12089](https://github.com/traefik/traefik/pull/12089) by [Darkangeel-hd](https://github.com/Darkangeel-hd))
+- Add govern section ([#12067](https://github.com/traefik/traefik/pull/12067) by [sheddy-traefik](https://github.com/sheddy-traefik))
+- Fix entrypoint config examples ([#12056](https://github.com/traefik/traefik/pull/12056) by [markormesher](https://github.com/markormesher))
+- Reorganize the menu entries ([#12044](https://github.com/traefik/traefik/pull/12044) by [nmengin](https://github.com/nmengin))
+- Add New Secure Section to the Documentation ([#11978](https://github.com/traefik/traefik/pull/11978) by [sheddy-traefik](https://github.com/sheddy-traefik))
+
 ## [v3.5.2](https://github.com/traefik/traefik/tree/v3.5.2) (2025-09-09)
 [All Commits](https://github.com/traefik/traefik/compare/v3.5.1...v3.5.2)
 

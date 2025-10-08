@@ -648,3 +648,34 @@ func TestPathOperations(t *testing.T) {
 		})
 	}
 }
+
+func TestHTTP2Config(t *testing.T) {
+	expectedMaxConcurrentStreams := 42
+	expectedEncoderTableSize := 128
+	expectedDecoderTableSize := 256
+
+	// Create a listener for the server.
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		_ = ln.Close()
+	})
+
+	// Define the server configuration.
+	configuration := &static.EntryPoint{}
+	configuration.SetDefaults()
+	configuration.HTTP2.MaxConcurrentStreams = int32(expectedMaxConcurrentStreams)
+	configuration.HTTP2.MaxEncoderHeaderTableSize = int32(expectedEncoderTableSize)
+	configuration.HTTP2.MaxDecoderHeaderTableSize = int32(expectedDecoderTableSize)
+
+	// Create the HTTP server using newHTTPServer.
+	server, err := newHTTPServer(t.Context(), ln, configuration, false, requestdecorator.New(nil))
+	require.NoError(t, err)
+
+	// Get the underlying HTTP Server.
+	httpServer := server.Server.(*http.Server)
+
+	assert.Equal(t, expectedMaxConcurrentStreams, httpServer.HTTP2.MaxConcurrentStreams)
+	assert.Equal(t, expectedEncoderTableSize, httpServer.HTTP2.MaxEncoderHeaderTableSize)
+	assert.Equal(t, expectedDecoderTableSize, httpServer.HTTP2.MaxDecoderHeaderTableSize)
+}
