@@ -116,6 +116,7 @@ depending on the service type:
 - **ClusterIP:** The ExternalIPs of the service will be propagated to the ingress status.
 - **NodePort:** The ExternalIP addresses of the nodes in the cluster will be propagated to the ingress status.
 - **LoadBalancer:** The IPs from the service's `loadBalancer.status` field (which contains the endpoints provided by the load balancer) will be propagated to the ingress status.
+- **ExternalName:** The hostname from the service's `spec.externalName` field will be propagated to the ingress status.
 
 When using third-party tools such as External-DNS, this option enables the copying of external service IPs to the ingress resources.
 
