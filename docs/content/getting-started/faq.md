@@ -147,13 +147,13 @@ for example, by using the `touch` command on the configuration file.
 
 By default, the following headers are automatically added when proxying requests:
 
-| Property                  | HTTP Header                |
-|---------------------------|----------------------------|
-| Client's IP               | X-Forwarded-For, X-Real-Ip |
-| Host                      | X-Forwarded-Host           |
-| Port                      | X-Forwarded-Port           |
-| Protocol                  | X-Forwarded-Proto          |
-| Proxy Server's Hostname   | X-Forwarded-Server         |
+| Property                  | HTTP Header                    |
+|---------------------------|--------------------------------|
+| Client's IP               | `X-Forwarded-For`, `X-Real-Ip` |
+| Host                      | `X-Forwarded-Host`             |
+| Port                      | `X-Forwarded-Port`             |
+| Protocol                  | `X-Forwarded-Proto`            |
+| Proxy Server's Hostname   | `X-Forwarded-Server`           |
 
 For more details,
 please check out the [forwarded header](../routing/entrypoints.md#forwarded-headers) documentation.

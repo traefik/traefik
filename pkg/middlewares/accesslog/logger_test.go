@@ -26,7 +26,7 @@ import (
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
-	"github.com/traefik/traefik/v3/pkg/types"
+	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	"go.opentelemetry.io/collector/pdata/plog/plogotlp"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -117,12 +117,12 @@ func TestOTelAccessLogWithBody(t *testing.T) {
 			}))
 			t.Cleanup(collector.Close)
 
-			config := &types.AccessLog{
+			config := &otypes.AccessLog{
 				Format: test.format,
-				OTLP: &types.OTelLog{
+				OTLP: &otypes.OTelLog{
 					ServiceName:        "test",
 					ResourceAttributes: map[string]string{"resource": "attribute"},
-					HTTP: &types.OTelHTTP{
+					HTTP: &otypes.OTelHTTP{
 						Endpoint: collector.URL,
 					},
 				},
@@ -188,7 +188,7 @@ func TestLogRotation(t *testing.T) {
 	fileName := filepath.Join(t.TempDir(), "traefik.log")
 	rotatedFileName := fileName + ".rotated"
 
-	config := &types.AccessLog{FilePath: fileName, Format: CommonFormat}
+	config := &otypes.AccessLog{FilePath: fileName, Format: CommonFormat}
 	logHandler, err := NewHandler(t.Context(), config)
 	require.NoError(t, err)
 	t.Cleanup(func() {
@@ -276,18 +276,18 @@ func TestLoggerHeaderFields(t *testing.T) {
 
 	testCases := []struct {
 		desc            string
-		accessLogFields types.AccessLogFields
+		accessLogFields otypes.AccessLogFields
 		header          string
 		expected        string
 	}{
 		{
 			desc:     "with default mode",
 			header:   "User-Agent",
-			expected: types.AccessLogDrop,
-			accessLogFields: types.AccessLogFields{
-				DefaultMode: types.AccessLogDrop,
-				Headers: &types.FieldHeaders{
-					DefaultMode: types.AccessLogDrop,
+			expected: otypes.AccessLogDrop,
+			accessLogFields: otypes.AccessLogFields{
+				DefaultMode: otypes.AccessLogDrop,
+				Headers: &otypes.FieldHeaders{
+					DefaultMode: otypes.AccessLogDrop,
 					Names:       map[string]string{},
 				},
 			},
@@ -295,13 +295,13 @@ func TestLoggerHeaderFields(t *testing.T) {
 		{
 			desc:     "with exact header name",
 			header:   "User-Agent",
-			expected: types.AccessLogKeep,
-			accessLogFields: types.AccessLogFields{
-				DefaultMode: types.AccessLogDrop,
-				Headers: &types.FieldHeaders{
-					DefaultMode: types.AccessLogDrop,
+			expected: otypes.AccessLogKeep,
+			accessLogFields: otypes.AccessLogFields{
+				DefaultMode: otypes.AccessLogDrop,
+				Headers: &otypes.FieldHeaders{
+					DefaultMode: otypes.AccessLogDrop,
 					Names: map[string]string{
-						"User-Agent": types.AccessLogKeep,
+						"User-Agent": otypes.AccessLogKeep,
 					},
 				},
 			},
@@ -309,13 +309,13 @@ func TestLoggerHeaderFields(t *testing.T) {
 		{
 			desc:     "with case-insensitive match on header name",
 			header:   "User-Agent",
-			expected: types.AccessLogKeep,
-			accessLogFields: types.AccessLogFields{
-				DefaultMode: types.AccessLogDrop,
-				Headers: &types.FieldHeaders{
-					DefaultMode: types.AccessLogDrop,
+			expected: otypes.AccessLogKeep,
+			accessLogFields: otypes.AccessLogFields{
+				DefaultMode: otypes.AccessLogDrop,
+				Headers: &otypes.FieldHeaders{
+					DefaultMode: otypes.AccessLogDrop,
 					Names: map[string]string{
-						"user-agent": types.AccessLogKeep,
+						"user-agent": otypes.AccessLogKeep,
 					},
 				},
 			},
@@ -327,7 +327,7 @@ func TestLoggerHeaderFields(t *testing.T) {
 			logFile, err := os.CreateTemp(t.TempDir(), "*.log")
 			require.NoError(t, err)
 
-			config := &types.AccessLog{
+			config := &otypes.AccessLog{
 				FilePath: logFile.Name(),
 				Format:   CommonFormat,
 				Fields:   &test.accessLogFields,
@@ -376,7 +376,7 @@ func TestLoggerHeaderFields(t *testing.T) {
 			logData, err := os.ReadFile(logFile.Name())
 			require.NoError(t, err)
 
-			if test.expected == types.AccessLogDrop {
+			if test.expected == otypes.AccessLogDrop {
 				assert.NotContains(t, string(logData), strings.Join(expectedValues, ","))
 			} else {
 				assert.Contains(t, string(logData), strings.Join(expectedValues, ","))
@@ -387,7 +387,7 @@ func TestLoggerHeaderFields(t *testing.T) {
 
 func TestCommonLogger(t *testing.T) {
 	logFilePath := filepath.Join(t.TempDir(), logFileNameSuffix)
-	config := &types.AccessLog{FilePath: logFilePath, Format: CommonFormat}
+	config := &otypes.AccessLog{FilePath: logFilePath, Format: CommonFormat}
 	doLogging(t, config, false)
 
 	logData, err := os.ReadFile(logFilePath)
@@ -399,7 +399,7 @@ func TestCommonLogger(t *testing.T) {
 
 func TestCommonLoggerWithBufferingSize(t *testing.T) {
 	logFilePath := filepath.Join(t.TempDir(), logFileNameSuffix)
-	config := &types.AccessLog{FilePath: logFilePath, Format: CommonFormat, BufferingSize: 1024}
+	config := &otypes.AccessLog{FilePath: logFilePath, Format: CommonFormat, BufferingSize: 1024}
 	doLogging(t, config, false)
 
 	// wait a bit for the buffer to be written in the file.
@@ -414,7 +414,7 @@ func TestCommonLoggerWithBufferingSize(t *testing.T) {
 
 func TestLoggerGenericCLF(t *testing.T) {
 	logFilePath := filepath.Join(t.TempDir(), logFileNameSuffix)
-	config := &types.AccessLog{FilePath: logFilePath, Format: GenericCLFFormat}
+	config := &otypes.AccessLog{FilePath: logFilePath, Format: GenericCLFFormat}
 	doLogging(t, config, false)
 
 	logData, err := os.ReadFile(logFilePath)
@@ -426,7 +426,7 @@ func TestLoggerGenericCLF(t *testing.T) {
 
 func TestLoggerGenericCLFWithBufferingSize(t *testing.T) {
 	logFilePath := filepath.Join(t.TempDir(), logFileNameSuffix)
-	config := &types.AccessLog{FilePath: logFilePath, Format: GenericCLFFormat, BufferingSize: 1024}
+	config := &otypes.AccessLog{FilePath: logFilePath, Format: GenericCLFFormat, BufferingSize: 1024}
 	doLogging(t, config, false)
 
 	// wait a bit for the buffer to be written in the file.
@@ -474,14 +474,14 @@ func assertFloat64NotZero() func(t *testing.T, actual interface{}) {
 func TestLoggerJSON(t *testing.T) {
 	testCases := []struct {
 		desc     string
-		config   *types.AccessLog
+		config   *otypes.AccessLog
 		tls      bool
 		tracing  bool
 		expected map[string]func(t *testing.T, value interface{})
 	}{
 		{
 			desc: "default config without tracing",
-			config: &types.AccessLog{
+			config: &otypes.AccessLog{
 				FilePath: "",
 				Format:   JSONFormat,
 			},
@@ -520,7 +520,7 @@ func TestLoggerJSON(t *testing.T) {
 		},
 		{
 			desc: "default config with tracing",
-			config: &types.AccessLog{
+			config: &otypes.AccessLog{
 				FilePath: "",
 				Format:   JSONFormat,
 			},
@@ -562,7 +562,7 @@ func TestLoggerJSON(t *testing.T) {
 		},
 		{
 			desc: "default config, with TLS request",
-			config: &types.AccessLog{
+			config: &otypes.AccessLog{
 				FilePath: "",
 				Format:   JSONFormat,
 			},
@@ -605,10 +605,10 @@ func TestLoggerJSON(t *testing.T) {
 		},
 		{
 			desc: "default config drop all fields",
-			config: &types.AccessLog{
+			config: &otypes.AccessLog{
 				FilePath: "",
 				Format:   JSONFormat,
-				Fields: &types.AccessLogFields{
+				Fields: &otypes.AccessLogFields{
 					DefaultMode: "drop",
 				},
 			},
@@ -623,12 +623,12 @@ func TestLoggerJSON(t *testing.T) {
 		},
 		{
 			desc: "default config drop all fields and headers",
-			config: &types.AccessLog{
+			config: &otypes.AccessLog{
 				FilePath: "",
 				Format:   JSONFormat,
-				Fields: &types.AccessLogFields{
+				Fields: &otypes.AccessLogFields{
 					DefaultMode: "drop",
-					Headers: &types.FieldHeaders{
+					Headers: &otypes.FieldHeaders{
 						DefaultMode: "drop",
 					},
 				},
@@ -641,12 +641,12 @@ func TestLoggerJSON(t *testing.T) {
 		},
 		{
 			desc: "default config drop all fields and redact headers",
-			config: &types.AccessLog{
+			config: &otypes.AccessLog{
 				FilePath: "",
 				Format:   JSONFormat,
-				Fields: &types.AccessLogFields{
+				Fields: &otypes.AccessLogFields{
 					DefaultMode: "drop",
-					Headers: &types.FieldHeaders{
+					Headers: &otypes.FieldHeaders{
 						DefaultMode: "redact",
 					},
 				},
@@ -662,15 +662,15 @@ func TestLoggerJSON(t *testing.T) {
 		},
 		{
 			desc: "default config drop all fields and headers but kept someone",
-			config: &types.AccessLog{
+			config: &otypes.AccessLog{
 				FilePath: "",
 				Format:   JSONFormat,
-				Fields: &types.AccessLogFields{
+				Fields: &otypes.AccessLogFields{
 					DefaultMode: "drop",
 					Names: map[string]string{
 						RequestHost: "keep",
 					},
-					Headers: &types.FieldHeaders{
+					Headers: &otypes.FieldHeaders{
 						DefaultMode: "drop",
 						Names: map[string]string{
 							"Referer": "keep",
@@ -688,15 +688,15 @@ func TestLoggerJSON(t *testing.T) {
 		},
 		{
 			desc: "fields and headers with unconventional letter case",
-			config: &types.AccessLog{
+			config: &otypes.AccessLog{
 				FilePath: "",
 				Format:   JSONFormat,
-				Fields: &types.AccessLogFields{
+				Fields: &otypes.AccessLogFields{
 					DefaultMode: "drop",
 					Names: map[string]string{
 						"rEqUeStHoSt": "keep",
 					},
-					Headers: &types.FieldHeaders{
+					Headers: &otypes.FieldHeaders{
 						DefaultMode: "drop",
 						Names: map[string]string{
 							"ReFeReR": "keep",
@@ -778,7 +778,7 @@ func TestLogger_AbortedRequest(t *testing.T) {
 		"downstream_Cache-Control":     assertString("no-cache"),
 	}
 
-	config := &types.AccessLog{
+	config := &otypes.AccessLog{
 		FilePath: filepath.Join(t.TempDir(), logFileNameSuffix),
 		Format:   JSONFormat,
 	}
@@ -804,12 +804,12 @@ func TestLogger_AbortedRequest(t *testing.T) {
 func TestNewLogHandlerOutputStdout(t *testing.T) {
 	testCases := []struct {
 		desc        string
-		config      *types.AccessLog
+		config      *otypes.AccessLog
 		expectedLog string
 	}{
 		{
 			desc: "default config",
-			config: &types.AccessLog{
+			config: &otypes.AccessLog{
 				FilePath: "",
 				Format:   CommonFormat,
 			},
@@ -817,19 +817,19 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 		},
 		{
 			desc: "default config with empty filters",
-			config: &types.AccessLog{
+			config: &otypes.AccessLog{
 				FilePath: "",
 				Format:   CommonFormat,
-				Filters:  &types.AccessLogFilters{},
+				Filters:  &otypes.AccessLogFilters{},
 			},
 			expectedLog: `TestHost - TestUser [13/Apr/2016:07:14:19 -0700] "POST testpath HTTP/0.0" 123 12 "testReferer" "testUserAgent" 23 "testRouter" "http://127.0.0.1/testService" 1ms`,
 		},
 		{
 			desc: "Status code filter not matching",
-			config: &types.AccessLog{
+			config: &otypes.AccessLog{
 				FilePath: "",
 				Format:   CommonFormat,
-				Filters: &types.AccessLogFilters{
+				Filters: &otypes.AccessLogFilters{
 					StatusCodes: []string{"200"},
 				},
 			},
@@ -837,10 +837,10 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 		},
 		{
 			desc: "Status code filter matching",
-			config: &types.AccessLog{
+			config: &otypes.AccessLog{
 				FilePath: "",
 				Format:   CommonFormat,
-				Filters: &types.AccessLogFilters{
+				Filters: &otypes.AccessLogFilters{
 					StatusCodes: []string{"123"},
 				},
 			},
@@ -848,10 +848,10 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 		},
 		{
 			desc: "Duration filter not matching",
-			config: &types.AccessLog{
+			config: &otypes.AccessLog{
 				FilePath: "",
 				Format:   CommonFormat,
-				Filters: &types.AccessLogFilters{
+				Filters: &otypes.AccessLogFilters{
 					MinDuration: ptypes.Duration(1 * time.Hour),
 				},
 			},
@@ -859,10 +859,10 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 		},
 		{
 			desc: "Duration filter matching",
-			config: &types.AccessLog{
+			config: &otypes.AccessLog{
 				FilePath: "",
 				Format:   CommonFormat,
-				Filters: &types.AccessLogFilters{
+				Filters: &otypes.AccessLogFilters{
 					MinDuration: ptypes.Duration(1 * time.Millisecond),
 				},
 			},
@@ -870,10 +870,10 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 		},
 		{
 			desc: "Retry attempts filter matching",
-			config: &types.AccessLog{
+			config: &otypes.AccessLog{
 				FilePath: "",
 				Format:   CommonFormat,
-				Filters: &types.AccessLogFilters{
+				Filters: &otypes.AccessLogFilters{
 					RetryAttempts: true,
 				},
 			},
@@ -881,10 +881,10 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 		},
 		{
 			desc: "Default mode keep",
-			config: &types.AccessLog{
+			config: &otypes.AccessLog{
 				FilePath: "",
 				Format:   CommonFormat,
-				Fields: &types.AccessLogFields{
+				Fields: &otypes.AccessLogFields{
 					DefaultMode: "keep",
 				},
 			},
@@ -892,10 +892,10 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 		},
 		{
 			desc: "Default mode keep with override",
-			config: &types.AccessLog{
+			config: &otypes.AccessLog{
 				FilePath: "",
 				Format:   CommonFormat,
-				Fields: &types.AccessLogFields{
+				Fields: &otypes.AccessLogFields{
 					DefaultMode: "keep",
 					Names: map[string]string{
 						ClientHost: "drop",
@@ -906,10 +906,10 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 		},
 		{
 			desc: "Default mode drop",
-			config: &types.AccessLog{
+			config: &otypes.AccessLog{
 				FilePath: "",
 				Format:   CommonFormat,
-				Fields: &types.AccessLogFields{
+				Fields: &otypes.AccessLogFields{
 					DefaultMode: "drop",
 				},
 			},
@@ -917,10 +917,10 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 		},
 		{
 			desc: "Default mode drop with override",
-			config: &types.AccessLog{
+			config: &otypes.AccessLog{
 				FilePath: "",
 				Format:   CommonFormat,
-				Fields: &types.AccessLogFields{
+				Fields: &otypes.AccessLogFields{
 					DefaultMode: "drop",
 					Names: map[string]string{
 						ClientHost:     "drop",
@@ -932,16 +932,16 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 		},
 		{
 			desc: "Default mode drop with header dropped",
-			config: &types.AccessLog{
+			config: &otypes.AccessLog{
 				FilePath: "",
 				Format:   CommonFormat,
-				Fields: &types.AccessLogFields{
+				Fields: &otypes.AccessLogFields{
 					DefaultMode: "drop",
 					Names: map[string]string{
 						ClientHost:     "drop",
 						ClientUsername: "keep",
 					},
-					Headers: &types.FieldHeaders{
+					Headers: &otypes.FieldHeaders{
 						DefaultMode: "drop",
 					},
 				},
@@ -950,16 +950,16 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 		},
 		{
 			desc: "Default mode drop with header redacted",
-			config: &types.AccessLog{
+			config: &otypes.AccessLog{
 				FilePath: "",
 				Format:   CommonFormat,
-				Fields: &types.AccessLogFields{
+				Fields: &otypes.AccessLogFields{
 					DefaultMode: "drop",
 					Names: map[string]string{
 						ClientHost:     "drop",
 						ClientUsername: "keep",
 					},
-					Headers: &types.FieldHeaders{
+					Headers: &otypes.FieldHeaders{
 						DefaultMode: "redact",
 					},
 				},
@@ -968,16 +968,16 @@ func TestNewLogHandlerOutputStdout(t *testing.T) {
 		},
 		{
 			desc: "Default mode drop with header redacted",
-			config: &types.AccessLog{
+			config: &otypes.AccessLog{
 				FilePath: "",
 				Format:   CommonFormat,
-				Fields: &types.AccessLogFields{
+				Fields: &otypes.AccessLogFields{
 					DefaultMode: "drop",
 					Names: map[string]string{
 						ClientHost:     "drop",
 						ClientUsername: "keep",
 					},
-					Headers: &types.FieldHeaders{
+					Headers: &otypes.FieldHeaders{
 						DefaultMode: "keep",
 						Names: map[string]string{
 							"Referer": "redact",
@@ -1084,7 +1084,7 @@ func captureStdout(t *testing.T) (out *os.File, restoreStdout func()) {
 	return file, restoreStdout
 }
 
-func doLoggingTLSOpt(t *testing.T, config *types.AccessLog, enableTLS, tracing bool) {
+func doLoggingTLSOpt(t *testing.T, config *otypes.AccessLog, enableTLS, tracing bool) {
 	t.Helper()
 	logger, err := NewHandler(t.Context(), config)
 	require.NoError(t, err)
@@ -1145,13 +1145,13 @@ func doLoggingTLSOpt(t *testing.T, config *types.AccessLog, enableTLS, tracing b
 	handler.ServeHTTP(httptest.NewRecorder(), req)
 }
 
-func doLoggingTLS(t *testing.T, config *types.AccessLog, tracing bool) {
+func doLoggingTLS(t *testing.T, config *otypes.AccessLog, tracing bool) {
 	t.Helper()
 
 	doLoggingTLSOpt(t, config, true, tracing)
 }
 
-func doLogging(t *testing.T, config *types.AccessLog, tracing bool) {
+func doLogging(t *testing.T, config *otypes.AccessLog, tracing bool) {
 	t.Helper()
 
 	doLoggingTLSOpt(t, config, false, tracing)
@@ -1180,7 +1180,7 @@ func logWriterTestHandlerFunc(rw http.ResponseWriter, r *http.Request) {
 	rw.WriteHeader(testStatus)
 }
 
-func doLoggingWithAbortedStream(t *testing.T, config *types.AccessLog) {
+func doLoggingWithAbortedStream(t *testing.T, config *otypes.AccessLog) {
 	t.Helper()
 
 	logger, err := NewHandler(t.Context(), config)

@@ -17,11 +17,11 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
 	"github.com/traefik/traefik/v3/pkg/healthcheck"
-	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
 	metricsMiddle "github.com/traefik/traefik/v3/pkg/middlewares/metrics"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/middlewares/retry"
+	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/server/cookie"
@@ -286,13 +286,13 @@ func (m *Manager) getWRRServiceHandler(ctx context.Context, serviceName string, 
 }
 
 func (m *Manager) getServiceHandler(ctx context.Context, service dynamic.WRRService) (http.Handler, error) {
-	switch {
-	case service.Status != nil:
+	if service.Status != nil {
 		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 			rw.WriteHeader(*service.Status)
 		}), nil
+	}
 
-	case service.GRPCStatus != nil:
+	if service.GRPCStatus != nil {
 		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 			st := status.New(service.GRPCStatus.Code, service.GRPCStatus.Msg)
 
@@ -307,10 +307,24 @@ func (m *Manager) getServiceHandler(ctx context.Context, service dynamic.WRRServ
 
 			_, _ = rw.Write(body)
 		}), nil
-
-	default:
-		return m.BuildHTTP(ctx, service.Name)
 	}
+
+	svcHandler, err := m.BuildHTTP(ctx, service.Name)
+	if err != nil {
+		return nil, fmt.Errorf("building HTTP service: %w", err)
+	}
+
+	if service.Headers != nil {
+		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			for k, v := range service.Headers {
+				req.Header.Set(k, v)
+			}
+
+			svcHandler.ServeHTTP(rw, req)
+		}), nil
+	}
+
+	return svcHandler, nil
 }
 
 func (m *Manager) getHRWServiceHandler(ctx context.Context, serviceName string, config *dynamic.HighestRandomWeight) (http.Handler, error) {

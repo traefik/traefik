@@ -23,12 +23,12 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/static"
 	"github.com/traefik/traefik/v3/pkg/ip"
-	"github.com/traefik/traefik/v3/pkg/logs"
-	"github.com/traefik/traefik/v3/pkg/metrics"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/middlewares/contenttype"
 	"github.com/traefik/traefik/v3/pkg/middlewares/forwardedheaders"
 	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
+	"github.com/traefik/traefik/v3/pkg/observability/logs"
+	"github.com/traefik/traefik/v3/pkg/observability/metrics"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	tcprouter "github.com/traefik/traefik/v3/pkg/server/router/tcp"
 	"github.com/traefik/traefik/v3/pkg/server/service"
@@ -631,6 +631,12 @@ func newHTTPServer(ctx context.Context, ln net.Listener, configuration *static.E
 	if configuration.HTTP2.MaxConcurrentStreams < 0 {
 		return nil, errors.New("max concurrent streams value must be greater than or equal to zero")
 	}
+	if configuration.HTTP2.MaxDecoderHeaderTableSize < 0 {
+		return nil, errors.New("max decoder header table size value must be greater than or equal to zero")
+	}
+	if configuration.HTTP2.MaxEncoderHeaderTableSize < 0 {
+		return nil, errors.New("max encoder header table size value must be greater than or equal to zero")
+	}
 
 	httpSwitcher := middlewares.NewHandlerSwitcher(http.NotFoundHandler())
 
@@ -688,7 +694,9 @@ func newHTTPServer(ctx context.Context, ln net.Listener, configuration *static.E
 		IdleTimeout:    time.Duration(configuration.Transport.RespondingTimeouts.IdleTimeout),
 		MaxHeaderBytes: configuration.HTTP.MaxHeaderBytes,
 		HTTP2: &http.HTTP2Config{
-			MaxConcurrentStreams: int(configuration.HTTP2.MaxConcurrentStreams),
+			MaxConcurrentStreams:      int(configuration.HTTP2.MaxConcurrentStreams),
+			MaxDecoderHeaderTableSize: int(configuration.HTTP2.MaxDecoderHeaderTableSize),
+			MaxEncoderHeaderTableSize: int(configuration.HTTP2.MaxEncoderHeaderTableSize),
 		},
 	}
 	if debugConnection || (configuration.Transport != nil && (configuration.Transport.KeepAliveMaxTime > 0 || configuration.Transport.KeepAliveMaxRequests > 0)) {

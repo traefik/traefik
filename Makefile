@@ -100,10 +100,15 @@ test-integration:
 	GOOS=$(GOOS) GOARCH=$(GOARCH) go test ./integration -test.timeout=20m -failfast -v $(TESTFLAGS)
 
 .PHONY: test-gateway-api-conformance
-#? test-gateway-api-conformance: Run the conformance tests
+#? test-gateway-api-conformance: Run the Gateway API conformance tests
 test-gateway-api-conformance: build-image-dirty
 	# In case of a new Minor/Major version, the k8sConformanceTraefikVersion needs to be updated.
 	GOOS=$(GOOS) GOARCH=$(GOARCH) go test ./integration -v -test.run K8sConformanceSuite -k8sConformance -k8sConformanceTraefikVersion="v3.5" $(TESTFLAGS)
+
+.PHONY: test-knative-conformance
+#? test-knative-conformance: Run the Knative conformance tests
+test-knative-conformance: build-image-dirty
+	GOOS=$(GOOS) GOARCH=$(GOARCH) go test ./integration/integration_test.go ./integration/knative_conformance_test.go -v -tags knativeConformance -test.run KnativeConformanceSuite
 
 .PHONY: test-ui-unit
 #? test-ui-unit: Run the unit tests for the webui

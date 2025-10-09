@@ -160,7 +160,7 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 			serviceName: "test",
 			service: &dynamic.ServersLoadBalancer{
 				Strategy:       dynamic.BalancerStrategyWRR,
-				PassHostHeader: boolPtr(true),
+				PassHostHeader: pointer(true),
 				Servers: []dynamic.Server{
 					{
 						URL: server1.URL,
@@ -479,16 +479,6 @@ func Test1xxResponses(t *testing.T) {
 	}
 }
 
-type serviceBuilderFunc func(ctx context.Context, serviceName string) (http.Handler, error)
-
-func (s serviceBuilderFunc) BuildHTTP(ctx context.Context, serviceName string) (http.Handler, error) {
-	return s(ctx, serviceName)
-}
-
-type internalHandler struct{}
-
-func (internalHandler) ServeHTTP(_ http.ResponseWriter, _ *http.Request) {}
-
 func TestManager_ServiceBuilders(t *testing.T) {
 	var internalHandler internalHandler
 
@@ -605,7 +595,129 @@ func TestMultipleTypeOnBuildHTTP(t *testing.T) {
 	assert.Error(t, err, "cannot create service: multi-types service not supported, consider declaring two different pieces of service instead")
 }
 
-func boolPtr(v bool) *bool { return &v }
+func TestGetServiceHandler_Headers(t *testing.T) {
+	pb := httputil.NewProxyBuilder(&transportManagerMock{}, nil)
+
+	testCases := []struct {
+		desc            string
+		service         dynamic.WRRService
+		userAgent       string
+		expectedHeaders map[string]string
+	}{
+		{
+			desc: "Service with custom headers",
+			service: dynamic.WRRService{
+				Name: "target-service",
+				Headers: map[string]string{
+					"X-Custom-Header": "custom-value",
+					"X-Service-Type":  "knative-service",
+					"Authorization":   "bearer token123",
+				},
+			},
+			userAgent: "test-agent",
+			expectedHeaders: map[string]string{
+				"X-Custom-Header": "custom-value",
+				"X-Service-Type":  "knative-service",
+				"Authorization":   "bearer token123",
+			},
+		},
+		{
+			desc: "Service with empty headers map",
+			service: dynamic.WRRService{
+				Name:    "target-service",
+				Headers: map[string]string{},
+			},
+			userAgent:       "test-agent",
+			expectedHeaders: map[string]string{},
+		},
+		{
+			desc: "Service with nil headers",
+			service: dynamic.WRRService{
+				Name:    "target-service",
+				Headers: nil,
+			},
+			userAgent:       "test-agent",
+			expectedHeaders: map[string]string{},
+		},
+		{
+			desc: "Service with headers that override existing request headers",
+			service: dynamic.WRRService{
+				Name: "target-service",
+				Headers: map[string]string{
+					"User-Agent": "overridden-agent",
+					"Accept":     "application/json",
+				},
+			},
+			userAgent: "original-agent",
+			expectedHeaders: map[string]string{
+				"User-Agent": "overridden-agent",
+				"Accept":     "application/json",
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			// Create a test server that will verify the headers are properly set for this specific test case
+			testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				// Verify expected headers are present
+				for key, expectedValue := range test.expectedHeaders {
+					actualValue := r.Header.Get(key)
+					assert.Equal(t, expectedValue, actualValue, "Header %s should be %s", key, expectedValue)
+				}
+
+				w.Header().Set("X-Response", "success")
+				w.WriteHeader(http.StatusOK)
+			}))
+			t.Cleanup(testServer.Close)
+
+			// Create the target service that the WRRService will point to
+			targetServiceInfo := &runtime.ServiceInfo{
+				Service: &dynamic.Service{
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Strategy: dynamic.BalancerStrategyWRR,
+						Servers: []dynamic.Server{
+							{URL: testServer.URL},
+						},
+					},
+				},
+			}
+
+			// Create a fresh manager for each test case
+			sm := NewManager(map[string]*runtime.ServiceInfo{
+				"target-service": targetServiceInfo,
+			}, nil, nil, &transportManagerMock{}, pb)
+
+			// Get the service handler
+			handler, err := sm.getServiceHandler(t.Context(), test.service)
+			require.NoError(t, err)
+			require.NotNil(t, handler)
+
+			// Create a test request
+			req := testhelpers.MustNewRequest(http.MethodGet, "http://test.example.com/path", nil)
+			if test.userAgent != "" {
+				req.Header.Set("User-Agent", test.userAgent)
+			}
+
+			// Execute the request
+			recorder := httptest.NewRecorder()
+			handler.ServeHTTP(recorder, req)
+
+			// Verify the response was successful
+			assert.Equal(t, http.StatusOK, recorder.Code)
+		})
+	}
+}
+
+type serviceBuilderFunc func(ctx context.Context, serviceName string) (http.Handler, error)
+
+func (s serviceBuilderFunc) BuildHTTP(ctx context.Context, serviceName string) (http.Handler, error) {
+	return s(ctx, serviceName)
+}
+
+type internalHandler struct{}
+
+func (internalHandler) ServeHTTP(_ http.ResponseWriter, _ *http.Request) {}
 
 type forwarderMock struct{}
 
