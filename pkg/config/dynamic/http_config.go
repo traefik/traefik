@@ -5,6 +5,7 @@ import (
 	"time"
 
 	ptypes "github.com/traefik/paerser/types"
+	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"google.golang.org/grpc/codes"
@@ -98,12 +99,12 @@ type RouterObservabilityConfig struct {
 	// TraceVerbosity defines the verbosity level of the tracing for this router.
 	// +kubebuilder:validation:Enum=minimal;detailed
 	// +kubebuilder:default=minimal
-	TraceVerbosity types.TracingVerbosity `json:"traceVerbosity,omitempty" toml:"traceVerbosity,omitempty" yaml:"traceVerbosity,omitempty" export:"true"`
+	TraceVerbosity otypes.TracingVerbosity `json:"traceVerbosity,omitempty" toml:"traceVerbosity,omitempty" yaml:"traceVerbosity,omitempty" export:"true"`
 }
 
 // SetDefaults Default values for a RouterObservabilityConfig.
 func (r *RouterObservabilityConfig) SetDefaults() {
-	r.TraceVerbosity = types.MinimalVerbosity
+	r.TraceVerbosity = otypes.MinimalVerbosity
 }
 
 // +k8s:deepcopy-gen=true
@@ -175,6 +176,10 @@ type HighestRandomWeight struct {
 type WRRService struct {
 	Name   string `json:"name,omitempty" toml:"name,omitempty" yaml:"name,omitempty" export:"true"`
 	Weight *int   `json:"weight,omitempty" toml:"weight,omitempty" yaml:"weight,omitempty" export:"true"`
+
+	// Headers defines the HTTP headers that should be added to the request when calling the service.
+	// This is required by the Knative implementation which expects specific headers to be sent.
+	Headers map[string]string `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
 
 	// Status defines an HTTP status code that should be returned when calling the service.
 	// This is required by the Gateway API implementation which expects specific HTTP status to be returned.

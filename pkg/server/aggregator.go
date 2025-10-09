@@ -7,10 +7,10 @@ import (
 	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/observability/logs"
+	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	"github.com/traefik/traefik/v3/pkg/server/provider"
 	"github.com/traefik/traefik/v3/pkg/tls"
-	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoints []string) dynamic.Configuration {
@@ -270,7 +270,7 @@ func applyDefaultObservabilityModel(cfg dynamic.Configuration) {
 					AccessLogs:     pointer(true),
 					Metrics:        pointer(true),
 					Tracing:        pointer(true),
-					TraceVerbosity: types.MinimalVerbosity,
+					TraceVerbosity: otypes.MinimalVerbosity,
 				}
 
 				continue
@@ -289,7 +289,7 @@ func applyDefaultObservabilityModel(cfg dynamic.Configuration) {
 			}
 
 			if router.Observability.TraceVerbosity == "" {
-				router.Observability.TraceVerbosity = types.MinimalVerbosity
+				router.Observability.TraceVerbosity = otypes.MinimalVerbosity
 			}
 		}
 	}

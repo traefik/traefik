@@ -21,7 +21,7 @@ import (
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/job"
-	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	"github.com/traefik/traefik/v3/pkg/provider"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/safe"
@@ -483,6 +483,11 @@ func (p *Provider) updateIngressStatus(ing *netv1.Ingress, k8sClient Client) err
 				}
 			}
 		}
+
+	case corev1.ServiceTypeExternalName:
+		ingressStatus = []netv1.IngressLoadBalancerIngress{{
+			Hostname: service.Spec.ExternalName,
+		}}
 
 	default:
 		return fmt.Errorf("unsupported service type: %s", service.Spec.Type)

@@ -100,6 +100,8 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | <a id="entrypoints-name-http-tls-domains0-sans" href="#entrypoints-name-http-tls-domains0-sans" title="#entrypoints-name-http-tls-domains0-sans">entrypoints._name_.http.tls.domains[0].sans</a> | Subject alternative names. | |
 | <a id="entrypoints-name-http-tls-options" href="#entrypoints-name-http-tls-options" title="#entrypoints-name-http-tls-options">entrypoints._name_.http.tls.options</a> | Default TLS options for the routers linked to the entry point. | |
 | <a id="entrypoints-name-http2-maxconcurrentstreams" href="#entrypoints-name-http2-maxconcurrentstreams" title="#entrypoints-name-http2-maxconcurrentstreams">entrypoints._name_.http2.maxconcurrentstreams</a> | Specifies the number of concurrent streams per connection that each client is allowed to initiate. | 250 |
+| <a id="entrypoints-name-http2-maxdecoderheadertablesize" href="#entrypoints-name-http2-maxdecoderheadertablesize" title="#entrypoints-name-http2-maxdecoderheadertablesize">entrypoints._name_.http2.maxdecoderheadertablesize</a> | Specifies the maximum size of the HTTP2 HPACK header table on the decoding (receiving from client) side. | 4096 |
+| <a id="entrypoints-name-http2-maxencoderheadertablesize" href="#entrypoints-name-http2-maxencoderheadertablesize" title="#entrypoints-name-http2-maxencoderheadertablesize">entrypoints._name_.http2.maxencoderheadertablesize</a> | Specifies the maximum size of the HTTP2 HPACK header table on the encoding (sending to client) side. | 4096 |
 | <a id="entrypoints-name-http3" href="#entrypoints-name-http3" title="#entrypoints-name-http3">entrypoints._name_.http3</a> | HTTP/3 configuration. | false |
 | <a id="entrypoints-name-http3-advertisedport" href="#entrypoints-name-http3-advertisedport" title="#entrypoints-name-http3-advertisedport">entrypoints._name_.http3.advertisedport</a> | UDP port to advertise, on which HTTP/3 is available. | 0 |
 | <a id="entrypoints-name-observability-accesslogs" href="#entrypoints-name-observability-accesslogs" title="#entrypoints-name-observability-accesslogs">entrypoints._name_.observability.accesslogs</a> | Enables access-logs for this entryPoint. | true |
@@ -121,6 +123,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | <a id="experimental-abortonpluginfailure" href="#experimental-abortonpluginfailure" title="#experimental-abortonpluginfailure">experimental.abortonpluginfailure</a> | Defines whether all plugins must be loaded successfully for Traefik to start. | false |
 | <a id="experimental-fastproxy" href="#experimental-fastproxy" title="#experimental-fastproxy">experimental.fastproxy</a> | Enables the FastProxy implementation. | false |
 | <a id="experimental-fastproxy-debug" href="#experimental-fastproxy-debug" title="#experimental-fastproxy-debug">experimental.fastproxy.debug</a> | Enable debug mode for the FastProxy implementation. | false |
+| <a id="experimental-knative" href="#experimental-knative" title="#experimental-knative">experimental.knative</a> | Allow the Knative provider usage. | false |
 | <a id="experimental-kubernetesgateway" href="#experimental-kubernetesgateway" title="#experimental-kubernetesgateway">experimental.kubernetesgateway</a> | (Deprecated) Allow the Kubernetes gateway api provider usage. | false |
 | <a id="experimental-kubernetesingressnginx" href="#experimental-kubernetesingressnginx" title="#experimental-kubernetesingressnginx">experimental.kubernetesingressnginx</a> | Allow the Kubernetes Ingress NGINX provider usage. | false |
 | <a id="experimental-localplugins-name" href="#experimental-localplugins-name" title="#experimental-localplugins-name">experimental.localplugins._name_</a> | Local plugins configuration. | false |
@@ -232,7 +235,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | <a id="ping-entrypoint" href="#ping-entrypoint" title="#ping-entrypoint">ping.entrypoint</a> | EntryPoint | traefik |
 | <a id="ping-manualrouting" href="#ping-manualrouting" title="#ping-manualrouting">ping.manualrouting</a> | Manual routing | false |
 | <a id="ping-terminatingstatuscode" href="#ping-terminatingstatuscode" title="#ping-terminatingstatuscode">ping.terminatingstatuscode</a> | Terminating status code | 503 |
-| <a id="providers-consul" href="#providers-consul" title="#providers-consul">providers.consul</a> | Enable Consul backend with default settings. | false |
+| <a id="providers-consul" href="#providers-consul" title="#providers-consul">providers.consul</a> | Enables Consul provider. | false |
 | <a id="providers-consul-endpoints" href="#providers-consul-endpoints" title="#providers-consul-endpoints">providers.consul.endpoints</a> | KV store endpoints. | 127.0.0.1:8500 |
 | <a id="providers-consul-namespaces" href="#providers-consul-namespaces" title="#providers-consul-namespaces">providers.consul.namespaces</a> | Sets the namespaces used to discover the configuration (Consul Enterprise only). | |
 | <a id="providers-consul-rootkey" href="#providers-consul-rootkey" title="#providers-consul-rootkey">providers.consul.rootkey</a> | Root key used for KV store. | traefik |
@@ -241,7 +244,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | <a id="providers-consul-tls-insecureskipverify" href="#providers-consul-tls-insecureskipverify" title="#providers-consul-tls-insecureskipverify">providers.consul.tls.insecureskipverify</a> | TLS insecure skip verify | false |
 | <a id="providers-consul-tls-key" href="#providers-consul-tls-key" title="#providers-consul-tls-key">providers.consul.tls.key</a> | TLS key | |
 | <a id="providers-consul-token" href="#providers-consul-token" title="#providers-consul-token">providers.consul.token</a> | Per-request ACL token. | |
-| <a id="providers-consulcatalog" href="#providers-consulcatalog" title="#providers-consulcatalog">providers.consulcatalog</a> | Enable ConsulCatalog backend with default settings. | false |
+| <a id="providers-consulcatalog" href="#providers-consulcatalog" title="#providers-consulcatalog">providers.consulcatalog</a> | Enables Consul Catalog provider. | false |
 | <a id="providers-consulcatalog-cache" href="#providers-consulcatalog-cache" title="#providers-consulcatalog-cache">providers.consulcatalog.cache</a> | Use local agent caching for catalog reads. | false |
 | <a id="providers-consulcatalog-connectaware" href="#providers-consulcatalog-connectaware" title="#providers-consulcatalog-connectaware">providers.consulcatalog.connectaware</a> | Enable Consul Connect support. | false |
 | <a id="providers-consulcatalog-connectbydefault" href="#providers-consulcatalog-connectbydefault" title="#providers-consulcatalog-connectbydefault">providers.consulcatalog.connectbydefault</a> | Consider every service as Connect capable by default. | false |
@@ -267,7 +270,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | <a id="providers-consulcatalog-stale" href="#providers-consulcatalog-stale" title="#providers-consulcatalog-stale">providers.consulcatalog.stale</a> | Use stale consistency for catalog reads. | false |
 | <a id="providers-consulcatalog-strictchecks" href="#providers-consulcatalog-strictchecks" title="#providers-consulcatalog-strictchecks">providers.consulcatalog.strictchecks</a> | A list of service health statuses to allow taking traffic. | passing, warning |
 | <a id="providers-consulcatalog-watch" href="#providers-consulcatalog-watch" title="#providers-consulcatalog-watch">providers.consulcatalog.watch</a> | Watch Consul API events. | false |
-| <a id="providers-docker" href="#providers-docker" title="#providers-docker">providers.docker</a> | Enable Docker backend with default settings. | false |
+| <a id="providers-docker" href="#providers-docker" title="#providers-docker">providers.docker</a> | Enables Docker provider. | false |
 | <a id="providers-docker-allowemptyservices" href="#providers-docker-allowemptyservices" title="#providers-docker-allowemptyservices">providers.docker.allowemptyservices</a> | Disregards the Docker containers health checks with respect to the creation or removal of the corresponding services. | false |
 | <a id="providers-docker-constraints" href="#providers-docker-constraints" title="#providers-docker-constraints">providers.docker.constraints</a> | Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container. | |
 | <a id="providers-docker-defaultrule" href="#providers-docker-defaultrule" title="#providers-docker-defaultrule">providers.docker.defaultrule</a> | Default rule. | Host(`{{ normalize .Name }}`) |
@@ -283,7 +286,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | <a id="providers-docker-usebindportip" href="#providers-docker-usebindportip" title="#providers-docker-usebindportip">providers.docker.usebindportip</a> | Use the ip address from the bound port, rather than from the inner network. | false |
 | <a id="providers-docker-username" href="#providers-docker-username" title="#providers-docker-username">providers.docker.username</a> | Username for Basic HTTP authentication. | |
 | <a id="providers-docker-watch" href="#providers-docker-watch" title="#providers-docker-watch">providers.docker.watch</a> | Watch Docker events. | true |
-| <a id="providers-ecs" href="#providers-ecs" title="#providers-ecs">providers.ecs</a> | Enable AWS ECS backend with default settings. | false |
+| <a id="providers-ecs" href="#providers-ecs" title="#providers-ecs">providers.ecs</a> | Enables AWS ECS provider. | false |
 | <a id="providers-ecs-accesskeyid" href="#providers-ecs-accesskeyid" title="#providers-ecs-accesskeyid">providers.ecs.accesskeyid</a> | AWS credentials access key ID to use for making requests. | |
 | <a id="providers-ecs-autodiscoverclusters" href="#providers-ecs-autodiscoverclusters" title="#providers-ecs-autodiscoverclusters">providers.ecs.autodiscoverclusters</a> | Auto discover cluster. | false |
 | <a id="providers-ecs-clusters" href="#providers-ecs-clusters" title="#providers-ecs-clusters">providers.ecs.clusters</a> | ECS Cluster names. | default |
@@ -295,7 +298,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | <a id="providers-ecs-refreshseconds" href="#providers-ecs-refreshseconds" title="#providers-ecs-refreshseconds">providers.ecs.refreshseconds</a> | Polling interval (in seconds). | 15 |
 | <a id="providers-ecs-region" href="#providers-ecs-region" title="#providers-ecs-region">providers.ecs.region</a> | AWS region to use for requests. | |
 | <a id="providers-ecs-secretaccesskey" href="#providers-ecs-secretaccesskey" title="#providers-ecs-secretaccesskey">providers.ecs.secretaccesskey</a> | AWS credentials access key to use for making requests. | |
-| <a id="providers-etcd" href="#providers-etcd" title="#providers-etcd">providers.etcd</a> | Enable Etcd backend with default settings. | false |
+| <a id="providers-etcd" href="#providers-etcd" title="#providers-etcd">providers.etcd</a> | Enables Etcd provider. | false |
 | <a id="providers-etcd-endpoints" href="#providers-etcd-endpoints" title="#providers-etcd-endpoints">providers.etcd.endpoints</a> | KV store endpoints. | 127.0.0.1:2379 |
 | <a id="providers-etcd-password" href="#providers-etcd-password" title="#providers-etcd-password">providers.etcd.password</a> | Password for authentication. | |
 | <a id="providers-etcd-rootkey" href="#providers-etcd-rootkey" title="#providers-etcd-rootkey">providers.etcd.rootkey</a> | Root key used for KV store. | traefik |
@@ -308,7 +311,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | <a id="providers-file-directory" href="#providers-file-directory" title="#providers-file-directory">providers.file.directory</a> | Load dynamic configuration from one or more .yml or .toml files in a directory. | |
 | <a id="providers-file-filename" href="#providers-file-filename" title="#providers-file-filename">providers.file.filename</a> | Load dynamic configuration from a file. | |
 | <a id="providers-file-watch" href="#providers-file-watch" title="#providers-file-watch">providers.file.watch</a> | Watch provider. | true |
-| <a id="providers-http" href="#providers-http" title="#providers-http">providers.http</a> | Enable HTTP backend with default settings. | false |
+| <a id="providers-http" href="#providers-http" title="#providers-http">providers.http</a> | Enables HTTP provider. | false |
 | <a id="providers-http-endpoint" href="#providers-http-endpoint" title="#providers-http-endpoint">providers.http.endpoint</a> | Load configuration from this endpoint. | |
 | <a id="providers-http-headers-name" href="#providers-http-headers-name" title="#providers-http-headers-name">providers.http.headers._name_</a> | Define custom headers to be sent to the endpoint. | |
 | <a id="providers-http-pollinterval" href="#providers-http-pollinterval" title="#providers-http-pollinterval">providers.http.pollinterval</a> | Polling interval for endpoint. | 5 |
@@ -317,7 +320,22 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | <a id="providers-http-tls-cert" href="#providers-http-tls-cert" title="#providers-http-tls-cert">providers.http.tls.cert</a> | TLS cert | |
 | <a id="providers-http-tls-insecureskipverify" href="#providers-http-tls-insecureskipverify" title="#providers-http-tls-insecureskipverify">providers.http.tls.insecureskipverify</a> | TLS insecure skip verify | false |
 | <a id="providers-http-tls-key" href="#providers-http-tls-key" title="#providers-http-tls-key">providers.http.tls.key</a> | TLS key | |
-| <a id="providers-kubernetescrd" href="#providers-kubernetescrd" title="#providers-kubernetescrd">providers.kubernetescrd</a> | Enable Kubernetes backend with default settings. | false |
+| <a id="providers-knative" href="#providers-knative" title="#providers-knative">providers.knative</a> | Enables Knative provider. | false |
+| <a id="providers-knative-certauthfilepath" href="#providers-knative-certauthfilepath" title="#providers-knative-certauthfilepath">providers.knative.certauthfilepath</a> | Kubernetes certificate authority file path (not needed for in-cluster client). | |
+| <a id="providers-knative-endpoint" href="#providers-knative-endpoint" title="#providers-knative-endpoint">providers.knative.endpoint</a> | Kubernetes server endpoint (required for external cluster client). | |
+| <a id="providers-knative-labelselector" href="#providers-knative-labelselector" title="#providers-knative-labelselector">providers.knative.labelselector</a> | Kubernetes label selector to use. | |
+| <a id="providers-knative-namespaces" href="#providers-knative-namespaces" title="#providers-knative-namespaces">providers.knative.namespaces</a> | Kubernetes namespaces. | |
+| <a id="providers-knative-privateentrypoints" href="#providers-knative-privateentrypoints" title="#providers-knative-privateentrypoints">providers.knative.privateentrypoints</a> | Entrypoint names used to expose the Ingress privately. If empty local Ingresses are skipped. | |
+| <a id="providers-knative-privateservice" href="#providers-knative-privateservice" title="#providers-knative-privateservice">providers.knative.privateservice</a> | Kubernetes service used to expose the networking controller privately. | |
+| <a id="providers-knative-privateservice-name" href="#providers-knative-privateservice-name" title="#providers-knative-privateservice-name">providers.knative.privateservice.name</a> | Name of the Kubernetes service. | |
+| <a id="providers-knative-privateservice-namespace" href="#providers-knative-privateservice-namespace" title="#providers-knative-privateservice-namespace">providers.knative.privateservice.namespace</a> | Namespace of the Kubernetes service. | |
+| <a id="providers-knative-publicentrypoints" href="#providers-knative-publicentrypoints" title="#providers-knative-publicentrypoints">providers.knative.publicentrypoints</a> | Entrypoint names used to expose the Ingress publicly. If empty an Ingress is exposed on all entrypoints. | |
+| <a id="providers-knative-publicservice" href="#providers-knative-publicservice" title="#providers-knative-publicservice">providers.knative.publicservice</a> | Kubernetes service used to expose the networking controller publicly. | |
+| <a id="providers-knative-publicservice-name" href="#providers-knative-publicservice-name" title="#providers-knative-publicservice-name">providers.knative.publicservice.name</a> | Name of the Kubernetes service. | |
+| <a id="providers-knative-publicservice-namespace" href="#providers-knative-publicservice-namespace" title="#providers-knative-publicservice-namespace">providers.knative.publicservice.namespace</a> | Namespace of the Kubernetes service. | |
+| <a id="providers-knative-throttleduration" href="#providers-knative-throttleduration" title="#providers-knative-throttleduration">providers.knative.throttleduration</a> | Ingress refresh throttle duration | 0 |
+| <a id="providers-knative-token" href="#providers-knative-token" title="#providers-knative-token">providers.knative.token</a> | Kubernetes bearer token (not needed for in-cluster client). | |
+| <a id="providers-kubernetescrd" href="#providers-kubernetescrd" title="#providers-kubernetescrd">providers.kubernetescrd</a> | Enables Kubernetes CRD provider. | false |
 | <a id="providers-kubernetescrd-allowcrossnamespace" href="#providers-kubernetescrd-allowcrossnamespace" title="#providers-kubernetescrd-allowcrossnamespace">providers.kubernetescrd.allowcrossnamespace</a> | Allow cross namespace resource reference. | false |
 | <a id="providers-kubernetescrd-allowemptyservices" href="#providers-kubernetescrd-allowemptyservices" title="#providers-kubernetescrd-allowemptyservices">providers.kubernetescrd.allowemptyservices</a> | Allow the creation of services without endpoints. | false |
 | <a id="providers-kubernetescrd-allowexternalnameservices" href="#providers-kubernetescrd-allowexternalnameservices" title="#providers-kubernetescrd-allowexternalnameservices">providers.kubernetescrd.allowexternalnameservices</a> | Allow ExternalName services. | false |
@@ -330,7 +348,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | <a id="providers-kubernetescrd-nativelbbydefault" href="#providers-kubernetescrd-nativelbbydefault" title="#providers-kubernetescrd-nativelbbydefault">providers.kubernetescrd.nativelbbydefault</a> | Defines whether to use Native Kubernetes load-balancing mode by default. | false |
 | <a id="providers-kubernetescrd-throttleduration" href="#providers-kubernetescrd-throttleduration" title="#providers-kubernetescrd-throttleduration">providers.kubernetescrd.throttleduration</a> | Ingress refresh throttle duration | 0 |
 | <a id="providers-kubernetescrd-token" href="#providers-kubernetescrd-token" title="#providers-kubernetescrd-token">providers.kubernetescrd.token</a> | Kubernetes bearer token (not needed for in-cluster client). It accepts either a token value or a file path to the token. | |
-| <a id="providers-kubernetesgateway" href="#providers-kubernetesgateway" title="#providers-kubernetesgateway">providers.kubernetesgateway</a> | Enable Kubernetes gateway api provider with default settings. | false |
+| <a id="providers-kubernetesgateway" href="#providers-kubernetesgateway" title="#providers-kubernetesgateway">providers.kubernetesgateway</a> | Enables Kubernetes Gateway API provider. | false |
 | <a id="providers-kubernetesgateway-certauthfilepath" href="#providers-kubernetesgateway-certauthfilepath" title="#providers-kubernetesgateway-certauthfilepath">providers.kubernetesgateway.certauthfilepath</a> | Kubernetes certificate authority file path (not needed for in-cluster client). | |
 | <a id="providers-kubernetesgateway-endpoint" href="#providers-kubernetesgateway-endpoint" title="#providers-kubernetesgateway-endpoint">providers.kubernetesgateway.endpoint</a> | Kubernetes server endpoint (required for external cluster client). | |
 | <a id="providers-kubernetesgateway-experimentalchannel" href="#providers-kubernetesgateway-experimentalchannel" title="#providers-kubernetesgateway-experimentalchannel">providers.kubernetesgateway.experimentalchannel</a> | Toggles Experimental Channel resources support (TCPRoute, TLSRoute...). | false |
@@ -344,7 +362,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | <a id="providers-kubernetesgateway-statusaddress-service-namespace" href="#providers-kubernetesgateway-statusaddress-service-namespace" title="#providers-kubernetesgateway-statusaddress-service-namespace">providers.kubernetesgateway.statusaddress.service.namespace</a> | Namespace of the Kubernetes service. | |
 | <a id="providers-kubernetesgateway-throttleduration" href="#providers-kubernetesgateway-throttleduration" title="#providers-kubernetesgateway-throttleduration">providers.kubernetesgateway.throttleduration</a> | Kubernetes refresh throttle duration | 0 |
 | <a id="providers-kubernetesgateway-token" href="#providers-kubernetesgateway-token" title="#providers-kubernetesgateway-token">providers.kubernetesgateway.token</a> | Kubernetes bearer token (not needed for in-cluster client). It accepts either a token value or a file path to the token. | |
-| <a id="providers-kubernetesingress" href="#providers-kubernetesingress" title="#providers-kubernetesingress">providers.kubernetesingress</a> | Enable Kubernetes backend with default settings. | false |
+| <a id="providers-kubernetesingress" href="#providers-kubernetesingress" title="#providers-kubernetesingress">providers.kubernetesingress</a> | Enables Kubernetes Ingress provider. | false |
 | <a id="providers-kubernetesingress-allowemptyservices" href="#providers-kubernetesingress-allowemptyservices" title="#providers-kubernetesingress-allowemptyservices">providers.kubernetesingress.allowemptyservices</a> | Allow creation of services without endpoints. | false |
 | <a id="providers-kubernetesingress-allowexternalnameservices" href="#providers-kubernetesingress-allowexternalnameservices" title="#providers-kubernetesingress-allowexternalnameservices">providers.kubernetesingress.allowexternalnameservices</a> | Allow ExternalName services. | false |
 | <a id="providers-kubernetesingress-certauthfilepath" href="#providers-kubernetesingress-certauthfilepath" title="#providers-kubernetesingress-certauthfilepath">providers.kubernetesingress.certauthfilepath</a> | Kubernetes certificate authority file path (not needed for in-cluster client). | |
@@ -361,7 +379,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | <a id="providers-kubernetesingress-strictprefixmatching" href="#providers-kubernetesingress-strictprefixmatching" title="#providers-kubernetesingress-strictprefixmatching">providers.kubernetesingress.strictprefixmatching</a> | Make prefix matching strictly comply with the Kubernetes Ingress specification (path-element-wise matching instead of character-by-character string matching). | false |
 | <a id="providers-kubernetesingress-throttleduration" href="#providers-kubernetesingress-throttleduration" title="#providers-kubernetesingress-throttleduration">providers.kubernetesingress.throttleduration</a> | Ingress refresh throttle duration | 0 |
 | <a id="providers-kubernetesingress-token" href="#providers-kubernetesingress-token" title="#providers-kubernetesingress-token">providers.kubernetesingress.token</a> | Kubernetes bearer token (not needed for in-cluster client). It accepts either a token value or a file path to the token. | |
-| <a id="providers-kubernetesingressnginx" href="#providers-kubernetesingressnginx" title="#providers-kubernetesingressnginx">providers.kubernetesingressnginx</a> | Enable Kubernetes Ingress NGINX provider. | false |
+| <a id="providers-kubernetesingressnginx" href="#providers-kubernetesingressnginx" title="#providers-kubernetesingressnginx">providers.kubernetesingressnginx</a> | Enables Kubernetes Ingress NGINX provider. | false |
 | <a id="providers-kubernetesingressnginx-certauthfilepath" href="#providers-kubernetesingressnginx-certauthfilepath" title="#providers-kubernetesingressnginx-certauthfilepath">providers.kubernetesingressnginx.certauthfilepath</a> | Kubernetes certificate authority file path (not needed for in-cluster client). | |
 | <a id="providers-kubernetesingressnginx-controllerclass" href="#providers-kubernetesingressnginx-controllerclass" title="#providers-kubernetesingressnginx-controllerclass">providers.kubernetesingressnginx.controllerclass</a> | Ingress Class Controller value this controller satisfies. | k8s.io/ingress-nginx |
 | <a id="providers-kubernetesingressnginx-defaultbackendservice" href="#providers-kubernetesingressnginx-defaultbackendservice" title="#providers-kubernetesingressnginx-defaultbackendservice">providers.kubernetesingressnginx.defaultbackendservice</a> | Service used to serve HTTP requests not matching any known server name (catch-all). Takes the form 'namespace/name'. | |
@@ -376,7 +394,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | <a id="providers-kubernetesingressnginx-watchingresswithoutclass" href="#providers-kubernetesingressnginx-watchingresswithoutclass" title="#providers-kubernetesingressnginx-watchingresswithoutclass">providers.kubernetesingressnginx.watchingresswithoutclass</a> | Define if Ingress Controller should also watch for Ingresses without an IngressClass or the annotation specified. | false |
 | <a id="providers-kubernetesingressnginx-watchnamespace" href="#providers-kubernetesingressnginx-watchnamespace" title="#providers-kubernetesingressnginx-watchnamespace">providers.kubernetesingressnginx.watchnamespace</a> | Namespace the controller watches for updates to Kubernetes objects. All namespaces are watched if this parameter is left empty. | |
 | <a id="providers-kubernetesingressnginx-watchnamespaceselector" href="#providers-kubernetesingressnginx-watchnamespaceselector" title="#providers-kubernetesingressnginx-watchnamespaceselector">providers.kubernetesingressnginx.watchnamespaceselector</a> | Selector selects namespaces the controller watches for updates to Kubernetes objects. | |
-| <a id="providers-nomad" href="#providers-nomad" title="#providers-nomad">providers.nomad</a> | Enable Nomad backend with default settings. | false |
+| <a id="providers-nomad" href="#providers-nomad" title="#providers-nomad">providers.nomad</a> | Enables Nomad provider. | false |
 | <a id="providers-nomad-allowemptyservices" href="#providers-nomad-allowemptyservices" title="#providers-nomad-allowemptyservices">providers.nomad.allowemptyservices</a> | Allow the creation of services without endpoints. | false |
 | <a id="providers-nomad-constraints" href="#providers-nomad-constraints" title="#providers-nomad-constraints">providers.nomad.constraints</a> | Constraints is an expression that Traefik matches against the Nomad service's tags to determine whether to create route(s) for that service. | |
 | <a id="providers-nomad-defaultrule" href="#providers-nomad-defaultrule" title="#providers-nomad-defaultrule">providers.nomad.defaultrule</a> | Default rule. | Host(`{{ normalize .Name }}`) |
@@ -397,7 +415,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | <a id="providers-nomad-watch" href="#providers-nomad-watch" title="#providers-nomad-watch">providers.nomad.watch</a> | Watch Nomad Service events. | false |
 | <a id="providers-plugin-name" href="#providers-plugin-name" title="#providers-plugin-name">providers.plugin._name_</a> | Plugins configuration. | |
 | <a id="providers-providersthrottleduration" href="#providers-providersthrottleduration" title="#providers-providersthrottleduration">providers.providersthrottleduration</a> | Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time. | 2 |
-| <a id="providers-redis" href="#providers-redis" title="#providers-redis">providers.redis</a> | Enable Redis backend with default settings. | false |
+| <a id="providers-redis" href="#providers-redis" title="#providers-redis">providers.redis</a> | Enables Redis provider. | false |
 | <a id="providers-redis-db" href="#providers-redis-db" title="#providers-redis-db">providers.redis.db</a> | Database to be selected after connecting to the server. | 0 |
 | <a id="providers-redis-endpoints" href="#providers-redis-endpoints" title="#providers-redis-endpoints">providers.redis.endpoints</a> | KV store endpoints. | 127.0.0.1:6379 |
 | <a id="providers-redis-password" href="#providers-redis-password" title="#providers-redis-password">providers.redis.password</a> | Password for authentication. | |
@@ -414,9 +432,9 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | <a id="providers-redis-tls-insecureskipverify" href="#providers-redis-tls-insecureskipverify" title="#providers-redis-tls-insecureskipverify">providers.redis.tls.insecureskipverify</a> | TLS insecure skip verify | false |
 | <a id="providers-redis-tls-key" href="#providers-redis-tls-key" title="#providers-redis-tls-key">providers.redis.tls.key</a> | TLS key | |
 | <a id="providers-redis-username" href="#providers-redis-username" title="#providers-redis-username">providers.redis.username</a> | Username for authentication. | |
-| <a id="providers-rest" href="#providers-rest" title="#providers-rest">providers.rest</a> | Enable Rest backend with default settings. | false |
+| <a id="providers-rest" href="#providers-rest" title="#providers-rest">providers.rest</a> | Enables Rest provider. | false |
 | <a id="providers-rest-insecure" href="#providers-rest-insecure" title="#providers-rest-insecure">providers.rest.insecure</a> | Activate REST Provider directly on the entryPoint named traefik. | false |
-| <a id="providers-swarm" href="#providers-swarm" title="#providers-swarm">providers.swarm</a> | Enable Docker Swarm backend with default settings. | false |
+| <a id="providers-swarm" href="#providers-swarm" title="#providers-swarm">providers.swarm</a> | Enables Docker Swarm provider. | false |
 | <a id="providers-swarm-allowemptyservices" href="#providers-swarm-allowemptyservices" title="#providers-swarm-allowemptyservices">providers.swarm.allowemptyservices</a> | Disregards the Docker containers health checks with respect to the creation or removal of the corresponding services. | false |
 | <a id="providers-swarm-constraints" href="#providers-swarm-constraints" title="#providers-swarm-constraints">providers.swarm.constraints</a> | Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container. | |
 | <a id="providers-swarm-defaultrule" href="#providers-swarm-defaultrule" title="#providers-swarm-defaultrule">providers.swarm.defaultrule</a> | Default rule. | Host(`{{ normalize .Name }}`) |
@@ -433,7 +451,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | <a id="providers-swarm-usebindportip" href="#providers-swarm-usebindportip" title="#providers-swarm-usebindportip">providers.swarm.usebindportip</a> | Use the ip address from the bound port, rather than from the inner network. | false |
 | <a id="providers-swarm-username" href="#providers-swarm-username" title="#providers-swarm-username">providers.swarm.username</a> | Username for Basic HTTP authentication. | |
 | <a id="providers-swarm-watch" href="#providers-swarm-watch" title="#providers-swarm-watch">providers.swarm.watch</a> | Watch Docker events. | true |
-| <a id="providers-zookeeper" href="#providers-zookeeper" title="#providers-zookeeper">providers.zookeeper</a> | Enable ZooKeeper backend with default settings. | false |
+| <a id="providers-zookeeper" href="#providers-zookeeper" title="#providers-zookeeper">providers.zookeeper</a> | Enables ZooKeeper provider. | false |
 | <a id="providers-zookeeper-endpoints" href="#providers-zookeeper-endpoints" title="#providers-zookeeper-endpoints">providers.zookeeper.endpoints</a> | KV store endpoints. | 127.0.0.1:2181 |
 | <a id="providers-zookeeper-password" href="#providers-zookeeper-password" title="#providers-zookeeper-password">providers.zookeeper.password</a> | Password for authentication. | |
 | <a id="providers-zookeeper-rootkey" href="#providers-zookeeper-rootkey" title="#providers-zookeeper-rootkey">providers.zookeeper.rootkey</a> | Root key used for KV store. | traefik |
