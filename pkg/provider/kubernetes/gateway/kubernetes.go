@@ -37,8 +37,6 @@ import (
 const (
 	providerName = "kubernetesgateway"
 
-	controllerName = "traefik.io/gateway-controller"
-
 	groupCore    = "core"
 	groupGateway = "gateway.networking.k8s.io"
 
@@ -72,6 +70,7 @@ type Provider struct {
 	ExperimentalChannel bool                `description:"Toggles Experimental Channel resources support (TCPRoute, TLSRoute...)." json:"experimentalChannel,omitempty" toml:"experimentalChannel,omitempty" yaml:"experimentalChannel,omitempty" export:"true"`
 	StatusAddress       *StatusAddress      `description:"Defines the Kubernetes Gateway status address." json:"statusAddress,omitempty" toml:"statusAddress,omitempty" yaml:"statusAddress,omitempty" export:"true"`
 	NativeLBByDefault   bool                `description:"Defines whether to use Native Kubernetes load-balancing by default." json:"nativeLBByDefault,omitempty" toml:"nativeLBByDefault,omitempty" yaml:"nativeLBByDefault,omitempty" export:"true"`
+	ControllerName      string              `description:"Defines the controller name to use for GatewayClass (defaults to traefik.io/gateway-controller)." json:"controllerName,omitempty" toml:"controllerName,omitempty" yaml:"controllerName,omitempty" export:"true"`
 
 	EntryPoints map[string]Entrypoint `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
 
@@ -336,7 +335,7 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) *dynamic.C
 
 	gatewayClassNames := map[string]struct{}{}
 	for _, gatewayClass := range gatewayClasses {
-		if gatewayClass.Spec.ControllerName != controllerName {
+		if gatewayClass.Spec.ControllerName != gatev1.GatewayController(p.ControllerName) {
 			continue
 		}
 

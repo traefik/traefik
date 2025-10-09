@@ -41,7 +41,7 @@ func (p *Provider) loadTLSRoutes(ctx context.Context, gatewayListeners []gateway
 		for _, parentRef := range route.Spec.ParentRefs {
 			parentStatus := &gatev1alpha2.RouteParentStatus{
 				ParentRef:      parentRef,
-				ControllerName: controllerName,
+				ControllerName: gatev1.GatewayController(p.ControllerName),
 				Conditions: []metav1.Condition{
 					{
 						Type:               string(gatev1.RouteConditionAccepted),
@@ -89,7 +89,7 @@ func (p *Provider) loadTLSRoutes(ctx context.Context, gatewayListeners []gateway
 				Parents: parentStatuses,
 			},
 		}
-		if err := p.client.UpdateTLSRouteStatus(ctx, ktypes.NamespacedName{Namespace: route.Namespace, Name: route.Name}, routeStatus); err != nil {
+		if err := p.client.UpdateTLSRouteStatus(ctx, ktypes.NamespacedName{Namespace: route.Namespace, Name: route.Name}, routeStatus, gatev1.GatewayController(p.ControllerName)); err != nil {
 			logger.Warn().
 				Err(err).
 				Msg("Unable to update TLSRoute status")

@@ -311,6 +311,10 @@ func (c *Configuration) SetEffectiveConfiguration() {
 			c.Providers.KubernetesCRD.FillExtensionBuilderRegistry(c.Providers.KubernetesGateway)
 		}
 
+		if c.Providers.KubernetesGateway.ControllerName == "" {
+			c.Providers.KubernetesGateway.ControllerName = "traefik.io/gateway-controller"
+		}
+
 		c.Providers.KubernetesGateway.EntryPoints = entryPoints
 	}
 
