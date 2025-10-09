@@ -2298,6 +2298,14 @@ func TestIngressEndpointPublishedService(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "Published Service ExternalName",
+			expected: []netv1.IngressLoadBalancerIngress{
+				{
+					Hostname: "example.com",
+				},
+			},
+		},
 	}
 
 	for _, test := range testCases {
