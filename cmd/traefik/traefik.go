@@ -581,7 +581,7 @@ func appendCertMetric(gauge gokitmetrics.Gauge, certificate *x509.Certificate) {
 		"sans", strings.Join(certificate.DNSNames, ","),
 	}
 
-	notAfter := float64(certificate.NotAfter.UnixMilli())
+	notAfter := float64(certificate.NotAfter.Unix())
 
 	gauge.With(labels...).Set(notAfter)
 }
