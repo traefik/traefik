@@ -37,13 +37,6 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-const (
-	k3sImage          = "docker.io/rancher/k3s:v1.29.3-k3s1"
-	traefikImage      = "traefik/traefik:latest"
-	traefikDeployment = "deployments/traefik"
-	traefikNamespace  = "traefik"
-)
-
 // K8sConformanceSuite tests suite.
 type K8sConformanceSuite struct {
 	BaseSuite

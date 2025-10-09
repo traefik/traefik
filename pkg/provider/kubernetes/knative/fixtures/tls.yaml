@@ -1,0 +1,38 @@
+---
+apiVersion: networking.internal.knative.dev/v1alpha1
+kind: Ingress
+metadata:
+  annotations:
+    networking.knative.dev/ingress.class: traefik.ingress.networking.knative.dev
+  name: helloworld-go
+  namespace: default
+spec:
+  httpOption: Enabled
+  tls:
+    - hosts:
+        - helloworld-go.default.svc.cluster.local
+      secretName: secretName
+      secretNamespace: secretNamespace
+  rules:
+    - hosts:
+        - helloworld-go.default
+        - helloworld-go.default.svc
+        - helloworld-go.default.svc.cluster.local
+      http:
+        paths:
+          - splits:
+              - appendHeaders:
+                  Knative-Serving-Namespace: default
+                  Knative-Serving-Revision: helloworld-go-00001
+                percent: 50
+                serviceName: helloworld-go-00001
+                serviceNamespace: default
+                servicePort: 80
+              - appendHeaders:
+                  Knative-Serving-Namespace: default
+                  Knative-Serving-Revision: helloworld-go-00002
+                percent: 50
+                serviceName: helloworld-go-00002
+                serviceNamespace: default
+                servicePort: 80
+      visibility: ExternalIP

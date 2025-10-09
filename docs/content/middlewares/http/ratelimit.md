@@ -225,7 +225,7 @@ The `depth` option tells Traefik to use the `X-Forwarded-For` header and select 
 If `ipStrategy.ipv6Subnet` is provided and the selected IP is IPv6, the IP is transformed into the first IP of the subnet it belongs to.  
 See [ipStrategy.ipv6Subnet](#ipstrategyipv6subnet) for more details.
 
-!!! example "Example of Depth & X-Forwarded-For"
+!!! example "Example of Depth & `X-Forwarded-For`"
 
     If `depth` is set to 2, and the request `X-Forwarded-For` header is `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` then the "real" client IP is `"10.0.0.1"` (at depth 4) but the IP used as the criterion is `"12.0.0.1"` (`depth=2`).
 
@@ -288,7 +288,7 @@ http:
 
     !!! example "Each IP as a distinct source"
 
-        | X-Forwarded-For                | excludedIPs           | clientIP     |
+        | `X-Forwarded-For`              | excludedIPs           | clientIP     |
         |--------------------------------|-----------------------|--------------|
         | `"10.0.0.1,11.0.0.1,12.0.0.1"` | `"11.0.0.1,12.0.0.1"` | `"10.0.0.1"` |
         | `"10.0.0.2,11.0.0.1,12.0.0.1"` | `"11.0.0.1,12.0.0.1"` | `"10.0.0.2"` |
@@ -298,7 +298,7 @@ http:
 
     !!! example "Group IPs together as same source"
 
-        |  X-Forwarded-For               |  excludedIPs | clientIP     |
+        | `X-Forwarded-For`              | excludedIPs  | clientIP     |
         |--------------------------------|--------------|--------------|
         | `"10.0.0.1,11.0.0.1,12.0.0.1"` | `"12.0.0.1"` | `"11.0.0.1"` |
         | `"10.0.0.2,11.0.0.1,12.0.0.1"` | `"12.0.0.1"` | `"11.0.0.1"` |
@@ -310,7 +310,7 @@ and the first IP that is _not_ in the pool (if any) is returned.
 
 !!! example "Matching for clientIP"
 
-    |  X-Forwarded-For               |  excludedIPs          | clientIP     |
+    | `X-Forwarded-For`              | excludedIPs           | clientIP     |
     |--------------------------------|-----------------------|--------------|
     | `"10.0.0.1,11.0.0.1,13.0.0.1"` | `"11.0.0.1"`          | `"13.0.0.1"` |
     | `"10.0.0.1,11.0.0.1,13.0.0.1"` | `"15.0.0.1,16.0.0.1"` | `"13.0.0.1"` |

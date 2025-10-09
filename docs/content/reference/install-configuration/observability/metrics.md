@@ -215,7 +215,7 @@ metrics:
 
 | Field      | Description         | Default | Required |
 |:-----------|---------------------|:--------|:---------|
-| <a id="metrics-prometheus-addInternals" href="#metrics-prometheus-addInternals" title="#metrics-prometheus-addInternals">`metrics.prometheus.addInternals`</a> | Enables metrics for internal resources (e.g.: `ping@internals`). | false      | No      |
+| <a id="metrics-prometheus-addInternals" href="#metrics-prometheus-addInternals" title="#metrics-prometheus-addInternals">`metrics.addInternals`</a> | Enables metrics for internal resources (e.g.: `ping@internals`). | false      | No      |
 | <a id="metrics-prometheus-addEntryPointsLabels" href="#metrics-prometheus-addEntryPointsLabels" title="#metrics-prometheus-addEntryPointsLabels">`metrics.prometheus.addEntryPointsLabels`</a> | Enable metrics on entry points. | true      | No      |
 | <a id="metrics-prometheus-addRoutersLabels" href="#metrics-prometheus-addRoutersLabels" title="#metrics-prometheus-addRoutersLabels">`metrics.prometheus.addRoutersLabels`</a> | Enable metrics on routers. | false      | No      |
 | <a id="metrics-prometheus-addServicesLabels" href="#metrics-prometheus-addServicesLabels" title="#metrics-prometheus-addServicesLabels">`metrics.prometheus.addServicesLabels`</a> | Enable metrics on services.| true      | No      |

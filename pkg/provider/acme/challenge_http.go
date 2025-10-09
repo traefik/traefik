@@ -13,7 +13,7 @@ import (
 
 	"github.com/go-acme/lego/v4/challenge/http01"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/observability/logs"
 )
 
 // ChallengeHTTP HTTP challenge provider implements challenge.Provider.

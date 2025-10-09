@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v3/pkg/metrics"
+	"github.com/traefik/traefik/v3/pkg/observability/metrics"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/server/middleware"
 )
