@@ -52,7 +52,7 @@ spec:
 
 ---
 kind: BackendTLSPolicy
-apiVersion: gateway.networking.k8s.io/v1alpha3
+apiVersion: gateway.networking.k8s.io/v1
 metadata:
   name: policy-1
   namespace: default

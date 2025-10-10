@@ -318,6 +318,8 @@ linters:
           - recvcheck
       - path: pkg/proxy/httputil/bufferpool.go
         text: 'SA6002: argument should be pointer-like to avoid allocations'
+      - path: integration/integration_test.go
+        text: 'var (gatewayAPIConformanceRunTest|traefikVersion) is unused'
     paths:
       - pkg/provider/kubernetes/crd/generated/
 

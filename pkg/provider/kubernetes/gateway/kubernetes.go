@@ -121,7 +121,7 @@ type gatewayListener struct {
 
 	Port              gatev1.PortNumber
 	Protocol          gatev1.ProtocolType
-	TLS               *gatev1.GatewayTLSConfig
+	TLS               *gatev1.ListenerTLSConfig
 	Hostname          *gatev1.Hostname
 	Status            *gatev1.ListenerStatus
 	AllowedNamespaces []string
@@ -325,14 +325,12 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) *dynamic.C
 	}
 
 	var supportedFeatures []gatev1.SupportedFeature
-	if p.ExperimentalChannel {
-		for _, feature := range SupportedFeatures() {
-			supportedFeatures = append(supportedFeatures, gatev1.SupportedFeature{Name: gatev1.FeatureName(feature)})
-		}
-		slices.SortFunc(supportedFeatures, func(a, b gatev1.SupportedFeature) int {
-			return strings.Compare(string(a.Name), string(b.Name))
-		})
+	for _, feature := range SupportedFeatures() {
+		supportedFeatures = append(supportedFeatures, gatev1.SupportedFeature{Name: gatev1.FeatureName(feature)})
 	}
+	slices.SortFunc(supportedFeatures, func(a, b gatev1.SupportedFeature) int {
+		return strings.Compare(string(a.Name), string(b.Name))
+	})
 
 	gatewayClassNames := map[string]struct{}{}
 	for _, gatewayClass := range gatewayClasses {
@@ -768,12 +766,9 @@ func (p *Provider) gatewayAddresses() ([]gatev1.GatewayStatusAddress, error) {
 
 	svcRef := p.StatusAddress.Service
 	if svcRef.Name != "" && svcRef.Namespace != "" {
-		svc, exists, err := p.client.GetService(svcRef.Namespace, svcRef.Name)
+		svc, err := p.client.GetService(svcRef.Namespace, svcRef.Name)
 		if err != nil {
-			return nil, fmt.Errorf("unable to get service: %w", err)
-		}
-		if !exists {
-			return nil, fmt.Errorf("could not find a service with name %s in namespace %s", svcRef.Name, svcRef.Namespace)
+			return nil, fmt.Errorf("getting service: %w", err)
 		}
 
 		var addresses []gatev1.GatewayStatusAddress
@@ -836,25 +831,27 @@ func (p *Provider) isReferenceGranted(fromKind, fromNamespace, toGroup, toKind, 
 }
 
 func (p *Provider) getTLS(secretName gatev1.ObjectName, namespace string) (*tls.CertAndStores, error) {
-	secret, exists, err := p.client.GetSecret(namespace, string(secretName))
+	secret, err := p.client.GetSecret(namespace, string(secretName))
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch secret %s/%s: %w", namespace, secretName, err)
-	}
-	if !exists {
-		return nil, fmt.Errorf("secret %s/%s does not exist", namespace, secretName)
+		return nil, fmt.Errorf("getting secret: %w", err)
 	}
 
 	cert, key, err := getCertificateBlocks(secret, namespace, string(secretName))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getting certificate blocks: %w", err)
 	}
 
-	return &tls.CertAndStores{
+	certAndStore := &tls.CertAndStores{
 		Certificate: tls.Certificate{
 			CertFile: types.FileOrContent(cert),
 			KeyFile:  types.FileOrContent(key),
 		},
-	}, nil
+	}
+	if _, err := certAndStore.GetCertificate(); err != nil {
+		return nil, fmt.Errorf("validating certificate: %w", err)
+	}
+
+	return certAndStore, nil
 }
 
 func (p *Provider) allowedNamespaces(gatewayNamespace string, routeNamespaces *gatev1.RouteNamespaces) ([]string, error) {
@@ -891,12 +888,9 @@ func (p *Provider) getBackendAddresses(namespace string, ref gatev1.BackendRef) 
 		return nil, corev1.ServicePort{}, errors.New("port is required for Kubernetes Service reference")
 	}
 
-	service, exists, err := p.client.GetService(namespace, string(ref.Name))
+	service, err := p.client.GetService(namespace, string(ref.Name))
 	if err != nil {
 		return nil, corev1.ServicePort{}, fmt.Errorf("getting service: %w", err)
-	}
-	if !exists {
-		return nil, corev1.ServicePort{}, errors.New("service not found")
 	}
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
 		return nil, corev1.ServicePort{}, errors.New("type ExternalName is not supported for Kubernetes Service reference")
@@ -904,7 +898,7 @@ func (p *Provider) getBackendAddresses(namespace string, ref gatev1.BackendRef) 
 
 	var svcPort *corev1.ServicePort
 	for _, p := range service.Spec.Ports {
-		if p.Port == int32(*ref.Port) {
+		if p.Port == *ref.Port {
 			svcPort = &p
 			break
 		}
