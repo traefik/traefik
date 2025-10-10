@@ -12,6 +12,14 @@ The tracing system allows developers to visualize call flows in their infrastruc
 
 Traefik uses [OpenTelemetry](https://opentelemetry.io/ "Link to website of OTel"), an open standard designed for distributed tracing.
 
+!!! info "Resource attributes"
+
+    Traefik supports the `OTEL_RESOURCE_ATTRIBUTES` env variable to set up the attributes.
+
+    Traefik can automatically discover basic attributes when running in a Kubernetes cluster.
+
+    However, if Traefik pod is running with the `hostNetwork: true` option, pod will inherit hostname from the node and will not be able to discover other attributes. In this case, provide the attributes yourself if necessary.
+
 ## Configuration Example
 
 To enable the tracing:
