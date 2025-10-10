@@ -33,7 +33,7 @@ type Listener struct {
 	// before releasing its related resources.
 	timeout time.Duration
 
-	// readBufferPool is a pool of byte slices for UDP packet reading
+	// readBufferPool is a pool of byte slices for UDP packet reading.
 	readBufferPool sync.Pool
 }
 
@@ -56,8 +56,7 @@ func ListenPacketConn(packetConn net.PacketConn, timeout time.Duration) (*Listen
 		timeout:   timeout,
 		readBufferPool: sync.Pool{
 			New: func() interface{} {
-				b := make([]byte, maxDatagramSize)
-				return &b
+				return make([]byte, maxDatagramSize)
 			},
 		},
 	}
@@ -162,25 +161,25 @@ func (l *Listener) readLoop() {
 		// Allocating a new buffer for every read avoids
 		// overwriting data in c.msgs in case the next packet is received
 		// before c.msgs is emptied via Read().
-		// Reuses buffers via the readBufferPool sync.Pool
-		buf := l.allocReadBuffer()
+		// Reuses buffers via the readBufferPool sync.Pool.
+		buf := l.readBufferPool.Get().([]byte)
 
 		n, raddr, err := l.pConn.ReadFrom(buf)
 		if err != nil {
-			l.releaseReadBuffer(buf)
+			l.readBufferPool.Put(buf)
 			return
 		}
 		conn, err := l.getConn(raddr)
 		if err != nil {
-			l.releaseReadBuffer(buf)
+			l.readBufferPool.Put(buf)
 			continue
 		}
 
 		select {
-		// receiver must call releaseReadBuffer() when done reading the data
+		// Receiver must call releaseReadBuffer() when done reading the data.
 		case conn.receiveCh <- buf[:n]:
 		case <-conn.doneCh:
-			l.releaseReadBuffer(buf)
+			l.readBufferPool.Put(buf)
 			continue
 		}
 	}
@@ -220,32 +219,20 @@ func (l *Listener) newConn(rAddr net.Addr) *Conn {
 	}
 }
 
-// allocReadBuffer gets a buffer slice from the sync.Pool.
-func (l *Listener) allocReadBuffer() []byte {
-	return *l.readBufferPool.Get().(*[]byte)
-}
-
-// releaseReadBuffer returns a buffer slice back to the pool.
-// The slice must have been obtained from readBufferPool using allocReadBuffer()
-// Receivers must call this when done with the buffer.
-func (l *Listener) releaseReadBuffer(buf []byte) {
-	l.readBufferPool.Put(&buf)
-}
-
 // Conn represents an on-going session with a client, over UDP packets.
 type Conn struct {
 	listener *Listener
 	rAddr    net.Addr
 
-	receiveCh chan []byte // to receive the data from the listener's readLoop
-	readCh    chan []byte // to receive the buffer into which we should Read
-	sizeCh    chan int    // to synchronize with the end of a Read
-	msgs      [][]byte    // to store data from listener, to be consumed by Reads
+	receiveCh chan []byte // to receive the data from the listener's readLoop.
+	readCh    chan []byte // to receive the buffer into which we should Read.
+	sizeCh    chan int    // to synchronize with the end of a Read.
+	msgs      [][]byte    // to store data from listener, to be consumed by Reads.
 
 	muActivity   sync.RWMutex
-	lastActivity time.Time // the last time the session saw either read or write activity
+	lastActivity time.Time // the last time the session saw either read or write activity.
 
-	timeout  time.Duration // for timeouts
+	timeout  time.Duration // for timeouts.
 	doneOnce sync.Once
 	doneCh   chan struct{}
 }
@@ -280,8 +267,8 @@ func (c *Conn) readLoop() {
 			msg := c.msgs[0]
 			c.msgs = c.msgs[1:]
 			n := copy(cBuf, msg)
-			// return buffer to sync.Pool once done reading from it
-			c.listener.releaseReadBuffer(msg)
+			// Return buffer to sync.Pool once done reading from it.
+			c.listener.readBufferPool.Put(msg)
 			c.sizeCh <- n
 		case msg := <-c.receiveCh:
 			c.msgs = append(c.msgs, msg)
@@ -327,9 +314,9 @@ func (c *Conn) Write(p []byte) (n int, err error) {
 
 func (c *Conn) close() {
 	c.doneOnce.Do(func() {
-		// Release any buffered data before closing
+		// Release any buffered data before closing.
 		for _, msg := range c.msgs {
-			c.listener.releaseReadBuffer(msg)
+			c.listener.readBufferPool.Put(msg)
 		}
 		c.msgs = nil
 		close(c.doneCh)
