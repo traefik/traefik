@@ -387,16 +387,16 @@ Here is a comprehensive list of labels that are provided by the metrics:
 
 Here is a comprehensive list of labels that are provided by the metrics:
 
-| <a id="Label" href="#Label" title="#Label">Label</a> | Description     | example       |
-| <a id="row" href="#row" title="#row">------  -----</a> |------------|---------------|
-| <a id="error-type-2" href="#error-type-2" title="#error-type-2">`error.type`</a> | Describes a class of error the operation ended with    | "500"   |
-| <a id="http-request-method-2" href="#http-request-method-2" title="#http-request-method-2">`http.request.method`</a> | HTTP request method  | "GET" |
-| <a id="http-response-status-code-2" href="#http-response-status-code-2" title="#http-response-status-code-2">`http.response.status_code`</a> | HTTP response status code  | "200" |
-| <a id="network-protocol-name-2" href="#network-protocol-name-2" title="#network-protocol-name-2">`network.protocol.name`</a> | OSI application layer or non-OSI equivalent                  | "http/1.1"    |
-| <a id="network-protocol-version-2" href="#network-protocol-version-2" title="#network-protocol-version-2">`network.protocol.version`</a> | Version of the protocol specified in `network.protocol.name` | "1.1"         |
-| <a id="server-address-2" href="#server-address-2" title="#server-address-2">`server.address`</a> | Name of the local HTTP server that received the request      | "example.com" |
-| <a id="server-port-2" href="#server-port-2" title="#server-port-2">`server.port`</a> | Port of the local HTTP server that received the request      | "80"          |
-| <a id="url-scheme-2" href="#url-scheme-2" title="#url-scheme-2">`url.scheme`</a> | The URI scheme component identifying the used protocol       | "http"        |
+| <a id="Label" href="#Label" title="#Label">Label</a>                                                                                            | Description     | example       |
+|-------------------------------------------------------------------------------------------------------------------------------------------------|------------|---------------|
+| <a id="error-type-2" href="#error-type-2" title="#error-type-2">`error.type`</a>                                                                | Describes a class of error the operation ended with    | "500"   |
+| <a id="http-request-method-2" href="#http-request-method-2" title="#http-request-method-2">`http.request.method`</a>                            | HTTP request method  | "GET" |
+| <a id="http-response-status-code-2" href="#http-response-status-code-2" title="#http-response-status-code-2">`http.response.status_code`</a>    | HTTP response status code  | "200" |
+| <a id="network-protocol-name-2" href="#network-protocol-name-2" title="#network-protocol-name-2">`network.protocol.name`</a>                    | OSI application layer or non-OSI equivalent                  | "http/1.1"    |
+| <a id="network-protocol-version-2" href="#network-protocol-version-2" title="#network-protocol-version-2">`network.protocol.version`</a>        | Version of the protocol specified in `network.protocol.name` | "1.1"         |
+| <a id="server-address-2" href="#server-address-2" title="#server-address-2">`server.address`</a>                                                | Name of the local HTTP server that received the request      | "example.com" |
+| <a id="server-port-2" href="#server-port-2" title="#server-port-2">`server.port`</a>                                                            | Port of the local HTTP server that received the request      | "80"          |
+| <a id="url-scheme-2" href="#url-scheme-2" title="#url-scheme-2">`url.scheme`</a>                                                                | The URI scheme component identifying the used protocol       | "http"        |
 
 ### HTTP Metrics
 
