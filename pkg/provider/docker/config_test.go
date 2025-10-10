@@ -1,7 +1,6 @@
 package docker
 
 import (
-	"context"
 	"strconv"
 	"testing"
 	"time"
@@ -4213,43 +4212,44 @@ func TestDynConfBuilder_build_visibleWhenNotRunning(t *testing.T) {
 						},
 					},
 				},
-			}, expected: &dynamic.Configuration{
-			TCP: &dynamic.TCPConfiguration{
-				Routers:           map[string]*dynamic.TCPRouter{},
-				Middlewares:       map[string]*dynamic.TCPMiddleware{},
-				Services:          map[string]*dynamic.TCPService{},
-				ServersTransports: map[string]*dynamic.TCPServersTransport{},
 			},
-			UDP: &dynamic.UDPConfiguration{
-				Routers:  map[string]*dynamic.UDPRouter{},
-				Services: map[string]*dynamic.UDPService{},
-			},
-			HTTP: &dynamic.HTTPConfiguration{
-				Routers: map[string]*dynamic.Router{
-					"Test": {
-						Service:     "Test",
-						Rule:        "Host(`Test`)",
-						DefaultRule: true,
-					},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
 				},
-				Middlewares: map[string]*dynamic.Middleware{},
-				Services: map[string]*dynamic.Service{
-					"Test": {
-						LoadBalancer: &dynamic.ServersLoadBalancer{
-							PassHostHeader: pointer(true),
-							Strategy:       "wrr",
-							ResponseForwarding: &dynamic.ResponseForwarding{
-								FlushInterval: ptypes.Duration(100 * time.Millisecond),
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"Test": {
+							Service:     "Test",
+							Rule:        "Host(`Test`)",
+							DefaultRule: true,
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"Test": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								PassHostHeader: pointer(true),
+								Strategy:       "wrr",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
 							},
 						},
 					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
-				ServersTransports: map[string]*dynamic.ServersTransport{},
+				TLS: &dynamic.TLSConfiguration{
+					Stores: map[string]tls.Store{},
+				},
 			},
-			TLS: &dynamic.TLSConfiguration{
-				Stores: map[string]tls.Store{},
-			},
-		},
 		},
 		{
 			desc: "exited container with TCP configuration and visibleWhenNotRunning=true should create TCP service without servers",
@@ -4387,7 +4387,7 @@ func TestDynConfBuilder_build_visibleWhenNotRunning(t *testing.T) {
 			}
 
 			builder := NewDynConfBuilder(p, nil, false)
-			configuration := builder.build(context.Background(), test.containers)
+			configuration := builder.build(t.Context(), test.containers)
 
 			assert.Equal(t, test.expected, configuration)
 		})
