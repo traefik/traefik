@@ -180,7 +180,8 @@ func (t *TransportManager) createTLSConfig(cfg *dynamic.ServersTransport) (*tls.
 				if cipherID, exists := traefiktls.CipherSuites[cipher]; exists {
 					cipherSuites = append(cipherSuites, cipherID)
 				} else {
-					return nil, fmt.Errorf("cipher suite not supported: %s", cipher)
+					log.Error().Msgf("Invalid cipher: %v", cipher)
+					cipherSuites = nil
 				}
 			}
 		}
@@ -190,7 +191,7 @@ func (t *TransportManager) createTLSConfig(cfg *dynamic.ServersTransport) (*tls.
 			if value, exists := traefiktls.MinVersion[cfg.MinVersion]; exists {
 				minVersion = value
 			} else {
-				return nil, fmt.Errorf("invalid TLS minimum version: %s", cfg.MinVersion)
+				log.Error().Msgf("invalid TLS minimum version: %s", cfg.MinVersion)
 			}
 		}
 
@@ -199,7 +200,7 @@ func (t *TransportManager) createTLSConfig(cfg *dynamic.ServersTransport) (*tls.
 			if value, exists := traefiktls.MaxVersion[cfg.MaxVersion]; exists {
 				maxVersion = value
 			} else {
-				return nil, fmt.Errorf("invalid TLS maximum version: %s", cfg.MaxVersion)
+				log.Error().Msgf("invalid TLS maximum version: %s", cfg.MaxVersion)
 			}
 		}
 

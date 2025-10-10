@@ -1,11 +1,13 @@
 package service
 
 import (
+	"bytes"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"log"
 	"math/big"
 	"net"
 	"net/http"
@@ -183,7 +185,7 @@ func TestKeepConnectionWhenSameConfiguration(t *testing.T) {
 	assert.EqualValues(t, 2, count)
 }
 
-func TestCipherSuites(t *testing.T) {
+func TestValidCipherSuites(t *testing.T) {
 	srv := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 	}))
@@ -222,6 +224,51 @@ func TestCipherSuites(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
+}
+
+func TestInvalidCipherSuites(t *testing.T) {
+	var buf bytes.Buffer
+	log.SetOutput(&buf)
+
+	srv := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+	}))
+
+	cert, err := tls.X509KeyPair(LocalhostCert, LocalhostKey)
+	require.NoError(t, err)
+
+	srv.TLS = &tls.Config{
+		Certificates: []tls.Certificate{cert},
+		MaxVersion:   tls.VersionTLS12,
+		CipherSuites: []uint16{
+			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+		},
+	}
+	srv.StartTLS()
+
+	transportManager := NewTransportManager(nil)
+
+	dynamicConf := map[string]*dynamic.ServersTransport{
+		"test": {
+			ServerName:   "example.com",
+			RootCAs:      []types.FileOrContent{types.FileOrContent(LocalhostCert)},
+			CipherSuites: []string{"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA385"},
+			MaxVersion:   "VersionTLS12",
+		},
+	}
+
+	transportManager.Update(dynamicConf)
+
+	tr, err := transportManager.GetRoundTripper("test")
+	require.NoError(t, err)
+
+	client := http.Client{Transport: tr}
+
+	resp, err := client.Get(srv.URL)
+	require.NoError(t, err)
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	assert.Equal(t, "Invalid cipher: TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA385", buf.String())
 }
 
 func TestMTLS(t *testing.T) {
