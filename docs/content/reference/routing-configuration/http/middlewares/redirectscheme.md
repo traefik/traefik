@@ -69,6 +69,6 @@ spec:
 
 | Field                        | Description                                             | Default | Required |
 |:-----------------------------|----------------------------------------------------------|:--------|:---------|
-| <a id="scheme" href="#scheme" title="#scheme">`scheme`</a> | Scheme of the new URL. | "" | Yes |
-| <a id="permanent" href="#permanent" title="#permanent">`permanent`</a> | Enable a permanent redirection. | false | No |
-| <a id="port" href="#port" title="#port">`port`</a> | Port of the new URL.<br />Set a string, **not** a numeric value. | "" | No |
+| <a id="opt-scheme" href="#opt-scheme" title="#opt-scheme">`scheme`</a> | Scheme of the new URL. | "" | Yes |
+| <a id="opt-permanent" href="#opt-permanent" title="#opt-permanent">`permanent`</a> | Enable a permanent redirection. | false | No |
+| <a id="opt-port" href="#opt-port" title="#opt-port">`port`</a> | Port of the new URL.<br />Set a string, **not** a numeric value. | "" | No |
