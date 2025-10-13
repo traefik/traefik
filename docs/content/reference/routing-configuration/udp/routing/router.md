@@ -51,8 +51,8 @@ labels:
 
 | Field                              | Description                                                                                                                                                                                                                                                                                                                                                                                | Default | Required |
 |------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------|----------|
-| <a id="entryPoints" href="#entryPoints" title="#entryPoints">`entryPoints`</a> | The list of entry points to which the router is attached. If not specified, UDP routers are attached to all UDP entry points. | All UDP entry points | No |
-| <a id="service" href="#service" title="#service">`service`</a> | The name of the service that will handle the matched UDP packets. UDP services are typically load balancer services that distribute packets to multiple backend servers. See [UDP Service](../service.md) for details. | | Yes |
+| <a id="opt-entryPoints" href="#opt-entryPoints" title="#opt-entryPoints">`entryPoints`</a> | The list of entry points to which the router is attached. If not specified, UDP routers are attached to all UDP entry points. | All UDP entry points | No |
+| <a id="opt-service" href="#opt-service" title="#opt-service">`service`</a> | The name of the service that will handle the matched UDP packets. UDP services are typically load balancer services that distribute packets to multiple backend servers. See [UDP Service](../service.md) for details. | | Yes |
 
 ## Sessions and Timeout
 

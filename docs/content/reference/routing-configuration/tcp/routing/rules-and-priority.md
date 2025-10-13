@@ -18,10 +18,10 @@ The table below lists all the available matchers:
 
 | Rule                                                        | Description                                                                                      |
 |-------------------------------------------------------------|:-------------------------------------------------------------------------------------------------|
-| <a id="HostSNIdomain" href="#HostSNIdomain" title="#HostSNIdomain">[```HostSNI(`domain`)```](#hostsni-and-hostsniregexp)</a> | Checks if the connection's Server Name Indication is equal to `domain`.<br /> More information [here](#hostsni-and-hostsniregexp).                          |
-| <a id="HostSNIRegexpregexp" href="#HostSNIRegexpregexp" title="#HostSNIRegexpregexp">[```HostSNIRegexp(`regexp`)```](#hostsni-and-hostsniregexp)</a> | Checks if the connection's Server Name Indication matches `regexp`.<br />Use a [Go](https://golang.org/pkg/regexp/) flavored syntax.<br /> More information [here](#hostsni-and-hostsniregexp). |
-| <a id="ClientIPip" href="#ClientIPip" title="#ClientIPip">[```ClientIP(`ip`)```](#clientip)</a> | Checks if the connection's client IP correspond to `ip`. It accepts IPv4, IPv6 and CIDR formats.<br /> More information [here](#clientip). |
-| <a id="ALPNprotocol" href="#ALPNprotocol" title="#ALPNprotocol">[```ALPN(`protocol`)```](#alpn)</a> | Checks if the connection's ALPN protocol equals `protocol`.<br /> More information [here](#alpn).          |
+| <a id="opt-HostSNIdomain" href="#opt-HostSNIdomain" title="#opt-HostSNIdomain">[```HostSNI(`domain`)```](#hostsni-and-hostsniregexp)</a> | Checks if the connection's Server Name Indication is equal to `domain`.<br /> More information [here](#hostsni-and-hostsniregexp).                          |
+| <a id="opt-HostSNIRegexpregexp" href="#opt-HostSNIRegexpregexp" title="#opt-HostSNIRegexpregexp">[```HostSNIRegexp(`regexp`)```](#hostsni-and-hostsniregexp)</a> | Checks if the connection's Server Name Indication matches `regexp`.<br />Use a [Go](https://golang.org/pkg/regexp/) flavored syntax.<br /> More information [here](#hostsni-and-hostsniregexp). |
+| <a id="opt-ClientIPip" href="#opt-ClientIPip" title="#opt-ClientIPip">[```ClientIP(`ip`)```](#clientip)</a> | Checks if the connection's client IP correspond to `ip`. It accepts IPv4, IPv6 and CIDR formats.<br /> More information [here](#clientip). |
+| <a id="opt-ALPNprotocol" href="#opt-ALPNprotocol" title="#opt-ALPNprotocol">[```ALPN(`protocol`)```](#alpn)</a> | Checks if the connection's ALPN protocol equals `protocol`.<br /> More information [here](#alpn).          |
 
 !!! tip "Backticks or Quotes?"
 

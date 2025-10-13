@@ -51,20 +51,20 @@ Below is the list of the currently supported providers in Traefik.
 
 | Provider                                          | Type         | Configuration Type   | Provider Name       |
 |--------------------------------------------------------------|--------------|----------------------|---------------------|
-| <a id="Docker" href="#Docker" title="#Docker">[Docker](./docker.md)</a> | Orchestrator | Label                | `docker`            |
-| <a id="Docker-Swarm" href="#Docker-Swarm" title="#Docker-Swarm">[Docker Swarm](./swarm.md)</a> | Orchestrator | Label                | `swarm`             |
-| <a id="Kubernetes-IngressRoute" href="#Kubernetes-IngressRoute" title="#Kubernetes-IngressRoute">[Kubernetes IngressRoute](./kubernetes/kubernetes-crd.md)</a> | Orchestrator | Custom Resource      | `kubernetescrd`     |
-| <a id="Kubernetes-Ingress" href="#Kubernetes-Ingress" title="#Kubernetes-Ingress">[Kubernetes Ingress](./kubernetes/kubernetes-ingress.md)</a> | Orchestrator | Ingress              | `kubernetes`        |
-| <a id="Kubernetes-Gateway-API" href="#Kubernetes-Gateway-API" title="#Kubernetes-Gateway-API">[Kubernetes Gateway API](./kubernetes/kubernetes-gateway.md)</a> | Orchestrator | Gateway API Resource | `kubernetesgateway` |
-| <a id="Consul-Catalog" href="#Consul-Catalog" title="#Consul-Catalog">[Consul Catalog](./hashicorp/consul-catalog.md)</a> | Orchestrator | Label                | `consulcatalog`     |
-| <a id="Nomad" href="#Nomad" title="#Nomad">[Nomad](./hashicorp/nomad.md)</a> | Orchestrator | Label                | `nomad`             |
-| <a id="ECS" href="#ECS" title="#ECS">[ECS](./others/ecs.md)</a> | Orchestrator | Label                | `ecs`               |
-| <a id="File" href="#File" title="#File">[File](./others/file.md)</a> | Manual       | YAML/TOML format     | `file`              |
-| <a id="Consul" href="#Consul" title="#Consul">[Consul](./hashicorp/consul.md)</a> | KV           | KV                   | `consul`            |
-| <a id="Etcd" href="#Etcd" title="#Etcd">[Etcd](./kv/etcd.md)</a> | KV           | KV                   | `etcd`              |
-| <a id="ZooKeeper" href="#ZooKeeper" title="#ZooKeeper">[ZooKeeper](./kv/zk.md)</a> | KV           | KV                   | `zookeeper`         |
-| <a id="Redis" href="#Redis" title="#Redis">[Redis](./kv/redis.md)</a> | KV           | KV                   | `redis`             |
-| <a id="HTTP" href="#HTTP" title="#HTTP">[HTTP](./others/http.md)</a> | Manual       | JSON/YAML format          | `http`              |
+| <a id="opt-Docker" href="#opt-Docker" title="#opt-Docker">[Docker](./docker.md)</a> | Orchestrator | Label                | `docker`            |
+| <a id="opt-Docker-Swarm" href="#opt-Docker-Swarm" title="#opt-Docker-Swarm">[Docker Swarm](./swarm.md)</a> | Orchestrator | Label                | `swarm`             |
+| <a id="opt-Kubernetes-IngressRoute" href="#opt-Kubernetes-IngressRoute" title="#opt-Kubernetes-IngressRoute">[Kubernetes IngressRoute](./kubernetes/kubernetes-crd.md)</a> | Orchestrator | Custom Resource      | `kubernetescrd`     |
+| <a id="opt-Kubernetes-Ingress" href="#opt-Kubernetes-Ingress" title="#opt-Kubernetes-Ingress">[Kubernetes Ingress](./kubernetes/kubernetes-ingress.md)</a> | Orchestrator | Ingress              | `kubernetes`        |
+| <a id="opt-Kubernetes-Gateway-API" href="#opt-Kubernetes-Gateway-API" title="#opt-Kubernetes-Gateway-API">[Kubernetes Gateway API](./kubernetes/kubernetes-gateway.md)</a> | Orchestrator | Gateway API Resource | `kubernetesgateway` |
+| <a id="opt-Consul-Catalog" href="#opt-Consul-Catalog" title="#opt-Consul-Catalog">[Consul Catalog](./hashicorp/consul-catalog.md)</a> | Orchestrator | Label                | `consulcatalog`     |
+| <a id="opt-Nomad" href="#opt-Nomad" title="#opt-Nomad">[Nomad](./hashicorp/nomad.md)</a> | Orchestrator | Label                | `nomad`             |
+| <a id="opt-ECS" href="#opt-ECS" title="#opt-ECS">[ECS](./others/ecs.md)</a> | Orchestrator | Label                | `ecs`               |
+| <a id="opt-File" href="#opt-File" title="#opt-File">[File](./others/file.md)</a> | Manual       | YAML/TOML format     | `file`              |
+| <a id="opt-Consul" href="#opt-Consul" title="#opt-Consul">[Consul](./hashicorp/consul.md)</a> | KV           | KV                   | `consul`            |
+| <a id="opt-Etcd" href="#opt-Etcd" title="#opt-Etcd">[Etcd](./kv/etcd.md)</a> | KV           | KV                   | `etcd`              |
+| <a id="opt-ZooKeeper" href="#opt-ZooKeeper" title="#opt-ZooKeeper">[ZooKeeper](./kv/zk.md)</a> | KV           | KV                   | `zookeeper`         |
+| <a id="opt-Redis" href="#opt-Redis" title="#opt-Redis">[Redis](./kv/redis.md)</a> | KV           | KV                   | `redis`             |
+| <a id="opt-HTTP" href="#opt-HTTP" title="#opt-HTTP">[HTTP](./others/http.md)</a> | Manual       | JSON/YAML format          | `http`              |
 
 !!! info "More Providers"
 

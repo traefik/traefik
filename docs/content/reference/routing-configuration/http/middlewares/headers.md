@@ -9,11 +9,11 @@ By default, the following headers are automatically added when proxying requests
 
 | Property                  | HTTP Header                |
 |---------------------------|----------------------------|
-| <a id="Clients-IP" href="#Clients-IP" title="#Clients-IP">Client's IP</a> | `X-Forwarded-For`, `X-Real-Ip` |
-| <a id="Host" href="#Host" title="#Host">Host</a> | `X-Forwarded-Host`           |
-| <a id="Port" href="#Port" title="#Port">Port</a> | `X-Forwarded-Port`           |
-| <a id="Protocol" href="#Protocol" title="#Protocol">Protocol</a> | `X-Forwarded-Proto`          |
-| <a id="Proxy-Servers-Hostname" href="#Proxy-Servers-Hostname" title="#Proxy-Servers-Hostname">Proxy Server's Hostname</a> | `X-Forwarded-Server`         |
+| <a id="opt-Clients-IP" href="#opt-Clients-IP" title="#opt-Clients-IP">Client's IP</a> | `X-Forwarded-For`, `X-Real-Ip` |
+| <a id="opt-Host" href="#opt-Host" title="#opt-Host">Host</a> | `X-Forwarded-Host`           |
+| <a id="opt-Port" href="#opt-Port" title="#opt-Port">Port</a> | `X-Forwarded-Port`           |
+| <a id="opt-Protocol" href="#opt-Protocol" title="#opt-Protocol">Protocol</a> | `X-Forwarded-Proto`          |
+| <a id="opt-Proxy-Servers-Hostname" href="#opt-Proxy-Servers-Hostname" title="#opt-Proxy-Servers-Hostname">Proxy Server's Hostname</a> | `X-Forwarded-Server`         |
 
 ## Configuration Examples
 
@@ -266,34 +266,34 @@ spec:
 
 | Field                         | Description                                       | Default   | Required |
 | ----------------------------- | ------------------------------------------------- | --------- | -------- |
-| <a id="customRequestHeaders" href="#customRequestHeaders" title="#customRequestHeaders">`customRequestHeaders`</a> | Lists the header names and values for requests.  | [] | No |
-| <a id="customResponseHeaders" href="#customResponseHeaders" title="#customResponseHeaders">`customResponseHeaders`</a> | Lists the header names and values for responses. | [] | No |
-| <a id="accessControlAllowCredentials" href="#accessControlAllowCredentials" title="#accessControlAllowCredentials">`accessControlAllowCredentials`</a> | Indicates if the request can include user credentials.| false     | No |
-| <a id="accessControlAllowHeaders" href="#accessControlAllowHeaders" title="#accessControlAllowHeaders">`accessControlAllowHeaders`</a> | Specifies allowed request header names.          | [] | No |
-| <a id="accessControlAllowMethods" href="#accessControlAllowMethods" title="#accessControlAllowMethods">`accessControlAllowMethods`</a> | Specifies allowed request methods.               | [] | No |
-| <a id="accessControlAllowOriginList" href="#accessControlAllowOriginList" title="#accessControlAllowOriginList">`accessControlAllowOriginList`</a> | Specifies allowed origins. More information [here](#accesscontrolalloworiginlist)      | []      | No |
-| <a id="accessControlAllowOriginListRegex" href="#accessControlAllowOriginListRegex" title="#accessControlAllowOriginListRegex">`accessControlAllowOriginListRegex`</a> | Allows origins matching regex. More information [here](#accesscontrolalloworiginlistregex)            | []      | No |
-| <a id="accessControlExposeHeaders" href="#accessControlExposeHeaders" title="#accessControlExposeHeaders">`accessControlExposeHeaders`</a> | Specifies which headers are safe to expose to the API of a CORS API specification.       |  []    | No |
-| <a id="accessControlMaxAge" href="#accessControlMaxAge" title="#accessControlMaxAge">`accessControlMaxAge`</a> | Time (in seconds) to cache preflight requests.   | 0         | No |
-| <a id="addVaryHeader" href="#addVaryHeader" title="#addVaryHeader">`addVaryHeader`</a> | Used in conjunction with `accessControlAllowOriginList` to determine whether the `Vary` header should be added or modified to demonstrate that server responses can differ based on the value of the origin header. | false     | No |
-| <a id="allowedHosts" href="#allowedHosts" title="#allowedHosts">`allowedHosts`</a> | Lists allowed domain names.                      | []      | No |
-| <a id="hostsProxyHeaders" href="#hostsProxyHeaders" title="#hostsProxyHeaders">`hostsProxyHeaders`</a> | Specifies header keys for proxied hostname.      | []      | No |
-| <a id="sslProxyHeaders" href="#sslProxyHeaders" title="#sslProxyHeaders">`sslProxyHeaders`</a> | Defines a set of header keys with associated values that would indicate a valid HTTPS request. It can be useful when using other proxies (example: `"X-Forwarded-Proto": "https"`).        |   {}   | No |
-| <a id="stsSeconds" href="#stsSeconds" title="#stsSeconds">`stsSeconds`</a> | Max age for `Strict-Transport-Security` header.    | 0         | No |
-| <a id="stsIncludeSubdomains" href="#stsIncludeSubdomains" title="#stsIncludeSubdomains">`stsIncludeSubdomains`</a> | If set to `true`, the `includeSubDomains` directive is appended to the `Strict-Transport-Security` header.    | false     | No |
-| <a id="stsPreload" href="#stsPreload" title="#stsPreload">`stsPreload`</a> | Adds preload flag to STS header.                 | false     | No |
-| <a id="forceSTSHeader" href="#forceSTSHeader" title="#forceSTSHeader">`forceSTSHeader`</a> | Adds STS header for HTTP connections.            | false     | No |
-| <a id="frameDeny" href="#frameDeny" title="#frameDeny">`frameDeny`</a> | Set `frameDeny` to `true` to add the `X-Frame-Options` header with the value of `DENY`.                | false     | No |
-| <a id="customFrameOptionsValue" href="#customFrameOptionsValue" title="#customFrameOptionsValue">`customFrameOptionsValue`</a> | allows the `X-Frame-Options` header value to be set with a custom value. This overrides the `FrameDeny` option.  |    ""  | No |
-| <a id="contentTypeNosniff" href="#contentTypeNosniff" title="#contentTypeNosniff">`contentTypeNosniff`</a> | Set `contentTypeNosniff` to true to add the `X-Content-Type-Options` header with the value `nosniff`.  | false     | No |
-| <a id="browserXssFilter" href="#browserXssFilter" title="#browserXssFilter">`browserXssFilter`</a> | Set `browserXssFilter` to true to add the `X-XSS-Protection` header with the value `1; mode=block`.  | false     | No |
-| <a id="customBrowserXSSValue" href="#customBrowserXSSValue" title="#customBrowserXSSValue">`customBrowserXSSValue`</a> | allows the `X-XSS-Protection` header value to be set with a custom value. This overrides the `BrowserXssFilter` option.   | false | No |
-| <a id="contentSecurityPolicy" href="#contentSecurityPolicy" title="#contentSecurityPolicy">`contentSecurityPolicy`</a> | allows the `Content-Security-Policy` header value to be set with a custom value.           | false | No |
-| <a id="contentSecurityPolicyReportOnly" href="#contentSecurityPolicyReportOnly" title="#contentSecurityPolicyReportOnly">`contentSecurityPolicyReportOnly`</a> | allows the `Content-Security-Policy-Report-Only` header value to be set with a custom value.    |   ""  | No |
-| <a id="publicKey" href="#publicKey" title="#publicKey">`publicKey`</a> | Implements HPKP for certificate pinning.         |  "" | No |
-| <a id="referrerPolicy" href="#referrerPolicy" title="#referrerPolicy">`referrerPolicy`</a> | Controls forwarding of `Referer` header.         | "" | No |
-| <a id="permissionsPolicy" href="#permissionsPolicy" title="#permissionsPolicy">`permissionsPolicy`</a> | allows sites to control browser features.                   | ""      | No |
-| <a id="isDevelopment" href="#isDevelopment" title="#isDevelopment">`isDevelopment`</a> | Set `true` when developing to mitigate the unwanted effects of the `AllowedHosts`, SSL, and STS options. Usually testing takes place using HTTP, not HTTPS, and on `localhost`, not your production domain.    | false     | No |
+| <a id="opt-customRequestHeaders" href="#opt-customRequestHeaders" title="#opt-customRequestHeaders">`customRequestHeaders`</a> | Lists the header names and values for requests.  | [] | No |
+| <a id="opt-customResponseHeaders" href="#opt-customResponseHeaders" title="#opt-customResponseHeaders">`customResponseHeaders`</a> | Lists the header names and values for responses. | [] | No |
+| <a id="opt-accessControlAllowCredentials" href="#opt-accessControlAllowCredentials" title="#opt-accessControlAllowCredentials">`accessControlAllowCredentials`</a> | Indicates if the request can include user credentials.| false     | No |
+| <a id="opt-accessControlAllowHeaders" href="#opt-accessControlAllowHeaders" title="#opt-accessControlAllowHeaders">`accessControlAllowHeaders`</a> | Specifies allowed request header names.          | [] | No |
+| <a id="opt-accessControlAllowMethods" href="#opt-accessControlAllowMethods" title="#opt-accessControlAllowMethods">`accessControlAllowMethods`</a> | Specifies allowed request methods.               | [] | No |
+| <a id="opt-accessControlAllowOriginList" href="#opt-accessControlAllowOriginList" title="#opt-accessControlAllowOriginList">`accessControlAllowOriginList`</a> | Specifies allowed origins. More information [here](#accesscontrolalloworiginlist)      | []      | No |
+| <a id="opt-accessControlAllowOriginListRegex" href="#opt-accessControlAllowOriginListRegex" title="#opt-accessControlAllowOriginListRegex">`accessControlAllowOriginListRegex`</a> | Allows origins matching regex. More information [here](#accesscontrolalloworiginlistregex)            | []      | No |
+| <a id="opt-accessControlExposeHeaders" href="#opt-accessControlExposeHeaders" title="#opt-accessControlExposeHeaders">`accessControlExposeHeaders`</a> | Specifies which headers are safe to expose to the API of a CORS API specification.       |  []    | No |
+| <a id="opt-accessControlMaxAge" href="#opt-accessControlMaxAge" title="#opt-accessControlMaxAge">`accessControlMaxAge`</a> | Time (in seconds) to cache preflight requests.   | 0         | No |
+| <a id="opt-addVaryHeader" href="#opt-addVaryHeader" title="#opt-addVaryHeader">`addVaryHeader`</a> | Used in conjunction with `accessControlAllowOriginList` to determine whether the `Vary` header should be added or modified to demonstrate that server responses can differ based on the value of the origin header. | false     | No |
+| <a id="opt-allowedHosts" href="#opt-allowedHosts" title="#opt-allowedHosts">`allowedHosts`</a> | Lists allowed domain names.                      | []      | No |
+| <a id="opt-hostsProxyHeaders" href="#opt-hostsProxyHeaders" title="#opt-hostsProxyHeaders">`hostsProxyHeaders`</a> | Specifies header keys for proxied hostname.      | []      | No |
+| <a id="opt-sslProxyHeaders" href="#opt-sslProxyHeaders" title="#opt-sslProxyHeaders">`sslProxyHeaders`</a> | Defines a set of header keys with associated values that would indicate a valid HTTPS request. It can be useful when using other proxies (example: `"X-Forwarded-Proto": "https"`).        |   {}   | No |
+| <a id="opt-stsSeconds" href="#opt-stsSeconds" title="#opt-stsSeconds">`stsSeconds`</a> | Max age for `Strict-Transport-Security` header.    | 0         | No |
+| <a id="opt-stsIncludeSubdomains" href="#opt-stsIncludeSubdomains" title="#opt-stsIncludeSubdomains">`stsIncludeSubdomains`</a> | If set to `true`, the `includeSubDomains` directive is appended to the `Strict-Transport-Security` header.    | false     | No |
+| <a id="opt-stsPreload" href="#opt-stsPreload" title="#opt-stsPreload">`stsPreload`</a> | Adds preload flag to STS header.                 | false     | No |
+| <a id="opt-forceSTSHeader" href="#opt-forceSTSHeader" title="#opt-forceSTSHeader">`forceSTSHeader`</a> | Adds STS header for HTTP connections.            | false     | No |
+| <a id="opt-frameDeny" href="#opt-frameDeny" title="#opt-frameDeny">`frameDeny`</a> | Set `frameDeny` to `true` to add the `X-Frame-Options` header with the value of `DENY`.                | false     | No |
+| <a id="opt-customFrameOptionsValue" href="#opt-customFrameOptionsValue" title="#opt-customFrameOptionsValue">`customFrameOptionsValue`</a> | allows the `X-Frame-Options` header value to be set with a custom value. This overrides the `FrameDeny` option.  |    ""  | No |
+| <a id="opt-contentTypeNosniff" href="#opt-contentTypeNosniff" title="#opt-contentTypeNosniff">`contentTypeNosniff`</a> | Set `contentTypeNosniff` to true to add the `X-Content-Type-Options` header with the value `nosniff`.  | false     | No |
+| <a id="opt-browserXssFilter" href="#opt-browserXssFilter" title="#opt-browserXssFilter">`browserXssFilter`</a> | Set `browserXssFilter` to true to add the `X-XSS-Protection` header with the value `1; mode=block`.  | false     | No |
+| <a id="opt-customBrowserXSSValue" href="#opt-customBrowserXSSValue" title="#opt-customBrowserXSSValue">`customBrowserXSSValue`</a> | allows the `X-XSS-Protection` header value to be set with a custom value. This overrides the `BrowserXssFilter` option.   | false | No |
+| <a id="opt-contentSecurityPolicy" href="#opt-contentSecurityPolicy" title="#opt-contentSecurityPolicy">`contentSecurityPolicy`</a> | allows the `Content-Security-Policy` header value to be set with a custom value.           | false | No |
+| <a id="opt-contentSecurityPolicyReportOnly" href="#opt-contentSecurityPolicyReportOnly" title="#opt-contentSecurityPolicyReportOnly">`contentSecurityPolicyReportOnly`</a> | allows the `Content-Security-Policy-Report-Only` header value to be set with a custom value.    |   ""  | No |
+| <a id="opt-publicKey" href="#opt-publicKey" title="#opt-publicKey">`publicKey`</a> | Implements HPKP for certificate pinning.         |  "" | No |
+| <a id="opt-referrerPolicy" href="#opt-referrerPolicy" title="#opt-referrerPolicy">`referrerPolicy`</a> | Controls forwarding of `Referer` header.         | "" | No |
+| <a id="opt-permissionsPolicy" href="#opt-permissionsPolicy" title="#opt-permissionsPolicy">`permissionsPolicy`</a> | allows sites to control browser features.                   | ""      | No |
+| <a id="opt-isDevelopment" href="#opt-isDevelopment" title="#opt-isDevelopment">`isDevelopment`</a> | Set `true` when developing to mitigate the unwanted effects of the `AllowedHosts`, SSL, and STS options. Usually testing takes place using HTTP, not HTTPS, and on `localhost`, not your production domain.    | false     | No |
 
 ### `accessControlAllowOriginList`
 
