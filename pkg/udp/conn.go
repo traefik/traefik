@@ -32,6 +32,9 @@ type Listener struct {
 	// timeout defines how long to wait on an idle session,
 	// before releasing its related resources.
 	timeout time.Duration
+
+	// readBufferPool is a pool of byte slices for UDP packet reading.
+	readBufferPool sync.Pool
 }
 
 // ListenPacketConn creates a new listener from PacketConn.
@@ -51,6 +54,11 @@ func ListenPacketConn(packetConn net.PacketConn, timeout time.Duration) (*Listen
 		conns:     make(map[string]*Conn),
 		accepting: true,
 		timeout:   timeout,
+		readBufferPool: sync.Pool{
+			New: func() interface{} {
+				return make([]byte, maxDatagramSize)
+			},
+		},
 	}
 
 	go l.readLoop()
@@ -152,21 +160,26 @@ func (l *Listener) readLoop() {
 	for {
 		// Allocating a new buffer for every read avoids
 		// overwriting data in c.msgs in case the next packet is received
-		// before c.msgs is emptied via Read()
-		buf := make([]byte, maxDatagramSize)
+		// before c.msgs is emptied via Read().
+		// Reuses buffers via the readBufferPool sync.Pool.
+		buf := l.readBufferPool.Get().([]byte)
 
 		n, raddr, err := l.pConn.ReadFrom(buf)
 		if err != nil {
+			l.readBufferPool.Put(buf)
 			return
 		}
 		conn, err := l.getConn(raddr)
 		if err != nil {
+			l.readBufferPool.Put(buf)
 			continue
 		}
 
 		select {
+		// Receiver must call releaseReadBuffer() when done reading the data.
 		case conn.receiveCh <- buf[:n]:
 		case <-conn.doneCh:
+			l.readBufferPool.Put(buf)
 			continue
 		}
 	}
@@ -211,15 +224,15 @@ type Conn struct {
 	listener *Listener
 	rAddr    net.Addr
 
-	receiveCh chan []byte // to receive the data from the listener's readLoop
-	readCh    chan []byte // to receive the buffer into which we should Read
-	sizeCh    chan int    // to synchronize with the end of a Read
-	msgs      [][]byte    // to store data from listener, to be consumed by Reads
+	receiveCh chan []byte // to receive the data from the listener's readLoop.
+	readCh    chan []byte // to receive the buffer into which we should Read.
+	sizeCh    chan int    // to synchronize with the end of a Read.
+	msgs      [][]byte    // to store data from listener, to be consumed by Reads.
 
 	muActivity   sync.RWMutex
-	lastActivity time.Time // the last time the session saw either read or write activity
+	lastActivity time.Time // the last time the session saw either read or write activity.
 
-	timeout  time.Duration // for timeouts
+	timeout  time.Duration // for timeouts.
 	doneOnce sync.Once
 	doneCh   chan struct{}
 }
@@ -254,6 +267,8 @@ func (c *Conn) readLoop() {
 			msg := c.msgs[0]
 			c.msgs = c.msgs[1:]
 			n := copy(cBuf, msg)
+			// Return buffer to sync.Pool once done reading from it.
+			c.listener.readBufferPool.Put(msg)
 			c.sizeCh <- n
 		case msg := <-c.receiveCh:
 			c.msgs = append(c.msgs, msg)
@@ -299,6 +314,11 @@ func (c *Conn) Write(p []byte) (n int, err error) {
 
 func (c *Conn) close() {
 	c.doneOnce.Do(func() {
+		// Release any buffered data before closing.
+		for _, msg := range c.msgs {
+			c.listener.readBufferPool.Put(msg)
+		}
+		c.msgs = nil
 		close(c.doneCh)
 	})
 }
