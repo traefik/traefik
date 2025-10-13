@@ -39,7 +39,6 @@ spec:
       serversTransport: transport
       nativeLB: true
       nodePortLB: true
-      tls: false
 
   tls:
     secretName: supersecret
