@@ -61,6 +61,6 @@ spec:
 
 | Field                        | Description           | Default | Required |
 |:-----------------------------|:--------------------------------------------------------------|:--------|:---------|
-| <a id="prefixes" href="#prefixes" title="#prefixes">`prefixes`</a> | List of prefixes to strip from the request URL.<br />If your backend is serving assets (for example, images or JavaScript files), it can use the `X-Forwarded-Prefix` header to construct relative URLs. | [] | No |
+| <a id="opt-prefixes" href="#opt-prefixes" title="#opt-prefixes">`prefixes`</a> | List of prefixes to strip from the request URL.<br />If your backend is serving assets (for example, images or JavaScript files), it can use the `X-Forwarded-Prefix` header to construct relative URLs. | [] | No |
 
 {!traefik-for-business-applications.md!}

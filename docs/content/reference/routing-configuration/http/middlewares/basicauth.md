@@ -64,11 +64,11 @@ spec:
 
 | Field      | Description                                                                                                                                                                                 | Default | Required |
 |:-----------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------|:---------|
-| <a id="users" href="#users" title="#users">`users`</a> | Array of authorized users. Each user must be declared using the `name:hashed-password` format. (More information [here](#users))| ""      | No      |
-| <a id="usersFile" href="#usersFile" title="#usersFile">`usersFile`</a> | Path to an external file that contains the authorized users for the middleware. <br />The file content is a list of `name:hashed-password`. (More information [here](#usersfile)) | ""      | No      |
-| <a id="realm" href="#realm" title="#realm">`realm`</a> | Allow customizing the realm for the authentication.| "traefik"      | No      |
-| <a id="headerField" href="#headerField" title="#headerField">`headerField`</a> | Allow defining a header field to store the authenticated user.| ""      | No      |
-| <a id="removeHeader" href="#removeHeader" title="#removeHeader">`removeHeader`</a> | Allow removing the authorization header before forwarding the request to your service. | false      | No      |
+| <a id="opt-users" href="#opt-users" title="#opt-users">`users`</a> | Array of authorized users. Each user must be declared using the `name:hashed-password` format. (More information [here](#users))| ""      | No      |
+| <a id="opt-usersFile" href="#opt-usersFile" title="#opt-usersFile">`usersFile`</a> | Path to an external file that contains the authorized users for the middleware. <br />The file content is a list of `name:hashed-password`. (More information [here](#usersfile)) | ""      | No      |
+| <a id="opt-realm" href="#opt-realm" title="#opt-realm">`realm`</a> | Allow customizing the realm for the authentication.| "traefik"      | No      |
+| <a id="opt-headerField" href="#opt-headerField" title="#opt-headerField">`headerField`</a> | Allow defining a header field to store the authenticated user.| ""      | No      |
+| <a id="opt-removeHeader" href="#opt-removeHeader" title="#opt-removeHeader">`removeHeader`</a> | Allow removing the authorization header before forwarding the request to your service. | false      | No      |
 
 ### Passwords format
 
