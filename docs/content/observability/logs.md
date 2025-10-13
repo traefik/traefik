@@ -217,7 +217,7 @@ log:
 
 !!! info "Default protocol"
 
-    The OpenTelemetry Logger exporter will export logs to the collector using HTTPS by default to https://localhost:4318/v1/logs, see the [gRPC Section](#grpc-configuration) to use gRPC.
+    The OpenTelemetry Logger exporter will export logs to the collector using HTTPS by default to http://localhost:4318/v1/logs, see the [gRPC Section](#grpc-configuration) to use gRPC.
 
 ### `serviceName`
 
@@ -289,7 +289,7 @@ log:
 
 #### `endpoint`
 
-_Optional, Default="`https://localhost:4318/v1/logs`", Format="`<scheme>://<host>:<port><path>`"_
+_Optional, Default="`http://localhost:4318/v1/logs`", Format="`<scheme>://<host>:<port><path>`"_
 
 URL of the OpenTelemetry Collector to send logs to.
 
