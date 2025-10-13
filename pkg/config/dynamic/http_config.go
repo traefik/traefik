@@ -267,6 +267,8 @@ const (
 	BalancerStrategyP2C BalancerStrategy = "p2c"
 	// BalancerStrategyHRW is the highest random weight strategy.
 	BalancerStrategyHRW BalancerStrategy = "hrw"
+	// BalancerStrategyLeastTime is the least-time strategy.
+	BalancerStrategyLeastTime BalancerStrategy = "leasttime"
 )
 
 // +k8s:deepcopy-gen=true
