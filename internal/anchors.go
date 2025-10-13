@@ -123,13 +123,13 @@ func makeID(text string) string {
 }
 
 // Dedupe ID within a file: if id already seen, append -2, -3...
-// Use "opt-" prefix to avoid conflicts with section headings
+// Use "opt-" prefix to avoid conflicts with section headings.
 func dedupeID(base string, seen map[string]int) string {
 	if base == "" {
 		base = "row"
 	}
 
-	// Add prefix to avoid conflicts with section headings
+	// Add prefix to avoid conflicts with section headings.
 	optID := "opt-" + base
 
 	count, ok := seen[optID]
@@ -142,10 +142,10 @@ func dedupeID(base string, seen map[string]int) string {
 	return fmt.Sprintf("%s-%d", optID, count+1)
 }
 
-// Clean existing anchors from cell content
+// Clean existing anchors from cell content.
 func cleanExistingAnchors(text string) string {
 	return reExistingAnchor.ReplaceAllStringFunc(text, func(match string) string {
-		// Extract content between <a> tags
+		// Extract content between <a> tags.
 		start := strings.Index(match, ">")
 		end := strings.LastIndex(match, "</")
 		if start >= 0 && end > start {
@@ -161,7 +161,7 @@ func injectClickableFirstCell(line string, seen map[string]int) string {
 	// first data cell is index 1
 	firstCellRaw := parts[1]
 
-	// Clean any existing anchors first
+	// Clean any existing anchors first.
 	firstCellRaw = cleanExistingAnchors(firstCellRaw)
 	firstTrimmed := strings.TrimSpace(firstCellRaw)
 
