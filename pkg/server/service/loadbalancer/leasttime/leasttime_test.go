@@ -930,19 +930,30 @@ func TestTrafficShiftsWhenPerformanceDegrades(t *testing.T) {
 		rw.WriteHeader(http.StatusOK)
 	}), pointer(1), false)
 
+	// Pre-fill ring buffers to eliminate cold start effects and ensure deterministic equal performance state
+	balancer.handlersMu.RLock()
+	for _, h := range balancer.handlers {
+		h.mu.Lock()
+		for i := 0; i < sampleSize; i++ {
+			h.responseTimes[i] = 50.0
+		}
+		h.responseTimeSum = 50.0 * sampleSize
+		h.sampleCount = sampleSize
+		h.mu.Unlock()
+	}
+	balancer.handlersMu.RUnlock()
+
 	// Phase 1: Both servers perform equally (50ms each)
-	// Warmup to establish baseline averages
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
-	for i := 0; i < 20; i++ {
+	for i := 0; i < 50; i++ {
 		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 	}
 
-	// With equal performance, distribution should be roughly balanced
-	// Allow wide tolerance (30-70%) due to cold start effects and random tie-breaking
+	// With equal performance and pre-filled buffers, distribution should be balanced via WRR tie-breaking
 	total := recorder.save["server1"] + recorder.save["server2"]
-	assert.Equal(t, 20, total)
-	assert.Greater(t, recorder.save["server1"], 3) // At least 15% of traffic
-	assert.Greater(t, recorder.save["server2"], 3) // At least 15% of traffic
+	assert.Equal(t, 50, total)
+	assert.Greater(t, recorder.save["server1"], 14) // At least 30% of traffic
+	assert.Greater(t, recorder.save["server2"], 14) // At least 30% of traffic
 
 	// Phase 2: server1 degrades (simulating GC pause, CPU spike, or network latency)
 	server1Delay.Store(150) // Now 150ms (3x slower)
