@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	sampleSize = 100 // Number of response time samples to track
+	sampleSize = 100 // Number of response time samples to track.
 )
 
 // namedHandler wraps an HTTP handler with metrics and server information.
@@ -25,15 +25,15 @@ type namedHandler struct {
 	name   string
 	weight float64
 
-	deadline float64 // WRR tie-breaking (EDF scheduling)
+	deadline float64 // WRR tie-breaking (EDF scheduling).
 
-	// Metrics (protected by mutex)
+	// Metrics (protected by mutex).
 	mu              sync.RWMutex
-	responseTimes   [sampleSize]float64 // Fixed-size ring buffer (TTFB measurements in ms)
-	responseTimeIdx int                 // Current position in ring buffer
-	responseTimeSum float64             // Sum of all values in buffer
-	sampleCount     int                 // Number of samples collected so far
-	inflightCount   atomic.Int64        // Number of inflight requests
+	responseTimes   [sampleSize]float64 // Fixed-size ring buffer (TTFB measurements in ms).
+	responseTimeIdx int                 // Current position in ring buffer.
+	responseTimeSum float64             // Sum of all values in buffer.
+	sampleCount     int                 // Number of samples collected so far.
+	inflightCount   atomic.Int64        // Number of inflight requests.
 }
 
 // updateResponseTime updates the average response time for this server using a ring buffer.
@@ -44,18 +44,17 @@ func (s *namedHandler) updateResponseTime(elapsed time.Duration) {
 	ms := float64(elapsed.Milliseconds())
 
 	if s.sampleCount < sampleSize {
-		// Still filling the buffer
+		// Still filling the buffer.
 		s.responseTimes[s.responseTimeIdx] = ms
 		s.responseTimeSum += ms
 		s.sampleCount++
 	} else {
-		// Buffer is full, replace oldest value
+		// Buffer is full, replace oldest value.
 		oldValue := s.responseTimes[s.responseTimeIdx]
 		s.responseTimes[s.responseTimeIdx] = ms
 		s.responseTimeSum = s.responseTimeSum - oldValue + ms
 	}
 
-	// Move to next position in ring buffer
 	s.responseTimeIdx = (s.responseTimeIdx + 1) % sampleSize
 }
 
@@ -142,7 +141,7 @@ func New(stickyConfig *dynamic.Sticky, wantsHealthCheck bool) *Balancer {
 }
 
 // SetStatus sets on the balancer that its given child is now of the given
-// status. balancerName is only needed for logging purposes.
+// status. childName is only needed for logging purposes.
 func (b *Balancer) SetStatus(ctx context.Context, childName string, up bool) {
 	b.handlersMu.Lock()
 	defer b.handlersMu.Unlock()
@@ -168,14 +167,14 @@ func (b *Balancer) SetStatus(ctx context.Context, childName string, up bool) {
 		status = "UP"
 	}
 
-	// No Status Change
+	// No Status Change.
 	if upBefore == upAfter {
-		// We're still with the same status, no need to propagate
+		// We're still with the same status, no need to propagate.
 		log.Ctx(ctx).Debug().Msgf("Still %s, no need to propagate", status)
 		return
 	}
 
-	// Status Change
+	// Status Change.
 	log.Ctx(ctx).Debug().Msgf("Propagating new %s status", status)
 	for _, fn := range b.updaters {
 		fn(upAfter)
@@ -221,7 +220,7 @@ func (b *Balancer) selectWRR(candidates []*namedHandler) *namedHandler {
 	var selected *namedHandler
 	minDeadline := math.MaxFloat64
 
-	// Find handler with earliest deadline
+	// Find handler with earliest deadline.
 	b.deadlineMu.RLock()
 	for _, h := range candidates {
 		if h.deadline < minDeadline {
@@ -254,11 +253,10 @@ func (b *Balancer) nextServer() (*namedHandler, error) {
 	}
 
 	if len(healthy) == 1 {
-		log.Debug().Msgf("Service selected by LeastTime: %s", healthy[0].name)
 		return healthy[0], nil
 	}
 
-	// Calculate scores and find minimum
+	// Calculate scores and find minimum.
 	minScore := math.MaxFloat64
 	var candidates []*namedHandler
 
@@ -276,21 +274,20 @@ func (b *Balancer) nextServer() (*namedHandler, error) {
 	}
 
 	if len(candidates) == 1 {
-		log.Debug().Msgf("Service selected by LeastTime: %s", candidates[0].name)
 		return candidates[0], nil
 	}
 
-	// Multiple servers with same score: use WRR (EDF) tie-breaking
+	// Multiple servers with same score: use WRR (EDF) tie-breaking.
 	selected := b.selectWRR(candidates)
 	if selected == nil {
 		return nil, errNoAvailableServer
 	}
-	log.Debug().Msgf("Service selected by LeastTime: %s", selected.name)
+
 	return selected, nil
 }
 
 func (b *Balancer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	// Handle sticky sessions first
+	// Handle sticky sessions first.
 	if b.sticky != nil {
 		h, rewrite, err := b.sticky.StickyHandler(req)
 		if err != nil {
@@ -328,23 +325,23 @@ func (b *Balancer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	// Track inflight requests
+	// Track inflight requests.
 	server.inflightCount.Add(1)
 	defer server.inflightCount.Add(-1)
 
-	// Wrap response writer to capture TTFB
+	// Wrap response writer to capture TTFB.
 	startTime := time.Now()
-	headerTime := startTime // Track when header is written
+	headerTime := startTime // Track when header is written.
 	tracked := &responseTracker{
 		ResponseWriter: rw,
 		headerTime:     &headerTime,
 	}
 
-	// Serve request
+	// Serve request.
 	server.ServeHTTP(tracked, req)
 
-	// Update average response time (TTFB)
-	// If headerTime changed, use it; otherwise use current time
+	// Update average response time (TTFB).
+	// If headerTime changed, use it; otherwise use current time.
 	elapsed := headerTime.Sub(startTime)
 	server.updateResponseTime(elapsed)
 }
@@ -362,7 +359,7 @@ func (b *Balancer) Add(name string, handler http.Handler, weight *int, fenced bo
 		w = *weight
 	}
 
-	if w <= 0 { // non-positive weight is meaningless
+	if w <= 0 { // non-positive weight is meaningless.
 		return
 	}
 

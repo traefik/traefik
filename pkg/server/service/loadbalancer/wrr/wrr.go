@@ -94,7 +94,7 @@ func (b *Balancer) Pop() interface{} {
 }
 
 // SetStatus sets on the balancer that its given child is now of the given
-// status. balancerName is only needed for logging purposes.
+// status. childName is only needed for logging purposes.
 func (b *Balancer) SetStatus(ctx context.Context, childName string, up bool) {
 	b.handlersMu.Lock()
 	defer b.handlersMu.Unlock()
