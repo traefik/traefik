@@ -108,18 +108,18 @@ See the dedicated section in [routing](../../../../routing/providers/kubernetes-
 
 <!-- markdownlint-disable MD013 -->
 
-| Resource  | Purpose    |
-|--------------------------------------------------|--------------------------------------------------------------------|
-| <a id="opt-IngressRoute" href="#opt-IngressRoute" title="#opt-IngressRoute">[IngressRoute](../../../../routing/providers/kubernetes-crd.md#kind-ingressroute)</a> | HTTP Routing     |
-| <a id="opt-Middleware" href="#opt-Middleware" title="#opt-Middleware">[Middleware](../../../../middlewares/http/overview.md)</a> | Tweaks the HTTP requests before they are sent to your service  |
-| <a id="opt-TraefikService" href="#opt-TraefikService" title="#opt-TraefikService">[TraefikService](../../../../routing/providers/kubernetes-crd.md#kind-traefikservice)</a> | Abstraction for HTTP loadbalancing/mirroring  | 
-| <a id="opt-TLSOptions" href="#opt-TLSOptions" title="#opt-TLSOptions">[TLSOptions](../../../../routing/providers/kubernetes-crd.md#kind-tlsoption)</a> | Allows configuring some parameters of the TLS connection  |
-| <a id="opt-TLSStores" href="#opt-TLSStores" title="#opt-TLSStores">[TLSStores](../../../../routing/providers/kubernetes-crd.md#kind-tlsstore)</a> | Allows configuring the default TLS store    |  
-| <a id="opt-ServersTransport" href="#opt-ServersTransport" title="#opt-ServersTransport">[ServersTransport](../../../../routing/providers/kubernetes-crd.md#kind-serverstransport)</a> | Allows configuring the transport between Traefik and the backends | 
-| <a id="opt-IngressRouteTCP" href="#opt-IngressRouteTCP" title="#opt-IngressRouteTCP">[IngressRouteTCP](../../../../routing/providers/kubernetes-crd.md#kind-ingressroutetcp)</a> | TCP Routing  | 
-| <a id="opt-MiddlewareTCP" href="#opt-MiddlewareTCP" title="#opt-MiddlewareTCP">[MiddlewareTCP](../../../../routing/providers/kubernetes-crd.md#kind-middlewaretcp)</a> | Tweaks the TCP requests before they are sent to your service       |
-| <a id="opt-ServersTransportTCP" href="#opt-ServersTransportTCP" title="#opt-ServersTransportTCP">[ServersTransportTCP](../../../../routing/providers/kubernetes-crd.md#kind-serverstransporttc)</a> | Allows configuring the transport between Traefik and the backends |
-| <a id="opt-IngressRouteUDP" href="#opt-IngressRouteUDP" title="#opt-IngressRouteUDP">[IngressRouteUDP](../../../../routing/providers/kubernetes-crd.md#kind-ingressrouteudp)</a> | UDP Routing       |
+| Resource                                                                                                                                                                                            | Purpose                                                           |
+|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------|
+| <a id="opt-IngressRoute" href="#opt-IngressRoute" title="#opt-IngressRoute">[IngressRoute](../../../routing-configuration/kubernetes/crd/http/ingressroute.md)</a> | HTTP Routing                                                      |
+| <a id="opt-Middleware" href="#opt-Middleware" title="#opt-Middleware">[Middleware](../../../routing-configuration/kubernetes/crd/http/middleware.md)</a> | Tweaks the HTTP requests before they are sent to your service     |
+| <a id="opt-TraefikService" href="#opt-TraefikService" title="#opt-TraefikService">[TraefikService](../../../routing-configuration/kubernetes/crd/http/traefikservice.md)</a> | Abstraction for HTTP loadbalancing/mirroring                      | 
+| <a id="opt-TLSOptions" href="#opt-TLSOptions" title="#opt-TLSOptions">[TLSOptions](../../../routing-configuration/kubernetes/crd/http/tlsoption.md)</a> | Allows configuring some parameters of the TLS connection          |
+| <a id="opt-TLSStores" href="#opt-TLSStores" title="#opt-TLSStores">[TLSStores](../../../routing-configuration/kubernetes/crd/http/tlsstore.md)</a> | Allows configuring the default TLS store                          |  
+| <a id="opt-ServersTransport" href="#opt-ServersTransport" title="#opt-ServersTransport">[ServersTransport](../../../routing-configuration/kubernetes/crd/http/serverstransport.md)</a> | Allows configuring the transport between Traefik and the backends | 
+| <a id="opt-IngressRouteTCP" href="#opt-IngressRouteTCP" title="#opt-IngressRouteTCP">[IngressRouteTCP](../../../routing-configuration/kubernetes/crd/tcp/ingressroutetcp.md)</a> | TCP Routing                                                       | 
+| <a id="opt-MiddlewareTCP" href="#opt-MiddlewareTCP" title="#opt-MiddlewareTCP">[MiddlewareTCP](../../../routing-configuration/kubernetes/crd/tcp/middlewaretcp.md)</a> | Tweaks the TCP requests before they are sent to your service      |
+| <a id="opt-ServersTransportTCP" href="#opt-ServersTransportTCP" title="#opt-ServersTransportTCP">[ServersTransportTCP](../../../routing-configuration/kubernetes/crd/tcp/serverstransporttcp.md)</a> | Allows configuring the transport between Traefik and the backends |
+| <a id="opt-IngressRouteUDP" href="#opt-IngressRouteUDP" title="#opt-IngressRouteUDP">[IngressRouteUDP](../../../routing-configuration/kubernetes/crd/udp/ingressrouteudp.md)</a> | UDP Routing                                                       |
 
 ## Particularities
 

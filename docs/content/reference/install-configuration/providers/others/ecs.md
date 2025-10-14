@@ -103,7 +103,7 @@ providers:
 # ...
 ```
 
-For additional information, refer to [Restrict the Scope of Service Discovery](../overview.md#restrict-the-scope-of-service-discovery).
+For additional information, refer to [Restrict the Scope of Service Discovery](../overview.md#exposedbydefault-and-traefikenable).
 
 ### `defaultRule`
 
