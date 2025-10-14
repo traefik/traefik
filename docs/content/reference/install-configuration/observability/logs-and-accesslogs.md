@@ -35,7 +35,7 @@ The section below describe how to configure Traefik logs using the static config
 
 | Field      | Description  | Default | Required |
 |:-----------|:----------------------------|:--------|:---------|
-| <a id="opt-log-filePath" href="#opt-log-filePath" title="#opt-log-filePath">`log.filePath`</a> | By default, the logs are written to the standard output.<br />You can configure a file path instead using the `filePath` option.| - | No      |
+| <a id="opt-log-filePath" href="#opt-log-filePath" title="#opt-log-filePath">`log.filePath`</a> | By default, the logs are written to the standard output.<br />You can configure a file path instead using the `filePath` option. When `filePath` is specified, Traefik will write logs only to that file (not to standard output).| - | No      |
 | <a id="opt-log-format" href="#opt-log-format" title="#opt-log-format">`log.format`</a> | Log format (`common`or `json`).<br /> The fields displayed with the format `common` cannot be customized. | "common" | No      |
 | <a id="opt-log-level" href="#opt-log-level" title="#opt-log-level">`log.level`</a> | Log level (`TRACE`, `DEBUG`, `INFO`, `WARN`, `ERROR`, `FATAL`, and `PANIC`)| ERROR | No      |
 | <a id="opt-log-noColor" href="#opt-log-noColor" title="#opt-log-noColor">`log.noColor`</a> | When using the format `common`, disables the colorized output. | false      | No      |
