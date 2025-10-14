@@ -5,4 +5,10 @@ namespace API {
     disableDashboardAd: boolean
     startDate: string
   }
+
+  type Certificate = {
+    name: string
+    expiration: string
+    domains: string[]
+  }
 }
