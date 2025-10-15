@@ -539,13 +539,12 @@ tcp:
           version: 42
         terminationDelay: 42
         healthCheck:
-          tls: true
-          serversTransport: foobar
+          port: 42
+          send: foobar
+          expect: foobar
           interval: 42s
           unhealthyInterval: 42s
           timeout: 42s
-          payload: foobar
-          expected: foobar
     TCPService02:
       weighted:
         services:

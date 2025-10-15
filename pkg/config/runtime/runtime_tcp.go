@@ -89,7 +89,8 @@ type TCPServiceInfo struct {
 	Status string   `json:"status,omitempty"`
 	UsedBy []string `json:"usedBy,omitempty"` // list of routers using that service
 
-	serverStatus *sync.Map // keyed by server URL, UP or DOWN
+	serverStatusMu sync.RWMutex
+	serverStatus   map[string]string // keyed by server URL
 }
 
 // AddError adds err to s.Err, if it does not already exist.
@@ -113,32 +114,30 @@ func (s *TCPServiceInfo) AddError(err error, critical bool) {
 	}
 }
 
-// UpdateServerStatus sets the status of the server in the TCPServiceInfo.
-func (s *TCPServiceInfo) UpdateServerStatus(server string, status bool) {
-	if s.serverStatus == nil {
-		s.serverStatus = &sync.Map{}
-	}
+// UpdateServerStatus sets the status of the server in the TCPServiceInfo
+func (s *TCPServiceInfo) UpdateServerStatus(server, status string) {
+	s.serverStatusMu.Lock()
+	defer s.serverStatusMu.Unlock()
 
-	if currentStatus, loaded := s.serverStatus.LoadOrStore(server, status); loaded && currentStatus != status {
-		s.serverStatus.Store(server, status)
+	if s.serverStatus == nil {
+		s.serverStatus = make(map[string]string)
 	}
+	s.serverStatus[server] = status
 }
 
 // GetAllStatus returns all the statuses of all the servers in TCPServiceInfo.
 func (s *TCPServiceInfo) GetAllStatus() map[string]string {
-	if s.serverStatus == nil {
+	s.serverStatusMu.RLock()
+	defer s.serverStatusMu.RUnlock()
+
+	if len(s.serverStatus) == 0 {
 		return nil
 	}
 
-	allStatus := make(map[string]string, 0)
-	s.serverStatus.Range(func(key, value interface{}) bool {
-		allStatus[key.(string)] = StatusDown
-		if value.(bool) {
-			allStatus[key.(string)] = StatusUp
-		}
-		return true
-	})
-
+	allStatus := make(map[string]string, len(s.serverStatus))
+	for k, v := range s.serverStatus {
+		allStatus[k] = v
+	}
 	return allStatus
 }
 
