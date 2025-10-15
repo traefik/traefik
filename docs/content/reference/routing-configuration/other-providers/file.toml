@@ -479,13 +479,12 @@
         [tcp.services.TCPService01.loadBalancer.proxyProtocol]
           version = 42
         [tcp.services.TCPService01.loadBalancer.healthCheck]
-          tls = true
-          serversTransport = "foobar"
+          port = 42
+          send = "foobar"
+          expect = "foobar"
           interval = "42s"
           unhealthyInterval = "42s"
           timeout = "42s"
-          payload = "foobar"
-          expected = "foobar"
     [tcp.services.TCPService02]
       [tcp.services.TCPService02.weighted]
 

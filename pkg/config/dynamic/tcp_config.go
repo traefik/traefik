@@ -179,22 +179,20 @@ type TLSClientConfig struct {
 	Spiffe             *Spiffe                 `description:"Defines the SPIFFE TLS configuration." json:"spiffe,omitempty" toml:"spiffe,omitempty" yaml:"spiffe,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 }
 
-// SetDefaults sets the default values for a TCPServersTransport.
-func (t *TCPServersTransport) SetDefaults() {
-	t.DialTimeout = ptypes.Duration(30 * time.Second)
-	t.DialKeepAlive = ptypes.Duration(15 * time.Second)
-	t.TerminationDelay = ptypes.Duration(100 * time.Millisecond)
-}
-
 // +k8s:deepcopy-gen=true
 
 // TCPServerHealthCheck holds the HealthCheck configuration.
 type TCPServerHealthCheck struct {
-	TLS               bool             `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" export:"true"`
-	ServersTransport  string           `json:"serversTransport,omitempty" toml:"serversTransport,omitempty" yaml:"serversTransport,omitempty" export:"true"`
+	Port              int              `json:"port,omitempty" toml:"port,omitempty,omitzero" yaml:"port,omitempty" export:"true"`
+	Send              string           `json:"send,omitempty" toml:"send,omitempty" yaml:"send,omitempty" export:"true"`
+	Expect            string           `json:"expect,omitempty" toml:"expect,omitempty" yaml:"expect,omitempty" export:"true"`
 	Interval          ptypes.Duration  `json:"interval,omitempty" toml:"interval,omitempty" yaml:"interval,omitempty" export:"true"`
 	UnhealthyInterval *ptypes.Duration `json:"unhealthyInterval,omitempty" toml:"unhealthyInterval,omitempty" yaml:"unhealthyInterval,omitempty" export:"true"`
 	Timeout           ptypes.Duration  `json:"timeout,omitempty" toml:"timeout,omitempty" yaml:"timeout,omitempty" export:"true"`
-	Payload           string           `json:"payload,omitempty" toml:"payload,omitempty" yaml:"payload,omitempty" export:"true"`
-	Expected          string           `json:"expected,omitempty" toml:"expected,omitempty" yaml:"expected,omitempty" export:"true"`
+}
+
+// SetDefaults sets the default values for a TCPServerHealthCheck.
+func (t *TCPServerHealthCheck) SetDefaults() {
+	t.Interval = DefaultHealthCheckInterval
+	t.Timeout = DefaultHealthCheckTimeout
 }

@@ -17,15 +17,19 @@ type server struct {
 
 // WRRLoadBalancer is a naive RoundRobin load balancer for TCP services.
 type WRRLoadBalancer struct {
-	servers       []server
-	lock          sync.Mutex
-	currentWeight int
-	index         int
+	serversMu sync.Mutex
+	servers   []server
+
 	// status is a record of which child services of the Balancer are healthy.
 	status sync.Map
+
 	// updaters is the list of hooks that are run (to update the Balancer
 	// parent(s)), whenever the Balancer status changes.
-	updaters         []func(bool)
+	// Modified during configuration build only, so no mutex needed.
+	updaters []func(bool)
+
+	currentWeight    int
+	index            int
 	wantsHealthCheck bool
 }
 
@@ -39,9 +43,9 @@ func NewWRRLoadBalancer(wantsHealthCheck bool) *WRRLoadBalancer {
 
 // ServeTCP forwards the connection to the right service.
 func (b *WRRLoadBalancer) ServeTCP(conn WriteCloser) {
-	b.lock.Lock()
+	b.serversMu.Lock()
 	next, err := b.next()
-	b.lock.Unlock()
+	b.serversMu.Unlock()
 
 	if err != nil {
 		if !errors.Is(err, errNoServersInPool) {
@@ -62,8 +66,8 @@ func (b *WRRLoadBalancer) AddServer(serverHandler Handler) {
 
 // AddWeightServer appends a server to the existing list with a weight.
 func (b *WRRLoadBalancer) AddWeightServer(serverHandler Handler, weight *int) {
-	b.lock.Lock()
-	defer b.lock.Unlock()
+	b.serversMu.Lock()
+	defer b.serversMu.Unlock()
 
 	w := 1
 	if weight != nil {
@@ -81,9 +85,9 @@ func (b *WRRLoadBalancer) SetStatus(ctx context.Context, childName string, up bo
 
 	log.Ctx(ctx).Debug().Msgf("Setting status of %s to %s", childName, statusString)
 
-	currentStatus, _ := b.status.LoadOrStore(childName, true)
-	if b.status.CompareAndSwap(childName, currentStatus, up) {
+	if _, loaded := b.status.LoadOrStore(childName, up); !loaded {
 		log.Ctx(ctx).Debug().Msgf("Propagating new %s status", statusString)
+
 		for _, fn := range b.updaters {
 			fn(up)
 		}
@@ -98,6 +102,7 @@ func (b *WRRLoadBalancer) RegisterStatusUpdater(fn func(up bool)) error {
 	if !b.wantsHealthCheck {
 		return errors.New("healthCheck not enabled in config for this weighted service")
 	}
+
 	b.updaters = append(b.updaters, fn)
 	return nil
 }

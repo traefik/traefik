@@ -137,8 +137,8 @@ func Test_ServiceTCPHealthChecker_Check(t *testing.T) {
 			config: &dynamic.TCPServerHealthCheck{
 				Interval: ptypes.Duration(time.Millisecond * 100),
 				Timeout:  ptypes.Duration(time.Millisecond * 99),
-				Payload:  "request",
-				Expected: "response",
+				Send:     "request",
+				Expect:   "response",
 			},
 			expNumRemovedServers:  0,
 			expNumUpsertedServers: 2,
@@ -155,8 +155,8 @@ func Test_ServiceTCPHealthChecker_Check(t *testing.T) {
 			config: &dynamic.TCPServerHealthCheck{
 				Interval: ptypes.Duration(time.Millisecond * 100),
 				Timeout:  ptypes.Duration(time.Millisecond * 99),
-				Payload:  "request",
-				Expected: "response",
+				Send:     "request",
+				Expect:   "response",
 			},
 			expNumRemovedServers:  1,
 			expNumUpsertedServers: 1,
@@ -171,11 +171,10 @@ func Test_ServiceTCPHealthChecker_Check(t *testing.T) {
 				tcpMockSequence{accept: true, payloadIn: "request", payloadOut: "response"},
 			),
 			config: &dynamic.TCPServerHealthCheck{
-				Payload:  "request",
-				Expected: "response",
+				Send:     "request",
+				Expect:   "response",
 				Interval: ptypes.Duration(time.Millisecond * 100),
 				Timeout:  ptypes.Duration(time.Millisecond * 99),
-				TLS:      true,
 			},
 			expNumRemovedServers:  0,
 			expNumUpsertedServers: 2,
@@ -190,8 +189,11 @@ func Test_ServiceTCPHealthChecker_Check(t *testing.T) {
 
 			test.server.Start(t)
 
-			targets := make(map[string]*net.TCPAddr)
-			targets["target1"] = test.server.Addr
+			targets := []TCPHealthCheckTarget{
+				{
+					Address: test.server.Addr.String(),
+				},
+			}
 
 			lb := &testLoadBalancer{RWMutex: &sync.RWMutex{}}
 			gauge := &testhelpers.CollectingGauge{}
@@ -204,7 +206,7 @@ func Test_ServiceTCPHealthChecker_Check(t *testing.T) {
 					ServerName:         "example.com",
 				},
 			}})
-			service := NewServiceTCPHealthChecker(ctx, dialerManager, &MetricsMock{gauge}, test.config, lb, serviceInfo, targets, "serviceName")
+			service := NewServiceTCPHealthChecker(ctx, test.config, lb, serviceInfo, targets, "serviceName")
 
 			for range test.server.StatusSequence {
 				test.server.Next()
