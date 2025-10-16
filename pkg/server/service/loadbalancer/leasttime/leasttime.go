@@ -235,8 +235,13 @@ func (b *Balancer) selectWRR(candidates []*namedHandler) *namedHandler {
 	}
 
 	b.deadlineMu.Lock()
-	selected.deadline = b.curDeadline + 1/selected.weight
-	b.curDeadline = selected.deadline
+	// Update deadline based on when this server was selected (minDeadline),
+	// not the global curDeadline. This ensures proper weighted distribution.
+	selected.deadline = minDeadline + 1/selected.weight
+	// Track the maximum deadline assigned for initializing new servers.
+	if selected.deadline > b.curDeadline {
+		b.curDeadline = selected.deadline
+	}
 	b.deadlineMu.Unlock()
 
 	return selected
@@ -366,7 +371,10 @@ func (b *Balancer) Add(name string, handler http.Handler, weight *int, fenced bo
 	h := &namedHandler{Handler: handler, name: name, weight: float64(w)}
 
 	b.deadlineMu.Lock()
+	// Initialize deadline by adding 1/weight to current deadline.
+	// This staggers servers to prevent all starting at the same time.
 	h.deadline = b.curDeadline + 1/h.weight
+	b.curDeadline = h.deadline
 	b.deadlineMu.Unlock()
 
 	b.handlersMu.Lock()
