@@ -114,7 +114,7 @@ func (s *TCPServiceInfo) AddError(err error, critical bool) {
 	}
 }
 
-// UpdateServerStatus sets the status of the server in the TCPServiceInfo
+// UpdateServerStatus sets the status of the server in the TCPServiceInfo.
 func (s *TCPServiceInfo) UpdateServerStatus(server, status string) {
 	s.serverStatusMu.Lock()
 	defer s.serverStatusMu.Unlock()
