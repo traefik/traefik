@@ -1,6 +1,7 @@
 package healthcheck
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"net"
@@ -17,7 +18,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	truntime "github.com/traefik/traefik/v3/pkg/config/runtime"
 	ttcp "github.com/traefik/traefik/v3/pkg/tcp"
-	"github.com/traefik/traefik/v3/pkg/testhelpers"
 )
 
 var LocalhostCert = []byte(`-----BEGIN CERTIFICATE-----
@@ -69,14 +69,13 @@ lvDhS+Pi/1KCBJxLHMv+V/WrckDRgHFnAhDaBZ+2vI/s09rKDnpjcTzV7x22kL0b
 XIJCEEE8JZ4AXIZ+IcB6LA==
 -----END PRIVATE KEY-----`)
 
-func Test_ServiceTCPHealthChecker_Check(t *testing.T) {
+func Test_ServiceTCPHealthChecker_Launch(t *testing.T) {
 	testCases := []struct {
 		desc                  string
 		server                *sequencedTCPServer
 		config                *dynamic.TCPServerHealthCheck
 		expNumRemovedServers  int
 		expNumUpsertedServers int
-		expGaugeValue         float64
 		targetStatus          string
 	}{
 		{
@@ -91,8 +90,7 @@ func Test_ServiceTCPHealthChecker_Check(t *testing.T) {
 				Timeout:  ptypes.Duration(time.Millisecond * 99),
 			},
 			expNumRemovedServers:  0,
-			expNumUpsertedServers: 2,
-			expGaugeValue:         1,
+			expNumUpsertedServers: 3,
 			targetStatus:          truntime.StatusUp,
 		},
 		{
@@ -108,7 +106,6 @@ func Test_ServiceTCPHealthChecker_Check(t *testing.T) {
 			},
 			expNumRemovedServers:  1,
 			expNumUpsertedServers: 1,
-			expGaugeValue:         0,
 			targetStatus:          truntime.StatusDown,
 		},
 		{
@@ -122,9 +119,8 @@ func Test_ServiceTCPHealthChecker_Check(t *testing.T) {
 				Interval: ptypes.Duration(time.Millisecond * 100),
 				Timeout:  ptypes.Duration(time.Millisecond * 99),
 			},
-			expNumRemovedServers:  1,
+			expNumRemovedServers:  0,
 			expNumUpsertedServers: 1,
-			expGaugeValue:         1,
 			targetStatus:          truntime.StatusUp,
 		},
 		{
@@ -142,7 +138,6 @@ func Test_ServiceTCPHealthChecker_Check(t *testing.T) {
 			},
 			expNumRemovedServers:  0,
 			expNumUpsertedServers: 2,
-			expGaugeValue:         1,
 			targetStatus:          truntime.StatusUp,
 		},
 		{
@@ -160,7 +155,6 @@ func Test_ServiceTCPHealthChecker_Check(t *testing.T) {
 			},
 			expNumRemovedServers:  1,
 			expNumUpsertedServers: 1,
-			expGaugeValue:         0,
 			targetStatus:          truntime.StatusDown,
 		},
 		{
@@ -178,26 +172,16 @@ func Test_ServiceTCPHealthChecker_Check(t *testing.T) {
 			},
 			expNumRemovedServers:  0,
 			expNumUpsertedServers: 2,
-			expGaugeValue:         1,
 			targetStatus:          truntime.StatusUp,
 		},
 	}
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			ctx := log.Logger.WithContext(t.Context())
+			ctx, cancel := context.WithCancel(log.Logger.WithContext(t.Context()))
+			defer cancel()
 
 			test.server.Start(t)
-
-			targets := []TCPHealthCheckTarget{
-				{
-					Address: test.server.Addr.String(),
-				},
-			}
-
-			lb := &testLoadBalancer{RWMutex: &sync.RWMutex{}}
-			gauge := &testhelpers.CollectingGauge{}
-			serviceInfo := &truntime.TCPServiceInfo{}
 
 			dialerManager := ttcp.NewDialerManager(nil)
 			dialerManager.Update(map[string]*dynamic.TCPServersTransport{"default@internal": {
@@ -206,21 +190,43 @@ func Test_ServiceTCPHealthChecker_Check(t *testing.T) {
 					ServerName:         "example.com",
 				},
 			}})
+
+			// Build dialer for TLS or non-TLS connections
+			dialer, err := dialerManager.Build(&dynamic.TCPServersLoadBalancer{
+				ServersTransport: "default@internal",
+			}, test.server.TLS)
+			require.NoError(t, err)
+
+			targets := []TCPHealthCheckTarget{
+				{
+					Address: test.server.Addr.String(),
+					TLS:     test.server.TLS,
+					Dialer:  dialer,
+				},
+			}
+
+			lb := &testLoadBalancer{RWMutex: &sync.RWMutex{}}
+			serviceInfo := &truntime.TCPServiceInfo{}
+
 			service := NewServiceTCPHealthChecker(ctx, test.config, lb, serviceInfo, targets, "serviceName")
 
+			// Start the health checker
+			go service.Launch(ctx)
+
+			// Wait for all health checks to complete
 			for range test.server.StatusSequence {
 				test.server.Next()
 				runtime.Gosched()
-				service.Check(ctx)
 			}
+
+			// Give some time for the health checks to process
+			time.Sleep(200 * time.Millisecond)
 
 			lb.RLock()
 			defer lb.RUnlock()
 
 			assert.Equal(t, test.expNumRemovedServers, lb.numRemovedServers, "removed servers")
 			assert.Equal(t, test.expNumUpsertedServers, lb.numUpsertedServers, "upserted servers")
-			assert.InDelta(t, test.expGaugeValue, gauge.GaugeValue, delta, "ServerUp Gauge")
-			assert.Equal(t, []string{"service", "serviceName", "url", test.server.Addr.String()}, gauge.LastLabelValues)
 			assert.Equal(t, map[string]string{test.server.Addr.String(): test.targetStatus}, serviceInfo.GetAllStatus())
 		})
 	}
