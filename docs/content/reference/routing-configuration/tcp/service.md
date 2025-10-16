@@ -81,7 +81,7 @@ labels:
 | <a id="opt-servers-address" href="#opt-servers-address" title="#opt-servers-address">`servers.address`</a> |   The address option (IP:Port) point to a specific instance. | "" |
 | <a id="opt-servers-tls" href="#opt-servers-tls" title="#opt-servers-tls">`servers.tls`</a> | The `tls` option determines whether to use TLS when dialing with the backend. | false |
 | <a id="opt-servers-serversTransport" href="#opt-servers-serversTransport" title="#opt-servers-serversTransport">`servers.serversTransport`</a> | `serversTransport` allows to reference a TCP [ServersTransport](./serverstransport.md configuration for the communication between Traefik and your servers. If no serversTransport is specified, the default@internal will be used. |  "" |
-| <a id="healthcheck" href="#healthcheck" title="#healthcheck">`healthCheck`</a> | Configures health check to remove unhealthy servers from the load balancing rotation. | | No |
+| <a id="opt-healthCheck" href="#opt-healthCheck" title="#opt-healthCheck">`healthCheck`</a> | Configures health check to remove unhealthy servers from the load balancing rotation. | | No |
 
 
 ### Health Check
@@ -96,12 +96,12 @@ Below are the available options for the health check mechanism:
 
 | Field | Description | Default | Required |
 |-------|-------------|---------|----------|
-| <a id="port" href="#port" title="#port">`port`</a> | Replaces the server URL port for the health check endpoint. | | No |
-| <a id="send" href="#send" title="#send">`send`</a> | Defines the payload to send to the server during the health check. | "" | No |
-| <a id="expect" href="#expect" title="#expect">`expect`</a> | Defines the expected response payload from the server. Only used when `send` is specified. | "" | No |
-| <a id="interval" href="#interval" title="#interval">`interval`</a> | Defines the frequency of the health check calls for healthy targets. | 30s | No |
-| <a id="unhealthyInterval" href="#unhealthyInterval" title="#unhealthyInterval">`unhealthyInterval`</a> | Defines the frequency of the health check calls for unhealthy targets. When not defined, it defaults to the `interval` value. | 30s | No |
-| <a id="timeout" href="#timeout" title="#timeout">`timeout`</a> | Defines the maximum duration Traefik will wait for a health check request before considering the server unhealthy. | 5s | No |
+| <a id="opt-port" href="#opt-port" title="#opt-port">`port`</a> | Replaces the server URL port for the health check endpoint. | | No |
+| <a id="opt-send" href="#opt-send" title="#opt-send">`send`</a> | Defines the payload to send to the server during the health check. | "" | No |
+| <a id="opt-expect" href="#opt-expect" title="#opt-expect">`expect`</a> | Defines the expected response payload from the server. Only used when `send` is specified. | "" | No |
+| <a id="opt-interval" href="#opt-interval" title="#opt-interval">`interval`</a> | Defines the frequency of the health check calls for healthy targets. | 30s | No |
+| <a id="opt-unhealthyInterval" href="#opt-unhealthyInterval" title="#opt-unhealthyInterval">`unhealthyInterval`</a> | Defines the frequency of the health check calls for unhealthy targets. When not defined, it defaults to the `interval` value. | 30s | No |
+| <a id="opt-timeout" href="#opt-timeout" title="#opt-timeout">`timeout`</a> | Defines the maximum duration Traefik will wait for a health check request before considering the server unhealthy. | 5s | No |
 
 #### Health Check Types
 
@@ -275,8 +275,8 @@ Servers represent individual backend instances for your service. The [service lo
 
 | Field | Description | Default | Required |
 |-------|-------------|---------|----------|
-| <a id="servers-address" href="#servers-address" title="#servers-address">`address`</a> | The address option (IP:Port) point to a specific instance. | | Yes |
-| <a id="servers-tls" href="#servers-tls" title="#servers-tls">`tls`</a> | The `tls` option determines whether to use TLS when dialing with the backend. | false | No |
+| <a id="opt-address" href="#opt-address" title="#opt-address">`address`</a> | The address option (IP:Port) point to a specific instance. | | Yes |
+| <a id="opt-tls" href="#opt-tls" title="#opt-tls">`tls`</a> | The `tls` option determines whether to use TLS when dialing with the backend. | false | No |
 
 ## Weighted Round Robin
 
