@@ -1,4 +1,4 @@
-import { Box, darkTheme, FaencyProvider, lightTheme } from '@traefiklabs/faency'
+import { globalCss, Box, darkTheme, FaencyProvider, lightTheme } from '@traefiklabs/faency'
 import { Suspense, useEffect } from 'react'
 import { HelmetProvider } from 'react-helmet-async'
 import { HashRouter, Navigate, Route, Routes as RouterRoutes, useLocation } from 'react-router-dom'
@@ -71,6 +71,12 @@ export const Routes = () => {
 
 const isDev = import.meta.env.NODE_ENV === 'development'
 
+const customGlobalStyle = globalCss({
+  'span[role=cell]': {     // target the AriaTd component
+    p: '$2 $3'
+  },
+})
+
 const App = () => {
   const isDarkMode = useIsDarkMode()
 
@@ -95,6 +101,7 @@ const App = () => {
         >
           <VersionProvider>
             <HashRouter basename={import.meta.env.VITE_APP_BASE_URL || ''}>
+              {customGlobalStyle()}
               <ScrollToTop />
               <Routes />
             </HashRouter>
