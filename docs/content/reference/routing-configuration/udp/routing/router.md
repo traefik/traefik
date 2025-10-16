@@ -51,8 +51,8 @@ labels:
 
 | Field                              | Description                                                                                                                                                                                                                                                                                                                                                                                | Default | Required |
 |------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------|----------|
-| <a id="entryPoints" href="#entryPoints" title="#entryPoints">`entryPoints`</a> | The list of entry points to which the router is attached. If not specified, UDP routers are attached to all UDP entry points. | All UDP entry points | No |
-| <a id="service" href="#service" title="#service">`service`</a> | The name of the service that will handle the matched UDP packets. UDP services are typically load balancer services that distribute packets to multiple backend servers. See [UDP Service](../service.md) for details. | | Yes |
+| <a id="opt-entryPoints" href="#opt-entryPoints" title="#opt-entryPoints">`entryPoints`</a> | The list of entry points to which the router is attached. If not specified, UDP routers are attached to all UDP entry points. | All UDP entry points | No |
+| <a id="opt-service" href="#opt-service" title="#opt-service">`service`</a> | The name of the service that will handle the matched UDP packets. UDP services are typically load balancer services that distribute packets to multiple backend servers. See [UDP Service](../service.md) for details. | | Yes |
 
 ## Sessions and Timeout
 
@@ -60,7 +60,7 @@ Even though UDP is connectionless, Traefik's UDP router implementation relies on
 
 Each session has an associated timeout that cleans up inactive sessions after a specified duration of inactivity.
 
-Session timeout can be configured using the `entryPoints.name.udp.timeout` option in the static configuration. See [EntryPoints documentation](../../install-configuration/entrypoints.md) for details.
+Session timeout can be configured using the `entryPoints.name.udp.timeout` option in the static configuration. See [EntryPoints documentation](../../../install-configuration/entrypoints.md) for details.
 
 ## Router Naming
 

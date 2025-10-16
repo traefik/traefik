@@ -11,7 +11,7 @@ How to Migrate from Traefik v2 to Traefik v3.
 !!! success "Streamlined Migration Process"
     Traefik v3 introduces minimal breaking changes and maintains backward compatibility with v2 syntax in dynamic configuration, offering a gradual migration path.
 
-With Traefik v3, we are introducing a streamlined transition process from v2. Minimal breaking changes have been made to specific options in the [static configuration](./v2-to-v3-details.md#static-configuration-changes "Link to static configuration changes"), and we are ensuring backward compatibility with v2 syntax in the [dynamic configuration](./v2-to-v3-details.md#dynamic-configuration-changes "Link to dynamic configuration changes"). This will offer a gradual path for adopting the v3 syntax, allowing users to progressively migrate their Kubernetes ingress resources, Docker labels, etc., to the new format.
+With Traefik v3, we are introducing a streamlined transition process from v2. Minimal breaking changes have been made to specific options in the [static configuration](./v2-to-v3-details.md#install-configuration-changes "Link to install configuration changes"), and we are ensuring backward compatibility with v2 syntax in the [dynamic configuration](./v2-to-v3-details.md#routing-configuration-changes "Link to routing configuration changes"). This will offer a gradual path for adopting the v3 syntax, allowing users to progressively migrate their Kubernetes ingress resources, Docker labels, etc., to the new format.
 
 ## Migration Overview
 
@@ -33,7 +33,7 @@ The migration process consists of three progressive steps designed to minimize r
 
 **Review and Update Static Configuration**
 
-Check the changes in [static configurations](./v2-to-v3-details.md#static-configuration-changes "Link to static configuration changes") and [operations](./v2-to-v3-details.md#operations-changes "Link to operations changes") brought by Traefik v3. Modify your configurations accordingly.
+Check the changes in [static configurations](./v2-to-v3-details.md#install-configuration-changes "Link to install configuration changes") and [operations](./v2-to-v3-details.md#operations-changes "Link to operations changes") brought by Traefik v3. Modify your configurations accordingly.
 
 **Enable v2 Compatibility Mode**
 
@@ -110,13 +110,13 @@ We strongly advise you to follow a progressive migration strategy ([Kubernetes r
 ## Step 3: Progressively Migrate Dynamic Configuration
 
 !!! info "Optional Immediate Step"
-    This step can be done later in the process, as Traefik v3 is compatible with the v2 format for [dynamic configuration](./v2-to-v3-details.md#dynamic-configuration-changes "Link to dynamic configuration changes"). Enable Traefik logs to get some help if any deprecated option is in use.
+    This step can be done later in the process, as Traefik v3 is compatible with the v2 format for [dynamic configuration](./v2-to-v3-details.md#routing-configuration-changes "Link to routing configuration changes"). Enable Traefik logs to get some help if any deprecated option is in use.
 
 ### Migration Process
 
 **Review Dynamic Configuration Changes**
 
-Check the changes in [dynamic configuration](./v2-to-v3-details.md#dynamic-configuration-changes "Link to dynamic configuration changes") to understand what updates are needed.
+Check the changes in [dynamic configuration](./v2-to-v3-details.md#routing-configuration-changes "Link to routing configuration changes") to understand what updates are needed.
 
 **Progressive Router Migration**
 

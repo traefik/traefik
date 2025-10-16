@@ -748,7 +748,6 @@ By default, NativeLB is `false`.
     Note that it is possible to override the default value by using the option [`nativeLBByDefault`](../../install-configuration/providers/kubernetes/kubernetes-gateway.md) at the provider level. 
 
 ```yaml
----
 apiVersion: v1
 kind: Service
 metadata:
@@ -757,7 +756,10 @@ metadata:
   annotations:
     traefik.io/service.nativelb: "true"
 spec:
-[...]
+  ports:
+    - name: web
+      port: 80
+
 ```
 
 {!traefik-for-business-applications.md!}

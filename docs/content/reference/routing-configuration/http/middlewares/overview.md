@@ -20,29 +20,29 @@ Middlewares that use the same protocol can be combined into chains to fit every 
 
 | Middleware                                | Purpose                                           | Area                        |
 |-------------------------------------------|---------------------------------------------------|-----------------------------|
-| <a id="AddPrefix" href="#AddPrefix" title="#AddPrefix">[AddPrefix](addprefix.md)</a> | Adds a Path Prefix                                | Path Modifier               |
-| <a id="BasicAuth" href="#BasicAuth" title="#BasicAuth">[BasicAuth](basicauth.md)</a> | Adds Basic Authentication                         | Security, Authentication    |
-| <a id="Buffering" href="#Buffering" title="#Buffering">[Buffering](buffering.md)</a> | Buffers the request/response                      | Request Lifecycle           |
-| <a id="Chain" href="#Chain" title="#Chain">[Chain](chain.md)</a> | Combines multiple pieces of middleware            | Misc                        |
-| <a id="CircuitBreaker" href="#CircuitBreaker" title="#CircuitBreaker">[CircuitBreaker](circuitbreaker.md)</a> | Prevents calling unhealthy services               | Request Lifecycle           |
-| <a id="Compress" href="#Compress" title="#Compress">[Compress](compress.md)</a> | Compresses the response                           | Content Modifier            |
-| <a id="ContentType" href="#ContentType" title="#ContentType">[ContentType](contenttype.md)</a> | Handles Content-Type auto-detection               | Misc                        |
-| <a id="DigestAuth" href="#DigestAuth" title="#DigestAuth">[DigestAuth](digestauth.md)</a> | Adds Digest Authentication                        | Security, Authentication    |
-| <a id="Errors" href="#Errors" title="#Errors">[Errors](errorpages.md)</a> | Defines custom error pages                        | Request Lifecycle           |
-| <a id="ForwardAuth" href="#ForwardAuth" title="#ForwardAuth">[ForwardAuth](forwardauth.md)</a> | Delegates Authentication                          | Security, Authentication    |
-| <a id="GrpcWeb" href="#GrpcWeb" title="#GrpcWeb">[GrpcWeb](grpcweb.md)</a> | Converts gRPC Web requests to HTTP/2 gRPC requests.                           | Request                   |
-| <a id="Headers" href="#Headers" title="#Headers">[Headers](headers.md)</a> | Adds / Updates headers                            | Security                    |
-| <a id="IPAllowList" href="#IPAllowList" title="#IPAllowList">[IPAllowList](ipallowlist.md)</a> | Limits the allowed client IPs                     | Security, Request lifecycle |
-| <a id="InFlightReq" href="#InFlightReq" title="#InFlightReq">[InFlightReq](inflightreq.md)</a> | Limits the number of simultaneous connections     | Security, Request lifecycle |
-| <a id="PassTLSClientCert" href="#PassTLSClientCert" title="#PassTLSClientCert">[PassTLSClientCert](passtlsclientcert.md)</a> | Adds Client Certificates in a Header              | Security                    |
-| <a id="RateLimit" href="#RateLimit" title="#RateLimit">[RateLimit](ratelimit.md)</a> | Limits the call frequency                         | Security, Request lifecycle |
-| <a id="RedirectScheme" href="#RedirectScheme" title="#RedirectScheme">[RedirectScheme](redirectscheme.md)</a> | Redirects based on scheme                         | Request lifecycle           |
-| <a id="RedirectRegex" href="#RedirectRegex" title="#RedirectRegex">[RedirectRegex](redirectregex.md)</a> | Redirects based on regex                          | Request lifecycle           |
-| <a id="ReplacePath" href="#ReplacePath" title="#ReplacePath">[ReplacePath](replacepath.md)</a> | Changes the path of the request                   | Path Modifier               |
-| <a id="ReplacePathRegex" href="#ReplacePathRegex" title="#ReplacePathRegex">[ReplacePathRegex](replacepathregex.md)</a> | Changes the path of the request                   | Path Modifier               |
-| <a id="Retry" href="#Retry" title="#Retry">[Retry](retry.md)</a> | Automatically retries in case of error            | Request lifecycle           |
-| <a id="StripPrefix" href="#StripPrefix" title="#StripPrefix">[StripPrefix](stripprefix.md)</a> | Changes the path of the request                   | Path Modifier               |
-| <a id="StripPrefixRegex" href="#StripPrefixRegex" title="#StripPrefixRegex">[StripPrefixRegex](stripprefixregex.md)</a> | Changes the path of the request                   | Path Modifier               |
+| <a id="opt-AddPrefix" href="#opt-AddPrefix" title="#opt-AddPrefix">[AddPrefix](addprefix.md)</a> | Adds a Path Prefix                                | Path Modifier               |
+| <a id="opt-BasicAuth" href="#opt-BasicAuth" title="#opt-BasicAuth">[BasicAuth](basicauth.md)</a> | Adds Basic Authentication                         | Security, Authentication    |
+| <a id="opt-Buffering" href="#opt-Buffering" title="#opt-Buffering">[Buffering](buffering.md)</a> | Buffers the request/response                      | Request Lifecycle           |
+| <a id="opt-Chain" href="#opt-Chain" title="#opt-Chain">[Chain](chain.md)</a> | Combines multiple pieces of middleware            | Misc                        |
+| <a id="opt-CircuitBreaker" href="#opt-CircuitBreaker" title="#opt-CircuitBreaker">[CircuitBreaker](circuitbreaker.md)</a> | Prevents calling unhealthy services               | Request Lifecycle           |
+| <a id="opt-Compress" href="#opt-Compress" title="#opt-Compress">[Compress](compress.md)</a> | Compresses the response                           | Content Modifier            |
+| <a id="opt-ContentType" href="#opt-ContentType" title="#opt-ContentType">[ContentType](contenttype.md)</a> | Handles Content-Type auto-detection               | Misc                        |
+| <a id="opt-DigestAuth" href="#opt-DigestAuth" title="#opt-DigestAuth">[DigestAuth](digestauth.md)</a> | Adds Digest Authentication                        | Security, Authentication    |
+| <a id="opt-Errors" href="#opt-Errors" title="#opt-Errors">[Errors](errorpages.md)</a> | Defines custom error pages                        | Request Lifecycle           |
+| <a id="opt-ForwardAuth" href="#opt-ForwardAuth" title="#opt-ForwardAuth">[ForwardAuth](forwardauth.md)</a> | Delegates Authentication                          | Security, Authentication    |
+| <a id="opt-GrpcWeb" href="#opt-GrpcWeb" title="#opt-GrpcWeb">[GrpcWeb](grpcweb.md)</a> | Converts gRPC Web requests to HTTP/2 gRPC requests.                           | Request                   |
+| <a id="opt-Headers" href="#opt-Headers" title="#opt-Headers">[Headers](headers.md)</a> | Adds / Updates headers                            | Security                    |
+| <a id="opt-IPAllowList" href="#opt-IPAllowList" title="#opt-IPAllowList">[IPAllowList](ipallowlist.md)</a> | Limits the allowed client IPs                     | Security, Request lifecycle |
+| <a id="opt-InFlightReq" href="#opt-InFlightReq" title="#opt-InFlightReq">[InFlightReq](inflightreq.md)</a> | Limits the number of simultaneous connections     | Security, Request lifecycle |
+| <a id="opt-PassTLSClientCert" href="#opt-PassTLSClientCert" title="#opt-PassTLSClientCert">[PassTLSClientCert](passtlsclientcert.md)</a> | Adds Client Certificates in a Header              | Security                    |
+| <a id="opt-RateLimit" href="#opt-RateLimit" title="#opt-RateLimit">[RateLimit](ratelimit.md)</a> | Limits the call frequency                         | Security, Request lifecycle |
+| <a id="opt-RedirectScheme" href="#opt-RedirectScheme" title="#opt-RedirectScheme">[RedirectScheme](redirectscheme.md)</a> | Redirects based on scheme                         | Request lifecycle           |
+| <a id="opt-RedirectRegex" href="#opt-RedirectRegex" title="#opt-RedirectRegex">[RedirectRegex](redirectregex.md)</a> | Redirects based on regex                          | Request lifecycle           |
+| <a id="opt-ReplacePath" href="#opt-ReplacePath" title="#opt-ReplacePath">[ReplacePath](replacepath.md)</a> | Changes the path of the request                   | Path Modifier               |
+| <a id="opt-ReplacePathRegex" href="#opt-ReplacePathRegex" title="#opt-ReplacePathRegex">[ReplacePathRegex](replacepathregex.md)</a> | Changes the path of the request                   | Path Modifier               |
+| <a id="opt-Retry" href="#opt-Retry" title="#opt-Retry">[Retry](retry.md)</a> | Automatically retries in case of error            | Request lifecycle           |
+| <a id="opt-StripPrefix" href="#opt-StripPrefix" title="#opt-StripPrefix">[StripPrefix](stripprefix.md)</a> | Changes the path of the request                   | Path Modifier               |
+| <a id="opt-StripPrefixRegex" href="#opt-StripPrefixRegex" title="#opt-StripPrefixRegex">[StripPrefixRegex](stripprefixregex.md)</a> | Changes the path of the request                   | Path Modifier               |
 
 ## Community Middlewares
 
