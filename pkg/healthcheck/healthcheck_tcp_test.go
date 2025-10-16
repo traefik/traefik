@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"net"
-	"runtime"
 	"strings"
 	"sync"
 	"testing"
@@ -17,7 +16,7 @@ import (
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	truntime "github.com/traefik/traefik/v3/pkg/config/runtime"
-	ttcp "github.com/traefik/traefik/v3/pkg/tcp"
+	"github.com/traefik/traefik/v3/pkg/tcp"
 )
 
 var LocalhostCert = []byte(`-----BEGIN CERTIFICATE-----
@@ -69,7 +68,335 @@ lvDhS+Pi/1KCBJxLHMv+V/WrckDRgHFnAhDaBZ+2vI/s09rKDnpjcTzV7x22kL0b
 XIJCEEE8JZ4AXIZ+IcB6LA==
 -----END PRIVATE KEY-----`)
 
-func Test_ServiceTCPHealthChecker_Launch(t *testing.T) {
+func TestNewServiceTCPHealthChecker_durations(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		config      *dynamic.TCPServerHealthCheck
+		expInterval time.Duration
+		expTimeout  time.Duration
+	}{
+		{
+			desc:        "default values",
+			config:      &dynamic.TCPServerHealthCheck{},
+			expInterval: time.Duration(dynamic.DefaultHealthCheckInterval),
+			expTimeout:  time.Duration(dynamic.DefaultHealthCheckTimeout),
+		},
+		{
+			desc: "out of range values",
+			config: &dynamic.TCPServerHealthCheck{
+				Interval: ptypes.Duration(-time.Second),
+				Timeout:  ptypes.Duration(-time.Second),
+			},
+			expInterval: time.Duration(dynamic.DefaultHealthCheckInterval),
+			expTimeout:  time.Duration(dynamic.DefaultHealthCheckTimeout),
+		},
+		{
+			desc: "custom durations",
+			config: &dynamic.TCPServerHealthCheck{
+				Interval: ptypes.Duration(time.Second * 10),
+				Timeout:  ptypes.Duration(time.Second * 5),
+			},
+			expInterval: time.Second * 10,
+			expTimeout:  time.Second * 5,
+		},
+		{
+			desc: "interval shorter than timeout",
+			config: &dynamic.TCPServerHealthCheck{
+				Interval: ptypes.Duration(time.Second),
+				Timeout:  ptypes.Duration(time.Second * 5),
+			},
+			expInterval: time.Second,
+			expTimeout:  time.Second * 5,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			// FIXME
+			ctx := t.Context()
+			targets := []TCPHealthCheckTarget{{Address: "127.0.0.1:8080"}}
+			healthChecker := NewServiceTCPHealthChecker(ctx, test.config, nil, nil, targets, "")
+			assert.Equal(t, test.expInterval, healthChecker.interval)
+			assert.Equal(t, test.expTimeout, healthChecker.timeout)
+		})
+	}
+}
+
+// mockTCPDialer implements tcp.Dialer for testing
+type mockTCPDialer struct {
+	onDial func(network, addr string) (net.Conn, error)
+}
+
+func (m *mockTCPDialer) Dial(network, addr string, _ tcp.ClientConn) (net.Conn, error) {
+	return m.onDial(network, addr)
+}
+
+func (m *mockTCPDialer) DialContext(_ context.Context, network, addr string, _ tcp.ClientConn) (net.Conn, error) {
+	return m.onDial(network, addr)
+}
+
+func (m *mockTCPDialer) TerminationDelay() time.Duration {
+	return 0
+}
+
+// mockConnection implements net.Conn for testing
+type mockConnection struct{}
+
+func (m *mockConnection) Read(_ []byte) (n int, err error)   { return 0, nil }
+func (m *mockConnection) Write(b []byte) (n int, err error)  { return len(b), nil }
+func (m *mockConnection) Close() error                       { return nil }
+func (m *mockConnection) LocalAddr() net.Addr                { return &net.TCPAddr{} }
+func (m *mockConnection) RemoteAddr() net.Addr               { return &net.TCPAddr{} }
+func (m *mockConnection) SetDeadline(_ time.Time) error      { return nil }
+func (m *mockConnection) SetReadDeadline(_ time.Time) error  { return nil }
+func (m *mockConnection) SetWriteDeadline(_ time.Time) error { return nil }
+
+// payloadMockConnection is a more sophisticated mock connection for testing payload handling
+type payloadMockConnection struct {
+	writeFunc func([]byte) (int, error)
+	readFunc  func([]byte) (int, error)
+}
+
+func (m *payloadMockConnection) Read(b []byte) (n int, err error) {
+	if m.readFunc != nil {
+		return m.readFunc(b)
+	}
+	return 0, nil
+}
+
+func (m *payloadMockConnection) Write(b []byte) (n int, err error) {
+	if m.writeFunc != nil {
+		return m.writeFunc(b)
+	}
+	return len(b), nil
+}
+
+func (m *payloadMockConnection) Close() error                       { return nil }
+func (m *payloadMockConnection) LocalAddr() net.Addr                { return &net.TCPAddr{} }
+func (m *payloadMockConnection) RemoteAddr() net.Addr               { return &net.TCPAddr{} }
+func (m *payloadMockConnection) SetDeadline(_ time.Time) error      { return nil }
+func (m *payloadMockConnection) SetReadDeadline(_ time.Time) error  { return nil }
+func (m *payloadMockConnection) SetWriteDeadline(_ time.Time) error { return nil }
+
+func TestServiceTCPHealthChecker_connection(t *testing.T) {
+	testCases := []struct {
+		desc             string
+		originalAddress  string
+		config           *dynamic.TCPServerHealthCheck
+		expectedConnAddr string
+	}{
+		{
+			desc:             "no port override - uses original address",
+			originalAddress:  "127.0.0.1:8080",
+			config:           &dynamic.TCPServerHealthCheck{Port: 0},
+			expectedConnAddr: "127.0.0.1:8080",
+		},
+		{
+			desc:             "port override - uses overridden port",
+			originalAddress:  "127.0.0.1:8080",
+			config:           &dynamic.TCPServerHealthCheck{Port: 9090},
+			expectedConnAddr: "127.0.0.1:9090",
+		},
+		{
+			desc:             "port override with hostname",
+			originalAddress:  "backend:8080",
+			config:           &dynamic.TCPServerHealthCheck{Port: 9090},
+			expectedConnAddr: "backend:9090",
+		},
+		{
+			desc:             "IPv6 address with port override",
+			originalAddress:  "[::1]:8080",
+			config:           &dynamic.TCPServerHealthCheck{Port: 9090},
+			expectedConnAddr: "[::1]:9090",
+		},
+		{
+			desc:             "successful connection without port override",
+			originalAddress:  "localhost:3306",
+			config:           &dynamic.TCPServerHealthCheck{Port: 0},
+			expectedConnAddr: "localhost:3306",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			ctx := t.Context()
+
+			// Create a mock dialer that records the address it was asked to dial
+			var dialedAddress string
+			mockDialer := &mockTCPDialer{
+				onDial: func(network, addr string) (net.Conn, error) {
+					dialedAddress = addr
+					return &mockConnection{}, nil
+				},
+			}
+
+			targets := []TCPHealthCheckTarget{{
+				Address: test.originalAddress,
+				TLS:     false,
+				Dialer:  mockDialer,
+			}}
+
+			healthChecker := NewServiceTCPHealthChecker(ctx, test.config, &testLoadBalancer{RWMutex: &sync.RWMutex{}}, &truntime.TCPServiceInfo{}, targets, "test")
+
+			// Execute a health check to see what address it tries to connect to
+			err := healthChecker.executeHealthCheck(ctx, test.config, &targets[0])
+			require.NoError(t, err)
+
+			// Verify that the health check attempted to connect to the expected address
+			assert.Equal(t, test.expectedConnAddr, dialedAddress)
+		})
+	}
+}
+
+func TestServiceTCPHealthChecker_payloadHandling(t *testing.T) {
+	testCases := []struct {
+		desc                string
+		config              *dynamic.TCPServerHealthCheck
+		mockResponse        string
+		expectSuccess       bool
+		expectedSentData    string
+		expectedReceiveSize int
+	}{
+		{
+			desc: "successful send and expect",
+			config: &dynamic.TCPServerHealthCheck{
+				Send:   "PING",
+				Expect: "PONG",
+			},
+			mockResponse:        "PONG",
+			expectSuccess:       true,
+			expectedSentData:    "PING",
+			expectedReceiveSize: 4, // len("PONG")
+		},
+		{
+			desc: "send without expect",
+			config: &dynamic.TCPServerHealthCheck{
+				Send:   "STATUS",
+				Expect: "",
+			},
+			mockResponse:        "", // No response needed
+			expectSuccess:       true,
+			expectedSentData:    "STATUS",
+			expectedReceiveSize: 0,
+		},
+		{
+			desc: "send without expect, ignores response",
+			config: &dynamic.TCPServerHealthCheck{
+				Send:   "STATUS",
+				Expect: "",
+			},
+			mockResponse:        strings.Repeat("A", MaxPayloadSize+1),
+			expectSuccess:       true,
+			expectedSentData:    "STATUS",
+			expectedReceiveSize: 0,
+		},
+		{
+			desc: "expect without send",
+			config: &dynamic.TCPServerHealthCheck{
+				Send:   "",
+				Expect: "READY",
+			},
+			mockResponse:        "READY",
+			expectSuccess:       true,
+			expectedSentData:    "",
+			expectedReceiveSize: 5, // len("READY")
+		},
+		{
+			desc: "wrong response received",
+			config: &dynamic.TCPServerHealthCheck{
+				Send:   "PING",
+				Expect: "PONG",
+			},
+			mockResponse:        "WRONG",
+			expectSuccess:       false,
+			expectedSentData:    "PING",
+			expectedReceiveSize: 4, // len("PONG") - we still try to read expected amount
+		},
+		{
+			desc: "send payload too large - gets truncated",
+			config: &dynamic.TCPServerHealthCheck{
+				Send:   strings.Repeat("A", MaxPayloadSize+1), // Will be truncated to empty
+				Expect: "OK",
+			},
+			mockResponse:        "OK",
+			expectSuccess:       true,
+			expectedSentData:    "", // Truncated to empty
+			expectedReceiveSize: 2,  // len("OK")
+		},
+		{
+			desc: "expect payload too large - gets truncated",
+			config: &dynamic.TCPServerHealthCheck{
+				Send:   "PING",
+				Expect: strings.Repeat("B", MaxPayloadSize+1), // Will be truncated to empty
+			},
+			mockResponse:        "",
+			expectSuccess:       true,
+			expectedSentData:    "PING",
+			expectedReceiveSize: 0, // Truncated to empty
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			ctx := t.Context()
+
+			// Variables to capture what was actually sent and read
+			var sentData []byte
+			var readAttemptSize int
+
+			// Create a mock connection that records writes and provides mock reads
+			mockConn := &payloadMockConnection{
+				writeFunc: func(data []byte) (int, error) {
+					sentData = append([]byte{}, data...) // Copy the data
+					return len(data), nil
+				},
+				readFunc: func(buf []byte) (int, error) {
+					readAttemptSize = len(buf)
+					response := []byte(test.mockResponse)
+					if len(response) > len(buf) {
+						response = response[:len(buf)]
+					}
+					copy(buf, response)
+					return len(response), nil
+				},
+			}
+
+			// Create a mock dialer that returns our mock connection
+			mockDialer := &mockTCPDialer{
+				onDial: func(network, addr string) (net.Conn, error) {
+					return mockConn, nil
+				},
+			}
+
+			targets := []TCPHealthCheckTarget{{
+				Address: "127.0.0.1:8080",
+				TLS:     false,
+				Dialer:  mockDialer,
+			}}
+
+			// Create healthchecker (this will apply payload size validation)
+			healthChecker := NewServiceTCPHealthChecker(ctx, test.config, &testLoadBalancer{RWMutex: &sync.RWMutex{}}, &truntime.TCPServiceInfo{}, targets, "test")
+
+			// Execute health check
+			err := healthChecker.executeHealthCheck(ctx, test.config, &targets[0])
+
+			// Verify success/failure
+			if test.expectSuccess {
+				assert.NoError(t, err, "Health check should succeed")
+			} else {
+				assert.Error(t, err, "Health check should fail")
+			}
+
+			// Verify what was actually sent
+			assert.Equal(t, test.expectedSentData, string(sentData), "Should send the expected data")
+
+			// Verify the read buffer size (indicates what we expected to receive)
+			assert.Equal(t, test.expectedReceiveSize, readAttemptSize, "Should attempt to read expected amount")
+		})
+	}
+}
+
+func TestServiceTCPHealthChecker_Launch(t *testing.T) {
 	testCases := []struct {
 		desc                  string
 		server                *sequencedTCPServer
@@ -79,96 +406,128 @@ func Test_ServiceTCPHealthChecker_Launch(t *testing.T) {
 		targetStatus          string
 	}{
 		{
-			desc: "healthy server staying healthy",
+			desc: "connection-only healthy server staying healthy",
 			server: newTCPServer(t,
 				false,
 				tcpMockSequence{accept: true},
 				tcpMockSequence{accept: true},
+				tcpMockSequence{accept: true},
 			),
 			config: &dynamic.TCPServerHealthCheck{
-				Interval: ptypes.Duration(time.Millisecond * 100),
-				Timeout:  ptypes.Duration(time.Millisecond * 99),
+				Interval: ptypes.Duration(time.Millisecond * 50),
+				Timeout:  ptypes.Duration(time.Millisecond * 40),
 			},
 			expNumRemovedServers:  0,
-			expNumUpsertedServers: 3,
+			expNumUpsertedServers: 3, // 3 health check sequences
 			targetStatus:          truntime.StatusUp,
 		},
 		{
-			desc: "healthy server becoming unhealthy",
+			desc: "connection-only healthy server becoming unhealthy",
 			server: newTCPServer(t,
 				false,
 				tcpMockSequence{accept: true},
 				tcpMockSequence{accept: false},
 			),
 			config: &dynamic.TCPServerHealthCheck{
-				Interval: ptypes.Duration(time.Millisecond * 100),
-				Timeout:  ptypes.Duration(time.Millisecond * 99),
+				Interval: ptypes.Duration(time.Millisecond * 50),
+				Timeout:  ptypes.Duration(time.Millisecond * 40),
 			},
 			expNumRemovedServers:  1,
 			expNumUpsertedServers: 1,
 			targetStatus:          truntime.StatusDown,
 		},
 		{
-			desc: "unhealthy server becoming healthy",
+			desc: "connection-only server toggling unhealthy to healthy",
 			server: newTCPServer(t,
 				false,
 				tcpMockSequence{accept: false},
 				tcpMockSequence{accept: true},
 			),
 			config: &dynamic.TCPServerHealthCheck{
-				Interval: ptypes.Duration(time.Millisecond * 100),
-				Timeout:  ptypes.Duration(time.Millisecond * 99),
+				Interval: ptypes.Duration(time.Millisecond * 50),
+				Timeout:  ptypes.Duration(time.Millisecond * 40),
 			},
-			expNumRemovedServers:  0,
-			expNumUpsertedServers: 1,
+			expNumRemovedServers:  1, // 1 failure call
+			expNumUpsertedServers: 1, // 1 success call
 			targetStatus:          truntime.StatusUp,
 		},
 		{
-			desc: "healthy server with request and response",
+			desc: "connection-only server toggling healthy to unhealthy to healthy",
 			server: newTCPServer(t,
 				false,
-				tcpMockSequence{accept: true, payloadIn: "request", payloadOut: "response"},
-				tcpMockSequence{accept: true, payloadIn: "request", payloadOut: "response"},
+				tcpMockSequence{accept: true},
+				tcpMockSequence{accept: false},
+				tcpMockSequence{accept: true},
 			),
 			config: &dynamic.TCPServerHealthCheck{
-				Interval: ptypes.Duration(time.Millisecond * 100),
-				Timeout:  ptypes.Duration(time.Millisecond * 99),
-				Send:     "request",
-				Expect:   "response",
+				Interval: ptypes.Duration(time.Millisecond * 50),
+				Timeout:  ptypes.Duration(time.Millisecond * 40),
 			},
-			expNumRemovedServers:  0,
+			expNumRemovedServers:  1,
 			expNumUpsertedServers: 2,
 			targetStatus:          truntime.StatusUp,
 		},
 		{
-			desc: "healthy server with request and response becoming unhealthy",
+			desc: "send/expect healthy server staying healthy",
 			server: newTCPServer(t,
 				false,
-				tcpMockSequence{accept: true, payloadIn: "request", payloadOut: "response"},
-				tcpMockSequence{accept: true, payloadIn: "request", payloadOut: "bad response"},
+				tcpMockSequence{accept: true, payloadIn: "PING", payloadOut: "PONG"},
+				tcpMockSequence{accept: true, payloadIn: "PING", payloadOut: "PONG"},
 			),
 			config: &dynamic.TCPServerHealthCheck{
-				Interval: ptypes.Duration(time.Millisecond * 100),
-				Timeout:  ptypes.Duration(time.Millisecond * 99),
-				Send:     "request",
-				Expect:   "response",
+				Send:     "PING",
+				Expect:   "PONG",
+				Interval: ptypes.Duration(time.Millisecond * 50),
+				Timeout:  ptypes.Duration(time.Millisecond * 40),
+			},
+			expNumRemovedServers:  0,
+			expNumUpsertedServers: 2, // 2 successful health checks
+			targetStatus:          truntime.StatusUp,
+		},
+		{
+			desc: "send/expect server with wrong response",
+			server: newTCPServer(t,
+				false,
+				tcpMockSequence{accept: true, payloadIn: "PING", payloadOut: "PONG"},
+				tcpMockSequence{accept: true, payloadIn: "PING", payloadOut: "WRONG"},
+			),
+			config: &dynamic.TCPServerHealthCheck{
+				Send:     "PING",
+				Expect:   "PONG",
+				Interval: ptypes.Duration(time.Millisecond * 50),
+				Timeout:  ptypes.Duration(time.Millisecond * 40),
 			},
 			expNumRemovedServers:  1,
 			expNumUpsertedServers: 1,
 			targetStatus:          truntime.StatusDown,
 		},
 		{
-			desc: "healthy server with TLS certificate",
+			desc: "TLS healthy server staying healthy",
 			server: newTCPServer(t,
 				true,
-				tcpMockSequence{accept: true, payloadIn: "request", payloadOut: "response"},
-				tcpMockSequence{accept: true, payloadIn: "request", payloadOut: "response"},
+				tcpMockSequence{accept: true, payloadIn: "HELLO", payloadOut: "WORLD"},
 			),
 			config: &dynamic.TCPServerHealthCheck{
-				Send:     "request",
-				Expect:   "response",
-				Interval: ptypes.Duration(time.Millisecond * 100),
-				Timeout:  ptypes.Duration(time.Millisecond * 99),
+				Send:     "HELLO",
+				Expect:   "WORLD",
+				Interval: ptypes.Duration(time.Millisecond * 500),
+				Timeout:  ptypes.Duration(time.Millisecond * 2000), // Even longer timeout for TLS handshake
+			},
+			expNumRemovedServers:  0,
+			expNumUpsertedServers: 1, // 1 TLS health check sequence
+			targetStatus:          truntime.StatusUp,
+		},
+		{
+			desc: "send-only healthcheck (no expect)",
+			server: newTCPServer(t,
+				false,
+				tcpMockSequence{accept: true, payloadIn: "STATUS"},
+				tcpMockSequence{accept: true, payloadIn: "STATUS"},
+			),
+			config: &dynamic.TCPServerHealthCheck{
+				Send:     "STATUS",
+				Interval: ptypes.Duration(time.Millisecond * 50),
+				Timeout:  ptypes.Duration(time.Millisecond * 40),
 			},
 			expNumRemovedServers:  0,
 			expNumUpsertedServers: 2,
@@ -183,7 +542,7 @@ func Test_ServiceTCPHealthChecker_Launch(t *testing.T) {
 
 			test.server.Start(t)
 
-			dialerManager := ttcp.NewDialerManager(nil)
+			dialerManager := tcp.NewDialerManager(nil)
 			dialerManager.Update(map[string]*dynamic.TCPServersTransport{"default@internal": {
 				TLS: &dynamic.TLSClientConfig{
 					InsecureSkipVerify: true,
@@ -191,10 +550,7 @@ func Test_ServiceTCPHealthChecker_Launch(t *testing.T) {
 				},
 			}})
 
-			// Build dialer for TLS or non-TLS connections
-			dialer, err := dialerManager.Build(&dynamic.TCPServersLoadBalancer{
-				ServersTransport: "default@internal",
-			}, test.server.TLS)
+			dialer, err := dialerManager.Build(&dynamic.TCPServersLoadBalancer{}, test.server.TLS)
 			require.NoError(t, err)
 
 			targets := []TCPHealthCheckTarget{
@@ -205,31 +561,119 @@ func Test_ServiceTCPHealthChecker_Launch(t *testing.T) {
 				},
 			}
 
-			lb := &testLoadBalancer{RWMutex: &sync.RWMutex{}}
+			lb := &testLoadBalancer{}
 			serviceInfo := &truntime.TCPServiceInfo{}
 
 			service := NewServiceTCPHealthChecker(ctx, test.config, lb, serviceInfo, targets, "serviceName")
 
-			// Start the health checker
 			go service.Launch(ctx)
 
-			// Wait for all health checks to complete
-			for range test.server.StatusSequence {
-				test.server.Next()
-				runtime.Gosched()
+			// How much time to wait for the health check to actually complete
+			deadline := time.Now().Add(200 * time.Millisecond)
+			// TLS handshake can take much longer
+			if test.server.TLS {
+				deadline = time.Now().Add(1000 * time.Millisecond)
 			}
 
-			// Give some time for the health checks to process
-			time.Sleep(200 * time.Millisecond)
+			// Wait for all health checks to complete deterministically
+			for range test.server.StatusSequence {
+				test.server.Next()
 
-			lb.RLock()
-			defer lb.RUnlock()
+				initialUpserted := lb.numUpsertedServers
+				initialRemoved := lb.numRemovedServers
+
+				for time.Now().Before(deadline) {
+					time.Sleep(5 * time.Millisecond)
+					if lb.numUpsertedServers > initialUpserted || lb.numRemovedServers > initialRemoved {
+						break
+					}
+				}
+			}
 
 			assert.Equal(t, test.expNumRemovedServers, lb.numRemovedServers, "removed servers")
 			assert.Equal(t, test.expNumUpsertedServers, lb.numUpsertedServers, "upserted servers")
 			assert.Equal(t, map[string]string{test.server.Addr.String(): test.targetStatus}, serviceInfo.GetAllStatus())
 		})
 	}
+}
+
+func TestTCPDifferentIntervals(t *testing.T) {
+	// Test that unhealthy servers are checked more frequently than healthy servers
+	// when UnhealthyInterval is set to a lower value than Interval
+	ctx, cancel := context.WithCancel(t.Context())
+	t.Cleanup(cancel)
+
+	// Create a healthy TCP server that always accepts connections
+	healthyServer := newTCPServer(t, false,
+		tcpMockSequence{accept: true}, tcpMockSequence{accept: true}, tcpMockSequence{accept: true},
+		tcpMockSequence{accept: true}, tcpMockSequence{accept: true},
+	)
+	healthyServer.Start(t)
+
+	// Create an unhealthy TCP server that always rejects connections
+	unhealthyServer := newTCPServer(t, false,
+		tcpMockSequence{accept: false}, tcpMockSequence{accept: false}, tcpMockSequence{accept: false},
+		tcpMockSequence{accept: false}, tcpMockSequence{accept: false}, tcpMockSequence{accept: false},
+		tcpMockSequence{accept: false}, tcpMockSequence{accept: false}, tcpMockSequence{accept: false},
+		tcpMockSequence{accept: false},
+	)
+	unhealthyServer.Start(t)
+
+	lb := &testLoadBalancer{RWMutex: &sync.RWMutex{}}
+
+	// Set normal interval to 500ms but unhealthy interval to 50ms
+	// This means unhealthy servers should be checked 10x more frequently
+	config := &dynamic.TCPServerHealthCheck{
+		Interval:          ptypes.Duration(500 * time.Millisecond),
+		UnhealthyInterval: pointer(ptypes.Duration(50 * time.Millisecond)),
+		Timeout:           ptypes.Duration(100 * time.Millisecond),
+	}
+
+	// Set up dialer manager
+	dialerManager := tcp.NewDialerManager(nil)
+	dialerManager.Update(map[string]*dynamic.TCPServersTransport{
+		"default@internal": {
+			DialTimeout:   ptypes.Duration(100 * time.Millisecond),
+			DialKeepAlive: ptypes.Duration(100 * time.Millisecond),
+		},
+	})
+
+	// Get dialer for targets
+	dialer, err := dialerManager.Build(&dynamic.TCPServersLoadBalancer{}, false)
+	require.NoError(t, err)
+
+	targets := []TCPHealthCheckTarget{
+		{Address: healthyServer.Addr.String(), TLS: false, Dialer: dialer},
+		{Address: unhealthyServer.Addr.String(), TLS: false, Dialer: dialer},
+	}
+
+	serviceInfo := &truntime.TCPServiceInfo{}
+	hc := NewServiceTCPHealthChecker(ctx, config, lb, serviceInfo, targets, "test-service")
+
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+
+	go func() {
+		hc.Launch(ctx)
+		wg.Done()
+	}()
+
+	// Let it run for 2 seconds to see the different check frequencies
+	select {
+	case <-time.After(2 * time.Second):
+		cancel()
+	case <-ctx.Done():
+	}
+
+	wg.Wait()
+
+	lb.Lock()
+	defer lb.Unlock()
+
+	// The unhealthy server should be checked more frequently (50ms interval)
+	// compared to the healthy server (500ms interval), so we should see
+	// significantly more "removed" events than "upserted" events
+	assert.Greater(t, lb.numRemovedServers, lb.numUpsertedServers, "unhealthy servers checked more frequently")
 }
 
 type tcpMockSequence struct {
@@ -321,6 +765,15 @@ func (s *sequencedTCPServer) Start(t *testing.T) {
 			t.Cleanup(func() {
 				_ = conn.Close()
 			})
+
+			// For TLS connections, perform handshake first
+			if s.TLS {
+				if tlsConn, ok := conn.(*tls.Conn); ok {
+					if err := tlsConn.Handshake(); err != nil {
+						continue // Skip this sequence on handshake failure
+					}
+				}
+			}
 
 			if seq.payloadIn == "" {
 				continue

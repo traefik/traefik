@@ -3,6 +3,8 @@ package healthcheck
 import (
 	"context"
 	"errors"
+	"fmt"
+	"net"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -11,14 +13,17 @@ import (
 	"github.com/traefik/traefik/v3/pkg/tcp"
 )
 
-const (
-	MaxPayloadSize = 65535 // Maximum size of the payload to send during health checks.
-)
+// MaxPayloadSize is the size of the payload to send during health checks.
+const MaxPayloadSize = 65535
 
+type TCPHealthCheckTarget struct {
+	Address string
+	TLS     bool
+	Dialer  tcp.Dialer
+}
 type ServiceTCPHealthChecker struct {
-	dialerManager *tcp.DialerManager
-	balancer      StatusSetter
-	info          *runtime.TCPServiceInfo
+	balancer StatusSetter
+	info     *runtime.TCPServiceInfo
 
 	config            *dynamic.TCPServerHealthCheck
 	interval          time.Duration
@@ -31,17 +36,11 @@ type ServiceTCPHealthChecker struct {
 	serviceName string
 }
 
-type TCPHealthCheckTarget struct {
-	Address string
-	TLS     bool
-	Dialer  tcp.Dialer
-}
-
 func NewServiceTCPHealthChecker(ctx context.Context, config *dynamic.TCPServerHealthCheck, service StatusSetter, info *runtime.TCPServiceInfo, targets []TCPHealthCheckTarget, serviceName string) *ServiceTCPHealthChecker {
 	logger := log.Ctx(ctx)
 	interval := time.Duration(config.Interval)
 	if interval <= 0 {
-		logger.Error().Msg("Health check interval smaller than zero")
+		logger.Error().Msg("Health check interval smaller than zero, default value will be used instead.")
 		interval = time.Duration(dynamic.DefaultHealthCheckInterval)
 	}
 
@@ -168,37 +167,40 @@ func (thc *ServiceTCPHealthChecker) healthcheck(ctx context.Context, targets cha
 }
 
 func (thc *ServiceTCPHealthChecker) executeHealthCheck(ctx context.Context, config *dynamic.TCPServerHealthCheck, target *TCPHealthCheckTarget) error {
-	conn, err := target.Dialer.Dial("tcp", target.Address, nil)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if err := conn.Close(); err != nil {
-			log.Ctx(ctx).Warn().Err(err).Msg("Failed to close health check connection")
+	addr := target.Address
+	if config.Port != 0 {
+		host, _, err := net.SplitHostPort(target.Address)
+		if err != nil {
+			return fmt.Errorf("parsing address %q: %w", target.Address, err)
 		}
-	}()
+
+		addr = net.JoinHostPort(host, fmt.Sprintf("%d", config.Port))
+	}
+
+	conn, err := target.Dialer.DialContext(ctx, "tcp", addr, nil)
+	if err != nil {
+		return fmt.Errorf("connecting to %s: %w", addr, err)
+	}
+	defer conn.Close()
+
+	if err := conn.SetDeadline(time.Now().Add(thc.timeout)); err != nil {
+		return fmt.Errorf("setting timeout to %s: %w", thc.timeout, err)
+	}
 
 	if config.Send != "" {
-		_, err = conn.Write([]byte(config.Send))
-		if err != nil {
-			return err
+		if _, err = conn.Write([]byte(config.Send)); err != nil {
+			return fmt.Errorf("sending to %s: %w", addr, err)
 		}
 	}
 
 	if config.Expect != "" {
-		err := conn.SetReadDeadline(time.Now().Add(thc.timeout))
-		if err != nil {
-			return err
-		}
-
 		buf := make([]byte, len(config.Expect))
-		_, err = conn.Read(buf)
-		if err != nil {
-			return err
+		if _, err = conn.Read(buf); err != nil {
+			return fmt.Errorf("reading from %s: %w", addr, err)
 		}
 
 		if string(buf) != config.Expect {
-			return errors.New("unexpected response")
+			return errors.New("unexpected heath check response")
 		}
 	}
 

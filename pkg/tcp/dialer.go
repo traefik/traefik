@@ -1,6 +1,7 @@
 package tcp
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
@@ -33,6 +34,7 @@ type ClientConn interface {
 // Dialer is an interface to dial a network connection, with support for PROXY protocol and termination delay.
 type Dialer interface {
 	Dial(network, addr string, clientConn ClientConn) (c net.Conn, err error)
+	DialContext(ctx context.Context, network, addr string, clientConn ClientConn) (c net.Conn, err error)
 	TerminationDelay() time.Duration
 }
 
@@ -49,7 +51,12 @@ func (d tcpDialer) TerminationDelay() time.Duration {
 
 // Dial dials a network connection and optionally sends a PROXY protocol header.
 func (d tcpDialer) Dial(network, addr string, clientConn ClientConn) (net.Conn, error) {
-	conn, err := d.dialer.Dial(network, addr)
+	return d.DialContext(context.Background(), network, addr, clientConn)
+}
+
+// DialContext dials a network connection and optionally sends a PROXY protocol header, with context.
+func (d tcpDialer) DialContext(ctx context.Context, network, addr string, clientConn ClientConn) (net.Conn, error) {
+	conn, err := d.dialer.DialContext(ctx, network, addr)
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +79,12 @@ type tcpTLSDialer struct {
 
 // Dial dials a network connection with the wrapped tcpDialer and performs a TLS handshake.
 func (d tcpTLSDialer) Dial(network, addr string, clientConn ClientConn) (net.Conn, error) {
-	conn, err := d.tcpDialer.Dial(network, addr, clientConn)
+	return d.DialContext(context.Background(), network, addr, clientConn)
+}
+
+// DialContext dials a network connection with the wrapped tcpDialer and performs a TLS handshake, with context.
+func (d tcpTLSDialer) DialContext(ctx context.Context, network, addr string, clientConn ClientConn) (net.Conn, error) {
+	conn, err := d.tcpDialer.DialContext(ctx, network, addr, clientConn)
 	if err != nil {
 		return nil, err
 	}
