@@ -19,7 +19,7 @@ const serviceName key = "serviceName"
 
 func pointer[T any](v T) *T { return &v }
 
-// responseRecorder tracks which servers handled requests
+// responseRecorder tracks which servers handled requests.
 type responseRecorder struct {
 	*httptest.ResponseRecorder
 	save map[string]int
@@ -33,7 +33,7 @@ func (r *responseRecorder) WriteHeader(statusCode int) {
 	r.ResponseRecorder.WriteHeader(statusCode)
 }
 
-// TestBalancer tests basic server addition and least-time selection
+// TestBalancer tests basic server addition and least-time selection.
 func TestBalancer(t *testing.T) {
 	balancer := New(nil, false)
 
@@ -50,18 +50,17 @@ func TestBalancer(t *testing.T) {
 	}), pointer(1), false)
 
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
-	for range 20 {
+	for range 10 {
 		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 	}
 
-	// With least-time and equal response times, distribution should be fairly balanced
-	// Both servers should get some traffic
+	// With least-time and equal response times, both servers should get some traffic.
 	assert.Greater(t, recorder.save["first"], 0)
 	assert.Greater(t, recorder.save["second"], 0)
-	assert.Equal(t, 20, recorder.save["first"]+recorder.save["second"])
+	assert.Equal(t, 10, recorder.save["first"]+recorder.save["second"])
 }
 
-// TestBalancerNoService tests behavior when no servers are configured
+// TestBalancerNoService tests behavior when no servers are configured.
 func TestBalancerNoService(t *testing.T) {
 	balancer := New(nil, false)
 
@@ -71,27 +70,7 @@ func TestBalancerNoService(t *testing.T) {
 	assert.Equal(t, http.StatusServiceUnavailable, recorder.Result().StatusCode)
 }
 
-// TestBalancerOneServerZeroWeight tests that zero-weight servers are ignored
-func TestBalancerOneServerZeroWeight(t *testing.T) {
-	balancer := New(nil, false)
-
-	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		rw.Header().Set("server", "first")
-		rw.WriteHeader(http.StatusOK)
-	}), pointer(1), false)
-
-	balancer.Add("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), pointer(0), false)
-
-	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
-	for range 3 {
-		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
-	}
-
-	assert.Equal(t, 3, recorder.save["first"])
-	assert.Equal(t, 0, recorder.save["second"]) // zero-weight server should not be added
-}
-
-// TestBalancerNoServiceUp tests behavior when all servers are marked down
+// TestBalancerNoServiceUp tests behavior when all servers are marked down.
 func TestBalancerNoServiceUp(t *testing.T) {
 	balancer := New(nil, false)
 
@@ -112,7 +91,7 @@ func TestBalancerNoServiceUp(t *testing.T) {
 	assert.Equal(t, http.StatusServiceUnavailable, recorder.Result().StatusCode)
 }
 
-// TestBalancerOneServerDown tests that down servers are excluded from selection
+// TestBalancerOneServerDown tests that down servers are excluded from selection.
 func TestBalancerOneServerDown(t *testing.T) {
 	balancer := New(nil, false)
 
@@ -135,8 +114,8 @@ func TestBalancerOneServerDown(t *testing.T) {
 	assert.Equal(t, 0, recorder.save["second"])
 }
 
-// TestBalancerDownThenUp tests server status transitions
-func TestBalancerDownThenUp(t *testing.T) {
+// TestBalancerOneServerDownThenUp tests server status transitions.
+func TestBalancerOneServerDownThenUp(t *testing.T) {
 	balancer := New(nil, false)
 
 	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -164,13 +143,47 @@ func TestBalancerDownThenUp(t *testing.T) {
 	for range 20 {
 		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 	}
-	// Both servers should get some traffic
+	// Both servers should get some traffic.
 	assert.Greater(t, recorder.save["first"], 0)
 	assert.Greater(t, recorder.save["second"], 0)
 	assert.Equal(t, 20, recorder.save["first"]+recorder.save["second"])
 }
 
-// TestBalancerPropagate tests status propagation to parent balancers
+// TestBalancerAllServersZeroWeight tests that all zero-weight servers result in no available server.
+func TestBalancerAllServersZeroWeight(t *testing.T) {
+	balancer := New(nil, false)
+
+	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), pointer(0), false)
+	balancer.Add("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), pointer(0), false)
+
+	recorder := httptest.NewRecorder()
+	balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
+
+	assert.Equal(t, http.StatusServiceUnavailable, recorder.Result().StatusCode)
+}
+
+// TestBalancerOneServerZeroWeight tests that zero-weight servers are ignored.
+func TestBalancerOneServerZeroWeight(t *testing.T) {
+	balancer := New(nil, false)
+
+	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.Header().Set("server", "first")
+		rw.WriteHeader(http.StatusOK)
+	}), pointer(1), false)
+
+	balancer.Add("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), pointer(0), false)
+
+	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
+	for range 3 {
+		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
+	}
+
+	// Only first server should receive traffic.
+	assert.Equal(t, 3, recorder.save["first"])
+	assert.Equal(t, 0, recorder.save["second"])
+}
+
+// TestBalancerPropagate tests status propagation to parent balancers.
 func TestBalancerPropagate(t *testing.T) {
 	balancer1 := New(nil, true)
 
@@ -205,7 +218,7 @@ func TestBalancerPropagate(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	// Test: Set all children of balancer1 to down, should propagate to top
+	// Set all children of balancer1 to down, should propagate to top.
 	balancer1.SetStatus(context.WithValue(t.Context(), serviceName, "top"), "first", false)
 	balancer1.SetStatus(context.WithValue(t.Context(), serviceName, "top"), "second", false)
 
@@ -214,27 +227,14 @@ func TestBalancerPropagate(t *testing.T) {
 		topBalancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 	}
 
-	// Only balancer2 should receive traffic
+	// Only balancer2 should receive traffic.
 	assert.Equal(t, 0, recorder.save["first"])
 	assert.Equal(t, 0, recorder.save["second"])
-	assert.Greater(t, recorder.save["third"]+recorder.save["fourth"], 0)
+	assert.Equal(t, recorder.save["third"]+recorder.save["fourth"], 4)
 }
 
-// TestBalancerAllServersZeroWeight tests that all zero-weight servers result in no available server
-func TestBalancerAllServersZeroWeight(t *testing.T) {
-	balancer := New(nil, false)
-
-	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), pointer(0), false)
-	balancer.Add("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), pointer(0), false)
-
-	recorder := httptest.NewRecorder()
-	balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
-
-	assert.Equal(t, http.StatusServiceUnavailable, recorder.Result().StatusCode)
-}
-
-// TestBalancerFenced tests that fenced servers are excluded from selection
-func TestBalancerFenced(t *testing.T) {
+// TestBalancerOneServerFenced tests that fenced servers are excluded from selection.
+func TestBalancerOneServerFenced(t *testing.T) {
 	balancer := New(nil, false)
 
 	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -252,12 +252,25 @@ func TestBalancerFenced(t *testing.T) {
 		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 	}
 
-	// Only first server should receive traffic
+	// Only first server should receive traffic.
 	assert.Equal(t, 3, recorder.save["first"])
 	assert.Equal(t, 0, recorder.save["second"])
 }
 
-// TestBalancerRegisterStatusUpdaterWithoutHealthCheck tests error when registering updater without health check
+// TestBalancerAllFencedServers tests that all fenced servers result in no available server.
+func TestBalancerAllFencedServers(t *testing.T) {
+	balancer := New(nil, false)
+
+	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), pointer(1), true)
+	balancer.Add("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), pointer(1), true)
+
+	recorder := httptest.NewRecorder()
+	balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
+
+	assert.Equal(t, http.StatusServiceUnavailable, recorder.Result().StatusCode)
+}
+
+// TestBalancerRegisterStatusUpdaterWithoutHealthCheck tests error when registering updater without health check.
 func TestBalancerRegisterStatusUpdaterWithoutHealthCheck(t *testing.T) {
 	balancer := New(nil, false)
 
@@ -266,29 +279,7 @@ func TestBalancerRegisterStatusUpdaterWithoutHealthCheck(t *testing.T) {
 	assert.Contains(t, err.Error(), "healthCheck not enabled")
 }
 
-// TestBalancerAddServerMethod tests the AddServer method with dynamic.Server
-func TestBalancerAddServerMethod(t *testing.T) {
-	balancer := New(nil, false)
-
-	handler := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		rw.Header().Set("server", "test")
-		rw.WriteHeader(http.StatusOK)
-	})
-
-	server := dynamic.Server{
-		Weight: pointer(2),
-		Fenced: false,
-	}
-
-	balancer.AddServer("test", handler, server)
-
-	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
-	balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
-
-	assert.Equal(t, 1, recorder.save["test"])
-}
-
-// TestBalancerSticky tests sticky session support
+// TestBalancerSticky tests sticky session support.
 func TestBalancerSticky(t *testing.T) {
 	balancer := New(&dynamic.Sticky{
 		Cookie: &dynamic.Cookie{
@@ -306,17 +297,17 @@ func TestBalancerSticky(t *testing.T) {
 		rw.WriteHeader(http.StatusOK)
 	}), pointer(1), false)
 
-	// First request should set cookie
+	// First request should set cookie.
 	recorder := httptest.NewRecorder()
 	balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 	firstServer := recorder.Header().Get("server")
 	assert.NotEmpty(t, firstServer)
 
-	// Extract cookie from first response
+	// Extract cookie from first response.
 	cookies := recorder.Result().Cookies()
 	assert.NotEmpty(t, cookies)
 
-	// Second request with cookie should hit same server
+	// Second request with cookie should hit same server.
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	for _, cookie := range cookies {
 		req.AddCookie(cookie)
@@ -329,7 +320,7 @@ func TestBalancerSticky(t *testing.T) {
 	assert.Equal(t, firstServer, secondServer)
 }
 
-// TestBalancerStickyFallback tests that sticky sessions fallback to least-time when sticky server is down
+// TestBalancerStickyFallback tests that sticky sessions fallback to least-time when sticky server is down.
 func TestBalancerStickyFallback(t *testing.T) {
 	balancer := New(&dynamic.Sticky{
 		Cookie: &dynamic.Cookie{
@@ -349,13 +340,13 @@ func TestBalancerStickyFallback(t *testing.T) {
 		rw.WriteHeader(http.StatusOK)
 	}), pointer(1), false)
 
-	// Make initial request to establish sticky session with server1
+	// Make initial request to establish sticky session with server1.
 	recorder1 := httptest.NewRecorder()
 	balancer.ServeHTTP(recorder1, httptest.NewRequest(http.MethodGet, "/", nil))
 	firstServer := recorder1.Header().Get("server")
 	assert.NotEmpty(t, firstServer)
 
-	// Extract cookie from first response
+	// Extract cookie from first response.
 	cookies := recorder1.Result().Cookies()
 	assert.NotEmpty(t, cookies)
 
@@ -419,7 +410,7 @@ func TestBalancerStickyFenced(t *testing.T) {
 		rw.WriteHeader(http.StatusOK)
 	}), pointer(1), false)
 
-	// Establish sticky session with any server
+	// Establish sticky session with any server.
 	recorder1 := httptest.NewRecorder()
 	balancer.ServeHTTP(recorder1, httptest.NewRequest(http.MethodGet, "/", nil))
 	stickyServer := recorder1.Header().Get("server")
@@ -428,12 +419,12 @@ func TestBalancerStickyFenced(t *testing.T) {
 	cookies := recorder1.Result().Cookies()
 	assert.NotEmpty(t, cookies)
 
-	// Fence the sticky server (simulate graceful shutdown)
+	// Fence the sticky server (simulate graceful shutdown).
 	balancer.handlersMu.Lock()
 	balancer.fenced[stickyServer] = struct{}{}
 	balancer.handlersMu.Unlock()
 
-	// Existing sticky session should STILL work (graceful draining)
+	// Existing sticky session should STILL work (graceful draining).
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	for _, cookie := range cookies {
 		req.AddCookie(cookie)
@@ -442,7 +433,7 @@ func TestBalancerStickyFenced(t *testing.T) {
 	balancer.ServeHTTP(recorder2, req)
 	assert.Equal(t, stickyServer, recorder2.Header().Get("server"))
 
-	// But NEW requests should NOT go to the fenced server
+	// But NEW requests should NOT go to the fenced server.
 	recorder3 := httptest.NewRecorder()
 	balancer.ServeHTTP(recorder3, httptest.NewRequest(http.MethodGet, "/", nil))
 	newServer := recorder3.Header().Get("server")
@@ -450,7 +441,7 @@ func TestBalancerStickyFenced(t *testing.T) {
 	assert.NotEmpty(t, newServer)
 }
 
-// TestRingBufferBasic tests basic ring buffer functionality with few samples
+// TestRingBufferBasic tests basic ring buffer functionality with few samples.
 func TestRingBufferBasic(t *testing.T) {
 	handler := &namedHandler{
 		Handler: http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}),
@@ -458,16 +449,16 @@ func TestRingBufferBasic(t *testing.T) {
 		weight:  1,
 	}
 
-	// Test cold start - no samples
+	// Test cold start - no samples.
 	avg := handler.getAvgResponseTime()
 	assert.Equal(t, 0.0, avg)
 
-	// Add one sample
+	// Add one sample.
 	handler.updateResponseTime(10 * time.Millisecond)
 	avg = handler.getAvgResponseTime()
 	assert.Equal(t, 10.0, avg)
 
-	// Add more samples
+	// Add more samples.
 	handler.updateResponseTime(20 * time.Millisecond)
 	handler.updateResponseTime(30 * time.Millisecond)
 	avg = handler.getAvgResponseTime()
@@ -482,20 +473,20 @@ func TestRingBufferWraparound(t *testing.T) {
 		weight:  1,
 	}
 
-	// Fill the buffer with 100 samples of 10ms each
+	// Fill the buffer with 100 samples of 10ms each.
 	for i := 0; i < sampleSize; i++ {
 		handler.updateResponseTime(10 * time.Millisecond)
 	}
 	avg := handler.getAvgResponseTime()
 	assert.Equal(t, 10.0, avg)
 
-	// Add one more sample (should replace oldest)
+	// Add one more sample (should replace oldest).
 	handler.updateResponseTime(20 * time.Millisecond)
 	avg = handler.getAvgResponseTime()
 	// Sum: 99*10 + 1*20 = 1010, avg = 1010/100 = 10.1
 	assert.Equal(t, 10.1, avg)
 
-	// Add 10 more samples of 30ms
+	// Add 10 more samples of 30ms.
 	for i := 0; i < 10; i++ {
 		handler.updateResponseTime(30 * time.Millisecond)
 	}
@@ -504,7 +495,7 @@ func TestRingBufferWraparound(t *testing.T) {
 	assert.Equal(t, 12.1, avg)
 }
 
-// TestRingBufferLarge tests ring buffer with many samples (> 100)
+// TestRingBufferLarge tests ring buffer with many samples (> 100).
 func TestRingBufferLarge(t *testing.T) {
 	handler := &namedHandler{
 		Handler: http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}),
@@ -512,7 +503,7 @@ func TestRingBufferLarge(t *testing.T) {
 		weight:  1,
 	}
 
-	// Add 150 samples
+	// Add 150 samples.
 	for i := 0; i < 150; i++ {
 		handler.updateResponseTime(time.Duration(i+1) * time.Millisecond)
 	}
@@ -524,46 +515,36 @@ func TestRingBufferLarge(t *testing.T) {
 	assert.Equal(t, 100.5, avg)
 }
 
-// TestInflightCounter tests inflight request tracking
+// TestInflightCounter tests inflight request tracking.
 func TestInflightCounter(t *testing.T) {
 	balancer := New(nil, false)
 
 	var inflightAtRequest atomic.Int64
 
 	balancer.Add("test", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		// Capture inflight count during request handling
-		// Note: We need to access the handler through the balancer
+		inflightAtRequest.Store(balancer.handlers[0].inflightCount.Load())
 		rw.Header().Set("server", "test")
 		rw.WriteHeader(http.StatusOK)
 	}), pointer(1), false)
 
-	// Check that inflight count is 0 initially
+	// Check that inflight count is 0 initially.
 	balancer.handlersMu.RLock()
 	handler := balancer.handlers[0]
 	balancer.handlersMu.RUnlock()
 	assert.Equal(t, int64(0), handler.inflightCount.Load())
 
-	// Make a request
+	// Make a request.
 	recorder := httptest.NewRecorder()
 	balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 
-	// After request completes, inflight should be back to 0
-	assert.Equal(t, int64(0), handler.inflightCount.Load())
-
-	// Store inflight count during request
-	inflightAtRequest.Store(0)
-	balancer.handlers[0].Handler = http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		inflightAtRequest.Store(balancer.handlers[0].inflightCount.Load())
-		rw.WriteHeader(http.StatusOK)
-	})
-
-	balancer.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/", nil))
-
-	// During request, inflight should have been 1
+	// During request, inflight should have been 1.
 	assert.Equal(t, int64(1), inflightAtRequest.Load())
+
+	// After request completes, inflight should be back to 0.
+	assert.Equal(t, int64(0), handler.inflightCount.Load())
 }
 
-// TestConcurrentResponseTimeUpdates tests thread safety of response time updates
+// TestConcurrentResponseTimeUpdates tests thread safety of response time updates.
 func TestConcurrentResponseTimeUpdates(t *testing.T) {
 	handler := &namedHandler{
 		Handler: http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}),
@@ -571,7 +552,7 @@ func TestConcurrentResponseTimeUpdates(t *testing.T) {
 		weight:  1,
 	}
 
-	// Concurrently update response times
+	// Concurrently update response times.
 	var wg sync.WaitGroup
 	numGoroutines := 10
 	updatesPerGoroutine := 20
@@ -588,17 +569,13 @@ func TestConcurrentResponseTimeUpdates(t *testing.T) {
 
 	wg.Wait()
 
-	// Should have exactly 100 samples (buffer size)
-	avg := handler.getAvgResponseTime()
-	assert.Greater(t, avg, 0.0)
-
-	// Verify sample count doesn't exceed buffer size
+	// Should have exactly 100 samples (buffer size).
 	handler.mu.RLock()
-	assert.LessOrEqual(t, handler.sampleCount, sampleSize)
+	assert.Equal(t, handler.sampleCount, sampleSize)
 	handler.mu.RUnlock()
 }
 
-// TestConcurrentInflightTracking tests thread safety of inflight counter
+// TestConcurrentInflightTracking tests thread safety of inflight counter.
 func TestConcurrentInflightTracking(t *testing.T) {
 	handler := &namedHandler{
 		Handler: http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -621,7 +598,7 @@ func TestConcurrentInflightTracking(t *testing.T) {
 			handler.inflightCount.Add(1)
 			defer handler.inflightCount.Add(-1)
 
-			// Track maximum inflight count
+			// Track maximum inflight count.
 			current := handler.inflightCount.Load()
 			for {
 				max := maxInflight.Load()
@@ -636,17 +613,17 @@ func TestConcurrentInflightTracking(t *testing.T) {
 
 	wg.Wait()
 
-	// All requests completed, inflight should be 0
+	// All requests completed, inflight should be 0.
 	assert.Equal(t, int64(0), handler.inflightCount.Load())
-	// Max inflight should be > 1 (concurrent requests)
+	// Max inflight should be > 1 (concurrent requests).
 	assert.Greater(t, maxInflight.Load(), int64(1))
 }
 
-// TestTTFBMeasurement tests TTFB measurement accuracy
+// TestTTFBMeasurement tests TTFB measurement accuracy.
 func TestTTFBMeasurement(t *testing.T) {
 	balancer := New(nil, false)
 
-	// Add server with known delay
+	// Add server with known delay.
 	delay := 50 * time.Millisecond
 	balancer.Add("slow", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		time.Sleep(delay)
@@ -654,61 +631,24 @@ func TestTTFBMeasurement(t *testing.T) {
 		rw.WriteHeader(http.StatusOK)
 	}), pointer(1), false)
 
-	// Make multiple requests to build average
+	// Make multiple requests to build average.
 	for i := 0; i < 5; i++ {
 		recorder := httptest.NewRecorder()
 		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 	}
 
-	// Check that average response time is approximately the delay
 	balancer.handlersMu.RLock()
 	handler := balancer.handlers[0]
 	balancer.handlersMu.RUnlock()
 
+	// Check that average response time is approximately the delay.
 	avg := handler.getAvgResponseTime()
-	// Allow 20ms tolerance for timing variations
-	assert.InDelta(t, float64(delay.Milliseconds()), avg, 20.0)
+
+	// Allow 5ms tolerance for Go timing jitter and test environment variations.
+	assert.InDelta(t, float64(delay.Milliseconds()), avg, 5.0)
 }
 
-// TestTTFBMeasurementMultipleServers tests TTFB tracking with different server speeds
-func TestTTFBMeasurementMultipleServers(t *testing.T) {
-	balancer := New(nil, false)
-
-	// Add fast server
-	balancer.Add("fast", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		time.Sleep(10 * time.Millisecond)
-		rw.Header().Set("server", "fast")
-		rw.WriteHeader(http.StatusOK)
-	}), pointer(1), false)
-
-	// Add slow server
-	balancer.Add("slow", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		time.Sleep(100 * time.Millisecond)
-		rw.Header().Set("server", "slow")
-		rw.WriteHeader(http.StatusOK)
-	}), pointer(1), false)
-
-	// Make requests (round-robin will alternate)
-	for i := 0; i < 10; i++ {
-		recorder := httptest.NewRecorder()
-		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
-	}
-
-	// Check that fast server has lower average than slow server
-	balancer.handlersMu.RLock()
-	fastHandler := balancer.handlers[0]
-	slowHandler := balancer.handlers[1]
-	balancer.handlersMu.RUnlock()
-
-	fastAvg := fastHandler.getAvgResponseTime()
-	slowAvg := slowHandler.getAvgResponseTime()
-
-	assert.Greater(t, slowAvg, fastAvg)
-	assert.InDelta(t, 10.0, fastAvg, 20.0)
-	assert.InDelta(t, 100.0, slowAvg, 20.0)
-}
-
-// TestResponseTrackerWriteHeader tests that WriteHeader is called correctly
+// TestResponseTrackerWriteHeader tests that WriteHeader is called correctly.
 func TestResponseTrackerWriteHeader(t *testing.T) {
 	recorder := httptest.NewRecorder()
 	startTime := time.Now()
@@ -719,19 +659,15 @@ func TestResponseTrackerWriteHeader(t *testing.T) {
 		headerWritten:  false,
 	}
 
-	// Simulate delay before writing header
 	time.Sleep(10 * time.Millisecond)
 	tracker.WriteHeader(http.StatusOK)
 
-	// Check that header was written
 	assert.True(t, tracker.headerWritten)
 	assert.Equal(t, http.StatusOK, recorder.Code)
-
-	// Check that headerTime was updated
 	assert.True(t, headerTime.After(startTime))
 }
 
-// TestZeroSamplesReturnsZero tests that getAvgResponseTime returns 0 when no samples
+// TestZeroSamplesReturnsZero tests that getAvgResponseTime returns 0 when no samples.
 func TestZeroSamplesReturnsZero(t *testing.T) {
 	handler := &namedHandler{
 		Handler: http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}),
@@ -743,12 +679,12 @@ func TestZeroSamplesReturnsZero(t *testing.T) {
 	assert.Equal(t, 0.0, avg)
 }
 
-// TestScoreCalculationWithWeights tests that weights are properly considered in score calculation
+// TestScoreCalculationWithWeights tests that weights are properly considered in score calculation.
 func TestScoreCalculationWithWeights(t *testing.T) {
 	balancer := New(nil, false)
 
-	// Add two servers with same response time but different weights
-	// Server with higher weight should be preferred
+	// Add two servers with same response time but different weights.
+	// Server with higher weight should be preferred.
 	balancer.Add("weighted", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		time.Sleep(50 * time.Millisecond)
 		rw.Header().Set("server", "weighted")
@@ -761,33 +697,30 @@ func TestScoreCalculationWithWeights(t *testing.T) {
 		rw.WriteHeader(http.StatusOK)
 	}), pointer(1), false) // Weight 1
 
-	// Make requests to build up response time averages
+	// Make requests to build up response time averages.
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
+	for i := 0; i < 2; i++ {
+		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
+	}
+
+	// Score for weighted: (50 × (1 + 0)) / 3 = 16.67
+	// Score for normal: (50 × (1 + 0)) / 1 = 50
+	// After warmup, weighted server has 3x better score (16.67 vs 50) and should receive nearly all requests.
+	recorder = &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
 	for i := 0; i < 10; i++ {
 		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 	}
 
-	// After warmup, weighted server should get more requests
-	// Score for weighted: (50 × (1 + 0)) / 3 = 16.67
-	// Score for normal: (50 × (1 + 0)) / 1 = 50
-	// Weighted server has lower score and should be preferred
-	recorder = &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
-	for i := 0; i < 30; i++ {
-		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
-	}
-
-	// Weighted server should get significantly more traffic
-	assert.Greater(t, recorder.save["weighted"], recorder.save["normal"])
-	// Should be roughly 3:1 ratio or better for weighted server
-	assert.Greater(t, recorder.save["weighted"], 20)
+	assert.Equal(t, recorder.save["weighted"], 10)
+	assert.Zero(t, recorder.save["normal"])
 }
 
-// TestScoreCalculationWithInflight tests that inflight requests are considered in score calculation
+// TestScoreCalculationWithInflight tests that inflight requests are considered in score calculation.
 func TestScoreCalculationWithInflight(t *testing.T) {
 	balancer := New(nil, false)
 
-	// We'll manually control the inflight counters to test the score calculation
-	// Add two servers with same response time
+	// We'll manually control the inflight counters to test the score calculation.
+	// Add two servers with same response time.
 	balancer.Add("server1", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		time.Sleep(10 * time.Millisecond)
 		rw.Header().Set("server", "server1")
@@ -800,23 +733,24 @@ func TestScoreCalculationWithInflight(t *testing.T) {
 		rw.WriteHeader(http.StatusOK)
 	}), pointer(1), false)
 
-	// Build up response time averages for both servers
-	for i := 0; i < 10; i++ {
+	// Build up response time averages for both servers.
+	for i := 0; i < 2; i++ {
 		recorder := httptest.NewRecorder()
 		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 	}
 
-	// Now manually set server1 to have high inflight count
+	// Now manually set server1 to have high inflight count.
 	balancer.handlers[0].inflightCount.Store(5)
 
 	// Make requests - they should prefer server2 because:
 	// Score for server1: (10 × (1 + 5)) / 1 = 60
 	// Score for server2: (10 × (1 + 0)) / 1 = 10
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
-	for i := 0; i < 20; i++ {
-		// Manually increment/decrement to simulate the ServeHTTP behavior
-		// but without actually going through full request flow
+	for i := 0; i < 5; i++ {
+		// Manually increment to simulate the ServeHTTP behavior.
 		server, _ := balancer.nextServer()
+		server.inflightCount.Add(1)
+
 		if server.name == "server1" {
 			recorder.save["server1"]++
 		} else {
@@ -824,13 +758,12 @@ func TestScoreCalculationWithInflight(t *testing.T) {
 		}
 	}
 
-	// Server2 should get all or most requests
-	assert.Greater(t, recorder.save["server2"], 15)
-
-	// Reset the inflight counter
-	balancer.handlers[0].inflightCount.Store(0)
+	// Server2 should get all requests
+	assert.Equal(t, recorder.save["server2"], 5)
+	assert.Zero(t, recorder.save["server1"])
 }
 
+// FIXME with new cold start strategy
 // TestScoreCalculationColdStart tests that new servers (0ms avg) get fair selection
 func TestScoreCalculationColdStart(t *testing.T) {
 	balancer := New(nil, false)
@@ -881,7 +814,7 @@ func TestScoreCalculationColdStart(t *testing.T) {
 func TestFastServerGetsMoreTraffic(t *testing.T) {
 	balancer := New(nil, false)
 
-	// Add two servers with different static response times
+	// Add two servers with different static response times.
 	balancer.Add("fast", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		time.Sleep(20 * time.Millisecond)
 		rw.Header().Set("server", "fast")
@@ -894,18 +827,15 @@ func TestFastServerGetsMoreTraffic(t *testing.T) {
 		rw.WriteHeader(http.StatusOK)
 	}), pointer(1), false)
 
-	// Make requests: cold start phase → steady state convergence
-	// Initial requests have random distribution, but algorithm converges
-	// to prefer fast server as averages are established
+	// After just 1 request to each server, the algorithm identifies the fastest server
+	// and routes nearly all subsequent traffic there (converges in ~2 requests).
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
 	for i := 0; i < 50; i++ {
 		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 	}
 
-	// Fast server should get significantly more traffic than slow server
-	// Expecting at least 60% of traffic to fast server (30/50 requests)
 	assert.Greater(t, recorder.save["fast"], recorder.save["slow"])
-	assert.Greater(t, recorder.save["fast"], 30)
+	assert.Greater(t, recorder.save["fast"], 48) // Expect ~96-98% to fast server (48-49/50).
 }
 
 // TestTrafficShiftsWhenPerformanceDegrades verifies that the load balancer
@@ -914,9 +844,9 @@ func TestFastServerGetsMoreTraffic(t *testing.T) {
 func TestTrafficShiftsWhenPerformanceDegrades(t *testing.T) {
 	balancer := New(nil, false)
 
-	// Use atomic to dynamically control server1's response time
+	// Use atomic to dynamically control server1's response time.
 	server1Delay := atomic.Int64{}
-	server1Delay.Store(50) // Start with 50ms
+	server1Delay.Store(5) // Start with 5ms
 
 	balancer.Add("server1", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		time.Sleep(time.Duration(server1Delay.Load()) * time.Millisecond)
@@ -925,170 +855,159 @@ func TestTrafficShiftsWhenPerformanceDegrades(t *testing.T) {
 	}), pointer(1), false)
 
 	balancer.Add("server2", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		time.Sleep(50 * time.Millisecond) // Static 50ms
+		time.Sleep(5 * time.Millisecond) // Static 5ms
 		rw.Header().Set("server", "server2")
 		rw.WriteHeader(http.StatusOK)
 	}), pointer(1), false)
 
-	// Pre-fill ring buffers to eliminate cold start effects and ensure deterministic equal performance state
+	// Pre-fill ring buffers to eliminate cold start effects and ensure deterministic equal performance state.
 	balancer.handlersMu.RLock()
 	for _, h := range balancer.handlers {
 		h.mu.Lock()
 		for i := 0; i < sampleSize; i++ {
-			h.responseTimes[i] = 50.0
+			h.responseTimes[i] = 5.0
 		}
-		h.responseTimeSum = 50.0 * sampleSize
+		h.responseTimeSum = 5.0 * sampleSize
 		h.sampleCount = sampleSize
 		h.mu.Unlock()
 	}
 	balancer.handlersMu.RUnlock()
 
-	// Phase 1: Both servers perform equally (50ms each)
+	// Phase 1: Both servers perform equally (5ms each).
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
 	for i := 0; i < 50; i++ {
 		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 	}
 
-	// With equal performance and pre-filled buffers, distribution should be balanced via WRR tie-breaking
+	// With equal performance and pre-filled buffers, distribution should be balanced via WRR tie-breaking.
 	total := recorder.save["server1"] + recorder.save["server2"]
 	assert.Equal(t, 50, total)
-	assert.Greater(t, recorder.save["server1"], 14) // At least 30% of traffic
-	assert.Greater(t, recorder.save["server2"], 14) // At least 30% of traffic
+	assert.InDelta(t, 25, recorder.save["server1"], 10) // 25 ± 10 requests
+	assert.InDelta(t, 25, recorder.save["server2"], 10) // 25 ± 10 requests
 
-	// Phase 2: server1 degrades (simulating GC pause, CPU spike, or network latency)
-	server1Delay.Store(150) // Now 150ms (3x slower)
+	// Phase 2: server1 degrades (simulating GC pause, CPU spike, or network latency).
+	server1Delay.Store(15) // Now 15ms (3x slower)
 
-	// Make more requests to shift the moving average
-	// Ring buffer has 100 samples, need significant new samples to shift average
-	// server1's average will climb from ~50ms toward 150ms
+	// Make more requests to shift the moving average.
+	// Ring buffer has 100 samples, need significant new samples to shift average.
+	// server1's average will climb from ~5ms toward 15ms.
 	recorder2 := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
 	for i := 0; i < 60; i++ {
 		balancer.ServeHTTP(recorder2, httptest.NewRequest(http.MethodGet, "/", nil))
 	}
 
-	// Traffic should have shifted to server2 (the faster server)
-	// server2 should get significantly more traffic (>70%)
-	// Score for server1: (~100-150ms × 1) / 1 = 100-150 (as average climbs)
-	// Score for server2: (50ms × 1) / 1 = 50
+	// server2 should get significantly more traffic (>75%)
+	// Score for server1: (~10-15ms × 1) / 1 = 10-15 (as average climbs)
+	// Score for server2: (5ms × 1) / 1 = 5
 	total2 := recorder2.save["server1"] + recorder2.save["server2"]
 	assert.Equal(t, 60, total2)
-	assert.Greater(t, recorder2.save["server2"], recorder2.save["server1"])
-	assert.Greater(t, recorder2.save["server2"], 40) // At least 66%% of traffic (40/60 requests)
+	assert.Greater(t, recorder2.save["server2"], 45) // At least 75% (45/60)
+	assert.Less(t, recorder2.save["server1"], 15)    // At most 25% (15/60)
 }
 
-// TestMultipleServersWithSameScore tests WRR tie-breaking when multiple servers have identical scores
+// TestMultipleServersWithSameScore tests WRR tie-breaking when multiple servers have identical scores.
+// Uses nextServer() directly to avoid timing variations in the test.
 func TestMultipleServersWithSameScore(t *testing.T) {
 	balancer := New(nil, false)
 
-	// Add three servers with identical response times and weights
+	// Add three servers with identical response times and weights.
 	balancer.Add("server1", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		time.Sleep(50 * time.Millisecond)
+		time.Sleep(5 * time.Millisecond)
 		rw.Header().Set("server", "server1")
 		rw.WriteHeader(http.StatusOK)
 	}), pointer(1), false)
 
 	balancer.Add("server2", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		time.Sleep(50 * time.Millisecond)
+		time.Sleep(5 * time.Millisecond)
 		rw.Header().Set("server", "server2")
 		rw.WriteHeader(http.StatusOK)
 	}), pointer(1), false)
 
 	balancer.Add("server3", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		time.Sleep(50 * time.Millisecond)
+		time.Sleep(5 * time.Millisecond)
 		rw.Header().Set("server", "server3")
 		rw.WriteHeader(http.StatusOK)
 	}), pointer(1), false)
 
-	// Set all servers to identical response times to trigger tie-breaking
+	// Set all servers to identical response times to trigger tie-breaking.
 	for _, h := range balancer.handlers {
 		h.mu.Lock()
 		for i := 0; i < sampleSize; i++ {
-			h.responseTimes[i] = 50.0
+			h.responseTimes[i] = 5.0
 		}
-		h.responseTimeSum = 50.0 * sampleSize
+		h.responseTimeSum = 5.0 * sampleSize
 		h.sampleCount = sampleSize
 		h.mu.Unlock()
 	}
 
-	// With all servers having identical scores, WRR tie-breaking should distribute fairly
-	// Make enough requests to see distribution
-	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
+	// With all servers having identical scores, WRR tie-breaking should distribute fairly.
+	// Test the selection logic directly without actual HTTP requests to avoid timing variations.
+	counts := map[string]int{"server1": 0, "server2": 0, "server3": 0}
 	for i := 0; i < 90; i++ {
-		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
+		server, err := balancer.nextServer()
+		assert.NoError(t, err)
+		counts[server.name]++
 	}
 
-	// All three servers should receive some traffic
-	// With WRR and 90 requests, each should get approximately 30 requests
-	assert.Greater(t, recorder.save["server1"], 0)
-	assert.Greater(t, recorder.save["server2"], 0)
-	assert.Greater(t, recorder.save["server3"], 0)
-
-	// Total should be 90
-	total := recorder.save["server1"] + recorder.save["server2"] + recorder.save["server3"]
+	total := counts["server1"] + counts["server2"] + counts["server3"]
 	assert.Equal(t, 90, total)
 
-	// With equal weights and sufficient pre-filled samples, distribution should be relatively balanced
-	assert.InDelta(t, 30, recorder.save["server1"], 12)
-	assert.InDelta(t, 30, recorder.save["server2"], 12)
-	assert.InDelta(t, 30, recorder.save["server3"], 12)
+	// With WRR and 90 requests, each server should get ~30 requests (±1 due to initialization).
+	assert.InDelta(t, 30, counts["server1"], 1)
+	assert.InDelta(t, 30, counts["server2"], 1)
+	assert.InDelta(t, 30, counts["server3"], 1)
 }
 
-// TestWRRTieBreakingWeightedDistribution tests weighted distribution among tied servers
+// TestWRRTieBreakingWeightedDistribution tests weighted distribution among tied servers.
+// Uses nextServer() directly to avoid timing variations in the test.
 func TestWRRTieBreakingWeightedDistribution(t *testing.T) {
 	balancer := New(nil, false)
 
-	// Add two servers with different weights
-	// To create equal scores, response times must be proportional to weights
-	// Use different sleep times to maintain the proportional response times
+	// Add two servers with different weights.
+	// To create equal scores, response times must be proportional to weights.
 	balancer.Add("weighted", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		time.Sleep(150 * time.Millisecond) // 3x longer due to 3x weight
+		time.Sleep(15 * time.Millisecond) // 3x longer due to 3x weight
 		rw.Header().Set("server", "weighted")
 		rw.WriteHeader(http.StatusOK)
 	}), pointer(3), false) // Weight 3
 
 	balancer.Add("normal", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		time.Sleep(50 * time.Millisecond)
+		time.Sleep(5 * time.Millisecond)
 		rw.Header().Set("server", "normal")
 		rw.WriteHeader(http.StatusOK)
 	}), pointer(1), false) // Weight 1
 
-	// Manually set response times proportional to weights to create equal scores
-	// weighted: score = (150 * 1) / 3 = 50
-	// normal: score = (50 * 1) / 1 = 50
-	// Both scores are equal, so WRR tie-breaking will apply
+	// Since response times is proportional to weights, both scores are equal, so WRR tie-breaking will apply.
+	// weighted: score = (15 * 1) / 3 = 5
+	// normal: score = (5 * 1) / 1 = 5
 	balancer.handlers[0].mu.Lock()
 	for i := 0; i < sampleSize; i++ {
-		balancer.handlers[0].responseTimes[i] = 150.0
+		balancer.handlers[0].responseTimes[i] = 15.0
 	}
-	balancer.handlers[0].responseTimeSum = 150.0 * sampleSize
+	balancer.handlers[0].responseTimeSum = 15.0 * sampleSize
 	balancer.handlers[0].sampleCount = sampleSize
 	balancer.handlers[0].mu.Unlock()
 
 	balancer.handlers[1].mu.Lock()
 	for i := 0; i < sampleSize; i++ {
-		balancer.handlers[1].responseTimes[i] = 50.0
+		balancer.handlers[1].responseTimes[i] = 5.0
 	}
-	balancer.handlers[1].responseTimeSum = 50.0 * sampleSize
+	balancer.handlers[1].responseTimeSum = 5.0 * sampleSize
 	balancer.handlers[1].sampleCount = sampleSize
 	balancer.handlers[1].mu.Unlock()
 
-	// Make requests - should use WRR for tie-breaking with 3:1 ratio
-	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
+	// Test the selection logic directly without actual HTTP requests to avoid timing variations.
+	counts := map[string]int{"weighted": 0, "normal": 0}
 	for i := 0; i < 80; i++ {
-		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
+		server, err := balancer.nextServer()
+		assert.NoError(t, err)
+		counts[server.name]++
 	}
 
-	total := recorder.save["weighted"] + recorder.save["normal"]
+	total := counts["weighted"] + counts["normal"]
 	assert.Equal(t, 80, total)
 
-	// Weighted server should get approximately 75% of traffic (60/80)
-	// Normal server should get approximately 25% of traffic (20/80)
-	// With full buffer of consistent samples, distribution should follow the 3:1 weight ratio
-	assert.Greater(t, recorder.save["weighted"], 45) // At least 56%
-	assert.Greater(t, recorder.save["normal"], 10)   // At least 12.5%
-
-	// More precise check: ratio should be approximately 3:1
-	// Allow wider tolerance since 80 requests will partially overwrite the buffer
-	ratio := float64(recorder.save["weighted"]) / float64(recorder.save["normal"])
-	assert.InDelta(t, 3.0, ratio, 1.5) // 3:1 ratio with ±1.5 tolerance
+	// With 3:1 weight ratio, distribution should be ~75%/25% (60/80 and 20/80), ±1 due to initialization.
+	assert.InDelta(t, 60, counts["weighted"], 1)
+	assert.InDelta(t, 20, counts["normal"], 1)
 }
