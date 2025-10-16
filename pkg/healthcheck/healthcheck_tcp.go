@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"strconv"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -174,7 +175,7 @@ func (thc *ServiceTCPHealthChecker) executeHealthCheck(ctx context.Context, conf
 			return fmt.Errorf("parsing address %q: %w", target.Address, err)
 		}
 
-		addr = net.JoinHostPort(host, fmt.Sprintf("%d", config.Port))
+		addr = net.JoinHostPort(host, strconv.Itoa(config.Port))
 	}
 
 	conn, err := target.Dialer.DialContext(ctx, "tcp", addr, nil)

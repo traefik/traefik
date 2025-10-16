@@ -112,10 +112,8 @@ func TestNewServiceTCPHealthChecker_durations(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			// FIXME
-			ctx := t.Context()
 			targets := []TCPHealthCheckTarget{{Address: "127.0.0.1:8080"}}
-			healthChecker := NewServiceTCPHealthChecker(ctx, test.config, nil, nil, targets, "")
+			healthChecker := NewServiceTCPHealthChecker(t.Context(), test.config, nil, nil, targets, "")
 			assert.Equal(t, test.expInterval, healthChecker.interval)
 			assert.Equal(t, test.expTimeout, healthChecker.timeout)
 		})
