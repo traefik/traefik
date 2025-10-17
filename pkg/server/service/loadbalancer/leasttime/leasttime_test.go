@@ -619,6 +619,114 @@ func TestConcurrentInflightTracking(t *testing.T) {
 	assert.Greater(t, maxInflight.Load(), int64(1))
 }
 
+// TestConcurrentRequestsRespectInflight tests that the load balancer dynamically
+// adapts to inflight request counts during concurrent request processing.
+func TestConcurrentRequestsRespectInflight(t *testing.T) {
+	balancer := New(nil, false)
+
+	// Use a channel to control when handlers start sleeping.
+	// This ensures we can fill one server with inflight requests before routing new ones.
+	blockChan := make(chan struct{})
+
+	// Add two servers with equal response times and weights.
+	balancer.Add("server1", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		<-blockChan // Wait for signal to proceed.
+		time.Sleep(10 * time.Millisecond)
+		rw.Header().Set("server", "server1")
+		rw.WriteHeader(http.StatusOK)
+	}), pointer(1), false)
+
+	balancer.Add("server2", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		<-blockChan // Wait for signal to proceed.
+		time.Sleep(10 * time.Millisecond)
+		rw.Header().Set("server", "server2")
+		rw.WriteHeader(http.StatusOK)
+	}), pointer(1), false)
+
+	// Pre-warm both servers to establish equal average response times.
+	balancer.handlers[0].mu.Lock()
+	for i := 0; i < sampleSize; i++ {
+		balancer.handlers[0].responseTimes[i] = 10.0
+	}
+	balancer.handlers[0].responseTimeSum = 10.0 * sampleSize
+	balancer.handlers[0].sampleCount = sampleSize
+	balancer.handlers[0].mu.Unlock()
+
+	balancer.handlers[1].mu.Lock()
+	for i := 0; i < sampleSize; i++ {
+		balancer.handlers[1].responseTimes[i] = 10.0
+	}
+	balancer.handlers[1].responseTimeSum = 10.0 * sampleSize
+	balancer.handlers[1].sampleCount = sampleSize
+	balancer.handlers[1].mu.Unlock()
+
+	// Phase 1: Launch concurrent requests to server1 that will block.
+	var wg sync.WaitGroup
+	inflightRequests := 5
+
+	for i := 0; i < inflightRequests; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			recorder := httptest.NewRecorder()
+			balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
+		}()
+	}
+
+	// Wait for goroutines to start and increment inflight counters.
+	// They will block on the channel, keeping inflight count high.
+	time.Sleep(50 * time.Millisecond)
+
+	// Verify inflight counts before making new requests.
+	server1Inflight := balancer.handlers[0].inflightCount.Load()
+	server2Inflight := balancer.handlers[1].inflightCount.Load()
+	assert.Equal(t, server1Inflight+server2Inflight, int64(5))
+
+	// Phase 2: Make new requests while the initial requests are blocked.
+	// These should see the high inflight counts and route to the less-loaded server.
+	var saveMu sync.Mutex
+	save := map[string]int{}
+	newRequests := 50
+
+	// Launch new requests in background so they don't block.
+	var newWg sync.WaitGroup
+	for i := 0; i < newRequests; i++ {
+		newWg.Add(1)
+		go func() {
+			defer newWg.Done()
+			rec := httptest.NewRecorder()
+			balancer.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/", nil))
+			server := rec.Header().Get("server")
+			if server != "" {
+				saveMu.Lock()
+				save[server]++
+				saveMu.Unlock()
+			}
+		}()
+	}
+
+	// Wait for new requests to start and see the inflight counts.
+	time.Sleep(50 * time.Millisecond)
+
+	close(blockChan)
+
+	wg.Wait()
+	newWg.Wait()
+
+	saveMu.Lock()
+	total := save["server1"] + save["server2"]
+	server1Count := save["server1"]
+	server2Count := save["server2"]
+	saveMu.Unlock()
+
+	assert.Equal(t, newRequests, total)
+
+	// With inflight tracking, load should naturally balance toward equal distribution.
+	// We allow variance due to concurrent execution and race windows in server selection.
+	assert.InDelta(t, 25.0, float64(server1Count), 5.0) // 20-30 requests
+	assert.InDelta(t, 25.0, float64(server2Count), 5.0) // 20-30 requests
+}
+
 // TestTTFBMeasurement tests TTFB measurement accuracy.
 func TestTTFBMeasurement(t *testing.T) {
 	balancer := New(nil, false)
