@@ -26,6 +26,57 @@ const (
 	httpProtocol  = "http"
 )
 
+// resolveParentRouterNames resolves parent IngressRoute references to router names.
+// It returns the list of parent router names and an error if one occurred during processing.
+func resolveParentRouterNames(client Client, childIngressRoute *traefikv1alpha1.IngressRoute, allowCrossNamespace bool) ([]string, error) {
+	// If no parent refs, return empty list (not an error)
+	if len(childIngressRoute.Spec.ParentRefs) == 0 {
+		return nil, nil
+	}
+
+	var parentRouterNames []string
+
+	// Process each parent reference
+	for _, parentRef := range childIngressRoute.Spec.ParentRefs {
+		// Determine parent namespace (default to child namespace if not specified)
+		parentNamespace := parentRef.Namespace
+		if parentNamespace == "" {
+			parentNamespace = childIngressRoute.Namespace
+		}
+
+		// Validate cross-namespace access
+		if !isNamespaceAllowed(allowCrossNamespace, childIngressRoute.Namespace, parentNamespace) {
+			return nil, fmt.Errorf("cross-namespace reference to parent IngressRoute %s/%s not allowed", parentNamespace, parentRef.Name)
+		}
+
+		// Look up parent IngressRoute
+		var parentIngressRoute *traefikv1alpha1.IngressRoute
+		for _, ir := range client.GetIngressRoutes() {
+			if ir.Name == parentRef.Name && ir.Namespace == parentNamespace {
+				parentIngressRoute = ir
+				break
+			}
+		}
+
+		if parentIngressRoute == nil {
+			return nil, fmt.Errorf("parent IngressRoute %s/%s does not exist", parentNamespace, parentRef.Name)
+		}
+
+		// Compute router names for all routes in parent IngressRoute
+		for _, route := range parentIngressRoute.Spec.Routes {
+			serviceKey, err := makeServiceKey(route.Match, parentIngressRoute.Name)
+			if err != nil {
+				return nil, fmt.Errorf("failed to compute service key for parent route in %s/%s: %w", parentIngressRoute.Namespace, parentIngressRoute.Name, err)
+			}
+
+			routerName := provider.Normalize(makeID(parentIngressRoute.Namespace, serviceKey))
+			parentRouterNames = append(parentRouterNames, routerName)
+		}
+	}
+
+	return parentRouterNames, nil
+}
+
 func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Client, tlsConfigs map[string]*tls.CertAndStores) *dynamic.HTTPConfiguration {
 	conf := &dynamic.HTTPConfiguration{
 		Routers:           map[string]*dynamic.Router{},
@@ -61,6 +112,12 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 			disableClusterScopeResources: p.DisableClusterScopeResources,
 		}
 
+		parentRouterNames, err := resolveParentRouterNames(client, ingressRoute, p.AllowCrossNamespace)
+		if err != nil {
+			logger.Error().Err(err).Msg("Error resolving parent routers")
+			continue
+		}
+
 		for _, route := range ingressRoute.Spec.Routes {
 			if len(route.Kind) > 0 && route.Kind != "Rule" {
 				logger.Error().Msgf("Unsupported match kind: %s. Only \"Rule\" is supported for now.", route.Kind)
@@ -85,9 +142,11 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 			}
 
 			normalized := provider.Normalize(makeID(ingressRoute.Namespace, serviceKey))
-			serviceName := normalized
+			serviceName := ""
 
 			if len(route.Services) > 1 {
+				serviceName = normalized
+
 				spec := traefikv1alpha1.TraefikServiceSpec{
 					Weighted: &traefikv1alpha1.WeightedRoundRobin{
 						Services: route.Services,
@@ -107,6 +166,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				}
 
 				if serversLB != nil {
+					serviceName = normalized
 					conf.Services[serviceName] = serversLB
 				} else {
 					serviceName = fullName
@@ -121,6 +181,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				Rule:          route.Match,
 				Service:       serviceName,
 				Observability: route.Observability,
+				ParentRefs:    parentRouterNames,
 			}
 
 			if ingressRoute.Spec.TLS != nil {

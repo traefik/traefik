@@ -1,0 +1,8 @@
+services:
+  whoami-admin:
+    image: traefik/whoami
+    hostname: whoami-admin
+
+  whoami-developer:
+    image: traefik/whoami
+    hostname: whoami-developer

@@ -19,6 +19,10 @@ type IngressRouteSpec struct {
 	// TLS defines the TLS configuration.
 	// More info: https://doc.traefik.io/traefik/v3.5/reference/routing-configuration/http/routing/router/#tls
 	TLS *TLS `json:"tls,omitempty"`
+	// ParentRefs defines references to parent IngressRoute resources for multi-layer routing.
+	// When set, this IngressRoute's routers will be children of the referenced parent IngressRoute's routers.
+	// More info: https://doc.traefik.io/traefik/v3.5/routing/routers/#parentrefs
+	ParentRefs []IngressRouteRef `json:"parentRefs,omitempty"`
 }
 
 // Route holds the HTTP route configuration.
@@ -208,6 +212,14 @@ type MiddlewareRef struct {
 	// Name defines the name of the referenced Middleware resource.
 	Name string `json:"name"`
 	// Namespace defines the namespace of the referenced Middleware resource.
+	Namespace string `json:"namespace,omitempty"`
+}
+
+// IngressRouteRef is a reference to an IngressRoute resource.
+type IngressRouteRef struct {
+	// Name defines the name of the referenced IngressRoute resource.
+	Name string `json:"name"`
+	// Namespace defines the namespace of the referenced IngressRoute resource.
 	Namespace string `json:"namespace,omitempty"`
 }
 

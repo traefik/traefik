@@ -1,0 +1,42 @@
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: parent-a
+  namespace: default
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`a.example.com`)
+      kind: Rule
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: parent-b
+  namespace: default
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`b.example.com`)
+      kind: Rule
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: child-multi-parents
+  namespace: default
+spec:
+  parentRefs:
+    - name: parent-a
+      namespace: default
+    - name: parent-b
+      namespace: default
+  routes:
+    - match: Path(`/shared`)
+      kind: Rule
+      services:
+        - name: shared-service
+          port: 9000
