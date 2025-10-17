@@ -54,10 +54,6 @@ func (s *DualLoggingSuite) TearDownSuite() {
 			s.T().Logf("Failed to remove %s: %v", filename, err)
 		}
 	}
-
-	if s.collector != nil {
-		s.collector.Close()
-	}
 }
 
 func (s *DualLoggingSuite) SetupTest() {
@@ -132,8 +128,8 @@ func (s *DualLoggingSuite) TestOTLPAndStdoutLogging() {
 
 	foundStdoutLog := strings.Contains(output, "Starting provider")
 	assert.True(s.T(), foundStdoutLog)
-	foundOLTPLog := strings.Contains(otlpOutput, "Starting provider")
-	assert.True(s.T(), foundOLTPLog)
+	foundOTLPLog := strings.Contains(otlpOutput, "Starting provider")
+	assert.True(s.T(), foundOTLPLog)
 }
 
 // Helper functions
