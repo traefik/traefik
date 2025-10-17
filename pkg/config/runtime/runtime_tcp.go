@@ -81,7 +81,7 @@ func (r *TCPRouterInfo) AddError(err error, critical bool) {
 
 // TCPServiceInfo holds information about a currently running TCP service.
 type TCPServiceInfo struct {
-	*dynamic.TCPService          // dynamic configuration
+	*dynamic.TCPService          // dynamic configuration.
 	Err                 []string `json:"error,omitempty"` // initialization error
 	// Status reports whether the service is disabled, in a warning state, or all good (enabled).
 	// If not in "enabled" state, the reason for it should be in the list of Err.
@@ -90,7 +90,7 @@ type TCPServiceInfo struct {
 	UsedBy []string `json:"usedBy,omitempty"` // list of routers using that service
 
 	serverStatusMu sync.RWMutex
-	serverStatus   map[string]string // keyed by server URL
+	serverStatus   map[string]string // keyed by server address.
 }
 
 // AddError adds err to s.Err, if it does not already exist.

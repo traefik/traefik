@@ -14,8 +14,8 @@ import (
 	"github.com/traefik/traefik/v3/pkg/tcp"
 )
 
-// MaxPayloadSize is the size of the payload to send during health checks.
-const MaxPayloadSize = 65535
+// maxPayloadSize is the maximum payload size that can be sent during health checks.
+const maxPayloadSize = 65535
 
 type TCPHealthCheckTarget struct {
 	Address string
@@ -64,13 +64,13 @@ func NewServiceTCPHealthChecker(ctx context.Context, config *dynamic.TCPServerHe
 		timeout = time.Duration(dynamic.DefaultHealthCheckTimeout)
 	}
 
-	if config.Send != "" && len(config.Send) > MaxPayloadSize {
-		logger.Error().Msgf("Health check payload size exceeds maximum allowed size of %d bytes, falling back to connect only check.", MaxPayloadSize)
+	if config.Send != "" && len(config.Send) > maxPayloadSize {
+		logger.Error().Msgf("Health check payload size exceeds maximum allowed size of %d bytes, falling back to connect only check.", maxPayloadSize)
 		config.Send = ""
 	}
 
-	if config.Expect != "" && len(config.Expect) > MaxPayloadSize {
-		logger.Error().Msgf("Health check expected response size exceeds maximum allowed size of %d bytes, falling back to close without response.", MaxPayloadSize)
+	if config.Expect != "" && len(config.Expect) > maxPayloadSize {
+		logger.Error().Msgf("Health check expected response size exceeds maximum allowed size of %d bytes, falling back to close without response.", maxPayloadSize)
 		config.Expect = ""
 	}
 
@@ -161,7 +161,7 @@ func (thc *ServiceTCPHealthChecker) healthcheck(ctx context.Context, targets cha
 
 				thc.info.UpdateServerStatus(target.Address, statusStr)
 
-				// TODO: add a TCP server up metric (like for HTTP)
+				// TODO: add a TCP server up metric (like for HTTP).
 			}
 		}
 	}

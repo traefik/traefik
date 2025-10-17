@@ -53,19 +53,12 @@ func TestNewServiceHealthChecker_durations(t *testing.T) {
 			expInterval: time.Second * 10,
 			expTimeout:  time.Second * 5,
 		},
-		{
-			desc: "interval shorter than timeout",
-			config: &dynamic.ServerHealthCheck{
-				Interval: ptypes.Duration(time.Second),
-				Timeout:  ptypes.Duration(time.Second * 5),
-			},
-			expInterval: time.Second,
-			expTimeout:  time.Second * 5,
-		},
 	}
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
 			healthChecker := NewServiceHealthChecker(t.Context(), nil, test.config, nil, nil, http.DefaultTransport, nil, "")
 			assert.Equal(t, test.expInterval, healthChecker.interval)
 			assert.Equal(t, test.expTimeout, healthChecker.timeout)

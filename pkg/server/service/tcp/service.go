@@ -93,13 +93,17 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 				continue
 			}
 
+			loadBalancer.Add(server.Address, handler, nil)
+
+			// Servers are considered UP by default.
+			conf.UpdateServerStatus(server.Address, runtime.StatusUp)
+
 			uniqHealthCheckTargets[server.Address] = healthcheck.TCPHealthCheckTarget{
 				Address: server.Address,
 				TLS:     server.TLS,
 				Dialer:  dialer,
 			}
 
-			loadBalancer.AddServer(handler)
 			logger.Debug().Msg("Creating TCP server")
 		}
 
@@ -125,7 +129,7 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 				return nil, err
 			}
 
-			loadBalancer.AddWeightServer(handler, service.Weight)
+			loadBalancer.Add(service.Name, handler, service.Weight)
 
 			if conf.Weighted.HealthCheck == nil {
 				continue

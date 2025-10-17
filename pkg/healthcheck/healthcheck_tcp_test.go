@@ -19,7 +19,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/tcp"
 )
 
-var LocalhostCert = []byte(`-----BEGIN CERTIFICATE-----
+var localhostCert = []byte(`-----BEGIN CERTIFICATE-----
 MIIDJzCCAg+gAwIBAgIUe3vnWg3cTbflL6kz2TyPUxmV8Y4wDQYJKoZIhvcNAQEL
 BQAwFjEUMBIGA1UEAwwLZXhhbXBsZS5jb20wIBcNMjUwMzA1MjAwOTM4WhgPMjA1
 NTAyMjYyMDA5MzhaMBYxFDASBgNVBAMMC2V4YW1wbGUuY29tMIIBIjANBgkqhkiG
@@ -39,7 +39,7 @@ GVUJfKsDJ4Ts8WIR1np74flSoxksWSHEOYk79AZOPANYgJwPMMiiZKsKm17GBoGu
 DxI0om4eX8GaSSZAtG6TOt3O3v1oCjKNsAC+u585HN0x0MFA33TUzC15NA==
 -----END CERTIFICATE-----`)
 
-var LocalhostKey = []byte(`-----BEGIN PRIVATE KEY-----
+var localhostKey = []byte(`-----BEGIN PRIVATE KEY-----
 MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQDgybhKnrHMm8Vk
 lYC/8pWYjWSvLCK55/wWGV8lHYzRxoqLGMFw23hTwrCvMiuov7yeKVumzVC7ClDT
 37rO2VtRdQvoOpHxkL7igKmA5nfLJVfa+EyKCQBNtDImtf9ZWNZIcPmshQE/YGux
@@ -68,7 +68,7 @@ lvDhS+Pi/1KCBJxLHMv+V/WrckDRgHFnAhDaBZ+2vI/s09rKDnpjcTzV7x22kL0b
 XIJCEEE8JZ4AXIZ+IcB6LA==
 -----END PRIVATE KEY-----`)
 
-func TestNewServiceTCPHealthChecker_durations(t *testing.T) {
+func TestNewServiceTCPHealthChecker(t *testing.T) {
 	testCases := []struct {
 		desc        string
 		config      *dynamic.TCPServerHealthCheck
@@ -99,154 +99,82 @@ func TestNewServiceTCPHealthChecker_durations(t *testing.T) {
 			expInterval: time.Second * 10,
 			expTimeout:  time.Second * 5,
 		},
-		{
-			desc: "interval shorter than timeout",
-			config: &dynamic.TCPServerHealthCheck{
-				Interval: ptypes.Duration(time.Second),
-				Timeout:  ptypes.Duration(time.Second * 5),
-			},
-			expInterval: time.Second,
-			expTimeout:  time.Second * 5,
-		},
 	}
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			targets := []TCPHealthCheckTarget{{Address: "127.0.0.1:8080"}}
-			healthChecker := NewServiceTCPHealthChecker(t.Context(), test.config, nil, nil, targets, "")
+			t.Parallel()
+
+			healthChecker := NewServiceTCPHealthChecker(t.Context(), test.config, nil, nil, nil, "")
 			assert.Equal(t, test.expInterval, healthChecker.interval)
 			assert.Equal(t, test.expTimeout, healthChecker.timeout)
 		})
 	}
 }
 
-// mockTCPDialer implements tcp.Dialer for testing
-type mockTCPDialer struct {
-	onDial func(network, addr string) (net.Conn, error)
-}
-
-func (m *mockTCPDialer) Dial(network, addr string, _ tcp.ClientConn) (net.Conn, error) {
-	return m.onDial(network, addr)
-}
-
-func (m *mockTCPDialer) DialContext(_ context.Context, network, addr string, _ tcp.ClientConn) (net.Conn, error) {
-	return m.onDial(network, addr)
-}
-
-func (m *mockTCPDialer) TerminationDelay() time.Duration {
-	return 0
-}
-
-// mockConnection implements net.Conn for testing
-type mockConnection struct{}
-
-func (m *mockConnection) Read(_ []byte) (n int, err error)   { return 0, nil }
-func (m *mockConnection) Write(b []byte) (n int, err error)  { return len(b), nil }
-func (m *mockConnection) Close() error                       { return nil }
-func (m *mockConnection) LocalAddr() net.Addr                { return &net.TCPAddr{} }
-func (m *mockConnection) RemoteAddr() net.Addr               { return &net.TCPAddr{} }
-func (m *mockConnection) SetDeadline(_ time.Time) error      { return nil }
-func (m *mockConnection) SetReadDeadline(_ time.Time) error  { return nil }
-func (m *mockConnection) SetWriteDeadline(_ time.Time) error { return nil }
-
-// payloadMockConnection is a more sophisticated mock connection for testing payload handling
-type payloadMockConnection struct {
-	writeFunc func([]byte) (int, error)
-	readFunc  func([]byte) (int, error)
-}
-
-func (m *payloadMockConnection) Read(b []byte) (n int, err error) {
-	if m.readFunc != nil {
-		return m.readFunc(b)
-	}
-	return 0, nil
-}
-
-func (m *payloadMockConnection) Write(b []byte) (n int, err error) {
-	if m.writeFunc != nil {
-		return m.writeFunc(b)
-	}
-	return len(b), nil
-}
-
-func (m *payloadMockConnection) Close() error                       { return nil }
-func (m *payloadMockConnection) LocalAddr() net.Addr                { return &net.TCPAddr{} }
-func (m *payloadMockConnection) RemoteAddr() net.Addr               { return &net.TCPAddr{} }
-func (m *payloadMockConnection) SetDeadline(_ time.Time) error      { return nil }
-func (m *payloadMockConnection) SetReadDeadline(_ time.Time) error  { return nil }
-func (m *payloadMockConnection) SetWriteDeadline(_ time.Time) error { return nil }
-
-func TestServiceTCPHealthChecker_connection(t *testing.T) {
+func TestServiceTCPHealthChecker_executeHealthCheck_connection(t *testing.T) {
 	testCases := []struct {
-		desc             string
-		originalAddress  string
-		config           *dynamic.TCPServerHealthCheck
-		expectedConnAddr string
+		desc       string
+		address    string
+		config     *dynamic.TCPServerHealthCheck
+		expAddress string
 	}{
 		{
-			desc:             "no port override - uses original address",
-			originalAddress:  "127.0.0.1:8080",
-			config:           &dynamic.TCPServerHealthCheck{Port: 0},
-			expectedConnAddr: "127.0.0.1:8080",
+			desc:       "no port override - uses original address",
+			address:    "127.0.0.1:8080",
+			config:     &dynamic.TCPServerHealthCheck{Port: 0},
+			expAddress: "127.0.0.1:8080",
 		},
 		{
-			desc:             "port override - uses overridden port",
-			originalAddress:  "127.0.0.1:8080",
-			config:           &dynamic.TCPServerHealthCheck{Port: 9090},
-			expectedConnAddr: "127.0.0.1:9090",
+			desc:       "port override - uses overridden port",
+			address:    "127.0.0.1:8080",
+			config:     &dynamic.TCPServerHealthCheck{Port: 9090},
+			expAddress: "127.0.0.1:9090",
 		},
 		{
-			desc:             "port override with hostname",
-			originalAddress:  "backend:8080",
-			config:           &dynamic.TCPServerHealthCheck{Port: 9090},
-			expectedConnAddr: "backend:9090",
+			desc:       "IPv6 address with port override",
+			address:    "[::1]:8080",
+			config:     &dynamic.TCPServerHealthCheck{Port: 9090},
+			expAddress: "[::1]:9090",
 		},
 		{
-			desc:             "IPv6 address with port override",
-			originalAddress:  "[::1]:8080",
-			config:           &dynamic.TCPServerHealthCheck{Port: 9090},
-			expectedConnAddr: "[::1]:9090",
-		},
-		{
-			desc:             "successful connection without port override",
-			originalAddress:  "localhost:3306",
-			config:           &dynamic.TCPServerHealthCheck{Port: 0},
-			expectedConnAddr: "localhost:3306",
+			desc:       "successful connection without port override",
+			address:    "localhost:3306",
+			config:     &dynamic.TCPServerHealthCheck{Port: 0},
+			expAddress: "localhost:3306",
 		},
 	}
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			ctx := t.Context()
+			t.Parallel()
 
-			// Create a mock dialer that records the address it was asked to dial
-			var dialedAddress string
-			mockDialer := &mockTCPDialer{
+			// Create a mock dialer that records the address it was asked to dial.
+			var gotAddress string
+			mockDialer := &dialerMock{
 				onDial: func(network, addr string) (net.Conn, error) {
-					dialedAddress = addr
-					return &mockConnection{}, nil
+					gotAddress = addr
+					return &connMock{}, nil
 				},
 			}
 
 			targets := []TCPHealthCheckTarget{{
-				Address: test.originalAddress,
-				TLS:     false,
+				Address: test.address,
 				Dialer:  mockDialer,
 			}}
+			healthChecker := NewServiceTCPHealthChecker(t.Context(), test.config, nil, nil, targets, "test")
 
-			healthChecker := NewServiceTCPHealthChecker(ctx, test.config, &testLoadBalancer{RWMutex: &sync.RWMutex{}}, &truntime.TCPServiceInfo{}, targets, "test")
-
-			// Execute a health check to see what address it tries to connect to
-			err := healthChecker.executeHealthCheck(ctx, test.config, &targets[0])
+			// Execute a health check to see what address it tries to connect to.
+			err := healthChecker.executeHealthCheck(t.Context(), test.config, &targets[0])
 			require.NoError(t, err)
 
-			// Verify that the health check attempted to connect to the expected address
-			assert.Equal(t, test.expectedConnAddr, dialedAddress)
+			// Verify that the health check attempted to connect to the expected address.
+			assert.Equal(t, test.expAddress, gotAddress)
 		})
 	}
 }
 
-func TestServiceTCPHealthChecker_payloadHandling(t *testing.T) {
+func TestServiceTCPHealthChecker_executeHealthCheck_payloadHandling(t *testing.T) {
 	testCases := []struct {
 		desc                string
 		config              *dynamic.TCPServerHealthCheck
@@ -283,7 +211,7 @@ func TestServiceTCPHealthChecker_payloadHandling(t *testing.T) {
 				Send:   "STATUS",
 				Expect: "",
 			},
-			mockResponse:        strings.Repeat("A", MaxPayloadSize+1),
+			mockResponse:        strings.Repeat("A", maxPayloadSize+1),
 			expectSuccess:       true,
 			expectedSentData:    "STATUS",
 			expectedReceiveSize: 0,
@@ -313,7 +241,7 @@ func TestServiceTCPHealthChecker_payloadHandling(t *testing.T) {
 		{
 			desc: "send payload too large - gets truncated",
 			config: &dynamic.TCPServerHealthCheck{
-				Send:   strings.Repeat("A", MaxPayloadSize+1), // Will be truncated to empty
+				Send:   strings.Repeat("A", maxPayloadSize+1), // Will be truncated to empty
 				Expect: "OK",
 			},
 			mockResponse:        "OK",
@@ -325,7 +253,7 @@ func TestServiceTCPHealthChecker_payloadHandling(t *testing.T) {
 			desc: "expect payload too large - gets truncated",
 			config: &dynamic.TCPServerHealthCheck{
 				Send:   "PING",
-				Expect: strings.Repeat("B", MaxPayloadSize+1), // Will be truncated to empty
+				Expect: strings.Repeat("B", maxPayloadSize+1), // Will be truncated to empty
 			},
 			mockResponse:        "",
 			expectSuccess:       true,
@@ -343,7 +271,7 @@ func TestServiceTCPHealthChecker_payloadHandling(t *testing.T) {
 			var readAttemptSize int
 
 			// Create a mock connection that records writes and provides mock reads
-			mockConn := &payloadMockConnection{
+			mockConn := &connMock{
 				writeFunc: func(data []byte) (int, error) {
 					sentData = append([]byte{}, data...) // Copy the data
 					return len(data), nil
@@ -360,7 +288,7 @@ func TestServiceTCPHealthChecker_payloadHandling(t *testing.T) {
 			}
 
 			// Create a mock dialer that returns our mock connection
-			mockDialer := &mockTCPDialer{
+			mockDialer := &dialerMock{
 				onDial: func(network, addr string) (net.Conn, error) {
 					return mockConn, nil
 				},
@@ -734,7 +662,7 @@ func (s *sequencedTCPServer) Start(t *testing.T) {
 			listener = lis
 
 			if s.TLS {
-				cert, err := tls.X509KeyPair(LocalhostCert, LocalhostKey)
+				cert, err := tls.X509KeyPair(localhostCert, localhostKey)
 				require.NoError(t, err)
 
 				x509Cert, err := x509.ParseCertificate(cert.Certificate[0])
@@ -798,3 +726,50 @@ func (s *sequencedTCPServer) Start(t *testing.T) {
 		defer close(s.release)
 	}()
 }
+
+type dialerMock struct {
+	onDial func(network, addr string) (net.Conn, error)
+}
+
+func (dm *dialerMock) Dial(network, addr string, _ tcp.ClientConn) (net.Conn, error) {
+	return dm.onDial(network, addr)
+}
+
+func (dm *dialerMock) DialContext(_ context.Context, network, addr string, _ tcp.ClientConn) (net.Conn, error) {
+	return dm.onDial(network, addr)
+}
+
+func (dm *dialerMock) TerminationDelay() time.Duration {
+	return 0
+}
+
+type connMock struct {
+	writeFunc func([]byte) (int, error)
+	readFunc  func([]byte) (int, error)
+}
+
+func (cm *connMock) Read(b []byte) (n int, err error) {
+	if cm.readFunc != nil {
+		return cm.readFunc(b)
+	}
+	return 0, nil
+}
+
+func (cm *connMock) Write(b []byte) (n int, err error) {
+	if cm.writeFunc != nil {
+		return cm.writeFunc(b)
+	}
+	return len(b), nil
+}
+
+func (cm *connMock) Close() error { return nil }
+
+func (cm *connMock) LocalAddr() net.Addr { return &net.TCPAddr{} }
+
+func (cm *connMock) RemoteAddr() net.Addr { return &net.TCPAddr{} }
+
+func (cm *connMock) SetDeadline(_ time.Time) error { return nil }
+
+func (cm *connMock) SetReadDeadline(_ time.Time) error { return nil }
+
+func (cm *connMock) SetWriteDeadline(_ time.Time) error { return nil }

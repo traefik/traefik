@@ -12,41 +12,42 @@ var errNoServersInPool = errors.New("no servers in the pool")
 
 type server struct {
 	Handler
+	name   string
 	weight int
 }
 
 // WRRLoadBalancer is a naive RoundRobin load balancer for TCP services.
 type WRRLoadBalancer struct {
+	// serversMu is a mutex to protect the handlers slice and the status.
 	serversMu sync.Mutex
 	servers   []server
+	// status is a record of which child services of the Balancer are healthy, keyed
+	// by name of child service. A service is initially added to the map when it is
+	// created via Add, and it is later removed or added to the map as needed,
+	// through the SetStatus method.
+	status map[string]struct{}
 
-	// status is a record of which child services of the Balancer are healthy.
-	status sync.Map
-
-	// updaters is the list of hooks that are run (to update the Balancer
-	// parent(s)), whenever the Balancer status changes.
-	// Modified during configuration build only, so no mutex needed.
+	// updaters is the list of hooks that are run (to update the Balancer parent(s)), whenever the Balancer status changes.
+	// No mutex is needed, as it is modified only during the configuration build.
 	updaters []func(bool)
 
-	currentWeight    int
 	index            int
+	currentWeight    int
 	wantsHealthCheck bool
 }
 
 // NewWRRLoadBalancer creates a new WRRLoadBalancer.
 func NewWRRLoadBalancer(wantsHealthCheck bool) *WRRLoadBalancer {
 	return &WRRLoadBalancer{
-		wantsHealthCheck: wantsHealthCheck,
+		status:           make(map[string]struct{}),
 		index:            -1,
+		wantsHealthCheck: wantsHealthCheck,
 	}
 }
 
 // ServeTCP forwards the connection to the right service.
 func (b *WRRLoadBalancer) ServeTCP(conn WriteCloser) {
-	b.serversMu.Lock()
-	next, err := b.next()
-	b.serversMu.Unlock()
-
+	next, err := b.nextServer()
 	if err != nil {
 		if !errors.Is(err, errNoServersInPool) {
 			log.Error().Err(err).Msg("Error during load balancing")
@@ -58,44 +59,57 @@ func (b *WRRLoadBalancer) ServeTCP(conn WriteCloser) {
 	next.ServeTCP(conn)
 }
 
-// AddServer appends a server to the existing list.
-func (b *WRRLoadBalancer) AddServer(serverHandler Handler) {
-	w := 1
-	b.AddWeightServer(serverHandler, &w)
-}
-
-// AddWeightServer appends a server to the existing list with a weight.
-func (b *WRRLoadBalancer) AddWeightServer(serverHandler Handler, weight *int) {
-	b.serversMu.Lock()
-	defer b.serversMu.Unlock()
-
+// Add appends a server to the existing list with a name and weight.
+func (b *WRRLoadBalancer) Add(name string, handler Handler, weight *int) {
 	w := 1
 	if weight != nil {
 		w = *weight
 	}
-	b.servers = append(b.servers, server{Handler: serverHandler, weight: w})
+
+	b.serversMu.Lock()
+	b.servers = append(b.servers, server{Handler: handler, name: name, weight: w})
+	b.status[name] = struct{}{}
+	b.serversMu.Unlock()
 }
 
 // SetStatus sets status (UP or DOWN) of a target server.
 func (b *WRRLoadBalancer) SetStatus(ctx context.Context, childName string, up bool) {
-	statusString := "DOWN"
+	b.serversMu.Lock()
+	defer b.serversMu.Unlock()
+
+	upBefore := len(b.status) > 0
+
+	status := "DOWN"
 	if up {
-		statusString = "UP"
+		status = "UP"
 	}
 
-	log.Ctx(ctx).Debug().Msgf("Setting status of %s to %s", childName, statusString)
+	log.Ctx(ctx).Debug().Msgf("Setting status of %s to %v", childName, status)
 
-	if _, loaded := b.status.LoadOrStore(childName, up); !loaded {
-		log.Ctx(ctx).Debug().Msgf("Propagating new %s status", statusString)
+	if up {
+		b.status[childName] = struct{}{}
+	} else {
+		delete(b.status, childName)
+	}
 
-		for _, fn := range b.updaters {
-			fn(up)
-		}
+	upAfter := len(b.status) > 0
+	status = "DOWN"
+	if upAfter {
+		status = "UP"
+	}
 
+	// No Status Change
+	if upBefore == upAfter {
+		// We're still with the same status, no need to propagate
+		log.Ctx(ctx).Debug().Msgf("Still %s, no need to propagate", status)
 		return
 	}
 
-	log.Ctx(ctx).Debug().Msgf("Still %s, no need to propagate", statusString)
+	// Status Change
+	log.Ctx(ctx).Debug().Msgf("Propagating new %s status", status)
+	for _, fn := range b.updaters {
+		fn(upAfter)
+	}
 }
 
 func (b *WRRLoadBalancer) RegisterStatusUpdater(fn func(up bool)) error {
@@ -105,6 +119,43 @@ func (b *WRRLoadBalancer) RegisterStatusUpdater(fn func(up bool)) error {
 
 	b.updaters = append(b.updaters, fn)
 	return nil
+}
+
+func (b *WRRLoadBalancer) nextServer() (Handler, error) {
+	b.serversMu.Lock()
+	defer b.serversMu.Unlock()
+
+	if len(b.servers) == 0 || len(b.status) == 0 {
+		return nil, errNoServersInPool
+	}
+
+	// The algo below may look messy, but is actually very simple
+	// it calculates the GCD  and subtracts it on every iteration, what interleaves servers
+	// and allows us not to build an iterator every time we readjust weights.
+
+	// Maximum weight across all enabled servers.
+	maximum := b.maxWeight()
+	if maximum == 0 {
+		return nil, errors.New("all servers have 0 weight")
+	}
+
+	// GCD across all enabled servers
+	gcd := b.weightGcd()
+
+	for {
+		b.index = (b.index + 1) % len(b.servers)
+		if b.index == 0 {
+			b.currentWeight -= gcd
+			if b.currentWeight <= 0 {
+				b.currentWeight = maximum
+			}
+		}
+		srv := b.servers[b.index]
+
+		if _, ok := b.status[srv.name]; ok && srv.weight >= b.currentWeight {
+			return srv, nil
+		}
+	}
 }
 
 func (b *WRRLoadBalancer) maxWeight() int {
@@ -134,37 +185,4 @@ func gcd(a, b int) int {
 		a, b = b, a%b
 	}
 	return a
-}
-
-func (b *WRRLoadBalancer) next() (Handler, error) {
-	if len(b.servers) == 0 {
-		return nil, errNoServersInPool
-	}
-
-	// The algo below may look messy, but is actually very simple
-	// it calculates the GCD  and subtracts it on every iteration, what interleaves servers
-	// and allows us not to build an iterator every time we readjust weights
-
-	// Maximum weight across all enabled servers
-	maximum := b.maxWeight()
-	if maximum == 0 {
-		return nil, errors.New("all servers have 0 weight")
-	}
-
-	// GCD across all enabled servers
-	gcd := b.weightGcd()
-
-	for {
-		b.index = (b.index + 1) % len(b.servers)
-		if b.index == 0 {
-			b.currentWeight -= gcd
-			if b.currentWeight <= 0 {
-				b.currentWeight = maximum
-			}
-		}
-		srv := b.servers[b.index]
-		if srv.weight >= b.currentWeight {
-			return srv, nil
-		}
-	}
 }

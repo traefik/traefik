@@ -40,7 +40,7 @@ type Balancer struct {
 
 	// updaters is the list of hooks that are run (to update the Balancer
 	// parent(s)), whenever the Balancer status changes.
-	// Modified during configuration build only, so no mutex needed.
+	// No mutex is needed, as it is modified only during the configuration build.
 	updaters []func(bool)
 
 	sticky *loadbalancer.Sticky

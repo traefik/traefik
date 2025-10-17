@@ -16,6 +16,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/static"
 )
 
+// FIXME: add tests for server statuses like in HTTP.
 func TestHandler_TCP(t *testing.T) {
 	type expected struct {
 		statusCode int
