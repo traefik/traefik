@@ -693,11 +693,11 @@ func Test_buildConfiguration(t *testing.T) {
 						Mirrors: []dynamic.MirrorService{
 							{
 								Name:    "foobar",
-								Percent: 42,
+								Percent: pointer(42),
 							},
 							{
 								Name:    "foobar",
-								Percent: 42,
+								Percent: pointer(42),
 							},
 						},
 					},
