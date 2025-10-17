@@ -247,9 +247,7 @@ func (b *Balancer) selectWRR(candidates []*namedHandler) *namedHandler {
 	return selected
 }
 
-// nextServer selects the next server to handle the request.
-// Implements least-time algorithm: selects server with minimum score.
-// Score = (avgResponseTime × (1 + inflightCount)) / weight
+// Score = (avgResponseTime × (1 + inflightCount)) / weight.
 func (b *Balancer) nextServer() (*namedHandler, error) {
 	healthy := b.getHealthyServers()
 
