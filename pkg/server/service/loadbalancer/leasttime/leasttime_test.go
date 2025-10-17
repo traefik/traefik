@@ -55,8 +55,8 @@ func TestBalancer(t *testing.T) {
 	}
 
 	// With least-time and equal response times, both servers should get some traffic.
-	assert.Greater(t, recorder.save["first"], 0)
-	assert.Greater(t, recorder.save["second"], 0)
+	assert.Positive(t, recorder.save["first"])
+	assert.Positive(t, recorder.save["second"])
 	assert.Equal(t, 10, recorder.save["first"]+recorder.save["second"])
 }
 
@@ -144,8 +144,8 @@ func TestBalancerOneServerDownThenUp(t *testing.T) {
 		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 	}
 	// Both servers should get some traffic.
-	assert.Greater(t, recorder.save["first"], 0)
-	assert.Greater(t, recorder.save["second"], 0)
+	assert.Positive(t, recorder.save["first"])
+	assert.Positive(t, recorder.save["second"])
 	assert.Equal(t, 20, recorder.save["first"]+recorder.save["second"])
 }
 
@@ -230,7 +230,7 @@ func TestBalancerPropagate(t *testing.T) {
 	// Only balancer2 should receive traffic.
 	assert.Equal(t, 0, recorder.save["first"])
 	assert.Equal(t, 0, recorder.save["second"])
-	assert.Equal(t, recorder.save["third"]+recorder.save["fourth"], 4)
+	assert.Equal(t, 4, recorder.save["third"]+recorder.save["fourth"])
 }
 
 // TestBalancerOneServerFenced tests that fenced servers are excluded from selection.
@@ -451,18 +451,18 @@ func TestRingBufferBasic(t *testing.T) {
 
 	// Test cold start - no samples.
 	avg := handler.getAvgResponseTime()
-	assert.Equal(t, 0.0, avg)
+	assert.InDelta(t, 0.0, avg, 0)
 
 	// Add one sample.
 	handler.updateResponseTime(10 * time.Millisecond)
 	avg = handler.getAvgResponseTime()
-	assert.Equal(t, 10.0, avg)
+	assert.InDelta(t, 10.0, avg, 0)
 
 	// Add more samples.
 	handler.updateResponseTime(20 * time.Millisecond)
 	handler.updateResponseTime(30 * time.Millisecond)
 	avg = handler.getAvgResponseTime()
-	assert.Equal(t, 20.0, avg) // (10 + 20 + 30) / 3 = 20
+	assert.InDelta(t, 20.0, avg, 0) // (10 + 20 + 30) / 3 = 20
 }
 
 // TestRingBufferWraparound tests ring buffer behavior when it wraps around
@@ -474,25 +474,25 @@ func TestRingBufferWraparound(t *testing.T) {
 	}
 
 	// Fill the buffer with 100 samples of 10ms each.
-	for i := 0; i < sampleSize; i++ {
+	for range sampleSize {
 		handler.updateResponseTime(10 * time.Millisecond)
 	}
 	avg := handler.getAvgResponseTime()
-	assert.Equal(t, 10.0, avg)
+	assert.InDelta(t, 10.0, avg, 0)
 
 	// Add one more sample (should replace oldest).
 	handler.updateResponseTime(20 * time.Millisecond)
 	avg = handler.getAvgResponseTime()
 	// Sum: 99*10 + 1*20 = 1010, avg = 1010/100 = 10.1
-	assert.Equal(t, 10.1, avg)
+	assert.InDelta(t, 10.1, avg, 0)
 
 	// Add 10 more samples of 30ms.
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		handler.updateResponseTime(30 * time.Millisecond)
 	}
 	avg = handler.getAvgResponseTime()
 	// Sum: 89*10 + 1*20 + 10*30 = 890 + 20 + 300 = 1210, avg = 1210/100 = 12.1
-	assert.Equal(t, 12.1, avg)
+	assert.InDelta(t, 12.1, avg, 0)
 }
 
 // TestRingBufferLarge tests ring buffer with many samples (> 100).
@@ -504,7 +504,7 @@ func TestRingBufferLarge(t *testing.T) {
 	}
 
 	// Add 150 samples.
-	for i := 0; i < 150; i++ {
+	for i := range 150 {
 		handler.updateResponseTime(time.Duration(i+1) * time.Millisecond)
 	}
 
@@ -512,7 +512,7 @@ func TestRingBufferLarge(t *testing.T) {
 	// Sum = (51 + 150) * 100 / 2 = 10050
 	// Avg = 10050 / 100 = 100.5
 	avg := handler.getAvgResponseTime()
-	assert.Equal(t, 100.5, avg)
+	assert.InDelta(t, 100.5, avg, 0)
 }
 
 // TestInflightCounter tests inflight request tracking.
@@ -557,11 +557,11 @@ func TestConcurrentResponseTimeUpdates(t *testing.T) {
 	numGoroutines := 10
 	updatesPerGoroutine := 20
 
-	for i := 0; i < numGoroutines; i++ {
+	for i := range numGoroutines {
 		wg.Add(1)
 		go func(id int) {
 			defer wg.Done()
-			for j := 0; j < updatesPerGoroutine; j++ {
+			for range updatesPerGoroutine {
 				handler.updateResponseTime(time.Duration(id+1) * time.Millisecond)
 			}
 		}(i)
@@ -571,7 +571,7 @@ func TestConcurrentResponseTimeUpdates(t *testing.T) {
 
 	// Should have exactly 100 samples (buffer size).
 	handler.mu.RLock()
-	assert.Equal(t, handler.sampleCount, sampleSize)
+	assert.Equal(t, sampleSize, handler.sampleCount)
 	handler.mu.RUnlock()
 }
 
@@ -591,7 +591,7 @@ func TestConcurrentInflightTracking(t *testing.T) {
 	var wg sync.WaitGroup
 	numRequests := 50
 
-	for i := 0; i < numRequests; i++ {
+	for range numRequests {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -601,8 +601,8 @@ func TestConcurrentInflightTracking(t *testing.T) {
 			// Track maximum inflight count.
 			current := handler.inflightCount.Load()
 			for {
-				max := maxInflight.Load()
-				if current <= max || maxInflight.CompareAndSwap(max, current) {
+				maxLoad := maxInflight.Load()
+				if current <= maxLoad || maxInflight.CompareAndSwap(maxLoad, current) {
 					break
 				}
 			}
@@ -645,7 +645,7 @@ func TestConcurrentRequestsRespectInflight(t *testing.T) {
 
 	// Pre-warm both servers to establish equal average response times.
 	balancer.handlers[0].mu.Lock()
-	for i := 0; i < sampleSize; i++ {
+	for i := range sampleSize {
 		balancer.handlers[0].responseTimes[i] = 10.0
 	}
 	balancer.handlers[0].responseTimeSum = 10.0 * sampleSize
@@ -653,7 +653,7 @@ func TestConcurrentRequestsRespectInflight(t *testing.T) {
 	balancer.handlers[0].mu.Unlock()
 
 	balancer.handlers[1].mu.Lock()
-	for i := 0; i < sampleSize; i++ {
+	for i := range sampleSize {
 		balancer.handlers[1].responseTimes[i] = 10.0
 	}
 	balancer.handlers[1].responseTimeSum = 10.0 * sampleSize
@@ -664,7 +664,7 @@ func TestConcurrentRequestsRespectInflight(t *testing.T) {
 	var wg sync.WaitGroup
 	inflightRequests := 5
 
-	for i := 0; i < inflightRequests; i++ {
+	for range inflightRequests {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -680,7 +680,7 @@ func TestConcurrentRequestsRespectInflight(t *testing.T) {
 	// Verify inflight counts before making new requests.
 	server1Inflight := balancer.handlers[0].inflightCount.Load()
 	server2Inflight := balancer.handlers[1].inflightCount.Load()
-	assert.Equal(t, server1Inflight+server2Inflight, int64(5))
+	assert.Equal(t, int64(5), server1Inflight+server2Inflight)
 
 	// Phase 2: Make new requests while the initial requests are blocked.
 	// These should see the high inflight counts and route to the less-loaded server.
@@ -690,7 +690,7 @@ func TestConcurrentRequestsRespectInflight(t *testing.T) {
 
 	// Launch new requests in background so they don't block.
 	var newWg sync.WaitGroup
-	for i := 0; i < newRequests; i++ {
+	for range newRequests {
 		newWg.Add(1)
 		go func() {
 			defer newWg.Done()
@@ -740,7 +740,7 @@ func TestTTFBMeasurement(t *testing.T) {
 	}), pointer(1), false)
 
 	// Make multiple requests to build average.
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		recorder := httptest.NewRecorder()
 		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 	}
@@ -784,7 +784,7 @@ func TestZeroSamplesReturnsZero(t *testing.T) {
 	}
 
 	avg := handler.getAvgResponseTime()
-	assert.Equal(t, 0.0, avg)
+	assert.InDelta(t, 0.0, avg, 0)
 }
 
 // TestScoreCalculationWithWeights tests that weights are properly considered in score calculation.
@@ -807,7 +807,7 @@ func TestScoreCalculationWithWeights(t *testing.T) {
 
 	// Make requests to build up response time averages.
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
-	for i := 0; i < 2; i++ {
+	for range 2 {
 		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 	}
 
@@ -815,11 +815,11 @@ func TestScoreCalculationWithWeights(t *testing.T) {
 	// Score for normal: (50 × (1 + 0)) / 1 = 50
 	// After warmup, weighted server has 3x better score (16.67 vs 50) and should receive nearly all requests.
 	recorder = &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 	}
 
-	assert.Equal(t, recorder.save["weighted"], 10)
+	assert.Equal(t, 10, recorder.save["weighted"])
 	assert.Zero(t, recorder.save["normal"])
 }
 
@@ -842,7 +842,7 @@ func TestScoreCalculationWithInflight(t *testing.T) {
 	}), pointer(1), false)
 
 	// Build up response time averages for both servers.
-	for i := 0; i < 2; i++ {
+	for range 2 {
 		recorder := httptest.NewRecorder()
 		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 	}
@@ -853,8 +853,8 @@ func TestScoreCalculationWithInflight(t *testing.T) {
 	// Make requests - they should prefer server2 because:
 	// Score for server1: (10 × (1 + 5)) / 1 = 60
 	// Score for server2: (10 × (1 + 0)) / 1 = 10
-	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
-	for i := 0; i < 5; i++ {
+	recorder := &responseRecorder{save: map[string]int{}}
+	for range 5 {
 		// Manually increment to simulate the ServeHTTP behavior.
 		server, _ := balancer.nextServer()
 		server.inflightCount.Add(1)
@@ -867,11 +867,10 @@ func TestScoreCalculationWithInflight(t *testing.T) {
 	}
 
 	// Server2 should get all requests
-	assert.Equal(t, recorder.save["server2"], 5)
+	assert.Equal(t, 5, recorder.save["server2"])
 	assert.Zero(t, recorder.save["server1"])
 }
 
-// FIXME with new cold start strategy
 // TestScoreCalculationColdStart tests that new servers (0ms avg) get fair selection
 func TestScoreCalculationColdStart(t *testing.T) {
 	balancer := New(nil, false)
@@ -884,7 +883,7 @@ func TestScoreCalculationColdStart(t *testing.T) {
 	}), pointer(1), false)
 
 	// Warm up the first server
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		recorder := httptest.NewRecorder()
 		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 	}
@@ -900,7 +899,7 @@ func TestScoreCalculationColdStart(t *testing.T) {
 	// Score for warm: (50 × (1 + 0)) / 1 = 50
 	// Score for cold: (0 × (1 + 0)) / 1 = 0
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 	}
 
@@ -910,7 +909,7 @@ func TestScoreCalculationColdStart(t *testing.T) {
 	// After cold server builds up its average, it should continue to get more traffic
 	// because it's actually faster (10ms vs 50ms)
 	recorder = &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 	}
 	assert.Greater(t, recorder.save["cold"], recorder.save["warm"])
@@ -938,7 +937,7 @@ func TestFastServerGetsMoreTraffic(t *testing.T) {
 	// After just 1 request to each server, the algorithm identifies the fastest server
 	// and routes nearly all subsequent traffic there (converges in ~2 requests).
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
-	for i := 0; i < 50; i++ {
+	for range 50 {
 		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 	}
 
@@ -972,7 +971,7 @@ func TestTrafficShiftsWhenPerformanceDegrades(t *testing.T) {
 	balancer.handlersMu.RLock()
 	for _, h := range balancer.handlers {
 		h.mu.Lock()
-		for i := 0; i < sampleSize; i++ {
+		for i := range sampleSize {
 			h.responseTimes[i] = 5.0
 		}
 		h.responseTimeSum = 5.0 * sampleSize
@@ -983,7 +982,7 @@ func TestTrafficShiftsWhenPerformanceDegrades(t *testing.T) {
 
 	// Phase 1: Both servers perform equally (5ms each).
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
-	for i := 0; i < 50; i++ {
+	for range 50 {
 		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 	}
 
@@ -1000,7 +999,7 @@ func TestTrafficShiftsWhenPerformanceDegrades(t *testing.T) {
 	// Ring buffer has 100 samples, need significant new samples to shift average.
 	// server1's average will climb from ~5ms toward 15ms.
 	recorder2 := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
-	for i := 0; i < 60; i++ {
+	for range 60 {
 		balancer.ServeHTTP(recorder2, httptest.NewRequest(http.MethodGet, "/", nil))
 	}
 
@@ -1040,7 +1039,7 @@ func TestMultipleServersWithSameScore(t *testing.T) {
 	// Set all servers to identical response times to trigger tie-breaking.
 	for _, h := range balancer.handlers {
 		h.mu.Lock()
-		for i := 0; i < sampleSize; i++ {
+		for i := range sampleSize {
 			h.responseTimes[i] = 5.0
 		}
 		h.responseTimeSum = 5.0 * sampleSize
@@ -1051,7 +1050,7 @@ func TestMultipleServersWithSameScore(t *testing.T) {
 	// With all servers having identical scores, WRR tie-breaking should distribute fairly.
 	// Test the selection logic directly without actual HTTP requests to avoid timing variations.
 	counts := map[string]int{"server1": 0, "server2": 0, "server3": 0}
-	for i := 0; i < 90; i++ {
+	for range 90 {
 		server, err := balancer.nextServer()
 		assert.NoError(t, err)
 		counts[server.name]++
@@ -1089,7 +1088,7 @@ func TestWRRTieBreakingWeightedDistribution(t *testing.T) {
 	// weighted: score = (15 * 1) / 3 = 5
 	// normal: score = (5 * 1) / 1 = 5
 	balancer.handlers[0].mu.Lock()
-	for i := 0; i < sampleSize; i++ {
+	for i := range sampleSize {
 		balancer.handlers[0].responseTimes[i] = 15.0
 	}
 	balancer.handlers[0].responseTimeSum = 15.0 * sampleSize
@@ -1097,7 +1096,7 @@ func TestWRRTieBreakingWeightedDistribution(t *testing.T) {
 	balancer.handlers[0].mu.Unlock()
 
 	balancer.handlers[1].mu.Lock()
-	for i := 0; i < sampleSize; i++ {
+	for i := range sampleSize {
 		balancer.handlers[1].responseTimes[i] = 5.0
 	}
 	balancer.handlers[1].responseTimeSum = 5.0 * sampleSize
@@ -1106,7 +1105,7 @@ func TestWRRTieBreakingWeightedDistribution(t *testing.T) {
 
 	// Test the selection logic directly without actual HTTP requests to avoid timing variations.
 	counts := map[string]int{"weighted": 0, "normal": 0}
-	for i := 0; i < 80; i++ {
+	for range 80 {
 		server, err := balancer.nextServer()
 		assert.NoError(t, err)
 		counts[server.name]++

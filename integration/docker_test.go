@@ -157,8 +157,8 @@ func (s *DockerSuite) TestLeastTimeServer() {
 	}
 
 	// Both servers should have received requests
-	assert.Greater(s.T(), repartition[whoami1IP], 0)
-	assert.Greater(s.T(), repartition[whoami2IP], 0)
+	assert.Positive(s.T(), repartition[whoami1IP])
+	assert.Positive(s.T(), repartition[whoami2IP])
 }
 
 func (s *DockerSuite) TestDefaultDockerContainers() {
