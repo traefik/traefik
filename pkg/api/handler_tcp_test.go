@@ -881,7 +881,7 @@ func TestHandler_TCP(t *testing.T) {
 			rtConf.PopulateUsedBy()
 			rtConf.GetTCPRoutersByEntryPoints(t.Context(), []string{"web"})
 
-			handler := New(static.Configuration{API: &static.API{}, Global: &static.Global{}}, rtConf)
+			handler := New(static.Configuration{API: &static.API{}, Global: &static.Global{}}, rtConf, nil)
 			server := httptest.NewServer(handler.createRouter())
 
 			resp, err := http.DefaultClient.Get(server.URL + test.path)
