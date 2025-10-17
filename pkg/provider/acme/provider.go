@@ -251,14 +251,15 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 
 	p.renewCertificates(ctx, renewPeriod)
 
-	ticker := time.NewTicker(renewInterval)
 	pool.GoCtx(func(ctxPool context.Context) {
+		ticker := time.NewTicker(renewInterval)
+		defer ticker.Stop()
+
 		for {
 			select {
 			case <-ticker.C:
 				p.renewCertificates(ctx, renewPeriod)
 			case <-ctxPool.Done():
-				ticker.Stop()
 				return
 			}
 		}
