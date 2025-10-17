@@ -65,6 +65,9 @@ experimental:
 !!! warning
     This is an experimental feature.
 
+!!! note "Stdio logs remain available"
+    When OTLP logging is enabled, standard output (stdio) logs are still available and will continue to be written alongside OTLP exports.
+
 #### Configuration Example
 
 ```yaml tab="File (YAML)"
