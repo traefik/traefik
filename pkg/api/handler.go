@@ -28,16 +28,11 @@ func writeError(rw http.ResponseWriter, msg string, code int) {
 	http.Error(rw, string(data), code)
 }
 
-type serviceInfoRepresentation struct {
-	*runtime.ServiceInfo
-	ServerStatus map[string]string `json:"serverStatus,omitempty"`
-}
-
 // RunTimeRepresentation is the configuration information exposed by the API handler.
 type RunTimeRepresentation struct {
 	Routers        map[string]*runtime.RouterInfo        `json:"routers,omitempty"`
 	Middlewares    map[string]*runtime.MiddlewareInfo    `json:"middlewares,omitempty"`
-	Services       map[string]*serviceInfoRepresentation `json:"services,omitempty"`
+	Services       map[string]*runtime.ServiceInfo       `json:"services,omitempty"`
 	TCPRouters     map[string]*runtime.TCPRouterInfo     `json:"tcpRouters,omitempty"`
 	TCPMiddlewares map[string]*runtime.TCPMiddlewareInfo `json:"tcpMiddlewares,omitempty"`
 	TCPServices    map[string]*runtime.TCPServiceInfo    `json:"tcpServices,omitempty"`
@@ -119,18 +114,10 @@ func (h Handler) createRouter() *mux.Router {
 }
 
 func (h Handler) getRuntimeConfiguration(rw http.ResponseWriter, request *http.Request) {
-	siRepr := make(map[string]*serviceInfoRepresentation, len(h.runtimeConfiguration.Services))
-	for k, v := range h.runtimeConfiguration.Services {
-		siRepr[k] = &serviceInfoRepresentation{
-			ServiceInfo:  v,
-			ServerStatus: v.GetAllStatus(),
-		}
-	}
-
 	result := RunTimeRepresentation{
 		Routers:        h.runtimeConfiguration.Routers,
 		Middlewares:    h.runtimeConfiguration.Middlewares,
-		Services:       siRepr,
+		Services:       h.runtimeConfiguration.Services,
 		TCPRouters:     h.runtimeConfiguration.TCPRouters,
 		TCPMiddlewares: h.runtimeConfiguration.TCPMiddlewares,
 		TCPServices:    h.runtimeConfiguration.TCPServices,
