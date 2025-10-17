@@ -48,6 +48,14 @@ tracing:
 
         OTEL_PROPAGATORS=b3,jaeger
 
+!!! info "Resource attributes"
+    
+    Traefik supports the `OTEL_RESOURCE_ATTRIBUTES` env variable to set up the attributes.
+
+    Traefik can automatically discover basic attributes when running in a Kubernetes cluster.
+
+    However, if Traefik pod is running with the `hostNetwork: true` option, pod will inherit hostname from the node and will not be able to discover other attributes. In this case, provide the attributes yourself if necessary.
+
 
 ### HTTP configuration
 
