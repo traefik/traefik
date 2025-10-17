@@ -16,9 +16,10 @@ const (
 // configuration contains information from the labels that are globals (not related to the dynamic configuration)
 // or specific to the provider.
 type configuration struct {
-	Enable  bool
-	Network string
-	LBSwarm bool
+	Enable                bool
+	Network               string
+	LBSwarm               bool
+	VisibleWhenNotRunning bool
 }
 
 type labelConfiguration struct {
@@ -28,8 +29,9 @@ type labelConfiguration struct {
 }
 
 type specificConfiguration struct {
-	Network *string
-	LBSwarm bool
+	Network               *string
+	LBSwarm               bool
+	VisibleWhenNotRunning *bool
 }
 
 func (p *Shared) extractDockerLabels(container dockerData) (configuration, error) {
@@ -43,9 +45,15 @@ func (p *Shared) extractDockerLabels(container dockerData) (configuration, error
 		network = *conf.Docker.Network
 	}
 
+	visibleWhenNotRunning := false
+	if conf.Docker != nil && conf.Docker.VisibleWhenNotRunning != nil {
+		visibleWhenNotRunning = *conf.Docker.VisibleWhenNotRunning
+	}
+
 	return configuration{
-		Enable:  conf.Enable,
-		Network: network,
+		Enable:                conf.Enable,
+		Network:               network,
+		VisibleWhenNotRunning: visibleWhenNotRunning,
 	}, nil
 }
 
@@ -72,6 +80,10 @@ func (p *Shared) extractSwarmLabels(container dockerData) (configuration, error)
 		if labelConf.Docker.Network != nil {
 			conf.Network = *labelConf.Docker.Network
 		}
+
+		if labelConf.Docker.VisibleWhenNotRunning != nil {
+			conf.VisibleWhenNotRunning = *labelConf.Docker.VisibleWhenNotRunning
+		}
 	}
 
 	if labelConf.Swarm != nil {
@@ -79,6 +91,10 @@ func (p *Shared) extractSwarmLabels(container dockerData) (configuration, error)
 
 		if labelConf.Swarm.Network != nil {
 			conf.Network = *labelConf.Swarm.Network
+		}
+
+		if labelConf.Swarm.VisibleWhenNotRunning != nil {
+			conf.VisibleWhenNotRunning = *labelConf.Swarm.VisibleWhenNotRunning
 		}
 	}
 
