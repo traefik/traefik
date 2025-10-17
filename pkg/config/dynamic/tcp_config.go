@@ -87,7 +87,6 @@ type RouterTCPTLSConfig struct {
 type TCPServersLoadBalancer struct {
 	Servers          []TCPServer `json:"servers,omitempty" toml:"servers,omitempty" yaml:"servers,omitempty" label-slice-as-struct:"server" export:"true"`
 	ServersTransport string      `json:"serversTransport,omitempty" toml:"serversTransport,omitempty" yaml:"serversTransport,omitempty" export:"true"`
-
 	// ProxyProtocol holds the PROXY Protocol configuration.
 	// Deprecated: use ServersTransport to configure ProxyProtocol instead.
 	ProxyProtocol *ProxyProtocol `json:"proxyProtocol,omitempty" toml:"proxyProtocol,omitempty" yaml:"proxyProtocol,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`

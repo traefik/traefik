@@ -29,9 +29,10 @@ func newTCPRouterRepresentation(name string, rt *runtime.TCPRouterInfo) tcpRoute
 
 type tcpServiceRepresentation struct {
 	*runtime.TCPServiceInfo
-	Name     string `json:"name,omitempty"`
-	Provider string `json:"provider,omitempty"`
-	Type     string `json:"type,omitempty"`
+	Name         string            `json:"name,omitempty"`
+	Provider     string            `json:"provider,omitempty"`
+	Type         string            `json:"type,omitempty"`
+	ServerStatus map[string]string `json:"serverStatus,omitempty"`
 }
 
 func newTCPServiceRepresentation(name string, si *runtime.TCPServiceInfo) tcpServiceRepresentation {
@@ -40,6 +41,7 @@ func newTCPServiceRepresentation(name string, si *runtime.TCPServiceInfo) tcpSer
 		Name:           name,
 		Provider:       getProviderName(name),
 		Type:           strings.ToLower(extractType(si.TCPService)),
+		ServerStatus:   si.GetAllStatus(),
 	}
 }
 
