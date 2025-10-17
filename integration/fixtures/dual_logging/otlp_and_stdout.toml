@@ -11,7 +11,7 @@
 [log.otlp]
   serviceName = "traefik-test"
   [log.otlp.http]
-    endpoint = "http://127.0.0.1:4318/v1/logs"
+    endpoint = "{{ .CollectorURL }}"
 
 [api]
   insecure = true

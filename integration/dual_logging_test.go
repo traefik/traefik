@@ -3,18 +3,15 @@ package integration
 import (
 	"compress/gzip"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"regexp"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"go.opentelemetry.io/collector/pdata/plog/plogotlp"
 )
@@ -107,11 +104,15 @@ func (s *DualLoggingSuite) TearDownTest() {
 }
 
 func (s *DualLoggingSuite) TestOTLPAndStdoutLogging() {
-	configContent := s.updateOTLPEndpoint("fixtures/dual_logging/otlp_and_stdout.toml")
-	configFile := s.createTempConfig(configContent)
-	defer os.Remove(configFile)
+	tempObjects := struct {
+		CollectorURL string
+	}{
+		CollectorURL: s.collector.URL + "/v1/logs",
+	}
 
-	cmd, display := s.cmdTraefik(withConfigFile(configFile))
+	file := s.adaptFile("fixtures/dual_logging/otlp_and_stdout.toml", tempObjects)
+
+	cmd, display := s.cmdTraefik(withConfigFile(file))
 	defer s.displayTraefikLogFile(traefikTestLogFile)
 
 	s.waitForTraefik("dashboard")
@@ -130,30 +131,4 @@ func (s *DualLoggingSuite) TestOTLPAndStdoutLogging() {
 	assert.True(s.T(), foundStdoutLog)
 	foundOTLPLog := strings.Contains(otlpOutput, "Starting provider")
 	assert.True(s.T(), foundOTLPLog)
-}
-
-// Helper functions
-func (s *DualLoggingSuite) updateOTLPEndpoint(configPath string) string {
-	content, err := os.ReadFile(configPath)
-	require.NoError(s.T(), err)
-
-	// Replace the endpoint with our test collector URL
-	configStr := string(content)
-	re := regexp.MustCompile(`endpoint = ".*"`)
-	configStr = re.ReplaceAllString(configStr, fmt.Sprintf(`endpoint = "%s/v1/logs"`, s.collector.URL))
-
-	return configStr
-}
-
-func (s *DualLoggingSuite) createTempConfig(content string) string {
-	tmpFile, err := os.CreateTemp("", "traefik-test-*.toml")
-	require.NoError(s.T(), err)
-
-	_, err = tmpFile.WriteString(content)
-	require.NoError(s.T(), err)
-
-	err = tmpFile.Close()
-	require.NoError(s.T(), err)
-
-	return tmpFile.Name()
 }
