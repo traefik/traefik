@@ -440,6 +440,8 @@ func TestServiceTCPHealthChecker_Launch(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
 			ctx, cancel := context.WithCancel(log.Logger.WithContext(t.Context()))
 			defer cancel()
 
@@ -471,9 +473,9 @@ func TestServiceTCPHealthChecker_Launch(t *testing.T) {
 
 			go service.Launch(ctx)
 
-			// How much time to wait for the health check to actually complete
+			// How much time to wait for the health check to actually complete.
 			deadline := time.Now().Add(200 * time.Millisecond)
-			// TLS handshake can take much longer
+			// TLS handshake can take much longer.
 			if test.server.TLS {
 				deadline = time.Now().Add(1000 * time.Millisecond)
 			}
@@ -500,7 +502,7 @@ func TestServiceTCPHealthChecker_Launch(t *testing.T) {
 	}
 }
 
-func TestTCPDifferentIntervals(t *testing.T) {
+func TestServiceTCPHealthChecker_differentIntervals(t *testing.T) {
 	// Test that unhealthy servers are checked more frequently than healthy servers
 	// when UnhealthyInterval is set to a lower value than Interval
 	ctx, cancel := context.WithCancel(t.Context())
