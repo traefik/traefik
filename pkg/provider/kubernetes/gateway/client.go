@@ -38,6 +38,7 @@ type clientWrapper struct {
 
 	factoryNamespace    kinformers.SharedInformerFactory
 	factoryGatewayClass gateinformers.SharedInformerFactory
+	factoryNode         kinformers.SharedInformerFactory
 	factoriesGateway    map[string]gateinformers.SharedInformerFactory
 	factoriesKube       map[string]kinformers.SharedInformerFactory
 	factoriesSecret     map[string]kinformers.SharedInformerFactory
@@ -47,6 +48,7 @@ type clientWrapper struct {
 
 	labelSelector       string
 	experimentalChannel bool
+	disableNodeInformer bool
 }
 
 func createClientFromConfig(c *rest.Config) (*clientWrapper, error) {
@@ -157,6 +159,14 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		return nil, err
 	}
 
+	if !c.disableNodeInformer {
+		c.factoryNode = kinformers.NewSharedInformerFactory(c.csKube, resyncPeriod)
+		_, err = c.factoryNode.Core().V1().Nodes().Informer().AddEventHandler(eventHandler)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	for _, ns := range namespaces {
 		factoryKube := kinformers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, kinformers.WithNamespace(ns))
 		_, err = factoryKube.Core().V1().Services().Informer().AddEventHandler(eventHandler)
@@ -218,6 +228,9 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 
 	c.factoryNamespace.Start(stopCh)
 	c.factoryGatewayClass.Start(stopCh)
+	if c.factoryNode != nil {
+		c.factoryNode.Start(stopCh)
+	}
 
 	for _, ns := range namespaces {
 		c.factoriesGateway[ns].Start(stopCh)
@@ -234,6 +247,14 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 	for t, ok := range c.factoryGatewayClass.WaitForCacheSync(stopCh) {
 		if !ok {
 			return nil, fmt.Errorf("timed out waiting for controller caches to sync %s", t.String())
+		}
+	}
+
+	if c.factoryNode != nil {
+		for t, ok := range c.factoryNode.WaitForCacheSync(stopCh) {
+			if !ok {
+				return nil, fmt.Errorf("timed out waiting for controller caches to sync %s", t.String())
+			}
 		}
 	}
 
@@ -363,6 +384,18 @@ func (c *clientWrapper) ListGateways() []*gatev1.Gateway {
 
 func (c *clientWrapper) ListGatewayClasses() ([]*gatev1.GatewayClass, error) {
 	return c.factoryGatewayClass.Gateway().V1().GatewayClasses().Lister().List(labels.Everything())
+}
+
+func (c *clientWrapper) ListNodes() ([]*corev1.Node, error) {
+	if c.disableNodeInformer {
+		return nil, errors.New("nodes lookup is disabled")
+	}
+
+	if c.factoryNode == nil {
+		return nil, errors.New("node informer not initialized")
+	}
+
+	return c.factoryNode.Core().V1().Nodes().Lister().List(labels.Everything())
 }
 
 // ListEndpointSlicesForService returns the EndpointSlices for the given service name in the given namespace.

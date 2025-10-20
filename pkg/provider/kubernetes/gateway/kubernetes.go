@@ -63,15 +63,16 @@ const (
 
 // Provider holds configurations of the provider.
 type Provider struct {
-	Endpoint            string              `description:"Kubernetes server endpoint (required for external cluster client)." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
-	Token               types.FileOrContent `description:"Kubernetes bearer token (not needed for in-cluster client). It accepts either a token value or a file path to the token." json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty" loggable:"false"`
-	CertAuthFilePath    string              `description:"Kubernetes certificate authority file path (not needed for in-cluster client)." json:"certAuthFilePath,omitempty" toml:"certAuthFilePath,omitempty" yaml:"certAuthFilePath,omitempty"`
-	Namespaces          []string            `description:"Kubernetes namespaces." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty" export:"true"`
-	LabelSelector       string              `description:"Kubernetes label selector to select specific GatewayClasses." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
-	ThrottleDuration    ptypes.Duration     `description:"Kubernetes refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
-	ExperimentalChannel bool                `description:"Toggles Experimental Channel resources support (TCPRoute, TLSRoute...)." json:"experimentalChannel,omitempty" toml:"experimentalChannel,omitempty" yaml:"experimentalChannel,omitempty" export:"true"`
-	StatusAddress       *StatusAddress      `description:"Defines the Kubernetes Gateway status address." json:"statusAddress,omitempty" toml:"statusAddress,omitempty" yaml:"statusAddress,omitempty" export:"true"`
-	NativeLBByDefault   bool                `description:"Defines whether to use Native Kubernetes load-balancing by default." json:"nativeLBByDefault,omitempty" toml:"nativeLBByDefault,omitempty" yaml:"nativeLBByDefault,omitempty" export:"true"`
+	Endpoint             string              `description:"Kubernetes server endpoint (required for external cluster client)." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
+	Token                types.FileOrContent `description:"Kubernetes bearer token (not needed for in-cluster client). It accepts either a token value or a file path to the token." json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty" loggable:"false"`
+	CertAuthFilePath     string              `description:"Kubernetes certificate authority file path (not needed for in-cluster client)." json:"certAuthFilePath,omitempty" toml:"certAuthFilePath,omitempty" yaml:"certAuthFilePath,omitempty"`
+	Namespaces           []string            `description:"Kubernetes namespaces." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty" export:"true"`
+	LabelSelector        string              `description:"Kubernetes label selector to select specific GatewayClasses." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
+	ThrottleDuration     ptypes.Duration     `description:"Kubernetes refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
+	ExperimentalChannel  bool                `description:"Toggles Experimental Channel resources support (TCPRoute, TLSRoute...)." json:"experimentalChannel,omitempty" toml:"experimentalChannel,omitempty" yaml:"experimentalChannel,omitempty" export:"true"`
+	StatusAddress        *StatusAddress      `description:"Defines the Kubernetes Gateway status address." json:"statusAddress,omitempty" toml:"statusAddress,omitempty" yaml:"statusAddress,omitempty" export:"true"`
+	NativeLBByDefault    bool                `description:"Defines whether to use Native Kubernetes load-balancing by default." json:"nativeLBByDefault,omitempty" toml:"nativeLBByDefault,omitempty" yaml:"nativeLBByDefault,omitempty" export:"true"`
+	DisableNodeResources bool                `description:"Disables the lookup of node resources (incompatible with NodePortLB enabled services)." json:"disableNodeResources,omitempty" toml:"disableNodeResources,omitempty" yaml:"disableNodeResources,omitempty" export:"true"`
 
 	EntryPoints map[string]Entrypoint `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
 
@@ -204,6 +205,7 @@ func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
 
 	client.labelSelector = p.LabelSelector
 	client.experimentalChannel = p.ExperimentalChannel
+	client.disableNodeInformer = p.DisableNodeResources
 
 	return client, nil
 }
@@ -910,6 +912,58 @@ func (p *Provider) getBackendAddresses(namespace string, ref gatev1.BackendRef) 
 	annotationsConfig, err := parseServiceAnnotations(service.Annotations)
 	if err != nil {
 		return nil, corev1.ServicePort{}, fmt.Errorf("parsing service annotations config: %w", err)
+	}
+
+	nodePortLB := false
+	if annotationsConfig.Service.NodePortLB != nil {
+		nodePortLB = *annotationsConfig.Service.NodePortLB
+	}
+
+	if nodePortLB && service.Spec.Type == corev1.ServiceTypeNodePort {
+		if p.DisableNodeResources {
+			return nil, corev1.ServicePort{}, errors.New("nodes lookup is disabled")
+		}
+
+		if svcPort.NodePort == 0 {
+			return nil, corev1.ServicePort{}, fmt.Errorf("service %s/%s does not expose a nodePort", service.Namespace, service.Name)
+		}
+
+		nodes, nodesErr := p.client.ListNodes()
+		if nodesErr != nil {
+			return nil, corev1.ServicePort{}, fmt.Errorf("listing nodes: %w", nodesErr)
+		}
+
+		if len(nodes) == 0 {
+			return nil, corev1.ServicePort{}, fmt.Errorf("nodes not found")
+		}
+
+		uniqAddresses := map[string]struct{}{}
+		var backendServers []backendAddress
+
+		for _, node := range nodes {
+			for _, addr := range node.Status.Addresses {
+				if addr.Type != corev1.NodeInternalIP {
+					continue
+				}
+
+				if _, ok := uniqAddresses[addr.Address]; ok {
+					continue
+				}
+
+				uniqAddresses[addr.Address] = struct{}{}
+
+				backendServers = append(backendServers, backendAddress{
+					IP:   addr.Address,
+					Port: svcPort.NodePort,
+				})
+			}
+		}
+
+		if len(backendServers) == 0 {
+			return nil, corev1.ServicePort{}, fmt.Errorf("no internal node addresses found")
+		}
+
+		return backendServers, *svcPort, nil
 	}
 
 	nativeLB := p.NativeLBByDefault

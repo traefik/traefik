@@ -328,6 +328,34 @@ providers:
 --providers.kubernetesgateway.nativeLBByDefault=true
 ```
 
+### `disableNodeResources`
+
+_Optional, Default: false_
+
+Disables the lookup of Node Kubernetes resources.
+Enable this option only when Traefik must not watch node objects.
+
+!!! warning "NodePortLB"
+
+    The `traefik.io/service.nodeportlb` annotation requires access to node information and therefore cannot be used when `disableNodeResources` is set to `true`.
+
+```yaml tab="File (YAML)"
+providers:
+  kubernetesGateway:
+    disableNodeResources: true
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.kubernetesGateway]
+  disableNodeResources = true
+  # ...
+```
+
+```bash tab="CLI"
+--providers.kubernetesgateway.disableNodeResources=true
+```
+
 ### `throttleDuration`
 
 _Optional, Default: 0_
