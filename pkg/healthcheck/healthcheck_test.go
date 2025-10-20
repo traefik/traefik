@@ -53,6 +53,15 @@ func TestNewServiceHealthChecker_durations(t *testing.T) {
 			expInterval: time.Second * 10,
 			expTimeout:  time.Second * 5,
 		},
+		{
+			desc: "interval shorter than timeout",
+			config: &dynamic.ServerHealthCheck{
+				Interval: ptypes.Duration(time.Second),
+				Timeout:  ptypes.Duration(time.Second * 5),
+			},
+			expInterval: time.Second,
+			expTimeout:  time.Second * 5,
+		},
 	}
 
 	for _, test := range testCases {

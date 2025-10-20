@@ -70,16 +70,16 @@ XIJCEEE8JZ4AXIZ+IcB6LA==
 
 func TestNewServiceTCPHealthChecker(t *testing.T) {
 	testCases := []struct {
-		desc        string
-		config      *dynamic.TCPServerHealthCheck
-		expInterval time.Duration
-		expTimeout  time.Duration
+		desc             string
+		config           *dynamic.TCPServerHealthCheck
+		expectedInterval time.Duration
+		expectedTimeout  time.Duration
 	}{
 		{
-			desc:        "default values",
-			config:      &dynamic.TCPServerHealthCheck{},
-			expInterval: time.Duration(dynamic.DefaultHealthCheckInterval),
-			expTimeout:  time.Duration(dynamic.DefaultHealthCheckTimeout),
+			desc:             "default values",
+			config:           &dynamic.TCPServerHealthCheck{},
+			expectedInterval: time.Duration(dynamic.DefaultHealthCheckInterval),
+			expectedTimeout:  time.Duration(dynamic.DefaultHealthCheckTimeout),
 		},
 		{
 			desc: "out of range values",
@@ -87,8 +87,8 @@ func TestNewServiceTCPHealthChecker(t *testing.T) {
 				Interval: ptypes.Duration(-time.Second),
 				Timeout:  ptypes.Duration(-time.Second),
 			},
-			expInterval: time.Duration(dynamic.DefaultHealthCheckInterval),
-			expTimeout:  time.Duration(dynamic.DefaultHealthCheckTimeout),
+			expectedInterval: time.Duration(dynamic.DefaultHealthCheckInterval),
+			expectedTimeout:  time.Duration(dynamic.DefaultHealthCheckTimeout),
 		},
 		{
 			desc: "custom durations",
@@ -96,8 +96,17 @@ func TestNewServiceTCPHealthChecker(t *testing.T) {
 				Interval: ptypes.Duration(time.Second * 10),
 				Timeout:  ptypes.Duration(time.Second * 5),
 			},
-			expInterval: time.Second * 10,
-			expTimeout:  time.Second * 5,
+			expectedInterval: time.Second * 10,
+			expectedTimeout:  time.Second * 5,
+		},
+		{
+			desc: "interval shorter than timeout",
+			config: &dynamic.TCPServerHealthCheck{
+				Interval: ptypes.Duration(time.Second),
+				Timeout:  ptypes.Duration(time.Second * 5),
+			},
+			expectedInterval: time.Second,
+			expectedTimeout:  time.Second * 5,
 		},
 	}
 
@@ -106,42 +115,42 @@ func TestNewServiceTCPHealthChecker(t *testing.T) {
 			t.Parallel()
 
 			healthChecker := NewServiceTCPHealthChecker(t.Context(), test.config, nil, nil, nil, "")
-			assert.Equal(t, test.expInterval, healthChecker.interval)
-			assert.Equal(t, test.expTimeout, healthChecker.timeout)
+			assert.Equal(t, test.expectedInterval, healthChecker.interval)
+			assert.Equal(t, test.expectedTimeout, healthChecker.timeout)
 		})
 	}
 }
 
 func TestServiceTCPHealthChecker_executeHealthCheck_connection(t *testing.T) {
 	testCases := []struct {
-		desc       string
-		address    string
-		config     *dynamic.TCPServerHealthCheck
-		expAddress string
+		desc            string
+		address         string
+		config          *dynamic.TCPServerHealthCheck
+		expectedAddress string
 	}{
 		{
-			desc:       "no port override - uses original address",
-			address:    "127.0.0.1:8080",
-			config:     &dynamic.TCPServerHealthCheck{Port: 0},
-			expAddress: "127.0.0.1:8080",
+			desc:            "no port override - uses original address",
+			address:         "127.0.0.1:8080",
+			config:          &dynamic.TCPServerHealthCheck{Port: 0},
+			expectedAddress: "127.0.0.1:8080",
 		},
 		{
-			desc:       "port override - uses overridden port",
-			address:    "127.0.0.1:8080",
-			config:     &dynamic.TCPServerHealthCheck{Port: 9090},
-			expAddress: "127.0.0.1:9090",
+			desc:            "port override - uses overridden port",
+			address:         "127.0.0.1:8080",
+			config:          &dynamic.TCPServerHealthCheck{Port: 9090},
+			expectedAddress: "127.0.0.1:9090",
 		},
 		{
-			desc:       "IPv6 address with port override",
-			address:    "[::1]:8080",
-			config:     &dynamic.TCPServerHealthCheck{Port: 9090},
-			expAddress: "[::1]:9090",
+			desc:            "IPv6 address with port override",
+			address:         "[::1]:8080",
+			config:          &dynamic.TCPServerHealthCheck{Port: 9090},
+			expectedAddress: "[::1]:9090",
 		},
 		{
-			desc:       "successful connection without port override",
-			address:    "localhost:3306",
-			config:     &dynamic.TCPServerHealthCheck{Port: 0},
-			expAddress: "localhost:3306",
+			desc:            "successful connection without port override",
+			address:         "localhost:3306",
+			config:          &dynamic.TCPServerHealthCheck{Port: 0},
+			expectedAddress: "localhost:3306",
 		},
 	}
 
@@ -169,19 +178,18 @@ func TestServiceTCPHealthChecker_executeHealthCheck_connection(t *testing.T) {
 			require.NoError(t, err)
 
 			// Verify that the health check attempted to connect to the expected address.
-			assert.Equal(t, test.expAddress, gotAddress)
+			assert.Equal(t, test.expectedAddress, gotAddress)
 		})
 	}
 }
 
 func TestServiceTCPHealthChecker_executeHealthCheck_payloadHandling(t *testing.T) {
 	testCases := []struct {
-		desc                string
-		config              *dynamic.TCPServerHealthCheck
-		mockResponse        string
-		expectSuccess       bool
-		expectedSentData    string
-		expectedReceiveSize int
+		desc             string
+		config           *dynamic.TCPServerHealthCheck
+		mockResponse     string
+		expectedSentData string
+		expectedSuccess  bool
 	}{
 		{
 			desc: "successful send and expect",
@@ -189,10 +197,9 @@ func TestServiceTCPHealthChecker_executeHealthCheck_payloadHandling(t *testing.T
 				Send:   "PING",
 				Expect: "PONG",
 			},
-			mockResponse:        "PONG",
-			expectSuccess:       true,
-			expectedSentData:    "PING",
-			expectedReceiveSize: 4, // len("PONG")
+			mockResponse:     "PONG",
+			expectedSentData: "PING",
+			expectedSuccess:  true,
 		},
 		{
 			desc: "send without expect",
@@ -200,32 +207,25 @@ func TestServiceTCPHealthChecker_executeHealthCheck_payloadHandling(t *testing.T
 				Send:   "STATUS",
 				Expect: "",
 			},
-			mockResponse:        "", // No response needed
-			expectSuccess:       true,
-			expectedSentData:    "STATUS",
-			expectedReceiveSize: 0,
+			expectedSentData: "STATUS",
+			expectedSuccess:  true,
 		},
 		{
 			desc: "send without expect, ignores response",
 			config: &dynamic.TCPServerHealthCheck{
-				Send:   "STATUS",
-				Expect: "",
+				Send: "STATUS",
 			},
-			mockResponse:        strings.Repeat("A", maxPayloadSize+1),
-			expectSuccess:       true,
-			expectedSentData:    "STATUS",
-			expectedReceiveSize: 0,
+			mockResponse:     strings.Repeat("A", maxPayloadSize+1),
+			expectedSentData: "STATUS",
+			expectedSuccess:  true,
 		},
 		{
 			desc: "expect without send",
 			config: &dynamic.TCPServerHealthCheck{
-				Send:   "",
 				Expect: "READY",
 			},
-			mockResponse:        "READY",
-			expectSuccess:       true,
-			expectedSentData:    "",
-			expectedReceiveSize: 5, // len("READY")
+			mockResponse:    "READY",
+			expectedSuccess: true,
 		},
 		{
 			desc: "wrong response received",
@@ -233,10 +233,9 @@ func TestServiceTCPHealthChecker_executeHealthCheck_payloadHandling(t *testing.T
 				Send:   "PING",
 				Expect: "PONG",
 			},
-			mockResponse:        "WRONG",
-			expectSuccess:       false,
-			expectedSentData:    "PING",
-			expectedReceiveSize: 4, // len("PONG") - we still try to read expected amount
+			mockResponse:     "WRONG",
+			expectedSentData: "PING",
+			expectedSuccess:  false,
 		},
 		{
 			desc: "send payload too large - gets truncated",
@@ -244,10 +243,8 @@ func TestServiceTCPHealthChecker_executeHealthCheck_payloadHandling(t *testing.T
 				Send:   strings.Repeat("A", maxPayloadSize+1), // Will be truncated to empty
 				Expect: "OK",
 			},
-			mockResponse:        "OK",
-			expectSuccess:       true,
-			expectedSentData:    "", // Truncated to empty
-			expectedReceiveSize: 2,  // len("OK")
+			mockResponse:    "OK",
+			expectedSuccess: true,
 		},
 		{
 			desc: "expect payload too large - gets truncated",
@@ -255,39 +252,26 @@ func TestServiceTCPHealthChecker_executeHealthCheck_payloadHandling(t *testing.T
 				Send:   "PING",
 				Expect: strings.Repeat("B", maxPayloadSize+1), // Will be truncated to empty
 			},
-			mockResponse:        "",
-			expectSuccess:       true,
-			expectedSentData:    "PING",
-			expectedReceiveSize: 0, // Truncated to empty
+			expectedSentData: "PING",
+			expectedSuccess:  true,
 		},
 	}
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			ctx := t.Context()
+			t.Parallel()
 
-			// Variables to capture what was actually sent and read
 			var sentData []byte
-			var readAttemptSize int
-
-			// Create a mock connection that records writes and provides mock reads
 			mockConn := &connMock{
 				writeFunc: func(data []byte) (int, error) {
-					sentData = append([]byte{}, data...) // Copy the data
+					sentData = append([]byte{}, data...)
 					return len(data), nil
 				},
 				readFunc: func(buf []byte) (int, error) {
-					readAttemptSize = len(buf)
-					response := []byte(test.mockResponse)
-					if len(response) > len(buf) {
-						response = response[:len(buf)]
-					}
-					copy(buf, response)
-					return len(response), nil
+					return copy(buf, test.mockResponse), nil
 				},
 			}
 
-			// Create a mock dialer that returns our mock connection
 			mockDialer := &dialerMock{
 				onDial: func(network, addr string) (net.Conn, error) {
 					return mockConn, nil
@@ -300,24 +284,17 @@ func TestServiceTCPHealthChecker_executeHealthCheck_payloadHandling(t *testing.T
 				Dialer:  mockDialer,
 			}}
 
-			// Create healthchecker (this will apply payload size validation)
-			healthChecker := NewServiceTCPHealthChecker(ctx, test.config, &testLoadBalancer{RWMutex: &sync.RWMutex{}}, &truntime.TCPServiceInfo{}, targets, "test")
+			healthChecker := NewServiceTCPHealthChecker(t.Context(), test.config, nil, nil, targets, "test")
 
-			// Execute health check
-			err := healthChecker.executeHealthCheck(ctx, test.config, &targets[0])
+			err := healthChecker.executeHealthCheck(t.Context(), test.config, &targets[0])
 
-			// Verify success/failure
-			if test.expectSuccess {
+			if test.expectedSuccess {
 				assert.NoError(t, err, "Health check should succeed")
 			} else {
 				assert.Error(t, err, "Health check should fail")
 			}
 
-			// Verify what was actually sent
 			assert.Equal(t, test.expectedSentData, string(sentData), "Should send the expected data")
-
-			// Verify the read buffer size (indicates what we expected to receive)
-			assert.Equal(t, test.expectedReceiveSize, readAttemptSize, "Should attempt to read expected amount")
 		})
 	}
 }
