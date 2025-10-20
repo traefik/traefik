@@ -1,6 +1,7 @@
 package service
 
 import (
+	"bytes"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/tls"
@@ -11,10 +12,12 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"sync/atomic"
 	"testing"
 	"time"
 
+	"github.com/rs/zerolog/log"
 	"github.com/spiffe/go-spiffe/v2/bundle/x509bundle"
 	"github.com/spiffe/go-spiffe/v2/spiffeid"
 	"github.com/spiffe/go-spiffe/v2/spiffetls/tlsconfig"
@@ -193,7 +196,6 @@ func TestValidCipherSuites(t *testing.T) {
 
 	srv.TLS = &tls.Config{
 		Certificates: []tls.Certificate{cert},
-		MaxVersion:   tls.VersionTLS12,
 		CipherSuites: []uint16{
 			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
 		},
@@ -207,17 +209,14 @@ func TestValidCipherSuites(t *testing.T) {
 			ServerName:   "example.com",
 			RootCAs:      []types.FileOrContent{types.FileOrContent(LocalhostCert)},
 			CipherSuites: []string{"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"},
-			MaxVersion:   "VersionTLS12",
 		},
 	}
 
 	transportManager.Update(dynamicConf)
-
+	require.NoError(t, err)
 	tr, err := transportManager.GetRoundTripper("test")
 	require.NoError(t, err)
-
 	client := http.Client{Transport: tr}
-
 	resp, err := client.Get(srv.URL)
 	require.NoError(t, err)
 
@@ -225,6 +224,7 @@ func TestValidCipherSuites(t *testing.T) {
 }
 
 func TestValidTLSVersions(t *testing.T) {
+
 	srv := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 	}))
@@ -255,12 +255,10 @@ func TestValidTLSVersions(t *testing.T) {
 	}
 
 	transportManager.Update(dynamicConf)
-
+	require.NoError(t, err)
 	tr, err := transportManager.GetRoundTripper("test")
 	require.NoError(t, err)
-
 	client := http.Client{Transport: tr}
-
 	resp, err := client.Get(srv.URL)
 	require.NoError(t, err)
 
@@ -268,6 +266,178 @@ func TestValidTLSVersions(t *testing.T) {
 }
 
 func TestInvalidMaxTLSVersions(t *testing.T) {
+
+	// init log buffer to capture zerolog output
+	var logBuffer bytes.Buffer
+	// Capture zerolog output
+	log.Logger = log.Output(&logBuffer)
+	// Restore original logger after test
+	defer func() {
+		log.Logger = log.Output(os.Stderr)
+	}()
+
+	// Define a function to run the test logic and gather logs
+	logtest := func() {
+		srv := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			rw.WriteHeader(http.StatusOK)
+		}))
+
+		cert, err := tls.X509KeyPair(LocalhostCert, LocalhostKey)
+		require.NoError(t, err)
+
+		srv.TLS = &tls.Config{
+			Certificates: []tls.Certificate{cert},
+			MaxVersion:   tls.VersionTLS12,
+			CipherSuites: []uint16{
+				tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+			},
+		}
+		srv.StartTLS()
+
+		transportManager := NewTransportManager(nil)
+
+		dynamicConf := map[string]*dynamic.ServersTransport{
+			"test": {
+				ServerName:   "example.com",
+				RootCAs:      []types.FileOrContent{types.FileOrContent(LocalhostCert)},
+				MaxVersion:   "VersionTLS16",
+				CipherSuites: []string{"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"},
+			},
+		}
+
+		transportManager.Update(dynamicConf)
+		tr, err := transportManager.GetRoundTripper("test")
+		require.NoError(t, err)
+		client := http.Client{Transport: tr}
+		resp, err := client.Get(srv.URL)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+	}
+
+	// Run the test
+	logtest()
+	// set logs in variable as string
+	logged := logBuffer.String()
+	//check logs cotent again expected error message
+	assert.Contains(t, logged, "invalid TLS maximum version: VersionTLS16")
+}
+
+func TestInvalidMinTLSVersions(t *testing.T) {
+
+	// init log buffer to capture zerolog output
+	var logBuffer bytes.Buffer
+	// Capture zerolog output
+	log.Logger = log.Output(&logBuffer)
+	// Restore original logger after test
+	defer func() {
+		log.Logger = log.Output(os.Stderr)
+	}()
+
+	// Define a function to run the test logic and gather logs
+	logtest := func() {
+		srv := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			rw.WriteHeader(http.StatusOK)
+		}))
+
+		cert, err := tls.X509KeyPair(LocalhostCert, LocalhostKey)
+		require.NoError(t, err)
+
+		srv.TLS = &tls.Config{
+			Certificates: []tls.Certificate{cert},
+			MinVersion:   tls.VersionTLS11,
+			CipherSuites: []uint16{
+				tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+			},
+		}
+		srv.StartTLS()
+
+		transportManager := NewTransportManager(nil)
+
+		dynamicConf := map[string]*dynamic.ServersTransport{
+			"test": {
+				ServerName:   "example.com",
+				RootCAs:      []types.FileOrContent{types.FileOrContent(LocalhostCert)},
+				MinVersion:   "VersionTLS09",
+				CipherSuites: []string{"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"},
+			},
+		}
+
+		transportManager.Update(dynamicConf)
+		tr, err := transportManager.GetRoundTripper("test")
+		require.NoError(t, err)
+		client := http.Client{Transport: tr}
+		resp, err := client.Get(srv.URL)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+	}
+
+	// Run the test
+	logtest()
+	// set logs in variable as string
+	logged := logBuffer.String()
+	//check logs cotent again expected error message
+	assert.Contains(t, logged, "invalid TLS minimum version: VersionTLS09")
+}
+
+func TestInvalidCipherSuites(t *testing.T) {
+
+	// init log buffer to capture zerolog output
+	var logBuffer bytes.Buffer
+	// Capture zerolog output
+	log.Logger = log.Output(&logBuffer)
+	// Restore original logger after test
+	defer func() {
+		log.Logger = log.Output(os.Stderr)
+	}()
+
+	// Define a function to run the test logic and gather logs
+	logtest := func() {
+		srv := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			rw.WriteHeader(http.StatusOK)
+		}))
+
+		cert, err := tls.X509KeyPair(LocalhostCert, LocalhostKey)
+		require.NoError(t, err)
+
+		srv.TLS = &tls.Config{
+			Certificates: []tls.Certificate{cert},
+			MaxVersion:   tls.VersionTLS12,
+			CipherSuites: []uint16{
+				tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+			},
+		}
+		srv.StartTLS()
+
+		transportManager := NewTransportManager(nil)
+
+		dynamicConf := map[string]*dynamic.ServersTransport{
+			"test": {
+				ServerName:   "example.com",
+				RootCAs:      []types.FileOrContent{types.FileOrContent(LocalhostCert)},
+				MaxVersion:   "VersionTLS12",
+				CipherSuites: []string{"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA385"},
+			},
+		}
+
+		transportManager.Update(dynamicConf)
+		tr, err := transportManager.GetRoundTripper("test")
+		require.NoError(t, err)
+		client := http.Client{Transport: tr}
+		resp, err := client.Get(srv.URL)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+	}
+
+	// Run the test
+	logtest()
+	// set logs in variable as string
+	logged := logBuffer.String()
+	//check logs cotent again expected error message
+	assert.Contains(t, logged, "Invalid cipher: TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA385")
+}
+
+func TestEmptyCipherSuites(t *testing.T) {
+
 	srv := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 	}))
@@ -278,46 +448,6 @@ func TestInvalidMaxTLSVersions(t *testing.T) {
 	srv.TLS = &tls.Config{
 		Certificates: []tls.Certificate{cert},
 		MaxVersion:   tls.VersionTLS12,
-		CipherSuites: []uint16{
-			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-		},
-	}
-	srv.StartTLS()
-
-	transportManager := NewTransportManager(nil)
-
-	dynamicConf := map[string]*dynamic.ServersTransport{
-		"test": {
-			ServerName:   "example.com",
-			RootCAs:      []types.FileOrContent{types.FileOrContent(LocalhostCert)},
-			MaxVersion:   "VersionTLS16",
-			CipherSuites: []string{"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"},
-		},
-	}
-
-	transportManager.Update(dynamicConf)
-
-	tr, err := transportManager.GetRoundTripper("test")
-	require.NoError(t, err)
-
-	client := http.Client{Transport: tr}
-
-	resp, err := client.Get(srv.URL)
-	require.NoError(t, err)
-
-	assert.Equal(t, http.StatusOK, resp.StatusCode)
-}
-
-func TestInvalidMinTLSVersions(t *testing.T) {
-	srv := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		rw.WriteHeader(http.StatusOK)
-	}))
-
-	cert, err := tls.X509KeyPair(LocalhostCert, LocalhostKey)
-	require.NoError(t, err)
-
-	srv.TLS = &tls.Config{
-		Certificates: []tls.Certificate{cert},
 		MinVersion:   tls.VersionTLS11,
 		CipherSuites: []uint16{
 			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
@@ -329,69 +459,19 @@ func TestInvalidMinTLSVersions(t *testing.T) {
 
 	dynamicConf := map[string]*dynamic.ServersTransport{
 		"test": {
-			ServerName:   "example.com",
-			RootCAs:      []types.FileOrContent{types.FileOrContent(LocalhostCert)},
-			MinVersion:   "VersionTLS09",
-			CipherSuites: []string{"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"},
+			ServerName: "example.com",
+			RootCAs:    []types.FileOrContent{types.FileOrContent(LocalhostCert)},
 		},
 	}
 
 	transportManager.Update(dynamicConf)
-
 	tr, err := transportManager.GetRoundTripper("test")
 	require.NoError(t, err)
-
 	client := http.Client{Transport: tr}
+	_, err = client.Get(srv.URL)
+	require.Error(t, err)
 
-	resp, err := client.Get(srv.URL)
-	require.NoError(t, err)
-
-	assert.Equal(t, http.StatusOK, resp.StatusCode)
-}
-
-func TestInvalidCipherSuites(t *testing.T) {
-	// var buf bytes.Buffer
-	// log.SetOutput(&buf)
-
-	srv := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		rw.WriteHeader(http.StatusOK)
-	}))
-
-	cert, err := tls.X509KeyPair(LocalhostCert, LocalhostKey)
-	require.NoError(t, err)
-
-	srv.TLS = &tls.Config{
-		Certificates: []tls.Certificate{cert},
-		MaxVersion:   tls.VersionTLS12,
-		CipherSuites: []uint16{
-			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-		},
-	}
-	srv.StartTLS()
-
-	transportManager := NewTransportManager(nil)
-
-	dynamicConf := map[string]*dynamic.ServersTransport{
-		"test": {
-			ServerName:   "example.com",
-			RootCAs:      []types.FileOrContent{types.FileOrContent(LocalhostCert)},
-			CipherSuites: []string{"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA385"},
-			MaxVersion:   "VersionTLS12",
-		},
-	}
-
-	transportManager.Update(dynamicConf)
-
-	tr, err := transportManager.GetRoundTripper("test")
-	require.NoError(t, err)
-
-	client := http.Client{Transport: tr}
-
-	resp, err := client.Get(srv.URL)
-	require.NoError(t, err)
-
-	assert.Equal(t, http.StatusOK, resp.StatusCode)
-	// assert.Equal(t, "Invalid cipher: TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA385", buf.String())
+	assert.ErrorContains(t, err, "remote error: tls: handshake failure")
 }
 
 func TestMTLS(t *testing.T) {
