@@ -33,8 +33,18 @@ describe('<TcpServicePage />', () => {
             address: 'http://10.0.1.12:80',
           },
         ],
-        passHostHeader: true,
         terminationDelay: 10,
+        healthCheck: {
+          interval: '30s',
+          timeout: '10s',
+          port: 8080,
+          unhealthyInterval: '1m',
+          send: 'GET /health HTTP/1.1\\r\\nHost: test.example.com\\r\\n\\r\\n',
+          expect: 'HTTP/1.1 200 OK',
+        },
+      },
+      serverStatus: {
+        'http://10.0.1.12:80': 'UP',
       },
       status: 'enabled',
       usedBy: ['router-test1@docker'],
@@ -65,19 +75,31 @@ describe('<TcpServicePage />', () => {
     const titleTags = headings.filter((h1) => h1.innerHTML === 'service-test1')
     expect(titleTags.length).toBe(1)
 
-    const serviceDetails = getByTestId('service-details')
+    const serviceDetails = getByTestId('tcp-service-details')
     expect(serviceDetails.innerHTML).toContain('Type')
     expect(serviceDetails.innerHTML).toContain('loadbalancer')
     expect(serviceDetails.innerHTML).toContain('Provider')
     expect(serviceDetails.querySelector('svg[data-testid="docker"]')).toBeTruthy()
     expect(serviceDetails.innerHTML).toContain('Status')
     expect(serviceDetails.innerHTML).toContain('Success')
-    expect(serviceDetails.innerHTML).toContain('Pass Host Header')
-    expect(serviceDetails.innerHTML).toContain('True')
     expect(serviceDetails.innerHTML).toContain('Termination Delay')
     expect(serviceDetails.innerHTML).toContain('10 ms')
 
-    const serversList = getByTestId('servers-list')
+    const healthCheck = getByTestId('tcp-health-check')
+    expect(healthCheck.innerHTML).toContain('Interval')
+    expect(healthCheck.innerHTML).toContain('30s')
+    expect(healthCheck.innerHTML).toContain('Timeout')
+    expect(healthCheck.innerHTML).toContain('10s')
+    expect(healthCheck.innerHTML).toContain('Port')
+    expect(healthCheck.innerHTML).toContain('8080')
+    expect(healthCheck.innerHTML).toContain('Unhealthy Interval')
+    expect(healthCheck.innerHTML).toContain('1m')
+    expect(healthCheck.innerHTML).toContain('Send')
+    expect(healthCheck.innerHTML).toContain('GET /health HTTP/1.1')
+    expect(healthCheck.innerHTML).toContain('Expect')
+    expect(healthCheck.innerHTML).toContain('HTTP/1.1 200 OK')
+
+    const serversList = getByTestId('tcp-servers-list')
     expect(serversList.childNodes.length).toBe(1)
     expect(serversList.innerHTML).toContain('http://10.0.1.12:80')
 
@@ -130,7 +152,7 @@ describe('<TcpServicePage />', () => {
       <TcpServiceRender name="mock-service" data={mockData as any} error={undefined} />,
     )
 
-    const serversList = getByTestId('servers-list')
+    const serversList = getByTestId('tcp-servers-list')
     expect(serversList.childNodes.length).toBe(1)
     expect(serversList.innerHTML).toContain('http://10.0.1.12:81')
 
