@@ -384,7 +384,7 @@ func (c configBuilder) buildServersLB(namespace string, svc traefikv1alpha1.Load
 	// TODO: remove this when the fake client apply default values.
 	if svc.Strategy != "" {
 		switch svc.Strategy {
-		case dynamic.BalancerStrategyWRR, dynamic.BalancerStrategyP2C, dynamic.BalancerStrategyHRW:
+		case dynamic.BalancerStrategyWRR, dynamic.BalancerStrategyP2C, dynamic.BalancerStrategyHRW, dynamic.BalancerStrategyLeastTime:
 			lb.Strategy = svc.Strategy
 
 		// Here we are just logging a warning as the default value is already applied.
