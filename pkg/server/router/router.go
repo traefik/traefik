@@ -229,13 +229,13 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 		chain = chain.Append(denyrouterrecursion.WrapHandler(routerName))
 	}
 
-	mHandler := m.middlewaresBuilder.BuildChain(ctx, router.Middlewares)
+	var (
+		nextHandler http.Handler
+		serviceName string
+		err         error
+	)
 
-	var nextHandler http.Handler
-	var serviceName string
-	var err error
-
-	// Check if this router has child routers or a service
+	// Check if this router has child routers or a service.
 	switch {
 	case len(router.ChildRefs) > 0:
 		// This router routes to child routers - create a muxer for them
@@ -243,7 +243,7 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 		if err != nil {
 			return nil, fmt.Errorf("building child routers muxer: %w", err)
 		}
-		serviceName = fmt.Sprintf("%s-routing", routerName)
+		serviceName = fmt.Sprintf("%s-muxer", routerName)
 	case router.Service != "":
 		// This router routes to a service
 		qualifiedService := provider.GetQualifiedName(ctx, router.Service)
@@ -253,7 +253,7 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 		}
 		serviceName = qualifiedService
 	default:
-		return nil, errors.New("the router must have either a service or child routers")
+		return nil, errors.New("router must have either a service or child routers")
 	}
 
 	// Access logs, metrics, and tracing middlewares are idempotent if the associated signal is disabled.
@@ -265,6 +265,8 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 	chain = chain.Append(func(next http.Handler) (http.Handler, error) {
 		return accesslog.NewConcatFieldHandler(next, accesslog.RouterName, routerName), nil
 	})
+
+	mHandler := m.middlewaresBuilder.BuildChain(ctx, router.Middlewares)
 
 	return chain.Extend(*mHandler).Then(nextHandler)
 }
@@ -309,19 +311,19 @@ func (m *Manager) ParseRouterTree() {
 			}
 		}
 
-		// Check for non-root router with TLS config
+		// Check for non-root router with TLS config.
 		if router.TLS != nil {
 			router.AddError(errors.New("non-root router cannot have TLS configuration"), true)
 			continue
 		}
 
-		// Check for non-root router with Observability config
+		// Check for non-root router with Observability config.
 		if router.Observability != nil {
 			router.AddError(errors.New("non-root router cannot have Observability configuration"), true)
 			continue
 		}
 
-		// Check for non-root router with Entrypoint config
+		// Check for non-root router with Entrypoint config.
 		if len(router.EntryPoints) > 0 {
 			router.AddError(errors.New("non-root router cannot have Entrypoints configuration"), true)
 			continue
@@ -329,7 +331,7 @@ func (m *Manager) ParseRouterTree() {
 	}
 	sort.Strings(rootRouters)
 
-	// Root-first traversal with cycle detection
+	// Root-first traversal with cycle detection.
 	visited := make(map[string]bool)
 	currentPath := make(map[string]bool)
 	var path []string
@@ -341,19 +343,19 @@ func (m *Manager) ParseRouterTree() {
 	}
 
 	for routerName, router := range m.conf.Routers {
-		// Set status for all routers based on reachability
+		// Set status for all routers based on reachability.
 		if !visited[routerName] {
 			router.AddError(errors.New("router is not reachable"), true)
 			continue
 		}
 
-		// Detect dead-end routers (no service + no children) - AFTER cycle handling
+		// Detect dead-end routers (no service + no children) - AFTER cycle handling.
 		if router.Service == "" && len(router.ChildRefs) == 0 {
 			router.AddError(errors.New("router has no service and no child routers"), true)
 			continue
 		}
 
-		// Check for router with service that is referenced as a parent
+		// Check for router with service that is referenced as a parent.
 		if router.Service != "" && len(router.ChildRefs) > 0 {
 			router.AddError(errors.New("router has both a service and is referenced as a parent by other routers"), true)
 			continue
@@ -365,7 +367,7 @@ func (m *Manager) ParseRouterTree() {
 // detecting cycles and marking visited routers for reachability detection.
 func (m *Manager) traverse(routerName string, visited, currentPath map[string]bool, path []string) {
 	if currentPath[routerName] {
-		// Found a cycle - handle it properly
+		// Found a cycle - handle it properly.
 		m.handleCycle(routerName, path)
 		return
 	}
@@ -385,12 +387,12 @@ func (m *Manager) traverse(routerName string, visited, currentPath map[string]bo
 	currentPath[routerName] = true
 	newPath := append(path, routerName)
 
-	// Sort ChildRefs for deterministic behavior
+	// Sort ChildRefs for deterministic behavior.
 	sortedChildRefs := make([]string, len(router.ChildRefs))
 	copy(sortedChildRefs, router.ChildRefs)
 	sort.Strings(sortedChildRefs)
 
-	// Traverse children
+	// Traverse children.
 	for _, childName := range sortedChildRefs {
 		m.traverse(childName, visited, currentPath, newPath)
 	}
@@ -413,11 +415,11 @@ func (m *Manager) handleCycle(victimRouter string, path []string) {
 		return
 	}
 
-	// Build the cycle path: from cycle start to current + victim
+	// Build the cycle path: from cycle start to current + victim.
 	cyclePath := append(path[cycleStart:], victimRouter)
 	cycleRouters := strings.Join(cyclePath, " -> ")
 
-	// The guilty router is the last one in the path (the one creating the cycle)
+	// The guilty router is the last one in the path (the one creating the cycle).
 	if len(path) > 0 {
 		guiltyRouterName := path[len(path)-1]
 		guiltyRouter, exists := m.conf.Routers[guiltyRouterName]
@@ -425,10 +427,10 @@ func (m *Manager) handleCycle(victimRouter string, path []string) {
 			return
 		}
 
-		// Add cycle error to guilty router
+		// Add cycle error to guilty router.
 		guiltyRouter.AddError(fmt.Errorf("cyclic reference detected in router tree: %s", cycleRouters), false)
 
-		// Remove victim from guilty router's ChildRefs
+		// Remove victim from guilty router's ChildRefs.
 		for i, childRef := range guiltyRouter.ChildRefs {
 			if childRef == victimRouter {
 				guiltyRouter.ChildRefs = append(guiltyRouter.ChildRefs[:i], guiltyRouter.ChildRefs[i+1:]...)
@@ -442,18 +444,17 @@ func (m *Manager) handleCycle(victimRouter string, path []string) {
 func (m *Manager) buildChildRoutersMuxer(ctx context.Context, childRefs []string) (http.Handler, error) {
 	childMuxer := httpmuxer.NewMuxer(m.parser)
 
-	// Set a default handler for the child muxer (404 Not Found)
+	// Set a default handler for the child muxer (404 Not Found).
 	childMuxer.SetDefaultHandler(http.NotFoundHandler())
 
 	childCount := 0
-
 	for _, childName := range childRefs {
 		childRouter, exists := m.conf.Routers[childName]
 		if !exists {
 			return nil, fmt.Errorf("child router %q does not exist", childName)
 		}
 
-		// Skip child routers with errors
+		// Skip child routers with errors.
 		if len(childRouter.Err) > 0 {
 			continue
 		}
@@ -461,12 +462,12 @@ func (m *Manager) buildChildRoutersMuxer(ctx context.Context, childRefs []string
 		logger := log.Ctx(ctx).With().Str(logs.RouterName, childName).Logger()
 		ctxChild := logger.WithContext(provider.AddInContext(ctx, childName))
 
-		// Set priority if not set
+		// Set priority if not set.
 		if childRouter.Priority == 0 {
 			childRouter.Priority = httpmuxer.GetRulePriority(childRouter.Rule)
 		}
 
-		// Build the child router handler
+		// Build the child router handler.
 		childHandler, err := m.buildRouterHandler(ctxChild, childName, childRouter)
 		if err != nil {
 			childRouter.AddError(err, true)
@@ -474,7 +475,7 @@ func (m *Manager) buildChildRoutersMuxer(ctx context.Context, childRefs []string
 			continue
 		}
 
-		// Add the child router to the muxer
+		// Add the child router to the muxer.
 		if err = childMuxer.AddRoute(childRouter.Rule, childRouter.RuleSyntax, childRouter.Priority, childHandler); err != nil {
 			childRouter.AddError(err, true)
 			logger.Error().Err(err).Send()
@@ -484,7 +485,7 @@ func (m *Manager) buildChildRoutersMuxer(ctx context.Context, childRefs []string
 		childCount++
 	}
 
-	// Prevent empty muxer
+	// Prevent empty muxer.
 	if childCount == 0 {
 		return nil, fmt.Errorf("no child routers could be added to muxer (%d skipped)", len(childRefs))
 	}

@@ -1584,7 +1584,7 @@ func TestManager_buildHTTPHandler_WithChildRouters(t *testing.T) {
 					Rule: "PathPrefix(`/api`)",
 				},
 			},
-			expectedError: "the router must have either a service or child routers",
+			expectedError: "router must have either a service or child routers",
 		},
 		{
 			desc: "router with child routers but missing child - error",

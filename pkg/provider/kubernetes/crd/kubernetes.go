@@ -1379,15 +1379,18 @@ func buildCertificates(client Client, tlsStore, namespace string, certificates [
 	return nil
 }
 
-func makeServiceKey(rule, ingressName string) (string, error) {
+func makeServiceKey(rule, ingressName string) string {
 	h := sha256.New()
+
+	// As explained in https://pkg.go.dev/hash#Hash,
+	// Write never returns an error.
 	if _, err := h.Write([]byte(rule)); err != nil {
-		return "", err
+		return ""
 	}
 
 	key := fmt.Sprintf("%s-%.10x", ingressName, h.Sum(nil))
 
-	return key, nil
+	return key
 }
 
 func makeID(namespace, name string) string {

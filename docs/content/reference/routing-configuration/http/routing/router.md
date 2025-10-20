@@ -46,6 +46,7 @@ http:
     priority = 10
     middlewares = ["auth", "ratelimit"]
     service = "my-service"
+    parentRefs = ["parent-router-1", "parent-router-2"]
 
     [http.routers.my-router.tls]
       certResolver = "letsencrypt"
@@ -59,9 +60,6 @@ http:
       metrics = true
       accessLogs = true
       tracing = true
-
-    [http.routers.my-router]
-      parentRefs = ["parent-router-1", "parent-router-2"]
 ```
 
 ```yaml tab="Labels"
@@ -78,7 +76,6 @@ labels:
   - "traefik.http.routers.my-router.observability.metrics=true"
   - "traefik.http.routers.my-router.observability.accessLogs=true"
   - "traefik.http.routers.my-router.observability.tracing=true"
-  - "traefik.http.routers.my-router.parentrefs=parent-router-1,parent-router-2"
 ```
 
 ```json tab="Tags"
@@ -96,7 +93,6 @@ labels:
     "traefik.http.routers.my-router.observability.metrics=true",
     "traefik.http.routers.my-router.observability.accessLogs=true",
     "traefik.http.routers.my-router.observability.tracing=true",
-    "traefik.http.routers.my-router.parentrefs=parent-router-1,parent-router-2"
   ]
 }
 ```

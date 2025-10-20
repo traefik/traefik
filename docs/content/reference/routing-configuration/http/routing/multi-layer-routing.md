@@ -5,8 +5,7 @@ description: "Learn how to use Traefik's multi-layer routing to create hierarchi
 
 # Multi-Layer Routing
 
-Hierarchical Router Relationships for Advanced Routing Scenarios
-{: .subtitle }
+Hierarchical Router Relationships for Advanced Routing Scenarios.
 
 ## Overview
 
@@ -19,6 +18,17 @@ Multi-layer routing is particularly useful for progressive request enrichment, w
 
 - **Authentication-Based Routing**: Parent router authenticates requests and adds user context (roles, permissions) as headers, child routers route based on these headers
 - **Staged Middleware Application**: Apply common middleware (rate limiting, CORS) at parent level (for a given domain/path), but specific middleware at child level
+
+!!! info "Provider Support"
+
+    Multi-layer routing is supported by the following providers:
+
+    - **File provider** (YAML, TOML, JSON)
+    - **KV stores** (Consul, etcd, Redis, ZooKeeper)
+    - **Kubernetes CRD** (IngressRoute)
+
+    Multi-layer routing is not available for other providers (Docker, Kubernetes Ingress, Gateway API, etc.).
+
 
 ## How It Works
 
@@ -42,6 +52,7 @@ Request → EntryPoint → Parent Router → Middleware → Child Router A → S
 - Have no `parentRefs` (top of the hierarchy)
 - **Can** have `tls`, `observability`, and `entryPoints` configuration
 - Can be either parent routers (with children) or standalone routers (with service)
+- **Can** have models applied (non-root routers cannot have models)
 
 ### Intermediate Routers
 
@@ -146,25 +157,24 @@ Request → EntryPoint → Parent Router → Middleware → Child Router A → S
           url = "http://user-backend:8080"
     ```
 
-    ```json tab="Tags"
-    {
-      "Tags": [
-        "traefik.http.routers.api-parent.rule=PathPrefix(`/api`)",
-        "traefik.http.routers.api-parent.middlewares=auth-middleware",
-        "traefik.http.routers.api-parent.entryPoints=websecure",
-        "traefik.http.routers.api-parent.tls=true",
-        "traefik.http.routers.api-admin.rule=HeadersRegexp(`X-User-Role`, `admin`)",
-        "traefik.http.routers.api-admin.service=admin-service",
-        "traefik.http.routers.api-admin.parentRefs=api-parent",
-        "traefik.http.routers.api-user.rule=HeadersRegexp(`X-User-Role`, `user`)",
-        "traefik.http.routers.api-user.service=user-service",
-        "traefik.http.routers.api-user.parentRefs=api-parent",
-        "traefik.http.middlewares.auth-middleware.forwardAuth.address=http://auth-service:8080/auth",
-        "traefik.http.middlewares.auth-middleware.forwardAuth.authResponseHeaders=X-User-Role,X-User-Name",
-        "traefik.http.services.admin-service.loadBalancer.servers[0].url=http://admin-backend:8080",
-        "traefik.http.services.user-service.loadBalancer.servers[0].url=http://user-backend:8080"
-      ]
-    }
+    ```txt tab="KV (Consul/etcd/Redis/ZK)"
+    | Key                                                                    | Value                           |
+    |------------------------------------------------------------------------|---------------------------------|
+    | `traefik/http/routers/api-parent/rule`                                 | `PathPrefix(\`/api\`)`          |
+    | `traefik/http/routers/api-parent/middlewares/0`                        | `auth-middleware`               |
+    | `traefik/http/routers/api-parent/entrypoints/0`                        | `websecure`                     |
+    | `traefik/http/routers/api-parent/tls`                                  | `true`                          |
+    | `traefik/http/routers/api-admin/rule`                                  | `HeadersRegexp(\`X-User-Role\`, \`admin\`)` |
+    | `traefik/http/routers/api-admin/service`                               | `admin-service`                 |
+    | `traefik/http/routers/api-admin/parentrefs/0`                          | `api-parent`                    |
+    | `traefik/http/routers/api-user/rule`                                   | `HeadersRegexp(\`X-User-Role\`, \`user\`)` |
+    | `traefik/http/routers/api-user/service`                                | `user-service`                  |
+    | `traefik/http/routers/api-user/parentrefs/0`                           | `api-parent`                    |
+    | `traefik/http/middlewares/auth-middleware/forwardauth/address`         | `http://auth-service:8080/auth` |
+    | `traefik/http/middlewares/auth-middleware/forwardauth/authresponseheaders/0` | `X-User-Role`         |
+    | `traefik/http/middlewares/auth-middleware/forwardauth/authresponseheaders/1` | `X-User-Name`         |
+    | `traefik/http/services/admin-service/loadbalancer/servers/0/url`       | `http://admin-backend:8080`     |
+    | `traefik/http/services/user-service/loadbalancer/servers/0/url`        | `http://user-backend:8080`      |
     ```
 
     **How it works:**
