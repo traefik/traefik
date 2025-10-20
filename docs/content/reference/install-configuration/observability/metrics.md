@@ -64,7 +64,7 @@ metrics:
 |:-------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------|:---------------------------------------------------|:---------|
 | <a id="opt-metrics-addInternals" href="#opt-metrics-addInternals" title="#opt-metrics-addInternals">`metrics.addInternals`</a> | Enables metrics for internal resources (e.g.: `ping@internal`).                                                                                                  | false                                              | No       |
 | <a id="opt-metrics-otlp-serviceName" href="#opt-metrics-otlp-serviceName" title="#opt-metrics-otlp-serviceName">`metrics.otlp.serviceName`</a> | Defines the service name resource attribute.                                                                                                                     | "traefik"                                          | No       |
-| <a id="opt-metrics-otlp-resourceAttributes" href="#opt-metrics-otlp-resourceAttributes" title="#opt-metrics-otlp-resourceAttributes">`metrics.otlp.resourceAttributes`</a> | Defines additional resource attributes to be sent to the collector.                                                                                              | []                                                 | No       |
+| <a id="opt-metrics-otlp-resourceAttributes" href="#opt-metrics-otlp-resourceAttributes" title="#opt-metrics-otlp-resourceAttributes">`metrics.otlp.resourceAttributes`</a> | Defines additional resource attributes to be sent to the collector. See [resourceAttributes](#resourceattributes) for details.                                                                                                   | []                                                 | No       |
 | <a id="opt-metrics-otlp-addEntryPointsLabels" href="#opt-metrics-otlp-addEntryPointsLabels" title="#opt-metrics-otlp-addEntryPointsLabels">`metrics.otlp.addEntryPointsLabels`</a> | Enable metrics on entry points.                                                                                                                                  | true                                               | No       |
 | <a id="opt-metrics-otlp-addRoutersLabels" href="#opt-metrics-otlp-addRoutersLabels" title="#opt-metrics-otlp-addRoutersLabels">`metrics.otlp.addRoutersLabels`</a> | Enable metrics on routers.                                                                                                                                       | false                                              | No       |
 | <a id="opt-metrics-otlp-addServicesLabels" href="#opt-metrics-otlp-addServicesLabels" title="#opt-metrics-otlp-addServicesLabels">`metrics.otlp.addServicesLabels`</a> | Enable metrics on services.                                                                                                                                      | true                                               | No       |
@@ -85,6 +85,22 @@ metrics:
 | <a id="opt-metrics-otlp-grpc-tls-cert" href="#opt-metrics-otlp-grpc-tls-cert" title="#opt-metrics-otlp-grpc-tls-cert">`metrics.otlp.grpc.tls.cert`</a> | Path to the public certificate used for the secure connection to the OpenTelemetry Collector.<br />When using this option, setting the `key` option is required. | -                                                  | No       |
 | <a id="opt-metrics-otlp-grpc-tls-key" href="#opt-metrics-otlp-grpc-tls-key" title="#opt-metrics-otlp-grpc-tls-key">`metrics.otlp.grpc.tls.key`</a> | This instructs the exporter to send the metrics to the OpenTelemetry Collector using HTTP.<br /> Setting the sub-options with their default values.              | null/false                                         | No       |
 | <a id="opt-metrics-otlp-grpc-tls-insecureskipverify" href="#opt-metrics-otlp-grpc-tls-insecureskipverify" title="#opt-metrics-otlp-grpc-tls-insecureskipverify">`metrics.otlp.grpc.tls.insecureskipverify`</a> | Allow the TLS connection to the OpenTelemetry Collector accepts any certificate presented by the server regardless of the hostnames it covers.                   | false                                              | Yes      |
+
+### resourceAttributes
+
+The `resourceAttributes` option allows setting the resource attributes sent along the traces.
+Traefik also supports the `OTEL_RESOURCE_ATTRIBUTES` env variable to set up the resource attributes.
+
+!!! info "Kubernetes Resource Attributes Detection"
+
+    Additionally, Traefik automatically discovers the following [Kubernetes resource attributes](https://opentelemetry.io/docs/specs/semconv/non-normative/k8s-attributes/) when running in a Kubernetes cluster:
+    
+    - `k8s.namespace.name`
+    - `k8s.pod.uid`
+    - `k8s.pod.name`
+    
+    Note that this automatic detection can fail, like if the Traefik pod is running in host network mode.
+    In this case, you should provide the attributes with the option or the env variable.
 
 ## Vendors
 
