@@ -16,7 +16,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/static"
 )
 
-// FIXME: add tests for server statuses like in HTTP.
 func TestHandler_TCP(t *testing.T) {
 	type expected struct {
 		statusCode int
@@ -356,45 +355,57 @@ func TestHandler_TCP(t *testing.T) {
 			path: "/api/tcp/services",
 			conf: runtime.Configuration{
 				TCPServices: map[string]*runtime.TCPServiceInfo{
-					"bar@myprovider": {
-						TCPService: &dynamic.TCPService{
-							LoadBalancer: &dynamic.TCPServersLoadBalancer{
-								Servers: []dynamic.TCPServer{
-									{
-										Address: "127.0.0.1:2345",
+					"bar@myprovider": func() *runtime.TCPServiceInfo {
+						si := &runtime.TCPServiceInfo{
+							TCPService: &dynamic.TCPService{
+								LoadBalancer: &dynamic.TCPServersLoadBalancer{
+									Servers: []dynamic.TCPServer{
+										{
+											Address: "127.0.0.1:2345",
+										},
 									},
 								},
 							},
-						},
-						UsedBy: []string{"foo@myprovider", "test@myprovider"},
-						Status: runtime.StatusEnabled,
-					},
-					"baz@myprovider": {
-						TCPService: &dynamic.TCPService{
-							LoadBalancer: &dynamic.TCPServersLoadBalancer{
-								Servers: []dynamic.TCPServer{
-									{
-										Address: "127.0.0.2:2345",
+							UsedBy: []string{"foo@myprovider", "test@myprovider"},
+							Status: runtime.StatusEnabled,
+						}
+						si.UpdateServerStatus("127.0.0.1:2345", "UP")
+						return si
+					}(),
+					"baz@myprovider": func() *runtime.TCPServiceInfo {
+						si := &runtime.TCPServiceInfo{
+							TCPService: &dynamic.TCPService{
+								LoadBalancer: &dynamic.TCPServersLoadBalancer{
+									Servers: []dynamic.TCPServer{
+										{
+											Address: "127.0.0.2:2345",
+										},
 									},
 								},
 							},
-						},
-						UsedBy: []string{"foo@myprovider"},
-						Status: runtime.StatusWarning,
-					},
-					"foz@myprovider": {
-						TCPService: &dynamic.TCPService{
-							LoadBalancer: &dynamic.TCPServersLoadBalancer{
-								Servers: []dynamic.TCPServer{
-									{
-										Address: "127.0.0.2:2345",
+							UsedBy: []string{"foo@myprovider"},
+							Status: runtime.StatusWarning,
+						}
+						si.UpdateServerStatus("127.0.0.2:2345", "UP")
+						return si
+					}(),
+					"foz@myprovider": func() *runtime.TCPServiceInfo {
+						si := &runtime.TCPServiceInfo{
+							TCPService: &dynamic.TCPService{
+								LoadBalancer: &dynamic.TCPServersLoadBalancer{
+									Servers: []dynamic.TCPServer{
+										{
+											Address: "127.0.0.3:2345",
+										},
 									},
 								},
 							},
-						},
-						UsedBy: []string{"foo@myprovider"},
-						Status: runtime.StatusDisabled,
-					},
+							UsedBy: []string{"foo@myprovider"},
+							Status: runtime.StatusDisabled,
+						}
+						si.UpdateServerStatus("127.0.0.3:2345", "UP")
+						return si
+					}(),
 				},
 			},
 			expected: expected{
@@ -408,45 +419,57 @@ func TestHandler_TCP(t *testing.T) {
 			path: "/api/tcp/services?status=enabled",
 			conf: runtime.Configuration{
 				TCPServices: map[string]*runtime.TCPServiceInfo{
-					"bar@myprovider": {
-						TCPService: &dynamic.TCPService{
-							LoadBalancer: &dynamic.TCPServersLoadBalancer{
-								Servers: []dynamic.TCPServer{
-									{
-										Address: "127.0.0.1:2345",
+					"bar@myprovider": func() *runtime.TCPServiceInfo {
+						si := &runtime.TCPServiceInfo{
+							TCPService: &dynamic.TCPService{
+								LoadBalancer: &dynamic.TCPServersLoadBalancer{
+									Servers: []dynamic.TCPServer{
+										{
+											Address: "127.0.0.1:2345",
+										},
 									},
 								},
 							},
-						},
-						UsedBy: []string{"foo@myprovider", "test@myprovider"},
-						Status: runtime.StatusEnabled,
-					},
-					"baz@myprovider": {
-						TCPService: &dynamic.TCPService{
-							LoadBalancer: &dynamic.TCPServersLoadBalancer{
-								Servers: []dynamic.TCPServer{
-									{
-										Address: "127.0.0.2:2345",
+							UsedBy: []string{"foo@myprovider", "test@myprovider"},
+							Status: runtime.StatusEnabled,
+						}
+						si.UpdateServerStatus("127.0.0.1:2345", "UP")
+						return si
+					}(),
+					"baz@myprovider": func() *runtime.TCPServiceInfo {
+						si := &runtime.TCPServiceInfo{
+							TCPService: &dynamic.TCPService{
+								LoadBalancer: &dynamic.TCPServersLoadBalancer{
+									Servers: []dynamic.TCPServer{
+										{
+											Address: "127.0.0.2:2345",
+										},
 									},
 								},
 							},
-						},
-						UsedBy: []string{"foo@myprovider"},
-						Status: runtime.StatusWarning,
-					},
-					"foz@myprovider": {
-						TCPService: &dynamic.TCPService{
-							LoadBalancer: &dynamic.TCPServersLoadBalancer{
-								Servers: []dynamic.TCPServer{
-									{
-										Address: "127.0.0.2:2345",
+							UsedBy: []string{"foo@myprovider"},
+							Status: runtime.StatusWarning,
+						}
+						si.UpdateServerStatus("127.0.0.2:2345", "UP")
+						return si
+					}(),
+					"foz@myprovider": func() *runtime.TCPServiceInfo {
+						si := &runtime.TCPServiceInfo{
+							TCPService: &dynamic.TCPService{
+								LoadBalancer: &dynamic.TCPServersLoadBalancer{
+									Servers: []dynamic.TCPServer{
+										{
+											Address: "127.0.0.3:2345",
+										},
 									},
 								},
 							},
-						},
-						UsedBy: []string{"foo@myprovider"},
-						Status: runtime.StatusDisabled,
-					},
+							UsedBy: []string{"foo@myprovider"},
+							Status: runtime.StatusDisabled,
+						}
+						si.UpdateServerStatus("127.0.0.3:2345", "UP")
+						return si
+					}(),
 				},
 			},
 			expected: expected{
@@ -460,45 +483,57 @@ func TestHandler_TCP(t *testing.T) {
 			path: "/api/tcp/services?search=baz@my",
 			conf: runtime.Configuration{
 				TCPServices: map[string]*runtime.TCPServiceInfo{
-					"bar@myprovider": {
-						TCPService: &dynamic.TCPService{
-							LoadBalancer: &dynamic.TCPServersLoadBalancer{
-								Servers: []dynamic.TCPServer{
-									{
-										Address: "127.0.0.1:2345",
+					"bar@myprovider": func() *runtime.TCPServiceInfo {
+						si := &runtime.TCPServiceInfo{
+							TCPService: &dynamic.TCPService{
+								LoadBalancer: &dynamic.TCPServersLoadBalancer{
+									Servers: []dynamic.TCPServer{
+										{
+											Address: "127.0.0.1:2345",
+										},
 									},
 								},
 							},
-						},
-						UsedBy: []string{"foo@myprovider", "test@myprovider"},
-						Status: runtime.StatusEnabled,
-					},
-					"baz@myprovider": {
-						TCPService: &dynamic.TCPService{
-							LoadBalancer: &dynamic.TCPServersLoadBalancer{
-								Servers: []dynamic.TCPServer{
-									{
-										Address: "127.0.0.2:2345",
+							UsedBy: []string{"foo@myprovider", "test@myprovider"},
+							Status: runtime.StatusEnabled,
+						}
+						si.UpdateServerStatus("127.0.0.1:2345", "UP")
+						return si
+					}(),
+					"baz@myprovider": func() *runtime.TCPServiceInfo {
+						si := &runtime.TCPServiceInfo{
+							TCPService: &dynamic.TCPService{
+								LoadBalancer: &dynamic.TCPServersLoadBalancer{
+									Servers: []dynamic.TCPServer{
+										{
+											Address: "127.0.0.2:2345",
+										},
 									},
 								},
 							},
-						},
-						UsedBy: []string{"foo@myprovider"},
-						Status: runtime.StatusWarning,
-					},
-					"foz@myprovider": {
-						TCPService: &dynamic.TCPService{
-							LoadBalancer: &dynamic.TCPServersLoadBalancer{
-								Servers: []dynamic.TCPServer{
-									{
-										Address: "127.0.0.2:2345",
+							UsedBy: []string{"foo@myprovider"},
+							Status: runtime.StatusWarning,
+						}
+						si.UpdateServerStatus("127.0.0.2:2345", "UP")
+						return si
+					}(),
+					"foz@myprovider": func() *runtime.TCPServiceInfo {
+						si := &runtime.TCPServiceInfo{
+							TCPService: &dynamic.TCPService{
+								LoadBalancer: &dynamic.TCPServersLoadBalancer{
+									Servers: []dynamic.TCPServer{
+										{
+											Address: "127.0.0.3:2345",
+										},
 									},
 								},
 							},
-						},
-						UsedBy: []string{"foo@myprovider"},
-						Status: runtime.StatusDisabled,
-					},
+							UsedBy: []string{"foo@myprovider"},
+							Status: runtime.StatusDisabled,
+						}
+						si.UpdateServerStatus("127.0.0.3:2345", "UP")
+						return si
+					}(),
 				},
 			},
 			expected: expected{
@@ -512,41 +547,53 @@ func TestHandler_TCP(t *testing.T) {
 			path: "/api/tcp/services?page=2&per_page=1",
 			conf: runtime.Configuration{
 				TCPServices: map[string]*runtime.TCPServiceInfo{
-					"bar@myprovider": {
-						TCPService: &dynamic.TCPService{
-							LoadBalancer: &dynamic.TCPServersLoadBalancer{
-								Servers: []dynamic.TCPServer{
-									{
-										Address: "127.0.0.1:2345",
+					"bar@myprovider": func() *runtime.TCPServiceInfo {
+						si := &runtime.TCPServiceInfo{
+							TCPService: &dynamic.TCPService{
+								LoadBalancer: &dynamic.TCPServersLoadBalancer{
+									Servers: []dynamic.TCPServer{
+										{
+											Address: "127.0.0.1:2345",
+										},
 									},
 								},
 							},
-						},
-						UsedBy: []string{"foo@myprovider", "test@myprovider"},
-					},
-					"baz@myprovider": {
-						TCPService: &dynamic.TCPService{
-							LoadBalancer: &dynamic.TCPServersLoadBalancer{
-								Servers: []dynamic.TCPServer{
-									{
-										Address: "127.0.0.2:2345",
+							UsedBy: []string{"foo@myprovider", "test@myprovider"},
+						}
+						si.UpdateServerStatus("127.0.0.1:2345", "UP")
+						return si
+					}(),
+					"baz@myprovider": func() *runtime.TCPServiceInfo {
+						si := &runtime.TCPServiceInfo{
+							TCPService: &dynamic.TCPService{
+								LoadBalancer: &dynamic.TCPServersLoadBalancer{
+									Servers: []dynamic.TCPServer{
+										{
+											Address: "127.0.0.2:2345",
+										},
 									},
 								},
 							},
-						},
-						UsedBy: []string{"foo@myprovider"},
-					},
-					"test@myprovider": {
-						TCPService: &dynamic.TCPService{
-							LoadBalancer: &dynamic.TCPServersLoadBalancer{
-								Servers: []dynamic.TCPServer{
-									{
-										Address: "127.0.0.3:2345",
+							UsedBy: []string{"foo@myprovider"},
+						}
+						si.UpdateServerStatus("127.0.0.2:2345", "UP")
+						return si
+					}(),
+					"test@myprovider": func() *runtime.TCPServiceInfo {
+						si := &runtime.TCPServiceInfo{
+							TCPService: &dynamic.TCPService{
+								LoadBalancer: &dynamic.TCPServersLoadBalancer{
+									Servers: []dynamic.TCPServer{
+										{
+											Address: "127.0.0.3:2345",
+										},
 									},
 								},
 							},
-						},
-					},
+						}
+						si.UpdateServerStatus("127.0.0.3:2345", "UP")
+						return si
+					}(),
 				},
 			},
 			expected: expected{
@@ -560,18 +607,22 @@ func TestHandler_TCP(t *testing.T) {
 			path: "/api/tcp/services/bar@myprovider",
 			conf: runtime.Configuration{
 				TCPServices: map[string]*runtime.TCPServiceInfo{
-					"bar@myprovider": {
-						TCPService: &dynamic.TCPService{
-							LoadBalancer: &dynamic.TCPServersLoadBalancer{
-								Servers: []dynamic.TCPServer{
-									{
-										Address: "127.0.0.1:2345",
+					"bar@myprovider": func() *runtime.TCPServiceInfo {
+						si := &runtime.TCPServiceInfo{
+							TCPService: &dynamic.TCPService{
+								LoadBalancer: &dynamic.TCPServersLoadBalancer{
+									Servers: []dynamic.TCPServer{
+										{
+											Address: "127.0.0.1:2345",
+										},
 									},
 								},
 							},
-						},
-						UsedBy: []string{"foo@myprovider", "test@myprovider"},
-					},
+							UsedBy: []string{"foo@myprovider", "test@myprovider"},
+						}
+						si.UpdateServerStatus("127.0.0.1:2345", "UP")
+						return si
+					}(),
 				},
 			},
 			expected: expected{
@@ -584,18 +635,22 @@ func TestHandler_TCP(t *testing.T) {
 			path: "/api/tcp/services/" + url.PathEscape("foo / bar@myprovider"),
 			conf: runtime.Configuration{
 				TCPServices: map[string]*runtime.TCPServiceInfo{
-					"foo / bar@myprovider": {
-						TCPService: &dynamic.TCPService{
-							LoadBalancer: &dynamic.TCPServersLoadBalancer{
-								Servers: []dynamic.TCPServer{
-									{
-										Address: "127.0.0.1:2345",
+					"foo / bar@myprovider": func() *runtime.TCPServiceInfo {
+						si := &runtime.TCPServiceInfo{
+							TCPService: &dynamic.TCPService{
+								LoadBalancer: &dynamic.TCPServersLoadBalancer{
+									Servers: []dynamic.TCPServer{
+										{
+											Address: "127.0.0.1:2345",
+										},
 									},
 								},
 							},
-						},
-						UsedBy: []string{"foo@myprovider", "test@myprovider"},
-					},
+							UsedBy: []string{"foo@myprovider", "test@myprovider"},
+						}
+						si.UpdateServerStatus("127.0.0.1:2345", "UP")
+						return si
+					}(),
 				},
 			},
 			expected: expected{
@@ -608,18 +663,22 @@ func TestHandler_TCP(t *testing.T) {
 			path: "/api/tcp/services/nono@myprovider",
 			conf: runtime.Configuration{
 				TCPServices: map[string]*runtime.TCPServiceInfo{
-					"bar@myprovider": {
-						TCPService: &dynamic.TCPService{
-							LoadBalancer: &dynamic.TCPServersLoadBalancer{
-								Servers: []dynamic.TCPServer{
-									{
-										Address: "127.0.0.1:2345",
+					"bar@myprovider": func() *runtime.TCPServiceInfo {
+						si := &runtime.TCPServiceInfo{
+							TCPService: &dynamic.TCPService{
+								LoadBalancer: &dynamic.TCPServersLoadBalancer{
+									Servers: []dynamic.TCPServer{
+										{
+											Address: "127.0.0.1:2345",
+										},
 									},
 								},
 							},
-						},
-						UsedBy: []string{"foo@myprovider", "test@myprovider"},
-					},
+							UsedBy: []string{"foo@myprovider", "test@myprovider"},
+						}
+						si.UpdateServerStatus("127.0.0.1:2345", "UP")
+						return si
+					}(),
 				},
 			},
 			expected: expected{

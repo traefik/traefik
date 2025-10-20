@@ -135,19 +135,18 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 				continue
 			}
 
-			childName := service.Name
 			updater, ok := handler.(healthcheck.StatusUpdater)
 			if !ok {
-				return nil, fmt.Errorf("child service %v of %v not a healthcheck.StatusUpdater (%T)", childName, serviceName, handler)
+				return nil, fmt.Errorf("child service %v of %v not a healthcheck.StatusUpdater (%T)", service.Name, serviceName, handler)
 			}
 
 			if err := updater.RegisterStatusUpdater(func(up bool) {
-				loadBalancer.SetStatus(ctx, childName, up)
+				loadBalancer.SetStatus(ctx, service.Name, up)
 			}); err != nil {
-				return nil, fmt.Errorf("cannot register %v as updater for %v: %w", childName, serviceName, err)
+				return nil, fmt.Errorf("cannot register %v as updater for %v: %w", service.Name, serviceName, err)
 			}
 
-			log.Ctx(ctx).Debug().Str("parent", serviceName).Str("child", childName).
+			log.Ctx(ctx).Debug().Str("parent", serviceName).Str("child", service.Name).
 				Msg("Child service will update parent on status change")
 		}
 
