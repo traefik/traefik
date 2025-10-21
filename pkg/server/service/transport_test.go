@@ -266,8 +266,7 @@ func TestValidTLSVersions(t *testing.T) {
 }
 
 func TestInvalidMaxTLSVersions(t *testing.T) {
-
-	// init log buffer to capture zerolog output
+	// Init log buffer to capture zerolog output
 	var logBuffer bytes.Buffer
 	// Capture zerolog output
 	log.Logger = log.Output(&logBuffer)
@@ -316,15 +315,14 @@ func TestInvalidMaxTLSVersions(t *testing.T) {
 
 	// Run the test
 	logtest()
-	// set logs in variable as string
+	// Set logs in variable as string
 	logged := logBuffer.String()
-	//check logs cotent again expected error message
+	// Check logs cotent again expected error message
 	assert.Contains(t, logged, "invalid TLS maximum version: VersionTLS16")
 }
 
 func TestInvalidMinTLSVersions(t *testing.T) {
-
-	// init log buffer to capture zerolog output
+	// Init log buffer to capture zerolog output
 	var logBuffer bytes.Buffer
 	// Capture zerolog output
 	log.Logger = log.Output(&logBuffer)
@@ -373,15 +371,14 @@ func TestInvalidMinTLSVersions(t *testing.T) {
 
 	// Run the test
 	logtest()
-	// set logs in variable as string
+	// Set logs in variable as string
 	logged := logBuffer.String()
-	//check logs cotent again expected error message
+	// Check logs cotent again expected error message
 	assert.Contains(t, logged, "invalid TLS minimum version: VersionTLS09")
 }
 
 func TestInvalidCipherSuites(t *testing.T) {
-
-	// init log buffer to capture zerolog output
+	// Init log buffer to capture zerolog output
 	var logBuffer bytes.Buffer
 	// Capture zerolog output
 	log.Logger = log.Output(&logBuffer)
@@ -430,14 +427,13 @@ func TestInvalidCipherSuites(t *testing.T) {
 
 	// Run the test
 	logtest()
-	// set logs in variable as string
+	// Set logs in variable as string
 	logged := logBuffer.String()
-	//check logs cotent again expected error message
+	// Check logs cotent again expected error message
 	assert.Contains(t, logged, "Invalid cipher: TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA385")
 }
 
 func TestEmptyCipherSuites(t *testing.T) {
-
 	srv := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 	}))
