@@ -133,7 +133,7 @@ spec:
 
 ??? info "`traefik.ingress.kubernetes.io/router.tls.options`"
 
-    See [options](../kubernetes/crd/http/tlsoption.md) for more information.
+    See [options](../kubernetes/crd/tls/tlsoption.md) for more information.
 
     ```yaml
     traefik.ingress.kubernetes.io/router.tls.options: foobar@file
@@ -589,7 +589,7 @@ and will connect via TLS automatically.
     Please note that by enabling TLS communication between traefik and your pods,
     you will have to have trusted certificates that have the proper trust chain and IP subject name.
     If this is not an option, you may need to skip TLS certificate verification.
-    See the [`insecureSkipVerify` TLSOption](../kubernetes/crd/http/tlsoption.md) setting for more details.
+    See the [`insecureSkipVerify` TLSOption](../kubernetes/crd/tls/tlsoption.md) setting for more details.
 
 ## Global Default Backend Ingresses
 
