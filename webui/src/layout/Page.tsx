@@ -1,5 +1,5 @@
 import { Flex, globalCss, styled } from '@traefiklabs/faency'
-import { ReactNode, useState } from 'react'
+import { ReactNode, useMemo, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useLocation } from 'react-router-dom'
 
@@ -42,8 +42,24 @@ export interface Props {
 }
 
 const Page = ({ children }: Props) => {
+  const { pathname } = useLocation()
   const [isSideBarPanelOpen, setIsSideBarPanelOpen] = useState(false)
   const location = useLocation()
+
+  const isDemoPage = useMemo(() => pathname.includes('hub-dashboard'), [pathname])
+
+  const renderedContent = useMemo(() => {
+    if (isDemoPage) {
+      return children
+    }
+
+    return (
+      <PageContainer data-testid={`${location.pathname} page`} direction="column">
+        <TopNav />
+        {children}
+      </PageContainer>
+    )
+  }, [children, isDemoPage, location.pathname])
 
   return (
     <ToastProvider>
@@ -58,10 +74,7 @@ const Page = ({ children }: Props) => {
           justify="center"
           css={{ flex: 1, margin: 'auto', ml: 264, [`@media (max-width:${LAPTOP_BP}px)`]: { ml: 60 } }}
         >
-          <PageContainer data-testid={`${location.pathname} page`} direction="column">
-            <TopNav />
-            {children}
-          </PageContainer>
+          {renderedContent}
         </Flex>
       </Flex>
       <ToastPool />

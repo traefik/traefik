@@ -7,6 +7,7 @@ import { verifyScriptSignature } from './workers/scriptVerification'
 
 import { SpinnerLoader } from 'components/SpinnerLoader'
 import { useIsDarkMode } from 'hooks/use-theme'
+import { TopNav } from 'layout/Navigation'
 
 const PUBLIC_KEY = 'MCowBQYDK2VwAyEAWMBZ0pMBaL/s8gNXxpAPCIQ8bxjnuz6bQFwGYvjXDfg='
 
@@ -56,17 +57,22 @@ const HubDashboard = ({ path }: { path: string }) => {
 
   if (scriptError) {
     return (
-      <Flex gap={4} align="center" justify="center" direction="column" css={{ width: '100%', mt: '$8' }}>
+      <Flex gap={4} align="center" justify="center" direction="column" css={{ width: '100%', mt: '$8', maxWidth: 690 }}>
         <Image src="/img/gopher-something-went-wrong.png" width={400} />
-        <Text css={{ fontSize: 24, fontWeight: '$semiBold' }}>
-          Oops, the demo content couldn't be fetched correctly
-        </Text>
-        <Text size={6} css={{ textAlign: 'center', lineHeight: 1.3 }}>
-          But don't worry, you can still read more about Traefik Hub API Management on our{' '}
-          <Link href="https://traefik.io/traefik-hub" target="_blank">
+        <Text css={{ fontSize: 24, fontWeight: '$semiBold' }}>Oops! We couldn’t load the demo content.</Text>
+        <Text size={6} css={{ textAlign: 'center', lineHeight: 1.4 }}>
+          Don’t worry — you can still learn more about{' '}
+          <Text size={6} css={{ fontWeight: '$semiBold' }}>
+            Traefik Hub API Management
+          </Text>{' '}
+          on our{' '}
+          <Link
+            href="https://traefik.io/traefik-hub?utm_campaign=hub-demo&utm_source=proxy-button&utm_medium=in-product"
+            target="_blank"
+          >
             website
           </Link>{' '}
-          and on our{' '}
+          or in our{' '}
           <Link href="https://doc.traefik.io/traefik-hub/" target="_blank">
             documentation
           </Link>
@@ -77,8 +83,7 @@ const HubDashboard = ({ path }: { path: string }) => {
   }
 
   return (
-    <Box css={{ mt: '-$7' }}>
-      <Text css={{ fontSize: '$8', color: '$primary', mb: '$7' }}>DEMO CONTENT</Text>
+    <Box css={{ width: '100%' }}>
       <Helmet>
         <title>Hub Demo - Traefik Proxy</title>
         <meta
@@ -94,7 +99,18 @@ const HubDashboard = ({ path }: { path: string }) => {
           ></script>
         )}
       </Helmet>
-
+      <Box
+        css={{
+          margin: 'auto',
+          position: 'relative',
+          maxWidth: '1334px',
+          '@media (max-width:1440px)': {
+            maxWidth: '100%',
+          },
+        }}
+      >
+        <TopNav noHubButton css={{ position: 'absolute', top: 125, right: '$5' }} />
+      </Box>
       {verificationInProgress ? (
         <Box css={{ width: '100%', justifyItems: 'center', mt: '$8' }}>
           <SpinnerLoader size={48} />
@@ -105,6 +121,14 @@ const HubDashboard = ({ path }: { path: string }) => {
           path={usedPath}
           theme={isDarkMode ? 'dark' : 'light'}
           baseurl="#/hub-dashboard"
+          containercss={JSON.stringify({
+            maxWidth: '1334px',
+            '@media (max-width:1440px)': {
+              maxWidth: '100%',
+            },
+            margin: 'auto',
+            marginTop: '90px',
+          })}
         ></hub-ui-demo-app>
       )}
     </Box>

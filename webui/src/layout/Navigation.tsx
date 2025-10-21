@@ -2,6 +2,7 @@ import {
   Badge,
   Box,
   Button,
+  CSS,
   DialogTitle,
   DropdownMenu,
   DropdownMenuContent,
@@ -291,7 +292,7 @@ export const SideNav = ({
   )
 }
 
-export const TopNav = () => {
+export const TopNav = ({ css, noHubButton = false }: { css?: CSS; noHubButton?: boolean }) => {
   const [hasHubButtonComponent, setHasHubButtonComponent] = useState(false)
   const { showHubButton, version } = useContext(VersionContext)
   const isDarkMode = useIsDarkMode()
@@ -344,8 +345,8 @@ export const TopNav = () => {
   }, [showHubButton])
 
   return (
-    <Flex as="nav" role="navigation" justify="end" align="center" css={{ gap: '$2', mb: '$6' }}>
-      {hasHubButtonComponent && (
+    <Flex as="nav" role="navigation" justify="end" align="center" css={{ gap: '$2', mb: '$6', ...css }}>
+      {!noHubButton && hasHubButtonComponent && (
         <Box css={{ fontFamily: '$rubik', fontWeight: '500 !important' }}>
           <hub-button-app
             key={`dark-mode-${isDarkMode}`}
