@@ -51,6 +51,7 @@ spec:
             - --entrypoints.web8080.address=:8080
             - --entrypoints.traefik.address=:9000
             - --providers.kubernetesgateway.experimentalChannel
+            - --providers.kubernetesgateway.disableNodeResources
             - --providers.kubernetesgateway.statusaddress.service.namespace=traefik
             - --providers.kubernetesgateway.statusaddress.service.name=traefik
           ports:
