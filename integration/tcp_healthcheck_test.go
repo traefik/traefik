@@ -55,8 +55,8 @@ func (s *TCPHealthCheckSuite) TestSimpleConfiguration() {
 		successfulConnectionsWhoami2 int
 	)
 
-	for i := 0; i < 4; i++ {
-		out, err := s.connectTCP("127.0.0.1:8093")
+	for range 4 {
+		out := s.connectTCP("127.0.0.1:8093")
 		require.NoError(s.T(), err)
 
 		if strings.Contains(out, "whoamitcp1") {
@@ -87,15 +87,15 @@ func (s *TCPHealthCheckSuite) TestSimpleConfiguration() {
 	time.Sleep(1 * time.Second)
 
 	// Verify that the remaining server still responds.
-	for i := 0; i < 3; i++ {
-		out, err := s.connectTCP("127.0.0.1:8093")
+	for range 3 {
+		out := s.connectTCP("127.0.0.1:8093")
 		require.NoError(s.T(), err)
 		assert.Contains(s.T(), out, "whoamitcp1")
 	}
 }
 
 // connectTCP connects to the given TCP address and returns the response.
-func (s *TCPHealthCheckSuite) connectTCP(addr string) (string, error) {
+func (s *TCPHealthCheckSuite) connectTCP(addr string) string {
 	s.T().Helper()
 
 	conn, err := net.DialTimeout("tcp", addr, time.Second)
@@ -114,5 +114,5 @@ func (s *TCPHealthCheckSuite) connectTCP(addr string) (string, error) {
 	n, err := conn.Read(buffer)
 	require.NoError(s.T(), err)
 
-	return string(buffer[:n]), nil
+	return string(buffer[:n])
 }
