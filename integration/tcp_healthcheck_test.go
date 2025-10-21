@@ -45,30 +45,30 @@ func (s *TCPHealthCheckSuite) TestSimpleConfiguration() {
 
 	s.traefikCmd(withConfigFile(file))
 
-	// wait for traefik
+	// Wait for Traefik.
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("HostSNI(`*`)"))
 	require.NoError(s.T(), err)
 
 	// Test that we can consistently reach servers through load balancing.
 	var (
-		successfulConnectionsWhoami1 int
-		successfulConnectionsWhoami2 int
+		successfulConnectionsWhoamitcp1 int
+		successfulConnectionsWhoamitcp2 int
 	)
 
 	for range 4 {
-		out := s.connectTCP("127.0.0.1:8093")
+		out := s.whoIs("127.0.0.1:8093")
 		require.NoError(s.T(), err)
 
 		if strings.Contains(out, "whoamitcp1") {
-			successfulConnectionsWhoami1++
+			successfulConnectionsWhoamitcp1++
 		}
 		if strings.Contains(out, "whoamitcp2") {
-			successfulConnectionsWhoami2++
+			successfulConnectionsWhoamitcp2++
 		}
 	}
 
-	assert.Equal(s.T(), 2, successfulConnectionsWhoami1)
-	assert.Equal(s.T(), 2, successfulConnectionsWhoami2)
+	assert.Equal(s.T(), 2, successfulConnectionsWhoamitcp1)
+	assert.Equal(s.T(), 2, successfulConnectionsWhoamitcp2)
 
 	// Stop one whoamitcp2 containers to simulate health check failure.
 	conn, err := net.DialTimeout("tcp", s.whoamitcp2IP+":8080", time.Second)
@@ -88,14 +88,14 @@ func (s *TCPHealthCheckSuite) TestSimpleConfiguration() {
 
 	// Verify that the remaining server still responds.
 	for range 3 {
-		out := s.connectTCP("127.0.0.1:8093")
+		out := s.whoIs("127.0.0.1:8093")
 		require.NoError(s.T(), err)
 		assert.Contains(s.T(), out, "whoamitcp1")
 	}
 }
 
 // connectTCP connects to the given TCP address and returns the response.
-func (s *TCPHealthCheckSuite) connectTCP(addr string) string {
+func (s *TCPHealthCheckSuite) whoIs(addr string) string {
 	s.T().Helper()
 
 	conn, err := net.DialTimeout("tcp", addr, time.Second)
