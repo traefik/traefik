@@ -224,7 +224,6 @@ func TestValidCipherSuites(t *testing.T) {
 }
 
 func TestValidTLSVersions(t *testing.T) {
-
 	srv := httptest.NewUnstartedServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 	}))
