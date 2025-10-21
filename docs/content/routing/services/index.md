@@ -807,6 +807,7 @@ _Optional_
 `cipherSuites` defines the cipher suites to use when contacting backend servers.
 
 This option allows you to control the cryptographic algorithms used for backend connections, which is useful for:
+
 - Connecting to legacy backends that only support specific cipher suites
 - Enforcing security policies (e.g., requiring Perfect Forward Secrecy)
 - Meeting compliance requirements
