@@ -934,7 +934,7 @@ func (p *Provider) getBackendAddresses(namespace string, ref gatev1.BackendRef) 
 		}
 
 		if len(nodes) == 0 {
-			return nil, corev1.ServicePort{}, fmt.Errorf("nodes not found")
+			return nil, corev1.ServicePort{}, errors.New("nodes not found")
 		}
 
 		uniqAddresses := map[string]struct{}{}
@@ -960,7 +960,7 @@ func (p *Provider) getBackendAddresses(namespace string, ref gatev1.BackendRef) 
 		}
 
 		if len(backendServers) == 0 {
-			return nil, corev1.ServicePort{}, fmt.Errorf("no internal node addresses found")
+			return nil, corev1.ServicePort{}, errors.New("no internal node addresses found")
 		}
 
 		return backendServers, *svcPort, nil
