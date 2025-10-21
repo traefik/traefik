@@ -178,6 +178,9 @@ func (thc *ServiceTCPHealthChecker) executeHealthCheck(ctx context.Context, conf
 		addr = net.JoinHostPort(host, strconv.Itoa(config.Port))
 	}
 
+	ctx, cancel := context.WithDeadline(ctx, time.Now().Add(time.Duration(config.Timeout)))
+	defer cancel()
+
 	conn, err := target.Dialer.DialContext(ctx, "tcp", addr, nil)
 	if err != nil {
 		return fmt.Errorf("connecting to %s: %w", addr, err)

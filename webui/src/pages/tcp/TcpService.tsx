@@ -29,6 +29,14 @@ const SpacedColumns = styled(Flex, {
   gridGap: '16px',
 })
 
+const ServicesGrid = styled(Box, {
+  display: 'grid',
+  gridTemplateColumns: '2fr 1fr 1fr',
+  alignItems: 'center',
+  padding: '$3 $5',
+  borderBottom: '1px solid $tableRowBorder',
+})
+
 const ServersGrid = styled(Box, {
   display: 'grid',
   alignItems: 'center',
@@ -36,6 +44,11 @@ const ServersGrid = styled(Box, {
   borderBottom: '1px solid $tableRowBorder',
 })
 
+const GridTitle = styled(Text, {
+  fontSize: '14px',
+  fontWeight: 700,
+  color: 'hsl(0, 0%, 56%)',
+})
 
 type TcpServer = {
   address: string
@@ -76,6 +89,10 @@ function getTcpServerStatusList(data: ServiceDetailType): ServerStatus {
 
 export const TcpServicePanels = ({ data }: TcpDetailProps) => {
   const serversList = getTcpServerStatusList(data)
+  const getProviderFromName = (serviceName: string): string => {
+    const [, provider] = serviceName.split('@')
+    return provider || data.provider
+  }
   const providerName = useMemo(() => {
     return data.provider
   }, [data.provider])
@@ -164,6 +181,28 @@ export const TcpServicePanels = ({ data }: TcpDetailProps) => {
           </Box>
         </DetailSection>
       )}
+      {!!data?.weighted?.services?.length && (
+        <DetailSection narrow icon={<FiGlobe size={20} />} title="Services" noPadding>
+          <>
+            <ServicesGrid css={{ mt: '$2' }}>
+              <GridTitle>Name</GridTitle>
+              <GridTitle css={{ textAlign: 'center' }}>Weight</GridTitle>
+              <GridTitle css={{ textAlign: 'center' }}>Provider</GridTitle>
+            </ServicesGrid>
+            <Box data-testid="tcp-weighted-services">
+              {data.weighted.services.map((service) => (
+                <ServicesGrid key={service.name}>
+                  <Text>{service.name}</Text>
+                  <Text css={{ textAlign: 'center' }}>{service.weight}</Text>
+                  <Flex css={{ justifyContent: 'center' }}>
+                    <ProviderIcon name={getProviderFromName(service.name)} />
+                  </Flex>
+                </ServicesGrid>
+              ))}
+            </Box>
+          </>
+        </DetailSection>
+      )}
       {Object.keys(serversList).length > 0 && (
         <DetailSection narrow icon={<FiGlobe size={20} />} title="Servers" noPadding>
           <>
@@ -212,6 +251,7 @@ export const TcpServiceRender = ({ data, error, name }: TcpServiceRenderProps) =
       <Page title={name}>
         <Skeleton css={{ height: '$7', width: '320px', mb: '$8' }} data-testid="skeleton" />
         <SpacedColumns>
+          <DetailSectionSkeleton narrow />
           <DetailSectionSkeleton narrow />
           <DetailSectionSkeleton narrow />
         </SpacedColumns>
