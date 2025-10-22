@@ -5,6 +5,7 @@ import (
 	"errors"
 	"math"
 	"net/http"
+	"net/http/httptrace"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -68,33 +69,6 @@ func (s *namedHandler) getAvgResponseTime() float64 {
 		return 0
 	}
 	return s.responseTimeSum / float64(s.sampleCount)
-}
-
-// responseTracker wraps http.ResponseWriter to capture Time To First Byte (TTFB).
-type responseTracker struct {
-	http.ResponseWriter
-	headerTime    *time.Time
-	headerWritten bool
-}
-
-// WriteHeader intercepts the first byte written to capture TTFB.
-func (r *responseTracker) WriteHeader(statusCode int) {
-	if !r.headerWritten {
-		*r.headerTime = time.Now()
-		r.headerWritten = true
-	}
-	r.ResponseWriter.WriteHeader(statusCode)
-}
-
-// Write intercepts writes to capture implicit WriteHeader call.
-// This is necessary because if WriteHeader is not explicitly called,
-// the first Write will trigger an implicit WriteHeader(200).
-func (r *responseTracker) Write(b []byte) (int, error) {
-	if !r.headerWritten {
-		*r.headerTime = time.Now()
-		r.headerWritten = true
-	}
-	return r.ResponseWriter.Write(b)
 }
 
 // Balancer implements the least-time load balancing algorithm.
@@ -332,21 +306,15 @@ func (b *Balancer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	server.inflightCount.Add(1)
 	defer server.inflightCount.Add(-1)
 
-	// Wrap response writer to capture TTFB.
 	startTime := time.Now()
-	headerTime := startTime // Track when header is written.
-	tracked := &responseTracker{
-		ResponseWriter: rw,
-		headerTime:     &headerTime,
+	trace := &httptrace.ClientTrace{
+		GotFirstResponseByte: func() {
+			// Update average response time (TTFB).
+			server.updateResponseTime(time.Now().Sub(startTime))
+		},
 	}
-
-	// Serve request.
-	server.ServeHTTP(tracked, req)
-
-	// Update average response time (TTFB).
-	// If headerTime changed, use it; otherwise use current time.
-	elapsed := headerTime.Sub(startTime)
-	server.updateResponseTime(elapsed)
+	traceCtx := httptrace.WithClientTrace(req.Context(), trace)
+	server.ServeHTTP(rw, req.WithContext(traceCtx))
 }
 
 // AddServer adds a handler with a server.

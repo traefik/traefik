@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"net/http/httptrace"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -737,6 +738,7 @@ func TestTTFBMeasurement(t *testing.T) {
 		time.Sleep(delay)
 		rw.Header().Set("server", "slow")
 		rw.WriteHeader(http.StatusOK)
+		httptrace.ContextClientTrace(req.Context()).GotFirstResponseByte()
 	}), pointer(1), false)
 
 	// Make multiple requests to build average.
@@ -745,34 +747,11 @@ func TestTTFBMeasurement(t *testing.T) {
 		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 	}
 
-	balancer.handlersMu.RLock()
-	handler := balancer.handlers[0]
-	balancer.handlersMu.RUnlock()
-
 	// Check that average response time is approximately the delay.
-	avg := handler.getAvgResponseTime()
+	avg := balancer.handlers[0].getAvgResponseTime()
 
 	// Allow 5ms tolerance for Go timing jitter and test environment variations.
 	assert.InDelta(t, float64(delay.Milliseconds()), avg, 5.0)
-}
-
-// TestResponseTrackerWriteHeader tests that WriteHeader is called correctly.
-func TestResponseTrackerWriteHeader(t *testing.T) {
-	recorder := httptest.NewRecorder()
-	startTime := time.Now()
-	headerTime := startTime
-	tracker := &responseTracker{
-		ResponseWriter: recorder,
-		headerTime:     &headerTime,
-		headerWritten:  false,
-	}
-
-	time.Sleep(10 * time.Millisecond)
-	tracker.WriteHeader(http.StatusOK)
-
-	assert.True(t, tracker.headerWritten)
-	assert.Equal(t, http.StatusOK, recorder.Code)
-	assert.True(t, headerTime.After(startTime))
 }
 
 // TestZeroSamplesReturnsZero tests that getAvgResponseTime returns 0 when no samples.
@@ -797,12 +776,14 @@ func TestScoreCalculationWithWeights(t *testing.T) {
 		time.Sleep(50 * time.Millisecond)
 		rw.Header().Set("server", "weighted")
 		rw.WriteHeader(http.StatusOK)
+		httptrace.ContextClientTrace(req.Context()).GotFirstResponseByte()
 	}), pointer(3), false) // Weight 3
 
 	balancer.Add("normal", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		time.Sleep(50 * time.Millisecond)
 		rw.Header().Set("server", "normal")
 		rw.WriteHeader(http.StatusOK)
+		httptrace.ContextClientTrace(req.Context()).GotFirstResponseByte()
 	}), pointer(1), false) // Weight 1
 
 	// Make requests to build up response time averages.
@@ -833,12 +814,14 @@ func TestScoreCalculationWithInflight(t *testing.T) {
 		time.Sleep(10 * time.Millisecond)
 		rw.Header().Set("server", "server1")
 		rw.WriteHeader(http.StatusOK)
+		httptrace.ContextClientTrace(req.Context()).GotFirstResponseByte()
 	}), pointer(1), false)
 
 	balancer.Add("server2", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		time.Sleep(10 * time.Millisecond)
 		rw.Header().Set("server", "server2")
 		rw.WriteHeader(http.StatusOK)
+		httptrace.ContextClientTrace(req.Context()).GotFirstResponseByte()
 	}), pointer(1), false)
 
 	// Build up response time averages for both servers.
@@ -880,6 +863,7 @@ func TestScoreCalculationColdStart(t *testing.T) {
 		time.Sleep(50 * time.Millisecond)
 		rw.Header().Set("server", "warm")
 		rw.WriteHeader(http.StatusOK)
+		httptrace.ContextClientTrace(req.Context()).GotFirstResponseByte()
 	}), pointer(1), false)
 
 	// Warm up the first server
@@ -893,6 +877,7 @@ func TestScoreCalculationColdStart(t *testing.T) {
 		time.Sleep(10 * time.Millisecond) // Actually faster
 		rw.Header().Set("server", "cold")
 		rw.WriteHeader(http.StatusOK)
+		httptrace.ContextClientTrace(req.Context()).GotFirstResponseByte()
 	}), pointer(1), false)
 
 	// Cold server should get selected because:
@@ -926,12 +911,14 @@ func TestFastServerGetsMoreTraffic(t *testing.T) {
 		time.Sleep(20 * time.Millisecond)
 		rw.Header().Set("server", "fast")
 		rw.WriteHeader(http.StatusOK)
+		httptrace.ContextClientTrace(req.Context()).GotFirstResponseByte()
 	}), pointer(1), false)
 
 	balancer.Add("slow", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		time.Sleep(100 * time.Millisecond)
 		rw.Header().Set("server", "slow")
 		rw.WriteHeader(http.StatusOK)
+		httptrace.ContextClientTrace(req.Context()).GotFirstResponseByte()
 	}), pointer(1), false)
 
 	// After just 1 request to each server, the algorithm identifies the fastest server
@@ -959,12 +946,14 @@ func TestTrafficShiftsWhenPerformanceDegrades(t *testing.T) {
 		time.Sleep(time.Duration(server1Delay.Load()) * time.Millisecond)
 		rw.Header().Set("server", "server1")
 		rw.WriteHeader(http.StatusOK)
+		httptrace.ContextClientTrace(req.Context()).GotFirstResponseByte()
 	}), pointer(1), false)
 
 	balancer.Add("server2", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		time.Sleep(5 * time.Millisecond) // Static 5ms
 		rw.Header().Set("server", "server2")
 		rw.WriteHeader(http.StatusOK)
+		httptrace.ContextClientTrace(req.Context()).GotFirstResponseByte()
 	}), pointer(1), false)
 
 	// Pre-fill ring buffers to eliminate cold start effects and ensure deterministic equal performance state.

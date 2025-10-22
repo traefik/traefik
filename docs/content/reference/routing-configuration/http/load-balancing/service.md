@@ -487,9 +487,17 @@ Power of two choices algorithm is a load balancing strategy that selects two ser
 
 ## Least-Time
 
-The Least-Time load balancing algorithm selects the server with the lowest average response time (Time To First Byte - TTFB) combined with the fewest active connections, weighted by server capacity. This strategy is ideal for heterogeneous backend environments where servers have varying performance characteristics, different hardware capabilities, or varying network latency.
+The Least-Time load balancing algorithm selects the server with the lowest average response time (Time To First Byte - TTFB),
+combined with the fewest active connections, weighted by server capacity.
+This strategy is ideal for heterogeneous backend environments where servers have varying performance characteristics,
+different hardware capabilities, or varying network latency.
 
-The algorithm continuously measures each backend's response time and tracks active connection counts. When routing a request, it calculates a score for each healthy server using the formula: `(avg_response_time × (1 + active_connections)) / weight`. The server with the lowest score receives the request. When multiple servers have identical scores, Weighted Round Robin (WRR) with EDF scheduling is used as a tie-breaker to ensure fair distribution.
+The algorithm continuously measures each backend's response time and tracks active connection counts.
+When routing a request,
+it calculates a score for each healthy server using the formula: `(avg_response_time × (1 + active_connections)) / weight`.
+The server with the lowest score receives the request.
+When multiple servers have identical scores,
+Weighted Round Robin (WRR) with Earliest Deadline First (EDF) scheduling is used as a tie-breaker to ensure fair distribution.
 
 ??? example "Basic Least-Time Load Balancing -- Using the [File Provider](../../../install-configuration/providers/others/file.md)"
 
@@ -517,127 +525,6 @@ The algorithm continuously measures each backend's response time and tracks acti
           url = "http://private-ip-server-2/"
         [[http.services.my-service.loadBalancer.servers]]
           url = "http://private-ip-server-3/"
-    ```
-
-??? example "Least-Time with Server Weights -- Using the [File Provider](../../../install-configuration/providers/others/file.md)"
-
-    Use weights to indicate relative server capacity. Servers with higher weights are preferred when response times are similar, allowing you to direct more traffic to more capable servers.
-
-    ```yaml tab="YAML"
-    ## Dynamic configuration
-    http:
-      services:
-        backend:
-          loadBalancer:
-            strategy: "leasttime"
-            servers:
-            - url: "http://server-a:8080"
-              weight: 2  # High-performance server (2x capacity)
-            - url: "http://server-b:8080"
-              weight: 1  # Standard server
-            - url: "http://server-c:8080"
-              weight: 1  # Standard server
-            sticky:
-              cookie:
-                name: backend_cookie
-            healthCheck:
-              path: /health
-              interval: 10s
-    ```
-
-    ```toml tab="TOML"
-    ## Dynamic configuration
-    [http.services]
-      [http.services.backend.loadBalancer]
-        strategy = "leasttime"
-        [[http.services.backend.loadBalancer.servers]]
-          url = "http://server-a:8080"
-          weight = 2
-        [[http.services.backend.loadBalancer.servers]]
-          url = "http://server-b:8080"
-          weight = 1
-        [[http.services.backend.loadBalancer.servers]]
-          url = "http://server-c:8080"
-          weight = 1
-
-        [http.services.backend.loadBalancer.sticky.cookie]
-          name = "backend_cookie"
-
-        [http.services.backend.loadBalancer.healthCheck]
-          path = "/health"
-          interval = "10s"
-    ```
-
-??? example "Multi-Datacenter Scenario -- Using the [File Provider](../../../install-configuration/providers/others/file.md)"
-
-    In multi-datacenter deployments, use weights to express datacenter preferences. The least-time algorithm will automatically route to the fastest responding datacenter while respecting weight preferences.
-
-    ```yaml tab="YAML"
-    ## Dynamic configuration
-    http:
-      services:
-        global-api:
-          loadBalancer:
-            strategy: "leasttime"
-            servers:
-            - url: "http://us-east.api:8080"
-              weight: 3  # Local datacenter, preferred
-            - url: "http://eu-west.api:8080"
-              weight: 1  # Higher latency, backup
-            - url: "http://ap-south.api:8080"
-              weight: 1  # Highest latency, last resort
-    ```
-
-    ```toml tab="TOML"
-    ## Dynamic configuration
-    [http.services]
-      [http.services.global-api.loadBalancer]
-        strategy = "leasttime"
-        [[http.services.global-api.loadBalancer.servers]]
-          url = "http://us-east.api:8080"
-          weight = 3
-        [[http.services.global-api.loadBalancer.servers]]
-          url = "http://eu-west.api:8080"
-          weight = 1
-        [[http.services.global-api.loadBalancer.servers]]
-          url = "http://ap-south.api:8080"
-          weight = 1
-    ```
-
-??? example "Docker Labels Configuration"
-
-    ```yaml
-    services:
-      whoami:
-        image: traefik/whoami
-        labels:
-          - "traefik.enable=true"
-          - "traefik.http.services.whoami.loadbalancer.strategy=leasttime"
-          - "traefik.http.services.whoami.loadbalancer.servers[0].url=http://whoami1:80"
-          - "traefik.http.services.whoami.loadbalancer.servers[0].weight=2"
-          - "traefik.http.services.whoami.loadbalancer.servers[1].url=http://whoami2:80"
-          - "traefik.http.services.whoami.loadbalancer.servers[1].weight=1"
-    ```
-
-??? example "Kubernetes IngressRoute"
-
-    ```yaml
-    apiVersion: traefik.io/v1alpha1
-    kind: IngressRoute
-    metadata:
-      name: app-route
-      namespace: default
-    spec:
-      entryPoints:
-        - web
-      routes:
-        - match: Host(`app.example.com`)
-          kind: Rule
-          services:
-            - name: app-service
-              port: 8080
-              strategy: leasttime
-              weight: 1
     ```
 
 ## Mirroring
