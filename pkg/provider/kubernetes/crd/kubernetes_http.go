@@ -359,7 +359,7 @@ func (c configBuilder) buildMirroring(ctx context.Context, tService *traefikv1al
 
 		mirrorServices = append(mirrorServices, dynamic.MirrorService{
 			Name:    mirroredName,
-			Percent: mirror.Percent,
+			Percent: &mirror.Percent,
 		})
 	}
 

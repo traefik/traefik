@@ -27,6 +27,9 @@ const (
 	MirroringDefaultMirrorBody = true
 	// MirroringDefaultMaxBodySize is the Mirroring.MaxBodySize option default value.
 	MirroringDefaultMaxBodySize int64 = -1
+
+	// MirroringServiceDefaultPercent is the default value for the MirrorService.Percent.
+	MirroringServiceDefaultPercent = 100
 )
 
 // +k8s:deepcopy-gen=true
@@ -141,10 +144,19 @@ type Failover struct {
 // MirrorService holds the MirrorService configuration.
 type MirrorService struct {
 	Name    string `json:"name,omitempty" toml:"name,omitempty" yaml:"name,omitempty" export:"true"`
-	Percent int    `json:"percent,omitempty" toml:"percent,omitempty" yaml:"percent,omitempty" export:"true"`
+	Percent *int   `json:"percent,omitempty" toml:"percent,omitempty" yaml:"percent,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
+
+// SetDefaults sets the default values for a MirrorService.
+func (ms *MirrorService) SetDefaults() {
+	// If Percent is not provided, default to mirroring 100 % of the traffic.
+	if ms.Percent == nil {
+		defaultPercent := MirroringServiceDefaultPercent
+		ms.Percent = &defaultPercent
+	}
+}
 
 // WeightedRoundRobin is a weighted round robin load-balancer of services.
 type WeightedRoundRobin struct {
