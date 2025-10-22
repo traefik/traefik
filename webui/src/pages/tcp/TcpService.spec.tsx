@@ -33,8 +33,18 @@ describe('<TcpServicePage />', () => {
             address: 'http://10.0.1.12:80',
           },
         ],
-        passHostHeader: true,
         terminationDelay: 10,
+        healthCheck: {
+          interval: '30s',
+          timeout: '10s',
+          port: 8080,
+          unhealthyInterval: '1m',
+          send: 'PING',
+          expect: 'PONG',
+        },
+      },
+      serverStatus: {
+        'http://10.0.1.12:80': 'UP',
       },
       status: 'enabled',
       usedBy: ['router-test1@docker'],
@@ -65,19 +75,31 @@ describe('<TcpServicePage />', () => {
     const titleTags = headings.filter((h1) => h1.innerHTML === 'service-test1')
     expect(titleTags.length).toBe(1)
 
-    const serviceDetails = getByTestId('service-details')
+    const serviceDetails = getByTestId('tcp-service-details')
     expect(serviceDetails.innerHTML).toContain('Type')
     expect(serviceDetails.innerHTML).toContain('loadbalancer')
     expect(serviceDetails.innerHTML).toContain('Provider')
     expect(serviceDetails.querySelector('svg[data-testid="docker"]')).toBeTruthy()
     expect(serviceDetails.innerHTML).toContain('Status')
     expect(serviceDetails.innerHTML).toContain('Success')
-    expect(serviceDetails.innerHTML).toContain('Pass Host Header')
-    expect(serviceDetails.innerHTML).toContain('True')
     expect(serviceDetails.innerHTML).toContain('Termination Delay')
     expect(serviceDetails.innerHTML).toContain('10 ms')
 
-    const serversList = getByTestId('servers-list')
+    const healthCheck = getByTestId('tcp-health-check')
+    expect(healthCheck.innerHTML).toContain('Interval')
+    expect(healthCheck.innerHTML).toContain('30s')
+    expect(healthCheck.innerHTML).toContain('Timeout')
+    expect(healthCheck.innerHTML).toContain('10s')
+    expect(healthCheck.innerHTML).toContain('Port')
+    expect(healthCheck.innerHTML).toContain('8080')
+    expect(healthCheck.innerHTML).toContain('Unhealthy Interval')
+    expect(healthCheck.innerHTML).toContain('1m')
+    expect(healthCheck.innerHTML).toContain('Send')
+    expect(healthCheck.innerHTML).toContain('PING')
+    expect(healthCheck.innerHTML).toContain('Expect')
+    expect(healthCheck.innerHTML).toContain('PONG')
+
+    const serversList = getByTestId('tcp-servers-list')
     expect(serversList.childNodes.length).toBe(1)
     expect(serversList.innerHTML).toContain('http://10.0.1.12:80')
 
@@ -130,7 +152,7 @@ describe('<TcpServicePage />', () => {
       <TcpServiceRender name="mock-service" data={mockData as any} error={undefined} />,
     )
 
-    const serversList = getByTestId('servers-list')
+    const serversList = getByTestId('tcp-servers-list')
     expect(serversList.childNodes.length).toBe(1)
     expect(serversList.innerHTML).toContain('http://10.0.1.12:81')
 
@@ -159,5 +181,63 @@ describe('<TcpServicePage />', () => {
     expect(() => {
       getByTestId('routers-table')
     }).toThrow('Unable to find an element by: [data-testid="routers-table"]')
+  })
+
+  it('should render weighted services', async () => {
+    const mockData = {
+      weighted: {
+        services: [
+          {
+            name: 'service1@docker',
+            weight: 80,
+          },
+          {
+            name: 'service2@kubernetes',
+            weight: 20,
+          },
+        ],
+      },
+      status: 'enabled',
+      usedBy: ['router-test1@docker'],
+      name: 'weighted-service-test',
+      provider: 'docker',
+      type: 'weighted',
+      routers: [
+        {
+          entryPoints: ['tcp'],
+          service: 'weighted-service-test',
+          rule: 'HostSNI(`*`)',
+          status: 'enabled',
+          using: ['tcp'],
+          name: 'router-test1@docker',
+          provider: 'docker',
+        },
+      ],
+    }
+
+    const { container, getByTestId } = renderWithProviders(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      <TcpServiceRender name="mock-service" data={mockData as any} error={undefined} />,
+    )
+
+    const headings = Array.from(container.getElementsByTagName('h1'))
+    const titleTags = headings.filter((h1) => h1.innerHTML === 'weighted-service-test')
+    expect(titleTags.length).toBe(1)
+
+    const serviceDetails = getByTestId('tcp-service-details')
+    expect(serviceDetails.innerHTML).toContain('Type')
+    expect(serviceDetails.innerHTML).toContain('weighted')
+    expect(serviceDetails.innerHTML).toContain('Provider')
+    expect(serviceDetails.querySelector('svg[data-testid="docker"]')).toBeTruthy()
+    expect(serviceDetails.innerHTML).toContain('Status')
+    expect(serviceDetails.innerHTML).toContain('Success')
+
+    const weightedServices = getByTestId('tcp-weighted-services')
+    expect(weightedServices.childNodes.length).toBe(2)
+    expect(weightedServices.innerHTML).toContain('service1@docker')
+    expect(weightedServices.innerHTML).toContain('80')
+    expect(weightedServices.innerHTML).toContain('service2@kubernetes')
+    expect(weightedServices.innerHTML).toContain('20')
+    expect(weightedServices.querySelector('svg[data-testid="docker"]')).toBeTruthy()
   })
 })
