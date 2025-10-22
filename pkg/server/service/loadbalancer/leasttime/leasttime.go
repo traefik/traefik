@@ -26,21 +26,22 @@ type namedHandler struct {
 	name   string
 	weight float64
 
-	deadline float64 // WRR tie-breaking (EDF scheduling).
+	deadlineMu sync.RWMutex
+	deadline   float64 // WRR tie-breaking (EDF scheduling).
 
-	// Metrics (protected by mutex).
-	mu              sync.RWMutex
+	inflightCount atomic.Int64 // Number of inflight requests.
+
+	responseTimeMu  sync.RWMutex
 	responseTimes   [sampleSize]float64 // Fixed-size ring buffer (TTFB measurements in ms).
 	responseTimeIdx int                 // Current position in ring buffer.
 	responseTimeSum float64             // Sum of all values in buffer.
 	sampleCount     int                 // Number of samples collected so far.
-	inflightCount   atomic.Int64        // Number of inflight requests.
 }
 
 // updateResponseTime updates the average response time for this server using a ring buffer.
 func (s *namedHandler) updateResponseTime(elapsed time.Duration) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.responseTimeMu.Lock()
+	defer s.responseTimeMu.Unlock()
 
 	ms := float64(elapsed.Milliseconds())
 
@@ -62,13 +63,25 @@ func (s *namedHandler) updateResponseTime(elapsed time.Duration) {
 // getAvgResponseTime returns the average response time in milliseconds.
 // Returns 0 if no samples have been collected yet (cold start).
 func (s *namedHandler) getAvgResponseTime() float64 {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
+	s.responseTimeMu.RLock()
+	defer s.responseTimeMu.RUnlock()
 
 	if s.sampleCount == 0 {
 		return 0
 	}
 	return s.responseTimeSum / float64(s.sampleCount)
+}
+
+func (s *namedHandler) getDeadline() float64 {
+	s.deadlineMu.RLock()
+	defer s.deadlineMu.RUnlock()
+	return s.deadline
+}
+
+func (s *namedHandler) setDeadline(deadline float64) {
+	s.deadlineMu.Lock()
+	defer s.deadlineMu.Unlock()
+	s.deadline = deadline
 }
 
 // Balancer implements the least-time load balancing algorithm.
@@ -95,7 +108,7 @@ type Balancer struct {
 
 	// deadlineMu protects EDF scheduling state (curDeadline and all handler deadline fields).
 	// Separate from handlersMu to reduce lock contention during tie-breaking.
-	deadlineMu sync.RWMutex
+	curDeadlineMu sync.RWMutex
 	// curDeadline is used for WRR tie-breaking (EDF scheduling).
 	curDeadline float64
 }
@@ -191,32 +204,29 @@ func (b *Balancer) selectWRR(candidates []*namedHandler) *namedHandler {
 		return nil
 	}
 
-	var selected *namedHandler
+	selected := candidates[0]
 	minDeadline := math.MaxFloat64
 
 	// Find handler with earliest deadline.
-	b.deadlineMu.RLock()
 	for _, h := range candidates {
-		if h.deadline < minDeadline {
-			minDeadline = h.deadline
+		handlerDeadline := h.getDeadline()
+		if handlerDeadline < minDeadline {
+			minDeadline = handlerDeadline
 			selected = h
 		}
 	}
-	b.deadlineMu.RUnlock()
 
-	if selected == nil {
-		selected = candidates[0]
-	}
-
-	b.deadlineMu.Lock()
 	// Update deadline based on when this server was selected (minDeadline),
 	// not the global curDeadline. This ensures proper weighted distribution.
-	selected.deadline = minDeadline + 1/selected.weight
+	newDeadline := minDeadline + 1/selected.weight
+	selected.setDeadline(newDeadline)
+
 	// Track the maximum deadline assigned for initializing new servers.
-	if selected.deadline > b.curDeadline {
-		b.curDeadline = selected.deadline
+	b.curDeadlineMu.Lock()
+	if newDeadline > b.curDeadline {
+		b.curDeadline = newDeadline
 	}
-	b.deadlineMu.Unlock()
+	b.curDeadlineMu.Unlock()
 
 	return selected
 }
@@ -336,12 +346,19 @@ func (b *Balancer) Add(name string, handler http.Handler, weight *int, fenced bo
 
 	h := &namedHandler{Handler: handler, name: name, weight: float64(w)}
 
-	b.deadlineMu.Lock()
 	// Initialize deadline by adding 1/weight to current deadline.
 	// This staggers servers to prevent all starting at the same time.
-	h.deadline = b.curDeadline + 1/h.weight
-	b.curDeadline = h.deadline
-	b.deadlineMu.Unlock()
+	var deadline float64
+	b.curDeadlineMu.RLock()
+	deadline = b.curDeadline + 1/h.weight
+	b.curDeadlineMu.RUnlock()
+
+	h.setDeadline(deadline)
+
+	// Update balancer's current deadline with the new server's deadline.
+	b.curDeadlineMu.Lock()
+	b.curDeadline = deadline
+	b.curDeadlineMu.Unlock()
 
 	b.handlersMu.Lock()
 	b.handlers = append(b.handlers, h)

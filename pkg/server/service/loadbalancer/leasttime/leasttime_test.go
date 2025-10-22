@@ -571,9 +571,7 @@ func TestConcurrentResponseTimeUpdates(t *testing.T) {
 	wg.Wait()
 
 	// Should have exactly 100 samples (buffer size).
-	handler.mu.RLock()
 	assert.Equal(t, sampleSize, handler.sampleCount)
-	handler.mu.RUnlock()
 }
 
 // TestConcurrentInflightTracking tests thread safety of inflight counter.
@@ -645,21 +643,17 @@ func TestConcurrentRequestsRespectInflight(t *testing.T) {
 	}), pointer(1), false)
 
 	// Pre-warm both servers to establish equal average response times.
-	balancer.handlers[0].mu.Lock()
 	for i := range sampleSize {
 		balancer.handlers[0].responseTimes[i] = 10.0
 	}
 	balancer.handlers[0].responseTimeSum = 10.0 * sampleSize
 	balancer.handlers[0].sampleCount = sampleSize
-	balancer.handlers[0].mu.Unlock()
 
-	balancer.handlers[1].mu.Lock()
 	for i := range sampleSize {
 		balancer.handlers[1].responseTimes[i] = 10.0
 	}
 	balancer.handlers[1].responseTimeSum = 10.0 * sampleSize
 	balancer.handlers[1].sampleCount = sampleSize
-	balancer.handlers[1].mu.Unlock()
 
 	// Phase 1: Launch concurrent requests to server1 that will block.
 	var wg sync.WaitGroup
@@ -957,17 +951,13 @@ func TestTrafficShiftsWhenPerformanceDegrades(t *testing.T) {
 	}), pointer(1), false)
 
 	// Pre-fill ring buffers to eliminate cold start effects and ensure deterministic equal performance state.
-	balancer.handlersMu.RLock()
 	for _, h := range balancer.handlers {
-		h.mu.Lock()
 		for i := range sampleSize {
 			h.responseTimes[i] = 5.0
 		}
 		h.responseTimeSum = 5.0 * sampleSize
 		h.sampleCount = sampleSize
-		h.mu.Unlock()
 	}
-	balancer.handlersMu.RUnlock()
 
 	// Phase 1: Both servers perform equally (5ms each).
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
@@ -1027,13 +1017,11 @@ func TestMultipleServersWithSameScore(t *testing.T) {
 
 	// Set all servers to identical response times to trigger tie-breaking.
 	for _, h := range balancer.handlers {
-		h.mu.Lock()
 		for i := range sampleSize {
 			h.responseTimes[i] = 5.0
 		}
 		h.responseTimeSum = 5.0 * sampleSize
 		h.sampleCount = sampleSize
-		h.mu.Unlock()
 	}
 
 	// With all servers having identical scores, WRR tie-breaking should distribute fairly.
@@ -1076,21 +1064,17 @@ func TestWRRTieBreakingWeightedDistribution(t *testing.T) {
 	// Since response times is proportional to weights, both scores are equal, so WRR tie-breaking will apply.
 	// weighted: score = (15 * 1) / 3 = 5
 	// normal: score = (5 * 1) / 1 = 5
-	balancer.handlers[0].mu.Lock()
 	for i := range sampleSize {
 		balancer.handlers[0].responseTimes[i] = 15.0
 	}
 	balancer.handlers[0].responseTimeSum = 15.0 * sampleSize
 	balancer.handlers[0].sampleCount = sampleSize
-	balancer.handlers[0].mu.Unlock()
 
-	balancer.handlers[1].mu.Lock()
 	for i := range sampleSize {
 		balancer.handlers[1].responseTimes[i] = 5.0
 	}
 	balancer.handlers[1].responseTimeSum = 5.0 * sampleSize
 	balancer.handlers[1].sampleCount = sampleSize
-	balancer.handlers[1].mu.Unlock()
 
 	// Test the selection logic directly without actual HTTP requests to avoid timing variations.
 	counts := map[string]int{"weighted": 0, "normal": 0}
