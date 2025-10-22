@@ -35,27 +35,3 @@ services:
     labels:
       traefik.http.Routers.Super.Rule: Host(`my.super.host`)
       traefik.http.Services.powpow.LoadBalancer.server.Port: 2375
-
-  wrr-server:
-    image: traefik/whoami
-    labels:
-      traefik.http.Routers.wrr-server.Rule: Host(`my.wrr.host`)
-      traefik.http.Services.wrr-server.LoadBalancer.server.Weight: 4
-  wrr-server2:
-    image: traefik/whoami
-    labels:
-      traefik.http.Routers.wrr-server.Rule: Host(`my.wrr.host`)
-      traefik.http.Services.wrr-server.LoadBalancer.server.Weight: 1
-
-  leasttime-server:
-    image: traefik/whoami
-    labels:
-      traefik.http.Routers.leasttime-server.Rule: Host(`my.leasttime.host`)
-      traefik.http.Services.leasttime-server.LoadBalancer.strategy: leasttime
-      traefik.http.Services.leasttime-server.LoadBalancer.server.Weight: 1
-  leasttime-server2:
-    image: traefik/whoami
-    labels:
-      traefik.http.Routers.leasttime-server.Rule: Host(`my.leasttime.host`)
-      traefik.http.Services.leasttime-server.LoadBalancer.strategy: leasttime
-      traefik.http.Services.leasttime-server.LoadBalancer.server.Weight: 1
