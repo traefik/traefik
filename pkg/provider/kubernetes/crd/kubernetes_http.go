@@ -89,7 +89,8 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 			normalized := provider.Normalize(makeID(ingressRoute.Namespace, serviceKey))
 			serviceName := normalized
 
-			if len(route.Services) > 1 {
+			switch {
+			case len(route.Services) > 1:
 				spec := traefikv1alpha1.TraefikServiceSpec{
 					Weighted: &traefikv1alpha1.WeightedRoundRobin{
 						Services: route.Services,
@@ -101,7 +102,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 					logger.Error().Err(errBuild).Send()
 					continue
 				}
-			} else if len(route.Services) == 1 {
+			case len(route.Services) == 1:
 				fullName, serversLB, err := cb.nameAndService(ctx, ingressRoute.Namespace, route.Services[0].LoadBalancerSpec)
 				if err != nil {
 					logger.Error().Err(err).Send()
@@ -113,7 +114,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				} else {
 					serviceName = fullName
 				}
-			} else {
+			default:
 				// Routes without services leave serviceName empty.
 				serviceName = ""
 			}
