@@ -23,6 +23,9 @@ metadata:
 spec:
   entryPoints:
     - web
+  parentRefs:
+    - name: parent-gateway
+      namespace: default  # Optional - defaults to same namespace
   routes:
   - kind: Rule
     # Rule on the Host
@@ -74,9 +77,12 @@ spec:
 
 ## Configuration Options
 
-| Field                                                                                                                                                                                | Description                                                                                                                                                                                                                                                                                                                                                                      | Default | Required |
-|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------|:---------|
+| Field                                                                                                                                                                                            | Description                                                                                                                                                                                                                                                                                                                                                                      | Default | Required |
+|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------|:---------|
 | <a id="opt-entryPoints" href="#opt-entryPoints" title="#opt-entryPoints">`entryPoints`</a> | List of [entry points](../../../../install-configuration/entrypoints.md) names.<br />If not specified, HTTP routers will accept requests from all EntryPoints in the list of default EntryPoints.                                                                                                                                                                                |         | No       |
+| <a id="opt-parentRefs" href="#opt-parentRefs" title="#opt-parentRefs">`parentRefs`</a> | List of references to parent IngressRoute resources for multi-layer routing. When specified, this IngressRoute's routers become children of the referenced parent IngressRoute's routers. See [Multi-Layer Routing](#multi-layer-routing-with-ingressroutes) section for details.                                                                                                |         | No       |
+| <a id="opt-parentRefsn-name" href="#opt-parentRefsn-name" title="#opt-parentRefsn-name">`parentRefs[n].name`</a> | Name of the referenced parent IngressRoute resource.                                                                                                                                                                                                                                                                                                                             |         | Yes      |
+| <a id="opt-parentRefsn-namespace" href="#opt-parentRefsn-namespace" title="#opt-parentRefsn-namespace">`parentRefs[n].namespace`</a> | Namespace of the referenced parent IngressRoute resource.<br />If not specified, defaults to the same namespace as the child IngressRoute.<br />Cross-namespace references require `allowCrossNamespace` provider option to be enabled.                                                                                                                                          |         | No       |
 | <a id="opt-routes" href="#opt-routes" title="#opt-routes">`routes`</a> | List of routes.                                                                                                                                                                                                                                                                                                                                                                  |         | Yes      |
 | <a id="opt-routesn-kind" href="#opt-routesn-kind" title="#opt-routesn-kind">`routes[n].kind`</a> | Kind of router matching, only `Rule` is allowed yet.                                                                                                                                                                                                                                                                                                                             | "Rule"  | No       |
 | <a id="opt-routesn-match" href="#opt-routesn-match" title="#opt-routesn-match">`routes[n].match`</a> | Defines the [rule](../../../http/routing/rules-and-priority.md#rules) corresponding to an underlying router.                                                                                                                                                                                                                                                                     |         | Yes      |
@@ -213,6 +219,162 @@ TLS options references, a conflict occurs, such as in the example below.
         ...
     ```
 
-If that happens, both mappings are discarded, and the host name 
+If that happens, both mappings are discarded, and the host name
 (`example.net` in the example) for these routers gets associated with
  the default TLS options instead.
+
+### Multi-Layer Routing with IngressRoutes
+
+Multi-layer routing allows creating hierarchical relationships between IngressRoutes,
+where parent IngressRoutes can apply middleware before child IngressRoutes make routing decisions.
+
+This is particularly useful for authentication-based routing,
+where a parent IngressRoute authenticates requests and adds context (e.g., user roles as headers),
+and child IngressRoutes route based on that context.
+
+When a child IngressRoute references a parent IngressRoute with multiple routes,
+**all** parent routers then become parents of **all** child routers.
+
+!!! info "Comprehensive Multi-Layer Routing Documentation"
+
+    For detailed information about multi-layer routing concepts, validation rules, and use cases, see the dedicated [Multi-Layer Routing](../../../../routing-configuration/http/routing/multi-layer-routing.md) page.
+
+#### Configuration Requirements
+
+### Root IngressRoutes
+
+- Have no `parentRefs` (top of the hierarchy)
+- **Can** have `entryPoints`, `tls`, and `observability` configuration
+- Can be either parent IngressRoutes (with children) or standalone IngressRoutes (with service)
+
+### Intermediate IngressRoutes
+
+- Reference their parent IngressRoute(s) via `parentRefs`
+- Have one or more child IngressRoutes
+- **Must not** have a `service` defined
+- **Must not** have `entryPoints`, `tls`, or `observability` configuration
+
+### Leaf IngressRoutes
+
+- Reference their parent IngressRoute(s) via `parentRefs`
+- **Must** have a `service` defined
+- **Must not** have `entryPoints`, `tls`, or `observability` configuration
+
+!!! warning "Cross-Namespace References"
+
+    Cross-namespace parent references require the `allowCrossNamespace` provider option to be enabled. 
+    If disabled, child IngressRoute creation will be skipped with an error logged.
+
+#### Example: Authentication-Based Routing
+
+??? example "Parent IngressRoute with ForwardAuth and Child IngressRoutes"
+
+    ```yaml tab="Parent IngressRoute"
+    apiVersion: traefik.io/v1alpha1
+    kind: IngressRoute
+    metadata:
+      name: api-parent
+      namespace: default
+    spec:
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+      routes:
+        # Parent route with authentication - no services
+        - match: Host(`api.example.com`) && PathPrefix(`/api`)
+          kind: Rule
+          middlewares:
+            - name: auth-middleware
+              namespace: default
+    ---
+    apiVersion: traefik.io/v1alpha1
+    kind: Middleware
+    metadata:
+      name: auth-middleware
+      namespace: default
+    spec:
+      forwardAuth:
+        address: "http://auth-service.default.svc.cluster.local:8080/auth"
+        authResponseHeaders:
+          - X-User-Role
+          - X-User-Name
+    ```
+
+    ```yaml tab="Child IngressRoutes"
+    # Child IngressRoute for admin users
+    apiVersion: traefik.io/v1alpha1
+    kind: IngressRoute
+    metadata:
+      name: api-admin
+      namespace: default
+    spec:
+      parentRefs:
+        - name: api-parent
+          namespace: default  # Optional - defaults to same namespace
+      routes:
+        - match: HeadersRegexp(`X-User-Role`, `admin`)
+          kind: Rule
+          services:
+            - name: admin-service
+              port: 80
+    ---
+    # Child IngressRoute for regular users
+    apiVersion: traefik.io/v1alpha1
+    kind: IngressRoute
+    metadata:
+      name: api-user
+      namespace: default
+    spec:
+      parentRefs:
+        - name: api-parent
+      routes:
+        - match: HeadersRegexp(`X-User-Role`, `user`)
+          kind: Rule
+          services:
+            - name: user-service
+              port: 80
+    ```
+
+    ```yaml tab="Services"
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: auth-service
+      namespace: default
+    spec:
+      ports:
+        - port: 8080
+      selector:
+        app: auth-service
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: admin-service
+      namespace: default
+    spec:
+      ports:
+        - port: 80
+      selector:
+        app: admin-backend
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: user-service
+      namespace: default
+    spec:
+      ports:
+        - port: 80
+      selector:
+        app: user-backend
+    ```
+
+    **How it works:**
+
+    1. Request to `https://api.example.com/api/endpoint` matches the parent router
+    2. `auth-middleware` (ForwardAuth) validates the request with `auth-service`
+    3. `auth-service` returns 200 OK with `X-User-Role` header (e.g., `admin` or `user`)
+    4. Child routers evaluate rules against the modified request (with `X-User-Role` header)
+    5. Request is routed to `admin-service` or `user-service` based on the role

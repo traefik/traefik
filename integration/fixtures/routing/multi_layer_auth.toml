@@ -1,0 +1,51 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+  noColor = true
+
+[entryPoints]
+  [entryPoints.web]
+    address = ":8000"
+
+[api]
+  insecure = true
+
+[providers.file]
+  filename = "{{ .SelfFilename }}"
+
+## Dynamic Configuration ##
+
+[http.middlewares]
+  [http.middlewares.auth-middleware.forwardAuth]
+    address = "http://127.0.0.1:{{ .AuthPort }}/auth"
+    authResponseHeaders = ["X-User-Role", "X-User-Name"]
+
+[http.services]
+  [http.services.admin-service.loadBalancer]
+    [[http.services.admin-service.loadBalancer.servers]]
+      url = "http://{{ .AdminIP }}:80"
+
+  [http.services.developer-service.loadBalancer]
+    [[http.services.developer-service.loadBalancer.servers]]
+      url = "http://{{ .DeveloperIP }}:80"
+
+[http.routers]
+  # Parent router: matches path, applies auth middleware
+  [http.routers.parent-router]
+    rule = "PathPrefix(`/whoami`)"
+    middlewares = ["auth-middleware"]
+
+  # Child router for admin role
+  [http.routers.admin-router]
+    rule = "Header(`X-User-Role`, `admin`)"
+    service = "admin-service"
+    parentRefs = ["parent-router@file"]
+
+  # Child router for developer role
+  [http.routers.developer-router]
+    rule = "Header(`X-User-Role`, `developer`)"
+    service = "developer-service"
+    parentRefs = ["parent-router@file"]

@@ -1,0 +1,27 @@
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: parent-default
+  namespace: default
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`default.example.com`)
+      kind: Rule
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: child-same
+  namespace: default
+spec:
+  parentRefs:
+    - name: parent-default
+  routes:
+    - match: Path(`/same`)
+      kind: Rule
+      services:
+        - name: same-service
+          port: 9000

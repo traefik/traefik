@@ -5351,6 +5351,322 @@ func TestLoadIngressRoutes(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
+		{
+			desc:  "IngressRoute with single parent (single route)",
+			paths: []string{"parent_refs_services.yml", "parent_refs_single_parent_single_route.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-parent-single-3c07cfffe8e5f876a01e": {
+							EntryPoints: []string{"web"},
+							Rule:        "Host(`parent.example.com`)",
+						},
+						"default-child-single-2bba0a3de1b50b70a519": {
+							Service:    "default-child-single-2bba0a3de1b50b70a519",
+							Rule:       "Path(`/api`)",
+							ParentRefs: []string{"default-parent-single-3c07cfffe8e5f876a01e"},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-child-single-2bba0a3de1b50b70a519": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.2.1:9000",
+									},
+									{
+										URL: "http://10.10.2.2:9000",
+									},
+								},
+								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "IngressRoute with single parent (multiple routes) - all parent routers in ParentRefs",
+			paths: []string{"parent_refs_services.yml", "parent_refs_single_parent_multiple_routes.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-parent-multi-4aac0d541c2b669a2d5d": {
+							EntryPoints: []string{"web"},
+							Rule:        "Host(`api.example.com`) && PathPrefix(`/v1`)",
+						},
+						"default-parent-multi-0af1ca0a94f5b87a125e": {
+							EntryPoints: []string{"web"},
+							Rule:        "Host(`api.example.com`) && PathPrefix(`/v2`)",
+						},
+						"default-child-multi-routes-b0479051e6a353d66211": {
+							Service:    "default-child-multi-routes-b0479051e6a353d66211",
+							Rule:       "Path(`/users`)",
+							ParentRefs: []string{"default-parent-multi-4aac0d541c2b669a2d5d", "default-parent-multi-0af1ca0a94f5b87a125e"},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-child-multi-routes-b0479051e6a353d66211": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.5.1:9000",
+									},
+									{
+										URL: "http://10.10.5.2:9000",
+									},
+								},
+								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "IngressRoute with multiple parents",
+			paths: []string{"parent_refs_services.yml", "parent_refs_multiple_parents.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-parent-a-629990b524bf9a1a8d27": {
+							EntryPoints: []string{"web"},
+							Rule:        "Host(`a.example.com`)",
+						},
+						"default-parent-b-add617f9b95cff009054": {
+							EntryPoints: []string{"web"},
+							Rule:        "Host(`b.example.com`)",
+						},
+						"default-child-multi-parents-8013b5025acddd1761d1": {
+							Service:    "default-child-multi-parents-8013b5025acddd1761d1",
+							Rule:       "Path(`/shared`)",
+							ParentRefs: []string{"default-parent-a-629990b524bf9a1a8d27", "default-parent-b-add617f9b95cff009054"},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-child-multi-parents-8013b5025acddd1761d1": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.8.1:9000",
+									},
+									{
+										URL: "http://10.10.8.2:9000",
+									},
+								},
+								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "IngressRoute with missing parent - routers skipped",
+			paths: []string{"parent_refs_services.yml", "parent_refs_missing_parent.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:                "IngressRoute with cross-namespace parent allowed",
+			allowCrossNamespace: true,
+			paths:               []string{"parent_refs_services.yml", "parent_refs_cross_namespace_allowed.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"ns-a-parent-cross-74575ab54671a3ede28c": {
+							EntryPoints: []string{"web"},
+							Rule:        "Host(`cross.example.com`)",
+						},
+						"ns-b-child-cross-allowed-0bad04de665623bf2362": {
+							Service:    "ns-b-child-cross-allowed-0bad04de665623bf2362",
+							Rule:       "Path(`/cross`)",
+							ParentRefs: []string{"ns-a-parent-cross-74575ab54671a3ede28c"},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"ns-b-child-cross-allowed-0bad04de665623bf2362": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.11.1:9000",
+									},
+									{
+										URL: "http://10.10.11.2:9000",
+									},
+								},
+								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:                "IngressRoute with cross-namespace parent denied",
+			allowCrossNamespace: false,
+			paths:               []string{"parent_refs_services.yml", "parent_refs_cross_namespace_denied.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"ns-a-parent-cross-74575ab54671a3ede28c": {
+							EntryPoints: []string{"web"},
+							Rule:        "Host(`cross.example.com`)",
+						},
+					},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "IngressRoute with parent namespace defaulting to child namespace",
+			paths: []string{"parent_refs_services.yml", "parent_refs_default_namespace.yml"},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-parent-default-9b8ab283eeed3eb66561": {
+							EntryPoints: []string{"web"},
+							Rule:        "Host(`default.example.com`)",
+						},
+						"default-child-same-9234eba1edcfbd8a7723": {
+							Service:    "default-child-same-9234eba1edcfbd8a7723",
+							Rule:       "Path(`/same`)",
+							ParentRefs: []string{"default-parent-default-9b8ab283eeed3eb66561"},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-child-same-9234eba1edcfbd8a7723": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.14.1:9000",
+									},
+									{
+										URL: "http://10.10.14.2:9000",
+									},
+								},
+								PassHostHeader: pointer(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
 	}
 
 	for _, test := range testCases {

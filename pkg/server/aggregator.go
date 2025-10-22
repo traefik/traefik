@@ -46,7 +46,9 @@ func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoint
 	for pvd, configuration := range configurations {
 		if configuration.HTTP != nil {
 			for routerName, router := range configuration.HTTP.Routers {
-				if len(router.EntryPoints) == 0 {
+				// If no entrypoint is defined, and the router has no parentRefs (i.e. is not a child router),
+				// we set the default entrypoints.
+				if len(router.EntryPoints) == 0 && router.ParentRefs == nil {
 					log.Debug().
 						Str(logs.RouterName, routerName).
 						Strs(logs.EntryPointName, defaultEntryPoints).
@@ -164,6 +166,11 @@ func applyModel(cfg dynamic.Configuration) dynamic.Configuration {
 		rts := make(map[string]*dynamic.Router)
 
 		for name, rt := range cfg.HTTP.Routers {
+			// Only root routers can have models applied.
+			if rt.ParentRefs != nil {
+				continue
+			}
+
 			router := rt.DeepCopy()
 
 			if !router.DefaultRule && router.RuleSyntax == "" {
@@ -265,6 +272,11 @@ func applyModel(cfg dynamic.Configuration) dynamic.Configuration {
 func applyDefaultObservabilityModel(cfg dynamic.Configuration) {
 	if cfg.HTTP != nil {
 		for _, router := range cfg.HTTP.Routers {
+			// Only root routers can have models applied.
+			if router.ParentRefs != nil {
+				continue
+			}
+
 			if router.Observability == nil {
 				router.Observability = &dynamic.RouterObservabilityConfig{
 					AccessLogs:     pointer(true),

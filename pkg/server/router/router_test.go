@@ -1,6 +1,7 @@
 package router
 
 import (
+	"context"
 	"crypto/tls"
 	"io"
 	"math"
@@ -11,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/containous/alice"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
@@ -925,6 +927,940 @@ func BenchmarkService(b *testing.B) {
 	for range b.N {
 		handler.ServeHTTP(w, req)
 	}
+}
+
+func TestManager_ComputeMultiLayerRouting(t *testing.T) {
+	testCases := []struct {
+		desc                string
+		routers             map[string]*dynamic.Router
+		expectedStatuses    map[string]string
+		expectedChildRefs   map[string][]string
+		expectedErrors      map[string][]string
+		expectedErrorCounts map[string]int
+	}{
+		{
+			desc: "Simple router",
+			routers: map[string]*dynamic.Router{
+				"A": {
+					Service: "A-service",
+				},
+			},
+			expectedStatuses: map[string]string{
+				"A": runtime.StatusEnabled,
+			},
+			expectedChildRefs: map[string][]string{
+				"A": {},
+			},
+		},
+		{
+			// A->B1
+			//  ->B2
+			desc: "Router with two children",
+			routers: map[string]*dynamic.Router{
+				"A": {},
+				"B1": {
+					ParentRefs: []string{"A"},
+					Service:    "B1-service",
+				},
+				"B2": {
+					ParentRefs: []string{"A"},
+					Service:    "B2-service",
+				},
+			},
+			expectedStatuses: map[string]string{
+				"A":  runtime.StatusEnabled,
+				"B1": runtime.StatusEnabled,
+				"B2": runtime.StatusEnabled,
+			},
+			expectedChildRefs: map[string][]string{
+				"A":  {"B1", "B2"},
+				"B1": nil,
+				"B2": nil,
+			},
+		},
+		{
+			desc: "Non-root router with TLS config",
+			routers: map[string]*dynamic.Router{
+				"A": {},
+				"B": {
+					ParentRefs: []string{"A"},
+					Service:    "B-service",
+					TLS:        &dynamic.RouterTLSConfig{},
+				},
+			},
+			expectedStatuses: map[string]string{
+				"A": runtime.StatusEnabled,
+				"B": runtime.StatusDisabled,
+			},
+			expectedChildRefs: map[string][]string{
+				"A": {"B"},
+				"B": nil,
+			},
+			expectedErrors: map[string][]string{
+				"B": {"non-root router cannot have TLS configuration"},
+			},
+		},
+		{
+			desc: "Non-root router with observability config",
+			routers: map[string]*dynamic.Router{
+				"A": {},
+				"B": {
+					ParentRefs:    []string{"A"},
+					Service:       "B-service",
+					Observability: &dynamic.RouterObservabilityConfig{},
+				},
+			},
+			expectedStatuses: map[string]string{
+				"A": runtime.StatusEnabled,
+				"B": runtime.StatusDisabled,
+			},
+			expectedChildRefs: map[string][]string{
+				"A": {"B"},
+				"B": nil,
+			},
+			expectedErrors: map[string][]string{
+				"B": {"non-root router cannot have Observability configuration"},
+			},
+		},
+		{
+			desc: "Non-root router with EntryPoints config",
+			routers: map[string]*dynamic.Router{
+				"A": {},
+				"B": {
+					ParentRefs:  []string{"A"},
+					Service:     "B-service",
+					EntryPoints: []string{"web"},
+				},
+			},
+			expectedStatuses: map[string]string{
+				"A": runtime.StatusEnabled,
+				"B": runtime.StatusDisabled,
+			},
+			expectedChildRefs: map[string][]string{
+				"A": {"B"},
+				"B": nil,
+			},
+			expectedErrors: map[string][]string{
+				"B": {"non-root router cannot have Entrypoints configuration"},
+			},
+		},
+
+		{
+			desc: "Router with non-existing parent",
+			routers: map[string]*dynamic.Router{
+				"B": {
+					ParentRefs: []string{"A"},
+					Service:    "B-service",
+				},
+			},
+			expectedStatuses: map[string]string{
+				"B": runtime.StatusDisabled,
+			},
+			expectedChildRefs: map[string][]string{
+				"B": nil,
+			},
+			expectedErrors: map[string][]string{
+				"B": {"parent router \"A\" does not exist", "router is not reachable"},
+			},
+		},
+		{
+			desc: "Dead-end router with no child and no service",
+			routers: map[string]*dynamic.Router{
+				"A": {},
+			},
+			expectedStatuses: map[string]string{
+				"A": runtime.StatusDisabled,
+			},
+			expectedChildRefs: map[string][]string{
+				"A": {},
+			},
+			expectedErrors: map[string][]string{
+				"A": {"router has no service and no child routers"},
+			},
+		},
+		{
+			// A->B->A
+			desc: "Router is not reachable",
+			routers: map[string]*dynamic.Router{
+				"A": {
+					ParentRefs: []string{"B"},
+				},
+				"B": {
+					ParentRefs: []string{"A"},
+				},
+			},
+			expectedStatuses: map[string]string{
+				"A": runtime.StatusDisabled,
+				"B": runtime.StatusDisabled,
+			},
+			expectedChildRefs: map[string][]string{
+				"A": {"B"},
+				"B": {"A"},
+			},
+			// Cycle detection does not visit unreachable routers (it avoids computing the cycle dependency graph for unreachable routers).
+			expectedErrors: map[string][]string{
+				"A": {"router is not reachable"},
+				"B": {"router is not reachable"},
+			},
+		},
+		{
+			// A->B->C->D->B
+			desc: "Router creating a cycle is a dead-end and should be disabled",
+			routers: map[string]*dynamic.Router{
+				"A": {},
+				"B": {
+					ParentRefs: []string{"A", "D"},
+				},
+				"C": {
+					ParentRefs: []string{"B"},
+				},
+				"D": {
+					ParentRefs: []string{"C"},
+				},
+			},
+			expectedStatuses: map[string]string{
+				"A": runtime.StatusEnabled,
+				"B": runtime.StatusEnabled,
+				"C": runtime.StatusEnabled,
+				"D": runtime.StatusDisabled, // Dead-end router is disabled, because the cycle error broke the link with B.
+			},
+			expectedChildRefs: map[string][]string{
+				"A": {"B"},
+				"B": {"C"},
+				"C": {"D"},
+				"D": {},
+			},
+			expectedErrors: map[string][]string{
+				"D": {
+					"cyclic reference detected in router tree: B -> C -> D -> B",
+					"router has no service and no child routers",
+				},
+			},
+		},
+		{
+			// A->B->C->D->B
+			//           ->E
+			desc: "Router creating a cycle A->B->C->D->B but which is referenced elsewhere, must be set to warning status",
+			routers: map[string]*dynamic.Router{
+				"A": {},
+				"B": {
+					ParentRefs: []string{"A", "D"},
+				},
+				"C": {
+					ParentRefs: []string{"B"},
+				},
+				"D": {
+					ParentRefs: []string{"C"},
+				},
+				"E": {
+					ParentRefs: []string{"D"},
+					Service:    "E-service",
+				},
+			},
+			expectedStatuses: map[string]string{
+				"A": runtime.StatusEnabled,
+				"B": runtime.StatusEnabled,
+				"C": runtime.StatusEnabled,
+				"D": runtime.StatusWarning,
+				"E": runtime.StatusEnabled,
+			},
+			expectedChildRefs: map[string][]string{
+				"A": {"B"},
+				"B": {"C"},
+				"C": {"D"},
+				"D": {"E"},
+			},
+			expectedErrors: map[string][]string{
+				"D": {"cyclic reference detected in router tree: B -> C -> D -> B"},
+			},
+		},
+		{
+			desc: "Parent router with all children having errors",
+			routers: map[string]*dynamic.Router{
+				"parent": {},
+				"child-a": {
+					ParentRefs: []string{"parent"},
+					Service:    "child-a-service",
+					TLS:        &dynamic.RouterTLSConfig{}, // Invalid: non-root cannot have TLS
+				},
+				"child-b": {
+					ParentRefs: []string{"parent"},
+					Service:    "child-b-service",
+					TLS:        &dynamic.RouterTLSConfig{}, // Invalid: non-root cannot have TLS
+				},
+			},
+			expectedStatuses: map[string]string{
+				"parent":  runtime.StatusEnabled, // Enabled during ParseRouterTree (no config errors). Would be disabled during handler building when empty muxer is detected.
+				"child-a": runtime.StatusDisabled,
+				"child-b": runtime.StatusDisabled,
+			},
+			expectedChildRefs: map[string][]string{
+				"parent":  {"child-a", "child-b"},
+				"child-a": nil,
+				"child-b": nil,
+			},
+			expectedErrors: map[string][]string{
+				"child-a": {"non-root router cannot have TLS configuration"},
+				"child-b": {"non-root router cannot have TLS configuration"},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			// Create runtime routers
+			runtimeRouters := make(map[string]*runtime.RouterInfo)
+			for name, router := range test.routers {
+				runtimeRouters[name] = &runtime.RouterInfo{
+					Router: router,
+					Status: runtime.StatusEnabled,
+				}
+			}
+
+			conf := &runtime.Configuration{
+				Routers: runtimeRouters,
+			}
+
+			manager := &Manager{
+				conf: conf,
+			}
+
+			// Execute the function we're testing
+			manager.ParseRouterTree()
+
+			// Verify ChildRefs are populated correctly
+			for routerName, expectedChildren := range test.expectedChildRefs {
+				router := runtimeRouters[routerName]
+				assert.ElementsMatch(t, expectedChildren, router.ChildRefs)
+			}
+
+			// Verify statuses are set correctly
+			var gotStatuses map[string]string
+			for routerName, router := range runtimeRouters {
+				if gotStatuses == nil {
+					gotStatuses = make(map[string]string)
+				}
+				gotStatuses[routerName] = router.Status
+			}
+			assert.Equal(t, test.expectedStatuses, gotStatuses)
+
+			// Verify errors are added correctly
+			var gotErrors map[string][]string
+			for routerName, router := range runtimeRouters {
+				for _, err := range router.Err {
+					if gotErrors == nil {
+						gotErrors = make(map[string][]string)
+					}
+					gotErrors[routerName] = append(gotErrors[routerName], err)
+				}
+			}
+			assert.Equal(t, test.expectedErrors, gotErrors)
+		})
+	}
+}
+
+func TestManager_buildChildRoutersMuxer(t *testing.T) {
+	testCases := []struct {
+		desc             string
+		childRefs        []string
+		routers          map[string]*dynamic.Router
+		services         map[string]*dynamic.Service
+		middlewares      map[string]*dynamic.Middleware
+		expectedError    string
+		expectedRequests []struct {
+			path       string
+			statusCode int
+		}
+	}{
+		{
+			desc:      "simple child router with service",
+			childRefs: []string{"child1"},
+			routers: map[string]*dynamic.Router{
+				"child1": {
+					Rule:    "Path(`/api`)",
+					Service: "child1-service",
+				},
+			},
+			services: map[string]*dynamic.Service{
+				"child1-service": {
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{{URL: "http://localhost:8080"}},
+					},
+				},
+			},
+			expectedRequests: []struct {
+				path       string
+				statusCode int
+			}{
+				{path: "/api", statusCode: http.StatusOK},
+				{path: "/unknown", statusCode: http.StatusNotFound},
+			},
+		},
+		{
+			desc:      "multiple child routers with different rules",
+			childRefs: []string{"child1", "child2"},
+			routers: map[string]*dynamic.Router{
+				"child1": {
+					Rule:    "Path(`/api`)",
+					Service: "child1-service",
+				},
+				"child2": {
+					Rule:    "Path(`/web`)",
+					Service: "child2-service",
+				},
+			},
+			services: map[string]*dynamic.Service{
+				"child1-service": {
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{{URL: "http://localhost:8080"}},
+					},
+				},
+				"child2-service": {
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{{URL: "http://localhost:8081"}},
+					},
+				},
+			},
+			expectedRequests: []struct {
+				path       string
+				statusCode int
+			}{
+				{path: "/api", statusCode: http.StatusOK},
+				{path: "/web", statusCode: http.StatusOK},
+				{path: "/unknown", statusCode: http.StatusNotFound},
+			},
+		},
+		{
+			desc:      "child router with middleware",
+			childRefs: []string{"child1"},
+			routers: map[string]*dynamic.Router{
+				"child1": {
+					Rule:        "Path(`/api`)",
+					Service:     "child1-service",
+					Middlewares: []string{"test-middleware"},
+				},
+			},
+			services: map[string]*dynamic.Service{
+				"child1-service": {
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{{URL: "http://localhost:8080"}},
+					},
+				},
+			},
+			middlewares: map[string]*dynamic.Middleware{
+				"test-middleware": {
+					Headers: &dynamic.Headers{
+						CustomRequestHeaders: map[string]string{"X-Test": "value"},
+					},
+				},
+			},
+			expectedRequests: []struct {
+				path       string
+				statusCode int
+			}{
+				{path: "/api", statusCode: http.StatusOK},
+				{path: "/unknown", statusCode: http.StatusNotFound},
+			},
+		},
+		{
+			desc:      "nested child routers (child with its own children)",
+			childRefs: []string{"intermediate"},
+			routers: map[string]*dynamic.Router{
+				"intermediate": {
+					Rule: "PathPrefix(`/api`)",
+					// No service - this will have its own children
+				},
+				"leaf1": {
+					Rule:       "Path(`/api/v1`)",
+					Service:    "leaf1-service",
+					ParentRefs: []string{"intermediate"},
+				},
+				"leaf2": {
+					Rule:       "Path(`/api/v2`)",
+					Service:    "leaf2-service",
+					ParentRefs: []string{"intermediate"},
+				},
+			},
+			services: map[string]*dynamic.Service{
+				"leaf1-service": {
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{{URL: "http://localhost:8080"}},
+					},
+				},
+				"leaf2-service": {
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{{URL: "http://localhost:8081"}},
+					},
+				},
+			},
+			expectedRequests: []struct {
+				path       string
+				statusCode int
+			}{
+				{path: "/api/v1", statusCode: http.StatusOK},
+				{path: "/api/v2", statusCode: http.StatusOK},
+				{path: "/unknown", statusCode: http.StatusNotFound},
+			},
+		},
+		{
+			desc:      "all child routers have errors - should return error",
+			childRefs: []string{"child1", "child2"},
+			routers: map[string]*dynamic.Router{
+				"child1": {
+					Rule:       "Path(`/api`)",
+					Service:    "child1-service",
+					ParentRefs: []string{"parent"},
+					TLS:        &dynamic.RouterTLSConfig{}, // Invalid: non-root router cannot have TLS
+				},
+				"child2": {
+					Rule:       "Path(`/web`)",
+					Service:    "child2-service",
+					ParentRefs: []string{"parent"},
+					TLS:        &dynamic.RouterTLSConfig{}, // Invalid: non-root router cannot have TLS
+				},
+			},
+			services: map[string]*dynamic.Service{
+				"child1-service": {
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{{URL: "http://localhost:8080"}},
+					},
+				},
+				"child2-service": {
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{{URL: "http://localhost:8081"}},
+					},
+				},
+			},
+			expectedError: "no child routers could be added to muxer (2 skipped)",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			// Create runtime routers
+			runtimeRouters := make(map[string]*runtime.RouterInfo)
+			for name, router := range test.routers {
+				runtimeRouters[name] = &runtime.RouterInfo{
+					Router: router,
+				}
+			}
+
+			// Create runtime services
+			runtimeServices := make(map[string]*runtime.ServiceInfo)
+			for name, service := range test.services {
+				runtimeServices[name] = &runtime.ServiceInfo{
+					Service: service,
+				}
+			}
+
+			// Create runtime middlewares
+			runtimeMiddlewares := make(map[string]*runtime.MiddlewareInfo)
+			for name, middleware := range test.middlewares {
+				runtimeMiddlewares[name] = &runtime.MiddlewareInfo{
+					Middleware: middleware,
+				}
+			}
+
+			conf := &runtime.Configuration{
+				Routers:     runtimeRouters,
+				Services:    runtimeServices,
+				Middlewares: runtimeMiddlewares,
+			}
+
+			// Set up the manager with mocks
+			serviceManager := &mockServiceManager{}
+			middlewareBuilder := &mockMiddlewareBuilder{}
+			parser, err := httpmuxer.NewSyntaxParser()
+			require.NoError(t, err)
+
+			manager := NewManager(conf, serviceManager, middlewareBuilder, nil, nil, parser)
+
+			// Compute multi-layer routing to populate ChildRefs
+			manager.ParseRouterTree()
+
+			// Build the child routers muxer
+			ctx := t.Context()
+			muxer, err := manager.buildChildRoutersMuxer(ctx, test.childRefs)
+
+			if test.expectedError != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), test.expectedError)
+				return
+			}
+
+			if len(test.childRefs) == 0 {
+				assert.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			require.NotNil(t, muxer)
+
+			// Test that the muxer routes requests correctly
+			for _, req := range test.expectedRequests {
+				recorder := httptest.NewRecorder()
+				request := httptest.NewRequest(http.MethodGet, req.path, nil)
+				muxer.ServeHTTP(recorder, request)
+
+				assert.Equal(t, req.statusCode, recorder.Code, "unexpected status code for path %s", req.path)
+			}
+		})
+	}
+}
+
+func TestManager_buildHTTPHandler_WithChildRouters(t *testing.T) {
+	testCases := []struct {
+		desc             string
+		router           *runtime.RouterInfo
+		childRouters     map[string]*dynamic.Router
+		services         map[string]*dynamic.Service
+		expectedError    string
+		expectedRequests []struct {
+			path       string
+			statusCode int
+		}
+	}{
+		{
+			desc: "router with child routers",
+			router: &runtime.RouterInfo{
+				Router: &dynamic.Router{
+					Rule: "PathPrefix(`/api`)",
+				},
+				ChildRefs: []string{"child1", "child2"},
+			},
+			childRouters: map[string]*dynamic.Router{
+				"child1": {
+					Rule:    "Path(`/api/v1`)",
+					Service: "child1-service",
+				},
+				"child2": {
+					Rule:    "Path(`/api/v2`)",
+					Service: "child2-service",
+				},
+			},
+			services: map[string]*dynamic.Service{
+				"child1-service": {
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{{URL: "http://localhost:8080"}},
+					},
+				},
+				"child2-service": {
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{{URL: "http://localhost:8081"}},
+					},
+				},
+			},
+			expectedRequests: []struct {
+				path       string
+				statusCode int
+			}{
+				{path: "/unknown", statusCode: http.StatusNotFound},
+			},
+		},
+		{
+			desc: "router with service (normal case)",
+			router: &runtime.RouterInfo{
+				Router: &dynamic.Router{
+					Rule:    "PathPrefix(`/api`)",
+					Service: "main-service",
+				},
+			},
+			services: map[string]*dynamic.Service{
+				"main-service": {
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{{URL: "http://localhost:8080"}},
+					},
+				},
+			},
+			expectedRequests: []struct {
+				path       string
+				statusCode int
+			}{},
+		},
+		{
+			desc: "router with neither service nor child routers - error",
+			router: &runtime.RouterInfo{
+				Router: &dynamic.Router{
+					Rule: "PathPrefix(`/api`)",
+				},
+			},
+			expectedError: "router must have either a service or child routers",
+		},
+		{
+			desc: "router with child routers but missing child - error",
+			router: &runtime.RouterInfo{
+				Router: &dynamic.Router{
+					Rule: "PathPrefix(`/api`)",
+				},
+				ChildRefs: []string{"nonexistent"},
+			},
+			expectedError: "child router \"nonexistent\" does not exist",
+		},
+		{
+			desc: "router with all children having errors - returns empty muxer error",
+			router: &runtime.RouterInfo{
+				Router: &dynamic.Router{
+					Rule: "PathPrefix(`/api`)",
+				},
+				ChildRefs: []string{"child1", "child2"},
+			},
+			childRouters: map[string]*dynamic.Router{
+				"child1": {
+					Rule:       "Path(`/api/v1`)",
+					Service:    "child1-service",
+					ParentRefs: []string{"parent"},
+					TLS:        &dynamic.RouterTLSConfig{}, // Invalid for non-root
+				},
+				"child2": {
+					Rule:       "Path(`/api/v2`)",
+					Service:    "child2-service",
+					ParentRefs: []string{"parent"},
+					TLS:        &dynamic.RouterTLSConfig{}, // Invalid for non-root
+				},
+			},
+			services: map[string]*dynamic.Service{
+				"child1-service": {
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{{URL: "http://localhost:8080"}},
+					},
+				},
+				"child2-service": {
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{{URL: "http://localhost:8081"}},
+					},
+				},
+			},
+			expectedError: "no child routers could be added to muxer (2 skipped)",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			// Create runtime routers
+			runtimeRouters := make(map[string]*runtime.RouterInfo)
+			runtimeRouters["test-router"] = test.router
+			for name, router := range test.childRouters {
+				runtimeRouters[name] = &runtime.RouterInfo{
+					Router: router,
+				}
+			}
+
+			// Create runtime services
+			runtimeServices := make(map[string]*runtime.ServiceInfo)
+			for name, service := range test.services {
+				runtimeServices[name] = &runtime.ServiceInfo{
+					Service: service,
+				}
+			}
+
+			conf := &runtime.Configuration{
+				Routers:  runtimeRouters,
+				Services: runtimeServices,
+			}
+
+			// Set up the manager with mocks
+			serviceManager := &mockServiceManager{}
+			middlewareBuilder := &mockMiddlewareBuilder{}
+			parser, err := httpmuxer.NewSyntaxParser()
+			require.NoError(t, err)
+
+			manager := NewManager(conf, serviceManager, middlewareBuilder, nil, nil, parser)
+
+			// Run ParseRouterTree to validate configuration and populate ChildRefs/errors
+			manager.ParseRouterTree()
+
+			// Build the HTTP handler
+			ctx := t.Context()
+			handler, err := manager.buildHTTPHandler(ctx, test.router, "test-router")
+
+			if test.expectedError != "" {
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), test.expectedError)
+				return
+			}
+
+			require.NoError(t, err)
+			require.NotNil(t, handler)
+
+			// Test that the handler routes requests correctly
+			for _, req := range test.expectedRequests {
+				recorder := httptest.NewRecorder()
+				request := httptest.NewRequest(http.MethodGet, req.path, nil)
+				handler.ServeHTTP(recorder, request)
+
+				assert.Equal(t, req.statusCode, recorder.Code, "unexpected status code for path %s", req.path)
+			}
+		})
+	}
+}
+
+func TestManager_BuildHandlers_WithChildRouters(t *testing.T) {
+	testCases := []struct {
+		desc               string
+		routers            map[string]*dynamic.Router
+		services           map[string]*dynamic.Service
+		entryPoints        []string
+		expectedEntryPoint string
+		expectedRequests   []struct {
+			path       string
+			statusCode int
+		}
+	}{
+		{
+			desc: "parent router with child routers",
+			routers: map[string]*dynamic.Router{
+				"parent": {
+					EntryPoints: []string{"web"},
+					Rule:        "PathPrefix(`/api`)",
+				},
+				"child1": {
+					Rule:       "Path(`/api/v1`)",
+					Service:    "child1-service",
+					ParentRefs: []string{"parent"},
+				},
+				"child2": {
+					Rule:       "Path(`/api/v2`)",
+					Service:    "child2-service",
+					ParentRefs: []string{"parent"},
+				},
+			},
+			services: map[string]*dynamic.Service{
+				"child1-service": {
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{{URL: "http://localhost:8080"}},
+					},
+				},
+				"child2-service": {
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{{URL: "http://localhost:8081"}},
+					},
+				},
+			},
+			entryPoints:        []string{"web"},
+			expectedEntryPoint: "web",
+			expectedRequests: []struct {
+				path       string
+				statusCode int
+			}{
+				{path: "/unknown", statusCode: http.StatusNotFound},
+			},
+		},
+		{
+			desc: "multiple parent routers with children",
+			routers: map[string]*dynamic.Router{
+				"api-parent": {
+					EntryPoints: []string{"web"},
+					Rule:        "PathPrefix(`/api`)",
+				},
+				"web-parent": {
+					EntryPoints: []string{"web"},
+					Rule:        "PathPrefix(`/web`)",
+				},
+				"api-child": {
+					Rule:       "Path(`/api/v1`)",
+					Service:    "api-service",
+					ParentRefs: []string{"api-parent"},
+				},
+				"web-child": {
+					Rule:       "Path(`/web/index`)",
+					Service:    "web-service",
+					ParentRefs: []string{"web-parent"},
+				},
+			},
+			services: map[string]*dynamic.Service{
+				"api-service": {
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{{URL: "http://localhost:8080"}},
+					},
+				},
+				"web-service": {
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{{URL: "http://localhost:8081"}},
+					},
+				},
+			},
+			entryPoints:        []string{"web"},
+			expectedEntryPoint: "web",
+			expectedRequests: []struct {
+				path       string
+				statusCode int
+			}{},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			// Create runtime routers
+			runtimeRouters := make(map[string]*runtime.RouterInfo)
+			for name, router := range test.routers {
+				runtimeRouters[name] = &runtime.RouterInfo{
+					Router: router,
+				}
+			}
+
+			// Create runtime services
+			runtimeServices := make(map[string]*runtime.ServiceInfo)
+			for name, service := range test.services {
+				runtimeServices[name] = &runtime.ServiceInfo{
+					Service: service,
+				}
+			}
+
+			conf := &runtime.Configuration{
+				Routers:  runtimeRouters,
+				Services: runtimeServices,
+			}
+
+			// Set up the manager with mocks
+			serviceManager := &mockServiceManager{}
+			middlewareBuilder := &mockMiddlewareBuilder{}
+			parser, err := httpmuxer.NewSyntaxParser()
+			require.NoError(t, err)
+
+			manager := NewManager(conf, serviceManager, middlewareBuilder, nil, nil, parser)
+
+			// Compute multi-layer routing to set up parent-child relationships
+			manager.ParseRouterTree()
+
+			// Build handlers
+			ctx := t.Context()
+			handlers := manager.BuildHandlers(ctx, test.entryPoints, false)
+
+			require.Contains(t, handlers, test.expectedEntryPoint)
+			handler := handlers[test.expectedEntryPoint]
+			require.NotNil(t, handler)
+
+			// Test that the handler routes requests correctly
+			for _, req := range test.expectedRequests {
+				recorder := httptest.NewRecorder()
+				request := httptest.NewRequest(http.MethodGet, req.path, nil)
+				request.Host = "test.com"
+				handler.ServeHTTP(recorder, request)
+
+				assert.Equal(t, req.statusCode, recorder.Code, "unexpected status code for path %s", req.path)
+			}
+		})
+	}
+}
+
+// Mock implementations for testing
+
+type mockServiceManager struct{}
+
+func (m *mockServiceManager) BuildHTTP(_ context.Context, _ string) (http.Handler, error) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("mock service response"))
+	}), nil
+}
+
+func (m *mockServiceManager) LaunchHealthCheck(_ context.Context) {}
+
+type mockMiddlewareBuilder struct{}
+
+func (m *mockMiddlewareBuilder) BuildChain(_ context.Context, _ []string) *alice.Chain {
+	chain := alice.New()
+	return &chain
 }
 
 type proxyBuilderMock struct{}

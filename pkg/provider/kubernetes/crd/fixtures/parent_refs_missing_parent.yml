@@ -1,0 +1,16 @@
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: child-missing-parent
+  namespace: default
+spec:
+  parentRefs:
+    - name: non-existent-parent
+      namespace: default
+  routes:
+    - match: Path(`/missing`)
+      kind: Rule
+      services:
+        - name: child-service
+          port: 9000
