@@ -54,7 +54,6 @@ func (s *TCPHealthCheckSuite) TestSimpleConfiguration() {
 		successfulConnectionsWhoamitcp1 int
 		successfulConnectionsWhoamitcp2 int
 	)
-
 	for range 4 {
 		out := s.whoIs("127.0.0.1:8093")
 		require.NoError(s.T(), err)
@@ -77,9 +76,6 @@ func (s *TCPHealthCheckSuite) TestSimpleConfiguration() {
 	s.T().Cleanup(func() {
 		_ = conn.Close()
 	})
-
-	_, err = conn.Write([]byte("STOP"))
-	require.NoError(s.T(), err)
 
 	s.composeStop("whoamitcp2")
 

@@ -39,8 +39,8 @@ describe('<TcpServicePage />', () => {
           timeout: '10s',
           port: 8080,
           unhealthyInterval: '1m',
-          send: 'GET /health HTTP/1.1\\r\\nHost: test.example.com\\r\\n\\r\\n',
-          expect: 'HTTP/1.1 200 OK',
+          send: 'PING',
+          expect: 'PONG',
         },
       },
       serverStatus: {
@@ -95,9 +95,9 @@ describe('<TcpServicePage />', () => {
     expect(healthCheck.innerHTML).toContain('Unhealthy Interval')
     expect(healthCheck.innerHTML).toContain('1m')
     expect(healthCheck.innerHTML).toContain('Send')
-    expect(healthCheck.innerHTML).toContain('GET /health HTTP/1.1')
+    expect(healthCheck.innerHTML).toContain('PING')
     expect(healthCheck.innerHTML).toContain('Expect')
-    expect(healthCheck.innerHTML).toContain('HTTP/1.1 200 OK')
+    expect(healthCheck.innerHTML).toContain('PONG')
 
     const serversList = getByTestId('tcp-servers-list')
     expect(serversList.childNodes.length).toBe(1)

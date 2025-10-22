@@ -95,22 +95,22 @@ Below are the available options for the health check mechanism:
 
 | Field | Description | Default | Required |
 |-------|-------------|---------|----------|
-| <a id="opt-port" href="#opt-port" title="#opt-port">`port`</a> | Replaces the server URL port for the health check endpoint. | | No |
+| <a id="opt-port" href="#opt-port" title="#opt-port">`port`</a> | Replaces the server address port for the health check endpoint. | | No |
 | <a id="opt-send" href="#opt-send" title="#opt-send">`send`</a> | Defines the payload to send to the server during the health check. | "" | No |
-| <a id="opt-expect" href="#opt-expect" title="#opt-expect">`expect`</a> | Defines the expected response payload from the server. Only used when `send` is specified. | "" | No |
+| <a id="opt-expect" href="#opt-expect" title="#opt-expect">`expect`</a> | Defines the expected response payload from the server. | "" | No |
 | <a id="opt-interval" href="#opt-interval" title="#opt-interval">`interval`</a> | Defines the frequency of the health check calls for healthy targets. | 30s | No |
 | <a id="opt-unhealthyInterval" href="#opt-unhealthyInterval" title="#opt-unhealthyInterval">`unhealthyInterval`</a> | Defines the frequency of the health check calls for unhealthy targets. When not defined, it defaults to the `interval` value. | 30s | No |
-| <a id="opt-timeout" href="#opt-timeout" title="#opt-timeout">`timeout`</a> | Defines the maximum duration Traefik will wait for a health check request before considering the server unhealthy. | 5s | No |
+| <a id="opt-timeout" href="#opt-timeout" title="#opt-timeout">`timeout`</a> | Defines the maximum duration Traefik will wait for a health check connection before considering the server unhealthy. | 5s | No |
 
 ## Weighted Round Robin
 
-The Weighted Round Robin (alias `WRR`) load-balancer of services is in charge of balancing the requests between multiple services based on provided weights.
+The Weighted Round Robin (alias `WRR`) load-balancer of services is in charge of balancing the connections between multiple services based on provided weights.
 
 This strategy is only available to load balance between [services](./service.md) and not between servers.
 
 !!! info "Supported Providers"
 
-    This strategy can be defined currently with the [File](../../install-configuration/providers/others/file.md) or [IngressRoute](../../install-configuration/providers/kubernetes/kubernetes-crd.md) providers.
+    This strategy can be defined currently with the [File provider](../../install-configuration/providers/others/file.md).
 
 ```yaml tab="Structured (YAML)"
 tcp:
@@ -157,7 +157,9 @@ tcp:
 
 ### Health Check
 
-HealthCheck enables automatic self-healthcheck for this service, i.e. whenever one of its children is reported as down, this service becomes aware of it, and takes it into account (i.e. it ignores the down child) when running the load-balancing algorithm. In addition, if the parent of this service also has HealthCheck enabled, this service reports to its parent any status change.
+HealthCheck enables automatic self-healthcheck for this service, i.e. whenever one of its children is reported as down, 
+this service becomes aware of it, and takes it into account (i.e. it ignores the down child) when running the load-balancing algorithm.
+In addition, if the parent of this service also has HealthCheck enabled, this service reports to its parent any status change.
 
 !!! note "Behavior"
 
