@@ -12,6 +12,8 @@ import (
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer"
 )
 
+var errNoAvailableServer = errors.New("no available server")
+
 type namedHandler struct {
 	http.Handler
 	name     string
@@ -139,13 +141,11 @@ func (b *Balancer) SetStatus(ctx context.Context, childName string, up bool) {
 // Not thread safe.
 func (b *Balancer) RegisterStatusUpdater(fn func(up bool)) error {
 	if !b.wantsHealthCheck {
-		return errors.New("healthCheck not enabled in config for this weighted service")
+		return errors.New("healthCheck not enabled in config for this WRR service")
 	}
 	b.updaters = append(b.updaters, fn)
 	return nil
 }
-
-var errNoAvailableServer = errors.New("no available server")
 
 func (b *Balancer) nextServer() (*namedHandler, error) {
 	b.handlersMu.Lock()

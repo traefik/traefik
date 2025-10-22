@@ -15,9 +15,9 @@ import (
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer"
 )
 
-const (
-	sampleSize = 100 // Number of response time samples to track.
-)
+const sampleSize = 100 // Number of response time samples to track.
+
+var errNoAvailableServer = errors.New("no available server")
 
 // namedHandler wraps an HTTP handler with metrics and server information.
 // Tracks response time (TTFB) and inflight request count for load balancing decisions.
@@ -173,13 +173,11 @@ func (b *Balancer) SetStatus(ctx context.Context, childName string, up bool) {
 // Not thread safe.
 func (b *Balancer) RegisterStatusUpdater(fn func(up bool)) error {
 	if !b.wantsHealthCheck {
-		return errors.New("healthCheck not enabled in config for this weighted service")
+		return errors.New("healthCheck not enabled in config for this LeastTime service")
 	}
 	b.updaters = append(b.updaters, fn)
 	return nil
 }
-
-var errNoAvailableServer = errors.New("no available server")
 
 // getHealthyServers returns the list of healthy, non-fenced servers.
 func (b *Balancer) getHealthyServers() []*namedHandler {
