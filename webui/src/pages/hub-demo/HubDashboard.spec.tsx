@@ -55,7 +55,7 @@ describe('HubDashboard demo', () => {
   it('should render the custom web component when signature is verified', async () => {
     mockVerifyScriptSignature.mockResolvedValue(true)
 
-    const { container, getByText } = renderWithProviders(<HubDashboard path="dashboard" />, {
+    const { container } = renderWithProviders(<HubDashboard path="dashboard" />, {
       route: '/hub-dashboard',
     })
 
@@ -64,23 +64,22 @@ describe('HubDashboard demo', () => {
     })
 
     const hubComponent = container.querySelector('hub-ui-demo-app')
-    expect(getByText('DEMO CONTENT')).toBeInTheDocument()
     expect(hubComponent).toBeInTheDocument()
     expect(hubComponent?.getAttribute('path')).toBe('dashboard')
     expect(hubComponent?.getAttribute('baseurl')).toBe('#/hub-dashboard')
+    expect(hubComponent?.getAttribute('theme')).toBe('light')
   })
 
   it('should render error state when signature verification fails', async () => {
     mockVerifyScriptSignature.mockResolvedValue(false)
 
-    const { container, getByText } = renderWithProviders(<HubDashboard path="dashboard" />)
+    const { container } = renderWithProviders(<HubDashboard path="dashboard" />)
 
     await waitFor(() => {
       expect(mockVerifyScriptSignature).toHaveBeenCalledTimes(1)
-      expect(getByText("Oops, the demo content couldn't be fetched correctly")).toBeInTheDocument()
     })
 
-    expect(getByText(/you can still read more about Traefik Hub/i)).toBeInTheDocument()
+    expect(container.textContent).toContain("Oops! We couldn't load the demo content")
 
     const errorImage = container.querySelector('img[src="/img/gopher-something-went-wrong.png"]')
     expect(errorImage).toBeInTheDocument()
@@ -96,10 +95,10 @@ describe('HubDashboard demo', () => {
   it('should render error state when verification throws an error', async () => {
     mockVerifyScriptSignature.mockRejectedValue(new Error('Network error'))
 
-    const { getByText } = renderWithProviders(<HubDashboard path="dashboard" />)
+    const { container } = renderWithProviders(<HubDashboard path="dashboard" />)
 
     await waitFor(() => {
-      expect(getByText("Oops, the demo content couldn't be fetched correctly")).toBeInTheDocument()
+      expect(container.textContent).toContain("Oops! We couldn't load the demo content")
     })
   })
 
