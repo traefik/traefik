@@ -267,6 +267,7 @@ nav:
               - 'Router' : 'reference/routing-configuration/http/routing/router.md'
               - 'Rules & Priority' : 'reference/routing-configuration/http/routing/rules-and-priority.md'
               - 'Observability': 'reference/routing-configuration/http/routing/observability.md'
+              - 'Multi-Layer Routing': 'reference/routing-configuration/http/routing/multi-layer-routing.md'
             - 'Load Balancing' :
               - 'Service' : 'reference/routing-configuration/http/load-balancing/service.md'
               - 'ServersTransport' : 'reference/routing-configuration/http/load-balancing/serverstransport.md'
@@ -363,6 +364,8 @@ nav:
         - 'Features': 'deprecation/features.md'
   - 'User Guides':
       - 'FastProxy': 'user-guides/fastproxy.md'
+      - 'Kubernetes and Let''s Encrypt': 'user-guides/crd-acme/index.md'
+      - 'Kubernetes and cert-manager': 'user-guides/cert-manager.md'
       - 'gRPC Examples': 'user-guides/grpc.md'
       - 'WebSocket Examples': 'user-guides/websocket.md'
   - 'Contributing':

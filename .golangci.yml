@@ -322,6 +322,10 @@ linters:
         text: 'SA6002: argument should be pointer-like to avoid allocations'
       - path: integration/integration_test.go
         text: 'var (gatewayAPIConformanceRunTest|traefikVersion) is unused'
+      - path: pkg/server/router/router.go
+        text: 'appendAssign: append result not assigned to the same slice'
+        linters:
+          - gocritic
     paths:
       - pkg/provider/kubernetes/crd/generated/
 

@@ -61,6 +61,12 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 			disableClusterScopeResources: p.DisableClusterScopeResources,
 		}
 
+		parentRouterNames, err := resolveParentRouterNames(client, ingressRoute, p.AllowCrossNamespace)
+		if err != nil {
+			logger.Error().Err(err).Msg("Error resolving parent routers")
+			continue
+		}
+
 		for _, route := range ingressRoute.Spec.Routes {
 			if len(route.Kind) > 0 && route.Kind != "Rule" {
 				logger.Error().Msgf("Unsupported match kind: %s. Only \"Rule\" is supported for now.", route.Kind)
@@ -72,11 +78,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				continue
 			}
 
-			serviceKey, err := makeServiceKey(route.Match, ingressName)
-			if err != nil {
-				logger.Error().Err(err).Send()
-				continue
-			}
+			serviceKey := makeServiceKey(route.Match, ingressName)
 
 			mds, err := p.makeMiddlewareKeys(ctx, ingressRoute.Namespace, route.Middlewares)
 			if err != nil {
@@ -87,7 +89,8 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 			normalized := provider.Normalize(makeID(ingressRoute.Namespace, serviceKey))
 			serviceName := normalized
 
-			if len(route.Services) > 1 {
+			switch {
+			case len(route.Services) > 1:
 				spec := traefikv1alpha1.TraefikServiceSpec{
 					Weighted: &traefikv1alpha1.WeightedRoundRobin{
 						Services: route.Services,
@@ -99,7 +102,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 					logger.Error().Err(errBuild).Send()
 					continue
 				}
-			} else if len(route.Services) == 1 {
+			case len(route.Services) == 1:
 				fullName, serversLB, err := cb.nameAndService(ctx, ingressRoute.Namespace, route.Services[0].LoadBalancerSpec)
 				if err != nil {
 					logger.Error().Err(err).Send()
@@ -111,6 +114,9 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				} else {
 					serviceName = fullName
 				}
+			default:
+				// Routes without services leave serviceName empty.
+				serviceName = ""
 			}
 
 			r := &dynamic.Router{
@@ -121,6 +127,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				Rule:          route.Match,
 				Service:       serviceName,
 				Observability: route.Observability,
+				ParentRefs:    parentRouterNames,
 			}
 
 			if ingressRoute.Spec.TLS != nil {
@@ -200,6 +207,50 @@ func (p *Provider) makeMiddlewareKeys(ctx context.Context, ingRouteNamespace str
 	}
 
 	return mds, nil
+}
+
+// resolveParentRouterNames resolves parent IngressRoute references to router names.
+// It returns the list of parent router names and an error if one occurred during processing.
+func resolveParentRouterNames(client Client, ingressRoute *traefikv1alpha1.IngressRoute, allowCrossNamespace bool) ([]string, error) {
+	// If no parent refs, return empty list (not an error).
+	if len(ingressRoute.Spec.ParentRefs) == 0 {
+		return nil, nil
+	}
+
+	var parentRouterNames []string
+	for _, parentRef := range ingressRoute.Spec.ParentRefs {
+		// Determine parent namespace (default to child namespace if not specified).
+		parentNamespace := parentRef.Namespace
+		if parentNamespace == "" {
+			parentNamespace = ingressRoute.Namespace
+		}
+
+		// Validate cross-namespace access.
+		if !isNamespaceAllowed(allowCrossNamespace, ingressRoute.Namespace, parentNamespace) {
+			return nil, fmt.Errorf("cross-namespace reference to parent IngressRoute %s/%s not allowed", parentNamespace, parentRef.Name)
+		}
+
+		var parentIngressRoute *traefikv1alpha1.IngressRoute
+		for _, ir := range client.GetIngressRoutes() {
+			if ir.Name == parentRef.Name && ir.Namespace == parentNamespace {
+				parentIngressRoute = ir
+				break
+			}
+		}
+
+		if parentIngressRoute == nil {
+			return nil, fmt.Errorf("parent IngressRoute %s/%s does not exist", parentNamespace, parentRef.Name)
+		}
+
+		// Compute router names for all routes in parent IngressRoute.
+		for _, route := range parentIngressRoute.Spec.Routes {
+			serviceKey := makeServiceKey(route.Match, parentIngressRoute.Name)
+			routerName := provider.Normalize(makeID(parentIngressRoute.Namespace, serviceKey))
+			parentRouterNames = append(parentRouterNames, routerName)
+		}
+	}
+
+	return parentRouterNames, nil
 }
 
 type configBuilder struct {

@@ -1180,6 +1180,83 @@ func logWriterTestHandlerFunc(rw http.ResponseWriter, r *http.Request) {
 	rw.WriteHeader(testStatus)
 }
 
+func TestConcatFieldHandler_LoggerIntegration(t *testing.T) {
+	logFilePath := filepath.Join(t.TempDir(), "access.log")
+	config := &otypes.AccessLog{FilePath: logFilePath, Format: CommonFormat}
+
+	logger, err := NewHandler(t.Context(), config)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		err := logger.Close()
+		require.NoError(t, err)
+	})
+
+	req := &http.Request{
+		Header: map[string][]string{
+			"User-Agent": {testUserAgent},
+			"Referer":    {testReferer},
+		},
+		Proto:      testProto,
+		Host:       testHostname,
+		Method:     testMethod,
+		RemoteAddr: fmt.Sprintf("%s:%d", testHostname, testPort),
+		URL: &url.URL{
+			User: url.UserPassword(testUsername, ""),
+			Path: testPath,
+		},
+		Body: io.NopCloser(bytes.NewReader([]byte("testdata"))),
+	}
+
+	chain := alice.New()
+	chain = chain.Append(capture.Wrap)
+
+	// Injection of the observability variables in the request context.
+	chain = chain.Append(func(next http.Handler) (http.Handler, error) {
+		return observability.WithObservabilityHandler(next, observability.Observability{
+			AccessLogsEnabled: true,
+		}), nil
+	})
+
+	chain = chain.Append(logger.AliceConstructor())
+
+	// Simulate multi-layer routing with concatenated router names
+	var handler http.Handler = http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		logData := GetLogData(r)
+		if logData != nil {
+			logData.Core[ServiceURL] = testServiceName
+			logData.Core[OriginStatus] = testStatus
+			logData.Core[OriginContentSize] = testContentSize
+			logData.Core[RetryAttempts] = testRetryAttempts
+			logData.Core[StartUTC] = testStart.UTC()
+			logData.Core[StartLocal] = testStart.Local()
+		}
+		rw.WriteHeader(testStatus)
+		if _, err := rw.Write([]byte(testContent)); err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+		}
+	})
+
+	// Create chain of ConcatFieldHandlers to simulate multi-layer routing
+	handler = NewConcatFieldHandler(handler, RouterName, "child-router")
+	handler = NewConcatFieldHandler(handler, RouterName, "parent-router")
+	handler = NewConcatFieldHandler(handler, RouterName, "root-router")
+
+	finalHandler, err := chain.Then(handler)
+	require.NoError(t, err)
+
+	recorder := httptest.NewRecorder()
+	finalHandler.ServeHTTP(recorder, req)
+
+	logData, err := os.ReadFile(logFilePath)
+	require.NoError(t, err)
+
+	result, err := ParseAccessLog(string(logData))
+	require.NoError(t, err)
+
+	expectedRouterName := "\"root-router -> parent-router -> child-router\""
+	assert.Equal(t, expectedRouterName, result[RouterName])
+}
+
 func doLoggingWithAbortedStream(t *testing.T, config *otypes.AccessLog) {
 	t.Helper()
 
