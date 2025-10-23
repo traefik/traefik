@@ -59,6 +59,83 @@ service {
 | <a id="opt-providers-nomad-endpoint-tls-key" href="#opt-providers-nomad-endpoint-tls-key" title="#opt-providers-nomad-endpoint-tls-key">`providers.nomad.endpoint.tls.key`</a> | Defines the path to the private key used for the secure connection to the Nomad API. When using this option, setting the `cert` option is required. |  ""   | Yes   |
 | <a id="opt-providers-nomad-endpoint-tls-insecureSkipVerify" href="#opt-providers-nomad-endpoint-tls-insecureSkipVerify" title="#opt-providers-nomad-endpoint-tls-insecureSkipVerify">`providers.nomad.endpoint.tls.insecureSkipVerify`</a> | Instructs the provider to accept any certificate presented by Nomad when establishing a TLS connection, regardless of the hostnames the certificate covers. | false   | No   |
 
+
+### `address`
+
+Address is used to specify the address of the Nomad server's API. If Traefik runs outside of Nomad, this value needs to be adjusted based on the `bind_addr` of Nomad. If Traefik runs inside of Nomad, one can and should use the [Task API](https://developer.hashicorp.com/nomad/api-docs/task-api) which is internal to the task and doesn't depend on external networking / have any firewall dependencies.
+
+For the Traefik task to be able to use the Task API to query Nomad's API, it needs sufficient ACL priviledges, which can be assigned directly to the task:
+
+```bash
+nomad acl policy apply -namespace traefik-namespace -job traefik-job read-policy policy.hcl
+```
+
+An example policy containing the neccessary read-job priviledges:
+
+```hcl
+namespace "*" { # to be adjusted if only certain namespaces should be exposed to Traefik
+  policy = "read"
+}
+```
+
+And to get the Workload Identity exposed as an environmental variable by Nomad, add the following to the traefik task:
+
+```hcl
+      identity {
+        env = true
+        change_mode = "restart"
+      }
+```
+
+Then the Task API can be set to be used in the Traefik configuration file, using a Nomad [`template`](https://developer.hashicorp.com/nomad/docs/job-specification/template) with interpolation to source the correct Task API address and the task's Workload Identity ACL token.
+
+```yaml tab="File (YAML)"
+providers:
+  nomad:
+    endpoint:
+      address: 'unix://{{ env "NOMAD_SECRETS_DIR" }}/api.sock'
+      token: '{{ env "NOMAD_TOKEN" }}'
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.nomad]
+  [providers.nomad.endpoint]
+    token = '{{ env "NOMAD_TOKEN" }}'
+    address = 'unix://{{ env "NOMAD_SECRETS_DIR" }}/api.sock'
+    # ...
+```
+
+!!! note ""
+
+    If there are any interpolation conflicts (Traefik's templating for `defaultrule also uses {{}}), change `left_delimeter` and `right_delimeter` on the Nomad `template`, and in the interpolations of `{{ env "NOMAD_TOKEN"}}` and "{{ env "NOMAD_SECRETS_DIR"}}", to something else like "[[" and "]]".
+
+
+### `token`
+
+Token is used to provide a per-request ACL token, if Nomad ACLs are enabled.
+The appropriate ACL privilege for this token is 'read-job', as outlined in the [Nomad documentation on ACL](https://developer.hashicorp.com/nomad/tutorials/access-control/access-control-policies). The token can be dynamically sourced via [Workload Identities](https://developer.hashicorp.com/nomad/docs/concepts/workload-identity) (cf. an example configuration and policy above).
+
+```yaml tab="File (YAML)"
+providers:
+  nomad:
+    endpoint:
+      token: test
+    # ...
+```
+
+```toml tab="File (TOML)"
+[providers.nomad]
+  [providers.nomad.endpoint]
+    token = "test"
+    # ...
+```
+
+```bash tab="CLI"
+--providers.nomad.endpoint.token=test
+# ...
+```
+
 ### `namespaces`
 
 The `namespaces` option defines the namespaces in which the nomad services will be discovered.
@@ -117,31 +194,6 @@ providers:
 
 ```bash tab="CLI"
 --providers.nomad.stale=true
-# ...
-```
-
-### `token`
-
-Token is used to provide a per-request ACL token, if Nomad ACLs are enabled.
-The appropriate ACL privilege for this token is 'read-job', as outlined in the [Nomad documentation on ACL](https://developer.hashicorp.com/nomad/tutorials/access-control/access-control-policies).
-
-```yaml tab="File (YAML)"
-providers:
-  nomad:
-    endpoint:
-      token: test
-    # ...
-```
-
-```toml tab="File (TOML)"
-[providers.nomad]
-  [providers.nomad.endpoint]
-    token = "test"
-    # ...
-```
-
-```bash tab="CLI"
---providers.nomad.endpoint.token=test
 # ...
 ```
 
