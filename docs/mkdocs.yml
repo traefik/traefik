@@ -335,14 +335,14 @@ nav:
               - 'TraefikService' : 'reference/routing-configuration/kubernetes/crd/http/traefikservice.md'
               - 'ServersTransport' : 'reference/routing-configuration/kubernetes/crd/http/serverstransport.md'
               - 'Middleware' : 'reference/routing-configuration/kubernetes/crd/http/middleware.md'
-              - 'TLSOption' : 'reference/routing-configuration/kubernetes/crd/http/tlsoption.md'
-              - 'TLSStore' : 'reference/routing-configuration/kubernetes/crd/http/tlsstore.md'
+              - 'TLSOption' : 'reference/routing-configuration/kubernetes/crd/tls/tlsoption.md'
+              - 'TLSStore' : 'reference/routing-configuration/kubernetes/crd/tls/tlsstore.md'
             - 'TCP' :
                 - 'IngressRouteTCP' : 'reference/routing-configuration/kubernetes/crd/tcp/ingressroutetcp.md'
                 - 'ServersTransportTCP' : 'reference/routing-configuration/kubernetes/crd/tcp/serverstransporttcp.md'
                 - 'MiddlewareTCP' : 'reference/routing-configuration/kubernetes/crd/tcp/middlewaretcp.md'
-                - 'TLSOption' : 'reference/routing-configuration/kubernetes/crd/tcp/tlsoption.md'
-                - 'TLSStore' : 'reference/routing-configuration/kubernetes/crd/tcp/tlsstore.md'
+                - 'TLSOption' : 'reference/routing-configuration/kubernetes/crd/tls/tlsoption.md'
+                - 'TLSStore' : 'reference/routing-configuration/kubernetes/crd/tls/tlsstore.md'
             - 'UDP' :
                 - 'IngressRouteUDP' : 'reference/routing-configuration/kubernetes/crd/udp/ingressrouteudp.md'
           - 'Ingress' : 'reference/routing-configuration/kubernetes/ingress.md'
