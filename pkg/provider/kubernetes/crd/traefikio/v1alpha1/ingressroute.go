@@ -120,7 +120,7 @@ type LoadBalancerSpec struct {
 	// Strategy defines the load balancing strategy between the servers.
 	// Supported values are: wrr (Weighed round-robin), p2c (Power of two choices), hrw (Highest Random Weight), and leasttime (Least-Time).
 	// RoundRobin value is deprecated and supported for backward compatibility.
-	// TODO: when the deprecated RoundRobin value will be removed, set the default value to wrr.
+	// TODO: when the deprecated RoundRobin value will be removed, set the default kubebuilder value to wrr.
 	// +kubebuilder:validation:Enum=wrr;p2c;hrw;leasttime;RoundRobin
 	Strategy dynamic.BalancerStrategy `json:"strategy,omitempty"`
 	// PassHostHeader defines whether the client Host header is forwarded to the upstream Kubernetes Service.

@@ -57,7 +57,7 @@ spec:
           httpOnly: true
           name: cookie
           secure: true
-      strategy: RoundRobin
+      strategy: wrr
       weight: 10
   tls:
     # Generate a TLS certificate using a certificate resolver
