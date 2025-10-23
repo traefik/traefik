@@ -59,9 +59,9 @@ const HubDashboard = ({ path }: { path: string }) => {
     return (
       <Flex gap={4} align="center" justify="center" direction="column" css={{ width: '100%', mt: '$8', maxWidth: 690 }}>
         <Image src="/img/gopher-something-went-wrong.png" width={400} />
-        <Text css={{ fontSize: 24, fontWeight: '$semiBold' }}>Oops! We couldn’t load the demo content.</Text>
+        <Text css={{ fontSize: 24, fontWeight: '$semiBold' }}>Oops! We couldn't load the demo content.</Text>
         <Text size={6} css={{ textAlign: 'center', lineHeight: 1.4 }}>
-          Don’t worry — you can still learn more about{' '}
+          Don't worry — you can still learn more about{' '}
           <Text size={6} css={{ fontWeight: '$semiBold' }}>
             Traefik Hub API Management
           </Text>{' '}
