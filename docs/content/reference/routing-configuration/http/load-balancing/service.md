@@ -485,6 +485,48 @@ Power of two choices algorithm is a load balancing strategy that selects two ser
           url = "http://private-ip-server-3/"
     ```
 
+## Least-Time
+
+The Least-Time load balancing algorithm selects the server with the lowest average response time (Time To First Byte - TTFB),
+combined with the fewest active connections, weighted by server capacity.
+This strategy is ideal for heterogeneous backend environments where servers have varying performance characteristics,
+different hardware capabilities, or varying network latency.
+
+The algorithm continuously measures each backend's response time and tracks active connection counts.
+When routing a request,
+it calculates a score for each healthy server using the formula: `(avg_response_time × (1 + active_connections)) / weight`.
+The server with the lowest score receives the request.
+When multiple servers have identical scores,
+Weighted Round Robin (WRR) with Earliest Deadline First (EDF) scheduling is used as a tie-breaker to ensure fair distribution.
+
+??? example "Basic Least-Time Load Balancing -- Using the [File Provider](../../../install-configuration/providers/others/file.md)"
+
+    ```yaml tab="YAML"
+    ## Dynamic configuration
+    http:
+      services:
+        my-service:
+          loadBalancer:
+            strategy: "leasttime"
+            servers:
+            - url: "http://private-ip-server-1/"
+            - url: "http://private-ip-server-2/"
+            - url: "http://private-ip-server-3/"
+    ```
+
+    ```toml tab="TOML"
+    ## Dynamic configuration
+    [http.services]
+      [http.services.my-service.loadBalancer]
+        strategy = "leasttime"
+        [[http.services.my-service.loadBalancer.servers]]
+          url = "http://private-ip-server-1/"
+        [[http.services.my-service.loadBalancer.servers]]
+          url = "http://private-ip-server-2/"
+        [[http.services.my-service.loadBalancer.servers]]
+          url = "http://private-ip-server-3/"
+    ```
+
 ## Mirroring
 
 The mirroring is able to mirror requests sent to a service to other services. Please note that by default the whole request is buffered in memory while it is being mirrored. See the `maxBodySize` option in the example below for how to modify this behaviour. You can also omit the request body by setting the `mirrorBody` option to false.

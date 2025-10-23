@@ -69,6 +69,7 @@ type Router struct {
 	Middlewares []string `json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
 	Service     string   `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty" export:"true"`
 	Rule        string   `json:"rule,omitempty" toml:"rule,omitempty" yaml:"rule,omitempty"`
+	ParentRefs  []string `json:"parentRefs,omitempty" toml:"parentRefs,omitempty" yaml:"parentRefs,omitempty" label:"-" export:"true"`
 	// Deprecated: Please do not use this field and rewrite the router rules to use the v3 syntax.
 	RuleSyntax    string                     `json:"ruleSyntax,omitempty" toml:"ruleSyntax,omitempty" yaml:"ruleSyntax,omitempty" export:"true"`
 	Priority      int                        `json:"priority,omitempty" toml:"priority,omitempty,omitzero" yaml:"priority,omitempty" export:"true"`
@@ -189,6 +190,12 @@ type WRRService struct {
 	GRPCStatus *GRPCStatus `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
 }
 
+// SetDefaults Default values for a WRRService.
+func (w *WRRService) SetDefaults() {
+	defaultWeight := 1
+	w.Weight = &defaultWeight
+}
+
 // +k8s:deepcopy-gen=true
 
 // HRWService is a reference to a service load-balanced with highest random weight.
@@ -199,12 +206,6 @@ type HRWService struct {
 
 // SetDefaults Default values for a HRWService.
 func (w *HRWService) SetDefaults() {
-	defaultWeight := 1
-	w.Weight = &defaultWeight
-}
-
-// SetDefaults Default values for a WRRService.
-func (w *WRRService) SetDefaults() {
 	defaultWeight := 1
 	w.Weight = &defaultWeight
 }
@@ -266,6 +267,8 @@ const (
 	BalancerStrategyP2C BalancerStrategy = "p2c"
 	// BalancerStrategyHRW is the highest random weight strategy.
 	BalancerStrategyHRW BalancerStrategy = "hrw"
+	// BalancerStrategyLeastTime is the least-time strategy.
+	BalancerStrategyLeastTime BalancerStrategy = "leasttime"
 )
 
 // +k8s:deepcopy-gen=true

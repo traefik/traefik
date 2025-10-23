@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"strings"
 	"testing"
 	"time"
 
@@ -54,56 +53,6 @@ func (s *DockerSuite) TestSimpleConfiguration() {
 	// Expected a 404 as we did not configure anything
 	err := try.GetRequest("http://127.0.0.1:8000/", 500*time.Millisecond, try.StatusCodeIs(http.StatusNotFound))
 	require.NoError(s.T(), err)
-}
-
-func (s *DockerSuite) TestWRRServer() {
-	tempObjects := struct {
-		DockerHost  string
-		DefaultRule string
-	}{
-		DockerHost:  s.getDockerHost(),
-		DefaultRule: "Host(`{{ normalize .Name }}.docker.localhost`)",
-	}
-
-	file := s.adaptFile("fixtures/docker/simple.toml", tempObjects)
-
-	s.composeUp()
-
-	s.traefikCmd(withConfigFile(file))
-
-	whoami1IP := s.getComposeServiceIP("wrr-server")
-	whoami2IP := s.getComposeServiceIP("wrr-server2")
-
-	// Expected a 404 as we did not configure anything
-	err := try.GetRequest("http://127.0.0.1:8000/", 500*time.Millisecond, try.StatusCodeIs(http.StatusNotFound))
-	require.NoError(s.T(), err)
-
-	err = try.GetRequest("http://127.0.0.1:8080/api/http/services", 1000*time.Millisecond, try.BodyContains("wrr-server"))
-	require.NoError(s.T(), err)
-
-	repartition := map[string]int{}
-	for range 4 {
-		req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/whoami", nil)
-		req.Host = "my.wrr.host"
-		require.NoError(s.T(), err)
-
-		response, err := http.DefaultClient.Do(req)
-		require.NoError(s.T(), err)
-		assert.Equal(s.T(), http.StatusOK, response.StatusCode)
-
-		body, err := io.ReadAll(response.Body)
-		require.NoError(s.T(), err)
-
-		if strings.Contains(string(body), whoami1IP) {
-			repartition[whoami1IP]++
-		}
-		if strings.Contains(string(body), whoami2IP) {
-			repartition[whoami2IP]++
-		}
-	}
-
-	assert.Equal(s.T(), 3, repartition[whoami1IP])
-	assert.Equal(s.T(), 1, repartition[whoami2IP])
 }
 
 func (s *DockerSuite) TestDefaultDockerContainers() {

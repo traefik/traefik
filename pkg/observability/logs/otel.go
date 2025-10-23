@@ -41,9 +41,6 @@ func (h *otelLoggerHook) Run(e *zerolog.Event, level zerolog.Level, message stri
 		return
 	}
 
-	// Discard the event to avoid double logging.
-	e.Discard()
-
 	var record otellog.Record
 	record.SetTimestamp(time.Now().UTC())
 	record.SetSeverity(otelLogSeverity(level))

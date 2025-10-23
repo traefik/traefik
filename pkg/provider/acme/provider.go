@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"os"
 	"reflect"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -656,9 +657,8 @@ func (p *Provider) resolveDefaultCertificate(ctx context.Context, domains []stri
 
 	p.resolvingDomainsMutex.Lock()
 
-	sortedDomains := make([]string, len(domains))
-	copy(sortedDomains, domains)
-	sort.Strings(sortedDomains)
+	sortedDomains := slices.Clone(domains)
+	slices.Sort(sortedDomains)
 
 	domainKey := strings.Join(sortedDomains, ",")
 

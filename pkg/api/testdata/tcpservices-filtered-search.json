@@ -9,6 +9,9 @@
 		},
 		"name": "baz@myprovider",
 		"provider": "myprovider",
+		"serverStatus": {
+			"127.0.0.2:2345": "UP"
+		},
 		"status": "warning",
 		"type": "loadbalancer",
 		"usedBy": [

@@ -65,6 +65,9 @@ experimental:
 !!! warning
     This is an experimental feature.
 
+!!! note "Stdio logs remain available"
+    When OTLP logging is enabled, standard output (stdio) logs are still available and will continue to be written alongside OTLP exports.
+
 #### Configuration Example
 
 ```yaml tab="File (YAML)"
@@ -99,7 +102,7 @@ log:
 | Field                                  | Description                                                                                                                            | Default                          | Required |
 |:---------------------------------------|:---------------------------------------------------------------------------------------------------------------------------------------|:---------------------------------|:---------|
 | <a id="opt-log-otlp-serviceName" href="#opt-log-otlp-serviceName" title="#opt-log-otlp-serviceName">`log.otlp.serviceName`</a> | Service name used in selected backend.                                                                                                 | "traefik"                        | No       |
-| <a id="opt-log-otlp-resourceAttributes" href="#opt-log-otlp-resourceAttributes" title="#opt-log-otlp-resourceAttributes">`log.otlp.resourceAttributes`</a> | Defines additional resource attributes to be sent to the collector.                                                                    | []                               | No       |
+| <a id="opt-log-otlp-resourceAttributes" href="#opt-log-otlp-resourceAttributes" title="#opt-log-otlp-resourceAttributes">`log.otlp.resourceAttributes`</a> | Defines additional resource attributes to be sent to the collector.  See [resourceAttributes](#resourceattributes) for details.                                                                    | []                               | No       |
 | <a id="opt-log-otlp-http" href="#opt-log-otlp-http" title="#opt-log-otlp-http">`log.otlp.http`</a> | This instructs the exporter to send logs to the OpenTelemetry Collector using HTTP.                                                    |                                  | No       |
 | <a id="opt-log-otlp-http-endpoint" href="#opt-log-otlp-http-endpoint" title="#opt-log-otlp-http-endpoint">`log.otlp.http.endpoint`</a> | The endpoint of the OpenTelemetry Collector. (format=`<scheme>://<host>:<port><path>`)                                                 | `https://localhost:4318/v1/logs` | No       |
 | <a id="opt-log-otlp-http-headers" href="#opt-log-otlp-http-headers" title="#opt-log-otlp-http-headers">`log.otlp.http.headers`</a> | Additional headers sent with logs by the exporter to the OpenTelemetry Collector.                                                      | [ ]                              | No       |
@@ -117,6 +120,22 @@ log:
 | <a id="opt-log-otlp-grpc-tls-cert" href="#opt-log-otlp-grpc-tls-cert" title="#opt-log-otlp-grpc-tls-cert">`log.otlp.grpc.tls.cert`</a> | The path to the certificate to use for the OpenTelemetry Collector.                                                                    |                                  | No       |
 | <a id="opt-log-otlp-grpc-tls-key" href="#opt-log-otlp-grpc-tls-key" title="#opt-log-otlp-grpc-tls-key">`log.otlp.grpc.tls.key`</a> | The path to the key to use for the OpenTelemetry Collector.                                                                            |                                  | No       |
 | <a id="opt-log-otlp-grpc-tls-insecureSkipVerify" href="#opt-log-otlp-grpc-tls-insecureSkipVerify" title="#opt-log-otlp-grpc-tls-insecureSkipVerify">`log.otlp.grpc.tls.insecureSkipVerify`</a> | Instructs the OpenTelemetry Collector to accept any certificate presented by the server regardless of the hostname in the certificate. | false                            | No       |
+
+#### resourceAttributes
+
+The `resourceAttributes` option allows setting the resource attributes sent along the traces.
+Traefik also supports the `OTEL_RESOURCE_ATTRIBUTES` env variable to set up the resource attributes.
+
+!!! info "Kubernetes Resource Attributes Detection"
+
+    Additionally, Traefik automatically discovers the following [Kubernetes resource attributes](https://opentelemetry.io/docs/specs/semconv/non-normative/k8s-attributes/) when running in a Kubernetes cluster:
+    
+    - `k8s.namespace.name`
+    - `k8s.pod.uid`
+    - `k8s.pod.name`
+    
+    Note that this automatic detection can fail, like if the Traefik pod is running in host network mode.
+    In this case, you should provide the attributes with the option or the env variable.
 
 ## AccessLogs
 
@@ -260,7 +279,7 @@ accesslog:
 | Field                                        | Description                                                                                                                            | Default                          | Required |
 |:---------------------------------------------|:---------------------------------------------------------------------------------------------------------------------------------------|:---------------------------------|:---------|
 | <a id="opt-accesslog-otlp-serviceName" href="#opt-accesslog-otlp-serviceName" title="#opt-accesslog-otlp-serviceName">`accesslog.otlp.serviceName`</a> | Defines the service name resource attribute.                                                                                           | "traefik"                        | No       |
-| <a id="opt-accesslog-otlp-resourceAttributes" href="#opt-accesslog-otlp-resourceAttributes" title="#opt-accesslog-otlp-resourceAttributes">`accesslog.otlp.resourceAttributes`</a> | Defines additional resource attributes to be sent to the collector.                                                                    | []                               | No       |
+| <a id="opt-accesslog-otlp-resourceAttributes" href="#opt-accesslog-otlp-resourceAttributes" title="#opt-accesslog-otlp-resourceAttributes">`accesslog.otlp.resourceAttributes`</a> | Defines additional resource attributes to be sent to the collector. See [resourceAttributes](#resourceattributes_1) for details.       | []                               | No       |
 | <a id="opt-accesslog-otlp-http" href="#opt-accesslog-otlp-http" title="#opt-accesslog-otlp-http">`accesslog.otlp.http`</a> | This instructs the exporter to send access logs to the OpenTelemetry Collector using HTTP.                                             |                                  | No       |
 | <a id="opt-accesslog-otlp-http-endpoint" href="#opt-accesslog-otlp-http-endpoint" title="#opt-accesslog-otlp-http-endpoint">`accesslog.otlp.http.endpoint`</a> | The endpoint of the OpenTelemetry Collector. (format=`<scheme>://<host>:<port><path>`)                                                 | `https://localhost:4318/v1/logs` | No       |
 | <a id="opt-accesslog-otlp-http-headers" href="#opt-accesslog-otlp-http-headers" title="#opt-accesslog-otlp-http-headers">`accesslog.otlp.http.headers`</a> | Additional headers sent with access logs by the exporter to the OpenTelemetry Collector.                                               | [ ]                              | No       |
@@ -278,6 +297,22 @@ accesslog:
 | <a id="opt-accesslog-otlp-grpc-tls-cert" href="#opt-accesslog-otlp-grpc-tls-cert" title="#opt-accesslog-otlp-grpc-tls-cert">`accesslog.otlp.grpc.tls.cert`</a> | The path to the certificate to use for the OpenTelemetry Collector.                                                                    |                                  | No       |
 | <a id="opt-accesslog-otlp-grpc-tls-key" href="#opt-accesslog-otlp-grpc-tls-key" title="#opt-accesslog-otlp-grpc-tls-key">`accesslog.otlp.grpc.tls.key`</a> | The path to the key to use for the OpenTelemetry Collector.                                                                            |                                  | No       |
 | <a id="opt-accesslog-otlp-grpc-tls-insecureSkipVerify" href="#opt-accesslog-otlp-grpc-tls-insecureSkipVerify" title="#opt-accesslog-otlp-grpc-tls-insecureSkipVerify">`accesslog.otlp.grpc.tls.insecureSkipVerify`</a> | Instructs the OpenTelemetry Collector to accept any certificate presented by the server regardless of the hostname in the certificate. | false                            | No       |
+
+#### resourceAttributes
+
+The `resourceAttributes` option allows setting the resource attributes sent along the traces.
+Traefik also supports the `OTEL_RESOURCE_ATTRIBUTES` env variable to set up the resource attributes.
+
+!!! info "Kubernetes Resource Attributes Detection"
+
+    Additionally, Traefik automatically discovers the following [Kubernetes resource attributes](https://opentelemetry.io/docs/specs/semconv/non-normative/k8s-attributes/) when running in a Kubernetes cluster:
+    
+    - `k8s.namespace.name`
+    - `k8s.pod.uid`
+    - `k8s.pod.name`
+    
+    Note that this automatic detection can fail, like if the Traefik pod is running in host network mode.
+    In this case, you should provide the attributes with the option or the env variable.
 
 ### Traefik CLF format fields
 

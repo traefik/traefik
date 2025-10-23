@@ -48,6 +48,26 @@ spec:
                 items:
                   type: string
                 type: array
+              parentRefs:
+                description: |-
+                  ParentRefs defines references to parent IngressRoute resources for multi-layer routing.
+                  When set, this IngressRoute's routers will be children of the referenced parent IngressRoute's routers.
+                  More info: https://doc.traefik.io/traefik/v3.5/routing/routers/#parentrefs
+                items:
+                  description: IngressRouteRef is a reference to an IngressRoute resource.
+                  properties:
+                    name:
+                      description: Name defines the name of the referenced IngressRoute
+                        resource.
+                      type: string
+                    namespace:
+                      description: Namespace defines the namespace of the referenced
+                        IngressRoute resource.
+                      type: string
+                  required:
+                  - name
+                  type: object
+                type: array
               routes:
                 description: Routes defines the list of routes.
                 items:
@@ -331,12 +351,13 @@ spec:
                           strategy:
                             description: |-
                               Strategy defines the load balancing strategy between the servers.
-                              Supported values are: wrr (Weighed round-robin), p2c (Power of two choices), and hrw (Highest Random Weight).
+                              Supported values are: wrr (Weighed round-robin), p2c (Power of two choices), hrw (Highest Random Weight), and leasttime (Least-Time).
                               RoundRobin value is deprecated and supported for backward compatibility.
                             enum:
                             - wrr
                             - p2c
                             - hrw
+                            - leasttime
                             - RoundRobin
                             type: string
                           weight:

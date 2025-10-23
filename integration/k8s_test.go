@@ -199,9 +199,9 @@ func matchesConfig(wantConfig string, buf *bytes.Buffer) try.ResponseCondition {
 		sanitizedExpected := rxURL.ReplaceAll(bytes.TrimSpace(expected), []byte(`"$1": "XXXX"`))
 		sanitizedGot := rxURL.ReplaceAll(got, []byte(`"$1": "XXXX"`))
 
-		rxServerStatus := regexp.MustCompile(`"http://.*?":\s+(".*")`)
-		sanitizedExpected = rxServerStatus.ReplaceAll(sanitizedExpected, []byte(`"http://XXXX": $1`))
-		sanitizedGot = rxServerStatus.ReplaceAll(sanitizedGot, []byte(`"http://XXXX": $1`))
+		rxServerStatus := regexp.MustCompile(`"(http://)?.*?":\s+(".*")`)
+		sanitizedExpected = rxServerStatus.ReplaceAll(sanitizedExpected, []byte(`"XXXX": $1`))
+		sanitizedGot = rxServerStatus.ReplaceAll(sanitizedGot, []byte(`"XXXX": $1`))
 
 		if bytes.Equal(sanitizedExpected, sanitizedGot) {
 			return nil
