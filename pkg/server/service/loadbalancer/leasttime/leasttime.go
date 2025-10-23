@@ -318,7 +318,7 @@ func (b *Balancer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	trace := &httptrace.ClientTrace{
 		GotFirstResponseByte: func() {
 			// Update average response time (TTFB).
-			server.updateResponseTime(time.Now().Sub(startTime))
+			server.updateResponseTime(time.Since(startTime))
 		},
 	}
 	traceCtx := httptrace.WithClientTrace(req.Context(), trace)
