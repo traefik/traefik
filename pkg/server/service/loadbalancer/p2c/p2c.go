@@ -14,6 +14,8 @@ import (
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer"
 )
 
+var errNoAvailableServer = errors.New("no available server")
+
 type namedHandler struct {
 	http.Handler
 
@@ -81,7 +83,7 @@ func New(stickyConfig *dynamic.Sticky, wantsHealthCheck bool) *Balancer {
 }
 
 // SetStatus sets on the balancer that its given child is now of the given
-// status. balancerName is only needed for logging purposes.
+// status. childName is only needed for logging purposes.
 func (b *Balancer) SetStatus(ctx context.Context, childName string, up bool) {
 	b.handlersMu.Lock()
 	defer b.handlersMu.Unlock()
@@ -126,13 +128,11 @@ func (b *Balancer) SetStatus(ctx context.Context, childName string, up bool) {
 // Not thread safe.
 func (b *Balancer) RegisterStatusUpdater(fn func(up bool)) error {
 	if !b.wantsHealthCheck {
-		return errors.New("healthCheck not enabled in config for this weighted service")
+		return errors.New("healthCheck not enabled in config for this P2C service")
 	}
 	b.updaters = append(b.updaters, fn)
 	return nil
 }
-
-var errNoAvailableServer = errors.New("no available server")
 
 func (b *Balancer) nextServer() (*namedHandler, error) {
 	// We kept the same representation (map) as in the WRR strategy to improve maintainability.

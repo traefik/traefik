@@ -190,6 +190,12 @@ type WRRService struct {
 	GRPCStatus *GRPCStatus `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
 }
 
+// SetDefaults Default values for a WRRService.
+func (w *WRRService) SetDefaults() {
+	defaultWeight := 1
+	w.Weight = &defaultWeight
+}
+
 // +k8s:deepcopy-gen=true
 
 // HRWService is a reference to a service load-balanced with highest random weight.
@@ -200,12 +206,6 @@ type HRWService struct {
 
 // SetDefaults Default values for a HRWService.
 func (w *HRWService) SetDefaults() {
-	defaultWeight := 1
-	w.Weight = &defaultWeight
-}
-
-// SetDefaults Default values for a WRRService.
-func (w *WRRService) SetDefaults() {
 	defaultWeight := 1
 	w.Weight = &defaultWeight
 }
@@ -267,6 +267,8 @@ const (
 	BalancerStrategyP2C BalancerStrategy = "p2c"
 	// BalancerStrategyHRW is the highest random weight strategy.
 	BalancerStrategyHRW BalancerStrategy = "hrw"
+	// BalancerStrategyLeastTime is the least-time strategy.
+	BalancerStrategyLeastTime BalancerStrategy = "leasttime"
 )
 
 // +k8s:deepcopy-gen=true
