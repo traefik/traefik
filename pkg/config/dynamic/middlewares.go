@@ -174,7 +174,7 @@ func (c *CircuitBreaker) SetDefaults() {
 // Compress holds the compress middleware configuration.
 // This middleware compresses responses before sending them to the client, using gzip, brotli, or zstd compression.
 type Compress struct {
-	// ExcludedContentTypes defines the list of content types to compare the Content-Type header of the incoming requests and responses before compressing.
+	// ExcludedContentTypes defines the List of content types to compare the Content-Type header of the responses before compressing.
 	// `application/grpc` is always excluded.
 	ExcludedContentTypes []string `json:"excludedContentTypes,omitempty" toml:"excludedContentTypes,omitempty" yaml:"excludedContentTypes,omitempty" export:"true"`
 	// IncludedContentTypes defines the list of content types to compare the Content-Type header of the responses before compressing.
