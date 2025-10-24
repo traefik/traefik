@@ -5,12 +5,14 @@ import (
 	"net/http"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
 	"github.com/traefik/traefik/v3/pkg/config/static"
+	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/version"
 )
 
@@ -56,18 +58,21 @@ type Handler struct {
 
 	// runtimeConfiguration is the data set used to create all the data representations exposed by the API.
 	runtimeConfiguration *runtime.Configuration
+
+	// tlsManager provides access to TLS certificates
+	tlsManager *tls.Manager
 }
 
 // NewBuilder returns a http.Handler builder based on runtime.Configuration.
-func NewBuilder(staticConfig static.Configuration) func(*runtime.Configuration) http.Handler {
+func NewBuilder(staticConfig static.Configuration, tlsManager *tls.Manager) func(*runtime.Configuration) http.Handler {
 	return func(configuration *runtime.Configuration) http.Handler {
-		return New(staticConfig, configuration).createRouter()
+		return New(staticConfig, configuration, tlsManager).createRouter()
 	}
 }
 
 // New returns a Handler defined by staticConfig, and if provided, by runtimeConfig.
 // It finishes populating the information provided in the runtimeConfig.
-func New(staticConfig static.Configuration, runtimeConfig *runtime.Configuration) *Handler {
+func New(staticConfig static.Configuration, runtimeConfig *runtime.Configuration, tlsManager *tls.Manager) *Handler {
 	rConfig := runtimeConfig
 	if rConfig == nil {
 		rConfig = &runtime.Configuration{}
@@ -76,6 +81,7 @@ func New(staticConfig static.Configuration, runtimeConfig *runtime.Configuration
 	return &Handler{
 		runtimeConfiguration: rConfig,
 		staticConfig:         staticConfig,
+		tlsManager:           tlsManager,
 	}
 }
 
@@ -117,6 +123,8 @@ func (h Handler) createRouter() *mux.Router {
 	apiRouter.Methods(http.MethodGet).Path("/api/udp/routers/{routerID}").HandlerFunc(h.getUDPRouter)
 	apiRouter.Methods(http.MethodGet).Path("/api/udp/services").HandlerFunc(h.getUDPServices)
 	apiRouter.Methods(http.MethodGet).Path("/api/udp/services/{serviceID}").HandlerFunc(h.getUDPService)
+
+	apiRouter.Methods(http.MethodGet).Path("/api/tls/certificates").HandlerFunc(h.getTLSCertificates)
 
 	version.Handler{}.Append(apiRouter)
 
@@ -182,4 +190,63 @@ func extractType(element interface{}) string {
 		}
 	}
 	return ""
+}
+
+// CertificateInfo represents certificate information exposed by the API.
+type CertificateInfo struct {
+	Name       string    `json:"name"`
+	Expiration time.Time `json:"expiration"`
+	Domains    []string  `json:"domains"`
+}
+
+// getTLSCertificates returns the list of TLS certificates from the central store.
+func (h Handler) getTLSCertificates(rw http.ResponseWriter, request *http.Request) {
+	if h.tlsManager == nil {
+		writeError(rw, "TLS manager not available", http.StatusServiceUnavailable)
+		return
+	}
+
+	certificates := h.tlsManager.GetServerCertificates()
+	certInfos := make([]CertificateInfo, 0, len(certificates))
+
+	for _, cert := range certificates {
+		// Extract certificate name (use first domain or subject common name)
+		name := cert.Subject.CommonName
+		if len(cert.DNSNames) > 0 {
+			name = cert.DNSNames[0]
+		}
+
+		// Collect all domains (DNS names + subject common name)
+		domains := make([]string, 0, len(cert.DNSNames)+1)
+		if cert.Subject.CommonName != "" {
+			domains = append(domains, cert.Subject.CommonName)
+		}
+		domains = append(domains, cert.DNSNames...)
+
+		// Remove duplicates
+		domainSet := make(map[string]bool)
+		uniqueDomains := make([]string, 0, len(domains))
+		for _, domain := range domains {
+			if !domainSet[domain] {
+				domainSet[domain] = true
+				uniqueDomains = append(uniqueDomains, domain)
+			}
+		}
+
+		certInfo := CertificateInfo{
+			Name:       name,
+			Expiration: cert.NotAfter,
+			Domains:    uniqueDomains,
+		}
+
+		certInfos = append(certInfos, certInfo)
+	}
+
+	rw.Header().Set("Content-Type", "application/json")
+
+	err := json.NewEncoder(rw).Encode(certInfos)
+	if err != nil {
+		log.Ctx(request.Context()).Error().Err(err).Send()
+		writeError(rw, err.Error(), http.StatusInternalServerError)
+	}
 }

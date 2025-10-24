@@ -213,7 +213,7 @@ func TestHandler_EntryPoints(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			handler := New(test.conf, &runtime.Configuration{})
+			handler := New(test.conf, &runtime.Configuration{}, nil)
 			server := httptest.NewServer(handler.createRouter())
 
 			resp, err := http.DefaultClient.Get(server.URL + test.path)

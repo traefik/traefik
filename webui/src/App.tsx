@@ -10,7 +10,7 @@ import fetch from './libs/fetch'
 import { VersionProvider } from 'contexts/version'
 import { useIsDarkMode } from 'hooks/use-theme'
 import ErrorSuspenseWrapper from 'layout/ErrorSuspenseWrapper'
-import { Dashboard, HTTPPages, NotFound, TCPPages, UDPPages } from 'pages'
+import { Dashboard, HTTPPages, NotFound, TCPPages, UDPPages, TLSPages } from 'pages'
 import { DashboardSkeleton } from 'pages/dashboard/Dashboard'
 
 export const LIGHT_THEME = lightTheme('blue')
@@ -52,6 +52,7 @@ export const Routes = () => {
         <Route path="/tcp/middlewares" element={<TCPPages.TcpMiddlewares />} />
         <Route path="/udp/routers" element={<UDPPages.UdpRouters />} />
         <Route path="/udp/services" element={<UDPPages.UdpServices />} />
+        <Route path="/tls/certificates" element={<TLSPages.TlsCertificates />} />
         <Route path="/http/routers/:name" element={<HTTPPages.HttpRouter />} />
         <Route path="/http/services/:name" element={<HTTPPages.HttpService />} />
         <Route path="/http/middlewares/:name" element={<HTTPPages.HttpMiddleware />} />
@@ -63,6 +64,7 @@ export const Routes = () => {
         <Route path="/http" element={<Navigate to="/http/routers" replace />} />
         <Route path="/tcp" element={<Navigate to="/tcp/routers" replace />} />
         <Route path="/udp" element={<Navigate to="/udp/routers" replace />} />
+        <Route path="/tls" element={<Navigate to="/tls/certificates" replace />} />
         <Route path="*" element={<NotFound />} />
       </RouterRoutes>
     </Suspense>
