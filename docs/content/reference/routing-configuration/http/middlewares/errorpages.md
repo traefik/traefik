@@ -82,6 +82,7 @@ spec:
 | Field      | Description                                                                                                                                                                                 | Default | Required |
 |:-----------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------|:---------|
 | <a id="opt-status" href="#opt-status" title="#opt-status">`status`</a> | Defines which status or range of statuses should result in an error page.<br/> The status code ranges are inclusive (`505-599` will trigger with every code between `505` and `599`, `505` and `599` included).<br /> You can define either a status code as a number (`500`), as multiple comma-separated numbers (`500,502`), as ranges by separating two codes with a dash (`505-599`), or a combination of the two (`404,418,505-599`).  | []     | No      | 
+| <a id="opt-statusrewrites" href="#opt-statusrewrites" title="#opt-statusrewrites">`statusRewrites`</a> | An optional mapping of status codes to be rewritten. More information [here](#statusrewrites).  | []     | No      |
 | <a id="opt-service" href="#opt-service" title="#opt-service">`service`</a> | The service that will serve the new requested error page.<br /> More information [here](#service-and-hostheader). | ""      | No      |
 | <a id="opt-query" href="#opt-query" title="#opt-query">`query`</a> | The URL for the error page (hosted by `service`).<br /> More information [here](#query) | ""      | No      |
 
@@ -94,6 +95,19 @@ the [`passHostHeader`](../../../../routing/services/index.md#pass-host-header) o
 !!!info "Kubernetes"
     When specifying a service in Kubernetes (e.g., in an IngressRoute), you need to reference the `name`, `namespace`, and `port` of your Kubernetes Service resource. For example, `my-service.my-namespace@kubernetescrd` (or `my-service.my-namespace@kubernetescrd:80`) ensures that requests go to the correct service and port.
 
+### statusRewrites
+
+An optional mapping of status codes to be rewritten. For example, if a service returns a 418, you might want to rewrite it to a 404.
+You can map individual status codes or even ranges to a different status code. The syntax for ranges follows the same rules as the <a href="#opt-status">`status`</a> option.
+
+Here is an example:
+
+```yml
+statusRewrites:
+  "500-503": 500
+  "418": 404
+```
+
 ### query
 
 There are multiple variables that can be placed in the `query` option to insert values in the URL.
@@ -103,4 +117,5 @@ The table below lists all the available variables and their associated values.
 | Variable   | Value                                                            |
 |------------|------------------------------------------------------------------|
 | <a id="opt-status-2" href="#opt-status-2" title="#opt-status-2">`{status}`</a> | The response status code.                                        |
+| <a id="opt-status-rewrites-2" href="#statusrewrites" title="#statusrewrites">`{originalStatus}`</a> | The original response status code, if it has been modified by the `statusRewrites` option. |
 | <a id="opt-url" href="#opt-url" title="#opt-url">`{url}`</a> | The [escaped](https://pkg.go.dev/net/url#QueryEscape) request URL.|
