@@ -104,12 +104,6 @@ func (p *DynConfBuilder) build(ctx context.Context, containersInspected []docker
 }
 
 func (p *DynConfBuilder) buildTCPServiceConfiguration(ctx context.Context, container dockerData, configuration *dynamic.TCPConfiguration) error {
-	// Only allow running containers or containers with visibleWhenNotRunning=true
-	// Empty status is treated as running for backward compatibility
-	if container.Status != "" && container.Status != containertypes.StateRunning && !container.ExtraConf.VisibleWhenNotRunning {
-		return nil
-	}
-
 	serviceName := getServiceName(container)
 
 	if len(configuration.Services) == 0 {
@@ -120,8 +114,12 @@ func (p *DynConfBuilder) buildTCPServiceConfiguration(ctx context.Context, conta
 		}
 	}
 
-	if (container.Health != "" && container.Health != containertypes.Healthy) ||
-		(container.Status != "" && container.Status != containertypes.StateRunning) {
+	// Keep an empty server load-balancer for non-running containers.
+	if container.Status != "" && container.Status != containertypes.StateRunning {
+		return nil
+	}
+	// Keep an empty server load-balancer for unhealthy containers.
+	if container.Health != "" && container.Health != containertypes.Healthy {
 		return nil
 	}
 
@@ -136,12 +134,6 @@ func (p *DynConfBuilder) buildTCPServiceConfiguration(ctx context.Context, conta
 }
 
 func (p *DynConfBuilder) buildUDPServiceConfiguration(ctx context.Context, container dockerData, configuration *dynamic.UDPConfiguration) error {
-	// Only allow running containers or containers with visibleWhenNotRunning=true
-	// Empty status is treated as running for backward compatibility
-	if container.Status != "" && container.Status != containertypes.StateRunning && !container.ExtraConf.VisibleWhenNotRunning {
-		return nil
-	}
-
 	serviceName := getServiceName(container)
 
 	if len(configuration.Services) == 0 {
@@ -151,8 +143,12 @@ func (p *DynConfBuilder) buildUDPServiceConfiguration(ctx context.Context, conta
 		}
 	}
 
-	if (container.Health != "" && container.Health != containertypes.Healthy) ||
-		(container.Status != "" && container.Status != containertypes.StateRunning) {
+	// Keep an empty server load-balancer for non-running containers.
+	if container.Status != "" && container.Status != containertypes.StateRunning {
+		return nil
+	}
+	// Keep an empty server load-balancer for unhealthy containers.
+	if container.Health != "" && container.Health != containertypes.Healthy {
 		return nil
 	}
 
@@ -167,12 +163,6 @@ func (p *DynConfBuilder) buildUDPServiceConfiguration(ctx context.Context, conta
 }
 
 func (p *DynConfBuilder) buildServiceConfiguration(ctx context.Context, container dockerData, configuration *dynamic.HTTPConfiguration) error {
-	// Only allow running containers or containers with visibleWhenNotRunning=true
-	// Empty status is treated as running for backward compatibility
-	if container.Status != "" && container.Status != containertypes.StateRunning && !container.ExtraConf.VisibleWhenNotRunning {
-		return nil
-	}
-
 	serviceName := getServiceName(container)
 
 	if len(configuration.Services) == 0 {
@@ -184,8 +174,12 @@ func (p *DynConfBuilder) buildServiceConfiguration(ctx context.Context, containe
 		}
 	}
 
-	if (container.Health != "" && container.Health != containertypes.Healthy) ||
-		(container.Status != "" && container.Status != containertypes.StateRunning) {
+	// Keep an empty server load-balancer for non-running containers.
+	if container.Status != "" && container.Status != containertypes.StateRunning {
+		return nil
+	}
+	// Keep an empty server load-balancer for unhealthy containers.
+	if container.Health != "" && container.Health != containertypes.Healthy {
 		return nil
 	}
 
@@ -217,9 +211,16 @@ func (p *DynConfBuilder) keepContainer(ctx context.Context, container dockerData
 		return false
 	}
 
-	// Only allow running containers or containers with visibleWhenNotRunning=true
-	// Empty status is treated as running for backward compatibility
-	if container.Status != "" && container.Status != containertypes.StateRunning && !container.ExtraConf.VisibleWhenNotRunning {
+	// AllowNonRunning has precedence over AllowEmptyServices.
+	// If AllowNonRunning is true, we don't care about the container health/status,
+	// and we need to quit before checking it.
+	// Only configurable with the Docker provider.
+	if container.ExtraConf.AllowNonRunning {
+		return true
+	}
+
+	if container.Status != "" && container.Status != containertypes.StateRunning {
+		logger.Debug().Msg("Filtering non running container")
 		return false
 	}
 

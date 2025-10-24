@@ -16,22 +16,27 @@ const (
 // configuration contains information from the labels that are globals (not related to the dynamic configuration)
 // or specific to the provider.
 type configuration struct {
-	Enable                bool
-	Network               string
-	LBSwarm               bool
-	VisibleWhenNotRunning bool
+	Enable          bool
+	Network         string
+	LBSwarm         bool
+	AllowNonRunning bool
 }
 
 type labelConfiguration struct {
 	Enable bool
-	Docker *specificConfiguration
+	Docker *dockerSpecificConfiguration
 	Swarm  *specificConfiguration
 }
 
+type dockerSpecificConfiguration struct {
+	Network         *string
+	LBSwarm         bool
+	AllowNonRunning bool
+}
+
 type specificConfiguration struct {
-	Network               *string
-	LBSwarm               bool
-	VisibleWhenNotRunning *bool
+	Network *string
+	LBSwarm bool
 }
 
 func (p *Shared) extractDockerLabels(container dockerData) (configuration, error) {
@@ -45,15 +50,15 @@ func (p *Shared) extractDockerLabels(container dockerData) (configuration, error
 		network = *conf.Docker.Network
 	}
 
-	visibleWhenNotRunning := false
-	if conf.Docker != nil && conf.Docker.VisibleWhenNotRunning != nil {
-		visibleWhenNotRunning = *conf.Docker.VisibleWhenNotRunning
+	var allowNonRunning bool
+	if conf.Docker != nil {
+		allowNonRunning = conf.Docker.AllowNonRunning
 	}
 
 	return configuration{
-		Enable:                conf.Enable,
-		Network:               network,
-		VisibleWhenNotRunning: visibleWhenNotRunning,
+		Enable:          conf.Enable,
+		Network:         network,
+		AllowNonRunning: allowNonRunning,
 	}, nil
 }
 
@@ -80,10 +85,6 @@ func (p *Shared) extractSwarmLabels(container dockerData) (configuration, error)
 		if labelConf.Docker.Network != nil {
 			conf.Network = *labelConf.Docker.Network
 		}
-
-		if labelConf.Docker.VisibleWhenNotRunning != nil {
-			conf.VisibleWhenNotRunning = *labelConf.Docker.VisibleWhenNotRunning
-		}
 	}
 
 	if labelConf.Swarm != nil {
@@ -91,10 +92,6 @@ func (p *Shared) extractSwarmLabels(container dockerData) (configuration, error)
 
 		if labelConf.Swarm.Network != nil {
 			conf.Network = *labelConf.Swarm.Network
-		}
-
-		if labelConf.Swarm.VisibleWhenNotRunning != nil {
-			conf.VisibleWhenNotRunning = *labelConf.Swarm.VisibleWhenNotRunning
 		}
 	}
 

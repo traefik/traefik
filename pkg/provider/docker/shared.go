@@ -44,7 +44,7 @@ func inspectContainers(ctx context.Context, dockerClient client.ContainerAPIClie
 	}
 
 	// Always parse all containers (running and stopped)
-	// The visibleWhenNotRunning filtering will be applied later in service configuration
+	// The allowNonRunning filtering will be applied later in service configuration
 	if containerInspected.ContainerJSONBase != nil && containerInspected.ContainerJSONBase.State != nil {
 		return parseContainer(containerInspected)
 	}

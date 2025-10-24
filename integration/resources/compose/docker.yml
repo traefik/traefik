@@ -36,8 +36,8 @@ services:
       traefik.http.Routers.Super.Rule: Host(`my.super.host`)
       traefik.http.Services.powpow.LoadBalancer.server.Port: 2375
 
-  visiblewhenStopped:
+  nonRunning:
     image: traefik/whoami
     labels:
-      traefik.http.Routers.VisibleStopped.Rule: Host(`visible.stopped.host`)
-      traefik.docker.visiblewhennotrunning: "true"
+      traefik.http.Routers.NonRunning.Rule: Host(`non.running.host`)
+      traefik.docker.allownonrunning: "true"

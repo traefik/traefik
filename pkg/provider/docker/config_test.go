@@ -3936,14 +3936,14 @@ func TestDynConfBuilder_build(t *testing.T) {
 	}
 }
 
-func TestDynConfBuilder_build_visibleWhenNotRunning(t *testing.T) {
+func TestDynConfBuilder_build_allowNonRunning(t *testing.T) {
 	testCases := []struct {
 		desc       string
 		containers []dockerData
 		expected   *dynamic.Configuration
 	}{
 		{
-			desc: "exited container with visibleWhenNotRunning=true should create router and service without servers",
+			desc: "exited container with allowNonRunning=true should create router and service without servers",
 			containers: []dockerData{
 				{
 					ServiceName: "Test",
@@ -3951,8 +3951,8 @@ func TestDynConfBuilder_build_visibleWhenNotRunning(t *testing.T) {
 					Status:      "exited",
 					Health:      "",
 					ExtraConf: configuration{
-						Enable:                true,
-						VisibleWhenNotRunning: true,
+						Enable:          true,
+						AllowNonRunning: true,
 					},
 					NetworkSettings: networkSettings{
 						NetworkMode: "bridge",
@@ -4007,7 +4007,7 @@ func TestDynConfBuilder_build_visibleWhenNotRunning(t *testing.T) {
 			},
 		},
 		{
-			desc: "exited container with visibleWhenNotRunning=false should not create anything",
+			desc: "exited container with allowNonRunning=false should not create anything",
 			containers: []dockerData{
 				{
 					ServiceName: "Test",
@@ -4015,8 +4015,8 @@ func TestDynConfBuilder_build_visibleWhenNotRunning(t *testing.T) {
 					Status:      "exited",
 					Health:      "",
 					ExtraConf: configuration{
-						Enable:                true,
-						VisibleWhenNotRunning: false,
+						Enable:          true,
+						AllowNonRunning: false,
 					},
 					NetworkSettings: networkSettings{
 						NetworkMode: "bridge",
@@ -4055,7 +4055,7 @@ func TestDynConfBuilder_build_visibleWhenNotRunning(t *testing.T) {
 			},
 		},
 		{
-			desc: "running container with visibleWhenNotRunning=true should work normally with servers",
+			desc: "running container with allowNonRunning=true should work normally with servers",
 			containers: []dockerData{
 				{
 					ServiceName: "Test",
@@ -4063,8 +4063,8 @@ func TestDynConfBuilder_build_visibleWhenNotRunning(t *testing.T) {
 					Status:      "running",
 					Health:      "",
 					ExtraConf: configuration{
-						Enable:                true,
-						VisibleWhenNotRunning: true,
+						Enable:          true,
+						AllowNonRunning: true,
 					},
 					NetworkSettings: networkSettings{
 						NetworkMode: "bridge",
@@ -4124,7 +4124,7 @@ func TestDynConfBuilder_build_visibleWhenNotRunning(t *testing.T) {
 			},
 		},
 		{
-			desc: "created container with visibleWhenNotRunning=true should create router and service without servers)",
+			desc: "created container with allowNonRunning=true should create router and service without servers)",
 			containers: []dockerData{
 				{
 					ServiceName: "Test",
@@ -4132,8 +4132,8 @@ func TestDynConfBuilder_build_visibleWhenNotRunning(t *testing.T) {
 					Status:      "created",
 					Health:      "",
 					ExtraConf: configuration{
-						Enable:                true,
-						VisibleWhenNotRunning: true,
+						Enable:          true,
+						AllowNonRunning: true,
 					},
 					NetworkSettings: networkSettings{
 						NetworkMode: "bridge",
@@ -4188,7 +4188,7 @@ func TestDynConfBuilder_build_visibleWhenNotRunning(t *testing.T) {
 			},
 		},
 		{
-			desc: "dead container with visibleWhenNotRunning=true should create router and service without servers)",
+			desc: "dead container with allowNonRunning=true should create router and service without servers)",
 			containers: []dockerData{
 				{
 					ServiceName: "Test",
@@ -4196,8 +4196,8 @@ func TestDynConfBuilder_build_visibleWhenNotRunning(t *testing.T) {
 					Status:      "dead",
 					Health:      "",
 					ExtraConf: configuration{
-						Enable:                true,
-						VisibleWhenNotRunning: true,
+						Enable:          true,
+						AllowNonRunning: true,
 					},
 					NetworkSettings: networkSettings{
 						NetworkMode: "bridge",
@@ -4252,7 +4252,7 @@ func TestDynConfBuilder_build_visibleWhenNotRunning(t *testing.T) {
 			},
 		},
 		{
-			desc: "exited container with TCP configuration and visibleWhenNotRunning=true should create TCP service without servers",
+			desc: "exited container with TCP configuration and allowNonRunning=true should create TCP service without servers",
 			containers: []dockerData{
 				{
 					ServiceName: "Test",
@@ -4263,8 +4263,8 @@ func TestDynConfBuilder_build_visibleWhenNotRunning(t *testing.T) {
 						"traefik.tcp.routers.Test.rule": "HostSNI(`test.localhost`)",
 					},
 					ExtraConf: configuration{
-						Enable:                true,
-						VisibleWhenNotRunning: true,
+						Enable:          true,
+						AllowNonRunning: true,
 					},
 					NetworkSettings: networkSettings{
 						NetworkMode: "bridge",
@@ -4312,7 +4312,7 @@ func TestDynConfBuilder_build_visibleWhenNotRunning(t *testing.T) {
 			},
 		},
 		{
-			desc: "exited container with UDP configuration and visibleWhenNotRunning=true should create UDP service without servers",
+			desc: "exited container with UDP configuration and allowNonRunning=true should create UDP service without servers",
 			containers: []dockerData{
 				{
 					ServiceName: "Test",
@@ -4323,8 +4323,8 @@ func TestDynConfBuilder_build_visibleWhenNotRunning(t *testing.T) {
 						"traefik.udp.routers.Test.entrypoints": "udp",
 					},
 					ExtraConf: configuration{
-						Enable:                true,
-						VisibleWhenNotRunning: true,
+						Enable:          true,
+						AllowNonRunning: true,
 					},
 					NetworkSettings: networkSettings{
 						NetworkMode: "bridge",

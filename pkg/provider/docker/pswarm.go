@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	containertypes "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	networktypes "github.com/docker/docker/api/types/network"
 	swarmtypes "github.com/docker/docker/api/types/swarm"
@@ -222,16 +221,10 @@ func (p *SwarmProvider) listServices(ctx context.Context, dockerClient client.AP
 func (p *SwarmProvider) parseService(ctx context.Context, service swarmtypes.Service, networkMap map[string]*networktypes.Summary) (dockerData, error) {
 	logger := log.Ctx(ctx)
 
-	status := containertypes.StateRunning
-	if service.ServiceStatus.RunningTasks == 0 {
-		status = containertypes.StateExited
-	}
-
 	dData := dockerData{
 		ID:              service.ID,
 		ServiceName:     service.Spec.Annotations.Name,
 		Name:            service.Spec.Annotations.Name,
-		Status:          status,
 		Labels:          service.Spec.Annotations.Labels,
 		NetworkSettings: networkSettings{},
 	}
@@ -308,7 +301,6 @@ func parseTasks(ctx context.Context, dockerClient client.APIClient, task swarmty
 	dData := dockerData{
 		ID:              task.ID,
 		ServiceName:     serviceDockerData.Name,
-		Status:          string(task.Status.State),
 		Name:            serviceDockerData.Name + "." + strconv.Itoa(task.Slot),
 		Labels:          serviceDockerData.Labels,
 		ExtraConf:       serviceDockerData.ExtraConf,

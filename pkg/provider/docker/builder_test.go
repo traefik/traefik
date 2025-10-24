@@ -141,10 +141,6 @@ func taskContainerStatus(id string) func(*swarmtypes.TaskStatus) {
 func swarmService(ops ...func(*swarmtypes.Service)) swarmtypes.Service {
 	service := &swarmtypes.Service{
 		ID: "serviceID",
-		ServiceStatus: &swarmtypes.ServiceStatus{
-			RunningTasks: 1,
-			DesiredTasks: 1,
-		},
 		Spec: swarmtypes.ServiceSpec{
 			Annotations: swarmtypes.Annotations{
 				Name: "defaultServiceName",
