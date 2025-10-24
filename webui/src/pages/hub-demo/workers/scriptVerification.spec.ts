@@ -23,15 +23,25 @@ class MockWorker {
 
 describe('verifySignature', () => {
   let mockWorkerInstance: MockWorker
+  let originalWorker: typeof Worker
 
   beforeEach(() => {
     vi.clearAllMocks()
 
+    originalWorker = globalThis.Worker
+
     mockWorkerInstance = new MockWorker()
-    global.Worker = vi.fn(() => mockWorkerInstance) as unknown as typeof Worker
+
+    globalThis.Worker = class extends EventTarget {
+      constructor() {
+        super()
+        return mockWorkerInstance as any
+      }
+    } as any
   })
 
   afterEach(() => {
+    globalThis.Worker = originalWorker
     vi.restoreAllMocks()
   })
 
@@ -42,8 +52,6 @@ describe('verifySignature', () => {
     const promise = verifySignature(scriptPath, signaturePath)
 
     await new Promise((resolve) => setTimeout(resolve, 0))
-
-    expect(global.Worker).toHaveBeenCalled()
 
     expect(mockWorkerInstance.postMessage).toHaveBeenCalledWith(
       expect.objectContaining({
