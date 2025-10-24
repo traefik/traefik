@@ -1,0 +1,88 @@
+name: Test Unit
+
+on:
+  pull_request:
+    branches:
+      - '*'
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+      - 'script/gcg/**'
+
+env:
+  GO_VERSION: '1.24'
+
+jobs:
+  generate-packages:
+    name: List Go Packages
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go ${{ env.GO_VERSION }}
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          check-latest: true
+
+      - name: Generate matrix
+        id: set-matrix
+        run: |
+          matrix_output=$(go run ./internal/testsci/genmatrix.go)
+          echo "$matrix_output"
+          echo "$matrix_output" >> $GITHUB_OUTPUT
+
+  test-unit:
+    runs-on: ubuntu-latest
+    needs: generate-packages
+    strategy:
+      matrix:
+        package: ${{ fromJson(needs.generate-packages.outputs.matrix) }}
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go ${{ env.GO_VERSION }}
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          check-latest: true
+
+      - name: Tests
+        run: |
+          go test -v -parallel 8 ${{ matrix.package.group }}
+
+  test-ui-unit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Enable corepack
+        run: corepack enable
+
+      - name: Set up Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: webui/.nvmrc
+          cache: 'yarn'
+          cache-dependency-path: webui/yarn.lock
+
+      - name: UI unit tests
+        working-directory: ./webui
+        env:
+          VITE_APP_BASE_API_URL: "/api"
+        run: |
+          yarn install
+          yarn test:unit:ci

@@ -1,0 +1,70 @@
+name: Build experimental image on branch
+
+on:
+  push:
+    branches:
+      - master
+      - v*
+
+env:
+  GO_VERSION: '1.24'
+  CGO_ENABLED: 0
+
+jobs:
+
+  build-webui:
+    if: github.repository == 'traefik/traefik'
+    uses: ./.github/workflows/template-webui.yaml
+
+  experimental:
+    if: github.repository == 'traefik/traefik'
+    name: Build experimental image on branch
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go ${{ env.GO_VERSION }}
+        uses: actions/setup-go@v5
+        env:
+          ImageOS: ${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.goarm }}
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          check-latest: true
+
+      - name: Build
+        run: make generate binary
+
+      - name: Branch name
+        run: echo ${GITHUB_REF##*/}
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Artifact webui
+        uses: actions/download-artifact@v4
+        with:
+          name: webui.tar.gz
+
+      - name: Untar webui
+        run: |
+          tar xvf webui.tar.gz
+          rm webui.tar.gz
+
+      - name: Build docker experimental image
+        env:
+          DOCKER_BUILDX_ARGS: "--push"
+        run: |
+          make multi-arch-image-experimental-${GITHUB_REF##*/}
