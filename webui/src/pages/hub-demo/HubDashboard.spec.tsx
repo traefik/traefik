@@ -110,8 +110,8 @@ describe('HubDashboard demo', () => {
     await waitFor(() => {
       expect(mockVerifyScriptSignature).toHaveBeenCalledWith(
         'MCowBQYDK2VwAyEAWMBZ0pMBaL/s8gNXxpAPCIQ8bxjnuz6bQFwGYvjXDfg=',
-        'https://traefik.github.io/hub-ui-demo-app/scripts/hub-ui-demo.umd.js',
-        'https://traefik.github.io/hub-ui-demo-app/scripts/hub-ui-demo.umd.js.sig',
+        'https://assets.traefik.io/hub-ui-demo.js',
+        'https://assets.traefik.io/hub-ui-demo.js.sig',
       )
     })
   })

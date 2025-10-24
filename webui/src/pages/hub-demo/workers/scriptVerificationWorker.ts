@@ -134,13 +134,27 @@ self.onmessage = async function (event) {
       verified = await verifyWithNoble(publicKey, scriptBuffer, signatureBuffer)
     }
 
-    self.postMessage({
+    // If verified, include script content to avoid re-downloading
+    let scriptContent: ArrayBuffer | undefined
+    if (verified) {
+      scriptContent = scriptBuffer
+    }
+
+    // Send message with transferable ArrayBuffer for efficiency
+    const message = {
       requestId,
       success: true,
       verified,
       scriptSize: scriptBuffer.byteLength,
       signatureSize: signatureBuffer.byteLength,
-    })
+      scriptContent,
+    }
+
+    if (scriptContent) {
+      self.postMessage(message, { transfer: [scriptContent] })
+    } else {
+      self.postMessage(message)
+    }
   } catch (error) {
     console.error('[Worker] Verification error:', error)
     self.postMessage({

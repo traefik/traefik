@@ -85,8 +85,9 @@ export const Routes = () => {
 const isDev = import.meta.env.NODE_ENV === 'development'
 
 const customGlobalStyle = globalCss({
-  'span[role=cell]': {     // target the AriaTd component
-    p: '$2 $3'
+  'span[role=cell]': {
+    // target the AriaTd component
+    p: '$2 $3',
   },
 })
 

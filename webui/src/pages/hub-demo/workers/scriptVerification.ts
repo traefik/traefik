@@ -1,8 +1,13 @@
+export interface VerificationResult {
+  verified: boolean
+  scriptContent?: ArrayBuffer
+}
+
 export async function verifyScriptSignature(
   publicKey: string,
   scriptPath: string,
   signaturePath: string,
-): Promise<boolean> {
+): Promise<VerificationResult> {
   return new Promise((resolve) => {
     const requestId = Math.random().toString(36).substring(2)
     const worker = new Worker(new URL('./scriptVerificationWorker.ts', import.meta.url), { type: 'module' })
@@ -11,29 +16,32 @@ export async function verifyScriptSignature(
     const timeout = setTimeout(() => {
       worker.terminate()
       console.error('Script verification timeout')
-      resolve(false)
+      resolve({ verified: false })
     }, 30000)
 
     worker.onmessage = (event) => {
       clearTimeout(timeout)
       worker.terminate()
 
-      const { success, verified, error } = event.data
+      const { success, verified, error, scriptContent } = event.data
 
       if (!success) {
         console.error('Worker verification failed:', error)
-        resolve(false)
+        resolve({ verified: false })
         return
       }
 
-      resolve(verified === true)
+      resolve({
+        verified: verified === true,
+        scriptContent: verified ? scriptContent : undefined,
+      })
     }
 
     worker.onerror = (error) => {
       clearTimeout(timeout)
       worker.terminate()
       console.error('Worker error:', error)
-      resolve(false)
+      resolve({ verified: false })
     }
 
     worker.postMessage({
