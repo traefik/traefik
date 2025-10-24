@@ -55,15 +55,17 @@ describe('verifyScriptSignature', () => {
       }),
     )
 
+    const mockScriptContent = new ArrayBuffer(100)
     mockWorkerInstance.simulateMessage({
       success: true,
       verified: true,
       error: null,
+      scriptContent: mockScriptContent,
     })
 
     const result = await promise
 
-    expect(result).toBe(true)
+    expect(result).toEqual({ verified: true, scriptContent: mockScriptContent })
     expect(mockWorkerInstance.terminate).toHaveBeenCalled()
   })
 
@@ -86,7 +88,7 @@ describe('verifyScriptSignature', () => {
 
     const result = await promise
 
-    expect(result).toBe(false)
+    expect(result).toEqual({ verified: false })
     expect(mockWorkerInstance.terminate).toHaveBeenCalled()
     expect(consoleErrorSpy).toHaveBeenCalledWith('Worker verification failed:', 'Signature verification failed')
 
@@ -110,7 +112,7 @@ describe('verifyScriptSignature', () => {
 
     const result = await promise
 
-    expect(result).toBe(false)
+    expect(result).toEqual({ verified: false })
     expect(mockWorkerInstance.terminate).toHaveBeenCalled()
     expect(consoleErrorSpy).toHaveBeenCalledWith('Worker error:', expect.any(ErrorEvent))
 

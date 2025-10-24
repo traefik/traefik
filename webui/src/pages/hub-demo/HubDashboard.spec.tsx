@@ -29,9 +29,17 @@ vi.mock('hooks/use-theme', () => ({
 
 describe('HubDashboard demo', () => {
   const mockVerifyScriptSignature = vi.mocked(scriptVerification.verifyScriptSignature)
+  let mockCreateObjectURL: ReturnType<typeof vi.fn>
+  let mockRevokeObjectURL: ReturnType<typeof vi.fn>
 
   beforeEach(() => {
     vi.clearAllMocks()
+
+    // Mock URL.createObjectURL and URL.revokeObjectURL
+    mockCreateObjectURL = vi.fn(() => 'blob:mock-url')
+    mockRevokeObjectURL = vi.fn()
+    global.URL.createObjectURL = mockCreateObjectURL
+    global.URL.revokeObjectURL = mockRevokeObjectURL
   })
 
   afterEach(() => {
@@ -39,7 +47,11 @@ describe('HubDashboard demo', () => {
   })
 
   it('should render loading state during script verification', async () => {
-    mockVerifyScriptSignature.mockImplementation(() => new Promise((resolve) => setTimeout(() => resolve(true), 100)))
+    const mockScriptContent = new ArrayBuffer(100)
+    mockVerifyScriptSignature.mockImplementation(
+      () =>
+        new Promise((resolve) => setTimeout(() => resolve({ verified: true, scriptContent: mockScriptContent }), 100)),
+    )
 
     const { getByTestId } = renderWithProviders(<HubDashboard path="dashboard" />, {
       route: '/hub-dashboard',
@@ -53,7 +65,8 @@ describe('HubDashboard demo', () => {
   })
 
   it('should render the custom web component when signature is verified', async () => {
-    mockVerifyScriptSignature.mockResolvedValue(true)
+    const mockScriptContent = new ArrayBuffer(100)
+    mockVerifyScriptSignature.mockResolvedValue({ verified: true, scriptContent: mockScriptContent })
 
     const { container } = renderWithProviders(<HubDashboard path="dashboard" />, {
       route: '/hub-dashboard',
@@ -71,7 +84,7 @@ describe('HubDashboard demo', () => {
   })
 
   it('should render error state when signature verification fails', async () => {
-    mockVerifyScriptSignature.mockResolvedValue(false)
+    mockVerifyScriptSignature.mockResolvedValue({ verified: false })
 
     const { container } = renderWithProviders(<HubDashboard path="dashboard" />)
 
@@ -103,7 +116,8 @@ describe('HubDashboard demo', () => {
   })
 
   it('should call verifyScriptSignature with correct parameters', async () => {
-    mockVerifyScriptSignature.mockResolvedValue(true)
+    const mockScriptContent = new ArrayBuffer(100)
+    mockVerifyScriptSignature.mockResolvedValue({ verified: true, scriptContent: mockScriptContent })
 
     renderWithProviders(<HubDashboard path="dashboard" />)
 
@@ -117,7 +131,8 @@ describe('HubDashboard demo', () => {
   })
 
   it('should set theme attribute based on dark mode', async () => {
-    mockVerifyScriptSignature.mockResolvedValue(true)
+    const mockScriptContent = new ArrayBuffer(100)
+    mockVerifyScriptSignature.mockResolvedValue({ verified: true, scriptContent: mockScriptContent })
 
     const { container } = renderWithProviders(<HubDashboard path="dashboard" />)
 
@@ -131,7 +146,8 @@ describe('HubDashboard demo', () => {
   })
 
   it('should handle path with :id parameter correctly', async () => {
-    mockVerifyScriptSignature.mockResolvedValue(true)
+    const mockScriptContent = new ArrayBuffer(100)
+    mockVerifyScriptSignature.mockResolvedValue({ verified: true, scriptContent: mockScriptContent })
 
     const { container } = renderWithProviders(<HubDashboard path="gateways:id" />)
 
