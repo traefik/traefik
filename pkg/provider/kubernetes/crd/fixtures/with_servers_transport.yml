@@ -169,6 +169,11 @@ spec:
       - spiffe://foo/buz
       - spiffe://bar/biz
     trustDomain: spiffe://lol
+  cipherSuites: 
+    - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+    - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+  minVersion: VersionTLS11
+  maxVersion: VersionTLS12
 
 ---
 apiVersion: traefik.io/v1alpha1
