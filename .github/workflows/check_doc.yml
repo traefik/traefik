@@ -17,12 +17,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup node
-        uses: actions/setup-node@v6
-        with:
-          node-version: 22
-          cache: 'npm'
-
       - name: Install markdownlint
         run: |
           npm install --global markdownlint@0.29.0 markdownlint-cli@0.35.0
@@ -53,6 +47,15 @@ jobs:
         run: |
           gem install nokogiri --version 1.18.6 --no-document -- --use-system-libraries
           gem install html-proofer --version 5.0.10 --no-document -- --use-system-libraries
+        env:
+          NOKOGIRI_USE_SYSTEM_LIBRARIES: "true"
+
+      # Comes from https://github.com/gjtorikian/html-proofer?tab=readme-ov-file#caching-with-continuous-integration
+      - name: Cache HTMLProofer
+        uses: actions/cache@v4
+        with:
+          path: tmp/.htmlproofer
+          key: ${{ runner.os }}-htmlproofer
 
       - name: Verify
         run: ./docs/scripts/verify.sh
