@@ -197,7 +197,7 @@ All the following endpoints must be accessed with a `GET` HTTP request.
 | <a id="opt-debugpproftrace" href="#opt-debugpproftrace" title="#opt-debugpproftrace">`/debug/pprof/trace`</a> | See the [pprof Trace](https://golang.org/pkg/net/http/pprof/#Trace) Go documentation.       |
 
 
-!!! note
+!!! note "Base Path Configuration"
 
     By default, Traefik exposes its API and Dashboard under the `/` base path. It's possible to configure it with `api.basepath`. When configured, all endpoints (api, dashboard, debug) are using it.
 
