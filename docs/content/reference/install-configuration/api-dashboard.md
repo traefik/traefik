@@ -156,6 +156,7 @@ enabing the dashboard [here](https://github.com/traefik/traefik-helm-chart/blob/
 | Field      | Description  | Default | Required |
 |:-----------|:---------------------------------|:--------|:---------|
 | <a id="opt-api" href="#opt-api" title="#opt-api">`api`</a> | Enable api/dashboard. When set to `true`, its sub option `api.dashboard` is also set to true.| false     | No      |
+| <a id="opt-api-basepath" href="#opt-api-basepath" title="#opt-api-basepath">api.basepath</a> | Defines the base path where the API and Dashboard will be exposed. | / | No |
 | <a id="opt-api-dashboard" href="#opt-api-dashboard" title="#opt-api-dashboard">`api.dashboard`</a> | Enable dashboard. | false      | No      |
 | <a id="opt-api-debug" href="#opt-api-debug" title="#opt-api-debug">`api.debug`</a> | Enable additional endpoints for debugging and profiling. | false      | No      |
 | <a id="opt-api-disabledashboardad" href="#opt-api-disabledashboardad" title="#opt-api-disabledashboardad">`api.disabledashboardad`</a> | Disable the advertisement from the dashboard. | false      | No      |
@@ -195,9 +196,14 @@ All the following endpoints must be accessed with a `GET` HTTP request.
 | <a id="opt-debugpprofsymbol" href="#opt-debugpprofsymbol" title="#opt-debugpprofsymbol">`/debug/pprof/symbol`</a> | See the [pprof Symbol](https://golang.org/pkg/net/http/pprof/#Symbol) Go documentation.     |
 | <a id="opt-debugpproftrace" href="#opt-debugpproftrace" title="#opt-debugpproftrace">`/debug/pprof/trace`</a> | See the [pprof Trace](https://golang.org/pkg/net/http/pprof/#Trace) Go documentation.       |
 
+
+!!! note "Base Path Configuration"
+
+    By default, Traefik exposes its API and Dashboard under the `/` base path. It's possible to configure it with `api.basepath`. When configured, all endpoints (api, dashboard, debug) are using it.
+
 ## Dashboard
 
-The dashboard is available at the same location as the [API](../../operations/api.md), but by default on the path  `/dashboard/`.
+The dashboard is available at the same location as the API, but by default on the path  `/dashboard/`.
 
 !!! note
 
