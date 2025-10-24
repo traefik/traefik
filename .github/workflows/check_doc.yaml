@@ -4,6 +4,9 @@ on:
   pull_request:
     branches:
       - '*'
+  paths:
+    - '.github/workflows/check_doc.yaml'
+    - 'docs/**'
 
 jobs:
 
