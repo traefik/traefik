@@ -22,7 +22,7 @@ jobs:
           npm install --global markdownlint@0.29.0 markdownlint-cli@0.35.0
 
       - name: Lint
-        run: ./docs/scripts/lint.sh docs
+        run: bash -x ./docs/scripts/lint.sh docs
 
       - name: Setup python
         uses: actions/setup-python@v6
