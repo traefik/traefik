@@ -1,5 +1,6 @@
 import { Flex, styled, Text } from '@traefiklabs/faency'
 import { useContext, useEffect, useMemo } from 'react'
+import { Helmet } from 'react-helmet-async'
 import { FiGlobe, FiLayers, FiLogIn, FiZap } from 'react-icons/fi'
 import { useParams } from 'react-router-dom'
 
@@ -9,7 +10,6 @@ import RouterPanel from 'components/resources/RouterPanel'
 import TlsPanel from 'components/resources/TlsPanel'
 import { ToastContext } from 'contexts/toasts'
 import { EntryPoint, ResourceDetailDataType, useResourceDetail } from 'hooks/use-resource-detail'
-import Page from 'layout/Page'
 import { getErrorData, getValidData } from 'libs/objectHandlers'
 import { parseMiddlewareType } from 'libs/parsers'
 import { NotFound } from 'pages/NotFound'
@@ -105,17 +105,23 @@ type HttpRouterRenderProps = {
 export const HttpRouterRender = ({ data, error, name }: HttpRouterRenderProps) => {
   if (error) {
     return (
-      <Page title={name}>
+      <>
+        <Helmet>
+          <title>{name} - Traefik Proxy</title>
+        </Helmet>
         <Text data-testid="error-text">
           Sorry, we could not fetch detail information for this Router right now. Please, try again later.
         </Text>
-      </Page>
+      </>
     )
   }
 
   if (!data) {
     return (
-      <Page title={name}>
+      <>
+        <Helmet>
+          <title>{name} - Traefik Proxy</title>
+        </Helmet>
         <Flex css={{ flexDirection: 'row', mb: '70px' }} data-testid="skeleton">
           <CardListSection bigDescription />
           <CardListSection />
@@ -127,7 +133,7 @@ export const HttpRouterRender = ({ data, error, name }: HttpRouterRenderProps) =
           <DetailSectionSkeleton />
           <DetailSectionSkeleton />
         </SpacedColumns>
-      </Page>
+      </>
     )
   }
 
@@ -136,10 +142,13 @@ export const HttpRouterRender = ({ data, error, name }: HttpRouterRenderProps) =
   }
 
   return (
-    <Page title={name}>
+    <>
+      <Helmet>
+        <title>{data.name} - Traefik Proxy</title>
+      </Helmet>
       <RouterStructure data={data} protocol="http" />
       <RouterDetail data={data} />
-    </Page>
+    </>
   )
 }
 

@@ -7,6 +7,7 @@ describe('<TcpRouterPage />', () => {
   it('should render the error message', () => {
     const { getByTestId } = renderWithProviders(
       <TcpRouterRender name="mock-router" data={undefined} error={new Error('Test error')} />,
+      { route: '/tcp/routers/mock-router', withPage: true },
     )
     expect(getByTestId('error-text')).toBeInTheDocument()
   })
@@ -14,6 +15,7 @@ describe('<TcpRouterPage />', () => {
   it('should render the skeleton', () => {
     const { getByTestId } = renderWithProviders(
       <TcpRouterRender name="mock-router" data={undefined} error={undefined} />,
+      { route: '/tcp/routers/mock-router', withPage: true },
     )
     expect(getByTestId('skeleton')).toBeInTheDocument()
   })
@@ -21,6 +23,7 @@ describe('<TcpRouterPage />', () => {
   it('should render the not found page', () => {
     const { getByTestId } = renderWithProviders(
       <TcpRouterRender name="mock-router" data={{} as ResourceDetailDataType} error={undefined} />,
+      { route: '/tcp/routers/mock-router', withPage: true },
     )
     expect(getByTestId('Not found page')).toBeInTheDocument()
   })
@@ -66,6 +69,7 @@ describe('<TcpRouterPage />', () => {
     const { getByTestId } = renderWithProviders(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       <TcpRouterRender name="mock-router" data={mockData as any} error={undefined} />,
+      { route: '/tcp/routers/tcp-all@docker', withPage: true },
     )
 
     const routerStructure = getByTestId('router-structure')

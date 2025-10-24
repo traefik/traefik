@@ -7,6 +7,7 @@ describe('<HttpServicePage />', () => {
   it('should render the error message', () => {
     const { getByTestId } = renderWithProviders(
       <HttpServiceRender name="mock-service" data={undefined} error={new Error('Test error')} />,
+      { route: '/http/services/mock-service', withPage: true },
     )
     expect(getByTestId('error-text')).toBeInTheDocument()
   })
@@ -14,6 +15,7 @@ describe('<HttpServicePage />', () => {
   it('should render the skeleton', () => {
     const { getByTestId } = renderWithProviders(
       <HttpServiceRender name="mock-service" data={undefined} error={undefined} />,
+      { route: '/http/services/mock-service', withPage: true },
     )
     expect(getByTestId('skeleton')).toBeInTheDocument()
   })
@@ -21,6 +23,7 @@ describe('<HttpServicePage />', () => {
   it('should render the not found page', () => {
     const { getByTestId } = renderWithProviders(
       <HttpServiceRender name="mock-service" data={{} as ResourceDetailDataType} error={undefined} />,
+      { route: '/http/services/mock-service', withPage: true },
     )
     expect(getByTestId('Not found page')).toBeInTheDocument()
   })
@@ -71,6 +74,7 @@ describe('<HttpServicePage />', () => {
     const { container, getByTestId } = renderWithProviders(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       <HttpServiceRender name="mock-service" data={mockData as any} error={undefined} />,
+      { route: '/http/services/mock-service', withPage: true },
     )
 
     const headings = Array.from(container.getElementsByTagName('h1'))
@@ -142,6 +146,7 @@ describe('<HttpServicePage />', () => {
     const { getByTestId } = renderWithProviders(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       <HttpServiceRender name="mock-service" data={mockData as any} error={undefined} />,
+      { route: '/http/services/mock-service', withPage: true },
     )
 
     const healthCheck = getByTestId('health-check')
@@ -196,6 +201,7 @@ describe('<HttpServicePage />', () => {
     const { getByTestId } = renderWithProviders(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       <HttpServiceRender name="mock-service" data={mockData as any} error={undefined} />,
+      { route: '/http/services/mock-service', withPage: true },
     )
 
     const mirrorServices = getByTestId('mirror-services')

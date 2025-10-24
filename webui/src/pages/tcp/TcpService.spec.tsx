@@ -7,6 +7,7 @@ describe('<TcpServicePage />', () => {
   it('should render the error message', () => {
     const { getByTestId } = renderWithProviders(
       <TcpServiceRender name="mock-service" data={undefined} error={new Error('Test error')} />,
+      { route: '/tcp/services/mock-service', withPage: true },
     )
     expect(getByTestId('error-text')).toBeInTheDocument()
   })
@@ -14,6 +15,7 @@ describe('<TcpServicePage />', () => {
   it('should render the skeleton', () => {
     const { getByTestId } = renderWithProviders(
       <TcpServiceRender name="mock-service" data={undefined} error={undefined} />,
+      { route: '/tcp/services/mock-service', withPage: true },
     )
     expect(getByTestId('skeleton')).toBeInTheDocument()
   })
@@ -21,6 +23,7 @@ describe('<TcpServicePage />', () => {
   it('should render the not found page', () => {
     const { getByTestId } = renderWithProviders(
       <TcpServiceRender name="mock-service" data={{} as ResourceDetailDataType} error={undefined} />,
+      { route: '/tcp/services/mock-service', withPage: true },
     )
     expect(getByTestId('Not found page')).toBeInTheDocument()
   })
@@ -69,6 +72,7 @@ describe('<TcpServicePage />', () => {
     const { container, getByTestId } = renderWithProviders(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       <TcpServiceRender name="mock-service" data={mockData as any} error={undefined} />,
+      { route: '/tcp/services/mock-service', withPage: true },
     )
 
     const headings = Array.from(container.getElementsByTagName('h1'))
@@ -150,6 +154,7 @@ describe('<TcpServicePage />', () => {
     const { getByTestId } = renderWithProviders(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       <TcpServiceRender name="mock-service" data={mockData as any} error={undefined} />,
+      { route: '/tcp/services/mock-service', withPage: true },
     )
 
     const serversList = getByTestId('tcp-servers-list')
@@ -176,6 +181,7 @@ describe('<TcpServicePage />', () => {
     const { getByTestId } = renderWithProviders(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       <TcpServiceRender name="mock-service" data={mockData as any} error={undefined} />,
+      { route: '/tcp/services/mock-service', withPage: true },
     )
 
     expect(() => {

@@ -1,6 +1,8 @@
 import { ReactNode } from 'react'
 import { LiaProjectDiagramSolid, LiaServerSolid, LiaCogsSolid, LiaHomeSolid } from 'react-icons/lia'
 
+import { ApiIcon, DashboardIcon, GatewayIcon, PortalIcon } from 'pages/hub-demo/icons'
+
 export type Route = {
   path: string
   label: string
@@ -90,5 +92,31 @@ export const ROUTES: RouteSections[] = [
         icon: <LiaServerSolid color="currentColor" size={20} />,
       },
     ],
+  },
+]
+
+export const APIM_DEMO_ROUTES = [
+  {
+    path: '/hub-dashboard',
+    label: 'Dashboard',
+    icon: <DashboardIcon color="currentColor" width={22} height={22} />,
+  },
+  {
+    path: '/hub-dashboard/gateways',
+    label: 'Gateways',
+    icon: <GatewayIcon color="currentColor" width={22} height={22} />,
+    activeMatches: ['/hub-dashboard/gateways/:id'],
+  },
+  {
+    path: '/hub-dashboard/apis',
+    label: 'APIs',
+    icon: <ApiIcon color="currentColor" width={22} height={22} />,
+    activeMatches: ['/hub-dashboard/apis/:id'],
+  },
+  {
+    path: '/hub-dashboard/portals',
+    label: 'Portals',
+    icon: <PortalIcon color="currentColor" width={22} height={22} />,
+    activeMatches: ['/hub-dashboard/portals/:id'],
   },
 ]
