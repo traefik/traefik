@@ -8,7 +8,7 @@ on:
 jobs:
 
   docs:
-    name: Check, verify and build documentation
+    name: lint, build and verify
     runs-on: ubuntu-latest
 
     steps:
@@ -32,8 +32,9 @@ jobs:
           cache-dependency-path: "./docs/requirements.txt"
 
       - name: Build documentation
+        working-directory: ./docs
         run: |
-          pip install -r docs/scripts/requirements.txt
+          pip install -r requirements.txt
           mkdocs build --strict
 
       - name: Setup ruby
