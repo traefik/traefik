@@ -16,6 +16,7 @@ const HubDashboard = ({ path }: { path: string }) => {
   const [scriptError, setScriptError] = useState<string | null>(null)
   const [signatureVerified, setSignatureVerified] = useState(false)
   const [verificationInProgress, setVerificationInProgress] = useState(false)
+  const [scriptBlobUrl, setScriptBlobUrl] = useState<string | null>(null)
 
   const { id } = useParams()
 
@@ -33,17 +34,22 @@ const HubDashboard = ({ path }: { path: string }) => {
       setVerificationInProgress(true)
 
       try {
-        const scriptPath = 'https://traefik.github.io/hub-ui-demo-app/scripts/hub-ui-demo.umd.js'
-        const signaturePath = 'https://traefik.github.io/hub-ui-demo-app/scripts/hub-ui-demo.umd.js.sig'
+        const scriptPath = 'https://assets.traefik.io/hub-ui-demo.js'
+        const signaturePath = 'https://assets.traefik.io/hub-ui-demo.js.sig'
 
-        const isSignatureValid = await verifyScriptSignature(PUBLIC_KEY, scriptPath, signaturePath)
+        const result = await verifyScriptSignature(PUBLIC_KEY, scriptPath, signaturePath)
 
-        if (!isSignatureValid) {
+        if (!result.verified || !result.scriptContent) {
           setScriptError('Script signature verification failed - security violation detected')
           setVerificationInProgress(false)
           return
         }
 
+        // Create Blob URL from verified script content
+        const blob = new Blob([result.scriptContent], { type: 'application/javascript' })
+        const blobUrl = URL.createObjectURL(blob)
+
+        setScriptBlobUrl(blobUrl)
         setSignatureVerified(true)
         setVerificationInProgress(false)
       } catch (error) {
@@ -53,6 +59,13 @@ const HubDashboard = ({ path }: { path: string }) => {
     }
 
     verifyAndLoadScript()
+
+    // Cleanup: revoke Blob URL on unmount
+    return () => {
+      if (scriptBlobUrl) {
+        URL.revokeObjectURL(scriptBlobUrl)
+      }
+    }
   }, [])
 
   if (scriptError) {
@@ -88,16 +101,9 @@ const HubDashboard = ({ path }: { path: string }) => {
         <title>Hub Demo - Traefik Proxy</title>
         <meta
           httpEquiv="Content-Security-Policy"
-          content="script-src 'self' https://traefik.github.io 'unsafe-inline'; object-src 'none'; base-uri 'self';"
+          content="script-src 'self' blob: 'unsafe-inline'; object-src 'none'; base-uri 'self';"
         />
-        {signatureVerified && (
-          <script
-            src="https://traefik.github.io/hub-ui-demo-app/scripts/hub-ui-demo.umd.js"
-            type="module"
-            crossOrigin="anonymous"
-            referrerPolicy="strict-origin-when-cross-origin"
-          ></script>
-        )}
+        {signatureVerified && scriptBlobUrl && <script src={scriptBlobUrl} type="module"></script>}
       </Helmet>
       <Box
         css={{
