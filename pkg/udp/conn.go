@@ -39,10 +39,15 @@ type proxyProtocolConfig struct {
 type Listener struct {
 	pConn *net.UDPConn
 
-	mu    sync.RWMutex
-	conns map[string]*Conn
+	connsMu sync.RWMutex
+	conns   map[string]*Conn
+	// connsProxyToClientAddr maps actual proxy source addresses to original client addresses.
+	// e.g., "127.0.0.1:12345" (proxy) → "192.0.2.50:7777" (client)
+	// Protected by connsMu.
+	connsProxyToClientAddr map[string]string
 	// accepting signifies whether the listener is still accepting new sessions.
 	// It also serves as a sentinel for Shutdown to be idempotent.
+	// Protected by connsMu.
 	accepting bool
 
 	acceptCh chan *Conn // no need for a Once, already indirectly guarded by accepting.
@@ -80,6 +85,7 @@ func ListenPacketConn(packetConn net.PacketConn, timeout time.Duration, ppConfig
 				return make([]byte, maxDatagramSize)
 			},
 		},
+		connsProxyToClientAddr: make(map[string]string),
 	}
 
 	if ppConfig != nil {
@@ -142,13 +148,14 @@ func (l *Listener) Close() error {
 
 // close should not be called more than once.
 func (l *Listener) close() error {
-	l.mu.Lock()
-	defer l.mu.Unlock()
+	l.connsMu.Lock()
+	defer l.connsMu.Unlock()
 	err := l.pConn.Close()
 	for k, v := range l.conns {
 		v.close()
 		delete(l.conns, k)
 	}
+	l.connsProxyToClientAddr = make(map[string]string)
 	close(l.acceptCh)
 	return err
 }
@@ -159,13 +166,13 @@ func (l *Listener) close() error {
 // and a maximum of graceTimeout.
 // Then it forces close any session left.
 func (l *Listener) Shutdown(graceTimeout time.Duration) error {
-	l.mu.Lock()
+	l.connsMu.Lock()
 	if !l.accepting {
-		l.mu.Unlock()
+		l.connsMu.Unlock()
 		return nil
 	}
 	l.accepting = false
-	l.mu.Unlock()
+	l.connsMu.Unlock()
 
 	retryInterval := closeRetryInterval
 	if retryInterval > graceTimeout {
@@ -174,12 +181,12 @@ func (l *Listener) Shutdown(graceTimeout time.Duration) error {
 	start := time.Now()
 	end := start.Add(graceTimeout)
 	for !time.Now().After(end) {
-		l.mu.RLock()
+		l.connsMu.RLock()
 		if len(l.conns) == 0 {
-			l.mu.RUnlock()
+			l.connsMu.RUnlock()
 			break
 		}
-		l.mu.RUnlock()
+		l.connsMu.RUnlock()
 
 		time.Sleep(retryInterval)
 	}
@@ -223,6 +230,11 @@ func (l *Listener) readLoop() {
 				// Use header's source address for session keying.
 				srcAddr, _, ok := header.UDPAddrs()
 				if ok {
+					// Record mapping of actual proxy source to client address for subsequent packets.
+					l.connsMu.Lock()
+					l.connsProxyToClientAddr[originalSource.String()] = srcAddr.String()
+					l.connsMu.Unlock()
+
 					raddr = srcAddr
 					packet = payload // Use stripped payload.
 				} else {
@@ -232,6 +244,19 @@ func (l *Listener) readLoop() {
 						Msg("Proxy Protocol header not UDP type, dropping packet")
 					l.readBufferPool.Put(buf)
 					continue
+				}
+			} else {
+				// No header: check if this source has an existing Proxy Protocol session.
+				l.connsMu.RLock()
+				clientAddr, exists := l.connsProxyToClientAddr[originalSource.String()]
+				l.connsMu.RUnlock()
+
+				if exists {
+					// Use the client address instead of actual source.
+					clientUDPAddr, err := net.ResolveUDPAddr("udp", clientAddr)
+					if err == nil {
+						raddr = clientUDPAddr
+					}
 				}
 			}
 		}
@@ -301,8 +326,8 @@ func (l *Listener) parseProxyProtocol(packet []byte) (*proxyproto.Header, []byte
 // getConn returns the ongoing session with raddr if it exists, or creates a new
 // one otherwise.
 func (l *Listener) getConn(raddr net.Addr) (*Conn, error) {
-	l.mu.Lock()
-	defer l.mu.Unlock()
+	l.connsMu.Lock()
+	defer l.connsMu.Unlock()
 
 	conn, ok := l.conns[raddr.String()]
 	if ok {
@@ -445,8 +470,8 @@ func (c *Conn) close() {
 func (c *Conn) Close() error {
 	c.close()
 
-	c.listener.mu.Lock()
-	defer c.listener.mu.Unlock()
+	c.listener.connsMu.Lock()
+	defer c.listener.connsMu.Unlock()
 	delete(c.listener.conns, c.rAddr.String())
 	return nil
 }
