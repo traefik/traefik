@@ -82,7 +82,7 @@ spec:
 | Field      | Description                                                                                                                                                                                 | Default | Required |
 |:-----------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------|:---------|
 | <a id="opt-status" href="#opt-status" title="#opt-status">`status`</a> | Defines which status or range of statuses should result in an error page.<br/> The status code ranges are inclusive (`505-599` will trigger with every code between `505` and `599`, `505` and `599` included).<br /> You can define either a status code as a number (`500`), as multiple comma-separated numbers (`500,502`), as ranges by separating two codes with a dash (`505-599`), or a combination of the two (`404,418,505-599`).  | []     | No      | 
-| <a id="opt-statusrewrites" href="#opt-statusrewrites" title="#opt-statusrewrites">`statusRewrites`</a> | An optional mapping of status codes to be rewritten. More information [here](#statusrewrites).  | []     | No      |
+| <a id="opt-statusRewrites" href="#opt-statusRewrites" title="#opt-statusRewrites">`statusRewrites`</a> | An optional mapping of status codes to be rewritten. More information [here](#statusrewrites).  | []     | No      |
 | <a id="opt-service" href="#opt-service" title="#opt-service">`service`</a> | The service that will serve the new requested error page.<br /> More information [here](#service-and-hostheader). | ""      | No      |
 | <a id="opt-query" href="#opt-query" title="#opt-query">`query`</a> | The URL for the error page (hosted by `service`).<br /> More information [here](#query) | ""      | No      |
 
@@ -117,5 +117,5 @@ The table below lists all the available variables and their associated values.
 | Variable   | Value                                                            |
 |------------|------------------------------------------------------------------|
 | <a id="opt-status-2" href="#opt-status-2" title="#opt-status-2">`{status}`</a> | The response status code.                                        |
-| <a id="opt-status-rewrites-2" href="#statusrewrites" title="#statusrewrites">`{originalStatus}`</a> | The original response status code, if it has been modified by the `statusRewrites` option. |
+| <a id="opt-originalStatus" href="#opt-originalStatus" title="#opt-originalStatus">`{originalStatus}`</a> | The original response status code, if it has been modified by the `statusRewrites` option. |
 | <a id="opt-url" href="#opt-url" title="#opt-url">`{url}`</a> | The [escaped](https://pkg.go.dev/net/url#QueryEscape) request URL.|
