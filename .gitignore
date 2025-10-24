@@ -20,7 +20,3 @@ plugins-local/
 traefik_changelog.md
 integration/tailscale.secret
 integration/conformance-reports/**/experimental-dev-default-report.yaml
-
-# Vim temp files
-*.swp
-*.swo
