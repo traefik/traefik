@@ -3,16 +3,17 @@ export interface VerificationResult {
   scriptContent?: ArrayBuffer
 }
 
-export async function verifyScriptSignature(
-  publicKey: string,
-  scriptPath: string,
+const PUBLIC_KEY = 'MCowBQYDK2VwAyEAWMBZ0pMBaL/s8gNXxpAPCIQ8bxjnuz6bQFwGYvjXDfg='
+
+async function verifySignature(
+  contentPath: string,
   signaturePath: string,
+  publicKey: string = PUBLIC_KEY
 ): Promise<VerificationResult> {
   return new Promise((resolve) => {
     const requestId = Math.random().toString(36).substring(2)
     const worker = new Worker(new URL('./scriptVerificationWorker.ts', import.meta.url), { type: 'module' })
 
-    // Set timeout for worker
     const timeout = setTimeout(() => {
       worker.terminate()
       console.error('Script verification timeout')
@@ -46,9 +47,11 @@ export async function verifyScriptSignature(
 
     worker.postMessage({
       requestId,
-      scriptUrl: scriptPath,
+      scriptUrl: contentPath,
       signatureUrl: signaturePath,
       publicKey,
     })
   })
 }
+
+export default verifySignature

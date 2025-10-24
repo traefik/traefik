@@ -2,12 +2,12 @@ import { waitFor } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
 import HubDashboard from './HubDashboard'
-import * as scriptVerification from './workers/scriptVerification'
+import verifySignature from './workers/scriptVerification'
 
 import { renderWithProviders } from 'utils/test'
 
 vi.mock('./workers/scriptVerification', () => ({
-  verifyScriptSignature: vi.fn(),
+  default: vi.fn(),
 }))
 
 vi.mock('react-router-dom', async () => {
@@ -28,7 +28,7 @@ vi.mock('hooks/use-theme', () => ({
 }))
 
 describe('HubDashboard demo', () => {
-  const mockVerifyScriptSignature = vi.mocked(scriptVerification.verifyScriptSignature)
+  const mockVerifyScriptSignature = vi.mocked(verifySignature)
   let mockCreateObjectURL: ReturnType<typeof vi.fn>
   let mockRevokeObjectURL: ReturnType<typeof vi.fn>
 
@@ -123,7 +123,6 @@ describe('HubDashboard demo', () => {
 
     await waitFor(() => {
       expect(mockVerifyScriptSignature).toHaveBeenCalledWith(
-        'MCowBQYDK2VwAyEAWMBZ0pMBaL/s8gNXxpAPCIQ8bxjnuz6bQFwGYvjXDfg=',
         'https://assets.traefik.io/hub-ui-demo.js',
         'https://assets.traefik.io/hub-ui-demo.js.sig',
       )

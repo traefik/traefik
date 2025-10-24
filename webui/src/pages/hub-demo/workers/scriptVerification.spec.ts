@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
-import { verifyScriptSignature } from './scriptVerification'
+import verifySignature from './scriptVerification'
 
 class MockWorker {
   onmessage: ((event: MessageEvent) => void) | null = null
@@ -21,7 +21,7 @@ class MockWorker {
   }
 }
 
-describe('verifyScriptSignature', () => {
+describe('verifySignature', () => {
   let mockWorkerInstance: MockWorker
 
   beforeEach(() => {
@@ -36,11 +36,10 @@ describe('verifyScriptSignature', () => {
   })
 
   it('should return true when verification succeeds', async () => {
-    const publicKey = 'test-public-key'
     const scriptPath = 'https://example.com/script.js'
     const signaturePath = 'https://example.com/script.js.sig'
 
-    const promise = verifyScriptSignature(publicKey, scriptPath, signaturePath)
+    const promise = verifySignature(scriptPath, signaturePath)
 
     await new Promise((resolve) => setTimeout(resolve, 0))
 
@@ -50,7 +49,6 @@ describe('verifyScriptSignature', () => {
       expect.objectContaining({
         scriptUrl: scriptPath,
         signatureUrl: signaturePath,
-        publicKey,
         requestId: expect.any(String),
       }),
     )
@@ -70,13 +68,12 @@ describe('verifyScriptSignature', () => {
   })
 
   it('should return false when verification fails', async () => {
-    const publicKey = 'test-public-key'
     const scriptPath = 'https://example.com/script.js'
     const signaturePath = 'https://example.com/script.js.sig'
 
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
-    const promise = verifyScriptSignature(publicKey, scriptPath, signaturePath)
+    const promise = verifySignature(scriptPath, signaturePath)
 
     await new Promise((resolve) => setTimeout(resolve, 0))
 
@@ -96,13 +93,12 @@ describe('verifyScriptSignature', () => {
   })
 
   it('should return false when worker throws an error', async () => {
-    const publicKey = 'test-public-key'
     const scriptPath = 'https://example.com/script.js'
     const signaturePath = 'https://example.com/script.js.sig'
 
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
-    const promise = verifyScriptSignature(publicKey, scriptPath, signaturePath)
+    const promise = verifySignature(scriptPath, signaturePath)
 
     await new Promise((resolve) => setTimeout(resolve, 0))
 

@@ -3,10 +3,10 @@ import { useState } from 'react'
 import { BsChevronRight } from 'react-icons/bs'
 
 import { HubIcon } from './icons'
+import { useHubDemoNavigation } from './use-hub-demo'
 
 import Tooltip from 'components/Tooltip'
 import { BasicNavigationItem, LAPTOP_BP } from 'layout/Navigation'
-import { APIM_DEMO_ROUTES } from 'routes'
 
 const ApimDemoNavMenu = ({
   isResponsive,
@@ -18,6 +18,11 @@ const ApimDemoNavMenu = ({
   isExpanded: boolean
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(false)
+  const hubDemoNavItems = useHubDemoNavigation('/hub-dashboard')
+
+  if (!hubDemoNavItems) {
+    return null
+  }
 
   return (
     <Flex direction="column" css={{ borderTop: '1px solid $colors$tableRowBorder', borderRadius: 0, pt: '$3' }}>
@@ -63,7 +68,7 @@ const ApimDemoNavMenu = ({
       <Box
         css={{ mt: '$1', transition: 'max-height 0.3s ease-out', maxHeight: isCollapsed ? 500 : 0, overflow: 'hidden' }}
       >
-        {APIM_DEMO_ROUTES.map((route, idx) => (
+        {hubDemoNavItems.map((route, idx) => (
           <BasicNavigationItem
             key={`apim-${idx}`}
             route={route}

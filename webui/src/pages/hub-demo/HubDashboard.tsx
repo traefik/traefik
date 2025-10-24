@@ -3,17 +3,15 @@ import { useMemo, useEffect, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useParams } from 'react-router-dom'
 
-import { verifyScriptSignature } from './workers/scriptVerification'
+import verifySignature from './workers/scriptVerification'
 
 import { SpinnerLoader } from 'components/SpinnerLoader'
 import { useIsDarkMode } from 'hooks/use-theme'
 import { TopNav } from 'layout/Navigation'
 
-const PUBLIC_KEY = 'MCowBQYDK2VwAyEAWMBZ0pMBaL/s8gNXxpAPCIQ8bxjnuz6bQFwGYvjXDfg='
-
 const HubDashboard = ({ path }: { path: string }) => {
   const isDarkMode = useIsDarkMode()
-  const [scriptError, setScriptError] = useState<string | null>(null)
+  const [scriptError, setScriptError] = useState<boolean>(true)
   const [signatureVerified, setSignatureVerified] = useState(false)
   const [verificationInProgress, setVerificationInProgress] = useState(false)
   const [scriptBlobUrl, setScriptBlobUrl] = useState<string | null>(null)
@@ -37,12 +35,11 @@ const HubDashboard = ({ path }: { path: string }) => {
         const scriptPath = 'https://assets.traefik.io/hub-ui-demo.js'
         const signaturePath = 'https://assets.traefik.io/hub-ui-demo.js.sig'
 
-        const result = await verifyScriptSignature(PUBLIC_KEY, scriptPath, signaturePath)
+        const result = await verifySignature(scriptPath, signaturePath)
 
         if (!result.verified || !result.scriptContent) {
-          setScriptError('Script signature verification failed - security violation detected')
+          setScriptError(true)
           setVerificationInProgress(false)
-          return
         }
 
         // Create Blob URL from verified script content
@@ -53,7 +50,7 @@ const HubDashboard = ({ path }: { path: string }) => {
         setSignatureVerified(true)
         setVerificationInProgress(false)
       } catch (error) {
-        setScriptError(`Script verification failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+        setScriptError(true)
         setVerificationInProgress(false)
       }
     }
@@ -68,7 +65,7 @@ const HubDashboard = ({ path }: { path: string }) => {
     }
   }, [])
 
-  if (scriptError) {
+  if (scriptError && !verificationInProgress) {
     return (
       <Flex gap={4} align="center" justify="center" direction="column" css={{ width: '100%', mt: '$8', maxWidth: 690 }}>
         <Image src="/img/gopher-something-went-wrong.png" width={400} />

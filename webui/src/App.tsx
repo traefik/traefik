@@ -12,7 +12,7 @@ import { useIsDarkMode } from 'hooks/use-theme'
 import ErrorSuspenseWrapper from 'layout/ErrorSuspenseWrapper'
 import { Dashboard, HTTPPages, NotFound, TCPPages, UDPPages } from 'pages'
 import { DashboardSkeleton } from 'pages/dashboard/Dashboard'
-import HubDashboard from 'pages/hub-demo/HubDashboard'
+import { useHubDemoRoutes } from 'pages/hub-demo/use-hub-demo'
 
 export const LIGHT_THEME = lightTheme('blue')
 export const DARK_THEME = darkTheme('blue')
@@ -34,6 +34,8 @@ const ScrollToTop = () => {
 }
 
 export const Routes = () => {
+  const hubDemoRoutes = useHubDemoRoutes('/hub-dashboard')
+
   return (
     <Page>
       <Suspense fallback={<PageLoader />}>
@@ -67,13 +69,7 @@ export const Routes = () => {
           <Route path="/udp" element={<Navigate to="/udp/routers" replace />} />
 
           {/* Hub Dashboard demo content */}
-          <Route path="/hub-dashboard" element={<HubDashboard path="dashboard" />} />
-          <Route path="/hub-dashboard/gateways" element={<HubDashboard path="gateways" />} />
-          <Route path="/hub-dashboard/gateways/:id" element={<HubDashboard path="gateways:id" />} />
-          <Route path="/hub-dashboard/apis" element={<HubDashboard path="apis" />} />
-          <Route path="/hub-dashboard/apis/:id" element={<HubDashboard path="apis:id" />} />
-          <Route path="/hub-dashboard/portals" element={<HubDashboard path="portals" />} />
-          <Route path="/hub-dashboard/portals/:id" element={<HubDashboard path="portals:id" />} />
+          {hubDemoRoutes?.map((route, idx) => <Route key={`hub-${idx}`} path={route.path} element={route.element} />)}
 
           <Route path="*" element={<NotFound />} />
         </RouterRoutes>
