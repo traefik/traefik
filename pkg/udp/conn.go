@@ -1,6 +1,8 @@
 package udp
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -8,6 +10,10 @@ import (
 	"net"
 	"sync"
 	"time"
+
+	"github.com/pires/go-proxyproto"
+	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/ip"
 )
 
 // maxDatagramSize is the maximum size of a UDP datagram.
@@ -16,6 +22,18 @@ const maxDatagramSize = 65535
 const closeRetryInterval = 500 * time.Millisecond
 
 var errClosedListener = errors.New("udp: listener closed")
+
+// ProxyProtocolConfig holds the Proxy Protocol configuration for UDP listeners.
+type ProxyProtocolConfig struct {
+	Insecure   bool
+	TrustedIPs []string
+}
+
+// proxyProtocolConfig is the internal configuration with compiled IP checker.
+type proxyProtocolConfig struct {
+	insecure  bool
+	ipChecker *ip.Checker
+}
 
 // Listener augments a session-oriented Listener over a UDP PacketConn.
 type Listener struct {
@@ -35,10 +53,13 @@ type Listener struct {
 
 	// readBufferPool is a pool of byte slices for UDP packet reading.
 	readBufferPool sync.Pool
+
+	// proxyProtocol holds Proxy Protocol configuration.
+	proxyProtocol *proxyProtocolConfig
 }
 
 // ListenPacketConn creates a new listener from PacketConn.
-func ListenPacketConn(packetConn net.PacketConn, timeout time.Duration) (*Listener, error) {
+func ListenPacketConn(packetConn net.PacketConn, timeout time.Duration, ppConfig *ProxyProtocolConfig) (*Listener, error) {
 	if timeout <= 0 {
 		return nil, errors.New("timeout should be greater than zero")
 	}
@@ -61,13 +82,26 @@ func ListenPacketConn(packetConn net.PacketConn, timeout time.Duration) (*Listen
 		},
 	}
 
+	if ppConfig != nil {
+		l.proxyProtocol = &proxyProtocolConfig{
+			insecure: ppConfig.Insecure,
+		}
+		if !ppConfig.Insecure && len(ppConfig.TrustedIPs) > 0 {
+			checker, err := ip.NewChecker(ppConfig.TrustedIPs)
+			if err != nil {
+				return nil, fmt.Errorf("creating IP checker: %w", err)
+			}
+			l.proxyProtocol.ipChecker = checker
+		}
+	}
+
 	go l.readLoop()
 
 	return l, nil
 }
 
 // Listen creates a new listener.
-func Listen(listenConfig net.ListenConfig, network, address string, timeout time.Duration) (*Listener, error) {
+func Listen(listenConfig net.ListenConfig, network, address string, timeout time.Duration, ppConfig *ProxyProtocolConfig) (*Listener, error) {
 	if timeout <= 0 {
 		return nil, errors.New("timeout should be greater than zero")
 	}
@@ -77,7 +111,7 @@ func Listen(listenConfig net.ListenConfig, network, address string, timeout time
 		return nil, fmt.Errorf("listen packet: %w", err)
 	}
 
-	l, err := ListenPacketConn(packetConn, timeout)
+	l, err := ListenPacketConn(packetConn, timeout, ppConfig)
 	if err != nil {
 		return nil, fmt.Errorf("listen packet conn: %w", err)
 	}
@@ -169,6 +203,39 @@ func (l *Listener) readLoop() {
 			l.readBufferPool.Put(buf)
 			return
 		}
+
+		packet := buf[:n]
+		originalSource := raddr
+
+		// Proxy Protocol handling.
+		if l.shouldParseProxyProtocol(originalSource) {
+			header, payload, err := l.parseProxyProtocol(packet)
+			if err != nil {
+				// Log and drop packet on parse error.
+				log.Debug().Err(err).
+					Str("source", raddr.String()).
+					Msg("Failed to parse Proxy Protocol header, dropping packet")
+				l.readBufferPool.Put(buf)
+				continue
+			}
+
+			if header != nil {
+				// Use header's source address for session keying.
+				srcAddr, _, ok := header.UDPAddrs()
+				if ok {
+					raddr = srcAddr
+					packet = payload // Use stripped payload.
+				} else {
+					// Header present but not UDP protocol, log and drop.
+					log.Debug().
+						Str("source", originalSource.String()).
+						Msg("Proxy Protocol header not UDP type, dropping packet")
+					l.readBufferPool.Put(buf)
+					continue
+				}
+			}
+		}
+
 		conn, err := l.getConn(raddr)
 		if err != nil {
 			l.readBufferPool.Put(buf)
@@ -177,12 +244,58 @@ func (l *Listener) readLoop() {
 
 		select {
 		// Receiver must call releaseReadBuffer() when done reading the data.
-		case conn.receiveCh <- buf[:n]:
+		case conn.receiveCh <- packet:
 		case <-conn.doneCh:
 			l.readBufferPool.Put(buf)
 			continue
 		}
 	}
+}
+
+// shouldParseProxyProtocol determines if we should attempt to parse
+// Proxy Protocol header from this source address.
+func (l *Listener) shouldParseProxyProtocol(originalSource net.Addr) bool {
+	if l.proxyProtocol == nil {
+		return false
+	}
+
+	if l.proxyProtocol.insecure {
+		return true
+	}
+
+	udpAddr, ok := originalSource.(*net.UDPAddr)
+	if !ok {
+		return false
+	}
+
+	if l.proxyProtocol.ipChecker == nil {
+		return false
+	}
+
+	return l.proxyProtocol.ipChecker.ContainsIP(udpAddr.IP)
+}
+
+// parseProxyProtocol attempts to parse Proxy Protocol header from packet.
+// Returns (header, payload, error) where payload has header bytes stripped.
+// If no header present, returns (nil, originalPacket, nil).
+func (l *Listener) parseProxyProtocol(packet []byte) (*proxyproto.Header, []byte, error) {
+	reader := bufio.NewReader(bytes.NewReader(packet))
+
+	header, err := proxyproto.Read(reader)
+	if err != nil {
+		if errors.Is(err, proxyproto.ErrNoProxyProtocol) {
+			return nil, packet, nil
+		}
+		return nil, nil, fmt.Errorf("parsing proxy protocol: %w", err)
+	}
+
+	headerLen := len(packet) - reader.Buffered()
+	if headerLen < 0 || headerLen > len(packet) {
+		return nil, nil, fmt.Errorf("invalid header length: %d", headerLen)
+	}
+
+	payload := packet[headerLen:]
+	return header, payload, nil
 }
 
 // getConn returns the ongoing session with raddr if it exists, or creates a new
@@ -282,6 +395,11 @@ func (c *Conn) readLoop() {
 			}
 		}
 	}
+}
+
+// RemoteAddr returns the remote network address.
+func (c *Conn) RemoteAddr() net.Addr {
+	return c.rAddr
 }
 
 // Read reads up to len(p) bytes into p from the connection.

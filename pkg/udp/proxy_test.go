@@ -96,7 +96,7 @@ func TestProxy_ServeUDP_MaxDataSize(t *testing.T) {
 func newServer(t *testing.T, addr string, handler Handler) {
 	t.Helper()
 
-	listener, err := Listen(net.ListenConfig{}, "udp", addr, 3*time.Second)
+	listener, err := Listen(net.ListenConfig{}, "udp", addr, 3*time.Second, nil)
 	require.NoError(t, err)
 
 	for {

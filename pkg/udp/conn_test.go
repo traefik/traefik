@@ -12,7 +12,7 @@ import (
 )
 
 func TestConsecutiveWrites(t *testing.T) {
-	ln, err := Listen(net.ListenConfig{}, "udp", ":0", 3*time.Second)
+	ln, err := Listen(net.ListenConfig{}, "udp", ":0", 3*time.Second, nil)
 	require.NoError(t, err)
 	defer func() {
 		err := ln.Close()
@@ -70,7 +70,7 @@ func TestConsecutiveWrites(t *testing.T) {
 }
 
 func TestListenNotBlocking(t *testing.T) {
-	ln, err := Listen(net.ListenConfig{}, "udp", ":0", 3*time.Second)
+	ln, err := Listen(net.ListenConfig{}, "udp", ":0", 3*time.Second, nil)
 	require.NoError(t, err)
 	defer func() {
 		err := ln.Close()
@@ -156,7 +156,7 @@ func TestListenNotBlocking(t *testing.T) {
 }
 
 func TestListenWithZeroTimeout(t *testing.T) {
-	_, err := Listen(net.ListenConfig{}, "udp", ":0", 0)
+	_, err := Listen(net.ListenConfig{}, "udp", ":0", 0, nil)
 	assert.Error(t, err)
 }
 
@@ -171,7 +171,7 @@ func TestTimeoutWithoutRead(t *testing.T) {
 func testTimeout(t *testing.T, withRead bool) {
 	t.Helper()
 
-	ln, err := Listen(net.ListenConfig{}, "udp", ":0", 3*time.Second)
+	ln, err := Listen(net.ListenConfig{}, "udp", ":0", 3*time.Second, nil)
 	require.NoError(t, err)
 	defer func() {
 		err := ln.Close()
@@ -212,7 +212,7 @@ func testTimeout(t *testing.T, withRead bool) {
 }
 
 func TestShutdown(t *testing.T) {
-	l, err := Listen(net.ListenConfig{}, "udp", ":0", 3*time.Second)
+	l, err := Listen(net.ListenConfig{}, "udp", ":0", 3*time.Second, nil)
 	require.NoError(t, err)
 
 	go func() {
