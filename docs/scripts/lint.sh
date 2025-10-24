@@ -13,7 +13,7 @@ echo "== Linting Markdown"
 cd "${BASE_DIR}" || exit 1
 
 LINTER_EXCLUSIONS="$(find "content" -type f -name '.markdownlint.json')"
-GLOBAL_LINT_OPTIONS="--config ${BASE_DIR}/.markdownlint.json"
+GLOBAL_LINT_OPTIONS="--config .markdownlint.json"
 
 # Lint the specific folders (containing linter specific rulesets)
 for LINTER_EXCLUSION in ${LINTER_EXCLUSIONS}
@@ -24,6 +24,6 @@ do
 done
 
 # Lint all the content, excluding the previously done`
-eval markdownlint "${GLOBAL_LINT_OPTIONS}" "${BASE_DIR}/content/**/*.md" || EXIT_CODE=1
+eval markdownlint "${GLOBAL_LINT_OPTIONS}" "content/**/*.md" || EXIT_CODE=1
 
 exit "${EXIT_CODE}"
