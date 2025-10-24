@@ -20,7 +20,6 @@ jobs:
       - name: Install markdownlint
         run: |
           npm install --global markdownlint@0.29.0 markdownlint-cli@0.35.0
-          markdownlint --version
 
       - name: Lint
         run: ./docs/scripts/lint.sh docs
