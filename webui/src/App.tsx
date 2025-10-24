@@ -81,8 +81,8 @@ export const Routes = () => {
 const isDev = import.meta.env.NODE_ENV === 'development'
 
 const customGlobalStyle = globalCss({
-  'span[role=cell]': {
-    // target the AriaTd component
+  // target the AriaTd component, but exclude anything inside hub-ui-demo-app
+  'body:not(:has(hub-ui-demo-app)) span[role=cell]': {
     p: '$2 $3',
   },
 })
