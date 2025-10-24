@@ -6,7 +6,7 @@ set -eu
 # We want to run all linters before returning success (exit 0) or failure (exit 1)
 # So this variable holds the global exit code
 EXIT_CODE=0
-readonly BASE_DIR=/app
+readonly BASE_DIR="${1:-/app}"
 
 echo "== Linting Markdown"
 # Uses the file ".markdownlint.json" for setup
