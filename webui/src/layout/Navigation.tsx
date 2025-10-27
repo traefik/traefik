@@ -2,6 +2,7 @@ import {
   Badge,
   Box,
   Button,
+  CSS,
   DialogTitle,
   DropdownMenu,
   DropdownMenuContent,
@@ -37,6 +38,7 @@ import TooltipText from 'components/TooltipText'
 import { VersionContext } from 'contexts/version'
 import useTotals from 'hooks/use-overview-totals'
 import { useIsDarkMode } from 'hooks/use-theme'
+import ApimDemoNavMenu from 'pages/hub-demo/HubDemoNav'
 import { Route, ROUTES } from 'routes'
 
 export const LAPTOP_BP = 1025
@@ -54,7 +56,7 @@ const NavigationDrawer = styled(Flex, {
   },
 })
 
-const BasicNavigationItem = ({
+export const BasicNavigationItem = ({
   route,
   count,
   isSmallScreen,
@@ -270,7 +272,7 @@ export const SideNav = ({
             ))}
           </Flex>
         ))}
-        <Flex direction="column" css={{ borderTop: '1px solid $colors$tableRowBorder', borderRadius: 0, pt: '$3' }}>
+        <Flex direction="column" css={{ borderTop: '1px solid $colors$tableRowBorder', borderRadius: 0, py: '$3' }}>
           <NavigationLink
             startAdornment={<PluginsIcon />}
             css={{
@@ -283,12 +285,14 @@ export const SideNav = ({
             {!isSmallScreen || isExpanded ? 'Plugins' : ''}
           </NavigationLink>
         </Flex>
+
+        <ApimDemoNavMenu isResponsive={isResponsive} isSmallScreen={isSmallScreen} isExpanded={isExpanded} />
       </Container>
     </NavigationDrawer>
   )
 }
 
-export const TopNav = () => {
+export const TopNav = ({ css, noHubButton = false }: { css?: CSS; noHubButton?: boolean }) => {
   const [hasHubButtonComponent, setHasHubButtonComponent] = useState(false)
   const { showHubButton, version } = useContext(VersionContext)
   const isDarkMode = useIsDarkMode()
@@ -341,8 +345,8 @@ export const TopNav = () => {
   }, [showHubButton])
 
   return (
-    <Flex as="nav" role="navigation" justify="end" align="center" css={{ gap: '$2', mb: '$6' }}>
-      {hasHubButtonComponent && (
+    <Flex as="nav" role="navigation" justify="end" align="center" css={{ gap: '$2', mb: '$6', ...css }}>
+      {!noHubButton && hasHubButtonComponent && (
         <Box css={{ fontFamily: '$rubik', fontWeight: '500 !important' }}>
           <hub-button-app
             key={`dark-mode-${isDarkMode}`}

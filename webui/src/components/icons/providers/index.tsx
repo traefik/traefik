@@ -8,7 +8,7 @@ import File from 'components/icons/providers/File'
 import Http from 'components/icons/providers/Http'
 import Hub from 'components/icons/providers/Hub'
 import Internal from 'components/icons/providers/Internal'
-import Knative from "components/icons/providers/Knative";
+import Knative from 'components/icons/providers/Knative'
 import Kubernetes from 'components/icons/providers/Kubernetes'
 import Nomad from 'components/icons/providers/Nomad'
 import Plugin from 'components/icons/providers/Plugin'
