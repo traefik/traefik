@@ -405,14 +405,14 @@ Here is a comprehensive list of labels that are provided by the metrics:
 
 | Label                                                                                              | Description                                                  | example       |
 |----------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------|---------------|
-| <a id="opt-error-type-2" href="#opt-error-type-2" title="#opt-error-type-2">`error.type`</a>                                                             | Describes a class of error the operation ended with          | "500"         |
-| <a id="opt-http-request-method-2" href="#opt-http-request-method-2" title="#opt-http-request-method-2">`http.request.method`</a>                         | HTTP request method                                          | "GET"         |
+| <a id="opt-error-type-2" href="#opt-error-type-2" title="#opt-error-type-2">`error.type`</a> | Describes a class of error the operation ended with          | "500"         |
+| <a id="opt-http-request-method-2" href="#opt-http-request-method-2" title="#opt-http-request-method-2">`http.request.method`</a> | HTTP request method                                          | "GET"         |
 | <a id="opt-http-response-status-code-2" href="#opt-http-response-status-code-2" title="#opt-http-response-status-code-2">`http.response.status_code`</a> | HTTP response status code                                    | "200"         |
-| <a id="opt-network-protocol-name-2" href="#opt-network-protocol-name-2" title="#opt-network-protocol-name-2">`network.protocol.name`</a>                 | OSI application layer or non-OSI equivalent                  | "http/1.1"    |
-| <a id="opt-network-protocol-version-2" href="#opt-network-protocol-version-2" title="#opt-network-protocol-version-2">`network.protocol.version`</a>     | Version of the protocol specified in `network.protocol.name` | "1.1"         |
-| <a id="opt-server-address-2" href="#opt-server-address-2" title="#opt-server-address-2">`server.address`</a>                                             | Name of the local HTTP server that received the request      | "example.com" |
-| <a id="opt-server-port-2" href="#opt-server-port-2" title="#opt-server-port-2">`server.port`</a>                                                         | Port of the local HTTP server that received the request      | "80"          |
-| <a id="opt-url-scheme-2" href="#opt-url-scheme-2" title="#opt-url-scheme-2">`url.scheme`</a>                                                             | The URI scheme component identifying the used protocol       | "http"        |
+| <a id="opt-network-protocol-name-2" href="#opt-network-protocol-name-2" title="#opt-network-protocol-name-2">`network.protocol.name`</a> | OSI application layer or non-OSI equivalent                  | "http/1.1"    |
+| <a id="opt-network-protocol-version-2" href="#opt-network-protocol-version-2" title="#opt-network-protocol-version-2">`network.protocol.version`</a> | Version of the protocol specified in `network.protocol.name` | "1.1"         |
+| <a id="opt-server-address-2" href="#opt-server-address-2" title="#opt-server-address-2">`server.address`</a> | Name of the local HTTP server that received the request      | "example.com" |
+| <a id="opt-server-port-2" href="#opt-server-port-2" title="#opt-server-port-2">`server.port`</a> | Port of the local HTTP server that received the request      | "80"          |
+| <a id="opt-url-scheme-2" href="#opt-url-scheme-2" title="#opt-url-scheme-2">`url.scheme`</a> | The URI scheme component identifying the used protocol       | "http"        |
 
 ### HTTP Metrics
 
