@@ -11,6 +11,9 @@ import { TopNav } from 'layout/Navigation'
 
 const SCRIPT_URL = 'https://assets.traefik.io/hub-ui-demo.js'
 
+// Module-level cache to persist across component mount/unmount
+let cachedBlobUrl: string | null = null
+
 const HubDashboard = ({ path }: { path: string }) => {
   const isDarkMode = useIsDarkMode()
   const [scriptError, setScriptError] = useState<boolean | undefined>(undefined)
@@ -34,18 +37,18 @@ const HubDashboard = ({ path }: { path: string }) => {
       setVerificationInProgress(true)
 
       try {
-        const { verified, scriptContent } = await verifySignature(SCRIPT_URL, `${SCRIPT_URL}.sig`)
+        const { verified, scriptContent: content } = await verifySignature(SCRIPT_URL, `${SCRIPT_URL}.sig`)
 
-        if (!verified || !scriptContent) {
+        if (!verified || !content) {
           setScriptError(true)
           setVerificationInProgress(false)
         } else {
           setScriptError(false)
-          // Create Blob URL from verified script content
-          const blob = new Blob([scriptContent], { type: 'application/javascript' })
-          const blobUrl = URL.createObjectURL(blob)
 
-          setScriptBlobUrl(blobUrl)
+          const blob = new Blob([content], { type: 'application/javascript' })
+          cachedBlobUrl = URL.createObjectURL(blob)
+
+          setScriptBlobUrl(cachedBlobUrl)
           setSignatureVerified(true)
           setVerificationInProgress(false)
         }
@@ -55,15 +58,12 @@ const HubDashboard = ({ path }: { path: string }) => {
       }
     }
 
-    verifyAndLoadScript()
-
-    // Cleanup: revoke Blob URL on unmount
-    return () => {
-      if (scriptBlobUrl) {
-        URL.revokeObjectURL(scriptBlobUrl)
-      }
+    if (!cachedBlobUrl) {
+      verifyAndLoadScript()
+    } else {
+      setScriptBlobUrl(cachedBlobUrl)
+      setSignatureVerified(true)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   if (scriptError && !verificationInProgress) {
