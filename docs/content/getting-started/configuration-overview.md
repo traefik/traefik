@@ -10,12 +10,12 @@ How the Magic Happens
 
 Configuration in Traefik can refer to two different things:
 
-- The fully routing configuration (formerly known as the _dynamic configuration_)
 - The install (startup) configuration (formerly known as the _static configuration_)
+- The routing configuration (formerly known as the _dynamic configuration_)
 
 Elements in the _install configuration_ set up connections to [providers](../providers/overview.md) and define the [entrypoints](../routing/entrypoints.md) Traefik will listen to (these elements don't change often).
 
-The routing configuration_ contains everything that defines how the requests are handled by your system.
+The _routing configuration_ contains everything that defines how the requests are handled by your system.
 This configuration can change and is seamlessly hot-reloaded, without any request interruption or connection loss.
 
 !!! warning "Incompatible Configuration"
@@ -30,7 +30,7 @@ Since this configuration is specific to your infrastructure choices, we invite y
 
 !!! info ""
 
-    In the [Quick Start example](../getting-started/quick-start.md), the routing configuration comes from docker in the form of labels attached to your containers.
+    In the [Quick Start example](../getting-started/docker.md), the whoami application routing configuration comes from docker in the form of a label attached to the whoami container.
 
 !!! info "HTTPS Certificates also belong to the routing configuration."
 
