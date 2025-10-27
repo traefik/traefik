@@ -111,9 +111,11 @@ the [`passHostHeader`](../../../../routing/services/index.md#pass-host-header) o
 
 ### statusRewrites
 
-An optional mapping of status codes to be rewritten.
+`statusRewrites` is an optional mapping of status codes to be rewritten.
+
 For example, if a service returns a 418, you might want to rewrite it to a 404.
 You can map individual status codes or even ranges to a different status code.
+
 The syntax for ranges follows the same rules as the <a href="#opt-status">`status`</a> option.
 
 ### query
