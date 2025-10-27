@@ -35,3 +35,9 @@ services:
     labels:
       traefik.http.Routers.Super.Rule: Host(`my.super.host`)
       traefik.http.Services.powpow.LoadBalancer.server.Port: 2375
+
+  nonRunning:
+    image: traefik/whoami
+    labels:
+      traefik.http.Routers.NonRunning.Rule: Host(`non.running.host`)
+      traefik.docker.allownonrunning: "true"

@@ -165,7 +165,9 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 }
 
 func (p *Provider) listContainers(ctx context.Context, dockerClient client.ContainerAPIClient) ([]dockerData, error) {
-	containerList, err := dockerClient.ContainerList(ctx, container.ListOptions{})
+	containerList, err := dockerClient.ContainerList(ctx, container.ListOptions{
+		All: true,
+	})
 	if err != nil {
 		return nil, err
 	}
