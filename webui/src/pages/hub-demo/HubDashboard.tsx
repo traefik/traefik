@@ -14,6 +14,11 @@ const SCRIPT_URL = 'https://assets.traefik.io/hub-ui-demo.js'
 // Module-level cache to persist across component mount/unmount
 let cachedBlobUrl: string | null = null
 
+// Export a function to reset the cache (for testing)
+export const resetCache = () => {
+  cachedBlobUrl = null
+}
+
 const HubDashboard = ({ path }: { path: string }) => {
   const isDarkMode = useIsDarkMode()
   const [scriptError, setScriptError] = useState<boolean | undefined>(undefined)
