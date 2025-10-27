@@ -10,12 +10,19 @@ ed25519.hashes.sha512 = sha512
 ed25519.hashes.sha512Async = (m) => Promise.resolve(sha512(m))
 
 function base64ToArrayBuffer(base64: string): ArrayBuffer {
-  const binaryString = atob(base64)
-  const bytes = new Uint8Array(binaryString.length)
-  for (let i = 0; i < binaryString.length; i++) {
-    bytes[i] = binaryString.charCodeAt(i)
+  try {
+    // @ts-expect-error - fromBase64 is not yet in all TypeScript lib definitions
+    const bytes = Uint8Array.fromBase64(base64)
+    return bytes.buffer
+  } catch {
+    // Fallback for browsers without Uint8Array.fromBase64()
+    const binaryString = atob(base64)
+    const bytes = new Uint8Array(binaryString.length)
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i)
+    }
+    return bytes.buffer
   }
-  return bytes.buffer
 }
 
 function extractEd25519PublicKey(spkiBytes: Uint8Array): Uint8Array {
@@ -77,11 +84,17 @@ function parseSignature(signatureBuffer: ArrayBuffer): Uint8Array {
 
   // hex decoding
   if (signatureText.length === 128 && /^[0-9a-fA-F]+$/.test(signatureText)) {
-    const hexDecoded = new Uint8Array(64)
-    for (let i = 0; i < 64; i++) {
-      hexDecoded[i] = parseInt(signatureText.slice(i * 2, i * 2 + 2), 16)
+    try {
+      // @ts-expect-error - fromHex is not yet in all TypeScript lib definitions
+      return Uint8Array.fromHex(signatureText)
+    } catch {
+      // Fallback for browsers without Uint8Array.fromHex()
+      const hexDecoded = new Uint8Array(64)
+      for (let i = 0; i < 64; i++) {
+        hexDecoded[i] = parseInt(signatureText.slice(i * 2, i * 2 + 2), 16)
+      }
+      return hexDecoded
     }
-    return hexDecoded
   }
 
   throw new Error(`Unable to parse signature format.`)
