@@ -18,6 +18,9 @@ http:
           - "501"
           - "503"
           - "505-599"
+        statusRewrites:
+          "418": "404"
+          "502-504": "500"
         service: error-handler-service
         query: "/{status}.html"
 
@@ -33,6 +36,10 @@ http:
     service = "error-handler-service"
     query = "/{status}.html"
 
+    [http.middlewares.test-errors.errors.statusRewrites]
+      "418" = "404"
+      "502-504" = "500"
+
 [http.services]
   # ... definition of the error-handler-service
 ```
@@ -41,6 +48,8 @@ http:
 # Dynamic Custom Error Page for 5XX Status Code
 labels:
   - "traefik.http.middlewares.test-errors.errors.status=500,501,503,505-599"
+  - "traefik.http.middlewares.test-errors.errors.statusRewrites.418=404"
+  - "traefik.http.middlewares.test-errors.errors.statusRewrites.502-504=500"
   - "traefik.http.middlewares.test-errors.errors.service=error-handler-service"
   - "traefik.http.middlewares.test-errors.errors.query=/{status}.html"
 ```
@@ -51,6 +60,8 @@ labels:
   // ...
   "Tags": [
     "traefik.http.middlewares.test-errors.errors.status=500,501,503,505-599",
+    "traefik.http.middlewares.test-errors.errors.statusRewrites.418=404",
+    "traefik.http.middlewares.test-errors.errors.statusRewrites.502-504=500",
     "traefik.http.middlewares.test-errors.errors.service=error-handler-service",
     "traefik.http.middlewares.test-errors.errors.query=/{status}.html"
   ]
@@ -71,6 +82,9 @@ spec:
       - "501"
       - "503"
       - "505-599"
+    statusRewrites:
+      "418": "404"
+      "502-504": "500"
     query: /{status}.html
     service:
       name: error-handler-service
@@ -97,16 +111,10 @@ the [`passHostHeader`](../../../../routing/services/index.md#pass-host-header) o
 
 ### statusRewrites
 
-An optional mapping of status codes to be rewritten. For example, if a service returns a 418, you might want to rewrite it to a 404.
-You can map individual status codes or even ranges to a different status code. The syntax for ranges follows the same rules as the <a href="#opt-status">`status`</a> option.
-
-Here is an example:
-
-```yml
-statusRewrites:
-  "500-503": 500
-  "418": 404
-```
+An optional mapping of status codes to be rewritten.
+For example, if a service returns a 418, you might want to rewrite it to a 404.
+You can map individual status codes or even ranges to a different status code.
+The syntax for ranges follows the same rules as the <a href="#opt-status">`status`</a> option.
 
 ### query
 
