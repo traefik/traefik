@@ -9,7 +9,6 @@ namespace HubDemo {
   }
 
   interface Manifest {
-    version: string
     routes: Route[]
   }
 

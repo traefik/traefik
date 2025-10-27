@@ -5,6 +5,8 @@ import verifySignature from './scriptVerification'
 describe('Script Signature Verification - Integration Tests', () => {
   let fetchMock: ReturnType<typeof vi.fn>
 
+  const SCRIPT_URL = 'https://example.com/script.js'
+  const SIGNATURE_URL = 'https://example.com/script.js.sig'
   const TEST_PUBLIC_KEY = 'MCowBQYDK2VwAyEAWH71OHphISjNK3mizCR/BawiDxc6IXT1vFHpBcxSIA0='
   const VALID_SCRIPT = "console.log('Hello from verified script!');"
   const VALID_SIGNATURE_HEX =
@@ -18,11 +20,8 @@ describe('Script Signature Verification - Integration Tests', () => {
   })
 
   it('should verify a valid script with correct signature through real worker', async () => {
-    const scriptUrl = 'https://example.com/script.js'
-    const signatureUrl = 'https://example.com/script.js.sig'
-
     fetchMock.mockImplementation((url: string) => {
-      if (url === scriptUrl) {
+      if (url === SCRIPT_URL) {
         return Promise.resolve(
           new Response(VALID_SCRIPT, {
             status: 200,
@@ -30,7 +29,7 @@ describe('Script Signature Verification - Integration Tests', () => {
           }),
         )
       }
-      if (url === signatureUrl) {
+      if (url === SIGNATURE_URL) {
         return Promise.resolve(
           new Response(VALID_SIGNATURE_HEX, {
             status: 200,
@@ -41,19 +40,17 @@ describe('Script Signature Verification - Integration Tests', () => {
       return Promise.reject(new Error('Unexpected URL'))
     })
 
-    const result = await verifySignature(scriptUrl, signatureUrl, TEST_PUBLIC_KEY)
+    const result = await verifySignature(SCRIPT_URL, SIGNATURE_URL, TEST_PUBLIC_KEY)
 
-    expect(fetchMock).toHaveBeenCalledWith(scriptUrl)
-    expect(fetchMock).toHaveBeenCalledWith(signatureUrl)
-    expect(result).toBe(true)
+    expect(fetchMock).toHaveBeenCalledWith(SCRIPT_URL)
+    expect(fetchMock).toHaveBeenCalledWith(SIGNATURE_URL)
+    expect(result.verified).toBe(true)
+    expect(result.scriptContent).toBeDefined()
   }, 15000)
 
   it('should reject a corrupted script with mismatched signature', async () => {
-    const scriptUrl = 'https://example.com/script.js'
-    const signatureUrl = 'https://example.com/script.js.sig'
-
     fetchMock.mockImplementation((url: string) => {
-      if (url === scriptUrl) {
+      if (url === SCRIPT_URL) {
         return Promise.resolve(
           new Response(CORRUPTED_SCRIPT, {
             status: 200,
@@ -61,7 +58,7 @@ describe('Script Signature Verification - Integration Tests', () => {
           }),
         )
       }
-      if (url === signatureUrl) {
+      if (url === SIGNATURE_URL) {
         return Promise.resolve(
           new Response(VALID_SIGNATURE_HEX, {
             status: 200,
@@ -72,19 +69,17 @@ describe('Script Signature Verification - Integration Tests', () => {
       return Promise.reject(new Error('Unexpected URL'))
     })
 
-    const result = await verifySignature(scriptUrl, signatureUrl, TEST_PUBLIC_KEY)
+    const result = await verifySignature(SCRIPT_URL, SIGNATURE_URL, TEST_PUBLIC_KEY)
 
-    expect(fetchMock).toHaveBeenCalledWith(scriptUrl)
-    expect(fetchMock).toHaveBeenCalledWith(signatureUrl)
-    expect(result).toBe(false)
+    expect(fetchMock).toHaveBeenCalledWith(SCRIPT_URL)
+    expect(fetchMock).toHaveBeenCalledWith(SIGNATURE_URL)
+    expect(result.verified).toBe(false)
+    expect(result.scriptContent).toBeUndefined()
   }, 15000)
 
   it('should reject script with invalid signature format', async () => {
-    const scriptUrl = 'https://example.com/script.js'
-    const signatureUrl = 'https://example.com/script.js.sig'
-
     fetchMock.mockImplementation((url: string) => {
-      if (url === scriptUrl) {
+      if (url === SCRIPT_URL) {
         return Promise.resolve(
           new Response(VALID_SCRIPT, {
             status: 200,
@@ -92,7 +87,7 @@ describe('Script Signature Verification - Integration Tests', () => {
           }),
         )
       }
-      if (url === signatureUrl) {
+      if (url === SIGNATURE_URL) {
         return Promise.resolve(
           new Response('not-a-valid-signature', {
             status: 200,
@@ -103,19 +98,17 @@ describe('Script Signature Verification - Integration Tests', () => {
       return Promise.reject(new Error('Unexpected URL'))
     })
 
-    const result = await verifySignature(scriptUrl, signatureUrl, TEST_PUBLIC_KEY)
+    const result = await verifySignature(SCRIPT_URL, SIGNATURE_URL, TEST_PUBLIC_KEY)
 
-    expect(result).toBe(false)
+    expect(result.verified).toBe(false)
+    expect(result.scriptContent).toBeUndefined()
   }, 15000)
 
   it('should reject script with wrong public key', async () => {
-    const scriptUrl = 'https://example.com/script.js'
-    const signatureUrl = 'https://example.com/script.js.sig'
-
     const WRONG_PUBLIC_KEY = 'MCowBQYDK2VwAyEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=='
 
     fetchMock.mockImplementation((url: string) => {
-      if (url === scriptUrl) {
+      if (url === SCRIPT_URL) {
         return Promise.resolve(
           new Response(VALID_SCRIPT, {
             status: 200,
@@ -123,7 +116,7 @@ describe('Script Signature Verification - Integration Tests', () => {
           }),
         )
       }
-      if (url === signatureUrl) {
+      if (url === SIGNATURE_URL) {
         return Promise.resolve(
           new Response(VALID_SIGNATURE_HEX, {
             status: 200,
@@ -134,15 +127,13 @@ describe('Script Signature Verification - Integration Tests', () => {
       return Promise.reject(new Error('Unexpected URL'))
     })
 
-    const result = await verifySignature(scriptUrl, signatureUrl, WRONG_PUBLIC_KEY)
+    const result = await verifySignature(SCRIPT_URL, SIGNATURE_URL, WRONG_PUBLIC_KEY)
 
-    expect(result).toBe(false)
+    expect(result.verified).toBe(false)
+    expect(result.scriptContent).toBeUndefined()
   }, 15000)
 
   it('should handle network failures when fetching script', async () => {
-    const scriptUrl = 'https://example.com/script.js'
-    const signatureUrl = 'https://example.com/script.js.sig'
-
     fetchMock.mockImplementation(() =>
       Promise.resolve(
         new Response(null, {
@@ -154,9 +145,10 @@ describe('Script Signature Verification - Integration Tests', () => {
 
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
-    const result = await verifySignature(scriptUrl, signatureUrl, TEST_PUBLIC_KEY)
+    const result = await verifySignature(SCRIPT_URL, SIGNATURE_URL, TEST_PUBLIC_KEY)
 
-    expect(result).toBe(false)
+    expect(result.verified).toBe(false)
+    expect(result.scriptContent).toBeUndefined()
     expect(consoleErrorSpy).toHaveBeenCalled()
 
     consoleErrorSpy.mockRestore()

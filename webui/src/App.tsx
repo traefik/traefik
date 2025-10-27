@@ -1,5 +1,5 @@
 import { globalCss, Box, darkTheme, FaencyProvider, lightTheme } from '@traefiklabs/faency'
-import { Suspense, useEffect } from 'react'
+import { Suspense, useContext, useEffect } from 'react'
 import { HelmetProvider } from 'react-helmet-async'
 import { HashRouter, Navigate, Route, Routes as RouterRoutes, useLocation } from 'react-router-dom'
 import { SWRConfig } from 'swr'
@@ -12,7 +12,7 @@ import { useIsDarkMode } from 'hooks/use-theme'
 import ErrorSuspenseWrapper from 'layout/ErrorSuspenseWrapper'
 import { Dashboard, HTTPPages, NotFound, TCPPages, UDPPages } from 'pages'
 import { DashboardSkeleton } from 'pages/dashboard/Dashboard'
-import { useHubDemoRoutes } from 'pages/hub-demo/use-hub-demo'
+import { HubDemoContext, HubDemoProvider } from 'pages/hub-demo/demoNavContext'
 
 export const LIGHT_THEME = lightTheme('blue')
 export const DARK_THEME = darkTheme('blue')
@@ -34,7 +34,7 @@ const ScrollToTop = () => {
 }
 
 export const Routes = () => {
-  const hubDemoRoutes = useHubDemoRoutes('/hub-dashboard')
+  const { routes: hubDemoRoutes } = useContext(HubDemoContext)
 
   return (
     <Page>
@@ -111,9 +111,11 @@ const App = () => {
         >
           <VersionProvider>
             <HashRouter basename={import.meta.env.VITE_APP_BASE_URL || ''}>
-              {customGlobalStyle()}
-              <ScrollToTop />
-              <Routes />
+              <HubDemoProvider basePath={'/hub-dashboard'}>
+                {customGlobalStyle()}
+                <ScrollToTop />
+                <Routes />
+              </HubDemoProvider>
             </HashRouter>
           </VersionProvider>
         </SWRConfig>

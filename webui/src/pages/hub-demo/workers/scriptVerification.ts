@@ -8,7 +8,7 @@ const PUBLIC_KEY = 'MCowBQYDK2VwAyEAWMBZ0pMBaL/s8gNXxpAPCIQ8bxjnuz6bQFwGYvjXDfg=
 async function verifySignature(
   contentPath: string,
   signaturePath: string,
-  publicKey: string = PUBLIC_KEY
+  publicKey: string = PUBLIC_KEY,
 ): Promise<VerificationResult> {
   return new Promise((resolve) => {
     const requestId = Math.random().toString(36).substring(2)

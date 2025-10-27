@@ -1,9 +1,9 @@
 import { Badge, Box, Flex, Text } from '@traefiklabs/faency'
-import { useState } from 'react'
+import { useContext, useState } from 'react'
 import { BsChevronRight } from 'react-icons/bs'
 
+import { HubDemoContext } from './demoNavContext'
 import { HubIcon } from './icons'
-import { useHubDemoNavigation } from './use-hub-demo'
 
 import Tooltip from 'components/Tooltip'
 import { BasicNavigationItem, LAPTOP_BP } from 'layout/Navigation'
@@ -18,7 +18,7 @@ const ApimDemoNavMenu = ({
   isExpanded: boolean
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(false)
-  const hubDemoNavItems = useHubDemoNavigation('/hub-dashboard')
+  const { navigationItems: hubDemoNavItems } = useContext(HubDemoContext)
 
   if (!hubDemoNavItems) {
     return null

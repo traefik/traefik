@@ -9,9 +9,11 @@ import { SpinnerLoader } from 'components/SpinnerLoader'
 import { useIsDarkMode } from 'hooks/use-theme'
 import { TopNav } from 'layout/Navigation'
 
+const SCRIPT_URL = 'https://assets.traefik.io/hub-ui-demo.js'
+
 const HubDashboard = ({ path }: { path: string }) => {
   const isDarkMode = useIsDarkMode()
-  const [scriptError, setScriptError] = useState<boolean>(true)
+  const [scriptError, setScriptError] = useState<boolean | undefined>(undefined)
   const [signatureVerified, setSignatureVerified] = useState(false)
   const [verificationInProgress, setVerificationInProgress] = useState(false)
   const [scriptBlobUrl, setScriptBlobUrl] = useState<string | null>(null)
@@ -32,24 +34,22 @@ const HubDashboard = ({ path }: { path: string }) => {
       setVerificationInProgress(true)
 
       try {
-        const scriptPath = 'https://assets.traefik.io/hub-ui-demo.js'
-        const signaturePath = 'https://assets.traefik.io/hub-ui-demo.js.sig'
+        const { verified, scriptContent } = await verifySignature(SCRIPT_URL, `${SCRIPT_URL}.sig`)
 
-        const result = await verifySignature(scriptPath, signaturePath)
-
-        if (!result.verified || !result.scriptContent) {
+        if (!verified || !scriptContent) {
           setScriptError(true)
           setVerificationInProgress(false)
+        } else {
+          setScriptError(false)
+          // Create Blob URL from verified script content
+          const blob = new Blob([scriptContent], { type: 'application/javascript' })
+          const blobUrl = URL.createObjectURL(blob)
+
+          setScriptBlobUrl(blobUrl)
+          setSignatureVerified(true)
+          setVerificationInProgress(false)
         }
-
-        // Create Blob URL from verified script content
-        const blob = new Blob([result.scriptContent], { type: 'application/javascript' })
-        const blobUrl = URL.createObjectURL(blob)
-
-        setScriptBlobUrl(blobUrl)
-        setSignatureVerified(true)
-        setVerificationInProgress(false)
-      } catch (error) {
+      } catch {
         setScriptError(true)
         setVerificationInProgress(false)
       }
@@ -63,6 +63,7 @@ const HubDashboard = ({ path }: { path: string }) => {
         URL.revokeObjectURL(scriptBlobUrl)
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   if (scriptError && !verificationInProgress) {

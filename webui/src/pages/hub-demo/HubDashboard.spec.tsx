@@ -38,8 +38,8 @@ describe('HubDashboard demo', () => {
     // Mock URL.createObjectURL and URL.revokeObjectURL
     mockCreateObjectURL = vi.fn(() => 'blob:mock-url')
     mockRevokeObjectURL = vi.fn()
-    global.URL.createObjectURL = mockCreateObjectURL
-    global.URL.revokeObjectURL = mockRevokeObjectURL
+    globalThis.URL.createObjectURL = mockCreateObjectURL
+    globalThis.URL.revokeObjectURL = mockRevokeObjectURL
   })
 
   afterEach(() => {

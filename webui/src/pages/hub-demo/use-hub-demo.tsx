@@ -5,29 +5,31 @@ import HubDashboard from 'pages/hub-demo/HubDashboard'
 import { ApiIcon, DashboardIcon, GatewayIcon, PortalIcon } from 'pages/hub-demo/icons'
 import verifySignature from 'pages/hub-demo/workers/scriptVerification'
 
-const ROUTES_MANIFEST_SOURCE = 'https://traefik.github.io/hub-ui-demo-app/config/routes.json'
+const ROUTES_MANIFEST_URL = 'https://traefik.github.io/hub-ui-demo-app/config/routes.json'
 
-export const useHubDemoRoutesManifest = (): HubDemo.Manifest | null => {
+const HUB_DEMO_NAV_ICONS: Record<string, ReactNode> = {
+  dashboard: <DashboardIcon color="currentColor" width={22} height={22} />,
+  gateway: <GatewayIcon color="currentColor" width={22} height={22} />,
+  api: <ApiIcon color="currentColor" width={22} height={22} />,
+  portal: <PortalIcon color="currentColor" width={22} height={22} />,
+}
+
+const useHubDemoRoutesManifest = (): HubDemo.Manifest | null => {
   const [manifest, setManifest] = useState<HubDemo.Manifest | null>(null)
 
   useEffect(() => {
     const fetchManifest = async () => {
       try {
-        const isSignatureValid = await verifySignature(ROUTES_MANIFEST_SOURCE, `${ROUTES_MANIFEST_SOURCE}.sig`)
+        const { verified, scriptContent } = await verifySignature(ROUTES_MANIFEST_URL, `${ROUTES_MANIFEST_URL}.sig`)
 
-        if (!isSignatureValid) {
-          console.error('Manifest signature verification failed - security violation detected')
+        if (!verified || !scriptContent) {
           setManifest(null)
           return
         }
 
-        const response = await fetch(ROUTES_MANIFEST_SOURCE)
-
-        if (!response.ok) {
-          throw new Error(`Failed to fetch hub demo manifest: ${response.statusText}`)
-        }
-
-        const data: HubDemo.Manifest = await response.json()
+        const textDecoder = new TextDecoder()
+        const jsonString = textDecoder.decode(scriptContent)
+        const data: HubDemo.Manifest = JSON.parse(jsonString)
         setManifest(data)
       } catch (error) {
         console.error('Failed to load hub demo manifest:', error)
@@ -41,7 +43,7 @@ export const useHubDemoRoutesManifest = (): HubDemo.Manifest | null => {
   return manifest
 }
 
-export const useHubDemoRoutes = (basePath: string): RouteObject[] | null => {
+export const useHubDemo = (basePath: string) => {
   const manifest = useHubDemoRoutesManifest()
 
   const routes = useMemo(() => {
@@ -70,20 +72,7 @@ export const useHubDemoRoutes = (basePath: string): RouteObject[] | null => {
     return routeObjects
   }, [basePath, manifest])
 
-  return routes
-}
-
-const HUB_DEMO_NAV_ICONS: Record<string, ReactNode> = {
-  dashboard: <DashboardIcon color="currentColor" width={22} height={22} />,
-  gateway: <GatewayIcon color="currentColor" width={22} height={22} />,
-  api: <ApiIcon color="currentColor" width={22} height={22} />,
-  portal: <PortalIcon color="currentColor" width={22} height={22} />,
-}
-
-export const useHubDemoNavigation = (basePath: string): HubDemo.NavItem[] | null => {
-  const manifest = useHubDemoRoutesManifest()
-
-  const navItems = useMemo(() => {
+  const navigationItems = useMemo(() => {
     if (!manifest) {
       return null
     }
@@ -92,9 +81,9 @@ export const useHubDemoNavigation = (basePath: string): HubDemo.NavItem[] | null
       path: `${basePath}${route.path}`,
       label: route.label,
       icon: HUB_DEMO_NAV_ICONS[route.icon],
-      activeMatches: route.activeMatches,
+      activeMatches: route.activeMatches?.map((r) => `${basePath}${r}`),
     }))
   }, [basePath, manifest])
 
-  return navItems
+  return { routes, navigationItems }
 }
