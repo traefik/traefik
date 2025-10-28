@@ -13,12 +13,12 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
 	"github.com/traefik/traefik/v3/pkg/config/static"
+	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	"github.com/traefik/traefik/v3/pkg/provider/docker"
 	"github.com/traefik/traefik/v3/pkg/provider/file"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/ingress"
 	"github.com/traefik/traefik/v3/pkg/provider/rest"
-	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 func TestHandler_Overview(t *testing.T) {
@@ -255,8 +255,8 @@ func TestHandler_Overview(t *testing.T) {
 			confStatic: static.Configuration{
 				Global: &static.Global{},
 				API:    &static.API{},
-				Metrics: &types.Metrics{
-					Prometheus: &types.Prometheus{},
+				Metrics: &otypes.Metrics{
+					Prometheus: &otypes.Prometheus{},
 				},
 				Tracing: &static.Tracing{},
 			},

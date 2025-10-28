@@ -1,0 +1,24 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "INFO"
+
+[experimental]
+  otlpLogs = true
+
+[log.otlp]
+  serviceName = "traefik-test"
+  [log.otlp.http]
+    endpoint = "{{ .CollectorURL }}"
+
+[api]
+  insecure = true
+
+[entryPoints]
+  [entryPoints.web]
+    address = ":8000"
+
+[providers.docker]
+  exposedByDefault = false

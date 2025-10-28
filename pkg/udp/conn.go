@@ -34,7 +34,7 @@ type Listener struct {
 	timeout time.Duration
 }
 
-// Creates a new listener from PacketConn.
+// ListenPacketConn creates a new listener from PacketConn.
 func ListenPacketConn(packetConn net.PacketConn, timeout time.Duration) (*Listener, error) {
 	if timeout <= 0 {
 		return nil, errors.New("timeout should be greater than zero")

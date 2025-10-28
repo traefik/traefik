@@ -8,9 +8,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v3/pkg/metrics"
 	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
-	"github.com/traefik/traefik/v3/pkg/types"
+	"github.com/traefik/traefik/v3/pkg/observability/metrics"
+	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	"go.opentelemetry.io/otel/attribute"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/metric/metricdata"
@@ -54,7 +54,7 @@ func TestSemConvServerMetrics(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			var cfg types.OTLP
+			var cfg otypes.OTLP
 			(&cfg).SetDefaults()
 			cfg.AddRoutersLabels = true
 			cfg.PushInterval = ptypes.Duration(10 * time.Millisecond)

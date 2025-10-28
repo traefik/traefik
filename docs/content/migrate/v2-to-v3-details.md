@@ -135,7 +135,7 @@ It is now unsupported and would prevent Traefik to start.
 ##### Remediation
 
 The `http3` option should be removed from the static configuration experimental section.
-To configure `http3`, please checkout the [entrypoint configuration documentation](../routing/entrypoints.md#http3_1).
+To configure `http3`, please checkout the [entrypoint configuration documentation](../reference/install-configuration/entrypoints.md#http3).
 
 ### Consul provider
 

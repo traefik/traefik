@@ -1,3 +1,59 @@
+## [v3.5.4](https://github.com/traefik/traefik/tree/v3.5.4) (2025-10-28)
+[All Commits](https://github.com/traefik/traefik/compare/v3.5.3...v3.5.4)
+
+**Bug fixes:**
+- **[acme]** Bump github.com/go-acme/lego/v4 to v4.27.0 ([#12166](https://github.com/traefik/traefik/pull/12166) by [ldez](https://github.com/ldez))
+- **[acme]** Bump github.com/go-acme/lego/v4 to v4.26.0 ([#12063](https://github.com/traefik/traefik/pull/12063) by [ldez](https://github.com/ldez))
+- **[http3]** Bump github.com/quic-go/quic-go to v0.55.0 ([#12121](https://github.com/traefik/traefik/pull/12121) by [GreyXor](https://github.com/GreyXor))
+- **[kv]** Bump github.com/kvtools/etcdv3 to v1.0.3 ([#12163](https://github.com/traefik/traefik/pull/12163) by [kevinpollet](https://github.com/kevinpollet))
+- **[logs,metrics,tracing,accesslogs,otel]** Fix otel not working without USER ([#12103](https://github.com/traefik/traefik/pull/12103) by [mmatur](https://github.com/mmatur))
+- **[logs,otel]** Enable stdout logging when OTLP is enabled ([#12124](https://github.com/traefik/traefik/pull/12124) by [lbenguigui](https://github.com/lbenguigui))
+- **[metrics,otel]** Rename traefik_tls_certs_not_after_milliseconds to traefik_tls_certs_not_after_seconds ([#12141](https://github.com/traefik/traefik/pull/12141) by [shreealt](https://github.com/shreealt))
+- **[otel]** Update OpenTelemetry to v1.38.0 and semantic conventions to v1.37.0 ([#12099](https://github.com/traefik/traefik/pull/12099) by [rtribotte](https://github.com/rtribotte))
+- **[otel]** Do not fail when pod is not found in K8sAttributesDetector ([#12096](https://github.com/traefik/traefik/pull/12096) by [xe-leon](https://github.com/xe-leon))
+- **[tls]** Make the staple updates continuous ([#12142](https://github.com/traefik/traefik/pull/12142) by [rtribotte](https://github.com/rtribotte))
+- **[webui]** Fix version display regression ([#12111](https://github.com/traefik/traefik/pull/12111) by [mdeliatf](https://github.com/mdeliatf))
+
+**Documentation:**
+- **[accesslogs]** Fix link for accesslog.fields.names in documentation ([#12094](https://github.com/traefik/traefik/pull/12094) by [rmbruntz](https://github.com/rmbruntz))
+- **[acme]** Fix Hetzner env var name inside documentation ([#12187](https://github.com/traefik/traefik/pull/12187) by [ldez](https://github.com/ldez))
+- **[acme]** Replace internal dead links ([#12152](https://github.com/traefik/traefik/pull/12152) by [rtribotte](https://github.com/rtribotte))
+- **[acme]** Clean and avoid collisions of anchors in option tables ([#12149](https://github.com/traefik/traefik/pull/12149) by [rtribotte](https://github.com/rtribotte))
+- **[docker/swarm]** Fix swarm code example ([#12115](https://github.com/traefik/traefik/pull/12115) by [Dr4K4n](https://github.com/Dr4K4n))
+- **[healthcheck]** Clarify health check requirement for server status metric ([#12201](https://github.com/traefik/traefik/pull/12201) by [asafm](https://github.com/asafm))
+- **[k8s/crd]** Fix typo in ingressroute.md from pirority to priority ([#12112](https://github.com/traefik/traefik/pull/12112) by [miromichalicka](https://github.com/miromichalicka))
+- **[k8s]** Fix incorrect option and lint page ([#12108](https://github.com/traefik/traefik/pull/12108) by [sheddy-traefik](https://github.com/sheddy-traefik))
+- **[k8s]** Add API basePath documentation and fix broken links ([#12177](https://github.com/traefik/traefik/pull/12177) by [mloiseleur](https://github.com/mloiseleur))
+- **[k8s]** Merge TLSOption/TLSStore CRD documentation page ([#12164](https://github.com/traefik/traefik/pull/12164) by [nmengin](https://github.com/nmengin))
+- **[logs]** Clarify log.filePath behavior in documentation ([#12153](https://github.com/traefik/traefik/pull/12153) by [Alanxtl](https://github.com/Alanxtl))
+- **[metrics]** Fix incorrect addInternals configuration option ([#12118](https://github.com/traefik/traefik/pull/12118) by [shreealt](https://github.com/shreealt))
+- **[middleware]** Fix anchors in basic auth configuration options ([#12168](https://github.com/traefik/traefik/pull/12168) by [homersimpsons](https://github.com/homersimpsons))
+- **[middleware]** Fix PreserveRequestMethod casing ([#12122](https://github.com/traefik/traefik/pull/12122) by [LeTamanoir](https://github.com/LeTamanoir))
+- **[middleware]** Add missing reference docs for statusRewrites in errors middleware ([#12198](https://github.com/traefik/traefik/pull/12198) by [sevensolutions](https://github.com/sevensolutions))
+- **[middleware]** Document rejectStatusCode ([#12062](https://github.com/traefik/traefik/pull/12062) by [czocher](https://github.com/czocher))
+- **[otel]** Align documentation on default otlp endpoint ([#12151](https://github.com/traefik/traefik/pull/12151) by [mloiseleur](https://github.com/mloiseleur))
+- **[otel]** Fix metric name to metrics.otlp.grpc.insecure ([#12200](https://github.com/traefik/traefik/pull/12200) by [germainlefebvre4](https://github.com/germainlefebvre4))
+- **[server,k8s/crd,k8s]** Add dedicated pages for routers and fix doc links in CRDs ([#12119](https://github.com/traefik/traefik/pull/12119) by [rtribotte](https://github.com/rtribotte))
+- **[tls]** Fix typo in TLS certificate generation description ([#12185](https://github.com/traefik/traefik/pull/12185) by [iraj-jelo](https://github.com/iraj-jelo))
+- Fix wrong references to router&#39;s pages ([#12131](https://github.com/traefik/traefik/pull/12131) by [rtribotte](https://github.com/rtribotte))
+- Fix markdown rendering for table anchors ([#12129](https://github.com/traefik/traefik/pull/12129) by [MaBauMeBad](https://github.com/MaBauMeBad))
+- Fix provider option descriptions ([#12135](https://github.com/traefik/traefik/pull/12135) by [kevinpollet](https://github.com/kevinpollet))
+- Format HTTP headers as code ([#12105](https://github.com/traefik/traefik/pull/12105) by [tyilo](https://github.com/tyilo))
+- Fix heading levels and add links ([#12084](https://github.com/traefik/traefik/pull/12084) by [Granjow](https://github.com/Granjow))
+
+**Misc:**
+- Merge branch v2.11 into v3.5 ([#12206](https://github.com/traefik/traefik/pull/12206) by [kevinpollet](https://github.com/kevinpollet))
+- Merge branch v2.11 into v3.5 ([#12158](https://github.com/traefik/traefik/pull/12158) by [rtribotte](https://github.com/rtribotte))
+
+## [v2.11.30](https://github.com/traefik/traefik/tree/v2.11.30) (2025-10-28)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.29...v2.11.30)
+
+**Bug fixes:**
+- **[http3]** Bump github.com/quic-go/quic-go to v0.55.0 ([#12156](https://github.com/traefik/traefik/pull/12156) by [kevinpollet](https://github.com/kevinpollet))
+- **[kv]** Fix KV key name used to check if connection is alive ([#12162](https://github.com/traefik/traefik/pull/12162) by [kevinpollet](https://github.com/kevinpollet))
+- **[server]** Bump golang.org/x/net to v0.46.0 ([#12143](https://github.com/traefik/traefik/pull/12143) by [kevinpollet](https://github.com/kevinpollet))
+- **[tracing]** Bump gopkg.in/DataDog/dd-trace-go.v1 to v1.74.6 ([#12083](https://github.com/traefik/traefik/pull/12083) by [hannahkm](https://github.com/hannahkm))
+
 ## [v3.5.3](https://github.com/traefik/traefik/tree/v3.5.3) (2025-09-26)
 [All Commits](https://github.com/traefik/traefik/compare/v3.5.2...v3.5.3)
 

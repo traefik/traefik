@@ -188,29 +188,29 @@ data:
 
 | Field      | Description       | Default | Required |
 |:-----------|:-------------------------------------------------------|:--------|:---------|
-| <a id="average" href="#average" title="#average">`average`</a> | Number of requests used to define the rate using the `period`.<br /> 0 means **no rate limiting**.<br />More information [here](#rate-and-burst). | 0      | No      |
-| <a id="period" href="#period" title="#period">`period`</a> | Period of time used to define the rate.<br />More information [here](#rate-and-burst). | 1s | No |
-| <a id="burst" href="#burst" title="#burst">`burst`</a> | Maximum number of requests allowed to go through at the very same moment.<br />More information [here](#rate-and-burst).| 1 | No |
-| <a id="sourceCriterion-requestHost" href="#sourceCriterion-requestHost" title="#sourceCriterion-requestHost">`sourceCriterion.requestHost`</a> | Whether to consider the request host as the source.<br />More information about `sourceCriterion`[here](#sourcecriterion). | false      | No      |
-| <a id="sourceCriterion-requestHeaderName" href="#sourceCriterion-requestHeaderName" title="#sourceCriterion-requestHeaderName">`sourceCriterion.requestHeaderName`</a> | Name of the header used to group incoming requests.<br />More information about `sourceCriterion`[here](#sourcecriterion). | ""      | No      |
-| <a id="sourceCriterion-ipStrategy-depth" href="#sourceCriterion-ipStrategy-depth" title="#sourceCriterion-ipStrategy-depth">`sourceCriterion.ipStrategy.depth`</a> | Depth position of the IP to select in the `X-Forwarded-For` header (starting from the right).<br />0 means no depth.<br />If greater than the total number of IPs in `X-Forwarded-For`, then the client IP is empty<br />If higher than 0, the `excludedIPs` options is not evaluated.<br />More information about [`sourceCriterion`](#sourcecriterion), [`ipStrategy`](#ipstrategy), and [`depth`](#sourcecriterionipstrategydepth) below. | 0      | No      |
-| <a id="sourceCriterion-ipStrategy-excludedIPs" href="#sourceCriterion-ipStrategy-excludedIPs" title="#sourceCriterion-ipStrategy-excludedIPs">`sourceCriterion.ipStrategy.excludedIPs`</a> | Allows scanning the `X-Forwarded-For` header and select the first IP not in the list.<br />If `depth` is specified, `excludedIPs` is ignored.<br />More information about [`sourceCriterion`](#sourcecriterion), [`ipStrategy`](#ipstrategy), and [`excludedIPs`](#sourcecriterionipstrategyexcludedips) below. |       | No      |
-| <a id="sourceCriterion-ipStrategy-ipv6Subnet" href="#sourceCriterion-ipStrategy-ipv6Subnet" title="#sourceCriterion-ipStrategy-ipv6Subnet">`sourceCriterion.ipStrategy.ipv6Subnet`</a> |  If `ipv6Subnet` is provided and the selected IP is IPv6, the IP is transformed into the first IP of the subnet it belongs to. <br />More information about [`sourceCriterion`](#sourcecriterion), [`ipStrategy.ipv6Subnet`](#sourcecriterionipstrategyipv6subnet) below. |       | No      |
-| <a id="redis" href="#redis" title="#redis">`redis`</a> | The `redis` configuration enables distributed rate limiting by using Redis to store rate limit tokens across multiple Traefik instances. This allows you to enforce consistent rate limits across a cluster of Traefik proxies. <br />When Redis is not configured, Traefik uses in-memory storage for rate limiting, which works only for the individual Traefik instance.|       | No      |
-| <a id="redis-endpoints" href="#redis-endpoints" title="#redis-endpoints">`redis.endpoints`</a> | List of Redis server endpoints for distributed rate limiting. You can specify multiple endpoints for Redis cluster or high availability setups. | "127.0.0.1:6379" | No |
-| <a id="redis-username" href="#redis-username" title="#redis-username">`redis.username`</a> | Username for Redis authentication. | "" | No |
-| <a id="redis-password" href="#redis-password" title="#redis-password">`redis.password`</a> | Password for Redis authentication. In Kubernetes, these can be provided via secrets. | "" | No |
-| <a id="redis-db" href="#redis-db" title="#redis-db">`redis.db`</a> | Redis database number to select. | 0 | No |
-| <a id="redis-poolSize" href="#redis-poolSize" title="#redis-poolSize">`redis.poolSize`</a> | Defines the base number of socket connections in the pool. If set to 0, it defaults to 10 connections per CPU core as reported by `runtime.GOMAXPROCS`. <br />If there are not enough connections in the pool, new connections will be allocated beyond `poolSize`, up to `maxActiveConns`. | 0 | No |
-| <a id="redis-minIdleConns" href="#redis-minIdleConns" title="#redis-minIdleConns">`redis.minIdleConns`</a> | Minimum number of idle connections to maintain in the pool. This is useful when establishing new connections is slow. A value of 0 means idle connections are not automatically closed. | 0 | No |
-| <a id="redis-maxActiveConns" href="#redis-maxActiveConns" title="#redis-maxActiveConns">`redis.maxActiveConns`</a> | Maximum number of connections the pool can allocate at any given time. A value of 0 means no limit. | 0 | No |
-| <a id="redis-readTimeout" href="#redis-readTimeout" title="#redis-readTimeout">`redis.readTimeout`</a> | Timeout for socket reads. If reached, commands will fail with a timeout instead of blocking. Zero means no timeout. | 3s | No |
-| <a id="redis-writeTimeout" href="#redis-writeTimeout" title="#redis-writeTimeout">`redis.writeTimeout`</a> | Timeout for socket writes. If reached, commands will fail with a timeout instead of blocking. Zero means no timeout. | 3s | No |
-| <a id="redis-dialTimeout" href="#redis-dialTimeout" title="#redis-dialTimeout">`redis.dialTimeout`</a> | Timeout for establishing new connections. Zero means no timeout. | 5s | No |
-| <a id="redis-tls-ca" href="#redis-tls-ca" title="#redis-tls-ca">`redis.tls.ca`</a> | Path to the certificate authority used for the secure connection to Redis, it defaults to the system bundle. | "" | No |
-| <a id="redis-tls-cert" href="#redis-tls-cert" title="#redis-tls-cert">`redis.tls.cert`</a> | Path to the public certificate used for the secure connection to Redis. When this option is set, the `key` option is required. | "" | No |
-| <a id="redis-tls-key" href="#redis-tls-key" title="#redis-tls-key">`redis.tls.key`</a> | Path to the private key used for the secure connection to Redis. When this option is set, the `cert` option is required. | "" | No |
-| <a id="redis-tls-insecureSkipVerify" href="#redis-tls-insecureSkipVerify" title="#redis-tls-insecureSkipVerify">`redis.tls.insecureSkipVerify`</a> | If `insecureSkipVerify` is `true`, the TLS connection to Redis accepts any certificate presented by the server regardless of the hostnames it covers. | false | No |
+| <a id="opt-average" href="#opt-average" title="#opt-average">`average`</a> | Number of requests used to define the rate using the `period`.<br /> 0 means **no rate limiting**.<br />More information [here](#rate-and-burst). | 0      | No      |
+| <a id="opt-period" href="#opt-period" title="#opt-period">`period`</a> | Period of time used to define the rate.<br />More information [here](#rate-and-burst). | 1s | No |
+| <a id="opt-burst" href="#opt-burst" title="#opt-burst">`burst`</a> | Maximum number of requests allowed to go through at the very same moment.<br />More information [here](#rate-and-burst).| 1 | No |
+| <a id="opt-sourceCriterion-requestHost" href="#opt-sourceCriterion-requestHost" title="#opt-sourceCriterion-requestHost">`sourceCriterion.requestHost`</a> | Whether to consider the request host as the source.<br />More information about `sourceCriterion`[here](#sourcecriterion). | false      | No      |
+| <a id="opt-sourceCriterion-requestHeaderName" href="#opt-sourceCriterion-requestHeaderName" title="#opt-sourceCriterion-requestHeaderName">`sourceCriterion.requestHeaderName`</a> | Name of the header used to group incoming requests.<br />More information about `sourceCriterion`[here](#sourcecriterion). | ""      | No      |
+| <a id="opt-sourceCriterion-ipStrategy-depth" href="#opt-sourceCriterion-ipStrategy-depth" title="#opt-sourceCriterion-ipStrategy-depth">`sourceCriterion.ipStrategy.depth`</a> | Depth position of the IP to select in the `X-Forwarded-For` header (starting from the right).<br />0 means no depth.<br />If greater than the total number of IPs in `X-Forwarded-For`, then the client IP is empty<br />If higher than 0, the `excludedIPs` options is not evaluated.<br />More information about [`sourceCriterion`](#sourcecriterion), [`ipStrategy`](#ipstrategy), and [`depth`](#sourcecriterionipstrategydepth) below. | 0      | No      |
+| <a id="opt-sourceCriterion-ipStrategy-excludedIPs" href="#opt-sourceCriterion-ipStrategy-excludedIPs" title="#opt-sourceCriterion-ipStrategy-excludedIPs">`sourceCriterion.ipStrategy.excludedIPs`</a> | Allows scanning the `X-Forwarded-For` header and select the first IP not in the list.<br />If `depth` is specified, `excludedIPs` is ignored.<br />More information about [`sourceCriterion`](#sourcecriterion), [`ipStrategy`](#ipstrategy), and [`excludedIPs`](#sourcecriterionipstrategyexcludedips) below. |       | No      |
+| <a id="opt-sourceCriterion-ipStrategy-ipv6Subnet" href="#opt-sourceCriterion-ipStrategy-ipv6Subnet" title="#opt-sourceCriterion-ipStrategy-ipv6Subnet">`sourceCriterion.ipStrategy.ipv6Subnet`</a> |  If `ipv6Subnet` is provided and the selected IP is IPv6, the IP is transformed into the first IP of the subnet it belongs to. <br />More information about [`sourceCriterion`](#sourcecriterion), [`ipStrategy.ipv6Subnet`](#sourcecriterionipstrategyipv6subnet) below. |       | No      |
+| <a id="opt-redis" href="#opt-redis" title="#opt-redis">`redis`</a> | The `redis` configuration enables distributed rate limiting by using Redis to store rate limit tokens across multiple Traefik instances. This allows you to enforce consistent rate limits across a cluster of Traefik proxies. <br />When Redis is not configured, Traefik uses in-memory storage for rate limiting, which works only for the individual Traefik instance.|       | No      |
+| <a id="opt-redis-endpoints" href="#opt-redis-endpoints" title="#opt-redis-endpoints">`redis.endpoints`</a> | List of Redis server endpoints for distributed rate limiting. You can specify multiple endpoints for Redis cluster or high availability setups. | "127.0.0.1:6379" | No |
+| <a id="opt-redis-username" href="#opt-redis-username" title="#opt-redis-username">`redis.username`</a> | Username for Redis authentication. | "" | No |
+| <a id="opt-redis-password" href="#opt-redis-password" title="#opt-redis-password">`redis.password`</a> | Password for Redis authentication. In Kubernetes, these can be provided via secrets. | "" | No |
+| <a id="opt-redis-db" href="#opt-redis-db" title="#opt-redis-db">`redis.db`</a> | Redis database number to select. | 0 | No |
+| <a id="opt-redis-poolSize" href="#opt-redis-poolSize" title="#opt-redis-poolSize">`redis.poolSize`</a> | Defines the base number of socket connections in the pool. If set to 0, it defaults to 10 connections per CPU core as reported by `runtime.GOMAXPROCS`. <br />If there are not enough connections in the pool, new connections will be allocated beyond `poolSize`, up to `maxActiveConns`. | 0 | No |
+| <a id="opt-redis-minIdleConns" href="#opt-redis-minIdleConns" title="#opt-redis-minIdleConns">`redis.minIdleConns`</a> | Minimum number of idle connections to maintain in the pool. This is useful when establishing new connections is slow. A value of 0 means idle connections are not automatically closed. | 0 | No |
+| <a id="opt-redis-maxActiveConns" href="#opt-redis-maxActiveConns" title="#opt-redis-maxActiveConns">`redis.maxActiveConns`</a> | Maximum number of connections the pool can allocate at any given time. A value of 0 means no limit. | 0 | No |
+| <a id="opt-redis-readTimeout" href="#opt-redis-readTimeout" title="#opt-redis-readTimeout">`redis.readTimeout`</a> | Timeout for socket reads. If reached, commands will fail with a timeout instead of blocking. Zero means no timeout. | 3s | No |
+| <a id="opt-redis-writeTimeout" href="#opt-redis-writeTimeout" title="#opt-redis-writeTimeout">`redis.writeTimeout`</a> | Timeout for socket writes. If reached, commands will fail with a timeout instead of blocking. Zero means no timeout. | 3s | No |
+| <a id="opt-redis-dialTimeout" href="#opt-redis-dialTimeout" title="#opt-redis-dialTimeout">`redis.dialTimeout`</a> | Timeout for establishing new connections. Zero means no timeout. | 5s | No |
+| <a id="opt-redis-tls-ca" href="#opt-redis-tls-ca" title="#opt-redis-tls-ca">`redis.tls.ca`</a> | Path to the certificate authority used for the secure connection to Redis, it defaults to the system bundle. | "" | No |
+| <a id="opt-redis-tls-cert" href="#opt-redis-tls-cert" title="#opt-redis-tls-cert">`redis.tls.cert`</a> | Path to the public certificate used for the secure connection to Redis. When this option is set, the `key` option is required. | "" | No |
+| <a id="opt-redis-tls-key" href="#opt-redis-tls-key" title="#opt-redis-tls-key">`redis.tls.key`</a> | Path to the private key used for the secure connection to Redis. When this option is set, the `cert` option is required. | "" | No |
+| <a id="opt-redis-tls-insecureSkipVerify" href="#opt-redis-tls-insecureSkipVerify" title="#opt-redis-tls-insecureSkipVerify">`redis.tls.insecureSkipVerify`</a> | If `insecureSkipVerify` is `true`, the TLS connection to Redis accepts any certificate presented by the server regardless of the hostnames it covers. | false | No |
 
 ### sourceCriterion
 
@@ -241,9 +241,9 @@ If `ipv6Subnet` is provided, the IP is transformed in the following way.
 
 | `IP`                      | `ipv6Subnet` | clientIP              |
 |---------------------------|--------------|-----------------------|
-| <a id="abcd111122223333" href="#abcd111122223333" title="#abcd111122223333">`"::abcd:1111:2222:3333"`</a> | `64`         | `"::0:0:0:0"`         |
-| <a id="abcd111122223333-2" href="#abcd111122223333-2" title="#abcd111122223333-2">`"::abcd:1111:2222:3333"`</a> | `80`         | `"::abcd:0:0:0:0"`    |
-| <a id="abcd111122223333-3" href="#abcd111122223333-3" title="#abcd111122223333-3">`"::abcd:1111:2222:3333"`</a> | `96`         | `"::abcd:1111:0:0:0"` |
+| <a id="opt-abcd111122223333" href="#opt-abcd111122223333" title="#opt-abcd111122223333">`"::abcd:1111:2222:3333"`</a> | `64`         | `"::0:0:0:0"`         |
+| <a id="opt-abcd111122223333-2" href="#opt-abcd111122223333-2" title="#opt-abcd111122223333-2">`"::abcd:1111:2222:3333"`</a> | `80`         | `"::abcd:0:0:0:0"`    |
+| <a id="opt-abcd111122223333-3" href="#opt-abcd111122223333-3" title="#opt-abcd111122223333-3">`"::abcd:1111:2222:3333"`</a> | `96`         | `"::abcd:1111:0:0:0"` |
 
 ### sourceCriterion.ipStrategy.depth
 
@@ -251,9 +251,9 @@ If `depth` is set to 2, and the request `X-Forwarded-For` header is `"10.0.0.1,1
 
 | `X-Forwarded-For`                       | `depth` | clientIP     |
 |-----------------------------------------|---------|--------------|
-| <a id="10-0-0-111-0-0-112-0-0-113-0-0-1" href="#10-0-0-111-0-0-112-0-0-113-0-0-1" title="#10-0-0-111-0-0-112-0-0-113-0-0-1">`"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"`</a> | `1`     | `"13.0.0.1"` |
-| <a id="10-0-0-111-0-0-112-0-0-113-0-0-1-2" href="#10-0-0-111-0-0-112-0-0-113-0-0-1-2" title="#10-0-0-111-0-0-112-0-0-113-0-0-1-2">`"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"`</a> | `3`     | `"11.0.0.1"` |
-| <a id="10-0-0-111-0-0-112-0-0-113-0-0-1-3" href="#10-0-0-111-0-0-112-0-0-113-0-0-1-3" title="#10-0-0-111-0-0-112-0-0-113-0-0-1-3">`"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"`</a> | `5`     | `""`         |
+| <a id="opt-10-0-0-111-0-0-112-0-0-113-0-0-1" href="#opt-10-0-0-111-0-0-112-0-0-113-0-0-1" title="#opt-10-0-0-111-0-0-112-0-0-113-0-0-1">`"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"`</a> | `1`     | `"13.0.0.1"` |
+| <a id="opt-10-0-0-111-0-0-112-0-0-113-0-0-1-2" href="#opt-10-0-0-111-0-0-112-0-0-113-0-0-1-2" title="#opt-10-0-0-111-0-0-112-0-0-113-0-0-1-2">`"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"`</a> | `3`     | `"11.0.0.1"` |
+| <a id="opt-10-0-0-111-0-0-112-0-0-113-0-0-1-3" href="#opt-10-0-0-111-0-0-112-0-0-113-0-0-1-3" title="#opt-10-0-0-111-0-0-112-0-0-113-0-0-1-3">`"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"`</a> | `5`     | `""`         |
 
 ### sourceCriterion.ipStrategy.excludedIPs
 
@@ -268,8 +268,8 @@ Example to use each IP as a distinct source:
 
 | `X-Forwarded-For`              | excludedIPs           | clientIP     |
 |--------------------------------|-----------------------|--------------|
-| <a id="10-0-0-111-0-0-112-0-0-1" href="#10-0-0-111-0-0-112-0-0-1" title="#10-0-0-111-0-0-112-0-0-1">`"10.0.0.1,11.0.0.1,12.0.0.1"`</a> | `"11.0.0.1,12.0.0.1"` | `"10.0.0.1"` |
-| <a id="10-0-0-211-0-0-112-0-0-1" href="#10-0-0-211-0-0-112-0-0-1" title="#10-0-0-211-0-0-112-0-0-1">`"10.0.0.2,11.0.0.1,12.0.0.1"`</a> | `"11.0.0.1,12.0.0.1"` | `"10.0.0.2"` |
+| <a id="opt-10-0-0-111-0-0-112-0-0-1" href="#opt-10-0-0-111-0-0-112-0-0-1" title="#opt-10-0-0-111-0-0-112-0-0-1">`"10.0.0.1,11.0.0.1,12.0.0.1"`</a> | `"11.0.0.1,12.0.0.1"` | `"10.0.0.1"` |
+| <a id="opt-10-0-0-211-0-0-112-0-0-1" href="#opt-10-0-0-211-0-0-112-0-0-1" title="#opt-10-0-0-211-0-0-112-0-0-1">`"10.0.0.2,11.0.0.1,12.0.0.1"`</a> | `"11.0.0.1,12.0.0.1"` | `"10.0.0.2"` |
 
 2. Group together a set of IPs (also behind a common set of reverse-proxies) so that they are considered the same source, and all contribute to the same rate-limit bucket.
 
@@ -277,6 +277,6 @@ Example to group IPs together as same source:
 
 | `X-Forwarded-For`              | excludedIPs  | clientIP     |
 |--------------------------------|--------------|--------------|
-| <a id="10-0-0-111-0-0-112-0-0-1-2" href="#10-0-0-111-0-0-112-0-0-1-2" title="#10-0-0-111-0-0-112-0-0-1-2">`"10.0.0.1,11.0.0.1,12.0.0.1"`</a> | `"12.0.0.1"` | `"11.0.0.1"` |
-| <a id="10-0-0-211-0-0-112-0-0-1-2" href="#10-0-0-211-0-0-112-0-0-1-2" title="#10-0-0-211-0-0-112-0-0-1-2">`"10.0.0.2,11.0.0.1,12.0.0.1"`</a> | `"12.0.0.1"` | `"11.0.0.1"` |
-| <a id="10-0-0-311-0-0-112-0-0-1" href="#10-0-0-311-0-0-112-0-0-1" title="#10-0-0-311-0-0-112-0-0-1">`"10.0.0.3,11.0.0.1,12.0.0.1"`</a> | `"12.0.0.1"` | `"11.0.0.1"` |
+| <a id="opt-10-0-0-111-0-0-112-0-0-1-2" href="#opt-10-0-0-111-0-0-112-0-0-1-2" title="#opt-10-0-0-111-0-0-112-0-0-1-2">`"10.0.0.1,11.0.0.1,12.0.0.1"`</a> | `"12.0.0.1"` | `"11.0.0.1"` |
+| <a id="opt-10-0-0-211-0-0-112-0-0-1-2" href="#opt-10-0-0-211-0-0-112-0-0-1-2" title="#opt-10-0-0-211-0-0-112-0-0-1-2">`"10.0.0.2,11.0.0.1,12.0.0.1"`</a> | `"12.0.0.1"` | `"11.0.0.1"` |
+| <a id="opt-10-0-0-311-0-0-112-0-0-1" href="#opt-10-0-0-311-0-0-112-0-0-1" title="#opt-10-0-0-311-0-0-112-0-0-1">`"10.0.0.3,11.0.0.1,12.0.0.1"`</a> | `"12.0.0.1"` | `"11.0.0.1"` |

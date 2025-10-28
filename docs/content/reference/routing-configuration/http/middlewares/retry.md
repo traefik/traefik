@@ -64,5 +64,5 @@ spec:
 
 | Field | Description | Default | Required |
 |:------|:------------|:--------|:---------|
-| <a id="attempts" href="#attempts" title="#attempts">`attempts`</a> | number of times the request should be retried. |  | Yes |
-| <a id="initialInterval" href="#initialInterval" title="#initialInterval">`initialInterval`</a> | First wait time in the exponential backoff series. <br />The maximum interval is calculated as twice the `initialInterval`. <br /> If unspecified, requests will be retried immediately.<br /> Defined in seconds or as a valid duration format, see [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration). | 0 | No |
+| <a id="opt-attempts" href="#opt-attempts" title="#opt-attempts">`attempts`</a> | number of times the request should be retried. |  | Yes |
+| <a id="opt-initialInterval" href="#opt-initialInterval" title="#opt-initialInterval">`initialInterval`</a> | First wait time in the exponential backoff series. <br />The maximum interval is calculated as twice the `initialInterval`. <br /> If unspecified, requests will be retried immediately.<br /> Defined in seconds or as a valid duration format, see [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration). | 0 | No |

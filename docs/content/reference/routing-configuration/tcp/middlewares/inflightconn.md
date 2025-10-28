@@ -52,4 +52,4 @@ spec:
 
 | Field | Description | Default | Required |
 |:------|:------------|------------------|-------|
-| <a id="amount" href="#amount" title="#amount">`amount`</a> | The `amount` option defines the maximum amount of allowed simultaneous connections. <br /> The middleware closes the connection if there are already `amount` connections opened. | "" | Yes |
+| <a id="opt-amount" href="#opt-amount" title="#opt-amount">`amount`</a> | The `amount` option defines the maximum amount of allowed simultaneous connections. <br /> The middleware closes the connection if there are already `amount` connections opened. | "" | Yes |

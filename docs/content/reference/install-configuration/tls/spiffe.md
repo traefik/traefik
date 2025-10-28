@@ -44,7 +44,7 @@ spiffe:
 ## ServersTransport
 
 Enabling SPIFFE does not imply that backend connections are going to use it automatically.
-Each [ServersTransport](../../../routing/services/index.md#serverstransport_1) or [TCPServersTransport](../../../routing/services/index.md#serverstransport_2), that is meant to be secured with SPIFFE, must explicitly enable it (see [SPIFFE with ServersTransport](../../../routing/services/index.md#spiffe) or [SPIFFE with TCPServersTransport](../../../routing/services/index.md#spiffe_1)).
+Each [ServersTransport](../../routing-configuration/http/load-balancing/serverstransport.md) or [TCPServersTransport](../../routing-configuration/tcp/serverstransport.md), that is meant to be secured with SPIFFE, must explicitly enable it (see [SPIFFE with ServersTransport](../../routing-configuration/http/load-balancing/serverstransport.md#opt-spiffe) or [SPIFFE with TCPServersTransport](../../routing-configuration/tcp/serverstransport.md#opt-serverstransport-spiffe)).
 
 ### Configuration Example
 

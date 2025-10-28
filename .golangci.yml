@@ -263,7 +263,7 @@ linters:
       - path: pkg/provider/kubernetes/(crd|gateway)/client.go
         linters:
           - interfacebloat
-      - path: pkg/metrics/metrics.go
+      - path: pkg/observability/metrics/metrics.go
         linters:
           - interfacebloat
       - path: integration/healthcheck_test.go

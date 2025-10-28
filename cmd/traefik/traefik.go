@@ -30,9 +30,11 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
 	"github.com/traefik/traefik/v3/pkg/config/static"
-	"github.com/traefik/traefik/v3/pkg/logs"
-	"github.com/traefik/traefik/v3/pkg/metrics"
 	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
+	"github.com/traefik/traefik/v3/pkg/observability/logs"
+	"github.com/traefik/traefik/v3/pkg/observability/metrics"
+	"github.com/traefik/traefik/v3/pkg/observability/tracing"
+	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	"github.com/traefik/traefik/v3/pkg/provider/acme"
 	"github.com/traefik/traefik/v3/pkg/provider/aggregator"
 	"github.com/traefik/traefik/v3/pkg/provider/tailscale"
@@ -46,8 +48,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/server/service"
 	"github.com/traefik/traefik/v3/pkg/tcp"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
-	"github.com/traefik/traefik/v3/pkg/tracing"
-	"github.com/traefik/traefik/v3/pkg/types"
 	"github.com/traefik/traefik/v3/pkg/version"
 )
 
@@ -505,7 +505,7 @@ func initTailscaleProviders(cfg *static.Configuration, providerAggregator *aggre
 	return providers
 }
 
-func registerMetricClients(metricsConfig *types.Metrics) []metrics.Registry {
+func registerMetricClients(metricsConfig *otypes.Metrics) []metrics.Registry {
 	if metricsConfig == nil {
 		return nil
 	}
@@ -586,7 +586,7 @@ func appendCertMetric(gauge gokitmetrics.Gauge, certificate *x509.Certificate) {
 	gauge.With(labels...).Set(notAfter)
 }
 
-func setupAccessLog(ctx context.Context, conf *types.AccessLog) *accesslog.Handler {
+func setupAccessLog(ctx context.Context, conf *otypes.AccessLog) *accesslog.Handler {
 	if conf == nil {
 		return nil
 	}

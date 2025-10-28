@@ -9,7 +9,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel/sdk/resource"
-	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.37.0"
 	kerror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kclientset "k8s.io/client-go/kubernetes"
@@ -53,7 +53,7 @@ func (K8sAttributesDetector) Detect(ctx context.Context) (*resource.Resource, er
 	podNamespace := string(podNamespaceBytes)
 
 	pod, err := client.CoreV1().Pods(podNamespace).Get(ctx, podName, metav1.GetOptions{})
-	if err != nil && kerror.IsForbidden(err) {
+	if err != nil && (kerror.IsForbidden(err) || kerror.IsNotFound(err)) {
 		log.Error().Err(err).Msg("Unable to build K8s resource attributes for Traefik pod")
 		return resource.Empty(), nil
 	}

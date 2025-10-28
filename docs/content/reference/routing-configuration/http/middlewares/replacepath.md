@@ -57,4 +57,4 @@ spec:
 
 | Field | Description |
 |:------|:------------|
-| <a id="path" href="#path" title="#path">`path`</a> | The `path` option defines the path to use as replacement in the request URL. |
+| <a id="opt-path" href="#opt-path" title="#opt-path">`path`</a> | The `path` option defines the path to use as replacement in the request URL. |

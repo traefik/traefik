@@ -2,7 +2,7 @@ package testhelpers
 
 import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/types"
+	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 )
 
 // BuildConfiguration is a helper to create a configuration.
@@ -61,7 +61,7 @@ func WithObservability() func(*dynamic.Router) {
 			AccessLogs:     pointer(true),
 			Metrics:        pointer(true),
 			Tracing:        pointer(true),
-			TraceVerbosity: types.MinimalVerbosity,
+			TraceVerbosity: otypes.MinimalVerbosity,
 		}
 	}
 }
