@@ -56,7 +56,7 @@ The certificates can then be used in an Ingress / IngressRoute / HTTPRoute.
     ```
 
 Let's see now how to use it with the various Kubernetes providers of Traefik Proxy.
-The enabled providers can be seen on the [dashboard](../operations/dashboard.md) of Traefik Proxy and also in the INFO logs when Traefik Proxy starts.
+The enabled providers can be seen on the [dashboard](../reference/install-configuration/api-dashboard.md) of Traefik Proxy and also in the INFO logs when Traefik Proxy starts.
 
 ### With an Ingress
 
