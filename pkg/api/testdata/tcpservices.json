@@ -9,6 +9,9 @@
 		},
 		"name": "bar@myprovider",
 		"provider": "myprovider",
+		"serverStatus": {
+			"127.0.0.1:2345": "UP"
+		},
 		"status": "enabled",
 		"type": "loadbalancer",
 		"usedBy": [
@@ -26,6 +29,9 @@
 		},
 		"name": "baz@myprovider",
 		"provider": "myprovider",
+		"serverStatus": {
+			"127.0.0.2:2345": "UP"
+		},
 		"status": "warning",
 		"type": "loadbalancer",
 		"usedBy": [
@@ -36,12 +42,15 @@
 		"loadBalancer": {
 			"servers": [
 				{
-					"address": "127.0.0.2:2345"
+					"address": "127.0.0.3:2345"
 				}
 			]
 		},
 		"name": "foz@myprovider",
 		"provider": "myprovider",
+		"serverStatus": {
+			"127.0.0.3:2345": "UP"
+		},
 		"status": "disabled",
 		"type": "loadbalancer",
 		"usedBy": [

@@ -11,6 +11,9 @@ http:
         - foobar
       service: foobar
       rule: foobar
+      parentRefs:
+        - foobar
+        - foobar
       ruleSyntax: foobar
       priority: 42
       tls:
@@ -39,6 +42,9 @@ http:
         - foobar
       service: foobar
       rule: foobar
+      parentRefs:
+        - foobar
+        - foobar
       ruleSyntax: foobar
       priority: 42
       tls:
@@ -538,6 +544,13 @@ tcp:
         proxyProtocol:
           version: 42
         terminationDelay: 42
+        healthCheck:
+          port: 42
+          send: foobar
+          expect: foobar
+          interval: 42s
+          unhealthyInterval: 42s
+          timeout: 42s
     TCPService02:
       weighted:
         services:
@@ -545,6 +558,7 @@ tcp:
             weight: 42
           - name: foobar
             weight: 42
+        healthCheck: {}
   middlewares:
     TCPMiddleware01:
       ipAllowList:

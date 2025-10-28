@@ -2,6 +2,7 @@ package accesslog
 
 import (
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -75,4 +76,38 @@ func InitServiceFields(rw http.ResponseWriter, req *http.Request, next http.Hand
 	data.Core[OriginContentSize] = int64(0)
 
 	next.ServeHTTP(rw, req)
+}
+
+const separator = " -> "
+
+// ConcatFieldHandler concatenates field values instead of overriding them.
+type ConcatFieldHandler struct {
+	next  http.Handler
+	name  string
+	value string
+}
+
+// NewConcatFieldHandler creates a ConcatField handler that concatenates values.
+func NewConcatFieldHandler(next http.Handler, name, value string) http.Handler {
+	return &ConcatFieldHandler{next: next, name: name, value: value}
+}
+
+func (c *ConcatFieldHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	table := GetLogData(req)
+	if table == nil {
+		c.next.ServeHTTP(rw, req)
+		return
+	}
+
+	// Check if field already exists and concatenate if so
+	if existingValue, exists := table.Core[c.name]; exists && existingValue != nil {
+		if existingStr, ok := existingValue.(string); ok && strings.TrimSpace(existingStr) != "" {
+			table.Core[c.name] = existingStr + separator + c.value
+			c.next.ServeHTTP(rw, req)
+			return
+		}
+	}
+
+	table.Core[c.name] = c.value
+	c.next.ServeHTTP(rw, req)
 }

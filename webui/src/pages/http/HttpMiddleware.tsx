@@ -1,11 +1,11 @@
 import { Box, Card, H1, Skeleton, styled, Text } from '@traefiklabs/faency'
+import { Helmet } from 'react-helmet-async'
 import { useParams } from 'react-router-dom'
 
 import { DetailSectionSkeleton } from 'components/resources/DetailSections'
 import { RenderMiddleware } from 'components/resources/MiddlewarePanel'
 import { UsedByRoutersSection, UsedByRoutersSkeleton } from 'components/resources/UsedByRoutersSection'
 import { ResourceDetailDataType, useResourceDetail } from 'hooks/use-resource-detail'
-import Page from 'layout/Page'
 import { NotFound } from 'pages/NotFound'
 import breakpoints from 'utils/breakpoints'
 
@@ -27,23 +27,29 @@ type HttpMiddlewareRenderProps = {
 export const HttpMiddlewareRender = ({ data, error, name }: HttpMiddlewareRenderProps) => {
   if (error) {
     return (
-      <Page title={name}>
+      <>
+        <Helmet>
+          <title>{name} - Traefik Proxy</title>
+        </Helmet>
         <Text data-testid="error-text">
           Sorry, we could not fetch detail information for this Middleware right now. Please, try again later.
         </Text>
-      </Page>
+      </>
     )
   }
 
   if (!data) {
     return (
-      <Page title={name}>
+      <>
+        <Helmet>
+          <title>{name} - Traefik Proxy</title>
+        </Helmet>
         <Skeleton css={{ height: '$7', width: '320px', mb: '$4' }} data-testid="skeleton" />
         <MiddlewareGrid data-testid="skeletons">
           <DetailSectionSkeleton />
         </MiddlewareGrid>
         <UsedByRoutersSkeleton />
-      </Page>
+      </>
     )
   }
 
@@ -52,7 +58,10 @@ export const HttpMiddlewareRender = ({ data, error, name }: HttpMiddlewareRender
   }
 
   return (
-    <Page title={name}>
+    <>
+      <Helmet>
+        <title>{data.name} - Traefik Proxy</title>
+      </Helmet>
       <H1 css={{ mb: '$7' }}>{data.name}</H1>
       <MiddlewareGrid>
         <Card css={{ p: '$3' }} data-testid="middleware-card">
@@ -60,7 +69,7 @@ export const HttpMiddlewareRender = ({ data, error, name }: HttpMiddlewareRender
         </Card>
       </MiddlewareGrid>
       <UsedByRoutersSection data-testid="routers-table" data={data} protocol="http" />
-    </Page>
+    </>
   )
 }
 

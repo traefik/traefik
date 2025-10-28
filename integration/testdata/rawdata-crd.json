@@ -362,7 +362,10 @@
 					}
 				]
 			},
-			"status": "enabled"
+			"status": "enabled",
+			"serverStatus": {
+				"domain.com:9090": "UP"
+			}
 		},
 		"default-test3.route-673acf455cb2dab0b43a-whoamitcp-8080@kubernetescrd": {
 			"loadBalancer": {
@@ -375,7 +378,11 @@
 					}
 				]
 			},
-			"status": "enabled"
+			"status": "enabled",
+			"serverStatus": {
+				"10.42.0.2:8080": "UP",
+				"10.42.0.6:8080": "UP"
+			}
 		},
 		"default-test3.route-673acf455cb2dab0b43a@kubernetescrd": {
 			"weighted": {

@@ -1,10 +1,10 @@
 import { Flex, styled, Text } from '@traefiklabs/faency'
+import { Helmet } from 'react-helmet-async'
 import { useParams } from 'react-router-dom'
 
 import { CardListSection, DetailSectionSkeleton } from 'components/resources/DetailSections'
 import RouterPanel from 'components/resources/RouterPanel'
 import { ResourceDetailDataType, useResourceDetail } from 'hooks/use-resource-detail'
-import Page from 'layout/Page'
 import { RouterStructure } from 'pages/http/HttpRouter'
 import { NotFound } from 'pages/NotFound'
 
@@ -33,17 +33,23 @@ type UdpRouterRenderProps = {
 export const UdpRouterRender = ({ data, error, name }: UdpRouterRenderProps) => {
   if (error) {
     return (
-      <Page title={name}>
+      <>
+        <Helmet>
+          <title>{name} - Traefik Proxy</title>
+        </Helmet>
         <Text data-testid="error-text">
           Sorry, we could not fetch detail information for this Router right now. Please, try again later.
         </Text>
-      </Page>
+      </>
     )
   }
 
   if (!data) {
     return (
-      <Page title={name}>
+      <>
+        <Helmet>
+          <title>{name} - Traefik Proxy</title>
+        </Helmet>
         <Flex css={{ flexDirection: 'row', mb: '70px' }} data-testid="skeleton">
           <CardListSection bigDescription />
           <CardListSection />
@@ -53,7 +59,7 @@ export const UdpRouterRender = ({ data, error, name }: UdpRouterRenderProps) => 
           <DetailSectionSkeleton />
           <DetailSectionSkeleton />
         </SpacedColumns>
-      </Page>
+      </>
     )
   }
 
@@ -62,10 +68,13 @@ export const UdpRouterRender = ({ data, error, name }: UdpRouterRenderProps) => 
   }
 
   return (
-    <Page title={name}>
+    <>
+      <Helmet>
+        <title>{data.name} - Traefik Proxy</title>
+      </Helmet>
       <RouterStructure data={data} protocol="udp" />
       <RouterDetail data={data} />
-    </Page>
+    </>
   )
 }
 

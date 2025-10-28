@@ -8,11 +8,11 @@ description: "The Kubernetes Gateway API can be used as a provider for routing a
 When using the Kubernetes Gateway API provider, Traefik leverages the Gateway API Custom Resource Definitions (CRDs) to obtain its routing configuration. 
 For detailed information on the Gateway API concepts and resources, refer to the official [documentation](https://gateway-api.sigs.k8s.io/).
 
-The Kubernetes Gateway API provider supports version [v1.3.0](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.3.0) of the specification.
+The Kubernetes Gateway API provider supports version [v1.4.0](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.4.0) of the specification.
 
 It fully supports all `HTTPRoute` core and some extended features, like `GRPCRoute`, as well as the `TCPRoute` and `TLSRoute` resources from the [Experimental channel](https://gateway-api.sigs.k8s.io/concepts/versioning/?h=#release-channels). 
 
-For more details, check out the conformance [report](https://github.com/kubernetes-sigs/gateway-api/tree/main/conformance/reports/v1.3.0/traefik-traefik).
+For more details, check out the conformance [report](https://github.com/kubernetes-sigs/gateway-api/tree/main/conformance/reports/v1.4.0/traefik-traefik).
 
 ## Deploying a Gateway
 

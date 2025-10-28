@@ -82,10 +82,10 @@ labels:
 
 | Field            | Description                                                                                                                                                                                | Default   | Required |
 |:-----------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:----------|:---------|
-| <a id="accessLogs" href="#accessLogs" title="#accessLogs">`accessLogs`</a> | The `accessLogs` option controls whether the router will produce access-logs.                                                                                                              | `true`    | No       |
-| <a id="metrics" href="#metrics" title="#metrics">`metrics`</a> | The `metrics` option controls whether the router will produce metrics.                                                                                                                     | `true`    | No       |
-| <a id="tracing" href="#tracing" title="#tracing">`tracing`</a> | The `tracing` option controls whether the router will produce traces.                                                                                                                      | `true`    | No       |
-| <a id="traceVerbosity" href="#traceVerbosity" title="#traceVerbosity">`traceVerbosity`</a> | The `traceVerbosity` option controls the tracing verbosity level for the router. Possible values: `minimal` (default), `detailed`. If not set, the value is inherited from the entryPoint. | `minimal` | No       |
+| <a id="opt-accessLogs" href="#opt-accessLogs" title="#opt-accessLogs">`accessLogs`</a> | The `accessLogs` option controls whether the router will produce access-logs.                                                                                                              | `true`    | No       |
+| <a id="opt-metrics" href="#opt-metrics" title="#opt-metrics">`metrics`</a> | The `metrics` option controls whether the router will produce metrics.                                                                                                                     | `true`    | No       |
+| <a id="opt-tracing" href="#opt-tracing" title="#opt-tracing">`tracing`</a> | The `tracing` option controls whether the router will produce traces.                                                                                                                      | `true`    | No       |
+| <a id="opt-traceVerbosity" href="#opt-traceVerbosity" title="#opt-traceVerbosity">`traceVerbosity`</a> | The `traceVerbosity` option controls the tracing verbosity level for the router. Possible values: `minimal` (default), `detailed`. If not set, the value is inherited from the entryPoint. | `minimal` | No       |
 
 #### traceVerbosity
 

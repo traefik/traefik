@@ -52,7 +52,7 @@ spec:
 
 ---
 kind: BackendTLSPolicy
-apiVersion: gateway.networking.k8s.io/v1alpha3
+apiVersion: gateway.networking.k8s.io/v1
 metadata:
   name: policy-1
   namespace: default
@@ -78,7 +78,7 @@ metadata:
   name: ca-file
   namespace: default
 data:
-  ca.crt: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0="
+  ca.crt: "CA1"
 
 ---
 apiVersion: v1
@@ -87,4 +87,4 @@ metadata:
   name: ca-file-2
   namespace: default
 data:
-  ca.crt: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0="
+  ca.crt: "CA2"

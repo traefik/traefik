@@ -12,6 +12,7 @@ func containerJSON(ops ...func(*containertypes.InspectResponse)) containertypes.
 		ContainerJSONBase: &containertypes.ContainerJSONBase{
 			Name:       "fake",
 			HostConfig: &containertypes.HostConfig{},
+			State:      &containertypes.State{},
 		},
 		Config: &containertypes.Config{},
 		NetworkSettings: &containertypes.NetworkSettings{

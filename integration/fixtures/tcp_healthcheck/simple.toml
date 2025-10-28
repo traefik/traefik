@@ -1,0 +1,52 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+  noColor = true
+
+[entryPoints]
+  [entryPoints.tcp]
+    address = ":8093"
+
+[api]
+  insecure = true
+
+[providers.file]
+  filename = "{{ .SelfFilename }}"
+
+## dynamic configuration ##
+
+[tcp.routers]
+  [tcp.routers.router1]
+    rule = "HostSNI(`*`)"
+    service = "weightedservice"
+
+[tcp.services]
+  [tcp.services.weightedservice.weighted]
+    [tcp.services.weightedservice.weighted.healthCheck]
+    [[tcp.services.weightedservice.weighted.services]]
+      name = "service1"
+      weight = 1
+    [[tcp.services.weightedservice.weighted.services]]
+      name = "service2"
+      weight = 1
+
+  [tcp.services.service1.loadBalancer]
+    [tcp.services.service1.loadBalancer.healthCheck]
+      interval = "500ms"
+      timeout = "500ms"
+      send = "PING"
+      expect = "Received: PING"
+    [[tcp.services.service1.loadBalancer.servers]]
+      address = "{{.Server1}}:8080"
+
+  [tcp.services.service2.loadBalancer]
+    [tcp.services.service2.loadBalancer.healthCheck]
+      interval = "500ms"
+      timeout = "500ms"
+      send = "PING"
+      expect = "Received: PING"
+    [[tcp.services.service2.loadBalancer.servers]]
+      address = "{{.Server2}}:8080"

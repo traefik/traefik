@@ -477,7 +477,7 @@ _Optional, Default=true_
 Expose Consul Catalog services by default in Traefik.
 If set to `false`, services that don't have a `traefik.enable=true` tag will be ignored from the resulting routing configuration.
 
-For additional information, refer to [Restrict the Scope of Service Discovery](./overview.md#restrict-the-scope-of-service-discovery).
+For additional information, refer to [Restrict the Scope of Service Discovery](./overview.md#exposedbydefault-and-traefikenable).
 
 ```yaml tab="File (YAML)"
 providers:
@@ -672,7 +672,7 @@ providers:
 # ...
 ```
 
-For additional information, refer to [Restrict the Scope of Service Discovery](./overview.md#restrict-the-scope-of-service-discovery).
+For additional information, refer to [Restrict the Scope of Service Discovery](./overview.md#exposedbydefault-and-traefikenable).
 
 ### `namespaces`
 

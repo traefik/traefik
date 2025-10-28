@@ -5,7 +5,7 @@ description: "Learn how to configure the transport layer security (TLS) connecti
 
 ## General
 
-When a router is configured to handle HTTPS traffic, include a `tls` field in its definition. This field tells Traefik that the router should process only TLS requests and ignore non-TLS traffic.
+When a TCP router is configured to handle TLS traffic, include a `tls` field in its definition. This field tells Traefik that the router should process only TLS connections and ignore non-TLS traffic.
 
 By default, a router with a TLS field will terminate the TLS connections, meaning that it will send decrypted data to the services.
 
@@ -94,11 +94,33 @@ labels:
 
 ## Configuration Options
 
-| Field   | Description  | Default    | Required |
-|:------------------|:--------------------|:-----------------------------------------------|:---------|
-| <a id="passthrough" href="#passthrough" title="#passthrough">`passthrough`</a> | Defines whether the requests should be forwarded "as is", keeping all data encrypted. | false | No |
-| <a id="options" href="#options" title="#options">`options`</a> | enables fine-grained control of the TLS parameters. It refers to a [TLS Options](../http/tls/tls-certificates.md#tls-options) and will be applied only if a `HostSNI` rule is defined. | "" | No |
-| <a id="domains" href="#domains" title="#domains">`domains`</a> | Defines a set of SANs (alternative domains) for each main domain. Every domain must have A/AAAA records pointing to Traefik. Each domain & SAN will lead to a certificate request.| [] | No |
-| <a id="certResolver" href="#certResolver" title="#certResolver">`certResolver`</a> | If defined, Traefik will try to generate certificates based on routers `Host` & `HostSNI` rules. | "" | No |
+| Field                                                                              | Description                                                                                                                                                                                                    | Default | Required |
+|:-----------------------------------------------------------------------------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------|:---------|
+| <a id="opt-passthrough" href="#opt-passthrough" title="#opt-passthrough">`passthrough`</a> | Defines whether the requests should be forwarded "as is", keeping all data encrypted.                                                                                                                          | false   | No       |
+| <a id="opt-options" href="#opt-options" title="#opt-options">`options`</a> | enables fine-grained control of the TLS parameters. It refers to a [TLS Options](../http/tls/tls-options.md) and will be applied only if a `HostSNI` rule is defined.                                          | ""      | No       |
+| <a id="opt-certResolver" href="#opt-certResolver" title="#opt-certResolver">`certResolver`</a> | The name of the certificate resolver to use for automatic certificate generation via ACME providers (such as Let's Encrypt). See the [Certificate Resolver](./#certificate-resolver) section for more details. | ""      | No       |
+| <a id="opt-domains" href="#opt-domains" title="#opt-domains">`domains`</a> | List of domains and Subject Alternative Names (SANs) for explicit certificate domain specification. See the [Custom Domains](./#custom-domains) section for more details.                                      | []      | No       |
+
+## Certificate Resolver
+
+The `tls.certResolver` option allows you to specify a certificate resolver for automatic certificate generation via ACME providers (such as Let's Encrypt).
+
+When a certificate resolver is configured for a router,
+Traefik will automatically obtain and manage TLS certificates for the domains specified in the router's rule (in the `HostSNI` matcher) or in the `tls.domains` configuration (with `tls.domains` taking precedence).
+
+!!! important "Prerequisites"
+
+    - Certificate resolvers must be defined in the [static configuration](../../install-configuration/tls/certificate-resolvers/acme.md)
+    - The router must have `tls` enabled
+    - An ACME challenge type must be configured for the certificate resolver
+
+## Custom Domains
+
+When using ACME certificate resolvers, domains are automatically extracted from router rules,
+but the `tls.domains` option allows you to explicitly specify the domains and Subject Alternative Names (SANs) for which certificates should be generated.
+
+This provides fine-grained control over certificate generation and takes precedence over domains automatically extracted from router rules.
+
+Every domain must have A/AAAA records pointing to Traefik.
 
 {!traefik-for-business-applications.md!}

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"sync"
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
@@ -87,6 +88,9 @@ type TCPServiceInfo struct {
 	// It is the caller's responsibility to set the initial status.
 	Status string   `json:"status,omitempty"`
 	UsedBy []string `json:"usedBy,omitempty"` // list of routers using that service
+
+	serverStatusMu sync.RWMutex
+	serverStatus   map[string]string // keyed by server address
 }
 
 // AddError adds err to s.Err, if it does not already exist.
@@ -108,6 +112,33 @@ func (s *TCPServiceInfo) AddError(err error, critical bool) {
 	if s.Status != StatusDisabled {
 		s.Status = StatusWarning
 	}
+}
+
+// UpdateServerStatus sets the status of the server in the TCPServiceInfo.
+func (s *TCPServiceInfo) UpdateServerStatus(server, status string) {
+	s.serverStatusMu.Lock()
+	defer s.serverStatusMu.Unlock()
+
+	if s.serverStatus == nil {
+		s.serverStatus = make(map[string]string)
+	}
+	s.serverStatus[server] = status
+}
+
+// GetAllStatus returns all the statuses of all the servers in TCPServiceInfo.
+func (s *TCPServiceInfo) GetAllStatus() map[string]string {
+	s.serverStatusMu.RLock()
+	defer s.serverStatusMu.RUnlock()
+
+	if len(s.serverStatus) == 0 {
+		return nil
+	}
+
+	allStatus := make(map[string]string, len(s.serverStatus))
+	for k, v := range s.serverStatus {
+		allStatus[k] = v
+	}
+	return allStatus
 }
 
 // TCPMiddlewareInfo holds information about a currently running middleware.

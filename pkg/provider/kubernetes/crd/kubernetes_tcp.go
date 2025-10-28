@@ -50,11 +50,7 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 				continue
 			}
 
-			key, err := makeServiceKey(route.Match, ingressName)
-			if err != nil {
-				logger.Error().Err(err).Send()
-				continue
-			}
+			key := makeServiceKey(route.Match, ingressName)
 
 			mds, err := p.makeMiddlewareTCPKeys(ctx, ingressRouteTCP.Namespace, route.Middlewares)
 			if err != nil {

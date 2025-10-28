@@ -10,6 +10,7 @@ type dockerData struct {
 	ID              string
 	ServiceName     string
 	Name            string
+	Status          string
 	Labels          map[string]string // List of labels set to container or service
 	NetworkSettings networkSettings
 	Health          string

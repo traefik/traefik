@@ -1,11 +1,9 @@
 package udp
 
 import (
-	"crypto/rand"
 	"errors"
 	"io"
 	"net"
-	"runtime"
 	"testing"
 	"time"
 
@@ -252,12 +250,18 @@ func TestShutdown(t *testing.T) {
 	// Start sending packets, to create a "session" with the server.
 	requireEcho(t, "TEST", conn, time.Second)
 
+	shutdownStartedChan := make(chan struct{})
 	doneChan := make(chan struct{})
 	go func() {
+		close(shutdownStartedChan)
 		err := l.Shutdown(5 * time.Second)
 		require.NoError(t, err)
 		close(doneChan)
 	}()
+
+	// Wait until shutdown has started, and hopefully after 100 ms the listener has stopped accepting new sessions.
+	<-shutdownStartedChan
+	time.Sleep(100 * time.Millisecond)
 
 	// Make sure that our session is still live even after the shutdown.
 	requireEcho(t, "TEST2", conn, time.Second)
@@ -300,58 +304,6 @@ func TestShutdown(t *testing.T) {
 	case <-time.Tick(5 * time.Second):
 		// In case we introduce a regression that would make the test wait forever.
 		t.Fatal("Timeout during shutdown")
-	}
-}
-
-func TestReadLoopMaxDataSize(t *testing.T) {
-	if runtime.GOOS == "darwin" {
-		// sudo sysctl -w net.inet.udp.maxdgram=65507
-		t.Skip("Skip test on darwin as the maximum dgram size is set to 9216 bytes by default")
-	}
-
-	// Theoretical maximum size of data in a UDP datagram.
-	// 65535 − 8 (UDP header) − 20 (IP header).
-	dataSize := 65507
-
-	doneCh := make(chan struct{})
-
-	l, err := Listen(net.ListenConfig{}, "udp", ":0", 3*time.Second)
-	require.NoError(t, err)
-
-	defer func() {
-		err := l.Close()
-		require.NoError(t, err)
-	}()
-
-	go func() {
-		defer close(doneCh)
-
-		conn, err := l.Accept()
-		require.NoError(t, err)
-
-		buffer := make([]byte, dataSize)
-
-		n, err := conn.Read(buffer)
-		require.NoError(t, err)
-
-		assert.Equal(t, dataSize, n)
-	}()
-
-	c, err := net.Dial("udp", l.Addr().String())
-	require.NoError(t, err)
-
-	data := make([]byte, dataSize)
-
-	_, err = rand.Read(data)
-	require.NoError(t, err)
-
-	_, err = c.Write(data)
-	require.NoError(t, err)
-
-	select {
-	case <-doneCh:
-	case <-time.Tick(5 * time.Second):
-		t.Fatal("Timeout waiting for datagram read")
 	}
 }
 

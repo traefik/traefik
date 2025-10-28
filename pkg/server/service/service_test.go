@@ -82,6 +82,20 @@ func TestGetLoadBalancer(t *testing.T) {
 			fwd:         &forwarderMock{},
 			expectError: false,
 		},
+		{
+			desc:        "Fails when unsupported strategy is set",
+			serviceName: "test",
+			service: &dynamic.ServersLoadBalancer{
+				Strategy: "invalid",
+				Servers: []dynamic.Server{
+					{
+						URL: "http://localhost:8080",
+					},
+				},
+			},
+			fwd:         &forwarderMock{},
+			expectError: true,
+		},
 	}
 
 	for _, test := range testCases {

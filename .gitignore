@@ -19,4 +19,4 @@ plugins-storage/
 plugins-local/
 traefik_changelog.md
 integration/tailscale.secret
-integration/conformance-reports/**/experimental-dev-default-report.yaml
+integration/gateway-api-conformance-reports/**/experimental-dev-default-report.yaml

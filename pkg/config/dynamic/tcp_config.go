@@ -39,7 +39,8 @@ type TCPService struct {
 
 // TCPWeightedRoundRobin is a weighted round robin tcp load-balancer of services.
 type TCPWeightedRoundRobin struct {
-	Services []TCPWRRService `json:"services,omitempty" toml:"services,omitempty" yaml:"services,omitempty" export:"true"`
+	Services    []TCPWRRService `json:"services,omitempty" toml:"services,omitempty" yaml:"services,omitempty" export:"true"`
+	HealthCheck *HealthCheck    `json:"healthCheck,omitempty" toml:"healthCheck,omitempty" yaml:"healthCheck,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -86,7 +87,6 @@ type RouterTCPTLSConfig struct {
 type TCPServersLoadBalancer struct {
 	Servers          []TCPServer `json:"servers,omitempty" toml:"servers,omitempty" yaml:"servers,omitempty" label-slice-as-struct:"server" export:"true"`
 	ServersTransport string      `json:"serversTransport,omitempty" toml:"serversTransport,omitempty" yaml:"serversTransport,omitempty" export:"true"`
-
 	// ProxyProtocol holds the PROXY Protocol configuration.
 	// Deprecated: use ServersTransport to configure ProxyProtocol instead.
 	ProxyProtocol *ProxyProtocol `json:"proxyProtocol,omitempty" toml:"proxyProtocol,omitempty" yaml:"proxyProtocol,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
@@ -96,7 +96,8 @@ type TCPServersLoadBalancer struct {
 	// connection. It is a duration in milliseconds, defaulting to 100. A negative value
 	// means an infinite deadline (i.e. the reading capability is never closed).
 	// Deprecated: use ServersTransport to configure the TerminationDelay instead.
-	TerminationDelay *int `json:"terminationDelay,omitempty" toml:"terminationDelay,omitempty" yaml:"terminationDelay,omitempty" export:"true"`
+	TerminationDelay *int                  `json:"terminationDelay,omitempty" toml:"terminationDelay,omitempty" yaml:"terminationDelay,omitempty" export:"true"`
+	HealthCheck      *TCPServerHealthCheck `json:"healthCheck,omitempty" toml:"healthCheck,omitempty" yaml:"healthCheck,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
 }
 
 // Mergeable tells if the given service is mergeable.
@@ -175,4 +176,22 @@ type TLSClientConfig struct {
 	Certificates       traefiktls.Certificates `description:"Defines a list of client certificates for mTLS." json:"certificates,omitempty" toml:"certificates,omitempty" yaml:"certificates,omitempty" export:"true"`
 	PeerCertURI        string                  `description:"Defines the URI used to match against SAN URI during the peer certificate verification." json:"peerCertURI,omitempty" toml:"peerCertURI,omitempty" yaml:"peerCertURI,omitempty" export:"true"`
 	Spiffe             *Spiffe                 `description:"Defines the SPIFFE TLS configuration." json:"spiffe,omitempty" toml:"spiffe,omitempty" yaml:"spiffe,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// TCPServerHealthCheck holds the HealthCheck configuration.
+type TCPServerHealthCheck struct {
+	Port              int              `json:"port,omitempty" toml:"port,omitempty,omitzero" yaml:"port,omitempty" export:"true"`
+	Send              string           `json:"send,omitempty" toml:"send,omitempty" yaml:"send,omitempty" export:"true"`
+	Expect            string           `json:"expect,omitempty" toml:"expect,omitempty" yaml:"expect,omitempty" export:"true"`
+	Interval          ptypes.Duration  `json:"interval,omitempty" toml:"interval,omitempty" yaml:"interval,omitempty" export:"true"`
+	UnhealthyInterval *ptypes.Duration `json:"unhealthyInterval,omitempty" toml:"unhealthyInterval,omitempty" yaml:"unhealthyInterval,omitempty" export:"true"`
+	Timeout           ptypes.Duration  `json:"timeout,omitempty" toml:"timeout,omitempty" yaml:"timeout,omitempty" export:"true"`
+}
+
+// SetDefaults sets the default values for a TCPServerHealthCheck.
+func (t *TCPServerHealthCheck) SetDefaults() {
+	t.Interval = DefaultHealthCheckInterval
+	t.Timeout = DefaultHealthCheckTimeout
 }

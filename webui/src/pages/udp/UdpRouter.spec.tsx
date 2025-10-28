@@ -7,6 +7,7 @@ describe('<UdpRouterPage />', () => {
   it('should render the error message', () => {
     const { getByTestId } = renderWithProviders(
       <UdpRouterRender name="mock-router" data={undefined} error={new Error('Test error')} />,
+      { route: '/udp/routers/mock-router', withPage: true },
     )
     expect(getByTestId('error-text')).toBeInTheDocument()
   })
@@ -14,6 +15,7 @@ describe('<UdpRouterPage />', () => {
   it('should render the skeleton', () => {
     const { getByTestId } = renderWithProviders(
       <UdpRouterRender name="mock-router" data={undefined} error={undefined} />,
+      { route: '/udp/routers/mock-router', withPage: true },
     )
     expect(getByTestId('skeleton')).toBeInTheDocument()
   })
@@ -21,6 +23,7 @@ describe('<UdpRouterPage />', () => {
   it('should render the not found page', () => {
     const { getByTestId } = renderWithProviders(
       <UdpRouterRender name="mock-router" data={{} as ResourceDetailDataType} error={undefined} />,
+      { route: '/udp/routers/mock-router', withPage: true },
     )
     expect(getByTestId('Not found page')).toBeInTheDocument()
   })
@@ -51,6 +54,7 @@ describe('<UdpRouterPage />', () => {
     const { getByTestId } = renderWithProviders(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       <UdpRouterRender name="mock-router" data={mockData as any} error={undefined} />,
+      { route: '/udp/routers/udp-all@docker', withPage: true },
     )
 
     const routerStructure = getByTestId('router-structure')

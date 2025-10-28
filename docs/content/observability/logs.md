@@ -20,6 +20,7 @@ Traefik logs concern everything that happens to Traefik itself (startup, configu
 
 By default, the logs are written to the standard output.
 You can configure a file path instead using the `filePath` option.
+When `filePath` is specified, Traefik will write logs only to that file (not to standard output).
 
 ```yaml tab="File (YAML)"
 # Writing Logs to a File

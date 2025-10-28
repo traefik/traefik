@@ -12,7 +12,7 @@ import (
 
 var (
 	// detect any existing <a ...> tag in the cell (case-insensitive).
-	reExistingAnchor = regexp.MustCompile(`(?i)<\s*a\b`)
+	reExistingAnchor = regexp.MustCompile(`(?i)<\s*a\b[^>]*>.*?</\s*a\s*>`)
 	// separator cell like --- or :---: (3+ dashes, optional leading/trailing colon).
 	reSepCell = regexp.MustCompile(`^\s*:?-{3,}:?\s*$`)
 	// markdown link [text](url) → text (used to strip link wrappers in id).
@@ -123,19 +123,36 @@ func makeID(text string) string {
 }
 
 // Dedupe ID within a file: if id already seen, append -2, -3...
+// Use "opt-" prefix to avoid conflicts with section headings.
 func dedupeID(base string, seen map[string]int) string {
 	if base == "" {
 		base = "row"
 	}
 
-	count, ok := seen[base]
+	// Add prefix to avoid conflicts with section headings.
+	optID := "opt-" + base
+
+	count, ok := seen[optID]
 	if !ok {
-		seen[base] = 1
-		return base
+		seen[optID] = 1
+		return optID
 	}
 
-	seen[base] = count + 1
-	return fmt.Sprintf("%s-%d", base, count+1)
+	seen[optID] = count + 1
+	return fmt.Sprintf("%s-%d", optID, count+1)
+}
+
+// Clean existing anchors from cell content.
+func cleanExistingAnchors(text string) string {
+	return reExistingAnchor.ReplaceAllStringFunc(text, func(match string) string {
+		// Extract content between <a> tags.
+		start := strings.Index(match, ">")
+		end := strings.LastIndex(match, "</")
+		if start >= 0 && end > start {
+			return strings.TrimSpace(match[start+1 : end])
+		}
+		return strings.TrimSpace(match)
+	})
 }
 
 // Inject clickable link that is also the target (id + href on same element).
@@ -143,16 +160,14 @@ func injectClickableFirstCell(line string, seen map[string]int) string {
 	parts := splitTableRow(line)
 	// first data cell is index 1
 	firstCellRaw := parts[1]
-	firstTrimmed := strings.TrimSpace(firstCellRaw)
 
-	// if there's already an <a ...> tag inside, skip (avoid nesting)
-	if reExistingAnchor.MatchString(firstTrimmed) {
-		return line
-	}
+	// Clean any existing anchors first.
+	firstCellRaw = cleanExistingAnchors(firstCellRaw)
+	firstTrimmed := strings.TrimSpace(firstCellRaw)
 
 	id := makeID(firstTrimmed)
 	if id == "" {
-		return line
+		return strings.Join(parts, "|")
 	}
 	id = dedupeID(id, seen)
 

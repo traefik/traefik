@@ -16,6 +16,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	"github.com/traefik/yaegi/interp"
 	"github.com/traefik/yaegi/stdlib"
+	"github.com/traefik/yaegi/stdlib/syscall"
 	"github.com/traefik/yaegi/stdlib/unsafe"
 )
 
@@ -135,13 +136,18 @@ func newInterpreter(ctx context.Context, goPath string, manifest *Manifest, sett
 	}
 
 	if manifest.UseUnsafe && !settings.UseUnsafe {
-		return nil, errors.New("this plugin uses unsafe import. If you want to use it, you need to allow useUnsafe in the settings")
+		return nil, errors.New("this plugin uses restricted imports. If you want to use it, you need to allow useUnsafe in the settings")
 	}
 
 	if settings.UseUnsafe && manifest.UseUnsafe {
 		err := i.Use(unsafe.Symbols)
 		if err != nil {
 			return nil, fmt.Errorf("failed to load unsafe symbols: %w", err)
+		}
+
+		err = i.Use(syscall.Symbols)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load syscall symbols: %w", err)
 		}
 	}
 

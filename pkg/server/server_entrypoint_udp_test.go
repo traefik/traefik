@@ -53,11 +53,17 @@ func TestShutdownUDPConn(t *testing.T) {
 	// Start sending packets, to create a "session" with the server.
 	requireEcho(t, "TEST", conn, time.Second)
 
+	shutdownStartedChan := make(chan struct{})
 	doneChan := make(chan struct{})
 	go func() {
+		close(shutdownStartedChan)
 		entryPoint.Shutdown(t.Context())
 		close(doneChan)
 	}()
+
+	// Wait until shutdown has started, and hopefully after 100 ms the listener has stopped accepting new sessions.
+	<-shutdownStartedChan
+	time.Sleep(100 * time.Millisecond)
 
 	// Make sure that our session is still live even after the shutdown.
 	requireEcho(t, "TEST2", conn, time.Second)

@@ -19,6 +19,10 @@ type IngressRouteSpec struct {
 	// TLS defines the TLS configuration.
 	// More info: https://doc.traefik.io/traefik/v3.5/reference/routing-configuration/http/routing/router/#tls
 	TLS *TLS `json:"tls,omitempty"`
+	// ParentRefs defines references to parent IngressRoute resources for multi-layer routing.
+	// When set, this IngressRoute's routers will be children of the referenced parent IngressRoute's routers.
+	// More info: https://doc.traefik.io/traefik/v3.5/routing/routers/#parentrefs
+	ParentRefs []IngressRouteRef `json:"parentRefs,omitempty"`
 }
 
 // Route holds the HTTP route configuration.
@@ -114,10 +118,10 @@ type LoadBalancerSpec struct {
 	// It defaults to https when Kubernetes Service port is 443, http otherwise.
 	Scheme string `json:"scheme,omitempty"`
 	// Strategy defines the load balancing strategy between the servers.
-	// Supported values are: wrr (Weighed round-robin), p2c (Power of two choices), and hrw (Highest Random Weight).
+	// Supported values are: wrr (Weighed round-robin), p2c (Power of two choices), hrw (Highest Random Weight), and leasttime (Least-Time).
 	// RoundRobin value is deprecated and supported for backward compatibility.
-	// TODO: when the deprecated RoundRobin value will be removed, set the default value to wrr.
-	// +kubebuilder:validation:Enum=wrr;p2c;hrw;RoundRobin
+	// TODO: when the deprecated RoundRobin value will be removed, set the default kubebuilder value to wrr.
+	// +kubebuilder:validation:Enum=wrr;p2c;hrw;leasttime;RoundRobin
 	Strategy dynamic.BalancerStrategy `json:"strategy,omitempty"`
 	// PassHostHeader defines whether the client Host header is forwarded to the upstream Kubernetes Service.
 	// By default, passHostHeader is true.
@@ -208,6 +212,14 @@ type MiddlewareRef struct {
 	// Name defines the name of the referenced Middleware resource.
 	Name string `json:"name"`
 	// Namespace defines the namespace of the referenced Middleware resource.
+	Namespace string `json:"namespace,omitempty"`
+}
+
+// IngressRouteRef is a reference to an IngressRoute resource.
+type IngressRouteRef struct {
+	// Name defines the name of the referenced IngressRoute resource.
+	Name string `json:"name"`
+	// Namespace defines the namespace of the referenced IngressRoute resource.
 	Namespace string `json:"namespace,omitempty"`
 }
 

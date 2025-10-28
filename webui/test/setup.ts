@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom'
 import 'vitest-canvas-mock'
+import '@vitest/web-worker'
 
 import * as matchers from 'jest-extended'
 import { expect } from 'vitest'
@@ -12,6 +13,7 @@ export class IntersectionObserver {
   root = null
   rootMargin = ''
   thresholds = []
+  scrollMargin = ''
 
   disconnect() {
     return null
@@ -43,10 +45,10 @@ class ResizeObserver {
 }
 
 beforeAll(() => {
-  global.IntersectionObserver = IntersectionObserver
+  globalThis.IntersectionObserver = IntersectionObserver
   window.IntersectionObserver = IntersectionObserver
 
-  global.ResizeObserver = ResizeObserver
+  globalThis.ResizeObserver = ResizeObserver
   window.ResizeObserver = ResizeObserver
 
   Object.defineProperty(window, 'matchMedia', {

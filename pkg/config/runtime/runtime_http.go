@@ -43,7 +43,8 @@ func (c *Configuration) GetRoutersByEntryPoints(ctx context.Context, entryPoints
 			entryPointsRouters[entryPointName][rtName] = rt
 		}
 
-		if entryPointsCount == 0 {
+		// Root routers must have at least one entry point.
+		if entryPointsCount == 0 && rt.ParentRefs == nil {
 			rt.AddError(errors.New("no valid entryPoint for this router"), true)
 			logger.Error().Msg("No valid entryPoint for this router")
 		}
@@ -80,6 +81,11 @@ type RouterInfo struct {
 	// It is the caller's responsibility to set the initial status.
 	Status string   `json:"status,omitempty"`
 	Using  []string `json:"using,omitempty"` // Effective entry points used by that router.
+
+	// ChildRefs contains the names of child routers.
+	// This field is only filled during multi-layer routing computation of parentRefs,
+	// and used when building the runtime configuration.
+	ChildRefs []string `json:"-"`
 }
 
 // AddError adds err to r.Err, if it does not already exist.

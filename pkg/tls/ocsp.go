@@ -49,15 +49,17 @@ func (o *ocspStapler) Run(ctx context.Context) {
 	ticker := time.NewTicker(time.Hour)
 	defer ticker.Stop()
 
-	select {
-	case <-ctx.Done():
-		return
+	for {
+		select {
+		case <-ctx.Done():
+			return
 
-	case <-o.forceStapleUpdates:
-		o.updateStaples(ctx)
+		case <-o.forceStapleUpdates:
+			o.updateStaples(ctx)
 
-	case <-ticker.C:
-		o.updateStaples(ctx)
+		case <-ticker.C:
+			o.updateStaples(ctx)
+		}
 	}
 }
 

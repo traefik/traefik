@@ -1,5 +1,6 @@
 import { AriaTable, AriaTbody, AriaTd, AriaTfoot, AriaThead, AriaTr, Box, Flex } from '@traefiklabs/faency'
 import { useMemo } from 'react'
+import { Helmet } from 'react-helmet-async'
 import useInfiniteScroll from 'react-infinite-scroll-hook'
 import { useSearchParams } from 'react-router-dom'
 
@@ -15,7 +16,6 @@ import Tooltip from 'components/Tooltip'
 import TooltipText from 'components/TooltipText'
 import useFetchWithPagination, { pagesResponseInterface, RenderRowType } from 'hooks/use-fetch-with-pagination'
 import { EmptyPlaceholder } from 'layout/EmptyPlaceholder'
-import Page from 'layout/Page'
 
 export const makeRowRender = (): RenderRowType => {
   const UdpRoutersRenderRow = (row) => (
@@ -111,7 +111,10 @@ export const UdpRouters = () => {
   )
 
   return (
-    <Page title="UDP Routers">
+    <>
+      <Helmet>
+        <title>UDP Routers - Traefik Proxy</title>
+      </Helmet>
       <TableFilter />
       <UdpRoutersRender
         error={error}
@@ -122,6 +125,6 @@ export const UdpRouters = () => {
         pageCount={pageCount}
         pages={pages}
       />
-    </Page>
+    </>
   )
 }

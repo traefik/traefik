@@ -367,7 +367,7 @@ Environment variables to forward to the wasm guest.
 Directory to mount to the wasm guest.
 
 `TRAEFIK_EXPERIMENTAL_LOCALPLUGINS_<NAME>_SETTINGS_USEUNSAFE`:  
-Allow the plugin to use unsafe package. (Default: ```false```)
+Allow the plugin to use unsafe and syscall packages. (Default: ```false```)
 
 `TRAEFIK_EXPERIMENTAL_OTLPLOGS`:  
 Enables the OpenTelemetry logs integration. (Default: ```false```)
@@ -385,7 +385,7 @@ Environment variables to forward to the wasm guest.
 Directory to mount to the wasm guest.
 
 `TRAEFIK_EXPERIMENTAL_PLUGINS_<NAME>_SETTINGS_USEUNSAFE`:  
-Allow the plugin to use unsafe package. (Default: ```false```)
+Allow the plugin to use unsafe and syscall packages. (Default: ```false```)
 
 `TRAEFIK_EXPERIMENTAL_PLUGINS_<NAME>_VERSION`:  
 plugin's version.

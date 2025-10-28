@@ -114,6 +114,11 @@ func (p *DynConfBuilder) buildTCPServiceConfiguration(ctx context.Context, conta
 		}
 	}
 
+	// Keep an empty server load-balancer for non-running containers.
+	if container.Status != "" && container.Status != containertypes.StateRunning {
+		return nil
+	}
+	// Keep an empty server load-balancer for unhealthy containers.
 	if container.Health != "" && container.Health != containertypes.Healthy {
 		return nil
 	}
@@ -138,6 +143,11 @@ func (p *DynConfBuilder) buildUDPServiceConfiguration(ctx context.Context, conta
 		}
 	}
 
+	// Keep an empty server load-balancer for non-running containers.
+	if container.Status != "" && container.Status != containertypes.StateRunning {
+		return nil
+	}
+	// Keep an empty server load-balancer for unhealthy containers.
 	if container.Health != "" && container.Health != containertypes.Healthy {
 		return nil
 	}
@@ -164,6 +174,11 @@ func (p *DynConfBuilder) buildServiceConfiguration(ctx context.Context, containe
 		}
 	}
 
+	// Keep an empty server load-balancer for non-running containers.
+	if container.Status != "" && container.Status != containertypes.StateRunning {
+		return nil
+	}
+	// Keep an empty server load-balancer for unhealthy containers.
 	if container.Health != "" && container.Health != containertypes.Healthy {
 		return nil
 	}
@@ -193,6 +208,19 @@ func (p *DynConfBuilder) keepContainer(ctx context.Context, container dockerData
 	}
 	if !matches {
 		logger.Debug().Msgf("Container pruned by constraint expression: %q", p.Constraints)
+		return false
+	}
+
+	// AllowNonRunning has precedence over AllowEmptyServices.
+	// If AllowNonRunning is true, we don't care about the container health/status,
+	// and we need to quit before checking it.
+	// Only configurable with the Docker provider.
+	if container.ExtraConf.AllowNonRunning {
+		return true
+	}
+
+	if container.Status != "" && container.Status != containertypes.StateRunning {
+		logger.Debug().Msg("Filtering non running container")
 		return false
 	}
 

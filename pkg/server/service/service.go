@@ -29,6 +29,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/server/provider"
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/failover"
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/hrw"
+	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/leasttime"
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/mirror"
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/p2c"
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/wrr"
@@ -266,19 +267,18 @@ func (m *Manager) getWRRServiceHandler(ctx context.Context, serviceName string, 
 			continue
 		}
 
-		childName := service.Name
 		updater, ok := serviceHandler.(healthcheck.StatusUpdater)
 		if !ok {
-			return nil, fmt.Errorf("child service %v of %v not a healthcheck.StatusUpdater (%T)", childName, serviceName, serviceHandler)
+			return nil, fmt.Errorf("child service %v of %v not a healthcheck.StatusUpdater (%T)", service.Name, serviceName, serviceHandler)
 		}
 
 		if err := updater.RegisterStatusUpdater(func(up bool) {
-			balancer.SetStatus(ctx, childName, up)
+			balancer.SetStatus(ctx, service.Name, up)
 		}); err != nil {
-			return nil, fmt.Errorf("cannot register %v as updater for %v: %w", childName, serviceName, err)
+			return nil, fmt.Errorf("cannot register %v as updater for %v: %w", service.Name, serviceName, err)
 		}
 
-		log.Ctx(ctx).Debug().Str("parent", serviceName).Str("child", childName).
+		log.Ctx(ctx).Debug().Str("parent", serviceName).Str("child", service.Name).
 			Msg("Child service will update parent on status change")
 	}
 
@@ -342,19 +342,18 @@ func (m *Manager) getHRWServiceHandler(ctx context.Context, serviceName string, 
 			continue
 		}
 
-		childName := service.Name
 		updater, ok := serviceHandler.(healthcheck.StatusUpdater)
 		if !ok {
-			return nil, fmt.Errorf("child service %v of %v not a healthcheck.StatusUpdater (%T)", childName, serviceName, serviceHandler)
+			return nil, fmt.Errorf("child service %v of %v not a healthcheck.StatusUpdater (%T)", service.Name, serviceName, serviceHandler)
 		}
 
 		if err := updater.RegisterStatusUpdater(func(up bool) {
-			balancer.SetStatus(ctx, childName, up)
+			balancer.SetStatus(ctx, service.Name, up)
 		}); err != nil {
-			return nil, fmt.Errorf("cannot register %v as updater for %v: %w", childName, serviceName, err)
+			return nil, fmt.Errorf("cannot register %v as updater for %v: %w", service.Name, serviceName, err)
 		}
 
-		log.Ctx(ctx).Debug().Str("parent", serviceName).Str("child", childName).
+		log.Ctx(ctx).Debug().Str("parent", serviceName).Str("child", service.Name).
 			Msg("Child service will update parent on status change")
 	}
 
@@ -404,6 +403,8 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 		lb = p2c.New(service.Sticky, service.HealthCheck != nil)
 	case dynamic.BalancerStrategyHRW:
 		lb = hrw.New(service.HealthCheck != nil)
+	case dynamic.BalancerStrategyLeastTime:
+		lb = leasttime.New(service.Sticky, service.HealthCheck != nil)
 	default:
 		return nil, fmt.Errorf("unsupported load-balancer strategy %q", service.Strategy)
 	}
@@ -466,7 +467,7 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 
 		lb.AddServer(server.URL, proxy, server)
 
-		// servers are considered UP by default.
+		// Servers are considered UP by default.
 		info.UpdateServerStatus(target.String(), runtime.StatusUp)
 
 		healthCheckTargets[server.URL] = target

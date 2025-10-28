@@ -365,7 +365,7 @@ func TestOpenTelemetry(t *testing.T) {
 			tryAssertMessage(t, c, expectedConfig)
 
 			expectedTLSCerts := []string{
-				`({"name":"traefik_tls_certs_not_after","description":"Certificate expiration timestamp","unit":"ms","gauge":{"dataPoints":\[{"attributes":\[{"key":"key","value":{"stringValue":"value"}}\],"startTimeUnixNano":"[\d]{19}","timeUnixNano":"[\d]{19}","asDouble":1}\]}})`,
+				`({"name":"traefik_tls_certs_not_after","description":"Certificate expiration timestamp","unit":"s","gauge":{"dataPoints":\[{"attributes":\[{"key":"key","value":{"stringValue":"value"}}\],"startTimeUnixNano":"[\d]{19}","timeUnixNano":"[\d]{19}","asDouble":1}\]}})`,
 			}
 
 			registry.TLSCertsNotAfterTimestampGauge().With("key", "value").Set(1)

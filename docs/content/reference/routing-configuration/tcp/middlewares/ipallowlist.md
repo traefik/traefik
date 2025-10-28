@@ -57,4 +57,4 @@ spec:
 
 | Field | Description | Default | Required |
 |:------|:------------|------------------|-------|
-| <a id="sourceRange" href="#sourceRange" title="#sourceRange">`sourceRange`</a> | The `sourceRange` option sets the allowed IPs (or ranges of allowed IPs by using CIDR notation).| | Yes |
+| <a id="opt-sourceRange" href="#opt-sourceRange" title="#opt-sourceRange">`sourceRange`</a> | The `sourceRange` option sets the allowed IPs (or ranges of allowed IPs by using CIDR notation).| | Yes |

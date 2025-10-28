@@ -11,7 +11,7 @@ type ResourceEventHandler struct {
 }
 
 // OnAdd is called on Add Events.
-func (reh *ResourceEventHandler) OnAdd(obj interface{}, isInInitialList bool) {
+func (reh *ResourceEventHandler) OnAdd(obj interface{}, _ bool) {
 	eventHandlerFunc(reh.Ev, obj)
 }
 

@@ -498,7 +498,7 @@ You can declare TCP Routers and/or Services using labels.
 
 ??? info "`traefik.tcp.routers.<router_name>.rule`"
 
-    See [rule](../tcp/router/rules-and-priority.md#rules) for more information.
+    See [rule](../tcp/routing/rules-and-priority.md#rules) for more information.
 
     ```yaml
      "traefik.tcp.routers.mytcprouter.rule=HostSNI(`example.com`)"
@@ -565,7 +565,7 @@ You can declare TCP Routers and/or Services using labels.
 
 ??? info "`traefik.tcp.routers.<router_name>.tls.passthrough`"
 
-    See [TLS](../tcp/tls.md#passthrough) for more information.
+    See [TLS](../tcp/tls.md#opt-passthrough) for more information.
 
     ```yaml
      "traefik.tcp.routers.mytcprouter.tls.passthrough=true"
@@ -573,7 +573,7 @@ You can declare TCP Routers and/or Services using labels.
 
 ??? info "`traefik.tcp.routers.<router_name>.priority`"
 
-    See [priority](../tcp/router/rules-and-priority.md) for more information.
+    See [priority](../tcp/routing/rules-and-priority.md) for more information.
 
     ```yaml
      "traefik.tcp.routers.mytcprouter.priority=42"
@@ -595,14 +595,6 @@ You can declare TCP Routers and/or Services using labels.
 
     ```yaml
      "traefik.tcp.services.mytcpservice.loadbalancer.server.tls=true"
-    ```
-
-??? info "`traefik.tcp.services.<service_name>.loadbalancer.proxyprotocol.version`"
-
-    See [PROXY protocol](../tcp/service.md#proxy-protocol) for more information.
-
-    ```yaml
-     "traefik.tcp.services.mytcpservice.loadbalancer.proxyprotocol.version=1"
     ```
 
 ??? info "`traefik.tcp.services.<service_name>.loadbalancer.serverstransport`"
@@ -696,6 +688,27 @@ You can tell Traefik to consider (or not) the container by setting `traefik.enab
 
 This option overrides the value of `exposedByDefault`.
 
+#### `traefik.docker.allownonrunning`
+
+```yaml
+- "traefik.docker.allownonrunning=true"
+```
+
+By default, Traefik only considers containers in "running" state.
+This option controls whether containers that are not in "running" state (e.g., stopped, paused, exited) should still be visible to Traefik for service discovery.
+
+When this label is set to true, Traefik will:
+
+- Keep the router and service configuration even when the container is not running
+- Create services with empty backend server lists
+- Return 503 Service Unavailable for requests to stopped containers (instead of 404 Not Found)
+- Execute the full middleware chain, allowing middlewares to intercept requests
+
+!!! warning "Configuration Collision"
+    
+    As the `traefik.docker.allownonrunning` enables the discovery of all containers exposing this option disregarding their state,
+    if multiple stopped containers expose the same router but their configurations diverge, then the routers will be dropped.
+
 #### `traefik.docker.network`
 
 ```yaml
@@ -708,4 +721,5 @@ If a container is linked to several networks, be sure to set the proper network 
 otherwise it will randomly pick one (depending on how docker is returning them).
 
 !!! warning
+
     When deploying a stack from a compose file `stack`, the networks defined are prefixed with `stack`.

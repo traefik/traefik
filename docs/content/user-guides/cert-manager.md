@@ -56,11 +56,11 @@ The certificates can then be used in an Ingress / IngressRoute / HTTPRoute.
     ```
 
 Let's see now how to use it with the various Kubernetes providers of Traefik Proxy.
-The enabled providers can be seen on the [dashboard](../../operations/dashboard/) of Traefik Proxy and also in the INFO logs when Traefik Proxy starts.
+The enabled providers can be seen on the [dashboard](../operations/dashboard.md) of Traefik Proxy and also in the INFO logs when Traefik Proxy starts.
 
 ### With an Ingress
 
-To use this certificate with an Ingress, the [Kubernetes Ingress](../../providers/kubernetes-ingress/) provider has to be enabled.
+To use this certificate with an Ingress, the [Kubernetes Ingress](../providers/kubernetes-ingress.md) provider has to be enabled.
 
 !!! info Traefik Helm Chart
 
@@ -94,7 +94,7 @@ To use this certificate with an Ingress, the [Kubernetes Ingress](../../provider
 
 ### With an IngressRoute
 
-To use this certificate with an IngressRoute, the [Kubernetes CRD](../../providers/kubernetes-crd/) provider has to be enabled.
+To use this certificate with an IngressRoute, the [Kubernetes CRD](../providers/kubernetes-crd.md) provider has to be enabled.
 
 !!! info Traefik Helm Chart
 
@@ -124,7 +124,7 @@ To use this certificate with an IngressRoute, the [Kubernetes CRD](../../provide
 
 ### With an HTTPRoute
 
-To use this certificate with an HTTPRoute, the [Kubernetes Gateway](../../routing/providers/kubernetes-gateway/) provider has to be enabled.
+To use this certificate with an HTTPRoute, the [Kubernetes Gateway](../routing/providers/kubernetes-gateway.md) provider has to be enabled.
 
 !!! info Traefik Helm Chart
 

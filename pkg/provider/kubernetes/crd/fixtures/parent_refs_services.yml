@@ -1,0 +1,139 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: child-service
+  namespace: default
+spec:
+  ports:
+    - name: web
+      port: 9000
+---
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
+metadata:
+  name: child-service-abc
+  namespace: default
+  labels:
+    kubernetes.io/service-name: child-service
+addressType: IPv4
+ports:
+  - name: web
+    port: 9000
+endpoints:
+  - addresses:
+      - 10.10.2.1
+      - 10.10.2.2
+    conditions:
+      ready: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: users-service
+  namespace: default
+spec:
+  ports:
+    - name: web
+      port: 9000
+---
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
+metadata:
+  name: users-service-abc
+  namespace: default
+  labels:
+    kubernetes.io/service-name: users-service
+addressType: IPv4
+ports:
+  - name: web
+    port: 9000
+endpoints:
+  - addresses:
+      - 10.10.5.1
+      - 10.10.5.2
+    conditions:
+      ready: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: shared-service
+  namespace: default
+spec:
+  ports:
+    - name: web
+      port: 9000
+---
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
+metadata:
+  name: shared-service-abc
+  namespace: default
+  labels:
+    kubernetes.io/service-name: shared-service
+addressType: IPv4
+ports:
+  - name: web
+    port: 9000
+endpoints:
+  - addresses:
+      - 10.10.8.1
+      - 10.10.8.2
+    conditions:
+      ready: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cross-service
+  namespace: ns-b
+spec:
+  ports:
+    - name: web
+      port: 9000
+---
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
+metadata:
+  name: cross-service-abc
+  namespace: ns-b
+  labels:
+    kubernetes.io/service-name: cross-service
+addressType: IPv4
+ports:
+  - name: web
+    port: 9000
+endpoints:
+  - addresses:
+      - 10.10.11.1
+      - 10.10.11.2
+    conditions:
+      ready: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: same-service
+  namespace: default
+spec:
+  ports:
+    - name: web
+      port: 9000
+---
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
+metadata:
+  name: same-service-abc
+  namespace: default
+  labels:
+    kubernetes.io/service-name: same-service
+addressType: IPv4
+ports:
+  - name: web
+    port: 9000
+endpoints:
+  - addresses:
+      - 10.10.14.1
+      - 10.10.14.2
+    conditions:
+      ready: true

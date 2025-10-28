@@ -1,14 +1,14 @@
 apiVersion: gateway.networking.k8s.io/v1
 date: '-'
 gatewayAPIChannel: experimental
-gatewayAPIVersion: v1.3.0
+gatewayAPIVersion: v1.4.0
 implementation:
   contact:
   - '@traefik/maintainers'
   organization: traefik
   project: traefik
   url: https://traefik.io/
-  version: v3.5
+  version: v3.6
 kind: ConformanceReport
 mode: default
 profiles:
@@ -16,7 +16,7 @@ profiles:
     result: success
     statistics:
       Failed: 0
-      Passed: 12
+      Passed: 13
       Skipped: 0
   name: GATEWAY-GRPC
   summary: Core tests succeeded.
@@ -52,6 +52,8 @@ profiles:
     - GatewayStaticAddresses
     - HTTPRouteBackendRequestHeaderModification
     - HTTPRouteBackendTimeout
+    - HTTPRouteCORS
+    - HTTPRouteNamedRouteRule
     - HTTPRouteParentRefPort
     - HTTPRouteRequestMirror
     - HTTPRouteRequestMultipleMirrors

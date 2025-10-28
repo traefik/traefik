@@ -7,8 +7,8 @@ on:
     paths:
       - '.github/workflows/test-gateway-api-conformance.yaml'
       - 'pkg/provider/kubernetes/gateway/**'
-      - 'integration/fixtures/k8s-conformance/**'
-      - 'integration/k8s_conformance_test.go'
+      - 'integration/fixtures/gateway-api-conformance/**'
+      - 'integration/gateway_api_conformance_test.go'
 
 env:
   GO_VERSION: '1.24'
@@ -34,7 +34,7 @@ jobs:
         run: |
           touch webui/static/index.html
 
-      - name: K8s Gateway API conformance test and report
+      - name: Gateway API conformance test and report
         run: |
           make test-gateway-api-conformance
           git diff --exit-code

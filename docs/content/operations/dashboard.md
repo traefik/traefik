@@ -11,7 +11,7 @@ See What's Going On
 The dashboard is the central place that shows you the current active routes handled by Traefik.
 
 <figure>
-    <img src="../../assets/img/webui-dashboard.png" alt="Dashboard - Providers" />
+    <img src="../assets/img/webui-dashboard.png" alt="Dashboard - Providers" />
     <figcaption>The dashboard in action</figcaption>
 </figure>
 

@@ -7,6 +7,7 @@ describe('<HttpMiddlewarePage />', () => {
   it('should render the error message', () => {
     const { getByTestId } = renderWithProviders(
       <HttpMiddlewareRender name="mock-middleware" data={undefined} error={new Error('Test error')} />,
+      { route: '/http/middlewares/mock-middleware', withPage: true },
     )
     expect(getByTestId('error-text')).toBeInTheDocument()
   })
@@ -14,6 +15,7 @@ describe('<HttpMiddlewarePage />', () => {
   it('should render the skeleton', () => {
     const { getByTestId } = renderWithProviders(
       <HttpMiddlewareRender name="mock-middleware" data={undefined} error={undefined} />,
+      { route: '/http/middlewares/mock-middleware', withPage: true },
     )
     expect(getByTestId('skeleton')).toBeInTheDocument()
   })
@@ -21,6 +23,7 @@ describe('<HttpMiddlewarePage />', () => {
   it('should render the not found page', () => {
     const { getByTestId } = renderWithProviders(
       <HttpMiddlewareRender name="mock-middleware" data={{} as ResourceDetailDataType} error={undefined} />,
+      { route: '/http/middlewares/mock-middleware', withPage: true },
     )
     expect(getByTestId('Not found page')).toBeInTheDocument()
   })
@@ -53,6 +56,7 @@ describe('<HttpMiddlewarePage />', () => {
     const { container, getByTestId } = renderWithProviders(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       <HttpMiddlewareRender name="mock-middleware" data={mockMiddleware as any} error={undefined} />,
+      { route: '/http/middlewares/middleware-simple', withPage: true },
     )
 
     const headings = Array.from(container.getElementsByTagName('h1'))
@@ -99,6 +103,7 @@ describe('<HttpMiddlewarePage />', () => {
     const { container, getByTestId } = renderWithProviders(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       <HttpMiddlewareRender name="mock-middleware" data={mockMiddleware as any} error={undefined} />,
+      { route: '/http/middlewares/middleware-plugin', withPage: true },
     )
 
     const headings = Array.from(container.getElementsByTagName('h1'))
@@ -338,6 +343,7 @@ describe('<HttpMiddlewarePage />', () => {
     const { container, getByTestId } = renderWithProviders(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       <HttpMiddlewareRender name="mock-middleware" data={mockMiddleware as any} error={undefined} />,
+      { route: '/http/middlewares/middleware-complex', withPage: true },
     )
 
     const headings = Array.from(container.getElementsByTagName('h1'))
@@ -459,6 +465,7 @@ describe('<HttpMiddlewarePage />', () => {
     const { container, getByTestId } = renderWithProviders(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       <HttpMiddlewareRender name="mock-middleware" data={mockMiddleware as any} error={undefined} />,
+      { route: '/http/middlewares/middleware-plugin-no-type', withPage: true },
     )
 
     const headings = Array.from(container.getElementsByTagName('h1'))
