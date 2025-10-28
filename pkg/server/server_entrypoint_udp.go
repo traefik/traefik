@@ -116,12 +116,23 @@ func NewUDPEntryPoint(config *static.EntryPoint, name string) (*UDPEntryPoint, e
 
 // Start commences the listening for ep.
 func (ep *UDPEntryPoint) Start(ctx context.Context) {
-	log.Ctx(ctx).Debug().Msg("Start UDP Server")
+	logger := log.Ctx(ctx)
+	logger.Debug().Msg("Start UDP Server")
 	for {
 		conn, err := ep.listener.Accept()
 		if err != nil {
 			// Only errClosedListener can happen that's why we return
 			return
+		}
+
+		if ep.transportConfiguration.UDP.ProxyProtocol.Insecure {
+			connProxy, err := udp.HandleProxyProtocol(conn, time.Duration(ep.transportConfiguration.UDP.Timeout))
+			if err != nil {
+				logger.Error().Err(err).Send()
+				_ = conn.Close()
+				continue
+			}
+			conn = connProxy
 		}
 
 		go ep.switcher.ServeUDP(conn)
