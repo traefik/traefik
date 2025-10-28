@@ -62,7 +62,7 @@ plugins:
         # Routing
         'routing/overview.md': 'reference/routing-configuration/dynamic-configuration-methods.md'
         'routing/entrypoints.md': 'reference/install-configuration/entrypoints.md'
-        'routing/routers/index.md': 'reference/routing-configuration/http/router/rules-and-priority.md'
+        'routing/routers/index.md': 'reference/routing-configuration/http/routing/rules-and-priority.md'
         'routing/services/index.md': 'reference/routing-configuration/http/load-balancing/service.md'
         'routing/providers/docker.md': 'reference/routing-configuration/other-providers/docker.md'
         'routing/providers/swarm.md': 'reference/routing-configuration/other-providers/swarm.md'
