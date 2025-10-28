@@ -1,3 +1,12 @@
+## [v2.11.30](https://github.com/traefik/traefik/tree/v2.11.30) (2025-10-28)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.29...v2.11.30)
+
+**Bug fixes:**
+- **[http3]** Bump github.com/quic-go/quic-go to v0.55.0 ([#12156](https://github.com/traefik/traefik/pull/12156) by [kevinpollet](https://github.com/kevinpollet))
+- **[kv]** Fix KV key name used to check if connection is alive ([#12162](https://github.com/traefik/traefik/pull/12162) by [kevinpollet](https://github.com/kevinpollet))
+- **[server]** Bump golang.org/x/net to v0.46.0 ([#12143](https://github.com/traefik/traefik/pull/12143) by [kevinpollet](https://github.com/kevinpollet))
+- **[tracing]** Bump gopkg.in/DataDog/dd-trace-go.v1 to v1.74.6 ([#12083](https://github.com/traefik/traefik/pull/12083) by [hannahkm](https://github.com/hannahkm))
+
 ## [v3.5.3](https://github.com/traefik/traefik/tree/v3.5.3) (2025-09-26)
 [All Commits](https://github.com/traefik/traefik/compare/v3.5.2...v3.5.3)
 
