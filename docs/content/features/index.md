@@ -83,14 +83,14 @@ The Traefik ecosystem offers multiple products designed to meet different requir
 
 ## Choosing the Right Product
 
-### Start with Traefik Proxy if you need:
+### Start with Traefik Proxy
 
 - Basic reverse proxy and load balancing
 - Service discovery for containerized applications
 - Simple TLS termination and Let's Encrypt integration
 - Cost-effective solution with community support (can upgrade to Traefik Hub for more features)
 
-### Upgrade to Traefik Hub API Gateway for:
+### Upgrade to Traefik Hub API Gateway
 
 - Enterprise security requirements (JWT, OIDC, LDAP)
 - Distributed deployments across multiple clusters
@@ -99,7 +99,7 @@ The Traefik ecosystem offers multiple products designed to meet different requir
 - AI Gateway capabilities
 - Commercial support
 
-### Consider Traefik AI Gateway for:
+### Consider Traefik AI Gateway
 
 - Multi-LLM applications requiring unified API access
 - Organizations using multiple AI providers (OpenAI, Anthropic, Azure OpenAI, AWS Bedrock, etc.)
@@ -109,23 +109,23 @@ The Traefik ecosystem offers multiple products designed to meet different requir
 - PII protection and content filtering for AI interactions
 - Comprehensive AI observability and compliance requirements
 
-### Choose Traefik Hub API Management when you have:
+### Choose Traefik MCP Gateway
+
+- AI agent deployments requiring secure access to MCP servers
+- Task-based access control (TBAC) for AI workflows
+- Governance of Model Context Protocol interactions
+- Session-smart routing for long-running agent conversations
+- OAuth 2.1 / 2.0 compliant MCP server protection
+- Audit-ready observability for AI agent activities
+- Fine-grained policy enforcement for AI tools and resources
+
+### Choose Traefik Hub API Management
 
 - Multiple APIs requiring centralized management
 - Developer teams needing self-service portals
 - Complex API versioning and lifecycle requirements
 - Multi-cluster environments requiring unified dashboards
 - Compliance and governance needs
-
-### Choose Traefik MCP Gateway for:
-
-- AI agent deployments requiring secure access to MCP servers
-- Task-based access control (TBAC) for AI workflows
-- Governance of Model Context Protocol interactions
-- Session-smart routing for long-running agent conversations
-- OAuth 2.1/2.0 compliant MCP server protection
-- Audit-ready observability for AI agent activities
-- Fine-grained policy enforcement for AI tools and resources
 
 ## Migration Path
 
