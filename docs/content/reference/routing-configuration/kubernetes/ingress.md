@@ -402,7 +402,7 @@ This way, any Ingress attached to this Entrypoint will have TLS termination by d
           serviceAccountName: traefik-ingress-controller
           containers:
             - name: traefik
-              image: traefik:v3.5
+              image: traefik:v3.6
               args:
                 - --entryPoints.websecure.address=:443
                 - --entryPoints.websecure.http.tls
