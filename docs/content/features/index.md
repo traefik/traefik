@@ -17,11 +17,13 @@ The Traefik ecosystem offers multiple products designed to meet different requir
 
 - **[Traefik AI Gateway](https://traefik.io/solutions/ai-gateway/)** transforms any AI endpoint into a managed API with unified access to multiple LLMs, centralized credential management, semantic caching, local inferencing, and comprehensive AI governance features.
 
+- **[Traefik MCP Gateway](https://traefik.io/solutions/mcp-gateway/)** provides secure, governed access to Model Context Protocol (MCP) servers for AI agents with task-based access control (TBAC), session-smart routing, and comprehensive audit capabilities for enterprise AI workflows.
+
 ## Features Matrix
 
 | Feature | Traefik Proxy | Traefik Hub API Gateway | Traefik Hub API Management |
 |---------|---------------|------------------------|---------------------------|
-| **Core Networking** | | | |
+| **Core Networking** | | | | 
 | Services Auto-Discovery | ✓ | ✓ | ✓ |
 | Graceful Configuration Reload | ✓ | ✓ | ✓ |
 | Websockets, HTTP/2, HTTP/3, TCP, UDP, GRPC | ✓ | ✓ | ✓ |
@@ -59,6 +61,13 @@ The Traefik ecosystem offers multiple products designed to meet different requir
 | Content Guard & PII Protection | ✗ | ✓ | ✓ |
 | AI-specific Observability & OpenTelemetry Integration | ✗ | ✓ | ✓ |
 | Support for Local/Self-hosted LLMs & Inference (Ollama, Mistral, etc.) | ✗ | ✓ | ✓ |
+| **MCP Gateway Capabilities** | | | |
+| Task-Based Access Control (TBAC) for AI Agents | ✗ | ✓ | ✓ |
+| MCP Servers Governance | ✗ | ✓ | ✓ |
+| Session-Smart Load Balancing for Agent Workflows | ✗ | ✓ | ✓ |
+| OAuth 2.1/2.0 Resource Server for MCP | ✗ | ✓ | ✓ |
+| Fine-grained Policy Enforcement for AI Tools | ✗ | ✓ | ✓ |
+| Audit-ready Observability for Agent Interactions | ✗ | ✓ | ✓ |
 | **API Management** | | | |
 | Flexible API grouping and versioning | ✗ | ✗ | ✓ |
 | API Developer Portal | ✗ | ✗ | ✓ |
@@ -108,11 +117,22 @@ The Traefik ecosystem offers multiple products designed to meet different requir
 - Multi-cluster environments requiring unified dashboards
 - Compliance and governance needs
 
+### Choose Traefik MCP Gateway for:
+
+- AI agent deployments requiring secure access to MCP servers
+- Task-based access control (TBAC) for AI workflows
+- Governance of Model Context Protocol interactions
+- Session-smart routing for long-running agent conversations
+- OAuth 2.1/2.0 compliant MCP server protection
+- Audit-ready observability for AI agent activities
+- Fine-grained policy enforcement for AI tools and resources
+
 ## Migration Path
 
 The Traefik ecosystem is designed for seamless upgrades. You can start with Traefik Proxy and add capabilities as your requirements grow:
 
 1. **Traefik Proxy** → **Hub API Gateway**: Add enterprise security, distributed features, and AI Gateway capabilities
 2. **Hub API Gateway** → **Hub API Management**: Add comprehensive API management and governance features
+3. **MCP Gateway**: Specialized solution for AI agent governance and Model Context Protocol management
 
 All products share the same core configuration concepts, making migration straightforward while preserving your existing configurations and operational knowledge.
