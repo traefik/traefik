@@ -187,10 +187,10 @@ nav:
   - 'What is Traefik': 'index.md'
   - 'Getting Started':
       - 'Overview': 'getting-started/index.md'
+      - 'Configuration Introduction': 'getting-started/configuration-overview.md'
       - 'Quick Start':
         - 'Kubernetes': 'getting-started/kubernetes.md'
         - 'Docker': 'getting-started/docker.md'
-      - 'Configuration Introduction': 'getting-started/configuration-overview.md'
   - 'Setup':
       - 'Kubernetes': 'setup/kubernetes.md'
       - 'Docker': 'setup/docker.md'
