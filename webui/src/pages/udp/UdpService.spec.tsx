@@ -7,6 +7,7 @@ describe('<UdpServicePage />', () => {
   it('should render the error message', () => {
     const { getByTestId } = renderWithProviders(
       <UdpServiceRender name="mock-service" data={undefined} error={new Error('Test error')} />,
+      { route: '/udp/services/mock-service', withPage: true },
     )
     expect(getByTestId('error-text')).toBeInTheDocument()
   })
@@ -14,6 +15,7 @@ describe('<UdpServicePage />', () => {
   it('should render the skeleton', () => {
     const { getByTestId } = renderWithProviders(
       <UdpServiceRender name="mock-service" data={undefined} error={undefined} />,
+      { route: '/udp/services/mock-service', withPage: true },
     )
     expect(getByTestId('skeleton')).toBeInTheDocument()
   })
@@ -21,6 +23,7 @@ describe('<UdpServicePage />', () => {
   it('should render the not found page', () => {
     const { getByTestId } = renderWithProviders(
       <UdpServiceRender name="mock-service" data={{} as ResourceDetailDataType} error={undefined} />,
+      { route: '/udp/services/mock-service', withPage: true },
     )
     expect(getByTestId('Not found page')).toBeInTheDocument()
   })
@@ -59,6 +62,7 @@ describe('<UdpServicePage />', () => {
     const { container, getByTestId } = renderWithProviders(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       <UdpServiceRender name="mock-service" data={mockData as any} error={undefined} />,
+      { route: '/udp/services/mock-service', withPage: true },
     )
 
     const headings = Array.from(container.getElementsByTagName('h1'))
@@ -128,6 +132,7 @@ describe('<UdpServicePage />', () => {
     const { getByTestId } = renderWithProviders(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       <UdpServiceRender name="mock-service" data={mockData as any} error={undefined} />,
+      { route: '/udp/services/mock-service', withPage: true },
     )
 
     const serversList = getByTestId('servers-list')
@@ -154,6 +159,7 @@ describe('<UdpServicePage />', () => {
     const { getByTestId } = renderWithProviders(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       <UdpServiceRender name="mock-service" data={mockData as any} error={undefined} />,
+      { route: '/udp/services/mock-service', withPage: true },
     )
 
     expect(() => {
