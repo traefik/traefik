@@ -21,6 +21,7 @@ import {
   VisuallyHidden,
 } from '@traefiklabs/faency'
 import { useContext, useEffect, useMemo, useState } from 'react'
+import { Helmet } from 'react-helmet-async'
 import { BsChevronDoubleRight, BsChevronDoubleLeft } from 'react-icons/bs'
 import { FiBookOpen, FiGithub, FiHelpCircle } from 'react-icons/fi'
 import { matchPath, useHref } from 'react-router'
@@ -36,6 +37,7 @@ import { PluginsIcon } from 'components/icons/PluginsIcon'
 import ThemeSwitcher from 'components/ThemeSwitcher'
 import TooltipText from 'components/TooltipText'
 import { VersionContext } from 'contexts/version'
+import useHubUpgradeButton from 'hooks/use-hub-upgrade-button'
 import useTotals from 'hooks/use-overview-totals'
 import { useIsDarkMode } from 'hooks/use-theme'
 import ApimDemoNavMenu from 'pages/hub-demo/HubDemoNav'
@@ -293,8 +295,7 @@ export const SideNav = ({
 }
 
 export const TopNav = ({ css, noHubButton = false }: { css?: CSS; noHubButton?: boolean }) => {
-  const [hasHubButtonComponent, setHasHubButtonComponent] = useState(false)
-  const { showHubButton, version } = useContext(VersionContext)
+  const { version } = useContext(VersionContext)
   const isDarkMode = useIsDarkMode()
 
   const parsedVersion = useMemo(() => {
@@ -308,91 +309,72 @@ export const TopNav = ({ css, noHubButton = false }: { css?: CSS; noHubButton?: 
     return matches ? 'v' + matches[1] : 'master'
   }, [version])
 
-  useEffect(() => {
-    if (!showHubButton) {
-      setHasHubButtonComponent(false)
-      return
-    }
-
-    if (customElements.get('hub-button-app')) {
-      setHasHubButtonComponent(true)
-      return
-    }
-
-    const scripts: HTMLScriptElement[] = []
-    const createScript = (scriptSrc: string): HTMLScriptElement => {
-      const script = document.createElement('script')
-      script.src = scriptSrc
-      script.async = true
-      script.onload = () => {
-        setHasHubButtonComponent(customElements.get('hub-button-app') !== undefined)
-      }
-      scripts.push(script)
-      return script
-    }
-
-    // Source: https://github.com/traefik/traefiklabs-hub-button-app
-    document.head.appendChild(createScript('traefiklabs-hub-button-app/main-v1.js'))
-
-    return () => {
-      // Remove the scripts on unmount.
-      scripts.forEach((script) => {
-        if (script.parentNode) {
-          script.parentNode.removeChild(script)
-        }
-      })
-    }
-  }, [showHubButton])
+  const { signatureVerified, scriptBlobUrl } = useHubUpgradeButton()
+  const displayUpgradeToHubButton = useMemo(
+    () => !noHubButton && signatureVerified && !!scriptBlobUrl,
+    [noHubButton, scriptBlobUrl, signatureVerified],
+  )
 
   return (
-    <Flex as="nav" role="navigation" justify="end" align="center" css={{ gap: '$2', mb: '$6', ...css }}>
-      {!noHubButton && hasHubButtonComponent && (
-        <Box css={{ fontFamily: '$rubik', fontWeight: '500 !important' }}>
-          <hub-button-app
-            key={`dark-mode-${isDarkMode}`}
-            style={{ backgroundColor: isDarkMode ? DARK_PRIMARY_COLOR : LIGHT_PRIMARY_COLOR, fontWeight: 'inherit' }}
+    <>
+      {displayUpgradeToHubButton && (
+        <Helmet>
+          <meta
+            httpEquiv="Content-Security-Policy"
+            content="script-src 'self' blob: 'unsafe-inline'; object-src 'none'; base-uri 'self';"
           />
-        </Box>
+          <script src={scriptBlobUrl as string} type="module"></script>
+        </Helmet>
       )}
-      <ThemeSwitcher />
+      <Flex as="nav" role="navigation" justify="end" align="center" css={{ gap: '$2', mb: '$6', ...css }}>
+        {displayUpgradeToHubButton && (
+          <Box css={{ fontFamily: '$rubik', fontWeight: '500 !important' }}>
+            <hub-button-app
+              key={`dark-mode-${isDarkMode}`}
+              style={{ backgroundColor: isDarkMode ? DARK_PRIMARY_COLOR : LIGHT_PRIMARY_COLOR, fontWeight: 'inherit' }}
+            />
+          </Box>
+        )}
+        <ThemeSwitcher />
 
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button ghost variant="secondary" css={{ px: '$2', boxShadow: 'none' }} data-testid="help-menu">
-            <FiHelpCircle size={20} />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuPortal>
-          <DropdownMenuContent align="end" css={{ zIndex: 9999 }}>
-            <DropdownMenuGroup>
-              <DropdownMenuItem css={{ height: '$6', cursor: 'pointer' }}>
-                <Link
-                  href={`https://doc.traefik.io/traefik/${parsedVersion}`}
-                  target="_blank"
-                  css={{ textDecoration: 'none', '&:hover': { textDecoration: 'none' } }}
-                >
-                  <Flex align="center" gap={2}>
-                    <FiBookOpen size={20} />
-                    <Text>Documentation</Text>
-                  </Flex>
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem css={{ height: '$6', cursor: 'pointer' }}>
-                <Link
-                  href="https://github.com/traefik/traefik/"
-                  target="_blank"
-                  css={{ textDecoration: 'none', '&:hover': { textDecoration: 'none' } }}
-                >
-                  <Flex align="center" gap={2}>
-                    <FiGithub size={20} />
-                    <Text>Github Repository</Text>
-                  </Flex>
-                </Link>
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-          </DropdownMenuContent>
-        </DropdownMenuPortal>
-      </DropdownMenu>
-    </Flex>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button ghost variant="secondary" css={{ px: '$2', boxShadow: 'none' }} data-testid="help-menu">
+              <FiHelpCircle size={20} />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuPortal>
+            <DropdownMenuContent align="end" css={{ zIndex: 9999 }}>
+              <DropdownMenuGroup>
+                <DropdownMenuItem css={{ height: '$6', cursor: 'pointer' }}>
+                  <Link
+                    href={`https://doc.traefik.io/traefik/${parsedVersion}`}
+                    target="_blank"
+                    css={{ textDecoration: 'none', '&:hover': { textDecoration: 'none' } }}
+                  >
+                    <Flex align="center" gap={2}>
+                      <FiBookOpen size={20} />
+                      <Text>Documentation</Text>
+                    </Flex>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem css={{ height: '$6', cursor: 'pointer' }}>
+                  <Link
+                    href="https://github.com/traefik/traefik/"
+                    target="_blank"
+                    css={{ textDecoration: 'none', '&:hover': { textDecoration: 'none' } }}
+                  >
+                    <Flex align="center" gap={2}>
+                      <FiGithub size={20} />
+                      <Text>Github Repository</Text>
+                    </Flex>
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenuPortal>
+        </DropdownMenu>
+      </Flex>
+    </>
   )
 }
