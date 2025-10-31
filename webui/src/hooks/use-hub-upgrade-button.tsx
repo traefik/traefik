@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from 'react'
 
 import { VersionContext } from 'contexts/version'
-import verifySignature from 'pages/hub-demo/workers/scriptVerification'
+import verifySignature from 'utils/workers/scriptVerification'
 
 const HUB_BUTTON_URL = 'https://traefik.github.io/traefiklabs-hub-button-app/main-v1.js'
 const PUBLIC_KEY = 'MCowBQYDK2VwAyEAY0OZFFE5kSuqYK6/UprTL5RmvQ+8dpPTGMCw1MiO/Gs='
