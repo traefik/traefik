@@ -24,8 +24,6 @@ const useHubUpgradeButton = () => {
           if (!verified || !content) {
             setSignatureVerified(false)
           } else {
-            setSignatureVerified(true)
-
             const blob = new Blob([content], { type: 'application/javascript' })
             const blobUrl = URL.createObjectURL(blob)
 
