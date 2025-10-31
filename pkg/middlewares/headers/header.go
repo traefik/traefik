@@ -99,13 +99,14 @@ func (s *Header) PostRequestModifyResponseHeaders(res *http.Response) error {
 		return nil
 	}
 
-	varyHeader := res.Header.Get("Vary")
-	if varyHeader == "Origin" {
+	varyHeader := strings.Join(res.Header["Vary"], ",")
+
+	if strings.Contains(varyHeader, "Origin") {
 		return nil
 	}
 
 	if varyHeader != "" {
-		varyHeader += ","
+		varyHeader += ", "
 	}
 	varyHeader += "Origin"
 
