@@ -1,9 +1,11 @@
 import { ReactNode, useEffect, useMemo, useState } from 'react'
 import { RouteObject } from 'react-router-dom'
 
+import { PUBLIC_KEY } from './constants'
+
 import HubDashboard from 'pages/hub-demo/HubDashboard'
 import { ApiIcon, DashboardIcon, GatewayIcon, PortalIcon } from 'pages/hub-demo/icons'
-import verifySignature from 'pages/hub-demo/workers/scriptVerification'
+import verifySignature from 'utils/workers/scriptVerification'
 
 const ROUTES_MANIFEST_URL = 'https://traefik.github.io/hub-ui-demo-app/config/routes.json'
 
@@ -20,7 +22,11 @@ const useHubDemoRoutesManifest = (): HubDemo.Manifest | null => {
   useEffect(() => {
     const fetchManifest = async () => {
       try {
-        const { verified, scriptContent } = await verifySignature(ROUTES_MANIFEST_URL, `${ROUTES_MANIFEST_URL}.sig`)
+        const { verified, scriptContent } = await verifySignature(
+          ROUTES_MANIFEST_URL,
+          `${ROUTES_MANIFEST_URL}.sig`,
+          PUBLIC_KEY,
+        )
 
         if (!verified || !scriptContent) {
           setManifest(null)

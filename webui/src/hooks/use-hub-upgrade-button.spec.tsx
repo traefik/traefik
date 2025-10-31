@@ -4,9 +4,9 @@ import { ReactNode } from 'react'
 import useHubUpgradeButton from './use-hub-upgrade-button'
 
 import { VersionContext } from 'contexts/version'
-import verifySignature from 'pages/hub-demo/workers/scriptVerification'
+import verifySignature from 'utils/workers/scriptVerification'
 
-vi.mock('pages/hub-demo/workers/scriptVerification')
+vi.mock('utils/workers/scriptVerification')
 
 const mockVerifySignature = vi.mocked(verifySignature)
 
