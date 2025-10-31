@@ -40,12 +40,15 @@ const useHubUpgradeButton = () => {
       verifyAndLoadScript()
 
       return () => {
-        if (scriptBlobUrl) {
-          URL.revokeObjectURL(scriptBlobUrl)
-        }
+        setScriptBlobUrl((prevUrl) => {
+          if (prevUrl) {
+            URL.revokeObjectURL(prevUrl)
+          }
+          return null
+        })
       }
     }
-  }, [scriptBlobUrl, showHubButton])
+  }, [showHubButton])
 
   return { signatureVerified, scriptBlobUrl }
 }
