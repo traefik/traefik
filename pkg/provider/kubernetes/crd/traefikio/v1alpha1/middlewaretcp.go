@@ -9,7 +9,7 @@ import (
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // MiddlewareTCP is the CRD implementation of a Traefik TCP middleware.
-// More info: https://doc.traefik.io/traefik/v3.5/reference/routing-configuration/tcp/middlewares/overview/
+// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/tcp/middlewares/overview/
 type MiddlewareTCP struct {
 	metav1.TypeMeta `json:",inline"`
 	// Standard object's metadata.
@@ -28,11 +28,11 @@ type MiddlewareTCPSpec struct {
 	// IPWhiteList defines the IPWhiteList middleware configuration.
 	// This middleware accepts/refuses connections based on the client IP.
 	// Deprecated: please use IPAllowList instead.
-	// More info: https://doc.traefik.io/traefik/v3.5/reference/routing-configuration/tcp/middlewares/ipwhitelist/
+	// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/tcp/middlewares/ipwhitelist/
 	IPWhiteList *dynamic.TCPIPWhiteList `json:"ipWhiteList,omitempty"`
 	// IPAllowList defines the IPAllowList middleware configuration.
 	// This middleware accepts/refuses connections based on the client IP.
-	// More info: https://doc.traefik.io/traefik/v3.5/reference/routing-configuration/tcp/middlewares/ipallowlist/
+	// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/tcp/middlewares/ipallowlist/
 	IPAllowList *dynamic.TCPIPAllowList `json:"ipAllowList,omitempty"`
 }
 

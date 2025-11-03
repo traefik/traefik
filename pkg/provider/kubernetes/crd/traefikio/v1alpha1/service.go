@@ -13,7 +13,7 @@ import (
 // TraefikService object allows to:
 // - Apply weight to Services on load-balancing
 // - Mirror traffic on services
-// More info: https://doc.traefik.io/traefik/v3.5/reference/routing-configuration/kubernetes/crd/http/traefikservice/
+// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/kubernetes/crd/http/traefikservice/
 type TraefikService struct {
 	metav1.TypeMeta `json:",inline"`
 	// Standard object's metadata.
@@ -51,7 +51,7 @@ type TraefikServiceSpec struct {
 // +k8s:deepcopy-gen=true
 
 // Mirroring holds the mirroring service configuration.
-// More info: https://doc.traefik.io/traefik/v3.5/reference/routing-configuration/http/load-balancing/service/#mirroring
+// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/load-balancing/service/#mirroring
 type Mirroring struct {
 	LoadBalancerSpec `json:",inline"`
 
@@ -80,19 +80,19 @@ type MirrorService struct {
 // +k8s:deepcopy-gen=true
 
 // WeightedRoundRobin holds the weighted round-robin configuration.
-// More info: https://doc.traefik.io/traefik/v3.5/reference/routing-configuration/http/load-balancing/service/#weighted-round-robin-wrr
+// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/load-balancing/service/#weighted-round-robin-wrr
 type WeightedRoundRobin struct {
 	// Services defines the list of Kubernetes Service and/or TraefikService to load-balance, with weight.
 	Services []Service `json:"services,omitempty"`
 	// Sticky defines whether sticky sessions are enabled.
-	// More info: https://doc.traefik.io/traefik/v3.5/reference/routing-configuration/kubernetes/crd/http/traefikservice/#stickiness-and-load-balancing
+	// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/kubernetes/crd/http/traefikservice/#stickiness-and-load-balancing
 	Sticky *dynamic.Sticky `json:"sticky,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
 
 // HighestRandomWeight holds the highest random weight configuration.
-// More info: https://doc.traefik.io/traefik/v3.5/routing/services/#highest-random-configuration
+// More info: https://doc.traefik.io/traefik/v3.6/routing/services/#highest-random-configuration
 type HighestRandomWeight struct {
 	// Services defines the list of Kubernetes Service and/or TraefikService to load-balance, with weight.
 	Services []Service `json:"services,omitempty"`

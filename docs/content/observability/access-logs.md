@@ -306,7 +306,7 @@ Example utilizing Docker Compose:
 ```yaml
 services:
   traefik:
-    image: traefik:v3.5
+    image: traefik:v3.6
     environment:
       - TZ=US/Alaska
     command:
