@@ -347,3 +347,128 @@ func TestProxyProtocol_SessionIsolation(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, payload2, buf[:n])
 }
+
+// TestProxyProtocolV1Rejected verifies that v1 headers are rejected for UDP.
+func TestProxyProtocolV1Rejected(t *testing.T) {
+	ppConfig := &ProxyProtocolConfig{
+		Insecure: true,
+	}
+
+	listener, clientConn := setupTestListener(t, ppConfig)
+	defer listener.Close()
+	defer clientConn.Close()
+
+	// Create a Proxy Protocol v1 header (text-based).
+	v1Header := []byte("PROXY TCP4 192.0.2.100 10.0.0.1 5000 8080\r\n")
+	payload := []byte("test-payload")
+	packet := append(v1Header, payload...)
+
+	_, err := clientConn.Write(packet)
+	require.NoError(t, err)
+
+	// Attempt to accept - should timeout as packet is dropped.
+	acceptCh := make(chan error, 1)
+	go func() {
+		_, err := listener.Accept()
+		acceptCh <- err
+	}()
+
+	select {
+	case <-acceptCh:
+		t.Fatal("Accept should not succeed for v1 header packet")
+	case <-time.After(100 * time.Millisecond):
+		// Expected: packet was dropped, no connection established.
+	}
+}
+
+// TestProxyProtocolNonUDPTypeRejected verifies that non-UDP protocol headers are rejected.
+func TestProxyProtocolNonUDPTypeRejected(t *testing.T) {
+	ppConfig := &ProxyProtocolConfig{
+		Insecure: true,
+	}
+
+	listener, clientConn := setupTestListener(t, ppConfig)
+	defer listener.Close()
+	defer clientConn.Close()
+
+	header := &proxyproto.Header{
+		Version:           2,
+		Command:           proxyproto.PROXY,
+		TransportProtocol: proxyproto.TCPv4, // TCP, not UDP
+		SourceAddr:        &net.TCPAddr{IP: net.ParseIP("192.0.2.100"), Port: 5000},
+		DestinationAddr:   &net.TCPAddr{IP: net.ParseIP("10.0.0.1"), Port: 8080},
+	}
+
+	var buf bytes.Buffer
+	_, err := header.WriteTo(&buf)
+	require.NoError(t, err)
+
+	payload := []byte("test-payload")
+	packet := append(buf.Bytes(), payload...)
+
+	_, err = clientConn.Write(packet)
+	require.NoError(t, err)
+
+	// Attempt to accept - should timeout as packet is dropped.
+	acceptCh := make(chan error, 1)
+	go func() {
+		_, err := listener.Accept()
+		acceptCh <- err
+	}()
+
+	select {
+	case <-acceptCh:
+		t.Fatal("Accept should not succeed for TCP header packet")
+	case <-time.After(100 * time.Millisecond):
+		// Expected: packet was dropped, no connection established.
+	}
+}
+
+// TestProxyProtocolCleanupOnClose verifies that connsPacketSourceToClient mapping
+// is properly cleaned up when a connection closes.
+func TestProxyProtocolCleanupOnClose(t *testing.T) {
+	ppConfig := &ProxyProtocolConfig{
+		Insecure: true,
+	}
+
+	listener, clientConn := setupTestListener(t, ppConfig)
+	defer listener.Close()
+	defer clientConn.Close()
+
+	ppHeader := buildProxyProtocolV2Header(t, "192.0.2.100", 5000, "10.0.0.1", 8080, false)
+	payload := []byte("test-payload")
+	packet := append(ppHeader, payload...)
+
+	_, err := clientConn.Write(packet)
+	require.NoError(t, err)
+
+	conn, err := listener.Accept()
+	require.NoError(t, err)
+
+	listener.connsMu.RLock()
+	clientAddrStr := listener.connsPacketSourceToClient[clientConn.LocalAddr().String()]
+	listener.connsMu.RUnlock()
+	assert.Equal(t, "192.0.2.100:5000", clientAddrStr)
+
+	buf := make([]byte, 1024)
+	n, err := conn.Read(buf)
+	require.NoError(t, err)
+	assert.Equal(t, payload, buf[:n])
+
+	err = conn.Close()
+	require.NoError(t, err)
+
+	time.Sleep(10 * time.Millisecond)
+
+	// Verify the mapping was removed.
+	listener.connsMu.RLock()
+	_, exists := listener.connsPacketSourceToClient[clientConn.LocalAddr().String()]
+	listener.connsMu.RUnlock()
+	assert.False(t, exists, "connsPacketSourceToClient should be cleaned up after connection close")
+
+	// Verify main conn map was also cleaned.
+	listener.connsMu.RLock()
+	_, exists = listener.conns["192.0.2.100:5000"]
+	listener.connsMu.RUnlock()
+	assert.False(t, exists, "conns should be cleaned up after connection close")
+}

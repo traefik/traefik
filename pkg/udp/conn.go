@@ -216,6 +216,7 @@ func (l *Listener) readLoop() {
 		packetSource := raddr
 
 		// Proxy Protocol handling.
+		var usedProxyProtocol bool
 		if l.shouldParseProxyProtocol(packetSource) {
 			header, payload, err := l.parseProxyProtocol(packet)
 			if err != nil {
@@ -228,24 +229,18 @@ func (l *Listener) readLoop() {
 			}
 
 			if header != nil {
-				// Use header's source address for session keying.
-				srcAddr, _, ok := header.UDPAddrs()
-				if ok {
-					// Record mapping of packet source to client address for subsequent packets.
-					l.connsMu.Lock()
-					l.connsPacketSourceToClient[packetSource.String()] = srcAddr.String()
-					l.connsMu.Unlock()
+				usedProxyProtocol = true
 
-					raddr = srcAddr
-					packet = payload // Use stripped payload.
-				} else {
-					// Header present but not UDP protocol, log and drop.
-					log.Debug().
-						Str("source", packetSource.String()).
-						Msg("Proxy Protocol header not UDP type, dropping packet")
-					l.readBufferPool.Put(buf)
-					continue
-				}
+				// Use header's source address for session keying.
+				srcAddr, _, _ := header.UDPAddrs()
+
+				// Record mapping of packet source to client address for subsequent packets.
+				l.connsMu.Lock()
+				l.connsPacketSourceToClient[packetSource.String()] = srcAddr.String()
+				l.connsMu.Unlock()
+
+				raddr = srcAddr
+				packet = payload // Use stripped payload.
 			} else {
 				// No header: check if this source has an existing Proxy Protocol session.
 				l.connsMu.RLock()
@@ -263,7 +258,7 @@ func (l *Listener) readLoop() {
 		}
 
 		clientAddr := raddr
-		conn, err := l.getConn(clientAddr, packetSource)
+		conn, err := l.getConn(clientAddr, packetSource, usedProxyProtocol)
 		if err != nil {
 			l.readBufferPool.Put(buf)
 			continue
@@ -313,7 +308,16 @@ func (l *Listener) parseProxyProtocol(packet []byte) (*proxyproto.Header, []byte
 		if errors.Is(err, proxyproto.ErrNoProxyProtocol) {
 			return nil, packet, nil
 		}
-		return nil, nil, fmt.Errorf("parsing proxy protocol: %w", err)
+		return nil, nil, fmt.Errorf("parsing Proxy Protocol header (packet size: %d): %w", len(packet), err)
+	}
+
+	if header.Version != 2 {
+		return nil, nil, fmt.Errorf("unsupported Proxy Protocol version %d (only v2 supported for UDP)", header.Version)
+	}
+
+	_, _, ok := header.UDPAddrs()
+	if !ok {
+		return nil, nil, fmt.Errorf("Proxy Protocol header is not UDP type (transport protocol: 0x%x)", header.TransportProtocol)
 	}
 
 	headerLen := len(packet) - reader.Buffered()
@@ -325,10 +329,10 @@ func (l *Listener) parseProxyProtocol(packet []byte) (*proxyproto.Header, []byte
 	return header, payload, nil
 }
 
-// getConn returns the ongoing session with clientAddr if it exists, or creates a new
-// one otherwise. The clientAddr is used for session keying, while responseAddr is used
+// getConn returns the ongoing session with clientAddr if it exists, or creates a new one otherwise.
+// The clientAddr is used for session keying, while responseAddr is used
 // for sending responses back to the packet source.
-func (l *Listener) getConn(clientAddr, responseAddr net.Addr) (*Conn, error) {
+func (l *Listener) getConn(clientAddr, responseAddr net.Addr, usedProxyProtocol bool) (*Conn, error) {
 	l.connsMu.Lock()
 	defer l.connsMu.Unlock()
 
@@ -340,7 +344,7 @@ func (l *Listener) getConn(clientAddr, responseAddr net.Addr) (*Conn, error) {
 	if !l.accepting {
 		return nil, errClosedListener
 	}
-	conn = l.newConn(clientAddr, responseAddr)
+	conn = l.newConn(clientAddr, responseAddr, usedProxyProtocol)
 	l.conns[clientAddr.String()] = conn
 	l.acceptCh <- conn
 	go conn.readLoop()
@@ -348,34 +352,36 @@ func (l *Listener) getConn(clientAddr, responseAddr net.Addr) (*Conn, error) {
 	return conn, nil
 }
 
-func (l *Listener) newConn(clientAddr, responseAddr net.Addr) *Conn {
+func (l *Listener) newConn(clientAddr, responseAddr net.Addr, usedProxyProtocol bool) *Conn {
 	return &Conn{
-		listener:     l,
-		clientAddr:   clientAddr,
-		responseAddr: responseAddr,
-		receiveCh:    make(chan []byte),
-		readCh:       make(chan []byte),
-		sizeCh:       make(chan int),
-		doneCh:       make(chan struct{}),
-		timeout:      l.timeout,
+		listener:          l,
+		clientAddr:        clientAddr,
+		responseAddr:      responseAddr,
+		usedProxyProtocol: usedProxyProtocol,
+		receiveCh:         make(chan []byte),
+		readCh:            make(chan []byte),
+		sizeCh:            make(chan int),
+		doneCh:            make(chan struct{}),
+		timeout:           l.timeout,
 	}
 }
 
 // Conn represents an on-going session with a client, over UDP packets.
 type Conn struct {
-	listener     *Listener
-	clientAddr   net.Addr // Client address for application logic (from Proxy Protocol header or network).
-	responseAddr net.Addr // Network address for sending responses.
+	listener          *Listener
+	clientAddr        net.Addr // Client address for application logic (from Proxy Protocol header or network).
+	responseAddr      net.Addr // Network address for sending responses.
+	usedProxyProtocol bool     // Indicates if this connection used Proxy Protocol.
 
-	receiveCh chan []byte // to receive the data from the listener's readLoop.
-	readCh    chan []byte // to receive the buffer into which we should Read.
-	sizeCh    chan int    // to synchronize with the end of a Read.
-	msgs      [][]byte    // to store data from listener, to be consumed by Reads.
+	receiveCh chan []byte // Receives data from the listener's readLoop.
+	readCh    chan []byte // Receives the buffer for Read operation.
+	sizeCh    chan int    // Synchronizes with the end of a Read operation.
+	msgs      [][]byte    // Stores data from listener to be consumed by Read calls.
 
 	muActivity   sync.RWMutex
-	lastActivity time.Time // the last time the session saw either read or write activity.
+	lastActivity time.Time // Last time the session saw read or write activity.
 
-	timeout  time.Duration // for timeouts.
+	timeout  time.Duration // Timeout for session inactivity.
 	doneOnce sync.Once
 	doneCh   chan struct{}
 }
@@ -453,6 +459,10 @@ func (c *Conn) Read(p []byte) (int, error) {
 // Each call sends at most one datagram.
 // It is an error to send a message larger than the system's max UDP datagram size.
 func (c *Conn) Write(p []byte) (n int, err error) {
+	if c.responseAddr == nil {
+		return 0, errors.New("connection has no response address")
+	}
+
 	c.muActivity.Lock()
 	c.lastActivity = time.Now()
 	c.muActivity.Unlock()
@@ -477,6 +487,12 @@ func (c *Conn) Close() error {
 
 	c.listener.connsMu.Lock()
 	defer c.listener.connsMu.Unlock()
+
 	delete(c.listener.conns, c.clientAddr.String())
+
+	if c.usedProxyProtocol {
+		delete(c.listener.connsPacketSourceToClient, c.responseAddr.String())
+	}
+
 	return nil
 }
