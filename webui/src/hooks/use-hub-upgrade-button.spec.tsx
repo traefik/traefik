@@ -124,8 +124,7 @@ describe('useHubUpgradeButton Hook', () => {
     await waitFor(() => {
       expect(URL.createObjectURL).toHaveBeenCalled()
     })
-
-    const blobCall = (URL.createObjectURL as any).mock.calls[0][0]
+    const blobCall = vi.mocked(URL.createObjectURL).mock.calls[0][0] as Blob
     expect(blobCall).toBeInstanceOf(Blob)
     expect(blobCall.type).toBe('application/javascript')
   })
