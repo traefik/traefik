@@ -954,16 +954,17 @@ func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *traef
 	}
 
 	forwardAuth := &dynamic.ForwardAuth{
-		Address:                  auth.Address,
-		TrustForwardHeader:       auth.TrustForwardHeader,
-		AuthResponseHeaders:      auth.AuthResponseHeaders,
-		AuthResponseHeadersRegex: auth.AuthResponseHeadersRegex,
-		AuthRequestHeaders:       auth.AuthRequestHeaders,
-		AddAuthCookiesToResponse: auth.AddAuthCookiesToResponse,
-		HeaderField:              auth.HeaderField,
-		ForwardBody:              auth.ForwardBody,
-		PreserveLocationHeader:   auth.PreserveLocationHeader,
-		PreserveRequestMethod:    auth.PreserveRequestMethod,
+		Address:                       auth.Address,
+		TrustForwardHeader:            auth.TrustForwardHeader,
+		AuthResponseHeaders:           auth.AuthResponseHeaders,
+		AuthResponseHeadersRegex:      auth.AuthResponseHeadersRegex,
+		AuthRequestHeaders:            auth.AuthRequestHeaders,
+		AddAuthCookiesToResponse:      auth.AddAuthCookiesToResponse,
+		AddAuthCookiesToResponseRegex: auth.AddAuthCookiesToResponseRegex,
+		HeaderField:                   auth.HeaderField,
+		ForwardBody:                   auth.ForwardBody,
+		PreserveLocationHeader:        auth.PreserveLocationHeader,
+		PreserveRequestMethod:         auth.PreserveRequestMethod,
 	}
 	forwardAuth.SetDefaults()
 

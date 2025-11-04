@@ -36,6 +36,7 @@
 - "traefik.http.middlewares.middleware09.errors.statusrewrites.name0=42"
 - "traefik.http.middlewares.middleware09.errors.statusrewrites.name1=42"
 - "traefik.http.middlewares.middleware10.forwardauth.addauthcookiestoresponse=foobar, foobar"
+- "traefik.http.middlewares.middleware10.forwardauth.addauthcookiestoresponseregex=foobar"
 - "traefik.http.middlewares.middleware10.forwardauth.address=foobar"
 - "traefik.http.middlewares.middleware10.forwardauth.authrequestheaders=foobar, foobar"
 - "traefik.http.middlewares.middleware10.forwardauth.authresponseheaders=foobar, foobar"

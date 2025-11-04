@@ -259,6 +259,8 @@ type ForwardAuth struct {
 	AuthRequestHeaders []string `json:"authRequestHeaders,omitempty" toml:"authRequestHeaders,omitempty" yaml:"authRequestHeaders,omitempty" export:"true"`
 	// AddAuthCookiesToResponse defines the list of cookies to copy from the authentication server response to the response.
 	AddAuthCookiesToResponse []string `json:"addAuthCookiesToResponse,omitempty" toml:"addAuthCookiesToResponse,omitempty" yaml:"addAuthCookiesToResponse,omitempty" export:"true"`
+	// AddAuthCookiesToResponseRegex defines the regex to match for cookies cookies to copy from the authentication server response to the response.
+	AddAuthCookiesToResponseRegex string `json:"addAuthCookiesToResponseRegex,omitempty" toml:"addAuthCookiesToResponseRegex,omitempty" yaml:"addAuthCookiesToResponseRegex,omitempty" export:"true"`
 	// HeaderField defines a header field to store the authenticated user.
 	// More info: https://doc.traefik.io/traefik/v3.6/middlewares/http/forwardauth/#headerfield
 	HeaderField string `json:"headerField,omitempty" toml:"headerField,omitempty" yaml:"headerField,omitempty" export:"true"`
