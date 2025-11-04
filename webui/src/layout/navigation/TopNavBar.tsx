@@ -11,9 +11,10 @@ import {
   Flex,
   Link,
   Text,
+  Tooltip,
 } from '@traefiklabs/faency'
 import { useContext, useEffect, useMemo, useState } from 'react'
-import { FiBookOpen, FiChevronLeft, FiGithub, FiHelpCircle } from 'react-icons/fi'
+import { FiBookOpen, FiChevronLeft, FiGithub, FiHeart, FiHelpCircle } from 'react-icons/fi'
 import { useLocation } from 'react-router-dom'
 
 import { DARK_PRIMARY_COLOR, LIGHT_PRIMARY_COLOR } from '../Page'
@@ -105,6 +106,13 @@ export const TopNav = ({ css, noHubButton = false }: { css?: CSS; noHubButton?: 
             />
           </Box>
         )}
+        <Tooltip content="Sponsor" side="bottom">
+          <Link href="https://github.com/sponsors/traefik" target="_blank">
+            <Button as="div" ghost css={{ px: '$2', boxShadow: 'none' }}>
+              <FiHeart size={20} color="#db61a2" />
+            </Button>
+          </Link>
+        </Tooltip>
         <ThemeSwitcher />
 
         <DropdownMenu>
