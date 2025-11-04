@@ -4,10 +4,10 @@ import { Helmet } from 'react-helmet-async'
 import { useLocation } from 'react-router-dom'
 
 import Container from './Container'
-import { LAPTOP_BP, SideBarPanel, SideNav, TopNav } from './Navigation'
 
 import { ToastPool } from 'components/ToastPool'
 import { ToastProvider } from 'contexts/toasts'
+import { LAPTOP_BP, SideBarPanel, SideNav, TopNav } from 'layout/navigation'
 
 export const LIGHT_PRIMARY_COLOR = '#217F97'
 export const DARK_PRIMARY_COLOR = '#2AA2C1'

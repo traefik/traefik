@@ -6,7 +6,7 @@ import { HubDemoContext } from './demoNavContext'
 import { HubIcon } from './icons'
 
 import Tooltip from 'components/Tooltip'
-import { BasicNavigationItem, LAPTOP_BP } from 'layout/Navigation'
+import { BasicNavigationItem, LAPTOP_BP } from 'layout/navigation'
 
 const ApimDemoNavMenu = ({
   isResponsive,

@@ -1,4 +1,4 @@
-import { SideNav, TopNav } from './Navigation'
+import { SideNav, TopNav } from '.'
 
 import { renderWithProviders } from 'utils/test'
 
