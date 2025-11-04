@@ -2,13 +2,17 @@ package cli
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/paerser/cli"
+	"github.com/traefik/paerser/env"
+	"github.com/traefik/paerser/file"
 	"github.com/traefik/paerser/flag"
 	"github.com/traefik/paerser/parser"
 )
@@ -17,7 +21,7 @@ type DeprecationLoader struct{}
 
 func (d DeprecationLoader) Load(args []string, cmd *cli.Command) (bool, error) {
 	if logDeprecation(cmd.Configuration, args) {
-		return true, errors.New("incompatible deprecated static option found")
+		return true, errors.New("incompatible deprecated install configuration option found")
 	}
 
 	return false, nil
@@ -39,44 +43,21 @@ func logDeprecation(traefikConfiguration interface{}, arguments []string) bool {
 		args = append(args, arg)
 	}
 
-	labels, err := flag.Parse(args, nil)
+	// Parse arguments to labels.
+	argsLabels, err := flag.Parse(args, nil)
 	if err != nil {
 		log.Error().Err(err).Msg("deprecated static options analysis failed")
 		return false
 	}
 
-	node, err := parser.DecodeToNode(labels, "traefik")
+	config, err := parseDeprecatedConfig(argsLabels)
 	if err != nil {
-		log.Error().Err(err).Msg("deprecated static options analysis failed")
+		log.Error().Err(err).Msg("Deprecated static options analysis failed")
 		return false
 	}
 
-	if node != nil && len(node.Children) > 0 {
-		config := &configuration{}
-		filterUnknownNodes(reflect.TypeOf(config), node)
-
-		if len(node.Children) > 0 {
-			// Telling parser to look for the label struct tag to allow empty values.
-			err = parser.AddMetadata(config, node, parser.MetadataOpts{TagName: "label"})
-			if err != nil {
-				log.Error().Err(err).Msg("deprecated static options analysis failed")
-				return false
-			}
-
-			err = parser.Fill(config, node, parser.FillerOpts{})
-			if err != nil {
-				log.Error().Err(err).Msg("deprecated static options analysis failed")
-				return false
-			}
-
-			if config.deprecationNotice(log.With().Str("loader", "FLAG").Logger()) {
-				return true
-			}
-
-			// No further deprecation parsing and logging,
-			// as args configuration contains at least one deprecated option.
-			return false
-		}
+	if config.deprecationNotice(log.With().Str("loader", "ENV").Logger()) {
+		return true
 	}
 
 	// FILE
@@ -91,22 +72,63 @@ func logDeprecation(traefikConfiguration interface{}, arguments []string) bool {
 		configFileFlag = "traefik.configFile"
 	}
 
-	config := &configuration{}
-	_, err = loadConfigFiles(ref[configFileFlag], config)
+	// Find the config file using the same logic as the normal file loader
+	finder := cli.Finder{
+		BasePaths:  []string{"/etc/traefik/traefik", "$XDG_CONFIG_HOME/traefik", "$HOME/.config/traefik", "./traefik"},
+		Extensions: []string{"toml", "yaml", "yml"},
+	}
 
-	if err == nil {
-		if config.deprecationNotice(log.With().Str("loader", "FILE").Logger()) {
+	filePath, err := finder.Find(ref[configFileFlag])
+	if err != nil {
+		log.Error().Err(err).Msg("deprecated static options analysis failed")
+		return false
+	}
+
+	if filePath != "" {
+		// We don't rely on the Parser file loader here to avoid issues with unknown fields.
+		// Parse file content into a generic map.
+		var fileConfig map[string]interface{}
+		if err := file.Decode(filePath, &fileConfig); err != nil {
+			log.Error().Err(err).Msg("Generic file decode also failed")
+			return false
+		}
+
+		// Convert the file config to labels format.
+		fileLabels := make(map[string]string)
+		flattenToLabels(fileConfig, "", &fileLabels)
+
+		config, err := parseDeprecatedConfig(fileLabels)
+		if err != nil {
+			log.Error().Err(err).Msg("Deprecated static options analysis failed")
+			return false
+		}
+
+		if config.deprecationNotice(log.With().Str("loader", "ENV").Logger()) {
 			return true
 		}
 	}
 
-	config = &configuration{}
-	l := EnvLoader{}
-	_, err = l.Load(os.Args, &cli.Command{
-		Configuration: config,
-	})
+	// ENV
+	vars := env.FindPrefixedEnvVars(os.Environ(), env.DefaultNamePrefix, &configuration{})
+	if len(vars) > 0 {
+		// We don't rely on the Parser env loader here to avoid issues with unknown fields.
+		// Decode environment variables to a generic map.
+		var envConfig map[string]interface{}
+		if err := env.Decode(vars, env.DefaultNamePrefix, &envConfig); err != nil {
+			log.Error().Err(err).Msg("Deprecated static options analysis failed")
+			return false
+		}
 
-	if err == nil {
+		// Convert the env config to labels format.
+		envLabels := make(map[string]string)
+		flattenToLabels(envConfig, "", &envLabels)
+
+		config, err := parseDeprecatedConfig(envLabels)
+		if err != nil {
+			log.Error().Err(err).Msg("Deprecated static options analysis failed")
+			return false
+		}
+
 		if config.deprecationNotice(log.With().Str("loader", "ENV").Logger()) {
 			return true
 		}
@@ -115,6 +137,69 @@ func logDeprecation(traefikConfiguration interface{}, arguments []string) bool {
 	return false
 }
 
+// flattenToLabels recursively flattens a nested map into label key-value pairs.
+// Example: {"experimental": {"http3": true}} -> {"traefik.experimental.http3": "true"}.
+func flattenToLabels(obj interface{}, prefix string, labels *map[string]string) {
+	switch v := obj.(type) {
+	case map[string]interface{}:
+		for key, value := range v {
+			newKey := key
+			if prefix != "" {
+				newKey = prefix + "." + key
+			}
+			flattenToLabels(value, newKey, labels)
+		}
+	case []interface{}:
+		for i, item := range v {
+			newKey := prefix + "[" + strconv.Itoa(i) + "]"
+			flattenToLabels(item, newKey, labels)
+		}
+	default:
+		// Convert value to string and create label with traefik prefix
+		valueStr := fmt.Sprintf("%v", v)
+		(*labels)["traefik."+prefix] = valueStr
+	}
+}
+
+// parseDeprecatedConfig parses command-line arguments using the deprecation configuration struct,
+// filtering unknown nodes and checking for deprecated options.
+// Returns true if incompatible deprecated options are found.
+func parseDeprecatedConfig(labels map[string]string) (*configuration, error) {
+	// If no config, we can return without error to allow other loaders to proceed.
+	if len(labels) == 0 {
+		return nil, nil
+	}
+
+	// Convert labels to node tree
+	node, err := parser.DecodeToNode(labels, "traefik")
+	if err != nil {
+		return nil, fmt.Errorf("decoding to node: %w", err)
+	}
+
+	// Filter unknown nodes and check for deprecated options
+	config := &configuration{}
+	filterUnknownNodes(reflect.TypeOf(config), node)
+
+	// If no config remains we can return without error, to allow other loaders to proceed.
+	if node == nil || len(node.Children) == 0 {
+		return nil, nil
+	}
+
+	// Telling parser to look for the label struct tag to allow empty values.
+	err = parser.AddMetadata(config, node, parser.MetadataOpts{TagName: "label"})
+	if err != nil {
+		return nil, fmt.Errorf("adding metadata to node: %w", err)
+	}
+
+	err = parser.Fill(config, node, parser.FillerOpts{})
+	if err != nil {
+		return nil, fmt.Errorf("filling configuration: %w", err)
+	}
+
+	return config, nil
+}
+
+// filterUnknownNodes removes from the node tree all nodes that do not correspond to any field in the given type.
 func filterUnknownNodes(fType reflect.Type, node *parser.Node) bool {
 	var children []*parser.Node
 	for _, child := range node.Children {
@@ -127,6 +212,7 @@ func filterUnknownNodes(fType reflect.Type, node *parser.Node) bool {
 	return len(node.Children) > 0
 }
 
+// hasKnownNodes checks whether the given node corresponds to a known field in the given type.
 func hasKnownNodes(rootType reflect.Type, node *parser.Node) bool {
 	rType := rootType
 	if rootType.Kind() == reflect.Pointer {
