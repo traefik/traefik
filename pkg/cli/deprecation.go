@@ -46,13 +46,13 @@ func logDeprecation(traefikConfiguration interface{}, arguments []string) bool {
 	// Parse arguments to labels.
 	argsLabels, err := flag.Parse(args, nil)
 	if err != nil {
-		log.Error().Err(err).Msg("deprecated static options analysis failed")
+		log.Error().Err(err).Msg("deprecated install configuration options analysis failed")
 		return false
 	}
 
 	config, err := parseDeprecatedConfig(argsLabels)
 	if err != nil {
-		log.Error().Err(err).Msg("Deprecated static options analysis failed")
+		log.Error().Err(err).Msg("Deprecated install configuration options analysis failed")
 		return false
 	}
 
@@ -63,7 +63,7 @@ func logDeprecation(traefikConfiguration interface{}, arguments []string) bool {
 	// FILE
 	ref, err := flag.Parse(args, traefikConfiguration)
 	if err != nil {
-		log.Error().Err(err).Msg("deprecated static options analysis failed")
+		log.Error().Err(err).Msg("deprecated install configuration options analysis failed")
 		return false
 	}
 
@@ -72,7 +72,7 @@ func logDeprecation(traefikConfiguration interface{}, arguments []string) bool {
 		configFileFlag = "traefik.configFile"
 	}
 
-	// Find the config file using the same logic as the normal file loader
+	// Find the config file using the same logic as the normal file loader.
 	finder := cli.Finder{
 		BasePaths:  []string{"/etc/traefik/traefik", "$XDG_CONFIG_HOME/traefik", "$HOME/.config/traefik", "./traefik"},
 		Extensions: []string{"toml", "yaml", "yml"},
@@ -80,7 +80,7 @@ func logDeprecation(traefikConfiguration interface{}, arguments []string) bool {
 
 	filePath, err := finder.Find(ref[configFileFlag])
 	if err != nil {
-		log.Error().Err(err).Msg("deprecated static options analysis failed")
+		log.Error().Err(err).Msg("deprecated install configuration options analysis failed")
 		return false
 	}
 
@@ -93,13 +93,13 @@ func logDeprecation(traefikConfiguration interface{}, arguments []string) bool {
 			return false
 		}
 
-		// Convert the file config to labels format.
+		// Convert the file config to label format.
 		fileLabels := make(map[string]string)
 		flattenToLabels(fileConfig, "", &fileLabels)
 
 		config, err := parseDeprecatedConfig(fileLabels)
 		if err != nil {
-			log.Error().Err(err).Msg("Deprecated static options analysis failed")
+			log.Error().Err(err).Msg("Deprecated install configuration options analysis failed")
 			return false
 		}
 
@@ -115,17 +115,17 @@ func logDeprecation(traefikConfiguration interface{}, arguments []string) bool {
 		// Decode environment variables to a generic map.
 		var envConfig map[string]interface{}
 		if err := env.Decode(vars, env.DefaultNamePrefix, &envConfig); err != nil {
-			log.Error().Err(err).Msg("Deprecated static options analysis failed")
+			log.Error().Err(err).Msg("Deprecated install configuration options analysis failed")
 			return false
 		}
 
-		// Convert the env config to labels format.
+		// Convert the env config to label format.
 		envLabels := make(map[string]string)
 		flattenToLabels(envConfig, "", &envLabels)
 
 		config, err := parseDeprecatedConfig(envLabels)
 		if err != nil {
-			log.Error().Err(err).Msg("Deprecated static options analysis failed")
+			log.Error().Err(err).Msg("Deprecated install configuration options analysis failed")
 			return false
 		}
 
@@ -155,7 +155,7 @@ func flattenToLabels(obj interface{}, prefix string, labels *map[string]string) 
 			flattenToLabels(item, newKey, labels)
 		}
 	default:
-		// Convert value to string and create label with traefik prefix
+		// Convert value to string and create label with traefik prefix.
 		valueStr := fmt.Sprintf("%v", v)
 		(*labels)["traefik."+prefix] = valueStr
 	}
@@ -170,13 +170,13 @@ func parseDeprecatedConfig(labels map[string]string) (*configuration, error) {
 		return nil, nil
 	}
 
-	// Convert labels to node tree
+	// Convert labels to node tree.
 	node, err := parser.DecodeToNode(labels, "traefik")
 	if err != nil {
 		return nil, fmt.Errorf("decoding to node: %w", err)
 	}
 
-	// Filter unknown nodes and check for deprecated options
+	// Filter unknown nodes and check for deprecated options.
 	config := &configuration{}
 	filterUnknownNodes(reflect.TypeOf(config), node)
 
@@ -263,7 +263,7 @@ func findTypedField(rType reflect.Type, node *parser.Node) (reflect.StructField,
 	return reflect.StructField{}, false
 }
 
-// configuration holds the static configuration removed/deprecated options.
+// configuration holds the install configuration removed/deprecated options.
 type configuration struct {
 	Core         *core          `json:"core,omitempty" toml:"core,omitempty" yaml:"core,omitempty" label:"allowEmpty" file:"allowEmpty"`
 	Experimental *experimental  `json:"experimental,omitempty" toml:"experimental,omitempty" yaml:"experimental,omitempty" label:"allowEmpty" file:"allowEmpty"`
@@ -280,7 +280,7 @@ func (c *configuration) deprecationNotice(logger zerolog.Logger) bool {
 	var incompatible bool
 	if c.Pilot != nil {
 		incompatible = true
-		logger.Error().Msg("Pilot configuration has been removed in v3, please remove all Pilot-related static configuration for Traefik to start." +
+		logger.Error().Msg("Pilot configuration has been removed in v3, please remove all Pilot-related install configuration for Traefik to start." +
 			" For more information please read the migration guide: https://doc.traefik.io/traefik/v3.5/migration/v2-to-v3/#pilot")
 	}
 
@@ -328,13 +328,13 @@ func (p *providers) deprecationNotice(logger zerolog.Logger) bool {
 
 	if p.Marathon != nil {
 		incompatible = true
-		logger.Error().Msg("Marathon provider has been removed in v3, please remove all Marathon-related static configuration for Traefik to start." +
+		logger.Error().Msg("Marathon provider has been removed in v3, please remove all Marathon-related install configuration for Traefik to start." +
 			" For more information please read the migration guide: https://doc.traefik.io/traefik/v3.5/migration/v2-to-v3/#marathon-provider")
 	}
 
 	if p.Rancher != nil {
 		incompatible = true
-		logger.Error().Msg("Rancher provider has been removed in v3, please remove all Rancher-related static configuration for Traefik to start." +
+		logger.Error().Msg("Rancher provider has been removed in v3, please remove all Rancher-related install configuration for Traefik to start." +
 			" For more information please read the migration guide: https://doc.traefik.io/traefik/v3.5/migration/v2-to-v3/#rancher-v1-provider")
 	}
 
@@ -383,7 +383,7 @@ func (d *docker) deprecationNotice(logger zerolog.Logger) bool {
 	if d.TLS != nil && d.TLS.CAOptional != nil {
 		incompatible = true
 		logger.Error().Msg("Docker provider `tls.CAOptional` option has been removed in v3, as TLS client authentication is a server side option (see https://github.com/golang/go/blob/740a490f71d026bb7d2d13cb8fa2d6d6e0572b70/src/crypto/tls/common.go#L634)." +
-			"Please remove all occurrences from the static configuration for Traefik to start." +
+			"Please remove all occurrences from the install configuration for Traefik to start." +
 			"For more information please read the migration guide: https://doc.traefik.io/traefik/v3.5/migration/v2-to-v3/#tlscaoptional")
 	}
 
@@ -404,7 +404,7 @@ func (s *swarm) deprecationNotice(logger zerolog.Logger) bool {
 	if s.TLS != nil && s.TLS.CAOptional != nil {
 		incompatible = true
 		logger.Error().Msg("Swarm provider `tls.CAOptional` option does not exist, as TLS client authentication is a server side option (see https://github.com/golang/go/blob/740a490f71d026bb7d2d13cb8fa2d6d6e0572b70/src/crypto/tls/common.go#L634)." +
-			"Please remove all occurrences from the static configuration for Traefik to start.")
+			"Please remove all occurrences from the install configuration for Traefik to start.")
 	}
 
 	return incompatible
@@ -424,7 +424,7 @@ func (e *etcd) deprecationNotice(logger zerolog.Logger) bool {
 	if e.TLS != nil && e.TLS.CAOptional != nil {
 		incompatible = true
 		logger.Error().Msg("ETCD provider `tls.CAOptional` option has been removed in v3, as TLS client authentication is a server side option (see https://github.com/golang/go/blob/740a490f71d026bb7d2d13cb8fa2d6d6e0572b70/src/crypto/tls/common.go#L634)." +
-			"Please remove all occurrences from the static configuration for Traefik to start." +
+			"Please remove all occurrences from the install configuration for Traefik to start." +
 			"For more information please read the migration guide: https://doc.traefik.io/traefik/v3.5/migration/v2-to-v3/#tlscaoptional_3")
 	}
 
@@ -445,7 +445,7 @@ func (r *redis) deprecationNotice(logger zerolog.Logger) bool {
 	if r.TLS != nil && r.TLS.CAOptional != nil {
 		incompatible = true
 		logger.Error().Msg("Redis provider `tls.CAOptional` option has been removed in v3, as TLS client authentication is a server side option (see https://github.com/golang/go/blob/740a490f71d026bb7d2d13cb8fa2d6d6e0572b70/src/crypto/tls/common.go#L634)." +
-			"Please remove all occurrences from the static configuration for Traefik to start." +
+			"Please remove all occurrences from the install configuration for Traefik to start." +
 			"For more information please read the migration guide: https://doc.traefik.io/traefik/v3.5/migration/v2-to-v3/#tlscaoptional_4")
 	}
 
@@ -473,7 +473,7 @@ func (c *consul) deprecationNotice(logger zerolog.Logger) bool {
 	if c.TLS != nil && c.TLS.CAOptional != nil {
 		incompatible = true
 		logger.Error().Msg("Consul provider `tls.CAOptional` option has been removed in v3, as TLS client authentication is a server side option (see https://github.com/golang/go/blob/740a490f71d026bb7d2d13cb8fa2d6d6e0572b70/src/crypto/tls/common.go#L634)." +
-			"Please remove all occurrences from the static configuration for Traefik to start." +
+			"Please remove all occurrences from the install configuration for Traefik to start." +
 			"For more information please read the migration guide: https://doc.traefik.io/traefik/v3.5/migration/v2-to-v3/#tlscaoptional_1")
 	}
 
@@ -505,7 +505,7 @@ func (c *consulCatalog) deprecationNotice(logger zerolog.Logger) bool {
 	if c.Endpoint != nil && c.Endpoint.TLS != nil && c.Endpoint.TLS.CAOptional != nil {
 		incompatible = true
 		logger.Error().Msg("ConsulCatalog provider `tls.CAOptional` option has been removed in v3, as TLS client authentication is a server side option (see https://github.com/golang/go/blob/740a490f71d026bb7d2d13cb8fa2d6d6e0572b70/src/crypto/tls/common.go#L634)." +
-			"Please remove all occurrences from the static configuration for Traefik to start." +
+			"Please remove all occurrences from the install configuration for Traefik to start." +
 			"For more information please read the migration guide: https://doc.traefik.io/traefik/v3.5/migration/v2-to-v3/#endpointtlscaoptional")
 	}
 
@@ -533,7 +533,7 @@ func (n *nomad) deprecationNotice(logger zerolog.Logger) bool {
 	if n.Endpoint != nil && n.Endpoint.TLS != nil && n.Endpoint.TLS.CAOptional != nil {
 		incompatible = true
 		logger.Error().Msg("Nomad provider `tls.CAOptional` option has been removed in v3, as TLS client authentication is a server side option (see https://github.com/golang/go/blob/740a490f71d026bb7d2d13cb8fa2d6d6e0572b70/src/crypto/tls/common.go#L634)." +
-			"Please remove all occurrences from the static configuration for Traefik to start." +
+			"Please remove all occurrences from the install configuration for Traefik to start." +
 			"For more information please read the migration guide: https://doc.traefik.io/traefik/v3.5/migration/v2-to-v3/#endpointtlscaoptional_1")
 	}
 
@@ -554,7 +554,7 @@ func (h *http) deprecationNotice(logger zerolog.Logger) bool {
 	if h.TLS != nil && h.TLS.CAOptional != nil {
 		incompatible = true
 		logger.Error().Msg("HTTP provider `tls.CAOptional` option has been removed in v3, as TLS client authentication is a server side option (see https://github.com/golang/go/blob/740a490f71d026bb7d2d13cb8fa2d6d6e0572b70/src/crypto/tls/common.go#L634)." +
-			"Please remove all occurrences from the static configuration for Traefik to start." +
+			"Please remove all occurrences from the install configuration for Traefik to start." +
 			"For more information please read the migration guide: https://doc.traefik.io/traefik/v3.5/migration/v2-to-v3/#tlscaoptional_2")
 	}
 
@@ -589,7 +589,7 @@ func (e *experimental) deprecationNotice(logger zerolog.Logger) bool {
 
 	if e.HTTP3 != nil {
 		logger.Error().Msg("HTTP3 is not an experimental feature in v3 and the associated enablement has been removed." +
-			"Please remove its usage from the static configuration for Traefik to start." +
+			"Please remove its usage from the install configuration for Traefik to start." +
 			"For more information please read the migration guide: https://doc.traefik.io/traefik/v3.5/migration/v2-to-v3-details/#http3")
 
 		return true
@@ -597,7 +597,7 @@ func (e *experimental) deprecationNotice(logger zerolog.Logger) bool {
 
 	if e.KubernetesGateway != nil {
 		logger.Error().Msg("KubernetesGateway provider is not an experimental feature starting with v3.1." +
-			"Please remove its usage from the static configuration." +
+			"Please remove its usage from the install configuration." +
 			"For more information please read the migration guide: https://doc.traefik.io/traefik/v3.5/migration/v3/#gateway-api-kubernetesgateway-provider")
 	}
 
@@ -638,42 +638,42 @@ func (t *tracing) deprecationNotice(logger zerolog.Logger) bool {
 
 	if t.Jaeger != nil {
 		incompatible = true
-		logger.Error().Msg("Jaeger Tracing backend has been removed in v3, please remove all Jaeger-related Tracing static configuration for Traefik to start." +
+		logger.Error().Msg("Jaeger Tracing backend has been removed in v3, please remove all Jaeger-related Tracing install configuration for Traefik to start." +
 			"In v3, Open Telemetry replaces specific tracing backend implementations, and an collector/exporter can be used to export metrics in a vendor specific format." +
 			"For more information please read the migration guide: https://doc.traefik.io/traefik/v3.5/migration/v2-to-v3/#tracing")
 	}
 
 	if t.Zipkin != nil {
 		incompatible = true
-		logger.Error().Msg("Zipkin Tracing backend has been removed in v3, please remove all Zipkin-related Tracing static configuration for Traefik to start." +
+		logger.Error().Msg("Zipkin Tracing backend has been removed in v3, please remove all Zipkin-related Tracing install configuration for Traefik to start." +
 			"In v3, Open Telemetry replaces specific tracing backend implementations, and an collector/exporter can be used to export metrics in a vendor specific format." +
 			"For more information please read the migration guide: https://doc.traefik.io/traefik/v3.5/migration/v2-to-v3/#tracing")
 	}
 
 	if t.Datadog != nil {
 		incompatible = true
-		logger.Error().Msg("Datadog Tracing backend has been removed in v3, please remove all Datadog-related Tracing static configuration for Traefik to start." +
+		logger.Error().Msg("Datadog Tracing backend has been removed in v3, please remove all Datadog-related Tracing install configuration for Traefik to start." +
 			"In v3, Open Telemetry replaces specific tracing backend implementations, and an collector/exporter can be used to export metrics in a vendor specific format." +
 			"For more information please read the migration guide: https://doc.traefik.io/traefik/v3.5/migration/v2-to-v3/#tracing")
 	}
 
 	if t.Instana != nil {
 		incompatible = true
-		logger.Error().Msg("Instana Tracing backend has been removed in v3, please remove all Instana-related Tracing static configuration for Traefik to start." +
+		logger.Error().Msg("Instana Tracing backend has been removed in v3, please remove all Instana-related Tracing install configuration for Traefik to start." +
 			"In v3, Open Telemetry replaces specific tracing backend implementations, and an collector/exporter can be used to export metrics in a vendor specific format." +
 			"For more information please read the migration guide: https://doc.traefik.io/traefik/v3.5/migration/v2-to-v3/#tracing")
 	}
 
 	if t.Haystack != nil {
 		incompatible = true
-		logger.Error().Msg("Haystack Tracing backend has been removed in v3, please remove all Haystack-related Tracing static configuration for Traefik to start." +
+		logger.Error().Msg("Haystack Tracing backend has been removed in v3, please remove all Haystack-related Tracing install configuration for Traefik to start." +
 			"In v3, Open Telemetry replaces specific tracing backend implementations, and an collector/exporter can be used to export metrics in a vendor specific format." +
 			"For more information please read the migration guide: https://doc.traefik.io/traefik/v3.5/migration/v2-to-v3/#tracing")
 	}
 
 	if t.Elastic != nil {
 		incompatible = true
-		logger.Error().Msg("Elastic Tracing backend has been removed in v3, please remove all Elastic-related Tracing static configuration for Traefik to start." +
+		logger.Error().Msg("Elastic Tracing backend has been removed in v3, please remove all Elastic-related Tracing install configuration for Traefik to start." +
 			"In v3, Open Telemetry replaces specific tracing backend implementations, and an collector/exporter can be used to export metrics in a vendor specific format." +
 			"For more information please read the migration guide: https://doc.traefik.io/traefik/v3.5/migration/v2-to-v3/#tracing")
 	}
