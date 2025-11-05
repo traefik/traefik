@@ -26,11 +26,11 @@ func (r RoutingConfigLoader) Load(arguments []string, _ *cli.Command) (bool, err
 	return false, nil
 }
 
-// logDeprecations prints deprecation hints and returns whether incompatible deprecated options need to be removed.
+// warnForRoutingConfig prints warnings when routing configuration is found in install configuration.
 func warnForRoutingConfig(arguments []string) error {
 	// This part doesn't handle properly a flag defined like this: --accesslog true
 	// where `true` could be considered as a new argument.
-	// This is not really an issue with the deprecation loader since it will filter the unknown nodes later in this function.
+	// This is not really an issue with this loader since it will filter the unknown nodes later in this function.
 	var args []string
 	for _, arg := range arguments {
 		if !strings.Contains(arg, "=") {
@@ -49,7 +49,7 @@ func warnForRoutingConfig(arguments []string) error {
 
 	config, err := parseRoutingConfig(argsLabels)
 	if err != nil {
-		return fmt.Errorf("parsing deprecated config from args: %w", err)
+		return fmt.Errorf("parsing routing config from args: %w", err)
 	}
 
 	// Check for routing configuration elements and warn.
@@ -86,7 +86,7 @@ func warnForRoutingConfig(arguments []string) error {
 
 		config, err := parseRoutingConfig(fileLabels)
 		if err != nil {
-			return fmt.Errorf("parsing deprecated config from file: %w", err)
+			return fmt.Errorf("parsing routing config from file: %w", err)
 		}
 
 		// Check if this is a self-reference scenario by examining the file provider configuration.
@@ -116,7 +116,7 @@ func warnForRoutingConfig(arguments []string) error {
 
 		config, err := parseRoutingConfig(envLabels)
 		if err != nil {
-			return fmt.Errorf("parsing deprecated config from environment variables: %w", err)
+			return fmt.Errorf("parsing routin config from environment variables: %w", err)
 		}
 
 		// Check for routing configuration elements and warn.
@@ -126,9 +126,8 @@ func warnForRoutingConfig(arguments []string) error {
 	return nil
 }
 
-// parseRoutingConfig parses command-line arguments using the deprecation configuration struct,
-// filtering unknown nodes and checking for deprecated options.
-// Returns true if incompatible deprecated options are found.
+// parseRoutingConfig parses command-line arguments using the routing configuration struct,
+// filtering unknown nodes and checking for routing options.
 func parseRoutingConfig(labels map[string]string) (*routingConfiguration, error) {
 	// If no config, we can return without error to allow other loaders to proceed.
 	if len(labels) == 0 {
@@ -141,7 +140,7 @@ func parseRoutingConfig(labels map[string]string) (*routingConfiguration, error)
 		return nil, fmt.Errorf("decoding to node: %w", err)
 	}
 
-	// Filter unknown nodes and check for deprecated options.
+	// Filter unknown nodes.
 	config := &routingConfiguration{}
 	filterUnknownNodes(reflect.TypeOf(config), node)
 
@@ -209,16 +208,16 @@ func isSameFile(path1, path2 string) bool {
 
 // routingConfiguration holds potential routing configuration elements that might be misplaced in the install config.
 type routingConfiguration struct {
-	HTTP      map[string]interface{} `json:"http,omitempty" toml:"http,omitempty" yaml:"http,omitempty" label:"allowEmpty" file:"allowEmpty"`
-	TCP       map[string]interface{} `json:"tcp,omitempty" toml:"tcp,omitempty" yaml:"tcp,omitempty" label:"allowEmpty" file:"allowEmpty"`
-	UDP       map[string]interface{} `json:"udp,omitempty" toml:"udp,omitempty" yaml:"udp,omitempty" label:"allowEmpty" file:"allowEmpty"`
-	TLS       map[string]interface{} `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty"`
-	Providers *providersConfig       `json:"providers,omitempty" toml:"providers,omitempty" yaml:"providers,omitempty" label:"allowEmpty" file:"allowEmpty"`
+	HTTP      map[string]interface{} `json:"http,omitempty" toml:"http,omitempty" yaml:"http,omitempty"`
+	TCP       map[string]interface{} `json:"tcp,omitempty" toml:"tcp,omitempty" yaml:"tcp,omitempty"`
+	UDP       map[string]interface{} `json:"udp,omitempty" toml:"udp,omitempty" yaml:"udp,omitempty"`
+	TLS       map[string]interface{} `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty"`
+	Providers *providersConfig       `json:"providers,omitempty" toml:"providers,omitempty" yaml:"providers,omitempty"`
 }
 
 // providersConfig holds provider configuration for self-reference detection.
 type providersConfig struct {
-	File *fileProviderConfig `json:"file,omitempty" toml:"file,omitempty" yaml:"file,omitempty" label:"allowEmpty" file:"allowEmpty"`
+	File *fileProviderConfig `json:"file,omitempty" toml:"file,omitempty" yaml:"file,omitempty"`
 }
 
 // fileProviderConfig holds file provider configuration.
@@ -233,26 +232,26 @@ func (c *routingConfiguration) checkRoutingElements(logger zerolog.Logger) {
 	}
 
 	if c.HTTP != nil {
-		logger.Error().Msg("Found 'http' routing configuration in install configuration. " +
-			"Please note that this configuration will be ignored. " +
-			"See https://doc.traefik.io/traefik/getting-started/configuration-overview/")
+		logger.Error().Msg("Found 'http' routing configuration in install configuration." +
+			" Please note that this configuration will be ignored." +
+			" See https://doc.traefik.io/traefik/getting-started/configuration-overview/")
 	}
 
 	if c.TCP != nil {
-		logger.Error().Msg("Found 'tcp' routing configuration in install configuration. " +
-			"Please note that this configuration will be ignored. " +
-			"See https://doc.traefik.io/traefik/getting-started/configuration-overview/")
+		logger.Error().Msg("Found 'tcp' routing configuration in install configuration." +
+			" Please note that this configuration will be ignored." +
+			" See https://doc.traefik.io/traefik/getting-started/configuration-overview/")
 	}
 
 	if c.UDP != nil {
-		logger.Error().Msg("Found 'udp' routing configuration in install configuration. " +
-			"Please note that this configuration will be ignored. " +
-			"See https://doc.traefik.io/traefik/getting-started/configuration-overview/")
+		logger.Error().Msg("Found 'udp' routing configuration in install configuration." +
+			" Please note that this configuration will be ignored." +
+			" See https://doc.traefik.io/traefik/getting-started/configuration-overview/")
 	}
 
 	if c.TLS != nil {
-		logger.Error().Msg("Found 'tls' routing configuration in install configuration. " +
-			"Please note that this configuration will be ignored. " +
-			"See https://doc.traefik.io/traefik/getting-started/configuration-overview/")
+		logger.Error().Msg("Found 'tls' routing configuration in install configuration." +
+			" Please note that this configuration will be ignored." +
+			" See https://doc.traefik.io/traefik/getting-started/configuration-overview/")
 	}
 }
