@@ -190,16 +190,16 @@ func isSameFile(path1, path2 string) bool {
 		return false
 	}
 
-	// Clean paths first to handle redundant separators and . and .. elements
+	// Clean paths first to handle redundant separators and . and .. elements.
 	clean1 := filepath.Clean(path1)
 	clean2 := filepath.Clean(path2)
 
-	// Convert cleaned paths to absolute paths for comparison
+	// Convert cleaned paths to absolute paths for comparison.
 	abs1, err1 := filepath.Abs(clean1)
 	abs2, err2 := filepath.Abs(clean2)
 
 	if err1 != nil || err2 != nil {
-		// Fallback to cleaned path comparison if absolute path resolution fails
+		// Fallback to cleaned path comparison if absolute path resolution fails.
 		return clean1 == clean2
 	}
 
