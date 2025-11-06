@@ -123,7 +123,7 @@ describe('useRouterReturnTo', () => {
     })
 
     expect(result.current.returnTo).toBeNull()
-    expect(result.current.returnToLabel).toBe('Null undefined')
+    expect(result.current.returnToLabel).toBeNull()
   })
 
   it('should extract returnTo from query params', () => {
@@ -164,7 +164,7 @@ describe('useRouterReturnTo', () => {
     })
 
     expect(result.current.returnTo).toBe('/')
-    expect(result.current.returnToLabel).toBe('Null undefined')
+    expect(result.current.returnToLabel).toBe('Back')
   })
 
   it('should handle returnTo with query params', () => {
@@ -174,6 +174,57 @@ describe('useRouterReturnTo', () => {
 
     expect(result.current.returnTo).toContain('/http/routers')
     expect(result.current.returnToLabel).toBe('HTTP routers')
+  })
+
+  it('should strip query params from path when generating label', () => {
+    const { result } = renderHook(() => useRouterReturnTo(), {
+      wrapper: createWrapper('/current?returnTo=/http/routers?filter=test&status=active'),
+    })
+
+    expect(result.current.returnToLabel).toBe('HTTP routers')
+    expect(result.current.returnToLabel).not.toContain('filter')
+    expect(result.current.returnToLabel).not.toContain('status')
+  })
+
+  it('should strip query params from subpath when generating label', () => {
+    const { result } = renderHook(() => useRouterReturnTo(), {
+      wrapper: createWrapper('/current?returnTo=/tcp/services?page=2'),
+    })
+
+    expect(result.current.returnToLabel).toBe('TCP services')
+  })
+
+  it('should handle query params with multiple question marks gracefully', () => {
+    const { result } = renderHook(() => useRouterReturnTo(), {
+      wrapper: createWrapper('/current?returnTo=/http/routers?filter=test?extra=param'),
+    })
+
+    // Should handle edge case with multiple question marks (invalid URL but should not crash)
+    expect(result.current.returnToLabel).toBe('HTTP routers')
+  })
+
+  it('should handle path with query params but no subpath', () => {
+    const { result } = renderHook(() => useRouterReturnTo(), {
+      wrapper: createWrapper('/current?returnTo=/http?foo=bar'),
+    })
+
+    expect(result.current.returnToLabel).toBe('Http')
+  })
+
+  it('should handle empty query string (path ending with ?)', () => {
+    const { result } = renderHook(() => useRouterReturnTo(), {
+      wrapper: createWrapper('/current?returnTo=/tcp/middlewares?'),
+    })
+
+    expect(result.current.returnToLabel).toBe('TCP middlewares')
+  })
+
+  it('should handle complex query strings with special characters', () => {
+    const { result } = renderHook(() => useRouterReturnTo(), {
+      wrapper: createWrapper('/current?returnTo=/http/services?filter=%40test%23special'),
+    })
+
+    expect(result.current.returnToLabel).toBe('HTTP services')
   })
 
   it('should capitalize first letter of label override', () => {
