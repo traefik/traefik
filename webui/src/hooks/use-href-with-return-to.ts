@@ -65,6 +65,11 @@ type UseRouterReturnTo = (initialReturnTo?: string) => {
   returnToLabel: string | null
 }
 
+const getCleanPath = (path: string) => {
+  if (!path) return ''
+  return path.split('?')[0]
+}
+
 export const useRouterReturnTo: UseRouterReturnTo = () => {
   const [searchParams] = useSearchParams()
 
@@ -76,19 +81,30 @@ export const useRouterReturnTo: UseRouterReturnTo = () => {
   const returnToHref = useHref(returnTo || '')
 
   const returnToLabel = useMemo(() => {
-    const returnToArr = returnTo?.split('/') || []
+    if (!returnTo) {
+      return null
+    }
 
-    const [, parent, nested, id] = returnToArr
+    const returnToArr = returnTo.split('/')
 
-    // Strip query params from nested path
-    const nestedClean = nested?.split('?')[0]
+    const [, path, subpath, id] = returnToArr
 
-    const fallbackLabel = `${capitalizeFirstLetter(parent)} ${nestedClean}`
+    // Strip query params from path, if any
+    const cleanPath = getCleanPath(path)
+    const cleanSubpath = getCleanPath(subpath)
+
+    // Malformed returnTo (e.g., just '/' or empty path)
+    if (!cleanPath) {
+      return 'Back'
+    }
+
+    const fallbackLabel = `${capitalizeFirstLetter(cleanPath)}${cleanSubpath ? ` ${cleanSubpath}` : ''}`
 
     const labelArray = id ? RETURN_TO_LABEL_OVERRIDES_SINGULAR : RETURN_TO_LABEL_OVERRIDES_PLURAL
 
     const labelOverride =
-      labelArray[parent]?.[nestedClean] ?? (typeof labelArray[parent] === 'string' ? labelArray[parent] : fallbackLabel)
+      labelArray[cleanPath]?.[cleanSubpath] ??
+      (typeof labelArray[cleanPath] === 'string' ? labelArray[cleanPath] : fallbackLabel)
 
     return capitalizeFirstLetter(labelOverride)
   }, [returnTo])
