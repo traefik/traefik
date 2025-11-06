@@ -79,12 +79,16 @@ export const useRouterReturnTo: UseRouterReturnTo = () => {
     const returnToArr = returnTo?.split('/') || []
 
     const [, parent, nested, id] = returnToArr
-    const fallbackLabel = `${capitalizeFirstLetter(parent)} ${nested}`
+
+    // Strip query params from nested path
+    const nestedClean = nested?.split('?')[0]
+
+    const fallbackLabel = `${capitalizeFirstLetter(parent)} ${nestedClean}`
 
     const labelArray = id ? RETURN_TO_LABEL_OVERRIDES_SINGULAR : RETURN_TO_LABEL_OVERRIDES_PLURAL
 
     const labelOverride =
-      labelArray[parent]?.[nested] ?? (typeof labelArray[parent] === 'string' ? labelArray[parent] : fallbackLabel)
+      labelArray[parent]?.[nestedClean] ?? (typeof labelArray[parent] === 'string' ? labelArray[parent] : fallbackLabel)
 
     return capitalizeFirstLetter(labelOverride)
   }, [returnTo])
