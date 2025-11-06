@@ -86,10 +86,7 @@ export const useRouterReturnTo: UseRouterReturnTo = () => {
     const labelOverride =
       labelArray[parent]?.[nested] ?? (typeof labelArray[parent] === 'string' ? labelArray[parent] : fallbackLabel)
 
-    // remove query, if any
-    const displayedLabel = labelOverride?.includes('?') ? labelOverride.split('?')[0] : labelOverride
-
-    return capitalizeFirstLetter(displayedLabel)
+    return capitalizeFirstLetter(labelOverride)
   }, [returnTo])
 
   return useMemo(
