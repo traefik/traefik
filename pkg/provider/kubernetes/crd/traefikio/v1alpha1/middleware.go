@@ -173,7 +173,7 @@ type ForwardAuth struct {
 	TLS *ClientTLSWithCAOptional `json:"tls,omitempty"`
 	// AddAuthCookiesToResponse defines the list of cookies to copy from the authentication server response to the response.
 	AddAuthCookiesToResponse []string `json:"addAuthCookiesToResponse,omitempty"`
-	// AddAuthCookiesToResponseRegex defines the regex to match for cookies cookies to copy from the authentication server response to the response.
+	// AddAuthCookiesToResponseRegex defines a regex pattern used to match cookies to copy from the authentication server response to the response.
 	AddAuthCookiesToResponseRegex string `json:"addAuthCookiesToResponseRegex,omitempty"`
 	// HeaderField defines a header field to store the authenticated user.
 	// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/middlewares/forwardauth/#headerfield
