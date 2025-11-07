@@ -288,7 +288,7 @@ type ClientTLS struct {
 // This middleware compresses responses before sending them to the client, using gzip, brotli, or zstd compression.
 // More info: https://doc.traefik.io/traefik/v3.5/reference/routing-configuration/http/middlewares/compress/
 type Compress struct {
-	// ExcludedContentTypes defines the list of content types to compare the Content-Type header of the incoming requests and responses before compressing.
+	// ExcludedContentTypes defines the list of content types to compare the Content-Type header of the responses before compressing.
 	// `application/grpc` is always excluded.
 	ExcludedContentTypes []string `json:"excludedContentTypes,omitempty"`
 	// IncludedContentTypes defines the list of content types to compare the Content-Type header of the responses before compressing.
