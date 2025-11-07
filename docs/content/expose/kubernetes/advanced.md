@@ -672,8 +672,7 @@ spec:
     kind: Rule
     middlewares:
     - name: auth-headers
-  tls: {}
-  # Note: No services defined - this is a parent IngressRoute
+  # Note: No services and no TLS config - this is a parent IngressRoute
 ---
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
