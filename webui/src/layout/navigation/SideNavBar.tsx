@@ -132,7 +132,7 @@ export const SideNav = ({
   const [isSmallScreen, setIsSmallScreen] = useState(false)
 
   useEffect(() => {
-    setIsSmallScreen(isResponsive && windowSize.width < LAPTOP_BP)
+    setIsSmallScreen(isResponsive && windowSize.width <= LAPTOP_BP)
   }, [isExpanded, isResponsive, windowSize.width])
 
   const totalValueByPath = useMemo<{ [key: string]: number }>(
