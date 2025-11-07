@@ -1,3 +1,67 @@
+## [v3.6.0](https://github.com/traefik/traefik/tree/v3.6.0) (2025-11-07)
+[All Commits](https://github.com/traefik/traefik/compare/v3.5.0-rc1...v3.6.0)
+
+**Enhancements:**
+- **[acme]** Add new certificatesresolvers options ([#11977](https://github.com/traefik/traefik/pull/11977) by [ldez](https://github.com/ldez))
+- **[consul,consulcatalog,nomad]** Log provider namespace during startup ([#12002](https://github.com/traefik/traefik/pull/12002) by [shreealt](https://github.com/shreealt))
+- **[docker]** Allow discovering non-running Docker containers  ([#10645](https://github.com/traefik/traefik/pull/10645) by [acouvreur](https://github.com/acouvreur))
+- **[ecs]** AWS ECS IPv6 Support ([#12179](https://github.com/traefik/traefik/pull/12179) by [wizbit](https://github.com/wizbit))
+- **[file,k8s/crd,service]** Add least time load balancing strategy ([#12167](https://github.com/traefik/traefik/pull/12167) by [sdelicata](https://github.com/sdelicata))
+- **[healthcheck,tcp]** Add TCP Healthcheck ([#11238](https://github.com/traefik/traefik/pull/11238) by [ddtmachado](https://github.com/ddtmachado))
+- **[healthcheck]** Add passive health checks ([#11351](https://github.com/traefik/traefik/pull/11351) by [Nelwhix](https://github.com/Nelwhix))
+- **[k8s/crd]** Add highest random weight in Kubernetes CRD ([#12061](https://github.com/traefik/traefik/pull/12061) by [lbenguigui](https://github.com/lbenguigui))
+- **[k8s/gatewayapi]** Bump sigs.k8s.io/gateway-api to v1.4.0 ([#12140](https://github.com/traefik/traefik/pull/12140) by [kevinpollet](https://github.com/kevinpollet))
+- **[k8s/ingress]** Allow publishing services with type ExternalName ([#12065](https://github.com/traefik/traefik/pull/12065) by [james-callahan](https://github.com/james-callahan))
+- **[k8s]** Add Knative provider ([#11448](https://github.com/traefik/traefik/pull/11448) by [idurgakalyan](https://github.com/idurgakalyan))
+- **[middleware,authentication]** Add warning when maxBodySize is not set ([#12085](https://github.com/traefik/traefik/pull/12085) by [kianelbo](https://github.com/kianelbo))
+- **[middleware,server]** Multi-layer routing ([#12130](https://github.com/traefik/traefik/pull/12130) by [sdelicata](https://github.com/sdelicata))
+- **[plugins]** Support syscall ([#11939](https://github.com/traefik/traefik/pull/11939) by [david-garcia-garcia](https://github.com/david-garcia-garcia))
+- **[server]** Implement HTTP2 HPACK table size options ([#12050](https://github.com/traefik/traefik/pull/12050) by [GCHQDeveloper548](https://github.com/GCHQDeveloper548))
+- **[service,udp]** Avoid allocations in readLoop by using sync.Pool ([#12029](https://github.com/traefik/traefik/pull/12029) by [arturmelanchyk](https://github.com/arturmelanchyk))
+- **[service]** Add HighestRandomWeight load balancing algorithm ([#9946](https://github.com/traefik/traefik/pull/9946) by [mathieuHa](https://github.com/mathieuHa))
+- **[webui]** Add Traefik Hub demo in dashboard ([#12193](https://github.com/traefik/traefik/pull/12193) by [gndz07](https://github.com/gndz07))
+- **[webui]** Reduce vertical padding in dashboard table rows for more compact layout ([#12145](https://github.com/traefik/traefik/pull/12145) by [leccelecce](https://github.com/leccelecce))
+
+**Bug fixes:**
+- **[server]** Make the aggregator compute provider namespace for router&#39;s parentRefs ([#12235](https://github.com/traefik/traefik/pull/12235) by [rtribotte](https://github.com/rtribotte))
+
+**Documentation:**
+- Prepare release v3.6.0-rc1 ([#12211](https://github.com/traefik/traefik/pull/12211) by [kevinpollet](https://github.com/kevinpollet))
+- Fix broken link to migration guide on readme ([#12021](https://github.com/traefik/traefik/pull/12021) by [0slb](https://github.com/0slb))
+- Fix broken links in TCP Service and HTTP Router documentation ([#12215](https://github.com/traefik/traefik/pull/12215) by [sheddy-traefik](https://github.com/sheddy-traefik))
+- Fix typo in v3.6 migration guide ([#12212](https://github.com/traefik/traefik/pull/12212) by [jnoordsij](https://github.com/jnoordsij))
+
+**Misc:**
+- Merge branch v3.5 into master ([#12210](https://github.com/traefik/traefik/pull/12210) by [rtribotte](https://github.com/rtribotte))
+- Merge branch v3.5 into master ([#12191](https://github.com/traefik/traefik/pull/12191) by [rtribotte](https://github.com/rtribotte))
+- Merge branch v3.5 into master ([#12188](https://github.com/traefik/traefik/pull/12188) by [rtribotte](https://github.com/rtribotte))
+- Merge branch v3.5 into master ([#12160](https://github.com/traefik/traefik/pull/12160) by [rtribotte](https://github.com/rtribotte))
+- Merge branch v3.5 into master ([#12136](https://github.com/traefik/traefik/pull/12136) by [kevinpollet](https://github.com/kevinpollet))
+- Merge branch v3.5 into master ([#12120](https://github.com/traefik/traefik/pull/12120) by [rtribotte](https://github.com/rtribotte))
+- Merge branch v3.5 into master ([#12095](https://github.com/traefik/traefik/pull/12095) by [kevinpollet](https://github.com/kevinpollet))
+- Merge branch v3.5 into master ([#12051](https://github.com/traefik/traefik/pull/12051) by [rtribotte](https://github.com/rtribotte))
+- Merge branch v3.5 into master ([#11976](https://github.com/traefik/traefik/pull/11976) by [kevinpollet](https://github.com/kevinpollet))
+- Merge branch v3.5 into master ([#11940](https://github.com/traefik/traefik/pull/11940) by [kevinpollet](https://github.com/kevinpollet))
+- Merge branch v3.5 into master ([#11900](https://github.com/traefik/traefik/pull/11900) by [kevinpollet](https://github.com/kevinpollet))
+- Merge branch v3.5 into v3.6 ([#12242](https://github.com/traefik/traefik/pull/12242) by [kevinpollet](https://github.com/kevinpollet))
+
+## [v3.5.6](https://github.com/traefik/traefik/tree/v3.5.6) (2025-11-07)
+[All Commits](https://github.com/traefik/traefik/compare/v3.5.4...v3.5.6)
+
+**Bug fixes:**
+- **[acme]** Bump github.com/go-acme/lego/v4 to v4.28.0 ([#12218](https://github.com/traefik/traefik/pull/12218) by [ldez](https://github.com/ldez))
+- **[server]** Filter unknown nodes with file and env for the deprecation loader ([#12227](https://github.com/traefik/traefik/pull/12227) by [rtribotte](https://github.com/rtribotte))
+
+**Documentation:**
+- **[acme]** Add missing ACME options and clean up table for more visibility ([#12208](https://github.com/traefik/traefik/pull/12208) by [sheddy-traefik](https://github.com/sheddy-traefik))
+- **[middleware]** Fix default encodings in compress middleware ([#12216](https://github.com/traefik/traefik/pull/12216) by [Belphemur](https://github.com/Belphemur))
+- Update Configuration Overview Page ([#12202](https://github.com/traefik/traefik/pull/12202) by [sheddy-traefik](https://github.com/sheddy-traefik))
+
+## [v3.5.5](https://github.com/traefik/traefik/tree/v3.5.5) (2025-11-07)
+[All Commits](https://github.com/traefik/traefik/compare/v3.5.4...v3.5.5)
+
+Release canceled.
+
 ## [v3.6.0-rc1](https://github.com/traefik/traefik/tree/v3.6.0-rc1) (2025-10-28)
 [All Commits](https://github.com/traefik/traefik/compare/v3.5.0-rc1...v3.6.0-rc1)
 
