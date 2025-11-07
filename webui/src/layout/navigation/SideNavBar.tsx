@@ -48,11 +48,13 @@ export const BasicNavigationItem = ({
   count,
   isSmallScreen,
   isExpanded,
+  onSidePanelToggle,
 }: {
   route: Route
   count?: number
   isSmallScreen: boolean
   isExpanded: boolean
+  onSidePanelToggle: (isOpen: boolean) => void
 }) => {
   const { pathname } = useLocation()
   const href = useHref(route.path)
@@ -78,7 +80,13 @@ export const BasicNavigationItem = ({
   }
 
   return (
-    <NavigationLink active={isActiveRoute} startAdornment={route?.icon} css={{ whiteSpace: 'nowrap' }} href={href}>
+    <NavigationLink
+      onClick={isSmallScreen ? () => onSidePanelToggle(false) : undefined}
+      active={isActiveRoute}
+      startAdornment={route?.icon}
+      css={{ whiteSpace: 'nowrap' }}
+      href={href}
+    >
       {route.label}
       {!!count && (
         <Badge variant={isActiveRoute ? 'green' : undefined} css={{ ml: '$2' }}>
@@ -132,8 +140,10 @@ export const SideNav = ({
   const [isSmallScreen, setIsSmallScreen] = useState(false)
 
   useEffect(() => {
-    setIsSmallScreen(isResponsive && windowSize.width <= LAPTOP_BP)
-  }, [isExpanded, isResponsive, windowSize.width])
+    setIsSmallScreen(windowSize.width <= LAPTOP_BP)
+  }, [isExpanded, windowSize.width])
+
+  const isSmallAndResponsive = useMemo(() => isSmallScreen && isResponsive, [isResponsive, isSmallScreen])
 
   const totalValueByPath = useMemo<{ [key: string]: number }>(
     () => ({
@@ -151,7 +161,7 @@ export const SideNav = ({
 
   return (
     <NavigationDrawer
-      data-collapsed={isExpanded && isResponsive && isSmallScreen}
+      data-collapsed={isExpanded && isSmallAndResponsive}
       css={{
         width: 264,
         height: '100vh',
@@ -214,8 +224,8 @@ export const SideNav = ({
           href={useHref('/')}
           data-testid="proxy-main-nav"
         >
-          <Logo height={isSmallScreen ? 36 : 56} isSmallScreen={isSmallScreen} />
-          {!!version && !isSmallScreen && (
+          <Logo height={isSmallAndResponsive ? 36 : 56} isSmallScreen={isSmallAndResponsive} />
+          {!!version && !isSmallAndResponsive && (
             <TooltipText text={version} css={{ maxWidth: 50, fontWeight: '$semiBold' }} isTruncated />
           )}
         </Flex>
@@ -254,6 +264,7 @@ export const SideNav = ({
                 count={totalValueByPath[item.path]}
                 isSmallScreen={isSmallScreen}
                 isExpanded={isExpanded}
+                onSidePanelToggle={onSidePanelToggle}
               />
             ))}
           </Flex>
@@ -272,7 +283,12 @@ export const SideNav = ({
           </NavigationLink>
         </Flex>
 
-        <ApimDemoNavMenu isResponsive={isResponsive} isSmallScreen={isSmallScreen} isExpanded={isExpanded} />
+        <ApimDemoNavMenu
+          isResponsive={isResponsive}
+          isSmallScreen={isSmallScreen}
+          isExpanded={isExpanded}
+          onSidePanelToggle={onSidePanelToggle}
+        />
       </Container>
     </NavigationDrawer>
   )
