@@ -100,7 +100,7 @@ export const SideBarPanel = ({
 
   return (
     <SidePanel
-      open={isOpen && windowSize.width < LAPTOP_BP}
+      open={isOpen && windowSize.width <= LAPTOP_BP}
       onOpenChange={onOpenChange}
       side="left"
       css={{ width: 264, p: 0 }}
