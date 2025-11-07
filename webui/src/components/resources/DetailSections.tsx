@@ -152,7 +152,7 @@ export const CardListSection = ({ icon, title, cards, isLast, bigDescription }: 
         <CardListColumn>
           <Flex css={{ flexDirection: 'column', flexGrow: 1, marginRight: '$3' }}>
             {!cards && <CardSkeleton bigDescription={bigDescription} />}
-            {cards?.filter((c) => !!c.description).map((card) => <CardItem card={card} />)}
+            {cards?.filter((c) => !!c.description).map((card, idx) => <CardItem key={`card-${idx}`} card={card} />)}
             <Box css={{ height: '16px' }}>&nbsp;</Box>
           </Flex>
         </CardListColumn>
