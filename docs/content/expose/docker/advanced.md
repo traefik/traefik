@@ -314,22 +314,21 @@ http:
         - auth-middleware
       entryPoints:
         - websecure
-      tls: {}
-      # Note: No service defined - this is a parent router
+      # Note: No service and no TLS config - this is a parent router
 
     # Child router for admin users
     api-admin:
       rule: "HeadersRegexp(`X-User-Role`, `admin`)"
       service: admin-backend@docker  # Reference Docker service
       parentRefs:
-        - api-parent
+        - api-parent@file  # Explicit reference to parent in file provider
 
     # Child router for regular users
     api-user:
       rule: "HeadersRegexp(`X-User-Role`, `user`)"
       service: user-backend@docker  # Reference Docker service
       parentRefs:
-        - api-parent
+        - api-parent@file  # Explicit reference to parent in file provider
 
   middlewares:
     auth-middleware:
@@ -339,7 +338,12 @@ http:
 ```
 
 !!! important "Cross-Provider References"
-    Notice the `@docker` suffix on service names. When referencing services from Docker labels in File configuration, use the format `service-name@docker`. This tells Traefik to look for the service in the Docker provider namespace.
+    Notice the `@docker` suffix on service names and the `@file` suffix in `parentRefs`. When using the File provider to orchestrate multi-layer routing with Docker services:
+
+    - Use `service-name@docker` to reference Docker services
+    - Use `parent-name@file` in `parentRefs` to reference the parent router in the File provider
+
+    The `@provider` suffix tells Traefik which provider namespace to look in for the resource.
 
 Apply the changes:
 
