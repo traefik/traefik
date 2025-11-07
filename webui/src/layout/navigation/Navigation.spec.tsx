@@ -4,7 +4,7 @@ import { renderWithProviders } from 'utils/test'
 
 describe('Navigation', () => {
   it('should render the side navigation bar', async () => {
-    const { container } = renderWithProviders(<SideNav isExpanded={false} onSidePanelToggle={() => {}} />)
+    const { container } = renderWithProviders(<SideNav isExpanded onSidePanelToggle={() => {}} />)
 
     expect(container.innerHTML).toContain('HTTP')
     expect(container.innerHTML).toContain('TCP')
