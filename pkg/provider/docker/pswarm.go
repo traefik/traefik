@@ -106,10 +106,11 @@ func (p *SwarmProvider) Provide(configurationChan chan<- dynamic.Message, pool *
 			if p.Watch {
 				errChan := make(chan error)
 
-				// TODO: This need to be change. Linked to Swarm events docker/docker#23827
-				ticker := time.NewTicker(time.Duration(p.RefreshSeconds))
-
 				pool.GoCtx(func(ctx context.Context) {
+					// TODO: This need to be change. Linked to Swarm events docker/docker#23827
+					ticker := time.NewTicker(time.Duration(p.RefreshSeconds))
+					defer ticker.Stop()
+
 					logger := log.Ctx(ctx).With().Str(logs.ProviderName, swarmName).Logger()
 					ctx = logger.WithContext(ctx)
 
@@ -133,7 +134,6 @@ func (p *SwarmProvider) Provide(configurationChan chan<- dynamic.Message, pool *
 							}
 
 						case <-ctx.Done():
-							ticker.Stop()
 							return
 						}
 					}
