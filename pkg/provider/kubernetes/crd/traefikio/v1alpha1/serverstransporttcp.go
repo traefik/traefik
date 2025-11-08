@@ -13,7 +13,7 @@ import (
 // ServersTransportTCP is the CRD implementation of a TCPServersTransport.
 // If no tcpServersTransport is specified, a default one named default@internal will be used.
 // The default@internal tcpServersTransport can be configured in the static configuration.
-// More info: https://doc.traefik.io/traefik/v3.5/reference/routing-configuration/tcp/serverstransport/
+// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/tcp/serverstransport/
 type ServersTransportTCP struct {
 	metav1.TypeMeta `json:",inline"`
 	// Standard object's metadata.
