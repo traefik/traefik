@@ -65,6 +65,16 @@ func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoint
 						Msg("Router's `ruleSyntax` option is deprecated, please remove any usage of this option.")
 				}
 
+				var qualifiedParentRefs []string
+				for _, parentRef := range router.ParentRefs {
+					if parts := strings.Split(parentRef, "@"); len(parts) == 1 {
+						parentRef = provider.MakeQualifiedName(pvd, parentRef)
+					}
+
+					qualifiedParentRefs = append(qualifiedParentRefs, parentRef)
+				}
+				router.ParentRefs = qualifiedParentRefs
+
 				conf.HTTP.Routers[provider.MakeQualifiedName(pvd, routerName)] = router
 			}
 			for middlewareName, middleware := range configuration.HTTP.Middlewares {

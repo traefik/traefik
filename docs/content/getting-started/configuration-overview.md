@@ -1,6 +1,6 @@
 ---
 title: "Traefik Configuration Documentation"
-description: "Get started with Traefik Proxy. This page will introduce you to the dynamic routing and startup configurations. Read the technical documentation."
+description: "Get started with Traefik Proxy. This page will introduce you to the routing and install configurations. Read the technical documentation."
 ---
 
 # Configuration Introduction
@@ -8,39 +8,37 @@ description: "Get started with Traefik Proxy. This page will introduce you to th
 How the Magic Happens
 {: .subtitle }
 
-![Configuration](../assets/img/static-dynamic-configuration.png)
-
 Configuration in Traefik can refer to two different things:
 
-- The fully dynamic routing configuration (referred to as the _routing configuration_, formerly known as the _dynamic configuration_)
-- The startup configuration (referred to as the _install configuration_, formerly known as the _static configuration_)
+- The install (startup) configuration (formerly known as the _static configuration_)
+- The routing configuration (formerly known as the _dynamic configuration_)
 
-Elements in the install configuration_ set up connections to [providers](../providers/overview.md) and define the [entrypoints](../routing/entrypoints.md) Traefik will listen to (these elements don't change often).
+Elements in the _install configuration_ set up connections to [providers](../providers/overview.md) and define the [entrypoints](../routing/entrypoints.md) Traefik will listen to (these elements don't change often).
 
-The _dynamic configuration_ contains everything that defines how the requests are handled by your system.
+The _routing configuration_ contains everything that defines how the requests are handled by your system.
 This configuration can change and is seamlessly hot-reloaded, without any request interruption or connection loss.
 
 !!! warning "Incompatible Configuration"
     Please be aware that the old configurations for Traefik v1.x are NOT compatible with the v2.x config as of now.
     If you are running v2, please ensure you are using a v2 configuration.
 
-## The Dynamic Configuration
+## The Routing Configuration
 
-Traefik gets its _dynamic configuration_ from [providers](../providers/overview.md): whether an orchestrator, a service registry, or a plain old configuration file.
+Traefik gets its _routing configuration_ from [providers](../providers/overview.md): whether an orchestrator, a service registry, or a plain old configuration file.
 
 Since this configuration is specific to your infrastructure choices, we invite you to refer to the [dedicated section of this documentation](../routing/overview.md).
 
 !!! info ""
 
-    In the [Quick Start example](../getting-started/quick-start.md), the routing configuration comes from docker in the form of labels attached to your containers.
+    In the [Quick Start example](../getting-started/docker.md), the whoami application routing configuration comes from docker in the form of a label attached to the whoami container.
 
 !!! info "HTTPS Certificates also belong to the routing configuration."
 
     You can add / update / remove them without restarting your Traefik instance.
 
-## The Static Configuration
+## The Install Configuration
 
-There are three different, **mutually exclusive** (i.e. you can use only one at the same time), ways to define static configuration options in Traefik:
+There are three different, **mutually exclusive** (i.e. you can use only one at the same time), ways to define install configuration options in Traefik:
 
 1. In a configuration file
 1. In the command-line arguments
@@ -56,7 +54,7 @@ Once positioned, this option sets (and resets) all the default values of the sub
 
 ### Configuration File
 
-At startup, Traefik searches for static configuration in a file named `traefik.yml` (or `traefik.yaml` or `traefik.toml`) in:
+At startup, Traefik searches for install configuration in a file named `traefik.yml` (or `traefik.yaml` or `traefik.toml`) in:
 
 - `/etc/traefik/`
 - `$XDG_CONFIG_HOME/`
@@ -86,7 +84,7 @@ Check the [CLI reference](../reference/install-configuration/configuration-optio
 
 ### Environment Variables
 
-All available environment variables can be found in the [static configuration environment overview](../reference/install-configuration/configuration-options.md).
+All available environment variables can be found in the [install configuration environment overview](../reference/install-configuration/configuration-options.md).
 
 ## Available Configuration Options
 
