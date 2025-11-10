@@ -1,3 +1,20 @@
+## [v3.5.6](https://github.com/traefik/traefik/tree/v3.5.6) (2025-11-07)
+[All Commits](https://github.com/traefik/traefik/compare/v3.5.4...v3.5.6)
+
+**Bug fixes:**
+- **[acme]** Bump github.com/go-acme/lego/v4 to v4.28.0 ([#12218](https://github.com/traefik/traefik/pull/12218) by [ldez](https://github.com/ldez))
+- **[server]** Filter unknown nodes with file and env for the deprecation loader ([#12227](https://github.com/traefik/traefik/pull/12227) by [rtribotte](https://github.com/rtribotte))
+
+**Documentation:**
+- **[acme]** Add missing ACME options and clean up table for more visibility ([#12208](https://github.com/traefik/traefik/pull/12208) by [sheddy-traefik](https://github.com/sheddy-traefik))
+- **[middleware]** Fix default encodings in compress middleware ([#12216](https://github.com/traefik/traefik/pull/12216) by [Belphemur](https://github.com/Belphemur))
+- Update Configuration Overview Page ([#12202](https://github.com/traefik/traefik/pull/12202) by [sheddy-traefik](https://github.com/sheddy-traefik))
+
+## [v3.5.5](https://github.com/traefik/traefik/tree/v3.5.5) (2025-11-07)
+[All Commits](https://github.com/traefik/traefik/compare/v3.5.4...v3.5.5)
+
+Release canceled.
+
 ## [v3.5.4](https://github.com/traefik/traefik/tree/v3.5.4) (2025-10-28)
 [All Commits](https://github.com/traefik/traefik/compare/v3.5.3...v3.5.4)
 
