@@ -175,9 +175,11 @@ func applyModel(cfg dynamic.Configuration) dynamic.Configuration {
 	if cfg.HTTP != nil && len(cfg.HTTP.Models) > 0 {
 		rts := make(map[string]*dynamic.Router)
 
+		modifiedRouters := make(map[string][]string)
 		for name, rt := range cfg.HTTP.Routers {
 			// Only root routers can have models applied.
 			if rt.ParentRefs != nil {
+				rts[name] = rt
 				continue
 			}
 
@@ -235,12 +237,27 @@ func applyModel(cfg dynamic.Configuration) dynamic.Configuration {
 						rtName = epName + "-" + name
 					}
 					rts[rtName] = cp
+					modifiedRouters[name] = append(modifiedRouters[name], rtName)
 				} else {
 					router.EntryPoints = append(router.EntryPoints, epName)
 
 					rts[name] = router
 				}
 			}
+
+		}
+		for _, rt := range cfg.HTTP.Routers {
+			if rt.ParentRefs == nil {
+				continue
+			}
+
+			newParentRef := rt.ParentRefs
+			for _, ref := range rt.ParentRefs {
+				if modifiedRouters[ref] != nil {
+					newParentRef = append(newParentRef, modifiedRouters[ref]...)
+				}
+			}
+			rt.ParentRefs = newParentRef
 		}
 
 		cfg.HTTP.Routers = rts
