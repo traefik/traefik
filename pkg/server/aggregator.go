@@ -244,7 +244,6 @@ func applyModel(cfg dynamic.Configuration) dynamic.Configuration {
 					rts[name] = router
 				}
 			}
-
 		}
 		for _, rt := range cfg.HTTP.Routers {
 			if rt.ParentRefs == nil {
