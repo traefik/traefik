@@ -1,12 +1,13 @@
 import { waitFor } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
+import { PUBLIC_KEY } from './constants'
 import HubDashboard, { resetCache } from './HubDashboard'
-import verifySignature from './workers/scriptVerification'
 
 import { renderWithProviders } from 'utils/test'
+import verifySignature from 'utils/workers/scriptVerification'
 
-vi.mock('./workers/scriptVerification', () => ({
+vi.mock('utils/workers/scriptVerification', () => ({
   default: vi.fn(),
 }))
 
@@ -34,7 +35,6 @@ describe('HubDashboard demo', () => {
   beforeEach(() => {
     vi.clearAllMocks()
 
-    // Mock URL.createObjectURL
     mockCreateObjectURL = vi.fn(() => 'blob:mock-url')
     globalThis.URL.createObjectURL = mockCreateObjectURL
   })
@@ -45,7 +45,6 @@ describe('HubDashboard demo', () => {
 
   describe('without cache', () => {
     beforeEach(() => {
-      // Reset cache before each test suites
       resetCache()
     })
 
@@ -130,6 +129,7 @@ describe('HubDashboard demo', () => {
         expect(mockVerifyScriptSignature).toHaveBeenCalledWith(
           'https://assets.traefik.io/hub-ui-demo.js',
           'https://assets.traefik.io/hub-ui-demo.js.sig',
+          PUBLIC_KEY,
         )
       })
     })

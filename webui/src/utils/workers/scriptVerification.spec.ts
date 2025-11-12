@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
 import verifySignature from './scriptVerification'
 
+const SCRIPT_PATH = 'https://example.com/script.js'
+const MOCK_PUBLIC_KEY = 'MCowBQYDK2VwAyEAWH71OHphISjNK3mizCR/BawiDxc6IXT1vFHpBcxSIA0='
 class MockWorker {
   onmessage: ((event: MessageEvent) => void) | null = null
   onerror: ((error: ErrorEvent) => void) | null = null
@@ -46,17 +48,14 @@ describe('verifySignature', () => {
   })
 
   it('should return true when verification succeeds', async () => {
-    const scriptPath = 'https://example.com/script.js'
-    const signaturePath = 'https://example.com/script.js.sig'
-
-    const promise = verifySignature(scriptPath, signaturePath)
+    const promise = verifySignature(SCRIPT_PATH, `${SCRIPT_PATH}.sig`, MOCK_PUBLIC_KEY)
 
     await new Promise((resolve) => setTimeout(resolve, 0))
 
     expect(mockWorkerInstance.postMessage).toHaveBeenCalledWith(
       expect.objectContaining({
-        scriptUrl: scriptPath,
-        signatureUrl: signaturePath,
+        scriptUrl: SCRIPT_PATH,
+        signatureUrl: `${SCRIPT_PATH}.sig`,
         requestId: expect.any(String),
       }),
     )
@@ -76,12 +75,9 @@ describe('verifySignature', () => {
   })
 
   it('should return false when verification fails', async () => {
-    const scriptPath = 'https://example.com/script.js'
-    const signaturePath = 'https://example.com/script.js.sig'
-
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
-    const promise = verifySignature(scriptPath, signaturePath)
+    const promise = verifySignature(SCRIPT_PATH, `${SCRIPT_PATH}.sig`, MOCK_PUBLIC_KEY)
 
     await new Promise((resolve) => setTimeout(resolve, 0))
 
@@ -101,16 +97,12 @@ describe('verifySignature', () => {
   })
 
   it('should return false when worker throws an error', async () => {
-    const scriptPath = 'https://example.com/script.js'
-    const signaturePath = 'https://example.com/script.js.sig'
-
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
-    const promise = verifySignature(scriptPath, signaturePath)
+    const promise = verifySignature(SCRIPT_PATH, `${SCRIPT_PATH}.sig`, MOCK_PUBLIC_KEY)
 
     await new Promise((resolve) => setTimeout(resolve, 0))
 
-    // Simulate worker onerror event
     const error = new Error('Worker crashed')
     mockWorkerInstance.simulateError(error)
 

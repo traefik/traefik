@@ -3,7 +3,9 @@ import { useMemo, useEffect, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useParams } from 'react-router-dom'
 
-import verifySignature from './workers/scriptVerification'
+import verifySignature from '../../utils/workers/scriptVerification'
+
+import { PUBLIC_KEY } from './constants'
 
 import { SpinnerLoader } from 'components/SpinnerLoader'
 import { useIsDarkMode } from 'hooks/use-theme'
@@ -42,7 +44,7 @@ const HubDashboard = ({ path }: { path: string }) => {
       setVerificationInProgress(true)
 
       try {
-        const { verified, scriptContent: content } = await verifySignature(SCRIPT_URL, `${SCRIPT_URL}.sig`)
+        const { verified, scriptContent: content } = await verifySignature(SCRIPT_URL, `${SCRIPT_URL}.sig`, PUBLIC_KEY)
 
         if (!verified || !content) {
           setScriptError(true)
