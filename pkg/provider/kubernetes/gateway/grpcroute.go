@@ -42,7 +42,7 @@ func (p *Provider) loadGRPCRoutes(ctx context.Context, gatewayListeners []gatewa
 		for _, parentRef := range route.Spec.ParentRefs {
 			parentStatus := &gatev1.RouteParentStatus{
 				ParentRef:      parentRef,
-				ControllerName: controllerName,
+				ControllerName: gatev1.GatewayController(p.ControllerName),
 				Conditions: []metav1.Condition{
 					{
 						Type:               string(gatev1.RouteConditionAccepted),
@@ -92,7 +92,7 @@ func (p *Provider) loadGRPCRoutes(ctx context.Context, gatewayListeners []gatewa
 				Parents: parentStatuses,
 			},
 		}
-		if err := p.client.UpdateGRPCRouteStatus(ctx, ktypes.NamespacedName{Namespace: route.Namespace, Name: route.Name}, status); err != nil {
+		if err := p.client.UpdateGRPCRouteStatus(ctx, ktypes.NamespacedName{Namespace: route.Namespace, Name: route.Name}, status, gatev1.GatewayController(p.ControllerName)); err != nil {
 			logger.Warn().
 				Err(err).
 				Msg("Unable to update GRPCRoute status")
