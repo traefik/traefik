@@ -89,7 +89,7 @@ func (b yaegiMiddlewareBuilder) newHandler(ctx context.Context, next http.Handle
 
 func (b yaegiMiddlewareBuilder) newTCPHandler(ctx context.Context, next tcp.Handler, cfg reflect.Value, middlewareName string) (tcp.Handler, error) {
 	if !b.fnNewTCP.IsValid() {
-		return nil, fmt.Errorf("plugin does not support TCP")
+		return nil, errors.New("plugin does not support TCP")
 	}
 
 	args := []reflect.Value{reflect.ValueOf(ctx), reflect.ValueOf(next), cfg, reflect.ValueOf(middlewareName)}

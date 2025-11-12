@@ -3,6 +3,7 @@ package plugins
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -167,5 +168,5 @@ func (m WasmMiddleware) NewHandler(ctx context.Context, next http.Handler) (http
 // NewTCPHandler creates a TCP constructor.
 // WASM plugins do not support TCP yet, so this always returns an error.
 func (m WasmMiddleware) NewTCPHandler(ctx context.Context, next tcp.Handler) (func(tcp.Handler) (tcp.Handler, error), error) {
-	return nil, fmt.Errorf("WASM plugins do not support TCP")
+	return nil, errors.New("WASM plugins do not support TCP")
 }
