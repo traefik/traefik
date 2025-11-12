@@ -14,6 +14,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
+	"github.com/traefik/traefik/v3/pkg/tcp"
 	"github.com/traefik/yaegi/interp"
 	"github.com/traefik/yaegi/stdlib"
 	"github.com/traefik/yaegi/stdlib/syscall"
@@ -23,6 +24,7 @@ import (
 type yaegiMiddlewareBuilder struct {
 	fnNew          reflect.Value
 	fnCreateConfig reflect.Value
+	fnNewTCP       reflect.Value
 }
 
 func newYaegiMiddlewareBuilder(i *interp.Interpreter, basePkg, imp string) (*yaegiMiddlewareBuilder, error) {
@@ -40,9 +42,14 @@ func newYaegiMiddlewareBuilder(i *interp.Interpreter, basePkg, imp string) (*yae
 		return nil, fmt.Errorf("failed to eval CreateConfig: %w", err)
 	}
 
+	// Optionally check for NewTCP function (for TCP support).
+	fnNewTCP, _ := i.Eval(basePkg + `.NewTCP`)
+	// No error if not found - it's optional.
+
 	return &yaegiMiddlewareBuilder{
 		fnNew:          fnNew,
 		fnCreateConfig: fnCreateConfig,
+		fnNewTCP:       fnNewTCP,
 	}, nil
 }
 
@@ -75,6 +82,31 @@ func (b yaegiMiddlewareBuilder) newHandler(ctx context.Context, next http.Handle
 	handler, ok := results[0].Interface().(http.Handler)
 	if !ok {
 		return nil, fmt.Errorf("invalid handler type: %T", results[0].Interface())
+	}
+
+	return handler, nil
+}
+
+func (b yaegiMiddlewareBuilder) newTCPHandler(ctx context.Context, next tcp.Handler, cfg reflect.Value, middlewareName string) (tcp.Handler, error) {
+	if !b.fnNewTCP.IsValid() {
+		return nil, fmt.Errorf("plugin does not support TCP")
+	}
+
+	args := []reflect.Value{reflect.ValueOf(ctx), reflect.ValueOf(next), cfg, reflect.ValueOf(middlewareName)}
+	results := b.fnNewTCP.Call(args)
+
+	if len(results) > 1 && results[1].Interface() != nil {
+		err, ok := results[1].Interface().(error)
+		if !ok {
+			return nil, fmt.Errorf("invalid error type: %T", results[1].Interface())
+		}
+
+		return nil, err
+	}
+
+	handler, ok := results[0].Interface().(tcp.Handler)
+	if !ok {
+		return nil, fmt.Errorf("invalid TCP handler type: %T", results[0].Interface())
 	}
 
 	return handler, nil
@@ -120,6 +152,13 @@ type YaegiMiddleware struct {
 // NewHandler creates a new HTTP handler.
 func (m *YaegiMiddleware) NewHandler(ctx context.Context, next http.Handler) (http.Handler, error) {
 	return m.builder.newHandler(ctx, next, m.config, m.middlewareName)
+}
+
+// NewTCPHandler creates a TCP constructor.
+func (m *YaegiMiddleware) NewTCPHandler(ctx context.Context, next tcp.Handler) (func(tcp.Handler) (tcp.Handler, error), error) {
+	return func(next tcp.Handler) (tcp.Handler, error) {
+		return m.builder.newTCPHandler(ctx, next, m.config, m.middlewareName)
+	}, nil
 }
 
 func newInterpreter(ctx context.Context, goPath string, manifest *Manifest, settings Settings) (*interp.Interpreter, error) {

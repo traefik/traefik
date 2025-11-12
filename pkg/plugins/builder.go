@@ -8,13 +8,22 @@ import (
 	"path/filepath"
 
 	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/tcp"
 )
 
 // Constructor creates a plugin handler.
 type Constructor func(context.Context, http.Handler) (http.Handler, error)
 
+// TCPConstructor creates a TCP plugin handler.
+// Note: Unlike HTTP Constructor, TCP doesn't use context in the constructor signature.
+type TCPConstructor func(tcp.Handler) (tcp.Handler, error)
+
 type pluginMiddleware interface {
 	NewHandler(ctx context.Context, next http.Handler) (http.Handler, error)
+}
+
+type pluginTCPMiddleware interface {
+	NewTCPHandler(ctx context.Context, next tcp.Handler) (TCPConstructor, error)
 }
 
 type middlewareBuilder interface {
@@ -126,6 +135,37 @@ func (b Builder) Build(pName string, config map[string]interface{}, middlewareNa
 	}
 
 	return nil, fmt.Errorf("unknown plugin type: %s", pName)
+}
+
+// BuildTCP builds a TCP middleware plugin.
+func (b Builder) BuildTCP(pName string, config map[string]interface{}, middlewareName string) (tcp.Constructor, error) {
+	if b.middlewareBuilders == nil {
+		return nil, fmt.Errorf("no plugin definitions in the static configuration: %s", pName)
+	}
+
+	descriptor, ok := b.middlewareBuilders[pName]
+	if !ok {
+		return nil, fmt.Errorf("unknown plugin type: %s", pName)
+	}
+
+	m, err := descriptor.newMiddleware(config, middlewareName)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check if the plugin implements TCP support.
+	tcpMiddleware, ok := m.(pluginTCPMiddleware)
+	if !ok {
+		return nil, fmt.Errorf("plugin %q does not support TCP", pName)
+	}
+
+	constructor, err := tcpMiddleware.NewTCPHandler(context.Background(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	// Return the tcp.Constructor directly (it matches the TCPConstructor signature).
+	return tcp.Constructor(constructor), nil
 }
 
 func newMiddlewareBuilder(ctx context.Context, goPath string, manifest *Manifest, moduleName string, settings Settings) (middlewareBuilder, error) {
