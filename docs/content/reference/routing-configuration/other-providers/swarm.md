@@ -301,6 +301,14 @@ you'd add the label `traefik.http.services.<name-of-your-choice>.loadbalancer.pa
     - "traefik.http.services.myservice.loadbalancer.server.scheme=http"
     ```
 
+??? info "`traefik.http.services.<service_name>.loadbalancer.server.url`"
+
+    Specifies a URL to publish on the service, rather than just a port and scheme
+
+    ```yaml
+     "traefik.http.services.myservice.loadbalancer.server.url=http://container-name-here:8080"
+    ```
+
 ??? info "`traefik.http.services.<service_name>.loadbalancer.server.weight`"
 
     Overrides the default weight.
