@@ -165,7 +165,7 @@ In addition, if the parent of this service also has HealthCheck enabled, this se
 
     If HealthCheck is enabled for a given service and any of its descendants does not have it enabled, the creation of the service will fail.
 
-    HealthCheck on Weighted services can be defined currently only with the [File provider](../../../install-configuration/providers/others/file.md).
+    HealthCheck on Weighted services can be defined currently only with the [File provider](../../install-configuration/providers/others/file.md).
 
 ```yaml tab="Structured (YAML)"
 ## Dynamic configuration
