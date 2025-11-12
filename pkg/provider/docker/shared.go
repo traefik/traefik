@@ -100,8 +100,6 @@ func parseContainer(container containertypes.InspectResponse) dockerData {
 }
 
 type ClientConfig struct {
-	apiVersion string
-
 	Username          string           `description:"Username for Basic HTTP authentication." json:"username,omitempty" toml:"username,omitempty" yaml:"username,omitempty"`
 	Password          string           `description:"Password for Basic HTTP authentication." json:"password,omitempty" toml:"password,omitempty" yaml:"password,omitempty"`
 	Endpoint          string           `description:"Docker server endpoint. Can be a TCP or a Unix socket endpoint." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
@@ -124,7 +122,7 @@ func createClient(ctx context.Context, cfg ClientConfig) (*client.Client, error)
 
 	opts = append(opts,
 		client.WithHTTPHeaders(httpHeaders),
-		client.WithVersion(cfg.apiVersion))
+		client.WithAPIVersionNegotiation())
 
 	return client.NewClientWithOpts(opts...)
 }
