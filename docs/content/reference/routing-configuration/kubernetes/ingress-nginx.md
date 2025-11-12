@@ -294,7 +294,7 @@ Limitations or behavioral differences are indicated where relevant.
 | <a id="opt-nginx-ingress-kubernetes-ioproxy-ssl-secret" href="#opt-nginx-ingress-kubernetes-ioproxy-ssl-secret" title="#opt-nginx-ingress-kubernetes-ioproxy-ssl-secret">`nginx.ingress.kubernetes.io/proxy-ssl-secret`</a> |                                                                                            |
 | <a id="opt-nginx-ingress-kubernetes-ioservice-upstream" href="#opt-nginx-ingress-kubernetes-ioservice-upstream" title="#opt-nginx-ingress-kubernetes-ioservice-upstream">`nginx.ingress.kubernetes.io/service-upstream`</a> |                                                                                            |
 
-### Unsupported NGINX Annotations
+**Unsupported NGINX Annotations**
 
 !!! question "Want to Add Support for More Annotations?"
 
