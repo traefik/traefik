@@ -309,10 +309,11 @@ export const TopNav = ({ css, noHubButton = false }: { css?: CSS; noHubButton?: 
     return matches ? 'v' + matches[1] : 'master'
   }, [version])
 
-  const { signatureVerified, scriptBlobUrl } = useHubUpgradeButton()
+  const { signatureVerified, scriptBlobUrl, isCustomElementDefined } = useHubUpgradeButton()
+
   const displayUpgradeToHubButton = useMemo(
-    () => !noHubButton && signatureVerified && !!scriptBlobUrl,
-    [noHubButton, scriptBlobUrl, signatureVerified],
+    () => !noHubButton && signatureVerified && (!!scriptBlobUrl || isCustomElementDefined),
+    [isCustomElementDefined, noHubButton, scriptBlobUrl, signatureVerified],
   )
 
   return (

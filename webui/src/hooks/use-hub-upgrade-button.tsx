@@ -9,11 +9,18 @@ const PUBLIC_KEY = 'MCowBQYDK2VwAyEAY0OZFFE5kSuqYK6/UprTL5RmvQ+8dpPTGMCw1MiO/Gs=
 const useHubUpgradeButton = () => {
   const [signatureVerified, setSignatureVerified] = useState(false)
   const [scriptBlobUrl, setScriptBlobUrl] = useState<string | null>(null)
+  const [isCustomElementDefined, setIsCustomElementDefined] = useState(false)
 
   const { showHubButton } = useContext(VersionContext)
 
   useEffect(() => {
     if (showHubButton) {
+      if (customElements.get('hub-button-app')) {
+        setSignatureVerified(true)
+        setIsCustomElementDefined(true)
+        return
+      }
+
       const verifyAndLoadScript = async () => {
         try {
           const { verified, scriptContent: content } = await verifySignature(
@@ -38,9 +45,9 @@ const useHubUpgradeButton = () => {
       verifyAndLoadScript()
 
       return () => {
-        setScriptBlobUrl((prevUrl) => {
-          if (prevUrl) {
-            URL.revokeObjectURL(prevUrl)
+        setScriptBlobUrl((currentUrl) => {
+          if (currentUrl) {
+            URL.revokeObjectURL(currentUrl)
           }
           return null
         })
@@ -48,7 +55,7 @@ const useHubUpgradeButton = () => {
     }
   }, [showHubButton])
 
-  return { signatureVerified, scriptBlobUrl }
+  return { signatureVerified, scriptBlobUrl, isCustomElementDefined }
 }
 
 export default useHubUpgradeButton

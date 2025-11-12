@@ -14,6 +14,7 @@ describe('Navigation', () => {
     mockUseHubUpgradeButton.mockReturnValue({
       signatureVerified: false,
       scriptBlobUrl: null,
+      isCustomElementDefined: false,
     })
   })
 
@@ -42,6 +43,7 @@ describe('Navigation', () => {
       mockUseHubUpgradeButton.mockReturnValue({
         signatureVerified: false,
         scriptBlobUrl: null,
+        isCustomElementDefined: false,
       })
 
       const { container } = renderWithProviders(<TopNav />)
@@ -54,6 +56,7 @@ describe('Navigation', () => {
       mockUseHubUpgradeButton.mockReturnValue({
         signatureVerified: true,
         scriptBlobUrl: null,
+        isCustomElementDefined: false,
       })
 
       const { container } = renderWithProviders(<TopNav />)
@@ -66,6 +69,7 @@ describe('Navigation', () => {
       mockUseHubUpgradeButton.mockReturnValue({
         signatureVerified: true,
         scriptBlobUrl: 'blob:http://localhost:3000/mock-blob-url',
+        isCustomElementDefined: false,
       })
 
       const { container } = renderWithProviders(<TopNav />)
@@ -80,6 +84,7 @@ describe('Navigation', () => {
       mockUseHubUpgradeButton.mockReturnValue({
         signatureVerified: true,
         scriptBlobUrl: 'blob:http://localhost:3000/mock-blob-url',
+        isCustomElementDefined: false,
       })
 
       const { container } = renderWithProviders(<TopNav noHubButton={true} />)
