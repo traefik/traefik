@@ -7,7 +7,7 @@ import verifySignature from './workers/scriptVerification'
 
 import { SpinnerLoader } from 'components/SpinnerLoader'
 import { useIsDarkMode } from 'hooks/use-theme'
-import { TopNav } from 'layout/Navigation'
+import { TopNav } from 'layout/navigation'
 
 const SCRIPT_URL = 'https://assets.traefik.io/hub-ui-demo.js'
 
