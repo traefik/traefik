@@ -254,7 +254,7 @@ func applyModel(cfg dynamic.Configuration) dynamic.Configuration {
 
 			var parentRefs []string
 			for _, ref := range rt.ParentRefs {
-				// Only add the initial parent ref if it still exists (at least one entryPoint had no model).
+				// Only add the initial parent ref if it still exists.
 				if _, ok := rts[ref]; ok {
 					parentRefs = append(parentRefs, ref)
 				}
