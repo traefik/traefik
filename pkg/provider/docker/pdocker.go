@@ -22,7 +22,7 @@ import (
 )
 
 // DockerAPIVersion is a constant holding the version of the Provider API traefik will use.
-const DockerAPIVersion = "1.24"
+const DockerAPIVersion = "1.44"
 
 const dockerName = "docker"
 

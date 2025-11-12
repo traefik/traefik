@@ -18,7 +18,7 @@ require (
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/containous/alice v0.0.0-20181107144136-d83ebdd94cbd // No tag on the repo.
 	github.com/coreos/go-systemd/v22 v22.5.0
-	github.com/docker/cli v28.3.3+incompatible
+	github.com/docker/cli v29.0.0+incompatible
 	github.com/docker/docker v28.3.3+incompatible
 	github.com/docker/go-connections v0.5.0
 	github.com/fatih/structs v1.1.0
