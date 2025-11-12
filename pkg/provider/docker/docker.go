@@ -33,14 +33,6 @@ import (
 	"github.com/traefik/traefik/v2/pkg/version"
 )
 
-const (
-	// DockerAPIVersion is a constant holding the version of the Provider API traefik will use.
-	DockerAPIVersion = "1.24"
-
-	// SwarmAPIVersion is a constant holding the version of the Provider API traefik will use.
-	SwarmAPIVersion = "1.24"
-)
-
 // DefaultTemplateRule The default template for the default rule.
 const DefaultTemplateRule = "Host(`{{ normalize .Name }}`)"
 
@@ -121,13 +113,10 @@ func (p *Provider) createClient() (client.APIClient, error) {
 	httpHeaders := map[string]string{
 		"User-Agent": "Traefik " + version.Version,
 	}
-	opts = append(opts, client.WithHTTPHeaders(httpHeaders))
-
-	apiVersion := DockerAPIVersion
-	if p.SwarmMode {
-		apiVersion = SwarmAPIVersion
-	}
-	opts = append(opts, client.WithVersion(apiVersion))
+	opts = append(opts,
+		client.FromEnv,
+		client.WithAPIVersionNegotiation(),
+		client.WithHTTPHeaders(httpHeaders))
 
 	return client.NewClientWithOpts(opts...)
 }
