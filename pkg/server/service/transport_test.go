@@ -411,7 +411,7 @@ func TestInvalidCipherSuites(t *testing.T) {
 				ServerName:   "example.com",
 				RootCAs:      []types.FileOrContent{types.FileOrContent(LocalhostCert)},
 				MaxVersion:   "VersionTLS12",
-				CipherSuites: []string{"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA385"},
+				CipherSuites: []string{"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA385", "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"},
 			},
 		}
 
