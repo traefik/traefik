@@ -155,12 +155,14 @@ func TestTrustedIPsStrategy_GetIP(t *testing.T) {
 		xForwardedFor string
 		expected      string
 		useRemote     bool
+		remoteAddr    string
 	}{
 		{
 			desc:          "Trust all IPs",
 			trustedIPs:    []string{"10.0.0.4", "10.0.0.3", "10.0.0.2", "10.0.0.1"},
 			xForwardedFor: "10.0.0.4,10.0.0.3,10.0.0.2,10.0.0.1",
-			expected:      "",
+			remoteAddr:    "192.168.0.1",
+			expected:      "192.168.0.1",
 		},
 		{
 			desc:          "Do not trust all IPs",
@@ -178,7 +180,15 @@ func TestTrustedIPsStrategy_GetIP(t *testing.T) {
 			desc:          "Trust all IPs with CIDR",
 			trustedIPs:    []string{"10.0.0.1/24"},
 			xForwardedFor: "10.0.0.4,10.0.0.3,10.0.0.2,10.0.0.1",
-			expected:      "",
+			remoteAddr:    "192.168.0.1",
+			expected:      "192.168.0.1",
+		},
+		{
+			desc:          "No XFF header",
+			trustedIPs:    []string{"10.0.0.1/24"},
+			xForwardedFor: "",
+			remoteAddr:    "192.168.0.1",
+			expected:      "192.168.0.1",
 		},
 	}
 
@@ -192,6 +202,9 @@ func TestTrustedIPsStrategy_GetIP(t *testing.T) {
 			strategy := PoolStrategy{Checker: checker}
 			req := httptest.NewRequest(http.MethodGet, "http://127.0.0.1", nil)
 			req.Header.Set(xForwardedFor, test.xForwardedFor)
+			if test.remoteAddr != "" {
+				req.RemoteAddr = test.remoteAddr
+			}
 			actual := strategy.GetIP(req)
 			assert.Equal(t, test.expected, actual)
 		})
