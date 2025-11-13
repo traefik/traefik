@@ -239,6 +239,8 @@ linters:
         text: ' always receives '
         linters:
           - unparam
+      - path: pkg/server/service/bufferpool.go
+        text: 'SA6002: argument should be pointer-like to avoid allocations'
       - path: pkg/server/middleware/middlewares.go
         text: Function 'buildConstructor' has too many statements
         linters:
@@ -314,11 +316,7 @@ linters:
         text: 'the methods of "wasmMiddlewareBuilder" use pointer receiver and non-pointer receiver.'
         linters:
           - recvcheck
-      - path: pkg/server/service/bufferpool.go
-        text: 'SA6002: argument should be pointer-like to avoid allocations'
       - path: pkg/proxy/httputil/bufferpool.go
-        text: 'SA6002: argument should be pointer-like to avoid allocations'
-      - path: pkg/udp/conn.go
         text: 'SA6002: argument should be pointer-like to avoid allocations'
       - path: integration/integration_test.go
         text: 'var (gatewayAPIConformanceRunTest|traefikVersion) is unused'
