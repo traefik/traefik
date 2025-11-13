@@ -237,6 +237,8 @@ which in turn will create the resulting routers, services, handlers, etc.
                         number: 80
       ```
 
+See also this TraefikLabs [blog post](https://traefik.io/blog/transition-from-ingress-nginx-to-traefik).
+
 ## Annotations Support
 
 This section lists all known NGINX Ingress annotations, split between those currently implemented (with limitations if any) and those not implemented. 
