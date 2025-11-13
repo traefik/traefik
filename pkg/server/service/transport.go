@@ -182,6 +182,7 @@ func (t *TransportManager) createTLSConfig(cfg *dynamic.ServersTransport) (*tls.
 				} else {
 					log.Error().Msgf("Invalid cipher: %v", cipher)
 					cipherSuites = nil
+					break
 				}
 			}
 		}
