@@ -42,10 +42,10 @@
   [http.routers.admin-router]
     rule = "Header(`X-User-Role`, `admin`)"
     service = "admin-service"
-    parentRefs = ["parent-router@file"]
+    parentRefs = ["parent-router"]
 
   # Child router for developer role
   [http.routers.developer-router]
     rule = "Header(`X-User-Role`, `developer`)"
     service = "developer-service"
-    parentRefs = ["parent-router@file"]
+    parentRefs = ["parent-router"]
