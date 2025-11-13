@@ -1,3 +1,9 @@
+## [v2.11.31](https://github.com/traefik/traefik/tree/v2.11.31) (2025-11-13)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.30...v2.11.31)
+
+**Bug fixes:**
+- **[docker,docker/swarm]** Auto-negotiate Docker API version ([#12262](https://github.com/traefik/traefik/pull/12262) by [kevinpollet](https://github.com/kevinpollet))
+
 ## [v2.11.30](https://github.com/traefik/traefik/tree/v2.11.30) (2025-10-28)
 [All Commits](https://github.com/traefik/traefik/compare/v2.11.29...v2.11.30)
 
