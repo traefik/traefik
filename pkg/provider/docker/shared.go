@@ -121,8 +121,9 @@ func createClient(ctx context.Context, cfg ClientConfig) (*client.Client, error)
 	}
 
 	opts = append(opts,
-		client.WithHTTPHeaders(httpHeaders),
-		client.WithAPIVersionNegotiation())
+		client.FromEnv,
+		client.WithAPIVersionNegotiation(),
+		client.WithHTTPHeaders(httpHeaders))
 
 	return client.NewClientWithOpts(opts...)
 }
