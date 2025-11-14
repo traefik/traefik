@@ -416,6 +416,8 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 					cipherSuites = append(cipherSuites, cipher)
 				} else {
 					logger.Error().Msgf("cipher suite not supported: %s", cipher)
+					cipherSuites = nil
+					break
 				}
 			}
 		}
