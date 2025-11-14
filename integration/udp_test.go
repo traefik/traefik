@@ -209,7 +209,11 @@ func proxyProtoUDPRequest(address, srcIP string, srcPort int) (string, error) {
 	}
 
 	// Read response
-	conn.SetReadDeadline(time.Now().Add(2 * time.Second))
+	err = conn.SetReadDeadline(time.Now().Add(2 * time.Second))
+	if err != nil {
+		return "", err
+	}
+
 	buf := make([]byte, 2048)
 	n, err := conn.Read(buf)
 	if err != nil {
@@ -235,8 +239,7 @@ func proxyProtoUDPRequestMultiPacket(address, srcIP string, srcPort, numPackets 
 	defer conn.Close()
 
 	responses := make([]string, 0, numPackets)
-
-	for i := 0; i < numPackets; i++ {
+	for i := range numPackets {
 		var packet []byte
 
 		if i == 0 {
@@ -274,7 +277,11 @@ func proxyProtoUDPRequestMultiPacket(address, srcIP string, srcPort, numPackets 
 		}
 
 		// Read response.
-		conn.SetReadDeadline(time.Now().Add(2 * time.Second))
+		err = conn.SetReadDeadline(time.Now().Add(2 * time.Second))
+		if err != nil {
+			return nil, err
+		}
+
 		buf := make([]byte, 2048)
 		n, err := conn.Read(buf)
 		if err != nil {

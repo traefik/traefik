@@ -61,7 +61,7 @@ func TestBuildProxyProtocolV2Header_IPv4(t *testing.T) {
 	header := buildProxyProtocolV2Header(t, "192.0.2.1", 12345, "198.51.100.1", 5000, false)
 	require.NotNil(t, header)
 	// Proxy Protocol v2 header for UDP/IPv4: 16 byte preamble + 8 bytes addresses + 4 bytes ports = 28 bytes.
-	assert.Equal(t, 28, len(header))
+	assert.Len(t, header, 28)
 }
 
 // TestBuildProxyProtocolV2Header_IPv6 verifies the helper creates valid IPv6 headers.
@@ -69,7 +69,7 @@ func TestBuildProxyProtocolV2Header_IPv6(t *testing.T) {
 	header := buildProxyProtocolV2Header(t, "2001:db8::1", 54321, "2001:db8::2", 5000, true)
 	require.NotNil(t, header)
 	// Proxy Protocol v2 header for UDP/IPv6: 16 byte preamble + 32 bytes addresses + 4 bytes ports = 52 bytes.
-	assert.Equal(t, 52, len(header))
+	assert.Len(t, header, 52)
 }
 
 // TestProxyProtocol_IPv4_Insecure tests IPv4 Proxy Protocol parsing in insecure mode.
