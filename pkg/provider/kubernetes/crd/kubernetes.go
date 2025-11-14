@@ -409,6 +409,37 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			})
 		}
 
+		var cipherSuites []string
+		if serversTransport.Spec.CipherSuites != nil {
+			for _, cipher := range serversTransport.Spec.CipherSuites {
+				if _, exists := tls.CipherSuites[cipher]; exists {
+					cipherSuites = append(cipherSuites, cipher)
+				} else {
+					logger.Error().Msgf("cipher suite not supported: %s", cipher)
+					cipherSuites = nil
+					break
+				}
+			}
+		}
+
+		var minVersion string
+		if serversTransport.Spec.MinVersion != "" {
+			if _, exists := tls.MinVersion[serversTransport.Spec.MinVersion]; exists {
+				minVersion = serversTransport.Spec.MinVersion
+			} else {
+				logger.Error().Msgf("invalid TLS minimum version: %s", serversTransport.Spec.MinVersion)
+			}
+		}
+
+		var maxVersion string
+		if serversTransport.Spec.MaxVersion != "" {
+			if _, exists := tls.MaxVersion[serversTransport.Spec.MaxVersion]; exists {
+				maxVersion = serversTransport.Spec.MaxVersion
+			} else {
+				logger.Error().Msgf("invalid TLS maximum version: %s", serversTransport.Spec.MaxVersion)
+			}
+		}
+
 		forwardingTimeout := &dynamic.ForwardingTimeouts{}
 		forwardingTimeout.SetDefaults()
 
@@ -455,6 +486,9 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			InsecureSkipVerify:  serversTransport.Spec.InsecureSkipVerify,
 			RootCAs:             rootCAs,
 			Certificates:        certs,
+			CipherSuites:        cipherSuites,
+			MinVersion:          minVersion,
+			MaxVersion:          maxVersion,
 			DisableHTTP2:        serversTransport.Spec.DisableHTTP2,
 			MaxIdleConnsPerHost: serversTransport.Spec.MaxIdleConnsPerHost,
 			ForwardingTimeouts:  forwardingTimeout,
