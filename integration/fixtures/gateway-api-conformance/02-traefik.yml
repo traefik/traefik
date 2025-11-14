@@ -41,7 +41,11 @@ spec:
       serviceAccountName: traefik
       containers:
         - name: traefik
+        securityContext:
+          allowPrivilegeEscalation: false
           image: traefik/traefik:latest
+        securityContext:
+          allowPrivilegeEscalation: false
           imagePullPolicy: Never
           args:
             - --log.level=DEBUG
@@ -56,12 +60,20 @@ spec:
           ports:
             - name: web
               containerPort: 80
+        securityContext:
+          allowPrivilegeEscalation: false
             - name: websecure
               containerPort: 443
+        securityContext:
+          allowPrivilegeEscalation: false
             - name: web8080
               containerPort: 8080
+        securityContext:
+          allowPrivilegeEscalation: false
             - name: traefik
               containerPort: 9000
+        securityContext:
+          allowPrivilegeEscalation: false
 
 ---
 apiVersion: v1
