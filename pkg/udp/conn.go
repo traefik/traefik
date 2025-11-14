@@ -45,7 +45,7 @@ type Listener struct {
 	// Used for Proxy Protocol sessions to route subsequent packets without headers.
 	// e.g., "127.0.0.1:12345" (packet source) → "192.0.2.50:7777" (client from Proxy Protocol header)
 	// Protected by connsMu.
-	connsPacketSourceToClient map[string]string
+	connsPacketSourceToClient map[string]*net.UDPAddr
 	// accepting signifies whether the listener is still accepting new sessions.
 	// It also serves as a sentinel for Shutdown to be idempotent.
 	// Protected by connsMu.
@@ -86,7 +86,7 @@ func ListenPacketConn(packetConn net.PacketConn, timeout time.Duration, ppConfig
 				return make([]byte, maxDatagramSize)
 			},
 		},
-		connsPacketSourceToClient: make(map[string]string),
+		connsPacketSourceToClient: make(map[string]*net.UDPAddr),
 	}
 
 	if ppConfig != nil {
@@ -156,7 +156,7 @@ func (l *Listener) close() error {
 		v.close()
 		delete(l.conns, k)
 	}
-	l.connsPacketSourceToClient = make(map[string]string)
+	l.connsPacketSourceToClient = make(map[string]*net.UDPAddr)
 	close(l.acceptCh)
 	return err
 }
@@ -216,7 +216,6 @@ func (l *Listener) readLoop() {
 		packetSource := raddr
 
 		// Proxy Protocol handling.
-		var usedProxyProtocol bool
 		if l.shouldParseProxyProtocol(packetSource) {
 			header, payload, err := l.parseProxyProtocol(packet)
 			if err != nil {
@@ -229,14 +228,12 @@ func (l *Listener) readLoop() {
 			}
 
 			if header != nil {
-				usedProxyProtocol = true
-
 				// Use header's source address for session keying.
 				srcAddr, _, _ := header.UDPAddrs()
 
 				// Record mapping of packet source to client address for subsequent packets.
 				l.connsMu.Lock()
-				l.connsPacketSourceToClient[packetSource.String()] = srcAddr.String()
+				l.connsPacketSourceToClient[packetSource.String()] = srcAddr
 				l.connsMu.Unlock()
 
 				raddr = srcAddr
@@ -244,21 +241,18 @@ func (l *Listener) readLoop() {
 			} else {
 				// No header: check if this source has an existing Proxy Protocol session.
 				l.connsMu.RLock()
-				clientAddrStr, exists := l.connsPacketSourceToClient[packetSource.String()]
+				clientAddr, exists := l.connsPacketSourceToClient[packetSource.String()]
 				l.connsMu.RUnlock()
 
 				if exists {
 					// Use the client address instead of actual source.
-					clientUDPAddr, err := net.ResolveUDPAddr("udp", clientAddrStr)
-					if err == nil {
-						raddr = clientUDPAddr
-					}
+					raddr = clientAddr
 				}
 			}
 		}
 
 		clientAddr := raddr
-		conn, err := l.getConn(clientAddr, packetSource, usedProxyProtocol)
+		conn, err := l.getConn(clientAddr, packetSource)
 		if err != nil {
 			l.readBufferPool.Put(buf)
 			continue
@@ -329,10 +323,19 @@ func (l *Listener) parseProxyProtocol(packet []byte) (*proxyproto.Header, []byte
 	return header, payload, nil
 }
 
+// removeConn removes a connection from the listener's tracking maps.
+func (l *Listener) removeConn(clientAddr, responseAddr string) {
+	l.connsMu.Lock()
+	defer l.connsMu.Unlock()
+
+	delete(l.conns, clientAddr)
+	delete(l.connsPacketSourceToClient, responseAddr)
+}
+
 // getConn returns the ongoing session with clientAddr if it exists, or creates a new one otherwise.
 // The clientAddr is used for session keying, while responseAddr is used
 // for sending responses back to the packet source.
-func (l *Listener) getConn(clientAddr, responseAddr net.Addr, usedProxyProtocol bool) (*Conn, error) {
+func (l *Listener) getConn(clientAddr, responseAddr net.Addr) (*Conn, error) {
 	l.connsMu.Lock()
 	defer l.connsMu.Unlock()
 
@@ -344,7 +347,7 @@ func (l *Listener) getConn(clientAddr, responseAddr net.Addr, usedProxyProtocol 
 	if !l.accepting {
 		return nil, errClosedListener
 	}
-	conn = l.newConn(clientAddr, responseAddr, usedProxyProtocol)
+	conn = l.newConn(clientAddr, responseAddr)
 	l.conns[clientAddr.String()] = conn
 	l.acceptCh <- conn
 	go conn.readLoop()
@@ -352,26 +355,24 @@ func (l *Listener) getConn(clientAddr, responseAddr net.Addr, usedProxyProtocol 
 	return conn, nil
 }
 
-func (l *Listener) newConn(clientAddr, responseAddr net.Addr, usedProxyProtocol bool) *Conn {
+func (l *Listener) newConn(clientAddr, responseAddr net.Addr) *Conn {
 	return &Conn{
-		listener:          l,
-		clientAddr:        clientAddr,
-		responseAddr:      responseAddr,
-		usedProxyProtocol: usedProxyProtocol,
-		receiveCh:         make(chan []byte),
-		readCh:            make(chan []byte),
-		sizeCh:            make(chan int),
-		doneCh:            make(chan struct{}),
-		timeout:           l.timeout,
+		listener:     l,
+		clientAddr:   clientAddr,
+		responseAddr: responseAddr,
+		receiveCh:    make(chan []byte),
+		readCh:       make(chan []byte),
+		sizeCh:       make(chan int),
+		doneCh:       make(chan struct{}),
+		timeout:      l.timeout,
 	}
 }
 
 // Conn represents an on-going session with a client, over UDP packets.
 type Conn struct {
-	listener          *Listener
-	clientAddr        net.Addr // Client address for application logic (from Proxy Protocol header or network).
-	responseAddr      net.Addr // Network address for sending responses.
-	usedProxyProtocol bool     // Indicates if this connection used Proxy Protocol.
+	listener     *Listener
+	clientAddr   net.Addr // Client address for application logic (from Proxy Protocol header or network).
+	responseAddr net.Addr // Network address for sending responses.
 
 	receiveCh chan []byte // Receives data from the listener's readLoop.
 	readCh    chan []byte // Receives the buffer for Read operation.
@@ -459,10 +460,6 @@ func (c *Conn) Read(p []byte) (int, error) {
 // Each call sends at most one datagram.
 // It is an error to send a message larger than the system's max UDP datagram size.
 func (c *Conn) Write(p []byte) (n int, err error) {
-	if c.responseAddr == nil {
-		return 0, errors.New("connection has no response address")
-	}
-
 	c.muActivity.Lock()
 	c.lastActivity = time.Now()
 	c.muActivity.Unlock()
@@ -484,15 +481,6 @@ func (c *Conn) close() {
 // Close releases resources related to the Conn.
 func (c *Conn) Close() error {
 	c.close()
-
-	c.listener.connsMu.Lock()
-	defer c.listener.connsMu.Unlock()
-
-	delete(c.listener.conns, c.clientAddr.String())
-
-	if c.usedProxyProtocol {
-		delete(c.listener.connsPacketSourceToClient, c.responseAddr.String())
-	}
-
+	c.listener.removeConn(c.clientAddr.String(), c.responseAddr.String())
 	return nil
 }

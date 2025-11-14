@@ -446,9 +446,9 @@ func TestProxyProtocolCleanupOnClose(t *testing.T) {
 	require.NoError(t, err)
 
 	listener.connsMu.RLock()
-	clientAddrStr := listener.connsPacketSourceToClient[clientConn.LocalAddr().String()]
+	clientAddr := listener.connsPacketSourceToClient[clientConn.LocalAddr().String()]
 	listener.connsMu.RUnlock()
-	assert.Equal(t, "192.0.2.100:5000", clientAddrStr)
+	assert.Equal(t, "192.0.2.100:5000", clientAddr.String())
 
 	buf := make([]byte, 1024)
 	n, err := conn.Read(buf)
