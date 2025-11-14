@@ -1,0 +1,41 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+  noColor = true
+
+[entryPoints]
+  [entryPoints.udp-trusted]
+    address = ":8093/udp"
+    [entryPoints.udp-trusted.udp]
+      [entryPoints.udp-trusted.udp.proxyProtocol]
+        trustedIPs = ["127.0.0.1"]
+
+  [entryPoints.udp-nottrusted]
+    address = ":8094/udp"
+    [entryPoints.udp-nottrusted.udp]
+      [entryPoints.udp-nottrusted.udp.proxyProtocol]
+        trustedIPs = ["1.2.3.4"]
+
+[api]
+  insecure = true
+
+[providers.file]
+  filename = "{{ .SelfFilename }}"
+
+## dynamic configuration ##
+[udp]
+  [udp.routers]
+    [udp.routers.to-whoami-trusted]
+      service = "whoami"
+      entryPoints = [ "udp-trusted" ]
+
+    [udp.routers.to-whoami-nottrusted]
+      service = "whoami"
+      entryPoints = [ "udp-nottrusted" ]
+
+  [udp.services.whoami.loadBalancer]
+    [[udp.services.whoami.loadBalancer.servers]]
+      address = "{{ .WhoamiIP}}:8080"

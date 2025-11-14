@@ -91,10 +91,18 @@ func NewUDPEntryPoint(config *static.EntryPoint, name string) (*UDPEntryPoint, e
 
 	timeout := time.Duration(config.UDP.Timeout)
 
+	var ppConfig *udp.ProxyProtocolConfig
+	if config.UDP.ProxyProtocol != nil {
+		ppConfig = &udp.ProxyProtocolConfig{
+			Insecure:   config.UDP.ProxyProtocol.Insecure,
+			TrustedIPs: config.UDP.ProxyProtocol.TrustedIPs,
+		}
+	}
+
 	// if we have predefined connections from socket activation
 	if socketActivation.isEnabled() {
 		if conn, err := socketActivation.getConn(name); err == nil {
-			listener, err = udp.ListenPacketConn(conn, timeout)
+			listener, err = udp.ListenPacketConn(conn, timeout, ppConfig)
 			if err != nil {
 				log.Warn().Err(err).Str("name", name).Msg("Unable to create socket activation listener")
 			}
@@ -105,9 +113,20 @@ func NewUDPEntryPoint(config *static.EntryPoint, name string) (*UDPEntryPoint, e
 
 	if listener == nil {
 		listenConfig := newListenConfig(config)
-		listener, err = udp.Listen(listenConfig, "udp", config.GetAddress(), timeout)
+		listener, err = udp.Listen(listenConfig, "udp", config.GetAddress(), timeout, ppConfig)
 		if err != nil {
 			return nil, fmt.Errorf("error creating listener: %w", err)
+		}
+	}
+
+	if ppConfig != nil {
+		if ppConfig.Insecure {
+			log.Info().Str("entrypoint", name).Msg("Enabling UDP ProxyProtocol without trusted IPs: Insecure")
+		} else if len(ppConfig.TrustedIPs) > 0 {
+			log.Info().
+				Str("entrypoint", name).
+				Strs("trustedIPs", ppConfig.TrustedIPs).
+				Msg("Enabling UDP ProxyProtocol for trusted IPs")
 		}
 	}
 

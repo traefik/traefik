@@ -1338,6 +1338,97 @@ entryPoints:
 --entryPoints.foo.udp.timeout=10s
 ```
 
+### Proxy Protocol
+
+UDP EntryPoints support the [HAProxy PROXY protocol v2](https://www.haproxy.org/download/2.0/doc/proxy-protocol.txt) 
+for preserving client source IP and port when Traefik is deployed behind a proxy or load balancer.
+
+Unlike TCP where Proxy Protocol can wrap the entire connection, UDP Proxy Protocol headers appear 
+only in the first datagram of a UDP session, and are automatically stripped before forwarding to backend services.
+
+#### Use Cases
+
+- **DNS Servers**: Preserve client IP for ACL enforcement and logging (PowerDNS, Knot DNS, etc.)
+- **TURN/STUN Servers**: Maintain client IP for WebRTC ICE candidate filtering and firewall rules
+- **Custom UDP Services**: Any service requiring client IP identification through a proxy
+
+#### Configuration
+
+Enable Proxy Protocol on a UDP entry point:
+
+??? info "`proxyProtocol.trustedIPs` (Recommended)"
+
+    Accept Proxy Protocol headers only from specified IP addresses or CIDR ranges:
+
+    ```yaml tab="File (YAML)"
+    ## Static configuration
+    entryPoints:
+      dns-udp:
+        address: ":53/udp"
+        udp:
+          timeout: 10s
+          proxyProtocol:
+            trustedIPs:
+              - "10.0.0.0/8"
+              - "192.168.1.10/32"
+    ```
+
+    ```toml tab="File (TOML)"
+    ## Static configuration
+    [entryPoints.dns-udp]
+      address = ":53/udp"
+
+      [entryPoints.dns-udp.udp]
+        timeout = "10s"
+
+        [entryPoints.dns-udp.udp.proxyProtocol]
+          trustedIPs = ["10.0.0.0/8", "192.168.1.10/32"]
+    ```
+
+    ```bash tab="CLI"
+    --entryPoints.dns-udp.address=:53/udp
+    --entryPoints.dns-udp.udp.timeout=10s
+    --entryPoints.dns-udp.udp.proxyProtocol.trustedIPs=10.0.0.0/8,192.168.1.10/32
+    ```
+
+    !!! warning "Security - TrustedIPs Required"
+
+        In production, always use TrustedIPs to prevent IP spoofing. Only allow Proxy Protocol headers from your trusted proxies or load balancers. Accepting from untrusted sources can allow attackers to claim arbitrary client IPs.
+
+??? info "`proxyProtocol.insecure` (Development Only)"
+
+    Accept Proxy Protocol headers from any source:
+
+    ```yaml tab="File (YAML)"
+    ## Static configuration
+    entryPoints:
+      test-udp:
+        address: ":5000/udp"
+        udp:
+          proxyProtocol:
+            insecure: true
+    ```
+
+    ```toml tab="File (TOML)"
+    ## Static configuration
+    [entryPoints.test-udp]
+      address = ":5000/udp"
+
+      [entryPoints.test-udp.udp]
+        [entryPoints.test-udp.udp.proxyProtocol]
+          insecure = true
+    ```
+
+    ```bash tab="CLI"
+    --entryPoints.test-udp.address=:5000/udp
+    --entryPoints.test-udp.udp.proxyProtocol.insecure
+    ```
+
+    !!! danger "Security Risk - Testing Only"
+
+        Insecure mode allows any client to claim any source IP address. This is convenient for testing but creates a major security vulnerability.
+        **Never use in production** - any connected client could spoof any IP address, defeating security controls that rely on source IP verification.
+
 ## Systemd Socket Activation
 
 Traefik supports [systemd socket activation](https://www.freedesktop.org/software/systemd/man/latest/systemd-socket-activate.html).
