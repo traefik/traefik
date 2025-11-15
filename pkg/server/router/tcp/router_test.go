@@ -197,7 +197,7 @@ func Test_Routing(t *testing.T) {
 			Stores:      []string{tlsalpn01.ACMETLS1Protocol},
 		}})
 
-	middlewaresBuilder := tcpmiddleware.NewBuilder(conf.TCPMiddlewares)
+	middlewaresBuilder := tcpmiddleware.NewBuilder(conf.TCPMiddlewares, nil)
 
 	manager := NewManager(conf, serviceManager, middlewaresBuilder,
 		nil, nil, tlsManager)
