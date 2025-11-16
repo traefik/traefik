@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"path"
@@ -25,6 +26,8 @@ type yaegiMiddlewareBuilder struct {
 	fnNew          reflect.Value
 	fnCreateConfig reflect.Value
 	fnNewTCP       reflect.Value
+	interpreter    *interp.Interpreter // Store for Eval() usage
+	basePkg        string              // Store package name for Eval()
 }
 
 func newYaegiMiddlewareBuilder(i *interp.Interpreter, basePkg, imp string) (*yaegiMiddlewareBuilder, error) {
@@ -50,6 +53,8 @@ func newYaegiMiddlewareBuilder(i *interp.Interpreter, basePkg, imp string) (*yae
 		fnNew:          fnNew,
 		fnCreateConfig: fnCreateConfig,
 		fnNewTCP:       fnNewTCP,
+		interpreter:    i,
+		basePkg:        basePkg,
 	}, nil
 }
 
@@ -67,24 +72,35 @@ func (b yaegiMiddlewareBuilder) newMiddleware(config map[string]interface{}, mid
 }
 
 func (b yaegiMiddlewareBuilder) newHandler(ctx context.Context, next http.Handler, cfg reflect.Value, middlewareName string) (http.Handler, error) {
-	args := []reflect.Value{reflect.ValueOf(ctx), reflect.ValueOf(next), cfg, reflect.ValueOf(middlewareName)}
-	results := b.fnNew.Call(args)
+	// Extract the config value
+	config := cfg.Interface()
 
-	if len(results) > 1 && results[1].Interface() != nil {
-		err, ok := results[1].Interface().(error)
-		if !ok {
-			return nil, fmt.Errorf("invalid error type: %T", results[0].Interface())
+	// Extract and call the function directly instead of using reflect.Call
+	// This allows passing compiled types like http.Handler
+	fnNew, ok := b.fnNew.Interface().(func(context.Context, http.Handler, interface{}, string) (http.Handler, error))
+	if !ok {
+		// Fallback to old reflection-based call for compatibility
+		args := []reflect.Value{reflect.ValueOf(ctx), reflect.ValueOf(next), cfg, reflect.ValueOf(middlewareName)}
+		results := b.fnNew.Call(args)
+
+		if len(results) > 1 && results[1].Interface() != nil {
+			err, ok := results[1].Interface().(error)
+			if !ok {
+				return nil, fmt.Errorf("invalid error type: %T", results[0].Interface())
+			}
+
+			return nil, err
 		}
 
-		return nil, err
+		handler, ok := results[0].Interface().(http.Handler)
+		if !ok {
+			return nil, fmt.Errorf("invalid handler type: %T", results[0].Interface())
+		}
+
+		return handler, nil
 	}
 
-	handler, ok := results[0].Interface().(http.Handler)
-	if !ok {
-		return nil, fmt.Errorf("invalid handler type: %T", results[0].Interface())
-	}
-
-	return handler, nil
+	return fnNew(ctx, next, config, middlewareName)
 }
 
 func (b yaegiMiddlewareBuilder) newTCPHandler(ctx context.Context, next tcp.Handler, cfg reflect.Value, middlewareName string) (tcp.Handler, error) {
@@ -92,7 +108,27 @@ func (b yaegiMiddlewareBuilder) newTCPHandler(ctx context.Context, next tcp.Hand
 		return nil, errors.New("plugin does not support TCP")
 	}
 
-	args := []reflect.Value{reflect.ValueOf(ctx), reflect.ValueOf(next), cfg, reflect.ValueOf(middlewareName)}
+	// BRILLIANT SOLUTION: Pass a callback function instead of a handler object!
+	// Functions are stdlib and yaegi handles them perfectly!
+
+	// Create a callback function that bridges to the compiled handler
+	nextCallback := func(ctx context.Context, conn net.Conn, closeWrite func() error) {
+		// Reconstruct tcp.WriteCloser from stdlib types
+		wc := &connWithCloseWrite{
+			Conn:       conn,
+			closeWrite: closeWrite,
+		}
+		next.ServeTCP(ctx, wc)
+	}
+
+	// Now use reflect.Call() with ONLY stdlib types!
+	args := []reflect.Value{
+		reflect.ValueOf(ctx),            // context.Context - stdlib
+		reflect.ValueOf(nextCallback),   // func(...) - stdlib
+		cfg,                             // config
+		reflect.ValueOf(middlewareName), // string - stdlib
+	}
+
 	results := b.fnNewTCP.Call(args)
 
 	if len(results) > 1 && results[1].Interface() != nil {
@@ -100,16 +136,36 @@ func (b yaegiMiddlewareBuilder) newTCPHandler(ctx context.Context, next tcp.Hand
 		if !ok {
 			return nil, fmt.Errorf("invalid error type: %T", results[1].Interface())
 		}
-
 		return nil, err
 	}
 
-	handler, ok := results[0].Interface().(tcp.Handler)
+	// Extract the handler function - yaegi returns it as a pure stdlib function type
+	pluginHandlerValue := results[0]
+	pluginFunc, ok := pluginHandlerValue.Interface().(func(context.Context, net.Conn, func() error))
 	if !ok {
-		return nil, fmt.Errorf("invalid TCP handler type: %T", results[0].Interface())
+		return nil, fmt.Errorf("expected function, got %T", pluginHandlerValue.Interface())
 	}
 
-	return handler, nil
+	// Wrap the function as tcp.Handler
+	return tcp.HandlerFunc(func(ctx context.Context, conn tcp.WriteCloser) {
+		closeWriteFunc := func() error {
+			return conn.CloseWrite()
+		}
+		pluginFunc(ctx, conn, closeWriteFunc)
+	}), nil
+}
+
+// connWithCloseWrite wraps net.Conn and adds CloseWrite method
+type connWithCloseWrite struct {
+	net.Conn
+	closeWrite func() error
+}
+
+func (c *connWithCloseWrite) CloseWrite() error {
+	if c.closeWrite != nil {
+		return c.closeWrite()
+	}
+	return nil
 }
 
 func (b yaegiMiddlewareBuilder) createConfig(config map[string]interface{}) (reflect.Value, error) {
@@ -200,10 +256,8 @@ func newInterpreter(ctx context.Context, goPath string, manifest *Manifest, sett
 		return nil, fmt.Errorf("failed to load provider symbols: %w", err)
 	}
 
-	err = i.Use(tcpSymbols())
-	if err != nil {
-		return nil, fmt.Errorf("failed to load TCP symbols: %w", err)
-	}
+	// Note: TCP plugins use stdlib types only (net.Conn, context.Context, functions)
+	// so we don't need to load Traefik's tcp package symbols
 
 	_, err = i.Eval(fmt.Sprintf(`import "%s"`, manifest.Import))
 	if err != nil {

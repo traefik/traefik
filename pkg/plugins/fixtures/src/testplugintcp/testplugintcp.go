@@ -30,7 +30,7 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 
 // TCPHandler is the interface that TCP handlers must implement.
 type TCPHandler interface {
-	ServeTCP(conn TCPWriteCloser)
+	ServeTCP(ctx context.Context, conn TCPWriteCloser)
 }
 
 // TCPWriteCloser is the interface for TCP connections.
@@ -54,7 +54,7 @@ type tcpMiddleware struct {
 	ipPrefix string
 }
 
-func (m *tcpMiddleware) ServeTCP(conn TCPWriteCloser) {
+func (m *tcpMiddleware) ServeTCP(ctx context.Context, conn TCPWriteCloser) {
 	// Simple test: if IP starts with "127", proceed, otherwise close
 	addr := conn.RemoteAddr().String()
 	host, _, _ := net.SplitHostPort(addr)
@@ -65,5 +65,5 @@ func (m *tcpMiddleware) ServeTCP(conn TCPWriteCloser) {
 		return
 	}
 
-	m.next.ServeTCP(conn)
+	m.next.ServeTCP(ctx, conn)
 }

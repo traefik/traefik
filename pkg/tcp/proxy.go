@@ -1,6 +1,7 @@
 package tcp
 
 import (
+	"context"
 	"errors"
 	"io"
 	"net"
@@ -25,7 +26,7 @@ func NewProxy(address string, dialer Dialer) (*Proxy, error) {
 }
 
 // ServeTCP forwards the connection to a service.
-func (p *Proxy) ServeTCP(conn WriteCloser) {
+func (p *Proxy) ServeTCP(ctx context.Context, conn WriteCloser) {
 	log.Debug().
 		Str("address", p.address).
 		Str("remoteAddr", conn.RemoteAddr().String()).

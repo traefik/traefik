@@ -42,7 +42,7 @@ func TestNewIPWhiteLister(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			next := tcp.HandlerFunc(func(conn tcp.WriteCloser) {})
+			next := tcp.HandlerFunc(func(ctx context.Context, conn tcp.WriteCloser) {})
 			whiteLister, err := New(t.Context(), next, test.whiteList, "traefikTest")
 
 			if test.expectedError {
@@ -83,7 +83,7 @@ func TestIPWhiteLister_ServeHTTP(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			next := tcp.HandlerFunc(func(conn tcp.WriteCloser) {
+			next := tcp.HandlerFunc(func(ctx context.Context, conn tcp.WriteCloser) {
 				write, err := conn.Write([]byte("OK"))
 				require.NoError(t, err)
 				assert.Equal(t, 2, write)
@@ -98,7 +98,7 @@ func TestIPWhiteLister_ServeHTTP(t *testing.T) {
 			server, client := net.Pipe()
 
 			go func() {
-				whiteLister.ServeTCP(&contextWriteCloser{client, addr{test.remoteAddr}})
+				whiteLister.ServeTCP(context.Background(), &contextWriteCloser{client, addr{test.remoteAddr}})
 			}()
 
 			read, err := io.ReadAll(server)
