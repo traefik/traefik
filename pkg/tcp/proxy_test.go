@@ -2,7 +2,6 @@ package tcp
 
 import (
 	"bytes"
-	"context"
 	"io"
 	"net"
 	"testing"
@@ -31,7 +30,7 @@ func TestCloseWrite(t *testing.T) {
 		for {
 			conn, err := proxyListener.Accept()
 			require.NoError(t, err)
-			proxy.ServeTCP(context.Background(), conn.(*net.TCPConn))
+			proxy.ServeTCP(t.Context(), conn.(*net.TCPConn))
 		}
 	}()
 

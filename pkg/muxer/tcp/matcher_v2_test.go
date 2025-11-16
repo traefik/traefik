@@ -503,7 +503,7 @@ func Test_addTCPRouteV2(t *testing.T) {
 
 			require.NotNil(t, matchingHandler)
 
-			matchingHandler.ServeTCP(context.Background(), conn)
+			matchingHandler.ServeTCP(t.Context(), conn)
 
 			n, ok := conn.call[msg]
 			assert.Equal(t, 1, n)

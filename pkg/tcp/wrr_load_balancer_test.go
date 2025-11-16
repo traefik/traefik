@@ -92,7 +92,7 @@ func TestWRRLoadBalancer_LoadBalancing(t *testing.T) {
 
 			conn := &fakeConn{writeCall: make(map[string]int)}
 			for range test.totalCall {
-				balancer.ServeTCP(context.Background(), conn)
+				balancer.ServeTCP(t.Context(), conn)
 			}
 
 			assert.Equal(t, test.expectedWrite, conn.writeCall)
@@ -118,7 +118,7 @@ func TestWRRLoadBalancer_NoServiceUp(t *testing.T) {
 	balancer.SetStatus(t.Context(), "second", false)
 
 	conn := &fakeConn{writeCall: make(map[string]int)}
-	balancer.ServeTCP(context.Background(), conn)
+	balancer.ServeTCP(t.Context(), conn)
 
 	assert.Empty(t, conn.writeCall)
 	assert.Equal(t, 1, conn.closeCall)
@@ -141,7 +141,7 @@ func TestWRRLoadBalancer_OneServerDown(t *testing.T) {
 
 	conn := &fakeConn{writeCall: make(map[string]int)}
 	for range 3 {
-		balancer.ServeTCP(context.Background(), conn)
+		balancer.ServeTCP(t.Context(), conn)
 	}
 	assert.Equal(t, 3, conn.writeCall["first"])
 }
@@ -163,7 +163,7 @@ func TestWRRLoadBalancer_DownThenUp(t *testing.T) {
 
 	conn := &fakeConn{writeCall: make(map[string]int)}
 	for range 3 {
-		balancer.ServeTCP(context.Background(), conn)
+		balancer.ServeTCP(t.Context(), conn)
 	}
 	assert.Equal(t, 3, conn.writeCall["first"])
 
@@ -171,7 +171,7 @@ func TestWRRLoadBalancer_DownThenUp(t *testing.T) {
 
 	conn = &fakeConn{writeCall: make(map[string]int)}
 	for range 2 {
-		balancer.ServeTCP(context.Background(), conn)
+		balancer.ServeTCP(t.Context(), conn)
 	}
 	assert.Equal(t, 1, conn.writeCall["first"])
 	assert.Equal(t, 1, conn.writeCall["second"])
@@ -216,7 +216,7 @@ func TestWRRLoadBalancer_Propagate(t *testing.T) {
 
 	conn := &fakeConn{writeCall: make(map[string]int)}
 	for range 8 {
-		topBalancer.ServeTCP(context.Background(), conn)
+		topBalancer.ServeTCP(t.Context(), conn)
 	}
 	assert.Equal(t, 2, conn.writeCall["first"])
 	assert.Equal(t, 2, conn.writeCall["second"])
@@ -228,7 +228,7 @@ func TestWRRLoadBalancer_Propagate(t *testing.T) {
 
 	conn = &fakeConn{writeCall: make(map[string]int)}
 	for range 8 {
-		topBalancer.ServeTCP(context.Background(), conn)
+		topBalancer.ServeTCP(t.Context(), conn)
 	}
 	assert.Equal(t, 2, conn.writeCall["first"])
 	assert.Equal(t, 2, conn.writeCall["second"])
@@ -241,7 +241,7 @@ func TestWRRLoadBalancer_Propagate(t *testing.T) {
 
 	conn = &fakeConn{writeCall: make(map[string]int)}
 	for range 8 {
-		topBalancer.ServeTCP(context.Background(), conn)
+		topBalancer.ServeTCP(t.Context(), conn)
 	}
 	assert.Equal(t, 4, conn.writeCall["first"])
 	assert.Equal(t, 4, conn.writeCall["second"])

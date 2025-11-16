@@ -119,7 +119,7 @@ func TestThenOrdersHandlersCorrectly(t *testing.T) {
 	require.NoError(t, err)
 
 	conn := &myWriter{}
-	chained.ServeTCP(context.Background(), conn)
+	chained.ServeTCP(t.Context(), conn)
 
 	assert.Equal(t, "t1\nt2\nt3\napp\n", string(conn.data))
 }
@@ -135,7 +135,7 @@ func TestAppendAddsHandlersCorrectly(t *testing.T) {
 	require.NoError(t, err)
 
 	conn := &myWriter{}
-	chained.ServeTCP(context.Background(), conn)
+	chained.ServeTCP(t.Context(), conn)
 
 	assert.Equal(t, "t1\nt2\nt3\nt4\napp\n", string(conn.data))
 }
@@ -162,7 +162,7 @@ func TestExtendAddsHandlersCorrectly(t *testing.T) {
 	require.NoError(t, err)
 
 	conn := &myWriter{}
-	chained.ServeTCP(context.Background(), conn)
+	chained.ServeTCP(t.Context(), conn)
 
 	assert.Equal(t, "t1\nt2\nt3\nt4\napp\n", string(conn.data))
 }

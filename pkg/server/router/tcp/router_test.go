@@ -664,7 +664,7 @@ func Test_Routing(t *testing.T) {
 						t.Error("not a write closer")
 					}
 
-					router.ServeTCP(context.Background(), tcpConn)
+					router.ServeTCP(t.Context(), tcpConn)
 				}
 			}()
 
@@ -1041,14 +1041,14 @@ func TestPostgres(t *testing.T) {
 	require.NoError(t, err)
 
 	mockConn := NewMockConn()
-	go router.ServeTCP(context.Background(), mockConn)
+	go router.ServeTCP(t.Context(), mockConn)
 
 	mockConn.dataRead <- PostgresStartTLSMsg
 	b := <-mockConn.dataWrite
 	require.Equal(t, PostgresStartTLSReply, b)
 
 	mockConn = NewMockConn()
-	go router.ServeTCP(context.Background(), mockConn)
+	go router.ServeTCP(t.Context(), mockConn)
 
 	mockConn.dataRead <- []byte("HTTP")
 	b = <-mockConn.dataWrite

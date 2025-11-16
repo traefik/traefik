@@ -98,7 +98,7 @@ func TestIPWhiteLister_ServeHTTP(t *testing.T) {
 			server, client := net.Pipe()
 
 			go func() {
-				whiteLister.ServeTCP(context.Background(), &contextWriteCloser{client, addr{test.remoteAddr}})
+				whiteLister.ServeTCP(t.Context(), &contextWriteCloser{client, addr{test.remoteAddr}})
 			}()
 
 			read, err := io.ReadAll(server)

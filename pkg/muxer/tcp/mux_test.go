@@ -305,7 +305,7 @@ func Test_addTCPRoute(t *testing.T) {
 
 			require.NotNil(t, matchingHandler)
 
-			matchingHandler.ServeTCP(context.Background(), conn)
+			matchingHandler.ServeTCP(t.Context(), conn)
 
 			n, ok := conn.call[msg]
 			assert.Equal(t, 1, n)
@@ -453,7 +453,7 @@ func Test_Priority(t *testing.T) {
 			})
 			require.NotNil(t, handler)
 
-			handler.ServeTCP(context.Background(), nil)
+			handler.ServeTCP(t.Context(), nil)
 			assert.Equal(t, test.expectedRule, matchedRule)
 		})
 	}

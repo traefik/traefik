@@ -161,7 +161,7 @@ func TestCombinedPlugin(t *testing.T) {
 			// Initialize context with metadata map (like Traefik does)
 			type metadataKey string
 			metadata := make(map[string]string)
-			execCtx := context.WithValue(context.Background(), metadataKey("metadata"), metadata)
+			execCtx := context.WithValue(t.Context(), metadataKey("metadata"), metadata)
 			tcpHandler.ServeTCP(execCtx, testConn)
 
 			// Verify request was allowed
@@ -187,7 +187,7 @@ func TestCombinedPlugin(t *testing.T) {
 			capturedCtx = nil
 			testConn := &testTCPConn{remoteAddr: "192.168.1.1:1234"}
 
-			tcpHandler.ServeTCP(context.Background(), testConn)
+			tcpHandler.ServeTCP(t.Context(), testConn)
 
 			// Verify connection was closed (rejected)
 			assert.True(t, testConn.closed, "Connection should be closed for blocked IP")
@@ -213,7 +213,7 @@ func TestCombinedPlugin(t *testing.T) {
 			// Initialize context with metadata map
 			type metadataKey string
 			metadata := make(map[string]string)
-			execCtx := context.WithValue(context.Background(), metadataKey("metadata"), metadata)
+			execCtx := context.WithValue(t.Context(), metadataKey("metadata"), metadata)
 			tcpHandler2.ServeTCP(execCtx, testConn)
 
 			assert.True(t, nextCalled, "Should allow 10.x IP")

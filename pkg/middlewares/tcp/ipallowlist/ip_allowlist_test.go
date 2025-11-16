@@ -98,7 +98,7 @@ func TestIPAllowLister_ServeHTTP(t *testing.T) {
 			server, client := net.Pipe()
 
 			go func() {
-				allowLister.ServeTCP(context.Background(), &contextWriteCloser{client, addr{test.remoteAddr}})
+				allowLister.ServeTCP(t.Context(), &contextWriteCloser{client, addr{test.remoteAddr}})
 			}()
 
 			read, err := io.ReadAll(server)
