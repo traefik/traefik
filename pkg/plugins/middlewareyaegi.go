@@ -72,44 +72,30 @@ func (b yaegiMiddlewareBuilder) newMiddleware(config map[string]interface{}, mid
 }
 
 func (b yaegiMiddlewareBuilder) newHandler(ctx context.Context, next http.Handler, cfg reflect.Value, middlewareName string) (http.Handler, error) {
-	// Extract the config value
-	config := cfg.Interface()
+	args := []reflect.Value{reflect.ValueOf(ctx), reflect.ValueOf(next), cfg, reflect.ValueOf(middlewareName)}
+	results := b.fnNew.Call(args)
 
-	// Extract and call the function directly instead of using reflect.Call
-	// This allows passing compiled types like http.Handler
-	fnNew, ok := b.fnNew.Interface().(func(context.Context, http.Handler, interface{}, string) (http.Handler, error))
-	if !ok {
-		// Fallback to old reflection-based call for compatibility
-		args := []reflect.Value{reflect.ValueOf(ctx), reflect.ValueOf(next), cfg, reflect.ValueOf(middlewareName)}
-		results := b.fnNew.Call(args)
-
-		if len(results) > 1 && results[1].Interface() != nil {
-			err, ok := results[1].Interface().(error)
-			if !ok {
-				return nil, fmt.Errorf("invalid error type: %T", results[0].Interface())
-			}
-
-			return nil, err
-		}
-
-		handler, ok := results[0].Interface().(http.Handler)
+	if len(results) > 1 && results[1].Interface() != nil {
+		err, ok := results[1].Interface().(error)
 		if !ok {
-			return nil, fmt.Errorf("invalid handler type: %T", results[0].Interface())
+			return nil, fmt.Errorf("invalid error type: %T", results[0].Interface())
 		}
 
-		return handler, nil
+		return nil, err
 	}
 
-	return fnNew(ctx, next, config, middlewareName)
+	handler, ok := results[0].Interface().(http.Handler)
+	if !ok {
+		return nil, fmt.Errorf("invalid handler type: %T", results[0].Interface())
+	}
+
+	return handler, nil
 }
 
 func (b yaegiMiddlewareBuilder) newTCPHandler(ctx context.Context, next tcp.Handler, cfg reflect.Value, middlewareName string) (tcp.Handler, error) {
 	if !b.fnNewTCP.IsValid() {
 		return nil, errors.New("plugin does not support TCP")
 	}
-
-	// BRILLIANT SOLUTION: Pass a callback function instead of a handler object!
-	// Functions are stdlib and yaegi handles them perfectly!
 
 	// Create a callback function that bridges to the compiled handler
 	nextCallback := func(ctx context.Context, conn net.Conn, closeWrite func() error) {
