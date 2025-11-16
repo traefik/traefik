@@ -1,7 +1,6 @@
 package plugins
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -12,7 +11,7 @@ import (
 
 // TestCombinedPlugin tests a plugin that supports BOTH HTTP and TCP protocols simultaneously.
 func TestCombinedPlugin(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	goPath := "fixtures"
 
 	// Load the combined test plugin

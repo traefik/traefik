@@ -1,20 +1,17 @@
 package plugins
 
 import (
-	"context"
-	"net"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v3/pkg/tcp"
 )
 
 // TestTCPPluginFunctional tests that a TCP yaegi plugin actually works end-to-end.
 func TestTCPPluginFunctional(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	goPath := "fixtures"
 
 	// Load the test TCP plugin
@@ -84,24 +81,4 @@ func TestTCPPluginFunctional(t *testing.T) {
 		// Note: Full execution test would require yaegi symbol compatibility
 		// The important part is that the function is detected and callable
 	})
-}
-
-// fakeConn implements tcp.WriteCloser for testing.
-type fakeConn struct {
-	tcp.WriteCloser
-	addr   net.Addr
-	closed bool
-}
-
-func (c *fakeConn) RemoteAddr() net.Addr {
-	return c.addr
-}
-
-func (c *fakeConn) Close() error {
-	c.closed = true
-	return nil
-}
-
-func (c *fakeConn) CloseWrite() error {
-	return nil
 }
