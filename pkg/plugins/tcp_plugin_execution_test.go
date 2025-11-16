@@ -82,11 +82,9 @@ func TestTCPPluginActualExecution(t *testing.T) {
 
 			// Execute! Call ServeTCP directly since it's a real tcp.Handler
 			// Initialize context with metadata map (like Traefik does)
-			// Use string key for consistency (plugin will try string key first)
-			// Note: Using string key matches postgres.go; entrypoint uses typed key but plugin handles both
+			type metadataKey string
 			metadata := make(map[string]string)
-			//nolint:staticcheck // SA1029: intentionally using string key to match Traefik's postgres.go pattern
-			execCtx := context.WithValue(context.Background(), "metadata", metadata)
+			execCtx := context.WithValue(context.Background(), metadataKey("metadata"), metadata)
 			tcpHandler.ServeTCP(execCtx, testConn)
 
 			// Verify execution
@@ -137,10 +135,10 @@ func TestTCPPluginActualExecution(t *testing.T) {
 			capturedCtx = nil
 			testConn := &testTCPConn{remoteAddr: "10.0.0.1:1234"}
 
-			// Initialize context with metadata map (use string key)
+			// Initialize context with metadata map
+			type metadataKey string
 			metadata := make(map[string]string)
-			//nolint:staticcheck // SA1029: intentionally using string key to match Traefik's postgres.go pattern
-			execCtx := context.WithValue(context.Background(), "metadata", metadata)
+			execCtx := context.WithValue(context.Background(), metadataKey("metadata"), metadata)
 			tcpHandler2.ServeTCP(execCtx, testConn)
 
 			assert.True(t, nextCalled, "Should allow 10.x IP")

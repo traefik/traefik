@@ -31,24 +31,24 @@ func TestInFlightConn_ServeTCP(t *testing.T) {
 	require.NoError(t, err)
 
 	// The first connection should succeed and wait.
-	go middleware.ServeTCP(context.Background(), fakeConn{addr: "127.0.0.1:9000", wait: true})
+	go middleware.ServeTCP(t.Context(), fakeConn{addr: "127.0.0.1:9000", wait: true})
 	requireMessage(t, proceedCh)
 
 	closeCh := make(chan struct{})
 
 	// The second connection from the same remote address should be closed as the maximum number of connections is exceeded.
-	go middleware.ServeTCP(context.Background(), fakeConn{addr: "127.0.0.1:9000", closeCh: closeCh})
+	go middleware.ServeTCP(t.Context(), fakeConn{addr: "127.0.0.1:9000", closeCh: closeCh})
 	requireMessage(t, closeCh)
 
 	// The connection from another remote address should succeed.
-	go middleware.ServeTCP(context.Background(), fakeConn{addr: "127.0.0.2:9000"})
+	go middleware.ServeTCP(t.Context(), fakeConn{addr: "127.0.0.2:9000"})
 	requireMessage(t, proceedCh)
 
 	// Once the first connection is closed, next connection with the same remote address should succeed.
 	close(waitCh)
 	requireMessage(t, finishCh)
 
-	go middleware.ServeTCP(context.Background(), fakeConn{addr: "127.0.0.1:9000"})
+	go middleware.ServeTCP(t.Context(), fakeConn{addr: "127.0.0.1:9000"})
 	requireMessage(t, proceedCh)
 }
 

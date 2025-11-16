@@ -292,7 +292,7 @@ func (e *TCPEntryPoint) Start(ctx context.Context) {
 			}
 
 			// Create connection-scoped context with metadata map for middleware chain
-			// Use server context as parent so connection context is cancelled on shutdown
+			// Use server context as parent so connection context is canceled on shutdown
 			connCtx, cancel := context.WithCancel(ctx)
 
 			metadata := make(map[string]string)

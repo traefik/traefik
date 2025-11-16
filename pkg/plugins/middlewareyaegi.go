@@ -155,7 +155,7 @@ func (b yaegiMiddlewareBuilder) newTCPHandler(ctx context.Context, next tcp.Hand
 	}), nil
 }
 
-// connWithCloseWrite wraps net.Conn and adds CloseWrite method
+// connWithCloseWrite wraps net.Conn and adds CloseWrite method.
 type connWithCloseWrite struct {
 	net.Conn
 	closeWrite func() error

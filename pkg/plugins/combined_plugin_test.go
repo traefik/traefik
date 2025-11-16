@@ -159,9 +159,9 @@ func TestCombinedPlugin(t *testing.T) {
 			testConn := &testTCPConn{remoteAddr: "127.0.0.1:1234"}
 
 			// Initialize context with metadata map (like Traefik does)
+			type metadataKey string
 			metadata := make(map[string]string)
-			//nolint:staticcheck // SA1029: intentionally using string key to match Traefik's postgres.go pattern
-			execCtx := context.WithValue(context.Background(), "metadata", metadata)
+			execCtx := context.WithValue(context.Background(), metadataKey("metadata"), metadata)
 			tcpHandler.ServeTCP(execCtx, testConn)
 
 			// Verify request was allowed
@@ -211,9 +211,9 @@ func TestCombinedPlugin(t *testing.T) {
 			testConn := &testTCPConn{remoteAddr: "10.0.0.1:1234"}
 
 			// Initialize context with metadata map
+			type metadataKey string
 			metadata := make(map[string]string)
-			//nolint:staticcheck // SA1029: intentionally using string key to match Traefik's postgres.go pattern
-			execCtx := context.WithValue(context.Background(), "metadata", metadata)
+			execCtx := context.WithValue(context.Background(), metadataKey("metadata"), metadata)
 			tcpHandler2.ServeTCP(execCtx, testConn)
 
 			assert.True(t, nextCalled, "Should allow 10.x IP")

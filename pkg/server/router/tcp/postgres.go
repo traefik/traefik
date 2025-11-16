@@ -92,8 +92,9 @@ func (r *Router) servePostgres(conn tcp.WriteCloser) {
 	}
 
 	// Create context for postgres connection
+	type metadataKey string
 	metadata := make(map[string]string)
-	ctx := context.WithValue(context.Background(), "metadata", metadata)
+	ctx := context.WithValue(context.Background(), metadataKey("metadata"), metadata)
 
 	handlerTCPTLS.ServeTCP(ctx, proxiedConn)
 }
