@@ -786,7 +786,6 @@ func (t *trackedConnection) Close() error {
 	return t.WriteCloser.Close()
 }
 
-// This function is inspired by http.AllowQuerySemicolons.
 // contextualWriteCloser wraps a WriteCloser and cancels context on Close().
 type contextualWriteCloser struct {
 	tcp.WriteCloser
@@ -801,6 +800,7 @@ func (c *contextualWriteCloser) Close() error {
 	return c.WriteCloser.Close()
 }
 
+// This function is inspired by http.AllowQuerySemicolons.
 func encodeQuerySemicolons(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		if strings.Contains(req.URL.RawQuery, ";") {
