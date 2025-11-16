@@ -156,6 +156,11 @@ func (m *YaegiMiddleware) NewHandler(ctx context.Context, next http.Handler) (ht
 
 // NewTCPHandler creates a TCP constructor.
 func (m *YaegiMiddleware) NewTCPHandler(ctx context.Context, next tcp.Handler) (func(tcp.Handler) (tcp.Handler, error), error) {
+	// Check if the plugin supports TCP
+	if !m.builder.fnNewTCP.IsValid() {
+		return nil, errors.New("plugin does not support TCP")
+	}
+
 	return func(next tcp.Handler) (tcp.Handler, error) {
 		return m.builder.newTCPHandler(ctx, next, m.config, m.middlewareName)
 	}, nil
@@ -193,6 +198,11 @@ func newInterpreter(ctx context.Context, goPath string, manifest *Manifest, sett
 	err = i.Use(ppSymbols())
 	if err != nil {
 		return nil, fmt.Errorf("failed to load provider symbols: %w", err)
+	}
+
+	err = i.Use(tcpSymbols())
+	if err != nil {
+		return nil, fmt.Errorf("failed to load TCP symbols: %w", err)
 	}
 
 	_, err = i.Eval(fmt.Sprintf(`import "%s"`, manifest.Import))
