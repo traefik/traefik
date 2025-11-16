@@ -73,12 +73,5 @@ func TestTCPPluginFunctional(t *testing.T) {
 		constructor, err := yaeg.NewTCPHandler(ctx, nil)
 		require.NoError(t, err, "Should be able to get TCP constructor from plugin with NewTCP function")
 		require.NotNil(t, constructor, "TCP constructor should not be nil")
-
-		t.Log("✅ TCP plugin support detected successfully")
-		t.Log("✅ NewTCP function found and is callable")
-		t.Log("✅ TCP constructor created without errors")
-
-		// Note: Full execution test would require yaegi symbol compatibility
-		// The important part is that the function is detected and callable
 	})
 }
