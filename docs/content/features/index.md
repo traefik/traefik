@@ -85,12 +85,16 @@ The Traefik ecosystem offers multiple products designed to meet different requir
 
 ### Start with Traefik Proxy
 
+Traefik Proxy is the ideal starting point for organizations looking for a reliable, open-source application proxy with essential networking capabilities. Deploy it as your default ingress tier if you need:
+
 - Basic reverse proxy and load balancing
 - Service discovery for containerized applications
 - Simple TLS termination and Let's Encrypt integration
 - Cost-effective solution with community support (can upgrade to Traefik Hub for more features)
 
 ### Upgrade to Traefik Hub API Gateway
+
+Traefik Hub API Gateway layers enterprise security, distributed coordination, and AI Gateway capabilities on top of Traefik Proxy. Upgrade to it when you need:
 
 - Enterprise security requirements (JWT, OIDC, LDAP)
 - Distributed deployments across multiple clusters
@@ -100,6 +104,8 @@ The Traefik ecosystem offers multiple products designed to meet different requir
 - Commercial support
 
 ### Consider Traefik AI Gateway
+
+Traefik AI Gateway unifies hosted and self-hosted LLM access under centralized control and observability. Consider it if you have:
 
 - Multi-LLM applications requiring unified API access
 - Organizations using multiple AI providers (OpenAI, Anthropic, Azure OpenAI, AWS Bedrock, etc.)
@@ -111,6 +117,8 @@ The Traefik ecosystem offers multiple products designed to meet different requir
 
 ### Choose Traefik MCP Gateway
 
+Traefik MCP Gateway governs how AI agents interact with Model Context Protocol servers through task-aware policies and session-smart routing. Choose it if you need:
+
 - AI agent deployments requiring secure access to MCP servers
 - Task-based access control (TBAC) for AI workflows
 - Governance of Model Context Protocol interactions
@@ -120,6 +128,8 @@ The Traefik ecosystem offers multiple products designed to meet different requir
 - Fine-grained policy enforcement for AI tools and resources
 
 ### Choose Traefik Hub API Management
+
+Traefik Hub API Management extends the gateway foundation with API lifecycle tooling, developer experience features, and governance workflows. Choose it when you have:
 
 - Multiple APIs requiring centralized management
 - Developer teams needing self-service portals
