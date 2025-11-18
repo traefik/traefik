@@ -1,3 +1,9 @@
+## [v3.6.2](https://github.com/traefik/traefik/tree/v3.6.2) (2025-11-18)
+[All Commits](https://github.com/traefik/traefik/compare/v3.6.1...v3.6.2)
+
+**Bug fixes:**
+- **[k8s/ingress-nginx]** Deprecate Kubernetes Ingress NGINX provider experimental flag ([#12286](https://github.com/traefik/traefik/pull/12286) by [rtribotte](https://github.com/rtribotte))
+
 ## [v3.6.1](https://github.com/traefik/traefik/tree/v3.6.1) (2025-11-13)
 [All Commits](https://github.com/traefik/traefik/compare/v3.6.0...v3.6.1)
 
