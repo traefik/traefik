@@ -10,7 +10,7 @@ It also supports many of the [ingress-nginx](https://kubernetes.github.io/ingres
 
 !!! warning "NGINX Ingress Controller Retirement"
 
-    The Kubernetes NGINX Ingress Controller project has announced its retirement and will no longer receive updates or security patches.
+    The Kubernetes NGINX Ingress Controller project has announced its retirement in **March 2026** and will no longer receive updates or security patches.
     Traefik provides a migration path by supporting NGINX annotations, allowing you to transition your workloads without rewriting all your Ingress configurations.
 
     For more information about the NGINX Ingress Controller retirement, see the [official Kubernetes blog announcement](https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement).

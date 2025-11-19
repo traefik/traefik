@@ -10,7 +10,7 @@ Enable seamless migration from NGINX Ingress Controller to Traefik with NGINX an
 
 !!! warning "NGINX Ingress Controller Retirement"
 
-    The Kubernetes NGINX Ingress Controller project has announced its retirement and will no longer receive updates or security patches.
+    The Kubernetes NGINX Ingress Controller project has announced its retirement in **March 2026** and will no longer receive updates or security patches.
     Traefik provides a migration path by supporting NGINX annotations, allowing you to transition your workloads without rewriting all your Ingress configurations.
 
     For more information about the NGINX Ingress Controller retirement, see the [official Kubernetes blog announcement](https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement).
@@ -247,14 +247,10 @@ This provider watches for incoming Ingress events and automatically translates N
 
 ## Annotations Support
 
-This section lists all known NGINX Ingress annotations, split between those currently implemented (with limitations if any) and those not implemented.
-Limitations or behavioral differences are indicated where relevant.
-
-### Supported Annotations
-
+This section lists all known NGINX Ingress annotations.
 The following annotations are organized by category for easier navigation.
 
-#### Authentication
+### Authentication
 
 | Annotation                                            | Limitations / Notes                                                                        |
 |-------------------------------------------------------|--------------------------------------------------------------------------------------------|
@@ -266,7 +262,7 @@ The following annotations are organized by category for easier navigation.
 | <a id="opt-nginx-ingress-kubernetes-ioauth-method" href="#opt-nginx-ingress-kubernetes-ioauth-method" title="#opt-nginx-ingress-kubernetes-ioauth-method">`nginx.ingress.kubernetes.io/auth-method`</a> |                                                                                            |
 | <a id="opt-nginx-ingress-kubernetes-ioauth-response-headers" href="#opt-nginx-ingress-kubernetes-ioauth-response-headers" title="#opt-nginx-ingress-kubernetes-ioauth-response-headers">`nginx.ingress.kubernetes.io/auth-response-headers`</a> |                                                                                            |
 
-#### SSL/TLS
+### SSL/TLS
 
 | Annotation                                            | Limitations / Notes                                                                        |
 |-------------------------------------------------------|--------------------------------------------------------------------------------------------|
@@ -278,7 +274,7 @@ The following annotations are organized by category for easier navigation.
 | <a id="opt-nginx-ingress-kubernetes-ioproxy-ssl-verify" href="#opt-nginx-ingress-kubernetes-ioproxy-ssl-verify" title="#opt-nginx-ingress-kubernetes-ioproxy-ssl-verify">`nginx.ingress.kubernetes.io/proxy-ssl-verify`</a> |                                                                                            |
 | <a id="opt-nginx-ingress-kubernetes-ioproxy-ssl-secret" href="#opt-nginx-ingress-kubernetes-ioproxy-ssl-secret" title="#opt-nginx-ingress-kubernetes-ioproxy-ssl-secret">`nginx.ingress.kubernetes.io/proxy-ssl-secret`</a> |                                                                                            |
 
-#### Session Affinity
+### Session Affinity
 
 | Annotation                                            | Limitations / Notes                                                                        |
 |-------------------------------------------------------|--------------------------------------------------------------------------------------------|
@@ -289,7 +285,7 @@ The following annotations are organized by category for easier navigation.
 | <a id="opt-nginx-ingress-kubernetes-iosession-cookie-domain" href="#opt-nginx-ingress-kubernetes-iosession-cookie-domain" title="#opt-nginx-ingress-kubernetes-iosession-cookie-domain">`nginx.ingress.kubernetes.io/session-cookie-domain`</a> |                                                                                            |
 | <a id="opt-nginx-ingress-kubernetes-iosession-cookie-samesite" href="#opt-nginx-ingress-kubernetes-iosession-cookie-samesite" title="#opt-nginx-ingress-kubernetes-iosession-cookie-samesite">`nginx.ingress.kubernetes.io/session-cookie-samesite`</a> |                                                                                            |
 
-#### Load Balancing & Backend
+### Load Balancing & Backend
 
 | Annotation                                            | Limitations / Notes                                                                        |
 |-------------------------------------------------------|--------------------------------------------------------------------------------------------|
@@ -297,7 +293,7 @@ The following annotations are organized by category for easier navigation.
 | <a id="opt-nginx-ingress-kubernetes-iobackend-protocol" href="#opt-nginx-ingress-kubernetes-iobackend-protocol" title="#opt-nginx-ingress-kubernetes-iobackend-protocol">`nginx.ingress.kubernetes.io/backend-protocol`</a> | FCGI and AUTO_HTTP not supported.                                                          |
 | <a id="opt-nginx-ingress-kubernetes-ioservice-upstream" href="#opt-nginx-ingress-kubernetes-ioservice-upstream" title="#opt-nginx-ingress-kubernetes-ioservice-upstream">`nginx.ingress.kubernetes.io/service-upstream`</a> |                                                                                            |
 
-#### CORS
+### CORS
 
 | Annotation                                            | Limitations / Notes                                                                        |
 |-------------------------------------------------------|--------------------------------------------------------------------------------------------|
@@ -308,13 +304,15 @@ The following annotations are organized by category for easier navigation.
 | <a id="opt-nginx-ingress-kubernetes-iocors-allow-origin" href="#opt-nginx-ingress-kubernetes-iocors-allow-origin" title="#opt-nginx-ingress-kubernetes-iocors-allow-origin">`nginx.ingress.kubernetes.io/cors-allow-origin`</a> |                                                                                            |
 | <a id="opt-nginx-ingress-kubernetes-iocors-max-age" href="#opt-nginx-ingress-kubernetes-iocors-max-age" title="#opt-nginx-ingress-kubernetes-iocors-max-age">`nginx.ingress.kubernetes.io/cors-max-age`</a> |                                                                                            |
 
-#### Routing
+### Routing
 
 | Annotation                                            | Limitations / Notes                                                                        |
 |-------------------------------------------------------|--------------------------------------------------------------------------------------------|
 | <a id="opt-nginx-ingress-kubernetes-iouse-regex" href="#opt-nginx-ingress-kubernetes-iouse-regex" title="#opt-nginx-ingress-kubernetes-iouse-regex">`nginx.ingress.kubernetes.io/use-regex`</a> |                                                                                            |
 
-#### Caveats and Key Behavioral Differences
+## Limitations
+
+### Caveats and Key Behavioral Differences
 
 - **Authentication**: Forward auth behaves differently and session caching is not supported. NGINX supports sub-request based auth, while Traefik forwards the original request.
 - **Session Affinity**: Only persistent mode is supported.
@@ -366,7 +364,7 @@ The following annotations are organized by category for easier navigation.
 | <a id="opt-nginx-ingress-kubernetes-ioconfiguration-snippet" href="#opt-nginx-ingress-kubernetes-ioconfiguration-snippet" title="#opt-nginx-ingress-kubernetes-ioconfiguration-snippet">`nginx.ingress.kubernetes.io/configuration-snippet`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-iocustom-http-errors" href="#opt-nginx-ingress-kubernetes-iocustom-http-errors" title="#opt-nginx-ingress-kubernetes-iocustom-http-errors">`nginx.ingress.kubernetes.io/custom-http-errors`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-iodisable-proxy-intercept-errors" href="#opt-nginx-ingress-kubernetes-iodisable-proxy-intercept-errors" title="#opt-nginx-ingress-kubernetes-iodisable-proxy-intercept-errors">`nginx.ingress.kubernetes.io/disable-proxy-intercept-errors`</a> |                                                      |
-| <a id="opt-nginx-ingress-kubernetes-iodefault-backend" href="#opt-nginx-ingress-kubernetes-iodefault-backend" title="#opt-nginx-ingress-kubernetes-iodefault-backend">`nginx.ingress.kubernetes.io/default-backend`</a> | Not supported yet; use `defaultBackend` in Ingress spec. |
+| <a id="opt-nginx-ingress-kubernetes-iodefault-backend" href="#opt-nginx-ingress-kubernetes-iodefault-backend" title="#opt-nginx-ingress-kubernetes-iodefault-backend">`nginx.ingress.kubernetes.io/default-backend`</a> | Use `defaultBackend` in Ingress spec. |
 | <a id="opt-nginx-ingress-kubernetes-iolimit-rate-after" href="#opt-nginx-ingress-kubernetes-iolimit-rate-after" title="#opt-nginx-ingress-kubernetes-iolimit-rate-after">`nginx.ingress.kubernetes.io/limit-rate-after`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-iolimit-rate" href="#opt-nginx-ingress-kubernetes-iolimit-rate" title="#opt-nginx-ingress-kubernetes-iolimit-rate">`nginx.ingress.kubernetes.io/limit-rate`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-iolimit-whitelist" href="#opt-nginx-ingress-kubernetes-iolimit-whitelist" title="#opt-nginx-ingress-kubernetes-iolimit-whitelist">`nginx.ingress.kubernetes.io/limit-whitelist`</a> |                                                      |
@@ -381,7 +379,7 @@ The following annotations are organized by category for easier navigation.
 | <a id="opt-nginx-ingress-kubernetes-iopermanent-redirect" href="#opt-nginx-ingress-kubernetes-iopermanent-redirect" title="#opt-nginx-ingress-kubernetes-iopermanent-redirect">`nginx.ingress.kubernetes.io/permanent-redirect`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-iopermanent-redirect-code" href="#opt-nginx-ingress-kubernetes-iopermanent-redirect-code" title="#opt-nginx-ingress-kubernetes-iopermanent-redirect-code">`nginx.ingress.kubernetes.io/permanent-redirect-code`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-iotemporal-redirect" href="#opt-nginx-ingress-kubernetes-iotemporal-redirect" title="#opt-nginx-ingress-kubernetes-iotemporal-redirect">`nginx.ingress.kubernetes.io/temporal-redirect`</a> |                                                      |
-| <a id="opt-nginx-ingress-kubernetes-iopreserve-trailing-slash" href="#opt-nginx-ingress-kubernetes-iopreserve-trailing-slash" title="#opt-nginx-ingress-kubernetes-iopreserve-trailing-slash">`nginx.ingress.kubernetes.io/preserve-trailing-slash`</a> | Not supported yet; Traefik preserves by default.         |
+| <a id="opt-nginx-ingress-kubernetes-iopreserve-trailing-slash" href="#opt-nginx-ingress-kubernetes-iopreserve-trailing-slash" title="#opt-nginx-ingress-kubernetes-iopreserve-trailing-slash">`nginx.ingress.kubernetes.io/preserve-trailing-slash`</a> | Traefik preserves trailing slash by default.         |
 | <a id="opt-nginx-ingress-kubernetes-ioproxy-cookie-domain" href="#opt-nginx-ingress-kubernetes-ioproxy-cookie-domain" title="#opt-nginx-ingress-kubernetes-ioproxy-cookie-domain">`nginx.ingress.kubernetes.io/proxy-cookie-domain`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-ioproxy-cookie-path" href="#opt-nginx-ingress-kubernetes-ioproxy-cookie-path" title="#opt-nginx-ingress-kubernetes-ioproxy-cookie-path">`nginx.ingress.kubernetes.io/proxy-cookie-path`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-ioproxy-connect-timeout" href="#opt-nginx-ingress-kubernetes-ioproxy-connect-timeout" title="#opt-nginx-ingress-kubernetes-ioproxy-connect-timeout">`nginx.ingress.kubernetes.io/proxy-connect-timeout`</a> |                                                      |
@@ -431,7 +429,7 @@ The following annotations are organized by category for easier navigation.
 | <a id="opt-nginx-ingress-kubernetes-ioproxy-max-temp-file-size" href="#opt-nginx-ingress-kubernetes-ioproxy-max-temp-file-size" title="#opt-nginx-ingress-kubernetes-ioproxy-max-temp-file-size">`nginx.ingress.kubernetes.io/proxy-max-temp-file-size`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-iostream-snippet" href="#opt-nginx-ingress-kubernetes-iostream-snippet" title="#opt-nginx-ingress-kubernetes-iostream-snippet">`nginx.ingress.kubernetes.io/stream-snippet`</a> |                                                      |
 
-#### Global Configuration Differences
+### Global Configuration
 
 Traefik does not expose all global configuration options to control default behaviors for Ingresses in the same way NGINX does.
 
