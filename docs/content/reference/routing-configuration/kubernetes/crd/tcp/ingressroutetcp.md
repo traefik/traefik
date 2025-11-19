@@ -39,6 +39,15 @@ spec:
       serversTransport: transport
       nativeLB: true
       nodePortLB: true
+      healthCheck:
+        port: 8080
+        interval: 10s
+        timeout: 5s
+        send: "PING\r\n"
+        expect: "PONG\r\n"
+      passiveHealthCheck:
+        failureWindow: 10s
+        maxFailedAttempts: 3
 
   tls:
     secretName: supersecret
@@ -73,6 +82,16 @@ spec:
 | <a id="opt-routesn-servicesn-serversTransport" href="#opt-routesn-servicesn-serversTransport" title="#opt-routesn-servicesn-serversTransport">`routes[n].services[n].serversTransport`</a> | Defines the [ServersTransportTCP](./serverstransporttcp.md).<br />The `ServersTransport` namespace is assumed to be the [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) namespace.                                                                    |  | No |
 | <a id="opt-routesn-servicesn-nativeLB" href="#opt-routesn-servicesn-nativeLB" title="#opt-routesn-servicesn-nativeLB">`routes[n].services[n].nativeLB`</a> | Controls, when creating the load-balancer, whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP. See [here](#nativelb) for more information.                                                                                         | false | No |
 | <a id="opt-routesn-servicesn-nodePortLB" href="#opt-routesn-servicesn-nodePortLB" title="#opt-routesn-servicesn-nodePortLB">`routes[n].services[n].nodePortLB`</a> | Controls, when creating the load-balancer, whether the LB's children are directly the nodes internal IPs using the nodePort when the service type is `NodePort`. It allows services to be reachable when Traefik runs externally from the Kubernetes cluster but within the same network of the nodes. | false | No |
+| <a id="opt-routesn-servicesn-healthCheck" href="#opt-routesn-servicesn-healthCheck" title="#opt-routesn-servicesn-healthCheck">`routes[n].services[n].healthCheck`</a> | Defines health checks for [ExternalName](#externalname-service) services.                                                                                                                                                                                                                               |  | No |
+| <a id="opt-routesn-servicesn-healthCheck-port" href="#opt-routesn-servicesn-healthCheck-port" title="#opt-routesn-servicesn-healthCheck-port">`routes[n].services[n].healthCheck.port`</a> | Defines the server URL port for the health check endpoint.                                                                                                                                                                                                                                              |  | No |
+| <a id="opt-routesn-servicesn-healthCheck-send" href="#opt-routesn-servicesn-healthCheck-send" title="#opt-routesn-servicesn-healthCheck-send">`routes[n].services[n].healthCheck.send`</a> | Defines the data to send to the server for the health check.                                                                                                                                                                                                                                            | "" | No |
+| <a id="opt-routesn-servicesn-healthCheck-expect" href="#opt-routesn-servicesn-healthCheck-expect" title="#opt-routesn-servicesn-healthCheck-expect">`routes[n].services[n].healthCheck.expect`</a> | Defines the expected response from the server.                                                                                                                                                                                                                                                          | "" | No |
+| <a id="opt-routesn-servicesn-healthCheck-interval" href="#opt-routesn-servicesn-healthCheck-interval" title="#opt-routesn-servicesn-healthCheck-interval">`routes[n].services[n].healthCheck.interval`</a> | Defines the frequency of the health check calls for healthy targets.                                                                                                                                                                                                                                    | 30s | No |
+| <a id="opt-routesn-servicesn-healthCheck-unhealthyInterval" href="#opt-routesn-servicesn-healthCheck-unhealthyInterval" title="#opt-routesn-servicesn-healthCheck-unhealthyInterval">`routes[n].services[n].healthCheck.unhealthyInterval`</a> | Defines the frequency of the health check calls for unhealthy targets. When not defined, it defaults to the `interval` value.                                                                                                                                                                           | 30s | No |
+| <a id="opt-routesn-servicesn-healthCheck-timeout" href="#opt-routesn-servicesn-healthCheck-timeout" title="#opt-routesn-servicesn-healthCheck-timeout">`routes[n].services[n].healthCheck.timeout`</a> | Defines the maximum duration Traefik will wait for a health check request before considering the server unhealthy.                                                                                                                                                                                      | 5s | No |
+| <a id="opt-routesn-servicesn-passiveHealthCheck" href="#opt-routesn-servicesn-passiveHealthCheck" title="#opt-routesn-servicesn-passiveHealthCheck">`routes[n].services[n].passiveHealthCheck`</a> | Defines passive health checks for [ExternalName](#externalname-service) services.                                                                                                                                                                                                                       |  | No |
+| <a id="opt-routesn-servicesn-passiveHealthCheck-failureWindow" href="#opt-routesn-servicesn-passiveHealthCheck-failureWindow" title="#opt-routesn-servicesn-passiveHealthCheck-failureWindow">`routes[n].services[n].passiveHealthCheck.failureWindow`</a> | Defines the time window during which the failed attempts must occur for the server to be marked as unhealthy. It also defines for how long the server will be considered unhealthy.                                                                                                                     |  | No |
+| <a id="opt-routesn-servicesn-passiveHealthCheck-maxFailedAttempts" href="#opt-routesn-servicesn-passiveHealthCheck-maxFailedAttempts" title="#opt-routesn-servicesn-passiveHealthCheck-maxFailedAttempts">`routes[n].services[n].passiveHealthCheck.maxFailedAttempts`</a> | Defines the number of consecutive failed attempts allowed within the failure window before marking the server as unhealthy.                                                                                                                                                                             |  | No |
 | <a id="opt-tls" href="#opt-tls" title="#opt-tls">`tls`</a> | Defines [TLS](../../../../install-configuration/tls/certificate-resolvers/overview.md) certificate configuration.                                                                                                                                                                            |  | No |
 | <a id="opt-tls-secretName" href="#opt-tls-secretName" title="#opt-tls-secretName">`tls.secretName`</a> | Defines the [secret](https://kubernetes.io/docs/concepts/configuration/secret/) name used to store the certificate (in the `IngressRoute` namespace).                                                                                                                                        | "" | No |
 | <a id="opt-tls-options" href="#opt-tls-options" title="#opt-tls-options">`tls.options`</a> | Defines the reference to a [TLSOption](../tls/tlsoption.md).                                                                                                                                                                                                                                        | "" | No |
@@ -191,6 +210,53 @@ Thus, in case of two sides port definition, Traefik expects a match between port
       ports:
         - port: 80
     ```
+
+### Health Check
+
+Traefik supports two types of health checks:
+
+- **Active Health Check (`healthCheck`)**: Traefik actively sends requests to the server at regular intervals to check its health status.
+- **Passive Health Check (`passiveHealthCheck`)**: Traefik monitors the responses from the server during normal traffic and marks the server as unhealthy based on failure patterns.
+
+```yaml tab="IngressRouteTCP"
+apiVersion: traefik.io/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: test.route
+  namespace: default
+
+spec:
+  entryPoints:
+    - foo
+  routes:
+  - match: HostSNI(`foo.com`)
+    services:
+    - name: external-svc
+      port: 80
+      healthCheck:
+        port: 80
+        interval: 10s
+        timeout: 5s
+        send: "PING\r\n"
+        expect: "PONG\r\n"
+      passiveHealthCheck:
+        failureWindow: 10s
+        maxFailedAttempts: 3
+```
+
+```yaml tab="Service ExternalName"
+apiVersion: v1
+kind: Service
+metadata:
+  name: external-svc
+  namespace: default
+
+spec:
+  externalName: external.domain
+  type: ExternalName
+  ports:
+    - port: 80
+```
 
 ### NativeLB
 

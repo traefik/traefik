@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/rs/zerolog/log"
+	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	"github.com/traefik/traefik/v3/pkg/provider"
@@ -191,6 +192,64 @@ func (p *Provider) createLoadBalancerServerTCP(client Client, parentNamespace st
 		},
 	}
 
+	if service.HealthCheck != nil {
+		tcpService.LoadBalancer.HealthCheck = &dynamic.TCPServerHealthCheck{
+			Port: service.HealthCheck.Port,
+		}
+		tcpService.LoadBalancer.HealthCheck.SetDefaults()
+
+		if service.HealthCheck.Interval != nil {
+			err := tcpService.LoadBalancer.HealthCheck.Interval.Set(service.HealthCheck.Interval.String())
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		if service.HealthCheck.Timeout != nil {
+			err := tcpService.LoadBalancer.HealthCheck.Timeout.Set(service.HealthCheck.Timeout.String())
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		if service.HealthCheck.UnhealthyInterval == nil {
+			tcpService.LoadBalancer.HealthCheck.UnhealthyInterval = &tcpService.LoadBalancer.HealthCheck.Interval
+		} else {
+			var unhealthyInterval ptypes.Duration
+
+			err := unhealthyInterval.Set(service.HealthCheck.UnhealthyInterval.String())
+			if err != nil {
+				return nil, err
+			}
+
+			tcpService.LoadBalancer.HealthCheck.UnhealthyInterval = &unhealthyInterval
+		}
+
+		if service.HealthCheck.Send != "" {
+			tcpService.LoadBalancer.HealthCheck.Send = service.HealthCheck.Send
+		}
+
+		if service.HealthCheck.Expect != "" {
+			tcpService.LoadBalancer.HealthCheck.Expect = service.HealthCheck.Expect
+		}
+	}
+
+	if service.PassiveHealthCheck != nil {
+		tcpService.LoadBalancer.PassiveHealthCheck = &dynamic.PassiveServerHealthCheck{}
+		tcpService.LoadBalancer.PassiveHealthCheck.SetDefaults()
+
+		if service.PassiveHealthCheck.MaxFailedAttempts != nil {
+			tcpService.LoadBalancer.PassiveHealthCheck.MaxFailedAttempts = *service.PassiveHealthCheck.MaxFailedAttempts
+		}
+
+		if service.PassiveHealthCheck.FailureWindow != nil {
+			err := tcpService.LoadBalancer.PassiveHealthCheck.FailureWindow.Set(service.PassiveHealthCheck.FailureWindow.String())
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
 	if service.ProxyProtocol != nil {
 		tcpService.LoadBalancer.ProxyProtocol = &dynamic.ProxyProtocol{}
 		tcpService.LoadBalancer.ProxyProtocol.SetDefaults()
@@ -226,6 +285,10 @@ func (p *Provider) loadTCPServers(client Client, namespace string, svc traefikv1
 
 	if service.Spec.Type == corev1.ServiceTypeExternalName && !p.AllowExternalNameServices {
 		return nil, fmt.Errorf("externalName services not allowed: %s/%s", namespace, svc.Name)
+	}
+
+	if service.Spec.Type != corev1.ServiceTypeExternalName && svc.HealthCheck != nil {
+		return nil, fmt.Errorf("healthCheck allowed only for ExternalName services: %s/%s", namespace, svc.Name)
 	}
 
 	svcPort, err := getServicePort(service, svc.Port)
