@@ -248,6 +248,7 @@ http:
         maxBodySize: 42
         preserveLocationHeader: true
         preserveRequestMethod: true
+        unauthenticatedAddress: foobar
     Middleware12:
       grpcWeb:
         allowOrigins:

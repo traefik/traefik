@@ -640,6 +640,10 @@ spec:
                     description: 'TrustForwardHeader defines whether to trust (ie:
                       forward) all X-Forwarded-* headers.'
                     type: boolean
+                  unauthenticatedAddress:
+                    description: UnauthenticatedAddress defines the address to redirect
+                      unauthenticated requests.
+                    type: string
                 type: object
               grpcWeb:
                 description: |-

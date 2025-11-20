@@ -292,6 +292,8 @@ type ForwardAuth struct {
 	PreserveLocationHeader bool `json:"preserveLocationHeader,omitempty" toml:"preserveLocationHeader,omitempty" yaml:"preserveLocationHeader,omitempty" export:"true"`
 	// PreserveRequestMethod defines whether to preserve the original request method while forwarding the request to the authentication server.
 	PreserveRequestMethod bool `json:"preserveRequestMethod,omitempty" toml:"preserveRequestMethod,omitempty" yaml:"preserveRequestMethod,omitempty" export:"true"`
+	// UnauthenticatedAddress defines the address to redirect to or serve when authentication fails.
+	UnauthenticatedAddress string `json:"unauthenticatedAddress,omitempty" toml:"unauthenticatedAddress,omitempty" yaml:"unauthenticatedAddress,omitempty" export:"true"`
 }
 
 func (f *ForwardAuth) SetDefaults() {

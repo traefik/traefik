@@ -872,6 +872,46 @@ func TestForwardAuthPreserveRequestMethod(t *testing.T) {
 	}
 }
 
+func TestForwardAuthUnauthenticatedHandler(t *testing.T) {
+	unauthServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Handled-By", "UnauthHandler")
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprint(w, "Login Page Content")
+	}))
+	t.Cleanup(unauthServer.Close)
+
+	authServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	}))
+	t.Cleanup(authServer.Close)
+
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Fail(t, "Next handler should not be called")
+	})
+
+	auth := dynamic.ForwardAuth{
+		Address:                authServer.URL,
+		UnauthenticatedAddress: unauthServer.URL,
+	}
+
+	middleware, err := NewForward(t.Context(), next, auth, "authTest")
+	require.NoError(t, err)
+
+	ts := httptest.NewServer(middleware)
+	t.Cleanup(ts.Close)
+
+	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
+	res, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+	assert.Equal(t, "UnauthHandler", res.Header.Get("X-Handled-By"))
+
+	body, err := io.ReadAll(res.Body)
+	require.NoError(t, err)
+	assert.Equal(t, "Login Page Content", string(body))
+}
+
 type mockTracer struct {
 	embedded.Tracer
 
