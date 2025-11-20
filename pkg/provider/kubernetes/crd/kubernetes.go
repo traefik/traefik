@@ -964,6 +964,7 @@ func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *traef
 		ForwardBody:              auth.ForwardBody,
 		PreserveLocationHeader:   auth.PreserveLocationHeader,
 		PreserveRequestMethod:    auth.PreserveRequestMethod,
+		UnauthenticatedAddress:   auth.UnauthenticatedAddress,
 	}
 	forwardAuth.SetDefaults()
 
