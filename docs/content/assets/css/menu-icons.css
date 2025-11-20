@@ -23,6 +23,12 @@
   opacity: 0.8;
 }
 
+/* Improve display on configuration tables */
+.md-typeset__table tr :nth-child(1){
+  max-width:10em;
+  word-wrap:break-word
+}
+
 /* Tablet responsive */
 @media (max-width: 1024px) {
   .menu-icon {
