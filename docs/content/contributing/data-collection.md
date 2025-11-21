@@ -10,7 +10,7 @@ Understanding the data Traefik shares and how it is used
 
 ## Introduction
 
-Protecting user privacy is essential to TraefikLabs, and we design every data-sharing mechanism with transparency and minimalism in mind.
+Protecting user privacy is essential to Traefik Labs, and we design every data-sharing mechanism with transparency and minimalism in mind.
 This page describes the two types of data exchanged by Traefik and how to configure them.
 
 For more details on how your data is handled, please refer to our [Privacy and Cookie Policy](https://traefik.io/legal/privacy-and-cookie-policy).
