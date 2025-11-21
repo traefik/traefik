@@ -153,6 +153,8 @@ func Test_getNomadServiceDataWithEmptyServices_GroupService_Scaling1(t *testing.
 			_, _ = w.Write(responses["job_job1_WithGroupService_Scaling1"])
 		case strings.HasSuffix(r.RequestURI, "/v1/service/job1"):
 			_, _ = w.Write(responses["service_job1"])
+		case strings.Contains(r.RequestURI, "/v1/allocation/"):
+			_, _ = w.Write(responses["alloc_healthy"])
 		}
 	}))
 
@@ -213,6 +215,8 @@ func Test_getNomadServiceDataWithEmptyServices_GroupService_ScalingDisabled(t *t
 			_, _ = w.Write(responses["job_job3_WithGroupService_ScalingDisabled"])
 		case strings.HasSuffix(r.RequestURI, "/v1/service/job3"):
 			_, _ = w.Write(responses["service_job3"])
+		case strings.Contains(r.RequestURI, "/v1/allocation/"):
+			_, _ = w.Write(responses["alloc_healthy"])
 		}
 	}))
 
@@ -277,6 +281,8 @@ func Test_getNomadServiceDataWithEmptyServices_GroupTaskService_Scaling1(t *test
 			_, _ = w.Write(responses["service_job5task1"])
 		case strings.HasSuffix(r.RequestURI, "/v1/service/job5task2"):
 			_, _ = w.Write(responses["service_job5task2"])
+		case strings.Contains(r.RequestURI, "/v1/allocation/"):
+			_, _ = w.Write(responses["alloc_healthy"])
 		}
 	}))
 
@@ -339,6 +345,8 @@ func Test_getNomadServiceDataWithEmptyServices_TCP(t *testing.T) {
 			_, _ = w.Write(responses["job_job7_TCP"])
 		case strings.HasSuffix(r.RequestURI, "/v1/service/job7"):
 			_, _ = w.Write(responses["service_job7"])
+		case strings.Contains(r.RequestURI, "/v1/allocation/"):
+			_, _ = w.Write(responses["alloc_healthy"])
 		}
 	}))
 
@@ -369,6 +377,8 @@ func Test_getNomadServiceDataWithEmptyServices_UDP(t *testing.T) {
 			_, _ = w.Write(responses["job_job8_UDP"])
 		case strings.HasSuffix(r.RequestURI, "/v1/service/job8"):
 			_, _ = w.Write(responses["service_job8"])
+		case strings.Contains(r.RequestURI, "/v1/allocation/"):
+			_, _ = w.Write(responses["alloc_healthy"])
 		}
 	}))
 
@@ -449,6 +459,8 @@ func Test_getNomadServiceData(t *testing.T) {
 			_, _ = w.Write(responses["service_redis"])
 		case strings.HasSuffix(r.RequestURI, "/v1/service/hello-nomad"):
 			_, _ = w.Write(responses["service_hello"])
+		case strings.Contains(r.RequestURI, "/v1/allocation/"):
+			_, _ = w.Write(responses["alloc_healthy"])
 		}
 	}))
 	t.Cleanup(ts.Close)
@@ -467,4 +479,50 @@ func Test_getNomadServiceData(t *testing.T) {
 	items, err := p.getNomadServiceData(t.Context())
 	require.NoError(t, err)
 	require.Len(t, items, 2)
+}
+
+func Test_fetchService_HealthChecks(t *testing.T) {
+	serviceListJSON := []byte(`[
+        {"ID": "s1", "ServiceName": "app", "Tags": ["traefik.enable=true"], "AllocID": "alloc-ok"},
+        {"ID": "s2", "ServiceName": "app", "Tags": ["traefik.enable=true"], "AllocID": "alloc-dead-client"},
+        {"ID": "s3", "ServiceName": "app", "Tags": ["traefik.enable=true"], "AllocID": "alloc-bad-deploy"},
+        {"ID": "s4", "ServiceName": "app", "Tags": ["traefik.enable=true"], "AllocID": "alloc-dead-task"}
+    ]`)
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case strings.HasSuffix(r.RequestURI, "/v1/service/app"):
+			w.Write(serviceListJSON)
+		case strings.Contains(r.RequestURI, "alloc-dead-client"):
+			w.Write([]byte(`{"ClientStatus": "complete"}`))
+		case strings.Contains(r.RequestURI, "alloc-bad-deploy"):
+			w.Write([]byte(`{
+                "ClientStatus": "running",
+                "DeploymentStatus": { "Healthy": false }
+            }`))
+		case strings.Contains(r.RequestURI, "alloc-dead-task"):
+			w.Write([]byte(`{
+                "ClientStatus": "running",
+                "DeploymentStatus": { "Healthy": true },
+                "TaskStates": {
+                    "web-task": { "State": "dead", "Events": [{"Type": "Terminated"}] }
+                }
+            }`))
+		case strings.Contains(r.RequestURI, "alloc-ok"):
+			_, _ = w.Write(responses["alloc_healthy"])
+		}
+	}))
+	t.Cleanup(ts.Close)
+	p := new(Provider)
+	p.SetDefaults()
+	p.Endpoint.Address = ts.URL
+	p.client, _ = createClient(p.namespace, p.Endpoint)
+
+	services, err := p.fetchService(t.Context(), "app")
+	require.NoError(t, err)
+	assert.Len(t, services, 1, "Must filter out ClientDead, DeployBad, and TaskDead")
+
+	if len(services) > 0 {
+		assert.Equal(t, "alloc-ok", services[0].AllocID)
+	}
 }
