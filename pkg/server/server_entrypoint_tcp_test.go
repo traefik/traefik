@@ -511,6 +511,27 @@ func TestNormalizePath_malformedPercentEncoding(t *testing.T) {
 	}
 }
 
+func TestDecodePathSlashes(t *testing.T) {
+	decodedSlashes := "/\\/\\"
+	encodedSlashes := []string{"%2F", "%5C", "%2f", "%5c"}
+
+	var callCount int
+	handler := decodePathSlashes(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		callCount++
+
+		wantRawPath := "/" + decodedSlashes
+		assert.Equal(t, wantRawPath, r.URL.RawPath)
+	}))
+
+	req := httptest.NewRequest(http.MethodGet, "http://foo/"+strings.Join(encodedSlashes, ""), http.NoBody)
+	res := httptest.NewRecorder()
+
+	handler.ServeHTTP(res, req)
+
+	assert.Equal(t, http.StatusOK, res.Code)
+	assert.Equal(t, 1, callCount)
+}
+
 // TestPathOperations tests the whole behavior of normalizePath, and sanitizePath combined through the use of the newHTTPServer func.
 // It aims to guarantee the server entrypoint handler is secure regarding a large variety of cases that could lead to path traversal attacks.
 func TestPathOperations(t *testing.T) {

@@ -681,6 +681,11 @@ func newHTTPServer(ctx context.Context, ln net.Listener, configuration *static.E
 		handler = sanitizePath(handler)
 	}
 
+	// Decode %2F, %2f, %5C, and %5c.
+	if configuration.HTTP.DecodePathSlashes {
+		handler = decodePathSlashes(handler)
+	}
+
 	handler = normalizePath(handler)
 
 	handler = denyFragment(handler)
@@ -765,6 +770,71 @@ type trackedConnection struct {
 func (t *trackedConnection) Close() error {
 	t.tracker.RemoveConnection(t.WriteCloser)
 	return t.WriteCloser.Close()
+}
+
+// slashesCharacters contains the mapping of the percent-encoded form to the ASCII form
+// of the slashes characters.
+var slashesCharacters = map[string]rune{
+	"%2F": '/',
+	"%5C": '\\',
+}
+
+// decodePathSlashes decodes encoded slashes characters from the request URL RawPath.
+func decodePathSlashes(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rawPath := req.URL.RawPath
+
+		// When the RawPath is empty the encoded form of the Path is equivalent to the original request Path.
+		// No need to try to decode the slashes.
+		if rawPath == "" {
+			h.ServeHTTP(rw, req)
+			return
+		}
+
+		var rawPathBuilder strings.Builder
+		for i := 0; i < len(rawPath); i++ {
+			if rawPath[i] != '%' {
+				rawPathBuilder.WriteString(string(rawPath[i]))
+				continue
+			}
+
+			// This should never happen as the standard library will reject requests containing invalid percent-encodings.
+			// This discards URLs with a percent character at the end.
+			if i+2 >= len(rawPath) {
+				rw.WriteHeader(http.StatusBadRequest)
+				return
+			}
+
+			encodedCharacter := strings.ToUpper(rawPath[i : i+3])
+			if r, slash := slashesCharacters[encodedCharacter]; slash {
+				rawPathBuilder.WriteRune(r)
+			} else {
+				rawPathBuilder.WriteString(encodedCharacter)
+			}
+
+			i += 2
+		}
+
+		decodedSlashesRawPath := rawPathBuilder.String()
+
+		// We do not have to alter the request URL as the original RawPath is already normalized.
+		if decodedSlashesRawPath == rawPath {
+			h.ServeHTTP(rw, req)
+			return
+		}
+
+		r2 := new(http.Request)
+		*r2 = *req
+
+		// Decoding the slashes only alter the RAW version of the URL,
+		// as slashes percent-encoded characters are already decoded in the URL Path property.
+		r2.URL.RawPath = decodedSlashesRawPath
+
+		// Because the reverse proxy director is building query params from RequestURI it needs to be updated as well.
+		r2.RequestURI = r2.URL.RequestURI()
+
+		h.ServeHTTP(rw, r2)
+	})
 }
 
 // This function is inspired by http.AllowQuerySemicolons.

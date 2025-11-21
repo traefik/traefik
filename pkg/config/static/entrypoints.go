@@ -65,12 +65,16 @@ func (ep *EntryPoint) SetDefaults() {
 
 // HTTPConfig is the HTTP configuration of an entry point.
 type HTTPConfig struct {
-	Redirections          *Redirections `description:"Set of redirection" json:"redirections,omitempty" toml:"redirections,omitempty" yaml:"redirections,omitempty" export:"true"`
-	Middlewares           []string      `description:"Default middlewares for the routers linked to the entry point." json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
-	TLS                   *TLSConfig    `description:"Default TLS configuration for the routers linked to the entry point." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
-	EncodeQuerySemicolons bool          `description:"Defines whether request query semicolons should be URLEncoded." json:"encodeQuerySemicolons,omitempty" toml:"encodeQuerySemicolons,omitempty" yaml:"encodeQuerySemicolons,omitempty"`
-	SanitizePath          *bool         `description:"Defines whether to enable request path sanitization (removal of /./, /../ and multiple slash sequences)." json:"sanitizePath,omitempty" toml:"sanitizePath,omitempty" yaml:"sanitizePath,omitempty" export:"true"`
-	MaxHeaderBytes        int           `description:"Maximum size of request headers in bytes." json:"maxHeaderBytes,omitempty" toml:"maxHeaderBytes,omitempty" yaml:"maxHeaderBytes,omitempty" export:"true"`
+	Redirections *Redirections `description:"Set of redirection" json:"redirections,omitempty" toml:"redirections,omitempty" yaml:"redirections,omitempty" export:"true"`
+	Middlewares  []string      `description:"Default middlewares for the routers linked to the entry point." json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
+	TLS          *TLSConfig    `description:"Default TLS configuration for the routers linked to the entry point." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+
+	EncodeQuerySemicolons bool `description:"Defines whether request query semicolons should be URLEncoded." json:"encodeQuerySemicolons,omitempty" toml:"encodeQuerySemicolons,omitempty" yaml:"encodeQuerySemicolons,omitempty"`
+	DecodePathSlashes     bool `description:"Defines whether to decode slashes in the path (%2F, %2f, %5C, and %5c)." json:"decodePathSlashes,omitempty" toml:"decodePathSlashes,omitempty" yaml:"decodePathSlashes,omitempty" export:"true"`
+
+	SanitizePath *bool `description:"Defines whether to enable request path sanitization (removal of /./, /../ and multiple slash sequences)." json:"sanitizePath,omitempty" toml:"sanitizePath,omitempty" yaml:"sanitizePath,omitempty" export:"true"`
+
+	MaxHeaderBytes int `description:"Maximum size of request headers in bytes." json:"maxHeaderBytes,omitempty" toml:"maxHeaderBytes,omitempty" yaml:"maxHeaderBytes,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
