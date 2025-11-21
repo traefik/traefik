@@ -17,10 +17,10 @@ We use [Semantic Versioning](https://semver.org/).
 
 | Version   | Supported          |
 |-----------|--------------------|
-| `2.2.x`   | :white_check_mark: |
-| `< 2.2.x` | :x:                |
-| `1.7.x`   | :white_check_mark: |
-| `< 1.7.x` | :x:                |
+| `3.6.x`   | :white_check_mark: |
+| `< 3.6.x` | :x:                |
+| `2.11.x`   | :white_check_mark: |
+| `< 2.11.x` | :x:                |
 
 ## Reporting a Vulnerability
 
