@@ -49,7 +49,7 @@
     "@testing-library/jest-dom": "^6.4.2",
     "@testing-library/react": "^14.2.1",
     "@testing-library/user-event": "^14.5.2",
-    "@traefiklabs/faency": "11.1.4",
+    "@traefiklabs/faency": "12.0.4",
     "@types/lodash": "^4.17.16",
     "@types/node": "^22.15.18",
     "@types/react": "^18.2.0",
