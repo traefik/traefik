@@ -513,7 +513,41 @@ func (p *Provider) fetchService(ctx context.Context, name string) ([]*api.Servic
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch services: %w", err)
 	}
-	return services, nil
+
+	var healthyServices []*api.ServiceRegistration
+	for _, service := range services {
+		if service.AllocID == "" {
+			continue
+		}
+		alloc, _, err := p.client.Allocations().Info(service.AllocID, &api.QueryOptions{AllowStale: true})
+		if err != nil {
+			continue
+		}
+		if alloc.ClientStatus != "running" {
+			continue
+		}
+		if alloc.DeploymentStatus != nil {
+			if alloc.DeploymentStatus.Healthy != nil && !*alloc.DeploymentStatus.Healthy {
+				continue
+			}
+		}
+
+		allTasksRunning := true
+		if alloc.TaskStates != nil {
+			for _, taskState := range alloc.TaskStates {
+				if taskState.State != "running" {
+					allTasksRunning = false
+					break
+				}
+			}
+		}
+
+		if !allTasksRunning {
+			continue
+		}
+		healthyServices = append(healthyServices, service)
+	}
+	return healthyServices, nil
 }
 
 func createClient(namespace string, endpoint *EndpointConfig) (*api.Client, error) {
