@@ -7,6 +7,7 @@ import { StatusWrapper } from './ResourceStatus'
 import { colorByStatus } from './Status'
 
 import Tooltip from 'components/Tooltip'
+import { useGetUrlWithReturnTo } from 'hooks/use-href-with-return-to'
 
 const CustomHeading = styled(H2, {
   display: 'flex',
@@ -125,9 +126,25 @@ const CardSkeleton = ({ bigDescription }: { bigDescription?: boolean }) => {
   )
 }
 
-export const CardListSection = ({ icon, title, cards, isLast, bigDescription }: SectionType) => {
+const CardItem = ({ card }) => {
   const navigate = useNavigate()
+  const href = useGetUrlWithReturnTo(card.link)
 
+  return (
+    <SpacedCard key={card.description} css={{ border: card.focus ? `2px solid $primary` : '', p: '$3' }}>
+      <FlexLink
+        data-testid={card.link}
+        onClick={(): false | void => !!card.link && navigate(href)}
+        css={{ cursor: card.link ? 'pointer' : 'inherit' }}
+      >
+        <ItemTitle>{card.title}</ItemTitle>
+        <CardDescription>{card.description}</CardDescription>
+      </FlexLink>
+    </SpacedCard>
+  )
+}
+
+export const CardListSection = ({ icon, title, cards, isLast, bigDescription }: SectionType) => {
   return (
     <Flex css={{ flexDirection: 'column', flexGrow: 1 }}>
       <SectionHeader icon={icon} title={title} />
@@ -135,20 +152,7 @@ export const CardListSection = ({ icon, title, cards, isLast, bigDescription }: 
         <CardListColumn>
           <Flex css={{ flexDirection: 'column', flexGrow: 1, marginRight: '$3' }}>
             {!cards && <CardSkeleton bigDescription={bigDescription} />}
-            {cards
-              ?.filter((c) => !!c.description)
-              .map((card) => (
-                <SpacedCard key={card.description} css={{ border: card.focus ? `2px solid $primary` : '', p: '$3' }}>
-                  <FlexLink
-                    data-testid={card.link}
-                    onClick={(): false | void => !!card.link && navigate(card.link)}
-                    css={{ cursor: card.link ? 'pointer' : 'inherit' }}
-                  >
-                    <ItemTitle>{card.title}</ItemTitle>
-                    <CardDescription>{card.description}</CardDescription>
-                  </FlexLink>
-                </SpacedCard>
-              ))}
+            {cards?.filter((c) => !!c.description).map((card, idx) => <CardItem key={`card-${idx}`} card={card} />)}
             <Box css={{ height: '16px' }}>&nbsp;</Box>
           </Flex>
         </CardListColumn>
