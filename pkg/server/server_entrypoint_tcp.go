@@ -681,7 +681,9 @@ func newHTTPServer(ctx context.Context, ln net.Listener, configuration *static.E
 		handler = sanitizePath(handler)
 	}
 
-	// Decode %2F, %2f, %5C, and %5c.
+	// Note that the decoding of slashes has to be done before the path sanitization,
+	// hence the wrapping has to be done after the sanitize path wrapping.
+	// Decodes %2F, %2f, %5C, and %5c.
 	if configuration.HTTP.DecodePathSlashes {
 		handler = decodePathSlashes(handler)
 	}
