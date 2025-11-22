@@ -21,11 +21,14 @@ func TestSemConvServerMetrics(t *testing.T) {
 	tests := []struct {
 		desc           string
 		statusCode     int
+		host           string
+		httpRoute      string
 		wantAttributes attribute.Set
 	}{
 		{
 			desc:       "not found status",
 			statusCode: http.StatusNotFound,
+			host:       "www.test.com",
 			wantAttributes: attribute.NewSet(
 				attribute.Key("error.type").String("404"),
 				attribute.Key("http.request.method").String("GET"),
@@ -39,12 +42,29 @@ func TestSemConvServerMetrics(t *testing.T) {
 		{
 			desc:       "created status",
 			statusCode: http.StatusCreated,
+			host:       "www.test.com",
 			wantAttributes: attribute.NewSet(
 				attribute.Key("http.request.method").String("GET"),
 				attribute.Key("http.response.status_code").Int(201),
 				attribute.Key("network.protocol.name").String("http/1.1"),
 				attribute.Key("network.protocol.version").String("1.1"),
 				attribute.Key("server.address").String("www.test.com"),
+				attribute.Key("url.scheme").String("http"),
+			),
+		},
+		{
+			desc:       "with http.route and server.port",
+			statusCode: http.StatusOK,
+			host:       "example.com:443",
+			httpRoute:  "/api/banking",
+			wantAttributes: attribute.NewSet(
+				attribute.Key("http.request.method").String("GET"),
+				attribute.Key("http.response.status_code").Int(200),
+				attribute.Key("http.route").String("/api/banking"),
+				attribute.Key("network.protocol.name").String("http/1.1"),
+				attribute.Key("network.protocol.version").String("1.1"),
+				attribute.Key("server.address").String("example.com:443"),
+				attribute.Key("server.port").Int(443),
 				attribute.Key("url.scheme").String("http"),
 			),
 		},
@@ -68,11 +88,17 @@ func TestSemConvServerMetrics(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, semConvMetricRegistry)
 
-			req := httptest.NewRequest(http.MethodGet, "http://www.test.com/search?q=Opentelemetry", nil)
+			req := httptest.NewRequest(http.MethodGet, "http://"+test.host+"/search?q=Opentelemetry", nil)
 			rw := httptest.NewRecorder()
+			req.Host = test.host
 			req.RemoteAddr = "10.0.0.1:1234"
 			req.Header.Set("User-Agent", "entrypoint-test")
 			req.Header.Set("X-Forwarded-Proto", "http")
+
+			// Inject http.route into context if provided.
+			if test.httpRoute != "" {
+				req = req.WithContext(WithHTTPRoute(req.Context(), test.httpRoute))
+			}
 
 			next := http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
 				rw.WriteHeader(test.statusCode)
