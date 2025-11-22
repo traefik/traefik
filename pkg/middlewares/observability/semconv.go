@@ -3,6 +3,7 @@ package observability
 import (
 	"context"
 	"fmt"
+	"net"
 	"net/http"
 	"strconv"
 	"strings"
@@ -75,6 +76,18 @@ func (e *semConvServerMetrics) ServeHTTP(rw http.ResponseWriter, req *http.Reque
 	attrs = append(attrs, semconv.NetworkProtocolName(strings.ToLower(req.Proto)))
 	attrs = append(attrs, semconv.NetworkProtocolVersion(Proto(req.Proto)))
 	attrs = append(attrs, semconv.ServerAddress(req.Host))
+
+	// Add http.route attribute if available from router context.
+	if route, ok := HTTPRoute(ctx); ok && route != "" {
+		attrs = append(attrs, semconv.HTTPRoute(route))
+	}
+
+	// Extract and add server.port attribute from req.Host.
+	if _, portStr, err := net.SplitHostPort(req.Host); err == nil {
+		if port, err := strconv.Atoi(portStr); err == nil {
+			attrs = append(attrs, semconv.ServerPort(port))
+		}
+	}
 
 	e.semConvMetricRegistry.HTTPServerRequestDuration().Record(req.Context(), end.Sub(start).Seconds(),
 		httpconv.RequestMethodAttr(req.Method), req.Header.Get("X-Forwarded-Proto"), attrs...)
