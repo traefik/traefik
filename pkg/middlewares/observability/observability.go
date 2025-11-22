@@ -11,7 +11,10 @@ import (
 
 type contextKey int
 
-const observabilityKey contextKey = iota
+const (
+	observabilityKey contextKey = iota
+	httpRouteKey
+)
 
 type Observability struct {
 	AccessLogsEnabled      bool
@@ -69,6 +72,17 @@ func SetStatusErrorf(ctx context.Context, format string, args ...any) {
 	if span := trace.SpanFromContext(ctx); span != nil {
 		span.SetStatus(codes.Error, fmt.Sprintf(format, args...))
 	}
+}
+
+// WithHTTPRoute injects the HTTP route pattern into the context.
+func WithHTTPRoute(ctx context.Context, route string) context.Context {
+	return context.WithValue(ctx, httpRouteKey, route)
+}
+
+// HTTPRoute returns the HTTP route pattern from the context, if available.
+func HTTPRoute(ctx context.Context) (string, bool) {
+	route, ok := ctx.Value(httpRouteKey).(string)
+	return route, ok
 }
 
 func Proto(proto string) string {

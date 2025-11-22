@@ -3,6 +3,7 @@ package observability
 import (
 	"context"
 	"fmt"
+	"net"
 	"net/http"
 	"strconv"
 	"strings"
@@ -75,6 +76,29 @@ func (e *semConvServerMetrics) ServeHTTP(rw http.ResponseWriter, req *http.Reque
 	attrs = append(attrs, semconv.NetworkProtocolName(strings.ToLower(req.Proto)))
 	attrs = append(attrs, semconv.NetworkProtocolVersion(Proto(req.Proto)))
 	attrs = append(attrs, semconv.ServerAddress(req.Host))
+
+	// Add http.route attribute if available from router context.
+	if route, ok := HTTPRoute(ctx); ok && route != "" {
+		attrs = append(attrs, semconv.HTTPRoute(route))
+	}
+
+	// Extract and add server.port attribute.
+	// First, try to get the port from the local address (canonical source).
+	// This ensures we always emit server.port even when the Host header doesn't include it.
+	if localAddr, ok := ctx.Value(http.LocalAddrContextKey).(net.Addr); ok {
+		if tcpAddr, ok := localAddr.(*net.TCPAddr); ok {
+			attrs = append(attrs, semconv.ServerPort(tcpAddr.Port))
+		} else if _, portStr, err := net.SplitHostPort(localAddr.String()); err == nil {
+			if port, err := strconv.Atoi(portStr); err == nil {
+				attrs = append(attrs, semconv.ServerPort(port))
+			}
+		}
+	} else if _, portStr, err := net.SplitHostPort(req.Host); err == nil {
+		// Fallback: extract port from Host header if local address is not available.
+		if port, err := strconv.Atoi(portStr); err == nil {
+			attrs = append(attrs, semconv.ServerPort(port))
+		}
+	}
 
 	e.semConvMetricRegistry.HTTPServerRequestDuration().Record(req.Context(), end.Sub(start).Seconds(),
 		httpconv.RequestMethodAttr(req.Method), req.Header.Get("X-Forwarded-Proto"), attrs...)
