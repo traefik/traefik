@@ -80,7 +80,7 @@ func TestOTelAccessLogWithBodyAndForcedLogging(t *testing.T) {
 			outLoggerCheckFn: func(t *testing.T, l *logrus.Logger) {
 				t.Helper()
 
-				assert.True(t, l.Out == io.Discard)
+				assert.Equal(t, l.Out, io.Discard)
 			},
 		},
 		{
@@ -97,7 +97,7 @@ func TestOTelAccessLogWithBodyAndForcedLogging(t *testing.T) {
 			outLoggerCheckFn: func(t *testing.T, l *logrus.Logger) {
 				t.Helper()
 
-				assert.True(t, l.Out == io.Discard)
+				assert.Equal(t, l.Out, io.Discard)
 			},
 		},
 		{
@@ -114,7 +114,7 @@ func TestOTelAccessLogWithBodyAndForcedLogging(t *testing.T) {
 			outLoggerCheckFn: func(t *testing.T, l *logrus.Logger) {
 				t.Helper()
 
-				assert.True(t, l.Out == io.Discard)
+				assert.Equal(t, l.Out, io.Discard)
 			},
 		},
 		{
@@ -131,7 +131,7 @@ func TestOTelAccessLogWithBodyAndForcedLogging(t *testing.T) {
 			outLoggerCheckFn: func(t *testing.T, l *logrus.Logger) {
 				t.Helper()
 
-				assert.True(t, l.Out != io.Discard)
+				assert.NotEqual(t, l.Out, io.Discard)
 			},
 		},
 		{
@@ -148,7 +148,7 @@ func TestOTelAccessLogWithBodyAndForcedLogging(t *testing.T) {
 			outLoggerCheckFn: func(t *testing.T, l *logrus.Logger) {
 				t.Helper()
 
-				assert.True(t, l.Out != io.Discard)
+				assert.NotEqual(t, l.Out, io.Discard)
 			},
 		},
 	}
