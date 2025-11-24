@@ -1,12 +1,11 @@
-import { TcpServiceRender } from './TcpService'
-
+import { ServiceDetail } from 'components/services/ServiceDetail'
 import { ResourceDetailDataType } from 'hooks/use-resource-detail'
 import { renderWithProviders } from 'utils/test'
 
 describe('<TcpServicePage />', () => {
   it('should render the error message', () => {
     const { getByTestId } = renderWithProviders(
-      <TcpServiceRender name="mock-service" data={undefined} error={new Error('Test error')} />,
+      <ServiceDetail name="mock-service" data={undefined} error={new Error('Test error')} protocol="tcp" />,
       { route: '/tcp/services/mock-service', withPage: true },
     )
     expect(getByTestId('error-text')).toBeInTheDocument()
@@ -14,7 +13,7 @@ describe('<TcpServicePage />', () => {
 
   it('should render the skeleton', () => {
     const { getByTestId } = renderWithProviders(
-      <TcpServiceRender name="mock-service" data={undefined} error={undefined} />,
+      <ServiceDetail name="mock-service" data={undefined} error={undefined} protocol="tcp" />,
       { route: '/tcp/services/mock-service', withPage: true },
     )
     expect(getByTestId('skeleton')).toBeInTheDocument()
@@ -22,7 +21,7 @@ describe('<TcpServicePage />', () => {
 
   it('should render the not found page', () => {
     const { getByTestId } = renderWithProviders(
-      <TcpServiceRender name="mock-service" data={{} as ResourceDetailDataType} error={undefined} />,
+      <ServiceDetail name="mock-service" data={{} as ResourceDetailDataType} error={undefined} protocol="tcp" />,
       { route: '/tcp/services/mock-service', withPage: true },
     )
     expect(getByTestId('Not found page')).toBeInTheDocument()
@@ -71,7 +70,7 @@ describe('<TcpServicePage />', () => {
 
     const { container, getByTestId } = renderWithProviders(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      <TcpServiceRender name="mock-service" data={mockData as any} error={undefined} />,
+      <ServiceDetail name="mock-service" data={mockData as any} error={undefined} protocol="tcp" />,
       { route: '/tcp/services/mock-service', withPage: true },
     )
 
@@ -79,7 +78,7 @@ describe('<TcpServicePage />', () => {
     const titleTags = headings.filter((h1) => h1.innerHTML === 'service-test1')
     expect(titleTags.length).toBe(1)
 
-    const serviceDetails = getByTestId('tcp-service-details')
+    const serviceDetails = getByTestId('service-details')
     expect(serviceDetails.innerHTML).toContain('Type')
     expect(serviceDetails.innerHTML).toContain('loadbalancer')
     expect(serviceDetails.innerHTML).toContain('Provider')
@@ -89,7 +88,7 @@ describe('<TcpServicePage />', () => {
     expect(serviceDetails.innerHTML).toContain('Termination Delay')
     expect(serviceDetails.innerHTML).toContain('10 ms')
 
-    const healthCheck = getByTestId('tcp-health-check')
+    const healthCheck = getByTestId('health-check')
     expect(healthCheck.innerHTML).toContain('Interval')
     expect(healthCheck.innerHTML).toContain('30s')
     expect(healthCheck.innerHTML).toContain('Timeout')
@@ -103,7 +102,7 @@ describe('<TcpServicePage />', () => {
     expect(healthCheck.innerHTML).toContain('Expect')
     expect(healthCheck.innerHTML).toContain('PONG')
 
-    const serversList = getByTestId('tcp-servers-list')
+    const serversList = getByTestId('servers-list')
     expect(serversList.childNodes.length).toBe(1)
     expect(serversList.innerHTML).toContain('http://10.0.1.12:80')
 
@@ -153,11 +152,11 @@ describe('<TcpServicePage />', () => {
 
     const { getByTestId } = renderWithProviders(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      <TcpServiceRender name="mock-service" data={mockData as any} error={undefined} />,
+      <ServiceDetail name="mock-service" data={mockData as any} error={undefined} protocol="tcp" />,
       { route: '/tcp/services/mock-service', withPage: true },
     )
 
-    const serversList = getByTestId('tcp-servers-list')
+    const serversList = getByTestId('servers-list')
     expect(serversList.childNodes.length).toBe(1)
     expect(serversList.innerHTML).toContain('http://10.0.1.12:81')
 
@@ -180,7 +179,7 @@ describe('<TcpServicePage />', () => {
 
     const { getByTestId } = renderWithProviders(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      <TcpServiceRender name="mock-service" data={mockData as any} error={undefined} />,
+      <ServiceDetail name="mock-service" data={mockData as any} error={undefined} protocol="tcp" />,
       { route: '/tcp/services/mock-service', withPage: true },
     )
 
@@ -223,14 +222,14 @@ describe('<TcpServicePage />', () => {
 
     const { container, getByTestId } = renderWithProviders(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      <TcpServiceRender name="mock-service" data={mockData as any} error={undefined} />,
+      <ServiceDetail name="mock-service" data={mockData as any} error={undefined} protocol="tcp" />,
     )
 
     const headings = Array.from(container.getElementsByTagName('h1'))
     const titleTags = headings.filter((h1) => h1.innerHTML === 'weighted-service-test')
     expect(titleTags.length).toBe(1)
 
-    const serviceDetails = getByTestId('tcp-service-details')
+    const serviceDetails = getByTestId('service-details')
     expect(serviceDetails.innerHTML).toContain('Type')
     expect(serviceDetails.innerHTML).toContain('weighted')
     expect(serviceDetails.innerHTML).toContain('Provider')
@@ -238,7 +237,7 @@ describe('<TcpServicePage />', () => {
     expect(serviceDetails.innerHTML).toContain('Status')
     expect(serviceDetails.innerHTML).toContain('Success')
 
-    const weightedServices = getByTestId('tcp-weighted-services')
+    const weightedServices = getByTestId('weighted-services')
     expect(weightedServices.childNodes.length).toBe(2)
     expect(weightedServices.innerHTML).toContain('service1@docker')
     expect(weightedServices.innerHTML).toContain('80')

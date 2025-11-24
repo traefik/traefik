@@ -1,5 +1,4 @@
-import { HttpRouterRender } from './HttpRouter'
-
+import { RouterDetail } from 'components/routers/RouterDetail'
 import { ResourceDetailDataType } from 'hooks/use-resource-detail'
 import apiEntrypoints from 'mocks/data/api-entrypoints.json'
 import apiHttpMiddlewares from 'mocks/data/api-http_middlewares.json'
@@ -9,7 +8,7 @@ import { renderWithProviders } from 'utils/test'
 describe('<HttpRouterPage />', () => {
   it('should render the error message', () => {
     const { getByTestId } = renderWithProviders(
-      <HttpRouterRender name="mock-router" data={undefined} error={new Error('Test error')} />,
+      <RouterDetail name="mock-router" data={undefined} error={new Error('Test error')} protocol="http" />,
       { route: '/http/routers/mock-router', withPage: true },
     )
     expect(getByTestId('error-text')).toBeInTheDocument()
@@ -17,7 +16,7 @@ describe('<HttpRouterPage />', () => {
 
   it('should render the skeleton', () => {
     const { getByTestId } = renderWithProviders(
-      <HttpRouterRender name="mock-router" data={undefined} error={undefined} />,
+      <RouterDetail name="mock-router" data={undefined} error={undefined} protocol="http" />,
       { route: '/http/routers/mock-router', withPage: true },
     )
     expect(getByTestId('skeleton')).toBeInTheDocument()
@@ -25,7 +24,7 @@ describe('<HttpRouterPage />', () => {
 
   it('should render the not found page', () => {
     const { getByTestId } = renderWithProviders(
-      <HttpRouterRender name="mock-router" data={{} as ResourceDetailDataType} error={undefined} />,
+      <RouterDetail name="mock-router" data={{} as ResourceDetailDataType} error={undefined} protocol="http" />,
       { route: '/http/routers/mock-router', withPage: true },
     )
     expect(getByTestId('Not found page')).toBeInTheDocument()
@@ -42,7 +41,7 @@ describe('<HttpRouterPage />', () => {
 
     const { getByTestId } = renderWithProviders(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      <HttpRouterRender name="mock-router" data={mockData as any} error={undefined} />,
+      <RouterDetail name="mock-router" data={mockData as any} error={undefined} protocol="http" />,
       { route: '/http/routers/orphan-router@file', withPage: true },
     )
 
@@ -78,7 +77,7 @@ describe('<HttpRouterPage />', () => {
     expect(routerStructure.innerHTML).toContain('HTTP Router')
     expect(routerStructure.innerHTML).not.toContain('TCP Router')
 
-    const routerDetailsSection = getByTestId('router-detail')
+    const routerDetailsSection = getByTestId('router-details')
 
     const routerDetailsPanel = routerDetailsSection.querySelector(':scope > div:nth-child(1)')
     expect(routerDetailsPanel?.innerHTML).toContain('orphan-router@file')

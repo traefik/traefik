@@ -1,12 +1,11 @@
-import { HttpServiceRender } from './HttpService'
-
+import { ServiceDetail } from 'components/services/ServiceDetail'
 import { ResourceDetailDataType } from 'hooks/use-resource-detail'
 import { renderWithProviders } from 'utils/test'
 
 describe('<HttpServicePage />', () => {
   it('should render the error message', () => {
     const { getByTestId } = renderWithProviders(
-      <HttpServiceRender name="mock-service" data={undefined} error={new Error('Test error')} />,
+      <ServiceDetail name="mock-service" data={undefined} error={new Error('Test error')} protocol="http" />,
       { route: '/http/services/mock-service', withPage: true },
     )
     expect(getByTestId('error-text')).toBeInTheDocument()
@@ -14,7 +13,7 @@ describe('<HttpServicePage />', () => {
 
   it('should render the skeleton', () => {
     const { getByTestId } = renderWithProviders(
-      <HttpServiceRender name="mock-service" data={undefined} error={undefined} />,
+      <ServiceDetail name="mock-service" data={undefined} error={undefined} protocol="http" />,
       { route: '/http/services/mock-service', withPage: true },
     )
     expect(getByTestId('skeleton')).toBeInTheDocument()
@@ -22,7 +21,7 @@ describe('<HttpServicePage />', () => {
 
   it('should render the not found page', () => {
     const { getByTestId } = renderWithProviders(
-      <HttpServiceRender name="mock-service" data={{} as ResourceDetailDataType} error={undefined} />,
+      <ServiceDetail name="mock-service" data={{} as ResourceDetailDataType} error={undefined} protocol="http" />,
       { route: '/http/services/mock-service', withPage: true },
     )
     expect(getByTestId('Not found page')).toBeInTheDocument()
@@ -73,7 +72,7 @@ describe('<HttpServicePage />', () => {
 
     const { container, getByTestId } = renderWithProviders(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      <HttpServiceRender name="mock-service" data={mockData as any} error={undefined} />,
+      <ServiceDetail name="mock-service" data={mockData as any} error={undefined} protocol="http" />,
       { route: '/http/services/mock-service', withPage: true },
     )
 
@@ -145,7 +144,7 @@ describe('<HttpServicePage />', () => {
 
     const { getByTestId } = renderWithProviders(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      <HttpServiceRender name="mock-service" data={mockData as any} error={undefined} />,
+      <ServiceDetail name="mock-service" data={mockData as any} error={undefined} protocol="http" />,
       { route: '/http/services/mock-service', withPage: true },
     )
 
@@ -200,7 +199,7 @@ describe('<HttpServicePage />', () => {
 
     const { getByTestId } = renderWithProviders(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      <HttpServiceRender name="mock-service" data={mockData as any} error={undefined} />,
+      <ServiceDetail name="mock-service" data={mockData as any} error={undefined} protocol="http" />,
       { route: '/http/services/mock-service', withPage: true },
     )
 

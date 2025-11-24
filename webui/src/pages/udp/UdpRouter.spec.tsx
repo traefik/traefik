@@ -1,12 +1,11 @@
-import { UdpRouterRender } from './UdpRouter'
-
+import { RouterDetail } from 'components/routers/RouterDetail'
 import { ResourceDetailDataType } from 'hooks/use-resource-detail'
 import { renderWithProviders } from 'utils/test'
 
 describe('<UdpRouterPage />', () => {
   it('should render the error message', () => {
     const { getByTestId } = renderWithProviders(
-      <UdpRouterRender name="mock-router" data={undefined} error={new Error('Test error')} />,
+      <RouterDetail name="mock-router" data={undefined} error={new Error('Test error')} protocol="udp" />,
       { route: '/udp/routers/mock-router', withPage: true },
     )
     expect(getByTestId('error-text')).toBeInTheDocument()
@@ -14,7 +13,7 @@ describe('<UdpRouterPage />', () => {
 
   it('should render the skeleton', () => {
     const { getByTestId } = renderWithProviders(
-      <UdpRouterRender name="mock-router" data={undefined} error={undefined} />,
+      <RouterDetail name="mock-router" data={undefined} error={undefined} protocol="udp" />,
       { route: '/udp/routers/mock-router', withPage: true },
     )
     expect(getByTestId('skeleton')).toBeInTheDocument()
@@ -22,7 +21,7 @@ describe('<UdpRouterPage />', () => {
 
   it('should render the not found page', () => {
     const { getByTestId } = renderWithProviders(
-      <UdpRouterRender name="mock-router" data={{} as ResourceDetailDataType} error={undefined} />,
+      <RouterDetail name="mock-router" data={{} as ResourceDetailDataType} error={undefined} protocol="udp" />,
       { route: '/udp/routers/mock-router', withPage: true },
     )
     expect(getByTestId('Not found page')).toBeInTheDocument()
@@ -53,7 +52,7 @@ describe('<UdpRouterPage />', () => {
 
     const { getByTestId } = renderWithProviders(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      <UdpRouterRender name="mock-router" data={mockData as any} error={undefined} />,
+      <RouterDetail name="mock-router" data={mockData as any} error={undefined} protocol="udp" />,
       { route: '/udp/routers/udp-all@docker', withPage: true },
     )
 

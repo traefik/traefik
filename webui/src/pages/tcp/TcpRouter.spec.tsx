@@ -1,12 +1,11 @@
-import { TcpRouterRender } from './TcpRouter'
-
+import { RouterDetail } from 'components/routers/RouterDetail'
 import { ResourceDetailDataType } from 'hooks/use-resource-detail'
 import { renderWithProviders } from 'utils/test'
 
 describe('<TcpRouterPage />', () => {
   it('should render the error message', () => {
     const { getByTestId } = renderWithProviders(
-      <TcpRouterRender name="mock-router" data={undefined} error={new Error('Test error')} />,
+      <RouterDetail name="mock-router" data={undefined} error={new Error('Test error')} protocol="tcp" />,
       { route: '/tcp/routers/mock-router', withPage: true },
     )
     expect(getByTestId('error-text')).toBeInTheDocument()
@@ -14,7 +13,7 @@ describe('<TcpRouterPage />', () => {
 
   it('should render the skeleton', () => {
     const { getByTestId } = renderWithProviders(
-      <TcpRouterRender name="mock-router" data={undefined} error={undefined} />,
+      <RouterDetail name="mock-router" data={undefined} error={undefined} protocol="tcp" />,
       { route: '/tcp/routers/mock-router', withPage: true },
     )
     expect(getByTestId('skeleton')).toBeInTheDocument()
@@ -22,7 +21,7 @@ describe('<TcpRouterPage />', () => {
 
   it('should render the not found page', () => {
     const { getByTestId } = renderWithProviders(
-      <TcpRouterRender name="mock-router" data={{} as ResourceDetailDataType} error={undefined} />,
+      <RouterDetail name="mock-router" data={{} as ResourceDetailDataType} error={undefined} protocol="tcp" />,
       { route: '/tcp/routers/mock-router', withPage: true },
     )
     expect(getByTestId('Not found page')).toBeInTheDocument()
@@ -68,7 +67,7 @@ describe('<TcpRouterPage />', () => {
 
     const { getByTestId } = renderWithProviders(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      <TcpRouterRender name="mock-router" data={mockData as any} error={undefined} />,
+      <RouterDetail name="mock-router" data={mockData as any} error={undefined} protocol="tcp" />,
       { route: '/tcp/routers/tcp-all@docker', withPage: true },
     )
 
