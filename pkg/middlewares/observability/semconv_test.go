@@ -1,6 +1,7 @@
 package observability
 
 import (
+	"crypto/tls"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -21,31 +22,63 @@ func TestSemConvServerMetrics(t *testing.T) {
 	tests := []struct {
 		desc           string
 		statusCode     int
+		url            string
+		forwardedProto string
+		route          string
+		tls            bool
 		wantAttributes attribute.Set
 	}{
 		{
-			desc:       "not found status",
-			statusCode: http.StatusNotFound,
+			desc:           "http default port not found",
+			statusCode:     http.StatusNotFound,
+			url:            "http://example.com/search?q=Opentelemetry",
+			forwardedProto: "http",
+			route:          "Path(`/search`)",
 			wantAttributes: attribute.NewSet(
 				attribute.Key("error.type").String("404"),
 				attribute.Key("http.request.method").String("GET"),
 				attribute.Key("http.response.status_code").Int(404),
 				attribute.Key("network.protocol.name").String("http/1.1"),
 				attribute.Key("network.protocol.version").String("1.1"),
-				attribute.Key("server.address").String("www.test.com"),
+				attribute.Key("http.route").String("Path(`/search`)"),
+				attribute.Key("server.address").String("example.com"),
+				attribute.Key("server.port").Int(80),
 				attribute.Key("url.scheme").String("http"),
 			),
 		},
 		{
-			desc:       "created status",
-			statusCode: http.StatusCreated,
+			desc:           "http default port created",
+			statusCode:     http.StatusCreated,
+			url:            "http://example.com/search?q=Opentelemetry",
+			forwardedProto: "http",
+			route:          "Path(`/search`)",
 			wantAttributes: attribute.NewSet(
 				attribute.Key("http.request.method").String("GET"),
 				attribute.Key("http.response.status_code").Int(201),
 				attribute.Key("network.protocol.name").String("http/1.1"),
 				attribute.Key("network.protocol.version").String("1.1"),
-				attribute.Key("server.address").String("www.test.com"),
+				attribute.Key("http.route").String("Path(`/search`)"),
+				attribute.Key("server.address").String("example.com"),
+				attribute.Key("server.port").Int(80),
 				attribute.Key("url.scheme").String("http"),
+			),
+		},
+		{
+			desc:           "https default port ok",
+			statusCode:     http.StatusOK,
+			url:            "https://example.com/secure",
+			forwardedProto: "https",
+			route:          "Path(`/secure`)",
+			tls:            true,
+			wantAttributes: attribute.NewSet(
+				attribute.Key("http.request.method").String("GET"),
+				attribute.Key("http.response.status_code").Int(200),
+				attribute.Key("network.protocol.name").String("http/1.1"),
+				attribute.Key("network.protocol.version").String("1.1"),
+				attribute.Key("http.route").String("Path(`/secure`)"),
+				attribute.Key("server.address").String("example.com"),
+				attribute.Key("server.port").Int(443),
+				attribute.Key("url.scheme").String("https"),
 			),
 		},
 	}
@@ -68,11 +101,21 @@ func TestSemConvServerMetrics(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, semConvMetricRegistry)
 
-			req := httptest.NewRequest(http.MethodGet, "http://www.test.com/search?q=Opentelemetry", nil)
+			req := httptest.NewRequest(http.MethodGet, test.url, nil)
 			rw := httptest.NewRecorder()
 			req.RemoteAddr = "10.0.0.1:1234"
 			req.Header.Set("User-Agent", "entrypoint-test")
-			req.Header.Set("X-Forwarded-Proto", "http")
+			if test.forwardedProto != "" {
+				req.Header.Set("X-Forwarded-Proto", test.forwardedProto)
+			}
+
+			if test.tls {
+				req.TLS = &tls.ConnectionState{}
+			}
+
+			if test.route != "" {
+				req = req.WithContext(WithHTTPRoute(req.Context(), test.route))
+			}
 
 			next := http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
 				rw.WriteHeader(test.statusCode)
