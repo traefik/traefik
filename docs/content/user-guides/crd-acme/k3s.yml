@@ -1,5 +1,5 @@
 server:
-  image: rancher/k3s:v1.17.2-k3s1
+  image: rancher/k3s:v1.34.2-k3s1
   command: server --disable-agent --no-deploy traefik
   environment:
     - K3S_CLUSTER_SECRET=somethingtotallyrandom
@@ -17,7 +17,7 @@ server:
     - 6443:6443
 
 node:
-  image: rancher/k3s:v1.17.2-k3s1
+  image: rancher/k3s:v1.34.2-k3s1
   privileged: true
   links:
     - server
