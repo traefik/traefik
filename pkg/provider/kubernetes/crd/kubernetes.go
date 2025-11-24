@@ -57,7 +57,7 @@ type Provider struct {
 	AllowCrossNamespace          bool                `description:"Allow cross namespace resource reference." json:"allowCrossNamespace,omitempty" toml:"allowCrossNamespace,omitempty" yaml:"allowCrossNamespace,omitempty" export:"true"`
 	AllowExternalNameServices    bool                `description:"Allow ExternalName services." json:"allowExternalNameServices,omitempty" toml:"allowExternalNameServices,omitempty" yaml:"allowExternalNameServices,omitempty" export:"true"`
 	LabelSelector                string              `description:"Kubernetes label selector to use." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
-	IngressClass                 string              `description:"Value of kubernetes.io/ingress.class annotation to watch for." json:"ingressClass,omitempty" toml:"ingressClass,omitempty" yaml:"ingressClass,omitempty" export:"true"`
+	IngressClass                 string              `description:"Value of ingressClassName field or kubernetes.io/ingress.class annotation to watch for." json:"ingressClass,omitempty" toml:"ingressClass,omitempty" yaml:"ingressClass,omitempty" export:"true"`
 	ThrottleDuration             ptypes.Duration     `description:"Ingress refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
 	AllowEmptyServices           bool                `description:"Allow the creation of services without endpoints." json:"allowEmptyServices,omitempty" toml:"allowEmptyServices,omitempty" yaml:"allowEmptyServices,omitempty" export:"true"`
 	NativeLBByDefault            bool                `description:"Defines whether to use Native Kubernetes load-balancing mode by default." json:"nativeLBByDefault,omitempty" toml:"nativeLBByDefault,omitempty" yaml:"nativeLBByDefault,omitempty" export:"true"`
@@ -1401,9 +1401,9 @@ func makeID(namespace, name string) string {
 	return namespace + "-" + name
 }
 
-func shouldProcessIngress(ingressClass, ingressClassAnnotation string) bool {
-	return ingressClass == ingressClassAnnotation ||
-		(len(ingressClass) == 0 && ingressClassAnnotation == traefikDefaultIngressClass)
+func shouldProcessIngress(ingressClass, ingressClassName string) bool {
+	return ingressClass == ingressClassName ||
+		(len(ingressClass) == 0 && ingressClassName == traefikDefaultIngressClass)
 }
 
 func getTLS(k8sClient Client, secretName, namespace string) (*tls.CertAndStores, error) {

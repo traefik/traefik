@@ -11,6 +11,8 @@ import (
 type IngressRouteTCPSpec struct {
 	// Routes defines the list of routes.
 	Routes []RouteTCP `json:"routes"`
+	// IngressClassName defines the name of the IngressClass cluster resource.
+	IngressClassName *string `json:"ingressClassName,omitempty"`
 	// EntryPoints defines the list of entry point names to bind to.
 	// Entry points have to be configured in the static configuration.
 	// More info: https://doc.traefik.io/traefik/v3.6/reference/install-configuration/entrypoints/

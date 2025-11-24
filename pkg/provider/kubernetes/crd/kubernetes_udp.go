@@ -22,7 +22,14 @@ func (p *Provider) loadIngressRouteUDPConfiguration(ctx context.Context, client 
 	for _, ingressRouteUDP := range client.GetIngressRouteUDPs() {
 		logger := log.Ctx(ctx).With().Str("ingress", ingressRouteUDP.Name).Str("namespace", ingressRouteUDP.Namespace).Logger()
 
-		if !shouldProcessIngress(p.IngressClass, ingressRouteUDP.Annotations[annotationKubernetesIngressClass]) {
+		var ingressClassName string
+		if ingressRouteUDP.Spec.IngressClassName != nil {
+			ingressClassName = *ingressRouteUDP.Spec.IngressClassName
+		} else if ingressClassAnnotation, ok := ingressRouteUDP.Annotations[annotationKubernetesIngressClass]; ok && ingressClassAnnotation != "" {
+			logger.Warn().Msgf("'%s' is a deprecated annotation, please use spec.ingressClassName instead.", annotationKubernetesIngressClass)
+			ingressClassName = ingressClassAnnotation
+		}
+		if !shouldProcessIngress(p.IngressClass, ingressClassName) {
 			continue
 		}
 
