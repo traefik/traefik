@@ -1,4 +1,5 @@
 import { Flex, styled, Text } from '@traefiklabs/faency'
+import { useMemo } from 'react'
 import { Helmet } from 'react-helmet-async'
 
 import { CardListSection, DetailSectionSkeleton } from 'components/resources/DetailSections'
@@ -20,6 +21,8 @@ const SpacedColumns = styled(Flex, {
 })
 
 export const RouterDetail = ({ data, error, name, protocol }: RouterDetailProps) => {
+  const isHttp = useMemo(() => protocol === 'http', [protocol])
+
   if (error) {
     return (
       <>
@@ -34,7 +37,6 @@ export const RouterDetail = ({ data, error, name, protocol }: RouterDetailProps)
   }
 
   if (!data) {
-    const isHttp = protocol === 'http'
     const skeletonCount = isHttp ? 3 : 2
 
     return (

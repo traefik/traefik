@@ -1,12 +1,11 @@
-import { HttpMiddlewareRender } from './HttpMiddleware'
-
+import { MiddlewareDetail } from 'components/middlewares/MiddlewareDetail'
 import { ResourceDetailDataType } from 'hooks/use-resource-detail'
 import { renderWithProviders } from 'utils/test'
 
 describe('<HttpMiddlewarePage />', () => {
   it('should render the error message', () => {
     const { getByTestId } = renderWithProviders(
-      <HttpMiddlewareRender name="mock-middleware" data={undefined} error={new Error('Test error')} />,
+      <MiddlewareDetail name="mock-middleware" data={undefined} error={new Error('Test error')} protocol="http" />,
       { route: '/http/middlewares/mock-middleware', withPage: true },
     )
     expect(getByTestId('error-text')).toBeInTheDocument()
@@ -14,7 +13,7 @@ describe('<HttpMiddlewarePage />', () => {
 
   it('should render the skeleton', () => {
     const { getByTestId } = renderWithProviders(
-      <HttpMiddlewareRender name="mock-middleware" data={undefined} error={undefined} />,
+      <MiddlewareDetail name="mock-middleware" data={undefined} error={undefined} protocol="http" />,
       { route: '/http/middlewares/mock-middleware', withPage: true },
     )
     expect(getByTestId('skeleton')).toBeInTheDocument()
@@ -22,7 +21,7 @@ describe('<HttpMiddlewarePage />', () => {
 
   it('should render the not found page', () => {
     const { getByTestId } = renderWithProviders(
-      <HttpMiddlewareRender name="mock-middleware" data={{} as ResourceDetailDataType} error={undefined} />,
+      <MiddlewareDetail name="mock-middleware" data={{} as ResourceDetailDataType} error={undefined} protocol="http" />,
       { route: '/http/middlewares/mock-middleware', withPage: true },
     )
     expect(getByTestId('Not found page')).toBeInTheDocument()
@@ -55,7 +54,7 @@ describe('<HttpMiddlewarePage />', () => {
 
     const { container, getByTestId } = renderWithProviders(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      <HttpMiddlewareRender name="mock-middleware" data={mockMiddleware as any} error={undefined} />,
+      <MiddlewareDetail name="mock-middleware" data={mockMiddleware as any} error={undefined} protocol="http" />,
       { route: '/http/middlewares/middleware-simple', withPage: true },
     )
 
@@ -102,7 +101,7 @@ describe('<HttpMiddlewarePage />', () => {
 
     const { container, getByTestId } = renderWithProviders(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      <HttpMiddlewareRender name="mock-middleware" data={mockMiddleware as any} error={undefined} />,
+      <MiddlewareDetail name="mock-middleware" data={mockMiddleware as any} error={undefined} protocol="http" />,
       { route: '/http/middlewares/middleware-plugin', withPage: true },
     )
 
@@ -342,7 +341,7 @@ describe('<HttpMiddlewarePage />', () => {
 
     const { container, getByTestId } = renderWithProviders(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      <HttpMiddlewareRender name="mock-middleware" data={mockMiddleware as any} error={undefined} />,
+      <MiddlewareDetail name="mock-middleware" data={mockMiddleware as any} error={undefined} protocol="http" />,
       { route: '/http/middlewares/middleware-complex', withPage: true },
     )
 
@@ -464,7 +463,7 @@ describe('<HttpMiddlewarePage />', () => {
 
     const { container, getByTestId } = renderWithProviders(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      <HttpMiddlewareRender name="mock-middleware" data={mockMiddleware as any} error={undefined} />,
+      <MiddlewareDetail name="mock-middleware" data={mockMiddleware as any} error={undefined} protocol="http" />,
       { route: '/http/middlewares/middleware-plugin-no-type', withPage: true },
     )
 
