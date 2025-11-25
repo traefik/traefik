@@ -1128,8 +1128,8 @@ func basicAuthUsers(secret *corev1.Secret, authSecretType string) (dynamic.Users
 	}
 
 	// Trim lines and filter out blanks
-	rawLines := strings.Split(string(authFileContent), "\n")
-	for _, rawLine := range rawLines {
+	rawLines := strings.SplitSeq(string(authFileContent), "\n")
+	for rawLine := range rawLines {
 		line := strings.TrimSpace(rawLine)
 		if line != "" && !strings.HasPrefix(line, "#") {
 			users = append(users, line)
