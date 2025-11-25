@@ -492,16 +492,16 @@ func Test_fetchService_HealthChecks(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case strings.HasSuffix(r.RequestURI, "/v1/service/app"):
-			w.Write(serviceListJSON)
+			_, _ = w.Write(serviceListJSON)
 		case strings.Contains(r.RequestURI, "alloc-dead-client"):
-			w.Write([]byte(`{"ClientStatus": "complete"}`))
+			_, _ = w.Write([]byte(`{"ClientStatus": "complete"}`))
 		case strings.Contains(r.RequestURI, "alloc-bad-deploy"):
-			w.Write([]byte(`{
+			_, _ = w.Write([]byte(`{
                 "ClientStatus": "running",
                 "DeploymentStatus": { "Healthy": false }
             }`))
 		case strings.Contains(r.RequestURI, "alloc-dead-task"):
-			w.Write([]byte(`{
+			_, _ = w.Write([]byte(`{
                 "ClientStatus": "running",
                 "DeploymentStatus": { "Healthy": true },
                 "TaskStates": {
