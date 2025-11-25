@@ -69,7 +69,11 @@ func TestNewRouter(t *testing.T) {
 			req = req.WithContext(tracingCtx)
 
 			rw := httptest.NewRecorder()
-			next := http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
+			var capturedRoute string
+			next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				if route, ok := HTTPRouteFromContext(req.Context()); ok {
+					capturedRoute = route
+				}
 				rw.WriteHeader(http.StatusNotFound)
 			})
 
@@ -80,6 +84,23 @@ func TestNewRouter(t *testing.T) {
 				assert.Equal(t, test.expected[i].name, span.name)
 				assert.Equal(t, test.expected[i].attributes, span.attributes)
 			}
+
+			assert.Equal(t, test.routerRule, capturedRoute)
 		})
 	}
+}
+
+func TestRouterAddsRouteContextWithoutTracer(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "http://example.com/resource", nil)
+	rw := httptest.NewRecorder()
+
+	var capturedRoute string
+	next := http.HandlerFunc(func(_ http.ResponseWriter, req *http.Request) {
+		capturedRoute, _ = HTTPRouteFromContext(req.Context())
+	})
+
+	handler := newRouter(t.Context(), "router0", "Path(`/resource`)", "svc0", next)
+	handler.ServeHTTP(rw, req)
+
+	assert.Equal(t, "Path(`/resource`)", capturedRoute)
 }
