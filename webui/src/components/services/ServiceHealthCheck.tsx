@@ -1,10 +1,9 @@
-import { Text } from '@traefiklabs/faency'
 import { useMemo } from 'react'
 import { FiShield } from 'react-icons/fi'
 
+import CopyableText from 'components/CopyableText'
 import DetailsCard from 'components/resources/DetailsCard'
 import { Chips } from 'components/resources/DetailSections'
-import Tooltip from 'components/Tooltip'
 import { ServiceDetailType } from 'hooks/use-resource-detail'
 
 type ServiceHealthCheckProps = {
@@ -26,19 +25,11 @@ const ServiceHealthCheck = ({ data, protocol }: ServiceHealthCheckProps) => {
           healthCheck?.unhealthyInterval && { key: 'Unhealthy interval', val: healthCheck.unhealthyInterval },
           healthCheck?.send && {
             key: 'Send',
-            val: (
-              <Tooltip label={healthCheck.send} action="copy">
-                <Text>{healthCheck.send}</Text>
-              </Tooltip>
-            ),
+            val: <CopyableText text={healthCheck.send} />,
           },
           healthCheck?.expect && {
             key: 'Expect',
-            val: (
-              <Tooltip label={healthCheck.expect} action="copy">
-                <Text>{healthCheck.expect}</Text>
-              </Tooltip>
-            ),
+            val: <CopyableText text={healthCheck.expect} />,
           },
         ].filter(Boolean) as { key: string; val: string | React.ReactElement; stackVertical?: boolean }[]
       } else {
@@ -47,21 +38,13 @@ const ServiceHealthCheck = ({ data, protocol }: ServiceHealthCheckProps) => {
           healthCheck?.interval && { key: 'Interval', val: healthCheck.interval },
           healthCheck?.path && {
             key: 'Path',
-            val: (
-              <Tooltip label={data.loadBalancer.healthCheck.path} action="copy">
-                <Text>{data.loadBalancer.healthCheck.path}</Text>
-              </Tooltip>
-            ),
+            val: <CopyableText text={data.loadBalancer.healthCheck.path} />,
           },
           healthCheck?.timeout && { key: 'Timeout', val: healthCheck.timeout },
           healthCheck?.port && { key: 'Port', val: healthCheck.port },
           healthCheck?.hostname && {
             key: 'Hostname',
-            val: (
-              <Tooltip label={data.loadBalancer.healthCheck.hostname} action="copy">
-                <Text>{data.loadBalancer.healthCheck.hostname}</Text>
-              </Tooltip>
-            ),
+            val: <CopyableText text={data.loadBalancer.healthCheck.hostname} />,
           },
           healthCheck.headers && {
             key: 'Headers',

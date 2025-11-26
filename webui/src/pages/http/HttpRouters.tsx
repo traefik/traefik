@@ -23,7 +23,7 @@ export const makeRowRender = (protocol = 'http'): RenderRowType => {
     <ClickableRow key={row.name} to={`/${protocol}/routers/${row.name}`}>
       <AriaTd>
         <Tooltip label={row.status}>
-          <Box css={{ width: '32px', height: '32px' }}>
+          <Box>
             <ResourceStatus status={row.status} />
           </Box>
         </Tooltip>

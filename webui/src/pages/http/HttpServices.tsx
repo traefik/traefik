@@ -20,11 +20,7 @@ export const makeRowRender = (): RenderRowType => {
   const HttpServicesRenderRow = (row) => (
     <ClickableRow key={row.name} to={`/http/services/${row.name}`}>
       <AriaTd>
-        <Tooltip label={row.status}>
-          <Box css={{ width: '32px', height: '32px' }}>
-            <ResourceStatus status={row.status} />
-          </Box>
-        </Tooltip>
+        <ResourceStatus status={row.status} />
       </AriaTd>
       <AriaTd>
         <TooltipText text={row.name} />

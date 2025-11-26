@@ -14,11 +14,12 @@ type Props = {
   status: StatusType
   label?: string
   withLabel?: boolean
+  size?: number
 }
 
 type Value = { color: string; icon: ReactNode; label: string }
 
-export const ResourceStatus = ({ status, withLabel = false }: Props) => {
+export const ResourceStatus = ({ status, withLabel = false, size = 20 }: Props) => {
   const valuesByStatus: { [key in StatusType]: Value } = {
     info: {
       color: colorByStatus.info,
@@ -57,12 +58,14 @@ export const ResourceStatus = ({ status, withLabel = false }: Props) => {
   if (!values) {
     return null
   }
-  console.log(values)
+
   return (
     <Flex css={{ alignItems: 'center' }} data-testid={status}>
-      <Box css={{ color: values.color }}>{values.icon}</Box>
+      <Box css={{ color: values.color, width: size, height: size }}>{values.icon}</Box>
       {withLabel && values.label && (
-        <Text css={{ ml: '$2', color: values.color, fontWeight: 600 }}>{values.label}</Text>
+        <Text css={{ ml: '$2', color: values.color, fontWeight: 600, fontSize: 'inherit !important' }}>
+          {values.label}
+        </Text>
       )}
     </Flex>
   )

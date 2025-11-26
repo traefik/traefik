@@ -1,11 +1,12 @@
 import { Badge, Box, Card, Flex, H2, styled, Text } from '@traefiklabs/faency'
 import { ReactNode } from 'react'
-import { FiArrowRight, FiToggleLeft, FiToggleRight } from 'react-icons/fi'
+import { BsToggleOff, BsToggleOn } from 'react-icons/bs'
+import { FiArrowRight } from 'react-icons/fi'
 import { useNavigate } from 'react-router-dom'
 
 import { colorByStatus } from './Status'
 
-import Tooltip from 'components/Tooltip'
+import CopyButton from 'components/CopyButton'
 import { useGetUrlWithReturnTo } from 'hooks/use-href-with-return-to'
 
 const CustomHeading = styled(H2, {
@@ -272,11 +273,12 @@ type ChipsType = {
 export const Chips = ({ items, variant, alignment = 'left' }: ChipsType) => (
   <FlexLimited wrap="wrap">
     {items.map((item, index) => (
-      <Tooltip key={index} label={item} action="copy">
-        <Badge variant={variant} css={{ textAlign: alignment, mr: '$2', mb: '$2' }}>
+      <Badge key={index} variant={variant} css={{ textAlign: alignment, mr: '$2', mb: '$2' }}>
+        <Flex gap={1} align="center">
           {item}
-        </Badge>
-      </Tooltip>
+          <CopyButton text={item} iconOnly />
+        </Flex>
+      </Badge>
     ))}
   </FlexLimited>
 )
@@ -326,12 +328,14 @@ export const LayoutThreeCols = styled(LayoutCols, {
 export const BooleanState = ({ enabled }: { enabled: boolean }) => (
   <Flex align="center" gap={2}>
     {enabled ? (
-      <FiToggleRight color={colorByStatus.enabled} size={24} data-testid={`enabled-true`} />
+      <BsToggleOn color={colorByStatus.enabled} size={24} data-testid={`enabled-true`} />
     ) : (
-      <FiToggleLeft color={colorByStatus.disabled} size={24} data-testid={`enabled-false`} />
+      <BsToggleOff color={colorByStatus.disabled} size={24} data-testid={`enabled-false`} />
     )}
 
-    <Text css={{ color: enabled ? colorByStatus.enabled : colorByStatus.disabled, fontWeight: 600 }}>
+    <Text
+      css={{ color: enabled ? colorByStatus.enabled : colorByStatus.disabled, fontWeight: 600, fontSize: 'inherit' }}
+    >
       {enabled ? 'True' : 'False'}
     </Text>
   </Flex>
@@ -340,6 +344,7 @@ export const BooleanState = ({ enabled }: { enabled: boolean }) => (
 export const ProviderName = styled(Text, {
   textTransform: 'capitalize',
   overflowWrap: 'break-word',
+  fontSize: 'inherit !important',
 })
 
 export const EmptyPlaceholder = styled(Text, {

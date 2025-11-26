@@ -15,7 +15,7 @@ export const ValText = styled(StyledText, {
 
 export const SectionTitle = ({ icon, title }: { icon?: ReactNode; title: string }) => {
   return (
-    <Flex gap={2} align="center">
+    <Flex gap={2} align="center" css={{ color: '$headingDefault' }}>
       {icon && icon}
       <H2 css={{ fontSize: '$5' }}>{title}</H2>
     </Flex>
