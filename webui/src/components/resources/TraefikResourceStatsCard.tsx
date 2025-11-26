@@ -89,7 +89,7 @@ const CustomLegend = ({
   return (
     <Link to={`${linkTo}?status=${status}`}>
       <Flex css={{ alignItems: 'center', p: '$2' }}>
-        <Status status={status} color="white" />
+        <Status status={status} />
         <Flex css={{ flexDirection: 'column', flex: 1 }}>
           <Text css={{ fontWeight: 600 }}>{capitalizeFirstLetter(label)}</Text>
           <Text size={1} css={{ color: 'hsl(0, 0%, 56%)' }} data-testid={`${label}-pc`}>

@@ -99,6 +99,7 @@ export default function DetailsCard({
                     <Flex
                       align="center"
                       css={{
+                        alignSelf: 'start',
                         '> *': {
                           height: 'fit-content',
                         },

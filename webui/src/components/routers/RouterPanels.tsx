@@ -3,7 +3,6 @@ import { useContext, useEffect, useMemo } from 'react'
 import { FiGlobe, FiLayers, FiLogIn, FiZap } from 'react-icons/fi'
 
 import { CardListSection } from 'components/resources/DetailSections'
-import MiddlewarePanel from 'components/resources/MiddlewarePanel'
 import RouterPanel from 'components/resources/RouterPanel'
 import TlsPanel from 'components/resources/TlsPanel'
 import { ToastContext } from 'contexts/toasts'
@@ -89,7 +88,6 @@ export const RouterPanels = ({ data, protocol }: RouterPanelsProps) => {
       <SpacedColumns data-testid="router-details">
         <RouterPanel data={data} />
         {!isUdp && <TlsPanel data={data} />}
-        {!isUdp && <MiddlewarePanel data={data} />}
       </SpacedColumns>
     </>
   )

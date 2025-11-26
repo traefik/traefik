@@ -30,7 +30,7 @@ type StatusProps = {
   color?: string
 }
 
-export default function Status({ css = {}, size = 20, status, color = 'currentColor' }: StatusProps) {
+export default function Status({ css = {}, size = 20, status, color = 'white' }: StatusProps) {
   const Icon = ({ size }: { size: number }) => {
     switch (status) {
       case 'info':

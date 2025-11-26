@@ -5,10 +5,9 @@ import ProviderIcon from 'components/icons/providers'
 import DetailsCard from 'components/resources/DetailsCard'
 import { BooleanState, ProviderName } from 'components/resources/DetailSections'
 import { ResourceStatus } from 'components/resources/ResourceStatus'
-import { ServiceDetailType } from 'hooks/use-resource-detail'
 
 type ServiceDefinitionProps = {
-  data: ServiceDetailType
+  data: Service.Details
   testId?: string
 }
 

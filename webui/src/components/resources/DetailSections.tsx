@@ -1,4 +1,4 @@
-import { Badge, Box, Card, Flex, H2, styled, Text } from '@traefiklabs/faency'
+import { Badge, Box, Card, CSS, Flex, H2, styled, Text } from '@traefiklabs/faency'
 import { ReactNode } from 'react'
 import { BsToggleOff, BsToggleOn } from 'react-icons/bs'
 import { FiArrowRight } from 'react-icons/fi'
@@ -42,11 +42,10 @@ export const SectionHeader = ({ icon, title }: SectionHeaderType) => {
 export const ItemTitle = styled(Text, {
   marginBottom: '$3',
   color: 'hsl(0, 0%, 56%)',
-  letterSpacing: '3px',
   fontSize: '12px',
   fontWeight: 600,
   textAlign: 'left',
-  textTransform: 'uppercase',
+  textTransform: 'capitalize',
   wordBreak: 'break-word',
 })
 
@@ -325,8 +324,8 @@ export const LayoutThreeCols = styled(LayoutCols, {
   gridTemplateColumns: 'repeat(3, minmax(30%, 1fr))',
 })
 
-export const BooleanState = ({ enabled }: { enabled: boolean }) => (
-  <Flex align="center" gap={2}>
+export const BooleanState = ({ enabled, css }: { enabled: boolean; css?: CSS }) => (
+  <Flex align="center" gap={2} css={css}>
     {enabled ? (
       <BsToggleOn color={colorByStatus.enabled} size={24} data-testid={`enabled-true`} />
     ) : (

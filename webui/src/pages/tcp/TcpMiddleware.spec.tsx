@@ -65,9 +65,9 @@ describe('<TcpMiddlewarePage />', () => {
     const middlewareCard = getByTestId('middleware-card')
     expect(middlewareCard.querySelector('svg[data-testid="docker"]')).toBeTruthy()
     expect(middlewareCard.innerHTML).toContain('Success')
-    expect(middlewareCard.innerHTML).toContain('inFlightConn')
-    expect(middlewareCard.innerHTML).toContain('amount')
-    expect(middlewareCard.innerHTML).toContain('10')
+    expect(container.innerHTML).toContain('inFlightConn')
+    expect(container.innerHTML).toContain('amount')
+    expect(container.innerHTML).toContain('10')
 
     const routersTable = getByTestId('routers-table')
     const tableBody = routersTable.querySelectorAll('div[role="rowgroup"]')[1]
@@ -116,13 +116,13 @@ describe('<TcpMiddlewarePage />', () => {
     const middlewareCard = getByTestId('middleware-card')
     expect(middlewareCard.innerHTML).toContain('Success')
     expect(middlewareCard.innerHTML).toContain('the-provider')
-    expect(middlewareCard.innerHTML).toContain('inFlightConn')
-    expect(middlewareCard.innerHTML).toContain('amount')
-    expect(middlewareCard.innerHTML).toContain('10')
-    expect(middlewareCard.innerHTML).toContain('ipWhiteList')
-    expect(middlewareCard.innerHTML).toContain('source Range')
-    expect(middlewareCard.innerHTML).toContain('125.0.0.1')
-    expect(middlewareCard.innerHTML).toContain('125.0.0.4')
+    expect(container.innerHTML).toContain('inFlightConn')
+    expect(container.innerHTML).toContain('amount')
+    expect(container.innerHTML).toContain('10')
+    expect(container.innerHTML).toContain('ipWhiteList')
+    expect(container.innerHTML).toContain('source Range')
+    expect(container.innerHTML).toContain('125.0.0.1')
+    expect(container.innerHTML).toContain('125.0.0.4')
 
     const routersTable = getByTestId('routers-table')
     const tableBody = routersTable.querySelectorAll('div[role="rowgroup"]')[1]

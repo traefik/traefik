@@ -92,13 +92,8 @@ describe('<TcpRouterPage />', () => {
     expect(routerDetailsPanel?.innerHTML).toContain('web</')
     expect(routerDetailsPanel?.innerHTML).toContain('web-secured')
     expect(routerDetailsPanel?.innerHTML).toContain('tcp-all</')
-
-    const middlewaresPanel = routerDetailsSection.querySelector(':scope > div:nth-child(3)')
-    const providers = Array.from(middlewaresPanel?.querySelectorAll('svg[data-testid="docker"]') || [])
-    expect(middlewaresPanel?.innerHTML).toContain('middleware00')
-    expect(middlewaresPanel?.innerHTML).toContain('middleware01')
-    expect(middlewaresPanel?.innerHTML).toContain('Success')
-    expect(providers.length).toBe(2)
+    expect(routerStructure.innerHTML).toContain('middleware00')
+    expect(routerStructure.innerHTML).toContain('middleware01')
 
     expect(getByTestId('/tcp/services/tcp-all@docker')).toBeInTheDocument()
   })

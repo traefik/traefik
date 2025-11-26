@@ -1,4 +1,4 @@
-import { Text } from '@traefiklabs/faency'
+import { CSS, Text } from '@traefiklabs/faency'
 import { useContext } from 'react'
 
 import CopyButton from 'components/CopyButton'
@@ -7,9 +7,10 @@ import { ToastContext } from 'contexts/toasts'
 type CopyableTextProps = {
   notifyText?: string
   text: string
+  css?: CSS
 }
 
-export default function CopyableText({ notifyText, text }: CopyableTextProps) {
+export default function CopyableText({ notifyText, text, css }: CopyableTextProps) {
   const { addToast } = useContext(ToastContext)
 
   return (
@@ -21,6 +22,7 @@ export default function CopyableText({ notifyText, text }: CopyableTextProps) {
         overflowWrap: 'anywhere',
         verticalAlign: 'middle',
         fontSize: 'inherit',
+        ...css,
       }}
     >
       {text}

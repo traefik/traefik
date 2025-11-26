@@ -1,12 +1,15 @@
-import { Box, Card, H1, Skeleton, styled, Text } from '@traefiklabs/faency'
+import { Card, Flex, H1, Skeleton, Text } from '@traefiklabs/faency'
+import { useMemo } from 'react'
 import { Helmet } from 'react-helmet-async'
 
+import MiddlewareDefinition from './MiddlewareDefinition'
+import { RenderUnknownProp } from './RenderUnknownProp'
+
 import { DetailSectionSkeleton } from 'components/resources/DetailSections'
-import { RenderMiddleware } from 'components/resources/MiddlewarePanel'
+import ResourceErrors from 'components/resources/ResourceErrors'
 import { UsedByRoutersSection, UsedByRoutersSkeleton } from 'components/resources/UsedByRoutersSection'
 import { ResourceDetailDataType } from 'hooks/use-resource-detail'
 import { NotFound } from 'pages/NotFound'
-import breakpoints from 'utils/breakpoints'
 
 type MiddlewareDetailProps = {
   data?: ResourceDetailDataType
@@ -15,16 +18,27 @@ type MiddlewareDetailProps = {
   protocol: 'http' | 'tcp'
 }
 
-const MiddlewareGrid = styled(Box, {
-  display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))',
+const filterMiddlewareProps = (middleware: Middleware.Details): string[] => {
+  const filteredProps = [] as string[]
+  const propsToRemove = ['name', 'plugin', 'status', 'type', 'provider', 'error', 'usedBy', 'routers']
 
-  [`@media (max-width: ${breakpoints.tablet})`]: {
-    gridTemplateColumns: '1fr',
-  },
-})
+  Object.keys(middleware).map((propName) => {
+    if (!propsToRemove.includes(propName)) {
+      filteredProps.push(propName)
+    }
+  })
+
+  return filteredProps
+}
 
 export const MiddlewareDetail = ({ data, error, name, protocol }: MiddlewareDetailProps) => {
+  const filteredProps = useMemo(() => {
+    if (data) {
+      return filterMiddlewareProps(data)
+    }
+
+    return []
+  }, [data])
   if (error) {
     return (
       <>
@@ -45,9 +59,7 @@ export const MiddlewareDetail = ({ data, error, name, protocol }: MiddlewareDeta
           <title>{name} - Traefik Proxy</title>
         </Helmet>
         <Skeleton css={{ height: '$7', width: '320px', mb: '$4' }} data-testid="skeleton" />
-        <MiddlewareGrid>
-          <DetailSectionSkeleton />
-        </MiddlewareGrid>
+        <DetailSectionSkeleton />
         <UsedByRoutersSkeleton />
       </>
     )
@@ -63,12 +75,23 @@ export const MiddlewareDetail = ({ data, error, name, protocol }: MiddlewareDeta
         <title>{data.name} - Traefik Proxy</title>
       </Helmet>
       <H1 css={{ mb: '$7' }}>{data.name}</H1>
-      <MiddlewareGrid>
-        <Card css={{ padding: '$5' }} data-testid="middleware-card">
-          <RenderMiddleware middleware={data} />
-        </Card>
-      </MiddlewareGrid>
-      <UsedByRoutersSection data-testid="routers-table" data={data} protocol={protocol} />
+      <Flex direction="column" gap={6}>
+        <MiddlewareDefinition data={data} testId="middleware-card" />
+        {!!data.error && <ResourceErrors errors={data.error} />}
+        {(!!data.plugin || !!filteredProps.length) && (
+          <Card>
+            {data.plugin &&
+              Object.keys(data.plugin).map((pluginName) => (
+                <RenderUnknownProp key={pluginName} name={pluginName} prop={data.plugin?.[pluginName]} />
+              ))}
+            {filteredProps?.map((propName) => (
+              <RenderUnknownProp key={propName} name={propName} prop={data[propName]} removeTitlePrefix={data.type} />
+            ))}
+          </Card>
+        )}
+
+        <UsedByRoutersSection data-testid="routers-table" data={data} protocol={protocol} />
+      </Flex>
     </>
   )
 }

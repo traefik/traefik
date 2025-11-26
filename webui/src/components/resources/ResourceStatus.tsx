@@ -60,7 +60,7 @@ export const ResourceStatus = ({ status, withLabel = false, size = 20 }: Props) 
   }
 
   return (
-    <Flex css={{ alignItems: 'center' }} data-testid={status}>
+    <Flex align="center" css={{ width: size, height: size }} data-testid={status}>
       <Box css={{ color: values.color, width: size, height: size }}>{values.icon}</Box>
       {withLabel && values.label && (
         <Text css={{ ml: '$2', color: values.color, fontWeight: 600, fontSize: 'inherit !important' }}>

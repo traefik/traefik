@@ -88,7 +88,7 @@ export const Toast = ({ message, dismiss, severity = 'error', icon, isVisible = 
           exit="hidden"
           variants={toastVariants}
         >
-          <Box css={{ width: '$4', height: '$4' }}>{icon ? icon : propsBySeverity[severity].icon}</Box>
+          <Box css={{ width: '$4', height: '$4', color: 'white' }}>{icon ? icon : propsBySeverity[severity].icon}</Box>
           <Text css={{ color: 'white', fontWeight: 600, lineHeight: '$4' }}>{message}</Text>
           {!timeout && (
             <CloseButton ghost onClick={dismiss} css={{ px: '$2' }}>

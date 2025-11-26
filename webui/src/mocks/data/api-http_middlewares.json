@@ -76,7 +76,11 @@
         "array of strings": ["value1", "value2"]
       }
     },
-    "error": ["message 1", "message 2"],
+    "error": [
+      "message 1",
+      "message 2",
+      "('colorByStatus' export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports"
+    ],
     "status": "enabled",
     "usedBy": ["foo@docker", "bar@file"],
     "name": "middleware00@docker",
