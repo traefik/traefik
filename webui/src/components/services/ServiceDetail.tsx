@@ -1,10 +1,15 @@
-import { Flex, H1, Skeleton, styled, Text } from '@traefiklabs/faency'
+import { Box, Flex, H1, Skeleton, Text } from '@traefiklabs/faency'
 import { Helmet } from 'react-helmet-async'
 
-import { ServicePanels } from './ServicePanels'
+import MirrorServices from './MirrorServices'
+import Servers from './Servers'
+import ServiceDefinition from './ServiceDefinition'
+import ServiceHealthCheck from './ServiceHealthCheck'
+import WeightedServices from './WeightedServices'
 
-import { DetailSectionSkeleton } from 'components/resources/DetailSections'
+import { DetailsCardSkeleton } from 'components/resources/DetailsCard'
 import { UsedByRoutersSection, UsedByRoutersSkeleton } from 'components/resources/UsedByRoutersSection'
+import AriaTableSkeleton from 'components/tables/AriaTableSkeleton'
 import { ResourceDetailDataType } from 'hooks/use-resource-detail'
 import { NotFound } from 'pages/NotFound'
 
@@ -14,12 +19,6 @@ type ServiceDetailProps = {
   name: string
   protocol: 'http' | 'tcp' | 'udp'
 }
-
-const SpacedColumns = styled(Flex, {
-  display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))',
-  gridGap: '16px',
-})
 
 export const ServiceDetail = ({ data, error, name, protocol }: ServiceDetailProps) => {
   if (error) {
@@ -42,12 +41,21 @@ export const ServiceDetail = ({ data, error, name, protocol }: ServiceDetailProp
           <title>{name} - Traefik Proxy</title>
         </Helmet>
         <Skeleton css={{ height: '$7', width: '320px', mb: '$8' }} data-testid="skeleton" />
-        <SpacedColumns>
-          <DetailSectionSkeleton narrow />
-          <DetailSectionSkeleton narrow />
-          {protocol !== 'udp' && <DetailSectionSkeleton narrow />}
-        </SpacedColumns>
-        <UsedByRoutersSkeleton />
+        <Flex direction="column" gap={4}>
+          <DetailsCardSkeleton />
+          <DetailsCardSkeleton />
+
+          <Box>
+            <Skeleton css={{ height: '$5', width: '150px', mb: '$2' }} />
+            <AriaTableSkeleton columns={2} />
+          </Box>
+          <Box>
+            <Skeleton css={{ height: '$5', width: '150px', mb: '$2' }} />
+            <AriaTableSkeleton />
+          </Box>
+
+          <UsedByRoutersSkeleton />
+        </Flex>
       </>
     )
   }
@@ -62,8 +70,19 @@ export const ServiceDetail = ({ data, error, name, protocol }: ServiceDetailProp
         <title>{data.name} - Traefik Proxy</title>
       </Helmet>
       <H1 css={{ mb: '$7' }}>{data.name}</H1>
-      <ServicePanels data={data} protocol={protocol} />
-      <UsedByRoutersSection data={data} protocol={protocol} />
+      <Flex direction="column" gap={6} data-testid="service-details">
+        <ServiceDefinition data={data} />
+
+        {data.loadBalancer?.healthCheck && <ServiceHealthCheck data={data} protocol={protocol} />}
+        {!!data?.weighted?.services?.length && (
+          <WeightedServices services={data.weighted.services} defaultProvider={data.provider} />
+        )}
+        <Servers data={data} protocol={protocol} />
+        {!!data?.mirroring?.mirrors && (
+          <MirrorServices mirrors={data.mirroring?.mirrors} defaultProvider={data.provider} />
+        )}
+        <UsedByRoutersSection data={data} protocol={protocol} />
+      </Flex>
     </>
   )
 }

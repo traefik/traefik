@@ -1,11 +1,11 @@
-import { Flex, styled, Text } from '@traefiklabs/faency'
+import { Box, Flex, styled, Text } from '@traefiklabs/faency'
 import { ReactNode } from 'react'
 
 import { colorByStatus, iconByStatus, StatusType } from 'components/resources/Status'
 
 export const StatusWrapper = styled(Flex, {
-  height: '32px',
-  width: '32px',
+  height: '24px',
+  width: '24px',
   padding: 0,
   borderRadius: '4px',
 })
@@ -57,12 +57,10 @@ export const ResourceStatus = ({ status, withLabel = false }: Props) => {
   if (!values) {
     return null
   }
-
+  console.log(values)
   return (
     <Flex css={{ alignItems: 'center' }} data-testid={status}>
-      <StatusWrapper css={{ alignItems: 'center', justifyContent: 'center', backgroundColor: values.color }}>
-        {values.icon}
-      </StatusWrapper>
+      <Box css={{ color: values.color }}>{values.icon}</Box>
       {withLabel && values.label && (
         <Text css={{ ml: '$2', color: values.color, fontWeight: 600 }}>{values.label}</Text>
       )}

@@ -3,7 +3,8 @@ import { orderBy } from 'lodash'
 import { useContext, useEffect, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
-import { SectionHeader } from 'components/resources/DetailSections'
+import { SectionTitle } from './DetailsCard'
+
 import SortableTh from 'components/tables/SortableTh'
 import { ToastContext } from 'contexts/toasts'
 import { MiddlewareDetailType, ServiceDetailType } from 'hooks/use-resource-detail'
@@ -24,7 +25,7 @@ const SkeletonContent = styled(Box, {
 
 export const UsedByRoutersSkeleton = () => (
   <Flex css={{ flexDirection: 'column', mt: '40px' }}>
-    <SectionHeader />
+    <SectionTitle title="Used by routers" />
     <AriaTable>
       <AriaThead>
         <AriaTr>
@@ -123,8 +124,8 @@ export const UsedByRoutersSection = ({ data, protocol = 'http' }: UsedByRoutersS
   }
 
   return (
-    <Flex css={{ flexDirection: 'column', mt: '$5' }}>
-      <SectionHeader title="Used by Routers" />
+    <Flex gap={2} css={{ flexDirection: 'column' }}>
+      <SectionTitle title="Used by routers" />
 
       <AriaTable data-testid="routers-table">
         <AriaThead>

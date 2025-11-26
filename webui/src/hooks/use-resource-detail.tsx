@@ -60,11 +60,6 @@ export type RouterDetailType = Router & {
   using?: string[]
 }
 
-type Mirror = {
-  name: string
-  percent: number
-}
-
 export type ServiceDetailType = {
   name: string
   status: 'enabled' | 'disabled' | 'warning'
@@ -77,7 +72,7 @@ export type ServiceDetailType = {
   }
   mirroring?: {
     service: string
-    mirrors?: Mirror[]
+    mirrors?: Service.Mirror[]
   }
   loadBalancer?: {
     servers?: { url: string }[]
@@ -86,20 +81,20 @@ export type ServiceDetailType = {
     healthCheck?: {
       scheme: string
       path: string
-      port: number
-      interval: string
-      timeout: string
       hostname: string
       headers?: {
         [header: string]: string
       }
+      port?: number
+      send?: string
+      expect?: string
+      interval?: string
+      unhealthyInterval?: string
+      timeout?: string
     }
   }
   weighted?: {
-    services?: {
-      name: string
-      weight: number
-    }[]
+    services?: Service.WeightedService[]
   }
 }
 

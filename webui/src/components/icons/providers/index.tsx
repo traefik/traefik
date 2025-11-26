@@ -20,7 +20,7 @@ export type ProviderIconProps = HTMLAttributes<SVGElement> & {
   width?: number | string
 }
 
-export default function ProviderIcon({ name, size = 32 }: { name: string; size?: number }) {
+export default function ProviderIcon({ name, size = 24 }: { name: string; size?: number }) {
   const Icon = useMemo(() => {
     if (!name || typeof name !== 'string') return Internal
 

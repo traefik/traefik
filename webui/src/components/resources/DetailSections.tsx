@@ -3,7 +3,6 @@ import { ReactNode } from 'react'
 import { FiArrowRight, FiToggleLeft, FiToggleRight } from 'react-icons/fi'
 import { useNavigate } from 'react-router-dom'
 
-import { StatusWrapper } from './ResourceStatus'
 import { colorByStatus } from './Status'
 
 import Tooltip from 'components/Tooltip'
@@ -166,12 +165,11 @@ export const CardListSection = ({ icon, title, cards, isLast, bigDescription }: 
   )
 }
 
-const FlexCard = styled(Card, {
+export const FlexCard = styled(Card, {
   display: 'flex',
   flexFlow: 'column',
   flexGrow: '1',
   overflowY: 'auto',
-  height: '600px',
 })
 
 const NarrowFlexCard = styled(FlexCard, {
@@ -327,16 +325,12 @@ export const LayoutThreeCols = styled(LayoutCols, {
 
 export const BooleanState = ({ enabled }: { enabled: boolean }) => (
   <Flex align="center" gap={2}>
-    <StatusWrapper
-      css={{
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: enabled ? colorByStatus.enabled : colorByStatus.disabled,
-      }}
-      data-testid={`enabled-${enabled}`}
-    >
-      {enabled ? <FiToggleRight color="#fff" size={20} /> : <FiToggleLeft color="#fff" size={20} />}
-    </StatusWrapper>
+    {enabled ? (
+      <FiToggleRight color={colorByStatus.enabled} size={24} data-testid={`enabled-true`} />
+    ) : (
+      <FiToggleLeft color={colorByStatus.disabled} size={24} data-testid={`enabled-false`} />
+    )}
+
     <Text css={{ color: enabled ? colorByStatus.enabled : colorByStatus.disabled, fontWeight: 600 }}>
       {enabled ? 'True' : 'False'}
     </Text>
