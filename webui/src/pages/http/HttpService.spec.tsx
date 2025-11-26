@@ -87,7 +87,7 @@ describe('<HttpServicePage />', () => {
     expect(serviceDetails.innerHTML).toContain('docker')
     expect(serviceDetails.innerHTML).toContain('Status')
     expect(serviceDetails.innerHTML).toContain('Success')
-    expect(serviceDetails.innerHTML).toContain('Pass Host Header')
+    expect(serviceDetails.innerHTML).toContain('Pass host header')
     expect(serviceDetails.innerHTML).toContain('True')
 
     const serversList = getByTestId('servers-list')

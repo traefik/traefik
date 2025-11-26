@@ -85,7 +85,7 @@ describe('<TcpServicePage />', () => {
     expect(serviceDetails.querySelector('svg[data-testid="docker"]')).toBeTruthy()
     expect(serviceDetails.innerHTML).toContain('Status')
     expect(serviceDetails.innerHTML).toContain('Success')
-    expect(serviceDetails.innerHTML).toContain('Termination Delay')
+    expect(serviceDetails.innerHTML).toContain('Termination delay')
     expect(serviceDetails.innerHTML).toContain('10 ms')
 
     const healthCheck = getByTestId('health-check')
@@ -95,7 +95,7 @@ describe('<TcpServicePage />', () => {
     expect(healthCheck.innerHTML).toContain('10s')
     expect(healthCheck.innerHTML).toContain('Port')
     expect(healthCheck.innerHTML).toContain('8080')
-    expect(healthCheck.innerHTML).toContain('Unhealthy Interval')
+    expect(healthCheck.innerHTML).toContain('Unhealthy interval')
     expect(healthCheck.innerHTML).toContain('1m')
     expect(healthCheck.innerHTML).toContain('Send')
     expect(healthCheck.innerHTML).toContain('PING')

@@ -32,7 +32,7 @@ const WeightedServices = ({ services, defaultProvider }: WeightedServicesProps) 
           if (key === 'provider') {
             return <ProviderIcon name={value as string} />
           }
-          return undefined
+          return value
         }}
       />
     </Flex>

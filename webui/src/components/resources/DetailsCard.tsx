@@ -28,6 +28,7 @@ type DetailsCardProps = {
   items: { key: string; val: string | React.ReactElement; stackVertical?: boolean }[]
   minKeyWidth?: string
   testidPrefix?: string
+  testId?: string
   title?: string
   icon?: ReactNode
 }
@@ -38,11 +39,12 @@ export default function DetailsCard({
   items,
   minKeyWidth,
   testidPrefix = 'definition',
+  testId,
   title,
   icon,
 }: DetailsCardProps) {
   return (
-    <Flex as="section" direction="column" gap={2} css={{ ...css }} data-testid={`${testidPrefix}-section`}>
+    <Flex as="section" direction="column" gap={2} css={{ ...css }} data-testid={testId || `${testidPrefix}-section`}>
       {title ? <SectionTitle icon={icon} title={title} /> : null}
       <Card css={{ flex: 1 }}>
         <Grid

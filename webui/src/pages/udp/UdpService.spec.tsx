@@ -75,9 +75,9 @@ describe('<UdpServicePage />', () => {
     expect(serviceDetails.querySelector('svg[data-testid="docker"]')).toBeTruthy()
     expect(serviceDetails.innerHTML).toContain('Status')
     expect(serviceDetails.innerHTML).toContain('Success')
-    expect(serviceDetails.innerHTML).toContain('Pass Host Header')
+    expect(serviceDetails.innerHTML).toContain('Pass host header')
     expect(serviceDetails.innerHTML).toContain('True')
-    expect(serviceDetails.innerHTML).toContain('Termination Delay')
+    expect(serviceDetails.innerHTML).toContain('Termination delay')
     expect(serviceDetails.innerHTML).toContain('10 ms')
 
     const serversList = getByTestId('servers-list')

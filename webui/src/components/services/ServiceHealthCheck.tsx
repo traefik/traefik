@@ -58,7 +58,9 @@ const ServiceHealthCheck = ({ data, protocol }: ServiceHealthCheckProps) => {
 
   if (!healthCheckItems) return null
 
-  return <DetailsCard icon={<FiShield size={20} />} title="Health Check" items={healthCheckItems} />
+  return (
+    <DetailsCard icon={<FiShield size={20} />} title="Health Check" items={healthCheckItems} testId="health-check" />
+  )
 }
 
 export default ServiceHealthCheck

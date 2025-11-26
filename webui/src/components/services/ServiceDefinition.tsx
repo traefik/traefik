@@ -9,9 +9,10 @@ import { ServiceDetailType } from 'hooks/use-resource-detail'
 
 type ServiceDefinitionProps = {
   data: ServiceDetailType
+  testId?: string
 }
 
-const ServiceDefinition = ({ data }: ServiceDefinitionProps) => {
+const ServiceDefinition = ({ data, testId }: ServiceDefinitionProps) => {
   const providerName = useMemo(() => {
     return data.provider
   }, [data.provider])
@@ -52,7 +53,7 @@ const ServiceDefinition = ({ data }: ServiceDefinitionProps) => {
     ],
   )
 
-  return <DetailsCard items={detailsItems} />
+  return <DetailsCard items={detailsItems} testId={testId} />
 }
 
 export default ServiceDefinition

@@ -70,8 +70,8 @@ export const ServiceDetail = ({ data, error, name, protocol }: ServiceDetailProp
         <title>{data.name} - Traefik Proxy</title>
       </Helmet>
       <H1 css={{ mb: '$7' }}>{data.name}</H1>
-      <Flex direction="column" gap={6} data-testid="service-details">
-        <ServiceDefinition data={data} />
+      <Flex direction="column" gap={6}>
+        <ServiceDefinition data={data} testId="service-details" />
 
         {data.loadBalancer?.healthCheck && <ServiceHealthCheck data={data} protocol={protocol} />}
         {!!data?.weighted?.services?.length && (

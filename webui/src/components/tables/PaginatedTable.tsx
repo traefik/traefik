@@ -54,11 +54,7 @@ const PaginatedTable = <T extends Record<string, unknown>>({
 
   return (
     <Box>
-      <AriaTable
-        ref={tableRef}
-        data-testid={testId}
-        css={totalPages > 1 && tableHeight ? { minHeight: `${tableHeight}px` } : undefined}
-      >
+      <AriaTable ref={tableRef} css={totalPages > 1 && tableHeight ? { minHeight: `${tableHeight}px` } : undefined}>
         <AriaThead>
           <AriaTr>
             {columns.map((column) => (
@@ -66,7 +62,7 @@ const PaginatedTable = <T extends Record<string, unknown>>({
             ))}
           </AriaTr>
         </AriaThead>
-        <AriaTbody css={totalPages > 1 && tableHeight ? { verticalAlign: 'top' } : undefined}>
+        <AriaTbody data-testid={testId} css={totalPages > 1 && tableHeight ? { verticalAlign: 'top' } : undefined}>
           {currentData.map((row, rowIndex) => (
             <AriaTr key={rowIndex}>
               {columns.map((column) => (
