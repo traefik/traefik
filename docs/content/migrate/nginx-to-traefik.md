@@ -320,7 +320,7 @@ kubectl get svc -n traefik traefik \
 
 ### Option B: External Load Balancer with Weighted Traffic
 
-For more control over traffic distribution, use an external load balancer (like Cloudflare, AWS ALB, or a dedicated load balancer) in front of both Kubernetes LoadBalancers.
+For more control over traffic distribution, use an external load balancer (like Traefik, Cloudflare, AWS ALB, or a dedicated load balancer) in front of both Kubernetes LoadBalancers.
 
 **Setup:**
 
@@ -522,6 +522,8 @@ release "ingress-nginx" uninstalled
 kubectl get ingressclass nginx
 ```
 
+In case, the ingressClass is somehow deleted, you can recreate it using the commands in [Step 3](#if-nginx-was-installed-manually).
+
 ### Clean Up NGINX Namespace
 
 ```bash
@@ -595,6 +597,7 @@ kubectl delete namespace ingress-nginx
 - Enable [metrics](../reference/install-configuration/observability/metrics.md) and [tracing](../reference/install-configuration/observability/tracing.md)
 - Configure [access logs](../reference/install-configuration/observability/logs-and-accesslogs.md) for observability
 - Explore [Traefik Middlewares](../reference/routing-configuration/http/middlewares/overview.md) for advanced traffic management
+- Migrate from Nginx-based config to Traefik [IngressRoute](../reference/routing-configuration/kubernetes/crd/http/ingressroute.md) or [Kubernetes Gateway API](../reference/routing-configuration/kubernetes/gateway-api.md)
 - Consider [Traefik Hub](https://traefik.io/traefik-hub/) for enterprise features like AI & API Gateway, API Management, and advanced security
 
 ---
