@@ -33,14 +33,14 @@ kind: Ingress
 metadata:
   name: myapp
   annotations:
-    # NGINX annotations are automatically translated by Traefik
+    # These NGINX annotations are automatically translated by Traefik
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/enable-cors: "true"
     nginx.ingress.kubernetes.io/cors-allow-origin: "https://example.com"
     nginx.ingress.kubernetes.io/affinity: "cookie"
     nginx.ingress.kubernetes.io/session-cookie-name: "route"
 spec:
-  ingressClassName: nginx  # ← Traefik will watch this class
+  ingressClassName: nginx  # ← Traefik watches this class
   rules:
     - host: myapp.example.com
       http:
@@ -284,9 +284,43 @@ kubectl get svc -n traefik traefik \
 4. **Wait for DNS propagation** - Allow time for DNS caches to expire
 5. **Uninstall NGINX** - Proceed to [Step 5](#step-5-uninstall-nginx-ingress-controller)
 
+??? info "ExternalDNS Users"
+
+    If you use [ExternalDNS](https://github.com/kubernetes-sigs/external-dns) to automatically manage DNS records based on Ingress status, both NGINX and Traefik will compete to update the Ingress status with their LoadBalancer IPs when `publishService` is enabled. Traefik typically wins because it updates faster, which can cause unexpected traffic shifts.
+
+    **Recommended approach for ExternalDNS:**
+
+    1. **[Install Traefik](#step-1-install-traefik-alongside-nginx) with `publishService` disabled**:
+
+        ```yaml
+        # traefik-values.yaml
+        providers:
+          kubernetesIngressNginx:
+            enabled: true
+            publishService:
+              enabled: false  # Disable to prevent status updates
+        ```
+
+    2. **Test Traefik** using [port-forward](#step-2-verify-traefik-is-handling-traffic) or a separate test hostname
+
+    3. **Switch DNS via NGINX** - Configure NGINX to publish Traefik's service address:
+
+        ```yaml
+        # nginx-values.yaml
+        controller:
+          publishService:
+            pathOverride: "traefik/traefik"  # Points to Traefik's service
+        ```
+
+        This makes NGINX update the Ingress status with Traefik's LoadBalancer IP, causing ExternalDNS to point traffic to Traefik.
+
+    4. **Verify traffic flows through Traefik** - At this point, you can still rollback by removing the `pathOverride`
+
+    5. **[Enable `publishService` on Traefik](#step-1-install-traefik-alongside-nginx)** and [uninstall NGINX](#step-5-uninstall-nginx-ingress-controller)
+
 ### Option B: External Load Balancer with Weighted Traffic (Best)
 
-For more control over traffic distribution, use an external load balancer (like Traefik, Cloudflare, AWS ALB, or a dedicated load balancer) in front of both Kubernetes LoadBalancers.
+For more control over traffic distribution, use an external load balancer (like Cloudflare, AWS ALB, or a dedicated load balancer) in front of both Kubernetes LoadBalancers.
 
 **Setup:**
 
@@ -475,7 +509,7 @@ helm uninstall ingress-nginx -n ingress-nginx
 
 You should see output confirming the IngressClass was preserved:
 
-```bash
+```text
 These resources were kept due to the resource policy:
 [IngressClass] nginx
 
@@ -487,8 +521,6 @@ release "ingress-nginx" uninstalled
 ```bash
 kubectl get ingressclass nginx
 ```
-
-In case, the ingressClass is somehow deleted, you can recreate it using the commands in [Step 3](#if-nginx-was-installed-manually).
 
 ### Clean Up NGINX Namespace
 
@@ -523,28 +555,28 @@ kubectl delete namespace ingress-nginx
 
 ??? note "TLS Certificates Not Working"
 
-    Existing TLS configurations continue to work with Traefik:
+Existing TLS configurations continue to work with Traefik:
 
-    - Keep `spec.tls` entries exactly as-is; Traefik terminates TLS using the referenced secrets
-    - TLS secrets must stay in the same namespace as the Ingress
-    - NGINX `ssl-redirect` / `force-ssl-redirect` annotations are honored
+- Keep `spec.tls` entries exactly as-is; Traefik terminates TLS using the referenced secrets
+- TLS secrets must stay in the same namespace as the Ingress
+- NGINX `ssl-redirect` / `force-ssl-redirect` annotations are honored
 
-    ```bash
-        # Verify TLS secret exists in the same namespace as Ingress
-    kubectl get secrets -n <namespace>
+```bash
+    # Verify TLS secret exists in the same namespace as Ingress
+kubectl get secrets -n <namespace>
 
-        # Check secret format
-    kubectl get secret <tls-secret-name> -n <namespace> -o yaml
-    ```
+    # Check secret format
+kubectl get secret <tls-secret-name> -n <namespace> -o yaml
+```
 
 ??? note "LoadBalancer IP Not Assigned"
 
-    ```bash
-        # Check service status
-        kubectl describe svc -n traefik traefik
+```bash
+    # Check service status
+    kubectl describe svc -n traefik traefik
 
-        # Check for events
-        kubectl get events -n traefik --sort-by='.lastTimestamp'
+    # Check for events
+    kubectl get events -n traefik --sort-by='.lastTimestamp'
     ```
 
 ---
@@ -563,7 +595,6 @@ kubectl delete namespace ingress-nginx
 - Enable [metrics](../reference/install-configuration/observability/metrics.md) and [tracing](../reference/install-configuration/observability/tracing.md)
 - Configure [access logs](../reference/install-configuration/observability/logs-and-accesslogs.md) for observability
 - Explore [Traefik Middlewares](../reference/routing-configuration/http/middlewares/overview.md) for advanced traffic management
-- Migrate from Nginx-based config to Traefik [IngressRoute](../reference/routing-configuration/kubernetes/crd/http/ingressroute.md) or [Kubernetes Gateway API](../reference/routing-configuration/kubernetes/gateway-api.md)
 - Consider [Traefik Hub](https://traefik.io/traefik-hub/) for enterprise features like AI & API Gateway, API Management, and advanced security
 
 ---
