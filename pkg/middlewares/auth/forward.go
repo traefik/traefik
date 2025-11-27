@@ -195,7 +195,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	forwardResponse, forwardErr := fa.client.Do(forwardReq)
 	if forwardErr != nil {
-		logger.Debug().Err(forwardErr).Msgf("Error calling %s", fa.address)
+		logger.Error().Err(forwardErr).Msgf("Error calling %s", fa.address)
 		observability.SetStatusErrorf(req.Context(), "Error calling %s. Cause: %s", fa.address, forwardErr)
 
 		statusCode := http.StatusInternalServerError
