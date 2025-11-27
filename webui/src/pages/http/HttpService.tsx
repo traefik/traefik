@@ -68,30 +68,28 @@ const GridTitle = styled(Text, {
 type Server = {
   url: string
   address?: string
+  weight?: number
 }
 
-type ServerStatus = {
-  [server: string]: string
-}
-
-function getServerStatusList(data: ServiceDetailType): ServerStatus {
-  const serversList: ServerStatus = {}
-
-  data.loadBalancer?.servers?.forEach((server: Server) => {
-    serversList[server.address || server.url] = 'DOWN'
-  })
-
-  if (data.serverStatus) {
-    Object.entries(data.serverStatus).forEach(([server, status]) => {
-      serversList[server] = status
-    })
-  }
-
-  return serversList
+type ServerInfo = {
+  url: string
+  status: string
+  weight?: number
 }
 
 export const ServicePanels = ({ data, protocol = '' }: DetailProps) => {
-  const serversList = getServerStatusList(data)
+  const serversList = useMemo<ServerInfo[]>(
+    () =>
+      data.loadBalancer?.servers?.map((server: Server) => {
+        const url = server.address || server.url
+        return {
+          url,
+          status: data.serverStatus?.[url] || 'DOWN',
+          weight: server.weight,
+        }
+      }) || [],
+    [data.loadBalancer?.servers, data.serverStatus],
+  )
   const getProviderFromName = (serviceName: string): string => {
     const [, provider] = serviceName.split('@')
     return provider || data.provider
@@ -217,22 +215,27 @@ export const ServicePanels = ({ data, protocol = '' }: DetailProps) => {
           </>
         </DetailSection>
       )}
-      {Object.keys(serversList).length > 0 && (
+      {serversList.length > 0 && (
         <DetailSection narrow icon={<FiGlobe size={20} />} title="Servers" noPadding>
           <>
-            <ServersGrid css={{ gridTemplateColumns: protocol === 'http' ? '25% auto' : 'inherit', mt: '$2' }}>
+            <ServersGrid css={{ gridTemplateColumns: protocol === 'http' ? '20% 60% 20%' : '80% 20%', mt: '$2' }}>
               {protocol === 'http' && <ItemTitle css={{ mb: 0 }}>Status</ItemTitle>}
               <ItemTitle css={{ mb: 0 }}>URL</ItemTitle>
+              <ItemTitle css={{ mb: 0, textAlign: 'center' }}>Weight</ItemTitle>
             </ServersGrid>
             <Box data-testid="servers-list">
-              {Object.entries(serversList).map(([server, status]) => (
-                <ServersGrid key={server} css={{ gridTemplateColumns: protocol === 'http' ? '25% auto' : 'inherit' }}>
-                  {protocol === 'http' && <ResourceStatus status={status === 'UP' ? 'enabled' : 'disabled'} />}
+              {serversList.map((server) => (
+                <ServersGrid
+                  key={server.url}
+                  css={{ gridTemplateColumns: protocol === 'http' ? '20% 60% 20%' : '80% 20%' }}
+                >
+                  {protocol === 'http' && <ResourceStatus status={server.status === 'UP' ? 'enabled' : 'disabled'} />}
                   <Box>
-                    <Tooltip label={server} action="copy">
-                      <Text>{server}</Text>
+                    <Tooltip label={server.url} action="copy">
+                      <Text>{server.url}</Text>
                     </Tooltip>
                   </Box>
+                  <Text css={{ textAlign: 'center' }}>{server.weight ?? 1}</Text>
                 </ServersGrid>
               ))}
             </Box>
