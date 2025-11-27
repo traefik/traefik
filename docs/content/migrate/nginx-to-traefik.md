@@ -555,28 +555,28 @@ kubectl delete namespace ingress-nginx
 
 ??? note "TLS Certificates Not Working"
 
-Existing TLS configurations continue to work with Traefik:
+    Existing TLS configurations continue to work with Traefik:
 
-- Keep `spec.tls` entries exactly as-is; Traefik terminates TLS using the referenced secrets
-- TLS secrets must stay in the same namespace as the Ingress
-- NGINX `ssl-redirect` / `force-ssl-redirect` annotations are honored
+    - Keep `spec.tls` entries exactly as-is; Traefik terminates TLS using the referenced secrets
+    - TLS secrets must stay in the same namespace as the Ingress
+    - NGINX `ssl-redirect` / `force-ssl-redirect` annotations are honored
 
-```bash
-    # Verify TLS secret exists in the same namespace as Ingress
-kubectl get secrets -n <namespace>
+    ```bash
+        # Verify TLS secret exists in the same namespace as Ingress
+    kubectl get secrets -n <namespace>
 
-    # Check secret format
-kubectl get secret <tls-secret-name> -n <namespace> -o yaml
-```
+        # Check secret format
+    kubectl get secret <tls-secret-name> -n <namespace> -o yaml
+    ```
 
 ??? note "LoadBalancer IP Not Assigned"
 
-```bash
-    # Check service status
-    kubectl describe svc -n traefik traefik
+    ```bash
+      # Check service status
+      kubectl describe svc -n traefik traefik
 
-    # Check for events
-    kubectl get events -n traefik --sort-by='.lastTimestamp'
+      # Check for events
+      kubectl get events -n traefik --sort-by='.lastTimestamp'
     ```
 
 ---
