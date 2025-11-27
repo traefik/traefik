@@ -40,7 +40,7 @@ metadata:
     nginx.ingress.kubernetes.io/affinity: "cookie"
     nginx.ingress.kubernetes.io/session-cookie-name: "route"
 spec:
-  ingressClassName: nginx  # ← Traefik watches this class
+  ingressClassName: nginx  # ← Traefik will watch this class
   rules:
     - host: myapp.example.com
       http:
@@ -260,7 +260,7 @@ EOF
 
 With both controllers running and verified, progressively shift traffic from NGINX to Traefik.
 
-### Option A: DNS-Based Migration (Recommended)
+### Option A: DNS-Based Migration
 
 Add the Traefik LoadBalancer IP to your DNS records alongside NGINX. This allows both controllers to receive traffic.
 
@@ -318,7 +318,7 @@ kubectl get svc -n traefik traefik \
 
     5. **[Enable `publishService` on Traefik](#step-1-install-traefik-alongside-nginx)** and [uninstall NGINX](#step-5-uninstall-nginx-ingress-controller)
 
-### Option B: External Load Balancer with Weighted Traffic (Best)
+### Option B: External Load Balancer with Weighted Traffic
 
 For more control over traffic distribution, use an external load balancer (like Cloudflare, AWS ALB, or a dedicated load balancer) in front of both Kubernetes LoadBalancers.
 
@@ -347,7 +347,7 @@ For more control over traffic distribution, use an external load balancer (like 
     - **Google Cloud Load Balancing** - Traffic splitting
     - **Traefik / HAProxy / NGINX (external)** - Self-hosted option with weighted backends
 
-### Option C: LoadBalancer IP Retention
+### LoadBalancer IP Retention
 
 If you want Traefik to eventually use the same LoadBalancer IP as NGINX (to simplify DNS management), you can transfer the IP after the migration. Since Traefik is already running with its own LoadBalancer, this can be done with zero downtime.
 
