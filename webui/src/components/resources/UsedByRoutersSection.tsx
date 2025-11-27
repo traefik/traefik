@@ -24,7 +24,7 @@ const SkeletonContent = styled(Box, {
 })
 
 export const UsedByRoutersSkeleton = () => (
-  <Flex css={{ flexDirection: 'column', mt: '40px' }}>
+  <Flex gap={2} css={{ flexDirection: 'column', mt: '40px' }}>
     <SectionTitle title="Used by routers" />
     <AriaTable>
       <AriaThead>

@@ -5,7 +5,7 @@ import { Doughnut } from 'react-chartjs-2'
 import { FaArrowRightLong } from 'react-icons/fa6'
 import { Link as RouterLink, useNavigate } from 'react-router-dom'
 
-import Status, { colorByStatus, StatusType } from './Status'
+import Status, { colorByStatus } from './Status'
 
 import { capitalizeFirstLetter } from 'utils/string'
 
@@ -58,7 +58,7 @@ export type DataType = {
 
 const getPercent = (total: number, value: number) => (total > 0 ? ((value * 100) / total).toFixed(0) : 0)
 
-const STATS_ATTRIBUTES: { status: StatusType; label: string }[] = [
+const STATS_ATTRIBUTES: { status: Resource.Status; label: string }[] = [
   {
     status: 'enabled',
     label: 'success',
@@ -80,7 +80,7 @@ const CustomLegend = ({
   total,
   linkTo,
 }: {
-  status: StatusType
+  status: Resource.Status
   label: string
   count: number
   total: number

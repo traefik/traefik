@@ -38,6 +38,7 @@ describe('<UdpRouterPage />', () => {
       provider: 'docker',
       middlewares: undefined,
       hasValidMiddlewares: undefined,
+      hasEntryPoints: true,
       entryPointsData: [
         {
           address: ':443',
@@ -59,24 +60,15 @@ describe('<UdpRouterPage />', () => {
     const routerStructure = getByTestId('router-structure')
     expect(routerStructure.innerHTML).toContain(':443')
     expect(routerStructure.innerHTML).toContain(':8000')
-    expect(routerStructure.innerHTML).toContain('udp-all@docker')
-    expect(routerStructure.innerHTML).toContain('udp-all</span>')
     expect(routerStructure.innerHTML).toContain('UDP Router')
     expect(routerStructure.innerHTML).not.toContain('HTTP Router')
 
     const routerDetailsSection = getByTestId('router-details')
-    const routerDetailsPanel = routerDetailsSection.querySelector(':scope > div:nth-child(1)')
 
-    expect(routerDetailsPanel?.innerHTML).toContain('Status')
-    expect(routerDetailsPanel?.innerHTML).toContain('Success')
-    expect(routerDetailsPanel?.innerHTML).toContain('Provider')
-    expect(routerDetailsPanel?.querySelector('svg[data-testid="docker"]')).toBeTruthy()
-    expect(routerDetailsPanel?.innerHTML).toContain('Name')
-    expect(routerDetailsPanel?.innerHTML).toContain('udp-all@docker')
-    expect(routerDetailsPanel?.innerHTML).toContain('Entrypoints')
-    expect(routerDetailsPanel?.innerHTML).toContain('web</')
-    expect(routerDetailsPanel?.innerHTML).toContain('web-secured')
-    expect(routerDetailsPanel?.innerHTML).toContain('udp-all</')
+    expect(routerDetailsSection?.innerHTML).toContain('Status')
+    expect(routerDetailsSection?.innerHTML).toContain('Success')
+    expect(routerDetailsSection?.innerHTML).toContain('Provider')
+    expect(routerDetailsSection?.querySelector('svg[data-testid="docker"]')).toBeTruthy()
 
     expect(getByTestId('/udp/services/udp-all@docker')).toBeInTheDocument()
   })

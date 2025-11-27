@@ -36,6 +36,7 @@ describe('<HttpRouterPage />', () => {
       ...router!,
       middlewares: apiHttpMiddlewares.filter((x) => router?.middlewares?.includes(x.name)),
       hasValidMiddlewares: true,
+      hasEntryPoints: true,
       entryPointsData: apiEntrypoints.filter((x) => router?.using?.includes(x.name)),
     }
 
@@ -51,7 +52,6 @@ describe('<HttpRouterPage />', () => {
     expect(routerStructure.innerHTML).toContain(':8080')
     expect(routerStructure.innerHTML).toContain(':8002')
     expect(routerStructure.innerHTML).toContain(':8003')
-    expect(routerStructure.innerHTML).toContain('orphan-router@file')
     expect(routerStructure.innerHTML).toContain('middleware00')
     expect(routerStructure.innerHTML).toContain('middleware01')
     expect(routerStructure.innerHTML).toContain('middleware02')
@@ -79,15 +79,11 @@ describe('<HttpRouterPage />', () => {
 
     const routerDetailsSection = getByTestId('router-details')
 
-    const routerDetailsPanel = routerDetailsSection.querySelector(':scope > div:nth-child(1)')
-    expect(routerDetailsPanel?.innerHTML).toContain('orphan-router@file')
-    expect(routerDetailsPanel?.innerHTML).toContain('Error')
-    expect(routerDetailsPanel?.querySelector('svg[data-testid="file"]')).toBeTruthy()
-    expect(routerDetailsPanel?.innerHTML).toContain(
+    expect(routerDetailsSection?.innerHTML).toContain('Error')
+    expect(routerDetailsSection?.querySelector('svg[data-testid="file"]')).toBeTruthy()
+    expect(routerDetailsSection?.innerHTML).toContain(
       'Path(`somethingreallyunexpectedbutalsoverylongitgetsoutofthecontainermaybe`)',
     )
-    expect(routerDetailsPanel?.innerHTML).toContain('unexistingservice')
-    expect(routerDetailsPanel?.innerHTML).toContain('the service "unexistingservice@file" does not exist')
 
     expect(routerStructure.innerHTML).toContain('middleware00')
     expect(routerStructure.innerHTML).toContain('middleware01')

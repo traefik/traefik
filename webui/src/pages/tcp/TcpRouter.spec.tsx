@@ -53,6 +53,7 @@ describe('<TcpRouterPage />', () => {
         },
       ],
       hasValidMiddlewares: true,
+      hasEntryPoints: true,
       entryPointsData: [
         {
           address: ':8000',
@@ -74,24 +75,15 @@ describe('<TcpRouterPage />', () => {
     const routerStructure = getByTestId('router-structure')
     expect(routerStructure.innerHTML).toContain(':443')
     expect(routerStructure.innerHTML).toContain(':8000')
-    expect(routerStructure.innerHTML).toContain('tcp-all@docker')
-    expect(routerStructure.innerHTML).toContain('tcp-all</span>')
     expect(routerStructure.innerHTML).toContain('TCP Router')
     expect(routerStructure.innerHTML).not.toContain('HTTP Router')
 
     const routerDetailsSection = getByTestId('router-details')
-    const routerDetailsPanel = routerDetailsSection.querySelector(':scope > div:nth-child(1)')
 
-    expect(routerDetailsPanel?.innerHTML).toContain('Status')
-    expect(routerDetailsPanel?.innerHTML).toContain('Success')
-    expect(routerDetailsPanel?.innerHTML).toContain('Provider')
-    expect(routerDetailsPanel?.querySelector('svg[data-testid="docker"]')).toBeTruthy()
-    expect(routerDetailsPanel?.innerHTML).toContain('Name')
-    expect(routerDetailsPanel?.innerHTML).toContain('tcp-all@docker')
-    expect(routerDetailsPanel?.innerHTML).toContain('Entrypoints')
-    expect(routerDetailsPanel?.innerHTML).toContain('web</')
-    expect(routerDetailsPanel?.innerHTML).toContain('web-secured')
-    expect(routerDetailsPanel?.innerHTML).toContain('tcp-all</')
+    expect(routerDetailsSection?.innerHTML).toContain('Status')
+    expect(routerDetailsSection?.innerHTML).toContain('Success')
+    expect(routerDetailsSection?.innerHTML).toContain('Provider')
+    expect(routerDetailsSection?.querySelector('svg[data-testid="docker"]')).toBeTruthy()
     expect(routerStructure.innerHTML).toContain('middleware00')
     expect(routerStructure.innerHTML).toContain('middleware01')
 

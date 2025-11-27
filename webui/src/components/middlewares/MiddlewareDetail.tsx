@@ -5,8 +5,8 @@ import { Helmet } from 'react-helmet-async'
 import MiddlewareDefinition from './MiddlewareDefinition'
 import { RenderUnknownProp } from './RenderUnknownProp'
 
-import { DetailSectionSkeleton } from 'components/resources/DetailSections'
-import ResourceErrors from 'components/resources/ResourceErrors'
+import { DetailsCardSkeleton } from 'components/resources/DetailsCard'
+import ResourceErrors, { ResourceErrorsSkeleton } from 'components/resources/ResourceErrors'
 import { UsedByRoutersSection, UsedByRoutersSkeleton } from 'components/resources/UsedByRoutersSection'
 import { ResourceDetailDataType } from 'hooks/use-resource-detail'
 import { NotFound } from 'pages/NotFound'
@@ -59,8 +59,11 @@ export const MiddlewareDetail = ({ data, error, name, protocol }: MiddlewareDeta
           <title>{name} - Traefik Proxy</title>
         </Helmet>
         <Skeleton css={{ height: '$7', width: '320px', mb: '$4' }} data-testid="skeleton" />
-        <DetailSectionSkeleton />
-        <UsedByRoutersSkeleton />
+        <Flex direction="column" gap={6}>
+          <DetailsCardSkeleton />
+          <ResourceErrorsSkeleton />
+          <UsedByRoutersSkeleton />
+        </Flex>
       </>
     )
   }

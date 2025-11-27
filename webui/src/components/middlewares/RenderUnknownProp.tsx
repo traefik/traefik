@@ -69,7 +69,7 @@ export const RenderUnknownProp = ({ name, prop, removeTitlePrefix }: RenderUnkno
       }
     }
   } catch (error) {
-    console.log('Unable to render plugin property:', { name, prop }, { error })
+    console.error('Unable to render plugin property:', { name, prop }, { error })
   }
 
   return null

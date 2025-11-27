@@ -41,7 +41,7 @@ const ServiceHealthCheck = ({ data, protocol }: ServiceHealthCheckProps) => {
             val: <CopyableText text={data.loadBalancer.healthCheck.path} />,
           },
           healthCheck?.timeout && { key: 'Timeout', val: healthCheck.timeout },
-          healthCheck?.port && { key: 'Port', val: healthCheck.port },
+          healthCheck?.port && { key: 'Port', val: String(healthCheck.port) },
           healthCheck?.hostname && {
             key: 'Hostname',
             val: <CopyableText text={data.loadBalancer.healthCheck.hostname} />,
@@ -50,6 +50,7 @@ const ServiceHealthCheck = ({ data, protocol }: ServiceHealthCheckProps) => {
             key: 'Headers',
             val: <Chips variant="neon" items={Object.entries(healthCheck.headers).map((entry) => entry.join(': '))} />,
             stackVertical: true,
+            forceNewRow: true,
           },
         ].filter(Boolean) as { key: string; val: string | React.ReactElement; stackVertical?: boolean }[]
       }

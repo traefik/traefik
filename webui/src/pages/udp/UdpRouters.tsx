@@ -21,11 +21,7 @@ export const makeRowRender = (): RenderRowType => {
   const UdpRoutersRenderRow = (row) => (
     <ClickableRow key={row.name} to={`/udp/routers/${row.name}`}>
       <AriaTd>
-        <Tooltip label={row.status}>
-          <Box css={{ width: '32px', height: '32px' }}>
-            <ResourceStatus status={row.status} />
-          </Box>
-        </Tooltip>
+        <ResourceStatus status={row.status} />
       </AriaTd>
       <AriaTd>{row.entryPoints && row.entryPoints.length > 0 && <Chips items={row.entryPoints} />}</AriaTd>
       <AriaTd>

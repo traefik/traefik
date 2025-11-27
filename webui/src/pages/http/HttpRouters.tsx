@@ -1,7 +1,6 @@
 import { AriaTable, AriaTbody, AriaTd, AriaTfoot, AriaThead, AriaTr, Box, Flex } from '@traefiklabs/faency'
 import { useMemo } from 'react'
 import { Helmet } from 'react-helmet-async'
-import { FiShield } from 'react-icons/fi'
 import useInfiniteScroll from 'react-infinite-scroll-hook'
 import { useSearchParams } from 'react-router-dom'
 
@@ -9,6 +8,7 @@ import ClickableRow from 'components/ClickableRow'
 import ProviderIcon from 'components/icons/providers'
 import { Chips } from 'components/resources/DetailSections'
 import { ResourceStatus } from 'components/resources/ResourceStatus'
+import TlsIcon from 'components/routers/TlsIcon'
 import { ScrollTopButton } from 'components/ScrollTopButton'
 import { SpinnerLoader } from 'components/SpinnerLoader'
 import { searchParamsToState, TableFilter } from 'components/TableFilter'
@@ -22,11 +22,7 @@ export const makeRowRender = (protocol = 'http'): RenderRowType => {
   const HttpRoutersRenderRow = (row) => (
     <ClickableRow key={row.name} to={`/${protocol}/routers/${row.name}`}>
       <AriaTd>
-        <Tooltip label={row.status}>
-          <Box>
-            <ResourceStatus status={row.status} />
-          </Box>
-        </Tooltip>
+        <ResourceStatus status={row.status} />
       </AriaTd>
       {protocol !== 'udp' && (
         <>
@@ -34,7 +30,7 @@ export const makeRowRender = (protocol = 'http'): RenderRowType => {
             {row.tls && (
               <Tooltip label="TLS ON">
                 <Box css={{ width: 24, height: 24 }} data-testid="tls-on">
-                  <FiShield color="#008000" fill="#008000" size={24} />
+                  <TlsIcon />
                 </Box>
               </Tooltip>
             )}

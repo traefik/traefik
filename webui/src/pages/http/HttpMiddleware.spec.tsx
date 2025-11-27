@@ -473,6 +473,6 @@ describe('<HttpMiddlewarePage />', () => {
     const childSpans = Array.from(container.querySelectorAll('span')).filter((span) =>
       ['0', '1', '2', '3', '123'].includes(span.innerHTML),
     )
-    expect(childSpans.length).toBe(7)
+    expect(childSpans.length).toBe(6)
   })
 })

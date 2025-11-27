@@ -25,7 +25,7 @@ export const SectionTitle = ({ icon, title }: { icon?: ReactNode; title: string 
 type DetailsCardProps = {
   css?: CSS
   keyColumns?: number
-  items: { key: string; val: string | React.ReactElement; stackVertical?: boolean }[]
+  items: { key: string; val: string | React.ReactElement; stackVertical?: boolean; forceNewRow?: boolean }[]
   minKeyWidth?: string
   testidPrefix?: string
   testId?: string
@@ -54,64 +54,80 @@ export default function DetailsCard({
             [`@media (max-width:${breakpoints.laptop}px)`]: { gridTemplateColumns: 'auto 1fr' },
           }}
         >
-          {items.map((item, index) => (
-            <Fragment key={index}>
-              {item.stackVertical ? (
-                <Flex direction="column" gap={1} css={{ gridColumn: 'span 2' }}>
-                  <StyledText css={{ fontWeight: 600, minWidth: minKeyWidth }}>{item.key}</StyledText>
-                  {typeof item.val === 'string' ? (
-                    <ValText>{item.val}</ValText>
-                  ) : (
-                    <Flex
-                      css={{
-                        '> *': {
-                          height: 'fit-content',
-                        },
-                      }}
-                    >
-                      {item.val}
-                    </Flex>
-                  )}
-                </Flex>
-              ) : (
-                <>
-                  <Grid>
-                    {index < keyColumns
-                      ? items
-                          .filter((hiddenItem) => hiddenItem.key != item.key)
-                          .map((hiddenItem, jndex) => (
-                            <StyledText
-                              key={`hidden-${index}-${jndex}`}
-                              aria-hidden="true"
-                              css={{ gridArea: '1 / 1', fontWeight: 600, visibility: 'hidden' }}
-                            >
-                              {hiddenItem.key}
-                            </StyledText>
-                          ))
-                      : null}
-                    <StyledText css={{ gridArea: '1 / 1', fontWeight: 600, minWidth: minKeyWidth }}>
-                      {item.key}
-                    </StyledText>
-                  </Grid>
-                  {typeof item.val === 'string' ? (
-                    <ValText css={{ flex: 1 }}>{item.val}</ValText>
-                  ) : (
-                    <Flex
-                      align="center"
-                      css={{
-                        alignSelf: 'start',
-                        '> *': {
-                          height: 'fit-content',
-                        },
-                      }}
-                    >
-                      {item.val}
-                    </Flex>
-                  )}
-                </>
-              )}
-            </Fragment>
-          ))}
+          {items.map((item, index) => {
+            // Handle forceNewRow props
+            const cellsBeforeThis = items.slice(0, index).reduce((count, prevItem) => {
+              if (prevItem.stackVertical) return count + keyColumns
+              return count + 1
+            }, 0)
+
+            const needsEmptyCell = item.forceNewRow && cellsBeforeThis % keyColumns !== 0
+
+            return (
+              <Fragment key={index}>
+                {needsEmptyCell && (
+                  <>
+                    <div />
+                    <div />
+                  </>
+                )}
+                {item.stackVertical ? (
+                  <Flex direction="column" gap={1} css={{ gridColumn: 'span 2' }}>
+                    <StyledText css={{ fontWeight: 600, minWidth: minKeyWidth }}>{item.key}</StyledText>
+                    {typeof item.val === 'string' ? (
+                      <ValText>{item.val}</ValText>
+                    ) : (
+                      <Flex
+                        css={{
+                          '> *': {
+                            height: 'fit-content',
+                          },
+                        }}
+                      >
+                        {item.val}
+                      </Flex>
+                    )}
+                  </Flex>
+                ) : (
+                  <>
+                    <Grid>
+                      {index < keyColumns
+                        ? items
+                            .filter((hiddenItem) => hiddenItem.key != item.key)
+                            .map((hiddenItem, jndex) => (
+                              <StyledText
+                                key={`hidden-${index}-${jndex}`}
+                                aria-hidden="true"
+                                css={{ gridArea: '1 / 1', fontWeight: 600, visibility: 'hidden' }}
+                              >
+                                {hiddenItem.key}
+                              </StyledText>
+                            ))
+                        : null}
+                      <StyledText css={{ gridArea: '1 / 1', fontWeight: 600, minWidth: minKeyWidth }}>
+                        {item.key}
+                      </StyledText>
+                    </Grid>
+                    {typeof item.val === 'string' ? (
+                      <ValText css={{ flex: 1 }}>{item.val}</ValText>
+                    ) : (
+                      <Flex
+                        align="center"
+                        css={{
+                          alignSelf: 'start',
+                          '> *': {
+                            height: 'fit-content',
+                          },
+                        }}
+                      >
+                        {item.val}
+                      </Flex>
+                    )}
+                  </>
+                )}
+              </Fragment>
+            )
+          })}
         </Grid>
       </Card>
     </Flex>

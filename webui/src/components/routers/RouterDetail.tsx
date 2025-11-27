@@ -1,9 +1,11 @@
-import { Flex, styled, Text } from '@traefiklabs/faency'
+import { Flex, H1, Skeleton, Text } from '@traefiklabs/faency'
 import { useMemo } from 'react'
 import { Helmet } from 'react-helmet-async'
 
-import { CardListSection, DetailSectionSkeleton } from 'components/resources/DetailSections'
-import { RouterPanels } from 'components/routers/RouterPanels'
+import { DetailsCardSkeleton } from 'components/resources/DetailsCard'
+import ResourceErrors, { ResourceErrorsSkeleton } from 'components/resources/ResourceErrors'
+import RouterFlowDiagram, { RouterFlowDiagramSkeleton } from 'components/routers/RouterFlowDiagram'
+import TlsSection from 'components/routers/TlsSection'
 import { ResourceDetailDataType } from 'hooks/use-resource-detail'
 import { NotFound } from 'pages/NotFound'
 
@@ -14,14 +16,8 @@ type RouterDetailProps = {
   protocol: 'http' | 'tcp' | 'udp'
 }
 
-const SpacedColumns = styled(Flex, {
-  display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))',
-  gridGap: '16px',
-})
-
 export const RouterDetail = ({ data, error, name, protocol }: RouterDetailProps) => {
-  const isHttp = useMemo(() => protocol === 'http', [protocol])
+  const isUdp = useMemo(() => protocol === 'udp', [protocol])
 
   if (error) {
     return (
@@ -37,24 +33,17 @@ export const RouterDetail = ({ data, error, name, protocol }: RouterDetailProps)
   }
 
   if (!data) {
-    const skeletonCount = isHttp ? 3 : 2
-
     return (
       <>
         <Helmet>
           <title>{name} - Traefik Proxy</title>
         </Helmet>
-        <Flex css={{ flexDirection: 'row', mb: '70px' }} data-testid="skeleton">
-          <CardListSection bigDescription />
-          <CardListSection />
-          {isHttp && <CardListSection />}
-          <CardListSection isLast />
+        <Skeleton css={{ height: '$7', width: '320px', mb: '$4' }} data-testid="skeleton" />
+        <Flex direction="column" gap={6}>
+          <RouterFlowDiagramSkeleton />
+          <ResourceErrorsSkeleton />
+          <DetailsCardSkeleton />
         </Flex>
-        <SpacedColumns>
-          {Array.from({ length: skeletonCount }).map((_, i) => (
-            <DetailSectionSkeleton key={i} />
-          ))}
-        </SpacedColumns>
       </>
     )
   }
@@ -68,7 +57,12 @@ export const RouterDetail = ({ data, error, name, protocol }: RouterDetailProps)
       <Helmet>
         <title>{data.name} - Traefik Proxy</title>
       </Helmet>
-      <RouterPanels data={data} protocol={protocol} />
+      <H1 css={{ mb: '$7' }}>{data.name}</H1>
+      <Flex direction="column" gap={6}>
+        <RouterFlowDiagram data={data} protocol={protocol} />
+        {data?.error && <ResourceErrors errors={data.error} />}
+        {!isUdp && <TlsSection data={data?.tls} />}
+      </Flex>
     </>
   )
 }

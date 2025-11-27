@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { ReactNode, useEffect } from 'react'
 import { FiX } from 'react-icons/fi'
 
-import { colorByStatus, iconByStatus, StatusType } from 'components/resources/Status'
+import { colorByStatus, iconByStatus } from 'components/resources/Status'
 
 const CloseButton = styled(Button, {
   position: 'absolute',
@@ -39,7 +39,7 @@ const toastVariants = {
 }
 
 export type ToastState = {
-  severity: StatusType
+  severity: Resource.Status
   message?: string
   isVisible?: boolean
   key?: string

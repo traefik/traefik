@@ -1,7 +1,7 @@
 import { Box, Flex, styled, Text } from '@traefiklabs/faency'
 import { ReactNode } from 'react'
 
-import { colorByStatus, iconByStatus, StatusType } from 'components/resources/Status'
+import { colorByStatus, iconByStatus } from 'components/resources/Status'
 
 export const StatusWrapper = styled(Flex, {
   height: '24px',
@@ -11,7 +11,7 @@ export const StatusWrapper = styled(Flex, {
 })
 
 type Props = {
-  status: StatusType
+  status: Resource.Status
   label?: string
   withLabel?: boolean
   size?: number
@@ -20,7 +20,7 @@ type Props = {
 type Value = { color: string; icon: ReactNode; label: string }
 
 export const ResourceStatus = ({ status, withLabel = false, size = 20 }: Props) => {
-  const valuesByStatus: { [key in StatusType]: Value } = {
+  const valuesByStatus: { [key in Resource.Status]: Value } = {
     info: {
       color: colorByStatus.info,
       icon: iconByStatus.info,
@@ -50,6 +50,11 @@ export const ResourceStatus = ({ status, withLabel = false, size = 20 }: Props) 
       color: colorByStatus.disabled,
       icon: iconByStatus.disabled,
       label: 'Error',
+    },
+    loading: {
+      color: colorByStatus.loading,
+      icon: iconByStatus.loading,
+      label: 'Loading...',
     },
   }
 

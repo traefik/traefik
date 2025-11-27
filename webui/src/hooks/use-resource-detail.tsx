@@ -40,7 +40,7 @@ type Router = {
   tls?: {
     options: string
     certResolver: string
-    domains: TlsDomain[]
+    domains: Router.TlsDomain[]
     passthrough: boolean
   }
   error?: string[]
@@ -48,14 +48,10 @@ type Router = {
   message?: string
 }
 
-type TlsDomain = {
-  main: string
-  sans: string[]
-}
-
 export type RouterDetailType = Router & {
   middlewares?: Middleware[]
   hasValidMiddlewares?: boolean
+  hasEntryPoints?: boolean
   entryPointsData?: EntryPoint[]
   using?: string[]
 }
@@ -142,6 +138,7 @@ export const useResourceDetail = (name: string, resource: string, protocol = 'ht
         hasValidMiddlewares: hasMiddlewares,
         entryPointsData: entryPoints,
         using: routeDetail.using,
+        hasEntryPoints: !!routeDetail.entryPoints?.length,
       },
       error: firstError,
     } as ResourceDetailType

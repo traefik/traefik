@@ -1,3 +1,21 @@
+declare namespace Resource {
+  type Status = 'info' | 'success' | 'warning' | 'error' | 'enabled' | 'disabled' | 'loading'
+}
+
+declare namespace Router {
+  type TlsDomain = {
+    main: string
+    sans: string[]
+  }
+
+  type TLS = {
+    options: string
+    certResolver: string
+    domains: TlsDomain[]
+    passthrough: boolean
+  }
+}
+
 declare namespace Service {
   type WeightedService = {
     name: string

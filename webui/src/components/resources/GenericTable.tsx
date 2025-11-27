@@ -1,13 +1,13 @@
 import { AriaTable, AriaTbody, AriaTd, AriaTr, Flex, Text } from '@traefiklabs/faency'
 import { useMemo } from 'react'
 
-import Status, { StatusType } from './Status'
+import Status from './Status'
 
 import CopyableText from 'components/CopyableText'
 
 type GenericTableProps = {
   items: (number | string)[]
-  status?: StatusType
+  status?: Resource.Status
   copyable?: boolean
 }
 
