@@ -286,7 +286,7 @@ kubectl get svc -n traefik traefik \
 
 ### Option B: External Load Balancer with Weighted Traffic (Best)
 
-For more control over traffic distribution, use an external load balancer (like Cloudflare, AWS ALB, or a dedicated load balancer) in front of both Kubernetes LoadBalancers.
+For more control over traffic distribution, use an external load balancer (like Traefik, Cloudflare, AWS ALB, or a dedicated load balancer) in front of both Kubernetes LoadBalancers.
 
 **Setup:**
 
@@ -311,7 +311,7 @@ For more control over traffic distribution, use an external load balancer (like 
     - **Cloudflare Load Balancing** - Traffic steering with health checks
     - **AWS Global Accelerator** - Weighted routing across endpoints
     - **Google Cloud Load Balancing** - Traffic splitting
-    - **HAProxy / NGINX (external)** - Self-hosted option with weighted backends
+    - **Traefik / HAProxy / NGINX (external)** - Self-hosted option with weighted backends
 
 ### Option C: LoadBalancer IP Retention
 
@@ -487,6 +487,8 @@ release "ingress-nginx" uninstalled
 ```bash
 kubectl get ingressclass nginx
 ```
+
+In case, the ingressClass is somehow deleted, you can recreate it using the commands in [Step 3](#if-nginx-was-installed-manually).
 
 ### Clean Up NGINX Namespace
 
