@@ -20,8 +20,6 @@ How to migrate from NGINX Ingress Controller to Traefik with zero downtime.
 
     For more information, see the [official Kubernetes blog announcement](https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement).
 
----
-
 ## What You Will Achieve
 
 By completing this migration, your existing Ingress resources will work with Traefik without any modifications. The Traefik Kubernetes Ingress NGINX Provider automatically translates NGINX annotations into Traefik configuration:
@@ -67,8 +65,9 @@ For a complete list of supported annotations and behavioral differences, see the
 Before starting the migration, ensure you have:
 
 - **Existing NGINX Ingress Controller** running in your Kubernetes cluster
-- **Kubernetes cluster access** with `kubectl` configured
-- **Helm** (if NGINX was installed via Helm)
+- **Kubernetes cluster access** with `kubectl` configured 
+- **Cluster support for running multiple LoadBalancer services** on ports 80/443 simultaneously
+- **Helm**
 - **Cluster admin permissions** to create RBAC resources
 - **Backup of critical configurations** (Ingress resources, ConfigMaps, Secrets)
 
@@ -126,7 +125,7 @@ helm upgrade --install traefik traefik/traefik \
   --set providers.kubernetesIngressNginx.enabled=true
 ```
 
-Or using a values file for more configuration:
+Or using a [values file](https://github.com/traefik/traefik-helm-chart/blob/master/traefik/VALUES.md) for more configuration:
 
 ```yaml tab="traefik-values.yaml"
 providers:
@@ -184,16 +183,20 @@ At this point, both NGINX and Traefik are running and can serve the same Ingress
 
 Before adding Traefik to DNS, verify it correctly serves your Ingress resources.
 
-### Test via Port-Forward
+### Test via Traefik's LoadBalancer IP
 
-Use port-forwarding to test Traefik directly without affecting production traffic:
+Get Traefik's LoadBalancer IP and use `--resolve` to test without changing DNS:
 
 ```bash
-# Port-forward to Traefik
-kubectl port-forward -n traefik deployment/traefik 8080:8000 &
+# Get Traefik's LoadBalancer IP
+TRAEFIK_IP=$(kubectl get svc -n traefik traefik -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+echo "Traefik IP: $TRAEFIK_IP"
 
-# Test an existing Ingress through Traefik
-curl --resolve myapp.example.com:8080:127.0.0.1 http://myapp.example.com:8080/
+# Test HTTP
+curl --resolve myapp.example.com:80:$TRAEFIK_IP http://myapp.example.com/
+
+# Test HTTPS (use -k to skip certificate verification if using self-signed certs)
+curl --resolve myapp.example.com:443:$TRAEFIK_IP https://myapp.example.com/
 ```
 
 ### Verify Ingress Discovery
@@ -212,15 +215,18 @@ When NGINX is uninstalled via Helm, it deletes the `nginx` IngressClass by defau
 
 ### If NGINX Was Installed via Helm
 
-Upgrade the NGINX Helm release to add the `helm.sh/resource-policy: keep` annotation to the IngressClass:
+Upgrade the NGINX Helm release to add the `helm.sh/resource-policy: keep` annotation to the IngressClass. Use `--reuse-values` to preserve your existing configuration.
 
 ```bash
 helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
+  --reuse-values \
   --namespace ingress-nginx \
   --set-json 'controller.ingressClassResource.annotations={"helm.sh/resource-policy": "keep"}'
 ```
 
-This annotation tells Helm to preserve the IngressClass when the release is uninstalled.
+!!! warning "Always Use --reuse-values"
+
+    The `--reuse-values` flag is critical - it preserves all your existing NGINX configuration. Without it, Helm would reset everything to defaults, potentially breaking your setup.
 
 !!! note "Traefik Handles Traffic During Upgrade"
 
@@ -481,10 +487,6 @@ kubectl get svc -n traefik traefik
     ```
 
     With multiple replicas, at least one pod is always running during the upgrade.
-
-!!! warning "k3s/k3d and ServiceLB Environments"
-
-    On k3s/k3d (and environments using Klipper/ServiceLB), only one LoadBalancer service can listen on ports 80/443 at a time. In these environments, you must ensure DNS points to Traefik before deleting the NGINX service.
 
 ---
 
