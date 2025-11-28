@@ -233,7 +233,7 @@ func TestProxyFromEnvironment(t *testing.T) {
 				certPool.AddCert(backendServer.Certificate())
 			}
 
-			builder := NewProxyBuilder(&transportManagerMock{tlsConfig: &tls.Config{RootCAs: certPool}}, static.FastProxyConfig{})
+			builder := NewProxyBuilder(&transportManagerMock{tlsConfig: &tls.Config{RootCAs: certPool}}, static.FastProxyConfig{}, false)
 			builder.proxy = func(req *http.Request) (*url.URL, error) {
 				u, err := url.Parse(proxyURL)
 				if err != nil {
@@ -282,7 +282,7 @@ func TestPreservePath(t *testing.T) {
 	}))
 	t.Cleanup(server.Close)
 
-	builder := NewProxyBuilder(&transportManagerMock{}, static.FastProxyConfig{})
+	builder := NewProxyBuilder(&transportManagerMock{}, static.FastProxyConfig{}, false)
 
 	serverURL, err := url.JoinPath(server.URL, "base")
 	require.NoError(t, err)
@@ -310,7 +310,7 @@ func TestHeadRequest(t *testing.T) {
 	}))
 	t.Cleanup(server.Close)
 
-	builder := NewProxyBuilder(&transportManagerMock{}, static.FastProxyConfig{})
+	builder := NewProxyBuilder(&transportManagerMock{}, static.FastProxyConfig{}, false)
 
 	serverURL, err := url.JoinPath(server.URL)
 	require.NoError(t, err)
@@ -351,7 +351,7 @@ func TestNoContentLength(t *testing.T) {
 		}
 	}()
 
-	builder := NewProxyBuilder(&transportManagerMock{}, static.FastProxyConfig{})
+	builder := NewProxyBuilder(&transportManagerMock{}, static.FastProxyConfig{}, false)
 
 	serverURL := "http://" + backendListener.Addr().String()
 
@@ -381,7 +381,7 @@ func TestTransferEncodingChunked(t *testing.T) {
 	}))
 	t.Cleanup(backendServer.Close)
 
-	builder := NewProxyBuilder(&transportManagerMock{}, static.FastProxyConfig{})
+	builder := NewProxyBuilder(&transportManagerMock{}, static.FastProxyConfig{}, false)
 
 	proxyHandler, err := builder.Build("", testhelpers.MustParseURL(backendServer.URL), true, true)
 	require.NoError(t, err)
@@ -404,6 +404,84 @@ func TestTransferEncodingChunked(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, "chunk 0\nchunk 1\nchunk 2\n", string(body))
+}
+
+func TestXForwardedFor(t *testing.T) {
+	testCases := []struct {
+		desc                  string
+		notAppendXFF          bool
+		incomingXFF           string
+		expectedXFF           string
+		expectedXFFNotPresent bool
+	}{
+		{
+			desc:         "appends RemoteAddr when notAppendXFF is false",
+			notAppendXFF: false,
+			incomingXFF:  "",
+			expectedXFF:  "192.0.2.1",
+		},
+		{
+			desc:         "appends RemoteAddr to existing XFF when notAppendXFF is false",
+			notAppendXFF: false,
+			incomingXFF:  "203.0.113.1",
+			expectedXFF:  "203.0.113.1, 192.0.2.1",
+		},
+		{
+			desc:                  "does not append RemoteAddr when notAppendXFF is true and no incoming XFF",
+			notAppendXFF:          true,
+			incomingXFF:           "",
+			expectedXFFNotPresent: true,
+		},
+		{
+			desc:         "preserves existing XFF when notAppendXFF is true",
+			notAppendXFF: true,
+			incomingXFF:  "203.0.113.1",
+			expectedXFF:  "203.0.113.1",
+		},
+		{
+			desc:         "preserves multiple XFF values when notAppendXFF is true",
+			notAppendXFF: true,
+			incomingXFF:  "203.0.113.1, 198.51.100.1",
+			expectedXFF:  "203.0.113.1, 198.51.100.1",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			var receivedXFF string
+			var xffPresent bool
+
+			server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				receivedXFF = req.Header.Get("X-Forwarded-For")
+				xffPresent = req.Header.Get("X-Forwarded-For") != "" || len(req.Header["X-Forwarded-For"]) > 0
+				rw.WriteHeader(http.StatusOK)
+			}))
+			t.Cleanup(server.Close)
+
+			builder := NewProxyBuilder(&transportManagerMock{}, static.FastProxyConfig{}, test.notAppendXFF)
+
+			proxyHandler, err := builder.Build("", testhelpers.MustParseURL(server.URL), true, false)
+			require.NoError(t, err)
+
+			req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
+			req.RemoteAddr = "192.0.2.1:12345"
+
+			if test.incomingXFF != "" {
+				req.Header.Set("X-Forwarded-For", test.incomingXFF)
+			}
+
+			res := httptest.NewRecorder()
+			proxyHandler.ServeHTTP(res, req)
+
+			assert.Equal(t, http.StatusOK, res.Code)
+
+			if test.expectedXFFNotPresent {
+				assert.False(t, xffPresent, "X-Forwarded-For header should not be present")
+			} else {
+				assert.Equal(t, test.expectedXFF, receivedXFF)
+			}
+		})
+	}
 }
 
 type transportManagerMock struct {

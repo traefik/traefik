@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"net/http/httputil"
 	"net/url"
 	"testing"
 
@@ -13,7 +14,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
 )
 
-func Test_directorBuilder(t *testing.T) {
+func Test_rewriteRequestBuilder(t *testing.T) {
 	tests := []struct {
 		name            string
 		target          *url.URL
@@ -25,6 +26,7 @@ func Test_directorBuilder(t *testing.T) {
 		expectedPath    string
 		expectedRawPath string
 		expectedQuery   string
+		notAppendXFF    bool
 	}{
 		{
 			name:           "Basic proxy",
@@ -36,6 +38,18 @@ func Test_directorBuilder(t *testing.T) {
 			expectedHost:   "example.com",
 			expectedPath:   "/test",
 			expectedQuery:  "param=value",
+		},
+		{
+			name:           "Basic proxy - notAppendXFF",
+			target:         testhelpers.MustParseURL("http://example.com"),
+			passHostHeader: false,
+			preservePath:   false,
+			incomingURL:    "http://localhost/test?param=value",
+			expectedScheme: "http",
+			expectedHost:   "example.com",
+			expectedPath:   "/test",
+			expectedQuery:  "param=value",
+			notAppendXFF:   true,
 		},
 		{
 			name:           "HTTPS target",
@@ -85,21 +99,30 @@ func Test_directorBuilder(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			director := directorBuilder(test.target, test.passHostHeader, test.preservePath)
+			rewriteRequest := rewriteRequestBuilder(test.target, test.passHostHeader, test.preservePath, test.notAppendXFF)
 
-			req := httptest.NewRequest(http.MethodGet, test.incomingURL, http.NoBody)
-			director(req)
+			reqIn := httptest.NewRequest(http.MethodGet, test.incomingURL, http.NoBody)
+			reqIn.Header.Add("X-Forwarded-For", "1.2.3.4")
+			reqOut := httptest.NewRequest(http.MethodGet, test.incomingURL, http.NoBody)
+			pr := &httputil.ProxyRequest{
+				In:  reqIn,
+				Out: reqOut,
+			}
+			rewriteRequest(pr)
 
-			assert.Equal(t, test.expectedScheme, req.URL.Scheme)
-			assert.Equal(t, test.expectedHost, req.Host)
-			assert.Equal(t, test.expectedPath, req.URL.Path)
-			assert.Equal(t, test.expectedRawPath, req.URL.RawPath)
-			assert.Equal(t, test.expectedQuery, req.URL.RawQuery)
-			assert.Empty(t, req.RequestURI)
-			assert.Equal(t, "HTTP/1.1", req.Proto)
-			assert.Equal(t, 1, req.ProtoMajor)
-			assert.Equal(t, 1, req.ProtoMinor)
-			assert.False(t, !test.passHostHeader && req.Host != req.URL.Host)
+			if test.notAppendXFF {
+				assert.Equal(t, "1.2.3.4", reqOut.Header.Get("X-Forwarded-For"))
+			}
+			assert.Equal(t, test.expectedScheme, reqOut.URL.Scheme)
+			assert.Equal(t, test.expectedHost, reqOut.Host)
+			assert.Equal(t, test.expectedPath, reqOut.URL.Path)
+			assert.Equal(t, test.expectedRawPath, reqOut.URL.RawPath)
+			assert.Equal(t, test.expectedQuery, reqOut.URL.RawQuery)
+			assert.Empty(t, reqOut.RequestURI)
+			assert.Equal(t, "HTTP/1.1", reqOut.Proto)
+			assert.Equal(t, 1, reqOut.ProtoMajor)
+			assert.Equal(t, 1, reqOut.ProtoMinor)
+			assert.False(t, !test.passHostHeader && reqOut.Host != reqOut.URL.Host)
 		})
 	}
 }

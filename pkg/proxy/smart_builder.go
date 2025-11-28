@@ -31,9 +31,9 @@ type SmartBuilder struct {
 }
 
 // NewSmartBuilder creates and returns a new SmartBuilder instance.
-func NewSmartBuilder(transportManager TransportManager, proxyBuilder service.ProxyBuilder, fastProxyConfig static.FastProxyConfig) *SmartBuilder {
+func NewSmartBuilder(transportManager TransportManager, proxyBuilder service.ProxyBuilder, fastProxyConfig static.FastProxyConfig, notAppendXFF bool) *SmartBuilder {
 	return &SmartBuilder{
-		fastProxyBuilder: fast.NewProxyBuilder(transportManager, fastProxyConfig),
+		fastProxyBuilder: fast.NewProxyBuilder(transportManager, fastProxyConfig, notAppendXFF),
 		proxyBuilder:     proxyBuilder,
 		transportManager: transportManager,
 	}

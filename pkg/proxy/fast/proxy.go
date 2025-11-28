@@ -95,7 +95,8 @@ func (t timeoutError) Temporary() bool {
 
 // ReverseProxy is the FastProxy reverse proxy implementation.
 type ReverseProxy struct {
-	debug bool
+	debug        bool
+	notAppendXFF bool
 
 	connPool *connPool
 
@@ -109,7 +110,7 @@ type ReverseProxy struct {
 }
 
 // NewReverseProxy creates a new ReverseProxy.
-func NewReverseProxy(targetURL, proxyURL *url.URL, debug, passHostHeader, preservePath bool, connPool *connPool) (*ReverseProxy, error) {
+func NewReverseProxy(targetURL, proxyURL *url.URL, debug, notAppendXFF, passHostHeader, preservePath bool, connPool *connPool) (*ReverseProxy, error) {
 	var proxyAuth string
 	if proxyURL != nil && proxyURL.User != nil && targetURL.Scheme == "http" {
 		username := proxyURL.User.Username()
@@ -119,6 +120,7 @@ func NewReverseProxy(targetURL, proxyURL *url.URL, debug, passHostHeader, preser
 
 	return &ReverseProxy{
 		debug:          debug,
+		notAppendXFF:   notAppendXFF,
 		passHostHeader: passHostHeader,
 		preservePath:   preservePath,
 		targetURL:      targetURL,
@@ -212,18 +214,20 @@ func (p *ReverseProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	outReq.Header.SetMethod(req.Method)
 
-	if clientIP, _, err := net.SplitHostPort(req.RemoteAddr); err == nil {
-		// If we aren't the first proxy retain prior
-		// X-Forwarded-For information as a comma+space
-		// separated list and fold multiple headers into one.
-		prior, ok := req.Header["X-Forwarded-For"]
-		if len(prior) > 0 {
-			clientIP = strings.Join(prior, ", ") + ", " + clientIP
-		}
+	if !p.notAppendXFF {
+		if clientIP, _, err := net.SplitHostPort(req.RemoteAddr); err == nil {
+			// If we aren't the first proxy retain prior
+			// X-Forwarded-For information as a comma+space
+			// separated list and fold multiple headers into one.
+			prior, ok := req.Header["X-Forwarded-For"]
+			if len(prior) > 0 {
+				clientIP = strings.Join(prior, ", ") + ", " + clientIP
+			}
 
-		omit := ok && prior == nil // Go Issue 38079: nil now means don't populate the header
-		if !omit {
-			outReq.Header.Set("X-Forwarded-For", clientIP)
+			omit := ok && prior == nil // Go Issue 38079: nil now means don't populate the header
+			if !omit {
+				outReq.Header.Set("X-Forwarded-For", clientIP)
+			}
 		}
 	}
 

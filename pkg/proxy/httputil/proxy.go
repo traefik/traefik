@@ -27,9 +27,9 @@ const (
 	StatusClientClosedRequestText = "Client Closed Request"
 )
 
-func buildSingleHostProxy(target *url.URL, passHostHeader bool, preservePath bool, flushInterval time.Duration, roundTripper http.RoundTripper, bufferPool httputil.BufferPool) http.Handler {
+func buildSingleHostProxy(target *url.URL, passHostHeader bool, preservePath bool, notAppendXFF bool, flushInterval time.Duration, roundTripper http.RoundTripper, bufferPool httputil.BufferPool) http.Handler {
 	return &httputil.ReverseProxy{
-		Director:      directorBuilder(target, passHostHeader, preservePath),
+		Rewrite:       rewriteRequestBuilder(target, passHostHeader, preservePath, notAppendXFF),
 		Transport:     roundTripper,
 		FlushInterval: flushInterval,
 		BufferPool:    bufferPool,
@@ -38,41 +38,63 @@ func buildSingleHostProxy(target *url.URL, passHostHeader bool, preservePath boo
 	}
 }
 
-func directorBuilder(target *url.URL, passHostHeader bool, preservePath bool) func(req *http.Request) {
-	return func(outReq *http.Request) {
-		outReq.URL.Scheme = target.Scheme
-		outReq.URL.Host = target.Host
+func rewriteRequestBuilder(target *url.URL, passHostHeader bool, preservePath bool, notAppendXFF bool) func(*httputil.ProxyRequest) {
+	return func(pr *httputil.ProxyRequest) {
+		var originalXFF []string
+		var hasXFF bool
 
-		u := outReq.URL
-		if outReq.RequestURI != "" {
-			parsedURL, err := url.ParseRequestURI(outReq.RequestURI)
+		if notAppendXFF {
+			// Capture the original X-Forwarded-For from the incoming request.
+			originalXFF, hasXFF = pr.In.Header["X-Forwarded-For"]
+		} else {
+			// Keep existing XFF and allow ReverseProxy to append RemoteAddr.
+			pr.Out.Header["X-Forwarded-For"] = pr.In.Header["X-Forwarded-For"]
+			pr.SetXForwarded()
+		}
+
+		pr.Out.URL.Scheme = target.Scheme
+		pr.Out.URL.Host = target.Host
+
+		u := pr.Out.URL
+		if pr.Out.RequestURI != "" {
+			parsedURL, err := url.ParseRequestURI(pr.Out.RequestURI)
 			if err == nil {
 				u = parsedURL
 			}
 		}
 
-		outReq.URL.Path = u.Path
-		outReq.URL.RawPath = u.RawPath
+		pr.Out.URL.Path = u.Path
+		pr.Out.URL.RawPath = u.RawPath
 
 		if preservePath {
-			outReq.URL.Path, outReq.URL.RawPath = JoinURLPath(target, u)
+			pr.Out.URL.Path, pr.Out.URL.RawPath = JoinURLPath(target, u)
 		}
 
 		// If a plugin/middleware adds semicolons in query params, they should be urlEncoded.
-		outReq.URL.RawQuery = strings.ReplaceAll(u.RawQuery, ";", "&")
-		outReq.RequestURI = "" // Outgoing request should not have RequestURI
+		pr.Out.URL.RawQuery = strings.ReplaceAll(u.RawQuery, ";", "&")
+		pr.Out.RequestURI = "" // Outgoing request should not have RequestURI
 
-		outReq.Proto = "HTTP/1.1"
-		outReq.ProtoMajor = 1
-		outReq.ProtoMinor = 1
+		pr.Out.Proto = "HTTP/1.1"
+		pr.Out.ProtoMajor = 1
+		pr.Out.ProtoMinor = 1
 
 		// Do not pass client Host header unless option PassHostHeader is set.
 		if !passHostHeader {
-			outReq.Host = outReq.URL.Host
+			pr.Out.Host = pr.Out.URL.Host
 		}
 
-		if isWebSocketUpgrade(outReq) {
-			cleanWebSocketHeaders(outReq)
+		if isWebSocketUpgrade(pr.Out) {
+			cleanWebSocketHeaders(pr.Out)
+		}
+
+		if notAppendXFF {
+			// Restore the original X-Forwarded-For (or delete if it didn't exist)
+			// This prevents httputil.ReverseProxy from appending RemoteAddr
+			if hasXFF {
+				pr.Out.Header["X-Forwarded-For"] = originalXFF
+			} else {
+				delete(pr.Out.Header, "X-Forwarded-For")
+			}
 		}
 	}
 }
