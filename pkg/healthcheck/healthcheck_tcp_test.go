@@ -702,6 +702,12 @@ func (s *sequencedTCPServer) Start(t *testing.T) {
 			}
 		}
 
+		// Close the final listener to prevent health checks from succeeding
+		// after all test sequences are exhausted, which would cause flaky test failures.
+		if listener != nil {
+			listener.Close()
+		}
+
 		defer close(s.release)
 	}()
 }
