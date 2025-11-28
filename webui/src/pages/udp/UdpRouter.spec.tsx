@@ -1,5 +1,4 @@
 import { RouterDetail } from 'components/routers/RouterDetail'
-import { ResourceDetailDataType } from 'hooks/use-resource-detail'
 import { renderWithProviders } from 'utils/test'
 
 describe('<UdpRouterPage />', () => {
@@ -21,7 +20,7 @@ describe('<UdpRouterPage />', () => {
 
   it('should render the not found page', () => {
     const { getByTestId } = renderWithProviders(
-      <RouterDetail name="mock-router" data={{} as ResourceDetailDataType} error={undefined} protocol="udp" />,
+      <RouterDetail name="mock-router" data={{} as Resource.DetailsData} error={undefined} protocol="udp" />,
       { route: '/udp/routers/mock-router', withPage: true },
     )
     expect(getByTestId('Not found page')).toBeInTheDocument()
@@ -38,7 +37,6 @@ describe('<UdpRouterPage />', () => {
       provider: 'docker',
       middlewares: undefined,
       hasValidMiddlewares: undefined,
-      hasEntryPoints: true,
       entryPointsData: [
         {
           address: ':443',

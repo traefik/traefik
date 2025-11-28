@@ -7,10 +7,9 @@ import { ResourceStatus } from 'components/resources/ResourceStatus'
 import { colorByStatus } from 'components/resources/Status'
 import PaginatedTable from 'components/tables/PaginatedTable'
 import Tooltip from 'components/Tooltip'
-import { ServiceDetailType } from 'hooks/use-resource-detail'
 
 type ServersProps = {
-  data: ServiceDetailType
+  data: Service.Details
   protocol: 'http' | 'tcp' | 'udp'
 }
 
@@ -23,7 +22,7 @@ type ServerStatus = {
   [server: string]: string
 }
 
-function getServerStatusList(data: ServiceDetailType): ServerStatus {
+function getServerStatusList(data: Service.Details): ServerStatus {
   const serversList: ServerStatus = {}
 
   data.loadBalancer?.servers?.forEach((server: Server) => {

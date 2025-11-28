@@ -8,11 +8,10 @@ import { RenderUnknownProp } from './RenderUnknownProp'
 import { DetailsCardSkeleton } from 'components/resources/DetailsCard'
 import ResourceErrors, { ResourceErrorsSkeleton } from 'components/resources/ResourceErrors'
 import { UsedByRoutersSection, UsedByRoutersSkeleton } from 'components/resources/UsedByRoutersSection'
-import { ResourceDetailDataType } from 'hooks/use-resource-detail'
 import { NotFound } from 'pages/NotFound'
 
 type MiddlewareDetailProps = {
-  data?: ResourceDetailDataType
+  data?: Resource.DetailsData
   error?: Error | null
   name: string
   protocol: 'http' | 'tcp'

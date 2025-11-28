@@ -2,106 +2,8 @@ import useSWR from 'swr'
 
 import fetchMany from 'libs/fetchMany'
 
-export type EntryPoint = {
-  name: string
-  address: string
-  message?: string
-}
-
-type JSONObject = {
-  [x: string]: string | number
-}
-export type ValuesMapType = {
-  [key: string]: string | number | JSONObject
-}
-
-export type MiddlewareProps = {
-  [prop: string]: ValuesMapType
-}
-
-export type Middleware = {
-  name: string
-  status: 'enabled' | 'disabled' | 'warning'
-  provider: string
-  type?: string
-  plugin?: Record<string, unknown>
-  error?: string[]
-  routers?: string[]
-  usedBy?: string[]
-} & MiddlewareProps
-
-type Router = {
-  name: string
-  service?: string
-  status: 'enabled' | 'disabled' | 'warning'
-  rule?: string
-  priority?: number
-  provider: string
-  tls?: {
-    options: string
-    certResolver: string
-    domains: Router.TlsDomain[]
-    passthrough: boolean
-  }
-  error?: string[]
-  entryPoints?: string[]
-  message?: string
-}
-
-export type RouterDetailType = Router & {
-  middlewares?: Middleware[]
-  hasValidMiddlewares?: boolean
-  hasEntryPoints?: boolean
-  entryPointsData?: EntryPoint[]
-  using?: string[]
-}
-
-export type ServiceDetailType = {
-  name: string
-  status: 'enabled' | 'disabled' | 'warning'
-  provider: string
-  type: string
-  usedBy?: string[]
-  routers?: Router[]
-  serverStatus?: {
-    [server: string]: string
-  }
-  mirroring?: {
-    service: string
-    mirrors?: Service.Mirror[]
-  }
-  loadBalancer?: {
-    servers?: { url: string }[]
-    passHostHeader?: boolean
-    terminationDelay?: number
-    healthCheck?: {
-      scheme: string
-      path: string
-      hostname: string
-      headers?: {
-        [header: string]: string
-      }
-      port?: number
-      send?: string
-      expect?: string
-      interval?: string
-      unhealthyInterval?: string
-      timeout?: string
-    }
-  }
-  weighted?: {
-    services?: Service.WeightedService[]
-  }
-}
-
-export type MiddlewareDetailType = Middleware & {
-  routers?: Router[]
-}
-
-export type ResourceDetailDataType = RouterDetailType & ServiceDetailType & MiddlewareDetailType
-
 type ResourceDetailType = {
-  data?: ResourceDetailDataType
+  data?: Resource.DetailsData
   error?: Error
 }
 
@@ -119,7 +21,7 @@ export const useResourceDetail = (name: string, resource: string, protocol = 'ht
   }
 
   const firstError = error || entryPointsError || middlewaresError || routersError
-  const validMiddlewares = (middlewares as Middleware[] | undefined)?.filter((mw) => !!mw.name)
+  const validMiddlewares = (middlewares as Middleware.Details[] | undefined)?.filter((mw) => !!mw.name)
   const hasMiddlewares = validMiddlewares
     ? validMiddlewares.length > 0
     : routeDetail.middlewares && routeDetail.middlewares.length > 0
@@ -138,7 +40,6 @@ export const useResourceDetail = (name: string, resource: string, protocol = 'ht
         hasValidMiddlewares: hasMiddlewares,
         entryPointsData: entryPoints,
         using: routeDetail.using,
-        hasEntryPoints: !!routeDetail.entryPoints?.length,
       },
       error: firstError,
     } as ResourceDetailType

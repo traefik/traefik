@@ -1,5 +1,15 @@
 declare namespace Resource {
   type Status = 'info' | 'success' | 'warning' | 'error' | 'enabled' | 'disabled' | 'loading'
+
+  type DetailsData = Router.DetailsData & Service.Details & Middleware.DetailsData
+}
+
+declare namespace Entrypoint {
+  type Details = {
+    name: string
+    address: string
+    message?: string
+  }
 }
 
 declare namespace Router {
@@ -13,6 +23,31 @@ declare namespace Router {
     certResolver: string
     domains: TlsDomain[]
     passthrough: boolean
+  }
+
+  type Details = {
+    name: string
+    service?: string
+    status: 'enabled' | 'disabled' | 'warning'
+    rule?: string
+    priority?: number
+    provider: string
+    tls?: {
+      options: string
+      certResolver: string
+      domains: TlsDomain[]
+      passthrough: boolean
+    }
+    error?: string[]
+    entryPoints?: string[]
+    message?: string
+  }
+
+  type DetailsData = Details & {
+    middlewares?: Middleware.Details[]
+    hasValidMiddlewares?: boolean
+    entryPointsData?: Entrypoint.Details[]
+    using?: string[]
   }
 }
 
@@ -39,7 +74,7 @@ declare namespace Service {
     }
     mirroring?: {
       service: string
-      mirrors?: Service.Mirror[]
+      mirrors?: Mirror[]
     }
     loadBalancer?: {
       servers?: { url: string }[]
@@ -61,13 +96,13 @@ declare namespace Service {
       }
     }
     weighted?: {
-      services?: Service.WeightedService[]
+      services?: WeightedService[]
     }
   }
 }
 
 declare namespace Middleware {
-  type MiddlewareProps = {
+  type Props = {
     [prop: string]: ValuesMapType
   }
 
@@ -80,5 +115,9 @@ declare namespace Middleware {
     error?: string[]
     routers?: string[]
     usedBy?: string[]
-  } & MiddlewareProps
+  } & Props
+
+  type DetailsData = Details & {
+    routers?: Router.Details[]
+  }
 }

@@ -6,11 +6,10 @@ import { DetailsCardSkeleton } from 'components/resources/DetailsCard'
 import ResourceErrors, { ResourceErrorsSkeleton } from 'components/resources/ResourceErrors'
 import RouterFlowDiagram, { RouterFlowDiagramSkeleton } from 'components/routers/RouterFlowDiagram'
 import TlsSection from 'components/routers/TlsSection'
-import { ResourceDetailDataType } from 'hooks/use-resource-detail'
 import { NotFound } from 'pages/NotFound'
 
 type RouterDetailProps = {
-  data?: ResourceDetailDataType
+  data?: Resource.DetailsData
   error?: Error | null
   name: string
   protocol: 'http' | 'tcp' | 'udp'

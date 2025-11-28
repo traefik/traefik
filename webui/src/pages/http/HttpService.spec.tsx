@@ -1,5 +1,4 @@
 import { ServiceDetail } from 'components/services/ServiceDetail'
-import { ResourceDetailDataType } from 'hooks/use-resource-detail'
 import { renderWithProviders } from 'utils/test'
 
 describe('<HttpServicePage />', () => {
@@ -21,7 +20,7 @@ describe('<HttpServicePage />', () => {
 
   it('should render the not found page', () => {
     const { getByTestId } = renderWithProviders(
-      <ServiceDetail name="mock-service" data={{} as ResourceDetailDataType} error={undefined} protocol="http" />,
+      <ServiceDetail name="mock-service" data={{} as Resource.DetailsData} error={undefined} protocol="http" />,
       { route: '/http/services/mock-service', withPage: true },
     )
     expect(getByTestId('Not found page')).toBeInTheDocument()

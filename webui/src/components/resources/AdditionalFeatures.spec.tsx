@@ -1,6 +1,5 @@
 import AdditionalFeatures from './AdditionalFeatures'
 
-import { MiddlewareProps } from 'hooks/use-resource-detail'
 import { renderWithProviders } from 'utils/test'
 
 describe('<AdditionalFeatures />', () => {
@@ -9,7 +8,7 @@ describe('<AdditionalFeatures />', () => {
   })
 
   it('should render the middleware info with number', () => {
-    const middlewares: MiddlewareProps[] = [
+    const middlewares: Middleware.Props[] = [
       {
         retry: {
           attempts: 2,
@@ -23,7 +22,7 @@ describe('<AdditionalFeatures />', () => {
   })
 
   it('should render the middleware info with string', () => {
-    const middlewares: MiddlewareProps[] = [
+    const middlewares: Middleware.Props[] = [
       {
         circuitBreaker: {
           expression: 'expression',
@@ -37,7 +36,7 @@ describe('<AdditionalFeatures />', () => {
   })
 
   it('should render the middleware info with string', () => {
-    const middlewares: MiddlewareProps[] = [
+    const middlewares: Middleware.Props[] = [
       {
         rateLimit: {
           burst: 100,

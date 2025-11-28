@@ -2,13 +2,13 @@ import { Card, Flex, styled, Link, Tooltip, Box, Text, Skeleton } from '@traefik
 import { useMemo } from 'react'
 import { FiArrowRight, FiGlobe, FiLayers, FiLogIn, FiZap } from 'react-icons/fi'
 
+import CopyableText from 'components/CopyableText'
 import ProviderIcon from 'components/icons/providers'
 import DetailsCard, { SectionTitle } from 'components/resources/DetailsCard'
 import { ProviderName } from 'components/resources/DetailSections'
 import { ResourceStatus } from 'components/resources/ResourceStatus'
 import { useHrefWithReturnTo } from 'hooks/use-href-with-return-to'
-import { ResourceDetailDataType, useResourceDetail } from 'hooks/use-resource-detail'
-import { getValidData } from 'libs/objectHandlers'
+import { useResourceDetail } from 'hooks/use-resource-detail'
 
 const FlexContainer = styled(Flex, {
   gap: '$3',
@@ -73,15 +73,20 @@ const LinkedNameAndStatus = ({ data }: { data: { status: Resource.Status; name: 
 }
 
 type RouterFlowDiagramProps = {
-  data: ResourceDetailDataType
+  data: Resource.DetailsData
   protocol: 'http' | 'tcp' | 'udp'
 }
 
 const RouterFlowDiagram = ({ data, protocol }: RouterFlowDiagramProps) => {
-  const entrypoints = useMemo(() => getValidData(data.entryPointsData), [data?.entryPointsData])
   const displayedEntrypoints = useMemo(() => {
-    return entrypoints.map((point) => ({ key: point.name, val: point.address }))
-  }, [entrypoints])
+    return data?.entryPointsData?.map((point) => {
+      if (!point.message) {
+        return { key: point.name, val: point.address }
+      } else {
+        return { key: point.message, val: '' }
+      }
+    })
+  }, [data?.entryPointsData])
 
   const routerDetailsItems = useMemo(
     () =>
@@ -97,7 +102,7 @@ const RouterFlowDiagram = ({ data, protocol }: RouterFlowDiagramProps) => {
           ),
         },
         data.priority && { key: 'Priority', val: data.priority },
-        data.rule && { key: 'Rule', val: data.rule },
+        data.rule && { key: 'Rule', val: <CopyableText css={{ lineHeight: 1.2 }} text={data.rule} /> },
       ].filter(Boolean) as { key: string; val: string | React.ReactElement }[],
     [data.priority, data.provider, data.rule, data.status],
   )
@@ -110,7 +115,7 @@ const RouterFlowDiagram = ({ data, protocol }: RouterFlowDiagramProps) => {
 
   return (
     <Flex gap={4} data-testid="router-structure">
-      {!!data.hasEntryPoints && (
+      {!!data.using?.length && (
         <>
           <FlexContainer>
             <SectionTitle icon={<FiLogIn size={20} />} title="Entrypoints" />

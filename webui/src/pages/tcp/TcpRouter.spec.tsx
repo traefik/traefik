@@ -1,5 +1,4 @@
 import { RouterDetail } from 'components/routers/RouterDetail'
-import { ResourceDetailDataType } from 'hooks/use-resource-detail'
 import { renderWithProviders } from 'utils/test'
 
 describe('<TcpRouterPage />', () => {
@@ -21,7 +20,7 @@ describe('<TcpRouterPage />', () => {
 
   it('should render the not found page', () => {
     const { getByTestId } = renderWithProviders(
-      <RouterDetail name="mock-router" data={{} as ResourceDetailDataType} error={undefined} protocol="tcp" />,
+      <RouterDetail name="mock-router" data={{} as Resource.DetailsData} error={undefined} protocol="tcp" />,
       { route: '/tcp/routers/mock-router', withPage: true },
     )
     expect(getByTestId('Not found page')).toBeInTheDocument()
@@ -53,7 +52,6 @@ describe('<TcpRouterPage />', () => {
         },
       ],
       hasValidMiddlewares: true,
-      hasEntryPoints: true,
       entryPointsData: [
         {
           address: ':8000',

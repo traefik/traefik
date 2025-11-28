@@ -1,5 +1,4 @@
 import { MiddlewareDetail } from 'components/middlewares/MiddlewareDetail'
-import { ResourceDetailDataType } from 'hooks/use-resource-detail'
 import { renderWithProviders } from 'utils/test'
 
 describe('<HttpMiddlewarePage />', () => {
@@ -21,7 +20,7 @@ describe('<HttpMiddlewarePage />', () => {
 
   it('should render the not found page', () => {
     const { getByTestId } = renderWithProviders(
-      <MiddlewareDetail name="mock-middleware" data={{} as ResourceDetailDataType} error={undefined} protocol="http" />,
+      <MiddlewareDetail name="mock-middleware" data={{} as Resource.DetailsData} error={undefined} protocol="http" />,
       { route: '/http/middlewares/mock-middleware', withPage: true },
     )
     expect(getByTestId('Not found page')).toBeInTheDocument()

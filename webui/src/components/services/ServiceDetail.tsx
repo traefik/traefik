@@ -10,11 +10,10 @@ import WeightedServices from './WeightedServices'
 import { DetailsCardSkeleton } from 'components/resources/DetailsCard'
 import { UsedByRoutersSection, UsedByRoutersSkeleton } from 'components/resources/UsedByRoutersSection'
 import AriaTableSkeleton from 'components/tables/AriaTableSkeleton'
-import { ResourceDetailDataType } from 'hooks/use-resource-detail'
 import { NotFound } from 'pages/NotFound'
 
 type ServiceDetailProps = {
-  data?: ResourceDetailDataType
+  data?: Resource.DetailsData
   error?: Error
   name: string
   protocol: 'http' | 'tcp' | 'udp'

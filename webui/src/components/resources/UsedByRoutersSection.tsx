@@ -7,11 +7,10 @@ import { SectionTitle } from './DetailsCard'
 
 import SortableTh from 'components/tables/SortableTh'
 import { ToastContext } from 'contexts/toasts'
-import { MiddlewareDetailType, ServiceDetailType } from 'hooks/use-resource-detail'
 import { makeRowRender } from 'pages/http/HttpRouters'
 
 type UsedByRoutersSectionProps = {
-  data: ServiceDetailType | MiddlewareDetailType
+  data: Service.Details | Middleware.DetailsData
   protocol?: string
 }
 

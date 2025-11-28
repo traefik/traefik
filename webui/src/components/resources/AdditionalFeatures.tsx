@@ -1,7 +1,6 @@
 import { Badge, Box, Text } from '@traefiklabs/faency'
 
 import Tooltip from 'components/Tooltip'
-import { MiddlewareProps, ValuesMapType } from 'hooks/use-resource-detail'
 
 function capitalize(word: string): string {
   return word.charAt(0).toUpperCase() + word.slice(1)
@@ -19,7 +18,7 @@ function quoteArray(values: (string | number)[]): (string | number)[] {
   return values.map(quote)
 }
 
-const renderFeatureValues = (valuesMap: ValuesMapType): string => {
+const renderFeatureValues = (valuesMap: Object.ValuesMapType): string => {
   return Object.entries(valuesMap)
     .map(([name, value]) => {
       const capitalizedName = capitalize(name)
@@ -40,7 +39,7 @@ const renderFeatureValues = (valuesMap: ValuesMapType): string => {
     .join(', ')
 }
 
-const FeatureMiddleware = ({ middleware }: { middleware: MiddlewareProps }) => {
+const FeatureMiddleware = ({ middleware }: { middleware: Middleware.Props }) => {
   const [name, value] = Object.entries(middleware)[0]
   const content = `${capitalize(name)}: ${renderFeatureValues(value)}`
 
@@ -54,7 +53,7 @@ const FeatureMiddleware = ({ middleware }: { middleware: MiddlewareProps }) => {
 }
 
 type AdditionalFeaturesProps = {
-  middlewares?: MiddlewareProps[]
+  middlewares?: Middleware.Props[]
   uid: string
 }
 

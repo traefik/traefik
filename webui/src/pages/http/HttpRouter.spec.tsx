@@ -1,5 +1,4 @@
 import { RouterDetail } from 'components/routers/RouterDetail'
-import { ResourceDetailDataType } from 'hooks/use-resource-detail'
 import apiEntrypoints from 'mocks/data/api-entrypoints.json'
 import apiHttpMiddlewares from 'mocks/data/api-http_middlewares.json'
 import apiHttpRouters from 'mocks/data/api-http_routers.json'
@@ -24,7 +23,7 @@ describe('<HttpRouterPage />', () => {
 
   it('should render the not found page', () => {
     const { getByTestId } = renderWithProviders(
-      <RouterDetail name="mock-router" data={{} as ResourceDetailDataType} error={undefined} protocol="http" />,
+      <RouterDetail name="mock-router" data={{} as Resource.DetailsData} error={undefined} protocol="http" />,
       { route: '/http/routers/mock-router', withPage: true },
     )
     expect(getByTestId('Not found page')).toBeInTheDocument()
@@ -36,7 +35,6 @@ describe('<HttpRouterPage />', () => {
       ...router!,
       middlewares: apiHttpMiddlewares.filter((x) => router?.middlewares?.includes(x.name)),
       hasValidMiddlewares: true,
-      hasEntryPoints: true,
       entryPointsData: apiEntrypoints.filter((x) => router?.using?.includes(x.name)),
     }
 

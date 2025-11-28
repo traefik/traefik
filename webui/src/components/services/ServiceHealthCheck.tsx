@@ -4,10 +4,9 @@ import { FiShield } from 'react-icons/fi'
 import CopyableText from 'components/CopyableText'
 import DetailsCard from 'components/resources/DetailsCard'
 import { Chips } from 'components/resources/DetailSections'
-import { ServiceDetailType } from 'hooks/use-resource-detail'
 
 type ServiceHealthCheckProps = {
-  data: ServiceDetailType
+  data: Service.Details
   protocol: 'http' | 'tcp' | 'udp'
 }
 
