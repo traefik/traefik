@@ -4,8 +4,8 @@ import { useMemo } from 'react'
 import TlsIcon from './TlsIcon'
 
 import { EmptyIcon } from 'components/icons/EmptyIcon'
+import { BooleanState, EmptyPlaceholder } from 'components/resources/DetailItemComponents'
 import DetailsCard, { SectionTitle } from 'components/resources/DetailsCard'
-import { BooleanState, EmptyPlaceholder } from 'components/resources/DetailSections'
 
 type Props = {
   data?: Router.TLS

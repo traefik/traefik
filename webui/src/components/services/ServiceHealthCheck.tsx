@@ -2,8 +2,8 @@ import { useMemo } from 'react'
 import { FiShield } from 'react-icons/fi'
 
 import CopyableText from 'components/CopyableText'
+import { Chips } from 'components/resources/DetailItemComponents'
 import DetailsCard from 'components/resources/DetailsCard'
-import { Chips } from 'components/resources/DetailSections'
 
 type ServiceHealthCheckProps = {
   data: Service.Details

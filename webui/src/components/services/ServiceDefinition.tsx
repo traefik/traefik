@@ -2,8 +2,8 @@ import { Badge } from '@traefiklabs/faency'
 import { useMemo } from 'react'
 
 import ProviderIcon from 'components/icons/providers'
+import { BooleanState, ProviderName } from 'components/resources/DetailItemComponents'
 import DetailsCard from 'components/resources/DetailsCard'
-import { BooleanState, ProviderName } from 'components/resources/DetailSections'
 import { ResourceStatus } from 'components/resources/ResourceStatus'
 
 type ServiceDefinitionProps = {

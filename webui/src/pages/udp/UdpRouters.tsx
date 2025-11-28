@@ -6,7 +6,7 @@ import { useSearchParams } from 'react-router-dom'
 
 import ClickableRow from 'components/ClickableRow'
 import ProviderIcon from 'components/icons/providers'
-import { Chips } from 'components/resources/DetailSections'
+import { Chips } from 'components/resources/DetailItemComponents'
 import { ResourceStatus } from 'components/resources/ResourceStatus'
 import { ScrollTopButton } from 'components/ScrollTopButton'
 import { SpinnerLoader } from 'components/SpinnerLoader'

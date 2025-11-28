@@ -1,7 +1,7 @@
 import { ReactNode } from 'react'
 
 import CopyableText from 'components/CopyableText'
-import { BooleanState, ItemBlock } from 'components/resources/DetailSections'
+import { BooleanState, ItemBlock } from 'components/resources/DetailItemComponents'
 import GenericTable from 'components/resources/GenericTable'
 import IpStrategyTable, { IpStrategy } from 'components/resources/IpStrategyTable'
 

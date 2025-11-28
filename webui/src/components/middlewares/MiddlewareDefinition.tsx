@@ -1,8 +1,8 @@
 import { useMemo } from 'react'
 
 import ProviderIcon from 'components/icons/providers'
+import { ProviderName } from 'components/resources/DetailItemComponents'
 import DetailsCard from 'components/resources/DetailsCard'
-import { ProviderName } from 'components/resources/DetailSections'
 import { ResourceStatus } from 'components/resources/ResourceStatus'
 import { parseMiddlewareType } from 'libs/parsers'
 
