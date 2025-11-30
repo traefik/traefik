@@ -162,6 +162,20 @@ func TestGetUncheckedCertificates(t *testing.T) {
 			},
 			expectedDomains: []string{"acme.wtf"},
 		},
+		{
+			desc:    "default certificate exists → no need to generate ACME cert",
+			domains: []string{"new-domain.com", "another-domain.com"},
+			dynamicCerts: func() *safe.Safe {
+				certMap := map[string]*tls.Certificate{
+					"default": {Leaf: nil}, // Simulating default fallback cert present
+				}
+				s := &safe.Safe{}
+				s.Set(certMap)
+				return s
+			}(),
+			expectedDomains: []string{},
+		},
+
 	}
 
 	for _, test := range testCases {
@@ -173,15 +187,15 @@ func TestGetUncheckedCertificates(t *testing.T) {
 			}
 
 			acmeProvider := Provider{
-				// certificateStore: &traefiktls.CertificateStore{
-				// 	DynamicCerts: test.dynamicCerts,
-				// },
+				certificateStore: &types.TLSStore{
+					DynamicCerts: test.dynamicCerts,
+				},
 				certificates:     test.acmeCertificates,
 				resolvingDomains: test.resolvingDomains,
 			}
 
 			domains := acmeProvider.getUncheckedDomains(t.Context(), test.domains, "default")
-			assert.Len(t, domains, len(test.expectedDomains), "Unexpected domains.")
+			assert.ElementsMatch(t, test.expectedDomains, domains, "Unchecked domains mismatch.")
 		})
 	}
 }
