@@ -1,6 +1,8 @@
 name: Build Web UI
 on:
   workflow_call: {}
+env:
+  SAFE_CHAIN_MINIMUM_PACKAGE_AGE_HOURS: 360  # 15 days
 jobs:
 
   build-webui:
@@ -19,10 +21,15 @@ jobs:
           cache: yarn
           cache-dependency-path: webui/yarn.lock
 
+      - name: Setup safe-chain
+        rn: |
+          npm i -g @aikidosec/safe-chain
+          safe-chain setup-ci
+
       - name: Build webui
         working-directory: ./webui
         run: |
-          yarn install
+          yarn install --ignore-scripts
           yarn build
 
       - name: Package webui

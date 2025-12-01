@@ -80,7 +80,12 @@ jobs:
           cache: 'yarn'
           cache-dependency-path: webui/yarn.lock
 
+      - name: Setup safe-chain
+        run: |
+          npm i -g @aikidosec/safe-chain
+          safe-chain setup-ci
+
       - name: UI unit tests
         run: |
-          yarn --cwd webui install
+          yarn --cwd webui install --ignore-scripts
           yarn --cwd webui test:unit:ci
