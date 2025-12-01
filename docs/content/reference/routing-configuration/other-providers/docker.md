@@ -285,6 +285,15 @@ you'd add the label `traefik.http.services.<name-of-your-choice>.loadbalancer.pa
      "traefik.http.services.myservice.loadbalancer.server.scheme=http"
     ```
 
+??? info "`traefik.http.services.<service_name>.loadbalancer.server.url`"
+
+    Defines the service URL.
+    This option cannot be used in combination with `port` or `scheme` definition.
+
+    ```yaml
+    traefik.http.services.<service_name>.loadbalancer.server.url=http://foobar:8080
+    ```
+
 ??? info "`traefik.http.services.<service_name>.loadbalancer.serverstransport`"
 
     Allows to reference a ServersTransport resource that is defined either with the File provider or the Kubernetes CRD one.

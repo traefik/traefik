@@ -16,7 +16,7 @@ import SortableTh from 'components/tables/SortableTh'
 import Tooltip from 'components/Tooltip'
 import TooltipText from 'components/TooltipText'
 import useFetchWithPagination, { pagesResponseInterface, RenderRowType } from 'hooks/use-fetch-with-pagination'
-import { EmptyPlaceholder } from 'layout/EmptyPlaceholder'
+import { EmptyPlaceholderTd } from 'layout/EmptyPlaceholder'
 
 export const makeRowRender = (protocol = 'http'): RenderRowType => {
   const HttpRoutersRenderRow = (row) => (
@@ -100,9 +100,7 @@ export const HttpRoutersRender = ({
         {(isEmpty || !!error) && (
           <AriaTfoot>
             <AriaTr>
-              <AriaTd fullColSpan>
-                <EmptyPlaceholder message={error ? 'Failed to fetch data' : 'No data available'} />
-              </AriaTd>
+              <EmptyPlaceholderTd message={error ? 'Failed to fetch data' : 'No data available'} />
             </AriaTr>
           </AriaTfoot>
         )}
