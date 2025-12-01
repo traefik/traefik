@@ -205,7 +205,7 @@ Get Traefik's LoadBalancer IP and use `--resolve` to test without changing DNS:
 NGINX_IP=$(kubectl get svc -n ingress-nginx ingress-nginx-controller -o go-template='{{ $ing := index .status.loadBalancer.ingress 0 }}{{ if $ing.ip }}{{ $ing.ip }}{{ else }}{{ $ing.hostname }}{{ end }}')
 
 TRAEFIK_IP=$(kubectl get svc -n traefik traefik -o go-template='{{ $ing := index .status.loadBalancer.ingress 0 }}{{ if $ing.ip }}{{ $ing.ip }}{{ else }}{{ $ing.hostname }}{{ end }}')
-echo "Traefik IP: $TRAEFIK_IP"
+echo -e "Nginx IP: $NGINX_IP\nTraefik IP: $TRAEFIK_IP"
 
 # Test HTTP
 curl --resolve myapp.example.com:80:$TRAEFIK_IP http://myapp.example.com/
