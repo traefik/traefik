@@ -128,31 +128,11 @@ helm upgrade --install traefik traefik/traefik \
 Or using a [values file](https://github.com/traefik/traefik-helm-chart/blob/master/traefik/VALUES.md) for more configuration:
 
 ```yaml tab="traefik-values.yaml"
+...
 providers:
   kubernetesIngressNginx:
     enabled: true
-    ingressClass: "nginx"
-    controllerClass: "k8s.io/ingress-nginx"
-    publishService:
-      enabled: true
-
-ports:
-  web:
-    port: 8000
-    expose:
-      default: true
-    exposedPort: 80
-  websecure:
-    port: 8443
-    expose:
-      default: true
-    exposedPort: 443
-    tls:
-      enabled: true
-
-service:
-  enabled: true
-  type: LoadBalancer
+ ...
 ```
 
 ```bash
