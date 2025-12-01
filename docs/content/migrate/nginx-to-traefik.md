@@ -24,8 +24,7 @@ How to migrate from NGINX Ingress Controller to Traefik with zero downtime.
 
 By completing this migration, your existing Ingress resources will work with Traefik without any modifications. The Traefik Kubernetes Ingress NGINX Provider automatically translates NGINX annotations into Traefik configuration:
 
-```yaml tab="Your Existing Ingress (No Changes Needed)"
-
+````yaml tab="Your Existing Ingress (No Changes Needed)"
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -47,10 +46,43 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: myapp
+                name: whoami
                 port:
                   number: 80
-```
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: whoami
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: whoami
+  template:
+    metadata:
+      labels:
+        app: whoami
+    spec:
+      containers:
+        - name: whoami
+          image: traefik/whoami
+          ports:
+            - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoami
+spec:
+  selector:
+    app: whoami
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
 
 For a complete list of supported annotations and behavioral differences, see the [Ingress NGINX Routing Configuration](../reference/routing-configuration/kubernetes/ingress-nginx.md) documentation.
 
