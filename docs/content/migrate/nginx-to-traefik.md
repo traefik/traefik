@@ -292,8 +292,7 @@ kubectl get svc -n ingress-nginx ingress-nginx-controller \
   -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
 
 # Traefik LoadBalancer
-kubectl get svc -n traefik traefik \
-  -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+echo $(kubectl get svc -n traefik traefik -o go-template='{{ $ing := index .status.loadBalancer.ingress 0 }}{{ if $ing.ip }}{{ $ing.ip }}{{ else }}{{ $ing.hostname }}{{ end }}')
 ```
 
 **Progressive DNS migration:**
