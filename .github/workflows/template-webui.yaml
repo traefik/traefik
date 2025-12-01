@@ -30,7 +30,7 @@ jobs:
       - name: Build webui
         working-directory: ./webui
         run: |
-          yarn install
+          yarn install --ignore-scripts
           yarn build
 
       - name: Package webui
