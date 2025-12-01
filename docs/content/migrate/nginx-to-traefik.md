@@ -32,6 +32,7 @@ metadata:
   annotations:
     # These NGINX annotations are automatically translated by Traefik
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
     nginx.ingress.kubernetes.io/enable-cors: "true"
     nginx.ingress.kubernetes.io/cors-allow-origin: "https://example.com"
     nginx.ingress.kubernetes.io/affinity: "cookie"
