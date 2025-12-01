@@ -132,7 +132,7 @@ Final:       DNS → LoadBalancer → Traefik → Your Services
 
 1. Install Traefik alongside NGINX (both serving traffic in parallel)
 2. Upgrade NGINX Helm release to preserve the IngressClass on uninstall
-3. Add Traefik LoadBalancer to DNS
+3. Add Traefik LoadBalancer to DNS (if you choose DNS option; cf. step 3)
 4. Progressively shift traffic from NGINX to Traefik
 5. Remove NGINX from DNS and uninstall
 
