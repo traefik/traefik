@@ -126,7 +126,7 @@ export const UsedByRoutersSection = ({ data, protocol = 'http' }: UsedByRoutersS
     <Flex css={{ flexDirection: 'column', mt: '$5' }}>
       <SectionHeader title="Used by Routers" />
 
-      <AriaTable data-testid="routers-table">
+      <AriaTable data-testid="routers-table" css={{ tableLayout: 'auto' }}>
         <AriaThead>
           <AriaTr>
             <SortableTh label="Status" css={{ width: '40px' }} isSortable sortByValue="status" />
