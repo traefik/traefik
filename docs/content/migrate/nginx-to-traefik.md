@@ -208,7 +208,9 @@ TRAEFIK_IP=$(kubectl get svc -n traefik traefik -o go-template='{{ $ing := index
 echo -e "Nginx IP: $NGINX_IP\nTraefik IP: $TRAEFIK_IP"
 
 # Test HTTP
-curl --resolve myapp.example.com:80:$TRAEFIK_IP http://myapp.example.com/
+# Observe HTTPS redirections:
+curl --connect-to myapp.example.com:80:${NGINX_IP}:80 http://myapp.example.com/ -D -
+curl --connect-to myapp.example.com:80:${TRAEFIK_IP}:80 http://myapp.example.com/ -D - # note X-Forwarded-Server which should be traefik
 
 # Test HTTPS (use -k to skip certificate verification if using self-signed certs)
 curl --resolve myapp.example.com:443:$TRAEFIK_IP https://myapp.example.com/
