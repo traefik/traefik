@@ -27,6 +27,7 @@ type DetailsCardProps = {
   keyColumns?: number
   items: { key: string; val: string | React.ReactElement; stackVertical?: boolean; forceNewRow?: boolean }[]
   minKeyWidth?: string
+  maxKeyWidth?: string
   testidPrefix?: string
   testId?: string
   title?: string
@@ -38,6 +39,7 @@ export default function DetailsCard({
   keyColumns = 2,
   items,
   minKeyWidth,
+  maxKeyWidth,
   testidPrefix = 'definition',
   testId,
   title,
@@ -50,8 +52,12 @@ export default function DetailsCard({
         <Grid
           css={{
             gap: '$2 $3',
-            gridTemplateColumns: `repeat(${keyColumns}, auto 1fr)`,
-            [`@media (max-width:${breakpoints.laptop}px)`]: { gridTemplateColumns: 'auto 1fr' },
+            gridTemplateColumns: maxKeyWidth
+              ? `repeat(${keyColumns}, minmax(auto, ${maxKeyWidth}) 1fr)`
+              : `repeat(${keyColumns}, auto 1fr)`,
+            [`@media (max-width:${breakpoints.laptop}px)`]: {
+              gridTemplateColumns: maxKeyWidth ? `minmax(auto, ${maxKeyWidth}) 1fr` : 'auto 1fr',
+            },
           }}
         >
           {items.map((item, index) => {
@@ -73,7 +79,17 @@ export default function DetailsCard({
                 )}
                 {item.stackVertical ? (
                   <Flex direction="column" gap={1} css={{ gridColumn: 'span 2' }}>
-                    <StyledText css={{ fontWeight: 600, minWidth: minKeyWidth }}>{item.key}</StyledText>
+                    <StyledText
+                      css={{
+                        fontWeight: 600,
+                        minWidth: minKeyWidth,
+                        maxWidth: maxKeyWidth,
+                        overflowWrap: 'break-word',
+                        wordBreak: 'break-word',
+                      }}
+                    >
+                      {item.key}
+                    </StyledText>
                     {typeof item.val === 'string' ? (
                       <ValText>{item.val}</ValText>
                     ) : (
@@ -98,13 +114,27 @@ export default function DetailsCard({
                               <StyledText
                                 key={`hidden-${index}-${jndex}`}
                                 aria-hidden="true"
-                                css={{ gridArea: '1 / 1', fontWeight: 600, visibility: 'hidden' }}
+                                css={{
+                                  gridArea: '1 / 1',
+                                  fontWeight: 600,
+                                  visibility: 'hidden',
+                                  maxWidth: maxKeyWidth,
+                                }}
                               >
                                 {hiddenItem.key}
                               </StyledText>
                             ))
                         : null}
-                      <StyledText css={{ gridArea: '1 / 1', fontWeight: 600, minWidth: minKeyWidth }}>
+                      <StyledText
+                        css={{
+                          gridArea: '1 / 1',
+                          fontWeight: 600,
+                          minWidth: minKeyWidth,
+                          maxWidth: maxKeyWidth,
+                          overflowWrap: 'break-word',
+                          wordBreak: 'break-word',
+                        }}
+                      >
                         {item.key}
                       </StyledText>
                     </Grid>

@@ -124,6 +124,7 @@ const RouterFlowDiagram = ({ data, protocol }: RouterFlowDiagramProps) => {
                 css={{ width: '100%', maxHeight: 300, overflowX: 'auto' }}
                 items={displayedEntrypoints}
                 keyColumns={1}
+                maxKeyWidth="70%"
               />
             ) : (
               <DiagramCardSkeleton />
