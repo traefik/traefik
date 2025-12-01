@@ -207,7 +207,7 @@ NGINX_IP=$(kubectl get svc -n ingress-nginx ingress-nginx-controller -o go-templ
 TRAEFIK_IP=$(kubectl get svc -n traefik traefik -o go-template='{{ $ing := index .status.loadBalancer.ingress 0 }}{{ if $ing.ip }}{{ $ing.ip }}{{ else }}{{ $ing.hostname }}{{ end }}')
 echo -e "Nginx IP: $NGINX_IP\nTraefik IP: $TRAEFIK_IP"
 
-# Test HTTP
+# Test HTTP for both
 # Observe HTTPS redirections:
 curl --connect-to myapp.example.com:80:${NGINX_IP}:80 http://myapp.example.com/ -D -
 curl --connect-to myapp.example.com:80:${TRAEFIK_IP}:80 http://myapp.example.com/ -D - # note X-Forwarded-Server which should be traefik
