@@ -22,7 +22,8 @@ jobs:
           cache-dependency-path: webui/yarn.lock
 
       - name: Setup safe-chain
-        rn: |
+        working-directory: ./webui
+        run: |
           npm i -g @aikidosec/safe-chain
           safe-chain setup-ci
 
