@@ -24,7 +24,7 @@ How to migrate from NGINX Ingress Controller to Traefik with zero downtime.
 
 By completing this migration, your existing Ingress resources will work with Traefik without any modifications. The Traefik Kubernetes Ingress NGINX Provider automatically translates NGINX annotations into Traefik configuration:
 
-````yaml tab="Your Existing Ingress (No Changes Needed)"
+```yaml tab="Your Existing Ingress (No Changes Needed)"
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -84,6 +84,7 @@ spec:
     - protocol: TCP
       port: 80
       targetPort: 80
+```
 
 For a complete list of supported annotations and behavioral differences, see the [Ingress NGINX Routing Configuration](../reference/routing-configuration/kubernetes/ingress-nginx.md) documentation.
 
@@ -132,10 +133,9 @@ Final:       DNS → LoadBalancer → Traefik → Your Services
 **Migration Flow:**
 
 1. Install Traefik alongside NGINX (both serving traffic in parallel)
-2. Upgrade NGINX Helm release to preserve the IngressClass on uninstall
-3. Add Traefik LoadBalancer to DNS (if you choose DNS option; cf. step 3)
-4. Progressively shift traffic from NGINX to Traefik
-5. Remove NGINX from DNS and uninstall
+2. Add Traefik LoadBalancer to DNS (if you choose DNS option; cf. step 3)
+3. Progressively shift traffic from NGINX to Traefik
+4. Remove NGINX from DNS, preserve the IngressClass, and uninstall
 
 ---
 
@@ -227,60 +227,7 @@ kubectl logs -n traefik deployment/traefik | grep -i "ingress"
 
 ---
 
-## Step 3: Preserve the IngressClass
-
-When NGINX is uninstalled via Helm, it deletes the `nginx` IngressClass by default. Traefik needs this IngressClass to continue recognizing your Ingresses. You must ensure the IngressClass persists after NGINX removal.
-
-### If NGINX Was Installed via Helm
-
-Upgrade the NGINX Helm release to add the `helm.sh/resource-policy: keep` annotation to the IngressClass. Use `--reuse-values` to preserve your existing configuration.
-
-```bash
-helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
-  --reuse-values \
-  --namespace ingress-nginx \
-  --set-json 'controller.ingressClassResource.annotations={"helm.sh/resource-policy": "keep"}'
-```
-
-!!! warning "Always Use --reuse-values"
-
-    The `--reuse-values` flag is critical - it preserves all your existing NGINX configuration. Without it, Helm would reset everything to defaults, potentially breaking your setup.
-
-!!! note "Traefik Handles Traffic During Upgrade"
-
-    While NGINX is being upgraded, Traefik continues serving traffic. This ensures zero downtime during the upgrade process.
-
-### If NGINX Was Installed via GitOps (ArgoCD, Flux)
-
-Ensure the `nginx` IngressClass is defined as a standalone resource in your Git repository, not as part of the NGINX Helm release. This way, it won't be deleted when NGINX is removed.
-
-```yaml tab="ingressclass.yaml"
-apiVersion: networking.k8s.io/v1
-kind: IngressClass
-metadata:
-  name: nginx
-spec:
-  controller: k8s.io/ingress-nginx
-```
-
-### If NGINX Was Installed Manually
-
-Create the IngressClass as a standalone resource before uninstalling NGINX:
-
-```bash
-kubectl apply -f - <<EOF
-apiVersion: networking.k8s.io/v1
-kind: IngressClass
-metadata:
-  name: nginx
-spec:
-  controller: k8s.io/ingress-nginx
-EOF
-```
-
----
-
-## Step 4: Shift Traffic to Traefik
+## Step 3: Shift Traffic to Traefik
 
 With both controllers running and verified, progressively shift traffic from NGINX to Traefik.
 
@@ -304,7 +251,7 @@ echo $(kubectl get svc -n traefik traefik -o go-template='{{ $ing := index .stat
 2. **Monitor** - Observe traffic patterns on both controllers
 3. **Remove NGINX from DNS** - Once confident, remove the NGINX LoadBalancer IP from DNS
 4. **Wait for DNS propagation** - Allow time for DNS caches to expire
-5. **Uninstall NGINX** - Proceed to [Step 5](#step-5-uninstall-nginx-ingress-controller)
+5. **Uninstall NGINX** - Proceed to [Step 4](#step-4-uninstall-nginx-ingress-controller)
 
 ??? info "ExternalDNS Users"
 
@@ -506,11 +453,59 @@ kubectl get svc -n traefik traefik
 
 ---
 
-## Step 5: Uninstall NGINX Ingress Controller
+## Step 4: Uninstall NGINX Ingress Controller
 
-Once NGINX is no longer receiving traffic, remove it from your cluster.
+Once NGINX is no longer receiving traffic, remove it from your cluster. Before uninstalling, you must ensure the `nginx` IngressClass is preserved. Traefik needs it to continue discovering your Ingresses.
 
-### Delete NGINX Admission Webhook First
+### Preserve the IngressClass
+
+??? note "If NGINX Was Installed via Helm"
+
+    Add the `helm.sh/resource-policy: keep` annotation to tell Helm to preserve the IngressClass:
+
+    ```bash
+    helm upgrade ingress-nginx ingress-nginx/ingress-nginx \
+      --namespace ingress-nginx \
+      --reuse-values \
+      --set-json 'controller.ingressClassResource.annotations={"helm.sh/resource-policy": "keep"}'
+    ```
+
+    The `--reuse-values` flag is critical - it preserves all your existing NGINX configuration. Without it, Helm would reset everything to defaults, potentially breaking your setup.
+
+    !!! info "kubectl annotate/patch/edit does not work"
+
+        Adding the annotation via `kubectl annotate`, `kubectl patch`, or `kubectl edit` will not preserve the IngressClass. Helm stores its release state internally and checks annotations from its internal manifest, not the live cluster state. Only `helm upgrade` updates Helm's internal state.
+
+??? note "If NGINX Was Installed via GitOps (ArgoCD, Flux)"
+
+    Ensure the `nginx` IngressClass is defined as a standalone resource in your Git repository, separate from the NGINX Helm release:
+
+    ```yaml
+    # ingressclass.yaml
+    apiVersion: networking.k8s.io/v1
+    kind: IngressClass
+    metadata:
+      name: nginx
+    spec:
+      controller: k8s.io/ingress-nginx
+    ```
+
+??? note "If NGINX Was Installed Manually"
+
+    Create the IngressClass as a standalone resource:
+
+    ```bash
+    kubectl apply -f - <<EOF
+    apiVersion: networking.k8s.io/v1
+    kind: IngressClass
+    metadata:
+      name: nginx
+    spec:
+      controller: k8s.io/ingress-nginx
+    EOF
+    ```
+
+### Delete NGINX Admission Webhook
 
 The admission webhook can cause issues with Ingress modifications after NGINX is removed:
 
@@ -525,7 +520,7 @@ kubectl delete mutatingwebhookconfiguration ingress-nginx-admission --ignore-not
 helm uninstall ingress-nginx -n ingress-nginx
 ```
 
-You should see output confirming the IngressClass was preserved:
+If you added the `helm.sh/resource-policy: keep` annotation, you should see:
 
 ```text
 These resources were kept due to the resource policy:
@@ -540,7 +535,7 @@ release "ingress-nginx" uninstalled
 kubectl get ingressclass nginx
 ```
 
-In case, the ingressClass is somehow deleted, you can recreate it using the commands in [Step 3](#if-nginx-was-installed-manually).
+In case, the ingressClass is somehow deleted, you can recreate it using the commands in [Preserve the IngressClass](#preserve-the-ingressclass).
 
 ### Clean Up NGINX Namespace
 
