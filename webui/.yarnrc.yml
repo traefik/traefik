@@ -1,0 +1,1 @@
+enableScripts: false
