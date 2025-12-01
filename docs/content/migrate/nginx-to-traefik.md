@@ -213,7 +213,8 @@ curl --connect-to myapp.example.com:80:${NGINX_IP}:80 http://myapp.example.com/ 
 curl --connect-to myapp.example.com:80:${TRAEFIK_IP}:80 http://myapp.example.com/ -D - # note X-Forwarded-Server which should be traefik
 
 # Test HTTPS (use -k to skip certificate verification if using self-signed certs)
-curl --resolve myapp.example.com:443:$TRAEFIK_IP https://myapp.example.com/
+curl --connect-to myapp.example.com:443:$NGINX_IP:443 https://myapp.example.com/
+curl --connect-to myapp.example.com:443:$TRAEFIK_IP:443 https://myapp.example.com/
 ```
 
 ### Verify Ingress Discovery
