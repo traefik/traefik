@@ -55,7 +55,7 @@ export const HttpServicesRender = ({
 
   return (
     <>
-      <AriaTable>
+      <AriaTable css={{ tableLayout: 'auto' }}>
         <AriaThead>
           <AriaTr>
             <SortableTh label="Status" css={{ width: '36px' }} isSortable sortByValue="status" />

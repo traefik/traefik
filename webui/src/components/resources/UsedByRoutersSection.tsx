@@ -1,4 +1,4 @@
-import { Flex } from '@traefiklabs/faency'
+import { AriaTable, AriaTbody, AriaThead, AriaTr, Flex } from '@traefiklabs/faency'
 import { orderBy } from 'lodash'
 import { useContext, useEffect, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
@@ -6,7 +6,7 @@ import { useSearchParams } from 'react-router-dom'
 import { SectionTitle } from './DetailsCard'
 
 import AriaTableSkeleton from 'components/tables/AriaTableSkeleton'
-import PaginatedTable from 'components/tables/PaginatedTable'
+import SortableTh from 'components/tables/SortableTh'
 import { ToastContext } from 'contexts/toasts'
 import { makeRowRender } from 'pages/http/HttpRouters'
 
@@ -46,38 +46,29 @@ export const UsedByRoutersSection = ({ data, protocol = 'http' }: UsedByRoutersS
     )
   }, [addToast, routersNotFound])
 
-  const columns = useMemo((): Array<{
-    key: keyof Router.DetailsData
-    header: string
-    sortable?: boolean
-    width?: string
-  }> => {
-    return [
-      { key: 'status', header: 'Status', sortable: true, width: '36px' },
-      ...(protocol !== 'udp' ? [{ key: 'tls' as keyof Router.DetailsData, header: 'TLS', width: '24px' }] : []),
-      ...(protocol !== 'udp' ? [{ key: 'rule' as keyof Router.DetailsData, header: 'Rule', sortable: true }] : []),
-      { key: 'using', header: 'Entrypoints', sortable: true },
-      { key: 'name', header: 'Name', sortable: true },
-      { key: 'service', header: 'Service', sortable: true },
-      { key: 'provider', header: 'Provider', sortable: true, width: '40px' },
-      { key: 'priority', header: 'Priority', sortable: true },
-    ]
-  }, [protocol])
-
   if (!routersFound || routersFound.length <= 0) {
     return null
   }
 
   return (
-    <Flex gap={2} css={{ flexDirection: 'column' }}>
-      <SectionTitle title="Used by routers" />
-      <PaginatedTable
-        data={routersFound}
-        columns={columns}
-        itemsPerPage={10}
-        testId="routers-table"
-        renderRow={renderRow}
-      />
+    <Flex css={{ flexDirection: 'column', mt: '$5' }}>
+      <SectionTitle title="Used by Routers" />
+
+      <AriaTable data-testid="routers-table" css={{ tableLayout: 'auto' }}>
+        <AriaThead>
+          <AriaTr>
+            <SortableTh label="Status" css={{ width: '40px' }} isSortable sortByValue="status" />
+            {protocol !== 'udp' ? <SortableTh css={{ width: '40px' }} label="TLS" /> : null}
+            {protocol !== 'udp' ? <SortableTh label="Rule" isSortable sortByValue="rule" /> : null}
+            <SortableTh label="Entrypoints" isSortable sortByValue="entryPoints" />
+            <SortableTh label="Name" isSortable sortByValue="name" />
+            <SortableTh label="Service" isSortable sortByValue="service" />
+            <SortableTh label="Provider" css={{ width: '40px' }} isSortable sortByValue="provider" />
+            <SortableTh label="Priority" isSortable sortByValue="priority" />
+          </AriaTr>
+        </AriaThead>
+        <AriaTbody>{routersFound.map(renderRow)}</AriaTbody>
+      </AriaTable>
     </Flex>
   )
 }
