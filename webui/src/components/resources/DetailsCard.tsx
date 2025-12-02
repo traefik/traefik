@@ -1,6 +1,7 @@
 import { Card, CSS, Flex, Grid, H2, Skeleton, styled, Text } from '@traefiklabs/faency'
-import { Fragment, ReactNode } from 'react'
+import { Fragment, ReactNode, useMemo } from 'react'
 
+import ScrollableCard from 'components/ScrollableCard'
 import breakpoints from 'utils/breakpoints'
 
 const StyledText = styled(Text, {
@@ -32,6 +33,7 @@ type DetailsCardProps = {
   testId?: string
   title?: string
   icon?: ReactNode
+  scrollable?: boolean
 }
 
 export default function DetailsCard({
@@ -44,11 +46,19 @@ export default function DetailsCard({
   testId,
   title,
   icon,
+  scrollable = false,
 }: DetailsCardProps) {
+  const ParentComponent = useMemo(() => {
+    if (scrollable) {
+      return ScrollableCard
+    }
+    return Card
+  }, [scrollable])
+
   return (
     <Flex as="section" direction="column" gap={2} css={{ ...css }} data-testid={testId || `${testidPrefix}-section`}>
       {title ? <SectionTitle icon={icon} title={title} /> : null}
-      <Card css={{ flex: 1 }}>
+      <ParentComponent css={{ flex: 1 }}>
         <Grid
           css={{
             gap: '$2 $3',
@@ -159,7 +169,7 @@ export default function DetailsCard({
             )
           })}
         </Grid>
-      </Card>
+      </ParentComponent>
     </Flex>
   )
 }

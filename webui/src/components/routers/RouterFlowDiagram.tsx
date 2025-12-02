@@ -7,6 +7,7 @@ import ProviderIcon from 'components/icons/providers'
 import { ProviderName } from 'components/resources/DetailItemComponents'
 import DetailsCard, { SectionTitle } from 'components/resources/DetailsCard'
 import { ResourceStatus } from 'components/resources/ResourceStatus'
+import ScrollableCard from 'components/ScrollableCard'
 import { useHrefWithReturnTo } from 'hooks/use-href-with-return-to'
 import { useResourceDetail } from 'hooks/use-resource-detail'
 
@@ -121,10 +122,11 @@ const RouterFlowDiagram = ({ data, protocol }: RouterFlowDiagramProps) => {
             <SectionTitle icon={<FiLogIn size={20} />} title="Entrypoints" />
             {displayedEntrypoints?.length ? (
               <DetailsCard
-                css={{ width: '100%', maxHeight: 300, overflowX: 'auto' }}
+                css={{ width: '100%' }}
                 items={displayedEntrypoints}
                 keyColumns={1}
                 maxKeyWidth="70%"
+                scrollable
               />
             ) : (
               <DiagramCardSkeleton />
@@ -146,7 +148,7 @@ const RouterFlowDiagram = ({ data, protocol }: RouterFlowDiagramProps) => {
           <FlexContainer>
             <SectionTitle icon={<FiLayers size={20} />} title={`${protocol.toUpperCase()} Middlewares`} />
             {data.middlewares ? (
-              <Card css={{ width: '100%', maxHeight: 300, overflowX: 'auto' }}>
+              <ScrollableCard>
                 <Flex direction="column" gap={2}>
                   {data.middlewares.map((mw, idx) => {
                     const data = {
@@ -157,7 +159,7 @@ const RouterFlowDiagram = ({ data, protocol }: RouterFlowDiagramProps) => {
                     return <LinkedNameAndStatus key={`mw-${idx}`} data={data} />
                   })}
                 </Flex>
-              </Card>
+              </ScrollableCard>
             ) : (
               <DiagramCardSkeleton />
             )}
