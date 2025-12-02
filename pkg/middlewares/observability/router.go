@@ -45,15 +45,23 @@ func newRouter(ctx context.Context, router, routerRule, service string, next htt
 }
 
 func (f *routerTracing) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	if tracer := tracing.TracerFromContext(req.Context()); tracer != nil && DetailedTracingEnabled(req.Context()) {
-		tracingCtx, span := tracer.Start(req.Context(), "Router", trace.WithSpanKind(trace.SpanKindInternal))
+	ctx := req.Context()
+
+	if tracer := tracing.TracerFromContext(ctx); tracer != nil && DetailedTracingEnabled(ctx) {
+		tracingCtx, span := tracer.Start(ctx, "Router", trace.WithSpanKind(trace.SpanKindInternal))
 		defer span.End()
 
+		ctx = tracingCtx
 		req = req.WithContext(tracingCtx)
 
 		span.SetAttributes(attribute.String("traefik.service.name", f.service))
 		span.SetAttributes(attribute.String("traefik.router.name", f.router))
 		span.SetAttributes(semconv.HTTPRoute(f.routerRule))
+	}
+
+	if f.routerRule != "" {
+		ctx = WithHTTPRoute(ctx, f.routerRule)
+		req = req.WithContext(ctx)
 	}
 
 	f.next.ServeHTTP(rw, req)
