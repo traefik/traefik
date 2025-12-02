@@ -334,8 +334,7 @@ This way, traffic is always flowing to Traefik during the IP transfer.
 **Get your current NGINX LoadBalancer IP:**
 
 ```bash
-kubectl get svc -n ingress-nginx ingress-nginx-controller \
-  -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+kubectl get svc -n ingress-nginx ingress-nginx-controller -o go-template='{{ $ing := index .status.loadBalancer.ingress 0 }}{{ if $ing.ip }}{{ $ing.ip }}{{ else }}{{ $ing.hostname }}{{ end }}'
 ```
 
 ??? note "AWS (Network Load Balancer with Elastic IPs)"
