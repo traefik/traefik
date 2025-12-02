@@ -315,6 +315,7 @@ For more control over traffic distribution, use an external load balancer (like 
     - **AWS Global Accelerator** - Weighted routing across endpoints
     - **Google Cloud Load Balancing** - Traffic splitting
     - **Traefik / HAProxy / NGINX (external)** - Self-hosted option with weighted backends
+    - ...
 
 ### LoadBalancer IP Retention
 
