@@ -64,7 +64,7 @@ export const UdpServicesRender = ({
 
   return (
     <>
-      <AriaTable>
+      <AriaTable css={{ tableLayout: 'auto' }}>
         <AriaThead>
           <AriaTr>
             <SortableTh label="Status" css={{ width: '40px' }} isSortable sortByValue="status" />
