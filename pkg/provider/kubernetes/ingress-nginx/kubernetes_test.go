@@ -178,6 +178,7 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-ssl-redirect-rule-0-path-0-redirect": {
 							Rule:        "Host(`sslredirect.localhost`) && Path(`/`)",
 							RuleSyntax:  "default",
+							EntryPoints: []string{"web"}, // FIX: Redirect router should only listen on HTTP
 							Middlewares: []string{"default-ingress-with-ssl-redirect-rule-0-path-0-redirect-scheme"},
 							Service:     "noop@internal",
 						},
@@ -200,6 +201,7 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-force-ssl-redirect-rule-0-path-0-redirect": {
 							Rule:        "Host(`forcesslredirect.localhost`) && Path(`/`)",
 							RuleSyntax:  "default",
+							EntryPoints: []string{"web"}, // FIX: Redirect router should only listen on HTTP
 							Middlewares: []string{"default-ingress-with-force-ssl-redirect-rule-0-path-0-redirect-scheme"},
 							Service:     "noop@internal",
 						},

@@ -958,12 +958,18 @@ func applySSLRedirectConfiguration(routerName string, ingressConfig ingressConfi
 		return
 	}
 
+	// The redirect router should only listen on the HTTP entry point (web),
+	// not on HTTPS (websecure). Otherwise, it will match HTTPS requests too,
+	// leading to routing conflicts and 418 errors (Issue #12332).
 	redirectRouter := &dynamic.Router{
-		Rule: rt.Rule,
-		// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
-		RuleSyntax: "default",
-		Service:    "noop@internal",
+		Rule:        rt.Rule,
+		RuleSyntax:  "default",
+		Service:     "noop@internal",
+		EntryPoints: []string{"web"},
 	}
+	// Note: TLS config is intentionally NOT set on the redirect router,
+	// as it should only handle non-TLS traffic and redirect it to HTTPS.
+	// The main router (rt) handles TLS traffic on the "websecure" entry point.
 
 	redirectMiddlewareName := routerName + "-redirect-scheme"
 	conf.HTTP.Middlewares[redirectMiddlewareName] = &dynamic.Middleware{
