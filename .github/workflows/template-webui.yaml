@@ -1,6 +1,8 @@
 name: Build Web UI
 on:
   workflow_call: {}
+env:
+  SAFE_CHAIN_MINIMUM_PACKAGE_AGE_HOURS: 360  # 15 days
 jobs:
 
   build-webui:
@@ -21,6 +23,12 @@ jobs:
           node-version-file: webui/.nvmrc
           cache: yarn
           cache-dependency-path: webui/yarn.lock
+
+      - name: Setup safe-chain
+        working-directory: ./webui
+        run: |
+          npm i -g @aikidosec/safe-chain
+          safe-chain setup-ci
 
       - name: Build webui
         working-directory: ./webui
