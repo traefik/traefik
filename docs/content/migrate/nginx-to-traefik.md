@@ -141,6 +141,17 @@ Final:       DNS → LoadBalancer → Traefik → Your Services
 
 ## Step 1: Install Traefik Alongside NGINX
 
+??? info "Install NGINX Ingress Controller"
+
+    If you have not installed NGINX Ingress Controller yet, you can set up a fresh NGINX Ingress Controller installation following the instructions below:
+
+    ### Install NGINX Ingress Controller
+
+    ```bash
+    helm upgrade --install ingress-nginx ingress-nginx \
+      --repo https://kubernetes.github.io/ingress-nginx \
+      --namespace ingress-nginx --create-namespace
+    ```
 Install Traefik with the Kubernetes Ingress NGINX provider enabled. Both controllers will serve the same Ingress resources simultaneously.
 
 ### Add Traefik Helm Repository
@@ -210,12 +221,23 @@ echo -e "Nginx IP: $NGINX_IP\nTraefik IP: $TRAEFIK_IP"
 # Test HTTP for both
 # Observe HTTPS redirections:
 curl --connect-to myapp.example.com:80:${NGINX_IP}:80 http://myapp.example.com/ -D -
-curl --connect-to myapp.example.com:80:${TRAEFIK_IP}:80 http://myapp.example.com/ -D - # note X-Forwarded-Server which should be traefik
+curl --connect-to myapp.example.com:80:${TRAEFIK_IP}:80 http://myapp.example.com/ -D -
 
-# Test HTTPS (use -k to skip certificate verification if using self-signed certs)
+# Test HTTPS
 curl --connect-to myapp.example.com:443:$NGINX_IP:443 https://myapp.example.com/
 curl --connect-to myapp.example.com:443:$TRAEFIK_IP:443 https://myapp.example.com/
 ```
+
+!!! warning "TLS Certificates During Migration"
+
+    Both NGINX and Traefik must serve valid TLS certificates for HTTPS tests to succeed. Since Traefik is not publicly exposed during this verification phase, **Let's Encrypt HTTP challenge will not work**.
+
+    Your options for TLS certificates during migration:
+
+    - **Existing certificates via `tls.secretName`** - If you use cert-manager or another external tool, your existing TLS secrets referenced in `spec.tls` will work with both controllers
+    - **Let's Encrypt DNS challenge** - Configure Traefik's [ACME DNS challenge](../reference/install-configuration/tls/certificate-resolvers/acme.md#dnschallenge) to obtain certificates without public exposure
+
+    Avoid using `curl -k` (skip certificate verification) as this masks TLS configuration issues that could cause problems after migration.
 
 ### Verify Ingress Discovery
 
@@ -252,6 +274,10 @@ echo $(kubectl get svc -n traefik traefik -o go-template='{{ $ing := index .stat
 3. **Remove NGINX from DNS** - Once confident, remove the NGINX LoadBalancer IP from DNS
 4. **Wait for DNS propagation** - Allow time for DNS caches to expire
 5. **Uninstall NGINX** - Proceed to [Step 4](#step-4-uninstall-nginx-ingress-controller)
+
+!!! warning "DNS TTL May Not Be Respected"
+
+    Some ISPs ignore DNS TTL values to reduce traffic costs, caching records longer than specified. After removing NGINX from DNS, keep NGINX running for at least 24-48 hours before uninstalling to avoid dropping traffic from users whose ISPs have stale DNS caches.
 
 ??? info "ExternalDNS Users"
 
@@ -290,6 +316,10 @@ echo $(kubectl get svc -n traefik traefik -o go-template='{{ $ing := index .stat
 ### Option B: External Load Balancer with Weighted Traffic
 
 For more control over traffic distribution, use an external load balancer (like Traefik, Cloudflare, AWS ALB, or a dedicated load balancer) in front of both Kubernetes LoadBalancers.
+
+!!! note "Infrastructure Prerequisite"
+
+    This option assumes you already have an external load balancer in your infrastructure, or are willing to set one up **before** starting the migration. Adding an external load balancer is a significant infrastructure change that should be planned and tested separately from the ingress controller migration.
 
 **Setup:**
 
@@ -441,15 +471,30 @@ kubectl get svc -n traefik traefik
 
 !!! tip "Zero Downtime During Helm Upgrade"
 
-    The Helm upgrade only restarts the Traefik pod, not the LoadBalancer service. Traefik uses a `RollingUpdate` deployment strategy by default, so the new pod starts before the old one terminates. For additional safety, run multiple Traefik replicas:
+    The Helm upgrade only restarts the Traefik pod, not the LoadBalancer service. Traefik uses a `RollingUpdate` deployment strategy by default, so the new pod starts before the old one terminates. For additional safety, configure high availability:
 
     ```yaml
     # In traefik-values.yaml
     deployment:
       replicas: 2
+
+    # Spread pods across nodes to survive node failures
+    affinity:
+      podAntiAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                app.kubernetes.io/name: traefik
+                app.kubernetes.io/instance: traefik
+            topologyKey: kubernetes.io/hostname
+
+    # Ensure at least one pod is always available during disruptions
+    podDisruptionBudget:
+      enabled: true
+      minAvailable: 1
     ```
 
-    With multiple replicas, at least one pod is always running during the upgrade.
+    With multiple replicas spread across nodes and a PodDisruptionBudget, at least one pod is always running during upgrades and node maintenance.
 
 ---
 
@@ -507,7 +552,7 @@ Once NGINX is no longer receiving traffic, remove it from your cluster. Before u
 
 ### Delete NGINX Admission Webhook
 
-The admission webhook can cause issues with Ingress modifications after NGINX is removed:
+If NGINX was not installed via Helm, you should delete the admission webhook to avoid issues with Ingress modifications after NGINX is removed:
 
 ```bash
 kubectl delete validatingwebhookconfiguration ingress-nginx-admission
