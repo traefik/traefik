@@ -397,7 +397,7 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-proxy-ssl": {
 							ServerName:         "whoami.localhost",
-							InsecureSkipVerify: true,
+							InsecureSkipVerify: false,
 							RootCAs:            []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
 						},
 					},
