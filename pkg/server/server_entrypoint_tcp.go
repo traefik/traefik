@@ -608,6 +608,8 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 
 	handler = denyFragment(handler)
 
+	handler = denyEncodedCharacters(configuration.HTTP.EncodedCharacters.Map(), handler)
+
 	serverHTTP := &http.Server{
 		Protocols:    &protocols,
 		Handler:      handler,
@@ -704,6 +706,37 @@ func encodeQuerySemicolons(h http.Handler) http.Handler {
 		} else {
 			h.ServeHTTP(rw, req)
 		}
+	})
+}
+
+// denyEncodedCharacters reject the request if the (raw) path contains suspicious encoded characters.
+func denyEncodedCharacters(encodedCharacters map[string]struct{}, h http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		escapedPath := req.URL.EscapedPath()
+
+		for i := 0; i < len(escapedPath); i++ {
+			if escapedPath[i] != '%' {
+				continue
+			}
+
+			// This should never happen as the standard library will reject requests containing invalid percent-encodings.
+			// This discards URLs with a percent character at the end.
+			if i+2 >= len(escapedPath) {
+				rw.WriteHeader(http.StatusBadRequest)
+				return
+			}
+
+			// This rejects a request with a path containing the given encoded characters.
+			if _, exists := encodedCharacters[escapedPath[i:i+3]]; exists {
+				log.FromContext(req.Context()).Debugf("Rejecting request because it contains encoded character %s in the URL path: %s", escapedPath[i:i+3], escapedPath)
+				rw.WriteHeader(http.StatusBadRequest)
+				return
+			}
+
+			i += 2
+		}
+
+		h.ServeHTTP(rw, req)
 	})
 }
 
