@@ -1,159 +1,281 @@
-
 <p align="center">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="docs/content/assets/img/baqup.logo-dark.png">
-      <source media="(prefers-color-scheme: light)" srcset="docs/content/assets/img/baqup.logo.png">
-      <img alt="Baqup" title="Baqup" src="docs/content/assets/img/baqup.logo.png">
+      <source media="(prefers-color-scheme: dark)" srcset="docs/content/assets/img/baqup.logo-dark.svg">
+      <source media="(prefers-color-scheme: light)" srcset="docs/content/assets/img/baqup.logo.svg">
+      <img alt="baqup" title="baqup" src="docs/content/assets/img/baqup.logo.svg" width="30%">
     </picture>
 </p>
 
-[![Docs](https://img.shields.io/badge/docs-current-brightgreen.svg)](https://doc.baqup.io/baqup)
-[![Go Report Card](https://goreportcard.com/badge/baqup/baqup)](https://goreportcard.com/report/baqup/baqup)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/baqupio/baqup/blob/master/LICENSE.md)
-[![Join the community support forum at https://community.baqup.io/](https://img.shields.io/badge/style-register-green.svg?style=social&label=Discourse)](https://community.baqup.io/)
-[![Twitter](https://img.shields.io/twitter/follow/baqup.svg?style=social)](https://twitter.com/intent/follow?screen_name=baqup)
+<p align="center">
+  <strong>Container-native backup orchestration. Zero-config simplicity. Full control when needed.</strong>
+</p>
 
-Baqup (pronounced _backup_) is a modern HTTP reverse proxy and load balancer that makes deploying microservices easy.
-Baqup integrates with your existing infrastructure components ([Docker](https://www.docker.com/), [Swarm mode](https://docs.docker.com/engine/swarm/), [Kubernetes](https://kubernetes.io), [Consul](https://www.consul.io/), [Etcd](https://coreos.com/etcd/), [Rancher v2](https://rancher.com), [Amazon ECS](https://aws.amazon.com/ecs), ...) and configures itself automatically and dynamically.
-Pointing Baqup at your orchestrator should be the _only_ configuration step you need.
+> [!CAUTION]
+> **Pre-alpha software.** This project is in early development. Everything below describes the intended design—not current functionality. APIs will change. Here be dragons.
 
----
+> [!NOTE]
+> **Standing on the shoulders of giants.** baqup is built on a fork of [Traefik](https://github.com/traefik/traefik), the excellent cloud-native reverse proxy. We're deeply grateful to the Traefik team and community for creating such a solid foundation for container-native infrastructure tooling. The provider discovery, label-based configuration, and dynamic reconfiguration patterns that make baqup possible all trace their lineage to Traefik's pioneering work.
 
-. **[Overview](#overview)** .
-**[Features](#features)** .
-**[Supported backends](#supported-backends)** .
-**[Quickstart](#quickstart)** .
-**[Web UI](#web-ui)** .
-**[Documentation](#documentation)** .
+<p align="center">
+  <a href="#how-it-works">How It Works</a> •
+  <a href="DESIGN.md">Design</a> •
+  <a href="AGENT-CONTRACT-SPEC.md">Agent Spec</a> •
+  <a href="GOVERNANCE.md">Governance</a>
+</p>
 
-. **[Support](#support)** .
-**[Release cycle](#release-cycle)** .
-**[Contributing](#contributing)** .
-**[Maintainers](#maintainers)** .
-**[Credits](#credits)** .
+<p align="center">
+  <img src="https://img.shields.io/badge/status-pre--alpha-orange.svg" alt="Status: Pre-alpha">
+  <a href="https://github.com/baqupio/baqup/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-Fair%20Source-blue.svg" alt="License"></a>
+  <a href="https://github.com/traefik/traefik"><img src="https://img.shields.io/badge/built%20on-Traefik-24a1c1.svg" alt="Built on Traefik"></a>
+</p>
 
 ---
 
-:warning: When migrating to a new major version of Baqup, please refer to the [migration guide](https://doc.baqup.io/baqup/migrate/v2-to-v3/) to ensure a smooth transition and to be aware of any breaking changes.
+## What is baqup?
 
+baqup is a container-native backup orchestration system. It discovers your workloads, backs them up automatically, and verifies they're actually restorable—not just present.
 
-## Overview
+```yaml
+# Add labels to your container. That's it.
+services:
+  postgres:
+    image: postgres:16
+    labels:
+      - "baqup.enabled=true"
+      - "baqup.snapshot.db.type=postgres"
+      - "baqup.snapshot.db.password_env=POSTGRES_PASSWORD"
+```
 
-Imagine that you have deployed a bunch of microservices with the help of an orchestrator (like Swarm or Kubernetes) or a service registry (like etcd or consul).
-Now you want users to access these microservices, and you need a reverse proxy.
+baqup handles the rest: agent selection, snapshot coordination, multi-destination shipping, retention policies, and restore verification.
 
-Traditional reverse-proxies require that you configure _each_ route that will connect paths and subdomains to _each_ microservice. 
-In an environment where you add, remove, kill, upgrade, or scale your services _many_ times a day, the task of keeping the routes up to date becomes tedious. 
+## Why baqup?
 
-**This is when Baqup can help you!**
+**The problem**: Backup tooling for containers is either too simple (volume tarballs that corrupt databases) or too complex (enterprise solutions requiring dedicated teams).
 
-Baqup listens to your service registry/orchestrator API and instantly generates the routes so your microservices are connected to the outside world -- without further intervention from your part. 
+**baqup's approach**:
 
-**Run Baqup and let it do the work for you!** 
-_(But if you'd rather configure some of your routes manually, Baqup supports that too!)_
-
-![Architecture](docs/content/assets/img/baqup-architecture.png)
+| Traditional Backup | baqup |
+|-------------------|-------|
+| Configure each backup job manually | Auto-discovers workloads via labels |
+| Generic volume snapshots | Application-aware agents (pg_dump, mysqldump, etc.) |
+| Hope backups work | Validates restorability automatically |
+| Single destination | Multi-destination in parallel |
+| Per-node pricing | Free for small teams, flat rate for enterprises |
 
 ## Features
 
-- Continuously updates its configuration (No restarts!)
-- Supports multiple load balancing algorithms
-- Provides HTTPS to your microservices by leveraging [Let's Encrypt](https://letsencrypt.org) (wildcard certificates support)
-- Circuit breakers, retry
-- See the magic through its clean web UI
-- WebSocket, HTTP/2, gRPC ready
-- Provides metrics (Rest, Prometheus, Datadog, Statsd, InfluxDB 2.X)
-- Keeps access logs (JSON, CLF)
-- Fast
-- Exposes a Rest API
-- Packaged as a single binary file (made with :heart: with go) and available as an [official](https://hub.docker.com/r/_/baqup/) docker image
+- **Zero-config discovery** — Labels on containers, automatic orchestration
+- **Application-aware agents** — Purpose-built for PostgreSQL, MariaDB, filesystem, and more
+- **Multi-destination** — Single snapshot to S3, B2, local storage, or any rclone target
+- **Restore verification** — Proves backups are restorable, not just present
+- **Encryption at rest** — AES-256-GCM or ChaCha20-Poly1305
+- **Checksums everywhere** — SHA-256/SHA-512/BLAKE3 on all artifacts
+- **Clean failure modes** — Partial failures reported clearly, successful artifacts preserved
 
-## Supported Backends
+## How It Works
 
-- [Docker](https://doc.baqup.io/baqup/providers/docker/) / [Swarm mode](https://doc.baqup.io/baqup/providers/docker/)
-- [Kubernetes](https://doc.baqup.io/baqup/providers/kubernetes-crd/)
-- [ECS](https://doc.baqup.io/baqup/providers/ecs/)
-- [File](https://doc.baqup.io/baqup/providers/file/)
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         CONTROLLER                               │
+│  Discovers workloads • Schedules jobs • Spawns agents           │
+└──────────────────────────────┬──────────────────────────────────┘
+                               │
+           ┌───────────────────┼───────────────────┐
+           │                   │                   │
+           ▼                   ▼                   ▼
+    ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+    │ agent-postgres│    │ agent-mariadb│    │  agent-fs   │
+    │             │     │             │     │             │
+    │ pg_dump     │     │ mysqldump   │     │ tar + zstd  │
+    │ streaming   │     │ consistent  │     │ incremental │
+    └──────┬──────┘     └──────┬──────┘     └──────┬──────┘
+           │                   │                   │
+           └───────────────────┼───────────────────┘
+                               │
+                               ▼
+                    ┌─────────────────────┐
+                    │   agent-rclone      │
+                    │                     │
+                    │  S3 / B2 / GCS /    │
+                    │  Azure / Local      │
+                    └─────────────────────┘
+```
+
+**Controller**: Watches your orchestrator (Docker, Swarm, Kubernetes), discovers labelled workloads, schedules backup jobs, spawns short-lived agent containers.
+
+**Agents**: Stateless containers that execute a single backup or restore operation. Each agent type understands its data source—`agent-postgres` uses `pg_dump` with proper transaction isolation, not naive volume copies.
+
+**Manifests**: Every backup produces a manifest with checksums. No manifest = incomplete backup = discarded automatically.
 
 ## Quickstart
 
-To get your hands on Baqup, you can use the [5-Minute Quickstart](https://doc.baqup.io/baqup/getting-started/quick-start/) in our documentation (you will need Docker).
+> [!NOTE]
+> **Aspirational.** This shows the intended UX. Implementation in progress.
 
-## Web UI
+### Docker Compose
 
-You can access the simple HTML frontend of Baqup.
+```yaml
+services:
+  baqup:
+    image: ghcr.io/baqupio/baqup:latest
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./backups:/backups
+    environment:
+      BAQUP_STAGING_DIR: /backups
 
-![Web UI Providers](docs/content/assets/img/webui-dashboard.png)
+  postgres:
+    image: postgres:16
+    labels:
+      - "baqup.enabled=true"
+      - "baqup.snapshot.db.type=postgres"
+      - "baqup.snapshot.db.username=postgres"
+      - "baqup.snapshot.db.password_env=POSTGRES_PASSWORD"
+      - "baqup.snapshot.db.schedule=daily"
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+```
+
+```bash
+docker compose up -d
+```
+
+That's it. baqup discovers the labelled container, uses controller defaults for schedule (`daily` = 3 AM) and retention (7 backups), and handles the rest.
+
+### Manual Backup
+
+```bash
+# Trigger immediate backup
+docker exec baqup baqup backup postgres
+
+# List backups
+docker exec baqup baqup list
+
+# Restore
+docker exec baqup baqup restore postgres --target postgres-restore
+```
+
+## Agents
+
+| Agent | Data Source | Method |
+|-------|-------------|--------|
+| `agent-postgres` | PostgreSQL | `pg_dump` with consistent snapshots |
+| `agent-mariadb` | MariaDB/MySQL | `mysqldump` or `mariadb-dump` |
+| `agent-fs` | Filesystem | Streaming tar with zstd compression |
+| `agent-rclone` | Remote storage | Any rclone-supported backend |
+
+Each agent implements the [Agent Contract Specification](AGENT-CONTRACT-SPEC.md)—a detailed protocol for lifecycle management, error handling, and artifact production.
+
+## Configuration
+
+baqup follows a hierarchy: **container labels → controller config → CLI flags**.
+
+### Container Labels
+
+```yaml
+labels:
+  # Global
+  - "baqup.enabled=true"                                    # Enable baqup for this container
+
+  # Schedules (reusable, named)
+  - "baqup.schedule.hourly.cron=0 * * * *"
+  - "baqup.schedule.daily.cron=0 3 * * *"
+
+  # Retention policies (reusable, named)
+  - "baqup.retention.critical.count=48"                     # Keep 48 backups
+  - "baqup.retention.standard.count=7"                      # Keep 7 backups
+
+  # Storage backends (reusable, named)
+  - "baqup.storage.nas.type=rclone"
+  - "baqup.storage.nas.remote=nas:/backups"
+
+  # Snapshots (what to back up)
+  - "baqup.snapshot.db.type=postgres"                       # Agent type
+  - "baqup.snapshot.db.username=postgres"
+  - "baqup.snapshot.db.password_env=POSTGRES_PASSWORD"      # Reference container env var
+  - "baqup.snapshot.db.schedule=daily"                      # Reference named schedule
+  - "baqup.snapshot.db.storage=nas"                         # Reference named storage
+  - "baqup.snapshot.db.retention.default=standard"          # Reference named retention
+```
+
+### Controller Configuration
+
+```yaml
+# /etc/baqup/config.yml
+redis:
+  url: redis://localhost:6379
+
+staging:
+  path: /var/lib/baqup/staging
+
+defaults:
+  schedules:
+    daily:
+      cron: "0 3 * * *"
+  
+  retention:
+    default:
+      count: 7
+
+  snapshot:
+    schedule: daily
+    compress: true
+    validation:
+      post_snapshot: structure
+      post_transfer: auto
+```
+
+Labels on containers override controller defaults. See [DESIGN.md](DESIGN.md) for the complete configuration reference.
+
+## Supported Platforms
+
+| Platform | Status |
+|----------|--------|
+| Docker (standalone) | 🚧 In development |
+| Docker Swarm | 🚧 Planned |
+| Kubernetes | 🚧 Planned |
+| Podman | 🚧 Planned |
 
 ## Documentation
 
-You can find the complete documentation of Baqup v3 at [https://doc.baqup.io/baqup/](https://doc.baqup.io/baqup/).
+Documentation is being developed alongside the code. For now:
 
-## Support
-
-To get community support, you can:
-
-- join the Baqup community forum: [![Join the chat at https://community.baqup.io/](https://img.shields.io/badge/style-register-green.svg?style=social&label=Discourse)](https://community.baqup.io/)
-
-If you need commercial support, please contact [Baqup.io](https://baqup.io) by mail: <mailto:support@baqup.io>.
-
-## Download
-
-- Grab the latest binary from the [releases](https://github.com/baqupio/baqup/releases) page and run it with the [sample configuration file](https://raw.githubusercontent.com/baqup/baqup/master/baqup.sample.toml):
-
-```shell
-./baqup --configFile=baqup.toml
-```
-
-- Or use the official tiny Docker image and run it with the [sample configuration file](https://raw.githubusercontent.com/baqup/baqup/master/baqup.sample.toml):
-
-```shell
-docker run -d -p 8080:8080 -p 80:80 -v $PWD/baqup.toml:/etc/baqup/baqup.toml baqup
-```
-
-- Or get the sources:
-
-```shell
-git clone https://github.com/baqupio/baqup
-```
-
-## Introductory Videos
-
-You can find high level and deep dive videos on [videos.baqup.io](https://videos.baqup.io).
-
-## Maintainers
-
-We are strongly promoting a philosophy of openness and sharing, and firmly standing against the elitist closed approach. Being part of the core team should be accessible to anyone who is motivated and want to be part of that journey!
-This [document](docs/content/contributing/maintainers-guidelines.md) describes how to be part of the [maintainers' team](docs/content/contributing/maintainers.md) as well as various responsibilities and guidelines for Baqup maintainers.
-You can also find more information on our process to review pull requests and manage issues [in this document](https://github.com/baqup/contributors-guide/blob/master/issue_triage.md).
+- **[Design Document](DESIGN.md)** — Comprehensive architecture, label schema, and rationale
+- **[Agent Contract Spec](AGENT-CONTRACT-SPEC.md)** — Technical specification for agent implementation
 
 ## Contributing
 
-If you'd like to contribute to the project, refer to the [contributing documentation](CONTRIBUTING.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
-Please note that this project is released with a [Contributor Code of Conduct](CODE_OF_CONDUCT.md).
-By participating in this project, you agree to abide by its terms.
+## Support
 
-## Release Cycle
+This is pre-alpha software. Expect rough edges.
 
-- We usually release 3/4 new versions (e.g. 1.1.0, 1.2.0, 1.3.0) per year.
-- Release Candidates are available before the release (e.g. 1.1.0-rc1, 1.1.0-rc2, 1.1.0-rc3, 1.1.0-rc4, before 1.1.0).
-- Bug-fixes (e.g. 1.1.1, 1.1.2, 1.2.1, 1.2.3) are released as needed (no additional features are delivered in those versions, bug-fixes only).
+- **Issues**: [GitHub Issues](https://github.com/baqupio/baqup/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/baqupio/baqup/discussions)
 
-Each version is supported until the next one is released (e.g. 1.1.x will be supported until 1.2.0 is out).
+## Repositories
 
-We use [Semantic Versioning](https://semver.org/).
+Planned repository structure:
 
-## Mailing Lists
-
-- General announcements, new releases: mail at news+subscribe@baqup.io or on [the online viewer](https://groups.google.com/a/baqup.io/forum/#!forum/news).
-- Security announcements: mail at security+subscribe@baqup.io or on [the online viewer](https://groups.google.com/a/baqup.io/forum/#!forum/security).
+| Repository | Purpose |
+|------------|---------|
+| `baqup` | Controller and CLI |
+| `agent-postgres` | PostgreSQL backup agent |
+| `agent-mariadb` | MariaDB/MySQL backup agent |
+| `agent-fs` | Filesystem backup agent |
+| `agent-rclone` | Remote storage shipping agent |
 
 ## Credits
 
-Kudos to [Peka](https://www.instagram.com/pierroks/) for his awesome work on the gopher's logo!.
+baqup exists because of the remarkable work done by the [Traefik](https://traefik.io) team.
 
-The gopher's logo of Baqup is licensed under the Creative Commons 3.0 Attributions license.
+The core discovery and orchestration engine is forked from Traefik, repurposing its battle-tested provider system (Docker, Swarm, Kubernetes) from routing HTTP traffic to orchestrating backup agents. Traefik's architecture—dynamic configuration via labels, automatic service discovery, clean provider abstractions—turns out to be exactly what backup orchestration needs.
 
-The gopher's logo of Baqup was inspired by the gopher stickers made by [Takuya Ueda](https://twitter.com/tenntenn).
-The original Go gopher was designed by [Renee French](https://reneefrench.blogspot.com/).
+We encourage you to check out [Traefik](https://github.com/traefik/traefik) if you need a reverse proxy. It's excellent software built by excellent people.
+
+---
+
+<p align="center">
+  <sub>Built with care for homelabbers, startups, and enterprises who actually want their backups to work.</sub>
+</p>
