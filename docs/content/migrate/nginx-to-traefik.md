@@ -1,18 +1,18 @@
 ---
-title: "Migrate from NGINX Ingress Controller to Traefik"
-description: "Step-by-step guide to migrate from Kubernetes NGINX Ingress Controller to Traefik with zero downtime and annotation compatibility."
+title: "Migrate from Ingress NGINX Controller to Traefik"
+description: "Step-by-step guide to migrate from Kubernetes Ingress NGINX Controller to Traefik with zero downtime and annotation compatibility."
 ---
 
-# Migrate from NGINX Ingress Controller to Traefik
+# Migrate from Ingress NGINX Controller to Traefik
 
-How to migrate from NGINX Ingress Controller to Traefik with zero downtime.
+How to migrate from Ingress NGINX Controller to Traefik with zero downtime.
 {: .subtitle }
 
 ---
 
-!!! danger "NGINX Ingress Controller Retirement"
+!!! danger "Ingress NGINX Controller Retirement"
 
-    The Kubernetes NGINX Ingress Controller project has announced its retirement in **March 2026**. After this date:
+    The Kubernetes Ingress NGINX Controller project has announced its retirement in **March 2026**. After this date:
 
     - No new releases or updates
     - No security patches
@@ -98,7 +98,7 @@ For a complete list of supported annotations and behavioral differences, see the
 
 Before starting the migration, ensure you have:
 
-- **Existing NGINX Ingress Controller** running in your Kubernetes cluster
+- **Existing Ingress NGINX Controller** running in your Kubernetes cluster
 - **Kubernetes cluster access** with `kubectl` configured 
 - **Cluster support for running multiple LoadBalancer services** on ports 80/443 simultaneously
 - **Helm**
@@ -141,11 +141,11 @@ Final:       DNS → LoadBalancer → Traefik → Your Services
 
 ## Step 1: Install Traefik Alongside NGINX
 
-??? info "Install NGINX Ingress Controller"
+??? info "Install Ingress NGINX Controller"
 
-    If you have not installed NGINX Ingress Controller yet, you can set up a fresh NGINX Ingress Controller installation following the instructions below:
+    If you have not installed Ingress NGINX Controller yet, you can set up a fresh Ingress NGINX Controller installation following the instructions below:
 
-    ### Install NGINX Ingress Controller
+    ### Install Ingress NGINX Controller
 
     ```bash
     helm upgrade --install ingress-nginx ingress-nginx \
@@ -214,18 +214,18 @@ Get Traefik's LoadBalancer IP and use `--resolve` to test without changing DNS:
 ```bash
 # Get LoadBalancer IPs
 NGINX_IP=$(kubectl get svc -n ingress-nginx ingress-nginx-controller -o go-template='{{ $ing := index .status.loadBalancer.ingress 0 }}{{ if $ing.ip }}{{ $ing.ip }}{{ else }}{{ $ing.hostname }}{{ end }}')
-
 TRAEFIK_IP=$(kubectl get svc -n traefik traefik -o go-template='{{ $ing := index .status.loadBalancer.ingress 0 }}{{ if $ing.ip }}{{ $ing.ip }}{{ else }}{{ $ing.hostname }}{{ end }}')
 echo -e "Nginx IP: $NGINX_IP\nTraefik IP: $TRAEFIK_IP"
 
 # Test HTTP for both
+FQDN=myapp.example.com
 # Observe HTTPS redirections:
-curl --connect-to myapp.example.com:80:${NGINX_IP}:80 http://myapp.example.com/ -D -
-curl --connect-to myapp.example.com:80:${TRAEFIK_IP}:80 http://myapp.example.com/ -D - # note X-Forwarded-Server which should be traefik
+curl --connect-to "${FQDN}:80:${NGINX_IP}:80" "http://${FQDN}" -D -
+curl --connect-to "${FQDN}:80:${TRAEFIK_IP}:80" "http://${FQDN}" -D - # note X-Forwarded-Server which should be traefik
 
 # Test HTTPS
-curl --connect-to myapp.example.com:443:$NGINX_IP:443 https://myapp.example.com/
-curl --connect-to myapp.example.com:443:$TRAEFIK_IP:443 https://myapp.example.com/
+curl --connect-to "${FQDN}:443:${NGINX_IP}:443" "https://${FQDN}"
+curl --connect-to "${FQDN}:443:${TRAEFIK_IP}:443" "https://${FQDN}"
 ```
 
 !!! warning "TLS Certificates During Migration"
@@ -273,7 +273,7 @@ echo $(kubectl get svc -n traefik traefik -o go-template='{{ $ing := index .stat
 2. **Monitor** - Observe traffic patterns on both controllers
 3. **Remove NGINX from DNS** - Once confident, remove the NGINX LoadBalancer IP from DNS
 4. **Wait for DNS propagation** - Allow time for DNS caches to expire
-5. **Uninstall NGINX** - Proceed to [Step 4](#step-4-uninstall-nginx-ingress-controller)
+5. **Uninstall NGINX** - Proceed to [Step 4](#step-4-uninstall-ingress-nginx-controller)
 
 !!! warning "DNS TTL May Not Be Respected"
 
@@ -335,8 +335,8 @@ For more control over traffic distribution, use an external load balancer (like 
 |-------|-------------|----------------|----------|
 | Initial | 100% | 0% | - |
 | Start | 90% | 10% | 1 hour |
-| Increase | 50% | 50% | 1 hour |
-| Near-complete | 10% | 90% | 1 hour |
+| Increase | 50% | 50% | 2 hour |
+| Near-complete | 10% | 90% | 4 hour |
 | Final | 0% | 100% | - |
 
 !!! tip "External Load Balancer Options"
@@ -498,7 +498,7 @@ kubectl get svc -n traefik traefik
 
 ---
 
-## Step 4: Uninstall NGINX Ingress Controller
+## Step 4: Uninstall Ingress NGINX Controller
 
 Once NGINX is no longer receiving traffic, remove it from your cluster. Before uninstalling, you must ensure the `nginx` IngressClass is preserved. Traefik needs it to continue discovering your Ingresses.
 
@@ -509,10 +509,14 @@ Once NGINX is no longer receiving traffic, remove it from your cluster. Before u
     Add the `helm.sh/resource-policy: keep` annotation to tell Helm to preserve the IngressClass:
 
     ```bash
-    helm upgrade ingress-nginx ingress-nginx/ingress-nginx \
+    # Add the required annotation
+    helm upgrade ingress-nginx ingress-nginx \
+      --repo https://kubernetes.github.io/ingress-nginx \
       --namespace ingress-nginx \
       --reuse-values \
       --set-json 'controller.ingressClassResource.annotations={"helm.sh/resource-policy": "keep"}'
+    # Check that the annotation is really here
+    kubectl describe ingressclass nginx
     ```
 
     The `--reuse-values` flag is critical - it preserves all your existing NGINX configuration. Without it, Helm would reset everything to defaults, potentially breaking your setup.
@@ -552,7 +556,7 @@ Once NGINX is no longer receiving traffic, remove it from your cluster. Before u
 
 ### Delete NGINX Admission Webhook
 
-If NGINX was not installed via Helm, you should delete the admission webhook to avoid issues with Ingress modifications after NGINX is removed:
+You should delete the admission webhook to avoid issues with Ingress modifications after NGINX is removed:
 
 ```bash
 kubectl delete validatingwebhookconfiguration ingress-nginx-admission
@@ -590,11 +594,32 @@ kubectl delete namespace ingress-nginx
 
 !!! success "Migration Complete"
 
-    Congratulations! You have successfully migrated from NGINX Ingress Controller to Traefik with zero downtime. Your existing Ingresses with `ingressClassName: nginx` continue to work, now served by Traefik.
+    Congratulations! You have successfully migrated from Ingress NGINX Controller to Traefik with zero downtime. Your existing Ingresses with `ingressClassName: nginx` continue to work, now served by Traefik.
 
 ---
 
 ## Troubleshooting
+
+There is a dashboard available in Traefik that can help to understand what's going on.
+It can be enabled with those helm values:
+
+```yaml
+providers:
+  kubernetesIngressNginx:
+    enabled: true
+ingressRoute:
+  dashboard:
+    enabled: true
+```
+
+For security reason, it won't be exposed by default. It can be port-forwarded locally:
+
+```bash
+NAMESPACE=traefik
+kubectl port-forward $(kubectl get pods --selector "app.kubernetes.io/name=traefik" --output=name -n $NAMESPACE) 8080:8080 -n $NAMESPACE
+```
+
+This command makes the dashboard accessible locally on [127.0.0.1:8080/dashboard/](http://127.0.0.1:8080/dashboard/)
 
 ??? note "Ingresses Not Discovered by Traefik"
 
