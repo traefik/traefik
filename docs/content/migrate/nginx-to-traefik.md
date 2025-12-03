@@ -601,25 +601,7 @@ kubectl delete namespace ingress-nginx
 ## Troubleshooting
 
 There is a dashboard available in Traefik that can help to understand what's going on.
-It can be enabled with those helm values:
-
-```yaml
-providers:
-  kubernetesIngressNginx:
-    enabled: true
-ingressRoute:
-  dashboard:
-    enabled: true
-```
-
-For security reason, it won't be exposed by default. It can be port-forwarded locally:
-
-```bash
-NAMESPACE=traefik
-kubectl port-forward $(kubectl get pods --selector "app.kubernetes.io/name=traefik" --output=name -n $NAMESPACE) 8080:8080 -n $NAMESPACE
-```
-
-This command makes the dashboard accessible locally on [127.0.0.1:8080/dashboard/](http://127.0.0.1:8080/dashboard/)
+Refer to the [dedicated documentation](../reference/install-configuration/api-dashboard.md#configuration-example) to enable it.
 
 ??? note "Ingresses Not Discovered by Traefik"
 
