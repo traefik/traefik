@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/baqupio/baqup/v3/pkg/types"
 	"github.com/containous/alice"
-	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 const (

@@ -1,0 +1,91 @@
+{
+  "http": {
+    "routers": {
+      "api": {
+        "entryPoints": [
+          "baqup"
+        ],
+        "service": "api@internal",
+        "rule": "PathPrefix(`/api`)",
+        "ruleSyntax": "default",
+        "priority": 9223372036854775806
+      },
+      "dashboard": {
+        "entryPoints": [
+          "baqup"
+        ],
+        "middlewares": [
+          "dashboard_redirect@internal",
+          "dashboard_stripprefix@internal"
+        ],
+        "service": "dashboard@internal",
+        "rule": "PathPrefix(`/`)",
+        "ruleSyntax": "default",
+        "priority": 9223372036854775805
+      },
+      "debug": {
+        "entryPoints": [
+          "baqup"
+        ],
+        "service": "api@internal",
+        "rule": "PathPrefix(`/debug`)",
+        "ruleSyntax": "default",
+        "priority": 9223372036854775806
+      },
+      "ping": {
+        "entryPoints": [
+          "test"
+        ],
+        "service": "ping@internal",
+        "rule": "PathPrefix(`/ping`)",
+        "ruleSyntax": "default",
+        "priority": 9223372036854775807
+      },
+      "prometheus": {
+        "entryPoints": [
+          "test"
+        ],
+        "service": "prometheus@internal",
+        "rule": "PathPrefix(`/metrics`)",
+        "ruleSyntax": "default",
+        "priority": 9223372036854775807
+      },
+      "rest": {
+        "entryPoints": [
+          "baqup"
+        ],
+        "service": "rest@internal",
+        "rule": "PathPrefix(`/api/providers`)",
+        "ruleSyntax": "default",
+        "priority": 9223372036854775807
+      }
+    },
+    "services": {
+      "api": {},
+      "dashboard": {},
+      "noop": {},
+      "ping": {},
+      "prometheus": {},
+      "rest": {}
+    },
+    "middlewares": {
+      "dashboard_redirect": {
+        "redirectRegex": {
+          "regex": "^(http:\\/\\/(\\[[\\w:.]+\\]|[\\w\\._-]+)(:\\d+)?)\\/$",
+          "replacement": "${1}/dashboard/",
+          "permanent": true
+        }
+      },
+      "dashboard_stripprefix": {
+        "stripPrefix": {
+          "prefixes": [
+            "/dashboard/",
+            "/dashboard"
+          ]
+        }
+      }
+    }
+  },
+  "tcp": {},
+  "tls": {}
+}

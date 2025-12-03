@@ -9,7 +9,7 @@ spec:
     - name: myapp
       port: 8000
   selector:
-    app: traefiklabs
+    app: baquplabs
     task: whoamiudp
 
 ---
@@ -44,7 +44,7 @@ spec:
     - name: myapp2
       port: 8080
   selector:
-    app: traefiklabs
+    app: baquplabs
     task: whoamiudp2
 
 ---
@@ -79,7 +79,7 @@ spec:
     - name: myapp3
       port: 8083
   selector:
-    app: traefiklabs
+    app: baquplabs
     task: whoamiudp3
 
 ---
@@ -134,7 +134,7 @@ spec:
     - name: myapp-ipv6
       port: 8080
   selector:
-    app: traefiklabs
+    app: baquplabs
     task: whoamiudp-ipv6
 
 ---
@@ -168,7 +168,7 @@ spec:
     - name: myapp
       port: 8000
   selector:
-    app: traefiklabs
+    app: baquplabs
     task: whoamiudp
 
 ---
@@ -228,7 +228,7 @@ spec:
       port: 8000
 
   selector:
-    app: traefiklabs
+    app: baquplabs
     task: whoamiudp
 
 ---

@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/baqupio/baqup/v3/pkg/config/dynamic"
 )
 
 // NamedHandler is a http.Handler with a name.

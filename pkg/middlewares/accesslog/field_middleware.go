@@ -5,9 +5,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/baqupio/baqup/v3/pkg/middlewares/capture"
+	"github.com/baqupio/baqup/v3/pkg/observability/logs"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
-	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	"github.com/vulcand/oxy/v2/utils"
 )
 
@@ -70,7 +70,7 @@ func AddServiceFields(rw http.ResponseWriter, req *http.Request, next http.Handl
 // InitServiceFields init service fields.
 func InitServiceFields(rw http.ResponseWriter, req *http.Request, next http.Handler, data *LogData) {
 	// Because they are expected to be initialized when the logger is processing the data table,
-	// the origin fields are initialized in case the response is returned by Traefik itself, and not a service.
+	// the origin fields are initialized in case the response is returned by Baqup itself, and not a service.
 	data.Core[OriginDuration] = time.Duration(0)
 	data.Core[OriginStatus] = 0
 	data.Core[OriginContentSize] = int64(0)

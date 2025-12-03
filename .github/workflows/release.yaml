@@ -9,17 +9,17 @@ env:
   GO_VERSION: '1.24'
   CGO_ENABLED: 0
   VERSION: ${{ github.ref_name }}
-  TRAEFIKER_EMAIL: "traefiker@traefik.io"
+  BAQUPER_EMAIL: "baquper@baqup.io"
   CODENAME: ramequin
 
 jobs:
 
   build-webui:
-    if: github.ref_type == 'tag' && github.repository == 'traefik/traefik'
+    if: github.ref_type == 'tag' && github.repository == 'baqup/baqup'
     uses: ./.github/workflows/template-webui.yaml
 
   build:
-    if: github.ref_type == 'tag' && github.repository == 'traefik/traefik'
+    if: github.ref_type == 'tag' && github.repository == 'baqup/baqup'
     runs-on: ubuntu-latest
 
     strategy:
@@ -81,7 +81,7 @@ jobs:
           retention-days: 1
 
   release:
-    if: github.ref_type == 'tag' && github.repository == 'traefik/traefik'
+    if: github.ref_type == 'tag' && github.repository == 'baqup/baqup'
     runs-on: ubuntu-latest
 
     needs:
@@ -105,10 +105,10 @@ jobs:
 
       - name: Retrieve the secret and decode it to a file
         env:
-          TRAEFIKER_RSA: ${{ secrets.TRAEFIKER_RSA }}
+          BAQUPER_RSA: ${{ secrets.BAQUPER_RSA }}
         run: |
           mkdir -p ~/.ssh
-          echo "${TRAEFIKER_RSA}" | base64 --decode > ~/.ssh/traefiker_rsa
+          echo "${BAQUPER_RSA}" | base64 --decode > ~/.ssh/baquper_rsa
 
       - name: Download All Artifacts
         uses: actions/download-artifact@v4
@@ -121,16 +121,16 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          cat dist/**/*_checksums.txt >> "dist/traefik_${VERSION}_checksums.txt"
+          cat dist/**/*_checksums.txt >> "dist/baqup_${VERSION}_checksums.txt"
           rm dist/**/*_checksums.txt
-          tar cfz "dist/traefik-${VERSION}.src.tar.gz" \
+          tar cfz "dist/baqup-${VERSION}.src.tar.gz" \
             --exclude-vcs \
             --exclude .idea \
             --exclude .github \
             --exclude dist .
           
           chown -R "$(id -u)":"$(id -g)" dist/
-          gh release create ${VERSION} ./dist/**/traefik*.{zip,tar.gz} ./dist/traefik*.{tar.gz,txt} --repo traefik/traefik --title ${VERSION} --notes ${VERSION} --latest=false
+          gh release create ${VERSION} ./dist/**/baqup*.{zip,tar.gz} ./dist/baqup*.{tar.gz,txt} --repo baqup/baqup --title ${VERSION} --notes ${VERSION} --latest=false
           
           ./script/deploy.sh
 

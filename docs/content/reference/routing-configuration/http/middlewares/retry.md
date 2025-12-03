@@ -1,6 +1,6 @@
 ---
-title: "Traefik HTTP Retry Documentation"
-description: "Configure Traefik Proxy's HTTP Retry middleware, so you can retry requests to a backend server until it succeeds. Read the technical documentation."
+title: "Baqup HTTP Retry Documentation"
+description: "Configure Baqup Proxy's HTTP Retry middleware, so you can retry requests to a backend server until it succeeds. Read the technical documentation."
 ---
 
 The `retry` middleware retries requests a given number of times to a backend server if that server does not reply.  
@@ -31,8 +31,8 @@ http:
 ```yaml tab="Labels"
 # Retry 4 times with exponential backoff
 labels:
-  - "traefik.http.middlewares.test-retry.retry.attempts=4"
-  - "traefik.http.middlewares.test-retry.retry.initialinterval=100ms"
+  - "baqup.http.middlewares.test-retry.retry.attempts=4"
+  - "baqup.http.middlewares.test-retry.retry.initialinterval=100ms"
 ```
 
 ```json tab="Tags"
@@ -41,8 +41,8 @@ labels:
 {
   // ...
   "Tags" : [
-    "traefik.http.middlewares.test-retry.retry.attempts=4",
-    "traefik.http.middlewares.test-retry.retry.initialinterval=100ms"
+    "baqup.http.middlewares.test-retry.retry.attempts=4",
+    "baqup.http.middlewares.test-retry.retry.initialinterval=100ms"
   ]
 }
 
@@ -50,7 +50,7 @@ labels:
 
 ```yaml tab="Kubernetes"
 # Retry 4 times with exponential backoff
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-retry

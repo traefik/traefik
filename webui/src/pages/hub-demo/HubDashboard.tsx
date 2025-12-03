@@ -11,7 +11,7 @@ import { SpinnerLoader } from 'components/SpinnerLoader'
 import { useIsDarkMode } from 'hooks/use-theme'
 import { TopNav } from 'layout/navigation'
 
-const SCRIPT_URL = 'https://assets.traefik.io/hub-ui-demo.js'
+const SCRIPT_URL = 'https://assets.baqup.io/hub-ui-demo.js'
 
 // Module-level cache to persist across component mount/unmount
 let cachedBlobUrl: string | null = null
@@ -81,17 +81,17 @@ const HubDashboard = ({ path }: { path: string }) => {
         <Text size={6} css={{ textAlign: 'center', lineHeight: 1.4 }}>
           Don't worry — you can still learn more about{' '}
           <Text size={6} css={{ fontWeight: '$semiBold' }}>
-            Traefik Hub API Management
+            Baqup Hub API Management
           </Text>{' '}
           on our{' '}
           <Link
-            href="https://traefik.io/traefik-hub?utm_campaign=hub-demo&utm_source=proxy-button&utm_medium=in-product"
+            href="https://baqup.io/baqup-hub?utm_campaign=hub-demo&utm_source=proxy-button&utm_medium=in-product"
             target="_blank"
           >
             website
           </Link>{' '}
           or in our{' '}
-          <Link href="https://doc.traefik.io/traefik-hub/" target="_blank">
+          <Link href="https://doc.baqup.io/baqup-hub/" target="_blank">
             documentation
           </Link>
           .
@@ -103,7 +103,7 @@ const HubDashboard = ({ path }: { path: string }) => {
   return (
     <Box css={{ width: '100%' }}>
       <Helmet>
-        <title>Hub Demo - Traefik Proxy</title>
+        <title>Hub Demo - Baqup Proxy</title>
         <meta
           httpEquiv="Content-Security-Policy"
           content="script-src 'self' blob: 'unsafe-inline'; object-src 'none'; base-uri 'self';"

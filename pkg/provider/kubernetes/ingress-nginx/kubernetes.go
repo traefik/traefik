@@ -14,18 +14,18 @@ import (
 	"strings"
 	"time"
 
+	"github.com/baqupio/baqup/v3/pkg/config/dynamic"
+	"github.com/baqupio/baqup/v3/pkg/job"
+	"github.com/baqupio/baqup/v3/pkg/observability/logs"
+	"github.com/baqupio/baqup/v3/pkg/provider"
+	"github.com/baqupio/baqup/v3/pkg/provider/kubernetes/k8s"
+	"github.com/baqupio/baqup/v3/pkg/safe"
+	"github.com/baqupio/baqup/v3/pkg/tls"
+	"github.com/baqupio/baqup/v3/pkg/types"
 	"github.com/cenkalti/backoff/v4"
 	"github.com/mitchellh/hashstructure"
 	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/job"
-	"github.com/traefik/traefik/v3/pkg/observability/logs"
-	"github.com/traefik/traefik/v3/pkg/provider"
-	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
-	"github.com/traefik/traefik/v3/pkg/safe"
-	"github.com/traefik/traefik/v3/pkg/tls"
-	"github.com/traefik/traefik/v3/pkg/types"
 	corev1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
 	"k8s.io/utils/ptr"
@@ -114,7 +114,7 @@ func (p *Provider) Init() error {
 	return nil
 }
 
-// Provide allows the k8s provider to provide configurations to traefik using the given configuration channel.
+// Provide allows the k8s provider to provide configurations to baqup using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	logger := log.With().Str(logs.ProviderName, providerName).Logger()
 	ctxLog := logger.WithContext(context.Background())
@@ -231,7 +231,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 		// Add the default backend service router to the configuration.
 		conf.HTTP.Routers[defaultBackendName] = &dynamic.Router{
 			Rule: "PathPrefix(`/`)",
-			// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
+			// "default" stands for the default rule syntax in Baqup v3, i.e. the v3 syntax.
 			RuleSyntax: "default",
 			Priority:   math.MinInt32,
 			Service:    defaultBackendName,
@@ -239,7 +239,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 		conf.HTTP.Routers[defaultBackendTLSName] = &dynamic.Router{
 			Rule: "PathPrefix(`/`)",
-			// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
+			// "default" stands for the default rule syntax in Baqup v3, i.e. the v3 syntax.
 			RuleSyntax: "default",
 			Priority:   math.MinInt32,
 			Service:    defaultBackendName,
@@ -308,7 +308,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 		if defaultBackendService != nil && len(ingress.Spec.Rules) == 0 {
 			rt := &dynamic.Router{
 				Rule: "PathPrefix(`/`)",
-				// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
+				// "default" stands for the default rule syntax in Baqup v3, i.e. the v3 syntax.
 				RuleSyntax: "default",
 				Priority:   math.MinInt32,
 				Service:    defaultBackendName,
@@ -322,7 +322,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 			rtTLS := &dynamic.Router{
 				Rule: "PathPrefix(`/`)",
-				// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
+				// "default" stands for the default rule syntax in Baqup v3, i.e. the v3 syntax.
 				RuleSyntax: "default",
 				Priority:   math.MinInt32,
 				Service:    defaultBackendName,
@@ -385,7 +385,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 				conf.TCP.Routers[routerKey] = &dynamic.TCPRouter{
 					Rule: fmt.Sprintf("HostSNI(`%s`)", rule.Host),
-					// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
+					// "default" stands for the default rule syntax in Baqup v3, i.e. the v3 syntax.
 					RuleSyntax: "default",
 					Service:    serviceName,
 					TLS: &dynamic.RouterTCPTLSConfig{
@@ -401,7 +401,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 				rt := &dynamic.Router{
 					Rule: buildHostRule(rule.Host),
-					// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
+					// "default" stands for the default rule syntax in Baqup v3, i.e. the v3 syntax.
 					RuleSyntax: "default",
 					Service:    key,
 				}
@@ -414,7 +414,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 				rtTLS := &dynamic.Router{
 					Rule: buildHostRule(rule.Host),
-					// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
+					// "default" stands for the default rule syntax in Baqup v3, i.e. the v3 syntax.
 					RuleSyntax: "default",
 					Service:    key,
 					TLS:        &dynamic.RouterTLSConfig{},
@@ -467,7 +467,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 				rt := &dynamic.Router{
 					Rule: buildRule(rule.Host, pa, ingressConfig),
-					// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
+					// "default" stands for the default rule syntax in Baqup v3, i.e. the v3 syntax.
 					RuleSyntax: "default",
 					Service:    serviceName,
 				}
@@ -946,7 +946,7 @@ func applySSLRedirectConfiguration(routerName string, ingressConfig ingressConfi
 		if hasTLS {
 			httpRouter := &dynamic.Router{
 				Rule: rt.Rule,
-				// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
+				// "default" stands for the default rule syntax in Baqup v3, i.e. the v3 syntax.
 				RuleSyntax:  "default",
 				Middlewares: rt.Middlewares,
 				Service:     rt.Service,
@@ -960,7 +960,7 @@ func applySSLRedirectConfiguration(routerName string, ingressConfig ingressConfi
 
 	redirectRouter := &dynamic.Router{
 		Rule: rt.Rule,
-		// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
+		// "default" stands for the default rule syntax in Baqup v3, i.e. the v3 syntax.
 		RuleSyntax: "default",
 		Service:    "noop@internal",
 	}

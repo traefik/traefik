@@ -57,8 +57,8 @@ describe('useHubUpgradeButton Hook', () => {
 
     await waitFor(() => {
       expect(mockVerifySignature).toHaveBeenCalledWith(
-        'https://traefik.github.io/traefiklabs-hub-button-app/main-v1.js',
-        'https://traefik.github.io/traefiklabs-hub-button-app/main-v1.js.sig',
+        'https://baqup.github.io/baquplabs-hub-button-app/main-v1.js',
+        'https://baqup.github.io/baquplabs-hub-button-app/main-v1.js.sig',
         'MCowBQYDK2VwAyEAY0OZFFE5kSuqYK6/UprTL5RmvQ+8dpPTGMCw1MiO/Gs=',
       )
     })

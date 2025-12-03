@@ -14,13 +14,13 @@ import (
 )
 
 var (
-	// Version holds the current version of traefik.
+	// Version holds the current version of baqup.
 	Version = "dev"
-	// Codename holds the current version codename of traefik.
+	// Codename holds the current version codename of baqup.
 	Codename = "cheddar" // beta cheese
-	// BuildDate holds the build date of traefik.
+	// BuildDate holds the build date of baqup.
 	BuildDate = "I don't remember exactly"
-	// StartDate holds the start date of traefik.
+	// StartDate holds the start date of baqup.
 	StartDate = time.Now()
 	// DisableDashboardAd disables ad in the dashboard.
 	DisableDashboardAd = false
@@ -64,14 +64,14 @@ func CheckNewVersion() {
 
 	client := github.NewClient(nil)
 
-	updateURL, err := url.Parse("https://update.traefik.io/")
+	updateURL, err := url.Parse("https://update.baqup.io/")
 	if err != nil {
 		log.Warn().Err(err).Msg("Error checking new version")
 		return
 	}
 	client.BaseURL = updateURL
 
-	releases, resp, err := client.Repositories.ListReleases(context.Background(), "traefik", "traefik", nil)
+	releases, resp, err := client.Repositories.ListReleases(context.Background(), "baqup", "baqup", nil)
 	if err != nil {
 		log.Warn().Err(err).Msg("Error checking new version")
 		return
@@ -100,7 +100,7 @@ func CheckNewVersion() {
 		}
 
 		if releaseVersion.GreaterThan(currentVersion) {
-			log.Warn().Err(err).Msgf("A new release of Traefik has been found: %s. Please consider updating.", releaseVersion.String())
+			log.Warn().Err(err).Msgf("A new release of Baqup has been found: %s. Please consider updating.", releaseVersion.String())
 			return
 		}
 	}

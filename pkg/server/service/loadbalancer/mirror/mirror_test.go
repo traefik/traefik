@@ -8,8 +8,8 @@ import (
 	"sync/atomic"
 	"testing"
 
+	"github.com/baqupio/baqup/v3/pkg/safe"
 	"github.com/stretchr/testify/assert"
-	"github.com/traefik/traefik/v3/pkg/safe"
 )
 
 const defaultMaxBodySize int64 = -1

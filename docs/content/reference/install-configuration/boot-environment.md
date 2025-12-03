@@ -1,25 +1,25 @@
 ---
-title: "Traefik Configuration Overview"
-description: "Read the official Traefik documentation to get started with configuring the Traefik Proxy."
+title: "Baqup Configuration Overview"
+description: "Read the official Baqup documentation to get started with configuring the Baqup Proxy."
 ---
 
 # Boot Environment
 
-Traefik Proxy’s configuration is divided into two main categories:
+Baqup Proxy’s configuration is divided into two main categories:
 
-- **Install Configuration**: (formerly known as the static configuration) Defines parameters that require Traefik to restart when changed. This includes entry points, providers, API/dashboard settings, and logging levels.
-- **Routing Configuration**: (formerly known as the dynamic configuration) Involves elements that can be updated without restarting Traefik, such as routers, services, and middlewares.
+- **Install Configuration**: (formerly known as the static configuration) Defines parameters that require Baqup to restart when changed. This includes entry points, providers, API/dashboard settings, and logging levels.
+- **Routing Configuration**: (formerly known as the dynamic configuration) Involves elements that can be updated without restarting Baqup, such as routers, services, and middlewares.
 
-This section focuses on setting up the install configuration, which is essential for Traefik’s initial boot.
+This section focuses on setting up the install configuration, which is essential for Baqup’s initial boot.
 
 ## Configuration Methods
 
-Traefik offers multiple methods to define install configuration. 
+Baqup offers multiple methods to define install configuration. 
 
 !!! warning "Note"
     It’s crucial to choose one method and stick to it, as mixing different configuration options is not supported and can lead to unexpected behavior.
 
-Here are the methods available for configuring the Traefik proxy:
+Here are the methods available for configuring the Baqup proxy:
 
 - [File](#file) 
 - [CLI](#cli)
@@ -32,7 +32,7 @@ You can define the install configuration in a file using formats like YAML or TO
 
 ### Configuration Example
 
-```yaml tab="traefik.yml (YAML)"
+```yaml tab="baqup.yml (YAML)"
 entryPoints:
   web:
     address: ":80"
@@ -49,7 +49,7 @@ log:
   level: INFO
 ```
 
-```toml tab="traefik.toml (TOML)"
+```toml tab="baqup.toml (TOML)"
 [entryPoints]
   [entryPoints.web]
     address = ":80"
@@ -69,9 +69,9 @@ log:
 
 ### Configuration File
 
-At startup, Traefik searches for install configuration in a file named `traefik.yml` (or `traefik.yaml` or `traefik.toml`) in the following directories:
+At startup, Baqup searches for install configuration in a file named `baqup.yml` (or `baqup.yaml` or `baqup.toml`) in the following directories:
 
-- `/etc/traefik/`
+- `/etc/baqup/`
 - `$XDG_CONFIG_HOME/`
 - `$HOME/.config/`
 - `.` (the current working directory).
@@ -79,17 +79,17 @@ At startup, Traefik searches for install configuration in a file named `traefik.
 You can override this behavior using the `configFile` argument like this:
 
 ```bash
-traefik --configFile=foo/bar/myconfigfile.yml
+baqup --configFile=foo/bar/myconfigfile.yml
 ```
 
 ## CLI
 
-Using the CLI, you can pass install configuration directly as command-line arguments when starting Traefik. 
+Using the CLI, you can pass install configuration directly as command-line arguments when starting Baqup. 
 
 ### Configuration Example
 
 ```sh tab="CLI"
-traefik \
+baqup \
   --entryPoints.web.address=":80" \
   --entryPoints.websecure.address=":443" \
   --providers.docker \
@@ -99,19 +99,19 @@ traefik \
 
 ## Environment Variables
 
-You can also set the install configuration using environment variables. Each option corresponds to an environment variable prefixed with `TRAEFIK_`.
+You can also set the install configuration using environment variables. Each option corresponds to an environment variable prefixed with `BAQUP_`.
 
 ### Configuration Example
 
 ```sh tab="ENV"
-TRAEFIK_ENTRYPOINTS_WEB_ADDRESS=":80" TRAEFIK_ENTRYPOINTS_WEBSECURE_ADDRESS=":443" TRAEFIK_PROVIDERS_DOCKER=true TRAEFIK_API_DASHBOARD=true TRAEFIK_LOG_LEVEL="INFO" traefik
+BAQUP_ENTRYPOINTS_WEB_ADDRESS=":80" BAQUP_ENTRYPOINTS_WEBSECURE_ADDRESS=":443" BAQUP_PROVIDERS_DOCKER=true BAQUP_API_DASHBOARD=true BAQUP_LOG_LEVEL="INFO" baqup
 ```
 
 ## Helm
 
-When deploying Traefik Proxy using Helm in a Kubernetes cluster, the install configuration is defined in a `values.yaml` file. 
+When deploying Baqup Proxy using Helm in a Kubernetes cluster, the install configuration is defined in a `values.yaml` file. 
 
-You can find the official Traefik Helm chart on [GitHub](https://github.com/traefik/traefik-helm-chart/blob/master/traefik/VALUES.md)
+You can find the official Baqup Helm chart on [GitHub](https://github.com/baqupio/baqup-helm-chart/blob/master/baqup/VALUES.md)
 
 ### Configuration Example
 
@@ -128,7 +128,7 @@ additionalArguments:
 ```
 
 ```sh tab="Helm Commands"
-helm repo add traefik https://traefik.github.io/charts
+helm repo add baqup https://baqup.github.io/charts
 helm repo update
-helm install traefik traefik/traefik -f values.yaml
+helm install baqup baqup/baqup -f values.yaml
 ```

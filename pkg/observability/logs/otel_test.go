@@ -10,10 +10,10 @@ import (
 	"testing"
 	"time"
 
+	otypes "github.com/baqupio/baqup/v3/pkg/observability/types"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	"go.opentelemetry.io/collector/pdata/plog/plogotlp"
 	"go.opentelemetry.io/otel/trace"
 )

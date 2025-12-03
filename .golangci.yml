@@ -142,17 +142,17 @@ linters:
         - pkg: sigs.k8s.io/gateway-api/apis/v1alpha2
           alias: gatev1alpha2
 
-        # Traefik Kubernetes rewrites:
-        - pkg: github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1
-          alias: traefikv1alpha1
-        - pkg: github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned
-          alias: traefikclientset
-        - pkg: github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/informers/externalversions
-          alias: traefikinformers
-        - pkg: github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned/scheme
-          alias: traefikscheme
-        - pkg: github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned/fake
-          alias: traefikcrdfake
+        # Baqup Kubernetes rewrites:
+        - pkg: github.com/baqupio/baqup/v3/pkg/provider/kubernetes/crd/baqupio/v1alpha1
+          alias: baqupv1alpha1
+        - pkg: github.com/baqupio/baqup/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned
+          alias: baqupclientset
+        - pkg: github.com/baqupio/baqup/v3/pkg/provider/kubernetes/crd/generated/informers/externalversions
+          alias: baqupinformers
+        - pkg: github.com/baqupio/baqup/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned/scheme
+          alias: baqupscheme
+        - pkg: github.com/baqupio/baqup/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned/fake
+          alias: baqupcrdfake
     misspell:
       locale: US
     revive:
@@ -319,7 +319,7 @@ linters:
       - path: pkg/proxy/httputil/bufferpool.go
         text: 'SA6002: argument should be pointer-like to avoid allocations'
       - path: integration/integration_test.go
-        text: 'var (gatewayAPIConformanceRunTest|traefikVersion) is unused'
+        text: 'var (gatewayAPIConformanceRunTest|baqupVersion) is unused'
       - path: pkg/server/router/router.go
         text: 'appendAssign: append result not assigned to the same slice'
         linters:

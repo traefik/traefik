@@ -12,10 +12,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/baqupio/baqup/v3/pkg/testhelpers"
 	gorillawebsocket "github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v3/pkg/testhelpers"
 	"golang.org/x/net/websocket"
 )
 

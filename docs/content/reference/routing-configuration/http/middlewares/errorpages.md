@@ -1,6 +1,6 @@
 ---
-title: "Traefik Errors Documentation"
-description: "In Traefik Proxy, the Errors middleware returns custom pages according to configured ranges of HTTP Status codes. Read the technical documentation."
+title: "Baqup Errors Documentation"
+description: "In Baqup Proxy, the Errors middleware returns custom pages according to configured ranges of HTTP Status codes. Read the technical documentation."
 ---
 
 The `errors` middleware returns a custom page in lieu of the default, according to configured ranges of HTTP Status codes.
@@ -47,11 +47,11 @@ http:
 ```yaml tab="Labels"
 # Dynamic Custom Error Page for 5XX Status Code
 labels:
-  - "traefik.http.middlewares.test-errors.errors.status=500,501,503,505-599"
-  - "traefik.http.middlewares.test-errors.errors.statusRewrites.418=404"
-  - "traefik.http.middlewares.test-errors.errors.statusRewrites.502-504=500"
-  - "traefik.http.middlewares.test-errors.errors.service=error-handler-service"
-  - "traefik.http.middlewares.test-errors.errors.query=/{status}.html"
+  - "baqup.http.middlewares.test-errors.errors.status=500,501,503,505-599"
+  - "baqup.http.middlewares.test-errors.errors.statusRewrites.418=404"
+  - "baqup.http.middlewares.test-errors.errors.statusRewrites.502-504=500"
+  - "baqup.http.middlewares.test-errors.errors.service=error-handler-service"
+  - "baqup.http.middlewares.test-errors.errors.query=/{status}.html"
 ```
 
 ```json tab="Tags"
@@ -59,11 +59,11 @@ labels:
 {
   // ...
   "Tags": [
-    "traefik.http.middlewares.test-errors.errors.status=500,501,503,505-599",
-    "traefik.http.middlewares.test-errors.errors.statusRewrites.418=404",
-    "traefik.http.middlewares.test-errors.errors.statusRewrites.502-504=500",
-    "traefik.http.middlewares.test-errors.errors.service=error-handler-service",
-    "traefik.http.middlewares.test-errors.errors.query=/{status}.html"
+    "baqup.http.middlewares.test-errors.errors.status=500,501,503,505-599",
+    "baqup.http.middlewares.test-errors.errors.statusRewrites.418=404",
+    "baqup.http.middlewares.test-errors.errors.statusRewrites.502-504=500",
+    "baqup.http.middlewares.test-errors.errors.service=error-handler-service",
+    "baqup.http.middlewares.test-errors.errors.query=/{status}.html"
   ]
 
 }
@@ -71,7 +71,7 @@ labels:
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-errors

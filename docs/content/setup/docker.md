@@ -1,14 +1,14 @@
 ---
-title: Setup Traefik Proxy in Docker Standalone
-description: "Learn how to Setup Traefik on Docker with HTTP/HTTPS entrypoints, redirects, secure dashboard, basic TLS, metrics, tracing, access‑logs."
+title: Setup Baqup Proxy in Docker Standalone
+description: "Learn how to Setup Baqup on Docker with HTTP/HTTPS entrypoints, redirects, secure dashboard, basic TLS, metrics, tracing, access‑logs."
 ---
 
-This guide provides an in-depth walkthrough for installing and configuring Traefik Proxy within a Docker container using the official Traefik Docker image & Docker Compose. In this guide, we'll cover the following:
+This guide provides an in-depth walkthrough for installing and configuring Baqup Proxy within a Docker container using the official Baqup Docker image & Docker Compose. In this guide, we'll cover the following:
 
 - Enable the [Docker provider](../reference/install-configuration/providers/docker.md)
 - Expose **web** (HTTP :80) and **websecure** (HTTPS :443) entrypoints  
 - Redirect all HTTP traffic to HTTPS
-- Secure the Traefik dashboard with **basic‑auth**  
+- Secure the Baqup dashboard with **basic‑auth**  
 - Terminate TLS with a self‑signed certificate for `*.docker.localhost`
 - Deploy the **whoami** demo service
 - Enable access‑logs and Prometheus metrics
@@ -22,7 +22,7 @@ This guide provides an in-depth walkthrough for installing and configuring Traef
 
 ## Create a self‑signed certificate
 
-Before Traefik can serve HTTPS locally it needs a certificate. In production you’d use one from a trusted CA, but for a single‑machine stack a quick self‑signed cert is enough. We can create one with openssl by running the following commands:
+Before Baqup can serve HTTPS locally it needs a certificate. In production you’d use one from a trusted CA, but for a single‑machine stack a quick self‑signed cert is enough. We can create one with openssl by running the following commands:
 
 ```bash
 mkdir -p certs
@@ -31,11 +31,11 @@ openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
   -subj "/CN=*.docker.localhost"
 ```
 
-The `certs` folder now holds `local.crt` and `local.key`, which will be mounted read‑only into Traefik.
+The `certs` folder now holds `local.crt` and `local.key`, which will be mounted read‑only into Baqup.
 
-## Create the Traefik Dashboard Credentials
+## Create the Baqup Dashboard Credentials
 
-In production, it is advisable to have some form of authentication/security for the Traefik dashboard. Traefik can be secured with the [basic‑auth middleware](../reference/routing-configuration/http/middlewares/basicauth.md). To do this, generate a hashed username / password pair that Traefik’s middleware will validate:
+In production, it is advisable to have some form of authentication/security for the Baqup dashboard. Baqup can be secured with the [basic‑auth middleware](../reference/routing-configuration/http/middlewares/basicauth.md). To do this, generate a hashed username / password pair that Baqup’s middleware will validate:
 
 ```bash
 htpasswd -nb admin "P@ssw0rd" | sed -e 's/\$/\$\$/g'
@@ -45,10 +45,10 @@ Copy the full output (e.g., admin:$$apr1$$…) — we'll need this for the middl
 
 ## Create a docker-compose.yaml
 
-Now define the whole stack in a Compose file. This file declares Traefik, mounts the certificate, sets up a dedicated network, and later hosts the whoami demo service.
+Now define the whole stack in a Compose file. This file declares Baqup, mounts the certificate, sets up a dedicated network, and later hosts the whoami demo service.
 
 !!! note
-    You can also choose to use the Docker CLI and a configuration file to run Traefik, but for this tutorial, we'll be using Docker Compose.
+    You can also choose to use the Docker CLI and a configuration file to run Baqup, but for this tutorial, we'll be using Docker Compose.
 
 First, create a folder named `dynamic` and create a file named `tls.yaml` for dynamic configuration. Paste the TLS certificate configuration into the file:
     
@@ -63,15 +63,15 @@ In the same folder as the `dynamic/tls.yaml` file, create a `docker-compose.yaml
 
 ```yaml
 services:
-  traefik:
-    image: traefik:v3.4
-    container_name: traefik
+  baqup:
+    image: baqup:v3.4
+    container_name: baqup
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
 
     networks:
-     # Connect to the 'traefik_proxy' overlay network for inter-container communication across nodes
+     # Connect to the 'baqup_proxy' overlay network for inter-container communication across nodes
       - proxy
 
     ports:
@@ -110,33 +110,33 @@ services:
       - "--accesslog=true"
       - "--metrics.prometheus=true"
 
-  # Traefik Dynamic configuration via Docker labels
+  # Baqup Dynamic configuration via Docker labels
     labels:
       # Enable self‑routing
-      - "traefik.enable=true"
+      - "baqup.enable=true"
 
       # Dashboard router
-      - "traefik.http.routers.dashboard.rule=Host(`dashboard.docker.localhost`)"
-      - "traefik.http.routers.dashboard.entrypoints=websecure"
-      - "traefik.http.routers.dashboard.service=api@internal"
-      - "traefik.http.routers.dashboard.tls=true"
+      - "baqup.http.routers.dashboard.rule=Host(`dashboard.docker.localhost`)"
+      - "baqup.http.routers.dashboard.entrypoints=websecure"
+      - "baqup.http.routers.dashboard.service=api@internal"
+      - "baqup.http.routers.dashboard.tls=true"
 
       # Basic‑auth middleware
-      - "traefik.http.middlewares.dashboard-auth.basicauth.users=<PASTE_HASH_HERE>"
-      - "traefik.http.routers.dashboard.middlewares=dashboard-auth@docker"
+      - "baqup.http.middlewares.dashboard-auth.basicauth.users=<PASTE_HASH_HERE>"
+      - "baqup.http.routers.dashboard.middlewares=dashboard-auth@docker"
 
 # Whoami application
   whoami:
-    image: traefik/whoami
+    image: baqup/whoami
     container_name: whoami
     restart: unless-stopped
     networks:
       - proxy
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.whoami.rule=Host(`whoami.docker.localhost`)"
-      - "traefik.http.routers.whoami.entrypoints=websecure"
-      - "traefik.http.routers.whoami.tls=true"
+      - "baqup.enable=true"
+      - "baqup.http.routers.whoami.rule=Host(`whoami.docker.localhost`)"
+      - "baqup.http.routers.whoami.entrypoints=websecure"
+      - "baqup.http.routers.whoami.tls=true"
 
 networks:
   proxy:
@@ -155,13 +155,13 @@ With the Compose file and supporting assets in place, start the containers and l
 docker compose up -d
 ```
 
-Traefik will start, read its static configuration from the `command` arguments, connect to the Docker socket, detect its own labels for dynamic configuration (dashboard routing and auth), and begin listening on ports 80 and 443. HTTP requests will be redirected to HTTPS.
+Baqup will start, read its static configuration from the `command` arguments, connect to the Docker socket, detect its own labels for dynamic configuration (dashboard routing and auth), and begin listening on ports 80 and 443. HTTP requests will be redirected to HTTPS.
 
 ## Access the Dashboard
 
-Now that Traefik is deployed, you can access the dashboard at [https://dashboard.docker.localhost](https://dashboard.docker.localhost) and it should prompt for the Basic Authentication credentials you configured:
+Now that Baqup is deployed, you can access the dashboard at [https://dashboard.docker.localhost](https://dashboard.docker.localhost) and it should prompt for the Basic Authentication credentials you configured:
 
-![Traefik Dashboard](../assets/img/setup/traefik-dashboard-docker.png)
+![Baqup Dashboard](../assets/img/setup/baqup-dashboard-docker.png)
 
 ## Test the whoami Application
 
@@ -187,7 +187,7 @@ X-Forwarded-For: 10.42.0.1
 X-Forwarded-Host: whoami.docker.localhost
 X-Forwarded-Port: 443
 X-Forwarded-Proto: https
-X-Forwarded-Server: traefik-644b7c67d9-f2tn9
+X-Forwarded-Server: baqup-644b7c67d9-f2tn9
 X-Real-Ip: 10.42.0.1
 ```
 
@@ -206,11 +206,11 @@ You can also open a browser and navigate to [https://whoami.docker.localhost](ht
 ![Whoami](../assets/img/setup/whoami-json-dump.png)
 
 !!! info
-    You can also navigate to the Traefik Dashboard at [https://dashboard.docker.localhost](https://dashboard.docker.localhost) to see that the route has been created.
+    You can also navigate to the Baqup Dashboard at [https://dashboard.docker.localhost](https://dashboard.docker.localhost) to see that the route has been created.
 
 ### Other Key Configuration Areas
 
-Beyond this initial setup, Traefik offers extensive configuration possibilities. Here are brief introductions and minimal examples using Docker Compose `command` arguments or `labels`. Consult the main documentation linked for comprehensive details.
+Beyond this initial setup, Baqup offers extensive configuration possibilities. Here are brief introductions and minimal examples using Docker Compose `command` arguments or `labels`. Consult the main documentation linked for comprehensive details.
 
 ### TLS Certificate Management (Let's Encrypt)
 
@@ -235,7 +235,7 @@ This defines a resolver named `le`, sets the required email and storage path (wi
 
 ### Metrics (Prometheus)
 
-You can expose Traefik's internal metrics for monitoring with Prometheus. We already enabled prometheus in our setup but we can further configure it.
+You can expose Baqup's internal metrics for monitoring with Prometheus. We already enabled prometheus in our setup but we can further configure it.
 *Example `command` additions:*
 
 ```yaml
@@ -246,7 +246,7 @@ command:
   # ... other command arguments ...
   - "--metrics.prometheus=true"
 
-  # Optionally change the entry point metrics are exposed on (defaults to 'traefik')
+  # Optionally change the entry point metrics are exposed on (defaults to 'baqup')
   - "--metrics.prometheus.entrypoint=metrics"
 
   # Add labels to metrics for routers/services (can increase cardinality)
@@ -258,7 +258,7 @@ This enables the `/metrics` endpoint (typically accessed via the internal API po
 
 ### Tracing (OTel):
 
-You can enable distributed tracing to follow requests through Traefik.
+You can enable distributed tracing to follow requests through Baqup.
 *Example `command` additions:*
 
 ```yaml
@@ -270,11 +270,11 @@ command:
 ```
 
 !!! note
-    This option requires a running OTEL collector accessible by Traefik. Consult the [Tracing Documentation](../reference/install-configuration/observability/tracing.md).
+    This option requires a running OTEL collector accessible by Baqup. Consult the [Tracing Documentation](../reference/install-configuration/observability/tracing.md).
 
 ### Access Logs
 
-You can configure Traefik to log incoming requests for debugging and analysis.
+You can configure Baqup to log incoming requests for debugging and analysis.
 *Example `command` additions:*
 
 ```yaml
@@ -290,10 +290,10 @@ command:
   - "--accesslog.filters.statuscodes=400-599"
 ```
 
-This enables access logs to the container's standard output (viewable via `docker compose logs <traefik-container-id>`). See the [Access Logs Documentation](../reference/install-configuration/observability/logs-and-accesslogs.md).
+This enables access logs to the container's standard output (viewable via `docker compose logs <baqup-container-id>`). See the [Access Logs Documentation](../reference/install-configuration/observability/logs-and-accesslogs.md).
 
 ### Conclusion
 
-You now have a basic Traefik setup in Docker with secure dashboard access and HTTP-to-HTTPS redirection.
+You now have a basic Baqup setup in Docker with secure dashboard access and HTTP-to-HTTPS redirection.
 
-{!traefik-for-business-applications.md!}
+{!baqup-for-business-applications.md!}

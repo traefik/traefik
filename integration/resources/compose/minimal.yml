@@ -1,10 +1,10 @@
 services:
   whoami1:
-    image: traefik/whoami
+    image: baqup/whoami
     labels:
-      traefik.http.routers.router-mini.Rule: PathPrefix(`/whoami`)
-      traefik.http.routers.router-mini.service: service-mini
-      traefik.http.services.service-mini.loadbalancer.server.port: 80
-      traefik.enable: true
+      baqup.http.routers.router-mini.Rule: PathPrefix(`/whoami`)
+      baqup.http.routers.router-mini.service: service-mini
+      baqup.http.services.service-mini.loadbalancer.server.port: 80
+      baqup.enable: true
     deploy:
       replicas: 2

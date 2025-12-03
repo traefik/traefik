@@ -44,11 +44,11 @@ jobs:
             ~/.cache/go-build
           key: ${{ runner.os }}-go-build-cache-${{ env.GO_VERSION }}-${{ hashFiles('**/go.sum') }}
 
-      - name: Artifact traefik binary
+      - name: Artifact baqup binary
         uses: actions/upload-artifact@v4
         with:
-          name: traefik
-          path: ./dist/linux/amd64/traefik
+          name: baqup
+          path: ./dist/linux/amd64/baqup
           retention-days: 1
 
   test-integration:
@@ -73,14 +73,14 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
           check-latest: true
 
-      - name: Download traefik binary
+      - name: Download baqup binary
         uses: actions/download-artifact@v4
         with:
-          name: traefik
+          name: baqup
           path: ./dist/linux/amd64/
 
       - name: Make binary executable
-        run: chmod +x ./dist/linux/amd64/traefik
+        run: chmod +x ./dist/linux/amd64/baqup
 
       - name: Restore go cache build
         uses: actions/cache/restore@v4

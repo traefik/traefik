@@ -1,6 +1,6 @@
 ---
-title: "Traefik Submitting Issues Documentation"
-description: "Help us help you! Learn how to submit an issue, following the guidelines, so the Traefik Proxy team can help. Read the technical documentation."
+title: "Baqup Submitting Issues Documentation"
+description: "Help us help you! Learn how to submit an issue, following the guidelines, so the Baqup Proxy team can help. Read the technical documentation."
 ---
 
 # Submitting Issues
@@ -9,7 +9,7 @@ Help Us Help You!
 {: .subtitle }
 
 Issues are perfect for requesting a feature/enhancement or reporting a suspected bug.
-We use the [GitHub issue tracker](https://github.com/traefik/traefik/issues) to keep track of issues in Traefik.
+We use the [GitHub issue tracker](https://github.com/baqupio/baqup/issues) to keep track of issues in Baqup.
 
 The process of sorting and checking the issues is a daunting task, and requires a lot of work.
 To help maintainers (and other community members) quickly and effortlessly understand what you need,
@@ -19,8 +19,8 @@ be sure to follow the guidelines below.
 
     The issue tracker is not a general support forum, but a place to report bugs and asks for new features.
 
-    For end-user related support questions, try using the [Traefik Community Forum](https://community.traefik.io/)
-   [![Join the chat at https://community.traefik.io/](https://img.shields.io/badge/style-register-green.svg?style=social&label=Traefik%20Community%20Forum)](https://community.traefik.io/)
+    For end-user related support questions, try using the [Baqup Community Forum](https://community.baqup.io/)
+   [![Join the chat at https://community.baqup.io/](https://img.shields.io/badge/style-register-green.svg?style=social&label=Baqup%20Community%20Forum)](https://community.baqup.io/)
 
 ## Issue Title
 
@@ -33,12 +33,12 @@ Examples:
 
 ## Feature Request
 
-Traefik is an open source project and aims to be the best edge router possible.
+Baqup is an open source project and aims to be the best edge router possible.
 
 Remember when asking for new features that these must be useful to the majority (and not only useful in edge case scenarios, or hack-like setups).
-Follow the [issue template](https://github.com/traefik/traefik/blob/master/.github/ISSUE_TEMPLATE/feature-request.yml) as much as possible.
+Follow the [issue template](https://github.com/baqupio/baqup/blob/master/.github/ISSUE_TEMPLATE/feature-request.yml) as much as possible.
 
-Do your best to explain what you're looking for, and why it would improve Traefik for everyone.
+Do your best to explain what you're looking for, and why it would improve Baqup for everyone.
 Be detailed and share the use-case(s) to allow us to see the value of your feature request as quickly as possible.
 
 Features with a lot of positive interaction (claps, +1s, conversation about how this would impact them) indicate higher community interest and help us to prioritize.
@@ -48,7 +48,7 @@ It can take a lot of work to make sure a PR can integrate with our existing code
 
 ## Issues or Possible Bug Reports
 
-Follow the [issue template](https://github.com/traefik/traefik/blob/master/.github/ISSUE_TEMPLATE/bug_report.yml) as much as possible.
+Follow the [issue template](https://github.com/baqupio/baqup/blob/master/.github/ISSUE_TEMPLATE/bug_report.yml) as much as possible.
 
 Explain the conditions in which you encountered the issue; what is your context?
 Share any logs you may have, and make sure to share the steps it takes to reproduce your issue or bug.
@@ -60,4 +60,4 @@ Help your readers focus on what matters and help them understand the structure o
 
 ## International English
 
-Every maintainer / Traefik user is not a native English speaker, so if you sometimes feel that some messages sound rude, remember that it probably is a language barrier problem from someone willing to help you.
+Every maintainer / Baqup user is not a native English speaker, so if you sometimes feel that some messages sound rude, remember that it probably is a language barrier problem from someone willing to help you.

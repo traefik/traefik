@@ -4,12 +4,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/baqupio/baqup/v3/pkg/config/dynamic"
+	"github.com/baqupio/baqup/v3/pkg/tls"
+	"github.com/baqupio/baqup/v3/pkg/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/tls"
-	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 func Test_defaultRule(t *testing.T) {
@@ -84,13 +84,13 @@ func Test_defaultRule(t *testing.T) {
 					Name:    "Test",
 					Address: "127.0.0.1",
 					Tags: []string{
-						"traefik.domain=example.com",
+						"baqup.domain=example.com",
 					},
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
 				},
 			},
-			rule: `Host("{{ .Name }}.{{ index .Labels "traefik.domain" }}")`,
+			rule: `Host("{{ .Name }}.{{ index .Labels "baqup.domain" }}")`,
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
 					Routers:           map[string]*dynamic.TCPRouter{},
@@ -290,7 +290,7 @@ func Test_buildConfig(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"dev-Test": {
 							Service:     "dev-Test",
-							Rule:        "Host(`dev-Test.traefik.test`)",
+							Rule:        "Host(`dev-Test.baqup.test`)",
 							DefaultRule: true,
 						},
 					},
@@ -353,12 +353,12 @@ func Test_buildConfig(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test1": {
 							Service:     "Test1",
-							Rule:        "Host(`Test1.traefik.test`)",
+							Rule:        "Host(`Test1.baqup.test`)",
 							DefaultRule: true,
 						},
 						"Test2": {
 							Service:     "Test2",
-							Rule:        "Host(`Test2.traefik.test`)",
+							Rule:        "Host(`Test2.baqup.test`)",
 							DefaultRule: true,
 						},
 					},
@@ -437,7 +437,7 @@ func Test_buildConfig(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service:     "Test",
-							Rule:        "Host(`Test.traefik.test`)",
+							Rule:        "Host(`Test.baqup.test`)",
 							DefaultRule: true,
 						},
 					},
@@ -505,7 +505,7 @@ func Test_buildConfig(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service:     "Test",
-							Rule:        "Host(`Test.traefik.test`)",
+							Rule:        "Host(`Test.baqup.test`)",
 							DefaultRule: true,
 						},
 					},
@@ -570,7 +570,7 @@ func Test_buildConfig(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service:     "Test",
-							Rule:        "Host(`Test.traefik.test`)",
+							Rule:        "Host(`Test.baqup.test`)",
 							DefaultRule: true,
 						},
 					},
@@ -608,7 +608,7 @@ func Test_buildConfig(t *testing.T) {
 					ID:   "id1",
 					Name: "Test",
 					Tags: []string{
-						"traefik.http.services.Service1.loadbalancer.passhostheader=true",
+						"baqup.http.services.Service1.loadbalancer.passhostheader=true",
 					},
 					Address:   "127.0.0.1",
 					Port:      9999,
@@ -630,7 +630,7 @@ func Test_buildConfig(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service:     "Service1",
-							Rule:        "Host(`Test.traefik.test`)",
+							Rule:        "Host(`Test.baqup.test`)",
 							DefaultRule: true,
 						},
 					},
@@ -665,9 +665,9 @@ func Test_buildConfig(t *testing.T) {
 					ID:   "id1",
 					Name: "Test",
 					Tags: []string{
-						"traefik.http.services.Service1.loadbalancer.passhostheader = true",
-						"traefik.http.routers.Router1.rule = Host(`foo.com`)",
-						"traefik.http.routers.Router1.service = Service1",
+						"baqup.http.services.Service1.loadbalancer.passhostheader = true",
+						"baqup.http.routers.Router1.rule = Host(`foo.com`)",
+						"baqup.http.routers.Router1.service = Service1",
 					},
 					Address:   "127.0.0.1",
 					Port:      9999,
@@ -723,7 +723,7 @@ func Test_buildConfig(t *testing.T) {
 					ID:   "id1",
 					Name: "Test",
 					Tags: []string{
-						"traefik.enable=true",
+						"baqup.enable=true",
 					},
 					Address:   "",
 					Port:      -1,
@@ -759,7 +759,7 @@ func Test_buildConfig(t *testing.T) {
 					ID:   "id1",
 					Name: "Test",
 					Tags: []string{
-						"traefik.http.routers.Router1.rule = Host(`foo.com`)",
+						"baqup.http.routers.Router1.rule = Host(`foo.com`)",
 					},
 					Address:   "127.0.0.1",
 					Port:      9999,
@@ -809,14 +809,14 @@ func Test_buildConfig(t *testing.T) {
 			},
 		},
 		{
-			desc: "one service with rule label and one traefik service",
+			desc: "one service with rule label and one baqup service",
 			items: []item{
 				{
 					ID:   "id1",
 					Name: "Test",
 					Tags: []string{
-						"traefik.http.routers.Router1.rule = Host(`foo.com`)",
-						"traefik.http.services.Service1.loadbalancer.passhostheader = true",
+						"baqup.http.routers.Router1.rule = Host(`foo.com`)",
+						"baqup.http.services.Service1.loadbalancer.passhostheader = true",
 					},
 					Address:   "127.0.0.1",
 					Port:      9999,
@@ -866,15 +866,15 @@ func Test_buildConfig(t *testing.T) {
 			},
 		},
 		{
-			desc: "one service with rule label and two traefik services",
+			desc: "one service with rule label and two baqup services",
 			items: []item{
 				{
 					ID:   "id1",
 					Name: "Test",
 					Tags: []string{
-						"traefik.http.routers.Router1.rule = Host(`foo.com`)",
-						"traefik.http.services.Service1.loadbalancer.passhostheader= true",
-						"traefik.http.services.Service2.loadbalancer.passhostheader = true",
+						"baqup.http.routers.Router1.rule = Host(`foo.com`)",
+						"baqup.http.services.Service1.loadbalancer.passhostheader= true",
+						"baqup.http.services.Service2.loadbalancer.passhostheader = true",
 					},
 					Address:   "127.0.0.1",
 					Port:      9999,
@@ -933,13 +933,13 @@ func Test_buildConfig(t *testing.T) {
 			},
 		},
 		{
-			desc: "two services with same traefik service and different passhostheader",
+			desc: "two services with same baqup service and different passhostheader",
 			items: []item{
 				{
 					ID:   "id1",
 					Name: "Test",
 					Tags: []string{
-						"traefik.http.services.Service1.loadbalancer.passhostheader = true",
+						"baqup.http.services.Service1.loadbalancer.passhostheader = true",
 					},
 					Address:   "127.0.0.1",
 					Port:      9999,
@@ -949,7 +949,7 @@ func Test_buildConfig(t *testing.T) {
 					ID:   "id2",
 					Name: "Test",
 					Tags: []string{
-						"traefik.http.services.Service1.loadbalancer.passhostheader = false",
+						"baqup.http.services.Service1.loadbalancer.passhostheader = false",
 					},
 					Address:   "127.0.0.2",
 					Port:      9999,
@@ -971,7 +971,7 @@ func Test_buildConfig(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service:     "Service1",
-							Rule:        "Host(`Test.traefik.test`)",
+							Rule:        "Host(`Test.baqup.test`)",
 							DefaultRule: true,
 						},
 					},
@@ -991,7 +991,7 @@ func Test_buildConfig(t *testing.T) {
 					ID:   "id1",
 					Name: "Test",
 					Tags: []string{
-						"traefik.http.services.Service1.loadbalancer.passhostheader = false",
+						"baqup.http.services.Service1.loadbalancer.passhostheader = false",
 					},
 					Address:   "127.0.0.1",
 					Port:      9999,
@@ -1001,7 +1001,7 @@ func Test_buildConfig(t *testing.T) {
 					ID:   "id2",
 					Name: "Test",
 					Tags: []string{
-						"traefik.http.services.Service1.loadbalancer.passhostheader = true",
+						"baqup.http.services.Service1.loadbalancer.passhostheader = true",
 					},
 					Address:   "127.0.0.1",
 					Port:      9999,
@@ -1011,7 +1011,7 @@ func Test_buildConfig(t *testing.T) {
 					ID:   "id3",
 					Name: "Test",
 					Tags: []string{
-						"traefik.http.services.Service1.loadbalancer.passhostheader = true",
+						"baqup.http.services.Service1.loadbalancer.passhostheader = true",
 					},
 					Address:   "127.0.0.2",
 					Port:      9999,
@@ -1033,7 +1033,7 @@ func Test_buildConfig(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service:     "Service1",
-							Rule:        "Host(`Test.traefik.test`)",
+							Rule:        "Host(`Test.baqup.test`)",
 							DefaultRule: true,
 						},
 					},
@@ -1053,7 +1053,7 @@ func Test_buildConfig(t *testing.T) {
 					ID:   "id1",
 					Name: "Test",
 					Tags: []string{
-						"traefik.http.services.Service1.loadbalancer.passhostheader = true",
+						"baqup.http.services.Service1.loadbalancer.passhostheader = true",
 					},
 					Address:   "127.0.0.1",
 					Port:      9999,
@@ -1063,7 +1063,7 @@ func Test_buildConfig(t *testing.T) {
 					ID:   "id2",
 					Name: "Test",
 					Tags: []string{
-						"traefik.http.services.Service1.loadbalancer.passhostheader = true",
+						"baqup.http.services.Service1.loadbalancer.passhostheader = true",
 					},
 					Address:   "127.0.0.2",
 					Port:      9999,
@@ -1085,7 +1085,7 @@ func Test_buildConfig(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service:     "Service1",
-							Rule:        "Host(`Test.traefik.test`)",
+							Rule:        "Host(`Test.baqup.test`)",
 							DefaultRule: true,
 						},
 					},
@@ -1123,7 +1123,7 @@ func Test_buildConfig(t *testing.T) {
 					ID:   "id1",
 					Name: "Test",
 					Tags: []string{
-						"traefik.http.middlewares.Middleware1.inflightreq.amount = 42",
+						"baqup.http.middlewares.Middleware1.inflightreq.amount = 42",
 					},
 					Address:   "127.0.0.1",
 					Port:      9999,
@@ -1145,7 +1145,7 @@ func Test_buildConfig(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service:     "Test",
-							Rule:        "Host(`Test.traefik.test`)",
+							Rule:        "Host(`Test.baqup.test`)",
 							DefaultRule: true,
 						},
 					},
@@ -1186,7 +1186,7 @@ func Test_buildConfig(t *testing.T) {
 					ID:   "id1",
 					Name: "Test",
 					Tags: []string{
-						"traefik.http.middlewares.Middleware1.inflightreq.amount = 42",
+						"baqup.http.middlewares.Middleware1.inflightreq.amount = 42",
 					},
 					Address:   "127.0.0.1",
 					Port:      9999,
@@ -1196,7 +1196,7 @@ func Test_buildConfig(t *testing.T) {
 					ID:   "id2",
 					Name: "Test",
 					Tags: []string{
-						"traefik.http.middlewares.Middleware1.inflightreq.amount = 42",
+						"baqup.http.middlewares.Middleware1.inflightreq.amount = 42",
 					},
 					Address:   "127.0.0.2",
 					Port:      9999,
@@ -1218,7 +1218,7 @@ func Test_buildConfig(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service:     "Test",
-							Rule:        "Host(`Test.traefik.test`)",
+							Rule:        "Host(`Test.baqup.test`)",
 							DefaultRule: true,
 						},
 					},
@@ -1262,7 +1262,7 @@ func Test_buildConfig(t *testing.T) {
 					ID:   "id1",
 					Name: "Test",
 					Tags: []string{
-						"traefik.http.middlewares.Middleware1.inflightreq.amount = 42",
+						"baqup.http.middlewares.Middleware1.inflightreq.amount = 42",
 					},
 					Address:   "127.0.0.1",
 					Port:      9999,
@@ -1272,7 +1272,7 @@ func Test_buildConfig(t *testing.T) {
 					ID:   "id2",
 					Name: "Test",
 					Tags: []string{
-						"traefik.http.middlewares.Middleware1.inflightreq.amount = 41",
+						"baqup.http.middlewares.Middleware1.inflightreq.amount = 41",
 					},
 					Address:   "127.0.0.2",
 					Port:      9999,
@@ -1294,7 +1294,7 @@ func Test_buildConfig(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service:     "Test",
-							Rule:        "Host(`Test.traefik.test`)",
+							Rule:        "Host(`Test.baqup.test`)",
 							DefaultRule: true,
 						},
 					},
@@ -1332,7 +1332,7 @@ func Test_buildConfig(t *testing.T) {
 					ID:   "id1",
 					Name: "Test",
 					Tags: []string{
-						"traefik.http.routers.Router1.rule = Host(`foo.com`)",
+						"baqup.http.routers.Router1.rule = Host(`foo.com`)",
 					},
 					Address:   "127.0.0.1",
 					Port:      9999,
@@ -1342,7 +1342,7 @@ func Test_buildConfig(t *testing.T) {
 					ID:   "id2",
 					Name: "Test",
 					Tags: []string{
-						"traefik.http.routers.Router1.rule = Host(`bar.com`)",
+						"baqup.http.routers.Router1.rule = Host(`bar.com`)",
 					},
 					Address:   "127.0.0.2",
 					Port:      9999,
@@ -1396,7 +1396,7 @@ func Test_buildConfig(t *testing.T) {
 					ID:   "id1",
 					Name: "Test",
 					Tags: []string{
-						"traefik.http.routers.Router1.rule = Host(`foo.com`)",
+						"baqup.http.routers.Router1.rule = Host(`foo.com`)",
 					},
 					Address:   "127.0.0.1",
 					Port:      9999,
@@ -1406,7 +1406,7 @@ func Test_buildConfig(t *testing.T) {
 					ID:   "id2",
 					Name: "Test",
 					Tags: []string{
-						"traefik.http.routers.Router1.rule = Host(`foo.com`)",
+						"baqup.http.routers.Router1.rule = Host(`foo.com`)",
 					},
 					Address:   "127.0.0.2",
 					Port:      9999,
@@ -1465,7 +1465,7 @@ func Test_buildConfig(t *testing.T) {
 					ID:   "id1",
 					Name: "Test",
 					Tags: []string{
-						"traefik.wrong.label = 42",
+						"baqup.wrong.label = 42",
 					},
 					Address:   "127.0.0.1",
 					Port:      9999,
@@ -1487,7 +1487,7 @@ func Test_buildConfig(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service:     "Test",
-							Rule:        "Host(`Test.traefik.test`)",
+							Rule:        "Host(`Test.baqup.test`)",
 							DefaultRule: true,
 						},
 					},
@@ -1522,8 +1522,8 @@ func Test_buildConfig(t *testing.T) {
 					ID:   "id1",
 					Name: "Test",
 					Tags: []string{
-						"traefik.http.services.Service1.LoadBalancer.server.scheme = h2c",
-						"traefik.http.services.Service1.LoadBalancer.server.port = 8080",
+						"baqup.http.services.Service1.LoadBalancer.server.scheme = h2c",
+						"baqup.http.services.Service1.LoadBalancer.server.port = 8080",
 					},
 					Address:   "127.0.0.1",
 					Port:      9999,
@@ -1545,7 +1545,7 @@ func Test_buildConfig(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service:     "Service1",
-							Rule:        "Host(`Test.traefik.test`)",
+							Rule:        "Host(`Test.baqup.test`)",
 							DefaultRule: true,
 						},
 					},
@@ -1580,7 +1580,7 @@ func Test_buildConfig(t *testing.T) {
 					ID:   "id1",
 					Name: "Test",
 					Tags: []string{
-						"traefik.http.services.Service1.LoadBalancer.server.url = http://1.2.3.4:5678",
+						"baqup.http.services.Service1.LoadBalancer.server.url = http://1.2.3.4:5678",
 					},
 					Address:   "127.0.0.1",
 					Port:      9999,
@@ -1602,7 +1602,7 @@ func Test_buildConfig(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service:     "Service1",
-							Rule:        "Host(`Test.traefik.test`)",
+							Rule:        "Host(`Test.baqup.test`)",
 							DefaultRule: true,
 						},
 					},
@@ -1637,8 +1637,8 @@ func Test_buildConfig(t *testing.T) {
 					ID:   "id1",
 					Name: "Test",
 					Tags: []string{
-						"traefik.http.services.Service1.LoadBalancer.server.url = http://1.2.3.4:5678",
-						"traefik.http.services.Service1.LoadBalancer.server.preservepath = true",
+						"baqup.http.services.Service1.LoadBalancer.server.url = http://1.2.3.4:5678",
+						"baqup.http.services.Service1.LoadBalancer.server.preservepath = true",
 					},
 					Address:   "127.0.0.1",
 					Port:      9999,
@@ -1660,7 +1660,7 @@ func Test_buildConfig(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service:     "Service1",
-							Rule:        "Host(`Test.traefik.test`)",
+							Rule:        "Host(`Test.baqup.test`)",
 							DefaultRule: true,
 						},
 					},
@@ -1696,8 +1696,8 @@ func Test_buildConfig(t *testing.T) {
 					ID:   "id1",
 					Name: "Test",
 					Tags: []string{
-						"traefik.http.services.Service1.LoadBalancer.server.url = http://1.2.3.4:5678",
-						"traefik.http.services.Service1.LoadBalancer.server.port = 1234",
+						"baqup.http.services.Service1.LoadBalancer.server.url = http://1.2.3.4:5678",
+						"baqup.http.services.Service1.LoadBalancer.server.port = 1234",
 					},
 					Address:   "127.0.0.1",
 					Port:      9999,
@@ -1733,8 +1733,8 @@ func Test_buildConfig(t *testing.T) {
 					ID:   "id1",
 					Name: "Test",
 					Tags: []string{
-						"traefik.http.services.Service1.LoadBalancer.server.url = http://1.2.3.4:5678",
-						"traefik.http.services.Service1.LoadBalancer.server.scheme = https",
+						"baqup.http.services.Service1.LoadBalancer.server.url = http://1.2.3.4:5678",
+						"baqup.http.services.Service1.LoadBalancer.server.scheme = https",
 					},
 					Address:   "127.0.0.1",
 					Port:      9999,
@@ -1770,8 +1770,8 @@ func Test_buildConfig(t *testing.T) {
 					ID:   "id1",
 					Name: "Test",
 					Tags: []string{
-						"traefik.http.services.Service1.LoadBalancer.server.port = ",
-						"traefik.http.services.Service2.LoadBalancer.server.port = 8080",
+						"baqup.http.services.Service1.LoadBalancer.server.port = ",
+						"baqup.http.services.Service2.LoadBalancer.server.port = 8080",
 					},
 					Address:   "127.0.0.1",
 					Port:      9999,
@@ -1870,7 +1870,7 @@ func Test_buildConfig(t *testing.T) {
 					ID:   "id1",
 					Name: "Test",
 					Tags: []string{
-						"traefik.http.middlewares.Middleware1.inflightreq.amount = 42",
+						"baqup.http.middlewares.Middleware1.inflightreq.amount = 42",
 					},
 					Address:   "127.0.0.2",
 					ExtraConf: configuration{Enable: true},
@@ -1899,13 +1899,13 @@ func Test_buildConfig(t *testing.T) {
 			},
 		},
 		{
-			desc: "one service with traefik.enable false",
+			desc: "one service with baqup.enable false",
 			items: []item{
 				{
 					ID:   "id1",
 					Name: "Test",
 					Tags: []string{
-						"traefik.enable=false",
+						"baqup.enable=false",
 					},
 					Address:   "127.0.0.1",
 					Port:      9999,
@@ -1941,14 +1941,14 @@ func Test_buildConfig(t *testing.T) {
 					ID:   "id1",
 					Name: "Test",
 					Tags: []string{
-						"traefik.tags=foo",
+						"baqup.tags=foo",
 					},
 					Address:   "127.0.0.1",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
 				},
 			},
-			constraints: `Tag("traefik.tags=bar")`,
+			constraints: `Tag("baqup.tags=bar")`,
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
 					Routers:           map[string]*dynamic.TCPRouter{},
@@ -1978,14 +1978,14 @@ func Test_buildConfig(t *testing.T) {
 					ID:   "id1",
 					Name: "Test",
 					Tags: []string{
-						"traefik.tags=foo",
+						"baqup.tags=foo",
 					},
 					Address:   "127.0.0.1",
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
 				},
 			},
-			constraints: `Tag("traefik.tags=foo")`,
+			constraints: `Tag("baqup.tags=foo")`,
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
 					Routers:           map[string]*dynamic.TCPRouter{},
@@ -2001,7 +2001,7 @@ func Test_buildConfig(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service:     "Test",
-							Rule:        "Host(`Test.traefik.test`)",
+							Rule:        "Host(`Test.baqup.test`)",
 							DefaultRule: true,
 						},
 					},
@@ -2036,8 +2036,8 @@ func Test_buildConfig(t *testing.T) {
 					ID:   "id1",
 					Name: "Test",
 					Tags: []string{
-						"traefik.http.middlewares.Middleware1.basicauth.users = test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
-						"traefik.http.routers.Test.middlewares = Middleware1",
+						"baqup.http.middlewares.Middleware1.basicauth.users = test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						"baqup.http.routers.Test.middlewares = Middleware1",
 					},
 					Address:   "127.0.0.1",
 					Port:      9999,
@@ -2059,7 +2059,7 @@ func Test_buildConfig(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service:     "Test",
-							Rule:        "Host(`Test.traefik.test`)",
+							Rule:        "Host(`Test.baqup.test`)",
 							Middlewares: []string{"Middleware1"},
 							DefaultRule: true,
 						},
@@ -2104,9 +2104,9 @@ func Test_buildConfig(t *testing.T) {
 					ID:   "id1",
 					Name: "Test",
 					Tags: []string{
-						"traefik.tcp.routers.Test.rule = HostSNI(`foo.bar`)",
-						"traefik.tcp.middlewares.Middleware1.ipallowlist.sourcerange = foobar, fiibar",
-						"traefik.tcp.routers.Test.middlewares = Middleware1",
+						"baqup.tcp.routers.Test.rule = HostSNI(`foo.bar`)",
+						"baqup.tcp.middlewares.Middleware1.ipallowlist.sourcerange = foobar, fiibar",
+						"baqup.tcp.routers.Test.middlewares = Middleware1",
 					},
 					Address:   "127.0.0.1",
 					Port:      9999,
@@ -2164,8 +2164,8 @@ func Test_buildConfig(t *testing.T) {
 					ID:   "id1",
 					Name: "Test",
 					Tags: []string{
-						"traefik.tcp.routers.foo.rule = HostSNI(`foo.bar`)",
-						"traefik.tcp.routers.foo.tls = true",
+						"baqup.tcp.routers.foo.rule = HostSNI(`foo.bar`)",
+						"baqup.tcp.routers.foo.tls = true",
 					},
 					Address:   "127.0.0.1",
 					Port:      9999,
@@ -2217,7 +2217,7 @@ func Test_buildConfig(t *testing.T) {
 					ID:   "id1",
 					Name: "Test",
 					Tags: []string{
-						"traefik.udp.routers.foo.entrypoints = mydns",
+						"baqup.udp.routers.foo.entrypoints = mydns",
 					},
 					Address:   "127.0.0.1",
 					Port:      9999,
@@ -2268,7 +2268,7 @@ func Test_buildConfig(t *testing.T) {
 					ID:   "id1",
 					Name: "Test",
 					Tags: []string{
-						"traefik.tcp.routers.foo.tls = true",
+						"baqup.tcp.routers.foo.tls = true",
 					},
 					Address:   "127.0.0.1",
 					Port:      9999,
@@ -2314,9 +2314,9 @@ func Test_buildConfig(t *testing.T) {
 					ID:   "id1",
 					Name: "Test",
 					Tags: []string{
-						"traefik.tcp.routers.foo.rule = HostSNI(`foo.bar`)",
-						"traefik.tcp.routers.foo.tls.options = foo",
-						"traefik.tcp.services.foo.loadbalancer.server.port = 80",
+						"baqup.tcp.routers.foo.rule = HostSNI(`foo.bar`)",
+						"baqup.tcp.routers.foo.tls.options = foo",
+						"baqup.tcp.services.foo.loadbalancer.server.port = 80",
 					},
 					Address:   "127.0.0.1",
 					Port:      9999,
@@ -2370,8 +2370,8 @@ func Test_buildConfig(t *testing.T) {
 					ID:   "id1",
 					Name: "Test",
 					Tags: []string{
-						"traefik.udp.routers.foo.entrypoints = mydns",
-						"traefik.udp.services.foo.loadbalancer.server.port = 80",
+						"baqup.udp.routers.foo.entrypoints = mydns",
+						"baqup.udp.services.foo.loadbalancer.server.port = 80",
 					},
 					Address:   "127.0.0.1",
 					Port:      9999,
@@ -2422,10 +2422,10 @@ func Test_buildConfig(t *testing.T) {
 					ID:   "id1",
 					Name: "Test",
 					Tags: []string{
-						"traefik.tcp.routers.foo.rule = HostSNI(`foo.bar`)",
-						"traefik.tcp.routers.foo.tls = true",
-						"traefik.tcp.services.foo.loadbalancer.server.port = 80",
-						"traefik.http.services.Service1.loadbalancer.passhostheader = true",
+						"baqup.tcp.routers.foo.rule = HostSNI(`foo.bar`)",
+						"baqup.tcp.routers.foo.tls = true",
+						"baqup.tcp.services.foo.loadbalancer.server.port = 80",
+						"baqup.http.services.Service1.loadbalancer.passhostheader = true",
 					},
 					Address:   "127.0.0.1",
 					Port:      9999,
@@ -2435,10 +2435,10 @@ func Test_buildConfig(t *testing.T) {
 					ID:   "id2",
 					Name: "Test",
 					Tags: []string{
-						"traefik.tcp.routers.foo.rule = HostSNI(`foo.bar`)",
-						"traefik.tcp.routers.foo.tls = true",
-						"traefik.tcp.services.foo.loadbalancer.server.port = 80",
-						"traefik.http.services.Service1.loadbalancer.passhostheader = true",
+						"baqup.tcp.routers.foo.rule = HostSNI(`foo.bar`)",
+						"baqup.tcp.routers.foo.tls = true",
+						"baqup.tcp.services.foo.loadbalancer.server.port = 80",
+						"baqup.http.services.Service1.loadbalancer.passhostheader = true",
 					},
 					Address:   "127.0.0.2",
 					Port:      9999,
@@ -2479,7 +2479,7 @@ func Test_buildConfig(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service:     "Service1",
-							Rule:        "Host(`Test.traefik.test`)",
+							Rule:        "Host(`Test.baqup.test`)",
 							DefaultRule: true,
 						},
 					},
@@ -2517,9 +2517,9 @@ func Test_buildConfig(t *testing.T) {
 					ID:   "id1",
 					Name: "Test",
 					Tags: []string{
-						"traefik.udp.routers.foo.entrypoints = mydns",
-						"traefik.udp.services.foo.loadbalancer.server.port = 80",
-						"traefik.http.services.Service1.loadbalancer.passhostheader = true",
+						"baqup.udp.routers.foo.entrypoints = mydns",
+						"baqup.udp.services.foo.loadbalancer.server.port = 80",
+						"baqup.http.services.Service1.loadbalancer.passhostheader = true",
 					},
 					Address:   "127.0.0.1",
 					Port:      9999,
@@ -2529,9 +2529,9 @@ func Test_buildConfig(t *testing.T) {
 					ID:   "id2",
 					Name: "Test",
 					Tags: []string{
-						"traefik.udp.routers.foo.entrypoints = mydns",
-						"traefik.udp.services.foo.loadbalancer.server.port = 80",
-						"traefik.http.services.Service1.loadbalancer.passhostheader = true",
+						"baqup.udp.routers.foo.entrypoints = mydns",
+						"baqup.udp.services.foo.loadbalancer.server.port = 80",
+						"baqup.http.services.Service1.loadbalancer.passhostheader = true",
 					},
 					Address:   "127.0.0.2",
 					Port:      9999,
@@ -2571,7 +2571,7 @@ func Test_buildConfig(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service:     "Service1",
-							Rule:        "Host(`Test.traefik.test`)",
+							Rule:        "Host(`Test.baqup.test`)",
 							DefaultRule: true,
 						},
 					},
@@ -2609,7 +2609,7 @@ func Test_buildConfig(t *testing.T) {
 					ID:   "id1",
 					Name: "Test",
 					Tags: []string{
-						"traefik.tcp.services.foo.loadbalancer.server.port = 80",
+						"baqup.tcp.services.foo.loadbalancer.server.port = 80",
 					},
 					Address:   "127.0.0.1",
 					Port:      9999,
@@ -2655,7 +2655,7 @@ func Test_buildConfig(t *testing.T) {
 					ID:   "id1",
 					Name: "Test",
 					Tags: []string{
-						"traefik.udp.services.foo.loadbalancer.server.port = 80",
+						"baqup.udp.services.foo.loadbalancer.server.port = 80",
 					},
 					Address:   "127.0.0.1",
 					Port:      9999,
@@ -2702,7 +2702,7 @@ func Test_buildConfig(t *testing.T) {
 					ID:   "id1",
 					Name: "Test",
 					Tags: []string{
-						"traefik.tcp.services.foo.loadbalancer.server.port = 80",
+						"baqup.tcp.services.foo.loadbalancer.server.port = 80",
 					},
 					Address:   "127.0.0.1",
 					Port:      80,
@@ -2762,7 +2762,7 @@ func Test_buildConfig(t *testing.T) {
 					Name:       "Test",
 					Namespace:  "ns",
 					Tags: []string{
-						"traefik.nomad.canary = true",
+						"baqup.nomad.canary = true",
 					},
 					Address: "127.0.0.2",
 					Port:    80,
@@ -2787,12 +2787,12 @@ func Test_buildConfig(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service:     "Test",
-							Rule:        "Host(`Test.traefik.test`)",
+							Rule:        "Host(`Test.baqup.test`)",
 							DefaultRule: true,
 						},
 						"Test-1234154071633021619": {
 							Service:     "Test-1234154071633021619",
-							Rule:        "Host(`Test.traefik.test`)",
+							Rule:        "Host(`Test.baqup.test`)",
 							DefaultRule: true,
 						},
 					},
@@ -2844,7 +2844,7 @@ func Test_buildConfig(t *testing.T) {
 					Name:       "Test",
 					Namespace:  "ns",
 					Tags: []string{
-						"traefik.tcp.routers.test.rule = HostSNI(`foobar`)",
+						"baqup.tcp.routers.test.rule = HostSNI(`foobar`)",
 					},
 					Address:   "127.0.0.1",
 					Port:      80,
@@ -2857,8 +2857,8 @@ func Test_buildConfig(t *testing.T) {
 					Name:       "Test",
 					Namespace:  "ns",
 					Tags: []string{
-						"traefik.nomad.canary = true",
-						"traefik.tcp.routers.test-canary.rule = HostSNI(`canary.foobar`)",
+						"baqup.nomad.canary = true",
+						"baqup.tcp.routers.test-canary.rule = HostSNI(`canary.foobar`)",
 					},
 					Address: "127.0.0.2",
 					Port:    80,
@@ -2924,7 +2924,7 @@ func Test_buildConfig(t *testing.T) {
 					Name:       "Test",
 					Namespace:  "ns",
 					Tags: []string{
-						"traefik.udp.routers.test.entrypoints = udp",
+						"baqup.udp.routers.test.entrypoints = udp",
 					},
 					Address:   "127.0.0.1",
 					Port:      80,
@@ -2937,8 +2937,8 @@ func Test_buildConfig(t *testing.T) {
 					Name:       "Test",
 					Namespace:  "ns",
 					Tags: []string{
-						"traefik.nomad.canary = true",
-						"traefik.udp.routers.test-canary.entrypoints = udp",
+						"baqup.nomad.canary = true",
+						"baqup.udp.routers.test-canary.entrypoints = udp",
 					},
 					Address: "127.0.0.2",
 					Port:    80,
@@ -3005,9 +3005,9 @@ func Test_buildConfig(t *testing.T) {
 					Port:      9999,
 					ExtraConf: configuration{Enable: true},
 					Tags: []string{
-						"traefik.tls.stores.default.defaultgeneratedcert.resolver = foobar",
-						"traefik.tls.stores.default.defaultgeneratedcert.domain.main = foobar",
-						"traefik.tls.stores.default.defaultgeneratedcert.domain.sans = foobar, fiibar",
+						"baqup.tls.stores.default.defaultgeneratedcert.resolver = foobar",
+						"baqup.tls.stores.default.defaultgeneratedcert.domain.main = foobar",
+						"baqup.tls.stores.default.defaultgeneratedcert.domain.sans = foobar, fiibar",
 					},
 				},
 			},
@@ -3026,7 +3026,7 @@ func Test_buildConfig(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"dev-Test": {
 							Service:     "dev-Test",
-							Rule:        "Host(`dev-Test.traefik.test`)",
+							Rule:        "Host(`dev-Test.baqup.test`)",
 							DefaultRule: true,
 						},
 					},
@@ -3070,7 +3070,7 @@ func Test_buildConfig(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			p := new(Provider)
 			p.SetDefaults()
-			p.DefaultRule = "Host(`{{ normalize .Name }}.traefik.test`)"
+			p.DefaultRule = "Host(`{{ normalize .Name }}.baqup.test`)"
 			p.Constraints = test.constraints
 			err := p.Init()
 			require.NoError(t, err)
@@ -3095,7 +3095,7 @@ func Test_buildConfigAllowEmptyServicesTrue(t *testing.T) {
 					ID:   "id1",
 					Name: "Test",
 					Tags: []string{
-						"traefik.enable=true",
+						"baqup.enable=true",
 					},
 					Address:   "",
 					Port:      -1,
@@ -3117,7 +3117,7 @@ func Test_buildConfigAllowEmptyServicesTrue(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service:     "Test",
-							Rule:        "Host(`Test.traefik.test`)",
+							Rule:        "Host(`Test.baqup.test`)",
 							DefaultRule: true,
 						},
 					},
@@ -3148,7 +3148,7 @@ func Test_buildConfigAllowEmptyServicesTrue(t *testing.T) {
 					ID:   "id1",
 					Name: "Test",
 					Tags: []string{
-						"traefik.tcp.routers.test.rule = HostSNI(`foobar`)",
+						"baqup.tcp.routers.test.rule = HostSNI(`foobar`)",
 					},
 					Address:   "",
 					Port:      -1,
@@ -3193,7 +3193,7 @@ func Test_buildConfigAllowEmptyServicesTrue(t *testing.T) {
 					ID:   "id1",
 					Name: "Test",
 					Tags: []string{
-						"traefik.udp.routers.test.entrypoints = udp",
+						"baqup.udp.routers.test.entrypoints = udp",
 					},
 					Address:   "",
 					Port:      -1,
@@ -3238,7 +3238,7 @@ func Test_buildConfigAllowEmptyServicesTrue(t *testing.T) {
 			p := new(Provider)
 			p.SetDefaults()
 			p.AllowEmptyServices = true
-			p.DefaultRule = "Host(`{{ normalize .Name }}.traefik.test`)"
+			p.DefaultRule = "Host(`{{ normalize .Name }}.baqup.test`)"
 			p.Constraints = test.constraints
 			err := p.Init()
 			require.NoError(t, err)
@@ -3263,7 +3263,7 @@ func Test_buildConfigAllowEmptyServicesFalseDefault(t *testing.T) {
 					ID:   "id1",
 					Name: "Test",
 					Tags: []string{
-						"traefik.enable=true",
+						"baqup.enable=true",
 					},
 					Address:   "",
 					Port:      -1,
@@ -3299,7 +3299,7 @@ func Test_buildConfigAllowEmptyServicesFalseDefault(t *testing.T) {
 					ID:   "id1",
 					Name: "Test",
 					Tags: []string{
-						"traefik.tcp.routers.test.rule = HostSNI(`foobar`)",
+						"baqup.tcp.routers.test.rule = HostSNI(`foobar`)",
 					},
 					Address:   "",
 					Port:      -1,
@@ -3335,7 +3335,7 @@ func Test_buildConfigAllowEmptyServicesFalseDefault(t *testing.T) {
 					ID:   "id1",
 					Name: "Test",
 					Tags: []string{
-						"traefik.udp.routers.test.entrypoints = udp",
+						"baqup.udp.routers.test.entrypoints = udp",
 					},
 					Address:   "",
 					Port:      -1,
@@ -3370,7 +3370,7 @@ func Test_buildConfigAllowEmptyServicesFalseDefault(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			p := new(Provider)
 			p.SetDefaults()
-			p.DefaultRule = "Host(`{{ normalize .Name }}.traefik.test`)"
+			p.DefaultRule = "Host(`{{ normalize .Name }}.baqup.test`)"
 			p.Constraints = test.constraints
 			err := p.Init()
 			require.NoError(t, err)
@@ -3401,19 +3401,19 @@ func Test_keepItem(t *testing.T) {
 		{
 			name: "constraint matches",
 			i: item{
-				Tags:      []string{"traefik.tags=foo"},
+				Tags:      []string{"baqup.tags=foo"},
 				ExtraConf: configuration{Enable: true},
 			},
-			constraints: `Tag("traefik.tags=foo")`,
+			constraints: `Tag("baqup.tags=foo")`,
 			exp:         true,
 		},
 		{
 			name: "constraint not match",
 			i: item{
-				Tags:      []string{"traefik.tags=foo"},
+				Tags:      []string{"baqup.tags=foo"},
 				ExtraConf: configuration{Enable: true},
 			},
-			constraints: `Tag("traefik.tags=bar")`,
+			constraints: `Tag("baqup.tags=bar")`,
 			exp:         false,
 		},
 	}

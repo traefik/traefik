@@ -6,11 +6,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/baqupio/baqup/v3/pkg/config/dynamic"
+	"github.com/baqupio/baqup/v3/pkg/provider/kubernetes/k8s"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"k8s.io/apimachinery/pkg/runtime"
 	kubefake "k8s.io/client-go/kubernetes/fake"
 	kscheme "k8s.io/client-go/kubernetes/scheme"

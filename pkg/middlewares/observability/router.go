@@ -4,10 +4,10 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/baqupio/baqup/v3/pkg/middlewares"
+	"github.com/baqupio/baqup/v3/pkg/observability/logs"
+	"github.com/baqupio/baqup/v3/pkg/observability/tracing"
 	"github.com/containous/alice"
-	"github.com/traefik/traefik/v3/pkg/middlewares"
-	"github.com/traefik/traefik/v3/pkg/observability/logs"
-	"github.com/traefik/traefik/v3/pkg/observability/tracing"
 	"go.opentelemetry.io/otel/attribute"
 	semconv "go.opentelemetry.io/otel/semconv/v1.37.0"
 	"go.opentelemetry.io/otel/trace"
@@ -51,8 +51,8 @@ func (f *routerTracing) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 		req = req.WithContext(tracingCtx)
 
-		span.SetAttributes(attribute.String("traefik.service.name", f.service))
-		span.SetAttributes(attribute.String("traefik.router.name", f.router))
+		span.SetAttributes(attribute.String("baqup.service.name", f.service))
+		span.SetAttributes(attribute.String("baqup.router.name", f.router))
 		span.SetAttributes(semconv.HTTPRoute(f.routerRule))
 	}
 

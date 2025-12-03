@@ -1,6 +1,6 @@
 ---
-title: "Traefik Proxy Middleware Overview"
-description: "There are several available middleware in Traefik Proxy used to modify requests or headers, take charge of redirections, add authentication, and so on."
+title: "Baqup Proxy Middleware Overview"
+description: "There are several available middleware in Baqup Proxy used to modify requests or headers, take charge of redirections, add authentication, and so on."
 ---
 
 # Middlewares
@@ -10,7 +10,7 @@ Tweaking the Request
 
 Attached to the routers, pieces of middleware are a means of tweaking the requests before they are sent to your [service](../routing/services/index.md) (or before the answer from the services are sent to the clients).
 
-There are several available middleware in Traefik, some can modify the request, the headers, some are in charge of redirections, some add authentication, and so on.
+There are several available middleware in Baqup, some can modify the request, the headers, some are in charge of redirections, some add authentication, and so on.
 
 Middlewares that use the same protocol can be combined into chains to fit every scenario.
 
@@ -25,17 +25,17 @@ Middlewares that use the same protocol can be combined into chains to fit every 
 # As a Docker Label
 whoami:
   #  A container that exposes an API to show its IP address
-  image: traefik/whoami
+  image: baqup/whoami
   labels:
     # Create a middleware named `foo-add-prefix`
-    - "traefik.http.middlewares.foo-add-prefix.addprefix.prefix=/foo"
+    - "baqup.http.middlewares.foo-add-prefix.addprefix.prefix=/foo"
     # Apply the middleware named `foo-add-prefix` to the router named `router1`
-    - "traefik.http.routers.router1.middlewares=foo-add-prefix@docker"
+    - "baqup.http.routers.router1.middlewares=foo-add-prefix@docker"
 ```
 
 ```yaml tab="IngressRoute"
 ---
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: stripprefix
@@ -45,7 +45,7 @@ spec:
       - /stripit
 
 ---
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: ingressroute
@@ -59,9 +59,9 @@ spec:
 
 ```yaml tab="Consul Catalog"
 # Create a middleware named `foo-add-prefix`
-- "traefik.http.middlewares.foo-add-prefix.addprefix.prefix=/foo"
+- "baqup.http.middlewares.foo-add-prefix.addprefix.prefix=/foo"
 # Apply the middleware named `foo-add-prefix` to the router named `router1`
-- "traefik.http.routers.router1.middlewares=foo-add-prefix@consulcatalog"
+- "baqup.http.routers.router1.middlewares=foo-add-prefix@consulcatalog"
 ```
 
 ```yaml tab="File (YAML)"
@@ -112,4 +112,4 @@ A list of HTTP middlewares can be found [here](http/overview.md).
 
 A list of TCP middlewares can be found [here](tcp/overview.md).
 
-{!traefik-for-business-applications.md!}
+{!baqup-for-business-applications.md!}

@@ -1,16 +1,16 @@
 ---
-title: "Traefik Docker Swarm Documentation"
-description: "Learn how to achieve configuration discovery in Traefik through Docker Swarm. Read the technical documentation."
+title: "Baqup Docker Swarm Documentation"
+description: "Learn how to achieve configuration discovery in Baqup through Docker Swarm. Read the technical documentation."
 ---
 
-# Traefik & Docker Swarm
+# Baqup & Docker Swarm
 
 A Story of Labels & Containers
 {: .subtitle }
 
 ![Docker](../assets/img/providers/docker.png)
 
-Attach labels to your containers and let Traefik do the rest!
+Attach labels to your containers and let Baqup do the rest!
 
 This provider works with [Docker Swarm Mode](https://docs.docker.com/engine/swarm/).
 
@@ -57,20 +57,20 @@ This provider works with [Docker Swarm Mode](https://docs.docker.com/engine/swar
       my-container:
         deploy:
           labels:
-            - traefik.http.routers.my-container.rule=Host(`example.com`)
-            - traefik.http.services.my-container-service.loadbalancer.server.port=8080
+            - baqup.http.routers.my-container.rule=Host(`example.com`)
+            - baqup.http.services.my-container-service.loadbalancer.server.port=8080
     ```
 
 ## Routing Configuration
 
 When using Docker as a [provider](./overview.md),
-Traefik uses [container labels](https://docs.docker.com/engine/reference/commandline/run/#label) to retrieve its routing configuration.
+Baqup uses [container labels](https://docs.docker.com/engine/reference/commandline/run/#label) to retrieve its routing configuration.
 
 See the list of labels in the dedicated [routing](../routing/providers/docker.md) section.
 
 ### Routing Configuration with Labels
 
-By default, Traefik watches for [container level labels](https://docs.docker.com/config/labels-custom-metadata/) on a standalone Docker Engine.
+By default, Baqup watches for [container level labels](https://docs.docker.com/config/labels-custom-metadata/) on a standalone Docker Engine.
 
 When using Docker Compose, labels are specified by the directive
 [`labels`](https://docs.docker.com/compose/compose-file/compose-file-v3/#labels) from the
@@ -80,9 +80,9 @@ When using Docker Compose, labels are specified by the directive
 
     Please note that any tool like Nomad, Terraform, Ansible, etc.
     that is able to define a Docker container with labels can work
-    with Traefik and the  Swarm provider.
+    with Baqup and the  Swarm provider.
 
-While in Swarm Mode, Traefik uses labels found on services, not on individual containers.
+While in Swarm Mode, Baqup uses labels found on services, not on individual containers.
 
 Therefore, if you use a compose file with Swarm Mode, labels should be defined in the
 [`deploy`](https://docs.docker.com/compose/compose-file/compose-file-v3/#labels-1) part of your service.
@@ -91,11 +91,11 @@ This behavior is only enabled for docker-compose version 3+ ([Compose file refer
 
 ### Port Detection
 
-Traefik retrieves the private IP and port of containers from the Docker API.
+Baqup retrieves the private IP and port of containers from the Docker API.
 
-Docker Swarm does not provide any port detection information to Traefik.
+Docker Swarm does not provide any port detection information to Baqup.
 
-Therefore, you **must** specify the port to use for communication by using the label `traefik.http.services.<service_name>.loadbalancer.server.port`
+Therefore, you **must** specify the port to use for communication by using the label `baqup.http.services.<service_name>.loadbalancer.server.port`
 (Check the reference for this label in the [routing section for Swarm](../routing/providers/swarm.md#services)).
 
 ### Host networking
@@ -109,26 +109,26 @@ the IP address of the host is resolved as follows:
 - if that lookup was also unsuccessful, fall back to `127.0.0.1`
 
 On Linux, for versions of Docker older than 20.10.0, for `host.docker.internal` to be defined, it should be provided
-as an `extra_host` to the Traefik container, using the `--add-host` flag. For example, to set it to the IP address of
+as an `extra_host` to the Baqup container, using the `--add-host` flag. For example, to set it to the IP address of
 the bridge interface (`docker0` by default): `--add-host=host.docker.internal:172.17.0.1`
 
 ### IPv4 && IPv6
 
 When using a docker stack that uses IPv6,
-Traefik will use the IPv4 container IP before its IPv6 counterpart.
+Baqup will use the IPv4 container IP before its IPv6 counterpart.
 Therefore, on an IPv6 Docker stack,
-Traefik will use the IPv6 container IP.
+Baqup will use the IPv6 container IP.
 
 ### Docker API Access
 
-Traefik requires access to the docker socket to get its dynamic configuration.
+Baqup requires access to the docker socket to get its dynamic configuration.
 
 You can specify which Docker API Endpoint to use with the directive [`endpoint`](#endpoint).
 
 !!! warning "Security Note"
 
     Accessing the Docker API without any restriction is a security concern:
-    If Traefik is attacked, then the attacker might get access to the underlying host.
+    If Baqup is attacked, then the attacker might get access to the underlying host.
     {: #security-note }
 
     As explained in the [Docker Daemon Attack Surface documentation](https://docs.docker.com/engine/security/#docker-daemon-attack-surface):
@@ -145,28 +145,28 @@ You can specify which Docker API Endpoint to use with the directive [`endpoint`]
         - Authentication with Client Certificates as described in ["Protect the Docker daemon socket."](https://docs.docker.com/engine/security/protect-access/)
         - Authorize and filter requests to restrict possible actions with [the TecnativaDocker Socket Proxy](https://github.com/Tecnativa/docker-socket-proxy).
         - Authorization with the [Docker Authorization Plugin Mechanism](https://web.archive.org/web/20190920092526/https://docs.docker.com/engine/extend/plugins_authorization/)
-        - Accounting at networking level, by exposing the socket only inside a Docker private network, only available for Traefik.
-        - Accounting at container level, by exposing the socket on a another container than Traefik's.
-          It allows scheduling of Traefik on worker nodes, with only the "socket exposer" container on the manager nodes.
-        - Accounting at kernel level, by enforcing kernel calls with mechanisms like [SELinux](https://en.wikipedia.org/wiki/Security-Enhanced_Linux), to only allows an identified set of actions for Traefik's process (or the "socket exposer" process).
+        - Accounting at networking level, by exposing the socket only inside a Docker private network, only available for Baqup.
+        - Accounting at container level, by exposing the socket on a another container than Baqup's.
+          It allows scheduling of Baqup on worker nodes, with only the "socket exposer" container on the manager nodes.
+        - Accounting at kernel level, by enforcing kernel calls with mechanisms like [SELinux](https://en.wikipedia.org/wiki/Security-Enhanced_Linux), to only allows an identified set of actions for Baqup's process (or the "socket exposer" process).
         - SSH public key authentication (SSH is supported with Docker > 18.09)
         - Authentication using HTTP Basic authentication through an HTTP proxy that exposes the Docker daemon socket.
 
     ??? info "More Resources and Examples"
 
-        - ["Paranoid about mounting /var/run/docker.sock?"](https://medium.com/@containeroo/traefik-2-0-paranoid-about-mounting-var-run-docker-sock-22da9cb3e78c)
-        - [Traefik and Docker: A Discussion with Docker Captain, Bret Fisher](https://blog.traefik.io/traefik-and-docker-a-discussion-with-docker-captain-bret-fisher-7f0b9a54ff88)
+        - ["Paranoid about mounting /var/run/docker.sock?"](https://medium.com/@containeroo/baqup-2-0-paranoid-about-mounting-var-run-docker-sock-22da9cb3e78c)
+        - [Baqup and Docker: A Discussion with Docker Captain, Bret Fisher](https://blog.baqup.io/baqup-and-docker-a-discussion-with-docker-captain-bret-fisher-7f0b9a54ff88)
         - [KubeCon EU 2018 Keynote, Running with Scissors, from Liz Rice](https://www.youtube.com/watch?v=ltrV-Qmh3oY)
         - [Don't expose the Docker socket (not even to a container)](https://www.lvh.io/posts/dont-expose-the-docker-socket-not-even-to-a-container/)
         - [A thread on Stack Overflow about sharing the `/var/run/docker.sock` file](https://news.ycombinator.com/item?id=17983623)
         - [To DinD or not to DinD](https://blog.loof.fr/2018/01/to-dind-or-not-do-dind.html)
-        - [Traefik issue GH-4174 about security with Docker socket](https://github.com/traefik/traefik/issues/4174)
+        - [Baqup issue GH-4174 about security with Docker socket](https://github.com/baqupio/baqup/issues/4174)
         - [Inspecting Docker Activity with Socat](https://developers.redhat.com/blog/2015/02/25/inspecting-docker-activity-with-socat/)
-        - [Letting Traefik run on Worker Nodes](https://blog.mikesir87.io/2018/07/letting-traefik-run-on-worker-nodes/)
+        - [Letting Baqup run on Worker Nodes](https://blog.mikesir87.io/2018/07/letting-baqup-run-on-worker-nodes/)
         - [Docker Socket Proxy from Tecnativa](https://github.com/Tecnativa/docker-socket-proxy)
 
 Since the Swarm API is only exposed on the [manager nodes](https://docs.docker.com/engine/swarm/how-swarm-mode-works/nodes/#manager-nodes),
-these are the nodes that Traefik should be scheduled on by deploying Traefik with a constraint on the node "role":
+these are the nodes that Baqup should be scheduled on by deploying Baqup with a constraint on the node "role":
 
 ```shell tab="With Docker CLI"
 docker service create \
@@ -176,7 +176,7 @@ docker service create \
 
 ```yml tab="With Docker Compose"
 services:
-  traefik:
+  baqup:
     # ...
     deploy:
       placement:
@@ -184,10 +184,10 @@ services:
           - node.role == manager
 ```
 
-!!! tip "Scheduling Traefik on Worker Nodes"
+!!! tip "Scheduling Baqup on Worker Nodes"
 
     Following the guidelines given in the previous section ["Docker API Access"](#docker-api-access),
-    if you expose the Docker API through TCP, then Traefik can be scheduled on any node if the TCP
+    if you expose the Docker API through TCP, then Baqup can be scheduled on any node if the TCP
     socket is reachable.
 
     Please consider the security implications by reading the [Security Note](#security-note).
@@ -202,19 +202,19 @@ See the [Docker Swarm API Access](#docker-api-access) section for more informati
 
 ??? example "Using the docker.sock"
 
-    The docker-compose file shares the docker sock with the Traefik container
+    The docker-compose file shares the docker sock with the Baqup container
 
     ```yaml
     services:
-      traefik:
-         image: traefik:v3.4 # The official v3 Traefik docker image
+      baqup:
+         image: baqup:v3.4 # The official v3 Baqup docker image
          ports:
            - "80:80"
          volumes:
            - /var/run/docker.sock:/var/run/docker.sock
     ```
 
-    We specify the docker.sock in traefik's configuration file.
+    We specify the docker.sock in baqup's configuration file.
 
     ```yaml tab="File (YAML)"
     providers:
@@ -236,31 +236,31 @@ See the [Docker Swarm API Access](#docker-api-access) section for more informati
 
 ??? example "Using SSH"
 
-    Using Docker 18.09+ you can connect Traefik to daemon using SSH
-    We specify the SSH host and user in Traefik's configuration file.
-    Note that is server requires public keys for authentication you must have those accessible for user who runs Traefik.
+    Using Docker 18.09+ you can connect Baqup to daemon using SSH
+    We specify the SSH host and user in Baqup's configuration file.
+    Note that is server requires public keys for authentication you must have those accessible for user who runs Baqup.
 
     ```yaml tab="File (YAML)"
     providers:
       swarm:
-        endpoint: "ssh://traefik@192.168.2.5:2022"
+        endpoint: "ssh://baqup@192.168.2.5:2022"
          # ...
     ```
 
     ```toml tab="File (TOML)"
     [providers.swarm]
-      endpoint = "ssh://traefik@192.168.2.5:2022"
+      endpoint = "ssh://baqup@192.168.2.5:2022"
       # ...
     ```
 
     ```bash tab="CLI"
-    --providers.swarm.endpoint=ssh://traefik@192.168.2.5:2022
+    --providers.swarm.endpoint=ssh://baqup@192.168.2.5:2022
     # ...
     ```
 
 ??? example "Using HTTP"
 
-    Using Docker Engine API you can connect Traefik to remote daemon using HTTP.
+    Using Docker Engine API you can connect Baqup to remote daemon using HTTP.
 
     ```yaml tab="File (YAML)"
     providers:
@@ -282,7 +282,7 @@ See the [Docker Swarm API Access](#docker-api-access) section for more informati
 
 ??? example "Using TCP"
 
-    Using Docker Engine API you can connect Traefik to remote daemon using TCP.
+    Using Docker Engine API you can connect Baqup to remote daemon using TCP.
 
     ```yaml tab="File (YAML)"
     providers:
@@ -371,13 +371,13 @@ providers:
 
 _Optional, Default=false_
 
-Traefik routes requests to the IP/port of the matching container.
-When setting `useBindPortIP=true`, you tell Traefik to use the IP/Port attached to the container's _binding_ instead of its inner network IP/Port.
+Baqup routes requests to the IP/port of the matching container.
+When setting `useBindPortIP=true`, you tell Baqup to use the IP/Port attached to the container's _binding_ instead of its inner network IP/Port.
 
-When used in conjunction with the `traefik.http.services.<name>.loadbalancer.server.port` label (that tells Traefik to route requests to a specific port),
-Traefik tries to find a binding on port `traefik.http.services.<name>.loadbalancer.server.port`.
-If it cannot find such a binding, Traefik falls back on the internal network IP of the container,
-but still uses the `traefik.http.services.<name>.loadbalancer.server.port` that is set in the label.
+When used in conjunction with the `baqup.http.services.<name>.loadbalancer.server.port` label (that tells Baqup to route requests to a specific port),
+Baqup tries to find a binding on port `baqup.http.services.<name>.loadbalancer.server.port`.
+If it cannot find such a binding, Baqup falls back on the internal network IP of the container,
+but still uses the `baqup.http.services.<name>.loadbalancer.server.port` that is set in the label.
 
 ??? example "Examples of `usebindportip` in different situations."
 
@@ -421,10 +421,10 @@ providers:
 
 _Optional, Default=true_
 
-Expose containers by default through Traefik.
-If set to `false`, containers that do not have a `traefik.enable=true` label are ignored from the resulting routing configuration.
+Expose containers by default through Baqup.
+If set to `false`, containers that do not have a `baqup.enable=true` label are ignored from the resulting routing configuration.
 
-For additional information, refer to [Restrict the Scope of Service Discovery](./overview.md#exposedbydefault-and-traefikenable).
+For additional information, refer to [Restrict the Scope of Service Discovery](./overview.md#exposedbydefault-and-baqupenable).
 
 ```yaml tab="File (YAML)"
 providers:
@@ -450,7 +450,7 @@ _Optional, Default=""_
 
 Defines a default docker network to use for connections to all containers.
 
-This option can be overridden on a per-container basis with the `traefik.swarm.network` [routing label](../routing/providers/swarm.md#traefikswarmnetwork).
+This option can be overridden on a per-container basis with the `baqup.swarm.network` [routing label](../routing/providers/swarm.md#baqupswarmnetwork).
 
 ```yaml tab="File (YAML)"
 providers:
@@ -499,12 +499,12 @@ providers:
 # ...
 ```
 
-??? info "Default rule and Traefik service"
+??? info "Default rule and Baqup service"
 
-    The exposure of the Traefik container, combined with the default rule mechanism,
+    The exposure of the Baqup container, combined with the default rule mechanism,
     can lead to create a router targeting itself in a loop.
     In this case, to prevent an infinite loop,
-    Traefik adds an internal middleware to refuse the request if it comes from the same router.
+    Baqup adds an internal middleware to refuse the request if it comes from the same router.
 
 ### `refreshSeconds`
 
@@ -582,7 +582,7 @@ providers:
 
 _Optional, Default=""_
 
-The `constraints` option can be set to an expression that Traefik matches against the container labels to determine whether
+The `constraints` option can be set to an expression that Baqup matches against the container labels to determine whether
 to create any route for that container. If none of the container labels match the expression, no route for that container is
 created. If the expression is empty, all detected containers are included.
 
@@ -621,7 +621,7 @@ as well as the usual boolean logic, as shown in examples below.
     constraints = "LabelRegex(`a.label.name`, `a.+`)"
     ```
 
-For additional information, refer to [Restrict the Scope of Service Discovery](./overview.md#exposedbydefault-and-traefikenable).
+For additional information, refer to [Restrict the Scope of Service Discovery](./overview.md#exposedbydefault-and-baqupenable).
 
 ```yaml tab="File (YAML)"
 providers:
@@ -769,4 +769,4 @@ providers:
 --providers.swarm.allowEmptyServices=true
 ```
 
-{!traefik-for-business-applications.md!}
+{!baqup-for-business-applications.md!}

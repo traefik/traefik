@@ -1,10 +1,10 @@
 ---
 title: 'API Key Authentication'
-description: 'Traefik Hub API Gateway - The API Key authentication middleware allows you to secure an API by requiring a secret key, base64 encoded or not, to be given, via an HTTP header, a cookie or a query parameter.'
+description: 'Baqup Hub API Gateway - The API Key authentication middleware allows you to secure an API by requiring a secret key, base64 encoded or not, to be given, via an HTTP header, a cookie or a query parameter.'
 ---
 
-!!! info "Traefik Hub Feature"
-    This middleware is available exclusively in [Traefik Hub](https://traefik.io/traefik-hub/). Learn more about [Traefik Hub's advanced features](https://doc.traefik.io/traefik-hub/api-gateway/intro).
+!!! info "Baqup Hub Feature"
+    This middleware is available exclusively in [Baqup Hub](https://baqup.io/baqup-hub/). Learn more about [Baqup Hub's advanced features](https://doc.baqup.io/baqup-hub/api-gateway/intro).
 
 The API Key authentication middleware allows you to secure an API by requiring a secret key, base64 encoded or not, to be given, via an HTTP header, a cookie or a query parameter.
 
@@ -13,7 +13,7 @@ The API Key authentication middleware allows you to secure an API by requiring a
 ## Configuration Example
 
 ```yaml tab="Middleware API Key"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-apikey
@@ -53,4 +53,4 @@ stringData:
 | <a id="opt-secretNonBase64Encoded" href="#opt-secretNonBase64Encoded" title="#opt-secretNonBase64Encoded">`secretNonBase64Encoded`</a> | Defines whether the secret sent by the client is base64 encoded. | false   | No       |
 | <a id="opt-secretValues" href="#opt-secretValues" title="#opt-secretValues">`secretValues`</a> | Contain the hash of the API keys. <br /> Supported hashing algorithms are Bcrypt, SHA1 and MD5. <br /> The hash should be generated using `htpasswd`.<br />Can reference a Kubernetes Secret using the URN format: `urn:k8s:secret:[name]:[valueKey]` | []      | Yes      |
 
-{!traefik-for-business-applications.md!}
+{!baqup-for-business-applications.md!}

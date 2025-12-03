@@ -1,10 +1,10 @@
 ---
 title: "Distributed RateLimit"
-description: "Traefik Hub API Gateway - The Distributed RateLimit middleware ensures Services receive fair amounts of requests throughout your cluster and not only on an individual proxy."
+description: "Baqup Hub API Gateway - The Distributed RateLimit middleware ensures Services receive fair amounts of requests throughout your cluster and not only on an individual proxy."
 ---
 
-!!! info "Traefik Hub Feature"
-    This middleware is available exclusively in [Traefik Hub](https://traefik.io/traefik-hub/). Learn more about [Traefik Hub's advanced features](https://doc.traefik.io/traefik-hub/api-gateway/intro).
+!!! info "Baqup Hub Feature"
+    This middleware is available exclusively in [Baqup Hub](https://baqup.io/baqup-hub/). Learn more about [Baqup Hub's advanced features](https://doc.baqup.io/baqup-hub/api-gateway/intro).
 
 The Distributed RateLimit middleware ensures that requests are limited over time throughout your cluster and not only on an individual proxy.
 
@@ -19,11 +19,11 @@ Below is an advanced configuration that enables the Distributed RateLimit middle
 ```yaml tab="Middleware Distributed Rate Limit"
 # Here, a limit of 100 requests per second is allowed.
 # In addition, a burst of 200 requests is allowed.
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-distributedratelimit
-  namespace: traefik
+  namespace: baqup
 spec:
   plugin:
     distributedRateLimit:
@@ -50,7 +50,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: redis
-  namespace: traefik
+  namespace: baqup
 stringData:
   password: mysecret12345678
 ```
@@ -64,7 +64,7 @@ The middleware is based on a [token bucket](https://en.wikipedia.org/wiki/Token_
 In this analogy, the `limit` and `period` parameters define the **rate** at which the bucket refills, and the `burst` is the size (volume) of the bucket.
 
 ```yaml
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-ratelimit
@@ -90,10 +90,10 @@ When the bucket is not full, on token is generated every 10 seconds (6 every 1 m
 | <a id="opt-burst" href="#opt-burst" title="#opt-burst">`burst`</a> | Maximum number of requests allowed to go through at the very same moment.<br />More information [here](#rate-and-burst). | 1 | No |
 | <a id="opt-denyOnError" href="#opt-denyOnError" title="#opt-denyOnError">`denyOnError`</a> | Forces to return a 429 error if the number of remaining requests accepted cannot be get.<br /> Set to `false`, this option allows the request to reach the backend. | true    | No       |
 | <a id="opt-responseHeaders" href="#opt-responseHeaders" title="#opt-responseHeaders">`responseHeaders`</a> | Injects the following rate limiting headers in the response:<br />- `X-Rate-Limit-Remaining`<br />- `X-Rate-Limit-Limit`<br />- `X-Rate-Limit-Period`<br />- `X-Rate-Limit-Reset`<br />The added headers indicate how many tokens are left in the bucket (in the token bucket analogy) after the reservation for the request was made. | false   | No       |
-| <a id="opt-store-redis-endpoints" href="#opt-store-redis-endpoints" title="#opt-store-redis-endpoints">`store.redis.endpoints`</a> | Endpoints of the Redis instances to connect to (example: `redis.traefik-hub.svc.cluster.local:6379`) | "" | Yes      |
-| <a id="opt-store-redis-username" href="#opt-store-redis-username" title="#opt-store-redis-username">`store.redis.username`</a> | The username Traefik Hub will use to connect to Redis                                                | "" | No       |
-| <a id="opt-store-redis-password" href="#opt-store-redis-password" title="#opt-store-redis-password">`store.redis.password`</a> | The password Traefik Hub will use to connect to Redis                                                | "" | No       |
-| <a id="opt-store-redis-database" href="#opt-store-redis-database" title="#opt-store-redis-database">`store.redis.database`</a> | The database Traefik Hub will use to sore information (default: `0`)                                 | "" | No       |
+| <a id="opt-store-redis-endpoints" href="#opt-store-redis-endpoints" title="#opt-store-redis-endpoints">`store.redis.endpoints`</a> | Endpoints of the Redis instances to connect to (example: `redis.baqup-hub.svc.cluster.local:6379`) | "" | Yes      |
+| <a id="opt-store-redis-username" href="#opt-store-redis-username" title="#opt-store-redis-username">`store.redis.username`</a> | The username Baqup Hub will use to connect to Redis                                                | "" | No       |
+| <a id="opt-store-redis-password" href="#opt-store-redis-password" title="#opt-store-redis-password">`store.redis.password`</a> | The password Baqup Hub will use to connect to Redis                                                | "" | No       |
+| <a id="opt-store-redis-database" href="#opt-store-redis-database" title="#opt-store-redis-database">`store.redis.database`</a> | The database Baqup Hub will use to sore information (default: `0`)                                 | "" | No       |
 | <a id="opt-store-redis-cluster" href="#opt-store-redis-cluster" title="#opt-store-redis-cluster">`store.redis.cluster`</a> | Enable Redis Cluster                                                                                 | "" | No       |
 | <a id="opt-store-redis-tls-caBundle" href="#opt-store-redis-tls-caBundle" title="#opt-store-redis-tls-caBundle">`store.redis.tls.caBundle`</a> | Custom CA bundle                                                                                     | "" | No       |
 | <a id="opt-store-redis-tls-cert" href="#opt-store-redis-tls-cert" title="#opt-store-redis-tls-cert">`store.redis.tls.cert`</a> | TLS certificate                                                                                      | "" | No       |
@@ -105,7 +105,7 @@ When the bucket is not full, on token is generated every 10 seconds (6 every 1 m
 | <a id="opt-sourceCriterion-requestHost" href="#opt-sourceCriterion-requestHost" title="#opt-sourceCriterion-requestHost">`sourceCriterion.requestHost`</a> | Whether to consider the request host as the source.<br />More information about `sourceCriterion`[here](#sourcecriterion). | false      | No      |
 | <a id="opt-sourceCriterion-requestHeaderName" href="#opt-sourceCriterion-requestHeaderName" title="#opt-sourceCriterion-requestHeaderName">`sourceCriterion.requestHeaderName`</a> | Name of the header used to group incoming requests.<br />More information about `sourceCriterion`[here](#sourcecriterion). | ""      | No      |
 | <a id="opt-sourceCriterion-ipStrategy-depth" href="#opt-sourceCriterion-ipStrategy-depth" title="#opt-sourceCriterion-ipStrategy-depth">`sourceCriterion.ipStrategy.depth`</a> | Depth position of the IP to select in the `X-Forwarded-For` header (starting from the right).<br />0 means no depth.<br />If greater than the total number of IPs in `X-Forwarded-For`, then the client IP is empty<br />If higher than 0, the `excludedIPs` options is not evaluated.<br />More information about [`sourceCriterion`](#sourcecriterion), [`ipStrategy`](#ipstrategy), and [`depth`](#sourcecriterionipstrategydepth) below. | 0      | No      |
-| <a id="opt-sourceCriterion-ipStrategy-excludedIPs" href="#opt-sourceCriterion-ipStrategy-excludedIPs" title="#opt-sourceCriterion-ipStrategy-excludedIPs">`sourceCriterion.ipStrategy.excludedIPs`</a> | Allows Traefik to scan the `X-Forwarded-For` header and select the first IP not in the list.<br />If `depth` is specified, `excludedIPs` is ignored.<br />More information about [`sourceCriterion`](#sourcecriterion), [`ipStrategy`](#ipstrategy), and [`excludedIPs`](#sourcecriterionipstrategyexcludedips) below. |       | No      |
+| <a id="opt-sourceCriterion-ipStrategy-excludedIPs" href="#opt-sourceCriterion-ipStrategy-excludedIPs" title="#opt-sourceCriterion-ipStrategy-excludedIPs">`sourceCriterion.ipStrategy.excludedIPs`</a> | Allows Baqup to scan the `X-Forwarded-For` header and select the first IP not in the list.<br />If `depth` is specified, `excludedIPs` is ignored.<br />More information about [`sourceCriterion`](#sourcecriterion), [`ipStrategy`](#ipstrategy), and [`excludedIPs`](#sourcecriterionipstrategyexcludedips) below. |       | No      |
 
 ### sourceCriterion
 
@@ -115,7 +115,7 @@ If none are set, the default is to use the request's remote address field (as an
 
 ### ipStrategy
 
-The `ipStrategy` option defines two parameters that configures how Traefik determines the client IP: `depth`, and `excludedIPs`.
+The `ipStrategy` option defines two parameters that configures how Baqup determines the client IP: `depth`, and `excludedIPs`.
 
 As a middleware, rate-limiting happens before the actual proxying to the backend takes place.
 In addition, the previous network hop only gets appended to `X-Forwarded-For` during the last stages of proxying, that is after it has already passed through rate-limiting.

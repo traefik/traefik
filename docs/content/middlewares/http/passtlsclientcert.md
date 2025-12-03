@@ -1,6 +1,6 @@
 ---
-title: "Traefik PassTLSClientCert Documentation"
-description: "In Traefik Proxy's HTTP middleware, the PassTLSClientCert adds selected data from passed client TLS certificates to headers. Read the technical documentation."
+title: "Baqup PassTLSClientCert Documentation"
+description: "In Baqup Proxy's HTTP middleware, the PassTLSClientCert adds selected data from passed client TLS certificates to headers. Read the technical documentation."
 ---
 
 # PassTLSClientCert
@@ -21,11 +21,11 @@ Pass the pem in the `X-Forwarded-Tls-Client-Cert` header.
 ```yaml tab="Docker & Swarm"
 # Pass the pem in the `X-Forwarded-Tls-Client-Cert` header.
 labels:
-  - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.pem=true"
+  - "baqup.http.middlewares.test-passtlsclientcert.passtlsclientcert.pem=true"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-passtlsclientcert
@@ -36,7 +36,7 @@ spec:
 
 ```yaml tab="Consul Catalog"
 # Pass the pem in the `X-Forwarded-Tls-Client-Cert` header
-- "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.pem=true"
+- "baqup.http.middlewares.test-passtlsclientcert.passtlsclientcert.pem=true"
 ```
 
 ```yaml tab="File (YAML)"
@@ -60,30 +60,30 @@ http:
     ```yaml tab="Docker & Swarm"
     # Pass all the available info in the `X-Forwarded-Tls-Client-Cert-Info` header
     labels:
-      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.notafter=true"
-      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.notbefore=true"
-      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.sans=true"
-      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.serialnumber=true"
-      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.commonname=true"
-      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.country=true"
-      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.domaincomponent=true"
-      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.locality=true"
-      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.organization=true"
-      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.organizationalunit=true"
-      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.province=true"
-      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.serialnumber=true"
-      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.commonname=true"
-      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.country=true"
-      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.domaincomponent=true"
-      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.locality=true"
-      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.organization=true"
-      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.province=true"
-      - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.serialnumber=true"
+      - "baqup.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.notafter=true"
+      - "baqup.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.notbefore=true"
+      - "baqup.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.sans=true"
+      - "baqup.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.serialnumber=true"
+      - "baqup.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.commonname=true"
+      - "baqup.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.country=true"
+      - "baqup.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.domaincomponent=true"
+      - "baqup.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.locality=true"
+      - "baqup.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.organization=true"
+      - "baqup.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.organizationalunit=true"
+      - "baqup.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.province=true"
+      - "baqup.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.serialnumber=true"
+      - "baqup.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.commonname=true"
+      - "baqup.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.country=true"
+      - "baqup.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.domaincomponent=true"
+      - "baqup.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.locality=true"
+      - "baqup.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.organization=true"
+      - "baqup.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.province=true"
+      - "baqup.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.serialnumber=true"
     ```
 
     ```yaml tab="Kubernetes"
     # Pass all the available info in the `X-Forwarded-Tls-Client-Cert-Info` header
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: baqup.io/v1alpha1
     kind: Middleware
     metadata:
       name: test-passtlsclientcert
@@ -114,24 +114,24 @@ http:
 
     ```yaml tab="Consul Catalog"
     # Pass all the available info in the `X-Forwarded-Tls-Client-Cert-Info` header
-    - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.notafter=true"
-    - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.notbefore=true"
-    - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.sans=true"
-    - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.commonname=true"
-    - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.country=true"
-    - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.domaincomponent=true"
-    - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.locality=true"
-    - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.organization=true"
-    - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.organizationalunit=true"
-    - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.province=true"
-    - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.serialnumber=true"
-    - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.commonname=true"
-    - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.country=true"
-    - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.domaincomponent=true"
-    - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.locality=true"
-    - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.organization=true"
-    - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.province=true"
-    - "traefik.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.serialnumber=true"
+    - "baqup.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.notafter=true"
+    - "baqup.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.notbefore=true"
+    - "baqup.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.sans=true"
+    - "baqup.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.commonname=true"
+    - "baqup.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.country=true"
+    - "baqup.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.domaincomponent=true"
+    - "baqup.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.locality=true"
+    - "baqup.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.organization=true"
+    - "baqup.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.organizationalunit=true"
+    - "baqup.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.province=true"
+    - "baqup.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.subject.serialnumber=true"
+    - "baqup.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.commonname=true"
+    - "baqup.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.country=true"
+    - "baqup.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.domaincomponent=true"
+    - "baqup.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.locality=true"
+    - "baqup.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.organization=true"
+    - "baqup.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.province=true"
+    - "baqup.http.middlewares.test-passtlsclientcert.passtlsclientcert.info.issuer.serialnumber=true"
     ```
 
     ```yaml tab="File (YAML)"

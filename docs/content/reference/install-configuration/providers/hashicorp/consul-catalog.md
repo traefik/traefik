@@ -1,9 +1,9 @@
 ---
-title: "Traefik Consul Catalog Documentation"
-description: "Learn how to use Consul Catalog as a provider for configuration discovery in Traefik Proxy. Read the technical documentation."
+title: "Baqup Consul Catalog Documentation"
+description: "Learn how to use Consul Catalog as a provider for configuration discovery in Baqup Proxy. Read the technical documentation."
 ---
 
-# Traefik & Consul Catalog
+# Baqup & Consul Catalog
 
 ## Configuration Example
 
@@ -25,7 +25,7 @@ providers:
 Attaching tags to services:
 
 ```yaml
-- traefik.http.routers.my-router.rule=Host(`example.com`)
+- baqup.http.routers.my-router.rule=Host(`example.com`)
 ```
 
 ## Configuration Options
@@ -34,21 +34,21 @@ Attaching tags to services:
 |:------|:----------------------------------------------------------|:---------------------|:---------|
 | <a id="opt-providers-providersThrottleDuration" href="#opt-providers-providersThrottleDuration" title="#opt-providers-providersThrottleDuration">`providers.providersThrottleDuration`</a> | Minimum amount of time to wait for, after a configuration reload, before taking into account any new configuration refresh event.<br />If multiple events occur within this time, only the most recent one is taken into account, and all others are discarded.<br />**This option cannot be set per provider, but the throttling algorithm applies to each of them independently.** | 2s  | No |
 | <a id="opt-providers-consulCatalog-refreshInterval" href="#opt-providers-consulCatalog-refreshInterval" title="#opt-providers-consulCatalog-refreshInterval">`providers.consulCatalog.refreshInterval`</a> | Defines the polling interval.|  15s    | No   |
-| <a id="opt-providers-consulCatalog-prefix" href="#opt-providers-consulCatalog-prefix" title="#opt-providers-consulCatalog-prefix">`providers.consulCatalog.prefix`</a> | Defines the prefix for Consul Catalog tags defining Traefik labels.|  traefik    | yes   |
+| <a id="opt-providers-consulCatalog-prefix" href="#opt-providers-consulCatalog-prefix" title="#opt-providers-consulCatalog-prefix">`providers.consulCatalog.prefix`</a> | Defines the prefix for Consul Catalog tags defining Baqup labels.|  baqup    | yes   |
 | <a id="opt-providers-consulCatalog-requireConsistent" href="#opt-providers-consulCatalog-requireConsistent" title="#opt-providers-consulCatalog-requireConsistent">`providers.consulCatalog.requireConsistent`</a> | Forces the read to be fully consistent. See [here](#requireconsistent) for more information.|  false    | yes   |
-| <a id="opt-providers-consulCatalog-exposedByDefault" href="#opt-providers-consulCatalog-exposedByDefault" title="#opt-providers-consulCatalog-exposedByDefault">`providers.consulCatalog.exposedByDefault`</a> | Expose Consul Catalog services by default in Traefik. If set to `false`, services that do not have a `traefik.enable=true` tag will be ignored from the resulting routing configuration. See [here](../overview.md#exposedbydefault-and-traefikenable). | true | no |
+| <a id="opt-providers-consulCatalog-exposedByDefault" href="#opt-providers-consulCatalog-exposedByDefault" title="#opt-providers-consulCatalog-exposedByDefault">`providers.consulCatalog.exposedByDefault`</a> | Expose Consul Catalog services by default in Baqup. If set to `false`, services that do not have a `baqup.enable=true` tag will be ignored from the resulting routing configuration. See [here](../overview.md#exposedbydefault-and-baqupenable). | true | no |
 | <a id="opt-providers-consulCatalog-defaultRule" href="#opt-providers-consulCatalog-defaultRule" title="#opt-providers-consulCatalog-defaultRule">`providers.consulCatalog.defaultRule`</a> | The Default Host rule for all services. See [here](#defaultrule) for more information. |   ```"Host(`{{ normalize .Name }}`)"```   | No   |
-| <a id="opt-providers-consulCatalog-connectAware" href="#opt-providers-consulCatalog-connectAware" title="#opt-providers-consulCatalog-connectAware">`providers.consulCatalog.connectAware`</a> | Enable Consul Connect support. If set to `true`, Traefik will be enabled to communicate with Connect services.   | false   | No |
-| <a id="opt-providers-consulCatalog-connectByDefault" href="#opt-providers-consulCatalog-connectByDefault" title="#opt-providers-consulCatalog-connectByDefault">`providers.consulCatalog.connectByDefault`</a> | Consider every service as Connect capable by default. If set to true, Traefik will consider every Consul Catalog service to be Connect capable by default. The option can be overridden on an instance basis with the traefik.consulcatalog.connect tag. | false   | No |
-| <a id="opt-providers-consulCatalog-serviceName" href="#opt-providers-consulCatalog-serviceName" title="#opt-providers-consulCatalog-serviceName">`providers.consulCatalog.serviceName`</a> | Defines the name of the Traefik service in Consul Catalog. | "traefik"   | No |
-| <a id="opt-providers-consulCatalog-constraints" href="#opt-providers-consulCatalog-constraints" title="#opt-providers-consulCatalog-constraints">`providers.consulCatalog.constraints`</a> | Defines an expression that Traefik matches against the container labels to determine whether to create any route for that container. See [here](#constraints) for more information. | ""   | No |
+| <a id="opt-providers-consulCatalog-connectAware" href="#opt-providers-consulCatalog-connectAware" title="#opt-providers-consulCatalog-connectAware">`providers.consulCatalog.connectAware`</a> | Enable Consul Connect support. If set to `true`, Baqup will be enabled to communicate with Connect services.   | false   | No |
+| <a id="opt-providers-consulCatalog-connectByDefault" href="#opt-providers-consulCatalog-connectByDefault" title="#opt-providers-consulCatalog-connectByDefault">`providers.consulCatalog.connectByDefault`</a> | Consider every service as Connect capable by default. If set to true, Baqup will consider every Consul Catalog service to be Connect capable by default. The option can be overridden on an instance basis with the baqup.consulcatalog.connect tag. | false   | No |
+| <a id="opt-providers-consulCatalog-serviceName" href="#opt-providers-consulCatalog-serviceName" title="#opt-providers-consulCatalog-serviceName">`providers.consulCatalog.serviceName`</a> | Defines the name of the Baqup service in Consul Catalog. | "baqup"   | No |
+| <a id="opt-providers-consulCatalog-constraints" href="#opt-providers-consulCatalog-constraints" title="#opt-providers-consulCatalog-constraints">`providers.consulCatalog.constraints`</a> | Defines an expression that Baqup matches against the container labels to determine whether to create any route for that container. See [here](#constraints) for more information. | ""   | No |
 | <a id="opt-providers-consulCatalog-namespaces" href="#opt-providers-consulCatalog-namespaces" title="#opt-providers-consulCatalog-namespaces">`providers.consulCatalog.namespaces`</a> | Defines the namespaces to query. See [here](#namespaces) for more information. |  ""     | no   |
-| <a id="opt-providers-consulCatalog-stale" href="#opt-providers-consulCatalog-stale" title="#opt-providers-consulCatalog-stale">`providers.consulCatalog.stale`</a> | Instruct Traefik to use stale consistency for catalog reads. |  false    | no   |
-| <a id="opt-providers-consulCatalog-cache" href="#opt-providers-consulCatalog-cache" title="#opt-providers-consulCatalog-cache">`providers.consulCatalog.cache`</a> | Instruct Traefik to use local agent caching for catalog reads. |  false    | no   |
+| <a id="opt-providers-consulCatalog-stale" href="#opt-providers-consulCatalog-stale" title="#opt-providers-consulCatalog-stale">`providers.consulCatalog.stale`</a> | Instruct Baqup to use stale consistency for catalog reads. |  false    | no   |
+| <a id="opt-providers-consulCatalog-cache" href="#opt-providers-consulCatalog-cache" title="#opt-providers-consulCatalog-cache">`providers.consulCatalog.cache`</a> | Instruct Baqup to use local agent caching for catalog reads. |  false    | no   |
 | <a id="opt-providers-consulCatalog-endpoint" href="#opt-providers-consulCatalog-endpoint" title="#opt-providers-consulCatalog-endpoint">`providers.consulCatalog.endpoint`</a> | Defines the Consul server endpoint. |  -    | yes   |
 | <a id="opt-providers-consulCatalog-endpoint-address" href="#opt-providers-consulCatalog-endpoint-address" title="#opt-providers-consulCatalog-endpoint-address">`providers.consulCatalog.endpoint.address`</a> | Defines the address of the Consul server. |  127.0.0.1:8500    | no   |
 | <a id="opt-providers-consulCatalog-endpoint-scheme" href="#opt-providers-consulCatalog-endpoint-scheme" title="#opt-providers-consulCatalog-endpoint-scheme">`providers.consulCatalog.endpoint.scheme`</a> | Defines the URI scheme for the Consul server. |  ""   | no   |
-| <a id="opt-providers-consulCatalog-endpoint-datacenter" href="#opt-providers-consulCatalog-endpoint-datacenter" title="#opt-providers-consulCatalog-endpoint-datacenter">`providers.consulCatalog.endpoint.datacenter`</a> | Defines the datacenter to use. If not provided in Traefik, Consul uses the default agent datacenter. |  ""   | no   |
+| <a id="opt-providers-consulCatalog-endpoint-datacenter" href="#opt-providers-consulCatalog-endpoint-datacenter" title="#opt-providers-consulCatalog-endpoint-datacenter">`providers.consulCatalog.endpoint.datacenter`</a> | Defines the datacenter to use. If not provided in Baqup, Consul uses the default agent datacenter. |  ""   | no   |
 | <a id="opt-providers-consulCatalog-endpoint-token" href="#opt-providers-consulCatalog-endpoint-token" title="#opt-providers-consulCatalog-endpoint-token">`providers.consulCatalog.endpoint.token`</a> |  Defines a per-request ACL token which overwrites the agent's default token. |  ""    | no   |
 | <a id="opt-providers-consulCatalog-endpoint-endpointWaitTime" href="#opt-providers-consulCatalog-endpoint-endpointWaitTime" title="#opt-providers-consulCatalog-endpoint-endpointWaitTime">`providers.consulCatalog.endpoint.endpointWaitTime`</a> |  Defines a duration for which a `watch` can block. If not provided, the agent default values will be used. |  ""    | no   |
 | <a id="opt-providers-consulCatalog-endpoint-httpAuth" href="#opt-providers-consulCatalog-endpoint-httpAuth" title="#opt-providers-consulCatalog-endpoint-httpAuth">`providers.consulCatalog.endpoint.httpAuth`</a> | Defines authentication settings for the HTTP client using HTTP Basic Authentication. |  N/A    | no   |
@@ -77,7 +77,7 @@ and can include [sprig template functions](https://masterminds.github.io/sprig/)
 The service name can be accessed with the `Name` identifier,
 and the template has access to all the labels (i.e. tags beginning with the `prefix`) defined on this service.
 
-The option can be overridden on an instance basis with the `traefik.http.routers.{name-of-your-choice}.rule` tag.
+The option can be overridden on an instance basis with the `baqup.http.routers.{name-of-your-choice}.rule` tag.
 
 ```yaml tab="File (YAML)"
 providers:
@@ -96,16 +96,16 @@ providers:
 --providers.consulcatalog.defaultRule="Host(`{{ .Name }}.{{ index .Labels \"customLabel\"}}`)"
 ```
 
-??? info "Default rule and Traefik service"
+??? info "Default rule and Baqup service"
 
-    The exposure of the Traefik container, combined with the default rule mechanism,
+    The exposure of the Baqup container, combined with the default rule mechanism,
     can lead to create a router targeting itself in a loop.
     In this case, to prevent an infinite loop,
-    Traefik adds an internal middleware to refuse the request if it comes from the same router.
+    Baqup adds an internal middleware to refuse the request if it comes from the same router.
 
 ### `constraints`
 
-The `constraints` option can be set to an expression that Traefik matches against the service tags to determine whether
+The `constraints` option can be set to an expression that Baqup matches against the service tags to determine whether
 to create any route for that service. If none of the service tags match the expression, no route for that service is
 created. If the expression is empty, all detected services are included.
 
@@ -114,7 +114,7 @@ as well as the usual boolean logic, as shown in examples below.
 
 !!! tip "Constraints key limitations"
 
-    Note that `traefik.*` is a reserved label namespace for configuration and can not be used as a key for custom constraints.
+    Note that `baqup.*` is a reserved label namespace for configuration and can not be used as a key for custom constraints.
 
 ??? example "Constraints Expression Examples"
 
@@ -166,7 +166,7 @@ providers:
 # ...
 ```
 
-For additional information, refer to [Restrict the Scope of Service Discovery](../overview.md#exposedbydefault-and-traefikenable).
+For additional information, refer to [Restrict the Scope of Service Discovery](../overview.md#exposedbydefault-and-baqupenable).
 
 ### `namespaces`
 

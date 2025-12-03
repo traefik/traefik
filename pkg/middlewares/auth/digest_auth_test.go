@@ -8,15 +8,15 @@ import (
 	"os"
 	"testing"
 
+	"github.com/baqupio/baqup/v3/pkg/config/dynamic"
+	"github.com/baqupio/baqup/v3/pkg/testhelpers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/testhelpers"
 )
 
 func TestDigestAuthError(t *testing.T) {
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "traefik")
+		fmt.Fprintln(w, "baqup")
 	})
 
 	auth := dynamic.DigestAuth{
@@ -28,11 +28,11 @@ func TestDigestAuthError(t *testing.T) {
 
 func TestDigestAuthFail(t *testing.T) {
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "traefik")
+		fmt.Fprintln(w, "baqup")
 	})
 
 	auth := dynamic.DigestAuth{
-		Users: []string{"test:traefik:a2688e031edb4be6a3797f3882655c05"},
+		Users: []string{"test:baqup:a2688e031edb4be6a3797f3882655c05"},
 	}
 	authMiddleware, err := NewDigest(t.Context(), next, auth, "authName")
 	require.NoError(t, err)
@@ -61,28 +61,28 @@ func TestDigestAuthUsersFromFile(t *testing.T) {
 	}{
 		{
 			desc:            "Finds the users in the file",
-			userFileContent: "test:traefik:a2688e031edb4be6a3797f3882655c05\ntest2:traefik:518845800f9e2bfb1f1f740ec24f074e\n",
+			userFileContent: "test:baqup:a2688e031edb4be6a3797f3882655c05\ntest2:baqup:518845800f9e2bfb1f1f740ec24f074e\n",
 			givenUsers:      []string{},
 			expectedUsers:   map[string]string{"test": "test", "test2": "test2"},
 		},
 		{
 			desc:            "Merges given users with users from the file",
-			userFileContent: "test:traefik:a2688e031edb4be6a3797f3882655c05\n",
-			givenUsers:      []string{"test2:traefik:518845800f9e2bfb1f1f740ec24f074e", "test3:traefik:c8e9f57ce58ecb4424407f665a91646c"},
+			userFileContent: "test:baqup:a2688e031edb4be6a3797f3882655c05\n",
+			givenUsers:      []string{"test2:baqup:518845800f9e2bfb1f1f740ec24f074e", "test3:baqup:c8e9f57ce58ecb4424407f665a91646c"},
 			expectedUsers:   map[string]string{"test": "test", "test2": "test2", "test3": "test3"},
 		},
 		{
 			desc:            "Given users have priority over users in the file",
-			userFileContent: "test:traefik:a2688e031edb4be6a3797f3882655c05\ntest2:traefik:518845800f9e2bfb1f1f740ec24f074e\n",
-			givenUsers:      []string{"test2:traefik:8de60a1c52da68ccf41f0c0ffb7c51a0"},
+			userFileContent: "test:baqup:a2688e031edb4be6a3797f3882655c05\ntest2:baqup:518845800f9e2bfb1f1f740ec24f074e\n",
+			givenUsers:      []string{"test2:baqup:8de60a1c52da68ccf41f0c0ffb7c51a0"},
 			expectedUsers:   map[string]string{"test": "test", "test2": "overridden"},
 		},
 		{
 			desc:            "Should authenticate the correct user based on the realm",
-			userFileContent: "test:traefik:a2688e031edb4be6a3797f3882655c05\ntest:traefiker:a3d334dff2645b914918de78bec50bf4\n",
+			userFileContent: "test:baqup:a2688e031edb4be6a3797f3882655c05\ntest:baquper:a3d334dff2645b914918de78bec50bf4\n",
 			givenUsers:      []string{},
 			expectedUsers:   map[string]string{"test": "test2"},
-			realm:           "traefiker",
+			realm:           "baquper",
 		},
 	}
 
@@ -105,7 +105,7 @@ func TestDigestAuthUsersFromFile(t *testing.T) {
 			}
 
 			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				fmt.Fprintln(w, "traefik")
+				fmt.Fprintln(w, "baqup")
 			})
 
 			authenticator, err := NewDigest(t.Context(), next, authenticatorConfiguration, "authName")
@@ -129,7 +129,7 @@ func TestDigestAuthUsersFromFile(t *testing.T) {
 				err = res.Body.Close()
 				require.NoError(t, err)
 
-				require.Equal(t, "traefik\n", string(body))
+				require.Equal(t, "baqup\n", string(body))
 			}
 
 			// Checks that user foo doesn't work
@@ -147,7 +147,7 @@ func TestDigestAuthUsersFromFile(t *testing.T) {
 			err = res.Body.Close()
 			require.NoError(t, err)
 
-			require.NotContains(t, "traefik", string(body))
+			require.NotContains(t, "baqup", string(body))
 		})
 	}
 }

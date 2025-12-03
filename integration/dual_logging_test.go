@@ -16,7 +16,7 @@ import (
 	"go.opentelemetry.io/collector/pdata/plog/plogotlp"
 )
 
-const traefikTestOTLPLogFile = "traefik_otlp.log"
+const baqupTestOTLPLogFile = "baqup_otlp.log"
 
 // DualLoggingSuite tests that both OTLP and stdout logging can work together.
 type DualLoggingSuite struct {
@@ -33,8 +33,8 @@ func (s *DualLoggingSuite) SetupSuite() {
 	s.BaseSuite.SetupSuite()
 
 	// Clean up any existing log files
-	os.Remove(traefikTestLogFile)
-	os.Remove(traefikTestOTLPLogFile)
+	os.Remove(baqupTestLogFile)
+	os.Remove(baqupTestOTLPLogFile)
 }
 
 func (s *DualLoggingSuite) TearDownSuite() {
@@ -42,8 +42,8 @@ func (s *DualLoggingSuite) TearDownSuite() {
 
 	// Clean up log files
 	generatedFiles := []string{
-		traefikTestLogFile,
-		traefikTestOTLPLogFile,
+		baqupTestLogFile,
+		baqupTestOTLPLogFile,
 	}
 
 	for _, filename := range generatedFiles {
@@ -112,10 +112,10 @@ func (s *DualLoggingSuite) TestOTLPAndStdoutLogging() {
 
 	file := s.adaptFile("fixtures/dual_logging/otlp_and_stdout.toml", tempObjects)
 
-	cmd, display := s.cmdTraefik(withConfigFile(file))
-	defer s.displayTraefikLogFile(traefikTestLogFile)
+	cmd, display := s.cmdBaqup(withConfigFile(file))
+	defer s.displayBaqupLogFile(baqupTestLogFile)
 
-	s.waitForTraefik("dashboard")
+	s.waitForBaqup("dashboard")
 
 	time.Sleep(3 * time.Second)
 

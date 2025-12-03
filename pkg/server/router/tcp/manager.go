@@ -9,16 +9,16 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/baqupio/baqup/v3/pkg/config/runtime"
+	"github.com/baqupio/baqup/v3/pkg/middlewares/snicheck"
+	httpmuxer "github.com/baqupio/baqup/v3/pkg/muxer/http"
+	tcpmuxer "github.com/baqupio/baqup/v3/pkg/muxer/tcp"
+	"github.com/baqupio/baqup/v3/pkg/observability/logs"
+	"github.com/baqupio/baqup/v3/pkg/server/provider"
+	tcpservice "github.com/baqupio/baqup/v3/pkg/server/service/tcp"
+	"github.com/baqupio/baqup/v3/pkg/tcp"
+	baquptls "github.com/baqupio/baqup/v3/pkg/tls"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v3/pkg/config/runtime"
-	"github.com/traefik/traefik/v3/pkg/middlewares/snicheck"
-	httpmuxer "github.com/traefik/traefik/v3/pkg/muxer/http"
-	tcpmuxer "github.com/traefik/traefik/v3/pkg/muxer/tcp"
-	"github.com/traefik/traefik/v3/pkg/observability/logs"
-	"github.com/traefik/traefik/v3/pkg/server/provider"
-	tcpservice "github.com/traefik/traefik/v3/pkg/server/service/tcp"
-	"github.com/traefik/traefik/v3/pkg/tcp"
-	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 )
 
 const maxUserPriority = math.MaxInt - 1000
@@ -33,7 +33,7 @@ func NewManager(conf *runtime.Configuration,
 	middlewaresBuilder middlewareBuilder,
 	httpHandlers map[string]http.Handler,
 	httpsHandlers map[string]http.Handler,
-	tlsManager *traefiktls.Manager,
+	tlsManager *baquptls.Manager,
 ) *Manager {
 	return &Manager{
 		serviceManager:     serviceManager,
@@ -51,7 +51,7 @@ type Manager struct {
 	middlewaresBuilder middlewareBuilder
 	httpHandlers       map[string]http.Handler
 	httpsHandlers      map[string]http.Handler
-	tlsManager         *traefiktls.Manager
+	tlsManager         *baquptls.Manager
 	conf               *runtime.Configuration
 }
 
@@ -110,7 +110,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 	// Even though the error is seemingly ignored (aside from logging it),
 	// we actually rely later on the fact that a tls config is nil (which happens when an error is returned) to take special steps
 	// when assigning a handler to a route.
-	defaultTLSConf, err := m.tlsManager.Get(traefiktls.DefaultTLSStoreName, traefiktls.DefaultTLSConfigName)
+	defaultTLSConf, err := m.tlsManager.Get(baquptls.DefaultTLSStoreName, baquptls.DefaultTLSConfigName)
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("Error during the build of the default TLS configuration")
 	}
@@ -135,8 +135,8 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		logger := log.Ctx(ctx).With().Str(logs.RouterName, routerHTTPName).Logger()
 		ctxRouter := logger.WithContext(provider.AddInContext(ctx, routerHTTPName))
 
-		tlsOptionsName := traefiktls.DefaultTLSConfigName
-		if len(routerHTTPConfig.TLS.Options) > 0 && routerHTTPConfig.TLS.Options != traefiktls.DefaultTLSConfigName {
+		tlsOptionsName := baquptls.DefaultTLSConfigName
+		if len(routerHTTPConfig.TLS.Options) > 0 && routerHTTPConfig.TLS.Options != baquptls.DefaultTLSConfigName {
 			tlsOptionsName = provider.GetQualifiedName(ctxRouter, routerHTTPConfig.TLS.Options)
 		}
 
@@ -185,7 +185,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 		// Even though the error is seemingly ignored (aside from logging it),
 		// we actually rely later on the fact that a tls config is nil (which happens when an error is returned) to take special steps
 		// when assigning a handler to a route.
-		tlsConf, tlsConfErr := m.tlsManager.Get(traefiktls.DefaultTLSStoreName, tlsOptionsName)
+		tlsConf, tlsConfErr := m.tlsManager.Get(baquptls.DefaultTLSStoreName, tlsOptionsName)
 		if tlsConfErr != nil {
 			// Note: we do not call AddError here because we already did so when buildRouterHandler errored for the same reason.
 			logger.Error().Err(tlsConfErr).Send()
@@ -203,7 +203,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string
 
 			if name, ok := tlsOptionsForHost[domain]; ok && name != tlsOptionsName {
 				// Different tlsOptions on the same domain, so fallback to default
-				tlsOptionsForHost[domain] = traefiktls.DefaultTLSConfigName
+				tlsOptionsForHost[domain] = baquptls.DefaultTLSConfigName
 			} else {
 				tlsOptionsForHost[domain] = tlsOptionsName
 			}
@@ -351,14 +351,14 @@ func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtim
 		tlsOptionsName := routerConfig.TLS.Options
 
 		if len(tlsOptionsName) == 0 {
-			tlsOptionsName = traefiktls.DefaultTLSConfigName
+			tlsOptionsName = baquptls.DefaultTLSConfigName
 		}
 
-		if tlsOptionsName != traefiktls.DefaultTLSConfigName {
+		if tlsOptionsName != baquptls.DefaultTLSConfigName {
 			tlsOptionsName = provider.GetQualifiedName(ctxRouter, tlsOptionsName)
 		}
 
-		tlsConf, err := m.tlsManager.Get(traefiktls.DefaultTLSStoreName, tlsOptionsName)
+		tlsConf, err := m.tlsManager.Get(baquptls.DefaultTLSStoreName, tlsOptionsName)
 		if err != nil {
 			routerConfig.AddError(err, true)
 			logger.Error().Err(err).Send()

@@ -1,14 +1,14 @@
 ---
-title: "Traefik AWS ECS Documentation"
-description: "Configuration discovery in Traefik is achieved through Providers. Read the technical documentation for leveraging AWS ECS in Traefik."
+title: "Baqup AWS ECS Documentation"
+description: "Configuration discovery in Baqup is achieved through Providers. Read the technical documentation for leveraging AWS ECS in Baqup."
 ---
 
-# Traefik & AWS ECS
+# Baqup & AWS ECS
 
 A Story of Labels & Elastic Containers
 {: .subtitle }
 
-Attach labels to your ECS containers and let Traefik do the rest!
+Attach labels to your ECS containers and let Baqup do the rest!
 
 ## Configuration Examples
 
@@ -31,14 +31,14 @@ Attach labels to your ECS containers and let Traefik do the rest!
 
 ## Policy
 
-Traefik needs the following policy to read ECS information:
+Baqup needs the following policy to read ECS information:
 
 ```json
 {
     "Version": "2012-10-17",
     "Statement": [
         {
-            "Sid": "TraefikECSReadAccess",
+            "Sid": "BaqupECSReadAccess",
             "Effect": "Allow",
             "Action": [
                 "ecs:ListClusters",
@@ -148,9 +148,9 @@ providers:
 
 _Optional, Default=true_
 
-Expose ECS services by default in Traefik.
+Expose ECS services by default in Baqup.
 
-If set to `false`, services that do not have a `traefik.enable=true` label are ignored from the resulting routing configuration.
+If set to `false`, services that do not have a `baqup.enable=true` label are ignored from the resulting routing configuration.
 
 ```yaml tab="File (YAML)"
 providers:
@@ -174,7 +174,7 @@ providers:
 
 _Optional, Default=""_
 
-The `constraints` option can be set to an expression that Traefik matches against the container labels (task),
+The `constraints` option can be set to an expression that Baqup matches against the container labels (task),
 to determine whether to create any route for that container. 
 If none of the container labels match the expression, no route for that container is created. 
 If the expression is empty, all detected containers are included.
@@ -214,7 +214,7 @@ as well as the usual boolean logic, as shown in examples below.
     constraints = "LabelRegex(`a.label.name`, `a.+`)"
     ```
 
-For additional information, refer to [Restrict the Scope of Service Discovery](./overview.md#exposedbydefault-and-traefikenable).
+For additional information, refer to [Restrict the Scope of Service Discovery](./overview.md#exposedbydefault-and-baqupenable).
 
 ```yaml tab="File (YAML)"
 providers:
@@ -238,7 +238,7 @@ providers:
 
 _Optional, Default=false_
 
-Determines whether Traefik discovers only healthy tasks (`HEALTHY` healthStatus).
+Determines whether Baqup discovers only healthy tasks (`HEALTHY` healthStatus).
 
 ```yaml tab="File (YAML)"
 providers:
@@ -287,12 +287,12 @@ providers:
 # ...
 ```
 
-??? info "Default rule and Traefik service"
+??? info "Default rule and Baqup service"
 
-    The exposure of the Traefik container, combined with the default rule mechanism,
+    The exposure of the Baqup container, combined with the default rule mechanism,
     can lead to create a router targeting itself in a loop.
     In this case, to prevent an infinite loop,
-    Traefik adds an internal middleware to refuse the request if it comes from the same router.
+    Baqup adds an internal middleware to refuse the request if it comes from the same router.
 
 ### `refreshSeconds`
 

@@ -1,5 +1,5 @@
 ---
-title: "Traefik UDP Services Documentation"
+title: "Baqup UDP Services Documentation"
 description: "A service is in charge of connecting incoming requests to the Servers that can handle them. Read the technical documentation. Read the technical documentation."
 --- 
 
@@ -41,4 +41,4 @@ udp:
       address = "xx.xx.xx.xx:xx"
 ```
 
-{!traefik-for-business-applications.md!}
+{!baqup-for-business-applications.md!}

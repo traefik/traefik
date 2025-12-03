@@ -1,6 +1,6 @@
 ---
-title: "Traefik TCP Middlewares IPAllowList"
-description: "Learn how to use IPAllowList in TCP middleware for limiting clients to specific IPs in Traefik Proxy. Read the technical documentation."
+title: "Baqup TCP Middlewares IPAllowList"
+description: "Learn how to use IPAllowList in TCP middleware for limiting clients to specific IPs in Baqup Proxy. Read the technical documentation."
 ---
 
 `iPAllowList` limits allowed requests based on the client IP.
@@ -28,7 +28,7 @@ tcp:
 ```yaml tab="Labels"
 # Accepts connections from defined IP
 labels:
-  - "traefik.tcp.middlewares.test-ipallowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
+  - "baqup.tcp.middlewares.test-ipallowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
 ```
 
 ```json tab="Tags"
@@ -36,13 +36,13 @@ labels:
 {
   //...
   "Tags" : [
-    "traefik.tcp.middlewares.test-ipallowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"s
+    "baqup.tcp.middlewares.test-ipallowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"s
   ]
 }
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: MiddlewareTCP
 metadata:
   name: test-ipallowlist

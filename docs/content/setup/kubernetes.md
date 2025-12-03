@@ -1,13 +1,13 @@
 ---
-title: "Setup Traefik on Kubernetes"
-description: "Learn how to Setup Traefik on Kubernetes with HTTP/HTTPS entrypoints, redirects, secure dashboard, basic TLS, metrics, tracing, access‑logs."
+title: "Setup Baqup on Kubernetes"
+description: "Learn how to Setup Baqup on Kubernetes with HTTP/HTTPS entrypoints, redirects, secure dashboard, basic TLS, metrics, tracing, access‑logs."
 ---
 
-This guide provides an in-depth walkthrough for installing and configuring Traefik Proxy within a Kubernetes cluster using the official Helm chart. In this guide, we'll cover the following:
+This guide provides an in-depth walkthrough for installing and configuring Baqup Proxy within a Kubernetes cluster using the official Helm chart. In this guide, we'll cover the following:
 
 - Configure standard HTTP (`web`) and HTTPS (`websecure`) entry points, 
 - Implement automatic redirection from HTTP to HTTPS
-- Secure the Traefik Dashboard using Basic Authentication.
+- Secure the Baqup Dashboard using Basic Authentication.
 - Deploy a demo application to test the setup
 - Explore some other key configuration options
 
@@ -22,19 +22,19 @@ This guide provides an in-depth walkthrough for installing and configuring Traef
 If you do not have a Kubernetes cluster already, you can spin up one with K3d:
 
 ```bash
-k3d cluster create traefik \
+k3d cluster create baqup \
   --port 80:80@loadbalancer \
   --port 443:443@loadbalancer \
   --port 8000:8000@loadbalancer \
-  --k3s-arg "--disable=traefik@server:0"
+  --k3s-arg "--disable=baqup@server:0"
 ```
 
-Ports `80` and `443` reach Traefik from the host, while port `8000` remains free for later demos. The built-in Traefik shipped with k3s is disabled to avoid conflicts.
+Ports `80` and `443` reach Baqup from the host, while port `8000` remains free for later demos. The built-in Baqup shipped with k3s is disabled to avoid conflicts.
 
 Check the context:
 
 ```bash
-kubectl cluster-info --context k3d-traefik
+kubectl cluster-info --context k3d-baqup
 ```
 
 You should see something like this:
@@ -49,19 +49,19 @@ To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
 
 ## Add the chart repo and namespace
 
-Using Helm streamlines Kubernetes application deployment. Helm packages applications into "charts," which are collections of template files describing Kubernetes resources. We use the official Traefik Helm chart for a managed and customizable installation.
+Using Helm streamlines Kubernetes application deployment. Helm packages applications into "charts," which are collections of template files describing Kubernetes resources. We use the official Baqup Helm chart for a managed and customizable installation.
 
 ```bash
-helm repo add traefik https://traefik.github.io/charts
+helm repo add baqup https://baqup.github.io/charts
 helm repo update
-kubectl create namespace traefik
+kubectl create namespace baqup
 ```
 
-The first command registers the `traefik` repository alias pointing to the official chart location. The second command refreshes your local cache to ensure you have the latest list of charts and versions available from all configured repositories.
+The first command registers the `baqup` repository alias pointing to the official chart location. The second command refreshes your local cache to ensure you have the latest list of charts and versions available from all configured repositories.
 
 ## Create a Local Self‑Signed TLS Secret
 
-Traefik's Gateway listeners require a certificate whenever a listener uses `protocol: HTTPS`.  
+Baqup's Gateway listeners require a certificate whenever a listener uses `protocol: HTTPS`.  
 
 For local development create a throw‑away self‑signed certificate and
 store it in a Kubernetes Secret named **local‑selfsigned‑tls**.  
@@ -73,10 +73,10 @@ openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
   -keyout tls.key -out tls.crt \
   -subj "/CN=*.docker.localhost"
 
-# 2) Create the TLS secret in the traefik namespace
+# 2) Create the TLS secret in the baqup namespace
 kubectl create secret tls local-selfsigned-tls \
   --cert=tls.crt --key=tls.key \
-  --namespace traefik
+  --namespace baqup
 ```
 
 ### Why Do We Need To Do This
@@ -85,7 +85,7 @@ The Gateway's HTTPS listener references this secret via `certificateRefs`.
 Without it, the helm chart validation fails and the HTTP→HTTPS redirect chain breaks.
 
 !!! info "Production tip"
-    The self-signed certificate above is **only for local development**. For production, either store a certificate issued by your organization's CA in a Secret or let an automated issuer such as cert-manager or Traefik's ACME (Let's Encrypt) generate certificates on demand. Update the `certificateRefs` in the `websecure` listener—or use `traefik.io/tls.certresolver`—so clients receive a trusted certificate and no longer see browser warnings.
+    The self-signed certificate above is **only for local development**. For production, either store a certificate issued by your organization's CA in a Secret or let an automated issuer such as cert-manager or Baqup's ACME (Let's Encrypt) generate certificates on demand. Update the `certificateRefs` in the `websecure` listener—or use `baqup.io/tls.certresolver`—so clients receive a trusted certificate and no longer see browser warnings.
 
 ## Prepare Helm Chart Configuration Values
 
@@ -136,7 +136,7 @@ extraObjects:
     stringData:
       username: admin
       password: "P@ssw0rd"      # Replace with an Actual Password
-  - apiVersion: traefik.io/v1alpha1
+  - apiVersion: baqup.io/v1alpha1
     kind: Middleware
     metadata:
       name: dashboard-auth
@@ -149,7 +149,7 @@ ingressClass:
   enabled: false
 
 # Enable Gateway API Provider & Disables the KubernetesIngress provider
-# Providers tell Traefik where to find routing configuration.
+# Providers tell Baqup where to find routing configuration.
 providers:
   kubernetesIngress:
      enabled: false
@@ -167,7 +167,7 @@ gateway:
 
     websecure:         # HTTPS listener that matches entryPoint `websecure`
       port: 443
-      protocol: HTTPS  # TLS terminates inside Traefik
+      protocol: HTTPS  # TLS terminates inside Baqup
       namespacePolicy:
         from: All
       mode: Terminate
@@ -180,7 +180,7 @@ gateway:
 logs:
   general:
     level: INFO
-  # This enables access logs, outputting them to Traefik's standard output by default. The [Access Logs Documentation](https://doc.traefik.io/traefik/observability/access-logs/) covers formatting, filtering, and output options.
+  # This enables access logs, outputting them to Baqup's standard output by default. The [Access Logs Documentation](https://doc.baqup.io/baqup/observability/access-logs/) covers formatting, filtering, and output options.
   access:
     enabled: true
 
@@ -190,40 +190,40 @@ metrics:
     enabled: true
 ```
 
-## Install the Traefik Using the Helm Values
+## Install the Baqup Using the Helm Values
 
 Now, apply the configuration using the Helm client.
 
 ```bash
-# Install the chart into the 'traefik' namespace
-helm install traefik traefik/traefik \
-  --namespace traefik \
+# Install the chart into the 'baqup' namespace
+helm install baqup baqup/baqup \
+  --namespace baqup \
   --values values.yaml
 ```
 
 **Command Breakdown:**
 
-- `helm install traefik`: Instructs Helm to install a new release named `traefik`.
-- `traefik/traefik`: Specifies the chart to use (`traefik` chart from the `traefik` repository added earlier).
-- `--namespace traefik`: Specifies the Kubernetes namespace to install into. Using a dedicated namespace is recommended practice.
+- `helm install baqup`: Instructs Helm to install a new release named `baqup`.
+- `baqup/baqup`: Specifies the chart to use (`baqup` chart from the `baqup` repository added earlier).
+- `--namespace baqup`: Specifies the Kubernetes namespace to install into. Using a dedicated namespace is recommended practice.
 - `--values values.yaml`: Applies the custom configuration from your `values.yaml` file.
 
 ## Accessing the Dashboard
 
-Now that Traefik is deployed, you can access its dashboard at [https://dashboard.docker.localhost/](https://dashboard.docker.localhost/). When you access this link, your browser will prompt for the username and password. Ensure you use the credentials set in the `values.yaml` file to log in. Upon successful login, the dashboard will be displayed as shown below:
+Now that Baqup is deployed, you can access its dashboard at [https://dashboard.docker.localhost/](https://dashboard.docker.localhost/). When you access this link, your browser will prompt for the username and password. Ensure you use the credentials set in the `values.yaml` file to log in. Upon successful login, the dashboard will be displayed as shown below:
 
-![Traefik Dashboard](../assets/img/setup/traefik-dashboard.png)
+![Baqup Dashboard](../assets/img/setup/baqup-dashboard.png)
 
 ## Deploy a Demo Application
 
-To test the setup, deploy the [Traefik whoami](https://github.com/traefik/whoami) application in the Kubernetes cluster. Create a file named `whoami.yaml` and paste the following:
+To test the setup, deploy the [Baqup whoami](https://github.com/baqup/whoami) application in the Kubernetes cluster. Create a file named `whoami.yaml` and paste the following:
 
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: whoami
-  namespace: traefik
+  namespace: baqup
 spec:
   replicas: 2
   selector:
@@ -236,7 +236,7 @@ spec:
     spec:
       containers:
         - name: whoami
-          image: traefik/whoami
+          image: baqup/whoami
           ports:
             - containerPort: 80
 ---
@@ -244,7 +244,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: whoami
-  namespace: traefik
+  namespace: baqup
 spec:
   selector:
     app: whoami
@@ -265,10 +265,10 @@ apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
   name: whoami
-  namespace: traefik
+  namespace: baqup
 spec:
   parentRefs:
-    - name: traefik-gateway # Name of the Gateway that Traefik creates when you enable the Gateway API provider
+    - name: baqup-gateway # Name of the Gateway that Baqup creates when you enable the Gateway API provider
   hostnames:
     - "whoami.docker.localhost"
   rules:
@@ -287,7 +287,7 @@ Apply the manifest:
 kubectl apply -f whoami-route.yaml
 ```
 
-After you apply the manifest, navigate to the Routes in the Traefik Dashboard; you’ll see that the [https://whoami.docker.localhost](https://whoami.docker.localhost) route has been created.
+After you apply the manifest, navigate to the Routes in the Baqup Dashboard; you’ll see that the [https://whoami.docker.localhost](https://whoami.docker.localhost) route has been created.
 
 ![Route](../assets/img/setup/route-in-dashboard.png)
 
@@ -313,7 +313,7 @@ X-Forwarded-For: 10.42.0.1
 X-Forwarded-Host: whoami.docker.localhost
 X-Forwarded-Port: 443
 X-Forwarded-Proto: https
-X-Forwarded-Server: traefik-644b7c67d9-f2tn9
+X-Forwarded-Server: baqup-644b7c67d9-f2tn9
 X-Real-Ip: 10.42.0.1
 ```
 
@@ -323,13 +323,13 @@ You can also open a browser and navigate to [https://whoami.docker.localhost](ht
 
 ## Other Key Configuration Areas
 
-The above setup provides a secure base, but Traefik offers much more. Here's a brief overview of other essential configurations, with minimal examples using Helm `values.yaml` overrides. 
+The above setup provides a secure base, but Baqup offers much more. Here's a brief overview of other essential configurations, with minimal examples using Helm `values.yaml` overrides. 
 
 These examples illustrate how to enable features; consult the main documentation for detailed options.
 
 ### TLS Certificate Management (Let's Encrypt)
 
-On the `websecure` entry point TLS is enabled by default. However, it currently lacks a valid certificate. Traefik can automatically obtain and renew TLS certificates from Let's Encrypt using the ACME protocol.
+On the `websecure` entry point TLS is enabled by default. However, it currently lacks a valid certificate. Baqup can automatically obtain and renew TLS certificates from Let's Encrypt using the ACME protocol.
 
 *Example `values.yaml` addition:*
 
@@ -355,12 +355,12 @@ This enables a certificate resolver named `le`, configures the mandatory email a
 
 ### Gateway API & ACME
 
-Traefik’s built‑in ACME/Let’s Encrypt integration works for IngressRoute and Ingress resources, but it does not issue certificates for Gateway API listeners.
+Baqup’s built‑in ACME/Let’s Encrypt integration works for IngressRoute and Ingress resources, but it does not issue certificates for Gateway API listeners.
 If you’re using the Gateway API, install [cert‑manager](https://cert-manager.io/docs/) (or another certificate controller) and reference the secret it creates in `gateway.listeners.websecure.certificateRefs`.
 
 ### Metrics (Prometheus)
 
-Traefik can expose detailed metrics in Prometheus format, essential for monitoring its performance and the traffic it handles.
+Baqup can expose detailed metrics in Prometheus format, essential for monitoring its performance and the traffic it handles.
 
 *Example `values.yaml` addition:*
 
@@ -380,7 +380,7 @@ This enables the Prometheus endpoint on a dedicated `metrics` entry point (port 
 
 ### Tracing (OTel)
 
-Distributed tracing helps understand request latency and flow through your system, including Traefik itself.
+Distributed tracing helps understand request latency and flow through your system, including Baqup itself.
 
 *Example `values.yaml` addition:*
 
@@ -395,6 +395,6 @@ This enables OTel tracing and specifies the collector endpoint. Consult the [Tra
     
 ## Conclusion
 
-This setup establishes Traefik with secure dashboard access and HTTPS redirection, along with pointers to enable observability & TLS.
+This setup establishes Baqup with secure dashboard access and HTTPS redirection, along with pointers to enable observability & TLS.
 
-{!traefik-for-business-applications.md!}
+{!baqup-for-business-applications.md!}

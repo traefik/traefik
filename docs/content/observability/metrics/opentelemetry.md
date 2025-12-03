@@ -1,6 +1,6 @@
 ---
-title: "Traefik OpenTelemetry Documentation"
-description: "Traefik supports several metrics backends, including OpenTelemetry. Learn how to implement it for observability in Traefik Proxy. Read the technical documentation."
+title: "Baqup OpenTelemetry Documentation"
+description: "Baqup supports several metrics backends, including OpenTelemetry. Learn how to implement it for observability in Baqup Proxy. Read the technical documentation."
 ---
 
 # OpenTelemetry
@@ -141,7 +141,7 @@ metrics:
 
 #### `serviceName`
 
-_Optional, Default="traefik"_
+_Optional, Default="baqup"_
 
 Defines the service name resource attribute.
 

@@ -12,14 +12,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/baqupio/baqup/v3/pkg/config/dynamic"
+	"github.com/baqupio/baqup/v3/pkg/config/runtime"
+	"github.com/baqupio/baqup/v3/pkg/proxy/httputil"
+	"github.com/baqupio/baqup/v3/pkg/server/provider"
+	"github.com/baqupio/baqup/v3/pkg/testhelpers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/config/runtime"
-	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
-	"github.com/traefik/traefik/v3/pkg/server/provider"
-	"github.com/traefik/traefik/v3/pkg/testhelpers"
 )
 
 func pointer[T any](v T) *T { return &v }

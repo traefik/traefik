@@ -8,10 +8,10 @@ import (
 	"strings"
 
 	goauth "github.com/abbot/go-http-auth"
-	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/middlewares"
-	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
-	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
+	"github.com/baqupio/baqup/v3/pkg/config/dynamic"
+	"github.com/baqupio/baqup/v3/pkg/middlewares"
+	"github.com/baqupio/baqup/v3/pkg/middlewares/accesslog"
+	"github.com/baqupio/baqup/v3/pkg/middlewares/observability"
 )
 
 const (

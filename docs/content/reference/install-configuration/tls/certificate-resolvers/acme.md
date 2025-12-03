@@ -1,11 +1,11 @@
 ---
-title: "Traefik & ACME Certificates Resolver"
+title: "Baqup & ACME Certificates Resolver"
 description: "Automatic Certificate Management Environment using Let's Encrypt."
 ---
 
 ## Configuration Example
 
-Below is an example of a basic configuration for ACME in Traefik.
+Below is an example of a basic configuration for ACME in Baqup.
 
 ```yaml tab="File (YAML)"
 entryPoints:
@@ -52,7 +52,7 @@ certificatesResolvers:
 ```
 
 ```yaml tab="Helm Chart Values"
-# Traefik entryPoints configuration for HTTP and HTTPS.
+# Baqup entryPoints configuration for HTTP and HTTPS.
 entryPoints:
   web:
     address: ":80"
@@ -101,19 +101,19 @@ ACME certificate resolvers have the following configuration options:
 | <a id="opt-acme-httpChallenge" href="#opt-acme-httpChallenge" title="#opt-acme-httpChallenge">`acme.httpChallenge`</a> | Enable HTTP-01 challenge. More information [here](#httpchallenge). | | No |
 | <a id="opt-acme-httpChallenge-entryPoint" href="#opt-acme-httpChallenge-entryPoint" title="#opt-acme-httpChallenge-entryPoint">`acme.httpChallenge.entryPoint`</a> | EntryPoint to use for the HTTP-01 challenges. Must be reachable by Let's Encrypt through port 80 | "" | Yes |
 | <a id="opt-acme-httpChallenge-delay" href="#opt-acme-httpChallenge-delay" title="#opt-acme-httpChallenge-delay">`acme.httpChallenge.delay`</a> | The delay between the creation of the challenge and the validation. A value lower than or equal to zero means no delay. | 0 | No |
-| <a id="opt-acme-tlsChallenge" href="#opt-acme-tlsChallenge" title="#opt-acme-tlsChallenge">`acme.tlsChallenge`</a> | Enable TLS-ALPN-01 challenge. Traefik must be reachable by Let's Encrypt through port 443. More information [here](#tlschallenge). | - | No |
+| <a id="opt-acme-tlsChallenge" href="#opt-acme-tlsChallenge" title="#opt-acme-tlsChallenge">`acme.tlsChallenge`</a> | Enable TLS-ALPN-01 challenge. Baqup must be reachable by Let's Encrypt through port 443. More information [here](#tlschallenge). | - | No |
 | <a id="opt-acme-tlschallenge-delay" href="#opt-acme-tlschallenge-delay" title="#opt-acme-tlschallenge-delay">`acme.tlschallenge.delay`</a> | The delay between the creation of the challenge and the validation. A value lower than or equal to zero means no delay.                                                                                                                                                 | 0                                              | No       |
 | <a id="opt-acme-storage" href="#opt-acme-storage" title="#opt-acme-storage">`acme.storage`</a> | File path used for certificates storage. | "acme.json" | Yes |
 
 ## Automatic Certificate Renewal
 
-Traefik automatically tracks the expiry date of certificates it generates. Certificates that are no longer used may still be renewed, as Traefik does not currently check if the certificate is being used before renewing.
+Baqup automatically tracks the expiry date of certificates it generates. Certificates that are no longer used may still be renewed, as Baqup does not currently check if the certificate is being used before renewing.
 
-By default, Traefik manages 90-day certificates and starts renewing them 30 days before their expiry.
+By default, Baqup manages 90-day certificates and starts renewing them 30 days before their expiry.
 When using a certificate resolver that issues certificates with custom durations, the `certificatesDuration` option can be used to configure the certificates' duration.
 
 !!! note
-    Certificates that are no longer used may still be renewed, as Traefik does not currently check if the certificate is being used before renewing.
+    Certificates that are no longer used may still be renewed, as Baqup does not currently check if the certificate is being used before renewing.
 
 ## The Different ACME Challenges
 
@@ -121,7 +121,7 @@ When using a certificate resolver that issues certificates with custom durations
 
 The DNS-01 challenge to generate and renew ACME certificates by provisioning a DNS record.
 
-Traefik relies internally on [Lego](https://go-acme.github.io/lego/ "Link to Lego website") for ACME.
+Baqup relies internally on [Lego](https://go-acme.github.io/lego/ "Link to Lego website") for ACME.
 You can find the list of all the supported DNS providers in their [documentation](https://go-acme.github.io/lego/dns/ "Link to Lego DNS challenge documentation page")
 with instructions about which environment variables need to be setup.
 
@@ -137,7 +137,7 @@ with instructions about which environment variables need to be setup.
 
 ??? warning "Multiple DNS challenge"
 
-      Multiple DNS challenge provider are not supported with Traefik, but you can use CNAME to handle that.
+      Multiple DNS challenge provider are not supported with Baqup, but you can use CNAME to handle that.
       For example, if you have `example.org` (account foo) and `example.com` (account bar) you can create a CNAME on `example.org` called `_acme-challenge.example.org` pointing to `challenge.example.com`.
       This way, you can obtain certificates for `example.com` with the foo account.
 
@@ -151,7 +151,7 @@ with instructions about which environment variables need to be setup.
 Use the `TLS-ALPN-01` challenge to generate and renew ACME certificates by provisioning a TLS certificate.
 
 As described on the Let's Encrypt [community forum](https://community.letsencrypt.org/t/support-for-ports-other-than-80-and-443/3419/72),
-when using the `TLS-ALPN-01` challenge, Traefik must be reachable by Let's Encrypt through port 443.
+when using the `TLS-ALPN-01` challenge, Baqup must be reachable by Let's Encrypt through port 443.
 
 ??? example "Configuring the `tlsChallenge`"
 
@@ -234,7 +234,7 @@ A certificate resolver requests certificates for a set of domain names inferred 
   in the IngressRoute's rule.
 
 You can set SANs (alternative domains) for each main domain.
-Every domain must have A/AAAA records pointing to Traefik.
+Every domain must have A/AAAA records pointing to Baqup.
 Each domain & SAN will lead to a certificate request.
 
 [ACME v2](https://community.letsencrypt.org/t/acme-v2-and-wildcard-certificate-support-is-live/55579) supports wildcard certificates.
@@ -246,7 +246,7 @@ In such a case the generated DNS TXT record for both domains is the same.
 Even though this behavior is [DNS RFC](https://community.letsencrypt.org/t/wildcard-issuance-two-txt-records-for-the-same-name/54528/2) compliant,
 it can lead to problems as all DNS providers keep DNS records cached for a given time (TTL) and this TTL can be greater than the challenge timeout making the `DNS-01` challenge fail.
 
-The Traefik ACME client library [lego](https://github.com/go-acme/lego) supports some but not all DNS providers to work around this issue.
+The Baqup ACME client library [lego](https://github.com/go-acme/lego) supports some but not all DNS providers to work around this issue.
 The supported `provider` table indicates if they allow generating certificates for a wildcard domain and its root domain.
 
 ### Wildcard Domains
@@ -288,31 +288,31 @@ certificatesResolvers:
 When using LetsEncrypt with kubernetes, there are some known caveats with both the [Ingress](../../providers/kubernetes/kubernetes-ingress.md) and [CRD](../../providers/kubernetes/kubernetes-crd.md) providers.
 
 !!! note
-    If you intend to run multiple instances of Traefik with LetsEncrypt, please ensure you read the sections on those provider pages.
+    If you intend to run multiple instances of Baqup with LetsEncrypt, please ensure you read the sections on those provider pages.
 
 ### LetsEncrypt Support with the Ingress Provider
 
-By design, Traefik is a stateless application,
+By design, Baqup is a stateless application,
 meaning that it only derives its configuration from the environment it runs in,
 without additional configuration.
-For this reason, users can run multiple instances of Traefik at the same time to
+For this reason, users can run multiple instances of Baqup at the same time to
 achieve HA, as is a common pattern in the kubernetes ecosystem.
 
-When using a single instance of Traefik Proxy with Let's Encrypt, 
+When using a single instance of Baqup Proxy with Let's Encrypt, 
 you should encounter no issues. However, this could be a single point of failure.
-Unfortunately, it is not possible to run multiple instances of Traefik 2.0 
+Unfortunately, it is not possible to run multiple instances of Baqup 2.0 
 with Let's Encrypt enabled, because there is no way to ensure that the correct 
-instance of Traefik receives the challenge request, and subsequent responses.
-Early versions (v1.x) of Traefik used a 
-[KV store](https://doc.traefik.io/traefik/v1.7/configuration/acme/#storage) 
+instance of Baqup receives the challenge request, and subsequent responses.
+Early versions (v1.x) of Baqup used a 
+[KV store](https://doc.baqup.io/baqup/v1.7/configuration/acme/#storage) 
 to attempt to achieve this, but due to sub-optimal performance that feature 
 was dropped in 2.0.
 
 If you need Let's Encrypt with high availability in a Kubernetes environment,
-we recommend using [Traefik Enterprise](https://traefik.io/traefik-enterprise/) 
+we recommend using [Baqup Enterprise](https://baqup.io/baqup-enterprise/) 
 which includes distributed Let's Encrypt as a supported feature.
 
-If you want to keep using Traefik Proxy,
+If you want to keep using Baqup Proxy,
 LetsEncrypt HA can be achieved by using a Certificate Controller such as [Cert-Manager](https://cert-manager.io/docs/).
 When using Cert-Manager to manage certificates,
 it creates secrets in your namespaces that can be referenced as TLS secrets in 
@@ -328,6 +328,6 @@ If Let's Encrypt is not reachable, the following certificates will apply:
   3. Provided certificates
 
 !!! important
-    For new (sub)domains which need Let's Encrypt authentication, the default Traefik certificate will be used until Traefik is restarted.
+    For new (sub)domains which need Let's Encrypt authentication, the default Baqup certificate will be used until Baqup is restarted.
 
-{!traefik-for-business-applications.md!}
+{!baqup-for-business-applications.md!}

@@ -1,9 +1,9 @@
 ---
-title: "Traefik Consul Documentation"
-description: "Use Consul as a provider for configuration discovery in Traefik Proxy. Automate and store your configurations with Consul. Read the technical documentation."
+title: "Baqup Consul Documentation"
+description: "Use Consul as a provider for configuration discovery in Baqup Proxy. Automate and store your configurations with Consul. Read the technical documentation."
 ---
 
-# Traefik & Consul
+# Baqup & Consul
 
 ## Configuration Example
 
@@ -28,7 +28,7 @@ providers:
 |:------|:----------------------------------------------------------|:---------------------|:---------|
 | <a id="opt-providers-providersThrottleDuration" href="#opt-providers-providersThrottleDuration" title="#opt-providers-providersThrottleDuration">`providers.providersThrottleDuration`</a> | Minimum amount of time to wait for, after a configuration reload, before taking into account any new configuration refresh event.<br />If multiple events occur within this time, only the most recent one is taken into account, and all others are discarded.<br />**This option cannot be set per provider, but the throttling algorithm applies to each of them independently.** | 2s  | No |
 | <a id="opt-providers-consul-endpoints" href="#opt-providers-consul-endpoints" title="#opt-providers-consul-endpoints">`providers.consul.endpoints`</a> | Defines the endpoint to access Consul. |  "127.0.0.1:8500"     | yes   |
-| <a id="opt-providers-consul-rootKey" href="#opt-providers-consul-rootKey" title="#opt-providers-consul-rootKey">`providers.consul.rootKey`</a> | Defines the root key of the configuration. |  "traefik"     | yes   |
+| <a id="opt-providers-consul-rootKey" href="#opt-providers-consul-rootKey" title="#opt-providers-consul-rootKey">`providers.consul.rootKey`</a> | Defines the root key of the configuration. |  "baqup"     | yes   |
 | <a id="opt-providers-consul-namespaces" href="#opt-providers-consul-namespaces" title="#opt-providers-consul-namespaces">`providers.consul.namespaces`</a> | Defines the namespaces to query. See [here](#namespaces) for more information |  ""     | no   |
 | <a id="opt-providers-consul-username" href="#opt-providers-consul-username" title="#opt-providers-consul-username">`providers.consul.username`</a> | Defines a username to connect to Consul with. |  ""     | no   |
 | <a id="opt-providers-consul-password" href="#opt-providers-consul-password" title="#opt-providers-consul-password">`providers.consul.password`</a> | Defines a password with which to connect to Consul. |  ""     | no   |

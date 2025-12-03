@@ -65,7 +65,7 @@ const Page = ({ children }: Props) => {
     <ToastProvider>
       {globalStyles()}
       <Helmet>
-        <title>Traefik Proxy</title>
+        <title>Baqup Proxy</title>
       </Helmet>
       <Flex>
         <SideBarPanel isOpen={isSideBarPanelOpen} onOpenChange={setIsSideBarPanelOpen} />

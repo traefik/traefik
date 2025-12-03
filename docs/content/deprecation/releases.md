@@ -32,7 +32,7 @@ Below is a non-exhaustive list of versions and their maintenance status:
 
     - **Security support**: Receives only critical bug and security fixes.
 
-This page is maintained and updated periodically to reflect our roadmap and any decisions affecting the end of support for Traefik Proxy.
+This page is maintained and updated periodically to reflect our roadmap and any decisions affecting the end of support for Baqup Proxy.
 
 Please refer to our migration guides for specific instructions on upgrading between versions, an example is the [v2 to v3 migration guide](../migrate/v2-to-v3.md).
 
@@ -40,10 +40,10 @@ Please refer to our migration guides for specific instructions on upgrading betw
 
 ## Versioning Scheme
 
-The Traefik Proxy project follows the [semantic versioning](https://semver.org/) scheme and maintains a separate branch for each minor version. The main branch always represents the next upcoming minor or major version.
+The Baqup Proxy project follows the [semantic versioning](https://semver.org/) scheme and maintains a separate branch for each minor version. The main branch always represents the next upcoming minor or major version.
 
 And these are our guiding rules for version support:
 
 - **Only the latest `minor`** will be on active support at any given time
 - **The last `minor` after releasing a new `major`** will be supported for 1 year following the `major` release
-- **Previous rules are subject to change** and in such cases an announcement will be made publicly, [here](https://traefik.io/blog/traefik-2-1-in-the-wild/) is an example extending v1.x branch support.
+- **Previous rules are subject to change** and in such cases an announcement will be made publicly, [here](https://baqup.io/blog/baqup-2-1-in-the-wild/) is an example extending v1.x branch support.

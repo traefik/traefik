@@ -1,15 +1,15 @@
 ---
-title: "Traefik Proxy gRPC Examples"
-description: "This section of the Traefik Proxy documentation explains how to use Traefik as reverse proxy for gRPC applications."
+title: "Baqup Proxy gRPC Examples"
+description: "This section of the Baqup Proxy documentation explains how to use Baqup as reverse proxy for gRPC applications."
 ---
 
 # gRPC Examples
 
 ## With HTTP (h2c)
 
-This section explains how to use Traefik as reverse proxy for gRPC application.
+This section explains how to use Baqup as reverse proxy for gRPC application.
 
-### Traefik Configuration
+### Baqup Configuration
 
 Static configuration:
 
@@ -78,15 +78,15 @@ http:
 ```
 
 !!! warning
-    For providers with labels, you will have to specify the `traefik.http.services.<my-service-name>.loadbalancer.server.scheme=h2c`
+    For providers with labels, you will have to specify the `baqup.http.services.<my-service-name>.loadbalancer.server.scheme=h2c`
 
 ### Conclusion
 
-We don't need specific configuration to use gRPC in Traefik, we just need to use `h2c` protocol, or use HTTPS communications to have HTTP2 with the backend.
+We don't need specific configuration to use gRPC in Baqup, we just need to use `h2c` protocol, or use HTTPS communications to have HTTP2 with the backend.
 
 ## With HTTPS
 
-This section explains how to use Traefik as reverse proxy for gRPC application with self-signed certificates.
+This section explains how to use Baqup as reverse proxy for gRPC application with self-signed certificates.
 
 ![gRPC architecture](../assets/img/user-guides/grpc.svg)
 
@@ -118,9 +118,9 @@ with
 Common Name (e.g. server FQDN or YOUR name) []: frontend.local
 ```
 
-### Traefik Configuration
+### Baqup Configuration
 
-At last, we configure our Traefik instance to use both self-signed certificates.
+At last, we configure our Baqup instance to use both self-signed certificates.
 
 Static configuration:
 
@@ -252,7 +252,7 @@ err := s.Serve(lis)
 // ...
 ```
 
-Next we will modify gRPC Client to use our Traefik self-signed certificate:
+Next we will modify gRPC Client to use our Baqup self-signed certificate:
 
 ```go
 // ...

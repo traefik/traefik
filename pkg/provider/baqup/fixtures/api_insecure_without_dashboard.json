@@ -1,0 +1,21 @@
+{
+  "http": {
+    "routers": {
+      "api": {
+        "entryPoints": [
+          "baqup"
+        ],
+        "service": "api@internal",
+        "rule": "PathPrefix(`/api`)",
+        "ruleSyntax": "default",
+        "priority": 9223372036854775806
+      }
+    },
+    "services": {
+      "api": {},
+      "noop": {}
+    }
+  },
+  "tcp": {},
+  "tls": {}
+}

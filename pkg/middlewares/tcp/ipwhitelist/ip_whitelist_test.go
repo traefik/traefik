@@ -6,10 +6,10 @@ import (
 	"net"
 	"testing"
 
+	"github.com/baqupio/baqup/v3/pkg/config/dynamic"
+	"github.com/baqupio/baqup/v3/pkg/tcp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/tcp"
 )
 
 func TestNewIPWhiteLister(t *testing.T) {
@@ -43,7 +43,7 @@ func TestNewIPWhiteLister(t *testing.T) {
 			t.Parallel()
 
 			next := tcp.HandlerFunc(func(conn tcp.WriteCloser) {})
-			whiteLister, err := New(t.Context(), next, test.whiteList, "traefikTest")
+			whiteLister, err := New(t.Context(), next, test.whiteList, "baqupTest")
 
 			if test.expectedError {
 				assert.Error(t, err)
@@ -92,7 +92,7 @@ func TestIPWhiteLister_ServeHTTP(t *testing.T) {
 				require.NoError(t, err)
 			})
 
-			whiteLister, err := New(t.Context(), next, test.whiteList, "traefikTest")
+			whiteLister, err := New(t.Context(), next, test.whiteList, "baqupTest")
 			require.NoError(t, err)
 
 			server, client := net.Pipe()

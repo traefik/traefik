@@ -81,8 +81,8 @@ export const TopNav = ({ css, noHubButton = false }: { css?: CSS; noHubButton?: 
       return script
     }
 
-    // Source: https://github.com/traefik/traefiklabs-hub-button-app
-    document.head.appendChild(createScript('traefiklabs-hub-button-app/main-v1.js'))
+    // Source: https://github.com/baqupio/baquplabs-hub-button-app
+    document.head.appendChild(createScript('baquplabs-hub-button-app/main-v1.js'))
 
     return () => {
       // Remove the scripts on unmount.
@@ -107,7 +107,7 @@ export const TopNav = ({ css, noHubButton = false }: { css?: CSS; noHubButton?: 
           </Box>
         )}
         <Tooltip content="Sponsor" side="bottom">
-          <Link href="https://github.com/sponsors/traefik" target="_blank">
+          <Link href="https://github.com/sponsors/baqup" target="_blank">
             <Button as="div" ghost css={{ px: '$2', boxShadow: 'none' }}>
               <FiHeart size={20} color="#db61a2" />
             </Button>
@@ -126,7 +126,7 @@ export const TopNav = ({ css, noHubButton = false }: { css?: CSS; noHubButton?: 
               <DropdownMenuGroup>
                 <DropdownMenuItem css={{ height: '$6', cursor: 'pointer' }}>
                   <Link
-                    href={`https://doc.traefik.io/traefik/${parsedVersion}`}
+                    href={`https://doc.baqup.io/baqup/${parsedVersion}`}
                     target="_blank"
                     css={{ textDecoration: 'none', '&:hover': { textDecoration: 'none' } }}
                   >
@@ -138,7 +138,7 @@ export const TopNav = ({ css, noHubButton = false }: { css?: CSS; noHubButton?: 
                 </DropdownMenuItem>
                 <DropdownMenuItem css={{ height: '$6', cursor: 'pointer' }}>
                   <Link
-                    href="https://github.com/traefik/traefik/"
+                    href="https://github.com/baqupio/baqup/"
                     target="_blank"
                     css={{ textDecoration: 'none', '&:hover': { textDecoration: 'none' } }}
                   >

@@ -7,6 +7,11 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/baqupio/baqup/v3/pkg/config/dynamic"
+	"github.com/baqupio/baqup/v3/pkg/job"
+	"github.com/baqupio/baqup/v3/pkg/observability/logs"
+	"github.com/baqupio/baqup/v3/pkg/provider"
+	"github.com/baqupio/baqup/v3/pkg/safe"
 	"github.com/cenkalti/backoff/v4"
 	"github.com/docker/docker/api/types/filters"
 	networktypes "github.com/docker/docker/api/types/network"
@@ -15,11 +20,6 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/job"
-	"github.com/traefik/traefik/v3/pkg/observability/logs"
-	"github.com/traefik/traefik/v3/pkg/provider"
-	"github.com/traefik/traefik/v3/pkg/safe"
 )
 
 const swarmName = "swarm"
@@ -58,7 +58,7 @@ func (p *SwarmProvider) createClient(ctx context.Context) (*client.Client, error
 	return createClient(ctx, p.ClientConfig)
 }
 
-// Provide allows the docker provider to provide configurations to traefik using the given configuration channel.
+// Provide allows the docker provider to provide configurations to baqup using the given configuration channel.
 func (p *SwarmProvider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	pool.GoCtx(func(routineCtx context.Context) {
 		logger := log.Ctx(routineCtx).With().Str(logs.ProviderName, swarmName).Logger()
@@ -236,7 +236,7 @@ func (p *SwarmProvider) parseService(ctx context.Context, service swarmtypes.Ser
 	}
 	if service.Spec.EndpointSpec.Mode == swarmtypes.ResolutionModeDNSRR {
 		if dData.ExtraConf.LBSwarm {
-			logger.Warn().Msgf("Ignored %s endpoint-mode not supported, service name: %s. Fallback to Traefik load balancing", swarmtypes.ResolutionModeDNSRR, service.Spec.Annotations.Name)
+			logger.Warn().Msgf("Ignored %s endpoint-mode not supported, service name: %s. Fallback to Baqup load balancing", swarmtypes.ResolutionModeDNSRR, service.Spec.Annotations.Name)
 		}
 	} else if service.Spec.EndpointSpec.Mode == swarmtypes.ResolutionModeVIP {
 		dData.NetworkSettings.Networks = make(map[string]*networkData)

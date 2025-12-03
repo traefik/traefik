@@ -4,9 +4,9 @@ import (
 	"testing"
 	"time"
 
+	baqupcrdfake "github.com/baqupio/baqup/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned/fake"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	traefikcrdfake "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned/fake"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kubefake "k8s.io/client-go/kubernetes/fake"
@@ -30,7 +30,7 @@ func TestClientIgnoresHelmOwnedSecrets(t *testing.T) {
 	}
 
 	kubeClient := kubefake.NewSimpleClientset(helmSecret, secret)
-	crdClient := traefikcrdfake.NewSimpleClientset()
+	crdClient := baqupcrdfake.NewSimpleClientset()
 
 	client := newClientImpl(kubeClient, crdClient)
 

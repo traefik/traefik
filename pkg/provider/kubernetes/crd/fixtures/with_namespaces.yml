@@ -70,7 +70,7 @@ spec:
     - name: web
       port: 8080
   selector:
-    app: traefiklabs
+    app: baquplabs
     task: whoami6
 
 ---
@@ -85,7 +85,7 @@ spec:
     - name: web
       port: 8080
   selector:
-    app: traefiklabs
+    app: baquplabs
     task: whoami5
 
 ---
@@ -100,12 +100,12 @@ spec:
     - name: web
       port: 8080
   selector:
-    app: traefiklabs
+    app: baquplabs
     task: whoami4
 
 ---
-apiVersion: traefik.io/v1alpha1
-kind: TraefikService
+apiVersion: baqup.io/v1alpha1
+kind: BaqupService
 metadata:
   name: mirror1
   namespace: foo
@@ -122,12 +122,12 @@ spec:
         port: 8080
         namespace: baz
       - name: mirrored
-        kind: TraefikService
+        kind: BaqupService
         namespace: bar
 
 ---
-apiVersion: traefik.io/v1alpha1
-kind: TraefikService
+apiVersion: baqup.io/v1alpha1
+kind: BaqupService
 metadata:
   name: wrr2
   namespace: bar
@@ -141,8 +141,8 @@ spec:
         port: 8080
 
 ---
-apiVersion: traefik.io/v1alpha1
-kind: TraefikService
+apiVersion: baqup.io/v1alpha1
+kind: BaqupService
 metadata:
   name: mirror2
   namespace: foo
@@ -158,15 +158,15 @@ spec:
         port: 8080
         namespace: baz
       - name: mirrored
-        kind: TraefikService
+        kind: BaqupService
         namespace: bar
       - name: wrr1
-        kind: TraefikService
+        kind: BaqupService
         namespace: foo
 
 ---
-apiVersion: traefik.io/v1alpha1
-kind: TraefikService
+apiVersion: baqup.io/v1alpha1
+kind: BaqupService
 metadata:
   name: mirror3
   namespace: foo
@@ -174,7 +174,7 @@ metadata:
 spec:
   mirroring:
     name: wrr1
-    kind: TraefikService
+    kind: BaqupService
     namespace: foo
     mirrors:
       - name: whoami4
@@ -183,16 +183,16 @@ spec:
         port: 8080
         namespace: baz
       - name: mirrored
-        kind: TraefikService
+        kind: BaqupService
         namespace: bar
       - name: wrr1
-        kind: TraefikService
+        kind: BaqupService
         namespace: foo
 
 
 ---
-apiVersion: traefik.io/v1alpha1
-kind: TraefikService
+apiVersion: baqup.io/v1alpha1
+kind: BaqupService
 metadata:
   name: mirror4
   namespace: foo
@@ -200,7 +200,7 @@ metadata:
 spec:
   mirroring:
     name: wrr1
-    kind: TraefikService
+    kind: BaqupService
     mirrors:
       - name: whoami4
         port: 8080
@@ -208,15 +208,15 @@ spec:
         port: 8080
         namespace: baz
       - name: mirrored
-        kind: TraefikService
+        kind: BaqupService
         namespace: bar
       - name: wrr1
-        kind: TraefikService
+        kind: BaqupService
         namespace: foo
 
 ---
-apiVersion: traefik.io/v1alpha1
-kind: TraefikService
+apiVersion: baqup.io/v1alpha1
+kind: BaqupService
 metadata:
   name: mirrored
   namespace: bar
@@ -233,8 +233,8 @@ spec:
         namespace: foo
 
 ---
-apiVersion: traefik.io/v1alpha1
-kind: TraefikService
+apiVersion: baqup.io/v1alpha1
+kind: BaqupService
 metadata:
   name: wrr1
   namespace: foo
@@ -248,13 +248,13 @@ spec:
         port: 8080
         namespace: baz
       - name: mirror1
-        kind: TraefikService
+        kind: BaqupService
       - name: wrr2
-        kind: TraefikService
+        kind: BaqupService
         namespace: bar
 
 ---
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: test.route
@@ -273,14 +273,14 @@ spec:
         port: 8080
         namespace: baz
       - name: wrr1
-        kind: TraefikService
+        kind: BaqupService
         namespace: foo
       - name: mirror2
-        kind: TraefikService
+        kind: BaqupService
         namespace: foo
       - name: mirror3
-        kind: TraefikService
+        kind: BaqupService
         namespace: foo
       - name: mirror4
-        kind: TraefikService
+        kind: BaqupService
         namespace: foo

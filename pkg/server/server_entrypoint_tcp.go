@@ -16,24 +16,24 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/baqupio/baqup/v3/pkg/config/static"
+	"github.com/baqupio/baqup/v3/pkg/ip"
+	"github.com/baqupio/baqup/v3/pkg/middlewares"
+	"github.com/baqupio/baqup/v3/pkg/middlewares/contenttype"
+	"github.com/baqupio/baqup/v3/pkg/middlewares/forwardedheaders"
+	"github.com/baqupio/baqup/v3/pkg/middlewares/requestdecorator"
+	"github.com/baqupio/baqup/v3/pkg/observability/logs"
+	"github.com/baqupio/baqup/v3/pkg/observability/metrics"
+	"github.com/baqupio/baqup/v3/pkg/safe"
+	tcprouter "github.com/baqupio/baqup/v3/pkg/server/router/tcp"
+	"github.com/baqupio/baqup/v3/pkg/server/service"
+	"github.com/baqupio/baqup/v3/pkg/tcp"
+	"github.com/baqupio/baqup/v3/pkg/types"
 	"github.com/containous/alice"
 	gokitmetrics "github.com/go-kit/kit/metrics"
 	"github.com/pires/go-proxyproto"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v3/pkg/config/static"
-	"github.com/traefik/traefik/v3/pkg/ip"
-	"github.com/traefik/traefik/v3/pkg/middlewares"
-	"github.com/traefik/traefik/v3/pkg/middlewares/contenttype"
-	"github.com/traefik/traefik/v3/pkg/middlewares/forwardedheaders"
-	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
-	"github.com/traefik/traefik/v3/pkg/observability/logs"
-	"github.com/traefik/traefik/v3/pkg/observability/metrics"
-	"github.com/traefik/traefik/v3/pkg/safe"
-	tcprouter "github.com/traefik/traefik/v3/pkg/server/router/tcp"
-	"github.com/traefik/traefik/v3/pkg/server/service"
-	"github.com/traefik/traefik/v3/pkg/tcp"
-	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 type key string
@@ -789,7 +789,7 @@ func encodeQuerySemicolons(h http.Handler) http.Handler {
 
 // When go receives an HTTP request, it assumes the absence of fragment URL.
 // However, it is still possible to send a fragment in the request.
-// In this case, Traefik will encode the '#' character, altering the request's intended meaning.
+// In this case, Baqup will encode the '#' character, altering the request's intended meaning.
 // To avoid this behavior, the following function rejects requests that include a fragment in the URL.
 func denyFragment(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {

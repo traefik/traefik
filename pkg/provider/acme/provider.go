@@ -18,6 +18,14 @@ import (
 	"sync"
 	"time"
 
+	"github.com/baqupio/baqup/v3/pkg/config/dynamic"
+	httpmuxer "github.com/baqupio/baqup/v3/pkg/muxer/http"
+	tcpmuxer "github.com/baqupio/baqup/v3/pkg/muxer/tcp"
+	"github.com/baqupio/baqup/v3/pkg/observability/logs"
+	"github.com/baqupio/baqup/v3/pkg/safe"
+	baquptls "github.com/baqupio/baqup/v3/pkg/tls"
+	"github.com/baqupio/baqup/v3/pkg/types"
+	"github.com/baqupio/baqup/v3/pkg/version"
 	"github.com/go-acme/lego/v4/certificate"
 	"github.com/go-acme/lego/v4/challenge"
 	"github.com/go-acme/lego/v4/challenge/dns01"
@@ -28,14 +36,6 @@ import (
 	"github.com/go-acme/lego/v4/registration"
 	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	httpmuxer "github.com/traefik/traefik/v3/pkg/muxer/http"
-	tcpmuxer "github.com/traefik/traefik/v3/pkg/muxer/tcp"
-	"github.com/traefik/traefik/v3/pkg/observability/logs"
-	"github.com/traefik/traefik/v3/pkg/safe"
-	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
-	"github.com/traefik/traefik/v3/pkg/types"
-	"github.com/traefik/traefik/v3/pkg/version"
 )
 
 const resolverSuffix = ".acme"
@@ -139,7 +139,7 @@ type Provider struct {
 	account                *Account
 	client                 *lego.Client
 	configurationChan      chan<- dynamic.Message
-	tlsManager             *traefiktls.Manager
+	tlsManager             *baquptls.Manager
 	clientMutex            sync.Mutex
 	configFromListenerChan chan dynamic.Configuration
 	pool                   *safe.Pool
@@ -148,7 +148,7 @@ type Provider struct {
 }
 
 // SetTLSManager sets the tls manager to use.
-func (p *Provider) SetTLSManager(tlsManager *traefiktls.Manager) {
+func (p *Provider) SetTLSManager(tlsManager *baquptls.Manager) {
 	p.tlsManager = tlsManager
 }
 
@@ -227,7 +227,7 @@ func (p *Provider) ThrottleDuration() time.Duration {
 	return 0
 }
 
-// Provide allows the file provider to provide configurations to traefik
+// Provide allows the file provider to provide configurations to baqup
 // using the given Configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	logger := log.With().Str(logs.ProviderName, p.ResolverName+resolverSuffix).Str("acmeCA", p.Configuration.CAServer).
@@ -296,7 +296,7 @@ func (p *Provider) getClient() (*lego.Client, error) {
 	config := lego.NewConfig(account)
 	config.CADirURL = caServer
 	config.Certificate.KeyType = GetKeyType(ctx, p.KeyType)
-	config.UserAgent = fmt.Sprintf("containous-traefik/%s", version.Version)
+	config.UserAgent = fmt.Sprintf("containous-baqup/%s", version.Version)
 	config.Certificate.DisableCommonName = p.DisableCommonName
 
 	config.HTTPClient, err = p.createHTTPClient()
@@ -531,13 +531,13 @@ func (p *Provider) watchNewDomains(ctx context.Context) {
 							domains := deleteUnnecessaryDomains(ctxRouter, route.TLS.Domains)
 							for _, domain := range domains {
 								safe.Go(func() {
-									dom, cert, err := p.resolveCertificate(ctx, domain, traefiktls.DefaultTLSStoreName)
+									dom, cert, err := p.resolveCertificate(ctx, domain, baquptls.DefaultTLSStoreName)
 									if err != nil {
 										logger.Error().Err(err).Strs("domains", domain.ToStrArray()).Msg("Unable to obtain ACME certificate for domains")
 										return
 									}
 
-									err = p.addCertificateForDomain(dom, cert, traefiktls.DefaultTLSStoreName)
+									err = p.addCertificateForDomain(dom, cert, baquptls.DefaultTLSStoreName)
 									if err != nil {
 										logger.Error().Err(err).Strs("domains", dom.ToStrArray()).Msg("Error adding certificate for domains")
 									}
@@ -549,7 +549,7 @@ func (p *Provider) watchNewDomains(ctx context.Context) {
 								logger.Error().Err(err).Msg("Error parsing domains in provider ACME")
 								continue
 							}
-							p.resolveDomains(ctxRouter, domains, traefiktls.DefaultTLSStoreName)
+							p.resolveDomains(ctxRouter, domains, baquptls.DefaultTLSStoreName)
 						}
 					}
 				}
@@ -567,13 +567,13 @@ func (p *Provider) watchNewDomains(ctx context.Context) {
 							domains := deleteUnnecessaryDomains(ctxRouter, route.TLS.Domains)
 							for _, domain := range domains {
 								safe.Go(func() {
-									dom, cert, err := p.resolveCertificate(ctx, domain, traefiktls.DefaultTLSStoreName)
+									dom, cert, err := p.resolveCertificate(ctx, domain, baquptls.DefaultTLSStoreName)
 									if err != nil {
 										logger.Error().Err(err).Strs("domains", domain.ToStrArray()).Msg("Unable to obtain ACME certificate for domains")
 										return
 									}
 
-									err = p.addCertificateForDomain(dom, cert, traefiktls.DefaultTLSStoreName)
+									err = p.addCertificateForDomain(dom, cert, baquptls.DefaultTLSStoreName)
 									if err != nil {
 										logger.Error().Err(err).Strs("domains", dom.ToStrArray()).Msg("Error adding certificate for domain")
 									}
@@ -585,7 +585,7 @@ func (p *Provider) watchNewDomains(ctx context.Context) {
 								logger.Error().Err(err).Msg("Error parsing domains in provider ACME")
 								continue
 							}
-							p.resolveDomains(ctxRouter, domains, traefiktls.DefaultTLSStoreName)
+							p.resolveDomains(ctxRouter, domains, baquptls.DefaultTLSStoreName)
 						}
 					}
 				}
@@ -639,7 +639,7 @@ func (p *Provider) watchNewDomains(ctx context.Context) {
 							domain.SANs = validDomains[1:]
 						}
 
-						err = p.addCertificateForDomain(domain, cert, traefiktls.DefaultTLSStoreName)
+						err = p.addCertificateForDomain(domain, cert, baquptls.DefaultTLSStoreName)
 						if err != nil {
 							logger.Error().Err(err).Msg("Error adding certificate for domain")
 						}
@@ -887,8 +887,8 @@ func (p *Provider) buildMessage() dynamic.Message {
 	}
 
 	for _, cert := range p.certificates {
-		certConf := &traefiktls.CertAndStores{
-			Certificate: traefiktls.Certificate{
+		certConf := &baquptls.CertAndStores{
+			Certificate: baquptls.Certificate{
 				CertFile: types.FileOrContent(cert.Certificate.Certificate),
 				KeyFile:  types.FileOrContent(cert.Key),
 			},

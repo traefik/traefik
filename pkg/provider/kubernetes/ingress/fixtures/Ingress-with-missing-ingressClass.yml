@@ -4,7 +4,7 @@ metadata:
   name: ""
   namespace: testing
 spec:
-  ingressClassName: traefik-lb
+  ingressClassName: baqup-lb
   rules:
   - http:
       paths:

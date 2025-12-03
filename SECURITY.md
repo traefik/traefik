@@ -19,9 +19,9 @@ We use [Semantic Versioning](https://semver.org/).
 
 ## Reporting a Vulnerability
 
-We want to keep Traefik safe for everyone.
-If you've discovered a security vulnerability in Traefik,
+We want to keep Baqup safe for everyone.
+If you've discovered a security vulnerability in Baqup,
 we appreciate your help in disclosing it to us in a responsible manner,
-by creating a [security advisory](https://github.com/traefik/traefik/security/advisories).
+by creating a [security advisory](https://github.com/baqupio/baqup/security/advisories).
 
-Reported vulnerabilities can be found on [cve.mitre.org](https://cve.mitre.org/cgi-bin/cvekey.cgi?keyword=traefik).
+Reported vulnerabilities can be found on [cve.mitre.org](https://cve.mitre.org/cgi-bin/cvekey.cgi?keyword=baqup).

@@ -10,7 +10,7 @@
       }
     },
     "forwardedHeaders": {},
-    "name": "traefik"
+    "name": "baqup"
   },
   {
     "address": ":8000",

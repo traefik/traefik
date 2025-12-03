@@ -1,4 +1,4 @@
-In general when configuring a Traefik provider,
+In general when configuring a Baqup provider,
 a service assigned to one (or several) router(s) must be defined as well for the routing to be functional.
 
 There are, however, exceptions when using label-based configurations:

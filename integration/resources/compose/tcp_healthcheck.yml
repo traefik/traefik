@@ -1,12 +1,12 @@
 services:
   whoamitcp1:
-    image: traefik/whoamitcp
+    image: baqup/whoamitcp
     command:
       - -name
       - whoamitcp1
 
   whoamitcp2:
-    image: traefik/whoamitcp
+    image: baqup/whoamitcp
     command:
       - -name
       - whoamitcp2

@@ -1,4 +1,4 @@
-name: Feature Request (Traefik)
+name: Feature Request (Baqup)
 description: Suggest an idea for this project.
 body:
   - type: checkboxes
@@ -7,13 +7,13 @@ body:
       label: Welcome!
       description: |
         The issue tracker is for reporting bugs and feature requests only. For end-user related support questions, please refer to one of the following:
-        - the Traefik community forum: https://community.traefik.io/
+        - the Baqup community forum: https://community.baqup.io/
 
         DO NOT FILE ISSUES FOR GENERAL SUPPORT QUESTIONS.
       options:
-        - label: Yes, I've searched similar issues on [GitHub](https://github.com/traefik/traefik/issues) and didn't find any.
+        - label: Yes, I've searched similar issues on [GitHub](https://github.com/baqupio/baqup/issues) and didn't find any.
           required: true
-        - label: Yes, I've searched similar issues on the [Traefik community forum](https://community.traefik.io) and didn't find any.
+        - label: Yes, I've searched similar issues on the [Baqup community forum](https://community.baqup.io) and didn't find any.
           required: true
 
   - type: textarea

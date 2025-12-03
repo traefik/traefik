@@ -8,6 +8,13 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/baqupio/baqup/v3/pkg/config/dynamic"
+	"github.com/baqupio/baqup/v3/pkg/job"
+	"github.com/baqupio/baqup/v3/pkg/observability/logs"
+	"github.com/baqupio/baqup/v3/pkg/provider"
+	"github.com/baqupio/baqup/v3/pkg/provider/constraints"
+	"github.com/baqupio/baqup/v3/pkg/safe"
+	"github.com/baqupio/baqup/v3/pkg/types"
 	"github.com/cenkalti/backoff/v4"
 	"github.com/hashicorp/consul/api"
 	"github.com/hashicorp/consul/api/watch"
@@ -15,13 +22,6 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/job"
-	"github.com/traefik/traefik/v3/pkg/observability/logs"
-	"github.com/traefik/traefik/v3/pkg/provider"
-	"github.com/traefik/traefik/v3/pkg/provider/constraints"
-	"github.com/traefik/traefik/v3/pkg/safe"
-	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 // defaultTemplateRule is the default template for the default rule.
@@ -76,7 +76,7 @@ func (p *ProviderBuilder) BuildProviders() []*Provider {
 
 // Configuration represents the Consul Catalog provider configuration.
 type Configuration struct {
-	Constraints       string          `description:"Constraints is an expression that Traefik matches against the container's labels to determine whether to create any route for that container." json:"constraints,omitempty" toml:"constraints,omitempty" yaml:"constraints,omitempty" export:"true"`
+	Constraints       string          `description:"Constraints is an expression that Baqup matches against the container's labels to determine whether to create any route for that container." json:"constraints,omitempty" toml:"constraints,omitempty" yaml:"constraints,omitempty" export:"true"`
 	Endpoint          *EndpointConfig `description:"Consul endpoint settings" json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty" export:"true"`
 	Prefix            string          `description:"Prefix for consul service tags." json:"prefix,omitempty" toml:"prefix,omitempty" yaml:"prefix,omitempty" export:"true"`
 	RefreshInterval   ptypes.Duration `description:"Interval for check Consul API." json:"refreshInterval,omitempty" toml:"refreshInterval,omitempty" yaml:"refreshInterval,omitempty" export:"true"`
@@ -87,7 +87,7 @@ type Configuration struct {
 	DefaultRule       string          `description:"Default rule." json:"defaultRule,omitempty" toml:"defaultRule,omitempty" yaml:"defaultRule,omitempty"`
 	ConnectAware      bool            `description:"Enable Consul Connect support." json:"connectAware,omitempty" toml:"connectAware,omitempty" yaml:"connectAware,omitempty" export:"true"`
 	ConnectByDefault  bool            `description:"Consider every service as Connect capable by default." json:"connectByDefault,omitempty" toml:"connectByDefault,omitempty" yaml:"connectByDefault,omitempty" export:"true"`
-	ServiceName       string          `description:"Name of the Traefik service in Consul Catalog (needs to be registered via the orchestrator or manually)." json:"serviceName,omitempty" toml:"serviceName,omitempty" yaml:"serviceName,omitempty" export:"true"`
+	ServiceName       string          `description:"Name of the Baqup service in Consul Catalog (needs to be registered via the orchestrator or manually)." json:"serviceName,omitempty" toml:"serviceName,omitempty" yaml:"serviceName,omitempty" export:"true"`
 	Watch             bool            `description:"Watch Consul API events." json:"watch,omitempty" toml:"watch,omitempty" yaml:"watch,omitempty" export:"true"`
 	StrictChecks      []string        `description:"A list of service health statuses to allow taking traffic." json:"strictChecks,omitempty" toml:"strictChecks,omitempty" yaml:"strictChecks,omitempty" export:"true"`
 }
@@ -96,10 +96,10 @@ type Configuration struct {
 func (c *Configuration) SetDefaults() {
 	c.Endpoint = &EndpointConfig{}
 	c.RefreshInterval = ptypes.Duration(15 * time.Second)
-	c.Prefix = "traefik"
+	c.Prefix = "baqup"
 	c.ExposedByDefault = true
 	c.DefaultRule = defaultTemplateRule
-	c.ServiceName = "traefik"
+	c.ServiceName = "baqup"
 	c.StrictChecks = defaultStrictChecks()
 }
 
@@ -151,7 +151,7 @@ func (p *Provider) Init() error {
 	return nil
 }
 
-// Provide allows the consul catalog provider to provide configurations to traefik using the given configuration channel.
+// Provide allows the consul catalog provider to provide configurations to baqup using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	var err error
 	p.client, err = createClient(p.namespace, p.Endpoint)

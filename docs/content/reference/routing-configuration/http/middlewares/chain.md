@@ -1,5 +1,5 @@
 ---
-title: "Traefik Chain Middleware Documentation"
+title: "Baqup Chain Middleware Documentation"
 description: "The HTTP chain middleware lets you define reusable combinations of other middleware, to reuse the same groups. Read the technical documentation."
 ---
 
@@ -80,34 +80,34 @@ http:
 
 ```yaml tab="Labels"
 labels:
-  - "traefik.http.routers.router1.service=service1"
-  - "traefik.http.routers.router1.middlewares=secured"
-  - "traefik.http.routers.router1.rule=Host(`mydomain`)"
-  - "traefik.http.middlewares.secured.chain.middlewares=https-only,known-ips,auth-users"
-  - "traefik.http.middlewares.auth-users.basicauth.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"
-  - "traefik.http.middlewares.https-only.redirectscheme.scheme=https"
-  - "traefik.http.middlewares.known-ips.ipallowlist.sourceRange=192.168.1.7,127.0.0.1/32"
-  - "traefik.http.services.service1.loadbalancer.server.port=80"
+  - "baqup.http.routers.router1.service=service1"
+  - "baqup.http.routers.router1.middlewares=secured"
+  - "baqup.http.routers.router1.rule=Host(`mydomain`)"
+  - "baqup.http.middlewares.secured.chain.middlewares=https-only,known-ips,auth-users"
+  - "baqup.http.middlewares.auth-users.basicauth.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"
+  - "baqup.http.middlewares.https-only.redirectscheme.scheme=https"
+  - "baqup.http.middlewares.known-ips.ipallowlist.sourceRange=192.168.1.7,127.0.0.1/32"
+  - "baqup.http.services.service1.loadbalancer.server.port=80"
 ```
 
 ```json tab="Tags"
 {
   // ...
   "Tags": [
-    "traefik.http.routers.router1.service=service1",
-    "traefik.http.routers.router1.middlewares=secured",
-    "traefik.http.routers.router1.rule=Host(`mydomain`)",
-    "traefik.http.middlewares.secured.chain.middlewares=https-only,known-ips,auth-users",
-    "traefik.http.middlewares.auth-users.basicauth.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
-    "traefik.http.middlewares.https-only.redirectscheme.scheme=https",
-    "traefik.http.middlewares.known-ips.ipallowlist.sourceRange=192.168.1.7,127.0.0.1/32",
-    "traefik.http.services.service1.loadbalancer.server.port=80"
+    "baqup.http.routers.router1.service=service1",
+    "baqup.http.routers.router1.middlewares=secured",
+    "baqup.http.routers.router1.rule=Host(`mydomain`)",
+    "baqup.http.middlewares.secured.chain.middlewares=https-only,known-ips,auth-users",
+    "baqup.http.middlewares.auth-users.basicauth.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+    "baqup.http.middlewares.https-only.redirectscheme.scheme=https",
+    "baqup.http.middlewares.known-ips.ipallowlist.sourceRange=192.168.1.7,127.0.0.1/32",
+    "baqup.http.services.service1.loadbalancer.server.port=80"
   ]
 }
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: test
@@ -124,7 +124,7 @@ spec:
       middlewares:
         - name: secured
 ---
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: secured
@@ -135,7 +135,7 @@ spec:
     - name: known-ips
     - name: auth-users
 ---
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: auth-users
@@ -144,7 +144,7 @@ spec:
     users:
     - test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/
 ---
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: https-only
@@ -152,7 +152,7 @@ spec:
   redirectScheme:
     scheme: https
 ---
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: known-ips

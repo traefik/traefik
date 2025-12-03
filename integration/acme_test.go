@@ -11,16 +11,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/baqupio/baqup/v3/integration/try"
+	"github.com/baqupio/baqup/v3/pkg/config/static"
+	"github.com/baqupio/baqup/v3/pkg/provider/acme"
+	"github.com/baqupio/baqup/v3/pkg/testhelpers"
+	"github.com/baqupio/baqup/v3/pkg/types"
 	"github.com/miekg/dns"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"github.com/traefik/traefik/v3/integration/try"
-	"github.com/traefik/traefik/v3/pkg/config/static"
-	"github.com/traefik/traefik/v3/pkg/provider/acme"
-	"github.com/traefik/traefik/v3/pkg/testhelpers"
-	"github.com/traefik/traefik/v3/pkg/types"
 	"k8s.io/utils/strings/slices"
 )
 
@@ -42,9 +42,9 @@ type subCases struct {
 }
 
 type acmeTestCase struct {
-	template            templateModel
-	traefikConfFilePath string
-	subCases            []subCases
+	template          templateModel
+	baqupConfFilePath string
+	subCases          []subCases
 }
 
 type templateModel struct {
@@ -57,7 +57,7 @@ type templateModel struct {
 
 const (
 	// Domain to check
-	acmeDomain = "traefik.acme.wtf"
+	acmeDomain = "baqup.acme.wtf"
 
 	// Wildcard domain to check
 	wildcardDomain = "*.acme.wtf"
@@ -141,7 +141,7 @@ func (s *AcmeSuite) TearDownSuite() {
 
 func (s *AcmeSuite) TestHTTP01Domains() {
 	testCase := acmeTestCase{
-		traefikConfFilePath: "fixtures/acme/acme_domains.toml",
+		baqupConfFilePath: "fixtures/acme/acme_domains.toml",
 		subCases: []subCases{{
 			host:              acmeDomain,
 			expectedDomain:    acmeDomain,
@@ -149,7 +149,7 @@ func (s *AcmeSuite) TestHTTP01Domains() {
 		}},
 		template: templateModel{
 			Domains: []types.Domain{{
-				Main: "traefik.acme.wtf",
+				Main: "baqup.acme.wtf",
 			}},
 			Acme: map[string]static.CertificateResolver{
 				"default": {ACME: &acme.Configuration{
@@ -164,7 +164,7 @@ func (s *AcmeSuite) TestHTTP01Domains() {
 
 func (s *AcmeSuite) TestHTTP01StoreDomains() {
 	testCase := acmeTestCase{
-		traefikConfFilePath: "fixtures/acme/acme_store_domains.toml",
+		baqupConfFilePath: "fixtures/acme/acme_store_domains.toml",
 		subCases: []subCases{{
 			host:              acmeDomain,
 			expectedDomain:    acmeDomain,
@@ -172,7 +172,7 @@ func (s *AcmeSuite) TestHTTP01StoreDomains() {
 		}},
 		template: templateModel{
 			Domain: types.Domain{
-				Main: "traefik.acme.wtf",
+				Main: "baqup.acme.wtf",
 			},
 			Acme: map[string]static.CertificateResolver{
 				"default": {ACME: &acme.Configuration{
@@ -187,7 +187,7 @@ func (s *AcmeSuite) TestHTTP01StoreDomains() {
 
 func (s *AcmeSuite) TestHTTP01DomainsInSAN() {
 	testCase := acmeTestCase{
-		traefikConfFilePath: "fixtures/acme/acme_domains.toml",
+		baqupConfFilePath: "fixtures/acme/acme_domains.toml",
 		subCases: []subCases{{
 			host:              acmeDomain,
 			expectedDomain:    "acme.wtf",
@@ -196,7 +196,7 @@ func (s *AcmeSuite) TestHTTP01DomainsInSAN() {
 		template: templateModel{
 			Domains: []types.Domain{{
 				Main: "acme.wtf",
-				SANs: []string{"traefik.acme.wtf"},
+				SANs: []string{"baqup.acme.wtf"},
 			}},
 			Acme: map[string]static.CertificateResolver{
 				"default": {ACME: &acme.Configuration{
@@ -211,7 +211,7 @@ func (s *AcmeSuite) TestHTTP01DomainsInSAN() {
 
 func (s *AcmeSuite) TestHTTP01OnHostRule() {
 	testCase := acmeTestCase{
-		traefikConfFilePath: "fixtures/acme/acme_base.toml",
+		baqupConfFilePath: "fixtures/acme/acme_base.toml",
 		subCases: []subCases{{
 			host:              acmeDomain,
 			expectedDomain:    acmeDomain,
@@ -231,7 +231,7 @@ func (s *AcmeSuite) TestHTTP01OnHostRule() {
 
 func (s *AcmeSuite) TestMultipleResolver() {
 	testCase := acmeTestCase{
-		traefikConfFilePath: "fixtures/acme/acme_multiple_resolvers.toml",
+		baqupConfFilePath: "fixtures/acme/acme_multiple_resolvers.toml",
 		subCases: []subCases{
 			{
 				host:              acmeDomain,
@@ -262,7 +262,7 @@ func (s *AcmeSuite) TestMultipleResolver() {
 
 func (s *AcmeSuite) TestHTTP01OnHostRuleECDSA() {
 	testCase := acmeTestCase{
-		traefikConfFilePath: "fixtures/acme/acme_base.toml",
+		baqupConfFilePath: "fixtures/acme/acme_base.toml",
 		subCases: []subCases{{
 			host:              acmeDomain,
 			expectedDomain:    acmeDomain,
@@ -283,7 +283,7 @@ func (s *AcmeSuite) TestHTTP01OnHostRuleECDSA() {
 
 func (s *AcmeSuite) TestHTTP01OnHostRuleInvalidAlgo() {
 	testCase := acmeTestCase{
-		traefikConfFilePath: "fixtures/acme/acme_base.toml",
+		baqupConfFilePath: "fixtures/acme/acme_base.toml",
 		subCases: []subCases{{
 			host:              acmeDomain,
 			expectedDomain:    acmeDomain,
@@ -305,7 +305,7 @@ func (s *AcmeSuite) TestHTTP01OnHostRuleInvalidAlgo() {
 // TODO: check why this test do not use the ACME cert resolver.
 func (s *AcmeSuite) TestHTTP01OnHostRuleDefaultDynamicCertificatesWithWildcard() {
 	testCase := acmeTestCase{
-		traefikConfFilePath: "fixtures/acme/acme_tls.toml",
+		baqupConfFilePath: "fixtures/acme/acme_tls.toml",
 		subCases: []subCases{{
 			host:              acmeDomain,
 			expectedDomain:    wildcardDomain,
@@ -326,7 +326,7 @@ func (s *AcmeSuite) TestHTTP01OnHostRuleDefaultDynamicCertificatesWithWildcard()
 // TODO: check why this test do not use the ACME cert resolver.
 func (s *AcmeSuite) TestHTTP01OnHostRuleDynamicCertificatesWithWildcard() {
 	testCase := acmeTestCase{
-		traefikConfFilePath: "fixtures/acme/acme_tls_dynamic.toml",
+		baqupConfFilePath: "fixtures/acme/acme_tls_dynamic.toml",
 		subCases: []subCases{{
 			host:              acmeDomain,
 			expectedDomain:    wildcardDomain,
@@ -346,7 +346,7 @@ func (s *AcmeSuite) TestHTTP01OnHostRuleDynamicCertificatesWithWildcard() {
 
 func (s *AcmeSuite) TestTLSALPN01OnHostRuleTCP() {
 	testCase := acmeTestCase{
-		traefikConfFilePath: "fixtures/acme/acme_tcp.toml",
+		baqupConfFilePath: "fixtures/acme/acme_tcp.toml",
 		subCases: []subCases{{
 			host:              acmeDomain,
 			expectedDomain:    acmeDomain,
@@ -366,7 +366,7 @@ func (s *AcmeSuite) TestTLSALPN01OnHostRuleTCP() {
 
 func (s *AcmeSuite) TestTLSALPN01OnHostRule() {
 	testCase := acmeTestCase{
-		traefikConfFilePath: "fixtures/acme/acme_base.toml",
+		baqupConfFilePath: "fixtures/acme/acme_base.toml",
 		subCases: []subCases{{
 			host:              acmeDomain,
 			expectedDomain:    acmeDomain,
@@ -386,7 +386,7 @@ func (s *AcmeSuite) TestTLSALPN01OnHostRule() {
 
 func (s *AcmeSuite) TestTLSALPN01Domains() {
 	testCase := acmeTestCase{
-		traefikConfFilePath: "fixtures/acme/acme_domains.toml",
+		baqupConfFilePath: "fixtures/acme/acme_domains.toml",
 		subCases: []subCases{{
 			host:              acmeDomain,
 			expectedDomain:    acmeDomain,
@@ -394,7 +394,7 @@ func (s *AcmeSuite) TestTLSALPN01Domains() {
 		}},
 		template: templateModel{
 			Domains: []types.Domain{{
-				Main: "traefik.acme.wtf",
+				Main: "baqup.acme.wtf",
 			}},
 			Acme: map[string]static.CertificateResolver{
 				"default": {ACME: &acme.Configuration{
@@ -409,7 +409,7 @@ func (s *AcmeSuite) TestTLSALPN01Domains() {
 
 func (s *AcmeSuite) TestTLSALPN01DomainsInSAN() {
 	testCase := acmeTestCase{
-		traefikConfFilePath: "fixtures/acme/acme_domains.toml",
+		baqupConfFilePath: "fixtures/acme/acme_domains.toml",
 		subCases: []subCases{{
 			host:              acmeDomain,
 			expectedDomain:    "acme.wtf",
@@ -418,7 +418,7 @@ func (s *AcmeSuite) TestTLSALPN01DomainsInSAN() {
 		template: templateModel{
 			Domains: []types.Domain{{
 				Main: "acme.wtf",
-				SANs: []string{"traefik.acme.wtf"},
+				SANs: []string{"baqup.acme.wtf"},
 			}},
 			Acme: map[string]static.CertificateResolver{
 				"default": {ACME: &acme.Configuration{
@@ -442,9 +442,9 @@ func (s *AcmeSuite) TestNoValidLetsEncryptServer() {
 		},
 	})
 
-	s.traefikCmd(withConfigFile(file))
+	s.baqupCmd(withConfigFile(file))
 
-	// Expected traefik works
+	// Expected baqup works
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.StatusCodeIs(http.StatusOK))
 	require.NoError(s.T(), err)
 }
@@ -465,9 +465,9 @@ func (s *AcmeSuite) retrieveAcmeCertificate(testCase acmeTestCase) {
 		}
 	}
 
-	file := s.adaptFile(testCase.traefikConfFilePath, testCase.template)
+	file := s.adaptFile(testCase.baqupConfFilePath, testCase.template)
 
-	s.traefikCmd(withConfigFile(file))
+	s.baqupCmd(withConfigFile(file))
 
 	// A real file is needed to have the right mode on acme.json file
 	defer os.Remove("/tmp/acme.json")
@@ -481,7 +481,7 @@ func (s *AcmeSuite) retrieveAcmeCertificate(testCase acmeTestCase) {
 		},
 	}
 
-	// wait for traefik (generating acme account take some seconds)
+	// wait for baqup (generating acme account take some seconds)
 	err := try.Do(60*time.Second, func() error {
 		_, errGet := client.Get("https://127.0.0.1:5001")
 		return errGet

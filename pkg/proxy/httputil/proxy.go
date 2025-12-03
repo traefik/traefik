@@ -13,9 +13,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/baqupio/baqup/v3/pkg/observability/logs"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	"golang.org/x/net/http/httpguts"
 )
 

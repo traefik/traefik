@@ -1,37 +1,37 @@
-# Exposing Services with Traefik on Docker Swarm
+# Exposing Services with Baqup on Docker Swarm
 
-This guide will help you expose your services securely through Traefik Proxy using Docker Swarm. We'll cover routing HTTP and HTTPS traffic, implementing TLS, adding middlewares, Let's Encrypt integration, and sticky sessions.
+This guide will help you expose your services securely through Baqup Proxy using Docker Swarm. We'll cover routing HTTP and HTTPS traffic, implementing TLS, adding middlewares, Let's Encrypt integration, and sticky sessions.
 
 ## Prerequisites
 
 - Docker Swarm cluster initialized
 - Basic understanding of Docker Swarm concepts
-- Traefik deployed using the Traefik Docker Swarm Setup guide
+- Baqup deployed using the Baqup Docker Swarm Setup guide
 
 ## Expose Your First HTTP Service
 
-Let's expose a simple HTTP service using the [whoami](https://hub.docker.com/r/traefik/whoami) application. This will demonstrate basic routing to a backend service.
+Let's expose a simple HTTP service using the [whoami](https://hub.docker.com/r/baqup/whoami) application. This will demonstrate basic routing to a backend service.
 
 First, update your existing `docker-compose.yml` file if you haven't already:
 
 ```yaml
 services:
   whoami:
-    image: traefik/whoami
+    image: baqup/whoami
     networks:
-      - traefik_proxy
+      - baqup_proxy
     deploy:
       replicas: 3
       labels:
-        - "traefik.enable=true"
-        - "traefik.http.routers.whoami.rule=Host(`whoami.swarm.localhost`)"
-        - "traefik.http.routers.whoami.entrypoints=web,websecure"
+        - "baqup.enable=true"
+        - "baqup.http.routers.whoami.rule=Host(`whoami.swarm.localhost`)"
+        - "baqup.http.routers.whoami.entrypoints=web,websecure"
 ```
 
 Save this as `docker-compose.yml` and deploy the stack:
 
 ```bash
-docker stack deploy -c docker-compose.yml traefik
+docker stack deploy -c docker-compose.yml baqup
 ```
 
 ### Verify Your Service
@@ -64,7 +64,7 @@ X-Forwarded-Server: 5789f594e7d5
 X-Real-Ip: 10.0.1.1
 ```
 
-This confirms that Traefik is successfully routing requests to your whoami application.
+This confirms that Baqup is successfully routing requests to your whoami application.
 
 ## Add Routing Rules
 
@@ -77,20 +77,20 @@ Update your `docker-compose.yml` to add another service:
 
 # New service
   whoami-api:
-    image: traefik/whoami
+    image: baqup/whoami
     networks:
-      - traefik_proxy
+      - baqup_proxy
     environment:
       - WHOAMI_NAME=API Service
     deploy:
       replicas: 2
       labels:
-        - "traefik.enable=true"
+        - "baqup.enable=true"
         # Path-based routing
-        - "traefik.http.routers.whoami-api.rule=Host(`whoami.swarm.localhost`) && PathPrefix(`/api`)"
-        - "traefik.http.routers.whoami-api.entrypoints=web,websecure"
-        - "traefik.http.routers.whoami-api.service=whoami-api-svc"
-        - "traefik.http.services.whoami-api-svc.loadbalancer.server.port=80"
+        - "baqup.http.routers.whoami-api.rule=Host(`whoami.swarm.localhost`) && PathPrefix(`/api`)"
+        - "baqup.http.routers.whoami-api.entrypoints=web,websecure"
+        - "baqup.http.routers.whoami-api.service=whoami-api-svc"
+        - "baqup.http.services.whoami-api-svc.loadbalancer.server.port=80"
 
 # ...
 ```
@@ -98,7 +98,7 @@ Update your `docker-compose.yml` to add another service:
 Apply the changes:
 
 ```bash
-docker stack deploy -c docker-compose.yml traefik
+docker stack deploy -c docker-compose.yml baqup
 ```
 
 ### Test the Path-Based Routing
@@ -121,7 +121,7 @@ Let's secure our service with HTTPS by adding TLS. We'll start with a self-signe
 
 ### Create a Self-Signed Certificate 
 
-Generate a self-signed certificate and dynamic config file to tell Traefik where the cert lives:
+Generate a self-signed certificate and dynamic config file to tell Baqup where the cert lives:
 
 ```bash
 mkdir -p certs
@@ -131,7 +131,7 @@ openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
   -keyout certs/local.key -out certs/local.crt \
   -subj "/CN=*.swarm.localhost"
 
-# dynamic config that tells Traefik where the cert lives
+# dynamic config that tells Baqup where the cert lives
 cat > certs/tls.yml <<'EOF'
 tls:
   certificates:
@@ -151,12 +151,12 @@ docker config create swarm-tls.yml certs/tls.yml
 Update your `docker-compose.yml` file with the following changes:
 
 ```yaml
-# Add to the Traefik command section:
+# Add to the Baqup command section:
 command:
   # ... existing commands ...
   - "--entryPoints.websecure.address=:443"
   - "--entryPoints.websecure.http.tls=true"
-  - "--providers.file.directory=/etc/traefik/dynamic"
+  - "--providers.file.directory=/etc/baqup/dynamic"
 ```
 
 ```yaml
@@ -173,14 +173,14 @@ configs:
 Deploy the stack:
 
 ```bash
-docker stack deploy -c docker-compose.yml traefik
+docker stack deploy -c docker-compose.yml baqup
 ```
 
 Your browser can access https://whoami.swarm.localhost/ for the service. You'll need to accept the security warning for the self-signed certificate.
 
 ## Add Middlewares
 
-Middlewares allow you to modify requests or responses as they pass through Traefik. Let's add two useful middlewares: [Headers](../reference/routing-configuration/http/middlewares/headers.md) for security and [IP allowlisting](../reference/routing-configuration/http/middlewares/ipallowlist.md) for access control.
+Middlewares allow you to modify requests or responses as they pass through Baqup. Let's add two useful middlewares: [Headers](../reference/routing-configuration/http/middlewares/headers.md) for security and [IP allowlisting](../reference/routing-configuration/http/middlewares/ipallowlist.md) for access control.
 
 Add the following labels to your whoami service deployment section in `docker-compose.yml`:
 
@@ -191,19 +191,19 @@ deploy:
     # ... existing labels ...
     
     # Secure Headers Middleware
-    - "traefik.http.middlewares.secure-headers.headers.frameDeny=true"
-    - "traefik.http.middlewares.secure-headers.headers.sslRedirect=true"
-    - "traefik.http.middlewares.secure-headers.headers.browserXssFilter=true"
-    - "traefik.http.middlewares.secure-headers.headers.contentTypeNosniff=true"
-    - "traefik.http.middlewares.secure-headers.headers.stsIncludeSubdomains=true"
-    - "traefik.http.middlewares.secure-headers.headers.stsPreload=true"
-    - "traefik.http.middlewares.secure-headers.headers.stsSeconds=31536000"
+    - "baqup.http.middlewares.secure-headers.headers.frameDeny=true"
+    - "baqup.http.middlewares.secure-headers.headers.sslRedirect=true"
+    - "baqup.http.middlewares.secure-headers.headers.browserXssFilter=true"
+    - "baqup.http.middlewares.secure-headers.headers.contentTypeNosniff=true"
+    - "baqup.http.middlewares.secure-headers.headers.stsIncludeSubdomains=true"
+    - "baqup.http.middlewares.secure-headers.headers.stsPreload=true"
+    - "baqup.http.middlewares.secure-headers.headers.stsSeconds=31536000"
     
     # IP Allowlist Middleware
-    - "traefik.http.middlewares.ip-allowlist.ipallowlist.sourceRange=127.0.0.1/32,192.168.0.0/16,10.0.0.0/8"
+    - "baqup.http.middlewares.ip-allowlist.ipallowlist.sourceRange=127.0.0.1/32,192.168.0.0/16,10.0.0.0/8"
     
     # Apply the middlewares
-    - "traefik.http.routers.whoami.middlewares=secure-headers,ip-allowlist"
+    - "baqup.http.routers.whoami.middlewares=secure-headers,ip-allowlist"
 ```
 
 Add the same middleware to your whoami-api service:
@@ -213,13 +213,13 @@ deploy:
   # ... existing configuration ...
   labels:
     # ... existing labels ...
-    - "traefik.http.routers.whoami-api.middlewares=secure-headers,ip-allowlist"
+    - "baqup.http.routers.whoami-api.middlewares=secure-headers,ip-allowlist"
 ```
 
 Apply the changes:
 
 ```bash
-docker stack deploy -c docker-compose.yml traefik
+docker stack deploy -c docker-compose.yml baqup
 ```
 
 ### Test the Middlewares
@@ -251,11 +251,11 @@ If you try to access from an IP not in the allow list, the request will be rejec
 
 ## Generate Certificates with Let's Encrypt
 
-Let's Encrypt provides free, automated TLS certificates. Let's configure Traefik to automatically obtain and renew certificates for our services.
+Let's Encrypt provides free, automated TLS certificates. Let's configure Baqup to automatically obtain and renew certificates for our services.
 
 Instead of using self-signed certificates, update your existing `docker-compose.yml` file with the following changes:
 
-Add the Let's Encrypt certificate resolver to the Traefik service command section:
+Add the Let's Encrypt certificate resolver to the Baqup service command section:
 
 ```yaml
 command:
@@ -279,7 +279,7 @@ Update your service labels to use the certificate resolver:
 ```yaml
 labels:
   # ... existing labels ...
-  - "traefik.http.routers.whoami.tls.certresolver=le"
+  - "baqup.http.routers.whoami.tls.certresolver=le"
 ```
 
 Do the same for any other services you want to secure:
@@ -287,7 +287,7 @@ Do the same for any other services you want to secure:
 ```yaml
 labels:
   # ... existing labels ...
-  - "traefik.http.routers.whoami-api.tls.certresolver=le"
+  - "baqup.http.routers.whoami-api.tls.certresolver=le"
 ```
 
 Create a named volume for storing Let's Encrypt certificates by adding to the volumes section:
@@ -302,11 +302,11 @@ volumes:
 Apply the changes:
 
 ```bash
-docker stack deploy -c docker-compose.yml traefik
+docker stack deploy -c docker-compose.yml baqup
 ```
 
 !!! important "Public DNS Required"
-    Let's Encrypt may require a publicly accessible domain to validate domain ownership. For testing with local domains like `whoami.swarm.localhost`, the certificate will remain self-signed. In production, replace it with a real domain that has a publicly accessible DNS record pointing to your Traefik instance.
+    Let's Encrypt may require a publicly accessible domain to validate domain ownership. For testing with local domains like `whoami.swarm.localhost`, the certificate will remain self-signed. In production, replace it with a real domain that has a publicly accessible DNS record pointing to your Baqup instance.
 
 Once the certificate is issued, you can verify it:
 
@@ -334,16 +334,16 @@ deploy:
     # ... existing labels ...
     
     # Sticky Sessions Configuration
-    - "traefik.http.services.whoami.loadbalancer.sticky.cookie=true"
-    - "traefik.http.services.whoami.loadbalancer.sticky.cookie.name=sticky_cookie"
-    - "traefik.http.services.whoami.loadbalancer.sticky.cookie.secure=true"
-    - "traefik.http.services.whoami.loadbalancer.sticky.cookie.httpOnly=true"
+    - "baqup.http.services.whoami.loadbalancer.sticky.cookie=true"
+    - "baqup.http.services.whoami.loadbalancer.sticky.cookie.name=sticky_cookie"
+    - "baqup.http.services.whoami.loadbalancer.sticky.cookie.secure=true"
+    - "baqup.http.services.whoami.loadbalancer.sticky.cookie.httpOnly=true"
 ```
 
 Apply the changes:
 
 ```bash
-docker stack deploy -c docker-compose.yml traefik
+docker stack deploy -c docker-compose.yml baqup
 ```
 
 ### Test Sticky Sessions
@@ -380,22 +380,22 @@ For more advanced configuration options, see the [reference documentation](../re
 
 In this guide, you've learned how to:
 
-- Expose HTTP services through Traefik in Docker Swarm
+- Expose HTTP services through Baqup in Docker Swarm
 - Set up path-based routing to direct traffic to different backend services
 - Secure your services with TLS using self-signed certificates
 - Add security with middlewares like secure headers and IP allow listing
 - Automate certificate management with Let's Encrypt
 - Implement sticky sessions for stateful applications
 
-These fundamental capabilities provide a solid foundation for exposing any application through Traefik Proxy in Docker Swarm. Each of these can be further customized to meet your specific requirements.
+These fundamental capabilities provide a solid foundation for exposing any application through Baqup Proxy in Docker Swarm. Each of these can be further customized to meet your specific requirements.
 
 ### Next Steps
 
-Now that you understand the basics of exposing services with Traefik Proxy, you might want to explore:
+Now that you understand the basics of exposing services with Baqup Proxy, you might want to explore:
 
 - [Advanced routing options](../reference/routing-configuration/http/routing/rules-and-priority.md) like query parameter matching, header-based routing, and more
 - [Additional middlewares](../reference/routing-configuration/http/middlewares/overview.md) for authentication, rate limiting, and request modifications
-- [Observability features](../reference/install-configuration/observability/metrics.md) for monitoring and debugging your Traefik deployment
+- [Observability features](../reference/install-configuration/observability/metrics.md) for monitoring and debugging your Baqup deployment
 - [TCP services](../reference/routing-configuration/tcp/service.md) for exposing TCP services
 - [UDP services](../reference/routing-configuration/udp/service.md) for exposing UDP services
 - [Docker provider documentation](../reference/install-configuration/providers/docker.md) for more details about the Docker integration

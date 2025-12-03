@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/baqupio/baqup/v3/pkg/config/dynamic"
+	"github.com/baqupio/baqup/v3/pkg/middlewares"
+	"github.com/baqupio/baqup/v3/pkg/observability/logs"
 	"github.com/rs/zerolog"
-	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/middlewares"
-	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	"github.com/vulcand/oxy/v2/connlimit"
 )
 

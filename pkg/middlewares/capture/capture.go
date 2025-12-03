@@ -32,7 +32,7 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/traefik/traefik/v3/pkg/middlewares"
+	"github.com/baqupio/baqup/v3/pkg/middlewares"
 )
 
 type key string

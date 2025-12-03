@@ -3,8 +3,8 @@ package headers
 import (
 	"net/http"
 
-	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/middlewares"
+	"github.com/baqupio/baqup/v3/pkg/config/dynamic"
+	"github.com/baqupio/baqup/v3/pkg/middlewares"
 	"github.com/unrolled/secure"
 )
 

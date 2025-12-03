@@ -11,11 +11,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/baqupio/baqup/v3/integration/try"
 	gorillawebsocket "github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"github.com/traefik/traefik/v3/integration/try"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/websocket"
 )
@@ -54,9 +54,9 @@ func (s *WebsocketSuite) TestBase() {
 		WebsocketServer: srv.URL,
 	})
 
-	s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
+	s.baqupCmd(withConfigFile(file), "--log.level=DEBUG")
 
-	// wait for traefik
+	// wait for baqup
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
 	require.NoError(s.T(), err)
 
@@ -98,9 +98,9 @@ func (s *WebsocketSuite) TestWrongOrigin() {
 		WebsocketServer: srv.URL,
 	})
 
-	s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
+	s.baqupCmd(withConfigFile(file), "--log.level=DEBUG")
 
-	// wait for traefik
+	// wait for baqup
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
 	require.NoError(s.T(), err)
 
@@ -141,9 +141,9 @@ func (s *WebsocketSuite) TestOrigin() {
 		WebsocketServer: srv.URL,
 	})
 
-	s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
+	s.baqupCmd(withConfigFile(file), "--log.level=DEBUG")
 
-	// wait for traefik
+	// wait for baqup
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
 	require.NoError(s.T(), err)
 
@@ -195,9 +195,9 @@ func (s *WebsocketSuite) TestWrongOriginIgnoredByServer() {
 		WebsocketServer: srv.URL,
 	})
 
-	s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
+	s.baqupCmd(withConfigFile(file), "--log.level=DEBUG")
 
-	// wait for traefik
+	// wait for baqup
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
 	require.NoError(s.T(), err)
 
@@ -246,9 +246,9 @@ func (s *WebsocketSuite) TestSSLTermination() {
 		WebsocketServer: srv.URL,
 	})
 
-	s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
+	s.baqupCmd(withConfigFile(file), "--log.level=DEBUG")
 
-	// wait for traefik
+	// wait for baqup
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
 	require.NoError(s.T(), err)
 
@@ -282,7 +282,7 @@ func (s *WebsocketSuite) TestBasicAuth() {
 		defer conn.Close()
 
 		user, password, _ := r.BasicAuth()
-		assert.Equal(s.T(), "traefiker", user)
+		assert.Equal(s.T(), "baquper", user)
 		assert.Equal(s.T(), "secret", password)
 
 		for {
@@ -302,14 +302,14 @@ func (s *WebsocketSuite) TestBasicAuth() {
 		WebsocketServer: srv.URL,
 	})
 
-	s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
+	s.baqupCmd(withConfigFile(file), "--log.level=DEBUG")
 
-	// wait for traefik
+	// wait for baqup
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
 	require.NoError(s.T(), err)
 
 	config, err := websocket.NewConfig("ws://127.0.0.1:8000/ws", "ws://127.0.0.1:8000")
-	auth := "traefiker:secret"
+	auth := "baquper:secret"
 	config.Header.Set("Authorization", "Basic "+base64.StdEncoding.EncodeToString([]byte(auth)))
 
 	assert.NoError(s.T(), err)
@@ -340,9 +340,9 @@ func (s *WebsocketSuite) TestSpecificResponseFromBackend() {
 		WebsocketServer: srv.URL,
 	})
 
-	s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
+	s.baqupCmd(withConfigFile(file), "--log.level=DEBUG")
 
-	// wait for traefik
+	// wait for baqup
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
 	require.NoError(s.T(), err)
 
@@ -379,9 +379,9 @@ func (s *WebsocketSuite) TestURLWithURLEncodedChar() {
 		WebsocketServer: srv.URL,
 	})
 
-	s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
+	s.baqupCmd(withConfigFile(file), "--log.level=DEBUG")
 
-	// wait for traefik
+	// wait for baqup
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
 	require.NoError(s.T(), err)
 
@@ -427,9 +427,9 @@ func (s *WebsocketSuite) TestSSLhttp2() {
 		WebsocketServer: ts.URL,
 	})
 
-	s.traefikCmd(withConfigFile(file), "--log.level=DEBUG", "--accesslog")
+	s.baqupCmd(withConfigFile(file), "--log.level=DEBUG", "--accesslog")
 
-	// wait for traefik
+	// wait for baqup
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
 	require.NoError(s.T(), err)
 
@@ -459,9 +459,9 @@ func (s *WebsocketSuite) TestSettingEnableConnectProtocol() {
 		WebsocketServer: "http://127.0.0.1",
 	})
 
-	s.traefikCmd(withConfigFile(file), "--log.level=DEBUG", "--accesslog")
+	s.baqupCmd(withConfigFile(file), "--log.level=DEBUG", "--accesslog")
 
-	// Wait for traefik.
+	// Wait for baqup.
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
 	require.NoError(s.T(), err)
 
@@ -518,9 +518,9 @@ func (s *WebsocketSuite) TestHeaderAreForwarded() {
 		WebsocketServer: srv.URL,
 	})
 
-	s.traefikCmd(withConfigFile(file), "--log.level=DEBUG")
+	s.baqupCmd(withConfigFile(file), "--log.level=DEBUG")
 
-	// wait for traefik
+	// wait for baqup
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("127.0.0.1"))
 	require.NoError(s.T(), err)
 

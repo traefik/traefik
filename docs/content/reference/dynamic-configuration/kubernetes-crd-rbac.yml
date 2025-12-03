@@ -1,7 +1,7 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: traefik-ingress-controller
+  name: baqup-ingress-controller
 
 rules:
   - apiGroups:
@@ -48,12 +48,12 @@ rules:
     verbs:
       - update
   - apiGroups:
-      - traefik.io
+      - baqup.io
     resources:
       - middlewares
       - middlewaretcps
       - ingressroutes
-      - traefikservices
+      - baqupservices
       - ingressroutetcps
       - ingressrouteudps
       - tlsoptions
@@ -69,13 +69,13 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: traefik-ingress-controller
+  name: baqup-ingress-controller
 
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: traefik-ingress-controller
+  name: baqup-ingress-controller
 subjects:
   - kind: ServiceAccount
-    name: traefik-ingress-controller
+    name: baqup-ingress-controller
     namespace: default

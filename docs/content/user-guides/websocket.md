@@ -1,11 +1,11 @@
 ---
-title: "Traefik WebSocket Documentation"
-description: "How to configure WebSocket and WebSocket Secure (WSS) connections with Traefik Proxy."
+title: "Baqup WebSocket Documentation"
+description: "How to configure WebSocket and WebSocket Secure (WSS) connections with Baqup Proxy."
 ---
 
 # WebSocket
 
-Configuring Traefik to handle WebSocket and WebSocket Secure (WSS) connections.
+Configuring Baqup to handle WebSocket and WebSocket Secure (WSS) connections.
 {: .subtitle }
 
 ## Overview
@@ -13,7 +13,7 @@ Configuring Traefik to handle WebSocket and WebSocket Secure (WSS) connections.
 WebSocket is a communication protocol that provides full-duplex communication channels over a single TCP connection.
 WebSocket Secure (WSS) is the encrypted version of WebSocket, using TLS/SSL encryption.
 
-Traefik supports WebSocket and WebSocket Secure (WSS) out of the box. This guide will walk through examples of how to configure Traefik for different WebSocket scenarios.
+Baqup supports WebSocket and WebSocket Secure (WSS) out of the box. This guide will walk through examples of how to configure Baqup for different WebSocket scenarios.
 
 ## Basic WebSocket Configuration
 
@@ -21,13 +21,13 @@ A basic WebSocket configuration only requires defining a router and a service th
 
 ```yaml tab="Docker & Swarm"
 labels:
-  - "traefik.http.routers.my-websocket.rule=Host(`ws.example.com`)"
-  - "traefik.http.routers.my-websocket.service=my-websocket-service"
-  - "traefik.http.services.my-websocket-service.loadbalancer.server.port=8000"
+  - "baqup.http.routers.my-websocket.rule=Host(`ws.example.com`)"
+  - "baqup.http.routers.my-websocket.service=my-websocket-service"
+  - "baqup.http.services.my-websocket-service.loadbalancer.server.port=8000"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: my-websocket-route
@@ -76,14 +76,14 @@ The client connects using the `wss://` protocol instead of `ws://`.
 
 ```yaml tab="Docker & Swarm"
 labels:
-  - "traefik.http.routers.my-websocket-secure.rule=Host(`wss.example.com`)"
-  - "traefik.http.routers.my-websocket-secure.service=my-websocket-service"
-  - "traefik.http.routers.my-websocket-secure.tls=true"
-  - "traefik.http.services.my-websocket-service.loadbalancer.server.port=8000"
+  - "baqup.http.routers.my-websocket-secure.rule=Host(`wss.example.com`)"
+  - "baqup.http.routers.my-websocket-secure.service=my-websocket-service"
+  - "baqup.http.routers.my-websocket-secure.tls=true"
+  - "baqup.http.services.my-websocket-service.loadbalancer.server.port=8000"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: my-websocket-secure-route
@@ -130,19 +130,19 @@ http:
 
 ## SSL Termination for WebSockets
 
-In this scenario, clients connect to Traefik using WSS (encrypted), but Traefik connects to your backend server using WS (unencrypted).
+In this scenario, clients connect to Baqup using WSS (encrypted), but Baqup connects to your backend server using WS (unencrypted).
 This is called SSL termination.
 
 ```yaml tab="Docker & Swarm"
 labels:
-  - "traefik.http.routers.my-wss-termination.rule=Host(`wss.example.com`)"
-  - "traefik.http.routers.my-wss-termination.service=my-ws-service"
-  - "traefik.http.routers.my-wss-termination.tls=true"
-  - "traefik.http.services.my-ws-service.loadbalancer.server.port=8000"
+  - "baqup.http.routers.my-wss-termination.rule=Host(`wss.example.com`)"
+  - "baqup.http.routers.my-wss-termination.service=my-ws-service"
+  - "baqup.http.routers.my-wss-termination.tls=true"
+  - "baqup.http.services.my-ws-service.loadbalancer.server.port=8000"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: my-wss-termination-route
@@ -189,21 +189,21 @@ http:
 
 ## End-to-End WebSocket Secure (WSS)
 
-For end-to-end encryption, Traefik can be configured to connect to your backend using HTTPS.
+For end-to-end encryption, Baqup can be configured to connect to your backend using HTTPS.
 
 ```yaml tab="Docker & Swarm"
 labels:
-  - "traefik.http.routers.my-wss-e2e.rule=Host(`wss.example.com`)"
-  - "traefik.http.routers.my-wss-e2e.service=my-wss-service"
-  - "traefik.http.routers.my-wss-e2e.tls=true"
-  - "traefik.http.services.my-wss-service.loadbalancer.server.port=8443"
+  - "baqup.http.routers.my-wss-e2e.rule=Host(`wss.example.com`)"
+  - "baqup.http.routers.my-wss-e2e.service=my-wss-service"
+  - "baqup.http.routers.my-wss-e2e.tls=true"
+  - "baqup.http.services.my-wss-service.loadbalancer.server.port=8443"
   # If the backend uses a self-signed certificate
-  - "traefik.http.serversTransports.insecureTransport.insecureSkipVerify=true"
-  - "traefik.http.services.my-wss-service.loadBalancer.serversTransport=insecureTransport"
+  - "baqup.http.serversTransports.insecureTransport.insecureSkipVerify=true"
+  - "baqup.http.services.my-wss-service.loadBalancer.serversTransport=insecureTransport"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: ServersTransport
 metadata:
   name: insecure-transport
@@ -211,7 +211,7 @@ spec:
   insecureSkipVerify: true
 
 ---
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: my-wss-e2e-route
@@ -269,7 +269,7 @@ http:
 
 ## EntryPoints Configuration for WebSockets
 
-In your Traefik static configuration, you'll need to define entryPoints for both WS and WSS:
+In your Baqup static configuration, you'll need to define entryPoints for both WS and WSS:
 
 ```yaml tab="File (YAML)"
 entryPoints:
@@ -308,18 +308,18 @@ wscat -c wss://wss.example.com
 
 ### Headers and Origin Checks
 
-Some WebSocket servers implement origin checking. Traefik passes the original headers to your backend, including the `Origin` header.
+Some WebSocket servers implement origin checking. Baqup passes the original headers to your backend, including the `Origin` header.
 
-If you need to manipulate headers for WebSocket connections, you can use Traefik's Headers middleware:
+If you need to manipulate headers for WebSocket connections, you can use Baqup's Headers middleware:
 
 ```yaml tab="Docker & Swarm"
 labels:
-  - "traefik.http.middlewares.my-headers.headers.customrequestheaders.Origin=https://allowed-origin.com"
-  - "traefik.http.routers.my-websocket.middlewares=my-headers"
+  - "baqup.http.middlewares.my-headers.headers.customrequestheaders.Origin=https://allowed-origin.com"
+  - "baqup.http.routers.my-websocket.middlewares=my-headers"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: my-headers
@@ -329,7 +329,7 @@ spec:
       Origin: "https://allowed-origin.com"
 
 ---
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: my-websocket-route

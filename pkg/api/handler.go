@@ -6,12 +6,12 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/baqupio/baqup/v3/pkg/config/dynamic"
+	"github.com/baqupio/baqup/v3/pkg/config/runtime"
+	"github.com/baqupio/baqup/v3/pkg/config/static"
+	"github.com/baqupio/baqup/v3/pkg/version"
 	"github.com/gorilla/mux"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/config/runtime"
-	"github.com/traefik/traefik/v3/pkg/config/static"
-	"github.com/traefik/traefik/v3/pkg/version"
 )
 
 type apiError struct {
@@ -50,7 +50,7 @@ type RunTimeRepresentation struct {
 	UDPServices    map[string]*runtime.UDPServiceInfo       `json:"udpServices,omitempty"`
 }
 
-// Handler serves the configuration and status of Traefik on API endpoints.
+// Handler serves the configuration and status of Baqup on API endpoints.
 type Handler struct {
 	staticConfig static.Configuration
 

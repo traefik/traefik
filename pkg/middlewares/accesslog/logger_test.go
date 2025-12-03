@@ -20,13 +20,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/baqupio/baqup/v3/pkg/middlewares/capture"
+	"github.com/baqupio/baqup/v3/pkg/middlewares/observability"
+	otypes "github.com/baqupio/baqup/v3/pkg/observability/types"
 	"github.com/containous/alice"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
-	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
-	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	"go.opentelemetry.io/collector/pdata/plog/plogotlp"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -37,7 +37,7 @@ import (
 const delta float64 = 1e-10
 
 var (
-	logFileNameSuffix       = "/traefik/logger/test.log"
+	logFileNameSuffix       = "/baqup/logger/test.log"
 	testContent             = "Hello, World"
 	testServiceName         = "http://127.0.0.1/testService"
 	testRouterName          = "testRouter"
@@ -68,7 +68,7 @@ func TestOTelAccessLogWithBody(t *testing.T) {
 			bodyCheckFn: func(t *testing.T, log string) {
 				t.Helper()
 
-				// For common format, verify the body contains the Traefik common log formatted string
+				// For common format, verify the body contains the Baqup common log formatted string
 				assert.Regexp(t, `"body":{"stringValue":".*- /health -.*200.*[0-9]+ms.*"}`, log)
 			},
 		},
@@ -185,7 +185,7 @@ func TestOTelAccessLogWithBody(t *testing.T) {
 }
 
 func TestLogRotation(t *testing.T) {
-	fileName := filepath.Join(t.TempDir(), "traefik.log")
+	fileName := filepath.Join(t.TempDir(), "baqup.log")
 	rotatedFileName := fileName + ".rotated"
 
 	config := &otypes.AccessLog{FilePath: fileName, Format: CommonFormat}

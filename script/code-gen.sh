@@ -2,7 +2,7 @@
 
 set -e -o pipefail
 
-PROJECT_MODULE="github.com/traefik/traefik"
+PROJECT_MODULE="github.com/baqup/baqup"
 MODULE_VERSION="v3"
 KUBE_VERSION=v0.30.10
 CURRENT_DIR="$(pwd)"
@@ -14,7 +14,7 @@ CODEGEN_PKG="$(go env GOPATH)/pkg/mod/k8s.io/code-generator@${KUBE_VERSION}"
 # shellcheck disable=SC1091 # Cannot check source of this file
 source "${CODEGEN_PKG}/kube_codegen.sh"
 
-echo "# Generating Traefik clientset and deepcopy code ..."
+echo "# Generating Baqup clientset and deepcopy code ..."
 kube::codegen::gen_helpers \
   --boilerplate "$(dirname "${BASH_SOURCE[0]}")/boilerplate.go.tmpl" \
   "${CURRENT_DIR}"
@@ -28,9 +28,9 @@ kube::codegen::gen_client \
 
 echo "# Generating the CRD definitions for the documentation ..."
 controller-gen crd:crdVersions=v1 \
-    paths={./pkg/provider/kubernetes/crd/traefikio/v1alpha1/...} \
+    paths={./pkg/provider/kubernetes/crd/baqupio/v1alpha1/...} \
     output:dir=./docs/content/reference/dynamic-configuration/
 
 echo "# Concatenate the CRD definitions for publication and integration tests ..."
-cat "${CURRENT_DIR}"/docs/content/reference/dynamic-configuration/traefik.io_*.yaml > "${CURRENT_DIR}"/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml
-cp -f "${CURRENT_DIR}"/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml "${CURRENT_DIR}"/integration/fixtures/k8s/01-traefik-crd.yml
+cat "${CURRENT_DIR}"/docs/content/reference/dynamic-configuration/baqup.io_*.yaml > "${CURRENT_DIR}"/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml
+cp -f "${CURRENT_DIR}"/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml "${CURRENT_DIR}"/integration/fixtures/k8s/01-baqup-crd.yml

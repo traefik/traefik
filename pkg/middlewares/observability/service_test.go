@@ -42,7 +42,7 @@ func TestNewService(t *testing.T) {
 						attribute.Int64("server.port", int64(80)),
 						attribute.String("url.full", "http://www.test.com/traces?p=OpenTelemetry"),
 						attribute.String("url.scheme", "http"),
-						attribute.String("traefik.service.name", "myService"),
+						attribute.String("baqup.service.name", "myService"),
 						attribute.String("user_agent.original", "service-test"),
 					},
 				},

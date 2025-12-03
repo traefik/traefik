@@ -4,9 +4,9 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/baqupio/baqup/v3/pkg/config/dynamic"
+	"github.com/baqupio/baqup/v3/pkg/observability/logs"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/observability/logs"
 )
 
 // Status of the router/service.
@@ -22,7 +22,7 @@ const (
 	StatusDown = "DOWN"
 )
 
-// Configuration holds the information about the currently running traefik instance.
+// Configuration holds the information about the currently running baqup instance.
 type Configuration struct {
 	Routers        map[string]*RouterInfo        `json:"routers,omitempty"`
 	Middlewares    map[string]*MiddlewareInfo    `json:"middlewares,omitempty"`

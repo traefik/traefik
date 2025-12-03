@@ -1,9 +1,9 @@
 ---
 title: "ServersTransport"
-description: "ServersTransport allows configuring the connection between Traefik and the HTTP servers."
+description: "ServersTransport allows configuring the connection between Baqup and the HTTP servers."
 ---
 
-ServersTransport allows you to configure the transport between Traefik and your HTTP servers.
+ServersTransport allows you to configure the transport between Baqup and your HTTP servers.
 
 ## Configuration Example
 
@@ -80,14 +80,14 @@ http:
 
 ```yaml tab="Labels"
 labels:
-  - "traefik.http.services.Service01.loadBalancer.serversTransport=mytransport"
+  - "baqup.http.services.Service01.loadBalancer.serversTransport=mytransport"
 ```
 
 ```json tab="Tags"
 {
   // ...
   "Tags": [
-    "traefik.http.services.Service01.loadBalancer.serversTransport=mytransport"
+    "baqup.http.services.Service01.loadBalancer.serversTransport=mytransport"
   ]
 }
 ```

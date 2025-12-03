@@ -1,6 +1,6 @@
 ---
-title: "Traefik StatsD Documentation"
-description: "Traefik supports several metrics backends, including StatsD. Learn how to implement it for observability in Traefik Proxy. Read the technical documentation."
+title: "Baqup StatsD Documentation"
+description: "Baqup supports several metrics backends, including StatsD. Learn how to implement it for observability in Baqup Proxy. Read the technical documentation."
 ---
 
 # StatsD
@@ -133,22 +133,22 @@ metrics:
 
 #### `prefix`
 
-_Optional, Default="traefik"_
+_Optional, Default="baqup"_
 
 The prefix to use for metrics collection.
 
 ```yaml tab="File (YAML)"
 metrics:
   statsD:
-    prefix: traefik
+    prefix: baqup
 ```
 
 ```toml tab="File (TOML)"
 [metrics]
   [metrics.statsD]
-    prefix = "traefik"
+    prefix = "baqup"
 ```
 
 ```bash tab="CLI"
---metrics.statsd.prefix=traefik
+--metrics.statsd.prefix=baqup
 ```

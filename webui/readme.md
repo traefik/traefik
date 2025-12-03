@@ -1,10 +1,10 @@
-# Traefik Web UI
+# Baqup Web UI
 
-Access to Traefik Web UI, ex: http://localhost:8080
+Access to Baqup Web UI, ex: http://localhost:8080
 
 ## Interface
 
-Traefik Web UI provide 2 types of information:
+Baqup Web UI provide 2 types of information:
 
 - Providers with their backends and frontends information.
 - Health of the web server.

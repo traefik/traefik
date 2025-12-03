@@ -8,12 +8,12 @@ import (
 	"net/http"
 	"runtime"
 
-	"github.com/traefik/traefik/v3/pkg/middlewares"
+	"github.com/baqupio/baqup/v3/pkg/middlewares"
 )
 
 const (
 	typeName       = "Recovery"
-	middlewareName = "traefik-internal-recovery"
+	middlewareName = "baqup-internal-recovery"
 )
 
 type recovery struct {

@@ -1,20 +1,20 @@
 ---
-title: "Kubernetes and Traefik Quick Start"
-description: "Deploy Traefik in Kubernetes using Helm and expose your first service"
+title: "Kubernetes and Baqup Quick Start"
+description: "Deploy Baqup in Kubernetes using Helm and expose your first service"
 slug: quick-start-with-kubernetes
 ---
 
-# Getting Started with Kubernetes and Traefik
+# Getting Started with Kubernetes and Baqup
 
-Kubernetes is a first-class citizen in Traefik, offering native support for Kubernetes resources and the latest Kubernetes standards. 
-Whether you're using Traefik's [IngressRoute CRD](../reference/routing-configuration/kubernetes/crd/http/ingressroute.md), [Ingress](../reference/routing-configuration/kubernetes/ingress.md) or the [Kubernetes Gateway API](../reference/routing-configuration/kubernetes/gateway-api.md), 
-Traefik provides a seamless experience for managing your Kubernetes traffic.
+Kubernetes is a first-class citizen in Baqup, offering native support for Kubernetes resources and the latest Kubernetes standards. 
+Whether you're using Baqup's [IngressRoute CRD](../reference/routing-configuration/kubernetes/crd/http/ingressroute.md), [Ingress](../reference/routing-configuration/kubernetes/ingress.md) or the [Kubernetes Gateway API](../reference/routing-configuration/kubernetes/gateway-api.md), 
+Baqup provides a seamless experience for managing your Kubernetes traffic.
 
 This guide shows you how to:
 
 - Create a Kubernetes cluster using k3d
-- Install Traefik using Helm
-- Expose the Traefik dashboard
+- Install Baqup using Helm
+- Expose the Baqup dashboard
 - Deploy a sample application
 - Configure basic routing with IngressRoute and Gateway API
 
@@ -31,32 +31,32 @@ This guide shows you how to:
 
 Create a cluster with the following command. This command:
 
-- Creates a k3d cluster named "traefik"
+- Creates a k3d cluster named "baqup"
 - Maps ports 80, 443, and 8000 to the loadbalancer for accessing services
-- Disables the built-in Traefik ingress controller to avoid conflicts
+- Disables the built-in Baqup ingress controller to avoid conflicts
 
 ```bash
-k3d cluster create traefik \
+k3d cluster create baqup \
   --port 80:80@loadbalancer \
   --port 443:443@loadbalancer \
   --port 8000:8000@loadbalancer \
-  --k3s-arg "--disable=traefik@server:0"
+  --k3s-arg "--disable=baqup@server:0"
 ```
 
 Configure kubectl:
 
 ```bash
-kubectl cluster-info --context k3d-traefik
+kubectl cluster-info --context k3d-baqup
 ```
 
-## Install Traefik
+## Install Baqup
 
 ### Using Helm Values File
 
-Add the Traefik Helm repository:
+Add the Baqup Helm repository:
 
 ```bash
-helm repo add traefik https://traefik.github.io/charts
+helm repo add baqup https://baqup.github.io/charts
 helm repo update
 ```
 
@@ -88,15 +88,15 @@ gateway:
 !!! info
     The [KubernetesCRD](../reference/install-configuration/providers/kubernetes/kubernetes-crd.md) provider is enabled by default when using the Helm chart so we don't need to set it in the values file.
 
-Install Traefik:
+Install Baqup:
 
 ```bash
-helm install traefik traefik/traefik -f values.yaml --wait
+helm install baqup baqup/baqup -f values.yaml --wait
 ```
 
 ### Using Helm CLI Arguments
 
-Alternatively, you can install Traefik using CLI arguments. This command:
+Alternatively, you can install Baqup using CLI arguments. This command:
 
 - Maps ports `30000` and `30001` to the web and websecure entrypoints
 - Enables the dashboard with a specific hostname rule
@@ -104,7 +104,7 @@ Alternatively, you can install Traefik using CLI arguments. This command:
 - Allows the Gateway to expose HTTPRoutes from all namespaces
 
 ```bash
-helm install traefik traefik/traefik --wait \
+helm install baqup baqup/baqup --wait \
   --set ingressRoute.dashboard.enabled=true \
   --set ingressRoute.dashboard.matchRule='Host(`dashboard.localhost`)' \
   --set ingressRoute.dashboard.entryPoints={web} \
@@ -115,10 +115,10 @@ helm install traefik traefik/traefik --wait \
 !!! info
     The [KubernetesCRD](../reference/install-configuration/providers/kubernetes/kubernetes-crd.md) provider is enabled by default when using the Helm chart so we don't need to set it in the CLI arguments.
 
-When Traefik is installed with the Gateway API provider enabled, it automatically creates a default GatewayClass named **traefik**:
+When Baqup is installed with the Gateway API provider enabled, it automatically creates a default GatewayClass named **baqup**:
 
 ```bash
-kubectl describe GatewayClass traefik
+kubectl describe GatewayClass baqup
 ```
 
 ## Expose the Dashboard
@@ -129,7 +129,7 @@ Access it at:
 
 [http://dashboard.localhost/dashboard/](http://dashboard.localhost/dashboard/)
 
-![Traefik Dashboard Screenshot](../assets/img/getting-started/traefik-dashboard.png)
+![Baqup Dashboard Screenshot](../assets/img/getting-started/baqup-dashboard.png)
 
 ## Deploy a Sample Application
 
@@ -153,7 +153,7 @@ spec:
     spec:
       containers:
         - name: whoami
-          image: traefik/whoami
+          image: baqup/whoami
           ports:
             - containerPort: 80
 ```
@@ -186,7 +186,7 @@ Create an IngressRoute:
 
 ```yaml
 # whoami-ingressroute.yaml
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: whoami
@@ -229,7 +229,7 @@ X-Forwarded-For: 127.0.0.1
 X-Forwarded-Host: whoami.localhost
 X-Forwarded-Port: 80
 X-Forwarded-Proto: http
-X-Forwarded-Server: traefik-598946cd7-zds59
+X-Forwarded-Server: baqup-598946cd7-zds59
 X-Real-Ip: 127.0.0.1
 ```
 
@@ -239,9 +239,9 @@ You can also visit [http://whoami.localhost](http://whoami.localhost) in a brows
 
 ## Exposing the Application Using the Gateway API
 
-Traefik supports the Kubernetes Gateway API specification, which provides a more standardized way to configure ingress in Kubernetes.
-When we installed Traefik earlier, we enabled the Gateway API provider. 
-You can verify this in the providers section of the Traefik dashboard.
+Baqup supports the Kubernetes Gateway API specification, which provides a more standardized way to configure ingress in Kubernetes.
+When we installed Baqup earlier, we enabled the Gateway API provider. 
+You can verify this in the providers section of the Baqup dashboard.
 
 ![Providers Section Screenshot](../assets/img/getting-started/providers.png)
 
@@ -256,7 +256,7 @@ kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/downloa
 Create an HTTPRoute. This configuration:
 
 - Creates an HTTPRoute named "whoami"
-- Attaches it to the default Gateway that Traefik created during installation
+- Attaches it to the default Gateway that Baqup created during installation
 - Configures routing for the hostname "whoami-gatewayapi.localhost"
 - Routes all traffic to the whoami service on port 80
 
@@ -268,7 +268,7 @@ metadata:
   name: whoami
 spec:
   parentRefs:
-    - name: traefik-gateway
+    - name: baqup-gateway
   hostnames:
     - "whoami-gatewayapi.localhost"
   rules:
@@ -309,7 +309,7 @@ X-Forwarded-For: 127.0.0.1
 X-Forwarded-Host: whoami.localhost
 X-Forwarded-Port: 80
 X-Forwarded-Proto: http
-X-Forwarded-Server: traefik-598946cd7-zds59
+X-Forwarded-Server: baqup-598946cd7-zds59
 X-Real-Ip: 127.0.0.1
 ```
 
@@ -317,11 +317,11 @@ You can now visit [http://whoami.localhost](http://whoami.localhost) in your bro
 
 ![whoami application Screenshot](../assets/img/getting-started/whoami-localhost.png)
 
-If you navigate to the **HTTP Routes** section of the traefik dashboard, you can see that the `whoami.localhost` route is managed by the Traefik Kubernetes Gateway API provider:
+If you navigate to the **HTTP Routes** section of the baqup dashboard, you can see that the `whoami.localhost` route is managed by the Baqup Kubernetes Gateway API provider:
 
-![Traefik Dashboard HTTP Routes Section Screenshot](../assets/img/getting-started/kubernetes-gateway.png)
+![Baqup Dashboard HTTP Routes Section Screenshot](../assets/img/getting-started/kubernetes-gateway.png)
 
-That's it! You've successfully deployed Traefik and configured routing in a Kubernetes cluster.
+That's it! You've successfully deployed Baqup and configured routing in a Kubernetes cluster.
 
 ## Next Steps
 
@@ -331,4 +331,4 @@ That's it! You've successfully deployed Traefik and configured routing in a Kube
 - [Learn more about Kubernetes CRD provider](../reference/install-configuration/providers/kubernetes/kubernetes-crd.md)
 - [Learn more about Kubernetes Gateway API provider](../reference/install-configuration/providers/kubernetes/kubernetes-gateway.md)
 
-{!traefik-for-business-applications.md!}
+{!baqup-for-business-applications.md!}

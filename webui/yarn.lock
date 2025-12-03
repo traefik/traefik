@@ -17816,9 +17816,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"traefik-proxy-dashboard@workspace:.":
+"baqup-proxy-dashboard@workspace:.":
   version: 0.0.0-use.local
-  resolution: "traefik-proxy-dashboard@workspace:."
+  resolution: "baqup-proxy-dashboard@workspace:."
   dependencies:
     "@eslint/js": "npm:^9.32.0"
     "@noble/ed25519": "npm:^3.0.0"

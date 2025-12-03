@@ -8,9 +8,9 @@
     "JobID": "job7",
     "AllocID": "3e1cc853-f6b1-2c46-6f20-332a6e91794b",
     "Tags": [
-      "traefik.enable=true",
-      "traefik.tcp.routers.job7.rule=HostSNI(`job7`)",
-      "traefik.tcp.routers.job7.tls.passthrough=true"
+      "baqup.enable=true",
+      "baqup.tcp.routers.job7.rule=HostSNI(`job7`)",
+      "baqup.tcp.routers.job7.tls.passthrough=true"
     ],
     "Address": "192.168.1.21",
     "Port": 22899,

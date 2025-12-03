@@ -16,7 +16,7 @@ func tagsToNeutralLabels(tags []string, prefix string) map[string]string {
 				}
 
 				// replace custom prefix by the generic prefix
-				key := "traefik." + strings.TrimPrefix(parts[0], prefix+".")
+				key := "baqup." + strings.TrimPrefix(parts[0], prefix+".")
 				labels[key] = parts[1]
 			}
 		}

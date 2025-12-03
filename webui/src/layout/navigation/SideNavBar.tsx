@@ -276,7 +276,7 @@ export const SideNav = ({
               mt: '$3',
               whiteSpace: 'nowrap',
             }}
-            href="https://plugins.traefik.io/"
+            href="https://plugins.baqup.io/"
             target="_blank"
           >
             {!isSmallScreen || isExpanded ? 'Plugins' : ''}

@@ -1,6 +1,6 @@
 server:
   image: rancher/k3s:v1.34.2-k3s1
-  command: server --disable-agent --no-deploy traefik
+  command: server --disable-agent --no-deploy baqup
   environment:
     - K3S_CLUSTER_SECRET=somethingtotallyrandom
     - K3S_KUBECONFIG_OUTPUT=/output/kubeconfig.yaml
@@ -25,6 +25,6 @@ node:
     - K3S_URL=https://server:6443
     - K3S_CLUSTER_SECRET=somethingtotallyrandom
   volumes:
-    # this is where you would place a alternative traefik image (saved as a .tar file with
-    # 'docker save'), if you want to use it, instead of the traefik:v3.6 image.
+    # this is where you would place a alternative baqup image (saved as a .tar file with
+    # 'docker save'), if you want to use it, instead of the baqup:v3.6 image.
     - /somewhere/on/your/host/custom-image:/var/lib/rancher/k3s/agent/images

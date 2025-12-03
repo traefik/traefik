@@ -1,6 +1,6 @@
 ---
-title: "Traefik EntryPoints Documentation"
-description: "For routing and load balancing in Traefik Proxy, EntryPoints define which port will receive packets and whether in UDP or TCP. Read the technical documentation."
+title: "Baqup EntryPoints Documentation"
+description: "For routing and load balancing in Baqup Proxy, EntryPoints define which port will receive packets and whether in UDP or TCP. Read the technical documentation."
 ---
 
 # EntryPoints
@@ -10,7 +10,7 @@ Opening Connections for Incoming Requests
 
 ![entryPoints](../assets/img/entrypoints.png)
 
-EntryPoints are the network entry points into Traefik.
+EntryPoints are the network entry points into Baqup.
 They define the port which will receive the packets,
 and whether to listen for TCP or UDP.
 
@@ -243,14 +243,14 @@ If both TCP and UDP are wanted for the same port, two entryPoints definitions ar
 
 _Optional, Default=false_
 
-`allowACMEByPass` determines whether a user defined router can handle ACME TLS or HTTP challenges instead of the Traefik dedicated one.
-This option can be used when a Traefik instance has one or more certificate resolvers configured,
+`allowACMEByPass` determines whether a user defined router can handle ACME TLS or HTTP challenges instead of the Baqup dedicated one.
+This option can be used when a Baqup instance has one or more certificate resolvers configured,
 but is also used to route challenges connections/requests to services that could also initiate their own ACME challenges.
 
 ??? info "No Certificate Resolvers configured"
 
     It is not necessary to use the `allowACMEByPass' option certificate option if no certificate resolver is defined.
-    In fact, Traefik will automatically allow ACME TLS or HTTP requests to be handled by custom routers in this case, since there can be no concurrency with its own challenge handlers.
+    In fact, Baqup will automatically allow ACME TLS or HTTP requests to be handled by custom routers in this case, since there can be no concurrency with its own challenge handlers.
 
 ```yaml tab="File (YAML)"
 entryPoints:
@@ -277,7 +277,7 @@ It also allows the kernel to act like a load balancer to distribute incoming
 connections between entry points.
 
 For example, you can use it with the [transport.lifeCycle](#lifecycle) to do
-canary deployments against Traefik itself. Like upgrading Traefik version or
+canary deployments against Baqup itself. Like upgrading Baqup version or
 reloading the static configuration without any service downtime.
 
 !!! warning "Supported platforms"
@@ -308,7 +308,7 @@ reloading the static configuration without any service downtime.
     --entryPoints.web.reusePort=true
     ```
 
-    Now it is possible to run multiple Traefik processes with the same EntryPoint configuration.
+    Now it is possible to run multiple Baqup processes with the same EntryPoint configuration.
 
 ??? example "Listen on the same port but bind to a different host"
 
@@ -355,7 +355,7 @@ EntryPoints in this list are used (by default) on HTTP and TCP routers that do n
     If at least one EntryPoint has the `AsDefault` option set to `true`,
     then the list of default EntryPoints includes only EntryPoints that have the `AsDefault` option set to `true`.
 
-    Some built-in EntryPoints are always excluded from the list, namely: `traefik`.
+    Some built-in EntryPoints are always excluded from the list, namely: `baqup`.
 
 !!! warning "Only TCP and HTTP"
 
@@ -486,7 +486,7 @@ entryPoints:
 
 ??? info "HTTP/3 uses UDP+TLS"
 
-    As HTTP/3 actually uses UDP, when traefik is configured with a TCP entryPoint on port N with HTTP/3 enabled,
+    As HTTP/3 actually uses UDP, when baqup is configured with a TCP entryPoint on port N with HTTP/3 enabled,
     the underlying HTTP/3 server that is started automatically listens on UDP port N too. As a consequence,
     it means port N cannot be used by another UDP entryPoint.
     Since HTTP/3 requires the use of TLS,
@@ -496,7 +496,7 @@ entryPoints:
 
 `http3.advertisedPort` defines which UDP port to advertise as the HTTP/3 authority.
 It defaults to the entryPoint's address port.
-It can be used to override the authority in the `alt-svc` header, for example if the public facing port is different from where Traefik is listening.
+It can be used to override the authority in the `alt-svc` header, for example if the public facing port is different from where Baqup is listening.
 
 !!! info "http3.advertisedPort"
 
@@ -518,7 +518,7 @@ It can be used to override the authority in the `alt-svc` header, for example if
 
 ### Forwarded Headers
 
-You can configure Traefik to trust the forwarded headers information (`X-Forwarded-*`).
+You can configure Baqup to trust the forwarded headers information (`X-Forwarded-*`).
 
 ??? info "`forwardedHeaders.trustedIPs`"
 
@@ -582,9 +582,9 @@ You can configure Traefik to trust the forwarded headers information (`X-Forward
 
 ??? info "`forwardedHeaders.connection`"
     
-    As per RFC7230, Traefik respects the Connection options from the client request.
+    As per RFC7230, Baqup respects the Connection options from the client request.
     By doing so, it removes any header field(s) listed in the request Connection header and the Connection header field itself when empty.
-    The removal happens as soon as the request is handled by Traefik,
+    The removal happens as soon as the request is handled by Baqup,
     thus the removed headers are not available when the request passes through the middleware chain.
     The `connection` option lists the Connection headers allowed to passthrough the middleware chain before their removal.
 
@@ -618,7 +618,7 @@ You can configure Traefik to trust the forwarded headers information (`X-Forward
 
 #### `respondingTimeouts`
 
-`respondingTimeouts` are timeouts for incoming requests to the Traefik instance.
+`respondingTimeouts` are timeouts for incoming requests to the Baqup instance.
 Setting them has no effect for UDP entryPoints.
 
 ??? info "`transport.respondingTimeouts.readTimeout`"
@@ -733,19 +733,19 @@ Setting them has no effect for UDP entryPoints.
 
 #### `lifeCycle`
 
-Controls the behavior of Traefik during the shutdown phase.
+Controls the behavior of Baqup during the shutdown phase.
 
 ??? info "`lifeCycle.requestAcceptGraceTimeout`"
 
     _Optional, Default=0s_
 
     Duration to keep accepting requests prior to initiating the graceful termination period (as defined by the `graceTimeOut` option).
-    This option is meant to give downstream load-balancers sufficient time to take Traefik out of rotation.
+    This option is meant to give downstream load-balancers sufficient time to take Baqup out of rotation.
 
     Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw values (digits).
 
     If no units are provided, the value is parsed assuming seconds.
-    The zero duration disables the request accepting grace period, i.e., Traefik will immediately proceed to the grace period.
+    The zero duration disables the request accepting grace period, i.e., Baqup will immediately proceed to the grace period.
 
     ```yaml tab="File (YAML)"
     ## Static configuration
@@ -777,7 +777,7 @@ Controls the behavior of Traefik during the shutdown phase.
 
     _Optional, Default=10s_
 
-    Duration to give active requests a chance to finish before Traefik stops.
+    Duration to give active requests a chance to finish before Baqup stops.
 
     Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw values (digits).
 
@@ -815,7 +815,7 @@ Controls the behavior of Traefik during the shutdown phase.
 
 _Optional, Default=0_
 
-The maximum number of requests Traefik can handle before sending a `Connection: Close` header to the client (for HTTP2, Traefik sends a GOAWAY). Zero means no limit.
+The maximum number of requests Baqup can handle before sending a `Connection: Close` header to the client (for HTTP2, Baqup sends a GOAWAY). Zero means no limit.
 
 ```yaml tab="File (YAML)"
 ## Static configuration
@@ -845,7 +845,7 @@ entryPoints:
 
 _Optional, Default=0s_
 
-The maximum duration Traefik can handle requests before sending a `Connection: Close` header to the client (for HTTP2, Traefik sends a GOAWAY). Zero means no limit.
+The maximum duration Baqup can handle requests before sending a `Connection: Close` header to the client (for HTTP2, Baqup sends a GOAWAY). Zero means no limit.
 
 ```yaml tab="File (YAML)"
 ## Static configuration
@@ -873,7 +873,7 @@ entryPoints:
 
 ### ProxyProtocol
 
-Traefik supports [PROXY protocol](https://www.haproxy.org/download/2.0/doc/proxy-protocol.txt) version 1 and 2.
+Baqup supports [PROXY protocol](https://www.haproxy.org/download/2.0/doc/proxy-protocol.txt) version 1 and 2.
 
 If PROXY protocol header parsing is enabled for the entry point, this entry point can accept connections with or without PROXY protocol headers.
 
@@ -915,7 +915,7 @@ If the PROXY protocol header is passed, then the version is determined automatic
 
     Insecure Mode (Testing Environment Only).
 
-    In a test environments, you can configure Traefik to trust every incoming connection.
+    In a test environments, you can configure Baqup to trust every incoming connection.
     Doing so, every remote client address will be replaced (`trustedIPs` won't have any effect)
 
     ```yaml tab="File (YAML)"
@@ -942,9 +942,9 @@ If the PROXY protocol header is passed, then the version is determined automatic
     --entryPoints.web.proxyProtocol.insecure
     ```
 
-!!! warning "Queuing Traefik behind Another Load Balancer"
+!!! warning "Queuing Baqup behind Another Load Balancer"
 
-    When queuing Traefik behind another load-balancer, make sure to configure PROXY protocol on both sides.
+    When queuing Baqup behind another load-balancer, make sure to configure PROXY protocol on both sides.
     Not doing so could introduce a security risk in your system (enabling request forgery).
 
 ## HTTP Options
@@ -1120,7 +1120,7 @@ This section is a convenience to enable (permanent) redirecting of all incoming 
 _Optional, Default=false_
 
 The `encodeQuerySemicolons` option allows to enable query semicolons encoding.
-One could use this option to avoid non-encoded semicolons to be interpreted as query parameter separators by Traefik.
+One could use this option to avoid non-encoded semicolons to be interpreted as query parameter separators by Baqup.
 When using this option, the non-encoded semicolons characters in query will be transmitted encoded to the backend.
 
 ```yaml tab="File (YAML)"
@@ -1340,12 +1340,12 @@ entryPoints:
 
 ## Systemd Socket Activation
 
-Traefik supports [systemd socket activation](https://www.freedesktop.org/software/systemd/man/latest/systemd-socket-activate.html).
+Baqup supports [systemd socket activation](https://www.freedesktop.org/software/systemd/man/latest/systemd-socket-activate.html).
 
 When a socket activation file descriptor name matches an EntryPoint name, the corresponding file descriptor will be used as the TCP/UDP listener for the matching EntryPoint.
 
 ```bash
-systemd-socket-activate -l 80 -l 443 --fdname web:websecure  ./traefik --entrypoints.web --entrypoints.websecure
+systemd-socket-activate -l 80 -l 443 --fdname web:websecure  ./baqup --entrypoints.web --entrypoints.websecure
 ```
 
 !!! warning "EntryPoint Address"
@@ -1369,7 +1369,7 @@ This section is dedicated to options to control observability for an EntryPoint.
 !!! warning "AddInternals option"
 
     By default, and for any type of signals (access-logs, metrics and tracing),
-    Traefik disables observability for internal resources.
+    Baqup disables observability for internal resources.
     The observability options described below cannot interfere with the `AddInternals` ones,
     and will be ignored.
 
@@ -1460,4 +1460,4 @@ entryPoints:
 --entryPoints.foo.observability.tracing=false
 ```
 
-{!traefik-for-business-applications.md!}
+{!baqup-for-business-applications.md!}

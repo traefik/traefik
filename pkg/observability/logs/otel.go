@@ -7,9 +7,9 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/baqupio/baqup/v3/pkg/observability"
+	"github.com/baqupio/baqup/v3/pkg/observability/types"
 	"github.com/rs/zerolog"
-	"github.com/traefik/traefik/v3/pkg/observability"
-	"github.com/traefik/traefik/v3/pkg/observability/types"
 	otellog "go.opentelemetry.io/otel/log"
 )
 
@@ -27,7 +27,7 @@ func SetupOTelLogger(ctx context.Context, logger zerolog.Logger, config *types.O
 		return zerolog.Logger{}, fmt.Errorf("setting up OpenTelemetry logger provider: %w", err)
 	}
 
-	return logger.Hook(&otelLoggerHook{logger: provider.Logger("traefik")}), nil
+	return logger.Hook(&otelLoggerHook{logger: provider.Logger("baqup")}), nil
 }
 
 // otelLoggerHook is a zerolog hook that forwards logs to OpenTelemetry.

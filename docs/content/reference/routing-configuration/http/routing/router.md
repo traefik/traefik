@@ -1,5 +1,5 @@
 ---
-title: "Traefik HTTP Routers Documentation"
+title: "Baqup HTTP Routers Documentation"
 description: "HTTP routers are responsible for connecting incoming requests to the services that can handle them. Read the technical documentation."
 ---
 
@@ -64,35 +64,35 @@ http:
 
 ```yaml tab="Labels"
 labels:
-  - "traefik.http.routers.my-router.entrypoints=web,websecure"
-  - "traefik.http.routers.my-router.rule=Host(`example.com`) && Path(`/api`)"
-  - "traefik.http.routers.my-router.priority=10"
-  - "traefik.http.routers.my-router.middlewares=auth,ratelimit"
-  - "traefik.http.routers.my-router.service=my-service"
-  - "traefik.http.routers.my-router.tls.certresolver=letsencrypt"
-  - "traefik.http.routers.my-router.tls.options=modern"
-  - "traefik.http.routers.my-router.tls.domains[0].main=example.com"
-  - "traefik.http.routers.my-router.tls.domains[0].sans=www.example.com"
-  - "traefik.http.routers.my-router.observability.metrics=true"
-  - "traefik.http.routers.my-router.observability.accessLogs=true"
-  - "traefik.http.routers.my-router.observability.tracing=true"
+  - "baqup.http.routers.my-router.entrypoints=web,websecure"
+  - "baqup.http.routers.my-router.rule=Host(`example.com`) && Path(`/api`)"
+  - "baqup.http.routers.my-router.priority=10"
+  - "baqup.http.routers.my-router.middlewares=auth,ratelimit"
+  - "baqup.http.routers.my-router.service=my-service"
+  - "baqup.http.routers.my-router.tls.certresolver=letsencrypt"
+  - "baqup.http.routers.my-router.tls.options=modern"
+  - "baqup.http.routers.my-router.tls.domains[0].main=example.com"
+  - "baqup.http.routers.my-router.tls.domains[0].sans=www.example.com"
+  - "baqup.http.routers.my-router.observability.metrics=true"
+  - "baqup.http.routers.my-router.observability.accessLogs=true"
+  - "baqup.http.routers.my-router.observability.tracing=true"
 ```
 
 ```json tab="Tags"
 {
   "Tags": [
-    "traefik.http.routers.my-router.entrypoints=web,websecure",
-    "traefik.http.routers.my-router.rule=Host(`example.com`) && Path(`/api`)",
-    "traefik.http.routers.my-router.priority=10",
-    "traefik.http.routers.my-router.middlewares=auth,ratelimit",
-    "traefik.http.routers.my-router.service=my-service",
-    "traefik.http.routers.my-router.tls.certresolver=letsencrypt",
-    "traefik.http.routers.my-router.tls.options=modern",
-    "traefik.http.routers.my-router.tls.domains[0].main=example.com",
-    "traefik.http.routers.my-router.tls.domains[0].sans=www.example.com",
-    "traefik.http.routers.my-router.observability.metrics=true",
-    "traefik.http.routers.my-router.observability.accessLogs=true",
-    "traefik.http.routers.my-router.observability.tracing=true",
+    "baqup.http.routers.my-router.entrypoints=web,websecure",
+    "baqup.http.routers.my-router.rule=Host(`example.com`) && Path(`/api`)",
+    "baqup.http.routers.my-router.priority=10",
+    "baqup.http.routers.my-router.middlewares=auth,ratelimit",
+    "baqup.http.routers.my-router.service=my-service",
+    "baqup.http.routers.my-router.tls.certresolver=letsencrypt",
+    "baqup.http.routers.my-router.tls.options=modern",
+    "baqup.http.routers.my-router.tls.domains[0].main=example.com",
+    "baqup.http.routers.my-router.tls.domains[0].sans=www.example.com",
+    "baqup.http.routers.my-router.observability.metrics=true",
+    "baqup.http.routers.my-router.observability.accessLogs=true",
+    "baqup.http.routers.my-router.observability.tracing=true",
   ]
 }
 ```
@@ -118,4 +118,4 @@ labels:
 - The character `@` is not authorized in the router name
 - In provider-specific configurations (Docker, Kubernetes), router names are often auto-generated based on service names and rules
 
-{!traefik-for-business-applications.md!}
+{!baqup-for-business-applications.md!}

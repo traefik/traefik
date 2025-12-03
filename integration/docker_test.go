@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/baqupio/baqup/v3/integration/try"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"github.com/traefik/traefik/v3/integration/try"
 )
 
 // Docker tests suite.
@@ -48,7 +48,7 @@ func (s *DockerSuite) TestSimpleConfiguration() {
 
 	s.composeUp()
 
-	s.traefikCmd(withConfigFile(file))
+	s.baqupCmd(withConfigFile(file))
 
 	// Expected a 404 as we did not configure anything
 	err := try.GetRequest("http://127.0.0.1:8000/", 500*time.Millisecond, try.StatusCodeIs(http.StatusNotFound))
@@ -68,8 +68,8 @@ func (s *DockerSuite) TestDefaultDockerContainers() {
 
 	s.composeUp("simple")
 
-	// Start traefik
-	s.traefikCmd(withConfigFile(file))
+	// Start baqup
+	s.baqupCmd(withConfigFile(file))
 
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/version", nil)
 	require.NoError(s.T(), err)
@@ -100,8 +100,8 @@ func (s *DockerSuite) TestDockerContainersWithTCPLabels() {
 
 	s.composeUp("withtcplabels")
 
-	// Start traefik
-	s.traefikCmd(withConfigFile(file))
+	// Start baqup
+	s.baqupCmd(withConfigFile(file))
 
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`my.super.host`)"))
 	require.NoError(s.T(), err)
@@ -125,8 +125,8 @@ func (s *DockerSuite) TestDockerContainersWithLabels() {
 
 	s.composeUp("withlabels1", "withlabels2")
 
-	// Start traefik
-	s.traefikCmd(withConfigFile(file))
+	// Start baqup
+	s.baqupCmd(withConfigFile(file))
 
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/version", nil)
 	require.NoError(s.T(), err)
@@ -164,8 +164,8 @@ func (s *DockerSuite) TestDockerContainersWithOneMissingLabels() {
 
 	s.composeUp("withonelabelmissing")
 
-	// Start traefik
-	s.traefikCmd(withConfigFile(file))
+	// Start baqup
+	s.baqupCmd(withConfigFile(file))
 
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/version", nil)
 	require.NoError(s.T(), err)
@@ -189,14 +189,14 @@ func (s *DockerSuite) TestRestartDockerContainers() {
 
 	s.composeUp("powpow")
 
-	// Start traefik
-	s.traefikCmd(withConfigFile(file))
+	// Start baqup
+	s.baqupCmd(withConfigFile(file))
 
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/version", nil)
 	require.NoError(s.T(), err)
 	req.Host = "my.super.host"
 
-	// TODO Need to wait than 500 milliseconds more (for swarm or traefik to boot up ?)
+	// TODO Need to wait than 500 milliseconds more (for swarm or baqup to boot up ?)
 	resp, err := try.ResponseUntilStatusCode(req, 1500*time.Millisecond, http.StatusOK)
 	require.NoError(s.T(), err)
 
@@ -236,8 +236,8 @@ func (s *DockerSuite) TestDockerAllowNonRunning() {
 
 	s.composeUp("nonRunning")
 
-	// Start traefik
-	s.traefikCmd(withConfigFile(file))
+	// Start baqup
+	s.baqupCmd(withConfigFile(file))
 
 	// Verify the container is working when running
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
@@ -251,7 +251,7 @@ func (s *DockerSuite) TestDockerAllowNonRunning() {
 	require.NoError(s.T(), err)
 	assert.Contains(s.T(), string(body), "Hostname:")
 
-	// Verify the router exists in Traefik configuration
+	// Verify the router exists in Baqup configuration
 	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers", 1*time.Second, try.BodyContains("NonRunning"))
 	require.NoError(s.T(), err)
 

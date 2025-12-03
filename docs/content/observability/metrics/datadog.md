@@ -1,6 +1,6 @@
 ---
-title: "Traefik Datadog Metrics Documentation"
-description: "Traefik Proxy supports Datadog for backend metrics. Read the technical documentation to enable Datadog for observability."
+title: "Baqup Datadog Metrics Documentation"
+description: "Baqup Proxy supports Datadog for backend metrics. Read the technical documentation to enable Datadog for observability."
 ---
 
 # Datadog
@@ -137,22 +137,22 @@ metrics:
 
 #### `prefix`
 
-_Optional, Default="traefik"_
+_Optional, Default="baqup"_
 
 The prefix to use for metrics collection.
 
 ```yaml tab="File (YAML)"
 metrics:
   datadog:
-    prefix: traefik
+    prefix: baqup
 ```
 
 ```toml tab="File (TOML)"
 [metrics]
   [metrics.datadog]
-    prefix = "traefik"
+    prefix = "baqup"
 ```
 
 ```bash tab="CLI"
---metrics.datadog.prefix=traefik
+--metrics.datadog.prefix=baqup
 ```

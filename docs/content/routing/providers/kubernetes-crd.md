@@ -1,9 +1,9 @@
 ---
-title: "Routing Configuration for Traefik CRD"
-description: "Understand the routing configuration for the Kubernetes IngressRoute & Traefik CRD. Read the technical documentation."
+title: "Routing Configuration for Baqup CRD"
+description: "Understand the routing configuration for the Kubernetes IngressRoute & Baqup CRD. Read the technical documentation."
 ---
 
-# Traefik & Kubernetes
+# Baqup & Kubernetes
 
 The Kubernetes Ingress Controller, The Custom Resource Way.
 {: .subtitle }
@@ -21,34 +21,34 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
     --8<-- "content/reference/dynamic-configuration/kubernetes-crd-rbac.yml"
     ```
     
-    ```yaml tab="Traefik"
+    ```yaml tab="Baqup"
     apiVersion: v1
     kind: ServiceAccount
     metadata:
-      name: traefik-ingress-controller
+      name: baqup-ingress-controller
     
     ---
     kind: Deployment
     apiVersion: apps/v1
     metadata:
-      name: traefik
+      name: baqup
       labels:
-        app: traefik
+        app: baqup
     
     spec:
       replicas: 1
       selector:
         matchLabels:
-          app: traefik
+          app: baqup
       template:
         metadata:
           labels:
-            app: traefik
+            app: baqup
         spec:
-          serviceAccountName: traefik-ingress-controller
+          serviceAccountName: baqup-ingress-controller
           containers:
-            - name: traefik
-              image: traefik:v3.6
+            - name: baqup
+              image: baqup:v3.6
               args:
                 - --log.level=DEBUG
                 - --api
@@ -71,11 +71,11 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
     apiVersion: v1
     kind: Service
     metadata:
-      name: traefik
+      name: baqup
     spec:
       type: LoadBalancer
       selector:
-        app: traefik
+        app: baqup
       ports:
         - protocol: TCP
           port: 80
@@ -94,11 +94,11 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
     apiVersion: v1
     kind: Service
     metadata:
-      name: traefikudp
+      name: baqupudp
     spec:
       type: LoadBalancer
       selector:
-        app: traefik
+        app: baqup
       ports:
         - protocol: UDP
           port: 9000
@@ -107,7 +107,7 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
     ```
     
     ```yaml tab="IngressRoute"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: baqup.io/v1alpha1
     kind: IngressRoute
     metadata:
       name: myingressroute
@@ -125,7 +125,7 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
           port: 80
     
     ---
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: baqup.io/v1alpha1
     kind: IngressRouteTCP
     metadata:
       name: ingressroute.tcp
@@ -141,7 +141,7 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
             port: 8080
     
     ---
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: baqup.io/v1alpha1
     kind: IngressRouteUDP
     metadata:
       name: ingressroute.udp
@@ -163,24 +163,24 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
       name: whoami
       namespace: default
       labels:
-        app: traefiklabs
+        app: baquplabs
         name: whoami
     
     spec:
       replicas: 2
       selector:
         matchLabels:
-          app: traefiklabs
+          app: baquplabs
           task: whoami
       template:
         metadata:
           labels:
-            app: traefiklabs
+            app: baquplabs
             task: whoami
         spec:
           containers:
             - name: whoami
-              image: traefik/whoami
+              image: baqup/whoami
               ports:
                 - containerPort: 80
     
@@ -196,7 +196,7 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
         - name: http
           port: 80
       selector:
-        app: traefiklabs
+        app: baquplabs
         task: whoami
     
     ---
@@ -206,24 +206,24 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
       name: whoamitcp
       namespace: default
       labels:
-        app: traefiklabs
+        app: baquplabs
         name: whoamitcp
     
     spec:
       replicas: 2
       selector:
         matchLabels:
-          app: traefiklabs
+          app: baquplabs
           task: whoamitcp
       template:
         metadata:
           labels:
-            app: traefiklabs
+            app: baquplabs
             task: whoamitcp
         spec:
           containers:
             - name: whoamitcp
-              image: traefik/whoamitcp
+              image: baqup/whoamitcp
               ports:
                 - containerPort: 8080
     
@@ -239,7 +239,7 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
         - protocol: TCP
           port: 8080
       selector:
-        app: traefiklabs
+        app: baquplabs
         task: whoamitcp
     
     ---
@@ -249,24 +249,24 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
       name: whoamiudp
       namespace: default
       labels:
-        app: traefiklabs
+        app: baquplabs
         name: whoamiudp
     
     spec:
       replicas: 2
       selector:
         matchLabels:
-          app: traefiklabs
+          app: baquplabs
           task: whoamiudp
       template:
         metadata:
           labels:
-            app: traefiklabs
+            app: baquplabs
             task: whoamiudp
         spec:
           containers:
             - name: whoamiudp
-              image: traefik/whoamiudp:latest
+              image: baqup/whoamiudp:latest
               ports:
                 - containerPort: 8080
     
@@ -281,7 +281,7 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
       ports:
         - port: 8080
       selector:
-        app: traefiklabs
+        app: baquplabs
         task: whoamiudp
     ```
 
@@ -289,9 +289,9 @@ The Kubernetes Ingress Controller, The Custom Resource Way.
 
 ### Custom Resource Definition (CRD)
 
-* You can find an exhaustive list, generated from Traefik's source code, of the custom resources and their attributes in [the reference page](../../reference/dynamic-configuration/kubernetes-crd.md).
-* Validate that [the prerequisites](../../providers/kubernetes-crd.md#requirements) are fulfilled before using the Traefik custom resources.
-* Traefik CRDs are building blocks that you can assemble according to your needs.
+* You can find an exhaustive list, generated from Baqup's source code, of the custom resources and their attributes in [the reference page](../../reference/dynamic-configuration/kubernetes-crd.md).
+* Validate that [the prerequisites](../../providers/kubernetes-crd.md#requirements) are fulfilled before using the Baqup custom resources.
+* Baqup CRDs are building blocks that you can assemble according to your needs.
     
 You can find an excerpt of the available custom resources in the table below:
 
@@ -299,25 +299,25 @@ You can find an excerpt of the available custom resources in the table below:
 |--------------------------------------------------|--------------------------------------------------------------------|----------------------------------------------------------------|
 | [IngressRoute](#kind-ingressroute)               | HTTP Routing                                                       | [HTTP router](../routers/index.md#configuring-http-routers)    |
 | [Middleware](#kind-middleware)                   | Tweaks the HTTP requests before they are sent to your service      | [HTTP Middlewares](../../middlewares/http/overview.md)         |
-| [TraefikService](#kind-traefikservice)           | Abstraction for HTTP loadbalancing/mirroring                       | [HTTP service](../services/index.md#configuring-http-services) |
+| [BaqupService](#kind-baqupservice)           | Abstraction for HTTP loadbalancing/mirroring                       | [HTTP service](../services/index.md#configuring-http-services) |
 | [IngressRouteTCP](#kind-ingressroutetcp)         | TCP Routing                                                        | [TCP router](../routers/index.md#configuring-tcp-routers)      |
 | [MiddlewareTCP](#kind-middlewaretcp)             | Tweaks the TCP requests before they are sent to your service       | [TCP Middlewares](../../middlewares/tcp/overview.md)           |
 | [IngressRouteUDP](#kind-ingressrouteudp)         | UDP Routing                                                        | [UDP router](../routers/index.md#configuring-udp-routers)      |
 | [TLSOptions](#kind-tlsoption)                    | Allows to configure some parameters of the TLS connection          | [TLSOptions](../../https/tls.md#tls-options)                   |
 | [TLSStores](#kind-tlsstore)                      | Allows to configure the default TLS store                          | [TLSStores](../../https/tls.md#certificates-stores)            |
-| [ServersTransport](#kind-serverstransport)       | Allows to configure the transport between Traefik and the backends | [ServersTransport](../../services/#serverstransport_1)         |
-| [ServersTransportTCP](#kind-serverstransporttcp) | Allows to configure the transport between Traefik and the backends | [TCP ServersTransport](../../services/#serverstransport_3)     |
+| [ServersTransport](#kind-serverstransport)       | Allows to configure the transport between Baqup and the backends | [ServersTransport](../../services/#serverstransport_1)         |
+| [ServersTransportTCP](#kind-serverstransporttcp) | Allows to configure the transport between Baqup and the backends | [TCP ServersTransport](../../services/#serverstransport_3)     |
 
 ### Kind: `IngressRoute`
 
-`IngressRoute` is the CRD implementation of a [Traefik HTTP router](../routers/index.md#configuring-http-routers).
+`IngressRoute` is the CRD implementation of a [Baqup HTTP router](../routers/index.md#configuring-http-routers).
 
 Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kubernetes-crd.md#definitions) in the Kubernetes cluster before creating `IngressRoute` objects.
 
 !!! info "IngressRoute Attributes"
 
     ```yaml
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: baqup.io/v1alpha1
     kind: IngressRoute
     metadata:
       name: foo
@@ -388,7 +388,7 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
 | [9]  | `observability.accesslogs`     | Defines whether the route will produce [access-logs](../routers/index.md#accesslogs).                                                                                                                                                                                                        |
 | [10] | `observability.metrics`        | Defines whether the route will produce [metrics](../routers/index.md#metrics).                                                                                                                                                                                                               |
 | [11] | `observability.tracing`        | Defines whether the route will produce [traces](../routers/index.md#tracing).                                                                                                                                                                                                                |
-| [12] | `routes[n].services`           | List of any combination of [TraefikService](#kind-traefikservice) and reference to a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) (See below for `ExternalName Service` setup)                                                                     |
+| [12] | `routes[n].services`           | List of any combination of [BaqupService](#kind-baqupservice) and reference to a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) (See below for `ExternalName Service` setup)                                                                     |
 | [13] | `services[n].port`             | Defines the port of a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/). This can be a reference to a named port.                                                                                                                                       |
 | [14] | `services[n].serversTransport` | Defines the reference to a [ServersTransport](#kind-serverstransport). The ServersTransport namespace is assumed to be the [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) namespace (see [ServersTransport reference](#serverstransport-reference)). |
 | [15] | `services[n].healthCheck`      | Defines the HealthCheck when service references a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) of type ExternalName.                                                                                                                               |
@@ -409,7 +409,7 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
 
     ```yaml tab="IngressRoute"
     # All resources definition must be declared
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: baqup.io/v1alpha1
     kind: IngressRoute
     metadata:
       name: test-name
@@ -456,7 +456,7 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
     ```yaml tab="Middlewares"
     # All resources definition must be declared
     # Prefixing with /foo
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: baqup.io/v1alpha1
     kind: Middleware
     metadata:
       name: middleware1
@@ -467,7 +467,7 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
     ```
 
     ```yaml tab="TLSOption"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: baqup.io/v1alpha1
     kind: TLSOption
     metadata:
       name: opt
@@ -490,30 +490,30 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
 
 !!! important "Configuring Backend Protocol"
 
-    There are 3 ways to configure the backend protocol for communication between Traefik and your pods:
+    There are 3 ways to configure the backend protocol for communication between Baqup and your pods:
 	
     - Setting the scheme explicitly (http/https/h2c)
     - Configuring the name of the kubernetes service port to start with https (https)
     - Setting the kubernetes service port to use port 443 (https)
 
-    If you do not configure the above, Traefik will assume an http connection.
+    If you do not configure the above, Baqup will assume an http connection.
     
 
 !!! important "Using Kubernetes ExternalName Service"
 
-    Traefik backends creation needs a port to be set, however Kubernetes [ExternalName Service](https://kubernetes.io/docs/concepts/services-networking/service/#externalname) could be defined without any port.
-    Accordingly, Traefik supports defining a port in two ways:
+    Baqup backends creation needs a port to be set, however Kubernetes [ExternalName Service](https://kubernetes.io/docs/concepts/services-networking/service/#externalname) could be defined without any port.
+    Accordingly, Baqup supports defining a port in two ways:
     
     - only on `IngressRoute` service
     - on both sides, you'll be warned if the ports don't match, and the `IngressRoute` service port is used
     
-    Thus, in case of two sides port definition, Traefik expects a match between ports.
+    Thus, in case of two sides port definition, Baqup expects a match between ports.
     
     ??? example "Examples"
         
         ```yaml tab="IngressRoute"
         ---
-        apiVersion: traefik.io/v1alpha1
+        apiVersion: baqup.io/v1alpha1
         kind: IngressRoute
         metadata:
           name: test.route
@@ -543,7 +543,7 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
         
         ```yaml tab="ExternalName Service"
         ---
-        apiVersion: traefik.io/v1alpha1
+        apiVersion: baqup.io/v1alpha1
         kind: IngressRoute
         metadata:
           name: test.route
@@ -574,7 +574,7 @@ Register the `IngressRoute` [kind](../../reference/dynamic-configuration/kuberne
         
         ```yaml tab="Both sides"
         ---
-        apiVersion: traefik.io/v1alpha1
+        apiVersion: baqup.io/v1alpha1
         kind: IngressRoute
         metadata:
           name: test.route
@@ -611,7 +611,7 @@ More information in the dedicated server [load balancing](../services/index.md#l
 !!! info "Declaring and using Kubernetes Service Load Balancing"
 
     ```yaml tab="IngressRoute"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: baqup.io/v1alpha1
     kind: IngressRoute
     metadata:
       name: ingressroutebar
@@ -642,7 +642,7 @@ More information in the dedicated server [load balancing](../services/index.md#l
         - name: http
           port: 80
       selector:
-        app: traefiklabs
+        app: baquplabs
         task: app1
     ---
     apiVersion: v1
@@ -656,7 +656,7 @@ More information in the dedicated server [load balancing](../services/index.md#l
         - name: http
           port: 80
       selector:
-        app: traefiklabs
+        app: baquplabs
         task: app2
     ```
 
@@ -664,14 +664,14 @@ More information in the dedicated server [load balancing](../services/index.md#l
 
     To avoid creating the server load-balancer with the pods IPs and use Kubernetes Service clusterIP directly,
     one should set the service `NativeLB` option to true.
-    Please note that, by default, Traefik reuses the established connections to the backends for performance purposes. This can prevent the requests load balancing between the replicas from behaving as one would expect when the option is set.
+    Please note that, by default, Baqup reuses the established connections to the backends for performance purposes. This can prevent the requests load balancing between the replicas from behaving as one would expect when the option is set.
     By default, `NativeLB` is false.
 
     ??? example "Example"
 
         ```yaml
         ---
-        apiVersion: traefik.io/v1alpha1
+        apiVersion: baqup.io/v1alpha1
         kind: IngressRoute
         metadata:
           name: test.route
@@ -703,14 +703,14 @@ More information in the dedicated server [load balancing](../services/index.md#l
 
 ### Kind: `Middleware`
 
-`Middleware` is the CRD implementation of a [Traefik middleware](../../middlewares/http/overview.md).
+`Middleware` is the CRD implementation of a [Baqup middleware](../../middlewares/http/overview.md).
 
 Register the `Middleware` [kind](../../reference/dynamic-configuration/kubernetes-crd.md#definitions) in the Kubernetes cluster before creating `Middleware` objects or referencing middlewares in the [`IngressRoute`](#kind-ingressroute) objects.
 
 ??? "Declaring and Referencing a Middleware"
     
     ```yaml tab="Middleware"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: baqup.io/v1alpha1
     kind: Middleware
     metadata:
       name: stripprefix
@@ -723,7 +723,7 @@ Register the `Middleware` [kind](../../reference/dynamic-configuration/kubernete
     ```
     
     ```yaml tab="IngressRoute"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: baqup.io/v1alpha1
     kind: IngressRoute
     metadata:
       name: ingressroutebar
@@ -749,27 +749,27 @@ Register the `Middleware` [kind](../../reference/dynamic-configuration/kubernete
     when the definition of the middleware comes from another provider.
     In this context, specifying a namespace when referring to the resource does not make any sense, and will be ignored.
     Additionally, when you want to reference a Middleware from the CRD Provider,
-    you have to append the namespace of the resource in the resource-name as Traefik appends the namespace internally automatically.
+    you have to append the namespace of the resource in the resource-name as Baqup appends the namespace internally automatically.
 
 More information about available middlewares in the dedicated [middlewares section](../../middlewares/http/overview.md).
 
-### Kind: `TraefikService`
+### Kind: `BaqupService`
 
-`TraefikService` is the CRD implementation of a ["Traefik Service"](../services/index.md).
+`BaqupService` is the CRD implementation of a ["Baqup Service"](../services/index.md).
 
-Register the `TraefikService` [kind](../../reference/dynamic-configuration/kubernetes-crd.md#definitions) in the Kubernetes cluster before creating `TraefikService` objects,
-referencing services in the [`IngressRoute`](#kind-ingressroute) objects, or recursively in others `TraefikService` objects.
+Register the `BaqupService` [kind](../../reference/dynamic-configuration/kubernetes-crd.md#definitions) in the Kubernetes cluster before creating `BaqupService` objects,
+referencing services in the [`IngressRoute`](#kind-ingressroute) objects, or recursively in others `BaqupService` objects.
 
-!!! info "Disambiguate Traefik and Kubernetes Services"
+!!! info "Disambiguate Baqup and Kubernetes Services"
 
     As the field `name` can reference different types of objects, use the field `kind` to avoid any ambiguity.
     
     The field `kind` allows the following values:
     
     * `Service` (default value): to reference a [Kubernetes Service](https://kubernetes.io/docs/concepts/services-networking/service/)
-    * `TraefikService`: to reference another [Traefik Service](../services/index.md)
+    * `BaqupService`: to reference another [Baqup Service](../services/index.md)
 
-`TraefikService` object allows to use any (valid) combinations of:
+`BaqupService` object allows to use any (valid) combinations of:
 
 * [Weighted Round Robin](#weighted-round-robin) load balancing.
 * [Mirroring](#mirroring).
@@ -781,7 +781,7 @@ More information in the dedicated [Weighted Round Robin](../services/index.md#we
 ??? "Declaring and Using Weighted Round Robin"
 
     ```yaml tab="IngressRoute"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: baqup.io/v1alpha1
     kind: IngressRoute
     metadata:
       name: ingressroutebar
@@ -796,12 +796,12 @@ More information in the dedicated [Weighted Round Robin](../services/index.md#we
         services:
         - name: wrr1
           namespace: default
-          kind: TraefikService
+          kind: BaqupService
     ```
     
     ```yaml tab="Weighted Round Robin"
-    apiVersion: traefik.io/v1alpha1
-    kind: TraefikService
+    apiVersion: baqup.io/v1alpha1
+    kind: BaqupService
     metadata:
       name: wrr1
       namespace: default
@@ -813,15 +813,15 @@ More information in the dedicated [Weighted Round Robin](../services/index.md#we
             port: 80
             weight: 1
           - name: wrr2
-            kind: TraefikService
+            kind: BaqupService
             weight: 1
           - name: mirror1
-            kind: TraefikService
+            kind: BaqupService
             weight: 1
 
     ---
-    apiVersion: traefik.io/v1alpha1
-    kind: TraefikService
+    apiVersion: baqup.io/v1alpha1
+    kind: BaqupService
     metadata:
       name: wrr2
       namespace: default
@@ -849,7 +849,7 @@ More information in the dedicated [Weighted Round Robin](../services/index.md#we
         - name: http
           port: 80
       selector:
-        app: traefiklabs
+        app: baquplabs
         task: app1
     ---
     apiVersion: v1
@@ -863,7 +863,7 @@ More information in the dedicated [Weighted Round Robin](../services/index.md#we
         - name: http
           port: 80
       selector:
-        app: traefiklabs
+        app: baquplabs
         task: app2
     ---
     apiVersion: v1
@@ -877,7 +877,7 @@ More information in the dedicated [Weighted Round Robin](../services/index.md#we
         - name: http
           port: 80
       selector:
-        app: traefiklabs
+        app: baquplabs
         task: app3
     ```
 
@@ -888,7 +888,7 @@ More information in the dedicated [mirroring](../services/index.md#mirroring-ser
 ??? "Declaring and Using Mirroring"
 
     ```yaml tab="IngressRoute"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: baqup.io/v1alpha1
     kind: IngressRoute
     metadata:
       name: ingressroutebar
@@ -903,13 +903,13 @@ More information in the dedicated [mirroring](../services/index.md#mirroring-ser
         services:
         - name: mirror1
           namespace: default
-          kind: TraefikService
+          kind: BaqupService
     ```
     
     ```yaml tab="Mirroring k8s Service"
     # Mirroring from a k8s Service
-    apiVersion: traefik.io/v1alpha1
-    kind: TraefikService
+    apiVersion: baqup.io/v1alpha1
+    kind: BaqupService
     metadata:
       name: mirror1
       namespace: default
@@ -923,14 +923,14 @@ More information in the dedicated [mirroring](../services/index.md#mirroring-ser
             port: 80
             percent: 20
           - name: svc3                  # svc3 receives a copy of 15% of this traffic
-            kind: TraefikService
+            kind: BaqupService
             percent: 15
     ```
     
-    ```yaml tab="Mirroring Traefik Service"
-    # Mirroring from a Traefik Service
-    apiVersion: traefik.io/v1alpha1
-    kind: TraefikService
+    ```yaml tab="Mirroring Baqup Service"
+    # Mirroring from a Baqup Service
+    apiVersion: baqup.io/v1alpha1
+    kind: BaqupService
     metadata:
       name: mirror1
       namespace: default
@@ -938,13 +938,13 @@ More information in the dedicated [mirroring](../services/index.md#mirroring-ser
     spec:
       mirroring:
         name: wrr1                      # wrr1 receives 100% of the traffic
-        kind: TraefikService
+        kind: BaqupService
         mirrors:
           - name: svc2                  # svc2 receives a copy of 20% of this traffic
             port: 80
             percent: 20
           - name: svc3                  # svc3 receives a copy of 10% of this traffic
-            kind: TraefikService
+            kind: BaqupService
             percent: 10
     ```
 
@@ -960,7 +960,7 @@ More information in the dedicated [mirroring](../services/index.md#mirroring-ser
         - name: http
           port: 80
       selector:
-        app: traefiklabs
+        app: baquplabs
         task: app1
     ---
     apiVersion: v1
@@ -974,7 +974,7 @@ More information in the dedicated [mirroring](../services/index.md#mirroring-ser
         - name: http
           port: 80
       selector:
-        app: traefiklabs
+        app: baquplabs
         task: app2
     ```
 
@@ -982,8 +982,8 @@ More information in the dedicated [mirroring](../services/index.md#mirroring-ser
 
     If the optional `namespace` attribute is not set, the configuration will be applied with the namespace of the current resource.
     
-    Additionally, when the definition of the `TraefikService` is from another provider,
-    the cross-provider syntax (`service@provider`) should be used to refer to the `TraefikService`, just as in the middleware case.
+    Additionally, when the definition of the `BaqupService` is from another provider,
+    the cross-provider syntax (`service@provider`) should be used to refer to the `BaqupService`, just as in the middleware case.
     
     Specifying a namespace attribute in this case would not make any sense, and will be ignored (except if the provider is `kubernetescrd`).
 
@@ -992,7 +992,7 @@ More information in the dedicated [mirroring](../services/index.md#mirroring-ser
 As explained in the section about [Sticky sessions](../../services/#sticky-sessions), for stickiness to work all the way,
 it must be specified at each load-balancing level.
 
-When stickiness is enabled, Traefik uses Kubernetes [serving](https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/#serving) endpoints status to detect and mark servers as fenced.
+When stickiness is enabled, Baqup uses Kubernetes [serving](https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/#serving) endpoints status to detect and mark servers as fenced.
 Fenced servers can still process requests tied to sticky cookies, while they are terminating.
 
 For instance, in the example below, there is a first level of load-balancing because there is a (Weighted Round Robin) load-balancing of the two `whoami` services,
@@ -1001,7 +1001,7 @@ and there is a second level because each whoami service is a `replicaset` and is
 ??? "Stickiness on two load-balancing levels"
 
     ```yaml tab="IngressRoute"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: baqup.io/v1alpha1
     kind: IngressRoute
     metadata:
       name: ingressroutebar
@@ -1016,12 +1016,12 @@ and there is a second level because each whoami service is a `replicaset` and is
         services:
         - name: wrr1
           namespace: default
-          kind: TraefikService
+          kind: BaqupService
     ```
 
     ```yaml tab="Weighted Round Robin"
-    apiVersion: traefik.io/v1alpha1
-    kind: TraefikService
+    apiVersion: baqup.io/v1alpha1
+    kind: BaqupService
     metadata:
       name: wrr1
       namespace: default
@@ -1098,7 +1098,7 @@ and there is a second level because each whoami service is a `replicaset` and is
         spec:
           containers:
             - name: whoami1
-              image: traefik/whoami
+              image: baqup/whoami
               ports:
                 - name: web
                   containerPort: 80
@@ -1124,7 +1124,7 @@ and there is a second level because each whoami service is a `replicaset` and is
         spec:
           containers:
             - name: whoami2
-              image: traefik/whoami
+              image: baqup/whoami
               ports:
                 - name: web
                   containerPort: 80
@@ -1140,14 +1140,14 @@ and there is a second level because each whoami service is a `replicaset` and is
 
 ### Kind: `IngressRouteTCP`
 
-`IngressRouteTCP` is the CRD implementation of a [Traefik TCP router](../routers/index.md#configuring-tcp-routers).
+`IngressRouteTCP` is the CRD implementation of a [Baqup TCP router](../routers/index.md#configuring-tcp-routers).
 
 Register the `IngressRouteTCP` [kind](../../reference/dynamic-configuration/kubernetes-crd.md#definitions) in the Kubernetes cluster before creating `IngressRouteTCP` objects.
 
 !!! info "IngressRouteTCP Attributes"
 
     ```yaml
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: baqup.io/v1alpha1
     kind: IngressRouteTCP
     metadata:
       name: ingressroutetcpfoo
@@ -1218,7 +1218,7 @@ Register the `IngressRouteTCP` [kind](../../reference/dynamic-configuration/kube
 ??? example "Declaring an IngressRouteTCP"
 
     ```yaml tab="IngressRouteTCP"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: baqup.io/v1alpha1
     kind: IngressRouteTCP
     metadata:
       name: ingressroutetcpfoo
@@ -1252,7 +1252,7 @@ Register the `IngressRouteTCP` [kind](../../reference/dynamic-configuration/kube
     ```
     
     ```yaml tab="TLSOption"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: baqup.io/v1alpha1
     kind: TLSOption
     metadata:
       name: opt
@@ -1275,19 +1275,19 @@ Register the `IngressRouteTCP` [kind](../../reference/dynamic-configuration/kube
 
 !!! important "Using Kubernetes ExternalName Service"
 
-    Traefik backends creation needs a port to be set, however Kubernetes [ExternalName Service](https://kubernetes.io/docs/concepts/services-networking/service/#externalname) could be defined without any port.
-    Accordingly, Traefik supports defining a port in two ways:
+    Baqup backends creation needs a port to be set, however Kubernetes [ExternalName Service](https://kubernetes.io/docs/concepts/services-networking/service/#externalname) could be defined without any port.
+    Accordingly, Baqup supports defining a port in two ways:
     
     - only on `IngressRouteTCP` service
     - on both sides, you'll be warned if the ports don't match, and the `IngressRouteTCP` service port is used
     
-    Thus, in case of two sides port definition, Traefik expects a match between ports.
+    Thus, in case of two sides port definition, Baqup expects a match between ports.
     
     ??? example "Examples"
         
         ```yaml tab="Only on IngressRouteTCP"
         ---
-        apiVersion: traefik.io/v1alpha1
+        apiVersion: baqup.io/v1alpha1
         kind: IngressRouteTCP
         metadata:
           name: test.route
@@ -1316,7 +1316,7 @@ Register the `IngressRouteTCP` [kind](../../reference/dynamic-configuration/kube
         
         ```yaml tab="On both sides"
         ---
-        apiVersion: traefik.io/v1alpha1
+        apiVersion: baqup.io/v1alpha1
         kind: IngressRouteTCP
         metadata:
           name: test.route
@@ -1355,7 +1355,7 @@ Register the `IngressRouteTCP` [kind](../../reference/dynamic-configuration/kube
 
         ```yaml
         ---
-        apiVersion: traefik.io/v1alpha1
+        apiVersion: baqup.io/v1alpha1
         kind: IngressRouteTCP
         metadata:
           name: test.route
@@ -1386,14 +1386,14 @@ Register the `IngressRouteTCP` [kind](../../reference/dynamic-configuration/kube
 
 ### Kind: `MiddlewareTCP`
 
-`MiddlewareTCP` is the CRD implementation of a [Traefik TCP middleware](../../middlewares/tcp/overview.md).
+`MiddlewareTCP` is the CRD implementation of a [Baqup TCP middleware](../../middlewares/tcp/overview.md).
 
 Register the `MiddlewareTCP` [kind](../../reference/dynamic-configuration/kubernetes-crd.md#definitions) in the Kubernetes cluster before creating `MiddlewareTCP` objects or referencing TCP middlewares in the [`IngressRouteTCP`](#kind-ingressroutetcp) objects.
 
 ??? "Declaring and Referencing a MiddlewareTCP "
 
     ```yaml tab="Middleware"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: baqup.io/v1alpha1
     kind: MiddlewareTCP
     metadata:
       name: ipallowlist
@@ -1405,7 +1405,7 @@ Register the `MiddlewareTCP` [kind](../../reference/dynamic-configuration/kubern
     ```
     
     ```yaml tab="IngressRoute"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: baqup.io/v1alpha1
     kind: IngressRoute
     metadata:
       name: ingressroutebar
@@ -1431,20 +1431,20 @@ Register the `MiddlewareTCP` [kind](../../reference/dynamic-configuration/kubern
     when the definition of the TCP middleware comes from another provider.
     In this context, specifying a namespace when referring to the resource does not make any sense, and will be ignored.
     Additionally, when you want to reference a MiddlewareTCP from the CRD Provider,
-    you have to append the namespace of the resource in the resource-name as Traefik appends the namespace internally automatically.
+    you have to append the namespace of the resource in the resource-name as Baqup appends the namespace internally automatically.
 
 More information about available TCP middlewares in the dedicated [middlewares section](../../middlewares/tcp/overview.md).
 
 ### Kind: `IngressRouteUDP`
 
-`IngressRouteUDP` is the CRD implementation of a [Traefik UDP router](../routers/index.md#configuring-udp-routers).
+`IngressRouteUDP` is the CRD implementation of a [Baqup UDP router](../routers/index.md#configuring-udp-routers).
 
 Register the `IngressRouteUDP` [kind](../../reference/dynamic-configuration/kubernetes-crd.md#definitions) in the Kubernetes cluster before creating `IngressRouteUDP` objects.
 
 !!! info "IngressRouteUDP Attributes"
 
     ```yaml
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: baqup.io/v1alpha1
     kind: IngressRouteUDP
     metadata:
       name: ingressrouteudpfoo
@@ -1475,7 +1475,7 @@ Register the `IngressRouteUDP` [kind](../../reference/dynamic-configuration/kube
 ??? example "Declaring an IngressRouteUDP"
 
     ```yaml
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: baqup.io/v1alpha1
     kind: IngressRouteUDP
     metadata:
       name: ingressrouteudpfoo
@@ -1495,19 +1495,19 @@ Register the `IngressRouteUDP` [kind](../../reference/dynamic-configuration/kube
 
 !!! important "Using Kubernetes ExternalName Service"
 
-    Traefik backends creation needs a port to be set, however Kubernetes [ExternalName Service](https://kubernetes.io/docs/concepts/services-networking/service/#externalname) could be defined without any port.
-    Accordingly, Traefik supports defining a port in two ways:
+    Baqup backends creation needs a port to be set, however Kubernetes [ExternalName Service](https://kubernetes.io/docs/concepts/services-networking/service/#externalname) could be defined without any port.
+    Accordingly, Baqup supports defining a port in two ways:
     
     - only on `IngressRouteUDP` service
     - on both sides, you'll be warned if the ports don't match, and the `IngressRouteUDP` service port is used
     
-    Thus, in case of two sides port definition, Traefik expects a match between ports.
+    Thus, in case of two sides port definition, Baqup expects a match between ports.
     
     ??? example "Examples"
         
         ```yaml tab="IngressRouteUDP"
         ---
-        apiVersion: traefik.io/v1alpha1
+        apiVersion: baqup.io/v1alpha1
         kind: IngressRouteUDP
         metadata:
           name: test.route
@@ -1535,7 +1535,7 @@ Register the `IngressRouteUDP` [kind](../../reference/dynamic-configuration/kube
         
         ```yaml tab="ExternalName Service"
         ---
-        apiVersion: traefik.io/v1alpha1
+        apiVersion: baqup.io/v1alpha1
         kind: IngressRouteUDP
         metadata:
           name: test.route
@@ -1564,7 +1564,7 @@ Register the `IngressRouteUDP` [kind](../../reference/dynamic-configuration/kube
         
         ```yaml tab="Both sides"
         ---
-        apiVersion: traefik.io/v1alpha1
+        apiVersion: baqup.io/v1alpha1
         kind: IngressRouteUDP
         metadata:
           name: test.route
@@ -1602,7 +1602,7 @@ Register the `IngressRouteUDP` [kind](../../reference/dynamic-configuration/kube
 
         ```yaml
         ---
-        apiVersion: traefik.io/v1alpha1
+        apiVersion: baqup.io/v1alpha1
         kind: IngressRouteUDP
         metadata:
           name: test.route
@@ -1632,7 +1632,7 @@ Register the `IngressRouteUDP` [kind](../../reference/dynamic-configuration/kube
 
 ### Kind: `TLSOption`
 
-`TLSOption` is the CRD implementation of a [Traefik "TLS Option"](../../https/tls.md#tls-options).
+`TLSOption` is the CRD implementation of a [Baqup "TLS Option"](../../https/tls.md#tls-options).
 
 Register the `TLSOption` [kind](../../reference/dynamic-configuration/kubernetes-crd.md#definitions) in the Kubernetes cluster before creating `TLSOption` objects
 or referencing TLS options in the [`IngressRoute`](#kind-ingressroute) / [`IngressRouteTCP`](#kind-ingressroutetcp) objects.
@@ -1640,7 +1640,7 @@ or referencing TLS options in the [`IngressRoute`](#kind-ingressroute) / [`Ingre
 !!! info "TLSOption Attributes"
    
     ```yaml tab="TLSOption"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: baqup.io/v1alpha1
     kind: TLSOption
     metadata:
       name: mytlsoption                             # [1]
@@ -1675,7 +1675,7 @@ or referencing TLS options in the [`IngressRoute`](#kind-ingressroute) / [`Ingre
 | [6]  | `clientAuth`                | determines the server's policy for TLS [Client Authentication](../../https/tls.md#client-authentication-mtls).                                                                                                             |
 | [7]  | `clientAuth.secretNames`    | list of names of the referenced Kubernetes [Secrets](https://kubernetes.io/docs/concepts/configuration/secret/) (in TLSOption namespace). The secret must contain a certificate under either a `tls.ca` or a `ca.crt` key. |
 | [8]  | `clientAuth.clientAuthType` | defines the client authentication type to apply. The available values are: `NoClientCert`, `RequestClientCert`, `VerifyClientCertIfGiven` and `RequireAndVerifyClientCert`.                                                |
-| [9]  | `sniStrict`                 | if `true`, Traefik won't allow connections from clients connections that do not specify a server_name extension.                                                                                                           |
+| [9]  | `sniStrict`                 | if `true`, Baqup won't allow connections from clients connections that do not specify a server_name extension.                                                                                                           |
 | [10] | `alpnProtocols`             | List of supported [application level protocols](../../https/tls.md#alpn-protocols) for the TLS handshake, in order of preference.                                                                                          |
 
 !!! info "CA Secret"
@@ -1685,7 +1685,7 @@ or referencing TLS options in the [`IngressRoute`](#kind-ingressroute) / [`Ingre
 ??? example "Declaring and referencing a TLSOption"
    
     ```yaml tab="TLSOption"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: baqup.io/v1alpha1
     kind: TLSOption
     metadata:
       name: mytlsoption
@@ -1705,7 +1705,7 @@ or referencing TLS options in the [`IngressRoute`](#kind-ingressroute) / [`Ingre
     ```
     
     ```yaml tab="IngressRoute"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: baqup.io/v1alpha1
     kind: IngressRoute
     metadata:
       name: ingressroutebar
@@ -1758,20 +1758,20 @@ or referencing TLS options in the [`IngressRoute`](#kind-ingressroute) / [`Ingre
 
 ### Kind: `TLSStore`
 
-`TLSStore` is the CRD implementation of a [Traefik "TLS Store"](../../https/tls.md#certificates-stores).
+`TLSStore` is the CRD implementation of a [Baqup "TLS Store"](../../https/tls.md#certificates-stores).
 
 Register the `TLSStore` kind in the Kubernetes cluster before creating `TLSStore` objects.
 
 !!! important "Default TLS Store"
 
-    Traefik currently only uses the [TLS Store named "default"](../../https/tls.md#certificates-stores).
-    This _default_ `TLSStore` should be in a namespace discoverable by Traefik. Since it is used by default on [`IngressRoute`](#kind-ingressroute) and [`IngressRouteTCP`](#kind-ingressroutetcp) objects, there never is a need to actually reference it.
+    Baqup currently only uses the [TLS Store named "default"](../../https/tls.md#certificates-stores).
+    This _default_ `TLSStore` should be in a namespace discoverable by Baqup. Since it is used by default on [`IngressRoute`](#kind-ingressroute) and [`IngressRouteTCP`](#kind-ingressroutetcp) objects, there never is a need to actually reference it.
     This means that you cannot have two stores that are named default in different Kubernetes namespaces.
     As a consequence, with respect to TLS stores, the only change that makes sense (and only if needed) is to configure the default TLSStore.
 
 !!! info "TLSStore Attributes"
     ```yaml tab="TLSStore"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: baqup.io/v1alpha1
     kind: TLSStore
     metadata:
       name: default
@@ -1792,7 +1792,7 @@ Register the `TLSStore` kind in the Kubernetes cluster before creating `TLSStore
 ??? example "Declaring and referencing a TLSStore"
    
     ```yaml tab="TLSStore"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: baqup.io/v1alpha1
     kind: TLSStore
     metadata:
       name: default
@@ -1803,7 +1803,7 @@ Register the `TLSStore` kind in the Kubernetes cluster before creating `TLSStore
     ```
     
     ```yaml tab="IngressRoute"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: baqup.io/v1alpha1
     kind: IngressRoute
     metadata:
       name: ingressroutebar
@@ -1842,7 +1842,7 @@ Register the `TLSStore` kind in the Kubernetes cluster before creating `TLSStore
 !!! info "ServersTransport Attributes"
    
     ```yaml tab="ServersTransport"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: baqup.io/v1alpha1
     kind: ServersTransport
     metadata:
       name: mytransport
@@ -1895,7 +1895,7 @@ Register the `TLSStore` kind in the Kubernetes cluster before creating `TLSStore
 ??? example "Declaring and referencing a ServersTransport"
    
     ```yaml tab="ServersTransport"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: baqup.io/v1alpha1
     kind: ServersTransport
     metadata:
       name: mytransport
@@ -1907,7 +1907,7 @@ Register the `TLSStore` kind in the Kubernetes cluster before creating `TLSStore
     ```
     
     ```yaml tab="IngressRoute"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: baqup.io/v1alpha1
     kind: IngressRoute
     metadata:
       name: testroute
@@ -1946,7 +1946,7 @@ The `default@internal` serversTransportTCP is created from the [static configura
 !!! info "ServersTransportTCP Attributes"
 
     ```yaml tab="ServersTransportTCP"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: baqup.io/v1alpha1
     kind: ServersTransportTCP
     metadata:
       name: mytransport
@@ -1995,7 +1995,7 @@ The `default@internal` serversTransportTCP is created from the [static configura
 ??? example "Declaring and referencing a ServersTransportTCP"
 
     ```yaml tab="ServersTransportTCP"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: baqup.io/v1alpha1
     kind: ServersTransportTCP
     metadata:
       name: mytransport
@@ -2008,7 +2008,7 @@ The `default@internal` serversTransportTCP is created from the [static configura
     ```
     
     ```yaml tab="IngressRouteTCP"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: baqup.io/v1alpha1
     kind: IngressRouteTCP
     metadata:
       name: testroute
@@ -2039,4 +2039,4 @@ If the ServersTransportTCP CRD is defined in another provider the cross-provider
 
 Also see the [full example](../../user-guides/crd-acme/index.md) with Let's Encrypt.
 
-{!traefik-for-business-applications.md!}
+{!baqup-for-business-applications.md!}

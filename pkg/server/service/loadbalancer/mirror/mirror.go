@@ -11,11 +11,11 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/baqupio/baqup/v3/pkg/config/dynamic"
+	"github.com/baqupio/baqup/v3/pkg/healthcheck"
+	"github.com/baqupio/baqup/v3/pkg/middlewares/accesslog"
+	"github.com/baqupio/baqup/v3/pkg/safe"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/healthcheck"
-	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
-	"github.com/traefik/traefik/v3/pkg/safe"
 )
 
 // Mirroring is an http.Handler that can mirror requests.

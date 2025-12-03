@@ -1,29 +1,29 @@
 ---
 title: 'Coraza Web Application Firewall'
-description: 'Traefik Hub API Gateway - The HTTP Coraza in Traefik Hub API Gateway provides web application firewall capabilities'
+description: 'Baqup Hub API Gateway - The HTTP Coraza in Baqup Hub API Gateway provides web application firewall capabilities'
 ---
 
-!!! info "Traefik Hub Feature"
-    This middleware is available exclusively in [Traefik Hub](https://traefik.io/traefik-hub/). Learn more about [Traefik Hub's advanced features](https://doc.traefik.io/traefik-hub/api-gateway/intro).
+!!! info "Baqup Hub Feature"
+    This middleware is available exclusively in [Baqup Hub](https://baqup.io/baqup-hub/). Learn more about [Baqup Hub's advanced features](https://doc.baqup.io/baqup-hub/api-gateway/intro).
 
-The [Coraza WAF](https://coraza.io/) middleware in Traefik Hub API Gateway provides web application firewall capabilities.
+The [Coraza WAF](https://coraza.io/) middleware in Baqup Hub API Gateway provides web application firewall capabilities.
 
 The native middleware in Hub API Gateway provides at least 23 times more performance compared to the
-WASM-based [Coraza plugin](https://plugins.traefik.io/plugins/65f2aea146079255c9ffd1ec/coraza-waf) available with the open-source Traefik Proxy.
+WASM-based [Coraza plugin](https://plugins.baqup.io/plugins/65f2aea146079255c9ffd1ec/coraza-waf) available with the open-source Baqup Proxy.
 
 To learn how to write rules, please visit [Coraza documentation](https://coraza.io/docs/tutorials/introduction/ "Link to Coraza introduction tutorial") and
 [OWASP CRS documentation](https://coreruleset.org/docs/ "Link to the OWAP CRS project documentation").
 
 !!! warning
 
-    Starting with Traefik Hub v3.11.0, Coraza needs to have read/write permissions to `/tmp`. This is related to [this upstream PR](https://github.com/corazawaf/coraza/pull/1030).
+    Starting with Baqup Hub v3.11.0, Coraza needs to have read/write permissions to `/tmp`. This is related to [this upstream PR](https://github.com/corazawaf/coraza/pull/1030).
 
 ---
 
 ## Configuration Examples
 
 ```yaml tab="Deny the /admin path"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: waf
@@ -36,7 +36,7 @@ spec:
 ```
 
 ```yaml tab="Allow only GET methods"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: wafcrs
@@ -61,4 +61,4 @@ spec:
 | <a id="opt-directives" href="#opt-directives" title="#opt-directives">`directives`</a> | List of WAF rules to enforce. |  | Yes |
 | <a id="opt-crsEnabled" href="#opt-crsEnabled" title="#opt-crsEnabled">`crsEnabled`</a> | Enable [CRS rulesets](https://github.com/corazawaf/coraza-coreruleset/tree/main/rules/%40owasp_crs).<br /> Once the ruleset is enabled, it can be used in the middleware. | false |  False |
 
-{!traefik-for-business-applications.md!}
+{!baqup-for-business-applications.md!}

@@ -7,9 +7,9 @@ import (
 	"os"
 	"sync"
 
+	"github.com/baqupio/baqup/v3/pkg/observability/logs"
+	"github.com/baqupio/baqup/v3/pkg/safe"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v3/pkg/observability/logs"
-	"github.com/traefik/traefik/v3/pkg/safe"
 )
 
 var _ Store = (*LocalStore)(nil)
@@ -112,7 +112,7 @@ func (s *LocalStore) listenSaveAction(routinesPool *safe.Pool) {
 			case object := <-s.saveDataChan:
 				select {
 				case <-ctx.Done():
-					// Stop handling events because Traefik is shutting down.
+					// Stop handling events because Baqup is shutting down.
 					return
 				default:
 				}

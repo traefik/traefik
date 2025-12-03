@@ -8,12 +8,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/baqupio/baqup/v3/pkg/config/static"
+	tcprouter "github.com/baqupio/baqup/v3/pkg/server/router/tcp"
+	"github.com/baqupio/baqup/v3/pkg/types"
 	"github.com/quic-go/quic-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v3/pkg/config/static"
-	tcprouter "github.com/traefik/traefik/v3/pkg/server/router/tcp"
-	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 // LocalhostCert is a PEM-encoded TLS cert with SAN IPs

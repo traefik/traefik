@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/baqupio/baqup/v3/pkg/safe"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v3/pkg/safe"
 )
 
 func TestLocalStore_GetAccount(t *testing.T) {

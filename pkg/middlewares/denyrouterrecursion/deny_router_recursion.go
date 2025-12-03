@@ -6,12 +6,12 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/baqupio/baqup/v3/pkg/observability/logs"
 	"github.com/containous/alice"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v3/pkg/observability/logs"
 )
 
-const xTraefikRouter = "X-Traefik-Router"
+const xBaqupRouter = "X-Baqup-Router"
 
 type DenyRouterRecursion struct {
 	routerName     string
@@ -42,7 +42,7 @@ func New(routerName string, next http.Handler) (*DenyRouterRecursion, error) {
 
 // ServeHTTP implements http.Handler.
 func (l *DenyRouterRecursion) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	if req.Header.Get(xTraefikRouter) == l.routerNameHash {
+	if req.Header.Get(xBaqupRouter) == l.routerNameHash {
 		logger := log.With().Str(logs.MiddlewareType, "DenyRouterRecursion").Logger()
 		logger.Debug().Msgf("Rejecting request in provenance of the same router (%q) to stop potential infinite loop.", l.routerName)
 
@@ -51,7 +51,7 @@ func (l *DenyRouterRecursion) ServeHTTP(rw http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	req.Header.Set(xTraefikRouter, l.routerNameHash)
+	req.Header.Set(xBaqupRouter, l.routerNameHash)
 
 	l.next.ServeHTTP(rw, req)
 }

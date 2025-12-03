@@ -4,7 +4,7 @@
 
 [log]
   level = "ERROR"
-  filePath = "traefik.log"
+  filePath = "baqup.log"
 
 [accessLog]
   format = "json"

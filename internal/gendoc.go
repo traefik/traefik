@@ -10,12 +10,12 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
+	"github.com/baqupio/baqup/v3/cmd"
+	"github.com/baqupio/baqup/v3/pkg/collector/hydratation"
+	"github.com/baqupio/baqup/v3/pkg/config/dynamic"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/paerser/flag"
 	"github.com/traefik/paerser/generator"
-	"github.com/traefik/traefik/v3/cmd"
-	"github.com/traefik/traefik/v3/pkg/collector/hydratation"
-	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"gopkg.in/yaml.v3"
 )
 
@@ -131,7 +131,7 @@ func genInstallConfDoc() {
 	outputFile := "./docs/content/reference/install-configuration/configuration-options.md"
 	logger := log.With().Str("file", outputFile).Logger()
 
-	element := &cmd.NewTraefikConfiguration().Configuration
+	element := &cmd.NewBaqupConfiguration().Configuration
 
 	generator.Generate(element)
 
@@ -167,11 +167,11 @@ THIS FILE MUST NOT BE EDITED BY HAND
 
 	for _, flat := range flats {
 		// TODO must be move into the flats creation.
-		if flat.Name == "experimental.plugins.<name>" || flat.Name == "TRAEFIK_EXPERIMENTAL_PLUGINS_<NAME>" {
+		if flat.Name == "experimental.plugins.<name>" || flat.Name == "BAQUP_EXPERIMENTAL_PLUGINS_<NAME>" {
 			continue
 		}
 
-		if strings.HasPrefix(flat.Name, "pilot.") || strings.HasPrefix(flat.Name, "TRAEFIK_PILOT_") {
+		if strings.HasPrefix(flat.Name, "pilot.") || strings.HasPrefix(flat.Name, "BAQUP_PILOT_") {
 			continue
 		}
 

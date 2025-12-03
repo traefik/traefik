@@ -9,11 +9,11 @@ import (
 	"os"
 	"testing"
 
+	"github.com/baqupio/baqup/v3/pkg/config/dynamic"
+	"github.com/baqupio/baqup/v3/pkg/config/runtime"
+	"github.com/baqupio/baqup/v3/pkg/config/static"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/config/runtime"
-	"github.com/traefik/traefik/v3/pkg/config/static"
 )
 
 var updateExpected = flag.Bool("update_expected", false, "Update expected files in testdata")

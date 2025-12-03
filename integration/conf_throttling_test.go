@@ -11,11 +11,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/baqupio/baqup/v3/integration/try"
+	"github.com/baqupio/baqup/v3/pkg/config/dynamic"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"github.com/traefik/traefik/v3/integration/try"
-	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 )
 
 type ThrottlingSuite struct{ BaseSuite }
@@ -31,9 +31,9 @@ func (s *ThrottlingSuite) SetupSuite() {
 }
 
 func (s *ThrottlingSuite) TestThrottleConfReload() {
-	s.traefikCmd(withConfigFile("fixtures/throttling/simple.toml"))
+	s.baqupCmd(withConfigFile("fixtures/throttling/simple.toml"))
 
-	// wait for Traefik
+	// wait for Baqup
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.BodyContains("rest@internal"))
 	require.NoError(s.T(), err)
 
@@ -81,7 +81,7 @@ func (s *ThrottlingSuite) TestThrottleConfReload() {
 		time.Sleep(200 * time.Millisecond)
 	}
 
-	reloadsRegexp := regexp.MustCompile(`traefik_config_reloads_total (\d*)\n`)
+	reloadsRegexp := regexp.MustCompile(`baqup_config_reloads_total (\d*)\n`)
 
 	resp, err := http.Get("http://127.0.0.1:8080/metrics")
 	require.NoError(s.T(), err)

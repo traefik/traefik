@@ -12,7 +12,7 @@ apiVersion: gateway.networking.k8s.io/v1
 metadata:
   name: my-gateway-class
 spec:
-  controllerName: traefik.io/gateway-controller
+  controllerName: baqup.io/gateway-controller
 
 ---
 kind: Gateway

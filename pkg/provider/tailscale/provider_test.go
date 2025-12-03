@@ -3,10 +3,10 @@ package tailscale
 import (
 	"testing"
 
+	"github.com/baqupio/baqup/v3/pkg/config/dynamic"
+	baquptls "github.com/baqupio/baqup/v3/pkg/tls"
+	"github.com/baqupio/baqup/v3/pkg/types"
 	"github.com/stretchr/testify/assert"
-	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
-	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 func TestProvider_findDomains(t *testing.T) {
@@ -133,7 +133,7 @@ func TestProvider_findDomains(t *testing.T) {
 func TestProvider_findNewDomains(t *testing.T) {
 	p := Provider{
 		ResolverName: "foo",
-		certByDomain: map[string]traefiktls.Certificate{
+		certByDomain: map[string]baquptls.Certificate{
 			"foo.com": {},
 		},
 	}
@@ -145,7 +145,7 @@ func TestProvider_findNewDomains(t *testing.T) {
 func TestProvider_purgeUnusedCerts(t *testing.T) {
 	p := Provider{
 		ResolverName: "foo",
-		certByDomain: map[string]traefiktls.Certificate{
+		certByDomain: map[string]baquptls.Certificate{
 			"foo.com": {},
 			"bar.com": {},
 		},
@@ -161,26 +161,26 @@ func TestProvider_purgeUnusedCerts(t *testing.T) {
 func TestProvider_sendDynamicConfig(t *testing.T) {
 	testCases := []struct {
 		desc         string
-		certByDomain map[string]traefiktls.Certificate
-		want         []*traefiktls.CertAndStores
+		certByDomain map[string]baquptls.Certificate
+		want         []*baquptls.CertAndStores
 	}{
 		{
 			desc: "without certificates",
 		},
 		{
 			desc: "with certificates",
-			certByDomain: map[string]traefiktls.Certificate{
+			certByDomain: map[string]baquptls.Certificate{
 				"foo.com": {CertFile: "foo.crt", KeyFile: "foo.key"},
 				"bar.com": {CertFile: "bar.crt", KeyFile: "bar.key"},
 			},
-			want: []*traefiktls.CertAndStores{
+			want: []*baquptls.CertAndStores{
 				{
-					Certificate: traefiktls.Certificate{CertFile: "bar.crt", KeyFile: "bar.key"},
-					Stores:      []string{traefiktls.DefaultTLSStoreName},
+					Certificate: baquptls.Certificate{CertFile: "bar.crt", KeyFile: "bar.key"},
+					Stores:      []string{baquptls.DefaultTLSStoreName},
 				},
 				{
-					Certificate: traefiktls.Certificate{CertFile: "foo.crt", KeyFile: "foo.key"},
-					Stores:      []string{traefiktls.DefaultTLSStoreName},
+					Certificate: baquptls.Certificate{CertFile: "foo.crt", KeyFile: "foo.key"},
+					Stores:      []string{baquptls.DefaultTLSStoreName},
 				},
 			},
 		},

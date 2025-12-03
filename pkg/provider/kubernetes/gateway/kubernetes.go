@@ -12,19 +12,19 @@ import (
 	"strings"
 	"time"
 
+	"github.com/baqupio/baqup/v3/pkg/config/dynamic"
+	"github.com/baqupio/baqup/v3/pkg/job"
+	"github.com/baqupio/baqup/v3/pkg/observability/logs"
+	baqupv1alpha1 "github.com/baqupio/baqup/v3/pkg/provider/kubernetes/crd/baqupio/v1alpha1"
+	"github.com/baqupio/baqup/v3/pkg/provider/kubernetes/k8s"
+	"github.com/baqupio/baqup/v3/pkg/safe"
+	"github.com/baqupio/baqup/v3/pkg/tls"
+	"github.com/baqupio/baqup/v3/pkg/types"
 	"github.com/cenkalti/backoff/v4"
 	"github.com/hashicorp/go-multierror"
 	"github.com/mitchellh/hashstructure"
 	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/job"
-	"github.com/traefik/traefik/v3/pkg/observability/logs"
-	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
-	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
-	"github.com/traefik/traefik/v3/pkg/safe"
-	"github.com/traefik/traefik/v3/pkg/tls"
-	"github.com/traefik/traefik/v3/pkg/types"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -37,18 +37,18 @@ import (
 const (
 	providerName = "kubernetesgateway"
 
-	controllerName = "traefik.io/gateway-controller"
+	controllerName = "baqup.io/gateway-controller"
 
 	groupCore    = "core"
 	groupGateway = "gateway.networking.k8s.io"
 
-	kindGateway        = "Gateway"
-	kindTraefikService = "TraefikService"
-	kindHTTPRoute      = "HTTPRoute"
-	kindGRPCRoute      = "GRPCRoute"
-	kindTCPRoute       = "TCPRoute"
-	kindTLSRoute       = "TLSRoute"
-	kindService        = "Service"
+	kindGateway      = "Gateway"
+	kindBaqupService = "BaqupService"
+	kindHTTPRoute    = "HTTPRoute"
+	kindGRPCRoute    = "GRPCRoute"
+	kindTCPRoute     = "TCPRoute"
+	kindTLSRoute     = "TLSRoute"
+	kindService      = "Service"
 
 	appProtocolHTTP  = "http"
 	appProtocolHTTPS = "https"
@@ -221,7 +221,7 @@ func (p *Provider) Init() error {
 	return nil
 }
 
-// Provide allows the k8s provider to provide configurations to traefik using the given configuration channel.
+// Provide allows the k8s provider to provide configurations to baqup using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	logger := log.With().Str(logs.ProviderName, providerName).Logger()
 	ctxLog := logger.WithContext(context.Background())
@@ -346,7 +346,7 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) *dynamic.C
 				Status:             metav1.ConditionTrue,
 				ObservedGeneration: gatewayClass.Generation,
 				Reason:             "Handled",
-				Message:            "Handled by Traefik controller",
+				Message:            "Handled by Baqup controller",
 				LastTransitionTime: metav1.Now(),
 			}),
 			SupportedFeatures: supportedFeatures,
@@ -1257,16 +1257,16 @@ func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *s
 	return eventsChanBuffered
 }
 
-func isTraefikService(ref gatev1.BackendRef) bool {
+func isBaqupService(ref gatev1.BackendRef) bool {
 	if ref.Kind == nil || ref.Group == nil {
 		return false
 	}
 
-	return *ref.Group == traefikv1alpha1.GroupName && *ref.Kind == kindTraefikService
+	return *ref.Group == baqupv1alpha1.GroupName && *ref.Kind == kindBaqupService
 }
 
 func isInternalService(ref gatev1.BackendRef) bool {
-	return isTraefikService(ref) && strings.HasSuffix(string(ref.Name), "@internal")
+	return isBaqupService(ref) && strings.HasSuffix(string(ref.Name), "@internal")
 }
 
 // makeListenerKey joins protocol, hostname, and port of a listener into a string key.

@@ -1,6 +1,6 @@
 services:
   whoami-a:
-    image: traefik/whoamitcp
+    image: baqup/whoamitcp
     command:
       - -name
       - whoami-a
@@ -12,7 +12,7 @@ services:
       - ./fixtures/tcp:/certs
 
   whoami-b:
-    image: traefik/whoamitcp
+    image: baqup/whoamitcp
     command:
       - -name
       - whoami-b
@@ -24,7 +24,7 @@ services:
       - ./fixtures/tcp:/certs
 
   whoami-ab:
-    image: traefik/whoamitcp
+    image: baqup/whoamitcp
     command:
       - -name
       - whoami-ab
@@ -36,22 +36,22 @@ services:
       - ./fixtures/tcp:/certs
 
   whoami-no-cert:
-    image: traefik/whoamitcp
+    image: baqup/whoamitcp
     command:
       - -name
       - whoami-no-cert
 
   whoami-no-tls:
-    image: traefik/whoamitcp
+    image: baqup/whoamitcp
     command:
       - -name
       - whoami-no-tls
 
   whoami:
-    image: traefik/whoami
+    image: baqup/whoami
 
   whoami-banner:
-    image: traefik/whoamitcp
+    image: baqup/whoamitcp
     command:
       - -name
       - whoami-banner

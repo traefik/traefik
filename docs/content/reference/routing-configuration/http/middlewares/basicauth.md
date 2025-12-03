@@ -1,6 +1,6 @@
 ---
-title: "Traefik BasicAuth Documentation"
-description: "The HTTP basic authentication (BasicAuth) middleware in Traefik Proxy restricts access to your Services to known users. Read the technical documentation."
+title: "Baqup BasicAuth Documentation"
+description: "The HTTP basic authentication (BasicAuth) middleware in Baqup Proxy restricts access to your Services to known users. Read the technical documentation."
 ---
 
 The `basicAuth` middleware grants access to services to authorized users only.
@@ -37,21 +37,21 @@ http:
 #
 # Also, note that dollar signs should NOT be doubled when not evaluated (e.g. Ansible docker_container module).
 labels:
-  - "traefik.http.middlewares.test-auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
+  - "baqup.http.middlewares.test-auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
 ```
 
 ```json tab="Tags"
 {
   // ...
   "Tags": [
-    "traefik.http.middlewares.test-auth.basicauth.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
+    "baqup.http.middlewares.test-auth.basicauth.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
   ]
 }
 ```
 
 ```yaml tab="Kubernetes"
 # Declaring the user list
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-auth
@@ -66,7 +66,7 @@ spec:
 |:-----------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------|:---------|
 | <a id="opt-users" href="#opt-users" title="#opt-users">`users`</a> | Array of authorized users. Each user must be declared using the `name:hashed-password` format. (More information [here](#users-usersfile))| ""      | No      |
 | <a id="opt-usersFile" href="#opt-usersFile" title="#opt-usersFile">`usersFile`</a> | Path to an external file that contains the authorized users for the middleware. <br />The file content is a list of `name:hashed-password`. (More information [here](#users-usersfile)) | ""      | No      |
-| <a id="opt-realm" href="#opt-realm" title="#opt-realm">`realm`</a> | Allow customizing the realm for the authentication.| "traefik"      | No      |
+| <a id="opt-realm" href="#opt-realm" title="#opt-realm">`realm`</a> | Allow customizing the realm for the authentication.| "baqup"      | No      |
 | <a id="opt-headerField" href="#opt-headerField" title="#opt-headerField">`headerField`</a> | Allow defining a header field to store the authenticated user.| ""      | No      |
 | <a id="opt-removeHeader" href="#opt-removeHeader" title="#opt-removeHeader">`removeHeader`</a> | Allow removing the authorization header before forwarding the request to your service. | false      | No      |
 
@@ -92,4 +92,4 @@ The option `users` supports Kubernetes secrets.
     Please note that these keys are not hashed or encrypted in any way, and therefore is less secure than other methods.
     You can find more information on the [Kubernetes Basic Authentication Secret Documentation](https://kubernetes.io/docs/concepts/configuration/secret/#basic-authentication-secret)
 
-{!traefik-for-business-applications.md!}
+{!baqup-for-business-applications.md!}

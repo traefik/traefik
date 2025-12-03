@@ -1,13 +1,13 @@
 ---
-title: "Traefik FastProxy Experimental Configuration"
-description: "This section of the Traefik Proxy documentation explains how to use the new FastProxy option."
+title: "Baqup FastProxy Experimental Configuration"
+description: "This section of the Baqup Proxy documentation explains how to use the new FastProxy option."
 ---
 
-# Traefik FastProxy Experimental Configuration
+# Baqup FastProxy Experimental Configuration
 
 ## Overview
 
-This guide provides instructions on how to configure and use the new experimental `fastProxy` static configuration option in Traefik.
+This guide provides instructions on how to configure and use the new experimental `fastProxy` static configuration option in Baqup.
 The `fastProxy` option introduces a high-performance reverse proxy designed to enhance the performance of routing.
 
 !!! info "Limitations"
@@ -25,7 +25,7 @@ The `fastProxy` option introduces a high-performance reverse proxy designed to e
 ### Enabling FastProxy
 
 The fastProxy option is a static configuration parameter.
-To enable it, you need to configure it in your Traefik static configuration
+To enable it, you need to configure it in your Baqup static configuration
 
 ```yaml tab="File (YAML)"
 experimental:

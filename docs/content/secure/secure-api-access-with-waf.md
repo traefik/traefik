@@ -1,21 +1,21 @@
 ---
 title: 'Secure API Access with WAF'
-description: 'Traefik Hub API Gateway - Learn how to configure the Coraza Web Application Firewall middleware to protect your applications from common web attacks.'
+description: 'Baqup Hub API Gateway - Learn how to configure the Coraza Web Application Firewall middleware to protect your applications from common web attacks.'
 ---
 
 # Secure API Access with WAF
 
-!!! info "Traefik Hub Feature"
-    This middleware is available exclusively in [Traefik Hub](https://traefik.io/traefik-hub/). Learn more about [Traefik Hub's advanced features](https://doc.traefik.io/traefik-hub/api-gateway/intro).
+!!! info "Baqup Hub Feature"
+    This middleware is available exclusively in [Baqup Hub](https://baqup.io/baqup-hub/). Learn more about [Baqup Hub's advanced features](https://doc.baqup.io/baqup-hub/api-gateway/intro).
 
-The [Coraza Web Application Firewall](https://coraza.io/) middleware in Traefik Hub API Gateway provides comprehensive protection against common web application attacks. The middleware supports the Coraza rule syntax and is compatible with [OWASP Core Rule Set (CRS)](https://coreruleset.org/docs/), allowing you to leverage proven security rules maintained by the security community.
+The [Coraza Web Application Firewall](https://coraza.io/) middleware in Baqup Hub API Gateway provides comprehensive protection against common web application attacks. The middleware supports the Coraza rule syntax and is compatible with [OWASP Core Rule Set (CRS)](https://coreruleset.org/docs/), allowing you to leverage proven security rules maintained by the security community.
 
 ## Basic WAF Protection
 
 To protect your applications with custom security rules, apply the following configuration:
 
 ```yaml tab="Middleware WAF"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: waf-protection
@@ -38,7 +38,7 @@ This configuration implements three security directives that work together to pr
 - **SQL Injection Detection**: The third rule scans request parameters (query strings and form data) for SQL injection patterns using Coraza's built-in detection engine. The `ARGS` variable covers query string parameters like `?id=1` and form data from POST requests like `username=admin&password=123`, but does not include cookies. SQL injection attacks attempt to manipulate database queries by injecting malicious SQL code through user inputs. When detected, the rule blocks the request and logs detailed information about the attempted attack, including which parameter contained the malicious payload.
 
 ```yaml tab="IngressRoute"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: protected-app
@@ -74,7 +74,7 @@ spec:
     spec:
       containers:
       - name: whoami
-        image: traefik/whoami
+        image: baqup/whoami
 
 ---
 apiVersion: v1
@@ -95,7 +95,7 @@ spec:
 To implement comprehensive protection using the OWASP Core Rule Set, which provides battle-tested rules against common attack patterns, apply the following configuration:
 
 ```yaml tab="Middleware WAF with CRS"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: waf-crs-protection
@@ -127,7 +127,7 @@ This advanced configuration implements [OWASP Core Rule Set (CRS)](https://corer
 - **BLOCKING-EVALUATION Rule Set**: The `REQUEST-949-BLOCKING-EVALUATION.conf` file evaluates the accumulated anomaly score against the configured thresholds. If the total score exceeds the threshold, it triggers the blocking action, preventing the request from reaching your application.
 
 ```yaml tab="IngressRoute"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: crs-protected-app
@@ -163,7 +163,7 @@ spec:
     spec:
       containers:
       - name: whoami
-        image: traefik/whoami
+        image: baqup/whoami
 
 ---
 apiVersion: v1
@@ -180,11 +180,11 @@ spec:
 ```
 
 !!! warning
-    Starting with Traefik Hub v3.11.0, Coraza requires read/write permissions to `/tmp`. This requirement stems from upstream changes in the Coraza engine.
+    Starting with Baqup Hub v3.11.0, Coraza requires read/write permissions to `/tmp`. This requirement stems from upstream changes in the Coraza engine.
 
 !!! note "Advanced Configuration"
     Advanced options and detailed rule configuration are described in the [reference page](../reference/routing-configuration/http/middlewares/waf.md).
 
     The WAF middleware supports extensive customization through Coraza directives. You can create custom rules, tune detection thresholds, configure logging levels, and integrate with external threat intelligence feeds. For comprehensive rule writing guidance, consult the [Coraza documentation](https://coraza.io/docs/tutorials/introduction/) and [OWASP CRS documentation](https://coreruleset.org/docs/).
 
-{!traefik-for-business-applications.md!}
+{!baqup-for-business-applications.md!}

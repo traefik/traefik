@@ -1,6 +1,6 @@
 ---
-title: "Traefik Logs Documentation"
-description: "Logs are a key part of observability in Traefik Proxy. Read the technical documentation to learn their configurations, rotations, and time zones."
+title: "Baqup Logs Documentation"
+description: "Logs are a key part of observability in Baqup Proxy. Read the technical documentation to learn their configurations, rotations, and time zones."
 ---
 
 # Logs
@@ -14,29 +14,29 @@ By default, logs are written to stdout, in text format.
 
 ### General
 
-Traefik logs concern everything that happens to Traefik itself (startup, configuration, events, shutdown, and so on).
+Baqup logs concern everything that happens to Baqup itself (startup, configuration, events, shutdown, and so on).
 
 #### `filePath`
 
 By default, the logs are written to the standard output.
 You can configure a file path instead using the `filePath` option.
-When `filePath` is specified, Traefik will write logs only to that file (not to standard output).
+When `filePath` is specified, Baqup will write logs only to that file (not to standard output).
 
 ```yaml tab="File (YAML)"
 # Writing Logs to a File
 log:
-  filePath: "/path/to/traefik.log"
+  filePath: "/path/to/baqup.log"
 ```
 
 ```toml tab="File (TOML)"
 # Writing Logs to a File
 [log]
-  filePath = "/path/to/traefik.log"
+  filePath = "/path/to/baqup.log"
 ```
 
 ```bash tab="CLI"
 # Writing Logs to a File
---log.filePath=/path/to/traefik.log
+--log.filePath=/path/to/baqup.log
 ```
 
 #### `format`
@@ -59,7 +59,7 @@ log:
 
 ```bash tab="CLI"
 # Writing Logs to a File, in JSON
---log.filePath=/path/to/traefik.log
+--log.filePath=/path/to/baqup.log
 --log.format=json
 ```
 
@@ -222,7 +222,7 @@ log:
 
 ### `serviceName`
 
-_Optional, Default="traefik"_
+_Optional, Default="baqup"_
 
 Defines the service name resource attribute.
 
@@ -644,4 +644,4 @@ log:
 --log.otlp.grpc.tls.insecureSkipVerify=true
 ```
 
-{!traefik-for-business-applications.md!}
+{!baqup-for-business-applications.md!}

@@ -1,6 +1,6 @@
 ---
-title: "Traefik Proxy  HTTPS & TLS Overview |Traefik Docs"
-description: "Traefik supports HTTPS & TLS, which concerns roughly two parts of the configuration: routers, and the TLS connection. Read the documentation to learn more."
+title: "Baqup Proxy  HTTPS & TLS Overview |Baqup Docs"
+description: "Baqup supports HTTPS & TLS, which concerns roughly two parts of the configuration: routers, and the TLS connection. Read the documentation to learn more."
 ---
 
 # HTTPS & TLS
@@ -8,7 +8,7 @@ description: "Traefik supports HTTPS & TLS, which concerns roughly two parts of 
 Overview
 {: .subtitle }
 
-Traefik supports HTTPS & TLS, which concerns roughly two parts of the configuration:
+Baqup supports HTTPS & TLS, which concerns roughly two parts of the configuration:
 routers, and the TLS connection (and its underlying certificates).
 
 When a router has to handle HTTPS traffic,
@@ -20,4 +20,4 @@ That is to say, how to obtain [TLS certificates](./tls.md#certificates-definitio
 either through a definition in the dynamic configuration, or through [Let's Encrypt](./acme.md) (ACME).
 And how to configure [TLS options](./tls.md#tls-options), and [certificates stores](./tls.md#certificates-stores).
 
-{!traefik-for-business-applications.md!}
+{!baqup-for-business-applications.md!}

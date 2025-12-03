@@ -3,11 +3,11 @@ package ingress
 import (
 	"testing"
 
+	"github.com/baqupio/baqup/v3/pkg/config/dynamic"
+	otypes "github.com/baqupio/baqup/v3/pkg/observability/types"
+	"github.com/baqupio/baqup/v3/pkg/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
-	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 func Test_parseRouterConfig(t *testing.T) {
@@ -19,23 +19,23 @@ func Test_parseRouterConfig(t *testing.T) {
 		{
 			desc: "router annotations",
 			annotations: map[string]string{
-				"ingress.kubernetes.io/foo":                                     "bar",
-				"traefik.ingress.kubernetes.io/foo":                             "bar",
-				"traefik.ingress.kubernetes.io/router.pathmatcher":              "foobar",
-				"traefik.ingress.kubernetes.io/router.entrypoints":              "foobar,foobar",
-				"traefik.ingress.kubernetes.io/router.middlewares":              "foobar,foobar",
-				"traefik.ingress.kubernetes.io/router.priority":                 "42",
-				"traefik.ingress.kubernetes.io/router.rulesyntax":               "foobar",
-				"traefik.ingress.kubernetes.io/router.tls":                      "true",
-				"traefik.ingress.kubernetes.io/router.tls.certresolver":         "foobar",
-				"traefik.ingress.kubernetes.io/router.tls.domains.0.main":       "foobar",
-				"traefik.ingress.kubernetes.io/router.tls.domains.0.sans":       "foobar,foobar",
-				"traefik.ingress.kubernetes.io/router.tls.domains.1.main":       "foobar",
-				"traefik.ingress.kubernetes.io/router.tls.domains.1.sans":       "foobar,foobar",
-				"traefik.ingress.kubernetes.io/router.tls.options":              "foobar",
-				"traefik.ingress.kubernetes.io/router.observability.accessLogs": "true",
-				"traefik.ingress.kubernetes.io/router.observability.metrics":    "true",
-				"traefik.ingress.kubernetes.io/router.observability.tracing":    "true",
+				"ingress.kubernetes.io/foo":                                   "bar",
+				"baqup.ingress.kubernetes.io/foo":                             "bar",
+				"baqup.ingress.kubernetes.io/router.pathmatcher":              "foobar",
+				"baqup.ingress.kubernetes.io/router.entrypoints":              "foobar,foobar",
+				"baqup.ingress.kubernetes.io/router.middlewares":              "foobar,foobar",
+				"baqup.ingress.kubernetes.io/router.priority":                 "42",
+				"baqup.ingress.kubernetes.io/router.rulesyntax":               "foobar",
+				"baqup.ingress.kubernetes.io/router.tls":                      "true",
+				"baqup.ingress.kubernetes.io/router.tls.certresolver":         "foobar",
+				"baqup.ingress.kubernetes.io/router.tls.domains.0.main":       "foobar",
+				"baqup.ingress.kubernetes.io/router.tls.domains.0.sans":       "foobar,foobar",
+				"baqup.ingress.kubernetes.io/router.tls.domains.1.main":       "foobar",
+				"baqup.ingress.kubernetes.io/router.tls.domains.1.sans":       "foobar,foobar",
+				"baqup.ingress.kubernetes.io/router.tls.options":              "foobar",
+				"baqup.ingress.kubernetes.io/router.observability.accessLogs": "true",
+				"baqup.ingress.kubernetes.io/router.observability.metrics":    "true",
+				"baqup.ingress.kubernetes.io/router.observability.tracing":    "true",
 			},
 			expected: &RouterConfig{
 				Router: &RouterIng{
@@ -70,7 +70,7 @@ func Test_parseRouterConfig(t *testing.T) {
 		{
 			desc: "simple TLS annotation",
 			annotations: map[string]string{
-				"traefik.ingress.kubernetes.io/router.tls": "true",
+				"baqup.ingress.kubernetes.io/router.tls": "true",
 			},
 			expected: &RouterConfig{
 				Router: &RouterIng{
@@ -112,19 +112,19 @@ func Test_parseServiceConfig(t *testing.T) {
 		{
 			desc: "service annotations",
 			annotations: map[string]string{
-				"ingress.kubernetes.io/foo":                                    "bar",
-				"traefik.ingress.kubernetes.io/foo":                            "bar",
-				"traefik.ingress.kubernetes.io/service.serversscheme":          "protocol",
-				"traefik.ingress.kubernetes.io/service.serverstransport":       "foobar@file",
-				"traefik.ingress.kubernetes.io/service.passhostheader":         "true",
-				"traefik.ingress.kubernetes.io/service.nativelb":               "true",
-				"traefik.ingress.kubernetes.io/service.sticky.cookie":          "true",
-				"traefik.ingress.kubernetes.io/service.sticky.cookie.httponly": "true",
-				"traefik.ingress.kubernetes.io/service.sticky.cookie.name":     "foobar",
-				"traefik.ingress.kubernetes.io/service.sticky.cookie.secure":   "true",
-				"traefik.ingress.kubernetes.io/service.sticky.cookie.samesite": "none",
-				"traefik.ingress.kubernetes.io/service.sticky.cookie.domain":   "foo.com",
-				"traefik.ingress.kubernetes.io/service.sticky.cookie.path":     "foobar",
+				"ingress.kubernetes.io/foo":                                  "bar",
+				"baqup.ingress.kubernetes.io/foo":                            "bar",
+				"baqup.ingress.kubernetes.io/service.serversscheme":          "protocol",
+				"baqup.ingress.kubernetes.io/service.serverstransport":       "foobar@file",
+				"baqup.ingress.kubernetes.io/service.passhostheader":         "true",
+				"baqup.ingress.kubernetes.io/service.nativelb":               "true",
+				"baqup.ingress.kubernetes.io/service.sticky.cookie":          "true",
+				"baqup.ingress.kubernetes.io/service.sticky.cookie.httponly": "true",
+				"baqup.ingress.kubernetes.io/service.sticky.cookie.name":     "foobar",
+				"baqup.ingress.kubernetes.io/service.sticky.cookie.secure":   "true",
+				"baqup.ingress.kubernetes.io/service.sticky.cookie.samesite": "none",
+				"baqup.ingress.kubernetes.io/service.sticky.cookie.domain":   "foo.com",
+				"baqup.ingress.kubernetes.io/service.sticky.cookie.path":     "foobar",
 			},
 			expected: &ServiceConfig{
 				Service: &ServiceIng{
@@ -148,7 +148,7 @@ func Test_parseServiceConfig(t *testing.T) {
 		{
 			desc: "simple sticky annotation",
 			annotations: map[string]string{
-				"traefik.ingress.kubernetes.io/service.sticky.cookie": "true",
+				"baqup.ingress.kubernetes.io/service.sticky.cookie": "true",
 			},
 			expected: &ServiceConfig{
 				Service: &ServiceIng{
@@ -194,62 +194,62 @@ func Test_convertAnnotations(t *testing.T) {
 		{
 			desc: "router annotations",
 			annotations: map[string]string{
-				"ingress.kubernetes.io/foo":                                     "bar",
-				"traefik.ingress.kubernetes.io/foo":                             "bar",
-				"traefik.ingress.kubernetes.io/router.pathmatcher":              "foobar",
-				"traefik.ingress.kubernetes.io/router.entrypoints":              "foobar,foobar",
-				"traefik.ingress.kubernetes.io/router.middlewares":              "foobar,foobar",
-				"traefik.ingress.kubernetes.io/router.priority":                 "42",
-				"traefik.ingress.kubernetes.io/router.rulesyntax":               "foobar",
-				"traefik.ingress.kubernetes.io/router.tls":                      "true",
-				"traefik.ingress.kubernetes.io/router.tls.certresolver":         "foobar",
-				"traefik.ingress.kubernetes.io/router.tls.domains.0.main":       "foobar",
-				"traefik.ingress.kubernetes.io/router.tls.domains.0.sans":       "foobar,foobar",
-				"traefik.ingress.kubernetes.io/router.tls.domains.1.main":       "foobar",
-				"traefik.ingress.kubernetes.io/router.tls.domains.1.sans":       "foobar,foobar",
-				"traefik.ingress.kubernetes.io/router.tls.options":              "foobar",
-				"traefik.ingress.kubernetes.io/router.observability.accessLogs": "true",
-				"traefik.ingress.kubernetes.io/router.observability.metrics":    "true",
-				"traefik.ingress.kubernetes.io/router.observability.tracing":    "true",
+				"ingress.kubernetes.io/foo":                                   "bar",
+				"baqup.ingress.kubernetes.io/foo":                             "bar",
+				"baqup.ingress.kubernetes.io/router.pathmatcher":              "foobar",
+				"baqup.ingress.kubernetes.io/router.entrypoints":              "foobar,foobar",
+				"baqup.ingress.kubernetes.io/router.middlewares":              "foobar,foobar",
+				"baqup.ingress.kubernetes.io/router.priority":                 "42",
+				"baqup.ingress.kubernetes.io/router.rulesyntax":               "foobar",
+				"baqup.ingress.kubernetes.io/router.tls":                      "true",
+				"baqup.ingress.kubernetes.io/router.tls.certresolver":         "foobar",
+				"baqup.ingress.kubernetes.io/router.tls.domains.0.main":       "foobar",
+				"baqup.ingress.kubernetes.io/router.tls.domains.0.sans":       "foobar,foobar",
+				"baqup.ingress.kubernetes.io/router.tls.domains.1.main":       "foobar",
+				"baqup.ingress.kubernetes.io/router.tls.domains.1.sans":       "foobar,foobar",
+				"baqup.ingress.kubernetes.io/router.tls.options":              "foobar",
+				"baqup.ingress.kubernetes.io/router.observability.accessLogs": "true",
+				"baqup.ingress.kubernetes.io/router.observability.metrics":    "true",
+				"baqup.ingress.kubernetes.io/router.observability.tracing":    "true",
 			},
 			expected: map[string]string{
-				"traefik.foo":                             "bar",
-				"traefik.router.pathmatcher":              "foobar",
-				"traefik.router.entrypoints":              "foobar,foobar",
-				"traefik.router.middlewares":              "foobar,foobar",
-				"traefik.router.priority":                 "42",
-				"traefik.router.rulesyntax":               "foobar",
-				"traefik.router.tls":                      "true",
-				"traefik.router.tls.certresolver":         "foobar",
-				"traefik.router.tls.domains[0].main":      "foobar",
-				"traefik.router.tls.domains[0].sans":      "foobar,foobar",
-				"traefik.router.tls.domains[1].main":      "foobar",
-				"traefik.router.tls.domains[1].sans":      "foobar,foobar",
-				"traefik.router.tls.options":              "foobar",
-				"traefik.router.observability.accessLogs": "true",
-				"traefik.router.observability.metrics":    "true",
-				"traefik.router.observability.tracing":    "true",
+				"baqup.foo":                             "bar",
+				"baqup.router.pathmatcher":              "foobar",
+				"baqup.router.entrypoints":              "foobar,foobar",
+				"baqup.router.middlewares":              "foobar,foobar",
+				"baqup.router.priority":                 "42",
+				"baqup.router.rulesyntax":               "foobar",
+				"baqup.router.tls":                      "true",
+				"baqup.router.tls.certresolver":         "foobar",
+				"baqup.router.tls.domains[0].main":      "foobar",
+				"baqup.router.tls.domains[0].sans":      "foobar,foobar",
+				"baqup.router.tls.domains[1].main":      "foobar",
+				"baqup.router.tls.domains[1].sans":      "foobar,foobar",
+				"baqup.router.tls.options":              "foobar",
+				"baqup.router.observability.accessLogs": "true",
+				"baqup.router.observability.metrics":    "true",
+				"baqup.router.observability.tracing":    "true",
 			},
 		},
 		{
 			desc: "service annotations",
 			annotations: map[string]string{
-				"traefik.ingress.kubernetes.io/service.serversscheme":          "protocol",
-				"traefik.ingress.kubernetes.io/service.serverstransport":       "foobar@file",
-				"traefik.ingress.kubernetes.io/service.passhostheader":         "true",
-				"traefik.ingress.kubernetes.io/service.sticky.cookie":          "true",
-				"traefik.ingress.kubernetes.io/service.sticky.cookie.httponly": "true",
-				"traefik.ingress.kubernetes.io/service.sticky.cookie.name":     "foobar",
-				"traefik.ingress.kubernetes.io/service.sticky.cookie.secure":   "true",
+				"baqup.ingress.kubernetes.io/service.serversscheme":          "protocol",
+				"baqup.ingress.kubernetes.io/service.serverstransport":       "foobar@file",
+				"baqup.ingress.kubernetes.io/service.passhostheader":         "true",
+				"baqup.ingress.kubernetes.io/service.sticky.cookie":          "true",
+				"baqup.ingress.kubernetes.io/service.sticky.cookie.httponly": "true",
+				"baqup.ingress.kubernetes.io/service.sticky.cookie.name":     "foobar",
+				"baqup.ingress.kubernetes.io/service.sticky.cookie.secure":   "true",
 			},
 			expected: map[string]string{
-				"traefik.service.passhostheader":         "true",
-				"traefik.service.serversscheme":          "protocol",
-				"traefik.service.serverstransport":       "foobar@file",
-				"traefik.service.sticky.cookie":          "true",
-				"traefik.service.sticky.cookie.httponly": "true",
-				"traefik.service.sticky.cookie.name":     "foobar",
-				"traefik.service.sticky.cookie.secure":   "true",
+				"baqup.service.passhostheader":         "true",
+				"baqup.service.serversscheme":          "protocol",
+				"baqup.service.serverstransport":       "foobar@file",
+				"baqup.service.sticky.cookie":          "true",
+				"baqup.service.sticky.cookie.httponly": "true",
+				"baqup.service.sticky.cookie.name":     "foobar",
+				"baqup.service.sticky.cookie.secure":   "true",
 			},
 		},
 		{

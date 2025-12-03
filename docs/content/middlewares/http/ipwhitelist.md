@@ -1,6 +1,6 @@
 ---
-title: "Traefik HTTP Middlewares IPWhiteList"
-description: "Learn how to use IPWhiteList in HTTP middleware for limiting clients to specific IPs in Traefik Proxy. Read the technical documentation."
+title: "Baqup HTTP Middlewares IPWhiteList"
+description: "Learn how to use IPWhiteList in HTTP middleware for limiting clients to specific IPs in Baqup Proxy. Read the technical documentation."
 ---
 
 # IPWhiteList
@@ -19,11 +19,11 @@ IPWhiteList limits allowed requests based on the client IP.
 ```yaml tab="Docker"
 # Accepts request from defined IP
 labels:
-  - "traefik.http.middlewares.test-ipwhitelist.ipwhitelist.sourcerange=127.0.0.1/32, 192.168.1.7"
+  - "baqup.http.middlewares.test-ipwhitelist.ipwhitelist.sourcerange=127.0.0.1/32, 192.168.1.7"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-ipwhitelist
@@ -36,7 +36,7 @@ spec:
 
 ```yaml tab="Consul Catalog"
 # Accepts request from defined IP
-- "traefik.http.middlewares.test-ipwhitelist.ipwhitelist.sourcerange=127.0.0.1/32, 192.168.1.7"
+- "baqup.http.middlewares.test-ipwhitelist.ipwhitelist.sourcerange=127.0.0.1/32, 192.168.1.7"
 ```
 
 ```yaml tab="File (YAML)"
@@ -67,14 +67,14 @@ The `sourceRange` option sets the allowed IPs (or ranges of allowed IPs by using
 
 ### `ipStrategy`
 
-The `ipStrategy` option defines two parameters that set how Traefik determines the client IP: `depth`, and `excludedIPs`.  
+The `ipStrategy` option defines two parameters that set how Baqup determines the client IP: `depth`, and `excludedIPs`.  
 If no strategy is set, the default behavior is to match `sourceRange` against the Remote address found in the request.
 
 !!! important "As a middleware, whitelisting happens before the actual proxying to the backend takes place. In addition, the previous network hop only gets appended to `X-Forwarded-For` during the last stages of proxying, i.e. after it has already passed through whitelisting. Therefore, during whitelisting, as the previous network hop is not yet present in `X-Forwarded-For`, it cannot be matched against `sourceRange`."
 
 #### `ipStrategy.depth`
 
-The `depth` option tells Traefik to use the `X-Forwarded-For` header and take the IP located at the `depth` position (starting from the right).
+The `depth` option tells Baqup to use the `X-Forwarded-For` header and take the IP located at the `depth` position (starting from the right).
 
 - If `depth` is greater than the total number of IPs in `X-Forwarded-For`, then the client IP will be empty.
 - `depth` is ignored if its value is less than or equal to 0.
@@ -95,13 +95,13 @@ See [ipStrategy.ipv6Subnet](#ipstrategyipv6subnet) for more details.
 ```yaml tab="Docker"
 # Whitelisting Based on `X-Forwarded-For` with `depth=2`
 labels:
-  - "traefik.http.middlewares.test-ipwhitelist.ipwhitelist.sourcerange=127.0.0.1/32, 192.168.1.7"
-  - "traefik.http.middlewares.test-ipwhitelist.ipwhitelist.ipstrategy.depth=2"
+  - "baqup.http.middlewares.test-ipwhitelist.ipwhitelist.sourcerange=127.0.0.1/32, 192.168.1.7"
+  - "baqup.http.middlewares.test-ipwhitelist.ipwhitelist.ipstrategy.depth=2"
 ```
 
 ```yaml tab="Kubernetes"
 # Whitelisting Based on `X-Forwarded-For` with `depth=2`
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-ipwhitelist
@@ -116,8 +116,8 @@ spec:
 
 ```yaml tab="Consul Catalog"
 # Whitelisting Based on `X-Forwarded-For` with `depth=2`
-- "traefik.http.middlewares.test-ipwhitelist.ipwhitelist.sourcerange=127.0.0.1/32, 192.168.1.7"
-- "traefik.http.middlewares.test-ipwhitelist.ipwhitelist.ipstrategy.depth=2"
+- "baqup.http.middlewares.test-ipwhitelist.ipwhitelist.sourcerange=127.0.0.1/32, 192.168.1.7"
+- "baqup.http.middlewares.test-ipwhitelist.ipwhitelist.ipstrategy.depth=2"
 ```
 
 ```yaml tab="File (YAML)"
@@ -144,7 +144,7 @@ http:
 
 #### `ipStrategy.excludedIPs`
 
-`excludedIPs` configures Traefik to scan the `X-Forwarded-For` header and select the first IP not in the list.
+`excludedIPs` configures Baqup to scan the `X-Forwarded-For` header and select the first IP not in the list.
 
 !!! important "If `depth` is specified, `excludedIPs` is ignored."
 
@@ -161,13 +161,13 @@ http:
 ```yaml tab="Docker"
 # Exclude from `X-Forwarded-For`
 labels:
-    - "traefik.http.middlewares.test-ipwhitelist.ipwhitelist.sourceRange=127.0.0.1/32, 192.168.1.0/24"
-    - "traefik.http.middlewares.test-ipwhitelist.ipwhitelist.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
+    - "baqup.http.middlewares.test-ipwhitelist.ipwhitelist.sourceRange=127.0.0.1/32, 192.168.1.0/24"
+    - "baqup.http.middlewares.test-ipwhitelist.ipwhitelist.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
 ```
 
 ```yaml tab="Kubernetes"
 # Exclude from `X-Forwarded-For`
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-ipwhitelist
@@ -184,8 +184,8 @@ spec:
 
 ```yaml tab="Consul Catalog"
 # Exclude from `X-Forwarded-For`
-- "traefik.http.middlewares.test-ipwhitelist.ipwhitelist.sourceRange=127.0.0.1/32, 192.168.1.0/24"
-- "traefik.http.middlewares.test-ipwhitelist.ipwhitelist.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
+- "baqup.http.middlewares.test-ipwhitelist.ipwhitelist.sourceRange=127.0.0.1/32, 192.168.1.0/24"
+- "baqup.http.middlewares.test-ipwhitelist.ipwhitelist.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
 ```
 
 ```yaml tab="File (YAML)"
@@ -233,11 +233,11 @@ This is useful for grouping IPv6 addresses into subnets to prevent bypassing thi
 
 ```yaml tab="Docker & Swarm"
 labels:
-  - "traefik.http.middlewares.test-ipWhiteList.ipWhiteList.sourcecriterion.ipstrategy.ipv6Subnet=64"
+  - "baqup.http.middlewares.test-ipWhiteList.ipWhiteList.sourcecriterion.ipstrategy.ipv6Subnet=64"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-ipWhiteList
@@ -249,7 +249,7 @@ spec:
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.test-ipWhiteList.ipWhiteList.sourcecriterion.ipstrategy.ipv6Subnet=64"
+- "baqup.http.middlewares.test-ipWhiteList.ipWhiteList.sourcecriterion.ipstrategy.ipv6Subnet=64"
 ```
 
 ```yaml tab="File (YAML)"

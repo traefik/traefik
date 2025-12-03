@@ -8,7 +8,7 @@ import (
 	"github.com/go-kit/kit/metrics/multi"
 )
 
-const defaultMetricsPrefix = "traefik"
+const defaultMetricsPrefix = "baqup"
 
 // Registry has to implemented by any system that wants to monitor and expose metrics.
 type Registry interface {

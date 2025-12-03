@@ -1,6 +1,6 @@
 ---
-title: "Traefik Configuration Documentation"
-description: "Get started with Traefik Proxy. This page will introduce you to the routing and install configurations. Read the technical documentation."
+title: "Baqup Configuration Documentation"
+description: "Get started with Baqup Proxy. This page will introduce you to the routing and install configurations. Read the technical documentation."
 ---
 
 # Configuration Introduction
@@ -8,23 +8,23 @@ description: "Get started with Traefik Proxy. This page will introduce you to th
 How the Magic Happens
 {: .subtitle }
 
-Configuration in Traefik can refer to two different things:
+Configuration in Baqup can refer to two different things:
 
 - The install (startup) configuration (formerly known as the _static configuration_)
 - The routing configuration (formerly known as the _dynamic configuration_)
 
-Elements in the _install configuration_ set up connections to [providers](../providers/overview.md) and define the [entrypoints](../routing/entrypoints.md) Traefik will listen to (these elements don't change often).
+Elements in the _install configuration_ set up connections to [providers](../providers/overview.md) and define the [entrypoints](../routing/entrypoints.md) Baqup will listen to (these elements don't change often).
 
 The _routing configuration_ contains everything that defines how the requests are handled by your system.
 This configuration can change and is seamlessly hot-reloaded, without any request interruption or connection loss.
 
 !!! warning "Incompatible Configuration"
-    Please be aware that the old configurations for Traefik v1.x are NOT compatible with the v2.x config as of now.
+    Please be aware that the old configurations for Baqup v1.x are NOT compatible with the v2.x config as of now.
     If you are running v2, please ensure you are using a v2 configuration.
 
 ## The Routing Configuration
 
-Traefik gets its _routing configuration_ from [providers](../providers/overview.md): whether an orchestrator, a service registry, or a plain old configuration file.
+Baqup gets its _routing configuration_ from [providers](../providers/overview.md): whether an orchestrator, a service registry, or a plain old configuration file.
 
 Since this configuration is specific to your infrastructure choices, we invite you to refer to the [dedicated section of this documentation](../routing/overview.md).
 
@@ -34,11 +34,11 @@ Since this configuration is specific to your infrastructure choices, we invite y
 
 !!! info "HTTPS Certificates also belong to the routing configuration."
 
-    You can add / update / remove them without restarting your Traefik instance.
+    You can add / update / remove them without restarting your Baqup instance.
 
 ## The Install Configuration
 
-There are three different, **mutually exclusive** (i.e. you can use only one at the same time), ways to define install configuration options in Traefik:
+There are three different, **mutually exclusive** (i.e. you can use only one at the same time), ways to define install configuration options in Baqup:
 
 1. In a configuration file
 1. In the command-line arguments
@@ -54,9 +54,9 @@ Once positioned, this option sets (and resets) all the default values of the sub
 
 ### Configuration File
 
-At startup, Traefik searches for install configuration in a file named `traefik.yml` (or `traefik.yaml` or `traefik.toml`) in:
+At startup, Baqup searches for install configuration in a file named `baqup.yml` (or `baqup.yaml` or `baqup.toml`) in:
 
-- `/etc/traefik/`
+- `/etc/baqup/`
 - `$XDG_CONFIG_HOME/`
 - `$HOME/.config/`
 - `.` (_the working directory_).
@@ -64,7 +64,7 @@ At startup, Traefik searches for install configuration in a file named `traefik.
 You can override this using the `configFile` argument.
 
 ```bash
-traefik --configFile=foo/bar/myconfigfile.yml
+baqup --configFile=foo/bar/myconfigfile.yml
 ```
 
 ### Arguments
@@ -72,12 +72,12 @@ traefik --configFile=foo/bar/myconfigfile.yml
 To get the list of all available arguments:
 
 ```bash
-traefik --help
+baqup --help
 
 # or
 
-docker run traefik[:version] --help
-# ex: docker run traefik:v3.6 --help
+docker run baqup[:version] --help
+# ex: docker run baqup:v3.6 --help
 ```
 
 Check the [CLI reference](../reference/install-configuration/configuration-options.md "Link to CLI reference overview") for an overview about all available arguments.
@@ -92,4 +92,4 @@ All the configuration options are documented in their related section.
 
 You can browse the available features in the menu, the [providers](../providers/overview.md), or the [routing section](../routing/overview.md) to see them in action.
 
-{!traefik-for-business-applications.md!}
+{!baqup-for-business-applications.md!}

@@ -1,5 +1,5 @@
-apiVersion: traefik.io/v1alpha1
-kind: TraefikService
+apiVersion: baqup.io/v1alpha1
+kind: BaqupService
 metadata:
   name: wrr2
   namespace: default
@@ -17,8 +17,8 @@ spec:
         port: 80
 
 ---
-apiVersion: traefik.io/v1alpha1
-kind: TraefikService
+apiVersion: baqup.io/v1alpha1
+kind: BaqupService
 metadata:
   name: wrr1
   namespace: default
@@ -27,15 +27,15 @@ spec:
   weighted:
     services:
       - name: wrr2
-        kind: TraefikService
+        kind: BaqupService
         weight: 1
       - name: s3
         weight: 1
         port: 80
 
 ---
-apiVersion: traefik.io/v1alpha1
-kind: TraefikService
+apiVersion: baqup.io/v1alpha1
+kind: BaqupService
 metadata:
   name: mirror1
   namespace: default
@@ -49,12 +49,12 @@ spec:
         percent: 20
         port: 80
       - name: mirror2
-        kind: TraefikService
+        kind: BaqupService
         percent: 20
 
 ---
-apiVersion: traefik.io/v1alpha1
-kind: TraefikService
+apiVersion: baqup.io/v1alpha1
+kind: BaqupService
 metadata:
   name: mirror2
   namespace: default
@@ -62,7 +62,7 @@ metadata:
 spec:
   mirroring:
     name: wrr2
-    kind: TraefikService
+    kind: BaqupService
     mirrorBody: true
     # Optional
     maxBodySize: 2000000000
@@ -74,7 +74,7 @@ spec:
         port: 80
 
 ---
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: ingressroute
@@ -120,12 +120,12 @@ spec:
       kind: Rule
       services:
         - name: wrr1
-          kind: TraefikService
+          kind: BaqupService
     - match: PathPrefix(`/mirrored`)
       kind: Rule
       services:
         - name: mirror1
-          kind: TraefikService
+          kind: BaqupService
   # use an empty tls object for TLS with Let's Encrypt
   tls:
     secretName: supersecret
@@ -134,7 +134,7 @@ spec:
       namespace: default
 
 ---
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: IngressRouteTCP
 metadata:
   name: ingressroutetcp.crd
@@ -159,7 +159,7 @@ spec:
       namespace: default
 
 ---
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: IngressRouteUDP
 metadata:
   name: ingressrouteudp.crd
@@ -174,7 +174,7 @@ spec:
           port: 8080
 
 ---
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: TLSOption
 metadata:
   name: tlsoption
@@ -200,7 +200,7 @@ spec:
     - foobar
 
 ---
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: ServersTransport
 metadata:
   name: mytransport
@@ -224,7 +224,7 @@ spec:
   disableHTTP2: true
 
 ---
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: ServersTransportTCP
 metadata:
   name: mytransporttcp

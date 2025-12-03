@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/baqupio/baqup/v3/integration/try"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"github.com/traefik/traefik/v3/integration/try"
 )
 
 type RateLimitSuite struct {
@@ -40,7 +40,7 @@ func (s *RateLimitSuite) TestSimpleConfiguration() {
 		Server1 string
 	}{s.ServerIP})
 
-	s.traefikCmd(withConfigFile(file))
+	s.baqupCmd(withConfigFile(file))
 
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("ratelimit"))
 	require.NoError(s.T(), err)
@@ -71,7 +71,7 @@ func (s *RateLimitSuite) TestRedisRateLimitSimpleConfiguration() {
 		RedisEndpoint: s.RedisEndpoint,
 	})
 
-	s.traefikCmd(withConfigFile(file))
+	s.baqupCmd(withConfigFile(file))
 
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("ratelimit", "redis"))
 	require.NoError(s.T(), err)

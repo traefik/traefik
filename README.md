@@ -1,21 +1,21 @@
 
 <p align="center">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="docs/content/assets/img/traefik.logo-dark.png">
-      <source media="(prefers-color-scheme: light)" srcset="docs/content/assets/img/traefik.logo.png">
-      <img alt="Traefik" title="Traefik" src="docs/content/assets/img/traefik.logo.png">
+      <source media="(prefers-color-scheme: dark)" srcset="docs/content/assets/img/baqup.logo-dark.png">
+      <source media="(prefers-color-scheme: light)" srcset="docs/content/assets/img/baqup.logo.png">
+      <img alt="Baqup" title="Baqup" src="docs/content/assets/img/baqup.logo.png">
     </picture>
 </p>
 
-[![Docs](https://img.shields.io/badge/docs-current-brightgreen.svg)](https://doc.traefik.io/traefik)
-[![Go Report Card](https://goreportcard.com/badge/traefik/traefik)](https://goreportcard.com/report/traefik/traefik)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/traefik/traefik/blob/master/LICENSE.md)
-[![Join the community support forum at https://community.traefik.io/](https://img.shields.io/badge/style-register-green.svg?style=social&label=Discourse)](https://community.traefik.io/)
-[![Twitter](https://img.shields.io/twitter/follow/traefik.svg?style=social)](https://twitter.com/intent/follow?screen_name=traefik)
+[![Docs](https://img.shields.io/badge/docs-current-brightgreen.svg)](https://doc.baqup.io/baqup)
+[![Go Report Card](https://goreportcard.com/badge/baqup/baqup)](https://goreportcard.com/report/baqup/baqup)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/baqupio/baqup/blob/master/LICENSE.md)
+[![Join the community support forum at https://community.baqup.io/](https://img.shields.io/badge/style-register-green.svg?style=social&label=Discourse)](https://community.baqup.io/)
+[![Twitter](https://img.shields.io/twitter/follow/baqup.svg?style=social)](https://twitter.com/intent/follow?screen_name=baqup)
 
-Traefik (pronounced _traffic_) is a modern HTTP reverse proxy and load balancer that makes deploying microservices easy.
-Traefik integrates with your existing infrastructure components ([Docker](https://www.docker.com/), [Swarm mode](https://docs.docker.com/engine/swarm/), [Kubernetes](https://kubernetes.io), [Consul](https://www.consul.io/), [Etcd](https://coreos.com/etcd/), [Rancher v2](https://rancher.com), [Amazon ECS](https://aws.amazon.com/ecs), ...) and configures itself automatically and dynamically.
-Pointing Traefik at your orchestrator should be the _only_ configuration step you need.
+Baqup (pronounced _backup_) is a modern HTTP reverse proxy and load balancer that makes deploying microservices easy.
+Baqup integrates with your existing infrastructure components ([Docker](https://www.docker.com/), [Swarm mode](https://docs.docker.com/engine/swarm/), [Kubernetes](https://kubernetes.io), [Consul](https://www.consul.io/), [Etcd](https://coreos.com/etcd/), [Rancher v2](https://rancher.com), [Amazon ECS](https://aws.amazon.com/ecs), ...) and configures itself automatically and dynamically.
+Pointing Baqup at your orchestrator should be the _only_ configuration step you need.
 
 ---
 
@@ -34,7 +34,7 @@ Pointing Traefik at your orchestrator should be the _only_ configuration step yo
 
 ---
 
-:warning: When migrating to a new major version of Traefik, please refer to the [migration guide](https://doc.traefik.io/traefik/migrate/v2-to-v3/) to ensure a smooth transition and to be aware of any breaking changes.
+:warning: When migrating to a new major version of Baqup, please refer to the [migration guide](https://doc.baqup.io/baqup/migrate/v2-to-v3/) to ensure a smooth transition and to be aware of any breaking changes.
 
 
 ## Overview
@@ -45,14 +45,14 @@ Now you want users to access these microservices, and you need a reverse proxy.
 Traditional reverse-proxies require that you configure _each_ route that will connect paths and subdomains to _each_ microservice. 
 In an environment where you add, remove, kill, upgrade, or scale your services _many_ times a day, the task of keeping the routes up to date becomes tedious. 
 
-**This is when Traefik can help you!**
+**This is when Baqup can help you!**
 
-Traefik listens to your service registry/orchestrator API and instantly generates the routes so your microservices are connected to the outside world -- without further intervention from your part. 
+Baqup listens to your service registry/orchestrator API and instantly generates the routes so your microservices are connected to the outside world -- without further intervention from your part. 
 
-**Run Traefik and let it do the work for you!** 
-_(But if you'd rather configure some of your routes manually, Traefik supports that too!)_
+**Run Baqup and let it do the work for you!** 
+_(But if you'd rather configure some of your routes manually, Baqup supports that too!)_
 
-![Architecture](docs/content/assets/img/traefik-architecture.png)
+![Architecture](docs/content/assets/img/baqup-architecture.png)
 
 ## Features
 
@@ -66,66 +66,66 @@ _(But if you'd rather configure some of your routes manually, Traefik supports t
 - Keeps access logs (JSON, CLF)
 - Fast
 - Exposes a Rest API
-- Packaged as a single binary file (made with :heart: with go) and available as an [official](https://hub.docker.com/r/_/traefik/) docker image
+- Packaged as a single binary file (made with :heart: with go) and available as an [official](https://hub.docker.com/r/_/baqup/) docker image
 
 ## Supported Backends
 
-- [Docker](https://doc.traefik.io/traefik/providers/docker/) / [Swarm mode](https://doc.traefik.io/traefik/providers/docker/)
-- [Kubernetes](https://doc.traefik.io/traefik/providers/kubernetes-crd/)
-- [ECS](https://doc.traefik.io/traefik/providers/ecs/)
-- [File](https://doc.traefik.io/traefik/providers/file/)
+- [Docker](https://doc.baqup.io/baqup/providers/docker/) / [Swarm mode](https://doc.baqup.io/baqup/providers/docker/)
+- [Kubernetes](https://doc.baqup.io/baqup/providers/kubernetes-crd/)
+- [ECS](https://doc.baqup.io/baqup/providers/ecs/)
+- [File](https://doc.baqup.io/baqup/providers/file/)
 
 ## Quickstart
 
-To get your hands on Traefik, you can use the [5-Minute Quickstart](https://doc.traefik.io/traefik/getting-started/quick-start/) in our documentation (you will need Docker).
+To get your hands on Baqup, you can use the [5-Minute Quickstart](https://doc.baqup.io/baqup/getting-started/quick-start/) in our documentation (you will need Docker).
 
 ## Web UI
 
-You can access the simple HTML frontend of Traefik.
+You can access the simple HTML frontend of Baqup.
 
 ![Web UI Providers](docs/content/assets/img/webui-dashboard.png)
 
 ## Documentation
 
-You can find the complete documentation of Traefik v3 at [https://doc.traefik.io/traefik/](https://doc.traefik.io/traefik/).
+You can find the complete documentation of Baqup v3 at [https://doc.baqup.io/baqup/](https://doc.baqup.io/baqup/).
 
 ## Support
 
 To get community support, you can:
 
-- join the Traefik community forum: [![Join the chat at https://community.traefik.io/](https://img.shields.io/badge/style-register-green.svg?style=social&label=Discourse)](https://community.traefik.io/)
+- join the Baqup community forum: [![Join the chat at https://community.baqup.io/](https://img.shields.io/badge/style-register-green.svg?style=social&label=Discourse)](https://community.baqup.io/)
 
-If you need commercial support, please contact [Traefik.io](https://traefik.io) by mail: <mailto:support@traefik.io>.
+If you need commercial support, please contact [Baqup.io](https://baqup.io) by mail: <mailto:support@baqup.io>.
 
 ## Download
 
-- Grab the latest binary from the [releases](https://github.com/traefik/traefik/releases) page and run it with the [sample configuration file](https://raw.githubusercontent.com/traefik/traefik/master/traefik.sample.toml):
+- Grab the latest binary from the [releases](https://github.com/baqupio/baqup/releases) page and run it with the [sample configuration file](https://raw.githubusercontent.com/baqup/baqup/master/baqup.sample.toml):
 
 ```shell
-./traefik --configFile=traefik.toml
+./baqup --configFile=baqup.toml
 ```
 
-- Or use the official tiny Docker image and run it with the [sample configuration file](https://raw.githubusercontent.com/traefik/traefik/master/traefik.sample.toml):
+- Or use the official tiny Docker image and run it with the [sample configuration file](https://raw.githubusercontent.com/baqup/baqup/master/baqup.sample.toml):
 
 ```shell
-docker run -d -p 8080:8080 -p 80:80 -v $PWD/traefik.toml:/etc/traefik/traefik.toml traefik
+docker run -d -p 8080:8080 -p 80:80 -v $PWD/baqup.toml:/etc/baqup/baqup.toml baqup
 ```
 
 - Or get the sources:
 
 ```shell
-git clone https://github.com/traefik/traefik
+git clone https://github.com/baqupio/baqup
 ```
 
 ## Introductory Videos
 
-You can find high level and deep dive videos on [videos.traefik.io](https://videos.traefik.io).
+You can find high level and deep dive videos on [videos.baqup.io](https://videos.baqup.io).
 
 ## Maintainers
 
 We are strongly promoting a philosophy of openness and sharing, and firmly standing against the elitist closed approach. Being part of the core team should be accessible to anyone who is motivated and want to be part of that journey!
-This [document](docs/content/contributing/maintainers-guidelines.md) describes how to be part of the [maintainers' team](docs/content/contributing/maintainers.md) as well as various responsibilities and guidelines for Traefik maintainers.
-You can also find more information on our process to review pull requests and manage issues [in this document](https://github.com/traefik/contributors-guide/blob/master/issue_triage.md).
+This [document](docs/content/contributing/maintainers-guidelines.md) describes how to be part of the [maintainers' team](docs/content/contributing/maintainers.md) as well as various responsibilities and guidelines for Baqup maintainers.
+You can also find more information on our process to review pull requests and manage issues [in this document](https://github.com/baqup/contributors-guide/blob/master/issue_triage.md).
 
 ## Contributing
 
@@ -146,14 +146,14 @@ We use [Semantic Versioning](https://semver.org/).
 
 ## Mailing Lists
 
-- General announcements, new releases: mail at news+subscribe@traefik.io or on [the online viewer](https://groups.google.com/a/traefik.io/forum/#!forum/news).
-- Security announcements: mail at security+subscribe@traefik.io or on [the online viewer](https://groups.google.com/a/traefik.io/forum/#!forum/security).
+- General announcements, new releases: mail at news+subscribe@baqup.io or on [the online viewer](https://groups.google.com/a/baqup.io/forum/#!forum/news).
+- Security announcements: mail at security+subscribe@baqup.io or on [the online viewer](https://groups.google.com/a/baqup.io/forum/#!forum/security).
 
 ## Credits
 
 Kudos to [Peka](https://www.instagram.com/pierroks/) for his awesome work on the gopher's logo!.
 
-The gopher's logo of Traefik is licensed under the Creative Commons 3.0 Attributions license.
+The gopher's logo of Baqup is licensed under the Creative Commons 3.0 Attributions license.
 
-The gopher's logo of Traefik was inspired by the gopher stickers made by [Takuya Ueda](https://twitter.com/tenntenn).
+The gopher's logo of Baqup was inspired by the gopher stickers made by [Takuya Ueda](https://twitter.com/tenntenn).
 The original Go gopher was designed by [Renee French](https://reneefrench.blogspot.com/).

@@ -4,11 +4,11 @@ import (
 	"context"
 	"time"
 
+	"github.com/baqupio/baqup/v3/pkg/observability/logs"
+	otypes "github.com/baqupio/baqup/v3/pkg/observability/types"
+	"github.com/baqupio/baqup/v3/pkg/safe"
 	"github.com/go-kit/kit/metrics/statsd"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v3/pkg/observability/logs"
-	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
-	"github.com/traefik/traefik/v3/pkg/safe"
 )
 
 var (

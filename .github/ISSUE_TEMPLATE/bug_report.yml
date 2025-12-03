@@ -1,4 +1,4 @@
-name: Bug Report (Traefik)
+name: Bug Report (Baqup)
 description: Create a report to help us improve.
 body:
   - type: checkboxes
@@ -7,7 +7,7 @@ body:
       label: Welcome!
       description: |
         The issue tracker is for reporting bugs and feature requests only.
-        For end-user related support questions, please use the [Traefik community forum](https://community.traefik.io/).
+        For end-user related support questions, please use the [Baqup community forum](https://community.baqup.io/).
 
         All new/updated issues are triaged regularly by the maintainers.
         All issues closed by a bot are subsequently double-checked by the maintainers.
@@ -15,9 +15,9 @@ body:
         DO NOT FILE ISSUES FOR GENERAL SUPPORT QUESTIONS.
 
       options:
-        - label: Yes, I've searched similar issues on [GitHub](https://github.com/traefik/traefik/issues) and didn't find any.
+        - label: Yes, I've searched similar issues on [GitHub](https://github.com/baqupio/baqup/issues) and didn't find any.
           required: true
-        - label: Yes, I've searched similar issues on the [Traefik community forum](https://community.traefik.io) and didn't find any.
+        - label: Yes, I've searched similar issues on the [Baqup community forum](https://community.baqup.io) and didn't find any.
           required: true
 
   - type: textarea
@@ -45,15 +45,15 @@ body:
 
   - type: textarea
     attributes:
-      label: What version of Traefik are you using?
+      label: What version of Baqup are you using?
       description: |
         `latest` is not considered as a valid version.
 
-        Output of `traefik version`.
+        Output of `baqup version`.
 
-        For the Traefik Docker image (`docker run [IMAGE] version`), example:
+        For the Baqup Docker image (`docker run [IMAGE] version`), example:
         ```console
-        $ docker run traefik version
+        $ docker run baqup version
         ```
       placeholder: Paste your output here.
     validations:

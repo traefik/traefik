@@ -6,10 +6,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/baqupio/baqup/v3/integration/try"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"github.com/traefik/traefik/v3/integration/try"
 )
 
 // TCPHealthCheckSuite test suite for TCP health checks.
@@ -43,9 +43,9 @@ func (s *TCPHealthCheckSuite) TestSimpleConfiguration() {
 		Server2 string
 	}{s.whoamitcp1IP, s.whoamitcp2IP})
 
-	s.traefikCmd(withConfigFile(file))
+	s.baqupCmd(withConfigFile(file))
 
-	// Wait for Traefik.
+	// Wait for Baqup.
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("HostSNI(`*`)"))
 	require.NoError(s.T(), err)
 

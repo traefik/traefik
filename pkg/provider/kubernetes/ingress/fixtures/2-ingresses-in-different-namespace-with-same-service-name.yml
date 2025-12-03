@@ -47,7 +47,7 @@ metadata:
 
 spec:
   rules:
-    - host: traefik.tchouk
+    - host: baqup.tchouk
       http:
         paths:
           - path: /bar
@@ -74,7 +74,7 @@ metadata:
 
 spec:
   rules:
-    - host: toto.traefik.tchouk
+    - host: toto.baqup.tchouk
       http:
         paths:
           - path: /bar

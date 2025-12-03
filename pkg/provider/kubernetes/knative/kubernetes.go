@@ -12,16 +12,16 @@ import (
 	"strings"
 	"time"
 
+	"github.com/baqupio/baqup/v3/pkg/config/dynamic"
+	"github.com/baqupio/baqup/v3/pkg/job"
+	"github.com/baqupio/baqup/v3/pkg/observability/logs"
+	"github.com/baqupio/baqup/v3/pkg/safe"
+	"github.com/baqupio/baqup/v3/pkg/tls"
+	"github.com/baqupio/baqup/v3/pkg/types"
 	"github.com/cenkalti/backoff/v4"
 	"github.com/mitchellh/hashstructure"
 	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/job"
-	"github.com/traefik/traefik/v3/pkg/observability/logs"
-	"github.com/traefik/traefik/v3/pkg/safe"
-	"github.com/traefik/traefik/v3/pkg/tls"
-	"github.com/traefik/traefik/v3/pkg/types"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -32,8 +32,8 @@ import (
 )
 
 const (
-	providerName            = "knative"
-	traefikIngressClassName = "traefik.ingress.networking.knative.dev"
+	providerName          = "knative"
+	baqupIngressClassName = "baqup.ingress.networking.knative.dev"
 )
 
 // ServiceRef holds a Kubernetes service reference.
@@ -73,7 +73,7 @@ func (p *Provider) Init() error {
 	return nil
 }
 
-// Provide allows the knative provider to provide configurations to traefik using the given configuration channel.
+// Provide allows the knative provider to provide configurations to baqup using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	logger := log.With().Str(logs.ProviderName, providerName).Logger()
 	ctxLog := logger.WithContext(context.Background())
@@ -202,7 +202,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) (*dynamic.Configuratio
 			Str("namespace", ingress.Namespace).
 			Logger()
 
-		if ingress.Annotations[knativenetworking.IngressClassAnnotationKey] != traefikIngressClassName {
+		if ingress.Annotations[knativenetworking.IngressClassAnnotationKey] != baqupIngressClassName {
 			logger.Debug().Msgf("Skipping Ingress %s/%s", ingress.Namespace, ingress.Name)
 			continue
 		}

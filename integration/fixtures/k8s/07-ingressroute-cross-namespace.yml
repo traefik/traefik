@@ -16,11 +16,11 @@ spec:
     - name: http
       port: 80
   selector:
-    app: traefiklabs
+    app: baquplabs
     task: whoami
 
 ---
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: test6.route
@@ -41,12 +41,12 @@ spec:
     services:
     - name: wrr2
       namespace: default
-      kind: TraefikService
+      kind: BaqupService
   - match: Host(`foo.com`) && PathPrefix(`/c`)
     kind: Rule
     services:
     - name: wrr3
-      kind: TraefikService
+      kind: BaqupService
   - match: Host(`foo.com`) && PathPrefix(`/d`)
     kind: Rule
     services:
@@ -65,8 +65,8 @@ spec:
     - name: test-errorpage
 
 ---
-apiVersion: traefik.io/v1alpha1
-kind: TraefikService
+apiVersion: baqup.io/v1alpha1
+kind: BaqupService
 metadata:
   name: wrr2
   namespace: default
@@ -78,8 +78,8 @@ spec:
         port: 80
 
 ---
-apiVersion: traefik.io/v1alpha1
-kind: TraefikService
+apiVersion: baqup.io/v1alpha1
+kind: BaqupService
 metadata:
   name: wrr3
   namespace: other-ns
@@ -92,7 +92,7 @@ spec:
         port: 80
 
 ---
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: stripprefix2
@@ -104,7 +104,7 @@ spec:
       - /tobestripped
 
 ---
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-errorpage

@@ -15,16 +15,16 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/baqupio/baqup/v3/pkg/middlewares/capture"
+	"github.com/baqupio/baqup/v3/pkg/middlewares/observability"
+	"github.com/baqupio/baqup/v3/pkg/observability/logs"
+	otypes "github.com/baqupio/baqup/v3/pkg/observability/types"
+	baquptls "github.com/baqupio/baqup/v3/pkg/tls"
+	"github.com/baqupio/baqup/v3/pkg/types"
 	"github.com/containous/alice"
 	"github.com/rs/zerolog/log"
 	"github.com/sirupsen/logrus"
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
-	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
-	"github.com/traefik/traefik/v3/pkg/observability/logs"
-	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
-	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
-	"github.com/traefik/traefik/v3/pkg/types"
 	"go.opentelemetry.io/contrib/bridges/otellogrus"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -127,7 +127,7 @@ func NewHandler(ctx context.Context, config *otypes.AccessLog) (*Handler, error)
 			return nil, fmt.Errorf("setting up OpenTelemetry logger provider: %w", err)
 		}
 
-		logger.Hooks.Add(otellogrus.NewHook("traefik", otellogrus.WithLoggerProvider(otelLoggerProvider)))
+		logger.Hooks.Add(otellogrus.NewHook("baqup", otellogrus.WithLoggerProvider(otelLoggerProvider)))
 		logger.Out = io.Discard
 	}
 
@@ -259,8 +259,8 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 	core[RequestScheme] = "http"
 	if req.TLS != nil {
 		core[RequestScheme] = "https"
-		core[TLSVersion] = traefiktls.GetVersion(req.TLS)
-		core[TLSCipher] = traefiktls.GetCipherName(req.TLS)
+		core[TLSVersion] = baquptls.GetVersion(req.TLS)
+		core[TLSCipher] = baquptls.GetCipherName(req.TLS)
 		if len(req.TLS.PeerCertificates) > 0 && req.TLS.PeerCertificates[0] != nil {
 			core[TLSClientSubject] = req.TLS.PeerCertificates[0].Subject.String()
 		}

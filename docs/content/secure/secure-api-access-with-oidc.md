@@ -1,12 +1,12 @@
 ---
 title: 'Secure API Access with OIDC'
-description: 'Traefik Hub API Gateway - The OIDC Authentication middleware secures your applications by delegating the authentication to an external provider.'
+description: 'Baqup Hub API Gateway - The OIDC Authentication middleware secures your applications by delegating the authentication to an external provider.'
 ---
 
 # Secure API Access with OIDC
 
-!!! info "Traefik Hub Feature"
-    This middleware is available exclusively in [Traefik Hub](https://traefik.io/traefik-hub/). Learn more about [Traefik Hub's advanced features](https://doc.traefik.io/traefik-hub/api-gateway/intro).
+!!! info "Baqup Hub Feature"
+    This middleware is available exclusively in [Baqup Hub](https://baqup.io/baqup-hub/). Learn more about [Baqup Hub's advanced features](https://doc.baqup.io/baqup-hub/api-gateway/intro).
 
 OpenID Connect Authentication is built on top of the OAuth2 Authorization Code Flow (defined in [OAuth 2.0 RFC 6749, section 4.1](https://tools.ietf.org/html/rfc6749#section-4.1)).
 It allows an application to be secured by delegating authentication to an external provider (Keycloak, Okta etc.)
@@ -22,7 +22,7 @@ Once the authentication is complete, users are redirected back to the middleware
 To allow the OIDC Middleware to use the credentials provided by the requests, apply the following configuration:
 
 ```yaml tab="Middleware OIDC"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: oidc-login
@@ -47,7 +47,7 @@ stringData:
 ```
 
 ```yaml tab="IngressRoute"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: secure-applications-apigateway-oauth2-client-credentials
@@ -83,7 +83,7 @@ spec:
     spec:
       containers:
       - name: whoami
-        image: traefik/whoami
+        image: baqup/whoami
 
 ---
 apiVersion: v1
@@ -107,4 +107,4 @@ spec:
     - Using a cookie ([Options `session`](../reference/routing-configuration/http/middlewares/oidc.md#configuration-options) (default behavior))
     - Using a [Redis store](../reference/routing-configuration/http/middlewares/oidc.md#sessionstore).  
 
-{!traefik-for-business-applications.md!}
+{!baqup-for-business-applications.md!}

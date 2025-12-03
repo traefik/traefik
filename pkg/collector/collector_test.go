@@ -3,10 +3,10 @@ package collector
 import (
 	"testing"
 
+	"github.com/baqupio/baqup/v3/pkg/collector/hydratation"
+	"github.com/baqupio/baqup/v3/pkg/config/static"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v3/pkg/collector/hydratation"
-	"github.com/traefik/traefik/v3/pkg/config/static"
 )
 
 func Test_createBody(t *testing.T) {

@@ -1,17 +1,17 @@
 ---
 title: 'Secure API Access with JWT'
-description: 'Traefik Hub API Gateway - Learn how to configure the JWT Authentication middleware for Ingress management.'
+description: 'Baqup Hub API Gateway - Learn how to configure the JWT Authentication middleware for Ingress management.'
 ---
 
 # Secure API Access with JWT
 
-!!! info "Traefik Hub Feature"
-    This middleware is available exclusively in [Traefik Hub](https://traefik.io/traefik-hub/). Learn more about [Traefik Hub's advanced features](https://doc.traefik.io/traefik-hub/api-gateway/intro).
+!!! info "Baqup Hub Feature"
+    This middleware is available exclusively in [Baqup Hub](https://baqup.io/baqup-hub/). Learn more about [Baqup Hub's advanced features](https://doc.baqup.io/baqup-hub/api-gateway/intro).
 
 JSON Web Token (JWT) (defined in the [RFC 7519](https://tools.ietf.org/html/rfc7519)) allows
-Traefik Hub API Gateway to secure the API access using a token signed using either a private signing secret or a plublic/private key.
+Baqup Hub API Gateway to secure the API access using a token signed using either a private signing secret or a plublic/private key.
 
-Traefik Hub API Gateway provides many kinds of sources to perform the token validation:
+Baqup Hub API Gateway provides many kinds of sources to perform the token validation:
 
 - Setting a secret value in the middleware configuration (option `signingSecret`).
 - Setting a public key: In that case, users should sign their token using a private key, and the public key can be used to verify the signature (option `publicKey`).
@@ -31,10 +31,10 @@ Traefik Hub API Gateway provides many kinds of sources to perform the token vali
 
 ## Verify a JWT with a secret
 
-To allow the Traefik Hub API Gateway to validate a JWT with a secret value stored in a Kubernetes Secret, apply the following configuration:
+To allow the Baqup Hub API Gateway to validate a JWT with a secret value stored in a Kubernetes Secret, apply the following configuration:
 
 ```yaml tab="Middleware JWT"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-jwt
@@ -56,7 +56,7 @@ stringData:
 ```
 
 ```yaml tab="IngressRoute"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: my-app
@@ -92,7 +92,7 @@ spec:
     spec:
       containers:
       - name: whoami
-        image: traefik/whoami
+        image: baqup/whoami
 
 ---
 apiVersion: v1
@@ -110,10 +110,10 @@ spec:
 
 ## Verify a JWT using an Identity Provider
 
-To allow the Traefik Hub API Gateway to validate a JWT using an Identity Provider, such as Keycloak and Azure AD in the examples below, apply the following configuration:
+To allow the Baqup Hub API Gateway to validate a JWT using an Identity Provider, such as Keycloak and Azure AD in the examples below, apply the following configuration:
 
 ```yaml tab="JWKS with Keycloak URL"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-jwt
@@ -131,7 +131,7 @@ spec:
 ```
 
 ```yaml tab="JWKS with Azure AD URL"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-jwt
@@ -143,7 +143,7 @@ spec:
 ```
 
 ```yaml tab="IngressRoute"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: my-app
@@ -179,7 +179,7 @@ spec:
     spec:
       containers:
       - name: whoami
-        image: traefik/whoami
+        image: baqup/whoami
 
 ---
 apiVersion: v1
@@ -201,4 +201,4 @@ spec:
     For example, the metadata recovered from the Identity Provider can be used to restrict the access to the applications.
     To do so, you can use the `claims` option, more information in the [dedicated section](../reference/routing-configuration/http/middlewares/jwt.md#claims).
 
-{!traefik-for-business-applications.md!}
+{!baqup-for-business-applications.md!}

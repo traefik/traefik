@@ -8,8 +8,8 @@
     "JobID": "job8",
     "AllocID": "fffd3d81-66ac-ed6d-d9a1-fc41b2a26d07",
     "Tags": [
-      "traefik.enable=true",
-      "traefik.udp.routers.job8.service=job8"
+      "baqup.enable=true",
+      "baqup.udp.routers.job8.service=job8"
     ],
     "Address": "192.168.1.21",
     "Port": 24268,

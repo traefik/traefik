@@ -1,6 +1,6 @@
 ---
-title: "Traefik Buffering Documentation"
-description: "The HTTP buffering middleware in Traefik Proxy limits the size of requests that can be forwarded to Services. Read the technical documentation."
+title: "Baqup Buffering Documentation"
+description: "The HTTP buffering middleware in Baqup Proxy limits the size of requests that can be forwarded to Services. Read the technical documentation."
 ---
 
 # Buffering
@@ -10,7 +10,7 @@ How to Read the Request before Forwarding It
 
 The Buffering middleware limits the size of requests that can be forwarded to services.
 
-With Buffering, Traefik reads the entire request into memory (possibly buffering large requests into disk), and rejects requests that are over a specified size limit.
+With Buffering, Baqup reads the entire request into memory (possibly buffering large requests into disk), and rejects requests that are over a specified size limit.
 
 This can help services avoid large amounts of data (`multipart/form-data` for example), and can minimize the time spent sending data to a service.
 
@@ -19,12 +19,12 @@ This can help services avoid large amounts of data (`multipart/form-data` for ex
 ```yaml tab="Docker & Swarm"
 # Sets the maximum request body to 2MB
 labels:
-  - "traefik.http.middlewares.limit.buffering.maxRequestBodyBytes=2000000"
+  - "baqup.http.middlewares.limit.buffering.maxRequestBodyBytes=2000000"
 ```
 
 ```yaml tab="Kubernetes"
 # Sets the maximum request body to 2MB
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: limit
@@ -35,7 +35,7 @@ spec:
 
 ```yaml tab="Consul Catalog"
 # Sets the maximum request body to 2MB
-- "traefik.http.middlewares.limit.buffering.maxRequestBodyBytes=2000000"
+- "baqup.http.middlewares.limit.buffering.maxRequestBodyBytes=2000000"
 ```
 
 ```yaml tab="File (YAML)"
@@ -66,11 +66,11 @@ If the request exceeds the allowed size, it is not forwarded to the service, and
 
 ```yaml tab="Docker & Swarm"
 labels:
-  - "traefik.http.middlewares.limit.buffering.maxRequestBodyBytes=2000000"
+  - "baqup.http.middlewares.limit.buffering.maxRequestBodyBytes=2000000"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: limit
@@ -80,7 +80,7 @@ spec:
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.limit.buffering.maxRequestBodyBytes=2000000"
+- "baqup.http.middlewares.limit.buffering.maxRequestBodyBytes=2000000"
 ```
 
 ```yaml tab="File (YAML)"
@@ -105,11 +105,11 @@ You can configure a threshold (in bytes) from which the request will be buffered
 
 ```yaml tab="Docker & Swarm"
 labels:
-  - "traefik.http.middlewares.limit.buffering.memRequestBodyBytes=2000000"
+  - "baqup.http.middlewares.limit.buffering.memRequestBodyBytes=2000000"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: limit
@@ -119,7 +119,7 @@ spec:
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.limit.buffering.memRequestBodyBytes=2000000"
+- "baqup.http.middlewares.limit.buffering.memRequestBodyBytes=2000000"
 ```
 
 ```yaml tab="File (YAML)"
@@ -146,11 +146,11 @@ If the response exceeds the allowed size, it is not forwarded to the client. The
 
 ```yaml tab="Docker & Swarm"
 labels:
-  - "traefik.http.middlewares.limit.buffering.maxResponseBodyBytes=2000000"
+  - "baqup.http.middlewares.limit.buffering.maxResponseBodyBytes=2000000"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: limit
@@ -160,7 +160,7 @@ spec:
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.limit.buffering.maxResponseBodyBytes=2000000"
+- "baqup.http.middlewares.limit.buffering.maxResponseBodyBytes=2000000"
 ```
 
 ```yaml tab="File (YAML)"
@@ -185,11 +185,11 @@ You can configure a threshold (in bytes) from which the response will be buffere
 
 ```yaml tab="Docker & Swarm"
 labels:
-  - "traefik.http.middlewares.limit.buffering.memResponseBodyBytes=2000000"
+  - "baqup.http.middlewares.limit.buffering.memResponseBodyBytes=2000000"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: limit
@@ -199,7 +199,7 @@ spec:
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.limit.buffering.memResponseBodyBytes=2000000"
+- "baqup.http.middlewares.limit.buffering.memResponseBodyBytes=2000000"
 ```
 
 ```yaml tab="File (YAML)"
@@ -226,11 +226,11 @@ You can have the Buffering middleware replay the request using `retryExpression`
 
     ```yaml tab="Docker & Swarm"
     labels:
-      - "traefik.http.middlewares.limit.buffering.retryExpression=IsNetworkError() && Attempts() < 2"
+      - "baqup.http.middlewares.limit.buffering.retryExpression=IsNetworkError() && Attempts() < 2"
     ```
 
     ```yaml tab="Kubernetes"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: baqup.io/v1alpha1
     kind: Middleware
     metadata:
       name: limit
@@ -240,7 +240,7 @@ You can have the Buffering middleware replay the request using `retryExpression`
     ```
 
     ```yaml tab="Consul Catalog"
-    - "traefik.http.middlewares.limit.buffering.retryExpression=IsNetworkError() && Attempts() < 2"
+    - "baqup.http.middlewares.limit.buffering.retryExpression=IsNetworkError() && Attempts() < 2"
     ```
 
     ```yaml tab="File (YAML)"

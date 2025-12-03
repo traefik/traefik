@@ -3,7 +3,7 @@
   "Debug": false,
   "CheckNewVersion": true,
   "AccessLogsFile": "",
-  "TraefikLogsFile": "",
+  "BaqupLogsFile": "",
   "Level": "ERROR",
   "EntryPoints": {
     "http": {
@@ -75,5 +75,5 @@
   "Eureka": null,
   "ECS": null,
   "DynamoDB": null,
-  "ConfigFile": "/etc/traefik/traefik.toml"
+  "ConfigFile": "/etc/baqup/baqup.toml"
 }

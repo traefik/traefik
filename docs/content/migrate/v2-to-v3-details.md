@@ -1,9 +1,9 @@
 ---
-title: "Traefik V3 Migration Details"
-description: "Configuration changes and their details to successfully migrate from Traefik v2 to v3."
+title: "Baqup V3 Migration Details"
+description: "Configuration changes and their details to successfully migrate from Baqup v2 to v3."
 ---
 
-# Configuration Details for Migrating from Traefik v2 to v3
+# Configuration Details for Migrating from Baqup v2 to v3
 
 ## Install Configuration Changes
 
@@ -31,7 +31,7 @@ In v3, the provider Docker has been split into 2 providers:
     --providers.docker.swarmMode=true
     ```
 
-This configuration is now unsupported and would prevent Traefik to start.
+This configuration is now unsupported and would prevent Baqup to start.
 
 #### Remediation
 
@@ -114,7 +114,7 @@ The `experimentalChannel` option should be used to enable the support for the ex
 
 In v3, HTTP/3 is no longer an experimental feature.
 It can be enabled on entry points without the associated `experimental.http3` option, which is now removed.
-It is now unsupported and would prevent Traefik to start.
+It is now unsupported and would prevent Baqup to start.
 
 ??? example "An example usage of v2 Experimental `http3` option"
 
@@ -142,7 +142,7 @@ To configure `http3`, please checkout the [entrypoint configuration documentatio
 #### namespace
 
 The Consul provider `namespace` option was deprecated in v2 and is now removed in v3.
-It is now unsupported and would prevent Traefik to start.
+It is now unsupported and would prevent Baqup to start.
 
 ??? example "An example usage of v2 Consul `namespace` option"
 
@@ -212,7 +212,7 @@ The `tls.caOptional` option should be removed from the Consul provider static co
 #### namespace
 
 The ConsulCatalog provider `namespace` option was deprecated in v2 and is now removed in v3.
-It is now unsupported and would prevent Traefik to start.
+It is now unsupported and would prevent Baqup to start.
 
 ??? example "An example usage of v2 ConsulCatalog `namespace` option"
 
@@ -283,7 +283,7 @@ The `endpoint.tls.caOptional` option should be removed from the ConsulCatalog pr
 #### namespace
 
 The Nomad provider `namespace` option was deprecated in v2 and is now removed in v3.
-It is now unsupported and would prevent Traefik to start.
+It is now unsupported and would prevent Baqup to start.
 
 ??? example "An example usage of v2 Nomad `namespace` option"
 
@@ -354,7 +354,7 @@ The `endpoint.tls.caOptional` option should be removed from the Nomad provider s
 In v3, the Rancher v1 provider has been removed because Rancher v1 is [no longer actively maintained](https://rancher.com/docs/os/v1.x/en/support/),
 and Rancher v2 is supported as a standard Kubernetes provider.
 
-??? example "An example of Traefik v2 Rancher v1 configuration"
+??? example "An example of Baqup v2 Rancher v1 configuration"
 
     ```yaml tab="File (YAML)"
     providers:
@@ -369,11 +369,11 @@ and Rancher v2 is supported as a standard Kubernetes provider.
     --providers.rancher=true
     ```
 
-This configuration is now unsupported and would prevent Traefik to start.
+This configuration is now unsupported and would prevent Baqup to start.
 
 #### Remediation
 
-Rancher 2.x requires Kubernetes and does not have a metadata endpoint of its own for Traefik to query.
+Rancher 2.x requires Kubernetes and does not have a metadata endpoint of its own for Baqup to query.
 As such, Rancher 2.x users should utilize the [Kubernetes CRD provider](../providers/kubernetes-crd.md) directly.
 
 Also, all Rancher provider related configuration should be removed from the static configuration.
@@ -398,7 +398,7 @@ In v3, the Marathon provider has been removed.
     --providers.marathon=true
     ```
 
-This configuration is now unsupported and would prevent Traefik to start.
+This configuration is now unsupported and would prevent Baqup to start.
 
 #### Remediation
 
@@ -493,7 +493,7 @@ The `tls.caOptional` option should be removed from the Redis provider static con
 InfluxDB v1.x maintenance [ended in 2021](https://www.influxdata.com/blog/influxdb-oss-and-enterprise-roadmap-update-from-influxdays-emea/).
 In v3, the InfluxDB v1 metrics provider has been removed.
 
-??? example "An example of Traefik v2 InfluxDB v1 metrics configuration"
+??? example "An example of Baqup v2 InfluxDB v1 metrics configuration"
 
     ```yaml tab="File (YAML)"
     metrics:
@@ -508,7 +508,7 @@ In v3, the InfluxDB v1 metrics provider has been removed.
     --metrics.influxDB=true
     ```
 
-This configuration is now unsupported and would prevent Traefik to start.
+This configuration is now unsupported and would prevent Baqup to start.
 
 #### Remediation
 
@@ -516,7 +516,7 @@ All InfluxDB v1 metrics provider related configuration should be removed from th
 
 ### Pilot
 
-Traefik Pilot is no longer available since October 4th, 2022.
+Baqup Pilot is no longer available since October 4th, 2022.
 
 ??? example "An example of v2 Pilot configuration"
 
@@ -535,7 +535,7 @@ Traefik Pilot is no longer available since October 4th, 2022.
     ```
 
 In v2, Pilot configuration was deprecated and ineffective,
-it is now unsupported and would prevent Traefik to start.
+it is now unsupported and would prevent Baqup to start.
 
 #### Remediation
 
@@ -550,13 +550,13 @@ In v3, the Kubernetes Ingress default path matching does not support regexes any
 Two levels of remediation are possible:
 
 - Interpret the default path matcher `PathPrefix` with v2 syntax.
-This can done globally for all routers with the [static configuration](#configure-the-default-syntax-in-static-configuration) or on a per-router basis by using the [traefik.ingress.kubernetes.io/router.rulesyntax](../routing/providers/kubernetes-ingress.md#annotations) annotation.
+This can done globally for all routers with the [static configuration](#configure-the-default-syntax-in-static-configuration) or on a per-router basis by using the [baqup.ingress.kubernetes.io/router.rulesyntax](../routing/providers/kubernetes-ingress.md#annotations) annotation.
 
-- Adapt the path regex to be compatible with the Go regex syntax and change the default path matcher to use the `PathRegexp` matcher with the [`traefik.ingress.kubernetes.io/router.pathmatcher`](../routing/providers/kubernetes-ingress.md#annotations) annotation.
+- Adapt the path regex to be compatible with the Go regex syntax and change the default path matcher to use the `PathRegexp` matcher with the [`baqup.ingress.kubernetes.io/router.pathmatcher`](../routing/providers/kubernetes-ingress.md#annotations) annotation.
 
 ## Operations Changes
 
-### Traefik RBAC Update
+### Baqup RBAC Update
 
 In v3, the support of `TCPServersTransport` has been introduced.
 When using the KubernetesCRD provider, it is therefore necessary to update [RBAC](../reference/dynamic-configuration/kubernetes-crd.md#rbac) and [CRD](../reference/dynamic-configuration/kubernetes-crd.md) manifests.
@@ -572,11 +572,11 @@ One should use the `ContentType` middleware to enable the `Content-Type` header 
 
 In v3, the open connections metric has been replaced with a global one because it was erroneously at the HTTP level, and providing misleading information.
 While previously produced at the entryPoint, router, and service levels, it is now replaced with a global metric.
-The equivalent to `traefik_entrypoint_open_connections`, `traefik_router_open_connections` and `traefik_service_open_connections` is now `traefik_open_connections`.
+The equivalent to `baqup_entrypoint_open_connections`, `baqup_router_open_connections` and `baqup_service_open_connections` is now `baqup_open_connections`.
 
 #### Configuration Reload Failures Metrics
 
-In v3, the `traefik_config_reloads_failure_total` and `traefik_config_last_reload_failure` metrics have been suppressed since they could not be implemented.
+In v3, the `baqup_config_reloads_failure_total` and `baqup_config_last_reload_failure` metrics have been suppressed since they could not be implemented.
 
 #### gRPC Metrics
 
@@ -586,7 +586,7 @@ In v3, the reported status code for gRPC requests is now the value of the `Grpc-
 
 In v3, the tracing feature has been revamped and is now powered exclusively by [OpenTelemetry](https://opentelemetry.io/ "Link to website of OTel") (OTel).
 !!! warning "Important"
-    Traefik v3 **no** longer supports direct output formats for specific vendors such as Instana, Jaeger, Zipkin, Haystack, Datadog, and Elastic.
+    Baqup v3 **no** longer supports direct output formats for specific vendors such as Instana, Jaeger, Zipkin, Haystack, Datadog, and Elastic.
     Instead, it focuses on pure OpenTelemetry implementation, providing a unified and standardized approach for observability.
 
 Here are two possible transition strategies:
@@ -594,7 +594,7 @@ Here are two possible transition strategies:
 1. OTLP Ingestion Endpoints:
 
     Most vendors now offer OpenTelemetry Protocol (OTLP) ingestion endpoints.
-    You can seamlessly integrate Traefik v3 with these endpoints to continue leveraging tracing capabilities.
+    You can seamlessly integrate Baqup v3 with these endpoints to continue leveraging tracing capabilities.
 
 2. Legacy Stack Compatibility:
 
@@ -682,11 +682,11 @@ This allows to have heterogeneous router configurations and ease migration.
 
 ```yaml tab="Docker & Swarm"
 labels:
-  - "traefik.http.routers.test.ruleSyntax=v2"
+  - "baqup.http.routers.test.ruleSyntax=v2"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: test.route
@@ -700,7 +700,7 @@ spec:
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.routers.test.ruleSyntax=v2"
+- "baqup.http.routers.test.ruleSyntax=v2"
 ```
 
 ```yaml tab="File (YAML)"
@@ -733,10 +733,10 @@ In v3, we renamed the `IPWhiteList` middleware to `IPAllowList` without changing
 The TCP LoadBalancer `terminationDelay` option has been deprecated.
 This option can now be configured directly on the `TCPServersTransport` level, please take a look at this [documentation](../routing/services/index.md#terminationdelay)
 
-### Kubernetes CRDs API Group `traefik.containo.us`
+### Kubernetes CRDs API Group `baqup.containo.us`
 
-In v3, the Kubernetes CRDs API Group `traefik.containo.us` has been removed. 
-Please use the API Group `traefik.io` instead.
+In v3, the Kubernetes CRDs API Group `baqup.containo.us` has been removed. 
+Please use the API Group `baqup.io` instead.
 
 ### Kubernetes Ingress API Group `networking.k8s.io/v1beta1`
 
@@ -744,8 +744,8 @@ In v3, the Kubernetes Ingress API Group `networking.k8s.io/v1beta1` ([removed si
 
 Please use the API Group `networking.k8s.io/v1` instead.
 
-### Traefik CRD API Version `apiextensions.k8s.io/v1beta1`
+### Baqup CRD API Version `apiextensions.k8s.io/v1beta1`
 
-In v3, the Traefik CRD API Version `apiextensions.k8s.io/v1beta1` ([removed since Kubernetes v1.22](https://kubernetes.io/docs/reference/using-api/deprecation-guide/#customresourcedefinition-v122)) support has been removed.
+In v3, the Baqup CRD API Version `apiextensions.k8s.io/v1beta1` ([removed since Kubernetes v1.22](https://kubernetes.io/docs/reference/using-api/deprecation-guide/#customresourcedefinition-v122)) support has been removed.
 
 Please use the CRD definition with the API Version `apiextensions.k8s.io/v1` instead.

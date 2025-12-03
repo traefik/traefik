@@ -12,10 +12,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/baqupio/baqup/v3/pkg/types"
 	"github.com/patrickmn/go-cache"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v3/pkg/types"
 	"golang.org/x/crypto/ocsp"
 )
 
@@ -434,7 +434,7 @@ func TestManager_UpdateConfigs_OCSPConfig(t *testing.T) {
 func TestManager_Get_DefaultValues(t *testing.T) {
 	tlsManager := NewManager(nil)
 
-	// Ensures we won't break things for Traefik users when updating Go
+	// Ensures we won't break things for Baqup users when updating Go
 	config, _ := tlsManager.Get("default", "default")
 	assert.Equal(t, uint16(tls.VersionTLS12), config.MinVersion)
 	assert.Equal(t, []string{"h2", "http/1.1", "acme-tls/1"}, config.NextProtos)

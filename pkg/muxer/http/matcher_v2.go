@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/baqupio/baqup/v3/pkg/ip"
+	"github.com/baqupio/baqup/v3/pkg/middlewares/requestdecorator"
 	"github.com/gorilla/mux"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v3/pkg/ip"
-	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
 )
 
 var httpFuncsV2 = matcherBuilderFuncs{

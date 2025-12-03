@@ -1,10 +1,10 @@
 ---
-title: "Traefik File Dynamic Configuration"
-description: "This guide will provide you with the YAML and TOML files for dynamic configuration in Traefik Proxy. Read the technical documentation."
+title: "Baqup File Dynamic Configuration"
+description: "This guide will provide you with the YAML and TOML files for dynamic configuration in Baqup Proxy. Read the technical documentation."
 ---
 
 
-# Traefik and Configuration Files
+# Baqup and Configuration Files
 
 !!! warning "Work In Progress"
 
@@ -27,9 +27,9 @@ description: "This guide will provide you with the YAML and TOML files for dynam
 !!! warning
 
     Go Templating only works with dedicated dynamic configuration files.
-    Templating does not work in the Traefik main static configuration file.
+    Templating does not work in the Baqup main static configuration file.
 
-Traefik supports using Go templating to automatically generate repetitive sections of configuration files.
+Baqup supports using Go templating to automatically generate repetitive sections of configuration files.
 These sections must be a valid [Go template](https://pkg.go.dev/text/template/), and can use
 [sprig template functions](https://masterminds.github.io/sprig/).
 
@@ -67,8 +67,8 @@ To illustrate, it is possible to easily define multiple routers, services, and T
     tls:
       certificates:
       {{ range $i, $e := until 10 }}
-      - certFile: "/etc/traefik/cert-{{ $e }}.pem"
-        keyFile: "/etc/traefik/cert-{{ $e }}.key"
+      - certFile: "/etc/baqup/cert-{{ $e }}.pem"
+        keyFile: "/etc/baqup/cert-{{ $e }}.key"
         store:
         - "my-store-foo-{{ $e }}"
         - "my-store-bar-{{ $e }}"
@@ -107,8 +107,8 @@ To illustrate, it is possible to easily define multiple routers, services, and T
 
     {{ range $i, $e := until 10 }}
     [[tls.certificates]]
-      certFile = "/etc/traefik/cert-{{ $e }}.pem"
-      keyFile = "/etc/traefik/cert-{{ $e }}.key"
+      certFile = "/etc/baqup/cert-{{ $e }}.pem"
+      keyFile = "/etc/baqup/cert-{{ $e }}.key"
       stores = ["my-store-foo-{{ $e }}", "my-store-bar-{{ $e }}"]
     {{ end }}
 

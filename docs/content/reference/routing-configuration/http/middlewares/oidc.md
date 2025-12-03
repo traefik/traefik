@@ -1,10 +1,10 @@
 ---
 title: 'OpenID Connect Authentication'
-description: 'Traefik Hub API Gateway - The OIDC Authentication middleware secures your applications by delegating the authentication to an external provider.'
+description: 'Baqup Hub API Gateway - The OIDC Authentication middleware secures your applications by delegating the authentication to an external provider.'
 ---
 
-!!! info "Traefik Hub Feature"
-    This middleware is available exclusively in [Traefik Hub](https://traefik.io/traefik-hub/). Learn more about [Traefik Hub's advanced features](https://doc.traefik.io/traefik-hub/api-gateway/intro).
+!!! info "Baqup Hub Feature"
+    This middleware is available exclusively in [Baqup Hub](https://baqup.io/baqup-hub/). Learn more about [Baqup Hub's advanced features](https://doc.baqup.io/baqup-hub/api-gateway/intro).
 
 The OIDC Authentication middleware secures your applications by delegating the authentication to an external provider
 
@@ -13,7 +13,7 @@ The OIDC Authentication middleware secures your applications by delegating the a
 ## Configuration Example
 
 ```yaml tab="Middleware OIDC"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-oidc
@@ -100,10 +100,10 @@ stringData:
 | <a id="opt-session-sameSite" href="#opt-session-sameSite" title="#opt-session-sameSite">`session.sameSite`</a> | Inform browsers how they should handle the session cookie on cross-site requests. <br /> Setting it to `lax` or `strict` can provide some protection against cross-site request forgery attacks ([CSRF](https://developer.mozilla.org/en-US/docs/Glossary/CSRF)). <br /> More information [here](#samesite---accepted-values). | lax | No |
 | <a id="opt-session-httpOnly" href="#opt-session-httpOnly" title="#opt-session-httpOnly">`session.httpOnly`</a> | Forbids JavaScript from accessing the cookie. <br /> For example, through the `Document.cookie` property, the `XMLHttpRequest` API, or the `Request` API. <br /> This mitigates attacks against cross-site scripting ([XSS](https://developer.mozilla.org/en-US/docs/Glossary/XSS)). | true | No |
 | <a id="opt-session-secure" href="#opt-session-secure" title="#opt-session-secure">`session.secure`</a> | Defines whether the session cookie is only sent to the server when a request is made with the `https` scheme. | false | No |
-| <a id="opt-session-store-redis-endpoints" href="#opt-session-store-redis-endpoints" title="#opt-session-store-redis-endpoints">`session.store.redis.endpoints`</a> | Endpoints of the Redis instances to connect to (example: `redis.traefik-hub.svc.cluster.local:6379`) | "" | Yes      |
-| <a id="opt-session-store-redis-username" href="#opt-session-store-redis-username" title="#opt-session-store-redis-username">`session.store.redis.username`</a> | The username Traefik Hub will use to connect to Redis                                                | "" | No       |
-| <a id="opt-session-store-redis-password" href="#opt-session-store-redis-password" title="#opt-session-store-redis-password">`session.store.redis.password`</a> | The password Traefik Hub will use to connect to Redis                                                | "" | No       |
-| <a id="opt-session-store-redis-database" href="#opt-session-store-redis-database" title="#opt-session-store-redis-database">`session.store.redis.database`</a> | The database Traefik Hub will use to sore information (default: `0`)                                 | "" | No       |
+| <a id="opt-session-store-redis-endpoints" href="#opt-session-store-redis-endpoints" title="#opt-session-store-redis-endpoints">`session.store.redis.endpoints`</a> | Endpoints of the Redis instances to connect to (example: `redis.baqup-hub.svc.cluster.local:6379`) | "" | Yes      |
+| <a id="opt-session-store-redis-username" href="#opt-session-store-redis-username" title="#opt-session-store-redis-username">`session.store.redis.username`</a> | The username Baqup Hub will use to connect to Redis                                                | "" | No       |
+| <a id="opt-session-store-redis-password" href="#opt-session-store-redis-password" title="#opt-session-store-redis-password">`session.store.redis.password`</a> | The password Baqup Hub will use to connect to Redis                                                | "" | No       |
+| <a id="opt-session-store-redis-database" href="#opt-session-store-redis-database" title="#opt-session-store-redis-database">`session.store.redis.database`</a> | The database Baqup Hub will use to sore information (default: `0`)                                 | "" | No       |
 | <a id="opt-session-store-redis-cluster" href="#opt-session-store-redis-cluster" title="#opt-session-store-redis-cluster">`session.store.redis.cluster`</a> | Enable Redis Cluster                                                                                 | "" | No       |
 | <a id="opt-session-store-redis-tls-caBundle" href="#opt-session-store-redis-tls-caBundle" title="#opt-session-store-redis-tls-caBundle">`session.store.redis.tls.caBundle`</a> | Custom CA bundle                                                                                     | "" | No       |
 | <a id="opt-session-store-redis-tls-cert" href="#opt-session-store-redis-tls-cert" title="#opt-session-store-redis-tls-cert">`session.store.redis.tls.cert`</a> | TLS certificate                                                                                      | "" | No       |
@@ -112,9 +112,9 @@ stringData:
 | <a id="opt-session-store-redis-sentinel-masterSet" href="#opt-session-store-redis-sentinel-masterSet" title="#opt-session-store-redis-sentinel-masterSet">`session.store.redis.sentinel.masterSet`</a> | Name of the set of main nodes to use for main selection. Required when using Sentinel.               | "" | No       |
 | <a id="opt-session-store-redis-sentinel-username" href="#opt-session-store-redis-sentinel-username" title="#opt-session-store-redis-sentinel-username">`session.store.redis.sentinel.username`</a> | Username to use for sentinel authentication (can be different from `username`)                       | "" | No       |
 | <a id="opt-session-store-redis-sentinel-password" href="#opt-session-store-redis-sentinel-password" title="#opt-session-store-redis-sentinel-password">`session.store.redis.sentinel.password`</a> | Password to use for sentinel authentication (can be different from `password`)                       | "" | No       |
-| <a id="opt-csrf" href="#opt-csrf" title="#opt-csrf">`csrf`</a> | When enabled, a CSRF cookie, named `traefikee-csrf-token`, is bound to the OIDC session to protect service from CSRF attacks. <br /> It is based on the [Signed Double Submit Cookie](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html#signed-double-submit-cookie) implementation as defined by the OWASP Foundation.<br />Moreinformation [here](#csrf). | "" | No |
+| <a id="opt-csrf" href="#opt-csrf" title="#opt-csrf">`csrf`</a> | When enabled, a CSRF cookie, named `baqupee-csrf-token`, is bound to the OIDC session to protect service from CSRF attacks. <br /> It is based on the [Signed Double Submit Cookie](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html#signed-double-submit-cookie) implementation as defined by the OWASP Foundation.<br />Moreinformation [here](#csrf). | "" | No |
 | <a id="opt-csrf-secure" href="#opt-csrf-secure" title="#opt-csrf-secure">`csrf.secure`</a> | Defines whether the CSRF cookie is only sent to the server when a request is made with the `https` scheme. | false | No |
-| <a id="opt-csrf-headerName" href="#opt-csrf-headerName" title="#opt-csrf-headerName">`csrf.headerName`</a> | Defines the name of the header used to send the CSRF token value received previously in the CSRF cookie. | TraefikHub-Csrf-Token | No |
+| <a id="opt-csrf-headerName" href="#opt-csrf-headerName" title="#opt-csrf-headerName">`csrf.headerName`</a> | Defines the name of the header used to send the CSRF token value received previously in the CSRF cookie. | BaqupHub-Csrf-Token | No |
 
 ### redirectUrl
 
@@ -125,7 +125,7 @@ If the router rule is accepting all paths on a domain, no extra work is needed.
 If the router rule is specific about the paths allowed, the path set in this option should be included.
 
 ```yaml tab="Defining specific rule for redirectUrl"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: whoami
@@ -173,7 +173,7 @@ See the following examples.
     Only `http` and `https` schemes are supported.
 
 ```yaml tab="Defining the redirectUrl"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-oidc
@@ -299,7 +299,7 @@ urn:k8s:secret:[name]:[valueKey]
 ```
 
 ```yaml tab="Middleware JWT"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-oidc
@@ -389,7 +389,7 @@ The following Redis modes are supported:
 For more information about Redis, we recommend the [official Redis documentation](https://redis.io/docs/ "Link to official Redis documentation").
 
 ```yaml tab="Defining Redis connection"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-oidc
@@ -404,7 +404,7 @@ spec:
         store:
           redis:
             endpoints:
-              - redis-master.traefik-hub.svc.cluster.local:6379
+              - redis-master.baqup-hub.svc.cluster.local:6379
             password: "urn:k8s:secret:oidc:redisPass"
 ```
 
@@ -427,4 +427,4 @@ This means that a new CSRF token will be generated and sent to the client whenev
 When a request is sent and uses a non-safe method (see [RFC7231#section-4.2.1](https://datatracker.ietf.org/doc/html/rfc7231.html#section-4.2.1)),
 the CSRF token value (extracted from the cookie) have to be sent to the server in the header configured with the [headerName option](#configuration-options).
 
-{!traefik-for-business-applications.md!}
+{!baqup-for-business-applications.md!}

@@ -8,7 +8,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/traefik/traefik/v3/pkg/ip"
+	"github.com/baqupio/baqup/v3/pkg/ip"
 	"golang.org/x/net/http/httpguts"
 )
 
@@ -211,7 +211,7 @@ func (x *XForwarded) removeConnectionHeaders(req *http.Request) {
 	for _, f := range req.Header[connection] {
 		for _, sf := range strings.Split(f, ",") {
 			if sf = textproto.TrimString(sf); sf != "" {
-				// Connection header cannot dictate to remove X- headers managed by Traefik,
+				// Connection header cannot dictate to remove X- headers managed by Baqup,
 				// as per rfc7230 https://datatracker.ietf.org/doc/html/rfc7230#section-6.1,
 				// A proxy or gateway MUST ... and then remove the Connection header field itself
 				// (or replace it with the intermediary's own connection options for the forwarded message).

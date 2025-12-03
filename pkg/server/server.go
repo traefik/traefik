@@ -7,10 +7,10 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/baqupio/baqup/v3/pkg/observability/metrics"
+	"github.com/baqupio/baqup/v3/pkg/safe"
+	"github.com/baqupio/baqup/v3/pkg/server/middleware"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v3/pkg/observability/metrics"
-	"github.com/traefik/traefik/v3/pkg/safe"
-	"github.com/traefik/traefik/v3/pkg/server/middleware"
 )
 
 // Server is the reverse-proxy/load-balancer engine.
@@ -84,7 +84,7 @@ func (s *Server) Close() {
 		if errors.Is(ctx.Err(), context.Canceled) {
 			return
 		} else if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-			panic("Timeout while stopping traefik, killing instance ✝")
+			panic("Timeout while stopping baqup, killing instance ✝")
 		}
 	}(ctx)
 

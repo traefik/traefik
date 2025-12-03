@@ -5,6 +5,9 @@ import (
 	"errors"
 	"time"
 
+	"github.com/baqupio/baqup/v3/pkg/observability/logs"
+	otypes "github.com/baqupio/baqup/v3/pkg/observability/types"
+	"github.com/baqupio/baqup/v3/pkg/safe"
 	"github.com/go-kit/kit/metrics/influx"
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 	influxdb2api "github.com/influxdata/influxdb-client-go/v2/api"
@@ -12,9 +15,6 @@ import (
 	influxdb2log "github.com/influxdata/influxdb-client-go/v2/log"
 	influxdb "github.com/influxdata/influxdb1-client/v2"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v3/pkg/observability/logs"
-	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
-	"github.com/traefik/traefik/v3/pkg/safe"
 )
 
 var (
@@ -24,31 +24,31 @@ var (
 )
 
 const (
-	influxDBConfigReloadsName           = "traefik.config.reload.total"
-	influxDBLastConfigReloadSuccessName = "traefik.config.reload.lastSuccessTimestamp"
-	influxDBOpenConnsName               = "traefik.open.connections"
+	influxDBConfigReloadsName           = "baqup.config.reload.total"
+	influxDBLastConfigReloadSuccessName = "baqup.config.reload.lastSuccessTimestamp"
+	influxDBOpenConnsName               = "baqup.open.connections"
 
-	influxDBTLSCertsNotAfterTimestampName = "traefik.tls.certs.notAfterTimestamp"
+	influxDBTLSCertsNotAfterTimestampName = "baqup.tls.certs.notAfterTimestamp"
 
-	influxDBEntryPointReqsName        = "traefik.entrypoint.requests.total"
-	influxDBEntryPointReqsTLSName     = "traefik.entrypoint.requests.tls.total"
-	influxDBEntryPointReqDurationName = "traefik.entrypoint.request.duration"
-	influxDBEntryPointReqsBytesName   = "traefik.entrypoint.requests.bytes.total"
-	influxDBEntryPointRespsBytesName  = "traefik.entrypoint.responses.bytes.total"
+	influxDBEntryPointReqsName        = "baqup.entrypoint.requests.total"
+	influxDBEntryPointReqsTLSName     = "baqup.entrypoint.requests.tls.total"
+	influxDBEntryPointReqDurationName = "baqup.entrypoint.request.duration"
+	influxDBEntryPointReqsBytesName   = "baqup.entrypoint.requests.bytes.total"
+	influxDBEntryPointRespsBytesName  = "baqup.entrypoint.responses.bytes.total"
 
-	influxDBRouterReqsName         = "traefik.router.requests.total"
-	influxDBRouterReqsTLSName      = "traefik.router.requests.tls.total"
-	influxDBRouterReqsDurationName = "traefik.router.request.duration"
-	influxDBRouterReqsBytesName    = "traefik.router.requests.bytes.total"
-	influxDBRouterRespsBytesName   = "traefik.router.responses.bytes.total"
+	influxDBRouterReqsName         = "baqup.router.requests.total"
+	influxDBRouterReqsTLSName      = "baqup.router.requests.tls.total"
+	influxDBRouterReqsDurationName = "baqup.router.request.duration"
+	influxDBRouterReqsBytesName    = "baqup.router.requests.bytes.total"
+	influxDBRouterRespsBytesName   = "baqup.router.responses.bytes.total"
 
-	influxDBServiceReqsName         = "traefik.service.requests.total"
-	influxDBServiceReqsTLSName      = "traefik.service.requests.tls.total"
-	influxDBServiceReqsDurationName = "traefik.service.request.duration"
-	influxDBServiceRetriesTotalName = "traefik.service.retries.total"
-	influxDBServiceServerUpName     = "traefik.service.server.up"
-	influxDBServiceReqsBytesName    = "traefik.service.requests.bytes.total"
-	influxDBServiceRespsBytesName   = "traefik.service.responses.bytes.total"
+	influxDBServiceReqsName         = "baqup.service.requests.total"
+	influxDBServiceReqsTLSName      = "baqup.service.requests.tls.total"
+	influxDBServiceReqsDurationName = "baqup.service.request.duration"
+	influxDBServiceRetriesTotalName = "baqup.service.retries.total"
+	influxDBServiceServerUpName     = "baqup.service.server.up"
+	influxDBServiceReqsBytesName    = "baqup.service.requests.bytes.total"
+	influxDBServiceRespsBytesName   = "baqup.service.responses.bytes.total"
 )
 
 // RegisterInfluxDB2 creates metrics exporter for InfluxDB2.

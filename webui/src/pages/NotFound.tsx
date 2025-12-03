@@ -8,7 +8,7 @@ export const NotFound = () => {
   return (
     <Flex css={{ flexDirection: 'column', alignItems: 'center', p: '$6' }} data-testid="Not found page">
       <Helmet>
-        <title>Not found - Traefik Proxy</title>
+        <title>Not found - Baqup Proxy</title>
       </Helmet>
       <Box>
         <H1 style={{ fontSize: '80px', lineHeight: '120px' }}>404</H1>

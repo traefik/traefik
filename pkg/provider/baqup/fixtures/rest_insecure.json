@@ -1,0 +1,21 @@
+{
+  "http": {
+    "routers": {
+      "rest": {
+        "entryPoints": [
+          "baqup"
+        ],
+        "service": "rest@internal",
+        "rule": "PathPrefix(`/api/providers`)",
+        "ruleSyntax": "default",
+        "priority": 9223372036854775807
+      }
+    },
+    "services": {
+      "noop": {},
+      "rest": {}
+    }
+  },
+  "tcp": {},
+  "tls": {}
+}

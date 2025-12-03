@@ -1,0 +1,102 @@
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: baqup
+
+---
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: baqup
+  namespace: baqup
+
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: baqup
+  namespace: baqup
+  labels:
+    app: baqup
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: baqup
+  template:
+    metadata:
+      labels:
+        app: baqup
+    spec:
+      serviceAccountName: baqup
+      containers:
+        - name: baqup
+          image: baqup/baqup:latest
+          imagePullPolicy: Never
+          args:
+            - --api.insecure
+            - --log.level=debug
+            - --entrypoints.pweb.address=:80
+            - --entrypoints.pwebsecure.address=:443
+            - --entrypoints.privweb.address=:8080
+            - --entrypoints.privwebsecure.address=:4443
+            - --entrypoints.baqup.address=:9000
+            - --experimental.knative
+            - --providers.knative.publicEntrypoints=pweb,pwebsecure
+            - --providers.knative.publicService.namespace=baqup
+            - --providers.knative.publicService.name=baqup
+            - --providers.knative.privateEntrypoints=privweb,privwebsecure
+            - --providers.knative.privateService.namespace=baqup
+            - --providers.knative.privateService.name=privbaqup
+            - --providers.knative.throttleduration=2s
+
+          ports:
+            - name: pweb
+              containerPort: 80
+            - name: pwebsecure
+              containerPort: 443
+            - name: privweb
+              containerPort: 8080
+            - name: privwebsecure
+              containerPort: 4443
+            - name: baqup
+              containerPort: 9000
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: baqup
+  namespace: baqup
+spec:
+  type: LoadBalancer
+  selector:
+    app: baqup
+  ports:
+    - port: 80
+      name: web
+      targetPort: pweb
+    - port: 443
+      name: websecure
+      targetPort: pwebsecure
+    - port: 9000
+      name: baqup
+      targetPort: baqup
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: privbaqup
+  namespace: baqup
+spec:
+  selector:
+    app: baqup
+  ports:
+    - port: 80
+      name: web
+      targetPort: privweb
+    - port: 443
+      name: websecure
+      targetPort: privwebsecure

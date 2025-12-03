@@ -1,6 +1,6 @@
 services:
   tailscaled:
-    hostname: traefik-tests-gw             # This will become the tailscale device name
+    hostname: baqup-tests-gw             # This will become the tailscale device name
     image: tailscale/tailscale:v1.24.0
     volumes:
       # TODO: maybe mount the container's /var/lib to keep some state for tailscale?

@@ -12,14 +12,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/baqupio/baqup/v3/integration/try"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"github.com/traefik/traefik/v3/integration/try"
 )
 
-const traefikTestAccessLogFileRotated = traefikTestAccessLogFile + ".rotated"
+const baqupTestAccessLogFileRotated = baqupTestAccessLogFile + ".rotated"
 
 // Log rotation integration test suite.
 type LogRotationSuite struct{ BaseSuite }
@@ -31,9 +31,9 @@ func TestLogRotationSuite(t *testing.T) {
 func (s *LogRotationSuite) SetupSuite() {
 	s.BaseSuite.SetupSuite()
 
-	os.Remove(traefikTestAccessLogFile)
-	os.Remove(traefikTestLogFile)
-	os.Remove(traefikTestAccessLogFileRotated)
+	os.Remove(baqupTestAccessLogFile)
+	os.Remove(baqupTestLogFile)
+	os.Remove(baqupTestAccessLogFileRotated)
 
 	s.createComposeProject("access_log")
 	s.composeUp()
@@ -43,9 +43,9 @@ func (s *LogRotationSuite) TearDownSuite() {
 	s.BaseSuite.TearDownSuite()
 
 	generatedFiles := []string{
-		traefikTestLogFile,
-		traefikTestAccessLogFile,
-		traefikTestAccessLogFileRotated,
+		baqupTestLogFile,
+		baqupTestAccessLogFile,
+		baqupTestAccessLogFileRotated,
 	}
 
 	for _, filename := range generatedFiles {
@@ -56,14 +56,14 @@ func (s *LogRotationSuite) TearDownSuite() {
 }
 
 func (s *LogRotationSuite) TestAccessLogRotation() {
-	// Start Traefik
-	cmd, _ := s.cmdTraefik(withConfigFile("fixtures/access_log/access_log_base.toml"))
-	defer s.displayTraefikLogFile(traefikTestLogFile)
+	// Start Baqup
+	cmd, _ := s.cmdBaqup(withConfigFile("fixtures/access_log/access_log_base.toml"))
+	defer s.displayBaqupLogFile(baqupTestLogFile)
 
-	// Verify Traefik started ok
-	s.verifyEmptyErrorLog("traefik.log")
+	// Verify Baqup started ok
+	s.verifyEmptyErrorLog("baqup.log")
 
-	s.waitForTraefik("server1")
+	s.waitForBaqup("server1")
 
 	// Make some requests
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
@@ -74,7 +74,7 @@ func (s *LogRotationSuite) TestAccessLogRotation() {
 	require.NoError(s.T(), err)
 
 	// Rename access log
-	err = os.Rename(traefikTestAccessLogFile, traefikTestAccessLogFileRotated)
+	err = os.Rename(baqupTestAccessLogFile, baqupTestAccessLogFileRotated)
 	require.NoError(s.T(), err)
 
 	// in the midst of the requests, issue SIGUSR1 signal to server process
@@ -88,23 +88,23 @@ func (s *LogRotationSuite) TestAccessLogRotation() {
 	require.NoError(s.T(), err)
 
 	// Verify access.log.rotated output as expected
-	s.logAccessLogFile(traefikTestAccessLogFileRotated)
-	lineCount := s.verifyLogLines(traefikTestAccessLogFileRotated, 0, true)
+	s.logAccessLogFile(baqupTestAccessLogFileRotated)
+	lineCount := s.verifyLogLines(baqupTestAccessLogFileRotated, 0, true)
 	assert.GreaterOrEqual(s.T(), lineCount, 1)
 
 	// make sure that the access log file is at least created before we do assertions on it
 	err = try.Do(1*time.Second, func() error {
-		_, err := os.Stat(traefikTestAccessLogFile)
+		_, err := os.Stat(baqupTestAccessLogFile)
 		return err
 	})
 	assert.NoError(s.T(), err, "access log file was not created in time")
 
 	// Verify access.log output as expected
-	s.logAccessLogFile(traefikTestAccessLogFile)
-	lineCount = s.verifyLogLines(traefikTestAccessLogFile, lineCount, true)
+	s.logAccessLogFile(baqupTestAccessLogFile)
+	lineCount = s.verifyLogLines(baqupTestAccessLogFile, lineCount, true)
 	assert.Equal(s.T(), 3, lineCount)
 
-	s.verifyEmptyErrorLog(traefikTestLogFile)
+	s.verifyEmptyErrorLog(baqupTestLogFile)
 }
 
 func (s *LogRotationSuite) logAccessLogFile(fileName string) {
@@ -115,11 +115,11 @@ func (s *LogRotationSuite) logAccessLogFile(fileName string) {
 
 func (s *LogRotationSuite) verifyEmptyErrorLog(name string) {
 	err := try.Do(5*time.Second, func() error {
-		traefikLog, e2 := os.ReadFile(name)
+		baqupLog, e2 := os.ReadFile(name)
 		if e2 != nil {
 			return e2
 		}
-		assert.Empty(s.T(), string(traefikLog))
+		assert.Empty(s.T(), string(baqupLog))
 
 		return nil
 	})

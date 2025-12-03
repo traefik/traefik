@@ -9,11 +9,11 @@ To proactively prevent services from being overwhelmed with high load, the numbe
 
 ```yaml tab="Docker & Swarm"
 labels:
-  - "traefik.tcp.middlewares.test-inflightconn.inflightconn.amount=10"
+  - "baqup.tcp.middlewares.test-inflightconn.inflightconn.amount=10"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: MiddlewareTCP
 metadata:
   name: test-inflightconn
@@ -24,7 +24,7 @@ spec:
 
 ```yaml tab="Consul Catalog"
 # Limiting to 10 simultaneous connections
-- "traefik.tcp.middlewares.test-inflightconn.inflightconn.amount=10"
+- "baqup.tcp.middlewares.test-inflightconn.inflightconn.amount=10"
 ```
 
 ```yaml tab="File (YAML)"

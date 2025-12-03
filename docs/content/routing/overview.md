@@ -1,6 +1,6 @@
 ---
-title: "Routing & Load Balancing Overview |Traefik Docs"
-description: "Read the official Traefik documentation to learn more on the Traefik Proxy architecture and the components that enable the routes to be created."
+title: "Routing & Load Balancing Overview |Baqup Docs"
+description: "Read the official Baqup documentation to learn more on the Baqup Proxy architecture and the components that enable the routes to be created."
 ---
 
 # Overview
@@ -8,9 +8,9 @@ description: "Read the official Traefik documentation to learn more on the Traef
 What's Happening to the Requests?
 {: .subtitle }
 
-Let's zoom in on Traefik's architecture and talk about the components that enable the routes to be created.
+Let's zoom in on Baqup's architecture and talk about the components that enable the routes to be created.
 
-First, when you start Traefik, you define [entrypoints](../entrypoints/) (in their most basic forms, they are port numbers).
+First, when you start Baqup, you define [entrypoints](../entrypoints/) (in their most basic forms, they are port numbers).
 Then, connected to these entrypoints, [routers](../routers/) analyze the incoming requests to see if they match a set of [rules](../routers/#rule).
 If they do, the router might transform the request using pieces of [middleware](../middlewares/overview.md) before forwarding them to your [services](./services/index.md).
 
@@ -27,7 +27,7 @@ If they do, the router might transform the request using pieces of [middleware](
 ## Example with a File Provider
 
 Below is an example of a full configuration file for the [file provider](../providers/file.md) that forwards `http://example.com/whoami/` requests to a service reachable on `http://private/whoami-service/`.
-In the process, Traefik will make sure that the user is authenticated (using the [BasicAuth middleware](../middlewares/http/basicauth.md)).
+In the process, Baqup will make sure that the user is authenticated (using the [BasicAuth middleware](../middlewares/http/basicauth.md)).
 
 Static configuration:
 
@@ -120,12 +120,12 @@ http:
 !!! info ""
 
     In this example, we use the [file provider](../providers/file.md).
-    Even if it is one of the least magical way of configuring Traefik, it explicitly describes every available notion.
+    Even if it is one of the least magical way of configuring Baqup, it explicitly describes every available notion.
 
 !!! info "HTTP / TCP"
 
     In this example, we've defined routing rules for http requests only.
-    Traefik also supports TCP requests. To add [TCP routers](./routers/index.md) and [TCP services](./services/index.md), declare them in a TCP section like in the following.
+    Baqup also supports TCP requests. To add [TCP routers](./routers/index.md) and [TCP services](./services/index.md), declare them in a TCP section like in the following.
 
     ??? example "Adding a TCP route for TLS requests on whoami-tcp.example.com"
 
@@ -244,12 +244,12 @@ http:
 
 ## Transport configuration
 
-Most of what happens to the connection between the clients and Traefik,
-and then between Traefik and the backend servers, is configured through the
+Most of what happens to the connection between the clients and Baqup,
+and then between Baqup and the backend servers, is configured through the
 [entrypoints](../entrypoints/) and the [routers](../routers/).
 
 In addition, a few parameters are dedicated to configuring globally
-what happens with the connections between Traefik and the backends.
+what happens with the connections between Baqup and the backends.
 This is done through the [`serversTransport`](#http-servers-transports) and [`tcpServersTransport`](#tcp-servers-transports)
 sections of the configuration, which features these options:
 
@@ -335,7 +335,7 @@ serversTransport:
 #### `spiffe`
 
 Please note that [SPIFFE](../https/spiffe.md) must be enabled in the static configuration 
-before using it to secure the connection between Traefik and the backends.  
+before using it to secure the connection between Baqup and the backends.  
 
 #### `spiffe.ids`
 
@@ -599,7 +599,7 @@ tcpServersTransport:
 #### `spiffe`
 
 Please note that [SPIFFE](../https/spiffe.md) must be enabled in the static configuration
-before using it to secure the connection between Traefik and the backends.
+before using it to secure the connection between Baqup and the backends.
 
 #### `spiffe.ids`
 
@@ -651,4 +651,4 @@ tcpServersTransport:
 --tcpServersTransport.spiffe.trustDomain=spiffe://trust-domain
 ```
 
-{!traefik-for-business-applications.md!}
+{!baqup-for-business-applications.md!}

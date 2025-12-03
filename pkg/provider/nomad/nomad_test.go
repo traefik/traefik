@@ -9,9 +9,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/baqupio/baqup/v3/pkg/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 var responses = map[string][]byte{}
@@ -35,29 +35,29 @@ func Test_globalConfig(t *testing.T) {
 	}{
 		{
 			Name:             "expose_by_default_no_tags",
-			Prefix:           "traefik",
+			Prefix:           "baqup",
 			Tags:             nil,
 			ExposedByDefault: true,
 			exp:              configuration{Enable: true},
 		},
 		{
 			Name:             "not_expose_by_default_no_tags",
-			Prefix:           "traefik",
+			Prefix:           "baqup",
 			Tags:             nil,
 			ExposedByDefault: false,
 			exp:              configuration{Enable: false},
 		},
 		{
 			Name:             "expose_by_default_tags_enable",
-			Prefix:           "traefik",
-			Tags:             []string{"traefik.enable=true"},
+			Prefix:           "baqup",
+			Tags:             []string{"baqup.enable=true"},
 			ExposedByDefault: true,
 			exp:              configuration{Enable: true},
 		},
 		{
 			Name:             "expose_by_default_tags_disable",
-			Prefix:           "traefik",
-			Tags:             []string{"traefik.enable=false"},
+			Prefix:           "baqup",
+			Tags:             []string{"baqup.enable=false"},
 			ExposedByDefault: true,
 			exp:              configuration{Enable: false},
 		},

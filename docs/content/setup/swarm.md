@@ -1,14 +1,14 @@
 ---
-title: Setup Traefik Proxy in Docker Swarm
-description: "Learn how to run Traefik v3 in Docker Swarm with HTTP/HTTPS entrypoints, redirects, a secured dashboard, self‑signed TLS, metrics, tracing, and access‑logs."
+title: Setup Baqup Proxy in Docker Swarm
+description: "Learn how to run Baqup v3 in Docker Swarm with HTTP/HTTPS entrypoints, redirects, a secured dashboard, self‑signed TLS, metrics, tracing, and access‑logs."
 ---
 
-This guide provides an in‑depth walkthrough for installing and configuring Traefik Proxy as a **Swarm service** using `docker stack deploy`. It follows the same structure as the standalone‑Docker tutorial and covers:
+This guide provides an in‑depth walkthrough for installing and configuring Baqup Proxy as a **Swarm service** using `docker stack deploy`. It follows the same structure as the standalone‑Docker tutorial and covers:
 
 - Enable the [Swarm provider](../reference/install-configuration/providers/swarm.md)
 - Expose **web** (HTTP :80) and **websecure** (HTTPS :443) entrypoints  
 - Redirect all HTTP traffic to HTTPS  
-- Secure the Traefik dashboard with **basic‑auth**  
+- Secure the Baqup dashboard with **basic‑auth**  
 - Terminate TLS with a self‑signed certificate for `*.swarm.localhost`  
 - Deploy the **whoami** demo service  
 - Enable access‑logs and Prometheus metrics
@@ -22,7 +22,7 @@ This guide provides an in‑depth walkthrough for installing and configuring Tra
 
 ## Create a self‑signed certificate
 
-Before Traefik can serve HTTPS locally it needs a certificate. In production you’d use one from a trusted CA, but for a multi‑node dev swarm a quick self‑signed cert is enough:
+Before Baqup can serve HTTPS locally it needs a certificate. In production you’d use one from a trusted CA, but for a multi‑node dev swarm a quick self‑signed cert is enough:
 
 ```bash
 mkdir -p certs
@@ -31,9 +31,9 @@ openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
   -subj "/CN=*.swarm.localhost"
 ```
 
-## Create the Traefik Dashboard Credentials
+## Create the Baqup Dashboard Credentials
 
-Generate a hashed username / password pair that Traefik’s middleware will validate:
+Generate a hashed username / password pair that Baqup’s middleware will validate:
 
 ```bash
 htpasswd -nb admin "P@ssw0rd" | sed -e 's/\$/\$\$/g'
@@ -60,24 +60,24 @@ In the same directory, create `docker‑compose‑swarm.yaml`:
 
 ```yaml
 services:
-  traefik:
-    image: traefik:v3.4
+  baqup:
+    image: baqup:v3.4
     
     networks:
-    # Connect to the 'traefik_proxy' overlay network for inter-container communication across nodes
-      - traefik_proxy
+    # Connect to the 'baqup_proxy' overlay network for inter-container communication across nodes
+      - baqup_proxy
 
     ports:
-        # Expose Traefik's entry points to the Swarm
+        # Expose Baqup's entry points to the Swarm
         # Swarm requires the long syntax for ports.
-      - target: 80 # Container port (Traefik web entry point)
+      - target: 80 # Container port (Baqup web entry point)
         published: 80 # Host port exposed on the nodes
         protocol: tcp
         # 'host' mode binds directly to the node's IP where the task runs.
         # 'ingress' mode uses Swarm's Routing Mesh (load balances across nodes).
         # Choose based on your load balancing strategy. 'host' is often simpler if using an external LB.
         mode: host
-      - target: 443 # Container port ( Traefik websecure entry point)
+      - target: 443 # Container port ( Baqup websecure entry point)
         published: 443 # Host port
         protocol: tcp
         mode: host
@@ -89,7 +89,7 @@ services:
       - ./certs:/certs:ro
       - ./dynamic:/dynamic:ro
 
-    # Traefik Static configuration via command-line arguments
+    # Baqup Static configuration via command-line arguments
     command:
       # HTTP EntryPoint
       - "--entrypoints.web.address=:80"
@@ -117,8 +117,8 @@ services:
       # Recommended: Don't expose services by default; require explicit labels
       - "--providers.swarm.exposedbydefault=false"
 
-      # Specify the default network for Traefik to connect to services
-      - "--providers.swarm.network=traefik_traefik_proxy"
+      # Specify the default network for Baqup to connect to services
+      - "--providers.swarm.network=baqup_baqup_proxy"
 
       # API & Dashboard
       - "--api.dashboard=true" # Enable the dashboard
@@ -134,50 +134,50 @@ services:
       replicas: 1
       placement:
 
-      # Placement constraints restrict where Traefik tasks can run.
+      # Placement constraints restrict where Baqup tasks can run.
       # Running on manager nodes is common for accessing the Swarm API via the socket.
         constraints:
           - node.role == manager
 
-      # Traefik Dynamic configuration via labels
-      # In Swarm, labels on the service definition configure Traefik routing for that service.
+      # Baqup Dynamic configuration via labels
+      # In Swarm, labels on the service definition configure Baqup routing for that service.
       labels:
-        - "traefik.enable=true"
+        - "baqup.enable=true"
 
         # Dashboard router
-        - "traefik.http.routers.dashboard.rule=Host(`dashboard.swarm.localhost`)"
-        - "traefik.http.routers.dashboard.entrypoints=websecure"
-        - "traefik.http.routers.dashboard.service=api@internal"
-        - "traefik.http.routers.dashboard.tls=true"
+        - "baqup.http.routers.dashboard.rule=Host(`dashboard.swarm.localhost`)"
+        - "baqup.http.routers.dashboard.entrypoints=websecure"
+        - "baqup.http.routers.dashboard.service=api@internal"
+        - "baqup.http.routers.dashboard.tls=true"
 
         # Basic‑auth middleware
-        - "traefik.http.middlewares.dashboard-auth.basicauth.users=<PASTE_HASH_HERE>"
-        - "traefik.http.routers.dashboard.middlewares=dashboard-auth@swarm"
+        - "baqup.http.middlewares.dashboard-auth.basicauth.users=<PASTE_HASH_HERE>"
+        - "baqup.http.routers.dashboard.middlewares=dashboard-auth@swarm"
 
         # Service hint
-        - "traefik.http.services.traefik.loadbalancer.server.port=8080"
+        - "baqup.http.services.baqup.loadbalancer.server.port=8080"
   
   # Deploy the Whoami application
   whoami:
-    image: traefik/whoami
+    image: baqup/whoami
     networks:
-      - traefik_proxy
+      - baqup_proxy
     deploy:
       labels:
-        # Enable Service discovery for Traefik
-        - "traefik.enable=true"
+        # Enable Service discovery for Baqup
+        - "baqup.enable=true"
         # Define the WHoami router rule
-        - "traefik.http.routers.whoami.rule=Host(`whoami.swarm.localhost`)"
+        - "baqup.http.routers.whoami.rule=Host(`whoami.swarm.localhost`)"
         # Expose Whoami on the HTTPS entrypoint
-        - "traefik.http.routers.whoami.entrypoints=websecure"
+        - "baqup.http.routers.whoami.entrypoints=websecure"
         # Enable TLS
-        - "traefik.http.routers.whoami.tls=true"
-        # Expose the whoami port number to Traefik
-        - traefik.http.services.whoami.loadbalancer.server.port=80
+        - "baqup.http.routers.whoami.tls=true"
+        # Expose the whoami port number to Baqup
+        - baqup.http.services.whoami.loadbalancer.server.port=80
 
 # Define the overlay network for Swarm
 networks:
-  traefik_proxy:
+  baqup_proxy:
     driver: overlay
     attachable: true
 ```
@@ -191,8 +191,8 @@ networks:
 Create the overlay network once (if it doesn’t exist) and deploy:
 
 ```bash
-docker network create --driver overlay --attachable traefik_proxy || true
-docker stack deploy -c docker-compose-swarm.yaml traefik
+docker network create --driver overlay --attachable baqup_proxy || true
+docker stack deploy -c docker-compose-swarm.yaml baqup
 ```
 
 Swarm schedules the services on a manager node and binds ports 80/443.
@@ -201,7 +201,7 @@ Swarm schedules the services on a manager node and binds ports 80/443.
 
 Open **https://dashboard.swarm.localhost/** in your browser — the dashboard should prompt for the basic‑auth credentials you configured.
 
-![Traefik Dashboard](../assets/img/setup/traefik-dashboard-swarm.png)
+![Baqup Dashboard](../assets/img/setup/baqup-dashboard-swarm.png)
 
 ## Test the whoami Application
 
@@ -227,7 +227,7 @@ X-Forwarded-For: 10.42.0.1
 X-Forwarded-Host: whoami.swarm.localhost
 X-Forwarded-Port: 443
 X-Forwarded-Proto: https
-X-Forwarded-Server: traefik-644b7c67d9-f2tn9
+X-Forwarded-Server: baqup-644b7c67d9-f2tn9
 X-Real-Ip: 10.42.0.1
 ```
 
@@ -247,7 +247,7 @@ You can also open a browser and navigate to [https://whoami.swarm.localhost](htt
 
 ### Other Key Configuration Areas
 
-Beyond this initial setup, Traefik offers extensive configuration possibilities. Here are brief introductions and minimal examples using Docker Compose `command` arguments or `labels`. Consult the main documentation linked for comprehensive details.
+Beyond this initial setup, Baqup offers extensive configuration possibilities. Here are brief introductions and minimal examples using Docker Compose `command` arguments or `labels`. Consult the main documentation linked for comprehensive details.
 
 #### TLS Certificate Management (Let’s Encrypt)
 
@@ -267,11 +267,11 @@ This defines a resolver named `le`, sets the required email and storage path (wi
 !!! note
 
     - Ensure the `/letsencrypt` path is on a **shared volume** or NFS so all nodes can read certificates.
-    - Ensure to mount the `/letsencrypt` volume in the `traefik` service in the `docker-compose-swarm.yaml` file.
+    - Ensure to mount the `/letsencrypt` volume in the `baqup` service in the `docker-compose-swarm.yaml` file.
 
 #### Metrics (Prometheus)
 
-You can expose Traefik's internal metrics for monitoring with Prometheus. We already enabled prometheus in our setup but we can further configure it.
+You can expose Baqup's internal metrics for monitoring with Prometheus. We already enabled prometheus in our setup but we can further configure it.
 *Example `command` additions:*
 
 ```yaml
@@ -281,7 +281,7 @@ command:
 
   - "--metrics.prometheus=true"
 
-  # Optionally change the entry point metrics are exposed on (defaults to 'traefik')
+  # Optionally change the entry point metrics are exposed on (defaults to 'baqup')
   - "--metrics.prometheus.entrypoint=metrics"
 
   # Add labels to metrics for routers/services (can increase cardinality)
@@ -292,7 +292,7 @@ This enables the `/metrics` endpoint (typically accessed via the internal API po
 
 #### Tracing (OTel)
 
-You can enable distributed tracing to follow requests through Traefik.
+You can enable distributed tracing to follow requests through Baqup.
 *Example `command` additions:*
 
 ```yaml
@@ -303,11 +303,11 @@ command:
 ```
 
 !!! note
-    This option requires a running OTEL collector accessible by Traefik. Consult the [Tracing Documentation](../reference/install-configuration/observability/tracing.md).
+    This option requires a running OTEL collector accessible by Baqup. Consult the [Tracing Documentation](../reference/install-configuration/observability/tracing.md).
 
 #### Access Logs
 
-You can configure Traefik to log incoming requests for debugging and analysis.
+You can configure Baqup to log incoming requests for debugging and analysis.
 *Example `command` additions:*
 
 ```yaml
@@ -325,6 +325,6 @@ command:
 
 ### Conclusion
 
-You now have Traefik running on Docker Swarm with HTTPS, a secured dashboard, automatic HTTP → HTTPS redirects, and foundational observability. Expand this stack with Let’s Encrypt, additional middlewares, or multiple Traefik replicas as your Swarm grows.
+You now have Baqup running on Docker Swarm with HTTPS, a secured dashboard, automatic HTTP → HTTPS redirects, and foundational observability. Expand this stack with Let’s Encrypt, additional middlewares, or multiple Baqup replicas as your Swarm grows.
 
-{!traefik-for-business-applications.md!}
+{!baqup-for-business-applications.md!}

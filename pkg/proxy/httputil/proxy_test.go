@@ -8,9 +8,9 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/baqupio/baqup/v3/pkg/testhelpers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v3/pkg/testhelpers"
 )
 
 func Test_directorBuilder(t *testing.T) {

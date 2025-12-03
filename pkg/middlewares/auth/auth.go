@@ -9,7 +9,7 @@ import (
 type UserParser func(user string) (string, string, error)
 
 const (
-	defaultRealm        = "traefik"
+	defaultRealm        = "baqup"
 	authorizationHeader = "Authorization"
 )
 

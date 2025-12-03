@@ -12,12 +12,12 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/baqupio/baqup/v3/pkg/observability/logs"
+	"github.com/baqupio/baqup/v3/pkg/tls/generate"
+	"github.com/baqupio/baqup/v3/pkg/types"
 	"github.com/go-acme/lego/v4/challenge/dns01"
 	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v3/pkg/observability/logs"
-	"github.com/traefik/traefik/v3/pkg/tls/generate"
-	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 const (
@@ -322,7 +322,7 @@ func (m *Manager) GetServerCertificates() []*x509.Certificate {
 			return certificates
 		}
 
-		// Excluding the generated Traefik default certificate.
+		// Excluding the generated Baqup default certificate.
 		if x509Cert.Subject.CommonName == generate.DefaultDomain {
 			return certificates
 		}

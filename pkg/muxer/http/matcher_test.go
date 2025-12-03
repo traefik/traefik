@@ -6,9 +6,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/baqupio/baqup/v3/pkg/middlewares/requestdecorator"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
 )
 
 func TestClientIPMatcher(t *testing.T) {
@@ -348,7 +348,7 @@ func TestHostRegexpMatcher(t *testing.T) {
 			},
 		},
 		{
-			desc: "valid HostRegexp matcher with Traefik v2 syntax",
+			desc: "valid HostRegexp matcher with Baqup v2 syntax",
 			rule: "HostRegexp(`{domain:[a-zA-Z-]+\\.com}`)",
 			expected: map[string]int{
 				"https://example.com":      http.StatusNotFound,
@@ -510,7 +510,7 @@ func TestPathRegexpMatcher(t *testing.T) {
 			},
 		},
 		{
-			desc: "valid PathRegexp matcher with Traefik v2 syntax",
+			desc: "valid PathRegexp matcher with Baqup v2 syntax",
 			rule: `PathRegexp("/{path:(css|js)}")`,
 			expected: map[string]int{
 				"https://example.com":                 http.StatusNotFound,
@@ -782,7 +782,7 @@ func TestHeaderRegexpMatcher(t *testing.T) {
 			},
 		},
 		{
-			desc: "valid HeaderRegexp matcher with Traefik v2 syntax",
+			desc: "valid HeaderRegexp matcher with Baqup v2 syntax",
 			rule: "HeaderRegexp(`X-Forwarded-Proto`, `http{secure:s?}`)",
 			expected: map[*http.Header]int{
 				{"X-Forwarded-Proto": []string{"http"}}:                 http.StatusNotFound,
@@ -848,7 +848,7 @@ func TestQueryMatcher(t *testing.T) {
 		},
 		{
 			desc:          "invalid Query matcher (empty key)",
-			rule:          "Query(``, `traefik`)",
+			rule:          "Query(``, `baqup`)",
 			expectedError: true,
 		},
 		{
@@ -858,23 +858,23 @@ func TestQueryMatcher(t *testing.T) {
 		},
 		{
 			desc:          "invalid Query matcher (too many parameters)",
-			rule:          "Query(`q`, `traefik`, `proxy`)",
+			rule:          "Query(`q`, `baqup`, `proxy`)",
 			expectedError: true,
 		},
 		{
 			desc: "valid Query matcher",
-			rule: "Query(`q`, `traefik`)",
+			rule: "Query(`q`, `baqup`)",
 			expected: map[string]int{
-				"https://example.com":                     http.StatusNotFound,
-				"https://example.com?q=traefik":           http.StatusOK,
-				"https://example.com?rel=ddg&q=traefik":   http.StatusOK,
-				"https://example.com?q=traefik&q=proxy":   http.StatusOK,
-				"https://example.com?q=awesome&q=traefik": http.StatusOK,
-				"https://example.com?q=nginx":             http.StatusNotFound,
-				"https://example.com?rel=ddg":             http.StatusNotFound,
-				"https://example.com?q=TRAEFIK":           http.StatusNotFound,
-				"https://example.com?Q=traefik":           http.StatusNotFound,
-				"https://example.com?rel=traefik":         http.StatusNotFound,
+				"https://example.com":                   http.StatusNotFound,
+				"https://example.com?q=baqup":           http.StatusOK,
+				"https://example.com?rel=ddg&q=baqup":   http.StatusOK,
+				"https://example.com?q=baqup&q=proxy":   http.StatusOK,
+				"https://example.com?q=awesome&q=baqup": http.StatusOK,
+				"https://example.com?q=nginx":           http.StatusNotFound,
+				"https://example.com?rel=ddg":           http.StatusNotFound,
+				"https://example.com?q=BAQUP":           http.StatusNotFound,
+				"https://example.com?Q=baqup":           http.StatusNotFound,
+				"https://example.com?rel=baqup":         http.StatusNotFound,
 			},
 		},
 		{
@@ -939,66 +939,66 @@ func TestQueryRegexpMatcher(t *testing.T) {
 		},
 		{
 			desc:          "invalid QueryRegexp matcher (invalid regexp)",
-			rule:          "QueryRegexp(`q`, `(traefik`)",
+			rule:          "QueryRegexp(`q`, `(baqup`)",
 			expectedError: true,
 		},
 		{
 			desc:          "invalid QueryRegexp matcher (too many parameters)",
-			rule:          "QueryRegexp(`q`, `traefik`, `proxy`)",
+			rule:          "QueryRegexp(`q`, `baqup`, `proxy`)",
 			expectedError: true,
 		},
 		{
 			desc: "valid QueryRegexp matcher",
-			rule: "QueryRegexp(`q`, `^(traefik|nginx)$`)",
+			rule: "QueryRegexp(`q`, `^(baqup|nginx)$`)",
 			expected: map[string]int{
-				"https://example.com":                     http.StatusNotFound,
-				"https://example.com?q=traefik":           http.StatusOK,
-				"https://example.com?rel=ddg&q=traefik":   http.StatusOK,
-				"https://example.com?q=traefik&q=proxy":   http.StatusOK,
-				"https://example.com?q=awesome&q=traefik": http.StatusOK,
-				"https://example.com?q=TRAEFIK":           http.StatusNotFound,
-				"https://example.com?Q=traefik":           http.StatusNotFound,
-				"https://example.com?rel=traefik":         http.StatusNotFound,
-				"https://example.com?q=nginx":             http.StatusOK,
-				"https://example.com?rel=ddg&q=nginx":     http.StatusOK,
-				"https://example.com?q=nginx&q=proxy":     http.StatusOK,
-				"https://example.com?q=awesome&q=nginx":   http.StatusOK,
-				"https://example.com?q=NGINX":             http.StatusNotFound,
-				"https://example.com?Q=nginx":             http.StatusNotFound,
-				"https://example.com?rel=nginx":           http.StatusNotFound,
-				"https://example.com?q=haproxy":           http.StatusNotFound,
-				"https://example.com?rel=ddg":             http.StatusNotFound,
+				"https://example.com":                   http.StatusNotFound,
+				"https://example.com?q=baqup":           http.StatusOK,
+				"https://example.com?rel=ddg&q=baqup":   http.StatusOK,
+				"https://example.com?q=baqup&q=proxy":   http.StatusOK,
+				"https://example.com?q=awesome&q=baqup": http.StatusOK,
+				"https://example.com?q=BAQUP":           http.StatusNotFound,
+				"https://example.com?Q=baqup":           http.StatusNotFound,
+				"https://example.com?rel=baqup":         http.StatusNotFound,
+				"https://example.com?q=nginx":           http.StatusOK,
+				"https://example.com?rel=ddg&q=nginx":   http.StatusOK,
+				"https://example.com?q=nginx&q=proxy":   http.StatusOK,
+				"https://example.com?q=awesome&q=nginx": http.StatusOK,
+				"https://example.com?q=NGINX":           http.StatusNotFound,
+				"https://example.com?Q=nginx":           http.StatusNotFound,
+				"https://example.com?rel=nginx":         http.StatusNotFound,
+				"https://example.com?q=haproxy":         http.StatusNotFound,
+				"https://example.com?rel=ddg":           http.StatusNotFound,
 			},
 		},
 		{
 			desc: "valid QueryRegexp matcher",
 			rule: "QueryRegexp(`q`, `^.*$`)",
 			expected: map[string]int{
-				"https://example.com":                     http.StatusNotFound,
-				"https://example.com?q=traefik":           http.StatusOK,
-				"https://example.com?rel=ddg&q=traefik":   http.StatusOK,
-				"https://example.com?q=traefik&q=proxy":   http.StatusOK,
-				"https://example.com?q=awesome&q=traefik": http.StatusOK,
-				"https://example.com?q=TRAEFIK":           http.StatusOK,
-				"https://example.com?Q=traefik":           http.StatusNotFound,
-				"https://example.com?rel=traefik":         http.StatusNotFound,
-				"https://example.com?q=nginx":             http.StatusOK,
-				"https://example.com?rel=ddg&q=nginx":     http.StatusOK,
-				"https://example.com?q=nginx&q=proxy":     http.StatusOK,
-				"https://example.com?q=awesome&q=nginx":   http.StatusOK,
-				"https://example.com?q=NGINX":             http.StatusOK,
-				"https://example.com?Q=nginx":             http.StatusNotFound,
-				"https://example.com?rel=nginx":           http.StatusNotFound,
-				"https://example.com?q=haproxy":           http.StatusOK,
-				"https://example.com?rel=ddg":             http.StatusNotFound,
+				"https://example.com":                   http.StatusNotFound,
+				"https://example.com?q=baqup":           http.StatusOK,
+				"https://example.com?rel=ddg&q=baqup":   http.StatusOK,
+				"https://example.com?q=baqup&q=proxy":   http.StatusOK,
+				"https://example.com?q=awesome&q=baqup": http.StatusOK,
+				"https://example.com?q=BAQUP":           http.StatusOK,
+				"https://example.com?Q=baqup":           http.StatusNotFound,
+				"https://example.com?rel=baqup":         http.StatusNotFound,
+				"https://example.com?q=nginx":           http.StatusOK,
+				"https://example.com?rel=ddg&q=nginx":   http.StatusOK,
+				"https://example.com?q=nginx&q=proxy":   http.StatusOK,
+				"https://example.com?q=awesome&q=nginx": http.StatusOK,
+				"https://example.com?q=NGINX":           http.StatusOK,
+				"https://example.com?Q=nginx":           http.StatusNotFound,
+				"https://example.com?rel=nginx":         http.StatusNotFound,
+				"https://example.com?q=haproxy":         http.StatusOK,
+				"https://example.com?rel=ddg":           http.StatusNotFound,
 			},
 		},
 		{
-			desc: "valid QueryRegexp matcher with Traefik v2 syntax",
-			rule: "QueryRegexp(`q`, `{value:(traefik|nginx)}`)",
+			desc: "valid QueryRegexp matcher with Baqup v2 syntax",
+			rule: "QueryRegexp(`q`, `{value:(baqup|nginx)}`)",
 			expected: map[string]int{
-				"https://example.com?q=traefik":         http.StatusNotFound,
-				"https://example.com?q={value:traefik}": http.StatusOK,
+				"https://example.com?q=baqup":         http.StatusNotFound,
+				"https://example.com?q={value:baqup}": http.StatusOK,
 			},
 		},
 	}

@@ -1,9 +1,9 @@
 ---
-title: "Traefik AWS ECS Documentation"
-description: "Configuration discovery in Traefik is achieved through Providers. Read the technical documentation for leveraging AWS ECS in Traefik."
+title: "Baqup AWS ECS Documentation"
+description: "Configuration discovery in Baqup is achieved through Providers. Read the technical documentation for leveraging AWS ECS in Baqup."
 ---
 
-# Traefik & AWS ECS
+# Baqup & AWS ECS
 
 ## Configuration Example
 
@@ -30,9 +30,9 @@ providers:
 | <a id="opt-providers-ecs-autoDiscoverClusters" href="#opt-providers-ecs-autoDiscoverClusters" title="#opt-providers-ecs-autoDiscoverClusters">`providers.ecs.autoDiscoverClusters`</a> | Search for services in cluster list. If set to `true` service discovery is enabled for all clusters. |  false  | No   |
 | <a id="opt-providers-ecs-ecsAnywhere" href="#opt-providers-ecs-ecsAnywhere" title="#opt-providers-ecs-ecsAnywhere">`providers.ecs.ecsAnywhere`</a> | Enable ECS Anywhere support. |  false    | No   |
 | <a id="opt-providers-ecs-clusters" href="#opt-providers-ecs-clusters" title="#opt-providers-ecs-clusters">`providers.ecs.clusters`</a> | Search for services in cluster list. This option is ignored if `autoDiscoverClusters` is set to `true`. |  `["default"]`  | No   |
-| <a id="opt-providers-ecs-exposedByDefault" href="#opt-providers-ecs-exposedByDefault" title="#opt-providers-ecs-exposedByDefault">`providers.ecs.exposedByDefault`</a> | Expose ECS services by default in Traefik. | true  | No   |
-| <a id="opt-providers-ecs-constraints" href="#opt-providers-ecs-constraints" title="#opt-providers-ecs-constraints">`providers.ecs.constraints`</a> |  Defines an expression that Traefik matches against the container labels to determine whether to create any route for that container. See [here](#constraints) for more information.  | true  | No   |
-| <a id="opt-providers-ecs-healthyTasksOnly" href="#opt-providers-ecs-healthyTasksOnly" title="#opt-providers-ecs-healthyTasksOnly">`providers.ecs.healthyTasksOnly`</a> |  Defines whether Traefik discovers only healthy tasks (`HEALTHY` healthStatus).  | false  | No   |
+| <a id="opt-providers-ecs-exposedByDefault" href="#opt-providers-ecs-exposedByDefault" title="#opt-providers-ecs-exposedByDefault">`providers.ecs.exposedByDefault`</a> | Expose ECS services by default in Baqup. | true  | No   |
+| <a id="opt-providers-ecs-constraints" href="#opt-providers-ecs-constraints" title="#opt-providers-ecs-constraints">`providers.ecs.constraints`</a> |  Defines an expression that Baqup matches against the container labels to determine whether to create any route for that container. See [here](#constraints) for more information.  | true  | No   |
+| <a id="opt-providers-ecs-healthyTasksOnly" href="#opt-providers-ecs-healthyTasksOnly" title="#opt-providers-ecs-healthyTasksOnly">`providers.ecs.healthyTasksOnly`</a> |  Defines whether Baqup discovers only healthy tasks (`HEALTHY` healthStatus).  | false  | No   |
 | <a id="opt-providers-ecs-defaultRule" href="#opt-providers-ecs-defaultRule" title="#opt-providers-ecs-defaultRule">`providers.ecs.defaultRule`</a> | The Default Host rule for all services. See [here](#defaultrule) for more information. |   ```"Host(`{{ normalize .Name }}`)"```  | No   |
 | <a id="opt-providers-ecs-refreshSeconds" href="#opt-providers-ecs-refreshSeconds" title="#opt-providers-ecs-refreshSeconds">`providers.ecs.refreshSeconds`</a> | Defines the polling interval (in seconds).   | 15   | No |
 | <a id="opt-providers-ecs-region" href="#opt-providers-ecs-region" title="#opt-providers-ecs-region">`providers.ecs.region`</a> | Defines the region of the ECS instance. See [here](#credentials) for more information.  | ""   | No |
@@ -41,7 +41,7 @@ providers:
 
 ### `constraints`
 
-The `constraints` option can be set to an expression that Traefik matches against the container labels (task),
+The `constraints` option can be set to an expression that Baqup matches against the container labels (task),
 to determine whether to create any route for that container. 
 If none of the container labels match the expression, no route for that container is created. 
 If the expression is empty, all detected containers are included.
@@ -51,7 +51,7 @@ as well as the usual boolean logic, as shown in examples below.
 
 !!! tip "Constraints key limitations"
 
-    Note that `traefik.*` is a reserved label namespace for configuration and can not be used as a key for custom constraints.
+    Note that `baqup.*` is a reserved label namespace for configuration and can not be used as a key for custom constraints.
 
 ??? example "Constraints Expression Examples"
 
@@ -103,7 +103,7 @@ providers:
 # ...
 ```
 
-For additional information, refer to [Restrict the Scope of Service Discovery](../overview.md#exposedbydefault-and-traefikenable).
+For additional information, refer to [Restrict the Scope of Service Discovery](../overview.md#exposedbydefault-and-baqupenable).
 
 ### `defaultRule`
 
@@ -132,12 +132,12 @@ providers:
 # ...
 ```
 
-??? info "Default rule and Traefik service"
+??? info "Default rule and Baqup service"
 
-    The exposure of the Traefik container, combined with the default rule mechanism,
+    The exposure of the Baqup container, combined with the default rule mechanism,
     can lead to create a router targeting itself in a loop.
     In this case, to prevent an infinite loop,
-    Traefik adds an internal middleware to refuse the request if it comes from the same router.
+    Baqup adds an internal middleware to refuse the request if it comes from the same router.
 
 ### Credentials
 
@@ -177,14 +177,14 @@ providers:
 
 ## Policy
 
-Traefik needs the following policy to read ECS information:
+Baqup needs the following policy to read ECS information:
 
 ```json
 {
     "Version": "2012-10-17",
     "Statement": [
         {
-            "Sid": "TraefikECSReadAccess",
+            "Sid": "BaqupECSReadAccess",
             "Effect": "Allow",
             "Action": [
                 "ecs:ListClusters",

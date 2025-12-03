@@ -1,6 +1,6 @@
 ---
-title: "Traefik ContentType Documentation"
-description: "Traefik Proxy's HTTP middleware automatically sets the `Content-Type` header value when it is not set by the backend. Read the technical documentation."
+title: "Baqup ContentType Documentation"
+description: "Baqup Proxy's HTTP middleware automatically sets the `Content-Type` header value when it is not set by the backend. Read the technical documentation."
 ---
 
 # ContentType
@@ -13,7 +13,7 @@ when it is not set by the backend.
 
 !!! info
 
-    The scope of the Content-Type middleware is the MIME type detection done by the core of Traefik (the server part).
+    The scope of the Content-Type middleware is the MIME type detection done by the core of Baqup (the server part).
     Therefore, it has no effect against any other `Content-Type` header modifications (e.g.: in another middleware such as compress).
 
 ## Configuration Examples
@@ -21,12 +21,12 @@ when it is not set by the backend.
 ```yaml tab="Docker & Swarm"
 # Enable auto-detection
 labels:
-  - "traefik.http.middlewares.autodetect.contenttype=true"
+  - "baqup.http.middlewares.autodetect.contenttype=true"
 ```
 
 ```yaml tab="Kubernetes"
 # Enable auto-detection
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: autodetect
@@ -36,7 +36,7 @@ spec:
 
 ```yaml tab="Consul Catalog"
 # Enable auto-detection
-- "traefik.http.middlewares.autodetect.contenttype=true"
+- "baqup.http.middlewares.autodetect.contenttype=true"
 ```
 
 ```yaml tab="File (YAML)"

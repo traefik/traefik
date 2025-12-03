@@ -10,12 +10,12 @@ import (
 	"slices"
 	"time"
 
+	"github.com/baqupio/baqup/v3/pkg/config/runtime"
+	"github.com/baqupio/baqup/v3/pkg/healthcheck"
+	"github.com/baqupio/baqup/v3/pkg/observability/logs"
+	"github.com/baqupio/baqup/v3/pkg/server/provider"
+	"github.com/baqupio/baqup/v3/pkg/tcp"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v3/pkg/config/runtime"
-	"github.com/traefik/traefik/v3/pkg/healthcheck"
-	"github.com/traefik/traefik/v3/pkg/observability/logs"
-	"github.com/traefik/traefik/v3/pkg/server/provider"
-	"github.com/traefik/traefik/v3/pkg/tcp"
 )
 
 // Manager is the TCPHandlers factory.

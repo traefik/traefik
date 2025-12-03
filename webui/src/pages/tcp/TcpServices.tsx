@@ -108,7 +108,7 @@ export const TcpServices = () => {
   return (
     <>
       <Helmet>
-        <title>TCP Services - Traefik Proxy</title>
+        <title>TCP Services - Baqup Proxy</title>
       </Helmet>
       <TableFilter />
       <TcpServicesRender

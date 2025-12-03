@@ -1,6 +1,6 @@
 ---
-title: "Traefik Prometheus Documentation"
-description: "Traefik supports several metrics backends, including Prometheus. Learn how to implement it for observability in Traefik Proxy. Read the technical documentation."
+title: "Baqup Prometheus Documentation"
+description: "Baqup supports several metrics backends, including Prometheus. Learn how to implement it for observability in Baqup Proxy. Read the technical documentation."
 ---
 
 # Prometheus
@@ -115,7 +115,7 @@ metrics:
 
 #### `entryPoint`
 
-_Optional, Default=traefik_
+_Optional, Default=baqup_
 
 Entry point used to expose metrics.
 
@@ -173,7 +173,7 @@ _Optional_
 Defines the extra labels for the `requests_total` metrics, and for each of them, the request header containing the value for this label.
 Please note that if the header is not present in the request it will be added nonetheless with an empty value.
 In addition, the label should be a valid label name for Prometheus metrics, 
-otherwise, the Prometheus metrics provider will fail to serve any Traefik-related metric.
+otherwise, the Prometheus metrics provider will fail to serve any Baqup-related metric.
 
 ```yaml tab="File (YAML)"
 metrics:
@@ -226,7 +226,7 @@ curl -H "User-Agent: foobar" http://localhost
 The following metric is produced :
 
 ```bash
-traefik_entrypoint_requests_total{code="200",entrypoint="web",method="GET",protocol="http",useragent="foobar"} 1
+baqup_entrypoint_requests_total{code="200",entrypoint="web",method="GET",protocol="http",useragent="foobar"} 1
 ```
 
 !!! info "`Host` header value"

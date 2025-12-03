@@ -1,9 +1,9 @@
 apiVersion: networking.k8s.io/v1
 kind: IngressClass
 metadata:
-  name: traefik-lb
+  name: baqup-lb
 spec:
-  controller: traefik.io/ingress-controller
+  controller: baqup.io/ingress-controller
 
 ---
 kind: Ingress
@@ -12,7 +12,7 @@ metadata:
   name: ""
   namespace: testing
 spec:
-  ingressClassName: traefik-lb
+  ingressClassName: baqup-lb
   rules:
     - http:
         paths:

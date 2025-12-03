@@ -167,8 +167,8 @@
           "Address": "",
           "EnableTagOverride": false,
           "Tags": [
-            "traefik.enable=true",
-            "traefik.udp.routers.job8.service=job8"
+            "baqup.enable=true",
+            "baqup.udp.routers.job8.service=job8"
           ],
           "CanaryTags": null,
           "Checks": null,

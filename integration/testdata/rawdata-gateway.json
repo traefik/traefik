@@ -2,7 +2,7 @@
 	"routers": {
 		"api@internal": {
 			"entryPoints": [
-				"traefik"
+				"baqup"
 			],
 			"service": "api@internal",
 			"rule": "PathPrefix(`/api`)",
@@ -16,12 +16,12 @@
 			},
 			"status": "enabled",
 			"using": [
-				"traefik"
+				"baqup"
 			]
 		},
 		"dashboard@internal": {
 			"entryPoints": [
-				"traefik"
+				"baqup"
 			],
 			"middlewares": [
 				"dashboard_redirect@internal",
@@ -39,7 +39,7 @@
 			},
 			"status": "enabled",
 			"using": [
-				"traefik"
+				"baqup"
 			]
 		},
 		"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-1c0cf64bde37d9d0df06@kubernetesgateway": {

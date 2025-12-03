@@ -1,6 +1,6 @@
 ---
-title: "Traefik Tailscale Documentation"
-description: "Learn how to configure Traefik Proxy to resolve TLS certificates for your Tailscale services. Read the technical documentation."
+title: "Baqup Tailscale Documentation"
+description: "Learn how to configure Baqup Proxy to resolve TLS certificates for your Tailscale services. Read the technical documentation."
 ---
 
 # Tailscale
@@ -90,20 +90,20 @@ A certificate resolver requests certificates for a set of domain names inferred 
     ```yaml tab="Docker & Swarm"
     ## Dynamic configuration
     labels:
-      - traefik.http.routers.blog.rule=Host(`monitoring.yak-bebop.ts.net`) && Path(`/metrics`)
-      - traefik.http.routers.blog.tls.certresolver=myresolver
+      - baqup.http.routers.blog.rule=Host(`monitoring.yak-bebop.ts.net`) && Path(`/metrics`)
+      - baqup.http.routers.blog.tls.certresolver=myresolver
     ```
 
     ```yaml tab="Docker (Swarm)"
     ## Dynamic configuration
     deploy:
       labels:
-        - traefik.http.routers.blog.rule=Host(`monitoring.yak-bebop.ts.net`) && Path(`/metrics`)
-        - traefik.http.routers.blog.tls.certresolver=myresolver
+        - baqup.http.routers.blog.rule=Host(`monitoring.yak-bebop.ts.net`) && Path(`/metrics`)
+        - baqup.http.routers.blog.tls.certresolver=myresolver
     ```
 
     ```yaml tab="Kubernetes"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: baqup.io/v1alpha1
     kind: IngressRoute
     metadata:
       name: blogtls
@@ -144,22 +144,22 @@ A certificate resolver requests certificates for a set of domain names inferred 
     ```yaml tab="Docker & Swarm"
     ## Dynamic configuration
     labels:
-      - traefik.http.routers.blog.rule=Path(`/metrics`)
-      - traefik.http.routers.blog.tls.certresolver=myresolver
-      - traefik.http.routers.blog.tls.domains[0].main=monitoring.yak-bebop.ts.net
+      - baqup.http.routers.blog.rule=Path(`/metrics`)
+      - baqup.http.routers.blog.tls.certresolver=myresolver
+      - baqup.http.routers.blog.tls.domains[0].main=monitoring.yak-bebop.ts.net
     ```
 
     ```yaml tab="Docker (Swarm)"
     ## Dynamic configuration
     deploy:
       labels:
-        - traefik.http.routers.blog.rule=Path(`/metrics`)
-        - traefik.http.routers.blog.tls.certresolver=myresolver
-        - traefik.http.routers.blog.tls.domains[0].main=monitoring.yak-bebop.ts.net
+        - baqup.http.routers.blog.rule=Path(`/metrics`)
+        - baqup.http.routers.blog.tls.certresolver=myresolver
+        - baqup.http.routers.blog.tls.domains[0].main=monitoring.yak-bebop.ts.net
     ```
 
     ```yaml tab="Kubernetes"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: baqup.io/v1alpha1
     kind: IngressRoute
     metadata:
       name: blogtls
@@ -203,5 +203,5 @@ A certificate resolver requests certificates for a set of domain names inferred 
 
 ## Automatic Renewals
 
-Traefik automatically tracks the expiry date of each Tailscale certificate it fetches,
+Baqup automatically tracks the expiry date of each Tailscale certificate it fetches,
 and starts to renew a certificate 14 days before its expiry to match Tailscale daemon renew policy.

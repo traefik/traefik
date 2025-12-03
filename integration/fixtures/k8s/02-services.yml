@@ -4,24 +4,24 @@ metadata:
   name: whoami
   namespace: default
   labels:
-    app: traefiklabs
+    app: baquplabs
     name: whoami
 
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: traefiklabs
+      app: baquplabs
       task: whoami
   template:
     metadata:
       labels:
-        app: traefiklabs
+        app: baquplabs
         task: whoami
     spec:
       containers:
         - name: whoami
-          image: traefik/whoami
+          image: baqup/whoami
           ports:
             - containerPort: 80
 
@@ -37,7 +37,7 @@ spec:
     - name: http
       port: 80
   selector:
-    app: traefiklabs
+    app: baquplabs
     task: whoami
 
 ---
@@ -47,24 +47,24 @@ metadata:
   name: whoamitcp
   namespace: default
   labels:
-    app: traefiklabs
+    app: baquplabs
     name: whoamitcp
 
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: traefiklabs
+      app: baquplabs
       task: whoamitcp
   template:
     metadata:
       labels:
-        app: traefiklabs
+        app: baquplabs
         task: whoamitcp
     spec:
       containers:
         - name: whoamitcp
-          image: traefik/whoamitcp
+          image: baqup/whoamitcp
           ports:
             - containerPort: 8080
 
@@ -80,7 +80,7 @@ spec:
     - name: footcp
       port: 8080
   selector:
-    app: traefiklabs
+    app: baquplabs
     task: whoamitcp
 
 ---
@@ -90,24 +90,24 @@ metadata:
   name: whoamiudp
   namespace: default
   labels:
-    app: traefiklabs
+    app: baquplabs
     name: whoamiudp
 
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: traefiklabs
+      app: baquplabs
       task: whoamiudp
   template:
     metadata:
       labels:
-        app: traefiklabs
+        app: baquplabs
         task: whoamiudp
     spec:
       containers:
         - name: whoamiudp
-          image: traefik/whoamiudp:latest
+          image: baqup/whoamiudp:latest
           ports:
             - containerPort: 8090
 
@@ -124,7 +124,7 @@ spec:
       name: fooudp
       port: 8090
   selector:
-    app: traefiklabs
+    app: baquplabs
     task: whoamiudp
 
 ---

@@ -23,21 +23,21 @@ const (
 	archivesFolder = "archives"
 	stateFilename  = "state.json"
 	goPathSrc      = "src"
-	pluginManifest = ".traefik.yml"
+	pluginManifest = ".baqup.yml"
 )
 
-const pluginsURL = "https://plugins.traefik.io/public/"
+const pluginsURL = "https://plugins.baqup.io/public/"
 
 const (
 	hashHeader = "X-Plugin-Hash"
 )
 
-// ManagerOptions the options of a Traefik plugins manager.
+// ManagerOptions the options of a Baqup plugins manager.
 type ManagerOptions struct {
 	Output string
 }
 
-// Manager manages Traefik plugins lifecycle operations including storage, and manifest reading.
+// Manager manages Baqup plugins lifecycle operations including storage, and manifest reading.
 type Manager struct {
 	downloader PluginDownloader
 
@@ -48,7 +48,7 @@ type Manager struct {
 	goPath   string
 }
 
-// NewManager creates a new Traefik plugins manager.
+// NewManager creates a new Baqup plugins manager.
 func NewManager(downloader PluginDownloader, opts ManagerOptions) (*Manager, error) {
 	sourcesRootPath := filepath.Join(filepath.FromSlash(opts.Output), sourcesFolder)
 	err := resetDirectory(sourcesRootPath)

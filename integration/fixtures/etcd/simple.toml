@@ -13,5 +13,5 @@
   insecure = true
 
 [providers.etcd]
-  rootKey = "traefik"
+  rootKey = "baqup"
   endpoints = ["{{ .EtcdAddress }}"]

@@ -21,7 +21,7 @@ func (f *FileLoader) GetFilename() string {
 	return f.filename
 }
 
-// Load loads the command's configuration from a file either specified with the -traefik.configfile flag, or from default locations.
+// Load loads the command's configuration from a file either specified with the -baqup.configfile flag, or from default locations.
 func (f *FileLoader) Load(args []string, cmd *cli.Command) (bool, error) {
 	ref, err := flag.Parse(args, cmd.Configuration)
 	if err != nil {
@@ -29,15 +29,15 @@ func (f *FileLoader) Load(args []string, cmd *cli.Command) (bool, error) {
 		return false, err
 	}
 
-	configFileFlag := "traefik.configfile"
-	if _, ok := ref["traefik.configFile"]; ok {
-		configFileFlag = "traefik.configFile"
+	configFileFlag := "baqup.configfile"
+	if _, ok := ref["baqup.configFile"]; ok {
+		configFileFlag = "baqup.configFile"
 	}
 
 	if f.ConfigFileFlag != "" {
-		configFileFlag = "traefik." + f.ConfigFileFlag
+		configFileFlag = "baqup." + f.ConfigFileFlag
 		if _, ok := ref[strings.ToLower(configFileFlag)]; ok {
-			configFileFlag = "traefik." + strings.ToLower(f.ConfigFileFlag)
+			configFileFlag = "baqup." + strings.ToLower(f.ConfigFileFlag)
 		}
 	}
 
@@ -64,7 +64,7 @@ func (f *FileLoader) Load(args []string, cmd *cli.Command) (bool, error) {
 // It stops as soon as decoding one of them is successful.
 func loadConfigFiles(configFile string, element interface{}) (string, error) {
 	finder := cli.Finder{
-		BasePaths:  []string{"/etc/traefik/traefik", "$XDG_CONFIG_HOME/traefik", "$HOME/.config/traefik", "./traefik"},
+		BasePaths:  []string{"/etc/baqup/baqup", "$XDG_CONFIG_HOME/baqup", "$HOME/.config/baqup", "./baqup"},
 		Extensions: []string{"toml", "yaml", "yml"},
 	}
 

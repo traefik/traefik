@@ -6,12 +6,12 @@ import (
 
 	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	ecstypes "github.com/aws/aws-sdk-go-v2/service/ecs/types"
+	"github.com/baqupio/baqup/v3/pkg/config/dynamic"
+	"github.com/baqupio/baqup/v3/pkg/tls"
+	"github.com/baqupio/baqup/v3/pkg/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/tls"
-	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 func pointer[T any](v T) *T { return &v }
@@ -148,7 +148,7 @@ func TestDefaultRule(t *testing.T) {
 				instance(
 					name("Test"),
 					labels(map[string]string{
-						"traefik.domain": "foo.bar",
+						"baqup.domain": "foo.bar",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -159,7 +159,7 @@ func TestDefaultRule(t *testing.T) {
 					),
 				),
 			},
-			defaultRule: `Host("{{ .Name }}.{{ index .Labels "traefik.domain" }}")`,
+			defaultRule: `Host("{{ .Name }}.{{ index .Labels "baqup.domain" }}")`,
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
 					Routers:           map[string]*dynamic.TCPRouter{},
@@ -409,7 +409,7 @@ func Test_buildConfiguration(t *testing.T) {
 				instance(
 					name("Test"),
 					labels(map[string]string{
-						"traefik.http.services.test": "",
+						"baqup.http.services.test": "",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -448,7 +448,7 @@ func Test_buildConfiguration(t *testing.T) {
 				instance(
 					name("Test"),
 					labels(map[string]string{
-						"traefik.tcp.services.test": "",
+						"baqup.tcp.services.test": "",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -487,7 +487,7 @@ func Test_buildConfiguration(t *testing.T) {
 				instance(
 					name("Test"),
 					labels(map[string]string{
-						"traefik.udp.services.test": "",
+						"baqup.udp.services.test": "",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -550,7 +550,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service:     "Test",
-							Rule:        "Host(`Test.traefik.wtf`)",
+							Rule:        "Host(`Test.baqup.wtf`)",
 							DefaultRule: true,
 						},
 					},
@@ -619,12 +619,12 @@ func Test_buildConfiguration(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service:     "Test",
-							Rule:        "Host(`Test.traefik.wtf`)",
+							Rule:        "Host(`Test.baqup.wtf`)",
 							DefaultRule: true,
 						},
 						"Test2": {
 							Service:     "Test2",
-							Rule:        "Host(`Test2.traefik.wtf`)",
+							Rule:        "Host(`Test2.baqup.wtf`)",
 							DefaultRule: true,
 						},
 					},
@@ -709,7 +709,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service:     "Test",
-							Rule:        "Host(`Test.traefik.wtf`)",
+							Rule:        "Host(`Test.baqup.wtf`)",
 							DefaultRule: true,
 						},
 					},
@@ -746,7 +746,7 @@ func Test_buildConfiguration(t *testing.T) {
 				instance(
 					name("Test"),
 					labels(map[string]string{
-						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
+						"baqup.http.services.Service1.loadbalancer.passhostheader": "true",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -772,7 +772,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service:     "Service1",
-							Rule:        "Host(`Test.traefik.wtf`)",
+							Rule:        "Host(`Test.baqup.wtf`)",
 							DefaultRule: true,
 						},
 					},
@@ -806,9 +806,9 @@ func Test_buildConfiguration(t *testing.T) {
 				instance(
 					name("Test"),
 					labels(map[string]string{
-						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
-						"traefik.http.routers.Router1.rule":                          "Host(`foo.com`)",
-						"traefik.http.routers.Router1.service":                       "Service1",
+						"baqup.http.services.Service1.loadbalancer.passhostheader": "true",
+						"baqup.http.routers.Router1.rule":                          "Host(`foo.com`)",
+						"baqup.http.routers.Router1.service":                       "Service1",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -867,7 +867,7 @@ func Test_buildConfiguration(t *testing.T) {
 				instance(
 					name("Test"),
 					labels(map[string]string{
-						"traefik.http.routers.Router1.rule": "Host(`foo.com`)",
+						"baqup.http.routers.Router1.rule": "Host(`foo.com`)",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -926,8 +926,8 @@ func Test_buildConfiguration(t *testing.T) {
 				instance(
 					name("Test"),
 					labels(map[string]string{
-						"traefik.http.routers.Router1.rule":                          "Host(`foo.com`)",
-						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
+						"baqup.http.routers.Router1.rule":                          "Host(`foo.com`)",
+						"baqup.http.services.Service1.loadbalancer.passhostheader": "true",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -986,9 +986,9 @@ func Test_buildConfiguration(t *testing.T) {
 				instance(
 					name("Test"),
 					labels(map[string]string{
-						"traefik.http.routers.Router1.rule":                          "Host(`foo.com`)",
-						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
-						"traefik.http.services.Service2.loadbalancer.passhostheader": "true",
+						"baqup.http.routers.Router1.rule":                          "Host(`foo.com`)",
+						"baqup.http.services.Service1.loadbalancer.passhostheader": "true",
+						"baqup.http.services.Service2.loadbalancer.passhostheader": "true",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -1056,8 +1056,8 @@ func Test_buildConfiguration(t *testing.T) {
 				instance(
 					name("Test"),
 					labels(map[string]string{
-						"traefik.http.routers.Router1.rule":    "Host(`foo.com`)",
-						"traefik.http.routers.Router1.service": "Service1",
+						"baqup.http.routers.Router1.rule":    "Host(`foo.com`)",
+						"baqup.http.routers.Router1.service": "Service1",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -1117,7 +1117,7 @@ func Test_buildConfiguration(t *testing.T) {
 					name("Test"),
 					id("1"),
 					labels(map[string]string{
-						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
+						"baqup.http.services.Service1.loadbalancer.passhostheader": "true",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -1131,7 +1131,7 @@ func Test_buildConfiguration(t *testing.T) {
 					name("Test"),
 					id("2"),
 					labels(map[string]string{
-						"traefik.http.services.Service1.loadbalancer.passhostheader": "false",
+						"baqup.http.services.Service1.loadbalancer.passhostheader": "false",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -1157,7 +1157,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service:     "Service1",
-							Rule:        "Host(`Test.traefik.wtf`)",
+							Rule:        "Host(`Test.baqup.wtf`)",
 							DefaultRule: true,
 						},
 					},
@@ -1177,7 +1177,7 @@ func Test_buildConfiguration(t *testing.T) {
 					name("Test"),
 					id("1"),
 					labels(map[string]string{
-						"traefik.http.services.Service1.loadbalancer.passhostheader": "false",
+						"baqup.http.services.Service1.loadbalancer.passhostheader": "false",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -1191,7 +1191,7 @@ func Test_buildConfiguration(t *testing.T) {
 					name("Test"),
 					id("2"),
 					labels(map[string]string{
-						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
+						"baqup.http.services.Service1.loadbalancer.passhostheader": "true",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -1205,7 +1205,7 @@ func Test_buildConfiguration(t *testing.T) {
 					name("Test"),
 					id("3"),
 					labels(map[string]string{
-						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
+						"baqup.http.services.Service1.loadbalancer.passhostheader": "true",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -1231,7 +1231,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service:     "Service1",
-							Rule:        "Host(`Test.traefik.wtf`)",
+							Rule:        "Host(`Test.baqup.wtf`)",
 							DefaultRule: true,
 						},
 					},
@@ -1251,7 +1251,7 @@ func Test_buildConfiguration(t *testing.T) {
 					name("Test"),
 					id("1"),
 					labels(map[string]string{
-						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
+						"baqup.http.services.Service1.loadbalancer.passhostheader": "true",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -1265,7 +1265,7 @@ func Test_buildConfiguration(t *testing.T) {
 					name("Test"),
 					id("2"),
 					labels(map[string]string{
-						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
+						"baqup.http.services.Service1.loadbalancer.passhostheader": "true",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -1291,7 +1291,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service:     "Service1",
-							Rule:        "Host(`Test.traefik.wtf`)",
+							Rule:        "Host(`Test.baqup.wtf`)",
 							DefaultRule: true,
 						},
 					},
@@ -1328,7 +1328,7 @@ func Test_buildConfiguration(t *testing.T) {
 				instance(
 					name("Test"),
 					labels(map[string]string{
-						"traefik.http.middlewares.Middleware1.inflightreq.amount": "42",
+						"baqup.http.middlewares.Middleware1.inflightreq.amount": "42",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -1354,7 +1354,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service:     "Test",
-							Rule:        "Host(`Test.traefik.wtf`)",
+							Rule:        "Host(`Test.baqup.wtf`)",
 							DefaultRule: true,
 						},
 					},
@@ -1395,7 +1395,7 @@ func Test_buildConfiguration(t *testing.T) {
 					name("Test"),
 					id("1"),
 					labels(map[string]string{
-						"traefik.http.middlewares.Middleware1.inflightreq.amount": "42",
+						"baqup.http.middlewares.Middleware1.inflightreq.amount": "42",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -1409,7 +1409,7 @@ func Test_buildConfiguration(t *testing.T) {
 					name("Test"),
 					id("2"),
 					labels(map[string]string{
-						"traefik.http.middlewares.Middleware1.inflightreq.amount": "42",
+						"baqup.http.middlewares.Middleware1.inflightreq.amount": "42",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -1435,7 +1435,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service:     "Test",
-							Rule:        "Host(`Test.traefik.wtf`)",
+							Rule:        "Host(`Test.baqup.wtf`)",
 							DefaultRule: true,
 						},
 					},
@@ -1479,7 +1479,7 @@ func Test_buildConfiguration(t *testing.T) {
 					name("Test"),
 					id("1"),
 					labels(map[string]string{
-						"traefik.http.middlewares.Middleware1.inflightreq.amount": "42",
+						"baqup.http.middlewares.Middleware1.inflightreq.amount": "42",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -1493,7 +1493,7 @@ func Test_buildConfiguration(t *testing.T) {
 					name("Test"),
 					id("2"),
 					labels(map[string]string{
-						"traefik.http.middlewares.Middleware1.inflightreq.amount": "41",
+						"baqup.http.middlewares.Middleware1.inflightreq.amount": "41",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -1519,7 +1519,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service:     "Test",
-							Rule:        "Host(`Test.traefik.wtf`)",
+							Rule:        "Host(`Test.baqup.wtf`)",
 							DefaultRule: true,
 						},
 					},
@@ -1557,7 +1557,7 @@ func Test_buildConfiguration(t *testing.T) {
 					name("Test"),
 					id("1"),
 					labels(map[string]string{
-						"traefik.http.middlewares.Middleware1.inflightreq.amount": "42",
+						"baqup.http.middlewares.Middleware1.inflightreq.amount": "42",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -1571,7 +1571,7 @@ func Test_buildConfiguration(t *testing.T) {
 					name("Test"),
 					id("2"),
 					labels(map[string]string{
-						"traefik.http.middlewares.Middleware1.inflightreq.amount": "41",
+						"baqup.http.middlewares.Middleware1.inflightreq.amount": "41",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -1585,7 +1585,7 @@ func Test_buildConfiguration(t *testing.T) {
 					name("Test"),
 					id("3"),
 					labels(map[string]string{
-						"traefik.http.middlewares.Middleware1.inflightreq.amount": "40",
+						"baqup.http.middlewares.Middleware1.inflightreq.amount": "40",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -1611,7 +1611,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service:     "Test",
-							Rule:        "Host(`Test.traefik.wtf`)",
+							Rule:        "Host(`Test.baqup.wtf`)",
 							DefaultRule: true,
 						},
 					},
@@ -1652,7 +1652,7 @@ func Test_buildConfiguration(t *testing.T) {
 					name("Test"),
 					id("1"),
 					labels(map[string]string{
-						"traefik.http.routers.Router1.rule": "Host(`foo.com`)",
+						"baqup.http.routers.Router1.rule": "Host(`foo.com`)",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -1666,7 +1666,7 @@ func Test_buildConfiguration(t *testing.T) {
 					name("Test"),
 					id("2"),
 					labels(map[string]string{
-						"traefik.http.routers.Router1.rule": "Host(`bar.com`)",
+						"baqup.http.routers.Router1.rule": "Host(`bar.com`)",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -1724,7 +1724,7 @@ func Test_buildConfiguration(t *testing.T) {
 					name("Test"),
 					id("1"),
 					labels(map[string]string{
-						"traefik.http.routers.Router1.rule": "Host(`foo.com`)",
+						"baqup.http.routers.Router1.rule": "Host(`foo.com`)",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -1738,7 +1738,7 @@ func Test_buildConfiguration(t *testing.T) {
 					name("Test"),
 					id("2"),
 					labels(map[string]string{
-						"traefik.http.routers.Router1.rule": "Host(`bar.com`)",
+						"baqup.http.routers.Router1.rule": "Host(`bar.com`)",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -1752,7 +1752,7 @@ func Test_buildConfiguration(t *testing.T) {
 					name("Test"),
 					id("3"),
 					labels(map[string]string{
-						"traefik.http.routers.Router1.rule": "Host(`foobar.com`)",
+						"baqup.http.routers.Router1.rule": "Host(`foobar.com`)",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -1813,7 +1813,7 @@ func Test_buildConfiguration(t *testing.T) {
 					name("Test"),
 					id("1"),
 					labels(map[string]string{
-						"traefik.http.routers.Router1.rule": "Host(`foo.com`)",
+						"baqup.http.routers.Router1.rule": "Host(`foo.com`)",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -1828,7 +1828,7 @@ func Test_buildConfiguration(t *testing.T) {
 					name("Test"),
 					id("2"),
 					labels(map[string]string{
-						"traefik.http.routers.Router1.rule": "Host(`foo.com`)",
+						"baqup.http.routers.Router1.rule": "Host(`foo.com`)",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -1890,7 +1890,7 @@ func Test_buildConfiguration(t *testing.T) {
 				instance(
 					name("Test"),
 					labels(map[string]string{
-						"traefik.http.routers.Router1.rule": "Host(`foo.com`)",
+						"baqup.http.routers.Router1.rule": "Host(`foo.com`)",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -1903,7 +1903,7 @@ func Test_buildConfiguration(t *testing.T) {
 				instance(
 					name("Test2"),
 					labels(map[string]string{
-						"traefik.http.routers.Router1.rule": "Host(`foo.com`)",
+						"baqup.http.routers.Router1.rule": "Host(`foo.com`)",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -1971,7 +1971,7 @@ func Test_buildConfiguration(t *testing.T) {
 				instance(
 					name("Test"),
 					labels(map[string]string{
-						"traefik.wrong.label": "42",
+						"baqup.wrong.label": "42",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -1997,7 +1997,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service:     "Test",
-							Rule:        "Host(`Test.traefik.wtf`)",
+							Rule:        "Host(`Test.baqup.wtf`)",
 							DefaultRule: true,
 						},
 					},
@@ -2031,8 +2031,8 @@ func Test_buildConfiguration(t *testing.T) {
 				instance(
 					name("Test"),
 					labels(map[string]string{
-						"traefik.http.services.Service1.LoadBalancer.server.scheme": "h2c",
-						"traefik.http.services.Service1.LoadBalancer.server.port":   "80",
+						"baqup.http.services.Service1.LoadBalancer.server.scheme": "h2c",
+						"baqup.http.services.Service1.LoadBalancer.server.port":   "80",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -2058,7 +2058,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service:     "Service1",
-							Rule:        "Host(`Test.traefik.wtf`)",
+							Rule:        "Host(`Test.baqup.wtf`)",
 							DefaultRule: true,
 						},
 					},
@@ -2092,7 +2092,7 @@ func Test_buildConfiguration(t *testing.T) {
 				instance(
 					name("Test"),
 					labels(map[string]string{
-						"traefik.http.services.Service1.LoadBalancer.server.url": "http://1.2.3.4:5678",
+						"baqup.http.services.Service1.LoadBalancer.server.url": "http://1.2.3.4:5678",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -2118,7 +2118,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service:     "Service1",
-							Rule:        "Host(`Test.traefik.wtf`)",
+							Rule:        "Host(`Test.baqup.wtf`)",
 							DefaultRule: true,
 						},
 					},
@@ -2152,8 +2152,8 @@ func Test_buildConfiguration(t *testing.T) {
 				instance(
 					name("Test"),
 					labels(map[string]string{
-						"traefik.http.services.Service1.LoadBalancer.server.url":          "http://1.2.3.4:5678",
-						"traefik.http.services.Service1.LoadBalancer.server.preservepath": "true",
+						"baqup.http.services.Service1.LoadBalancer.server.url":          "http://1.2.3.4:5678",
+						"baqup.http.services.Service1.LoadBalancer.server.preservepath": "true",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -2179,7 +2179,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service:     "Service1",
-							Rule:        "Host(`Test.traefik.wtf`)",
+							Rule:        "Host(`Test.baqup.wtf`)",
 							DefaultRule: true,
 						},
 					},
@@ -2214,8 +2214,8 @@ func Test_buildConfiguration(t *testing.T) {
 				instance(
 					name("Test"),
 					labels(map[string]string{
-						"traefik.http.services.Service1.LoadBalancer.server.url":  "http://1.2.3.4:5678",
-						"traefik.http.services.Service1.LoadBalancer.server.port": "1234",
+						"baqup.http.services.Service1.LoadBalancer.server.url":  "http://1.2.3.4:5678",
+						"baqup.http.services.Service1.LoadBalancer.server.port": "1234",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -2254,8 +2254,8 @@ func Test_buildConfiguration(t *testing.T) {
 				instance(
 					name("Test"),
 					labels(map[string]string{
-						"traefik.http.services.Service1.LoadBalancer.server.url":    "http://1.2.3.4:5678",
-						"traefik.http.services.Service1.LoadBalancer.server.scheme": "https",
+						"baqup.http.services.Service1.LoadBalancer.server.url":    "http://1.2.3.4:5678",
+						"baqup.http.services.Service1.LoadBalancer.server.scheme": "https",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -2294,8 +2294,8 @@ func Test_buildConfiguration(t *testing.T) {
 				instance(
 					name("Test"),
 					labels(map[string]string{
-						"traefik.http.services.Service1.LoadBalancer.server.scheme": "h2c",
-						"traefik.http.services.Service1.LoadBalancer.server.port":   "8040",
+						"baqup.http.services.Service1.LoadBalancer.server.scheme": "h2c",
+						"baqup.http.services.Service1.LoadBalancer.server.port":   "8040",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -2321,7 +2321,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service:     "Service1",
-							Rule:        "Host(`Test.traefik.wtf`)",
+							Rule:        "Host(`Test.baqup.wtf`)",
 							DefaultRule: true,
 						},
 					},
@@ -2355,12 +2355,12 @@ func Test_buildConfiguration(t *testing.T) {
 				instance(
 					name("Test"),
 					labels(map[string]string{
-						"traefik.http.routers.Test.rule":                          "Host(`Test.traefik.wtf`)",
-						"traefik.http.routers.Test.service":                       "Service1",
-						"traefik.http.services.Service1.LoadBalancer.server.port": "4445",
-						"traefik.http.routers.Test2.rule":                         "Host(`Test.traefik.local`)",
-						"traefik.http.routers.Test2.service":                      "Service2",
-						"traefik.http.services.Service2.LoadBalancer.server.port": "4444",
+						"baqup.http.routers.Test.rule":                          "Host(`Test.baqup.wtf`)",
+						"baqup.http.routers.Test.service":                       "Service1",
+						"baqup.http.services.Service1.LoadBalancer.server.port": "4445",
+						"baqup.http.routers.Test2.rule":                         "Host(`Test.baqup.local`)",
+						"baqup.http.routers.Test2.service":                      "Service2",
+						"baqup.http.services.Service2.LoadBalancer.server.port": "4444",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -2387,11 +2387,11 @@ func Test_buildConfiguration(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service: "Service1",
-							Rule:    "Host(`Test.traefik.wtf`)",
+							Rule:    "Host(`Test.baqup.wtf`)",
 						},
 						"Test2": {
 							Service: "Service2",
-							Rule:    "Host(`Test.traefik.local`)",
+							Rule:    "Host(`Test.baqup.local`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -2438,8 +2438,8 @@ func Test_buildConfiguration(t *testing.T) {
 				instance(
 					name("Test"),
 					labels(map[string]string{
-						"traefik.http.services.Service1.LoadBalancer.server.port": "",
-						"traefik.http.services.Service2.LoadBalancer.server.port": "8080",
+						"baqup.http.services.Service1.LoadBalancer.server.port": "",
+						"baqup.http.services.Service2.LoadBalancer.server.port": "8080",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -2542,7 +2542,7 @@ func Test_buildConfiguration(t *testing.T) {
 				instance(
 					name("Test"),
 					labels(map[string]string{
-						"traefik.http.middlewares.Middleware1.inflightreq.amount": "42",
+						"baqup.http.middlewares.Middleware1.inflightreq.amount": "42",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -2574,12 +2574,12 @@ func Test_buildConfiguration(t *testing.T) {
 			},
 		},
 		{
-			desc: "one container with traefik.enable false",
+			desc: "one container with baqup.enable false",
 			containers: []ecsInstance{
 				instance(
 					name("Test"),
 					labels(map[string]string{
-						"traefik.enable": "false",
+						"baqup.enable": "false",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -2618,7 +2618,7 @@ func Test_buildConfiguration(t *testing.T) {
 				instance(
 					name("Test"),
 					labels(map[string]string{
-						"traefik.enable": "false",
+						"baqup.enable": "false",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -2658,7 +2658,7 @@ func Test_buildConfiguration(t *testing.T) {
 				instance(
 					name("Test"),
 					labels(map[string]string{
-						"traefik.enable": "false",
+						"baqup.enable": "false",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNamePending),
@@ -2697,7 +2697,7 @@ func Test_buildConfiguration(t *testing.T) {
 				instance(
 					name("Test"),
 					labels(map[string]string{
-						"traefik.tags": "foo",
+						"baqup.tags": "foo",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -2708,7 +2708,7 @@ func Test_buildConfiguration(t *testing.T) {
 					),
 				),
 			},
-			constraints: `Label("traefik.tags", "bar")`,
+			constraints: `Label("baqup.tags", "bar")`,
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
 					Routers:           map[string]*dynamic.TCPRouter{},
@@ -2737,7 +2737,7 @@ func Test_buildConfiguration(t *testing.T) {
 				instance(
 					name("Test"),
 					labels(map[string]string{
-						"traefik.tags": "foo",
+						"baqup.tags": "foo",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -2748,7 +2748,7 @@ func Test_buildConfiguration(t *testing.T) {
 					),
 				),
 			},
-			constraints: `Label("traefik.tags", "foo")`,
+			constraints: `Label("baqup.tags", "foo")`,
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
 					Routers:           map[string]*dynamic.TCPRouter{},
@@ -2764,7 +2764,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service:     "Test",
-							Rule:        "Host(`Test.traefik.wtf`)",
+							Rule:        "Host(`Test.baqup.wtf`)",
 							DefaultRule: true,
 						},
 					},
@@ -2798,8 +2798,8 @@ func Test_buildConfiguration(t *testing.T) {
 				instance(
 					name("Test"),
 					labels(map[string]string{
-						"traefik.http.middlewares.Middleware1.basicauth.users": "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
-						"traefik.http.routers.Test.middlewares":                "Middleware1",
+						"baqup.http.middlewares.Middleware1.basicauth.users": "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						"baqup.http.routers.Test.middlewares":                "Middleware1",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -2825,7 +2825,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service:     "Test",
-							Rule:        "Host(`Test.traefik.wtf`)",
+							Rule:        "Host(`Test.baqup.wtf`)",
 							Middlewares: []string{"Middleware1"},
 							DefaultRule: true,
 						},
@@ -2869,9 +2869,9 @@ func Test_buildConfiguration(t *testing.T) {
 				instance(
 					name("Test"),
 					labels(map[string]string{
-						"traefik.tcp.routers.Test.rule":                               "HostSNI(`foo.bar`)",
-						"traefik.tcp.middlewares.Middleware1.ipallowlist.sourcerange": "foobar, fiibar",
-						"traefik.tcp.routers.Test.middlewares":                        "Middleware1",
+						"baqup.tcp.routers.Test.rule":                               "HostSNI(`foo.bar`)",
+						"baqup.tcp.middlewares.Middleware1.ipallowlist.sourcerange": "foobar, fiibar",
+						"baqup.tcp.routers.Test.middlewares":                        "Middleware1",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -2932,8 +2932,8 @@ func Test_buildConfiguration(t *testing.T) {
 				instance(
 					name("Test"),
 					labels(map[string]string{
-						"traefik.tcp.routers.foo.rule": "HostSNI(`foo.bar`)",
-						"traefik.tcp.routers.foo.tls":  "true",
+						"baqup.tcp.routers.foo.rule": "HostSNI(`foo.bar`)",
+						"baqup.tcp.routers.foo.tls":  "true",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -2988,7 +2988,7 @@ func Test_buildConfiguration(t *testing.T) {
 				instance(
 					name("Test"),
 					labels(map[string]string{
-						"traefik.udp.routers.foo.entrypoints": "mydns",
+						"baqup.udp.routers.foo.entrypoints": "mydns",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -3042,7 +3042,7 @@ func Test_buildConfiguration(t *testing.T) {
 				instance(
 					name("Test"),
 					labels(map[string]string{
-						"traefik.tcp.routers.foo.tls": "true",
+						"baqup.tcp.routers.foo.tls": "true",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -3091,9 +3091,9 @@ func Test_buildConfiguration(t *testing.T) {
 				instance(
 					name("Test"),
 					labels(map[string]string{
-						"traefik.tcp.routers.foo.rule":                      "HostSNI(`foo.bar`)",
-						"traefik.tcp.routers.foo.tls.options":               "foo",
-						"traefik.tcp.services.foo.loadbalancer.server.port": "80",
+						"baqup.tcp.routers.foo.rule":                      "HostSNI(`foo.bar`)",
+						"baqup.tcp.routers.foo.tls.options":               "foo",
+						"baqup.tcp.services.foo.loadbalancer.server.port": "80",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -3150,8 +3150,8 @@ func Test_buildConfiguration(t *testing.T) {
 				instance(
 					name("Test"),
 					labels(map[string]string{
-						"traefik.udp.routers.foo.entrypoints":               "mydns",
-						"traefik.udp.services.foo.loadbalancer.server.port": "80",
+						"baqup.udp.routers.foo.entrypoints":               "mydns",
+						"baqup.udp.services.foo.loadbalancer.server.port": "80",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -3205,9 +3205,9 @@ func Test_buildConfiguration(t *testing.T) {
 				instance(
 					name("Test"),
 					labels(map[string]string{
-						"traefik.udp.routers.foo.entrypoints":                        "mydns",
-						"traefik.udp.services.foo.loadbalancer.server.port":          "8080",
-						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
+						"baqup.udp.routers.foo.entrypoints":                        "mydns",
+						"baqup.udp.services.foo.loadbalancer.server.port":          "8080",
+						"baqup.http.services.Service1.loadbalancer.passhostheader": "true",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -3221,9 +3221,9 @@ func Test_buildConfiguration(t *testing.T) {
 					name("Test"),
 					id("2"),
 					labels(map[string]string{
-						"traefik.udp.routers.foo.entrypoints":                        "mydns",
-						"traefik.udp.services.foo.loadbalancer.server.port":          "8080",
-						"traefik.http.services.Service1.loadbalancer.passhostheader": "true",
+						"baqup.udp.routers.foo.entrypoints":                        "mydns",
+						"baqup.udp.services.foo.loadbalancer.server.port":          "8080",
+						"baqup.http.services.Service1.loadbalancer.passhostheader": "true",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -3267,7 +3267,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service:     "Service1",
-							Rule:        "Host(`Test.traefik.wtf`)",
+							Rule:        "Host(`Test.baqup.wtf`)",
 							DefaultRule: true,
 						},
 					},
@@ -3304,7 +3304,7 @@ func Test_buildConfiguration(t *testing.T) {
 				instance(
 					name("Test"),
 					labels(map[string]string{
-						"traefik.udp.services.foo.loadbalancer.server.port": "8080",
+						"baqup.udp.services.foo.loadbalancer.server.port": "8080",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -3354,7 +3354,7 @@ func Test_buildConfiguration(t *testing.T) {
 				instance(
 					name("Test"),
 					labels(map[string]string{
-						"traefik.tcp.services.foo.loadbalancer.server.port": "80",
+						"baqup.tcp.services.foo.loadbalancer.server.port": "80",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -3403,9 +3403,9 @@ func Test_buildConfiguration(t *testing.T) {
 				instance(
 					name("Test"),
 					labels(map[string]string{
-						"traefik.tls.stores.default.defaultgeneratedcert.resolver":    "foobar",
-						"traefik.tls.stores.default.defaultgeneratedcert.domain.main": "foobar",
-						"traefik.tls.stores.default.defaultgeneratedcert.domain.sans": "foobar, fiibar",
+						"baqup.tls.stores.default.defaultgeneratedcert.resolver":    "foobar",
+						"baqup.tls.stores.default.defaultgeneratedcert.domain.main": "foobar",
+						"baqup.tls.stores.default.defaultgeneratedcert.domain.sans": "foobar, fiibar",
 					}),
 					iMachine(
 						mState(ec2types.InstanceStateNameRunning),
@@ -3431,7 +3431,7 @@ func Test_buildConfiguration(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"Test": {
 							Service:     "Test",
-							Rule:        "Host(`Test.traefik.wtf`)",
+							Rule:        "Host(`Test.baqup.wtf`)",
 							DefaultRule: true,
 						},
 					},
@@ -3477,7 +3477,7 @@ func Test_buildConfiguration(t *testing.T) {
 
 			p := Provider{
 				ExposedByDefault: true,
-				DefaultRule:      "Host(`{{ normalize .Name }}.traefik.wtf`)",
+				DefaultRule:      "Host(`{{ normalize .Name }}.baqup.wtf`)",
 			}
 			p.Constraints = test.constraints
 

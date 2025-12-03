@@ -14,14 +14,14 @@ import (
 	"sync"
 	"time"
 
+	"github.com/baqupio/baqup/v3/pkg/config/dynamic"
+	baquptls "github.com/baqupio/baqup/v3/pkg/tls"
+	"github.com/baqupio/baqup/v3/pkg/types"
 	"github.com/rs/zerolog/log"
 	"github.com/spiffe/go-spiffe/v2/bundle/x509bundle"
 	"github.com/spiffe/go-spiffe/v2/spiffeid"
 	"github.com/spiffe/go-spiffe/v2/spiffetls/tlsconfig"
 	"github.com/spiffe/go-spiffe/v2/svid/x509svid"
-	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
-	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 // SpiffeX509Source allows to retrieve a x509 SVID and bundle.
@@ -183,7 +183,7 @@ func (t *TransportManager) createTLSConfig(cfg *dynamic.ServersTransport) (*tls.
 
 		if cfg.PeerCertURI != "" {
 			config.VerifyPeerCertificate = func(rawCerts [][]byte, _ [][]*x509.Certificate) error {
-				return traefiktls.VerifyPeerCertificate(cfg.PeerCertURI, config, rawCerts)
+				return baquptls.VerifyPeerCertificate(cfg.PeerCertURI, config, rawCerts)
 			}
 		}
 	}
@@ -192,8 +192,8 @@ func (t *TransportManager) createTLSConfig(cfg *dynamic.ServersTransport) (*tls.
 }
 
 // createRoundTripper creates an http.RoundTripper configured with the Transport configuration settings.
-// For the settings that can't be configured in Traefik it uses the default http.Transport settings.
-// An exception to this is the MaxIdleConns setting as we only provide the option MaxIdleConnsPerHost in Traefik at this point in time.
+// For the settings that can't be configured in Baqup it uses the default http.Transport settings.
+// An exception to this is the MaxIdleConns setting as we only provide the option MaxIdleConnsPerHost in Baqup at this point in time.
 // Setting this value to the default of 100 could lead to confusing behavior and backwards compatibility issues.
 func (t *TransportManager) createRoundTripper(cfg *dynamic.ServersTransport, tlsConfig *tls.Config) (http.RoundTripper, error) {
 	if cfg == nil {

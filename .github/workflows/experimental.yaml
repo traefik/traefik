@@ -13,11 +13,11 @@ env:
 jobs:
 
   build-webui:
-    if: github.repository == 'traefik/traefik'
+    if: github.repository == 'baqup/baqup'
     uses: ./.github/workflows/template-webui.yaml
 
   experimental:
-    if: github.repository == 'traefik/traefik'
+    if: github.repository == 'baqup/baqup'
     name: Build experimental image on branch
     runs-on: ubuntu-latest
 

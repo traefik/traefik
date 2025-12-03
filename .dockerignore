@@ -1,5 +1,5 @@
 dist/
-!dist/**/traefik
+!dist/**/baqup
 site/
 vendor/
 .idea/

@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/baqupio/baqup/v3/integration/try"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"github.com/traefik/traefik/v3/integration/try"
 )
 
 // RoutingSuite tests multi-layer routing with authentication middleware.
@@ -51,7 +51,7 @@ func authHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Set headers that will be forwarded by Traefik
+	// Set headers that will be forwarded by Baqup
 	w.Header().Set("X-User-Role", role)
 	w.Header().Set("X-User-Name", username)
 	w.WriteHeader(http.StatusOK)
@@ -104,7 +104,7 @@ func (s *RoutingSuite) TestMultiLayerRoutingWithAuth() {
 		DeveloperIP: developerIP,
 	})
 
-	s.traefikCmd(withConfigFile(file))
+	s.baqupCmd(withConfigFile(file))
 
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second, try.BodyContains("parent-router"))
 	require.NoError(s.T(), err)

@@ -5,18 +5,18 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/baqupio/baqup/v3/pkg/config/dynamic"
+	"github.com/baqupio/baqup/v3/pkg/config/static"
+	"github.com/baqupio/baqup/v3/pkg/middlewares/accesslog"
+	"github.com/baqupio/baqup/v3/pkg/middlewares/capture"
+	mmetrics "github.com/baqupio/baqup/v3/pkg/middlewares/metrics"
+	"github.com/baqupio/baqup/v3/pkg/middlewares/observability"
+	"github.com/baqupio/baqup/v3/pkg/observability/logs"
+	"github.com/baqupio/baqup/v3/pkg/observability/metrics"
+	"github.com/baqupio/baqup/v3/pkg/observability/tracing"
+	otypes "github.com/baqupio/baqup/v3/pkg/observability/types"
 	"github.com/containous/alice"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/config/static"
-	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
-	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
-	mmetrics "github.com/traefik/traefik/v3/pkg/middlewares/metrics"
-	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
-	"github.com/traefik/traefik/v3/pkg/observability/logs"
-	"github.com/traefik/traefik/v3/pkg/observability/metrics"
-	"github.com/traefik/traefik/v3/pkg/observability/tracing"
-	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 )
 
 // ObservabilityMgr is a manager for observability (AccessLogs, Metrics and Tracing) enablement.

@@ -5,9 +5,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/baqupio/baqup/v3/pkg/config/dynamic"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 )
 
 func TestNewIPAllowLister(t *testing.T) {
@@ -44,7 +44,7 @@ func TestNewIPAllowLister(t *testing.T) {
 			t.Parallel()
 
 			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-			allowLister, err := New(t.Context(), next, test.allowList, "traefikTest")
+			allowLister, err := New(t.Context(), next, test.allowList, "baqupTest")
 
 			if test.expectedError {
 				assert.Error(t, err)
@@ -104,7 +104,7 @@ func TestIPAllowLister_ServeHTTP(t *testing.T) {
 			t.Parallel()
 
 			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-			allowLister, err := New(t.Context(), next, test.allowList, "traefikTest")
+			allowLister, err := New(t.Context(), next, test.allowList, "baqupTest")
 			require.NoError(t, err)
 
 			recorder := httptest.NewRecorder()

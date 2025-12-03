@@ -27,9 +27,9 @@ func Test_tagsToNeutralLabels(t *testing.T) {
 				"test.ddd=04=to",
 			},
 			expected: map[string]string{
-				"traefik.aaa": "01",
-				"traefik.bbb": "02",
-				"traefik.ddd": "04=to",
+				"baqup.aaa": "01",
+				"baqup.bbb": "02",
+				"baqup.ddd": "04=to",
 			},
 		},
 
@@ -43,10 +43,10 @@ func Test_tagsToNeutralLabels(t *testing.T) {
 				"test.ddd=04=to",
 			},
 			expected: map[string]string{
-				"traefik.test.aaa": "01",
-				"traefik.test.bbb": "02",
-				"traefik.ccc":      "03",
-				"traefik.test.ddd": "04=to",
+				"baqup.test.aaa": "01",
+				"baqup.test.bbb": "02",
+				"baqup.ccc":      "03",
+				"baqup.test.ddd": "04=to",
 			},
 		},
 	}

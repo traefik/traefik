@@ -1,10 +1,10 @@
 ---
 title: 'JWT Authentication'
-description: 'Traefik Hub API Gateway - The JWT Authentication middleware verifies that a valid JWT token is provided in the Authorization header.'
+description: 'Baqup Hub API Gateway - The JWT Authentication middleware verifies that a valid JWT token is provided in the Authorization header.'
 ---
 
-!!! info "Traefik Hub Feature"
-    This middleware is available exclusively in [Traefik Hub](https://traefik.io/traefik-hub/). Learn more about [Traefik Hub's advanced features](https://doc.traefik.io/traefik-hub/api-gateway/intro).
+!!! info "Baqup Hub Feature"
+    This middleware is available exclusively in [Baqup Hub](https://baqup.io/baqup-hub/). Learn more about [Baqup Hub's advanced features](https://doc.baqup.io/baqup-hub/api-gateway/intro).
 
 The JWT middleware verifies that a valid JWT token is provided in the `Authorization` header (`Authorization: Bearer <JWT>`).
 If the token can't be passed as an `Authorization` header, it can be given as form data or as a query parameter.
@@ -18,7 +18,7 @@ Custom claim validation can be configured with [Custom Claims Validation](#claim
 ## Configuration Example
 
 ```yaml tab="Middleware JWT"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-jwt
@@ -144,7 +144,7 @@ urn:k8s:secret:[name]:[valueKey]
 ```
 
 ```yaml tab="Middleware JWT"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-jwt
@@ -230,4 +230,4 @@ The reference to a Kubernetes secret takes the form of a URN:
 urn:k8s:secret:[name]:[valueKey]
 ```
 
-{!traefik-for-business-applications.md!}
+{!baqup-for-business-applications.md!}

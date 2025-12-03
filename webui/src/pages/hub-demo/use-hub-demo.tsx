@@ -7,7 +7,7 @@ import HubDashboard from 'pages/hub-demo/HubDashboard'
 import { ApiIcon, DashboardIcon, GatewayIcon, PortalIcon } from 'pages/hub-demo/icons'
 import verifySignature from 'utils/workers/scriptVerification'
 
-const ROUTES_MANIFEST_URL = 'https://traefik.github.io/hub-ui-demo-app/config/routes.json'
+const ROUTES_MANIFEST_URL = 'https://baqup.github.io/hub-ui-demo-app/config/routes.json'
 
 const HUB_DEMO_NAV_ICONS: Record<string, ReactNode> = {
   dashboard: <DashboardIcon color="currentColor" width={22} height={22} />,

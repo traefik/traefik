@@ -7,16 +7,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/baqupio/baqup/v3/pkg/config/dynamic"
+	"github.com/baqupio/baqup/v3/pkg/config/runtime"
+	"github.com/baqupio/baqup/v3/pkg/config/static"
+	"github.com/baqupio/baqup/v3/pkg/server/middleware"
+	"github.com/baqupio/baqup/v3/pkg/server/service"
+	"github.com/baqupio/baqup/v3/pkg/tcp"
+	th "github.com/baqupio/baqup/v3/pkg/testhelpers"
+	"github.com/baqupio/baqup/v3/pkg/tls"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/config/runtime"
-	"github.com/traefik/traefik/v3/pkg/config/static"
-	"github.com/traefik/traefik/v3/pkg/server/middleware"
-	"github.com/traefik/traefik/v3/pkg/server/service"
-	"github.com/traefik/traefik/v3/pkg/tcp"
-	th "github.com/traefik/traefik/v3/pkg/testhelpers"
-	"github.com/traefik/traefik/v3/pkg/tls"
 )
 
 func TestReuseService(t *testing.T) {

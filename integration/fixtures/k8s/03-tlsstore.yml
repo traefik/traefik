@@ -1,10 +1,10 @@
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: TLSStore
 metadata:
   name: mytlsstore
   namespace: default
   labels:
-    app: traefik
+    app: baqup
 
 spec:
   defaultCertificate:

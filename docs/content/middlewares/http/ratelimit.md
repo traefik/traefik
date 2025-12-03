@@ -1,6 +1,6 @@
 ---
-title: "Traefik RateLimit Documentation"
-description: "Traefik Proxy's HTTP RateLimit middleware ensures Services receive fair amounts of requests. Read the technical documentation."
+title: "Baqup RateLimit Documentation"
+description: "Baqup Proxy's HTTP RateLimit middleware ensures Services receive fair amounts of requests. Read the technical documentation."
 ---
 
 # RateLimit
@@ -18,14 +18,14 @@ It is based on a [token bucket](https://en.wikipedia.org/wiki/Token_bucket) impl
 # Here, an average of 100 requests per second is allowed.
 # In addition, a burst of 200 requests is allowed.
 labels:
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.average=100"
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.burst=200"
+  - "baqup.http.middlewares.test-ratelimit.ratelimit.average=100"
+  - "baqup.http.middlewares.test-ratelimit.ratelimit.burst=200"
 ```
 
 ```yaml tab="Kubernetes"
 # Here, an average of 100 requests per second is allowed.
 # In addition, a burst of 200 requests is allowed.
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-ratelimit
@@ -38,8 +38,8 @@ spec:
 ```yaml tab="Consul Catalog"
 # Here, an average of 100 requests per second is allowed.
 # In addition, a burst of 200 requests is allowed.
-- "traefik.http.middlewares.test-ratelimit.ratelimit.average=100"
-- "traefik.http.middlewares.test-ratelimit.ratelimit.burst=50"
+- "baqup.http.middlewares.test-ratelimit.ratelimit.average=100"
+- "baqup.http.middlewares.test-ratelimit.ratelimit.burst=50"
 ```
 
 ```yaml tab="File (YAML)"
@@ -76,12 +76,12 @@ So for a rate below 1 req/s, one needs to define a `period` larger than a second
 ```yaml tab="Docker & Swarm"
 # 100 reqs/s
 labels:
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.average=100"
+  - "baqup.http.middlewares.test-ratelimit.ratelimit.average=100"
 ```
 
 ```yaml tab="Kubernetes"
 # 100 reqs/s
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-ratelimit
@@ -92,7 +92,7 @@ spec:
 
 ```yaml tab="Consul Catalog"
 # 100 reqs/s
-- "traefik.http.middlewares.test-ratelimit.ratelimit.average=100"
+- "baqup.http.middlewares.test-ratelimit.ratelimit.average=100"
 ```
 
 ```yaml tab="File (YAML)"
@@ -124,13 +124,13 @@ It defaults to `1` second.
 ```yaml tab="Docker & Swarm"
 # 6 reqs/minute
 labels:
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.average=6"
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.period=1m"
+  - "baqup.http.middlewares.test-ratelimit.ratelimit.average=6"
+  - "baqup.http.middlewares.test-ratelimit.ratelimit.period=1m"
 ```
 
 ```yaml tab="Kubernetes"
 # 6 reqs/minute
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-ratelimit
@@ -142,8 +142,8 @@ spec:
 
 ```yaml tab="Consul Catalog"
 # 6 reqs/minute
-- "traefik.http.middlewares.test-ratelimit.ratelimit.average=6"
-- "traefik.http.middlewares.test-ratelimit.ratelimit.period=1m"
+- "baqup.http.middlewares.test-ratelimit.ratelimit.average=6"
+- "baqup.http.middlewares.test-ratelimit.ratelimit.period=1m"
 ```
 
 ```yaml tab="File (YAML)"
@@ -172,11 +172,11 @@ It defaults to `1`.
 
 ```yaml tab="Docker & Swarm"
 labels:
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.burst=100"
+  - "baqup.http.middlewares.test-ratelimit.ratelimit.burst=100"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-ratelimit
@@ -186,7 +186,7 @@ spec:
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.test-ratelimit.ratelimit.burst=100"
+- "baqup.http.middlewares.test-ratelimit.ratelimit.burst=100"
 ```
 
 ```yaml tab="File (YAML)"
@@ -211,13 +211,13 @@ If none are set, the default is to use the request's remote address field (as an
 
 #### `sourceCriterion.ipStrategy`
 
-The `ipStrategy` option defines three parameters that configures how Traefik determines the client IP: `depth`, `excludedIPs` and `ipv6Subnet`.
+The `ipStrategy` option defines three parameters that configures how Baqup determines the client IP: `depth`, `excludedIPs` and `ipv6Subnet`.
 
 !!! important "As a middleware, rate-limiting happens before the actual proxying to the backend takes place. In addition, the previous network hop only gets appended to `X-Forwarded-For` during the last stages of proxying, i.e. after it has already passed through rate-limiting. Therefore, during rate-limiting, as the previous network hop is not yet present in `X-Forwarded-For`, it cannot be found and/or relied upon."
 
 ##### `ipStrategy.depth`
 
-The `depth` option tells Traefik to use the `X-Forwarded-For` header and select the IP located at the `depth` position (starting from the right).
+The `depth` option tells Baqup to use the `X-Forwarded-For` header and select the IP located at the `depth` position (starting from the right).
 
 - If `depth` is greater than the total number of IPs in `X-Forwarded-For`, then the client IP is empty.
 - `depth` is ignored if its value is less than or equal to 0.
@@ -237,11 +237,11 @@ See [ipStrategy.ipv6Subnet](#ipstrategyipv6subnet) for more details.
 
 ```yaml tab="Docker & Swarm"
 labels:
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.ipstrategy.depth=2"
+  - "baqup.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.ipstrategy.depth=2"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-ratelimit
@@ -253,7 +253,7 @@ spec:
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.ipstrategy.depth=2"
+- "baqup.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.ipstrategy.depth=2"
 ```
 
 ```yaml tab="File (YAML)"
@@ -318,11 +318,11 @@ and the first IP that is _not_ in the pool (if any) is returned.
 
 ```yaml tab="Docker & Swarm"
 labels:
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
+  - "baqup.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-ratelimit
@@ -336,7 +336,7 @@ spec:
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
+- "baqup.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.ipstrategy.excludedips=127.0.0.1/32, 192.168.1.7"
 ```
 
 ```yaml tab="File (YAML)"
@@ -379,11 +379,11 @@ This is useful for grouping IPv6 addresses into subnets to prevent bypassing thi
 
 ```yaml tab="Docker & Swarm"
 labels:
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.ipstrategy.ipv6Subnet=64"
+  - "baqup.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.ipstrategy.ipv6Subnet=64"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-ratelimit
@@ -395,7 +395,7 @@ spec:
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.ipstrategy.ipv6Subnet=64"
+- "baqup.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.ipstrategy.ipv6Subnet=64"
 ```
 
 ```yaml tab="File (YAML)"
@@ -423,11 +423,11 @@ Name of the header used to group incoming requests.
 
 ```yaml tab="Docker & Swarm"
 labels:
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requestheadername=username"
+  - "baqup.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requestheadername=username"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-ratelimit
@@ -438,7 +438,7 @@ spec:
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requestheadername=username"
+- "baqup.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requestheadername=username"
 ```
 
 ```yaml tab="File (YAML)"
@@ -463,11 +463,11 @@ Whether to consider the request host as the source.
 
 ```yaml tab="Docker & Swarm"
 labels:
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requesthost=true"
+  - "baqup.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requesthost=true"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-ratelimit
@@ -478,7 +478,7 @@ spec:
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requesthost=true"
+- "baqup.http.middlewares.test-ratelimit.ratelimit.sourcecriterion.requesthost=true"
 ```
 
 ```yaml tab="File (YAML)"
@@ -500,7 +500,7 @@ http:
 ### `redis`
 
 Enables distributed rate limit using `redis` to store the tokens.
-If not set, Traefik's in-memory storage is used by default.
+If not set, Baqup's in-memory storage is used by default.
 
 #### `redis.endpoints`
 
@@ -510,11 +510,11 @@ Defines how to connect to the Redis server.
 
 ```yaml tab="Docker & Swarm"
 labels:
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.endpoints=127.0.0.1:6379"
+  - "baqup.http.middlewares.test-ratelimit.ratelimit.redis.endpoints=127.0.0.1:6379"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-ratelimit
@@ -527,7 +527,7 @@ spec:
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.endpoints=127.0.0.1:6379"
+- "baqup.http.middlewares.test-ratelimit.ratelimit.redis.endpoints=127.0.0.1:6379"
 ```
 
 ```yaml tab="File (YAML)"
@@ -556,11 +556,11 @@ Defines the username used to authenticate with the Redis server.
 
 ```yaml tab="Docker & Swarm"
 labels:
-    - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.username=user"
+    - "baqup.http.middlewares.test-ratelimit.ratelimit.redis.username=user"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
    name: test-ratelimit
@@ -583,7 +583,7 @@ data:
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.username=user"
+- "baqup.http.middlewares.test-ratelimit.ratelimit.redis.username=user"
 ```
 
 ```yaml tab="File (YAML)"
@@ -611,11 +611,11 @@ Defines the password to authenticate against the Redis server.
 
 ```yaml tab="Docker & Swarm"
 labels:
-    - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.password=password"
+    - "baqup.http.middlewares.test-ratelimit.ratelimit.redis.password=password"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
    name: test-ratelimit
@@ -638,7 +638,7 @@ data:
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.password=password"
+- "baqup.http.middlewares.test-ratelimit.ratelimit.redis.password=password"
 ```
 
 ```yaml tab="File (YAML)"
@@ -666,11 +666,11 @@ Defines the database to select after connecting to the Redis.
 
 ```yaml tab="Docker & Swarm"
 labels:
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.db=0"
+  - "baqup.http.middlewares.test-ratelimit.ratelimit.redis.db=0"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-ratelimit
@@ -682,7 +682,7 @@ spec:
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.db=0"
+- "baqup.http.middlewares.test-ratelimit.ratelimit.redis.db=0"
 ```
 
 ```yaml tab="File (YAML)"
@@ -704,7 +704,7 @@ http:
 
 #### `redis.tls`
 
-Same as this [config](https://doc.traefik.io/traefik/providers/redis/#tls)
+Same as this [config](https://doc.baqup.io/baqup/providers/redis/#tls)
 
 _Optional_
 
@@ -719,11 +719,11 @@ it defaults to the system bundle.
 
 ```yaml tab="Docker & Swarm"
 labels:
-    - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.ca=path/to/ca.crt"
+    - "baqup.http.middlewares.test-ratelimit.ratelimit.redis.tls.ca=path/to/ca.crt"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-ratelimit
@@ -747,7 +747,7 @@ data:
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.ca=path/to/ca.crt"
+- "baqup.http.middlewares.test-ratelimit.ratelimit.redis.tls.ca=path/to/ca.crt"
 ```
 
 ```yaml tab="File (YAML)"
@@ -774,12 +774,12 @@ When this option is set, the `key` option is required.
 
 ```yaml tab="Docker & Swarm"
 labels:
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.cert=path/to/foo.cert"
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.key=path/to/foo.key"
+  - "baqup.http.middlewares.test-ratelimit.ratelimit.redis.tls.cert=path/to/foo.cert"
+  - "baqup.http.middlewares.test-ratelimit.ratelimit.redis.tls.key=path/to/foo.key"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
    name: test-ratelimit
@@ -803,8 +803,8 @@ data:
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.cert=path/to/foo.cert"
-- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.key=path/to/foo.key"
+- "baqup.http.middlewares.test-ratelimit.ratelimit.redis.tls.cert=path/to/foo.cert"
+- "baqup.http.middlewares.test-ratelimit.ratelimit.redis.tls.key=path/to/foo.key"
 ```
 
 ```yaml tab="File (YAML)"
@@ -836,12 +836,12 @@ When this option is set, the `cert` option is required.
 
 ```yaml tab="Docker & Swarm"
 labels:
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.cert=path/to/foo.cert"
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.key=path/to/foo.key"
+  - "baqup.http.middlewares.test-ratelimit.ratelimit.redis.tls.cert=path/to/foo.cert"
+  - "baqup.http.middlewares.test-ratelimit.ratelimit.redis.tls.key=path/to/foo.key"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
    name: test-ratelimit
@@ -865,8 +865,8 @@ data:
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.cert=path/to/foo.cert"
-- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.key=path/to/foo.key"
+- "baqup.http.middlewares.test-ratelimit.ratelimit.redis.tls.cert=path/to/foo.cert"
+- "baqup.http.middlewares.test-ratelimit.ratelimit.redis.tls.key=path/to/foo.key"
 ```
 
 ```yaml tab="File (YAML)"
@@ -897,11 +897,11 @@ If `insecureSkipVerify` is `true`, the TLS connection to Redis accepts any certi
 
 ```yaml tab="Docker & Swarm"
 labels:
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.insecureSkipVerify=true"
+  - "baqup.http.middlewares.test-ratelimit.ratelimit.redis.tls.insecureSkipVerify=true"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-ratelimit
@@ -914,7 +914,7 @@ spec:
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.insecureSkipVerify=true"
+- "baqup.http.middlewares.test-ratelimit.ratelimit.redis.tls.insecureSkipVerify=true"
 ```
 
 ```yaml tab="File (YAML)"
@@ -949,11 +949,11 @@ Zero means 10 connections per every available CPU as reported by runtime.GOMAXPR
 
 ```yaml tab="Docker & Swarm"
 labels:
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.poolSize=42"
+  - "baqup.http.middlewares.test-ratelimit.ratelimit.redis.poolSize=42"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-ratelimit
@@ -965,7 +965,7 @@ spec:
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.poolSize=42"
+- "baqup.http.middlewares.test-ratelimit.ratelimit.redis.poolSize=42"
 ```
 
 ```yaml tab="File (YAML)"
@@ -994,11 +994,11 @@ Zero means that idle connections are not closed.
 
 ```yaml tab="Docker & Swarm"
 labels:
-    - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.minIdleConns=42"
+    - "baqup.http.middlewares.test-ratelimit.ratelimit.redis.minIdleConns=42"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-ratelimit
@@ -1010,7 +1010,7 @@ spec:
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.minIdleConns=42"
+- "baqup.http.middlewares.test-ratelimit.ratelimit.redis.minIdleConns=42"
 ```
 
 ```yaml tab="File (YAML)"
@@ -1039,11 +1039,11 @@ Zero means no limit.
 
 ```yaml tab="Docker & Swarm"
 labels:
-    - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.maxActiveConns=42"
+    - "baqup.http.middlewares.test-ratelimit.ratelimit.redis.maxActiveConns=42"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-ratelimit
@@ -1055,7 +1055,7 @@ spec:
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.maxActiveConns=42"
+- "baqup.http.middlewares.test-ratelimit.ratelimit.redis.maxActiveConns=42"
 ```
 
 ```yaml tab="File (YAML)"
@@ -1085,11 +1085,11 @@ Zero means no timeout.
 
 ```yaml tab="Docker & Swarm"
 labels:
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.readTimeout=42s"
+  - "baqup.http.middlewares.test-ratelimit.ratelimit.redis.readTimeout=42s"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-ratelimit
@@ -1101,7 +1101,7 @@ spec:
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.readTimeout=42s"
+- "baqup.http.middlewares.test-ratelimit.ratelimit.redis.readTimeout=42s"
 ```
 
 ```yaml tab="File (YAML)"
@@ -1131,11 +1131,11 @@ Zero means no timeout.
 
 ```yaml tab="Docker & Swarm"
 labels:
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.writeTimeout=42s"
+  - "baqup.http.middlewares.test-ratelimit.ratelimit.redis.writeTimeout=42s"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-ratelimit
@@ -1147,7 +1147,7 @@ spec:
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.writeTimeout=42s"
+- "baqup.http.middlewares.test-ratelimit.ratelimit.redis.writeTimeout=42s"
 ```
 
 ```yaml tab="File (YAML)"
@@ -1176,11 +1176,11 @@ Zero means no timeout.
 
 ```yaml tab="Docker & Swarm"
 labels:
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.dialTimeout=42s"
+  - "baqup.http.middlewares.test-ratelimit.ratelimit.redis.dialTimeout=42s"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-ratelimit
@@ -1192,7 +1192,7 @@ spec:
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.test-ratelimit.ratelimit.redis.dialTimeout=42s"
+- "baqup.http.middlewares.test-ratelimit.ratelimit.redis.dialTimeout=42s"
 ```
 
 ```yaml tab="File (YAML)"

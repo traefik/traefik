@@ -1,6 +1,6 @@
 ---
-title: "Traefik TCP Middlewares IPWhiteList"
-description: "Learn how to use IPWhiteList in TCP middleware for limiting clients to specific IPs in Traefik Proxy. Read the technical documentation."
+title: "Baqup TCP Middlewares IPWhiteList"
+description: "Learn how to use IPWhiteList in TCP middleware for limiting clients to specific IPs in Baqup Proxy. Read the technical documentation."
 ---
 
 # IPWhiteList
@@ -19,11 +19,11 @@ IPWhiteList accepts / refuses connections based on the client IP.
 ```yaml tab="Docker"
 # Accepts connections from defined IP
 labels:
-  - "traefik.tcp.middlewares.test-ipwhitelist.ipwhitelist.sourcerange=127.0.0.1/32, 192.168.1.7"
+  - "baqup.tcp.middlewares.test-ipwhitelist.ipwhitelist.sourcerange=127.0.0.1/32, 192.168.1.7"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: MiddlewareTCP
 metadata:
   name: test-ipwhitelist
@@ -36,7 +36,7 @@ spec:
 
 ```yaml tab="Consul Catalog"
 # Accepts request from defined IP
-- "traefik.tcp.middlewares.test-ipwhitelist.ipwhitelist.sourcerange=127.0.0.1/32, 192.168.1.7"
+- "baqup.tcp.middlewares.test-ipwhitelist.ipwhitelist.sourcerange=127.0.0.1/32, 192.168.1.7"
 ```
 
 ```toml tab="File (TOML)"

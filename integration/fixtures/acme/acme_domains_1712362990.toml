@@ -15,7 +15,7 @@
 
 
 [certificatesResolvers.default.acme]
-  email = "test@traefik.io"
+  email = "test@baqup.io"
   storage = "/tmp/acme.json"
   keyType = ""
   caServer = "https://172.31.42.2:14000/dir"
@@ -52,6 +52,6 @@
   [[http.routers.test.tls.domains]]
     main = "acme.wtf"
     sans = [
-      "traefik.acme.wtf",
+      "baqup.acme.wtf",
       ]
 

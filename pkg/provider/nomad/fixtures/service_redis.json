@@ -12,7 +12,7 @@
     "Port": 30826,
     "ServiceName": "redis",
     "Tags": [
-      "traefik.enable=true"
+      "baqup.enable=true"
     ]
   }
 ]

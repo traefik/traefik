@@ -21,19 +21,19 @@ services:
       - 0.0.0.0
 
   whoami1:
-    image: traefik/whoami
+    image: baqup/whoami
     hostname: whoami1
 
   whoami2:
-    image: traefik/whoami
+    image: baqup/whoami
     hostname: whoami2
 
   whoami3:
-    image: traefik/whoami
+    image: baqup/whoami
     hostname: whoami3
 
   whoamitcp:
-    image: traefik/whoamitcp
+    image: baqup/whoamitcp
     hostname: whoamitcp
 
   connect:

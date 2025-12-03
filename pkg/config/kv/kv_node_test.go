@@ -31,10 +31,10 @@ func TestDecodeToNode(t *testing.T) {
 		{
 			desc: "level 1",
 			in: map[string]string{
-				"traefik/foo": "bar",
+				"baqup/foo": "bar",
 			},
 			expected: expected{node: &parser.Node{
-				Name: "traefik",
+				Name: "baqup",
 				Children: []*parser.Node{
 					{Name: "foo", Value: "bar"},
 				},
@@ -43,10 +43,10 @@ func TestDecodeToNode(t *testing.T) {
 		{
 			desc: "level 1 empty value",
 			in: map[string]string{
-				"traefik/foo": "",
+				"baqup/foo": "",
 			},
 			expected: expected{node: &parser.Node{
-				Name: "traefik",
+				Name: "baqup",
 				Children: []*parser.Node{
 					{Name: "foo", Value: ""},
 				},
@@ -55,10 +55,10 @@ func TestDecodeToNode(t *testing.T) {
 		{
 			desc: "level 2",
 			in: map[string]string{
-				"traefik/foo/bar": "bar",
+				"baqup/foo/bar": "bar",
 			},
 			expected: expected{node: &parser.Node{
-				Name: "traefik",
+				Name: "baqup",
 				Children: []*parser.Node{{
 					Name: "foo",
 					Children: []*parser.Node{
@@ -70,20 +70,20 @@ func TestDecodeToNode(t *testing.T) {
 		{
 			desc: "several entries, level 0",
 			in: map[string]string{
-				"traefik":  "bar",
-				"traefik_": "bur",
+				"baqup":  "bar",
+				"baqup_": "bur",
 			},
 			expected: expected{error: true},
 		},
 		{
 			desc: "several entries, prefix filter",
 			in: map[string]string{
-				"traefik/foo": "bar",
-				"traefik/fii": "bir",
+				"baqup/foo": "bar",
+				"baqup/fii": "bir",
 			},
-			filters: []string{"traefik/Foo"},
+			filters: []string{"baqup/Foo"},
 			expected: expected{node: &parser.Node{
-				Name: "traefik",
+				Name: "baqup",
 				Children: []*parser.Node{
 					{Name: "foo", Value: "bar"},
 				},
@@ -92,11 +92,11 @@ func TestDecodeToNode(t *testing.T) {
 		{
 			desc: "several entries, level 1",
 			in: map[string]string{
-				"traefik/foo": "bar",
-				"traefik/fii": "bur",
+				"baqup/foo": "bar",
+				"baqup/fii": "bur",
 			},
 			expected: expected{node: &parser.Node{
-				Name: "traefik",
+				Name: "baqup",
 				Children: []*parser.Node{
 					{Name: "fii", Value: "bur"},
 					{Name: "foo", Value: "bar"},
@@ -106,11 +106,11 @@ func TestDecodeToNode(t *testing.T) {
 		{
 			desc: "several entries, level 2",
 			in: map[string]string{
-				"traefik/foo/aaa": "bar",
-				"traefik/foo/bbb": "bur",
+				"baqup/foo/aaa": "bar",
+				"baqup/foo/bbb": "bur",
 			},
 			expected: expected{node: &parser.Node{
-				Name: "traefik",
+				Name: "baqup",
 				Children: []*parser.Node{
 					{Name: "foo", Children: []*parser.Node{
 						{Name: "aaa", Value: "bar"},
@@ -122,11 +122,11 @@ func TestDecodeToNode(t *testing.T) {
 		{
 			desc: "several entries, level 2, case-insensitive",
 			in: map[string]string{
-				"traefik/foo/aaa": "bar",
-				"traefik/Foo/bbb": "bur",
+				"baqup/foo/aaa": "bar",
+				"baqup/Foo/bbb": "bur",
 			},
 			expected: expected{node: &parser.Node{
-				Name: "traefik",
+				Name: "baqup",
 				Children: []*parser.Node{
 					{Name: "Foo", Children: []*parser.Node{
 						{Name: "bbb", Value: "bur"},
@@ -138,12 +138,12 @@ func TestDecodeToNode(t *testing.T) {
 		{
 			desc: "several entries, level 2, 3 children",
 			in: map[string]string{
-				"traefik/foo/aaa": "bar",
-				"traefik/foo/bbb": "bur",
-				"traefik/foo/ccc": "bir",
+				"baqup/foo/aaa": "bar",
+				"baqup/foo/bbb": "bur",
+				"baqup/foo/ccc": "bir",
 			},
 			expected: expected{node: &parser.Node{
-				Name: "traefik",
+				Name: "baqup",
 				Children: []*parser.Node{
 					{Name: "foo", Children: []*parser.Node{
 						{Name: "aaa", Value: "bar"},
@@ -156,11 +156,11 @@ func TestDecodeToNode(t *testing.T) {
 		{
 			desc: "several entries, level 3",
 			in: map[string]string{
-				"traefik/foo/bar/aaa": "bar",
-				"traefik/foo/bar/bbb": "bur",
+				"baqup/foo/bar/aaa": "bar",
+				"baqup/foo/bar/bbb": "bur",
 			},
 			expected: expected{node: &parser.Node{
-				Name: "traefik",
+				Name: "baqup",
 				Children: []*parser.Node{
 					{Name: "foo", Children: []*parser.Node{
 						{Name: "bar", Children: []*parser.Node{
@@ -174,12 +174,12 @@ func TestDecodeToNode(t *testing.T) {
 		{
 			desc: "several entries, level 3, 2 children level 1",
 			in: map[string]string{
-				"traefik/foo/bar/aaa": "bar",
-				"traefik/foo/bar/bbb": "bur",
-				"traefik/bar/foo/bbb": "bir",
+				"baqup/foo/bar/aaa": "bar",
+				"baqup/foo/bar/bbb": "bur",
+				"baqup/bar/foo/bbb": "bir",
 			},
 			expected: expected{node: &parser.Node{
-				Name: "traefik",
+				Name: "baqup",
 				Children: []*parser.Node{
 					{Name: "bar", Children: []*parser.Node{
 						{Name: "foo", Children: []*parser.Node{
@@ -198,13 +198,13 @@ func TestDecodeToNode(t *testing.T) {
 		{
 			desc: "several entries, slice syntax",
 			in: map[string]string{
-				"traefik/foo/0/aaa": "bar0",
-				"traefik/foo/0/bbb": "bur0",
-				"traefik/foo/1/aaa": "bar1",
-				"traefik/foo/1/bbb": "bur1",
+				"baqup/foo/0/aaa": "bar0",
+				"baqup/foo/0/bbb": "bur0",
+				"baqup/foo/1/aaa": "bar1",
+				"baqup/foo/1/bbb": "bur1",
 			},
 			expected: expected{node: &parser.Node{
-				Name: "traefik",
+				Name: "baqup",
 				Children: []*parser.Node{
 					{Name: "foo", Children: []*parser.Node{
 						{Name: "[0]", Children: []*parser.Node{
@@ -222,13 +222,13 @@ func TestDecodeToNode(t *testing.T) {
 		{
 			desc: "several entries, slice in slice of struct",
 			in: map[string]string{
-				"traefik/foo/0/aaa/0": "bar0",
-				"traefik/foo/0/aaa/1": "bar1",
-				"traefik/foo/1/aaa/0": "bar2",
-				"traefik/foo/1/aaa/1": "bar3",
+				"baqup/foo/0/aaa/0": "bar0",
+				"baqup/foo/0/aaa/1": "bar1",
+				"baqup/foo/1/aaa/0": "bar2",
+				"baqup/foo/1/aaa/1": "bar3",
 			},
 			expected: expected{node: &parser.Node{
-				Name: "traefik",
+				Name: "baqup",
 				Children: []*parser.Node{
 					{Name: "foo", Children: []*parser.Node{
 						{Name: "[0]", Children: []*parser.Node{
@@ -247,7 +247,7 @@ func TestDecodeToNode(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			out, err := DecodeToNode(mapToPairs(test.in), "traefik", test.filters...)
+			out, err := DecodeToNode(mapToPairs(test.in), "baqup", test.filters...)
 
 			if test.expected.error {
 				require.Error(t, err)

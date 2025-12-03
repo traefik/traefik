@@ -16,27 +16,27 @@ func Test_tagsToLabels(t *testing.T) {
 		{
 			desc:     "no tags",
 			tags:     []string{},
-			prefix:   "traefik",
+			prefix:   "baqup",
 			expected: map[string]string{},
 		},
 		{
 			desc:   "minimal global config",
-			tags:   []string{"traefik.enable=false"},
-			prefix: "traefik",
+			tags:   []string{"baqup.enable=false"},
+			prefix: "baqup",
 			expected: map[string]string{
-				"traefik.enable": "false",
+				"baqup.enable": "false",
 			},
 		},
 		{
 			desc: "config with domain",
 			tags: []string{
-				"traefik.enable=true",
-				"traefik.domain=example.com",
+				"baqup.enable=true",
+				"baqup.domain=example.com",
 			},
-			prefix: "traefik",
+			prefix: "baqup",
 			expected: map[string]string{
-				"traefik.enable": "true",
-				"traefik.domain": "example.com",
+				"baqup.enable": "true",
+				"baqup.domain": "example.com",
 			},
 		},
 		{
@@ -47,8 +47,8 @@ func Test_tagsToLabels(t *testing.T) {
 			},
 			prefix: "custom",
 			expected: map[string]string{
-				"traefik.enable": "true",
-				"traefik.domain": "example.com",
+				"baqup.enable": "true",
+				"baqup.domain": "example.com",
 			},
 		},
 		{
@@ -59,8 +59,8 @@ func Test_tagsToLabels(t *testing.T) {
 			},
 			prefix: "custom",
 			expected: map[string]string{
-				"traefik.enable": "true",
-				"traefik.domain": "example.com",
+				"baqup.enable": "true",
+				"baqup.domain": "example.com",
 			},
 		},
 		{
@@ -73,9 +73,9 @@ func Test_tagsToLabels(t *testing.T) {
 				"test.ddd=04=to",
 			},
 			expected: map[string]string{
-				"traefik.aaa": "01",
-				"traefik.bbb": "02",
-				"traefik.ddd": "04=to",
+				"baqup.aaa": "01",
+				"baqup.bbb": "02",
+				"baqup.ddd": "04=to",
 			},
 		},
 		{
@@ -88,10 +88,10 @@ func Test_tagsToLabels(t *testing.T) {
 				"test.ddd=04=to",
 			},
 			expected: map[string]string{
-				"traefik.test.aaa": "01",
-				"traefik.test.bbb": "02",
-				"traefik.ccc":      "03",
-				"traefik.test.ddd": "04=to",
+				"baqup.test.aaa": "01",
+				"baqup.test.bbb": "02",
+				"baqup.ccc":      "03",
+				"baqup.test.ddd": "04=to",
 			},
 		},
 	}

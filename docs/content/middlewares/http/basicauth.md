@@ -1,6 +1,6 @@
 ---
-title: "Traefik BasicAuth Documentation"
-description: "The HTTP basic authentication (BasicAuth) middleware in Traefik Proxy restricts access to your Services to known users. Read the technical documentation."
+title: "Baqup BasicAuth Documentation"
+description: "The HTTP basic authentication (BasicAuth) middleware in Baqup Proxy restricts access to your Services to known users. Read the technical documentation."
 ---
 
 # BasicAuth
@@ -21,12 +21,12 @@ The BasicAuth middleware grants access to services to authorized users only.
 #
 # Also note that dollar signs should NOT be doubled when they are not being evaluated (e.g. Ansible docker_container module).
 labels:
-  - "traefik.http.middlewares.test-auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
+  - "baqup.http.middlewares.test-auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
 ```
 
 ```yaml tab="Kubernetes"
 # Declaring the user list
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-auth
@@ -36,7 +36,7 @@ spec:
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.test-auth.basicauth.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
+- "baqup.http.middlewares.test-auth.basicauth.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
 ```
 
 ```yaml tab="File (YAML)"
@@ -95,12 +95,12 @@ The `users` option is an array of authorized users. Each user must be declared u
 #
 # Also note that dollar signs should NOT be doubled when they not evaluated (e.g. Ansible docker_container module).
 labels:
-  - "traefik.http.middlewares.test-auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
+  - "baqup.http.middlewares.test-auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
 ```
 
 ```yaml tab="Kubernetes"
 # Declaring the user list
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-auth
@@ -140,7 +140,7 @@ data:
 
 ```yaml tab="Consul Catalog"
 # Declaring the user list
-- "traefik.http.middlewares.test-auth.basicauth.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
+- "baqup.http.middlewares.test-auth.basicauth.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
 ```
 
 ```yaml tab="File (YAML)"
@@ -177,11 +177,11 @@ The file content is a list of `name:hashed-password`.
 
 ```yaml tab="Docker & Swarm"
 labels:
-  - "traefik.http.middlewares.test-auth.basicauth.usersfile=/path/to/my/usersfile"
+  - "baqup.http.middlewares.test-auth.basicauth.usersfile=/path/to/my/usersfile"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-auth
@@ -203,7 +203,7 @@ data:
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.test-auth.basicauth.usersfile=/path/to/my/usersfile"
+- "baqup.http.middlewares.test-auth.basicauth.usersfile=/path/to/my/usersfile"
 ```
 
 ```yaml tab="File (YAML)"
@@ -229,15 +229,15 @@ http:
 
 ### `realm`
 
-You can customize the realm for the authentication with the `realm` option. The default value is `traefik`.
+You can customize the realm for the authentication with the `realm` option. The default value is `baqup`.
 
 ```yaml tab="Docker & Swarm"
 labels:
-  - "traefik.http.middlewares.test-auth.basicauth.realm=MyRealm"
+  - "baqup.http.middlewares.test-auth.basicauth.realm=MyRealm"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-auth
@@ -247,7 +247,7 @@ spec:
 ```
 
 ```json tab="Consul Catalog"
-- "traefik.http.middlewares.test-auth.basicauth.realm=MyRealm"
+- "baqup.http.middlewares.test-auth.basicauth.realm=MyRealm"
 ```
 
 ```yaml tab="File (YAML)"
@@ -270,11 +270,11 @@ You can define a header field to store the authenticated user using the `headerF
 
 ```yaml tab="Docker & Swarm"
 labels:
-  - "traefik.http.middlewares.my-auth.basicauth.headerField=X-WebAuth-User"
+  - "baqup.http.middlewares.my-auth.basicauth.headerField=X-WebAuth-User"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: my-auth
@@ -285,7 +285,7 @@ spec:
 ```
 
 ```json tab="Consul Catalog"
-- "traefik.http.middlewares.my-auth.basicauth.headerField=X-WebAuth-User"
+- "baqup.http.middlewares.my-auth.basicauth.headerField=X-WebAuth-User"
 ```
 
 ```yaml tab="File (YAML)"
@@ -309,11 +309,11 @@ Set the `removeHeader` option to `true` to remove the authorization header befor
 
 ```yaml tab="Docker & Swarm"
 labels:
-  - "traefik.http.middlewares.test-auth.basicauth.removeheader=true"
+  - "baqup.http.middlewares.test-auth.basicauth.removeheader=true"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-auth
@@ -323,7 +323,7 @@ spec:
 ```
 
 ```json tab="Consul Catalog"
-- "traefik.http.middlewares.test-auth.basicauth.removeheader=true"
+- "baqup.http.middlewares.test-auth.basicauth.removeheader=true"
 ```
 
 ```yaml tab="File (YAML)"
@@ -340,4 +340,4 @@ http:
     removeHeader = true
 ```
 
-{!traefik-for-business-applications.md!}
+{!baqup-for-business-applications.md!}

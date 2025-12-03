@@ -7,9 +7,9 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/baqupio/baqup/v3/webui"
 	"github.com/gorilla/mux"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v3/webui"
 )
 
 type indexTemplateData struct {
@@ -29,9 +29,9 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		assets = webui.FS
 	}
 
-	// Allow iframes from traefik domains only.
+	// Allow iframes from baqup domains only.
 	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/frame-src
-	w.Header().Set("Content-Security-Policy", "frame-src 'self' https://traefik.io https://*.traefik.io;")
+	w.Header().Set("Content-Security-Policy", "frame-src 'self' https://baqup.io https://*.baqup.io;")
 
 	if r.RequestURI == "/" {
 		indexTemplate, err := template.ParseFS(assets, "index.html")
@@ -88,7 +88,7 @@ func Append(router *mux.Router, basePath string, customAssets fs.FS) error {
 		HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Allow iframes from our domains only.
 			// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/frame-src
-			w.Header().Set("Content-Security-Policy", "frame-src 'self' https://traefik.io https://*.traefik.io;")
+			w.Header().Set("Content-Security-Policy", "frame-src 'self' https://baqup.io https://*.baqup.io;")
 
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
@@ -103,9 +103,9 @@ func Append(router *mux.Router, basePath string, customAssets fs.FS) error {
 	router.Methods(http.MethodGet).
 		PathPrefix(dashboardPath).
 		HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Allow iframes from traefik domains only.
+			// Allow iframes from baqup domains only.
 			// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/frame-src
-			w.Header().Set("Content-Security-Policy", "frame-src 'self' https://traefik.io https://*.traefik.io;")
+			w.Header().Set("Content-Security-Policy", "frame-src 'self' https://baqup.io https://*.baqup.io;")
 
 			// The content type must be guessed by the file server.
 			// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options

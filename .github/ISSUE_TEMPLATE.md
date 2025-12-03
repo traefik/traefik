@@ -8,7 +8,7 @@ DO NOT FILE ISSUES FOR GENERAL SUPPORT QUESTIONS.
 The issue tracker is for reporting bugs and feature requests only.
 For end-user related support questions, please refer to one of the following:
 
-- the Traefik community forum: https://community.traefik.io/
+- the Baqup community forum: https://community.baqup.io/
 
 -->
 
@@ -17,7 +17,7 @@ Bug
 <!--
 
 The configurations between 1.X and 2.X are NOT compatible.
-Please have a look here https://doc.traefik.io/traefik/getting-started/configuration-overview/.
+Please have a look here https://doc.baqup.io/baqup/getting-started/configuration-overview/.
 
 -->
 
@@ -44,14 +44,14 @@ HOW TO WRITE A GOOD BUG REPORT?
 
 
 
-### Output of `traefik version`: (_What version of Traefik are you using?_)
+### Output of `baqup version`: (_What version of Baqup are you using?_)
 
 <!--
 `latest` is not considered as a valid version.
 
-For the Traefik Docker image:
+For the Baqup Docker image:
     docker run [IMAGE] version
-    ex: docker run traefik version
+    ex: docker run baqup version
 
 -->
 

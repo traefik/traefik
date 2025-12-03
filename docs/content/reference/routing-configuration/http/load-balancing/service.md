@@ -1,9 +1,9 @@
 ---
-title: "Traefik HTTP Services Documentation"
+title: "Baqup HTTP Services Documentation"
 description: "A service is in charge of connecting incoming requests to the Servers that can handle them. Read the technical documentation."
 ---
 
-Traefik services define how to distribute incoming traffic across your backend servers.
+Baqup services define how to distribute incoming traffic across your backend servers.
 Each service implements one of the load balancing strategies detailed on this page to ensure optimal traffic distribution and high availability.
 
 ## Service Load Balancer
@@ -66,35 +66,35 @@ http:
 
 ```yaml tab="Labels"
 labels:
-  - "traefik.http.services.my-service.loadBalancer.servers[0].url=http://private-ip-server-1/"
-  - "traefik.http.services.my-service.loadBalancer.servers[0].weight=2"
-  - "traefik.http.services.my-service.loadBalancer.servers[0].preservePath=true"
-  - "traefik.http.services.my-service.loadBalancer.sticky.cookie.name=sticky-cookie"
-  - "traefik.http.services.my-service.loadBalancer.healthcheck.path=/health"
-  - "traefik.http.services.my-service.loadBalancer.healthcheck.interval=10s"
-  - "traefik.http.services.my-service.loadBalancer.healthcheck.timeout=3s"
-  - "traefik.http.services.my-service.loadBalancer.passiveHealthcheck.failureWindow=3s"
-  - "traefik.http.services.my-service.loadBalancer.passiveHealthcheck.maxFailedAttempts=3"
-  - "traefik.http.services.my-service.loadBalancer.passHostHeader=true"
-  - "traefik.http.services.my-service.loadBalancer.serversTransport=customTransport@file"
-  - "traefik.http.services.my-service.loadBalancer.responseForwarding.flushInterval=150ms"
+  - "baqup.http.services.my-service.loadBalancer.servers[0].url=http://private-ip-server-1/"
+  - "baqup.http.services.my-service.loadBalancer.servers[0].weight=2"
+  - "baqup.http.services.my-service.loadBalancer.servers[0].preservePath=true"
+  - "baqup.http.services.my-service.loadBalancer.sticky.cookie.name=sticky-cookie"
+  - "baqup.http.services.my-service.loadBalancer.healthcheck.path=/health"
+  - "baqup.http.services.my-service.loadBalancer.healthcheck.interval=10s"
+  - "baqup.http.services.my-service.loadBalancer.healthcheck.timeout=3s"
+  - "baqup.http.services.my-service.loadBalancer.passiveHealthcheck.failureWindow=3s"
+  - "baqup.http.services.my-service.loadBalancer.passiveHealthcheck.maxFailedAttempts=3"
+  - "baqup.http.services.my-service.loadBalancer.passHostHeader=true"
+  - "baqup.http.services.my-service.loadBalancer.serversTransport=customTransport@file"
+  - "baqup.http.services.my-service.loadBalancer.responseForwarding.flushInterval=150ms"
 ```
 
 ```json tab="Tags"
 {
   "Tags": [
-    "traefik.http.services.my-service.loadBalancer.servers[0].url=http://private-ip-server-1/",
-    "traefik.http.services.my-service.loadBalancer.servers[0].weight=2",
-    "traefik.http.services.my-service.loadBalancer.servers[0].preservePath=true",
-    "traefik.http.services.my-service.loadBalancer.sticky.cookie.name=sticky-cookie",
-    "traefik.http.services.my-service.loadBalancer.healthcheck.path=/health",
-    "traefik.http.services.my-service.loadBalancer.healthcheck.interval=10s",
-    "traefik.http.services.my-service.loadBalancer.healthcheck.timeout=3s",
-    "traefik.http.services.my-service.loadBalancer.passiveHealthcheck.failureWindow=3s",
-    "traefik.http.services.my-service.loadBalancer.passiveHealthcheck.maxFailedAttempts=3",
-    "traefik.http.services.my-service.loadBalancer.passHostHeader=true",
-    "traefik.http.services.my-service.loadBalancer.serversTransport=customTransport@file",
-    "traefik.http.services.my-service.loadBalancer.responseForwarding.flushInterval=150ms"
+    "baqup.http.services.my-service.loadBalancer.servers[0].url=http://private-ip-server-1/",
+    "baqup.http.services.my-service.loadBalancer.servers[0].weight=2",
+    "baqup.http.services.my-service.loadBalancer.servers[0].preservePath=true",
+    "baqup.http.services.my-service.loadBalancer.sticky.cookie.name=sticky-cookie",
+    "baqup.http.services.my-service.loadBalancer.healthcheck.path=/health",
+    "baqup.http.services.my-service.loadBalancer.healthcheck.interval=10s",
+    "baqup.http.services.my-service.loadBalancer.healthcheck.timeout=3s",
+    "baqup.http.services.my-service.loadBalancer.passiveHealthcheck.failureWindow=3s",
+    "baqup.http.services.my-service.loadBalancer.passiveHealthcheck.maxFailedAttempts=3",
+    "baqup.http.services.my-service.loadBalancer.passHostHeader=true",
+    "baqup.http.services.my-service.loadBalancer.serversTransport=customTransport@file",
+    "baqup.http.services.my-service.loadBalancer.responseForwarding.flushInterval=150ms"
   ]
 }
 ```
@@ -108,8 +108,8 @@ labels:
 | <a id="opt-healthcheck" href="#opt-healthcheck" title="#opt-healthcheck">`healthcheck`</a> | Configures health check to remove unhealthy servers from the load balancing rotation.                                                                                                                                                                                                                                                                                                         | No       |
 | <a id="opt-passiveHealthcheck" href="#opt-passiveHealthcheck" title="#opt-passiveHealthcheck">`passiveHealthcheck`</a> | Configures the passive health check to remove unhealthy servers from the load balancing rotation.                                                                                                                                                                                                                                                                                             | No       |
 | <a id="opt-passHostHeader" href="#opt-passHostHeader" title="#opt-passHostHeader">`passHostHeader`</a> | Allows forwarding of the client Host header to server. By default, `passHostHeader` is true.                                                                                                                                                                                                                                                                                                  | No       |
-| <a id="opt-serversTransport" href="#opt-serversTransport" title="#opt-serversTransport">`serversTransport`</a> | Allows to reference an [HTTP ServersTransport](./serverstransport.md) configuration for the communication between Traefik and your servers. If no `serversTransport` is specified, the `default@internal` will be used.                                                                                                                                                                       | No       |
-| <a id="opt-responseForwarding" href="#opt-responseForwarding" title="#opt-responseForwarding">`responseForwarding`</a> | Configures how Traefik forwards the response from the backend server to the client.                                                                                                                                                                                                                                                                                                           | No       |
+| <a id="opt-serversTransport" href="#opt-serversTransport" title="#opt-serversTransport">`serversTransport`</a> | Allows to reference an [HTTP ServersTransport](./serverstransport.md) configuration for the communication between Baqup and your servers. If no `serversTransport` is specified, the `default@internal` will be used.                                                                                                                                                                       | No       |
+| <a id="opt-responseForwarding" href="#opt-responseForwarding" title="#opt-responseForwarding">`responseForwarding`</a> | Configures how Baqup forwards the response from the backend server to the client.                                                                                                                                                                                                                                                                                                           | No       |
 | <a id="opt-responseForwarding-FlushInterval" href="#opt-responseForwarding-FlushInterval" title="#opt-responseForwarding-FlushInterval">`responseForwarding.FlushInterval`</a> | Specifies the interval in between flushes to the client while copying the response body. It is a duration in milliseconds, defaulting to 100ms. A negative value means to flush immediately after each write to the client. The `FlushInterval` is ignored when ReverseProxy recognizes a response as a streaming response; for such responses, writes are flushed to the client immediately. | No       |
 
 #### Servers
@@ -127,8 +127,8 @@ Servers represent individual backend instances for your service. The [service lo
 #### Health Check
 
 The `healthcheck` option configures health check to remove unhealthy servers from the load balancing rotation.
-Traefik will consider HTTP(s) servers healthy as long as they return a status code to the health check request (carried out every interval) between `2XX` and `3XX`, or matching the configured status.
-For gRPC servers, Traefik will consider them healthy as long as they return SERVING to [gRPC health check v1 requests](https://github.com/grpc/grpc/blob/master/doc/health-checking.md).
+Baqup will consider HTTP(s) servers healthy as long as they return a status code to the health check request (carried out every interval) between `2XX` and `3XX`, or matching the configured status.
+For gRPC servers, Baqup will consider them healthy as long as they return SERVING to [gRPC health check v1 requests](https://github.com/grpc/grpc/blob/master/doc/health-checking.md).
 
 To propagate status changes (e.g. all servers of this service are down) upwards, HealthCheck must also be enabled on the parent(s) of this service.
 
@@ -143,7 +143,7 @@ Below are the available options for the health check mechanism:
 | <a id="opt-port" href="#opt-port" title="#opt-port">`port`</a> | Replaces the server URL port for the health check endpoint.                                                                   |         | No       |
 | <a id="opt-interval" href="#opt-interval" title="#opt-interval">`interval`</a> | Defines the frequency of the health check calls for healthy targets.                                                          | 30s     | No       |
 | <a id="opt-unhealthyInterval" href="#opt-unhealthyInterval" title="#opt-unhealthyInterval">`unhealthyInterval`</a> | Defines the frequency of the health check calls for unhealthy targets. When not defined, it defaults to the `interval` value. | 30s     | No       |
-| <a id="opt-timeout" href="#opt-timeout" title="#opt-timeout">`timeout`</a> | Defines the maximum duration Traefik will wait for a health check request before considering the server unhealthy.            | 5s      | No       |
+| <a id="opt-timeout" href="#opt-timeout" title="#opt-timeout">`timeout`</a> | Defines the maximum duration Baqup will wait for a health check request before considering the server unhealthy.            | 5s      | No       |
 | <a id="opt-headers" href="#opt-headers" title="#opt-headers">`headers`</a> | Defines custom headers to be sent to the health check endpoint.                                                               |         | No       |
 | <a id="opt-followRedirects" href="#opt-followRedirects" title="#opt-followRedirects">`followRedirects`</a> | Defines whether redirects should be followed during the health check calls.                                                   | true    | No       |
 | <a id="opt-hostname-2" href="#opt-hostname-2" title="#opt-hostname-2">`hostname`</a> | Defines the value of hostname in the Host header of the health check request.                                                 | ""      | No       |
@@ -313,10 +313,10 @@ On subsequent requests, to keep the session alive with the same server, the clie
 The `passiveHealthcheck` option configures passive health check to remove unhealthy servers from the load balancing rotation.
 
 Passive health checks rely on real traffic to assess server health.
-Traefik forwards requests as usual and evaluates each response or timeout,
+Baqup forwards requests as usual and evaluates each response or timeout,
 incrementing a failure counter whenever a request fails.
 If the number of successive failures within a specified time window exceeds the configured threshold,
-Traefik will automatically stop routing traffic to that server until it recovers.
+Baqup will automatically stop routing traffic to that server until it recovers.
 A server will be considered healthy again after the configured failure window has passed.
 
 Below are the available options for the passive health check mechanism:

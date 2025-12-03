@@ -76,5 +76,5 @@ roleRef:
   name: gateway-role
 subjects:
   - kind: ServiceAccount
-    name: traefik-controller
+    name: baqup-controller
     namespace: default

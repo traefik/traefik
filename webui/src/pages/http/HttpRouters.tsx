@@ -130,7 +130,7 @@ export const HttpRouters = () => {
   return (
     <>
       <Helmet>
-        <title>HTTP Routers - Traefik Proxy</title>
+        <title>HTTP Routers - Baqup Proxy</title>
       </Helmet>
       <TableFilter />
       <HttpRoutersRender

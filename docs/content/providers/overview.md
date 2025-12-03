@@ -1,20 +1,20 @@
 ---
-title: "Traefik Configuration Discovery Overview"
-description: "Configuration discovery in Traefik is achieved through Providers. The providers are infrastructure components. Read the documentation to learn more."
+title: "Baqup Configuration Discovery Overview"
+description: "Configuration discovery in Baqup is achieved through Providers. The providers are infrastructure components. Read the documentation to learn more."
 ---
 
 # Overview
 
-Traefik's Many Friends
+Baqup's Many Friends
 {: .subtitle }
 
 ![Providers](../assets/img/providers.png)
 
-Configuration discovery in Traefik is achieved through _Providers_.
+Configuration discovery in Baqup is achieved through _Providers_.
 
 The _providers_ are infrastructure components, whether orchestrators, container engines, cloud providers, or key-value stores.
-The idea is that Traefik queries the provider APIs in order to find relevant information about routing,
-and when Traefik detects a change, it dynamically updates the routes.
+The idea is that Baqup queries the provider APIs in order to find relevant information about routing,
+and when Baqup detects a change, it dynamically updates the routes.
 
 ## Orchestrators
 
@@ -27,7 +27,7 @@ While each provider is different, you can think of each as belonging to one of f
 
 ## Provider Namespace
 
-When you declare certain objects in the Traefik dynamic configuration,
+When you declare certain objects in the Baqup dynamic configuration,
 such as middleware, services, TLS options or server transports, they reside in their provider's namespace.
 For example, if you declare a middleware using a Docker label, it resides in the Docker provider namespace.
 
@@ -46,13 +46,13 @@ For the list of the providers names, see the [supported providers](#supported-pr
     As Kubernetes also has its own notion of namespace,
     one should not confuse the _provider namespace_ with the _Kubernetes Namespace_ of a resource when in the context of cross-provider usage.
 
-    In this case, since the definition of a Traefik dynamic configuration object is not in Kubernetes,
+    In this case, since the definition of a Baqup dynamic configuration object is not in Kubernetes,
     specifying a Kubernetes Namespace when referring to the resource does not make any sense.
 
     On the other hand, if you were to declare a middleware as a Custom Resource in Kubernetes and use the non-CRD Ingress objects,
     you would have to add the Kubernetes Namespace of the middleware to the annotation like this `<middleware-namespace>-<middleware-name>@kubernetescrd`.
 
-!!! abstract "Referencing a Traefik Dynamic Configuration Object from Another Provider"
+!!! abstract "Referencing a Baqup Dynamic Configuration Object from Another Provider"
 
     Declaring the add-foo-prefix in the file provider.
 
@@ -78,11 +78,11 @@ For the list of the providers names, see the [supported providers](#supported-pr
 
       labels:
         # Attach add-foo-prefix@file middleware (declared in file)
-        - "traefik.http.routers.my-container.middlewares=add-foo-prefix@file"
+        - "baqup.http.routers.my-container.middlewares=add-foo-prefix@file"
     ```
 
     ```yaml tab="IngressRoute"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: baqup.io/v1alpha1
     kind: IngressRoute
     metadata:
       name: ingressroutestripprefix
@@ -104,7 +104,7 @@ For the list of the providers names, see the [supported providers](#supported-pr
     ```
 
     ```yaml tab="Ingress"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: baqup.io/v1alpha1
     kind: Middleware
     metadata:
       name: stripprefix
@@ -123,14 +123,14 @@ For the list of the providers names, see the [supported providers](#supported-pr
       annotations:
         # referencing a middleware from Kubernetes CRD provider: 
         # <middleware-namespace>-<middleware-name>@kubernetescrd
-        "traefik.ingress.kubernetes.io/router.middlewares": appspace-stripprefix@kubernetescrd
+        "baqup.ingress.kubernetes.io/router.middlewares": appspace-stripprefix@kubernetescrd
     spec:
       # ... regular ingress definition
     ```
 
 ## Supported Providers
 
-Below is the list of the currently supported providers in Traefik.
+Below is the list of the currently supported providers in Baqup.
 
 | Provider                                          | Type         | Configuration Type   | Provider Name       |
 |---------------------------------------------------|--------------|----------------------|---------------------|
@@ -150,8 +150,8 @@ Below is the list of the currently supported providers in Traefik.
 
 !!! info "More Providers"
 
-    The current version of Traefik does not yet support every provider that Traefik v2.11 did.
-    See the [previous version (v2.11)](https://doc.traefik.io/traefik/v2.11/) for more information.
+    The current version of Baqup does not yet support every provider that Baqup v2.11 did.
+    See the [previous version (v2.11)](https://doc.baqup.io/baqup/v2.11/) for more information.
 
 ### Configuration Reload Frequency
 
@@ -161,12 +161,12 @@ _Optional, Default: 2s_
 
 In some cases, some providers might undergo a sudden burst of changes,
 which would generate a lot of configuration change events.
-If Traefik took them all into account,
+If Baqup took them all into account,
 that would trigger a lot more configuration reloads than is necessary,
 or even useful.
 
 In order to mitigate that, the `providers.providersThrottleDuration` option can be set.
-It is the duration that Traefik waits for, after a configuration reload,
+It is the duration that Baqup waits for, after a configuration reload,
 before taking into account any new configuration refresh event.
 If multiple events occur within this time, only the most recent one is taken into account,
 and all others are discarded.
@@ -197,16 +197,16 @@ TODO (document TCP VS HTTP dynamic configuration)
 
 ## Restrict the Scope of Service Discovery
 
-By default, Traefik creates routes for all detected containers.
+By default, Baqup creates routes for all detected containers.
 
-If you want to limit the scope of the Traefik service discovery,
+If you want to limit the scope of the Baqup service discovery,
 i.e. disallow route creation for some containers,
 you can do so in two different ways:
 
 - the generic configuration option `exposedByDefault`,
 - a finer granularity mechanism based on constraints.
 
-### `exposedByDefault` and `traefik.enable`
+### `exposedByDefault` and `baqup.enable`
 
 List of providers that support these features:
 
@@ -227,4 +227,4 @@ List of providers that support constraints:
 - [Kubernetes Ingress](./kubernetes-ingress.md#labelselector)
 - [Kubernetes Gateway](./kubernetes-gateway.md#labelselector)
 
-{!traefik-for-business-applications.md!}
+{!baqup-for-business-applications.md!}

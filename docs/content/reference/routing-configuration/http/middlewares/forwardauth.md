@@ -1,6 +1,6 @@
 ---
-title: "Traefik ForwardAuth Documentation"
-description: "In Traefik Proxy, the HTTP ForwardAuth middleware delegates authentication to an external Service. Read the technical documentation."
+title: "Baqup ForwardAuth Documentation"
+description: "In Baqup Proxy, the HTTP ForwardAuth middleware delegates authentication to an external Service. Read the technical documentation."
 ---
 
 The `forwardAuth` middleware delegates authentication to an external service.
@@ -28,21 +28,21 @@ http:
 ```yaml tab="Labels"
 # Forward authentication to example.com
 labels:
-  - "traefik.http.middlewares.test-auth.forwardauth.address=https://example.com/auth"
+  - "baqup.http.middlewares.test-auth.forwardauth.address=https://example.com/auth"
 ```
 
 ```json tab="Tags"
 // Forward authentication to example.com
 {
   "Tags" : [
-    "traefik.http.middlewares.test-auth.forwardauth.address=https://example.com/auth"
+    "baqup.http.middlewares.test-auth.forwardauth.address=https://example.com/auth"
   ]
 }
 ```
 
 ```yaml tab="Kubernetes"
 # Forward authentication to example.com
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-auth
@@ -61,7 +61,7 @@ spec:
 | <a id="opt-authResponseHeadersRegex" href="#opt-authResponseHeadersRegex" title="#opt-authResponseHeadersRegex">`authResponseHeadersRegex`</a> | Regex to match by the headers to copy from the authentication server response and set on forwarded request, after stripping all headers that match the regex.<br /> More information [here](#authresponseheadersregex). | "" | No      |
 | <a id="opt-authRequestHeaders" href="#opt-authRequestHeaders" title="#opt-authRequestHeaders">`authRequestHeaders`</a> | List of the headers to copy from the request to the authentication server. <br /> It allows filtering headers that should not be passed to the authentication server. <br /> If not set or empty, then all request headers are passed. | [] | No      |
 | <a id="opt-addAuthCookiesToResponse" href="#opt-addAuthCookiesToResponse" title="#opt-addAuthCookiesToResponse">`addAuthCookiesToResponse`</a> | List of cookies to copy from the authentication server to the response, replacing any existing conflicting cookie from the forwarded response.<br /> Please note that all backend cookies matching the configured list will not be added to the response. | [] | No      |
-| <a id="opt-forwardBody" href="#opt-forwardBody" title="#opt-forwardBody">`forwardBody`</a> | Sets the `forwardBody` option to `true` to send the Body. As body is read inside Traefik before forwarding, this breaks streaming. | false | No      |
+| <a id="opt-forwardBody" href="#opt-forwardBody" title="#opt-forwardBody">`forwardBody`</a> | Sets the `forwardBody` option to `true` to send the Body. As body is read inside Baqup before forwarding, this breaks streaming. | false | No      |
 | <a id="opt-maxBodySize" href="#opt-maxBodySize" title="#opt-maxBodySize">`maxBodySize`</a> | Set the `maxBodySize` to limit the body size in bytes. If body is bigger than this, it returns a 401 (unauthorized). If left unset, the request body size is unrestricted which can have performance or security implications. < br/>More information [here](#maxbodysize).| -1 | No      |
 | <a id="opt-headerField" href="#opt-headerField" title="#opt-headerField">`headerField`</a> | Defines a header field to store the authenticated user. | "" | No      |
 | <a id="opt-preserveLocationHeader" href="#opt-preserveLocationHeader" title="#opt-preserveLocationHeader">`preserveLocationHeader`</a> | Defines whether to forward the Location header to the client as is or prefix it with the domain name of the authentication server. | false | No      |
@@ -127,4 +127,4 @@ The following request properties are provided to the forward-auth target endpoin
 | <a id="opt-Request-URI" href="#opt-Request-URI" title="#opt-Request-URI">Request URI</a> | `X-Forwarded-Uri`        |
 | <a id="opt-Source-IP-Address" href="#opt-Source-IP-Address" title="#opt-Source-IP-Address">Source IP-Address</a> | `X-Forwarded-For`        |
 
-{!traefik-for-business-applications.md!}
+{!baqup-for-business-applications.md!}

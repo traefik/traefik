@@ -1,18 +1,18 @@
 ---
-title: "Traefik Metrics Overview"
-description: "Traefik Proxy supports these metrics backend systems: OpenTelemetry, Datadog, InfluxDB 2.X, Prometheus, and StatsD. Read the full documentation to get started."
+title: "Baqup Metrics Overview"
+description: "Baqup Proxy supports these metrics backend systems: OpenTelemetry, Datadog, InfluxDB 2.X, Prometheus, and StatsD. Read the full documentation to get started."
 ---
 
 # Metrics
 
-Traefik provides metrics in the [OpenTelemetry](#open-telemetry) format as well as the following vendor specific backends:
+Baqup provides metrics in the [OpenTelemetry](#open-telemetry) format as well as the following vendor specific backends:
 
 - [Datadog](#datadog)
 - [InfluxDB2](#influxdb-v2)
 - [Prometheus](#prometheus)
 - [StatsD](#statsd)
 
-Traefik Proxy has an official Grafana dashboard for both [on-premises](https://grafana.com/grafana/dashboards/17346)
+Baqup Proxy has an official Grafana dashboard for both [on-premises](https://grafana.com/grafana/dashboards/17346)
 and [Kubernetes](https://grafana.com/grafana/dashboards/17347) deployments.
 
 ---
@@ -55,15 +55,15 @@ metrics:
 
 !!! tip "Helm Chart Configuration"
 
-    Traefik can be configured to provide metrics in the OpenTelemetry format using the Helm Chart values.
-    To know more about the Helm Chart options, refer to the [Helm Chart](https://github.com/traefik/traefik-helm-chart/blob/master/traefik/VALUES.md) (Find options `metrics.otlp`).
+    Baqup can be configured to provide metrics in the OpenTelemetry format using the Helm Chart values.
+    To know more about the Helm Chart options, refer to the [Helm Chart](https://github.com/baqupio/baqup-helm-chart/blob/master/baqup/VALUES.md) (Find options `metrics.otlp`).
 
 ### Configuration Options
 
 | Field                                      | Description                                                                                                                                                      | Default                                            | Required |
 |:-------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------|:---------------------------------------------------|:---------|
 | <a id="opt-metrics-addInternals" href="#opt-metrics-addInternals" title="#opt-metrics-addInternals">`metrics.addInternals`</a> | Enables metrics for internal resources (e.g.: `ping@internal`).                                                                                                  | false                                              | No       |
-| <a id="opt-metrics-otlp-serviceName" href="#opt-metrics-otlp-serviceName" title="#opt-metrics-otlp-serviceName">`metrics.otlp.serviceName`</a> | Defines the service name resource attribute.                                                                                                                     | "traefik"                                          | No       |
+| <a id="opt-metrics-otlp-serviceName" href="#opt-metrics-otlp-serviceName" title="#opt-metrics-otlp-serviceName">`metrics.otlp.serviceName`</a> | Defines the service name resource attribute.                                                                                                                     | "baqup"                                          | No       |
 | <a id="opt-metrics-otlp-resourceAttributes" href="#opt-metrics-otlp-resourceAttributes" title="#opt-metrics-otlp-resourceAttributes">`metrics.otlp.resourceAttributes`</a> | Defines additional resource attributes to be sent to the collector. See [resourceAttributes](#resourceattributes) for details.                                                                                                   | []                                                 | No       |
 | <a id="opt-metrics-otlp-addEntryPointsLabels" href="#opt-metrics-otlp-addEntryPointsLabels" title="#opt-metrics-otlp-addEntryPointsLabels">`metrics.otlp.addEntryPointsLabels`</a> | Enable metrics on entry points.                                                                                                                                  | true                                               | No       |
 | <a id="opt-metrics-otlp-addRoutersLabels" href="#opt-metrics-otlp-addRoutersLabels" title="#opt-metrics-otlp-addRoutersLabels">`metrics.otlp.addRoutersLabels`</a> | Enable metrics on routers.                                                                                                                                       | false                                              | No       |
@@ -89,17 +89,17 @@ metrics:
 ### resourceAttributes
 
 The `resourceAttributes` option allows setting the resource attributes sent along the traces.
-Traefik also supports the `OTEL_RESOURCE_ATTRIBUTES` env variable to set up the resource attributes.
+Baqup also supports the `OTEL_RESOURCE_ATTRIBUTES` env variable to set up the resource attributes.
 
 !!! info "Kubernetes Resource Attributes Detection"
 
-    Additionally, Traefik automatically discovers the following [Kubernetes resource attributes](https://opentelemetry.io/docs/specs/semconv/non-normative/k8s-attributes/) when running in a Kubernetes cluster:
+    Additionally, Baqup automatically discovers the following [Kubernetes resource attributes](https://opentelemetry.io/docs/specs/semconv/non-normative/k8s-attributes/) when running in a Kubernetes cluster:
     
     - `k8s.namespace.name`
     - `k8s.pod.uid`
     - `k8s.pod.name`
     
-    Note that this automatic detection can fail, like if the Traefik pod is running in host network mode.
+    Note that this automatic detection can fail, like if the Baqup pod is running in host network mode.
     In this case, you should provide the attributes with the option or the env variable.
 
 ## Vendors
@@ -134,7 +134,7 @@ metrics:
 | <a id="opt-datadog-addRoutersLabels" href="#opt-datadog-addRoutersLabels" title="#opt-datadog-addRoutersLabels">`datadog.addRoutersLabels`</a> | Enable metrics on routers. |  false   | No   |
 | <a id="opt-datadog-addServicesLabels" href="#opt-datadog-addServicesLabels" title="#opt-datadog-addServicesLabels">`datadog.addServicesLabels`</a> | Enable metrics on services. |  true   | No   |
 | <a id="opt-datadog-pushInterval" href="#opt-datadog-pushInterval" title="#opt-datadog-pushInterval">`datadog.pushInterval`</a> | Defines the interval used by the exporter to push metrics to datadog-agent. |  10s   | No   |
-| <a id="opt-datadog-prefix" href="#opt-datadog-prefix" title="#opt-datadog-prefix">`datadog.prefix`</a> | Defines the prefix to use for metrics collection. |  "traefik"   | No   |
+| <a id="opt-datadog-prefix" href="#opt-datadog-prefix" title="#opt-datadog-prefix">`datadog.prefix`</a> | Defines the prefix to use for metrics collection. |  "baqup"   | No   |
 
 ##### `address`
 
@@ -237,14 +237,14 @@ metrics:
 | <a id="opt-metrics-prometheus-addServicesLabels" href="#opt-metrics-prometheus-addServicesLabels" title="#opt-metrics-prometheus-addServicesLabels">`metrics.prometheus.addServicesLabels`</a> | Enable metrics on services.| true      | No      |
 | <a id="opt-metrics-prometheus-buckets" href="#opt-metrics-prometheus-buckets" title="#opt-metrics-prometheus-buckets">`metrics.prometheus.buckets`</a> | Buckets for latency metrics. |"0.100000, 0.300000, 1.200000, 5.000000"  | No      |
 | <a id="opt-metrics-prometheus-manualRouting" href="#opt-metrics-prometheus-manualRouting" title="#opt-metrics-prometheus-manualRouting">`metrics.prometheus.manualRouting`</a> | Set to _true_, it disables the default internal router in order to allow creating a custom router for the `prometheus@internal` service. | false    | No      |
-| <a id="opt-metrics-prometheus-entryPoint" href="#opt-metrics-prometheus-entryPoint" title="#opt-metrics-prometheus-entryPoint">`metrics.prometheus.entryPoint`</a> | Traefik Entrypoint name used to expose metrics. | "traefik"     | No      |
+| <a id="opt-metrics-prometheus-entryPoint" href="#opt-metrics-prometheus-entryPoint" title="#opt-metrics-prometheus-entryPoint">`metrics.prometheus.entryPoint`</a> | Baqup Entrypoint name used to expose metrics. | "baqup"     | No      |
 | <a id="opt-metrics-prometheus-headerLabels" href="#opt-metrics-prometheus-headerLabels" title="#opt-metrics-prometheus-headerLabels">`metrics.prometheus.headerLabels`</a> | Defines extra labels extracted from request headers for the `requests_total` metrics.<br />More information [here](#headerlabels). |       | Yes      |
 
 ##### headerLabels
 
 Defines the extra labels for the `requests_total` metrics, and for each of them, the request header containing the value for this label.
 If the header is not present in the request it will be added nonetheless with an empty value.
-The label must be a valid label name for Prometheus metrics, otherwise, the Prometheus metrics provider will fail to serve any Traefik-related metric.
+The label must be a valid label name for Prometheus metrics, otherwise, the Prometheus metrics provider will fail to serve any Baqup-related metric.
 
 !!! note "How to provide the `Host` header value"
       The `Host` header is never present in the Header map of a request, as per go documentation says:
@@ -275,7 +275,7 @@ curl -H "User-Agent: foobar" http://localhost
 ```
 
 ```bash tab="Metric"
-traefik_entrypoint_requests_total\{code="200",entrypoint="web",method="GET",protocol="http",useragent="foobar"\} 1
+baqup_entrypoint_requests_total\{code="200",entrypoint="web",method="GET",protocol="http",useragent="foobar"\} 1
 ```
 
 ### StatsD
@@ -310,7 +310,7 @@ metrics:
 | <a id="opt-metrics-statsD-addServicesLabels" href="#opt-metrics-statsD-addServicesLabels" title="#opt-metrics-statsD-addServicesLabels">`metrics.statsD.addServicesLabels`</a> | Enable metrics on services.| true      | No      |
 | <a id="opt-metrics-statsD-pushInterval" href="#opt-metrics-statsD-pushInterval" title="#opt-metrics-statsD-pushInterval">`metrics.statsD.pushInterval`</a> | The interval used by the exporter to push metrics to DataDog server. | 10s      | No      |
 | <a id="opt-metrics-statsD-address" href="#opt-metrics-statsD-address" title="#opt-metrics-statsD-address">`metrics.statsD.address`</a> | Address instructs exporter to send metrics to statsd at this address.  | "127.0.0.1:8125"     | Yes      |
-| <a id="opt-metrics-statsD-prefix" href="#opt-metrics-statsD-prefix" title="#opt-metrics-statsD-prefix">`metrics.statsD.prefix`</a> | The prefix to use for metrics collection. | "traefik"      | No      |
+| <a id="opt-metrics-statsD-prefix" href="#opt-metrics-statsD-prefix" title="#opt-metrics-statsD-prefix">`metrics.statsD.prefix`</a> | The prefix to use for metrics collection. | "baqup"      | No      |
 
 ## Metrics Provided
 
@@ -319,18 +319,18 @@ metrics:
 === "OpenTelemetry"
     | Metric                     | Type  | [Labels](#labels)        | Description                                                        |
     |----------------------------|-------|--------------------------|--------------------------------------------------------------------|
-    | <a id="opt-traefik-config-reloads-total" href="#opt-traefik-config-reloads-total" title="#opt-traefik-config-reloads-total">`traefik_config_reloads_total`</a> | Count |                          | The total count of configuration reloads.                          |
-    | <a id="opt-traefik-config-last-reload-success" href="#opt-traefik-config-last-reload-success" title="#opt-traefik-config-last-reload-success">`traefik_config_last_reload_success`</a> | Gauge |                          | The timestamp of the last configuration reload success.            |
-    | <a id="opt-traefik-open-connections" href="#opt-traefik-open-connections" title="#opt-traefik-open-connections">`traefik_open_connections`</a> | Gauge | `entrypoint`, `protocol` | The current count of open connections, by entrypoint and protocol. |
-    | <a id="opt-traefik-tls-certs-not-after" href="#opt-traefik-tls-certs-not-after" title="#opt-traefik-tls-certs-not-after">`traefik_tls_certs_not_after`</a> | Gauge |                          | The expiration date of certificates.                               |
+    | <a id="opt-baqup-config-reloads-total" href="#opt-baqup-config-reloads-total" title="#opt-baqup-config-reloads-total">`baqup_config_reloads_total`</a> | Count |                          | The total count of configuration reloads.                          |
+    | <a id="opt-baqup-config-last-reload-success" href="#opt-baqup-config-last-reload-success" title="#opt-baqup-config-last-reload-success">`baqup_config_last_reload_success`</a> | Gauge |                          | The timestamp of the last configuration reload success.            |
+    | <a id="opt-baqup-open-connections" href="#opt-baqup-open-connections" title="#opt-baqup-open-connections">`baqup_open_connections`</a> | Gauge | `entrypoint`, `protocol` | The current count of open connections, by entrypoint and protocol. |
+    | <a id="opt-baqup-tls-certs-not-after" href="#opt-baqup-tls-certs-not-after" title="#opt-baqup-tls-certs-not-after">`baqup_tls_certs_not_after`</a> | Gauge |                          | The expiration date of certificates.                               |
     
 === "Prometheus"
     | Metric                     | Type  | [Labels](#labels)        | Description                                                        |
     |----------------------------|-------|--------------------------|--------------------------------------------------------------------|
-    | <a id="opt-traefik-config-reloads-total-2" href="#opt-traefik-config-reloads-total-2" title="#opt-traefik-config-reloads-total-2">`traefik_config_reloads_total`</a> | Count |                          | The total count of configuration reloads.                          |
-    | <a id="opt-traefik-config-last-reload-success-2" href="#opt-traefik-config-last-reload-success-2" title="#opt-traefik-config-last-reload-success-2">`traefik_config_last_reload_success`</a> | Gauge |                          | The timestamp of the last configuration reload success.            |
-    | <a id="opt-traefik-open-connections-2" href="#opt-traefik-open-connections-2" title="#opt-traefik-open-connections-2">`traefik_open_connections`</a> | Gauge | `entrypoint`, `protocol` | The current count of open connections, by entrypoint and protocol. |
-    | <a id="opt-traefik-tls-certs-not-after-2" href="#opt-traefik-tls-certs-not-after-2" title="#opt-traefik-tls-certs-not-after-2">`traefik_tls_certs_not_after`</a> | Gauge |      | The expiration date of certificates. |
+    | <a id="opt-baqup-config-reloads-total-2" href="#opt-baqup-config-reloads-total-2" title="#opt-baqup-config-reloads-total-2">`baqup_config_reloads_total`</a> | Count |                          | The total count of configuration reloads.                          |
+    | <a id="opt-baqup-config-last-reload-success-2" href="#opt-baqup-config-last-reload-success-2" title="#opt-baqup-config-last-reload-success-2">`baqup_config_last_reload_success`</a> | Gauge |                          | The timestamp of the last configuration reload success.            |
+    | <a id="opt-baqup-open-connections-2" href="#opt-baqup-open-connections-2" title="#opt-baqup-open-connections-2">`baqup_open_connections`</a> | Gauge | `entrypoint`, `protocol` | The current count of open connections, by entrypoint and protocol. |
+    | <a id="opt-baqup-tls-certs-not-after-2" href="#opt-baqup-tls-certs-not-after-2" title="#opt-baqup-tls-certs-not-after-2">`baqup_tls_certs_not_after`</a> | Gauge |      | The expiration date of certificates. |
 
 === "Datadog"
     | Metric                     | Type  | [Labels](#labels)        | Description                                                        |
@@ -343,10 +343,10 @@ metrics:
 === "InfluxDB2"
     | Metric                     | Type  | [Labels](#labels)        | Description                                                        |
     |----------------------------|-------|--------------------------|--------------------------------------------------------------------|
-    | <a id="opt-traefik-config-reload-total" href="#opt-traefik-config-reload-total" title="#opt-traefik-config-reload-total">`traefik.config.reload.total`</a> | Count |                          | The total count of configuration reloads.                          |
-    | <a id="opt-traefik-config-reload-lastSuccessTimestamp" href="#opt-traefik-config-reload-lastSuccessTimestamp" title="#opt-traefik-config-reload-lastSuccessTimestamp">`traefik.config.reload.lastSuccessTimestamp`</a> | Gauge |                          | The timestamp of the last configuration reload success.            |
-    | <a id="opt-traefik-open-connections-3" href="#opt-traefik-open-connections-3" title="#opt-traefik-open-connections-3">`traefik.open.connections`</a> | Gauge | `entrypoint`, `protocol` | The current count of open connections, by entrypoint and protocol. |
-    | <a id="opt-traefik-tls-certs-notAfterTimestamp" href="#opt-traefik-tls-certs-notAfterTimestamp" title="#opt-traefik-tls-certs-notAfterTimestamp">`traefik.tls.certs.notAfterTimestamp`</a> | Gauge |                          | The expiration date of certificates.                               |
+    | <a id="opt-baqup-config-reload-total" href="#opt-baqup-config-reload-total" title="#opt-baqup-config-reload-total">`baqup.config.reload.total`</a> | Count |                          | The total count of configuration reloads.                          |
+    | <a id="opt-baqup-config-reload-lastSuccessTimestamp" href="#opt-baqup-config-reload-lastSuccessTimestamp" title="#opt-baqup-config-reload-lastSuccessTimestamp">`baqup.config.reload.lastSuccessTimestamp`</a> | Gauge |                          | The timestamp of the last configuration reload success.            |
+    | <a id="opt-baqup-open-connections-3" href="#opt-baqup-open-connections-3" title="#opt-baqup-open-connections-3">`baqup.open.connections`</a> | Gauge | `entrypoint`, `protocol` | The current count of open connections, by entrypoint and protocol. |
+    | <a id="opt-baqup-tls-certs-notAfterTimestamp" href="#opt-baqup-tls-certs-notAfterTimestamp" title="#opt-baqup-tls-certs-notAfterTimestamp">`baqup.tls.certs.notAfterTimestamp`</a> | Gauge |                          | The expiration date of certificates.                               |
 
 === "StatsD"
     | Metric       | Type  | [Labels](#labels)        | Description                                                        |
@@ -357,7 +357,7 @@ metrics:
     | <a id="opt-prefix-tls-certs-notAfterTimestamp" href="#opt-prefix-tls-certs-notAfterTimestamp" title="#opt-prefix-tls-certs-notAfterTimestamp">`{prefix}.tls.certs.notAfterTimestamp`</a> | Gauge |    | The expiration date of certificates.   |
 
 !!! note "\{prefix\} Default Value"
-        By default, \{prefix\} value is `traefik`.
+        By default, \{prefix\} value is `baqup`.
 
 #### Labels
 
@@ -370,7 +370,7 @@ Here is a comprehensive list of labels that are provided by the global metrics:
 
 ### OpenTelemetry Semantic Conventions
 
-Traefik Proxy follows [official OpenTelemetry semantic conventions v1.23.1](https://github.com/open-telemetry/semantic-conventions/blob/v1.23.1/docs/http/http-metrics.md).
+Baqup Proxy follows [official OpenTelemetry semantic conventions v1.23.1](https://github.com/open-telemetry/semantic-conventions/blob/v1.23.1/docs/http/http-metrics.md).
 
 #### HTTP Server
 
@@ -416,7 +416,7 @@ Here is a comprehensive list of labels that are provided by the metrics:
 
 ### HTTP Metrics
 
-On top of the official OpenTelemetry semantic conventions, Traefik provides its own metrics to monitor the incoming traffic.
+On top of the official OpenTelemetry semantic conventions, Baqup provides its own metrics to monitor the incoming traffic.
 
 #### EntryPoint Metrics
 
@@ -424,21 +424,21 @@ On top of the official OpenTelemetry semantic conventions, Traefik provides its 
 
     | Metric   | Type      | [Labels](#labels)         | Description   |
     |-----------------------|-----------|--------------------|--------------------------|
-    | <a id="opt-traefik-entrypoint-requests-total" href="#opt-traefik-entrypoint-requests-total" title="#opt-traefik-entrypoint-requests-total">`traefik_entrypoint_requests_total`</a> | Count     | `code`, `method`, `protocol`, `entrypoint` | The total count of HTTP requests received by an entrypoint.         |
-    | <a id="opt-traefik-entrypoint-requests-tls-total" href="#opt-traefik-entrypoint-requests-tls-total" title="#opt-traefik-entrypoint-requests-tls-total">`traefik_entrypoint_requests_tls_total`</a> | Count     | `tls_version`, `tls_cipher`, `entrypoint`  | The total count of HTTPS requests received by an entrypoint.        |
-    | <a id="opt-traefik-entrypoint-request-duration-seconds" href="#opt-traefik-entrypoint-request-duration-seconds" title="#opt-traefik-entrypoint-request-duration-seconds">`traefik_entrypoint_request_duration_seconds`</a> | Histogram | `code`, `method`, `protocol`, `entrypoint` | Request processing duration histogram on an entrypoint.             |
-    | <a id="opt-traefik-entrypoint-requests-bytes-total" href="#opt-traefik-entrypoint-requests-bytes-total" title="#opt-traefik-entrypoint-requests-bytes-total">`traefik_entrypoint_requests_bytes_total`</a> | Count     | `code`, `method`, `protocol`, `entrypoint` | The total size of HTTP requests in bytes handled by an entrypoint.  |
-    | <a id="opt-traefik-entrypoint-responses-bytes-total" href="#opt-traefik-entrypoint-responses-bytes-total" title="#opt-traefik-entrypoint-responses-bytes-total">`traefik_entrypoint_responses_bytes_total`</a> | Count     | `code`, `method`, `protocol`, `entrypoint` | The total size of HTTP responses in bytes handled by an entrypoint. |
+    | <a id="opt-baqup-entrypoint-requests-total" href="#opt-baqup-entrypoint-requests-total" title="#opt-baqup-entrypoint-requests-total">`baqup_entrypoint_requests_total`</a> | Count     | `code`, `method`, `protocol`, `entrypoint` | The total count of HTTP requests received by an entrypoint.         |
+    | <a id="opt-baqup-entrypoint-requests-tls-total" href="#opt-baqup-entrypoint-requests-tls-total" title="#opt-baqup-entrypoint-requests-tls-total">`baqup_entrypoint_requests_tls_total`</a> | Count     | `tls_version`, `tls_cipher`, `entrypoint`  | The total count of HTTPS requests received by an entrypoint.        |
+    | <a id="opt-baqup-entrypoint-request-duration-seconds" href="#opt-baqup-entrypoint-request-duration-seconds" title="#opt-baqup-entrypoint-request-duration-seconds">`baqup_entrypoint_request_duration_seconds`</a> | Histogram | `code`, `method`, `protocol`, `entrypoint` | Request processing duration histogram on an entrypoint.             |
+    | <a id="opt-baqup-entrypoint-requests-bytes-total" href="#opt-baqup-entrypoint-requests-bytes-total" title="#opt-baqup-entrypoint-requests-bytes-total">`baqup_entrypoint_requests_bytes_total`</a> | Count     | `code`, `method`, `protocol`, `entrypoint` | The total size of HTTP requests in bytes handled by an entrypoint.  |
+    | <a id="opt-baqup-entrypoint-responses-bytes-total" href="#opt-baqup-entrypoint-responses-bytes-total" title="#opt-baqup-entrypoint-responses-bytes-total">`baqup_entrypoint_responses_bytes_total`</a> | Count     | `code`, `method`, `protocol`, `entrypoint` | The total size of HTTP responses in bytes handled by an entrypoint. |
     
 === "Prometheus"
 
     | Metric     | Type      | [Labels](#labels)      | Description      |
     |-----------------------|-----------|------------------------|-------------------------|
-    | <a id="opt-traefik-entrypoint-requests-total-2" href="#opt-traefik-entrypoint-requests-total-2" title="#opt-traefik-entrypoint-requests-total-2">`traefik_entrypoint_requests_total`</a> | Count     | `code`, `method`, `protocol`, `entrypoint` | The total count of HTTP requests received by an entrypoint.         |
-    | <a id="opt-traefik-entrypoint-requests-tls-total-2" href="#opt-traefik-entrypoint-requests-tls-total-2" title="#opt-traefik-entrypoint-requests-tls-total-2">`traefik_entrypoint_requests_tls_total`</a> | Count     | `tls_version`, `tls_cipher`, `entrypoint`  | The total count of HTTPS requests received by an entrypoint.        |
-    | <a id="opt-traefik-entrypoint-request-duration-seconds-2" href="#opt-traefik-entrypoint-request-duration-seconds-2" title="#opt-traefik-entrypoint-request-duration-seconds-2">`traefik_entrypoint_request_duration_seconds`</a> | Histogram | `code`, `method`, `protocol`, `entrypoint` | Request processing duration histogram on an entrypoint.             |
-    | <a id="opt-traefik-entrypoint-requests-bytes-total-2" href="#opt-traefik-entrypoint-requests-bytes-total-2" title="#opt-traefik-entrypoint-requests-bytes-total-2">`traefik_entrypoint_requests_bytes_total`</a> | Count     | `code`, `method`, `protocol`, `entrypoint` | The total size of HTTP requests in bytes handled by an entrypoint.  |
-    | <a id="opt-traefik-entrypoint-responses-bytes-total-2" href="#opt-traefik-entrypoint-responses-bytes-total-2" title="#opt-traefik-entrypoint-responses-bytes-total-2">`traefik_entrypoint_responses_bytes_total`</a> | Count     | `code`, `method`, `protocol`, `entrypoint` | The total size of HTTP responses in bytes handled by an entrypoint. |
+    | <a id="opt-baqup-entrypoint-requests-total-2" href="#opt-baqup-entrypoint-requests-total-2" title="#opt-baqup-entrypoint-requests-total-2">`baqup_entrypoint_requests_total`</a> | Count     | `code`, `method`, `protocol`, `entrypoint` | The total count of HTTP requests received by an entrypoint.         |
+    | <a id="opt-baqup-entrypoint-requests-tls-total-2" href="#opt-baqup-entrypoint-requests-tls-total-2" title="#opt-baqup-entrypoint-requests-tls-total-2">`baqup_entrypoint_requests_tls_total`</a> | Count     | `tls_version`, `tls_cipher`, `entrypoint`  | The total count of HTTPS requests received by an entrypoint.        |
+    | <a id="opt-baqup-entrypoint-request-duration-seconds-2" href="#opt-baqup-entrypoint-request-duration-seconds-2" title="#opt-baqup-entrypoint-request-duration-seconds-2">`baqup_entrypoint_request_duration_seconds`</a> | Histogram | `code`, `method`, `protocol`, `entrypoint` | Request processing duration histogram on an entrypoint.             |
+    | <a id="opt-baqup-entrypoint-requests-bytes-total-2" href="#opt-baqup-entrypoint-requests-bytes-total-2" title="#opt-baqup-entrypoint-requests-bytes-total-2">`baqup_entrypoint_requests_bytes_total`</a> | Count     | `code`, `method`, `protocol`, `entrypoint` | The total size of HTTP requests in bytes handled by an entrypoint.  |
+    | <a id="opt-baqup-entrypoint-responses-bytes-total-2" href="#opt-baqup-entrypoint-responses-bytes-total-2" title="#opt-baqup-entrypoint-responses-bytes-total-2">`baqup_entrypoint_responses_bytes_total`</a> | Count     | `code`, `method`, `protocol`, `entrypoint` | The total size of HTTP responses in bytes handled by an entrypoint. |
 
 === "Datadog"
 
@@ -454,11 +454,11 @@ On top of the official OpenTelemetry semantic conventions, Traefik provides its 
 
     | Metric    | Type      | [Labels](#labels)   | Description     |
     |------------|-----------|-------------------|-----------------|
-    | <a id="opt-traefik-entrypoint-requests-total-3" href="#opt-traefik-entrypoint-requests-total-3" title="#opt-traefik-entrypoint-requests-total-3">`traefik.entrypoint.requests.total`</a> | Count     | `code`, `method`, `protocol`, `entrypoint` | The total count of HTTP requests received by an entrypoint.         |
-    | <a id="opt-traefik-entrypoint-requests-tls-total-3" href="#opt-traefik-entrypoint-requests-tls-total-3" title="#opt-traefik-entrypoint-requests-tls-total-3">`traefik.entrypoint.requests.tls.total`</a> | Count     | `tls_version`, `tls_cipher`, `entrypoint`  | The total count of HTTPS requests received by an entrypoint.        |
-    | <a id="opt-traefik-entrypoint-request-duration-seconds-3" href="#opt-traefik-entrypoint-request-duration-seconds-3" title="#opt-traefik-entrypoint-request-duration-seconds-3">`traefik.entrypoint.request.duration.seconds`</a> | Histogram | `code`, `method`, `protocol`, `entrypoint` | Request processing duration histogram on an entrypoint.             |
-    | <a id="opt-traefik-entrypoint-requests-bytes-total-3" href="#opt-traefik-entrypoint-requests-bytes-total-3" title="#opt-traefik-entrypoint-requests-bytes-total-3">`traefik.entrypoint.requests.bytes.total`</a> | Count     | `code`, `method`, `protocol`, `entrypoint` | The total size of HTTP requests in bytes handled by an entrypoint.  |
-    | <a id="opt-traefik-entrypoint-responses-bytes-total-3" href="#opt-traefik-entrypoint-responses-bytes-total-3" title="#opt-traefik-entrypoint-responses-bytes-total-3">`traefik.entrypoint.responses.bytes.total`</a> | Count     | `code`, `method`, `protocol`, `entrypoint` | The total size of HTTP responses in bytes handled by an entrypoint. |
+    | <a id="opt-baqup-entrypoint-requests-total-3" href="#opt-baqup-entrypoint-requests-total-3" title="#opt-baqup-entrypoint-requests-total-3">`baqup.entrypoint.requests.total`</a> | Count     | `code`, `method`, `protocol`, `entrypoint` | The total count of HTTP requests received by an entrypoint.         |
+    | <a id="opt-baqup-entrypoint-requests-tls-total-3" href="#opt-baqup-entrypoint-requests-tls-total-3" title="#opt-baqup-entrypoint-requests-tls-total-3">`baqup.entrypoint.requests.tls.total`</a> | Count     | `tls_version`, `tls_cipher`, `entrypoint`  | The total count of HTTPS requests received by an entrypoint.        |
+    | <a id="opt-baqup-entrypoint-request-duration-seconds-3" href="#opt-baqup-entrypoint-request-duration-seconds-3" title="#opt-baqup-entrypoint-request-duration-seconds-3">`baqup.entrypoint.request.duration.seconds`</a> | Histogram | `code`, `method`, `protocol`, `entrypoint` | Request processing duration histogram on an entrypoint.             |
+    | <a id="opt-baqup-entrypoint-requests-bytes-total-3" href="#opt-baqup-entrypoint-requests-bytes-total-3" title="#opt-baqup-entrypoint-requests-bytes-total-3">`baqup.entrypoint.requests.bytes.total`</a> | Count     | `code`, `method`, `protocol`, `entrypoint` | The total size of HTTP requests in bytes handled by an entrypoint.  |
+    | <a id="opt-baqup-entrypoint-responses-bytes-total-3" href="#opt-baqup-entrypoint-responses-bytes-total-3" title="#opt-baqup-entrypoint-responses-bytes-total-3">`baqup.entrypoint.responses.bytes.total`</a> | Count     | `code`, `method`, `protocol`, `entrypoint` | The total size of HTTP responses in bytes handled by an entrypoint. |
 
 === "StatsD"
 
@@ -471,7 +471,7 @@ On top of the official OpenTelemetry semantic conventions, Traefik provides its 
     | <a id="opt-prefix-entrypoint-responses-bytes-total" href="#opt-prefix-entrypoint-responses-bytes-total" title="#opt-prefix-entrypoint-responses-bytes-total">`{prefix}.entrypoint.responses.bytes.total`</a> | Count     | `code`, `method`, `protocol`, `entrypoint` | The total size of HTTP responses in bytes handled by an entrypoint. |
 
 !!! note "\{prefix\} Default Value"
-        By default, \{prefix\} value is `traefik`.
+        By default, \{prefix\} value is `baqup`.
 
 #### Router Metrics
 
@@ -479,21 +479,21 @@ On top of the official OpenTelemetry semantic conventions, Traefik provides its 
 
     | Metric    | Type      | [Labels](#labels)         | Description           |
     |-----------------------|-----------|----------------------|--------------------------------|
-    | <a id="opt-traefik-router-requests-total" href="#opt-traefik-router-requests-total" title="#opt-traefik-router-requests-total">`traefik_router_requests_total`</a> | Count     | `code`, `method`, `protocol`, `router`, `service` | The total count of HTTP requests handled by a router.          |
-    | <a id="opt-traefik-router-requests-tls-total" href="#opt-traefik-router-requests-tls-total" title="#opt-traefik-router-requests-tls-total">`traefik_router_requests_tls_total`</a> | Count     | `tls_version`, `tls_cipher`, `router`, `service`  | The total count of HTTPS requests handled by a router.         |
-    | <a id="opt-traefik-router-request-duration-seconds" href="#opt-traefik-router-request-duration-seconds" title="#opt-traefik-router-request-duration-seconds">`traefik_router_request_duration_seconds`</a> | Histogram | `code`, `method`, `protocol`, `router`, `service` | Request processing duration histogram on a router.             |
-    | <a id="opt-traefik-router-requests-bytes-total" href="#opt-traefik-router-requests-bytes-total" title="#opt-traefik-router-requests-bytes-total">`traefik_router_requests_bytes_total`</a> | Count     | `code`, `method`, `protocol`, `router`, `service` | The total size of HTTP requests in bytes handled by a router.  |
-    | <a id="opt-traefik-router-responses-bytes-total" href="#opt-traefik-router-responses-bytes-total" title="#opt-traefik-router-responses-bytes-total">`traefik_router_responses_bytes_total`</a> | Count     | `code`, `method`, `protocol`, `router`, `service` | The total size of HTTP responses in bytes handled by a router. |
+    | <a id="opt-baqup-router-requests-total" href="#opt-baqup-router-requests-total" title="#opt-baqup-router-requests-total">`baqup_router_requests_total`</a> | Count     | `code`, `method`, `protocol`, `router`, `service` | The total count of HTTP requests handled by a router.          |
+    | <a id="opt-baqup-router-requests-tls-total" href="#opt-baqup-router-requests-tls-total" title="#opt-baqup-router-requests-tls-total">`baqup_router_requests_tls_total`</a> | Count     | `tls_version`, `tls_cipher`, `router`, `service`  | The total count of HTTPS requests handled by a router.         |
+    | <a id="opt-baqup-router-request-duration-seconds" href="#opt-baqup-router-request-duration-seconds" title="#opt-baqup-router-request-duration-seconds">`baqup_router_request_duration_seconds`</a> | Histogram | `code`, `method`, `protocol`, `router`, `service` | Request processing duration histogram on a router.             |
+    | <a id="opt-baqup-router-requests-bytes-total" href="#opt-baqup-router-requests-bytes-total" title="#opt-baqup-router-requests-bytes-total">`baqup_router_requests_bytes_total`</a> | Count     | `code`, `method`, `protocol`, `router`, `service` | The total size of HTTP requests in bytes handled by a router.  |
+    | <a id="opt-baqup-router-responses-bytes-total" href="#opt-baqup-router-responses-bytes-total" title="#opt-baqup-router-responses-bytes-total">`baqup_router_responses_bytes_total`</a> | Count     | `code`, `method`, `protocol`, `router`, `service` | The total size of HTTP responses in bytes handled by a router. |
     
 === "Prometheus"
 
     | Metric                | Type      | [Labels](#labels)                                 | Description                                                    |
     |-----------------------|-----------|---------------------------------------------------|----------------------------------------------------------------|
-    | <a id="opt-traefik-router-requests-total-2" href="#opt-traefik-router-requests-total-2" title="#opt-traefik-router-requests-total-2">`traefik_router_requests_total`</a> | Count     | `code`, `method`, `protocol`, `router`, `service` | The total count of HTTP requests handled by a router.          |
-    | <a id="opt-traefik-router-requests-tls-total-2" href="#opt-traefik-router-requests-tls-total-2" title="#opt-traefik-router-requests-tls-total-2">`traefik_router_requests_tls_total`</a> | Count     | `tls_version`, `tls_cipher`, `router`, `service`  | The total count of HTTPS requests handled by a router.         |
-    | <a id="opt-traefik-router-request-duration-seconds-2" href="#opt-traefik-router-request-duration-seconds-2" title="#opt-traefik-router-request-duration-seconds-2">`traefik_router_request_duration_seconds`</a> | Histogram | `code`, `method`, `protocol`, `router`, `service` | Request processing duration histogram on a router.             |
-    | <a id="opt-traefik-router-requests-bytes-total-2" href="#opt-traefik-router-requests-bytes-total-2" title="#opt-traefik-router-requests-bytes-total-2">`traefik_router_requests_bytes_total`</a> | Count     | `code`, `method`, `protocol`, `router`, `service` | The total size of HTTP requests in bytes handled by a router.  |
-    | <a id="opt-traefik-router-responses-bytes-total-2" href="#opt-traefik-router-responses-bytes-total-2" title="#opt-traefik-router-responses-bytes-total-2">`traefik_router_responses_bytes_total`</a> | Count     | `code`, `method`, `protocol`, `router`, `service` | The total size of HTTP responses in bytes handled by a router. |
+    | <a id="opt-baqup-router-requests-total-2" href="#opt-baqup-router-requests-total-2" title="#opt-baqup-router-requests-total-2">`baqup_router_requests_total`</a> | Count     | `code`, `method`, `protocol`, `router`, `service` | The total count of HTTP requests handled by a router.          |
+    | <a id="opt-baqup-router-requests-tls-total-2" href="#opt-baqup-router-requests-tls-total-2" title="#opt-baqup-router-requests-tls-total-2">`baqup_router_requests_tls_total`</a> | Count     | `tls_version`, `tls_cipher`, `router`, `service`  | The total count of HTTPS requests handled by a router.         |
+    | <a id="opt-baqup-router-request-duration-seconds-2" href="#opt-baqup-router-request-duration-seconds-2" title="#opt-baqup-router-request-duration-seconds-2">`baqup_router_request_duration_seconds`</a> | Histogram | `code`, `method`, `protocol`, `router`, `service` | Request processing duration histogram on a router.             |
+    | <a id="opt-baqup-router-requests-bytes-total-2" href="#opt-baqup-router-requests-bytes-total-2" title="#opt-baqup-router-requests-bytes-total-2">`baqup_router_requests_bytes_total`</a> | Count     | `code`, `method`, `protocol`, `router`, `service` | The total size of HTTP requests in bytes handled by a router.  |
+    | <a id="opt-baqup-router-responses-bytes-total-2" href="#opt-baqup-router-responses-bytes-total-2" title="#opt-baqup-router-responses-bytes-total-2">`baqup_router_responses_bytes_total`</a> | Count     | `code`, `method`, `protocol`, `router`, `service` | The total size of HTTP responses in bytes handled by a router. |
 
 === "Datadog"
 
@@ -509,11 +509,11 @@ On top of the official OpenTelemetry semantic conventions, Traefik provides its 
 
     | Metric                | Type      | [Labels](#labels)                                 | Description                                                    |
     |-----------------------|-----------|---------------------------------------------------|----------------------------------------------------------------|
-    | <a id="opt-traefik-router-requests-total-3" href="#opt-traefik-router-requests-total-3" title="#opt-traefik-router-requests-total-3">`traefik.router.requests.total`</a> | Count     | `code`, `method`, `protocol`, `router`, `service` | The total count of HTTP requests handled by a router.          |
-    | <a id="opt-traefik-router-requests-tls-total-3" href="#opt-traefik-router-requests-tls-total-3" title="#opt-traefik-router-requests-tls-total-3">`traefik.router.requests.tls.total`</a> | Count     | `tls_version`, `tls_cipher`, `router`, `service`  | The total count of HTTPS requests handled by a router.         |
-    | <a id="opt-traefik-router-request-duration-seconds-3" href="#opt-traefik-router-request-duration-seconds-3" title="#opt-traefik-router-request-duration-seconds-3">`traefik.router.request.duration.seconds`</a> | Histogram | `code`, `method`, `protocol`, `router`, `service` | Request processing duration histogram on a router.             |
-    | <a id="opt-traefik-router-requests-bytes-total-3" href="#opt-traefik-router-requests-bytes-total-3" title="#opt-traefik-router-requests-bytes-total-3">`traefik.router.requests.bytes.total`</a> | Count     | `code`, `method`, `protocol`, `router`, `service` | The total size of HTTP requests in bytes handled by a router.  |
-    | <a id="opt-traefik-router-responses-bytes-total-3" href="#opt-traefik-router-responses-bytes-total-3" title="#opt-traefik-router-responses-bytes-total-3">`traefik.router.responses.bytes.total`</a> | Count     | `code`, `method`, `protocol`, `router`, `service` | The total size of HTTP responses in bytes handled by a router. |
+    | <a id="opt-baqup-router-requests-total-3" href="#opt-baqup-router-requests-total-3" title="#opt-baqup-router-requests-total-3">`baqup.router.requests.total`</a> | Count     | `code`, `method`, `protocol`, `router`, `service` | The total count of HTTP requests handled by a router.          |
+    | <a id="opt-baqup-router-requests-tls-total-3" href="#opt-baqup-router-requests-tls-total-3" title="#opt-baqup-router-requests-tls-total-3">`baqup.router.requests.tls.total`</a> | Count     | `tls_version`, `tls_cipher`, `router`, `service`  | The total count of HTTPS requests handled by a router.         |
+    | <a id="opt-baqup-router-request-duration-seconds-3" href="#opt-baqup-router-request-duration-seconds-3" title="#opt-baqup-router-request-duration-seconds-3">`baqup.router.request.duration.seconds`</a> | Histogram | `code`, `method`, `protocol`, `router`, `service` | Request processing duration histogram on a router.             |
+    | <a id="opt-baqup-router-requests-bytes-total-3" href="#opt-baqup-router-requests-bytes-total-3" title="#opt-baqup-router-requests-bytes-total-3">`baqup.router.requests.bytes.total`</a> | Count     | `code`, `method`, `protocol`, `router`, `service` | The total size of HTTP requests in bytes handled by a router.  |
+    | <a id="opt-baqup-router-responses-bytes-total-3" href="#opt-baqup-router-responses-bytes-total-3" title="#opt-baqup-router-responses-bytes-total-3">`baqup.router.responses.bytes.total`</a> | Count     | `code`, `method`, `protocol`, `router`, `service` | The total size of HTTP responses in bytes handled by a router. |
 
 === "StatsD"
 
@@ -526,7 +526,7 @@ On top of the official OpenTelemetry semantic conventions, Traefik provides its 
     | <a id="opt-prefix-router-responses-bytes-total" href="#opt-prefix-router-responses-bytes-total" title="#opt-prefix-router-responses-bytes-total">`{prefix}.router.responses.bytes.total`</a> | Count     | `code`, `method`, `protocol`, `router`, `service` | The total size of HTTP responses in bytes handled by a router. |
 
 !!! note "\{prefix\} Default Value"
-        By default, \{prefix\} value is `traefik`.
+        By default, \{prefix\} value is `baqup`.
 
 #### Service Metrics
 
@@ -534,25 +534,25 @@ On top of the official OpenTelemetry semantic conventions, Traefik provides its 
 
     | Metric    | Type      | Labels      | Description     |
     |-----------------------|-----------|------------|------------|
-    | <a id="opt-traefik-service-requests-total" href="#opt-traefik-service-requests-total" title="#opt-traefik-service-requests-total">`traefik_service_requests_total`</a> | Count     | `code`, `method`, `protocol`, `service` | The total count of HTTP requests processed on a service.    |
-    | <a id="opt-traefik-service-requests-tls-total" href="#opt-traefik-service-requests-tls-total" title="#opt-traefik-service-requests-tls-total">`traefik_service_requests_tls_total`</a> | Count     | `tls_version`, `tls_cipher`, `service`  | The total count of HTTPS requests processed on a service.   |
-    | <a id="opt-traefik-service-request-duration-seconds" href="#opt-traefik-service-request-duration-seconds" title="#opt-traefik-service-request-duration-seconds">`traefik_service_request_duration_seconds`</a> | Histogram | `code`, `method`, `protocol`, `service` | Request processing duration histogram on a service.         |
-    | <a id="opt-traefik-service-retries-total" href="#opt-traefik-service-retries-total" title="#opt-traefik-service-retries-total">`traefik_service_retries_total`</a> | Count     | `service`                               | The count of requests retries on a service.                 |
-    | <a id="opt-traefik-service-server-up" href="#opt-traefik-service-server-up" title="#opt-traefik-service-server-up">`traefik_service_server_up`</a> | Gauge     | `service`, `url`                        | Current service's server status, 0 for a down or 1 for up. Only for services configured with healthcheck. |
-    | <a id="opt-traefik-service-requests-bytes-total" href="#opt-traefik-service-requests-bytes-total" title="#opt-traefik-service-requests-bytes-total">`traefik_service_requests_bytes_total`</a> | Count     | `code`, `method`, `protocol`, `service` | The total size of requests in bytes received by a service.  |
-    | <a id="opt-traefik-service-responses-bytes-total" href="#opt-traefik-service-responses-bytes-total" title="#opt-traefik-service-responses-bytes-total">`traefik_service_responses_bytes_total`</a> | Count     | `code`, `method`, `protocol`, `service` | The total size of responses in bytes returned by a service. |
+    | <a id="opt-baqup-service-requests-total" href="#opt-baqup-service-requests-total" title="#opt-baqup-service-requests-total">`baqup_service_requests_total`</a> | Count     | `code`, `method`, `protocol`, `service` | The total count of HTTP requests processed on a service.    |
+    | <a id="opt-baqup-service-requests-tls-total" href="#opt-baqup-service-requests-tls-total" title="#opt-baqup-service-requests-tls-total">`baqup_service_requests_tls_total`</a> | Count     | `tls_version`, `tls_cipher`, `service`  | The total count of HTTPS requests processed on a service.   |
+    | <a id="opt-baqup-service-request-duration-seconds" href="#opt-baqup-service-request-duration-seconds" title="#opt-baqup-service-request-duration-seconds">`baqup_service_request_duration_seconds`</a> | Histogram | `code`, `method`, `protocol`, `service` | Request processing duration histogram on a service.         |
+    | <a id="opt-baqup-service-retries-total" href="#opt-baqup-service-retries-total" title="#opt-baqup-service-retries-total">`baqup_service_retries_total`</a> | Count     | `service`                               | The count of requests retries on a service.                 |
+    | <a id="opt-baqup-service-server-up" href="#opt-baqup-service-server-up" title="#opt-baqup-service-server-up">`baqup_service_server_up`</a> | Gauge     | `service`, `url`                        | Current service's server status, 0 for a down or 1 for up. Only for services configured with healthcheck. |
+    | <a id="opt-baqup-service-requests-bytes-total" href="#opt-baqup-service-requests-bytes-total" title="#opt-baqup-service-requests-bytes-total">`baqup_service_requests_bytes_total`</a> | Count     | `code`, `method`, `protocol`, `service` | The total size of requests in bytes received by a service.  |
+    | <a id="opt-baqup-service-responses-bytes-total" href="#opt-baqup-service-responses-bytes-total" title="#opt-baqup-service-responses-bytes-total">`baqup_service_responses_bytes_total`</a> | Count     | `code`, `method`, `protocol`, `service` | The total size of responses in bytes returned by a service. |
     
 === "Prometheus"
 
     | Metric    | Type      | Labels    | Description    |
     |-----------------------|-----------|-------|------------|
-    | <a id="opt-traefik-service-requests-total-2" href="#opt-traefik-service-requests-total-2" title="#opt-traefik-service-requests-total-2">`traefik_service_requests_total`</a> | Count     | `code`, `method`, `protocol`, `service` | The total count of HTTP requests processed on a service.    |
-    | <a id="opt-traefik-service-requests-tls-total-2" href="#opt-traefik-service-requests-tls-total-2" title="#opt-traefik-service-requests-tls-total-2">`traefik_service_requests_tls_total`</a> | Count     | `tls_version`, `tls_cipher`, `service`  | The total count of HTTPS requests processed on a service.   |
-    | <a id="opt-traefik-service-request-duration-seconds-2" href="#opt-traefik-service-request-duration-seconds-2" title="#opt-traefik-service-request-duration-seconds-2">`traefik_service_request_duration_seconds`</a> | Histogram | `code`, `method`, `protocol`, `service` | Request processing duration histogram on a service.         |
-    | <a id="opt-traefik-service-retries-total-2" href="#opt-traefik-service-retries-total-2" title="#opt-traefik-service-retries-total-2">`traefik_service_retries_total`</a> | Count     | `service`                               | The count of requests retries on a service.                 |
-    | <a id="opt-traefik-service-server-up-2" href="#opt-traefik-service-server-up-2" title="#opt-traefik-service-server-up-2">`traefik_service_server_up`</a> | Gauge     | `service`, `url`                        | Current service's server status, 0 for a down or 1 for up. Only for services configured with healthcheck. |
-    | <a id="opt-traefik-service-requests-bytes-total-2" href="#opt-traefik-service-requests-bytes-total-2" title="#opt-traefik-service-requests-bytes-total-2">`traefik_service_requests_bytes_total`</a> | Count     | `code`, `method`, `protocol`, `service` | The total size of requests in bytes received by a service.  |
-    | <a id="opt-traefik-service-responses-bytes-total-2" href="#opt-traefik-service-responses-bytes-total-2" title="#opt-traefik-service-responses-bytes-total-2">`traefik_service_responses_bytes_total`</a> | Count     | `code`, `method`, `protocol`, `service` | The total size of responses in bytes returned by a service. |
+    | <a id="opt-baqup-service-requests-total-2" href="#opt-baqup-service-requests-total-2" title="#opt-baqup-service-requests-total-2">`baqup_service_requests_total`</a> | Count     | `code`, `method`, `protocol`, `service` | The total count of HTTP requests processed on a service.    |
+    | <a id="opt-baqup-service-requests-tls-total-2" href="#opt-baqup-service-requests-tls-total-2" title="#opt-baqup-service-requests-tls-total-2">`baqup_service_requests_tls_total`</a> | Count     | `tls_version`, `tls_cipher`, `service`  | The total count of HTTPS requests processed on a service.   |
+    | <a id="opt-baqup-service-request-duration-seconds-2" href="#opt-baqup-service-request-duration-seconds-2" title="#opt-baqup-service-request-duration-seconds-2">`baqup_service_request_duration_seconds`</a> | Histogram | `code`, `method`, `protocol`, `service` | Request processing duration histogram on a service.         |
+    | <a id="opt-baqup-service-retries-total-2" href="#opt-baqup-service-retries-total-2" title="#opt-baqup-service-retries-total-2">`baqup_service_retries_total`</a> | Count     | `service`                               | The count of requests retries on a service.                 |
+    | <a id="opt-baqup-service-server-up-2" href="#opt-baqup-service-server-up-2" title="#opt-baqup-service-server-up-2">`baqup_service_server_up`</a> | Gauge     | `service`, `url`                        | Current service's server status, 0 for a down or 1 for up. Only for services configured with healthcheck. |
+    | <a id="opt-baqup-service-requests-bytes-total-2" href="#opt-baqup-service-requests-bytes-total-2" title="#opt-baqup-service-requests-bytes-total-2">`baqup_service_requests_bytes_total`</a> | Count     | `code`, `method`, `protocol`, `service` | The total size of requests in bytes received by a service.  |
+    | <a id="opt-baqup-service-responses-bytes-total-2" href="#opt-baqup-service-responses-bytes-total-2" title="#opt-baqup-service-responses-bytes-total-2">`baqup_service_responses_bytes_total`</a> | Count     | `code`, `method`, `protocol`, `service` | The total size of responses in bytes returned by a service. |
 
 === "Datadog"
 
@@ -570,13 +570,13 @@ On top of the official OpenTelemetry semantic conventions, Traefik provides its 
 
     | Metric                | Type      | Labels                                  | Description                                                 |
     |-----------------------|-----------|-----------------------------------------|-------------------------------------------------------------|
-    | <a id="opt-traefik-service-requests-total-3" href="#opt-traefik-service-requests-total-3" title="#opt-traefik-service-requests-total-3">`traefik.service.requests.total`</a> | Count     | `code`, `method`, `protocol`, `service` | The total count of HTTP requests processed on a service.    |
-    | <a id="opt-traefik-service-requests-tls-total-3" href="#opt-traefik-service-requests-tls-total-3" title="#opt-traefik-service-requests-tls-total-3">`traefik.service.requests.tls.total`</a> | Count     | `tls_version`, `tls_cipher`, `service`  | The total count of HTTPS requests processed on a service.   |
-    | <a id="opt-traefik-service-request-duration-seconds-3" href="#opt-traefik-service-request-duration-seconds-3" title="#opt-traefik-service-request-duration-seconds-3">`traefik.service.request.duration.seconds`</a> | Histogram | `code`, `method`, `protocol`, `service` | Request processing duration histogram on a service.         |
-    | <a id="opt-traefik-service-retries-total-3" href="#opt-traefik-service-retries-total-3" title="#opt-traefik-service-retries-total-3">`traefik.service.retries.total`</a> | Count     | `service`                               | The count of requests retries on a service.                 |
-    | <a id="opt-traefik-service-server-up-3" href="#opt-traefik-service-server-up-3" title="#opt-traefik-service-server-up-3">`traefik.service.server.up`</a> | Gauge     | `service`, `url`                        | Current service's server status, 0 for a down or 1 for up. Only for services configured with healthcheck. |
-    | <a id="opt-traefik-service-requests-bytes-total-3" href="#opt-traefik-service-requests-bytes-total-3" title="#opt-traefik-service-requests-bytes-total-3">`traefik.service.requests.bytes.total`</a> | Count     | `code`, `method`, `protocol`, `service` | The total size of requests in bytes received by a service.  |
-    | <a id="opt-traefik-service-responses-bytes-total-3" href="#opt-traefik-service-responses-bytes-total-3" title="#opt-traefik-service-responses-bytes-total-3">`traefik.service.responses.bytes.total`</a> | Count     | `code`, `method`, `protocol`, `service` | The total size of responses in bytes returned by a service. |
+    | <a id="opt-baqup-service-requests-total-3" href="#opt-baqup-service-requests-total-3" title="#opt-baqup-service-requests-total-3">`baqup.service.requests.total`</a> | Count     | `code`, `method`, `protocol`, `service` | The total count of HTTP requests processed on a service.    |
+    | <a id="opt-baqup-service-requests-tls-total-3" href="#opt-baqup-service-requests-tls-total-3" title="#opt-baqup-service-requests-tls-total-3">`baqup.service.requests.tls.total`</a> | Count     | `tls_version`, `tls_cipher`, `service`  | The total count of HTTPS requests processed on a service.   |
+    | <a id="opt-baqup-service-request-duration-seconds-3" href="#opt-baqup-service-request-duration-seconds-3" title="#opt-baqup-service-request-duration-seconds-3">`baqup.service.request.duration.seconds`</a> | Histogram | `code`, `method`, `protocol`, `service` | Request processing duration histogram on a service.         |
+    | <a id="opt-baqup-service-retries-total-3" href="#opt-baqup-service-retries-total-3" title="#opt-baqup-service-retries-total-3">`baqup.service.retries.total`</a> | Count     | `service`                               | The count of requests retries on a service.                 |
+    | <a id="opt-baqup-service-server-up-3" href="#opt-baqup-service-server-up-3" title="#opt-baqup-service-server-up-3">`baqup.service.server.up`</a> | Gauge     | `service`, `url`                        | Current service's server status, 0 for a down or 1 for up. Only for services configured with healthcheck. |
+    | <a id="opt-baqup-service-requests-bytes-total-3" href="#opt-baqup-service-requests-bytes-total-3" title="#opt-baqup-service-requests-bytes-total-3">`baqup.service.requests.bytes.total`</a> | Count     | `code`, `method`, `protocol`, `service` | The total size of requests in bytes received by a service.  |
+    | <a id="opt-baqup-service-responses-bytes-total-3" href="#opt-baqup-service-responses-bytes-total-3" title="#opt-baqup-service-responses-bytes-total-3">`baqup.service.responses.bytes.total`</a> | Count     | `code`, `method`, `protocol`, `service` | The total size of responses in bytes returned by a service. |
 
 === "StatsD"
 
@@ -591,7 +591,7 @@ On top of the official OpenTelemetry semantic conventions, Traefik provides its 
     | <a id="opt-prefix-service-responses-bytes-total" href="#opt-prefix-service-responses-bytes-total" title="#opt-prefix-service-responses-bytes-total">`{prefix}.service.responses.bytes.total`</a> | Count     | `code`, `method`, `protocol`, `service` | The total size of responses in bytes returned by a service. |
 
 !!! note "\{prefix\} Default Value"
-        By default, \{prefix\} value is `traefik`.
+        By default, \{prefix\} value is `baqup`.
 
 ##### Labels
 

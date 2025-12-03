@@ -1,9 +1,9 @@
 ---
 title: "ServersTransport TCP"
-description: "The ServersTransport allows configuring the connection between Traefik and the TCP servers in Kubernetes."
+description: "The ServersTransport allows configuring the connection between Baqup and the TCP servers in Kubernetes."
 ---
 
-ServersTransport allows to configure the transport between Traefik and your TCP servers.
+ServersTransport allows to configure the transport between Baqup and your TCP servers.
 
 ## Configuration Example
 
@@ -70,14 +70,14 @@ tcp:
 
 ```yaml tab="Labels"
 labels:
-  - "traefik.tcp.services.Service01.loadBalancer.serversTransport=mytransport"
+  - "baqup.tcp.services.Service01.loadBalancer.serversTransport=mytransport"
 ```
 
 ```json tab="Tags"
 {
   // ...
   "Tags": [
-    "traefik.tcp.services.Service01.loadBalancer.serversTransport=mytransport"
+    "baqup.tcp.services.Service01.loadBalancer.serversTransport=mytransport"
   ]
 }
 ```
@@ -90,7 +90,7 @@ labels:
 | <a id="opt-serverstransport-dialKeepAlive" href="#opt-serverstransport-dialKeepAlive" title="#opt-serverstransport-dialKeepAlive">`serverstransport.`<br />`dialKeepAlive`</a> | Defines the interval between keep-alive probes for an active network connection.                                                                                                                                   | 15s     | No       |
 | <a id="opt-serverstransport-terminationDelay" href="#opt-serverstransport-terminationDelay" title="#opt-serverstransport-terminationDelay">`serverstransport.`<br />`terminationDelay`</a> | Sets the time limit for the proxy to fully terminate connections on both sides after initiating the termination sequence, with a negative value indicating no deadline. More Information [here](#terminationdelay) | 100ms   | No       |
 | <a id="opt-serverstransport-proxyProtocol" href="#opt-serverstransport-proxyProtocol" title="#opt-serverstransport-proxyProtocol">`serverstransport.`<br />`proxyProtocol`</a> | Defines the Proxy Protocol configuration. An empty `proxyProtocol` section enables Proxy Protocol version 2.                                                                                                       |         | No       |
-| <a id="opt-serverstransport-proxyProtocol-version" href="#opt-serverstransport-proxyProtocol-version" title="#opt-serverstransport-proxyProtocol-version">`serverstransport.`<br />`proxyProtocol.version`</a> | Traefik supports PROXY Protocol version 1 and 2 on TCP Services. More Information [here](#proxyprotocolversion)                                                                                                    | 2       | No       |
+| <a id="opt-serverstransport-proxyProtocol-version" href="#opt-serverstransport-proxyProtocol-version" title="#opt-serverstransport-proxyProtocol-version">`serverstransport.`<br />`proxyProtocol.version`</a> | Baqup supports PROXY Protocol version 1 and 2 on TCP Services. More Information [here](#proxyprotocolversion)                                                                                                    | 2       | No       |
 | <a id="opt-serverstransport-tls" href="#opt-serverstransport-tls" title="#opt-serverstransport-tls">`serverstransport.`<br />`tls`</a> | Defines the TLS configuration. An empty `tls` section enables TLS.                                                                                                                                                 |         | No       |
 | <a id="opt-serverstransport-tls-serverName" href="#opt-serverstransport-tls-serverName" title="#opt-serverstransport-tls-serverName">`serverstransport.`<br />`tls`<br />`.serverName`</a> | Configures the server name that will be used for SNI.                                                                                                                                                              |         | No       |
 | <a id="opt-serverstransport-tls-certificates" href="#opt-serverstransport-tls-certificates" title="#opt-serverstransport-tls-certificates">`serverstransport.`<br />`tls`<br />`.certificates`</a> | Defines the list of certificates (as file paths, or data bytes) that will be set as client certificates for mTLS.                                                                                                  |         | No       |
@@ -103,7 +103,7 @@ labels:
 
 !!! note "SPIFFE"
 
-    Please note that SPIFFE must be enabled in the [install configuration](../../install-configuration/tls/spiffe.md) (formerly known as static configuration) before using it to secure the connection between Traefik and the backends.
+    Please note that SPIFFE must be enabled in the [install configuration](../../install-configuration/tls/spiffe.md) (formerly known as static configuration) before using it to secure the connection between Baqup and the backends.
 
 ### `terminationDelay`
 
@@ -120,6 +120,6 @@ A negative value means an infinite deadline (i.e. the connection is never fully 
 
 ### `proxyProtocol.version`
 
-Traefik supports [PROXY Protocol](https://www.haproxy.org/download/2.0/doc/proxy-protocol.txt) version 1 and 2 on TCP Services.
+Baqup supports [PROXY Protocol](https://www.haproxy.org/download/2.0/doc/proxy-protocol.txt) version 1 and 2 on TCP Services.
 It can be configured by setting `proxyProtocol.version` on the serversTransport.
 The option specifies the version of the protocol to be used. Either 1 or 2.

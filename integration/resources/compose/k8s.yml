@@ -7,7 +7,7 @@ services:
       - --disable-agent
       - --disable=coredns
       - --disable=servicelb
-      - --disable=traefik
+      - --disable=baqup
       - --disable=local-storage
       - --disable=metrics-server
       - --log=/output/k3s.log

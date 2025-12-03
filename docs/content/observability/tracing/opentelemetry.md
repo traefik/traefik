@@ -1,11 +1,11 @@
 ---
-title: "Traefik OpenTelemetry Documentation"
-description: "Traefik supports several tracing backends, including OpenTelemetry. Learn how to implement it for observability in Traefik Proxy. Read the technical documentation."
+title: "Baqup OpenTelemetry Documentation"
+description: "Baqup supports several tracing backends, including OpenTelemetry. Learn how to implement it for observability in Baqup Proxy. Read the technical documentation."
 ---
 
 # OpenTelemetry
 
-Traefik Proxy follows [official OpenTelemetry semantic conventions v1.37.0](https://github.com/open-telemetry/semantic-conventions/blob/v1.37.0/docs/http/http-spans.md).
+Baqup Proxy follows [official OpenTelemetry semantic conventions v1.37.0](https://github.com/open-telemetry/semantic-conventions/blob/v1.37.0/docs/http/http-spans.md).
 
 To enable the OpenTelemetry tracer:
 
@@ -34,7 +34,7 @@ tracing:
 
 !!! info "Propagation"
     
-    Traefik supports the `OTEL_PROPAGATORS` env variable to set up the propragators. The supported propagators are:
+    Baqup supports the `OTEL_PROPAGATORS` env variable to set up the propragators. The supported propagators are:
 
     - tracecontext (default)
     - baggage (default)

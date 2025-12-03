@@ -14,17 +14,17 @@ import (
 	"testing"
 	"time"
 
+	"github.com/baqupio/baqup/v3/integration/try"
+	"github.com/baqupio/baqup/v3/pkg/middlewares/accesslog"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"github.com/traefik/traefik/v3/integration/try"
-	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
 )
 
 const (
-	traefikTestLogFile       = "traefik.log"
-	traefikTestAccessLogFile = "access.log"
+	baqupTestLogFile       = "baqup.log"
+	baqupTestAccessLogFile = "access.log"
 )
 
 // AccessLogSuite tests suite.
@@ -53,28 +53,28 @@ func (s *AccessLogSuite) TearDownSuite() {
 }
 
 func (s *AccessLogSuite) TearDownTest() {
-	s.displayTraefikLogFile(traefikTestLogFile)
-	_ = os.Remove(traefikTestAccessLogFile)
+	s.displayBaqupLogFile(baqupTestLogFile)
+	_ = os.Remove(baqupTestAccessLogFile)
 }
 
 func (s *AccessLogSuite) TestAccessLog() {
 	ensureWorkingDirectoryIsClean()
 
-	// Start Traefik
-	s.traefikCmd(withConfigFile("fixtures/access_log/access_log_base.toml"))
+	// Start Baqup
+	s.baqupCmd(withConfigFile("fixtures/access_log/access_log_base.toml"))
 
 	defer func() {
-		traefikLog, err := os.ReadFile(traefikTestLogFile)
+		baqupLog, err := os.ReadFile(baqupTestLogFile)
 		require.NoError(s.T(), err)
-		log.Info().Msg(string(traefikLog))
+		log.Info().Msg(string(baqupLog))
 	}()
 
-	s.waitForTraefik("server1")
+	s.waitForBaqup("server1")
 
 	s.checkStatsForLogFile()
 
-	// Verify Traefik started OK
-	s.checkTraefikStarted()
+	// Verify Baqup started OK
+	s.checkBaqupStarted()
 
 	// Make some requests
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
@@ -98,8 +98,8 @@ func (s *AccessLogSuite) TestAccessLog() {
 
 	assert.Equal(s.T(), 3, count)
 
-	// Verify no other Traefik problems
-	s.checkNoOtherTraefikProblems()
+	// Verify no other Baqup problems
+	s.checkNoOtherBaqupProblems()
 }
 
 func (s *AccessLogSuite) TestAccessLogAuthFrontend() {
@@ -129,15 +129,15 @@ func (s *AccessLogSuite) TestAccessLogAuthFrontend() {
 		},
 	}
 
-	// Start Traefik
-	s.traefikCmd(withConfigFile("fixtures/access_log/access_log_base.toml"))
+	// Start Baqup
+	s.baqupCmd(withConfigFile("fixtures/access_log/access_log_base.toml"))
 
 	s.checkStatsForLogFile()
 
-	s.waitForTraefik("authFrontend")
+	s.waitForBaqup("authFrontend")
 
-	// Verify Traefik started OK
-	s.checkTraefikStarted()
+	// Verify Baqup started OK
+	s.checkBaqupStarted()
 
 	// Test auth entrypoint
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8006/", nil)
@@ -162,8 +162,8 @@ func (s *AccessLogSuite) TestAccessLogAuthFrontend() {
 
 	assert.GreaterOrEqual(s.T(), count, len(expected))
 
-	// Verify no other Traefik problems
-	s.checkNoOtherTraefikProblems()
+	// Verify no other Baqup problems
+	s.checkNoOtherBaqupProblems()
 }
 
 func (s *AccessLogSuite) TestAccessLogDigestAuthMiddleware() {
@@ -193,15 +193,15 @@ func (s *AccessLogSuite) TestAccessLogDigestAuthMiddleware() {
 		},
 	}
 
-	// Start Traefik
-	s.traefikCmd(withConfigFile("fixtures/access_log/access_log_base.toml"))
+	// Start Baqup
+	s.baqupCmd(withConfigFile("fixtures/access_log/access_log_base.toml"))
 
 	s.checkStatsForLogFile()
 
-	s.waitForTraefik("digestAuthMiddleware")
+	s.waitForBaqup("digestAuthMiddleware")
 
-	// Verify Traefik started OK
-	s.checkTraefikStarted()
+	// Verify Baqup started OK
+	s.checkBaqupStarted()
 
 	// Test auth entrypoint
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8008/", nil)
@@ -235,8 +235,8 @@ func (s *AccessLogSuite) TestAccessLogDigestAuthMiddleware() {
 
 	assert.GreaterOrEqual(s.T(), count, len(expected))
 
-	// Verify no other Traefik problems
-	s.checkNoOtherTraefikProblems()
+	// Verify no other Baqup problems
+	s.checkNoOtherBaqupProblems()
 }
 
 // Thanks to mvndaai for digest authentication
@@ -303,15 +303,15 @@ func (s *AccessLogSuite) TestAccessLogFrontendRedirect() {
 		},
 	}
 
-	// Start Traefik
-	s.traefikCmd(withConfigFile("fixtures/access_log/access_log_base.toml"))
+	// Start Baqup
+	s.baqupCmd(withConfigFile("fixtures/access_log/access_log_base.toml"))
 
 	s.checkStatsForLogFile()
 
-	s.waitForTraefik("frontendRedirect")
+	s.waitForBaqup("frontendRedirect")
 
-	// Verify Traefik started OK
-	s.checkTraefikStarted()
+	// Verify Baqup started OK
+	s.checkBaqupStarted()
 
 	// Test frontend redirect
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8005/test", nil)
@@ -326,8 +326,8 @@ func (s *AccessLogSuite) TestAccessLogFrontendRedirect() {
 
 	assert.GreaterOrEqual(s.T(), count, len(expected))
 
-	// Verify no other Traefik problems
-	s.checkNoOtherTraefikProblems()
+	// Verify no other Baqup problems
+	s.checkNoOtherBaqupProblems()
 }
 
 func (s *AccessLogSuite) TestAccessLogJSONFrontendRedirect() {
@@ -355,15 +355,15 @@ func (s *AccessLogSuite) TestAccessLogJSONFrontendRedirect() {
 		},
 	}
 
-	// Start Traefik
-	s.traefikCmd(withConfigFile("fixtures/access_log_json_config.toml"))
+	// Start Baqup
+	s.baqupCmd(withConfigFile("fixtures/access_log_json_config.toml"))
 
 	s.checkStatsForLogFile()
 
-	s.waitForTraefik("frontendRedirect")
+	s.waitForBaqup("frontendRedirect")
 
-	// Verify Traefik started OK
-	s.checkTraefikStarted()
+	// Verify Baqup started OK
+	s.checkBaqupStarted()
 
 	// Test frontend redirect
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8005/test", nil)
@@ -409,15 +409,15 @@ func (s *AccessLogSuite) TestAccessLogRateLimit() {
 		},
 	}
 
-	// Start Traefik
-	s.traefikCmd(withConfigFile("fixtures/access_log/access_log_base.toml"))
+	// Start Baqup
+	s.baqupCmd(withConfigFile("fixtures/access_log/access_log_base.toml"))
 
 	s.checkStatsForLogFile()
 
-	s.waitForTraefik("rateLimit")
+	s.waitForBaqup("rateLimit")
 
-	// Verify Traefik started OK
-	s.checkTraefikStarted()
+	// Verify Baqup started OK
+	s.checkBaqupStarted()
 
 	// Test rate limit
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8007/", nil)
@@ -436,8 +436,8 @@ func (s *AccessLogSuite) TestAccessLogRateLimit() {
 
 	assert.GreaterOrEqual(s.T(), count, len(expected))
 
-	// Verify no other Traefik problems
-	s.checkNoOtherTraefikProblems()
+	// Verify no other Baqup problems
+	s.checkNoOtherBaqupProblems()
 }
 
 func (s *AccessLogSuite) TestAccessLogBackendNotFound() {
@@ -453,15 +453,15 @@ func (s *AccessLogSuite) TestAccessLogBackendNotFound() {
 		},
 	}
 
-	// Start Traefik
-	s.traefikCmd(withConfigFile("fixtures/access_log/access_log_base.toml"))
+	// Start Baqup
+	s.baqupCmd(withConfigFile("fixtures/access_log/access_log_base.toml"))
 
-	s.waitForTraefik("server1")
+	s.waitForBaqup("server1")
 
 	s.checkStatsForLogFile()
 
-	// Verify Traefik started OK
-	s.checkTraefikStarted()
+	// Verify Baqup started OK
+	s.checkBaqupStarted()
 
 	// Test rate limit
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
@@ -476,8 +476,8 @@ func (s *AccessLogSuite) TestAccessLogBackendNotFound() {
 
 	assert.GreaterOrEqual(s.T(), count, len(expected))
 
-	// Verify no other Traefik problems
-	s.checkNoOtherTraefikProblems()
+	// Verify no other Baqup problems
+	s.checkNoOtherBaqupProblems()
 }
 
 func (s *AccessLogSuite) TestAccessLogFrontendAllowlist() {
@@ -493,15 +493,15 @@ func (s *AccessLogSuite) TestAccessLogFrontendAllowlist() {
 		},
 	}
 
-	// Start Traefik
-	s.traefikCmd(withConfigFile("fixtures/access_log/access_log_base.toml"))
+	// Start Baqup
+	s.baqupCmd(withConfigFile("fixtures/access_log/access_log_base.toml"))
 
 	s.checkStatsForLogFile()
 
-	s.waitForTraefik("frontendAllowlist")
+	s.waitForBaqup("frontendAllowlist")
 
-	// Verify Traefik started OK
-	s.checkTraefikStarted()
+	// Verify Baqup started OK
+	s.checkBaqupStarted()
 
 	// Test rate limit
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
@@ -516,8 +516,8 @@ func (s *AccessLogSuite) TestAccessLogFrontendAllowlist() {
 
 	assert.GreaterOrEqual(s.T(), count, len(expected))
 
-	// Verify no other Traefik problems
-	s.checkNoOtherTraefikProblems()
+	// Verify no other Baqup problems
+	s.checkNoOtherBaqupProblems()
 }
 
 func (s *AccessLogSuite) TestAccessLogAuthFrontendSuccess() {
@@ -533,15 +533,15 @@ func (s *AccessLogSuite) TestAccessLogAuthFrontendSuccess() {
 		},
 	}
 
-	// Start Traefik
-	s.traefikCmd(withConfigFile("fixtures/access_log/access_log_base.toml"))
+	// Start Baqup
+	s.baqupCmd(withConfigFile("fixtures/access_log/access_log_base.toml"))
 
 	s.checkStatsForLogFile()
 
-	s.waitForTraefik("authFrontend")
+	s.waitForBaqup("authFrontend")
 
-	// Verify Traefik started OK
-	s.checkTraefikStarted()
+	// Verify Baqup started OK
+	s.checkBaqupStarted()
 
 	// Test auth entrypoint
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8006/", nil)
@@ -557,8 +557,8 @@ func (s *AccessLogSuite) TestAccessLogAuthFrontendSuccess() {
 
 	assert.GreaterOrEqual(s.T(), count, len(expected))
 
-	// Verify no other Traefik problems
-	s.checkNoOtherTraefikProblems()
+	// Verify no other Baqup problems
+	s.checkNoOtherBaqupProblems()
 }
 
 func (s *AccessLogSuite) TestAccessLogPreflightHeadersMiddleware() {
@@ -574,15 +574,15 @@ func (s *AccessLogSuite) TestAccessLogPreflightHeadersMiddleware() {
 		},
 	}
 
-	// Start Traefik
-	s.traefikCmd(withConfigFile("fixtures/access_log/access_log_base.toml"))
+	// Start Baqup
+	s.baqupCmd(withConfigFile("fixtures/access_log/access_log_base.toml"))
 
 	s.checkStatsForLogFile()
 
-	s.waitForTraefik("preflightCORS")
+	s.waitForBaqup("preflightCORS")
 
-	// Verify Traefik started OK
-	s.checkTraefikStarted()
+	// Verify Baqup started OK
+	s.checkBaqupStarted()
 
 	// Test preflight response
 	req, err := http.NewRequest(http.MethodOptions, "http://127.0.0.1:8009/", nil)
@@ -599,30 +599,30 @@ func (s *AccessLogSuite) TestAccessLogPreflightHeadersMiddleware() {
 
 	assert.GreaterOrEqual(s.T(), count, len(expected))
 
-	// Verify no other Traefik problems
-	s.checkNoOtherTraefikProblems()
+	// Verify no other Baqup problems
+	s.checkNoOtherBaqupProblems()
 }
 
 func (s *AccessLogSuite) TestAccessLogDisabledForInternals() {
 	ensureWorkingDirectoryIsClean()
 
-	// Start Traefik.
-	s.traefikCmd(withConfigFile("fixtures/access_log/access_log_base.toml"))
+	// Start Baqup.
+	s.baqupCmd(withConfigFile("fixtures/access_log/access_log_base.toml"))
 
 	defer func() {
-		traefikLog, err := os.ReadFile(traefikTestLogFile)
+		baqupLog, err := os.ReadFile(baqupTestLogFile)
 		require.NoError(s.T(), err)
-		log.Info().Msg(string(traefikLog))
+		log.Info().Msg(string(baqupLog))
 	}()
 
-	// waitForTraefik makes at least one call to the rawdata api endpoint,
+	// waitForBaqup makes at least one call to the rawdata api endpoint,
 	// but the logs for this endpoint are ignored in checkAccessLogOutput.
-	s.waitForTraefik("service3")
+	s.waitForBaqup("service3")
 
 	s.checkStatsForLogFile()
 
-	// Verify Traefik started OK.
-	s.checkTraefikStarted()
+	// Verify Baqup started OK.
+	s.checkBaqupStarted()
 
 	// Make some requests on the internal ping router.
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8080/ping", nil)
@@ -648,15 +648,15 @@ func (s *AccessLogSuite) TestAccessLogDisabledForInternals() {
 
 	require.Equal(s.T(), 0, count)
 
-	// Verify no other Traefik problems.
-	s.checkNoOtherTraefikProblems()
+	// Verify no other Baqup problems.
+	s.checkNoOtherBaqupProblems()
 }
 
-func (s *AccessLogSuite) checkNoOtherTraefikProblems() {
-	traefikLog, err := os.ReadFile(traefikTestLogFile)
+func (s *AccessLogSuite) checkNoOtherBaqupProblems() {
+	baqupLog, err := os.ReadFile(baqupTestLogFile)
 	require.NoError(s.T(), err)
-	if len(traefikLog) > 0 {
-		fmt.Printf("%s\n", string(traefikLog))
+	if len(baqupLog) > 0 {
+		fmt.Printf("%s\n", string(baqupLog))
 	}
 }
 
@@ -696,7 +696,7 @@ func (s *AccessLogSuite) checkAccessLogExactValuesOutput(values []accessLogValue
 func (s *AccessLogSuite) extractLines() []string {
 	s.T().Helper()
 
-	accessLog, err := os.ReadFile(traefikTestAccessLogFile)
+	accessLog, err := os.ReadFile(baqupTestAccessLogFile)
 	require.NoError(s.T(), err)
 
 	lines := strings.Split(string(accessLog), "\n")
@@ -714,7 +714,7 @@ func (s *AccessLogSuite) checkStatsForLogFile() {
 	s.T().Helper()
 
 	err := try.Do(1*time.Second, func() error {
-		if _, errStat := os.Stat(traefikTestLogFile); errStat != nil {
+		if _, errStat := os.Stat(baqupTestLogFile); errStat != nil {
 			return fmt.Errorf("could not get stats for log file: %w", errStat)
 		}
 		return nil
@@ -723,19 +723,19 @@ func (s *AccessLogSuite) checkStatsForLogFile() {
 }
 
 func ensureWorkingDirectoryIsClean() {
-	os.Remove(traefikTestAccessLogFile)
-	os.Remove(traefikTestLogFile)
+	os.Remove(baqupTestAccessLogFile)
+	os.Remove(baqupTestLogFile)
 }
 
-func (s *AccessLogSuite) checkTraefikStarted() []byte {
+func (s *AccessLogSuite) checkBaqupStarted() []byte {
 	s.T().Helper()
 
-	traefikLog, err := os.ReadFile(traefikTestLogFile)
+	baqupLog, err := os.ReadFile(baqupTestLogFile)
 	require.NoError(s.T(), err)
-	if len(traefikLog) > 0 {
-		fmt.Printf("%s\n", string(traefikLog))
+	if len(baqupLog) > 0 {
+		fmt.Printf("%s\n", string(baqupLog))
 	}
-	return traefikLog
+	return baqupLog
 }
 
 func (s *BaseSuite) CheckAccessLogFormat(line string, i int) {

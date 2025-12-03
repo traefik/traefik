@@ -5,15 +5,15 @@
       {
         "ServiceName": "redis",
         "Tags": [
-          "traefik.enable=true"
+          "baqup.enable=true"
         ]
       },
       {
         "ServiceName": "hello-nomad",
         "Tags": [
-          "traefik.enable=true",
-          "traefik.http.routers.hellon.entrypoints=web",
-          "traefik.http.routers.hellon.service=hello-nomad"
+          "baqup.enable=true",
+          "baqup.http.routers.hellon.entrypoints=web",
+          "baqup.http.routers.hellon.service=hello-nomad"
         ]
       }
     ]

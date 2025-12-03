@@ -14,7 +14,7 @@
 {{range $name, $resolvers := .Acme }}
 
 [certificatesResolvers.{{ $name }}.acme]
-  email = "test@traefik.io"
+  email = "test@baqup.io"
   storage = "/tmp/acme.json"
   keyType = "{{ $resolvers.ACME.KeyType }}"
   caServer = "{{ $resolvers.ACME.CAServer }}"

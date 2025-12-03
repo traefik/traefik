@@ -1,6 +1,6 @@
 ---
-title: "Traefik RedirectRegex Documentation"
-description: "In Traefik Proxy's HTTP middleware, RedirectRegex redirecting clients to different locations. Read the technical documentation."
+title: "Baqup RedirectRegex Documentation"
+description: "In Baqup Proxy's HTTP middleware, RedirectRegex redirecting clients to different locations. Read the technical documentation."
 ---
 
 The `RedirectRegex` redirects a request using regex matching and replacement.
@@ -29,8 +29,8 @@ http:
 # Redirect with domain replacement
 # Note: all dollar signs need to be doubled for escaping.
 labels:
-  - "traefik.http.middlewares.test-redirectregex.redirectregex.regex=^http://localhost/(.*)"
-  - "traefik.http.middlewares.test-redirectregex.redirectregex.replacement=http://mydomain/$${1}"
+  - "baqup.http.middlewares.test-redirectregex.redirectregex.regex=^http://localhost/(.*)"
+  - "baqup.http.middlewares.test-redirectregex.redirectregex.replacement=http://mydomain/$${1}"
 ```
 
 ```json tab="Tags"
@@ -39,15 +39,15 @@ labels:
 {
   // ...
   "Tags" : [
-    "traefik.http.middlewares.test-redirectregex.redirectregex.regex=^http://localhost/(.*)"
-    "traefik.http.middlewares.test-redirectregex.redirectregex.replacement=http://mydomain/$${1}"
+    "baqup.http.middlewares.test-redirectregex.redirectregex.regex=^http://localhost/(.*)"
+    "baqup.http.middlewares.test-redirectregex.redirectregex.replacement=http://mydomain/$${1}"
   ]
 }
 ```
 
 ```yaml tab="Kubernetes"
 # Redirect with domain replacement
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-redirectregex
@@ -85,4 +85,4 @@ The `replacement` option defines how to modify the URL to have the new target UR
 
     Care should be taken when defining replacement expand variables: `$1x` is equivalent to `${1x}`, not `${1}x` (see [Regexp.Expand](https://golang.org/pkg/regexp/#Regexp.Expand)), so use `${1}` syntax.
 
-{!traefik-for-business-applications.md!}
+{!baqup-for-business-applications.md!}

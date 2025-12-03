@@ -21,7 +21,7 @@ func GetName(cookieName, backendName string) string {
 
 // GenerateName Generate a hashed name.
 func GenerateName(backendName string) string {
-	data := []byte("_TRAEFIK_BACKEND_" + backendName)
+	data := []byte("_BAQUP_BACKEND_" + backendName)
 
 	hash := sha1.New()
 	_, err := hash.Write(data)

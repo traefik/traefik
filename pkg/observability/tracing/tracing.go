@@ -11,10 +11,10 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/baqupio/baqup/v3/pkg/config/static"
+	"github.com/baqupio/baqup/v3/pkg/observability"
+	otypes "github.com/baqupio/baqup/v3/pkg/observability/types"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v3/pkg/config/static"
-	"github.com/traefik/traefik/v3/pkg/observability"
-	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	"go.opentelemetry.io/contrib/propagators/autoprop"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -66,7 +66,7 @@ func TracerFromContext(ctx context.Context) *Tracer {
 
 	span := trace.SpanFromContext(ctx)
 	if span != nil && span.TracerProvider() != nil {
-		tracer := span.TracerProvider().Tracer("github.com/traefik/traefik")
+		tracer := span.TracerProvider().Tracer("github.com/baqup/baqup")
 		if tracer, ok := tracer.(*Tracer); ok {
 			return tracer
 		}
@@ -89,7 +89,7 @@ func InjectContextIntoCarrier(req *http.Request) {
 	propagator.Inject(req.Context(), propagation.HeaderCarrier(req.Header))
 }
 
-// Span is trace.Span wrapping the Traefik TracerProvider.
+// Span is trace.Span wrapping the Baqup TracerProvider.
 type Span struct {
 	trace.Span
 
@@ -101,7 +101,7 @@ func (s Span) TracerProvider() trace.TracerProvider {
 	return s.tracerProvider
 }
 
-// TracerProvider is trace.TracerProvider wrapping the Traefik Tracer implementation.
+// TracerProvider is trace.TracerProvider wrapping the Baqup Tracer implementation.
 type TracerProvider struct {
 	trace.TracerProvider
 
@@ -109,9 +109,9 @@ type TracerProvider struct {
 }
 
 // Tracer returns the trace.Tracer for the given options.
-// It returns specifically the Traefik Tracer when requested.
+// It returns specifically the Baqup Tracer when requested.
 func (t TracerProvider) Tracer(name string, options ...trace.TracerOption) trace.Tracer {
-	if name == "github.com/traefik/traefik" {
+	if name == "github.com/baqup/baqup" {
 		return t.tracer
 	}
 

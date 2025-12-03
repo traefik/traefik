@@ -35,7 +35,7 @@ export const UdpRouterRender = ({ data, error, name }: UdpRouterRenderProps) => 
     return (
       <>
         <Helmet>
-          <title>{name} - Traefik Proxy</title>
+          <title>{name} - Baqup Proxy</title>
         </Helmet>
         <Text data-testid="error-text">
           Sorry, we could not fetch detail information for this Router right now. Please, try again later.
@@ -48,7 +48,7 @@ export const UdpRouterRender = ({ data, error, name }: UdpRouterRenderProps) => 
     return (
       <>
         <Helmet>
-          <title>{name} - Traefik Proxy</title>
+          <title>{name} - Baqup Proxy</title>
         </Helmet>
         <Flex css={{ flexDirection: 'row', mb: '70px' }} data-testid="skeleton">
           <CardListSection bigDescription />
@@ -70,7 +70,7 @@ export const UdpRouterRender = ({ data, error, name }: UdpRouterRenderProps) => 
   return (
     <>
       <Helmet>
-        <title>{data.name} - Traefik Proxy</title>
+        <title>{data.name} - Baqup Proxy</title>
       </Helmet>
       <RouterStructure data={data} protocol="udp" />
       <RouterDetail data={data} />

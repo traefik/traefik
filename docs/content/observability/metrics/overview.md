@@ -1,18 +1,18 @@
 ---
-title: "Traefik Metrics Overview"
-description: "Traefik Proxy supports these metrics backend systems: Datadog, InfluxDB 2.X, Prometheus, and StatsD. Read the full documentation to get started."
+title: "Baqup Metrics Overview"
+description: "Baqup Proxy supports these metrics backend systems: Datadog, InfluxDB 2.X, Prometheus, and StatsD. Read the full documentation to get started."
 ---
 
 # Metrics
 
-Traefik provides metrics in the [OpenTelemetry](./opentelemetry.md) format as well as the following vendor specific backends:
+Baqup provides metrics in the [OpenTelemetry](./opentelemetry.md) format as well as the following vendor specific backends:
 
 - [Datadog](./datadog.md)
 - [InfluxDB2](./influxdb2.md)
 - [Prometheus](./prometheus.md)
 - [StatsD](./statsd.md)
 
-Traefik Proxy hosts an official Grafana dashboard for both [on-premises](https://grafana.com/grafana/dashboards/17346)
+Baqup Proxy hosts an official Grafana dashboard for both [on-premises](https://grafana.com/grafana/dashboards/17346)
 and [Kubernetes](https://grafana.com/grafana/dashboards/17347) deployments.
 
 ## Common Options
@@ -47,17 +47,17 @@ addInternals = true
 | TLS certificates not after | Gauge |                          | The expiration date of certificates.                               |
 
 ```opentelemetry tab="OpenTelemetry"
-traefik_config_reloads_total
-traefik_config_last_reload_success
-traefik_open_connections
-traefik_tls_certs_not_after
+baqup_config_reloads_total
+baqup_config_last_reload_success
+baqup_open_connections
+baqup_tls_certs_not_after
 ```
 
 ```prom tab="Prometheus"
-traefik_config_reloads_total
-traefik_config_last_reload_success
-traefik_open_connections
-traefik_tls_certs_not_after
+baqup_config_reloads_total
+baqup_config_last_reload_success
+baqup_open_connections
+baqup_tls_certs_not_after
 ```
 
 ```dd tab="Datadog"
@@ -68,14 +68,14 @@ tls.certs.notAfterTimestamp
 ```
 
 ```influxdb tab="InfluxDB2"
-traefik.config.reload.total
-traefik.config.reload.lastSuccessTimestamp
-traefik.open.connections
-traefik.tls.certs.notAfterTimestamp
+baqup.config.reload.total
+baqup.config.reload.lastSuccessTimestamp
+baqup.open.connections
+baqup.tls.certs.notAfterTimestamp
 ```
 
 ```statsd tab="StatsD"
-# Default prefix: "traefik"
+# Default prefix: "baqup"
 {prefix}.config.reload.total
 {prefix}.config.reload.lastSuccessTimestamp
 {prefix}.open.connections
@@ -93,7 +93,7 @@ Here is a comprehensive list of labels that are provided by the global metrics:
 
 ## OpenTelemetry Semantic Conventions
 
-Traefik Proxy follows [official OpenTelemetry semantic conventions v1.23.1](https://github.com/open-telemetry/semantic-conventions/blob/v1.23.1/docs/http/http-metrics.md).
+Baqup Proxy follows [official OpenTelemetry semantic conventions v1.23.1](https://github.com/open-telemetry/semantic-conventions/blob/v1.23.1/docs/http/http-metrics.md).
 
 ### HTTP Server
 
@@ -139,7 +139,7 @@ Here is a comprehensive list of labels that are provided by the metrics:
 
 ## HTTP Metrics
 
-On top of the official OpenTelemetry semantic conventions, Traefik provides its own metrics to monitor the incoming traffic.
+On top of the official OpenTelemetry semantic conventions, Baqup provides its own metrics to monitor the incoming traffic.
 
 ### EntryPoint Metrics
 
@@ -152,19 +152,19 @@ On top of the official OpenTelemetry semantic conventions, Traefik provides its 
 | Responses bytes total | Count     | `code`, `method`, `protocol`, `entrypoint` | The total size of HTTP responses in bytes handled by an entrypoint. |
 
 ```opentelemetry tab="OpenTelemetry"
-traefik_entrypoint_requests_total
-traefik_entrypoint_requests_tls_total
-traefik_entrypoint_request_duration_seconds
-traefik_entrypoint_requests_bytes_total
-traefik_entrypoint_responses_bytes_total
+baqup_entrypoint_requests_total
+baqup_entrypoint_requests_tls_total
+baqup_entrypoint_request_duration_seconds
+baqup_entrypoint_requests_bytes_total
+baqup_entrypoint_responses_bytes_total
 ```
 
 ```prom tab="Prometheus"
-traefik_entrypoint_requests_total
-traefik_entrypoint_requests_tls_total
-traefik_entrypoint_request_duration_seconds
-traefik_entrypoint_requests_bytes_total
-traefik_entrypoint_responses_bytes_total
+baqup_entrypoint_requests_total
+baqup_entrypoint_requests_tls_total
+baqup_entrypoint_request_duration_seconds
+baqup_entrypoint_requests_bytes_total
+baqup_entrypoint_responses_bytes_total
 ```
 
 ```dd tab="Datadog"
@@ -176,15 +176,15 @@ entrypoint.responses.bytes.total
 ```
 
 ```influxdb tab="InfluxDB2"
-traefik.entrypoint.requests.total
-traefik.entrypoint.requests.tls.total
-traefik.entrypoint.request.duration
-traefik.entrypoint.requests.bytes.total
-traefik.entrypoint.responses.bytes.total
+baqup.entrypoint.requests.total
+baqup.entrypoint.requests.tls.total
+baqup.entrypoint.request.duration
+baqup.entrypoint.requests.bytes.total
+baqup.entrypoint.responses.bytes.total
 ```
 
 ```statsd tab="StatsD"
-# Default prefix: "traefik"
+# Default prefix: "baqup"
 {prefix}.entrypoint.request.total
 {prefix}.entrypoint.request.tls.total
 {prefix}.entrypoint.request.duration
@@ -203,19 +203,19 @@ traefik.entrypoint.responses.bytes.total
 | Responses bytes total | Count     | `code`, `method`, `protocol`, `router`, `service` | The total size of HTTP responses in bytes handled by a router. |
 
 ```opentelemetry tab="OpenTelemetry"
-traefik_router_requests_total
-traefik_router_requests_tls_total
-traefik_router_request_duration_seconds
-traefik_router_requests_bytes_total
-traefik_router_responses_bytes_total
+baqup_router_requests_total
+baqup_router_requests_tls_total
+baqup_router_request_duration_seconds
+baqup_router_requests_bytes_total
+baqup_router_responses_bytes_total
 ```
 
 ```prom tab="Prometheus"
-traefik_router_requests_total
-traefik_router_requests_tls_total
-traefik_router_request_duration_seconds
-traefik_router_requests_bytes_total
-traefik_router_responses_bytes_total
+baqup_router_requests_total
+baqup_router_requests_tls_total
+baqup_router_request_duration_seconds
+baqup_router_requests_bytes_total
+baqup_router_responses_bytes_total
 ```
 
 ```dd tab="Datadog"
@@ -227,15 +227,15 @@ router.responses.bytes.total
 ```
 
 ```influxdb tab="InfluxDB2"
-traefik.router.requests.total
-traefik.router.requests.tls.total
-traefik.router.request.duration
-traefik.router.requests.bytes.total
-traefik.router.responses.bytes.total
+baqup.router.requests.total
+baqup.router.requests.tls.total
+baqup.router.request.duration
+baqup.router.requests.bytes.total
+baqup.router.responses.bytes.total
 ```
 
 ```statsd tab="StatsD"
-# Default prefix: "traefik"
+# Default prefix: "baqup"
 {prefix}.router.request.total
 {prefix}.router.request.tls.total
 {prefix}.router.request.duration
@@ -256,23 +256,23 @@ traefik.router.responses.bytes.total
 | Responses bytes total | Count     | `code`, `method`, `protocol`, `service` | The total size of responses in bytes returned by a service. |
 
 ```opentelemetry tab="OpenTelemetry"
-traefik_service_requests_total
-traefik_service_requests_tls_total
-traefik_service_request_duration_seconds
-traefik_service_retries_total
-traefik_service_server_up
-traefik_service_requests_bytes_total
-traefik_service_responses_bytes_total
+baqup_service_requests_total
+baqup_service_requests_tls_total
+baqup_service_request_duration_seconds
+baqup_service_retries_total
+baqup_service_server_up
+baqup_service_requests_bytes_total
+baqup_service_responses_bytes_total
 ```
 
 ```prom tab="Prometheus"
-traefik_service_requests_total
-traefik_service_requests_tls_total
-traefik_service_request_duration_seconds
-traefik_service_retries_total
-traefik_service_server_up
-traefik_service_requests_bytes_total
-traefik_service_responses_bytes_total
+baqup_service_requests_total
+baqup_service_requests_tls_total
+baqup_service_request_duration_seconds
+baqup_service_retries_total
+baqup_service_server_up
+baqup_service_requests_bytes_total
+baqup_service_responses_bytes_total
 ```
 
 ```dd tab="Datadog"
@@ -286,17 +286,17 @@ service.responses.bytes.total
 ```
 
 ```influxdb tab="InfluxDB2"
-traefik.service.requests.total
-traefik.service.requests.tls.total
-traefik.service.request.duration
-traefik.service.retries.total
-traefik.service.server.up
-traefik.service.requests.bytes.total
-traefik.service.responses.bytes.total
+baqup.service.requests.total
+baqup.service.requests.tls.total
+baqup.service.request.duration
+baqup.service.retries.total
+baqup.service.server.up
+baqup.service.requests.bytes.total
+baqup.service.responses.bytes.total
 ```
 
 ```statsd tab="StatsD"
-# Default prefix: "traefik"
+# Default prefix: "baqup"
 {prefix}.service.request.total
 {prefix}.service.request.tls.total
 {prefix}.service.request.duration

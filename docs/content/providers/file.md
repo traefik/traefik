@@ -1,9 +1,9 @@
 ---
-title: "Traefik File Documentation"
-description: "The file provider in Traefik Proxy lets you define the dynamic configuration in a YAML or TOML file. Read the technical documentation."
+title: "Baqup File Documentation"
+description: "The file provider in Baqup Proxy lets you define the dynamic configuration in a YAML or TOML file. Read the technical documentation."
 ---
 
-# Traefik & File
+# Baqup & File
 
 Good Old Configuration File
 {: .subtitle }
@@ -62,7 +62,7 @@ It supports providing configuration through a [single configuration file](#filen
             users:
             - test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/
             - test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0
-            usersFile: etc/traefik/.htpasswd
+            usersFile: etc/baqup/.htpasswd
 
       # Add the service
       services:
@@ -89,7 +89,7 @@ It supports providing configuration through a [single configuration file](#filen
         [http.middlewares.my-basic-auth.basicAuth]
           users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
                     "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]
-          usersFile = "etc/traefik/.htpasswd"
+          usersFile = "etc/baqup/.htpasswd"
 
       # Add the service
       [http.services]
@@ -107,7 +107,7 @@ For an overview of all the options that can be set with the file provider, see t
 
 !!! warning "Limitations"
 
-    With the file provider, Traefik listens for file system notifications to update the dynamic configuration.
+    With the file provider, Baqup listens for file system notifications to update the dynamic configuration.
 
     If you use a mounted/bound file system in your orchestrator (like docker or kubernetes), the way the files are linked may be a source of errors.
     If the link between the file systems is broken, when a source file/directory is changed/renamed, nothing will be reported to the linked file/directory, so the file system notifications will be neither triggered nor caught.
@@ -115,10 +115,10 @@ For an overview of all the options that can be set with the file provider, see t
     For example, in Docker, if the host file is renamed, the link to the mounted file is broken and the container's file is no longer updated.
     To avoid this kind of issue, it is recommended to:
 
-    * set the Traefik [**directory**](#directory) configuration with the parent directory
+    * set the Baqup [**directory**](#directory) configuration with the parent directory
     * mount/bind the parent directory
 
-    As it is very difficult to listen to all file system notifications, Traefik uses [fsnotify](https://github.com/fsnotify/fsnotify).
+    As it is very difficult to listen to all file system notifications, Baqup uses [fsnotify](https://github.com/fsnotify/fsnotify).
     If using a directory with a mounted directory does not fix your issue, please check your file system compatibility with fsnotify.
 
 ### `filename`
@@ -173,7 +173,7 @@ providers:
 
 ### `watch`
 
-Set the `watch` option to `true` to allow Traefik to automatically watch for file changes.
+Set the `watch` option to `true` to allow Baqup to automatically watch for file changes.
 It works with both the `filename` and the `directory` options.
 
 ```yaml tab="File (YAML)"
@@ -200,9 +200,9 @@ providers:
 !!! warning
 
     Go Templating only works with dedicated dynamic configuration files.
-    Templating does not work in the Traefik main static configuration file.
+    Templating does not work in the Baqup main static configuration file.
 
-Traefik supports using Go templating to automatically generate repetitive sections of configuration files.
+Baqup supports using Go templating to automatically generate repetitive sections of configuration files.
 These sections must be a valid [Go template](https://pkg.go.dev/text/template/), and can use
 [sprig template functions](https://masterminds.github.io/sprig/).
 
@@ -240,8 +240,8 @@ To illustrate, it is possible to easily define multiple routers, services, and T
     tls:
       certificates:
       {{ range $i, $e := until 10 }}
-      - certFile: "/etc/traefik/cert-{{ $e }}.pem"
-        keyFile: "/etc/traefik/cert-{{ $e }}.key"
+      - certFile: "/etc/baqup/cert-{{ $e }}.pem"
+        keyFile: "/etc/baqup/cert-{{ $e }}.key"
         store:
         - "my-store-foo-{{ $e }}"
         - "my-store-bar-{{ $e }}"
@@ -280,8 +280,8 @@ To illustrate, it is possible to easily define multiple routers, services, and T
 
     {{ range $i, $e := until 10 }}
     [[tls.certificates]]
-      certFile = "/etc/traefik/cert-{{ $e }}.pem"
-      keyFile = "/etc/traefik/cert-{{ $e }}.key"
+      certFile = "/etc/baqup/cert-{{ $e }}.pem"
+      keyFile = "/etc/baqup/cert-{{ $e }}.key"
       stores = ["my-store-foo-{{ $e }}", "my-store-bar-{{ $e }}"]
     {{ end }}
 
@@ -292,4 +292,4 @@ To illustrate, it is possible to easily define multiple routers, services, and T
     {{ end }}
     ```
 
-{!traefik-for-business-applications.md!}
+{!baqup-for-business-applications.md!}

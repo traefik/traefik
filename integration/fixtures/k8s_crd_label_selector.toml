@@ -17,4 +17,4 @@
     address = ":8000"
 
 [providers.kubernetesCRD]
-  labelSelector = "app=traefik"
+  labelSelector = "app=baqup"

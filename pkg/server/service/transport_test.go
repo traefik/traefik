@@ -15,15 +15,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/baqupio/baqup/v3/pkg/config/dynamic"
+	baquptls "github.com/baqupio/baqup/v3/pkg/tls"
+	"github.com/baqupio/baqup/v3/pkg/types"
 	"github.com/spiffe/go-spiffe/v2/bundle/x509bundle"
 	"github.com/spiffe/go-spiffe/v2/spiffeid"
 	"github.com/spiffe/go-spiffe/v2/spiffetls/tlsconfig"
 	"github.com/spiffe/go-spiffe/v2/svid/x509svid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
-	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 // LocalhostCert is a PEM-encoded TLS cert
@@ -213,8 +213,8 @@ func TestMTLS(t *testing.T) {
 			RootCAs: []types.FileOrContent{types.FileOrContent(LocalhostCert)},
 
 			// For mTLS
-			Certificates: traefiktls.Certificates{
-				traefiktls.Certificate{
+			Certificates: baquptls.Certificates{
+				baquptls.Certificate{
 					CertFile: types.FileOrContent(mTLSCert),
 					KeyFile:  types.FileOrContent(mTLSKey),
 				},
@@ -240,7 +240,7 @@ func TestSpiffeMTLS(t *testing.T) {
 		rw.WriteHeader(http.StatusOK)
 	}))
 
-	trustDomain := spiffeid.RequireTrustDomainFromString("spiffe://traefik.test")
+	trustDomain := spiffeid.RequireTrustDomainFromString("spiffe://baqup.test")
 
 	pki, err := newFakeSpiffePKI(trustDomain)
 	require.NoError(t, err)
@@ -295,7 +295,7 @@ func TestSpiffeMTLS(t *testing.T) {
 		{
 			desc: "allows expected server SPIFFE ID",
 			config: dynamic.Spiffe{
-				IDs: []string{"spiffe://traefik.test/server"},
+				IDs: []string{"spiffe://baqup.test/server"},
 			},
 			clientSource:   &clientSource,
 			wantStatusCode: http.StatusOK,
@@ -303,7 +303,7 @@ func TestSpiffeMTLS(t *testing.T) {
 		{
 			desc: "blocks unexpected server SPIFFE ID",
 			config: dynamic.Spiffe{
-				IDs: []string{"spiffe://traefik.test/not-server"},
+				IDs: []string{"spiffe://baqup.test/not-server"},
 			},
 			clientSource: &clientSource,
 			wantError:    true,
@@ -311,7 +311,7 @@ func TestSpiffeMTLS(t *testing.T) {
 		{
 			desc: "allows expected server trust domain",
 			config: dynamic.Spiffe{
-				TrustDomain: "spiffe://traefik.test",
+				TrustDomain: "spiffe://baqup.test",
 			},
 			clientSource:   &clientSource,
 			wantStatusCode: http.StatusOK,
@@ -319,7 +319,7 @@ func TestSpiffeMTLS(t *testing.T) {
 		{
 			desc: "denies unexpected server trust domain",
 			config: dynamic.Spiffe{
-				TrustDomain: "spiffe://not-traefik.test",
+				TrustDomain: "spiffe://not-baqup.test",
 			},
 			clientSource: &clientSource,
 			wantError:    true,
@@ -327,8 +327,8 @@ func TestSpiffeMTLS(t *testing.T) {
 		{
 			desc: "spiffe IDs allowlist takes precedence",
 			config: dynamic.Spiffe{
-				IDs:         []string{"spiffe://traefik.test/not-server"},
-				TrustDomain: "spiffe://not-traefik.test",
+				IDs:         []string{"spiffe://baqup.test/not-server"},
+				TrustDomain: "spiffe://not-baqup.test",
 			},
 			clientSource: &clientSource,
 			wantError:    true,

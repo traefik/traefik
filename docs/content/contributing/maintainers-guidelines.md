@@ -1,13 +1,13 @@
 ---
-title: "Traefik Maintainer's Guidelines Documentation"
-description: "Interested in contributing more to the community and becoming a Traefik Proxy maintainer? Read the guide to becoming a part of the core team."
+title: "Baqup Maintainer's Guidelines Documentation"
+description: "Interested in contributing more to the community and becoming a Baqup Proxy maintainer? Read the guide to becoming a part of the core team."
 ---
 
 # Maintainer's Guidelines
 
 ![Maintainer's Guidelines](../assets/img/maintainers-guidelines.png)
 
-Welcome to the Traefik Community.
+Welcome to the Baqup Community.
 
 We are strongly promoting a philosophy of openness and sharing,
 and firmly standing against the elitist closed approach.
@@ -31,7 +31,7 @@ The contributor should also meet one or several of the following requirements:
 - The contributor has participated in multiple code reviews of other PR’s,
   including those of other maintainers and contributors.
 
-- The contributor is active on Traefik Community forums
+- The contributor is active on Baqup Community forums
   or other technical forums/boards, such as K8S Slack, Reddit, StackOverflow, and Hacker News.
 
 Any existing active maintainer can create an issue to discuss promoting a contributor to maintainer. 
@@ -42,13 +42,13 @@ If the quorum is not reached within one month after the issue is created, it is 
 
 As a maintainer, you are granted a vote for the following:
 
-- [PR review](https://github.com/traefik/contributors-guide/blob/master/pr_guidelines.md).
+- [PR review](https://github.com/baqup/contributors-guide/blob/master/pr_guidelines.md).
 
-- [Design review](https://github.com/traefik/contributors-guide/blob/master/proposals.md).
+- [Design review](https://github.com/baqup/contributors-guide/blob/master/proposals.md).
 
-- [Proposals](https://github.com/traefik/contributors-guide/blob/master/proposals.md).
+- [Proposals](https://github.com/baqup/contributors-guide/blob/master/proposals.md).
 
-Maintainers are also added to the maintainer's Discord server where happens the [issue triage](https://github.com/traefik/contributors-guide/blob/master/issue_triage.md)
+Maintainers are also added to the maintainer's Discord server where happens the [issue triage](https://github.com/baqup/contributors-guide/blob/master/issue_triage.md)
 and appear on the [Maintainers](maintainers.md) page.
 
 As a maintainer, you should: 
@@ -63,7 +63,7 @@ Any triage activity on issues and PRs (e.g. labels, marking messages as off-topi
 
 ## Communicating
 
-- All of our maintainers are added to the Traefik Maintainers Discord server that belongs to Traefik labs.
+- All of our maintainers are added to the Baqup Maintainers Discord server that belongs to Baqup labs.
   Having the team in one place helps us to communicate effectively.
   Maintainers can discuss issues, pull requests, enhancements more efficiently
   and get the feedback almost immediately.
@@ -73,7 +73,7 @@ Any triage activity on issues and PRs (e.g. labels, marking messages as off-topi
 
 - Maintainers express their opinions on issues and reviews. 
   It is fine to have different point of views. 
-  We encourage active and open conversations which goals are to improve Traefik.
+  We encourage active and open conversations which goals are to improve Baqup.
 
 - When discussing issues and proposals, maintainers should share as much information as possible to help solve the issue.
 

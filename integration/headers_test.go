@@ -8,10 +8,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/baqupio/baqup/v3/integration/try"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"github.com/traefik/traefik/v3/integration/try"
 )
 
 // Headers tests suite.
@@ -22,12 +22,12 @@ func TestHeadersSuite(t *testing.T) {
 }
 
 func (s *HeadersSuite) TearDownTest() {
-	s.displayTraefikLogFile(traefikTestLogFile)
-	_ = os.Remove(traefikTestAccessLogFile)
+	s.displayBaqupLogFile(baqupTestLogFile)
+	_ = os.Remove(baqupTestAccessLogFile)
 }
 
 func (s *HeadersSuite) TestSimpleConfiguration() {
-	s.traefikCmd(withConfigFile("fixtures/headers/basic.toml"))
+	s.baqupCmd(withConfigFile("fixtures/headers/basic.toml"))
 
 	// Expected a 404 as we did not configure anything
 	err := try.GetRequest("http://127.0.0.1:8000/", 1000*time.Millisecond, try.StatusCodeIs(http.StatusNotFound))
@@ -36,7 +36,7 @@ func (s *HeadersSuite) TestSimpleConfiguration() {
 
 func (s *HeadersSuite) TestReverseProxyHeaderRemoved() {
 	file := s.adaptFile("fixtures/headers/remove_reverseproxy_headers.toml", struct{}{})
-	s.traefikCmd(withConfigFile(file))
+	s.baqupCmd(withConfigFile(file))
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, found := r.Header["X-Forwarded-Host"]
@@ -70,7 +70,7 @@ func (s *HeadersSuite) TestReverseProxyHeaderRemoved() {
 
 func (s *HeadersSuite) TestConnectionHopByHop() {
 	file := s.adaptFile("fixtures/headers/connection_hop_by_hop_headers.toml", struct{}{})
-	s.traefikCmd(withConfigFile(file))
+	s.baqupCmd(withConfigFile(file))
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, found := r.Header["X-Forwarded-For"]
@@ -108,7 +108,7 @@ func (s *HeadersSuite) TestConnectionHopByHop() {
 	err = try.Request(req, time.Second, try.StatusCodeIs(http.StatusOK))
 	require.NoError(s.T(), err)
 
-	accessLog, err := os.ReadFile(traefikTestAccessLogFile)
+	accessLog, err := os.ReadFile(baqupTestAccessLogFile)
 	require.NoError(s.T(), err)
 
 	assert.Contains(s.T(), string(accessLog), "\"request_Foo\":\"bar\"")
@@ -117,7 +117,7 @@ func (s *HeadersSuite) TestConnectionHopByHop() {
 
 func (s *HeadersSuite) TestCorsResponses() {
 	file := s.adaptFile("fixtures/headers/cors.toml", struct{}{})
-	s.traefikCmd(withConfigFile(file))
+	s.baqupCmd(withConfigFile(file))
 
 	backend := startTestServer("9000", http.StatusOK, "")
 	defer backend.Close()
@@ -200,7 +200,7 @@ func (s *HeadersSuite) TestCorsResponses() {
 
 func (s *HeadersSuite) TestSecureHeadersResponses() {
 	file := s.adaptFile("fixtures/headers/secure.toml", struct{}{})
-	s.traefikCmd(withConfigFile(file))
+	s.baqupCmd(withConfigFile(file))
 
 	backend := startTestServer("9000", http.StatusOK, "")
 	defer backend.Close()
@@ -243,7 +243,7 @@ func (s *HeadersSuite) TestSecureHeadersResponses() {
 
 func (s *HeadersSuite) TestMultipleSecureHeadersResponses() {
 	file := s.adaptFile("fixtures/headers/secure_multiple.toml", struct{}{})
-	s.traefikCmd(withConfigFile(file))
+	s.baqupCmd(withConfigFile(file))
 
 	backend := startTestServer("9000", http.StatusOK, "")
 	defer backend.Close()

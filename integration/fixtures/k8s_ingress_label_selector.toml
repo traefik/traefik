@@ -14,4 +14,4 @@
     address = ":8000"
 
 [providers.kubernetesIngress]
-  labelSelector = "app=traefik"
+  labelSelector = "app=baqup"

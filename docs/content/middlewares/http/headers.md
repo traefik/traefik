@@ -1,6 +1,6 @@
 ---
-title: "Traefik Headers Documentation"
-description: "In Traefik Proxy, the HTTP headers middleware manages the headers of requests and responses. Read the technical documentation."
+title: "Baqup Headers Documentation"
+description: "In Baqup Proxy, the HTTP headers middleware manages the headers of requests and responses. Read the technical documentation."
 ---
 
 # Headers
@@ -20,12 +20,12 @@ The following example adds the `X-Script-Name` header to the proxied request and
 
 ```yaml tab="Docker & Swarm"
 labels:
-  - "traefik.http.middlewares.testHeader.headers.customrequestheaders.X-Script-Name=test"
-  - "traefik.http.middlewares.testHeader.headers.customresponseheaders.X-Custom-Response-Header=value"
+  - "baqup.http.middlewares.testHeader.headers.customrequestheaders.X-Script-Name=test"
+  - "baqup.http.middlewares.testHeader.headers.customresponseheaders.X-Custom-Response-Header=value"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-header
@@ -38,8 +38,8 @@ spec:
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name=test"
-- "traefik.http.middlewares.testheader.headers.customresponseheaders.X-Custom-Response-Header=value"
+- "baqup.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name=test"
+- "baqup.http.middlewares.testheader.headers.customresponseheaders.X-Custom-Response-Header=value"
 ```
 
 ```yaml tab="File (YAML)"
@@ -69,13 +69,13 @@ and responses are stripped of their `X-Custom-Response-Header` header.
 
 ```yaml tab="Docker & Swarm"
 labels:
-  - "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name=test"
-  - "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Custom-Request-Header="
-  - "traefik.http.middlewares.testheader.headers.customresponseheaders.X-Custom-Response-Header="
+  - "baqup.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name=test"
+  - "baqup.http.middlewares.testheader.headers.customrequestheaders.X-Custom-Request-Header="
+  - "baqup.http.middlewares.testheader.headers.customresponseheaders.X-Custom-Response-Header="
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-header
@@ -89,9 +89,9 @@ spec:
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name=test"
-- "traefik.http.middlewares.testheader.headers.customrequestheaders.X-Custom-Request-Header="
-- "traefik.http.middlewares.testheader.headers.customresponseheaders.X-Custom-Response-Header="
+- "baqup.http.middlewares.testheader.headers.customrequestheaders.X-Script-Name=test"
+- "baqup.http.middlewares.testheader.headers.customrequestheaders.X-Custom-Request-Header="
+- "baqup.http.middlewares.testheader.headers.customresponseheaders.X-Custom-Response-Header="
 ```
 
 ```yaml tab="File (YAML)"
@@ -123,12 +123,12 @@ This functionality makes it possible to easily use security features by adding h
 
 ```yaml tab="Docker & Swarm"
 labels:
-  - "traefik.http.middlewares.testHeader.headers.framedeny=true"
-  - "traefik.http.middlewares.testHeader.headers.browserxssfilter=true"
+  - "baqup.http.middlewares.testHeader.headers.framedeny=true"
+  - "baqup.http.middlewares.testHeader.headers.browserxssfilter=true"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-header
@@ -139,8 +139,8 @@ spec:
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.testheader.headers.framedeny=true"
-- "traefik.http.middlewares.testheader.headers.browserxssfilter=true"
+- "baqup.http.middlewares.testheader.headers.framedeny=true"
+- "baqup.http.middlewares.testheader.headers.browserxssfilter=true"
 ```
 
 ```yaml tab="File (YAML)"
@@ -170,15 +170,15 @@ and should not be used as is for production.
 
 ```yaml tab="Docker & Swarm"
 labels:
-  - "traefik.http.middlewares.testheader.headers.accesscontrolallowmethods=GET,OPTIONS,PUT"
-  - "traefik.http.middlewares.testheader.headers.accesscontrolallowheaders=*"
-  - "traefik.http.middlewares.testheader.headers.accesscontrolalloworiginlist=https://foo.bar.org,https://example.org"
-  - "traefik.http.middlewares.testheader.headers.accesscontrolmaxage=100"
-  - "traefik.http.middlewares.testheader.headers.addvaryheader=true"
+  - "baqup.http.middlewares.testheader.headers.accesscontrolallowmethods=GET,OPTIONS,PUT"
+  - "baqup.http.middlewares.testheader.headers.accesscontrolallowheaders=*"
+  - "baqup.http.middlewares.testheader.headers.accesscontrolalloworiginlist=https://foo.bar.org,https://example.org"
+  - "baqup.http.middlewares.testheader.headers.accesscontrolmaxage=100"
+  - "baqup.http.middlewares.testheader.headers.addvaryheader=true"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-header
@@ -198,11 +198,11 @@ spec:
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.testheader.headers.accesscontrolallowmethods=GET,OPTIONS,PUT"
-- "traefik.http.middlewares.testheader.headers.accesscontrolallowheaders=*"
-- "traefik.http.middlewares.testheader.headers.accesscontrolalloworiginlist=https://foo.bar.org,https://example.org"
-- "traefik.http.middlewares.testheader.headers.accesscontrolmaxage=100"
-- "traefik.http.middlewares.testheader.headers.addvaryheader=true"
+- "baqup.http.middlewares.testheader.headers.accesscontrolallowmethods=GET,OPTIONS,PUT"
+- "baqup.http.middlewares.testheader.headers.accesscontrolallowheaders=*"
+- "baqup.http.middlewares.testheader.headers.accesscontrolalloworiginlist=https://foo.bar.org,https://example.org"
+- "baqup.http.middlewares.testheader.headers.accesscontrolmaxage=100"
+- "baqup.http.middlewares.testheader.headers.addvaryheader=true"
 ```
 
 ```yaml tab="File (YAML)"
@@ -269,7 +269,7 @@ The  `accessControlAllowMethods` indicates which methods can be used during requ
 The `accessControlAllowOriginList` indicates whether a resource can be shared by returning different values.
 
 A wildcard origin `*` can also be configured, and matches all requests.
-If this value is set by a backend service, it will be overwritten by Traefik.
+If this value is set by a backend service, it will be overwritten by Baqup.
 
 This value can contain a list of allowed origins.
 
@@ -279,7 +279,7 @@ More information including how to use the settings can be found at:
 - [w3](https://fetch.spec.whatwg.org/#http-access-control-allow-origin)
 - [IETF](https://tools.ietf.org/html/rfc6454#section-7.1)
 
-Traefik no longer supports the `null` value, as it is [no longer recommended as a return value](https://w3c.github.io/webappsec-cors-for-developers/#avoid-returning-access-control-allow-origin-null).
+Baqup no longer supports the `null` value, as it is [no longer recommended as a return value](https://w3c.github.io/webappsec-cors-for-developers/#avoid-returning-access-control-allow-origin-null).
 
 ### `accessControlAllowOriginListRegex`
 
@@ -422,4 +422,4 @@ Set `isDevelopment` to `true` when developing to mitigate the unwanted effects o
 Usually testing takes place using HTTP, not HTTPS, and on `localhost`, not your production domain.
 If you would like your development environment to mimic production with complete Host blocking, SSL redirects, and STS headers, leave this as `false`.
 
-{!traefik-for-business-applications.md!}
+{!baqup-for-business-applications.md!}

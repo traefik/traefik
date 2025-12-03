@@ -1,4 +1,4 @@
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: test.route
@@ -14,15 +14,15 @@ spec:
       priority: 12
       services:
         - name: test-weighted
-          kind: TraefikService
+          kind: BaqupService
         - name: test-mirror
-          kind: TraefikService
+          kind: BaqupService
       middlewares:
         - name: test-errorpage
 
 ---
-apiVersion: traefik.io/v1alpha1
-kind: TraefikService
+apiVersion: baqup.io/v1alpha1
+kind: BaqupService
 metadata:
   name: test-weighted
   namespace: default
@@ -35,8 +35,8 @@ spec:
         port: 80
 
 ---
-apiVersion: traefik.io/v1alpha1
-kind: TraefikService
+apiVersion: baqup.io/v1alpha1
+kind: BaqupService
 metadata:
   name: test-mirror
   namespace: default
@@ -49,10 +49,10 @@ spec:
       - name: whoami-without-endpointslice-endpoints
         port: 80
       - name: test-weighted
-        kind: TraefikService
+        kind: BaqupService
 
 ---
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-errorpage

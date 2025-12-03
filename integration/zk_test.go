@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/baqupio/baqup/v3/integration/try"
+	"github.com/baqupio/baqup/v3/pkg/api"
 	"github.com/kvtools/valkeyrie"
 	"github.com/kvtools/valkeyrie/store"
 	"github.com/kvtools/zookeeper"
@@ -17,8 +19,6 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"github.com/traefik/traefik/v3/integration/try"
-	"github.com/traefik/traefik/v3/pkg/api"
 )
 
 // Zk test suites.
@@ -64,48 +64,48 @@ func (s *ZookeeperSuite) TestSimpleConfiguration() {
 	file := s.adaptFile("fixtures/zookeeper/simple.toml", struct{ ZkAddress string }{s.zookeeperAddr})
 
 	data := map[string]string{
-		"traefik/http/routers/Router0/entryPoints/0": "web",
-		"traefik/http/routers/Router0/middlewares/0": "compressor",
-		"traefik/http/routers/Router0/middlewares/1": "striper",
-		"traefik/http/routers/Router0/service":       "simplesvc",
-		"traefik/http/routers/Router0/rule":          "Host(`kv1.localhost`)",
-		"traefik/http/routers/Router0/priority":      "42",
-		"traefik/http/routers/Router0/tls":           "",
+		"baqup/http/routers/Router0/entryPoints/0": "web",
+		"baqup/http/routers/Router0/middlewares/0": "compressor",
+		"baqup/http/routers/Router0/middlewares/1": "striper",
+		"baqup/http/routers/Router0/service":       "simplesvc",
+		"baqup/http/routers/Router0/rule":          "Host(`kv1.localhost`)",
+		"baqup/http/routers/Router0/priority":      "42",
+		"baqup/http/routers/Router0/tls":           "",
 
-		"traefik/http/routers/Router1/rule":                 "Host(`kv2.localhost`)",
-		"traefik/http/routers/Router1/priority":             "42",
-		"traefik/http/routers/Router1/tls/domains/0/main":   "aaa.localhost",
-		"traefik/http/routers/Router1/tls/domains/0/sans/0": "aaa.aaa.localhost",
-		"traefik/http/routers/Router1/tls/domains/0/sans/1": "bbb.aaa.localhost",
-		"traefik/http/routers/Router1/tls/domains/1/main":   "bbb.localhost",
-		"traefik/http/routers/Router1/tls/domains/1/sans/0": "aaa.bbb.localhost",
-		"traefik/http/routers/Router1/tls/domains/1/sans/1": "bbb.bbb.localhost",
-		"traefik/http/routers/Router1/entryPoints/0":        "web",
-		"traefik/http/routers/Router1/service":              "simplesvc",
+		"baqup/http/routers/Router1/rule":                 "Host(`kv2.localhost`)",
+		"baqup/http/routers/Router1/priority":             "42",
+		"baqup/http/routers/Router1/tls/domains/0/main":   "aaa.localhost",
+		"baqup/http/routers/Router1/tls/domains/0/sans/0": "aaa.aaa.localhost",
+		"baqup/http/routers/Router1/tls/domains/0/sans/1": "bbb.aaa.localhost",
+		"baqup/http/routers/Router1/tls/domains/1/main":   "bbb.localhost",
+		"baqup/http/routers/Router1/tls/domains/1/sans/0": "aaa.bbb.localhost",
+		"baqup/http/routers/Router1/tls/domains/1/sans/1": "bbb.bbb.localhost",
+		"baqup/http/routers/Router1/entryPoints/0":        "web",
+		"baqup/http/routers/Router1/service":              "simplesvc",
 
-		"traefik/http/services/simplesvc/loadBalancer/servers/0/url": "http://10.0.1.1:8888",
-		"traefik/http/services/simplesvc/loadBalancer/servers/1/url": "http://10.0.1.1:8889",
+		"baqup/http/services/simplesvc/loadBalancer/servers/0/url": "http://10.0.1.1:8888",
+		"baqup/http/services/simplesvc/loadBalancer/servers/1/url": "http://10.0.1.1:8889",
 
-		"traefik/http/services/srvcA/loadBalancer/servers/0/url": "http://10.0.1.2:8888",
-		"traefik/http/services/srvcA/loadBalancer/servers/1/url": "http://10.0.1.2:8889",
+		"baqup/http/services/srvcA/loadBalancer/servers/0/url": "http://10.0.1.2:8888",
+		"baqup/http/services/srvcA/loadBalancer/servers/1/url": "http://10.0.1.2:8889",
 
-		"traefik/http/services/srvcB/loadBalancer/servers/0/url": "http://10.0.1.3:8888",
-		"traefik/http/services/srvcB/loadBalancer/servers/1/url": "http://10.0.1.3:8889",
+		"baqup/http/services/srvcB/loadBalancer/servers/0/url": "http://10.0.1.3:8888",
+		"baqup/http/services/srvcB/loadBalancer/servers/1/url": "http://10.0.1.3:8889",
 
-		"traefik/http/services/mirror/mirroring/service":           "simplesvc",
-		"traefik/http/services/mirror/mirroring/mirrors/0/name":    "srvcA",
-		"traefik/http/services/mirror/mirroring/mirrors/0/percent": "42",
-		"traefik/http/services/mirror/mirroring/mirrors/1/name":    "srvcB",
-		"traefik/http/services/mirror/mirroring/mirrors/1/percent": "42",
+		"baqup/http/services/mirror/mirroring/service":           "simplesvc",
+		"baqup/http/services/mirror/mirroring/mirrors/0/name":    "srvcA",
+		"baqup/http/services/mirror/mirroring/mirrors/0/percent": "42",
+		"baqup/http/services/mirror/mirroring/mirrors/1/name":    "srvcB",
+		"baqup/http/services/mirror/mirroring/mirrors/1/percent": "42",
 
-		"traefik/http/services/Service03/weighted/services/0/name":   "srvcA",
-		"traefik/http/services/Service03/weighted/services/0/weight": "42",
-		"traefik/http/services/Service03/weighted/services/1/name":   "srvcB",
-		"traefik/http/services/Service03/weighted/services/1/weight": "42",
+		"baqup/http/services/Service03/weighted/services/0/name":   "srvcA",
+		"baqup/http/services/Service03/weighted/services/0/weight": "42",
+		"baqup/http/services/Service03/weighted/services/1/name":   "srvcB",
+		"baqup/http/services/Service03/weighted/services/1/weight": "42",
 
-		"traefik/http/middlewares/compressor/compress":            "",
-		"traefik/http/middlewares/striper/stripPrefix/prefixes/0": "foo",
-		"traefik/http/middlewares/striper/stripPrefix/prefixes/1": "bar",
+		"baqup/http/middlewares/compressor/compress":            "",
+		"baqup/http/middlewares/striper/stripPrefix/prefixes/0": "foo",
+		"baqup/http/middlewares/striper/stripPrefix/prefixes/1": "bar",
 	}
 
 	for k, v := range data {
@@ -113,9 +113,9 @@ func (s *ZookeeperSuite) TestSimpleConfiguration() {
 		require.NoError(s.T(), err)
 	}
 
-	s.traefikCmd(withConfigFile(file))
+	s.baqupCmd(withConfigFile(file))
 
-	// wait for traefik
+	// wait for baqup
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second,
 		try.BodyContains(`"striper@zookeeper":`, `"compressor@zookeeper":`, `"srvcA@zookeeper":`, `"srvcB@zookeeper":`),
 	)

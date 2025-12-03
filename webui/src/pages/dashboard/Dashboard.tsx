@@ -4,9 +4,9 @@ import { Helmet } from 'react-helmet-async'
 import useSWR from 'swr'
 
 import ProviderIcon from 'components/icons/providers'
+import BaqupResourceStatsCard, { StatsCardSkeleton } from 'components/resources/BaqupResourceStatsCard'
 import FeatureCard, { FeatureCardSkeleton } from 'components/resources/FeatureCard'
 import ResourceCard from 'components/resources/ResourceCard'
-import TraefikResourceStatsCard, { StatsCardSkeleton } from 'components/resources/TraefikResourceStatsCard'
 import { capitalizeFirstLetter } from 'utils/string'
 
 const RESOURCES = ['routers', 'services', 'middlewares']
@@ -78,7 +78,7 @@ export const Dashboard = () => {
   return (
     <Flex direction="column" gap={6}>
       <Helmet>
-        <title>Dashboard - Traefik Proxy</title>
+        <title>Dashboard - Baqup Proxy</title>
       </Helmet>
       <SectionContainer title="Entrypoints" css={{ mt: 0 }}>
         {entrypoints?.map((i, idx) => (
@@ -104,7 +104,7 @@ export const Dashboard = () => {
       >
         {overview?.http && hasResources.http ? (
           RESOURCES.map((i) => (
-            <TraefikResourceStatsCard
+            <BaqupResourceStatsCard
               key={`http-${i}`}
               title={capitalizeFirstLetter(i)}
               data-testid={`section-http-${i}`}
@@ -123,7 +123,7 @@ export const Dashboard = () => {
       >
         {overview?.tcp && hasResources.tcp ? (
           RESOURCES.map((i) => (
-            <TraefikResourceStatsCard
+            <BaqupResourceStatsCard
               key={`tcp-${i}`}
               title={capitalizeFirstLetter(i)}
               data-testid={`section-tcp-${i}`}
@@ -142,7 +142,7 @@ export const Dashboard = () => {
       >
         {overview?.udp && hasResources.udp ? (
           RESOURCES.map((i) => (
-            <TraefikResourceStatsCard
+            <BaqupResourceStatsCard
               key={`udp-${i}`}
               title={capitalizeFirstLetter(i)}
               data-testid={`section-udp-${i}`}

@@ -7,14 +7,14 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/baqupio/baqup/v3/pkg/config/dynamic"
+	"github.com/baqupio/baqup/v3/pkg/config/runtime"
+	tcpmiddleware "github.com/baqupio/baqup/v3/pkg/server/middleware/tcp"
+	"github.com/baqupio/baqup/v3/pkg/server/service/tcp"
+	tcp2 "github.com/baqupio/baqup/v3/pkg/tcp"
+	baquptls "github.com/baqupio/baqup/v3/pkg/tls"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/config/runtime"
-	tcpmiddleware "github.com/traefik/traefik/v3/pkg/server/middleware/tcp"
-	"github.com/traefik/traefik/v3/pkg/server/service/tcp"
-	tcp2 "github.com/traefik/traefik/v3/pkg/tcp"
-	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 )
 
 func TestRuntimeConfiguration(t *testing.T) {
@@ -347,11 +347,11 @@ func TestRuntimeConfiguration(t *testing.T) {
 			dialerManager := tcp2.NewDialerManager(nil)
 			dialerManager.Update(map[string]*dynamic.TCPServersTransport{"default@internal": {}})
 			serviceManager := tcp.NewManager(conf, dialerManager)
-			tlsManager := traefiktls.NewManager(nil)
+			tlsManager := baquptls.NewManager(nil)
 			tlsManager.UpdateConfigs(
 				t.Context(),
-				map[string]traefiktls.Store{},
-				map[string]traefiktls.Options{
+				map[string]baquptls.Store{},
+				map[string]baquptls.Options{
 					"default": {
 						MinVersion: "VersionTLS10",
 					},
@@ -362,7 +362,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 						MinVersion: "VersionTLS11",
 					},
 				},
-				[]*traefiktls.CertAndStores{})
+				[]*baquptls.CertAndStores{})
 
 			middlewaresBuilder := tcpmiddleware.NewBuilder(conf.TCPMiddlewares)
 
@@ -401,7 +401,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 }
 
 func TestDomainFronting(t *testing.T) {
-	tlsOptionsBase := map[string]traefiktls.Options{
+	tlsOptionsBase := map[string]baquptls.Options{
 		"default": {
 			MinVersion: "VersionTLS10",
 		},
@@ -418,7 +418,7 @@ func TestDomainFronting(t *testing.T) {
 	tests := []struct {
 		desc           string
 		routers        map[string]*runtime.RouterInfo
-		tlsOptions     map[string]traefiktls.Options
+		tlsOptions     map[string]baquptls.Options
 		host           string
 		ServerName     string
 		expectedStatus int
@@ -614,7 +614,7 @@ func TestDomainFronting(t *testing.T) {
 					},
 				},
 			},
-			tlsOptions: map[string]traefiktls.Options{
+			tlsOptions: map[string]baquptls.Options{
 				"default": {
 					MinVersion: "VersionTLS13",
 				},
@@ -638,7 +638,7 @@ func TestDomainFronting(t *testing.T) {
 					},
 				},
 			},
-			tlsOptions: map[string]traefiktls.Options{
+			tlsOptions: map[string]baquptls.Options{
 				"default": {
 					MinVersion: "VersionTLS13",
 				},
@@ -659,8 +659,8 @@ func TestDomainFronting(t *testing.T) {
 
 			serviceManager := tcp.NewManager(conf, tcp2.NewDialerManager(nil))
 
-			tlsManager := traefiktls.NewManager(nil)
-			tlsManager.UpdateConfigs(t.Context(), map[string]traefiktls.Store{}, test.tlsOptions, []*traefiktls.CertAndStores{})
+			tlsManager := baquptls.NewManager(nil)
+			tlsManager.UpdateConfigs(t.Context(), map[string]baquptls.Store{}, test.tlsOptions, []*baquptls.CertAndStores{})
 
 			httpsHandler := map[string]http.Handler{
 				"web": http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {}),

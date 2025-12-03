@@ -7,31 +7,31 @@ import (
 	"testing"
 	"time"
 
+	"github.com/baqupio/baqup/v3/pkg/config/dynamic"
+	"github.com/baqupio/baqup/v3/pkg/config/static"
+	otypes "github.com/baqupio/baqup/v3/pkg/observability/types"
+	"github.com/baqupio/baqup/v3/pkg/ping"
+	"github.com/baqupio/baqup/v3/pkg/plugins"
+	"github.com/baqupio/baqup/v3/pkg/provider/acme"
+	"github.com/baqupio/baqup/v3/pkg/provider/consulcatalog"
+	"github.com/baqupio/baqup/v3/pkg/provider/docker"
+	"github.com/baqupio/baqup/v3/pkg/provider/ecs"
+	"github.com/baqupio/baqup/v3/pkg/provider/file"
+	"github.com/baqupio/baqup/v3/pkg/provider/http"
+	"github.com/baqupio/baqup/v3/pkg/provider/kubernetes/crd"
+	"github.com/baqupio/baqup/v3/pkg/provider/kubernetes/gateway"
+	"github.com/baqupio/baqup/v3/pkg/provider/kubernetes/ingress"
+	"github.com/baqupio/baqup/v3/pkg/provider/kv"
+	"github.com/baqupio/baqup/v3/pkg/provider/kv/consul"
+	"github.com/baqupio/baqup/v3/pkg/provider/kv/etcd"
+	"github.com/baqupio/baqup/v3/pkg/provider/kv/redis"
+	"github.com/baqupio/baqup/v3/pkg/provider/kv/zk"
+	"github.com/baqupio/baqup/v3/pkg/provider/rest"
+	baquptls "github.com/baqupio/baqup/v3/pkg/tls"
+	"github.com/baqupio/baqup/v3/pkg/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/config/static"
-	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
-	"github.com/traefik/traefik/v3/pkg/ping"
-	"github.com/traefik/traefik/v3/pkg/plugins"
-	"github.com/traefik/traefik/v3/pkg/provider/acme"
-	"github.com/traefik/traefik/v3/pkg/provider/consulcatalog"
-	"github.com/traefik/traefik/v3/pkg/provider/docker"
-	"github.com/traefik/traefik/v3/pkg/provider/ecs"
-	"github.com/traefik/traefik/v3/pkg/provider/file"
-	"github.com/traefik/traefik/v3/pkg/provider/http"
-	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd"
-	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/gateway"
-	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/ingress"
-	"github.com/traefik/traefik/v3/pkg/provider/kv"
-	"github.com/traefik/traefik/v3/pkg/provider/kv/consul"
-	"github.com/traefik/traefik/v3/pkg/provider/kv/etcd"
-	"github.com/traefik/traefik/v3/pkg/provider/kv/redis"
-	"github.com/traefik/traefik/v3/pkg/provider/kv/zk"
-	"github.com/traefik/traefik/v3/pkg/provider/rest"
-	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
-	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 var updateExpected = flag.Bool("update_expected", false, "Update expected files in fixtures")
@@ -136,7 +136,7 @@ func init() {
 				ServerName:         "foo",
 				InsecureSkipVerify: true,
 				RootCAs:            []types.FileOrContent{"rootca.pem"},
-				Certificates: []traefiktls.Certificate{
+				Certificates: []baquptls.Certificate{
 					{
 						CertFile: "cert.pem",
 						KeyFile:  "key.pem",
@@ -397,7 +397,7 @@ func init() {
 					ServerName:         "foo",
 					InsecureSkipVerify: true,
 					RootCAs:            []types.FileOrContent{"rootca.pem"},
-					Certificates: []traefiktls.Certificate{
+					Certificates: []baquptls.Certificate{
 						{
 							CertFile: "cert.pem",
 							KeyFile:  "key.pem",
@@ -440,31 +440,31 @@ func init() {
 		},
 	}
 	config.TLS = &dynamic.TLSConfiguration{
-		Options: map[string]traefiktls.Options{
+		Options: map[string]baquptls.Options{
 			"foo": {
 				MinVersion:       "foo",
 				MaxVersion:       "foo",
 				CipherSuites:     []string{"foo"},
 				CurvePreferences: []string{"foo"},
-				ClientAuth: traefiktls.ClientAuth{
+				ClientAuth: baquptls.ClientAuth{
 					CAFiles:        []types.FileOrContent{"ca.pem"},
 					ClientAuthType: "RequireAndVerifyClientCert",
 				},
 				SniStrict: true,
 			},
 		},
-		Certificates: []*traefiktls.CertAndStores{
+		Certificates: []*baquptls.CertAndStores{
 			{
-				Certificate: traefiktls.Certificate{
+				Certificate: baquptls.Certificate{
 					CertFile: "cert.pem",
 					KeyFile:  "key.pem",
 				},
 				Stores: []string{"foo"},
 			},
 		},
-		Stores: map[string]traefiktls.Store{
+		Stores: map[string]baquptls.Store{
 			"foo": {
-				DefaultCertificate: &traefiktls.Certificate{
+				DefaultCertificate: &baquptls.Certificate{
 					CertFile: "cert.pem",
 					KeyFile:  "key.pem",
 				},
@@ -828,7 +828,7 @@ func TestDo_staticConfiguration(t *testing.T) {
 		TerminatingStatusCode: 42,
 	}
 
-	config.Log = &otypes.TraefikLog{
+	config.Log = &otypes.BaqupLog{
 		Level:      "Level",
 		Format:     "json",
 		FilePath:   "/foo/path",

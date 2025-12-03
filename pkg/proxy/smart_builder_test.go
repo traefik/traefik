@@ -7,14 +7,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/baqupio/baqup/v3/pkg/config/dynamic"
+	"github.com/baqupio/baqup/v3/pkg/config/static"
+	"github.com/baqupio/baqup/v3/pkg/proxy/httputil"
+	"github.com/baqupio/baqup/v3/pkg/server/service"
+	"github.com/baqupio/baqup/v3/pkg/testhelpers"
+	"github.com/baqupio/baqup/v3/pkg/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/config/static"
-	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
-	"github.com/traefik/traefik/v3/pkg/server/service"
-	"github.com/traefik/traefik/v3/pkg/testhelpers"
-	"github.com/traefik/traefik/v3/pkg/types"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 )
@@ -62,9 +62,9 @@ func TestSmartBuilder_Build(t *testing.T) {
 			handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				callCount++
 				if test.wantFastProxy {
-					assert.Contains(t, r.Header, "X-Traefik-Fast-Proxy")
+					assert.Contains(t, r.Header, "X-Baqup-Fast-Proxy")
 				} else {
-					assert.NotContains(t, r.Header, "X-Traefik-Fast-Proxy")
+					assert.NotContains(t, r.Header, "X-Baqup-Fast-Proxy")
 				}
 			})
 

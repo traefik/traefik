@@ -8,7 +8,7 @@
     "JobID": "job3",
     "AllocID": "dd945b55-70fa-0efc-6512-b88fb55ce33f",
     "Tags": [
-      "traefik.enable=true"
+      "baqup.enable=true"
     ],
     "Address": "192.168.1.21",
     "Port": 29983,

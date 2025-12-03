@@ -46,7 +46,7 @@
     "using": [
       "web-secured",
       "web",
-      "traefik",
+      "baqup",
       "web2",
       "web3"
     ],
@@ -126,10 +126,10 @@
     "provider": "docker"
   },
   {
-    "service": "traefik_v2-example-beta1",
-    "rule": "Host(`traefik-v2-example-beta1`)",
+    "service": "baqup_v2-example-beta1",
+    "rule": "Host(`baqup-v2-example-beta1`)",
     "status": "enabled",
-    "name": "traefik_v2-example-beta1@docker",
+    "name": "baqup_v2-example-beta1@docker",
     "using": [
       "web-secured",
       "web"

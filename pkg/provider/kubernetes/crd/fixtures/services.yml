@@ -9,7 +9,7 @@ spec:
     - name: web
       port: 80
   selector:
-    app: traefiklabs
+    app: baquplabs
     task: whoami
 
 ---
@@ -44,7 +44,7 @@ spec:
     - name: web
       port: 8080
   selector:
-    app: traefiklabs
+    app: baquplabs
     task: whoami2
 
 ---
@@ -80,7 +80,7 @@ spec:
       port: 443
       targetPort: 8443
   selector:
-    app: traefiklabs
+    app: baquplabs
     task: whoami2
 
 ---
@@ -115,7 +115,7 @@ spec:
     - name: websecure2
       port: 8443
   selector:
-    app: traefiklabs
+    app: baquplabs
     task: whoami3
 
 ---
@@ -150,7 +150,7 @@ spec:
     - name: web
       port: 8080
   selector:
-    app: traefiklabs
+    app: baquplabs
     task: whoami-ipv6
 
 ---
@@ -236,7 +236,7 @@ spec:
     - name: web
       port: 80
   selector:
-    app: traefiklabs
+    app: baquplabs
     task: whoami
 
 ---
@@ -272,7 +272,7 @@ spec:
       port: 80
 
   selector:
-    app: traefiklabs
+    app: baquplabs
     task: whoami
 
 ---

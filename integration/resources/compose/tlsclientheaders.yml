@@ -1,8 +1,8 @@
 services:
   whoami:
-    image: traefik/whoami
+    image: baqup/whoami
     labels:
-      traefik.http.routers.route1.rule: PathPrefix(`/foo`)
-      traefik.http.routers.route1.middlewares: passtls
-      traefik.http.routers.route1.tls: true
-      traefik.http.middlewares.passtls.passtlsclientcert.pem: true
+      baqup.http.routers.route1.rule: PathPrefix(`/foo`)
+      baqup.http.routers.route1.middlewares: passtls
+      baqup.http.routers.route1.tls: true
+      baqup.http.middlewares.passtls.passtlsclientcert.pem: true

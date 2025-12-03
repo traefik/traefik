@@ -1,14 +1,14 @@
 ---
-title: "Traefik Redis Documentation"
-description: "For configuration discovery in Traefik Proxy, you can store your configurations in Redis. Read the technical documentation."
+title: "Baqup Redis Documentation"
+description: "For configuration discovery in Baqup Proxy, you can store your configurations in Redis. Read the technical documentation."
 ---
 
-# Traefik & Redis
+# Baqup & Redis
 
 A Story of KV store & Containers
 {: .subtitle }
 
-Store your configuration in Redis and let Traefik do the rest!
+Store your configuration in Redis and let Baqup do the rest!
 
 !!! tip "Dynamic configuration updates"
 
@@ -46,23 +46,23 @@ providers:
 
 ### `rootKey`
 
-_Required, Default="traefik"_
+_Required, Default="baqup"_
 
 Defines the root key of the configuration.
 
 ```yaml tab="File (YAML)"
 providers:
   redis:
-    rootKey: "traefik"
+    rootKey: "baqup"
 ```
 
 ```toml tab="File (TOML)"
 [providers.redis]
-  rootKey = "traefik"
+  rootKey = "baqup"
 ```
 
 ```bash tab="CLI"
---providers.redis.rootkey=traefik
+--providers.redis.rootkey=baqup
 ```
 
 ### `username`

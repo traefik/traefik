@@ -1,11 +1,11 @@
 ---
 title: "TLSOption"
-description: "TLS Options in Traefik Proxy"
+description: "TLS Options in Baqup Proxy"
 ---
 
-The TLS options allow you to configure some parameters of the TLS connection in Traefik.
+The TLS options allow you to configure some parameters of the TLS connection in Baqup.
 
-Before creating `TLSOption` objects or referencing TLS options in the [`IngressRoute`](../http/ingressroute.md) / [`IngressRouteTCP`](../tcp/ingressroutetcp.md) objects, you need to apply the [Traefik Kubernetes CRDs](https://doc.traefik.io/traefik/reference/dynamic-configuration/kubernetes-crd/#definitions) to your Kubernetes cluster.
+Before creating `TLSOption` objects or referencing TLS options in the [`IngressRoute`](../http/ingressroute.md) / [`IngressRouteTCP`](../tcp/ingressroutetcp.md) objects, you need to apply the [Baqup Kubernetes CRDs](https://doc.baqup.io/baqup/reference/dynamic-configuration/kubernetes-crd/#definitions) to your Kubernetes cluster.
 
 !!! tip "References and namespaces"
     If the optional namespace attribute is not set, the configuration will be applied with the namespace of the `IngressRoute`/`IngressRouteTCP`.
@@ -20,12 +20,12 @@ Before creating `TLSOption` objects or referencing TLS options in the [`IngressR
     There may exist only one `TLSOption` with the name `default` (across all namespaces) - otherwise they will be dropped.  
     To explicitly use a different `TLSOption` (and using the Kubernetes Ingress resources)
     you'll have to add an annotation to the Ingress in the following form:
-    `traefik.ingress.kubernetes.io/router.tls.options: <resource-namespace>-<resource-name>@kubernetescrd`
+    `baqup.ingress.kubernetes.io/router.tls.options: <resource-namespace>-<resource-name>@kubernetescrd`
 
 ## Configuration Example
 
 ```yaml tab="TLSOption"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: TLSOption
 metadata:
   name: mytlsoption

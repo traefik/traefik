@@ -1,9 +1,9 @@
 ---
-title: "Traefik Routing Configuration with KV stores"
-description: "Read the technical documentation to learn the Traefik Routing Configuration with KV stores."
+title: "Baqup Routing Configuration with KV stores"
+description: "Read the technical documentation to learn the Baqup Routing Configuration with KV stores."
 ---
 
-# Traefik & KV Stores
+# Baqup & KV Stores
 
 A Story of key & values
 {: .subtitle }
@@ -19,374 +19,374 @@ A Story of key & values
 
 !!! warning "The character `@` is not authorized in the router name `<router_name>`."
 
-??? info "`traefik/http/routers/<router_name>/rule`"
+??? info "`baqup/http/routers/<router_name>/rule`"
 
     See [rule](../routers/index.md#rule) for more information.
     
     | Key (Path)                           | Value                      |
     |--------------------------------------|----------------------------|
-    | `traefik/http/routers/myrouter/rule` | ```Host(`example.com`)```  |
+    | `baqup/http/routers/myrouter/rule` | ```Host(`example.com`)```  |
 
-??? info "`traefik/http/routers/<router_name>/entrypoints`"
+??? info "`baqup/http/routers/<router_name>/entrypoints`"
 
     See [entry points](../routers/index.md#entrypoints) for more information.
 
     | Key (Path)                                    | Value       |
     |-----------------------------------------------|-------------|
-    | `traefik/http/routers/myrouter/entrypoints/0` | `web`       |
-    | `traefik/http/routers/myrouter/entrypoints/1` | `websecure` |
+    | `baqup/http/routers/myrouter/entrypoints/0` | `web`       |
+    | `baqup/http/routers/myrouter/entrypoints/1` | `websecure` |
 
-??? info "`traefik/http/routers/<router_name>/middlewares`"
+??? info "`baqup/http/routers/<router_name>/middlewares`"
 
     See [middlewares](../routers/index.md#middlewares) and [middlewares overview](../../middlewares/overview.md) for more information.
 
     | Key (Path)                                    | Value       |
     |-----------------------------------------------|-------------|
-    | `traefik/http/routers/myrouter/middlewares/0` | `auth`      |
-    | `traefik/http/routers/myrouter/middlewares/1` | `prefix`    |
-    | `traefik/http/routers/myrouter/middlewares/2` | `cb`        |
+    | `baqup/http/routers/myrouter/middlewares/0` | `auth`      |
+    | `baqup/http/routers/myrouter/middlewares/1` | `prefix`    |
+    | `baqup/http/routers/myrouter/middlewares/2` | `cb`        |
 
-??? info "`traefik/http/routers/<router_name>/service`"
+??? info "`baqup/http/routers/<router_name>/service`"
 
     See [rule](../routers/index.md#service) for more information.
 
     | Key (Path)                              | Value       |
     |-----------------------------------------|-------------|
-    | `traefik/http/routers/myrouter/service` | `myservice` |
+    | `baqup/http/routers/myrouter/service` | `myservice` |
 
-??? info "`traefik/http/routers/<router_name>/tls`"
+??? info "`baqup/http/routers/<router_name>/tls`"
 
     See [tls](../routers/index.md#tls) for more information.
 
     | Key (Path)                          | Value  |
     |-------------------------------------|--------|
-    | `traefik/http/routers/myrouter/tls` | `true` |
+    | `baqup/http/routers/myrouter/tls` | `true` |
     
-??? info "`traefik/http/routers/<router_name>/tls/certresolver`"
+??? info "`baqup/http/routers/<router_name>/tls/certresolver`"
 
     See [certResolver](../routers/index.md#certresolver) for more information.
 
     | Key (Path)                                       | Value        |
     |--------------------------------------------------|--------------|
-    | `traefik/http/routers/myrouter/tls/certresolver` | `myresolver` |    
+    | `baqup/http/routers/myrouter/tls/certresolver` | `myresolver` |    
 
-??? info "`traefik/http/routers/<router_name>/tls/domains/<n>/main`"
+??? info "`baqup/http/routers/<router_name>/tls/domains/<n>/main`"
 
     See [domains](../routers/index.md#domains) for more information.
 
     | Key (Path)                                         | Value         |
     |----------------------------------------------------|---------------|
-    | `traefik/http/routers/myrouter/tls/domains/0/main` | `example.org` |
+    | `baqup/http/routers/myrouter/tls/domains/0/main` | `example.org` |
     
-??? info "`traefik/http/routers/<router_name>/tls/domains/<n>/sans/<n>`"
+??? info "`baqup/http/routers/<router_name>/tls/domains/<n>/sans/<n>`"
 
     See [domains](../routers/index.md#domains) for more information.
 
     | Key (Path)                                           | Value              |
     |------------------------------------------------------|--------------------|
-    | `traefik/http/routers/myrouter/tls/domains/0/sans/0` | `test.example.org` |
-    | `traefik/http/routers/myrouter/tls/domains/0/sans/1` | `dev.example.org`  |
+    | `baqup/http/routers/myrouter/tls/domains/0/sans/0` | `test.example.org` |
+    | `baqup/http/routers/myrouter/tls/domains/0/sans/1` | `dev.example.org`  |
     
-??? info "`traefik/http/routers/<router_name>/tls/options`"
+??? info "`baqup/http/routers/<router_name>/tls/options`"
 
     See [options](../routers/index.md#options) for more information.
 
     | Key (Path)                                  | Value    |
     |---------------------------------------------|----------|
-    | `traefik/http/routers/myrouter/tls/options` | `foobar` |
+    | `baqup/http/routers/myrouter/tls/options` | `foobar` |
 
-??? info "`traefik/http/routers/<router_name>/observability/accesslogs`"
+??? info "`baqup/http/routers/<router_name>/observability/accesslogs`"
 
     See accesslogs [option](../routers/index.md#accesslogs) for more information.
 
     | Key (Path)                                               | Value  |
     |----------------------------------------------------------|--------|
-    | `traefik/http/routers/myrouter/observability/accesslogs` | `true` |
+    | `baqup/http/routers/myrouter/observability/accesslogs` | `true` |
 
-??? info "`traefik/http/routers/<router_name>/observability/metrics`"
+??? info "`baqup/http/routers/<router_name>/observability/metrics`"
 
     See metrics [option](../routers/index.md#metrics) for more information.
 
     | Key (Path)                                            | Value  |
     |-------------------------------------------------------|--------|
-    | `traefik/http/routers/myrouter/observability/metrics` | `true` |
+    | `baqup/http/routers/myrouter/observability/metrics` | `true` |
 
-??? info "`traefik/http/routers/<router_name>/observability/tracing`"
+??? info "`baqup/http/routers/<router_name>/observability/tracing`"
 
     See tracing [option](../routers/index.md#tracing) for more information.
 
     | Key (Path)                                            | Value  |
     |-------------------------------------------------------|--------|
-    | `traefik/http/routers/myrouter/observability/tracing` | `true` |
+    | `baqup/http/routers/myrouter/observability/tracing` | `true` |
 
-??? info "`traefik/http/routers/<router_name>/priority`"
+??? info "`baqup/http/routers/<router_name>/priority`"
 
     See [priority](../routers/index.md#priority) for more information.
 
     | Key (Path)                               | Value |
     |------------------------------------------|-------|
-    | `traefik/http/routers/myrouter/priority` | `42`  |
+    | `baqup/http/routers/myrouter/priority` | `42`  |
 
 ### Services
 
 !!! warning "The character `@` is not authorized in the service name `<service_name>`."
 
-??? info "`traefik/http/services/<service_name>/loadbalancer/servers/<n>/url`"
+??? info "`baqup/http/services/<service_name>/loadbalancer/servers/<n>/url`"
 
     See [servers](../services/index.md#servers) for more information.
 
     | Key (Path)                                                      | Value                                   |
     |-----------------------------------------------------------------|-----------------------------------------|
-    | `traefik/http/services/myservice/loadbalancer/servers/0/url`    | `http://<ip-server-1>:<port-server-1>/` |
+    | `baqup/http/services/myservice/loadbalancer/servers/0/url`    | `http://<ip-server-1>:<port-server-1>/` |
 
-??? info "`traefik/http/services/<service_name>/loadbalancer/serverstransport`"
+??? info "`baqup/http/services/<service_name>/loadbalancer/serverstransport`"
 
     Allows to reference a ServersTransport resource that is defined either with the File provider or the Kubernetes CRD one.
     See [serverstransport](../services/index.md#serverstransport) for more information.
 
     | Key (Path)                                                      | Value         |
     |-----------------------------------------------------------------|---------------|
-    | `traefik/http/services/myservice/loadbalancer/serverstransport` | `foobar@file` |
+    | `baqup/http/services/myservice/loadbalancer/serverstransport` | `foobar@file` |
 
-??? info "`traefik/http/services/<service_name>/loadbalancer/passhostheader`"
+??? info "`baqup/http/services/<service_name>/loadbalancer/passhostheader`"
 
     See [pass Host header](../services/index.md#pass-host-header) for more information.
 
     | Key (Path)                                                      | Value  |
     |-----------------------------------------------------------------|--------|
-    | `traefik/http/services/myservice/loadbalancer/passhostheader`   | `true` |
+    | `baqup/http/services/myservice/loadbalancer/passhostheader`   | `true` |
 
-??? info "`traefik/http/services/<service_name>/loadbalancer/healthcheck/headers/<header_name>`"
+??? info "`baqup/http/services/<service_name>/loadbalancer/healthcheck/headers/<header_name>`"
 
     See [health check](../services/index.md#health-check) for more information.
 
     | Key (Path)                                                               | Value    |
     |--------------------------------------------------------------------------|----------|
-    | `traefik/http/services/myservice/loadbalancer/healthcheck/headers/X-Foo` | `foobar` |
+    | `baqup/http/services/myservice/loadbalancer/healthcheck/headers/X-Foo` | `foobar` |
 
-??? info "`traefik/http/services/<service_name>/loadbalancer/healthcheck/hostname`"
+??? info "`baqup/http/services/<service_name>/loadbalancer/healthcheck/hostname`"
 
     See [health check](../services/index.md#health-check) for more information.
 
     | Key (Path)                                                          | Value         |
     |---------------------------------------------------------------------|---------------|
-    | `traefik/http/services/myservice/loadbalancer/healthcheck/hostname` | `example.org` |
+    | `baqup/http/services/myservice/loadbalancer/healthcheck/hostname` | `example.org` |
 
-??? info "`traefik/http/services/<service_name>/loadbalancer/healthcheck/interval`"
+??? info "`baqup/http/services/<service_name>/loadbalancer/healthcheck/interval`"
 
     See [health check](../services/index.md#health-check) for more information.
 
     | Key (Path)                                                          | Value |
     |---------------------------------------------------------------------|-------|
-    | `traefik/http/services/myservice/loadbalancer/healthcheck/interval` | `10`  |
+    | `baqup/http/services/myservice/loadbalancer/healthcheck/interval` | `10`  |
 
-??? info "`traefik/http/services/<service_name>/loadbalancer/healthcheck/unhealthyinterval`"
+??? info "`baqup/http/services/<service_name>/loadbalancer/healthcheck/unhealthyinterval`"
 
     See [health check](../services/index.md#health-check) for more information.
 
     | Key (Path)                                                                   | Value |
     |------------------------------------------------------------------------------|-------|
-    | `traefik/http/services/myservice/loadbalancer/healthcheck/unhealthyinterval` | `10`  |
+    | `baqup/http/services/myservice/loadbalancer/healthcheck/unhealthyinterval` | `10`  |
 
-??? info "`traefik/http/services/<service_name>/loadbalancer/healthcheck/path`"
+??? info "`baqup/http/services/<service_name>/loadbalancer/healthcheck/path`"
 
     See [health check](../services/index.md#health-check) for more information.
 
     | Key (Path)                                                      | Value  |
     |-----------------------------------------------------------------|--------|
-    | `traefik/http/services/myservice/loadbalancer/healthcheck/path` | `/foo` |
+    | `baqup/http/services/myservice/loadbalancer/healthcheck/path` | `/foo` |
 
-??? info "`traefik/http/services/<service_name>/loadbalancer/healthcheck/method`"
+??? info "`baqup/http/services/<service_name>/loadbalancer/healthcheck/method`"
 
     See [health check](../services/index.md#health-check) for more information.
 
     | Key (Path)                                                        | Value    |
     |-------------------------------------------------------------------|----------|
-    | `traefik/http/services/myservice/loadbalancer/healthcheck/method` | `foobar` |
+    | `baqup/http/services/myservice/loadbalancer/healthcheck/method` | `foobar` |
 
-??? info "`traefik/http/services/<service_name>/loadbalancer/healthcheck/status`"
+??? info "`baqup/http/services/<service_name>/loadbalancer/healthcheck/status`"
 
     See [health check](../services/index.md#health-check) for more information.
 
     | Key (Path)                                                        | Value |
     |-------------------------------------------------------------------|-------|
-    | `traefik/http/services/myservice/loadbalancer/healthcheck/status` | `42`  |
+    | `baqup/http/services/myservice/loadbalancer/healthcheck/status` | `42`  |
 
-??? info "`traefik/http/services/<service_name>/loadbalancer/healthcheck/port`"
+??? info "`baqup/http/services/<service_name>/loadbalancer/healthcheck/port`"
 
     See [health check](../services/index.md#health-check) for more information.
 
     | Key (Path)                                                      | Value |
     |-----------------------------------------------------------------|-------|
-    | `traefik/http/services/myservice/loadbalancer/healthcheck/port` | `42`  |
+    | `baqup/http/services/myservice/loadbalancer/healthcheck/port` | `42`  |
 
-??? info "`traefik/http/services/<service_name>/loadbalancer/healthcheck/scheme`"
+??? info "`baqup/http/services/<service_name>/loadbalancer/healthcheck/scheme`"
 
     See [health check](../services/index.md#health-check) for more information.
 
     | Key (Path)                                                        | Value  |
     |-------------------------------------------------------------------|--------|
-    | `traefik/http/services/myservice/loadbalancer/healthcheck/scheme` | `http` |
+    | `baqup/http/services/myservice/loadbalancer/healthcheck/scheme` | `http` |
 
-??? info "`traefik/http/services/<service_name>/loadbalancer/healthcheck/timeout`"
+??? info "`baqup/http/services/<service_name>/loadbalancer/healthcheck/timeout`"
 
     See [health check](../services/index.md#health-check) for more information.
 
     | Key (Path)                                                         | Value |
     |--------------------------------------------------------------------|-------|
-    | `traefik/http/services/myservice/loadbalancer/healthcheck/timeout` | `10`  |
+    | `baqup/http/services/myservice/loadbalancer/healthcheck/timeout` | `10`  |
 
-??? info "`traefik/http/services/<service_name>/loadbalancer/sticky`"
+??? info "`baqup/http/services/<service_name>/loadbalancer/sticky`"
 
     See [sticky sessions](../services/index.md#sticky-sessions) for more information.
 
     | Key (Path)                                            | Value  |
     |-------------------------------------------------------|--------|
-    | `traefik/http/services/myservice/loadbalancer/sticky` | `true` |
+    | `baqup/http/services/myservice/loadbalancer/sticky` | `true` |
 
-??? info "`traefik/http/services/<service_name>/loadbalancer/sticky/cookie/httponly`"
+??? info "`baqup/http/services/<service_name>/loadbalancer/sticky/cookie/httponly`"
 
     See [sticky sessions](../services/index.md#sticky-sessions) for more information.
 
     | Key (Path)                                                            | Value  |
     |-----------------------------------------------------------------------|--------|
-    | `traefik/http/services/myservice/loadbalancer/sticky/cookie/httponly` | `true` |
+    | `baqup/http/services/myservice/loadbalancer/sticky/cookie/httponly` | `true` |
 
-??? info "`traefik/http/services/<service_name>/loadbalancer/sticky/cookie/name`"
+??? info "`baqup/http/services/<service_name>/loadbalancer/sticky/cookie/name`"
 
     See [sticky sessions](../services/index.md#sticky-sessions) for more information.
 
     | Key (Path)                                                        | Value    |
     |-------------------------------------------------------------------|----------|
-    | `traefik/http/services/myservice/loadbalancer/sticky/cookie/name` | `foobar` |
+    | `baqup/http/services/myservice/loadbalancer/sticky/cookie/name` | `foobar` |
 
-??? info "`traefik/http/services/<service_name>/loadbalancer/sticky/cookie/path`"
+??? info "`baqup/http/services/<service_name>/loadbalancer/sticky/cookie/path`"
 
     See [sticky sessions](../services/index.md#sticky-sessions) for more information.
 
     | Key (Path)                                                        | Value     |
     |-------------------------------------------------------------------|-----------|
-    | `traefik/http/services/myservice/loadbalancer/sticky/cookie/path` | `/foobar` |
+    | `baqup/http/services/myservice/loadbalancer/sticky/cookie/path` | `/foobar` |
 
-??? info "`traefik/http/services/<service_name>/loadbalancer/sticky/cookie/secure`"
+??? info "`baqup/http/services/<service_name>/loadbalancer/sticky/cookie/secure`"
 
     See [sticky sessions](../services/index.md#sticky-sessions) for more information.
 
     | Key (Path)                                                          | Value  |
     |---------------------------------------------------------------------|--------|
-    | `traefik/http/services/myservice/loadbalancer/sticky/cookie/secure` | `true` |
+    | `baqup/http/services/myservice/loadbalancer/sticky/cookie/secure` | `true` |
 
-??? info "`traefik/http/services/<service_name>/loadbalancer/sticky/cookie/samesite`"
+??? info "`baqup/http/services/<service_name>/loadbalancer/sticky/cookie/samesite`"
 
     See [sticky sessions](../services/index.md#sticky-sessions) for more information.
 
     | Key (Path)                                                            | Value  |
     |-----------------------------------------------------------------------|--------|
-    | `traefik/http/services/myservice/loadbalancer/sticky/cookie/samesite` | `none` |
+    | `baqup/http/services/myservice/loadbalancer/sticky/cookie/samesite` | `none` |
 
-??? info "`traefik/http/services/<service_name>/loadbalancer/sticky/cookie/domain`"
+??? info "`baqup/http/services/<service_name>/loadbalancer/sticky/cookie/domain`"
 
     See [sticky sessions](../services/index.md#sticky-sessions) for more information.
 
     | Key (Path)                                                            | Value     |
     |-----------------------------------------------------------------------|-----------|
-    | `traefik/http/services/myservice/loadbalancer/sticky/cookie/domain`   | `foo.com` |
+    | `baqup/http/services/myservice/loadbalancer/sticky/cookie/domain`   | `foo.com` |
 
-??? info "`traefik/http/services/<service_name>/loadbalancer/sticky/cookie/maxage`"
+??? info "`baqup/http/services/<service_name>/loadbalancer/sticky/cookie/maxage`"
 
     See [sticky sessions](../services/index.md#sticky-sessions) for more information.
 
     | Key (Path)                                                          | Value |
     |---------------------------------------------------------------------|-------|
-    | `traefik/http/services/myservice/loadbalancer/sticky/cookie/maxage` | `42`  |
+    | `baqup/http/services/myservice/loadbalancer/sticky/cookie/maxage` | `42`  |
 
-??? info "`traefik/http/services/<service_name>/loadbalancer/responseforwarding/flushinterval`"
+??? info "`baqup/http/services/<service_name>/loadbalancer/responseforwarding/flushinterval`"
 
     See [response forwarding](../services/index.md#response-forwarding) for more information.
 
     | Key (Path)                                                                      | Value |
     |---------------------------------------------------------------------------------|-------|
-    | `traefik/http/services/myservice/loadbalancer/responseforwarding/flushinterval` | `10`  |
+    | `baqup/http/services/myservice/loadbalancer/responseforwarding/flushinterval` | `10`  |
 
-??? info "`traefik/http/services/<service_name>/loadbalancer/strategy`"
+??? info "`baqup/http/services/<service_name>/loadbalancer/strategy`"
 
     See [load balancing strategy](../services/index.md#load-balancing-strategy) for more information.
 
     | Key (Path)                                              | Value |
     |---------------------------------------------------------|-------|
-    | `traefik/http/services/myservice/loadbalancer/strategy` | `p2c` |
+    | `baqup/http/services/myservice/loadbalancer/strategy` | `p2c` |
 
-??? info "`traefik/http/services/<service_name>/mirroring/service`"
+??? info "`baqup/http/services/<service_name>/mirroring/service`"
 
     | Key (Path)                                               | Value    |
     |----------------------------------------------------------|----------|
-    | `traefik/http/services/<service_name>/mirroring/service` | `foobar` |
+    | `baqup/http/services/<service_name>/mirroring/service` | `foobar` |
 
-??? info "`traefik/http/services/<service_name>/mirroring/mirrors/<n>/name`"
+??? info "`baqup/http/services/<service_name>/mirroring/mirrors/<n>/name`"
 
     | Key (Path)                                                        | Value    |
     |-------------------------------------------------------------------|----------|
-    | `traefik/http/services/<service_name>/mirroring/mirrors/<n>/name` | `foobar` |
+    | `baqup/http/services/<service_name>/mirroring/mirrors/<n>/name` | `foobar` |
 
-??? info "`traefik/http/services/<service_name>/mirroring/mirrors/<n>/percent`"
+??? info "`baqup/http/services/<service_name>/mirroring/mirrors/<n>/percent`"
 
     | Key (Path)                                                           | Value |
     |----------------------------------------------------------------------|-------|
-    | `traefik/http/services/<service_name>/mirroring/mirrors/<n>/percent` | `42`  |
+    | `baqup/http/services/<service_name>/mirroring/mirrors/<n>/percent` | `42`  |
 
-??? info "`traefik/http/services/<service_name>/weighted/services/<n>/name`"
+??? info "`baqup/http/services/<service_name>/weighted/services/<n>/name`"
 
     | Key (Path)                                                        | Value    |
     |-------------------------------------------------------------------|----------|
-    | `traefik/http/services/<service_name>/weighted/services/<n>/name` | `foobar` |
+    | `baqup/http/services/<service_name>/weighted/services/<n>/name` | `foobar` |
 
-??? info "`traefik/http/services/<service_name>/weighted/services/<n>/weight`"
+??? info "`baqup/http/services/<service_name>/weighted/services/<n>/weight`"
 
     | Key (Path)                                                          | Value |
     |---------------------------------------------------------------------|-------|
-    | `traefik/http/services/<service_name>/weighted/services/<n>/weight` | `42`  |
+    | `baqup/http/services/<service_name>/weighted/services/<n>/weight` | `42`  |
 
-??? info "`traefik/http/services/<service_name>/weighted/sticky/cookie/name`"
+??? info "`baqup/http/services/<service_name>/weighted/sticky/cookie/name`"
 
     | Key (Path)                                                         | Value    |
     |--------------------------------------------------------------------|----------|
-    | `traefik/http/services/<service_name>/weighted/sticky/cookie/name` | `foobar` |
+    | `baqup/http/services/<service_name>/weighted/sticky/cookie/name` | `foobar` |
 
-??? info "`traefik/http/services/<service_name>/weighted/sticky/cookie/secure`"
+??? info "`baqup/http/services/<service_name>/weighted/sticky/cookie/secure`"
 
     | Key (Path)                                                           | Value  |
     |----------------------------------------------------------------------|--------|
-    | `traefik/http/services/<service_name>/weighted/sticky/cookie/secure` | `true` |
+    | `baqup/http/services/<service_name>/weighted/sticky/cookie/secure` | `true` |
 
-??? info "`traefik/http/services/<service_name>/weighted/sticky/cookie/samesite`"
+??? info "`baqup/http/services/<service_name>/weighted/sticky/cookie/samesite`"
 
     | Key (Path)                                                             | Value  |
     |------------------------------------------------------------------------|--------|
-    | `traefik/http/services/<service_name>/weighted/sticky/cookie/samesite` | `none` |
+    | `baqup/http/services/<service_name>/weighted/sticky/cookie/samesite` | `none` |
 
-??? info "`traefik/http/services/<service_name>/weighted/sticky/cookie/domain`"
+??? info "`baqup/http/services/<service_name>/weighted/sticky/cookie/domain`"
 
     | Key (Path)                                                             | Value     |
     |------------------------------------------------------------------------|-----------|
-    | `traefik/http/services/<service_name>/weighted/sticky/cookie/domain`   | `foo.com` |
+    | `baqup/http/services/<service_name>/weighted/sticky/cookie/domain`   | `foo.com` |
 
-??? info "`traefik/http/services/<service_name>/weighted/sticky/cookie/httpOnly`"
+??? info "`baqup/http/services/<service_name>/weighted/sticky/cookie/httpOnly`"
 
     | Key (Path)                                                             | Value  |
     |------------------------------------------------------------------------|--------|
-    | `traefik/http/services/<service_name>/weighted/sticky/cookie/httpOnly` | `true` |
+    | `baqup/http/services/<service_name>/weighted/sticky/cookie/httpOnly` | `true` |
 
-??? info "`traefik/http/services/<service_name>/weighted/sticky/cookie/maxage`"
+??? info "`baqup/http/services/<service_name>/weighted/sticky/cookie/maxage`"
 
     | Key (Path)                                                           | Value |
     |----------------------------------------------------------------------|-------|
-    | `traefik/http/services/<service_name>/weighted/sticky/cookie/maxage` | `42`  |
+    | `baqup/http/services/<service_name>/weighted/sticky/cookie/maxage` | `42`  |
 
-??? info "`traefik/http/services/<service_name>/weighted/sticky/cookie/path`"
+??? info "`baqup/http/services/<service_name>/weighted/sticky/cookie/path`"
 
     | Key (Path)                                                           | Value     |
     |----------------------------------------------------------------------|-----------|
-    | `traefik/http/services/<service_name>/weighted/sticky/cookie/path`   | `/foobar` |
+    | `baqup/http/services/<service_name>/weighted/sticky/cookie/path`   | `/foobar` |
 
 ### Middleware
 
@@ -404,123 +404,123 @@ You can declare TCP Routers and/or Services using KV.
 
 #### TCP Routers
 
-??? info "`traefik/tcp/routers/<router_name>/entrypoints`"
+??? info "`baqup/tcp/routers/<router_name>/entrypoints`"
 
     See [entry points](../routers/index.md#entrypoints_1) for more information.
 
     | Key (Path)                                      | Value |
     |-------------------------------------------------|-------|
-    | `traefik/tcp/routers/mytcprouter/entrypoints/0` | `ep1` |
-    | `traefik/tcp/routers/mytcprouter/entrypoints/1` | `ep2` |
+    | `baqup/tcp/routers/mytcprouter/entrypoints/0` | `ep1` |
+    | `baqup/tcp/routers/mytcprouter/entrypoints/1` | `ep2` |
     
-??? info "`traefik/tcp/routers/<router_name>/rule`"
+??? info "`baqup/tcp/routers/<router_name>/rule`"
 
     See [rule](../routers/index.md#rule_1) for more information.
 
     | Key (Path)                           | Value                        |
     |--------------------------------------|------------------------------|
-    | `traefik/tcp/routers/my-router/rule` | ```HostSNI(`example.com`)``` |  
+    | `baqup/tcp/routers/my-router/rule` | ```HostSNI(`example.com`)``` |  
 
-??? info "`traefik/tcp/routers/<router_name>/service`"
+??? info "`baqup/tcp/routers/<router_name>/service`"
 
     See [service](../routers/index.md#services) for more information.
     
     | Key (Path)                                | Value       |
     |-------------------------------------------|-------------|
-    | `traefik/tcp/routers/mytcprouter/service` | `myservice` |
+    | `baqup/tcp/routers/mytcprouter/service` | `myservice` |
 
-??? info "`traefik/tcp/routers/<router_name>/tls`"
+??? info "`baqup/tcp/routers/<router_name>/tls`"
 
     See [TLS](../routers/index.md#tls_1) for more information.
 
     | Key (Path)                            | Value  |
     |---------------------------------------|--------|
-    | `traefik/tcp/routers/mytcprouter/tls` | `true` |
+    | `baqup/tcp/routers/mytcprouter/tls` | `true` |
 
-??? info "`traefik/tcp/routers/<router_name>/tls/certresolver`"
+??? info "`baqup/tcp/routers/<router_name>/tls/certresolver`"
 
     See [certResolver](../routers/index.md#certresolver_1) for more information.
 
     | Key (Path)                                         | Value        |
     |----------------------------------------------------|--------------|
-    | `traefik/tcp/routers/mytcprouter/tls/certresolver` | `myresolver` |
+    | `baqup/tcp/routers/mytcprouter/tls/certresolver` | `myresolver` |
 
-??? info "`traefik/tcp/routers/<router_name>/tls/domains/<n>/main`"
+??? info "`baqup/tcp/routers/<router_name>/tls/domains/<n>/main`"
 
     See [domains](../routers/index.md#domains_1) for more information.
 
     | Key (Path)                                           | Value         |
     |------------------------------------------------------|---------------|
-    | `traefik/tcp/routers/mytcprouter/tls/domains/0/main` | `example.org` |
+    | `baqup/tcp/routers/mytcprouter/tls/domains/0/main` | `example.org` |
         
-??? info "`traefik/tcp/routers/<router_name>/tls/domains/<n>/sans`"
+??? info "`baqup/tcp/routers/<router_name>/tls/domains/<n>/sans`"
 
     See [domains](../routers/index.md#domains_1) for more information.
 
     | Key (Path)                                             | Value              |
     |--------------------------------------------------------|--------------------|
-    | `traefik/tcp/routers/mytcprouter/tls/domains/0/sans/0` | `test.example.org` |
-    | `traefik/tcp/routers/mytcprouter/tls/domains/0/sans/1` | `dev.example.org`  |
+    | `baqup/tcp/routers/mytcprouter/tls/domains/0/sans/0` | `test.example.org` |
+    | `baqup/tcp/routers/mytcprouter/tls/domains/0/sans/1` | `dev.example.org`  |
     
-??? info "`traefik/tcp/routers/<router_name>/tls/options`"
+??? info "`baqup/tcp/routers/<router_name>/tls/options`"
 
     See [options](../routers/index.md#options_1) for more information.
 
     | Key (Path)                                    | Value    |
     |-----------------------------------------------|----------|
-    | `traefik/tcp/routers/mytcprouter/tls/options` | `foobar` |
+    | `baqup/tcp/routers/mytcprouter/tls/options` | `foobar` |
 
-??? info "`traefik/tcp/routers/<router_name>/tls/passthrough`"
+??? info "`baqup/tcp/routers/<router_name>/tls/passthrough`"
 
     See [TLS](../routers/index.md#tls_1) for more information.
 
     | Key (Path)                                        | Value  |
     |---------------------------------------------------|--------|
-    | `traefik/tcp/routers/mytcprouter/tls/passthrough` | `true` |
+    | `baqup/tcp/routers/mytcprouter/tls/passthrough` | `true` |
 
-??? info "`traefik/tcp/routers/<router_name>/priority`"
+??? info "`baqup/tcp/routers/<router_name>/priority`"
 
     See [priority](../routers/index.md#priority_1) for more information.
 
     | Key (Path)                               | Value |
     |------------------------------------------|-------|
-    | `traefik/tcp/routers/myrouter/priority`  | `42`  |
+    | `baqup/tcp/routers/myrouter/priority`  | `42`  |
 
 #### TCP Services
 
-??? info "`traefik/tcp/services/<service_name>/loadbalancer/servers/<n>/address`"
+??? info "`baqup/tcp/services/<service_name>/loadbalancer/servers/<n>/address`"
 
     See [servers](../services/index.md#servers) for more information.
 
     | Key (Path)                                                         | Value            |
     |--------------------------------------------------------------------|------------------|
-    | `traefik/tcp/services/mytcpservice/loadbalancer/servers/0/address` | `xx.xx.xx.xx:xx` |
+    | `baqup/tcp/services/mytcpservice/loadbalancer/servers/0/address` | `xx.xx.xx.xx:xx` |
     
-??? info "`traefik/tcp/services/<service_name>/loadbalancer/proxyprotocol/version`"
+??? info "`baqup/tcp/services/<service_name>/loadbalancer/proxyprotocol/version`"
 
     See [PROXY protocol](../services/index.md#proxy-protocol) for more information.
 
     | Key (Path)                                                             | Value |
     |------------------------------------------------------------------------|-------|
-    | `traefik/tcp/services/mytcpservice/loadbalancer/proxyprotocol/version` | `1`   |
+    | `baqup/tcp/services/mytcpservice/loadbalancer/proxyprotocol/version` | `1`   |
 
-??? info "`traefik/tcp/services/<service_name>/loadbalancer/serverstransport`"
+??? info "`baqup/tcp/services/<service_name>/loadbalancer/serverstransport`"
 
     Allows to reference a ServersTransport resource that is defined either with the File provider or the Kubernetes CRD one.
     See [serverstransport](../services/index.md#serverstransport_2) for more information.
 
     | Key (Path)                                                      | Value         |
     |-----------------------------------------------------------------|---------------|
-    | `traefik/tcp/services/myservice/loadbalancer/serverstransport` | `foobar@file` |
+    | `baqup/tcp/services/myservice/loadbalancer/serverstransport` | `foobar@file` |
 
-??? info "`traefik/tcp/services/<service_name>/weighted/services/<n>/name`"
+??? info "`baqup/tcp/services/<service_name>/weighted/services/<n>/name`"
 
     | Key (Path)                                                          | Value    |
     |---------------------------------------------------------------------|----------|
-    | `traefik/tcp/services/<service_name>/weighted/services/0/name`      | `foobar` |
+    | `baqup/tcp/services/<service_name>/weighted/services/0/name`      | `foobar` |
 
-??? info "`traefik/tcp/services/<service_name>/weighted/services/<n>/weight`"
+??? info "`baqup/tcp/services/<service_name>/weighted/services/<n>/weight`"
 
     | Key (Path)                                                       | Value |
     |------------------------------------------------------------------|-------|
-    | `traefik/tcp/services/<service_name>/weighted/services/0/weight` | `42`  |
+    | `baqup/tcp/services/<service_name>/weighted/services/0/weight` | `42`  |

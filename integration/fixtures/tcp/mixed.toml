@@ -33,7 +33,7 @@
     [http.routers.api]
       rule = "PathPrefix(`/api`)"
       service = "api@internal"
-      entryPoints = ["traefik"]
+      entryPoints = ["baqup"]
 
   [http.services]
     [http.services.whoami.loadBalancer]

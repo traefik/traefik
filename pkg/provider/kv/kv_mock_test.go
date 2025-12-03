@@ -10,7 +10,7 @@ import (
 
 func newProviderMock(kvPairs []*store.KVPair) *Provider {
 	return &Provider{
-		RootKey:  "traefik",
+		RootKey:  "baqup",
 		kvClient: newKvClientMock(kvPairs, nil),
 	}
 }

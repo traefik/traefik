@@ -102,8 +102,8 @@ describe('HubDashboard demo', () => {
       expect(errorImage).toBeInTheDocument()
 
       const links = container.querySelectorAll('a')
-      const websiteLink = Array.from(links).find((link) => link.href.includes('traefik.io/traefik-hub'))
-      const docLink = Array.from(links).find((link) => link.href.includes('doc.traefik.io/traefik-hub'))
+      const websiteLink = Array.from(links).find((link) => link.href.includes('baqup.io/baqup-hub'))
+      const docLink = Array.from(links).find((link) => link.href.includes('doc.baqup.io/baqup-hub'))
 
       expect(websiteLink).toBeInTheDocument()
       expect(docLink).toBeInTheDocument()
@@ -127,8 +127,8 @@ describe('HubDashboard demo', () => {
 
       await waitFor(() => {
         expect(mockVerifyScriptSignature).toHaveBeenCalledWith(
-          'https://assets.traefik.io/hub-ui-demo.js',
-          'https://assets.traefik.io/hub-ui-demo.js.sig',
+          'https://assets.baqup.io/hub-ui-demo.js',
+          'https://assets.baqup.io/hub-ui-demo.js.sig',
           PUBLIC_KEY,
         )
       })

@@ -13,5 +13,5 @@
   insecure = true
 
 [providers.consul]
-  rootKey = "traefik"
+  rootKey = "baqup"
   endpoints = ["{{ .ConsulAddress }}"]

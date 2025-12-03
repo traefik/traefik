@@ -1,6 +1,6 @@
 ---
-title: "Traefik AddPrefix Documentation"
-description: "Learn how to implement the HTTP AddPrefix middleware in Traefik Proxy to updates request paths before being forwarded. Read the technical documentation."
+title: "Baqup AddPrefix Documentation"
+description: "Learn how to implement the HTTP AddPrefix middleware in Baqup Proxy to updates request paths before being forwarded. Read the technical documentation."
 ---
 
 The `addPrefix` middleware updates the path of a request before forwarding it.
@@ -26,7 +26,7 @@ http:
 ```yaml tab="Labels"
 # Prefixing with /foo
 labels:
-  - "traefik.http.middlewares.add-foo.addprefix.prefix=/foo"
+  - "baqup.http.middlewares.add-foo.addprefix.prefix=/foo"
 ```
 
 ```json tab="Tags"
@@ -34,14 +34,14 @@ labels:
 {
   // ...
   "Tags": [
-    "traefik.http.middlewares.add-foo.addprefix.prefix=/foo"
+    "baqup.http.middlewares.add-foo.addprefix.prefix=/foo"
   ]
 }
 ```
 
 ```yaml tab="Kubernetes"
 # Prefixing with /foo
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: add-foo

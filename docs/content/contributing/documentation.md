@@ -1,6 +1,6 @@
 ---
-title: "Traefik Contribution Documentation"
-description: "Found something unclear in the Traefik Proxy documentation and want to give a try at explaining it better? Read the guide to building documentation."
+title: "Baqup Contribution Documentation"
+description: "Found something unclear in the Baqup Proxy documentation and want to give a try at explaining it better? Read the guide to building documentation."
 ---
 
 # Documentation
@@ -15,7 +15,7 @@ Let's see how.
 
 ### General
 
-This [documentation](../index.md "Link to the official Traefik documentation") is built with [MkDocs](https://mkdocs.org/ "Link to the website of MkDocs").
+This [documentation](../index.md "Link to the official Baqup documentation") is built with [MkDocs](https://mkdocs.org/ "Link to the website of MkDocs").
 
 ### Method 1: `Docker` and `make`
 
@@ -27,9 +27,9 @@ You can build the documentation and test it locally (with live reloading), using
 
 ```bash
 $ make docs-serve
-docker build -t traefik-docs -f docs.Dockerfile .
+docker build -t baqup-docs -f docs.Dockerfile .
 # […]
-docker run  --rm -v /home/user/go/github/traefik/traefik:/mkdocs -p 8000:8000 traefik-docs mkdocs serve
+docker run  --rm -v /home/user/go/github/baqup/baqup:/mkdocs -p 8000:8000 baqup-docs mkdocs serve
 # […]
 [I 170828 20:47:48 server:283] Serving on http://0.0.0.0:8000
 [I 170828 20:47:48 handlers:60] Start watching changes
@@ -85,9 +85,9 @@ To check that the documentation meets standard expectations (no dead links, html
 
 ```bash
 $ make docs-verify
-docker build -t traefik-docs-verify ./script/docs-verify-docker-image ## Build Validator image
+docker build -t baqup-docs-verify ./script/docs-verify-docker-image ## Build Validator image
 ...
-docker run --rm -v /home/travis/build/traefik/traefik:/app traefik-docs-verify ## Check for dead links and w3c compliance
+docker run --rm -v /home/travis/build/baqup/baqup:/app baqup-docs-verify ## Check for dead links and w3c compliance
 === Checking HTML content...
 Running ["HtmlCheck", "ImageCheck", "ScriptCheck", "LinkCheck"] on /app/site/basics/index.html on *.html...
 ```

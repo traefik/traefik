@@ -8,17 +8,17 @@ import (
 	"time"
 
 	auth "github.com/abbot/go-http-auth"
+	"github.com/baqupio/baqup/v3/pkg/config/dynamic"
+	"github.com/baqupio/baqup/v3/pkg/provider"
+	baqupv1alpha1 "github.com/baqupio/baqup/v3/pkg/provider/kubernetes/crd/baqupio/v1alpha1"
+	baqupcrdfake "github.com/baqupio/baqup/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned/fake"
+	"github.com/baqupio/baqup/v3/pkg/provider/kubernetes/gateway"
+	"github.com/baqupio/baqup/v3/pkg/provider/kubernetes/k8s"
+	"github.com/baqupio/baqup/v3/pkg/tls"
+	"github.com/baqupio/baqup/v3/pkg/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/provider"
-	traefikcrdfake "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned/fake"
-	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
-	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/gateway"
-	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
-	"github.com/traefik/traefik/v3/pkg/tls"
-	"github.com/traefik/traefik/v3/pkg/types"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -32,7 +32,7 @@ func pointer[T any](v T) *T { return &v }
 
 func init() {
 	// required by k8s.MustParseYaml
-	err := traefikv1alpha1.AddToScheme(kscheme.Scheme)
+	err := baqupv1alpha1.AddToScheme(kscheme.Scheme)
 	if err != nil {
 		panic(err)
 	}
@@ -1655,7 +1655,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 			k8sObjects, crdObjects := readResources(t, test.paths)
 
 			kubeClient := kubefake.NewClientset(k8sObjects...)
-			crdClient := traefikcrdfake.NewSimpleClientset(crdObjects...)
+			crdClient := baqupcrdfake.NewSimpleClientset(crdObjects...)
 
 			client := newClientImpl(kubeClient, crdClient)
 
@@ -2244,7 +2244,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 			},
 		},
 		{
-			desc:  "traefik service without ingress route",
+			desc:  "baqup service without ingress route",
 			paths: []string{"with_services_only.yml"},
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
@@ -5083,7 +5083,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 			},
 		},
 		{
-			desc:               "TraefikService, empty service allowed",
+			desc:               "BaqupService, empty service allowed",
 			allowEmptyServices: true,
 			paths:              []string{"services.yml", "with_empty_services_ts.yml"},
 			expected: &dynamic.Configuration{
@@ -5201,7 +5201,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 						"default-test2-route-4f06607bbc69f34a4db5": {
 							EntryPoints: []string{"web"},
 							Service:     "default-test2-route-4f06607bbc69f34a4db5",
-							Rule:        "Host(`traefik-service`)",
+							Rule:        "Host(`baqup-service`)",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -5728,7 +5728,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 			k8sObjects, crdObjects := readResources(t, test.paths)
 
 			kubeClient := kubefake.NewClientset(k8sObjects...)
-			crdClient := traefikcrdfake.NewSimpleClientset(crdObjects...)
+			crdClient := baqupcrdfake.NewSimpleClientset(crdObjects...)
 
 			client := newClientImpl(kubeClient, crdClient)
 
@@ -5810,7 +5810,7 @@ func TestLoadIngressRoutes_multipleEndpointAddresses(t *testing.T) {
 	k8sObjects, crdObjects := readResources(t, []string{"services.yml", "with_multiple_endpointslices.yml"})
 
 	kubeClient := kubefake.NewClientset(k8sObjects...)
-	crdClient := traefikcrdfake.NewSimpleClientset(crdObjects...)
+	crdClient := baqupcrdfake.NewSimpleClientset(crdObjects...)
 
 	client := newClientImpl(kubeClient, crdClient)
 
@@ -6319,7 +6319,7 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 			k8sObjects, crdObjects := readResources(t, test.paths)
 
 			kubeClient := kubefake.NewClientset(k8sObjects...)
-			crdClient := traefikcrdfake.NewSimpleClientset(crdObjects...)
+			crdClient := baqupcrdfake.NewSimpleClientset(crdObjects...)
 
 			client := newClientImpl(kubeClient, crdClient)
 
@@ -7822,7 +7822,7 @@ func TestCrossNamespace(t *testing.T) {
 			k8sObjects, crdObjects := readResources(t, test.paths)
 
 			kubeClient := kubefake.NewClientset(k8sObjects...)
-			crdClient := traefikcrdfake.NewSimpleClientset(crdObjects...)
+			crdClient := baqupcrdfake.NewSimpleClientset(crdObjects...)
 
 			client := newClientImpl(kubeClient, crdClient)
 
@@ -8092,7 +8092,7 @@ func TestExternalNameService(t *testing.T) {
 			k8sObjects, crdObjects := readResources(t, test.paths)
 
 			kubeClient := kubefake.NewClientset(k8sObjects...)
-			crdClient := traefikcrdfake.NewSimpleClientset(crdObjects...)
+			crdClient := baqupcrdfake.NewSimpleClientset(crdObjects...)
 
 			client := newClientImpl(kubeClient, crdClient)
 
@@ -8274,7 +8274,7 @@ func TestNativeLB(t *testing.T) {
 			k8sObjects, crdObjects := readResources(t, test.paths)
 
 			kubeClient := kubefake.NewClientset(k8sObjects...)
-			crdClient := traefikcrdfake.NewSimpleClientset(crdObjects...)
+			crdClient := baqupcrdfake.NewSimpleClientset(crdObjects...)
 
 			client := newClientImpl(kubeClient, crdClient)
 
@@ -8540,7 +8540,7 @@ func TestNodePortLB(t *testing.T) {
 			k8sObjects, crdObjects := readResources(t, test.paths)
 
 			kubeClient := kubefake.NewClientset(k8sObjects...)
-			crdClient := traefikcrdfake.NewSimpleClientset(crdObjects...)
+			crdClient := baqupcrdfake.NewSimpleClientset(crdObjects...)
 
 			client := newClientImpl(kubeClient, crdClient)
 
@@ -8581,7 +8581,7 @@ func TestCreateBasicAuthCredentials(t *testing.T) {
 	}
 
 	kubeClient := kubefake.NewClientset(k8sObjects...)
-	crdClient := traefikcrdfake.NewSimpleClientset()
+	crdClient := baqupcrdfake.NewSimpleClientset()
 
 	client := newClientImpl(kubeClient, crdClient)
 
@@ -8596,7 +8596,7 @@ func TestCreateBasicAuthCredentials(t *testing.T) {
 	}
 
 	// Testing for username/password components in basic-auth secret
-	basicAuth, secretErr := createBasicAuthMiddleware(client, "default", &traefikv1alpha1.BasicAuth{Secret: "basic-auth-secret"})
+	basicAuth, secretErr := createBasicAuthMiddleware(client, "default", &baqupv1alpha1.BasicAuth{Secret: "basic-auth-secret"})
 	require.NoError(t, secretErr)
 	require.Len(t, basicAuth.Users, 1)
 
@@ -8611,7 +8611,7 @@ func TestCreateBasicAuthCredentials(t *testing.T) {
 	assert.True(t, auth.CheckSecret("password", hashedPassword))
 
 	// Testing for username/password components in htpasswd secret
-	basicAuth, secretErr = createBasicAuthMiddleware(client, "default", &traefikv1alpha1.BasicAuth{Secret: "auth-secret"})
+	basicAuth, secretErr = createBasicAuthMiddleware(client, "default", &baqupv1alpha1.BasicAuth{Secret: "auth-secret"})
 	require.NoError(t, secretErr)
 	require.Len(t, basicAuth.Users, 2)
 
@@ -8657,7 +8657,7 @@ func TestFillExtensionBuilderRegistry(t *testing.T) {
 			p := Provider{Namespaces: test.namespaces}
 			p.FillExtensionBuilderRegistry(r)
 
-			filterFunc, ok := r.groupKindFilterFuncs[traefikv1alpha1.SchemeGroupVersion.Group]["Middleware"]
+			filterFunc, ok := r.groupKindFilterFuncs[baqupv1alpha1.SchemeGroupVersion.Group]["Middleware"]
 			require.True(t, ok)
 
 			name, conf, err := filterFunc("my-middleware", "default")
@@ -8668,7 +8668,7 @@ func TestFillExtensionBuilderRegistry(t *testing.T) {
 				assert.Equal(t, "default-my-middleware@kubernetescrd", name)
 			}
 
-			backendFunc, ok := r.groupKindBackendFuncs[traefikv1alpha1.SchemeGroupVersion.Group]["TraefikService"]
+			backendFunc, ok := r.groupKindBackendFuncs[baqupv1alpha1.SchemeGroupVersion.Group]["BaqupService"]
 			require.True(t, ok)
 
 			name, svc, err := backendFunc("my-service", "default")
@@ -8696,7 +8696,7 @@ func readResources(t *testing.T, paths []string) ([]runtime.Object, []runtime.Ob
 		objects := k8s.MustParseYaml(yamlContent)
 		for _, obj := range objects {
 			switch obj.GetObjectKind().GroupVersionKind().Group {
-			case "traefik.io":
+			case "baqup.io":
 				crdObjects = append(crdObjects, obj)
 			default:
 				k8sObjects = append(k8sObjects, obj)
@@ -9165,19 +9165,19 @@ func TestGlobalNativeLB(t *testing.T) {
 				objects := k8s.MustParseYaml(yamlContent)
 				for _, obj := range objects {
 					switch o := obj.(type) {
-					case *traefikv1alpha1.IngressRoute:
+					case *baqupv1alpha1.IngressRoute:
 						crdObjects = append(crdObjects, o)
-					case *traefikv1alpha1.IngressRouteTCP:
+					case *baqupv1alpha1.IngressRouteTCP:
 						crdObjects = append(crdObjects, o)
-					case *traefikv1alpha1.IngressRouteUDP:
+					case *baqupv1alpha1.IngressRouteUDP:
 						crdObjects = append(crdObjects, o)
-					case *traefikv1alpha1.Middleware:
+					case *baqupv1alpha1.Middleware:
 						crdObjects = append(crdObjects, o)
-					case *traefikv1alpha1.TraefikService:
+					case *baqupv1alpha1.BaqupService:
 						crdObjects = append(crdObjects, o)
-					case *traefikv1alpha1.TLSOption:
+					case *baqupv1alpha1.TLSOption:
 						crdObjects = append(crdObjects, o)
-					case *traefikv1alpha1.TLSStore:
+					case *baqupv1alpha1.TLSStore:
 						crdObjects = append(crdObjects, o)
 					default:
 						k8sObjects = append(k8sObjects, o)
@@ -9186,7 +9186,7 @@ func TestGlobalNativeLB(t *testing.T) {
 			}
 
 			kubeClient := kubefake.NewClientset(k8sObjects...)
-			crdClient := traefikcrdfake.NewSimpleClientset(crdObjects...)
+			crdClient := baqupcrdfake.NewSimpleClientset(crdObjects...)
 
 			client := newClientImpl(kubeClient, crdClient)
 

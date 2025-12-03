@@ -7,7 +7,7 @@ import (
 	"net"
 	"syscall"
 
-	"github.com/traefik/traefik/v3/pkg/config/static"
+	"github.com/baqupio/baqup/v3/pkg/config/static"
 	"golang.org/x/sys/unix"
 )
 

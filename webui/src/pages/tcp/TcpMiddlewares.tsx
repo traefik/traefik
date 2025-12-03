@@ -109,7 +109,7 @@ export const TcpMiddlewares = () => {
   return (
     <>
       <Helmet>
-        <title>TCP Middlewares - Traefik Proxy</title>
+        <title>TCP Middlewares - Baqup Proxy</title>
       </Helmet>
       <TableFilter />
       <TcpMiddlewaresRender

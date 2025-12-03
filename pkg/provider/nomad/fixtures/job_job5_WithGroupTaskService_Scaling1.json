@@ -86,7 +86,7 @@
               "Address": "",
               "EnableTagOverride": false,
               "Tags": [
-                "traefik.enable=true"
+                "baqup.enable=true"
               ],
               "CanaryTags": null,
               "Checks": null,
@@ -159,7 +159,7 @@
               "Address": "",
               "EnableTagOverride": false,
               "Tags": [
-                "traefik.enable=true"
+                "baqup.enable=true"
               ],
               "CanaryTags": null,
               "Checks": null,

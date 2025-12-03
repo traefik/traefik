@@ -1,6 +1,6 @@
 package types
 
-import "github.com/traefik/traefik/v3/pkg/types"
+import "github.com/baqupio/baqup/v3/pkg/types"
 
 // OTelGRPC provides configuration settings for the gRPC open-telemetry.
 type OTelGRPC struct {

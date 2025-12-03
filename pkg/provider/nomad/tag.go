@@ -10,7 +10,7 @@ func tagsToLabels(tags []string, prefix string) map[string]string {
 		if strings.HasPrefix(tag, prefix) {
 			if parts := strings.SplitN(tag, "=", 2); len(parts) == 2 {
 				left, right := strings.TrimSpace(parts[0]), strings.TrimSpace(parts[1])
-				key := "traefik." + strings.TrimPrefix(left, prefix+".")
+				key := "baqup." + strings.TrimPrefix(left, prefix+".")
 				labels[key] = right
 			}
 		}

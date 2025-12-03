@@ -1,17 +1,17 @@
 ---
-title: "Traefik Kubernetes Ingress NGINX Documentation"
+title: "Baqup Kubernetes Ingress NGINX Documentation"
 description: "Understand the requirements, routing configuration, and how to set up the Kubernetes Ingress NGINX provider. Read the technical documentation."
 ---
 
-# Traefik & Ingresses with NGINX Annotations
+# Baqup & Ingresses with NGINX Annotations
 
 This provider is a Kubernetes Ingress controller that manages access to cluster services by supporting the [Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/) specification.
-It also supports many of the [ingress-nginx](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/) annotations on Ingresses, enabling teams to migrate from NGINX Ingress Controller to Traefik with minimal configuration changes.
+It also supports many of the [ingress-nginx](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/) annotations on Ingresses, enabling teams to migrate from NGINX Ingress Controller to Baqup with minimal configuration changes.
 
 !!! warning "NGINX Ingress Controller Retirement"
 
     The Kubernetes NGINX Ingress Controller project has announced its retirement in **March 2026** and will no longer receive updates or security patches.
-    Traefik provides a migration path by supporting NGINX annotations, allowing you to transition your workloads without rewriting all your Ingress configurations.
+    Baqup provides a migration path by supporting NGINX annotations, allowing you to transition your workloads without rewriting all your Ingress configurations.
 
     For more information about the NGINX Ingress Controller retirement, see the [official Kubernetes blog announcement](https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement).
 
@@ -49,7 +49,7 @@ providers:
     ingressClassByName: false
 
     # Status updates
-    publishService: "kube-system/traefik"
+    publishService: "kube-system/baqup"
     publishStatusAddress: "203.0.113.42"
 
     # Default backend
@@ -78,7 +78,7 @@ providers:
   ingressClassByName = false
 
   # Status updates
-  publishService = "kube-system/traefik"
+  publishService = "kube-system/baqup"
   publishStatusAddress = "203.0.113.42"
 
   # Default backend
@@ -99,7 +99,7 @@ providers:
 --providers.kubernetesingressnginx.controllerclass=k8s.io/ingress-nginx
 --providers.kubernetesingressnginx.watchingresswithoutclass=false
 --providers.kubernetesingressnginx.ingressclassbyname=false
---providers.kubernetesingressnginx.publishservice=kube-system/traefik
+--providers.kubernetesingressnginx.publishservice=kube-system/baqup
 --providers.kubernetesingressnginx.publishstatusaddress=203.0.113.42
 --providers.kubernetesingressnginx.defaultbackendservice=default/default-backend
 --providers.kubernetesingressnginx.disablesvcexternalname=false
@@ -145,7 +145,7 @@ providers:
     # -- Service fronting the Ingress controller
     publishService:
       enabled: true
-      pathOverride: "kube-system/traefik"
+      pathOverride: "kube-system/baqup"
     # -- Customized address (or addresses, separated by comma) to set as the load-balancer status of Ingress objects
     publishStatusAddress: "203.0.113.42"
 
@@ -158,7 +158,7 @@ providers:
     disableSvcExternalName: false
 ```
 
-This provider watches for incoming Ingress events and automatically translates NGINX annotations into Traefik's dynamic configuration, creating the corresponding routers, services, middlewares, and other components needed to route traffic to your cluster services.
+This provider watches for incoming Ingress events and automatically translates NGINX annotations into Baqup's dynamic configuration, creating the corresponding routers, services, middlewares, and other components needed to route traffic to your cluster services.
 
 ## Configuration Options
 <!-- markdownlint-disable MD013 -->
@@ -169,7 +169,7 @@ This provider watches for incoming Ingress events and automatically translates N
 | <a id="opt-providers-kubernetesIngressNGINX-endpoint" href="#opt-providers-kubernetesIngressNGINX-endpoint" title="#opt-providers-kubernetesIngressNGINX-endpoint">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`endpoint`</a> | Server endpoint URL.<br />More information [here](#endpoint).                                                                                                                                                                                                                                                                                                                        | ""      | No       |
 | <a id="opt-providers-kubernetesIngressNGINX-token" href="#opt-providers-kubernetesIngressNGINX-token" title="#opt-providers-kubernetesIngressNGINX-token">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`token`</a> | Bearer token used for the Kubernetes client configuration.                                                                                                                                                                                                                                                                                                                           | ""      | No       |
 | <a id="opt-providers-kubernetesIngressNGINX-certAuthFilePath" href="#opt-providers-kubernetesIngressNGINX-certAuthFilePath" title="#opt-providers-kubernetesIngressNGINX-certAuthFilePath">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`certAuthFilePath`</a> | Path to the certificate authority file.<br />Used for the Kubernetes client configuration.                                                                                                                                                                                                                                                                                           | ""      | No       |
-| <a id="opt-providers-kubernetesIngressNGINX-throttleDuration" href="#opt-providers-kubernetesIngressNGINX-throttleDuration" title="#opt-providers-kubernetesIngressNGINX-throttleDuration">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`throttleDuration`</a> | Minimum amount of time to wait between two Kubernetes events before producing a new configuration.<br />This prevents a Kubernetes cluster that updates many times per second from continuously changing your Traefik configuration.<br />If empty, every event is caught.                                                                                                           | 0s      | No       |
+| <a id="opt-providers-kubernetesIngressNGINX-throttleDuration" href="#opt-providers-kubernetesIngressNGINX-throttleDuration" title="#opt-providers-kubernetesIngressNGINX-throttleDuration">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`throttleDuration`</a> | Minimum amount of time to wait between two Kubernetes events before producing a new configuration.<br />This prevents a Kubernetes cluster that updates many times per second from continuously changing your Baqup configuration.<br />If empty, every event is caught.                                                                                                           | 0s      | No       |
 | <a id="opt-providers-kubernetesIngressNGINX-watchNamespace" href="#opt-providers-kubernetesIngressNGINX-watchNamespace" title="#opt-providers-kubernetesIngressNGINX-watchNamespace">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`watchNamespace`</a> | Namespace the controller watches for updates to Kubernetes objects. All namespaces are watched if this parameter is left empty.                                                                                                                                                                                                                                                      | ""      | No       |
 | <a id="opt-providers-kubernetesIngressNGINX-watchNamespaceSelector" href="#opt-providers-kubernetesIngressNGINX-watchNamespaceSelector" title="#opt-providers-kubernetesIngressNGINX-watchNamespaceSelector">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`watchNamespaceSelector`</a> | Selector selects namespaces the controller watches for updates to Kubernetes objects.                                                                                                                                                                                                                                                                                                | ""      | No       |
 | <a id="opt-providers-kubernetesIngressNGINX-ingressClass" href="#opt-providers-kubernetesIngressNGINX-ingressClass" title="#opt-providers-kubernetesIngressNGINX-ingressClass">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`ingressClass`</a> | Name of the ingress class this controller satisfies.                                                                                                                                                                                                                                                                                                                                 | "nginx"      | No       |
@@ -187,7 +187,7 @@ This provider watches for incoming Ingress events and automatically translates N
 
 The Kubernetes server endpoint URL.
 
-When deployed into Kubernetes, Traefik reads the environment variables `KUBERNETES_SERVICE_HOST`
+When deployed into Kubernetes, Baqup reads the environment variables `KUBERNETES_SERVICE_HOST`
 and `KUBERNETES_SERVICE_PORT` or `KUBECONFIG` to construct the endpoint.
 
 The access token is looked up in `/var/run/secrets/kubernetes.io/serviceaccount/token`
@@ -197,7 +197,7 @@ Both are mounted automatically when deployed inside Kubernetes.
 The endpoint may be specified to override the environment variable values inside
 a cluster.
 
-When the environment variables are not found, Traefik tries to connect to the 
+When the environment variables are not found, Baqup tries to connect to the 
 Kubernetes API server with an external-cluster client.
 
 In this case, the endpoint is required.
@@ -225,4 +225,4 @@ providers:
 
 See the dedicated section in [routing](../../../routing-configuration/kubernetes/ingress-nginx.md).
 
-{!traefik-for-business-applications.md!}
+{!baqup-for-business-applications.md!}

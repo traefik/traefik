@@ -8,9 +8,9 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/baqupio/baqup/v3/pkg/ip"
+	"github.com/baqupio/baqup/v3/pkg/middlewares/requestdecorator"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v3/pkg/ip"
-	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
 )
 
 var httpFuncs = matcherBuilderFuncs{

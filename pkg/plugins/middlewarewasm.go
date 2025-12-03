@@ -11,11 +11,11 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/baqupio/baqup/v3/pkg/middlewares"
+	"github.com/baqupio/baqup/v3/pkg/observability/logs"
 	"github.com/http-wasm/http-wasm-host-go/handler"
 	wasm "github.com/http-wasm/http-wasm-host-go/handler/nethttp"
 	"github.com/tetratelabs/wazero"
-	"github.com/traefik/traefik/v3/pkg/middlewares"
-	"github.com/traefik/traefik/v3/pkg/observability/logs"
 )
 
 type wasmMiddlewareBuilder struct {
@@ -138,9 +138,9 @@ func (b *wasmMiddlewareBuilder) buildMiddleware(ctx context.Context, next http.H
 
 	h := mw.NewHandler(ctx, next)
 
-	// Traefik does not Close the middleware when creating a new instance on a configuration change.
+	// Baqup does not Close the middleware when creating a new instance on a configuration change.
 	// When the middleware is marked to be GC, we need to close it so the wasm instance is properly closed.
-	// Reference: https://github.com/traefik/traefik/issues/11119
+	// Reference: https://github.com/baqupio/baqup/issues/11119
 	runtime.SetFinalizer(h, func(_ http.Handler) {
 		if err := mw.Close(ctx); err != nil {
 			logger.Err(err).Msg("[wasm] middleware Close failed")

@@ -1,7 +1,7 @@
 /*
 The MIT License (MIT)
 
-Copyright (c) 2016-2020 Containous SAS; 2020-2025 Traefik Labs
+Copyright (c) 2016-2020 Containous SAS; 2020-2025 Baqup Labs
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -29,7 +29,7 @@ package externalversions
 import (
 	"fmt"
 
-	v1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	v1alpha1 "github.com/baqupio/baqup/v3/pkg/provider/kubernetes/crd/baqupio/v1alpha1"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	cache "k8s.io/client-go/tools/cache"
 )
@@ -60,27 +60,27 @@ func (f *genericInformer) Lister() cache.GenericLister {
 // TODO extend this to unknown resources with a client pool
 func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource) (GenericInformer, error) {
 	switch resource {
-	// Group=traefik.io, Version=v1alpha1
+	// Group=baqup.io, Version=v1alpha1
 	case v1alpha1.SchemeGroupVersion.WithResource("ingressroutes"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Traefik().V1alpha1().IngressRoutes().Informer()}, nil
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Baqup().V1alpha1().IngressRoutes().Informer()}, nil
 	case v1alpha1.SchemeGroupVersion.WithResource("ingressroutetcps"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Traefik().V1alpha1().IngressRouteTCPs().Informer()}, nil
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Baqup().V1alpha1().IngressRouteTCPs().Informer()}, nil
 	case v1alpha1.SchemeGroupVersion.WithResource("ingressrouteudps"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Traefik().V1alpha1().IngressRouteUDPs().Informer()}, nil
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Baqup().V1alpha1().IngressRouteUDPs().Informer()}, nil
 	case v1alpha1.SchemeGroupVersion.WithResource("middlewares"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Traefik().V1alpha1().Middlewares().Informer()}, nil
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Baqup().V1alpha1().Middlewares().Informer()}, nil
 	case v1alpha1.SchemeGroupVersion.WithResource("middlewaretcps"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Traefik().V1alpha1().MiddlewareTCPs().Informer()}, nil
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Baqup().V1alpha1().MiddlewareTCPs().Informer()}, nil
 	case v1alpha1.SchemeGroupVersion.WithResource("serverstransports"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Traefik().V1alpha1().ServersTransports().Informer()}, nil
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Baqup().V1alpha1().ServersTransports().Informer()}, nil
 	case v1alpha1.SchemeGroupVersion.WithResource("serverstransporttcps"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Traefik().V1alpha1().ServersTransportTCPs().Informer()}, nil
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Baqup().V1alpha1().ServersTransportTCPs().Informer()}, nil
 	case v1alpha1.SchemeGroupVersion.WithResource("tlsoptions"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Traefik().V1alpha1().TLSOptions().Informer()}, nil
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Baqup().V1alpha1().TLSOptions().Informer()}, nil
 	case v1alpha1.SchemeGroupVersion.WithResource("tlsstores"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Traefik().V1alpha1().TLSStores().Informer()}, nil
-	case v1alpha1.SchemeGroupVersion.WithResource("traefikservices"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Traefik().V1alpha1().TraefikServices().Informer()}, nil
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Baqup().V1alpha1().TLSStores().Informer()}, nil
+	case v1alpha1.SchemeGroupVersion.WithResource("baqupservices"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Baqup().V1alpha1().BaqupServices().Informer()}, nil
 
 	}
 

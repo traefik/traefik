@@ -13,13 +13,13 @@ const (
 	// not the log writing time.
 	Duration = "Duration"
 
-	// RouterName is the map key used for the name of the Traefik router.
+	// RouterName is the map key used for the name of the Baqup router.
 	RouterName = "RouterName"
-	// ServiceName is the map key used for the name of the Traefik backend.
+	// ServiceName is the map key used for the name of the Baqup backend.
 	ServiceName = "ServiceName"
-	// ServiceURL is the map key used for the URL of the Traefik backend.
+	// ServiceURL is the map key used for the URL of the Baqup backend.
 	ServiceURL = "ServiceURL"
-	// ServiceAddr is the map key used for the IP:port of the Traefik backend (extracted from BackendURL).
+	// ServiceAddr is the map key used for the IP:port of the Baqup backend (extracted from BackendURL).
 	ServiceAddr = "ServiceAddr"
 
 	// ClientAddr is the map key used for the remote address in its original form (usually IP:port).
@@ -55,18 +55,18 @@ const (
 	// OriginContentSize is the map key used for the content length specified by the origin server, or 0 if unspecified.
 	OriginContentSize = "OriginContentSize"
 	// OriginStatus is the map key used for the HTTP status code returned by the origin server.
-	// If the request was handled by this Traefik instance (e.g. with a redirect), then this value will be absent.
+	// If the request was handled by this Baqup instance (e.g. with a redirect), then this value will be absent.
 	OriginStatus = "OriginStatus"
 	// DownstreamStatus is the map key used for the HTTP status code returned to the client.
 	DownstreamStatus = "DownstreamStatus"
 	// DownstreamContentSize is the map key used for the number of bytes in the response entity returned to the client.
 	// This is in addition to the "Content-Length" header, which may be present in the origin response.
 	DownstreamContentSize = "DownstreamContentSize"
-	// RequestCount is the map key used for the number of requests received since the Traefik instance started.
+	// RequestCount is the map key used for the number of requests received since the Baqup instance started.
 	RequestCount = "RequestCount"
 	// GzipRatio is the map key used for the response body compression ratio achieved.
 	GzipRatio = "GzipRatio"
-	// Overhead is the map key used for the processing time overhead caused by Traefik.
+	// Overhead is the map key used for the processing time overhead caused by Baqup.
 	Overhead = "Overhead"
 	// RetryAttempts is the map key used for the amount of attempts the request was retried.
 	RetryAttempts = "RetryAttempts"
@@ -78,9 +78,9 @@ const (
 	// TLSClientSubject is the string representation of the TLS client certificate's Subject.
 	TLSClientSubject = "TLSClientSubject"
 
-	// TraceID is the consistent identifier for tracking requests across services, including upstream ones managed by Traefik, shown as a 32-hex digit string.
+	// TraceID is the consistent identifier for tracking requests across services, including upstream ones managed by Baqup, shown as a 32-hex digit string.
 	TraceID = "TraceId"
-	// SpanID is the unique identifier for Traefik’s root span (EntryPoint) within a request trace, formatted as a 16-hex digit string.
+	// SpanID is the unique identifier for Baqup’s root span (EntryPoint) within a request trace, formatted as a 16-hex digit string.
 	SpanID = "SpanId"
 )
 

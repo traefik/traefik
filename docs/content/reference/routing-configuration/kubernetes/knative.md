@@ -1,11 +1,11 @@
 ---
-title: "Traefik Knative Documentation"
-description: "The Knative provider can be used for routing and load balancing in Traefik Proxy. View examples in the technical documentation."
+title: "Baqup Knative Documentation"
+description: "The Knative provider can be used for routing and load balancing in Baqup Proxy. View examples in the technical documentation."
 ---
 
-# Traefik & Knative
+# Baqup & Knative
 
-When using the Knative provider, Traefik leverages Knative's Custom Resource Definitions (CRDs) to obtain its routing configuration. 
+When using the Knative provider, Baqup leverages Knative's Custom Resource Definitions (CRDs) to obtain its routing configuration. 
 For detailed information on Knative concepts and resources, refer to the official [documentation](https://knative.dev/docs/).
 
 The Knative provider supports version [v1.19.0](https://github.com/knative/serving/releases/tag/knative-v1.19.0) of the specification.
@@ -16,7 +16,7 @@ A `Service` is a core resource in the Knative specification that defines the ent
 It is linked to a `Ingress`, which specifies the Knative networking controller responsible for managing and handling the traffic, 
 ensuring that it is directed to the appropriate Knative backend services.
 
-The following `Service` manifest configures the running Traefik controller to handle the incoming traffic.
+The following `Service` manifest configures the running Baqup controller to handle the incoming traffic.
 
 ```yaml
 ---
@@ -45,7 +45,7 @@ Hello Go Sample v1!
 
 !!! Note
 
-    The `example.com` domain is the public domain configured when deploying the Traefik controller.
+    The `example.com` domain is the public domain configured when deploying the Baqup controller.
     Check out [the install configuration](../../install-configuration/providers/kubernetes/knative.md) for more details.
 
 ### Tag based routing
@@ -93,4 +93,4 @@ Use the default URL to access percentage-based routing:
 
 Check out the Knative documentation for [HTTP/HTTPS configuration](https://knative.dev/docs/serving/encryption/external-domain-tls/#configure-external-domain-encryption).
 
-{!traefik-for-business-applications.md!}
+{!baqup-for-business-applications.md!}

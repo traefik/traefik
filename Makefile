@@ -5,7 +5,7 @@ SHA := $(shell git rev-parse HEAD)
 VERSION_GIT := $(if $(TAG_NAME),$(TAG_NAME),$(SHA))
 VERSION := $(if $(VERSION),$(VERSION),$(VERSION_GIT))
 
-BIN_NAME := traefik
+BIN_NAME := baqup
 CODENAME ?= cheddar
 
 DATE := $(shell date -u '+%Y-%m-%d_%I:%M:%S%p')
@@ -30,7 +30,7 @@ dist:
 .PHONY: build-webui-image
 #? build-webui-image: Build WebUI Docker image
 build-webui-image:
-	docker build -t traefik-webui -f webui/buildx.Dockerfile webui
+	docker build -t baqup-webui -f webui/buildx.Dockerfile webui
 
 .PHONY: clean-webui
 #? clean-webui: Clean WebUI static generated assets
@@ -41,8 +41,8 @@ clean-webui:
 
 webui/static/index.html:
 	$(MAKE) build-webui-image
-	docker run --rm -v "$(PWD)/webui/static":'/src/webui/static' traefik-webui yarn build:prod
-	docker run --rm -v "$(PWD)/webui/static":'/src/webui/static' traefik-webui chown -R $(shell id -u):$(shell id -g) ./static
+	docker run --rm -v "$(PWD)/webui/static":'/src/webui/static' baqup-webui yarn build:prod
+	docker run --rm -v "$(PWD)/webui/static":'/src/webui/static' baqup-webui chown -R $(shell id -u):$(shell id -g) ./static
 	printf 'For more information see `webui/readme.md`' > webui/static/DONT-EDIT-FILES-IN-THIS-DIRECTORY.md
 
 .PHONY: generate-webui
@@ -59,10 +59,10 @@ generate:
 binary: generate-webui dist
 	@echo SHA: $(VERSION) $(CODENAME) $(DATE)
 	CGO_ENABLED=0 GOGC=${GOGC} GOOS=${GOOS} GOARCH=${GOARCH} go build ${FLAGS[*]} -ldflags "-s -w \
-    -X github.com/traefik/traefik/v3/pkg/version.Version=$(VERSION) \
-    -X github.com/traefik/traefik/v3/pkg/version.Codename=$(CODENAME) \
-    -X github.com/traefik/traefik/v3/pkg/version.BuildDate=$(DATE)" \
-    -installsuffix nocgo -o "./dist/${GOOS}/${GOARCH}/$(BIN_NAME)" ./cmd/traefik
+    -X github.com/baqupio/baqup/v3/pkg/version.Version=$(VERSION) \
+    -X github.com/baqupio/baqup/v3/pkg/version.Codename=$(CODENAME) \
+    -X github.com/baqupio/baqup/v3/pkg/version.BuildDate=$(DATE)" \
+    -installsuffix nocgo -o "./dist/${GOOS}/${GOARCH}/$(BIN_NAME)" ./cmd/baqup
 
 binary-linux-arm64: export GOOS := linux
 binary-linux-arm64: export GOARCH := arm64
@@ -76,7 +76,7 @@ binary-linux-amd64:
 
 binary-windows-amd64: export GOOS := windows
 binary-windows-amd64: export GOARCH := amd64
-binary-windows-amd64: export BIN_NAME := traefik.exe
+binary-windows-amd64: export BIN_NAME := baqup.exe
 binary-windows-amd64:
 	@$(MAKE) binary
 
@@ -102,8 +102,8 @@ test-integration:
 .PHONY: test-gateway-api-conformance
 #? test-gateway-api-conformance: Run the Gateway API conformance tests
 test-gateway-api-conformance: build-image-dirty
-	# In case of a new Minor/Major version, the traefikVersion needs to be updated.
-	GOOS=$(GOOS) GOARCH=$(GOARCH) go test ./integration -v -tags gatewayAPIConformance -test.run GatewayAPIConformanceSuite -traefikVersion="v3.6" $(TESTFLAGS)
+	# In case of a new Minor/Major version, the baqupVersion needs to be updated.
+	GOOS=$(GOOS) GOARCH=$(GOARCH) go test ./integration -v -tags gatewayAPIConformance -test.run GatewayAPIConformanceSuite -baqupVersion="v3.6" $(TESTFLAGS)
 
 .PHONY: test-knative-conformance
 #? test-knative-conformance: Run the Knative conformance tests
@@ -114,8 +114,8 @@ test-knative-conformance: build-image-dirty
 #? test-ui-unit: Run the unit tests for the webui
 test-ui-unit:
 	$(MAKE) build-webui-image
-	docker run --rm -v "$(PWD)/webui/static":'/src/webui/static' traefik-webui yarn --cwd webui install
-	docker run --rm -v "$(PWD)/webui/static":'/src/webui/static' traefik-webui yarn --cwd webui test:unit:ci
+	docker run --rm -v "$(PWD)/webui/static":'/src/webui/static' baqup-webui yarn --cwd webui install
+	docker run --rm -v "$(PWD)/webui/static":'/src/webui/static' baqup-webui yarn --cwd webui test:unit:ci
 
 .PHONY: pull-images
 #? pull-images: Pull all Docker images to avoid timeout during integration tests
@@ -147,18 +147,18 @@ validate: lint validate-files
 # Target for building images for multiple architectures.
 .PHONY: multi-arch-image-%
 multi-arch-image-%: binary-linux-amd64 binary-linux-arm64
-	docker buildx build $(DOCKER_BUILDX_ARGS) -t traefik/traefik:$* --platform=$(DOCKER_BUILD_PLATFORMS) -f Dockerfile .
+	docker buildx build $(DOCKER_BUILDX_ARGS) -t baqup/baqup:$* --platform=$(DOCKER_BUILD_PLATFORMS) -f Dockerfile .
 
 
 .PHONY: build-image
-#? build-image: Clean up static directory and build a Docker Traefik image
+#? build-image: Clean up static directory and build a Docker Baqup image
 build-image: export DOCKER_BUILDX_ARGS := --load
 build-image: export DOCKER_BUILD_PLATFORMS := linux/$(GOARCH)
 build-image: clean-webui
 	@$(MAKE) multi-arch-image-latest
 
 .PHONY: build-image-dirty
-#? build-image-dirty: Build a Docker Traefik image without re-building the webui when it's already built
+#? build-image-dirty: Build a Docker Baqup image without re-building the webui when it's already built
 build-image-dirty: export DOCKER_BUILDX_ARGS := --load
 build-image-dirty: export DOCKER_BUILD_PLATFORMS := linux/$(GOARCH)
 build-image-dirty:
@@ -197,5 +197,5 @@ fmt:
 .PHONY: help
 #? help: Get more info on make commands
 help: Makefile
-	@echo " Choose a command run in traefik:"
+	@echo " Choose a command run in baqup:"
 	@sed -n 's/^#?//p' $< | column -t -s ':' |  sort | sed -e 's/^/ /'

@@ -16,7 +16,7 @@ jobs:
   docs:
     name: Doc Process
     runs-on: ubuntu-latest
-    if: github.repository == 'traefik/traefik'
+    if: github.repository == 'baqup/baqup'
 
     steps:
       - name: Check out code
@@ -31,23 +31,23 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Install Structor ${{ env.STRUCTOR_VERSION }}
-        run: curl -sSfL https://raw.githubusercontent.com/traefik/structor/master/godownloader.sh | sh -s -- -b $HOME/bin ${STRUCTOR_VERSION}
+        run: curl -sSfL https://raw.githubusercontent.com/baqup/structor/master/godownloader.sh | sh -s -- -b $HOME/bin ${STRUCTOR_VERSION}
 
       - name: Install Seo-doc
-        run: curl -sSfL https://raw.githubusercontent.com/traefik/seo-doc/master/godownloader.sh | sh -s -- -b "${HOME}/bin"
+        run: curl -sSfL https://raw.githubusercontent.com/baqup/seo-doc/master/godownloader.sh | sh -s -- -b "${HOME}/bin"
 
       - name: Install Mixtus ${{ env.MIXTUS_VERSION }}
-        run: curl -sSfL https://raw.githubusercontent.com/traefik/mixtus/master/godownloader.sh | sh -s -- -b $HOME/bin ${MIXTUS_VERSION}
+        run: curl -sSfL https://raw.githubusercontent.com/baqup/mixtus/master/godownloader.sh | sh -s -- -b $HOME/bin ${MIXTUS_VERSION}
 
       - name: Build documentation
         run: |
-          STRUCTOR_LATEST_TAG=$(curl -s https://api.github.com/repos/traefik/traefik/releases/latest | jq -r '.tag_name')
-          $HOME/bin/structor -o traefik -r traefik --dockerfile-url="https://raw.githubusercontent.com/traefik/traefik/v1.7/docs.Dockerfile" --menu.js-url="https://raw.githubusercontent.com/traefik/structor/master/traefik-menu.js.gotmpl" --rqts-url="https://raw.githubusercontent.com/traefik/structor/master/requirements-override.txt" --force-edit-url --exp-branch=master --debug
+          STRUCTOR_LATEST_TAG=$(curl -s https://api.github.com/repos/baqup/baqup/releases/latest | jq -r '.tag_name')
+          $HOME/bin/structor -o baqup -r baqup --dockerfile-url="https://raw.githubusercontent.com/baqup/baqup/v1.7/docs.Dockerfile" --menu.js-url="https://raw.githubusercontent.com/baqup/structor/master/baqup-menu.js.gotmpl" --rqts-url="https://raw.githubusercontent.com/baqup/structor/master/requirements-override.txt" --force-edit-url --exp-branch=master --debug
 
       - name: Apply seo
-        run: $HOME/bin/seo -path=./site -product=traefik
+        run: $HOME/bin/seo -path=./site -product=baqup
 
       - name: Publish documentation
-        run: $HOME/bin/mixtus --dst-doc-path="./traefik" --dst-owner=traefik --dst-repo-name=doc --git-user-email="30906710+traefiker@users.noreply.github.com" --git-user-name=traefiker --src-doc-path="./site" --src-owner=traefik --src-repo-name=traefik
+        run: $HOME/bin/mixtus --dst-doc-path="./baqup" --dst-owner=baqup --dst-repo-name=doc --git-user-email="30906710+baquper@users.noreply.github.com" --git-user-name=baquper --src-doc-path="./site" --src-owner=baqup --src-repo-name=baqup
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN_REPO }}

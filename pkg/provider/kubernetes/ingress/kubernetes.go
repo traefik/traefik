@@ -15,18 +15,18 @@ import (
 	"strings"
 	"time"
 
+	"github.com/baqupio/baqup/v3/pkg/config/dynamic"
+	"github.com/baqupio/baqup/v3/pkg/job"
+	"github.com/baqupio/baqup/v3/pkg/observability/logs"
+	"github.com/baqupio/baqup/v3/pkg/provider"
+	"github.com/baqupio/baqup/v3/pkg/provider/kubernetes/k8s"
+	"github.com/baqupio/baqup/v3/pkg/safe"
+	"github.com/baqupio/baqup/v3/pkg/tls"
+	"github.com/baqupio/baqup/v3/pkg/types"
 	"github.com/cenkalti/backoff/v4"
 	"github.com/mitchellh/hashstructure"
 	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/job"
-	"github.com/traefik/traefik/v3/pkg/observability/logs"
-	"github.com/traefik/traefik/v3/pkg/provider"
-	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
-	"github.com/traefik/traefik/v3/pkg/safe"
-	"github.com/traefik/traefik/v3/pkg/tls"
-	"github.com/traefik/traefik/v3/pkg/types"
 	corev1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -34,10 +34,10 @@ import (
 )
 
 const (
-	annotationKubernetesIngressClass     = "kubernetes.io/ingress.class"
-	traefikDefaultIngressClass           = "traefik"
-	traefikDefaultIngressClassController = "traefik.io/ingress-controller"
-	defaultPathMatcher                   = "PathPrefix"
+	annotationKubernetesIngressClass   = "kubernetes.io/ingress.class"
+	baqupDefaultIngressClass           = "baqup"
+	baqupDefaultIngressClassController = "baqup.io/ingress-controller"
+	defaultPathMatcher                 = "PathPrefix"
 )
 
 // Provider holds configurations of the provider.
@@ -131,7 +131,7 @@ func (p *Provider) Init() error {
 	return nil
 }
 
-// Provide allows the k8s provider to provide configurations to traefik
+// Provide allows the k8s provider to provide configurations to baqup
 // using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	logger := log.With().Str(logs.ProviderName, "kubernetes").Logger()
@@ -289,7 +289,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 
 			rt := &dynamic.Router{
 				Rule: "PathPrefix(`/`)",
-				// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
+				// "default" stands for the default rule syntax in Baqup v3, i.e. the v3 syntax.
 				RuleSyntax: "default",
 				Priority:   math.MinInt32,
 				Service:    "default-backend",
@@ -505,7 +505,7 @@ func (p *Provider) shouldProcessIngress(ingress *netv1.Ingress, ingressClasses [
 	}
 
 	return p.IngressClass == ingress.Annotations[annotationKubernetesIngressClass] ||
-		len(p.IngressClass) == 0 && ingress.Annotations[annotationKubernetesIngressClass] == traefikDefaultIngressClass
+		len(p.IngressClass) == 0 && ingress.Annotations[annotationKubernetesIngressClass] == baqupDefaultIngressClass
 }
 
 func (p *Provider) loadService(client Client, namespace string, backend netv1.IngressBackend) (*dynamic.Service, error) {
@@ -860,7 +860,7 @@ func buildRule(strictPrefixMatching bool, matcher string, path string) string {
 		// https://kubernetes.io/docs/concepts/services-networking/ingress/#examples,
 		// "/v12" should not match "/v1".
 		//
-		// Traefik's default PathPrefix matcher performs a character-wise prefix match,
+		// Baqup's default PathPrefix matcher performs a character-wise prefix match,
 		// unlike Kubernetes which matches path elements. To mimic Kubernetes behavior,
 		// we will use Path and PathPrefix to replicate element-wise behavior.
 		//

@@ -1,13 +1,13 @@
 ---
-title: "Traefik API Documentation"
-description: "Traefik Proxy exposes information through API handlers. Learn about the security, configuration, and endpoints of APIs. Read the technical documentation."
+title: "Baqup API Documentation"
+description: "Baqup Proxy exposes information through API handlers. Learn about the security, configuration, and endpoints of APIs. Read the technical documentation."
 ---
 
 # API
 
-Traefik exposes a number of information through an API handler, such as the configuration of all routers, services, middlewares, etc.
+Baqup exposes a number of information through an API handler, such as the configuration of all routers, services, middlewares, etc.
 
-As with all features of Traefik, this handler can be enabled with the [static configuration](../getting-started/configuration-overview.md#the-static-configuration).
+As with all features of Baqup, this handler can be enabled with the [static configuration](../getting-started/configuration-overview.md#the-static-configuration).
 
 ## Security
 
@@ -41,7 +41,7 @@ api: {}
 --api=true
 ```
 
-And then define a routing configuration on Traefik itself with the
+And then define a routing configuration on Baqup itself with the
 [dynamic configuration](../getting-started/configuration-overview.md#the-dynamic-configuration):
 
 --8<-- "content/operations/include-api-examples.md"
@@ -51,29 +51,29 @@ And then define a routing configuration on Traefik itself with the
     However, you can also use "path prefix" rule or any combination or rules.
 
     ```bash tab="Host Rule"
-    # Matches http://traefik.example.com, http://traefik.example.com/api
-    # or http://traefik.example.com/hello
-    rule = "Host(`traefik.example.com`)"
+    # Matches http://baqup.example.com, http://baqup.example.com/api
+    # or http://baqup.example.com/hello
+    rule = "Host(`baqup.example.com`)"
     ```
 
     ```bash tab="Path Prefix Rule"
-    # Matches http://api.traefik.example.com/api or http://example.com/api
-    # but does not match http://api.traefik.example.com/hello
+    # Matches http://api.baqup.example.com/api or http://example.com/api
+    # but does not match http://api.baqup.example.com/hello
     rule = "PathPrefix(`/api`)"
     ```
 
     ```bash tab="Combination of Rules"
-    # Matches http://traefik.example.com/api or http://traefik.example.com/dashboard
-    # but does not match http://traefik.example.com/hello
-    rule = "Host(`traefik.example.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
+    # Matches http://baqup.example.com/api or http://baqup.example.com/dashboard
+    # but does not match http://baqup.example.com/hello
+    rule = "Host(`baqup.example.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
     ```
 
 ### `insecure`
 
-Enable the API in `insecure` mode, which means that the API will be available directly on the entryPoint named `traefik`, on path `/api`.
+Enable the API in `insecure` mode, which means that the API will be available directly on the entryPoint named `baqup`, on path `/api`.
 
 !!! info
-    If the entryPoint named `traefik` is not configured, it will be automatically created on port 8080.
+    If the entryPoint named `baqup` is not configured, it will be automatically created on port 8080.
 
 ```yaml tab="File (YAML)"
 api:
@@ -142,7 +142,7 @@ All the following endpoints must be accessed with a `GET` HTTP request.
     To control pagination, use the `page` and `per_page` query parameters.
 
     ```bash
-    curl https://traefik.example.com:8080/api/http/routers?page=2&per_page=20
+    curl https://baqup.example.com:8080/api/http/routers?page=2&per_page=20
     ```
 
 | Path                           | Description                                                                                         |
@@ -168,7 +168,7 @@ All the following endpoints must be accessed with a `GET` HTTP request.
 | `/api/overview`                | Returns statistic information about http and tcp as well as enabled features and providers.         |
 | `/api/support-dump`            | Returns an archive that contains the anonymized static configuration and the runtime configuration. |
 | `/api/rawdata`                 | Returns information about dynamic configurations, errors, status and dependency relations.          |
-| `/api/version`                 | Returns information about Traefik version.                                                          |
+| `/api/version`                 | Returns information about Baqup version.                                                          |
 | `/debug/vars`                  | See the [expvar](https://golang.org/pkg/expvar/) Go documentation.                                  |
 | `/debug/pprof/`                | See the [pprof Index](https://golang.org/pkg/net/http/pprof/#Index) Go documentation.               |
 | `/debug/pprof/cmdline`         | See the [pprof Cmdline](https://golang.org/pkg/net/http/pprof/#Cmdline) Go documentation.           |
@@ -176,4 +176,4 @@ All the following endpoints must be accessed with a `GET` HTTP request.
 | `/debug/pprof/symbol`          | See the [pprof Symbol](https://golang.org/pkg/net/http/pprof/#Symbol) Go documentation.             |
 | `/debug/pprof/trace`           | See the [pprof Trace](https://golang.org/pkg/net/http/pprof/#Trace) Go documentation.               |
 
-{!traefik-for-business-applications.md!}
+{!baqup-for-business-applications.md!}

@@ -1,8 +1,8 @@
 services:
 
-  traefik:
-    image: "traefik:v3.6"
-    container_name: "traefik"
+  baqup:
+    image: "baqup:v3.6"
+    container_name: "baqup"
     command:
       #- "--log.level=DEBUG"
       - "--api.insecure=true"
@@ -24,10 +24,10 @@ services:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
 
   whoami:
-    image: "traefik/whoami"
+    image: "baqup/whoami"
     container_name: "simple-service"
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.whoami.rule=Host(`whoami.example.com`)"
-      - "traefik.http.routers.whoami.entrypoints=websecure"
-      - "traefik.http.routers.whoami.tls.certresolver=myresolver"
+      - "baqup.enable=true"
+      - "baqup.http.routers.whoami.rule=Host(`whoami.example.com`)"
+      - "baqup.http.routers.whoami.entrypoints=websecure"
+      - "baqup.http.routers.whoami.tls.certresolver=myresolver"

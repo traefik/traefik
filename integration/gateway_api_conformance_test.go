@@ -13,13 +13,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/baqupio/baqup/v3/integration/try"
+	"github.com/baqupio/baqup/v3/pkg/provider/kubernetes/gateway"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/k3s"
 	"github.com/testcontainers/testcontainers-go/network"
-	"github.com/traefik/traefik/v3/integration/try"
-	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/gateway"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	kclientset "k8s.io/client-go/kubernetes"
@@ -73,29 +73,29 @@ func (s *GatewayAPIConformanceSuite) SetupSuite() {
 	}
 
 	if !slices.ContainsFunc(images, func(img testcontainers.ImageInfo) bool {
-		return img.Name == traefikImage
+		return img.Name == baqupImage
 	}) {
-		s.T().Fatal("Traefik image is not present")
+		s.T().Fatal("Baqup image is not present")
 	}
 
 	s.k3sContainer, err = k3s.Run(ctx,
 		k3sImage,
 		k3s.WithManifest("./fixtures/gateway-api-conformance/00-experimental-v1.4.0.yml"),
 		k3s.WithManifest("./fixtures/gateway-api-conformance/01-rbac.yml"),
-		k3s.WithManifest("./fixtures/gateway-api-conformance/02-traefik.yml"),
+		k3s.WithManifest("./fixtures/gateway-api-conformance/02-baqup.yml"),
 		network.WithNetwork(nil, s.network),
 	)
 	if err != nil {
 		s.T().Fatal(err)
 	}
 
-	if err = s.k3sContainer.LoadImages(ctx, traefikImage); err != nil {
+	if err = s.k3sContainer.LoadImages(ctx, baqupImage); err != nil {
 		s.T().Fatal(err)
 	}
 
-	exitCode, _, err := s.k3sContainer.Exec(ctx, []string{"kubectl", "wait", "-n", traefikNamespace, traefikDeployment, "--for=condition=Available", "--timeout=30s"})
+	exitCode, _, err := s.k3sContainer.Exec(ctx, []string{"kubectl", "wait", "-n", baqupNamespace, baqupDeployment, "--for=condition=Available", "--timeout=30s"})
 	if err != nil || exitCode > 0 {
-		s.T().Fatalf("Traefik pod is not ready: %v", err)
+		s.T().Fatalf("Baqup pod is not ready: %v", err)
 	}
 
 	kubeConfigYaml, err := s.k3sContainer.GetKubeConfig(ctx)
@@ -146,7 +146,7 @@ func (s *GatewayAPIConformanceSuite) TearDownSuite() {
 			}
 		}
 
-		exitCode, result, err := s.k3sContainer.Exec(ctx, []string{"kubectl", "logs", "-n", traefikNamespace, traefikDeployment})
+		exitCode, result, err := s.k3sContainer.Exec(ctx, []string{"kubectl", "logs", "-n", baqupNamespace, baqupDeployment})
 		if err == nil || exitCode == 0 {
 			if res, err := io.ReadAll(result); err == nil {
 				s.T().Log(string(res))
@@ -162,7 +162,7 @@ func (s *GatewayAPIConformanceSuite) TearDownSuite() {
 }
 
 func (s *GatewayAPIConformanceSuite) TestK8sGatewayAPIConformance() {
-	// Wait for traefik to start
+	// Wait for baqup to start
 	k3sContainerIP, err := s.k3sContainer.ContainerIP(s.T().Context())
 	require.NoError(s.T(), err)
 
@@ -172,7 +172,7 @@ func (s *GatewayAPIConformanceSuite) TestK8sGatewayAPIConformance() {
 	cSuite, err := ksuite.NewConformanceTestSuite(ksuite.ConformanceOptions{
 		Client:                     s.kubeClient,
 		Clientset:                  s.clientSet,
-		GatewayClassName:           "traefik",
+		GatewayClassName:           "baqup",
 		Debug:                      true,
 		CleanupBaseResources:       true,
 		RestConfig:                 s.restConfig,
@@ -181,11 +181,11 @@ func (s *GatewayAPIConformanceSuite) TestK8sGatewayAPIConformance() {
 		EnableAllSupportedFeatures: false,
 		RunTest:                    *gatewayAPIConformanceRunTest,
 		Implementation: v1.Implementation{
-			Organization: "traefik",
-			Project:      "traefik",
-			URL:          "https://traefik.io/",
-			Version:      *traefikVersion,
-			Contact:      []string{"@traefik/maintainers"},
+			Organization: "baqup",
+			Project:      "baqup",
+			URL:          "https://baqup.io/",
+			Version:      *baqupVersion,
+			Contact:      []string{"@baqup/maintainers"},
 		},
 		ConformanceProfiles: sets.New(
 			ksuite.GatewayHTTPConformanceProfileName,

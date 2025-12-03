@@ -1,6 +1,6 @@
 ---
-title: "Traefik RateLimit Documentation"
-description: "Traefik Proxy's HTTP RateLimit middleware ensures Services receive fair amounts of requests. Read the technical documentation."
+title: "Baqup RateLimit Documentation"
+description: "Baqup Proxy's HTTP RateLimit middleware ensures Services receive fair amounts of requests. Read the technical documentation."
 ---
 
 The `rateLimit` middleware ensures that services will receive a *fair* amount of requests, and allows you to define what fair is.
@@ -78,23 +78,23 @@ http:
 # In addition, a burst of 200 requests is allowed.
 # Redis distributed rate limiting is configured with all available options.
 labels:
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.average=100"
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.period=1s"
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.burst=200"
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.endpoints=redis-primary.example.com:6379,redis-replica.example.com:6379"
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.username=ratelimit-user"
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.password=secure-password"
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.db=2"
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.poolSize=50"
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.minIdleConns=10"
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.maxActiveConns=200"
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.readTimeout=3s"
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.writeTimeout=3s"
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.dialTimeout=5s"
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.ca=/etc/ssl/redis-ca.crt"
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.cert=/etc/ssl/redis-client.crt"
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.key=/etc/ssl/redis-client.key"
-  - "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.insecureSkipVerify=false"
+  - "baqup.http.middlewares.test-ratelimit.ratelimit.average=100"
+  - "baqup.http.middlewares.test-ratelimit.ratelimit.period=1s"
+  - "baqup.http.middlewares.test-ratelimit.ratelimit.burst=200"
+  - "baqup.http.middlewares.test-ratelimit.ratelimit.redis.endpoints=redis-primary.example.com:6379,redis-replica.example.com:6379"
+  - "baqup.http.middlewares.test-ratelimit.ratelimit.redis.username=ratelimit-user"
+  - "baqup.http.middlewares.test-ratelimit.ratelimit.redis.password=secure-password"
+  - "baqup.http.middlewares.test-ratelimit.ratelimit.redis.db=2"
+  - "baqup.http.middlewares.test-ratelimit.ratelimit.redis.poolSize=50"
+  - "baqup.http.middlewares.test-ratelimit.ratelimit.redis.minIdleConns=10"
+  - "baqup.http.middlewares.test-ratelimit.ratelimit.redis.maxActiveConns=200"
+  - "baqup.http.middlewares.test-ratelimit.ratelimit.redis.readTimeout=3s"
+  - "baqup.http.middlewares.test-ratelimit.ratelimit.redis.writeTimeout=3s"
+  - "baqup.http.middlewares.test-ratelimit.ratelimit.redis.dialTimeout=5s"
+  - "baqup.http.middlewares.test-ratelimit.ratelimit.redis.tls.ca=/etc/ssl/redis-ca.crt"
+  - "baqup.http.middlewares.test-ratelimit.ratelimit.redis.tls.cert=/etc/ssl/redis-client.crt"
+  - "baqup.http.middlewares.test-ratelimit.ratelimit.redis.tls.key=/etc/ssl/redis-client.key"
+  - "baqup.http.middlewares.test-ratelimit.ratelimit.redis.tls.insecureSkipVerify=false"
 ```
 
 ```json tab="Tags"
@@ -103,23 +103,23 @@ labels:
 // Redis distributed rate limiting is configured with all available options.
 {
   "Tags": [
-    "traefik.http.middlewares.test-ratelimit.ratelimit.average=100",
-    "traefik.http.middlewares.test-ratelimit.ratelimit.period=1s",
-    "traefik.http.middlewares.test-ratelimit.ratelimit.burst=200",
-    "traefik.http.middlewares.test-ratelimit.ratelimit.redis.endpoints=redis-primary.example.com:6379,redis-replica.example.com:6379",
-    "traefik.http.middlewares.test-ratelimit.ratelimit.redis.username=ratelimit-user",
-    "traefik.http.middlewares.test-ratelimit.ratelimit.redis.password=secure-password",
-    "traefik.http.middlewares.test-ratelimit.ratelimit.redis.db=2",
-    "traefik.http.middlewares.test-ratelimit.ratelimit.redis.poolSize=50",
-    "traefik.http.middlewares.test-ratelimit.ratelimit.redis.minIdleConns=10",
-    "traefik.http.middlewares.test-ratelimit.ratelimit.redis.maxActiveConns=200",
-    "traefik.http.middlewares.test-ratelimit.ratelimit.redis.readTimeout=3s",
-    "traefik.http.middlewares.test-ratelimit.ratelimit.redis.writeTimeout=3s",
-    "traefik.http.middlewares.test-ratelimit.ratelimit.redis.dialTimeout=5s",
-    "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.ca=/etc/ssl/redis-ca.crt",
-    "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.cert=/etc/ssl/redis-client.crt",
-    "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.key=/etc/ssl/redis-client.key",
-    "traefik.http.middlewares.test-ratelimit.ratelimit.redis.tls.insecureSkipVerify=false"
+    "baqup.http.middlewares.test-ratelimit.ratelimit.average=100",
+    "baqup.http.middlewares.test-ratelimit.ratelimit.period=1s",
+    "baqup.http.middlewares.test-ratelimit.ratelimit.burst=200",
+    "baqup.http.middlewares.test-ratelimit.ratelimit.redis.endpoints=redis-primary.example.com:6379,redis-replica.example.com:6379",
+    "baqup.http.middlewares.test-ratelimit.ratelimit.redis.username=ratelimit-user",
+    "baqup.http.middlewares.test-ratelimit.ratelimit.redis.password=secure-password",
+    "baqup.http.middlewares.test-ratelimit.ratelimit.redis.db=2",
+    "baqup.http.middlewares.test-ratelimit.ratelimit.redis.poolSize=50",
+    "baqup.http.middlewares.test-ratelimit.ratelimit.redis.minIdleConns=10",
+    "baqup.http.middlewares.test-ratelimit.ratelimit.redis.maxActiveConns=200",
+    "baqup.http.middlewares.test-ratelimit.ratelimit.redis.readTimeout=3s",
+    "baqup.http.middlewares.test-ratelimit.ratelimit.redis.writeTimeout=3s",
+    "baqup.http.middlewares.test-ratelimit.ratelimit.redis.dialTimeout=5s",
+    "baqup.http.middlewares.test-ratelimit.ratelimit.redis.tls.ca=/etc/ssl/redis-ca.crt",
+    "baqup.http.middlewares.test-ratelimit.ratelimit.redis.tls.cert=/etc/ssl/redis-client.crt",
+    "baqup.http.middlewares.test-ratelimit.ratelimit.redis.tls.key=/etc/ssl/redis-client.key",
+    "baqup.http.middlewares.test-ratelimit.ratelimit.redis.tls.insecureSkipVerify=false"
   ]
 }
 ```
@@ -128,7 +128,7 @@ labels:
 # Here, an average of 100 requests per second is allowed.
 # In addition, a burst of 200 requests is allowed.
 # Redis distributed rate limiting is configured with all available options.
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-ratelimit
@@ -196,7 +196,7 @@ data:
 | <a id="opt-sourceCriterion-ipStrategy-depth" href="#opt-sourceCriterion-ipStrategy-depth" title="#opt-sourceCriterion-ipStrategy-depth">`sourceCriterion.ipStrategy.depth`</a> | Depth position of the IP to select in the `X-Forwarded-For` header (starting from the right).<br />0 means no depth.<br />If greater than the total number of IPs in `X-Forwarded-For`, then the client IP is empty<br />If higher than 0, the `excludedIPs` options is not evaluated.<br />More information about [`sourceCriterion`](#sourcecriterion), [`ipStrategy`](#ipstrategy), and [`depth`](#sourcecriterionipstrategydepth) below. | 0      | No      |
 | <a id="opt-sourceCriterion-ipStrategy-excludedIPs" href="#opt-sourceCriterion-ipStrategy-excludedIPs" title="#opt-sourceCriterion-ipStrategy-excludedIPs">`sourceCriterion.ipStrategy.excludedIPs`</a> | Allows scanning the `X-Forwarded-For` header and select the first IP not in the list.<br />If `depth` is specified, `excludedIPs` is ignored.<br />More information about [`sourceCriterion`](#sourcecriterion), [`ipStrategy`](#ipstrategy), and [`excludedIPs`](#sourcecriterionipstrategyexcludedips) below. |       | No      |
 | <a id="opt-sourceCriterion-ipStrategy-ipv6Subnet" href="#opt-sourceCriterion-ipStrategy-ipv6Subnet" title="#opt-sourceCriterion-ipStrategy-ipv6Subnet">`sourceCriterion.ipStrategy.ipv6Subnet`</a> |  If `ipv6Subnet` is provided and the selected IP is IPv6, the IP is transformed into the first IP of the subnet it belongs to. <br />More information about [`sourceCriterion`](#sourcecriterion), [`ipStrategy.ipv6Subnet`](#sourcecriterionipstrategyipv6subnet) below. |       | No      |
-| <a id="opt-redis" href="#opt-redis" title="#opt-redis">`redis`</a> | The `redis` configuration enables distributed rate limiting by using Redis to store rate limit tokens across multiple Traefik instances. This allows you to enforce consistent rate limits across a cluster of Traefik proxies. <br />When Redis is not configured, Traefik uses in-memory storage for rate limiting, which works only for the individual Traefik instance.|       | No      |
+| <a id="opt-redis" href="#opt-redis" title="#opt-redis">`redis`</a> | The `redis` configuration enables distributed rate limiting by using Redis to store rate limit tokens across multiple Baqup instances. This allows you to enforce consistent rate limits across a cluster of Baqup proxies. <br />When Redis is not configured, Baqup uses in-memory storage for rate limiting, which works only for the individual Baqup instance.|       | No      |
 | <a id="opt-redis-endpoints" href="#opt-redis-endpoints" title="#opt-redis-endpoints">`redis.endpoints`</a> | List of Redis server endpoints for distributed rate limiting. You can specify multiple endpoints for Redis cluster or high availability setups. | "127.0.0.1:6379" | No |
 | <a id="opt-redis-username" href="#opt-redis-username" title="#opt-redis-username">`redis.username`</a> | Username for Redis authentication. | "" | No |
 | <a id="opt-redis-password" href="#opt-redis-password" title="#opt-redis-password">`redis.password`</a> | Password for Redis authentication. In Kubernetes, these can be provided via secrets. | "" | No |
@@ -220,7 +220,7 @@ If none are set, the default is to use the request's remote address field (as an
 
 ### ipStrategy
 
-The `ipStrategy` option defines three parameters that configures how Traefik determines the client IP: `depth`, `excludedIPs` and `ipv6Subnet`.
+The `ipStrategy` option defines three parameters that configures how Baqup determines the client IP: `depth`, `excludedIPs` and `ipv6Subnet`.
 
 As a middleware, rate-limiting happens before the actual proxying to the backend takes place.
 In addition, the previous network hop only gets appended to `X-Forwarded-For` during the last stages of proxying, that is after it has already passed through rate-limiting.

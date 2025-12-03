@@ -3,7 +3,7 @@ apiVersion: networking.internal.knative.dev/v1alpha1
 kind: Ingress
 metadata:
   annotations:
-    networking.knative.dev/ingress.class: traefik.ingress.networking.knative.dev
+    networking.knative.dev/ingress.class: baqup.ingress.networking.knative.dev
   name: helloworld-go
   namespace: default
 spec:

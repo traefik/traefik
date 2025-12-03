@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/traefik/traefik/v3/pkg/config/label"
+	"github.com/baqupio/baqup/v3/pkg/config/label"
 )
 
-const annotationsPrefix = "traefik.io/"
+const annotationsPrefix = "baqup.io/"
 
 // ServiceConfig is the service's root configuration from annotations.
 type ServiceConfig struct {
@@ -27,7 +27,7 @@ func parseServiceAnnotations(annotations map[string]string) (ServiceConfig, erro
 		return svcConf, nil
 	}
 
-	if err := label.Decode(labels, &svcConf, "traefik.service."); err != nil {
+	if err := label.Decode(labels, &svcConf, "baqup.service."); err != nil {
 		return svcConf, fmt.Errorf("decoding labels: %w", err)
 	}
 

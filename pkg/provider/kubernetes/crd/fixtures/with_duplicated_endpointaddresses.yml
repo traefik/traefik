@@ -9,7 +9,7 @@ spec:
     - name: web
       port: 8080
   selector:
-    app: traefiklabs
+    app: baquplabs
     task: whoami
 
 ---
@@ -55,7 +55,7 @@ endpoints:
       ready: true
 
 ---
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: test.route

@@ -272,7 +272,7 @@ export const HttpServiceRender = ({ data, error, name }: HttpServiceRenderProps)
     return (
       <>
         <Helmet>
-          <title>{name} - Traefik Proxy</title>
+          <title>{name} - Baqup Proxy</title>
         </Helmet>
         <Text data-testid="error-text">
           Sorry, we could not fetch detail information for this Service right now. Please, try again later.
@@ -285,7 +285,7 @@ export const HttpServiceRender = ({ data, error, name }: HttpServiceRenderProps)
     return (
       <>
         <Helmet>
-          <title>{name} - Traefik Proxy</title>
+          <title>{name} - Baqup Proxy</title>
         </Helmet>
         <Skeleton css={{ height: '$7', width: '320px', mb: '$8' }} data-testid="skeleton" />
         <SpacedColumns>
@@ -305,7 +305,7 @@ export const HttpServiceRender = ({ data, error, name }: HttpServiceRenderProps)
   return (
     <>
       <Helmet>
-        <title>{data.name} - Traefik Proxy</title>
+        <title>{data.name} - Baqup Proxy</title>
       </Helmet>
       <H1 css={{ mb: '$7' }}>{data.name}</H1>
       <ServicePanels data={data} protocol="http" />

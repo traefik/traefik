@@ -1,7 +1,7 @@
 /*
 The MIT License (MIT)
 
-Copyright (c) 2016-2020 Containous SAS; 2020-2025 Traefik Labs
+Copyright (c) 2016-2020 Containous SAS; 2020-2025 Baqup Labs
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -30,7 +30,7 @@ import (
 	"fmt"
 	"net/http"
 
-	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned/typed/traefikio/v1alpha1"
+	baqupv1alpha1 "github.com/baqupio/baqup/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned/typed/baqupio/v1alpha1"
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
 	flowcontrol "k8s.io/client-go/util/flowcontrol"
@@ -38,18 +38,18 @@ import (
 
 type Interface interface {
 	Discovery() discovery.DiscoveryInterface
-	TraefikV1alpha1() traefikv1alpha1.TraefikV1alpha1Interface
+	BaqupV1alpha1() baqupv1alpha1.BaqupV1alpha1Interface
 }
 
 // Clientset contains the clients for groups.
 type Clientset struct {
 	*discovery.DiscoveryClient
-	traefikV1alpha1 *traefikv1alpha1.TraefikV1alpha1Client
+	baqupV1alpha1 *baqupv1alpha1.BaqupV1alpha1Client
 }
 
-// TraefikV1alpha1 retrieves the TraefikV1alpha1Client
-func (c *Clientset) TraefikV1alpha1() traefikv1alpha1.TraefikV1alpha1Interface {
-	return c.traefikV1alpha1
+// BaqupV1alpha1 retrieves the BaqupV1alpha1Client
+func (c *Clientset) BaqupV1alpha1() baqupv1alpha1.BaqupV1alpha1Interface {
+	return c.baqupV1alpha1
 }
 
 // Discovery retrieves the DiscoveryClient
@@ -96,7 +96,7 @@ func NewForConfigAndClient(c *rest.Config, httpClient *http.Client) (*Clientset,
 
 	var cs Clientset
 	var err error
-	cs.traefikV1alpha1, err = traefikv1alpha1.NewForConfigAndClient(&configShallowCopy, httpClient)
+	cs.baqupV1alpha1, err = baqupv1alpha1.NewForConfigAndClient(&configShallowCopy, httpClient)
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +121,7 @@ func NewForConfigOrDie(c *rest.Config) *Clientset {
 // New creates a new Clientset for the given RESTClient.
 func New(c rest.Interface) *Clientset {
 	var cs Clientset
-	cs.traefikV1alpha1 = traefikv1alpha1.New(c)
+	cs.baqupV1alpha1 = baqupv1alpha1.New(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClient(c)
 	return &cs

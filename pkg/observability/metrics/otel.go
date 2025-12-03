@@ -9,12 +9,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/baqupio/baqup/v3/pkg/observability"
+	otypes "github.com/baqupio/baqup/v3/pkg/observability/types"
+	"github.com/baqupio/baqup/v3/pkg/types"
+	"github.com/baqupio/baqup/v3/pkg/version"
 	"github.com/go-kit/kit/metrics"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v3/pkg/observability"
-	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
-	"github.com/traefik/traefik/v3/pkg/types"
-	"github.com/traefik/traefik/v3/pkg/version"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
@@ -62,7 +62,7 @@ func NewSemConvMetricRegistry(ctx context.Context, config *otypes.OTLP) (*SemCon
 		}
 	}
 
-	meter := otel.Meter("github.com/traefik/traefik",
+	meter := otel.Meter("github.com/baqup/baqup",
 		metric.WithInstrumentationVersion(version.Version))
 
 	httpServerRequestDuration, err := httpconv.NewServerRequestDuration(meter,
@@ -115,7 +115,7 @@ func RegisterOpenTelemetry(ctx context.Context, config *otypes.OTLP) Registry {
 		openTelemetryGaugeCollector = newOpenTelemetryGaugeCollector()
 	}
 
-	meter := otel.Meter("github.com/traefik/traefik",
+	meter := otel.Meter("github.com/baqup/baqup",
 		metric.WithInstrumentationVersion(version.Version))
 
 	reg := &standardRegistry{
@@ -244,7 +244,7 @@ func newOpenTelemetryMeterProvider(ctx context.Context, config *otypes.OTLP) (*s
 		sdkmetric.WithReader(sdkmetric.NewPeriodicReader(exporter, opts...)),
 		// View to customize histogram buckets and rename a single histogram instrument.
 		sdkmetric.WithView(sdkmetric.NewView(
-			sdkmetric.Instrument{Name: "traefik_*_request_duration_seconds"},
+			sdkmetric.Instrument{Name: "baqup_*_request_duration_seconds"},
 			sdkmetric.Stream{Aggregation: sdkmetric.AggregationExplicitBucketHistogram{
 				Boundaries: config.ExplicitBoundaries,
 			}},

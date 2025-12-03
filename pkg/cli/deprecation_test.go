@@ -3,12 +3,12 @@ package cli
 import (
 	"testing"
 
+	"github.com/baqupio/baqup/v3/cmd"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/paerser/cli"
-	"github.com/traefik/traefik/v3/cmd"
 )
 
 func ptr[T any](t T) *T {
@@ -352,30 +352,30 @@ func TestLoad(t *testing.T) {
 		{
 			desc: "[ENV] providers.marathon is deprecated",
 			env: map[string]string{
-				"TRAEFIK_ACCESS_LOG":               "",
-				"TRAEFIK_LOG_LEVEL":                "DEBUG",
-				"TRAEFIK_ENTRYPOINT_TEST_HTTP_TLS": "true",
-				"TRAEFIK_PROVIDERS_MARATHON":       "true",
+				"BAQUP_ACCESS_LOG":               "",
+				"BAQUP_LOG_LEVEL":                "DEBUG",
+				"BAQUP_ENTRYPOINT_TEST_HTTP_TLS": "true",
+				"BAQUP_PROVIDERS_MARATHON":       "true",
 			},
 			wantDeprecated: true,
 		},
 		{
 			desc: "[ENV] multiple deprecated",
 			env: map[string]string{
-				"TRAEFIK_ACCESS_LOG":               "true",
-				"TRAEFIK_LOG_LEVEL":                "DEBUG",
-				"TRAEFIK_ENTRYPOINT_TEST_HTTP_TLS": "true",
-				"TRAEFIK_PROVIDERS_MARATHON":       "true",
-				"TRAEFIK_PILOT_TOKEN":              "xxx",
+				"BAQUP_ACCESS_LOG":               "true",
+				"BAQUP_LOG_LEVEL":                "DEBUG",
+				"BAQUP_ENTRYPOINT_TEST_HTTP_TLS": "true",
+				"BAQUP_PROVIDERS_MARATHON":       "true",
+				"BAQUP_PILOT_TOKEN":              "xxx",
 			},
 			wantDeprecated: true,
 		},
 		{
 			desc: "[ENV] no deprecated",
 			env: map[string]string{
-				"TRAEFIK_ACCESS_LOG":               "true",
-				"TRAEFIK_LOG_LEVEL":                "DEBUG",
-				"TRAEFIK_ENTRYPOINT_TEST_HTTP_TLS": "true",
+				"BAQUP_ACCESS_LOG":               "true",
+				"BAQUP_LOG_LEVEL":                "DEBUG",
+				"BAQUP_ENTRYPOINT_TEST_HTTP_TLS": "true",
 			},
 
 			wantDeprecated: false,
@@ -383,21 +383,21 @@ func TestLoad(t *testing.T) {
 		{
 			desc: "[FILE] providers.marathon is deprecated",
 			args: []string{
-				"--configfile=./fixtures/traefik_deprecated.toml",
+				"--configfile=./fixtures/baqup_deprecated.toml",
 			},
 			wantDeprecated: true,
 		},
 		{
 			desc: "[FILE] multiple deprecated",
 			args: []string{
-				"--configfile=./fixtures/traefik_multiple_deprecated.toml",
+				"--configfile=./fixtures/baqup_multiple_deprecated.toml",
 			},
 			wantDeprecated: true,
 		},
 		{
 			desc: "[FILE] no deprecated",
 			args: []string{
-				"--configfile=./fixtures/traefik_no_deprecated.toml",
+				"--configfile=./fixtures/baqup_no_deprecated.toml",
 			},
 			wantDeprecated: false,
 		},
@@ -405,7 +405,7 @@ func TestLoad(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			tconfig := cmd.NewTraefikConfiguration()
+			tconfig := cmd.NewBaqupConfiguration()
 			c := &cli.Command{Configuration: tconfig}
 			l := DeprecationLoader{}
 

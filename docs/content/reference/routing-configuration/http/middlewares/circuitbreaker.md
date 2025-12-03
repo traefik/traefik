@@ -1,6 +1,6 @@
 ---
-title: "Traefik CircuitBreaker Documentation"
-description: "The HTTP circuit breaker in Traefik Proxy prevents stacking requests to unhealthy Services, resulting in cascading failures. Read the technical documentation."
+title: "Baqup CircuitBreaker Documentation"
+description: "The HTTP circuit breaker in Baqup Proxy prevents stacking requests to unhealthy Services, resulting in cascading failures. Read the technical documentation."
 ---
 
 The HTTP circuit breaker prevents stacking requests to unhealthy Services, resulting in cascading failures.
@@ -38,21 +38,21 @@ http:
 ```yaml tab="Labels"
 # Latency Check
 labels:
-  - "traefik.http.middlewares.latency-check.circuitbreaker.expression=LatencyAtQuantileMS(50.0) > 100"
+  - "baqup.http.middlewares.latency-check.circuitbreaker.expression=LatencyAtQuantileMS(50.0) > 100"
 ```
 
 ```json tab="Tags"
 {
   //..
   "Tags" : [
-    "traefik.http.middlewares.latency-check.circuitbreaker.expression=LatencyAtQuantileMS(50.0) > 100"
+    "baqup.http.middlewares.latency-check.circuitbreaker.expression=LatencyAtQuantileMS(50.0) > 100"
   ]
 }
 ```
 
 ```yaml tab="Kubernetes"
 # Latency Check
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: latency-check

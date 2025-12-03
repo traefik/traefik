@@ -7,10 +7,10 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 
+	"github.com/baqupio/baqup/v3/pkg/observability/logs"
 	"github.com/go-acme/lego/v4/certcrypto"
 	"github.com/go-acme/lego/v4/registration"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v3/pkg/observability/logs"
 )
 
 // Account is used to store lets encrypt registration info.

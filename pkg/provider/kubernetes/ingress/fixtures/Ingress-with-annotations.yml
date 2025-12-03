@@ -5,22 +5,22 @@ metadata:
   namespace: testing
   annotations:
     ingress.kubernetes.io/foo: bar
-    traefik.ingress.kubernetes.io/foo: bar
-    traefik.ingress.kubernetes.io/router.pathmatcher: Path
-    traefik.ingress.kubernetes.io/router.entrypoints: ep1,ep2
-    traefik.ingress.kubernetes.io/router.middlewares: md1,md2
-    traefik.ingress.kubernetes.io/router.priority: "42"
-    traefik.ingress.kubernetes.io/router.rulesyntax: "v2"
-    traefik.ingress.kubernetes.io/router.tls: "true"
-    traefik.ingress.kubernetes.io/router.tls.certresolver:   foobar
-    traefik.ingress.kubernetes.io/router.tls.domains.0.main: domain.com
-    traefik.ingress.kubernetes.io/router.tls.domains.0.sans: one.domain.com,two.domain.com
-    traefik.ingress.kubernetes.io/router.tls.domains.1.main: example.com
-    traefik.ingress.kubernetes.io/router.tls.domains.1.sans: one.example.com,two.example.com
-    traefik.ingress.kubernetes.io/router.tls.options: foobar
-    traefik.ingress.kubernetes.io/router.observability.accesslogs: "true"
-    traefik.ingress.kubernetes.io/router.observability.metrics: "true"
-    traefik.ingress.kubernetes.io/router.observability.tracing: "true"
+    baqup.ingress.kubernetes.io/foo: bar
+    baqup.ingress.kubernetes.io/router.pathmatcher: Path
+    baqup.ingress.kubernetes.io/router.entrypoints: ep1,ep2
+    baqup.ingress.kubernetes.io/router.middlewares: md1,md2
+    baqup.ingress.kubernetes.io/router.priority: "42"
+    baqup.ingress.kubernetes.io/router.rulesyntax: "v2"
+    baqup.ingress.kubernetes.io/router.tls: "true"
+    baqup.ingress.kubernetes.io/router.tls.certresolver:   foobar
+    baqup.ingress.kubernetes.io/router.tls.domains.0.main: domain.com
+    baqup.ingress.kubernetes.io/router.tls.domains.0.sans: one.domain.com,two.domain.com
+    baqup.ingress.kubernetes.io/router.tls.domains.1.main: example.com
+    baqup.ingress.kubernetes.io/router.tls.domains.1.sans: one.example.com,two.example.com
+    baqup.ingress.kubernetes.io/router.tls.options: foobar
+    baqup.ingress.kubernetes.io/router.observability.accesslogs: "true"
+    baqup.ingress.kubernetes.io/router.observability.metrics: "true"
+    baqup.ingress.kubernetes.io/router.observability.tracing: "true"
 
 spec:
   rules:
@@ -42,14 +42,14 @@ metadata:
   namespace: testing
   annotations:
     ingress.kubernetes.io/foo: bar
-    traefik.ingress.kubernetes.io/foo: bar
-    traefik.ingress.kubernetes.io/service.serversscheme: protocol
-    traefik.ingress.kubernetes.io/service.serverstransport: foobar@file
-    traefik.ingress.kubernetes.io/service.passhostheader: "true"
-    traefik.ingress.kubernetes.io/service.sticky.cookie: "true"
-    traefik.ingress.kubernetes.io/service.sticky.cookie.httponly: "true"
-    traefik.ingress.kubernetes.io/service.sticky.cookie.name: foobar
-    traefik.ingress.kubernetes.io/service.sticky.cookie.secure: "true"
+    baqup.ingress.kubernetes.io/foo: bar
+    baqup.ingress.kubernetes.io/service.serversscheme: protocol
+    baqup.ingress.kubernetes.io/service.serverstransport: foobar@file
+    baqup.ingress.kubernetes.io/service.passhostheader: "true"
+    baqup.ingress.kubernetes.io/service.sticky.cookie: "true"
+    baqup.ingress.kubernetes.io/service.sticky.cookie.httponly: "true"
+    baqup.ingress.kubernetes.io/service.sticky.cookie.name: foobar
+    baqup.ingress.kubernetes.io/service.sticky.cookie.secure: "true"
 
 spec:
   ports:

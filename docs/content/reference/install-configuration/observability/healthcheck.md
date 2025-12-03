@@ -1,29 +1,29 @@
 ---
-title: "Traefik Health Check Documentation"
-description: "In Traefik Proxy, CLI & Ping lets you check the health of your Traefik instances. Read the technical documentation for configuration examples and options."
+title: "Baqup Health Check Documentation"
+description: "In Baqup Proxy, CLI & Ping lets you check the health of your Baqup instances. Read the technical documentation for configuration examples and options."
 ---
 
 # CLI & Ping
 
-Checking the Health of your Traefik Instances
+Checking the Health of your Baqup Instances
 {: .subtitle }
 
 ## CLI
 
-The CLI can be used to make a request to the `/ping` endpoint to check the health of Traefik. Its exit status is `0` if Traefik is healthy and `1` otherwise.
+The CLI can be used to make a request to the `/ping` endpoint to check the health of Baqup. Its exit status is `0` if Baqup is healthy and `1` otherwise.
 
 This can be used with [HEALTHCHECK](https://docs.docker.com/engine/reference/builder/#healthcheck) instruction or any other health check orchestration mechanism.
 
 ### Usage 
 
 ```sh
-traefik healthcheck [command] [flags] [arguments]
+baqup healthcheck [command] [flags] [arguments]
 ```
 
 Example:
 
 ```sh
-$ traefik healthcheck
+$ baqup healthcheck
 OK: http://:8082/ping
 ```
 
@@ -32,11 +32,11 @@ OK: http://:8082/ping
 The `/ping` health-check URL is enabled with the command-line `--ping` or config file option `[ping]`.
 
 The entryPoint where the `/ping` is active can be customized with the `entryPoint` option,
-whose default value is `traefik` (port `8080`).
+whose default value is `baqup` (port `8080`).
 
 | Path    | Method        | Description                                                                                         |
 |---------|---------------|-----------------------------------------------------------------------------------------------------|
-| <a id="opt-ping" href="#opt-ping" title="#opt-ping">`/ping`</a> | `GET`, `HEAD` | An endpoint to check for Traefik process liveness. Return a code `200` with the content: `OK` |
+| <a id="opt-ping" href="#opt-ping" title="#opt-ping">`/ping`</a> | `GET`, `HEAD` | An endpoint to check for Baqup process liveness. Return a code `200` with the content: `OK` |
 
 ### Configuration Example
 
@@ -58,15 +58,15 @@ ping: {}
 
 | Field | Description                                               | Default              | Required |
 |:------|:----------------------------------------------------------|:---------------------|:---------|
-| <a id="opt-ping-entryPoint" href="#opt-ping-entryPoint" title="#opt-ping-entryPoint">`ping.entryPoint`</a> | Enables `/ping` on a dedicated EntryPoint. | traefik  | No   |
+| <a id="opt-ping-entryPoint" href="#opt-ping-entryPoint" title="#opt-ping-entryPoint">`ping.entryPoint`</a> | Enables `/ping` on a dedicated EntryPoint. | baqup  | No   |
 | <a id="opt-ping-manualRouting" href="#opt-ping-manualRouting" title="#opt-ping-manualRouting">`ping.manualRouting`</a> | Disables the default internal router in order to allow one to create a custom router for the `ping@internal` service when set to `true`. | false | No   |
 | <a id="opt-ping-terminatingStatusCode" href="#opt-ping-terminatingStatusCode" title="#opt-ping-terminatingStatusCode">`ping.terminatingStatusCode`</a> | Defines the status code for the ping handler during a graceful shut down. See more information [here](#terminatingstatuscode) | 503 | No   |
 
 #### `terminatingStatusCode`
 
-During the period in which Traefik is gracefully shutting down, the ping handler
+During the period in which Baqup is gracefully shutting down, the ping handler
 returns a `503` status code by default.  
-If Traefik is behind, for example a load-balancer
+If Baqup is behind, for example a load-balancer
 doing health checks (such as the Kubernetes LivenessProbe), another code might
 be expected as the signal for graceful termination.  
 In that case, the terminatingStatusCode can be used to set the code returned by the ping

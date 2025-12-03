@@ -2,4 +2,4 @@ services:
   consul:
     image: consul:1.6
   whoami:
-    image: traefik/whoami
+    image: baqup/whoami

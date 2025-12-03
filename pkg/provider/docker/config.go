@@ -7,15 +7,15 @@ import (
 	"net"
 	"strings"
 
+	"github.com/baqupio/baqup/v3/pkg/config/dynamic"
+	"github.com/baqupio/baqup/v3/pkg/config/label"
+	"github.com/baqupio/baqup/v3/pkg/observability/logs"
+	"github.com/baqupio/baqup/v3/pkg/provider"
+	"github.com/baqupio/baqup/v3/pkg/provider/constraints"
 	containertypes "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/config/label"
-	"github.com/traefik/traefik/v3/pkg/observability/logs"
-	"github.com/traefik/traefik/v3/pkg/provider"
-	"github.com/traefik/traefik/v3/pkg/provider/constraints"
 )
 
 type DynConfBuilder struct {
@@ -392,7 +392,7 @@ func (p *DynConfBuilder) getIPAddress(ctx context.Context, container dockerData)
 			return ""
 		}
 
-		// Check connected container for traefik.docker.network,
+		// Check connected container for baqup.docker.network,
 		// falling back to the network specified on the current container.
 		containerParsed := parseContainer(containerInspected)
 		extraConf, err := p.extractLabels(containerParsed)

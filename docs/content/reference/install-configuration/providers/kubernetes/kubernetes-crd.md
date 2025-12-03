@@ -1,29 +1,29 @@
 ---
 title: 'Kubernetes Custom Resources'
-description: 'Configure the Kubernetes CRD provider that allows managing Traefik custom resources.'
+description: 'Configure the Kubernetes CRD provider that allows managing Baqup custom resources.'
 ---
 
-Traefik provides some Kubernetes Custom Resources, such as `IngressRoute`, `Middleware`, etc.
+Baqup provides some Kubernetes Custom Resources, such as `IngressRoute`, `Middleware`, etc.
 
 When using KubernetesCRD as a provider,
-Traefik uses [Custom Resource Definition](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) to retrieve its routing configuration.
-Traefik Custom Resource Definitions are [listed below](#list-of-resources).
+Baqup uses [Custom Resource Definition](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) to retrieve its routing configuration.
+Baqup Custom Resource Definitions are [listed below](#list-of-resources).
 
-When Traefik is installed using the Helm Chart, by default, the provider `kubernetesCRD` is enabled.
+When Baqup is installed using the Helm Chart, by default, the provider `kubernetesCRD` is enabled.
 
 ## Requirements
 
-When you install Traefik without using the Helm Chart, or when you are upgrading the stack using Helm, ensure that you satisfy the following requirements:
+When you install Baqup without using the Helm Chart, or when you are upgrading the stack using Helm, ensure that you satisfy the following requirements:
 
-- Add/update **all** the Traefik resources definitions
-- Add/update the [RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) for the Traefik custom resources
+- Add/update **all** the Baqup resources definitions
+- Add/update the [RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) for the Baqup custom resources
 
 ```bash
-# Install Traefik Resource Definitions:
-kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.6/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml
+# Install Baqup Resource Definitions:
+kubectl apply -f https://raw.githubusercontent.com/baqup/baqup/v3.6/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml
 
-# Install RBAC for Traefik:
-kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.6/docs/content/reference/dynamic-configuration/kubernetes-crd-rbac.yml
+# Install RBAC for Baqup:
+kubectl apply -f https://raw.githubusercontent.com/baqup/baqup/v3.6/docs/content/reference/dynamic-configuration/kubernetes-crd-rbac.yml
 ```
 
 ## Configuration Example
@@ -59,27 +59,27 @@ providers:
 | <a id="opt-providers-kubernetesCRD-token" href="#opt-providers-kubernetesCRD-token" title="#opt-providers-kubernetesCRD-token">`providers.kubernetesCRD.token`</a> | Bearer token used for the Kubernetes client configuration. | ""      | No |
 | <a id="opt-providers-kubernetesCRD-certAuthFilePath" href="#opt-providers-kubernetesCRD-certAuthFilePath" title="#opt-providers-kubernetesCRD-certAuthFilePath">`providers.kubernetesCRD.certAuthFilePath`</a> | Path to the certificate authority file.<br />Used for the Kubernetes client configuration. | ""      | No |
 | <a id="opt-providers-kubernetesCRD-namespaces" href="#opt-providers-kubernetesCRD-namespaces" title="#opt-providers-kubernetesCRD-namespaces">`providers.kubernetesCRD.namespaces`</a> | Array of namespaces to watch.<br />If left empty, watch all namespaces. | []      | No |
-| <a id="opt-providers-kubernetesCRD-labelselector" href="#opt-providers-kubernetesCRD-labelselector" title="#opt-providers-kubernetesCRD-labelselector">`providers.kubernetesCRD.labelselector`</a> | Allow filtering on specific resource objects only using label selectors.<br />Only to Traefik [Custom Resources](#list-of-resources) (they all must match the filter).<br />No effect on Kubernetes `Secrets`, `EndpointSlices` and `Services`.<br />See [label-selectors](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors) for details. | ""      | No |
-| <a id="opt-providers-kubernetesCRD-ingressClass" href="#opt-providers-kubernetesCRD-ingressClass" title="#opt-providers-kubernetesCRD-ingressClass">`providers.kubernetesCRD.ingressClass`</a> | Value of `kubernetes.io/ingress.class` annotation that identifies resource objects to be processed.<br />If empty, resources missing the annotation, having an empty value, or the value `traefik` are processed. | ""      | No |
-| <a id="opt-providers-kubernetesCRD-throttleDuration" href="#opt-providers-kubernetesCRD-throttleDuration" title="#opt-providers-kubernetesCRD-throttleDuration">`providers.kubernetesCRD.throttleDuration`</a> | Minimum amount of time to wait between two Kubernetes events before producing a new configuration.<br />This prevents a Kubernetes cluster that updates many times per second from continuously changing your Traefik configuration.<br />If empty, every event is caught. | 0s      | No |
-| <a id="opt-providers-kubernetesCRD-allowEmptyServices" href="#opt-providers-kubernetesCRD-allowEmptyServices" title="#opt-providers-kubernetesCRD-allowEmptyServices">`providers.kubernetesCRD.allowEmptyServices`</a> | Allows creating a route to reach a service that has no endpoint available.<br />It allows Traefik to handle the requests and responses targeting this service (applying middleware or observability operations) before returning a `503` HTTP Status.  | false   | No |
+| <a id="opt-providers-kubernetesCRD-labelselector" href="#opt-providers-kubernetesCRD-labelselector" title="#opt-providers-kubernetesCRD-labelselector">`providers.kubernetesCRD.labelselector`</a> | Allow filtering on specific resource objects only using label selectors.<br />Only to Baqup [Custom Resources](#list-of-resources) (they all must match the filter).<br />No effect on Kubernetes `Secrets`, `EndpointSlices` and `Services`.<br />See [label-selectors](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors) for details. | ""      | No |
+| <a id="opt-providers-kubernetesCRD-ingressClass" href="#opt-providers-kubernetesCRD-ingressClass" title="#opt-providers-kubernetesCRD-ingressClass">`providers.kubernetesCRD.ingressClass`</a> | Value of `kubernetes.io/ingress.class` annotation that identifies resource objects to be processed.<br />If empty, resources missing the annotation, having an empty value, or the value `baqup` are processed. | ""      | No |
+| <a id="opt-providers-kubernetesCRD-throttleDuration" href="#opt-providers-kubernetesCRD-throttleDuration" title="#opt-providers-kubernetesCRD-throttleDuration">`providers.kubernetesCRD.throttleDuration`</a> | Minimum amount of time to wait between two Kubernetes events before producing a new configuration.<br />This prevents a Kubernetes cluster that updates many times per second from continuously changing your Baqup configuration.<br />If empty, every event is caught. | 0s      | No |
+| <a id="opt-providers-kubernetesCRD-allowEmptyServices" href="#opt-providers-kubernetesCRD-allowEmptyServices" title="#opt-providers-kubernetesCRD-allowEmptyServices">`providers.kubernetesCRD.allowEmptyServices`</a> | Allows creating a route to reach a service that has no endpoint available.<br />It allows Baqup to handle the requests and responses targeting this service (applying middleware or observability operations) before returning a `503` HTTP Status.  | false   | No |
 | <a id="opt-providers-kubernetesCRD-allowCrossNamespace" href="#opt-providers-kubernetesCRD-allowCrossNamespace" title="#opt-providers-kubernetesCRD-allowCrossNamespace">`providers.kubernetesCRD.allowCrossNamespace`</a> | Allows the `IngressRoutes` to reference resources in namespaces other than theirs. | false   | No |
 | <a id="opt-providers-kubernetesCRD-allowExternalNameServices" href="#opt-providers-kubernetesCRD-allowExternalNameServices" title="#opt-providers-kubernetesCRD-allowExternalNameServices">`providers.kubernetesCRD.allowExternalNameServices`</a> | Allows the `IngressRoutes` to reference ExternalName services. | false   | No |
-| <a id="opt-providers-kubernetesCRD-nativeLBByDefault" href="#opt-providers-kubernetesCRD-nativeLBByDefault" title="#opt-providers-kubernetesCRD-nativeLBByDefault">`providers.kubernetesCRD.nativeLBByDefault`</a> | Allow using the Kubernetes Service load balancing between the pods instead of the one provided by Traefik for every `IngressRoute` by default.<br />It can br overridden in the [`ServerTransport`](../../../../routing/services/index.md#serverstransport). | false   | No |
-| <a id="opt-providers-kubernetesCRD-disableClusterScopeResources" href="#opt-providers-kubernetesCRD-disableClusterScopeResources" title="#opt-providers-kubernetesCRD-disableClusterScopeResources">`providers.kubernetesCRD.disableClusterScopeResources`</a> | Prevent from discovering cluster scope resources (`IngressClass` and `Nodes`).<br />By doing so, it alleviates the requirement of giving Traefik the rights to look up for cluster resources.<br />Furthermore, Traefik will not handle IngressRoutes with IngressClass references, therefore such Ingresses will be ignored (please note that annotations are not affected by this option).<br />This will also prevent from using the `NodePortLB` options on services. | false   | No |
+| <a id="opt-providers-kubernetesCRD-nativeLBByDefault" href="#opt-providers-kubernetesCRD-nativeLBByDefault" title="#opt-providers-kubernetesCRD-nativeLBByDefault">`providers.kubernetesCRD.nativeLBByDefault`</a> | Allow using the Kubernetes Service load balancing between the pods instead of the one provided by Baqup for every `IngressRoute` by default.<br />It can br overridden in the [`ServerTransport`](../../../../routing/services/index.md#serverstransport). | false   | No |
+| <a id="opt-providers-kubernetesCRD-disableClusterScopeResources" href="#opt-providers-kubernetesCRD-disableClusterScopeResources" title="#opt-providers-kubernetesCRD-disableClusterScopeResources">`providers.kubernetesCRD.disableClusterScopeResources`</a> | Prevent from discovering cluster scope resources (`IngressClass` and `Nodes`).<br />By doing so, it alleviates the requirement of giving Baqup the rights to look up for cluster resources.<br />Furthermore, Baqup will not handle IngressRoutes with IngressClass references, therefore such Ingresses will be ignored (please note that annotations are not affected by this option).<br />This will also prevent from using the `NodePortLB` options on services. | false   | No |
 
 ### endpoint
 
 The Kubernetes server endpoint URL.
 
-When deployed into Kubernetes, Traefik reads the environment variables `KUBERNETES_SERVICE_HOST` and `KUBERNETES_SERVICE_PORT` or `KUBECONFIG` to construct the endpoint.
+When deployed into Kubernetes, Baqup reads the environment variables `KUBERNETES_SERVICE_HOST` and `KUBERNETES_SERVICE_PORT` or `KUBECONFIG` to construct the endpoint.
 
 The access token is looked up in `/var/run/secrets/kubernetes.io/serviceaccount/token` and the SSL CA certificate in `/var/run/secrets/kubernetes.io/serviceaccount/ca.crt`.
 Both are mounted automatically when deployed inside Kubernetes.
 
 The endpoint may be specified to override the environment variable values inside a cluster.
 
-When the environment variables are not found, Traefik tries to connect to the Kubernetes API server with an external-cluster client.
+When the environment variables are not found, Baqup tries to connect to the Kubernetes API server with an external-cluster client.
 In this case, the endpoint is required.
 Specifically, it may be set to the URL used by `kubectl proxy` to connect to a Kubernetes cluster using the granted authentication and authorization of the associated kubeconfig.
 
@@ -112,13 +112,13 @@ See the dedicated section in [routing](../../../../routing/providers/kubernetes-
 |-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------|
 | <a id="opt-IngressRoute" href="#opt-IngressRoute" title="#opt-IngressRoute">[IngressRoute](../../../routing-configuration/kubernetes/crd/http/ingressroute.md)</a> | HTTP Routing                                                      |
 | <a id="opt-Middleware" href="#opt-Middleware" title="#opt-Middleware">[Middleware](../../../routing-configuration/kubernetes/crd/http/middleware.md)</a> | Tweaks the HTTP requests before they are sent to your service     |
-| <a id="opt-TraefikService" href="#opt-TraefikService" title="#opt-TraefikService">[TraefikService](../../../routing-configuration/kubernetes/crd/http/traefikservice.md)</a> | Abstraction for HTTP loadbalancing/mirroring                      | 
+| <a id="opt-BaqupService" href="#opt-BaqupService" title="#opt-BaqupService">[BaqupService](../../../routing-configuration/kubernetes/crd/http/baqupservice.md)</a> | Abstraction for HTTP loadbalancing/mirroring                      | 
 | <a id="opt-TLSOptions" href="#opt-TLSOptions" title="#opt-TLSOptions">[TLSOptions](../../../routing-configuration/kubernetes/crd/tls/tlsoption.md)</a> | Allows configuring some parameters of the TLS connection          |
 | <a id="opt-TLSStores" href="#opt-TLSStores" title="#opt-TLSStores">[TLSStores](../../../routing-configuration/kubernetes/crd/tls/tlsstore.md)</a> | Allows configuring the default TLS store                          |  
-| <a id="opt-ServersTransport" href="#opt-ServersTransport" title="#opt-ServersTransport">[ServersTransport](../../../routing-configuration/kubernetes/crd/http/serverstransport.md)</a> | Allows configuring the transport between Traefik and the backends | 
+| <a id="opt-ServersTransport" href="#opt-ServersTransport" title="#opt-ServersTransport">[ServersTransport](../../../routing-configuration/kubernetes/crd/http/serverstransport.md)</a> | Allows configuring the transport between Baqup and the backends | 
 | <a id="opt-IngressRouteTCP" href="#opt-IngressRouteTCP" title="#opt-IngressRouteTCP">[IngressRouteTCP](../../../routing-configuration/kubernetes/crd/tcp/ingressroutetcp.md)</a> | TCP Routing                                                       | 
 | <a id="opt-MiddlewareTCP" href="#opt-MiddlewareTCP" title="#opt-MiddlewareTCP">[MiddlewareTCP](../../../routing-configuration/kubernetes/crd/tcp/middlewaretcp.md)</a> | Tweaks the TCP requests before they are sent to your service      |
-| <a id="opt-ServersTransportTCP" href="#opt-ServersTransportTCP" title="#opt-ServersTransportTCP">[ServersTransportTCP](../../../routing-configuration/kubernetes/crd/tcp/serverstransporttcp.md)</a> | Allows configuring the transport between Traefik and the backends |
+| <a id="opt-ServersTransportTCP" href="#opt-ServersTransportTCP" title="#opt-ServersTransportTCP">[ServersTransportTCP](../../../routing-configuration/kubernetes/crd/tcp/serverstransporttcp.md)</a> | Allows configuring the transport between Baqup and the backends |
 | <a id="opt-IngressRouteUDP" href="#opt-IngressRouteUDP" title="#opt-IngressRouteUDP">[IngressRouteUDP](../../../routing-configuration/kubernetes/crd/udp/ingressrouteudp.md)</a> | UDP Routing                                                       |
 
 ## Particularities
@@ -130,4 +130,4 @@ See the dedicated section in [routing](../../../../routing/providers/kubernetes-
 
 For additional information, refer to the [full example](../../../../user-guides/crd-acme/index.md) with Let's Encrypt.
 
-{!traefik-for-business-applications.md!}
+{!baqup-for-business-applications.md!}

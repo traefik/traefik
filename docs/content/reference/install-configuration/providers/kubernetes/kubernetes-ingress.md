@@ -1,11 +1,11 @@
 ---
-title: "Traefik Kubernetes Ingress Documentation"
-description: "Understand the requirements, routing configuration, and how to set up Traefik Proxy as your Kubernetes Ingress Controller. Read the technical documentation."
+title: "Baqup Kubernetes Ingress Documentation"
+description: "Understand the requirements, routing configuration, and how to set up Baqup Proxy as your Kubernetes Ingress Controller. Read the technical documentation."
 ---
 
-# Traefik & Kubernetes
+# Baqup & Kubernetes
 
-The Traefik Kubernetes Ingress provider is a Kubernetes Ingress controller; i.e,
+The Baqup Kubernetes Ingress provider is a Kubernetes Ingress controller; i.e,
 it manages access to cluster services by supporting the [Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/) specification.
 
 ??? warning "Ingress Backend Resource not supported"
@@ -53,17 +53,17 @@ which in turn creates the resulting routers, services, handlers, etc.
 | <a id="opt-providers-kubernetesIngress-certAuthFilePath" href="#opt-providers-kubernetesIngress-certAuthFilePath" title="#opt-providers-kubernetesIngress-certAuthFilePath">`providers.kubernetesIngress.certAuthFilePath`</a> | Path to the certificate authority file.<br />Used for the Kubernetes client configuration.  | ""      | No       |
 | <a id="opt-providers-kubernetesIngress-namespaces" href="#opt-providers-kubernetesIngress-namespaces" title="#opt-providers-kubernetesIngress-namespaces">`providers.kubernetesIngress.namespaces`</a> | Array of namespaces to watch.<br />If left empty, watch all namespaces.   |         | No       |
 | <a id="opt-providers-kubernetesIngress-labelselector" href="#opt-providers-kubernetesIngress-labelselector" title="#opt-providers-kubernetesIngress-labelselector">`providers.kubernetesIngress.labelselector`</a> | Allow filtering on Ingress objects using label selectors.<br />No effect on Kubernetes `Secrets`, `EndpointSlices` and `Services`.<br />See [label-selectors](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors) for details.        | ""      | No       |
-| <a id="opt-providers-kubernetesIngress-ingressClass" href="#opt-providers-kubernetesIngress-ingressClass" title="#opt-providers-kubernetesIngress-ingressClass">`providers.kubernetesIngress.ingressClass`</a> | The `IngressClass` resource name or the `kubernetes.io/ingress.class` annotation value that identifies resource objects to be processed.<br />If empty, resources missing the annotation, having an empty value, or the value `traefik` are processed.     | ""      | No       |
-| <a id="opt-providers-kubernetesIngress-disableIngressClassLookup" href="#opt-providers-kubernetesIngress-disableIngressClassLookup" title="#opt-providers-kubernetesIngress-disableIngressClassLookup">`providers.kubernetesIngress.disableIngressClassLookup`</a> | Prevent to discover IngressClasses in the cluster.<br />It alleviates the requirement of giving Traefik the rights to look IngressClasses up.<br />Ignore Ingresses with IngressClass.<br />Annotations are not affected by this option.   | false   | No       |
+| <a id="opt-providers-kubernetesIngress-ingressClass" href="#opt-providers-kubernetesIngress-ingressClass" title="#opt-providers-kubernetesIngress-ingressClass">`providers.kubernetesIngress.ingressClass`</a> | The `IngressClass` resource name or the `kubernetes.io/ingress.class` annotation value that identifies resource objects to be processed.<br />If empty, resources missing the annotation, having an empty value, or the value `baqup` are processed.     | ""      | No       |
+| <a id="opt-providers-kubernetesIngress-disableIngressClassLookup" href="#opt-providers-kubernetesIngress-disableIngressClassLookup" title="#opt-providers-kubernetesIngress-disableIngressClassLookup">`providers.kubernetesIngress.disableIngressClassLookup`</a> | Prevent to discover IngressClasses in the cluster.<br />It alleviates the requirement of giving Baqup the rights to look IngressClasses up.<br />Ignore Ingresses with IngressClass.<br />Annotations are not affected by this option.   | false   | No       |
 | <a id="opt-providers-kubernetesIngress-ingressEndpoint-hostname" href="#opt-providers-kubernetesIngress-ingressEndpoint-hostname" title="#opt-providers-kubernetesIngress-ingressEndpoint-hostname">`providers.kubernetesIngress.`<br />`ingressEndpoint.hostname`</a> | Hostname used for Kubernetes Ingress endpoints.  | ""      | No       |
 | <a id="opt-providers-kubernetesIngress-ingressEndpoint-ip" href="#opt-providers-kubernetesIngress-ingressEndpoint-ip" title="#opt-providers-kubernetesIngress-ingressEndpoint-ip">`providers.kubernetesIngress.`<br />`ingressEndpoint.ip`</a> | This IP will get copied to the Ingress `status.loadbalancer.ip`, and currently only supports one IP value (IPv4 or IPv6). | ""      | No       |
 | <a id="opt-providers-kubernetesIngress-ingressEndpoint-publishedService" href="#opt-providers-kubernetesIngress-ingressEndpoint-publishedService" title="#opt-providers-kubernetesIngress-ingressEndpoint-publishedService">`providers.kubernetesIngress.`<br />`ingressEndpoint.publishedService`</a> | The Kubernetes service to copy status from.<br />More information [here](#ingressendpointpublishedservice). | ""      | No       |
-| <a id="opt-providers-kubernetesIngress-throttleDuration" href="#opt-providers-kubernetesIngress-throttleDuration" title="#opt-providers-kubernetesIngress-throttleDuration">`providers.kubernetesIngress.throttleDuration`</a> | Minimum amount of time to wait between two Kubernetes events before producing a new configuration.<br />This prevents a Kubernetes cluster that updates many times per second from continuously changing your Traefik configuration.<br />If empty, every event is caught.  | 0s      | No       |
-| <a id="opt-providers-kubernetesIngress-allowEmptyServices" href="#opt-providers-kubernetesIngress-allowEmptyServices" title="#opt-providers-kubernetesIngress-allowEmptyServices">`providers.kubernetesIngress.allowEmptyServices`</a> | Allows creating a route to reach a service that has no endpoint available.<br />It allows Traefik to handle the requests and responses targeting this service (applying middleware or observability operations) before returning a `503` HTTP Status.  | false   | No       |
+| <a id="opt-providers-kubernetesIngress-throttleDuration" href="#opt-providers-kubernetesIngress-throttleDuration" title="#opt-providers-kubernetesIngress-throttleDuration">`providers.kubernetesIngress.throttleDuration`</a> | Minimum amount of time to wait between two Kubernetes events before producing a new configuration.<br />This prevents a Kubernetes cluster that updates many times per second from continuously changing your Baqup configuration.<br />If empty, every event is caught.  | 0s      | No       |
+| <a id="opt-providers-kubernetesIngress-allowEmptyServices" href="#opt-providers-kubernetesIngress-allowEmptyServices" title="#opt-providers-kubernetesIngress-allowEmptyServices">`providers.kubernetesIngress.allowEmptyServices`</a> | Allows creating a route to reach a service that has no endpoint available.<br />It allows Baqup to handle the requests and responses targeting this service (applying middleware or observability operations) before returning a `503` HTTP Status.  | false   | No       |
 | <a id="opt-providers-kubernetesIngress-allowCrossNamespace" href="#opt-providers-kubernetesIngress-allowCrossNamespace" title="#opt-providers-kubernetesIngress-allowCrossNamespace">`providers.kubernetesIngress.allowCrossNamespace`</a> | Allows the `Ingress` to reference resources in namespaces other than theirs. | false   | No       |
 | <a id="opt-providers-kubernetesIngress-allowExternalNameServices" href="#opt-providers-kubernetesIngress-allowExternalNameServices" title="#opt-providers-kubernetesIngress-allowExternalNameServices">`providers.kubernetesIngress.allowExternalNameServices`</a> | Allows the `Ingress` to reference ExternalName services.   | false   | No       |
-| <a id="opt-providers-kubernetesIngress-nativeLBByDefault" href="#opt-providers-kubernetesIngress-nativeLBByDefault" title="#opt-providers-kubernetesIngress-nativeLBByDefault">`providers.kubernetesIngress.nativeLBByDefault`</a> | Allow using the Kubernetes Service load balancing between the pods instead of the one provided by Traefik for every `Ingress` by default.<br />It can br overridden in the [`ServerTransport`](../../../../routing/services/index.md#serverstransport).         | false   | No       |
-| <a id="opt-providers-kubernetesIngress-disableClusterScopeResources" href="#opt-providers-kubernetesIngress-disableClusterScopeResources" title="#opt-providers-kubernetesIngress-disableClusterScopeResources">`providers.kubernetesIngress.disableClusterScopeResources`</a> | Prevent from discovering cluster scope resources (`IngressClass` and `Nodes`).<br />By doing so, it alleviates the requirement of giving Traefik the rights to look up for cluster resources.<br />Furthermore, Traefik will not handle Ingresses with IngressClass references, therefore such Ingresses will be ignored (please note that annotations are not affected by this option).<br />This will also prevent from using the `NodePortLB` options on services. | false   | No       |
+| <a id="opt-providers-kubernetesIngress-nativeLBByDefault" href="#opt-providers-kubernetesIngress-nativeLBByDefault" title="#opt-providers-kubernetesIngress-nativeLBByDefault">`providers.kubernetesIngress.nativeLBByDefault`</a> | Allow using the Kubernetes Service load balancing between the pods instead of the one provided by Baqup for every `Ingress` by default.<br />It can br overridden in the [`ServerTransport`](../../../../routing/services/index.md#serverstransport).         | false   | No       |
+| <a id="opt-providers-kubernetesIngress-disableClusterScopeResources" href="#opt-providers-kubernetesIngress-disableClusterScopeResources" title="#opt-providers-kubernetesIngress-disableClusterScopeResources">`providers.kubernetesIngress.disableClusterScopeResources`</a> | Prevent from discovering cluster scope resources (`IngressClass` and `Nodes`).<br />By doing so, it alleviates the requirement of giving Baqup the rights to look up for cluster resources.<br />Furthermore, Baqup will not handle Ingresses with IngressClass references, therefore such Ingresses will be ignored (please note that annotations are not affected by this option).<br />This will also prevent from using the `NodePortLB` options on services. | false   | No       |
 | <a id="opt-providers-kubernetesIngress-strictPrefixMatching" href="#opt-providers-kubernetesIngress-strictPrefixMatching" title="#opt-providers-kubernetesIngress-strictPrefixMatching">`providers.kubernetesIngress.strictPrefixMatching`</a> | Make prefix matching strictly comply with the Kubernetes Ingress specification (path-element-wise matching instead of character-by-character string matching). For example, a PathPrefix of `/foo` will match `/foo`, `/foo/`, and `/foo/bar` but not `/foobar`.                           | false   | No       |
 
 <!-- markdownlint-enable MD013 -->
@@ -72,7 +72,7 @@ which in turn creates the resulting routers, services, handlers, etc.
 
 The Kubernetes server endpoint URL.
 
-When deployed into Kubernetes, Traefik reads the environment variables `KUBERNETES_SERVICE_HOST`
+When deployed into Kubernetes, Baqup reads the environment variables `KUBERNETES_SERVICE_HOST`
 and `KUBERNETES_SERVICE_PORT` or `KUBECONFIG` to construct the endpoint.
 
 The access token is looked up in `/var/run/secrets/kubernetes.io/serviceaccount/token`
@@ -82,7 +82,7 @@ Both are mounted automatically when deployed inside Kubernetes.
 The endpoint may be specified to override the environment variable values inside
 a cluster.
 
-When the environment variables are not found, Traefik tries to connect to the
+When the environment variables are not found, Baqup tries to connect to the
 Kubernetes API server with an external-cluster client.
 
 In this case, the endpoint is required.
@@ -145,9 +145,9 @@ See the dedicated section in [routing](../../../../routing/providers/kubernetes-
 ## Further
 
 To learn more about the various aspects of the Ingress specification that
-Traefik supports,
+Baqup supports,
 many examples of Ingresses definitions are located in the test
-[examples](https://github.com/traefik/traefik/tree/v3.1/pkg/provider/kubernetes/ingress/fixtures)
-of the Traefik repository.
+[examples](https://github.com/baqupio/baqup/tree/v3.1/pkg/provider/kubernetes/ingress/fixtures)
+of the Baqup repository.
 
-{!traefik-for-business-applications.md!}
+{!baqup-for-business-applications.md!}

@@ -1,18 +1,18 @@
 ---
-title: "Traefik Kubernetes Gateway API Documentation"
-description: "Learn how to use the Kubernetes Gateway API as a provider for configuration discovery in Traefik Proxy. Read the technical documentation."
+title: "Baqup Kubernetes Gateway API Documentation"
+description: "Learn how to use the Kubernetes Gateway API as a provider for configuration discovery in Baqup Proxy. Read the technical documentation."
 ---
 
-# Traefik & Kubernetes with Gateway API
+# Baqup & Kubernetes with Gateway API
 
-The Kubernetes Gateway provider is a Traefik implementation of the [Gateway API](https://gateway-api.sigs.k8s.io/)
+The Kubernetes Gateway provider is a Baqup implementation of the [Gateway API](https://gateway-api.sigs.k8s.io/)
 specification from the Kubernetes Special Interest Groups (SIGs).
 
 This provider supports Standard version [v1.4.0](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.4.0) of the Gateway API specification. 
 
 It fully supports all HTTP core and some extended features, as well as the `TCPRoute` and `TLSRoute` resources from the [Experimental channel](https://gateway-api.sigs.k8s.io/concepts/versioning/?h=#release-channels).
 
-For more details, check out the conformance [report](https://github.com/kubernetes-sigs/gateway-api/tree/main/conformance/reports/v1.4.0/traefik-traefik).
+For more details, check out the conformance [report](https://github.com/kubernetes-sigs/gateway-api/tree/main/conformance/reports/v1.4.0/baqup-baqup).
 
 ## Requirements
 
@@ -20,8 +20,8 @@ For more details, check out the conformance [report](https://github.com/kubernet
 
 !!! info "Helm Chart"
 
-    When using the Traefik [Helm Chart](../getting-started/install-traefik.md#use-the-helm-chart), the CRDs (Custom Resource Definitions) and RBAC (Role-Based Access Control) are automatically managed for you.
-    The only remaining task is to enable the `kubernetesGateway` in the chart [values](https://github.com/traefik/traefik-helm-chart/blob/master/traefik/values.yaml#L323).
+    When using the Baqup [Helm Chart](../getting-started/install-baqup.md#use-the-helm-chart), the CRDs (Custom Resource Definitions) and RBAC (Role-Based Access Control) are automatically managed for you.
+    The only remaining task is to enable the `kubernetesGateway` in the chart [values](https://github.com/baqupio/baqup-helm-chart/blob/master/baqup/values.yaml#L323).
 
 1. Install/update the Kubernetes Gateway API CRDs.
 
@@ -30,14 +30,14 @@ For more details, check out the conformance [report](https://github.com/kubernet
     kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.4.0/standard-install.yaml
     ```
 
-2. Install the additional Traefik RBAC required for Gateway API.
+2. Install the additional Baqup RBAC required for Gateway API.
 
     ```bash
-    # Install Traefik RBACs.
-    kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.6/docs/content/reference/dynamic-configuration/kubernetes-gateway-rbac.yml
+    # Install Baqup RBACs.
+    kubectl apply -f https://raw.githubusercontent.com/baqup/baqup/v3.6/docs/content/reference/dynamic-configuration/kubernetes-gateway-rbac.yml
     ```
 
-3. Deploy Traefik and enable the `kubernetesGateway` provider in the static configuration as detailed below:
+3. Deploy Baqup and enable the `kubernetesGateway` provider in the static configuration as detailed below:
        
        ```yaml tab="File (YAML)"
        providers:
@@ -54,9 +54,9 @@ For more details, check out the conformance [report](https://github.com/kubernet
 
 ## Routing Configuration
 
-When using the Kubernetes Gateway API provider, Traefik uses the Gateway API CRDs to retrieve its routing configuration.
+When using the Kubernetes Gateway API provider, Baqup uses the Gateway API CRDs to retrieve its routing configuration.
 Check out the Gateway API concepts [documentation](https://gateway-api.sigs.k8s.io/concepts/api-overview/),
-and the dedicated [routing section](../routing/providers/kubernetes-gateway.md) in the Traefik documentation.
+and the dedicated [routing section](../routing/providers/kubernetes-gateway.md) in the Baqup documentation.
 
 ## Provider Configuration
 
@@ -66,14 +66,14 @@ _Optional, Default=""_
 
 The Kubernetes server endpoint URL.
 
-When deployed into Kubernetes, Traefik reads the environment variables `KUBERNETES_SERVICE_HOST` and `KUBERNETES_SERVICE_PORT` or `KUBECONFIG` to construct the endpoint.
+When deployed into Kubernetes, Baqup reads the environment variables `KUBERNETES_SERVICE_HOST` and `KUBERNETES_SERVICE_PORT` or `KUBECONFIG` to construct the endpoint.
 
 The access token is looked up in `/var/run/secrets/kubernetes.io/serviceaccount/token` and the SSL CA certificate in `/var/run/secrets/kubernetes.io/serviceaccount/ca.crt`.
 Both are mounted automatically when deployed inside Kubernetes.
 
 The endpoint may be specified to override the environment variable values inside a cluster.
 
-When the environment variables are not found, Traefik tries to connect to the Kubernetes API server with an external-cluster client.
+When the environment variables are not found, Baqup tries to connect to the Kubernetes API server with an external-cluster client.
 In this case, the endpoint is required.
 Specifically, it may be set to the URL used by `kubectl proxy` to connect to a Kubernetes cluster using the granted authentication and authorization of the associated kubeconfig.
 
@@ -146,7 +146,7 @@ providers:
 _Optional, Default: []_
 
 Array of namespaces to watch.
-If left empty, Traefik watches all namespaces.
+If left empty, Baqup watches all namespaces.
 
 ```yaml tab="File (YAML)"
 providers:
@@ -283,25 +283,25 @@ providers:
 _Optional, Default: ""_
 
 A label selector can be defined to filter on specific GatewayClass objects only.
-If left empty, Traefik processes all GatewayClass objects in the configured namespaces.
+If left empty, Baqup processes all GatewayClass objects in the configured namespaces.
 
 See [label-selectors](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors) for details.
 
 ```yaml tab="File (YAML)"
 providers:
   kubernetesGateway:
-    labelselector: "app=traefik"
+    labelselector: "app=baqup"
     # ...
 ```
 
 ```toml tab="File (TOML)"
 [providers.kubernetesGateway]
-  labelselector = "app=traefik"
+  labelselector = "app=baqup"
   # ...
 ```
 
 ```bash tab="CLI"
---providers.kubernetesgateway.labelselector="app=traefik"
+--providers.kubernetesgateway.labelselector="app=baqup"
 ```
 
 ### `nativeLBByDefault`
@@ -309,7 +309,7 @@ providers:
 _Optional, Default: false_
 
 Defines whether to use Native Kubernetes load-balancing mode by default.
-For more information, please check out the `traefik.io/service.nativelb` [service annotation documentation](../routing/providers/kubernetes-gateway.md#native-load-balancing).
+For more information, please check out the `baqup.io/service.nativelb` [service annotation documentation](../routing/providers/kubernetes-gateway.md#native-load-balancing).
 
 ```yaml tab="File (YAML)"
 providers:
@@ -333,7 +333,7 @@ providers:
 _Optional, Default: 0_
 
 The `throttleDuration` option defines how often the provider is allowed to handle events from Kubernetes. This prevents
-a Kubernetes cluster that updates many times per second from continuously changing your Traefik configuration.
+a Kubernetes cluster that updates many times per second from continuously changing your Baqup configuration.
 
 If left empty, the provider does not apply any throttling and does not drop any Kubernetes events.
 
@@ -357,4 +357,4 @@ providers:
 --providers.kubernetesgateway.throttleDuration=10s
 ```
 
-{!traefik-for-business-applications.md!}
+{!baqup-for-business-applications.md!}

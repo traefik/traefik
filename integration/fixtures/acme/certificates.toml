@@ -6,7 +6,7 @@
 [http.routers]
   [http.routers.test]
     entryPoints = ["websecure"]
-    rule = "Host(`traefik.acme.wtf`)"
+    rule = "Host(`baqup.acme.wtf`)"
     service = "test"
     [http.routers.test.tls]
 

@@ -1,5 +1,5 @@
 ---
-title: 'Traefik InFlightConn Middleware - TCP'
+title: 'Baqup InFlightConn Middleware - TCP'
 description: "Limiting the number of simultaneous connections."
 ---
 
@@ -25,7 +25,7 @@ tcp:
 
 ```yaml tab="Labels"
 labels:
-  - "traefik.tcp.middlewares.test-inflightconn.inflightconn.amount=10"
+  - "baqup.tcp.middlewares.test-inflightconn.inflightconn.amount=10"
 ```
 
 ```json tab="Tags"
@@ -33,13 +33,13 @@ labels:
 {
   //..
   "Tags" : [
-    "traefik.tcp.middlewares.test-inflightconn.inflightconn.amount=10"
+    "baqup.tcp.middlewares.test-inflightconn.inflightconn.amount=10"
   ]
 }
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: MiddlewareTCP
 metadata:
   name: test-inflightconn

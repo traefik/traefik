@@ -1,18 +1,18 @@
 ---
 title: "Kubernetes serversTransport"
-description: "The Kubernetes ServersTransport allows configuring the connection between Traefik and the HTTP servers in Kubernetes."
+description: "The Kubernetes ServersTransport allows configuring the connection between Baqup and the HTTP servers in Kubernetes."
 ---
 
-A `ServersTransport` allows you to configure the connection between Traefik and the HTTP servers in Kubernetes.
+A `ServersTransport` allows you to configure the connection between Baqup and the HTTP servers in Kubernetes.
 
-Before creating `ServersTransport` objects, you need to apply the [Traefik Kubernetes CRDs](https://doc.traefik.io/traefik/reference/dynamic-configuration/kubernetes-crd/#definitions) to your Kubernetes cluster.
+Before creating `ServersTransport` objects, you need to apply the [Baqup Kubernetes CRDs](https://doc.baqup.io/baqup/reference/dynamic-configuration/kubernetes-crd/#definitions) to your Kubernetes cluster.
 
-This registers the `ServersTransport` kind and other Traefik-specific resources.
+This registers the `ServersTransport` kind and other Baqup-specific resources.
 
 It can be applied on a service using:
 
 - The option `services.serverstransport` on a [`IngressRoute`](./ingressroute.md) (if the service is a Kubernetes Service)
-- The option `serverstransport` on a [`TraefikService`](./traefikservice.md) (if the service is a Kubernetes Service)
+- The option `serverstransport` on a [`BaqupService`](./baqupservice.md) (if the service is a Kubernetes Service)
 
 !!! note "Reference a ServersTransport CRD from another namespace"
 
@@ -21,7 +21,7 @@ It can be applied on a service using:
 ## Configuration Example
 
 ```yaml tab="serversTransport"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: ServersTransport
 metadata:
   name: mytransport
@@ -33,7 +33,7 @@ spec:
 ```
 
 ```yaml tab="IngressRoute"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: testroute

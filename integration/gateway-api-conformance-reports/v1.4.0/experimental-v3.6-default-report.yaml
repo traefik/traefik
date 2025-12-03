@@ -4,10 +4,10 @@ gatewayAPIChannel: experimental
 gatewayAPIVersion: v1.4.0
 implementation:
   contact:
-  - '@traefik/maintainers'
-  organization: traefik
-  project: traefik
-  url: https://traefik.io/
+  - '@baqup/maintainers'
+  organization: baqup
+  project: baqup
+  url: https://baqup.io/
   version: v3.6
 kind: ConformanceReport
 mode: default

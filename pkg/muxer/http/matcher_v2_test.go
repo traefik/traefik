@@ -6,10 +6,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/baqupio/baqup/v3/pkg/middlewares/requestdecorator"
+	"github.com/baqupio/baqup/v3/pkg/testhelpers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
-	"github.com/traefik/traefik/v3/pkg/testhelpers"
 )
 
 func TestClientIPV2Matcher(t *testing.T) {
@@ -365,7 +365,7 @@ func TestHostRegexpV2Matcher(t *testing.T) {
 			},
 		},
 		{
-			desc: "valid HostRegexp matcher with Traefik v2 syntax",
+			desc: "valid HostRegexp matcher with Baqup v2 syntax",
 			rule: "HostRegexp(`{domain:[a-zA-Z-]+\\.com}`)",
 			expected: map[string]int{
 				"https://example.com":      http.StatusOK,
@@ -747,7 +747,7 @@ func TestHeaderRegexpV2Matcher(t *testing.T) {
 			},
 		},
 		{
-			desc: "valid HeaderRegexp matcher with Traefik v2 syntax",
+			desc: "valid HeaderRegexp matcher with Baqup v2 syntax",
 			rule: "HeadersRegexp(`X-Forwarded-Proto`, `http{secure:s?}`)",
 			expected: map[*http.Header]int{
 				{"X-Forwarded-Proto": []string{"http"}}:                 http.StatusNotFound,

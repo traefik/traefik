@@ -1,6 +1,6 @@
 ---
 title: "Multi-Layer Routing"
-description: "Learn how to use Traefik's multi-layer routing to create hierarchical router relationships where parent routers can apply middleware before child routers make routing decisions."
+description: "Learn how to use Baqup's multi-layer routing to create hierarchical router relationships where parent routers can apply middleware before child routers make routing decisions."
 ---
 
 # Multi-Layer Routing
@@ -160,21 +160,21 @@ Request → EntryPoint → Parent Router → Middleware → Child Router A → S
     ```txt tab="KV (Consul/etcd/Redis/ZK)"
     | Key                                                                    | Value                           |
     |------------------------------------------------------------------------|---------------------------------|
-    | `traefik/http/routers/api-parent/rule`                                 | `PathPrefix(\`/api\`)`          |
-    | `traefik/http/routers/api-parent/middlewares/0`                        | `auth-middleware`               |
-    | `traefik/http/routers/api-parent/entrypoints/0`                        | `websecure`                     |
-    | `traefik/http/routers/api-parent/tls`                                  | `true`                          |
-    | `traefik/http/routers/api-admin/rule`                                  | `HeadersRegexp(\`X-User-Role\`, \`admin\`)` |
-    | `traefik/http/routers/api-admin/service`                               | `admin-service`                 |
-    | `traefik/http/routers/api-admin/parentrefs/0`                          | `api-parent`                    |
-    | `traefik/http/routers/api-user/rule`                                   | `HeadersRegexp(\`X-User-Role\`, \`user\`)` |
-    | `traefik/http/routers/api-user/service`                                | `user-service`                  |
-    | `traefik/http/routers/api-user/parentrefs/0`                           | `api-parent`                    |
-    | `traefik/http/middlewares/auth-middleware/forwardauth/address`         | `http://auth-service:8080/auth` |
-    | `traefik/http/middlewares/auth-middleware/forwardauth/authresponseheaders/0` | `X-User-Role`         |
-    | `traefik/http/middlewares/auth-middleware/forwardauth/authresponseheaders/1` | `X-User-Name`         |
-    | `traefik/http/services/admin-service/loadbalancer/servers/0/url`       | `http://admin-backend:8080`     |
-    | `traefik/http/services/user-service/loadbalancer/servers/0/url`        | `http://user-backend:8080`      |
+    | `baqup/http/routers/api-parent/rule`                                 | `PathPrefix(\`/api\`)`          |
+    | `baqup/http/routers/api-parent/middlewares/0`                        | `auth-middleware`               |
+    | `baqup/http/routers/api-parent/entrypoints/0`                        | `websecure`                     |
+    | `baqup/http/routers/api-parent/tls`                                  | `true`                          |
+    | `baqup/http/routers/api-admin/rule`                                  | `HeadersRegexp(\`X-User-Role\`, \`admin\`)` |
+    | `baqup/http/routers/api-admin/service`                               | `admin-service`                 |
+    | `baqup/http/routers/api-admin/parentrefs/0`                          | `api-parent`                    |
+    | `baqup/http/routers/api-user/rule`                                   | `HeadersRegexp(\`X-User-Role\`, \`user\`)` |
+    | `baqup/http/routers/api-user/service`                                | `user-service`                  |
+    | `baqup/http/routers/api-user/parentrefs/0`                           | `api-parent`                    |
+    | `baqup/http/middlewares/auth-middleware/forwardauth/address`         | `http://auth-service:8080/auth` |
+    | `baqup/http/middlewares/auth-middleware/forwardauth/authresponseheaders/0` | `X-User-Role`         |
+    | `baqup/http/middlewares/auth-middleware/forwardauth/authresponseheaders/1` | `X-User-Name`         |
+    | `baqup/http/services/admin-service/loadbalancer/servers/0/url`       | `http://admin-backend:8080`     |
+    | `baqup/http/services/user-service/loadbalancer/servers/0/url`        | `http://user-backend:8080`      |
     ```
 
     **How it works:**
@@ -185,4 +185,4 @@ Request → EntryPoint → Parent Router → Middleware → Child Router A → S
     4. If `X-User-Role: admin`, `api-admin` router matches and forwards to `admin-service`
     5. If `X-User-Role: user`, `api-user` router matches and forwards to `user-service`
 
-{!traefik-for-business-applications.md!}
+{!baqup-for-business-applications.md!}

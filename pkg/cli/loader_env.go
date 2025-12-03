@@ -10,7 +10,7 @@ import (
 	"github.com/traefik/paerser/env"
 )
 
-// EnvLoader loads a configuration from all the environment variables prefixed with "TRAEFIK_".
+// EnvLoader loads a configuration from all the environment variables prefixed with "BAQUP_".
 type EnvLoader struct{}
 
 // Load loads the command's configuration from the environment variables.

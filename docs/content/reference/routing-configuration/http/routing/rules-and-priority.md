@@ -1,9 +1,9 @@
 ---
-title: "Traefik HTTP Routers Rules & Priority Documentation"
-description: "In Traefik Proxy, an HTTP router is in charge of connecting incoming requests to the Services that can handle them. Read the technical documentation."
+title: "Baqup HTTP Routers Rules & Priority Documentation"
+description: "In Baqup Proxy, an HTTP router is in charge of connecting incoming requests to the Services that can handle them. Read the technical documentation."
 ---
 
-An HTTP router is in charge of connecting incoming requests to the services that can handle them. Traefik allows you to define your matching rules and [prioritize](#priority-calculation) the routes.
+An HTTP router is in charge of connecting incoming requests to the services that can handle them. Baqup allows you to define your matching rules and [prioritize](#priority-calculation) the routes.
 
 ## Rules
 
@@ -117,7 +117,7 @@ It only matches the request client IP and does not use the `X-Forwarded-For` hea
     RuleSyntax option is deprecated and will be removed in the next major version.
     Please do not use this field and rewrite the router rules to use the v3 syntax.
 
-In Traefik v3 a new rule syntax has been introduced ([migration guide](../../../../migrate/v3.md)). the `ruleSyntax` option allows to configure the rule syntax to be used for parsing the rule on a per-router basis. This allows to have heterogeneous router configurations and ease migration.
+In Baqup v3 a new rule syntax has been introduced ([migration guide](../../../../migrate/v3.md)). the `ruleSyntax` option allows to configure the rule syntax to be used for parsing the rule on a per-router basis. This allows to have heterogeneous router configurations and ease migration.
 
 The default value of the `ruleSyntax` option is inherited from the `defaultRuleSyntax` option in the install configuration (formerly known as static configuration). By default, the `defaultRuleSyntax` static option is v3, meaning that the default rule syntax is also v3
 
@@ -130,10 +130,10 @@ The configuration below uses the [File Provider (Structured)](../../../install-c
 http:
   routers:
     Router-v3:
-      rule: HostRegexp(`[a-z]+\\.traefik\\.com`)
+      rule: HostRegexp(`[a-z]+\\.baqup\\.com`)
       ruleSyntax: v3
     Router-v2:
-      rule: HostRegexp(`{subdomain:[a-z]+}.traefik.com`)
+      rule: HostRegexp(`{subdomain:[a-z]+}.baqup.com`)
       ruleSyntax: v2
 ```
 
@@ -141,29 +141,29 @@ http:
 ## Dynamic configuration
 [http.routers]
   [http.routers.Router-v3]
-    rule = "HostRegexp(`[a-z]+\\.traefik\\.com`)"
+    rule = "HostRegexp(`[a-z]+\\.baqup\\.com`)"
     ruleSyntax = v3
   [http.routers.Router-v2]
-    rule = "HostRegexp(`{subdomain:[a-z]+}.traefik.com`)"
+    rule = "HostRegexp(`{subdomain:[a-z]+}.baqup.com`)"
     ruleSyntax = v2
 ```
 
 ```yaml tab="Labels"
 labels:
-  - "traefik.http.routers.Router-v3.rule=HostRegexp(`[a-z]+\\.traefik\\.com`)"
-  - "traefik.http.routers.Router-v3.ruleSyntax=v3"
-  - "traefik.http.routers.Router-v2.rule=HostRegexp(`{subdomain:[a-z]+}.traefik.com`)"
-  - "traefik.http.routers.Router-v2.ruleSyntax=v2"
+  - "baqup.http.routers.Router-v3.rule=HostRegexp(`[a-z]+\\.baqup\\.com`)"
+  - "baqup.http.routers.Router-v3.ruleSyntax=v3"
+  - "baqup.http.routers.Router-v2.rule=HostRegexp(`{subdomain:[a-z]+}.baqup.com`)"
+  - "baqup.http.routers.Router-v2.ruleSyntax=v2"
 ```
 
 ```json tab="Tags"
 {
   // ...
   "Tags": [
-    "traefik.http.routers.Router-v3.rule=HostRegexp(`[a-z]+\\.traefik\\.com`)",
-    "traefik.http.routers.Router-v3.ruleSyntax=v3"
-    "traefik.http.routers.Router-v2.rule=HostRegexp(`{subdomain:[a-z]+}.traefik.com`)",
-    "traefik.http.routers.Router-v2.ruleSyntax=v2"
+    "baqup.http.routers.Router-v3.rule=HostRegexp(`[a-z]+\\.baqup\\.com`)",
+    "baqup.http.routers.Router-v3.ruleSyntax=v3"
+    "baqup.http.routers.Router-v2.rule=HostRegexp(`{subdomain:[a-z]+}.baqup.com`)",
+    "baqup.http.routers.Router-v2.ruleSyntax=v2"
   ]
 },
 ```
@@ -176,45 +176,45 @@ labels:
     http:
       routers:
         Router-1:
-          rule: "HostRegexp(`[a-z]+\.traefik\.com`)"
+          rule: "HostRegexp(`[a-z]+\.baqup\.com`)"
           # ...
         Router-2:
-          rule: "Host(`foobar.traefik.com`)"
+          rule: "Host(`foobar.baqup.com`)"
           # ...
     ```
 
     ```toml tab="Structured (TOML)"
     [http.routers]
       [http.routers.Router-1]
-        rule = "HostRegexp(`[a-z]+\\.traefik\\.com`)"
+        rule = "HostRegexp(`[a-z]+\\.baqup\\.com`)"
         # ...
       [http.routers.Router-2]
-        rule = "Host(`foobar.traefik.com`)"
+        rule = "Host(`foobar.baqup.com`)"
         # ...
     ```
 
     ```yaml tab="Labels"
     labels:
-      - "traefik.http.routers.Router-1.rule=HostRegexp(`[a-z]+\\.traefik\\.com`)"
-      - "traefik.http.routers.Router-2.rule=Host(`foobar.traefik.com`)"
+      - "baqup.http.routers.Router-1.rule=HostRegexp(`[a-z]+\\.baqup\\.com`)"
+      - "baqup.http.routers.Router-2.rule=Host(`foobar.baqup.com`)"
     ```
 
     ```json tab="Tags"
     {
         // ...
         "Tags": [
-          "traefik.http.routers.Router-1.rule=HostRegexp(`[a-z]+\\.traefik\\.com`)",
-          "traefik.http.routers.Router-2.rule=Host(`foobar.traefik.com`)"
+          "baqup.http.routers.Router-1.rule=HostRegexp(`[a-z]+\\.baqup\\.com`)",
+          "baqup.http.routers.Router-2.rule=Host(`foobar.baqup.com`)"
         ]
       }
     ```
 
-    In this case, all requests with host `foobar.traefik.com` will be routed through `Router-1` instead of `Router-2`.
+    In this case, all requests with host `foobar.baqup.com` will be routed through `Router-1` instead of `Router-2`.
 
     | Name     | Rule                                     | Priority |
     |----------|------------------------------------------|----------|
-    | <a id="opt-Router-1" href="#opt-Router-1" title="#opt-Router-1">Router-1</a> | ```HostRegexp(`[a-z]+\.traefik\.com`)``` | 34       |
-    | <a id="opt-Router-2" href="#opt-Router-2" title="#opt-Router-2">Router-2</a> | ```Host(`foobar.traefik.com`)```         | 26       |
+    | <a id="opt-Router-1" href="#opt-Router-1" title="#opt-Router-1">Router-1</a> | ```HostRegexp(`[a-z]+\.baqup\.com`)``` | 34       |
+    | <a id="opt-Router-2" href="#opt-Router-2" title="#opt-Router-2">Router-2</a> | ```Host(`foobar.baqup.com`)```         | 26       |
 
     The previous table shows that `Router-1` has a higher priority than `Router-2`.
 
@@ -225,7 +225,7 @@ The priority is directly equal to the length of the rule, and so the longest len
 
 A value of `0` for the priority is ignored: `priority: 0` means that the default rules length sorting is used.
 
-Traefik reserves a range of priorities for its internal routers, the maximum user-defined router priority value is:
+Baqup reserves a range of priorities for its internal routers, the maximum user-defined router priority value is:
 
 - `(MaxInt32 - 1000)` for 32-bit platforms,
 - `(MaxInt64 - 1000)` for 64-bit platforms.
@@ -237,13 +237,13 @@ Traefik reserves a range of priorities for its internal routers, the maximum use
 http:
   routers:
     Router-1:
-      rule: "HostRegexp(`[a-z]+\\.traefik\\.com`)"
+      rule: "HostRegexp(`[a-z]+\\.baqup\\.com`)"
       entryPoints:
       - "web"
       service: service-1
       priority: 1
     Router-2:
-      rule: "Host(`foobar.traefik.com`)"
+      rule: "Host(`foobar.baqup.com`)"
       entryPoints:
       - "web"
       priority: 2
@@ -254,12 +254,12 @@ http:
 ## Dynamic configuration
 [http.routers]
   [http.routers.Router-1]
-    rule = "HostRegexp(`[a-z]+\\.traefik\\.com`)"
+    rule = "HostRegexp(`[a-z]+\\.baqup\\.com`)"
     entryPoints = ["web"]
     service = "service-1"
     priority = 1
   [http.routers.Router-2]
-    rule = "Host(`foobar.traefik.com`)"
+    rule = "Host(`foobar.baqup.com`)"
     entryPoints = ["web"]
     priority = 2
     service = "service-2"
@@ -267,30 +267,30 @@ http:
 
 ```yaml tab="Labels"
 labels:
-  - "traefik.http.routers.Router-1.rule=HostRegexp(`[a-z]+\\.traefik\\.com`)"
-  - "traefik.http.routers.Router-1.entryPoints=web"
-  - "traefik.http.routers.Router-1.service=service-1"
-  - "traefik.http.routers.Router-1.priority=1"
-  - "traefik.http.routers.Router-2.rule=Host(`foobar.traefik.com`)"
-  - "traefik.http.routers.Router-2.entryPoints=web"
-  - "traefik.http.routers.Router-2.service=service-2"
-  - "traefik.http.routers.Router-2.priority=2"
+  - "baqup.http.routers.Router-1.rule=HostRegexp(`[a-z]+\\.baqup\\.com`)"
+  - "baqup.http.routers.Router-1.entryPoints=web"
+  - "baqup.http.routers.Router-1.service=service-1"
+  - "baqup.http.routers.Router-1.priority=1"
+  - "baqup.http.routers.Router-2.rule=Host(`foobar.baqup.com`)"
+  - "baqup.http.routers.Router-2.entryPoints=web"
+  - "baqup.http.routers.Router-2.service=service-2"
+  - "baqup.http.routers.Router-2.priority=2"
 ```
 
 ```json tab="Tags"
   {
     // ...
     "Tags": [
-      "traefik.http.routers.Router-1.rule=HostRegexp(`[a-z]+\\.traefik\\.com`)",
-      "traefik.http.routers.Router-1.entryPoints=web",
-      "traefik.http.routers.Router-1.service=service-1",
-      "traefik.http.routers.Router-1.priority=1"
-      "traefik.http.routers.Router-2.rule=Host(`foobar.traefik.com`)",
-      "traefik.http.routers.Router-2.entryPoints=web",
-      "traefik.http.routers.Router-2.service=service-2",
-      "traefik.http.routers.Router-2.priority=2"
+      "baqup.http.routers.Router-1.rule=HostRegexp(`[a-z]+\\.baqup\\.com`)",
+      "baqup.http.routers.Router-1.entryPoints=web",
+      "baqup.http.routers.Router-1.service=service-1",
+      "baqup.http.routers.Router-1.priority=1"
+      "baqup.http.routers.Router-2.rule=Host(`foobar.baqup.com`)",
+      "baqup.http.routers.Router-2.entryPoints=web",
+      "baqup.http.routers.Router-2.service=service-2",
+      "baqup.http.routers.Router-2.priority=2"
     ]
   }
 ```
 
-In the example above, the priority is configured to allow `Router-2` to handle requests with the `foobar.traefik.com` host.
+In the example above, the priority is configured to allow `Router-2` to handle requests with the `foobar.baqup.com` host.

@@ -1,6 +1,6 @@
-# Exposing Services with Traefik Proxy
+# Exposing Services with Baqup Proxy
 
-This section guides you through exposing services securely with Traefik Proxy. You'll learn how to route HTTP and HTTPS traffic to your services, add security features, and implement advanced load balancing.
+This section guides you through exposing services securely with Baqup Proxy. You'll learn how to route HTTP and HTTPS traffic to your services, add security features, and implement advanced load balancing.
 
 ## What You'll Accomplish
 

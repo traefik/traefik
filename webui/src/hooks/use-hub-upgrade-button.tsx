@@ -3,7 +3,7 @@ import { useContext, useEffect, useState } from 'react'
 import { VersionContext } from 'contexts/version'
 import verifySignature from 'utils/workers/scriptVerification'
 
-const HUB_BUTTON_URL = 'https://traefik.github.io/traefiklabs-hub-button-app/main-v1.js'
+const HUB_BUTTON_URL = 'https://baqup.github.io/baquplabs-hub-button-app/main-v1.js'
 const PUBLIC_KEY = 'MCowBQYDK2VwAyEAY0OZFFE5kSuqYK6/UprTL5RmvQ+8dpPTGMCw1MiO/Gs='
 
 const useHubUpgradeButton = () => {

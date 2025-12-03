@@ -1,14 +1,14 @@
 ---
-title: "Traefik CRD TLS Documentation"
-description: "Learn how to use Traefik Proxy w/ an IngressRoute Custom Resource Definition (CRD) for Kubernetes, and TLS with Let's Encrypt. Read the technical documentation."
+title: "Baqup CRD TLS Documentation"
+description: "Learn how to use Baqup Proxy w/ an IngressRoute Custom Resource Definition (CRD) for Kubernetes, and TLS with Let's Encrypt. Read the technical documentation."
 ---
 
-# Traefik & CRD & Let's Encrypt
+# Baqup & CRD & Let's Encrypt
 
-Traefik with an IngressRoute Custom Resource Definition for Kubernetes, and TLS Through Let's Encrypt.
+Baqup with an IngressRoute Custom Resource Definition for Kubernetes, and TLS Through Let's Encrypt.
 {: .subtitle }
 
-This document is intended to be a fully working example demonstrating how to set up Traefik in [Kubernetes](https://kubernetes.io),
+This document is intended to be a fully working example demonstrating how to set up Baqup in [Kubernetes](https://kubernetes.io),
 with the dynamic configuration coming from the [IngressRoute Custom Resource](../../providers/kubernetes-crd.md),
 and TLS setup with [Let's Encrypt](https://letsencrypt.org).
 However, for the sake of simplicity, we're using [k3s](https://github.com/rancher/k3s)  docker image for the Kubernetes cluster setup.
@@ -44,23 +44,23 @@ Let's now have a look (in the order they should be applied, if using `kubectl ap
 
 ### IngressRoute Definition
 
-First, you will need to install Traefik CRDs containing the definition of the `IngressRoute` and the `Middleware` kinds, 
+First, you will need to install Baqup CRDs containing the definition of the `IngressRoute` and the `Middleware` kinds, 
 and the RBAC authorization resources which will be referenced through the `serviceAccountName` of the deployment.
 
 ```bash
-# Install Traefik Resource Definitions:
-kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.6/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml
+# Install Baqup Resource Definitions:
+kubectl apply -f https://raw.githubusercontent.com/baqup/baqup/v3.6/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml
 
-# Install RBAC for Traefik:
-kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.6/docs/content/reference/dynamic-configuration/kubernetes-crd-rbac.yml
+# Install RBAC for Baqup:
+kubectl apply -f https://raw.githubusercontent.com/baqup/baqup/v3.6/docs/content/reference/dynamic-configuration/kubernetes-crd-rbac.yml
 ```
 
 ### Services
 
-Then, the services. One for Traefik itself, and one for the app it routes for, i.e. in this case our demo HTTP server: [whoami](https://github.com/traefik/whoami).
+Then, the services. One for Baqup itself, and one for the app it routes for, i.e. in this case our demo HTTP server: [whoami](https://github.com/baqup/whoami).
 
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.6/docs/content/user-guides/crd-acme/02-services.yml
+kubectl apply -f https://raw.githubusercontent.com/baqup/baqup/v3.6/docs/content/user-guides/crd-acme/02-services.yml
 ```
 
 ```yaml
@@ -70,10 +70,10 @@ kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.6/docs/con
 ### Deployments
 
 Next, the deployments, i.e. the actual pods behind the services.
-Again, one pod for Traefik, and one for the whoami app.
+Again, one pod for Baqup, and one for the whoami app.
 
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.6/docs/content/user-guides/crd-acme/03-deployments.yml
+kubectl apply -f https://raw.githubusercontent.com/baqup/baqup/v3.6/docs/content/user-guides/crd-acme/03-deployments.yml
 ```
 
 ```yaml
@@ -83,31 +83,31 @@ kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.6/docs/con
 ### Port Forwarding
 
 Now, as an exception to what we said above, please note that you should not let the ingressRoute resources below be applied automatically to your cluster.
-The reason is, as soon as the ACME provider of Traefik detects we have TLS routers, it will try to generate the certificates for the corresponding domains.
-And this will not work, because as it is, our Traefik pod is not reachable from the outside, which will make the ACME TLS challenge fail.
+The reason is, as soon as the ACME provider of Baqup detects we have TLS routers, it will try to generate the certificates for the corresponding domains.
+And this will not work, because as it is, our Baqup pod is not reachable from the outside, which will make the ACME TLS challenge fail.
 Therefore, for the whole thing to work, we must delay applying the ingressRoute resources until we have port-forwarding set up properly, which is the next step.
 
 ```bash
-kubectl port-forward --address 0.0.0.0 service/traefik 8000:8000 8080:8080 443:4443 -n default
+kubectl port-forward --address 0.0.0.0 service/baqup 8000:8000 8080:8080 443:4443 -n default
 ```
 
 Also, and this is out of the scope of this guide, please note that because of the privileged ports limitation on Linux, the above command might fail to listen on port 443.
 In which case you can use tricks such as elevating caps of `kubectl` with `setcaps`, or using `authbind`, or setting up a NAT between your host and the WAN.
 Look it up.
 
-### Traefik Routers
+### Baqup Routers
 
 We can now finally apply the actual ingressRoutes, with:
 
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.6/docs/content/user-guides/crd-acme/04-ingressroutes.yml
+kubectl apply -f https://raw.githubusercontent.com/baqup/baqup/v3.6/docs/content/user-guides/crd-acme/04-ingressroutes.yml
 ```
 
 ```yaml
 --8<-- "content/user-guides/crd-acme/04-ingressroutes.yml"
 ```
 
-Give it a few seconds for the ACME TLS challenge to complete, and you should then be able to access your whoami pod (routed through Traefik), from the outside.
+Give it a few seconds for the ACME TLS challenge to complete, and you should then be able to access your whoami pod (routed through Baqup), from the outside.
 Both with or (just for fun, do not do that in production) without TLS:
 
 ```bash
@@ -126,7 +126,7 @@ Nowadays, TLS v1.0 and v1.1 are deprecated.
 In order to force TLS v1.2 or later on all your IngressRoute, you can define the `default` TLSOption:
 
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.6/docs/content/user-guides/crd-acme/05-tlsoption.yml
+kubectl apply -f https://raw.githubusercontent.com/baqup/baqup/v3.6/docs/content/user-guides/crd-acme/05-tlsoption.yml
 ```
 
 ```yaml

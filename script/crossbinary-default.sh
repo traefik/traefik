@@ -15,7 +15,7 @@ fi
 
 echo "Building ${VERSION} ${CODENAME} ${DATE}"
 
-GIT_REPO_URL='github.com/traefik/traefik/pkg/version'
+GIT_REPO_URL='github.com/baqup/baqup/pkg/version'
 GO_BUILD_CMD="go build -ldflags"
 GO_BUILD_OPT="-s -w -X ${GIT_REPO_URL}.Version=${VERSION} -X ${GIT_REPO_URL}.Codename=${CODENAME} -X ${GIT_REPO_URL}.BuildDate=${DATE}"
 
@@ -29,7 +29,7 @@ for OS in "${OS_PLATFORM_ARG[@]}"; do
   fi
   for ARCH in "${OS_ARCH_ARG[@]}"; do
     echo "Building binary for ${OS}/${ARCH}..."
-    GOARCH=${ARCH} GOOS=${OS} CGO_ENABLED=0 ${GO_BUILD_CMD} "${GO_BUILD_OPT}" -o "dist/traefik_${OS}-${ARCH}${BIN_EXT}" ./cmd/traefik/
+    GOARCH=${ARCH} GOOS=${OS} CGO_ENABLED=0 ${GO_BUILD_CMD} "${GO_BUILD_OPT}" -o "dist/baqup_${OS}-${ARCH}${BIN_EXT}" ./cmd/baqup/
   done
 done
 
@@ -39,6 +39,6 @@ OS_ARCH_ARG=(arm64)
 for OS in "${OS_PLATFORM_ARG[@]}"; do
   for ARCH in "${OS_ARCH_ARG[@]}"; do
     echo "Building binary for ${OS}/${ARCH}..."
-    GOARCH=${ARCH} GOOS=${OS} CGO_ENABLED=0 ${GO_BUILD_CMD} "${GO_BUILD_OPT}" -o "dist/traefik_${OS}-${ARCH}" ./cmd/traefik/
+    GOARCH=${ARCH} GOOS=${OS} CGO_ENABLED=0 ${GO_BUILD_CMD} "${GO_BUILD_OPT}" -o "dist/baqup_${OS}-${ARCH}" ./cmd/baqup/
   done
 done

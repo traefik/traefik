@@ -7,11 +7,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/baqupio/baqup/v3/integration/try"
 	"github.com/hashicorp/consul/api"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"github.com/traefik/traefik/v3/integration/try"
 )
 
 type ConsulCatalogSuite struct {
@@ -98,7 +98,7 @@ func (s *ConsulCatalogSuite) TestWithNotExposedByDefaultAndDefaultsSettings() {
 	reg1 := &api.AgentServiceRegistration{
 		ID:      "whoami1",
 		Name:    "whoami",
-		Tags:    []string{"traefik.enable=true"},
+		Tags:    []string{"baqup.enable=true"},
 		Port:    80,
 		Address: s.getComposeServiceIP("whoami1"),
 	}
@@ -108,7 +108,7 @@ func (s *ConsulCatalogSuite) TestWithNotExposedByDefaultAndDefaultsSettings() {
 	reg2 := &api.AgentServiceRegistration{
 		ID:      "whoami2",
 		Name:    "whoami",
-		Tags:    []string{"traefik.enable=true"},
+		Tags:    []string{"baqup.enable=true"},
 		Port:    80,
 		Address: s.getComposeServiceIP("whoami2"),
 	}
@@ -118,7 +118,7 @@ func (s *ConsulCatalogSuite) TestWithNotExposedByDefaultAndDefaultsSettings() {
 	reg3 := &api.AgentServiceRegistration{
 		ID:      "whoami3",
 		Name:    "whoami",
-		Tags:    []string{"traefik.enable=true"},
+		Tags:    []string{"baqup.enable=true"},
 		Port:    80,
 		Address: s.getComposeServiceIP("whoami3"),
 	}
@@ -133,7 +133,7 @@ func (s *ConsulCatalogSuite) TestWithNotExposedByDefaultAndDefaultsSettings() {
 
 	file := s.adaptFile("fixtures/consul_catalog/default_not_exposed.toml", tempObjects)
 
-	s.traefikCmd(withConfigFile(file))
+	s.baqupCmd(withConfigFile(file))
 
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
 	require.NoError(s.T(), err)
@@ -168,8 +168,8 @@ func (s *ConsulCatalogSuite) TestByLabels() {
 		ID:   "whoami1",
 		Name: "whoami",
 		Tags: []string{
-			"traefik.enable=true",
-			"traefik.http.routers.router1.rule=Path(`/whoami`)",
+			"baqup.enable=true",
+			"baqup.http.routers.router1.rule=Path(`/whoami`)",
 		},
 		Port:    80,
 		Address: containerIP,
@@ -185,7 +185,7 @@ func (s *ConsulCatalogSuite) TestByLabels() {
 
 	file := s.adaptFile("fixtures/consul_catalog/default_not_exposed.toml", tempObjects)
 
-	s.traefikCmd(withConfigFile(file))
+	s.baqupCmd(withConfigFile(file))
 
 	err = try.GetRequest("http://127.0.0.1:8000/whoami", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContainsOr("Hostname: whoami1", "Hostname: whoami2", "Hostname: whoami3"))
 	require.NoError(s.T(), err)
@@ -208,14 +208,14 @@ func (s *ConsulCatalogSuite) TestSimpleConfiguration() {
 	reg := &api.AgentServiceRegistration{
 		ID:      "whoami1",
 		Name:    "whoami",
-		Tags:    []string{"traefik.enable=true"},
+		Tags:    []string{"baqup.enable=true"},
 		Port:    80,
 		Address: s.getComposeServiceIP("whoami1"),
 	}
 	err := s.registerService(reg, false)
 	require.NoError(s.T(), err)
 
-	s.traefikCmd(withConfigFile(file))
+	s.baqupCmd(withConfigFile(file))
 
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
 	require.NoError(s.T(), err)
@@ -242,14 +242,14 @@ func (s *ConsulCatalogSuite) TestSimpleConfigurationWithWatch() {
 	reg := &api.AgentServiceRegistration{
 		ID:      "whoami1",
 		Name:    "whoami",
-		Tags:    []string{"traefik.enable=true"},
+		Tags:    []string{"baqup.enable=true"},
 		Port:    80,
 		Address: s.getComposeServiceIP("whoami1"),
 	}
 	err := s.registerService(reg, false)
 	require.NoError(s.T(), err)
 
-	s.traefikCmd(withConfigFile(file))
+	s.baqupCmd(withConfigFile(file))
 
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
 	require.NoError(s.T(), err)
@@ -311,14 +311,14 @@ func (s *ConsulCatalogSuite) TestRegisterServiceWithoutIP() {
 	reg := &api.AgentServiceRegistration{
 		ID:      "whoami1",
 		Name:    "whoami",
-		Tags:    []string{"traefik.enable=true"},
+		Tags:    []string{"baqup.enable=true"},
 		Port:    80,
 		Address: "",
 	}
 	err := s.registerService(reg, false)
 	require.NoError(s.T(), err)
 
-	s.traefikCmd(withConfigFile(file))
+	s.baqupCmd(withConfigFile(file))
 
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8080/api/http/services", nil)
 	require.NoError(s.T(), err)
@@ -350,8 +350,8 @@ func (s *ConsulCatalogSuite) TestDefaultConsulService() {
 	err := s.registerService(reg, false)
 	require.NoError(s.T(), err)
 
-	// Start traefik
-	s.traefikCmd(withConfigFile(file))
+	// Start baqup
+	s.baqupCmd(withConfigFile(file))
 
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
 	require.NoError(s.T(), err)
@@ -380,9 +380,9 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithTCPLabels() {
 		ID:   "whoamitcp",
 		Name: "whoamitcp",
 		Tags: []string{
-			"traefik.tcp.Routers.Super.Rule=HostSNI(`my.super.host`)",
-			"traefik.tcp.Routers.Super.tls=true",
-			"traefik.tcp.Services.Super.Loadbalancer.server.port=8080",
+			"baqup.tcp.Routers.Super.Rule=HostSNI(`my.super.host`)",
+			"baqup.tcp.Routers.Super.tls=true",
+			"baqup.tcp.Services.Super.Loadbalancer.server.port=8080",
 		},
 		Port:    8080,
 		Address: s.getComposeServiceIP("whoamitcp"),
@@ -391,8 +391,8 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithTCPLabels() {
 	err := s.registerService(reg, false)
 	require.NoError(s.T(), err)
 
-	// Start traefik
-	s.traefikCmd(withConfigFile(file))
+	// Start baqup
+	s.baqupCmd(withConfigFile(file))
 
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1500*time.Millisecond, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`my.super.host`)"))
 	require.NoError(s.T(), err)
@@ -422,7 +422,7 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithLabels() {
 		ID:   "whoami1",
 		Name: "whoami",
 		Tags: []string{
-			"traefik.http.Routers.Super.Rule=Host(`my.super.host`)",
+			"baqup.http.Routers.Super.Rule=Host(`my.super.host`)",
 		},
 		Port:    80,
 		Address: s.getComposeServiceIP("whoami1"),
@@ -436,7 +436,7 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithLabels() {
 		ID:   "whoami2",
 		Name: "whoami",
 		Tags: []string{
-			"traefik.http.Routers.SuperHost.Rule=Host(`my-super.host`)",
+			"baqup.http.Routers.SuperHost.Rule=Host(`my-super.host`)",
 		},
 		Port:    80,
 		Address: s.getComposeServiceIP("whoami2"),
@@ -444,8 +444,8 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithLabels() {
 	err = s.registerService(reg2, false)
 	require.NoError(s.T(), err)
 
-	// Start traefik
-	s.traefikCmd(withConfigFile(file))
+	// Start baqup
+	s.baqupCmd(withConfigFile(file))
 
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
 	require.NoError(s.T(), err)
@@ -481,9 +481,9 @@ func (s *ConsulCatalogSuite) TestSameServiceIDOnDifferentConsulAgent() {
 
 	// Start a container with some tags
 	tags := []string{
-		"traefik.enable=true",
-		"traefik.http.Routers.Super.service=whoami",
-		"traefik.http.Routers.Super.Rule=Host(`my.super.host`)",
+		"baqup.enable=true",
+		"baqup.http.Routers.Super.service=whoami",
+		"baqup.http.Routers.Super.Rule=Host(`my.super.host`)",
 	}
 
 	reg1 := &api.AgentServiceRegistration{
@@ -506,8 +506,8 @@ func (s *ConsulCatalogSuite) TestSameServiceIDOnDifferentConsulAgent() {
 	err = s.registerService(reg2, true)
 	require.NoError(s.T(), err)
 
-	// Start traefik
-	s.traefikCmd(withConfigFile(file))
+	// Start baqup
+	s.baqupCmd(withConfigFile(file))
 
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
 	require.NoError(s.T(), err)
@@ -546,7 +546,7 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithOneMissingLabels() {
 		ID:   "whoami1",
 		Name: "whoami",
 		Tags: []string{
-			"traefik.random.value=my.super.host",
+			"baqup.random.value=my.super.host",
 		},
 		Port:    80,
 		Address: s.getComposeServiceIP("whoami1"),
@@ -555,14 +555,14 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithOneMissingLabels() {
 	err := s.registerService(reg, false)
 	require.NoError(s.T(), err)
 
-	// Start traefik
-	s.traefikCmd(withConfigFile(file))
+	// Start baqup
+	s.baqupCmd(withConfigFile(file))
 
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/version", nil)
 	require.NoError(s.T(), err)
 	req.Host = "my.super.host"
 
-	// TODO Need to wait than 500 milliseconds more (for swarm or traefik to boot up ?)
+	// TODO Need to wait than 500 milliseconds more (for swarm or baqup to boot up ?)
 	// TODO validate : run on 80
 	// Expected a 404 as we did not configure anything
 	err = try.Request(req, 1500*time.Millisecond, try.StatusCodeIs(http.StatusNotFound))
@@ -572,8 +572,8 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithOneMissingLabels() {
 func (s *ConsulCatalogSuite) TestConsulServiceWithHealthCheck() {
 	whoamiIP := s.getComposeServiceIP("whoami1")
 	tags := []string{
-		"traefik.enable=true",
-		"traefik.http.routers.router1.rule=Path(`/whoami`)",
+		"baqup.enable=true",
+		"baqup.http.routers.router1.rule=Path(`/whoami`)",
 	}
 
 	reg1 := &api.AgentServiceRegistration{
@@ -602,7 +602,7 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithHealthCheck() {
 
 	file := s.adaptFile("fixtures/consul_catalog/simple.toml", tempObjects)
 
-	s.traefikCmd(withConfigFile(file))
+	s.baqupCmd(withConfigFile(file))
 
 	err = try.GetRequest("http://127.0.0.1:8000/whoami", 2*time.Second, try.StatusCodeIs(http.StatusNotFound))
 	require.NoError(s.T(), err)
@@ -633,7 +633,7 @@ func (s *ConsulCatalogSuite) TestConsulServiceWithHealthCheck() {
 	require.NoError(s.T(), err)
 	req.Host = "whoami"
 
-	// TODO Need to wait for up to 10 seconds (for consul discovery or traefik to boot up ?)
+	// TODO Need to wait for up to 10 seconds (for consul discovery or baqup to boot up ?)
 	err = try.Request(req, 10*time.Second, try.StatusCodeIs(200), try.BodyContainsOr("Hostname: whoami2"))
 	require.NoError(s.T(), err)
 
@@ -651,9 +651,9 @@ func (s *ConsulCatalogSuite) TestConsulConnect() {
 		ID:   "uuid-api1",
 		Name: "uuid-api",
 		Tags: []string{
-			"traefik.enable=true",
-			"traefik.consulcatalog.connect=true",
-			"traefik.http.routers.router1.rule=Path(`/`)",
+			"baqup.enable=true",
+			"baqup.consulcatalog.connect=true",
+			"baqup.http.routers.router1.rule=Path(`/`)",
 		},
 		Connect: &api.AgentServiceConnect{
 			Native: true,
@@ -669,9 +669,9 @@ func (s *ConsulCatalogSuite) TestConsulConnect() {
 		ID:   "whoami1",
 		Name: "whoami",
 		Tags: []string{
-			"traefik.enable=true",
-			"traefik.http.routers.router2.rule=Path(`/whoami`)",
-			"traefik.http.routers.router2.service=whoami",
+			"baqup.enable=true",
+			"baqup.http.routers.router2.rule=Path(`/whoami`)",
+			"baqup.http.routers.router2.service=whoami",
 		},
 		Port:    80,
 		Address: whoamiIP,
@@ -686,7 +686,7 @@ func (s *ConsulCatalogSuite) TestConsulConnect() {
 	}
 	file := s.adaptFile("fixtures/consul_catalog/connect.toml", tempObjects)
 
-	s.traefikCmd(withConfigFile(file))
+	s.baqupCmd(withConfigFile(file))
 
 	err = try.GetRequest("http://127.0.0.1:8000/", 10*time.Second, try.StatusCodeIs(http.StatusOK))
 	require.NoError(s.T(), err)
@@ -710,8 +710,8 @@ func (s *ConsulCatalogSuite) TestConsulConnect_ByDefault() {
 		ID:   "uuid-api1",
 		Name: "uuid-api",
 		Tags: []string{
-			"traefik.enable=true",
-			"traefik.http.routers.router1.rule=Path(`/`)",
+			"baqup.enable=true",
+			"baqup.http.routers.router1.rule=Path(`/`)",
 		},
 		Connect: &api.AgentServiceConnect{
 			Native: true,
@@ -727,9 +727,9 @@ func (s *ConsulCatalogSuite) TestConsulConnect_ByDefault() {
 		ID:   "whoami1",
 		Name: "whoami1",
 		Tags: []string{
-			"traefik.enable=true",
-			"traefik.http.routers.router2.rule=Path(`/whoami`)",
-			"traefik.http.routers.router2.service=whoami",
+			"baqup.enable=true",
+			"baqup.http.routers.router2.rule=Path(`/whoami`)",
+			"baqup.http.routers.router2.service=whoami",
 		},
 		Port:    80,
 		Address: whoamiIP,
@@ -742,10 +742,10 @@ func (s *ConsulCatalogSuite) TestConsulConnect_ByDefault() {
 		ID:   "whoami2",
 		Name: "whoami2",
 		Tags: []string{
-			"traefik.enable=true",
-			"traefik.consulcatalog.connect=false",
-			"traefik.http.routers.router2.rule=Path(`/whoami2`)",
-			"traefik.http.routers.router2.service=whoami2",
+			"baqup.enable=true",
+			"baqup.consulcatalog.connect=false",
+			"baqup.http.routers.router2.rule=Path(`/whoami2`)",
+			"baqup.http.routers.router2.service=whoami2",
 		},
 		Port:    80,
 		Address: whoami2IP,
@@ -760,7 +760,7 @@ func (s *ConsulCatalogSuite) TestConsulConnect_ByDefault() {
 	}
 	file := s.adaptFile("fixtures/consul_catalog/connect_by_default.toml", tempObjects)
 
-	s.traefikCmd(withConfigFile(file))
+	s.baqupCmd(withConfigFile(file))
 
 	err = try.GetRequest("http://127.0.0.1:8000/", 10*time.Second, try.StatusCodeIs(http.StatusOK))
 	require.NoError(s.T(), err)
@@ -789,9 +789,9 @@ func (s *ConsulCatalogSuite) TestConsulConnect_NotAware() {
 		ID:   "uuid-api1",
 		Name: "uuid-api",
 		Tags: []string{
-			"traefik.enable=true",
-			"traefik.consulcatalog.connect=true",
-			"traefik.http.routers.router1.rule=Path(`/`)",
+			"baqup.enable=true",
+			"baqup.consulcatalog.connect=true",
+			"baqup.http.routers.router1.rule=Path(`/`)",
 		},
 		Connect: &api.AgentServiceConnect{
 			Native: true,
@@ -807,9 +807,9 @@ func (s *ConsulCatalogSuite) TestConsulConnect_NotAware() {
 		ID:   "whoami1",
 		Name: "whoami",
 		Tags: []string{
-			"traefik.enable=true",
-			"traefik.http.routers.router2.rule=Path(`/whoami`)",
-			"traefik.http.routers.router2.service=whoami",
+			"baqup.enable=true",
+			"baqup.http.routers.router2.rule=Path(`/whoami`)",
+			"baqup.http.routers.router2.service=whoami",
 		},
 		Port:    80,
 		Address: whoamiIP,
@@ -824,7 +824,7 @@ func (s *ConsulCatalogSuite) TestConsulConnect_NotAware() {
 	}
 	file := s.adaptFile("fixtures/consul_catalog/connect_not_aware.toml", tempObjects)
 
-	s.traefikCmd(withConfigFile(file))
+	s.baqupCmd(withConfigFile(file))
 
 	err = try.GetRequest("http://127.0.0.1:8000/", 10*time.Second, try.StatusCodeIs(http.StatusNotFound))
 	require.NoError(s.T(), err)

@@ -6,7 +6,7 @@ metadata:
 
 spec:
   rules:
-  - host: traefik.tchouk
+  - host: baqup.tchouk
     http:
       paths:
       - path: /bar
@@ -16,7 +16,7 @@ spec:
             port:
               number: 80
         pathType: Prefix
-  - host: traefik.courgette
+  - host: baqup.courgette
     http:
       paths:
       - path: /carotte

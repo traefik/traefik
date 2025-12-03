@@ -12,11 +12,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/baqupio/baqup/v3/integration/try"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/tidwall/gjson"
-	"github.com/traefik/traefik/v3/integration/try"
 )
 
 type TracingSuite struct {
@@ -85,9 +85,9 @@ func (s *TracingSuite) TestOpenTelemetryBasic_HTTP_router_minimalVerbosity() {
 		IsHTTP:     true,
 	})
 
-	s.traefikCmd(withConfigFile(file))
+	s.baqupCmd(withConfigFile(file))
 
-	// wait for traefik
+	// wait for baqup
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
 	require.NoError(s.T(), err)
 
@@ -96,7 +96,7 @@ func (s *TracingSuite) TestOpenTelemetryBasic_HTTP_router_minimalVerbosity() {
 
 	contains := []map[string]string{
 		{
-			"batches.0.scopeSpans.0.scope.name": "github.com/traefik/traefik",
+			"batches.0.scopeSpans.0.scope.name": "github.com/baqup/baqup",
 
 			"batches.0.scopeSpans.0.spans.0.name":                                                             "ReverseProxy",
 			"batches.0.scopeSpans.0.spans.0.kind":                                                             "SPAN_KIND_CLIENT",
@@ -134,9 +134,9 @@ func (s *TracingSuite) TestOpenTelemetryBasic_HTTP_entrypoint_minimalVerbosity()
 		IsHTTP:     true,
 	})
 
-	s.traefikCmd(withConfigFile(file))
+	s.baqupCmd(withConfigFile(file))
 
-	// wait for traefik
+	// wait for baqup
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
 	require.NoError(s.T(), err)
 
@@ -145,7 +145,7 @@ func (s *TracingSuite) TestOpenTelemetryBasic_HTTP_entrypoint_minimalVerbosity()
 
 	contains := []map[string]string{
 		{
-			"batches.0.scopeSpans.0.scope.name": "github.com/traefik/traefik",
+			"batches.0.scopeSpans.0.scope.name": "github.com/baqup/baqup",
 
 			"batches.0.scopeSpans.0.spans.0.name":                                                             "ReverseProxy",
 			"batches.0.scopeSpans.0.spans.0.kind":                                                             "SPAN_KIND_CLIENT",
@@ -183,9 +183,9 @@ func (s *TracingSuite) TestOpenTelemetryBasic_HTTP() {
 		IsHTTP:     true,
 	})
 
-	s.traefikCmd(withConfigFile(file))
+	s.baqupCmd(withConfigFile(file))
 
-	// wait for traefik
+	// wait for baqup
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
 	require.NoError(s.T(), err)
 
@@ -194,7 +194,7 @@ func (s *TracingSuite) TestOpenTelemetryBasic_HTTP() {
 
 	contains := []map[string]string{
 		{
-			"batches.0.scopeSpans.0.scope.name": "github.com/traefik/traefik",
+			"batches.0.scopeSpans.0.scope.name": "github.com/baqup/baqup",
 
 			"batches.0.scopeSpans.0.spans.0.name":                                                             "ReverseProxy",
 			"batches.0.scopeSpans.0.spans.0.kind":                                                             "SPAN_KIND_CLIENT",
@@ -210,21 +210,21 @@ func (s *TracingSuite) TestOpenTelemetryBasic_HTTP() {
 
 			"batches.0.scopeSpans.0.spans.1.name": "Metrics",
 			"batches.0.scopeSpans.0.spans.1.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "metrics-service",
+			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"baqup.middleware.name\").value.stringValue": "metrics-service",
 
-			"batches.0.scopeSpans.0.spans.2.name": "Service",
-			"batches.0.scopeSpans.0.spans.2.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.2.attributes.#(key=\"traefik.service.name\").value.stringValue": "service0@file",
+			"batches.0.scopeSpans.0.spans.2.name":                                                       "Service",
+			"batches.0.scopeSpans.0.spans.2.kind":                                                       "SPAN_KIND_INTERNAL",
+			"batches.0.scopeSpans.0.spans.2.attributes.#(key=\"baqup.service.name\").value.stringValue": "service0@file",
 
-			"batches.0.scopeSpans.0.spans.3.name": "Router",
-			"batches.0.scopeSpans.0.spans.3.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"traefik.service.name\").value.stringValue": "service0@file",
-			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"traefik.router.name\").value.stringValue":  "web-router0@file",
-			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"http.route\").value.stringValue":           "Path(`/basic`)",
+			"batches.0.scopeSpans.0.spans.3.name":                                                       "Router",
+			"batches.0.scopeSpans.0.spans.3.kind":                                                       "SPAN_KIND_INTERNAL",
+			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"baqup.service.name\").value.stringValue": "service0@file",
+			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"baqup.router.name\").value.stringValue":  "web-router0@file",
+			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"http.route\").value.stringValue":         "Path(`/basic`)",
 
 			"batches.0.scopeSpans.0.spans.4.name": "Metrics",
 			"batches.0.scopeSpans.0.spans.4.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.4.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "metrics-entrypoint",
+			"batches.0.scopeSpans.0.spans.4.attributes.#(key=\"baqup.middleware.name\").value.stringValue": "metrics-entrypoint",
 
 			"batches.0.scopeSpans.0.spans.5.name":                                                           "GET",
 			"batches.0.scopeSpans.0.spans.5.kind":                                                           "SPAN_KIND_SERVER",
@@ -251,9 +251,9 @@ func (s *TracingSuite) TestOpenTelemetryBasic_gRPC() {
 	})
 	defer os.Remove(file)
 
-	s.traefikCmd(withConfigFile(file))
+	s.baqupCmd(withConfigFile(file))
 
-	// wait for traefik
+	// wait for baqup
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
 	require.NoError(s.T(), err)
 
@@ -262,7 +262,7 @@ func (s *TracingSuite) TestOpenTelemetryBasic_gRPC() {
 
 	contains := []map[string]string{
 		{
-			"batches.0.scopeSpans.0.scope.name": "github.com/traefik/traefik",
+			"batches.0.scopeSpans.0.scope.name": "github.com/baqup/baqup",
 
 			"batches.0.scopeSpans.0.spans.0.name":                                                             "ReverseProxy",
 			"batches.0.scopeSpans.0.spans.0.kind":                                                             "SPAN_KIND_CLIENT",
@@ -278,21 +278,21 @@ func (s *TracingSuite) TestOpenTelemetryBasic_gRPC() {
 
 			"batches.0.scopeSpans.0.spans.1.name": "Metrics",
 			"batches.0.scopeSpans.0.spans.1.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "metrics-service",
+			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"baqup.middleware.name\").value.stringValue": "metrics-service",
 
-			"batches.0.scopeSpans.0.spans.2.name": "Service",
-			"batches.0.scopeSpans.0.spans.2.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.2.attributes.#(key=\"traefik.service.name\").value.stringValue": "service0@file",
+			"batches.0.scopeSpans.0.spans.2.name":                                                       "Service",
+			"batches.0.scopeSpans.0.spans.2.kind":                                                       "SPAN_KIND_INTERNAL",
+			"batches.0.scopeSpans.0.spans.2.attributes.#(key=\"baqup.service.name\").value.stringValue": "service0@file",
 
-			"batches.0.scopeSpans.0.spans.3.name": "Router",
-			"batches.0.scopeSpans.0.spans.3.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"traefik.service.name\").value.stringValue": "service0@file",
-			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"traefik.router.name\").value.stringValue":  "web-router0@file",
-			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"http.route\").value.stringValue":           "Path(`/basic`)",
+			"batches.0.scopeSpans.0.spans.3.name":                                                       "Router",
+			"batches.0.scopeSpans.0.spans.3.kind":                                                       "SPAN_KIND_INTERNAL",
+			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"baqup.service.name\").value.stringValue": "service0@file",
+			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"baqup.router.name\").value.stringValue":  "web-router0@file",
+			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"http.route\").value.stringValue":         "Path(`/basic`)",
 
 			"batches.0.scopeSpans.0.spans.4.name": "Metrics",
 			"batches.0.scopeSpans.0.spans.4.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.4.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "metrics-entrypoint",
+			"batches.0.scopeSpans.0.spans.4.attributes.#(key=\"baqup.middleware.name\").value.stringValue": "metrics-entrypoint",
 		},
 	}
 
@@ -307,9 +307,9 @@ func (s *TracingSuite) TestOpenTelemetryRateLimit() {
 	})
 	defer os.Remove(file)
 
-	s.traefikCmd(withConfigFile(file))
+	s.baqupCmd(withConfigFile(file))
 
-	// wait for traefik
+	// wait for baqup
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
 	require.NoError(s.T(), err)
 
@@ -340,21 +340,21 @@ func (s *TracingSuite) TestOpenTelemetryRateLimit() {
 
 	contains := []map[string]string{
 		{
-			"batches.0.scopeSpans.0.scope.name": "github.com/traefik/traefik",
+			"batches.0.scopeSpans.0.scope.name": "github.com/baqup/baqup",
 
 			"batches.0.scopeSpans.0.spans.0.name": "RateLimiter",
 			"batches.0.scopeSpans.0.spans.0.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "ratelimit-1@file",
+			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"baqup.middleware.name\").value.stringValue": "ratelimit-1@file",
 
-			"batches.0.scopeSpans.0.spans.1.name": "Router",
-			"batches.0.scopeSpans.0.spans.1.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"traefik.service.name\").value.stringValue": "service1@file",
-			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"traefik.router.name\").value.stringValue":  "web-router1@file",
-			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"http.route\").value.stringValue":           "Path(`/ratelimit`)",
+			"batches.0.scopeSpans.0.spans.1.name":                                                       "Router",
+			"batches.0.scopeSpans.0.spans.1.kind":                                                       "SPAN_KIND_INTERNAL",
+			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"baqup.service.name\").value.stringValue": "service1@file",
+			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"baqup.router.name\").value.stringValue":  "web-router1@file",
+			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"http.route\").value.stringValue":         "Path(`/ratelimit`)",
 
 			"batches.0.scopeSpans.0.spans.2.name": "Metrics",
 			"batches.0.scopeSpans.0.spans.2.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.2.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "metrics-entrypoint",
+			"batches.0.scopeSpans.0.spans.2.attributes.#(key=\"baqup.middleware.name\").value.stringValue": "metrics-entrypoint",
 
 			"batches.0.scopeSpans.0.spans.3.name":                                                           "GET",
 			"batches.0.scopeSpans.0.spans.3.kind":                                                           "SPAN_KIND_SERVER",
@@ -368,7 +368,7 @@ func (s *TracingSuite) TestOpenTelemetryRateLimit() {
 			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"http.response.status_code\").value.intValue": "429",
 		},
 		{
-			"batches.0.scopeSpans.0.scope.name": "github.com/traefik/traefik",
+			"batches.0.scopeSpans.0.scope.name": "github.com/baqup/baqup",
 
 			"batches.0.scopeSpans.0.spans.0.name":                                                             "ReverseProxy",
 			"batches.0.scopeSpans.0.spans.0.kind":                                                             "SPAN_KIND_CLIENT",
@@ -384,25 +384,25 @@ func (s *TracingSuite) TestOpenTelemetryRateLimit() {
 
 			"batches.0.scopeSpans.0.spans.1.name": "Metrics",
 			"batches.0.scopeSpans.0.spans.1.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "metrics-service",
+			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"baqup.middleware.name\").value.stringValue": "metrics-service",
 
-			"batches.0.scopeSpans.0.spans.2.name": "Service",
-			"batches.0.scopeSpans.0.spans.2.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.2.attributes.#(key=\"traefik.service.name\").value.stringValue": "service1@file",
+			"batches.0.scopeSpans.0.spans.2.name":                                                       "Service",
+			"batches.0.scopeSpans.0.spans.2.kind":                                                       "SPAN_KIND_INTERNAL",
+			"batches.0.scopeSpans.0.spans.2.attributes.#(key=\"baqup.service.name\").value.stringValue": "service1@file",
 
 			"batches.0.scopeSpans.0.spans.3.name": "RateLimiter",
 			"batches.0.scopeSpans.0.spans.3.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "ratelimit-1@file",
+			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"baqup.middleware.name\").value.stringValue": "ratelimit-1@file",
 
-			"batches.0.scopeSpans.0.spans.4.name": "Router",
-			"batches.0.scopeSpans.0.spans.4.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.4.attributes.#(key=\"traefik.service.name\").value.stringValue": "service1@file",
-			"batches.0.scopeSpans.0.spans.4.attributes.#(key=\"traefik.router.name\").value.stringValue":  "web-router1@file",
-			"batches.0.scopeSpans.0.spans.4.attributes.#(key=\"http.route\").value.stringValue":           "Path(`/ratelimit`)",
+			"batches.0.scopeSpans.0.spans.4.name":                                                       "Router",
+			"batches.0.scopeSpans.0.spans.4.kind":                                                       "SPAN_KIND_INTERNAL",
+			"batches.0.scopeSpans.0.spans.4.attributes.#(key=\"baqup.service.name\").value.stringValue": "service1@file",
+			"batches.0.scopeSpans.0.spans.4.attributes.#(key=\"baqup.router.name\").value.stringValue":  "web-router1@file",
+			"batches.0.scopeSpans.0.spans.4.attributes.#(key=\"http.route\").value.stringValue":         "Path(`/ratelimit`)",
 
 			"batches.0.scopeSpans.0.spans.5.name": "Metrics",
 			"batches.0.scopeSpans.0.spans.5.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.5.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "metrics-entrypoint",
+			"batches.0.scopeSpans.0.spans.5.attributes.#(key=\"baqup.middleware.name\").value.stringValue": "metrics-entrypoint",
 
 			"batches.0.scopeSpans.0.spans.6.name":                                                           "GET",
 			"batches.0.scopeSpans.0.spans.6.kind":                                                           "SPAN_KIND_SERVER",
@@ -428,9 +428,9 @@ func (s *TracingSuite) TestOpenTelemetryRetry() {
 	})
 	defer os.Remove(file)
 
-	s.traefikCmd(withConfigFile(file))
+	s.baqupCmd(withConfigFile(file))
 
-	// wait for traefik
+	// wait for baqup
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second, try.BodyContains("basic-auth"))
 	require.NoError(s.T(), err)
 
@@ -439,7 +439,7 @@ func (s *TracingSuite) TestOpenTelemetryRetry() {
 
 	contains := []map[string]string{
 		{
-			"batches.0.scopeSpans.0.scope.name": "github.com/traefik/traefik",
+			"batches.0.scopeSpans.0.scope.name": "github.com/baqup/baqup",
 
 			"batches.0.scopeSpans.0.spans.0.name":                                                             "ReverseProxy",
 			"batches.0.scopeSpans.0.spans.0.kind":                                                             "SPAN_KIND_CLIENT",
@@ -456,15 +456,15 @@ func (s *TracingSuite) TestOpenTelemetryRetry() {
 
 			"batches.0.scopeSpans.0.spans.1.name": "Metrics",
 			"batches.0.scopeSpans.0.spans.1.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "metrics-service",
+			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"baqup.middleware.name\").value.stringValue": "metrics-service",
 
-			"batches.0.scopeSpans.0.spans.2.name": "Service",
-			"batches.0.scopeSpans.0.spans.2.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.2.attributes.#(key=\"traefik.service.name\").value.stringValue": "service2@file",
+			"batches.0.scopeSpans.0.spans.2.name":                                                       "Service",
+			"batches.0.scopeSpans.0.spans.2.kind":                                                       "SPAN_KIND_INTERNAL",
+			"batches.0.scopeSpans.0.spans.2.attributes.#(key=\"baqup.service.name\").value.stringValue": "service2@file",
 
 			"batches.0.scopeSpans.0.spans.3.name": "Retry",
 			"batches.0.scopeSpans.0.spans.3.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "retry@file",
+			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"baqup.middleware.name\").value.stringValue": "retry@file",
 
 			"batches.0.scopeSpans.0.spans.4.name":                                                             "ReverseProxy",
 			"batches.0.scopeSpans.0.spans.4.kind":                                                             "SPAN_KIND_CLIENT",
@@ -481,16 +481,16 @@ func (s *TracingSuite) TestOpenTelemetryRetry() {
 
 			"batches.0.scopeSpans.0.spans.5.name": "Metrics",
 			"batches.0.scopeSpans.0.spans.5.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.5.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "metrics-service",
+			"batches.0.scopeSpans.0.spans.5.attributes.#(key=\"baqup.middleware.name\").value.stringValue": "metrics-service",
 
-			"batches.0.scopeSpans.0.spans.6.name": "Service",
-			"batches.0.scopeSpans.0.spans.6.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.6.attributes.#(key=\"traefik.service.name\").value.stringValue": "service2@file",
+			"batches.0.scopeSpans.0.spans.6.name":                                                       "Service",
+			"batches.0.scopeSpans.0.spans.6.kind":                                                       "SPAN_KIND_INTERNAL",
+			"batches.0.scopeSpans.0.spans.6.attributes.#(key=\"baqup.service.name\").value.stringValue": "service2@file",
 
 			"batches.0.scopeSpans.0.spans.7.name": "Retry",
 			"batches.0.scopeSpans.0.spans.7.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.7.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "retry@file",
-			"batches.0.scopeSpans.0.spans.7.attributes.#(key=\"http.request.resend_count\").value.intValue":  "1",
+			"batches.0.scopeSpans.0.spans.7.attributes.#(key=\"baqup.middleware.name\").value.stringValue":  "retry@file",
+			"batches.0.scopeSpans.0.spans.7.attributes.#(key=\"http.request.resend_count\").value.intValue": "1",
 
 			"batches.0.scopeSpans.0.spans.8.name":                                                             "ReverseProxy",
 			"batches.0.scopeSpans.0.spans.8.kind":                                                             "SPAN_KIND_CLIENT",
@@ -507,25 +507,25 @@ func (s *TracingSuite) TestOpenTelemetryRetry() {
 
 			"batches.0.scopeSpans.0.spans.9.name": "Metrics",
 			"batches.0.scopeSpans.0.spans.9.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.9.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "metrics-service",
+			"batches.0.scopeSpans.0.spans.9.attributes.#(key=\"baqup.middleware.name\").value.stringValue": "metrics-service",
 
-			"batches.0.scopeSpans.0.spans.10.name":                                                         "Service",
-			"batches.0.scopeSpans.0.spans.10.kind":                                                         "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.10.attributes.#(key=\"traefik.service.name\").value.stringValue": "service2@file",
+			"batches.0.scopeSpans.0.spans.10.name":                                                       "Service",
+			"batches.0.scopeSpans.0.spans.10.kind":                                                       "SPAN_KIND_INTERNAL",
+			"batches.0.scopeSpans.0.spans.10.attributes.#(key=\"baqup.service.name\").value.stringValue": "service2@file",
 
 			"batches.0.scopeSpans.0.spans.11.name": "Retry",
 			"batches.0.scopeSpans.0.spans.11.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.11.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "retry@file",
-			"batches.0.scopeSpans.0.spans.11.attributes.#(key=\"http.request.resend_count\").value.intValue":  "2",
+			"batches.0.scopeSpans.0.spans.11.attributes.#(key=\"baqup.middleware.name\").value.stringValue":  "retry@file",
+			"batches.0.scopeSpans.0.spans.11.attributes.#(key=\"http.request.resend_count\").value.intValue": "2",
 
-			"batches.0.scopeSpans.0.spans.12.name":                                                         "Router",
-			"batches.0.scopeSpans.0.spans.12.kind":                                                         "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.12.attributes.#(key=\"traefik.service.name\").value.stringValue": "service2@file",
-			"batches.0.scopeSpans.0.spans.12.attributes.#(key=\"traefik.router.name\").value.stringValue":  "web-router2@file",
+			"batches.0.scopeSpans.0.spans.12.name":                                                       "Router",
+			"batches.0.scopeSpans.0.spans.12.kind":                                                       "SPAN_KIND_INTERNAL",
+			"batches.0.scopeSpans.0.spans.12.attributes.#(key=\"baqup.service.name\").value.stringValue": "service2@file",
+			"batches.0.scopeSpans.0.spans.12.attributes.#(key=\"baqup.router.name\").value.stringValue":  "web-router2@file",
 
 			"batches.0.scopeSpans.0.spans.13.name": "Metrics",
 			"batches.0.scopeSpans.0.spans.13.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.13.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "metrics-entrypoint",
+			"batches.0.scopeSpans.0.spans.13.attributes.#(key=\"baqup.middleware.name\").value.stringValue": "metrics-entrypoint",
 
 			"batches.0.scopeSpans.0.spans.14.name":                                                           "GET",
 			"batches.0.scopeSpans.0.spans.14.kind":                                                           "SPAN_KIND_SERVER",
@@ -551,9 +551,9 @@ func (s *TracingSuite) TestOpenTelemetryAuth() {
 	})
 	defer os.Remove(file)
 
-	s.traefikCmd(withConfigFile(file))
+	s.baqupCmd(withConfigFile(file))
 
-	// wait for traefik
+	// wait for baqup
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
 	require.NoError(s.T(), err)
 
@@ -562,23 +562,23 @@ func (s *TracingSuite) TestOpenTelemetryAuth() {
 
 	contains := []map[string]string{
 		{
-			"batches.0.scopeSpans.0.scope.name": "github.com/traefik/traefik",
+			"batches.0.scopeSpans.0.scope.name": "github.com/baqup/baqup",
 
 			"batches.0.scopeSpans.0.spans.0.name": "BasicAuth",
 			"batches.0.scopeSpans.0.spans.0.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "basic-auth@file",
-			"batches.0.scopeSpans.0.spans.0.status.message":                                                  "Authentication failed",
-			"batches.0.scopeSpans.0.spans.0.status.code":                                                     "STATUS_CODE_ERROR",
+			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"baqup.middleware.name\").value.stringValue": "basic-auth@file",
+			"batches.0.scopeSpans.0.spans.0.status.message":                                                "Authentication failed",
+			"batches.0.scopeSpans.0.spans.0.status.code":                                                   "STATUS_CODE_ERROR",
 
-			"batches.0.scopeSpans.0.spans.1.name": "Router",
-			"batches.0.scopeSpans.0.spans.1.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"traefik.service.name\").value.stringValue": "service3@file",
-			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"traefik.router.name\").value.stringValue":  "web-router3@file",
-			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"http.route\").value.stringValue":           "Path(`/auth`)",
+			"batches.0.scopeSpans.0.spans.1.name":                                                       "Router",
+			"batches.0.scopeSpans.0.spans.1.kind":                                                       "SPAN_KIND_INTERNAL",
+			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"baqup.service.name\").value.stringValue": "service3@file",
+			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"baqup.router.name\").value.stringValue":  "web-router3@file",
+			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"http.route\").value.stringValue":         "Path(`/auth`)",
 
 			"batches.0.scopeSpans.0.spans.2.name": "Metrics",
 			"batches.0.scopeSpans.0.spans.2.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.2.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "metrics-entrypoint",
+			"batches.0.scopeSpans.0.spans.2.attributes.#(key=\"baqup.middleware.name\").value.stringValue": "metrics-entrypoint",
 
 			"batches.0.scopeSpans.0.spans.3.name":                                                           "GET",
 			"batches.0.scopeSpans.0.spans.3.kind":                                                           "SPAN_KIND_SERVER",
@@ -604,9 +604,9 @@ func (s *TracingSuite) TestOpenTelemetryAuthWithRetry() {
 	})
 	defer os.Remove(file)
 
-	s.traefikCmd(withConfigFile(file))
+	s.baqupCmd(withConfigFile(file))
 
-	// wait for traefik
+	// wait for baqup
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
 	require.NoError(s.T(), err)
 
@@ -615,27 +615,27 @@ func (s *TracingSuite) TestOpenTelemetryAuthWithRetry() {
 
 	contains := []map[string]string{
 		{
-			"batches.0.scopeSpans.0.scope.name": "github.com/traefik/traefik",
+			"batches.0.scopeSpans.0.scope.name": "github.com/baqup/baqup",
 
 			"batches.0.scopeSpans.0.spans.0.name": "BasicAuth",
 			"batches.0.scopeSpans.0.spans.0.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "basic-auth@file",
-			"batches.0.scopeSpans.0.spans.0.status.message":                                                  "Authentication failed",
-			"batches.0.scopeSpans.0.spans.0.status.code":                                                     "STATUS_CODE_ERROR",
+			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"baqup.middleware.name\").value.stringValue": "basic-auth@file",
+			"batches.0.scopeSpans.0.spans.0.status.message":                                                "Authentication failed",
+			"batches.0.scopeSpans.0.spans.0.status.code":                                                   "STATUS_CODE_ERROR",
 
 			"batches.0.scopeSpans.0.spans.1.name": "Retry",
 			"batches.0.scopeSpans.0.spans.1.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "retry@file",
+			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"baqup.middleware.name\").value.stringValue": "retry@file",
 
-			"batches.0.scopeSpans.0.spans.2.name": "Router",
-			"batches.0.scopeSpans.0.spans.2.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.2.attributes.#(key=\"traefik.service.name\").value.stringValue": "service4@file",
-			"batches.0.scopeSpans.0.spans.2.attributes.#(key=\"traefik.router.name\").value.stringValue":  "web-router4@file",
-			"batches.0.scopeSpans.0.spans.2.attributes.#(key=\"http.route\").value.stringValue":           "Path(`/retry-auth`)",
+			"batches.0.scopeSpans.0.spans.2.name":                                                       "Router",
+			"batches.0.scopeSpans.0.spans.2.kind":                                                       "SPAN_KIND_INTERNAL",
+			"batches.0.scopeSpans.0.spans.2.attributes.#(key=\"baqup.service.name\").value.stringValue": "service4@file",
+			"batches.0.scopeSpans.0.spans.2.attributes.#(key=\"baqup.router.name\").value.stringValue":  "web-router4@file",
+			"batches.0.scopeSpans.0.spans.2.attributes.#(key=\"http.route\").value.stringValue":         "Path(`/retry-auth`)",
 
 			"batches.0.scopeSpans.0.spans.3.name": "Metrics",
 			"batches.0.scopeSpans.0.spans.3.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "metrics-entrypoint",
+			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"baqup.middleware.name\").value.stringValue": "metrics-entrypoint",
 
 			"batches.0.scopeSpans.0.spans.4.name":                                                           "GET",
 			"batches.0.scopeSpans.0.spans.4.kind":                                                           "SPAN_KIND_SERVER",
@@ -661,9 +661,9 @@ func (s *TracingSuite) TestOpenTelemetrySafeURL() {
 	})
 	defer os.Remove(file)
 
-	s.traefikCmd(withConfigFile(file))
+	s.baqupCmd(withConfigFile(file))
 
-	// wait for traefik
+	// wait for baqup
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", time.Second, try.BodyContains("basic-auth"))
 	require.NoError(s.T(), err)
 
@@ -672,7 +672,7 @@ func (s *TracingSuite) TestOpenTelemetrySafeURL() {
 
 	contains := []map[string]string{
 		{
-			"batches.0.scopeSpans.0.scope.name": "github.com/traefik/traefik",
+			"batches.0.scopeSpans.0.scope.name": "github.com/baqup/baqup",
 
 			"batches.0.scopeSpans.0.spans.0.name":                                                           "ReverseProxy",
 			"batches.0.scopeSpans.0.spans.0.attributes.#(key=\"http.request.method\").value.stringValue":    "GET",
@@ -686,25 +686,25 @@ func (s *TracingSuite) TestOpenTelemetrySafeURL() {
 
 			"batches.0.scopeSpans.0.spans.1.name": "Metrics",
 			"batches.0.scopeSpans.0.spans.1.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "metrics-service",
+			"batches.0.scopeSpans.0.spans.1.attributes.#(key=\"baqup.middleware.name\").value.stringValue": "metrics-service",
 
-			"batches.0.scopeSpans.0.spans.2.name": "Service",
-			"batches.0.scopeSpans.0.spans.2.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.2.attributes.#(key=\"traefik.service.name\").value.stringValue": "service3@file",
+			"batches.0.scopeSpans.0.spans.2.name":                                                       "Service",
+			"batches.0.scopeSpans.0.spans.2.kind":                                                       "SPAN_KIND_INTERNAL",
+			"batches.0.scopeSpans.0.spans.2.attributes.#(key=\"baqup.service.name\").value.stringValue": "service3@file",
 
 			"batches.0.scopeSpans.0.spans.3.name": "BasicAuth",
 			"batches.0.scopeSpans.0.spans.3.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "basic-auth@file",
+			"batches.0.scopeSpans.0.spans.3.attributes.#(key=\"baqup.middleware.name\").value.stringValue": "basic-auth@file",
 
-			"batches.0.scopeSpans.0.spans.4.name": "Router",
-			"batches.0.scopeSpans.0.spans.4.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.4.attributes.#(key=\"traefik.service.name\").value.stringValue": "service3@file",
-			"batches.0.scopeSpans.0.spans.4.attributes.#(key=\"traefik.router.name\").value.stringValue":  "web-router3@file",
-			"batches.0.scopeSpans.0.spans.4.attributes.#(key=\"http.route\").value.stringValue":           "Path(`/auth`)",
+			"batches.0.scopeSpans.0.spans.4.name":                                                       "Router",
+			"batches.0.scopeSpans.0.spans.4.kind":                                                       "SPAN_KIND_INTERNAL",
+			"batches.0.scopeSpans.0.spans.4.attributes.#(key=\"baqup.service.name\").value.stringValue": "service3@file",
+			"batches.0.scopeSpans.0.spans.4.attributes.#(key=\"baqup.router.name\").value.stringValue":  "web-router3@file",
+			"batches.0.scopeSpans.0.spans.4.attributes.#(key=\"http.route\").value.stringValue":         "Path(`/auth`)",
 
 			"batches.0.scopeSpans.0.spans.5.name": "Metrics",
 			"batches.0.scopeSpans.0.spans.5.kind": "SPAN_KIND_INTERNAL",
-			"batches.0.scopeSpans.0.spans.5.attributes.#(key=\"traefik.middleware.name\").value.stringValue": "metrics-entrypoint",
+			"batches.0.scopeSpans.0.spans.5.attributes.#(key=\"baqup.middleware.name\").value.stringValue": "metrics-entrypoint",
 
 			"batches.0.scopeSpans.0.spans.6.name":                                                           "GET",
 			"batches.0.scopeSpans.0.spans.6.kind":                                                           "SPAN_KIND_SERVER",
@@ -730,9 +730,9 @@ func (s *TracingSuite) TestNoInternals() {
 		IsHTTP:     true,
 	})
 
-	s.traefikCmd(withConfigFile(file))
+	s.baqupCmd(withConfigFile(file))
 
-	// wait for traefik
+	// wait for baqup
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 2*time.Second, try.BodyContains("basic-auth"))
 	require.NoError(s.T(), err)
 

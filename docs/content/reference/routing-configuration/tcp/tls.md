@@ -1,11 +1,11 @@
 ---
-title: "Traefik TLS Documentation"
-description: "Learn how to configure the transport layer security (TLS) connection for TCP services in Traefik Proxy. Read the technical documentation."
+title: "Baqup TLS Documentation"
+description: "Learn how to configure the transport layer security (TLS) connection for TCP services in Baqup Proxy. Read the technical documentation."
 ---
 
 ## General
 
-When a TCP router is configured to handle TLS traffic, include a `tls` field in its definition. This field tells Traefik that the router should process only TLS connections and ignore non-TLS traffic.
+When a TCP router is configured to handle TLS traffic, include a `tls` field in its definition. This field tells Baqup that the router should process only TLS connections and ignore non-TLS traffic.
 
 By default, a router with a TLS field will terminate the TLS connections, meaning that it will send decrypted data to the services.
 
@@ -45,38 +45,38 @@ tcp:
 
 ```yaml tab="Labels"
 labels:
-  - "traefik.tcp.routers.my-tls-router.tls=true"
-  - "traefik.tcp.routers.my-tls-router.rule=HostSNI(`example.com`)"
-  - "traefik.tcp.routers.my-tls-router.service=my-tcp-service"
-  - "traefik.tcp.routers.my-tls-router.tls.passthrough=true"
-  - "traefik.tcp.routers.my-tls-router.tls.options=my-tls-options"
-  - "traefik.tcp.routers.my-tls-router.tls.certResolver=myresolver"
-  - "traefik.tcp.routers.my-tls-router.tls.domains[0].main=example.com"
-  - "traefik.tcp.routers.my-tls-router.tls.domains[0].sans=www.example.com,api.example.com"
+  - "baqup.tcp.routers.my-tls-router.tls=true"
+  - "baqup.tcp.routers.my-tls-router.rule=HostSNI(`example.com`)"
+  - "baqup.tcp.routers.my-tls-router.service=my-tcp-service"
+  - "baqup.tcp.routers.my-tls-router.tls.passthrough=true"
+  - "baqup.tcp.routers.my-tls-router.tls.options=my-tls-options"
+  - "baqup.tcp.routers.my-tls-router.tls.certResolver=myresolver"
+  - "baqup.tcp.routers.my-tls-router.tls.domains[0].main=example.com"
+  - "baqup.tcp.routers.my-tls-router.tls.domains[0].sans=www.example.com,api.example.com"
 ```
 
 ```json tab="Tags"
 {
   //...
   "Tags": [
-    "traefik.tcp.routers.my-tls-router.tls=true"
-    "traefik.tcp.routers.my-tls-router.rule=HostSNI(`example.com`)",
-    "traefik.tcp.routers.my-tls-router.service=my-tcp-service",
-    "traefik.tcp.routers.my-tls-router.tls.passthrough=true",
-    "traefik.tcp.routers.my-tls-router.tls.options=my-tls-options",
-    "traefik.tcp.routers.my-tls-router.tls.certResolver=myresolver",
-    "traefik.tcp.routers.my-tls-router.tls.domains[0].main=example.com",
-    "traefik.tcp.routers.my-tls-router.tls.domains[0].sans=www.example.com,api.example.com"
+    "baqup.tcp.routers.my-tls-router.tls=true"
+    "baqup.tcp.routers.my-tls-router.rule=HostSNI(`example.com`)",
+    "baqup.tcp.routers.my-tls-router.service=my-tcp-service",
+    "baqup.tcp.routers.my-tls-router.tls.passthrough=true",
+    "baqup.tcp.routers.my-tls-router.tls.options=my-tls-options",
+    "baqup.tcp.routers.my-tls-router.tls.certResolver=myresolver",
+    "baqup.tcp.routers.my-tls-router.tls.domains[0].main=example.com",
+    "baqup.tcp.routers.my-tls-router.tls.domains[0].sans=www.example.com,api.example.com"
   ]
 }
 ```
 
 ??? info "Postgres STARTTLS"
 
-    Traefik supports the Postgres STARTTLS protocol,
+    Baqup supports the Postgres STARTTLS protocol,
     which allows TLS routing for Postgres connections.
 
-    To do so, Traefik reads the first bytes sent by a Postgres client,
+    To do so, Baqup reads the first bytes sent by a Postgres client,
     identifies if they correspond to the message of a STARTTLS negotiation,
     and, if so, acknowledges and signals the client that it can start the TLS handshake.
 
@@ -106,7 +106,7 @@ labels:
 The `tls.certResolver` option allows you to specify a certificate resolver for automatic certificate generation via ACME providers (such as Let's Encrypt).
 
 When a certificate resolver is configured for a router,
-Traefik will automatically obtain and manage TLS certificates for the domains specified in the router's rule (in the `HostSNI` matcher) or in the `tls.domains` configuration (with `tls.domains` taking precedence).
+Baqup will automatically obtain and manage TLS certificates for the domains specified in the router's rule (in the `HostSNI` matcher) or in the `tls.domains` configuration (with `tls.domains` taking precedence).
 
 !!! important "Prerequisites"
 
@@ -121,6 +121,6 @@ but the `tls.domains` option allows you to explicitly specify the domains and Su
 
 This provides fine-grained control over certificate generation and takes precedence over domains automatically extracted from router rules.
 
-Every domain must have A/AAAA records pointing to Traefik.
+Every domain must have A/AAAA records pointing to Baqup.
 
-{!traefik-for-business-applications.md!}
+{!baqup-for-business-applications.md!}

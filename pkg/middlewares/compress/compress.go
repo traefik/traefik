@@ -9,10 +9,10 @@ import (
 	"slices"
 
 	"github.com/andybalholm/brotli"
+	"github.com/baqupio/baqup/v3/pkg/config/dynamic"
+	"github.com/baqupio/baqup/v3/pkg/middlewares"
 	"github.com/klauspost/compress/gzhttp"
 	"github.com/klauspost/compress/zstd"
-	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/middlewares"
 )
 
 const typeName = "Compress"
@@ -143,7 +143,7 @@ func (c *compress) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	// Notably for text/event-stream requests the response should not be compressed.
-	// See https://github.com/traefik/traefik/issues/2576
+	// See https://github.com/baqupio/baqup/issues/2576
 	if slices.Contains(c.excludes, mediaType) {
 		c.next.ServeHTTP(rw, req)
 		return
@@ -159,7 +159,7 @@ func (c *compress) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 
 		// Client doesn't specify a preferred encoding, for compatibility don't encode the request
-		// See https://github.com/traefik/traefik/issues/9734
+		// See https://github.com/baqupio/baqup/issues/9734
 		c.next.ServeHTTP(rw, req)
 		return
 	}

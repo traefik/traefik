@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/baqupio/baqup/v3/pkg/testhelpers"
+	"github.com/baqupio/baqup/v3/pkg/types"
 	"github.com/stretchr/testify/assert"
-	"github.com/traefik/traefik/v3/pkg/testhelpers"
-	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 func TestRequestHost(t *testing.T) {

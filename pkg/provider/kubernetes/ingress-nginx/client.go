@@ -10,10 +10,10 @@ import (
 	"slices"
 	"time"
 
+	"github.com/baqupio/baqup/v3/pkg/provider/kubernetes/k8s"
+	"github.com/baqupio/baqup/v3/pkg/types"
+	baqupversion "github.com/baqupio/baqup/v3/pkg/version"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
-	"github.com/traefik/traefik/v3/pkg/types"
-	traefikversion "github.com/traefik/traefik/v3/pkg/version"
 	corev1 "k8s.io/api/core/v1"
 	discoveryv1 "k8s.io/api/discovery/v1"
 	netv1 "k8s.io/api/networking/v1"
@@ -100,7 +100,7 @@ func createClientFromConfig(c *rest.Config) (*clientWrapper, error) {
 	c.UserAgent = fmt.Sprintf(
 		"%s/%s (%s/%s) kubernetes/ingress",
 		filepath.Base(os.Args[0]),
-		traefikversion.Version,
+		baqupversion.Version,
 		runtime.GOOS,
 		runtime.GOARCH,
 	)

@@ -13,10 +13,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/baqupio/baqup/v3/integration/try"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"github.com/traefik/traefik/v3/integration/try"
 )
 
 type TCPSuite struct{ BaseSuite }
@@ -49,22 +49,22 @@ func (s *TCPSuite) TestMixed() {
 		WhoamiNoCert: s.getComposeServiceIP("whoami-no-cert") + ":8080",
 	})
 
-	s.traefikCmd(withConfigFile(file))
+	s.baqupCmd(withConfigFile(file))
 
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("Path(`/test`)"))
 	require.NoError(s.T(), err)
 
-	// Traefik passes through, termination handled by whoami-a
+	// Baqup passes through, termination handled by whoami-a
 	out, err := guessWhoTLSPassthrough("127.0.0.1:8093", "whoami-a.test")
 	require.NoError(s.T(), err)
 	assert.Contains(s.T(), out, "whoami-a")
 
-	// Traefik passes through, termination handled by whoami-b
+	// Baqup passes through, termination handled by whoami-b
 	out, err = guessWhoTLSPassthrough("127.0.0.1:8093", "whoami-b.test")
 	require.NoError(s.T(), err)
 	assert.Contains(s.T(), out, "whoami-b")
 
-	// Termination handled by traefik
+	// Termination handled by baqup
 	out, err = guessWho("127.0.0.1:8093", "whoami-c.test", true)
 	require.NoError(s.T(), err)
 	assert.Contains(s.T(), out, "whoami-no-cert")
@@ -97,7 +97,7 @@ func (s *TCPSuite) TestTLSOptions() {
 		WhoamiNoCert: s.getComposeServiceIP("whoami-no-cert") + ":8080",
 	})
 
-	s.traefikCmd(withConfigFile(file))
+	s.baqupCmd(withConfigFile(file))
 
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`whoami-c.test`)"))
 	require.NoError(s.T(), err)
@@ -138,22 +138,22 @@ func (s *TCPSuite) TestNonTLSFallback() {
 		WhoamiNoTLS:  s.getComposeServiceIP("whoami-no-tls") + ":8080",
 	})
 
-	s.traefikCmd(withConfigFile(file))
+	s.baqupCmd(withConfigFile(file))
 
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`*`)"))
 	require.NoError(s.T(), err)
 
-	// Traefik passes through, termination handled by whoami-a
+	// Baqup passes through, termination handled by whoami-a
 	out, err := guessWhoTLSPassthrough("127.0.0.1:8093", "whoami-a.test")
 	require.NoError(s.T(), err)
 	assert.Contains(s.T(), out, "whoami-a")
 
-	// Traefik passes through, termination handled by whoami-b
+	// Baqup passes through, termination handled by whoami-b
 	out, err = guessWhoTLSPassthrough("127.0.0.1:8093", "whoami-b.test")
 	require.NoError(s.T(), err)
 	assert.Contains(s.T(), out, "whoami-b")
 
-	// Termination handled by traefik
+	// Termination handled by baqup
 	out, err = guessWho("127.0.0.1:8093", "whoami-c.test", true)
 	require.NoError(s.T(), err)
 	assert.Contains(s.T(), out, "whoami-no-cert")
@@ -170,12 +170,12 @@ func (s *TCPSuite) TestNonTlsTcp() {
 		WhoamiNoTLS: s.getComposeServiceIP("whoami-no-tls") + ":8080",
 	})
 
-	s.traefikCmd(withConfigFile(file))
+	s.baqupCmd(withConfigFile(file))
 
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`*`)"))
 	require.NoError(s.T(), err)
 
-	// Traefik will forward every requests on the given port to whoami-no-tls
+	// Baqup will forward every requests on the given port to whoami-no-tls
 	out, err := guessWho("127.0.0.1:8093", "", false)
 	require.NoError(s.T(), err)
 	assert.Contains(s.T(), out, "whoami-no-tls")
@@ -188,12 +188,12 @@ func (s *TCPSuite) TestCatchAllNoTLS() {
 		WhoamiBannerAddress: s.getComposeServiceIP("whoami-banner") + ":8080",
 	})
 
-	s.traefikCmd(withConfigFile(file))
+	s.baqupCmd(withConfigFile(file))
 
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`*`)"))
 	require.NoError(s.T(), err)
 
-	// Traefik will forward every requests on the given port to whoami-no-tls
+	// Baqup will forward every requests on the given port to whoami-no-tls
 	out, err := welcome("127.0.0.1:8093")
 	require.NoError(s.T(), err)
 	assert.Contains(s.T(), out, "Welcome")
@@ -208,7 +208,7 @@ func (s *TCPSuite) TestCatchAllNoTLSWithHTTPS() {
 		WhoamiURL:          "http://" + s.getComposeServiceIP("whoami") + ":80",
 	})
 
-	s.traefikCmd(withConfigFile(file))
+	s.baqupCmd(withConfigFile(file))
 
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`*`)"))
 	require.NoError(s.T(), err)
@@ -233,16 +233,16 @@ func (s *TCPSuite) TestMiddlewareAllowList() {
 		WhoamiB: s.getComposeServiceIP("whoami-b") + ":8080",
 	})
 
-	s.traefikCmd(withConfigFile(file))
+	s.baqupCmd(withConfigFile(file))
 
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`whoami-a.test`)"))
 	require.NoError(s.T(), err)
 
-	// Traefik not passes through, ipAllowList closes connection
+	// Baqup not passes through, ipAllowList closes connection
 	_, err = guessWhoTLSPassthrough("127.0.0.1:8093", "whoami-a.test")
 	assert.ErrorIs(s.T(), err, io.EOF)
 
-	// Traefik passes through, termination handled by whoami-b
+	// Baqup passes through, termination handled by whoami-b
 	out, err := guessWhoTLSPassthrough("127.0.0.1:8093", "whoami-b.test")
 	require.NoError(s.T(), err)
 	assert.Contains(s.T(), out, "whoami-b")
@@ -257,16 +257,16 @@ func (s *TCPSuite) TestMiddlewareWhiteList() {
 		WhoamiB: s.getComposeServiceIP("whoami-b") + ":8080",
 	})
 
-	s.traefikCmd(withConfigFile(file))
+	s.baqupCmd(withConfigFile(file))
 
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`whoami-a.test`)"))
 	require.NoError(s.T(), err)
 
-	// Traefik not passes through, ipWhiteList closes connection
+	// Baqup not passes through, ipWhiteList closes connection
 	_, err = guessWhoTLSPassthrough("127.0.0.1:8093", "whoami-a.test")
 	assert.ErrorIs(s.T(), err, io.EOF)
 
-	// Traefik passes through, termination handled by whoami-b
+	// Baqup passes through, termination handled by whoami-b
 	out, err := guessWhoTLSPassthrough("127.0.0.1:8093", "whoami-b.test")
 	require.NoError(s.T(), err)
 	assert.Contains(s.T(), out, "whoami-b")
@@ -281,14 +281,14 @@ func (s *TCPSuite) TestWRR() {
 		WhoamiAB: s.getComposeServiceIP("whoami-ab") + ":8080",
 	})
 
-	s.traefikCmd(withConfigFile(file))
+	s.baqupCmd(withConfigFile(file))
 
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains("HostSNI(`whoami-b.test`)"))
 	require.NoError(s.T(), err)
 
 	call := map[string]int{}
 	for range 4 {
-		// Traefik passes through, termination handled by whoami-b or whoami-bb
+		// Baqup passes through, termination handled by whoami-b or whoami-bb
 		out, err := guessWhoTLSPassthrough("127.0.0.1:8093", "whoami-b.test")
 		require.NoError(s.T(), err)
 		switch {

@@ -1,6 +1,6 @@
 ---
-title: "Traefik HTTP Retry Documentation"
-description: "Configure Traefik Proxy's HTTP Retry middleware, so you can retry requests to a backend server until it succeeds. Read the technical documentation."
+title: "Baqup HTTP Retry Documentation"
+description: "Configure Baqup Proxy's HTTP Retry middleware, so you can retry requests to a backend server until it succeeds. Read the technical documentation."
 ---
 
 # Retry
@@ -24,13 +24,13 @@ The Retry middleware has an optional configuration to enable an exponential back
 ```yaml tab="Docker & Swarm"
 # Retry 4 times with exponential backoff
 labels:
-  - "traefik.http.middlewares.test-retry.retry.attempts=4"
-  - "traefik.http.middlewares.test-retry.retry.initialinterval=100ms"
+  - "baqup.http.middlewares.test-retry.retry.attempts=4"
+  - "baqup.http.middlewares.test-retry.retry.initialinterval=100ms"
 ```
 
 ```yaml tab="Kubernetes"
 # Retry 4 times with exponential backoff
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-retry
@@ -42,8 +42,8 @@ spec:
 
 ```yaml tab="Consul Catalog"
 # Retry 4 times with exponential backoff
-- "traefik.http.middlewares.test-retry.retry.attempts=4"
-- "traefik.http.middlewares.test-retry.retry.initialinterval=100ms"
+- "baqup.http.middlewares.test-retry.retry.attempts=4"
+- "baqup.http.middlewares.test-retry.retry.initialinterval=100ms"
 ```
 
 ```yaml tab="File (YAML)"

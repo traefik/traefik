@@ -2,31 +2,31 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   namespace: default
-  name: traefik-ingress-controller
+  name: baqup-ingress-controller
 
 ---
 kind: Deployment
 apiVersion: apps/v1
 metadata:
   namespace: default
-  name: traefik
+  name: baqup
   labels:
-    app: traefik
+    app: baqup
 
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: traefik
+      app: baqup
   template:
     metadata:
       labels:
-        app: traefik
+        app: baqup
     spec:
-      serviceAccountName: traefik-ingress-controller
+      serviceAccountName: baqup-ingress-controller
       containers:
-        - name: traefik
-          image: traefik:v3.6
+        - name: baqup
+          image: baqup:v3.6
           args:
             - --api.insecure
             - --accesslog
@@ -68,7 +68,7 @@ spec:
     spec:
       containers:
         - name: whoami
-          image: traefik/whoami
+          image: baqup/whoami
           ports:
             - name: web
               containerPort: 80

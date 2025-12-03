@@ -1,5 +1,5 @@
 ---
-title: "Traefik TCP Routers Documentation"
+title: "Baqup TCP Routers Documentation"
 description: "TCP routers are responsible for connecting incoming TCP connections to the services that can handle them. Read the technical documentation."
 ---
 
@@ -55,31 +55,31 @@ tcp:
 
 ```yaml tab="Labels"
 labels:
-  - "traefik.tcp.routers.my-tcp-router.entrypoints=tcp-ep,websecure"
-  - "traefik.tcp.routers.my-tcp-router.rule=HostSNI(`example.com`)"
-  - "traefik.tcp.routers.my-tcp-router.priority=10"
-  - "traefik.tcp.routers.my-tcp-router.middlewares=tcp-ipallowlist"
-  - "traefik.tcp.routers.my-tcp-router.tls.certresolver=letsencrypt"
-  - "traefik.tcp.routers.my-tcp-router.tls.passthrough=false"
-  - "traefik.tcp.routers.my-tcp-router.tls.options=modern-tls"
-  - "traefik.tcp.routers.my-tcp-router.tls.domains[0].main=example.com"
-  - "traefik.tcp.routers.my-tcp-router.tls.domains[0].sans=www.example.com"
-  - "traefik.tcp.routers.my-tcp-router.service=my-tcp-service"
+  - "baqup.tcp.routers.my-tcp-router.entrypoints=tcp-ep,websecure"
+  - "baqup.tcp.routers.my-tcp-router.rule=HostSNI(`example.com`)"
+  - "baqup.tcp.routers.my-tcp-router.priority=10"
+  - "baqup.tcp.routers.my-tcp-router.middlewares=tcp-ipallowlist"
+  - "baqup.tcp.routers.my-tcp-router.tls.certresolver=letsencrypt"
+  - "baqup.tcp.routers.my-tcp-router.tls.passthrough=false"
+  - "baqup.tcp.routers.my-tcp-router.tls.options=modern-tls"
+  - "baqup.tcp.routers.my-tcp-router.tls.domains[0].main=example.com"
+  - "baqup.tcp.routers.my-tcp-router.tls.domains[0].sans=www.example.com"
+  - "baqup.tcp.routers.my-tcp-router.service=my-tcp-service"
 ```
 
 ```json tab="Tags"
 {
   "Tags": [
-    "traefik.tcp.routers.my-tcp-router.entrypoints=tcp-ep,websecure",
-    "traefik.tcp.routers.my-tcp-router.rule=HostSNI(`example.com`)",
-    "traefik.tcp.routers.my-tcp-router.priority=10",
-    "traefik.tcp.routers.my-tcp-router.middlewares=tcp-ipallowlist",
-    "traefik.tcp.routers.my-tcp-router.tls.certresolver=letsencrypt",
-    "traefik.tcp.routers.my-tcp-router.tls.passthrough=false",
-    "traefik.tcp.routers.my-tcp-router.tls.options=modern-tls",
-    "traefik.tcp.routers.my-tcp-router.tls.domains[0].main=example.com",
-    "traefik.tcp.routers.my-tcp-router.tls.domains[0].sans=www.example.com",
-    "traefik.tcp.routers.my-tcp-router.service=my-tcp-service"
+    "baqup.tcp.routers.my-tcp-router.entrypoints=tcp-ep,websecure",
+    "baqup.tcp.routers.my-tcp-router.rule=HostSNI(`example.com`)",
+    "baqup.tcp.routers.my-tcp-router.priority=10",
+    "baqup.tcp.routers.my-tcp-router.middlewares=tcp-ipallowlist",
+    "baqup.tcp.routers.my-tcp-router.tls.certresolver=letsencrypt",
+    "baqup.tcp.routers.my-tcp-router.tls.passthrough=false",
+    "baqup.tcp.routers.my-tcp-router.tls.options=modern-tls",
+    "baqup.tcp.routers.my-tcp-router.tls.domains[0].main=example.com",
+    "baqup.tcp.routers.my-tcp-router.tls.domains[0].sans=www.example.com",
+    "baqup.tcp.routers.my-tcp-router.service=my-tcp-service"
   ]
 }
 ```
@@ -101,4 +101,4 @@ labels:
 - Router names should be descriptive and follow your naming conventions
 - In provider-specific configurations (Docker, Kubernetes), router names are often auto-generated based on service names and rules
 
-{!traefik-for-business-applications.md!}
+{!baqup-for-business-applications.md!}

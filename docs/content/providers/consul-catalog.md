@@ -1,16 +1,16 @@
 ---
 title: "Consul Catalog Configuration Discovery"
-description: "Learn how to use Consul Catalog as a provider for configuration discovery in Traefik Proxy. Read the technical documentation."
+description: "Learn how to use Consul Catalog as a provider for configuration discovery in Baqup Proxy. Read the technical documentation."
 ---
 
-# Traefik & Consul Catalog
+# Baqup & Consul Catalog
 
 A Story of Tags, Services & Instances
 {: .subtitle }
 
 ![Consul Catalog](../assets/img/providers/consul.png)
 
-Attach tags to your services and let Traefik do the rest!
+Attach tags to your services and let Baqup do the rest!
 
 ## Configuration Examples
 
@@ -34,7 +34,7 @@ Attach tags to your services and let Traefik do the rest!
     Attaching tags to services
 
     ```yaml
-    - traefik.http.routers.my-router.rule=Host(`example.com`)
+    - baqup.http.routers.my-router.rule=Host(`example.com`)
     ```
 
 ## Routing Configuration
@@ -69,9 +69,9 @@ providers:
 
 ### `prefix`
 
-_required, Default="traefik"_
+_required, Default="baqup"_
 
-The prefix for Consul Catalog tags defining Traefik labels.
+The prefix for Consul Catalog tags defining Baqup labels.
 
 ```yaml tab="File (YAML)"
 providers:
@@ -236,7 +236,7 @@ providers:
 _Optional, Default=""_
 
 Defines the datacenter to use.
-If not provided in Traefik, Consul uses the default agent datacenter.
+If not provided in Baqup, Consul uses the default agent datacenter.
 
 ```yaml tab="File (YAML)"
 providers:
@@ -474,10 +474,10 @@ providers:
 
 _Optional, Default=true_
 
-Expose Consul Catalog services by default in Traefik.
-If set to `false`, services that don't have a `traefik.enable=true` tag will be ignored from the resulting routing configuration.
+Expose Consul Catalog services by default in Baqup.
+If set to `false`, services that don't have a `baqup.enable=true` tag will be ignored from the resulting routing configuration.
 
-For additional information, refer to [Restrict the Scope of Service Discovery](./overview.md#exposedbydefault-and-traefikenable).
+For additional information, refer to [Restrict the Scope of Service Discovery](./overview.md#exposedbydefault-and-baqupenable).
 
 ```yaml tab="File (YAML)"
 providers:
@@ -509,7 +509,7 @@ and can include [sprig template functions](https://masterminds.github.io/sprig/)
 The service name can be accessed with the `Name` identifier,
 and the template has access to all the labels (i.e. tags beginning with the `prefix`) defined on this service.
 
-The option can be overridden on an instance basis with the `traefik.http.routers.{name-of-your-choice}.rule` tag.
+The option can be overridden on an instance basis with the `baqup.http.routers.{name-of-your-choice}.rule` tag.
 
 ```yaml tab="File (YAML)"
 providers:
@@ -529,19 +529,19 @@ providers:
 # ...
 ```
 
-??? info "Default rule and Traefik service"
+??? info "Default rule and Baqup service"
 
-    The exposure of the Traefik container, combined with the default rule mechanism,
+    The exposure of the Baqup container, combined with the default rule mechanism,
     can lead to create a router targeting itself in a loop.
     In this case, to prevent an infinite loop,
-    Traefik adds an internal middleware to refuse the request if it comes from the same router.
+    Baqup adds an internal middleware to refuse the request if it comes from the same router.
 
 ### `connectAware`
 
 _Optional, Default=false_
 
 Enable Consul Connect support.
-If set to `true`, Traefik will be enabled to communicate with Connect services.
+If set to `true`, Baqup will be enabled to communicate with Connect services.
 
 ```toml tab="File (TOML)"
 [providers.consulCatalog]
@@ -566,8 +566,8 @@ providers:
 _Optional, Default=false_
 
 Consider every service as Connect capable by default.
-If set to `true`, Traefik will consider every Consul Catalog service to be Connect capable by default.
-The option can be overridden on an instance basis with the `traefik.consulcatalog.connect` tag.
+If set to `true`, Baqup will consider every Consul Catalog service to be Connect capable by default.
+The option can be overridden on an instance basis with the `baqup.consulcatalog.connect` tag.
 
 ```toml tab="File (TOML)"
 [providers.consulCatalog]
@@ -589,9 +589,9 @@ providers:
 
 ### `serviceName`
 
-_Optional, Default="traefik"_
+_Optional, Default="baqup"_
 
-Name of the Traefik service in Consul Catalog.
+Name of the Baqup service in Consul Catalog.
 
 ```toml tab="File (TOML)"
 [providers.consulCatalog]
@@ -615,7 +615,7 @@ providers:
 
 _Optional, Default=""_
 
-The `constraints` option can be set to an expression that Traefik matches against the service tags to determine whether
+The `constraints` option can be set to an expression that Baqup matches against the service tags to determine whether
 to create any route for that service. If none of the service tags match the expression, no route for that service is
 created. If the expression is empty, all detected services are included.
 
@@ -672,7 +672,7 @@ providers:
 # ...
 ```
 
-For additional information, refer to [Restrict the Scope of Service Discovery](./overview.md#exposedbydefault-and-traefikenable).
+For additional information, refer to [Restrict the Scope of Service Discovery](./overview.md#exposedbydefault-and-baqupenable).
 
 ### `namespaces`
 

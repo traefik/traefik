@@ -1,12 +1,12 @@
 ---
-title: "Traefik Proxy TCP Middleware Overview"
-description: "Read the official Traefik Proxy documentation for an overview of the available TCP middleware."
+title: "Baqup Proxy TCP Middleware Overview"
+description: "Read the official Baqup Proxy documentation for an overview of the available TCP middleware."
 ---
 # TCP Middleware Overview
 
 Attached to the routers, pieces of middleware are a means of tweaking the requests before they are sent to your service (or before the answer from the services are sent to the clients).
 
-There are several available middlewares in Traefik, some can modify the request, the headers, some are in charge of redirections, some add authentication, and so on.
+There are several available middlewares in Baqup, some can modify the request, the headers, some are in charge of redirections, some add authentication, and so on.
 
 Middlewares that use the same protocol can be combined into chains to fit every scenario.
 
@@ -61,9 +61,9 @@ tcp:
 ```yaml tab="Labels"
 labels:
   # Create a middleware named `foo-ip-allowlist`
-  - "traefik.tcp.middlewares.foo-ip-allowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
+  - "baqup.tcp.middlewares.foo-ip-allowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7"
   # Apply the middleware named `foo-ip-allowlist` to the router named `router1`
-  - "traefik.tcp.routers.router1.middlewares=foo-ip-allowlist@docker"
+  - "baqup.tcp.routers.router1.middlewares=foo-ip-allowlist@docker"
 ```
 
 ```json tab="Consul Catalog" 
@@ -71,9 +71,9 @@ labels:
   //...
   "Tags" : [
     // Create a middleware named `foo-ip-allowlist`
-    "traefik.tcp.middlewares.foo-ip-allowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7",
+    "baqup.tcp.middlewares.foo-ip-allowlist.ipallowlist.sourcerange=127.0.0.1/32, 192.168.1.7",
     // Apply the middleware named `foo-ip-allowlist` to the router named `router1`
-    "traefik.tcp.routers.router1.middlewares=foo-ip-allowlist@consulcatalog"
+    "baqup.tcp.routers.router1.middlewares=foo-ip-allowlist@consulcatalog"
   ]
 }
 
@@ -81,7 +81,7 @@ labels:
 
 ```yaml tab="Kubernetes"
 ---
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: MiddlewareTCP
 metadata:
   name: foo-ip-allowlist
@@ -92,7 +92,7 @@ spec:
       - 192.168.1.7
 
 ---
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: IngressRouteTCP
 metadata:
   name: ingressroute

@@ -1,8 +1,8 @@
 package testhelpers
 
 import (
-	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
+	"github.com/baqupio/baqup/v3/pkg/config/dynamic"
+	otypes "github.com/baqupio/baqup/v3/pkg/observability/types"
 )
 
 // BuildConfiguration is a helper to create a configuration.

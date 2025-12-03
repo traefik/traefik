@@ -1,0 +1,52 @@
+{
+  "http": {
+    "routers": {
+      "api": {
+        "entryPoints": [
+          "baqup"
+        ],
+        "service": "api@internal",
+        "rule": "PathPrefix(`/api`)",
+        "ruleSyntax": "default",
+        "priority": 9223372036854775806
+      },
+      "dashboard": {
+        "entryPoints": [
+          "baqup"
+        ],
+        "middlewares": [
+          "dashboard_redirect@internal",
+          "dashboard_stripprefix@internal"
+        ],
+        "service": "dashboard@internal",
+        "rule": "PathPrefix(`/`)",
+        "ruleSyntax": "default",
+        "priority": 9223372036854775805
+      }
+    },
+    "services": {
+      "api": {},
+      "dashboard": {},
+      "noop": {}
+    },
+    "middlewares": {
+      "dashboard_redirect": {
+        "redirectRegex": {
+          "regex": "^(http:\\/\\/(\\[[\\w:.]+\\]|[\\w\\._-]+)(:\\d+)?)\\/$",
+          "replacement": "${1}/dashboard/",
+          "permanent": true
+        }
+      },
+      "dashboard_stripprefix": {
+        "stripPrefix": {
+          "prefixes": [
+            "/dashboard/",
+            "/dashboard"
+          ]
+        }
+      }
+    }
+  },
+  "tcp": {},
+  "tls": {}
+}

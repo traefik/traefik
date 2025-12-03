@@ -1,6 +1,6 @@
 ---
-title: "Traefik Tracing Overview"
-description: "The Traefik Proxy tracing system allows developers to visualize call flows in their infrastructure. Read the full documentation."
+title: "Baqup Tracing Overview"
+description: "The Baqup Proxy tracing system allows developers to visualize call flows in their infrastructure. Read the full documentation."
 ---
 
 # Tracing
@@ -10,7 +10,7 @@ Visualize the Requests Flow
 
 The tracing system allows developers to visualize call flows in their infrastructure.
 
-Traefik uses [OpenTelemetry](https://opentelemetry.io/ "Link to website of OTel"), an open standard designed for distributed tracing.
+Baqup uses [OpenTelemetry](https://opentelemetry.io/ "Link to website of OTel"), an open standard designed for distributed tracing.
 
 ## Configuration Example
 
@@ -39,7 +39,7 @@ tracing: {}
 | Field                                                                                                                                                                                                          | Description                                                                                                                                                                 | Default                             | Required |
 |:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:------------------------------------|:---------|
 | <a id="opt-tracing-addInternals" href="#opt-tracing-addInternals" title="#opt-tracing-addInternals">`tracing.addInternals`</a> | Enables tracing for internal resources (e.g.: `ping@internal`).                                                                                                             | false                               | No       |
-| <a id="opt-tracing-serviceName" href="#opt-tracing-serviceName" title="#opt-tracing-serviceName">`tracing.serviceName`</a> | Defines the service name resource attribute.                                                                                                                                | "traefik"                           | No       |
+| <a id="opt-tracing-serviceName" href="#opt-tracing-serviceName" title="#opt-tracing-serviceName">`tracing.serviceName`</a> | Defines the service name resource attribute.                                                                                                                                | "baqup"                           | No       |
 | <a id="opt-tracing-resourceAttributes" href="#opt-tracing-resourceAttributes" title="#opt-tracing-resourceAttributes">`tracing.resourceAttributes`</a> | Defines additional resource attributes to be sent to the collector. See [resourceAttributes](#resourceattributes) for details.                                              | []                                  | No       |
 | <a id="opt-tracing-sampleRate" href="#opt-tracing-sampleRate" title="#opt-tracing-sampleRate">`tracing.sampleRate`</a> | The proportion of requests to trace, specified between 0.0 and 1.0.                                                                                                         | 1.0                                 | No       |
 | <a id="opt-tracing-capturedRequestHeaders" href="#opt-tracing-capturedRequestHeaders" title="#opt-tracing-capturedRequestHeaders">`tracing.capturedRequestHeaders`</a> | Defines the list of request headers to add as attributes.<br />It applies to client and server kind spans.                                                                  | []                                  | No       |
@@ -64,15 +64,15 @@ tracing: {}
 ## resourceAttributes
 
 The `resourceAttributes` option allows setting the resource attributes sent along the traces.
-Traefik also supports the `OTEL_RESOURCE_ATTRIBUTES` env variable to set up the resource attributes.
+Baqup also supports the `OTEL_RESOURCE_ATTRIBUTES` env variable to set up the resource attributes.
 
 !!! info "Kubernetes Resource Attributes Detection"
 
-    Additionally, Traefik automatically discovers the following [Kubernetes resource attributes](https://opentelemetry.io/docs/specs/semconv/non-normative/k8s-attributes/) when running in a Kubernetes cluster:
+    Additionally, Baqup automatically discovers the following [Kubernetes resource attributes](https://opentelemetry.io/docs/specs/semconv/non-normative/k8s-attributes/) when running in a Kubernetes cluster:
     
     - `k8s.namespace.name`
     - `k8s.pod.uid`
     - `k8s.pod.name`
     
-    Note that this automatic detection can fail, like if the Traefik pod is running in host network mode.
+    Note that this automatic detection can fail, like if the Baqup pod is running in host network mode.
     In this case, you should provide the attributes with the option or the env variable.

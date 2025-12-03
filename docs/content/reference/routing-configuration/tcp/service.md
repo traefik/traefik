@@ -1,5 +1,5 @@
 ---
-title: "Traefik TCP Services Documentation"
+title: "Baqup TCP Services Documentation"
 description: "A service is in charge of connecting incoming requests to the Servers that can handle them. Read the technical documentation."
 --- 
 
@@ -50,25 +50,25 @@ tcp:
 
 ```yaml tab="Labels"
 labels:
-  - "traefik.tcp.services.my-service.loadBalancer.servers[0].address=xx.xx.xx.xx:xx"
-  - "traefik.tcp.services.my-service.loadBalancer.servers[1].address=xx.xx.xx.xx:xx"
-  - "traefik.tcp.services.my-service.loadBalancer.healthCheck.send=PING"
-  - "traefik.tcp.services.my-service.loadBalancer.healthCheck.expect=PONG"
-  - "traefik.tcp.services.my-service.loadBalancer.healthCheck.interval=10s"
-  - "traefik.tcp.services.my-service.loadBalancer.healthCheck.timeout=3s"
-  - "traefik.tcp.services.my-service.loadBalancer.serversTransport=customTransport@file"
+  - "baqup.tcp.services.my-service.loadBalancer.servers[0].address=xx.xx.xx.xx:xx"
+  - "baqup.tcp.services.my-service.loadBalancer.servers[1].address=xx.xx.xx.xx:xx"
+  - "baqup.tcp.services.my-service.loadBalancer.healthCheck.send=PING"
+  - "baqup.tcp.services.my-service.loadBalancer.healthCheck.expect=PONG"
+  - "baqup.tcp.services.my-service.loadBalancer.healthCheck.interval=10s"
+  - "baqup.tcp.services.my-service.loadBalancer.healthCheck.timeout=3s"
+  - "baqup.tcp.services.my-service.loadBalancer.serversTransport=customTransport@file"
 ```
 
 ```json tab="Tags"
 {
   "Tags": [
-    "traefik.tcp.services.my-service.loadBalancer.servers[0].address=xx.xx.xx.xx:xx",
-    "traefik.tcp.services.my-service.loadBalancer.servers[1].address=xx.xx.xx.xx:xx",
-    "traefik.tcp.services.my-service.loadBalancer.healthCheck.send=PING",
-    "traefik.tcp.services.my-service.loadBalancer.healthCheck.expect=PONG",
-    "traefik.tcp.services.my-service.loadBalancer.healthCheck.interval=10s",
-    "traefik.tcp.services.my-service.loadBalancer.healthCheck.timeout=3s",
-    "traefik.tcp.services.my-service.loadBalancer.serversTransport=customTransport@file"
+    "baqup.tcp.services.my-service.loadBalancer.servers[0].address=xx.xx.xx.xx:xx",
+    "baqup.tcp.services.my-service.loadBalancer.servers[1].address=xx.xx.xx.xx:xx",
+    "baqup.tcp.services.my-service.loadBalancer.healthCheck.send=PING",
+    "baqup.tcp.services.my-service.loadBalancer.healthCheck.expect=PONG",
+    "baqup.tcp.services.my-service.loadBalancer.healthCheck.interval=10s",
+    "baqup.tcp.services.my-service.loadBalancer.healthCheck.timeout=3s",
+    "baqup.tcp.services.my-service.loadBalancer.serversTransport=customTransport@file"
   ]
 }
 ```
@@ -80,13 +80,13 @@ labels:
 | <a id="opt-servers" href="#opt-servers" title="#opt-servers">`servers`</a> |  Servers declare a single instance of your program.  | "" |
 | <a id="opt-servers-address" href="#opt-servers-address" title="#opt-servers-address">`servers.address`</a> |   The address option (IP:Port) point to a specific instance. | "" |
 | <a id="opt-servers-tls" href="#opt-servers-tls" title="#opt-servers-tls">`servers.tls`</a> | The `tls` option determines whether to use TLS when dialing with the backend. | false |
-| <a id="opt-serversTransport" href="#opt-serversTransport" title="#opt-serversTransport">`serversTransport`</a> | `serversTransport` allows to reference a TCP [ServersTransport](./serverstransport.md) configuration for the communication between Traefik and your servers. If no serversTransport is specified, the default@internal will be used. |  "" |
+| <a id="opt-serversTransport" href="#opt-serversTransport" title="#opt-serversTransport">`serversTransport`</a> | `serversTransport` allows to reference a TCP [ServersTransport](./serverstransport.md) configuration for the communication between Baqup and your servers. If no serversTransport is specified, the default@internal will be used. |  "" |
 | <a id="opt-healthCheck" href="#opt-healthCheck" title="#opt-healthCheck">`healthCheck`</a> | Configures health check to remove unhealthy servers from the load balancing rotation. See [HealthCheck](#health-check) for details. | | No |
 
 ### Health Check
 
 The `healthCheck` option configures health check to remove unhealthy servers from the load balancing rotation.
-Traefik will consider TCP servers healthy as long as the connection to the target server succeeds.
+Baqup will consider TCP servers healthy as long as the connection to the target server succeeds.
 For advanced health checks, you can configure TCP payload exchange by specifying `send` and `expect` parameters.
 
 To propagate status changes (e.g. all servers of this service are down) upwards, HealthCheck must also be enabled on the parent(s) of this service.
@@ -100,7 +100,7 @@ Below are the available options for the health check mechanism:
 | <a id="opt-expect" href="#opt-expect" title="#opt-expect">`expect`</a> | Defines the expected response payload from the server. | "" | No |
 | <a id="opt-interval" href="#opt-interval" title="#opt-interval">`interval`</a> | Defines the frequency of the health check calls for healthy targets. | 30s | No |
 | <a id="opt-unhealthyInterval" href="#opt-unhealthyInterval" title="#opt-unhealthyInterval">`unhealthyInterval`</a> | Defines the frequency of the health check calls for unhealthy targets. When not defined, it defaults to the `interval` value. | 30s | No |
-| <a id="opt-timeout" href="#opt-timeout" title="#opt-timeout">`timeout`</a> | Defines the maximum duration Traefik will wait for a health check connection before considering the server unhealthy. | 5s | No |
+| <a id="opt-timeout" href="#opt-timeout" title="#opt-timeout">`timeout`</a> | Defines the maximum duration Baqup will wait for a health check connection before considering the server unhealthy. | 5s | No |
 
 ## Weighted Round Robin
 

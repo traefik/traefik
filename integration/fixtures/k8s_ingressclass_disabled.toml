@@ -14,5 +14,5 @@
     address = ":8000"
 
 [providers.kubernetesIngress]
-  ingressClass = "traefik-keep"
+  ingressClass = "baqup-keep"
   disableIngressClassLookup = true

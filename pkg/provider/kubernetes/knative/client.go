@@ -7,8 +7,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/baqupio/baqup/v3/pkg/provider/kubernetes/k8s"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"

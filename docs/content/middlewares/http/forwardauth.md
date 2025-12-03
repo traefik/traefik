@@ -1,6 +1,6 @@
 ---
-title: "Traefik ForwardAuth Documentation"
-description: "In Traefik Proxy, the HTTP ForwardAuth middleware delegates authentication to an external Service. Read the technical documentation."
+title: "Baqup ForwardAuth Documentation"
+description: "In Baqup Proxy, the HTTP ForwardAuth middleware delegates authentication to an external Service. Read the technical documentation."
 ---
 
 # ForwardAuth
@@ -17,12 +17,12 @@ Otherwise, the response from the authentication server is returned.
 ```yaml tab="Docker & Swarm"
 # Forward authentication to example.com
 labels:
-  - "traefik.http.middlewares.test-auth.forwardauth.address=https://example.com/auth"
+  - "baqup.http.middlewares.test-auth.forwardauth.address=https://example.com/auth"
 ```
 
 ```yaml tab="Kubernetes"
 # Forward authentication to example.com
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-auth
@@ -33,7 +33,7 @@ spec:
 
 ```yaml tab="Consul Catalog"
 # Forward authentication to example.com
-- "traefik.http.middlewares.test-auth.forwardauth.address=https://example.com/auth"
+- "baqup.http.middlewares.test-auth.forwardauth.address=https://example.com/auth"
 ```
 
 ```yaml tab="File (YAML)"
@@ -72,11 +72,11 @@ The `address` option defines the authentication server address.
 
 ```yaml tab="Docker & Swarm"
 labels:
-  - "traefik.http.middlewares.test-auth.forwardauth.address=https://example.com/auth"
+  - "baqup.http.middlewares.test-auth.forwardauth.address=https://example.com/auth"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-auth
@@ -86,7 +86,7 @@ spec:
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.test-auth.forwardauth.address=https://example.com/auth"
+- "baqup.http.middlewares.test-auth.forwardauth.address=https://example.com/auth"
 ```
 
 ```yaml tab="File (YAML)"
@@ -109,11 +109,11 @@ Set the `trustForwardHeader` option to `true` to trust all `X-Forwarded-*` heade
 
 ```yaml tab="Docker & Swarm"
 labels:
-  - "traefik.http.middlewares.test-auth.forwardauth.trustForwardHeader=true"
+  - "baqup.http.middlewares.test-auth.forwardauth.trustForwardHeader=true"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-auth
@@ -124,7 +124,7 @@ spec:
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.test-auth.forwardauth.trustForwardHeader=true"
+- "baqup.http.middlewares.test-auth.forwardauth.trustForwardHeader=true"
 ```
 
 ```yaml tab="File (YAML)"
@@ -150,11 +150,11 @@ forwarded request, replacing any existing conflicting headers.
 
 ```yaml tab="Docker & Swarm"
 labels:
-  - "traefik.http.middlewares.test-auth.forwardauth.authResponseHeaders=X-Auth-User, X-Secret"
+  - "baqup.http.middlewares.test-auth.forwardauth.authResponseHeaders=X-Auth-User, X-Secret"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-auth
@@ -167,7 +167,7 @@ spec:
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.test-auth.forwardauth.authResponseHeaders=X-Auth-User, X-Secret"
+- "baqup.http.middlewares.test-auth.forwardauth.authResponseHeaders=X-Auth-User, X-Secret"
 ```
 
 ```yaml tab="File (YAML)"
@@ -197,11 +197,11 @@ The start of string (`^`) and end of string (`$`) anchors should be used to ensu
 
 ```yaml tab="Docker & Swarm"
 labels:
-  - "traefik.http.middlewares.test-auth.forwardauth.authResponseHeadersRegex=^X-"
+  - "baqup.http.middlewares.test-auth.forwardauth.authResponseHeadersRegex=^X-"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-auth
@@ -212,7 +212,7 @@ spec:
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.test-auth.forwardauth.authResponseHeadersRegex=^X-"
+- "baqup.http.middlewares.test-auth.forwardauth.authResponseHeadersRegex=^X-"
 ```
 
 ```yaml tab="File (YAML)"
@@ -245,11 +245,11 @@ If not set or empty then all request headers are passed.
 
 ```yaml tab="Docker & Swarm"
 labels:
-  - "traefik.http.middlewares.test-auth.forwardauth.authRequestHeaders=Accept,X-CustomHeader"
+  - "baqup.http.middlewares.test-auth.forwardauth.authRequestHeaders=Accept,X-CustomHeader"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-auth
@@ -262,7 +262,7 @@ spec:
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.test-auth.forwardauth.authRequestHeaders=Accept,X-CustomHeader"
+- "baqup.http.middlewares.test-auth.forwardauth.authRequestHeaders=Accept,X-CustomHeader"
 ```
 
 ```yaml tab="File (YAML)"
@@ -294,11 +294,11 @@ replacing any existing conflicting cookie from the forwarded response.
 
 ```yaml tab="Docker"
 labels:
-  - "traefik.http.middlewares.test-auth.forwardauth.addAuthCookiesToResponse=Session-Cookie,State-Cookie"
+  - "baqup.http.middlewares.test-auth.forwardauth.addAuthCookiesToResponse=Session-Cookie,State-Cookie"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-auth
@@ -311,7 +311,7 @@ spec:
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.test-auth.forwardauth.addAuthCookiesToResponse=Session-Cookie,State-Cookie"
+- "baqup.http.middlewares.test-auth.forwardauth.addAuthCookiesToResponse=Session-Cookie,State-Cookie"
 ```
 
 ```yaml tab="File (YAML)"
@@ -340,15 +340,15 @@ Set the `forwardBody` option to `true` to send Body.
 
 !!! info
 
-    As body is read inside Traefik before forwarding, this breaks streaming.
+    As body is read inside Baqup before forwarding, this breaks streaming.
 
 ```yaml tab="Docker & Swarm"
 labels:
-  - "traefik.http.middlewares.test-auth.forwardauth.forwardBody=true"
+  - "baqup.http.middlewares.test-auth.forwardauth.forwardBody=true"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-auth
@@ -359,7 +359,7 @@ spec:
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.test-auth.forwardauth.forwardBody=true"
+- "baqup.http.middlewares.test-auth.forwardauth.forwardBody=true"
 ```
 
 ```yaml tab="File (YAML)"
@@ -388,11 +388,11 @@ Default is `-1`, which means no limit.
 
 ```yaml tab="Docker & Swarm"
 labels:
-  - "traefik.http.middlewares.test-auth.forwardauth.maxBodySize=1000"
+  - "baqup.http.middlewares.test-auth.forwardauth.maxBodySize=1000"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-auth
@@ -404,7 +404,7 @@ spec:
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.test-auth.forwardauth.maxBodySize=1000"
+- "baqup.http.middlewares.test-auth.forwardauth.maxBodySize=1000"
 ```
 
 ```yaml tab="File (YAML)"
@@ -439,11 +439,11 @@ it defaults to the system bundle.
 
 ```yaml tab="Docker & Swarm"
 labels:
-  - "traefik.http.middlewares.test-auth.forwardauth.tls.ca=path/to/local.crt"
+  - "baqup.http.middlewares.test-auth.forwardauth.tls.ca=path/to/local.crt"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-auth
@@ -466,7 +466,7 @@ data:
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.test-auth.forwardauth.tls.ca=path/to/local.crt"
+- "baqup.http.middlewares.test-auth.forwardauth.tls.ca=path/to/local.crt"
 ```
 
 ```yaml tab="File (YAML)"
@@ -496,12 +496,12 @@ When using this option, setting the `key` option is required.
 
 ```yaml tab="Docker & Swarm"
 labels:
-  - "traefik.http.middlewares.test-auth.forwardauth.tls.cert=path/to/foo.cert"
-  - "traefik.http.middlewares.test-auth.forwardauth.tls.key=path/to/foo.key"
+  - "baqup.http.middlewares.test-auth.forwardauth.tls.cert=path/to/foo.cert"
+  - "baqup.http.middlewares.test-auth.forwardauth.tls.key=path/to/foo.key"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-auth
@@ -524,8 +524,8 @@ data:
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.test-auth.forwardauth.tls.cert=path/to/foo.cert"
-- "traefik.http.middlewares.test-auth.forwardauth.tls.key=path/to/foo.key"
+- "baqup.http.middlewares.test-auth.forwardauth.tls.cert=path/to/foo.cert"
+- "baqup.http.middlewares.test-auth.forwardauth.tls.key=path/to/foo.key"
 ```
 
 ```yaml tab="File (YAML)"
@@ -561,12 +561,12 @@ When using this option, setting the `cert` option is required.
 
 ```yaml tab="Docker & Swarm"
 labels:
-  - "traefik.http.middlewares.test-auth.forwardauth.tls.cert=path/to/foo.cert"
-  - "traefik.http.middlewares.test-auth.forwardauth.tls.key=path/to/foo.key"
+  - "baqup.http.middlewares.test-auth.forwardauth.tls.cert=path/to/foo.cert"
+  - "baqup.http.middlewares.test-auth.forwardauth.tls.key=path/to/foo.key"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-auth
@@ -589,8 +589,8 @@ data:
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.test-auth.forwardauth.tls.cert=path/to/foo.cert"
-- "traefik.http.middlewares.test-auth.forwardauth.tls.key=path/to/foo.key"
+- "baqup.http.middlewares.test-auth.forwardauth.tls.cert=path/to/foo.cert"
+- "baqup.http.middlewares.test-auth.forwardauth.tls.key=path/to/foo.key"
 ```
 
 ```yaml tab="File (YAML)"
@@ -625,11 +625,11 @@ If `insecureSkipVerify` is `true`, the TLS connection to the authentication serv
 
 ```yaml tab="Docker & Swarm"
 labels:
-  - "traefik.http.middlewares.test-auth.forwardauth.tls.insecureSkipVerify=true"
+  - "baqup.http.middlewares.test-auth.forwardauth.tls.insecureSkipVerify=true"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-auth
@@ -641,7 +641,7 @@ spec:
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.test-auth.forwardauth.tls.InsecureSkipVerify=true"
+- "baqup.http.middlewares.test-auth.forwardauth.tls.InsecureSkipVerify=true"
 ```
 
 ```yaml tab="File (YAML)"
@@ -670,11 +670,11 @@ You can define a header field to store the authenticated user using the `headerF
 
 ```yaml tab="Docker & Swarm"
 labels:
-  - "traefik.http.middlewares.test-auth.forwardauth.headerField=X-WebAuth-User"
+  - "baqup.http.middlewares.test-auth.forwardauth.headerField=X-WebAuth-User"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-auth
@@ -685,7 +685,7 @@ spec:
 ```
 
 ```json tab="Consul Catalog"
-- "traefik.http.middlewares.test-auth.forwardauth.headerField=X-WebAuth-User"
+- "baqup.http.middlewares.test-auth.forwardauth.headerField=X-WebAuth-User"
 ```
 
 ```yaml tab="File (YAML)"
@@ -711,11 +711,11 @@ _Optional, Default=false_
 
 ```yaml tab="Docker & Swarm"
 labels:
-  - "traefik.http.middlewares.test-auth.forwardauth.preserveLocationHeader=true"
+  - "baqup.http.middlewares.test-auth.forwardauth.preserveLocationHeader=true"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-auth
@@ -726,7 +726,7 @@ spec:
 ```
 
 ```json tab="Consul Catalog"
-- "traefik.http.middlewares.test-auth.forwardauth.preserveLocationHeader=true"
+- "baqup.http.middlewares.test-auth.forwardauth.preserveLocationHeader=true"
 ```
 
 ```yaml tab="File (YAML)"
@@ -752,11 +752,11 @@ _Optional, Default=false_
 
 ```yaml tab="Docker & Swarm"
 labels:
-  - "traefik.http.middlewares.test-auth.forwardauth.preserveRequestMethod=true"
+  - "baqup.http.middlewares.test-auth.forwardauth.preserveRequestMethod=true"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-auth
@@ -767,7 +767,7 @@ spec:
 ```
 
 ```json tab="Consul Catalog"
-- "traefik.http.middlewares.test-auth.forwardauth.preserveRequestMethod=true"
+- "baqup.http.middlewares.test-auth.forwardauth.preserveRequestMethod=true"
 ```
 
 ```yaml tab="File (YAML)"
@@ -785,4 +785,4 @@ http:
   preserveRequestMethod = true
 ```
 
-{!traefik-for-business-applications.md!}
+{!baqup-for-business-applications.md!}

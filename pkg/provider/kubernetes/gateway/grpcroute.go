@@ -8,9 +8,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/baqupio/baqup/v3/pkg/config/dynamic"
+	"github.com/baqupio/baqup/v3/pkg/provider"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/provider"
 	"google.golang.org/grpc/codes"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -131,7 +131,7 @@ func (p *Provider) loadGRPCRoute(ctx context.Context, listener gatewayListener, 
 			rule, priority := buildGRPCMatchRule(hostnames, match)
 
 			router := dynamic.Router{
-				// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
+				// "default" stands for the default rule syntax in Baqup v3, i.e. the v3 syntax.
 				RuleSyntax:  "default",
 				Rule:        rule,
 				Priority:    priority,

@@ -1,12 +1,12 @@
 ---
 title: 'OAuth 2.0 Token Introspection Authentication'
-description: 'Traefik Hub API Gateway - OAuth 2.0 Token Introspection allows to retrieve metadata about an access token from an OAuth 2.0 server.'
+description: 'Baqup Hub API Gateway - OAuth 2.0 Token Introspection allows to retrieve metadata about an access token from an OAuth 2.0 server.'
 ---
 
-!!! info "Traefik Hub Feature"
-    This middleware is available exclusively in [Traefik Hub](https://traefik.io/traefik-hub/). Learn more about [Traefik Hub's advanced features](https://doc.traefik.io/traefik-hub/api-gateway/intro).
+!!! info "Baqup Hub Feature"
+    This middleware is available exclusively in [Baqup Hub](https://baqup.io/baqup-hub/). Learn more about [Baqup Hub's advanced features](https://doc.baqup.io/baqup-hub/api-gateway/intro).
 
-OAuth 2.0 Token Introspection allows Traefik Hub to retrieve metadata about an access token from an OAuth 2.0 server with the Token Introspection extension.
+OAuth 2.0 Token Introspection allows Baqup Hub to retrieve metadata about an access token from an OAuth 2.0 server with the Token Introspection extension.
 
 The metadata can be used to restrict the access to applications. For more information please refer to the [RFC](https://tools.ietf.org/html/rfc7662).
 
@@ -15,7 +15,7 @@ The metadata can be used to restrict the access to applications. For more inform
 ## Configuration Example
 
 ```yaml tab="Middleware OAuth Token Introspection"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-oauth-intro
@@ -149,7 +149,7 @@ urn:k8s:secret:[name]:[valueKey]
 ```
 
 ```yaml tab="Middleware JWT"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-oauth-intro
@@ -206,4 +206,4 @@ stringData:
     -----END EC PRIVATE KEY-----
 ```
 
-{!traefik-for-business-applications.md!}
+{!baqup-for-business-applications.md!}

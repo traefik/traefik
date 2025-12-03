@@ -18,20 +18,20 @@ import (
 	"strings"
 	"time"
 
+	"github.com/baqupio/baqup/v3/pkg/config/dynamic"
+	"github.com/baqupio/baqup/v3/pkg/job"
+	"github.com/baqupio/baqup/v3/pkg/observability/logs"
+	"github.com/baqupio/baqup/v3/pkg/provider"
+	baqupv1alpha1 "github.com/baqupio/baqup/v3/pkg/provider/kubernetes/crd/baqupio/v1alpha1"
+	"github.com/baqupio/baqup/v3/pkg/provider/kubernetes/gateway"
+	"github.com/baqupio/baqup/v3/pkg/provider/kubernetes/k8s"
+	"github.com/baqupio/baqup/v3/pkg/safe"
+	"github.com/baqupio/baqup/v3/pkg/tls"
+	"github.com/baqupio/baqup/v3/pkg/types"
 	"github.com/cenkalti/backoff/v4"
 	"github.com/mitchellh/hashstructure"
 	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/job"
-	"github.com/traefik/traefik/v3/pkg/observability/logs"
-	"github.com/traefik/traefik/v3/pkg/provider"
-	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
-	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/gateway"
-	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
-	"github.com/traefik/traefik/v3/pkg/safe"
-	"github.com/traefik/traefik/v3/pkg/tls"
-	"github.com/traefik/traefik/v3/pkg/types"
 	corev1 "k8s.io/api/core/v1"
 	apiextensionv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -40,7 +40,7 @@ import (
 
 const (
 	annotationKubernetesIngressClass = "kubernetes.io/ingress.class"
-	traefikDefaultIngressClass       = "traefik"
+	baqupDefaultIngressClass         = "baqup"
 )
 
 const (
@@ -72,7 +72,7 @@ func (p *Provider) SetRouterTransform(routerTransform k8s.RouterTransform) {
 	p.routerTransform = routerTransform
 }
 
-func (p *Provider) applyRouterTransform(ctx context.Context, rt *dynamic.Router, ingress *traefikv1alpha1.IngressRoute) {
+func (p *Provider) applyRouterTransform(ctx context.Context, rt *dynamic.Router, ingress *baqupv1alpha1.IngressRoute) {
 	if p.routerTransform == nil {
 		return
 	}
@@ -122,7 +122,7 @@ func (p *Provider) Init() error {
 	return nil
 }
 
-// Provide allows the k8s provider to provide configurations to traefik
+// Provide allows the k8s provider to provide configurations to baqup
 // using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	logger := log.With().Str(logs.ProviderName, providerName).Logger()
@@ -330,11 +330,11 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 		allowEmptyServices:        p.AllowEmptyServices,
 	}
 
-	for _, service := range client.GetTraefikServices() {
-		err := cb.buildTraefikService(ctx, service, conf.HTTP.Services)
+	for _, service := range client.GetBaqupServices() {
+		err := cb.buildBaqupService(ctx, service, conf.HTTP.Services)
 		if err != nil {
 			log.Ctx(ctx).Error().Str(logs.ServiceName, service.Name).Err(err).
-				Msg("Error while building TraefikService")
+				Msg("Error while building BaqupService")
 			continue
 		}
 	}
@@ -704,7 +704,7 @@ func getSecretValue(c Client, ns, urn string) (string, error) {
 	return string(secretValue), nil
 }
 
-func createCircuitBreakerMiddleware(circuitBreaker *traefikv1alpha1.CircuitBreaker) (*dynamic.CircuitBreaker, error) {
+func createCircuitBreakerMiddleware(circuitBreaker *baqupv1alpha1.CircuitBreaker) (*dynamic.CircuitBreaker, error) {
 	if circuitBreaker == nil {
 		return nil, nil
 	}
@@ -737,7 +737,7 @@ func createCircuitBreakerMiddleware(circuitBreaker *traefikv1alpha1.CircuitBreak
 	return cb, nil
 }
 
-func createCompressMiddleware(compress *traefikv1alpha1.Compress) *dynamic.Compress {
+func createCompressMiddleware(compress *baqupv1alpha1.Compress) *dynamic.Compress {
 	if compress == nil {
 		return nil
 	}
@@ -768,7 +768,7 @@ func createCompressMiddleware(compress *traefikv1alpha1.Compress) *dynamic.Compr
 	return c
 }
 
-func createRateLimitMiddleware(client Client, namespace string, rateLimit *traefikv1alpha1.RateLimit) (*dynamic.RateLimit, error) {
+func createRateLimitMiddleware(client Client, namespace string, rateLimit *baqupv1alpha1.RateLimit) (*dynamic.RateLimit, error) {
 	if rateLimit == nil {
 		return nil, nil
 	}
@@ -886,7 +886,7 @@ func loadRedisCredentials(namespace, secretName string, k8sClient Client) (strin
 	return string(username), string(password), nil
 }
 
-func createRetryMiddleware(retry *traefikv1alpha1.Retry) (*dynamic.Retry, error) {
+func createRetryMiddleware(retry *baqupv1alpha1.Retry) (*dynamic.Retry, error) {
 	if retry == nil {
 		return nil, nil
 	}
@@ -901,7 +901,7 @@ func createRetryMiddleware(retry *traefikv1alpha1.Retry) (*dynamic.Retry, error)
 	return r, nil
 }
 
-func (p *Provider) createErrorPageMiddleware(client Client, namespace string, errorPage *traefikv1alpha1.ErrorPage) (*dynamic.ErrorPage, *dynamic.Service, error) {
+func (p *Provider) createErrorPageMiddleware(client Client, namespace string, errorPage *baqupv1alpha1.ErrorPage) (*dynamic.ErrorPage, *dynamic.Service, error) {
 	if errorPage == nil {
 		return nil, nil, nil
 	}
@@ -928,7 +928,7 @@ func (p *Provider) createErrorPageMiddleware(client Client, namespace string, er
 }
 
 func (p *Provider) FillExtensionBuilderRegistry(registry gateway.ExtensionBuilderRegistry) {
-	registry.RegisterFilterFuncs(traefikv1alpha1.GroupName, "Middleware", func(name, namespace string) (string, *dynamic.Middleware, error) {
+	registry.RegisterFilterFuncs(baqupv1alpha1.GroupName, "Middleware", func(name, namespace string) (string, *dynamic.Middleware, error) {
 		if len(p.Namespaces) > 0 && !slices.Contains(p.Namespaces, namespace) {
 			return "", nil, fmt.Errorf("namespace %q is not allowed", namespace)
 		}
@@ -936,7 +936,7 @@ func (p *Provider) FillExtensionBuilderRegistry(registry gateway.ExtensionBuilde
 		return makeID(namespace, name) + providerNamespaceSeparator + providerName, nil, nil
 	})
 
-	registry.RegisterBackendFuncs(traefikv1alpha1.GroupName, "TraefikService", func(name, namespace string) (string, *dynamic.Service, error) {
+	registry.RegisterBackendFuncs(baqupv1alpha1.GroupName, "BaqupService", func(name, namespace string) (string, *dynamic.Service, error) {
 		if len(p.Namespaces) > 0 && !slices.Contains(p.Namespaces, namespace) {
 			return "", nil, fmt.Errorf("namespace %q is not allowed", namespace)
 		}
@@ -945,7 +945,7 @@ func (p *Provider) FillExtensionBuilderRegistry(registry gateway.ExtensionBuilde
 	})
 }
 
-func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *traefikv1alpha1.ForwardAuth) (*dynamic.ForwardAuth, error) {
+func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *baqupv1alpha1.ForwardAuth) (*dynamic.ForwardAuth, error) {
 	if auth == nil {
 		return nil, nil
 	}
@@ -1068,7 +1068,7 @@ func loadAuthTLSSecret(namespace, secretName string, k8sClient Client) (string, 
 	return getCertificateBlocks(secret, namespace, secretName)
 }
 
-func createBasicAuthMiddleware(client Client, namespace string, basicAuth *traefikv1alpha1.BasicAuth) (*dynamic.BasicAuth, error) {
+func createBasicAuthMiddleware(client Client, namespace string, basicAuth *baqupv1alpha1.BasicAuth) (*dynamic.BasicAuth, error) {
 	if basicAuth == nil {
 		return nil, nil
 	}
@@ -1115,7 +1115,7 @@ func createBasicAuthMiddleware(client Client, namespace string, basicAuth *traef
 	}, nil
 }
 
-func createDigestAuthMiddleware(client Client, namespace string, digestAuth *traefikv1alpha1.DigestAuth) (*dynamic.DigestAuth, error) {
+func createDigestAuthMiddleware(client Client, namespace string, digestAuth *baqupv1alpha1.DigestAuth) (*dynamic.DigestAuth, error) {
 	if digestAuth == nil {
 		return nil, nil
 	}
@@ -1190,7 +1190,7 @@ func loadAuthCredentials(secret *corev1.Secret) ([]string, error) {
 	return credentials, nil
 }
 
-func createChainMiddleware(ctx context.Context, namespace string, chain *traefikv1alpha1.Chain) *dynamic.Chain {
+func createChainMiddleware(ctx context.Context, namespace string, chain *baqupv1alpha1.Chain) *dynamic.Chain {
 	if chain == nil {
 		return nil
 	}
@@ -1362,7 +1362,7 @@ func buildTLSStores(ctx context.Context, client Client) (map[string]tls.Store, m
 }
 
 // buildCertificates loads TLSStore certificates from secrets and sets them into tlsConfigs.
-func buildCertificates(client Client, tlsStore, namespace string, certificates []traefikv1alpha1.Certificate, tlsConfigs map[string]*tls.CertAndStores) error {
+func buildCertificates(client Client, tlsStore, namespace string, certificates []baqupv1alpha1.Certificate, tlsConfigs map[string]*tls.CertAndStores) error {
 	for _, c := range certificates {
 		configKey := namespace + "/" + c.SecretName
 		if _, tlsExists := tlsConfigs[configKey]; !tlsExists {
@@ -1403,7 +1403,7 @@ func makeID(namespace, name string) string {
 
 func shouldProcessIngress(ingressClass, ingressClassAnnotation string) bool {
 	return ingressClass == ingressClassAnnotation ||
-		(len(ingressClass) == 0 && ingressClassAnnotation == traefikDefaultIngressClass)
+		(len(ingressClass) == 0 && ingressClassAnnotation == baqupDefaultIngressClass)
 }
 
 func getTLS(k8sClient Client, secretName, namespace string) (*tls.CertAndStores, error) {

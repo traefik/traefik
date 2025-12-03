@@ -1,6 +1,6 @@
 ---
-title: "Traefik GrpcWeb Documentation"
-description: "In Traefik Proxy's HTTP middleware, GrpcWeb converts a gRPC Web requests to HTTP/2 gRPC requests. Read the technical documentation."
+title: "Baqup GrpcWeb Documentation"
+description: "In Baqup Proxy's HTTP middleware, GrpcWeb converts a gRPC Web requests to HTTP/2 gRPC requests. Read the technical documentation."
 ---
 
 # GrpcWeb
@@ -12,18 +12,18 @@ The GrpcWeb middleware converts gRPC Web requests to HTTP/2 gRPC requests before
 
 !!! tip
 
-    Please note, that Traefik needs to communicate using gRPC with the backends (h2c or HTTP/2 over TLS).
+    Please note, that Baqup needs to communicate using gRPC with the backends (h2c or HTTP/2 over TLS).
     Check out the [gRPC](../../user-guides/grpc.md) user guide for more details.
 
 ## Configuration Examples
 
 ```yaml tab="Docker & Swarm"
 labels:
-  - "traefik.http.middlewares.test-grpcweb.grpcweb.allowOrigins=*"
+  - "baqup.http.middlewares.test-grpcweb.grpcweb.allowOrigins=*"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-grpcweb
@@ -34,7 +34,7 @@ spec:
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.test-grpcweb.grpcWeb.allowOrigins=*"
+- "baqup.http.middlewares.test-grpcweb.grpcWeb.allowOrigins=*"
 ```
 
 ```yaml tab="File (YAML)"

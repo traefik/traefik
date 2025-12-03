@@ -9,11 +9,11 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/baqupio/baqup/v3/pkg/config/static"
+	tcprouter "github.com/baqupio/baqup/v3/pkg/server/router/tcp"
 	"github.com/quic-go/quic-go"
 	"github.com/quic-go/quic-go/http3"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v3/pkg/config/static"
-	tcprouter "github.com/traefik/traefik/v3/pkg/server/router/tcp"
 )
 
 type http3server struct {

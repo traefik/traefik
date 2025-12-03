@@ -9,8 +9,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/baqupio/baqup/v3/pkg/types"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 var (
@@ -47,7 +47,7 @@ var (
 	}
 )
 
-// Certificates defines traefik certificates type
+// Certificates defines baqup certificates type
 // Certs and Keys could be either a file path, or the file content itself.
 type Certificates []Certificate
 

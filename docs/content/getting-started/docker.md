@@ -1,17 +1,17 @@
 ---
-title: "Docker and Traefik Quick Start"
-description: "Deploy Traefik in Docker and expose your first service"
+title: "Docker and Baqup Quick Start"
+description: "Deploy Baqup in Docker and expose your first service"
 ---
 
-# Getting Started with Docker and Traefik
+# Getting Started with Docker and Baqup
 
-Docker is a first-class citizen in Traefik, offering native support for Docker containers and services. 
-Whether you're using Docker Compose or running containers directly, Traefik provides a seamless experience for managing your Docker traffic.
+Docker is a first-class citizen in Baqup, offering native support for Docker containers and services. 
+Whether you're using Docker Compose or running containers directly, Baqup provides a seamless experience for managing your Docker traffic.
 
 This guide shows you how to:
 
-- Install Traefik using Docker
-- Expose the Traefik dashboard
+- Install Baqup using Docker
+- Expose the Baqup dashboard
 - Deploy a sample application
 - Configure basic routing
 
@@ -20,7 +20,7 @@ This guide shows you how to:
 - Docker 
 - Docker Compose (optional)
 
-## Install Traefik
+## Install Baqup
 
 ### Using Docker Compose
 
@@ -35,8 +35,8 @@ This configuration:
 ```yaml
 # docker-compose.yml
 services:
-  traefik:
-    image: traefik:v3.6
+  baqup:
+    image: baqup:v3.6
     command:
       - "--api.insecure=true"
       - "--providers.docker=true"
@@ -48,7 +48,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
 ```
 
-Start Traefik:
+Start Baqup:
 
 ```bash
 docker-compose up -d
@@ -56,7 +56,7 @@ docker-compose up -d
 
 ### Using Docker CLI
 
-Alternatively, you can run Traefik directly with Docker. 
+Alternatively, you can run Baqup directly with Docker. 
 This command:
 
 - Exposes ports 80 and 8080 for web traffic and dashboard access
@@ -66,7 +66,7 @@ This command:
 Create a configuration file:
 
 ```yaml
-# traefik.yml
+# baqup.yml
 api:
   insecure: true
 entryPoints:
@@ -76,15 +76,15 @@ providers:
   docker: {}
 ```
 
-Start Traefik:
+Start Baqup:
 
 ```bash
 docker run -d \
   -p 80:80 \
   -p 8080:8080 \
-  -v $PWD/traefik.yml:/etc/traefik/traefik.yml \
+  -v $PWD/baqup.yml:/etc/baqup/baqup.yml \
   -v /var/run/docker.sock:/var/run/docker.sock \
-  traefik:v3.6
+  baqup:v3.6
 ```
 
 ## Expose the Dashboard
@@ -96,7 +96,7 @@ You can access the dashboard at:
 
 [http://localhost:8080/dashboard/](http://localhost:8080/dashboard/)
 
-![Traefik Dashboard Screenshot](../assets/img/getting-started/traefik-dashboard.png)
+![Baqup Dashboard Screenshot](../assets/img/getting-started/baqup-dashboard.png)
 
 ## Deploy a Sample Application
 
@@ -106,9 +106,9 @@ Create a whoami service:
 # whoami.yml
 services:
   whoami:
-    image: traefik/whoami
+    image: baqup/whoami
     labels:
-      - "traefik.http.routers.whoami.rule=Host(`whoami.localhost`)"
+      - "baqup.http.routers.whoami.rule=Host(`whoami.localhost`)"
 ```
 
 Apply the configuration:
@@ -146,11 +146,11 @@ You can also open [http://whoami.localhost](http://whoami.localhost) in a browse
 
 ![whoami application Screenshot](../assets/img/getting-started/whoami-localhost.png)
 
-If you navigate to the **HTTP Routers** section of the Traefik dashboard, you can see that the `whoami.localhost` route is managed by the Traefik Docker provider:
+If you navigate to the **HTTP Routers** section of the Baqup dashboard, you can see that the `whoami.localhost` route is managed by the Baqup Docker provider:
 
-![Traefik Dashboard HTTP Routers Section Screenshot](../assets/img/getting-started/docker-router.png)
+![Baqup Dashboard HTTP Routers Section Screenshot](../assets/img/getting-started/docker-router.png)
 
-That's it! You've successfully deployed Traefik and configured routing in Docker.
+That's it! You've successfully deployed Baqup and configured routing in Docker.
 
 ## Next Steps
 
@@ -159,4 +159,4 @@ That's it! You've successfully deployed Traefik and configured routing in Docker
 - [Enable Metrics](../reference/install-configuration/observability/metrics.md)
 - [Learn more about Docker provider](../reference/install-configuration/providers/docker.md)
 
-{!traefik-for-business-applications.md!}
+{!baqup-for-business-applications.md!}

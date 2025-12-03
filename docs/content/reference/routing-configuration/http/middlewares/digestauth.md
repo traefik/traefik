@@ -1,6 +1,6 @@
 ---
-title: "Traefik DigestAuth Documentation"
-description: "Traefik Proxy's HTTP DigestAuth middleware restricts access to your services to known users. Read the technical documentation."
+title: "Baqup DigestAuth Documentation"
+description: "Baqup Proxy's HTTP DigestAuth middleware restricts access to your services to known users. Read the technical documentation."
 ---
 
 The `DigestAuth` middleware grants access to services to authorized users only.
@@ -14,8 +14,8 @@ http:
     test-auth:
       digestAuth:
         users:
-          - "test:traefik:a2688e031edb4be6a3797f3882655c05"
-          - "test2:traefik:518845800f9e2bfb1f1f740ec24f074e"
+          - "test:baqup:a2688e031edb4be6a3797f3882655c05"
+          - "test2:baqup:518845800f9e2bfb1f1f740ec24f074e"
 ```
 
 ```toml tab="Structured (TOML)"
@@ -23,15 +23,15 @@ http:
 [http.middlewares]
   [http.middlewares.test-auth.digestAuth]
     users = [
-      "test:traefik:a2688e031edb4be6a3797f3882655c05",
-      "test2:traefik:518845800f9e2bfb1f1f740ec24f074e",
+      "test:baqup:a2688e031edb4be6a3797f3882655c05",
+      "test2:baqup:518845800f9e2bfb1f1f740ec24f074e",
     ]
 ```
 
 ```yaml tab="Labels"
 # Declaring the user list
 labels:
-  - "traefik.http.middlewares.test-auth.digestauth.users=test:traefik:a2688e031edb4be6a3797f3882655c05,test2:traefik:518845800f9e2bfb1f1f740ec24f074e"
+  - "baqup.http.middlewares.test-auth.digestauth.users=test:baqup:a2688e031edb4be6a3797f3882655c05,test2:baqup:518845800f9e2bfb1f1f740ec24f074e"
 ```
 
 ```json tab="Tags"
@@ -39,14 +39,14 @@ labels:
 {
   //...
   "Tags" : [
-    "traefik.http.middlewares.test-auth.digestauth.users=test:traefik:a2688e031edb4be6a3797f3882655c05,test2:traefik:518845800f9e2bfb1f1f740ec24f074e"
+    "baqup.http.middlewares.test-auth.digestauth.users=test:baqup:a2688e031edb4be6a3797f3882655c05,test2:baqup:518845800f9e2bfb1f1f740ec24f074e"
   ]
 }
 ```
 
 ```yaml tab="Kubernetes"
 # Declaring the user list
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-auth
@@ -61,7 +61,7 @@ spec:
 |:-----------|:---------------------------------------------------------------------------------|:--------|:---------|
 | <a id="opt-users" href="#opt-users" title="#opt-users">`users`</a> | Array of authorized users. Each user must be declared using the `name:realm:encoded-password` format.<br /> The option `users` supports Kubernetes secrets.<br />(More information [here](#users--usersfile))| []  | No      |
 | <a id="opt-usersFile" href="#opt-usersFile" title="#opt-usersFile">`usersFile`</a> | Path to an external file that contains the authorized users for the middleware. <br />The file content is a list of `name:realm:encoded-password`. (More information [here](#users--usersfile)) | ""      | No      |
-| <a id="opt-realm" href="#opt-realm" title="#opt-realm">`realm`</a> | Allow customizing the realm for the authentication.| "traefik"      | No      |
+| <a id="opt-realm" href="#opt-realm" title="#opt-realm">`realm`</a> | Allow customizing the realm for the authentication.| "baqup"      | No      |
 | <a id="opt-headerField" href="#opt-headerField" title="#opt-headerField">`headerField`</a> | Allow defining a header field to store the authenticated user.| ""      | No      |
 | <a id="opt-removeHeader" href="#opt-removeHeader" title="#opt-removeHeader">`removeHeader`</a> | Allow removing the authorization header before forwarding the request to your service. | false      | No      |
 
@@ -82,4 +82,4 @@ On Kubernetes, you don’t use the `users` or `usersFile` fields. Instead, you r
 - `kubernetes.io/basic-auth secret`: This secret type contains two keys—`username` and `password`—but is generally suited for a smaller number of users. Please note that these keys are not hashed or encrypted in any way, and therefore is less secure than the other method.
 - Opaque secret with a users field: Here, the secret contains a single string field (often called `users`) where each line represents a user. This approach allows you to store multiple users in one secret.
 
-{!traefik-for-business-applications.md!}
+{!baqup-for-business-applications.md!}

@@ -1,9 +1,9 @@
 ---
-title: "Traefik Etcd Documentation"
-description: "Use etcd as a provider for configuration discovery in Traefik Proxy. Automate and store your configurations with Etcd. Read the technical documentation."
+title: "Baqup Etcd Documentation"
+description: "Use etcd as a provider for configuration discovery in Baqup Proxy. Automate and store your configurations with Etcd. Read the technical documentation."
 ---
 
-# Traefik & etcd
+# Baqup & etcd
 
 ## Configuration Example
 
@@ -28,7 +28,7 @@ providers:
 |:------|:----------------------------------------------------------|:---------------------|:---------|
 | <a id="opt-providers-providersThrottleDuration" href="#opt-providers-providersThrottleDuration" title="#opt-providers-providersThrottleDuration">`providers.providersThrottleDuration`</a> | Minimum amount of time to wait for, after a configuration reload, before taking into account any new configuration refresh event.<br />If multiple events occur within this time, only the most recent one is taken into account, and all others are discarded.<br />**This option cannot be set per provider, but the throttling algorithm applies to each of them independently.** | 2s  | No |
 | <a id="opt-providers-etcd-endpoints" href="#opt-providers-etcd-endpoints" title="#opt-providers-etcd-endpoints">`providers.etcd.endpoints`</a> | Defines the endpoint to access etcd. |  "127.0.0.1:2379"     | Yes   |
-| <a id="opt-providers-etcd-rootKey" href="#opt-providers-etcd-rootKey" title="#opt-providers-etcd-rootKey">`providers.etcd.rootKey`</a> | Defines the root key for the configuration. |  "traefik"   | Yes   |
+| <a id="opt-providers-etcd-rootKey" href="#opt-providers-etcd-rootKey" title="#opt-providers-etcd-rootKey">`providers.etcd.rootKey`</a> | Defines the root key for the configuration. |  "baqup"   | Yes   |
 | <a id="opt-providers-etcd-username" href="#opt-providers-etcd-username" title="#opt-providers-etcd-username">`providers.etcd.username`</a> | Defines a username with which to connect to etcd. |  ""   | No   |
 | <a id="opt-providers-etcd-password" href="#opt-providers-etcd-password" title="#opt-providers-etcd-password">`providers.etcd.password`</a> | Defines a password for connecting to etcd. |  ""    | No   |
 | <a id="opt-providers-etcd-tls" href="#opt-providers-etcd-tls" title="#opt-providers-etcd-tls">`providers.etcd.tls`</a> | Defines the TLS configuration used for the secure connection to etcd. |  -  | No   |

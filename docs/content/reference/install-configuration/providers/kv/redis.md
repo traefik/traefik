@@ -1,9 +1,9 @@
 ---
-title: "Traefik Redis Documentation"
-description: "For configuration discovery in Traefik Proxy, you can store your configurations in Redis. Read the technical documentation."
+title: "Baqup Redis Documentation"
+description: "For configuration discovery in Baqup Proxy, you can store your configurations in Redis. Read the technical documentation."
 ---
 
-# Traefik & Redis
+# Baqup & Redis
 
 ## Configuration Example
 
@@ -28,7 +28,7 @@ providers:
 |:------|:----------------------------------------------------------|:---------------------|:---------|
 | <a id="opt-providers-providersThrottleDuration" href="#opt-providers-providersThrottleDuration" title="#opt-providers-providersThrottleDuration">`providers.providersThrottleDuration`</a> | Minimum amount of time to wait for, after a configuration reload, before taking into account any new configuration refresh event.<br />If multiple events occur within this time, only the most recent one is taken into account, and all others are discarded.<br />**This option cannot be set per provider, but the throttling algorithm applies to each of them independently.** | 2s  | No |
 | <a id="opt-providers-redis-endpoints" href="#opt-providers-redis-endpoints" title="#opt-providers-redis-endpoints">`providers.redis.endpoints`</a> | Defines the endpoint to access Redis. |  "127.0.0.1:6379"    | Yes   |
-| <a id="opt-providers-redis-rootKey" href="#opt-providers-redis-rootKey" title="#opt-providers-redis-rootKey">`providers.redis.rootKey`</a> | Defines the root key for the configuration. |  "traefik"     | Yes   |
+| <a id="opt-providers-redis-rootKey" href="#opt-providers-redis-rootKey" title="#opt-providers-redis-rootKey">`providers.redis.rootKey`</a> | Defines the root key for the configuration. |  "baqup"     | Yes   |
 | <a id="opt-providers-redis-username" href="#opt-providers-redis-username" title="#opt-providers-redis-username">`providers.redis.username`</a> | Defines a username for connecting to Redis. |  ""    | No   |
 | <a id="opt-providers-redis-password" href="#opt-providers-redis-password" title="#opt-providers-redis-password">`providers.redis.password`</a> | Defines a password for connecting to Redis. |  ""    | No   |
 | <a id="opt-providers-redis-db" href="#opt-providers-redis-db" title="#opt-providers-redis-db">`providers.redis.db`</a> | Defines the database to be selected after connecting to the Redis. |  0    | No   |

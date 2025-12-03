@@ -4,7 +4,7 @@ kind: GatewayClass
 metadata:
   name: my-gateway-class
 spec:
-  controllerName: traefik.io/gateway-controller
+  controllerName: baqup.io/gateway-controller
 
 ---
 apiVersion: gateway.networking.k8s.io/v1
@@ -74,8 +74,8 @@ spec:
             value: /foo
 
       backendRefs:
-        - group: traefik.io
-          kind: TraefikService
+        - group: baqup.io
+          kind: BaqupService
           name: myservice@file
           weight: 1
           port: 80

@@ -1,6 +1,6 @@
 ---
-title: "Traefik StripPrefix Documentation"
-description: "In Traefik Proxy's HTTP middleware, StripPrefix removes prefixes from paths before forwarding requests. Read the technical documentation."
+title: "Baqup StripPrefix Documentation"
+description: "In Baqup Proxy's HTTP middleware, StripPrefix removes prefixes from paths before forwarding requests. Read the technical documentation."
 ---
 
 The `stripPrefix` middleware strips the matching path prefix and stores it in an `X-Forwarded-Prefix` header.
@@ -32,21 +32,21 @@ http:
 ```yaml tab="Labels"
 # Strip prefix /foobar and /fiibar
 labels:
-  - "traefik.http.middlewares.test-stripprefix.stripprefix.prefixes=/foobar,/fiibar"
+  - "baqup.http.middlewares.test-stripprefix.stripprefix.prefixes=/foobar,/fiibar"
 ```
 
 ```json tab="Tags"
 // Strip prefix /foobar and /fiibar
 {
   "Tags" : [
-    "traefik.http.middlewares.test-stripprefix.stripprefix.prefixes=/foobar,/fiibar"
+    "baqup.http.middlewares.test-stripprefix.stripprefix.prefixes=/foobar,/fiibar"
   ]
 }
 ```
 
 ```yaml tab="Kubernetes"
 # Strip prefix /foobar and /fiibar
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-stripprefix
@@ -63,4 +63,4 @@ spec:
 |:-----------------------------|:--------------------------------------------------------------|:--------|:---------|
 | <a id="opt-prefixes" href="#opt-prefixes" title="#opt-prefixes">`prefixes`</a> | List of prefixes to strip from the request URL.<br />If your backend is serving assets (for example, images or JavaScript files), it can use the `X-Forwarded-Prefix` header to construct relative URLs. | [] | No |
 
-{!traefik-for-business-applications.md!}
+{!baqup-for-business-applications.md!}

@@ -1,17 +1,17 @@
 ---
-title: "Traefik Knative Documentation"
-description: "Learn how to use the Knative as a provider for configuration discovery in Traefik Proxy. Read the technical documentation."
+title: "Baqup Knative Documentation"
+description: "Learn how to use the Knative as a provider for configuration discovery in Baqup Proxy. Read the technical documentation."
 ---
 
-# Traefik & Knative
+# Baqup & Knative
 
-The Traefik Knative provider integrates with Knative Serving to provide advanced traffic management and routing capabilities for serverless applications.
+The Baqup Knative provider integrates with Knative Serving to provide advanced traffic management and routing capabilities for serverless applications.
 
 [Knative](https://knative.dev) is a Kubernetes-based platform that enables serverless workloads with features like scale-to-zero, 
 automatic scaling, and revision management.
 
-The provider watches Knative `Ingress` resources and automatically configures Traefik routing rules,
-enabling seamless integration between Traefik's networking capabilities and Knative's serverless platform.
+The provider watches Knative `Ingress` resources and automatically configures Baqup routing rules,
+enabling seamless integration between Baqup's networking capabilities and Knative's serverless platform.
 
 ## Requirements
 
@@ -29,13 +29,13 @@ enabling seamless integration between Traefik's networking capabilities and Knat
     kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.19.0/serving-core.yaml
     ```
 
-3. Update the config-network configuration to use the Traefik ingress class.
+3. Update the config-network configuration to use the Baqup ingress class.
 
     ```bash
        kubectl patch configmap/config-network \
        -n knative-serving \
        --type merge \
-       -p '{"data":{"ingress.class":"traefik.ingress.networking.knative.dev"}}'
+       -p '{"data":{"ingress.class":"baqup.ingress.networking.knative.dev"}}'
     ```
 
 4. Add a custom domain to your Knative configuration (Optional).
@@ -47,10 +47,10 @@ enabling seamless integration between Traefik's networking capabilities and Knat
       -p='{"data":{"example.com":""}}'
     ```
 
-5. Install/update the Traefik [RBAC](../../../dynamic-configuration/kubernetes-knative-rbac.yml).
+5. Install/update the Baqup [RBAC](../../../dynamic-configuration/kubernetes-knative-rbac.yml).
 
     ```bash
-    kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.6/docs/content/reference/dynamic-configuration/kubernetes-knative-rbac.yml
+    kubectl apply -f https://raw.githubusercontent.com/baqup/baqup/v3.6/docs/content/reference/dynamic-configuration/kubernetes-knative-rbac.yml
     ```
 
 ## Configuration Example
@@ -92,7 +92,7 @@ The provider then watches for incoming Knative events and derives the correspond
 | <a id="opt-providers-knative-certauthfilepath" href="#opt-providers-knative-certauthfilepath" title="#opt-providers-knative-certauthfilepath">providers.knative.certauthfilepath</a> | Path to the certificate authority file.<br />Used for the Kubernetes client configuration.                                                                                                                                                                                                                                                                                           |         |
 | <a id="opt-providers-knative-namespaces" href="#opt-providers-knative-namespaces" title="#opt-providers-knative-namespaces">providers.knative.namespaces</a> | Array of namespaces to watch.<br />If left empty, watch all namespaces.                                                                                                                                                                                                                                                                                                              |         |
 | <a id="opt-providers-knative-labelselector" href="#opt-providers-knative-labelselector" title="#opt-providers-knative-labelselector">providers.knative.labelselector</a> | Allow filtering Knative Ingress objects using label selectors.                                                                                                                                                                                                                                                                                                                       |         |
-| <a id="opt-providers-knative-throttleduration" href="#opt-providers-knative-throttleduration" title="#opt-providers-knative-throttleduration">providers.knative.throttleduration</a> | Minimum amount of time to wait between two Kubernetes events before producing a new configuration.<br />This prevents a Kubernetes cluster that updates many times per second from continuously changing your Traefik configuration.<br />If empty, every event is caught.                                                                                                           | 0       |
+| <a id="opt-providers-knative-throttleduration" href="#opt-providers-knative-throttleduration" title="#opt-providers-knative-throttleduration">providers.knative.throttleduration</a> | Minimum amount of time to wait between two Kubernetes events before producing a new configuration.<br />This prevents a Kubernetes cluster that updates many times per second from continuously changing your Baqup configuration.<br />If empty, every event is caught.                                                                                                           | 0       |
 | <a id="opt-providers-knative-privateentrypoints" href="#opt-providers-knative-privateentrypoints" title="#opt-providers-knative-privateentrypoints">providers.knative.privateentrypoints</a> | Entrypoint names used to expose the Ingress privately. If empty local Ingresses are skipped.                                                                                                                                                                                                                                                                                         |         |
 | <a id="opt-providers-knative-privateservice" href="#opt-providers-knative-privateservice" title="#opt-providers-knative-privateservice">providers.knative.privateservice</a> | Kubernetes service used to expose the networking controller privately.                                                                                                                                                                                                                                                                                                               |         |
 | <a id="opt-providers-knative-privateservice-name" href="#opt-providers-knative-privateservice-name" title="#opt-providers-knative-privateservice-name">providers.knative.privateservice.name</a> | Name of the private Kubernetes service.                                                                                                                                                                                                                                                                                                                                              |         |
@@ -108,14 +108,14 @@ The provider then watches for incoming Knative events and derives the correspond
 
 The Kubernetes server endpoint URL.
 
-When deployed into Kubernetes, Traefik reads the environment variables `KUBERNETES_SERVICE_HOST` and `KUBERNETES_SERVICE_PORT` or `KUBECONFIG` to construct the endpoint.
+When deployed into Kubernetes, Baqup reads the environment variables `KUBERNETES_SERVICE_HOST` and `KUBERNETES_SERVICE_PORT` or `KUBECONFIG` to construct the endpoint.
 
 The access token is looked up in `/var/run/secrets/kubernetes.io/serviceaccount/token` and the SSL CA certificate in `/var/run/secrets/kubernetes.io/serviceaccount/ca.crt`.
 Both are mounted automatically when deployed inside Kubernetes.
 
 The endpoint may be specified to override the environment variable values inside a cluster.
 
-When the environment variables are not found, Traefik tries to connect to the Knative API server with an external-cluster client.
+When the environment variables are not found, Baqup tries to connect to the Knative API server with an external-cluster client.
 In this case, the endpoint is required.
 Specifically, it may be set to the URL used by `kubectl proxy` to connect to a Knative cluster using the granted authentication and authorization of the associated kubeconfig.
 
@@ -139,4 +139,4 @@ providers:
 
 See the dedicated section in [routing](../../../routing-configuration/kubernetes/knative.md).
 
-{!traefik-for-business-applications.md!}
+{!baqup-for-business-applications.md!}

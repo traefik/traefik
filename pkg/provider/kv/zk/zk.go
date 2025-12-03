@@ -3,9 +3,9 @@ package zk
 import (
 	"time"
 
+	"github.com/baqupio/baqup/v3/pkg/provider"
+	"github.com/baqupio/baqup/v3/pkg/provider/kv"
 	"github.com/kvtools/zookeeper"
-	"github.com/traefik/traefik/v3/pkg/provider"
-	"github.com/traefik/traefik/v3/pkg/provider/kv"
 )
 
 var _ provider.Provider = (*Provider)(nil)

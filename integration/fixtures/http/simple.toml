@@ -9,7 +9,7 @@
 [entryPoints]
   [entryPoints.web]
     address = ":8000"
-  [entryPoints.traefik]
+  [entryPoints.baqup]
     address = ":9090"
 
 [api]

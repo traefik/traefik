@@ -1,10 +1,10 @@
 ---
 title: 'LDAP Authentication'
-description: 'Traefik Hub API Gateway - The LDAP Authentication middleware secures your applications by delegating the authentication to an external LDAP server.'
+description: 'Baqup Hub API Gateway - The LDAP Authentication middleware secures your applications by delegating the authentication to an external LDAP server.'
 ---
 
-!!! info "Traefik Hub Feature"
-    This middleware is available exclusively in [Traefik Hub](https://traefik.io/traefik-hub/). Learn more about [Traefik Hub's advanced features](https://doc.traefik.io/traefik-hub/api-gateway/intro).
+!!! info "Baqup Hub Feature"
+    This middleware is available exclusively in [Baqup Hub](https://baqup.io/baqup-hub/). Learn more about [Baqup Hub's advanced features](https://doc.baqup.io/baqup-hub/api-gateway/intro).
 
 The LDAP Authentication middleware secures your applications by delegating the authentication to an external LDAP server.
 
@@ -15,7 +15,7 @@ The LDAP middleware will look for user credentials in the `Authorization` header
 ## Configuration Examples
 
 ```yaml tab="Basic usage"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-ldap-auth
@@ -28,7 +28,7 @@ spec:
 ```
 
 ```yaml tab="Basic usage with bind need"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-ldap-auth
@@ -43,7 +43,7 @@ spec:
 ```
 
 ```yaml tab="Enabling search, bind & WWW-Authenticate header"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-ldap-auth
@@ -57,7 +57,7 @@ spec:
       forwardUsername: true
       forwardUsernameHeader: Custom-Username-Header-Name
       wwwAuthenticateHeader: true
-      wwwAuthenticateHeaderRealm: traefikee
+      wwwAuthenticateHeaderRealm: baqupee
 ```
 
 ## Configuration Options
@@ -102,4 +102,4 @@ and a `bindPassword`, then the middleware runs in search mode. In this mode, a s
 issued to the LDAP server before trying to bind. If result of this search returns only 1 record,
 it tries to issue a bind request with this record, otherwise it aborts a `401 Unauthorized` status code.
 
-{!traefik-for-business-applications.md!}
+{!baqup-for-business-applications.md!}

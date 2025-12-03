@@ -6,10 +6,10 @@ import (
 	"testing"
 	"time"
 
+	otypes "github.com/baqupio/baqup/v3/pkg/observability/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stvp/go-udp-testing"
 	ptypes "github.com/traefik/paerser/types"
-	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 )
 
 func TestDatadog(t *testing.T) {

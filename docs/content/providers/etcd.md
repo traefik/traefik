@@ -1,14 +1,14 @@
 ---
-title: "Traefik Etcd Documentation"
-description: "Use Etcd as a provider for configuration discovery in Traefik Proxy. Automate and store your configurations with Etcd. Read the technical documentation."
+title: "Baqup Etcd Documentation"
+description: "Use Etcd as a provider for configuration discovery in Baqup Proxy. Automate and store your configurations with Etcd. Read the technical documentation."
 ---
 
-# Traefik & Etcd
+# Baqup & Etcd
 
 A Story of KV store & Containers
 {: .subtitle }
 
-Store your configuration in etcd and let Traefik do the rest!
+Store your configuration in etcd and let Baqup do the rest!
 
 ## Routing Configuration
 
@@ -40,23 +40,23 @@ providers:
 
 ### `rootKey`
 
-_Required, Default="traefik"_
+_Required, Default="baqup"_
 
 Defines the root key of the configuration.
 
 ```yaml tab="File (YAML)"
 providers:
   etcd:
-    rootKey: "traefik"
+    rootKey: "baqup"
 ```
 
 ```toml tab="File (TOML)"
 [providers.etcd]
-  rootKey = "traefik"
+  rootKey = "baqup"
 ```
 
 ```bash tab="CLI"
---providers.etcd.rootkey=traefik
+--providers.etcd.rootkey=baqup
 ```
 
 ### `username`

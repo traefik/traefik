@@ -1,12 +1,12 @@
 services:
   whoami1:
-    image: traefik/whoami
+    image: baqup/whoami
     labels:
-      traefik.enable: true
-      traefik.http.routers.router1.rule: PathPrefix(`/whoami`)
-      traefik.http.routers.router2.rule: PathPrefix(`/whoami2`)
+      baqup.enable: true
+      baqup.http.routers.router1.rule: PathPrefix(`/whoami`)
+      baqup.http.routers.router2.rule: PathPrefix(`/whoami2`)
 
   whoami2:
-    image: traefik/whoami
+    image: baqup/whoami
     labels:
-      traefik.enable: false
+      baqup.enable: false

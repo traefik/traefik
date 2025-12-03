@@ -12,16 +12,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/baqupio/baqup/v3/pkg/config/dynamic"
+	baquphttp "github.com/baqupio/baqup/v3/pkg/muxer/http"
+	otypes "github.com/baqupio/baqup/v3/pkg/observability/types"
+	"github.com/baqupio/baqup/v3/pkg/provider"
+	"github.com/baqupio/baqup/v3/pkg/provider/kubernetes/k8s"
+	"github.com/baqupio/baqup/v3/pkg/tls"
+	"github.com/baqupio/baqup/v3/pkg/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	traefikhttp "github.com/traefik/traefik/v3/pkg/muxer/http"
-	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
-	"github.com/traefik/traefik/v3/pkg/provider"
-	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
-	"github.com/traefik/traefik/v3/pkg/tls"
-	"github.com/traefik/traefik/v3/pkg/types"
 	corev1 "k8s.io/api/core/v1"
 	netv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -317,8 +317,8 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
-						"testing-traefik-tchouk-bar": {
-							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
+						"testing-baqup-tchouk-bar": {
+							Rule:    "Host(`baqup.tchouk`) && PathPrefix(`/bar`)",
 							Service: "testing-service1-80",
 						},
 					},
@@ -380,12 +380,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
-						"testing-traefik-tchouk-bar": {
-							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
+						"testing-baqup-tchouk-bar": {
+							Rule:    "Host(`baqup.tchouk`) && PathPrefix(`/bar`)",
 							Service: "testing-service1-80",
 						},
-						"testing-traefik-tchouk-foo": {
-							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/foo`)",
+						"testing-baqup-tchouk-foo": {
+							Rule:    "Host(`baqup.tchouk`) && PathPrefix(`/foo`)",
 							Service: "testing-service1-80",
 						},
 					},
@@ -417,12 +417,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
-						"testing-traefik-tchouk-bar": {
-							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
+						"testing-baqup-tchouk-bar": {
+							Rule:    "Host(`baqup.tchouk`) && PathPrefix(`/bar`)",
 							Service: "testing-service1-80",
 						},
-						"testing-traefik-courgette-carotte": {
-							Rule:    "Host(`traefik.courgette`) && PathPrefix(`/carotte`)",
+						"testing-baqup-courgette-carotte": {
+							Rule:    "Host(`baqup.courgette`) && PathPrefix(`/carotte`)",
 							Service: "testing-service1-80",
 						},
 					},
@@ -454,12 +454,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
-						"testing-traefik-tchouk-bar": {
-							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
+						"testing-baqup-tchouk-bar": {
+							Rule:    "Host(`baqup.tchouk`) && PathPrefix(`/bar`)",
 							Service: "testing-service1-80",
 						},
-						"testing-traefik-courgette-carotte": {
-							Rule:    "Host(`traefik.courgette`) && PathPrefix(`/carotte`)",
+						"testing-baqup-courgette-carotte": {
+							Rule:    "Host(`baqup.courgette`) && PathPrefix(`/carotte`)",
 							Service: "testing-service2-8082",
 						},
 					},
@@ -509,8 +509,8 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
-						"testing-traefik-tchouk-bar": {
-							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
+						"testing-baqup-tchouk-bar": {
+							Rule:    "Host(`baqup.tchouk`) && PathPrefix(`/bar`)",
 							Service: "testing-service1-80",
 						},
 					},
@@ -601,8 +601,8 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
-						"testing-traefik-tchouk-bar": {
-							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
+						"testing-baqup-tchouk-bar": {
+							Rule:    "Host(`baqup.tchouk`) && PathPrefix(`/bar`)",
 							Service: "testing-service1-80",
 						},
 					},
@@ -634,8 +634,8 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
-						"testing-traefik-tchouk-bar": {
-							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
+						"testing-baqup-tchouk-bar": {
+							Rule:    "Host(`baqup.tchouk`) && PathPrefix(`/bar`)",
 							Service: "testing-service1-tchouk",
 						},
 					},
@@ -667,8 +667,8 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
-						"testing-traefik-tchouk-bar": {
-							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
+						"testing-baqup-tchouk-bar": {
+							Rule:    "Host(`baqup.tchouk`) && PathPrefix(`/bar`)",
 							Service: "testing-service1-tchouk",
 						},
 					},
@@ -700,12 +700,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
-						"testing-traefik-tchouk-bar": {
-							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
+						"testing-baqup-tchouk-bar": {
+							Rule:    "Host(`baqup.tchouk`) && PathPrefix(`/bar`)",
 							Service: "testing-service1-tchouk",
 						},
-						"testing-traefik-tchouk-foo": {
-							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/foo`)",
+						"testing-baqup-tchouk-foo": {
+							Rule:    "Host(`baqup.tchouk`) && PathPrefix(`/foo`)",
 							Service: "testing-service1-carotte",
 						},
 					},
@@ -754,8 +754,8 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
-						"testing-traefik-tchouk-bar": {
-							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
+						"testing-baqup-tchouk-bar": {
+							Rule:    "Host(`baqup.tchouk`) && PathPrefix(`/bar`)",
 							Service: "testing-service1-tchouk",
 						},
 					},
@@ -787,12 +787,12 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
-						"testing-traefik-tchouk-bar": {
-							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
+						"testing-baqup-tchouk-bar": {
+							Rule:    "Host(`baqup.tchouk`) && PathPrefix(`/bar`)",
 							Service: "testing-service1-tchouk",
 						},
-						"toto-toto-traefik-tchouk-bar": {
-							Rule:    "Host(`toto.traefik.tchouk`) && PathPrefix(`/bar`)",
+						"toto-toto-baqup-tchouk-bar": {
+							Rule:    "Host(`toto.baqup.tchouk`) && PathPrefix(`/bar`)",
 							Service: "toto-service1-tchouk",
 						},
 					},
@@ -861,8 +861,8 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
-						"testing-traefik-port-port": {
-							Rule:    "Host(`traefik.port`) && PathPrefix(`/port`)",
+						"testing-baqup-port-port": {
+							Rule:    "Host(`baqup.port`) && PathPrefix(`/port`)",
 							Service: "testing-service1-8080",
 						},
 					},
@@ -1062,7 +1062,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc: "Ingress with default traefik ingressClass",
+			desc: "Ingress with default baqup ingressClass",
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -1092,7 +1092,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc: "Ingress without provider traefik ingressClass and unknown annotation",
+			desc: "Ingress without provider baqup ingressClass and unknown annotation",
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -1102,7 +1102,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc:         "Ingress with non matching provider traefik ingressClass and annotation",
+			desc:         "Ingress with non matching provider baqup ingressClass and annotation",
 			ingressClass: "tchouk",
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
@@ -1235,7 +1235,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 		},
 		{
 			desc:         "Ingress with ingressClasses filter",
-			ingressClass: "traefik-lb2",
+			ingressClass: "baqup-lb2",
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -1729,8 +1729,8 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
-						"testing-traefik-tchouk-bar": {
-							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
+						"testing-baqup-tchouk-bar": {
+							Rule:    "Host(`baqup.tchouk`) && PathPrefix(`/bar`)",
 							Service: "testing-service1-8080",
 						},
 					},
@@ -1744,7 +1744,7 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 								},
 								Servers: []dynamic.Server{
 									{
-										URL: "http://traefik.wtf:8080",
+										URL: "http://baqup.wtf:8080",
 									},
 								},
 							},
@@ -1843,8 +1843,8 @@ func TestLoadConfigurationFromIngressesWithNativeLB(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
-						"testing-traefik-tchouk-bar": {
-							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
+						"testing-baqup-tchouk-bar": {
+							Rule:    "Host(`baqup.tchouk`) && PathPrefix(`/bar`)",
 							Service: "testing-service1-8080",
 						},
 					},
@@ -1893,8 +1893,8 @@ func TestLoadConfigurationFromIngressesWithNodePortLB(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
-						"testing-traefik-tchouk-bar": {
-							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
+						"testing-baqup-tchouk-bar": {
+							Rule:    "Host(`baqup.tchouk`) && PathPrefix(`/bar`)",
 							Service: "testing-service1-8080",
 						},
 					},
@@ -2131,8 +2131,8 @@ func TestLoadConfigurationFromIngressesWithNativeLBByDefault(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
-						"testing-traefik-tchouk-bar": {
-							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
+						"testing-baqup-tchouk-bar": {
+							Rule:    "Host(`baqup.tchouk`) && PathPrefix(`/bar`)",
 							Service: "testing-service1-8080",
 						},
 					},
@@ -2159,8 +2159,8 @@ func TestLoadConfigurationFromIngressesWithNativeLBByDefault(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
-						"default-global-native-lb-traefik-tchouk-bar": {
-							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
+						"default-global-native-lb-baqup-tchouk-bar": {
+							Rule:    "Host(`baqup.tchouk`) && PathPrefix(`/bar`)",
 							Service: "default-service1-8080",
 						},
 					},
@@ -2187,8 +2187,8 @@ func TestLoadConfigurationFromIngressesWithNativeLBByDefault(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
 					Routers: map[string]*dynamic.Router{
-						"default-global-native-lb-traefik-tchouk-bar": {
-							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
+						"default-global-native-lb-baqup-tchouk-bar": {
+							Rule:    "Host(`baqup.tchouk`) && PathPrefix(`/bar`)",
 							Service: "default-native-disabled-svc-web",
 						},
 					},
@@ -2442,10 +2442,10 @@ func TestStrictPrefixMatchingRule(t *testing.T) {
 			t.Parallel()
 
 			handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-			parser, err := traefikhttp.NewSyntaxParser()
+			parser, err := baquphttp.NewSyntaxParser()
 			require.NoError(t, err)
 
-			muxer := traefikhttp.NewMuxer(parser)
+			muxer := baquphttp.NewMuxer(parser)
 
 			rule := buildStrictPrefixMatchingRule(tt.path)
 			err = muxer.AddRoute(rule, "", 0, handler)

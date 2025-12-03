@@ -13,8 +13,8 @@ import (
 	"strings"
 	"sync"
 
+	proxyhttputil "github.com/baqupio/baqup/v3/pkg/proxy/httputil"
 	"github.com/rs/zerolog/log"
-	proxyhttputil "github.com/traefik/traefik/v3/pkg/proxy/httputil"
 	"github.com/valyala/fasthttp"
 	"golang.org/x/net/http/httpguts"
 )
@@ -159,7 +159,7 @@ func (p *ReverseProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	if p.debug {
-		outReq.Header.Set("X-Traefik-Fast-Proxy", "enabled")
+		outReq.Header.Set("X-Baqup-Fast-Proxy", "enabled")
 	}
 
 	reqUpType := upgradeType(req.Header)

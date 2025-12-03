@@ -16,7 +16,7 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-// K8sAttributesDetector detects the metadata of the Traefik pod running in a Kubernetes cluster.
+// K8sAttributesDetector detects the metadata of the Baqup pod running in a Kubernetes cluster.
 // It reads the pod name from the hostname file and the namespace from the service account namespace file and queries the Kubernetes API to get the pod's UID.
 type K8sAttributesDetector struct{}
 
@@ -54,7 +54,7 @@ func (K8sAttributesDetector) Detect(ctx context.Context) (*resource.Resource, er
 
 	pod, err := client.CoreV1().Pods(podNamespace).Get(ctx, podName, metav1.GetOptions{})
 	if err != nil && (kerror.IsForbidden(err) || kerror.IsNotFound(err)) {
-		log.Error().Err(err).Msg("Unable to build K8s resource attributes for Traefik pod")
+		log.Error().Err(err).Msg("Unable to build K8s resource attributes for Baqup pod")
 		return resource.Empty(), nil
 	}
 	if err != nil {

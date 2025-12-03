@@ -1,19 +1,19 @@
 ---
-title: "Traefik Pull Requests Documentation"
-description: "Looking to contribute to Traefik Proxy? This guide will show you the guidelines for submitting a PR in our contributors guide repository."
+title: "Baqup Pull Requests Documentation"
+description: "Looking to contribute to Baqup Proxy? This guide will show you the guidelines for submitting a PR in our contributors guide repository."
 ---
 
 # Before You Submit a Pull Request
 
 This guide is for contributors who already have a pull request to submit.
 If you are looking for information on setting up your developer environment
-and creating code to contribute to Traefik Proxy or related projects,
-see the [development guide](https://docs.traefik.io/contributing/building-testing/).
+and creating code to contribute to Baqup Proxy or related projects,
+see the [development guide](https://docs.baqup.io/contributing/building-testing/).
 
-Looking for a way to contribute to Traefik Proxy?
-Check out this list of [Priority Issues](https://github.com/traefik/traefik/labels/contributor%2Fwanted),
-the [Good First Issue](https://github.com/traefik/traefik/labels/contributor%2Fgood-first-issue) list,
-or the list of [confirmed bugs](https://github.com/traefik/traefik/labels/kind%2Fbug%2Fconfirmed) waiting to be remedied.
+Looking for a way to contribute to Baqup Proxy?
+Check out this list of [Priority Issues](https://github.com/baqupio/baqup/labels/contributor%2Fwanted),
+the [Good First Issue](https://github.com/baqupio/baqup/labels/contributor%2Fgood-first-issue) list,
+or the list of [confirmed bugs](https://github.com/baqupio/baqup/labels/kind%2Fbug%2Fconfirmed) waiting to be remedied.
 
 ## How We Prioritize
 
@@ -30,7 +30,7 @@ PRs that take more time to address include:
 * Enhancements or Features without the `contributor/wanted` tag.
 
 If you have an idea for an enhancement or feature that you would like to build,
-[create an issue](https://github.com/traefik/traefik/issues/new/choose) for it first
+[create an issue](https://github.com/baqupio/baqup/issues/new/choose) for it first
 and tell us you are interested in writing the PR.
 If an issue already exists, definitely comment on it to tell us you are interested in creating a PR.
 
@@ -39,14 +39,14 @@ This will allow us to communicate directly and let you know if it is something w
 It also allows us to make sure you have all the information you need during the design phase
 so that it can be reviewed and merged quickly.
 
-Read more about the [Triage process](https://github.com/traefik/contributors-guide/blob/master/issue_triage.md) in the docs.
+Read more about the [Triage process](https://github.com/baqup/contributors-guide/blob/master/issue_triage.md) in the docs.
 
 ## The Pull Request Submit Process
 
 Merging a PR requires the following steps to be completed before it is merged automatically.
 
 * Make sure your pull request adheres to our best practices. These include:
-    * [Following project conventions](https://github.com/traefik/traefik/blob/master/docs/content/contributing/maintainers-guidelines.md); including using the PR Template.
+    * [Following project conventions](https://github.com/baqupio/baqup/blob/master/docs/content/contributing/maintainers-guidelines.md); including using the PR Template.
     * Make small pull requests.
     * Solve only one problem at a time.
     * Comment thoroughly.
@@ -61,7 +61,7 @@ Merging a PR requires the following steps to be completed before it is merged au
 
 ## Pull Request Review Cycle
 
-Learn about our [Triage Process](https://github.com/traefik/contributors-guide/blob/master/issue_triage.md),
+Learn about our [Triage Process](https://github.com/baqup/contributors-guide/blob/master/issue_triage.md),
 in short, it looks like this:
 
 * We triage every new PR or comment before entering it into the review process.
@@ -99,11 +99,11 @@ Your PR will not be reviewed until these are green on the CI.
 
 ## The Testing and Merge Workflow
 
-Pull Requests are managed by the bot [Myrmica Lobicornis](https://github.com/traefik/lobicornis).
+Pull Requests are managed by the bot [Myrmica Lobicornis](https://github.com/baqup/lobicornis).
 This bot is responsible for verifying GitHub Checks (CI, Tests, etc), mergability, and minimum reviews.
 In addition, it rebases or merges with the base PR branch if needed.
 It performs several other housekeeping items
-and you can read more about those on the [README](https://github.com/traefik/lobicornis) for Lobicornis.
+and you can read more about those on the [README](https://github.com/baqup/lobicornis) for Lobicornis.
 
 The maintainer giving the final LGTM must add the `status/3-needs-merge` label to trigger the merge bot.
 
@@ -127,8 +127,8 @@ This label can be used when:
 
 ## Why Was My Pull Request Closed?
 
-Traefik Proxy is made by the community for the community,
-as such the goal is to engage the community to make Traefik the best reverse proxy available.
+Baqup Proxy is made by the community for the community,
+as such the goal is to engage the community to make Baqup the best reverse proxy available.
 Part of this goal is maintaining a lean codebase and ensuring code velocity.
 Unfortunately, this means that sometimes we will not be able to merge a pull request.
 
@@ -141,7 +141,7 @@ Your pull request might be closed if:
 * Your PR's design conflicts with our existing codebase in such a way that merging is not an option
   and the work needed to make your pull request usable is too high.
     * To prevent this, make sure you created an issue first
-      and think about including Traefik Proxy maintainers in your design phase to minimize conflicts.
+      and think about including Baqup Proxy maintainers in your design phase to minimize conflicts.
 * Your PR is for an enhancement or feature that we will not use.
     * Please remember to create an issue for any pull request **before** you create a PR
       to ensure that your goal is something we can merge and that you have any design insight you might need from the team.
@@ -178,7 +178,7 @@ The most common failures to follow best practices are:
       If you can extract whole ideas from your pull request and send those as pull requests of their own,
       you should do that instead.
       It is better to have many pull requests addressing one thing than one pull request addressing many things.
-    * Traefik Proxy is a fast-moving codebase — lock in your changes ASAP with your small pull request,
+    * Baqup Proxy is a fast-moving codebase — lock in your changes ASAP with your small pull request,
       and make merges be someone else's problem.
       We want every pull request to be useful on its own,
       so use your best judgment on what should be a pull request vs. a commit.

@@ -5,7 +5,7 @@ package server
 import (
 	"net"
 
-	"github.com/traefik/traefik/v3/pkg/config/static"
+	"github.com/baqupio/baqup/v3/pkg/config/static"
 )
 
 // newListenConfig creates a new net.ListenConfig for the given configuration of

@@ -1,11 +1,11 @@
 ---
-title: 'Providing Dynamic Configuration to Traefik'
-description: 'Learn about the different methods for providing dynamic configuration to Traefik. Read the technical documentation.'
+title: 'Providing Dynamic Configuration to Baqup'
+description: 'Learn about the different methods for providing dynamic configuration to Baqup. Read the technical documentation.'
 ---
 
-# Providing Dynamic (Routing) Configuration to Traefik
+# Providing Dynamic (Routing) Configuration to Baqup
 
-Dynamic configuration—now also known as routing configuration—defines how Traefik routes incoming requests to the correct services. This is distinct from install configuration (formerly known as static configuration), which sets up Traefik’s core components and providers.
+Dynamic configuration—now also known as routing configuration—defines how Baqup routes incoming requests to the correct services. This is distinct from install configuration (formerly known as static configuration), which sets up Baqup’s core components and providers.
 
 Depending on your environment and preferences, there are several ways to supply this routing configuration:
 
@@ -21,7 +21,7 @@ The File provider allows you to define routing configuration in static files usi
 
 ### Enabling the File Provider
 
-To enable the File provider, add the following to your Traefik install configuration:
+To enable the File provider, add the following to your Baqup install configuration:
 
 ```yaml tab="YAML"
 providers:
@@ -65,7 +65,7 @@ providers:
 
 ## Using Labels With Docker and ECS
 
-When using Docker or Amazon ECS, you can define routing configuration using container labels. This method allows Traefik to automatically discover services and apply configurations without the need for additional files.
+When using Docker or Amazon ECS, you can define routing configuration using container labels. This method allows Baqup to automatically discover services and apply configurations without the need for additional files.
 
 ???+ example "Example with Docker"
 
@@ -76,8 +76,8 @@ When using Docker or Amazon ECS, you can define routing configuration using cont
       my-service:
         image: my-image
         labels:
-          - "traefik.http.routers.my-router.rule=Host(`example.com`)"
-          - "traefik.http.services.my-service.loadbalancer.server.port=80"
+          - "baqup.http.routers.my-router.rule=Host(`example.com`)"
+          - "baqup.http.services.my-service.loadbalancer.server.port=80"
     ```
 
 ???+ example "Example with ECS"
@@ -91,8 +91,8 @@ When using Docker or Amazon ECS, you can define routing configuration using cont
           "name": "my-service",
           "image": "my-image",
           "dockerLabels": {
-            "traefik.http.routers.my-router.rule": "Host(`example.com`)",
-            "traefik.http.services.my-service.loadbalancer.server.port": "80"
+            "baqup.http.routers.my-router.rule": "Host(`example.com`)",
+            "baqup.http.services.my-service.loadbalancer.server.port": "80"
           }
         }
       ]
@@ -101,7 +101,7 @@ When using Docker or Amazon ECS, you can define routing configuration using cont
 
 ## Using Kubernetes Providers
 
-For Kubernetes providers, you can configure Traefik using the native Ingress or custom resources (like IngressRoute). Annotations in your Ingress or IngressRoute definition allow you to define routing rules and middleware settings. For example:
+For Kubernetes providers, you can configure Baqup using the native Ingress or custom resources (like IngressRoute). Annotations in your Ingress or IngressRoute definition allow you to define routing rules and middleware settings. For example:
 
 ???+ example "Example with Kubernetes"
 
@@ -112,10 +112,10 @@ For Kubernetes providers, you can configure Traefik using the native Ingress or 
       name: whoami
       namespace: apps
       annotations:
-        traefik.ingress.kubernetes.io/router.entrypoints: websecure
-        traefik.ingress.kubernetes.io/router.priority: "42"
-        traefik.ingress.kubernetes.io/router.tls: "true"
-        traefik.ingress.kubernetes.io/router.tls.options: apps-opt@kubernetescrd
+        baqup.ingress.kubernetes.io/router.entrypoints: websecure
+        baqup.ingress.kubernetes.io/router.priority: "42"
+        baqup.ingress.kubernetes.io/router.tls: "true"
+        baqup.ingress.kubernetes.io/router.tls.options: apps-opt@kubernetescrd
     spec:
       rules:
         - host: my-domain.example.com
@@ -135,35 +135,35 @@ For Kubernetes providers, you can configure Traefik using the native Ingress or 
 
 ## Using Key-Value Pairs With KV Providers
 
-For [KV providers](./other-providers/kv.md) you can configure Traefik with key-value pairs.
+For [KV providers](./other-providers/kv.md) you can configure Baqup with key-value pairs.
 
 ???+ example "Examples"
 
     ```bash tab="etcd"
     # Set a router rule
-    etcdctl put /traefik/http/routers/my-router/rule "Host(`example.com`)"
+    etcdctl put /baqup/http/routers/my-router/rule "Host(`example.com`)"
     # Define the service associated with the router
-    etcdctl put /traefik/http/routers/my-router/service "my-service"
+    etcdctl put /baqup/http/routers/my-router/service "my-service"
     # Set the backend server URL for the service
-    etcdctl put /traefik/http/services/my-service/loadbalancer/servers/0/url "http://localhost:8080"
+    etcdctl put /baqup/http/services/my-service/loadbalancer/servers/0/url "http://localhost:8080"
     ```
 
     ```bash tab="Redis"
     # Set a router rule
-    redis-cli set traefik/http/routers/my-router/rule "Host(`example.com`)"
+    redis-cli set baqup/http/routers/my-router/rule "Host(`example.com`)"
     # Define the service associated with the router
-    redis-cli set traefik/http/routers/my-router/service "my-service"
+    redis-cli set baqup/http/routers/my-router/service "my-service"
     # Set the backend server URL for the service
-    redis-cli set traefik/http/services/my-service/loadbalancer/servers/0/url "http://localhost:8080"
+    redis-cli set baqup/http/services/my-service/loadbalancer/servers/0/url "http://localhost:8080"
     ```
 
     ```bash tab="ZooKeeper"
     # Set a router rule
-    create /traefik/http/routers/my-router/rule "Host(`example.com`)"
+    create /baqup/http/routers/my-router/rule "Host(`example.com`)"
     # Define the service associated with the router
-    create /traefik/http/routers/my-router/service "my-service"
+    create /baqup/http/routers/my-router/service "my-service"
     # Set the backend server URL for the service
-    create /traefik/http/services/my-service/loadbalancer/servers/0/url "http://localhost:8080"
+    create /baqup/http/services/my-service/loadbalancer/servers/0/url "http://localhost:8080"
     ```
 
 ## Using Tags With Other Providers
@@ -176,8 +176,8 @@ For providers that do not support labels, such as Consul & Nomad, you can use ta
     {
       "Name": "my-service",
       "Tags": [
-        "traefik.http.routers.my-router.rule=Host(`example.com`)",
-        "traefik.http.services.my-service.loadbalancer.server.port=80"
+        "baqup.http.routers.my-router.rule=Host(`example.com`)",
+        "baqup.http.services.my-service.loadbalancer.server.port=80"
       ],
       "Address": "localhost",
       "Port": 8080

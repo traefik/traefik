@@ -1,4 +1,4 @@
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: cross-ns-route
@@ -17,15 +17,15 @@ spec:
         namespace: cross-ns
         port: 80
       - name: tr-svc-wrr1
-        kind: TraefikService
+        kind: BaqupService
       - name: tr-svc-wrr2
         namespace: cross-ns
-        kind: TraefikService
+        kind: BaqupService
       - name: tr-svc-mirror1
-        kind: TraefikService
+        kind: BaqupService
       - name: tr-svc-mirror2
         namespace: cross-ns
-        kind: TraefikService
+        kind: BaqupService
 
     - match: Host(`bar.com`) && PathPrefix(`/foo`)
       kind: Rule
@@ -36,8 +36,8 @@ spec:
           serversTransport: foo-test@kubernetescrd
 
 ---
-apiVersion: traefik.io/v1alpha1
-kind: TraefikService
+apiVersion: baqup.io/v1alpha1
+kind: BaqupService
 metadata:
   name: tr-svc-wrr1
   namespace: default
@@ -51,8 +51,8 @@ spec:
         port: 80
 
 ---
-apiVersion: traefik.io/v1alpha1
-kind: TraefikService
+apiVersion: baqup.io/v1alpha1
+kind: BaqupService
 metadata:
   name: tr-svc-wrr2
   namespace: cross-ns
@@ -65,8 +65,8 @@ spec:
         port: 80
 
 ---
-apiVersion: traefik.io/v1alpha1
-kind: TraefikService
+apiVersion: baqup.io/v1alpha1
+kind: BaqupService
 metadata:
   name: tr-svc-mirror1
   namespace: default
@@ -82,8 +82,8 @@ spec:
         port: 80
 
 ---
-apiVersion: traefik.io/v1alpha1
-kind: TraefikService
+apiVersion: baqup.io/v1alpha1
+kind: BaqupService
 metadata:
   name: tr-svc-mirror2
   namespace: cross-ns
@@ -99,7 +99,7 @@ spec:
         port: 80
 
 ---
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: ServersTransport
 metadata:
   name: test

@@ -13,5 +13,5 @@
   insecure = true
 
 [providers.zookeeper]
-  rootKey = "traefik"
+  rootKey = "baqup"
   endpoints = ["{{ .ZkAddress }}"]

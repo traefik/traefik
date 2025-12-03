@@ -1,6 +1,6 @@
-# Exposing Services with Traefik on Kubernetes
+# Exposing Services with Baqup on Kubernetes
 
-This guide will help you expose your services securely through Traefik Proxy on Kubernetes. We'll cover routing HTTP and HTTPS traffic, implementing TLS, adding security middleware, and configuring sticky sessions. For routing, this guide gives you two options:
+This guide will help you expose your services securely through Baqup Proxy on Kubernetes. We'll cover routing HTTP and HTTPS traffic, implementing TLS, adding security middleware, and configuring sticky sessions. For routing, this guide gives you two options:
 
 - [Gateway API](../reference/routing-configuration/kubernetes/gateway-api.md)
 - [IngressRoute](../reference/routing-configuration/kubernetes/crd/http/ingressroute.md)
@@ -9,13 +9,13 @@ Feel free to choose the one that fits your needs best.
 
 ## Prerequisites
 
-- A Kubernetes cluster with Traefik Proxy installed
+- A Kubernetes cluster with Baqup Proxy installed
 - `kubectl` configured to interact with your cluster
-- Traefik deployed using the Traefik Kubernetes Setup guide
+- Baqup deployed using the Baqup Kubernetes Setup guide
 
 ## Expose Your First HTTP Service
 
-Let's expose a simple HTTP service using the [whoami](https://github.com/traefik/whoami) application. This will demonstrate basic routing to a backend service.
+Let's expose a simple HTTP service using the [whoami](https://github.com/baqup/whoami) application. This will demonstrate basic routing to a backend service.
 
 First, create the deployment and service:
 
@@ -37,7 +37,7 @@ spec:
     spec:
       containers:
       - name: whoami
-        image: traefik/whoami
+        image: baqup/whoami
         ports:
         - containerPort: 80
 ---
@@ -71,7 +71,7 @@ metadata:
   namespace: default
 spec:
   parentRefs:
-  - name: traefik-gateway  # This Gateway is automatically created by Traefik 
+  - name: baqup-gateway  # This Gateway is automatically created by Baqup 
   hostnames:
   - "whoami.docker.localhost"
   rules:
@@ -93,7 +93,7 @@ kubectl apply -f whoami-route.yaml
 ### Using IngressRoute
 
 ```yaml
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: whoami
@@ -124,7 +124,7 @@ curl -H "Host: whoami.docker.localhost" http://localhost/
 ```
 
 !!! info
-    Make sure to remove the `ports.web.redirections` block from the `values.yaml` file if you followed the Kubernetes Setup Guide to install Traefik otherwise you will be redirected to the HTTPS entrypoint:
+    Make sure to remove the `ports.web.redirections` block from the `values.yaml` file if you followed the Kubernetes Setup Guide to install Baqup otherwise you will be redirected to the HTTPS entrypoint:
 
     ```yaml
     redirections:
@@ -150,11 +150,11 @@ X-Forwarded-For: 10.42.0.1
 X-Forwarded-Host: whoami.docker.localhost
 X-Forwarded-Port: 80
 X-Forwarded-Proto: http
-X-Forwarded-Server: traefik-76cbd5b89c-rx5xn
+X-Forwarded-Server: baqup-76cbd5b89c-rx5xn
 X-Real-Ip: 10.42.0.1
 ```
 
-This confirms that Traefik is successfully routing requests to your whoami application.
+This confirms that Baqup is successfully routing requests to your whoami application.
 
 ## Add Routing Rules
 
@@ -180,7 +180,7 @@ spec:
     spec:
       containers:
       - name: whoami
-        image: traefik/whoami
+        image: baqup/whoami
         env:
         - name: WHOAMI_NAME
           value: "API Service"
@@ -219,7 +219,7 @@ metadata:
   namespace: default
 spec:
   parentRefs:
-  - name: traefik-gateway
+  - name: baqup-gateway
   hostnames:
   - "whoami.docker.localhost"
   rules:
@@ -250,7 +250,7 @@ kubectl apply -f whoami-route.yaml
 Update your existing IngressRoute to include path-based routing:
 
 ```yaml
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: whoami
@@ -292,7 +292,7 @@ curl -H "Host: whoami.docker.localhost" http://localhost/api
 For the `/api` requests, you should see the response showing "API Service" in the environment variables section, confirming that your path-based routing is working correctly:
 
 ```bash
-{"hostname":"whoami-api-67d97b4868-dvvll","ip":["127.0.0.1","::1","10.42.0.9","fe80::10aa:37ff:fe74:31f2"],"headers":{"Accept":["*/*"],"Accept-Encoding":["gzip"],"User-Agent":["curl/8.7.1"],"X-Forwarded-For":["10.42.0.1"],"X-Forwarded-Host":["whoami.docker.localhost"],"X-Forwarded-Port":["80"],"X-Forwarded-Proto":["http"],"X-Forwarded-Server":["traefik-669c479df8-vkj22"],"X-Real-Ip":["10.42.0.1"]},"url":"/api","host":"whoami.docker.localhost","method":"GET","name":"API Service","remoteAddr":"10.42.0.13:36592"}
+{"hostname":"whoami-api-67d97b4868-dvvll","ip":["127.0.0.1","::1","10.42.0.9","fe80::10aa:37ff:fe74:31f2"],"headers":{"Accept":["*/*"],"Accept-Encoding":["gzip"],"User-Agent":["curl/8.7.1"],"X-Forwarded-For":["10.42.0.1"],"X-Forwarded-Host":["whoami.docker.localhost"],"X-Forwarded-Port":["80"],"X-Forwarded-Proto":["http"],"X-Forwarded-Server":["baqup-669c479df8-vkj22"],"X-Real-Ip":["10.42.0.1"]},"url":"/api","host":"whoami.docker.localhost","method":"GET","name":"API Service","remoteAddr":"10.42.0.13:36592"}
 ```
 
 ## Enable TLS
@@ -316,7 +316,7 @@ kubectl create secret tls whoami-tls --cert=tls.crt --key=tls.key
 ```
 
 !!! important "Prerequisite for Gateway API with TLS"
-    Before using the Gateway API with TLS, you must define the `websecure` listener in your Traefik installation. This is typically done in your Helm values.
+    Before using the Gateway API with TLS, you must define the `websecure` listener in your Baqup installation. This is typically done in your Helm values.
     
     Example configuration in `values.yaml`:
     ```yaml
@@ -339,7 +339,7 @@ kubectl create secret tls whoami-tls --cert=tls.crt --key=tls.key
               group: ""
     ```
     
-    See the Traefik Kubernetes Setup Guide for complete installation details.
+    See the Baqup Kubernetes Setup Guide for complete installation details.
 
 ### Gateway API with TLS
 
@@ -353,7 +353,7 @@ metadata:
   namespace: default
 spec:
   parentRefs:
-  - name: traefik-gateway
+  - name: baqup-gateway
     sectionName: websecure  # The HTTPS listener
   hostnames:
   - "whoami.docker.localhost"
@@ -385,7 +385,7 @@ kubectl apply -f whoami-route.yaml
 Update your existing IngressRoute to use TLS:
 
 ```yaml
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: whoami
@@ -426,12 +426,12 @@ Your browser can also access https://whoami.docker.localhost/ (you'll need to ac
 
 ## Add Middlewares
 
-Middlewares allow you to modify requests or responses as they pass through Traefik. Let's add two useful middlewares: [Headers](../reference/routing-configuration/http/middlewares/headers.md) for security and [IP allowlisting](../reference/routing-configuration/http/middlewares/ipallowlist.md) for access control.
+Middlewares allow you to modify requests or responses as they pass through Baqup. Let's add two useful middlewares: [Headers](../reference/routing-configuration/http/middlewares/headers.md) for security and [IP allowlisting](../reference/routing-configuration/http/middlewares/ipallowlist.md) for access control.
 
 ### Create Middlewares
 
 ```yaml
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: secure-headers
@@ -446,7 +446,7 @@ spec:
     stsPreload: true
     stsSeconds: 31536000
 ---
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: ip-allowlist
@@ -467,12 +467,12 @@ kubectl apply -f middlewares.yaml
 
 ### Apply Middlewares with Gateway API
 
-In Gateway API, you can apply middlewares using the `ExtensionRef` filter type. This is the preferred and standard way to use Traefik middlewares with Gateway API, as it integrates directly with the HTTPRoute specification.
+In Gateway API, you can apply middlewares using the `ExtensionRef` filter type. This is the preferred and standard way to use Baqup middlewares with Gateway API, as it integrates directly with the HTTPRoute specification.
 
 First, make sure you have the same middlewares defined:
 
 ```yaml
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: secure-headers
@@ -487,7 +487,7 @@ spec:
     stsPreload: true
     stsSeconds: 31536000
 ---
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: ip-allowlist
@@ -510,7 +510,7 @@ metadata:
   namespace: default
 spec:
   parentRefs:
-  - name: traefik-gateway
+  - name: baqup-gateway
     sectionName: websecure
   hostnames:
   - "whoami.docker.localhost"
@@ -522,12 +522,12 @@ spec:
     filters:
     - type: ExtensionRef
       extensionRef:  # Headers Middleware Definition
-        group: traefik.io
+        group: baqup.io
         kind: Middleware
         name: secure-headers
     - type: ExtensionRef 
       extensionRef: # IP AllowList Middleware Definition
-        group: traefik.io
+        group: baqup.io
         kind: Middleware
         name: ip-allowlist
     backendRefs:
@@ -540,12 +540,12 @@ spec:
     filters:
     - type: ExtensionRef
       extensionRef:  # Headers Middleware Definition
-        group: traefik.io
+        group: baqup.io
         kind: Middleware
         name: secure-headers
     - type: ExtensionRef 
       extensionRef: # IP AllowList Middleware Definition
-        group: traefik.io
+        group: baqup.io
         kind: Middleware
         name: ip-allowlist
     backendRefs:
@@ -559,14 +559,14 @@ Update the file `whoami-route.yaml` and apply it:
 kubectl apply -f whoami-route.yaml
 ```
 
-This approach uses the Gateway API's native filter mechanism rather than annotations. The `ExtensionRef` filter type allows you to reference Traefik middlewares directly within the HTTPRoute specification, which is more consistent with the Gateway API design principles.
+This approach uses the Gateway API's native filter mechanism rather than annotations. The `ExtensionRef` filter type allows you to reference Baqup middlewares directly within the HTTPRoute specification, which is more consistent with the Gateway API design principles.
 
 ### Apply Middlewares with IngressRoute
 
 Update your existing IngressRoute to include middlewares:
 
 ```yaml
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: whoami
@@ -626,11 +626,11 @@ To test the IP allowlist, you can modify the `sourceRange` in the middleware to 
 ## Generate Certificates with Let's Encrypt
 
 !!! info
-    Traefik's built-in Let's Encrypt integration works with IngressRoute but does not automatically issue certificates for Gateway API listeners. For Gateway API, you should use cert-manager or another certificate controller.
+    Baqup's built-in Let's Encrypt integration works with IngressRoute but does not automatically issue certificates for Gateway API listeners. For Gateway API, you should use cert-manager or another certificate controller.
 
 ### Using IngressRoute with Let's Encrypt
 
-Configure a certificate resolver in your Traefik values.yaml:
+Configure a certificate resolver in your Baqup values.yaml:
 
 ```yaml
 additionalArguments:
@@ -640,18 +640,18 @@ additionalArguments:
 ```
 
 !!! important "Public DNS Required"
-    Let's Encrypt may require a publicly accessible domain to validate domain ownership. For testing with local domains like `whoami.docker.localhost`, the certificate will remain self-signed. In production, replace it with a real domain that has a publicly accessible DNS record pointing to your Traefik instance.
+    Let's Encrypt may require a publicly accessible domain to validate domain ownership. For testing with local domains like `whoami.docker.localhost`, the certificate will remain self-signed. In production, replace it with a real domain that has a publicly accessible DNS record pointing to your Baqup instance.
 
-Update your Traefik installation with this configuration:
+Update your Baqup installation with this configuration:
 
 ```bash
-helm upgrade traefik traefik/traefik -n traefik --reuse-values -f values.yaml
+helm upgrade baqup baqup/baqup -n baqup --reuse-values -f values.yaml
 ```
 
 Update your IngressRoute with the Let's Encrypt certificate:
 
 ```yaml
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: whoami
@@ -711,7 +711,7 @@ spec:
       - http01:
           gatewayHTTPRoute:
             parentRefs:
-              - name: traefik
+              - name: baqup
                 namespace: default
                 kind: Gateway
 ---
@@ -744,10 +744,10 @@ Now, update your Gateway to use the generated certificate:
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
-  name: traefik-gateway
+  name: baqup-gateway
   namespace: default
 spec:
-  gatewayClassName: traefik
+  gatewayClassName: baqup
   listeners:
   - name: web
     port: 80
@@ -800,13 +800,13 @@ To demonstrate sticky sessions, first scale up the deployment to 3 replicas:
 kubectl scale deployment whoami --replicas=3
 ```
 
-### Using Gateway API with TraefikService
+### Using Gateway API with BaqupService
 
-First, create the `TraefikService` for sticky sessions:
+First, create the `BaqupService` for sticky sessions:
 
 ```yaml
-apiVersion: traefik.io/v1alpha1
-kind: TraefikService
+apiVersion: baqup.io/v1alpha1
+kind: BaqupService
 metadata:
   name: whoami-sticky
   namespace: default
@@ -829,7 +829,7 @@ Save this as `whoami-sticky-service.yaml` and apply it:
 kubectl apply -f whoami-sticky-service.yaml
 ```
 
-Now update your `HTTPRoute` with an annotation referencing the `TraefikService`:
+Now update your `HTTPRoute` with an annotation referencing the `BaqupService`:
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -839,7 +839,7 @@ metadata:
   namespace: default
 spec:
   parentRefs:
-  - name: traefik-gateway
+  - name: baqup-gateway
     sectionName: websecure
   hostnames:
   - "whoami.docker.localhost"
@@ -851,12 +851,12 @@ spec:
     filters:
     - type: ExtensionRef
       extensionRef:  # Headers Middleware Definition
-        group: traefik.io
+        group: baqup.io
         kind: Middleware
         name: secure-headers
     - type: ExtensionRef 
       extensionRef: # IP AllowList Middleware Definition
-        group: traefik.io
+        group: baqup.io
         kind: Middleware
         name: ip-allowlist
     backendRefs:
@@ -867,18 +867,18 @@ spec:
         type: PathPrefix
         value: /
     backendRefs:
-    - group: traefik.io          # <── tell Gateway this is a TraefikService
-      kind: TraefikService
+    - group: baqup.io          # <── tell Gateway this is a BaqupService
+      kind: BaqupService
       name: whoami-sticky
     filters:
     - type: ExtensionRef
       extensionRef:  # Headers Middleware Definition
-        group: traefik.io
+        group: baqup.io
         kind: Middleware
         name: secure-headers
     - type: ExtensionRef 
       extensionRef: # IP AllowList Middleware Definition
-        group: traefik.io
+        group: baqup.io
         kind: Middleware
         name: ip-allowlist
     backendRefs:
@@ -892,13 +892,13 @@ Update the file `whoami-route.yaml` and apply it:
 kubectl apply -f whoami-route.yaml
 ```
 
-### Using IngressRoute with TraefikService
+### Using IngressRoute with BaqupService
 
-First, create the `TraefikService` for sticky sessions:
+First, create the `BaqupService` for sticky sessions:
 
 ```yaml
-apiVersion: traefik.io/v1alpha1
-kind: TraefikService
+apiVersion: baqup.io/v1alpha1
+kind: BaqupService
 metadata:
   name: whoami-sticky
   namespace: default
@@ -920,10 +920,10 @@ Save this as `whoami-sticky-service.yaml` and apply it:
 kubectl apply -f whoami-sticky-service.yaml
 ```
 
-Now update your IngressRoute to use this `TraefikService`:
+Now update your IngressRoute to use this `BaqupService`:
 
 ```yaml
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: whoami
@@ -947,7 +947,7 @@ spec:
     - name: ip-allowlist
     services:
     - name: whoami-sticky  # Changed from whoami to whoami-sticky
-      kind: TraefikService  # Added kind: TraefikService
+      kind: BaqupService  # Added kind: BaqupService
   tls:
     certResolver: le
 ```
@@ -992,22 +992,22 @@ For more advanced configuration options, see the [reference documentation](../re
 
 In this guide, you've learned how to:
 
-- Expose HTTP services through Traefik in Kubernetes using both Gateway API and IngressRoute
+- Expose HTTP services through Baqup in Kubernetes using both Gateway API and IngressRoute
 - Set up path-based routing to direct traffic to different backend services
 - Secure your services with TLS using self-signed certificates
 - Add security with middlewares like secure headers and IP allow listing
 - Automate certificate management with Let's Encrypt
 - Implement sticky sessions for stateful applications
 
-These fundamental capabilities provide a solid foundation for exposing any application through Traefik Proxy in Kubernetes. Each of these can be further customized to meet your specific requirements.
+These fundamental capabilities provide a solid foundation for exposing any application through Baqup Proxy in Kubernetes. Each of these can be further customized to meet your specific requirements.
 
 ### Next Steps
 
-Now that you understand the basics of exposing services with Traefik Proxy, you might want to explore:
+Now that you understand the basics of exposing services with Baqup Proxy, you might want to explore:
 
 - [Advanced routing options](../reference/routing-configuration/http/routing/rules-and-priority.md) like query parameter matching, header-based routing, and more
 - [Additional middlewares](../reference/routing-configuration/http/middlewares/overview.md) for authentication, rate limiting, and request modifications
-- [Observability features](../reference/install-configuration/observability/metrics.md) for monitoring and debugging your Traefik deployment
+- [Observability features](../reference/install-configuration/observability/metrics.md) for monitoring and debugging your Baqup deployment
 - [TCP services](../reference/routing-configuration/tcp/service.md) for exposing TCP services
 - [UDP services](../reference/routing-configuration/udp/service.md) for exposing UDP services
 - [Kubernetes Provider documentation](../reference/install-configuration/providers/kubernetes/kubernetes-crd.md) for more details about the Kubernetes integration.

@@ -13,12 +13,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/baqupio/baqup/v3/integration/try"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/k3s"
 	"github.com/testcontainers/testcontainers-go/network"
-	"github.com/traefik/traefik/v3/integration/try"
 	"knative.dev/networking/test/conformance/ingress"
 	klog "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -27,7 +27,7 @@ import (
 const knativeNamespace = "knative-serving"
 
 var imageNames = []string{
-	traefikImage,
+	baqupImage,
 	"ko.local/grpc-ping:latest",
 	"ko.local/httpproxy:latest",
 	"ko.local/retry:latest",
@@ -66,16 +66,16 @@ func (s *KnativeConformanceSuite) SetupSuite() {
 	}
 
 	if !slices.ContainsFunc(images, func(img testcontainers.ImageInfo) bool {
-		return img.Name == traefikImage
+		return img.Name == baqupImage
 	}) {
-		s.T().Fatal("Traefik image is not present")
+		s.T().Fatal("Baqup image is not present")
 	}
 
 	s.k3sContainer, err = k3s.Run(ctx,
 		k3sImage,
 		k3s.WithManifest("./fixtures/knative/00-knative-crd-v1.19.0.yml"),
 		k3s.WithManifest("./fixtures/knative/01-rbac.yml"),
-		k3s.WithManifest("./fixtures/knative/02-traefik.yml"),
+		k3s.WithManifest("./fixtures/knative/02-baqup.yml"),
 		k3s.WithManifest("./fixtures/knative/03-knative-serving-v1.19.0.yaml"),
 		k3s.WithManifest("./fixtures/knative/04-serving-tests-namespace.yaml"),
 		network.WithNetwork(nil, s.network),
@@ -90,9 +90,9 @@ func (s *KnativeConformanceSuite) SetupSuite() {
 		}
 	}
 
-	exitCode, _, err := s.k3sContainer.Exec(ctx, []string{"kubectl", "wait", "-n", traefikNamespace, traefikDeployment, "--for=condition=Available", "--timeout=10s"})
+	exitCode, _, err := s.k3sContainer.Exec(ctx, []string{"kubectl", "wait", "-n", baqupNamespace, baqupDeployment, "--for=condition=Available", "--timeout=10s"})
 	if err != nil || exitCode > 0 {
-		s.T().Fatalf("Traefik pod is not ready: %v", err)
+		s.T().Fatalf("Baqup pod is not ready: %v", err)
 	}
 
 	exitCode, _, err = s.k3sContainer.Exec(ctx, []string{"kubectl", "wait", "-n", knativeNamespace, "deployment/activator", "--for=condition=Available", "--timeout=10s"})
@@ -127,7 +127,7 @@ func (s *KnativeConformanceSuite) TearDownSuite() {
 			}
 		}
 
-		exitCode, result, err := s.k3sContainer.Exec(ctx, []string{"kubectl", "logs", "-n", traefikNamespace, traefikDeployment})
+		exitCode, result, err := s.k3sContainer.Exec(ctx, []string{"kubectl", "logs", "-n", baqupNamespace, baqupDeployment})
 		if err == nil || exitCode == 0 {
 			if res, err := io.ReadAll(result); err == nil {
 				s.T().Log(string(res))
@@ -143,7 +143,7 @@ func (s *KnativeConformanceSuite) TearDownSuite() {
 }
 
 func (s *KnativeConformanceSuite) TestKnativeConformance() {
-	// Wait for traefik to start
+	// Wait for baqup to start
 	k3sContainerIP, err := s.k3sContainer.ContainerIP(s.T().Context())
 	require.NoError(s.T(), err)
 
@@ -166,7 +166,7 @@ func (s *KnativeConformanceSuite) TestKnativeConformance() {
 		s.T().Fatal(err)
 	}
 
-	if err = flag.CommandLine.Set("ingressClass", "traefik.ingress.networking.knative.dev"); err != nil {
+	if err = flag.CommandLine.Set("ingressClass", "baqup.ingress.networking.knative.dev"); err != nil {
 		s.T().Fatal(err)
 	}
 

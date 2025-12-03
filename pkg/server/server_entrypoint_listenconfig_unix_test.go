@@ -6,8 +6,8 @@ import (
 	"net"
 	"testing"
 
+	"github.com/baqupio/baqup/v3/pkg/config/static"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v3/pkg/config/static"
 )
 
 func TestNewListenConfig(t *testing.T) {

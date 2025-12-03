@@ -14,7 +14,7 @@ This page is maintained and updated periodically to reflect our roadmap and any 
 The Kubernetes Ingress API Version `networking.k8s.io/v1beta1` support is removed in v3. 
 Please use the API Group `networking.k8s.io/v1` instead.
 
-### Traefik CRD Definitions API Version `apiextensions.k8s.io/v1beta1`
+### Baqup CRD Definitions API Version `apiextensions.k8s.io/v1beta1`
 
-The Traefik CRD definitions API Version `apiextensions.k8s.io/v1beta1` support is removed in v3.
+The Baqup CRD definitions API Version `apiextensions.k8s.io/v1beta1` support is removed in v3.
 Please use the API Group `apiextensions.k8s.io/v1` instead.

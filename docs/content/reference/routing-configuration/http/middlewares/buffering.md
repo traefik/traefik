@@ -1,11 +1,11 @@
 ---
-title: "Traefik Buffering Documentation"
-description: "The HTTP buffering middleware in Traefik Proxy limits the size of requests that can be forwarded to Services. Read the technical documentation."
+title: "Baqup Buffering Documentation"
+description: "The HTTP buffering middleware in Baqup Proxy limits the size of requests that can be forwarded to Services. Read the technical documentation."
 ---
 
 The `buffering` middleware limits the size of requests that can be forwarded to services.
 
-With buffering, Traefik reads the entire request into memory (possibly buffering large requests into disk), and rejects requests that are over a specified size limit.
+With buffering, Baqup reads the entire request into memory (possibly buffering large requests into disk), and rejects requests that are over a specified size limit.
 
 This can help services avoid large amounts of data (`multipart/form-data` for example), and can minimize the time spent sending data to a Service
 
@@ -30,7 +30,7 @@ http:
 ```yaml tab="Labels"
 # Sets the maximum request body to 2MB
 labels:
-  - "traefik.http.middlewares.limit.buffering.maxRequestBodyBytes=2000000"
+  - "baqup.http.middlewares.limit.buffering.maxRequestBodyBytes=2000000"
 ```
 
 ```json tab="Tags"
@@ -38,14 +38,14 @@ labels:
 {
   // ...
   "Tags": [
-    "traefik.http.middlewares.test-auth.basicauth.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
+    "baqup.http.middlewares.test-auth.basicauth.users=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"
   ]
 }
 ```
 
 ```yaml tab="Kubernetes"
 # Sets the maximum request body to 2MB
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: limit

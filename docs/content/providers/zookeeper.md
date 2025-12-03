@@ -1,14 +1,14 @@
 ---
-title: "Traefik ZooKeeper Documentation"
-description: "For configuration discovery in Traefik Proxy, you can store your configurations in ZooKeeper. Read the technical documentation."
+title: "Baqup ZooKeeper Documentation"
+description: "For configuration discovery in Baqup Proxy, you can store your configurations in ZooKeeper. Read the technical documentation."
 ---
 
-# Traefik & ZooKeeper
+# Baqup & ZooKeeper
 
 A Story of KV Store & Containers
 {: .subtitle }
 
-Store your configuration in ZooKeeper and let Traefik do the rest!
+Store your configuration in ZooKeeper and let Baqup do the rest!
 
 ## Routing Configuration
 
@@ -40,23 +40,23 @@ providers:
 
 ### `rootKey`
 
-_Required, Default="traefik"_
+_Required, Default="baqup"_
 
 Defines the root key of the configuration.
 
 ```yaml tab="File (YAML)"
 providers:
   zooKeeper:
-    rootKey: "traefik"
+    rootKey: "baqup"
 ```
 
 ```toml tab="File (TOML)"
 [providers.zooKeeper]
-  rootKey = "traefik"
+  rootKey = "baqup"
 ```
 
 ```bash tab="CLI"
---providers.zookeeper.rootkey=traefik
+--providers.zookeeper.rootkey=baqup
 ```
 
 ### `username`

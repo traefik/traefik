@@ -1,18 +1,18 @@
 ---
-title: "Traefik Ping Option Documentation"
-description: "In Traefik Proxy, the option Ping lets you check the health of your Traefik instances. Read the technical documentation for configuration examples and options."
+title: "Baqup Ping Option Documentation"
+description: "In Baqup Proxy, the option Ping lets you check the health of your Baqup instances. Read the technical documentation for configuration examples and options."
 ---
 
 # Ping 
 
-Checking the Health of your Traefik Instances
+Checking the Health of your Baqup Instances
 {: .subtitle }
 
-The `ping` options allows you to enable the ping endpoint to check Traefik liveness.
+The `ping` options allows you to enable the ping endpoint to check Baqup liveness.
 
 The ping endpoint is reachable using the path `/ping` and the methods `GET`and `HEAD`.
 
-If the Traefik instance is alive, it returns the `200` HTTP code with the content: `OK`.
+If the Baqup instance is alive, it returns the `200` HTTP code with the content: `OK`.
 
 ## Configuration Example
 
@@ -33,19 +33,19 @@ ping: {}
 ## Configuration Options
 
 The `ping` option is defined in the install (static) configuration.
-You can define it using the same [configuration methods](../../boot-environment.md#configuration-methods) as Traefik.
+You can define it using the same [configuration methods](../../boot-environment.md#configuration-methods) as Baqup.
 
 | Field | Description                                               | Default              | Required |
 |:------|:----------------------------------------------------------|:---------------------|:---------|
-| <a id="opt-ping-entryPoint" href="#opt-ping-entryPoint" title="#opt-ping-entryPoint">`ping.entryPoint`</a> | Enables `/ping` on a dedicated EntryPoint. | traefik  | No   |
+| <a id="opt-ping-entryPoint" href="#opt-ping-entryPoint" title="#opt-ping-entryPoint">`ping.entryPoint`</a> | Enables `/ping` on a dedicated EntryPoint. | baqup  | No   |
 | <a id="opt-ping-manualRouting" href="#opt-ping-manualRouting" title="#opt-ping-manualRouting">`ping.manualRouting`</a> | Disables the default internal router in order to allow one to create a custom router for the `ping@internal` service when set to `true`. | false | No   |
 | <a id="opt-ping-terminatingStatusCode" href="#opt-ping-terminatingStatusCode" title="#opt-ping-terminatingStatusCode">`ping.terminatingStatusCode`</a> | Defines the status code for the ping handler during a graceful shut down. See more information [here](#terminatingstatuscode) | 503 | No   |
 
 ### `terminatingStatusCode`
 
-During the period in which Traefik is gracefully shutting down, the ping handler
+During the period in which Baqup is gracefully shutting down, the ping handler
 returns a `503` status code by default.  
-If Traefik is behind, for example a load-balancer
+If Baqup is behind, for example a load-balancer
 doing health checks (such as the Kubernetes LivenessProbe), another code might
 be expected as the signal for graceful termination.  
 In that case, the terminatingStatusCode can be used to set the code returned by the ping

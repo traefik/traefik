@@ -9,9 +9,9 @@ import (
 	"slices"
 	"time"
 
+	"github.com/baqupio/baqup/v3/pkg/provider/kubernetes/k8s"
+	"github.com/baqupio/baqup/v3/pkg/types"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
-	"github.com/traefik/traefik/v3/pkg/types"
 	corev1 "k8s.io/api/core/v1"
 	discoveryv1 "k8s.io/api/discovery/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -514,7 +514,7 @@ func (c *clientWrapper) UpdateHTTPRouteStatus(ctx context.Context, route ktypes.
 		copy(parentStatuses, status.Parents)
 
 		// keep statuses added by other gateway controllers.
-		// TODO: we should also keep statuses for gateways managed by other Traefik instances.
+		// TODO: we should also keep statuses for gateways managed by other Baqup instances.
 		for _, parentStatus := range currentRoute.Status.Parents {
 			if parentStatus.ControllerName != controllerName {
 				parentStatuses = append(parentStatuses, parentStatus)
@@ -565,7 +565,7 @@ func (c *clientWrapper) UpdateGRPCRouteStatus(ctx context.Context, route ktypes.
 		copy(parentStatuses, status.Parents)
 
 		// keep statuses added by other gateway controllers.
-		// TODO: we should also keep statuses for gateways managed by other Traefik instances.
+		// TODO: we should also keep statuses for gateways managed by other Baqup instances.
 		for _, parentStatus := range currentRoute.Status.Parents {
 			if parentStatus.ControllerName != controllerName {
 				parentStatuses = append(parentStatuses, parentStatus)
@@ -616,7 +616,7 @@ func (c *clientWrapper) UpdateTCPRouteStatus(ctx context.Context, route ktypes.N
 		copy(parentStatuses, status.Parents)
 
 		// keep statuses added by other gateway controllers.
-		// TODO: we should also keep statuses for gateways managed by other Traefik instances.
+		// TODO: we should also keep statuses for gateways managed by other Baqup instances.
 		for _, parentStatus := range currentRoute.Status.Parents {
 			if parentStatus.ControllerName != controllerName {
 				parentStatuses = append(parentStatuses, parentStatus)
@@ -667,7 +667,7 @@ func (c *clientWrapper) UpdateTLSRouteStatus(ctx context.Context, route ktypes.N
 		copy(parentStatuses, status.Parents)
 
 		// keep statuses added by other gateway controllers.
-		// TODO: we should also keep statuses for gateways managed by other Traefik instances.
+		// TODO: we should also keep statuses for gateways managed by other Baqup instances.
 		for _, parentStatus := range currentRoute.Status.Parents {
 			if parentStatus.ControllerName != controllerName {
 				parentStatuses = append(parentStatuses, parentStatus)
@@ -718,7 +718,7 @@ func (c *clientWrapper) UpdateBackendTLSPolicyStatus(ctx context.Context, policy
 		copy(ancestorStatuses, status.Ancestors)
 
 		// keep statuses added by other gateway controllers,
-		// and statuses for Traefik gateway controller but not for the same Gateway as the one in parameter (AncestorRef).
+		// and statuses for Baqup gateway controller but not for the same Gateway as the one in parameter (AncestorRef).
 		for _, ancestorStatus := range currentPolicy.Status.Ancestors {
 			if ancestorStatus.ControllerName != controllerName {
 				ancestorStatuses = append(ancestorStatuses, ancestorStatus)

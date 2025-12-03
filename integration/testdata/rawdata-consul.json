@@ -61,7 +61,7 @@
     },
     "api@internal": {
       "entryPoints": [
-        "traefik"
+        "baqup"
       ],
       "service": "api@internal",
       "rule": "PathPrefix(`/api`)",
@@ -75,12 +75,12 @@
       },
       "status": "enabled",
       "using": [
-        "traefik"
+        "baqup"
       ]
     },
     "dashboard@internal": {
       "entryPoints": [
-        "traefik"
+        "baqup"
       ],
       "middlewares": [
         "dashboard_redirect@internal",
@@ -98,7 +98,7 @@
       },
       "status": "enabled",
       "using": [
-        "traefik"
+        "baqup"
       ]
     }
   },

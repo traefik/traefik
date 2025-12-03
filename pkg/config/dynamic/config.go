@@ -1,12 +1,12 @@
 package dynamic
 
 import (
-	"github.com/traefik/traefik/v3/pkg/tls"
+	"github.com/baqupio/baqup/v3/pkg/tls"
 )
 
 // +k8s:deepcopy-gen=true
 
-// Message holds configuration information exchanged between parts of traefik.
+// Message holds configuration information exchanged between parts of baqup.
 type Message struct {
 	ProviderName  string
 	Configuration *Configuration

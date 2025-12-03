@@ -4,7 +4,7 @@ metadata:
   name: ""
   namespace: testing
   annotations:
-    kubernetes.io/ingress.class: traefik
+    kubernetes.io/ingress.class: baqup
 spec:
   rules:
   - http:

@@ -7,8 +7,8 @@ import (
 	"runtime"
 	"text/template"
 
+	"github.com/baqupio/baqup/v3/pkg/version"
 	"github.com/traefik/paerser/cli"
-	"github.com/traefik/traefik/v3/pkg/version"
 )
 
 var versionTemplate = `Version:      {{.Version}}
@@ -21,7 +21,7 @@ OS/Arch:      {{.Os}}/{{.Arch}}`
 func NewCmd() *cli.Command {
 	return &cli.Command{
 		Name:          "version",
-		Description:   `Shows the current Traefik version.`,
+		Description:   `Shows the current Baqup version.`,
 		Configuration: nil,
 		Run: func(_ []string) error {
 			if err := GetPrint(os.Stdout); err != nil {

@@ -1,12 +1,12 @@
 ---
 title: 'Open Policy Agent'
-description: 'Traefik Hub API Gateway - The Open Policy Agent (OPA) middleware that allows you to restrict access to your services.'
+description: 'Baqup Hub API Gateway - The Open Policy Agent (OPA) middleware that allows you to restrict access to your services.'
 ---
 
-!!! info "Traefik Hub Feature"
-    This middleware is available exclusively in [Traefik Hub](https://traefik.io/traefik-hub/). Learn more about [Traefik Hub's advanced features](https://doc.traefik.io/traefik-hub/api-gateway/intro).
+!!! info "Baqup Hub Feature"
+    This middleware is available exclusively in [Baqup Hub](https://baqup.io/baqup-hub/). Learn more about [Baqup Hub's advanced features](https://doc.baqup.io/baqup-hub/api-gateway/intro).
 
-Traefik Hub comes with an Open Policy Agent middleware that allows you to restrict access to your services. It also allows you to enrich request headers with data extracted from policies.
+Baqup Hub comes with an Open Policy Agent middleware that allows you to restrict access to your services. It also allows you to enrich request headers with data extracted from policies.
 The OPA middleware works as an [OPA agent](https://www.openpolicyagent.org/).
 
 !!! note "OPA Version"
@@ -16,7 +16,7 @@ The OPA middleware works as an [OPA agent](https://www.openpolicyagent.org/).
 ## Configuration Example
 
 ```yaml tab="Allow requests with specific JWT claim"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: opa-allow-jwt-claim
@@ -37,7 +37,7 @@ spec:
 ```
 
 ```yaml tab="Deny requests with JSON Accept Header"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: opa-deny-json
@@ -69,4 +69,4 @@ spec:
 | <a id="opt-allow" href="#opt-allow" title="#opt-allow">`allow`</a> | The `allow` option sets the expression to evaluate that determines if the request should be authorized. | ""      | No (one of `allow` or `forwardHeaders` must be set) |
 | <a id="opt-forwardHeaders" href="#opt-forwardHeaders" title="#opt-forwardHeaders">`forwardHeaders`</a> | The `forwardHeaders` option sets the HTTP headers to add to requests and populates them with the result of the given expression. | ""      | No (one of `allow` or `forwardHeaders` must be set) |   
 
-{!traefik-for-business-applications.md!}
+{!baqup-for-business-applications.md!}

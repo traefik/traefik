@@ -13,17 +13,17 @@ import (
 	"testing"
 	"time"
 
+	"github.com/baqupio/baqup/v3/pkg/config/dynamic"
+	"github.com/baqupio/baqup/v3/pkg/config/runtime"
+	tcpmiddleware "github.com/baqupio/baqup/v3/pkg/server/middleware/tcp"
+	"github.com/baqupio/baqup/v3/pkg/server/service/tcp"
+	tcp2 "github.com/baqupio/baqup/v3/pkg/tcp"
+	baquptls "github.com/baqupio/baqup/v3/pkg/tls"
+	"github.com/baqupio/baqup/v3/pkg/tls/generate"
+	"github.com/baqupio/baqup/v3/pkg/types"
 	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/config/runtime"
-	tcpmiddleware "github.com/traefik/traefik/v3/pkg/server/middleware/tcp"
-	"github.com/traefik/traefik/v3/pkg/server/service/tcp"
-	tcp2 "github.com/traefik/traefik/v3/pkg/tcp"
-	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
-	"github.com/traefik/traefik/v3/pkg/tls/generate"
-	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 type applyRouter func(conf *runtime.Configuration)
@@ -172,13 +172,13 @@ func Test_Routing(t *testing.T) {
 	require.NoError(t, err)
 
 	// Creates the tlsManager and defines the TLS 1.0 and 1.2 TLSOptions.
-	tlsManager := traefiktls.NewManager(nil)
+	tlsManager := baquptls.NewManager(nil)
 	tlsManager.UpdateConfigs(
 		t.Context(),
-		map[string]traefiktls.Store{
+		map[string]baquptls.Store{
 			tlsalpn01.ACMETLS1Protocol: {},
 		},
-		map[string]traefiktls.Options{
+		map[string]baquptls.Options{
 			"default": {
 				MinVersion: "VersionTLS10",
 				MaxVersion: "VersionTLS10",
@@ -192,8 +192,8 @@ func Test_Routing(t *testing.T) {
 				MaxVersion: "VersionTLS12",
 			},
 		},
-		[]*traefiktls.CertAndStores{{
-			Certificate: traefiktls.Certificate{CertFile: types.FileOrContent(certPEM), KeyFile: types.FileOrContent(keyPEM)},
+		[]*baquptls.CertAndStores{{
+			Certificate: baquptls.Certificate{CertFile: types.FileOrContent(certPEM), KeyFile: types.FileOrContent(keyPEM)},
 			Stores:      []string{tlsalpn01.ACMETLS1Protocol},
 		}})
 

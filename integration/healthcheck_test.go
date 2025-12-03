@@ -10,10 +10,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/baqupio/baqup/v3/integration/try"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"github.com/traefik/traefik/v3/integration/try"
 )
 
 // HealthCheck test suites.
@@ -51,9 +51,9 @@ func (s *HealthCheckSuite) TestSimpleConfiguration() {
 		Server2 string
 	}{s.whoami1IP, s.whoami2IP})
 
-	s.traefikCmd(withConfigFile(file))
+	s.baqupCmd(withConfigFile(file))
 
-	// wait for traefik
+	// wait for baqup
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("Host(`test.localhost`)"))
 	require.NoError(s.T(), err)
 
@@ -113,9 +113,9 @@ func (s *HealthCheckSuite) TestSimpleConfiguration_Passive() {
 		Server1 string
 	}{s.whoami1IP})
 
-	s.traefikCmd(withConfigFile(file))
+	s.baqupCmd(withConfigFile(file))
 
-	// wait for traefik
+	// wait for baqup
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("Host(`test.localhost`)"))
 	require.NoError(s.T(), err)
 
@@ -161,9 +161,9 @@ func (s *HealthCheckSuite) TestMultipleEntrypoints() {
 		Server2 string
 	}{s.whoami1IP, s.whoami2IP})
 
-	s.traefikCmd(withConfigFile(file))
+	s.baqupCmd(withConfigFile(file))
 
-	// Wait for traefik
+	// Wait for baqup
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("Host(`test.localhost`)"))
 	require.NoError(s.T(), err)
 
@@ -232,9 +232,9 @@ func (s *HealthCheckSuite) TestPortOverload() {
 		Server1 string
 	}{s.whoami1IP})
 
-	s.traefikCmd(withConfigFile(file))
+	s.baqupCmd(withConfigFile(file))
 
-	// wait for traefik
+	// wait for baqup
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("Host(`test.localhost`)"))
 	require.NoError(s.T(), err)
 
@@ -263,9 +263,9 @@ func (s *HealthCheckSuite) TestMultipleRoutersOnSameService() {
 		Server1 string
 	}{s.whoami1IP})
 
-	s.traefikCmd(withConfigFile(file))
+	s.baqupCmd(withConfigFile(file))
 
-	// wait for traefik
+	// wait for baqup
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("Host(`test.localhost`)"))
 	require.NoError(s.T(), err)
 
@@ -326,9 +326,9 @@ func (s *HealthCheckSuite) TestPropagate() {
 		Server4 string
 	}{s.whoami1IP, s.whoami2IP, s.whoami3IP, s.whoami4IP})
 
-	s.traefikCmd(withConfigFile(file))
+	s.baqupCmd(withConfigFile(file))
 
-	// wait for traefik
+	// wait for baqup
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("Host(`root.localhost`)"))
 	require.NoError(s.T(), err)
 
@@ -573,9 +573,9 @@ func (s *HealthCheckSuite) TestPropagateNoHealthCheck() {
 		Server1 string
 	}{s.whoami1IP})
 
-	s.traefikCmd(withConfigFile(file))
+	s.baqupCmd(withConfigFile(file))
 
-	// wait for traefik
+	// wait for baqup
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("Host(`noop.localhost`)"), try.BodyNotContains("Host(`root.localhost`)"))
 	require.NoError(s.T(), err)
 
@@ -598,9 +598,9 @@ func (s *HealthCheckSuite) TestPropagateReload() {
 		Server2 string
 	}{s.whoami1IP, s.whoami2IP})
 
-	s.traefikCmd(withConfigFile(withoutHealthCheck))
+	s.baqupCmd(withConfigFile(withoutHealthCheck))
 
-	// wait for traefik
+	// wait for baqup
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("Host(`root.localhost`)"))
 	require.NoError(s.T(), err)
 
@@ -621,7 +621,7 @@ func (s *HealthCheckSuite) TestPropagateReload() {
 	err = try.Request(rootReq, 500*time.Millisecond, try.StatusCodeIs(http.StatusServiceUnavailable))
 	require.NoError(s.T(), err)
 
-	// Enable the healthcheck on the root WSP (wsp-service1) and let Traefik reload the config
+	// Enable the healthcheck on the root WSP (wsp-service1) and let Baqup reload the config
 	fr1, err := os.OpenFile(withoutHealthCheck, os.O_APPEND|os.O_WRONLY, 0o644)
 	assert.NotNil(s.T(), fr1)
 	require.NoError(s.T(), err)

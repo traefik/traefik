@@ -6,7 +6,7 @@ metadata:
 
 spec:
   rules:
-  - host: traefik.tchouk
+  - host: baqup.tchouk
     http:
       paths:
       - path: /bar
@@ -24,7 +24,7 @@ metadata:
   name: service1
   namespace: testing
   annotations:
-    traefik.ingress.kubernetes.io/service.nodeportlb: "true"
+    baqup.ingress.kubernetes.io/service.nodeportlb: "true"
 
 spec:
   ports:
@@ -32,13 +32,13 @@ spec:
       nodePort: 32456
   clusterIP: 10.0.0.1
   type: NodePort
-  externalName: traefik.wtf
+  externalName: baqup.wtf
 
 ---
 kind: Node
 apiVersion: v1
 metadata:
-  name: traefik-node
+  name: baqup-node
 status:
   addresses:
     - type: InternalIP

@@ -9,15 +9,15 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/baqupio/baqup/v3/pkg/middlewares"
+	"github.com/baqupio/baqup/v3/pkg/middlewares/capture"
+	"github.com/baqupio/baqup/v3/pkg/middlewares/observability"
+	"github.com/baqupio/baqup/v3/pkg/middlewares/retry"
+	"github.com/baqupio/baqup/v3/pkg/observability/metrics"
+	baquptls "github.com/baqupio/baqup/v3/pkg/tls"
 	"github.com/containous/alice"
 	gokitmetrics "github.com/go-kit/kit/metrics"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v3/pkg/middlewares"
-	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
-	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
-	"github.com/traefik/traefik/v3/pkg/middlewares/retry"
-	"github.com/traefik/traefik/v3/pkg/observability/metrics"
-	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 	"google.golang.org/grpc/codes"
 )
 
@@ -146,7 +146,7 @@ func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 	if req.TLS != nil {
 		var tlsLabels []string
 		tlsLabels = append(tlsLabels, m.baseLabels...)
-		tlsLabels = append(tlsLabels, "tls_version", traefiktls.GetVersion(req.TLS), "tls_cipher", traefiktls.GetCipherName(req.TLS))
+		tlsLabels = append(tlsLabels, "tls_version", baquptls.GetVersion(req.TLS), "tls_cipher", baquptls.GetCipherName(req.TLS))
 
 		m.reqsTLSCounter.With(tlsLabels...).Add(1)
 	}

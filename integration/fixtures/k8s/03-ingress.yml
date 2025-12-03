@@ -4,7 +4,7 @@ metadata:
   name: test.ingress
   namespace: default
   labels:
-    app: traefik
+    app: baqup
 
 spec:
   rules:

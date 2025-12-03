@@ -1,18 +1,18 @@
 ---
-title: "Getting Started with Traefik"
-description: "Quick start guides for deploying Traefik in Kubernetes and Docker environments"
+title: "Getting Started with Baqup"
+description: "Quick start guides for deploying Baqup in Kubernetes and Docker environments"
 ---
 
-# Getting Started with Traefik
+# Getting Started with Baqup
 
-Traefik can be deployed in various environments. Choose your preferred deployment method:
+Baqup can be deployed in various environments. Choose your preferred deployment method:
 
-- [Kubernetes Quick Start](./kubernetes.md) - Deploy Traefik using Helm
-- [Docker Quick Start](./docker.md) - Deploy Traefik using Docker
+- [Kubernetes Quick Start](./kubernetes.md) - Deploy Baqup using Helm
+- [Docker Quick Start](./docker.md) - Deploy Baqup using Docker
 
 Each guide will help you:
 
-- Install Traefik
+- Install Baqup
 - Expose the dashboard
 - Deploy a sample application
 - Configure basic routing

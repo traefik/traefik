@@ -5,12 +5,12 @@ import (
 	"errors"
 	"sort"
 
+	"github.com/baqupio/baqup/v3/pkg/config/runtime"
+	"github.com/baqupio/baqup/v3/pkg/observability/logs"
+	"github.com/baqupio/baqup/v3/pkg/server/provider"
+	udpservice "github.com/baqupio/baqup/v3/pkg/server/service/udp"
+	"github.com/baqupio/baqup/v3/pkg/udp"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v3/pkg/config/runtime"
-	"github.com/traefik/traefik/v3/pkg/observability/logs"
-	"github.com/traefik/traefik/v3/pkg/server/provider"
-	udpservice "github.com/traefik/traefik/v3/pkg/server/service/udp"
-	"github.com/traefik/traefik/v3/pkg/udp"
 )
 
 // NewManager Creates a new Manager.

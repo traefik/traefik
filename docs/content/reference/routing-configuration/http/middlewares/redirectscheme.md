@@ -1,16 +1,16 @@
 ---
-title: "Traefik RedirectScheme Documentation"
-description: "In Traefik Proxy's HTTP middleware, RedirectScheme redirects clients to different schemes/ports. Read the technical documentation."
+title: "Baqup RedirectScheme Documentation"
+description: "In Baqup Proxy's HTTP middleware, RedirectScheme redirects clients to different schemes/ports. Read the technical documentation."
 ---
 
 The `RedirectScheme` middleware redirects the request if the request scheme is different from the configured scheme.
 
 !!! warning "When behind another reverse-proxy"
 
-    When there is at least one other reverse-proxy between the client and Traefik, 
+    When there is at least one other reverse-proxy between the client and Baqup, 
     the other reverse-proxy (i.e. the last hop) needs to be a [trusted](../../../install-configuration/entrypoints.md#configuration-options) one. 
     
-    Otherwise, Traefik would clean up the `X-Forwarded` headers coming from this last hop,
+    Otherwise, Baqup would clean up the `X-Forwarded` headers coming from this last hop,
     and as the RedirectScheme middleware relies on them to determine the scheme used,
     it would not function as intended.
 
@@ -37,8 +37,8 @@ http:
 ```yaml tab="Labels"
 # Redirect to https
 labels:
-  - "traefik.http.middlewares.test-redirectscheme.redirectscheme.scheme=https"
-  - "traefik.http.middlewares.test-redirectscheme.redirectscheme.permanent=true"
+  - "baqup.http.middlewares.test-redirectscheme.redirectscheme.scheme=https"
+  - "baqup.http.middlewares.test-redirectscheme.redirectscheme.permanent=true"
 ```
 
 ```json tab="Tags"
@@ -46,8 +46,8 @@ labels:
 {
   // ...
   "Tags": [
-    "traefik.http.middlewares.test-redirectscheme.redirectscheme.scheme=https"
-    "traefik.http.middlewares.test-redirectscheme.redirectscheme.permanent=true"
+    "baqup.http.middlewares.test-redirectscheme.redirectscheme.scheme=https"
+    "baqup.http.middlewares.test-redirectscheme.redirectscheme.permanent=true"
   ]
 }
 
@@ -55,7 +55,7 @@ labels:
 
 ```yaml tab="Kubernetes"
 # Redirect to https
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-redirectscheme

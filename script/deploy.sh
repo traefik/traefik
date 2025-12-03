@@ -8,18 +8,18 @@ else
   exit 0
 fi
 
-git config --global user.email "${TRAEFIKER_EMAIL}"
-git config --global user.name "Traefiker"
+git config --global user.email "${BAQUPER_EMAIL}"
+git config --global user.name "Baquper"
 
 # load ssh key
 eval "$(ssh-agent -s)"
-chmod 600 ~/.ssh/traefiker_rsa
-ssh-add ~/.ssh/traefiker_rsa
+chmod 600 ~/.ssh/baquper_rsa
+ssh-add ~/.ssh/baquper_rsa
 
-# update traefik-library-image repo (official Docker image)
-echo "Updating traefik-library-imag repo..."
-git clone git@github.com:traefik/traefik-library-image.git
-cd traefik-library-image
+# update baqup-library-image repo (official Docker image)
+echo "Updating baqup-library-imag repo..."
+git clone git@github.com:baqup/baqup-library-image.git
+cd baqup-library-image
 ./updatev2.sh "${VERSION}"
 git add -A
 echo "${VERSION}" | git commit --file -
@@ -27,6 +27,6 @@ echo "${VERSION}" | git tag -a "${VERSION}" --file -
 git push -q --follow-tags -u origin master > /dev/null 2>&1
 
 cd ..
-rm -Rf traefik-library-image/
+rm -Rf baqup-library-image/
 
 echo "Deployed"

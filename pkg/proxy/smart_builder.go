@@ -7,11 +7,11 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/config/static"
-	"github.com/traefik/traefik/v3/pkg/proxy/fast"
-	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
-	"github.com/traefik/traefik/v3/pkg/server/service"
+	"github.com/baqupio/baqup/v3/pkg/config/dynamic"
+	"github.com/baqupio/baqup/v3/pkg/config/static"
+	"github.com/baqupio/baqup/v3/pkg/proxy/fast"
+	"github.com/baqupio/baqup/v3/pkg/proxy/httputil"
+	"github.com/baqupio/baqup/v3/pkg/server/service"
 )
 
 // TransportManager manages transport used for backend communications.

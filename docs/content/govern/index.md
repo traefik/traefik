@@ -1,29 +1,29 @@
 ---
-title: "Govern Your APIs with Traefik Hub"
-description: "Learn how Traefik Hub provides comprehensive API Gateway and API Management capabilities to govern, secure, and manage your APIs at scale."
+title: "Govern Your APIs with Baqup Hub"
+description: "Learn how Baqup Hub provides comprehensive API Gateway and API Management capabilities to govern, secure, and manage your APIs at scale."
 ---
 
-# Govern Your APIs with Traefik Hub
+# Govern Your APIs with Baqup Hub
 
-Traefik Hub transforms your API infrastructure by providing enterprise-grade API Gateway and comprehensive API Management capabilities. Built on the foundation of Traefik Proxy, Hub enables organizations to govern, secure, and manage APIs at scale across cloud-native environments.
+Baqup Hub transforms your API infrastructure by providing enterprise-grade API Gateway and comprehensive API Management capabilities. Built on the foundation of Baqup Proxy, Hub enables organizations to govern, secure, and manage APIs at scale across cloud-native environments.
 
 ## API Gateway and API Management Capabilities
 
-Traefik Hub offers two complementary approaches to API governance:
+Baqup Hub offers two complementary approaches to API governance:
 
-- [Traefik Hub API Gateway](https://traefik.io/solutions/api-gateway/): Enterprise-grade security, distributed features, and advanced access control for cloud-native API gateway scenarios. It includes AI Gateway capabilities for modern machine learning workloads.
+- [Baqup Hub API Gateway](https://baqup.io/solutions/api-gateway/): Enterprise-grade security, distributed features, and advanced access control for cloud-native API gateway scenarios. It includes AI Gateway capabilities for modern machine learning workloads.
 
-- [Traefik Hub API Management](https://traefik.io/solutions/api-management/): Comprehensive API lifecycle management, developer portals, and organizational features for teams managing multiple APIs across environments.
+- [Baqup Hub API Management](https://baqup.io/solutions/api-management/): Comprehensive API lifecycle management, developer portals, and organizational features for teams managing multiple APIs across environments.
 
 ## API Management Features
 
-Traefik Hub API Management provides a complete suite of features designed to streamline API governance and accelerate developer productivity:
+Baqup Hub API Management provides a complete suite of features designed to streamline API governance and accelerate developer productivity:
 
 ### Comprehensive API Lifecycle Management
 
 - **Centralized API Catalog**: Comprehensive API inventory providing real-time visibility and control
 - **Advanced Versioning**: Utilize the most flexible API versioning and Kubernetes-native labels to logically organize APIs, track their evolution over time, and avoid breaking changes for client applications
-- **Quality Control**: Perform error checks and change impact analysis with Traefik Hub's static analyzer to ensure compliance and prevent misconfiguration by catching errors early
+- **Quality Control**: Perform error checks and change impact analysis with Baqup Hub's static analyzer to ensure compliance and prevent misconfiguration by catching errors early
 - **Resource Management**: Centralize rate limits, quotas, and policy enforcement across groups of APIs through Plans & Bundles, ensuring consistent and efficient resource management
 - **Subscription Management**: Create managed and self-serve subscriptions for enhanced ease-of-use, security, and auditability
 - **Standards Compliance**: Import, validate, and manage APIs using industry-standard OpenAPI specifications
@@ -46,14 +46,14 @@ Traefik Hub API Management provides a complete suite of features designed to str
 ### Observability
 
 - **Open Standards Monitoring**: Gain deep insights into API health and performance with OpenTelemetry integration to provide metrics and tracing capabilities without vendor lock-in
-- **Third-party Integrations**: Turnkey integration with Treblle directly on the Traefik Hub Dashboard for real-time, out-of-the-box observability without maintaining a complex monitoring infrastructure
+- **Third-party Integrations**: Turnkey integration with Treblle directly on the Baqup Hub Dashboard for real-time, out-of-the-box observability without maintaining a complex monitoring infrastructure
 - **Pre-built Grafana Dashboards**: Ready-to-use monitoring dashboards with key API metrics and performance indicators
 
 ## Getting Started with API Governance
 
-Transform your API infrastructure with Traefik Hub's governance capabilities:
+Transform your API infrastructure with Baqup Hub's governance capabilities:
 
 1. **Start with API Gateway**: Implement enterprise security, authentication, distributed features, and AI Gateway capabilities
 2. **Scale with API Management**: Add comprehensive lifecycle management, developer portals, and governance features
 
-Ready to govern your APIs at scale? Explore [Traefik Hub API Management](https://traefik.io/solutions/api-management/) and discover how it can transform your API strategy.
+Ready to govern your APIs at scale? Explore [Baqup Hub API Management](https://baqup.io/solutions/api-management/) and discover how it can transform your API strategy.

@@ -1,6 +1,6 @@
 ---
-title: "Traefik Tracing Overview"
-description: "The Traefik Proxy tracing system allows developers to visualize call flows in their infrastructure. Read the full documentation."
+title: "Baqup Tracing Overview"
+description: "The Baqup Proxy tracing system allows developers to visualize call flows in their infrastructure. Read the full documentation."
 ---
 
 # Tracing
@@ -10,7 +10,7 @@ Visualize the Requests Flow
 
 The tracing system allows developers to visualize call flows in their infrastructure.
 
-Traefik uses [OpenTelemetry](https://opentelemetry.io/ "Link to website of OTel"), an open standard designed for distributed tracing.
+Baqup uses [OpenTelemetry](https://opentelemetry.io/ "Link to website of OTel"), an open standard designed for distributed tracing.
 
 Please check our dedicated [OTel docs](./opentelemetry.md) to learn more.
 
@@ -54,22 +54,22 @@ tracing:
 
 #### `serviceName`
 
-_Required, Default="traefik"_
+_Required, Default="baqup"_
 
 Service name used in selected backend.
 
 ```yaml tab="File (YAML)"
 tracing:
-  serviceName: traefik
+  serviceName: baqup
 ```
 
 ```toml tab="File (TOML)"
 [tracing]
-  serviceName = "traefik"
+  serviceName = "baqup"
 ```
 
 ```bash tab="CLI"
---tracing.serviceName=traefik
+--tracing.serviceName=baqup
 ```
 
 #### `sampleRate`

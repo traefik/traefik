@@ -30,53 +30,53 @@ func TestIsLoadBalancerIngressEquals(t *testing.T) {
 		{
 			desc: "not the same length",
 			bSlice: []netv1.IngressLoadBalancerIngress{
-				{IP: "192.168.1.1", Hostname: "traefik"},
+				{IP: "192.168.1.1", Hostname: "baqup"},
 			},
 			expectedEqual: false,
 		},
 		{
 			desc: "same ordered content",
 			aSlice: []netv1.IngressLoadBalancerIngress{
-				{IP: "192.168.1.1", Hostname: "traefik"},
+				{IP: "192.168.1.1", Hostname: "baqup"},
 			},
 			bSlice: []netv1.IngressLoadBalancerIngress{
-				{IP: "192.168.1.1", Hostname: "traefik"},
+				{IP: "192.168.1.1", Hostname: "baqup"},
 			},
 			expectedEqual: true,
 		},
 		{
 			desc: "same unordered content",
 			aSlice: []netv1.IngressLoadBalancerIngress{
-				{IP: "192.168.1.1", Hostname: "traefik"},
-				{IP: "192.168.1.2", Hostname: "traefik2"},
+				{IP: "192.168.1.1", Hostname: "baqup"},
+				{IP: "192.168.1.2", Hostname: "baqup2"},
 			},
 			bSlice: []netv1.IngressLoadBalancerIngress{
-				{IP: "192.168.1.2", Hostname: "traefik2"},
-				{IP: "192.168.1.1", Hostname: "traefik"},
+				{IP: "192.168.1.2", Hostname: "baqup2"},
+				{IP: "192.168.1.1", Hostname: "baqup"},
 			},
 			expectedEqual: true,
 		},
 		{
 			desc: "different ordered content",
 			aSlice: []netv1.IngressLoadBalancerIngress{
-				{IP: "192.168.1.1", Hostname: "traefik"},
-				{IP: "192.168.1.2", Hostname: "traefik2"},
+				{IP: "192.168.1.1", Hostname: "baqup"},
+				{IP: "192.168.1.2", Hostname: "baqup2"},
 			},
 			bSlice: []netv1.IngressLoadBalancerIngress{
-				{IP: "192.168.1.1", Hostname: "traefik"},
-				{IP: "192.168.1.2", Hostname: "traefik"},
+				{IP: "192.168.1.1", Hostname: "baqup"},
+				{IP: "192.168.1.2", Hostname: "baqup"},
 			},
 			expectedEqual: false,
 		},
 		{
 			desc: "different unordered content",
 			aSlice: []netv1.IngressLoadBalancerIngress{
-				{IP: "192.168.1.1", Hostname: "traefik"},
-				{IP: "192.168.1.2", Hostname: "traefik2"},
+				{IP: "192.168.1.1", Hostname: "baqup"},
+				{IP: "192.168.1.2", Hostname: "baqup2"},
 			},
 			bSlice: []netv1.IngressLoadBalancerIngress{
-				{IP: "192.168.1.2", Hostname: "traefik3"},
-				{IP: "192.168.1.1", Hostname: "traefik"},
+				{IP: "192.168.1.2", Hostname: "baqup3"},
+				{IP: "192.168.1.1", Hostname: "baqup"},
 			},
 			expectedEqual: false,
 		},

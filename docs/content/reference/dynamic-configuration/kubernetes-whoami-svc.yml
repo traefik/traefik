@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: whoami
-          image: traefik/whoami
+          image: baqup/whoami
 
 ---
 apiVersion: v1

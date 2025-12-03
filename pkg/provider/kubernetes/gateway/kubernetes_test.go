@@ -8,15 +8,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/baqupio/baqup/v3/pkg/config/dynamic"
+	"github.com/baqupio/baqup/v3/pkg/provider"
+	baqupv1alpha1 "github.com/baqupio/baqup/v3/pkg/provider/kubernetes/crd/baqupio/v1alpha1"
+	"github.com/baqupio/baqup/v3/pkg/provider/kubernetes/k8s"
+	"github.com/baqupio/baqup/v3/pkg/tls"
+	"github.com/baqupio/baqup/v3/pkg/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/provider"
-	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
-	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
-	"github.com/traefik/traefik/v3/pkg/tls"
-	"github.com/traefik/traefik/v3/pkg/types"
 	"google.golang.org/grpc/codes"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -77,7 +77,7 @@ func TestGatewayClassLabelSelector(t *testing.T) {
 	client := newClientImpl(kubeClient, gwClient)
 
 	// This is initialized by the Provider init method but this cannot be called in a unit test.
-	client.labelSelector = "name=traefik-internal"
+	client.labelSelector = "name=baqup-internal"
 
 	eventCh, err := client.WatchAll(nil, make(chan struct{}))
 	require.NoError(t, err)
@@ -95,12 +95,12 @@ func TestGatewayClassLabelSelector(t *testing.T) {
 
 	_ = p.loadConfigurationFromGateways(t.Context())
 
-	gw, err := gwClient.GatewayV1().Gateways("default").Get(t.Context(), "traefik-external", metav1.GetOptions{})
+	gw, err := gwClient.GatewayV1().Gateways("default").Get(t.Context(), "baqup-external", metav1.GetOptions{})
 	require.NoError(t, err)
 
 	assert.Empty(t, gw.Status.Addresses)
 
-	gw, err = gwClient.GatewayV1().Gateways("default").Get(t.Context(), "traefik-internal", metav1.GetOptions{})
+	gw, err = gwClient.GatewayV1().Gateways("default").Get(t.Context(), "baqup-internal", metav1.GetOptions{})
 	require.NoError(t, err)
 	require.Len(t, gw.Status.Addresses, 1)
 	require.NotNil(t, gw.Status.Addresses[0].Type)
@@ -2588,10 +2588,10 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 		entryPoints           map[string]Entrypoint
 	}{
 		{
-			desc:  "Simple HTTPRoute with TraefikService",
-			paths: []string{"services.yml", "httproute/simple_with_TraefikService.yml"},
+			desc:  "Simple HTTPRoute with BaqupService",
+			paths: []string{"services.yml", "httproute/simple_with_BaqupService.yml"},
 			groupKindBackendFuncs: map[string]map[string]BuildBackendFunc{
-				traefikv1alpha1.GroupName: {"TraefikService": func(name, namespace string) (string, *dynamic.Service, error) {
+				baqupv1alpha1.GroupName: {"BaqupService": func(name, namespace string) (string, *dynamic.Service, error) {
 					return name, nil, nil
 				}},
 			},
@@ -2638,10 +2638,10 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 			},
 		},
 		{
-			desc:  "Simple HTTPRoute with TraefikService with service configuration",
-			paths: []string{"services.yml", "httproute/simple_with_TraefikService.yml"},
+			desc:  "Simple HTTPRoute with BaqupService with service configuration",
+			paths: []string{"services.yml", "httproute/simple_with_BaqupService.yml"},
 			groupKindBackendFuncs: map[string]map[string]BuildBackendFunc{
-				traefikv1alpha1.GroupName: {"TraefikService": func(name, namespace string) (string, *dynamic.Service, error) {
+				baqupv1alpha1.GroupName: {"BaqupService": func(name, namespace string) (string, *dynamic.Service, error) {
 					return name, &dynamic.Service{LoadBalancer: &dynamic.ServersLoadBalancer{Strategy: dynamic.BalancerStrategyWRR, Servers: []dynamic.Server{{URL: "foobar"}}}}, nil
 				}},
 			},
@@ -2696,8 +2696,8 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 			},
 		},
 		{
-			desc:  "Simple HTTPRoute with invalid TraefikService kind",
-			paths: []string{"services.yml", "httproute/simple_with_TraefikService.yml"},
+			desc:  "Simple HTTPRoute with invalid BaqupService kind",
+			paths: []string{"services.yml", "httproute/simple_with_BaqupService.yml"},
 			entryPoints: map[string]Entrypoint{"web": {
 				Address: ":80",
 			}},
@@ -2743,9 +2743,9 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 		},
 		{
 			desc:  "Simple HTTPRoute with backendFunc error",
-			paths: []string{"services.yml", "httproute/simple_with_TraefikService.yml"},
+			paths: []string{"services.yml", "httproute/simple_with_BaqupService.yml"},
 			groupKindBackendFuncs: map[string]map[string]BuildBackendFunc{
-				traefikv1alpha1.GroupName: {"TraefikService": func(name, namespace string) (string, *dynamic.Service, error) {
+				baqupv1alpha1.GroupName: {"BaqupService": func(name, namespace string) (string, *dynamic.Service, error) {
 					return "", nil, errors.New("BOOM")
 				}},
 			},
@@ -2796,7 +2796,7 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 			desc:  "Simple HTTPRoute, with myservice@file service",
 			paths: []string{"services.yml", "httproute/simple_cross_provider.yml"},
 			groupKindBackendFuncs: map[string]map[string]BuildBackendFunc{
-				traefikv1alpha1.GroupName: {"TraefikService": func(name, namespace string) (string, *dynamic.Service, error) {
+				baqupv1alpha1.GroupName: {"BaqupService": func(name, namespace string) (string, *dynamic.Service, error) {
 					// func should never be executed in case of cross-provider reference.
 					return "", nil, errors.New("BOOM")
 				}},
@@ -2868,7 +2868,7 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 			desc:  "Simple HTTPRoute, with appProtocol service",
 			paths: []string{"services.yml", "httproute/with_app_protocol_service.yml"},
 			groupKindBackendFuncs: map[string]map[string]BuildBackendFunc{
-				traefikv1alpha1.GroupName: {"TraefikService": func(name, namespace string) (string, *dynamic.Service, error) {
+				baqupv1alpha1.GroupName: {"BaqupService": func(name, namespace string) (string, *dynamic.Service, error) {
 					// func should never be executed in case of cross-provider reference.
 					return "", nil, errors.New("BOOM")
 				}},
@@ -3052,7 +3052,7 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 		{
 			desc: "ExtensionRef filter",
 			groupKindFilterFuncs: map[string]map[string]BuildFilterFunc{
-				traefikv1alpha1.GroupName: {"Middleware": func(name, namespace string) (string, *dynamic.Middleware, error) {
+				baqupv1alpha1.GroupName: {"Middleware": func(name, namespace string) (string, *dynamic.Middleware, error) {
 					return namespace + "-" + name, nil, nil
 				}},
 			},
@@ -3122,7 +3122,7 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 		{
 			desc: "ExtensionRef filter with middleware creation",
 			groupKindFilterFuncs: map[string]map[string]BuildFilterFunc{
-				traefikv1alpha1.GroupName: {"Middleware": func(name, namespace string) (string, *dynamic.Middleware, error) {
+				baqupv1alpha1.GroupName: {"Middleware": func(name, namespace string) (string, *dynamic.Middleware, error) {
 					return namespace + "-" + name, &dynamic.Middleware{Headers: &dynamic.Headers{CustomRequestHeaders: map[string]string{"Test-Header": "Test"}}}, nil
 				}},
 			},
@@ -3240,7 +3240,7 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 		{
 			desc: "ExtensionRef filter with filterFunc error",
 			groupKindFilterFuncs: map[string]map[string]BuildFilterFunc{
-				traefikv1alpha1.GroupName: {"Middleware": func(name, namespace string) (string, *dynamic.Middleware, error) {
+				baqupv1alpha1.GroupName: {"Middleware": func(name, namespace string) (string, *dynamic.Middleware, error) {
 					return "", nil, errors.New("BOOM")
 				}},
 			},
@@ -3338,7 +3338,7 @@ func TestLoadGRPCRoutes_filterExtensionRef(t *testing.T) {
 		{
 			desc: "ExtensionRef filter",
 			groupKindFilterFuncs: map[string]map[string]BuildFilterFunc{
-				traefikv1alpha1.GroupName: {"Middleware": func(name, namespace string) (string, *dynamic.Middleware, error) {
+				baqupv1alpha1.GroupName: {"Middleware": func(name, namespace string) (string, *dynamic.Middleware, error) {
 					return namespace + "-" + name, nil, nil
 				}},
 			},
@@ -3408,7 +3408,7 @@ func TestLoadGRPCRoutes_filterExtensionRef(t *testing.T) {
 		{
 			desc: "ExtensionRef filter with middleware creation",
 			groupKindFilterFuncs: map[string]map[string]BuildFilterFunc{
-				traefikv1alpha1.GroupName: {"Middleware": func(name, namespace string) (string, *dynamic.Middleware, error) {
+				baqupv1alpha1.GroupName: {"Middleware": func(name, namespace string) (string, *dynamic.Middleware, error) {
 					return namespace + "-" + name, &dynamic.Middleware{Headers: &dynamic.Headers{CustomRequestHeaders: map[string]string{"Test-Header": "Test"}}}, nil
 				}},
 			},
@@ -3529,7 +3529,7 @@ func TestLoadGRPCRoutes_filterExtensionRef(t *testing.T) {
 		{
 			desc: "ExtensionRef filter with filterFunc error",
 			groupKindFilterFuncs: map[string]map[string]BuildFilterFunc{
-				traefikv1alpha1.GroupName: {"Middleware": func(name, namespace string) (string, *dynamic.Middleware, error) {
+				baqupv1alpha1.GroupName: {"Middleware": func(name, namespace string) (string, *dynamic.Middleware, error) {
 					return "", nil, errors.New("BOOM")
 				}},
 			},

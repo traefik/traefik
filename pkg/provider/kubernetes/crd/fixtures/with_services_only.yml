@@ -30,12 +30,12 @@ spec:
     - name: web
       port: 8080
   selector:
-    app: traefiklabs
+    app: baquplabs
     task: whoami5
 
 ---
-apiVersion: traefik.io/v1alpha1
-kind: TraefikService
+apiVersion: baqup.io/v1alpha1
+kind: BaqupService
 metadata:
   name: wrr1
   namespace: default

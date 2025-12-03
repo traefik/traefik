@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/baqupio/baqup/v3/pkg/config/label"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v3/pkg/config/label"
 )
 
 const (
@@ -41,7 +41,7 @@ type specificConfiguration struct {
 
 func (p *Shared) extractDockerLabels(container dockerData) (configuration, error) {
 	conf := labelConfiguration{Enable: p.ExposedByDefault}
-	if err := label.Decode(container.Labels, &conf, "traefik.docker.", "traefik.enable"); err != nil {
+	if err := label.Decode(container.Labels, &conf, "baqup.docker.", "baqup.enable"); err != nil {
 		return configuration{}, fmt.Errorf("decoding Docker labels: %w", err)
 	}
 
@@ -64,7 +64,7 @@ func (p *Shared) extractDockerLabels(container dockerData) (configuration, error
 
 func (p *Shared) extractSwarmLabels(container dockerData) (configuration, error) {
 	labelConf := labelConfiguration{Enable: p.ExposedByDefault}
-	if err := label.Decode(container.Labels, &labelConf, "traefik.enable", "traefik.docker.", "traefik.swarm."); err != nil {
+	if err := label.Decode(container.Labels, &labelConf, "baqup.enable", "baqup.docker.", "baqup.swarm."); err != nil {
 		return configuration{}, fmt.Errorf("decoding Swarm labels: %w", err)
 	}
 
@@ -78,7 +78,7 @@ func (p *Shared) extractSwarmLabels(container dockerData) (configuration, error)
 	}
 
 	if labelConf.Docker != nil {
-		log.Warn().Msg("Labels traefik.docker.* for Swarm provider are deprecated. Please use traefik.swarm.* labels instead")
+		log.Warn().Msg("Labels baqup.docker.* for Swarm provider are deprecated. Please use baqup.swarm.* labels instead")
 
 		conf.LBSwarm = labelConf.Docker.LBSwarm
 

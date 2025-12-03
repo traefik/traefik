@@ -2,20 +2,20 @@
 apiVersion: gateway.networking.k8s.io/v1
 kind: GatewayClass
 metadata:
-  name: traefik-internal
+  name: baqup-internal
   labels:
-    name: traefik-internal
+    name: baqup-internal
 spec:
-  controllerName: traefik.io/gateway-controller
+  controllerName: baqup.io/gateway-controller
 
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
-  name: traefik-internal
+  name: baqup-internal
   namespace: default
 spec:
-  gatewayClassName: traefik-internal
+  gatewayClassName: baqup-internal
   listeners:
     - name: http
       protocol: HTTP
@@ -28,20 +28,20 @@ spec:
 apiVersion: gateway.networking.k8s.io/v1
 kind: GatewayClass
 metadata:
-  name: traefik-external
+  name: baqup-external
   labels:
-    name: traefik-external
+    name: baqup-external
 spec:
-  controllerName: traefik.io/gateway-controller
+  controllerName: baqup.io/gateway-controller
 
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
-  name: traefik-external
+  name: baqup-external
   namespace: default
 spec:
-  gatewayClassName: traefik-external
+  gatewayClassName: baqup-external
   listeners:
     - name: http
       protocol: HTTP

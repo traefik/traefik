@@ -1,6 +1,6 @@
 ---
-apiVersion: traefik.io/v1alpha1
-kind: TraefikService
+apiVersion: baqup.io/v1alpha1
+kind: BaqupService
 metadata:
   name: sticky-default
   namespace: default
@@ -18,8 +18,8 @@ spec:
         port: 8443
 
 ---
-apiVersion: traefik.io/v1alpha1
-kind: TraefikService
+apiVersion: baqup.io/v1alpha1
+kind: BaqupService
 metadata:
   name: sticky
   namespace: default
@@ -38,7 +38,7 @@ spec:
         port: 8443
 
 ---
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: test2.route
@@ -49,13 +49,13 @@ spec:
     - web
 
   routes:
-    - match: Host(`traefik-service`)
+    - match: Host(`baqup-service`)
       kind: Rule
       services:
         - name: sticky
-          kind: TraefikService
+          kind: BaqupService
         - name: sticky-default
-          kind: TraefikService
+          kind: BaqupService
 
     - match: Host(`k8s-service`)
       kind: Rule

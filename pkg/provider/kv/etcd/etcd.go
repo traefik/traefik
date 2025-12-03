@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/baqupio/baqup/v3/pkg/provider"
+	"github.com/baqupio/baqup/v3/pkg/provider/kv"
+	"github.com/baqupio/baqup/v3/pkg/types"
 	"github.com/kvtools/etcdv3"
-	"github.com/traefik/traefik/v3/pkg/provider"
-	"github.com/traefik/traefik/v3/pkg/provider/kv"
-	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 var _ provider.Provider = (*Provider)(nil)

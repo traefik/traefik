@@ -8,18 +8,18 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/baqupio/baqup/v3/pkg/config/dynamic"
+	"github.com/baqupio/baqup/v3/pkg/job"
+	"github.com/baqupio/baqup/v3/pkg/observability/logs"
+	"github.com/baqupio/baqup/v3/pkg/provider"
+	"github.com/baqupio/baqup/v3/pkg/provider/constraints"
+	"github.com/baqupio/baqup/v3/pkg/safe"
+	"github.com/baqupio/baqup/v3/pkg/types"
 	"github.com/cenkalti/backoff/v4"
 	"github.com/hashicorp/nomad/api"
 	"github.com/mitchellh/hashstructure"
 	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/job"
-	"github.com/traefik/traefik/v3/pkg/observability/logs"
-	"github.com/traefik/traefik/v3/pkg/provider"
-	"github.com/traefik/traefik/v3/pkg/provider/constraints"
-	"github.com/traefik/traefik/v3/pkg/safe"
-	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 const (
@@ -30,8 +30,8 @@ const (
 	defaultTemplateRule = "Host(`{{ normalize .Name }}`)"
 
 	// defaultPrefix is the default prefix used in tag values indicating the service
-	// should be consumed and exposed via traefik.
-	defaultPrefix = "traefik"
+	// should be consumed and exposed via baqup.
+	defaultPrefix = "baqup"
 )
 
 var _ provider.Provider = (*Provider)(nil)
@@ -87,7 +87,7 @@ func (p *ProviderBuilder) BuildProviders() []*Provider {
 // Configuration represents the Nomad provider configuration.
 type Configuration struct {
 	DefaultRule        string          `description:"Default rule." json:"defaultRule,omitempty" toml:"defaultRule,omitempty" yaml:"defaultRule,omitempty"`
-	Constraints        string          `description:"Constraints is an expression that Traefik matches against the Nomad service's tags to determine whether to create route(s) for that service." json:"constraints,omitempty" toml:"constraints,omitempty" yaml:"constraints,omitempty" export:"true"`
+	Constraints        string          `description:"Constraints is an expression that Baqup matches against the Nomad service's tags to determine whether to create route(s) for that service." json:"constraints,omitempty" toml:"constraints,omitempty" yaml:"constraints,omitempty" export:"true"`
 	Endpoint           *EndpointConfig `description:"Nomad endpoint settings" json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty" export:"true"`
 	Prefix             string          `description:"Prefix for nomad service tags." json:"prefix,omitempty" toml:"prefix,omitempty" yaml:"prefix,omitempty" export:"true"`
 	Stale              bool            `description:"Use stale consistency for catalog reads." json:"stale,omitempty" toml:"stale,omitempty" yaml:"stale,omitempty" export:"true"`
@@ -98,7 +98,7 @@ type Configuration struct {
 	ThrottleDuration   ptypes.Duration `description:"Watch throttle duration." json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
 }
 
-// SetDefaults sets the default values for the Nomad Traefik Provider Configuration.
+// SetDefaults sets the default values for the Nomad Baqup Provider Configuration.
 func (c *Configuration) SetDefaults() {
 	defConfig := api.DefaultConfig()
 	c.Endpoint = &EndpointConfig{
@@ -146,12 +146,12 @@ type Provider struct {
 	lastConfiguration safe.Safe
 }
 
-// SetDefaults sets the default values for the Nomad Traefik Provider.
+// SetDefaults sets the default values for the Nomad Baqup Provider.
 func (p *Provider) SetDefaults() {
 	p.Configuration.SetDefaults()
 }
 
-// Init the Nomad Traefik Provider.
+// Init the Nomad Baqup Provider.
 func (p *Provider) Init() error {
 	if p.namespace == api.AllNamespacesNamespace {
 		return errors.New("wildcard namespace not supported")
@@ -175,7 +175,7 @@ func (p *Provider) Init() error {
 	return nil
 }
 
-// Provide allows the Nomad Traefik Provider to provide configurations to traefik
+// Provide allows the Nomad Baqup Provider to provide configurations to baqup
 // using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	var err error
@@ -483,12 +483,12 @@ func (p *Provider) getExtraConf(tags []string) configuration {
 	labels := tagsToLabels(tags, p.Prefix)
 
 	enabled := p.ExposedByDefault
-	if v, exists := labels["traefik.enable"]; exists {
+	if v, exists := labels["baqup.enable"]; exists {
 		enabled = strings.EqualFold(v, "true")
 	}
 
 	var canary bool
-	if v, exists := labels["traefik.nomad.canary"]; exists {
+	if v, exists := labels["baqup.nomad.canary"]; exists {
 		canary = strings.EqualFold(v, "true")
 	}
 

@@ -1,7 +1,7 @@
 package tcp
 
 import (
-	"github.com/traefik/traefik/v3/pkg/safe"
+	"github.com/baqupio/baqup/v3/pkg/safe"
 )
 
 // HandlerSwitcher is a TCP handler switcher.

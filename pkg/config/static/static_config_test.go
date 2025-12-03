@@ -3,8 +3,8 @@ package static
 import (
 	"testing"
 
+	"github.com/baqupio/baqup/v3/pkg/provider/acme"
 	"github.com/stretchr/testify/assert"
-	"github.com/traefik/traefik/v3/pkg/provider/acme"
 )
 
 func pointer[T any](v T) *T { return &v }

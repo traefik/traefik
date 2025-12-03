@@ -1,6 +1,6 @@
 ---
-title: "Traefik UDP Routers Rules & Priority Documentation"
-description: "In Traefik Proxy, a router is in charge of connecting incoming requests to the Services that can handle them. Read the technical documentation."
+title: "Baqup UDP Routers Rules & Priority Documentation"
+description: "In Baqup Proxy, a router is in charge of connecting incoming requests to the Services that can handle them. Read the technical documentation."
 ---
 
 A router is in charge of connecting incoming requests to the services that can handle them.
@@ -20,7 +20,7 @@ So UDP _routers_ at this time are pretty much only load-balancers in one form or
 ## Sessions and timeout
 
 Even though UDP is connectionless (and because of that),
-the implementation of an UDP router in Traefik relies on what we (and a couple of other implementations) call a `session`.
+the implementation of an UDP router in Baqup relies on what we (and a couple of other implementations) call a `session`.
 It means that some state is kept about an ongoing communication between a client and a backend,
 notably so that the proxy knows where to forward a response packet from a backend.
 
@@ -56,14 +56,14 @@ udp:
 
 ```yaml tab="Labels"
 labels:
-  - "traefik.udp.routers.Router-1.service=service-1"
+  - "baqup.udp.routers.Router-1.service=service-1"
 ```
 
 ```json tab="Tags"
 {
   //...
   "Tags": [
-    "traefik.udp.routers.Router-1.service=service-1"
+    "baqup.udp.routers.Router-1.service=service-1"
   ]
 }
 ```
@@ -90,16 +90,16 @@ udp:
 
 ```yaml tab="Labels"
 labels:
-  - "traefik.udp.routers.Router-1.entryPoints=streaming"
-  - "traefik.udp.routers.Router-1.service=service-1"
+  - "baqup.udp.routers.Router-1.entryPoints=streaming"
+  - "baqup.udp.routers.Router-1.service=service-1"
 ```
 
 ```json tab="Tags"
 {
   //...
   "Tags": [
-    "traefik.udp.routers.Router-1.entryPoints=streaming",
-    "traefik.udp.routers.Router-1.service=service-1"
+    "baqup.udp.routers.Router-1.entryPoints=streaming",
+    "baqup.udp.routers.Router-1.service=service-1"
   ]
 }
 ```
@@ -109,4 +109,4 @@ labels:
     There must be one (and only one) UDP [service](../service.md) referenced per UDP router.
     Services are the target for the router.
 
-{!traefik-for-business-applications.md!}
+{!baqup-for-business-applications.md!}

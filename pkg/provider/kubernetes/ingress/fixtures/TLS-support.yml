@@ -15,7 +15,7 @@ metadata:
   name: ""
   namespace: testing
   annotations:
-    traefik.ingress.kubernetes.io/router.tls: "true"
+    baqup.ingress.kubernetes.io/router.tls: "true"
 
 spec:
   tls:

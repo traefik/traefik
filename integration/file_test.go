@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/baqupio/baqup/v3/integration/try"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"github.com/traefik/traefik/v3/integration/try"
 )
 
 // File tests suite.
@@ -30,7 +30,7 @@ func (s *FileSuite) TearDownSuite() {
 
 func (s *FileSuite) TestSimpleConfiguration() {
 	file := s.adaptFile("fixtures/file/simple.toml", struct{}{})
-	s.traefikCmd(withConfigFile(file))
+	s.baqupCmd(withConfigFile(file))
 
 	// Expected a 404 as we did not configure anything
 	err := try.GetRequest("http://127.0.0.1:8000/", 1000*time.Millisecond, try.StatusCodeIs(http.StatusNotFound))
@@ -39,7 +39,7 @@ func (s *FileSuite) TestSimpleConfiguration() {
 
 // #56 regression test, make sure it does not fail?
 func (s *FileSuite) TestSimpleConfigurationNoPanic() {
-	s.traefikCmd(withConfigFile("fixtures/file/56-simple-panic.toml"))
+	s.baqupCmd(withConfigFile("fixtures/file/56-simple-panic.toml"))
 
 	// Expected a 404 as we did not configure anything
 	err := try.GetRequest("http://127.0.0.1:8000/", 1000*time.Millisecond, try.StatusCodeIs(http.StatusNotFound))
@@ -47,7 +47,7 @@ func (s *FileSuite) TestSimpleConfigurationNoPanic() {
 }
 
 func (s *FileSuite) TestDirectoryConfiguration() {
-	s.traefikCmd(withConfigFile("fixtures/file/directory.toml"))
+	s.baqupCmd(withConfigFile("fixtures/file/directory.toml"))
 
 	// Expected a 404 as we did not configure anything at /test
 	err := try.GetRequest("http://127.0.0.1:8000/test", 1000*time.Millisecond, try.StatusCodeIs(http.StatusNotFound))

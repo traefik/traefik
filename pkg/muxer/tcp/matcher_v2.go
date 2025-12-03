@@ -8,9 +8,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/baqupio/baqup/v3/pkg/ip"
 	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v3/pkg/ip"
 )
 
 var tcpFuncsV2 = map[string]func(*matchersTree, ...string) error{

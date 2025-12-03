@@ -1,17 +1,17 @@
 ---
-title: "Traefik V3 Migration Documentation"
-description: "Migrate from Traefik Proxy v2 to v3 and update all the necessary configurations to take advantage of all the improvements. Read the technical documentation."
+title: "Baqup V3 Migration Documentation"
+description: "Migrate from Baqup Proxy v2 to v3 and update all the necessary configurations to take advantage of all the improvements. Read the technical documentation."
 ---
 
 # Migration Guide: From v2 to v3
 
-How to Migrate from Traefik v2 to Traefik v3.
+How to Migrate from Baqup v2 to Baqup v3.
 {: .subtitle }
 
 !!! success "Streamlined Migration Process"
-    Traefik v3 introduces minimal breaking changes and maintains backward compatibility with v2 syntax in dynamic configuration, offering a gradual migration path.
+    Baqup v3 introduces minimal breaking changes and maintains backward compatibility with v2 syntax in dynamic configuration, offering a gradual migration path.
 
-With Traefik v3, we are introducing a streamlined transition process from v2. Minimal breaking changes have been made to specific options in the [static configuration](./v2-to-v3-details.md#install-configuration-changes "Link to install configuration changes"), and we are ensuring backward compatibility with v2 syntax in the [dynamic configuration](./v2-to-v3-details.md#routing-configuration-changes "Link to routing configuration changes"). This will offer a gradual path for adopting the v3 syntax, allowing users to progressively migrate their Kubernetes ingress resources, Docker labels, etc., to the new format.
+With Baqup v3, we are introducing a streamlined transition process from v2. Minimal breaking changes have been made to specific options in the [static configuration](./v2-to-v3-details.md#install-configuration-changes "Link to install configuration changes"), and we are ensuring backward compatibility with v2 syntax in the [dynamic configuration](./v2-to-v3-details.md#routing-configuration-changes "Link to routing configuration changes"). This will offer a gradual path for adopting the v3 syntax, allowing users to progressively migrate their Kubernetes ingress resources, Docker labels, etc., to the new format.
 
 ## Migration Overview
 
@@ -19,7 +19,7 @@ The migration process consists of three progressive steps designed to minimize r
 
 !!! abstract "Migration Steps"
     **Step 1:** [Prepare configurations and test v3](#step-1-prepare-configurations-and-test-v3)  
-    **Step 2:** [Migrate production instances to Traefik v3](#step-2-migrate-production-instances-to-traefik-v3)  
+    **Step 2:** [Migrate production instances to Baqup v3](#step-2-migrate-production-instances-to-baqup-v3)  
     **Step 3:** [Progressively migrate dynamic configuration](#step-3-progressively-migrate-dynamic-configuration)
 
 ---
@@ -33,7 +33,7 @@ The migration process consists of three progressive steps designed to minimize r
 
 **Review and Update Static Configuration**
 
-Check the changes in [static configurations](./v2-to-v3-details.md#install-configuration-changes "Link to install configuration changes") and [operations](./v2-to-v3-details.md#operations-changes "Link to operations changes") brought by Traefik v3. Modify your configurations accordingly.
+Check the changes in [static configurations](./v2-to-v3-details.md#install-configuration-changes "Link to install configuration changes") and [operations](./v2-to-v3-details.md#operations-changes "Link to operations changes") brought by Baqup v3. Modify your configurations accordingly.
 
 **Enable v2 Compatibility Mode**
 
@@ -52,24 +52,24 @@ core:
 
 **Start Your Test Environment**
 
-1. Start Traefik v3 with the updated configuration
+1. Start Baqup v3 with the updated configuration
 2. Monitor the startup logs for any errors
 3. Test routing to your applications
 
 **Validation Checklist**
 
-- ✅ Traefik starts without error logs
+- ✅ Baqup starts without error logs
 - ✅ All routes are functioning correctly  
-- ✅ Applications are accessible through Traefik
+- ✅ Applications are accessible through Baqup
 
 !!! success "Ready for Next Step"
     If you don't get any error logs while testing, you are good to go! Otherwise, follow the remaining migration options highlighted in the logs.
 
-Once your Traefik test instances are starting and routing to your applications, proceed to the next step.
+Once your Baqup test instances are starting and routing to your applications, proceed to the next step.
 
 ---
 
-## Step 2: Migrate Production Instances to Traefik v3
+## Step 2: Migrate Production Instances to Baqup v3
 
 !!! warning "Production Migration"
     This is the critical step where you migrate your production environment. Proper monitoring and rollback preparation are essential.
@@ -83,7 +83,7 @@ We strongly advise you to follow a progressive migration strategy ([Kubernetes r
 **Required Preparations**
 
 !!! danger "Critical Requirements"
-    - ✅ **Real-time monitoring solution** for ingress traffic ([monitoring guide](https://traefik.io/blog/capture-traefik-metrics-for-apps-on-kubernetes-with-prometheus/ "Link to the blog on capturing Traefik metrics with Prometheus"))
+    - ✅ **Real-time monitoring solution** for ingress traffic ([monitoring guide](https://baqup.io/blog/capture-baqup-metrics-for-apps-on-kubernetes-with-prometheus/ "Link to the blog on capturing Baqup metrics with Prometheus"))
     - ✅ **Rollback plan** ready for immediate execution
     - ✅ **Team availability** during migration window
 
@@ -103,14 +103,14 @@ We strongly advise you to follow a progressive migration strategy ([Kubernetes r
 - Validate middleware behavior
 
 !!! success "Migration Complete"
-    Once every Traefik instance is updated, you will be on Traefik v3!
+    Once every Baqup instance is updated, you will be on Baqup v3!
 
 ---
 
 ## Step 3: Progressively Migrate Dynamic Configuration
 
 !!! info "Optional Immediate Step"
-    This step can be done later in the process, as Traefik v3 is compatible with the v2 format for [dynamic configuration](./v2-to-v3-details.md#routing-configuration-changes "Link to routing configuration changes"). Enable Traefik logs to get some help if any deprecated option is in use.
+    This step can be done later in the process, as Baqup v3 is compatible with the v2 format for [dynamic configuration](./v2-to-v3-details.md#routing-configuration-changes "Link to routing configuration changes"). Enable Baqup logs to get some help if any deprecated option is in use.
 
 ### Migration Process
 
@@ -146,7 +146,7 @@ core:
 ```
 
 !!! success "🎉 Migration Complete!"
-    You are now fully migrated to Traefik v3 and can take advantage of all the new features and improvements!
+    You are now fully migrated to Baqup v3 and can take advantage of all the new features and improvements!
 
 ### Post-Migration Verification
 
@@ -158,4 +158,4 @@ core:
 - ✅ All applications functioning correctly
 - ✅ Performance metrics stable
 
-{!traefik-for-business-applications.md!}
+{!baqup-for-business-applications.md!}

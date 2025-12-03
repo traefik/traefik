@@ -9,15 +9,15 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/baqupio/baqup/v3/pkg/config/static"
+	"github.com/baqupio/baqup/v3/pkg/redactor"
+	"github.com/baqupio/baqup/v3/pkg/version"
 	"github.com/mitchellh/hashstructure"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v3/pkg/config/static"
-	"github.com/traefik/traefik/v3/pkg/redactor"
-	"github.com/traefik/traefik/v3/pkg/version"
 )
 
 // collectorURL URL where the stats are sent.
-const collectorURL = "https://collect.traefik.io/yYaUej3P42cziRVzv6T5w2aYy9po2Mrn"
+const collectorURL = "https://collect.baqup.io/yYaUej3P42cziRVzv6T5w2aYy9po2Mrn"
 
 // Collected data.
 type data struct {

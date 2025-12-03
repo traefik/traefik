@@ -1,6 +1,6 @@
 ---
-title: "Traefik Let's Encrypt Documentation"
-description: "Learn how to configure Traefik Proxy to use an ACME provider like Let's Encrypt for automatic certificate generation. Read the technical documentation."
+title: "Baqup Let's Encrypt Documentation"
+description: "Learn how to configure Baqup Proxy to use an ACME provider like Let's Encrypt for automatic certificate generation. Read the technical documentation."
 ---
 
 # Let's Encrypt
@@ -8,13 +8,13 @@ description: "Learn how to configure Traefik Proxy to use an ACME provider like 
 Automatic HTTPS
 {: .subtitle }
 
-You can configure Traefik to use an ACME provider (like Let's Encrypt) for automatic certificate generation.
+You can configure Baqup to use an ACME provider (like Let's Encrypt) for automatic certificate generation.
 
 !!! warning "Let's Encrypt and Rate Limiting"
     Note that Let's Encrypt API has [rate limiting](https://letsencrypt.org/docs/rate-limits). These last up to **one week**, and cannot be overridden.
     
-    When running Traefik in a container the `acme.json` file should be persisted across restarts. 
-    If Traefik requests new certificates each time it starts up, a crash-looping container can quickly reach Let's Encrypt's ratelimits.
+    When running Baqup in a container the `acme.json` file should be persisted across restarts. 
+    If Baqup requests new certificates each time it starts up, a crash-looping container can quickly reach Let's Encrypt's ratelimits.
     To configure where certificates are stored, please take a look at the [storage](#storage) configuration.
 
     Use Let's Encrypt staging server with the [`caServer`](#caserver) configuration option
@@ -22,7 +22,7 @@ You can configure Traefik to use an ACME provider (like Let's Encrypt) for autom
 
 ## Certificate Resolvers
 
-Traefik requires you to define "Certificate Resolvers" in the [static configuration](../getting-started/configuration-overview.md#the-static-configuration),
+Baqup requires you to define "Certificate Resolvers" in the [static configuration](../getting-started/configuration-overview.md#the-static-configuration),
 which are responsible for retrieving certificates from an ACME server.
 
 Then, each ["router"](../routing/routers/index.md) is configured to enable TLS,
@@ -149,23 +149,23 @@ Please check the [configuration examples below](#configuration-examples) for mor
 
 ## Automatic Renewals
 
-Traefik automatically tracks the expiry date of ACME certificates it generates.
+Baqup automatically tracks the expiry date of ACME certificates it generates.
 
-By default, Traefik manages 90 days certificates,
+By default, Baqup manages 90 days certificates,
 and starts to renew certificates 30 days before their expiry.
 
 When using a certificate resolver that issues certificates with custom durations,
 one can configure the certificates' duration with the [`certificatesDuration`](#certificatesduration) option.
 
 !!! info ""
-    Certificates that are no longer used may still be renewed, as Traefik does not currently check if the certificate is being used before renewing.
+    Certificates that are no longer used may still be renewed, as Baqup does not currently check if the certificate is being used before renewing.
 
 ## Using LetsEncrypt with Kubernetes
 
 When using LetsEncrypt with kubernetes, there are some known caveats with both the [ingress](../providers/kubernetes-ingress.md) and [crd](../providers/kubernetes-crd.md) providers.
 
 !!! info ""
-    If you intend to run multiple instances of Traefik with LetsEncrypt, please ensure you read the sections on those provider pages.
+    If you intend to run multiple instances of Baqup with LetsEncrypt, please ensure you read the sections on those provider pages.
 
 ## The Different ACME Challenges
 
@@ -178,7 +178,7 @@ When using LetsEncrypt with kubernetes, there are some known caveats with both t
 Use the `TLS-ALPN-01` challenge to generate and renew ACME certificates by provisioning a TLS certificate.
 
 As described on the Let's Encrypt [community forum](https://community.letsencrypt.org/t/support-for-ports-other-than-80-and-443/3419/72),
-when using the `TLS-ALPN-01` challenge, Traefik must be reachable by Let's Encrypt through port 443.
+when using the `TLS-ALPN-01` challenge, Baqup must be reachable by Let's Encrypt through port 443.
 
 ??? example "Configuring the `tlsChallenge`"
 
@@ -356,7 +356,7 @@ Use the `DNS-01` challenge to generate and renew ACME certificates by provisioni
 
 !!! warning "Multiple DNS Challenge provider"
     
-    Multiple DNS challenge provider are not supported with Traefik, but you can use `CNAME` to handle that.
+    Multiple DNS challenge provider are not supported with Baqup, but you can use `CNAME` to handle that.
     For example, if you have `example.org` (account foo) and `example.com` (account bar) you can create a CNAME on `example.org` called `_acme-challenge.example.org` pointing to `challenge.example.com`.
     This way, you can obtain certificates for `example.org` with the `bar` account.
 
@@ -370,7 +370,7 @@ along with the required environment variables and their [wildcard & root domain 
 Do not hesitate to complete it.
 
 Many lego environment variables can be overridden by their respective `_FILE` counterpart, which should have a filepath to a file that contains the secret as its value.
-For example, `CF_API_EMAIL_FILE=/run/secrets/traefik_cf-api-email` could be used to provide a Cloudflare API email address as a Docker secret named `traefik_cf-api-email`.
+For example, `CF_API_EMAIL_FILE=/run/secrets/baqup_cf-api-email` could be used to provide a Cloudflare API email address as a Docker secret named `baqup_cf-api-email`.
 
 For complete details, refer to your provider's _Additional configuration_ link.
 
@@ -540,14 +540,14 @@ For complete details, refer to your provider's _Additional configuration_ link.
 | [Zonomi](https://zonomi.com)                                           | `zonomi`           | `ZONOMI_API_KEY`                                                                                                                                                                 | [Additional configuration](https://go-acme.github.io/lego/dns/zonomi)           |
 | External Program                                                       | `exec`             | `EXEC_PATH`                                                                                                                                                                      | [Additional configuration](https://go-acme.github.io/lego/dns/exec)             |
 | HTTP request                                                           | `httpreq`          | `HTTPREQ_ENDPOINT`, `HTTPREQ_MODE`, `HTTPREQ_USERNAME`, `HTTPREQ_PASSWORD` [^1]                                                                                                  | [Additional configuration](https://go-acme.github.io/lego/dns/httpreq)          |
-| manual                                                                 | `manual`           | none, but you need to run Traefik interactively [^4], turn on debug log to see instructions and press <kbd>Enter</kbd>.                                                          |                                                                                 |
+| manual                                                                 | `manual`           | none, but you need to run Baqup interactively [^4], turn on debug log to see instructions and press <kbd>Enter</kbd>.                                                          |                                                                                 |
 
 [^1]: More information about the HTTP message format can be found [here](https://go-acme.github.io/lego/dns/httpreq/).
 [^2]: [Providing credentials to your application](https://cloud.google.com/docs/authentication/production).
 [^3]: [google/default.go](https://github.com/golang/oauth2/blob/36a7019397c4c86cf59eeab3bc0d188bac444277/google/default.go#L61-L76)
 [^4]: `docker stack` remark: there is no way to support terminal attached to container when deploying with `docker stack`, so you might need to run container with `docker run -it` to generate certificates using `manual` provider.
 [^5]: The `Global API Key` needs to be used, not the `Origin CA Key`.
-[^6]: As explained in the [LEGO hurricane configuration](https://go-acme.github.io/lego/dns/hurricane/#credentials), each domain or wildcard (record name) needs a token. So each update of record name must be followed by an update of the `HURRICANE_TOKENS` variable, and a restart of Traefik.
+[^6]: As explained in the [LEGO hurricane configuration](https://go-acme.github.io/lego/dns/hurricane/#credentials), each domain or wildcard (record name) needs a token. So each update of record name must be followed by an update of the `HURRICANE_TOKENS` variable, and a restart of Baqup.
 
 #### `resolvers`
 
@@ -824,15 +824,15 @@ ACME certificates are stored in a JSON file that needs to have a `600` file mode
 In Docker you can mount either the JSON file, or the folder containing it:
 
 ```bash
-docker run -v "/my/host/acme.json:/acme.json" traefik
+docker run -v "/my/host/acme.json:/acme.json" baqup
 ```
 
 ```bash
-docker run -v "/my/host/acme:/etc/traefik/acme" traefik
+docker run -v "/my/host/acme:/etc/baqup/acme" baqup
 ```
 
 !!! warning
-    For concurrency reasons, this file cannot be shared across multiple instances of Traefik.
+    For concurrency reasons, this file cannot be shared across multiple instances of Baqup.
 
 ### `certificatesDuration`
 
@@ -856,7 +856,7 @@ It defaults to `2160` (90 days) to follow Let's Encrypt certificates' duration.
 | >= 24 hours          | 6 hours           | 10 min                  |
 | < 24 hours           | 20 min            | 1 min                   |
 
-!!! warning "Traefik cannot manage certificates with a duration lower than 1 hour."
+!!! warning "Baqup cannot manage certificates with a duration lower than 1 hour."
 
 ```yaml tab="File (YAML)"
 certificatesResolvers:
@@ -1209,6 +1209,6 @@ If Let's Encrypt is not reachable, the following certificates will apply:
   3. Provided certificates
 
 !!! important
-    For new (sub)domains which need Let's Encrypt authentication, the default Traefik certificate will be used until Traefik is restarted.
+    For new (sub)domains which need Let's Encrypt authentication, the default Baqup certificate will be used until Baqup is restarted.
 
-{!traefik-for-business-applications.md!}
+{!baqup-for-business-applications.md!}

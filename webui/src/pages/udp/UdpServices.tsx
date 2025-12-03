@@ -108,7 +108,7 @@ export const UdpServices = () => {
   return (
     <>
       <Helmet>
-        <title>UDP Services - Traefik Proxy</title>
+        <title>UDP Services - Baqup Proxy</title>
       </Helmet>
       <TableFilter />
       <UdpServicesRender

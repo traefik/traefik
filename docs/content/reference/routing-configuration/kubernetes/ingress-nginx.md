@@ -1,17 +1,17 @@
 ---
-title: "Traefik Kubernetes Ingress NGINX Routing Configuration"
-description: "Understand the routing configuration for the Kubernetes Ingress NGINX Controller and Traefik Proxy. Read the technical documentation."
+title: "Baqup Kubernetes Ingress NGINX Routing Configuration"
+description: "Understand the routing configuration for the Kubernetes Ingress NGINX Controller and Baqup Proxy. Read the technical documentation."
 ---
 
-# Traefik & Ingresses with NGINX Annotations
+# Baqup & Ingresses with NGINX Annotations
 
-Enable seamless migration from NGINX Ingress Controller to Traefik with NGINX annotation compatibility.
+Enable seamless migration from NGINX Ingress Controller to Baqup with NGINX annotation compatibility.
 {: .subtitle }
 
 !!! warning "NGINX Ingress Controller Retirement"
 
     The Kubernetes NGINX Ingress Controller project has announced its retirement in **March 2026** and will no longer receive updates or security patches.
-    Traefik provides a migration path by supporting NGINX annotations, allowing you to transition your workloads without rewriting all your Ingress configurations.
+    Baqup provides a migration path by supporting NGINX annotations, allowing you to transition your workloads without rewriting all your Ingress configurations.
 
     For more information about the NGINX Ingress Controller retirement, see the [official Kubernetes blog announcement](https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement).
 
@@ -27,7 +27,7 @@ This provider discovers all Ingresses in the cluster by default, which may lead 
 
 ## Routing Configuration
 
-This provider watches for incoming Ingress events and automatically translates NGINX annotations into Traefik's dynamic configuration, creating the corresponding routers, services, middlewares, and other components needed to handle your traffic.
+This provider watches for incoming Ingress events and automatically translates NGINX annotations into Baqup's dynamic configuration, creating the corresponding routers, services, middlewares, and other components needed to handle your traffic.
 
 ## Configuration Example
 
@@ -38,7 +38,7 @@ This provider watches for incoming Ingress events and automatically translates N
       apiVersion: rbac.authorization.k8s.io/v1
       kind: ClusterRole
       metadata:
-        name: traefik-ingress-controller
+        name: baqup-ingress-controller
       rules:
         - apiGroups:
             - ""
@@ -107,46 +107,46 @@ This provider watches for incoming Ingress events and automatically translates N
           apiVersion: rbac.authorization.k8s.io/v1
           kind: ClusterRoleBinding
           metadata:
-            name: traefik-ingress-controller
+            name: baqup-ingress-controller
           roleRef:
             apiGroup: rbac.authorization.k8s.io
             kind: ClusterRole
-            name: traefik-ingress-controller
+            name: baqup-ingress-controller
           subjects:
             - kind: ServiceAccount
-              name: traefik-ingress-controller
+              name: baqup-ingress-controller
               namespace: default
       ```
 
-      ```yaml tab="Traefik"
+      ```yaml tab="Baqup"
       ---
       apiVersion: v1
       kind: ServiceAccount
       metadata:
-        name: traefik-ingress-controller
+        name: baqup-ingress-controller
 
       ---
       apiVersion: apps/v1
       kind: Deployment
       metadata:
-        name: traefik
+        name: baqup
         labels:
-          app: traefik
+          app: baqup
 
       spec:
         replicas: 1
         selector:
           matchLabels:
-            app: traefik
+            app: baqup
         template:
           metadata:
             labels:
-              app: traefik
+              app: baqup
           spec:
-            serviceAccountName: traefik-ingress-controller
+            serviceAccountName: baqup-ingress-controller
             containers:
-              - name: traefik
-                image: traefik:v3.6
+              - name: baqup
+                image: baqup:v3.6
                 args:
                   - --entryPoints.web.address=:80
                   - --providers.kubernetesingressnginx
@@ -158,11 +158,11 @@ This provider watches for incoming Ingress events and automatically translates N
       apiVersion: v1
       kind: Service
       metadata:
-        name: traefik
+        name: baqup
       spec:
         type: LoadBalancer
         selector:
-          app: traefik
+          app: baqup
         ports:
           - name: web
             port: 80
@@ -190,7 +190,7 @@ This provider watches for incoming Ingress events and automatically translates N
           spec:
             containers:
               - name: whoami
-                image: traefik/whoami
+                image: baqup/whoami
                 ports:
                   - containerPort: 80
 
@@ -314,14 +314,14 @@ The following annotations are organized by category for easier navigation.
 
 ### Caveats and Key Behavioral Differences
 
-- **Authentication**: Forward auth behaves differently and session caching is not supported. NGINX supports sub-request based auth, while Traefik forwards the original request.
+- **Authentication**: Forward auth behaves differently and session caching is not supported. NGINX supports sub-request based auth, while Baqup forwards the original request.
 - **Session Affinity**: Only persistent mode is supported.
 - **Leader Election**: Not supported; no cluster mode with leader election.
 - **Default Backend**: Only defaultBackend in Ingress spec is supported; the annotation is ignored.
 - **Load Balancing**: Only round_robin is supported; EWMA and IP hash are not supported.
-- **CORS**: NGINX responds with all configured headers unconditionally; Traefik handles headers differently between pre-flight and regular requests.
-- **TLS/Backend Protocols**: AUTO_HTTP, FCGI and some TLS options are not supported in Traefik.
-- **Path Handling**: Traefik preserves trailing slashes by default; NGINX removes them unless configured otherwise
+- **CORS**: NGINX responds with all configured headers unconditionally; Baqup handles headers differently between pre-flight and regular requests.
+- **TLS/Backend Protocols**: AUTO_HTTP, FCGI and some TLS options are not supported in Baqup.
+- **Path Handling**: Baqup preserves trailing slashes by default; NGINX removes them unless configured otherwise
 
 ### Unsupported Annotations
 
@@ -330,7 +330,7 @@ The following annotations are organized by category for easier navigation.
     You can help extend support in two ways:
 
     - [**Open a PR**](../../../contributing/submitting-pull-requests.md) with the new annotation support.
-    - **Reach out** to the [Traefik Labs support team](https://info.traefik.io/request-commercial-support?cta=doc).
+    - **Reach out** to the [Baqup Labs support team](https://info.baqup.io/request-commercial-support?cta=doc).
 
     All contributions and suggestions are welcome — let's build this together!
 
@@ -379,7 +379,7 @@ The following annotations are organized by category for easier navigation.
 | <a id="opt-nginx-ingress-kubernetes-iopermanent-redirect" href="#opt-nginx-ingress-kubernetes-iopermanent-redirect" title="#opt-nginx-ingress-kubernetes-iopermanent-redirect">`nginx.ingress.kubernetes.io/permanent-redirect`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-iopermanent-redirect-code" href="#opt-nginx-ingress-kubernetes-iopermanent-redirect-code" title="#opt-nginx-ingress-kubernetes-iopermanent-redirect-code">`nginx.ingress.kubernetes.io/permanent-redirect-code`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-iotemporal-redirect" href="#opt-nginx-ingress-kubernetes-iotemporal-redirect" title="#opt-nginx-ingress-kubernetes-iotemporal-redirect">`nginx.ingress.kubernetes.io/temporal-redirect`</a> |                                                      |
-| <a id="opt-nginx-ingress-kubernetes-iopreserve-trailing-slash" href="#opt-nginx-ingress-kubernetes-iopreserve-trailing-slash" title="#opt-nginx-ingress-kubernetes-iopreserve-trailing-slash">`nginx.ingress.kubernetes.io/preserve-trailing-slash`</a> | Traefik preserves trailing slash by default.         |
+| <a id="opt-nginx-ingress-kubernetes-iopreserve-trailing-slash" href="#opt-nginx-ingress-kubernetes-iopreserve-trailing-slash" title="#opt-nginx-ingress-kubernetes-iopreserve-trailing-slash">`nginx.ingress.kubernetes.io/preserve-trailing-slash`</a> | Baqup preserves trailing slash by default.         |
 | <a id="opt-nginx-ingress-kubernetes-ioproxy-cookie-domain" href="#opt-nginx-ingress-kubernetes-ioproxy-cookie-domain" title="#opt-nginx-ingress-kubernetes-ioproxy-cookie-domain">`nginx.ingress.kubernetes.io/proxy-cookie-domain`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-ioproxy-cookie-path" href="#opt-nginx-ingress-kubernetes-ioproxy-cookie-path" title="#opt-nginx-ingress-kubernetes-ioproxy-cookie-path">`nginx.ingress.kubernetes.io/proxy-cookie-path`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-ioproxy-connect-timeout" href="#opt-nginx-ingress-kubernetes-ioproxy-connect-timeout" title="#opt-nginx-ingress-kubernetes-ioproxy-connect-timeout">`nginx.ingress.kubernetes.io/proxy-connect-timeout`</a> |                                                      |
@@ -431,6 +431,6 @@ The following annotations are organized by category for easier navigation.
 
 ### Global Configuration
 
-Traefik does not expose all global configuration options to control default behaviors for Ingresses in the same way NGINX does.
+Baqup does not expose all global configuration options to control default behaviors for Ingresses in the same way NGINX does.
 
 Some behaviors that are globally configurable in NGINX (such as default SSL redirect, rate limiting, or affinity) are currently not supported and cannot be overridden per-Ingress as in NGINX. These limitations are noted in the annotation tables below where applicable.

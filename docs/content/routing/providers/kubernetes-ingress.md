@@ -1,9 +1,9 @@
 ---
 title: "Kubernetes Ingress Routing Configuration"
-description: "Understand the routing configuration for the Kubernetes Ingress Controller and Traefik Proxy. Read the technical documentation."
+description: "Understand the routing configuration for the Kubernetes Ingress Controller and Baqup Proxy. Read the technical documentation."
 ---
 
-# Traefik & Kubernetes
+# Baqup & Kubernetes
 
 The Kubernetes Ingress Controller.
 {: .subtitle }
@@ -23,7 +23,7 @@ which in turn will create the resulting routers, services, handlers, etc.
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRole
     metadata:
-      name: traefik-ingress-controller
+      name: baqup-ingress-controller
     rules:
       - apiGroups:
           - ""
@@ -63,14 +63,14 @@ which in turn will create the resulting routers, services, handlers, etc.
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRoleBinding
     metadata:
-      name: traefik-ingress-controller
+      name: baqup-ingress-controller
     roleRef:
       apiGroup: rbac.authorization.k8s.io
       kind: ClusterRole
-      name: traefik-ingress-controller
+      name: baqup-ingress-controller
     subjects:
       - kind: ServiceAccount
-        name: traefik-ingress-controller
+        name: baqup-ingress-controller
         namespace: default
     ```
 
@@ -80,7 +80,7 @@ which in turn will create the resulting routers, services, handlers, etc.
     metadata:
       name: myingress
       annotations:
-        traefik.ingress.kubernetes.io/router.entrypoints: web
+        baqup.ingress.kubernetes.io/router.entrypoints: web
 
     spec:
       rules:
@@ -103,34 +103,34 @@ which in turn will create the resulting routers, services, handlers, etc.
                       number: 80
     ```
 
-    ```yaml tab="Traefik"
+    ```yaml tab="Baqup"
     apiVersion: v1
     kind: ServiceAccount
     metadata:
-      name: traefik-ingress-controller
+      name: baqup-ingress-controller
 
     ---
     apiVersion: apps/v1
     kind: Deployment
     metadata:
-      name: traefik
+      name: baqup
       labels:
-        app: traefik
+        app: baqup
 
     spec:
       replicas: 1
       selector:
         matchLabels:
-          app: traefik
+          app: baqup
       template:
         metadata:
           labels:
-            app: traefik
+            app: baqup
         spec:
-          serviceAccountName: traefik-ingress-controller
+          serviceAccountName: baqup-ingress-controller
           containers:
-            - name: traefik
-              image: traefik:v3.6
+            - name: baqup
+              image: baqup:v3.6
               args:
                 - --entryPoints.web.address=:80
                 - --providers.kubernetesingress
@@ -142,11 +142,11 @@ which in turn will create the resulting routers, services, handlers, etc.
     apiVersion: v1
     kind: Service
     metadata:
-      name: traefik
+      name: baqup
     spec:
       type: LoadBalancer
       selector:
-        app: traefik
+        app: baqup
       ports:
         - protocol: TCP
           port: 80
@@ -160,24 +160,24 @@ which in turn will create the resulting routers, services, handlers, etc.
     metadata:
       name: whoami
       labels:
-        app: traefiklabs
+        app: baquplabs
         name: whoami
 
     spec:
       replicas: 2
       selector:
         matchLabels:
-          app: traefiklabs
+          app: baquplabs
           task: whoami
       template:
         metadata:
           labels:
-            app: traefiklabs
+            app: baquplabs
             task: whoami
         spec:
           containers:
             - name: whoami
-              image: traefik/whoami
+              image: baqup/whoami
               ports:
                 - containerPort: 80
 
@@ -192,7 +192,7 @@ which in turn will create the resulting routers, services, handlers, etc.
         - name: http
           port: 80
       selector:
-        app: traefiklabs
+        app: baquplabs
         task: whoami
     ```
 
@@ -205,31 +205,31 @@ which in turn will create the resulting routers, services, handlers, etc.
 
 #### On Ingress
 
-??? info "`traefik.ingress.kubernetes.io/router.entrypoints`"
+??? info "`baqup.ingress.kubernetes.io/router.entrypoints`"
 
     See [entry points](../routers/index.md#entrypoints) for more information.
 
     ```yaml
-    traefik.ingress.kubernetes.io/router.entrypoints: ep1,ep2
+    baqup.ingress.kubernetes.io/router.entrypoints: ep1,ep2
     ```
 
-??? info "`traefik.ingress.kubernetes.io/router.middlewares`"
+??? info "`baqup.ingress.kubernetes.io/router.middlewares`"
 
     See [middlewares](../routers/index.md#middlewares) and [middlewares overview](../../middlewares/overview.md) for more information.
 
     ```yaml
-    traefik.ingress.kubernetes.io/router.middlewares: auth@file,default-prefix@kubernetescrd
+    baqup.ingress.kubernetes.io/router.middlewares: auth@file,default-prefix@kubernetescrd
     ```
 
-??? info "`traefik.ingress.kubernetes.io/router.priority`"
+??? info "`baqup.ingress.kubernetes.io/router.priority`"
 
     See [priority](../routers/index.md#priority) for more information.
 
     ```yaml
-    traefik.ingress.kubernetes.io/router.priority: "42"
+    baqup.ingress.kubernetes.io/router.priority: "42"
     ```
 
-??? info "`traefik.ingress.kubernetes.io/router.rulesyntax`"
+??? info "`baqup.ingress.kubernetes.io/router.rulesyntax`"
 
     !!! warning
 
@@ -239,10 +239,10 @@ which in turn will create the resulting routers, services, handlers, etc.
     See [rule syntax](../routers/index.md#rulesyntax) for more information.
 
     ```yaml
-    traefik.ingress.kubernetes.io/router.rulesyntax: "v2"
+    baqup.ingress.kubernetes.io/router.rulesyntax: "v2"
     ```
 
-??? info "`traefik.ingress.kubernetes.io/router.pathmatcher`"
+??? info "`baqup.ingress.kubernetes.io/router.pathmatcher`"
 
     Overrides the default router rule type used for a path.
     Only path-related matcher name should be specified: `Path`, `PathPrefix` or `PathRegexp`.
@@ -250,187 +250,187 @@ which in turn will create the resulting routers, services, handlers, etc.
     Default `PathPrefix`
 
     ```yaml
-    traefik.ingress.kubernetes.io/router.pathmatcher: Path
+    baqup.ingress.kubernetes.io/router.pathmatcher: Path
     ```
 
-??? info "`traefik.ingress.kubernetes.io/router.tls`"
+??? info "`baqup.ingress.kubernetes.io/router.tls`"
 
     See [tls](../routers/index.md#tls) for more information.
 
     ```yaml
-    traefik.ingress.kubernetes.io/router.tls: "true"
+    baqup.ingress.kubernetes.io/router.tls: "true"
     ```
 
-??? info "`traefik.ingress.kubernetes.io/router.tls.certresolver`"
+??? info "`baqup.ingress.kubernetes.io/router.tls.certresolver`"
 
     See [certResolver](../routers/index.md#certresolver) for more information.
 
     ```yaml
-    traefik.ingress.kubernetes.io/router.tls.certresolver: myresolver
+    baqup.ingress.kubernetes.io/router.tls.certresolver: myresolver
     ```
 
-??? info "`traefik.ingress.kubernetes.io/router.tls.domains.n.main`"
+??? info "`baqup.ingress.kubernetes.io/router.tls.domains.n.main`"
 
     See [domains](../routers/index.md#domains) for more information.
 
     ```yaml
-    traefik.ingress.kubernetes.io/router.tls.domains.0.main: example.org
+    baqup.ingress.kubernetes.io/router.tls.domains.0.main: example.org
     ```
 
-??? info "`traefik.ingress.kubernetes.io/router.tls.domains.n.sans`"
+??? info "`baqup.ingress.kubernetes.io/router.tls.domains.n.sans`"
 
     See [domains](../routers/index.md#domains) for more information.
 
     ```yaml
-    traefik.ingress.kubernetes.io/router.tls.domains.0.sans: test.example.org,dev.example.org
+    baqup.ingress.kubernetes.io/router.tls.domains.0.sans: test.example.org,dev.example.org
     ```
 
-??? info "`traefik.ingress.kubernetes.io/router.tls.options`"
+??? info "`baqup.ingress.kubernetes.io/router.tls.options`"
 
     See [options](../routers/index.md#options) for more information.
 
     ```yaml
-    traefik.ingress.kubernetes.io/router.tls.options: foobar@file
+    baqup.ingress.kubernetes.io/router.tls.options: foobar@file
     ```
 
-??? info "`traefik.ingress.kubernetes.io/router.observability.accesslogs`"
+??? info "`baqup.ingress.kubernetes.io/router.observability.accesslogs`"
 
     See accesslogs [option](../routers/index.md#accesslogs) for more information.
 
     ```yaml
-    traefik.ingress.kubernetes.io/router.observability.accesslogs: true
+    baqup.ingress.kubernetes.io/router.observability.accesslogs: true
     ```
 
-??? info "`traefik.ingress.kubernetes.io/router.observability.metrics`"
+??? info "`baqup.ingress.kubernetes.io/router.observability.metrics`"
 
     See metrics [option](../routers/index.md#metrics) for more information.
 
     ```yaml
-    traefik.ingress.kubernetes.io/router.observability.metrics: true
+    baqup.ingress.kubernetes.io/router.observability.metrics: true
     ```
 
-??? info "`traefik.ingress.kubernetes.io/router.observability.tracing`"
+??? info "`baqup.ingress.kubernetes.io/router.observability.tracing`"
 
     See tracing [option](../routers/index.md#tracing) for more information.
 
     ```yaml
-    traefik.ingress.kubernetes.io/router.observability.tracing: true
+    baqup.ingress.kubernetes.io/router.observability.tracing: true
     ```
 
 #### On Service
 
-??? info "`traefik.ingress.kubernetes.io/service.nativelb`"
+??? info "`baqup.ingress.kubernetes.io/service.nativelb`"
 
     Controls, when creating the load-balancer, whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP.
     The Kubernetes Service itself does load-balance to the pods.
-    Please note that, by default, Traefik reuses the established connections to the backends for performance purposes. This can prevent the requests load balancing between the replicas from behaving as one would expect when the option is set.
+    Please note that, by default, Baqup reuses the established connections to the backends for performance purposes. This can prevent the requests load balancing between the replicas from behaving as one would expect when the option is set.
     By default, NativeLB is false.
 
     ```yaml
-    traefik.ingress.kubernetes.io/service.nativelb: "true"
+    baqup.ingress.kubernetes.io/service.nativelb: "true"
     ```
 
-??? info "`traefik.ingress.kubernetes.io/service.nodeportlb`"
+??? info "`baqup.ingress.kubernetes.io/service.nodeportlb`"
 
     Controls, when creating the load-balancer, whether the LB's children are directly the nodes internal IPs using the nodePort when the service type is NodePort.
-    It allows services to be reachable when Traefik runs externally from the Kubernetes cluster but within the same network of the nodes.
+    It allows services to be reachable when Baqup runs externally from the Kubernetes cluster but within the same network of the nodes.
     By default, NodePortLB is false.
 
     ```yaml
-    traefik.ingress.kubernetes.io/service.nodeportlb: "true"
+    baqup.ingress.kubernetes.io/service.nodeportlb: "true"
     ```
 
-??? info "`traefik.ingress.kubernetes.io/service.serversscheme`"
+??? info "`baqup.ingress.kubernetes.io/service.serversscheme`"
 
     Overrides the default scheme.
 
     ```yaml
-    traefik.ingress.kubernetes.io/service.serversscheme: h2c
+    baqup.ingress.kubernetes.io/service.serversscheme: h2c
     ```
 
-??? info "`traefik.ingress.kubernetes.io/service.serverstransport`"
+??? info "`baqup.ingress.kubernetes.io/service.serverstransport`"
 
     See [ServersTransport](../services/index.md#serverstransport) for more information.
 
     ```yaml
-    traefik.ingress.kubernetes.io/service.serverstransport: foobar@file
+    baqup.ingress.kubernetes.io/service.serverstransport: foobar@file
     ```
 
-??? info "`traefik.ingress.kubernetes.io/service.passhostheader`"
+??? info "`baqup.ingress.kubernetes.io/service.passhostheader`"
 
     See [pass Host header](../services/index.md#pass-host-header) for more information.
 
     ```yaml
-    traefik.ingress.kubernetes.io/service.passhostheader: "true"
+    baqup.ingress.kubernetes.io/service.passhostheader: "true"
     ```
 
-??? info "`traefik.ingress.kubernetes.io/service.sticky.cookie`"
+??? info "`baqup.ingress.kubernetes.io/service.sticky.cookie`"
 
     See [sticky sessions](../services/index.md#sticky-sessions) for more information.
 
     ```yaml
-    traefik.ingress.kubernetes.io/service.sticky.cookie: "true"
+    baqup.ingress.kubernetes.io/service.sticky.cookie: "true"
     ```
 
-??? info "`traefik.ingress.kubernetes.io/service.sticky.cookie.name`"
+??? info "`baqup.ingress.kubernetes.io/service.sticky.cookie.name`"
 
     See [sticky sessions](../services/index.md#sticky-sessions) for more information.
 
     ```yaml
-    traefik.ingress.kubernetes.io/service.sticky.cookie.name: foobar
+    baqup.ingress.kubernetes.io/service.sticky.cookie.name: foobar
     ```
 
-??? info "`traefik.ingress.kubernetes.io/service.sticky.cookie.secure`"
+??? info "`baqup.ingress.kubernetes.io/service.sticky.cookie.secure`"
 
     See [sticky sessions](../services/index.md#sticky-sessions) for more information.
 
     ```yaml
-    traefik.ingress.kubernetes.io/service.sticky.cookie.secure: "true"
+    baqup.ingress.kubernetes.io/service.sticky.cookie.secure: "true"
     ```
 
-??? info "`traefik.ingress.kubernetes.io/service.sticky.cookie.samesite`"
+??? info "`baqup.ingress.kubernetes.io/service.sticky.cookie.samesite`"
 
     See [sticky sessions](../services/index.md#sticky-sessions) for more information.
 
     ```yaml
-    traefik.ingress.kubernetes.io/service.sticky.cookie.samesite: "none"
+    baqup.ingress.kubernetes.io/service.sticky.cookie.samesite: "none"
     ```
 
-??? info "`traefik.ingress.kubernetes.io/service.sticky.cookie.domain`"
+??? info "`baqup.ingress.kubernetes.io/service.sticky.cookie.domain`"
 
     See [sticky sessions](../services/index.md#sticky-sessions) for more information.
 
     ```yaml
-    traefik.ingress.kubernetes.io/service.sticky.cookie.domain: "foo.com"
+    baqup.ingress.kubernetes.io/service.sticky.cookie.domain: "foo.com"
     ```
 
-??? info "`traefik.ingress.kubernetes.io/service.sticky.cookie.httponly`"
+??? info "`baqup.ingress.kubernetes.io/service.sticky.cookie.httponly`"
 
     See [sticky sessions](../services/index.md#sticky-sessions) for more information.
 
     ```yaml
-    traefik.ingress.kubernetes.io/service.sticky.cookie.httponly: "true"
+    baqup.ingress.kubernetes.io/service.sticky.cookie.httponly: "true"
     ```
 
-??? info "`traefik.ingress.kubernetes.io/service.sticky.cookie.maxage`"
+??? info "`baqup.ingress.kubernetes.io/service.sticky.cookie.maxage`"
 
     See [sticky sessions](../services/index.md#sticky-sessions) for more information.
 
     ```yaml
-    traefik.ingress.kubernetes.io/service.sticky.cookie.maxage: 42
+    baqup.ingress.kubernetes.io/service.sticky.cookie.maxage: 42
     ```
 
-??? info "`traefik.ingress.kubernetes.io/service.sticky.cookie.path`"
+??? info "`baqup.ingress.kubernetes.io/service.sticky.cookie.path`"
 
     See [sticky sessions](../services/index.md#sticky-sessions) for more information.
 
     ```yaml
-    traefik.ingress.kubernetes.io/service.sticky.cookie.path: /foobar
+    baqup.ingress.kubernetes.io/service.sticky.cookie.path: /foobar
     ```
 
 ## Stickiness and load-balancing
 
-When stickiness is enabled, Traefik uses Kubernetes [serving](https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/#serving) endpoints status to detect and mark servers as fenced.
+When stickiness is enabled, Baqup uses Kubernetes [serving](https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/#serving) endpoints status to detect and mark servers as fenced.
 Fenced servers can still process requests tied to sticky cookies, while they are terminating.
 
 ## Path Types on Kubernetes 1.18+
@@ -444,7 +444,7 @@ the new `pathType` property can be leveraged to define the rules matchers:
 Please see [this documentation](https://kubernetes.io/docs/concepts/services-networking/ingress/#path-types) for more information.
 
 !!! warning "Multiple Matches"
-    In the case of multiple matches, Traefik will not ensure the priority of a Path matcher over a PathPrefix matcher,
+    In the case of multiple matches, Baqup will not ensure the priority of a Path matcher over a PathPrefix matcher,
     as stated in [this documentation](https://kubernetes.io/docs/concepts/services-networking/ingress/#multiple-matches).
 
 ## TLS
@@ -485,7 +485,7 @@ This way, any Ingress attached to this Entrypoint will have TLS termination by d
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRole
     metadata:
-      name: traefik-ingress-controller
+      name: baqup-ingress-controller
     rules:
       - apiGroups:
           - ""
@@ -526,14 +526,14 @@ This way, any Ingress attached to this Entrypoint will have TLS termination by d
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRoleBinding
     metadata:
-      name: traefik-ingress-controller
+      name: baqup-ingress-controller
     roleRef:
       apiGroup: rbac.authorization.k8s.io
       kind: ClusterRole
-      name: traefik-ingress-controller
+      name: baqup-ingress-controller
     subjects:
       - kind: ServiceAccount
-        name: traefik-ingress-controller
+        name: baqup-ingress-controller
         namespace: default
     ```
 
@@ -543,7 +543,7 @@ This way, any Ingress attached to this Entrypoint will have TLS termination by d
     metadata:
       name: myingress
       annotations:
-        traefik.ingress.kubernetes.io/router.entrypoints: websecure
+        baqup.ingress.kubernetes.io/router.entrypoints: websecure
 
     spec:
       rules:
@@ -566,34 +566,34 @@ This way, any Ingress attached to this Entrypoint will have TLS termination by d
                       number: 80
     ```
 
-    ```yaml tab="Traefik"
+    ```yaml tab="Baqup"
     apiVersion: v1
     kind: ServiceAccount
     metadata:
-      name: traefik-ingress-controller
+      name: baqup-ingress-controller
 
     ---
     apiVersion: apps/v1
     kind: Deployment
     metadata:
-      name: traefik
+      name: baqup
       labels:
-        app: traefik
+        app: baqup
 
     spec:
       replicas: 1
       selector:
         matchLabels:
-          app: traefik
+          app: baqup
       template:
         metadata:
           labels:
-            app: traefik
+            app: baqup
         spec:
-          serviceAccountName: traefik-ingress-controller
+          serviceAccountName: baqup-ingress-controller
           containers:
-            - name: traefik
-              image: traefik:v3.6
+            - name: baqup
+              image: baqup:v3.6
               args:
                 - --entryPoints.websecure.address=:443
                 - --entryPoints.websecure.http.tls
@@ -606,11 +606,11 @@ This way, any Ingress attached to this Entrypoint will have TLS termination by d
     apiVersion: v1
     kind: Service
     metadata:
-      name: traefik
+      name: baqup
     spec:
       type: LoadBalancer
       selector:
-        app: traefik
+        app: baqup
       ports:
         - protocol: TCP
           port: 443
@@ -624,24 +624,24 @@ This way, any Ingress attached to this Entrypoint will have TLS termination by d
     metadata:
       name: whoami
       labels:
-        app: traefiklabs
+        app: baquplabs
         name: whoami
 
     spec:
       replicas: 2
       selector:
         matchLabels:
-          app: traefiklabs
+          app: baquplabs
           task: whoami
       template:
         metadata:
           labels:
-            app: traefiklabs
+            app: baquplabs
             task: whoami
         spec:
           containers:
             - name: whoami
-              image: traefik/whoami
+              image: baqup/whoami
               ports:
                 - containerPort: 80
 
@@ -656,7 +656,7 @@ This way, any Ingress attached to this Entrypoint will have TLS termination by d
         - name: http
           port: 80
       selector:
-        app: traefiklabs
+        app: baquplabs
         task: whoami
     ```
 
@@ -665,7 +665,7 @@ This way, any Ingress attached to this Entrypoint will have TLS termination by d
 To enable TLS on the underlying router created from an Ingress, one should configure it through annotations:
 
 ```yaml
-traefik.ingress.kubernetes.io/router.tls: "true"
+baqup.ingress.kubernetes.io/router.tls: "true"
 ```
 
 For more options, please refer to the available [annotations](#on-ingress).
@@ -677,7 +677,7 @@ For more options, please refer to the available [annotations](#on-ingress).
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRole
     metadata:
-      name: traefik-ingress-controller
+      name: baqup-ingress-controller
     rules:
       - apiGroups:
           - ""
@@ -718,14 +718,14 @@ For more options, please refer to the available [annotations](#on-ingress).
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRoleBinding
     metadata:
-      name: traefik-ingress-controller
+      name: baqup-ingress-controller
     roleRef:
       apiGroup: rbac.authorization.k8s.io
       kind: ClusterRole
-      name: traefik-ingress-controller
+      name: baqup-ingress-controller
     subjects:
       - kind: ServiceAccount
-        name: traefik-ingress-controller
+        name: baqup-ingress-controller
         namespace: default
     ```
 
@@ -735,8 +735,8 @@ For more options, please refer to the available [annotations](#on-ingress).
     metadata:
       name: myingress
       annotations:
-        traefik.ingress.kubernetes.io/router.entrypoints: websecure
-        traefik.ingress.kubernetes.io/router.tls: true
+        baqup.ingress.kubernetes.io/router.entrypoints: websecure
+        baqup.ingress.kubernetes.io/router.tls: true
 
     spec:
       rules:
@@ -759,34 +759,34 @@ For more options, please refer to the available [annotations](#on-ingress).
                       number: 80
     ```
 
-    ```yaml tab="Traefik"
+    ```yaml tab="Baqup"
     apiVersion: v1
     kind: ServiceAccount
     metadata:
-      name: traefik-ingress-controller
+      name: baqup-ingress-controller
 
     ---
     apiVersion: apps/v1
     kind: Deployment
     metadata:
-      name: traefik
+      name: baqup
       labels:
-        app: traefik
+        app: baqup
 
     spec:
       replicas: 1
       selector:
         matchLabels:
-          app: traefik
+          app: baqup
       template:
         metadata:
           labels:
-            app: traefik
+            app: baqup
         spec:
-          serviceAccountName: traefik-ingress-controller
+          serviceAccountName: baqup-ingress-controller
           containers:
-            - name: traefik
-              image: traefik:v3.6
+            - name: baqup
+              image: baqup:v3.6
               args:
                 - --entryPoints.websecure.address=:443
                 - --providers.kubernetesingress
@@ -798,11 +798,11 @@ For more options, please refer to the available [annotations](#on-ingress).
     apiVersion: v1
     kind: Service
     metadata:
-      name: traefik
+      name: baqup
     spec:
       type: LoadBalancer
       selector:
-        app: traefik
+        app: baqup
       ports:
         - protocol: TCP
           port: 443
@@ -816,24 +816,24 @@ For more options, please refer to the available [annotations](#on-ingress).
     metadata:
       name: whoami
       labels:
-        app: traefiklabs
+        app: baquplabs
         name: whoami
 
     spec:
       replicas: 2
       selector:
         matchLabels:
-          app: traefiklabs
+          app: baquplabs
           task: whoami
       template:
         metadata:
           labels:
-            app: traefiklabs
+            app: baquplabs
             task: whoami
         spec:
           containers:
             - name: whoami
-              image: traefik/whoami
+              image: baqup/whoami
               ports:
                 - containerPort: 80
 
@@ -848,7 +848,7 @@ For more options, please refer to the available [annotations](#on-ingress).
         - name: http
           port: 80
       selector:
-        app: traefiklabs
+        app: baquplabs
         task: whoami
     ```
 
@@ -900,34 +900,34 @@ TLS certificates can be managed in Secrets objects.
     Only TLS certificates provided by users can be stored in Kubernetes Secrets.
     [Let's Encrypt](../../https/acme.md) certificates cannot be managed in Kubernetes Secrets yet.
 
-### Communication Between Traefik and Pods
+### Communication Between Baqup and Pods
 
 !!! info "Routing directly to [Kubernetes services](https://kubernetes.io/docs/concepts/services-networking/service/ "Link to Kubernetes service docs")"
 
     To route directly to the Kubernetes service,
-    one can use the `traefik.ingress.kubernetes.io/service.nativelb` annotation on the Kubernetes service.
+    one can use the `baqup.ingress.kubernetes.io/service.nativelb` annotation on the Kubernetes service.
     It controls, when creating the load-balancer,
     whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP.
 
     One alternative is to use an `ExternalName` service to forward requests to the Kubernetes service through DNS.
     To do so, one must [allow external name services](../../../providers/kubernetes-ingress/#allowexternalnameservices "Link to docs about allowing external name services").
 
-Traefik automatically requests endpoint information based on the service provided in the ingress spec.
-Although Traefik will connect directly to the endpoints (pods),
+Baqup automatically requests endpoint information based on the service provided in the ingress spec.
+Although Baqup will connect directly to the endpoints (pods),
 it still checks the service port to see if TLS communication is required.
 
-There are 3 ways to configure Traefik to use HTTPS to communicate with pods:
+There are 3 ways to configure Baqup to use HTTPS to communicate with pods:
 
 1. If the service port defined in the ingress spec is `443` (note that you can still use `targetPort` to use a different port on your pod).
 1. If the service port defined in the ingress spec has a name that starts with `https` (such as `https-api`, `https-web` or just `https`).
-1. If the service spec includes the annotation `traefik.ingress.kubernetes.io/service.serversscheme: https`.
+1. If the service spec includes the annotation `baqup.ingress.kubernetes.io/service.serversscheme: https`.
 
 If either of those configuration options exist, then the backend communication protocol is assumed to be TLS,
 and will connect via TLS automatically.
 
 !!! info
 
-    Please note that by enabling TLS communication between traefik and your pods,
+    Please note that by enabling TLS communication between baqup and your pods,
     you will have to have trusted certificates that have the proper trust chain and IP subject name.
     If this is not an option, you may need to skip TLS certificate verification.
     See the [insecureSkipVerify](../../routing/overview.md#insecureskipverify) setting for more details.
@@ -955,9 +955,9 @@ This will allow users to create a "default router" that will match all unmatched
 
 !!! info
 
-    Due to Traefik's use of priorities, you may have to set this ingress priority lower than other ingresses in your environment,
+    Due to Baqup's use of priorities, you may have to set this ingress priority lower than other ingresses in your environment,
     to avoid this global ingress from satisfying requests that could match other ingresses.
 
-    To do this, use the `traefik.ingress.kubernetes.io/router.priority` annotation (as seen in [Annotations on Ingress](#on-ingress)) on your ingresses accordingly.
+    To do this, use the `baqup.ingress.kubernetes.io/router.priority` annotation (as seen in [Annotations on Ingress](#on-ingress)) on your ingresses accordingly.
 
-{!traefik-for-business-applications.md!}
+{!baqup-for-business-applications.md!}

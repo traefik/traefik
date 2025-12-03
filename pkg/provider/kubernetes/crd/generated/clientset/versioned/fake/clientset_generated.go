@@ -1,7 +1,7 @@
 /*
 The MIT License (MIT)
 
-Copyright (c) 2016-2020 Containous SAS; 2020-2025 Traefik Labs
+Copyright (c) 2016-2020 Containous SAS; 2020-2025 Baqup Labs
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -27,9 +27,9 @@ THE SOFTWARE.
 package fake
 
 import (
-	clientset "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned"
-	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned/typed/traefikio/v1alpha1"
-	faketraefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned/typed/traefikio/v1alpha1/fake"
+	clientset "github.com/baqupio/baqup/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned"
+	baqupv1alpha1 "github.com/baqupio/baqup/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned/typed/baqupio/v1alpha1"
+	fakebaqupv1alpha1 "github.com/baqupio/baqup/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned/typed/baqupio/v1alpha1/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"
@@ -87,7 +87,7 @@ var (
 	_ testing.FakeClient  = &Clientset{}
 )
 
-// TraefikV1alpha1 retrieves the TraefikV1alpha1Client
-func (c *Clientset) TraefikV1alpha1() traefikv1alpha1.TraefikV1alpha1Interface {
-	return &faketraefikv1alpha1.FakeTraefikV1alpha1{Fake: &c.Fake}
+// BaqupV1alpha1 retrieves the BaqupV1alpha1Client
+func (c *Clientset) BaqupV1alpha1() baqupv1alpha1.BaqupV1alpha1Interface {
+	return &fakebaqupv1alpha1.FakeBaqupV1alpha1{Fake: &c.Fake}
 }

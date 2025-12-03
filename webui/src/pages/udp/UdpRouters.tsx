@@ -111,7 +111,7 @@ export const UdpRouters = () => {
   return (
     <>
       <Helmet>
-        <title>UDP Routers - Traefik Proxy</title>
+        <title>UDP Routers - Baqup Proxy</title>
       </Helmet>
       <TableFilter />
       <UdpRoutersRender

@@ -10,7 +10,7 @@ import (
 )
 
 type handler struct {
-	traefikIP string
+	baqupIP string
 }
 
 // ServeDNS a fake DNS server
@@ -33,7 +33,7 @@ func (s *handler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 				Class:  dns.ClassINET,
 				Ttl:    0,
 			}
-			record.A = net.ParseIP(s.traefikIP)
+			record.A = net.ParseIP(s.baqupIP)
 
 			m.Answer = append(m.Answer, record)
 		case dns.TypeCAA:
@@ -96,11 +96,11 @@ func (s *handler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 	}
 }
 
-func startFakeDNSServer(traefikIP string) *dns.Server {
+func startFakeDNSServer(baqupIP string) *dns.Server {
 	srv := &dns.Server{
 		Addr:    ":5053",
 		Net:     "udp",
-		Handler: &handler{traefikIP},
+		Handler: &handler{baqupIP},
 	}
 
 	go func() {

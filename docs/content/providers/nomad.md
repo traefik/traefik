@@ -1,16 +1,16 @@
 ---
 title: "Nomad Service Discovery"
-description: "Learn how to use Nomad as a provider for configuration discovery in Traefik Proxy. Read the technical documentation."
+description: "Learn how to use Nomad as a provider for configuration discovery in Baqup Proxy. Read the technical documentation."
 ---
 
-# Traefik & Nomad Service Discovery
+# Baqup & Nomad Service Discovery
 
 A Story of Tags, Services & Nomads
 {: .subtitle }
 
 ![Nomad Service Discovery](../assets/img/providers/nomad.png)
 
-Attach tags to your Nomad services and let Traefik do the rest!
+Attach tags to your Nomad services and let Baqup do the rest!
 
 ## Configuration Examples
 
@@ -38,7 +38,7 @@ Attach tags to your Nomad services and let Traefik do the rest!
     service {
       name = "myService"
       tags = [
-        "traefik.http.routers.my-router.rule=Host(`example.com`)",
+        "baqup.http.routers.my-router.rule=Host(`example.com`)",
       ]
     }
     ...
@@ -105,7 +105,7 @@ providers:
 _Optional, Default=0s_
 
 The `throttleDuration` option defines how often the provider is allowed to handle service events from Nomad.
-This prevents a Nomad cluster that updates many times per second from continuously changing your Traefik configuration.
+This prevents a Nomad cluster that updates many times per second from continuously changing your Baqup configuration.
 
 If left empty, the provider does not apply any throttling and does not drop any Nomad service events.
 
@@ -134,9 +134,9 @@ providers:
 
 ### `prefix`
 
-_required, Default="traefik"_
+_required, Default="baqup"_
 
-The prefix for Nomad service tags defining Traefik labels.
+The prefix for Nomad service tags defining Baqup labels.
 
 ```yaml tab="File (YAML)"
 providers:
@@ -381,10 +381,10 @@ providers:
 
 _Optional, Default=true_
 
-Expose Nomad services by default in Traefik.
-If set to `false`, services that do not have a `traefik.enable=true` tag will be ignored from the resulting routing configuration.
+Expose Nomad services by default in Baqup.
+If set to `false`, services that do not have a `baqup.enable=true` tag will be ignored from the resulting routing configuration.
 
-For additional information, refer to [Restrict the Scope of Service Discovery](./overview.md#exposedbydefault-and-traefikenable).
+For additional information, refer to [Restrict the Scope of Service Discovery](./overview.md#exposedbydefault-and-baqupenable).
 
 ```yaml tab="File (YAML)"
 providers:
@@ -416,7 +416,7 @@ and can include [sprig template functions](https://masterminds.github.io/sprig/)
 The service name can be accessed with the `Name` identifier,
 and the template has access to all the labels (i.e. tags beginning with the `prefix`) defined on this service.
 
-The option can be overridden on an instance basis with the `traefik.http.routers.{name-of-your-choice}.rule` tag.
+The option can be overridden on an instance basis with the `baqup.http.routers.{name-of-your-choice}.rule` tag.
 
 ```yaml tab="File (YAML)"
 providers:
@@ -436,18 +436,18 @@ providers:
 # ...
 ```
 
-??? info "Default rule and Traefik service"
+??? info "Default rule and Baqup service"
 
-    The exposure of the Traefik container, combined with the default rule mechanism,
+    The exposure of the Baqup container, combined with the default rule mechanism,
     can lead to create a router targeting itself in a loop.
     In this case, to prevent an infinite loop,
-    Traefik adds an internal middleware to refuse the request if it comes from the same router.
+    Baqup adds an internal middleware to refuse the request if it comes from the same router.
 
 ### `constraints`
 
 _Optional, Default=""_
 
-The `constraints` option can be set to an expression that Traefik matches against the service tags to determine whether
+The `constraints` option can be set to an expression that Baqup matches against the service tags to determine whether
 to create any route for that service. If none of the service tags match the expression, no route for that service is
 created. If the expression is empty, all detected services are included.
 
@@ -504,7 +504,7 @@ providers:
 # ...
 ```
 
-For additional information, refer to [Restrict the Scope of Service Discovery](./overview.md#exposedbydefault-and-traefikenable).
+For additional information, refer to [Restrict the Scope of Service Discovery](./overview.md#exposedbydefault-and-baqupenable).
 
 ### `namespaces`
 

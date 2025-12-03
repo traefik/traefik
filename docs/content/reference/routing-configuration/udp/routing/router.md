@@ -1,5 +1,5 @@
 ---
-title: "Traefik UDP Routers Documentation"
+title: "Baqup UDP Routers Documentation"
 description: "UDP routers are responsible for connecting incoming UDP packets to the services that can handle them. Read the technical documentation."
 ---
 
@@ -34,15 +34,15 @@ udp:
 
 ```yaml tab="Labels"
 labels:
-  - "traefik.udp.routers.my-udp-router.entrypoints=udp-ep,dns"
-  - "traefik.udp.routers.my-udp-router.service=my-udp-service"
+  - "baqup.udp.routers.my-udp-router.entrypoints=udp-ep,dns"
+  - "baqup.udp.routers.my-udp-router.service=my-udp-service"
 ```
 
 ```json tab="Tags"
 {
   "Tags": [
-    "traefik.udp.routers.my-udp-router.entrypoints=udp-ep,dns",
-    "traefik.udp.routers.my-udp-router.service=my-udp-service"
+    "baqup.udp.routers.my-udp-router.entrypoints=udp-ep,dns",
+    "baqup.udp.routers.my-udp-router.service=my-udp-service"
   ]
 }
 ```
@@ -56,7 +56,7 @@ labels:
 
 ## Sessions and Timeout
 
-Even though UDP is connectionless, Traefik's UDP router implementation relies on sessions to maintain state about ongoing communication between clients and backends. This allows the proxy to know where to forward response packets from backends.
+Even though UDP is connectionless, Baqup's UDP router implementation relies on sessions to maintain state about ongoing communication between clients and backends. This allows the proxy to know where to forward response packets from backends.
 
 Each session has an associated timeout that cleans up inactive sessions after a specified duration of inactivity.
 

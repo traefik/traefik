@@ -1,20 +1,20 @@
 ---
 title: "Kubernetes IngressRoute"
-description: "An IngressRoute is a Traefik CRD is in charge of connecting incoming requests to the Services that can handle them in HTTP."
+description: "An IngressRoute is a Baqup CRD is in charge of connecting incoming requests to the Services that can handle them in HTTP."
 ---
 
-`IngressRoute` is the CRD implementation of a [Traefik HTTP router](../../../http/routing/rules-and-priority.md).
+`IngressRoute` is the CRD implementation of a [Baqup HTTP router](../../../http/routing/rules-and-priority.md).
 
-Before creating `IngressRoute` objects, you need to apply the [Traefik Kubernetes CRDs](https://doc.traefik.io/traefik/reference/dynamic-configuration/kubernetes-crd/#definitions) to your Kubernetes cluster.
+Before creating `IngressRoute` objects, you need to apply the [Baqup Kubernetes CRDs](https://doc.baqup.io/baqup/reference/dynamic-configuration/kubernetes-crd/#definitions) to your Kubernetes cluster.
 
-This registers the `IngressRoute` kind and other Traefik-specific resources.
+This registers the `IngressRoute` kind and other Baqup-specific resources.
 
 ## Configuration Example
 
 You can declare an `IngressRoute` as detailed below:
 
 ```yaml tab="IngressRoute"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: test-name
@@ -46,7 +46,7 @@ spec:
     - kind: Service
       name: foo
       namespace: apps
-      # Customize the connection between Traefik and the backend
+      # Customize the connection between Baqup and the backend
       passHostHeader: true
       port: 80
       responseForwarding:
@@ -94,7 +94,7 @@ spec:
 | <a id="opt-routesn-observability-metrics" href="#opt-routesn-observability-metrics" title="#opt-routesn-observability-metrics">`routes[n].`<br />`observability.`<br />`metrics`</a> | Defines whether the route will produce [metrics](../../../../install-configuration/observability/metrics.md). See [here](../../../http/routing/observability.md) for more information.                                                                                                                                                                                           | false   | No       |
 | <a id="opt-routesn-observability-tracing" href="#opt-routesn-observability-tracing" title="#opt-routesn-observability-tracing">`routes[n].`<br />`observability.`<br />`tracing`</a> | Defines whether the route will produce [traces](../../../../install-configuration/observability/tracing.md). See [here](../../../http/routing/observability.md) for more information.                                                                                                                                                                                            | false   | No       |
 | <a id="opt-tls" href="#opt-tls" title="#opt-tls">`tls`</a> | TLS configuration.<br />Can be an empty value(`{}`):<br />A self signed is generated in such a case<br />(or the [default certificate](../tls/tlsstore.md) is used if it is defined.)                                                                                                                                                                                                   |         | No       |
-| <a id="opt-routesn-services" href="#opt-routesn-services" title="#opt-routesn-services">`routes[n].`<br />`services`</a> | List of any combination of [TraefikService](./traefikservice.md) and [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/). <br /> Exhaustive list of option in the [`Service`](./service.md#configuration-options) documentation.                                                                                                              |         | No       |
+| <a id="opt-routesn-services" href="#opt-routesn-services" title="#opt-routesn-services">`routes[n].`<br />`services`</a> | List of any combination of [BaqupService](./baqupservice.md) and [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/). <br /> Exhaustive list of option in the [`Service`](./service.md#configuration-options) documentation.                                                                                                              |         | No       |
 | <a id="opt-tls-secretName" href="#opt-tls-secretName" title="#opt-tls-secretName">`tls.secretName`</a> | [Secret](https://kubernetes.io/docs/concepts/configuration/secret/) name used to store the certificate (in the same namesapce as the `IngressRoute`)                                                                                                                                                                                                                             | ""      | No       |
 | <a id="opt-tls-options-name" href="#opt-tls-options-name" title="#opt-tls-options-name">`tls.`<br />`options.name`</a> | Name of the [`TLSOption`](../tls/tlsoption.md) to use.<br />More information [here](#tls-options).                                                                                                                                                                                                                                                                                      | ""      | No       |
 | <a id="opt-tls-options-namespace" href="#opt-tls-options-namespace" title="#opt-tls-options-namespace">`tls.`<br />`options.namespace`</a> | Namespace of the [`TLSOption`](../tls/tlsoption.md) to use.                                                                                                                                                                                                                                                                                                                             | ""      | No       |
@@ -118,7 +118,7 @@ same namespace as the IngressRoute)
 ??? example "IngressRoute attached to a few middlewares"
 
     ```yaml 
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: baqup.io/v1alpha1
     kind: IngressRoute
     metadata:
       name: my-app
@@ -150,7 +150,7 @@ same namespace as the IngressRoute)
     The field `kind` allows the following values:
 
     - `Service` (default value): to reference a [Kubernetes Service](https://kubernetes.io/docs/concepts/services-networking/service/)
-    - `TraefikService`: to reference an object [`TraefikService`](../http/traefikservice.md)
+    - `BaqupService`: to reference an object [`BaqupService`](../http/baqupservice.md)
 
 
 ### TLS Options
@@ -172,7 +172,7 @@ and it all happens before routing actually occurs.
 
 In the case of domain fronting,
 if the TLS options associated with the Host Header and the SNI are different then
-Traefik will respond with a status code `421`.
+Baqup will respond with a status code `421`.
 
 #### Conflicting TLS Options
 
@@ -183,7 +183,7 @@ TLS options references, a conflict occurs, such as in the example below.
 ??? example
 
     ```yaml tab="IngressRoute01"
-      apiVersion: traefik.io/v1alpha1
+      apiVersion: baqup.io/v1alpha1
       kind: IngressRoute
       metadata:
         name: IngressRoute01
@@ -202,7 +202,7 @@ TLS options references, a conflict occurs, such as in the example below.
     ```
 
     ```yaml tab="IngressRoute02"
-      apiVersion: traefik.io/v1alpha1
+      apiVersion: baqup.io/v1alpha1
       kind: IngressRoute
       metadata:
         name: IngressRoute02
@@ -270,7 +270,7 @@ When a child IngressRoute references a parent IngressRoute with multiple routes,
 ??? example "Parent IngressRoute with ForwardAuth and Child IngressRoutes"
 
     ```yaml tab="Parent IngressRoute"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: baqup.io/v1alpha1
     kind: IngressRoute
     metadata:
       name: api-parent
@@ -288,7 +288,7 @@ When a child IngressRoute references a parent IngressRoute with multiple routes,
             - name: auth-middleware
               namespace: default
     ---
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: baqup.io/v1alpha1
     kind: Middleware
     metadata:
       name: auth-middleware
@@ -303,7 +303,7 @@ When a child IngressRoute references a parent IngressRoute with multiple routes,
 
     ```yaml tab="Child IngressRoutes"
     # Child IngressRoute for admin users
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: baqup.io/v1alpha1
     kind: IngressRoute
     metadata:
       name: api-admin
@@ -320,7 +320,7 @@ When a child IngressRoute references a parent IngressRoute with multiple routes,
               port: 80
     ---
     # Child IngressRoute for regular users
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: baqup.io/v1alpha1
     kind: IngressRoute
     metadata:
       name: api-user

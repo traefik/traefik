@@ -11,10 +11,10 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/baqupio/baqup/v3/pkg/config/dynamic"
+	"github.com/baqupio/baqup/v3/pkg/provider"
+	"github.com/baqupio/baqup/v3/pkg/types"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/provider"
-	"github.com/traefik/traefik/v3/pkg/types"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ktypes "k8s.io/apimachinery/pkg/types"
@@ -127,7 +127,7 @@ func (p *Provider) loadHTTPRoute(ctx context.Context, listener gatewayListener, 
 		for _, match := range routeRule.Matches {
 			rule, priority := buildMatchRule(hostnames, match)
 			router := dynamic.Router{
-				// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
+				// "default" stands for the default rule syntax in Baqup v3, i.e. the v3 syntax.
 				RuleSyntax:  "default",
 				Rule:        rule,
 				Priority:    priority + len(route.Spec.Rules) - ri,
@@ -293,7 +293,7 @@ func (p *Provider) loadService(ctx context.Context, listener gatewayListener, co
 func (p *Provider) loadHTTPBackendRef(namespace string, backendRef gatev1.HTTPBackendRef) (string, *dynamic.Service, error) {
 	// Support for cross-provider references (e.g: api@internal).
 	// This provides the same behavior as for IngressRoutes.
-	if *backendRef.Kind == "TraefikService" && strings.Contains(string(backendRef.Name), "@") {
+	if *backendRef.Kind == "BaqupService" && strings.Contains(string(backendRef.Name), "@") {
 		return string(backendRef.Name), nil, nil
 	}
 

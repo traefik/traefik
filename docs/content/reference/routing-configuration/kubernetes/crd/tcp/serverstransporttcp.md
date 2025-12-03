@@ -1,13 +1,13 @@
 ---
 title : 'ServersTransportTCP'
-description : 'Understand the service routing configuration for the Kubernetes ServerTransportTCP & Traefik CRD'
+description : 'Understand the service routing configuration for the Kubernetes ServerTransportTCP & Baqup CRD'
 ---
 
 `ServersTransportTCP` is the CRD implementation of [ServersTransportTCP](../../../tcp/serverstransport.md).
 
-Before creating `ServersTransportTCP` objects, you need to apply the [Traefik Kubernetes CRDs](https://doc.traefik.io/traefik/reference/dynamic-configuration/kubernetes-crd/#definitions) to your Kubernetes cluster.
+Before creating `ServersTransportTCP` objects, you need to apply the [Baqup Kubernetes CRDs](https://doc.baqup.io/baqup/reference/dynamic-configuration/kubernetes-crd/#definitions) to your Kubernetes cluster.
 
-This registers the `ServersTransportTCP` kind and other Traefik-specific resources.
+This registers the `ServersTransportTCP` kind and other Baqup-specific resources.
 
 !!! tip "Default serversTransportTCP"
     If no `serversTransportTCP` is specified, the `default@internal` will be used. The `default@internal` `serversTransportTCP` is created from the install configuration (formerly known as static configuration).
@@ -22,7 +22,7 @@ This registers the `ServersTransportTCP` kind and other Traefik-specific resourc
 ## Configuration Example
 
 ```yaml tab="ServersTransportTCP"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: ServersTransportTCP
 metadata:
   name: mytransport
@@ -44,7 +44,7 @@ spec:
 | <a id="opt-dialTimeout" href="#opt-dialTimeout" title="#opt-dialTimeout">`dialTimeout`</a> | The amount of time to wait until a connection to a server can be established. If zero, no timeout exists.                                                                                                                                                                                                                                                                                  | 30s     | No       |
 | <a id="opt-dialKeepAlive" href="#opt-dialKeepAlive" title="#opt-dialKeepAlive">`dialKeepAlive`</a> | The interval between keep-alive probes for an active network connection.<br />If this option is set to zero, keep-alive probes are sent with a default value (currently 15 seconds),<br />if supported by the protocol and operating system. Network protocols or operating systems that do not support keep-alives ignore this field.<br />If negative, keep-alive probes are turned off. | 15s     | No       |
 | <a id="opt-proxyProtocol" href="#opt-proxyProtocol" title="#opt-proxyProtocol">`proxyProtocol`</a> | Defines the Proxy Protocol configuration. An empty `proxyProtocol` section enables Proxy Protocol version 2.                                                                                                                                                                                                                                                                               |         | No       |
-| <a id="opt-proxyProtocol-version" href="#opt-proxyProtocol-version" title="#opt-proxyProtocol-version">`proxyProtocol.version`</a> | Traefik supports PROXY Protocol version 1 and 2 on TCP Services.                                                                                                                                                                                                                                                                                                                           |         | No       |
+| <a id="opt-proxyProtocol-version" href="#opt-proxyProtocol-version" title="#opt-proxyProtocol-version">`proxyProtocol.version`</a> | Baqup supports PROXY Protocol version 1 and 2 on TCP Services.                                                                                                                                                                                                                                                                                                                           |         | No       |
 | <a id="opt-terminationDelay" href="#opt-terminationDelay" title="#opt-terminationDelay">`terminationDelay`</a> | Defines the delay to wait before fully terminating the connection, after one connected peer has closed its writing capability.                                                                                                                                                                                                                                                             | 100ms   | No       |
 | <a id="opt-tls-serverName" href="#opt-tls-serverName" title="#opt-tls-serverName">`tls.serverName`</a> | ServerName used to contact the server.                                                                                                                                                                                                                                                                                                                                                     | ""      | No       |
 | <a id="opt-tls-insecureSkipVerify" href="#opt-tls-insecureSkipVerify" title="#opt-tls-insecureSkipVerify">`tls.insecureSkipVerify`</a> | Controls whether the server's certificate chain and host name is verified.                                                                                                                                                                                                                                                                                                                 | false   | No       |

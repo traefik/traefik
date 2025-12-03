@@ -10,15 +10,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/baqupio/baqup/v3/pkg/config/dynamic"
+	"github.com/baqupio/baqup/v3/pkg/testhelpers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/testhelpers"
 )
 
 func TestBasicAuthFail(t *testing.T) {
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "traefik")
+		fmt.Fprintln(w, "baqup")
 	})
 
 	auth := dynamic.BasicAuth{
@@ -47,7 +47,7 @@ func TestBasicAuthFail(t *testing.T) {
 
 func TestBasicAuthSuccess(t *testing.T) {
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "traefik")
+		fmt.Fprintln(w, "baqup")
 	})
 
 	auth := dynamic.BasicAuth{
@@ -71,13 +71,13 @@ func TestBasicAuthSuccess(t *testing.T) {
 	require.NoError(t, err)
 	defer res.Body.Close()
 
-	assert.Equal(t, "traefik\n", string(body), "they should be equal")
+	assert.Equal(t, "baqup\n", string(body), "they should be equal")
 }
 
 func TestBasicAuthUserHeader(t *testing.T) {
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, "test", r.Header["X-Webauth-User"][0], "auth user should be set")
-		fmt.Fprintln(w, "traefik")
+		fmt.Fprintln(w, "baqup")
 	})
 
 	auth := dynamic.BasicAuth{
@@ -102,13 +102,13 @@ func TestBasicAuthUserHeader(t *testing.T) {
 	require.NoError(t, err)
 	defer res.Body.Close()
 
-	assert.Equal(t, "traefik\n", string(body))
+	assert.Equal(t, "baqup\n", string(body))
 }
 
 func TestBasicAuthHeaderRemoved(t *testing.T) {
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Empty(t, r.Header.Get(authorizationHeader))
-		fmt.Fprintln(w, "traefik")
+		fmt.Fprintln(w, "baqup")
 	})
 
 	auth := dynamic.BasicAuth{
@@ -134,13 +134,13 @@ func TestBasicAuthHeaderRemoved(t *testing.T) {
 	err = res.Body.Close()
 	require.NoError(t, err)
 
-	assert.Equal(t, "traefik\n", string(body))
+	assert.Equal(t, "baqup\n", string(body))
 }
 
 func TestBasicAuthHeaderPresent(t *testing.T) {
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.NotEmpty(t, r.Header.Get(authorizationHeader))
-		fmt.Fprintln(w, "traefik")
+		fmt.Fprintln(w, "baqup")
 	})
 
 	auth := dynamic.BasicAuth{
@@ -165,12 +165,12 @@ func TestBasicAuthHeaderPresent(t *testing.T) {
 	err = res.Body.Close()
 	require.NoError(t, err)
 
-	assert.Equal(t, "traefik\n", string(body))
+	assert.Equal(t, "baqup\n", string(body))
 }
 
 func TestBasicAuthConcurrentHashOnce(t *testing.T) {
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "traefik")
+		fmt.Fprintln(w, "baqup")
 	})
 	auth := dynamic.BasicAuth{
 		Users: []string{"test:$2a$04$.8sTYfcxbSplCtoxt5TdJOgpBYkarKtZYsYfYxQ1edbYRuO1DNi0e"},
@@ -243,14 +243,14 @@ func TestBasicAuthUsersFromFile(t *testing.T) {
 			userFileContent: "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/\ntest2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0\n",
 			givenUsers:      []string{"test2:$apr1$mK.GtItK$ncnLYvNLek0weXdxo68690"},
 			expectedUsers:   map[string]string{"test": "test", "test2": "overridden"},
-			realm:           "traefik",
+			realm:           "baqup",
 		},
 		{
 			desc:            "Should skip comments",
 			userFileContent: "#Comment\ntest:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/\ntest2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0\n",
 			givenUsers:      []string{},
 			expectedUsers:   map[string]string{"test": "test", "test2": "test2"},
-			realm:           "traefiker",
+			realm:           "baquper",
 		},
 	}
 
@@ -273,7 +273,7 @@ func TestBasicAuthUsersFromFile(t *testing.T) {
 			}
 
 			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				fmt.Fprintln(w, "traefik")
+				fmt.Fprintln(w, "baqup")
 			})
 
 			authenticator, err := NewBasic(t.Context(), next, authenticatorConfiguration, "authName")
@@ -298,7 +298,7 @@ func TestBasicAuthUsersFromFile(t *testing.T) {
 				err = res.Body.Close()
 				require.NoError(t, err)
 
-				require.Equal(t, "traefik\n", string(body))
+				require.Equal(t, "baqup\n", string(body))
 			}
 
 			// Checks that user foo doesn't work
@@ -318,7 +318,7 @@ func TestBasicAuthUsersFromFile(t *testing.T) {
 			err = res.Body.Close()
 			require.NoError(t, err)
 
-			require.NotContains(t, "traefik", string(body))
+			require.NotContains(t, "baqup", string(body))
 		})
 	}
 }

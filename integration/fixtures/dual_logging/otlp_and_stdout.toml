@@ -9,7 +9,7 @@
   otlpLogs = true
 
 [log.otlp]
-  serviceName = "traefik-test"
+  serviceName = "baqup-test"
   [log.otlp.http]
     endpoint = "{{ .CollectorURL }}"
 

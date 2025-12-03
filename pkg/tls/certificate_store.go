@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/baqupio/baqup/v3/pkg/safe"
 	"github.com/patrickmn/go-cache"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v3/pkg/safe"
 )
 
 // CertificateData holds runtime data for runtime TLS certificate handling.

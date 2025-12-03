@@ -11,10 +11,10 @@ import (
 	"slices"
 	"time"
 
+	tcpmuxer "github.com/baqupio/baqup/v3/pkg/muxer/tcp"
+	"github.com/baqupio/baqup/v3/pkg/tcp"
 	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
 	"github.com/rs/zerolog/log"
-	tcpmuxer "github.com/traefik/traefik/v3/pkg/muxer/tcp"
-	"github.com/traefik/traefik/v3/pkg/tcp"
 )
 
 const defaultBufSize = 4096

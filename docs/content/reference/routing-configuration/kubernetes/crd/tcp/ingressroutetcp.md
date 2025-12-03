@@ -1,13 +1,13 @@
 ---
 title: "Kubernetes IngressRouteTCP"
-description: "An IngressRouteTCP is a Traefik CRD is in charge of connecting incoming TCP connections to the Services that can handle them."
+description: "An IngressRouteTCP is a Baqup CRD is in charge of connecting incoming TCP connections to the Services that can handle them."
 ---
 
-`IngressRouteTCP` is the CRD implementation of a [Traefik TCP router](../../../tcp/routing/rules-and-priority.md).
+`IngressRouteTCP` is the CRD implementation of a [Baqup TCP router](../../../tcp/routing/rules-and-priority.md).
 
-Before creating `IngressRouteTCP` objects, you need to apply the [Traefik Kubernetes CRDs](https://doc.traefik.io/traefik/reference/dynamic-configuration/kubernetes-crd/#definitions) to your Kubernetes cluster.
+Before creating `IngressRouteTCP` objects, you need to apply the [Baqup Kubernetes CRDs](https://doc.baqup.io/baqup/reference/dynamic-configuration/kubernetes-crd/#definitions) to your Kubernetes cluster.
 
-This registers the `IngressRouteTCP` kind and other Traefik-specific resources.
+This registers the `IngressRouteTCP` kind and other Baqup-specific resources.
 
 !!! note "General"
     If both HTTP routers and TCP routers are connected to the same EntryPoint, the TCP routers will apply before the HTTP routers. If no matching route is found for the TCP routers, then the HTTP routers will take over.
@@ -17,7 +17,7 @@ This registers the `IngressRouteTCP` kind and other Traefik-specific resources.
 You can declare an `IngressRouteTCP` as detailed below:
 
 ```yaml tab="IngressRouteTCP"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: IngressRouteTCP
 metadata:
   name: ingressroutetcpfoo
@@ -72,7 +72,7 @@ spec:
 | <a id="opt-routesn-servicesn-proxyProtocol-version" href="#opt-routesn-servicesn-proxyProtocol-version" title="#opt-routesn-servicesn-proxyProtocol-version">`routes[n].services[n].proxyProtocol.version`</a> | Defines the [PROXY protocol](../../../../install-configuration/entrypoints.md#proxyprotocol-and-load-balancers) version.                                                                                                                                                                     |  | No |
 | <a id="opt-routesn-servicesn-serversTransport" href="#opt-routesn-servicesn-serversTransport" title="#opt-routesn-servicesn-serversTransport">`routes[n].services[n].serversTransport`</a> | Defines the [ServersTransportTCP](./serverstransporttcp.md).<br />The `ServersTransport` namespace is assumed to be the [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) namespace.                                                                    |  | No |
 | <a id="opt-routesn-servicesn-nativeLB" href="#opt-routesn-servicesn-nativeLB" title="#opt-routesn-servicesn-nativeLB">`routes[n].services[n].nativeLB`</a> | Controls, when creating the load-balancer, whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP. See [here](#nativelb) for more information.                                                                                         | false | No |
-| <a id="opt-routesn-servicesn-nodePortLB" href="#opt-routesn-servicesn-nodePortLB" title="#opt-routesn-servicesn-nodePortLB">`routes[n].services[n].nodePortLB`</a> | Controls, when creating the load-balancer, whether the LB's children are directly the nodes internal IPs using the nodePort when the service type is `NodePort`. It allows services to be reachable when Traefik runs externally from the Kubernetes cluster but within the same network of the nodes. | false | No |
+| <a id="opt-routesn-servicesn-nodePortLB" href="#opt-routesn-servicesn-nodePortLB" title="#opt-routesn-servicesn-nodePortLB">`routes[n].services[n].nodePortLB`</a> | Controls, when creating the load-balancer, whether the LB's children are directly the nodes internal IPs using the nodePort when the service type is `NodePort`. It allows services to be reachable when Baqup runs externally from the Kubernetes cluster but within the same network of the nodes. | false | No |
 | <a id="opt-tls" href="#opt-tls" title="#opt-tls">`tls`</a> | Defines [TLS](../../../../install-configuration/tls/certificate-resolvers/overview.md) certificate configuration.                                                                                                                                                                            |  | No |
 | <a id="opt-tls-secretName" href="#opt-tls-secretName" title="#opt-tls-secretName">`tls.secretName`</a> | Defines the [secret](https://kubernetes.io/docs/concepts/configuration/secret/) name used to store the certificate (in the `IngressRoute` namespace).                                                                                                                                        | "" | No |
 | <a id="opt-tls-options" href="#opt-tls-options" title="#opt-tls-options">`tls.options`</a> | Defines the reference to a [TLSOption](../tls/tlsoption.md).                                                                                                                                                                                                                                        | "" | No |
@@ -86,17 +86,17 @@ spec:
 
 ### ExternalName Service
 
-Traefik connect to a backend with a domain and a port. However, Kubernetes [ExternalName Service](https://kubernetes.io/docs/concepts/services-networking/service/#externalname) can be defined without any port. Accordingly, Traefik supports defining a port in two ways:
+Baqup connect to a backend with a domain and a port. However, Kubernetes [ExternalName Service](https://kubernetes.io/docs/concepts/services-networking/service/#externalname) can be defined without any port. Accordingly, Baqup supports defining a port in two ways:
 
 - only on `IngressRouteTCP` service
 - on both sides, you'll be warned if the ports don't match, and the `IngressRouteTCP` service port is used
 
-Thus, in case of two sides port definition, Traefik expects a match between ports.
+Thus, in case of two sides port definition, Baqup expects a match between ports.
 
 === "Ports defined on Resource"
 
     ```yaml tab="IngressRouteTCP"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: baqup.io/v1alpha1
     kind: IngressRouteTCP
     metadata:
       name: test.route
@@ -128,7 +128,7 @@ Thus, in case of two sides port definition, Traefik expects a match between port
 === "Port defined on the Service"
 
     ```yaml tab="IngressRouteTCP"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: baqup.io/v1alpha1
     kind: IngressRouteTCP
     metadata:
       name: test.route
@@ -161,7 +161,7 @@ Thus, in case of two sides port definition, Traefik expects a match between port
 === "Port defined on both sides"
 
     ```yaml tab="IngressRouteTCP"
-    apiVersion: traefik.io/v1alpha1
+    apiVersion: baqup.io/v1alpha1
     kind: IngressRouteTCP
     metadata:
       name: test.route
@@ -197,7 +197,7 @@ Thus, in case of two sides port definition, Traefik expects a match between port
 To avoid creating the server load-balancer with the pods IPs and use Kubernetes Service `clusterIP` directly, one should set the `NativeLB` option to true. By default, `NativeLB` is false.
 
 ```yaml tab="IngressRouteTCP"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: IngressRouteTCP
 metadata:
   name: test.route

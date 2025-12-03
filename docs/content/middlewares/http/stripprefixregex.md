@@ -1,6 +1,6 @@
 ---
-title: "Traefik StripPrefixRegex Documentation"
-description: "In Traefik Proxy's HTTP middleware, StripPrefixRegex removes prefixes from paths before forwarding requests, using regex. Read the technical documentation."
+title: "Baqup StripPrefixRegex Documentation"
+description: "In Baqup Proxy's HTTP middleware, StripPrefixRegex removes prefixes from paths before forwarding requests, using regex. Read the technical documentation."
 ---
 
 # StripPrefixRegex
@@ -14,11 +14,11 @@ Remove the matching prefixes from the URL path.
 
 ```yaml tab="Docker & Swarm"
 labels:
-  - "traefik.http.middlewares.test-stripprefixregex.stripprefixregex.regex=/foo/[a-z0-9]+/[0-9]+/"
+  - "baqup.http.middlewares.test-stripprefixregex.stripprefixregex.regex=/foo/[a-z0-9]+/[0-9]+/"
 ```
 
 ```yaml tab="Kubernetes"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-stripprefixregex
@@ -29,7 +29,7 @@ spec:
 ```
 
 ```yaml tab="Consul Catalog"
-- "traefik.http.middlewares.test-stripprefixregex.stripprefixregex.regex=/foo/[a-z0-9]+/[0-9]+/"
+- "baqup.http.middlewares.test-stripprefixregex.stripprefixregex.regex=/foo/[a-z0-9]+/[0-9]+/"
 ```
 
 ```yaml tab="File (YAML)"
@@ -64,7 +64,7 @@ The `regex` option is the regular expression to match the path prefix from the r
 For instance, `/products` also matches `/products/shoes` and `/products/shirts`.
 
 If your backend is serving assets (e.g., images or JavaScript files), it can use the `X-Forwarded-Prefix` header to properly construct relative URLs.
-Using the previous example, the backend should return `/products/shoes/image.png` (and not `/images.png`, which Traefik would likely not be able to associate with the same backend).
+Using the previous example, the backend should return `/products/shoes/image.png` (and not `/images.png`, which Baqup would likely not be able to associate with the same backend).
 
 !!! tip
 

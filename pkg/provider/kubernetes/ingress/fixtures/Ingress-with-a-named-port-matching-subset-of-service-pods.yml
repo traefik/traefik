@@ -6,7 +6,7 @@ metadata:
 
 spec:
   rules:
-    - host: traefik.tchouk
+    - host: baqup.tchouk
       http:
         paths:
           - path: /bar

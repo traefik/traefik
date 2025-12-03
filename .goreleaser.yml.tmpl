@@ -1,4 +1,4 @@
-project_name: traefik
+project_name: baqup
 version: 2
 
 [[if .GOARCH]]
@@ -8,13 +8,13 @@ dist: "./dist/[[ .GOOS ]]"
 [[end]]
 
 builds:
-  - binary: traefik
+  - binary: baqup
 
-    main: ./cmd/traefik/
+    main: ./cmd/baqup/
     env:
       - CGO_ENABLED=0
     ldflags:
-      - -s -w -X github.com/traefik/traefik/v3/pkg/version.Version={{.Version}} -X github.com/traefik/traefik/v3/pkg/version.Codename={{.Env.CODENAME}} -X github.com/traefik/traefik/v3/pkg/version.BuildDate={{.Date}}
+      - -s -w -X github.com/baqupio/baqup/v3/pkg/version.Version={{.Version}} -X github.com/baqupio/baqup/v3/pkg/version.Codename={{.Env.CODENAME}} -X github.com/baqupio/baqup/v3/pkg/version.BuildDate={{.Date}}
     flags:
       - -trimpath
     goos:
@@ -52,7 +52,7 @@ changelog:
   disable: true
 
 archives:
-  - id: traefik
+  - id: baqup
     name_template: '{{ .ProjectName }}_v{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
     format: tar.gz
     format_overrides:

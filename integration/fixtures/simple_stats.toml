@@ -25,7 +25,7 @@
     rule = "PathPrefix(`/whoami`)"
 
   [http.routers.router2]
-    entryPoints = ["traefik"]
+    entryPoints = ["baqup"]
     service = "service2"
     rule = "PathPrefix(`/whoami`)"
 

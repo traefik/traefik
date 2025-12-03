@@ -1,11 +1,11 @@
 ---
-title: "Traefik Docker DNS Challenge Documentation"
-description: "Learn how to create a certificate with the Let's Encrypt DNS challenge to use HTTPS on a Service exposed with Traefik Proxy. Read the technical documentation."
+title: "Baqup Docker DNS Challenge Documentation"
+description: "Learn how to create a certificate with the Let's Encrypt DNS challenge to use HTTPS on a Service exposed with Baqup Proxy. Read the technical documentation."
 ---
 
 # Docker-compose with Let's Encrypt: DNS Challenge
 
-This guide aims to demonstrate how to create a certificate with the Let's Encrypt DNS challenge to use https on a simple service exposed with Traefik.  
+This guide aims to demonstrate how to create a certificate with the Let's Encrypt DNS challenge to use https on a simple service exposed with Baqup.  
 Please also read the [basic example](../basic-example/) for details on how to expose such a service.  
 
 ## Prerequisite
@@ -37,8 +37,8 @@ For the DNS challenge, you'll need:
       - "OVH_CONSUMER_KEY=[YOUR_OWN_VALUE]"
     ```
 
-- Replace `postmaster@example.com` by your **own email** within the `certificatesresolvers.myresolver.acme.email` command line argument of the `traefik` service.
-- Replace `whoami.example.com` by your **own domain** within the `traefik.http.routers.whoami.rule` label of the `whoami` service.
+- Replace `postmaster@example.com` by your **own email** within the `certificatesresolvers.myresolver.acme.email` command line argument of the `baqup` service.
+- Replace `whoami.example.com` by your **own domain** within the `baqup.http.routers.whoami.rule` label of the `whoami` service.
 - Optionally uncomment the following lines if you want to test/debug: 
 
 	```yaml
@@ -53,7 +53,7 @@ For the DNS challenge, you'll need:
 
     If you uncommented the `acme.caserver` line, you will get an SSL error, but if you display the certificate and see it was emitted by `Fake LE Intermediate X1` then it means all is good.
     (It is the staging environment intermediate certificate used by Let's Encrypt).
-    You can now safely comment the `acme.caserver` line, remove the `letsencrypt/acme.json` file and restart Traefik to issue a valid certificate.
+    You can now safely comment the `acme.caserver` line, remove the `letsencrypt/acme.json` file and restart Baqup to issue a valid certificate.
 
 ## Explanation
 
@@ -63,7 +63,7 @@ What changed between the initial setup:
 
 ```yaml
 command:
-  # Traefik will listen to incoming request on the port 443 (https)
+  # Baqup will listen to incoming request on the port 443 (https)
   - "--entryPoints.websecure.address=:443"
 ports:
   - "443:443"
@@ -109,11 +109,11 @@ command:
   - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
 ```
 
-- We configure the `whoami` service to tell Traefik to use the certificate resolver named `myresolver` we just configured:
+- We configure the `whoami` service to tell Baqup to use the certificate resolver named `myresolver` we just configured:
 
 ```yaml
 labels:
-	- "traefik.http.routers.whoami.tls.certresolver=myresolver" # Uses the Host rule to define which certificate to issue
+	- "baqup.http.routers.whoami.tls.certresolver=myresolver" # Uses the Host rule to define which certificate to issue
 ```
 
 ## Use Secrets
@@ -166,7 +166,7 @@ secrets:
     file: "./secrets/ovh_consumer_key.secret"
 
 services:
-  traefik:
+  baqup:
     # expose the predefined secret to the container by name
     secrets:
       - "ovh_endpoint"
@@ -175,7 +175,7 @@ services:
       - "ovh_consumer_key"
 ```
 
-- The environment variable within our `traefik` service are suffixed by `_FILE` which allow us to point to files containing the value, instead of exposing the value itself.  
+- The environment variable within our `baqup` service are suffixed by `_FILE` which allow us to point to files containing the value, instead of exposing the value itself.  
 	The acme client will read the content of those file to get the required configuration values.
 
 ```yaml
@@ -187,4 +187,4 @@ environment:
   - "OVH_CONSUMER_KEY_FILE=/run/secrets/ovh_consumer_key"
 ```
 
-{!traefik-for-business-applications.md!}
+{!baqup-for-business-applications.md!}

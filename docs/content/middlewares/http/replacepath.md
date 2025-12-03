@@ -1,6 +1,6 @@
 ---
-title: "Traefik ReplacePath Documentation"
-description: "In Traefik Proxy's HTTP middleware, ReplacePath updates paths before forwarding requests. Read the technical documentation."
+title: "Baqup ReplacePath Documentation"
+description: "In Baqup Proxy's HTTP middleware, ReplacePath updates paths before forwarding requests. Read the technical documentation."
 ---
 
 # ReplacePath
@@ -19,12 +19,12 @@ Replace the path of the request URL.
 ```yaml tab="Docker & Swarm"
 # Replace the path with /foo
 labels:
-  - "traefik.http.middlewares.test-replacepath.replacepath.path=/foo"
+  - "baqup.http.middlewares.test-replacepath.replacepath.path=/foo"
 ```
 
 ```yaml tab="Kubernetes"
 # Replace the path with /foo
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: test-replacepath
@@ -35,7 +35,7 @@ spec:
 
 ```yaml tab="Consul Catalog"
 # Replace the path with /foo
-- "traefik.http.middlewares.test-replacepath.replacepath.path=/foo"
+- "baqup.http.middlewares.test-replacepath.replacepath.path=/foo"
 ```
 
 ```yaml tab="File (YAML)"

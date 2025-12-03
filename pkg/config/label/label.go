@@ -2,8 +2,8 @@
 package label
 
 import (
+	"github.com/baqupio/baqup/v3/pkg/config/dynamic"
 	"github.com/traefik/paerser/parser"
-	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 )
 
 // DecodeConfiguration converts the labels to a configuration.
@@ -16,7 +16,7 @@ func DecodeConfiguration(labels map[string]string) (*dynamic.Configuration, erro
 	}
 
 	// When decoding the TLS configuration we are making sure that only the default TLS store can be configured.
-	err := parser.Decode(labels, conf, parser.DefaultRootName, "traefik.http", "traefik.tcp", "traefik.udp", "traefik.tls.stores.default")
+	err := parser.Decode(labels, conf, parser.DefaultRootName, "baqup.http", "baqup.tcp", "baqup.udp", "baqup.tls.stores.default")
 	if err != nil {
 		return nil, err
 	}

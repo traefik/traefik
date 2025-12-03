@@ -1,9 +1,9 @@
 ---
-title: "Traefik API & Dashboard Documentation"
-description: "Traefik Proxy exposes information through API handlers and showcase them on the Dashboard. Learn about the security, configuration, and endpoints of the APIs and Dashboard. Read the technical documentation."
+title: "Baqup API & Dashboard Documentation"
+description: "Baqup Proxy exposes information through API handlers and showcase them on the Dashboard. Learn about the security, configuration, and endpoints of the APIs and Dashboard. Read the technical documentation."
 ---
 
-The dashboard is the central place that shows you the current active routes handled by Traefik.
+The dashboard is the central place that shows you the current active routes handled by Baqup.
 
 <figure>
     <img src="../../../assets/img/webui-dashboard.png" alt="Dashboard - Providers" />
@@ -29,21 +29,21 @@ api: {}
 Expose the dashboard:
 
 ```yaml tab="Kubernetes CRD"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: IngressRoute
 metadata:
-  name: traefik-dashboard
+  name: baqup-dashboard
 spec:
   routes:
-  - match: Host(`traefik.example.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))
+  - match: Host(`baqup.example.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))
     kind: Rule
     services:
     - name: api@internal
-      kind: TraefikService
+      kind: BaqupService
     middlewares:
       - name: auth
 ---
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: auth
@@ -58,11 +58,11 @@ ingressRoute:
   dashboard:
     enabled: true
     # Custom match rule with host domain
-    matchRule: Host(`traefik.example.com`)
+    matchRule: Host(`baqup.example.com`)
     entryPoints: ["websecure"]
     # Add custom middlewares : authentication and redirection
     middlewares:
-      - name: traefik-dashboard-auth
+      - name: baqup-dashboard-auth
 
 # Create the custom middlewares used by the IngressRoute dashboard (can also be created in another way).
 # /!\ Yes, you need to replace "changeme" password with a better one. /!\
@@ -70,48 +70,48 @@ extraObjects:
   - apiVersion: v1
     kind: Secret
     metadata:
-      name: traefik-dashboard-auth-secret
+      name: baqup-dashboard-auth-secret
     type: kubernetes.io/basic-auth
     stringData:
       username: admin
       password: changeme
 
-  - apiVersion: traefik.io/v1alpha1
+  - apiVersion: baqup.io/v1alpha1
     kind: Middleware
     metadata:
-      name: traefik-dashboard-auth
+      name: baqup-dashboard-auth
     spec:
       basicAuth:
-        secret: traefik-dashboard-auth-secret
+        secret: baqup-dashboard-auth-secret
 ```
 
 ```yaml tab="Docker"
 # Dynamic Configuration
 labels:
-  - "traefik.http.routers.dashboard.rule=Host(`traefik.example.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
-  - "traefik.http.routers.dashboard.service=api@internal"
-  - "traefik.http.routers.dashboard.middlewares=auth"
-  - "traefik.http.middlewares.auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
+  - "baqup.http.routers.dashboard.rule=Host(`baqup.example.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
+  - "baqup.http.routers.dashboard.service=api@internal"
+  - "baqup.http.routers.dashboard.middlewares=auth"
+  - "baqup.http.middlewares.auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
 ```
 
 ```yaml tab="Swarm"
 # Dynamic Configuration
 deploy:
   labels:
-    - "traefik.http.routers.dashboard.rule=Host(`traefik.example.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
-    - "traefik.http.routers.dashboard.service=api@internal"
-    - "traefik.http.routers.dashboard.middlewares=auth"
-    - "traefik.http.middlewares.auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
+    - "baqup.http.routers.dashboard.rule=Host(`baqup.example.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
+    - "baqup.http.routers.dashboard.service=api@internal"
+    - "baqup.http.routers.dashboard.middlewares=auth"
+    - "baqup.http.middlewares.auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
     # Dummy service for Swarm port detection. The port can be any valid integer value.
-    - "traefik.http.services.dummy-svc.loadbalancer.server.port=9999"
+    - "baqup.http.services.dummy-svc.loadbalancer.server.port=9999"
 ```
 
 ```yaml tab="Consul Catalog"
 # Dynamic Configuration
-- "traefik.http.routers.dashboard.rule=Host(`traefik.example.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
-- "traefik.http.routers.dashboard.service=api@internal"
-- "traefik.http.routers.dashboard.middlewares=auth"
-- "traefik.http.middlewares.auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
+- "baqup.http.routers.dashboard.rule=Host(`baqup.example.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
+- "baqup.http.routers.dashboard.service=api@internal"
+- "baqup.http.routers.dashboard.middlewares=auth"
+- "baqup.http.middlewares.auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
 ```
 
 ```yaml tab="File (YAML)"
@@ -119,7 +119,7 @@ deploy:
 http:
   routers:
     dashboard:
-      rule: Host(`traefik.example.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))
+      rule: Host(`baqup.example.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))
       service: api@internal
       middlewares:
         - auth
@@ -134,7 +134,7 @@ http:
 ```toml tab="File (TOML)"
 # Dynamic Configuration
 [http.routers.my-api]
-  rule = "Host(`traefik.example.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
+  rule = "Host(`baqup.example.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
   service = "api@internal"
   middlewares = ["auth"]
 
@@ -149,9 +149,9 @@ http:
 
 The API and the dashboard can be configured:
 
-- In the Helm Chart: You can find the options to customize the Traefik installation
-enabing the dashboard [here](https://github.com/traefik/traefik-helm-chart/blob/master/traefik/values.yaml#L155).
-- In the Traefik Static Configuration as described below.
+- In the Helm Chart: You can find the options to customize the Baqup installation
+enabing the dashboard [here](https://github.com/baqupio/baqup-helm-chart/blob/master/baqup/values.yaml#L155).
+- In the Baqup Static Configuration as described below.
 
 | Field      | Description  | Default | Required |
 |:-----------|:---------------------------------|:--------|:---------|
@@ -160,7 +160,7 @@ enabing the dashboard [here](https://github.com/traefik/traefik-helm-chart/blob/
 | <a id="opt-api-dashboard" href="#opt-api-dashboard" title="#opt-api-dashboard">`api.dashboard`</a> | Enable dashboard. | false      | No      |
 | <a id="opt-api-debug" href="#opt-api-debug" title="#opt-api-debug">`api.debug`</a> | Enable additional endpoints for debugging and profiling. | false      | No      |
 | <a id="opt-api-disabledashboardad" href="#opt-api-disabledashboardad" title="#opt-api-disabledashboardad">`api.disabledashboardad`</a> | Disable the advertisement from the dashboard. | false      | No      |
-| <a id="opt-api-insecure" href="#opt-api-insecure" title="#opt-api-insecure">`api.insecure`</a> | Enable the API and the dashboard on the entryPoint named traefik.| false      | No      |
+| <a id="opt-api-insecure" href="#opt-api-insecure" title="#opt-api-insecure">`api.insecure`</a> | Enable the API and the dashboard on the entryPoint named baqup.| false      | No      |
 
 ## Endpoints
 
@@ -188,7 +188,7 @@ All the following endpoints must be accessed with a `GET` HTTP request.
 | <a id="opt-apientrypointsname" href="#opt-apientrypointsname" title="#opt-apientrypointsname">`/api/entrypoints/{name}`</a> | Returns the information of the entry point specified by `name`.                             |
 | <a id="opt-apioverview" href="#opt-apioverview" title="#opt-apioverview">`/api/overview`</a> | Returns statistic information about HTTP, TCP and about enabled features and providers. |
 | <a id="opt-apirawdata" href="#opt-apirawdata" title="#opt-apirawdata">`/api/rawdata`</a> | Returns information about dynamic configurations, errors, status and dependency relations.  |
-| <a id="opt-apiversion" href="#opt-apiversion" title="#opt-apiversion">`/api/version`</a> | Returns information about Traefik version.                                                  |
+| <a id="opt-apiversion" href="#opt-apiversion" title="#opt-apiversion">`/api/version`</a> | Returns information about Baqup version.                                                  |
 | <a id="opt-debugvars" href="#opt-debugvars" title="#opt-debugvars">`/debug/vars`</a> | See the [expvar](https://golang.org/pkg/expvar/) Go documentation.                          |
 | <a id="opt-debugpprof" href="#opt-debugpprof" title="#opt-debugpprof">`/debug/pprof/`</a> | See the [pprof Index](https://golang.org/pkg/net/http/pprof/#Index) Go documentation.       |
 | <a id="opt-debugpprofcmdline" href="#opt-debugpprofcmdline" title="#opt-debugpprofcmdline">`/debug/pprof/cmdline`</a> | See the [pprof Cmdline](https://golang.org/pkg/net/http/pprof/#Cmdline) Go documentation.   |
@@ -199,7 +199,7 @@ All the following endpoints must be accessed with a `GET` HTTP request.
 
 !!! note "Base Path Configuration"
 
-    By default, Traefik exposes its API and Dashboard under the `/` base path. It's possible to configure it with `api.basepath`. When configured, all endpoints (api, dashboard, debug) are using it.
+    By default, Baqup exposes its API and Dashboard under the `/` base path. It's possible to configure it with `api.basepath`. When configured, all endpoints (api, dashboard, debug) are using it.
 
 ## Dashboard
 
@@ -210,12 +210,12 @@ The dashboard is available at the same location as the API, but by default on th
     - The trailing slash `/` in `/dashboard/` is mandatory. This limitation can be mitigated using the the [RedirectRegex Middleware](../../middlewares/http/redirectregex.md).
 	  - There is also a redirect from the path `/` to `/dashboard/`, but you should not rely on this behavior, as it is subject to change and may complicate routing rules.
 
-To securely access the dashboard, you need to define a routing configuration within Traefik. This involves setting up a router attached to the service `api@internal`, which allows you to:
+To securely access the dashboard, you need to define a routing configuration within Baqup. This involves setting up a router attached to the service `api@internal`, which allows you to:
 
 - Implement security features using [middlewares](../../middlewares/overview.md), such as authentication ([basicAuth](../../middlewares/http/basicauth.md), [digestAuth](../../middlewares/http/digestauth.md),
   [forwardAuth](../../middlewares/http/forwardauth.md)) or [allowlisting](../../middlewares/http/ipallowlist.md).
 
-- Define a [router rule](#dashboard-router-rule) for accessing the dashboard through Traefik.
+- Define a [router rule](#dashboard-router-rule) for accessing the dashboard through Baqup.
 
 ### Dashboard Router Rule
 
@@ -224,18 +224,18 @@ We recommend using either a *Host-based rule* to match all requests on the desir
 Here are some examples:
 
 ```bash tab="Host Rule"
-# The dashboard can be accessed on http://traefik.example.com/dashboard/
-rule = "Host(`traefik.example.com`)"
+# The dashboard can be accessed on http://baqup.example.com/dashboard/
+rule = "Host(`baqup.example.com`)"
 ```
 
 ```bash tab="Path Prefix Rule"
-# The dashboard can be accessed on http://example.com/dashboard/ or http://traefik.example.com/dashboard/
+# The dashboard can be accessed on http://example.com/dashboard/ or http://baqup.example.com/dashboard/
 rule = "PathPrefix(`/api`) || PathPrefix(`/dashboard`)"
 ```
 
 ```bash tab="Combination of Rules"
-# The dashboard can be accessed on http://traefik.example.com/dashboard/
-rule = "Host(`traefik.example.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
+# The dashboard can be accessed on http://baqup.example.com/dashboard/
+rule = "Host(`baqup.example.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
 ```
 
-{!traefik-for-business-applications.md!}
+{!baqup-for-business-applications.md!}

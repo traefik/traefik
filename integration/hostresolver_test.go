@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/baqupio/baqup/v3/integration/try"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"github.com/traefik/traefik/v3/integration/try"
 )
 
 type HostResolverSuite struct{ BaseSuite }
@@ -28,7 +28,7 @@ func (s *HostResolverSuite) TearDownSuite() {
 }
 
 func (s *HostResolverSuite) TestSimpleConfig() {
-	s.traefikCmd(withConfigFile("fixtures/simple_hostresolver.toml"))
+	s.baqupCmd(withConfigFile("fixtures/simple_hostresolver.toml"))
 
 	testCase := []struct {
 		desc   string

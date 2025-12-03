@@ -76,7 +76,7 @@
       "maxResponseBodyBytes": 42,
       "memResponseBodyBytes": 42,
       "retryExpression": "IsNetworkError() && Attempts() < 2",
-      "oauthIntrospection > clientConfig > url": "https://keycloak.traefiklabs.tech/realms/keycloak-demo/protocol/openid-connect/token/introspect",
+      "oauthIntrospection > clientConfig > url": "https://keycloak.baquplabs.tech/realms/keycloak-demo/protocol/openid-connect/token/introspect",
       "oauthIntrospection > clientConfig > headers > authorization": "Basic UZShXHjj2XcRSL8PZjuVDRqyqJ7ThjaZiSwJMoQeMJ2yHTgRyhAgLmfT4A1PvHGh"
     },
     "error": ["message 1", "message 2"],
@@ -185,7 +185,7 @@
   },
   {
     "digestAuth": {
-      "users": ["test:traefik:a2688e031edb4be6a3797f3882655c05", "test2:traefik:518845800f9e2bfb1f1f740ec24f074e"],
+      "users": ["test:baqup:a2688e031edb4be6a3797f3882655c05", "test2:baqup:518845800f9e2bfb1f1f740ec24f074e"],
       "usersFile": "/etc/foo/my/file/path/.htpasswd",
       "realm": "Hello you are here",
       "removeHeader": true,

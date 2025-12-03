@@ -1,0 +1,62 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: baqup-controller
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: baqup
+
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: baqup-lb
+
+  template:
+    metadata:
+      labels:
+        app: baqup-lb
+
+    spec:
+      serviceAccountName: baqup-controller
+      containers:
+        - name: baqup
+          image: baqup:v3.6
+          args:
+            - --entryPoints.web.address=:80
+            - --entryPoints.websecure.address=:443
+            - --experimental.kubernetesgateway
+            - --providers.kubernetesgateway
+
+          ports:
+            - name: web
+              containerPort: 80
+
+            - name: websecure
+              containerPort: 443
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: baqup
+
+spec:
+  type: LoadBalancer
+  selector:
+    app: baqup-lb
+
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: web
+      name: web
+
+    - protocol: TCP
+      port: 443
+      targetPort: websecure
+      name: websecure

@@ -1,6 +1,6 @@
 ---
-title: "Traefik TCP Routers Rules & Priority Documentation"
-description: "In Traefik Proxy, a router is in charge of connecting incoming requests to the Services that can handle them. Read the technical documentation."
+title: "Baqup TCP Routers Rules & Priority Documentation"
+description: "In Baqup Proxy, a router is in charge of connecting incoming requests to the Services that can handle them. Read the technical documentation."
 ---
 
 
@@ -114,9 +114,9 @@ ClientIP(`fe80::/10`)
 The `ALPN` matcher allows matching connections the given protocol.
 
 It would be a security issue to let a user-defined router catch the response to
-an ACME TLS challenge previously initiated by Traefik.
+an ACME TLS challenge previously initiated by Baqup.
 For this reason, the `ALPN` matcher is not allowed to match the `ACME-TLS/1`
-protocol, and Traefik returns an error if this is attempted.
+protocol, and Baqup returns an error if this is attempted.
 
 #### Example
 
@@ -163,28 +163,28 @@ ALPN(`h2`)
 
     ```yaml tab="Labels"
        labels:
-        - "traefik.tcp.routers.Router-1.rule="ClientIP(`192.168.0.12`)"
-        - "traefik.tcp.routers.Router-1.entryPoints=web"
-        - "traefik.tcp.routers.Router-1.service=service-1"
-        - "traefik.tcp.routers.Router-1.priority=2"
-        - "traefik.tcp.routers.Router-2.rule="ClientIP(`192.168.0.0/24`)"
-        - "traefik.tcp.routers.Router-2.entryPoints=web"
-        - "traefik.tcp.routers.Router-2.service=service-2"
-        - "traefik.tcp.routers.Router-2.priority=1"
+        - "baqup.tcp.routers.Router-1.rule="ClientIP(`192.168.0.12`)"
+        - "baqup.tcp.routers.Router-1.entryPoints=web"
+        - "baqup.tcp.routers.Router-1.service=service-1"
+        - "baqup.tcp.routers.Router-1.priority=2"
+        - "baqup.tcp.routers.Router-2.rule="ClientIP(`192.168.0.0/24`)"
+        - "baqup.tcp.routers.Router-2.entryPoints=web"
+        - "baqup.tcp.routers.Router-2.service=service-2"
+        - "baqup.tcp.routers.Router-2.priority=1"
     ```
 
     ```json tab="Tags"
       {
         //...
         "Tags": [
-          "traefik.tcp.routers.Router-1.rule=ClientIP(`192.168.0.12`)",
-          "traefik.tcp.routers.Router-1.entryPoints=web",
-          "traefik.tcp.routers.Router-1.service=service-1",
-          "traefik.tcp.routers.Router-1.priority=2",
-          "traefik.tcp.routers.Router-2.rule=ClientIP(`192.168.0.0/24`)",
-          "traefik.tcp.routers.Router-2.entryPoints=web",
-          "traefik.tcp.routers.Router-2.service=service-2",
-          "traefik.tcp.routers.Router-2.priority=1"
+          "baqup.tcp.routers.Router-1.rule=ClientIP(`192.168.0.12`)",
+          "baqup.tcp.routers.Router-1.entryPoints=web",
+          "baqup.tcp.routers.Router-1.service=service-1",
+          "baqup.tcp.routers.Router-1.priority=2",
+          "baqup.tcp.routers.Router-2.rule=ClientIP(`192.168.0.0/24`)",
+          "baqup.tcp.routers.Router-2.entryPoints=web",
+          "baqup.tcp.routers.Router-2.service=service-2",
+          "baqup.tcp.routers.Router-2.priority=1"
         ]
       }
     ```
@@ -195,7 +195,7 @@ To avoid path overlap, routes are sorted, by default, in descending order using 
 The priority is directly equal to the length of the rule, and so the longest length has the highest priority.
 A value of `0` for the priority is ignored: `priority: 0` means that the default rules length sorting is used.
 
-Traefik reserves a range of priorities for its internal routers, the maximum user-defined router priority value is:
+Baqup reserves a range of priorities for its internal routers, the maximum user-defined router priority value is:
 
 - `(MaxInt32 - 1000)` for 32-bit platforms,
 - `(MaxInt64 - 1000)` for 64-bit platforms.

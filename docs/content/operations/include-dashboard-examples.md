@@ -1,40 +1,40 @@
 ```yaml tab="Docker & Swarm"
 # Dynamic Configuration
 labels:
-  - "traefik.http.routers.dashboard.rule=Host(`traefik.example.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
-  - "traefik.http.routers.dashboard.service=api@internal"
-  - "traefik.http.routers.dashboard.middlewares=auth"
-  - "traefik.http.middlewares.auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
+  - "baqup.http.routers.dashboard.rule=Host(`baqup.example.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
+  - "baqup.http.routers.dashboard.service=api@internal"
+  - "baqup.http.routers.dashboard.middlewares=auth"
+  - "baqup.http.middlewares.auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
 ```
 
 ```yaml tab="Docker (Swarm)"
 # Dynamic Configuration
 deploy:
   labels:
-    - "traefik.http.routers.dashboard.rule=Host(`traefik.example.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
-    - "traefik.http.routers.dashboard.service=api@internal"
-    - "traefik.http.routers.dashboard.middlewares=auth"
-    - "traefik.http.middlewares.auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
+    - "baqup.http.routers.dashboard.rule=Host(`baqup.example.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
+    - "baqup.http.routers.dashboard.service=api@internal"
+    - "baqup.http.routers.dashboard.middlewares=auth"
+    - "baqup.http.middlewares.auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
     # Dummy service for Swarm port detection. The port can be any valid integer value.
-    - "traefik.http.services.dummy-svc.loadbalancer.server.port=9999"
+    - "baqup.http.services.dummy-svc.loadbalancer.server.port=9999"
 ```
 
 ```yaml tab="Kubernetes CRD"
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: IngressRoute
 metadata:
-  name: traefik-dashboard
+  name: baqup-dashboard
 spec:
   routes:
-  - match: Host(`traefik.example.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))
+  - match: Host(`baqup.example.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))
     kind: Rule
     services:
     - name: api@internal
-      kind: TraefikService
+      kind: BaqupService
     middlewares:
       - name: auth
 ---
-apiVersion: traefik.io/v1alpha1
+apiVersion: baqup.io/v1alpha1
 kind: Middleware
 metadata:
   name: auth
@@ -45,10 +45,10 @@ spec:
 
 ```yaml tab="Consul Catalog"
 # Dynamic Configuration
-- "traefik.http.routers.dashboard.rule=Host(`traefik.example.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
-- "traefik.http.routers.dashboard.service=api@internal"
-- "traefik.http.routers.dashboard.middlewares=auth"
-- "traefik.http.middlewares.auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
+- "baqup.http.routers.dashboard.rule=Host(`baqup.example.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
+- "baqup.http.routers.dashboard.service=api@internal"
+- "baqup.http.routers.dashboard.middlewares=auth"
+- "baqup.http.middlewares.auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
 ```
 
 ```yaml tab="File (YAML)"
@@ -56,7 +56,7 @@ spec:
 http:
   routers:
     dashboard:
-      rule: Host(`traefik.example.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))
+      rule: Host(`baqup.example.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))
       service: api@internal
       middlewares:
         - auth
@@ -71,7 +71,7 @@ http:
 ```toml tab="File (TOML)"
 # Dynamic Configuration
 [http.routers.my-api]
-  rule = "Host(`traefik.example.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
+  rule = "Host(`baqup.example.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
   service = "api@internal"
   middlewares = ["auth"]
 

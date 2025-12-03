@@ -13,7 +13,7 @@ metadata:
   name: my-gateway-class
   namespace: default
 spec:
-  controllerName: traefik.io/gateway-controller
+  controllerName: baqup.io/gateway-controller
 
 ---
 kind: Gateway
