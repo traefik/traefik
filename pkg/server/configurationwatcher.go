@@ -224,7 +224,7 @@ func logConfiguration(logger zerolog.Logger, configMsg dynamic.Message) {
 		logger.Error().Err(err).Msg("Could not marshal dynamic configuration")
 		logger.Debug().Msgf("Configuration received: [struct] %#v", copyConf)
 	} else {
-		logger.Debug().RawJSON("config", jsonConf).Msg("Configuration received")
+		logger.Debug().RawJSON("config", jsonConf).Msg("Configuration received (TLS data hidden)")
 	}
 }
 
