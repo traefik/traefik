@@ -13,6 +13,8 @@ Enable seamless migration from NGINX Ingress Controller to Traefik with NGINX an
     The Kubernetes NGINX Ingress Controller project has announced its retirement in **March 2026** and will no longer receive updates or security patches.
     Traefik provides a migration path by supporting NGINX annotations, allowing you to transition your workloads without rewriting all your Ingress configurations.
 
+    **→ See the [NGINX to Traefik Migration Guide](../../../migrate/nginx-to-traefik.md) for step-by-step instructions.**
+
     For more information about the NGINX Ingress Controller retirement, see the [official Kubernetes blog announcement](https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement).
 
 ## Ingress Discovery
