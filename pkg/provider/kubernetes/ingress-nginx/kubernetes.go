@@ -453,7 +453,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 				}
 
 				// TODO: if no service, do not add middlewares and 503.
-				serviceName := provider.Normalize(ingress.Namespace + "-" + pa.Backend.Service.Name + "-" + portString)
+				serviceName := provider.Normalize(ingress.Namespace + "-" + ingress.Name + "-" + pa.Backend.Service.Name + "-" + portString)
 
 				service, err := p.buildService(ingress.Namespace, pa.Backend, ingressConfig)
 				if err != nil {
