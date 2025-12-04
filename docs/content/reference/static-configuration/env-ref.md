@@ -148,7 +148,7 @@ Defines whether requests with encoded null characters in the path are allowed. (
 Defines whether requests with encoded percent characters in the path are allowed. (Default: ```false```)
 
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_ENCODEDCHARACTERS_ALLOWENCODEDQUESTIONMARK`:  
-Defines whether requests with encoded question characters in the path are allowed. (Default: ```false```)
+Defines whether requests with encoded question mark characters in the path are allowed. (Default: ```false```)
 
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_ENCODEDCHARACTERS_ALLOWENCODEDSEMICOLON`:  
 Defines whether requests with encoded semicolon characters in the path are allowed. (Default: ```false```)

@@ -709,7 +709,7 @@ func encodeQuerySemicolons(h http.Handler) http.Handler {
 	})
 }
 
-// denyEncodedCharacters reject the request if the (raw) path contains suspicious encoded characters.
+// denyEncodedCharacters reject the request if the escaped path contains encoded characters.
 func denyEncodedCharacters(encodedCharacters map[string]struct{}, h http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		escapedPath := req.URL.EscapedPath()

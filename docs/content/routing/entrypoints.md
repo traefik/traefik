@@ -128,13 +128,13 @@ They can be defined by using a file (YAML or TOML) or CLI arguments.
             - "127.0.0.1"
             - "192.168.0.1"
         encodedCharacters:
-          allowEncodedSlash: false
-          allowEncodedBackSlash: false
-          allowEncodedNullCharacter: false
-          allowEncodedSemicolon: false
-          allowEncodedPercent: false
-          allowEncodedQuestionMark: false
-          allowEncodedHash: false
+          allowEncodedSlash: true
+          allowEncodedBackSlash: true
+          allowEncodedNullCharacter: true
+          allowEncodedSemicolon: true
+          allowEncodedPercent: true
+          allowEncodedQuestionMark: true
+          allowEncodedHash: true
     ```
 
     ```toml tab="File (TOML)"
@@ -161,13 +161,13 @@ They can be defined by using a file (YAML or TOML) or CLI arguments.
           insecure = true
           trustedIPs = ["127.0.0.1", "192.168.0.1"]
         [entryPoints.name.encodedCharacters]
-          allowEncodedSlash = false
-          allowEncodedBackSlash = false
-          allowEncodedNullCharacter = false
-          allowEncodedSemicolon = false
-          allowEncodedPercent = false
-          allowEncodedQuestionMark = false
-          allowEncodedHash = false
+          allowEncodedSlash = true
+          allowEncodedBackSlash = true
+          allowEncodedNullCharacter = true
+          allowEncodedSemicolon = true
+          allowEncodedPercent = true
+          allowEncodedQuestionMark = true
+          allowEncodedHash = true
     ```
 
     ```bash tab="CLI"
@@ -184,13 +184,13 @@ They can be defined by using a file (YAML or TOML) or CLI arguments.
     --entryPoints.name.proxyProtocol.trustedIPs=127.0.0.1,192.168.0.1
     --entryPoints.name.forwardedHeaders.insecure=true
     --entryPoints.name.forwardedHeaders.trustedIPs=127.0.0.1,192.168.0.1
-    --entryPoints.name.encodedCharacters.allowEncodedSlash=false
-    --entryPoints.name.encodedCharacters.allowEncodedBackSlash=false
-    --entryPoints.name.encodedCharacters.allowEncodedNullCharacter=false
-    --entryPoints.name.encodedCharacters.allowEncodedSemicolon=false
-    --entryPoints.name.encodedCharacters.allowEncodedPercent=false
-    --entryPoints.name.encodedCharacters.allowEncodedQuestionMark=false
-    --entryPoints.name.encodedCharacters.allowEncodedHash=false
+    --entryPoints.name.encodedCharacters.allowEncodedSlash=true
+    --entryPoints.name.encodedCharacters.allowEncodedBackSlash=true
+    --entryPoints.name.encodedCharacters.allowEncodedNullCharacter=true
+    --entryPoints.name.encodedCharacters.allowEncodedSemicolon=true
+    --entryPoints.name.encodedCharacters.allowEncodedPercent=true
+    --entryPoints.name.encodedCharacters.allowEncodedQuestionMark=true
+    --entryPoints.name.encodedCharacters.allowEncodedHash=true
     ```
 
 ### Address
