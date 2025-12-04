@@ -358,8 +358,9 @@ nav:
           - 'KV' : 'reference/routing-configuration/other-providers/kv.md'
         - 'File' : 'reference/routing-configuration/other-providers/file.md'
     - 'Security':
-          - 'Content-Length': 'security/content-length.md'
-          - 'TLS in Multi-Tenant Kubernetes': 'security/tls-certs-in-multi-tenant-kubernetes.md'
+        - 'Request Path': 'security/request-path.md'
+        - 'Content-Length': 'security/content-length.md'
+        - 'TLS in Multi-Tenant Kubernetes': 'security/tls-certs-in-multi-tenant-kubernetes.md'
     - 'Deprecation Notices':
         - 'Releases': 'deprecation/releases.md'
         - 'Features': 'deprecation/features.md'

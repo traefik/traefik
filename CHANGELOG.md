@@ -1,3 +1,17 @@
+## [v2.11.32](https://github.com/traefik/traefik/tree/v2.11.32) (2025-12-04)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.31...v2.11.32)
+
+  **Bug fixes:**
+- **[server]** Reject suspicious encoded characters ([#12360](https://github.com/traefik/traefik/pull/12360) by [rtribotte](https://github.com/rtribotte))
+- **[plugins]** Validate plugin module name ([#12291](https://github.com/traefik/traefik/pull/12291) by [kevinpollet](https://github.com/kevinpollet))
+- **[http3]** Bump github.com/quic-go/quic-go to v0.57.1 ([#12319](https://github.com/traefik/traefik/pull/12319) by [GreyXor](https://github.com/GreyXor))
+- **[http3]** Bump github.com/quic-go/quic-go to v0.57.0 ([#12308](https://github.com/traefik/traefik/pull/12308) by [GreyXor](https://github.com/GreyXor))
+- **[server]** Bump golang.org/x/crypto to v0.45.0 ([#12296](https://github.com/traefik/traefik/pull/12296) by [kevinpollet](https://github.com/kevinpollet))
+
+**Documentation:**
+- Update SECURITY.md to streamline information ([#12310](https://github.com/traefik/traefik/pull/12310) by [emilevauge](https://github.com/emilevauge))
+- Update SECURITY.md ([#12304](https://github.com/traefik/traefik/pull/12304) by [cwayne18](https://github.com/cwayne18))
+
 ## [v3.6.2](https://github.com/traefik/traefik/tree/v3.6.2) (2025-11-18)
 [All Commits](https://github.com/traefik/traefik/compare/v3.6.1...v3.6.2)
 
