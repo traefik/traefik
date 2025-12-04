@@ -590,6 +590,43 @@ func TestLoadIngresses(t *testing.T) {
 	}
 }
 
+// TestSSLRedirectEntryPoints verifies the fix for #12332 where redirect routers
+// without explicit EntryPoints caused routing conflicts on the websecure entry point.
+func TestSSLRedirectEntryPoints(t *testing.T) {
+	k8sObjects := readResources(t, []string{
+		"services.yml",
+		"secrets.yml",
+		"ingressclasses.yml",
+		"ingresses/03-ingress-with-ssl-redirect.yml",
+	})
+
+	kubeClient := kubefake.NewClientset(k8sObjects...)
+	client := newClient(kubeClient)
+
+	eventCh, err := client.WatchAll(t.Context(), "", "")
+	require.NoError(t, err)
+	<-eventCh
+
+	p := Provider{k8sClient: client}
+	p.SetDefaults()
+
+	conf := p.loadConfiguration(t.Context())
+
+	// Check ssl-redirect router
+	redirect := conf.HTTP.Routers["default-ingress-with-ssl-redirect-rule-0-path-0-redirect"]
+	require.NotNil(t, redirect.EntryPoints)
+	assert.Equal(t, []string{"web"}, redirect.EntryPoints)
+
+	// Check force-ssl-redirect router
+	forceRedirect := conf.HTTP.Routers["default-ingress-with-force-ssl-redirect-rule-0-path-0-redirect"]
+	require.NotNil(t, forceRedirect.EntryPoints)
+	assert.Equal(t, []string{"web"}, forceRedirect.EntryPoints)
+
+	// Verify no redirect router exists when annotation is disabled
+	_, exists := conf.HTTP.Routers["default-ingress-without-ssl-redirect-rule-0-path-0-redirect"]
+	assert.False(t, exists)
+}
+
 func readResources(t *testing.T, paths []string) []runtime.Object {
 	t.Helper()
 
