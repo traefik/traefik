@@ -1,3 +1,29 @@
+## [v3.6.3](https://github.com/traefik/traefik/tree/v3.6.3) (2025-12-04)
+[All Commits](https://github.com/traefik/traefik/compare/v3.6.2...v3.6.3)
+
+**Bug fixes:**
+- **[acme]** Bump github.com/go-acme/lego/v4 to v4.29.0 ([#12333](https://github.com/traefik/traefik/pull/12333) by [ldez](https://github.com/ldez))
+- **[k8s/ingress-nginx]** Fix SSL redirect to match NGINX behavior ([#12361](https://github.com/traefik/traefik/pull/12361) by [mmatur](https://github.com/mmatur))
+- **[k8s/ingress-nginx]** Fix the service name for ingress-nginx provider ([#12352](https://github.com/traefik/traefik/pull/12352) by [mmatur](https://github.com/mmatur))
+- **[k8s/ingress-nginx]** Fix nginx.ingress.kubernetes.io/proxy-ssl-verify annotation support ([#12351](https://github.com/traefik/traefik/pull/12351) by [rtribotte](https://github.com/rtribotte))
+- **[middleware,authentication]** Change ForwardAuth error log level from DEBUG to ERROR ([#12324](https://github.com/traefik/traefik/pull/12324) by [murataslan1](https://github.com/murataslan1))
+
+**Documentation:**
+- **[api]** Fix typo in API dashboard configuration instructions ([#12335](https://github.com/traefik/traefik/pull/12335) by [NAICOLAS](https://github.com/NAICOLAS))
+- **[docker]** Add documentation for loadbalancer.server.url in Docker and Swarm providers ([#12289](https://github.com/traefik/traefik/pull/12289) by [webash](https://github.com/webash))
+- **[k8s/gatewayapi]** Fix links of Helm chart values reference to providers.kubernetesGateway.enabled ([#12315](https://github.com/traefik/traefik/pull/12315) by [shouhei](https://github.com/shouhei))
+- **[k8s/ingress-nginx]** Fix default value of ingress-nginx provider in documentation ([#12328](https://github.com/traefik/traefik/pull/12328) by [mloiseleur](https://github.com/mloiseleur))
+- **[k8s/ingress-nginx]** NGINX Ingress Controller to Traefik Migration Guide ([#12318](https://github.com/traefik/traefik/pull/12318) by [sheddy-traefik](https://github.com/sheddy-traefik))
+- **[k8s/ingress-nginx]** Improve the configuration options display of the Kubernetes ingress-nginx provider ([#12297](https://github.com/traefik/traefik/pull/12297) by [mloiseleur](https://github.com/mloiseleur))
+- **[k8s/ingress-nginx]** Improve ingress-nginx provider documentation ([#12288](https://github.com/traefik/traefik/pull/12288) by [sheddy-traefik](https://github.com/sheddy-traefik))
+- **[service]** Fix loadbalancer doc for highest random weight ([#12283](https://github.com/traefik/traefik/pull/12283) by [ozon2](https://github.com/ozon2))
+- Correctly Format the HTTP Service Documentation ([#12311](https://github.com/traefik/traefik/pull/12311) by [sheddy-traefik](https://github.com/sheddy-traefik))
+- Add documentation about checkNewVersion ([#12298](https://github.com/traefik/traefik/pull/12298) by [darkweaver87](https://github.com/darkweaver87))
+
+**Misc:**
+- Merge branch v2.11 into v3.6 ([#12364](https://github.com/traefik/traefik/pull/12364) by [kevinpollet](https://github.com/kevinpollet))
+- Merge branch v2.11 into v3.6 ([#12341](https://github.com/traefik/traefik/pull/12341) by [mmatur](https://github.com/mmatur))
+
 ## [v2.11.32](https://github.com/traefik/traefik/tree/v2.11.32) (2025-12-04)
 [All Commits](https://github.com/traefik/traefik/compare/v2.11.31...v2.11.32)
 
