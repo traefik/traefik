@@ -1,5 +1,5 @@
 ---
-title: "Request Path Security"
+title: "Request Path"
 description: "Learn how Traefik processes and secures request paths through sanitization and encoded character filtering to protect against path traversal and injection attacks."
 ---
 
