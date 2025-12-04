@@ -7,6 +7,7 @@ import (
 	"maps"
 	"math"
 	"net"
+	"net/http"
 	"os"
 	"regexp"
 	"slices"
@@ -968,8 +969,9 @@ func applySSLRedirectConfiguration(routerName string, ingressConfig ingressConfi
 	redirectMiddlewareName := routerName + "-redirect-scheme"
 	conf.HTTP.Middlewares[redirectMiddlewareName] = &dynamic.Middleware{
 		RedirectScheme: &dynamic.RedirectScheme{
-			Scheme:    "https",
-			Permanent: true,
+			Scheme:     "https",
+			Permanent:  true,
+			StatusCode: http.StatusPermanentRedirect,
 		},
 	}
 	redirectRouter.Middlewares = append(redirectRouter.Middlewares, redirectMiddlewareName)

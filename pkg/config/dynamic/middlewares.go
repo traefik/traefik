@@ -657,6 +657,10 @@ type RedirectScheme struct {
 	Port string `json:"port,omitempty" toml:"port,omitempty" yaml:"port,omitempty" export:"true"`
 	// Permanent defines whether the redirection is permanent (308).
 	Permanent bool `json:"permanent,omitempty" toml:"permanent,omitempty" yaml:"permanent,omitempty" export:"true"`
+	// StatusCode is an internal field (not exposed in configuration).
+	// When set, this overrides the automatic status code selection.
+	// Used by providers like ingress-nginx that need specific redirect codes.
+	StatusCode int `json:"-" toml:"-" yaml:"-" export:"false"`
 }
 
 // +k8s:deepcopy-gen=true
