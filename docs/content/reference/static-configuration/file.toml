@@ -55,7 +55,7 @@
         [[entryPoints.EntryPoint0.http.tls.domains]]
           main = "foobar"
           sans = ["foobar", "foobar"]
-      [entryPoints.EntryPoint0.http.encodedCharactersFilter]
+      [entryPoints.EntryPoint0.http.encodedCharacters]
         allowEncodedSlash = true
         allowEncodedBackSlash = true
         allowEncodedNullCharacter = true

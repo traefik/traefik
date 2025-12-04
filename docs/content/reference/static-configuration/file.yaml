@@ -62,7 +62,7 @@ entryPoints:
             sans:
               - foobar
               - foobar
-      encodedCharactersFilter:
+      encodedCharacters:
         allowEncodedSlash: true
         allowEncodedBackSlash: true
         allowEncodedNullCharacter: true

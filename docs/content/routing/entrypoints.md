@@ -486,13 +486,12 @@ By default, Traefik rejects requests containing certain encoded characters that 
 !!! warning "Security Considerations"
 
     Allowing certain encoded characters may expose your application to security vulnerabilities.
-    See the [Encoded Characters Security Guide](../security/encoded-characters.md) for more details.
 
 ??? info "`encodedCharacters.allowEncodedSlash`"
 
     _Optional, Default=false_
 
-    Controls whether requests with encoded slash characters (`%2F`) in the path are allowed.
+    Controls whether requests with encoded slash characters (`%2F` or `%2f`) in the path are allowed.
 
     ```yaml tab="File (YAML)"
     ## Static configuration
@@ -523,7 +522,7 @@ By default, Traefik rejects requests containing certain encoded characters that 
 
     _Optional, Default=false_
 
-    Controls whether requests with encoded back slash characters (`%5C`) in the path are allowed.
+    Controls whether requests with encoded back slash characters (`%5C` or `%5c`) in the path are allowed.
 
     ```yaml tab="File (YAML)"
     ## Static configuration
@@ -585,7 +584,7 @@ By default, Traefik rejects requests containing certain encoded characters that 
 
     _Optional, Default=false_
 
-    Controls whether requests with encoded semicolon characters (`%3B`) in the path are allowed.
+    Controls whether requests with encoded semicolon characters (`%3B` or `%3b`) in the path are allowed.
 
     ```yaml tab="File (YAML)"
     ## Static configuration
@@ -647,7 +646,7 @@ By default, Traefik rejects requests containing certain encoded characters that 
 
     _Optional, Default=false_
 
-    Controls whether requests with encoded question mark characters (`%3F`) in the path are allowed.
+    Controls whether requests with encoded question mark characters (`%3F` or `%3f`) in the path are allowed.
 
     ```yaml tab="File (YAML)"
     ## Static configuration
