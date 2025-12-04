@@ -168,9 +168,8 @@ func TestRedirectSchemeHandler(t *testing.T) {
 		{
 			desc: "HTTP to HTTPS with explicit 308 status code",
 			config: dynamic.RedirectScheme{
-				Scheme:     "https",
-				Permanent:  true,
-				StatusCode: http.StatusPermanentRedirect,
+				Scheme:                 "https",
+				ForcePermanentRedirect: true,
 			},
 			url:            "http://foo",
 			expectedURL:    "https://foo",
@@ -180,9 +179,8 @@ func TestRedirectSchemeHandler(t *testing.T) {
 			desc:   "HTTP to HTTPS with explicit 308 status code for GET request",
 			method: http.MethodGet,
 			config: dynamic.RedirectScheme{
-				Scheme:     "https",
-				Permanent:  true,
-				StatusCode: http.StatusPermanentRedirect,
+				Scheme:                 "https",
+				ForcePermanentRedirect: true,
 			},
 			url:            "http://foo",
 			expectedURL:    "https://foo",

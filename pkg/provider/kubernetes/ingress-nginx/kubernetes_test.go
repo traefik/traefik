@@ -2,7 +2,6 @@ package ingressnginx
 
 import (
 	"math"
-	"net/http"
 	"os"
 	"path/filepath"
 	"testing"
@@ -208,16 +207,14 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-ssl-redirect-rule-0-path-0-redirect-scheme": {
 							RedirectScheme: &dynamic.RedirectScheme{
-								Scheme:     "https",
-								Permanent:  true,
-								StatusCode: http.StatusPermanentRedirect,
+								Scheme:                 "https",
+								ForcePermanentRedirect: true,
 							},
 						},
 						"default-ingress-with-force-ssl-redirect-rule-0-path-0-redirect-scheme": {
 							RedirectScheme: &dynamic.RedirectScheme{
-								Scheme:     "https",
-								Permanent:  true,
-								StatusCode: http.StatusPermanentRedirect,
+								Scheme:                 "https",
+								ForcePermanentRedirect: true,
 							},
 						},
 					},
