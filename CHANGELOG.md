@@ -22,7 +22,7 @@
 
 **Misc:**
 - Merge branch v2.11 into v3.6 ([#12364](https://github.com/traefik/traefik/pull/12364) by [kevinpollet](https://github.com/kevinpollet))
-- Merge v2.11 into v3.6 ([#12341](https://github.com/traefik/traefik/pull/12341) by [mmatur](https://github.com/mmatur))
+- Merge branch v2.11 into v3.6 ([#12341](https://github.com/traefik/traefik/pull/12341) by [mmatur](https://github.com/mmatur))
 
 ## [v2.11.32](https://github.com/traefik/traefik/tree/v2.11.32) (2025-12-04)
 [All Commits](https://github.com/traefik/traefik/compare/v2.11.31...v2.11.32)
