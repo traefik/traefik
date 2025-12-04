@@ -108,6 +108,7 @@ export default function DetailsCard({
                           '> *': {
                             height: 'fit-content',
                           },
+                          height: '100%',
                         }}
                       >
                         {item.val}
@@ -158,6 +159,7 @@ export default function DetailsCard({
                           '> *': {
                             height: 'fit-content',
                           },
+                          height: '100%',
                         }}
                       >
                         {item.val}

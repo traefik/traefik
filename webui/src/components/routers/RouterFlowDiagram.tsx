@@ -139,7 +139,7 @@ const RouterFlowDiagram = ({ data, protocol }: RouterFlowDiagramProps) => {
 
       <FlexContainer data-testid="router-details">
         <SectionTitle icon={<FiGlobe size={20} />} title={`${protocol.toUpperCase()} Router`} />
-        <DetailsCard css={{ width: '100%' }} items={routerDetailsItems} keyColumns={1} />
+        <DetailsCard css={{ width: '100%' }} items={routerDetailsItems} keyColumns={1} scrollable />
       </FlexContainer>
 
       {data.hasValidMiddlewares && (

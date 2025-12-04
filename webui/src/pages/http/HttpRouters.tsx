@@ -36,7 +36,18 @@ export const makeRowRender = (protocol = 'http'): RenderRowType => {
             )}
           </AriaTd>
           <AriaTd>
-            <TooltipText text={row.rule} isTruncated />
+            <TooltipText
+              text={row.rule}
+              css={{
+                display: '-webkit-box',
+                '-webkit-line-clamp': 2,
+                '-webkit-box-orient': 'vertical',
+                overflow: 'hidden',
+                wordBreak: 'break-word',
+                maxWidth: '100%',
+                lineHeight: 1.3,
+              }}
+            />
           </AriaTd>
         </>
       )}
@@ -82,13 +93,13 @@ export const HttpRoutersRender = ({
       <AriaTable>
         <AriaThead>
           <AriaTr>
-            <SortableTh label="Status" css={{ width: '40px' }} isSortable sortByValue="status" />
-            <SortableTh label="TLS" css={{ width: '40px' }} />
+            <SortableTh label="Status" css={{ width: '24px' }} isSortable sortByValue="status" />
+            <SortableTh label="TLS" css={{ width: '24px' }} />
             <SortableTh label="Rule" isSortable sortByValue="rule" />
             <SortableTh label="Entrypoints" isSortable sortByValue="entryPoints" />
             <SortableTh label="Name" isSortable sortByValue="name" />
             <SortableTh label="Service" isSortable sortByValue="service" />
-            <SortableTh label="Provider" css={{ width: '40px' }} isSortable sortByValue="provider" />
+            <SortableTh label="Provider" css={{ width: '32px' }} isSortable sortByValue="provider" />
             <SortableTh label="Priority" css={{ width: '60px' }} isSortable sortByValue="priority" />
           </AriaTr>
         </AriaThead>

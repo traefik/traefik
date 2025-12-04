@@ -38,6 +38,7 @@ export const MiddlewareDetail = ({ data, error, name, protocol }: MiddlewareDeta
 
     return []
   }, [data])
+
   if (error) {
     return (
       <>

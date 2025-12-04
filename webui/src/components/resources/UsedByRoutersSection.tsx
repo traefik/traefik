@@ -46,18 +46,22 @@ export const UsedByRoutersSection = ({ data, protocol = 'http' }: UsedByRoutersS
     )
   }, [addToast, routersNotFound])
 
-  const columns = useMemo(() => {
-    const baseColumns: Array<{ key: keyof Router.DetailsData; header: string; sortable?: boolean; width?: string }> = [
-      { key: 'status', header: 'Status', sortable: true, width: '40px' },
-      ...(protocol !== 'udp' ? [{ key: 'tls' as keyof Router.DetailsData, header: 'TLS', width: '40px' }] : []),
+  const columns = useMemo((): Array<{
+    key: keyof Router.DetailsData
+    header: string
+    sortable?: boolean
+    width?: string
+  }> => {
+    return [
+      { key: 'status', header: 'Status', sortable: true, width: '24px' },
+      ...(protocol !== 'udp' ? [{ key: 'tls' as keyof Router.DetailsData, header: 'TLS', width: '24px' }] : []),
       ...(protocol !== 'udp' ? [{ key: 'rule' as keyof Router.DetailsData, header: 'Rule', sortable: true }] : []),
       { key: 'using', header: 'Entrypoints', sortable: true },
       { key: 'name', header: 'Name', sortable: true },
       { key: 'service', header: 'Service', sortable: true },
-      { key: 'provider', header: 'Provider', sortable: true, width: '40px' },
+      { key: 'provider', header: 'Provider', sortable: true, width: '32px' },
       { key: 'priority', header: 'Priority', sortable: true },
     ]
-    return baseColumns
   }, [protocol])
 
   if (!routersFound || routersFound.length <= 0) {
