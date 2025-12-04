@@ -17,6 +17,7 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
 
     steps:
       - name: Check out code
@@ -53,6 +54,7 @@ jobs:
 
   test-integration:
     runs-on: ubuntu-latest
+    timeout-minutes: 90
     needs:
       - build
     strategy:
