@@ -1,5 +1,5 @@
-## [v3.6.3](https://github.com/traefik/traefik/tree/v3.6.3) (2025-12-04)
-[All Commits](https://github.com/traefik/traefik/compare/v3.6.2...v3.6.3)
+## [v3.6.4](https://github.com/traefik/traefik/tree/v3.6.4) (2025-12-05)
+[All Commits](https://github.com/traefik/traefik/compare/v3.6.2...v3.6.4)
 
 **Bug fixes:**
 - **[acme]** Bump github.com/go-acme/lego/v4 to v4.29.0 ([#12333](https://github.com/traefik/traefik/pull/12333) by [ldez](https://github.com/ldez))
@@ -23,6 +23,12 @@
 **Misc:**
 - Merge branch v2.11 into v3.6 ([#12364](https://github.com/traefik/traefik/pull/12364) by [kevinpollet](https://github.com/kevinpollet))
 - Merge branch v2.11 into v3.6 ([#12341](https://github.com/traefik/traefik/pull/12341) by [mmatur](https://github.com/mmatur))
+- Merge branch v2.11 into v3.6 ([#12368](https://github.com/traefik/traefik/pull/12368) by [mmatur](https://github.com/mmatur))
+
+## [v3.6.3](https://github.com/traefik/traefik/tree/v3.6.3) (2025-12-04)
+[All Commits](https://github.com/traefik/traefik/compare/v3.6.2...v3.6.3)
+
+Release canceled.
 
 ## [v2.11.32](https://github.com/traefik/traefik/tree/v2.11.32) (2025-12-04)
 [All Commits](https://github.com/traefik/traefik/compare/v2.11.31...v2.11.32)
