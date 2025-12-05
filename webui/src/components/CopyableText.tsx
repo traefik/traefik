@@ -1,7 +1,7 @@
 import { CSS, Text } from '@traefiklabs/faency'
 import { useContext } from 'react'
 
-import CopyButton from 'components/CopyButton'
+import CopyButton from 'components/buttons/CopyButton'
 import { ToastContext } from 'contexts/toasts'
 
 type CopyableTextProps = {

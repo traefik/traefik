@@ -4,7 +4,7 @@ import { BsToggleOff, BsToggleOn } from 'react-icons/bs'
 
 import { colorByStatus } from './Status'
 
-import CopyButton from 'components/CopyButton'
+import CopyButton from 'components/buttons/CopyButton'
 
 export const ItemTitle = styled(Text, {
   marginBottom: '$3',
