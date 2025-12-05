@@ -116,7 +116,7 @@ func TestGetLoadBalancer(t *testing.T) {
 }
 
 func TestGetLoadBalancerServiceHandler(t *testing.T) {
-	pb := httputil.NewProxyBuilder(&transportManagerMock{}, nil)
+	pb := httputil.NewProxyBuilder(&transportManagerMock{}, nil, false)
 	sm := NewManager(nil, nil, nil, transportManagerMock{}, pb)
 
 	server1 := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -402,7 +402,7 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 
 // This test is an adapted version of net/http/httputil.Test1xxResponses test.
 func Test1xxResponses(t *testing.T) {
-	pb := httputil.NewProxyBuilder(&transportManagerMock{}, nil)
+	pb := httputil.NewProxyBuilder(&transportManagerMock{}, nil, false)
 	sm := NewManager(nil, nil, nil, &transportManagerMock{}, pb)
 
 	backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -610,7 +610,7 @@ func TestMultipleTypeOnBuildHTTP(t *testing.T) {
 }
 
 func TestGetServiceHandler_Headers(t *testing.T) {
-	pb := httputil.NewProxyBuilder(&transportManagerMock{}, nil)
+	pb := httputil.NewProxyBuilder(&transportManagerMock{}, nil, false)
 
 	testCases := []struct {
 		desc            string
