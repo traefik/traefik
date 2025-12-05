@@ -40,15 +40,9 @@ func buildSingleHostProxy(target *url.URL, passHostHeader bool, preservePath boo
 
 func rewriteRequestBuilder(target *url.URL, passHostHeader bool, preservePath bool, notAppendXFF bool) func(*httputil.ProxyRequest) {
 	return func(pr *httputil.ProxyRequest) {
-		var originalXFF []string
-		var hasXFF bool
 
-		if notAppendXFF {
-			// Capture the original X-Forwarded-For from the incoming request.
-			originalXFF, hasXFF = pr.In.Header["X-Forwarded-For"]
-		} else {
-			// Keep existing XFF and allow ReverseProxy to append RemoteAddr.
-			pr.Out.Header["X-Forwarded-For"] = pr.In.Header["X-Forwarded-For"]
+		pr.Out.Header["X-Forwarded-For"] = pr.In.Header["X-Forwarded-For"]
+		if !notAppendXFF {
 			pr.SetXForwarded()
 		}
 
@@ -85,16 +79,6 @@ func rewriteRequestBuilder(target *url.URL, passHostHeader bool, preservePath bo
 
 		if isWebSocketUpgrade(pr.Out) {
 			cleanWebSocketHeaders(pr.Out)
-		}
-
-		if notAppendXFF {
-			// Restore the original X-Forwarded-For (or delete if it didn't exist)
-			// This prevents httputil.ReverseProxy from appending RemoteAddr
-			if hasXFF {
-				pr.Out.Header["X-Forwarded-For"] = originalXFF
-			} else {
-				delete(pr.Out.Header, "X-Forwarded-For")
-			}
 		}
 	}
 }
