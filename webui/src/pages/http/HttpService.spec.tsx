@@ -94,10 +94,9 @@ describe('<HttpServicePage />', () => {
     expect(serversList.innerHTML).toContain('http://10.0.1.12:80')
 
     const routersTable = getByTestId('routers-table')
-    const tableBody = routersTable.querySelectorAll('div[role="rowgroup"]')[1]
-    expect(tableBody?.querySelectorAll('a[role="row"]')).toHaveLength(2)
-    expect(tableBody?.innerHTML).toContain('router-test1@docker')
-    expect(tableBody?.innerHTML).toContain('router-test2@docker')
+    expect(routersTable.querySelectorAll('a[role="row"]')).toHaveLength(2)
+    expect(routersTable.innerHTML).toContain('router-test1@docker')
+    expect(routersTable.innerHTML).toContain('router-test2@docker')
 
     expect(() => {
       getByTestId('health-check')

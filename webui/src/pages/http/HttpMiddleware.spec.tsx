@@ -68,9 +68,8 @@ describe('<HttpMiddlewarePage />', () => {
     expect(container.innerHTML).toContain('/foo')
 
     const routersTable = getByTestId('routers-table')
-    const tableBody = routersTable.querySelectorAll('div[role="rowgroup"]')[1]
-    expect(tableBody?.querySelectorAll('a[role="row"]')).toHaveLength(1)
-    expect(tableBody?.innerHTML).toContain('router-test-simple@docker')
+    expect(routersTable.querySelectorAll('a[role="row"]')).toHaveLength(1)
+    expect(routersTable.innerHTML).toContain('router-test-simple@docker')
   })
 
   it('should render a plugin middleware', () => {
@@ -113,9 +112,8 @@ describe('<HttpMiddlewarePage />', () => {
     expect(middlewareCard.innerHTML).toContain('Success')
 
     const routersTable = getByTestId('routers-table')
-    const tableBody = routersTable.querySelectorAll('div[role="rowgroup"]')[1]
-    expect(tableBody?.querySelectorAll('a[role="row"]')).toHaveLength(1)
-    expect(tableBody?.innerHTML).toContain('router-test-plugin@docker')
+    expect(routersTable.querySelectorAll('a[role="row"]')).toHaveLength(1)
+    expect(routersTable.innerHTML).toContain('router-test-plugin@docker')
   })
 
   it('should render a complex middleware', async () => {
@@ -427,9 +425,8 @@ describe('<HttpMiddlewarePage />', () => {
     ])
 
     const routersTable = getByTestId('routers-table')
-    const tableBody = routersTable.querySelectorAll('div[role="rowgroup"]')[1]
-    expect(tableBody?.querySelectorAll('a[role="row"]')).toHaveLength(1)
-    expect(tableBody?.innerHTML).toContain('router-test-complex@docker')
+    expect(routersTable.querySelectorAll('a[role="row"]')).toHaveLength(1)
+    expect(routersTable.innerHTML).toContain('router-test-complex@docker')
   })
 
   it('should render a plugin middleware with no type', async () => {

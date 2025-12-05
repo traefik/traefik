@@ -69,9 +69,8 @@ describe('<TcpMiddlewarePage />', () => {
     expect(container.innerHTML).toContain('10')
 
     const routersTable = getByTestId('routers-table')
-    const tableBody = routersTable.querySelectorAll('div[role="rowgroup"]')[1]
-    expect(tableBody?.querySelectorAll('a[role="row"]')).toHaveLength(1)
-    expect(tableBody?.innerHTML).toContain('router-test-simple@docker')
+    expect(routersTable.querySelectorAll('a[role="row"]')).toHaveLength(1)
+    expect(routersTable.innerHTML).toContain('router-test-simple@docker')
   })
 
   it('should render a complex middleware', async () => {
@@ -124,8 +123,7 @@ describe('<TcpMiddlewarePage />', () => {
     expect(container.innerHTML).toContain('125.0.0.4')
 
     const routersTable = getByTestId('routers-table')
-    const tableBody = routersTable.querySelectorAll('div[role="rowgroup"]')[1]
-    expect(tableBody?.querySelectorAll('a[role="row"]')).toHaveLength(1)
-    expect(tableBody?.innerHTML).toContain('router-test-complex@docker')
+    expect(routersTable.querySelectorAll('a[role="row"]')).toHaveLength(1)
+    expect(routersTable.innerHTML).toContain('router-test-complex@docker')
   })
 })
