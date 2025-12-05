@@ -40,7 +40,6 @@ func buildSingleHostProxy(target *url.URL, passHostHeader bool, preservePath boo
 
 func rewriteRequestBuilder(target *url.URL, passHostHeader bool, preservePath bool, notAppendXFF bool) func(*httputil.ProxyRequest) {
 	return func(pr *httputil.ProxyRequest) {
-
 		pr.Out.Header["X-Forwarded-For"] = pr.In.Header["X-Forwarded-For"]
 		if !notAppendXFF {
 			pr.SetXForwarded()
