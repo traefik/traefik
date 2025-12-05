@@ -40,9 +40,21 @@ func buildSingleHostProxy(target *url.URL, passHostHeader bool, preservePath boo
 
 func rewriteRequestBuilder(target *url.URL, passHostHeader bool, preservePath bool, notAppendXFF bool) func(*httputil.ProxyRequest) {
 	return func(pr *httputil.ProxyRequest) {
-		pr.Out.Header["X-Forwarded-For"] = pr.In.Header["X-Forwarded-For"]
+		copyForwardedHeader(pr.Out.Header, pr.In.Header)
 		if !notAppendXFF {
-			pr.SetXForwarded()
+			if clientIP, _, err := net.SplitHostPort(pr.In.RemoteAddr); err == nil {
+				// If we aren't the first proxy retain prior
+				// X-Forwarded-For information as a comma+space
+				// separated list and fold multiple headers into one.
+				prior, ok := pr.Out.Header["X-Forwarded-For"]
+				omit := ok && prior == nil // Issue 38079: nil now means don't populate the header
+				if len(prior) > 0 {
+					clientIP = strings.Join(prior, ", ") + ", " + clientIP
+				}
+				if !omit {
+					pr.Out.Header.Set("X-Forwarded-For", clientIP)
+				}
+			}
 		}
 
 		pr.Out.URL.Scheme = target.Scheme
@@ -79,6 +91,26 @@ func rewriteRequestBuilder(target *url.URL, passHostHeader bool, preservePath bo
 		if isWebSocketUpgrade(pr.Out) {
 			cleanWebSocketHeaders(pr.Out)
 		}
+	}
+}
+
+// copyForwardedHeader copies header that are removed by the reverseProxy when a rewriteRequest is used.
+func copyForwardedHeader(dst, src http.Header) {
+	prior, ok := src["X-Forwarded-For"]
+	if ok {
+		dst["X-Forwarded-For"] = prior
+	}
+	prior, ok = src["Forwarded"]
+	if ok {
+		dst["Forwarded"] = prior
+	}
+	prior, ok = src["X-Forwarded-Host"]
+	if ok {
+		dst["X-Forwarded-Host"] = prior
+	}
+	prior, ok = src["X-Forwarded-Proto"]
+	if ok {
+		dst["X-Forwarded-Proto"] = prior
 	}
 }
 
