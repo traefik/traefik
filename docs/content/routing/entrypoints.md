@@ -478,232 +478,6 @@ You can configure Traefik to trust the forwarded headers information (`X-Forward
     --entryPoints.web.forwardedHeaders.connection=foobar
     ```
 
-### Encoded Characters
-
-You can configure Traefik to control the handling of encoded characters in request paths for security purposes.
-By default, Traefik rejects requests containing certain encoded characters that could be used in path traversal or other security attacks.
-
-!!! warning "Security Considerations"
-
-    Allowing certain encoded characters may expose your application to security vulnerabilities.
-
-??? info "`encodedCharacters.allowEncodedSlash`"
-
-    _Optional, Default=false_
-
-    Controls whether requests with encoded slash characters (`%2F` or `%2f`) in the path are allowed.
-
-    ```yaml tab="File (YAML)"
-    ## Static configuration
-    entryPoints:
-      web:
-        address: ":80"
-        encodedCharacters:
-          allowEncodedSlash: true
-    ```
-
-    ```toml tab="File (TOML)"
-    ## Static configuration
-    [entryPoints]
-      [entryPoints.web]
-        address = ":80"
-
-        [entryPoints.web.encodedCharacters]
-          allowEncodedSlash = true
-    ```
-
-    ```bash tab="CLI"
-    ## Static configuration
-    --entryPoints.web.address=:80
-    --entryPoints.web.encodedCharacters.allowEncodedSlash=true
-    ```
-
-??? info "`encodedCharacters.allowEncodedBackSlash`"
-
-    _Optional, Default=false_
-
-    Controls whether requests with encoded back slash characters (`%5C` or `%5c`) in the path are allowed.
-
-    ```yaml tab="File (YAML)"
-    ## Static configuration
-    entryPoints:
-      web:
-        address: ":80"
-        encodedCharacters:
-          allowEncodedBackSlash: true
-    ```
-
-    ```toml tab="File (TOML)"
-    ## Static configuration
-    [entryPoints]
-      [entryPoints.web]
-        address = ":80"
-
-        [entryPoints.web.encodedCharacters]
-          allowEncodedBackSlash = true
-    ```
-
-    ```bash tab="CLI"
-    ## Static configuration
-    --entryPoints.web.address=:80
-    --entryPoints.web.encodedCharacters.allowEncodedBackSlash=true
-    ```
-
-??? info "`encodedCharacters.allowEncodedNullCharacter`"
-
-    _Optional, Default=false_
-
-    Controls whether requests with encoded null characters (`%00`) in the path are allowed.
-
-    ```yaml tab="File (YAML)"
-    ## Static configuration
-    entryPoints:
-      web:
-        address: ":80"
-        encodedCharacters:
-          allowEncodedNullCharacter: true
-    ```
-
-    ```toml tab="File (TOML)"
-    ## Static configuration
-    [entryPoints]
-      [entryPoints.web]
-        address = ":80"
-
-        [entryPoints.web.encodedCharacters]
-          allowEncodedNullCharacter = true
-    ```
-
-    ```bash tab="CLI"
-    ## Static configuration
-    --entryPoints.web.address=:80
-    --entryPoints.web.encodedCharacters.allowEncodedNullCharacter=true
-    ```
-
-??? info "`encodedCharacters.allowEncodedSemicolon`"
-
-    _Optional, Default=false_
-
-    Controls whether requests with encoded semicolon characters (`%3B` or `%3b`) in the path are allowed.
-
-    ```yaml tab="File (YAML)"
-    ## Static configuration
-    entryPoints:
-      web:
-        address: ":80"
-        encodedCharacters:
-          allowEncodedSemicolon: true
-    ```
-
-    ```toml tab="File (TOML)"
-    ## Static configuration
-    [entryPoints]
-      [entryPoints.web]
-        address = ":80"
-
-        [entryPoints.web.encodedCharacters]
-          allowEncodedSemicolon = true
-    ```
-
-    ```bash tab="CLI"
-    ## Static configuration
-    --entryPoints.web.address=:80
-    --entryPoints.web.encodedCharacters.allowEncodedSemicolon=true
-    ```
-
-??? info "`encodedCharacters.allowEncodedPercent`"
-
-    _Optional, Default=false_
-
-    Controls whether requests with encoded percent characters (`%25`) in the path are allowed.
-
-    ```yaml tab="File (YAML)"
-    ## Static configuration
-    entryPoints:
-      web:
-        address: ":80"
-        encodedCharacters:
-          allowEncodedPercent: true
-    ```
-
-    ```toml tab="File (TOML)"
-    ## Static configuration
-    [entryPoints]
-      [entryPoints.web]
-        address = ":80"
-
-        [entryPoints.web.encodedCharacters]
-          allowEncodedPercent = true
-    ```
-
-    ```bash tab="CLI"
-    ## Static configuration
-    --entryPoints.web.address=:80
-    --entryPoints.web.encodedCharacters.allowEncodedPercent=true
-    ```
-
-??? info "`encodedCharacters.allowEncodedQuestionMark`"
-
-    _Optional, Default=false_
-
-    Controls whether requests with encoded question mark characters (`%3F` or `%3f`) in the path are allowed.
-
-    ```yaml tab="File (YAML)"
-    ## Static configuration
-    entryPoints:
-      web:
-        address: ":80"
-        encodedCharacters:
-          allowEncodedQuestionMark: true
-    ```
-
-    ```toml tab="File (TOML)"
-    ## Static configuration
-    [entryPoints]
-      [entryPoints.web]
-        address = ":80"
-
-        [entryPoints.web.encodedCharacters]
-          allowEncodedQuestionMark = true
-    ```
-
-    ```bash tab="CLI"
-    ## Static configuration
-    --entryPoints.web.address=:80
-    --entryPoints.web.encodedCharacters.allowEncodedQuestionMark=true
-    ```
-
-??? info "`encodedCharacters.allowEncodedHash`"
-
-    _Optional, Default=false_
-
-    Controls whether requests with encoded hash characters (`%23`) in the path are allowed.
-
-    ```yaml tab="File (YAML)"
-    ## Static configuration
-    entryPoints:
-      web:
-        address: ":80"
-        encodedCharacters:
-          allowEncodedHash: true
-    ```
-
-    ```toml tab="File (TOML)"
-    ## Static configuration
-    [entryPoints]
-      [entryPoints.web]
-        address = ":80"
-
-        [entryPoints.web.encodedCharacters]
-          allowEncodedHash = true
-    ```
-
-    ```bash tab="CLI"
-    ## Static configuration
-    --entryPoints.web.address=:80
-    --entryPoints.web.encodedCharacters.allowEncodedHash=true
-    ```
-
 ### Transport
 
 #### `respondingTimeouts`
@@ -1242,6 +1016,239 @@ entryPoints:
 | true                  | foo=bar;baz=bar     | foo=bar%3Bbaz=bar       |
 | false                 | foo=bar&baz=bar;foo | foo=bar&baz=bar&foo     |
 | true                  | foo=bar&baz=bar;foo | foo=bar&baz=bar%3Bfoo   |
+
+### Encoded Characters
+
+You can configure Traefik to control the handling of encoded characters in request paths for security purposes.
+By default, Traefik rejects requests containing certain encoded characters that could be used in path traversal or other security attacks.
+
+!!! warning "Security Considerations"
+
+    Allowing certain encoded characters may expose your application to security vulnerabilities.
+
+??? info "`encodedCharacters.allowEncodedSlash`"
+
+    _Optional, Default=false_
+
+    Controls whether requests with encoded slash characters (`%2F` or `%2f`) in the path are allowed.
+
+    ```yaml tab="File (YAML)"
+    ## Static configuration
+    entryPoints:
+      web:
+        address: ":80"
+        http:
+          encodedCharacters:
+            allowEncodedSlash: true
+    ```
+
+    ```toml tab="File (TOML)"
+    ## Static configuration
+    [entryPoints]
+      [entryPoints.web]
+        address = ":80"
+
+        [entryPoints.web.http.encodedCharacters]
+          allowEncodedSlash = true
+    ```
+
+    ```bash tab="CLI"
+    ## Static configuration
+    --entryPoints.web.address=:80
+    --entryPoints.web.http.encodedCharacters.allowEncodedSlash=true
+    ```
+
+??? info "`encodedCharacters.allowEncodedBackSlash`"
+
+    _Optional, Default=false_
+
+    Controls whether requests with encoded back slash characters (`%5C` or `%5c`) in the path are allowed.
+
+    ```yaml tab="File (YAML)"
+    ## Static configuration
+    entryPoints:
+      web:
+        address: ":80"
+        http:
+          encodedCharacters:
+            allowEncodedBackSlash: true
+    ```
+
+    ```toml tab="File (TOML)"
+    ## Static configuration
+    [entryPoints]
+      [entryPoints.web]
+        address = ":80"
+
+        [entryPoints.web.http.encodedCharacters]
+          allowEncodedBackSlash = true
+    ```
+
+    ```bash tab="CLI"
+    ## Static configuration
+    --entryPoints.web.address=:80
+    --entryPoints.web.http.encodedCharacters.allowEncodedBackSlash=true
+    ```
+
+??? info "`encodedCharacters.allowEncodedNullCharacter`"
+
+    _Optional, Default=false_
+
+    Controls whether requests with encoded null characters (`%00`) in the path are allowed.
+
+    ```yaml tab="File (YAML)"
+    ## Static configuration
+    entryPoints:
+      web:
+        address: ":80"
+        http:
+          encodedCharacters:
+            allowEncodedNullCharacter: true
+    ```
+
+    ```toml tab="File (TOML)"
+    ## Static configuration
+    [entryPoints]
+      [entryPoints.web]
+        address = ":80"
+
+        [entryPoints.web.http.encodedCharacters]
+          allowEncodedNullCharacter = true
+    ```
+
+    ```bash tab="CLI"
+    ## Static configuration
+    --entryPoints.web.address=:80
+    --entryPoints.web.http.encodedCharacters.allowEncodedNullCharacter=true
+    ```
+
+??? info "`encodedCharacters.allowEncodedSemicolon`"
+
+    _Optional, Default=false_
+
+    Controls whether requests with encoded semicolon characters (`%3B` or `%3b`) in the path are allowed.
+
+    ```yaml tab="File (YAML)"
+    ## Static configuration
+    entryPoints:
+      web:
+        address: ":80"
+        http:
+          encodedCharacters:
+            allowEncodedSemicolon: true
+    ```
+
+    ```toml tab="File (TOML)"
+    ## Static configuration
+    [entryPoints]
+      [entryPoints.web]
+        address = ":80"
+
+        [entryPoints.web.http.encodedCharacters]
+          allowEncodedSemicolon = true
+    ```
+
+    ```bash tab="CLI"
+    ## Static configuration
+    --entryPoints.web.address=:80
+    --entryPoints.web.http.encodedCharacters.allowEncodedSemicolon=true
+    ```
+
+??? info "`encodedCharacters.allowEncodedPercent`"
+
+    _Optional, Default=false_
+
+    Controls whether requests with encoded percent characters (`%25`) in the path are allowed.
+
+    ```yaml tab="File (YAML)"
+    ## Static configuration
+    entryPoints:
+      web:
+        address: ":80"
+        http:
+          encodedCharacters:
+            allowEncodedPercent: true   
+    ```
+
+    ```toml tab="File (TOML)"
+    ## Static configuration
+    [entryPoints]
+      [entryPoints.web]
+        address = ":80"
+
+        [entryPoints.web.http.encodedCharacters]
+          allowEncodedPercent = true
+    ```
+
+    ```bash tab="CLI"
+    ## Static configuration
+    --entryPoints.web.address=:80
+    --entryPoints.web.http.encodedCharacters.allowEncodedPercent=true
+    ```
+
+??? info "`encodedCharacters.allowEncodedQuestionMark`"
+
+    _Optional, Default=false_
+
+    Controls whether requests with encoded question mark characters (`%3F` or `%3f`) in the path are allowed.
+
+    ```yaml tab="File (YAML)"
+    ## Static configuration
+    entryPoints:
+      web:
+        address: ":80"
+        http:
+          encodedCharacters:
+            allowEncodedQuestionMark: true
+    ```
+
+    ```toml tab="File (TOML)"
+    ## Static configuration
+    [entryPoints]
+      [entryPoints.web]
+        address = ":80"
+
+        [entryPoints.web.http.encodedCharacters]
+          allowEncodedQuestionMark = true
+    ```
+
+    ```bash tab="CLI"
+    ## Static configuration
+    --entryPoints.web.address=:80
+    --entryPoints.web.http.encodedCharacters.allowEncodedQuestionMark=true
+    ```
+
+??? info "`encodedCharacters.allowEncodedHash`"
+
+    _Optional, Default=false_
+
+    Controls whether requests with encoded hash characters (`%23`) in the path are allowed.
+
+    ```yaml tab="File (YAML)"
+    ## Static configuration
+    entryPoints:
+      web:
+        address: ":80"
+        http:    
+          encodedCharacters:
+            allowEncodedHash: true
+    ```
+
+    ```toml tab="File (TOML)"
+    ## Static configuration
+    [entryPoints]
+      [entryPoints.web]
+        address = ":80"
+
+        [entryPoints.web.http.encodedCharacters]
+          allowEncodedHash = true
+    ```
+
+    ```bash tab="CLI"
+    ## Static configuration
+    --entryPoints.web.address=:80
+    --entryPoints.web.http.encodedCharacters.allowEncodedHash=true
+    ```
 
 ### SanitizePath
 
