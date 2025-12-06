@@ -19,7 +19,7 @@ const HUB_DEMO_NAV_ICONS: Record<string, ReactNode> = {
 
 const useHubDemoRoutesManifest = (): HubDemo.Manifest | null => {
   const [manifest, setManifest] = useState<HubDemo.Manifest | null>(null)
-  const showDemoSection = useContext(VersionContext);
+  const { showDemoSection } = useContext(VersionContext);
 
   useEffect(() => {
     if (!showDemoSection) {
