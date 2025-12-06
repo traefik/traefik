@@ -4,6 +4,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
 import { useHubDemo } from './use-hub-demo'
 
+import { VersionContext } from "contexts/version"
 import verifySignature from 'utils/workers/scriptVerification'
 
 vi.mock('utils/workers/scriptVerification', () => ({
@@ -27,6 +28,11 @@ const MOCK_ROUTES_MANIFEST = {
       activeMatches: ['/gateway/:id'],
     },
   ],
+}
+const createWrapper = (showDemoSection: boolean) => {
+  return ({ children }: { children: ReactNode }) => (
+    <VersionContext.Provider value={{ showHubButton: true, version: '1.0.0', showDemoSection }}>{children}</VersionContext.Provider>
+  )
 }
 
 describe('useHubDemo', () => {
@@ -206,6 +212,36 @@ describe('useHubDemo', () => {
       rerender({ basePath: '/demo' })
 
       expect(result.current.routes![0].path).toBe('/demo/dashboard')
+    })
+
+    it('should load demo routes if showDemoButton is true', async () => {
+      const { result } = renderHook(() => useHubDemo("/hub"), {
+        wrapper: createWrapper(false),
+      })
+
+      await waitFor(() => {
+        expect(mockVerifySignature).toHaveBeenCalled()
+      })
+
+      await new Promise((resolve) => setTimeout(resolve, 10))
+
+      expect(result.current.routes).toBeArray()
+      expect(result.current.navigationItems).toBeArray()
+    })
+
+    it('should not load demo routes if showDemoButton is false', async () => {
+      const { result } = renderHook(() => useHubDemo("/hub"), {
+        wrapper: createWrapper(false),
+      })
+
+      await waitFor(() => {
+        expect(mockVerifySignature).not.toHaveBeenCalled()
+      })
+
+      await new Promise((resolve) => setTimeout(resolve, 10))
+
+      expect(result.current.routes).toBeNull()
+      expect(result.current.navigationItems).toBeNull()
     })
   })
 
