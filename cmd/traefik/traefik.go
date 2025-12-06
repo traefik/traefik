@@ -226,6 +226,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 
 	if staticConfiguration.API != nil {
 		version.DisableDashboardAd = staticConfiguration.API.DisableDashboardAd
+		version.DisableDashboardDemo = staticConfiguration.API.DisableDashboardDemo
 	}
 
 	// Plugins

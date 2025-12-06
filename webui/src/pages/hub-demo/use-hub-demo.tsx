@@ -1,8 +1,9 @@
-import { ReactNode, useEffect, useMemo, useState } from 'react'
+import { ReactNode, useContext, useEffect, useMemo, useState } from 'react'
 import { RouteObject } from 'react-router-dom'
 
 import { PUBLIC_KEY } from './constants'
 
+import { VersionContext } from "contexts/version"
 import HubDashboard from 'pages/hub-demo/HubDashboard'
 import { ApiIcon, DashboardIcon, GatewayIcon, PortalIcon } from 'pages/hub-demo/icons'
 import verifySignature from 'utils/workers/scriptVerification'
@@ -18,8 +19,13 @@ const HUB_DEMO_NAV_ICONS: Record<string, ReactNode> = {
 
 const useHubDemoRoutesManifest = (): HubDemo.Manifest | null => {
   const [manifest, setManifest] = useState<HubDemo.Manifest | null>(null)
+  const showDemoSection = useContext(VersionContext);
 
   useEffect(() => {
+    if (!showDemoSection) {
+      return;
+    }
+
     const fetchManifest = async () => {
       try {
         const { verified, scriptContent } = await verifySignature(
@@ -44,7 +50,7 @@ const useHubDemoRoutesManifest = (): HubDemo.Manifest | null => {
     }
 
     fetchManifest()
-  }, [])
+  }, [showDemoSection])
 
   return manifest
 }
