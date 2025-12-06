@@ -24,7 +24,7 @@ var (
 	StartDate = time.Now()
 	// DisableDashboardAd disables ad in the dashboard.
 	DisableDashboardAd = false
-	// DisableDashboardDemo disables demo in the dashboard.
+	// DisableDashboardDemo disables demo section in the dashboard.
 	DisableDashboardDemo = false
 )
 
