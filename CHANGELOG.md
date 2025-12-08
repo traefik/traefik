@@ -1,7 +1,18 @@
 ## [v3.6.4](https://github.com/traefik/traefik/tree/v3.6.4) (2025-12-05)
 [All Commits](https://github.com/traefik/traefik/compare/v3.6.2...v3.6.4)
 
+**CVE's fixed:**
+- [CVE-2025-66490](https://nvd.nist.gov/vuln/detail/CVE-2025-66490) (Advisory [GHSA-gm3x-23wp-hc2c](https://github.com/traefik/traefik/security/advisories/GHSA-gm3x-23wp-hc2c))
+- [CVE-2025-66491](https://nvd.nist.gov/vuln/detail/CVE-2025-66491) (Advisory [GHSA-7vww-mvcr-x6vj](https://github.com/traefik/traefik/security/advisories/GHSA-7vww-mvcr-x6vj))
+
+**Important:** Please read the [migration guide](https://doc.traefik.io/traefik/v3.6/migrate/v3/#v364).
+
 **Bug fixes:**
+- **[server]** Reject suspicious encoded characters ([#12360](https://github.com/traefik/traefik/pull/12360) by [rtribotte](https://github.com/rtribotte))
+- **[plugins]** Validate plugin module name ([#12291](https://github.com/traefik/traefik/pull/12291) by [kevinpollet](https://github.com/kevinpollet))
+- **[http3]** Bump github.com/quic-go/quic-go to v0.57.1 ([#12319](https://github.com/traefik/traefik/pull/12319) by [GreyXor](https://github.com/GreyXor))
+- **[http3]** Bump github.com/quic-go/quic-go to v0.57.0 ([#12308](https://github.com/traefik/traefik/pull/12308) by [GreyXor](https://github.com/GreyXor))
+- **[server]** Bump golang.org/x/crypto to v0.45.0 ([#12296](https://github.com/traefik/traefik/pull/12296) by [kevinpollet](https://github.com/kevinpollet))
 - **[acme]** Bump github.com/go-acme/lego/v4 to v4.29.0 ([#12333](https://github.com/traefik/traefik/pull/12333) by [ldez](https://github.com/ldez))
 - **[k8s/ingress-nginx]** Fix SSL redirect to match NGINX behavior ([#12361](https://github.com/traefik/traefik/pull/12361) by [mmatur](https://github.com/mmatur))
 - **[k8s/ingress-nginx]** Fix the service name for ingress-nginx provider ([#12352](https://github.com/traefik/traefik/pull/12352) by [mmatur](https://github.com/mmatur))
@@ -33,7 +44,7 @@ Release canceled.
 ## [v2.11.32](https://github.com/traefik/traefik/tree/v2.11.32) (2025-12-04)
 [All Commits](https://github.com/traefik/traefik/compare/v2.11.31...v2.11.32)
 
-  **Bug fixes:**
+**Bug fixes:**
 - **[server]** Reject suspicious encoded characters ([#12360](https://github.com/traefik/traefik/pull/12360) by [rtribotte](https://github.com/rtribotte))
 - **[plugins]** Validate plugin module name ([#12291](https://github.com/traefik/traefik/pull/12291) by [kevinpollet](https://github.com/kevinpollet))
 - **[http3]** Bump github.com/quic-go/quic-go to v0.57.1 ([#12319](https://github.com/traefik/traefik/pull/12319) by [GreyXor](https://github.com/GreyXor))
