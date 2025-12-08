@@ -127,14 +127,15 @@ They can be defined by using a file (YAML or TOML) or CLI arguments.
           trustedIPs:
             - "127.0.0.1"
             - "192.168.0.1"
-        encodedCharacters:
-          allowEncodedSlash: true
-          allowEncodedBackSlash: true
-          allowEncodedNullCharacter: true
-          allowEncodedSemicolon: true
-          allowEncodedPercent: true
-          allowEncodedQuestionMark: true
-          allowEncodedHash: true
+        http:
+          encodedCharacters:
+            allowEncodedSlash: true
+            allowEncodedBackSlash: true
+            allowEncodedNullCharacter: true
+            allowEncodedSemicolon: true
+            allowEncodedPercent: true
+            allowEncodedQuestionMark: true
+            allowEncodedHash: true
     ```
 
     ```toml tab="File (TOML)"
@@ -160,7 +161,7 @@ They can be defined by using a file (YAML or TOML) or CLI arguments.
         [entryPoints.name.forwardedHeaders]
           insecure = true
           trustedIPs = ["127.0.0.1", "192.168.0.1"]
-        [entryPoints.name.encodedCharacters]
+        [entryPoints.name.http.encodedCharacters]
           allowEncodedSlash = true
           allowEncodedBackSlash = true
           allowEncodedNullCharacter = true
@@ -184,13 +185,13 @@ They can be defined by using a file (YAML or TOML) or CLI arguments.
     --entryPoints.name.proxyProtocol.trustedIPs=127.0.0.1,192.168.0.1
     --entryPoints.name.forwardedHeaders.insecure=true
     --entryPoints.name.forwardedHeaders.trustedIPs=127.0.0.1,192.168.0.1
-    --entryPoints.name.encodedCharacters.allowEncodedSlash=true
-    --entryPoints.name.encodedCharacters.allowEncodedBackSlash=true
-    --entryPoints.name.encodedCharacters.allowEncodedNullCharacter=true
-    --entryPoints.name.encodedCharacters.allowEncodedSemicolon=true
-    --entryPoints.name.encodedCharacters.allowEncodedPercent=true
-    --entryPoints.name.encodedCharacters.allowEncodedQuestionMark=true
-    --entryPoints.name.encodedCharacters.allowEncodedHash=true
+    --entryPoints.name.http.encodedCharacters.allowEncodedSlash=true
+    --entryPoints.name.http.encodedCharacters.allowEncodedBackSlash=true
+    --entryPoints.name.http.encodedCharacters.allowEncodedNullCharacter=true
+    --entryPoints.name.http.encodedCharacters.allowEncodedSemicolon=true
+    --entryPoints.name.http.encodedCharacters.allowEncodedPercent=true
+    --entryPoints.name.http.encodedCharacters.allowEncodedQuestionMark=true
+    --entryPoints.name.http.encodedCharacters.allowEncodedHash=true
     ```
 
 ### Address
