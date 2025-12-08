@@ -129,14 +129,15 @@ They can be defined by using a file (YAML or TOML) or CLI arguments.
           trustedIPs:
             - "127.0.0.1"
             - "192.168.0.1"
-        encodedCharacters:
-          allowEncodedSlash: true
-          allowEncodedBackSlash: true
-          allowEncodedNullCharacter: true
-          allowEncodedSemicolon: true
-          allowEncodedPercent: true
-          allowEncodedQuestionMark: true
-          allowEncodedHash: true
+        http:
+          encodedCharacters:
+            allowEncodedSlash: true
+            allowEncodedBackSlash: true
+            allowEncodedNullCharacter: true
+            allowEncodedSemicolon: true
+            allowEncodedPercent: true
+            allowEncodedQuestionMark: true
+            allowEncodedHash: true
     ```
 
     ```toml tab="File (TOML)"
@@ -164,7 +165,7 @@ They can be defined by using a file (YAML or TOML) or CLI arguments.
         [entryPoints.name.forwardedHeaders]
           insecure = true
           trustedIPs = ["127.0.0.1", "192.168.0.1"]
-        [entryPoints.name.encodedCharacters]
+        [entryPoints.name.http.encodedCharacters]
           allowEncodedSlash = true
           allowEncodedBackSlash = true
           allowEncodedNullCharacter = true
@@ -190,13 +191,13 @@ They can be defined by using a file (YAML or TOML) or CLI arguments.
     --entryPoints.name.proxyProtocol.trustedIPs=127.0.0.1,192.168.0.1
     --entryPoints.name.forwardedHeaders.insecure=true
     --entryPoints.name.forwardedHeaders.trustedIPs=127.0.0.1,192.168.0.1
-    --entryPoints.name.encodedCharacters.allowEncodedSlash=true
-    --entryPoints.name.encodedCharacters.allowEncodedBackSlash=true
-    --entryPoints.name.encodedCharacters.allowEncodedNullCharacter=true
-    --entryPoints.name.encodedCharacters.allowEncodedSemicolon=true
-    --entryPoints.name.encodedCharacters.allowEncodedPercent=true
-    --entryPoints.name.encodedCharacters.allowEncodedQuestionMark=true
-    --entryPoints.name.encodedCharacters.allowEncodedHash=true
+    --entryPoints.name.http.encodedCharacters.allowEncodedSlash=true
+    --entryPoints.name.http.encodedCharacters.allowEncodedBackSlash=true
+    --entryPoints.name.http.encodedCharacters.allowEncodedNullCharacter=true
+    --entryPoints.name.http.encodedCharacters.allowEncodedSemicolon=true
+    --entryPoints.name.http.encodedCharacters.allowEncodedPercent=true
+    --entryPoints.name.http.encodedCharacters.allowEncodedQuestionMark=true
+    --entryPoints.name.http.encodedCharacters.allowEncodedHash=true
     ```
 
 ### Address
@@ -657,8 +658,9 @@ By default, Traefik rejects requests containing certain encoded characters that 
     entryPoints:
       web:
         address: ":80"
-        encodedCharacters:
-          allowEncodedSlash: true
+        http:
+          encodedCharacters:
+            allowEncodedSlash: true
     ```
 
     ```toml tab="File (TOML)"
@@ -667,14 +669,14 @@ By default, Traefik rejects requests containing certain encoded characters that 
       [entryPoints.web]
         address = ":80"
 
-        [entryPoints.web.encodedCharacters]
+        [entryPoints.web.http.encodedCharacters]
           allowEncodedSlash = true
     ```
 
     ```bash tab="CLI"
     ## Static configuration
     --entryPoints.web.address=:80
-    --entryPoints.web.encodedCharacters.allowEncodedSlash=true
+    --entryPoints.web.http.encodedCharacters.allowEncodedSlash=true
     ```
 
 ??? info "`encodedCharacters.allowEncodedBackSlash`"
@@ -688,8 +690,9 @@ By default, Traefik rejects requests containing certain encoded characters that 
     entryPoints:
       web:
         address: ":80"
-        encodedCharacters:
-          allowEncodedBackSlash: true
+        http:
+          encodedCharacters:
+            allowEncodedBackSlash: true
     ```
 
     ```toml tab="File (TOML)"
@@ -698,14 +701,14 @@ By default, Traefik rejects requests containing certain encoded characters that 
       [entryPoints.web]
         address = ":80"
 
-        [entryPoints.web.encodedCharacters]
+        [entryPoints.web.http.encodedCharacters]
           allowEncodedBackSlash = true
     ```
 
     ```bash tab="CLI"
     ## Static configuration
     --entryPoints.web.address=:80
-    --entryPoints.web.encodedCharacters.allowEncodedBackSlash=true
+    --entryPoints.web.http.encodedCharacters.allowEncodedBackSlash=true
     ```
 
 ??? info "`encodedCharacters.allowEncodedNullCharacter`"
@@ -719,8 +722,9 @@ By default, Traefik rejects requests containing certain encoded characters that 
     entryPoints:
       web:
         address: ":80"
-        encodedCharacters:
-          allowEncodedNullCharacter: true
+        http:
+          encodedCharacters:
+            allowEncodedNullCharacter: true
     ```
 
     ```toml tab="File (TOML)"
@@ -729,14 +733,14 @@ By default, Traefik rejects requests containing certain encoded characters that 
       [entryPoints.web]
         address = ":80"
 
-        [entryPoints.web.encodedCharacters]
+        [entryPoints.web.http.encodedCharacters]
           allowEncodedNullCharacter = true
     ```
 
     ```bash tab="CLI"
     ## Static configuration
     --entryPoints.web.address=:80
-    --entryPoints.web.encodedCharacters.allowEncodedNullCharacter=true
+    --entryPoints.web.http.encodedCharacters.allowEncodedNullCharacter=true
     ```
 
 ??? info "`encodedCharacters.allowEncodedSemicolon`"
@@ -750,8 +754,9 @@ By default, Traefik rejects requests containing certain encoded characters that 
     entryPoints:
       web:
         address: ":80"
-        encodedCharacters:
-          allowEncodedSemicolon: true
+        http:
+          encodedCharacters:
+            allowEncodedSemicolon: true
     ```
 
     ```toml tab="File (TOML)"
@@ -760,14 +765,14 @@ By default, Traefik rejects requests containing certain encoded characters that 
       [entryPoints.web]
         address = ":80"
 
-        [entryPoints.web.encodedCharacters]
+        [entryPoints.web.http.encodedCharacters]
           allowEncodedSemicolon = true
     ```
 
     ```bash tab="CLI"
     ## Static configuration
     --entryPoints.web.address=:80
-    --entryPoints.web.encodedCharacters.allowEncodedSemicolon=true
+    --entryPoints.web.http.encodedCharacters.allowEncodedSemicolon=true
     ```
 
 ??? info "`encodedCharacters.allowEncodedPercent`"
@@ -781,8 +786,9 @@ By default, Traefik rejects requests containing certain encoded characters that 
     entryPoints:
       web:
         address: ":80"
-        encodedCharacters:
-          allowEncodedPercent: true
+        http:
+          encodedCharacters:
+            allowEncodedPercent: true
     ```
 
     ```toml tab="File (TOML)"
@@ -791,14 +797,14 @@ By default, Traefik rejects requests containing certain encoded characters that 
       [entryPoints.web]
         address = ":80"
 
-        [entryPoints.web.encodedCharacters]
+        [entryPoints.web.http.encodedCharacters]
           allowEncodedPercent = true
     ```
 
     ```bash tab="CLI"
     ## Static configuration
     --entryPoints.web.address=:80
-    --entryPoints.web.encodedCharacters.allowEncodedPercent=true
+    --entryPoints.web.http.encodedCharacters.allowEncodedPercent=true
     ```
 
 ??? info "`encodedCharacters.allowEncodedQuestionMark`"
@@ -812,8 +818,9 @@ By default, Traefik rejects requests containing certain encoded characters that 
     entryPoints:
       web:
         address: ":80"
-        encodedCharacters:
-          allowEncodedQuestionMark: true
+        http:
+          encodedCharacters:
+            allowEncodedQuestionMark: true
     ```
 
     ```toml tab="File (TOML)"
@@ -822,14 +829,14 @@ By default, Traefik rejects requests containing certain encoded characters that 
       [entryPoints.web]
         address = ":80"
 
-        [entryPoints.web.encodedCharacters]
+        [entryPoints.web.http.encodedCharacters]
           allowEncodedQuestionMark = true
     ```
 
     ```bash tab="CLI"
     ## Static configuration
     --entryPoints.web.address=:80
-    --entryPoints.web.encodedCharacters.allowEncodedQuestionMark=true
+    --entryPoints.web.http.encodedCharacters.allowEncodedQuestionMark=true
     ```
 
 ??? info "`encodedCharacters.allowEncodedHash`"
@@ -843,8 +850,9 @@ By default, Traefik rejects requests containing certain encoded characters that 
     entryPoints:
       web:
         address: ":80"
-        encodedCharacters:
-          allowEncodedHash: true
+        http:
+          encodedCharacters:
+            allowEncodedHash: true
     ```
 
     ```toml tab="File (TOML)"
@@ -853,14 +861,14 @@ By default, Traefik rejects requests containing certain encoded characters that 
       [entryPoints.web]
         address = ":80"
 
-        [entryPoints.web.encodedCharacters]
+        [entryPoints.web.http.encodedCharacters]
           allowEncodedHash = true
     ```
 
     ```bash tab="CLI"
     ## Static configuration
     --entryPoints.web.address=:80
-    --entryPoints.web.encodedCharacters.allowEncodedHash=true
+    --entryPoints.web.http.encodedCharacters.allowEncodedHash=true
     ```
 
 ### Transport

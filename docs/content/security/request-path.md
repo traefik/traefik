@@ -93,21 +93,22 @@ All encoded character filtering is enabled by default (`false` means encoded cha
 entryPoints:
   websecure:
     address: ":443"
-    encodedCharacters:
-      allowEncodedSlash: false          # %2F - Default: false (RECOMMENDED)
-      allowEncodedBackSlash: false      # %5C - Default: false (RECOMMENDED)
-      allowEncodedNullCharacter: false  # %00 - Default: false (RECOMMENDED)
-      allowEncodedSemicolon: false      # %3B - Default: false (RECOMMENDED)
-      allowEncodedPercent: false        # %25 - Default: false (RECOMMENDED)
-      allowEncodedQuestionMark: false   # %3F - Default: false (RECOMMENDED)
-      allowEncodedHash: false           # %23 - Default: false (RECOMMENDED)
+    http:
+      encodedCharacters:
+        allowEncodedSlash: false          # %2F - Default: false (RECOMMENDED)
+        allowEncodedBackSlash: false      # %5C - Default: false (RECOMMENDED)
+        allowEncodedNullCharacter: false  # %00 - Default: false (RECOMMENDED)
+        allowEncodedSemicolon: false      # %3B - Default: false (RECOMMENDED)
+        allowEncodedPercent: false        # %25 - Default: false (RECOMMENDED)
+        allowEncodedQuestionMark: false   # %3F - Default: false (RECOMMENDED)
+        allowEncodedHash: false           # %23 - Default: false (RECOMMENDED)
 ```
 
 ```toml tab="File (TOML)"
 [entryPoints.websecure]
   address = ":443"
 
-  [entryPoints.websecure.encodedCharacters]
+  [entryPoints.websecure.http.encodedCharacters]
     allowEncodedSlash = false
     allowEncodedBackSlash = false
     allowEncodedNullCharacter = false
@@ -119,11 +120,11 @@ entryPoints:
 
 ```bash tab="CLI"
 --entryPoints.websecure.address=:443
---entryPoints.websecure.encodedCharacters.allowEncodedSlash=false
---entryPoints.websecure.encodedCharacters.allowEncodedBackSlash=false
---entryPoints.websecure.encodedCharacters.allowEncodedNullCharacter=false
---entryPoints.websecure.encodedCharacters.allowEncodedSemicolon=false
---entryPoints.websecure.encodedCharacters.allowEncodedPercent=false
---entryPoints.websecure.encodedCharacters.allowEncodedQuestionMark=false
---entryPoints.websecure.encodedCharacters.allowEncodedHash=false
+--entryPoints.websecure.http.encodedCharacters.allowEncodedSlash=false
+--entryPoints.websecure.http.encodedCharacters.allowEncodedBackSlash=false
+--entryPoints.websecure.http.encodedCharacters.allowEncodedNullCharacter=false
+--entryPoints.websecure.http.encodedCharacters.allowEncodedSemicolon=false
+--entryPoints.websecure.http.encodedCharacters.allowEncodedPercent=false
+--entryPoints.websecure.http.encodedCharacters.allowEncodedQuestionMark=false
+--entryPoints.websecure.http.encodedCharacters.allowEncodedHash=false
 ```
