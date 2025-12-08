@@ -986,7 +986,6 @@ func applySSLRedirectConfiguration(routerName string, ingressConfig ingressConfi
 
 	// An Ingress that is not forcing sslRedirect and has no TLS configuration does not redirect,
 	// even if sslRedirect is enabled.
-	return
 }
 
 func applyForwardAuthConfiguration(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
