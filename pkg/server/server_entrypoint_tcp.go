@@ -748,8 +748,7 @@ func denyFragment(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		if strings.Contains(req.URL.RawPath, "#") {
 			log.WithoutContext().Debugf("Rejecting request because it contains a fragment in the URL path: %s", req.URL.RawPath)
-			rw.WriteHeader(http.StatusBadRequest)
-
+			http.Error(rw, "Request contains unallowed fragment in the URL path.", http.StatusBadRequest)
 			return
 		}
 
