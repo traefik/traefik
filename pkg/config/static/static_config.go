@@ -168,7 +168,7 @@ type API struct {
 func (a *API) SetDefaults() {
 	a.BasePath = "/"
 	a.Dashboard = true
-	a.DashboardName = "Traefik dashboard"
+	a.DashboardName = ""
 }
 
 // RespondingTimeouts contains timeout configurations for incoming requests to the Traefik instance.

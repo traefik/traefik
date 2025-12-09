@@ -25,7 +25,7 @@ var (
 	// DisableDashboardAd disables ad in the dashboard.
 	DisableDashboardAd = false
 	// DashboardName holds the custom name for the dashboard
-	DashboardName = "Traefik Proxy"
+	DashboardName = ""
 )
 
 // Handler expose version routes.
