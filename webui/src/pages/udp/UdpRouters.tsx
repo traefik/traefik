@@ -14,6 +14,7 @@ import SortableTh from 'components/tables/SortableTh'
 import { searchParamsToState, TableFilter } from 'components/tables/TableFilter'
 import TooltipText from 'components/TooltipText'
 import useFetchWithPagination, { pagesResponseInterface, RenderRowType } from 'hooks/use-fetch-with-pagination'
+import usePageTitle from 'hooks/use-page-title'
 import { EmptyPlaceholderTd } from 'layout/EmptyPlaceholder'
 
 export const makeRowRender = (): RenderRowType => {
@@ -87,6 +88,7 @@ export const UdpRoutersRender = ({
 export const UdpRouters = () => {
   const renderRow = makeRowRender()
   const [searchParams] = useSearchParams()
+  const pageTitle = usePageTitle('UDP Routers')
 
   const query = useMemo(() => searchParamsToState(searchParams), [searchParams])
   const { pages, pageCount, isLoadingMore, isReachingEnd, loadMore, error, isEmpty } = useFetchWithPagination(
@@ -102,7 +104,7 @@ export const UdpRouters = () => {
   return (
     <>
       <Helmet>
-        <title>UDP Routers - Traefik Proxy</title>
+        <title>{pageTitle}</title>
       </Helmet>
       <TableFilter />
       <UdpRoutersRender

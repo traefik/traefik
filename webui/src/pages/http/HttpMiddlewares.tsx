@@ -13,6 +13,7 @@ import SortableTh from 'components/tables/SortableTh'
 import { searchParamsToState, TableFilter } from 'components/tables/TableFilter'
 import TooltipText from 'components/TooltipText'
 import useFetchWithPagination, { pagesResponseInterface, RenderRowType } from 'hooks/use-fetch-with-pagination'
+import usePageTitle from 'hooks/use-page-title'
 import { EmptyPlaceholderTd } from 'layout/EmptyPlaceholder'
 import { parseMiddlewareType } from 'libs/parsers'
 
@@ -85,6 +86,7 @@ export const HttpMiddlewaresRender = ({
 export const HttpMiddlewares = () => {
   const renderRow = makeRowRender()
   const [searchParams] = useSearchParams()
+  const pageTitle = usePageTitle('HTTP Middlewares')
 
   const query = useMemo(() => searchParamsToState(searchParams), [searchParams])
   const { pages, pageCount, isLoadingMore, isReachingEnd, loadMore, error, isEmpty } = useFetchWithPagination(
@@ -100,7 +102,7 @@ export const HttpMiddlewares = () => {
   return (
     <>
       <Helmet>
-        <title>HTTP Middlewares - Traefik Proxy</title>
+        <title>{pageTitle}</title>
       </Helmet>
       <TableFilter />
       <HttpMiddlewaresRender

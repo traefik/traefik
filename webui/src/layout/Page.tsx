@@ -7,6 +7,7 @@ import Container from './Container'
 
 import { ToastPool } from 'components/ToastPool'
 import { ToastProvider } from 'contexts/toasts'
+import usePageTitle from 'hooks/use-page-title'
 import { LAPTOP_BP, SideBarPanel, SideNav, TopNav } from 'layout/navigation'
 
 export const LIGHT_PRIMARY_COLOR = '#217F97'
@@ -45,6 +46,7 @@ const Page = ({ children }: Props) => {
   const { pathname } = useLocation()
   const [isSideBarPanelOpen, setIsSideBarPanelOpen] = useState(false)
   const location = useLocation()
+  const pageTitle = usePageTitle()
 
   const isDemoPage = useMemo(() => pathname.includes('hub-dashboard'), [pathname])
 
@@ -65,7 +67,7 @@ const Page = ({ children }: Props) => {
     <ToastProvider>
       {globalStyles()}
       <Helmet>
-        <title>Traefik Proxy</title>
+        <title>{pageTitle}</title>
       </Helmet>
       <Flex>
         <SideBarPanel isOpen={isSideBarPanelOpen} onOpenChange={setIsSideBarPanelOpen} />

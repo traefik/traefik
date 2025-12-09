@@ -16,6 +16,7 @@ import { searchParamsToState, TableFilter } from 'components/tables/TableFilter'
 import Tooltip from 'components/Tooltip'
 import TooltipText from 'components/TooltipText'
 import useFetchWithPagination, { pagesResponseInterface, RenderRowType } from 'hooks/use-fetch-with-pagination'
+import usePageTitle from 'hooks/use-page-title'
 import { EmptyPlaceholderTd } from 'layout/EmptyPlaceholder'
 
 export const makeRowRender = (protocol = 'http'): RenderRowType => {
@@ -118,6 +119,7 @@ export const HttpRoutersRender = ({
 export const HttpRouters = () => {
   const renderRow = makeRowRender()
   const [searchParams] = useSearchParams()
+  const pageTitle = usePageTitle('HTTP Routers')
 
   const query = useMemo(() => searchParamsToState(searchParams), [searchParams])
   const { pages, pageCount, isLoadingMore, isReachingEnd, loadMore, error, isEmpty } = useFetchWithPagination(
@@ -133,7 +135,7 @@ export const HttpRouters = () => {
   return (
     <>
       <Helmet>
-        <title>HTTP Routers - Traefik Proxy</title>
+        <title>{pageTitle}</title>
       </Helmet>
       <TableFilter />
       <HttpRoutersRender
