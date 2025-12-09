@@ -1021,7 +1021,12 @@ entryPoints:
 ### Encoded Characters
 
 You can configure Traefik to control the handling of encoded characters in request paths for security purposes.
-By default, Traefik rejects requests containing certain encoded characters that could be used in path traversal or other security attacks.
+By default, Traefik rejects requests with path containing certain encoded characters that could be used in path traversal or other security attacks.
+
+!!! info 
+    
+    This check is not done against the request query parameters,
+    but only against the request path as defined in [RFC3986 section-3](https://datatracker.ietf.org/doc/html/rfc3986#section-3).
 
 !!! warning "Security Considerations"
 
