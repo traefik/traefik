@@ -1026,7 +1026,7 @@ By default, Traefik rejects requests with path containing certain encoded charac
 !!! info 
     
     This check is not done against the request query parameters,
-    and only the request path as defined in [RFC3986 section-3](https://datatracker.ietf.org/doc/html/rfc3986#section-3).
+    but only against the request path as defined in [RFC3986 section-3](https://datatracker.ietf.org/doc/html/rfc3986#section-3).
 
 !!! warning "Security Considerations"
 
