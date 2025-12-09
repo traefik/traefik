@@ -259,6 +259,7 @@ nav:
           - 'Tracing': 'reference/install-configuration/observability/tracing.md'
           - 'Logs & AccessLogs': 'reference/install-configuration/observability/logs-and-accesslogs.md'
           - 'Health Check (CLI & Ping)': 'reference/install-configuration/observability/healthcheck.md'
+      - 'ServersTransport' : 'reference/install-configuration/serverstransport.md'
       - 'Options List': 'reference/install-configuration/configuration-options.md'
     - 'Routing Configuration':
         - 'Common Configuration' :

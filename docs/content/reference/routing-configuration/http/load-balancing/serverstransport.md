@@ -5,6 +5,9 @@ description: "ServersTransport allows configuring the connection between Traefik
 
 ServersTransport allows you to configure the transport between Traefik and your HTTP servers.
 
+If no serversTransport is specified on a service, the default one is used.
+The default serversTransport can be customize using the [install configuration](../../../install-configuration/serverstransport.md).
+
 ## Configuration Example
 
 Declare the serversTransport:
