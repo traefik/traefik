@@ -132,8 +132,8 @@ http:
 
 ## Why Is My TLS Certificate Not Reloaded When Its Contents Change?
 
-With the file provider,
-a configuration update is only triggered when one of the [watched](../providers/file.md#provider-configuration) configuration files is modified.
+With the [file provider](../reference/install-configuration/providers/others/file.md),
+a configuration update is only triggered when one of the watched configuration files is modified.
 
 Which is why, when a certificate is defined by path,
 and the actual contents of this certificate change,
@@ -156,14 +156,14 @@ By default, the following headers are automatically added when proxying requests
 | Proxy Server's Hostname   | `X-Forwarded-Server`           |
 
 For more details,
-please check out the [forwarded header](../routing/entrypoints.md#forwarded-headers) documentation.
+please check out the [forwarded header](../reference/install-configuration/entrypoints.md#configuration-options) documentation.
 
 ## How Traefik is Storing and Serving TLS Certificates?
 
 ### Storing TLS Certificates
 
-[TLS](../https/tls.md "Link to Traefik TLS docs") certificates are either provided directly by the [dynamic configuration](./configuration-overview.md#the-dynamic-configuration "Link to dynamic configuration overview") from [providers](../https/tls.md#user-defined "Link to the TLS configuration"),
-or by [ACME resolvers](../https/acme.md#providers "Link to ACME resolvers"), which act themselves as providers internally.
+TLS certificates are either provided directly by the [routing configuration](../reference/routing-configuration/dynamic-configuration-methods.md "Link to routing configuration overview"),
+or by [Certificate resolvers](../reference/install-configuration/tls/certificate-resolvers/overview.md "Link to certificates resolvers").
 
 For each TLS certificate, Traefik produces an identifier used as a key to store it.
 This identifier is constructed as the alphabetically ordered concatenation of the SANs `DNSNames` and `IPAddresses` of the TLScertificate.
