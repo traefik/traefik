@@ -1,13 +1,12 @@
 import { Flex, globalCss, styled } from '@traefiklabs/faency'
 import { ReactNode, useMemo, useState } from 'react'
-import { Helmet } from 'react-helmet-async'
 import { useLocation } from 'react-router-dom'
 
 import Container from './Container'
+import PageTitle from './PageTitle'
 
 import { ToastPool } from 'components/ToastPool'
 import { ToastProvider } from 'contexts/toasts'
-import usePageTitle from 'hooks/use-page-title'
 import { LAPTOP_BP, SideBarPanel, SideNav, TopNav } from 'layout/navigation'
 
 export const LIGHT_PRIMARY_COLOR = '#217F97'
@@ -46,7 +45,6 @@ const Page = ({ children }: Props) => {
   const { pathname } = useLocation()
   const [isSideBarPanelOpen, setIsSideBarPanelOpen] = useState(false)
   const location = useLocation()
-  const pageTitle = usePageTitle()
 
   const isDemoPage = useMemo(() => pathname.includes('hub-dashboard'), [pathname])
 
@@ -66,9 +64,7 @@ const Page = ({ children }: Props) => {
   return (
     <ToastProvider>
       {globalStyles()}
-      <Helmet>
-        <title>{pageTitle}</title>
-      </Helmet>
+      <PageTitle />
       <Flex>
         <SideBarPanel isOpen={isSideBarPanelOpen} onOpenChange={setIsSideBarPanelOpen} />
         <SideNav isExpanded={isSideBarPanelOpen} onSidePanelToggle={() => setIsSideBarPanelOpen(true)} isResponsive />

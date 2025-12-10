@@ -1,6 +1,5 @@
 import { AriaTable, AriaTbody, AriaTd, AriaTfoot, AriaThead, AriaTr, Flex, Text } from '@traefiklabs/faency'
 import { useMemo } from 'react'
-import { Helmet } from 'react-helmet-async'
 import useInfiniteScroll from 'react-infinite-scroll-hook'
 import { useSearchParams } from 'react-router-dom'
 
@@ -13,8 +12,8 @@ import SortableTh from 'components/tables/SortableTh'
 import { searchParamsToState, TableFilter } from 'components/tables/TableFilter'
 import TooltipText from 'components/TooltipText'
 import useFetchWithPagination, { pagesResponseInterface, RenderRowType } from 'hooks/use-fetch-with-pagination'
-import usePageTitle from 'hooks/use-page-title'
 import { EmptyPlaceholderTd } from 'layout/EmptyPlaceholder'
+import PageTitle from 'layout/PageTitle'
 
 export const makeRowRender = (): RenderRowType => {
   const TcpServicesRenderRow = (row) => (
@@ -85,7 +84,6 @@ export const TcpServicesRender = ({
 export const TcpServices = () => {
   const renderRow = makeRowRender()
   const [searchParams] = useSearchParams()
-  const pageTitle = usePageTitle('TCP Services')
 
   const query = useMemo(() => searchParamsToState(searchParams), [searchParams])
   const { pages, pageCount, isLoadingMore, isReachingEnd, loadMore, error, isEmpty } = useFetchWithPagination(
@@ -100,9 +98,7 @@ export const TcpServices = () => {
 
   return (
     <>
-      <Helmet>
-        <title>{pageTitle}</title>
-      </Helmet>
+      <PageTitle title="TCP Services" />
       <TableFilter />
       <TcpServicesRender
         error={error}

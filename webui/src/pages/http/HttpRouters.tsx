@@ -1,6 +1,10 @@
 import { AriaTable, AriaTbody, AriaTd, AriaTfoot, AriaThead, AriaTr, Box, Flex } from '@traefiklabs/faency'
 import { useMemo } from 'react'
+<<<<<<< HEAD
 import { Helmet } from 'react-helmet-async'
+=======
+import { FiShield } from 'react-icons/fi'
+>>>>>>> e81e0fd23 (feat: put dashboard name as page title)
 import useInfiniteScroll from 'react-infinite-scroll-hook'
 import { useSearchParams } from 'react-router-dom'
 
@@ -16,8 +20,8 @@ import { searchParamsToState, TableFilter } from 'components/tables/TableFilter'
 import Tooltip from 'components/Tooltip'
 import TooltipText from 'components/TooltipText'
 import useFetchWithPagination, { pagesResponseInterface, RenderRowType } from 'hooks/use-fetch-with-pagination'
-import usePageTitle from 'hooks/use-page-title'
 import { EmptyPlaceholderTd } from 'layout/EmptyPlaceholder'
+import PageTitle from 'layout/PageTitle'
 
 export const makeRowRender = (protocol = 'http'): RenderRowType => {
   const HttpRoutersRenderRow = (row) => (
@@ -119,7 +123,6 @@ export const HttpRoutersRender = ({
 export const HttpRouters = () => {
   const renderRow = makeRowRender()
   const [searchParams] = useSearchParams()
-  const pageTitle = usePageTitle('HTTP Routers')
 
   const query = useMemo(() => searchParamsToState(searchParams), [searchParams])
   const { pages, pageCount, isLoadingMore, isReachingEnd, loadMore, error, isEmpty } = useFetchWithPagination(
@@ -134,9 +137,7 @@ export const HttpRouters = () => {
 
   return (
     <>
-      <Helmet>
-        <title>{pageTitle}</title>
-      </Helmet>
+      <PageTitle title="HTTP Routers" />
       <TableFilter />
       <HttpRoutersRender
         error={error}
