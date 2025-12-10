@@ -2,7 +2,7 @@
 [All Commits](https://github.com/traefik/traefik/compare/v3.6.2...v3.6.4)
 
 **CVE's fixed:**
-- [CVE-2025-66490](https://nvd.nist.gov/vuln/detail/CVE-2025-66490) (Advisory [GHSA-gm3x-23wp-hc2c](https://github.com/traefik/traefik/security/advisories/GHSA-gm3x-23wp-hc2c))
+- [CVE-2025-66490](https://nvd.nist.gov/vuln/detail/CVE-2025-66490) (Advisory [GHSA-gm3x-23wp-hc2c](https://github.com/traefik/traefik/security/advisories/GHSA-gm3x-23wp-hc2c)): **Breaking Change** please read the [migration guide](https://doc.traefik.io/traefik/v3.6/migrate/v3/#v364).
 - [CVE-2025-66491](https://nvd.nist.gov/vuln/detail/CVE-2025-66491) (Advisory [GHSA-7vww-mvcr-x6vj](https://github.com/traefik/traefik/security/advisories/GHSA-7vww-mvcr-x6vj))
 
 **Important:** Please read the [migration guide](https://doc.traefik.io/traefik/v3.6/migrate/v3/#v364).
