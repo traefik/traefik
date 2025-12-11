@@ -9,7 +9,6 @@
 set -eu
 
 BASE_DIR="${1:-/app}"
-EXIT_CODE=0
 
 echo "== Linting YAML files (Kubernetes multi-resource format)"
 
