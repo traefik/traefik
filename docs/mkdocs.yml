@@ -136,16 +136,15 @@ plugins:
         'middlewares/tcp/ipwhitelist.md': 'reference/routing-configuration/tcp/middlewares/ipallowlist.md'
         'middlewares/tcp/ipallowlist.md': 'reference/routing-configuration/tcp/middlewares/ipallowlist.md'
         ## User Guides
-        'user-guides/crd-acme/index.md': 'expose/kubernetes/basic.md'
-        'user-guides/cert-manager.md': 'expose/kubernetes/advanced.md'
-        'user-guides/docker-compose/basic-example/index.md': 'expose/docker/basic.md'
-        'user-guides/docker-compose/acme-tls/index.md': 'expose/docker/advanced.md'
-        'user-guides/docker-compose/acme-http/index.md': 'expose/docker/advanced.md'
-        'user-guides/docker-compose/acme-dns/index.md': 'expose/docker/advanced.md'
-        ## Expose pages (redirect old URLs to new structure)
-        'expose/kubernetes.md': 'expose/kubernetes/basic.md'
-        'expose/docker.md': 'expose/docker/basic.md'
-        'expose/swarm.md': 'expose/swarm/basic.md'
+        'user-guides/crd-acme/index.md': 'expose/kubernetes.md'
+        'user-guides/cert-manager.md': 'expose/kubernetes.md'
+        'user-guides/docker-compose/basic-example/index.md': 'expose/docker.md'
+        'user-guides/docker-compose/acme-tls/index.md': 'expose/docker.md'
+        'user-guides/docker-compose/acme-http/index.md': 'expose/docker.md'
+        'user-guides/docker-compose/acme-dns/index.md': 'expose/docker.md'
+        'user-guides/fastproxy.md': 'reference/install-configuration/experimental/fastproxy.md'
+        'user-guides/grpc.md': 'expose/overview.md#exposing-grpc-services'
+        'user-guides/websocket.md': 'expose/overview.md#exposing-websocket-services'
         # References
         # Static Configuration
         'reference/static-configuration/overview.md': 'reference/install-configuration/configuration-options.md'
@@ -273,6 +272,8 @@ nav:
           - 'Tracing': 'reference/install-configuration/observability/tracing.md'
           - 'Logs & AccessLogs': 'reference/install-configuration/observability/logs-and-accesslogs.md'
           - 'Health Check (CLI & Ping)': 'reference/install-configuration/observability/healthcheck.md'
+      - 'Experimental':
+          - 'FastProxy': 'reference/install-configuration/experimental/fastproxy.md'
       - 'Options List': 'reference/install-configuration/configuration-options.md'
     - 'Routing Configuration':
         - 'Common Configuration' :
@@ -378,12 +379,6 @@ nav:
     - 'Deprecation Notices':
         - 'Releases': 'deprecation/releases.md'
         - 'Features': 'deprecation/features.md'
-  - 'User Guides':
-      - 'FastProxy': 'user-guides/fastproxy.md'
-      - 'Kubernetes and Let''s Encrypt': 'user-guides/crd-acme/index.md'
-      - 'Kubernetes and cert-manager': 'user-guides/cert-manager.md'
-      - 'gRPC Examples': 'user-guides/grpc.md'
-      - 'WebSocket Examples': 'user-guides/websocket.md'
   - 'Contributing':
       - 'Thank You!': 'contributing/thank-you.md'
       - 'Submitting Issues': 'contributing/submitting-issues.md'

@@ -2037,6 +2037,6 @@ If the ServersTransportTCP CRD is defined in another provider the cross-provider
 
 ## Further
 
-Also see the [full example](../../user-guides/crd-acme/index.md) with Let's Encrypt.
+For additional information on exposing services with Kubernetes, see the [Kubernetes guide](../../expose/kubernetes.md).
 
 {% include-markdown "includes/traefik-for-business-applications.md" %}
