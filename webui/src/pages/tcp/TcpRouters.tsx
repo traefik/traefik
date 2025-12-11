@@ -5,7 +5,7 @@ import useInfiniteScroll from 'react-infinite-scroll-hook'
 import { useSearchParams } from 'react-router-dom'
 
 import { ScrollTopButton } from 'components/buttons/ScrollTopButton'
-import ProviderIcon from 'components/icons/providers'
+import { ProviderIconWithTooltip } from 'components/icons/providers'
 import { Chips } from 'components/resources/DetailItemComponents'
 import { ResourceStatus } from 'components/resources/ResourceStatus'
 import TlsIcon from 'components/routers/TlsIcon'
@@ -44,11 +44,7 @@ export const makeRowRender = (): RenderRowType => {
         <TooltipText text={row.service} isTruncated />
       </AriaTd>
       <AriaTd>
-        <Tooltip label={row.provider}>
-          <Box css={{ width: '32px', height: '32px' }}>
-            <ProviderIcon name={row.provider} />
-          </Box>
-        </Tooltip>
+        <ProviderIconWithTooltip provider={row.provider} />
       </AriaTd>
       <AriaTd>
         <TooltipText text={row.priority} isTruncated />

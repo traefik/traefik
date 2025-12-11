@@ -97,7 +97,7 @@ const RouterFlowDiagram = ({ data, protocol }: RouterFlowDiagramProps) => {
           key: 'Provider',
           val: (
             <>
-              <ProviderIcon name={data.provider} size={20} />
+              <ProviderIcon name={data.provider} />
               <ProviderName css={{ ml: '$2' }}>{data.provider}</ProviderName>
             </>
           ),

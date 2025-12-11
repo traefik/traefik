@@ -1,17 +1,16 @@
-import { AriaTable, AriaTbody, AriaTd, AriaTfoot, AriaThead, AriaTr, Box, Flex, Text } from '@traefiklabs/faency'
+import { AriaTable, AriaTbody, AriaTd, AriaTfoot, AriaThead, AriaTr, Flex, Text } from '@traefiklabs/faency'
 import { useMemo } from 'react'
 import { Helmet } from 'react-helmet-async'
 import useInfiniteScroll from 'react-infinite-scroll-hook'
 import { useSearchParams } from 'react-router-dom'
 
 import { ScrollTopButton } from 'components/buttons/ScrollTopButton'
-import ProviderIcon from 'components/icons/providers'
+import { ProviderIconWithTooltip } from 'components/icons/providers'
 import { ResourceStatus } from 'components/resources/ResourceStatus'
 import { SpinnerLoader } from 'components/SpinnerLoader'
 import ClickableRow from 'components/tables/ClickableRow'
 import SortableTh from 'components/tables/SortableTh'
 import { searchParamsToState, TableFilter } from 'components/tables/TableFilter'
-import Tooltip from 'components/Tooltip'
 import TooltipText from 'components/TooltipText'
 import useFetchWithPagination, { pagesResponseInterface, RenderRowType } from 'hooks/use-fetch-with-pagination'
 import { EmptyPlaceholderTd } from 'layout/EmptyPlaceholder'
@@ -32,11 +31,7 @@ export const makeRowRender = (): RenderRowType => {
         <Text>{row.loadBalancer?.servers?.length || 0}</Text>
       </AriaTd>
       <AriaTd>
-        <Tooltip label={row.provider}>
-          <Box css={{ width: '32px', height: '32px' }}>
-            <ProviderIcon name={row.provider} />
-          </Box>
-        </Tooltip>
+        <ProviderIconWithTooltip provider={row.provider} />
       </AriaTd>
     </ClickableRow>
   )
