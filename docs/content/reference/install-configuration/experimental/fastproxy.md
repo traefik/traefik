@@ -1,13 +1,13 @@
 ---
 title: "Traefik FastProxy Experimental Configuration"
-description: "This section of the Traefik Proxy documentation explains how to use the new FastProxy option."
+description: "This section of the Traefik Proxy documentation explains how to use the new FastProxy install configuration option."
 ---
 
 # Traefik FastProxy Experimental Configuration
 
 ## Overview
 
-This guide provides instructions on how to configure and use the new experimental `fastProxy` static configuration option in Traefik. The `fastProxy` option introduces a high-performance reverse proxy designed to enhance the performance of routing.
+This guide provides instructions on how to configure and use the new experimental `fastProxy` install configuration option in Traefik. The `fastProxy` option introduces a high-performance reverse proxy designed to enhance the performance of routing.
 
 !!! info "Limitations"
 
@@ -23,8 +23,8 @@ This guide provides instructions on how to configure and use the new experimenta
 
 ## Enabling FastProxy
 
-The fastProxy option is a static configuration parameter.
-To enable it, you need to configure it in your Traefik static configuration
+The fastProxy option is an install configuration parameter.
+To enable it, you need to configure it in your Traefik install configuration
 
 ```yaml tab="File (YAML)"
 experimental:
