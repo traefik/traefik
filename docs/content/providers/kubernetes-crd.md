@@ -363,6 +363,6 @@ providers:
 
 ## Full Example
 
-For additional information, refer to the [full example](../user-guides/crd-acme/index.md) with Let's Encrypt.
+For additional information on exposing services with Kubernetes, refer to the [Kubernetes guide](../expose/kubernetes.md).
 
 {% include-markdown "includes/traefik-for-business-applications.md" %}
