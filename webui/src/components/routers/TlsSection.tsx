@@ -51,10 +51,10 @@ const TlsSection = ({ data }: Props) => {
         <DetailsCard items={items} />
       ) : (
         <Card>
-          <Flex direction="column" align="center" justify="center" css={{ flexGrow: 1, textAlign: 'center' }}>
+          <Flex direction="column" align="center" justify="center" css={{ flexGrow: 1, textAlign: 'center', py: '$4' }}>
             <Box
               css={{
-                width: 88,
+                width: 56,
                 svg: {
                   width: '100%',
                   height: '100%',

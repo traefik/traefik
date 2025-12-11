@@ -65,7 +65,7 @@ export const UdpRoutersRender = ({
       <AriaTable>
         <AriaThead>
           <AriaTr>
-            <SortableTh label="Status" css={{ width: '40px' }} isSortable sortByValue="status" />
+            <SortableTh label="Status" css={{ width: '36px' }} isSortable sortByValue="status" />
             <SortableTh label="Entrypoints" isSortable sortByValue="entryPoints" />
             <SortableTh label="Name" isSortable sortByValue="name" />
             <SortableTh label="Service" isSortable sortByValue="service" />

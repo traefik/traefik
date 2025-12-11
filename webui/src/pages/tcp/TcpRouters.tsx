@@ -78,7 +78,7 @@ export const TcpRoutersRender = ({
       <AriaTable>
         <AriaThead>
           <AriaTr>
-            <SortableTh label="Status" css={{ width: '40px' }} isSortable sortByValue="status" />
+            <SortableTh label="Status" css={{ width: '36px' }} isSortable sortByValue="status" />
             <SortableTh label="TLS" css={{ width: '40px' }} />
             <SortableTh label="Rule" isSortable sortByValue="rule" />
             <SortableTh label="Entrypoints" isSortable sortByValue="entryPoints" />

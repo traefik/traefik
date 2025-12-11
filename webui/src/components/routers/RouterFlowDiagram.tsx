@@ -97,7 +97,7 @@ const RouterFlowDiagram = ({ data, protocol }: RouterFlowDiagramProps) => {
           key: 'Provider',
           val: (
             <>
-              <ProviderIcon name={data.provider} />
+              <ProviderIcon name={data.provider} size={20} />
               <ProviderName css={{ ml: '$2' }}>{data.provider}</ProviderName>
             </>
           ),
@@ -149,7 +149,7 @@ const RouterFlowDiagram = ({ data, protocol }: RouterFlowDiagramProps) => {
             <SectionTitle icon={<FiLayers size={20} />} title={`${protocol.toUpperCase()} Middlewares`} />
             {data.middlewares ? (
               <ScrollableCard>
-                <Flex direction="column" gap={2}>
+                <Flex direction="column" gap={3}>
                   {data.middlewares.map((mw, idx) => {
                     const data = {
                       name: mw.name,

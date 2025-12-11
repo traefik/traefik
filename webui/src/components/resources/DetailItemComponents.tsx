@@ -61,23 +61,21 @@ type ItemBlockType = {
 }
 
 export const ItemBlock = ({ title, children }: ItemBlockType) => (
-  <Flex css={{ flexDirection: 'column', mb: '$5' }}>
+  <Flex css={{ flexDirection: 'column', '&:not(:last-child)': { mb: '$5' } }}>
     <ItemTitle>{title}</ItemTitle>
     <ItemBlockContainer css={{ alignItems: 'center' }}>{children}</ItemBlockContainer>
   </Flex>
 )
 
 export const BooleanState = ({ enabled, css }: { enabled: boolean; css?: CSS }) => (
-  <Flex align="center" gap={2} css={css}>
+  <Flex align="center" gap={2} css={{ color: '$textDefault', ...css }}>
     {enabled ? (
       <BsToggleOn color={colorByStatus.enabled} size={24} data-testid={`enabled-true`} />
     ) : (
-      <BsToggleOff color={colorByStatus.disabled} size={24} data-testid={`enabled-false`} />
+      <BsToggleOff color="inherit" size={24} data-testid={`enabled-false`} />
     )}
 
-    <Text
-      css={{ color: enabled ? colorByStatus.enabled : colorByStatus.disabled, fontWeight: 600, fontSize: 'inherit' }}
-    >
+    <Text css={{ color: enabled ? colorByStatus.enabled : 'inherit', fontWeight: 600, fontSize: 'inherit' }}>
       {enabled ? 'True' : 'False'}
     </Text>
   </Flex>

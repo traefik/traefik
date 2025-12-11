@@ -88,7 +88,7 @@ export default function DetailsCard({
                   </>
                 )}
                 {item.stackVertical ? (
-                  <Flex direction="column" gap={1} css={{ gridColumn: 'span 2' }}>
+                  <Flex direction="column" gap={2} css={{ gridColumn: 'span 2' }}>
                     <StyledText
                       css={{
                         fontWeight: 600,

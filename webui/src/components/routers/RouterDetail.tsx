@@ -37,7 +37,7 @@ export const RouterDetail = ({ data, error, name, protocol }: RouterDetailProps)
         <Helmet>
           <title>{name} - Traefik Proxy</title>
         </Helmet>
-        <Skeleton css={{ height: '$7', width: '320px', mb: '$4' }} data-testid="skeleton" />
+        <Skeleton css={{ height: '$7', width: '320px', mb: '$7' }} data-testid="skeleton" />
         <Flex direction="column" gap={6}>
           <RouterFlowDiagramSkeleton />
           <ResourceErrorsSkeleton />

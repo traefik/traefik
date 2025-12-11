@@ -53,13 +53,13 @@ export const UsedByRoutersSection = ({ data, protocol = 'http' }: UsedByRoutersS
     width?: string
   }> => {
     return [
-      { key: 'status', header: 'Status', sortable: true, width: '24px' },
+      { key: 'status', header: 'Status', sortable: true, width: '36px' },
       ...(protocol !== 'udp' ? [{ key: 'tls' as keyof Router.DetailsData, header: 'TLS', width: '24px' }] : []),
       ...(protocol !== 'udp' ? [{ key: 'rule' as keyof Router.DetailsData, header: 'Rule', sortable: true }] : []),
       { key: 'using', header: 'Entrypoints', sortable: true },
       { key: 'name', header: 'Name', sortable: true },
       { key: 'service', header: 'Service', sortable: true },
-      { key: 'provider', header: 'Provider', sortable: true, width: '32px' },
+      { key: 'provider', header: 'Provider', sortable: true, width: '40px' },
       { key: 'priority', header: 'Priority', sortable: true },
     ]
   }, [protocol])

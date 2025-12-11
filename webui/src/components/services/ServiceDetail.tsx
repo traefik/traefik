@@ -39,7 +39,7 @@ export const ServiceDetail = ({ data, error, name, protocol }: ServiceDetailProp
         <Helmet>
           <title>{name} - Traefik Proxy</title>
         </Helmet>
-        <Skeleton css={{ height: '$7', width: '320px', mb: '$8' }} data-testid="skeleton" />
+        <Skeleton css={{ height: '$7', width: '320px', mb: '$7' }} data-testid="skeleton" />
         <Flex direction="column" gap={4}>
           <DetailsCardSkeleton />
           <DetailsCardSkeleton />
