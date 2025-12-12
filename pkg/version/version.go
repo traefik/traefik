@@ -24,7 +24,7 @@ var (
 	StartDate = time.Now()
 	// DisableDashboardAd disables ad in the dashboard.
 	DisableDashboardAd = false
-	// DashboardName holds the custom name for the dashboard
+	// DashboardName holds the custom name for the dashboard.
 	DashboardName = ""
 )
 
