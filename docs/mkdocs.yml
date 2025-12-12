@@ -245,7 +245,6 @@ nav:
           - 'ECS': 'reference/install-configuration/providers/others/ecs.md'
           - 'HTTP': 'reference/install-configuration/providers/others/http.md'
       - 'EntryPoints': 'reference/install-configuration/entrypoints.md'
-      - 'Global Options': 'reference/install-configuration/global-options.md'
       - 'API & Dashboard': 'reference/install-configuration/api-dashboard.md'
       - 'TLS':
           - 'Certificate Resolvers':

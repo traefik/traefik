@@ -99,10 +99,18 @@ func Test_rewriteRequestBuilder(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			rewriteRequest := rewriteRequestBuilder(test.target, test.passHostHeader, test.preservePath, test.notAppendXFF)
+			rewriteRequest := rewriteRequestBuilder(test.target, test.passHostHeader, test.preservePath)
+
+			ctx := t.Context()
+			if test.notAppendXFF {
+				ctx = SetNotAppendXFF(ctx)
+			}
 
 			reqIn := httptest.NewRequest(http.MethodGet, test.incomingURL, http.NoBody)
+			reqIn = reqIn.WithContext(ctx)
 			reqIn.Header.Add("X-Forwarded-For", "1.2.3.4")
+			reqIn.RemoteAddr = "127.0.0.1:1234"
+
 			reqOut := httptest.NewRequest(http.MethodGet, test.incomingURL, http.NoBody)
 			pr := &httputil.ProxyRequest{
 				In:  reqIn,
@@ -112,6 +120,9 @@ func Test_rewriteRequestBuilder(t *testing.T) {
 
 			if test.notAppendXFF {
 				assert.Equal(t, "1.2.3.4", reqOut.Header.Get("X-Forwarded-For"))
+			} else {
+				// When not disabled, X-Forwarded-For should have RemoteAddr appended
+				assert.Equal(t, "1.2.3.4, 127.0.0.1", reqOut.Header.Get("X-Forwarded-For"))
 			}
 			assert.Equal(t, test.expectedScheme, reqOut.URL.Scheme)
 			assert.Equal(t, test.expectedHost, reqOut.Host)

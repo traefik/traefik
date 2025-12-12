@@ -19,17 +19,41 @@ import (
 	"golang.org/x/net/http/httpguts"
 )
 
+type key string
+
 const (
 	// StatusClientClosedRequest non-standard HTTP status code for client disconnection.
 	StatusClientClosedRequest = 499
 
 	// StatusClientClosedRequestText non-standard HTTP status for client disconnection.
 	StatusClientClosedRequestText = "Client Closed Request"
+
+	notAppendXFFKey key = "NotAppendXFF"
 )
 
-func buildSingleHostProxy(target *url.URL, passHostHeader bool, preservePath bool, notAppendXFF bool, flushInterval time.Duration, roundTripper http.RoundTripper, bufferPool httputil.BufferPool) http.Handler {
+// SetNotAppendXFF indicates xff should not be appended.
+func SetNotAppendXFF(ctx context.Context) context.Context {
+	return context.WithValue(ctx, notAppendXFFKey, true)
+}
+
+// ShouldNotAppendXFF returns whether X-Forwarded-For should not be appended.
+func ShouldNotAppendXFF(ctx context.Context) bool {
+	val := ctx.Value(notAppendXFFKey)
+	if val == nil {
+		return false
+	}
+
+	notAppendXFF, ok := val.(bool)
+	if !ok {
+		return false
+	}
+
+	return notAppendXFF
+}
+
+func buildSingleHostProxy(target *url.URL, passHostHeader bool, preservePath bool, flushInterval time.Duration, roundTripper http.RoundTripper, bufferPool httputil.BufferPool) http.Handler {
 	return &httputil.ReverseProxy{
-		Rewrite:       rewriteRequestBuilder(target, passHostHeader, preservePath, notAppendXFF),
+		Rewrite:       rewriteRequestBuilder(target, passHostHeader, preservePath),
 		Transport:     roundTripper,
 		FlushInterval: flushInterval,
 		BufferPool:    bufferPool,
@@ -38,10 +62,10 @@ func buildSingleHostProxy(target *url.URL, passHostHeader bool, preservePath boo
 	}
 }
 
-func rewriteRequestBuilder(target *url.URL, passHostHeader bool, preservePath bool, notAppendXFF bool) func(*httputil.ProxyRequest) {
+func rewriteRequestBuilder(target *url.URL, passHostHeader bool, preservePath bool) func(*httputil.ProxyRequest) {
 	return func(pr *httputil.ProxyRequest) {
 		copyForwardedHeader(pr.Out.Header, pr.In.Header)
-		if !notAppendXFF {
+		if !ShouldNotAppendXFF(pr.In.Context()) {
 			if clientIP, _, err := net.SplitHostPort(pr.In.RemoteAddr); err == nil {
 				// If we aren't the first proxy retain prior
 				// X-Forwarded-For information as a comma+space

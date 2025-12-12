@@ -1,11 +1,9 @@
-[global]
-  notAppendXForwardedFor = true
-
 [entryPoints]
   [entryPoints.web]
     address = ":8000"
     [entryPoints.web.forwardedHeaders]
       insecure = true
+      notAppendXForwardedFor = true
 
 [api]
   insecure = true

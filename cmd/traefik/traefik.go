@@ -290,14 +290,9 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 
 	transportManager := service.NewTransportManager(spiffeX509Source)
 
-	var notAppendXFF bool
-	if staticConfiguration.Global != nil {
-		notAppendXFF = staticConfiguration.Global.NotAppendXForwardedFor
-	}
-
-	var proxyBuilder service.ProxyBuilder = httputil.NewProxyBuilder(transportManager, semConvMetricRegistry, notAppendXFF)
+	var proxyBuilder service.ProxyBuilder = httputil.NewProxyBuilder(transportManager, semConvMetricRegistry)
 	if staticConfiguration.Experimental != nil && staticConfiguration.Experimental.FastProxy != nil {
-		proxyBuilder = proxy.NewSmartBuilder(transportManager, proxyBuilder, *staticConfiguration.Experimental.FastProxy, notAppendXFF)
+		proxyBuilder = proxy.NewSmartBuilder(transportManager, proxyBuilder, *staticConfiguration.Experimental.FastProxy)
 	}
 
 	dialerManager := tcp.NewDialerManager(spiffeX509Source)

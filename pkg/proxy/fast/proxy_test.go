@@ -19,6 +19,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/static"
+	proxyhttputil "github.com/traefik/traefik/v3/pkg/proxy/httputil"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
 )
 
@@ -233,7 +234,7 @@ func TestProxyFromEnvironment(t *testing.T) {
 				certPool.AddCert(backendServer.Certificate())
 			}
 
-			builder := NewProxyBuilder(&transportManagerMock{tlsConfig: &tls.Config{RootCAs: certPool}}, static.FastProxyConfig{}, false)
+			builder := NewProxyBuilder(&transportManagerMock{tlsConfig: &tls.Config{RootCAs: certPool}}, static.FastProxyConfig{})
 			builder.proxy = func(req *http.Request) (*url.URL, error) {
 				u, err := url.Parse(proxyURL)
 				if err != nil {
@@ -282,7 +283,7 @@ func TestPreservePath(t *testing.T) {
 	}))
 	t.Cleanup(server.Close)
 
-	builder := NewProxyBuilder(&transportManagerMock{}, static.FastProxyConfig{}, false)
+	builder := NewProxyBuilder(&transportManagerMock{}, static.FastProxyConfig{})
 
 	serverURL, err := url.JoinPath(server.URL, "base")
 	require.NoError(t, err)
@@ -310,7 +311,7 @@ func TestHeadRequest(t *testing.T) {
 	}))
 	t.Cleanup(server.Close)
 
-	builder := NewProxyBuilder(&transportManagerMock{}, static.FastProxyConfig{}, false)
+	builder := NewProxyBuilder(&transportManagerMock{}, static.FastProxyConfig{})
 
 	serverURL, err := url.JoinPath(server.URL)
 	require.NoError(t, err)
@@ -351,7 +352,7 @@ func TestNoContentLength(t *testing.T) {
 		}
 	}()
 
-	builder := NewProxyBuilder(&transportManagerMock{}, static.FastProxyConfig{}, false)
+	builder := NewProxyBuilder(&transportManagerMock{}, static.FastProxyConfig{})
 
 	serverURL := "http://" + backendListener.Addr().String()
 
@@ -381,7 +382,7 @@ func TestTransferEncodingChunked(t *testing.T) {
 	}))
 	t.Cleanup(backendServer.Close)
 
-	builder := NewProxyBuilder(&transportManagerMock{}, static.FastProxyConfig{}, false)
+	builder := NewProxyBuilder(&transportManagerMock{}, static.FastProxyConfig{})
 
 	proxyHandler, err := builder.Build("", testhelpers.MustParseURL(backendServer.URL), true, true)
 	require.NoError(t, err)
@@ -458,12 +459,18 @@ func TestXForwardedFor(t *testing.T) {
 			}))
 			t.Cleanup(server.Close)
 
-			builder := NewProxyBuilder(&transportManagerMock{}, static.FastProxyConfig{}, test.notAppendXFF)
+			builder := NewProxyBuilder(&transportManagerMock{}, static.FastProxyConfig{})
 
 			proxyHandler, err := builder.Build("", testhelpers.MustParseURL(server.URL), true, false)
 			require.NoError(t, err)
+			
+			ctx := t.Context()
+			if test.notAppendXFF {
+				ctx = proxyhttputil.SetNotAppendXFF(ctx)
+			}
 
 			req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
+			req = req.WithContext(ctx)
 			req.RemoteAddr = "192.0.2.1:12345"
 
 			if test.incomingXFF != "" {

@@ -98,8 +98,8 @@ func TestSmartBuilder_Build(t *testing.T) {
 			transportManager := service.NewTransportManager(nil)
 			transportManager.Update(serversTransports)
 
-			httpProxyBuilder := httputil.NewProxyBuilder(transportManager, nil, false)
-			proxyBuilder := NewSmartBuilder(transportManager, httpProxyBuilder, test.fastProxyConfig, false)
+			httpProxyBuilder := httputil.NewProxyBuilder(transportManager, nil)
+			proxyBuilder := NewSmartBuilder(transportManager, httpProxyBuilder, test.fastProxyConfig)
 
 			proxyHandler, err := proxyBuilder.Build("test", targetURL, false, false, time.Second)
 			require.NoError(t, err)

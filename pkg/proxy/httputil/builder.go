@@ -23,16 +23,14 @@ type ProxyBuilder struct {
 	bufferPool             *bufferPool
 	transportManager       TransportManager
 	semConvMetricsRegistry *metrics.SemConvMetricsRegistry
-	notAppendXFF           bool
 }
 
 // NewProxyBuilder creates a new ProxyBuilder.
-func NewProxyBuilder(transportManager TransportManager, semConvMetricsRegistry *metrics.SemConvMetricsRegistry, notAppendXFF bool) *ProxyBuilder {
+func NewProxyBuilder(transportManager TransportManager, semConvMetricsRegistry *metrics.SemConvMetricsRegistry) *ProxyBuilder {
 	return &ProxyBuilder{
 		bufferPool:             newBufferPool(),
 		transportManager:       transportManager,
 		semConvMetricsRegistry: semConvMetricsRegistry,
-		notAppendXFF:           notAppendXFF,
 	}
 }
 
@@ -50,5 +48,5 @@ func (r *ProxyBuilder) Build(cfgName string, targetURL *url.URL, passHostHeader,
 	// to create, if necessary, the reverseProxy client span and the semConv client metric.
 	roundTripper = newObservabilityRoundTripper(r.semConvMetricsRegistry, roundTripper)
 
-	return buildSingleHostProxy(targetURL, passHostHeader, preservePath, r.notAppendXFF, flushInterval, roundTripper, r.bufferPool), nil
+	return buildSingleHostProxy(targetURL, passHostHeader, preservePath, flushInterval, roundTripper, r.bufferPool), nil
 }
