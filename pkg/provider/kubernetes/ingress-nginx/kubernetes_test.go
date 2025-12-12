@@ -47,6 +47,58 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
+			desc: "Custom Headers",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/10-ingress-with-custom-headers.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-custom-headers-rule-0-path-0": {
+							Rule:        "Host(`whoami.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-custom-headers-rule-0-path-0-custom-headers"},
+							Service:     "default-whoami-80",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-custom-headers-rule-0-path-0-custom-headers": {
+							Headers: &dynamic.Headers{
+								CustomResponseHeaders: map[string]string{"X-Custom-Header": "some-random-string"},
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
 			desc: "Basic Auth",
 			paths: []string{
 				"services.yml",
