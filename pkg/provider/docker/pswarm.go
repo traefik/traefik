@@ -30,8 +30,6 @@ var _ provider.Provider = (*SwarmProvider)(nil)
 type SwarmProvider struct {
 	Shared       `yaml:",inline" export:"true"`
 	ClientConfig `yaml:",inline" export:"true"`
-
-	RefreshSeconds ptypes.Duration `description:"Polling interval for swarm mode." json:"refreshSeconds,omitempty" toml:"refreshSeconds,omitempty" yaml:"refreshSeconds,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
