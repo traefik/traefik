@@ -9,7 +9,7 @@ This provider works with [Docker Swarm Mode](https://docs.docker.com/engine/swar
 
 !!! tip "The Quick Start Uses Docker"
 
-    If you have not already read it, maybe you would like to go through the [quick start guide](../../../getting-started/quick-start.md) that uses the Docker provider.
+    If you have not already read it, maybe you would like to go through the [quick start guide](../../../getting-started/index.md) that uses the Docker provider.
 
 ## Configuration Example
 
@@ -57,7 +57,7 @@ services:
 | <a id="opt-providers-swarm-httpClientTimeout" href="#opt-providers-swarm-httpClientTimeout" title="#opt-providers-swarm-httpClientTimeout">`providers.swarm.httpClientTimeout`</a> | Defines the client timeout (in seconds) for HTTP connections. If its value is 0, no timeout is set.                                                                                                                                                                                                                                                                                  | 0                                     | No       |
 | <a id="opt-providers-swarm-watch" href="#opt-providers-swarm-watch" title="#opt-providers-swarm-watch">`providers.swarm.watch`</a> | Instructs Traefik to watch Docker events or not.                                                                                                                                                                                                                                                                                                                                     | True                                  | No       |
 | <a id="opt-providers-swarm-constraints" href="#opt-providers-swarm-constraints" title="#opt-providers-swarm-constraints">`providers.swarm.constraints`</a> | Defines an expression that Traefik matches against the container labels to determine whether to create any route for that container. See [here](#constraints) for more information.                                                                                                                                                                                                  | ""                                    | No       |
-| <a id="opt-providers-swarm-allowEmptyServices" href="#opt-providers-swarm-allowEmptyServices" title="#opt-providers-swarm-allowEmptyServices">`providers.swarm.allowEmptyServices`</a> | Instructs the provider to create any [servers load balancer](../../../routing/services/index.md#servers-load-balancer) defined for Docker containers regardless of the [healthiness](https://docs.docker.com/engine/reference/builder/#healthcheck) of the corresponding containers.                                                                                                 | false                                 | No       |
+| <a id="opt-providers-swarm-allowEmptyServices" href="#opt-providers-swarm-allowEmptyServices" title="#opt-providers-swarm-allowEmptyServices">`providers.swarm.allowEmptyServices`</a> | Instructs the provider to create any [servers load balancer](../../../reference/routing-configuration/http/load-balancing/service.md#servers-load-balancer) defined for Docker containers regardless of the [healthiness](https://docs.docker.com/engine/reference/builder/#healthcheck) of the corresponding containers.                                                                                                 | false                                 | No       |
 | <a id="opt-providers-swarm-tls-ca" href="#opt-providers-swarm-tls-ca" title="#opt-providers-swarm-tls-ca">`providers.swarm.tls.ca`</a> | Defines the path to the certificate authority used for the secure connection to Docker, it defaults to the system bundle.                                                                                                                                                                                                                                                            | ""                                    | No       |
 | <a id="opt-providers-swarm-tls-cert" href="#opt-providers-swarm-tls-cert" title="#opt-providers-swarm-tls-cert">`providers.swarm.tls.cert`</a> | Defines the path to the public certificate used for the secure connection to Docker. When using this option, setting the `key` option is required.                                                                                                                                                                                                                                   | ""                                    | Yes      |
 | <a id="opt-providers-swarm-tls-key" href="#opt-providers-swarm-tls-key" title="#opt-providers-swarm-tls-key">`providers.swarm.tls.key`</a> | Defines the path to the private key used for the secure connection to Docker. When using this option, setting the `cert` option is required.                                                                                                                                                                                                                                         | ""                                    | Yes      |
@@ -337,7 +337,7 @@ providers:
 When using Docker as a [provider](./overview.md),
 Traefik uses [container labels](https://docs.docker.com/engine/reference/commandline/run/#label) to retrieve its routing configuration.
 
-See the list of labels in the dedicated [routing](../../../routing/providers/docker.md) section.
+See the list of labels in the dedicated [routing](../../../reference/routing-configuration/other-providers/docker.md) section.
 
 ### Routing Configuration with Labels
 
@@ -367,7 +367,7 @@ Traefik retrieves the private IP and port of containers from the Docker API.
 Docker Swarm does not provide any port detection information to Traefik.
 
 Therefore, you **must** specify the port to use for communication by using the label `traefik.http.services.<service_name>.loadbalancer.server.port`
-(Check the reference for this label in the [routing section for Swarm](../../../routing/providers/swarm.md#services)).
+(Check the reference for this label in the [routing section for Swarm](../../../reference/routing-configuration/other-providers/swarm.md#services)).
 
 ### Host networking
 

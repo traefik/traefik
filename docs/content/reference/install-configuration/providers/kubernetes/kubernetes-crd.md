@@ -65,7 +65,7 @@ providers:
 | <a id="opt-providers-kubernetesCRD-allowEmptyServices" href="#opt-providers-kubernetesCRD-allowEmptyServices" title="#opt-providers-kubernetesCRD-allowEmptyServices">`providers.kubernetesCRD.allowEmptyServices`</a> | Allows creating a route to reach a service that has no endpoint available.<br />It allows Traefik to handle the requests and responses targeting this service (applying middleware or observability operations) before returning a `503` HTTP Status.  | false   | No |
 | <a id="opt-providers-kubernetesCRD-allowCrossNamespace" href="#opt-providers-kubernetesCRD-allowCrossNamespace" title="#opt-providers-kubernetesCRD-allowCrossNamespace">`providers.kubernetesCRD.allowCrossNamespace`</a> | Allows the `IngressRoutes` to reference resources in namespaces other than theirs. | false   | No |
 | <a id="opt-providers-kubernetesCRD-allowExternalNameServices" href="#opt-providers-kubernetesCRD-allowExternalNameServices" title="#opt-providers-kubernetesCRD-allowExternalNameServices">`providers.kubernetesCRD.allowExternalNameServices`</a> | Allows the `IngressRoutes` to reference ExternalName services. | false   | No |
-| <a id="opt-providers-kubernetesCRD-nativeLBByDefault" href="#opt-providers-kubernetesCRD-nativeLBByDefault" title="#opt-providers-kubernetesCRD-nativeLBByDefault">`providers.kubernetesCRD.nativeLBByDefault`</a> | Allow using the Kubernetes Service load balancing between the pods instead of the one provided by Traefik for every `IngressRoute` by default.<br />It can br overridden in the [`ServerTransport`](../../../../routing/services/index.md#serverstransport). | false   | No |
+| <a id="opt-providers-kubernetesCRD-nativeLBByDefault" href="#opt-providers-kubernetesCRD-nativeLBByDefault" title="#opt-providers-kubernetesCRD-nativeLBByDefault">`providers.kubernetesCRD.nativeLBByDefault`</a> | Allow using the Kubernetes Service load balancing between the pods instead of the one provided by Traefik for every `IngressRoute` by default.<br />It can br overridden in the [`ServerTransport`](../../../../reference/routing-configuration/http/load-balancing/service.md#serverstransport). | false   | No |
 | <a id="opt-providers-kubernetesCRD-disableClusterScopeResources" href="#opt-providers-kubernetesCRD-disableClusterScopeResources" title="#opt-providers-kubernetesCRD-disableClusterScopeResources">`providers.kubernetesCRD.disableClusterScopeResources`</a> | Prevent from discovering cluster scope resources (`IngressClass` and `Nodes`).<br />By doing so, it alleviates the requirement of giving Traefik the rights to look up for cluster resources.<br />Furthermore, Traefik will not handle IngressRoutes with IngressClass references, therefore such Ingresses will be ignored (please note that annotations are not affected by this option).<br />This will also prevent from using the `NodePortLB` options on services. | false   | No |
 
 ### endpoint
@@ -102,9 +102,9 @@ providers:
 
 ## Routing Configuration
 
-See the dedicated section in [routing](../../../../routing/providers/kubernetes-crd.md).
+Traefik CRDs are building blocks that you can assemble according to your needs.
 
-## List of Resources
+The available custom resources are in the table below:
 
 <!-- markdownlint-disable MD013 -->
 

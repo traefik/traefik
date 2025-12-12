@@ -60,7 +60,7 @@ The enabled providers can be seen on the [dashboard](../reference/install-config
 
 ### With an Ingress
 
-To use this certificate with an Ingress, the [Kubernetes Ingress](../providers/kubernetes-ingress.md) provider has to be enabled.
+To use this certificate with an Ingress, the [Kubernetes Ingress](../reference/install-configuration/providers/kubernetes/kubernetes-ingress.md) provider has to be enabled.
 
 !!! info Traefik Helm Chart
 
@@ -94,7 +94,7 @@ To use this certificate with an Ingress, the [Kubernetes Ingress](../providers/k
 
 ### With an IngressRoute
 
-To use this certificate with an IngressRoute, the [Kubernetes CRD](../providers/kubernetes-crd.md) provider has to be enabled.
+To use this certificate with an IngressRoute, the [Kubernetes CRD](../reference/install-configuration/providers/kubernetes/kubernetes-crd.md#requirements) provider has to be enabled.
 
 !!! info Traefik Helm Chart
 
@@ -124,7 +124,7 @@ To use this certificate with an IngressRoute, the [Kubernetes CRD](../providers/
 
 ### With an HTTPRoute
 
-To use this certificate with an HTTPRoute, the [Kubernetes Gateway](../routing/providers/kubernetes-gateway.md) provider has to be enabled.
+To use this certificate with an HTTPRoute, the [Kubernetes Gateway](../reference/routing-configuration/kubernetes/gateway-api.md) provider has to be enabled.
 
 !!! info Traefik Helm Chart
 

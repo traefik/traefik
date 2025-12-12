@@ -16,7 +16,7 @@ For more details, check out the conformance [report](https://github.com/kubernet
 
 !!! info "Using The Helm Chart"
 
-    When using the Traefik [Helm Chart](../../../../getting-started/install-traefik.md#use-the-helm-chart), the CRDs (Custom Resource Definitions) and RBAC (Role-Based Access Control) are automatically managed for you.
+    When using the Traefik [Helm Chart](../../../../getting-started/kubernetes.md#install-traefik), the CRDs (Custom Resource Definitions) and RBAC (Role-Based Access Control) are automatically managed for you.
     The only remaining task is to enable the `kubernetesGateway` in the chart [values](https://github.com/traefik/traefik-helm-chart/blob/master/traefik/values.yaml#L323).
 
 ## Requirements
@@ -127,14 +127,14 @@ providers:
 
 ## Routing Configuration
 
-See the dedicated section in [routing](../../../../routing/providers/kubernetes-gateway.md).
+See the dedicated section in [routing](../../../../reference/routing-configuration/kubernetes/gateway-api.md).
 
 !!! tip "Routing Configuration"
 
     When using the Kubernetes Gateway API provider, Traefik uses the Gateway API
     CRDs to retrieve its routing configuration.
     Check out the Gateway API concepts [documentation](https://gateway-api.sigs.k8s.io/concepts/api-overview/),
-    and the dedicated [routing section](../../../../routing/providers/kubernetes-gateway.md)
+    and the dedicated [routing section](../../../../reference/routing-configuration/kubernetes/gateway-api.md)
     in the Traefik documentation.
 
 {!traefik-for-business-applications.md!}

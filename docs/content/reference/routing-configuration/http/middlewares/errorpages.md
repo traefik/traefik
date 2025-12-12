@@ -104,7 +104,7 @@ spec:
 
 By default, the client `Host` header value is forwarded to the configured error service.
 To forward the `Host` value corresponding to the configured error service URL, 
-the [`passHostHeader`](../../../../routing/services/index.md#pass-host-header) option must be set to `false`.
+the [`passHostHeader`](../../../../reference/routing-configuration/http/load-balancing/service.md#pass-host-header) option must be set to `false`.
 
 !!!info "Kubernetes"
     When specifying a service in Kubernetes (e.g., in an IngressRoute), you need to reference the `name`, `namespace`, and `port` of your Kubernetes Service resource. For example, `my-service.my-namespace@kubernetescrd` (or `my-service.my-namespace@kubernetescrd:80`) ensures that requests go to the correct service and port.

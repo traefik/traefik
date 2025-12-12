@@ -14,7 +14,7 @@ As this Store is global in Traefik, it is shared across all namespaces, meaning 
 
 This lack of isolation poses a risk in multi-tenant environments where different teams or applications require strict boundaries between resources, especially around sensitive data like TLS certificates.
 
-In contrast, the [Kubernetes Gateway API](../providers/kubernetes-gateway.md) provides better primitives for secure multi-tenancy. 
+In contrast, the [Kubernetes Gateway API](../reference/install-configuration/providers/kubernetes/kubernetes-gateway.md) provides better primitives for secure multi-tenancy. 
 Specifically, the `Listener` resource in the Gateway API allows administrators to explicitly define which Route resources (e.g., `HTTPRoute`) are permitted to bind to which domain names or ports. 
 This capability enforces stricter ownership and isolation, making it a safer choice for multi-tenant use cases.
 
@@ -23,7 +23,7 @@ This capability enforces stricter ownership and isolation, making it a safer cho
 When strict boundaries are required between resources and teams, we recommend using one Traefik instance per tenant.
 
 In Kubernetes one way to isolate a tenant is to restrict it to a namespace.
-In that case, the namespace options from the Kubernetes [CRD](../providers/kubernetes-crd.md#namespaces) and [Ingress](../providers/kubernetes-ingress.md#namespaces) providers can be leveraged.  
+In that case, the namespace options from the Kubernetes [CRD](../reference/install-configuration/providers/kubernetes/kubernetes-crd.md#opt-providers-kubernetesCRD-namespaces) and [Ingress](../reference/install-configuration/providers/kubernetes/kubernetes-ingress.md#opt-providers-kubernetesIngress-namespaces) providers can be leveraged.  
 
 !!! tip "Dedicate one Traefik instance per tenant using the Helm Chart" 
 
