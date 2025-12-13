@@ -42,7 +42,7 @@ var (
 )
 
 const (
-	k3sImage                = "docker.io/rancher/k3s:v1.32.9-k3s1"
+	k3sImage                = "docker.io/rancher/k3s:v1.34.2-k3s1"
 	traefikImage            = "traefik/traefik:latest"
 	traefikDeployment       = "deployments/traefik"
 	traefikNamespace        = "traefik"

@@ -1,3 +1,29 @@
+## [v3.6.2](https://github.com/traefik/traefik/tree/v3.6.2) (2025-11-18)
+[All Commits](https://github.com/traefik/traefik/compare/v3.6.1...v3.6.2)
+
+**Bug fixes:**
+- **[k8s/ingress-nginx]** Deprecate Kubernetes Ingress NGINX provider experimental flag ([#12286](https://github.com/traefik/traefik/pull/12286) by [rtribotte](https://github.com/rtribotte))
+
+## [v3.6.1](https://github.com/traefik/traefik/tree/v3.6.1) (2025-11-13)
+[All Commits](https://github.com/traefik/traefik/compare/v3.6.0...v3.6.1)
+
+**Bug fixes:**
+- **[docker]** Auto-negotiate Docker API Version ([#12256](https://github.com/traefik/traefik/pull/12256) by [felixbuenemann](https://github.com/felixbuenemann))
+- **[server]** Fix multi-layer routing with models ([#12258](https://github.com/traefik/traefik/pull/12258) by [juliens](https://github.com/juliens))
+- **[udp]** Revert &#34;Avoid allocations in readLoop by using sync.Pool&#34; ([#12267](https://github.com/traefik/traefik/pull/12267) by [kevinpollet](https://github.com/kevinpollet))
+- **[webui]** Fix blocked navigation on Safari ([#12231](https://github.com/traefik/traefik/pull/12231) by [gndz07](https://github.com/gndz07))
+- **[webui]** Restore remote Upgrade to Hub button web component ([#12219](https://github.com/traefik/traefik/pull/12219) by [gndz07](https://github.com/gndz07))
+
+**Documentation:**
+- **[k8s]** Fix Nginx provider documentation ([#12266](https://github.com/traefik/traefik/pull/12266) by [nmengin](https://github.com/nmengin))
+- **[k8s]** Fix Gateway API version and the list of features supported ([#12254](https://github.com/traefik/traefik/pull/12254) by [nmengin](https://github.com/nmengin))
+
+## [v2.11.31](https://github.com/traefik/traefik/tree/v2.11.31) (2025-11-13)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.30...v2.11.31)
+
+**Bug fixes:**
+- **[docker,docker/swarm]** Auto-negotiate Docker API version ([#12262](https://github.com/traefik/traefik/pull/12262) by [kevinpollet](https://github.com/kevinpollet))
+
 ## [v3.6.0](https://github.com/traefik/traefik/tree/v3.6.0) (2025-11-07)
 [All Commits](https://github.com/traefik/traefik/compare/v3.5.0-rc1...v3.6.0)
 

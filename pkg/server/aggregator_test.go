@@ -810,6 +810,414 @@ func Test_applyModel(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "child router with parentRefs, parent not split",
+			input: dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"parent": {
+							EntryPoints: []string{"web"},
+						},
+						"child": {
+							ParentRefs: []string{"parent"},
+						},
+					},
+					Middlewares: make(map[string]*dynamic.Middleware),
+					Services:    make(map[string]*dynamic.Service),
+					Models:      make(map[string]*dynamic.Model),
+				},
+			},
+			expected: dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"parent": {
+							EntryPoints: []string{"web"},
+							Observability: &dynamic.RouterObservabilityConfig{
+								AccessLogs:     pointer(true),
+								Metrics:        pointer(true),
+								Tracing:        pointer(true),
+								TraceVerbosity: otypes.MinimalVerbosity,
+							},
+						},
+						"child": {
+							ParentRefs: []string{"parent"},
+						},
+					},
+					Middlewares: make(map[string]*dynamic.Middleware),
+					Services:    make(map[string]*dynamic.Service),
+					Models:      make(map[string]*dynamic.Model),
+				},
+			},
+		},
+		{
+			desc: "child router with parentRefs, parent split by model",
+			input: dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"parent": {
+							EntryPoints: []string{"websecure", "web"},
+						},
+						"child": {
+							ParentRefs: []string{"parent"},
+						},
+					},
+					Middlewares: make(map[string]*dynamic.Middleware),
+					Services:    make(map[string]*dynamic.Service),
+					Models: map[string]*dynamic.Model{
+						"websecure@internal": {
+							Middlewares: []string{"test"},
+							TLS:         &dynamic.RouterTLSConfig{},
+						},
+					},
+				},
+			},
+			expected: dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"parent": {
+							EntryPoints: []string{"web"},
+							Observability: &dynamic.RouterObservabilityConfig{
+								AccessLogs:     pointer(true),
+								Metrics:        pointer(true),
+								Tracing:        pointer(true),
+								TraceVerbosity: otypes.MinimalVerbosity,
+							},
+						},
+						"websecure-parent": {
+							EntryPoints: []string{"websecure"},
+							Middlewares: []string{"test"},
+							TLS:         &dynamic.RouterTLSConfig{},
+							Observability: &dynamic.RouterObservabilityConfig{
+								AccessLogs:     pointer(true),
+								Metrics:        pointer(true),
+								Tracing:        pointer(true),
+								TraceVerbosity: otypes.MinimalVerbosity,
+							},
+						},
+						"child": {
+							ParentRefs: []string{"parent", "websecure-parent"},
+						},
+					},
+					Middlewares: make(map[string]*dynamic.Middleware),
+					Services:    make(map[string]*dynamic.Service),
+					Models: map[string]*dynamic.Model{
+						"websecure@internal": {
+							Middlewares: []string{"test"},
+							TLS:         &dynamic.RouterTLSConfig{},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "multiple child routers with parentRefs, parent split by model",
+			input: dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"parent": {
+							EntryPoints: []string{"websecure", "web"},
+						},
+						"child1": {
+							ParentRefs: []string{"parent"},
+						},
+						"child2": {
+							ParentRefs: []string{"parent"},
+						},
+					},
+					Middlewares: make(map[string]*dynamic.Middleware),
+					Services:    make(map[string]*dynamic.Service),
+					Models: map[string]*dynamic.Model{
+						"websecure@internal": {
+							Middlewares: []string{"auth"},
+						},
+					},
+				},
+			},
+			expected: dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"parent": {
+							EntryPoints: []string{"web"},
+							Observability: &dynamic.RouterObservabilityConfig{
+								AccessLogs:     pointer(true),
+								Metrics:        pointer(true),
+								Tracing:        pointer(true),
+								TraceVerbosity: otypes.MinimalVerbosity,
+							},
+						},
+						"websecure-parent": {
+							EntryPoints: []string{"websecure"},
+							Middlewares: []string{"auth"},
+							Observability: &dynamic.RouterObservabilityConfig{
+								AccessLogs:     pointer(true),
+								Metrics:        pointer(true),
+								Tracing:        pointer(true),
+								TraceVerbosity: otypes.MinimalVerbosity,
+							},
+						},
+						"child1": {
+							ParentRefs: []string{"parent", "websecure-parent"},
+						},
+						"child2": {
+							ParentRefs: []string{"parent", "websecure-parent"},
+						},
+					},
+					Middlewares: make(map[string]*dynamic.Middleware),
+					Services:    make(map[string]*dynamic.Service),
+					Models: map[string]*dynamic.Model{
+						"websecure@internal": {
+							Middlewares: []string{"auth"},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "child router with parentRefs to non-existing parent",
+			input: dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"child": {
+							ParentRefs: []string{"nonexistent"},
+						},
+					},
+					Middlewares: make(map[string]*dynamic.Middleware),
+					Services:    make(map[string]*dynamic.Service),
+					Models:      make(map[string]*dynamic.Model),
+				},
+			},
+			expected: dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"child": {
+							ParentRefs: []string{"nonexistent"},
+						},
+					},
+					Middlewares: make(map[string]*dynamic.Middleware),
+					Services:    make(map[string]*dynamic.Service),
+					Models:      make(map[string]*dynamic.Model),
+				},
+			},
+		},
+		{
+			desc: "child router with multiple parentRefs, some split",
+			input: dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"parent1": {
+							EntryPoints: []string{"websecure", "web"},
+						},
+						"parent2": {
+							EntryPoints: []string{"web"},
+						},
+						"child": {
+							ParentRefs: []string{"parent1", "parent2"},
+						},
+					},
+					Middlewares: make(map[string]*dynamic.Middleware),
+					Services:    make(map[string]*dynamic.Service),
+					Models: map[string]*dynamic.Model{
+						"websecure@internal": {
+							TLS: &dynamic.RouterTLSConfig{},
+						},
+					},
+				},
+			},
+			expected: dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"parent1": {
+							EntryPoints: []string{"web"},
+							Observability: &dynamic.RouterObservabilityConfig{
+								AccessLogs:     pointer(true),
+								Metrics:        pointer(true),
+								Tracing:        pointer(true),
+								TraceVerbosity: otypes.MinimalVerbosity,
+							},
+						},
+						"websecure-parent1": {
+							EntryPoints: []string{"websecure"},
+							TLS:         &dynamic.RouterTLSConfig{},
+							Observability: &dynamic.RouterObservabilityConfig{
+								AccessLogs:     pointer(true),
+								Metrics:        pointer(true),
+								Tracing:        pointer(true),
+								TraceVerbosity: otypes.MinimalVerbosity,
+							},
+						},
+						"parent2": {
+							EntryPoints: []string{"web"},
+							Observability: &dynamic.RouterObservabilityConfig{
+								AccessLogs:     pointer(true),
+								Metrics:        pointer(true),
+								Tracing:        pointer(true),
+								TraceVerbosity: otypes.MinimalVerbosity,
+							},
+						},
+						"child": {
+							ParentRefs: []string{"parent1", "websecure-parent1", "parent2"},
+						},
+					},
+					Middlewares: make(map[string]*dynamic.Middleware),
+					Services:    make(map[string]*dynamic.Service),
+					Models: map[string]*dynamic.Model{
+						"websecure@internal": {
+							TLS: &dynamic.RouterTLSConfig{},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "child router with multiple parentRefs, all split",
+			input: dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"parent1": {
+							EntryPoints: []string{"websecure", "web"},
+						},
+						"parent2": {
+							EntryPoints: []string{"web"},
+						},
+						"child": {
+							ParentRefs: []string{"parent1", "parent2"},
+						},
+					},
+					Middlewares: make(map[string]*dynamic.Middleware),
+					Services:    make(map[string]*dynamic.Service),
+					Models: map[string]*dynamic.Model{
+						"web@internal": {
+							TLS: &dynamic.RouterTLSConfig{},
+						},
+						"websecure@internal": {
+							TLS: &dynamic.RouterTLSConfig{},
+						},
+					},
+				},
+			},
+			expected: dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"web-parent1": {
+							EntryPoints: []string{"web"},
+							TLS:         &dynamic.RouterTLSConfig{},
+							Observability: &dynamic.RouterObservabilityConfig{
+								AccessLogs:     pointer(true),
+								Metrics:        pointer(true),
+								Tracing:        pointer(true),
+								TraceVerbosity: otypes.MinimalVerbosity,
+							},
+						},
+						"websecure-parent1": {
+							EntryPoints: []string{"websecure"},
+							TLS:         &dynamic.RouterTLSConfig{},
+							Observability: &dynamic.RouterObservabilityConfig{
+								AccessLogs:     pointer(true),
+								Metrics:        pointer(true),
+								Tracing:        pointer(true),
+								TraceVerbosity: otypes.MinimalVerbosity,
+							},
+						},
+						"parent2": {
+							EntryPoints: []string{"web"},
+							TLS:         &dynamic.RouterTLSConfig{},
+							Observability: &dynamic.RouterObservabilityConfig{
+								AccessLogs:     pointer(true),
+								Metrics:        pointer(true),
+								Tracing:        pointer(true),
+								TraceVerbosity: otypes.MinimalVerbosity,
+							},
+						},
+						"child": {
+							ParentRefs: []string{"websecure-parent1", "web-parent1", "parent2"},
+						},
+					},
+					Middlewares: make(map[string]*dynamic.Middleware),
+					Services:    make(map[string]*dynamic.Service),
+					Models: map[string]*dynamic.Model{
+						"web@internal": {
+							TLS: &dynamic.RouterTLSConfig{},
+						},
+						"websecure@internal": {
+							TLS: &dynamic.RouterTLSConfig{},
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "child router with parentRefs, parent split into three routers",
+			input: dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"parent": {
+							EntryPoints: []string{"websecure", "web", "admin"},
+						},
+						"child": {
+							ParentRefs: []string{"parent"},
+						},
+					},
+					Middlewares: make(map[string]*dynamic.Middleware),
+					Services:    make(map[string]*dynamic.Service),
+					Models: map[string]*dynamic.Model{
+						"websecure@internal": {
+							TLS: &dynamic.RouterTLSConfig{},
+						},
+						"admin@internal": {
+							Middlewares: []string{"admin-auth"},
+						},
+					},
+				},
+			},
+			expected: dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"parent": {
+							EntryPoints: []string{"web"},
+							Observability: &dynamic.RouterObservabilityConfig{
+								AccessLogs:     pointer(true),
+								Metrics:        pointer(true),
+								Tracing:        pointer(true),
+								TraceVerbosity: otypes.MinimalVerbosity,
+							},
+						},
+						"websecure-parent": {
+							EntryPoints: []string{"websecure"},
+							TLS:         &dynamic.RouterTLSConfig{},
+							Observability: &dynamic.RouterObservabilityConfig{
+								AccessLogs:     pointer(true),
+								Metrics:        pointer(true),
+								Tracing:        pointer(true),
+								TraceVerbosity: otypes.MinimalVerbosity,
+							},
+						},
+						"admin-parent": {
+							EntryPoints: []string{"admin"},
+							Middlewares: []string{"admin-auth"},
+							Observability: &dynamic.RouterObservabilityConfig{
+								AccessLogs:     pointer(true),
+								Metrics:        pointer(true),
+								Tracing:        pointer(true),
+								TraceVerbosity: otypes.MinimalVerbosity,
+							},
+						},
+						"child": {
+							ParentRefs: []string{"parent", "websecure-parent", "admin-parent"},
+						},
+					},
+					Middlewares: make(map[string]*dynamic.Middleware),
+					Services:    make(map[string]*dynamic.Service),
+					Models: map[string]*dynamic.Model{
+						"websecure@internal": {
+							TLS: &dynamic.RouterTLSConfig{},
+						},
+						"admin@internal": {
+							Middlewares: []string{"admin-auth"},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range testCases {
