@@ -151,13 +151,17 @@ func (b *Balancer) nextServer() (*namedHandler, error) {
 	b.handlersMu.Lock()
 	defer b.handlersMu.Unlock()
 
-	if len(b.handlers) == 0 || len(b.status) == 0 || len(b.fenced) == len(b.handlers) {
+	if len(b.handlers) == 0 || len(b.status) == 0 {
 		return nil, errNoAvailableServer
 	}
 
 	var handler *namedHandler
-	for {
-		// Pick handler with closest deadline.
+	var fallbackHandler *namedHandler
+
+	// Iterate through all handlers to find a healthy non-fenced one
+	// Track the first healthy fenced handler as fallback
+	for i := 0; i < len(b.handlers); i++ {
+		// Pick handler with closest deadline
 		handler = heap.Pop(b).(*namedHandler)
 
 		// curDeadline should be handler's deadline so that new added entry would have a fair competition environment with the old ones.
@@ -165,16 +169,28 @@ func (b *Balancer) nextServer() (*namedHandler, error) {
 		handler.deadline += 1 / handler.weight
 
 		heap.Push(b, handler)
+
 		if _, ok := b.status[handler.name]; ok {
-			if _, ok := b.fenced[handler.name]; !ok {
-				// do not select a fenced handler.
-				break
+			if _, isFenced := b.fenced[handler.name]; !isFenced {
+				// Found a healthy non-fenced handler, use it immediately
+				log.Debug().Msgf("Service selected by WRR: %s", handler.name)
+				return handler, nil
+			} else if fallbackHandler == nil {
+				// This is the first healthy but fenced (terminating) handler
+				// Keep it as fallback for graceful shutdown
+				fallbackHandler = handler
 			}
 		}
 	}
 
-	log.Debug().Msgf("Service selected by WRR: %s", handler.name)
-	return handler, nil
+	// No healthy non-fenced handlers found
+	// Use the fallback fenced handler if available to support graceful termination
+	if fallbackHandler != nil {
+		log.Debug().Msgf("Service selected by WRR (terminating fallback): %s", fallbackHandler.name)
+		return fallbackHandler, nil
+	}
+
+	return nil, errNoAvailableServer
 }
 
 func (b *Balancer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
