@@ -50,6 +50,8 @@ type ingressConfig struct {
 	CORSAllowOrigin            *[]string `annotation:"nginx.ingress.kubernetes.io/cors-allow-origin"`
 	CORSMaxAge                 *int      `annotation:"nginx.ingress.kubernetes.io/cors-max-age"`
 
+	WhitelistSourceRange *string `annotation:"nginx.ingress.kubernetes.io/whitelist-source-range"`
+
 	UpstreamVhost *string `annotation:"nginx.ingress.kubernetes.io/upstream-vhost"`
 }
 
