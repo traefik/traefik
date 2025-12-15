@@ -21,7 +21,7 @@ jobs:
   build:
     if: github.ref_type == 'tag' && github.repository == 'traefik/traefik'
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 45
 
     strategy:
       matrix:
@@ -31,12 +31,12 @@ jobs:
 
     steps:
       - name: Check out code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: Set up Go ${{ env.GO_VERSION }}
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         env:
           # Ensure cache consistency on Linux, see https://github.com/actions/setup-go/pull/383
           ImageOS: ${{ matrix.os }}
@@ -45,7 +45,7 @@ jobs:
           check-latest: true
 
       - name: Artifact webui
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: webui.tar.gz
 
@@ -84,19 +84,19 @@ jobs:
   release:
     if: github.ref_type == 'tag' && github.repository == 'traefik/traefik'
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 45
 
     needs:
       - build
 
     steps:
       - name: Check out code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: Artifact webui
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: webui.tar.gz
 
@@ -113,7 +113,7 @@ jobs:
           echo "${TRAEFIKER_RSA}" | base64 --decode > ~/.ssh/traefiker_rsa
 
       - name: Download All Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           path: dist/
           pattern: "*-binaries"
