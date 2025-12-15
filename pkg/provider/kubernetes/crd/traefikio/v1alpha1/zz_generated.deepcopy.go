@@ -458,6 +458,11 @@ func (in *IngressRouteSpec) DeepCopyInto(out *IngressRouteSpec) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
+	if in.IngressClassName != nil {
+		in, out := &in.IngressClassName, &out.IngressClassName
+		*out = new(string)
+		**out = **in
+	}
 	if in.EntryPoints != nil {
 		in, out := &in.EntryPoints, &out.EntryPoints
 		*out = make([]string, len(*in))
@@ -556,6 +561,11 @@ func (in *IngressRouteTCPSpec) DeepCopyInto(out *IngressRouteTCPSpec) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
+	if in.IngressClassName != nil {
+		in, out := &in.IngressClassName, &out.IngressClassName
+		*out = new(string)
+		**out = **in
+	}
 	if in.EntryPoints != nil {
 		in, out := &in.EntryPoints, &out.EntryPoints
 		*out = make([]string, len(*in))
@@ -648,6 +658,11 @@ func (in *IngressRouteUDPSpec) DeepCopyInto(out *IngressRouteUDPSpec) {
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
+	}
+	if in.IngressClassName != nil {
+		in, out := &in.IngressClassName, &out.IngressClassName
+		*out = new(string)
+		**out = **in
 	}
 	if in.EntryPoints != nil {
 		in, out := &in.EntryPoints, &out.EntryPoints
