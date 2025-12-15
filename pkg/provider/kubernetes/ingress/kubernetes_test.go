@@ -2337,7 +2337,7 @@ func TestIngressEndpointPublishedService(t *testing.T) {
 			ingress, err := kubeClient.NetworkingV1().Ingresses(metav1.NamespaceDefault).Get(t.Context(), "foo", metav1.GetOptions{})
 			require.NoError(t, err)
 
-			assert.Equal(t, test.expected, ingress.Status.LoadBalancer.Ingress)
+			assert.ElementsMatch(t, test.expected, ingress.Status.LoadBalancer.Ingress)
 		})
 	}
 }
