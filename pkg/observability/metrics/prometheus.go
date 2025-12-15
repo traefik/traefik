@@ -341,7 +341,7 @@ type vector interface {
 }
 
 type prometheusState struct {
-	vectors         []vector
+	vectors          []vector
 	tlsCertsGaugeVec *stdprometheus.GaugeVec
 
 	mtx             sync.Mutex
