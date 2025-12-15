@@ -9,8 +9,6 @@ import (
 
 // IngressRouteTCPSpec defines the desired state of IngressRouteTCP.
 type IngressRouteTCPSpec struct {
-	// Routes defines the list of routes.
-	Routes []RouteTCP `json:"routes"`
 	// IngressClassName defines the name of the IngressClass cluster resource.
 	IngressClassName *string `json:"ingressClassName,omitempty"`
 	// EntryPoints defines the list of entry point names to bind to.
@@ -18,6 +16,8 @@ type IngressRouteTCPSpec struct {
 	// More info: https://doc.traefik.io/traefik/v3.6/reference/install-configuration/entrypoints/
 	// Default: all.
 	EntryPoints []string `json:"entryPoints,omitempty"`
+	// Routes defines the list of routes.
+	Routes []RouteTCP `json:"routes"`
 	// TLS defines the TLS configuration on a layer 4 / TCP Route.
 	// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/tcp/routing/router/#tls
 	TLS *TLSTCP `json:"tls,omitempty"`

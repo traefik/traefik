@@ -28,12 +28,9 @@ func (p *Provider) loadIngressRouteTCPConfiguration(ctx context.Context, client 
 	for _, ingressRouteTCP := range client.GetIngressRouteTCPs() {
 		logger := log.Ctx(ctx).With().Str("ingress", ingressRouteTCP.Name).Str("namespace", ingressRouteTCP.Namespace).Logger()
 
-		var ingressClassName string
-		if ingressRouteTCP.Spec.IngressClassName != nil {
-			ingressClassName = *ingressRouteTCP.Spec.IngressClassName
-		} else if ingressClassAnnotation, ok := ingressRouteTCP.Annotations[annotationKubernetesIngressClass]; ok && ingressClassAnnotation != "" {
+		ingressClassName, usingDeprecatedAnnotation := getIngressClassName(ingressRouteTCP.Spec.IngressClassName, ingressRouteTCP.Annotations)
+		if usingDeprecatedAnnotation {
 			logger.Warn().Msgf("'%s' is a deprecated annotation, please use spec.ingressClassName instead.", annotationKubernetesIngressClass)
-			ingressClassName = ingressClassAnnotation
 		}
 		if !shouldProcessIngress(p.IngressClass, ingressClassName) {
 			continue

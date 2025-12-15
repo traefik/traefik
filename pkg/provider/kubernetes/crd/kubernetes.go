@@ -1406,6 +1406,18 @@ func shouldProcessIngress(ingressClass, ingressClassName string) bool {
 		(len(ingressClass) == 0 && ingressClassName == traefikDefaultIngressClass)
 }
 
+// getIngressClassName returns the ingress class name from the spec field or falls back to the
+// deprecated annotation. Returns the class name and whether the deprecated annotation was used.
+func getIngressClassName(specIngressClassName *string, annotations map[string]string) (string, bool) {
+	if specIngressClassName != nil {
+		return *specIngressClassName, false
+	}
+	if annotation, ok := annotations[annotationKubernetesIngressClass]; ok && annotation != "" {
+		return annotation, true
+	}
+	return "", false
+}
+
 func getTLS(k8sClient Client, secretName, namespace string) (*tls.CertAndStores, error) {
 	secret, exists, err := k8sClient.GetSecret(namespace, secretName)
 	if err != nil {
