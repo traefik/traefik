@@ -1607,7 +1607,7 @@ func (s *SimpleSuite) TestDebugLog() {
 
 	file := s.adaptFile("fixtures/simple_debug_log.toml", struct{}{})
 
-    _, output := s.cmdTraefik(withConfigFile(file))
+	_, output := s.cmdTraefik(withConfigFile(file))
 
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("PathPrefix(`/whoami`)"))
 	require.NoError(s.T(), err)
@@ -1695,9 +1695,7 @@ func (s *SimpleSuite) TestDenyFragment() {
 	s.composeUp()
 	defer s.composeDown()
 
-	file := s.adaptFile("fixtures/simple_deny.toml", struct{}{})
-
-	_, output := s.cmdTraefik(withConfigFile(file))
+	_, _ = s.cmdTraefik(withConfigFile("fixtures/simple_deny.toml"))
 
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`deny.localhost`)"))
 	require.NoError(s.T(), err)
