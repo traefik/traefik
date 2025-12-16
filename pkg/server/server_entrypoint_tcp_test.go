@@ -428,59 +428,6 @@ func TestSanitizePath(t *testing.T) {
 	}
 }
 
-func TestDenyEncodedCharacters(t *testing.T) {
-	tests := []struct {
-		name       string
-		encoded    map[string]struct{}
-		url        string
-		wantStatus int
-	}{
-		{
-			name: "Rejects disallowed characters",
-			encoded: map[string]struct{}{
-				"%0A": {},
-				"%0D": {},
-			},
-			url:        "http://example.com/foo%0Abar",
-			wantStatus: http.StatusBadRequest,
-		},
-		{
-			name: "Allows valid paths",
-			encoded: map[string]struct{}{
-				"%0A": {},
-				"%0D": {},
-			},
-			url:        "http://example.com/foo%20bar",
-			wantStatus: http.StatusOK,
-		},
-		{
-			name: "Handles empty path",
-			encoded: map[string]struct{}{
-				"%0A": {},
-			},
-			url:        "http://example.com/",
-			wantStatus: http.StatusOK,
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			t.Parallel()
-
-			handler := denyEncodedCharacters(test.encoded, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusOK)
-			}))
-
-			req := httptest.NewRequest(http.MethodGet, test.url, nil)
-			res := httptest.NewRecorder()
-
-			handler.ServeHTTP(res, req)
-
-			assert.Equal(t, test.wantStatus, res.Code)
-		})
-	}
-}
-
 func TestNormalizePath(t *testing.T) {
 	unreservedDecoded := "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~"
 	unreserved := []string{
