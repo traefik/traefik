@@ -9,7 +9,7 @@ Traefik with an IngressRoute Custom Resource Definition for Kubernetes, and TLS 
 {: .subtitle }
 
 This document is intended to be a fully working example demonstrating how to set up Traefik in [Kubernetes](https://kubernetes.io),
-with the dynamic configuration coming from the [IngressRoute Custom Resource](../../providers/kubernetes-crd.md),
+with the dynamic configuration coming from the [IngressRoute Custom Resource](../../reference/install-configuration/providers/kubernetes/kubernetes-crd.md),
 and TLS setup with [Let's Encrypt](https://letsencrypt.org).
 However, for the sake of simplicity, we're using [k3s](https://github.com/rancher/k3s)  docker image for the Kubernetes cluster setup.
 

@@ -13,7 +13,7 @@ The `fastProxy` option introduces a high-performance reverse proxy designed to e
 !!! info "Limitations"
 
     Please note that the new fast proxy implementation does not work with HTTP/2.
-    This means that when a H2C or HTTPS request with [HTTP2 enabled](../routing/services/index.md#disablehttp2) is sent to a backend, the fallback proxy is the regular one.
+    This means that when a H2C or HTTPS request with [HTTP2 enabled](../reference/routing-configuration/http/load-balancing/service.md#disablehttp2) is sent to a backend, the fallback proxy is the regular one.
 
     Additionnaly, observability features like tracing and OTEL semconv metrics are not supported for the moment.
 

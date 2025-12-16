@@ -207,19 +207,19 @@ The dashboard is available at the same location as the API, but by default on th
 
 !!! note
 
-    - The trailing slash `/` in `/dashboard/` is mandatory. This limitation can be mitigated using the the [RedirectRegex Middleware](../../middlewares/http/redirectregex.md).
+    - The trailing slash `/` in `/dashboard/` is mandatory. This limitation can be mitigated using the the [RedirectRegex Middleware](../../reference/routing-configuration/http/middlewares/redirectregex.md).
 	  - There is also a redirect from the path `/` to `/dashboard/`, but you should not rely on this behavior, as it is subject to change and may complicate routing rules.
 
 To securely access the dashboard, you need to define a routing configuration within Traefik. This involves setting up a router attached to the service `api@internal`, which allows you to:
 
-- Implement security features using [middlewares](../../middlewares/overview.md), such as authentication ([basicAuth](../../middlewares/http/basicauth.md), [digestAuth](../../middlewares/http/digestauth.md),
-  [forwardAuth](../../middlewares/http/forwardauth.md)) or [allowlisting](../../middlewares/http/ipallowlist.md).
+- Implement security features using [middlewares](../../reference/routing-configuration/http/middlewares/overview.md), such as authentication ([basicAuth](../../reference/routing-configuration/http/middlewares/basicauth.md), [digestAuth](../../reference/routing-configuration/http/middlewares/digestauth.md),
+  [forwardAuth](../../reference/routing-configuration/http/middlewares/forwardauth.md)) or [allowlisting](../../reference/routing-configuration/http/middlewares/ipallowlist.md).
 
 - Define a [router rule](#dashboard-router-rule) for accessing the dashboard through Traefik.
 
 ### Dashboard Router Rule
 
-To ensure proper access to the dashboard, the [router rule](../../routing/routers/index.md#rule) you define must match requests intended for the `/api` and `/dashboard` paths. 
+To ensure proper access to the dashboard, the [router rule](../../reference/routing-configuration/http/routing/router.md#rule) you define must match requests intended for the `/api` and `/dashboard` paths. 
 We recommend using either a *Host-based rule* to match all requests on the desired domain or explicitly defining a rule that includes both path prefixes. 
 Here are some examples:
 
