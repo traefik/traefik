@@ -367,7 +367,7 @@ func (d *docker) deprecationNotice(logger zerolog.Logger) bool {
 	if d.SwarmMode != nil {
 		incompatible = true
 		logger.Error().Msg("Docker provider `swarmMode` option has been removed in v3, please use the Swarm Provider instead." +
-			" For more information please read the migration guide: https://doc.traefik.io/traefik/v3.6/migration/v2-to-v3/#docker-docker-swarm")
+			" For more information please read the migration guide: https://doc.traefik.io/traefik/v3.6/migrate/v2-to-v3-details/#swarmmode")
 	}
 
 	if d.TLS != nil && d.TLS.CAOptional != nil {
