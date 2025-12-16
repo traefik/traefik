@@ -424,10 +424,6 @@ func (c *Configuration) ValidateConfiguration() error {
 	}
 
 	if c.Providers != nil && c.Providers.KubernetesIngressNGINX != nil {
-		if c.Experimental == nil || !c.Experimental.KubernetesIngressNGINX {
-			return errors.New("the experimental KubernetesIngressNGINX feature must be enabled to use the KubernetesIngressNGINX provider")
-		}
-
 		if c.Providers.KubernetesIngressNGINX.WatchNamespace != "" && c.Providers.KubernetesIngressNGINX.WatchNamespaceSelector != "" {
 			return errors.New("watchNamespace and watchNamespaceSelector options are mutually exclusive")
 		}

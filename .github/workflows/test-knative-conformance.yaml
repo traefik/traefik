@@ -9,6 +9,7 @@ on:
       - 'pkg/provider/kubernetes/knative/**'
       - 'integration/fixtures/knative/**'
       - 'integration/knative_conformance_test.go'
+      - 'integration/integration_test.go'
 
 env:
   GO_VERSION: '1.24'

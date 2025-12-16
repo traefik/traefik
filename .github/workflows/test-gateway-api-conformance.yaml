@@ -9,6 +9,7 @@ on:
       - 'pkg/provider/kubernetes/gateway/**'
       - 'integration/fixtures/gateway-api-conformance/**'
       - 'integration/gateway_api_conformance_test.go'
+      - 'integration/integration_test.go'
 
 env:
   GO_VERSION: '1.24'

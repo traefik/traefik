@@ -65,6 +65,16 @@ func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoint
 						Msg("Router's `ruleSyntax` option is deprecated, please remove any usage of this option.")
 				}
 
+				var qualifiedParentRefs []string
+				for _, parentRef := range router.ParentRefs {
+					if parts := strings.Split(parentRef, "@"); len(parts) == 1 {
+						parentRef = provider.MakeQualifiedName(pvd, parentRef)
+					}
+
+					qualifiedParentRefs = append(qualifiedParentRefs, parentRef)
+				}
+				router.ParentRefs = qualifiedParentRefs
+
 				conf.HTTP.Routers[provider.MakeQualifiedName(pvd, routerName)] = router
 			}
 			for middlewareName, middleware := range configuration.HTTP.Middlewares {
@@ -165,9 +175,11 @@ func applyModel(cfg dynamic.Configuration) dynamic.Configuration {
 	if cfg.HTTP != nil && len(cfg.HTTP.Models) > 0 {
 		rts := make(map[string]*dynamic.Router)
 
+		modelRouterNames := make(map[string][]string)
 		for name, rt := range cfg.HTTP.Routers {
 			// Only root routers can have models applied.
 			if rt.ParentRefs != nil {
+				rts[name] = rt
 				continue
 			}
 
@@ -223,7 +235,9 @@ func applyModel(cfg dynamic.Configuration) dynamic.Configuration {
 					rtName := name
 					if len(eps) > 1 {
 						rtName = epName + "-" + name
+						modelRouterNames[name] = append(modelRouterNames[name], rtName)
 					}
+
 					rts[rtName] = cp
 				} else {
 					router.EntryPoints = append(router.EntryPoints, epName)
@@ -231,6 +245,26 @@ func applyModel(cfg dynamic.Configuration) dynamic.Configuration {
 					rts[name] = router
 				}
 			}
+		}
+
+		for _, rt := range rts {
+			if rt.ParentRefs == nil {
+				continue
+			}
+
+			var parentRefs []string
+			for _, ref := range rt.ParentRefs {
+				// Only add the initial parent ref if it still exists.
+				if _, ok := rts[ref]; ok {
+					parentRefs = append(parentRefs, ref)
+				}
+
+				if names, ok := modelRouterNames[ref]; ok {
+					parentRefs = append(parentRefs, names...)
+				}
+			}
+
+			rt.ParentRefs = parentRefs
 		}
 
 		cfg.HTTP.Routers = rts
