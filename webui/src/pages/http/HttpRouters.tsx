@@ -1,10 +1,5 @@
 import { AriaTable, AriaTbody, AriaTd, AriaTfoot, AriaThead, AriaTr, Box, Flex } from '@traefiklabs/faency'
 import { useMemo } from 'react'
-<<<<<<< HEAD
-import { Helmet } from 'react-helmet-async'
-=======
-import { FiShield } from 'react-icons/fi'
->>>>>>> e81e0fd23 (feat: put dashboard name as page title)
 import useInfiniteScroll from 'react-infinite-scroll-hook'
 import { useSearchParams } from 'react-router-dom'
 
