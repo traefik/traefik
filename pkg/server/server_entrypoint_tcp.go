@@ -606,10 +606,6 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 
 	handler = normalizePath(handler)
 
-	handler = denyFragment(handler)
-
-	handler = denyEncodedCharacters(configuration.HTTP.EncodedCharacters.Map(), handler)
-
 	serverHTTP := &http.Server{
 		Protocols:    &protocols,
 		Handler:      handler,
@@ -706,54 +702,6 @@ func encodeQuerySemicolons(h http.Handler) http.Handler {
 		} else {
 			h.ServeHTTP(rw, req)
 		}
-	})
-}
-
-// denyEncodedCharacters reject the request if the escaped path contains encoded characters.
-func denyEncodedCharacters(encodedCharacters map[string]struct{}, h http.Handler) http.Handler {
-	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		escapedPath := req.URL.EscapedPath()
-
-		for i := 0; i < len(escapedPath); i++ {
-			if escapedPath[i] != '%' {
-				continue
-			}
-
-			// This should never happen as the standard library will reject requests containing invalid percent-encodings.
-			// This discards URLs with a percent character at the end.
-			if i+2 >= len(escapedPath) {
-				rw.WriteHeader(http.StatusBadRequest)
-				return
-			}
-
-			// This rejects a request with a path containing the given encoded characters.
-			if _, exists := encodedCharacters[escapedPath[i:i+3]]; exists {
-				log.FromContext(req.Context()).Debugf("Rejecting request because it contains encoded character %s in the URL path: %s", escapedPath[i:i+3], escapedPath)
-				rw.WriteHeader(http.StatusBadRequest)
-				return
-			}
-
-			i += 2
-		}
-
-		h.ServeHTTP(rw, req)
-	})
-}
-
-// When go receives an HTTP request, it assumes the absence of fragment URL.
-// However, it is still possible to send a fragment in the request.
-// In this case, Traefik will encode the '#' character, altering the request's intended meaning.
-// To avoid this behavior, the following function rejects requests that include a fragment in the URL.
-func denyFragment(h http.Handler) http.Handler {
-	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		if strings.Contains(req.URL.RawPath, "#") {
-			log.WithoutContext().Debugf("Rejecting request because it contains a fragment in the URL path: %s", req.URL.RawPath)
-			rw.WriteHeader(http.StatusBadRequest)
-
-			return
-		}
-
-		h.ServeHTTP(rw, req)
 	})
 }
 
