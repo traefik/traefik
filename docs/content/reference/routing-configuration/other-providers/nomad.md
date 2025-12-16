@@ -13,7 +13,108 @@ With Nomad, Traefik can leverage tags attached to a service to generate routing 
     We recommend to *not* use tags to store sensitive data (certificates, credentials, etc).
     Instead, we recommend to store sensitive data in a safer storage (secrets, file, etc).
 
-## Routing Configuration
+## Configuration Examples
+
+??? example "Configuring Nomad & Deploying / Exposing one Service"
+
+    Enabling the nomad provider
+
+    ```yaml tab="Structured (YAML)"
+    providers:
+      nomad: {}
+    ```
+
+    ```toml tab="Structured (TOML)"
+    [providers.nomad]
+    ```
+
+    ```bash tab="CLI"
+    --providers.nomad=true
+    ```
+
+    Attaching tags to services (in your Nomad job file)
+
+    ```hcl
+    job "my-service" {
+      datacenters = ["dc1"]
+      
+      group "web" {
+        task "app" {
+          driver = "docker"
+          
+          service {
+            name = "my-service"
+            tags = [
+              "traefik.http.routers.my-service.rule=Host(`example.com`)",
+            ]
+          }
+        }
+      }
+    }
+    ```
+
+??? example "Specify a Custom Port for the Container"
+
+    Forward requests for `http://example.com` to `http://<private IP of container>:12345`:
+
+    ```hcl
+    job "my-service" {
+      datacenters = ["dc1"]
+      
+      group "web" {
+        task "app" {
+          driver = "docker"
+          
+          service {
+            name = "my-service"
+            tags = [
+              "traefik.http.routers.my-service.rule=Host(`example.com`)",
+              "traefik.http.routers.my-service.service=my-service",
+              "traefik.http.services.my-service.loadbalancer.server.port=12345",
+            ]
+          }
+        }
+      }
+    }
+    ```
+
+    !!! important "Traefik Connecting to the Wrong Port: `HTTP/502 Gateway Error`"
+        By default, Traefik uses the first exposed port of a container.
+
+        Setting the tag `traefik.http.services.xxx.loadbalancer.server.port`
+        overrides that behavior.
+
+??? example "Specifying more than one router and service per container"
+
+    Forwarding requests to more than one port on a container requires referencing the service loadbalancer port definition using the service parameter on the router.
+
+    In this example, requests are forwarded for `http://example-a.com` to `http://<private IP of container>:8000` in addition to `http://example-b.com` forwarding to `http://<private IP of container>:9000`:
+
+    ```hcl
+    job "my-service" {
+      datacenters = ["dc1"]
+      
+      group "web" {
+        task "app" {
+          driver = "docker"
+          
+          service {
+            name = "my-service"
+            tags = [
+              "traefik.http.routers.www-router.rule=Host(`example-a.com`)",
+              "traefik.http.routers.www-router.service=www-service",
+              "traefik.http.services.www-service.loadbalancer.server.port=8000",
+              "traefik.http.routers.admin-router.rule=Host(`example-b.com`)",
+              "traefik.http.routers.admin-router.service=admin-service",
+              "traefik.http.services.admin-service.loadbalancer.server.port=9000",
+            ]
+          }
+        }
+      }
+    }
+    ```
+
+## Configuration Options
 
 !!! info "Tags"
 

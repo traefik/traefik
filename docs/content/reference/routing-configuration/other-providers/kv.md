@@ -5,6 +5,62 @@ description: "Read the technical documentation to learn the Traefik Routing Conf
 
 # Traefik & KV Stores
 
+## Configuration Examples
+
+??? example "Configuring KV Store & Deploying / Exposing one Service"
+
+    Enabling a KV store provider (example: Consul)
+
+    ```yaml tab="Structured (YAML)"
+    providers:
+      consul:
+        endpoints:
+          - "127.0.0.1:8500"
+    ```
+
+    ```toml tab="Structured (TOML)"
+    [providers.consul]
+      endpoints = ["127.0.0.1:8500"]
+    ```
+
+    ```bash tab="CLI"
+    --providers.consul.endpoints=127.0.0.1:8500
+    ```
+
+    Setting keys in the KV store (example: Consul)
+
+    ```bash
+    consul kv put traefik/http/routers/my-router/rule "Host(`example.com`)"
+    consul kv put traefik/http/routers/my-router/service "my-service"
+    consul kv put traefik/http/services/my-service/loadbalancer/servers/0/url "http://127.0.0.1:8080"
+    ```
+
+??? example "Specify a Custom Port for the Service"
+
+    Forward requests for `http://example.com` to `http://127.0.0.1:12345`:
+
+    ```bash
+    consul kv put traefik/http/routers/my-router/rule "Host(`example.com`)"
+    consul kv put traefik/http/routers/my-router/service "my-service"
+    consul kv put traefik/http/services/my-service/loadbalancer/servers/0/url "http://127.0.0.1:12345"
+    ```
+
+??? example "Specifying more than one router and service"
+
+    Forwarding requests to more than one service requires defining multiple routers and services.
+
+    In this example, requests are forwarded for `http://example-a.com` to `http://127.0.0.1:8000` in addition to `http://example-b.com` forwarding to `http://127.0.0.1:9000`:
+
+    ```bash
+    consul kv put traefik/http/routers/www-router/rule "Host(`example-a.com`)"
+    consul kv put traefik/http/routers/www-router/service "www-service"
+    consul kv put traefik/http/services/www-service/loadbalancer/servers/0/url "http://127.0.0.1:8000"
+    
+    consul kv put traefik/http/routers/admin-router/rule "Host(`example-b.com`)"
+    consul kv put traefik/http/routers/admin-router/service "admin-service"
+    consul kv put traefik/http/services/admin-service/loadbalancer/servers/0/url "http://127.0.0.1:9000"
+    ```
+
 ## Configuration Options
 
 !!! info "Keys"

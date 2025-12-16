@@ -104,7 +104,7 @@ With Docker Swarm, Traefik can leverage labels attached to a service to generate
             - traefik.http.services.admin-service.loadbalancer.server.port=9000
     ```
 
-## Routing Configuration
+## Configuration Options
 
 !!! info "Labels"
 

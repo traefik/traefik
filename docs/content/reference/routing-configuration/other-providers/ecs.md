@@ -13,7 +13,96 @@ With ECS, Traefik can leverage labels attached to a container to generate routin
     We recommend to *not* use labels to store sensitive data (certificates, credentials, etc).
     Instead, we recommend to store sensitive data in a safer storage (secrets, file, etc).
 
-## Routing Configuration
+## Configuration Examples
+
+??? example "Configuring ECS & Deploying / Exposing one Service"
+
+    Enabling the ECS provider
+
+    ```yaml tab="Structured (YAML)"
+    providers:
+      ecs: {}
+    ```
+
+    ```toml tab="Structured (TOML)"
+    [providers.ecs]
+    ```
+
+    ```bash tab="CLI"
+    --providers.ecs=true
+    ```
+
+    Attaching labels to containers (in your ECS task definition)
+
+    ```json
+    {
+      "family": "my-service",
+      "containerDefinitions": [
+        {
+          "name": "my-container",
+          "image": "my-image:latest",
+          "labels": {
+            "traefik.http.routers.my-container.rule": "Host(`example.com`)"
+          }
+        }
+      ]
+    }
+    ```
+
+??? example "Specify a Custom Port for the Container"
+
+    Forward requests for `http://example.com` to `http://<private IP of container>:12345`:
+
+    ```json
+    {
+      "family": "my-service",
+      "containerDefinitions": [
+        {
+          "name": "my-container",
+          "image": "my-image:latest",
+          "labels": {
+            "traefik.http.routers.my-container.rule": "Host(`example.com`)",
+            "traefik.http.routers.my-container.service": "my-service",
+            "traefik.http.services.my-service.loadbalancer.server.port": "12345"
+          }
+        }
+      ]
+    }
+    ```
+
+    !!! important "Traefik Connecting to the Wrong Port: `HTTP/502 Gateway Error`"
+        By default, Traefik uses the first exposed port of a container.
+
+        Setting the label `traefik.http.services.xxx.loadbalancer.server.port`
+        overrides that behavior.
+
+??? example "Specifying more than one router and service per container"
+
+    Forwarding requests to more than one port on a container requires referencing the service loadbalancer port definition using the service parameter on the router.
+
+    In this example, requests are forwarded for `http://example-a.com` to `http://<private IP of container>:8000` in addition to `http://example-b.com` forwarding to `http://<private IP of container>:9000`:
+
+    ```json
+    {
+      "family": "my-service",
+      "containerDefinitions": [
+        {
+          "name": "my-container",
+          "image": "my-image:latest",
+          "labels": {
+            "traefik.http.routers.www-router.rule": "Host(`example-a.com`)",
+            "traefik.http.routers.www-router.service": "www-service",
+            "traefik.http.services.www-service.loadbalancer.server.port": "8000",
+            "traefik.http.routers.admin-router.rule": "Host(`example-b.com`)",
+            "traefik.http.routers.admin-router.service": "admin-service",
+            "traefik.http.services.admin-service.loadbalancer.server.port": "9000"
+          }
+        }
+      ]
+    }
+    ```
+
+## Configuration Options
 
 !!! info "labels"
     

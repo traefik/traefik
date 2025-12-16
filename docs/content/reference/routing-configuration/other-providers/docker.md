@@ -81,7 +81,7 @@ With Docker, Traefik can leverage labels attached to a container to generate rou
           - traefik.http.services.admin-service.loadbalancer.server.port=9000
     ```
 
-## Routing Configuration
+## Configuration Options
 
 !!! info "Labels"
 
