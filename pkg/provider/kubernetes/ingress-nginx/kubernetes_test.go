@@ -175,7 +175,7 @@ func TestLoadIngresses(t *testing.T) {
 							TLS:        &dynamic.RouterTLSConfig{},
 							Service:    "default-ingress-with-ssl-redirect-whoami-80",
 						},
-						"default-ingress-with-ssl-redirect-rule-0-path-0-redirect": {
+						"default-ingress-with-ssl-redirect-rule-0-path-0-http": {
 							Rule:        "Host(`sslredirect.localhost`) && Path(`/`)",
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-ingress-with-ssl-redirect-rule-0-path-0-redirect-scheme"},
@@ -193,15 +193,10 @@ func TestLoadIngresses(t *testing.T) {
 							Service:    "default-ingress-without-ssl-redirect-whoami-80",
 						},
 						"default-ingress-with-force-ssl-redirect-rule-0-path-0": {
-							Rule:       "Host(`forcesslredirect.localhost`) && Path(`/`)",
-							RuleSyntax: "default",
-							Service:    "default-ingress-with-force-ssl-redirect-whoami-80",
-						},
-						"default-ingress-with-force-ssl-redirect-rule-0-path-0-redirect": {
 							Rule:        "Host(`forcesslredirect.localhost`) && Path(`/`)",
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-ingress-with-force-ssl-redirect-rule-0-path-0-redirect-scheme"},
-							Service:     "noop@internal",
+							Service:     "default-ingress-with-force-ssl-redirect-whoami-80",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
