@@ -13,7 +13,7 @@ With ECS, Traefik can leverage labels attached to a container to generate routin
     We recommend to *not* use labels to store sensitive data (certificates, credentials, etc).
     Instead, we recommend to store sensitive data in a safer storage (secrets, file, etc).
 
-## Routing Configurationred
+## Routing Configuration
 
 !!! info "labels"
     
@@ -37,120 +37,24 @@ For example, to change the rule, you could add the label ```traefik.http.routers
 
 !!! warning "The character `@` is not authorized in the router name `<router_name>`."
 
-??? info "`traefik.http.routers.<router_name>.rule`"
-    
-    See [rule](../http/routing/rules-and-priority.md#rules) for more information.
-    
-    ```yaml
-    traefik.http.routers.myrouter.rule=Host(`example.com`)
-    ```
+#### Configuration Options
 
-??? info "`traefik.http.routers.<router_name>.ruleSyntax`"
-
-    !!! warning
-
-        RuleSyntax option is deprecated and will be removed in the next major version.
-        Please do not use this field and rewrite the router rules to use the v3 syntax.
-
-    See [ruleSyntax](../http/routing/rules-and-priority.md#rulesyntax) for more information.
-    
-    ```yaml
-    traefik.http.routers.myrouter.ruleSyntax=v3
-    ```
-
-??? info "`traefik.http.routers.<router_name>.entrypoints`"
-    
-    See [entry points](../../install-configuration/entrypoints.md) for more information.
-    
-    ```yaml
-    traefik.http.routers.myrouter.entrypoints=web,websecure
-    ```
-
-??? info "`traefik.http.routers.<router_name>.middlewares`"
-    
-    See [middlewares overview](../http/middlewares/overview.md) for more information.
-    
-    ```yaml
-    traefik.http.routers.myrouter.middlewares=auth,prefix,cb
-    ```
-
-??? info "`traefik.http.routers.<router_name>.service`"
-    
-    See [service](../http/load-balancing/service.md) for more information.
-    
-    ```yaml
-    traefik.http.routers.myrouter.service=myservice
-    ```
-
-??? info "`traefik.http.routers.<router_name>.tls`"
-    
-    See [tls](../http/tls/overview.md) for more information.
-    
-    ```yaml
-    traefik.http.routers.myrouter.tls=true
-    ```
-
-??? info "`traefik.http.routers.<router_name>.tls.certresolver`"
-    
-    See [certResolver](../../install-configuration/tls/certificate-resolvers/overview.md) for more information.
-    
-    ```yaml
-    traefik.http.routers.myrouter.tls.certresolver=myresolver
-    ```
-
-??? info "`traefik.http.routers.<router_name>.tls.domains[n].main`"
-    
-    See [domains](../../install-configuration/tls/certificate-resolvers/acme.md#domain-definition) for more information.
-    
-    ```yaml
-    traefik.http.routers.myrouter.tls.domains[0].main=example.org
-    ```
-
-??? info "`traefik.http.routers.<router_name>.tls.domains[n].sans`"
-    
-    See [domains](../../install-configuration/tls/certificate-resolvers/acme.md#domain-definition) for more information.
-    
-    ```yaml
-    traefik.http.routers.myrouter.tls.domains[0].sans=test.example.org,dev.example.org
-    ```
-
-??? info "`traefik.http.routers.<router_name>.tls.options`"
-    
-    ```yaml
-    traefik.http.routers.myrouter.tls.options=foobar
-    ```
-
-??? info "`traefik.http.routers.<router_name>.observability.accesslogs`"
-    
-    The accessLogs option controls whether the router will produce access-logs.
-    
-    ```yaml
-     "traefik.http.routers.myrouter.observability.accesslogs=true"
-    ```
-
-??? info "`traefik.http.routers.<router_name>.observability.metrics`"
-    
-    The metrics option controls whether the router will produce metrics.
-
-    ```yaml
-     "traefik.http.routers.myrouter.observability.metrics=true"
-    ```
-
-??? info "`traefik.http.routers.<router_name>.observability.tracing`"
-    
-    The tracing option controls whether the router will produce traces.
-
-    ```yaml
-     "traefik.http.routers.myrouter.observability.tracing=true"
-    ```
-
-??? info "`traefik.http.routers.<router_name>.priority`"
-
-    See [priority](../http/routing/rules-and-priority.md#priority-calculation) for more information.
-
-    ```yaml
-    traefik.http.routers.myrouter.priority=42
-    ```
+| Label | Description | Value |
+|------|-------------|-------|
+| <a id="opt-traefikhttproutersrouter-namerule" href="#opt-traefikhttproutersrouter-namerule" title="#opt-traefikhttproutersrouter-namerule">`traefik.http.routers.<router_name>.rule`</a> | See [rule](../http/routing/rules-and-priority.md#rules) for more information. | ```Host(`example.com`)``` |
+| <a id="opt-traefikhttproutersrouter-nameruleSyntax" href="#opt-traefikhttproutersrouter-nameruleSyntax" title="#opt-traefikhttproutersrouter-nameruleSyntax">`traefik.http.routers.<router_name>.ruleSyntax`</a> | See [ruleSyntax](../http/routing/rules-and-priority.md#rulesyntax) for more information.<br/>RuleSyntax option is deprecated and will be removed in the next major version.<br/>Please do not use this field and rewrite the router rules to use the v3 syntax. | `v3` |
+| <a id="opt-traefikhttproutersrouter-nameentrypoints" href="#opt-traefikhttproutersrouter-nameentrypoints" title="#opt-traefikhttproutersrouter-nameentrypoints">`traefik.http.routers.<router_name>.entrypoints`</a> | See [entry points](../../install-configuration/entrypoints.md) for more information. | `web,websecure` |
+| <a id="opt-traefikhttproutersrouter-namemiddlewares" href="#opt-traefikhttproutersrouter-namemiddlewares" title="#opt-traefikhttproutersrouter-namemiddlewares">`traefik.http.routers.<router_name>.middlewares`</a> | See [middlewares overview](../http/middlewares/overview.md) for more information. | `auth,prefix,cb` |
+| <a id="opt-traefikhttproutersrouter-nameservice" href="#opt-traefikhttproutersrouter-nameservice" title="#opt-traefikhttproutersrouter-nameservice">`traefik.http.routers.<router_name>.service`</a> | See [service](../http/load-balancing/service.md) for more information. | `myservice` |
+| <a id="opt-traefikhttproutersrouter-nametls" href="#opt-traefikhttproutersrouter-nametls" title="#opt-traefikhttproutersrouter-nametls">`traefik.http.routers.<router_name>.tls`</a> | See [tls](../http/tls/overview.md) for more information. | `true` |
+| <a id="opt-traefikhttproutersrouter-nametlscertresolver" href="#opt-traefikhttproutersrouter-nametlscertresolver" title="#opt-traefikhttproutersrouter-nametlscertresolver">`traefik.http.routers.<router_name>.tls.certresolver`</a> | See [certResolver](../../install-configuration/tls/certificate-resolvers/overview.md) for more information. | `myresolver` |
+| <a id="opt-traefikhttproutersrouter-nametlsdomainsnmain" href="#opt-traefikhttproutersrouter-nametlsdomainsnmain" title="#opt-traefikhttproutersrouter-nametlsdomainsnmain">`traefik.http.routers.<router_name>.tls.domains[n].main`</a> | See [domains](../../install-configuration/tls/certificate-resolvers/acme.md#domain-definition) for more information. | `example.org` |
+| <a id="opt-traefikhttproutersrouter-nametlsdomainsnsans" href="#opt-traefikhttproutersrouter-nametlsdomainsnsans" title="#opt-traefikhttproutersrouter-nametlsdomainsnsans">`traefik.http.routers.<router_name>.tls.domains[n].sans`</a> | See [domains](../../install-configuration/tls/certificate-resolvers/acme.md#domain-definition) for more information. | `test.example.org,dev.example.org` |
+| <a id="opt-traefikhttproutersrouter-nametlsoptions" href="#opt-traefikhttproutersrouter-nametlsoptions" title="#opt-traefikhttproutersrouter-nametlsoptions">`traefik.http.routers.<router_name>.tls.options`</a> |  | `foobar` |
+| <a id="opt-traefikhttproutersrouter-nameobservabilityaccesslogs" href="#opt-traefikhttproutersrouter-nameobservabilityaccesslogs" title="#opt-traefikhttproutersrouter-nameobservabilityaccesslogs">`traefik.http.routers.<router_name>.observability.accesslogs`</a> | The accessLogs option controls whether the router will produce access-logs. | `true` |
+| <a id="opt-traefikhttproutersrouter-nameobservabilitymetrics" href="#opt-traefikhttproutersrouter-nameobservabilitymetrics" title="#opt-traefikhttproutersrouter-nameobservabilitymetrics">`traefik.http.routers.<router_name>.observability.metrics`</a> | The metrics option controls whether the router will produce metrics. | `true` |
+| <a id="opt-traefikhttproutersrouter-nameobservabilitytracing" href="#opt-traefikhttproutersrouter-nameobservabilitytracing" title="#opt-traefikhttproutersrouter-nameobservabilitytracing">`traefik.http.routers.<router_name>.observability.tracing`</a> | The tracing option controls whether the router will produce traces. | `true` |
+| <a id="opt-traefikhttproutersrouter-namepriority" href="#opt-traefikhttproutersrouter-namepriority" title="#opt-traefikhttproutersrouter-namepriority">`traefik.http.routers.<router_name>.priority`</a> | See [priority](../http/routing/rules-and-priority.md#priority-calculation) for more information. | `42` |
 
 ### Services
 
@@ -162,175 +66,33 @@ you'd add the label `traefik.http.services.{name-of-your-choice}.loadbalancer.pa
 
 !!! warning "The character `@` is not authorized in the service name `<service_name>`."
 
-??? info "`traefik.http.services.<service_name>.loadbalancer.server.port`"
-    
-    Registers a port.
-    Useful when the service exposes multiples ports.
-    
-    ```yaml
-    traefik.http.services.myservice.loadbalancer.server.port=8080
-    ```
+#### Configuration Options
 
-??? info "`traefik.http.services.<service_name>.loadbalancer.server.scheme`"
-    
-    Overrides the default scheme.
-    
-    ```yaml
-    traefik.http.services.myservice.loadbalancer.server.scheme=http
-    ```
-
-??? info "`traefik.http.services.<service_name>.loadbalancer.serverstransport`"
-    
-    Allows to reference a ServersTransport resource that is defined either with the File provider or the Kubernetes CRD one.
-    See [serverstransport](../http/load-balancing/serverstransport.md) for more information.
-    
-    ```yaml
-    traefik.http.services.<service_name>.loadbalancer.serverstransport=foobar@file
-    ```
-
-??? info "`traefik.http.services.<service_name>.loadbalancer.passhostheader`"
-
-    ```yaml
-    traefik.http.services.myservice.loadbalancer.passhostheader=true
-    ```
-
-??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.headers.<header_name>`"
-    
-    See [health check](../http/load-balancing/service.md#health-check) for more information.
-    
-    ```yaml
-    traefik.http.services.myservice.loadbalancer.healthcheck.headers.X-Foo=foobar
-    ```
-
-??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.hostname`"
-    
-    See [health check](../http/load-balancing/service.md#health-check) for more information.
-    
-    ```yaml
-    traefik.http.services.myservice.loadbalancer.healthcheck.hostname=example.org
-    ```
-
-??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.interval`"
-    
-    See [health check](../http/load-balancing/service.md#health-check) for more information.
-    
-    ```yaml
-    traefik.http.services.myservice.loadbalancer.healthcheck.interval=10
-    ```
-
-??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.unhealthyinterval`"
-    
-    See [health check](../http/load-balancing/service.md#health-check) for more information.
-    
-    ```yaml
-    traefik.http.services.myservice.loadbalancer.healthcheck.unhealthyinterval=10
-    ```
-
-??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.path`"
-    
-    See [health check](../http/load-balancing/service.md#health-check) for more information.
-    
-    ```yaml
-    traefik.http.services.myservice.loadbalancer.healthcheck.path=/foo
-    ```
-
-??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.method`"
-    
-    See [health check](../http/load-balancing/service.md#health-check) for more information.
-    
-    ```yaml
-    traefik.http.services.myservice.loadbalancer.healthcheck.method=foobar
-    ```
-
-??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.status`"
-    
-    See [health check](../http/load-balancing/service.md#health-check) for more information.
-    
-    ```yaml
-    traefik.http.services.myservice.loadbalancer.healthcheck.status=42
-    ```
-
-??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.port`"
-    
-    See [health check](../http/load-balancing/service.md#health-check) for more information.
-    
-    ```yaml
-    traefik.http.services.myservice.loadbalancer.healthcheck.port=42
-    ```
-
-??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.scheme`"
-    
-    See [health check](../http/load-balancing/service.md#health-check) for more information.
-    
-    ```yaml
-    traefik.http.services.myservice.loadbalancer.healthcheck.scheme=http
-    ```
-
-??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.timeout`"
-    
-    See [health check](../http/load-balancing/service.md#health-check) for more information.
-    
-    ```yaml
-    traefik.http.services.myservice.loadbalancer.healthcheck.timeout=10
-    ```
-
-??? info "`traefik.http.services.<service_name>.loadbalancer.healthcheck.followredirects`"
-    
-    See [health check](../http/load-balancing/service.md#health-check) for more information.
-    
-    ```yaml
-    traefik.http.services.myservice.loadbalancer.healthcheck.followredirects=true
-    ```
-
-??? info "`traefik.http.services.<service_name>.loadbalancer.sticky.cookie`"
-    
-    ```yaml
-    traefik.http.services.myservice.loadbalancer.sticky.cookie=true
-    ```
-
-??? info "`traefik.http.services.<service_name>.loadbalancer.sticky.cookie.httponly`"
-    
-    ```yaml
-    traefik.http.services.myservice.loadbalancer.sticky.cookie.httponly=true
-    ```
-
-??? info "`traefik.http.services.<service_name>.loadbalancer.sticky.cookie.name`"
-    
-    ```yaml
-    traefik.http.services.myservice.loadbalancer.sticky.cookie.name=foobar
-    ```
-
-??? info "`traefik.http.services.<service_name>.loadbalancer.sticky.cookie.path`"
-
-    ```yaml
-     "traefik.http.services.myservice.loadbalancer.sticky.cookie.path=/foobar"
-    ```
-
-??? info "`traefik.http.services.<service_name>.loadbalancer.sticky.cookie.secure`"
-
-    ```yaml
-    traefik.http.services.myservice.loadbalancer.sticky.cookie.secure=true
-    ```
-
-??? info "`traefik.http.services.<service_name>.loadbalancer.sticky.cookie.samesite`"
-
-    ```yaml
-    traefik.http.services.myservice.loadbalancer.sticky.cookie.samesite=none
-    ```
-
-??? info "`traefik.http.services.<service_name>.loadbalancer.sticky.cookie.maxage`"
-
-    ```yaml
-    traefik.http.services.myservice.loadbalancer.sticky.cookie.maxage=42
-    ```
-
-??? info "`traefik.http.services.<service_name>.loadbalancer.responseforwarding.flushinterval`"
-        
-    `FlushInterval` specifies the flush interval to flush to the client while copying the response body.
-    
-    ```yaml
-    traefik.http.services.myservice.loadbalancer.responseforwarding.flushinterval=10
-    ```
+| Label | Description | Value |
+|------|-------------|-------|
+| <a id="opt-traefikhttpservicesservice-nameloadbalancerserverport" href="#opt-traefikhttpservicesservice-nameloadbalancerserverport" title="#opt-traefikhttpservicesservice-nameloadbalancerserverport">`traefik.http.services.<service_name>.loadbalancer.server.port`</a> | Registers a port.<br/>Useful when the service exposes multiples ports. | `8080` |
+| <a id="opt-traefikhttpservicesservice-nameloadbalancerserverscheme" href="#opt-traefikhttpservicesservice-nameloadbalancerserverscheme" title="#opt-traefikhttpservicesservice-nameloadbalancerserverscheme">`traefik.http.services.<service_name>.loadbalancer.server.scheme`</a> | Overrides the default scheme. | `http` |
+| <a id="opt-traefikhttpservicesservice-nameloadbalancerserverstransport" href="#opt-traefikhttpservicesservice-nameloadbalancerserverstransport" title="#opt-traefikhttpservicesservice-nameloadbalancerserverstransport">`traefik.http.services.<service_name>.loadbalancer.serverstransport`</a> | Allows to reference a ServersTransport resource that is defined either with the File provider or the Kubernetes CRD one.<br/>See [serverstransport](../http/load-balancing/serverstransport.md) for more information. | `foobar@file` |
+| <a id="opt-traefikhttpservicesservice-nameloadbalancerpasshostheader" href="#opt-traefikhttpservicesservice-nameloadbalancerpasshostheader" title="#opt-traefikhttpservicesservice-nameloadbalancerpasshostheader">`traefik.http.services.<service_name>.loadbalancer.passhostheader`</a> |  | `true` |
+| <a id="opt-traefikhttpservicesservice-nameloadbalancerhealthcheckheadersheader-name" href="#opt-traefikhttpservicesservice-nameloadbalancerhealthcheckheadersheader-name" title="#opt-traefikhttpservicesservice-nameloadbalancerhealthcheckheadersheader-name">`traefik.http.services.<service_name>.loadbalancer.healthcheck.headers.<header_name>`</a> | See [health check](../http/load-balancing/service.md#health-check) for more information. | `foobar` |
+| <a id="opt-traefikhttpservicesservice-nameloadbalancerhealthcheckhostname" href="#opt-traefikhttpservicesservice-nameloadbalancerhealthcheckhostname" title="#opt-traefikhttpservicesservice-nameloadbalancerhealthcheckhostname">`traefik.http.services.<service_name>.loadbalancer.healthcheck.hostname`</a> | See [health check](../http/load-balancing/service.md#health-check) for more information. | `example.org` |
+| <a id="opt-traefikhttpservicesservice-nameloadbalancerhealthcheckinterval" href="#opt-traefikhttpservicesservice-nameloadbalancerhealthcheckinterval" title="#opt-traefikhttpservicesservice-nameloadbalancerhealthcheckinterval">`traefik.http.services.<service_name>.loadbalancer.healthcheck.interval`</a> | See [health check](../http/load-balancing/service.md#health-check) for more information. | `10` |
+| <a id="opt-traefikhttpservicesservice-nameloadbalancerhealthcheckunhealthyinterval" href="#opt-traefikhttpservicesservice-nameloadbalancerhealthcheckunhealthyinterval" title="#opt-traefikhttpservicesservice-nameloadbalancerhealthcheckunhealthyinterval">`traefik.http.services.<service_name>.loadbalancer.healthcheck.unhealthyinterval`</a> | See [health check](../http/load-balancing/service.md#health-check) for more information. | `10` |
+| <a id="opt-traefikhttpservicesservice-nameloadbalancerhealthcheckpath" href="#opt-traefikhttpservicesservice-nameloadbalancerhealthcheckpath" title="#opt-traefikhttpservicesservice-nameloadbalancerhealthcheckpath">`traefik.http.services.<service_name>.loadbalancer.healthcheck.path`</a> | See [health check](../http/load-balancing/service.md#health-check) for more information. | `/foo` |
+| <a id="opt-traefikhttpservicesservice-nameloadbalancerhealthcheckmethod" href="#opt-traefikhttpservicesservice-nameloadbalancerhealthcheckmethod" title="#opt-traefikhttpservicesservice-nameloadbalancerhealthcheckmethod">`traefik.http.services.<service_name>.loadbalancer.healthcheck.method`</a> | See [health check](../http/load-balancing/service.md#health-check) for more information. | `foobar` |
+| <a id="opt-traefikhttpservicesservice-nameloadbalancerhealthcheckstatus" href="#opt-traefikhttpservicesservice-nameloadbalancerhealthcheckstatus" title="#opt-traefikhttpservicesservice-nameloadbalancerhealthcheckstatus">`traefik.http.services.<service_name>.loadbalancer.healthcheck.status`</a> | See [health check](../http/load-balancing/service.md#health-check) for more information. | `42` |
+| <a id="opt-traefikhttpservicesservice-nameloadbalancerhealthcheckport" href="#opt-traefikhttpservicesservice-nameloadbalancerhealthcheckport" title="#opt-traefikhttpservicesservice-nameloadbalancerhealthcheckport">`traefik.http.services.<service_name>.loadbalancer.healthcheck.port`</a> | See [health check](../http/load-balancing/service.md#health-check) for more information. | `42` |
+| <a id="opt-traefikhttpservicesservice-nameloadbalancerhealthcheckscheme" href="#opt-traefikhttpservicesservice-nameloadbalancerhealthcheckscheme" title="#opt-traefikhttpservicesservice-nameloadbalancerhealthcheckscheme">`traefik.http.services.<service_name>.loadbalancer.healthcheck.scheme`</a> | See [health check](../http/load-balancing/service.md#health-check) for more information. | `http` |
+| <a id="opt-traefikhttpservicesservice-nameloadbalancerhealthchecktimeout" href="#opt-traefikhttpservicesservice-nameloadbalancerhealthchecktimeout" title="#opt-traefikhttpservicesservice-nameloadbalancerhealthchecktimeout">`traefik.http.services.<service_name>.loadbalancer.healthcheck.timeout`</a> | See [health check](../http/load-balancing/service.md#health-check) for more information. | `10` |
+| <a id="opt-traefikhttpservicesservice-nameloadbalancerhealthcheckfollowredirects" href="#opt-traefikhttpservicesservice-nameloadbalancerhealthcheckfollowredirects" title="#opt-traefikhttpservicesservice-nameloadbalancerhealthcheckfollowredirects">`traefik.http.services.<service_name>.loadbalancer.healthcheck.followredirects`</a> | See [health check](../http/load-balancing/service.md#health-check) for more information. | `true` |
+| <a id="opt-traefikhttpservicesservice-nameloadbalancerstickycookie" href="#opt-traefikhttpservicesservice-nameloadbalancerstickycookie" title="#opt-traefikhttpservicesservice-nameloadbalancerstickycookie">`traefik.http.services.<service_name>.loadbalancer.sticky.cookie`</a> |  | `true` |
+| <a id="opt-traefikhttpservicesservice-nameloadbalancerstickycookiehttponly" href="#opt-traefikhttpservicesservice-nameloadbalancerstickycookiehttponly" title="#opt-traefikhttpservicesservice-nameloadbalancerstickycookiehttponly">`traefik.http.services.<service_name>.loadbalancer.sticky.cookie.httponly`</a> |  | `true` |
+| <a id="opt-traefikhttpservicesservice-nameloadbalancerstickycookiename" href="#opt-traefikhttpservicesservice-nameloadbalancerstickycookiename" title="#opt-traefikhttpservicesservice-nameloadbalancerstickycookiename">`traefik.http.services.<service_name>.loadbalancer.sticky.cookie.name`</a> |  | `foobar` |
+| <a id="opt-traefikhttpservicesservice-nameloadbalancerstickycookiepath" href="#opt-traefikhttpservicesservice-nameloadbalancerstickycookiepath" title="#opt-traefikhttpservicesservice-nameloadbalancerstickycookiepath">`traefik.http.services.<service_name>.loadbalancer.sticky.cookie.path`</a> |  | `/foobar` |
+| <a id="opt-traefikhttpservicesservice-nameloadbalancerstickycookiesecure" href="#opt-traefikhttpservicesservice-nameloadbalancerstickycookiesecure" title="#opt-traefikhttpservicesservice-nameloadbalancerstickycookiesecure">`traefik.http.services.<service_name>.loadbalancer.sticky.cookie.secure`</a> |  | `true` |
+| <a id="opt-traefikhttpservicesservice-nameloadbalancerstickycookiesamesite" href="#opt-traefikhttpservicesservice-nameloadbalancerstickycookiesamesite" title="#opt-traefikhttpservicesservice-nameloadbalancerstickycookiesamesite">`traefik.http.services.<service_name>.loadbalancer.sticky.cookie.samesite`</a> |  | `none` |
+| <a id="opt-traefikhttpservicesservice-nameloadbalancerstickycookiemaxage" href="#opt-traefikhttpservicesservice-nameloadbalancerstickycookiemaxage" title="#opt-traefikhttpservicesservice-nameloadbalancerstickycookiemaxage">`traefik.http.services.<service_name>.loadbalancer.sticky.cookie.maxage`</a> |  | `42` |
+| <a id="opt-traefikhttpservicesservice-nameloadbalancerresponseforwardingflushinterval" href="#opt-traefikhttpservicesservice-nameloadbalancerresponseforwardingflushinterval" title="#opt-traefikhttpservicesservice-nameloadbalancerresponseforwardingflushinterval">`traefik.http.services.<service_name>.loadbalancer.responseforwarding.flushinterval`</a> | `FlushInterval` specifies the flush interval to flush to the client while copying the response body. | `10` |
 
 ### Middleware
 
@@ -375,133 +137,32 @@ You can declare TCP Routers and/or Services using labels.
 
 #### TCP Routers
 
-??? info "`traefik.tcp.routers.<router_name>.entrypoints`"
-    
-    See [entry points](../../install-configuration/entrypoints.md) for more information.
-    
-    ```yaml
-    traefik.tcp.routers.mytcprouter.entrypoints=ep1,ep2
-    ```
+##### Configuration Options
 
-??? info "`traefik.tcp.routers.<router_name>.rule`"
-    
-    See [entry points](../../install-configuration/entrypoints.md) for more information.
-    
-    ```yaml
-    traefik.tcp.routers.mytcprouter.rule=HostSNI(`example.com`)
-    ```
-
-??? info "`traefik.tcp.routers.<router_name>.ruleSyntax`"
-
-    !!! warning
-
-        RuleSyntax option is deprecated and will be removed in the next major version.
-        Please do not use this field and rewrite the router rules to use the v3 syntax.
-
-    configure the rule syntax to be used for parsing the rule on a per-router basis.
-    
-    ```yaml
-    traefik.tcp.routers.mytcprouter.ruleSyntax=v3
-    ```
-    
-??? info "`traefik.tcp.routers.<router_name>.service`"
-    
-    See [service](../tcp/service.md) for more information.
-    
-    ```yaml
-    traefik.tcp.routers.mytcprouter.service=myservice
-    ```
-
-??? info "`traefik.tcp.routers.<router_name>.tls`"
-    
-    See [TLS](../tcp/tls.md) for more information.
-    
-    ```yaml
-    traefik.tcp.routers.mytcprouter.tls=true
-    ```
-
-??? info "`traefik.tcp.routers.<router_name>.tls.certresolver`"
-    
-    See [certResolver](../tcp/tls.md#configuration-options) for more information.
-    
-    ```yaml
-    traefik.tcp.routers.mytcprouter.tls.certresolver=myresolver
-    ```
-
-??? info "`traefik.tcp.routers.<router_name>.tls.domains[n].main`"
-    
-    See [TLS](../tcp/tls.md) for more information.
-    
-    ```yaml
-    traefik.tcp.routers.mytcprouter.tls.domains[0].main=example.org
-    ```
-
-??? info "`traefik.tcp.routers.<router_name>.tls.domains[n].sans`"
-    
-    See [TLS](../tcp/tls.md) for more information.
-    
-    ```yaml
-    traefik.tcp.routers.mytcprouter.tls.domains[0].sans=test.example.org,dev.example.org
-    ```
-
-??? info "`traefik.tcp.routers.<router_name>.tls.options`"
-    
-    See [TLS](../tcp/tls.md) for more information.
-    
-    ```yaml
-    traefik.tcp.routers.mytcprouter.tls.options=mysoptions
-    ```
-
-??? info "`traefik.tcp.routers.<router_name>.tls.passthrough`"
-    
-    See [Passthrough](../tcp/tls.md#opt-passthrough) for more information.
-    
-    ```yaml
-    traefik.tcp.routers.mytcprouter.tls.passthrough=true
-    ```
-
-??? info "`traefik.tcp.routers.<router_name>.priority`"
-
-    See [priority](../tcp/routing/rules-and-priority.md#priority-calculation) for more information.
-
-    ```yaml
-    traefik.tcp.routers.mytcprouter.priority=42
-    ```
+| Label | Description | Value |
+|------|-------------|-------|
+| <a id="opt-traefiktcproutersrouter-nameentrypoints" href="#opt-traefiktcproutersrouter-nameentrypoints" title="#opt-traefiktcproutersrouter-nameentrypoints">`traefik.tcp.routers.<router_name>.entrypoints`</a> | See [entry points](../../install-configuration/entrypoints.md) for more information. | `ep1,ep2` |
+| <a id="opt-traefiktcproutersrouter-namerule" href="#opt-traefiktcproutersrouter-namerule" title="#opt-traefiktcproutersrouter-namerule">`traefik.tcp.routers.<router_name>.rule`</a> | See [rule](../tcp/routing/rules-and-priority.md#rules) for more information. | ```HostSNI(`example.com`)``` |
+| <a id="opt-traefiktcproutersrouter-nameruleSyntax" href="#opt-traefiktcproutersrouter-nameruleSyntax" title="#opt-traefiktcproutersrouter-nameruleSyntax">`traefik.tcp.routers.<router_name>.ruleSyntax`</a> | configure the rule syntax to be used for parsing the rule on a per-router basis.<br/>RuleSyntax option is deprecated and will be removed in the next major version.<br/>Please do not use this field and rewrite the router rules to use the v3 syntax. | `v3` |
+| <a id="opt-traefiktcproutersrouter-nameservice" href="#opt-traefiktcproutersrouter-nameservice" title="#opt-traefiktcproutersrouter-nameservice">`traefik.tcp.routers.<router_name>.service`</a> | See [service](../tcp/service.md) for more information. | `myservice` |
+| <a id="opt-traefiktcproutersrouter-nametls" href="#opt-traefiktcproutersrouter-nametls" title="#opt-traefiktcproutersrouter-nametls">`traefik.tcp.routers.<router_name>.tls`</a> | See [TLS](../tcp/tls.md) for more information. | `true` |
+| <a id="opt-traefiktcproutersrouter-nametlscertresolver" href="#opt-traefiktcproutersrouter-nametlscertresolver" title="#opt-traefiktcproutersrouter-nametlscertresolver">`traefik.tcp.routers.<router_name>.tls.certresolver`</a> | See [certResolver](../tcp/tls.md#configuration-options) for more information. | `myresolver` |
+| <a id="opt-traefiktcproutersrouter-nametlsdomainsnmain" href="#opt-traefiktcproutersrouter-nametlsdomainsnmain" title="#opt-traefiktcproutersrouter-nametlsdomainsnmain">`traefik.tcp.routers.<router_name>.tls.domains[n].main`</a> | See [TLS](../tcp/tls.md) for more information. | `example.org` |
+| <a id="opt-traefiktcproutersrouter-nametlsdomainsnsans" href="#opt-traefiktcproutersrouter-nametlsdomainsnsans" title="#opt-traefiktcproutersrouter-nametlsdomainsnsans">`traefik.tcp.routers.<router_name>.tls.domains[n].sans`</a> | See [TLS](../tcp/tls.md) for more information. | `test.example.org,dev.example.org` |
+| <a id="opt-traefiktcproutersrouter-nametlsoptions" href="#opt-traefiktcproutersrouter-nametlsoptions" title="#opt-traefiktcproutersrouter-nametlsoptions">`traefik.tcp.routers.<router_name>.tls.options`</a> | See [TLS](../tcp/tls.md) for more information. | `mysoptions` |
+| <a id="opt-traefiktcproutersrouter-nametlspassthrough" href="#opt-traefiktcproutersrouter-nametlspassthrough" title="#opt-traefiktcproutersrouter-nametlspassthrough">`traefik.tcp.routers.<router_name>.tls.passthrough`</a> | See [Passthrough](../tcp/tls.md#opt-passthrough) for more information. | `true` |
+| <a id="opt-traefiktcproutersrouter-namepriority" href="#opt-traefiktcproutersrouter-namepriority" title="#opt-traefiktcproutersrouter-namepriority">`traefik.tcp.routers.<router_name>.priority`</a> | See [priority](../tcp/routing/rules-and-priority.md#priority-calculation) for more information. | `42` |
 
 #### TCP Services
 
-??? info "`traefik.tcp.services.<service_name>.loadbalancer.server.port`"
-    
-    Registers a port of the application.
-    
-    ```yaml
-    traefik.tcp.services.mytcpservice.loadbalancer.server.port=423
-    ```
+##### Configuration Options
 
-??? info "`traefik.tcp.services.<service_name>.loadbalancer.server.tls`"
-    
-    Determines whether to use TLS when dialing with the backend.
-    
-    ```yaml
-    traefik.tcp.services.mytcpservice.loadbalancer.server.tls=true
-    ```
-
-??? info "`traefik.http.services.<service_name>.loadbalancer.server.weight`"
-
-    Overrides the default weight.
-    
-    ```yaml
-    traefik.http.services.myservice.loadbalancer.server.weight=42
-    ```
-
-??? info "`traefik.tcp.services.<service_name>.loadbalancer.serverstransport`"
-
-    Allows to reference a ServersTransport resource that is defined either with the File provider or the Kubernetes CRD one.
-    See [serverstransport](../tcp/serverstransport.md) for more information.
-    
-    ```yaml
-    traefik.tcp.services.<service_name>.loadbalancer.serverstransport=foobar@file
-    ```
+| Label | Description | Value |
+|------|-------------|-------|
+| <a id="opt-traefiktcpservicesservice-nameloadbalancerserverport" href="#opt-traefiktcpservicesservice-nameloadbalancerserverport" title="#opt-traefiktcpservicesservice-nameloadbalancerserverport">`traefik.tcp.services.<service_name>.loadbalancer.server.port`</a> | Registers a port of the application. | `423` |
+| <a id="opt-traefiktcpservicesservice-nameloadbalancerservertls" href="#opt-traefiktcpservicesservice-nameloadbalancerservertls" title="#opt-traefiktcpservicesservice-nameloadbalancerservertls">`traefik.tcp.services.<service_name>.loadbalancer.server.tls`</a> | Determines whether to use TLS when dialing with the backend. | `true` |
+| <a id="opt-traefiktcpservicesservice-nameloadbalancerserverweight" href="#opt-traefiktcpservicesservice-nameloadbalancerserverweight" title="#opt-traefiktcpservicesservice-nameloadbalancerserverweight">`traefik.tcp.services.<service_name>.loadbalancer.server.weight`</a> | Overrides the default weight. | `42` |
+| <a id="opt-traefiktcpservicesservice-nameloadbalancerserverstransport" href="#opt-traefiktcpservicesservice-nameloadbalancerserverstransport" title="#opt-traefiktcpservicesservice-nameloadbalancerserverstransport">`traefik.tcp.services.<service_name>.loadbalancer.serverstransport`</a> | Allows to reference a ServersTransport resource that is defined either with the File provider or the Kubernetes CRD one.<br/>See [serverstransport](../tcp/serverstransport.md) for more information. | `foobar@file` |
 
 ### UDP
 
@@ -543,40 +204,25 @@ More information about available middlewares in the dedicated [middlewares secti
 
 #### UDP Routers
 
-??? info "`traefik.udp.routers.<router_name>.entrypoints`"
-    
-    See [entry points](../../install-configuration/entrypoints.md) for more information.
-    
-    ```yaml
-    traefik.udp.routers.myudprouter.entrypoints=ep1,ep2
-    ```
+##### Configuration Options
 
-??? info "`traefik.udp.routers.<router_name>.service`"
-    
-    See [service](../udp/service.md) for more information.
-    
-    ```yaml
-    traefik.udp.routers.myudprouter.service=myservice
-    ```
+| Label | Description | Value |
+|------|-------------|-------|
+| <a id="opt-traefikudproutersrouter-nameentrypoints" href="#opt-traefikudproutersrouter-nameentrypoints" title="#opt-traefikudproutersrouter-nameentrypoints">`traefik.udp.routers.<router_name>.entrypoints`</a> | See [entry points](../../install-configuration/entrypoints.md) for more information. | `ep1,ep2` |
+| <a id="opt-traefikudproutersrouter-nameservice" href="#opt-traefikudproutersrouter-nameservice" title="#opt-traefikudproutersrouter-nameservice">`traefik.udp.routers.<router_name>.service`</a> | See [service](../udp/service.md) for more information. | `myservice` |
 
 #### UDP Services
 
-??? info "`traefik.udp.services.<service_name>.loadbalancer.server.port`"
-    
-    Registers a port of the application.
-    
-    ```yaml
-    traefik.udp.services.myudpservice.loadbalancer.server.port=423
-    ```
+##### Configuration Options
+
+| Label | Description | Value |
+|------|-------------|-------|
+| <a id="opt-traefikudpservicesservice-nameloadbalancerserverport" href="#opt-traefikudpservicesservice-nameloadbalancerserverport" title="#opt-traefikudpservicesservice-nameloadbalancerserverport">`traefik.udp.services.<service_name>.loadbalancer.server.port`</a> | Registers a port of the application. | `423` |
 
 ### Specific Provider Options
 
-#### `traefik.enable`
+#### Configuration Options
 
-```yaml
-traefik.enable=true
-```
-
-You can tell Traefik to consider (or not) the ECS service by setting `traefik.enable` to true or false.
-
-This option overrides the value of `exposedByDefault`.
+| Label | Description | Value |
+|------|-------------|-------|
+| <a id="opt-traefikenable" href="#opt-traefikenable" title="#opt-traefikenable">`traefik.enable`</a> | You can tell Traefik to consider (or not) the ECS service by setting `traefik.enable` to true or false.<br/>This option overrides the value of `exposedByDefault`. | `true` |

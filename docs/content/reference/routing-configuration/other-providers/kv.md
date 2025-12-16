@@ -93,15 +93,6 @@ description: "Read the technical documentation to learn the Traefik Routing Conf
 
     If you declare multiple middleware with the same name but with different parameters, the middleware fails to be declared.
 
-##### Configuration Example
-    
-```bash
-# Declaring a middleware
-traefik/http/middlewares/myAddPrefix/addPrefix/prefix=/foobar
-# Referencing a middleware
-traefik/http/routers/<router_name>/middlewares/0=myAddPrefix
-```
-
 #### ServerTransport
 
 ##### Configuration Options
@@ -109,17 +100,6 @@ traefik/http/routers/<router_name>/middlewares/0=myAddPrefix
 | Key (Path)                                                      | Description                                                      |  Value                                   |
 |-----------------------------------------------------------------|-----------------------------------------------------------------|-----------------------------------------|
 | <a id="opt-traefikhttpserversTransportsserversTransportNamest-option" href="#opt-traefikhttpserversTransportsserversTransportNamest-option" title="#opt-traefikhttpserversTransportsserversTransportNamest-option">`traefik/http/serversTransports/<serversTransportName>/st_option`</a> | With  `st_option` the ServerTransport option to set (ex `maxIdleConnsPerHost`).<br/> More information about available options in the dedicated [ServerTransport section](../http/load-balancing/serverstransport.md). | ServerTransport Options |
-
-##### Configuration Example
-    
-```bash
-# Declaring a ServerTransport
-traefik/http/serversTransports/myServerTransport/maxIdleConnsPerHost=-1
-traefik/http/serversTransports/myServerTransport/certificates/0/certFile=mypath/cert.pem
-traefik/http/serversTransports/myServerTransport/certificates/0/keyFile=mypath/key.pem
-# Referencing a middleware
-traefik/http/services/myService/serversTransports/0=myServerTransport
-```
 
 ### TCP
 
@@ -170,15 +150,6 @@ More information about available middlewares in the dedicated [middlewares secti
 
     If you declare multiple middleware with the same name but with different parameters, the middleware fails to be declared.
 
-##### Configuration Example
-    
-```bash
-# Declaring a middleware
-traefik/tcp/middlewares/test-inflightconn/amount=10
-# Referencing a middleware
-traefik/tcp/routers/<router_name>/middlewares/0=test-inflightconn
-```
-
 #### ServerTransport
 
 ##### Configuration Options
@@ -186,15 +157,6 @@ traefik/tcp/routers/<router_name>/middlewares/0=test-inflightconn
 | Key (Path)                                                      | Description                                                      |  Value                                   |
 |-----------------------------------------------------------------|-----------------------------------------------------------------|-----------------------------------------|
 | <a id="opt-traefiktcpserversTransportsserversTransportNamest-option" href="#opt-traefiktcpserversTransportsserversTransportNamest-option" title="#opt-traefiktcpserversTransportsserversTransportNamest-option">`traefik/tcp/serversTransports/<serversTransportName>/st_option`</a> | With  `st_option` the ServerTransport option to set (ex `maxIdleConnsPerHost`).<br/> More information about available options in the dedicated [ServerTransport section](../tcp/serverstransport.md). | ServerTransport Options |
-
-##### Configuration Example
-    
-```bash
-# Declaring a ServerTransport
-traefik/tcp/serversTransports/myServerTransport/maxIdleConnsPerHost=-1
-# Referencing a middleware
-traefik/tcp/services/myService/serversTransports/0=myServerTransport
-```
 
 ### UDP
 
