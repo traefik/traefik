@@ -1,96 +1,24 @@
-import { AriaTable, AriaTbody, AriaTd, AriaTh, AriaThead, AriaTr, Box, Flex, styled } from '@traefiklabs/faency'
+import { Flex } from '@traefiklabs/faency'
 import { orderBy } from 'lodash'
 import { useContext, useEffect, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
-import { SectionHeader } from 'components/resources/DetailSections'
-import SortableTh from 'components/tables/SortableTh'
+import { SectionTitle } from './DetailsCard'
+
+import AriaTableSkeleton from 'components/tables/AriaTableSkeleton'
+import PaginatedTable from 'components/tables/PaginatedTable'
 import { ToastContext } from 'contexts/toasts'
-import { MiddlewareDetailType, ServiceDetailType } from 'hooks/use-resource-detail'
 import { makeRowRender } from 'pages/http/HttpRouters'
 
 type UsedByRoutersSectionProps = {
-  data: ServiceDetailType | MiddlewareDetailType
+  data: Service.Details | Middleware.DetailsData
   protocol?: string
 }
 
-const SkeletonContent = styled(Box, {
-  backgroundColor: '$slate5',
-  height: '14px',
-  minWidth: '50px',
-  borderRadius: '4px',
-  margin: '8px',
-})
-
 export const UsedByRoutersSkeleton = () => (
-  <Flex css={{ flexDirection: 'column', mt: '40px' }}>
-    <SectionHeader />
-    <AriaTable>
-      <AriaThead>
-        <AriaTr>
-          <AriaTh>
-            <SkeletonContent />
-          </AriaTh>
-          <AriaTh>
-            <SkeletonContent />
-          </AriaTh>
-          <AriaTh>
-            <SkeletonContent />
-          </AriaTh>
-          <AriaTh>
-            <SkeletonContent />
-          </AriaTh>
-          <AriaTh>
-            <SkeletonContent />
-          </AriaTh>
-          <AriaTh>
-            <SkeletonContent />
-          </AriaTh>
-        </AriaTr>
-      </AriaThead>
-      <AriaTbody>
-        <AriaTr css={{ pointerEvents: 'none' }}>
-          <AriaTd>
-            <SkeletonContent />
-          </AriaTd>
-          <AriaTd>
-            <SkeletonContent />
-          </AriaTd>
-          <AriaTd>
-            <SkeletonContent />
-          </AriaTd>
-          <AriaTd>
-            <SkeletonContent />
-          </AriaTd>
-          <AriaTd>
-            <SkeletonContent />
-          </AriaTd>
-          <AriaTd>
-            <SkeletonContent />
-          </AriaTd>
-        </AriaTr>
-        <AriaTr css={{ pointerEvents: 'none' }}>
-          <AriaTd>
-            <SkeletonContent />
-          </AriaTd>
-          <AriaTd>
-            <SkeletonContent />
-          </AriaTd>
-          <AriaTd>
-            <SkeletonContent />
-          </AriaTd>
-          <AriaTd>
-            <SkeletonContent />
-          </AriaTd>
-          <AriaTd>
-            <SkeletonContent />
-          </AriaTd>
-          <AriaTd>
-            <SkeletonContent />
-          </AriaTd>
-        </AriaTr>
-      </AriaTbody>
-    </AriaTable>
+  <Flex gap={2} css={{ flexDirection: 'column', mt: '40px' }}>
+    <SectionTitle title="Used by routers" />
+    <AriaTableSkeleton columns={8} />
   </Flex>
 )
 
@@ -118,29 +46,38 @@ export const UsedByRoutersSection = ({ data, protocol = 'http' }: UsedByRoutersS
     )
   }, [addToast, routersNotFound])
 
+  const columns = useMemo((): Array<{
+    key: keyof Router.DetailsData
+    header: string
+    sortable?: boolean
+    width?: string
+  }> => {
+    return [
+      { key: 'status', header: 'Status', sortable: true, width: '36px' },
+      ...(protocol !== 'udp' ? [{ key: 'tls' as keyof Router.DetailsData, header: 'TLS', width: '24px' }] : []),
+      ...(protocol !== 'udp' ? [{ key: 'rule' as keyof Router.DetailsData, header: 'Rule', sortable: true }] : []),
+      { key: 'using', header: 'Entrypoints', sortable: true },
+      { key: 'name', header: 'Name', sortable: true },
+      { key: 'service', header: 'Service', sortable: true },
+      { key: 'provider', header: 'Provider', sortable: true, width: '40px' },
+      { key: 'priority', header: 'Priority', sortable: true },
+    ]
+  }, [protocol])
+
   if (!routersFound || routersFound.length <= 0) {
     return null
   }
 
   return (
-    <Flex css={{ flexDirection: 'column', mt: '$5' }}>
-      <SectionHeader title="Used by Routers" />
-
-      <AriaTable data-testid="routers-table">
-        <AriaThead>
-          <AriaTr>
-            <SortableTh label="Status" css={{ width: '40px' }} isSortable sortByValue="status" />
-            {protocol !== 'udp' ? <SortableTh css={{ width: '40px' }} label="TLS" /> : null}
-            {protocol !== 'udp' ? <SortableTh label="Rule" isSortable sortByValue="rule" /> : null}
-            <SortableTh label="Entrypoints" isSortable sortByValue="entryPoints" />
-            <SortableTh label="Name" isSortable sortByValue="name" />
-            <SortableTh label="Service" isSortable sortByValue="service" />
-            <SortableTh label="Provider" css={{ width: '40px' }} isSortable sortByValue="provider" />
-            <SortableTh label="Priority" isSortable sortByValue="priority" />
-          </AriaTr>
-        </AriaThead>
-        <AriaTbody>{routersFound.map(renderRow)}</AriaTbody>
-      </AriaTable>
+    <Flex gap={2} css={{ flexDirection: 'column' }}>
+      <SectionTitle title="Used by routers" />
+      <PaginatedTable
+        data={routersFound}
+        columns={columns}
+        itemsPerPage={10}
+        testId="routers-table"
+        renderRow={renderRow}
+      />
     </Flex>
   )
 }

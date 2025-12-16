@@ -13,7 +13,8 @@ import {
   Text,
   Tooltip,
 } from '@traefiklabs/faency'
-import { useContext, useEffect, useMemo, useState } from 'react'
+import { useContext, useMemo } from 'react'
+import { Helmet } from 'react-helmet-async'
 import { FiBookOpen, FiChevronLeft, FiGithub, FiHeart, FiHelpCircle } from 'react-icons/fi'
 import { useLocation } from 'react-router-dom'
 
@@ -22,6 +23,7 @@ import { DARK_PRIMARY_COLOR, LIGHT_PRIMARY_COLOR } from '../Page'
 import ThemeSwitcher from 'components/ThemeSwitcher'
 import { VersionContext } from 'contexts/version'
 import { useRouterReturnTo } from 'hooks/use-href-with-return-to'
+import useHubUpgradeButton from 'hooks/use-hub-upgrade-button'
 import { useIsDarkMode } from 'hooks/use-theme'
 
 const TopNavBarBackLink = () => {
@@ -43,8 +45,7 @@ const TopNavBarBackLink = () => {
 }
 
 export const TopNav = ({ css, noHubButton = false }: { css?: CSS; noHubButton?: boolean }) => {
-  const [hasHubButtonComponent, setHasHubButtonComponent] = useState(false)
-  const { showHubButton, version } = useContext(VersionContext)
+  const { version } = useContext(VersionContext)
   const isDarkMode = useIsDarkMode()
 
   const parsedVersion = useMemo(() => {
@@ -58,101 +59,86 @@ export const TopNav = ({ css, noHubButton = false }: { css?: CSS; noHubButton?: 
     return matches ? 'v' + matches[1] : 'master'
   }, [version])
 
-  useEffect(() => {
-    if (!showHubButton) {
-      setHasHubButtonComponent(false)
-      return
-    }
+  const { signatureVerified, scriptBlobUrl, isCustomElementDefined } = useHubUpgradeButton()
 
-    if (customElements.get('hub-button-app')) {
-      setHasHubButtonComponent(true)
-      return
-    }
-
-    const scripts: HTMLScriptElement[] = []
-    const createScript = (scriptSrc: string): HTMLScriptElement => {
-      const script = document.createElement('script')
-      script.src = scriptSrc
-      script.async = true
-      script.onload = () => {
-        setHasHubButtonComponent(customElements.get('hub-button-app') !== undefined)
-      }
-      scripts.push(script)
-      return script
-    }
-
-    // Source: https://github.com/traefik/traefiklabs-hub-button-app
-    document.head.appendChild(createScript('traefiklabs-hub-button-app/main-v1.js'))
-
-    return () => {
-      // Remove the scripts on unmount.
-      scripts.forEach((script) => {
-        if (script.parentNode) {
-          script.parentNode.removeChild(script)
-        }
-      })
-    }
-  }, [showHubButton])
+  const displayUpgradeToHubButton = useMemo(
+    () => !noHubButton && signatureVerified && (!!scriptBlobUrl || isCustomElementDefined),
+    [isCustomElementDefined, noHubButton, scriptBlobUrl, signatureVerified],
+  )
 
   return (
-    <Flex as="nav" role="navigation" justify="space-between" align="center" css={{ mb: '$6', ...css }}>
-      <TopNavBarBackLink />
-      <Flex gap={2} align="center">
-        {!noHubButton && hasHubButtonComponent && (
-          <Box css={{ fontFamily: '$rubik', fontWeight: '500 !important' }}>
-            <hub-button-app
-              key={`dark-mode-${isDarkMode}`}
-              style={{ backgroundColor: isDarkMode ? DARK_PRIMARY_COLOR : LIGHT_PRIMARY_COLOR, fontWeight: 'inherit' }}
-            />
-          </Box>
-        )}
-        <Tooltip content="Sponsor" side="bottom">
-          <Link href="https://github.com/sponsors/traefik" target="_blank">
-            <Button as="div" ghost css={{ px: '$2', boxShadow: 'none' }}>
-              <FiHeart size={20} color="#db61a2" />
-            </Button>
-          </Link>
-        </Tooltip>
-        <ThemeSwitcher />
+    <>
+      {displayUpgradeToHubButton && (
+        <Helmet>
+          <meta
+            httpEquiv="Content-Security-Policy"
+            content="script-src 'self' blob: 'unsafe-inline'; object-src 'none'; base-uri 'self';"
+          />
+          <script src={scriptBlobUrl as string} type="module"></script>
+        </Helmet>
+      )}
+      <Flex as="nav" role="navigation" justify="space-between" align="center" css={{ mb: '$6', ...css }}>
+        <TopNavBarBackLink />
+        <Flex gap={2} align="center">
+          {displayUpgradeToHubButton && (
+            <Box css={{ fontFamily: '$rubik', fontWeight: '500 !important' }}>
+              <hub-button-app
+                key={`dark-mode-${isDarkMode}`}
+                style={{
+                  backgroundColor: isDarkMode ? DARK_PRIMARY_COLOR : LIGHT_PRIMARY_COLOR,
+                  fontWeight: 'inherit',
+                }}
+              />
+            </Box>
+          )}
+          <Tooltip content="Sponsor" side="bottom">
+            <Link href="https://github.com/sponsors/traefik" target="_blank">
+              <Button as="div" ghost css={{ px: '$2', boxShadow: 'none' }}>
+                <FiHeart size={20} color="#db61a2" />
+              </Button>
+            </Link>
+          </Tooltip>
+          <ThemeSwitcher />
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button ghost variant="secondary" css={{ px: '$2', boxShadow: 'none' }} data-testid="help-menu">
-              <FiHelpCircle size={20} />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuPortal>
-            <DropdownMenuContent align="end" css={{ zIndex: 9999 }}>
-              <DropdownMenuGroup>
-                <DropdownMenuItem css={{ height: '$6', cursor: 'pointer' }}>
-                  <Link
-                    href={`https://doc.traefik.io/traefik/${parsedVersion}`}
-                    target="_blank"
-                    css={{ textDecoration: 'none', '&:hover': { textDecoration: 'none' } }}
-                  >
-                    <Flex align="center" gap={2}>
-                      <FiBookOpen size={20} />
-                      <Text>Documentation</Text>
-                    </Flex>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem css={{ height: '$6', cursor: 'pointer' }}>
-                  <Link
-                    href="https://github.com/traefik/traefik/"
-                    target="_blank"
-                    css={{ textDecoration: 'none', '&:hover': { textDecoration: 'none' } }}
-                  >
-                    <Flex align="center" gap={2}>
-                      <FiGithub size={20} />
-                      <Text>Github Repository</Text>
-                    </Flex>
-                  </Link>
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
-            </DropdownMenuContent>
-          </DropdownMenuPortal>
-        </DropdownMenu>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button ghost variant="secondary" css={{ px: '$2', boxShadow: 'none' }} data-testid="help-menu">
+                <FiHelpCircle size={20} />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuPortal>
+              <DropdownMenuContent align="end" css={{ zIndex: 9999 }}>
+                <DropdownMenuGroup>
+                  <DropdownMenuItem css={{ height: '$6', cursor: 'pointer' }}>
+                    <Link
+                      href={`https://doc.traefik.io/traefik/${parsedVersion}`}
+                      target="_blank"
+                      css={{ textDecoration: 'none', '&:hover': { textDecoration: 'none' } }}
+                    >
+                      <Flex align="center" gap={2}>
+                        <FiBookOpen size={20} />
+                        <Text>Documentation</Text>
+                      </Flex>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem css={{ height: '$6', cursor: 'pointer' }}>
+                    <Link
+                      href="https://github.com/traefik/traefik/"
+                      target="_blank"
+                      css={{ textDecoration: 'none', '&:hover': { textDecoration: 'none' } }}
+                    >
+                      <Flex align="center" gap={2}>
+                        <FiGithub size={20} />
+                        <Text>Github Repository</Text>
+                      </Flex>
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenuPortal>
+          </DropdownMenu>
+        </Flex>
       </Flex>
-    </Flex>
+    </>
   )
 }

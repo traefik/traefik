@@ -4,10 +4,7 @@
     "rule": "Host(`jaeger-v2-example-beta1`)",
     "status": "enabled",
     "name": "jaeger_v2-example-beta1@docker",
-    "using": [
-      "web-secured",
-      "web"
-    ],
+    "using": ["web-secured", "web"],
     "priority": 10,
     "provider": "docker"
   },
@@ -20,6 +17,24 @@
     ],
     "status": "disabled",
     "name": "orphan-router@file",
+    "tls": {
+      "options": "foo@file",
+      "certResolver": "acme-dns-challenge",
+      "domains": [
+        {
+          "main": "example.com",
+          "sans": ["foo.example.com", "bar.example.com"]
+        },
+        {
+          "main": "domain.com",
+          "sans": ["foo.domain.com", "bar.domain.com"]
+        },
+        {
+          "main": "my.domain.com",
+          "sans": ["foo.my.domain.com", "bar.my.domain.com"]
+        }
+      ]
+    },
     "middlewares": [
       "middleware00@docker",
       "middleware01@docker",
@@ -43,20 +58,12 @@
       "middleware19@docker",
       "middleware20@docker"
     ],
-    "using": [
-      "web-secured",
-      "web",
-      "traefik",
-      "web2",
-      "web3"
-    ],
+    "using": ["web-secured", "web", "traefik", "web2", "web3"],
     "priority": 30,
     "provider": "file"
   },
   {
-    "entryPoints": [
-      "web-mtls"
-    ],
+    "entryPoints": ["web-mtls"],
     "service": "api3_v2-example-beta1",
     "rule": "Host(`server`) \u0026\u0026 Path(`/mtls`)",
     "tls": {
@@ -65,24 +72,15 @@
       "domains": [
         {
           "main": "example.com",
-          "sans": [
-            "foo.example.com",
-            "bar.example.com"
-          ]
+          "sans": ["foo.example.com", "bar.example.com"]
         },
         {
           "main": "domain.com",
-          "sans": [
-            "foo.domain.com",
-            "bar.domain.com"
-          ]
+          "sans": ["foo.domain.com", "bar.domain.com"]
         },
         {
           "main": "my.domain.com",
-          "sans": [
-            "foo.my.domain.com",
-            "bar.my.domain.com"
-          ]
+          "sans": ["foo.my.domain.com", "bar.my.domain.com"]
         }
       ]
     },
@@ -90,39 +88,27 @@
     "priority": 42,
     "name": "server-mtls@docker",
     "provider": "docker",
-    "using": [
-      "web-mtls"
-    ]
+    "using": ["web-mtls"]
   },
   {
-    "entryPoints": [
-      "web-redirect"
-    ],
-    "middlewares": [
-      "redirect@file"
-    ],
+    "entryPoints": ["web-redirect"],
+    "middlewares": ["redirect@file"],
     "service": "api2_v2-example-beta1",
     "rule": "Host(`server`)",
     "status": "enabled",
     "name": "server-redirect@docker",
-    "using": [
-      "web-redirect"
-    ],
+    "using": ["web-redirect"],
     "priority": 9223372036854776000,
     "provider": "docker"
   },
   {
-    "entryPoints": [
-      "web-secured"
-    ],
+    "entryPoints": ["web-secured"],
     "service": "api2_v2-example-beta1",
     "rule": "Host(`server`)",
     "tls": {},
     "status": "enabled",
     "name": "server-secured@docker",
-    "using": [
-      "web-secured"
-    ],
+    "using": ["web-secured"],
     "provider": "docker"
   },
   {
@@ -130,42 +116,27 @@
     "rule": "Host(`traefik-v2-example-beta1`)",
     "status": "enabled",
     "name": "traefik_v2-example-beta1@docker",
-    "using": [
-      "web-secured",
-      "web"
-    ],
+    "using": ["web-secured", "web"],
     "provider": "docker"
   },
   {
-    "entryPoints": [
-      "web"
-    ],
-    "middlewares": [
-      "add-foo"
-    ],
+    "entryPoints": ["web"],
+    "middlewares": ["add-foo"],
     "service": "api_v2-example-beta1",
     "rule": "Host(`jorge.dockeree.containous.cloud`)",
     "status": "enabled",
     "name": "web@docker",
-    "using": [
-      "web"
-    ],
+    "using": ["web"],
     "provider": "docker"
   },
   {
-    "entryPoints": [
-      "web"
-    ],
-    "middlewares": [
-      "whoami-app-hello-tls-jwt-ef36e528ebdc93bc4f2a-service-middleware"
-    ],
+    "entryPoints": ["web"],
+    "middlewares": ["whoami-app-hello-tls-jwt-ef36e528ebdc93bc4f2a-service-middleware"],
     "service": "whoami-app-hello-tls-jwt-ef36e528ebdc93bc4f2a-service",
     "rule": "Host(`jorge.dockeree.containous.cloud`)",
     "status": "enabled",
     "name": "whoami-app-hello-tls-jwt-ef36e528ebdc93bc4f2a@kubernetescrd",
-    "using": [
-      "web"
-    ],
+    "using": ["web"],
     "provider": "docker"
   }
 ]
