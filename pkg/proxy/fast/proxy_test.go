@@ -463,7 +463,7 @@ func TestXForwardedFor(t *testing.T) {
 
 			proxyHandler, err := builder.Build("", testhelpers.MustParseURL(server.URL), true, false)
 			require.NoError(t, err)
-			
+
 			ctx := t.Context()
 			if test.notAppendXFF {
 				ctx = proxyhttputil.SetNotAppendXFF(ctx)
