@@ -1,0 +1,16 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[api]
+  insecure = true
+
+[providers.file]
+  filename = "{{ .SelfFilename }}"
+
+## dynamic configuration ##
+
+[http.routers]
+  [http.routers.router]
+    service = "noop@internal"
+    rule = "Host(`deny.localhost`)"
