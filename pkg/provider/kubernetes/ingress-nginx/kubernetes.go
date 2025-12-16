@@ -940,7 +940,7 @@ func applyUpstreamVhost(routerName string, ingressConfig ingressConfig, rt *dyna
 	if ingressConfig.UpstreamVhost == nil {
 		return
 	}
-	
+
 	vHostMiddlewareName := routerName + "-vhost"
 	conf.HTTP.Middlewares[vHostMiddlewareName] = &dynamic.Middleware{
 		Headers: &dynamic.Headers{
