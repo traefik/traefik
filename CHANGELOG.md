@@ -1,7 +1,18 @@
+## [v2.11.33](https://github.com/traefik/traefik/tree/v2.11.33) (2025-12-17)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.32...v2.11.33)
+
+**Bug fixes:**
+- **[server]** Print access logs for rejected requests and warn about new behavior ([#12426](https://github.com/traefik/traefik/pull/12426) by [rtribotte](https://github.com/rtribotte))
+
+**Documentation:**
+- Clarify doc about encoded characters rejection ([#12391](https://github.com/traefik/traefik/pull/12391) by [rtribotte](https://github.com/rtribotte))
+- Fix encoded characters entryPoint option documentation ([#12384](https://github.com/traefik/traefik/pull/12384) by [rtribotte](https://github.com/rtribotte))
+- Fix encoded characters option documentation ([#12373](https://github.com/traefik/traefik/pull/12373) by [kevinpollet](https://github.com/kevinpollet))
+
 ## [v2.11.32](https://github.com/traefik/traefik/tree/v2.11.32) (2025-12-04)
 [All Commits](https://github.com/traefik/traefik/compare/v2.11.31...v2.11.32)
 
-  **Bug fixes:**
+**Bug fixes:**
 - **[server]** Reject suspicious encoded characters ([#12360](https://github.com/traefik/traefik/pull/12360) by [rtribotte](https://github.com/rtribotte))
 - **[plugins]** Validate plugin module name ([#12291](https://github.com/traefik/traefik/pull/12291) by [kevinpollet](https://github.com/kevinpollet))
 - **[http3]** Bump github.com/quic-go/quic-go to v0.57.1 ([#12319](https://github.com/traefik/traefik/pull/12319) by [GreyXor](https://github.com/GreyXor))
