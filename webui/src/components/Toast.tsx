@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { ReactNode, useEffect } from 'react'
 import { FiX } from 'react-icons/fi'
 
-import { colorByStatus, iconByStatus, StatusType } from 'components/resources/Status'
+import { colorByStatus, iconByStatus } from 'components/resources/Status'
 
 const CloseButton = styled(Button, {
   position: 'absolute',
@@ -39,7 +39,7 @@ const toastVariants = {
 }
 
 export type ToastState = {
-  severity: StatusType
+  severity: Resource.Status
   message?: string
   isVisible?: boolean
   key?: string
@@ -88,7 +88,7 @@ export const Toast = ({ message, dismiss, severity = 'error', icon, isVisible = 
           exit="hidden"
           variants={toastVariants}
         >
-          <Box css={{ width: '$4', height: '$4' }}>{icon ? icon : propsBySeverity[severity].icon}</Box>
+          <Box css={{ width: '$4', height: '$4', color: 'white' }}>{icon ? icon : propsBySeverity[severity].icon}</Box>
           <Text css={{ color: 'white', fontWeight: 600, lineHeight: '$4' }}>{message}</Text>
           {!timeout && (
             <CloseButton ghost onClick={dismiss} css={{ px: '$2' }}>

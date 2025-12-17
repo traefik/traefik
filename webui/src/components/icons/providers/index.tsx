@@ -1,3 +1,4 @@
+import { Box } from '@traefiklabs/faency'
 import { HTMLAttributes, useMemo } from 'react'
 
 import Consul from 'components/icons/providers/Consul'
@@ -14,13 +15,14 @@ import Nomad from 'components/icons/providers/Nomad'
 import Plugin from 'components/icons/providers/Plugin'
 import Redis from 'components/icons/providers/Redis'
 import Zookeeper from 'components/icons/providers/Zookeeper'
+import Tooltip from 'components/Tooltip'
 
 export type ProviderIconProps = HTMLAttributes<SVGElement> & {
   height?: number | string
   width?: number | string
 }
 
-export default function ProviderIcon({ name, size = 32 }: { name: string; size?: number }) {
+export default function ProviderIcon({ name, size = 20 }: { name: string; size?: number }) {
   const Icon = useMemo(() => {
     if (!name || typeof name !== 'string') return Internal
 
@@ -74,5 +76,15 @@ export default function ProviderIcon({ name, size = 32 }: { name: string; size?:
       width={size}
       style={{ backgroundColor: 'var(--colors-primary)', borderRadius: '50%', color: 'var(--colors-01dp)' }}
     />
+  )
+}
+
+export const ProviderIconWithTooltip = ({ provider, size = 20 }) => {
+  return (
+    <Tooltip label={provider}>
+      <Box css={{ width: size, height: size }}>
+        <ProviderIcon name={provider} size={size} />
+      </Box>
+    </Tooltip>
   )
 }

@@ -1,12 +1,10 @@
-import { HttpServiceRender } from './HttpService'
-
-import { ResourceDetailDataType } from 'hooks/use-resource-detail'
+import { ServiceDetail } from 'components/services/ServiceDetail'
 import { renderWithProviders } from 'utils/test'
 
 describe('<HttpServicePage />', () => {
   it('should render the error message', () => {
     const { getByTestId } = renderWithProviders(
-      <HttpServiceRender name="mock-service" data={undefined} error={new Error('Test error')} />,
+      <ServiceDetail name="mock-service" data={undefined} error={new Error('Test error')} protocol="http" />,
       { route: '/http/services/mock-service', withPage: true },
     )
     expect(getByTestId('error-text')).toBeInTheDocument()
@@ -14,7 +12,7 @@ describe('<HttpServicePage />', () => {
 
   it('should render the skeleton', () => {
     const { getByTestId } = renderWithProviders(
-      <HttpServiceRender name="mock-service" data={undefined} error={undefined} />,
+      <ServiceDetail name="mock-service" data={undefined} error={undefined} protocol="http" />,
       { route: '/http/services/mock-service', withPage: true },
     )
     expect(getByTestId('skeleton')).toBeInTheDocument()
@@ -22,7 +20,7 @@ describe('<HttpServicePage />', () => {
 
   it('should render the not found page', () => {
     const { getByTestId } = renderWithProviders(
-      <HttpServiceRender name="mock-service" data={{} as ResourceDetailDataType} error={undefined} />,
+      <ServiceDetail name="mock-service" data={{} as Resource.DetailsData} error={undefined} protocol="http" />,
       { route: '/http/services/mock-service', withPage: true },
     )
     expect(getByTestId('Not found page')).toBeInTheDocument()
@@ -73,7 +71,7 @@ describe('<HttpServicePage />', () => {
 
     const { container, getByTestId } = renderWithProviders(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      <HttpServiceRender name="mock-service" data={mockData as any} error={undefined} />,
+      <ServiceDetail name="mock-service" data={mockData as any} error={undefined} protocol="http" />,
       { route: '/http/services/mock-service', withPage: true },
     )
 
@@ -88,7 +86,7 @@ describe('<HttpServicePage />', () => {
     expect(serviceDetails.innerHTML).toContain('docker')
     expect(serviceDetails.innerHTML).toContain('Status')
     expect(serviceDetails.innerHTML).toContain('Success')
-    expect(serviceDetails.innerHTML).toContain('Pass Host Header')
+    expect(serviceDetails.innerHTML).toContain('Pass host header')
     expect(serviceDetails.innerHTML).toContain('True')
 
     const serversList = getByTestId('servers-list')
@@ -96,10 +94,9 @@ describe('<HttpServicePage />', () => {
     expect(serversList.innerHTML).toContain('http://10.0.1.12:80')
 
     const routersTable = getByTestId('routers-table')
-    const tableBody = routersTable.querySelectorAll('div[role="rowgroup"]')[1]
-    expect(tableBody?.querySelectorAll('a[role="row"]')).toHaveLength(2)
-    expect(tableBody?.innerHTML).toContain('router-test1@docker')
-    expect(tableBody?.innerHTML).toContain('router-test2@docker')
+    expect(routersTable.querySelectorAll('a[role="row"]')).toHaveLength(2)
+    expect(routersTable.innerHTML).toContain('router-test1@docker')
+    expect(routersTable.innerHTML).toContain('router-test2@docker')
 
     expect(() => {
       getByTestId('health-check')
@@ -145,7 +142,7 @@ describe('<HttpServicePage />', () => {
 
     const { getByTestId } = renderWithProviders(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      <HttpServiceRender name="mock-service" data={mockData as any} error={undefined} />,
+      <ServiceDetail name="mock-service" data={mockData as any} error={undefined} protocol="http" />,
       { route: '/http/services/mock-service', withPage: true },
     )
 
@@ -200,7 +197,7 @@ describe('<HttpServicePage />', () => {
 
     const { getByTestId } = renderWithProviders(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      <HttpServiceRender name="mock-service" data={mockData as any} error={undefined} />,
+      <ServiceDetail name="mock-service" data={mockData as any} error={undefined} protocol="http" />,
       { route: '/http/services/mock-service', withPage: true },
     )
 
