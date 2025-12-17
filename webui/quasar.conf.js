@@ -132,7 +132,7 @@ module.exports = configure(function (ctx) {
       },
       target: {
         browser: ['edge88', 'firefox78', 'chrome87', 'safari13.1'],
-        node: 'node20'
+        node: 'node24'
       },
       publicPath: process.env.APP_PUBLIC_PATH || '',
       env: process.env.APP_ENV === 'development'

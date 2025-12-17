@@ -1,4 +1,4 @@
-FROM node:22.9-alpine3.20
+FROM node:24-alpine3.22
 # Current Active LTS release according to (https://nodejs.org/en/about/releases/)
 
 ENV WEBUI_DIR=/src/webui
