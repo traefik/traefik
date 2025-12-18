@@ -800,6 +800,8 @@ func (p *Provider) applyMiddlewares(namespace, routerKey string, ingressConfig i
 	// TODO: check how to remove this, and create the HTTP router elsewhere.
 	applySSLRedirectConfiguration(routerKey, ingressConfig, hasTLS, rt, conf)
 
+	applyUpstreamVhost(routerKey, ingressConfig, rt, conf)
+
 	return nil
 }
 
@@ -932,6 +934,21 @@ func applyCORSConfiguration(routerName string, ingressConfig ingressConfig, rt *
 	}
 
 	rt.Middlewares = append(rt.Middlewares, corsMiddlewareName)
+}
+
+func applyUpstreamVhost(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
+	if ingressConfig.UpstreamVhost == nil {
+		return
+	}
+
+	vHostMiddlewareName := routerName + "-vhost"
+	conf.HTTP.Middlewares[vHostMiddlewareName] = &dynamic.Middleware{
+		Headers: &dynamic.Headers{
+			CustomRequestHeaders: map[string]string{"Host": *ingressConfig.UpstreamVhost},
+		},
+	}
+
+	rt.Middlewares = append(rt.Middlewares, vHostMiddlewareName)
 }
 
 func applySSLRedirectConfiguration(routerName string, ingressConfig ingressConfig, hasTLS bool, rt *dynamic.Router, conf *dynamic.Configuration) {

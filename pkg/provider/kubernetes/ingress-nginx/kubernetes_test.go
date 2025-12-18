@@ -505,6 +505,58 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
+			desc: "Upstream vhost",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/10-ingress-with-upstream-vhost.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-upstream-vhost-rule-0-path-0": {
+							Rule:        "Host(`upstream-vhost.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-upstream-vhost-rule-0-path-0-vhost"},
+							Service:     "default-whoami-80",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-upstream-vhost-rule-0-path-0-vhost": {
+							Headers: &dynamic.Headers{
+								CustomRequestHeaders: map[string]string{"Host": "upstream-host-header-value"},
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
 			desc:                           "Default Backend",
 			defaultBackendServiceName:      "whoami",
 			defaultBackendServiceNamespace: "default",

@@ -1,18 +1,18 @@
 import { AriaTable, AriaTbody, AriaTd, AriaTfoot, AriaThead, AriaTr, Box, Flex } from '@traefiklabs/faency'
 import { useMemo } from 'react'
 import { Helmet } from 'react-helmet-async'
-import { FiShield } from 'react-icons/fi'
 import useInfiniteScroll from 'react-infinite-scroll-hook'
 import { useSearchParams } from 'react-router-dom'
 
-import ClickableRow from 'components/ClickableRow'
-import ProviderIcon from 'components/icons/providers'
-import { Chips } from 'components/resources/DetailSections'
+import { ScrollTopButton } from 'components/buttons/ScrollTopButton'
+import { ProviderIconWithTooltip } from 'components/icons/providers'
+import { Chips } from 'components/resources/DetailItemComponents'
 import { ResourceStatus } from 'components/resources/ResourceStatus'
-import { ScrollTopButton } from 'components/ScrollTopButton'
+import TlsIcon from 'components/routers/TlsIcon'
 import { SpinnerLoader } from 'components/SpinnerLoader'
-import { searchParamsToState, TableFilter } from 'components/TableFilter'
+import ClickableRow from 'components/tables/ClickableRow'
 import SortableTh from 'components/tables/SortableTh'
+import { searchParamsToState, TableFilter } from 'components/tables/TableFilter'
 import Tooltip from 'components/Tooltip'
 import TooltipText from 'components/TooltipText'
 import useFetchWithPagination, { pagesResponseInterface, RenderRowType } from 'hooks/use-fetch-with-pagination'
@@ -22,17 +22,13 @@ export const makeRowRender = (): RenderRowType => {
   const TcpRoutersRenderRow = (row) => (
     <ClickableRow key={row.name} to={`/tcp/routers/${row.name}`}>
       <AriaTd>
-        <Tooltip label={row.status}>
-          <Box css={{ width: '32px', height: '32px' }}>
-            <ResourceStatus status={row.status} />
-          </Box>
-        </Tooltip>
+        <ResourceStatus status={row.status} />
       </AriaTd>
       <AriaTd>
         {row.tls && (
           <Tooltip label="TLS ON">
             <Box css={{ width: 24, height: 24 }} data-testid="tls-on">
-              <FiShield color="#008000" fill="#008000" size={24} />
+              <TlsIcon />
             </Box>
           </Tooltip>
         )}
@@ -48,11 +44,7 @@ export const makeRowRender = (): RenderRowType => {
         <TooltipText text={row.service} isTruncated />
       </AriaTd>
       <AriaTd>
-        <Tooltip label={row.provider}>
-          <Box css={{ width: '32px', height: '32px' }}>
-            <ProviderIcon name={row.provider} />
-          </Box>
-        </Tooltip>
+        <ProviderIconWithTooltip provider={row.provider} />
       </AriaTd>
       <AriaTd>
         <TooltipText text={row.priority} isTruncated />
@@ -82,7 +74,7 @@ export const TcpRoutersRender = ({
       <AriaTable>
         <AriaThead>
           <AriaTr>
-            <SortableTh label="Status" css={{ width: '40px' }} isSortable sortByValue="status" />
+            <SortableTh label="Status" css={{ width: '36px' }} isSortable sortByValue="status" />
             <SortableTh label="TLS" css={{ width: '40px' }} />
             <SortableTh label="Rule" isSortable sortByValue="rule" />
             <SortableTh label="Entrypoints" isSortable sortByValue="entryPoints" />

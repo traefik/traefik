@@ -49,6 +49,8 @@ type ingressConfig struct {
 	CORSAllowMethods           *[]string `annotation:"nginx.ingress.kubernetes.io/cors-allow-methods"`
 	CORSAllowOrigin            *[]string `annotation:"nginx.ingress.kubernetes.io/cors-allow-origin"`
 	CORSMaxAge                 *int      `annotation:"nginx.ingress.kubernetes.io/cors-max-age"`
+
+	UpstreamVhost *string `annotation:"nginx.ingress.kubernetes.io/upstream-vhost"`
 }
 
 // parseIngressConfig parses the annotations from an Ingress object into an ingressConfig struct.
