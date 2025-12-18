@@ -1,3 +1,14 @@
+## [v2.11.33](https://github.com/traefik/traefik/tree/v2.11.33) (2025-12-17)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.32...v2.11.33)
+
+**Bug fixes:**
+- **[server]** Print access logs for rejected requests and warn about new behavior ([#12426](https://github.com/traefik/traefik/pull/12426) by [rtribotte](https://github.com/rtribotte))
+
+**Documentation:**
+- Clarify doc about encoded characters rejection ([#12391](https://github.com/traefik/traefik/pull/12391) by [rtribotte](https://github.com/rtribotte))
+- Fix encoded characters entryPoint option documentation ([#12384](https://github.com/traefik/traefik/pull/12384) by [rtribotte](https://github.com/rtribotte))
+- Fix encoded characters option documentation ([#12373](https://github.com/traefik/traefik/pull/12373) by [kevinpollet](https://github.com/kevinpollet))
+
 ## [v3.6.5](https://github.com/traefik/traefik/tree/v3.6.5) (2025-12-16)
 [All Commits](https://github.com/traefik/traefik/compare/v3.6.4...v3.6.5)
 

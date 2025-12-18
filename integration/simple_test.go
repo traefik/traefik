@@ -1695,8 +1695,7 @@ func (s *SimpleSuite) TestDenyFragment() {
 	s.composeUp()
 	defer s.composeDown()
 
-	file := s.adaptFile("fixtures/simple_deny.toml", struct{}{})
-	_, _ = s.cmdTraefik(withConfigFile(file))
+	s.traefikCmd(withConfigFile(s.adaptFile("fixtures/simple_deny.toml", struct{}{})))
 
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`deny.localhost`)"))
 	require.NoError(s.T(), err)
