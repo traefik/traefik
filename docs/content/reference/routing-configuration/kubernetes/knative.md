@@ -8,7 +8,7 @@ description: "The Knative provider can be used for routing and load balancing in
 When using the Knative provider, Traefik leverages Knative's Custom Resource Definitions (CRDs) to obtain its routing configuration. 
 For detailed information on Knative concepts and resources, refer to the official [documentation](https://knative.dev/docs/).
 
-The Knative provider supports version [v1.19.0](https://github.com/knative/serving/releases/tag/knative-v1.19.0) of the specification.
+The Knative provider supports versions [v1.19.0](https://github.com/knative/serving/releases/tag/knative-v1.19.0) and [v1.20.0](https://github.com/knative/serving/releases/tag/knative-v1.20.0) of the specification.
 
 ## Deploying a Knative Service
 
