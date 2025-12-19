@@ -51,7 +51,7 @@ func TestLoadIngresses(t *testing.T) {
 			paths: []string{
 				"services.yml",
 				"ingressclasses.yml",
-				"ingresses/10-ingress-with-custom-headers.yml",
+				"ingresses/11-ingress-with-custom-headers.yml",
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
