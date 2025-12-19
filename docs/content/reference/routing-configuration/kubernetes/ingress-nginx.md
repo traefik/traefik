@@ -293,7 +293,7 @@ The following annotations are organized by category for easier navigation.
 | <a id="opt-nginx-ingress-kubernetes-iobackend-protocol" href="#opt-nginx-ingress-kubernetes-iobackend-protocol" title="#opt-nginx-ingress-kubernetes-iobackend-protocol">`nginx.ingress.kubernetes.io/backend-protocol`</a> | FCGI and AUTO_HTTP not supported.                                                          |
 | <a id="opt-nginx-ingress-kubernetes-ioservice-upstream" href="#opt-nginx-ingress-kubernetes-ioservice-upstream" title="#opt-nginx-ingress-kubernetes-ioservice-upstream">`nginx.ingress.kubernetes.io/service-upstream`</a> |                                                                                            |
 | <a id="opt-nginx-ingress-kubernetes-ioupstream-vhost" href="#opt-nginx-ingress-kubernetes-ioupstream-vhost" title="#opt-nginx-ingress-kubernetes-ioupstream-vhost">`nginx.ingress.kubernetes.io/upstream-vhost`</a> |                                                      |
-| <a id="opt-nginx-ingress-kubernetes-iocustom-headers" href="#opt-nginx-ingress-kubernetes-iocustom-headers" title="#opt-nginx-ingress-kubernetes-iocustom-headers">`nginx.ingress.kubernetes.io/custom-headers`</a> | Header whitelisting, similar to global-allowed-response-headers Nginx config is not supported |
+| <a id="opt-nginx-ingress-kubernetes-iocustom-headers" href="#opt-nginx-ingress-kubernetes-iocustom-headers" title="#opt-nginx-ingress-kubernetes-iocustom-headers">`nginx.ingress.kubernetes.io/custom-headers`</a> | Header whitelisting, similar to `global-allowed-response-headers` NGINX config is not supported |
 
 ### CORS
 
