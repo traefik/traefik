@@ -64,7 +64,7 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        "Host(`whoami.localhost`) && Path(`/basicauth`)",
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-ingress-with-basicauth-rule-0-path-0-basic-auth"},
-							Service:     "default-whoami-80",
+							Service:     "default-ingress-with-basicauth-whoami-80",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -78,7 +78,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Services: map[string]*dynamic.Service{
-						"default-whoami-80": {
+						"default-ingress-with-basicauth-whoami-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
@@ -119,7 +119,7 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        "Host(`whoami.localhost`) && Path(`/forwardauth`)",
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-ingress-with-forwardauth-rule-0-path-0-forward-auth"},
-							Service:     "default-whoami-80",
+							Service:     "default-ingress-with-forwardauth-whoami-80",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -131,7 +131,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Services: map[string]*dynamic.Service{
-						"default-whoami-80": {
+						"default-ingress-with-forwardauth-whoami-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
@@ -173,9 +173,9 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:       "Host(`sslredirect.localhost`) && Path(`/`)",
 							RuleSyntax: "default",
 							TLS:        &dynamic.RouterTLSConfig{},
-							Service:    "default-whoami-80",
+							Service:    "default-ingress-with-ssl-redirect-whoami-80",
 						},
-						"default-ingress-with-ssl-redirect-rule-0-path-0-redirect": {
+						"default-ingress-with-ssl-redirect-rule-0-path-0-http": {
 							Rule:        "Host(`sslredirect.localhost`) && Path(`/`)",
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-ingress-with-ssl-redirect-rule-0-path-0-redirect-scheme"},
@@ -184,42 +184,71 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-without-ssl-redirect-rule-0-path-0-http": {
 							Rule:       "Host(`withoutsslredirect.localhost`) && Path(`/`)",
 							RuleSyntax: "default",
-							Service:    "default-whoami-80",
+							Service:    "default-ingress-without-ssl-redirect-whoami-80",
 						},
 						"default-ingress-without-ssl-redirect-rule-0-path-0": {
 							Rule:       "Host(`withoutsslredirect.localhost`) && Path(`/`)",
 							RuleSyntax: "default",
 							TLS:        &dynamic.RouterTLSConfig{},
-							Service:    "default-whoami-80",
+							Service:    "default-ingress-without-ssl-redirect-whoami-80",
 						},
 						"default-ingress-with-force-ssl-redirect-rule-0-path-0": {
-							Rule:       "Host(`forcesslredirect.localhost`) && Path(`/`)",
-							RuleSyntax: "default",
-							Service:    "default-whoami-80",
-						},
-						"default-ingress-with-force-ssl-redirect-rule-0-path-0-redirect": {
 							Rule:        "Host(`forcesslredirect.localhost`) && Path(`/`)",
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-ingress-with-force-ssl-redirect-rule-0-path-0-redirect-scheme"},
-							Service:     "noop@internal",
+							Service:     "default-ingress-with-force-ssl-redirect-whoami-80",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-ssl-redirect-rule-0-path-0-redirect-scheme": {
 							RedirectScheme: &dynamic.RedirectScheme{
-								Scheme:    "https",
-								Permanent: true,
+								Scheme:                 "https",
+								ForcePermanentRedirect: true,
 							},
 						},
 						"default-ingress-with-force-ssl-redirect-rule-0-path-0-redirect-scheme": {
 							RedirectScheme: &dynamic.RedirectScheme{
-								Scheme:    "https",
-								Permanent: true,
+								Scheme:                 "https",
+								ForcePermanentRedirect: true,
 							},
 						},
 					},
 					Services: map[string]*dynamic.Service{
-						"default-whoami-80": {
+						"default-ingress-with-ssl-redirect-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-ingress-without-ssl-redirect-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-ingress-with-force-ssl-redirect-whoami-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
@@ -313,12 +342,12 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-sticky-rule-0-path-0": {
 							Rule:       "Host(`sticky.localhost`) && Path(`/`)",
 							RuleSyntax: "default",
-							Service:    "default-whoami-80",
+							Service:    "default-ingress-with-sticky-whoami-80",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-whoami-80": {
+						"default-ingress-with-sticky-whoami-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
@@ -370,12 +399,12 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-proxy-ssl-rule-0-path-0": {
 							Rule:       "Host(`proxy-ssl.localhost`) && Path(`/`)",
 							RuleSyntax: "default",
-							Service:    "default-whoami-tls-443",
+							Service:    "default-ingress-with-proxy-ssl-whoami-tls-443",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-whoami-tls-443": {
+						"default-ingress-with-proxy-ssl-whoami-tls-443": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
@@ -397,7 +426,7 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-proxy-ssl": {
 							ServerName:         "whoami.localhost",
-							InsecureSkipVerify: true,
+							InsecureSkipVerify: false,
 							RootCAs:            []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
 						},
 					},
@@ -423,7 +452,7 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        "Host(`cors.localhost`) && Path(`/`)",
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-ingress-with-cors-rule-0-path-0-cors"},
-							Service:     "default-whoami-80",
+							Service:     "default-ingress-with-cors-whoami-80",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -439,7 +468,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Services: map[string]*dynamic.Service{
-						"default-whoami-80": {
+						"default-ingress-with-cors-whoami-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
@@ -479,12 +508,12 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-service-upstream-rule-0-path-0": {
 							Rule:       "Host(`service-upstream.localhost`) && Path(`/`)",
 							RuleSyntax: "default",
-							Service:    "default-whoami-80",
+							Service:    "default-ingress-with-service-upstream-whoami-80",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-whoami-80": {
+						"default-ingress-with-service-upstream-whoami-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{

@@ -13,6 +13,8 @@ It also supports many of the [ingress-nginx](https://kubernetes.github.io/ingres
     The Kubernetes NGINX Ingress Controller project has announced its retirement in **March 2026** and will no longer receive updates or security patches.
     Traefik provides a migration path by supporting NGINX annotations, allowing you to transition your workloads without rewriting all your Ingress configurations.
 
+    **→ See the [NGINX to Traefik Migration Guide](../../../../migrate/nginx-to-traefik.md) for step-by-step instructions.**
+
     For more information about the NGINX Ingress Controller retirement, see the [official Kubernetes blog announcement](https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement).
 
 ## Ingress Discovery
@@ -32,11 +34,6 @@ You can enable the Kubernetes Ingress NGINX provider as detailed below:
 ```yaml tab="File (YAML)"
 providers:
   kubernetesIngressNGINX:
-    endpoint: "https://kubernetes.default.svc"
-    token: "mytoken"
-    certAuthFilePath: "/path/to/ca.crt"
-    throttleDuration: "2s"
-
     # Namespace discovery
     watchNamespace: "default"
     # OR use namespace selector (mutually exclusive with watchNamespace)
@@ -47,25 +44,10 @@ providers:
     controllerClass: "k8s.io/ingress-nginx"
     watchIngressWithoutClass: false
     ingressClassByName: false
-
-    # Status updates
-    publishService: "kube-system/traefik"
-    publishStatusAddress: "203.0.113.42"
-
-    # Default backend
-    defaultBackendService: "default/default-backend"
-
-    # Security
-    disableSvcExternalName: false
 ```
 
 ```toml tab="File (TOML)"
 [providers.kubernetesIngressNGINX]
-  endpoint = "https://kubernetes.default.svc"
-  token = "mytoken"
-  certAuthFilePath = "/path/to/ca.crt"
-  throttleDuration = "2s"
-
   # Namespace discovery
   watchNamespace = "default"
   # OR use namespace selector (mutually exclusive with watchNamespace)
@@ -76,33 +58,15 @@ providers:
   controllerClass = "k8s.io/ingress-nginx"
   watchIngressWithoutClass = false
   ingressClassByName = false
-
-  # Status updates
-  publishService = "kube-system/traefik"
-  publishStatusAddress = "203.0.113.42"
-
-  # Default backend
-  defaultBackendService = "default/default-backend"
-
-  # Security
-  disableSvcExternalName = false
 ```
 
 ```bash tab="CLI"
 --providers.kubernetesingressnginx=true
---providers.kubernetesingressnginx.endpoint=https://kubernetes.default.svc
---providers.kubernetesingressnginx.token=mytoken
---providers.kubernetesingressnginx.certauthfilepath=/path/to/ca.crt
---providers.kubernetesingressnginx.throttleduration=2s
 --providers.kubernetesingressnginx.watchnamespace=default
 --providers.kubernetesingressnginx.ingressclass=nginx
 --providers.kubernetesingressnginx.controllerclass=k8s.io/ingress-nginx
 --providers.kubernetesingressnginx.watchingresswithoutclass=false
 --providers.kubernetesingressnginx.ingressclassbyname=false
---providers.kubernetesingressnginx.publishservice=kube-system/traefik
---providers.kubernetesingressnginx.publishstatusaddress=203.0.113.42
---providers.kubernetesingressnginx.defaultbackendservice=default/default-backend
---providers.kubernetesingressnginx.disablesvcexternalname=false
 ```
 
 ```yaml tab="Helm Chart Values"
@@ -110,18 +74,6 @@ providers:
   kubernetesIngressNginx:
     # -- Enable Kubernetes Ingress NGINX provider
     enabled: true
-
-    # -- Kubernetes server endpoint (required for external cluster client)
-    endpoint: "https://kubernetes.default.svc"
-
-    # -- Kubernetes bearer token (not needed for in-cluster client)
-    token: "mytoken"
-
-    # -- Kubernetes certificate authority file path (not needed for in-cluster client)
-    certAuthFilePath: "/path/to/ca.crt"
-
-    # -- Ingress refresh throttle duration
-    throttleDuration: "2s"
 
     # Namespace discovery
     # -- Namespace the controller watches for updates to Kubernetes objects
@@ -140,22 +92,6 @@ providers:
     watchIngressWithoutClass: false
     # -- Define if Ingress Controller should watch for Ingress Class by Name together with Controller Class
     ingressClassByName: false
-
-    # Status updates
-    # -- Service fronting the Ingress controller
-    publishService:
-      enabled: true
-      pathOverride: "kube-system/traefik"
-    # -- Customized address (or addresses, separated by comma) to set as the load-balancer status of Ingress objects
-    publishStatusAddress: "203.0.113.42"
-
-    # Default backend
-    # -- Service used to serve HTTP requests not matching any known server name (catch-all). Takes the form 'namespace/name'
-    defaultBackendService: "default/default-backend"
-
-    # Security
-    # -- Disable support for Services of type ExternalName
-    disableSvcExternalName: false
 ```
 
 This provider watches for incoming Ingress events and automatically translates NGINX annotations into Traefik's dynamic configuration, creating the corresponding routers, services, middlewares, and other components needed to route traffic to your cluster services.
@@ -172,7 +108,7 @@ This provider watches for incoming Ingress events and automatically translates N
 | <a id="opt-providers-kubernetesIngressNGINX-throttleDuration" href="#opt-providers-kubernetesIngressNGINX-throttleDuration" title="#opt-providers-kubernetesIngressNGINX-throttleDuration">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`throttleDuration`</a> | Minimum amount of time to wait between two Kubernetes events before producing a new configuration.<br />This prevents a Kubernetes cluster that updates many times per second from continuously changing your Traefik configuration.<br />If empty, every event is caught.                                                                                                           | 0s      | No       |
 | <a id="opt-providers-kubernetesIngressNGINX-watchNamespace" href="#opt-providers-kubernetesIngressNGINX-watchNamespace" title="#opt-providers-kubernetesIngressNGINX-watchNamespace">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`watchNamespace`</a> | Namespace the controller watches for updates to Kubernetes objects. All namespaces are watched if this parameter is left empty.                                                                                                                                                                                                                                                      | ""      | No       |
 | <a id="opt-providers-kubernetesIngressNGINX-watchNamespaceSelector" href="#opt-providers-kubernetesIngressNGINX-watchNamespaceSelector" title="#opt-providers-kubernetesIngressNGINX-watchNamespaceSelector">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`watchNamespaceSelector`</a> | Selector selects namespaces the controller watches for updates to Kubernetes objects.                                                                                                                                                                                                                                                                                                | ""      | No       |
-| <a id="opt-providers-kubernetesIngressNGINX-ingressClass" href="#opt-providers-kubernetesIngressNGINX-ingressClass" title="#opt-providers-kubernetesIngressNGINX-ingressClass">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`ingressClass`</a> | Name of the ingress class this controller satisfies.                                                                                                                                                                                                                                                                                                                                 | ""      | No       |
+| <a id="opt-providers-kubernetesIngressNGINX-ingressClass" href="#opt-providers-kubernetesIngressNGINX-ingressClass" title="#opt-providers-kubernetesIngressNGINX-ingressClass">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`ingressClass`</a> | Name of the ingress class this controller satisfies.                                                                                                                                                                                                                                                                                                                                 | "nginx"      | No       |
 | <a id="opt-providers-kubernetesIngressNGINX-controllerClass" href="#opt-providers-kubernetesIngressNGINX-controllerClass" title="#opt-providers-kubernetesIngressNGINX-controllerClass">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`controllerClass`</a> | Ingress Class Controller value this controller satisfies.                                                                                                                                                                                                                                                                                                                            | ""      | No       |
 | <a id="opt-providers-kubernetesIngressNGINX-watchIngressWithoutClass" href="#opt-providers-kubernetesIngressNGINX-watchIngressWithoutClass" title="#opt-providers-kubernetesIngressNGINX-watchIngressWithoutClass">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`watchIngressWithoutClass`</a> | Define if Ingress Controller should also watch for Ingresses without an IngressClass or the annotation specified.                                                                                                                                                                                                                                                                    | false   | No       |
 | <a id="opt-providers-kubernetesIngressNGINX-ingressClassByName" href="#opt-providers-kubernetesIngressNGINX-ingressClassByName" title="#opt-providers-kubernetesIngressNGINX-ingressClassByName">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`ingressClassByName`</a> | Define if Ingress Controller should watch for Ingress Class by Name together with Controller Class.                                                                                                                                                                                                                                                                                  | false   | No       |
