@@ -42,6 +42,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | <a id="opt-api-dashboard" href="#opt-api-dashboard" title="#opt-api-dashboard">api.dashboard</a> | Activate dashboard. | true |
 | <a id="opt-api-debug" href="#opt-api-debug" title="#opt-api-debug">api.debug</a> | Enable additional endpoints for debugging and profiling. | false |
 | <a id="opt-api-disabledashboardad" href="#opt-api-disabledashboardad" title="#opt-api-disabledashboardad">api.disabledashboardad</a> | Disable ad in the dashboard. | false |
+| <a id="opt-api-disabledashboarddemo" href="#opt-api-disabledashboarddemo" title="#opt-api-disabledashboarddemo">api.disabledashboarddemo</a> | Disable demo section in the dashboard. | false |
 | <a id="opt-api-insecure" href="#opt-api-insecure" title="#opt-api-insecure">api.insecure</a> | Activate API directly on the entryPoint named traefik. | false |
 | <a id="opt-certificatesresolvers-name" href="#opt-certificatesresolvers-name" title="#opt-certificatesresolvers-name">certificatesresolvers._name_</a> | Certificates resolvers configuration. | false |
 | <a id="opt-certificatesresolvers-name-acme-cacertificates" href="#opt-certificatesresolvers-name-acme-cacertificates" title="#opt-certificatesresolvers-name-acme-cacertificates">certificatesresolvers._name_.acme.cacertificates</a> | Specify the paths to PEM encoded CA Certificates that can be used to authenticate an ACME server with an HTTPS certificate not issued by a CA in the system-wide trusted root list. | |

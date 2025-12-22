@@ -24,6 +24,8 @@ var (
 	StartDate = time.Now()
 	// DisableDashboardAd disables ad in the dashboard.
 	DisableDashboardAd = false
+	// DisableDashboardDemo disables demo section in the dashboard.
+	DisableDashboardDemo = false
 )
 
 // Handler expose version routes.
@@ -38,16 +40,18 @@ func (v Handler) Append(router *mux.Router) {
 	router.Methods(http.MethodGet).Path("/api/version").
 		HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
 			v := struct {
-				Version            string
-				Codename           string
-				StartDate          time.Time `json:"startDate"`
-				UUID               string    `json:"uuid,omitempty"`
-				DisableDashboardAd bool      `json:"disableDashboardAd,omitempty"`
+				Version              string
+				Codename             string
+				StartDate            time.Time `json:"startDate"`
+				UUID                 string    `json:"uuid,omitempty"`
+				DisableDashboardAd   bool      `json:"disableDashboardAd,omitempty"`
+				DisableDashboardDemo bool      `json:"disableDashboardDemo,omitempty"`
 			}{
-				Version:            Version,
-				Codename:           Codename,
-				StartDate:          StartDate,
-				DisableDashboardAd: DisableDashboardAd,
+				Version:              Version,
+				Codename:             Codename,
+				StartDate:            StartDate,
+				DisableDashboardAd:   DisableDashboardAd,
+				DisableDashboardDemo: DisableDashboardDemo,
 			}
 
 			if err := templatesRenderer.JSON(response, http.StatusOK, v); err != nil {

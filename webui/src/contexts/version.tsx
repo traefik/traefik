@@ -5,11 +5,13 @@ import { BASE_PATH } from 'libs/utils'
 type VersionContextProps = {
   showHubButton: boolean
   version: string
+  showDemoSection: boolean
 }
 
 export const VersionContext = createContext<VersionContextProps>({
   showHubButton: false,
   version: '',
+  showDemoSection: false,
 })
 
 type VersionProviderProps = {
@@ -18,6 +20,7 @@ type VersionProviderProps = {
 
 export const VersionProvider = ({ children }: VersionProviderProps) => {
   const [showHubButton, setShowHubButton] = useState(false)
+  const [showDemoSection, setShowDemoSection] = useState(false)
   const [version, setVersion] = useState('')
 
   useEffect(() => {
@@ -29,6 +32,7 @@ export const VersionProvider = ({ children }: VersionProviderProps) => {
         }
         const data: API.Version = await response.json()
         setShowHubButton(!data.disableDashboardAd)
+        setShowDemoSection(!data.disableDashboardDemo)
         setVersion(data.Version)
       } catch (err) {
         console.error(err)
@@ -38,5 +42,5 @@ export const VersionProvider = ({ children }: VersionProviderProps) => {
     fetchVersion()
   }, [])
 
-  return <VersionContext.Provider value={{ showHubButton, version }}>{children}</VersionContext.Provider>
+  return <VersionContext.Provider value={{ showHubButton, version, showDemoSection }}>{children}</VersionContext.Provider>
 }
