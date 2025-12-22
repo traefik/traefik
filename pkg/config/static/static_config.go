@@ -112,8 +112,9 @@ type CertificateResolver struct {
 
 // Global holds the global configuration.
 type Global struct {
-	CheckNewVersion    bool `description:"Periodically check if a new version has been released." json:"checkNewVersion,omitempty" toml:"checkNewVersion,omitempty" yaml:"checkNewVersion,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
-	SendAnonymousUsage bool `description:"Periodically send anonymous usage statistics. If the option is not specified, it will be disabled by default." json:"sendAnonymousUsage,omitempty" toml:"sendAnonymousUsage,omitempty" yaml:"sendAnonymousUsage,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	CheckNewVersion        bool `description:"Periodically check if a new version has been released." json:"checkNewVersion,omitempty" toml:"checkNewVersion,omitempty" yaml:"checkNewVersion,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	SendAnonymousUsage     bool `description:"Periodically send anonymous usage statistics. If the option is not specified, it will be disabled by default." json:"sendAnonymousUsage,omitempty" toml:"sendAnonymousUsage,omitempty" yaml:"sendAnonymousUsage,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	NotAppendXForwardedFor bool `description:"Disable appending RemoteAddr to X-Forwarded-For header. Defaults to false (appending is enabled)." json:"notAppendXForwardedFor,omitempty" toml:"notAppendXForwardedFor,omitempty" yaml:"notAppendXForwardedFor,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 }
 
 // ServersTransport options to configure communication between Traefik and the servers.

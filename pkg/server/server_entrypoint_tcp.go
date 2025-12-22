@@ -650,6 +650,7 @@ func newHTTPServer(ctx context.Context, ln net.Listener, configuration *static.E
 		configuration.ForwardedHeaders.Insecure,
 		configuration.ForwardedHeaders.TrustedIPs,
 		configuration.ForwardedHeaders.Connection,
+		configuration.ForwardedHeaders.NotAppendXForwardedFor,
 		next)
 	if err != nil {
 		return nil, err

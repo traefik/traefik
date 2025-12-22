@@ -794,6 +794,8 @@ func (p *Provider) applyMiddlewares(namespace, routerKey string, ingressConfig i
 		return fmt.Errorf("applying forward auth configuration: %w", err)
 	}
 
+	applyWhitelistSourceRangeConfiguration(routerKey, ingressConfig, rt, conf)
+
 	applyCORSConfiguration(routerKey, ingressConfig, rt, conf)
 
 	// Apply SSL redirect is mandatory to be applied after all other middlewares.
@@ -801,6 +803,40 @@ func (p *Provider) applyMiddlewares(namespace, routerKey string, ingressConfig i
 	applySSLRedirectConfiguration(routerKey, ingressConfig, hasTLS, rt, conf)
 
 	applyUpstreamVhost(routerKey, ingressConfig, rt, conf)
+
+	if err := p.applyCustomHeaders(routerKey, ingressConfig, rt, conf); err != nil {
+		return fmt.Errorf("applying custom headers: %w", err)
+	}
+
+	return nil
+}
+
+func (p *Provider) applyCustomHeaders(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
+	customHeaders := ptr.Deref(ingressConfig.CustomHeaders, "")
+	if customHeaders == "" {
+		return nil
+	}
+
+	customHeadersParts := strings.Split(customHeaders, "/")
+	if len(customHeadersParts) != 2 {
+		return fmt.Errorf("invalid custom headers config map %q", customHeaders)
+	}
+
+	configMapNamespace := customHeadersParts[0]
+	configMapName := customHeadersParts[1]
+
+	configMap, err := p.k8sClient.GetConfigMap(configMapNamespace, configMapName)
+	if err != nil {
+		return fmt.Errorf("getting configMap %s: %w", customHeaders, err)
+	}
+
+	customHeadersMiddlewareName := routerName + "-custom-headers"
+	conf.HTTP.Middlewares[customHeadersMiddlewareName] = &dynamic.Middleware{
+		Headers: &dynamic.Headers{
+			CustomResponseHeaders: configMap.Data,
+		},
+	}
+	rt.Middlewares = append(rt.Middlewares, customHeadersMiddlewareName)
 
 	return nil
 }
@@ -949,6 +985,26 @@ func applyUpstreamVhost(routerName string, ingressConfig ingressConfig, rt *dyna
 	}
 
 	rt.Middlewares = append(rt.Middlewares, vHostMiddlewareName)
+}
+
+func applyWhitelistSourceRangeConfiguration(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
+	whitelistSourceRange := ptr.Deref(ingressConfig.WhitelistSourceRange, "")
+	if whitelistSourceRange == "" {
+		return
+	}
+
+	sourceRanges := strings.Split(whitelistSourceRange, ",")
+	for i := range sourceRanges {
+		sourceRanges[i] = strings.TrimSpace(sourceRanges[i])
+	}
+
+	whitelistSourceRangeMiddlewareName := routerName + "-whitelist-source-range"
+	conf.HTTP.Middlewares[whitelistSourceRangeMiddlewareName] = &dynamic.Middleware{
+		IPAllowList: &dynamic.IPAllowList{
+			SourceRange: sourceRanges,
+		},
+	}
+	rt.Middlewares = append(rt.Middlewares, whitelistSourceRangeMiddlewareName)
 }
 
 func applySSLRedirectConfiguration(routerName string, ingressConfig ingressConfig, hasTLS bool, rt *dynamic.Router, conf *dynamic.Configuration) {

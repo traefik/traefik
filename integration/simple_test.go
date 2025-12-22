@@ -94,6 +94,197 @@ func (s *SimpleSuite) TestSimpleFastProxy() {
 	assert.GreaterOrEqual(s.T(), 1, callCount)
 }
 
+func (s *SimpleSuite) TestXForwardedForDisabled() {
+	srv1 := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		// Echo back the X-Forwarded-For header
+		xff := req.Header.Get("X-Forwarded-For")
+		_, _ = rw.Write([]byte(xff))
+	}))
+	defer srv1.Close()
+
+	dynamicConf := s.adaptFile("resources/compose/x_forwarded_for.toml", struct {
+		Server string
+	}{
+		Server: srv1.URL,
+	})
+
+	staticConf := s.adaptFile("fixtures/x_forwarded_for.toml", struct {
+		DynamicConfPath string
+	}{
+		DynamicConfPath: dynamicConf,
+	})
+
+	s.traefikCmd(withConfigFile(staticConf))
+
+	// Wait for Traefik to start
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("service1"))
+	require.NoError(s.T(), err)
+
+	// Test with appendXForwardedFor = false
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
+	require.NoError(s.T(), err)
+
+	// Set an existing X-Forwarded-For header
+	req.Header.Set("X-Forwarded-For", "1.2.3.4")
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(s.T(), err)
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(s.T(), err)
+
+	// The backend should receive the original X-Forwarded-For header unchanged
+	// (Traefik should NOT append RemoteAddr when appendXForwardedFor = false)
+	assert.Equal(s.T(), "1.2.3.4", string(body))
+}
+
+func (s *SimpleSuite) TestXForwardedForEnabled() {
+	srv1 := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		// Echo back the X-Forwarded-For header
+		xff := req.Header.Get("X-Forwarded-For")
+		_, _ = rw.Write([]byte(xff))
+	}))
+	defer srv1.Close()
+
+	dynamicConf := s.adaptFile("resources/compose/x_forwarded_for.toml", struct {
+		Server string
+	}{
+		Server: srv1.URL,
+	})
+
+	// Use a config with appendXForwardedFor = true
+	staticConf := s.adaptFile("fixtures/x_forwarded_for_enabled.toml", struct {
+		DynamicConfPath string
+	}{
+		DynamicConfPath: dynamicConf,
+	})
+
+	s.traefikCmd(withConfigFile(staticConf))
+
+	// Wait for Traefik to start
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("service1"))
+	require.NoError(s.T(), err)
+
+	// Test with default appendXForwardedFor = true
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
+	require.NoError(s.T(), err)
+
+	// Set an existing X-Forwarded-For header
+	req.Header.Set("X-Forwarded-For", "1.2.3.4")
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(s.T(), err)
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(s.T(), err)
+
+	// The backend should receive the X-Forwarded-For header with RemoteAddr appended
+	// (should be "1.2.3.4, 127.0.0.1" since the request comes from localhost)
+	assert.Contains(s.T(), string(body), "1.2.3.4,")
+	assert.Contains(s.T(), string(body), "127.0.0.1")
+}
+
+func (s *SimpleSuite) TestXForwardedForDisabledFastProxy() {
+	srv1 := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		// Verify FastProxy is being used
+		assert.Contains(s.T(), req.Header, "X-Traefik-Fast-Proxy")
+
+		// Echo back the X-Forwarded-For header
+		xff := req.Header.Get("X-Forwarded-For")
+		_, _ = rw.Write([]byte(xff))
+	}))
+	defer srv1.Close()
+
+	dynamicConf := s.adaptFile("resources/compose/x_forwarded_for.toml", struct {
+		Server string
+	}{
+		Server: srv1.URL,
+	})
+
+	staticConf := s.adaptFile("fixtures/x_forwarded_for_fastproxy.toml", struct {
+		DynamicConfPath string
+	}{
+		DynamicConfPath: dynamicConf,
+	})
+
+	s.traefikCmd(withConfigFile(staticConf))
+
+	// Wait for Traefik to start
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("service1"))
+	require.NoError(s.T(), err)
+
+	// Test with appendXForwardedFor = false
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
+	require.NoError(s.T(), err)
+
+	// Set an existing X-Forwarded-For header
+	req.Header.Set("X-Forwarded-For", "1.2.3.4")
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(s.T(), err)
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(s.T(), err)
+
+	// The backend should receive the original X-Forwarded-For header unchanged
+	// (FastProxy should NOT append RemoteAddr when notAppendXForwardedFor = true)
+	assert.Equal(s.T(), "1.2.3.4", string(body))
+}
+
+func (s *SimpleSuite) TestXForwardedForEnabledFastProxy() {
+	srv1 := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		// Verify FastProxy is being used
+		assert.Contains(s.T(), req.Header, "X-Traefik-Fast-Proxy")
+
+		// Echo back the X-Forwarded-For header
+		xff := req.Header.Get("X-Forwarded-For")
+		_, _ = rw.Write([]byte(xff))
+	}))
+	defer srv1.Close()
+
+	dynamicConf := s.adaptFile("resources/compose/x_forwarded_for.toml", struct {
+		Server string
+	}{
+		Server: srv1.URL,
+	})
+
+	// Use a config with appendXForwardedFor = false (default)
+	staticConf := s.adaptFile("fixtures/x_forwarded_for_fastproxy_enabled.toml", struct {
+		DynamicConfPath string
+	}{
+		DynamicConfPath: dynamicConf,
+	})
+
+	s.traefikCmd(withConfigFile(staticConf))
+
+	// Wait for Traefik to start
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("service1"))
+	require.NoError(s.T(), err)
+
+	// Test with default appendXForwardedFor = true
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
+	require.NoError(s.T(), err)
+
+	// Set an existing X-Forwarded-For header
+	req.Header.Set("X-Forwarded-For", "1.2.3.4")
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(s.T(), err)
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(s.T(), err)
+
+	// The backend should receive the X-Forwarded-For header with RemoteAddr appended
+	// (FastProxy should append RemoteAddr when notAppendXForwardedFor = false)
+	// (should be "1.2.3.4, 127.0.0.1" since the request comes from localhost)
+	assert.Contains(s.T(), string(body), "1.2.3.4,")
+	assert.Contains(s.T(), string(body), "127.0.0.1")
+}
+
 func (s *SimpleSuite) TestWithWebConfig() {
 	s.cmdTraefik(withConfigFile("fixtures/simple_web.toml"))
 
