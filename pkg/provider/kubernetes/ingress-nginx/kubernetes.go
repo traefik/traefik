@@ -794,6 +794,8 @@ func (p *Provider) applyMiddlewares(namespace, routerKey string, ingressConfig i
 		return fmt.Errorf("applying forward auth configuration: %w", err)
 	}
 
+	applyWhitelistSourceRangeConfiguration(routerKey, ingressConfig, rt, conf)
+
 	applyCORSConfiguration(routerKey, ingressConfig, rt, conf)
 
 	// Apply SSL redirect is mandatory to be applied after all other middlewares.
@@ -949,6 +951,26 @@ func applyUpstreamVhost(routerName string, ingressConfig ingressConfig, rt *dyna
 	}
 
 	rt.Middlewares = append(rt.Middlewares, vHostMiddlewareName)
+}
+
+func applyWhitelistSourceRangeConfiguration(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
+	whitelistSourceRange := ptr.Deref(ingressConfig.WhitelistSourceRange, "")
+	if whitelistSourceRange == "" {
+		return
+	}
+
+	sourceRanges := strings.Split(whitelistSourceRange, ",")
+	for i := range sourceRanges {
+		sourceRanges[i] = strings.TrimSpace(sourceRanges[i])
+	}
+
+	whitelistSourceRangeMiddlewareName := routerName + "-whitelist-source-range"
+	conf.HTTP.Middlewares[whitelistSourceRangeMiddlewareName] = &dynamic.Middleware{
+		IPAllowList: &dynamic.IPAllowList{
+			SourceRange: sourceRanges,
+		},
+	}
+	rt.Middlewares = append(rt.Middlewares, whitelistSourceRangeMiddlewareName)
 }
 
 func applySSLRedirectConfiguration(routerName string, ingressConfig ingressConfig, hasTLS bool, rt *dynamic.Router, conf *dynamic.Configuration) {

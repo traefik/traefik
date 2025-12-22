@@ -609,6 +609,208 @@ func TestLoadIngresses(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
+		{
+			desc: "WhitelistSourceRange with single IP",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/10-ingress-with-whitelist-single-ip.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-whitelist-single-ip-rule-0-path-0": {
+							Rule:        "Host(`whitelist-source-range.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-whitelist-single-ip-rule-0-path-0-whitelist-source-range"},
+							Service:     "default-whoami-80",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-whitelist-single-ip-rule-0-path-0-whitelist-source-range": {
+							IPAllowList: &dynamic.IPAllowList{
+								SourceRange: []string{"192.168.20.1"},
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "WhitelistSourceRange with single CIDR",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/11-ingress-with-whitelist-single-cidr.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-whitelist-single-cidr-rule-0-path-0": {
+							Rule:        "Host(`whitelist-source-range.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-whitelist-single-cidr-rule-0-path-0-whitelist-source-range"},
+							Service:     "default-whoami-80",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-whitelist-single-cidr-rule-0-path-0-whitelist-source-range": {
+							IPAllowList: &dynamic.IPAllowList{
+								SourceRange: []string{"192.168.1.0/24"},
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "WhitelistSourceRange when specified multiple IP/CIDR",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/12-ingress-with-whitelist-multiple-ip-and-cidr.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-whitelist-multiple-ip-and-cidr-rule-0-path-0": {
+							Rule:        "Host(`whitelist-source-range.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-whitelist-multiple-ip-and-cidr-rule-0-path-0-whitelist-source-range"},
+							Service:     "default-whoami-80",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-whitelist-multiple-ip-and-cidr-rule-0-path-0-whitelist-source-range": {
+							IPAllowList: &dynamic.IPAllowList{
+								SourceRange: []string{"192.168.1.0/24", "10.0.0.0/8", "192.168.20.1"},
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "WhitelistSourceRange when empty ignored",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/13-ingress-with-whitelist-empty.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-whitelist-empty-rule-0-path-0": {
+							Rule:        "Host(`whitelist-source-range.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Middlewares: nil,
+							Service:     "default-whoami-80",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
 	}
 
 	for _, test := range testCases {
