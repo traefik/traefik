@@ -804,14 +804,14 @@ func (p *Provider) applyMiddlewares(namespace, routerKey string, ingressConfig i
 
 	applyUpstreamVhost(routerKey, ingressConfig, rt, conf)
 
-	if err := p.applyCustomHeader(routerKey, ingressConfig, rt, conf); err != nil {
+	if err := p.applyCustomHeaders(routerKey, ingressConfig, rt, conf); err != nil {
 		return fmt.Errorf("applying custom headers: %w", err)
 	}
 
 	return nil
 }
 
-func (p *Provider) applyCustomHeader(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
+func (p *Provider) applyCustomHeaders(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
 	customHeaders := ptr.Deref(ingressConfig.CustomHeaders, "")
 	if customHeaders == "" {
 		return nil
