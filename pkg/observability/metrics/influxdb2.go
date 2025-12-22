@@ -3,6 +3,8 @@ package metrics
 import (
 	"context"
 	"errors"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/go-kit/kit/metrics/influx"
@@ -134,15 +136,60 @@ func StopInfluxDB2() {
 
 // newInfluxDB2Client creates an influxdb2.Client.
 func newInfluxDB2Client(config *otypes.InfluxDB2) (influxdb2.Client, error) {
-	if config.Token == "" || config.Org == "" || config.Bucket == "" {
-		return nil, errors.New("token, org or bucket property is missing")
+	if config.Org == "" || config.Bucket == "" {
+		return nil, errors.New("org or bucket property is missing")
+	}
+
+	token, err := getToken(config);
+	if err != nil {
+		return nil, err
 	}
 
 	// Disable InfluxDB2 logs.
 	// See https://github.com/influxdata/influxdb-client-go/blob/v2.7.0/options.go#L128
 	influxdb2log.Log = nil
 
-	return influxdb2.NewClient(config.Address, config.Token), nil
+	return influxdb2.NewClient(config.Address, token), nil
+}
+
+func getToken(config *otypes.InfluxDB2) (string, error) {
+	if config.Token != "" {
+		return config.Token, nil
+	}
+
+	if config.TokenFile == "" {
+		return nil, errors.New("Either token or tokenfile property must be set")
+	}
+
+	lines, err := getLinesFromFile(config.TokenFile)
+	if err != nil {
+		return nil, err
+	}
+
+	if (len(lines) == 0) {
+		return nil, errors.New("The contents of tokenfile must not be empty")
+	}
+
+	return lines[0], nil
+}
+
+func getLinesFromFile(filename string) ([]string, error) {
+	dat, err := os.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	// Trim lines and filter out blanks
+	rawLines := strings.Split(string(dat), "\n")
+	var filteredLines []string
+	for _, rawLine := range rawLines {
+		line := strings.TrimSpace(rawLine)
+		if line != "" {
+			filteredLines = append(filteredLines, line)
+		}
+	}
+
+	return filteredLines, nil
 }
 
 type influxDB2Writer struct {

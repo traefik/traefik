@@ -42,6 +42,8 @@ metrics:
 
 _Required, Default=""_
 
+##### Either `token` or `tokenFile` is required. If both are provided, `token` is used.
+
 Token with which to connect to InfluxDB v2.
 
 ```yaml tab="File (YAML)"
@@ -59,6 +61,29 @@ metrics:
 ```bash tab="CLI"
 --metrics.influxdb2.token=secret
 ```
+
+#### `tokenFile`
+
+Default=""_
+
+The path to an external file that contains the token with which to connect to InfluxDB v2.
+
+```yaml tab="File (YAML)"
+metrics:
+  influxDB2:
+    tokenFile: /secrets/influxdb2_token
+```
+
+```toml tab="File (TOML)"
+[metrics]
+  [metrics.influxDB2]
+    tokenFile = "/secrets/influxdb2_token"
+```
+
+```bash tab="CLI"
+--metrics.influxdb2.tokenfile=/secrets/influxdb2_token
+```
+
 
 #### `org`
 

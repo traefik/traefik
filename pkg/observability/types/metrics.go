@@ -89,6 +89,7 @@ func (s *Statsd) SetDefaults() {
 type InfluxDB2 struct {
 	Address              string            `description:"InfluxDB v2 address." json:"address,omitempty" toml:"address,omitempty" yaml:"address,omitempty"`
 	Token                string            `description:"InfluxDB v2 access token." json:"token,omitempty" toml:"token,omitempty" yaml:"token,omitempty" loggable:"false"`
+	TokenFile            string            `description:"InfluxDB v2 access token file." json:"tokenFile,omitempty" toml:"tokenFile,omitempty" yaml:"tokenFile,omitempty"`
 	PushInterval         types.Duration    `description:"InfluxDB v2 push interval." json:"pushInterval,omitempty" toml:"pushInterval,omitempty" yaml:"pushInterval,omitempty" export:"true"`
 	Org                  string            `description:"InfluxDB v2 org ID." json:"org,omitempty" toml:"org,omitempty" yaml:"org,omitempty" export:"true"`
 	Bucket               string            `description:"InfluxDB v2 bucket ID." json:"bucket,omitempty" toml:"bucket,omitempty" yaml:"bucket,omitempty" export:"true"`

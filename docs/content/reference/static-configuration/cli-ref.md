@@ -543,6 +543,9 @@ InfluxDB v2 push interval. (Default: ```10```)
 `--metrics.influxdb2.token`:  
 InfluxDB v2 access token.
 
+`--metrics.influxdb2.tokenfile`:  
+InfluxDB v2 access token file.
+
 `--metrics.otlp`:  
 OpenTelemetry metrics exporter type. (Default: ```false```)
 
