@@ -287,12 +287,13 @@ The following annotations are organized by category for easier navigation.
 
 ### Load Balancing & Backend
 
-| Annotation                                            | Limitations / Notes                                                                        |
-|-------------------------------------------------------|--------------------------------------------------------------------------------------------|
-| <a id="opt-nginx-ingress-kubernetes-ioload-balance" href="#opt-nginx-ingress-kubernetes-ioload-balance" title="#opt-nginx-ingress-kubernetes-ioload-balance">`nginx.ingress.kubernetes.io/load-balance`</a> | Only round_robin supported; ewma and IP hash not supported.                                |
-| <a id="opt-nginx-ingress-kubernetes-iobackend-protocol" href="#opt-nginx-ingress-kubernetes-iobackend-protocol" title="#opt-nginx-ingress-kubernetes-iobackend-protocol">`nginx.ingress.kubernetes.io/backend-protocol`</a> | FCGI and AUTO_HTTP not supported.                                                          |
-| <a id="opt-nginx-ingress-kubernetes-ioservice-upstream" href="#opt-nginx-ingress-kubernetes-ioservice-upstream" title="#opt-nginx-ingress-kubernetes-ioservice-upstream">`nginx.ingress.kubernetes.io/service-upstream`</a> |                                                                                            |
-| <a id="opt-nginx-ingress-kubernetes-ioupstream-vhost" href="#opt-nginx-ingress-kubernetes-ioupstream-vhost" title="#opt-nginx-ingress-kubernetes-ioupstream-vhost">`nginx.ingress.kubernetes.io/upstream-vhost`</a> |                                                      |
+| Annotation                                            | Limitations / Notes                                                                              |
+|-------------------------------------------------------|--------------------------------------------------------------------------------------------------|
+| <a id="opt-nginx-ingress-kubernetes-ioload-balance" href="#opt-nginx-ingress-kubernetes-ioload-balance" title="#opt-nginx-ingress-kubernetes-ioload-balance">`nginx.ingress.kubernetes.io/load-balance`</a> | Only round_robin supported; ewma and IP hash not supported.                                      |
+| <a id="opt-nginx-ingress-kubernetes-iobackend-protocol" href="#opt-nginx-ingress-kubernetes-iobackend-protocol" title="#opt-nginx-ingress-kubernetes-iobackend-protocol">`nginx.ingress.kubernetes.io/backend-protocol`</a> | FCGI and AUTO_HTTP not supported.                                                                |
+| <a id="opt-nginx-ingress-kubernetes-ioservice-upstream" href="#opt-nginx-ingress-kubernetes-ioservice-upstream" title="#opt-nginx-ingress-kubernetes-ioservice-upstream">`nginx.ingress.kubernetes.io/service-upstream`</a> |                                                                                                  |
+| <a id="opt-nginx-ingress-kubernetes-ioupstream-vhost" href="#opt-nginx-ingress-kubernetes-ioupstream-vhost" title="#opt-nginx-ingress-kubernetes-ioupstream-vhost">`nginx.ingress.kubernetes.io/upstream-vhost`</a> |                                                                                                  |
+| <a id="opt-nginx-ingress-kubernetes-iocustom-headers" href="#opt-nginx-ingress-kubernetes-iocustom-headers" title="#opt-nginx-ingress-kubernetes-iocustom-headers">`nginx.ingress.kubernetes.io/custom-headers`</a> | Header whitelisting, similar to `global-allowed-response-headers` NGINX config is not supported. |
 
 ### CORS
 

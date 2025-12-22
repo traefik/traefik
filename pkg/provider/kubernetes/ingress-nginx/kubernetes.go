@@ -804,6 +804,40 @@ func (p *Provider) applyMiddlewares(namespace, routerKey string, ingressConfig i
 
 	applyUpstreamVhost(routerKey, ingressConfig, rt, conf)
 
+	if err := p.applyCustomHeaders(routerKey, ingressConfig, rt, conf); err != nil {
+		return fmt.Errorf("applying custom headers: %w", err)
+	}
+
+	return nil
+}
+
+func (p *Provider) applyCustomHeaders(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
+	customHeaders := ptr.Deref(ingressConfig.CustomHeaders, "")
+	if customHeaders == "" {
+		return nil
+	}
+
+	customHeadersParts := strings.Split(customHeaders, "/")
+	if len(customHeadersParts) != 2 {
+		return fmt.Errorf("invalid custom headers config map %q", customHeaders)
+	}
+
+	configMapNamespace := customHeadersParts[0]
+	configMapName := customHeadersParts[1]
+
+	configMap, err := p.k8sClient.GetConfigMap(configMapNamespace, configMapName)
+	if err != nil {
+		return fmt.Errorf("getting configMap %s: %w", customHeaders, err)
+	}
+
+	customHeadersMiddlewareName := routerName + "-custom-headers"
+	conf.HTTP.Middlewares[customHeadersMiddlewareName] = &dynamic.Middleware{
+		Headers: &dynamic.Headers{
+			CustomResponseHeaders: configMap.Data,
+		},
+	}
+	rt.Middlewares = append(rt.Middlewares, customHeadersMiddlewareName)
+
 	return nil
 }
 

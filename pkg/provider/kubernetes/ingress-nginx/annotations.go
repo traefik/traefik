@@ -52,6 +52,7 @@ type ingressConfig struct {
 
 	WhitelistSourceRange *string `annotation:"nginx.ingress.kubernetes.io/whitelist-source-range"`
 
+	CustomHeaders *string `annotation:"nginx.ingress.kubernetes.io/custom-headers"`
 	UpstreamVhost *string `annotation:"nginx.ingress.kubernetes.io/upstream-vhost"`
 }
 
