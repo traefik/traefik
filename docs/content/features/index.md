@@ -65,7 +65,7 @@ The Traefik ecosystem offers multiple products designed to meet different requir
 | Task-Based Access Control (TBAC) for AI Agents | ✗ | ✓ | ✓ |
 | MCP Servers Governance | ✗ | ✓ | ✓ |
 | Session-Smart Load Balancing for Agent Workflows | ✗ | ✓ | ✓ |
-| OAuth 2.1/2.0 Resource Server for MCP | ✗ | ✓ | ✓ |
+| OAuth 2.1 / 2.0 Resource Server for MCP | ✗ | ✓ | ✓ |
 | Fine-grained Policy Enforcement for AI Tools | ✗ | ✓ | ✓ |
 | Audit-ready Observability for Agent Interactions | ✗ | ✓ | ✓ |
 | **API Management** | | | |
