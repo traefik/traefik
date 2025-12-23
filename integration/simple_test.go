@@ -2093,7 +2093,7 @@ func (s *SimpleSuite) TestSanitizePathSyntaxV2() {
 	}
 }
 
-// This test verifies that router handler caching does not interfere with
+// TestEncodedCharactersDifferentEntryPoints verifies that router handler caching does not interfere with
 // per-entry-point encoded characters configuration.
 // The same router should behave differently on different entry points.
 func (s *SimpleSuite) TestEncodedCharactersDifferentEntryPoints() {
