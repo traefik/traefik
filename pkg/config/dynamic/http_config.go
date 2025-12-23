@@ -94,32 +94,32 @@ type RouterDeniedEncodedPathCharacters struct {
 }
 
 // Map returns a map of unallowed encoded characters.
-func (h *RouterDeniedEncodedPathCharacters) Map() map[string]struct{} {
+func (r *RouterDeniedEncodedPathCharacters) Map() map[string]struct{} {
 	characters := make(map[string]struct{})
 
-	if !h.AllowEncodedSlash {
+	if !r.AllowEncodedSlash {
 		characters["%2F"] = struct{}{}
 		characters["%2f"] = struct{}{}
 	}
-	if !h.AllowEncodedBackSlash {
+	if !r.AllowEncodedBackSlash {
 		characters["%5C"] = struct{}{}
 		characters["%5c"] = struct{}{}
 	}
-	if !h.AllowEncodedNullCharacter {
+	if !r.AllowEncodedNullCharacter {
 		characters["%00"] = struct{}{}
 	}
-	if !h.AllowEncodedSemicolon {
+	if !r.AllowEncodedSemicolon {
 		characters["%3B"] = struct{}{}
 		characters["%3b"] = struct{}{}
 	}
-	if !h.AllowEncodedPercent {
+	if !r.AllowEncodedPercent {
 		characters["%25"] = struct{}{}
 	}
-	if !h.AllowEncodedQuestionMark {
+	if !r.AllowEncodedQuestionMark {
 		characters["%3F"] = struct{}{}
 		characters["%3f"] = struct{}{}
 	}
-	if !h.AllowEncodedHash {
+	if !r.AllowEncodedHash {
 		characters["%23"] = struct{}{}
 	}
 
