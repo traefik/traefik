@@ -2283,3 +2283,72 @@ func (s *SimpleSuite) TestSanitizePathSyntaxV2() {
 		}
 	}
 }
+
+// TestEncodedCharactersDifferentEntryPoints verifies that router handler caching does not interfere with
+// per-entry-point encoded characters configuration.
+// The same router should behave differently on different entry points.
+func (s *SimpleSuite) TestEncodedCharactersDifferentEntryPoints() {
+	s.createComposeProject("base")
+
+	s.composeUp()
+	defer s.composeDown()
+
+	whoami1URL := "http://" + net.JoinHostPort(s.getComposeServiceIP("whoami1"), "80")
+
+	file := s.adaptFile("fixtures/simple_encoded_chars.toml", struct {
+		Server1 string
+	}{whoami1URL})
+
+	s.traefikCmd(withConfigFile(file))
+
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`test.localhost`)"))
+	require.NoError(s.T(), err)
+
+	testCases := []struct {
+		desc     string
+		request  string
+		target   string
+		expected int
+	}{
+		{
+			desc:     "Encoded slash should be REJECTED on strict entry point",
+			request:  "GET /path%2Fwith%2Fslash HTTP/1.1\r\nHost: test.localhost\r\n\r\n",
+			target:   "127.0.0.1:8000", // strict entry point
+			expected: http.StatusBadRequest,
+		},
+		{
+			desc:     "Encoded slash should be ALLOWED on permissive entry point",
+			request:  "GET /path%2Fwith%2Fslash HTTP/1.1\r\nHost: test.localhost\r\n\r\n",
+			target:   "127.0.0.1:8001", // permissive entry point
+			expected: http.StatusOK,
+		},
+		{
+			desc:     "Regular path should work on strict entry point",
+			request:  "GET /regular/path HTTP/1.1\r\nHost: test.localhost\r\n\r\n",
+			target:   "127.0.0.1:8000",
+			expected: http.StatusOK,
+		},
+		{
+			desc:     "Regular path should work on permissive entry point",
+			request:  "GET /regular/path HTTP/1.1\r\nHost: test.localhost\r\n\r\n",
+			target:   "127.0.0.1:8001",
+			expected: http.StatusOK,
+		},
+	}
+
+	for _, test := range testCases {
+		conn, err := net.Dial("tcp", test.target)
+		require.NoError(s.T(), err)
+
+		_, err = conn.Write([]byte(test.request))
+		require.NoError(s.T(), err)
+
+		resp, err := http.ReadResponse(bufio.NewReader(conn), nil)
+		require.NoError(s.T(), err)
+
+		assert.Equalf(s.T(), test.expected, resp.StatusCode, "%s failed with %d instead of %d", test.desc, resp.StatusCode, test.expected)
+
+		err = conn.Close()
+		require.NoError(s.T(), err)
+	}
+}
