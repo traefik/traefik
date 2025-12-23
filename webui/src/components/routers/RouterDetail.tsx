@@ -1,11 +1,11 @@
 import { Flex, H1, Skeleton, Text } from '@traefiklabs/faency'
 import { useMemo } from 'react'
-import { Helmet } from 'react-helmet-async'
 
 import { DetailsCardSkeleton } from 'components/resources/DetailsCard'
 import ResourceErrors, { ResourceErrorsSkeleton } from 'components/resources/ResourceErrors'
 import RouterFlowDiagram, { RouterFlowDiagramSkeleton } from 'components/routers/RouterFlowDiagram'
 import TlsSection from 'components/routers/TlsSection'
+import PageTitle from 'layout/PageTitle'
 import { NotFound } from 'pages/NotFound'
 
 type RouterDetailProps = {
@@ -21,9 +21,7 @@ export const RouterDetail = ({ data, error, name, protocol }: RouterDetailProps)
   if (error) {
     return (
       <>
-        <Helmet>
-          <title>{name} - Traefik Proxy</title>
-        </Helmet>
+        <PageTitle title={data?.name || name} />
         <Text data-testid="error-text">
           Sorry, we could not fetch detail information for this Router right now. Please, try again later.
         </Text>
@@ -34,9 +32,7 @@ export const RouterDetail = ({ data, error, name, protocol }: RouterDetailProps)
   if (!data) {
     return (
       <>
-        <Helmet>
-          <title>{name} - Traefik Proxy</title>
-        </Helmet>
+        <PageTitle title={name} />
         <Skeleton css={{ height: '$7', width: '320px', mb: '$7' }} data-testid="skeleton" />
         <Flex direction="column" gap={6}>
           <RouterFlowDiagramSkeleton />
@@ -53,9 +49,7 @@ export const RouterDetail = ({ data, error, name, protocol }: RouterDetailProps)
 
   return (
     <>
-      <Helmet>
-        <title>{data.name} - Traefik Proxy</title>
-      </Helmet>
+      <PageTitle title={data.name} />
       <H1 css={{ mb: '$7' }}>{data.name}</H1>
       <Flex direction="column" gap={6}>
         <RouterFlowDiagram data={data} protocol={protocol} />

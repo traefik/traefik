@@ -40,6 +40,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | <a id="opt-api" href="#opt-api" title="#opt-api">api</a> | Enable api/dashboard. | false |
 | <a id="opt-api-basepath" href="#opt-api-basepath" title="#opt-api-basepath">api.basepath</a> | Defines the base path where the API and Dashboard will be exposed. | / |
 | <a id="opt-api-dashboard" href="#opt-api-dashboard" title="#opt-api-dashboard">api.dashboard</a> | Activate dashboard. | true |
+| <a id="opt-api-dashboardname" href="#opt-api-dashboardname" title="#opt-api-dashboardname">api.dashboardname</a> | Custom name for the dashboard. | |
 | <a id="opt-api-debug" href="#opt-api-debug" title="#opt-api-debug">api.debug</a> | Enable additional endpoints for debugging and profiling. | false |
 | <a id="opt-api-disabledashboardad" href="#opt-api-disabledashboardad" title="#opt-api-disabledashboardad">api.disabledashboardad</a> | Disable ad in the dashboard. | false |
 | <a id="opt-api-insecure" href="#opt-api-insecure" title="#opt-api-insecure">api.insecure</a> | Activate API directly on the entryPoint named traefik. | false |

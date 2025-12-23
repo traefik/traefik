@@ -1,6 +1,5 @@
 import { Card, Flex, H1, Skeleton, Text } from '@traefiklabs/faency'
 import { useMemo } from 'react'
-import { Helmet } from 'react-helmet-async'
 
 import MiddlewareDefinition from './MiddlewareDefinition'
 import { RenderUnknownProp } from './RenderUnknownProp'
@@ -8,6 +7,7 @@ import { RenderUnknownProp } from './RenderUnknownProp'
 import { DetailsCardSkeleton } from 'components/resources/DetailsCard'
 import ResourceErrors, { ResourceErrorsSkeleton } from 'components/resources/ResourceErrors'
 import { UsedByRoutersSection, UsedByRoutersSkeleton } from 'components/resources/UsedByRoutersSection'
+import PageTitle from 'layout/PageTitle'
 import { NotFound } from 'pages/NotFound'
 
 type MiddlewareDetailProps = {
@@ -42,9 +42,7 @@ export const MiddlewareDetail = ({ data, error, name, protocol }: MiddlewareDeta
   if (error) {
     return (
       <>
-        <Helmet>
-          <title>{name} - Traefik Proxy</title>
-        </Helmet>
+        <PageTitle title={data?.name || name} />
         <Text data-testid="error-text">
           Sorry, we could not fetch detail information for this Middleware right now. Please, try again later.
         </Text>
@@ -55,9 +53,7 @@ export const MiddlewareDetail = ({ data, error, name, protocol }: MiddlewareDeta
   if (!data) {
     return (
       <>
-        <Helmet>
-          <title>{name} - Traefik Proxy</title>
-        </Helmet>
+        <PageTitle title={name} />
         <Skeleton css={{ height: '$7', width: '320px', mb: '$7' }} data-testid="skeleton" />
         <Flex direction="column" gap={6}>
           <DetailsCardSkeleton />
@@ -74,9 +70,7 @@ export const MiddlewareDetail = ({ data, error, name, protocol }: MiddlewareDeta
 
   return (
     <>
-      <Helmet>
-        <title>{data.name} - Traefik Proxy</title>
-      </Helmet>
+      <PageTitle title={data.name} />
       <H1 css={{ mb: '$7' }}>{data.name}</H1>
       <Flex direction="column" gap={6}>
         <MiddlewareDefinition data={data} testId="middleware-card" />

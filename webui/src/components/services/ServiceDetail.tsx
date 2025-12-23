@@ -1,5 +1,4 @@
 import { Box, Flex, H1, Skeleton, Text } from '@traefiklabs/faency'
-import { Helmet } from 'react-helmet-async'
 
 import MirrorServices from './MirrorServices'
 import Servers from './Servers'
@@ -10,6 +9,7 @@ import WeightedServices from './WeightedServices'
 import { DetailsCardSkeleton } from 'components/resources/DetailsCard'
 import { UsedByRoutersSection, UsedByRoutersSkeleton } from 'components/resources/UsedByRoutersSection'
 import AriaTableSkeleton from 'components/tables/AriaTableSkeleton'
+import PageTitle from 'layout/PageTitle'
 import { NotFound } from 'pages/NotFound'
 
 type ServiceDetailProps = {
@@ -23,9 +23,7 @@ export const ServiceDetail = ({ data, error, name, protocol }: ServiceDetailProp
   if (error) {
     return (
       <>
-        <Helmet>
-          <title>{name} - Traefik Proxy</title>
-        </Helmet>
+        <PageTitle title={data?.name || name} />
         <Text data-testid="error-text">
           Sorry, we could not fetch detail information for this Service right now. Please, try again later.
         </Text>
@@ -36,9 +34,7 @@ export const ServiceDetail = ({ data, error, name, protocol }: ServiceDetailProp
   if (!data) {
     return (
       <>
-        <Helmet>
-          <title>{name} - Traefik Proxy</title>
-        </Helmet>
+        <PageTitle title={name} />
         <Skeleton css={{ height: '$7', width: '320px', mb: '$7' }} data-testid="skeleton" />
         <Flex direction="column" gap={4}>
           <DetailsCardSkeleton />
@@ -65,9 +61,7 @@ export const ServiceDetail = ({ data, error, name, protocol }: ServiceDetailProp
 
   return (
     <>
-      <Helmet>
-        <title>{data.name} - Traefik Proxy</title>
-      </Helmet>
+      <PageTitle title={data.name} />
       <H1 css={{ mb: '$7' }}>{data.name}</H1>
       <Flex direction="column" gap={6}>
         <ServiceDefinition data={data} testId="service-details" />
