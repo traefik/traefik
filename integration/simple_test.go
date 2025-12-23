@@ -1886,16 +1886,15 @@ func (s *SimpleSuite) TestDenyFragment() {
 	s.composeUp()
 	defer s.composeDown()
 
-	s.traefikCmd(withConfigFile("fixtures/simple_default.toml"))
+	s.traefikCmd(withConfigFile(s.adaptFile("fixtures/simple_deny.toml", struct{}{})))
 
-	// Expected a 404 as we did not configure anything
-	err := try.GetRequest("http://127.0.0.1:8000/", 1*time.Second, try.StatusCodeIs(http.StatusNotFound))
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("Host(`deny.localhost`)"))
 	require.NoError(s.T(), err)
 
 	conn, err := net.Dial("tcp", "127.0.0.1:8000")
 	require.NoError(s.T(), err)
 
-	_, err = conn.Write([]byte("GET /#/?bar=toto;boo=titi HTTP/1.1\nHost: other.localhost\n\n"))
+	_, err = conn.Write([]byte("GET /#/?bar=toto;boo=titi HTTP/1.1\nHost: deny.localhost\n\n"))
 	require.NoError(s.T(), err)
 
 	resp, err := http.ReadResponse(bufio.NewReader(conn), nil)

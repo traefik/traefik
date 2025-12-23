@@ -8,7 +8,9 @@
 				"192.168.1.4"
 			]
 		},
-		"http": {},
+		"http": {
+			"encodedCharacters": {}
+		},
 		"name": "web",
 		"proxyProtocol": {
 			"insecure": true,
@@ -38,7 +40,9 @@
 				"192.168.1.40"
 			]
 		},
-		"http": {},
+		"http": {
+			"encodedCharacters": {}
+		},
 		"name": "websecure",
 		"proxyProtocol": {
 			"insecure": true,

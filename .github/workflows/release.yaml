@@ -25,7 +25,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [ linux-amd64, linux-386, linux-arm, linux-arm64, linux-ppc64le, linux-s390x, linux-riscv64, darwin, windows-amd64, windows-arm64, windows-386, freebsd, openbsd ]
+        os: [ linux-amd64, linux-386, linux-arm, linux-arm64, linux-ppc64le, linux-s390x, linux-riscv64, darwin-amd64, darwin-arm64, windows-amd64, windows-arm64, windows-386, freebsd-amd64, freebsd-386, openbsd-amd64, openbsd-386, openbsd-riscv64 ]
     needs:
       - build-webui
 

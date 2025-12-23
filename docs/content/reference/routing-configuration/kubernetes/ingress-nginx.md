@@ -13,6 +13,8 @@ Enable seamless migration from NGINX Ingress Controller to Traefik with NGINX an
     The Kubernetes NGINX Ingress Controller project has announced its retirement in **March 2026** and will no longer receive updates or security patches.
     Traefik provides a migration path by supporting NGINX annotations, allowing you to transition your workloads without rewriting all your Ingress configurations.
 
+    **→ See the [NGINX to Traefik Migration Guide](../../../migrate/nginx-to-traefik.md) for step-by-step instructions.**
+
     For more information about the NGINX Ingress Controller retirement, see the [official Kubernetes blog announcement](https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement).
 
 ## Ingress Discovery
@@ -347,6 +349,7 @@ The following annotations are organized by category for easier navigation.
 |-----------------------------------------------------------------------------|------------------------------------------------------|
 | <a id="opt-nginx-ingress-kubernetes-ioapp-root" href="#opt-nginx-ingress-kubernetes-ioapp-root" title="#opt-nginx-ingress-kubernetes-ioapp-root">`nginx.ingress.kubernetes.io/app-root`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-ioaffinity-canary-behavior" href="#opt-nginx-ingress-kubernetes-ioaffinity-canary-behavior" title="#opt-nginx-ingress-kubernetes-ioaffinity-canary-behavior">`nginx.ingress.kubernetes.io/affinity-canary-behavior`</a> |                                                      |
+| <a id="opt-nginx-ingress-kubernetes-ioauth-signin" href="#opt-nginx-ingress-kubernetes-ioauth-signin" title="#opt-nginx-ingress-kubernetes-ioauth-signin">`nginx.ingress.kubernetes.io/auth-signin`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-ioauth-tls-secret" href="#opt-nginx-ingress-kubernetes-ioauth-tls-secret" title="#opt-nginx-ingress-kubernetes-ioauth-tls-secret">`nginx.ingress.kubernetes.io/auth-tls-secret`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-ioauth-tls-verify-depth" href="#opt-nginx-ingress-kubernetes-ioauth-tls-verify-depth" title="#opt-nginx-ingress-kubernetes-ioauth-tls-verify-depth">`nginx.ingress.kubernetes.io/auth-tls-verify-depth`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-ioauth-tls-verify-client" href="#opt-nginx-ingress-kubernetes-ioauth-tls-verify-client" title="#opt-nginx-ingress-kubernetes-ioauth-tls-verify-client">`nginx.ingress.kubernetes.io/auth-tls-verify-client`</a> |                                                      |

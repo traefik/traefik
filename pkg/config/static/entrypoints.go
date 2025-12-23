@@ -65,12 +65,13 @@ func (ep *EntryPoint) SetDefaults() {
 
 // HTTPConfig is the HTTP configuration of an entry point.
 type HTTPConfig struct {
-	Redirections          *Redirections `description:"Set of redirection" json:"redirections,omitempty" toml:"redirections,omitempty" yaml:"redirections,omitempty" export:"true"`
-	Middlewares           []string      `description:"Default middlewares for the routers linked to the entry point." json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
-	TLS                   *TLSConfig    `description:"Default TLS configuration for the routers linked to the entry point." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
-	EncodeQuerySemicolons bool          `description:"Defines whether request query semicolons should be URLEncoded." json:"encodeQuerySemicolons,omitempty" toml:"encodeQuerySemicolons,omitempty" yaml:"encodeQuerySemicolons,omitempty"`
-	SanitizePath          *bool         `description:"Defines whether to enable request path sanitization (removal of /./, /../ and multiple slash sequences)." json:"sanitizePath,omitempty" toml:"sanitizePath,omitempty" yaml:"sanitizePath,omitempty" export:"true"`
-	MaxHeaderBytes        int           `description:"Maximum size of request headers in bytes." json:"maxHeaderBytes,omitempty" toml:"maxHeaderBytes,omitempty" yaml:"maxHeaderBytes,omitempty" export:"true"`
+	Redirections          *Redirections     `description:"Set of redirection" json:"redirections,omitempty" toml:"redirections,omitempty" yaml:"redirections,omitempty" export:"true"`
+	Middlewares           []string          `description:"Default middlewares for the routers linked to the entry point." json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
+	TLS                   *TLSConfig        `description:"Default TLS configuration for the routers linked to the entry point." json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	EncodedCharacters     EncodedCharacters `description:"Defines which encoded characters are allowed in the request path." json:"encodedCharacters,omitempty" toml:"encodedCharacters,omitempty" yaml:"encodedCharacters,omitempty" export:"true"`
+	EncodeQuerySemicolons bool              `description:"Defines whether request query semicolons should be URLEncoded." json:"encodeQuerySemicolons,omitempty" toml:"encodeQuerySemicolons,omitempty" yaml:"encodeQuerySemicolons,omitempty" export:"true"`
+	SanitizePath          *bool             `description:"Defines whether to enable request path sanitization (removal of /./, /../ and multiple slash sequences)." json:"sanitizePath,omitempty" toml:"sanitizePath,omitempty" yaml:"sanitizePath,omitempty" export:"true"`
+	MaxHeaderBytes        int               `description:"Maximum size of request headers in bytes." json:"maxHeaderBytes,omitempty" toml:"maxHeaderBytes,omitempty" yaml:"maxHeaderBytes,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values.
@@ -78,6 +79,50 @@ func (c *HTTPConfig) SetDefaults() {
 	sanitizePath := true
 	c.SanitizePath = &sanitizePath
 	c.MaxHeaderBytes = http.DefaultMaxHeaderBytes
+}
+
+// EncodedCharacters configures which encoded characters are allowed in the request path.
+type EncodedCharacters struct {
+	AllowEncodedSlash         bool `description:"Defines whether requests with encoded slash characters in the path are allowed." json:"allowEncodedSlash,omitempty" toml:"allowEncodedSlash,omitempty" yaml:"allowEncodedSlash,omitempty" export:"true"`
+	AllowEncodedBackSlash     bool `description:"Defines whether requests with encoded back slash characters in the path are allowed." json:"allowEncodedBackSlash,omitempty" toml:"allowEncodedBackSlash,omitempty" yaml:"allowEncodedBackSlash,omitempty" export:"true"`
+	AllowEncodedNullCharacter bool `description:"Defines whether requests with encoded null characters in the path are allowed." json:"allowEncodedNullCharacter,omitempty" toml:"allowEncodedNullCharacter,omitempty" yaml:"allowEncodedNullCharacter,omitempty" export:"true"`
+	AllowEncodedSemicolon     bool `description:"Defines whether requests with encoded semicolon characters in the path are allowed." json:"allowEncodedSemicolon,omitempty" toml:"allowEncodedSemicolon,omitempty" yaml:"allowEncodedSemicolon,omitempty" export:"true"`
+	AllowEncodedPercent       bool `description:"Defines whether requests with encoded percent characters in the path are allowed." json:"allowEncodedPercent,omitempty" toml:"allowEncodedPercent,omitempty" yaml:"allowEncodedPercent,omitempty" export:"true"`
+	AllowEncodedQuestionMark  bool `description:"Defines whether requests with encoded question mark characters in the path are allowed." json:"allowEncodedQuestionMark,omitempty" toml:"allowEncodedQuestionMark,omitempty" yaml:"allowEncodedQuestionMark,omitempty" export:"true"`
+	AllowEncodedHash          bool `description:"Defines whether requests with encoded hash characters in the path are allowed." json:"allowEncodedHash,omitempty" toml:"allowEncodedHash,omitempty" yaml:"allowEncodedHash,omitempty" export:"true"`
+}
+
+// Map returns a map of unallowed encoded characters.
+func (h *EncodedCharacters) Map() map[string]struct{} {
+	characters := make(map[string]struct{})
+
+	if !h.AllowEncodedSlash {
+		characters["%2F"] = struct{}{}
+		characters["%2f"] = struct{}{}
+	}
+	if !h.AllowEncodedBackSlash {
+		characters["%5C"] = struct{}{}
+		characters["%5c"] = struct{}{}
+	}
+	if !h.AllowEncodedNullCharacter {
+		characters["%00"] = struct{}{}
+	}
+	if !h.AllowEncodedSemicolon {
+		characters["%3B"] = struct{}{}
+		characters["%3b"] = struct{}{}
+	}
+	if !h.AllowEncodedPercent {
+		characters["%25"] = struct{}{}
+	}
+	if !h.AllowEncodedQuestionMark {
+		characters["%3F"] = struct{}{}
+		characters["%3f"] = struct{}{}
+	}
+	if !h.AllowEncodedHash {
+		characters["%23"] = struct{}{}
+	}
+
+	return characters
 }
 
 // HTTP2Config is the HTTP2 configuration of an entry point.

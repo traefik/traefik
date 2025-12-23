@@ -4,14 +4,14 @@ RepositoryName = "traefik"
 OutputType = "file"
 FileName = "traefik_changelog.md"
 
-# example new bugfix v3.6.2
+# example new bugfix v3.6.5
 CurrentRef = "v3.6"
-PreviousRef = "v3.6.1"
+PreviousRef = "v3.6.4"
 BaseBranch = "v3.6"
-FutureCurrentRefName = "v3.6.2"
+FutureCurrentRefName = "v3.6.5"
 
-ThresholdPreviousRef = 10
-ThresholdCurrentRef = 10
+ThresholdPreviousRef = 10000
+ThresholdCurrentRef = 10000
 
 Debug = true
 DisplayLabel = true

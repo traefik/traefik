@@ -453,7 +453,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 				}
 
 				// TODO: if no service, do not add middlewares and 503.
-				serviceName := provider.Normalize(ingress.Namespace + "-" + pa.Backend.Service.Name + "-" + portString)
+				serviceName := provider.Normalize(ingress.Namespace + "-" + ingress.Name + "-" + pa.Backend.Service.Name + "-" + portString)
 
 				service, err := p.buildService(ingress.Namespace, pa.Backend, ingressConfig)
 				if err != nil {
@@ -509,7 +509,7 @@ func (p *Provider) buildServersTransport(namespace, name string, cfg ingressConf
 		Name: provider.Normalize(namespace + "-" + name),
 		ServersTransport: &dynamic.ServersTransport{
 			ServerName:         ptr.Deref(cfg.ProxySSLName, ptr.Deref(cfg.ProxySSLServerName, "")),
-			InsecureSkipVerify: strings.ToLower(ptr.Deref(cfg.ProxySSLVerify, "off")) == "on",
+			InsecureSkipVerify: strings.ToLower(ptr.Deref(cfg.ProxySSLVerify, "off")) == "off",
 		},
 	}
 
@@ -1015,39 +1015,50 @@ func applySSLRedirectConfiguration(routerName string, ingressConfig ingressConfi
 
 	sslRedirect := ptr.Deref(ingressConfig.SSLRedirect, hasTLS)
 
-	if !forceSSLRedirect && !sslRedirect {
-		if hasTLS {
-			httpRouter := &dynamic.Router{
-				Rule: rt.Rule,
-				// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
-				RuleSyntax:  "default",
-				Middlewares: rt.Middlewares,
-				Service:     rt.Service,
-			}
+	if hasTLS {
+		// An Ingress with TLS configuration creates only a Traefik router with a TLS configuration,
+		// so no Non-TLS router exists to handle HTTP traffic, and we should create it.
+		httpRouter := &dynamic.Router{
+			Rule: rt.Rule,
+			// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
+			RuleSyntax:  "default",
+			Middlewares: rt.Middlewares,
+			Service:     rt.Service,
+		}
+		conf.HTTP.Routers[routerName+"-http"] = httpRouter
 
-			conf.HTTP.Routers[routerName+"-http"] = httpRouter
+		// If either forceSSLRedirect or sslRedirect are enabled,
+		// the HTTP router needs to redirect to HTTPS.
+		if forceSSLRedirect || sslRedirect {
+			redirectMiddlewareName := routerName + "-redirect-scheme"
+			conf.HTTP.Middlewares[redirectMiddlewareName] = &dynamic.Middleware{
+				RedirectScheme: &dynamic.RedirectScheme{
+					Scheme:                 "https",
+					ForcePermanentRedirect: true,
+				},
+			}
+			httpRouter.Middlewares = []string{redirectMiddlewareName}
+			httpRouter.Service = "noop@internal"
 		}
 
 		return
 	}
 
-	redirectRouter := &dynamic.Router{
-		Rule: rt.Rule,
-		// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
-		RuleSyntax: "default",
-		Service:    "noop@internal",
+	// An Ingress with no TLS configuration and forceSSLRedirect annotation should always redirect on HTTPS,
+	// even if no route exists for HTTPS.
+	if forceSSLRedirect {
+		redirectMiddlewareName := routerName + "-redirect-scheme"
+		conf.HTTP.Middlewares[redirectMiddlewareName] = &dynamic.Middleware{
+			RedirectScheme: &dynamic.RedirectScheme{
+				Scheme:                 "https",
+				ForcePermanentRedirect: true,
+			},
+		}
+		rt.Middlewares = append([]string{redirectMiddlewareName}, rt.Middlewares...)
 	}
 
-	redirectMiddlewareName := routerName + "-redirect-scheme"
-	conf.HTTP.Middlewares[redirectMiddlewareName] = &dynamic.Middleware{
-		RedirectScheme: &dynamic.RedirectScheme{
-			Scheme:    "https",
-			Permanent: true,
-		},
-	}
-	redirectRouter.Middlewares = append(redirectRouter.Middlewares, redirectMiddlewareName)
-
-	conf.HTTP.Routers[routerName+"-redirect"] = redirectRouter
+	// An Ingress that is not forcing sslRedirect and has no TLS configuration does not redirect,
+	// even if sslRedirect is enabled.
 }
 
 func applyForwardAuthConfiguration(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {

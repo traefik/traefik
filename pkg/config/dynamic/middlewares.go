@@ -655,8 +655,13 @@ type RedirectScheme struct {
 	Scheme string `json:"scheme,omitempty" toml:"scheme,omitempty" yaml:"scheme,omitempty" export:"true"`
 	// Port defines the port of the new URL.
 	Port string `json:"port,omitempty" toml:"port,omitempty" yaml:"port,omitempty" export:"true"`
-	// Permanent defines whether the redirection is permanent (308).
+	// Permanent defines whether the redirection is permanent.
+	// For HTTP GET requests a 301 is returned, otherwise a 308 is returned.
 	Permanent bool `json:"permanent,omitempty" toml:"permanent,omitempty" yaml:"permanent,omitempty" export:"true"`
+	// ForcePermanentRedirect is an internal field (not exposed in configuration).
+	// When set to true, this forces the use of permanent redirects 308, regardless of the request method.
+	// Used by the provider ingress-ngin.
+	ForcePermanentRedirect bool `json:"-" toml:"-" yaml:"-" label:"-"`
 }
 
 // +k8s:deepcopy-gen=true
