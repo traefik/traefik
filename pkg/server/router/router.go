@@ -36,14 +36,13 @@ type serviceManager interface {
 
 // Manager A route/router manager.
 type Manager struct {
-	routerHandlers              map[string]http.Handler
-	serviceManager              serviceManager
-	metricsRegistry             metrics.Registry
-	middlewaresBuilder          middlewareBuilder
-	chainBuilder                *middleware.ChainBuilder
-	conf                        *runtime.Configuration
-	tlsManager                  *tls.Manager
-	deniedEncodedPathCharacters map[string]map[string]struct{}
+	routerHandlers     map[string]http.Handler
+	serviceManager     serviceManager
+	metricsRegistry    metrics.Registry
+	middlewaresBuilder middlewareBuilder
+	chainBuilder       *middleware.ChainBuilder
+	conf               *runtime.Configuration
+	tlsManager         *tls.Manager
 }
 
 // NewManager creates a new Manager.
@@ -53,17 +52,15 @@ func NewManager(conf *runtime.Configuration,
 	chainBuilder *middleware.ChainBuilder,
 	metricsRegistry metrics.Registry,
 	tlsManager *tls.Manager,
-	deniedEncodedPathCharacters map[string]map[string]struct{},
 ) *Manager {
 	return &Manager{
-		routerHandlers:              make(map[string]http.Handler),
-		serviceManager:              serviceManager,
-		metricsRegistry:             metricsRegistry,
-		middlewaresBuilder:          middlewaresBuilder,
-		chainBuilder:                chainBuilder,
-		conf:                        conf,
-		tlsManager:                  tlsManager,
-		deniedEncodedPathCharacters: deniedEncodedPathCharacters,
+		routerHandlers:     make(map[string]http.Handler),
+		serviceManager:     serviceManager,
+		metricsRegistry:    metricsRegistry,
+		middlewaresBuilder: middlewaresBuilder,
+		chainBuilder:       chainBuilder,
+		conf:               conf,
+		tlsManager:         tlsManager,
 	}
 }
 
@@ -82,7 +79,7 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string, t
 	for entryPointName, routers := range m.getHTTPRouters(rootCtx, entryPoints, tls) {
 		ctx := log.With(rootCtx, log.Str(log.EntryPointName, entryPointName))
 
-		handler, err := m.buildEntryPointHandler(ctx, entryPointName, routers)
+		handler, err := m.buildEntryPointHandler(ctx, routers)
 		if err != nil {
 			log.FromContext(ctx).Error(err)
 			continue
@@ -118,7 +115,7 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string, t
 	return entryPointHandlers
 }
 
-func (m *Manager) buildEntryPointHandler(ctx context.Context, entryPointName string, configs map[string]*runtime.RouterInfo) (http.Handler, error) {
+func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string]*runtime.RouterInfo) (http.Handler, error) {
 	muxer, err := httpmuxer.NewMuxer()
 	if err != nil {
 		return nil, err
@@ -135,7 +132,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, entryPointName str
 			continue
 		}
 
-		handler, err := m.buildRouterHandler(ctxRouter, entryPointName, routerName, routerConfig)
+		handler, err := m.buildRouterHandler(ctxRouter, routerName, routerConfig)
 		if err != nil {
 			routerConfig.AddError(err, true)
 			logger.Error(err)
@@ -160,7 +157,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, entryPointName str
 	return chain.Then(muxer)
 }
 
-func (m *Manager) buildRouterHandler(ctx context.Context, entryPointName, routerName string, routerConfig *runtime.RouterInfo) (http.Handler, error) {
+func (m *Manager) buildRouterHandler(ctx context.Context, routerName string, routerConfig *runtime.RouterInfo) (http.Handler, error) {
 	if handler, ok := m.routerHandlers[routerName]; ok {
 		return handler, nil
 	}
@@ -176,7 +173,7 @@ func (m *Manager) buildRouterHandler(ctx context.Context, entryPointName, router
 		}
 	}
 
-	handler, err := m.buildHTTPHandler(ctx, routerConfig, entryPointName, routerName)
+	handler, err := m.buildHTTPHandler(ctx, routerConfig, routerName)
 	if err != nil {
 		return nil, err
 	}
@@ -194,7 +191,7 @@ func (m *Manager) buildRouterHandler(ctx context.Context, entryPointName, router
 	return m.routerHandlers[routerName], nil
 }
 
-func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterInfo, entryPointName, routerName string) (http.Handler, error) {
+func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterInfo, routerName string) (http.Handler, error) {
 	var qualifiedNames []string
 	for _, name := range router.Middlewares {
 		qualifiedNames = append(qualifiedNames, provider.GetQualifiedName(ctx, name))
@@ -232,7 +229,7 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 		return denyFragment(next), nil
 	})
 	chain = chain.Append(func(next http.Handler) (http.Handler, error) {
-		return denyEncodedPathCharacters(m.deniedEncodedPathCharacters[entryPointName], next), nil
+		return denyEncodedPathCharacters(router.DeniedEncodedPathCharacters.Map(), next), nil
 	})
 
 	return chain.Extend(*mHandler).Append(tHandler).Then(sHandler)

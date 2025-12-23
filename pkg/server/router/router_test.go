@@ -13,7 +13,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
-	"github.com/traefik/traefik/v2/pkg/config/static"
 	"github.com/traefik/traefik/v2/pkg/metrics"
 	"github.com/traefik/traefik/v2/pkg/middlewares/accesslog"
 	"github.com/traefik/traefik/v2/pkg/middlewares/capture"
@@ -320,7 +319,7 @@ func TestRouterManager_Get(t *testing.T) {
 			chainBuilder := middleware.NewChainBuilder(nil, nil, nil)
 			tlsManager := tls.NewManager()
 
-			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry(), tlsManager, nil)
+			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry(), tlsManager)
 
 			handlers := routerManager.BuildHandlers(t.Context(), test.entryPoints, false)
 
@@ -427,7 +426,7 @@ func TestAccessLog(t *testing.T) {
 			chainBuilder := middleware.NewChainBuilder(nil, nil, nil)
 			tlsManager := tls.NewManager()
 
-			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry(), tlsManager, nil)
+			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry(), tlsManager)
 
 			handlers := routerManager.BuildHandlers(t.Context(), test.entryPoints, false)
 
@@ -815,7 +814,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 			tlsManager := tls.NewManager()
 			tlsManager.UpdateConfigs(t.Context(), nil, test.tlsOptions, nil)
 
-			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry(), tlsManager, nil)
+			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry(), tlsManager)
 
 			_ = routerManager.BuildHandlers(t.Context(), entryPoints, false)
 			_ = routerManager.BuildHandlers(t.Context(), entryPoints, true)
@@ -892,7 +891,7 @@ func TestProviderOnMiddlewares(t *testing.T) {
 	chainBuilder := middleware.NewChainBuilder(nil, nil, nil)
 	tlsManager := tls.NewManager()
 
-	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry(), tlsManager, nil)
+	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry(), tlsManager)
 
 	_ = routerManager.BuildHandlers(t.Context(), entryPoints, false)
 
@@ -908,7 +907,6 @@ func TestManager_BuildHandlers_Deny(t *testing.T) {
 		routers            map[string]*dynamic.Router
 		services           map[string]*dynamic.Service
 		requestPath        string
-		encodedCharacters  static.EncodedCharacters
 		expectedStatusCode int
 	}{
 		{
@@ -938,6 +936,9 @@ func TestManager_BuildHandlers_Deny(t *testing.T) {
 					EntryPoints: []string{"web"},
 					Rule:        "PathPrefix(`/`)",
 					Service:     "service",
+					DeniedEncodedPathCharacters: dynamic.RouterDeniedEncodedPathCharacters{
+						AllowEncodedSlash: true,
+					},
 				},
 			},
 			services: map[string]*dynamic.Service{
@@ -946,9 +947,6 @@ func TestManager_BuildHandlers_Deny(t *testing.T) {
 						Servers: []dynamic.Server{{URL: "http://localhost:8080"}},
 					},
 				},
-			},
-			encodedCharacters: static.EncodedCharacters{
-				AllowEncodedSlash: true,
 			},
 			expectedStatusCode: http.StatusBadGateway,
 		},
@@ -996,7 +994,6 @@ func TestManager_BuildHandlers_Deny(t *testing.T) {
 				Services: runtimeServices,
 			}
 
-			deniedEncodedPathCharacters := map[string]map[string]struct{}{"web": test.encodedCharacters.Map()}
 			roundTripperManager := service.NewRoundTripperManager()
 			roundTripperManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
 			serviceManager := service.NewManager(conf.Services, nil, nil, roundTripperManager)
@@ -1004,7 +1001,7 @@ func TestManager_BuildHandlers_Deny(t *testing.T) {
 			chainBuilder := middleware.NewChainBuilder(nil, nil, nil)
 			tlsManager := tls.NewManager()
 
-			routerManager := NewManager(conf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry(), tlsManager, deniedEncodedPathCharacters)
+			routerManager := NewManager(conf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry(), tlsManager)
 
 			// Build handlers
 			ctx := t.Context()
@@ -1079,7 +1076,7 @@ func BenchmarkRouterServe(b *testing.B) {
 	chainBuilder := middleware.NewChainBuilder(nil, nil, nil)
 	tlsManager := tls.NewManager()
 
-	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry(), tlsManager, nil)
+	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, chainBuilder, metrics.NewVoidRegistry(), tlsManager)
 
 	handlers := routerManager.BuildHandlers(b.Context(), entryPoints, false)
 

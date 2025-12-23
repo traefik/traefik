@@ -576,8 +576,10 @@ func TestPathOperations(t *testing.T) {
 	configuration.SetDefaults()
 
 	// We need to allow some of the suspicious encoded characters to test the path operations in case they are authorized.
-	configuration.HTTP.EncodedCharacters.AllowEncodedSlash = true
-	configuration.HTTP.EncodedCharacters.AllowEncodedPercent = true
+	configuration.HTTP.EncodedCharacters = &static.EncodedCharacters{
+		AllowEncodedSlash:   true,
+		AllowEncodedPercent: true,
+	}
 
 	// Create the HTTP server using createHTTPServer.
 	server, err := createHTTPServer(t.Context(), ln, configuration, false, requestdecorator.New(nil))
