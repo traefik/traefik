@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 )
 
@@ -223,13 +224,18 @@ func TestBalancerAllServersZeroWeight(t *testing.T) {
 func TestBalancerAllServersFenced(t *testing.T) {
 	balancer := New(nil, false)
 
-	balancer.Add("test", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), pointer(1), true)
-	balancer.Add("test2", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), pointer(1), true)
+	balancer.Add("test", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+	}), pointer(1), true)
+	balancer.Add("test2", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+	}), pointer(1), true)
 
 	recorder := httptest.NewRecorder()
 	balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 
-	assert.Equal(t, http.StatusServiceUnavailable, recorder.Result().StatusCode)
+	// Fenced but healthy endpoints should be used as fallback
+	assert.Equal(t, http.StatusOK, recorder.Result().StatusCode)
 }
 
 func TestSticky(t *testing.T) {
@@ -392,4 +398,267 @@ func (r *responseRecorder) WriteHeader(statusCode int) {
 		r.cookies[cookie.Name] = cookie
 	}
 	r.ResponseRecorder.WriteHeader(statusCode)
+}
+
+// TestNextServerWithAllTerminating tests that when all endpoints are terminating
+// (fenced but still serving), the load balancer should still route traffic to them
+// instead of returning an error.
+func TestNextServerWithAllTerminating(t *testing.T) {
+	balancer := New(nil, false)
+
+	// Add three handlers, all will be marked as fenced (terminating)
+	handler1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("handler1"))
+	})
+	handler2 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("handler2"))
+	})
+	handler3 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("handler3"))
+	})
+
+	weight := 1
+	balancer.Add("handler1", handler1, &weight, true) // fenced=true
+	balancer.Add("handler2", handler2, &weight, true) // fenced=true
+	balancer.Add("handler3", handler3, &weight, true) // fenced=true
+
+	// Mark all handlers as healthy (serving)
+	ctx := context.Background()
+	balancer.SetStatus(ctx, "handler1", true)
+	balancer.SetStatus(ctx, "handler2", true)
+	balancer.SetStatus(ctx, "handler3", true)
+
+	// nextServer should return a handler even though all are fenced
+	// because they're still healthy and serving
+	server, err := balancer.nextServer()
+	require.NoError(t, err, "Should not error when all handlers are fenced but healthy")
+	require.NotNil(t, server, "Should return a server even when all are fenced")
+	assert.Contains(t, []string{"handler1", "handler2", "handler3"}, server.name)
+}
+
+// TestNextServerPreferNonTerminating tests that non-terminating endpoints
+// are preferred over terminating ones
+func TestNextServerPreferNonTerminating(t *testing.T) {
+	balancer := New(nil, false)
+
+	handler1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("handler1"))
+	})
+	handler2 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("handler2"))
+	})
+
+	weight := 1
+	balancer.Add("handler1", handler1, &weight, false) // not fenced
+	balancer.Add("handler2", handler2, &weight, true)  // fenced
+
+	ctx := context.Background()
+	balancer.SetStatus(ctx, "handler1", true)
+	balancer.SetStatus(ctx, "handler2", true)
+
+	// Should prefer the non-fenced handler
+	selectedHandlers := make(map[string]int)
+	for i := 0; i < 10; i++ {
+		server, err := balancer.nextServer()
+		require.NoError(t, err)
+		require.NotNil(t, server)
+		selectedHandlers[server.name]++
+	}
+
+	// handler1 (non-fenced) should be selected more often or exclusively
+	assert.Greater(t, selectedHandlers["handler1"], 0, "Non-fenced handler should be selected")
+
+	// In the current implementation, non-fenced handlers should be selected exclusively
+	// when both fenced and non-fenced handlers are available
+	assert.Equal(t, 10, selectedHandlers["handler1"], "Non-fenced handler should be selected exclusively")
+}
+
+// TestNextServerFallbackToTerminating tests that terminating endpoints
+// are used as a fallback when no healthy non-terminating endpoints exist
+func TestNextServerFallbackToTerminating(t *testing.T) {
+	balancer := New(nil, false)
+
+	handler1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("handler1"))
+	})
+	handler2 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("handler2"))
+	})
+
+	weight := 1
+	balancer.Add("handler1", handler1, &weight, false) // not fenced, but will be marked unhealthy
+	balancer.Add("handler2", handler2, &weight, true)  // fenced but healthy
+
+	// Mark handler1 as down, handler2 as up but fenced
+	ctx := context.Background()
+	balancer.SetStatus(ctx, "handler1", false)
+	balancer.SetStatus(ctx, "handler2", true)
+
+	// Should fall back to the fenced but healthy handler
+	server, err := balancer.nextServer()
+	require.NoError(t, err, "Should not error when fenced handler is available")
+	require.NotNil(t, server)
+	assert.Equal(t, "handler2", server.name, "Should fallback to fenced handler when no healthy non-fenced handlers exist")
+}
+
+// TestNextServerNoHealthyHandlers tests that an error is returned
+// when no healthy handlers exist at all
+func TestNextServerNoHealthyHandlers(t *testing.T) {
+	balancer := New(nil, false)
+
+	handler1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	weight := 1
+	balancer.Add("handler1", handler1, &weight, false)
+
+	// Mark handler as unhealthy (Add() automatically marks it as healthy)
+	ctx := context.Background()
+	balancer.SetStatus(ctx, "handler1", false)
+
+	server, err := balancer.nextServer()
+	assert.Error(t, err, "Should error when no healthy handlers exist")
+	assert.Nil(t, server)
+	assert.Equal(t, errNoAvailableServer, err)
+}
+
+// TestServeHTTPWithAllTerminating tests the full request flow
+// when all backends are terminating
+func TestServeHTTPWithAllTerminating(t *testing.T) {
+	balancer := New(nil, false)
+
+	callCount1 := 0
+	callCount2 := 0
+
+	handler1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		callCount1++
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("handler1"))
+	})
+	handler2 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		callCount2++
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("handler2"))
+	})
+
+	weight := 1
+	balancer.Add("handler1", handler1, &weight, true) // fenced
+	balancer.Add("handler2", handler2, &weight, true) // fenced
+
+	ctx := context.Background()
+	balancer.SetStatus(ctx, "handler1", true)
+	balancer.SetStatus(ctx, "handler2", true)
+
+	// Send 10 requests - all should succeed
+	for i := 0; i < 10; i++ {
+		req := httptest.NewRequest("GET", "/", nil)
+		w := httptest.NewRecorder()
+
+		balancer.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code, "Request should succeed even with all fenced handlers")
+	}
+
+	// All requests should succeed
+	totalCalls := callCount1 + callCount2
+	assert.Equal(t, 10, totalCalls, "All requests should be handled")
+	// Note: WRR with equal weights and all fenced may not distribute perfectly evenly,
+	// but at least one handler should receive traffic (which proves fallback works)
+	assert.True(t, callCount1 > 0 || callCount2 > 0, "At least one handler should receive requests")
+}
+
+// TestServeHTTPGracefulShutdownScenario tests a realistic graceful shutdown scenario:
+// - Initially 2 healthy endpoints
+// - One endpoint starts terminating (fenced=true)
+// - Traffic should still reach the terminating endpoint
+// - The terminating endpoint goes down
+// - All traffic should go to the remaining healthy endpoint
+func TestServeHTTPGracefulShutdownScenario(t *testing.T) {
+	balancer := New(nil, false)
+
+	callCount1 := 0
+	callCount2 := 0
+
+	handler1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		callCount1++
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("handler1"))
+	})
+	handler2 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		callCount2++
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("handler2"))
+	})
+
+	weight := 1
+
+	ctx := context.Background()
+
+	// Phase 1: Both healthy and not terminating
+	balancer.Add("handler1", handler1, &weight, false)
+	balancer.Add("handler2", handler2, &weight, false)
+	balancer.SetStatus(ctx, "handler1", true)
+	balancer.SetStatus(ctx, "handler2", true)
+
+	// Send some requests - both should receive traffic
+	for i := 0; i < 6; i++ {
+		req := httptest.NewRequest("GET", "/", nil)
+		w := httptest.NewRecorder()
+		balancer.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusOK, w.Code)
+	}
+
+	phase1Calls1 := callCount1
+	phase1Calls2 := callCount2
+	assert.Greater(t, phase1Calls1, 0, "Handler1 should receive requests in phase 1")
+	assert.Greater(t, phase1Calls2, 0, "Handler2 should receive requests in phase 1")
+
+	// Phase 2: handler2 starts terminating (fenced=true)
+	// Simulate this by updating the handler
+	balancer.handlersMu.Lock()
+	balancer.fenced["handler2"] = struct{}{}
+	balancer.handlersMu.Unlock()
+
+	// Send more requests - handler1 should get all of them now
+	// (since non-fenced handlers are preferred)
+	for i := 0; i < 10; i++ {
+		req := httptest.NewRequest("GET", "/", nil)
+		w := httptest.NewRecorder()
+		balancer.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusOK, w.Code)
+	}
+
+	phase2Calls1 := callCount1 - phase1Calls1
+	phase2Calls2 := callCount2 - phase1Calls2
+
+	// Handler1 (non-fenced) should receive all traffic
+	assert.Equal(t, 10, phase2Calls1, "Non-fenced handler should receive all requests")
+	assert.Equal(t, 0, phase2Calls2, "Fenced handler should receive no requests when non-fenced is available")
+
+	// Phase 3: handler1 goes down, only handler2 (fenced) remains
+	balancer.SetStatus(ctx, "handler1", false)
+
+	// Send more requests - handler2 (fenced but healthy) should handle them
+	callCount1Before := callCount1
+	for i := 0; i < 10; i++ {
+		req := httptest.NewRequest("GET", "/", nil)
+		w := httptest.NewRecorder()
+		balancer.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusOK, w.Code)
+	}
+
+	phase3Calls1 := callCount1 - callCount1Before
+	phase3Calls2 := callCount2 - (phase1Calls2 + phase2Calls2)
+
+	// Only handler2 should receive traffic (graceful shutdown fallback)
+	assert.Equal(t, 0, phase3Calls1, "Down handler should receive no requests")
+	assert.Equal(t, 10, phase3Calls2, "Fenced but healthy handler should receive all requests as fallback")
 }
