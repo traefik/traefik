@@ -212,12 +212,24 @@ func (i *Provider) getEntryPointPort(name string, def *static.Redirections) (str
 
 func (i *Provider) entryPointModels(cfg *dynamic.Configuration) {
 	for name, ep := range i.staticCfg.EntryPoints {
-		if len(ep.HTTP.Middlewares) == 0 && ep.HTTP.TLS == nil {
+		if len(ep.HTTP.Middlewares) == 0 && ep.HTTP.TLS == nil && ep.HTTP.EncodedCharacters == nil {
 			continue
 		}
 
 		m := &dynamic.Model{
 			Middlewares: ep.HTTP.Middlewares,
+		}
+
+		if ep.HTTP.EncodedCharacters != nil {
+			m.DeniedEncodedPathCharacters = &dynamic.RouterDeniedEncodedPathCharacters{
+				AllowEncodedSlash:         ep.HTTP.EncodedCharacters.AllowEncodedSlash,
+				AllowEncodedBackSlash:     ep.HTTP.EncodedCharacters.AllowEncodedBackSlash,
+				AllowEncodedPercent:       ep.HTTP.EncodedCharacters.AllowEncodedPercent,
+				AllowEncodedQuestionMark:  ep.HTTP.EncodedCharacters.AllowEncodedQuestionMark,
+				AllowEncodedSemicolon:     ep.HTTP.EncodedCharacters.AllowEncodedSemicolon,
+				AllowEncodedHash:          ep.HTTP.EncodedCharacters.AllowEncodedHash,
+				AllowEncodedNullCharacter: ep.HTTP.EncodedCharacters.AllowEncodedNullCharacter,
+			}
 		}
 
 		if ep.HTTP.TLS != nil {

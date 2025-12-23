@@ -24,8 +24,9 @@ type HTTPConfiguration struct {
 
 // Model is a set of default router's values.
 type Model struct {
-	Middlewares []string         `json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
-	TLS         *RouterTLSConfig `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
+	Middlewares                 []string                           `json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
+	TLS                         *RouterTLSConfig                   `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
+	DeniedEncodedPathCharacters *RouterDeniedEncodedPathCharacters `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -42,13 +43,60 @@ type Service struct {
 
 // Router holds the router configuration.
 type Router struct {
-	EntryPoints []string         `json:"entryPoints,omitempty" toml:"entryPoints,omitempty" yaml:"entryPoints,omitempty" export:"true"`
-	Middlewares []string         `json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
-	Service     string           `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty" export:"true"`
-	Rule        string           `json:"rule,omitempty" toml:"rule,omitempty" yaml:"rule,omitempty"`
-	Priority    int              `json:"priority,omitempty" toml:"priority,omitempty,omitzero" yaml:"priority,omitempty" export:"true"`
-	TLS         *RouterTLSConfig `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
-	DefaultRule bool             `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
+	EntryPoints                 []string                          `json:"entryPoints,omitempty" toml:"entryPoints,omitempty" yaml:"entryPoints,omitempty" export:"true"`
+	Middlewares                 []string                          `json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
+	Service                     string                            `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty" export:"true"`
+	Rule                        string                            `json:"rule,omitempty" toml:"rule,omitempty" yaml:"rule,omitempty"`
+	Priority                    int                               `json:"priority,omitempty" toml:"priority,omitempty,omitzero" yaml:"priority,omitempty" export:"true"`
+	TLS                         *RouterTLSConfig                  `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
+	DefaultRule                 bool                              `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
+	DeniedEncodedPathCharacters RouterDeniedEncodedPathCharacters `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// RouterDeniedEncodedPathCharacters configures which encoded characters are allowed in the request path.
+type RouterDeniedEncodedPathCharacters struct {
+	AllowEncodedSlash         bool `description:"Defines whether requests with encoded slash characters in the path are allowed." json:"allowEncodedSlash,omitempty" toml:"allowEncodedSlash,omitempty" yaml:"allowEncodedSlash,omitempty" export:"true"`
+	AllowEncodedBackSlash     bool `description:"Defines whether requests with encoded back slash characters in the path are allowed." json:"allowEncodedBackSlash,omitempty" toml:"allowEncodedBackSlash,omitempty" yaml:"allowEncodedBackSlash,omitempty" export:"true"`
+	AllowEncodedNullCharacter bool `description:"Defines whether requests with encoded null characters in the path are allowed." json:"allowEncodedNullCharacter,omitempty" toml:"allowEncodedNullCharacter,omitempty" yaml:"allowEncodedNullCharacter,omitempty" export:"true"`
+	AllowEncodedSemicolon     bool `description:"Defines whether requests with encoded semicolon characters in the path are allowed." json:"allowEncodedSemicolon,omitempty" toml:"allowEncodedSemicolon,omitempty" yaml:"allowEncodedSemicolon,omitempty" export:"true"`
+	AllowEncodedPercent       bool `description:"Defines whether requests with encoded percent characters in the path are allowed." json:"allowEncodedPercent,omitempty" toml:"allowEncodedPercent,omitempty" yaml:"allowEncodedPercent,omitempty" export:"true"`
+	AllowEncodedQuestionMark  bool `description:"Defines whether requests with encoded question mark characters in the path are allowed." json:"allowEncodedQuestionMark,omitempty" toml:"allowEncodedQuestionMark,omitempty" yaml:"allowEncodedQuestionMark,omitempty" export:"true"`
+	AllowEncodedHash          bool `description:"Defines whether requests with encoded hash characters in the path are allowed." json:"allowEncodedHash,omitempty" toml:"allowEncodedHash,omitempty" yaml:"allowEncodedHash,omitempty" export:"true"`
+}
+
+// Map returns a map of unallowed encoded characters.
+func (h *RouterDeniedEncodedPathCharacters) Map() map[string]struct{} {
+	characters := make(map[string]struct{})
+
+	if !h.AllowEncodedSlash {
+		characters["%2F"] = struct{}{}
+		characters["%2f"] = struct{}{}
+	}
+	if !h.AllowEncodedBackSlash {
+		characters["%5C"] = struct{}{}
+		characters["%5c"] = struct{}{}
+	}
+	if !h.AllowEncodedNullCharacter {
+		characters["%00"] = struct{}{}
+	}
+	if !h.AllowEncodedSemicolon {
+		characters["%3B"] = struct{}{}
+		characters["%3b"] = struct{}{}
+	}
+	if !h.AllowEncodedPercent {
+		characters["%25"] = struct{}{}
+	}
+	if !h.AllowEncodedQuestionMark {
+		characters["%3F"] = struct{}{}
+		characters["%3f"] = struct{}{}
+	}
+	if !h.AllowEncodedHash {
+		characters["%23"] = struct{}{}
+	}
+
+	return characters
 }
 
 // +k8s:deepcopy-gen=true
