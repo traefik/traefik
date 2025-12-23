@@ -104,9 +104,8 @@ func (p *DynConfBuilder) build(ctx context.Context, containersInspected []docker
 }
 
 func (p *DynConfBuilder) buildTCPServiceConfiguration(ctx context.Context, container dockerData, configuration *dynamic.TCPConfiguration) error {
-	serviceName := getServiceName(container)
-
 	if len(configuration.Services) == 0 {
+		serviceName := getServiceName(container)
 		configuration.Services = map[string]*dynamic.TCPService{
 			serviceName: {
 				LoadBalancer: new(dynamic.TCPServersLoadBalancer),
@@ -114,16 +113,19 @@ func (p *DynConfBuilder) buildTCPServiceConfiguration(ctx context.Context, conta
 		}
 	}
 
-	// Keep an empty server load-balancer for non-running containers.
-	if container.Status != "" && container.Status != containertypes.StateRunning {
-		return nil
-	}
-	// Keep an empty server load-balancer for unhealthy containers.
-	if container.Health != "" && container.Health != containertypes.Healthy {
-		return nil
-	}
-
 	for name, service := range configuration.Services {
+		// Keep an empty server load-balancer for non-running containers.
+		if container.Status != "" && container.Status != containertypes.StateRunning {
+			continue
+		}
+		// Keep an empty server load-balancer for unhealthy containers.
+		if container.Health != "" && container.Health != containertypes.Healthy {
+			continue
+		}
+		if service.LoadBalancer != nil && len(service.LoadBalancer.Servers) == 0 {
+			service.LoadBalancer.Servers = []dynamic.TCPServer{{}}
+		}
+
 		ctx := log.Ctx(ctx).With().Str(logs.ServiceName, name).Logger().WithContext(ctx)
 		if err := p.addServerTCP(ctx, container, service.LoadBalancer); err != nil {
 			return fmt.Errorf("service %q error: %w", name, err)
@@ -239,6 +241,9 @@ func (p *DynConfBuilder) addServerTCP(ctx context.Context, container dockerData,
 
 	if len(loadBalancer.Servers) == 0 {
 		loadBalancer.Servers = []dynamic.TCPServer{{}}
+	}
+	if loadBalancer.Servers[0].Address != "" {
+		return nil
 	}
 
 	serverPort := loadBalancer.Servers[0].Port
