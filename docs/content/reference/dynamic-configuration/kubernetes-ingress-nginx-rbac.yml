@@ -9,12 +9,11 @@ rules:
     resources:
       - services
       - secrets
-      - nodes
-      - configmaps
     verbs:
-      - get
       - list
       - watch
+  # When using the watchNamespaceSelector option,
+  # Traefik requires permissions to list and watch namespaces.
   - apiGroups:
       - ""
     resources:
@@ -38,17 +37,14 @@ rules:
       - list
       - watch
   - apiGroups:
-      - extensions
       - networking.k8s.io
     resources:
       - ingresses
       - ingressclasses
     verbs:
-      - get
       - list
       - watch
   - apiGroups:
-      - extensions
       - networking.k8s.io
     resources:
       - ingresses/status

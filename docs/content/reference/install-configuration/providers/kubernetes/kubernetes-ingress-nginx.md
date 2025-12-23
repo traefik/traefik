@@ -19,9 +19,8 @@ It also supports many of the [ingress-nginx](https://kubernetes.github.io/ingres
 
 ## Requirements
 
-When you install Traefik without using the Helm Chart, ensure that you satisfy the following requirements:
-
-- Add/update the [RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) for the Traefik Kubernetes Ingress NGINX provider
+When you install Traefik without using the Helm Chart, 
+ensure that you add/update the [RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) for the Traefik Kubernetes Ingress NGINX provider. 
 
 !!! note "Additional RBAC for Namespace Selector"
 
