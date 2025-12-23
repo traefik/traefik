@@ -83,9 +83,10 @@ func (p *Provider) applyRouterTransform(ctx context.Context, rt *dynamic.Router,
 
 // EndpointIngress holds the endpoint information for the Kubernetes provider.
 type EndpointIngress struct {
-	IP               string `description:"IP used for Kubernetes Ingress endpoints." json:"ip,omitempty" toml:"ip,omitempty" yaml:"ip,omitempty"`
-	Hostname         string `description:"Hostname used for Kubernetes Ingress endpoints." json:"hostname,omitempty" toml:"hostname,omitempty" yaml:"hostname,omitempty"`
-	PublishedService string `description:"Published Kubernetes Service to copy status from." json:"publishedService,omitempty" toml:"publishedService,omitempty" yaml:"publishedService,omitempty"`
+	IP                       string `description:"IP used for Kubernetes Ingress endpoints." json:"ip,omitempty" toml:"ip,omitempty" yaml:"ip,omitempty"`
+	Hostname                 string `description:"Hostname used for Kubernetes Ingress endpoints." json:"hostname,omitempty" toml:"hostname,omitempty" yaml:"hostname,omitempty"`
+	PublishedService         string `description:"Published Kubernetes Service to copy status from." json:"publishedService,omitempty" toml:"publishedService,omitempty" yaml:"publishedService,omitempty"`
+	PublishedServiceSelector string `description:"Published Kubernetes Service label selector to copy status from." json:"publishedServiceSelector,omitempty" toml:"publishedServiceSelector,omitempty" yaml:"publishedServiceSelector,omitempty"`
 }
 
 func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
@@ -400,97 +401,115 @@ func (p *Provider) updateIngressStatus(ing *netv1.Ingress, k8sClient Client) err
 		return nil
 	}
 
-	if len(p.IngressEndpoint.PublishedService) == 0 {
+	if len(p.IngressEndpoint.PublishedService) == 0 && len(p.IngressEndpoint.PublishedServiceSelector) == 0 {
 		if len(p.IngressEndpoint.IP) == 0 && len(p.IngressEndpoint.Hostname) == 0 {
-			return errors.New("publishedService or ip or hostname must be defined")
+			return errors.New("publishedService, publishedServiceSelector, ip, or hostname must be defined")
 		}
 
 		return k8sClient.UpdateIngressStatus(ing, []netv1.IngressLoadBalancerIngress{{IP: p.IngressEndpoint.IP, Hostname: p.IngressEndpoint.Hostname}})
 	}
 
-	serviceInfo := strings.Split(p.IngressEndpoint.PublishedService, "/")
-	if len(serviceInfo) != 2 {
-		return fmt.Errorf("invalid publishedService format (expected 'namespace/service' format): %s", p.IngressEndpoint.PublishedService)
-	}
+	var services []*corev1.Service
 
-	serviceNamespace, serviceName := serviceInfo[0], serviceInfo[1]
+	if len(p.IngressEndpoint.PublishedService) != 0 {
+		serviceNamespace, serviceName, ok := strings.Cut(p.IngressEndpoint.PublishedService, "/")
+		if !ok {
+			return fmt.Errorf("invalid publishedService format (expected 'namespace/service' format): %s", p.IngressEndpoint.PublishedService)
+		}
 
-	service, exists, err := k8sClient.GetService(serviceNamespace, serviceName)
-	if err != nil {
-		return fmt.Errorf("cannot get service %s, received error: %w", p.IngressEndpoint.PublishedService, err)
-	}
+		service, exists, err := k8sClient.GetService(serviceNamespace, serviceName)
+		if err != nil {
+			return fmt.Errorf("cannot get service %s, received error: %w", p.IngressEndpoint.PublishedService, err)
+		}
 
-	if !exists {
-		return fmt.Errorf("missing service: %s", p.IngressEndpoint.PublishedService)
+		if !exists {
+			return fmt.Errorf("missing service: %s", p.IngressEndpoint.PublishedService)
+		}
+
+		services = []*corev1.Service{service}
+	} else {
+		namespace, selector, ok := strings.Cut(p.IngressEndpoint.PublishedServiceSelector, "/")
+		if !ok {
+			return fmt.Errorf("invalid publishedServiceSelector format (expected 'namespace/selector' format): %s", p.IngressEndpoint.PublishedServiceSelector)
+		}
+
+		var err error
+		services, err = k8sClient.GetServicesBySelector(namespace, selector)
+		if err != nil {
+			return fmt.Errorf("getting services by selector: %w", err)
+		}
 	}
 
 	var ingressStatus []netv1.IngressLoadBalancerIngress
 
-	switch service.Spec.Type {
-	case corev1.ServiceTypeLoadBalancer:
-		if service.Status.LoadBalancer.Ingress == nil {
-			// service exists, but has no Load Balancer status
-			log.Debug().Msgf("Skipping updating Ingress %s/%s due to service %s having no status set", ing.Namespace, ing.Name, p.IngressEndpoint.PublishedService)
-			return nil
-		}
+	for _, service := range services {
+		switch service.Spec.Type {
+		case corev1.ServiceTypeLoadBalancer:
+			if service.Status.LoadBalancer.Ingress == nil {
+				// service exists, but has no Load Balancer status
+				log.Debug().Msgf("Skipping updating Ingress %s/%s due to service %s/%s having no status set", ing.Namespace, ing.Name, service.Namespace, service.Name)
+				continue
+			}
 
-		ingressStatus, err = convertSlice[netv1.IngressLoadBalancerIngress](service.Status.LoadBalancer.Ingress)
-		if err != nil {
-			return fmt.Errorf("converting ingress loadbalancer status: %w", err)
-		}
+			status, err := convertSlice[netv1.IngressLoadBalancerIngress](service.Status.LoadBalancer.Ingress)
+			if err != nil {
+				return fmt.Errorf("converting ingress loadbalancer status: %w", err)
+			}
+			ingressStatus = append(ingressStatus, status...)
 
-	case corev1.ServiceTypeClusterIP:
-		var ports []netv1.IngressPortStatus
-		for _, port := range service.Spec.Ports {
-			ports = append(ports, netv1.IngressPortStatus{
-				Port:     port.Port,
-				Protocol: port.Protocol,
-			})
-		}
+		case corev1.ServiceTypeClusterIP:
+			var ports []netv1.IngressPortStatus
+			for _, port := range service.Spec.Ports {
+				ports = append(ports, netv1.IngressPortStatus{
+					Port:     port.Port,
+					Protocol: port.Protocol,
+				})
+			}
 
-		for _, ip := range service.Spec.ExternalIPs {
-			ingressStatus = append(ingressStatus, netv1.IngressLoadBalancerIngress{
-				IP:    ip,
-				Ports: ports,
-			})
-		}
+			for _, ip := range service.Spec.ExternalIPs {
+				ingressStatus = append(ingressStatus, netv1.IngressLoadBalancerIngress{
+					IP:    ip,
+					Ports: ports,
+				})
+			}
 
-	case corev1.ServiceTypeNodePort:
-		if p.DisableClusterScopeResources {
-			return errors.New("node port service type is not supported when cluster scope resources lookup is disabled")
-		}
+		case corev1.ServiceTypeNodePort:
+			if p.DisableClusterScopeResources {
+				return errors.New("node port service type is not supported when cluster scope resources lookup is disabled")
+			}
 
-		nodes, _, err := k8sClient.GetNodes()
-		if err != nil {
-			return fmt.Errorf("getting nodes: %w", err)
-		}
+			nodes, _, err := k8sClient.GetNodes()
+			if err != nil {
+				return fmt.Errorf("getting nodes: %w", err)
+			}
 
-		var ports []netv1.IngressPortStatus
-		for _, port := range service.Spec.Ports {
-			ports = append(ports, netv1.IngressPortStatus{
-				Port:     port.NodePort,
-				Protocol: port.Protocol,
-			})
-		}
+			var ports []netv1.IngressPortStatus
+			for _, port := range service.Spec.Ports {
+				ports = append(ports, netv1.IngressPortStatus{
+					Port:     port.NodePort,
+					Protocol: port.Protocol,
+				})
+			}
 
-		for _, node := range nodes {
-			for _, address := range node.Status.Addresses {
-				if address.Type == corev1.NodeExternalIP {
-					ingressStatus = append(ingressStatus, netv1.IngressLoadBalancerIngress{
-						IP:    address.Address,
-						Ports: ports,
-					})
+			for _, node := range nodes {
+				for _, address := range node.Status.Addresses {
+					if address.Type == corev1.NodeExternalIP {
+						ingressStatus = append(ingressStatus, netv1.IngressLoadBalancerIngress{
+							IP:    address.Address,
+							Ports: ports,
+						})
+					}
 				}
 			}
+
+		case corev1.ServiceTypeExternalName:
+			ingressStatus = append(ingressStatus, netv1.IngressLoadBalancerIngress{
+				Hostname: service.Spec.ExternalName,
+			})
+
+		default:
+			return fmt.Errorf("unsupported service type: %s", service.Spec.Type)
 		}
-
-	case corev1.ServiceTypeExternalName:
-		ingressStatus = []netv1.IngressLoadBalancerIngress{{
-			Hostname: service.Spec.ExternalName,
-		}}
-
-	default:
-		return fmt.Errorf("unsupported service type: %s", service.Spec.Type)
 	}
 
 	return k8sClient.UpdateIngressStatus(ing, ingressStatus)

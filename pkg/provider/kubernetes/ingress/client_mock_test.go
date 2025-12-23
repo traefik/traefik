@@ -8,6 +8,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	discoveryv1 "k8s.io/api/discovery/v1"
 	netv1 "k8s.io/api/networking/v1"
+	"k8s.io/apimachinery/pkg/labels"
 )
 
 var _ Client = (*clientMock)(nil)
@@ -75,6 +76,26 @@ func (c clientMock) GetService(namespace, name string) (*corev1.Service, bool, e
 		}
 	}
 	return nil, false, c.apiServiceError
+}
+
+func (c clientMock) GetServicesBySelector(namespace, selector string) ([]*corev1.Service, error) {
+	if c.apiServiceError != nil {
+		return nil, c.apiServiceError
+	}
+
+	ls, err := labels.Parse(selector)
+	if err != nil {
+		return nil, fmt.Errorf("parse selector: %w", err)
+	}
+
+	var result []*corev1.Service
+	for _, service := range c.services {
+		if service.Namespace == namespace && ls.Matches(labels.Set(service.Labels)) {
+			result = append(result, service)
+		}
+	}
+
+	return result, nil
 }
 
 func (c clientMock) GetEndpointSlicesForService(namespace, serviceName string) ([]*discoveryv1.EndpointSlice, error) {

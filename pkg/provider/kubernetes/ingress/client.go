@@ -40,6 +40,7 @@ type Client interface {
 	GetIngresses() []*netv1.Ingress
 	GetIngressClasses() ([]*netv1.IngressClass, error)
 	GetService(namespace, name string) (*corev1.Service, bool, error)
+	GetServicesBySelector(namespace string, selector string) ([]*corev1.Service, error)
 	GetSecret(namespace, name string) (*corev1.Secret, bool, error)
 	GetNodes() ([]*corev1.Node, bool, error)
 	GetEndpointSlicesForService(namespace, serviceName string) ([]*discoveryv1.EndpointSlice, error)
@@ -319,6 +320,20 @@ func (c *clientWrapper) GetService(namespace, name string) (*corev1.Service, boo
 	service, err := c.factoriesKube[c.lookupNamespace(namespace)].Core().V1().Services().Lister().Services(namespace).Get(name)
 	exist, err := translateNotFoundError(err)
 	return service, exist, err
+}
+
+// GetServicesBySelector returns all services in the given namespace that match the given selector.
+func (c *clientWrapper) GetServicesBySelector(namespace, selector string) ([]*corev1.Service, error) {
+	if !c.isWatchedNamespace(namespace) {
+		return nil, fmt.Errorf("failed to get services by selector %s in namespace %s: namespace is not within watched namespaces", selector, namespace)
+	}
+
+	labelSelector, err := labels.Parse(selector)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse service label selector %s: %w", selector, err)
+	}
+
+	return c.factoriesKube[c.lookupNamespace(namespace)].Core().V1().Services().Lister().Services(namespace).List(labelSelector)
 }
 
 // GetEndpointSlicesForService returns the EndpointSlices for the given service name in the given namespace.
