@@ -1086,6 +1086,11 @@ func (in *Model) DeepCopyInto(out *Model) {
 		(*in).DeepCopyInto(*out)
 	}
 	in.Observability.DeepCopyInto(&out.Observability)
+	if in.DeniedEncodedPathCharacters != nil {
+		in, out := &in.DeniedEncodedPathCharacters, &out.DeniedEncodedPathCharacters
+		*out = new(RouterDeniedEncodedPathCharacters)
+		**out = **in
+	}
 	return
 }
 
@@ -1384,6 +1389,7 @@ func (in *Router) DeepCopyInto(out *Router) {
 		*out = new(RouterObservabilityConfig)
 		(*in).DeepCopyInto(*out)
 	}
+	out.DeniedEncodedPathCharacters = in.DeniedEncodedPathCharacters
 	return
 }
 
