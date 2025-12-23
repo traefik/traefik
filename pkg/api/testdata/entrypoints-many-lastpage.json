@@ -1,37 +1,27 @@
 [
 	{
 		"address": ":14",
-		"http": {
-			"encodedCharacters": {}
-		},
+		"http": {},
 		"name": "ep14"
 	},
 	{
 		"address": ":15",
-		"http": {
-			"encodedCharacters": {}
-		},
+		"http": {},
 		"name": "ep15"
 	},
 	{
 		"address": ":16",
-		"http": {
-			"encodedCharacters": {}
-		},
+		"http": {},
 		"name": "ep16"
 	},
 	{
 		"address": ":17",
-		"http": {
-			"encodedCharacters": {}
-		},
+		"http": {},
 		"name": "ep17"
 	},
 	{
 		"address": ":18",
-		"http": {
-			"encodedCharacters": {}
-		},
+		"http": {},
 		"name": "ep18"
 	}
 ]
