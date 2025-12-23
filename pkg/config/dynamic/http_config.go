@@ -80,6 +80,8 @@ type Router struct {
 	DeniedEncodedPathCharacters RouterDeniedEncodedPathCharacters `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
 }
 
+// +k8s:deepcopy-gen=true
+
 // RouterDeniedEncodedPathCharacters configures which encoded characters are allowed in the request path.
 type RouterDeniedEncodedPathCharacters struct {
 	AllowEncodedSlash         bool `description:"Defines whether requests with encoded slash characters in the path are allowed." json:"allowEncodedSlash,omitempty" toml:"allowEncodedSlash,omitempty" yaml:"allowEncodedSlash,omitempty" export:"true"`
