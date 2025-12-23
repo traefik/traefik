@@ -190,6 +190,8 @@ apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: whoami
+  annotations:
+    kubernetes.io/ingress.class: traefik
 spec:
   entryPoints:
     - web
