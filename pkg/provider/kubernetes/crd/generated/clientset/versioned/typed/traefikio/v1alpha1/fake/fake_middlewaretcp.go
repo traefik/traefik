@@ -27,20 +27,21 @@ THE SOFTWARE.
 package fake
 
 import (
-	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned/typed/traefikio/v1alpha1"
+	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/applyconfiguration/traefikio/v1alpha1"
+	typedtraefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned/typed/traefikio/v1alpha1"
 	v1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	gentype "k8s.io/client-go/gentype"
 )
 
 // fakeMiddlewareTCPs implements MiddlewareTCPInterface
 type fakeMiddlewareTCPs struct {
-	*gentype.FakeClientWithList[*v1alpha1.MiddlewareTCP, *v1alpha1.MiddlewareTCPList]
+	*gentype.FakeClientWithListAndApply[*v1alpha1.MiddlewareTCP, *v1alpha1.MiddlewareTCPList, *traefikiov1alpha1.MiddlewareTCPApplyConfiguration]
 	Fake *FakeTraefikV1alpha1
 }
 
-func newFakeMiddlewareTCPs(fake *FakeTraefikV1alpha1, namespace string) traefikiov1alpha1.MiddlewareTCPInterface {
+func newFakeMiddlewareTCPs(fake *FakeTraefikV1alpha1, namespace string) typedtraefikiov1alpha1.MiddlewareTCPInterface {
 	return &fakeMiddlewareTCPs{
-		gentype.NewFakeClientWithList[*v1alpha1.MiddlewareTCP, *v1alpha1.MiddlewareTCPList](
+		gentype.NewFakeClientWithListAndApply[*v1alpha1.MiddlewareTCP, *v1alpha1.MiddlewareTCPList, *traefikiov1alpha1.MiddlewareTCPApplyConfiguration](
 			fake.Fake,
 			namespace,
 			v1alpha1.SchemeGroupVersion.WithResource("middlewaretcps"),

@@ -29,6 +29,7 @@ package v1alpha1
 import (
 	context "context"
 
+	applyconfigurationtraefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/applyconfiguration/traefikio/v1alpha1"
 	scheme "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned/scheme"
 	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -53,18 +54,19 @@ type TraefikServiceInterface interface {
 	List(ctx context.Context, opts v1.ListOptions) (*traefikiov1alpha1.TraefikServiceList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
 	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *traefikiov1alpha1.TraefikService, err error)
+	Apply(ctx context.Context, traefikService *applyconfigurationtraefikiov1alpha1.TraefikServiceApplyConfiguration, opts v1.ApplyOptions) (result *traefikiov1alpha1.TraefikService, err error)
 	TraefikServiceExpansion
 }
 
 // traefikServices implements TraefikServiceInterface
 type traefikServices struct {
-	*gentype.ClientWithList[*traefikiov1alpha1.TraefikService, *traefikiov1alpha1.TraefikServiceList]
+	*gentype.ClientWithListAndApply[*traefikiov1alpha1.TraefikService, *traefikiov1alpha1.TraefikServiceList, *applyconfigurationtraefikiov1alpha1.TraefikServiceApplyConfiguration]
 }
 
 // newTraefikServices returns a TraefikServices
 func newTraefikServices(c *TraefikV1alpha1Client, namespace string) *traefikServices {
 	return &traefikServices{
-		gentype.NewClientWithList[*traefikiov1alpha1.TraefikService, *traefikiov1alpha1.TraefikServiceList](
+		gentype.NewClientWithListAndApply[*traefikiov1alpha1.TraefikService, *traefikiov1alpha1.TraefikServiceList, *applyconfigurationtraefikiov1alpha1.TraefikServiceApplyConfiguration](
 			"traefikservices",
 			c.RESTClient(),
 			scheme.ParameterCodec,
