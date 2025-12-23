@@ -29,6 +29,7 @@ package v1alpha1
 import (
 	context "context"
 
+	applyconfigurationtraefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/applyconfiguration/traefikio/v1alpha1"
 	scheme "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned/scheme"
 	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -53,18 +54,19 @@ type TLSStoreInterface interface {
 	List(ctx context.Context, opts v1.ListOptions) (*traefikiov1alpha1.TLSStoreList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
 	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *traefikiov1alpha1.TLSStore, err error)
+	Apply(ctx context.Context, tLSStore *applyconfigurationtraefikiov1alpha1.TLSStoreApplyConfiguration, opts v1.ApplyOptions) (result *traefikiov1alpha1.TLSStore, err error)
 	TLSStoreExpansion
 }
 
 // tLSStores implements TLSStoreInterface
 type tLSStores struct {
-	*gentype.ClientWithList[*traefikiov1alpha1.TLSStore, *traefikiov1alpha1.TLSStoreList]
+	*gentype.ClientWithListAndApply[*traefikiov1alpha1.TLSStore, *traefikiov1alpha1.TLSStoreList, *applyconfigurationtraefikiov1alpha1.TLSStoreApplyConfiguration]
 }
 
 // newTLSStores returns a TLSStores
 func newTLSStores(c *TraefikV1alpha1Client, namespace string) *tLSStores {
 	return &tLSStores{
-		gentype.NewClientWithList[*traefikiov1alpha1.TLSStore, *traefikiov1alpha1.TLSStoreList](
+		gentype.NewClientWithListAndApply[*traefikiov1alpha1.TLSStore, *traefikiov1alpha1.TLSStoreList, *applyconfigurationtraefikiov1alpha1.TLSStoreApplyConfiguration](
 			"tlsstores",
 			c.RESTClient(),
 			scheme.ParameterCodec,

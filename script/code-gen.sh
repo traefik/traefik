@@ -20,6 +20,7 @@ kube::codegen::gen_helpers \
   "${CURRENT_DIR}"
 
 kube::codegen::gen_client \
+    --with-applyconfig \
     --with-watch \
     --output-dir "${CURRENT_DIR}/pkg/provider/kubernetes/crd/generated" \
     --output-pkg "${PROJECT_MODULE}/${MODULE_VERSION}/pkg/provider/kubernetes/crd/generated" \
