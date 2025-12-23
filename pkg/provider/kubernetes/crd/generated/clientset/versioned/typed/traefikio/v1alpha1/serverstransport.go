@@ -29,6 +29,7 @@ package v1alpha1
 import (
 	context "context"
 
+	applyconfigurationtraefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/applyconfiguration/traefikio/v1alpha1"
 	scheme "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned/scheme"
 	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -53,18 +54,19 @@ type ServersTransportInterface interface {
 	List(ctx context.Context, opts v1.ListOptions) (*traefikiov1alpha1.ServersTransportList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
 	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *traefikiov1alpha1.ServersTransport, err error)
+	Apply(ctx context.Context, serversTransport *applyconfigurationtraefikiov1alpha1.ServersTransportApplyConfiguration, opts v1.ApplyOptions) (result *traefikiov1alpha1.ServersTransport, err error)
 	ServersTransportExpansion
 }
 
 // serversTransports implements ServersTransportInterface
 type serversTransports struct {
-	*gentype.ClientWithList[*traefikiov1alpha1.ServersTransport, *traefikiov1alpha1.ServersTransportList]
+	*gentype.ClientWithListAndApply[*traefikiov1alpha1.ServersTransport, *traefikiov1alpha1.ServersTransportList, *applyconfigurationtraefikiov1alpha1.ServersTransportApplyConfiguration]
 }
 
 // newServersTransports returns a ServersTransports
 func newServersTransports(c *TraefikV1alpha1Client, namespace string) *serversTransports {
 	return &serversTransports{
-		gentype.NewClientWithList[*traefikiov1alpha1.ServersTransport, *traefikiov1alpha1.ServersTransportList](
+		gentype.NewClientWithListAndApply[*traefikiov1alpha1.ServersTransport, *traefikiov1alpha1.ServersTransportList, *applyconfigurationtraefikiov1alpha1.ServersTransportApplyConfiguration](
 			"serverstransports",
 			c.RESTClient(),
 			scheme.ParameterCodec,

@@ -27,20 +27,21 @@ THE SOFTWARE.
 package fake
 
 import (
-	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned/typed/traefikio/v1alpha1"
+	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/applyconfiguration/traefikio/v1alpha1"
+	typedtraefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned/typed/traefikio/v1alpha1"
 	v1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	gentype "k8s.io/client-go/gentype"
 )
 
 // fakeServersTransports implements ServersTransportInterface
 type fakeServersTransports struct {
-	*gentype.FakeClientWithList[*v1alpha1.ServersTransport, *v1alpha1.ServersTransportList]
+	*gentype.FakeClientWithListAndApply[*v1alpha1.ServersTransport, *v1alpha1.ServersTransportList, *traefikiov1alpha1.ServersTransportApplyConfiguration]
 	Fake *FakeTraefikV1alpha1
 }
 
-func newFakeServersTransports(fake *FakeTraefikV1alpha1, namespace string) traefikiov1alpha1.ServersTransportInterface {
+func newFakeServersTransports(fake *FakeTraefikV1alpha1, namespace string) typedtraefikiov1alpha1.ServersTransportInterface {
 	return &fakeServersTransports{
-		gentype.NewFakeClientWithList[*v1alpha1.ServersTransport, *v1alpha1.ServersTransportList](
+		gentype.NewFakeClientWithListAndApply[*v1alpha1.ServersTransport, *v1alpha1.ServersTransportList, *traefikiov1alpha1.ServersTransportApplyConfiguration](
 			fake.Fake,
 			namespace,
 			v1alpha1.SchemeGroupVersion.WithResource("serverstransports"),

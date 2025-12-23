@@ -27,20 +27,21 @@ THE SOFTWARE.
 package fake
 
 import (
-	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned/typed/traefikio/v1alpha1"
+	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/applyconfiguration/traefikio/v1alpha1"
+	typedtraefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned/typed/traefikio/v1alpha1"
 	v1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	gentype "k8s.io/client-go/gentype"
 )
 
 // fakeTLSStores implements TLSStoreInterface
 type fakeTLSStores struct {
-	*gentype.FakeClientWithList[*v1alpha1.TLSStore, *v1alpha1.TLSStoreList]
+	*gentype.FakeClientWithListAndApply[*v1alpha1.TLSStore, *v1alpha1.TLSStoreList, *traefikiov1alpha1.TLSStoreApplyConfiguration]
 	Fake *FakeTraefikV1alpha1
 }
 
-func newFakeTLSStores(fake *FakeTraefikV1alpha1, namespace string) traefikiov1alpha1.TLSStoreInterface {
+func newFakeTLSStores(fake *FakeTraefikV1alpha1, namespace string) typedtraefikiov1alpha1.TLSStoreInterface {
 	return &fakeTLSStores{
-		gentype.NewFakeClientWithList[*v1alpha1.TLSStore, *v1alpha1.TLSStoreList](
+		gentype.NewFakeClientWithListAndApply[*v1alpha1.TLSStore, *v1alpha1.TLSStoreList, *traefikiov1alpha1.TLSStoreApplyConfiguration](
 			fake.Fake,
 			namespace,
 			v1alpha1.SchemeGroupVersion.WithResource("tlsstores"),

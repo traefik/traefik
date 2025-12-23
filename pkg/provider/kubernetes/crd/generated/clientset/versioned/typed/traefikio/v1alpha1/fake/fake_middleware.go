@@ -27,20 +27,21 @@ THE SOFTWARE.
 package fake
 
 import (
-	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned/typed/traefikio/v1alpha1"
+	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/applyconfiguration/traefikio/v1alpha1"
+	typedtraefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned/typed/traefikio/v1alpha1"
 	v1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	gentype "k8s.io/client-go/gentype"
 )
 
 // fakeMiddlewares implements MiddlewareInterface
 type fakeMiddlewares struct {
-	*gentype.FakeClientWithList[*v1alpha1.Middleware, *v1alpha1.MiddlewareList]
+	*gentype.FakeClientWithListAndApply[*v1alpha1.Middleware, *v1alpha1.MiddlewareList, *traefikiov1alpha1.MiddlewareApplyConfiguration]
 	Fake *FakeTraefikV1alpha1
 }
 
-func newFakeMiddlewares(fake *FakeTraefikV1alpha1, namespace string) traefikiov1alpha1.MiddlewareInterface {
+func newFakeMiddlewares(fake *FakeTraefikV1alpha1, namespace string) typedtraefikiov1alpha1.MiddlewareInterface {
 	return &fakeMiddlewares{
-		gentype.NewFakeClientWithList[*v1alpha1.Middleware, *v1alpha1.MiddlewareList](
+		gentype.NewFakeClientWithListAndApply[*v1alpha1.Middleware, *v1alpha1.MiddlewareList, *traefikiov1alpha1.MiddlewareApplyConfiguration](
 			fake.Fake,
 			namespace,
 			v1alpha1.SchemeGroupVersion.WithResource("middlewares"),

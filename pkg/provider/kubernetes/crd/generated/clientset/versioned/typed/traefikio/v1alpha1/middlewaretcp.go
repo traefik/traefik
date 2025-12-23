@@ -29,6 +29,7 @@ package v1alpha1
 import (
 	context "context"
 
+	applyconfigurationtraefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/applyconfiguration/traefikio/v1alpha1"
 	scheme "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned/scheme"
 	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -53,18 +54,19 @@ type MiddlewareTCPInterface interface {
 	List(ctx context.Context, opts v1.ListOptions) (*traefikiov1alpha1.MiddlewareTCPList, error)
 	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
 	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *traefikiov1alpha1.MiddlewareTCP, err error)
+	Apply(ctx context.Context, middlewareTCP *applyconfigurationtraefikiov1alpha1.MiddlewareTCPApplyConfiguration, opts v1.ApplyOptions) (result *traefikiov1alpha1.MiddlewareTCP, err error)
 	MiddlewareTCPExpansion
 }
 
 // middlewareTCPs implements MiddlewareTCPInterface
 type middlewareTCPs struct {
-	*gentype.ClientWithList[*traefikiov1alpha1.MiddlewareTCP, *traefikiov1alpha1.MiddlewareTCPList]
+	*gentype.ClientWithListAndApply[*traefikiov1alpha1.MiddlewareTCP, *traefikiov1alpha1.MiddlewareTCPList, *applyconfigurationtraefikiov1alpha1.MiddlewareTCPApplyConfiguration]
 }
 
 // newMiddlewareTCPs returns a MiddlewareTCPs
 func newMiddlewareTCPs(c *TraefikV1alpha1Client, namespace string) *middlewareTCPs {
 	return &middlewareTCPs{
-		gentype.NewClientWithList[*traefikiov1alpha1.MiddlewareTCP, *traefikiov1alpha1.MiddlewareTCPList](
+		gentype.NewClientWithListAndApply[*traefikiov1alpha1.MiddlewareTCP, *traefikiov1alpha1.MiddlewareTCPList, *applyconfigurationtraefikiov1alpha1.MiddlewareTCPApplyConfiguration](
 			"middlewaretcps",
 			c.RESTClient(),
 			scheme.ParameterCodec,
