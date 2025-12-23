@@ -27,10 +27,10 @@ THE SOFTWARE.
 package v1alpha1
 
 import (
-	v1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/tools/cache"
+	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	labels "k8s.io/apimachinery/pkg/labels"
+	listers "k8s.io/client-go/listers"
+	cache "k8s.io/client-go/tools/cache"
 )
 
 // MiddlewareTCPLister helps list MiddlewareTCPs.
@@ -38,7 +38,7 @@ import (
 type MiddlewareTCPLister interface {
 	// List lists all MiddlewareTCPs in the indexer.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1alpha1.MiddlewareTCP, err error)
+	List(selector labels.Selector) (ret []*traefikiov1alpha1.MiddlewareTCP, err error)
 	// MiddlewareTCPs returns an object that can list and get MiddlewareTCPs.
 	MiddlewareTCPs(namespace string) MiddlewareTCPNamespaceLister
 	MiddlewareTCPListerExpansion
@@ -46,25 +46,17 @@ type MiddlewareTCPLister interface {
 
 // middlewareTCPLister implements the MiddlewareTCPLister interface.
 type middlewareTCPLister struct {
-	indexer cache.Indexer
+	listers.ResourceIndexer[*traefikiov1alpha1.MiddlewareTCP]
 }
 
 // NewMiddlewareTCPLister returns a new MiddlewareTCPLister.
 func NewMiddlewareTCPLister(indexer cache.Indexer) MiddlewareTCPLister {
-	return &middlewareTCPLister{indexer: indexer}
-}
-
-// List lists all MiddlewareTCPs in the indexer.
-func (s *middlewareTCPLister) List(selector labels.Selector) (ret []*v1alpha1.MiddlewareTCP, err error) {
-	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1alpha1.MiddlewareTCP))
-	})
-	return ret, err
+	return &middlewareTCPLister{listers.New[*traefikiov1alpha1.MiddlewareTCP](indexer, traefikiov1alpha1.Resource("middlewaretcp"))}
 }
 
 // MiddlewareTCPs returns an object that can list and get MiddlewareTCPs.
 func (s *middlewareTCPLister) MiddlewareTCPs(namespace string) MiddlewareTCPNamespaceLister {
-	return middlewareTCPNamespaceLister{indexer: s.indexer, namespace: namespace}
+	return middlewareTCPNamespaceLister{listers.NewNamespaced[*traefikiov1alpha1.MiddlewareTCP](s.ResourceIndexer, namespace)}
 }
 
 // MiddlewareTCPNamespaceLister helps list and get MiddlewareTCPs.
@@ -72,36 +64,15 @@ func (s *middlewareTCPLister) MiddlewareTCPs(namespace string) MiddlewareTCPName
 type MiddlewareTCPNamespaceLister interface {
 	// List lists all MiddlewareTCPs in the indexer for a given namespace.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1alpha1.MiddlewareTCP, err error)
+	List(selector labels.Selector) (ret []*traefikiov1alpha1.MiddlewareTCP, err error)
 	// Get retrieves the MiddlewareTCP from the indexer for a given namespace and name.
 	// Objects returned here must be treated as read-only.
-	Get(name string) (*v1alpha1.MiddlewareTCP, error)
+	Get(name string) (*traefikiov1alpha1.MiddlewareTCP, error)
 	MiddlewareTCPNamespaceListerExpansion
 }
 
 // middlewareTCPNamespaceLister implements the MiddlewareTCPNamespaceLister
 // interface.
 type middlewareTCPNamespaceLister struct {
-	indexer   cache.Indexer
-	namespace string
-}
-
-// List lists all MiddlewareTCPs in the indexer for a given namespace.
-func (s middlewareTCPNamespaceLister) List(selector labels.Selector) (ret []*v1alpha1.MiddlewareTCP, err error) {
-	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1alpha1.MiddlewareTCP))
-	})
-	return ret, err
-}
-
-// Get retrieves the MiddlewareTCP from the indexer for a given namespace and name.
-func (s middlewareTCPNamespaceLister) Get(name string) (*v1alpha1.MiddlewareTCP, error) {
-	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, errors.NewNotFound(v1alpha1.Resource("middlewaretcp"), name)
-	}
-	return obj.(*v1alpha1.MiddlewareTCP), nil
+	listers.ResourceIndexer[*traefikiov1alpha1.MiddlewareTCP]
 }
