@@ -45,20 +45,21 @@ var hopHeaders = []string{
 }
 
 type forwardAuth struct {
-	address                  string
-	authResponseHeaders      []string
-	authResponseHeadersRegex *regexp.Regexp
-	next                     http.Handler
-	name                     string
-	client                   http.Client
-	trustForwardHeader       bool
-	authRequestHeaders       []string
-	addAuthCookiesToResponse map[string]struct{}
-	headerField              string
-	forwardBody              bool
-	maxBodySize              int64
-	preserveLocationHeader   bool
-	preserveRequestMethod    bool
+	address                       string
+	authResponseHeaders           []string
+	authResponseHeadersRegex      *regexp.Regexp
+	next                          http.Handler
+	name                          string
+	client                        http.Client
+	trustForwardHeader            bool
+	authRequestHeaders            []string
+	addAuthCookiesToResponse      map[string]struct{}
+	addAuthCookiesToResponseRegex *regexp.Regexp
+	headerField                   string
+	forwardBody                   bool
+	maxBodySize                   int64
+	preserveLocationHeader        bool
+	preserveRequestMethod         bool
 }
 
 // NewForward creates a forward auth middleware.
@@ -128,6 +129,14 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 			return nil, fmt.Errorf("error compiling regular expression %s: %w", config.AuthResponseHeadersRegex, err)
 		}
 		fa.authResponseHeadersRegex = re
+	}
+
+	if config.AddAuthCookiesToResponseRegex != "" {
+		re, err := regexp.Compile(config.AddAuthCookiesToResponseRegex)
+		if err != nil {
+			return nil, fmt.Errorf("error compiling regular expression %s: %w", config.AddAuthCookiesToResponseRegex, err)
+		}
+		fa.addAuthCookiesToResponseRegex = re
 	}
 
 	return fa, nil
@@ -316,13 +325,23 @@ func (fa *forwardAuth) buildModifier(authCookies []*http.Cookie) func(res *http.
 		res.Header.Del("Set-Cookie")
 
 		for _, cookie := range cookies {
-			if _, found := fa.addAuthCookiesToResponse[cookie.Name]; !found {
+			_, found := fa.addAuthCookiesToResponse[cookie.Name]
+			var matches bool
+			if fa.addAuthCookiesToResponseRegex != nil {
+				matches = fa.addAuthCookiesToResponseRegex.MatchString(cookie.Name)
+			}
+			if !found && !matches {
 				res.Header.Add("Set-Cookie", cookie.String())
 			}
 		}
 
 		for _, cookie := range authCookies {
-			if _, found := fa.addAuthCookiesToResponse[cookie.Name]; found {
+			_, found := fa.addAuthCookiesToResponse[cookie.Name]
+			var matches bool
+			if fa.addAuthCookiesToResponseRegex != nil {
+				matches = fa.addAuthCookiesToResponseRegex.MatchString(cookie.Name)
+			}
+			if found || matches {
 				res.Header.Add("Set-Cookie", cookie.String())
 			}
 		}

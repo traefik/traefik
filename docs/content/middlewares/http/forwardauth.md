@@ -332,6 +332,52 @@ http:
     addAuthCookiesToResponse = ["Session-Cookie", "State-Cookie"]
 ```
 
+### `addAuthCookiesToResponseRegex`
+
+The `addAuthCookiesToResponseRegex` option allows you to define a regex that matches cookies to copy
+from the authentication server to the response. Any cookies that match the response sent from the
+service will be removed.
+
+!!! info
+
+    Please note that all backend cookies matching the regex will not be added to the response.
+
+```yaml tab="Docker"
+labels:
+  - "traefik.http.middlewares.test-auth.forwardauth.addAuthCookiesToResponseRegex=^auth_cookie"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-auth
+spec:
+  forwardAuth:
+    address: https://example.com/auth
+    addAuthCookiesToResponseRegex: ^auth_cookie
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-auth.forwardauth.addAuthCookiesToResponseRegex=^auth_cookie"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-auth:
+      forwardAuth:
+        address: "https://example.com/auth"
+        addAuthCookiesToResponseRegex: "^auth_cookie"
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.test-auth.forwardAuth]
+    address = "https://example.com/auth"
+    addAuthCookiesToResponseRegex = "^auth_cookie"
+```
+
 ### `forwardBody`
 
 _Optional, Default=false_
