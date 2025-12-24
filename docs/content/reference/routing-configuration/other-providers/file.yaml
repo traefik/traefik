@@ -573,6 +573,14 @@ tcp:
     TCPMiddleware03:
       inFlightConn:
         amount: 42
+    TCPMiddleware04:
+      plugin:
+        PluginConf0:
+          name0: foobar
+          name1: foobar
+        PluginConf1:
+          name0: foobar
+          name1: foobar
   serversTransports:
     TCPServersTransport0:
       dialKeepAlive: 42s

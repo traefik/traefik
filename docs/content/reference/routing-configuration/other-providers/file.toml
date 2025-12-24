@@ -508,6 +508,14 @@
     [tcp.middlewares.TCPMiddleware03]
       [tcp.middlewares.TCPMiddleware03.inFlightConn]
         amount = 42
+    [tcp.middlewares.TCPMiddleware04]
+      [tcp.middlewares.TCPMiddleware04.plugin]
+        [tcp.middlewares.TCPMiddleware04.plugin.PluginConf0]
+          name0 = "foobar"
+          name1 = "foobar"
+        [tcp.middlewares.TCPMiddleware04.plugin.PluginConf1]
+          name0 = "foobar"
+          name1 = "foobar"
   [tcp.serversTransports]
     [tcp.serversTransports.TCPServersTransport0]
       dialKeepAlive = "42s"
