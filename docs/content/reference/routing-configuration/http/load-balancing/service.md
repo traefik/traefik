@@ -157,39 +157,39 @@ On subsequent requests, to keep the session alive with the same server, the clie
 
 ##### Stickiness on multiple levels
 
-    When chaining or mixing load-balancers (e.g. a load-balancer of servers is one of the "children" of a load-balancer of services), for stickiness to work all the way, the option needs to be specified at all required levels. Which means the client needs to send a cookie with as many key/value pairs as there are sticky levels.
+When chaining or mixing load-balancers (e.g. a load-balancer of servers is one of the "children" of a load-balancer of services), for stickiness to work all the way, the option needs to be specified at all required levels. Which means the client needs to send a cookie with as many key/value pairs as there are sticky levels.
 
 ##### Stickiness & Unhealthy Servers
 
-    If the server specified in the cookie becomes unhealthy, the request will be forwarded to a new server (and the cookie will keep track of the new server).
+If the server specified in the cookie becomes unhealthy, the request will be forwarded to a new server (and the cookie will keep track of the new server).
 
 ##### Cookie Name
 
-    The default cookie name is an abbreviation of a sha1 (ex: `_1d52e`).
+The default cookie name is an abbreviation of a sha1 (ex: `_1d52e`).
 
 ##### MaxAge
 
-    By default, the affinity cookie will never expire as the `MaxAge` option is set to zero.
+By default, the affinity cookie will never expire as the `MaxAge` option is set to zero.
 
-    This option indicates the number of seconds until the cookie expires.  
-    When set to a negative number, the cookie expires immediately.
-    
+This option indicates the number of seconds until the cookie expires.  
+When set to a negative number, the cookie expires immediately.
+
 ##### Secure & HTTPOnly & SameSite flags
 
-    By default, the affinity cookie is created without those flags.
-    One however can change that through configuration.
+By default, the affinity cookie is created without those flags.
+One however can change that through configuration.
 
-    `SameSite` can be `none`, `lax`, `strict` or empty.
+`SameSite` can be `none`, `lax`, `strict` or empty.
 
 ##### Domain
 
-    The Domain attribute of a cookie specifies the domain for which the cookie is valid. 
-    
-    By setting the Domain attribute, the cookie can be shared across subdomains (for example, a cookie set for example.com would be accessible to www.example.com, api.example.com, etc.). This is particularly useful in cases where sticky sessions span multiple subdomains, ensuring that the session is maintained even when the client interacts with different parts of the infrastructure.
+The Domain attribute of a cookie specifies the domain for which the cookie is valid. 
+
+By setting the Domain attribute, the cookie can be shared across subdomains (for example, a cookie set for example.com would be accessible to www.example.com, api.example.com, etc.). This is particularly useful in cases where sticky sessions span multiple subdomains, ensuring that the session is maintained even when the client interacts with different parts of the infrastructure.
 
 ??? example "Adding Stickiness -- Using the [File Provider](../../../install-configuration/providers/others/file.md)"
 
-    ```yaml tab="YAML"
+    ```yaml tab="Structured (YAML)"
     ## Dynamic configuration
     http:
       services:
@@ -199,7 +199,7 @@ On subsequent requests, to keep the session alive with the same server, the clie
              cookie: {}
     ```
 
-    ```toml tab="TOML"
+    ```toml tab="Structured (TOML)"
     ## Dynamic configuration
     [http.services]
       [http.services.my-service]
@@ -208,7 +208,7 @@ On subsequent requests, to keep the session alive with the same server, the clie
 
 ??? example "Adding Stickiness with custom Options -- Using the [File Provider](../../../install-configuration/providers/others/file.md)"
 
-    ```yaml tab="YAML"
+    ```yaml tab="Structured (YAML)"
     ## Dynamic configuration
     http:
       services:
@@ -222,7 +222,7 @@ On subsequent requests, to keep the session alive with the same server, the clie
                 httpOnly: true
     ```
 
-    ```toml tab="TOML"
+    ```toml tab="Structured (TOML)"
     ## Dynamic configuration
     [http.services]
       [http.services.my-service]
@@ -236,7 +236,7 @@ On subsequent requests, to keep the session alive with the same server, the clie
 
 ??? example "Setting Stickiness on all the required levels -- Using the [File Provider](../../../install-configuration/providers/others/file.md)"
 
-    ```yaml tab="YAML"
+    ```yaml tab="Structured (YAML)"
     ## Dynamic configuration
     http:
       services:
@@ -270,7 +270,7 @@ On subsequent requests, to keep the session alive with the same server, the clie
               - url: http://127.0.0.1:8084
     ```
 
-    ```toml tab="TOML"
+    ```toml tab="Structured (TOML)"
     ## Dynamic configuration
     [http.services]
       [http.services.wrr1]
@@ -302,11 +302,11 @@ On subsequent requests, to keep the session alive with the same server, the clie
             url = "http://127.0.0.1:8084"
     ```
 
-    To keep a session open with the same server, the client would then need to specify the two levels within the cookie for each request, e.g. with curl:
+To keep a session open with the same server, the client would then need to specify the two levels within the cookie for each request, e.g. with curl:
 
-    ```
-    curl -b "lvl1=whoami1; lvl2=http://127.0.0.1:8081" http://localhost:8000
-    ```
+```bash
+curl -b "lvl1=whoami1; lvl2=http://127.0.0.1:8081" http://localhost:8000
+```
 
 #### Passive Health Check
 
@@ -453,13 +453,14 @@ http:
       [[http.services.appv2.loadBalancer.servers]]
         url = "http://private-ip-server-2/"
 ```
+
 ## P2C
 
 Power of two choices algorithm is a load balancing strategy that selects two servers at random and chooses the one with the least number of active requests.
 
 ??? example "P2C Load Balancing -- Using the [File Provider](../../../install-configuration/providers/others/file.md)"
 
-    ```yaml tab="YAML"
+    ```yaml tab="Structured (YAML)"
     ## Dynamic configuration
     http:
       services:
@@ -472,7 +473,7 @@ Power of two choices algorithm is a load balancing strategy that selects two ser
             - url: "http://private-ip-server-3/"
     ```
 
-    ```toml tab="TOML"
+    ```toml tab="Structured (TOML) "
     ## Dynamic configuration
     [http.services]
       [http.services.my-service.loadBalancer]
@@ -501,7 +502,7 @@ Weighted Round Robin (WRR) with Earliest Deadline First (EDF) scheduling is used
 
 ??? example "Basic Least-Time Load Balancing -- Using the [File Provider](../../../install-configuration/providers/others/file.md)"
 
-    ```yaml tab="YAML"
+    ```yaml tab="Structured (YAML)"
     ## Dynamic configuration
     http:
       services:
@@ -514,7 +515,7 @@ Weighted Round Robin (WRR) with Earliest Deadline First (EDF) scheduling is used
             - url: "http://private-ip-server-3/"
     ```
 
-    ```toml tab="TOML"
+    ```toml tab="Structured (TOML)"
     ## Dynamic configuration
     [http.services]
       [http.services.my-service.loadBalancer]

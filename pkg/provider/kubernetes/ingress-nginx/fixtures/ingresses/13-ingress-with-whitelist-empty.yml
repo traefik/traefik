@@ -1,0 +1,22 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-with-whitelist-empty
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/whitelist-source-range: ""
+
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: whitelist-source-range.localhost
+      http:
+        paths:
+          - path: /
+            pathType: Exact
+            backend:
+              service:
+                name: whoami
+                port:
+                  number: 80

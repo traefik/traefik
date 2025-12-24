@@ -1,0 +1,22 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-with-whitelist-multiple-ip-and-cidr
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/whitelist-source-range: "192.168.1.0/24, 10.0.0.0/8, 192.168.20.1"
+
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: whitelist-source-range.localhost
+      http:
+        paths:
+          - path: /
+            pathType: Exact
+            backend:
+              service:
+                name: whoami
+                port:
+                  number: 80

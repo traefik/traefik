@@ -18,6 +18,7 @@ import (
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
+	"github.com/traefik/traefik/v3/pkg/config/static"
 	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
 	httpmuxer "github.com/traefik/traefik/v3/pkg/muxer/http"
 	"github.com/traefik/traefik/v3/pkg/server/middleware"
@@ -332,7 +333,7 @@ func TestRouterManager_Get(t *testing.T) {
 			parser, err := httpmuxer.NewSyntaxParser()
 			require.NoError(t, err)
 
-			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager, parser)
+			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager, parser, nil)
 
 			handlers := routerManager.BuildHandlers(t.Context(), test.entryPoints, false)
 
@@ -720,7 +721,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 			parser, err := httpmuxer.NewSyntaxParser()
 			require.NoError(t, err)
 
-			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager, parser)
+			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager, parser, nil)
 
 			_ = routerManager.BuildHandlers(t.Context(), entryPoints, false)
 			_ = routerManager.BuildHandlers(t.Context(), entryPoints, true)
@@ -801,7 +802,7 @@ func TestProviderOnMiddlewares(t *testing.T) {
 	parser, err := httpmuxer.NewSyntaxParser()
 	require.NoError(t, err)
 
-	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager, parser)
+	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager, parser, nil)
 
 	_ = routerManager.BuildHandlers(t.Context(), entryPoints, false)
 
@@ -809,30 +810,6 @@ func TestProviderOnMiddlewares(t *testing.T) {
 	assert.Equal(t, []string{"m1@file", "m2@file", "m1@file"}, rtConf.Middlewares["chain@file"].Chain.Middlewares)
 	assert.Equal(t, []string{"chain@docker", "m1@file"}, rtConf.Routers["router@docker"].Middlewares)
 	assert.Equal(t, []string{"m1@docker", "m2@docker", "m1@file"}, rtConf.Middlewares["chain@docker"].Chain.Middlewares)
-}
-
-type staticTransportManager struct {
-	res *http.Response
-}
-
-func (s staticTransportManager) GetRoundTripper(_ string) (http.RoundTripper, error) {
-	return &staticTransport{res: s.res}, nil
-}
-
-func (s staticTransportManager) GetTLSConfig(_ string) (*tls.Config, error) {
-	panic("implement me")
-}
-
-func (s staticTransportManager) Get(_ string) (*dynamic.ServersTransport, error) {
-	panic("implement me")
-}
-
-type staticTransport struct {
-	res *http.Response
-}
-
-func (t *staticTransport) RoundTrip(_ *http.Request) (*http.Response, error) {
-	return t.res, nil
 }
 
 func BenchmarkRouterServe(b *testing.B) {
@@ -880,7 +857,7 @@ func BenchmarkRouterServe(b *testing.B) {
 	parser, err := httpmuxer.NewSyntaxParser()
 	require.NoError(b, err)
 
-	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager, parser)
+	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager, parser, nil)
 
 	handlers := routerManager.BuildHandlers(b.Context(), entryPoints, false)
 
@@ -1473,14 +1450,14 @@ func TestManager_buildChildRoutersMuxer(t *testing.T) {
 			parser, err := httpmuxer.NewSyntaxParser()
 			require.NoError(t, err)
 
-			manager := NewManager(conf, serviceManager, middlewareBuilder, nil, nil, parser)
+			manager := NewManager(conf, serviceManager, middlewareBuilder, nil, nil, parser, nil)
 
 			// Compute multi-layer routing to populate ChildRefs
 			manager.ParseRouterTree()
 
 			// Build the child routers muxer
 			ctx := t.Context()
-			muxer, err := manager.buildChildRoutersMuxer(ctx, test.childRefs)
+			muxer, err := manager.buildChildRoutersMuxer(ctx, "test", test.childRefs)
 
 			if test.expectedError != "" {
 				require.Error(t, err)
@@ -1664,14 +1641,14 @@ func TestManager_buildHTTPHandler_WithChildRouters(t *testing.T) {
 			parser, err := httpmuxer.NewSyntaxParser()
 			require.NoError(t, err)
 
-			manager := NewManager(conf, serviceManager, middlewareBuilder, nil, nil, parser)
+			manager := NewManager(conf, serviceManager, middlewareBuilder, nil, nil, parser, nil)
 
 			// Run ParseRouterTree to validate configuration and populate ChildRefs/errors
 			manager.ParseRouterTree()
 
 			// Build the HTTP handler
 			ctx := t.Context()
-			handler, err := manager.buildHTTPHandler(ctx, test.router, "test-router")
+			handler, err := manager.buildHTTPHandler(ctx, test.router, "test", "test-router")
 
 			if test.expectedError != "" {
 				assert.Error(t, err)
@@ -1696,12 +1673,10 @@ func TestManager_buildHTTPHandler_WithChildRouters(t *testing.T) {
 
 func TestManager_BuildHandlers_WithChildRouters(t *testing.T) {
 	testCases := []struct {
-		desc               string
-		routers            map[string]*dynamic.Router
-		services           map[string]*dynamic.Service
-		entryPoints        []string
-		expectedEntryPoint string
-		expectedRequests   []struct {
+		desc             string
+		routers          map[string]*dynamic.Router
+		services         map[string]*dynamic.Service
+		expectedRequests []struct {
 			path       string
 			statusCode int
 		}
@@ -1736,8 +1711,6 @@ func TestManager_BuildHandlers_WithChildRouters(t *testing.T) {
 					},
 				},
 			},
-			entryPoints:        []string{"web"},
-			expectedEntryPoint: "web",
 			expectedRequests: []struct {
 				path       string
 				statusCode int
@@ -1779,8 +1752,6 @@ func TestManager_BuildHandlers_WithChildRouters(t *testing.T) {
 					},
 				},
 			},
-			entryPoints:        []string{"web"},
-			expectedEntryPoint: "web",
 			expectedRequests: []struct {
 				path       string
 				statusCode int
@@ -1817,17 +1788,16 @@ func TestManager_BuildHandlers_WithChildRouters(t *testing.T) {
 			parser, err := httpmuxer.NewSyntaxParser()
 			require.NoError(t, err)
 
-			manager := NewManager(conf, serviceManager, middlewareBuilder, nil, nil, parser)
+			manager := NewManager(conf, serviceManager, middlewareBuilder, nil, nil, parser, nil)
 
 			// Compute multi-layer routing to set up parent-child relationships
 			manager.ParseRouterTree()
 
 			// Build handlers
 			ctx := t.Context()
-			handlers := manager.BuildHandlers(ctx, test.entryPoints, false)
+			handlers := manager.BuildHandlers(ctx, []string{"web"}, false)
 
-			require.Contains(t, handlers, test.expectedEntryPoint)
-			handler := handlers[test.expectedEntryPoint]
+			handler := handlers["web"]
 			require.NotNil(t, handler)
 
 			// Test that the handler routes requests correctly
@@ -1843,7 +1813,224 @@ func TestManager_BuildHandlers_WithChildRouters(t *testing.T) {
 	}
 }
 
+func TestManager_BuildHandlers_Deny(t *testing.T) {
+	testCases := []struct {
+		desc               string
+		routers            map[string]*dynamic.Router
+		services           map[string]*dynamic.Service
+		requestPath        string
+		encodedCharacters  static.EncodedCharacters
+		expectedStatusCode int
+	}{
+		{
+			desc:        "parent router without child routers request with encoded slash",
+			requestPath: "/foo%2F",
+			routers: map[string]*dynamic.Router{
+				"parent": {
+					EntryPoints: []string{"web"},
+					Rule:        "PathPrefix(`/`)",
+					Service:     "service",
+				},
+			},
+			services: map[string]*dynamic.Service{
+				"service": {
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{{URL: "http://localhost:8080"}},
+					},
+				},
+			},
+			expectedStatusCode: http.StatusBadRequest,
+		},
+		{
+			desc:        "parent router with child routers request with encoded slash",
+			requestPath: "/foo%2F",
+			routers: map[string]*dynamic.Router{
+				"parent": {
+					EntryPoints: []string{"web"},
+					Rule:        "PathPrefix(`/`)",
+				},
+				"child1": {
+					Rule:       "PathPrefix(`/`)",
+					Service:    "child1-service",
+					ParentRefs: []string{"parent"},
+				},
+			},
+			services: map[string]*dynamic.Service{
+				"child1-service": {
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{{URL: "http://localhost:8080"}},
+					},
+				},
+			},
+			expectedStatusCode: http.StatusBadRequest,
+		},
+		{
+			desc:        "parent router without child router allowing encoded slash",
+			requestPath: "/foo%2F",
+			routers: map[string]*dynamic.Router{
+				"parent": {
+					EntryPoints: []string{"web"},
+					Rule:        "PathPrefix(`/`)",
+					Service:     "service",
+				},
+			},
+			services: map[string]*dynamic.Service{
+				"service": {
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{{URL: "http://localhost:8080"}},
+					},
+				},
+			},
+			encodedCharacters: static.EncodedCharacters{
+				AllowEncodedSlash: true,
+			},
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			desc:        "parent router with child routers allowing encoded slash",
+			requestPath: "/foo%2F",
+			routers: map[string]*dynamic.Router{
+				"parent": {
+					EntryPoints: []string{"web"},
+					Rule:        "PathPrefix(`/`)",
+				},
+				"child1": {
+					Rule:       "PathPrefix(`/`)",
+					Service:    "child1-service",
+					ParentRefs: []string{"parent"},
+				},
+			},
+			services: map[string]*dynamic.Service{
+				"child1-service": {
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{{URL: "http://localhost:8080"}},
+					},
+				},
+			},
+			encodedCharacters: static.EncodedCharacters{
+				AllowEncodedSlash: true,
+			},
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			desc:        "parent router without child routers request with fragment",
+			requestPath: "/foo#",
+			routers: map[string]*dynamic.Router{
+				"parent": {
+					EntryPoints: []string{"web"},
+					Rule:        "PathPrefix(`/`)",
+					Service:     "service",
+				},
+			},
+			services: map[string]*dynamic.Service{
+				"service": {
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{{URL: "http://localhost:8080"}},
+					},
+				},
+			},
+			expectedStatusCode: http.StatusBadRequest,
+		},
+		{
+			desc:        "parent router with child routers request with fragment",
+			requestPath: "/foo#",
+			routers: map[string]*dynamic.Router{
+				"parent": {
+					EntryPoints: []string{"web"},
+					Rule:        "PathPrefix(`/`)",
+				},
+				"child1": {
+					Rule:       "Path(`/v1`)",
+					Service:    "child1-service",
+					ParentRefs: []string{"parent"},
+				},
+			},
+			services: map[string]*dynamic.Service{
+				"child1-service": {
+					LoadBalancer: &dynamic.ServersLoadBalancer{
+						Servers: []dynamic.Server{{URL: "http://localhost:8080"}},
+					},
+				},
+			},
+			expectedStatusCode: http.StatusBadRequest,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			// Create runtime routers
+			runtimeRouters := make(map[string]*runtime.RouterInfo)
+			for name, router := range test.routers {
+				runtimeRouters[name] = &runtime.RouterInfo{
+					Router: router,
+				}
+			}
+
+			// Create runtime services
+			runtimeServices := make(map[string]*runtime.ServiceInfo)
+			for name, service := range test.services {
+				runtimeServices[name] = &runtime.ServiceInfo{
+					Service: service,
+				}
+			}
+
+			conf := &runtime.Configuration{
+				Routers:  runtimeRouters,
+				Services: runtimeServices,
+			}
+
+			// Set up the manager with mocks
+			serviceManager := &mockServiceManager{}
+			middlewareBuilder := &mockMiddlewareBuilder{}
+
+			parser, err := httpmuxer.NewSyntaxParser()
+			require.NoError(t, err)
+
+			deniedEncodedPathCharacters := map[string]map[string]struct{}{"web": test.encodedCharacters.Map()}
+			manager := NewManager(conf, serviceManager, middlewareBuilder, nil, nil, parser, deniedEncodedPathCharacters)
+
+			// Compute multi-layer routing to set up parent-child relationships
+			manager.ParseRouterTree()
+
+			// Build handlers
+			ctx := t.Context()
+			handlers := manager.BuildHandlers(ctx, []string{"web"}, false)
+
+			recorder := httptest.NewRecorder()
+			request := httptest.NewRequest(http.MethodGet, test.requestPath, http.NoBody)
+
+			handlers["web"].ServeHTTP(recorder, request)
+
+			assert.Equal(t, test.expectedStatusCode, recorder.Code)
+		})
+	}
+}
+
 // Mock implementations for testing
+
+type staticTransportManager struct {
+	res *http.Response
+}
+
+func (s staticTransportManager) GetRoundTripper(_ string) (http.RoundTripper, error) {
+	return &staticTransport{res: s.res}, nil
+}
+
+func (s staticTransportManager) GetTLSConfig(_ string) (*tls.Config, error) {
+	panic("implement me")
+}
+
+func (s staticTransportManager) Get(_ string) (*dynamic.ServersTransport, error) {
+	panic("implement me")
+}
+
+type staticTransport struct {
+	res *http.Response
+}
+
+func (t *staticTransport) RoundTrip(_ *http.Request) (*http.Response, error) {
+	return t.res, nil
+}
 
 type mockServiceManager struct{}
 

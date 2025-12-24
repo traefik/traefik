@@ -1,4 +1,4 @@
-FROM node:22.15.1-alpine3.20
+FROM node:24-alpine3.22
 
 ENV WEBUI_DIR=/src/webui
 RUN mkdir -p $WEBUI_DIR
