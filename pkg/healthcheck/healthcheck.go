@@ -5,11 +5,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/http/httptrace"
 	"net/url"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -259,7 +261,12 @@ func (shc *ServiceHealthChecker) newRequest(ctx context.Context, target *url.URL
 		u.Host = net.JoinHostPort(u.Hostname(), strconv.Itoa(shc.config.Port))
 	}
 
-	req, err := http.NewRequestWithContext(ctx, shc.config.Method, u.String(), http.NoBody)
+	var body io.Reader = http.NoBody
+	if shc.config.Body != "" && shc.config.Method == "POST" {
+		body = strings.NewReader(shc.config.Body)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, shc.config.Method, u.String(), body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
 	}
