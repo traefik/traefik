@@ -750,4 +750,25 @@ spec:
 [...]
 ```
 
+## NodePort Load Balancing
+
+When Traefik runs outside of the Kubernetes cluster but within the same network as the nodes, it can direct the traffic to the nodes' internal IPs by using the service `nodePort`.
+It can be done with the annotation `traefik.io/service.nodeportlb` on the backend `Service`.
+This requires Traefik to look up Kubernetes `Node` resources. This lookup can be disabled with the provider option [`disableNodeResources`](../../providers/kubernetes-gateway.md#disableNodeResources).
+
+By default, NodePortLB is `false`.
+
+```yaml
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: myservice
+  namespace: default
+  annotations:
+    traefik.io/service.nodeportlb: "true"
+spec:
+[...]
+```
+
 {!traefik-for-business-applications.md!}
