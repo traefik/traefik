@@ -5,9 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"reflect"
 	"slices"
 	"strings"
+	"sort"
 
 	"github.com/containous/alice"
 	"github.com/rs/zerolog/log"
@@ -64,11 +66,18 @@ func NewBuilder(configs map[string]*runtime.MiddlewareInfo, serviceBuilder servi
 
 // BuildChain creates a middleware chain.
 func (b *Builder) BuildChain(ctx context.Context, middlewares []string) *alice.Chain {
-	chain := alice.New()
+	var (
+		orConstructorsMap map[string][]func(http.Handler) (http.Handler, error)
+		andConstructors []func(http.Handler) (http.Handler, error)
+	)
+	orConstructorsMap = make(map[string][]func(http.Handler) (http.Handler, error))
+
 	for _, name := range middlewares {
 		middlewareName := provider.GetQualifiedName(ctx, name)
 
-		chain = chain.Append(func(next http.Handler) (http.Handler, error) {
+		mwName := middlewareName
+
+		ctor := func(next http.Handler) (http.Handler, error) {
 			constructorContext := provider.AddInContext(ctx, middlewareName)
 			if midInf, ok := b.configs[middlewareName]; !ok || midInf.Middleware == nil {
 				return nil, fmt.Errorf("middleware %q does not exist", middlewareName)
@@ -93,10 +102,72 @@ func (b *Builder) BuildChain(ctx context.Context, middlewares []string) *alice.C
 			}
 
 			return handler, nil
-		})
+		}
+
+		if midInf, ok := b.configs[mwName]; ok && midInf.Middleware != nil && midInf.OrGroup != "" {
+			orConstructorsMap[midInf.OrGroup] = append(orConstructorsMap[midInf.OrGroup], ctor)
+		} else {
+			andConstructors = append(andConstructors, ctor)
+		}
 	}
+
+	chain := alice.New()
+
+	var groupIDs []string
+	for id := range orConstructorsMap {
+		groupIDs = append(groupIDs, id)
+	}
+	sort.Strings(groupIDs)
+	for _, groupID := range groupIDs {
+		ctors := orConstructorsMap[groupID]
+
+		if len(ctors) == 1 {
+			chain = chain.Append(ctors[0]) 
+		} else if len(ctors) > 1 {
+			chain = chain.Append(func(next http.Handler) (http.Handler, error) {
+				h := newORChainHandler(ctors, next) 
+				return h, nil
+			})
+		}
+	}
+
+	for _, ctor := range andConstructors {
+		chain = chain.Append(ctor)
+	}
+
 	return &chain
 }
+
+//build or-chain
+func newORChainHandler(ctors []func(http.Handler) (http.Handler, error), finalNext http.Handler) http.Handler {
+
+    return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+
+        for _, ctor := range ctors {
+            allowed := false
+
+            nextCalled := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+                allowed = true
+            })
+
+            h, err := ctor(nextCalled)
+            if err != nil {
+                continue
+            }
+
+            rr := httptest.NewRecorder()
+            h.ServeHTTP(rr, req)
+
+            if allowed {
+                finalNext.ServeHTTP(rw, req)
+                return
+            }
+        }
+
+        http.Error(rw, "Forbidden", http.StatusForbidden)
+    })
+}
+
 
 func checkRecursion(ctx context.Context, middlewareName string) (context.Context, error) {
 	currentStack, ok := ctx.Value(middlewareStackKey).([]string)
