@@ -411,6 +411,7 @@ type ServerHealthCheck struct {
 	Hostname          string            `json:"hostname,omitempty" toml:"hostname,omitempty" yaml:"hostname,omitempty"`
 	FollowRedirects   *bool             `json:"followRedirects,omitempty" toml:"followRedirects,omitempty" yaml:"followRedirects,omitempty" export:"true"`
 	Headers           map[string]string `json:"headers,omitempty" toml:"headers,omitempty" yaml:"headers,omitempty" export:"true"`
+	Body              string            `json:"body,omitempty" toml:"body,omitempty" yaml:"body,omitempty" export:"true"`
 }
 
 // SetDefaults Default values for a HealthCheck.
