@@ -48,6 +48,10 @@ spec:
                 items:
                   type: string
                 type: array
+              ingressClassName:
+                description: IngressClassName defines the name of the IngressClass
+                  cluster resource.
+                type: string
               parentRefs:
                 description: |-
                   ParentRefs defines references to parent IngressRoute resources for multi-layer routing.
@@ -510,6 +514,10 @@ spec:
                 items:
                   type: string
                 type: array
+              ingressClassName:
+                description: IngressClassName defines the name of the IngressClass
+                  cluster resource.
+                type: string
               routes:
                 description: Routes defines the list of routes.
                 items:
@@ -766,6 +774,10 @@ spec:
                 items:
                   type: string
                 type: array
+              ingressClassName:
+                description: IngressClassName defines the name of the IngressClass
+                  cluster resource.
+                type: string
               routes:
                 description: Routes defines the list of routes.
                 items:
