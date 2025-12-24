@@ -2281,6 +2281,12 @@ spec:
                 items:
                   type: string
                 type: array
+              cipherSuites:
+                description: CipherSuites defines the cipher suites to use when contacting
+                  backend servers.
+                items:
+                  type: string
+                type: array
               disableHTTP2:
                 description: DisableHTTP2 disables HTTP/2 for connections with backend
                   servers.
@@ -2341,6 +2347,14 @@ spec:
                   to keep per-host.
                 minimum: -1
                 type: integer
+              maxVersion:
+                description: MaxVersion defines the maximum TLS version to use when
+                  contacting backend servers.
+                type: string
+              minVersion:
+                description: MinVersion defines the minimum TLS version to use when
+                  contacting backend servers.
+                type: string
               peerCertURI:
                 description: PeerCertURI defines the peer cert URI used to match against
                   SAN URI during the peer certificate verification.
