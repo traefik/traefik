@@ -181,13 +181,49 @@ func logConfiguration(logger zerolog.Logger, configMsg dynamic.Message) {
 	if logger.GetLevel() > zerolog.DebugLevel {
 		return
 	}
+	sanitizedConfiguration := getSanitizedConfigurationTLS(configMsg.Configuration)
+	summary := tlsSummary(configMsg.Configuration)
+	jsonConf, err := json.Marshal(sanitizedConfiguration)
+	if err != nil {
+		logger.Error().Err(err).Msg("Could not marshal dynamic configuration")
+		logger.Debug().Msgf("Configuration received: [struct] %#v", sanitizedConfiguration)
+		return
+	}
+	evt := logger.Debug().RawJSON("config", jsonConf)
+	if summary != nil {
+		evt = evt.Any("tls_summary", summary)
+	}
+	evt.Msg("Configuration received (TLS redacted)")
+}
 
-	copyConf := configMsg.Configuration.DeepCopy()
+func isEmptyConfiguration(conf *dynamic.Configuration) bool {
+	if conf.TCP == nil {
+		conf.TCP = &dynamic.TCPConfiguration{}
+	}
+	if conf.HTTP == nil {
+		conf.HTTP = &dynamic.HTTPConfiguration{}
+	}
+	if conf.UDP == nil {
+		conf.UDP = &dynamic.UDPConfiguration{}
+	}
+
+	httpEmpty := conf.HTTP.Routers == nil && conf.HTTP.Services == nil && conf.HTTP.Middlewares == nil
+	tlsEmpty := conf.TLS == nil || conf.TLS.Certificates == nil && conf.TLS.Stores == nil && conf.TLS.Options == nil
+	tcpEmpty := conf.TCP.Routers == nil && conf.TCP.Services == nil && conf.TCP.Middlewares == nil
+	udpEmpty := conf.UDP.Routers == nil && conf.UDP.Services == nil
+
+	return httpEmpty && tlsEmpty && tcpEmpty && udpEmpty
+}
+
+func getSanitizedConfigurationTLS(configuration *dynamic.Configuration) *dynamic.Configuration {
+	copyConf := configuration.DeepCopy()
+
 	if copyConf.TLS != nil {
 		copyConf.TLS.Certificates = nil
 
 		if copyConf.TLS.Options != nil {
 			cleanedOptions := make(map[string]tls.Options, len(copyConf.TLS.Options))
+
 			for name, option := range copyConf.TLS.Options {
 				option.ClientAuth.CAFiles = []types.FileOrContent{}
 				cleanedOptions[name] = option
@@ -219,30 +255,44 @@ func logConfiguration(logger zerolog.Logger, configMsg dynamic.Message) {
 		}
 	}
 
-	jsonConf, err := json.Marshal(copyConf)
-	if err != nil {
-		logger.Error().Err(err).Msg("Could not marshal dynamic configuration")
-		logger.Debug().Msgf("Configuration received: [struct] %#v", copyConf)
-	} else {
-		logger.Debug().RawJSON("config", jsonConf).Msg("Configuration received (TLS data hidden)")
-	}
+	return copyConf
 }
 
-func isEmptyConfiguration(conf *dynamic.Configuration) bool {
-	if conf.TCP == nil {
-		conf.TCP = &dynamic.TCPConfiguration{}
-	}
-	if conf.HTTP == nil {
-		conf.HTTP = &dynamic.HTTPConfiguration{}
-	}
-	if conf.UDP == nil {
-		conf.UDP = &dynamic.UDPConfiguration{}
+func tlsSummary(orig *dynamic.Configuration) map[string]any {
+	if orig == nil || orig.TLS == nil {
+		return nil
 	}
 
-	httpEmpty := conf.HTTP.Routers == nil && conf.HTTP.Services == nil && conf.HTTP.Middlewares == nil
-	tlsEmpty := conf.TLS == nil || conf.TLS.Certificates == nil && conf.TLS.Stores == nil && conf.TLS.Options == nil
-	tcpEmpty := conf.TCP.Routers == nil && conf.TCP.Services == nil && conf.TCP.Middlewares == nil
-	udpEmpty := conf.UDP.Routers == nil && conf.UDP.Services == nil
+	stores := make([]string, 0, len(orig.TLS.Stores))
+	defaultCerts := 0
+	for name, st := range orig.TLS.Stores {
+		stores = append(stores, name)
+		if st.DefaultCertificate != nil {
+			defaultCerts++
+		}
+	}
 
-	return httpEmpty && tlsEmpty && tcpEmpty && udpEmpty
+	caFiles := 0
+	if orig.TLS.Options != nil {
+		for _, opt := range orig.TLS.Options {
+			caFiles += len(opt.ClientAuth.CAFiles)
+		}
+	}
+
+	return map[string]any{
+		"certificates": map[string]any{
+			"present": len(orig.TLS.Certificates) > 0,
+			"count":   len(orig.TLS.Certificates),
+			"value":   "<redacted>",
+		},
+		"stores": map[string]any{
+			"names":              stores,
+			"default_cert_count": defaultCerts,
+			"default_cert":       "<redacted>",
+		},
+		"clientAuth": map[string]any{
+			"ca_files_total": caFiles,
+			"ca_files":       "<redacted>",
+		},
+	}
 }
