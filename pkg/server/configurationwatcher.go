@@ -11,8 +11,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	"github.com/traefik/traefik/v3/pkg/provider"
 	"github.com/traefik/traefik/v3/pkg/safe"
-	"github.com/traefik/traefik/v3/pkg/tls"
-	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 // ConfigurationWatcher watches configuration changes.
@@ -115,7 +113,7 @@ func (c *ConfigurationWatcher) receiveConfigurations(ctx context.Context) {
 					continue
 				}
 
-				if isEmptyConfiguration(configMsg.Configuration) {
+				if configMsg.Configuration.IsEmpty() {
 					logger.Debug().Msg("Skipping empty configuration")
 					continue
 				}
@@ -181,8 +179,8 @@ func logConfiguration(logger zerolog.Logger, configMsg dynamic.Message) {
 	if logger.GetLevel() > zerolog.DebugLevel {
 		return
 	}
-	sanitizedConfiguration := getSanitizedConfigurationTLS(configMsg.Configuration)
-	summary := tlsSummary(configMsg.Configuration)
+	sanitizedConfiguration := configMsg.Configuration.GetSanitizedConfigurationTLS()
+	summary := configMsg.Configuration.SummaryTLS()
 	jsonConf, err := json.Marshal(sanitizedConfiguration)
 	if err != nil {
 		logger.Error().Err(err).Msg("Could not marshal dynamic configuration")
@@ -194,105 +192,4 @@ func logConfiguration(logger zerolog.Logger, configMsg dynamic.Message) {
 		evt = evt.Any("tls_summary", summary)
 	}
 	evt.Msg("Configuration received (TLS redacted)")
-}
-
-func isEmptyConfiguration(conf *dynamic.Configuration) bool {
-	if conf.TCP == nil {
-		conf.TCP = &dynamic.TCPConfiguration{}
-	}
-	if conf.HTTP == nil {
-		conf.HTTP = &dynamic.HTTPConfiguration{}
-	}
-	if conf.UDP == nil {
-		conf.UDP = &dynamic.UDPConfiguration{}
-	}
-
-	httpEmpty := conf.HTTP.Routers == nil && conf.HTTP.Services == nil && conf.HTTP.Middlewares == nil
-	tlsEmpty := conf.TLS == nil || conf.TLS.Certificates == nil && conf.TLS.Stores == nil && conf.TLS.Options == nil
-	tcpEmpty := conf.TCP.Routers == nil && conf.TCP.Services == nil && conf.TCP.Middlewares == nil
-	udpEmpty := conf.UDP.Routers == nil && conf.UDP.Services == nil
-
-	return httpEmpty && tlsEmpty && tcpEmpty && udpEmpty
-}
-
-func getSanitizedConfigurationTLS(configuration *dynamic.Configuration) *dynamic.Configuration {
-	copyConf := configuration.DeepCopy()
-
-	if copyConf.TLS != nil {
-		copyConf.TLS.Certificates = nil
-
-		if copyConf.TLS.Options != nil {
-			cleanedOptions := make(map[string]tls.Options, len(copyConf.TLS.Options))
-
-			for name, option := range copyConf.TLS.Options {
-				option.ClientAuth.CAFiles = []types.FileOrContent{}
-				cleanedOptions[name] = option
-			}
-
-			copyConf.TLS.Options = cleanedOptions
-		}
-
-		for k := range copyConf.TLS.Stores {
-			st := copyConf.TLS.Stores[k]
-			st.DefaultCertificate = nil
-			copyConf.TLS.Stores[k] = st
-		}
-	}
-
-	if copyConf.HTTP != nil {
-		for _, transport := range copyConf.HTTP.ServersTransports {
-			transport.Certificates = tls.Certificates{}
-			transport.RootCAs = []types.FileOrContent{}
-		}
-	}
-
-	if copyConf.TCP != nil {
-		for _, transport := range copyConf.TCP.ServersTransports {
-			if transport.TLS != nil {
-				transport.TLS.Certificates = tls.Certificates{}
-				transport.TLS.RootCAs = []types.FileOrContent{}
-			}
-		}
-	}
-
-	return copyConf
-}
-
-func tlsSummary(orig *dynamic.Configuration) map[string]any {
-	if orig == nil || orig.TLS == nil {
-		return nil
-	}
-
-	stores := make([]string, 0, len(orig.TLS.Stores))
-	defaultCerts := 0
-	for name, st := range orig.TLS.Stores {
-		stores = append(stores, name)
-		if st.DefaultCertificate != nil {
-			defaultCerts++
-		}
-	}
-
-	caFiles := 0
-	if orig.TLS.Options != nil {
-		for _, opt := range orig.TLS.Options {
-			caFiles += len(opt.ClientAuth.CAFiles)
-		}
-	}
-
-	return map[string]any{
-		"certificates": map[string]any{
-			"present": len(orig.TLS.Certificates) > 0,
-			"count":   len(orig.TLS.Certificates),
-			"value":   "<redacted>",
-		},
-		"stores": map[string]any{
-			"names":              stores,
-			"default_cert_count": defaultCerts,
-			"default_cert":       "<redacted>",
-		},
-		"clientAuth": map[string]any{
-			"ca_files_total": caFiles,
-			"ca_files":       "<redacted>",
-		},
-	}
 }
