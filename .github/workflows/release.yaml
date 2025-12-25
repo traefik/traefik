@@ -21,21 +21,22 @@ jobs:
   build:
     if: github.ref_type == 'tag' && github.repository == 'traefik/traefik'
     runs-on: ubuntu-latest
+    timeout-minutes: 45
 
     strategy:
       matrix:
-        os: [ linux-amd64, linux-386, linux-arm, linux-arm64, linux-ppc64le, linux-s390x, linux-riscv64, darwin, windows-amd64, windows-arm64, windows-386, freebsd, openbsd ]
+        os: [ linux-amd64, linux-386, linux-arm, linux-arm64, linux-ppc64le, linux-s390x, linux-riscv64, darwin-amd64, darwin-arm64, windows-amd64, windows-arm64, windows-386, freebsd-amd64, freebsd-386, openbsd-amd64, openbsd-386, openbsd-riscv64 ]
     needs:
       - build-webui
 
     steps:
       - name: Check out code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: Set up Go ${{ env.GO_VERSION }}
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         env:
           # Ensure cache consistency on Linux, see https://github.com/actions/setup-go/pull/383
           ImageOS: ${{ matrix.os }}
@@ -44,7 +45,7 @@ jobs:
           check-latest: true
 
       - name: Artifact webui
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: webui.tar.gz
 
@@ -83,18 +84,19 @@ jobs:
   release:
     if: github.ref_type == 'tag' && github.repository == 'traefik/traefik'
     runs-on: ubuntu-latest
+    timeout-minutes: 45
 
     needs:
       - build
 
     steps:
       - name: Check out code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: Artifact webui
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: webui.tar.gz
 
@@ -111,7 +113,7 @@ jobs:
           echo "${TRAEFIKER_RSA}" | base64 --decode > ~/.ssh/traefiker_rsa
 
       - name: Download All Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           path: dist/
           pattern: "*-binaries"
@@ -133,4 +135,3 @@ jobs:
           gh release create ${VERSION} ./dist/**/traefik*.{zip,tar.gz} ./dist/traefik*.{tar.gz,txt} --repo traefik/traefik --title ${VERSION} --notes ${VERSION} --latest=false
           
           ./script/deploy.sh
-

@@ -39,7 +39,7 @@ const RETURN_TO_LABEL_OVERRIDES_SINGULAR: Record<string, Record<string, string>>
   },
   udp: {
     routers: 'UDP router',
-    services: 'TCP service',
+    services: 'UDP service',
   },
 }
 
@@ -56,7 +56,7 @@ const RETURN_TO_LABEL_OVERRIDES_PLURAL: Record<string, Record<string, string>> =
   },
   udp: {
     routers: 'UDP routers',
-    services: 'TCP services',
+    services: 'UDP services',
   },
 }
 

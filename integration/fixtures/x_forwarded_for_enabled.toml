@@ -1,0 +1,11 @@
+[entryPoints]
+  [entryPoints.web]
+    address = ":8000"
+    [entryPoints.web.forwardedHeaders]
+      insecure = true
+
+[api]
+  insecure = true
+
+[providers.file]
+  filename = "{{ .DynamicConfPath }}"

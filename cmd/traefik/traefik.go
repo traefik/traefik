@@ -97,6 +97,11 @@ func runCmd(staticConfiguration *static.Configuration) error {
 		return fmt.Errorf("setting up logger: %w", err)
 	}
 
+	// Display warning to advertise for new behavior of rejecting encoded characters in the request path.
+	// Deprecated: this has to be removed in the next minor/major version.
+	log.Warn().Msg("Starting with v3.6.4, Traefik now rejects some encoded characters in the request path by default. " +
+		"Refer to the documentation for more details: https://doc.traefik.io/traefik/migrate/v3/#encoded-characters-in-request-path")
+
 	http.DefaultTransport.(*http.Transport).Proxy = http.ProxyFromEnvironment
 
 	staticConfiguration.SetEffectiveConfiguration()
@@ -226,6 +231,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 
 	if staticConfiguration.API != nil {
 		version.DisableDashboardAd = staticConfiguration.API.DisableDashboardAd
+		version.DashboardName = staticConfiguration.API.DashboardName
 	}
 
 	// Plugins
