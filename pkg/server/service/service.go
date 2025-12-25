@@ -27,6 +27,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/server/cookie"
 	"github.com/traefik/traefik/v3/pkg/server/middleware"
 	"github.com/traefik/traefik/v3/pkg/server/provider"
+	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/ewma"
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/failover"
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/hrw"
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/leasttime"
@@ -405,6 +406,8 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 		lb = hrw.New(service.HealthCheck != nil)
 	case dynamic.BalancerStrategyLeastTime:
 		lb = leasttime.New(service.Sticky, service.HealthCheck != nil)
+	case dynamic.BalancerStrategyEWMA:
+		lb = ewma.New(service.Sticky, service.HealthCheck != nil)
 	default:
 		return nil, fmt.Errorf("unsupported load-balancer strategy %q", service.Strategy)
 	}
