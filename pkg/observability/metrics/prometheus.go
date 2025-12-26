@@ -512,7 +512,6 @@ type counterWithHeaders struct {
 	collector        stdprometheus.Counter
 }
 
-
 func (c *counterWithHeaders) With(reqHeaders, respHeaders http.Header, labelValues ...string) CounterWithHeaders {
 	for headerLabel, headerKey := range c.requestHeaders {
 		labelValues = append(labelValues, headerLabel, reqHeaders.Get(headerKey))
