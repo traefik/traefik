@@ -3,13 +3,16 @@ title: "Traefik HTTP Services Documentation"
 description: "A service is in charge of connecting incoming requests to the Servers that can handle them. Read the technical documentation."
 ---
 
+Traefik services define how to distribute incoming traffic across your backend servers.
+Each service implements one of the load balancing strategies detailed on this page to ensure optimal traffic distribution and high availability.
+
 ## Service Load Balancer
 
 The load balancers are able to load balance the requests between multiple instances of your programs.
 
 Each service has a load-balancer, even if there is only one server to forward traffic to.
 
-## Configuration Example
+### Configuration Example
 
 ```yaml tab="Structured (YAML)"
 http:
@@ -100,14 +103,14 @@ labels:
 
 | Field                              | Description                                                                                                                                                                                                                                                                                                                                                                                   | Required |
 |------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------|
-| <a id="servers" href="#servers" title="#servers">`servers`</a> | Represents individual backend instances for your service                                                                                                                                                                                                                                                                                                                                      | Yes      |
-| <a id="sticky" href="#sticky" title="#sticky">`sticky`</a> | Defines a `Set-Cookie` header is set on the initial response to let the client know which server handles the first response.                                                                                                                                                                                                                                                                  | No       |
-| <a id="healthcheck" href="#healthcheck" title="#healthcheck">`healthcheck`</a> | Configures health check to remove unhealthy servers from the load balancing rotation.                                                                                                                                                                                                                                                                                                         | No       |
-| <a id="passiveHealthcheck" href="#passiveHealthcheck" title="#passiveHealthcheck">`passiveHealthcheck`</a> | Configures the passive health check to remove unhealthy servers from the load balancing rotation.                                                                                                                                                                                                                                                                                             | No       |
-| <a id="passHostHeader" href="#passHostHeader" title="#passHostHeader">`passHostHeader`</a> | Allows forwarding of the client Host header to server. By default, `passHostHeader` is true.                                                                                                                                                                                                                                                                                                  | No       |
-| <a id="serversTransport" href="#serversTransport" title="#serversTransport">`serversTransport`</a> | Allows to reference an [HTTP ServersTransport](./serverstransport.md) configuration for the communication between Traefik and your servers. If no `serversTransport` is specified, the `default@internal` will be used.                                                                                                                                                                       | No       |
-| <a id="responseForwarding" href="#responseForwarding" title="#responseForwarding">`responseForwarding`</a> | Configures how Traefik forwards the response from the backend server to the client.                                                                                                                                                                                                                                                                                                           | No       |
-| <a id="responseForwarding-FlushInterval" href="#responseForwarding-FlushInterval" title="#responseForwarding-FlushInterval">`responseForwarding.FlushInterval`</a> | Specifies the interval in between flushes to the client while copying the response body. It is a duration in milliseconds, defaulting to 100ms. A negative value means to flush immediately after each write to the client. The `FlushInterval` is ignored when ReverseProxy recognizes a response as a streaming response; for such responses, writes are flushed to the client immediately. | No       |
+| <a id="opt-servers" href="#opt-servers" title="#opt-servers">`servers`</a> | Represents individual backend instances for your service                                                                                                                                                                                                                                                                                                                                      | Yes      |
+| <a id="opt-sticky" href="#opt-sticky" title="#opt-sticky">`sticky`</a> | Defines a `Set-Cookie` header is set on the initial response to let the client know which server handles the first response.                                                                                                                                                                                                                                                                  | No       |
+| <a id="opt-healthcheck" href="#opt-healthcheck" title="#opt-healthcheck">`healthcheck`</a> | Configures health check to remove unhealthy servers from the load balancing rotation.                                                                                                                                                                                                                                                                                                         | No       |
+| <a id="opt-passiveHealthcheck" href="#opt-passiveHealthcheck" title="#opt-passiveHealthcheck">`passiveHealthcheck`</a> | Configures the passive health check to remove unhealthy servers from the load balancing rotation.                                                                                                                                                                                                                                                                                             | No       |
+| <a id="opt-passHostHeader" href="#opt-passHostHeader" title="#opt-passHostHeader">`passHostHeader`</a> | Allows forwarding of the client Host header to server. By default, `passHostHeader` is true.                                                                                                                                                                                                                                                                                                  | No       |
+| <a id="opt-serversTransport" href="#opt-serversTransport" title="#opt-serversTransport">`serversTransport`</a> | Allows to reference an [HTTP ServersTransport](./serverstransport.md) configuration for the communication between Traefik and your servers. If no `serversTransport` is specified, the `default@internal` will be used.                                                                                                                                                                       | No       |
+| <a id="opt-responseForwarding" href="#opt-responseForwarding" title="#opt-responseForwarding">`responseForwarding`</a> | Configures how Traefik forwards the response from the backend server to the client.                                                                                                                                                                                                                                                                                                           | No       |
+| <a id="opt-responseForwarding-FlushInterval" href="#opt-responseForwarding-FlushInterval" title="#opt-responseForwarding-FlushInterval">`responseForwarding.FlushInterval`</a> | Specifies the interval in between flushes to the client while copying the response body. It is a duration in milliseconds, defaulting to 100ms. A negative value means to flush immediately after each write to the client. The `FlushInterval` is ignored when ReverseProxy recognizes a response as a streaming response; for such responses, writes are flushed to the client immediately. | No       |
 
 #### Servers
 
@@ -117,9 +120,9 @@ Servers represent individual backend instances for your service. The [service lo
 
 | Field          | Description                                        | Required                                                                         |
 |----------------|----------------------------------------------------|----------------------------------------------------------------------------------|
-| <a id="url" href="#url" title="#url">`url`</a> | Points to a specific instance.                     | Yes for File provider, No for [Docker provider](../../other-providers/docker.md) |
-| <a id="weight" href="#weight" title="#weight">`weight`</a> | Allows for weighted load balancing on the servers. | No                                                                               |
-| <a id="preservePath" href="#preservePath" title="#preservePath">`preservePath`</a> | Allows to preserve the URL path.                   | No                                                                               |
+| <a id="opt-url" href="#opt-url" title="#opt-url">`url`</a> | Points to a specific instance.                     | Yes for File provider, No for [Docker provider](../../other-providers/docker.md) |
+| <a id="opt-weight" href="#opt-weight" title="#opt-weight">`weight`</a> | Allows for weighted load balancing on the servers. | No                                                                               |
+| <a id="opt-preservePath" href="#opt-preservePath" title="#opt-preservePath">`preservePath`</a> | Allows to preserve the URL path.                   | No                                                                               |
 
 #### Health Check
 
@@ -133,19 +136,19 @@ Below are the available options for the health check mechanism:
 
 | Field               | Description                                                                                                                   | Default | Required |
 |---------------------|-------------------------------------------------------------------------------------------------------------------------------|---------|----------|
-| <a id="path" href="#path" title="#path">`path`</a> | Defines the server URL path for the health check endpoint.                                                                    | ""      | Yes      |
-| <a id="scheme" href="#scheme" title="#scheme">`scheme`</a> | Replaces the server URL scheme for the health check endpoint.                                                                 |         | No       |
-| <a id="mode" href="#mode" title="#mode">`mode`</a> | If defined to `grpc`, will use the gRPC health check protocol to probe the server.                                            | http    | No       |
-| <a id="hostname" href="#hostname" title="#hostname">`hostname`</a> | Defines the value of hostname in the Host header of the health check request.                                                 | ""      | No       |
-| <a id="port" href="#port" title="#port">`port`</a> | Replaces the server URL port for the health check endpoint.                                                                   |         | No       |
-| <a id="interval" href="#interval" title="#interval">`interval`</a> | Defines the frequency of the health check calls for healthy targets.                                                          | 30s     | No       |
-| <a id="unhealthyInterval" href="#unhealthyInterval" title="#unhealthyInterval">`unhealthyInterval`</a> | Defines the frequency of the health check calls for unhealthy targets. When not defined, it defaults to the `interval` value. | 30s     | No       |
-| <a id="timeout" href="#timeout" title="#timeout">`timeout`</a> | Defines the maximum duration Traefik will wait for a health check request before considering the server unhealthy.            | 5s      | No       |
-| <a id="headers" href="#headers" title="#headers">`headers`</a> | Defines custom headers to be sent to the health check endpoint.                                                               |         | No       |
-| <a id="followRedirects" href="#followRedirects" title="#followRedirects">`followRedirects`</a> | Defines whether redirects should be followed during the health check calls.                                                   | true    | No       |
-| <a id="hostname-2" href="#hostname-2" title="#hostname-2">`hostname`</a> | Defines the value of hostname in the Host header of the health check request.                                                 | ""      | No       |
-| <a id="method" href="#method" title="#method">`method`</a> | Defines the HTTP method that will be used while connecting to the endpoint.                                                   | GET     | No       |
-| <a id="status" href="#status" title="#status">`status`</a> | Defines the expected HTTP status code of the response to the health check request.                                            |         | No       |
+| <a id="opt-path" href="#opt-path" title="#opt-path">`path`</a> | Defines the server URL path for the health check endpoint.                                                                    | ""      | Yes      |
+| <a id="opt-scheme" href="#opt-scheme" title="#opt-scheme">`scheme`</a> | Replaces the server URL scheme for the health check endpoint.                                                                 |         | No       |
+| <a id="opt-mode" href="#opt-mode" title="#opt-mode">`mode`</a> | If defined to `grpc`, will use the gRPC health check protocol to probe the server.                                            | http    | No       |
+| <a id="opt-hostname" href="#opt-hostname" title="#opt-hostname">`hostname`</a> | Defines the value of hostname in the Host header of the health check request.                                                 | ""      | No       |
+| <a id="opt-port" href="#opt-port" title="#opt-port">`port`</a> | Replaces the server URL port for the health check endpoint.                                                                   |         | No       |
+| <a id="opt-interval" href="#opt-interval" title="#opt-interval">`interval`</a> | Defines the frequency of the health check calls for healthy targets.                                                          | 30s     | No       |
+| <a id="opt-unhealthyInterval" href="#opt-unhealthyInterval" title="#opt-unhealthyInterval">`unhealthyInterval`</a> | Defines the frequency of the health check calls for unhealthy targets. When not defined, it defaults to the `interval` value. | 30s     | No       |
+| <a id="opt-timeout" href="#opt-timeout" title="#opt-timeout">`timeout`</a> | Defines the maximum duration Traefik will wait for a health check request before considering the server unhealthy.            | 5s      | No       |
+| <a id="opt-headers" href="#opt-headers" title="#opt-headers">`headers`</a> | Defines custom headers to be sent to the health check endpoint.                                                               |         | No       |
+| <a id="opt-followRedirects" href="#opt-followRedirects" title="#opt-followRedirects">`followRedirects`</a> | Defines whether redirects should be followed during the health check calls.                                                   | true    | No       |
+| <a id="opt-hostname-2" href="#opt-hostname-2" title="#opt-hostname-2">`hostname`</a> | Defines the value of hostname in the Host header of the health check request.                                                 | ""      | No       |
+| <a id="opt-method" href="#opt-method" title="#opt-method">`method`</a> | Defines the HTTP method that will be used while connecting to the endpoint.                                                   | GET     | No       |
+| <a id="opt-status" href="#opt-status" title="#opt-status">`status`</a> | Defines the expected HTTP status code of the response to the health check request.                                            |         | No       |
 
 #### Sticky sessions
 
@@ -154,39 +157,39 @@ On subsequent requests, to keep the session alive with the same server, the clie
 
 ##### Stickiness on multiple levels
 
-    When chaining or mixing load-balancers (e.g. a load-balancer of servers is one of the "children" of a load-balancer of services), for stickiness to work all the way, the option needs to be specified at all required levels. Which means the client needs to send a cookie with as many key/value pairs as there are sticky levels.
+When chaining or mixing load-balancers (e.g. a load-balancer of servers is one of the "children" of a load-balancer of services), for stickiness to work all the way, the option needs to be specified at all required levels. Which means the client needs to send a cookie with as many key/value pairs as there are sticky levels.
 
 ##### Stickiness & Unhealthy Servers
 
-    If the server specified in the cookie becomes unhealthy, the request will be forwarded to a new server (and the cookie will keep track of the new server).
+If the server specified in the cookie becomes unhealthy, the request will be forwarded to a new server (and the cookie will keep track of the new server).
 
 ##### Cookie Name
 
-    The default cookie name is an abbreviation of a sha1 (ex: `_1d52e`).
+The default cookie name is an abbreviation of a sha1 (ex: `_1d52e`).
 
 ##### MaxAge
 
-    By default, the affinity cookie will never expire as the `MaxAge` option is set to zero.
+By default, the affinity cookie will never expire as the `MaxAge` option is set to zero.
 
-    This option indicates the number of seconds until the cookie expires.  
-    When set to a negative number, the cookie expires immediately.
-    
+This option indicates the number of seconds until the cookie expires.  
+When set to a negative number, the cookie expires immediately.
+
 ##### Secure & HTTPOnly & SameSite flags
 
-    By default, the affinity cookie is created without those flags.
-    One however can change that through configuration.
+By default, the affinity cookie is created without those flags.
+One however can change that through configuration.
 
-    `SameSite` can be `none`, `lax`, `strict` or empty.
+`SameSite` can be `none`, `lax`, `strict` or empty.
 
 ##### Domain
 
-    The Domain attribute of a cookie specifies the domain for which the cookie is valid. 
-    
-    By setting the Domain attribute, the cookie can be shared across subdomains (for example, a cookie set for example.com would be accessible to www.example.com, api.example.com, etc.). This is particularly useful in cases where sticky sessions span multiple subdomains, ensuring that the session is maintained even when the client interacts with different parts of the infrastructure.
+The Domain attribute of a cookie specifies the domain for which the cookie is valid. 
+
+By setting the Domain attribute, the cookie can be shared across subdomains (for example, a cookie set for example.com would be accessible to www.example.com, api.example.com, etc.). This is particularly useful in cases where sticky sessions span multiple subdomains, ensuring that the session is maintained even when the client interacts with different parts of the infrastructure.
 
 ??? example "Adding Stickiness -- Using the [File Provider](../../../install-configuration/providers/others/file.md)"
 
-    ```yaml tab="YAML"
+    ```yaml tab="Structured (YAML)"
     ## Dynamic configuration
     http:
       services:
@@ -196,7 +199,7 @@ On subsequent requests, to keep the session alive with the same server, the clie
              cookie: {}
     ```
 
-    ```toml tab="TOML"
+    ```toml tab="Structured (TOML)"
     ## Dynamic configuration
     [http.services]
       [http.services.my-service]
@@ -205,7 +208,7 @@ On subsequent requests, to keep the session alive with the same server, the clie
 
 ??? example "Adding Stickiness with custom Options -- Using the [File Provider](../../../install-configuration/providers/others/file.md)"
 
-    ```yaml tab="YAML"
+    ```yaml tab="Structured (YAML)"
     ## Dynamic configuration
     http:
       services:
@@ -219,7 +222,7 @@ On subsequent requests, to keep the session alive with the same server, the clie
                 httpOnly: true
     ```
 
-    ```toml tab="TOML"
+    ```toml tab="Structured (TOML)"
     ## Dynamic configuration
     [http.services]
       [http.services.my-service]
@@ -233,7 +236,7 @@ On subsequent requests, to keep the session alive with the same server, the clie
 
 ??? example "Setting Stickiness on all the required levels -- Using the [File Provider](../../../install-configuration/providers/others/file.md)"
 
-    ```yaml tab="YAML"
+    ```yaml tab="Structured (YAML)"
     ## Dynamic configuration
     http:
       services:
@@ -267,7 +270,7 @@ On subsequent requests, to keep the session alive with the same server, the clie
               - url: http://127.0.0.1:8084
     ```
 
-    ```toml tab="TOML"
+    ```toml tab="Structured (TOML)"
     ## Dynamic configuration
     [http.services]
       [http.services.wrr1]
@@ -299,11 +302,11 @@ On subsequent requests, to keep the session alive with the same server, the clie
             url = "http://127.0.0.1:8084"
     ```
 
-    To keep a session open with the same server, the client would then need to specify the two levels within the cookie for each request, e.g. with curl:
+To keep a session open with the same server, the client would then need to specify the two levels within the cookie for each request, e.g. with curl:
 
-    ```
-    curl -b "lvl1=whoami1; lvl2=http://127.0.0.1:8081" http://localhost:8000
-    ```
+```bash
+curl -b "lvl1=whoami1; lvl2=http://127.0.0.1:8081" http://localhost:8000
+```
 
 #### Passive Health Check
 
@@ -320,8 +323,8 @@ Below are the available options for the passive health check mechanism:
 
 | Field               | Description                                                                                                                                                                         | Default | Required |
 |---------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------|----------|
-| <a id="failureWindow" href="#failureWindow" title="#failureWindow">`failureWindow`</a> | Defines the time window during which the failed attempts must occur for the server to be marked as unhealthy. It also defines for how long the server will be considered unhealthy. | 10s     | No       |
-| <a id="maxFailedAttempts" href="#maxFailedAttempts" title="#maxFailedAttempts">`maxFailedAttempts`</a> | Defines the number of consecutive failed attempts allowed within the failure window before marking the server as unhealthy.                                                         | 1       | No       |
+| <a id="opt-failureWindow" href="#opt-failureWindow" title="#opt-failureWindow">`failureWindow`</a> | Defines the time window during which the failed attempts must occur for the server to be marked as unhealthy. It also defines for how long the server will be considered unhealthy. | 10s     | No       |
+| <a id="opt-maxFailedAttempts" href="#opt-maxFailedAttempts" title="#opt-maxFailedAttempts">`maxFailedAttempts`</a> | Defines the number of consecutive failed attempts allowed within the failure window before marking the server as unhealthy.                                                         | 1       | No       |
 
 ## Weighted Round Robin (WRR)
 
@@ -450,13 +453,14 @@ http:
       [[http.services.appv2.loadBalancer.servers]]
         url = "http://private-ip-server-2/"
 ```
+
 ## P2C
 
 Power of two choices algorithm is a load balancing strategy that selects two servers at random and chooses the one with the least number of active requests.
 
 ??? example "P2C Load Balancing -- Using the [File Provider](../../../install-configuration/providers/others/file.md)"
 
-    ```yaml tab="YAML"
+    ```yaml tab="Structured (YAML)"
     ## Dynamic configuration
     http:
       services:
@@ -469,7 +473,7 @@ Power of two choices algorithm is a load balancing strategy that selects two ser
             - url: "http://private-ip-server-3/"
     ```
 
-    ```toml tab="TOML"
+    ```toml tab="Structured (TOML) "
     ## Dynamic configuration
     [http.services]
       [http.services.my-service.loadBalancer]
@@ -478,6 +482,48 @@ Power of two choices algorithm is a load balancing strategy that selects two ser
           url = "http://private-ip-server-1/"
         [[http.services.my-service.loadBalancer.servers]]
           url = "http://private-ip-server-2/"       
+        [[http.services.my-service.loadBalancer.servers]]
+          url = "http://private-ip-server-3/"
+    ```
+
+## Least-Time
+
+The Least-Time load balancing algorithm selects the server with the lowest average response time (Time To First Byte - TTFB),
+combined with the fewest active connections, weighted by server capacity.
+This strategy is ideal for heterogeneous backend environments where servers have varying performance characteristics,
+different hardware capabilities, or varying network latency.
+
+The algorithm continuously measures each backend's response time and tracks active connection counts.
+When routing a request,
+it calculates a score for each healthy server using the formula: `(avg_response_time × (1 + active_connections)) / weight`.
+The server with the lowest score receives the request.
+When multiple servers have identical scores,
+Weighted Round Robin (WRR) with Earliest Deadline First (EDF) scheduling is used as a tie-breaker to ensure fair distribution.
+
+??? example "Basic Least-Time Load Balancing -- Using the [File Provider](../../../install-configuration/providers/others/file.md)"
+
+    ```yaml tab="Structured (YAML)"
+    ## Dynamic configuration
+    http:
+      services:
+        my-service:
+          loadBalancer:
+            strategy: "leasttime"
+            servers:
+            - url: "http://private-ip-server-1/"
+            - url: "http://private-ip-server-2/"
+            - url: "http://private-ip-server-3/"
+    ```
+
+    ```toml tab="Structured (TOML)"
+    ## Dynamic configuration
+    [http.services]
+      [http.services.my-service.loadBalancer]
+        strategy = "leasttime"
+        [[http.services.my-service.loadBalancer.servers]]
+          url = "http://private-ip-server-1/"
+        [[http.services.my-service.loadBalancer.servers]]
+          url = "http://private-ip-server-2/"
         [[http.services.my-service.loadBalancer.servers]]
           url = "http://private-ip-server-3/"
     ```

@@ -24,7 +24,7 @@ import (
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/job"
-	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	"github.com/traefik/traefik/v3/pkg/provider"
 	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/gateway"
@@ -1379,15 +1379,18 @@ func buildCertificates(client Client, tlsStore, namespace string, certificates [
 	return nil
 }
 
-func makeServiceKey(rule, ingressName string) (string, error) {
+func makeServiceKey(rule, ingressName string) string {
 	h := sha256.New()
+
+	// As explained in https://pkg.go.dev/hash#Hash,
+	// Write never returns an error.
 	if _, err := h.Write([]byte(rule)); err != nil {
-		return "", err
+		return ""
 	}
 
 	key := fmt.Sprintf("%s-%.10x", ingressName, h.Sum(nil))
 
-	return key, nil
+	return key
 }
 
 func makeID(namespace, name string) string {

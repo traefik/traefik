@@ -12,10 +12,10 @@ and while the documentation often demonstrates configuration options through fil
 the core feature of Traefik is its dynamic configurability,
 directly reacting to changes from providers over time.
 
-Notably, a part of the configuration is [static](../configuration-overview/#the-static-configuration),
+Notably, a part of the configuration is [static](./configuration-overview.md#the-static-configuration),
 and can be provided by a file on startup, whereas various providers,
 such as the file provider,
-contribute dynamically all along the traefik instance lifetime to its [dynamic configuration](../configuration-overview/#the-dynamic-configuration) changes.
+contribute dynamically all along the traefik instance lifetime to its [dynamic configuration](./configuration-overview.md#the-dynamic-configuration) changes.
 
 In addition, the configuration englobes concepts such as the EntryPoint which can be seen as a listener on the Transport Layer (TCP),
 as apposed to the Router which is more about the Presentation (TLS) and Application layers (HTTP).
@@ -147,13 +147,13 @@ for example, by using the `touch` command on the configuration file.
 
 By default, the following headers are automatically added when proxying requests:
 
-| Property                  | HTTP Header                |
-|---------------------------|----------------------------|
-| Client's IP               | X-Forwarded-For, X-Real-Ip |
-| Host                      | X-Forwarded-Host           |
-| Port                      | X-Forwarded-Port           |
-| Protocol                  | X-Forwarded-Proto          |
-| Proxy Server's Hostname   | X-Forwarded-Server         |
+| Property                  | HTTP Header                    |
+|---------------------------|--------------------------------|
+| Client's IP               | `X-Forwarded-For`, `X-Real-Ip` |
+| Host                      | `X-Forwarded-Host`             |
+| Port                      | `X-Forwarded-Port`             |
+| Protocol                  | `X-Forwarded-Proto`            |
+| Proxy Server's Hostname   | `X-Forwarded-Server`           |
 
 For more details,
 please check out the [forwarded header](../routing/entrypoints.md#forwarded-headers) documentation.

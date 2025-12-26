@@ -237,6 +237,30 @@ Trust only forwarded headers from selected IPs.
 `--entrypoints.<name>.http`:  
 HTTP configuration.
 
+`--entrypoints.<name>.http.encodedcharacters`:  
+Defines which encoded characters are allowed in the request path.
+
+`--entrypoints.<name>.http.encodedcharacters.allowencodedbackslash`:  
+Defines whether requests with encoded back slash characters in the path are allowed. (Default: ```false```)
+
+`--entrypoints.<name>.http.encodedcharacters.allowencodedhash`:  
+Defines whether requests with encoded hash characters in the path are allowed. (Default: ```false```)
+
+`--entrypoints.<name>.http.encodedcharacters.allowencodednullcharacter`:  
+Defines whether requests with encoded null characters in the path are allowed. (Default: ```false```)
+
+`--entrypoints.<name>.http.encodedcharacters.allowencodedpercent`:  
+Defines whether requests with encoded percent characters in the path are allowed. (Default: ```false```)
+
+`--entrypoints.<name>.http.encodedcharacters.allowencodedquestionmark`:  
+Defines whether requests with encoded question mark characters in the path are allowed. (Default: ```false```)
+
+`--entrypoints.<name>.http.encodedcharacters.allowencodedsemicolon`:  
+Defines whether requests with encoded semicolon characters in the path are allowed. (Default: ```false```)
+
+`--entrypoints.<name>.http.encodedcharacters.allowencodedslash`:  
+Defines whether requests with encoded slash characters in the path are allowed. (Default: ```false```)
+
 `--entrypoints.<name>.http.encodequerysemicolons`:  
 Defines whether request query semicolons should be URLEncoded. (Default: ```false```)
 
@@ -367,7 +391,7 @@ Environment variables to forward to the wasm guest.
 Directory to mount to the wasm guest.
 
 `--experimental.localplugins.<name>.settings.useunsafe`:  
-Allow the plugin to use unsafe package. (Default: ```false```)
+Allow the plugin to use unsafe and syscall packages. (Default: ```false```)
 
 `--experimental.otlplogs`:  
 Enables the OpenTelemetry logs integration. (Default: ```false```)
@@ -385,7 +409,7 @@ Environment variables to forward to the wasm guest.
 Directory to mount to the wasm guest.
 
 `--experimental.plugins.<name>.settings.useunsafe`:  
-Allow the plugin to use unsafe package. (Default: ```false```)
+Allow the plugin to use unsafe and syscall packages. (Default: ```false```)
 
 `--experimental.plugins.<name>.version`:  
 plugin's version.

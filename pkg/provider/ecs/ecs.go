@@ -24,7 +24,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/job"
-	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	"github.com/traefik/traefik/v3/pkg/provider"
 	"github.com/traefik/traefik/v3/pkg/safe"
 )
@@ -317,8 +317,14 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 							protocol:      mapping.Protocol,
 						})
 					}
+
+					privateIP := aws.ToString(container.NetworkInterfaces[0].PrivateIpv4Address)
+					if privateIP == "" {
+						privateIP = aws.ToString(container.NetworkInterfaces[0].Ipv6Address)
+					}
+
 					mach = &machine{
-						privateIP:    aws.ToString(container.NetworkInterfaces[0].PrivateIpv4Address),
+						privateIP:    privateIP,
 						ports:        ports,
 						state:        ec2types.InstanceStateName(strings.ToLower(aws.ToString(task.LastStatus))),
 						healthStatus: task.HealthStatus,

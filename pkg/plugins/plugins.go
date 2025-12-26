@@ -8,18 +8,19 @@ import (
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/rs/zerolog/log"
+	"golang.org/x/mod/module"
 )
 
 const localGoPath = "./plugins-local/"
 
 // SetupRemotePlugins setup remote plugins environment.
-func SetupRemotePlugins(client *Client, plugins map[string]Descriptor) error {
+func SetupRemotePlugins(manager *Manager, plugins map[string]Descriptor) error {
 	err := checkRemotePluginsConfiguration(plugins)
 	if err != nil {
 		return fmt.Errorf("invalid configuration: %w", err)
 	}
 
-	err = client.CleanArchives(plugins)
+	err = manager.CleanArchives(plugins)
 	if err != nil {
 		return fmt.Errorf("unable to clean archives: %w", err)
 	}
@@ -27,33 +28,18 @@ func SetupRemotePlugins(client *Client, plugins map[string]Descriptor) error {
 	ctx := context.Background()
 
 	for pAlias, desc := range plugins {
-		log.Ctx(ctx).Debug().Msgf("Loading of plugin: %s: %s@%s", pAlias, desc.ModuleName, desc.Version)
+		log.Ctx(ctx).Debug().Msgf("Installing plugin: %s: %s@%s", pAlias, desc.ModuleName, desc.Version)
 
-		hash, err := client.Download(ctx, desc.ModuleName, desc.Version)
-		if err != nil {
-			_ = client.ResetAll()
-			return fmt.Errorf("unable to download plugin %s: %w", desc.ModuleName, err)
-		}
-
-		err = client.Check(ctx, desc.ModuleName, desc.Version, hash)
-		if err != nil {
-			_ = client.ResetAll()
-			return fmt.Errorf("unable to check archive integrity of the plugin %s: %w", desc.ModuleName, err)
+		if err = manager.InstallPlugin(ctx, desc); err != nil {
+			_ = manager.ResetAll()
+			return fmt.Errorf("unable to install plugin %s: %w", pAlias, err)
 		}
 	}
 
-	err = client.WriteState(plugins)
+	err = manager.WriteState(plugins)
 	if err != nil {
-		_ = client.ResetAll()
+		_ = manager.ResetAll()
 		return fmt.Errorf("unable to write plugins state: %w", err)
-	}
-
-	for _, desc := range plugins {
-		err = client.Unzip(desc.ModuleName, desc.Version)
-		if err != nil {
-			_ = client.ResetAll()
-			return fmt.Errorf("unable to unzip archive: %w", err)
-		}
 	}
 
 	return nil
@@ -68,24 +54,18 @@ func checkRemotePluginsConfiguration(plugins map[string]Descriptor) error {
 
 	var errs []string
 	for pAlias, descriptor := range plugins {
-		if descriptor.ModuleName == "" {
-			errs = append(errs, fmt.Sprintf("%s: plugin name is missing", pAlias))
+		if err := module.CheckPath(descriptor.ModuleName); err != nil {
+			errs = append(errs, fmt.Sprintf("%s: malformed plugin module name is missing: %s", pAlias, err))
 		}
 
 		if descriptor.Version == "" {
 			errs = append(errs, fmt.Sprintf("%s: plugin version is missing", pAlias))
 		}
 
-		if strings.HasPrefix(descriptor.ModuleName, "/") || strings.HasSuffix(descriptor.ModuleName, "/") {
-			errs = append(errs, fmt.Sprintf("%s: plugin name should not start or end with a /", pAlias))
-			continue
-		}
-
 		if _, ok := uniq[descriptor.ModuleName]; ok {
 			errs = append(errs, fmt.Sprintf("only one version of a plugin is allowed, there is a duplicate of %s", descriptor.ModuleName))
 			continue
 		}
-
 		uniq[descriptor.ModuleName] = struct{}{}
 	}
 

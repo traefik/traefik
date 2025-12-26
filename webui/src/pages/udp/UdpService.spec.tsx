@@ -1,26 +1,27 @@
-import { UdpServiceRender } from './UdpService'
-
-import { ResourceDetailDataType } from 'hooks/use-resource-detail'
+import { ServiceDetail } from 'components/services/ServiceDetail'
 import { renderWithProviders } from 'utils/test'
 
 describe('<UdpServicePage />', () => {
   it('should render the error message', () => {
     const { getByTestId } = renderWithProviders(
-      <UdpServiceRender name="mock-service" data={undefined} error={new Error('Test error')} />,
+      <ServiceDetail name="mock-service" data={undefined} error={new Error('Test error')} protocol="udp" />,
+      { route: '/udp/services/mock-service', withPage: true },
     )
     expect(getByTestId('error-text')).toBeInTheDocument()
   })
 
   it('should render the skeleton', () => {
     const { getByTestId } = renderWithProviders(
-      <UdpServiceRender name="mock-service" data={undefined} error={undefined} />,
+      <ServiceDetail name="mock-service" data={undefined} error={undefined} protocol="udp" />,
+      { route: '/udp/services/mock-service', withPage: true },
     )
     expect(getByTestId('skeleton')).toBeInTheDocument()
   })
 
   it('should render the not found page', () => {
     const { getByTestId } = renderWithProviders(
-      <UdpServiceRender name="mock-service" data={{} as ResourceDetailDataType} error={undefined} />,
+      <ServiceDetail name="mock-service" data={{} as Resource.DetailsData} error={undefined} protocol="udp" />,
+      { route: '/udp/services/mock-service', withPage: true },
     )
     expect(getByTestId('Not found page')).toBeInTheDocument()
   })
@@ -58,7 +59,8 @@ describe('<UdpServicePage />', () => {
 
     const { container, getByTestId } = renderWithProviders(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      <UdpServiceRender name="mock-service" data={mockData as any} error={undefined} />,
+      <ServiceDetail name="mock-service" data={mockData as any} error={undefined} protocol="udp" />,
+      { route: '/udp/services/mock-service', withPage: true },
     )
 
     const headings = Array.from(container.getElementsByTagName('h1'))
@@ -72,9 +74,9 @@ describe('<UdpServicePage />', () => {
     expect(serviceDetails.querySelector('svg[data-testid="docker"]')).toBeTruthy()
     expect(serviceDetails.innerHTML).toContain('Status')
     expect(serviceDetails.innerHTML).toContain('Success')
-    expect(serviceDetails.innerHTML).toContain('Pass Host Header')
+    expect(serviceDetails.innerHTML).toContain('Pass host header')
     expect(serviceDetails.innerHTML).toContain('True')
-    expect(serviceDetails.innerHTML).toContain('Termination Delay')
+    expect(serviceDetails.innerHTML).toContain('Termination delay')
     expect(serviceDetails.innerHTML).toContain('10 ms')
 
     const serversList = getByTestId('servers-list')
@@ -82,9 +84,8 @@ describe('<UdpServicePage />', () => {
     expect(serversList.innerHTML).toContain('http://10.0.1.12:80')
 
     const routersTable = getByTestId('routers-table')
-    const tableBody = routersTable.querySelectorAll('div[role="rowgroup"]')[1]
-    expect(tableBody?.querySelectorAll('a[role="row"]')).toHaveLength(1)
-    expect(tableBody?.innerHTML).toContain('router-test1@docker')
+    expect(routersTable.querySelectorAll('a[role="row"]')).toHaveLength(1)
+    expect(routersTable.innerHTML).toContain('router-test1@docker')
   })
 
   it('should render the service servers from the serverStatus property', async () => {
@@ -127,7 +128,8 @@ describe('<UdpServicePage />', () => {
 
     const { getByTestId } = renderWithProviders(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      <UdpServiceRender name="mock-service" data={mockData as any} error={undefined} />,
+      <ServiceDetail name="mock-service" data={mockData as any} error={undefined} protocol="udp" />,
+      { route: '/udp/services/mock-service', withPage: true },
     )
 
     const serversList = getByTestId('servers-list')
@@ -135,10 +137,9 @@ describe('<UdpServicePage />', () => {
     expect(serversList.innerHTML).toContain('http://10.0.1.12:81')
 
     const routersTable = getByTestId('routers-table')
-    const tableBody = routersTable.querySelectorAll('div[role="rowgroup"]')[1]
-    expect(tableBody?.querySelectorAll('a[role="row"]')).toHaveLength(2)
-    expect(tableBody?.innerHTML).toContain('router-test1@docker')
-    expect(tableBody?.innerHTML).toContain('router-test2@docker')
+    expect(routersTable.querySelectorAll('a[role="row"]')).toHaveLength(2)
+    expect(routersTable.innerHTML).toContain('router-test1@docker')
+    expect(routersTable.innerHTML).toContain('router-test2@docker')
   })
 
   it('should not render used by routers table if the usedBy property is empty', async () => {
@@ -153,7 +154,8 @@ describe('<UdpServicePage />', () => {
 
     const { getByTestId } = renderWithProviders(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      <UdpServiceRender name="mock-service" data={mockData as any} error={undefined} />,
+      <ServiceDetail name="mock-service" data={mockData as any} error={undefined} protocol="udp" />,
+      { route: '/udp/services/mock-service', withPage: true },
     )
 
     expect(() => {

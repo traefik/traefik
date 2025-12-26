@@ -12,6 +12,7 @@ import (
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/static"
+	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	"github.com/traefik/traefik/v3/pkg/ping"
 	"github.com/traefik/traefik/v3/pkg/plugins"
 	"github.com/traefik/traefik/v3/pkg/provider/acme"
@@ -798,21 +799,21 @@ func TestDo_staticConfiguration(t *testing.T) {
 		Debug:     true,
 	}
 
-	config.Metrics = &types.Metrics{
-		Prometheus: &types.Prometheus{
+	config.Metrics = &otypes.Metrics{
+		Prometheus: &otypes.Prometheus{
 			Buckets:              []float64{0.1, 0.3, 1.2, 5},
 			AddEntryPointsLabels: true,
 			AddServicesLabels:    true,
 			EntryPoint:           "MyEntryPoint",
 			ManualRouting:        true,
 		},
-		Datadog: &types.Datadog{
+		Datadog: &otypes.Datadog{
 			Address:              "localhost:8181",
 			PushInterval:         42,
 			AddEntryPointsLabels: true,
 			AddServicesLabels:    true,
 		},
-		StatsD: &types.Statsd{
+		StatsD: &otypes.Statsd{
 			Address:              "localhost:8182",
 			PushInterval:         42,
 			AddEntryPointsLabels: true,
@@ -827,7 +828,7 @@ func TestDo_staticConfiguration(t *testing.T) {
 		TerminatingStatusCode: 42,
 	}
 
-	config.Log = &types.TraefikLog{
+	config.Log = &otypes.TraefikLog{
 		Level:      "Level",
 		Format:     "json",
 		FilePath:   "/foo/path",
@@ -835,19 +836,19 @@ func TestDo_staticConfiguration(t *testing.T) {
 		MaxAge:     3,
 		MaxBackups: 4,
 		Compress:   true,
-		OTLP: &types.OTelLog{
+		OTLP: &otypes.OTelLog{
 			ServiceName: "foobar",
 			ResourceAttributes: map[string]string{
 				"foobar": "foobar",
 			},
-			GRPC: &types.OTelGRPC{
+			GRPC: &otypes.OTelGRPC{
 				Endpoint: "foobar",
 				Insecure: true,
 				Headers: map[string]string{
 					"foobar": "foobar",
 				},
 			},
-			HTTP: &types.OTelHTTP{
+			HTTP: &otypes.OTelHTTP{
 				Endpoint: "foobar",
 				Headers: map[string]string{
 					"foobar": "foobar",
@@ -856,20 +857,20 @@ func TestDo_staticConfiguration(t *testing.T) {
 		},
 	}
 
-	config.AccessLog = &types.AccessLog{
+	config.AccessLog = &otypes.AccessLog{
 		FilePath: "AccessLog FilePath",
 		Format:   "AccessLog Format",
-		Filters: &types.AccessLogFilters{
+		Filters: &otypes.AccessLogFilters{
 			StatusCodes:   []string{"200", "500"},
 			RetryAttempts: true,
 			MinDuration:   42,
 		},
-		Fields: &types.AccessLogFields{
+		Fields: &otypes.AccessLogFields{
 			DefaultMode: "drop",
 			Names: map[string]string{
 				"RequestHost": "keep",
 			},
-			Headers: &types.FieldHeaders{
+			Headers: &otypes.FieldHeaders{
 				DefaultMode: "drop",
 				Names: map[string]string{
 					"Referer": "keep",
@@ -877,19 +878,19 @@ func TestDo_staticConfiguration(t *testing.T) {
 			},
 		},
 		BufferingSize: 42,
-		OTLP: &types.OTelLog{
+		OTLP: &otypes.OTelLog{
 			ServiceName: "foobar",
 			ResourceAttributes: map[string]string{
 				"foobar": "foobar",
 			},
-			GRPC: &types.OTelGRPC{
+			GRPC: &otypes.OTelGRPC{
 				Endpoint: "foobar",
 				Insecure: true,
 				Headers: map[string]string{
 					"foobar": "foobar",
 				},
 			},
-			HTTP: &types.OTelHTTP{
+			HTTP: &otypes.OTelHTTP{
 				Endpoint: "foobar",
 				Headers: map[string]string{
 					"foobar": "foobar",
@@ -907,14 +908,14 @@ func TestDo_staticConfiguration(t *testing.T) {
 			"foobar": "foobar",
 		},
 		SampleRate: 42,
-		OTLP: &types.OTelTracing{
-			HTTP: &types.OTelHTTP{
+		OTLP: &otypes.OTelTracing{
+			HTTP: &otypes.OTelHTTP{
 				Endpoint: "foobar",
 				Headers: map[string]string{
 					"foobar": "foobar",
 				},
 			},
-			GRPC: &types.OTelGRPC{
+			GRPC: &otypes.OTelGRPC{
 				Endpoint: "foobar",
 				Insecure: true,
 				Headers: map[string]string{

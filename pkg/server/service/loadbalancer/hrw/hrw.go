@@ -13,6 +13,8 @@ import (
 	"github.com/traefik/traefik/v3/pkg/ip"
 )
 
+var errNoAvailableServer = errors.New("no available server")
+
 type namedHandler struct {
 	http.Handler
 	name   string
@@ -39,6 +41,7 @@ type Balancer struct {
 	status map[string]struct{}
 	// updaters is the list of hooks that are run (to update the Balancer
 	// parent(s)), whenever the Balancer status changes.
+	// No mutex is needed, as it is modified only during the configuration build.
 	updaters []func(bool)
 	// fenced is the list of terminating yet still serving child services.
 	fenced map[string]struct{}
@@ -113,14 +116,12 @@ func (b *Balancer) SetStatus(ctx context.Context, childName string, up bool) {
 // Not thread safe.
 func (b *Balancer) RegisterStatusUpdater(fn func(up bool)) error {
 	if !b.wantsHealthCheck {
-		return errors.New("healthCheck not enabled in config for this weighted service")
+		return errors.New("healthCheck not enabled in config for this HRW service")
 	}
 	b.updaters = append(b.updaters, fn)
 
 	return nil
 }
-
-var errNoAvailableServer = errors.New("no available server")
 
 func (b *Balancer) nextServer(ip string) (*namedHandler, error) {
 	b.handlersMu.RLock()

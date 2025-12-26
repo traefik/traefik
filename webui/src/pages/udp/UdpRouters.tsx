@@ -1,31 +1,26 @@
-import { AriaTable, AriaTbody, AriaTd, AriaTfoot, AriaThead, AriaTr, Box, Flex } from '@traefiklabs/faency'
+import { AriaTable, AriaTbody, AriaTd, AriaTfoot, AriaThead, AriaTr, Flex } from '@traefiklabs/faency'
 import { useMemo } from 'react'
 import useInfiniteScroll from 'react-infinite-scroll-hook'
 import { useSearchParams } from 'react-router-dom'
 
-import ClickableRow from 'components/ClickableRow'
-import ProviderIcon from 'components/icons/providers'
-import { Chips } from 'components/resources/DetailSections'
+import { ScrollTopButton } from 'components/buttons/ScrollTopButton'
+import { ProviderIconWithTooltip } from 'components/icons/providers'
+import { Chips } from 'components/resources/DetailItemComponents'
 import { ResourceStatus } from 'components/resources/ResourceStatus'
-import { ScrollTopButton } from 'components/ScrollTopButton'
 import { SpinnerLoader } from 'components/SpinnerLoader'
-import { searchParamsToState, TableFilter } from 'components/TableFilter'
+import ClickableRow from 'components/tables/ClickableRow'
 import SortableTh from 'components/tables/SortableTh'
-import Tooltip from 'components/Tooltip'
+import { searchParamsToState, TableFilter } from 'components/tables/TableFilter'
 import TooltipText from 'components/TooltipText'
 import useFetchWithPagination, { pagesResponseInterface, RenderRowType } from 'hooks/use-fetch-with-pagination'
-import { EmptyPlaceholder } from 'layout/EmptyPlaceholder'
-import Page from 'layout/Page'
+import { EmptyPlaceholderTd } from 'layout/EmptyPlaceholder'
+import PageTitle from 'layout/PageTitle'
 
 export const makeRowRender = (): RenderRowType => {
   const UdpRoutersRenderRow = (row) => (
     <ClickableRow key={row.name} to={`/udp/routers/${row.name}`}>
       <AriaTd>
-        <Tooltip label={row.status}>
-          <Box css={{ width: '32px', height: '32px' }}>
-            <ResourceStatus status={row.status} />
-          </Box>
-        </Tooltip>
+        <ResourceStatus status={row.status} />
       </AriaTd>
       <AriaTd>{row.entryPoints && row.entryPoints.length > 0 && <Chips items={row.entryPoints} />}</AriaTd>
       <AriaTd>
@@ -35,11 +30,7 @@ export const makeRowRender = (): RenderRowType => {
         <TooltipText text={row.service} isTruncated />
       </AriaTd>
       <AriaTd>
-        <Tooltip label={row.provider}>
-          <Box css={{ width: '32px', height: '32px' }}>
-            <ProviderIcon name={row.provider} />
-          </Box>
-        </Tooltip>
+        <ProviderIconWithTooltip provider={row.provider} />
       </AriaTd>
       <AriaTd>
         <TooltipText text={row.priority} isTruncated />
@@ -69,7 +60,7 @@ export const UdpRoutersRender = ({
       <AriaTable>
         <AriaThead>
           <AriaTr>
-            <SortableTh label="Status" css={{ width: '40px' }} isSortable sortByValue="status" />
+            <SortableTh label="Status" css={{ width: '36px' }} isSortable sortByValue="status" />
             <SortableTh label="Entrypoints" isSortable sortByValue="entryPoints" />
             <SortableTh label="Name" isSortable sortByValue="name" />
             <SortableTh label="Service" isSortable sortByValue="service" />
@@ -81,9 +72,7 @@ export const UdpRoutersRender = ({
         {(isEmpty || !!error) && (
           <AriaTfoot>
             <AriaTr>
-              <AriaTd fullColSpan>
-                <EmptyPlaceholder message={error ? 'Failed to fetch data' : 'No data available'} />
-              </AriaTd>
+              <EmptyPlaceholderTd message={error ? 'Failed to fetch data' : 'No data available'} />
             </AriaTr>
           </AriaTfoot>
         )}
@@ -111,7 +100,8 @@ export const UdpRouters = () => {
   )
 
   return (
-    <Page title="UDP Routers">
+    <>
+      <PageTitle title="UDP Routers" />
       <TableFilter />
       <UdpRoutersRender
         error={error}
@@ -122,6 +112,6 @@ export const UdpRouters = () => {
         pageCount={pageCount}
         pages={pages}
       />
-    </Page>
+    </>
   )
 }

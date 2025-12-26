@@ -1,49 +1,50 @@
 import { Box, CSS } from '@traefiklabs/faency'
 import { ReactNode } from 'react'
-import { FiAlertCircle, FiAlertTriangle, FiCheckCircle } from 'react-icons/fi'
+import { FiAlertCircle, FiAlertTriangle, FiCheckCircle, FiLoader } from 'react-icons/fi'
 
-export type StatusType = 'info' | 'success' | 'warning' | 'error' | 'enabled' | 'disabled'
-
-export const iconByStatus: { [key in StatusType]: ReactNode } = {
-  info: <FiAlertCircle color="white" size={20} />,
-  success: <FiCheckCircle color="white" size={20} />,
-  warning: <FiAlertCircle color="white" size={20} />,
-  error: <FiAlertTriangle color="white" size={20} />,
-  enabled: <FiCheckCircle color="white" size={20} />,
-  disabled: <FiAlertTriangle color="white" size={20} />,
+export const iconByStatus: { [key in Resource.Status]: ReactNode } = {
+  info: <FiAlertCircle color="currentColor" size={20} />,
+  success: <FiCheckCircle color="currentColor" size={20} />,
+  warning: <FiAlertCircle color="currentColor" size={20} />,
+  error: <FiAlertTriangle color="currentColor" size={20} />,
+  enabled: <FiCheckCircle color="currentColor" size={20} />,
+  disabled: <FiAlertTriangle color="currentColor" size={20} />,
+  loading: <FiLoader color="currentColor" size={20} />,
 }
 
 // Please notice: dark and light colors have the same values.
-export const colorByStatus: { [key in StatusType]: string } = {
+export const colorByStatus: { [key in Resource.Status]: string } = {
   info: 'hsl(220, 67%, 51%)',
   success: '#30A46C',
   warning: 'hsl(24 94.0% 50.0%)',
   error: 'hsl(347, 100%, 60.0%)',
   enabled: '#30A46C',
   disabled: 'hsl(347, 100%, 60.0%)',
+  loading: 'hsla(0, 0%, 100%, 0.51)',
 }
 
 type StatusProps = {
   css?: CSS
   size?: number
-  status: StatusType
+  status: Resource.Status
+  color?: string
 }
 
-export default function Status({ css = {}, size = 20, status }: StatusProps) {
+export default function Status({ css = {}, size = 20, status, color = 'white' }: StatusProps) {
   const Icon = ({ size }: { size: number }) => {
     switch (status) {
       case 'info':
-        return <FiAlertCircle color="white" size={size} />
+        return <FiAlertCircle color={color} size={size} />
       case 'success':
-        return <FiCheckCircle color="white" size={size} />
+        return <FiCheckCircle color={color} size={size} />
       case 'warning':
-        return <FiAlertCircle color="white" size={size} />
+        return <FiAlertCircle color={color} size={size} />
       case 'error':
-        return <FiAlertTriangle color="white" size={size} />
+        return <FiAlertTriangle color={color} size={size} />
       case 'enabled':
-        return <FiCheckCircle color="white" size={size} />
+        return <FiCheckCircle color={color} size={size} />
       case 'disabled':
-        return <FiAlertTriangle color="white" size={size} />
+        return <FiAlertTriangle color={color} size={size} />
       default:
         return null
     }

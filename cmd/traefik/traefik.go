@@ -30,9 +30,11 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
 	"github.com/traefik/traefik/v3/pkg/config/static"
-	"github.com/traefik/traefik/v3/pkg/logs"
-	"github.com/traefik/traefik/v3/pkg/metrics"
 	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
+	"github.com/traefik/traefik/v3/pkg/observability/logs"
+	"github.com/traefik/traefik/v3/pkg/observability/metrics"
+	"github.com/traefik/traefik/v3/pkg/observability/tracing"
+	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	"github.com/traefik/traefik/v3/pkg/provider/acme"
 	"github.com/traefik/traefik/v3/pkg/provider/aggregator"
 	"github.com/traefik/traefik/v3/pkg/provider/tailscale"
@@ -46,8 +48,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/server/service"
 	"github.com/traefik/traefik/v3/pkg/tcp"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
-	"github.com/traefik/traefik/v3/pkg/tracing"
-	"github.com/traefik/traefik/v3/pkg/types"
 	"github.com/traefik/traefik/v3/pkg/version"
 )
 
@@ -97,6 +97,11 @@ func runCmd(staticConfiguration *static.Configuration) error {
 		return fmt.Errorf("setting up logger: %w", err)
 	}
 
+	// Display warning to advertise for new behavior of rejecting encoded characters in the request path.
+	// Deprecated: this has to be removed in the next minor/major version.
+	log.Warn().Msg("Starting with v3.6.4, Traefik now rejects some encoded characters in the request path by default. " +
+		"Refer to the documentation for more details: https://doc.traefik.io/traefik/migrate/v3/#encoded-characters-in-request-path")
+
 	http.DefaultTransport.(*http.Transport).Proxy = http.ProxyFromEnvironment
 
 	staticConfiguration.SetEffectiveConfiguration()
@@ -114,9 +119,7 @@ func runCmd(staticConfiguration *static.Configuration) error {
 		log.Debug().RawJSON("staticConfiguration", []byte(redactedStaticConfiguration)).Msg("Static configuration loaded [json]")
 	}
 
-	if staticConfiguration.Global.CheckNewVersion {
-		checkNewVersion()
-	}
+	checkNewVersion(staticConfiguration)
 
 	stats(staticConfiguration)
 
@@ -228,6 +231,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 
 	if staticConfiguration.API != nil {
 		version.DisableDashboardAd = staticConfiguration.API.DisableDashboardAd
+		version.DashboardName = staticConfiguration.API.DashboardName
 	}
 
 	// Plugins
@@ -505,7 +509,7 @@ func initTailscaleProviders(cfg *static.Configuration, providerAggregator *aggre
 	return providers
 }
 
-func registerMetricClients(metricsConfig *types.Metrics) []metrics.Registry {
+func registerMetricClients(metricsConfig *otypes.Metrics) []metrics.Registry {
 	if metricsConfig == nil {
 		return nil
 	}
@@ -586,7 +590,7 @@ func appendCertMetric(gauge gokitmetrics.Gauge, certificate *x509.Certificate) {
 	gauge.With(labels...).Set(notAfter)
 }
 
-func setupAccessLog(ctx context.Context, conf *types.AccessLog) *accesslog.Handler {
+func setupAccessLog(ctx context.Context, conf *otypes.AccessLog) *accesslog.Handler {
 	if conf == nil {
 		return nil
 	}
@@ -614,13 +618,28 @@ func setupTracing(ctx context.Context, conf *static.Tracing) (*tracing.Tracer, i
 	return tracer, closer
 }
 
-func checkNewVersion() {
-	ticker := time.Tick(24 * time.Hour)
-	safe.Go(func() {
-		for time.Sleep(10 * time.Minute); ; <-ticker {
-			version.CheckNewVersion()
-		}
-	})
+func checkNewVersion(staticConfiguration *static.Configuration) {
+	logger := log.With().Logger()
+
+	if staticConfiguration.Global.CheckNewVersion {
+		logger.Info().Msg(`Version check is enabled.`)
+		logger.Info().Msg(`Traefik checks for new releases to notify you if your version is out of date.`)
+		logger.Info().Msg(`It also collects usage data during this process.`)
+		logger.Info().Msg(`Check the documentation to get more info: https://doc.traefik.io/traefik/contributing/data-collection/`)
+
+		ticker := time.Tick(24 * time.Hour)
+		safe.Go(func() {
+			for time.Sleep(10 * time.Minute); ; <-ticker {
+				version.CheckNewVersion()
+			}
+		})
+	} else {
+		logger.Info().Msg(`
+Version check is disabled.
+You will not be notified if a new version is available.
+More details: https://doc.traefik.io/traefik/contributing/data-collection/
+`)
+	}
 }
 
 func stats(staticConfiguration *static.Configuration) {

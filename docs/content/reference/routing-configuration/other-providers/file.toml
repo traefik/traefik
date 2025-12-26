@@ -7,6 +7,7 @@
       middlewares = ["foobar", "foobar"]
       service = "foobar"
       rule = "foobar"
+      parentRefs = ["foobar", "foobar"]
       ruleSyntax = "foobar"
       priority = 42
       [http.routers.Router0.tls]
@@ -30,6 +31,7 @@
       middlewares = ["foobar", "foobar"]
       service = "foobar"
       rule = "foobar"
+      parentRefs = ["foobar", "foobar"]
       ruleSyntax = "foobar"
       priority = 42
       [http.routers.Router1.tls]
@@ -478,6 +480,13 @@
           tls = true
         [tcp.services.TCPService01.loadBalancer.proxyProtocol]
           version = 42
+        [tcp.services.TCPService01.loadBalancer.healthCheck]
+          port = 42
+          send = "foobar"
+          expect = "foobar"
+          interval = "42s"
+          unhealthyInterval = "42s"
+          timeout = "42s"
     [tcp.services.TCPService02]
       [tcp.services.TCPService02.weighted]
 
@@ -488,6 +497,7 @@
         [[tcp.services.TCPService02.weighted.services]]
           name = "foobar"
           weight = 42
+        [tcp.services.TCPService02.weighted.healthCheck]
   [tcp.middlewares]
     [tcp.middlewares.TCPMiddleware01]
       [tcp.middlewares.TCPMiddleware01.ipAllowList]

@@ -263,7 +263,7 @@ linters:
       - path: pkg/provider/kubernetes/(crd|gateway)/client.go
         linters:
           - interfacebloat
-      - path: pkg/metrics/metrics.go
+      - path: pkg/observability/metrics/metrics.go
         linters:
           - interfacebloat
       - path: integration/healthcheck_test.go
@@ -318,6 +318,12 @@ linters:
           - recvcheck
       - path: pkg/proxy/httputil/bufferpool.go
         text: 'SA6002: argument should be pointer-like to avoid allocations'
+      - path: integration/integration_test.go
+        text: 'var (gatewayAPIConformanceRunTest|traefikVersion) is unused'
+      - path: pkg/server/router/router.go
+        text: 'appendAssign: append result not assigned to the same slice'
+        linters:
+          - gocritic
     paths:
       - pkg/provider/kubernetes/crd/generated/
 

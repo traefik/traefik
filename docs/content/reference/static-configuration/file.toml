@@ -72,6 +72,14 @@
         [[entryPoints.EntryPoint0.http.tls.domains]]
           main = "foobar"
           sans = ["foobar", "foobar"]
+      [entryPoints.EntryPoint0.http.encodedCharacters]
+        allowEncodedSlash = true
+        allowEncodedBackSlash = true
+        allowEncodedNullCharacter = true
+        allowEncodedSemicolon = true
+        allowEncodedPercent = true
+        allowEncodedQuestionMark = true
+        allowEncodedHash = true
     [entryPoints.EntryPoint0.http2]
       maxConcurrentStreams = 42
     [entryPoints.EntryPoint0.http3]

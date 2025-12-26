@@ -17,13 +17,10 @@ import (
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/job"
-	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	"github.com/traefik/traefik/v3/pkg/provider"
 	"github.com/traefik/traefik/v3/pkg/safe"
 )
-
-// SwarmAPIVersion is a constant holding the version of the Provider API traefik will use.
-const SwarmAPIVersion = "1.24"
 
 const swarmName = "swarm"
 
@@ -58,7 +55,6 @@ func (p *SwarmProvider) Init() error {
 }
 
 func (p *SwarmProvider) createClient(ctx context.Context) (*client.Client, error) {
-	p.ClientConfig.apiVersion = SwarmAPIVersion
 	return createClient(ctx, p.ClientConfig)
 }
 

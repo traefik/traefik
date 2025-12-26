@@ -1,6 +1,7 @@
 package tcp
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
@@ -19,12 +20,21 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
-	"golang.org/x/net/proxy"
 )
 
-type Dialer interface {
-	proxy.Dialer
+// ClientConn is the interface that provides information about the client connection.
+type ClientConn interface {
+	// LocalAddr returns the local network address, if known.
+	LocalAddr() net.Addr
 
+	// RemoteAddr returns the remote network address, if known.
+	RemoteAddr() net.Addr
+}
+
+// Dialer is an interface to dial a network connection, with support for PROXY protocol and termination delay.
+type Dialer interface {
+	Dial(network, addr string, clientConn ClientConn) (c net.Conn, err error)
+	DialContext(ctx context.Context, network, addr string, clientConn ClientConn) (c net.Conn, err error)
 	TerminationDelay() time.Duration
 }
 
@@ -34,18 +44,25 @@ type tcpDialer struct {
 	proxyProtocol    *dynamic.ProxyProtocol
 }
 
+// TerminationDelay returns the termination delay duration.
 func (d tcpDialer) TerminationDelay() time.Duration {
 	return d.terminationDelay
 }
 
-func (d tcpDialer) Dial(network, addr string) (net.Conn, error) {
-	conn, err := d.dialer.Dial(network, addr)
+// Dial dials a network connection and optionally sends a PROXY protocol header.
+func (d tcpDialer) Dial(network, addr string, clientConn ClientConn) (net.Conn, error) {
+	return d.DialContext(context.Background(), network, addr, clientConn)
+}
+
+// DialContext dials a network connection and optionally sends a PROXY protocol header, with context.
+func (d tcpDialer) DialContext(ctx context.Context, network, addr string, clientConn ClientConn) (net.Conn, error) {
+	conn, err := d.dialer.DialContext(ctx, network, addr)
 	if err != nil {
 		return nil, err
 	}
 
-	if d.proxyProtocol != nil && d.proxyProtocol.Version > 0 && d.proxyProtocol.Version < 3 {
-		header := proxyproto.HeaderProxyFromAddrs(byte(d.proxyProtocol.Version), conn.RemoteAddr(), conn.LocalAddr())
+	if d.proxyProtocol != nil && clientConn != nil && d.proxyProtocol.Version > 0 && d.proxyProtocol.Version < 3 {
+		header := proxyproto.HeaderProxyFromAddrs(byte(d.proxyProtocol.Version), clientConn.RemoteAddr(), clientConn.LocalAddr())
 		if _, err := header.WriteTo(conn); err != nil {
 			_ = conn.Close()
 			return nil, fmt.Errorf("writing PROXY Protocol header: %w", err)
@@ -60,8 +77,14 @@ type tcpTLSDialer struct {
 	tlsConfig *tls.Config
 }
 
-func (d tcpTLSDialer) Dial(network, addr string) (net.Conn, error) {
-	conn, err := d.tcpDialer.Dial(network, addr)
+// Dial dials a network connection with the wrapped tcpDialer and performs a TLS handshake.
+func (d tcpTLSDialer) Dial(network, addr string, clientConn ClientConn) (net.Conn, error) {
+	return d.DialContext(context.Background(), network, addr, clientConn)
+}
+
+// DialContext dials a network connection with the wrapped tcpDialer and performs a TLS handshake, with context.
+func (d tcpTLSDialer) DialContext(ctx context.Context, network, addr string, clientConn ClientConn) (net.Conn, error) {
+	conn, err := d.tcpDialer.DialContext(ctx, network, addr, clientConn)
 	if err != nil {
 		return nil, err
 	}

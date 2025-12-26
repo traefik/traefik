@@ -10,10 +10,10 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/types"
 	corev1 "k8s.io/api/core/v1"
 	discoveryv1 "k8s.io/api/discovery/v1"
-	kerror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
@@ -25,29 +25,12 @@ import (
 	"k8s.io/client-go/util/retry"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
 	gatev1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
-	gatev1alpha3 "sigs.k8s.io/gateway-api/apis/v1alpha3"
 	gatev1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	gateclientset "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned"
 	gateinformers "sigs.k8s.io/gateway-api/pkg/client/informers/externalversions"
 )
 
 const resyncPeriod = 10 * time.Minute
-
-type resourceEventHandler struct {
-	ev chan<- interface{}
-}
-
-func (reh *resourceEventHandler) OnAdd(obj interface{}, _ bool) {
-	eventHandlerFunc(reh.ev, obj)
-}
-
-func (reh *resourceEventHandler) OnUpdate(_, newObj interface{}) {
-	eventHandlerFunc(reh.ev, newObj)
-}
-
-func (reh *resourceEventHandler) OnDelete(obj interface{}) {
-	eventHandlerFunc(reh.ev, obj)
-}
 
 type clientWrapper struct {
 	csGateway gateclientset.Interface
@@ -145,7 +128,7 @@ func newExternalClusterClient(endpoint, caFilePath string, token types.FileOrCon
 // WatchAll starts namespace-specific controllers for all relevant kinds.
 func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error) {
 	eventCh := make(chan interface{}, 1)
-	eventHandler := &resourceEventHandler{ev: eventCh}
+	eventHandler := &k8s.ResourceEventHandler{Ev: eventCh}
 
 	if len(namespaces) == 0 {
 		namespaces = []string{metav1.NamespaceAll}
@@ -202,6 +185,14 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 		if err != nil {
 			return nil, err
 		}
+		_, err = factoryGateway.Gateway().V1().BackendTLSPolicies().Informer().AddEventHandler(eventHandler)
+		if err != nil {
+			return nil, err
+		}
+		_, err = factoryKube.Core().V1().ConfigMaps().Informer().AddEventHandler(eventHandler)
+		if err != nil {
+			return nil, err
+		}
 
 		if c.experimentalChannel {
 			_, err = factoryGateway.Gateway().V1alpha2().TCPRoutes().Informer().AddEventHandler(eventHandler)
@@ -209,14 +200,6 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 				return nil, err
 			}
 			_, err = factoryGateway.Gateway().V1alpha2().TLSRoutes().Informer().AddEventHandler(eventHandler)
-			if err != nil {
-				return nil, err
-			}
-			_, err = factoryGateway.Gateway().V1alpha3().BackendTLSPolicies().Informer().AddEventHandler(eventHandler)
-			if err != nil {
-				return nil, err
-			}
-			_, err = factoryKube.Core().V1().ConfigMaps().Informer().AddEventHandler(eventHandler)
 			if err != nil {
 				return nil, err
 			}
@@ -380,6 +363,72 @@ func (c *clientWrapper) ListGateways() []*gatev1.Gateway {
 
 func (c *clientWrapper) ListGatewayClasses() ([]*gatev1.GatewayClass, error) {
 	return c.factoryGatewayClass.Gateway().V1().GatewayClasses().Lister().List(labels.Everything())
+}
+
+// ListEndpointSlicesForService returns the EndpointSlices for the given service name in the given namespace.
+func (c *clientWrapper) ListEndpointSlicesForService(namespace, serviceName string) ([]*discoveryv1.EndpointSlice, error) {
+	if !c.isWatchedNamespace(namespace) {
+		return nil, fmt.Errorf("failed to get endpointslices for service %s/%s: namespace is not within watched namespaces", namespace, serviceName)
+	}
+
+	serviceLabelRequirement, err := labels.NewRequirement(discoveryv1.LabelServiceName, selection.Equals, []string{serviceName})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create service label selector requirement: %w", err)
+	}
+	serviceSelector := labels.NewSelector()
+	serviceSelector = serviceSelector.Add(*serviceLabelRequirement)
+
+	return c.factoriesKube[c.lookupNamespace(namespace)].Discovery().V1().EndpointSlices().Lister().EndpointSlices(namespace).List(serviceSelector)
+}
+
+// ListBackendTLSPoliciesForService returns the BackendTLSPolicy for the given service name in the given namespace.
+func (c *clientWrapper) ListBackendTLSPoliciesForService(namespace, serviceName string) ([]*gatev1.BackendTLSPolicy, error) {
+	if !c.isWatchedNamespace(namespace) {
+		return nil, fmt.Errorf("failed to get BackendTLSPolicies for service %s/%s: namespace is not within watched namespaces", namespace, serviceName)
+	}
+
+	policies, err := c.factoriesGateway[c.lookupNamespace(namespace)].Gateway().V1().BackendTLSPolicies().Lister().BackendTLSPolicies(namespace).List(labels.Everything())
+	if err != nil {
+		return nil, fmt.Errorf("failed to list BackendTLSPolicies in namespace %s", namespace)
+	}
+
+	var servicePolicies []*gatev1.BackendTLSPolicy
+	for _, policy := range policies {
+		for _, ref := range policy.Spec.TargetRefs {
+			// The policy does not target the service.
+			if (ref.Group != "" && ref.Group != groupCore) || ref.Kind != kindService || string(ref.Name) != serviceName {
+				continue
+			}
+
+			servicePolicies = append(servicePolicies, policy)
+		}
+	}
+
+	return servicePolicies, nil
+}
+
+// GetService returns the named service from the given namespace.
+func (c *clientWrapper) GetService(namespace, name string) (*corev1.Service, error) {
+	if !c.isWatchedNamespace(namespace) {
+		return nil, fmt.Errorf("failed to get service %s/%s: namespace is not within watched namespaces", namespace, name)
+	}
+	return c.factoriesKube[c.lookupNamespace(namespace)].Core().V1().Services().Lister().Services(namespace).Get(name)
+}
+
+// GetSecret returns the named secret from the given namespace.
+func (c *clientWrapper) GetSecret(namespace, name string) (*corev1.Secret, error) {
+	if !c.isWatchedNamespace(namespace) {
+		return nil, fmt.Errorf("failed to get secret %s/%s: namespace is not within watched namespaces", namespace, name)
+	}
+	return c.factoriesSecret[c.lookupNamespace(namespace)].Core().V1().Secrets().Lister().Secrets(namespace).Get(name)
+}
+
+// GetConfigMap returns the named configMap from the given namespace.
+func (c *clientWrapper) GetConfigMap(namespace, name string) (*corev1.ConfigMap, error) {
+	if !c.isWatchedNamespace(namespace) {
+		return nil, fmt.Errorf("failed to get configMap %s/%s: namespace is not within watched namespaces", namespace, name)
+	}
+	return c.factoriesKube[c.lookupNamespace(namespace)].Core().V1().ConfigMaps().Lister().ConfigMaps(namespace).Get(name)
 }
 
 func (c *clientWrapper) UpdateGatewayClassStatus(ctx context.Context, name string, status gatev1.GatewayClassStatus) error {
@@ -652,20 +701,20 @@ func (c *clientWrapper) UpdateTLSRouteStatus(ctx context.Context, route ktypes.N
 	return nil
 }
 
-func (c *clientWrapper) UpdateBackendTLSPolicyStatus(ctx context.Context, policy ktypes.NamespacedName, status gatev1alpha2.PolicyStatus) error {
+func (c *clientWrapper) UpdateBackendTLSPolicyStatus(ctx context.Context, policy ktypes.NamespacedName, status gatev1.PolicyStatus) error {
 	if !c.isWatchedNamespace(policy.Namespace) {
 		return fmt.Errorf("updating BackendTLSPolicy status %s/%s: namespace is not within watched namespaces", policy.Namespace, policy.Name)
 	}
 
 	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		currentPolicy, err := c.factoriesGateway[c.lookupNamespace(policy.Namespace)].Gateway().V1alpha3().BackendTLSPolicies().Lister().BackendTLSPolicies(policy.Namespace).Get(policy.Name)
+		currentPolicy, err := c.factoriesGateway[c.lookupNamespace(policy.Namespace)].Gateway().V1().BackendTLSPolicies().Lister().BackendTLSPolicies(policy.Namespace).Get(policy.Name)
 		if err != nil {
 			// We have to return err itself here (not wrapped inside another error)
 			// so that RetryOnConflict can identify it correctly.
 			return err
 		}
 
-		ancestorStatuses := make([]gatev1alpha2.PolicyAncestorStatus, len(status.Ancestors))
+		ancestorStatuses := make([]gatev1.PolicyAncestorStatus, len(status.Ancestors))
 		copy(ancestorStatuses, status.Ancestors)
 
 		// keep statuses added by other gateway controllers,
@@ -675,14 +724,6 @@ func (c *clientWrapper) UpdateBackendTLSPolicyStatus(ctx context.Context, policy
 				ancestorStatuses = append(ancestorStatuses, ancestorStatus)
 				continue
 			}
-
-			if slices.ContainsFunc(status.Ancestors, func(status gatev1alpha2.PolicyAncestorStatus) bool {
-				return reflect.DeepEqual(ancestorStatus.AncestorRef, status.AncestorRef)
-			}) {
-				continue
-			}
-
-			ancestorStatuses = append(ancestorStatuses, ancestorStatus)
 		}
 
 		if len(ancestorStatuses) > 16 {
@@ -695,11 +736,11 @@ func (c *clientWrapper) UpdateBackendTLSPolicyStatus(ctx context.Context, policy
 		}
 
 		currentPolicy = currentPolicy.DeepCopy()
-		currentPolicy.Status = gatev1alpha2.PolicyStatus{
+		currentPolicy.Status = gatev1.PolicyStatus{
 			Ancestors: ancestorStatuses,
 		}
 
-		if _, err = c.csGateway.GatewayV1alpha3().BackendTLSPolicies(policy.Namespace).UpdateStatus(ctx, currentPolicy, metav1.UpdateOptions{}); err != nil {
+		if _, err = c.csGateway.GatewayV1().BackendTLSPolicies(policy.Namespace).UpdateStatus(ctx, currentPolicy, metav1.UpdateOptions{}); err != nil {
 			// We have to return err itself here (not wrapped inside another error)
 			// so that RetryOnConflict can identify it correctly.
 			return err
@@ -714,85 +755,7 @@ func (c *clientWrapper) UpdateBackendTLSPolicyStatus(ctx context.Context, policy
 	return nil
 }
 
-// GetService returns the named service from the given namespace.
-func (c *clientWrapper) GetService(namespace, name string) (*corev1.Service, bool, error) {
-	if !c.isWatchedNamespace(namespace) {
-		return nil, false, fmt.Errorf("failed to get service %s/%s: namespace is not within watched namespaces", namespace, name)
-	}
-
-	service, err := c.factoriesKube[c.lookupNamespace(namespace)].Core().V1().Services().Lister().Services(namespace).Get(name)
-	exist, err := translateNotFoundError(err)
-
-	return service, exist, err
-}
-
-// ListEndpointSlicesForService returns the EndpointSlices for the given service name in the given namespace.
-func (c *clientWrapper) ListEndpointSlicesForService(namespace, serviceName string) ([]*discoveryv1.EndpointSlice, error) {
-	if !c.isWatchedNamespace(namespace) {
-		return nil, fmt.Errorf("failed to get endpointslices for service %s/%s: namespace is not within watched namespaces", namespace, serviceName)
-	}
-
-	serviceLabelRequirement, err := labels.NewRequirement(discoveryv1.LabelServiceName, selection.Equals, []string{serviceName})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create service label selector requirement: %w", err)
-	}
-	serviceSelector := labels.NewSelector()
-	serviceSelector = serviceSelector.Add(*serviceLabelRequirement)
-
-	return c.factoriesKube[c.lookupNamespace(namespace)].Discovery().V1().EndpointSlices().Lister().EndpointSlices(namespace).List(serviceSelector)
-}
-
-// ListBackendTLSPoliciesForService returns the BackendTLSPolicy for the given service name in the given namespace.
-func (c *clientWrapper) ListBackendTLSPoliciesForService(namespace, serviceName string) ([]*gatev1alpha3.BackendTLSPolicy, error) {
-	if !c.isWatchedNamespace(namespace) {
-		return nil, fmt.Errorf("failed to get BackendTLSPolicies for service %s/%s: namespace is not within watched namespaces", namespace, serviceName)
-	}
-
-	policies, err := c.factoriesGateway[c.lookupNamespace(namespace)].Gateway().V1alpha3().BackendTLSPolicies().Lister().BackendTLSPolicies(namespace).List(labels.Everything())
-	if err != nil {
-		return nil, fmt.Errorf("failed to list BackendTLSPolicies in namespace %s", namespace)
-	}
-
-	var servicePolicies []*gatev1alpha3.BackendTLSPolicy
-	for _, policy := range policies {
-		for _, ref := range policy.Spec.TargetRefs {
-			// The policy does not target the service.
-			if (ref.Group != "" && ref.Group != groupCore) || ref.Kind != kindService || string(ref.Name) != serviceName {
-				continue
-			}
-
-			servicePolicies = append(servicePolicies, policy)
-		}
-	}
-
-	return servicePolicies, nil
-}
-
-// GetSecret returns the named secret from the given namespace.
-func (c *clientWrapper) GetSecret(namespace, name string) (*corev1.Secret, bool, error) {
-	if !c.isWatchedNamespace(namespace) {
-		return nil, false, fmt.Errorf("failed to get secret %s/%s: namespace is not within watched namespaces", namespace, name)
-	}
-
-	secret, err := c.factoriesSecret[c.lookupNamespace(namespace)].Core().V1().Secrets().Lister().Secrets(namespace).Get(name)
-	exist, err := translateNotFoundError(err)
-
-	return secret, exist, err
-}
-
-// GetConfigMap returns the named configMap from the given namespace.
-func (c *clientWrapper) GetConfigMap(namespace, name string) (*corev1.ConfigMap, bool, error) {
-	if !c.isWatchedNamespace(namespace) {
-		return nil, false, fmt.Errorf("failed to get configMap %s/%s: namespace is not within watched namespaces", namespace, name)
-	}
-
-	configMap, err := c.factoriesKube[c.lookupNamespace(namespace)].Core().V1().ConfigMaps().Lister().ConfigMaps(namespace).Get(name)
-	exist, err := translateNotFoundError(err)
-
-	return configMap, exist, err
-}
-
-// lookupNamespace returns the lookup namespace key for the given namespace.
+// lookupNamespace returns the lookup namespace listenerKey for the given namespace.
 // When listening on all namespaces, it returns the client-go identifier ("")
 // for all-namespaces. Otherwise, it returns the given namespace.
 // The distinction is necessary because we index all informers on the special
@@ -815,38 +778,19 @@ func (c *clientWrapper) isWatchedNamespace(namespace string) bool {
 	return slices.Contains(c.watchedNamespaces, namespace)
 }
 
-// eventHandlerFunc will pass the obj on to the events channel or drop it.
-// This is so passing the events along won't block in the case of high volume.
-// The events are only used for signaling anyway so dropping a few is ok.
-func eventHandlerFunc(events chan<- interface{}, obj interface{}) {
-	select {
-	case events <- obj:
-	default:
-	}
-}
-
-// translateNotFoundError will translate a "not found" error to a boolean return
-// value which indicates if the resource exists and a nil error.
-func translateNotFoundError(err error) (bool, error) {
-	if kerror.IsNotFound(err) {
-		return false, nil
-	}
-	return err == nil, err
-}
-
 func gatewayStatusEqual(statusA, statusB gatev1.GatewayStatus) bool {
 	return reflect.DeepEqual(statusA.Addresses, statusB.Addresses) &&
 		listenersStatusEqual(statusA.Listeners, statusB.Listeners) &&
 		conditionsEqual(statusA.Conditions, statusB.Conditions)
 }
 
-func policyAncestorStatusesEqual(policyAncestorStatusesA, policyAncestorStatusesB []gatev1alpha2.PolicyAncestorStatus) bool {
+func policyAncestorStatusesEqual(policyAncestorStatusesA, policyAncestorStatusesB []gatev1.PolicyAncestorStatus) bool {
 	if len(policyAncestorStatusesA) != len(policyAncestorStatusesB) {
 		return false
 	}
 
 	for _, sA := range policyAncestorStatusesA {
-		if !slices.ContainsFunc(policyAncestorStatusesB, func(sB gatev1alpha2.PolicyAncestorStatus) bool {
+		if !slices.ContainsFunc(policyAncestorStatusesB, func(sB gatev1.PolicyAncestorStatus) bool {
 			return policyAncestorStatusEqual(sB, sA)
 		}) {
 			return false
@@ -854,7 +798,7 @@ func policyAncestorStatusesEqual(policyAncestorStatusesA, policyAncestorStatuses
 	}
 
 	for _, sB := range policyAncestorStatusesB {
-		if !slices.ContainsFunc(policyAncestorStatusesA, func(sA gatev1alpha2.PolicyAncestorStatus) bool {
+		if !slices.ContainsFunc(policyAncestorStatusesA, func(sA gatev1.PolicyAncestorStatus) bool {
 			return policyAncestorStatusEqual(sA, sB)
 		}) {
 			return false
@@ -864,7 +808,7 @@ func policyAncestorStatusesEqual(policyAncestorStatusesA, policyAncestorStatuses
 	return true
 }
 
-func policyAncestorStatusEqual(sA, sB gatev1alpha2.PolicyAncestorStatus) bool {
+func policyAncestorStatusEqual(sA, sB gatev1.PolicyAncestorStatus) bool {
 	return sA.ControllerName == sB.ControllerName &&
 		reflect.DeepEqual(sA.AncestorRef, sB.AncestorRef) &&
 		conditionsEqual(sA.Conditions, sB.Conditions)

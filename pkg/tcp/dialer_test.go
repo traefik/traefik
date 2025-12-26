@@ -160,7 +160,7 @@ func TestNoTLS(t *testing.T) {
 	dialer, err := dialerManager.Build(&dynamic.TCPServersLoadBalancer{ServersTransport: "test"}, false)
 	require.NoError(t, err)
 
-	conn, err := dialer.Dial("tcp", ":"+port)
+	conn, err := dialer.Dial("tcp", ":"+port, nil)
 	require.NoError(t, err)
 
 	_, err = conn.Write([]byte("ping\n"))
@@ -209,7 +209,7 @@ func TestTLS(t *testing.T) {
 	dialer, err := dialerManager.Build(&dynamic.TCPServersLoadBalancer{ServersTransport: "test"}, true)
 	require.NoError(t, err)
 
-	conn, err := dialer.Dial("tcp", ":"+port)
+	conn, err := dialer.Dial("tcp", ":"+port, nil)
 	require.NoError(t, err)
 
 	_, err = conn.Write([]byte("ping\n"))
@@ -260,7 +260,7 @@ func TestTLSWithInsecureSkipVerify(t *testing.T) {
 	dialer, err := dialerManager.Build(&dynamic.TCPServersLoadBalancer{ServersTransport: "test"}, true)
 	require.NoError(t, err)
 
-	conn, err := dialer.Dial("tcp", ":"+port)
+	conn, err := dialer.Dial("tcp", ":"+port, nil)
 	require.NoError(t, err)
 
 	_, err = conn.Write([]byte("ping\n"))
@@ -329,7 +329,7 @@ func TestMTLS(t *testing.T) {
 	dialer, err := dialerManager.Build(&dynamic.TCPServersLoadBalancer{ServersTransport: "test"}, true)
 	require.NoError(t, err)
 
-	conn, err := dialer.Dial("tcp", ":"+port)
+	conn, err := dialer.Dial("tcp", ":"+port, nil)
 	require.NoError(t, err)
 
 	_, err = conn.Write([]byte("ping\n"))
@@ -463,7 +463,7 @@ func TestSpiffeMTLS(t *testing.T) {
 			dialer, err := dialerManager.Build(&dynamic.TCPServersLoadBalancer{ServersTransport: "test"}, true)
 			require.NoError(t, err)
 
-			conn, err := dialer.Dial("tcp", ":"+port)
+			conn, err := dialer.Dial("tcp", ":"+port, nil)
 
 			if test.wantError {
 				require.Error(t, err)
@@ -510,10 +510,13 @@ func TestProxyProtocol(t *testing.T) {
 			require.NoError(t, err)
 
 			var version int
+			var localAddr, remoteAddr string
 			proxyBackendListener := proxyproto.Listener{
 				Listener: backendListener,
 				ValidateHeader: func(h *proxyproto.Header) error {
 					version = int(h.Version)
+					localAddr = h.DestinationAddr.String()
+					remoteAddr = h.SourceAddr.String()
 					return nil
 				},
 				Policy: func(upstream net.Addr) (proxyproto.Policy, error) {
@@ -544,7 +547,18 @@ func TestProxyProtocol(t *testing.T) {
 			dialer, err := dialerManager.Build(&dynamic.TCPServersLoadBalancer{ServersTransport: "test"}, false)
 			require.NoError(t, err)
 
-			conn, err := dialer.Dial("tcp", ":"+port)
+			clientConn := &fakeClientConn{
+				localAddr: &net.TCPAddr{
+					IP:   net.ParseIP("2.2.2.2"),
+					Port: 12345,
+				},
+				remoteAddr: &net.TCPAddr{
+					IP:   net.ParseIP("1.1.1.1"),
+					Port: 12345,
+				},
+			}
+
+			conn, err := dialer.Dial("tcp", ":"+port, clientConn)
 			require.NoError(t, err)
 			defer conn.Close()
 
@@ -558,6 +572,8 @@ func TestProxyProtocol(t *testing.T) {
 			assert.Equal(t, 4, n)
 			assert.Equal(t, "PONG", string(buf[:4]))
 			assert.Equal(t, test.version, version)
+			assert.Equal(t, "2.2.2.2:12345", localAddr)
+			assert.Equal(t, "1.1.1.1:12345", remoteAddr)
 		})
 	}
 }
@@ -586,10 +602,13 @@ func TestProxyProtocolWithTLS(t *testing.T) {
 			require.NoError(t, err)
 
 			var version int
+			var localAddr, remoteAddr string
 			proxyBackendListener := proxyproto.Listener{
 				Listener: backendListener,
 				ValidateHeader: func(h *proxyproto.Header) error {
 					version = int(h.Version)
+					localAddr = h.DestinationAddr.String()
+					remoteAddr = h.SourceAddr.String()
 					return nil
 				},
 				Policy: func(upstream net.Addr) (proxyproto.Policy, error) {
@@ -646,7 +665,18 @@ func TestProxyProtocolWithTLS(t *testing.T) {
 			}, true)
 			require.NoError(t, err)
 
-			conn, err := dialer.Dial("tcp", ":"+port)
+			clientConn := &fakeClientConn{
+				localAddr: &net.TCPAddr{
+					IP:   net.ParseIP("2.2.2.2"),
+					Port: 12345,
+				},
+				remoteAddr: &net.TCPAddr{
+					IP:   net.ParseIP("1.1.1.1"),
+					Port: 12345,
+				},
+			}
+
+			conn, err := dialer.Dial("tcp", ":"+port, clientConn)
 			require.NoError(t, err)
 			defer conn.Close()
 
@@ -660,6 +690,8 @@ func TestProxyProtocolWithTLS(t *testing.T) {
 			assert.Equal(t, 4, n)
 			assert.Equal(t, "PONG", string(buf[:4]))
 			assert.Equal(t, test.version, version)
+			assert.Equal(t, "2.2.2.2:12345", localAddr)
+			assert.Equal(t, "1.1.1.1:12345", remoteAddr)
 		})
 	}
 }
@@ -695,7 +727,7 @@ func TestProxyProtocolDisabled(t *testing.T) {
 	dialer, err := dialerManager.Build(&dynamic.TCPServersLoadBalancer{ServersTransport: "test"}, false)
 	require.NoError(t, err)
 
-	conn, err := dialer.Dial("tcp", ":"+port)
+	conn, err := dialer.Dial("tcp", ":"+port, nil)
 	require.NoError(t, err)
 
 	_, err = conn.Write([]byte("ping"))
@@ -707,6 +739,19 @@ func TestProxyProtocolDisabled(t *testing.T) {
 
 	assert.Equal(t, 4, n)
 	assert.Equal(t, "PONG", string(buf[:4]))
+}
+
+type fakeClientConn struct {
+	remoteAddr *net.TCPAddr
+	localAddr  *net.TCPAddr
+}
+
+func (f fakeClientConn) LocalAddr() net.Addr {
+	return f.localAddr
+}
+
+func (f fakeClientConn) RemoteAddr() net.Addr {
+	return f.remoteAddr
 }
 
 // fakeSpiffePKI simulates a SPIFFE aware PKI and allows generating multiple valid SVIDs.

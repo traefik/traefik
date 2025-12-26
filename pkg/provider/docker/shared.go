@@ -43,9 +43,9 @@ func inspectContainers(ctx context.Context, dockerClient client.ContainerAPIClie
 		return dockerData{}
 	}
 
-	// This condition is here to avoid to have empty IP https://github.com/traefik/traefik/issues/2459
-	// We register only container which are running
-	if containerInspected.ContainerJSONBase != nil && containerInspected.ContainerJSONBase.State != nil && containerInspected.ContainerJSONBase.State.Running {
+	// Always parse all containers (running and stopped)
+	// The allowNonRunning filtering will be applied later in service configuration
+	if containerInspected.ContainerJSONBase != nil && containerInspected.ContainerJSONBase.State != nil {
 		return parseContainer(containerInspected)
 	}
 
@@ -61,6 +61,7 @@ func parseContainer(container containertypes.InspectResponse) dockerData {
 		dData.ID = container.ContainerJSONBase.ID
 		dData.Name = container.ContainerJSONBase.Name
 		dData.ServiceName = dData.Name // Default ServiceName to be the container's Name.
+		dData.Status = container.ContainerJSONBase.State.Status
 
 		if container.ContainerJSONBase.HostConfig != nil {
 			dData.NetworkSettings.NetworkMode = container.ContainerJSONBase.HostConfig.NetworkMode
@@ -99,8 +100,6 @@ func parseContainer(container containertypes.InspectResponse) dockerData {
 }
 
 type ClientConfig struct {
-	apiVersion string
-
 	Username          string           `description:"Username for Basic HTTP authentication." json:"username,omitempty" toml:"username,omitempty" yaml:"username,omitempty"`
 	Password          string           `description:"Password for Basic HTTP authentication." json:"password,omitempty" toml:"password,omitempty" yaml:"password,omitempty"`
 	Endpoint          string           `description:"Docker server endpoint. Can be a TCP or a Unix socket endpoint." json:"endpoint,omitempty" toml:"endpoint,omitempty" yaml:"endpoint,omitempty"`
@@ -122,8 +121,9 @@ func createClient(ctx context.Context, cfg ClientConfig) (*client.Client, error)
 	}
 
 	opts = append(opts,
-		client.WithHTTPHeaders(httpHeaders),
-		client.WithVersion(cfg.apiVersion))
+		client.FromEnv,
+		client.WithAPIVersionNegotiation(),
+		client.WithHTTPHeaders(httpHeaders))
 
 	return client.NewClientWithOpts(opts...)
 }

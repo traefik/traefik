@@ -1,30 +1,25 @@
-import { AriaTable, AriaTbody, AriaTd, AriaTfoot, AriaThead, AriaTr, Box, Flex, Text } from '@traefiklabs/faency'
+import { AriaTable, AriaTbody, AriaTd, AriaTfoot, AriaThead, AriaTr, Flex, Text } from '@traefiklabs/faency'
 import { useMemo } from 'react'
 import useInfiniteScroll from 'react-infinite-scroll-hook'
 import { useSearchParams } from 'react-router-dom'
 
-import ClickableRow from 'components/ClickableRow'
-import ProviderIcon from 'components/icons/providers'
+import { ScrollTopButton } from 'components/buttons/ScrollTopButton'
+import { ProviderIconWithTooltip } from 'components/icons/providers'
 import { ResourceStatus } from 'components/resources/ResourceStatus'
-import { ScrollTopButton } from 'components/ScrollTopButton'
 import { SpinnerLoader } from 'components/SpinnerLoader'
-import { searchParamsToState, TableFilter } from 'components/TableFilter'
+import ClickableRow from 'components/tables/ClickableRow'
 import SortableTh from 'components/tables/SortableTh'
-import Tooltip from 'components/Tooltip'
+import { searchParamsToState, TableFilter } from 'components/tables/TableFilter'
 import TooltipText from 'components/TooltipText'
 import useFetchWithPagination, { pagesResponseInterface, RenderRowType } from 'hooks/use-fetch-with-pagination'
-import { EmptyPlaceholder } from 'layout/EmptyPlaceholder'
-import Page from 'layout/Page'
+import { EmptyPlaceholderTd } from 'layout/EmptyPlaceholder'
+import PageTitle from 'layout/PageTitle'
 
 export const makeRowRender = (): RenderRowType => {
   const TcpServicesRenderRow = (row) => (
     <ClickableRow key={row.name} to={`/tcp/services/${row.name}`}>
       <AriaTd>
-        <Tooltip label={row.status}>
-          <Box css={{ width: '32px', height: '32px' }}>
-            <ResourceStatus status={row.status} />
-          </Box>
-        </Tooltip>
+        <ResourceStatus status={row.status} />
       </AriaTd>
       <AriaTd>
         <TooltipText text={row.name} />
@@ -36,11 +31,7 @@ export const makeRowRender = (): RenderRowType => {
         <Text>{row.loadBalancer?.servers?.length || 0}</Text>
       </AriaTd>
       <AriaTd>
-        <Tooltip label={row.provider}>
-          <Box css={{ width: '32px', height: '32px' }}>
-            <ProviderIcon name={row.provider} />
-          </Box>
-        </Tooltip>
+        <ProviderIconWithTooltip provider={row.provider} />
       </AriaTd>
     </ClickableRow>
   )
@@ -67,7 +58,7 @@ export const TcpServicesRender = ({
       <AriaTable>
         <AriaThead>
           <AriaTr>
-            <SortableTh label="Status" css={{ width: '40px' }} isSortable sortByValue="status" />
+            <SortableTh label="Status" css={{ width: '36px' }} isSortable sortByValue="status" />
             <SortableTh label="Name" isSortable sortByValue="name" />
             <SortableTh label="Type" isSortable sortByValue="type" />
             <SortableTh label="Servers" isSortable sortByValue="servers" />
@@ -78,9 +69,7 @@ export const TcpServicesRender = ({
         {(isEmpty || !!error) && (
           <AriaTfoot>
             <AriaTr>
-              <AriaTd fullColSpan>
-                <EmptyPlaceholder message={error ? 'Failed to fetch data' : 'No data available'} />
-              </AriaTd>
+              <EmptyPlaceholderTd message={error ? 'Failed to fetch data' : 'No data available'} />
             </AriaTr>
           </AriaTfoot>
         )}
@@ -108,7 +97,8 @@ export const TcpServices = () => {
   )
 
   return (
-    <Page title="TCP Services">
+    <>
+      <PageTitle title="TCP Services" />
       <TableFilter />
       <TcpServicesRender
         error={error}
@@ -119,6 +109,6 @@ export const TcpServices = () => {
         pageCount={pageCount}
         pages={pages}
       />
-    </Page>
+    </>
   )
 }

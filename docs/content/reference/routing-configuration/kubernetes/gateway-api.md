@@ -8,11 +8,12 @@ description: "The Kubernetes Gateway API can be used as a provider for routing a
 When using the Kubernetes Gateway API provider, Traefik leverages the Gateway API Custom Resource Definitions (CRDs) to obtain its routing configuration. 
 For detailed information on the Gateway API concepts and resources, refer to the official [documentation](https://gateway-api.sigs.k8s.io/).
 
-The Kubernetes Gateway API provider supports version [v1.2.1](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.2.1) of the specification.
+The Kubernetes Gateway API provider supports version [v1.4.0](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.4.0) of the specification.
 
-It fully supports all `HTTPRoute` core and some extended features, like `GRPCRoute`, as well as the `TCPRoute` and `TLSRoute` resources from the [Experimental channel](https://gateway-api.sigs.k8s.io/concepts/versioning/?h=#release-channels). 
+It fully supports all `HTTPRoute` core and some extended features, like `BackendTLSPolicy`, and `GRPCRoute` resources from the [Standard channel](https://gateway-api.sigs.k8s.io/concepts/versioning/?h=#release-channels), as well as `TCPRoute`, and `TLSRoute` resources from the [Experimental channel](https://gateway-api.sigs.k8s.io/concepts/versioning/?h=#release-channels). 
 
-For more details, check out the conformance [report](https://github.com/kubernetes-sigs/gateway-api/tree/main/conformance/reports/v1.2.1/traefik-traefik).
+For more details, check out the conformance [report](https://github.com/kubernetes-sigs/gateway-api/tree/main/conformance/reports/v1.4.0/traefik-traefik).
+
 
 ## Deploying a Gateway
 
@@ -748,7 +749,6 @@ By default, NativeLB is `false`.
     Note that it is possible to override the default value by using the option [`nativeLBByDefault`](../../install-configuration/providers/kubernetes/kubernetes-gateway.md) at the provider level. 
 
 ```yaml
----
 apiVersion: v1
 kind: Service
 metadata:
@@ -757,7 +757,10 @@ metadata:
   annotations:
     traefik.io/service.nativelb: "true"
 spec:
-[...]
+  ports:
+    - name: web
+      port: 80
+
 ```
 
 {!traefik-for-business-applications.md!}
