@@ -125,7 +125,7 @@ func init() {
 					Mirrors: []dynamic.MirrorService{
 						{
 							Name:    "foo",
-							Percent: 42,
+							Percent: pointer(42),
 						},
 					},
 				},

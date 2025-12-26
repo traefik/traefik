@@ -2565,7 +2565,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Mirroring: &dynamic.Mirroring{
 								Service: "default-whoami5-8080",
 								Mirrors: []dynamic.MirrorService{
-									{Name: "default-whoami4-8080", Percent: 50},
+									{Name: "default-whoami4-8080", Percent: pointer(50)},
 								},
 							},
 						},
@@ -2932,7 +2932,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Mirroring: &dynamic.Mirroring{
 								Service: "baz-whoami6-8080",
 								Mirrors: []dynamic.MirrorService{
-									{Name: "foo-whoami4-8080", Percent: 50},
+									{Name: "foo-whoami4-8080", Percent: pointer(50)},
 								},
 							},
 						},
@@ -3014,7 +3014,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Mirroring: &dynamic.Mirroring{
 								Service: "default-whoami5-8080",
 								Mirrors: []dynamic.MirrorService{
-									{Name: "default-whoami4-8080", Percent: 50},
+									{Name: "default-whoami4-8080", Percent: pointer(50)},
 								},
 							},
 						},
@@ -3087,7 +3087,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 							Mirroring: &dynamic.Mirroring{
 								Service: "default-wrr1",
 								Mirrors: []dynamic.MirrorService{
-									{Name: "default-wrr2", Percent: 30},
+									{Name: "default-wrr2", Percent: pointer(30)},
 								},
 							},
 						},
@@ -6976,7 +6976,7 @@ func TestCrossNamespace(t *testing.T) {
 								Mirrors: []dynamic.MirrorService{
 									{
 										Name:    "cross-ns-whoami-svc-80",
-										Percent: 20,
+										Percent: pointer(20),
 									},
 								},
 							},
@@ -6987,7 +6987,7 @@ func TestCrossNamespace(t *testing.T) {
 								Mirrors: []dynamic.MirrorService{
 									{
 										Name:    "cross-ns-whoami-svc-80",
-										Percent: 20,
+										Percent: pointer(20),
 									},
 								},
 							},
@@ -7066,7 +7066,7 @@ func TestCrossNamespace(t *testing.T) {
 								Mirrors: []dynamic.MirrorService{
 									{
 										Name:    "cross-ns-whoami-svc-80",
-										Percent: 20,
+										Percent: pointer(20),
 									},
 								},
 							},
