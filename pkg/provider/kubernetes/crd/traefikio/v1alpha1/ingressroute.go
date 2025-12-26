@@ -195,6 +195,25 @@ type ServerHealthCheck struct {
 	Headers map[string]string `json:"headers,omitempty"`
 }
 
+type TCPServerHealthCheck struct {
+	// Port defines the server URL port for the health check endpoint.
+	Port int `json:"port,omitempty"`
+	// Send defines the expected request to send to the server.
+	Send string `json:"send,omitempty"`
+	// Expect defines the expected response from the server.
+	Expect string `json:"expect,omitempty"`
+	// Interval defines the frequency of the health check calls for healthy targets.
+	// Default: 30s
+	Interval *intstr.IntOrString `json:"interval,omitempty"`
+	// UnhealthyInterval defines the frequency of the health check calls for unhealthy targets.
+	// When UnhealthyInterval is not defined, it defaults to the Interval value.
+	// Default: 30s
+	UnhealthyInterval *intstr.IntOrString `json:"unhealthyInterval,omitempty"`
+	// Timeout defines the maximum duration Traefik will wait for a health check request before considering the server unhealthy.
+	// Default: 5s
+	Timeout *intstr.IntOrString `json:"timeout,omitempty"`
+}
+
 type PassiveServerHealthCheck struct {
 	// FailureWindow defines the time window during which the failed attempts must occur for the server to be marked as unhealthy. It also defines for how long the server will be considered unhealthy.
 	FailureWindow *intstr.IntOrString `json:"failureWindow,omitempty"`
