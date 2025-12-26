@@ -1,12 +1,10 @@
-import { TcpMiddlewareRender } from './TcpMiddleware'
-
-import { ResourceDetailDataType } from 'hooks/use-resource-detail'
+import { MiddlewareDetail } from 'components/middlewares/MiddlewareDetail'
 import { renderWithProviders } from 'utils/test'
 
 describe('<TcpMiddlewarePage />', () => {
   it('should render the error message', () => {
     const { getByTestId } = renderWithProviders(
-      <TcpMiddlewareRender name="mock-middleware" data={undefined} error={new Error('Test error')} />,
+      <MiddlewareDetail name="mock-middleware" data={undefined} error={new Error('Test error')} protocol="tcp" />,
       { route: '/tcp/middlewares/mock-middleware', withPage: true },
     )
     expect(getByTestId('error-text')).toBeInTheDocument()
@@ -14,7 +12,7 @@ describe('<TcpMiddlewarePage />', () => {
 
   it('should render the skeleton', () => {
     const { getByTestId } = renderWithProviders(
-      <TcpMiddlewareRender name="mock-middleware" data={undefined} error={undefined} />,
+      <MiddlewareDetail name="mock-middleware" data={undefined} error={undefined} protocol="tcp" />,
       { route: '/tcp/middlewares/mock-middleware', withPage: true },
     )
     expect(getByTestId('skeleton')).toBeInTheDocument()
@@ -22,7 +20,7 @@ describe('<TcpMiddlewarePage />', () => {
 
   it('should render the not found page', () => {
     const { getByTestId } = renderWithProviders(
-      <TcpMiddlewareRender name="mock-middleware" data={{} as ResourceDetailDataType} error={undefined} />,
+      <MiddlewareDetail name="mock-middleware" data={{} as Resource.DetailsData} error={undefined} protocol="tcp" />,
       { route: '/tcp/middlewares/mock-middleware', withPage: true },
     )
     expect(getByTestId('Not found page')).toBeInTheDocument()
@@ -55,7 +53,7 @@ describe('<TcpMiddlewarePage />', () => {
 
     const { container, getByTestId } = renderWithProviders(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      <TcpMiddlewareRender name="mock-middleware" data={mockData as any} error={undefined} />,
+      <MiddlewareDetail name="mock-middleware" data={mockData as any} error={undefined} protocol="tcp" />,
       { route: '/tcp/middlewares/middleware-simple', withPage: true },
     )
 
@@ -66,14 +64,13 @@ describe('<TcpMiddlewarePage />', () => {
     const middlewareCard = getByTestId('middleware-card')
     expect(middlewareCard.querySelector('svg[data-testid="docker"]')).toBeTruthy()
     expect(middlewareCard.innerHTML).toContain('Success')
-    expect(middlewareCard.innerHTML).toContain('inFlightConn')
-    expect(middlewareCard.innerHTML).toContain('amount')
-    expect(middlewareCard.innerHTML).toContain('10')
+    expect(container.innerHTML).toContain('inFlightConn')
+    expect(container.innerHTML).toContain('amount')
+    expect(container.innerHTML).toContain('10')
 
     const routersTable = getByTestId('routers-table')
-    const tableBody = routersTable.querySelectorAll('div[role="rowgroup"]')[1]
-    expect(tableBody?.querySelectorAll('a[role="row"]')).toHaveLength(1)
-    expect(tableBody?.innerHTML).toContain('router-test-simple@docker')
+    expect(routersTable.querySelectorAll('a[role="row"]')).toHaveLength(1)
+    expect(routersTable.innerHTML).toContain('router-test-simple@docker')
   })
 
   it('should render a complex middleware', async () => {
@@ -106,7 +103,7 @@ describe('<TcpMiddlewarePage />', () => {
 
     const { container, getByTestId } = renderWithProviders(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      <TcpMiddlewareRender name="mock-middleware" data={mockData as any} error={undefined} />,
+      <MiddlewareDetail name="mock-middleware" data={mockData as any} error={undefined} protocol="tcp" />,
       { route: '/tcp/middlewares/middleware-complex', withPage: true },
     )
 
@@ -117,17 +114,16 @@ describe('<TcpMiddlewarePage />', () => {
     const middlewareCard = getByTestId('middleware-card')
     expect(middlewareCard.innerHTML).toContain('Success')
     expect(middlewareCard.innerHTML).toContain('the-provider')
-    expect(middlewareCard.innerHTML).toContain('inFlightConn')
-    expect(middlewareCard.innerHTML).toContain('amount')
-    expect(middlewareCard.innerHTML).toContain('10')
-    expect(middlewareCard.innerHTML).toContain('ipWhiteList')
-    expect(middlewareCard.innerHTML).toContain('source Range')
-    expect(middlewareCard.innerHTML).toContain('125.0.0.1')
-    expect(middlewareCard.innerHTML).toContain('125.0.0.4')
+    expect(container.innerHTML).toContain('inFlightConn')
+    expect(container.innerHTML).toContain('amount')
+    expect(container.innerHTML).toContain('10')
+    expect(container.innerHTML).toContain('ipWhiteList')
+    expect(container.innerHTML).toContain('source Range')
+    expect(container.innerHTML).toContain('125.0.0.1')
+    expect(container.innerHTML).toContain('125.0.0.4')
 
     const routersTable = getByTestId('routers-table')
-    const tableBody = routersTable.querySelectorAll('div[role="rowgroup"]')[1]
-    expect(tableBody?.querySelectorAll('a[role="row"]')).toHaveLength(1)
-    expect(tableBody?.innerHTML).toContain('router-test-complex@docker')
+    expect(routersTable.querySelectorAll('a[role="row"]')).toHaveLength(1)
+    expect(routersTable.innerHTML).toContain('router-test-complex@docker')
   })
 })
