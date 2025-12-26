@@ -239,7 +239,7 @@ metrics:
 | <a id="opt-metrics-prometheus-manualRouting" href="#opt-metrics-prometheus-manualRouting" title="#opt-metrics-prometheus-manualRouting">`metrics.prometheus.manualRouting`</a> | Set to _true_, it disables the default internal router in order to allow creating a custom router for the `prometheus@internal` service. | false    | No      |
 | <a id="opt-metrics-prometheus-entryPoint" href="#opt-metrics-prometheus-entryPoint" title="#opt-metrics-prometheus-entryPoint">`metrics.prometheus.entryPoint`</a> | Traefik Entrypoint name used to expose metrics. | "traefik"     | No      |
 | <a id="opt-metrics-prometheus-headerLabels" href="#opt-metrics-prometheus-headerLabels" title="#opt-metrics-prometheus-headerLabels">`metrics.prometheus.headerLabels`</a> | Defines extra labels extracted from request headers for the `requests_total` metrics.<br />More information [here](#headerlabels). |       | Yes      |
-| <a id="metrics-prometheus-responseHeaderLabels" href="#metrics-prometheus-responseHeaderLabels" title="#metrics-prometheus-responseHeaderLabels">`metrics.prometheus.responseHeaderLabels`</a> | Defines extra labels extracted from response headers for the `requests_total` metrics.<br />More information [here](#responseheaderlabels). |       | Yes      |
+| <a id="opt-metrics-prometheus-responseHeaderLabels" href="#opt-metrics-prometheus-responseHeaderLabels" title="#opt-metrics-prometheus-responseHeaderLabels">`metrics.prometheus.responseHeaderLabels`</a> | Defines extra labels extracted from response headers for the `requests_total` metrics.<br />More information [here](#responseheaderlabels). |       | Yes      |
 
 ##### headerLabels
 
