@@ -8,6 +8,11 @@ set -eu
 
 NUMBER_OF_CPUS="$(grep -c processor /proc/cpuinfo)"
 
+if [ "$NUMBER_OF_CPUS" -gt 4 ]; then
+  # avoid launching too many html proofer in //
+  NUMBER_OF_CPUS=4
+fi
+
 echo "=== Checking HTML content..."
 
 # Search for all HTML files except the theme's partials
