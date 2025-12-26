@@ -120,5 +120,8 @@ http:
 
     As it is very difficult to listen to all file system notifications, Traefik uses [fsnotify](https://github.com/fsnotify/fsnotify).
     If using a directory with a mounted directory does not fix your issue, please check your file system compatibility with fsnotify.
+    ----
+    Due to limitations in how fsnotify works, subdirectories are not being watched. To trigger updates from subdirectories, create an empty file in the watched directory and touch it whenever you want changes to be applied.
+    
 
 {!traefik-for-business-applications.md!}
