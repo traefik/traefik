@@ -38,7 +38,7 @@ func TestNewMultiRegistry(t *testing.T) {
 	registries := []Registry{newCollectingRetryMetrics(), newCollectingRetryMetrics()}
 	registry := NewMultiRegistry(registries)
 
-	registry.ServiceReqsCounter().With(nil, "key", "requests").Add(1)
+	registry.ServiceReqsCounter().With(nil, nil, "key", "requests").Add(1)
 	registry.ServiceReqDurationHistogram().With("key", "durations").Observe(float64(2))
 	registry.ServiceRetriesCounter().With("key", "retries").Add(3)
 
@@ -93,7 +93,7 @@ type counterWithHeadersMock struct {
 	lastLabelValues []string
 }
 
-func (c *counterWithHeadersMock) With(_ http.Header, labelValues ...string) CounterWithHeaders {
+func (c *counterWithHeadersMock) With(_, _ http.Header, labelValues ...string) CounterWithHeaders {
 	c.lastLabelValues = labelValues
 	return c
 }
