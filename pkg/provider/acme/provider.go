@@ -55,6 +55,7 @@ type Configuration struct {
 
 	ClientTimeout               ptypes.Duration `description:"Timeout for a complete HTTP transaction with the ACME server." json:"clientTimeout,omitempty" toml:"clientTimeout,omitempty" yaml:"clientTimeout,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	ClientResponseHeaderTimeout ptypes.Duration `description:"Timeout for receiving the response headers when communicating with the ACME server." json:"clientResponseHeaderTimeout,omitempty" toml:"clientResponseHeaderTimeout,omitempty" yaml:"clientResponseHeaderTimeout,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	FinalizationTimeout         ptypes.Duration `description:"Defines the total time the ACME client will wait for the order to finalize." json:"finalizationTimeout,omitempty" toml:"finalizationTimeout,omitempty" yaml:"finalizationTimeout,omitempty" export:"true"`
 
 	CACertificates   []string `description:"Specify the paths to PEM encoded CA Certificates that can be used to authenticate an ACME server with an HTTPS certificate not issued by a CA in the system-wide trusted root list." json:"caCertificates,omitempty" toml:"caCertificates,omitempty" yaml:"caCertificates,omitempty"`
 	CASystemCertPool bool     `description:"Define if the certificates pool must use a copy of the system cert pool." json:"caSystemCertPool,omitempty" toml:"caSystemCertPool,omitempty" yaml:"caSystemCertPool,omitempty" export:"true"`
@@ -73,6 +74,7 @@ func (a *Configuration) SetDefaults() {
 	a.CertificatesDuration = 3 * 30 * 24 // 90 Days
 	a.ClientTimeout = ptypes.Duration(2 * time.Minute)
 	a.ClientResponseHeaderTimeout = ptypes.Duration(30 * time.Second)
+	a.FinalizationTimeout = ptypes.Duration(30 * time.Second)
 }
 
 // CertAndStore allows mapping a TLS certificate to a TLS store.
@@ -298,6 +300,7 @@ func (p *Provider) getClient() (*lego.Client, error) {
 	config.Certificate.KeyType = GetKeyType(ctx, p.KeyType)
 	config.UserAgent = fmt.Sprintf("containous-traefik/%s", version.Version)
 	config.Certificate.DisableCommonName = p.DisableCommonName
+	config.Certificate.Timeout = time.Duration(p.FinalizationTimeout)
 
 	config.HTTPClient, err = p.createHTTPClient()
 	if err != nil {
