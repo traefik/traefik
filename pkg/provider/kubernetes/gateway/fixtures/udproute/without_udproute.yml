@@ -1,0 +1,26 @@
+---
+kind: GatewayClass
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: my-gateway-class
+spec:
+  controllerName: traefik.io/gateway-controller
+
+---
+kind: Gateway
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: my-udp-gateway
+  namespace: default
+spec:
+  gatewayClassName: my-gateway-class
+  listeners:
+    - name: udp
+      protocol: UDP
+      port: 5300
+      allowedRoutes:
+        namespaces:
+          from: Same
+        kinds:
+          - kind: UDPRoute
+            group: gateway.networking.k8s.io
