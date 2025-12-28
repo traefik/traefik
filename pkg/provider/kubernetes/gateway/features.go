@@ -1,6 +1,8 @@
 package gateway
 
 import (
+	"maps"
+	"slices"
 	"sync"
 
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -16,7 +18,9 @@ var SupportedFeatures = sync.OnceValue(func() []features.FeatureName {
 		Insert(features.ReferenceGrantCoreFeatures.UnsortedList()...).
 		Insert(features.BackendTLSPolicyCoreFeatures.UnsortedList()...).
 		Insert(features.GRPCRouteCoreFeatures.UnsortedList()...).
-		Insert(features.TLSRouteCoreFeatures.UnsortedList()...)
+		Insert(features.TLSRouteCoreFeatures.UnsortedList()...).
+		// UDPRouteFeatures is a map and not a set, hence the different handling.
+		Insert(slices.Collect(maps.Values(features.UDPRouteFeatures))...)
 
 	featureNames := make([]features.FeatureName, 0, featureSet.Len())
 	for f := range featureSet {
