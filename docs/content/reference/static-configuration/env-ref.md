@@ -246,6 +246,30 @@ HTTP/3 configuration. (Default: ```false```)
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP3_ADVERTISEDPORT`:  
 UDP port to advertise, on which HTTP/3 is available. (Default: ```0```)
 
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_ENCODEDCHARACTERS`:  
+Defines which encoded characters are allowed in the request path.
+
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_ENCODEDCHARACTERS_ALLOWENCODEDBACKSLASH`:  
+Defines whether requests with encoded back slash characters in the path are allowed. (Default: ```false```)
+
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_ENCODEDCHARACTERS_ALLOWENCODEDHASH`:  
+Defines whether requests with encoded hash characters in the path are allowed. (Default: ```false```)
+
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_ENCODEDCHARACTERS_ALLOWENCODEDNULLCHARACTER`:  
+Defines whether requests with encoded null characters in the path are allowed. (Default: ```false```)
+
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_ENCODEDCHARACTERS_ALLOWENCODEDPERCENT`:  
+Defines whether requests with encoded percent characters in the path are allowed. (Default: ```false```)
+
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_ENCODEDCHARACTERS_ALLOWENCODEDQUESTIONMARK`:  
+Defines whether requests with encoded question mark characters in the path are allowed. (Default: ```false```)
+
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_ENCODEDCHARACTERS_ALLOWENCODEDSEMICOLON`:  
+Defines whether requests with encoded semicolon characters in the path are allowed. (Default: ```false```)
+
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_ENCODEDCHARACTERS_ALLOWENCODEDSLASH`:  
+Defines whether requests with encoded slash characters in the path are allowed. (Default: ```false```)
+
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_ENCODEQUERYSEMICOLONS`:  
 Defines whether request query semicolons should be URLEncoded. (Default: ```false```)
 

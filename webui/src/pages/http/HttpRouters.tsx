@@ -1,6 +1,5 @@
 import { AriaTable, AriaTbody, AriaTd, AriaTfoot, AriaThead, AriaTr, Box, Flex } from '@traefiklabs/faency'
 import { useMemo } from 'react'
-import { Helmet } from 'react-helmet-async'
 import useInfiniteScroll from 'react-infinite-scroll-hook'
 import { useSearchParams } from 'react-router-dom'
 
@@ -17,6 +16,7 @@ import Tooltip from 'components/Tooltip'
 import TooltipText from 'components/TooltipText'
 import useFetchWithPagination, { pagesResponseInterface, RenderRowType } from 'hooks/use-fetch-with-pagination'
 import { EmptyPlaceholderTd } from 'layout/EmptyPlaceholder'
+import PageTitle from 'layout/PageTitle'
 
 export const makeRowRender = (protocol = 'http'): RenderRowType => {
   const HttpRoutersRenderRow = (row) => (
@@ -132,9 +132,7 @@ export const HttpRouters = () => {
 
   return (
     <>
-      <Helmet>
-        <title>HTTP Routers - Traefik Proxy</title>
-      </Helmet>
+      <PageTitle title="HTTP Routers" />
       <TableFilter />
       <HttpRoutersRender
         error={error}

@@ -39,25 +39,34 @@ type serviceManager interface {
 
 // Manager A route/router manager.
 type Manager struct {
-	routerHandlers     map[string]http.Handler
-	serviceManager     serviceManager
-	observabilityMgr   *middleware.ObservabilityMgr
-	middlewaresBuilder middlewareBuilder
-	conf               *runtime.Configuration
-	tlsManager         *tls.Manager
-	parser             httpmuxer.SyntaxParser
+	routerHandlers              map[string]http.Handler
+	serviceManager              serviceManager
+	observabilityMgr            *middleware.ObservabilityMgr
+	middlewaresBuilder          middlewareBuilder
+	conf                        *runtime.Configuration
+	tlsManager                  *tls.Manager
+	parser                      httpmuxer.SyntaxParser
+	deniedEncodedPathCharacters map[string]map[string]struct{}
 }
 
 // NewManager creates a new Manager.
-func NewManager(conf *runtime.Configuration, serviceManager serviceManager, middlewaresBuilder middlewareBuilder, observabilityMgr *middleware.ObservabilityMgr, tlsManager *tls.Manager, parser httpmuxer.SyntaxParser) *Manager {
+func NewManager(conf *runtime.Configuration,
+	serviceManager serviceManager,
+	middlewaresBuilder middlewareBuilder,
+	observabilityMgr *middleware.ObservabilityMgr,
+	tlsManager *tls.Manager,
+	parser httpmuxer.SyntaxParser,
+	deniedEncodedPathCharacters map[string]map[string]struct{},
+) *Manager {
 	return &Manager{
-		routerHandlers:     make(map[string]http.Handler),
-		serviceManager:     serviceManager,
-		observabilityMgr:   observabilityMgr,
-		middlewaresBuilder: middlewaresBuilder,
-		conf:               conf,
-		tlsManager:         tlsManager,
-		parser:             parser,
+		routerHandlers:              make(map[string]http.Handler),
+		serviceManager:              serviceManager,
+		observabilityMgr:            observabilityMgr,
+		middlewaresBuilder:          middlewaresBuilder,
+		conf:                        conf,
+		tlsManager:                  tlsManager,
+		parser:                      parser,
+		deniedEncodedPathCharacters: deniedEncodedPathCharacters,
 	}
 }
 
@@ -157,7 +166,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, entryPointName str
 			continue
 		}
 
-		handler, err := m.buildRouterHandler(ctxRouter, routerName, routerConfig)
+		handler, err := m.buildRouterHandler(ctxRouter, entryPointName, routerName, routerConfig)
 		if err != nil {
 			routerConfig.AddError(err, true)
 			logger.Error().Err(err).Send()
@@ -191,7 +200,7 @@ func (m *Manager) buildEntryPointHandler(ctx context.Context, entryPointName str
 	return chain.Then(muxer)
 }
 
-func (m *Manager) buildRouterHandler(ctx context.Context, routerName string, routerConfig *runtime.RouterInfo) (http.Handler, error) {
+func (m *Manager) buildRouterHandler(ctx context.Context, entryPointName, routerName string, routerConfig *runtime.RouterInfo) (http.Handler, error) {
 	if handler, ok := m.routerHandlers[routerName]; ok {
 		return handler, nil
 	}
@@ -207,16 +216,16 @@ func (m *Manager) buildRouterHandler(ctx context.Context, routerName string, rou
 		}
 	}
 
-	handler, err := m.buildHTTPHandler(ctx, routerConfig, routerName)
+	handler, err := m.buildHTTPHandler(ctx, routerConfig, entryPointName, routerName)
 	if err != nil {
 		return nil, err
 	}
 
 	m.routerHandlers[routerName] = handler
-	return m.routerHandlers[routerName], nil
+	return handler, nil
 }
 
-func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterInfo, routerName string) (http.Handler, error) {
+func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterInfo, entryPointName, routerName string) (http.Handler, error) {
 	var qualifiedNames []string
 	for _, name := range router.Middlewares {
 		qualifiedNames = append(qualifiedNames, provider.GetQualifiedName(ctx, name))
@@ -239,7 +248,7 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 	switch {
 	case len(router.ChildRefs) > 0:
 		// This router routes to child routers - create a muxer for them
-		nextHandler, err = m.buildChildRoutersMuxer(ctx, router.ChildRefs)
+		nextHandler, err = m.buildChildRoutersMuxer(ctx, entryPointName, router.ChildRefs)
 		if err != nil {
 			return nil, fmt.Errorf("building child routers muxer: %w", err)
 		}
@@ -265,6 +274,17 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 	chain = chain.Append(func(next http.Handler) (http.Handler, error) {
 		return accesslog.NewConcatFieldHandler(next, accesslog.RouterName, routerName), nil
 	})
+
+	// Here we are adding deny handlers for encoded path characters and fragment.
+	// Deny handler are only added for root routers, child routers are protected by their parent router deny handlers.
+	if len(router.ParentRefs) == 0 {
+		chain = chain.Append(func(next http.Handler) (http.Handler, error) {
+			return denyFragment(next), nil
+		})
+		chain = chain.Append(func(next http.Handler) (http.Handler, error) {
+			return denyEncodedPathCharacters(m.deniedEncodedPathCharacters[entryPointName], next), nil
+		})
+	}
 
 	mHandler := m.middlewaresBuilder.BuildChain(ctx, router.Middlewares)
 
@@ -441,7 +461,7 @@ func (m *Manager) handleCycle(victimRouter string, path []string) {
 }
 
 // buildChildRoutersMuxer creates a muxer for child routers.
-func (m *Manager) buildChildRoutersMuxer(ctx context.Context, childRefs []string) (http.Handler, error) {
+func (m *Manager) buildChildRoutersMuxer(ctx context.Context, entryPointName string, childRefs []string) (http.Handler, error) {
 	childMuxer := httpmuxer.NewMuxer(m.parser)
 
 	// Set a default handler for the child muxer (404 Not Found).
@@ -468,7 +488,7 @@ func (m *Manager) buildChildRoutersMuxer(ctx context.Context, childRefs []string
 		}
 
 		// Build the child router handler.
-		childHandler, err := m.buildRouterHandler(ctxChild, childName, childRouter)
+		childHandler, err := m.buildRouterHandler(ctxChild, entryPointName, childName, childRouter)
 		if err != nil {
 			childRouter.AddError(err, true)
 			logger.Error().Err(err).Send()
