@@ -48,6 +48,7 @@ const (
 	kindGRPCRoute      = "GRPCRoute"
 	kindTCPRoute       = "TCPRoute"
 	kindTLSRoute       = "TLSRoute"
+	kindUDPRoute       = "UDPRoute"
 	kindService        = "Service"
 
 	appProtocolHTTP  = "http"
@@ -386,6 +387,7 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) *dynamic.C
 	if p.ExperimentalChannel {
 		p.loadTCPRoutes(ctx, gatewayListeners, conf)
 		p.loadTLSRoutes(ctx, gatewayListeners, conf)
+		p.loadUDPRoutes(ctx, gatewayListeners, conf)
 	}
 
 	for _, gateway := range gateways {
@@ -1008,6 +1010,19 @@ func supportedRouteKinds(protocol gatev1.ProtocolType, experimentalChannel bool)
 			Status:             metav1.ConditionTrue,
 			LastTransitionTime: metav1.Now(),
 			Reason:             string(gatev1.ListenerReasonInvalidRouteKinds),
+			Message:            fmt.Sprintf("Protocol %q requires the experimental channel support to be enabled, please use the `experimentalChannel` option", protocol),
+		}}
+
+	case gatev1.UDPProtocolType:
+		if experimentalChannel {
+			return []gatev1.RouteGroupKind{{Kind: kindUDPRoute, Group: &group}}, nil
+		}
+
+		return nil, []metav1.Condition{{
+			Type:               string(gatev1.ListenerConditionConflicted),
+			Status:             metav1.ConditionTrue,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(gatev1.ListenerReasonProtocolConflict),
 			Message:            fmt.Sprintf("Protocol %q requires the experimental channel support to be enabled, please use the `experimentalChannel` option", protocol),
 		}}
 	}
