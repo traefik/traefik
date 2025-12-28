@@ -22,7 +22,7 @@ func (p *Provider) loadUDPRoutes(ctx context.Context, gatewayListeners []gateway
 	logger := log.Ctx(ctx)
 	routes, err := p.client.ListUDPRoutes()
 	if err != nil {
-		logger.Error().Err(err).Msgf("Unable to list UDPRoute")
+		logger.Error().Err(err).Msgf("Unable to list UDPRoutes")
 		return
 	}
 
