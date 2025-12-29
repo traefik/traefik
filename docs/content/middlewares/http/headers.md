@@ -422,4 +422,4 @@ Set `isDevelopment` to `true` when developing to mitigate the unwanted effects o
 Usually testing takes place using HTTP, not HTTPS, and on `localhost`, not your production domain.
 If you would like your development environment to mimic production with complete Host blocking, SSL redirects, and STS headers, leave this as `false`.
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

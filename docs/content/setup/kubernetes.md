@@ -397,4 +397,4 @@ This enables OTel tracing and specifies the collector endpoint. Consult the [Tra
 
 This setup establishes Traefik with secure dashboard access and HTTPS redirection, along with pointers to enable observability & TLS.
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

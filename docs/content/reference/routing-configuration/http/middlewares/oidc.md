@@ -427,4 +427,4 @@ This means that a new CSRF token will be generated and sent to the client whenev
 When a request is sent and uses a non-safe method (see [RFC7231#section-4.2.1](https://datatracker.ietf.org/doc/html/rfc7231.html#section-4.2.1)),
 the CSRF token value (extracted from the cookie) have to be sent to the server in the header configured with the [headerName option](#configuration-options).
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}
