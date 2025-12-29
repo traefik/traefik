@@ -1,3 +1,9 @@
+## [v2.11.34](https://github.com/traefik/traefik/tree/v2.11.34) (2025-12-23)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.33...v2.11.34)
+
+**Bug fixes:**
+- **[server]** Fix deny encoded characters ([#12457](https://github.com/traefik/traefik/pull/12457) by [rtribotte](https://github.com/rtribotte))
+
 ## [v2.11.33](https://github.com/traefik/traefik/tree/v2.11.33) (2025-12-17)
 [All Commits](https://github.com/traefik/traefik/compare/v2.11.32...v2.11.33)
 
