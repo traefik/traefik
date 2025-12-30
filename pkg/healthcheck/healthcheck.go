@@ -59,6 +59,8 @@ type ServiceHealthChecker struct {
 	unhealthyInterval time.Duration
 	timeout           time.Duration
 
+	maxConcurrentChecks int
+
 	metrics metricsHealthCheck
 
 	client *http.Client
@@ -97,6 +99,12 @@ func NewServiceHealthChecker(ctx context.Context, metrics metricsHealthCheck, co
 		timeout = time.Duration(dynamic.DefaultHealthCheckTimeout)
 	}
 
+	maxConcurrentChecks := config.MaxConcurrentChecks
+	if maxConcurrentChecks <= 0 {
+		logger.Error().Msg("Health check max concurrent checks smaller than zero, default value will be used instead.")
+		maxConcurrentChecks = dynamic.DefaultMaxConcurrentChecks
+	}
+
 	client := &http.Client{
 		Transport: transport,
 	}
@@ -117,17 +125,18 @@ func NewServiceHealthChecker(ctx context.Context, metrics metricsHealthCheck, co
 	unhealthyTargets := make(chan target, len(targets))
 
 	return &ServiceHealthChecker{
-		balancer:          service,
-		info:              info,
-		config:            config,
-		interval:          interval,
-		unhealthyInterval: unhealthyInterval,
-		timeout:           timeout,
-		healthyTargets:    healthyTargets,
-		unhealthyTargets:  unhealthyTargets,
-		serviceName:       serviceName,
-		client:            client,
-		metrics:           metrics,
+		balancer:            service,
+		info:                info,
+		config:              config,
+		interval:            interval,
+		unhealthyInterval:   unhealthyInterval,
+		timeout:             timeout,
+		maxConcurrentChecks: maxConcurrentChecks,
+		healthyTargets:      healthyTargets,
+		unhealthyTargets:    unhealthyTargets,
+		serviceName:         serviceName,
+		client:              client,
+		metrics:             metrics,
 	}
 }
 
@@ -162,48 +171,37 @@ func (shc *ServiceHealthChecker) healthcheck(ctx context.Context, targets chan t
 				}
 			}
 
-			// Now we can check the targets.
-			for _, target := range targetsToCheck {
-				select {
-				case <-ctx.Done():
-					return
-				default:
-				}
+			if shc.maxConcurrentChecks > 1 {
+				sem := make(chan struct{}, shc.maxConcurrentChecks)
+				var wg sync.WaitGroup
 
-				up := true
-				serverUpMetricValue := float64(1)
-
-				if err := shc.executeHealthCheck(ctx, shc.config, target.targetURL); err != nil {
-					// The context is canceled when the dynamic configuration is refreshed.
-					if errors.Is(err, context.Canceled) {
+				// Now we can check the targets.
+				for _, t := range targetsToCheck {
+					select {
+					case <-ctx.Done():
 						return
+					case sem <- struct{}{}:
 					}
 
-					log.Ctx(ctx).Warn().
-						Str("targetURL", target.targetURL.String()).
-						Err(err).
-						Msg("Health check failed.")
-
-					up = false
-					serverUpMetricValue = float64(0)
+					wg.Add(1)
+					go func(t target) {
+						defer wg.Done()
+						defer func() { <-sem }()
+						shc.checkTarget(ctx, t)
+					}(t)
 				}
 
-				shc.balancer.SetStatus(ctx, target.name, up)
-
-				var statusStr string
-				if up {
-					statusStr = runtime.StatusUp
-					shc.healthyTargets <- target
-				} else {
-					statusStr = runtime.StatusDown
-					shc.unhealthyTargets <- target
+				wg.Wait()
+			} else {
+				// Old behavior: sequential health checks for backward compatibility.
+				for _, t := range targetsToCheck {
+					select {
+					case <-ctx.Done():
+						return
+					default:
+					}
+					shc.checkTarget(ctx, t)
 				}
-
-				shc.info.UpdateServerStatus(target.targetURL.String(), statusStr)
-
-				shc.metrics.ServiceServerUpGauge().
-					With("service", shc.serviceName, "url", target.targetURL.String()).
-					Set(serverUpMetricValue)
 			}
 		}
 	}
@@ -217,6 +215,44 @@ func (shc *ServiceHealthChecker) executeHealthCheck(ctx context.Context, config 
 		return shc.checkHealthGRPC(ctx, target)
 	}
 	return shc.checkHealthHTTP(ctx, target)
+}
+
+// checkTarget performs a health check for a single target URL and updates its status.
+func (shc *ServiceHealthChecker) checkTarget(ctx context.Context, target target) {
+	up := true
+	serverUpMetricValue := float64(1)
+
+	if err := shc.executeHealthCheck(ctx, shc.config, target.targetURL); err != nil {
+		// The context is canceled when the dynamic configuration is refreshed.
+		if errors.Is(err, context.Canceled) {
+			return
+		}
+
+		log.Ctx(ctx).Warn().
+			Str("targetURL", target.targetURL.String()).
+			Err(err).
+			Msg("Health check failed.")
+
+		up = false
+		serverUpMetricValue = float64(0)
+	}
+
+	shc.balancer.SetStatus(ctx, target.name, up)
+
+	var statusStr string
+	if up {
+		statusStr = runtime.StatusUp
+		shc.healthyTargets <- target
+	} else {
+		statusStr = runtime.StatusDown
+		shc.unhealthyTargets <- target
+	}
+
+	shc.info.UpdateServerStatus(target.targetURL.String(), statusStr)
+
+	shc.metrics.ServiceServerUpGauge().
+		With("service", shc.serviceName, "url", target.targetURL.String()).
+		Set(serverUpMetricValue)
 }
 
 // checkHealthHTTP returns an error with a meaningful description if the health check failed.

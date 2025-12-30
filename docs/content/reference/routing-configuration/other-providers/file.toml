@@ -101,6 +101,7 @@
           interval = "42s"
           unhealthyInterval = "42s"
           timeout = "42s"
+          maxConcurrentChecks = 42
           hostname = "foobar"
           followRedirects = true
           [http.services.Service03.loadBalancer.healthCheck.headers]
