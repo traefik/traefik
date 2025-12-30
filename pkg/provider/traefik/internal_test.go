@@ -261,6 +261,28 @@ func Test_createConfiguration(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "redirection_empty_address.json",
+			staticCfg: static.Configuration{
+				EntryPoints: map[string]*static.EntryPoint{
+					"web": {
+						Address: "",
+						HTTP: static.HTTPConfig{
+							Redirections: &static.Redirections{
+								EntryPoint: &static.RedirectEntryPoint{
+									To:        "websecure",
+									Scheme:    "https",
+									Permanent: true,
+								},
+							},
+						},
+					},
+					"websecure": {
+						Address: "",
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range testCases {
