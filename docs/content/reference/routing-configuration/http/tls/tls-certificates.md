@@ -6,6 +6,8 @@ description: "Learn how to configure the transport layer security (TLS) connecti
 !!! info
     When a router has to handle HTTPS traffic, it should be specified with a `tls` field of the router definition.
 
+# TLS Certificates
+
 ## Certificates Definition
 
 ### Automated
@@ -40,6 +42,52 @@ tls:
     In the above example, we've used the [file provider](../../../install-configuration/providers/others/file.md) to handle these definitions.
     It is the only available method to configure the certificates (as well as the options and the stores).
     However, in [Kubernetes](../../../install-configuration/providers/kubernetes/kubernetes-crd.md), the certificates can and must be provided by [secrets](https://kubernetes.io/docs/concepts/configuration/secret/).
+
+#### Certificate selection (SNI)
+
+Traefik selects the certificate to present during the TLS handshake, based on the Server Name Indication (SNI) sent by the client.
+As a consequence, HTTP router rules (for example `Host()`) are evaluated after TLS has been established and do not influence certificate selection.
+
+- Certificates declared under `tls.certificates` are matched against the requested server name (SNI).
+- If the client does not send SNI, or if no certificate matches the requested server name, Traefik falls back to the [default certificate](#default-certificate) from the TLS store (if configured).
+
+!!! tip "Strict SNI Checking"
+    To reject connections without SNI (or with an unknown server name) instead of falling back to the default certificate, enable `sniStrict` in [TLS Options](./tls-options.md#strict-sni-checking).
+
+#### Local development example (mkcert)
+
+[mkcert](https://mkcert.dev/) can generate **locally-trusted** certificates for development.
+The snippet below shows the minimal pieces needed to serve HTTPS with a custom certificate using the **file provider**.
+
+```bash
+# one-time per machine
+mkcert -install
+mkdir -p certs dynamic
+mkcert -cert-file certs/local.crt -key-file certs/local.key \
+  whoami.docker.localhost dashboard.docker.localhost
+```
+
+```yaml tab="Structured (YAML)"
+# dynamic/tls.yml (dynamic configuration)
+tls:
+  certificates:
+    - certFile: /certs/local.crt
+      keyFile:  /certs/local.key
+```
+
+```toml tab="Structured (TOML)"
+# dynamic/tls.toml (dynamic configuration)
+[[tls.certificates]]
+  certFile = "/certs/local.crt"
+  keyFile = "/certs/local.key"
+```
+
+!!! tip "Complete examples"
+    For end-to-end examples (entryPoints, dynamic TLS file, and router configuration), see:
+
+    - [Docker: Enable TLS](../../../../expose/docker.md#enable-tls)
+    - [Swarm: Enable TLS](../../../../expose/swarm.md#enable-tls)
+    - [Kubernetes: Enable TLS](../../../../expose/kubernetes.md#enable-tls)
 
 ## Certificates Stores
 
