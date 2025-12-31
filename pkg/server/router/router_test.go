@@ -325,7 +325,7 @@ func TestRouterManager_Get(t *testing.T) {
 			transportManager := service.NewTransportManager(nil)
 			transportManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
 
-			serviceManager := service.NewManager(rtConf.Services, nil, nil, transportManager, proxyBuilderMock{})
+			serviceManager := service.NewManager(rtConf.Services, nil, nil, transportManager, proxyBuilderMock{}, nil)
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
 			tlsManager := traefiktls.NewManager(nil)
 
@@ -712,7 +712,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 			transportManager := service.NewTransportManager(nil)
 			transportManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
 
-			serviceManager := service.NewManager(rtConf.Services, nil, nil, transportManager, proxyBuilderMock{})
+			serviceManager := service.NewManager(rtConf.Services, nil, nil, transportManager, proxyBuilderMock{}, nil)
 			middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
 			tlsManager := traefiktls.NewManager(nil)
 			tlsManager.UpdateConfigs(t.Context(), nil, test.tlsOptions, nil)
@@ -794,7 +794,7 @@ func TestProviderOnMiddlewares(t *testing.T) {
 	transportManager := service.NewTransportManager(nil)
 	transportManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
 
-	serviceManager := service.NewManager(rtConf.Services, nil, nil, transportManager, nil)
+	serviceManager := service.NewManager(rtConf.Services, nil, nil, transportManager, nil, nil)
 	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
 	tlsManager := traefiktls.NewManager(nil)
 
@@ -849,7 +849,7 @@ func BenchmarkRouterServe(b *testing.B) {
 		},
 	})
 
-	serviceManager := service.NewManager(rtConf.Services, nil, nil, staticTransportManager{res}, nil)
+	serviceManager := service.NewManager(rtConf.Services, nil, nil, staticTransportManager{res}, nil, nil)
 	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, nil)
 	tlsManager := traefiktls.NewManager(nil)
 
@@ -894,7 +894,7 @@ func BenchmarkService(b *testing.B) {
 		},
 	})
 
-	serviceManager := service.NewManager(rtConf.Services, nil, nil, staticTransportManager{res}, nil)
+	serviceManager := service.NewManager(rtConf.Services, nil, nil, staticTransportManager{res}, nil, nil)
 	w := httptest.NewRecorder()
 	req := testhelpers.MustNewRequest(http.MethodGet, "http://foo.bar/", nil)
 

@@ -2364,3 +2364,37 @@ func (s *SimpleSuite) TestEncodedCharactersDifferentEntryPoints() {
 		require.NoError(s.T(), err)
 	}
 }
+
+func (s *SimpleSuite) TestServiceMiddleware() {
+	s.createComposeProject("base")
+
+	s.composeUp()
+	defer s.composeDown()
+
+	whoamiIP := s.getComposeServiceIP("whoami1")
+
+	file := s.adaptFile("fixtures/service_middleware.toml", struct {
+		Server string
+	}{Server: "http://" + whoamiIP})
+
+	s.traefikCmd(withConfigFile(file))
+
+	// Wait for Traefik to be ready
+	err := try.GetRequest("http://127.0.0.1:8080/api/http/services", 2*time.Second, try.BodyContains("service1"))
+	require.NoError(s.T(), err)
+
+	// Make a request and verify the middleware added the custom header
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/whoami", nil)
+	require.NoError(s.T(), err)
+
+	response, err := http.DefaultClient.Do(req)
+	require.NoError(s.T(), err)
+	assert.Equal(s.T(), http.StatusOK, response.StatusCode)
+
+	// Read the response body to check if the whoami service received the custom header
+	body, err := io.ReadAll(response.Body)
+	require.NoError(s.T(), err)
+
+	// The whoami service should have received the X-Custom-Header that was added by the service middleware
+	assert.Contains(s.T(), string(body), "X-Custom-Header: service-middleware-test")
+}
