@@ -192,7 +192,7 @@ func (t *TransportManager) createTLSConfig(cfg *dynamic.ServersTransport) (*tls.
 			if value, exists := traefiktls.MinVersion[cfg.MinVersion]; exists {
 				minVersion = value
 			} else {
-				log.Error().Msgf("invalid TLS minimum version: %s", cfg.MinVersion)
+				log.Error().Msgf("Invalid TLS minimum version: %s", cfg.MinVersion)
 			}
 		}
 
