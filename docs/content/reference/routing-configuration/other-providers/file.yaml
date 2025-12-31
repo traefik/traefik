@@ -120,6 +120,10 @@ http:
           flushInterval: 42s
         serversTransport: foobar
     Service04:
+      middlewares:
+        - foobar
+        - foobar
+    Service05:
       mirroring:
         service: foobar
         mirrorBody: true
@@ -130,7 +134,7 @@ http:
           - name: foobar
             percent: 42
         healthCheck: {}
-    Service05:
+    Service06:
       weighted:
         services:
           - name: foobar
