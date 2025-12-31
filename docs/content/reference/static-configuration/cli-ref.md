@@ -237,9 +237,6 @@ Trust only forwarded headers from selected IPs.
 `--entrypoints.<name>.http`:  
 HTTP configuration.
 
-`--entrypoints.<name>.http.encodedcharacters`:  
-Defines which encoded characters are allowed in the request path.
-
 `--entrypoints.<name>.http.encodedcharacters.allowencodedbackslash`:  
 Defines whether requests with encoded back slash characters in the path are allowed. (Default: ```false```)
 

@@ -1,3 +1,29 @@
+## [v3.6.6](https://github.com/traefik/traefik/tree/v3.6.6) (2025-12-29)
+[All Commits](https://github.com/traefik/traefik/compare/v3.6.5...v3.6.6)
+
+**Bug fixes:**
+- **[acme]** Bump github.com/go-acme/lego/v4 to v4.30.1 ([#12432](https://github.com/traefik/traefik/pull/12432) by [ldez](https://github.com/ldez))
+- **[http3]** Bump github.com/quic-go/quic-go to v0.58.0 ([#12448](https://github.com/traefik/traefik/pull/12448) by [GreyXor](https://github.com/GreyXor))
+- **[redis]** Fix mutually exclusive verification for Redis ([#12442](https://github.com/traefik/traefik/pull/12442) by [juliens](https://github.com/juliens))
+- **[server]** Fix deny encoded characters ([#12454](https://github.com/traefik/traefik/pull/12454) by [rtribotte](https://github.com/rtribotte))
+
+**Documentation:**
+- **[k8s/ingress,k8s]** Fix Kubernetes Ingress provider documentation ([#12443](https://github.com/traefik/traefik/pull/12443) by [nmengin](https://github.com/nmengin))
+- **[k8s/ingress-nginx]** Add RBAC documentation for Ingress NGINX provider ([#12445](https://github.com/traefik/traefik/pull/12445) by [nmn3m](https://github.com/nmn3m))
+- **[k8s]** Improve the K8S multi-tenancy security note ([#12444](https://github.com/traefik/traefik/pull/12444) by [nmengin](https://github.com/nmengin))
+- Restore documentation on http.maxHeaderBytes ([#12440](https://github.com/traefik/traefik/pull/12440) by [mloiseleur](https://github.com/mloiseleur))
+- Fix Menu Item Naming ([#12431](https://github.com/traefik/traefik/pull/12431) by [sheddy-traefik](https://github.com/sheddy-traefik))
+
+**Misc:**
+- Merge branch v2.11 into v3.6 ([#12475](https://github.com/traefik/traefik/pull/12475) by [mmatur](https://github.com/mmatur))
+- Merge branch v2.11 into v3.6 ([#12438](https://github.com/traefik/traefik/pull/12438) by [kevinpollet](https://github.com/kevinpollet))
+
+## [v2.11.34](https://github.com/traefik/traefik/tree/v2.11.34) (2025-12-23)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.33...v2.11.34)
+
+**Bug fixes:**
+- **[server]** Fix deny encoded characters ([#12457](https://github.com/traefik/traefik/pull/12457) by [rtribotte](https://github.com/rtribotte))
+
 ## [v2.11.33](https://github.com/traefik/traefik/tree/v2.11.33) (2025-12-17)
 [All Commits](https://github.com/traefik/traefik/compare/v2.11.32...v2.11.33)
 

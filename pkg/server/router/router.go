@@ -39,14 +39,13 @@ type serviceManager interface {
 
 // Manager A route/router manager.
 type Manager struct {
-	routerHandlers              map[string]http.Handler
-	serviceManager              serviceManager
-	observabilityMgr            *middleware.ObservabilityMgr
-	middlewaresBuilder          middlewareBuilder
-	conf                        *runtime.Configuration
-	tlsManager                  *tls.Manager
-	parser                      httpmuxer.SyntaxParser
-	deniedEncodedPathCharacters map[string]map[string]struct{}
+	routerHandlers     map[string]http.Handler
+	serviceManager     serviceManager
+	observabilityMgr   *middleware.ObservabilityMgr
+	middlewaresBuilder middlewareBuilder
+	conf               *runtime.Configuration
+	tlsManager         *tls.Manager
+	parser             httpmuxer.SyntaxParser
 }
 
 // NewManager creates a new Manager.
@@ -56,17 +55,15 @@ func NewManager(conf *runtime.Configuration,
 	observabilityMgr *middleware.ObservabilityMgr,
 	tlsManager *tls.Manager,
 	parser httpmuxer.SyntaxParser,
-	deniedEncodedPathCharacters map[string]map[string]struct{},
 ) *Manager {
 	return &Manager{
-		routerHandlers:              make(map[string]http.Handler),
-		serviceManager:              serviceManager,
-		observabilityMgr:            observabilityMgr,
-		middlewaresBuilder:          middlewaresBuilder,
-		conf:                        conf,
-		tlsManager:                  tlsManager,
-		parser:                      parser,
-		deniedEncodedPathCharacters: deniedEncodedPathCharacters,
+		routerHandlers:     make(map[string]http.Handler),
+		serviceManager:     serviceManager,
+		observabilityMgr:   observabilityMgr,
+		middlewaresBuilder: middlewaresBuilder,
+		conf:               conf,
+		tlsManager:         tlsManager,
+		parser:             parser,
 	}
 }
 
@@ -282,7 +279,7 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 			return denyFragment(next), nil
 		})
 		chain = chain.Append(func(next http.Handler) (http.Handler, error) {
-			return denyEncodedPathCharacters(m.deniedEncodedPathCharacters[entryPointName], next), nil
+			return denyEncodedPathCharacters(router.DeniedEncodedPathCharacters.Map(), next), nil
 		})
 	}
 
