@@ -24,6 +24,7 @@ rules:
     resources:
       - services
       - secrets
+      - nodes
       - configmaps
     verbs:
       - get
