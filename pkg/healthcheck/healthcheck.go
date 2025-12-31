@@ -171,8 +171,8 @@ func (shc *ServiceHealthChecker) healthcheck(ctx context.Context, targets chan t
 			}
 
 			if shc.maxConcurrency > 1 {
-				// Use semaphore to limit concurrent health checks.
-				// This prevents overwhelming the network and target servers.
+				// Limit the maximum number of concurrent health checks.
+				// The effective concurrency is bounded by the number of servers.
 				sem := make(chan struct{}, shc.maxConcurrency)
 				var wg sync.WaitGroup
 
@@ -196,7 +196,7 @@ func (shc *ServiceHealthChecker) healthcheck(ctx context.Context, targets chan t
 				wg.Wait()
 
 			} else {
-				// Check targets sequentially (old behaviour).
+				// Sequential mode: preserves legacy behavior.
 				for _, t := range targetsToCheck {
 					select {
 					case <-ctx.Done():
