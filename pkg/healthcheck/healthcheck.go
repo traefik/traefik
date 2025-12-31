@@ -59,7 +59,7 @@ type ServiceHealthChecker struct {
 	unhealthyInterval time.Duration
 	timeout           time.Duration
 
-	maxConcurrentChecks int
+	maxConcurrency int
 
 	metrics metricsHealthCheck
 
@@ -99,10 +99,9 @@ func NewServiceHealthChecker(ctx context.Context, metrics metricsHealthCheck, co
 		timeout = time.Duration(dynamic.DefaultHealthCheckTimeout)
 	}
 
-	maxConcurrentChecks := config.MaxConcurrentChecks
-	if maxConcurrentChecks <= 0 {
-		logger.Error().Msg("Health check max concurrent checks smaller than zero, default value will be used instead.")
-		maxConcurrentChecks = dynamic.DefaultMaxConcurrentChecks
+	maxConcurrency := config.MaxConcurrency
+	if maxConcurrency <= 0 {
+		maxConcurrency = dynamic.DefaultHealthCheckMaxConcurrency
 	}
 
 	client := &http.Client{
@@ -125,18 +124,18 @@ func NewServiceHealthChecker(ctx context.Context, metrics metricsHealthCheck, co
 	unhealthyTargets := make(chan target, len(targets))
 
 	return &ServiceHealthChecker{
-		balancer:            service,
-		info:                info,
-		config:              config,
-		interval:            interval,
-		unhealthyInterval:   unhealthyInterval,
-		timeout:             timeout,
-		maxConcurrentChecks: maxConcurrentChecks,
-		healthyTargets:      healthyTargets,
-		unhealthyTargets:    unhealthyTargets,
-		serviceName:         serviceName,
-		client:              client,
-		metrics:             metrics,
+		balancer:          service,
+		info:              info,
+		config:            config,
+		interval:          interval,
+		unhealthyInterval: unhealthyInterval,
+		timeout:           timeout,
+		maxConcurrency:    maxConcurrency,
+		healthyTargets:    healthyTargets,
+		unhealthyTargets:  unhealthyTargets,
+		serviceName:       serviceName,
+		client:            client,
+		metrics:           metrics,
 	}
 }
 
@@ -171,11 +170,14 @@ func (shc *ServiceHealthChecker) healthcheck(ctx context.Context, targets chan t
 				}
 			}
 
-			if shc.maxConcurrentChecks > 1 {
-				sem := make(chan struct{}, shc.maxConcurrentChecks)
+			if shc.maxConcurrency > 1 {
+				// Use semaphore to limit concurrent health checks.
+				// This prevents overwhelming the network and target servers.
+				sem := make(chan struct{}, shc.maxConcurrency)
 				var wg sync.WaitGroup
 
 				// Now we can check the targets.
+				// Each target is checked in a separate goroutine.
 				for _, t := range targetsToCheck {
 					select {
 					case <-ctx.Done():
@@ -187,13 +189,14 @@ func (shc *ServiceHealthChecker) healthcheck(ctx context.Context, targets chan t
 					go func(t target) {
 						defer wg.Done()
 						defer func() { <-sem }()
+
 						shc.checkTarget(ctx, t)
 					}(t)
 				}
-
 				wg.Wait()
+
 			} else {
-				// Old behavior: sequential health checks for backward compatibility.
+				// Check targets sequentially (old behaviour).
 				for _, t := range targetsToCheck {
 					select {
 					case <-ctx.Done():
