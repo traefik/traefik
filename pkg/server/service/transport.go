@@ -201,7 +201,7 @@ func (t *TransportManager) createTLSConfig(cfg *dynamic.ServersTransport) (*tls.
 			if value, exists := traefiktls.MaxVersion[cfg.MaxVersion]; exists {
 				maxVersion = value
 			} else {
-				log.Error().Msgf("invalid TLS maximum version: %s", cfg.MaxVersion)
+				log.Error().Msgf("Invalid TLS maximum version: %s", cfg.MaxVersion)
 			}
 		}
 
