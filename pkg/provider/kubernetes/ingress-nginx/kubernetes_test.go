@@ -99,6 +99,65 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
+			desc: "Forward Auth with Auth Signin",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/02-ingress-with-forwardauth.yml", // Update this file or create a new one
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-forwardauth-rule-0-path-0": {
+							Rule:        "Host(`whoami.localhost`) && Path(`/forwardauth`)",
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-forwardauth-rule-0-path-0-forward-auth"},
+							Service:     "default-ingress-with-forwardauth-whoami-80",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-forwardauth-rule-0-path-0-forward-auth": {
+							ForwardAuth: &dynamic.ForwardAuth{
+								Address: "http://whoami.default.svc/",
+								AuthResponseHeaders: []string{"X-Foo"},
+								AuthRequestHeaders: []string{
+									"X-Forwarded-Proto",
+									"X-Forwarded-Host",
+									"X-Forwarded-Uri",
+									"X-Forwarded-Method",
+								},
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-forwardauth-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
 			desc: "Basic Auth",
 			paths: []string{
 				"services.yml",

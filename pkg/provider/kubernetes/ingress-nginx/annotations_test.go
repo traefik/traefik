@@ -43,6 +43,17 @@ func Test_parseIngressConfig(t *testing.T) {
 			},
 		},
 		{
+			desc: "with auth-signin annotation",
+			annotations: map[string]string{
+				"nginx.ingress.kubernetes.io/auth-url":    "https://oauth2-proxy.example.com/oauth2/auth",
+				"nginx.ingress.kubernetes.io/auth-signin": "https://oauth2-proxy.example.com/oauth2/start?rd=$scheme://$host$request_uri",
+			},
+			expected: ingressConfig{
+				AuthURL:    ptr.To("https://oauth2-proxy.example.com/oauth2/auth"),
+				AuthSignin: ptr.To("https://oauth2-proxy.example.com/oauth2/start?rd=$scheme://$host$request_uri"),
+			},
+		},
+		{
 			desc: "missing fields",
 			annotations: map[string]string{
 				"nginx.ingress.kubernetes.io/ssl-passthrough": "false",

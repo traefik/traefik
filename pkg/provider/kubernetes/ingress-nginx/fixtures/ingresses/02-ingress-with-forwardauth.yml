@@ -5,20 +5,19 @@ metadata:
   name: ingress-with-forwardauth
   namespace: default
   annotations:
-    nginx.ingress.kubernetes.io/auth-url: "http://whoami.default.svc/"
-    nginx.ingress.kubernetes.io/auth-method: "GET"
-    nginx.ingress.kubernetes.io/auth-response-headers: "X-Foo"
-
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/auth-url: http://whoami.default.svc/
+    nginx.ingress.kubernetes.io/auth-signin: http://whoami.default.svc/oauth2/start?rd=$scheme://$host$request_uri
+    nginx.ingress.kubernetes.io/auth-response-headers: X-Foo
 spec:
-  ingressClassName: nginx
   rules:
-    - host: whoami.localhost
-      http:
-        paths:
-          - path: /forwardauth
-            pathType: Exact
-            backend:
-              service:
-                name: whoami
-                port:
-                  number: 80
+  - host: whoami.localhost
+    http:
+      paths:
+      - path: /forwardauth
+        pathType: Prefix
+        backend:
+          service:
+            name: whoami
+            port:
+              number: 80

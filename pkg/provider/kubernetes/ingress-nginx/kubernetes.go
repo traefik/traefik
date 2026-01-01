@@ -1073,11 +1073,26 @@ func applyForwardAuthConfiguration(routerName string, ingressConfig ingressConfi
 	authResponseHeaders := strings.Split(ptr.Deref(ingressConfig.AuthResponseHeaders, ""), ",")
 
 	forwardMiddlewareName := routerName + "-forward-auth"
-	conf.HTTP.Middlewares[forwardMiddlewareName] = &dynamic.Middleware{
-		ForwardAuth: &dynamic.ForwardAuth{
-			Address:             *ingressConfig.AuthURL,
-			AuthResponseHeaders: authResponseHeaders,
+	forwardAuth := &dynamic.ForwardAuth{
+		Address:             *ingressConfig.AuthURL,
+		AuthResponseHeaders: authResponseHeaders,
+		// Pass headers that allow the auth service to reconstruct the original URL
+		// This is important for OAuth2 providers to know where to redirect back to
+		AuthRequestHeaders: []string{
+			"X-Forwarded-Proto",
+			"X-Forwarded-Host",
+			"X-Forwarded-Uri",
+			"X-Forwarded-Method",
 		},
+	}
+
+	// If auth-signin is provided, we should ensure the auth service receives
+	// the original request details so it can generate the proper redirect
+	// Note: The actual redirect to the signin URL is handled by the auth service
+	// (e.g., oauth2-proxy) when it returns a 302 response
+
+	conf.HTTP.Middlewares[forwardMiddlewareName] = &dynamic.Middleware{
+		ForwardAuth: forwardAuth,
 	}
 	rt.Middlewares = append(rt.Middlewares, forwardMiddlewareName)
 
