@@ -150,7 +150,7 @@ http:
 The API and the dashboard can be configured:
 
 - In the Helm Chart: You can find the options to customize the Traefik installation
-enabing the dashboard [here](https://github.com/traefik/traefik-helm-chart/blob/master/traefik/values.yaml#L155).
+enabling the dashboard [here](https://github.com/traefik/traefik-helm-chart/blob/master/traefik/values.yaml#L155).
 - In the Traefik Static Configuration as described below.
 
 | Field      | Description  | Default | Required |

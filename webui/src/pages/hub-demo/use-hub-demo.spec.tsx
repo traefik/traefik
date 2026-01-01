@@ -3,9 +3,10 @@ import { ReactNode } from 'react'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
 import { useHubDemo } from './use-hub-demo'
-import verifySignature from './workers/scriptVerification'
 
-vi.mock('./workers/scriptVerification', () => ({
+import verifySignature from 'utils/workers/scriptVerification'
+
+vi.mock('utils/workers/scriptVerification', () => ({
   default: vi.fn(),
 }))
 

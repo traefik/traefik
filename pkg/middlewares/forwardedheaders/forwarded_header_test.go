@@ -516,7 +516,7 @@ func TestServeHTTP(t *testing.T) {
 				}
 			}
 
-			m, err := NewXForwarded(test.insecure, test.trustedIps, test.connectionHeaders,
+			m, err := NewXForwarded(test.insecure, test.trustedIps, test.connectionHeaders, false,
 				http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {}))
 			require.NoError(t, err)
 
@@ -655,7 +655,7 @@ func TestConnection(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			forwarded, err := NewXForwarded(true, nil, test.connectionHeaders, nil)
+			forwarded, err := NewXForwarded(true, nil, test.connectionHeaders, false, nil)
 			require.NoError(t, err)
 
 			req := httptest.NewRequest(http.MethodGet, "https://localhost", nil)

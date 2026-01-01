@@ -255,7 +255,7 @@ HighestRandomWeight, also called RendezVous hashing allows to loadbalance client
       services:
         my-service:
           loadBalancer:
-            type: hrw
+            strategy: hrw
             servers:
             - url: "http://private-ip-server-1/"
             - url: "http://private-ip-server-2/"
@@ -1306,13 +1306,13 @@ http:
 
     appv1:
       loadBalancer:
-        type: hrw
+        strategy: hrw
         servers:
         - url: "http://private-ip-server-1/"
 
     appv2:
       loadBalancer:
-        type: hrw
+        strategy: hrw
         servers:
         - url: "http://private-ip-server-2/"
 ```
@@ -1330,13 +1330,13 @@ http:
 
   [http.services.appv1]
     [http.services.appv1.loadBalancer]
-      type = "hrw"
+      strategy = "hrw"
       [[http.services.appv1.loadBalancer.servers]]
         url = "http://private-ip-server-1/"
 
   [http.services.appv2]
     [http.services.appv2.loadBalancer]
-      type = "hrw"
+      strategy = "hrw"
       [[http.services.appv2.loadBalancer.servers]]
         url = "http://private-ip-server-2/"
 ```
@@ -1371,7 +1371,7 @@ http:
 
     appv1:
       loadBalancer:
-        type: hrw
+        strategy: hrw
         healthCheck:
           path: /status
           interval: 10s
@@ -1381,7 +1381,7 @@ http:
 
     appv2:
       loadBalancer:
-        type: hrw
+        strategy: hrw
         healthCheck:
           path: /status
           interval: 10s
@@ -1404,7 +1404,7 @@ http:
 
   [http.services.appv1]
     [http.services.appv1.loadBalancer]
-      type="hrw"
+      strategy="hrw"
       [http.services.appv1.loadBalancer.healthCheck]
         path = "/health"
         interval = "10s"
@@ -1414,7 +1414,7 @@ http:
 
   [http.services.appv2]
     [http.services.appv2.loadBalancer]
-      type="hrw"
+      strategy="hrw"
       [http.services.appv2.loadBalancer.healthCheck]
         path = "/health"
         interval = "10s"

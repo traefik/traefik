@@ -8,6 +8,7 @@ import (
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/rs/zerolog/log"
+	"golang.org/x/mod/module"
 )
 
 const localGoPath = "./plugins-local/"
@@ -53,24 +54,18 @@ func checkRemotePluginsConfiguration(plugins map[string]Descriptor) error {
 
 	var errs []string
 	for pAlias, descriptor := range plugins {
-		if descriptor.ModuleName == "" {
-			errs = append(errs, fmt.Sprintf("%s: plugin name is missing", pAlias))
+		if err := module.CheckPath(descriptor.ModuleName); err != nil {
+			errs = append(errs, fmt.Sprintf("%s: malformed plugin module name is missing: %s", pAlias, err))
 		}
 
 		if descriptor.Version == "" {
 			errs = append(errs, fmt.Sprintf("%s: plugin version is missing", pAlias))
 		}
 
-		if strings.HasPrefix(descriptor.ModuleName, "/") || strings.HasSuffix(descriptor.ModuleName, "/") {
-			errs = append(errs, fmt.Sprintf("%s: plugin name should not start or end with a /", pAlias))
-			continue
-		}
-
 		if _, ok := uniq[descriptor.ModuleName]; ok {
 			errs = append(errs, fmt.Sprintf("only one version of a plugin is allowed, there is a duplicate of %s", descriptor.ModuleName))
 			continue
 		}
-
 		uniq[descriptor.ModuleName] = struct{}{}
 	}
 

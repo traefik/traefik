@@ -1,14 +1,17 @@
 name: Build Web UI
 on:
   workflow_call: {}
+env:
+  SAFE_CHAIN_MINIMUM_PACKAGE_AGE_HOURS: 360  # 15 days
 jobs:
 
   build-webui:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
       - name: Check out code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -16,11 +19,17 @@ jobs:
         run: corepack enable
 
       - name: Setup node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version-file: webui/.nvmrc
           cache: yarn
           cache-dependency-path: webui/yarn.lock
+
+      - name: Setup safe-chain
+        working-directory: ./webui
+        run: |
+          npm i -g @aikidosec/safe-chain
+          safe-chain setup-ci
 
       - name: Build webui
         working-directory: ./webui
@@ -33,7 +42,7 @@ jobs:
           tar czvf webui.tar.gz ./webui/static/
 
       - name: Artifact webui
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: webui.tar.gz
           path: webui.tar.gz

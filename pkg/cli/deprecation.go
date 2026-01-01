@@ -568,8 +568,9 @@ func (i *ingress) deprecationNotice(logger zerolog.Logger) {
 }
 
 type experimental struct {
-	HTTP3             *bool `json:"http3,omitempty" toml:"http3,omitempty" yaml:"http3,omitempty"`
-	KubernetesGateway *bool `json:"kubernetesGateway,omitempty" toml:"kubernetesGateway,omitempty" yaml:"kubernetesGateway,omitempty"`
+	HTTP3                  *bool `json:"http3,omitempty" toml:"http3,omitempty" yaml:"http3,omitempty"`
+	KubernetesGateway      *bool `json:"kubernetesGateway,omitempty" toml:"kubernetesGateway,omitempty" yaml:"kubernetesGateway,omitempty"`
+	KubernetesIngressNGINX *bool `json:"kubernetesIngressNGINX,omitempty" toml:"kubernetesIngressNGINX,omitempty" yaml:"kubernetesIngressNGINX,omitempty"`
 }
 
 func (e *experimental) deprecationNotice(logger zerolog.Logger) bool {
@@ -589,6 +590,12 @@ func (e *experimental) deprecationNotice(logger zerolog.Logger) bool {
 		logger.Error().Msg("KubernetesGateway provider is not an experimental feature starting with v3.1." +
 			" Please remove its usage from the install configuration." +
 			" For more information please read the migration guide: https://doc.traefik.io/traefik/v3.6/migration/v3/#gateway-api-kubernetesgateway-provider")
+	}
+
+	if e.KubernetesIngressNGINX != nil {
+		logger.Error().Msg("KubernetesIngressNGINX provider is not an experimental feature starting with v3.6.2." +
+			" Please remove its usage from the install configuration." +
+			" For more information please read the migration guide: https://doc.traefik.io/traefik/v3.6/migration/v3/#ingress-nginx-provider")
 	}
 
 	return false

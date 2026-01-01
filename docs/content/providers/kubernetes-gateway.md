@@ -21,7 +21,7 @@ For more details, check out the conformance [report](https://github.com/kubernet
 !!! info "Helm Chart"
 
     When using the Traefik [Helm Chart](../getting-started/install-traefik.md#use-the-helm-chart), the CRDs (Custom Resource Definitions) and RBAC (Role-Based Access Control) are automatically managed for you.
-    The only remaining task is to enable the `kubernetesGateway` in the chart [values](https://github.com/traefik/traefik-helm-chart/blob/master/traefik/values.yaml#L130).
+    The only remaining task is to enable the `kubernetesGateway` in the chart [values](https://github.com/traefik/traefik-helm-chart/blob/master/traefik/values.yaml#L323).
 
 1. Install/update the Kubernetes Gateway API CRDs.
 

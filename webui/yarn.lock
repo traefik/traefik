@@ -2871,24 +2871,24 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@microsoft/api-extractor-model@npm:7.31.3":
-  version: 7.31.3
-  resolution: "@microsoft/api-extractor-model@npm:7.31.3"
+"@microsoft/api-extractor-model@npm:7.32.0":
+  version: 7.32.0
+  resolution: "@microsoft/api-extractor-model@npm:7.32.0"
   dependencies:
-    "@microsoft/tsdoc": "npm:~0.15.1"
-    "@microsoft/tsdoc-config": "npm:~0.17.1"
+    "@microsoft/tsdoc": "npm:~0.16.0"
+    "@microsoft/tsdoc-config": "npm:~0.18.0"
     "@rushstack/node-core-library": "npm:5.18.0"
-  checksum: 10c0/4e4a798c5d92b72fa664932019563f085153cf33f7745f8ea452901348a0021f19c7c3db55e5555b779a78df52d93ec10960349b5bc1ee53bf555e63c0fe1197
+  checksum: 10c0/e6d9c54a457c66dec53765522f411c8ca5d2bb8c51559b9f952fdd7bb88b10efe035a8dbdf8b672644c136d75a65f3446b3b18938fa50c0a766f83111cbda5eb
   languageName: node
   linkType: hard
 
 "@microsoft/api-extractor@npm:^7.50.1":
-  version: 7.54.0
-  resolution: "@microsoft/api-extractor@npm:7.54.0"
+  version: 7.55.0
+  resolution: "@microsoft/api-extractor@npm:7.55.0"
   dependencies:
-    "@microsoft/api-extractor-model": "npm:7.31.3"
-    "@microsoft/tsdoc": "npm:~0.15.1"
-    "@microsoft/tsdoc-config": "npm:~0.17.1"
+    "@microsoft/api-extractor-model": "npm:7.32.0"
+    "@microsoft/tsdoc": "npm:~0.16.0"
+    "@microsoft/tsdoc-config": "npm:~0.18.0"
     "@rushstack/node-core-library": "npm:5.18.0"
     "@rushstack/rig-package": "npm:0.6.0"
     "@rushstack/terminal": "npm:0.19.3"
@@ -2902,26 +2902,26 @@ __metadata:
     typescript: "npm:5.8.2"
   bin:
     api-extractor: bin/api-extractor
-  checksum: 10c0/e4708ac5edc3bb32988b632cc75e6f5e5b3afe7772c7229974db91f731d6b8d3c786c406d5437bfce893b78c6f23c64b084db52952a7d35294e2525171a465ee
+  checksum: 10c0/3211981b7aaf6ca7a36fe33dc9cab5014dc753c0c75d09ace46bef07db947a433ca9daecc843ea13b29fe7527ea3d357c7bd5051fedf10ae3b3db31d2a5de71f
   languageName: node
   linkType: hard
 
-"@microsoft/tsdoc-config@npm:~0.17.1":
-  version: 0.17.1
-  resolution: "@microsoft/tsdoc-config@npm:0.17.1"
+"@microsoft/tsdoc-config@npm:~0.18.0":
+  version: 0.18.0
+  resolution: "@microsoft/tsdoc-config@npm:0.18.0"
   dependencies:
-    "@microsoft/tsdoc": "npm:0.15.1"
+    "@microsoft/tsdoc": "npm:0.16.0"
     ajv: "npm:~8.12.0"
     jju: "npm:~1.4.0"
     resolve: "npm:~1.22.2"
-  checksum: 10c0/a686355796f492f27af17e2a17d615221309caf4d9f9047a5a8f17f8625c467c4c81e2a7923ddafd71b892631d5e5013c4b8cc49c5867d3cc1d260fd90c1413d
+  checksum: 10c0/6e2c3bfde3e5fa4c0360127c86fe016dcf1b09d0091d767c06ce916284d3f6aeea3617a33b855c5bb2615ab0f2840eeebd4c7f4a1f879f951828d213bf306cfd
   languageName: node
   linkType: hard
 
-"@microsoft/tsdoc@npm:0.15.1, @microsoft/tsdoc@npm:~0.15.1":
-  version: 0.15.1
-  resolution: "@microsoft/tsdoc@npm:0.15.1"
-  checksum: 10c0/09948691fac56c45a0d1920de478d66a30371a325bd81addc92eea5654d95106ce173c440fea1a1bd5bb95b3a544b6d4def7bb0b5a846c05d043575d8369a20c
+"@microsoft/tsdoc@npm:0.16.0, @microsoft/tsdoc@npm:~0.16.0":
+  version: 0.16.0
+  resolution: "@microsoft/tsdoc@npm:0.16.0"
+  checksum: 10c0/8883bb0ed22753af7360e9222687fda4eb448f0a574ea34b4596c11e320148b3ae0d24e00f8923df8ba7bc62a46a6f53b9343243a348640d923dfd55d52cd6bb
   languageName: node
   linkType: hard
 
@@ -6524,26 +6524,26 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vue/compiler-core@npm:3.5.23":
-  version: 3.5.23
-  resolution: "@vue/compiler-core@npm:3.5.23"
+"@vue/compiler-core@npm:3.5.24":
+  version: 3.5.24
+  resolution: "@vue/compiler-core@npm:3.5.24"
   dependencies:
     "@babel/parser": "npm:^7.28.5"
-    "@vue/shared": "npm:3.5.23"
+    "@vue/shared": "npm:3.5.24"
     entities: "npm:^4.5.0"
     estree-walker: "npm:^2.0.2"
     source-map-js: "npm:^1.2.1"
-  checksum: 10c0/195c57b2eb8c6948bf3b1b3f65c2a5a9bf9e252376bcd22bd9b5e1787c4254abc4bffab5f15902c7820f5e607b26d44578cddeb39605ece37b611703c2d6152b
+  checksum: 10c0/d5b1421c0c0cfdff6b6ae2ef3d59b5901f0fec8ad2fa153f5ae1ec8487b898c92766353c661f68b892580ab0eacbc493632c946af8141045d6e76d67797b8a84
   languageName: node
   linkType: hard
 
 "@vue/compiler-dom@npm:^3.5.0":
-  version: 3.5.23
-  resolution: "@vue/compiler-dom@npm:3.5.23"
+  version: 3.5.24
+  resolution: "@vue/compiler-dom@npm:3.5.24"
   dependencies:
-    "@vue/compiler-core": "npm:3.5.23"
-    "@vue/shared": "npm:3.5.23"
-  checksum: 10c0/fb925b2d64de40c1b39852f5fd26fdec3238f8381ccc2b30a1bef372ef894fff4e6f0231f8a135a02d6a5c8b8254dc7018bcd136a689579a72a3a0e1ff211a89
+    "@vue/compiler-core": "npm:3.5.24"
+    "@vue/shared": "npm:3.5.24"
+  checksum: 10c0/d49cb715f2e1cb2272ede2e41901282fb3f6fbdf489c8aa737e60c68e21216e07b72942695a80430fee8f11e5933e36fc90615b146b189cac925bf32f2727c95
   languageName: node
   linkType: hard
 
@@ -6578,10 +6578,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vue/shared@npm:3.5.23, @vue/shared@npm:^3.5.0":
-  version: 3.5.23
-  resolution: "@vue/shared@npm:3.5.23"
-  checksum: 10c0/0f051ea60a756520b0b0af3d5058587b47f1942476c7f2cee6f78589c97c246acabdea11c73e2f84f13ecfb36c1160aacecca37694144326ebec8c108103bb89
+"@vue/shared@npm:3.5.24, @vue/shared@npm:^3.5.0":
+  version: 3.5.24
+  resolution: "@vue/shared@npm:3.5.24"
+  checksum: 10c0/4fd5665539fa5be3d12280c1921a8db3a707115fef54d22d83ce347ea06e3b1089dfe07292e0c46bbebf23553c7c1ec98010972ebccf10532db82422801288ff
   languageName: node
   linkType: hard
 
@@ -10099,9 +10099,9 @@ __metadata:
   linkType: hard
 
 "exsolve@npm:^1.0.7":
-  version: 1.0.7
-  resolution: "exsolve@npm:1.0.7"
-  checksum: 10c0/4479369d0bd84bb7e0b4f5d9bc18d26a89b6dbbbccd73f9d383d14892ef78ddbe159e01781055342f83dc00ebe90044036daf17ddf55cc21e2cac6609aa15631
+  version: 1.0.8
+  resolution: "exsolve@npm:1.0.8"
+  checksum: 10c0/65e44ae05bd4a4a5d87cfdbbd6b8f24389282cf9f85fa5feb17ca87ad3f354877e6af4cd99e02fc29044174891f82d1d68c77f69234410eb8f163530e6278c67
   languageName: node
   linkType: hard
 
@@ -18670,8 +18670,8 @@ __metadata:
   linkType: hard
 
 "vite@npm:^5.0.0 || ^6.0.0 || ^7.0.0, vite@npm:^5.0.0 || ^6.0.0 || ^7.0.0-0":
-  version: 7.2.1
-  resolution: "vite@npm:7.2.1"
+  version: 7.2.2
+  resolution: "vite@npm:7.2.2"
   dependencies:
     esbuild: "npm:^0.25.0"
     fdir: "npm:^6.5.0"
@@ -18720,7 +18720,7 @@ __metadata:
       optional: true
   bin:
     vite: bin/vite.js
-  checksum: 10c0/25fbcfc67b1598fa6152f3ed0a7355144a2ac203859ad3b6a2e466b0930ec1081c19cc6f0d83104897517ecf30c0aac3e4a50c4e5e2980d3659decb1d9e41a28
+  checksum: 10c0/9c76ee441f8dbec645ddaecc28d1f9cf35670ffa91cff69af7b1d5081545331603f0b1289d437b2fa8dc43cdc77b4d96b5bd9c9aed66310f490cb1a06f9c814c
   languageName: node
   linkType: hard
 

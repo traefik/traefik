@@ -20,6 +20,7 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     strategy:
       matrix:
@@ -51,12 +52,12 @@ jobs:
 
     steps:
       - name: Check out code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: Set up Go ${{ env.GO_VERSION }}
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         env:
           ImageOS: ${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.goarm }}
         with:
@@ -64,7 +65,7 @@ jobs:
           check-latest: true
 
       - name: Artifact webui
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: webui.tar.gz
 

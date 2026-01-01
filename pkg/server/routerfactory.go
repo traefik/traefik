@@ -23,8 +23,9 @@ import (
 
 // RouterFactory the factory of TCP/UDP routers.
 type RouterFactory struct {
-	entryPointsTCP  []string
-	entryPointsUDP  []string
+	entryPointsTCP []string
+	entryPointsUDP []string
+
 	allowACMEByPass map[string]bool
 
 	managerFactory *service.ManagerFactory

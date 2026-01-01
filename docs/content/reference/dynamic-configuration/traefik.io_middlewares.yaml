@@ -1211,8 +1211,9 @@ spec:
                   More info: https://doc.traefik.io/traefik/v3.6/middlewares/http/redirectscheme/
                 properties:
                   permanent:
-                    description: Permanent defines whether the redirection is permanent
-                      (308).
+                    description: |-
+                      Permanent defines whether the redirection is permanent.
+                      For HTTP GET requests a 301 is returned, otherwise a 308 is returned.
                     type: boolean
                   port:
                     description: Port defines the port of the new URL.

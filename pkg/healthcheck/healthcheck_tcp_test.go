@@ -481,7 +481,7 @@ func TestServiceTCPHealthChecker_Launch(t *testing.T) {
 			}
 
 			// Wait for all health checks to complete deterministically
-			for range test.server.StatusSequence {
+			for i := range test.server.StatusSequence {
 				test.server.Next()
 
 				initialUpserted := lb.numUpsertedServers
@@ -490,6 +490,11 @@ func TestServiceTCPHealthChecker_Launch(t *testing.T) {
 				for time.Now().Before(deadline) {
 					time.Sleep(5 * time.Millisecond)
 					if lb.numUpsertedServers > initialUpserted || lb.numRemovedServers > initialRemoved {
+						// Stop the health checker immediately after the last expected sequence completes
+						// to prevent extra health checks from firing and modifying the counters.
+						if i == len(test.server.StatusSequence)-1 {
+							cancel()
+						}
 						break
 					}
 				}

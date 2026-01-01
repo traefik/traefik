@@ -1,9 +1,9 @@
 import { Flex, globalCss, styled } from '@traefiklabs/faency'
 import { ReactNode, useMemo, useState } from 'react'
-import { Helmet } from 'react-helmet-async'
 import { useLocation } from 'react-router-dom'
 
 import Container from './Container'
+import PageTitle from './PageTitle'
 
 import { ToastPool } from 'components/ToastPool'
 import { ToastProvider } from 'contexts/toasts'
@@ -64,9 +64,7 @@ const Page = ({ children }: Props) => {
   return (
     <ToastProvider>
       {globalStyles()}
-      <Helmet>
-        <title>Traefik Proxy</title>
-      </Helmet>
+      <PageTitle />
       <Flex>
         <SideBarPanel isOpen={isSideBarPanelOpen} onOpenChange={setIsSideBarPanelOpen} />
         <SideNav isExpanded={isSideBarPanelOpen} onSidePanelToggle={() => setIsSideBarPanelOpen(true)} isResponsive />

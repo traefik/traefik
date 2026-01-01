@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/traefik/traefik/v3/pkg/ip"
+	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
 	"golang.org/x/net/http/httpguts"
 )
 
@@ -47,16 +48,17 @@ var xHeaders = []string{
 // Unless insecure is set,
 // it first removes all the existing values for those headers if the remote address is not one of the trusted ones.
 type XForwarded struct {
-	insecure          bool
-	trustedIPs        []string
-	connectionHeaders []string
-	ipChecker         *ip.Checker
-	next              http.Handler
-	hostname          string
+	insecure               bool
+	trustedIPs             []string
+	connectionHeaders      []string
+	notAppendXForwardedFor bool
+	ipChecker              *ip.Checker
+	next                   http.Handler
+	hostname               string
 }
 
 // NewXForwarded creates a new XForwarded.
-func NewXForwarded(insecure bool, trustedIPs []string, connectionHeaders []string, next http.Handler) (*XForwarded, error) {
+func NewXForwarded(insecure bool, trustedIPs []string, connectionHeaders []string, notAppendXForwardedFor bool, next http.Handler) (*XForwarded, error) {
 	var ipChecker *ip.Checker
 	if len(trustedIPs) > 0 {
 		var err error
@@ -72,12 +74,13 @@ func NewXForwarded(insecure bool, trustedIPs []string, connectionHeaders []strin
 	}
 
 	return &XForwarded{
-		insecure:          insecure,
-		trustedIPs:        trustedIPs,
-		connectionHeaders: connectionHeaders,
-		ipChecker:         ipChecker,
-		next:              next,
-		hostname:          hostname,
+		insecure:               insecure,
+		trustedIPs:             trustedIPs,
+		connectionHeaders:      connectionHeaders,
+		notAppendXForwardedFor: notAppendXForwardedFor,
+		ipChecker:              ipChecker,
+		next:                   next,
+		hostname:               hostname,
 	}, nil
 }
 
@@ -197,6 +200,10 @@ func (x *XForwarded) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	x.rewrite(r)
 
 	x.removeConnectionHeaders(r)
+
+	if x.notAppendXForwardedFor {
+		r = r.WithContext(httputil.SetNotAppendXFF(r.Context()))
+	}
 
 	x.next.ServeHTTP(w, r)
 }

@@ -8,13 +8,14 @@ on:
 jobs:
   sync:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       packages: write
       contents: read
     if: github.repository == 'traefik/traefik'
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: imjasonh/setup-crane@v0.4
       
