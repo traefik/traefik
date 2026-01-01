@@ -28,7 +28,6 @@ import (
 	"github.com/go-acme/lego/v4/registration"
 	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
-
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	httpmuxer "github.com/traefik/traefik/v3/pkg/muxer/http"
 	tcpmuxer "github.com/traefik/traefik/v3/pkg/muxer/tcp"
