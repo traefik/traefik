@@ -6,13 +6,17 @@ import (
 	"encoding/binary"
 	"encoding/pem"
 	"fmt"
-	"github.com/cloudflare/circl/hpke"
-	"golang.org/x/crypto/cryptobyte"
-	"log"
+	"io"
 	"math/rand/v2"
 	"net/http"
 	"net/url"
+
+	"github.com/cloudflare/circl/hpke"
+	"golang.org/x/crypto/cryptobyte"
 )
+
+// sha256PrivateKeyLength is the required private key length for SHA-256 based ECDH.
+const sha256PrivateKeyLength = 32
 
 func UnmarshalECHKey(data []byte) (*tls.EncryptedClientHelloKey, error) {
 	var k tls.EncryptedClientHelloKey
@@ -35,14 +39,14 @@ func UnmarshalECHKey(data []byte) (*tls.EncryptedClientHelloKey, error) {
 	}
 
 	if len(k.Config) == 0 || len(k.PrivateKey) == 0 {
-		return nil, fmt.Errorf("lack of ECH configuration or private key in PEM file")
+		return nil, fmt.Errorf("missing ECH configuration or private key in PEM file")
 	}
 
 	// go ecdh now only supports SHA-256 (32-byte private key)
-	if len(k.PrivateKey) < 32 {
-		return nil, fmt.Errorf("invalid private key length: expected at least 32 bytes, got %d bytes", len(k.PrivateKey))
-	} else if len(k.PrivateKey) > 32 {
-		k.PrivateKey = k.PrivateKey[len(k.PrivateKey)-32:]
+	if len(k.PrivateKey) < sha256PrivateKeyLength {
+		return nil, fmt.Errorf("invalid private key length: expected at least %d bytes, got %d bytes", sha256PrivateKeyLength, len(k.PrivateKey))
+	} else if len(k.PrivateKey) > sha256PrivateKeyLength {
+		k.PrivateKey = k.PrivateKey[len(k.PrivateKey)-sha256PrivateKeyLength:]
 	}
 
 	k.SendAsRetry = true
@@ -52,7 +56,7 @@ func UnmarshalECHKey(data []byte) (*tls.EncryptedClientHelloKey, error) {
 
 func MarshalECHKey(k *tls.EncryptedClientHelloKey) ([]byte, error) {
 	if len(k.Config) == 0 || len(k.PrivateKey) == 0 {
-		return nil, fmt.Errorf("lack of ECH configuration or private key")
+		return nil, fmt.Errorf("missing ECH configuration or private key")
 	}
 	lengthPrefix := make([]byte, 2)
 	binary.BigEndian.PutUint16(lengthPrefix, uint16(len(k.Config)))
@@ -157,37 +161,15 @@ func NewECHKey(publicName string) (*tls.EncryptedClientHelloKey, error) {
 	}, nil
 }
 
-// startECHServer starts a TLS server that supports Encrypted Client Hello (ECH).
-func startECHServer(bind string, cert tls.Certificate, echKey tls.EncryptedClientHelloKey) {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Hello, ECH-enabled TLS server!")
-	})
-
-	server := &http.Server{
-		Addr:    bind,
-		Handler: mux,
-		TLSConfig: &tls.Config{
-			Certificates:             []tls.Certificate{cert},
-			MinVersion:               tls.VersionTLS13,
-			EncryptedClientHelloKeys: []tls.EncryptedClientHelloKey{echKey},
-		},
-	}
-
-	if err := server.ListenAndServeTLS("", ""); err != nil {
-		log.Fatalf("server error: %v", err)
-	}
-}
-
-type ECHRequestConf[T []byte | string] struct {
+type ECHRequestConfig[T []byte | string] struct {
 	URL      string `description:"The URL to request." json:"u" export:"true"`
-	Host     string `description:"The host/sni to request with." json:"h" export:"true"`
-	ECH      T      `description:"A base64-encoded ECH public config list." json:"ech" export:"true"`
+	Host     string `description:"The host/sni to request." json:"h" export:"true"`
+	ECH      T      `description:"Base64-encoded ECH public configuration list for client use." json:"ech" export:"true"`
 	Insecure bool   `description:"If true, skip TLS verification (for testing purposes)." json:"k" export:"true"`
 }
 
 // RequestWithECH sends a GET request to a server using the provided ECH configuration.
-func RequestWithECH[T []byte | string](c ECHRequestConf[T]) (body []byte, err error) {
+func RequestWithECH[T []byte | string](c ECHRequestConfig[T]) (body []byte, err error) {
 	// Decode the ECH configuration from base64 if it's a string, otherwise use it directly.
 	var ech []byte
 	if s, ok := any(c.ECH).(string); ok {
@@ -199,7 +181,11 @@ func RequestWithECH[T []byte | string](c ECHRequestConf[T]) (body []byte, err er
 		ech = []byte(c.ECH)
 	}
 
-	requestURL, _ := url.Parse(c.URL)
+	requestURL, err := url.Parse(c.URL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse URL: %w", err)
+	}
+
 	if c.Host == "" {
 		c.Host = requestURL.Hostname()
 	}
@@ -226,13 +212,12 @@ func RequestWithECH[T []byte | string](c ECHRequestConf[T]) (body []byte, err er
 	}
 	defer resp.Body.Close()
 
-	body = make([]byte, 1024)
-	n, _ := resp.Body.Read(body)
-	fmt.Printf("server response: %s\n", body[:n])
-	fmt.Printf("Status code: %d\n", resp.StatusCode)
-	fmt.Printf("Response header: %v\n", resp.Header)
+	body, err = io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
 
-	return body[:n], nil
+	return body, nil
 }
 
 func ECHConfigToConfigList(echConfig []byte) ([]byte, error) {

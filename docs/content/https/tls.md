@@ -608,12 +608,6 @@ AQALZXhhbXBsZS5jb20AAA==
 -----END ECHCONFIG-----
 ```
 
-To generate the ECH configuration, you can run:
-
-```bash
-traefik ech generate example.com
-```
-
 ```yaml tab="File (YAML)"
 # Dynamic configuration
 
