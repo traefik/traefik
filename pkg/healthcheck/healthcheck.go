@@ -50,6 +50,13 @@ type target struct {
 	name      string
 }
 
+// targetState tracks the health check state for a target.
+type targetState struct {
+	healthy           bool // Current health status
+	consecutiveFails  int  // Consecutive failure count
+	consecutivePasses int  // Consecutive success count (while unhealthy)
+}
+
 type ServiceHealthChecker struct {
 	balancer StatusSetter
 	info     *runtime.ServiceInfo
@@ -67,6 +74,14 @@ type ServiceHealthChecker struct {
 	unhealthyTargets chan target
 
 	serviceName string
+
+	// Threshold configuration
+	failsThreshold  int
+	passesThreshold int
+
+	// State tracking
+	stateMu sync.RWMutex
+	states  map[string]*targetState
 }
 
 func NewServiceHealthChecker(ctx context.Context, metrics metricsHealthCheck, config *dynamic.ServerHealthCheck, service StatusSetter, info *runtime.ServiceInfo, transport http.RoundTripper, targets map[string]*url.URL, serviceName string) *ServiceHealthChecker {
@@ -108,13 +123,26 @@ func NewServiceHealthChecker(ctx context.Context, metrics metricsHealthCheck, co
 	}
 
 	healthyTargets := make(chan target, len(targets))
+	states := make(map[string]*targetState, len(targets))
 	for name, targetURL := range targets {
 		healthyTargets <- target{
 			targetURL: targetURL,
 			name:      name,
 		}
+		// All targets start as healthy
+		states[name] = &targetState{healthy: true}
 	}
 	unhealthyTargets := make(chan target, len(targets))
+
+	// Use default thresholds if not configured (0 means use default of 1)
+	failsThreshold := config.FailsThreshold
+	if failsThreshold <= 0 {
+		failsThreshold = 1
+	}
+	passesThreshold := config.PassesThreshold
+	if passesThreshold <= 0 {
+		passesThreshold = 1
+	}
 
 	return &ServiceHealthChecker{
 		balancer:          service,
@@ -128,6 +156,9 @@ func NewServiceHealthChecker(ctx context.Context, metrics metricsHealthCheck, co
 		serviceName:       serviceName,
 		client:            client,
 		metrics:           metrics,
+		failsThreshold:    failsThreshold,
+		passesThreshold:   passesThreshold,
+		states:            states,
 	}
 }
 
@@ -170,8 +201,7 @@ func (shc *ServiceHealthChecker) healthcheck(ctx context.Context, targets chan t
 				default:
 				}
 
-				up := true
-				serverUpMetricValue := float64(1)
+				checkPassed := true
 
 				if err := shc.executeHealthCheck(ctx, shc.config, target.targetURL); err != nil {
 					// The context is canceled when the dynamic configuration is refreshed.
@@ -184,19 +214,22 @@ func (shc *ServiceHealthChecker) healthcheck(ctx context.Context, targets chan t
 						Err(err).
 						Msg("Health check failed.")
 
-					up = false
-					serverUpMetricValue = float64(0)
+					checkPassed = false
 				}
 
-				shc.balancer.SetStatus(ctx, target.name, up)
+				// Apply threshold logic and determine current perceived health status
+				nowHealthy := shc.updateTargetState(target.name, checkPassed)
+
+				shc.balancer.SetStatus(ctx, target.name, nowHealthy)
 
 				var statusStr string
-				if up {
+				var serverUpMetricValue float64
+				if nowHealthy {
 					statusStr = runtime.StatusUp
-					shc.healthyTargets <- target
+					serverUpMetricValue = float64(1)
 				} else {
 					statusStr = runtime.StatusDown
-					shc.unhealthyTargets <- target
+					serverUpMetricValue = float64(0)
 				}
 
 				shc.info.UpdateServerStatus(target.targetURL.String(), statusStr)
@@ -204,9 +237,63 @@ func (shc *ServiceHealthChecker) healthcheck(ctx context.Context, targets chan t
 				shc.metrics.ServiceServerUpGauge().
 					With("service", shc.serviceName, "url", target.targetURL.String()).
 					Set(serverUpMetricValue)
+
+				// Route target to appropriate channel based on current health status
+				if nowHealthy {
+					shc.healthyTargets <- target
+				} else {
+					shc.unhealthyTargets <- target
+				}
 			}
 		}
 	}
+}
+
+// updateTargetState updates the target state based on the health check result and thresholds.
+// Returns the current perceived health status after applying threshold logic.
+func (shc *ServiceHealthChecker) updateTargetState(targetName string, checkPassed bool) bool {
+	shc.stateMu.Lock()
+	defer shc.stateMu.Unlock()
+
+	state, ok := shc.states[targetName]
+	if !ok {
+		// This shouldn't happen, but handle gracefully
+		state = &targetState{healthy: true}
+		shc.states[targetName] = state
+	}
+
+	if checkPassed {
+		if state.healthy {
+			// Already healthy, reset fail counter and stay healthy
+			state.consecutiveFails = 0
+			return true
+		}
+		// Currently unhealthy, increment pass counter
+		state.consecutivePasses++
+		state.consecutiveFails = 0
+		if state.consecutivePasses >= shc.passesThreshold {
+			// Transition to healthy
+			state.healthy = true
+			state.consecutivePasses = 0
+		}
+		return state.healthy
+	}
+
+	// Check failed
+	if !state.healthy {
+		// Already unhealthy, reset pass counter and stay unhealthy
+		state.consecutivePasses = 0
+		return false
+	}
+	// Currently healthy, increment fail counter
+	state.consecutiveFails++
+	state.consecutivePasses = 0
+	if state.consecutiveFails >= shc.failsThreshold {
+		// Transition to unhealthy
+		state.healthy = false
+		state.consecutiveFails = 0
+	}
+	return state.healthy
 }
 
 func (shc *ServiceHealthChecker) executeHealthCheck(ctx context.Context, config *dynamic.ServerHealthCheck, target *url.URL) error {

@@ -188,10 +188,18 @@ type TCPServerHealthCheck struct {
 	Interval          ptypes.Duration  `json:"interval,omitempty" toml:"interval,omitempty" yaml:"interval,omitempty" export:"true"`
 	UnhealthyInterval *ptypes.Duration `json:"unhealthyInterval,omitempty" toml:"unhealthyInterval,omitempty" yaml:"unhealthyInterval,omitempty" export:"true"`
 	Timeout           ptypes.Duration  `json:"timeout,omitempty" toml:"timeout,omitempty" yaml:"timeout,omitempty" export:"true"`
+	// FailsThreshold defines the number of consecutive failed health checks required before marking the backend as unavailable.
+	// Default: 1 (a single failure marks the backend as unhealthy).
+	FailsThreshold int `json:"failsThreshold,omitempty" toml:"failsThreshold,omitempty" yaml:"failsThreshold,omitempty" export:"true"`
+	// PassesThreshold defines the number of consecutive successful health checks required before marking an unavailable backend as available again.
+	// Default: 1 (a single success marks the backend as healthy).
+	PassesThreshold int `json:"passesThreshold,omitempty" toml:"passesThreshold,omitempty" yaml:"passesThreshold,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values for a TCPServerHealthCheck.
 func (t *TCPServerHealthCheck) SetDefaults() {
 	t.Interval = DefaultHealthCheckInterval
 	t.Timeout = DefaultHealthCheckTimeout
+	t.FailsThreshold = 1
+	t.PassesThreshold = 1
 }
