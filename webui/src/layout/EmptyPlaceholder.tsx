@@ -1,4 +1,4 @@
-import { AriaTd, Flex, Text } from '@traefiklabs/faency'
+import { AriaTd, Flex, Text } from '@traefik-labs/faency'
 import { FiAlertTriangle } from 'react-icons/fi'
 
 type EmptyPlaceholderProps = {

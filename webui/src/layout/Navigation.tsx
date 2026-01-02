@@ -19,7 +19,7 @@ import {
   Text,
   Tooltip,
   VisuallyHidden,
-} from '@traefiklabs/faency'
+} from '@traefik-labs/faency'
 import { useContext, useEffect, useMemo, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { BsChevronDoubleRight, BsChevronDoubleLeft } from 'react-icons/bs'

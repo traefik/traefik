@@ -1,4 +1,4 @@
-import { Box, Flex, H1, Skeleton, styled, Text } from '@traefiklabs/faency'
+import { Box, Flex, H1, Skeleton, styled, Text } from '@traefik-labs/faency'
 import { useMemo } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { FiGlobe, FiInfo, FiShield } from 'react-icons/fi'
@@ -72,21 +72,35 @@ type TcpHealthCheck = {
 }
 
 export const TcpServicePanels = ({ data }: TcpDetailProps) => {
-  const serversList = useMemo<ServerInfo[]>(
-    () =>
-      data.loadBalancer?.servers
-        ?.map((server: TcpServer) => {
-          const address = server.address || server.url
-          if (!address) return null
-          return {
+  const serversList = useMemo<ServerInfo[]>(() => {
+    const serversMap = new Map<string, ServerInfo>()
+
+    // First, add servers from loadBalancer with their weights
+    data.loadBalancer?.servers?.forEach((server: TcpServer) => {
+      const address = server.address || server.url
+      if (!address) return
+      serversMap.set(address, {
+        address,
+        status: data.serverStatus?.[address] || 'DOWN',
+        weight: server.weight,
+      })
+    })
+
+    // Then, add servers from serverStatus that aren't already in the list
+    if (data.serverStatus) {
+      Object.entries(data.serverStatus).forEach(([address, status]) => {
+        if (!serversMap.has(address)) {
+          serversMap.set(address, {
             address,
-            status: data.serverStatus?.[address] || 'DOWN',
-            weight: server.weight,
-          }
-        })
-        .filter((server): server is ServerInfo => server !== null) || [],
-    [data.loadBalancer?.servers, data.serverStatus],
-  )
+            status,
+            weight: undefined,
+          })
+        }
+      })
+    }
+
+    return Array.from(serversMap.values())
+  }, [data.loadBalancer?.servers, data.serverStatus])
   const getProviderFromName = (serviceName: string): string => {
     const [, provider] = serviceName.split('@')
     return provider || data.provider

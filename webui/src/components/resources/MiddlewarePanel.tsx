@@ -1,4 +1,4 @@
-import { Box, Flex, H3, styled, Text } from '@traefiklabs/faency'
+import { Box, Flex, H3, styled, Text } from '@traefik-labs/faency'
 import { FiLayers } from 'react-icons/fi'
 
 import { DetailSection, EmptyPlaceholder, ItemBlock, LayoutTwoCols, ProviderName } from './DetailSections'
