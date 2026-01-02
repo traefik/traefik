@@ -8,6 +8,9 @@ set -eu
 EXIT_CODE=0
 readonly BASE_DIR=/app
 
+# Run YAML linter for Kubernetes multi-resource files
+/lint-yaml.sh "${BASE_DIR}" || EXIT_CODE=1
+
 echo "== Linting Markdown"
 # Uses the file ".markdownlint.json" for setup
 cd "${BASE_DIR}" || exit 1
