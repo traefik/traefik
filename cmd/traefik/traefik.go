@@ -23,7 +23,6 @@ import (
 	"github.com/spiffe/go-spiffe/v2/workloadapi"
 	"github.com/traefik/paerser/cli"
 	"github.com/traefik/traefik/v3/cmd"
-	cmdECH "github.com/traefik/traefik/v3/cmd/ech"
 	"github.com/traefik/traefik/v3/cmd/healthcheck"
 	cmdVersion "github.com/traefik/traefik/v3/cmd/version"
 	tcli "github.com/traefik/traefik/v3/pkg/cli"
@@ -76,12 +75,6 @@ Complete documentation is available at https://traefik.io`,
 	}
 
 	err = cmdTraefik.AddCommand(cmdVersion.NewCmd())
-	if err != nil {
-		stdlog.Println(err)
-		os.Exit(1)
-	}
-
-	err = cmdTraefik.AddCommand(cmdECH.NewCmd())
 	if err != nil {
 		stdlog.Println(err)
 		os.Exit(1)
