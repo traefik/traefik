@@ -8,11 +8,35 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
+	"log"
 	"math/big"
+	"net/http"
 	"reflect"
 	"testing"
 	"time"
 )
+
+// startECHServer starts a TLS server that supports Encrypted Client Hello (ECH).
+func startECHServer(bind string, cert tls.Certificate, echKey tls.EncryptedClientHelloKey) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "Hello, ECH-enabled TLS server!")
+	})
+
+	server := &http.Server{
+		Addr:    bind,
+		Handler: mux,
+		TLSConfig: &tls.Config{
+			Certificates:             []tls.Certificate{cert},
+			MinVersion:               tls.VersionTLS13,
+			EncryptedClientHelloKeys: []tls.EncryptedClientHelloKey{echKey},
+		},
+	}
+
+	if err := server.ListenAndServeTLS("", ""); err != nil {
+		log.Fatalf("server error: %v", err)
+	}
+}
 
 func TestECH(t *testing.T) {
 	const commonName = "server.local"
@@ -48,7 +72,7 @@ func TestECH(t *testing.T) {
 
 	go startECHServer("localhost:8443", testCert, *echKey)
 	time.Sleep(1 * time.Second) // Wait for the server to start
-	response, err := RequestWithECH(ECHRequestConf[[]byte]{
+	response, err := RequestWithECH(ECHRequestConfig[[]byte]{
 		URL:      "https://localhost:8443/",
 		Host:     commonName,
 		ECH:      echConfigList,
