@@ -1,0 +1,22 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-with-client-body-buffer-size-invalid
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/client-body-buffer-size: "10A"
+
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: hostname.localhost
+      http:
+        paths:
+          - path: /
+            pathType: Exact
+            backend:
+              service:
+                name: whoami
+                port:
+                  number: 80

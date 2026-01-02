@@ -804,6 +804,10 @@ func (p *Provider) applyMiddlewares(namespace, routerKey string, ingressConfig i
 
 	applyUpstreamVhost(routerKey, ingressConfig, rt, conf)
 
+	if err := applyBufferingConfiguration(routerKey, ingressConfig, rt, conf); err != nil {
+		return fmt.Errorf("applying buffering: %w", err)
+	}
+
 	if err := p.applyCustomHeaders(routerKey, ingressConfig, rt, conf); err != nil {
 		return fmt.Errorf("applying custom headers: %w", err)
 	}
@@ -1005,6 +1009,64 @@ func applyWhitelistSourceRangeConfiguration(routerName string, ingressConfig ing
 		},
 	}
 	rt.Middlewares = append(rt.Middlewares, whitelistSourceRangeMiddlewareName)
+}
+
+func applyBufferingConfiguration(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
+	bodyMaxRequestSize := ptr.Deref(ingressConfig.BodyMaxRequestSize, "")
+	bodyMaxBufferSize := ptr.Deref(ingressConfig.BodyMaxBufferSize, "")
+	if bodyMaxRequestSize == "" && bodyMaxBufferSize == "" {
+		return nil
+	}
+	buffering := &dynamic.Buffering{}
+
+	if bodyMaxRequestSize != "" {
+		size, err := nginxSizeToBytes(bodyMaxRequestSize)
+		if err != nil {
+			return errors.New("nginx.ingress.kubernetes.io/proxy-body-size has invalid value")
+		}
+
+		buffering.MaxRequestBodyBytes = size
+	}
+
+	if bodyMaxBufferSize != "" {
+		size, err := nginxSizeToBytes(bodyMaxBufferSize)
+		if err != nil {
+			return errors.New("nginx.ingress.kubernetes.io/client-body-buffer-size has invalid value")
+		}
+
+		buffering.MemRequestBodyBytes = size
+	}
+
+	bufferingMiddlewareName := routerName + "-buffering"
+	conf.HTTP.Middlewares[bufferingMiddlewareName] = &dynamic.Middleware{
+		Buffering: buffering,
+	}
+	rt.Middlewares = append(rt.Middlewares, bufferingMiddlewareName)
+
+	return nil
+}
+
+func nginxSizeToBytes(nginxSize string) (int64, error) {
+	// calculating memory bytes as defined in https://nginx.org/en/docs/syntax.html
+
+	units := map[string]int64{
+		"g": 1024 * 1024 * 1024,
+		"m": 1024 * 1024,
+		"k": 1024,
+		"b": 1,
+		"":  1,
+	}
+
+	r := regexp.MustCompile(`^(?i)\s*([0-9]+)\s*([b|k|m|g]?)\s*$`)
+	if !r.MatchString(nginxSize) {
+		return 0, fmt.Errorf("unable to parse number %s", nginxSize)
+	}
+	size := r.FindStringSubmatch(nginxSize)
+	bytes, err := strconv.ParseInt(size[1], 10, 64)
+	if err != nil {
+		return 0, err
+	}
+	return bytes * units[strings.ToLower(size[2])], nil
 }
 
 func applySSLRedirectConfiguration(routerName string, ingressConfig ingressConfig, hasTLS bool, rt *dynamic.Router, conf *dynamic.Configuration) {

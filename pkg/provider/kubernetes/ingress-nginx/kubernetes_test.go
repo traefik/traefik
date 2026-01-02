@@ -1,6 +1,7 @@
 package ingressnginx
 
 import (
+	"errors"
 	"math"
 	"os"
 	"path/filepath"
@@ -892,6 +893,347 @@ func TestLoadIngresses(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
+		{
+			desc: "WhitelistSourceRange when proxy body size is 10MB",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/14-ingress-with-proxy-body-size.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-proxy-body-size-rule-0-path-0": {
+							Rule:        "Host(`hostname.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-proxy-body-size-rule-0-path-0-buffering"},
+							Service:     "default-ingress-with-proxy-body-size-whoami-80",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-proxy-body-size-rule-0-path-0-buffering": {
+							Buffering: &dynamic.Buffering{
+								MaxRequestBodyBytes: 10 * 1024 * 1024,
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-proxy-body-size-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "WhitelistSourceRange when proxy body size is invalid",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/15-ingress-with-proxy-body-size-invalid.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-proxy-body-size-invalid-rule-0-path-0": {
+							Rule:        "Host(`hostname.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Middlewares: nil,
+							Service:     "default-ingress-with-proxy-body-size-invalid-whoami-80",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-proxy-body-size-invalid-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "WhitelistSourceRange when proxy body size is empty",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/16-ingress-with-proxy-body-size-empty.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-proxy-body-size-empty-rule-0-path-0": {
+							Rule:        "Host(`hostname.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Middlewares: nil,
+							Service:     "default-ingress-with-proxy-body-size-empty-whoami-80",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-proxy-body-size-empty-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "WhitelistSourceRange when client body buffer size is 10MB",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/17-ingress-with-client-body-buffer-size.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-client-body-buffer-size-rule-0-path-0": {
+							Rule:        "Host(`hostname.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-client-body-buffer-size-rule-0-path-0-buffering"},
+							Service:     "default-ingress-with-client-body-buffer-size-whoami-80",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-client-body-buffer-size-rule-0-path-0-buffering": {
+							Buffering: &dynamic.Buffering{
+								MemRequestBodyBytes: 10 * 1024 * 1024,
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-client-body-buffer-size-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "WhitelistSourceRange when client body buffer is invalid",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/18-ingress-with-client-body-buffer-size-invalid.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-client-body-buffer-size-invalid-rule-0-path-0": {
+							Rule:        "Host(`hostname.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Middlewares: nil,
+							Service:     "default-ingress-with-client-body-buffer-size-invalid-whoami-80",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-client-body-buffer-size-invalid-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "WhitelistSourceRange when client body buffer size is empty",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/19-ingress-with-client-body-buffer-size-empty.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-client-body-buffer-size-empty-rule-0-path-0": {
+							Rule:        "Host(`hostname.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Middlewares: nil,
+							Service:     "default-ingress-with-client-body-buffer-size-empty-whoami-80",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-client-body-buffer-size-empty-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "WhitelistSourceRange with proxy body size and client body buffer",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/20-ingress-with-proxy-body-size-and-client-body-buffer-size.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-proxy-body-size-and-client-body-buffer-size-rule-0-path-0": {
+							Rule:        "Host(`hostname.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-proxy-body-size-and-client-body-buffer-size-rule-0-path-0-buffering"},
+							Service:     "default-ingress-with-proxy-body-size-and-client-body-buffer-size-whoami-80",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-proxy-body-size-and-client-body-buffer-size-rule-0-path-0-buffering": {
+							Buffering: &dynamic.Buffering{
+								MaxRequestBodyBytes: 10 * 1024 * 1024,
+								MemRequestBodyBytes: 10 * 1024,
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-proxy-body-size-and-client-body-buffer-size-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -937,4 +1279,89 @@ func readResources(t *testing.T, paths []string) []runtime.Object {
 	}
 
 	return k8sObjects
+}
+
+func TestNginxSizeToBytes(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		value    string
+		err      error
+		expected int64
+	}{
+		{
+			desc:     "Testing no unit",
+			expected: 100,
+			value:    "100",
+			err:      nil,
+		},
+		{
+			desc:     "Testing unit b",
+			expected: 100,
+			value:    "100b",
+			err:      nil,
+		},
+		{
+			desc:     "Testing unit B",
+			expected: 100,
+			value:    "100B",
+			err:      nil,
+		},
+		{
+			desc:     "Testing unit KB",
+			expected: 100 * 1024,
+			value:    "100k",
+			err:      nil,
+		},
+		{
+			desc:     "Testing unit MB",
+			expected: 100 * 1024 * 1024,
+			value:    "100m",
+			err:      nil,
+		},
+		{
+			desc:     "Testing unit GB",
+			expected: 100 * 1024 * 1024 * 1024,
+			value:    "100g",
+			err:      nil,
+		},
+		{
+			desc:     "Testing unit GB with whitespaces",
+			expected: 100 * 1024 * 1024 * 1024,
+			value:    " 100 g ",
+			err:      nil,
+		},
+		{
+			desc:     "Testing unit KB uppercase",
+			expected: 100 * 1024,
+			value:    "100K",
+			err:      nil,
+		},
+		{
+			desc:     "Testing unit MB uppercase",
+			expected: 100 * 1024 * 1024,
+			value:    "100M",
+			err:      nil,
+		},
+		{
+			desc:     "Testing unit GB uppercase",
+			expected: 100 * 1024 * 1024 * 1024,
+			value:    "100G",
+			err:      nil,
+		},
+		{
+			desc:     "Testing invalid input",
+			expected: 0,
+			value:    "100A",
+			err:      errors.New("unable to parse number 100A"),
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+			size, err := nginxSizeToBytes(test.value)
+			assert.Equal(t, test.err, err)
+			assert.Equal(t, test.expected, size)
+		})
+	}
 }

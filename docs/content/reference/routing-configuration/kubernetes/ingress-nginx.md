@@ -320,6 +320,13 @@ The following annotations are organized by category for easier navigation.
 |-------------------------------------------------------|--------------------------------------------------------------------------------------------|
 | <a id="opt-nginx-ingress-kubernetes-iowhitelist-source-range" href="#opt-nginx-ingress-kubernetes-iowhitelist-source-range" title="#opt-nginx-ingress-kubernetes-iowhitelist-source-range">`nginx.ingress.kubernetes.io/whitelist-source-range`</a> |                                                      |
 
+### Request Buffering
+
+| Annotation                                            | Limitations / Notes                                                                        |
+|-------------------------------------------------------|--------------------------------------------------------------------------------------------|
+| <a id="opt-nginx-ingress-kubernetes-ioproxy-body-size" href="#opt-nginx-ingress-kubernetes-ioproxy-body-size" title="#opt-nginx-ingress-kubernetes-ioproxy-body-size">`nginx.ingress.kubernetes.io/proxy-body-size`</a> |                                                      |
+| <a id="opt-nginx-ingress-kubernetes-ioclient-body-buffer-size" href="#opt-nginx-ingress-kubernetes-ioclient-body-buffer-size" title="#opt-nginx-ingress-kubernetes-ioclient-body-buffer-size">`nginx.ingress.kubernetes.io/client-body-buffer-size`</a> |                                                      |
+
 
 ## Limitations
 
@@ -372,7 +379,6 @@ The following annotations are organized by category for easier navigation.
 | <a id="opt-nginx-ingress-kubernetes-iocanary-by-cookie" href="#opt-nginx-ingress-kubernetes-iocanary-by-cookie" title="#opt-nginx-ingress-kubernetes-iocanary-by-cookie">`nginx.ingress.kubernetes.io/canary-by-cookie`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-iocanary-weight" href="#opt-nginx-ingress-kubernetes-iocanary-weight" title="#opt-nginx-ingress-kubernetes-iocanary-weight">`nginx.ingress.kubernetes.io/canary-weight`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-iocanary-weight-total" href="#opt-nginx-ingress-kubernetes-iocanary-weight-total" title="#opt-nginx-ingress-kubernetes-iocanary-weight-total">`nginx.ingress.kubernetes.io/canary-weight-total`</a> |                                                      |
-| <a id="opt-nginx-ingress-kubernetes-ioclient-body-buffer-size" href="#opt-nginx-ingress-kubernetes-ioclient-body-buffer-size" title="#opt-nginx-ingress-kubernetes-ioclient-body-buffer-size">`nginx.ingress.kubernetes.io/client-body-buffer-size`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-ioconfiguration-snippet" href="#opt-nginx-ingress-kubernetes-ioconfiguration-snippet" title="#opt-nginx-ingress-kubernetes-ioconfiguration-snippet">`nginx.ingress.kubernetes.io/configuration-snippet`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-iocustom-http-errors" href="#opt-nginx-ingress-kubernetes-iocustom-http-errors" title="#opt-nginx-ingress-kubernetes-iocustom-http-errors">`nginx.ingress.kubernetes.io/custom-http-errors`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-iodisable-proxy-intercept-errors" href="#opt-nginx-ingress-kubernetes-iodisable-proxy-intercept-errors" title="#opt-nginx-ingress-kubernetes-iodisable-proxy-intercept-errors">`nginx.ingress.kubernetes.io/disable-proxy-intercept-errors`</a> |                                                      |
