@@ -18,6 +18,7 @@ metadata:
   name: ingressrouteudpfoo
   namespace: apps
 spec:
+  ingressClassName: traefik-lb
   entryPoints:
     - fooudp  # The entry point where Traefik listens for incoming traffic.
   routes:
@@ -32,6 +33,7 @@ spec:
 
 | Field  |  Description | Default  | Required |
 |------------------------------------|-----------------------------|-------------------------------------------|-----------------------|
+| <a id="opt-ingressClassName" href="#opt-ingressClassName" title="#opt-ingressClassName">`ingressClassName`</a> | Defines the [IngressClass](https://kubernetes.io/docs/concepts/services-networking/ingress/#ingress-class) cluster resource to use. It replaces the deprecated `kubernetes.io/ingress.class` annotation.<br />The spec field takes precedence over the annotation. | | No |
 | <a id="opt-entryPoints" href="#opt-entryPoints" title="#opt-entryPoints">`entryPoints`</a> | List of entrypoints names.  | | No |
 | <a id="opt-routes" href="#opt-routes" title="#opt-routes">` routes `</a> | List of routes.  | | Yes |
 | <a id="opt-routesn-services" href="#opt-routesn-services" title="#opt-routesn-services">`routes[n].services`</a> | List of [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) definitions. See [here](#externalname-service) for `ExternalName Service` setup. | | No |
