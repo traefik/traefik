@@ -70,6 +70,10 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 					// ignore sub-dir
 					continue
 				}
+				if !isFileSupported(entry.Name()) {
+					// ignore unsupported file extension
+					continue
+				}
 				watchItems = append(watchItems, path.Join(p.Directory, entry.Name()))
 			}
 		case len(p.Filename) > 0:
@@ -122,7 +126,7 @@ func (p *Provider) addWatcher(pool *safe.Pool, items []string, configurationChan
 		log.Debug().Msgf("add watcher on: %s", item)
 		err = watcher.Add(item)
 		if err != nil {
-			return fmt.Errorf("error adding file watcher: %w", err)
+			return fmt.Errorf("error adding file watcher for %s: %w", item, err)
 		}
 	}
 
@@ -404,10 +408,8 @@ func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory st
 			continue
 		}
 
-		switch strings.ToLower(filepath.Ext(item.Name())) {
-		case ".toml", ".yaml", ".yml":
-			// noop
-		default:
+		if !isFileSupported(item.Name()) {
+			logger.Debug().Msg("Skipping file, unsupported extension")
 			continue
 		}
 
@@ -627,4 +629,13 @@ func readFile(filename string) (string, error) {
 		return string(buf), nil
 	}
 	return "", fmt.Errorf("invalid filename: %s", filename)
+}
+
+func isFileSupported(filename string) bool {
+	switch strings.ToLower(filepath.Ext(filename)) {
+	case ".toml", ".yaml", ".yml":
+		return true
+	default:
+		return false
+	}
 }
