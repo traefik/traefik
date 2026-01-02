@@ -2,11 +2,15 @@ package server
 
 import (
 	"context"
+	"crypto/rand"
 	"crypto/tls"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"net"
 	"net/http"
+	"os"
+	"strings"
 	"sync"
 
 	"github.com/quic-go/quic-go"
@@ -15,6 +19,32 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/static"
 	tcprouter "github.com/traefik/traefik/v3/pkg/server/router/tcp"
 )
+
+type awsNlbConnectionIDGenerator struct {
+	ServerID []byte
+}
+
+func (g *awsNlbConnectionIDGenerator) GenerateConnectionID() (quic.ConnectionID, error) {
+	const maxLen = 20
+
+	if len(g.ServerID) > maxLen {
+		return quic.ConnectionID{}, errors.New("ServerID exceeds maximum ConnectionID length (20 bytes)")
+	}
+
+	idLen := maxLen
+	b := make([]byte, idLen)
+	copy(b, g.ServerID)
+
+	if _, err := rand.Read(b[len(g.ServerID):]); err != nil {
+		return quic.ConnectionID{}, err
+	}
+
+	return quic.ConnectionIDFromBytes(b), nil
+}
+
+func (g *awsNlbConnectionIDGenerator) ConnectionIDLen() int {
+	return 20
+}
 
 type http3server struct {
 	*http3.Server
@@ -84,7 +114,28 @@ func newHTTP3Server(ctx context.Context, name string, config *static.EntryPoint,
 }
 
 func (e *http3server) Start() error {
-	return e.Serve(e.http3conn)
+	tr := &quic.Transport{
+		Conn: e.http3conn,
+	}
+
+	if serverId := os.Getenv("AWS_LBC_QUIC_SERVER_ID"); serverId != "" {
+
+		cleanID := strings.TrimPrefix(serverId, "0x")
+		cleanID = strings.TrimPrefix(cleanID, "0X")
+		decodedID, err := hex.DecodeString(cleanID)
+		if err != nil {
+			return fmt.Errorf("decoding AWS_LBC_QUIC_SERVER_ID: %w", err)
+		}
+		log.Info().Str("id", serverId).Msg("Starting QUIC server with AWS Load Balancer compatibility")
+		tr.ConnectionIDGenerator = &awsNlbConnectionIDGenerator{
+			ServerID: []byte(decodedID),
+		}
+	}
+	ln, err := tr.ListenEarly(e.TLSConfig, e.QUICConfig)
+	if err != nil {
+		return fmt.Errorf("starting quic listener: %w", err)
+	}
+	return e.ServeListener(ln)
 }
 
 func (e *http3server) Switch(rt *tcprouter.Router) {
