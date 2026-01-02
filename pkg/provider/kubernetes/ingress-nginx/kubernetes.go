@@ -453,7 +453,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 				}
 
 				// TODO: if no service, do not add middlewares and 503.
-				serviceName := provider.Normalize(ingress.Namespace + "-" + pa.Backend.Service.Name + "-" + portString)
+				serviceName := provider.Normalize(ingress.Namespace + "-" + ingress.Name + "-" + pa.Backend.Service.Name + "-" + portString)
 
 				service, err := p.buildService(ingress.Namespace, pa.Backend, ingressConfig)
 				if err != nil {
@@ -509,7 +509,7 @@ func (p *Provider) buildServersTransport(namespace, name string, cfg ingressConf
 		Name: provider.Normalize(namespace + "-" + name),
 		ServersTransport: &dynamic.ServersTransport{
 			ServerName:         ptr.Deref(cfg.ProxySSLName, ptr.Deref(cfg.ProxySSLServerName, "")),
-			InsecureSkipVerify: strings.ToLower(ptr.Deref(cfg.ProxySSLVerify, "off")) == "on",
+			InsecureSkipVerify: strings.ToLower(ptr.Deref(cfg.ProxySSLVerify, "off")) == "off",
 		},
 	}
 
@@ -794,6 +794,8 @@ func (p *Provider) applyMiddlewares(namespace, routerKey string, ingressConfig i
 		return fmt.Errorf("applying forward auth configuration: %w", err)
 	}
 
+	applyWhitelistSourceRangeConfiguration(routerKey, ingressConfig, rt, conf)
+
 	applyCORSConfiguration(routerKey, ingressConfig, rt, conf)
 
 	// Apply SSL redirect is mandatory to be applied after all other middlewares.
@@ -801,6 +803,40 @@ func (p *Provider) applyMiddlewares(namespace, routerKey string, ingressConfig i
 	applySSLRedirectConfiguration(routerKey, ingressConfig, hasTLS, rt, conf)
 
 	applyUpstreamVhost(routerKey, ingressConfig, rt, conf)
+
+	if err := p.applyCustomHeaders(routerKey, ingressConfig, rt, conf); err != nil {
+		return fmt.Errorf("applying custom headers: %w", err)
+	}
+
+	return nil
+}
+
+func (p *Provider) applyCustomHeaders(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
+	customHeaders := ptr.Deref(ingressConfig.CustomHeaders, "")
+	if customHeaders == "" {
+		return nil
+	}
+
+	customHeadersParts := strings.Split(customHeaders, "/")
+	if len(customHeadersParts) != 2 {
+		return fmt.Errorf("invalid custom headers config map %q", customHeaders)
+	}
+
+	configMapNamespace := customHeadersParts[0]
+	configMapName := customHeadersParts[1]
+
+	configMap, err := p.k8sClient.GetConfigMap(configMapNamespace, configMapName)
+	if err != nil {
+		return fmt.Errorf("getting configMap %s: %w", customHeaders, err)
+	}
+
+	customHeadersMiddlewareName := routerName + "-custom-headers"
+	conf.HTTP.Middlewares[customHeadersMiddlewareName] = &dynamic.Middleware{
+		Headers: &dynamic.Headers{
+			CustomResponseHeaders: configMap.Data,
+		},
+	}
+	rt.Middlewares = append(rt.Middlewares, customHeadersMiddlewareName)
 
 	return nil
 }
@@ -951,6 +987,26 @@ func applyUpstreamVhost(routerName string, ingressConfig ingressConfig, rt *dyna
 	rt.Middlewares = append(rt.Middlewares, vHostMiddlewareName)
 }
 
+func applyWhitelistSourceRangeConfiguration(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
+	whitelistSourceRange := ptr.Deref(ingressConfig.WhitelistSourceRange, "")
+	if whitelistSourceRange == "" {
+		return
+	}
+
+	sourceRanges := strings.Split(whitelistSourceRange, ",")
+	for i := range sourceRanges {
+		sourceRanges[i] = strings.TrimSpace(sourceRanges[i])
+	}
+
+	whitelistSourceRangeMiddlewareName := routerName + "-whitelist-source-range"
+	conf.HTTP.Middlewares[whitelistSourceRangeMiddlewareName] = &dynamic.Middleware{
+		IPAllowList: &dynamic.IPAllowList{
+			SourceRange: sourceRanges,
+		},
+	}
+	rt.Middlewares = append(rt.Middlewares, whitelistSourceRangeMiddlewareName)
+}
+
 func applySSLRedirectConfiguration(routerName string, ingressConfig ingressConfig, hasTLS bool, rt *dynamic.Router, conf *dynamic.Configuration) {
 	var forceSSLRedirect bool
 	if ingressConfig.ForceSSLRedirect != nil {
@@ -959,39 +1015,50 @@ func applySSLRedirectConfiguration(routerName string, ingressConfig ingressConfi
 
 	sslRedirect := ptr.Deref(ingressConfig.SSLRedirect, hasTLS)
 
-	if !forceSSLRedirect && !sslRedirect {
-		if hasTLS {
-			httpRouter := &dynamic.Router{
-				Rule: rt.Rule,
-				// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
-				RuleSyntax:  "default",
-				Middlewares: rt.Middlewares,
-				Service:     rt.Service,
-			}
+	if hasTLS {
+		// An Ingress with TLS configuration creates only a Traefik router with a TLS configuration,
+		// so no Non-TLS router exists to handle HTTP traffic, and we should create it.
+		httpRouter := &dynamic.Router{
+			Rule: rt.Rule,
+			// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
+			RuleSyntax:  "default",
+			Middlewares: rt.Middlewares,
+			Service:     rt.Service,
+		}
+		conf.HTTP.Routers[routerName+"-http"] = httpRouter
 
-			conf.HTTP.Routers[routerName+"-http"] = httpRouter
+		// If either forceSSLRedirect or sslRedirect are enabled,
+		// the HTTP router needs to redirect to HTTPS.
+		if forceSSLRedirect || sslRedirect {
+			redirectMiddlewareName := routerName + "-redirect-scheme"
+			conf.HTTP.Middlewares[redirectMiddlewareName] = &dynamic.Middleware{
+				RedirectScheme: &dynamic.RedirectScheme{
+					Scheme:                 "https",
+					ForcePermanentRedirect: true,
+				},
+			}
+			httpRouter.Middlewares = []string{redirectMiddlewareName}
+			httpRouter.Service = "noop@internal"
 		}
 
 		return
 	}
 
-	redirectRouter := &dynamic.Router{
-		Rule: rt.Rule,
-		// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
-		RuleSyntax: "default",
-		Service:    "noop@internal",
+	// An Ingress with no TLS configuration and forceSSLRedirect annotation should always redirect on HTTPS,
+	// even if no route exists for HTTPS.
+	if forceSSLRedirect {
+		redirectMiddlewareName := routerName + "-redirect-scheme"
+		conf.HTTP.Middlewares[redirectMiddlewareName] = &dynamic.Middleware{
+			RedirectScheme: &dynamic.RedirectScheme{
+				Scheme:                 "https",
+				ForcePermanentRedirect: true,
+			},
+		}
+		rt.Middlewares = append([]string{redirectMiddlewareName}, rt.Middlewares...)
 	}
 
-	redirectMiddlewareName := routerName + "-redirect-scheme"
-	conf.HTTP.Middlewares[redirectMiddlewareName] = &dynamic.Middleware{
-		RedirectScheme: &dynamic.RedirectScheme{
-			Scheme:    "https",
-			Permanent: true,
-		},
-	}
-	redirectRouter.Middlewares = append(redirectRouter.Middlewares, redirectMiddlewareName)
-
-	conf.HTTP.Routers[routerName+"-redirect"] = redirectRouter
+	// An Ingress that is not forcing sslRedirect and has no TLS configuration does not redirect,
+	// even if sslRedirect is enabled.
 }
 
 func applyForwardAuthConfiguration(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
