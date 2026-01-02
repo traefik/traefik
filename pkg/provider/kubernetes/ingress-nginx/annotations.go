@@ -16,6 +16,7 @@ type ingressConfig struct {
 	AuthSecretType *string `annotation:"nginx.ingress.kubernetes.io/auth-secret-type"`
 
 	AuthURL             *string `annotation:"nginx.ingress.kubernetes.io/auth-url"`
+	AuthSignin          *string `annotation:"nginx.ingress.kubernetes.io/auth-signin"`
 	AuthResponseHeaders *string `annotation:"nginx.ingress.kubernetes.io/auth-response-headers"`
 
 	ForceSSLRedirect *bool `annotation:"nginx.ingress.kubernetes.io/force-ssl-redirect"`
