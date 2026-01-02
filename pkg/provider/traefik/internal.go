@@ -209,7 +209,14 @@ func (i *Provider) getEntryPointPort(name string, def *static.Redirections) (str
 		return "", fmt.Errorf("'to' entry point field references a non-existing entry point: %s", def.EntryPoint.To)
 	}
 
-	_, port, err := net.SplitHostPort(dst.GetAddress())
+	address := dst.GetAddress()
+	if address == "" {
+		// When address is empty (e.g., socket activation), return empty port.
+		// The redirect middleware will use the scheme's default port.
+		return "", nil
+	}
+
+	_, port, err := net.SplitHostPort(address)
 	if err != nil {
 		return "", fmt.Errorf("invalid entry point %q address %q: %w",
 			name, i.staticCfg.EntryPoints[def.EntryPoint.To].Address, err)
