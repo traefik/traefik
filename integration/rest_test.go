@@ -18,6 +18,7 @@ import (
 
 type RestSuite struct {
 	BaseSuite
+
 	whoamiAddr string
 }
 

@@ -9,68 +9,79 @@ import (
 )
 
 // Debug logs a message at level Debug on the standard logger.
+//
 // Deprecated: use log.FromContext(ctx).Debug(...) instead.
-func Debug(args ...interface{}) {
+func Debug(args ...any) {
 	mainLogger.Debug(args...)
 }
 
 // Debugf logs a message at level Debug on the standard logger.
+//
 // Deprecated: use log.FromContext(ctx).Debugf(...) instead.
-func Debugf(format string, args ...interface{}) {
+func Debugf(format string, args ...any) {
 	mainLogger.Debugf(format, args...)
 }
 
 // Info logs a message at level Info on the standard logger.
+//
 // Deprecated: use log.FromContext(ctx).Info(...) instead.
-func Info(args ...interface{}) {
+func Info(args ...any) {
 	mainLogger.Info(args...)
 }
 
 // Infof logs a message at level Info on the standard logger.
+//
 // Deprecated: use log.FromContext(ctx).Infof(...) instead.
-func Infof(format string, args ...interface{}) {
+func Infof(format string, args ...any) {
 	mainLogger.Infof(format, args...)
 }
 
 // Warn logs a message at level Warn on the standard logger.
+//
 // Deprecated: use log.FromContext(ctx).Warn(...) instead.
-func Warn(args ...interface{}) {
+func Warn(args ...any) {
 	mainLogger.Warn(args...)
 }
 
 // Warnf logs a message at level Warn on the standard logger.
+//
 // Deprecated: use log.FromContext(ctx).Warnf(...) instead.
-func Warnf(format string, args ...interface{}) {
+func Warnf(format string, args ...any) {
 	mainLogger.Warnf(format, args...)
 }
 
 // Error logs a message at level Error on the standard logger.
+//
 // Deprecated: use log.FromContext(ctx).Error(...) instead.
-func Error(args ...interface{}) {
+func Error(args ...any) {
 	mainLogger.Error(args...)
 }
 
 // Errorf logs a message at level Error on the standard logger.
+//
 // Deprecated: use log.FromContext(ctx).Errorf(...) instead.
-func Errorf(format string, args ...interface{}) {
+func Errorf(format string, args ...any) {
 	mainLogger.Errorf(format, args...)
 }
 
 // Panic logs a message at level Panic on the standard logger.
+//
 // Deprecated: use log.FromContext(ctx).Panic(...) instead.
-func Panic(args ...interface{}) {
+func Panic(args ...any) {
 	mainLogger.Panic(args...)
 }
 
 // Fatal logs a message at level Fatal on the standard logger.
+//
 // Deprecated: use log.FromContext(ctx).Fatal(...) instead.
-func Fatal(args ...interface{}) {
+func Fatal(args ...any) {
 	mainLogger.Fatal(args...)
 }
 
 // Fatalf logs a message at level Fatal on the standard logger.
+//
 // Deprecated: use log.FromContext(ctx).Fatalf(...) instead.
-func Fatalf(format string, args ...interface{}) {
+func Fatalf(format string, args ...any) {
 	mainLogger.Fatalf(format, args...)
 }
 
@@ -84,7 +95,7 @@ func AddHook(hook logrus.Hook) {
 func CustomWriterLevel(level logrus.Level, maxScanTokenSize int) *io.PipeWriter {
 	reader, writer := io.Pipe()
 
-	var printFunc func(args ...interface{})
+	var printFunc func(args ...any)
 
 	switch level {
 	case logrus.DebugLevel:
@@ -111,7 +122,7 @@ func CustomWriterLevel(level logrus.Level, maxScanTokenSize int) *io.PipeWriter 
 
 // extract from github.com/Sirupsen/logrus/writer.go
 // Hack the buffer size.
-func writerScanner(reader io.ReadCloser, scanTokenSize int, printFunc func(args ...interface{})) {
+func writerScanner(reader io.ReadCloser, scanTokenSize int, printFunc func(args ...any)) {
 	scanner := bufio.NewScanner(reader)
 
 	if scanTokenSize > bufio.MaxScanTokenSize {

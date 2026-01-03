@@ -78,7 +78,7 @@ func main() {
 		logger.Fatal(err)
 	}
 
-	genStaticConfDoc("./docs/content/reference/static-configuration/env-ref.md", "", func(i interface{}) ([]parser.Flat, error) {
+	genStaticConfDoc("./docs/content/reference/static-configuration/env-ref.md", "", func(i any) ([]parser.Flat, error) {
 		return env.Encode(env.DefaultNamePrefix, i)
 	})
 	genStaticConfDoc("./docs/content/reference/static-configuration/cli-ref.md", "--", flag.Encode)
@@ -240,7 +240,7 @@ func clean(element any) {
 	valSvcs.SetMapIndex(reflect.ValueOf(fmt.Sprintf("%s1", valueSvcRoot.Type().Name())), reflect.Value{})
 }
 
-func genStaticConfDoc(outputFile, prefix string, encodeFn func(interface{}) ([]parser.Flat, error)) {
+func genStaticConfDoc(outputFile, prefix string, encodeFn func(any) ([]parser.Flat, error)) {
 	logger := log.WithoutContext().WithField("file", outputFile)
 
 	element := &cmd.NewTraefikConfiguration().Configuration
@@ -309,7 +309,7 @@ type errWriter struct {
 	err error
 }
 
-func (ew *errWriter) writeln(a ...interface{}) {
+func (ew *errWriter) writeln(a ...any) {
 	if ew.err != nil {
 		return
 	}
@@ -319,15 +319,15 @@ func (ew *errWriter) writeln(a ...interface{}) {
 
 func genKVDynConfDoc(outputFile string) {
 	dynConfPath := "./docs/content/reference/dynamic-configuration/file.toml"
-	conf := map[string]interface{}{}
+	conf := map[string]any{}
 	_, err := toml.DecodeFile(dynConfPath, &conf)
 	if err != nil {
-		log.Fatal(err)
+		log.WithoutContext().Fatal(err)
 	}
 
 	file, err := os.Create(outputFile)
 	if err != nil {
-		log.Fatal(err)
+		log.WithoutContext().Fatal(err)
 	}
 
 	store := storeWriter{data: map[string]string{}}
@@ -335,7 +335,7 @@ func genKVDynConfDoc(outputFile string) {
 	c := client{store: store}
 	err = c.load("traefik", conf)
 	if err != nil {
-		log.Fatal(err)
+		log.WithoutContext().Fatal(err)
 	}
 
 	var keys []string
@@ -374,10 +374,10 @@ type client struct {
 	store storeWriter
 }
 
-func (c client) load(parentKey string, conf map[string]interface{}) error {
+func (c client) load(parentKey string, conf map[string]any) error {
 	for k, v := range conf {
 		switch entry := v.(type) {
-		case map[string]interface{}:
+		case map[string]any:
 			key := path.Join(parentKey, k)
 
 			if len(entry) == 0 {
@@ -391,7 +391,7 @@ func (c client) load(parentKey string, conf map[string]interface{}) error {
 					return err
 				}
 			}
-		case []map[string]interface{}:
+		case []map[string]any:
 			for i, o := range entry {
 				key := path.Join(parentKey, k, strconv.Itoa(i))
 
@@ -399,11 +399,11 @@ func (c client) load(parentKey string, conf map[string]interface{}) error {
 					return err
 				}
 			}
-		case []interface{}:
+		case []any:
 			for i, o := range entry {
 				key := path.Join(parentKey, k, strconv.Itoa(i))
 
-				err := c.store.Put(key, []byte(fmt.Sprintf("%v", o)), nil)
+				err := c.store.Put(key, fmt.Appendf(nil, "%v", o), nil)
 				if err != nil {
 					return err
 				}
@@ -411,7 +411,7 @@ func (c client) load(parentKey string, conf map[string]interface{}) error {
 		default:
 			key := path.Join(parentKey, k)
 
-			err := c.store.Put(key, []byte(fmt.Sprintf("%v", v)), nil)
+			err := c.store.Put(key, fmt.Appendf(nil, "%v", v), nil)
 			if err != nil {
 				return err
 			}

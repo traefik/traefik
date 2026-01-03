@@ -178,7 +178,7 @@ func TestHandler_GetMiddleware(t *testing.T) {
 		middlewareName string
 		conf           runtime.Configuration
 		expectedStatus int
-		expected       interface{}
+		expected       any
 	}{
 		{
 			desc:           "Middleware not found",

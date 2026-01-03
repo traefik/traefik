@@ -26,6 +26,7 @@ import (
 // Consul test suites.
 type ConsulSuite struct {
 	BaseSuite
+
 	kvClient  store.Store
 	consulURL string
 }
@@ -164,16 +165,6 @@ func (s *ConsulSuite) TestSimpleConfiguration() {
 	}
 }
 
-func (s *ConsulSuite) assertWhoami(host string, expectedStatusCode int) {
-	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000", nil)
-	require.NoError(s.T(), err)
-	req.Host = host
-
-	resp, err := try.ResponseUntilStatusCode(req, 15*time.Second, expectedStatusCode)
-	require.NoError(s.T(), err)
-	resp.Body.Close()
-}
-
 func (s *ConsulSuite) TestDeleteRootKey() {
 	// This test case reproduce the issue: https://github.com/traefik/traefik/issues/8092
 
@@ -221,4 +212,14 @@ func (s *ConsulSuite) TestDeleteRootKey() {
 	require.NoError(s.T(), err)
 	s.assertWhoami("kv1.localhost", http.StatusNotFound)
 	s.assertWhoami("kv2.localhost", http.StatusNotFound)
+}
+
+func (s *ConsulSuite) assertWhoami(host string, expectedStatusCode int) {
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000", nil)
+	require.NoError(s.T(), err)
+	req.Host = host
+
+	resp, err := try.ResponseUntilStatusCode(req, 15*time.Second, expectedStatusCode)
+	require.NoError(s.T(), err)
+	resp.Body.Close()
 }

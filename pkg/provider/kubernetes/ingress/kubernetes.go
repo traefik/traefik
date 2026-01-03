@@ -58,58 +58,11 @@ func (p *Provider) SetRouterTransform(routerTransform k8s.RouterTransform) {
 	p.routerTransform = routerTransform
 }
 
-func (p *Provider) applyRouterTransform(ctx context.Context, rt *dynamic.Router, ingress *netv1.Ingress) {
-	if p.routerTransform == nil {
-		return
-	}
-
-	err := p.routerTransform.Apply(ctx, rt, ingress.Annotations)
-	if err != nil {
-		log.FromContext(ctx).WithError(err).Error("Apply router transform")
-	}
-}
-
 // EndpointIngress holds the endpoint information for the Kubernetes provider.
 type EndpointIngress struct {
 	IP               string `description:"IP used for Kubernetes Ingress endpoints." json:"ip,omitempty" toml:"ip,omitempty" yaml:"ip,omitempty"`
 	Hostname         string `description:"Hostname used for Kubernetes Ingress endpoints." json:"hostname,omitempty" toml:"hostname,omitempty" yaml:"hostname,omitempty"`
 	PublishedService string `description:"Published Kubernetes Service to copy status from." json:"publishedService,omitempty" toml:"publishedService,omitempty" yaml:"publishedService,omitempty"`
-}
-
-func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
-	_, err := labels.Parse(p.LabelSelector)
-	if err != nil {
-		return nil, fmt.Errorf("invalid ingress label selector: %q", p.LabelSelector)
-	}
-
-	logger := log.FromContext(ctx)
-
-	logger.Infof("ingress label selector is: %q", p.LabelSelector)
-
-	withEndpoint := ""
-	if p.Endpoint != "" {
-		withEndpoint = fmt.Sprintf(" with endpoint %v", p.Endpoint)
-	}
-
-	var cl *clientWrapper
-	switch {
-	case os.Getenv("KUBERNETES_SERVICE_HOST") != "" && os.Getenv("KUBERNETES_SERVICE_PORT") != "":
-		logger.Infof("Creating in-cluster Provider client%s", withEndpoint)
-		cl, err = newInClusterClient(p.Endpoint)
-	case os.Getenv("KUBECONFIG") != "":
-		logger.Infof("Creating cluster-external Provider client from KUBECONFIG %s", os.Getenv("KUBECONFIG"))
-		cl, err = newExternalClusterClientFromFile(os.Getenv("KUBECONFIG"))
-	default:
-		logger.Infof("Creating cluster-external Provider client%s", withEndpoint)
-		cl, err = newExternalClusterClient(p.Endpoint, p.Token, p.CertAuthFilePath)
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	cl.ingressLabelSelector = p.LabelSelector
-	return cl, nil
 }
 
 // Init the provider.
@@ -197,6 +150,47 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	})
 
 	return nil
+}
+
+func (p *Provider) applyRouterTransform(ctx context.Context, rt *dynamic.Router, ingress *netv1.Ingress) {
+	if p.routerTransform == nil {
+		return
+	}
+
+	err := p.routerTransform.Apply(ctx, rt, ingress.Annotations)
+	if err != nil {
+		log.FromContext(ctx).WithError(err).Error("Apply router transform")
+	}
+}
+
+func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
+	_, err := labels.Parse(p.LabelSelector)
+	if err != nil {
+		return nil, fmt.Errorf("invalid ingress label selector: %q", p.LabelSelector)
+	}
+
+	logger := log.FromContext(ctx)
+
+	logger.Debugf("Creating in-cluster Provider client")
+
+	var client *clientWrapper
+
+	switch {
+	case os.Getenv("KUBERNETES_SERVICE_HOST") != "" && os.Getenv("KUBERNETES_SERVICE_PORT") != "":
+		client, err = newInClusterClient(p.Endpoint)
+	case os.Getenv("KUBECONFIG") != "":
+		client, err = newExternalClusterClientFromFile(os.Getenv("KUBECONFIG"))
+	default:
+		client, err = newExternalClusterClient(p.Endpoint, p.Token, p.CertAuthFilePath)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	client.ingressLabelSelector = p.LabelSelector
+
+	return client, nil
 }
 
 func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Client) *dynamic.Configuration {
@@ -404,8 +398,8 @@ func (p *Provider) updateIngressStatus(ing *netv1.Ingress, k8sClient Client) err
 	}
 
 	if exists && service.Status.LoadBalancer.Ingress == nil {
-		// service exists, but has no Load Balancer status
-		log.Debugf("Skipping updating Ingress %s/%s due to service %s having no status set", ing.Namespace, ing.Name, p.IngressEndpoint.PublishedService)
+		// service exists but has no Load Balancer status
+		log.WithoutContext().Debugf("Skipping updating Ingress %s/%s due to service %s having no status set", ing.Namespace, ing.Name, p.IngressEndpoint.PublishedService)
 		return nil
 	}
 
@@ -715,13 +709,13 @@ func loadRouter(rule netv1.IngressRule, pa netv1.HTTPIngressPath, rtConfig *Rout
 	return rt
 }
 
-func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *safe.Pool, eventsChan <-chan interface{}) chan interface{} {
+func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *safe.Pool, eventsChan <-chan any) chan any {
 	if throttleDuration == 0 {
 		return nil
 	}
 
 	// Create a buffered channel to hold the pending event (if we're delaying processing the event due to throttling).
-	eventsChanBuffered := make(chan interface{}, 1)
+	eventsChanBuffered := make(chan any, 1)
 
 	// Run a goroutine that reads events from eventChan and does a
 	// non-blocking write to pendingEvent. This guarantees that writing to

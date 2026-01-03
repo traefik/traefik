@@ -15,6 +15,7 @@ import (
 
 type entryPointRepresentation struct {
 	*static.EntryPoint
+
 	Name string `json:"name,omitempty"`
 }
 

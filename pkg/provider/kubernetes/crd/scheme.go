@@ -29,7 +29,7 @@ func init() {
 		kschema.GroupKind{Group: containousv1alpha1.GroupName, Kind: containousv1alpha1.TraefikService{}.Kind},
 	)
 
-	convert := map[interface{}]interface{}{}
+	convert := map[any]any{}
 	convert[&containousv1alpha1.IngressRoute{}] = &traefikv1alpha1.IngressRoute{}
 	convert[&containousv1alpha1.IngressRouteTCP{}] = &traefikv1alpha1.IngressRouteTCP{}
 	convert[&containousv1alpha1.IngressRouteUDP{}] = &traefikv1alpha1.IngressRouteUDP{}
@@ -41,7 +41,7 @@ func init() {
 	convert[&containousv1alpha1.TraefikService{}] = &traefikv1alpha1.TraefikService{}
 
 	for interfaceA, interfaceB := range convert {
-		err := traefikscheme.Scheme.AddConversionFunc(interfaceA, interfaceB, func(a, b interface{}, scope conversion.Scope) error {
+		err := traefikscheme.Scheme.AddConversionFunc(interfaceA, interfaceB, func(a, b any, scope conversion.Scope) error {
 			unstruct, err := k8sruntime.DefaultUnstructuredConverter.ToUnstructured(a)
 			if err != nil {
 				return fmt.Errorf("failed to unstruct interface: %w", err)

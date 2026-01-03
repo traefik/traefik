@@ -21,19 +21,19 @@ func (c *clientWrapper) appendContainousIngressRoutes(result []*traefikv1alpha1.
 	for ns, factory := range c.factoriesCrd {
 		ings, err := factory.TraefikContainous().V1alpha1().IngressRoutes().Lister().List(labels.Everything())
 		if err != nil {
-			log.Errorf("Failed to list ingress routes in namespace %s: %v", ns, err)
+			log.WithoutContext().Errorf("Failed to list ingress routes in namespace %s: %v", ns, err)
 		}
 
 		for _, ing := range ings {
 			key := objectKey(ing.ObjectMeta)
 			if _, ok := listed[key]; ok {
-				log.Debugf("Ignoring traefik.containo.us/v1alpha1 ingress route (%s) already listed within traefik.io/v1alpha1 API GroupVersion", key)
+				log.WithoutContext().Debugf("Ignoring traefik.containo.us/v1alpha1 ingress route (%s) already listed within traefik.io/v1alpha1 API GroupVersion", key)
 				continue
 			}
 
 			toVersion, err := traefikscheme.Scheme.ConvertToVersion(ing, GroupVersioner)
 			if err != nil {
-				log.Errorf("Failed to convert ingress route in namespace %s: %v", ns, err)
+				log.WithoutContext().Errorf("Failed to convert ingress route in namespace %s: %v", ns, err)
 				continue
 			}
 
@@ -53,19 +53,19 @@ func (c *clientWrapper) appendContainousIngressRouteTCPs(result []*traefikv1alph
 	for ns, factory := range c.factoriesCrd {
 		ings, err := factory.TraefikContainous().V1alpha1().IngressRouteTCPs().Lister().List(labels.Everything())
 		if err != nil {
-			log.Errorf("Failed to list tcp ingress routes in namespace %s: %v", ns, err)
+			log.WithoutContext().Errorf("Failed to list tcp ingress routes in namespace %s: %v", ns, err)
 		}
 
 		for _, ing := range ings {
 			key := objectKey(ing.ObjectMeta)
 			if _, ok := listed[key]; ok {
-				log.Debugf("Ignoring traefik.containo.us/v1alpha1 tcp ingress route (%s) already listed within traefik.io/v1alpha1 API GroupVersion", key)
+				log.WithoutContext().Debugf("Ignoring traefik.containo.us/v1alpha1 tcp ingress route (%s) already listed within traefik.io/v1alpha1 API GroupVersion", key)
 				continue
 			}
 
 			toVersion, err := traefikscheme.Scheme.ConvertToVersion(ing, GroupVersioner)
 			if err != nil {
-				log.Errorf("Failed to convert tcp ingress route in namespace %s: %v", ns, err)
+				log.WithoutContext().Errorf("Failed to convert tcp ingress route in namespace %s: %v", ns, err)
 				continue
 			}
 
@@ -85,19 +85,19 @@ func (c *clientWrapper) appendContainousIngressRouteUDPs(result []*traefikv1alph
 	for ns, factory := range c.factoriesCrd {
 		ings, err := factory.TraefikContainous().V1alpha1().IngressRouteUDPs().Lister().List(labels.Everything())
 		if err != nil {
-			log.Errorf("Failed to list udp ingress routes in namespace %s: %v", ns, err)
+			log.WithoutContext().Errorf("Failed to list udp ingress routes in namespace %s: %v", ns, err)
 		}
 
 		for _, ing := range ings {
 			key := objectKey(ing.ObjectMeta)
 			if _, ok := listed[key]; ok {
-				log.Debugf("Ignoring traefik.containo.us/v1alpha1 udp ingress route (%s) already listed within traefik.io/v1alpha1 API GroupVersion", key)
+				log.WithoutContext().Debugf("Ignoring traefik.containo.us/v1alpha1 udp ingress route (%s) already listed within traefik.io/v1alpha1 API GroupVersion", key)
 				continue
 			}
 
 			toVersion, err := traefikscheme.Scheme.ConvertToVersion(ing, GroupVersioner)
 			if err != nil {
-				log.Errorf("Failed to convert udp ingress route in namespace %s: %v", ns, err)
+				log.WithoutContext().Errorf("Failed to convert udp ingress route in namespace %s: %v", ns, err)
 				continue
 			}
 
@@ -117,19 +117,19 @@ func (c *clientWrapper) appendContainousMiddlewares(result []*traefikv1alpha1.Mi
 	for ns, factory := range c.factoriesCrd {
 		middlewares, err := factory.TraefikContainous().V1alpha1().Middlewares().Lister().List(labels.Everything())
 		if err != nil {
-			log.Errorf("Failed to list middlewares in namespace %s: %v", ns, err)
+			log.WithoutContext().Errorf("Failed to list middlewares in namespace %s: %v", ns, err)
 		}
 
 		for _, middleware := range middlewares {
 			key := objectKey(middleware.ObjectMeta)
 			if _, ok := listed[key]; ok {
-				log.Debugf("Ignoring traefik.containo.us/v1alpha1 middleware (%s) already listed within traefik.io/v1alpha1 API GroupVersion", key)
+				log.WithoutContext().Debugf("Ignoring traefik.containo.us/v1alpha1 middleware (%s) already listed within traefik.io/v1alpha1 API GroupVersion", key)
 				continue
 			}
 
 			toVersion, err := traefikscheme.Scheme.ConvertToVersion(middleware, GroupVersioner)
 			if err != nil {
-				log.Errorf("Failed to convert middleware in namespace %s: %v", ns, err)
+				log.WithoutContext().Errorf("Failed to convert middleware in namespace %s: %v", ns, err)
 				continue
 			}
 
@@ -149,19 +149,19 @@ func (c *clientWrapper) appendContainousMiddlewareTCPs(result []*traefikv1alpha1
 	for ns, factory := range c.factoriesCrd {
 		middlewares, err := factory.TraefikContainous().V1alpha1().MiddlewareTCPs().Lister().List(labels.Everything())
 		if err != nil {
-			log.Errorf("Failed to list tcp middlewares in namespace %s: %v", ns, err)
+			log.WithoutContext().Errorf("Failed to list tcp middlewares in namespace %s: %v", ns, err)
 		}
 
 		for _, middleware := range middlewares {
 			key := objectKey(middleware.ObjectMeta)
 			if _, ok := listed[key]; ok {
-				log.Debugf("Ignoring traefik.containo.us/v1alpha1 middleware (%s) already listed within traefik.io/v1alpha1 API GroupVersion", key)
+				log.WithoutContext().Debugf("Ignoring traefik.containo.us/v1alpha1 middleware (%s) already listed within traefik.io/v1alpha1 API GroupVersion", key)
 				continue
 			}
 
 			toVersion, err := traefikscheme.Scheme.ConvertToVersion(middleware, GroupVersioner)
 			if err != nil {
-				log.Errorf("Failed to convert tcp middleware in namespace %s: %v", ns, err)
+				log.WithoutContext().Errorf("Failed to convert tcp middleware in namespace %s: %v", ns, err)
 				continue
 			}
 
@@ -181,19 +181,19 @@ func (c *clientWrapper) appendContainousTraefikServices(result []*traefikv1alpha
 	for ns, factory := range c.factoriesCrd {
 		traefikServices, err := factory.TraefikContainous().V1alpha1().TraefikServices().Lister().List(labels.Everything())
 		if err != nil {
-			log.Errorf("Failed to list Traefik services in namespace %s: %v", ns, err)
+			log.WithoutContext().Errorf("Failed to list Traefik services in namespace %s: %v", ns, err)
 		}
 
 		for _, traefikService := range traefikServices {
 			key := objectKey(traefikService.ObjectMeta)
 			if _, ok := listed[key]; ok {
-				log.Debugf("Ignoring traefik.containo.us/v1alpha1 Traefik service (%s) already listed within traefik.io/v1alpha1 API GroupVersion", key)
+				log.WithoutContext().Debugf("Ignoring traefik.containo.us/v1alpha1 Traefik service (%s) already listed within traefik.io/v1alpha1 API GroupVersion", key)
 				continue
 			}
 
 			toVersion, err := traefikscheme.Scheme.ConvertToVersion(traefikService, GroupVersioner)
 			if err != nil {
-				log.Errorf("Failed to convert Traefik service in namespace %s: %v", ns, err)
+				log.WithoutContext().Errorf("Failed to convert Traefik service in namespace %s: %v", ns, err)
 				continue
 			}
 
@@ -213,19 +213,19 @@ func (c *clientWrapper) appendContainousServersTransport(result []*traefikv1alph
 	for ns, factory := range c.factoriesCrd {
 		serversTransports, err := factory.TraefikContainous().V1alpha1().ServersTransports().Lister().List(labels.Everything())
 		if err != nil {
-			log.Errorf("Failed to list servers transports in namespace %s: %v", ns, err)
+			log.WithoutContext().Errorf("Failed to list servers transports in namespace %s: %v", ns, err)
 		}
 
 		for _, serversTransport := range serversTransports {
 			key := objectKey(serversTransport.ObjectMeta)
 			if _, ok := listed[key]; ok {
-				log.Debugf("Ignoring traefik.containo.us/v1alpha1 servers transport (%s) already listed within traefik.io/v1alpha1 API GroupVersion", key)
+				log.WithoutContext().Debugf("Ignoring traefik.containo.us/v1alpha1 servers transport (%s) already listed within traefik.io/v1alpha1 API GroupVersion", key)
 				continue
 			}
 
 			toVersion, err := traefikscheme.Scheme.ConvertToVersion(serversTransport, GroupVersioner)
 			if err != nil {
-				log.Errorf("Failed to convert servers transport in namespace %s: %v", ns, err)
+				log.WithoutContext().Errorf("Failed to convert servers transport in namespace %s: %v", ns, err)
 				continue
 			}
 
@@ -245,19 +245,19 @@ func (c *clientWrapper) appendContainousTLSOptions(result []*traefikv1alpha1.TLS
 	for ns, factory := range c.factoriesCrd {
 		options, err := factory.TraefikContainous().V1alpha1().TLSOptions().Lister().List(labels.Everything())
 		if err != nil {
-			log.Errorf("Failed to list tls options in namespace %s: %v", ns, err)
+			log.WithoutContext().Errorf("Failed to list tls options in namespace %s: %v", ns, err)
 		}
 
 		for _, option := range options {
 			key := objectKey(option.ObjectMeta)
 			if _, ok := listed[key]; ok {
-				log.Debugf("Ignoring traefik.containo.us/v1alpha1 tls option (%s) already listed within traefik.io/v1alpha1 API GroupVersion", key)
+				log.WithoutContext().Debugf("Ignoring traefik.containo.us/v1alpha1 tls option (%s) already listed within traefik.io/v1alpha1 API GroupVersion", key)
 				continue
 			}
 
 			toVersion, err := traefikscheme.Scheme.ConvertToVersion(option, GroupVersioner)
 			if err != nil {
-				log.Errorf("Failed to convert tls option in namespace %s: %v", ns, err)
+				log.WithoutContext().Errorf("Failed to convert tls option in namespace %s: %v", ns, err)
 				continue
 			}
 
@@ -277,19 +277,19 @@ func (c *clientWrapper) appendContainousTLSStores(result []*traefikv1alpha1.TLSS
 	for ns, factory := range c.factoriesCrd {
 		stores, err := factory.TraefikContainous().V1alpha1().TLSStores().Lister().List(labels.Everything())
 		if err != nil {
-			log.Errorf("Failed to list tls stores in namespace %s: %v", ns, err)
+			log.WithoutContext().Errorf("Failed to list tls stores in namespace %s: %v", ns, err)
 		}
 
 		for _, store := range stores {
 			key := objectKey(store.ObjectMeta)
 			if _, ok := listed[key]; ok {
-				log.Debugf("Ignoring traefik.containo.us/v1alpha1 tls store (%s) already listed within traefik.io/v1alpha1 API GroupVersion", key)
+				log.WithoutContext().Debugf("Ignoring traefik.containo.us/v1alpha1 tls store (%s) already listed within traefik.io/v1alpha1 API GroupVersion", key)
 				continue
 			}
 
 			toVersion, err := traefikscheme.Scheme.ConvertToVersion(store, GroupVersioner)
 			if err != nil {
-				log.Errorf("Failed to convert tls store in namespace %s: %v", ns, err)
+				log.WithoutContext().Errorf("Failed to convert tls store in namespace %s: %v", ns, err)
 				continue
 			}
 
@@ -314,7 +314,7 @@ func (c *clientWrapper) getContainousTraefikService(namespace, name string) (*tr
 
 	toVersion, err := traefikscheme.Scheme.ConvertToVersion(service, GroupVersioner)
 	if err != nil {
-		log.Errorf("Failed to convert Traefik service in namespace %s: %v", namespace, err)
+		log.WithoutContext().Errorf("Failed to convert Traefik service in namespace %s: %v", namespace, err)
 	}
 
 	return toVersion.(*traefikv1alpha1.TraefikService), exist, err

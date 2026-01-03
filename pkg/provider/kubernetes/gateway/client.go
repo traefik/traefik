@@ -25,14 +25,14 @@ import (
 const resyncPeriod = 10 * time.Minute
 
 type resourceEventHandler struct {
-	ev chan<- interface{}
+	ev chan<- any
 }
 
-func (reh *resourceEventHandler) OnAdd(obj interface{}, _ bool) {
+func (reh *resourceEventHandler) OnAdd(obj any, _ bool) {
 	eventHandlerFunc(reh.ev, obj)
 }
 
-func (reh *resourceEventHandler) OnUpdate(oldObj, newObj interface{}) {
+func (reh *resourceEventHandler) OnUpdate(oldObj, newObj any) {
 	switch oldObj.(type) {
 	case *gatev1alpha2.GatewayClass:
 		// Skip update for gateway classes. We only manage addition or deletion for this cluster-wide resource.
@@ -42,7 +42,7 @@ func (reh *resourceEventHandler) OnUpdate(oldObj, newObj interface{}) {
 	}
 }
 
-func (reh *resourceEventHandler) OnDelete(obj interface{}) {
+func (reh *resourceEventHandler) OnDelete(obj any) {
 	eventHandlerFunc(reh.ev, obj)
 }
 
@@ -50,7 +50,7 @@ func (reh *resourceEventHandler) OnDelete(obj interface{}) {
 // WatchAll starts the watch of the Provider resources and updates the stores.
 // The stores can then be accessed via the Get* functions.
 type Client interface {
-	WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error)
+	WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan any, error)
 	GetGatewayClasses() ([]*gatev1alpha2.GatewayClass, error)
 	UpdateGatewayStatus(gateway *gatev1alpha2.Gateway, gatewayStatus gatev1alpha2.GatewayStatus) error
 	UpdateGatewayClassStatus(gatewayClass *gatev1alpha2.GatewayClass, condition metav1.Condition) error
@@ -152,8 +152,8 @@ func newExternalClusterClient(endpoint, token, caFilePath string) (*clientWrappe
 }
 
 // WatchAll starts namespace-specific controllers for all relevant kinds.
-func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error) {
-	eventCh := make(chan interface{}, 1)
+func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan any, error) {
+	eventCh := make(chan any, 1)
 	eventHandler := &resourceEventHandler{ev: eventCh}
 
 	if len(namespaces) == 0 {
@@ -527,7 +527,7 @@ func (c *clientWrapper) lookupNamespace(ns string) string {
 // eventHandlerFunc will pass the obj on to the events channel or drop it.
 // This is so passing the events along won't block in the case of high volume.
 // The events are only used for signaling anyway so dropping a few is ok.
-func eventHandlerFunc(events chan<- interface{}, obj interface{}) {
+func eventHandlerFunc(events chan<- any, obj any) {
 	select {
 	case events <- obj:
 	default:

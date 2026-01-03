@@ -16,6 +16,7 @@ const containerNameMarathon = "marathon"
 // Marathon test suites.
 type MarathonSuite struct {
 	BaseSuite
+
 	marathonURL string
 }
 

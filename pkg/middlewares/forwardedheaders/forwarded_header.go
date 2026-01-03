@@ -81,13 +81,6 @@ func NewXForwarded(insecure bool, trustedIPs []string, connectionHeaders []strin
 	}, nil
 }
 
-func (x *XForwarded) isTrustedIP(ip string) bool {
-	if x.ipChecker == nil {
-		return false
-	}
-	return x.ipChecker.IsAuthorized(ip) == nil
-}
-
 // removeIPv6Zone removes the zone if the given IP is an ipv6 address and it has {zone} information in it,
 // like "[fe80::d806:a55d:eb1b:49cc%vEthernet (vmxnet3 Ethernet Adapter - Virtual Switch)]:64692".
 func removeIPv6Zone(clientIP string) string {
@@ -138,6 +131,28 @@ func forwardedPort(req *http.Request) string {
 	return "80"
 }
 
+// ServeHTTP implements http.Handler.
+func (x *XForwarded) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if !x.insecure && !x.isTrustedIP(r.RemoteAddr) {
+		for _, h := range xHeaders {
+			unsafeHeader(r.Header).Del(h)
+		}
+	}
+
+	x.rewrite(r)
+
+	x.removeConnectionHeaders(r)
+
+	x.next.ServeHTTP(w, r)
+}
+
+func (x *XForwarded) isTrustedIP(ip string) bool {
+	if x.ipChecker == nil {
+		return false
+	}
+	return x.ipChecker.IsAuthorized(ip) == nil
+}
+
 func (x *XForwarded) rewrite(outreq *http.Request) {
 	if clientIP, _, err := net.SplitHostPort(outreq.RemoteAddr); err == nil {
 		clientIP = removeIPv6Zone(clientIP)
@@ -186,21 +201,6 @@ func (x *XForwarded) rewrite(outreq *http.Request) {
 	}
 }
 
-// ServeHTTP implements http.Handler.
-func (x *XForwarded) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if !x.insecure && !x.isTrustedIP(r.RemoteAddr) {
-		for _, h := range xHeaders {
-			unsafeHeader(r.Header).Del(h)
-		}
-	}
-
-	x.rewrite(r)
-
-	x.removeConnectionHeaders(r)
-
-	x.next.ServeHTTP(w, r)
-}
-
 func (x *XForwarded) removeConnectionHeaders(req *http.Request) {
 	var reqUpType string
 	if httpguts.HeaderValuesContainsToken(req.Header[connection], upgrade) {
@@ -209,7 +209,7 @@ func (x *XForwarded) removeConnectionHeaders(req *http.Request) {
 
 	var connectionHopByHopHeaders []string
 	for _, f := range req.Header[connection] {
-		for _, sf := range strings.Split(f, ",") {
+		for sf := range strings.SplitSeq(f, ",") {
 			if sf = textproto.TrimString(sf); sf != "" {
 				// Connection header cannot dictate to remove X- headers managed by Traefik,
 				// as per rfc7230 https://datatracker.ietf.org/doc/html/rfc7230#section-6.1,

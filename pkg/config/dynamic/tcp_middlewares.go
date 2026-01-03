@@ -26,6 +26,7 @@ type TCPInFlightConn struct {
 // TCPIPWhiteList holds the TCP IPWhiteList middleware configuration.
 // This middleware limits allowed requests based on the client IP.
 // More info: https://doc.traefik.io/traefik/v2.11/middlewares/tcp/ipwhitelist/
+//
 // Deprecated: please use IPAllowList instead.
 type TCPIPWhiteList struct {
 	// SourceRange defines the allowed IPs (or ranges of allowed IPs by using CIDR notation).

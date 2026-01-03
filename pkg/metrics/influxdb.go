@@ -147,7 +147,7 @@ func initInfluxDBClient(ctx context.Context, config *types.InfluxDB) *influx.Inf
 			Database:        config.Database,
 			RetentionPolicy: config.RetentionPolicy,
 		},
-		kitlog.LoggerFunc(func(keyvals ...interface{}) error {
+		kitlog.LoggerFunc(func(keyvals ...any) error {
 			log.WithoutContext().WithField(log.MetricsProviderName, "influxdb").Info(keyvals...)
 			return nil
 		}))

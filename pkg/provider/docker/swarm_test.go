@@ -17,6 +17,7 @@ import (
 
 type fakeTasksClient struct {
 	dockerclient.APIClient
+
 	tasks     []swarmtypes.Task
 	container dockercontainertypes.InspectResponse
 	err       error
@@ -105,6 +106,7 @@ func TestListTasks(t *testing.T) {
 
 type fakeServicesClient struct {
 	dockerclient.APIClient
+
 	dockerVersion string
 	networks      []networktypes.Summary
 	nodes         []swarmtypes.Node
