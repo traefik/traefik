@@ -1,12 +1,10 @@
-import { HttpMiddlewareRender } from './HttpMiddleware'
-
-import { ResourceDetailDataType } from 'hooks/use-resource-detail'
+import { MiddlewareDetail } from 'components/middlewares/MiddlewareDetail'
 import { renderWithProviders } from 'utils/test'
 
 describe('<HttpMiddlewarePage />', () => {
   it('should render the error message', () => {
     const { getByTestId } = renderWithProviders(
-      <HttpMiddlewareRender name="mock-middleware" data={undefined} error={new Error('Test error')} />,
+      <MiddlewareDetail name="mock-middleware" data={undefined} error={new Error('Test error')} protocol="http" />,
       { route: '/http/middlewares/mock-middleware', withPage: true },
     )
     expect(getByTestId('error-text')).toBeInTheDocument()
@@ -14,7 +12,7 @@ describe('<HttpMiddlewarePage />', () => {
 
   it('should render the skeleton', () => {
     const { getByTestId } = renderWithProviders(
-      <HttpMiddlewareRender name="mock-middleware" data={undefined} error={undefined} />,
+      <MiddlewareDetail name="mock-middleware" data={undefined} error={undefined} protocol="http" />,
       { route: '/http/middlewares/mock-middleware', withPage: true },
     )
     expect(getByTestId('skeleton')).toBeInTheDocument()
@@ -22,7 +20,7 @@ describe('<HttpMiddlewarePage />', () => {
 
   it('should render the not found page', () => {
     const { getByTestId } = renderWithProviders(
-      <HttpMiddlewareRender name="mock-middleware" data={{} as ResourceDetailDataType} error={undefined} />,
+      <MiddlewareDetail name="mock-middleware" data={{} as Resource.DetailsData} error={undefined} protocol="http" />,
       { route: '/http/middlewares/mock-middleware', withPage: true },
     )
     expect(getByTestId('Not found page')).toBeInTheDocument()
@@ -55,7 +53,7 @@ describe('<HttpMiddlewarePage />', () => {
 
     const { container, getByTestId } = renderWithProviders(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      <HttpMiddlewareRender name="mock-middleware" data={mockMiddleware as any} error={undefined} />,
+      <MiddlewareDetail name="mock-middleware" data={mockMiddleware as any} error={undefined} protocol="http" />,
       { route: '/http/middlewares/middleware-simple', withPage: true },
     )
 
@@ -67,12 +65,11 @@ describe('<HttpMiddlewarePage />', () => {
     expect(middlewareCard.innerHTML).toContain('addprefix')
     expect(middlewareCard.querySelector('svg[data-testid="docker"]')).toBeTruthy()
     expect(middlewareCard.innerHTML).toContain('Success')
-    expect(middlewareCard.innerHTML).toContain('/foo')
+    expect(container.innerHTML).toContain('/foo')
 
     const routersTable = getByTestId('routers-table')
-    const tableBody = routersTable.querySelectorAll('div[role="rowgroup"]')[1]
-    expect(tableBody?.querySelectorAll('a[role="row"]')).toHaveLength(1)
-    expect(tableBody?.innerHTML).toContain('router-test-simple@docker')
+    expect(routersTable.querySelectorAll('a[role="row"]')).toHaveLength(1)
+    expect(routersTable.innerHTML).toContain('router-test-simple@docker')
   })
 
   it('should render a plugin middleware', () => {
@@ -102,7 +99,7 @@ describe('<HttpMiddlewarePage />', () => {
 
     const { container, getByTestId } = renderWithProviders(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      <HttpMiddlewareRender name="mock-middleware" data={mockMiddleware as any} error={undefined} />,
+      <MiddlewareDetail name="mock-middleware" data={mockMiddleware as any} error={undefined} protocol="http" />,
       { route: '/http/middlewares/middleware-plugin', withPage: true },
     )
 
@@ -112,11 +109,11 @@ describe('<HttpMiddlewarePage />', () => {
 
     const middlewareCard = getByTestId('middleware-card')
     expect(middlewareCard.innerHTML).toContain('jwtAuth')
+    expect(middlewareCard.innerHTML).toContain('Success')
 
     const routersTable = getByTestId('routers-table')
-    const tableBody = routersTable.querySelectorAll('div[role="rowgroup"]')[1]
-    expect(tableBody?.querySelectorAll('a[role="row"]')).toHaveLength(1)
-    expect(tableBody?.innerHTML).toContain('router-test-plugin@docker')
+    expect(routersTable.querySelectorAll('a[role="row"]')).toHaveLength(1)
+    expect(routersTable.innerHTML).toContain('router-test-plugin@docker')
   })
 
   it('should render a complex middleware', async () => {
@@ -342,7 +339,7 @@ describe('<HttpMiddlewarePage />', () => {
 
     const { container, getByTestId } = renderWithProviders(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      <HttpMiddlewareRender name="mock-middleware" data={mockMiddleware as any} error={undefined} />,
+      <MiddlewareDetail name="mock-middleware" data={mockMiddleware as any} error={undefined} protocol="http" />,
       { route: '/http/middlewares/middleware-complex', withPage: true },
     )
 
@@ -353,60 +350,50 @@ describe('<HttpMiddlewarePage />', () => {
     const middlewareCard = getByTestId('middleware-card')
     expect(middlewareCard.innerHTML).toContain('Success')
     expect(middlewareCard.innerHTML).toContain('the-provider')
-    expect(middlewareCard.innerHTML).toContain('redirect-scheme')
-    expect(middlewareCard.innerHTML).toContain('add-prefix-sample')
-    expect(middlewareCard.innerHTML).toContain('buffer-retry-expression')
-    expect(middlewareCard.innerHTML).toContain('circuit-breaker')
-    expect(middlewareCard.innerHTML).toIncludeMultiple(['replace-path-regex', 'replace-path-replacement'])
-    expect(middlewareCard.innerHTML).toIncludeMultiple(['/redirect-from-regex', '/redirect-to'])
-    expect(middlewareCard.innerHTML).toIncludeMultiple(['127.0.0.1', '127.0.0.2', 'rate-limit-req-header'])
-    expect(middlewareCard.innerHTML).toIncludeMultiple(['126.0.0.1', '126.0.0.2', 'inflight-req-header'])
-    expect(middlewareCard.innerHTML).toIncludeMultiple(['125.0.0.1', '125.0.0.2', '125.0.0.3', '125.0.0.4'])
-    expect(middlewareCard.innerHTML).toIncludeMultiple(['ssl.host', 'ssl-proxy-header-a', 'ssl-proxy-header-b'])
-    expect(middlewareCard.innerHTML).toIncludeMultiple(['host-proxy-header-a', 'host-proxy-header-b'])
-    expect(middlewareCard.innerHTML).toIncludeMultiple(['allowed-host-1', 'allowed-host-2'])
-    expect(middlewareCard.innerHTML).toIncludeMultiple(['exposed-header-1', 'exposed-header-2'])
-    expect(middlewareCard.innerHTML).toContain('allowed.origin')
-    expect(middlewareCard.innerHTML).toContain('custom-frame-options')
-    expect(middlewareCard.innerHTML).toContain('content-security-policy')
-    expect(middlewareCard.innerHTML).toContain('public-key')
-    expect(middlewareCard.innerHTML).toContain('referrer-policy')
-    expect(middlewareCard.innerHTML).toContain('feature-policy')
-    expect(middlewareCard.innerHTML).toIncludeMultiple(['GET', 'POST', 'PUT'])
-    expect(middlewareCard.innerHTML).toIncludeMultiple(['allowed-header-1', 'allowed-header-2'])
-    expect(middlewareCard.innerHTML).toIncludeMultiple(['custom-res-headers-a', 'custom-res-headers-b'])
-    expect(middlewareCard.innerHTML).toIncludeMultiple(['custom-req-headers-a', 'custom-req-headers-b'])
-    expect(middlewareCard.innerHTML).toIncludeMultiple([
+    expect(container.innerHTML).toContain('redirect-scheme')
+    expect(container.innerHTML).toContain('add-prefix-sample')
+    expect(container.innerHTML).toContain('buffer-retry-expression')
+    expect(container.innerHTML).toContain('circuit-breaker')
+    expect(container.innerHTML).toIncludeMultiple(['replace-path-regex', 'replace-path-replacement'])
+    expect(container.innerHTML).toIncludeMultiple(['/redirect-from-regex', '/redirect-to'])
+    expect(container.innerHTML).toIncludeMultiple(['127.0.0.1', '127.0.0.2', 'rate-limit-req-header'])
+    expect(container.innerHTML).toIncludeMultiple(['126.0.0.1', '126.0.0.2', 'inflight-req-header'])
+    expect(container.innerHTML).toIncludeMultiple(['125.0.0.1', '125.0.0.2', '125.0.0.3', '125.0.0.4'])
+    expect(container.innerHTML).toIncludeMultiple(['ssl.host', 'ssl-proxy-header-a', 'ssl-proxy-header-b'])
+    expect(container.innerHTML).toIncludeMultiple(['host-proxy-header-a', 'host-proxy-header-b'])
+    expect(container.innerHTML).toIncludeMultiple(['allowed-host-1', 'allowed-host-2'])
+    expect(container.innerHTML).toIncludeMultiple(['exposed-header-1', 'exposed-header-2'])
+    expect(container.innerHTML).toContain('allowed.origin')
+    expect(container.innerHTML).toContain('custom-frame-options')
+    expect(container.innerHTML).toContain('content-security-policy')
+    expect(container.innerHTML).toContain('public-key')
+    expect(container.innerHTML).toContain('referrer-policy')
+    expect(container.innerHTML).toContain('feature-policy')
+    expect(container.innerHTML).toIncludeMultiple(['GET', 'POST', 'PUT'])
+    expect(container.innerHTML).toIncludeMultiple(['allowed-header-1', 'allowed-header-2'])
+    expect(container.innerHTML).toIncludeMultiple(['custom-res-headers-a', 'custom-res-headers-b'])
+    expect(container.innerHTML).toIncludeMultiple(['custom-req-headers-a', 'custom-req-headers-b'])
+    expect(container.innerHTML).toIncludeMultiple([
       'forward-auth-address',
       'auth-response-header-1',
       'auth-response-header-2',
     ])
-    expect(middlewareCard.innerHTML).toIncludeMultiple([
+    expect(container.innerHTML).toIncludeMultiple([
       'error-sample',
       'status-1',
       'status-2',
       'errors-service',
       'errors-query',
     ])
-    expect(middlewareCard.innerHTML).toIncludeMultiple([
-      'chain-middleware-1',
-      'chain-middleware-2',
-      'chain-middleware-3',
-    ])
-    expect(middlewareCard.innerHTML).toIncludeMultiple([
-      'user1',
-      'user2',
-      'users/file',
-      'realm-sample',
-      'basic-auth-header',
-    ])
-    expect(middlewareCard.innerHTML).toIncludeMultiple([
+    expect(container.innerHTML).toIncludeMultiple(['chain-middleware-1', 'chain-middleware-2', 'chain-middleware-3'])
+    expect(container.innerHTML).toIncludeMultiple(['user1', 'user2', 'users/file', 'realm-sample', 'basic-auth-header'])
+    expect(container.innerHTML).toIncludeMultiple([
       'strip-prefix1',
       'strip-prefix2',
       'strip-prefix-regex1',
       'strip-prefix-regex2',
     ])
-    expect(middlewareCard.innerHTML).toIncludeMultiple([
+    expect(container.innerHTML).toIncludeMultiple([
       '10000',
       '10001',
       '10002',
@@ -421,7 +408,7 @@ describe('<HttpMiddlewarePage />', () => {
       '10011',
       '10012',
     ])
-    expect(middlewareCard.innerHTML).toIncludeMultiple([
+    expect(container.innerHTML).toIncludeMultiple([
       'plugin-ldap-source',
       'plugin-ldap-base-dn',
       'plugin-ldap-attribute',
@@ -438,9 +425,8 @@ describe('<HttpMiddlewarePage />', () => {
     ])
 
     const routersTable = getByTestId('routers-table')
-    const tableBody = routersTable.querySelectorAll('div[role="rowgroup"]')[1]
-    expect(tableBody?.querySelectorAll('a[role="row"]')).toHaveLength(1)
-    expect(tableBody?.innerHTML).toContain('router-test-complex@docker')
+    expect(routersTable.querySelectorAll('a[role="row"]')).toHaveLength(1)
+    expect(routersTable.innerHTML).toContain('router-test-complex@docker')
   })
 
   it('should render a plugin middleware with no type', async () => {
@@ -464,7 +450,7 @@ describe('<HttpMiddlewarePage />', () => {
 
     const { container, getByTestId } = renderWithProviders(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      <HttpMiddlewareRender name="mock-middleware" data={mockMiddleware as any} error={undefined} />,
+      <MiddlewareDetail name="mock-middleware" data={mockMiddleware as any} error={undefined} protocol="http" />,
       { route: '/http/middlewares/middleware-plugin-no-type', withPage: true },
     )
 
@@ -474,15 +460,15 @@ describe('<HttpMiddlewarePage />', () => {
 
     const middlewareCard = getByTestId('middleware-card')
     expect(middlewareCard.innerHTML).toContain('Success')
-    expect(middlewareCard.innerHTML).toContain('jwtAuth &gt; child')
-    expect(middlewareCard.innerHTML).toContain('jwtAuth &gt; sibling &gt; negative Grand Child')
-    expect(middlewareCard.innerHTML).toContain('jwtAuth &gt; sibling &gt; positive Grand Child')
-    expect(middlewareCard.innerHTML).toContain('jwtAuth &gt; string Child')
-    expect(middlewareCard.innerHTML).toContain('jwtAuth &gt; array Child')
+    expect(container.innerHTML).toContain('jwtAuth &gt; child')
+    expect(container.innerHTML).toContain('jwtAuth &gt; sibling &gt; negative Grand Child')
+    expect(container.innerHTML).toContain('jwtAuth &gt; sibling &gt; positive Grand Child')
+    expect(container.innerHTML).toContain('jwtAuth &gt; string Child')
+    expect(container.innerHTML).toContain('jwtAuth &gt; array Child')
 
-    const childSpans = Array.from(middlewareCard.querySelectorAll('span')).filter((span) =>
+    const childSpans = Array.from(container.querySelectorAll('span')).filter((span) =>
       ['0', '1', '2', '3', '123'].includes(span.innerHTML),
     )
-    expect(childSpans.length).toBe(7)
+    expect(childSpans.length).toBe(6)
   })
 })

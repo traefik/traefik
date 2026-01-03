@@ -1,11 +1,9 @@
-import { Text } from '@traefiklabs/faency'
 import { ReactNode } from 'react'
 
-import { BooleanState, ItemBlock } from './DetailSections'
-import GenericTable from './GenericTable'
-import IpStrategyTable, { IpStrategy } from './IpStrategyTable'
-
-import Tooltip from 'components/Tooltip'
+import CopyableText from 'components/CopyableText'
+import { BooleanState, ItemBlock } from 'components/resources/DetailItemComponents'
+import GenericTable from 'components/resources/GenericTable'
+import IpStrategyTable, { IpStrategy } from 'components/resources/IpStrategyTable'
 
 type RenderUnknownPropProps = {
   name: string
@@ -22,23 +20,19 @@ export const RenderUnknownProp = ({ name, prop, removeTitlePrefix }: RenderUnkno
   try {
     if (typeof prop !== 'undefined') {
       if (typeof prop === 'boolean') {
-        return wrap(<BooleanState enabled={prop} />)
+        return wrap(<BooleanState css={{ fontSize: '$3' }} enabled={prop} />)
       }
 
       if (typeof prop === 'string' && ['true', 'false'].includes((prop as string).toLowerCase())) {
-        return wrap(<BooleanState enabled={prop === 'true'} />)
+        return wrap(<BooleanState css={{ fontSize: '$3' }} enabled={prop === 'true'} />)
       }
 
       if (['string', 'number'].includes(typeof prop)) {
-        return wrap(
-          <Tooltip label={prop as string} action="copy">
-            <Text css={{ overflowWrap: 'break-word' }}>{prop as string}</Text>
-          </Tooltip>,
-        )
+        return wrap(<CopyableText text={prop as string} css={{ fontSize: '$3' }} />)
       }
 
       if (JSON.stringify(prop) === '{}') {
-        return wrap(<BooleanState enabled />)
+        return wrap(<BooleanState enabled css={{ fontSize: '$3' }} />)
       }
 
       if (prop instanceof Array) {
@@ -75,7 +69,7 @@ export const RenderUnknownProp = ({ name, prop, removeTitlePrefix }: RenderUnkno
       }
     }
   } catch (error) {
-    console.log('Unable to render plugin property:', { name, prop }, { error })
+    console.error('Unable to render plugin property:', { name, prop }, { error })
   }
 
   return null

@@ -1,6 +1,7 @@
 import { AriaTr, VariantProps, styled } from '@traefiklabs/faency'
 import { ComponentProps, forwardRef, ReactNode } from 'react'
-import { useHref } from 'react-router-dom'
+
+import { useHrefWithReturnTo } from 'hooks/use-href-with-return-to'
 
 const UnstyledLink = styled('a', {
   color: 'inherit',
@@ -18,7 +19,7 @@ type ClickableRowProps = ComponentProps<typeof AriaTr> &
   }
 
 export default forwardRef<HTMLTableRowElement | null, ClickableRowProps>(({ children, css, to, ...props }, ref) => {
-  const href = useHref(to)
+  const href = useHrefWithReturnTo(to)
 
   return (
     <AriaTr asChild interactive ref={ref} css={css} {...props}>

@@ -1,17 +1,16 @@
-import { AriaTable, AriaTbody, AriaTd, AriaTfoot, AriaThead, AriaTr, Box, Flex } from '@traefiklabs/faency'
+import { AriaTable, AriaTbody, AriaTd, AriaTfoot, AriaThead, AriaTr, Flex } from '@traefiklabs/faency'
 import { useMemo } from 'react'
 import { Helmet } from 'react-helmet-async'
 import useInfiniteScroll from 'react-infinite-scroll-hook'
 import { useSearchParams } from 'react-router-dom'
 
-import ClickableRow from 'components/ClickableRow'
-import ProviderIcon from 'components/icons/providers'
+import { ScrollTopButton } from 'components/buttons/ScrollTopButton'
+import { ProviderIconWithTooltip } from 'components/icons/providers'
 import { ResourceStatus } from 'components/resources/ResourceStatus'
-import { ScrollTopButton } from 'components/ScrollTopButton'
 import { SpinnerLoader } from 'components/SpinnerLoader'
-import { searchParamsToState, TableFilter } from 'components/TableFilter'
+import ClickableRow from 'components/tables/ClickableRow'
 import SortableTh from 'components/tables/SortableTh'
-import Tooltip from 'components/Tooltip'
+import { searchParamsToState, TableFilter } from 'components/tables/TableFilter'
 import TooltipText from 'components/TooltipText'
 import useFetchWithPagination, { pagesResponseInterface, RenderRowType } from 'hooks/use-fetch-with-pagination'
 import { EmptyPlaceholderTd } from 'layout/EmptyPlaceholder'
@@ -24,11 +23,7 @@ export const makeRowRender = (): RenderRowType => {
     return (
       <ClickableRow key={row.name} to={`/tcp/middlewares/${row.name}`}>
         <AriaTd>
-          <Tooltip label={row.status}>
-            <Box css={{ width: '32px', height: '32px' }}>
-              <ResourceStatus status={row.status} />
-            </Box>
-          </Tooltip>
+          <ResourceStatus status={row.status} />
         </AriaTd>
         <AriaTd>
           <TooltipText text={row.name} />
@@ -37,11 +32,7 @@ export const makeRowRender = (): RenderRowType => {
           <TooltipText text={middlewareType} />
         </AriaTd>
         <AriaTd>
-          <Tooltip label={row.provider}>
-            <Box css={{ width: '32px', height: '32px' }}>
-              <ProviderIcon name={row.provider} />
-            </Box>
-          </Tooltip>
+          <ProviderIconWithTooltip provider={row.provider} />
         </AriaTd>
       </ClickableRow>
     )
@@ -69,7 +60,7 @@ export const TcpMiddlewaresRender = ({
       <AriaTable>
         <AriaThead>
           <AriaTr>
-            <SortableTh label="Status" css={{ width: '40px' }} isSortable sortByValue="status" />
+            <SortableTh label="Status" css={{ width: '36px' }} isSortable sortByValue="status" />
             <SortableTh label="Name" isSortable sortByValue="name" />
             <SortableTh label="Type" isSortable sortByValue="type" />
             <SortableTh label="Provider" css={{ width: '75px' }} isSortable sortByValue="provider" />
