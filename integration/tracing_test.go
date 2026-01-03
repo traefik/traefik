@@ -12,6 +12,7 @@ import (
 
 type TracingSuite struct {
 	BaseSuite
+
 	whoamiIP       string
 	whoamiPort     int
 	tracerZipkinIP string
@@ -41,15 +42,6 @@ func (s *TracingSuite) SetupSuite() {
 
 func (s *TracingSuite) TearDownSuite() {
 	s.BaseSuite.TearDownSuite()
-}
-
-func (s *TracingSuite) startZipkin() {
-	s.composeUp("zipkin")
-	s.tracerZipkinIP = s.getComposeServiceIP("zipkin")
-
-	// Wait for Zipkin to turn ready.
-	err := try.GetRequest("http://"+s.tracerZipkinIP+":9411/api/v2/services", 20*time.Second, try.StatusCodeIs(http.StatusOK))
-	require.NoError(s.T(), err)
 }
 
 func (s *TracingSuite) TestZipkinRateLimit() {
@@ -138,15 +130,6 @@ func (s *TracingSuite) TestZipkinAuth() {
 	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://"+s.tracerZipkinIP+":9411/api/v2/spans?serviceName=tracing", 20*time.Second, try.BodyContains("entrypoint web", "basic-auth@file"))
-	require.NoError(s.T(), err)
-}
-
-func (s *TracingSuite) startJaeger() {
-	s.composeUp("jaeger", "whoami")
-	s.tracerJaegerIP = s.getComposeServiceIP("jaeger")
-
-	// Wait for Jaeger to turn ready.
-	err := try.GetRequest("http://"+s.tracerJaegerIP+":16686/api/services", 20*time.Second, try.StatusCodeIs(http.StatusOK))
 	require.NoError(s.T(), err)
 }
 
@@ -288,5 +271,23 @@ func (s *TracingSuite) TestJaegerAuthCollector() {
 	require.NoError(s.T(), err)
 
 	err = try.GetRequest("http://"+s.tracerJaegerIP+":16686/api/traces?service=tracing", 20*time.Second, try.BodyContains("EntryPoint web", "basic-auth@file"))
+	require.NoError(s.T(), err)
+}
+
+func (s *TracingSuite) startZipkin() {
+	s.composeUp("zipkin")
+	s.tracerZipkinIP = s.getComposeServiceIP("zipkin")
+
+	// Wait for Zipkin to turn ready.
+	err := try.GetRequest("http://"+s.tracerZipkinIP+":9411/api/v2/services", 20*time.Second, try.StatusCodeIs(http.StatusOK))
+	require.NoError(s.T(), err)
+}
+
+func (s *TracingSuite) startJaeger() {
+	s.composeUp("jaeger", "whoami")
+	s.tracerJaegerIP = s.getComposeServiceIP("jaeger")
+
+	// Wait for Jaeger to turn ready.
+	err := try.GetRequest("http://"+s.tracerJaegerIP+":16686/api/services", 20*time.Second, try.StatusCodeIs(http.StatusOK))
 	require.NoError(s.T(), err)
 }

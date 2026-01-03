@@ -98,7 +98,7 @@ func (rc *readinessChecker) Do(task marathon.Task, app marathon.Application) boo
 		// An unparseable start time should never occur; if it does, we assume the
 		// problem should be surfaced as quickly as possible, which is easiest if
 		// we shun the task from rotation.
-		log.Warnf("Failed to parse start-time %s of task %s from application %s: %s (assuming unready)", task.StartedAt, task.ID, app.ID, err)
+		log.WithoutContext().Warnf("Failed to parse start-time %s of task %s from application %s: %s (assuming unready)", task.StartedAt, task.ID, app.ID, err)
 		return false
 	}
 
@@ -115,8 +115,8 @@ func (rc *readinessChecker) Do(task marathon.Task, app marathon.Application) boo
 	return true
 }
 
-func (rc *readinessChecker) tracef(format string, args ...interface{}) {
+func (rc *readinessChecker) tracef(format string, args ...any) {
 	if rc.traceLogging {
-		log.Debugf(readinessLogHeader+format, args...)
+		log.WithoutContext().Debugf(readinessLogHeader+format, args...)
 	}
 }

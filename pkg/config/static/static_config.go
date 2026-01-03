@@ -295,20 +295,6 @@ func (c *Configuration) SetEffectiveConfiguration() {
 	c.initACMEProvider()
 }
 
-func (c *Configuration) hasUserDefinedEntrypoint() bool {
-	return len(c.EntryPoints) != 0
-}
-
-func (c *Configuration) initACMEProvider() {
-	for _, resolver := range c.CertificatesResolvers {
-		if resolver.ACME != nil {
-			resolver.ACME.CAServer = getSafeACMECAServer(resolver.ACME.CAServer)
-		}
-	}
-
-	legolog.Logger = stdlog.New(log.WithoutContext().WriterLevel(logrus.DebugLevel), "legolog: ", 0)
-}
-
 // ValidateConfiguration validate that configuration is coherent.
 func (c *Configuration) ValidateConfiguration() error {
 	var acmeEmail string
@@ -340,6 +326,20 @@ func (c *Configuration) ValidateConfiguration() error {
 	}
 
 	return nil
+}
+
+func (c *Configuration) hasUserDefinedEntrypoint() bool {
+	return len(c.EntryPoints) != 0
+}
+
+func (c *Configuration) initACMEProvider() {
+	for _, resolver := range c.CertificatesResolvers {
+		if resolver.ACME != nil {
+			resolver.ACME.CAServer = getSafeACMECAServer(resolver.ACME.CAServer)
+		}
+	}
+
+	legolog.Logger = stdlog.New(log.WithoutContext().WriterLevel(logrus.DebugLevel), "legolog: ", 0)
 }
 
 func getSafeACMECAServer(caServerSrc string) string {

@@ -14,6 +14,7 @@ func pointer[T any](v T) *T { return &v }
 
 type responseRecorder struct {
 	*httptest.ResponseRecorder
+
 	save     map[string]int
 	sequence []string
 	status   []int

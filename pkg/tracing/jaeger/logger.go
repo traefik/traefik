@@ -21,6 +21,6 @@ func (l *jaegerLogger) Error(msg string) {
 }
 
 // Infof logs a message at debug priority.
-func (l *jaegerLogger) Infof(msg string, args ...interface{}) {
+func (l *jaegerLogger) Infof(msg string, args ...any) {
 	l.logger.Debugf(msg, args...)
 }

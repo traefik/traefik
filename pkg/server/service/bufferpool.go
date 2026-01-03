@@ -7,7 +7,7 @@ const bufferPoolSize = 32 * 1024
 func newBufferPool() *bufferPool {
 	return &bufferPool{
 		pool: sync.Pool{
-			New: func() interface{} {
+			New: func() any {
 				return make([]byte, bufferPoolSize)
 			},
 		},

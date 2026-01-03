@@ -18,10 +18,11 @@ func Test_newSecure_sslForceHost(t *testing.T) {
 	}
 
 	testCases := []struct {
+		expected
+
 		desc string
 		host string
 		cfg  dynamic.Headers
-		expected
 	}{
 		{
 			desc: "http should return a 301",

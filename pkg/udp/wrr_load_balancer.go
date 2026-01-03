@@ -9,6 +9,7 @@ import (
 
 type server struct {
 	Handler
+
 	weight int
 }
 

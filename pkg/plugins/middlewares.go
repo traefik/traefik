@@ -13,7 +13,7 @@ import (
 )
 
 // Build builds a middleware plugin.
-func (b Builder) Build(pName string, config map[string]interface{}, middlewareName string) (Constructor, error) {
+func (b Builder) Build(pName string, config map[string]any, middlewareName string) (Constructor, error) {
 	if b.middlewareBuilders == nil {
 		return nil, fmt.Errorf("no plugin definition in the static configuration: %s", pName)
 	}
@@ -77,7 +77,7 @@ func (p middlewareBuilder) newHandler(ctx context.Context, next http.Handler, cf
 	return handler, nil
 }
 
-func (p middlewareBuilder) createConfig(config map[string]interface{}) (reflect.Value, error) {
+func (p middlewareBuilder) createConfig(config map[string]any) (reflect.Value, error) {
 	results := p.fnCreateConfig.Call(nil)
 	if len(results) != 1 {
 		return reflect.Value{}, fmt.Errorf("invalid number of return for the CreateConfig function: %d", len(results))
@@ -114,7 +114,7 @@ type Middleware struct {
 	builder        *middlewareBuilder
 }
 
-func newMiddleware(builder *middlewareBuilder, config map[string]interface{}, middlewareName string) (*Middleware, error) {
+func newMiddleware(builder *middlewareBuilder, config map[string]any, middlewareName string) (*Middleware, error) {
 	vConfig, err := builder.createConfig(config)
 	if err != nil {
 		return nil, err

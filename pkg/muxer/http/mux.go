@@ -32,6 +32,7 @@ var httpFuncs = map[string]func(*mux.Route, ...string) error{
 // Muxer handles routing with rules.
 type Muxer struct {
 	*mux.Router
+
 	parser predicate.Parser
 }
 

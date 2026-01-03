@@ -55,7 +55,7 @@ func RegisterStatsd(ctx context.Context, config *types.Statsd) Registry {
 		config.Prefix = defaultMetricsPrefix
 	}
 
-	statsdClient = statsd.New(config.Prefix+".", kitlog.LoggerFunc(func(keyvals ...interface{}) error {
+	statsdClient = statsd.New(config.Prefix+".", kitlog.LoggerFunc(func(keyvals ...any) error {
 		log.WithoutContext().WithField(log.MetricsProviderName, "statsd").Info(keyvals...)
 		return nil
 	}))

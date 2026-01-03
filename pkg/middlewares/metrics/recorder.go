@@ -27,6 +27,7 @@ func newResponseRecorder(rw http.ResponseWriter) recorder {
 // later analysis.
 type responseRecorder struct {
 	http.ResponseWriter
+
 	statusCode int
 }
 
@@ -38,10 +39,6 @@ type responseRecorderWithCloseNotify struct {
 // single value (true) when the client connection has gone away.
 func (r *responseRecorderWithCloseNotify) CloseNotify() <-chan bool {
 	return r.ResponseWriter.(http.CloseNotifier).CloseNotify()
-}
-
-func (r *responseRecorder) getCode() int {
-	return r.statusCode
 }
 
 // WriteHeader captures the status code for later retrieval.
@@ -60,4 +57,8 @@ func (r *responseRecorder) Flush() {
 	if f, ok := r.ResponseWriter.(http.Flusher); ok {
 		f.Flush()
 	}
+}
+
+func (r *responseRecorder) getCode() int {
+	return r.statusCode
 }

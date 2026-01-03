@@ -121,7 +121,7 @@ func buildProxy(passHostHeader *bool, responseForwarding *dynamic.ResponseForwar
 			w.WriteHeader(statusCode)
 			_, werr := w.Write([]byte(statusText(statusCode)))
 			if werr != nil {
-				log.Debugf("Error while writing status code", werr)
+				log.WithoutContext().Debugf("Error while writing status code", werr)
 			}
 		},
 	}
