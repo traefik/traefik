@@ -451,6 +451,7 @@ Below are the available options for the health check mechanism:
 - `followRedirects` (default: true), defines whether redirects should be followed during the health check calls.
 - `method` (default: GET), defines the HTTP method that will be used while connecting to the endpoint.
 - `status` (optional), defines the expected HTTP status code of the response to the health check request.
+- `body` (optional), defines the request body that will be used during the health check calls.
 
 !!! info "Interval & Timeout Format"
 
@@ -560,6 +561,38 @@ Below are the available options for the health check mechanism:
           [http.services.Service-1.loadBalancer.healthCheck.headers]
             My-Custom-Header = "foo"
             My-Header = "bar"
+    ```
+
+??? example "Custom HTTP Body -- Using the [File Provider](../../providers/file.md)"
+
+    ```yaml tab="YAML"
+    ## Dynamic configuration
+    http:
+      services:
+        Service-1:
+          loadBalancer:
+            healthCheck:
+              path: /jsonrpc
+              method: "POST"
+              interval: "10s"
+              timeout: "3s"
+              headers:
+                Content-Type: application/json
+              body: '{"jsonrpc": "2.0","method": "call", "params": {"service": "db", "method": "db_exist", "args": ["your_db_name"]}}'
+    ```
+
+    ```toml tab="TOML"
+    ## Dynamic configuration
+    [http.services]
+      [http.services.Service-1]
+        [http.services.Service-1.loadBalancer.healthCheck]
+          path = "/health"
+          method = "POST"
+          interval = "10s"
+          timeout = "3s"
+          body = '{"jsonrpc": "2.0","method": "call", "params": {"service": "db", "method": "db_exist", "args": ["your_db_name"]}}'
+          [http.services.Service-1.loadBalancer.healthCheck.headers]
+            Content-Type = "application/json"
     ```
 
 #### Pass Host Header
