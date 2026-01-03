@@ -19,6 +19,7 @@ import (
 // HealthCheck test suites.
 type HealthCheckSuite struct {
 	BaseSuite
+
 	whoami1IP string
 	whoami2IP string
 	whoami3IP string
@@ -305,7 +306,7 @@ func (s *HealthCheckSuite) TestPropagate() {
 		require.NoError(s.T(), err)
 	}
 
-	try.Sleep(time.Second)
+	try.Sleep(time.Second) //nolint:staticcheck // Intentional use for integration test timing
 
 	want2 := `IP: ` + s.whoami2IP
 	want4 := `IP: ` + s.whoami4IP
@@ -387,7 +388,7 @@ func (s *HealthCheckSuite) TestPropagate() {
 		require.NoError(s.T(), err)
 	}
 
-	try.Sleep(time.Second)
+	try.Sleep(time.Second) //nolint:staticcheck // Intentional use for integration test timing
 
 	// Verify that everything is down, and that we get 503s everywhere.
 	for range 2 {
@@ -413,7 +414,7 @@ func (s *HealthCheckSuite) TestPropagate() {
 		require.NoError(s.T(), err)
 	}
 
-	try.Sleep(time.Second)
+	try.Sleep(time.Second) //nolint:staticcheck // Intentional use for integration test timing
 
 	// Verify everything is up on root router.
 	reachedServers = make(map[string]int)

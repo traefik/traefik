@@ -14,10 +14,11 @@ import (
 
 type contextKey int
 
+// SpanKindNoneEnum Span kind enum none.
+const SpanKindNoneEnum ext.SpanKindEnum = "none"
+
 const (
-	// SpanKindNoneEnum Span kind enum none.
-	SpanKindNoneEnum ext.SpanKindEnum = "none"
-	tracingKey       contextKey       = iota
+	tracingKey contextKey = iota
 )
 
 // WithTracing Adds Tracing into the context.
@@ -80,12 +81,12 @@ func (t *Tracing) StartSpanf(r *http.Request, spanKind ext.SpanKindEnum, opPrefi
 }
 
 // Inject delegates to opentracing.Tracer.
-func (t *Tracing) Inject(sm opentracing.SpanContext, format, carrier interface{}) error {
+func (t *Tracing) Inject(sm opentracing.SpanContext, format, carrier any) error {
 	return t.tracer.Inject(sm, format, carrier)
 }
 
 // Extract delegates to opentracing.Tracer.
-func (t *Tracing) Extract(format, carrier interface{}) (opentracing.SpanContext, error) {
+func (t *Tracing) Extract(format, carrier any) (opentracing.SpanContext, error) {
 	return t.tracer.Extract(format, carrier)
 }
 
@@ -142,7 +143,7 @@ func InjectRequestHeaders(r *http.Request) {
 }
 
 // LogEventf logs an event to the span in the request context.
-func LogEventf(r *http.Request, format string, args ...interface{}) {
+func LogEventf(r *http.Request, format string, args ...any) {
 	if span := GetSpan(r); span != nil {
 		span.LogKV("event", fmt.Sprintf(format, args...))
 	}
@@ -177,7 +178,7 @@ func SetError(r *http.Request) {
 }
 
 // SetErrorWithEvent flags the span associated with this request as in error and log an event.
-func SetErrorWithEvent(r *http.Request, format string, args ...interface{}) {
+func SetErrorWithEvent(r *http.Request, format string, args ...any) {
 	SetError(r)
 	LogEventf(r, format, args...)
 }

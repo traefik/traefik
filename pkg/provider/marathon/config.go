@@ -386,8 +386,7 @@ func processPorts(app marathon.Application, task marathon.Task, serverPort strin
 		}
 	}
 
-	if strings.HasPrefix(serverPort, "name:") {
-		name := strings.TrimPrefix(serverPort, "name:")
+	if name, ok := strings.CutPrefix(serverPort, "name:"); ok {
 		port := retrieveNamedPort(app, name)
 
 		if port == 0 {
@@ -403,8 +402,7 @@ func processPorts(app marathon.Application, task marathon.Task, serverPort strin
 	}
 
 	portIndex := 0
-	if strings.HasPrefix(serverPort, "index:") {
-		indexString := strings.TrimPrefix(serverPort, "index:")
+	if indexString, ok := strings.CutPrefix(serverPort, "index:"); ok {
 		index, err := strconv.Atoi(indexString)
 		if err != nil {
 			return 0, err

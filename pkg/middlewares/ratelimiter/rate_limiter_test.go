@@ -283,11 +283,8 @@ func TestRateLimit(t *testing.T) {
 			stop := time.Now()
 			elapsed := stop.Sub(start)
 
-			burst := test.config.Burst
-			if burst < 1 {
-				// actual default value
-				burst = 1
-			}
+			// actual default value if burst < 1
+			burst := max(test.config.Burst, 1)
 
 			period := time.Duration(test.config.Period)
 			if period == 0 {

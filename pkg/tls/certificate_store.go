@@ -31,32 +31,6 @@ func NewCertificateStore() *CertificateStore {
 	}
 }
 
-func (c *CertificateStore) getDefaultCertificateDomains() []string {
-	var allCerts []string
-
-	if c.DefaultCertificate == nil {
-		return allCerts
-	}
-
-	x509Cert, err := x509.ParseCertificate(c.DefaultCertificate.Certificate[0])
-	if err != nil {
-		log.WithoutContext().Errorf("Could not parse default certificate: %v", err)
-		return allCerts
-	}
-
-	if len(x509Cert.Subject.CommonName) > 0 {
-		allCerts = append(allCerts, x509Cert.Subject.CommonName)
-	}
-
-	allCerts = append(allCerts, x509Cert.DNSNames...)
-
-	for _, ipSan := range x509Cert.IPAddresses {
-		allCerts = append(allCerts, ipSan.String())
-	}
-
-	return allCerts
-}
-
 // GetAllDomains return a slice with all the certificate domain.
 func (c *CertificateStore) GetAllDomains() []string {
 	allDomains := c.getDefaultCertificateDomains()
@@ -93,7 +67,7 @@ func (c *CertificateStore) GetBestCertificate(clientHello *tls.ClientHelloInfo) 
 	matchedCerts := map[string]*tls.Certificate{}
 	if c.DynamicCerts != nil && c.DynamicCerts.Get() != nil {
 		for domains, cert := range c.DynamicCerts.Get().(map[string]*tls.Certificate) {
-			for _, certDomain := range strings.Split(domains, ",") {
+			for certDomain := range strings.SplitSeq(domains, ",") {
 				if matchDomain(serverName, certDomain) {
 					matchedCerts[certDomain] = cert
 				}
@@ -138,7 +112,7 @@ func (c *CertificateStore) GetCertificate(domains []string) *tls.Certificate {
 			}
 
 			var matchedDomains []string
-			for _, certDomain := range strings.Split(certDomains, ",") {
+			for certDomain := range strings.SplitSeq(certDomains, ",") {
 				for _, checkDomain := range domains {
 					if certDomain == checkDomain {
 						matchedDomains = append(matchedDomains, certDomain)
@@ -161,6 +135,32 @@ func (c *CertificateStore) ResetCache() {
 	if c.CertCache != nil {
 		c.CertCache.Flush()
 	}
+}
+
+func (c *CertificateStore) getDefaultCertificateDomains() []string {
+	var allCerts []string
+
+	if c.DefaultCertificate == nil {
+		return allCerts
+	}
+
+	x509Cert, err := x509.ParseCertificate(c.DefaultCertificate.Certificate[0])
+	if err != nil {
+		log.WithoutContext().Errorf("Could not parse default certificate: %v", err)
+		return allCerts
+	}
+
+	if len(x509Cert.Subject.CommonName) > 0 {
+		allCerts = append(allCerts, x509Cert.Subject.CommonName)
+	}
+
+	allCerts = append(allCerts, x509Cert.DNSNames...)
+
+	for _, ipSan := range x509Cert.IPAddresses {
+		allCerts = append(allCerts, ipSan.String())
+	}
+
+	return allCerts
 }
 
 // matchDomain returns whether the server name matches the cert domain.

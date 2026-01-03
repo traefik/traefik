@@ -394,12 +394,12 @@ func (p *Provider) fetchService(ctx context.Context, name string, connectEnabled
 // watchServices watches for update events of the services list and statuses,
 // and transmits them to the caller through the p.watchServicesChan.
 func (p *Provider) watchServices(ctx context.Context) error {
-	servicesWatcher, err := watch.Parse(map[string]interface{}{"type": "services"})
+	servicesWatcher, err := watch.Parse(map[string]any{"type": "services"})
 	if err != nil {
 		return fmt.Errorf("failed to create services watcher plan: %w", err)
 	}
 
-	servicesWatcher.HybridHandler = func(_ watch.BlockingParamVal, _ interface{}) {
+	servicesWatcher.HybridHandler = func(_ watch.BlockingParamVal, _ any) {
 		select {
 		case <-ctx.Done():
 		case p.watchServicesChan <- struct{}{}:
@@ -408,12 +408,12 @@ func (p *Provider) watchServices(ctx context.Context) error {
 		}
 	}
 
-	checksWatcher, err := watch.Parse(map[string]interface{}{"type": "checks"})
+	checksWatcher, err := watch.Parse(map[string]any{"type": "checks"})
 	if err != nil {
 		return fmt.Errorf("failed to create checks watcher plan: %w", err)
 	}
 
-	checksWatcher.HybridHandler = func(_ watch.BlockingParamVal, _ interface{}) {
+	checksWatcher.HybridHandler = func(_ watch.BlockingParamVal, _ any) {
 		select {
 		case <-ctx.Done():
 		case p.watchServicesChan <- struct{}{}:
@@ -452,8 +452,8 @@ func (p *Provider) watchServices(ctx context.Context) error {
 	}
 }
 
-func rootsWatchHandler(ctx context.Context, dest chan<- []string) func(watch.BlockingParamVal, interface{}) {
-	return func(_ watch.BlockingParamVal, raw interface{}) {
+func rootsWatchHandler(ctx context.Context, dest chan<- []string) func(watch.BlockingParamVal, any) {
+	return func(_ watch.BlockingParamVal, raw any) {
 		if raw == nil {
 			log.FromContext(ctx).Errorf("Root certificate watcher called with nil")
 			return
@@ -482,8 +482,8 @@ type keyPair struct {
 	key  string
 }
 
-func leafWatcherHandler(ctx context.Context, dest chan<- keyPair) func(watch.BlockingParamVal, interface{}) {
-	return func(_ watch.BlockingParamVal, raw interface{}) {
+func leafWatcherHandler(ctx context.Context, dest chan<- keyPair) func(watch.BlockingParamVal, any) {
+	return func(_ watch.BlockingParamVal, raw any) {
 		if raw == nil {
 			log.FromContext(ctx).Errorf("Leaf certificate watcher called with nil")
 			return
@@ -511,7 +511,7 @@ func leafWatcherHandler(ctx context.Context, dest chan<- keyPair) func(watch.Blo
 // certificate, and transmits them to the caller via p.certChan.
 func (p *Provider) watchConnectTLS(ctx context.Context) error {
 	leafChan := make(chan keyPair)
-	leafWatcher, err := watch.Parse(map[string]interface{}{
+	leafWatcher, err := watch.Parse(map[string]any{
 		"type":    "connect_leaf",
 		"service": p.ServiceName,
 	})
@@ -521,7 +521,7 @@ func (p *Provider) watchConnectTLS(ctx context.Context) error {
 	leafWatcher.HybridHandler = leafWatcherHandler(ctx, leafChan)
 
 	rootsChan := make(chan []string)
-	rootsWatcher, err := watch.Parse(map[string]interface{}{
+	rootsWatcher, err := watch.Parse(map[string]any{
 		"type": "connect_roots",
 	})
 	if err != nil {

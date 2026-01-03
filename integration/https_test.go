@@ -876,40 +876,6 @@ func (s *HTTPSSuite) TestWithSNIDynamicConfigRouteWithTlsConfigurationDeletion()
 	require.NoError(s.T(), err)
 }
 
-// modifyCertificateConfFileContent replaces the content of a HTTPS configuration file.
-func (s *HTTPSSuite) modifyCertificateConfFileContent(certFileName, confFileName string) {
-	file, err := os.OpenFile("./"+confFileName, os.O_WRONLY, os.ModeExclusive)
-	require.NoError(s.T(), err)
-	defer func() {
-		file.Close()
-	}()
-	err = file.Truncate(0)
-	require.NoError(s.T(), err)
-
-	// If certificate file is not provided, just truncate the configuration file
-	if len(certFileName) > 0 {
-		tlsConf := dynamic.Configuration{
-			TLS: &dynamic.TLSConfiguration{
-				Certificates: []*traefiktls.CertAndStores{
-					{
-						Certificate: traefiktls.Certificate{
-							CertFile: traefiktls.FileOrContent("fixtures/https/" + certFileName + ".cert"),
-							KeyFile:  traefiktls.FileOrContent("fixtures/https/" + certFileName + ".key"),
-						},
-					},
-				},
-			},
-		}
-
-		var confBuffer bytes.Buffer
-		err := toml.NewEncoder(&confBuffer).Encode(tlsConf)
-		require.NoError(s.T(), err)
-
-		_, err = file.Write(confBuffer.Bytes())
-		require.NoError(s.T(), err)
-	}
-}
-
 func (s *HTTPSSuite) TestEntryPointHttpsRedirectAndPathModification() {
 	file := s.adaptFile("fixtures/https/https_redirect.toml", struct{}{})
 	s.traefikCmd(withConfigFile(file))
@@ -1173,6 +1139,40 @@ func (s *HTTPSSuite) TestWithInvalidTLSOption() {
 		conn, err := tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
 		assert.Error(s.T(), err, "connected to server successfully")
 		assert.Nil(s.T(), conn)
+	}
+}
+
+// modifyCertificateConfFileContent replaces the content of a HTTPS configuration file.
+func (s *HTTPSSuite) modifyCertificateConfFileContent(certFileName, confFileName string) {
+	file, err := os.OpenFile("./"+confFileName, os.O_WRONLY, os.ModeExclusive)
+	require.NoError(s.T(), err)
+	defer func() {
+		file.Close()
+	}()
+	err = file.Truncate(0)
+	require.NoError(s.T(), err)
+
+	// If certificate file is not provided, just truncate the configuration file
+	if len(certFileName) > 0 {
+		tlsConf := dynamic.Configuration{
+			TLS: &dynamic.TLSConfiguration{
+				Certificates: []*traefiktls.CertAndStores{
+					{
+						Certificate: traefiktls.Certificate{
+							CertFile: traefiktls.FileOrContent("fixtures/https/" + certFileName + ".cert"),
+							KeyFile:  traefiktls.FileOrContent("fixtures/https/" + certFileName + ".key"),
+						},
+					},
+				},
+			},
+		}
+
+		var confBuffer bytes.Buffer
+		err := toml.NewEncoder(&confBuffer).Encode(tlsConf)
+		require.NoError(s.T(), err)
+
+		_, err = file.Write(confBuffer.Bytes())
+		require.NoError(s.T(), err)
 	}
 }
 

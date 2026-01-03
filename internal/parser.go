@@ -38,7 +38,7 @@ func encodeNode(labels map[string]string, root string, node *parser.Node) {
 	}
 }
 
-func encodeRawValue(labels map[string]string, root string, rawValue interface{}) {
+func encodeRawValue(labels map[string]string, root string, rawValue any) {
 	if rawValue == nil {
 		return
 	}
@@ -47,14 +47,14 @@ func encodeRawValue(labels map[string]string, root string, rawValue interface{})
 
 	if tValue.Kind() == reflect.Map && tValue.Elem().Kind() == reflect.Interface {
 		r := reflect.ValueOf(rawValue).
-			Convert(reflect.TypeOf((map[string]interface{})(nil))).
-			Interface().(map[string]interface{})
+			Convert(reflect.TypeFor[map[string]any]()).
+			Interface().(map[string]any)
 
 		for k, v := range r {
 			switch tv := v.(type) {
 			case string:
 				labels[root+"."+k] = tv
-			case []interface{}:
+			case []any:
 				for i, e := range tv {
 					encodeRawValue(labels, fmt.Sprintf("%s.%s[%d]", root, k, i), e)
 				}

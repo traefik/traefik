@@ -14,6 +14,7 @@ import (
 // Marathon test suites.
 type MarathonSuite15 struct {
 	BaseSuite
+
 	marathonURL string
 }
 

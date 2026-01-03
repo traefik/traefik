@@ -13,7 +13,7 @@ import (
 
 func TestNewForwarder(t *testing.T) {
 	type expected struct {
-		Tags          map[string]interface{}
+		Tags          map[string]any
 		OperationName string
 	}
 
@@ -29,12 +29,12 @@ func TestNewForwarder(t *testing.T) {
 			desc:          "Simple Forward Tracer without truncation and hashing",
 			spanNameLimit: 101,
 			tracing: &trackingBackenMock{
-				tracer: &MockTracer{Span: &MockSpan{Tags: make(map[string]interface{})}},
+				tracer: &MockTracer{Span: &MockSpan{Tags: make(map[string]any)}},
 			},
 			service: "some-service.domain.tld",
 			router:  "some-service.domain.tld",
 			expected: expected{
-				Tags: map[string]interface{}{
+				Tags: map[string]any{
 					"http.host":            "www.test.com",
 					"http.method":          "GET",
 					"http.url":             "http://www.test.com/toto",
@@ -49,12 +49,12 @@ func TestNewForwarder(t *testing.T) {
 			desc:          "Simple Forward Tracer with truncation and hashing",
 			spanNameLimit: 101,
 			tracing: &trackingBackenMock{
-				tracer: &MockTracer{Span: &MockSpan{Tags: make(map[string]interface{})}},
+				tracer: &MockTracer{Span: &MockSpan{Tags: make(map[string]any)}},
 			},
 			service: "some-service-100.slug.namespace.environment.domain.tld",
 			router:  "some-service-100.slug.namespace.environment.domain.tld",
 			expected: expected{
-				Tags: map[string]interface{}{
+				Tags: map[string]any{
 					"http.host":            "www.test.com",
 					"http.method":          "GET",
 					"http.url":             "http://www.test.com/toto",
@@ -69,12 +69,12 @@ func TestNewForwarder(t *testing.T) {
 			desc:          "Exactly 101 chars",
 			spanNameLimit: 101,
 			tracing: &trackingBackenMock{
-				tracer: &MockTracer{Span: &MockSpan{Tags: make(map[string]interface{})}},
+				tracer: &MockTracer{Span: &MockSpan{Tags: make(map[string]any)}},
 			},
 			service: "some-service1.namespace.environment.domain.tld",
 			router:  "some-service1.namespace.environment.domain.tld",
 			expected: expected{
-				Tags: map[string]interface{}{
+				Tags: map[string]any{
 					"http.host":            "www.test.com",
 					"http.method":          "GET",
 					"http.url":             "http://www.test.com/toto",
@@ -89,12 +89,12 @@ func TestNewForwarder(t *testing.T) {
 			desc:          "More than 101 chars",
 			spanNameLimit: 101,
 			tracing: &trackingBackenMock{
-				tracer: &MockTracer{Span: &MockSpan{Tags: make(map[string]interface{})}},
+				tracer: &MockTracer{Span: &MockSpan{Tags: make(map[string]any)}},
 			},
 			service: "some-service1.frontend.namespace.environment.domain.tld",
 			router:  "some-service1.backend.namespace.environment.domain.tld",
 			expected: expected{
-				Tags: map[string]interface{}{
+				Tags: map[string]any{
 					"http.host":            "www.test.com",
 					"http.method":          "GET",
 					"http.url":             "http://www.test.com/toto",

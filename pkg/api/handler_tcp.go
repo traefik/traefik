@@ -16,6 +16,7 @@ import (
 
 type tcpRouterRepresentation struct {
 	*runtime.TCPRouterInfo
+
 	Name     string `json:"name,omitempty"`
 	Provider string `json:"provider,omitempty"`
 }
@@ -30,6 +31,7 @@ func newTCPRouterRepresentation(name string, rt *runtime.TCPRouterInfo) tcpRoute
 
 type tcpServiceRepresentation struct {
 	*runtime.TCPServiceInfo
+
 	Name     string `json:"name,omitempty"`
 	Provider string `json:"provider,omitempty"`
 	Type     string `json:"type,omitempty"`
@@ -46,6 +48,7 @@ func newTCPServiceRepresentation(name string, si *runtime.TCPServiceInfo) tcpSer
 
 type tcpMiddlewareRepresentation struct {
 	*runtime.TCPMiddlewareInfo
+
 	Name     string `json:"name,omitempty"`
 	Provider string `json:"provider,omitempty"`
 	Type     string `json:"type,omitempty"`

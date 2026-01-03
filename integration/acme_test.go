@@ -27,6 +27,7 @@ import (
 // ACME test suites.
 type AcmeSuite struct {
 	BaseSuite
+
 	pebbleIP      string
 	fakeDNSServer *dns.Server
 }
@@ -62,11 +63,6 @@ const (
 	// Wildcard domain to check
 	wildcardDomain = "*.acme.wtf"
 )
-
-func (s *AcmeSuite) getAcmeURL() string {
-	return fmt.Sprintf("https://%s/dir",
-		net.JoinHostPort(s.pebbleIP, "14000"))
-}
 
 func setupPebbleRootCA() (*http.Transport, error) {
 	path, err := filepath.Abs("fixtures/acme/ssl/pebble.minica.pem")
@@ -539,4 +535,9 @@ func (s *AcmeSuite) retrieveAcmeCertificate(testCase acmeTestCase) {
 		assert.Contains(s.T(), gotDomains, sub.expectedDomain)
 		assert.Equal(s.T(), sub.expectedAlgorithm, gotPublicKeyAlgorithm)
 	}
+}
+
+func (s *AcmeSuite) getAcmeURL() string {
+	return fmt.Sprintf("https://%s/dir",
+		net.JoinHostPort(s.pebbleIP, "14000"))
 }

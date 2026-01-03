@@ -37,7 +37,7 @@ func RegisterInfluxDB2(ctx context.Context, config *types.InfluxDB2) Registry {
 		influxDB2Store = influx.New(
 			config.AdditionalLabels,
 			influxdb.BatchPointsConfig{},
-			kitlog.LoggerFunc(func(kv ...interface{}) error {
+			kitlog.LoggerFunc(func(kv ...any) error {
 				log.FromContext(ctx).Error(kv...)
 				return nil
 			}),

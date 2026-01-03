@@ -13,7 +13,7 @@ import (
 
 func TestEntryPointMiddleware(t *testing.T) {
 	type expected struct {
-		Tags          map[string]interface{}
+		Tags          map[string]any
 		OperationName string
 	}
 
@@ -29,10 +29,10 @@ func TestEntryPointMiddleware(t *testing.T) {
 			entryPoint:    "test",
 			spanNameLimit: 0,
 			tracing: &trackingBackenMock{
-				tracer: &MockTracer{Span: &MockSpan{Tags: make(map[string]interface{})}},
+				tracer: &MockTracer{Span: &MockSpan{Tags: make(map[string]any)}},
 			},
 			expected: expected{
-				Tags: map[string]interface{}{
+				Tags: map[string]any{
 					"span.kind":   ext.SpanKindRPCServerEnum,
 					"http.method": http.MethodGet,
 					"component":   "",
@@ -47,10 +47,10 @@ func TestEntryPointMiddleware(t *testing.T) {
 			entryPoint:    "test",
 			spanNameLimit: 25,
 			tracing: &trackingBackenMock{
-				tracer: &MockTracer{Span: &MockSpan{Tags: make(map[string]interface{})}},
+				tracer: &MockTracer{Span: &MockSpan{Tags: make(map[string]any)}},
 			},
 			expected: expected{
-				Tags: map[string]interface{}{
+				Tags: map[string]any{
 					"span.kind":   ext.SpanKindRPCServerEnum,
 					"http.method": http.MethodGet,
 					"component":   "",

@@ -29,6 +29,7 @@ func NewEntryPoint(ctx context.Context, t *tracing.Tracing, entryPointName strin
 
 type entryPointMiddleware struct {
 	*tracing.Tracing
+
 	entryPoint string
 	next       http.Handler
 }

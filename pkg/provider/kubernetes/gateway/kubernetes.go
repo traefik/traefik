@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"errors"
 	"fmt"
+	"maps"
 	"net"
 	"os"
 	"sort"
@@ -62,58 +63,10 @@ func (p *Provider) SetRouterTransform(routerTransform k8s.RouterTransform) {
 	p.routerTransform = routerTransform
 }
 
-func (p *Provider) applyRouterTransform(ctx context.Context, rt *dynamic.Router, route *gatev1alpha2.HTTPRoute) {
-	if p.routerTransform == nil {
-		return
-	}
-
-	err := p.routerTransform.Apply(ctx, rt, route.Annotations)
-	if err != nil {
-		log.FromContext(ctx).WithError(err).Error("Apply router transform")
-	}
-}
-
 // Entrypoint defines the available entry points.
 type Entrypoint struct {
 	Address        string
 	HasHTTPTLSConf bool
-}
-
-func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
-	// Label selector validation
-	_, err := labels.Parse(p.LabelSelector)
-	if err != nil {
-		return nil, fmt.Errorf("invalid label selector: %q", p.LabelSelector)
-	}
-
-	logger := log.FromContext(ctx)
-	logger.Infof("label selector is: %q", p.LabelSelector)
-
-	withEndpoint := ""
-	if p.Endpoint != "" {
-		withEndpoint = fmt.Sprintf(" with endpoint %s", p.Endpoint)
-	}
-
-	var client *clientWrapper
-	switch {
-	case os.Getenv("KUBERNETES_SERVICE_HOST") != "" && os.Getenv("KUBERNETES_SERVICE_PORT") != "":
-		logger.Infof("Creating in-cluster Provider client%s", withEndpoint)
-		client, err = newInClusterClient(p.Endpoint)
-	case os.Getenv("KUBECONFIG") != "":
-		logger.Infof("Creating cluster-external Provider client from KUBECONFIG %s", os.Getenv("KUBECONFIG"))
-		client, err = newExternalClusterClientFromFile(os.Getenv("KUBECONFIG"))
-	default:
-		logger.Infof("Creating cluster-external Provider client%s", withEndpoint)
-		client, err = newExternalClusterClient(p.Endpoint, p.Token, p.CertAuthFilePath)
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	client.labelSelector = p.LabelSelector
-
-	return client, nil
 }
 
 // Init the provider.
@@ -193,6 +146,54 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	})
 
 	return nil
+}
+
+func (p *Provider) applyRouterTransform(ctx context.Context, rt *dynamic.Router, route *gatev1alpha2.HTTPRoute) {
+	if p.routerTransform == nil {
+		return
+	}
+
+	err := p.routerTransform.Apply(ctx, rt, route.Annotations)
+	if err != nil {
+		log.FromContext(ctx).WithError(err).Error("Apply router transform")
+	}
+}
+
+func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
+	// Label selector validation
+	_, err := labels.Parse(p.LabelSelector)
+	if err != nil {
+		return nil, fmt.Errorf("invalid label selector: %q", p.LabelSelector)
+	}
+
+	logger := log.FromContext(ctx)
+	logger.Infof("label selector is: %q", p.LabelSelector)
+
+	withEndpoint := ""
+	if p.Endpoint != "" {
+		withEndpoint = fmt.Sprintf(" with endpoint %s", p.Endpoint)
+	}
+
+	var client *clientWrapper
+	switch {
+	case os.Getenv("KUBERNETES_SERVICE_HOST") != "" && os.Getenv("KUBERNETES_SERVICE_PORT") != "":
+		logger.Infof("Creating in-cluster Provider client%s", withEndpoint)
+		client, err = newInClusterClient(p.Endpoint)
+	case os.Getenv("KUBECONFIG") != "":
+		logger.Infof("Creating cluster-external Provider client from KUBECONFIG %s", os.Getenv("KUBECONFIG"))
+		client, err = newExternalClusterClientFromFile(os.Getenv("KUBECONFIG"))
+	default:
+		logger.Infof("Creating cluster-external Provider client%s", withEndpoint)
+		client, err = newExternalClusterClient(p.Endpoint, p.Token, p.CertAuthFilePath)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	client.labelSelector = p.LabelSelector
+
+	return client, nil
 }
 
 // TODO Handle errors and update resources statuses (gatewayClass, gateway).
@@ -795,9 +796,7 @@ func (p *Provider) gatewayHTTPRouteToHTTPConf(ctx context.Context, ep string, li
 					continue
 				}
 
-				for svcName, svc := range subServices {
-					conf.HTTP.Services[svcName] = svc
-				}
+				maps.Copy(conf.HTTP.Services, subServices)
 
 				serviceName := provider.Normalize(routerKey + "-wrr")
 				conf.HTTP.Services[serviceName] = wrrService
@@ -911,9 +910,7 @@ func gatewayTCPRouteToTCPConf(ctx context.Context, ep string, listener gatev1alp
 				continue
 			}
 
-			for svcName, svc := range subServices {
-				conf.TCP.Services[svcName] = svc
-			}
+			maps.Copy(conf.TCP.Services, subServices)
 
 			serviceName := fmt.Sprintf("%s-wrr-%d", routerKey, i)
 			conf.TCP.Services[serviceName] = wrrService
@@ -1058,9 +1055,7 @@ func gatewayTLSRouteToTCPConf(ctx context.Context, ep string, listener gatev1alp
 				continue
 			}
 
-			for svcName, svc := range subServices {
-				conf.TCP.Services[svcName] = svc
-			}
+			maps.Copy(conf.TCP.Services, subServices)
 
 			serviceName := fmt.Sprintf("%s-wrr-%d", routerKey, i)
 			conf.TCP.Services[serviceName] = wrrService
@@ -1686,12 +1681,12 @@ func getProtocol(portSpec corev1.ServicePort) string {
 	return protocol
 }
 
-func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *safe.Pool, eventsChan <-chan interface{}) chan interface{} {
+func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *safe.Pool, eventsChan <-chan any) chan any {
 	if throttleDuration == 0 {
 		return nil
 	}
 	// Create a buffered channel to hold the pending event (if we're delaying processing the event due to throttling)
-	eventsChanBuffered := make(chan interface{}, 1)
+	eventsChanBuffered := make(chan any, 1)
 
 	// Run a goroutine that reads events from eventChan and does a non-blocking write to pendingEvent.
 	// This guarantees that writing to eventChan will never block,

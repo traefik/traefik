@@ -66,10 +66,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.RateLimit, name 
 		return nil, err
 	}
 
-	burst := config.Burst
-	if burst < 1 {
-		burst = 1
-	}
+	burst := max(config.Burst, 1)
 
 	period := time.Duration(config.Period)
 	if period < 0 {
