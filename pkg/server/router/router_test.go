@@ -18,7 +18,6 @@ import (
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
-	"github.com/traefik/traefik/v3/pkg/config/static"
 	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
 	httpmuxer "github.com/traefik/traefik/v3/pkg/muxer/http"
 	"github.com/traefik/traefik/v3/pkg/server/middleware"
@@ -333,7 +332,7 @@ func TestRouterManager_Get(t *testing.T) {
 			parser, err := httpmuxer.NewSyntaxParser()
 			require.NoError(t, err)
 
-			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager, parser, nil)
+			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager, parser)
 
 			handlers := routerManager.BuildHandlers(t.Context(), test.entryPoints, false)
 
@@ -721,7 +720,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 			parser, err := httpmuxer.NewSyntaxParser()
 			require.NoError(t, err)
 
-			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager, parser, nil)
+			routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager, parser)
 
 			_ = routerManager.BuildHandlers(t.Context(), entryPoints, false)
 			_ = routerManager.BuildHandlers(t.Context(), entryPoints, true)
@@ -802,7 +801,7 @@ func TestProviderOnMiddlewares(t *testing.T) {
 	parser, err := httpmuxer.NewSyntaxParser()
 	require.NoError(t, err)
 
-	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager, parser, nil)
+	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager, parser)
 
 	_ = routerManager.BuildHandlers(t.Context(), entryPoints, false)
 
@@ -857,7 +856,7 @@ func BenchmarkRouterServe(b *testing.B) {
 	parser, err := httpmuxer.NewSyntaxParser()
 	require.NoError(b, err)
 
-	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager, parser, nil)
+	routerManager := NewManager(rtConf, serviceManager, middlewaresBuilder, nil, tlsManager, parser)
 
 	handlers := routerManager.BuildHandlers(b.Context(), entryPoints, false)
 
@@ -1450,7 +1449,7 @@ func TestManager_buildChildRoutersMuxer(t *testing.T) {
 			parser, err := httpmuxer.NewSyntaxParser()
 			require.NoError(t, err)
 
-			manager := NewManager(conf, serviceManager, middlewareBuilder, nil, nil, parser, nil)
+			manager := NewManager(conf, serviceManager, middlewareBuilder, nil, nil, parser)
 
 			// Compute multi-layer routing to populate ChildRefs
 			manager.ParseRouterTree()
@@ -1641,7 +1640,7 @@ func TestManager_buildHTTPHandler_WithChildRouters(t *testing.T) {
 			parser, err := httpmuxer.NewSyntaxParser()
 			require.NoError(t, err)
 
-			manager := NewManager(conf, serviceManager, middlewareBuilder, nil, nil, parser, nil)
+			manager := NewManager(conf, serviceManager, middlewareBuilder, nil, nil, parser)
 
 			// Run ParseRouterTree to validate configuration and populate ChildRefs/errors
 			manager.ParseRouterTree()
@@ -1788,7 +1787,7 @@ func TestManager_BuildHandlers_WithChildRouters(t *testing.T) {
 			parser, err := httpmuxer.NewSyntaxParser()
 			require.NoError(t, err)
 
-			manager := NewManager(conf, serviceManager, middlewareBuilder, nil, nil, parser, nil)
+			manager := NewManager(conf, serviceManager, middlewareBuilder, nil, nil, parser)
 
 			// Compute multi-layer routing to set up parent-child relationships
 			manager.ParseRouterTree()
@@ -1819,11 +1818,10 @@ func TestManager_BuildHandlers_Deny(t *testing.T) {
 		routers            map[string]*dynamic.Router
 		services           map[string]*dynamic.Service
 		requestPath        string
-		encodedCharacters  static.EncodedCharacters
 		expectedStatusCode int
 	}{
 		{
-			desc:        "parent router without child routers request with encoded slash",
+			desc:        "parent router without child routers, request with encoded slash",
 			requestPath: "/foo%2F",
 			routers: map[string]*dynamic.Router{
 				"parent": {
@@ -1842,7 +1840,7 @@ func TestManager_BuildHandlers_Deny(t *testing.T) {
 			expectedStatusCode: http.StatusBadRequest,
 		},
 		{
-			desc:        "parent router with child routers request with encoded slash",
+			desc:        "parent router with child routers, request with encoded slash",
 			requestPath: "/foo%2F",
 			routers: map[string]*dynamic.Router{
 				"parent": {
@@ -1865,13 +1863,16 @@ func TestManager_BuildHandlers_Deny(t *testing.T) {
 			expectedStatusCode: http.StatusBadRequest,
 		},
 		{
-			desc:        "parent router without child router allowing encoded slash",
+			desc:        "parent router allowing encoded slash without child router",
 			requestPath: "/foo%2F",
 			routers: map[string]*dynamic.Router{
 				"parent": {
 					EntryPoints: []string{"web"},
 					Rule:        "PathPrefix(`/`)",
 					Service:     "service",
+					DeniedEncodedPathCharacters: dynamic.RouterDeniedEncodedPathCharacters{
+						AllowEncodedSlash: true,
+					},
 				},
 			},
 			services: map[string]*dynamic.Service{
@@ -1881,18 +1882,18 @@ func TestManager_BuildHandlers_Deny(t *testing.T) {
 					},
 				},
 			},
-			encodedCharacters: static.EncodedCharacters{
-				AllowEncodedSlash: true,
-			},
 			expectedStatusCode: http.StatusOK,
 		},
 		{
-			desc:        "parent router with child routers allowing encoded slash",
+			desc:        "parent router allowing encoded slash with child routers",
 			requestPath: "/foo%2F",
 			routers: map[string]*dynamic.Router{
 				"parent": {
 					EntryPoints: []string{"web"},
 					Rule:        "PathPrefix(`/`)",
+					DeniedEncodedPathCharacters: dynamic.RouterDeniedEncodedPathCharacters{
+						AllowEncodedSlash: true,
+					},
 				},
 				"child1": {
 					Rule:       "PathPrefix(`/`)",
@@ -1907,13 +1908,10 @@ func TestManager_BuildHandlers_Deny(t *testing.T) {
 					},
 				},
 			},
-			encodedCharacters: static.EncodedCharacters{
-				AllowEncodedSlash: true,
-			},
 			expectedStatusCode: http.StatusOK,
 		},
 		{
-			desc:        "parent router without child routers request with fragment",
+			desc:        "parent router without child routers, request with fragment",
 			requestPath: "/foo#",
 			routers: map[string]*dynamic.Router{
 				"parent": {
@@ -1932,7 +1930,7 @@ func TestManager_BuildHandlers_Deny(t *testing.T) {
 			expectedStatusCode: http.StatusBadRequest,
 		},
 		{
-			desc:        "parent router with child routers request with fragment",
+			desc:        "parent router with child routers, request with fragment",
 			requestPath: "/foo#",
 			routers: map[string]*dynamic.Router{
 				"parent": {
@@ -1986,8 +1984,7 @@ func TestManager_BuildHandlers_Deny(t *testing.T) {
 			parser, err := httpmuxer.NewSyntaxParser()
 			require.NoError(t, err)
 
-			deniedEncodedPathCharacters := map[string]map[string]struct{}{"web": test.encodedCharacters.Map()}
-			manager := NewManager(conf, serviceManager, middlewareBuilder, nil, nil, parser, deniedEncodedPathCharacters)
+			manager := NewManager(conf, serviceManager, middlewareBuilder, nil, nil, parser)
 
 			// Compute multi-layer routing to set up parent-child relationships
 			manager.ParseRouterTree()
