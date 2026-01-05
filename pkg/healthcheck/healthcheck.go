@@ -262,7 +262,7 @@ func (shc *ServiceHealthChecker) newRequest(ctx context.Context, target *url.URL
 	}
 
 	var body io.Reader = http.NoBody
-	if shc.config.Body != "" && shc.config.Method == "POST" {
+	if shc.config.Body != "" && shc.config.Method == http.MethodPost {
 		body = strings.NewReader(shc.config.Body)
 	}
 
