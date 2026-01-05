@@ -212,6 +212,12 @@ func applyModel(cfg dynamic.Configuration) dynamic.Configuration {
 
 					cp.Middlewares = append(m.Middlewares, cp.Middlewares...)
 
+					if m.DeniedEncodedPathCharacters != nil {
+						// As the denied encoded path characters option is not configurable at the router level,
+						// we can simply copy the whole structure to override the router's default config.
+						cp.DeniedEncodedPathCharacters = *m.DeniedEncodedPathCharacters
+					}
+
 					if cp.Observability == nil {
 						cp.Observability = &dynamic.RouterObservabilityConfig{}
 					}

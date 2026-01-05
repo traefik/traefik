@@ -76,7 +76,7 @@ func TestHandler_SupportDump(t *testing.T) {
 				assert.Contains(t, string(files["version.json"]), `"version":"dev"`)
 
 				// Verify static config contains entry points
-				assert.Contains(t, string(files["static-config.json"]), `"entryPoints":{"web":{"address":"xxxx","http":{"encodedCharacters":{}}}`)
+				assert.Contains(t, string(files["static-config.json"]), `"entryPoints":{"web":{"address":"xxxx","http":{}`)
 
 				// Verify runtime config contains services
 				assert.Contains(t, string(files["runtime-config.json"]), `"services":`)

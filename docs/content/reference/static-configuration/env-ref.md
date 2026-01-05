@@ -246,9 +246,6 @@ HTTP/3 configuration. (Default: ```false```)
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP3_ADVERTISEDPORT`:  
 UDP port to advertise, on which HTTP/3 is available. (Default: ```0```)
 
-`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_ENCODEDCHARACTERS`:  
-Defines which encoded characters are allowed in the request path.
-
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_ENCODEDCHARACTERS_ALLOWENCODEDBACKSLASH`:  
 Defines whether requests with encoded back slash characters in the path are allowed. (Default: ```false```)
 

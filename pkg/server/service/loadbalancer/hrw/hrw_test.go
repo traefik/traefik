@@ -12,11 +12,16 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// newTestRand creates a deterministic random source for reproducible tests.
+func newTestRand() *rand.Rand {
+	return rand.New(rand.NewSource(12345))
+}
+
 // genIPAddress generate randomly an IP address as a string.
-func genIPAddress() string {
+func genIPAddress(rng *rand.Rand) string {
 	buf := make([]byte, 4)
 
-	ip := rand.Uint32()
+	ip := rng.Uint32()
 
 	binary.LittleEndian.PutUint32(buf, ip)
 	ipStr := net.IP(buf)
@@ -37,6 +42,7 @@ func initStatusArray(size int, value int) []int {
 // The tests validate repartition using a margin of 10% of the number of requests
 
 func TestBalancer(t *testing.T) {
+	rng := newTestRand()
 	balancer := New(false)
 
 	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -52,7 +58,7 @@ func TestBalancer(t *testing.T) {
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	for range 100 {
-		req.RemoteAddr = genIPAddress()
+		req.RemoteAddr = genIPAddress(rng)
 		balancer.ServeHTTP(recorder, req)
 	}
 	assert.InDelta(t, 80, recorder.save["first"], 10)
@@ -132,6 +138,7 @@ func TestBalancerOneServerDown(t *testing.T) {
 }
 
 func TestBalancerDownThenUp(t *testing.T) {
+	rng := newTestRand()
 	balancer := New(false)
 
 	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -155,7 +162,7 @@ func TestBalancerDownThenUp(t *testing.T) {
 	recorder = &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	for range 100 {
-		req.RemoteAddr = genIPAddress()
+		req.RemoteAddr = genIPAddress(rng)
 		balancer.ServeHTTP(recorder, req)
 	}
 	assert.InDelta(t, 50, recorder.save["first"], 10)
@@ -163,6 +170,7 @@ func TestBalancerDownThenUp(t *testing.T) {
 }
 
 func TestBalancerPropagate(t *testing.T) {
+	rng := newTestRand()
 	balancer1 := New(true)
 
 	balancer1.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -188,8 +196,6 @@ func TestBalancerPropagate(t *testing.T) {
 	topBalancer.Add("balancer1", balancer1, Int(1), false)
 	_ = balancer1.RegisterStatusUpdater(func(up bool) {
 		topBalancer.SetStatus(context.WithValue(t.Context(), serviceName, "top"), "balancer1", up)
-		// TODO(mpl): if test gets flaky, add channel or something here to signal that
-		// propagation is done, and wait on it before sending request.
 	})
 	topBalancer.Add("balancer2", balancer2, Int(1), false)
 	_ = balancer2.RegisterStatusUpdater(func(up bool) {
@@ -199,7 +205,7 @@ func TestBalancerPropagate(t *testing.T) {
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	for range 100 {
-		req.RemoteAddr = genIPAddress()
+		req.RemoteAddr = genIPAddress(rng)
 		topBalancer.ServeHTTP(recorder, req)
 	}
 	assert.InDelta(t, 25, recorder.save["first"], 10)
@@ -214,7 +220,7 @@ func TestBalancerPropagate(t *testing.T) {
 	recorder = &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
 	req = httptest.NewRequest(http.MethodGet, "/", nil)
 	for range 100 {
-		req.RemoteAddr = genIPAddress()
+		req.RemoteAddr = genIPAddress(rng)
 		topBalancer.ServeHTTP(recorder, req)
 	}
 	assert.InDelta(t, 25, recorder.save["first"], 10)
@@ -230,7 +236,7 @@ func TestBalancerPropagate(t *testing.T) {
 	recorder = &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
 	req = httptest.NewRequest(http.MethodGet, "/", nil)
 	for range 100 {
-		req.RemoteAddr = genIPAddress()
+		req.RemoteAddr = genIPAddress(rng)
 		topBalancer.ServeHTTP(recorder, req)
 	}
 	assert.InDelta(t, 50, recorder.save["first"], 10)
@@ -254,6 +260,7 @@ func TestBalancerAllServersZeroWeight(t *testing.T) {
 }
 
 func TestSticky(t *testing.T) {
+	rng := newTestRand()
 	balancer := New(false)
 
 	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -269,7 +276,7 @@ func TestSticky(t *testing.T) {
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	req.RemoteAddr = genIPAddress()
+	req.RemoteAddr = genIPAddress(rng)
 	for range 10 {
 		for _, cookie := range recorder.Result().Cookies() {
 			req.AddCookie(cookie)

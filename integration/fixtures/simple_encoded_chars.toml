@@ -1,0 +1,34 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+
+[entryPoints]
+  [entryPoints.strict]
+    address = ":8000"
+    # Default: no encoded characters allowed
+
+  [entryPoints.permissive]
+    address = ":8001"
+    [entryPoints.permissive.http.encodedCharacters]
+      allowEncodedSlash = true
+
+[api]
+  insecure = true
+
+[providers.file]
+  filename = "{{ .SelfFilename }}"
+
+## dynamic configuration ##
+
+[http.routers]
+  [http.routers.sameRouter]
+    service = "service1"
+    rule = "Host(`test.localhost`)"
+
+[http.services]
+  [http.services.service1.loadBalancer]
+    [[http.services.service1.loadBalancer.servers]]
+      url = "{{ .Server1 }}"

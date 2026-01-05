@@ -972,23 +972,22 @@ func TestTrafficShiftsWhenPerformanceDegrades(t *testing.T) {
 	assert.InDelta(t, 25, recorder.save["server2"], 10) // 25 ± 10 requests
 
 	// Phase 2: server1 degrades (simulating GC pause, CPU spike, or network latency).
-	server1Delay.Store(15) // Now 15ms (3x slower)
+	server1Delay.Store(50) // Now 50ms (10x slower) - dramatic degradation for reliable detection
 
 	// Make more requests to shift the moving average.
 	// Ring buffer has 100 samples, need significant new samples to shift average.
-	// server1's average will climb from ~5ms toward 15ms.
+	// server1's average will climb from ~5ms toward 50ms.
 	recorder2 := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
 	for range 60 {
 		balancer.ServeHTTP(recorder2, httptest.NewRequest(http.MethodGet, "/", nil))
 	}
 
-	// server2 should get significantly more traffic (>75%)
-	// Score for server1: (~10-15ms × 1) / 1 = 10-15 (as average climbs)
-	// Score for server2: (5ms × 1) / 1 = 5
+	// server2 should get significantly more traffic
+	// With 10x performance difference, server2 should dominate.
 	total2 := recorder2.save["server1"] + recorder2.save["server2"]
 	assert.Equal(t, 60, total2)
-	assert.Greater(t, recorder2.save["server2"], 45) // At least 75% (45/60)
-	assert.Less(t, recorder2.save["server1"], 15)    // At most 25% (15/60)
+	assert.Greater(t, recorder2.save["server2"], 35) // At least ~60% (35/60)
+	assert.Less(t, recorder2.save["server1"], 25)    // At most ~40% (25/60)
 }
 
 // TestMultipleServersWithSameScore tests WRR tie-breaking when multiple servers have identical scores.

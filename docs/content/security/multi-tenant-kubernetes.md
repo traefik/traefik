@@ -1,13 +1,20 @@
 ---
-title: "TLS Certificates in Multi‑Tenant Kubernetes"
-description: "Isolate TLS certificates in multi‑tenant clusters by keeping Secrets and routes in the same namespace and disabling cross‑namespace look‑ups in Traefik. Read the technical guidelines."
+title: "Traefik in Multi-Tenant Kubernetes Clusterss"
+description: "Traefik is not recommended for multi-tenant Kubernetes clusters due to TLS certificate management and broader isolation, traffic, and security concerns. Read the technical guidelines."
 ---
 
-# TLS Certificates in Multi‑Tenant Kubernetes
+# Traefik in Multi-Tenant Kubernetes Clusters
 
-In a shared cluster, different teams can create `Ingress` or `IngressRoute` objects that Traefik consumes.
+Traefik is primarily designed as a cluster-wide ingress controller. For this reason, when using the Kubernetes `Ingress` or `IngressRoute` specifications, **it is not recommended to use Traefik in multi-tenant Kubernetes clusters**, where multiple teams or tenants share the same cluster.
 
-Traefik does not support multi-tenancy when using the Kubernetes `Ingress` or `IngressRoute` specifications due to the way TLS certificate management is handled.
+The main reasons include:
+
+* **Resource visibility and isolation**: Traefik requires cluster-level permissions and watches resources across namespaces. Misconfigurations in one tenant’s resources may affect others.
+* **Shared CRDs**: Advanced configuration resources, like Middleware or TLSOptions, are cluster-scoped. Conflicting definitions can impact multiple tenants.
+* **Traffic and availability risks**: Routing rules, middleware, or heavy traffic from one tenant can interfere with others, affecting reliability and performance.
+* **Observability and privacy**: Logs, metrics, and traces are shared by default, which may expose sensitive information across tenants.
+
+## TLS Certificates Management
 
 At the core of this limitation is the TLS Store, which holds all the TLS certificates used by Traefik. 
 As this Store is global in Traefik, it is shared across all namespaces, meaning any `Ingress` or `IngressRoute` in the cluster can potentially reference or affect TLS configurations intended for other tenants.

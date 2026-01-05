@@ -231,13 +231,25 @@ func (i *Provider) entryPointModels(cfg *dynamic.Configuration) {
 			}
 		}
 
-		if len(ep.HTTP.Middlewares) == 0 && ep.HTTP.TLS == nil && defaultRuleSyntax == "" && ep.Observability == nil {
+		if len(ep.HTTP.Middlewares) == 0 && ep.HTTP.TLS == nil && defaultRuleSyntax == "" && ep.Observability == nil && ep.HTTP.EncodedCharacters == nil {
 			continue
 		}
 
 		httpModel := &dynamic.Model{
 			DefaultRuleSyntax: defaultRuleSyntax,
 			Middlewares:       ep.HTTP.Middlewares,
+		}
+
+		if ep.HTTP.EncodedCharacters != nil {
+			httpModel.DeniedEncodedPathCharacters = &dynamic.RouterDeniedEncodedPathCharacters{
+				AllowEncodedSlash:         ep.HTTP.EncodedCharacters.AllowEncodedSlash,
+				AllowEncodedBackSlash:     ep.HTTP.EncodedCharacters.AllowEncodedBackSlash,
+				AllowEncodedPercent:       ep.HTTP.EncodedCharacters.AllowEncodedPercent,
+				AllowEncodedQuestionMark:  ep.HTTP.EncodedCharacters.AllowEncodedQuestionMark,
+				AllowEncodedSemicolon:     ep.HTTP.EncodedCharacters.AllowEncodedSemicolon,
+				AllowEncodedHash:          ep.HTTP.EncodedCharacters.AllowEncodedHash,
+				AllowEncodedNullCharacter: ep.HTTP.EncodedCharacters.AllowEncodedNullCharacter,
+			}
 		}
 
 		if ep.Observability != nil {

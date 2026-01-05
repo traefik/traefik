@@ -935,6 +935,8 @@ func (p *Provider) renewCertificates(ctx context.Context, renewPeriod time.Durat
 
 		opts := &certificate.RenewOptions{
 			Bundle:         true,
+			EmailAddresses: p.EmailAddresses,
+			Profile:        p.Profile,
 			PreferredChain: p.PreferredChain,
 		}
 
