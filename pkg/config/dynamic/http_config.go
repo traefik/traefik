@@ -271,6 +271,8 @@ type GRPCStatus struct {
 type Sticky struct {
 	// Cookie defines the sticky cookie configuration.
 	Cookie *Cookie `json:"cookie,omitempty" toml:"cookie,omitempty" yaml:"cookie,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
+	// Header defines the sticky header configuration.
+	Header *Header `json:"header,omitempty" toml:"header,omitempty" yaml:"header,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -304,6 +306,22 @@ type Cookie struct {
 func (c *Cookie) SetDefaults() {
 	defaultPath := "/"
 	c.Path = &defaultPath
+}
+
+// +k8s:deepcopy-gen=true
+
+// Header holds the sticky configuration based on header.
+type Header struct {
+	// Name defines the header name used for sticky sessions.
+	// The client must include this header in requests and the server will set it in responses.
+	Name string `json:"name,omitempty" toml:"name,omitempty" yaml:"name,omitempty" export:"true"`
+}
+
+// SetDefaults sets the default values for a Header.
+func (h *Header) SetDefaults() {
+	if h.Name == "" {
+		h.Name = "X-Sticky-Session"
+	}
 }
 
 type BalancerStrategy string

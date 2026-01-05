@@ -10,6 +10,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
@@ -207,6 +208,9 @@ func (p *Provider) loadWRRService(ctx context.Context, listener gatewayListener,
 			Weight: weight,
 		})
 	}
+
+	// Convert Gateway API SessionPersistence to Traefik Sticky configuration.
+	wrr.Sticky = convertSessionPersistence(routeRule.SessionPersistence)
 
 	conf.HTTP.Services[name] = &dynamic.Service{Weighted: &wrr}
 	return name, condition
@@ -935,4 +939,45 @@ func mergeHTTPConfiguration(from, to *dynamic.Configuration) {
 	for name, serversTransport := range from.HTTP.ServersTransports {
 		to.HTTP.ServersTransports[name] = serversTransport
 	}
+}
+
+// convertSessionPersistence converts a Gateway API SessionPersistence to a Traefik Sticky configuration.
+func convertSessionPersistence(sp *gatev1.SessionPersistence) *dynamic.Sticky {
+	if sp == nil {
+		return nil
+	}
+
+	// Header-based session persistence.
+	if sp.Type != nil && *sp.Type == gatev1.HeaderBasedSessionPersistence {
+		header := &dynamic.Header{}
+		header.SetDefaults()
+
+		// SessionName maps to Header.Name
+		if sp.SessionName != nil {
+			header.Name = *sp.SessionName
+		}
+
+		return &dynamic.Sticky{Header: header}
+	}
+
+	// Cookie-based session persistence (default).
+	cookie := &dynamic.Cookie{}
+	cookie.SetDefaults()
+
+	// SessionName maps to Cookie.Name
+	if sp.SessionName != nil {
+		cookie.Name = *sp.SessionName
+	}
+
+	// AbsoluteTimeout maps to Cookie.MaxAge when lifetimeType is Permanent.
+	// When lifetimeType is Session (default), the cookie is a session cookie (MaxAge = 0).
+	if sp.AbsoluteTimeout != nil && sp.CookieConfig != nil &&
+		sp.CookieConfig.LifetimeType != nil && *sp.CookieConfig.LifetimeType == gatev1.PermanentCookieLifetimeType {
+		duration, err := time.ParseDuration(string(*sp.AbsoluteTimeout))
+		if err == nil {
+			cookie.MaxAge = int(duration.Seconds())
+		}
+	}
+
+	return &dynamic.Sticky{Cookie: cookie}
 }

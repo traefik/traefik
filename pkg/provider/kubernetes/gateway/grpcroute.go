@@ -214,6 +214,9 @@ func (p *Provider) loadGRPCService(conf *dynamic.Configuration, routeKey string,
 		})
 	}
 
+	// Convert Gateway API SessionPersistence to Traefik Sticky configuration.
+	wrr.Sticky = convertSessionPersistence(routeRule.SessionPersistence)
+
 	conf.HTTP.Services[name] = &dynamic.Service{Weighted: &wrr}
 	return name, condition
 }

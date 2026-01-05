@@ -152,8 +152,25 @@ Below are the available options for the health check mechanism:
 
 #### Sticky sessions
 
-When sticky sessions are enabled, a `Set-Cookie` header is set on the initial response to let the client know which server handles the first response.
+Sticky sessions ensure that requests from the same client are consistently routed to the same backend server. Traefik supports two modes for sticky sessions:
+
+- **Cookie-based** (default): A `Set-Cookie` header is set on the initial response. The client automatically sends this cookie on subsequent requests.
+- **Header-based**: A custom header is set on the initial response. The client must extract and include this header in subsequent requests. This is useful for API clients, gRPC, or service mesh scenarios where cookies are not practical.
+
+##### Cookie-based Stickiness
+
+When cookie-based sticky sessions are enabled, a `Set-Cookie` header is set on the initial response to let the client know which server handles the first response.
 On subsequent requests, to keep the session alive with the same server, the client should send the cookie with the value set.
+
+##### Header-based Stickiness
+
+When header-based sticky sessions are enabled, a custom header (default: `X-Sticky-Session`) is set on the initial response.
+The client must read this header value and include it in subsequent requests. This mode is ideal for:
+
+- API clients that don't handle cookies
+- gRPC services
+- Service mesh communication
+- Mobile applications
 
 ##### Stickiness on multiple levels
 
@@ -306,6 +323,42 @@ To keep a session open with the same server, the client would then need to speci
 
 ```bash
 curl -b "lvl1=whoami1; lvl2=http://127.0.0.1:8081" http://localhost:8000
+```
+
+??? example "Adding Header-based Stickiness -- Using the [File Provider](../../../install-configuration/providers/others/file.md)"
+
+    ```yaml tab="Structured (YAML)"
+    ## Dynamic configuration
+    http:
+      services:
+        my-service:
+          loadBalancer:
+            sticky:
+              header:
+                name: X-Sticky-Session
+    ```
+
+    ```toml tab="Structured (TOML)"
+    ## Dynamic configuration
+    [http.services]
+      [http.services.my-service]
+        [http.services.my-service.loadBalancer.sticky.header]
+          name = "X-Sticky-Session"
+    ```
+
+To use header-based stickiness, the client must:
+
+1. Make an initial request to get the sticky header value from the response
+2. Include that header value in all subsequent requests
+
+Example with curl:
+
+```bash
+# Initial request - get the sticky header
+STICKY_VALUE=$(curl -s -D - http://localhost:8000 | grep -i "X-Sticky-Session" | cut -d' ' -f2 | tr -d '\r')
+
+# Subsequent requests - include the sticky header
+curl -H "X-Sticky-Session: $STICKY_VALUE" http://localhost:8000
 ```
 
 #### Passive Health Check
