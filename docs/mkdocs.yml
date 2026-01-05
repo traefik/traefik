@@ -27,7 +27,7 @@ theme:
     prev: 'Previous'
     next: 'Next'
 
-copyright: 'Traefik Labs • Copyright &copy; 2016-2025'
+copyright: 'Traefik Labs • Copyright &copy; 2016-2026'
 
 extra_javascript:
   - assets/js/hljs/highlight.pack.js # Download from https://highlightjs.org/download/ and enable YAML, TOML and Dockerfile
@@ -212,7 +212,7 @@ nav:
   - 'Extend': 'extend/extend-traefik.md'
   - '<span class="nav-link-with-icon">Govern <img src="https://doc.traefik.io/traefik-hub/img/ps-traefik-hub-logo-light.svg" class="menu-icon" alt="Traefik Hub API Gateway"></span>': 'govern/index.md'
   - 'Migrate':
-      - 'NGINX Ingress to Traefik': 'migrate/nginx-to-traefik.md'
+      - 'Ingress NGINX to Traefik': 'migrate/nginx-to-traefik.md'
       - 'Traefik v3 minor migrations': 'migrate/v3.md'
       - 'Traefik v2 to v3':
         - 'Migration guide': 'migrate/v2-to-v3.md'
@@ -360,7 +360,7 @@ nav:
     - 'Security':
         - 'Request Path': 'security/request-path.md'
         - 'Content-Length': 'security/content-length.md'
-        - 'TLS in Multi-Tenant Kubernetes': 'security/tls-certs-in-multi-tenant-kubernetes.md'
+        - 'Multi-Tenant Kubernetes': 'security/multi-tenant-kubernetes.md'
     - 'Deprecation Notices':
         - 'Releases': 'deprecation/releases.md'
         - 'Features': 'deprecation/features.md'

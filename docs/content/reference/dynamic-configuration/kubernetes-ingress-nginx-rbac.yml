@@ -1,0 +1,66 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: traefik-ingress-nginx-controller
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - services
+      - secrets
+    verbs:
+      - list
+      - watch
+  # When using the watchNamespaceSelector option,
+  # Traefik requires permissions to list and watch namespaces.
+  - apiGroups:
+      - ""
+    resources:
+      - namespaces
+    verbs:
+      - list
+      - watch
+  # The pods right is needed to inject k8s.pod.uid and k8s.pod.name OTel attributes.
+  # When OTel tracing/logs/metrics are not enabled, this rule is not needed.
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs:
+      - get
+  - apiGroups:
+      - discovery.k8s.io
+    resources:
+      - endpointslices
+    verbs:
+      - list
+      - watch
+  - apiGroups:
+      - networking.k8s.io
+    resources:
+      - ingresses
+      - ingressclasses
+    verbs:
+      - list
+      - watch
+  - apiGroups:
+      - networking.k8s.io
+    resources:
+      - ingresses/status
+    verbs:
+      - update
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: traefik-ingress-nginx-controller
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: traefik-ingress-nginx-controller
+subjects:
+  - kind: ServiceAccount
+    name: traefik-ingress-nginx-controller
+    namespace: default

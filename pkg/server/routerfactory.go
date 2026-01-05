@@ -26,8 +26,7 @@ type RouterFactory struct {
 	entryPointsTCP []string
 	entryPointsUDP []string
 
-	allowACMEByPass             map[string]bool
-	deniedEncodedPathCharacters map[string]map[string]struct{}
+	allowACMEByPass map[string]bool
 
 	managerFactory *service.ManagerFactory
 
@@ -73,27 +72,21 @@ func NewRouterFactory(staticConfiguration static.Configuration, managerFactory *
 		}
 	}
 
-	deniedEncodedPathCharacters := map[string]map[string]struct{}{}
-	for name, ep := range staticConfiguration.EntryPoints {
-		deniedEncodedPathCharacters[name] = ep.HTTP.EncodedCharacters.Map()
-	}
-
 	parser, err := httpmuxer.NewSyntaxParser()
 	if err != nil {
 		return nil, fmt.Errorf("creating parser: %w", err)
 	}
 
 	return &RouterFactory{
-		entryPointsTCP:              entryPointsTCP,
-		entryPointsUDP:              entryPointsUDP,
-		managerFactory:              managerFactory,
-		observabilityMgr:            observabilityMgr,
-		tlsManager:                  tlsManager,
-		pluginBuilder:               pluginBuilder,
-		dialerManager:               dialerManager,
-		allowACMEByPass:             allowACMEByPass,
-		deniedEncodedPathCharacters: deniedEncodedPathCharacters,
-		parser:                      parser,
+		entryPointsTCP:   entryPointsTCP,
+		entryPointsUDP:   entryPointsUDP,
+		managerFactory:   managerFactory,
+		observabilityMgr: observabilityMgr,
+		tlsManager:       tlsManager,
+		pluginBuilder:    pluginBuilder,
+		dialerManager:    dialerManager,
+		allowACMEByPass:  allowACMEByPass,
+		parser:           parser,
 	}, nil
 }
 
@@ -111,7 +104,7 @@ func (f *RouterFactory) CreateRouters(rtConf *runtime.Configuration) (map[string
 
 	middlewaresBuilder := middleware.NewBuilder(rtConf.Middlewares, serviceManager, f.pluginBuilder)
 
-	routerManager := router.NewManager(rtConf, serviceManager, middlewaresBuilder, f.observabilityMgr, f.tlsManager, f.parser, f.deniedEncodedPathCharacters)
+	routerManager := router.NewManager(rtConf, serviceManager, middlewaresBuilder, f.observabilityMgr, f.tlsManager, f.parser)
 
 	routerManager.ParseRouterTree()
 
