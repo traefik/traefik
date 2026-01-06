@@ -4,6 +4,7 @@ description: "Traefik Proxy exposes information through API handlers and showcas
 ---
 
 Traefik exposes a number of information through API endpoints, such as the configuration of all routers, services, middlewares, etc.
+
 The dashboard, which is the central place that shows you the current active routes handled by Traefik, fetches the data from this API.
 
 <figure>
@@ -19,8 +20,9 @@ including sensitive data, for which access should be reserved to administrators.
 In production, it should be at least secured by authentication and authorizations.
 
 !!! info
-It's recommended to NOT publicly exposing the API's port, keeping it restricted to internal networks
-(as in the [principle of least privilege](https://en.wikipedia.org/wiki/Principle_of_least_privilege), applied to networks).
+
+    It's recommended to NOT publicly exposing the API's port, keeping it restricted to internal networks
+    (as in the [principle of least privilege](https://en.wikipedia.org/wiki/Principle_of_least_privilege), applied to networks).
 
 ## Configuration Example
 
@@ -199,6 +201,7 @@ All the following endpoints must be accessed with a `GET` HTTP request.
 | <a id="opt-apientrypoints" href="#opt-apientrypoints" title="#opt-apientrypoints">`/api/entrypoints`</a> | Lists all the entry points information.                                                     |
 | <a id="opt-apientrypointsname" href="#opt-apientrypointsname" title="#opt-apientrypointsname">`/api/entrypoints/{name}`</a> | Returns the information of the entry point specified by `name`.                             |
 | <a id="opt-apioverview" href="#opt-apioverview" title="#opt-apioverview">`/api/overview`</a> | Returns statistic information about HTTP, TCP and about enabled features and providers. |
+| <a id="opt-apisupport-dump" href="#opt-apisupport-dump" title="#opt-apisupport-dump">`/api/support-dump`</a> | Returns an archive that contains the anonymized static configuration and the runtime configuration. |
 | <a id="opt-apirawdata" href="#opt-apirawdata" title="#opt-apirawdata">`/api/rawdata`</a> | Returns information about dynamic configurations, errors, status and dependency relations.  |
 | <a id="opt-apiversion" href="#opt-apiversion" title="#opt-apiversion">`/api/version`</a> | Returns information about Traefik version.                                                  |
 | <a id="opt-debugvars" href="#opt-debugvars" title="#opt-debugvars">`/debug/vars`</a> | See the [expvar](https://golang.org/pkg/expvar/) Go documentation.                          |
@@ -222,7 +225,7 @@ The dashboard is available by default on the path  `/dashboard/`.
     - The trailing slash `/` in `/dashboard/` is mandatory. This limitation can be mitigated using the the [RedirectRegex Middleware](../../middlewares/http/redirectregex.md).
     - There is also a redirect from the path `/` to `/dashboard/`.
 
-As mentioned earlier in the [Security](#security) section, it is important to secure the access to the dashboard.
+As mentioned earlier in the [Security](#security) section, it is important to secure the access to the dashboard and to the API.
 You need to define a routing configuration within Traefik.
 This involves setting up a router attached to the service `api@internal`, which allows you to:
 
