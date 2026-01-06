@@ -3,9 +3,9 @@ title: "Traefik API & Dashboard Documentation"
 description: "Traefik Proxy exposes information through API handlers and showcase them on the Dashboard. Learn about the security, configuration, and endpoints of the APIs and Dashboard. Read the technical documentation."
 ---
 
-Traefik exposes a number of information through API endpoints, such as the configuration of all routers, services, middlewares, etc.
+Traefik exposes a number of information through API endpoints, such as the configuration of your routers, services, middlewares, etc.
 
-The dashboard, which is the central place that shows you the current active routes handled by Traefik, fetches the data from this API.
+The dashboard, which is the central place that displays the current active routes handled by Traefik, fetches the data from this API.
 
 <figure>
     <img src="../../../assets/img/webui-dashboard.png" alt="Dashboard - Providers" />
@@ -225,7 +225,7 @@ The dashboard is available by default on the path  `/dashboard/`.
     - The trailing slash `/` in `/dashboard/` is mandatory. This limitation can be mitigated using the the [RedirectRegex Middleware](../../middlewares/http/redirectregex.md).
     - There is also a redirect from the path `/` to `/dashboard/`.
 
-As mentioned earlier in the [Security](#security) section, it is important to secure the access to the dashboard and to the API.
+As mentioned above in the [Security](#security) section, it is important to secure access to both the dashboard and the API.
 You need to define a routing configuration within Traefik.
 This involves setting up a router attached to the service `api@internal`, which allows you to:
 
