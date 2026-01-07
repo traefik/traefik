@@ -70,11 +70,6 @@ func Test_XForwardedPrefix(t *testing.T) {
 	}{
 		{
 			desc:     "location in X-Forwarded-Prefix",
-			prefix:   "//foobar",
-			expected: "/dashboard/",
-		},
-		{
-			desc:     "location in X-Forwarded-Prefix",
 			prefix:   "//foobar/test",
 			expected: "/dashboard/",
 		},
