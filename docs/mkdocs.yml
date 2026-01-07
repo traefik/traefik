@@ -20,6 +20,8 @@ theme:
   logo: assets/img/traefikproxy-vertical-logo-color.svg
   feature:
     tabs: false
+  features:
+    - content.code.copy
   palette:
     primary: 'cyan'
     accent: 'cyan'
@@ -35,6 +37,7 @@ extra_javascript:
 
 extra_css:
   - assets/css/menu-icons.css
+  - assets/css/code-copy.css
 
 plugins:
   - search
