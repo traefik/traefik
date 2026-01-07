@@ -41,7 +41,12 @@ const (
 
 	defaultBackendName    = "default-backend"
 	defaultBackendTLSName = "default-backend-tls"
+
+	maxRequestBodyBytes = int64(1048576)
+	memRequestBodyBytes = int64(16 * 1024)
 )
+
+var nginxSizeRegexp = regexp.MustCompile(`^(?i)\s*([0-9]+)\s*([b|k|m|g]?)\s*$`)
 
 type backendAddress struct {
 	Address string
@@ -793,11 +798,15 @@ func (p *Provider) applyMiddlewares(namespace, routerKey, rulePath string, ingre
 		return fmt.Errorf("applying basic auth configuration: %w", err)
 	}
 
+	applyWhitelistSourceRangeConfiguration(routerKey, ingressConfig, rt, conf)
+
+	if err := applyBufferingConfiguration(routerKey, ingressConfig, rt, conf); err != nil {
+		return fmt.Errorf("applying buffering: %w", err)
+	}
+
 	if err := applyForwardAuthConfiguration(routerKey, ingressConfig, rt, conf); err != nil {
 		return fmt.Errorf("applying forward auth configuration: %w", err)
 	}
-
-	applyWhitelistSourceRangeConfiguration(routerKey, ingressConfig, rt, conf)
 
 	applyCORSConfiguration(routerKey, ingressConfig, rt, conf)
 
@@ -808,10 +817,6 @@ func (p *Provider) applyMiddlewares(namespace, routerKey, rulePath string, ingre
 	p.applySSLRedirectConfiguration(routerKey, ingressConfig, hasTLS, rt, conf)
 
 	applyUpstreamVhost(routerKey, ingressConfig, rt, conf)
-
-	if err := applyBufferingConfiguration(routerKey, ingressConfig, rt, conf); err != nil {
-		return fmt.Errorf("applying buffering: %w", err)
-	}
 
 	if err := p.applyCustomHeaders(routerKey, ingressConfig, rt, conf); err != nil {
 		return fmt.Errorf("applying custom headers: %w", err)
@@ -1035,41 +1040,41 @@ func applyWhitelistSourceRangeConfiguration(routerName string, ingressConfig ing
 func applyBufferingConfiguration(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
 	bodyMaxRequestSize := ptr.Deref(ingressConfig.BodyMaxRequestSize, "")
 	bodyMaxBufferSize := ptr.Deref(ingressConfig.BodyMaxBufferSize, "")
-	if bodyMaxRequestSize == "" && bodyMaxBufferSize == "" {
-		return nil
-	}
-	buffering := &dynamic.Buffering{}
 
+	maxRequestBodySize := maxRequestBodyBytes
 	if bodyMaxRequestSize != "" {
 		size, err := nginxSizeToBytes(bodyMaxRequestSize)
 		if err != nil {
-			return errors.New("nginx.ingress.kubernetes.io/proxy-body-size has invalid value")
+			return fmt.Errorf("proxy-body-size annotation has invalid value: %w", err)
 		}
 
-		buffering.MaxRequestBodyBytes = size
+		maxRequestBodySize = size
 	}
 
+	memRequestBodySize := memRequestBodyBytes
 	if bodyMaxBufferSize != "" {
 		size, err := nginxSizeToBytes(bodyMaxBufferSize)
 		if err != nil {
-			return errors.New("nginx.ingress.kubernetes.io/client-body-buffer-size has invalid value")
+			return fmt.Errorf("client-body-buffer-size annotation has invalid value: %w", err)
 		}
 
-		buffering.MemRequestBodyBytes = size
+		memRequestBodySize = size
 	}
 
 	bufferingMiddlewareName := routerName + "-buffering"
 	conf.HTTP.Middlewares[bufferingMiddlewareName] = &dynamic.Middleware{
-		Buffering: buffering,
+		Buffering: &dynamic.Buffering{
+			MaxRequestBodyBytes: maxRequestBodySize,
+			MemRequestBodyBytes: memRequestBodySize,
+		},
 	}
 	rt.Middlewares = append(rt.Middlewares, bufferingMiddlewareName)
 
 	return nil
 }
 
+// nginxSizeToBytes convert nginx size to memory bytes as defined in https://nginx.org/en/docs/syntax.html
 func nginxSizeToBytes(nginxSize string) (int64, error) {
-	// calculating memory bytes as defined in https://nginx.org/en/docs/syntax.html
-
 	units := map[string]int64{
 		"g": 1024 * 1024 * 1024,
 		"m": 1024 * 1024,
@@ -1078,11 +1083,10 @@ func nginxSizeToBytes(nginxSize string) (int64, error) {
 		"":  1,
 	}
 
-	r := regexp.MustCompile(`^(?i)\s*([0-9]+)\s*([b|k|m|g]?)\s*$`)
-	if !r.MatchString(nginxSize) {
+	if !nginxSizeRegexp.MatchString(nginxSize) {
 		return 0, fmt.Errorf("unable to parse number %s", nginxSize)
 	}
-	size := r.FindStringSubmatch(nginxSize)
+	size := nginxSizeRegexp.FindStringSubmatch(nginxSize)
 	bytes, err := strconv.ParseInt(size[1], 10, 64)
 	if err != nil {
 		return 0, err
