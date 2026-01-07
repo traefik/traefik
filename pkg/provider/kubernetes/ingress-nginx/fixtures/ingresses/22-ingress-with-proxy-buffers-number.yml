@@ -2,10 +2,11 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: ingress-with-proxy-body-size-invalid
+  name: ingress-with-proxy-buffers-number
   namespace: default
   annotations:
-    nginx.ingress.kubernetes.io/proxy-body-size: "aa"
+    nginx.ingress.kubernetes.io/proxy-buffering: "on"
+    nginx.ingress.kubernetes.io/proxy-buffers-number: "8"
 
 spec:
   ingressClassName: nginx
