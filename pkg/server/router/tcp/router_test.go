@@ -679,6 +679,53 @@ func Test_Routing(t *testing.T) {
 	}
 }
 
+func Test_Router_acmeTLSALPNHandlerTimeout(t *testing.T) {
+	router, err := NewRouter()
+	require.NoError(t, err)
+
+	router.httpsTLSConfig = &tls.Config{}
+
+	handler := router.acmeTLSALPNHandler()
+
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+
+	acceptCh := make(chan struct{})
+	go func() {
+		close(acceptCh)
+
+		conn, err := listener.Accept()
+		require.NoError(t, err)
+
+		defer listener.Close()
+
+		handler.ServeTCP(conn.(*net.TCPConn))
+	}()
+
+	<-acceptCh
+
+	conn, err := net.DialTimeout("tcp", listener.Addr().String(), 2*time.Second)
+	require.NoError(t, err)
+
+	// This is a minimal truncated Client Hello message
+	// to simulate a hanging connection during TLS handshake.
+	clientHello := []byte{
+		// TLS Record Header
+		0x16,       // Content Type: Handshake
+		0x03, 0x01, // Version: TLS 1.0 (for compatibility)
+		0x00, 0x50, // Length: 80 bytes
+	}
+
+	_, err = conn.Write(clientHello)
+	require.NoError(t, err)
+
+	// This will return an EOF as the acmeTLSALPNHandler will close the connection
+	// after a timeout during the TLS handshake.
+	b := make([]byte, 256)
+	_, err = conn.Read(b)
+	require.ErrorIs(t, err, io.EOF)
+}
+
 // routerTCPCatchAll configures a TCP CatchAll No TLS - HostSNI(`*`) router.
 func routerTCPCatchAll(conf *runtime.Configuration) {
 	conf.TCPRouters["tcp-catchall"] = &runtime.TCPRouterInfo{
