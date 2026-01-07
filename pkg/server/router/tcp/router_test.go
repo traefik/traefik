@@ -685,12 +685,10 @@ func Test_Router_acmeTLSALPNHandlerTimeout(t *testing.T) {
 
 	router.httpsTLSConfig = &tls.Config{}
 
-	handler := router.acmeTLSALPNHandler()
-
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	require.NoError(t, err)
 
-	acceptCh := make(chan struct{})
+	acceptCh := make(chan struct{}, 1)
 	go func() {
 		close(acceptCh)
 
@@ -699,7 +697,8 @@ func Test_Router_acmeTLSALPNHandlerTimeout(t *testing.T) {
 
 		defer listener.Close()
 
-		handler.ServeTCP(conn.(*net.TCPConn))
+		router.acmeTLSALPNHandler().
+			ServeTCP(conn.(*net.TCPConn))
 	}()
 
 	<-acceptCh
@@ -719,11 +718,23 @@ func Test_Router_acmeTLSALPNHandlerTimeout(t *testing.T) {
 	_, err = conn.Write(clientHello)
 	require.NoError(t, err)
 
-	// This will return an EOF as the acmeTLSALPNHandler will close the connection
-	// after a timeout during the TLS handshake.
-	b := make([]byte, 256)
-	_, err = conn.Read(b)
-	require.ErrorIs(t, err, io.EOF)
+	errCh := make(chan error, 1)
+	go func() {
+		// This will return an EOF as the acmeTLSALPNHandler will close the connection
+		// after a timeout during the TLS handshake.
+		b := make([]byte, 256)
+		_, err = conn.Read(b)
+
+		errCh <- err
+	}()
+
+	select {
+	case err := <-errCh:
+		assert.ErrorIs(t, err, io.EOF)
+
+	case <-time.After(3 * time.Second):
+		t.Fatal("Error: Timeout waiting for acmeTLSALPNHandler to close the connection")
+	}
 }
 
 // routerTCPCatchAll configures a TCP CatchAll No TLS - HostSNI(`*`) router.
