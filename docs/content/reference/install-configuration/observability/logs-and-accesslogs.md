@@ -142,7 +142,7 @@ Traefik also supports the `OTEL_RESOURCE_ATTRIBUTES` env variable to set up the 
 Access logs concern everything that happens to the requests handled by Traefik.
 
 !!! note "Stdio logs are not enabled by default alongside OTLP exports"
-    If you would like Stdio access logs to be available, use [accessLog.dual-output](#opt-accesslog-dual-output) option.
+    If you would like Stdio access logs to be available, use [accessLog.dualOutput](#opt-accesslog-dualOutput) option.
 
 ### Configuration Example
 
