@@ -2,10 +2,11 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: ingress-with-proxy-body-size-empty
+  name: ingress-with-proxy-max-temp-file-size
   namespace: default
   annotations:
-    nginx.ingress.kubernetes.io/proxy-body-size: ""
+    nginx.ingress.kubernetes.io/proxy-buffering: "on"
+    nginx.ingress.kubernetes.io/proxy-max-temp-file-size: "100m"
 
 spec:
   ingressClassName: nginx
