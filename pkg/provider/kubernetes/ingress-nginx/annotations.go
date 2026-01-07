@@ -71,8 +71,21 @@ type ingressConfig struct {
 	CustomHeaders *string `annotation:"nginx.ingress.kubernetes.io/custom-headers"`
 	UpstreamVhost *string `annotation:"nginx.ingress.kubernetes.io/upstream-vhost"`
 
-	BodyMaxBufferSize  *string `annotation:"nginx.ingress.kubernetes.io/client-body-buffer-size"`
-	BodyMaxRequestSize *string `annotation:"nginx.ingress.kubernetes.io/proxy-body-size"`
+	// ProxyRequestBuffering controls whether request buffering is enabled.
+	ProxyRequestBuffering *string `annotation:"nginx.ingress.kubernetes.io/proxy-request-buffering"`
+	// ClientBodyBufferSize sets the size of the buffer used for reading request body.
+	ClientBodyBufferSize *string `annotation:"nginx.ingress.kubernetes.io/client-body-buffer-size"`
+	// ProxyBodySize sets the maximum allowed size of the client request body.
+	ProxyBodySize *string `annotation:"nginx.ingress.kubernetes.io/proxy-body-size"`
+
+	// ProxyBuffering controls whether response buffering is enabled.
+	ProxyBuffering *string `annotation:"nginx.ingress.kubernetes.io/proxy-buffering"`
+	// ProxyBufferSize sets the size of the memory buffer used for reading the response.
+	ProxyBufferSize *string `annotation:"nginx.ingress.kubernetes.io/proxy-buffer-size"`
+	// ProxyBuffersNumber sets the number of memory buffers used for reading the response.
+	ProxyBuffersNumber *int `annotation:"nginx.ingress.kubernetes.io/proxy-buffers-number"`
+	// ProxyMaxTempFileSize sets the maximum size of a temporary file used to buffer responses.
+	ProxyMaxTempFileSize *string `annotation:"nginx.ingress.kubernetes.io/proxy-max-temp-file-size"`
 }
 
 // parseIngressConfig parses the annotations from an Ingress object into an ingressConfig struct.
