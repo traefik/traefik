@@ -57,20 +57,20 @@ var (
 	testStart               = time.Now()
 )
 
-func TestOTelAccessLogWithBodyAndForcedLogging(t *testing.T) {
+func TestOTelAccessLogWithBodyAndDualOutput(t *testing.T) {
 	testCases := []struct {
 		desc             string
 		format           string
 		filePath         string
-		force            bool
+		dualOutput       bool
 		bodyCheckFn      func(*testing.T, string)
 		outLoggerCheckFn func(*testing.T, *logrus.Logger)
 	}{
 		{
-			desc:     "Common format with log body",
-			format:   CommonFormat,
-			filePath: "",
-			force:    false,
+			desc:       "Common format with log body",
+			format:     CommonFormat,
+			filePath:   "",
+			dualOutput: false,
 			bodyCheckFn: func(t *testing.T, log string) {
 				t.Helper()
 
@@ -84,10 +84,10 @@ func TestOTelAccessLogWithBodyAndForcedLogging(t *testing.T) {
 			},
 		},
 		{
-			desc:     "Generic CLF format with log body",
-			format:   GenericCLFFormat,
-			filePath: "",
-			force:    false,
+			desc:       "Generic CLF format with log body",
+			format:     GenericCLFFormat,
+			filePath:   "",
+			dualOutput: false,
 			bodyCheckFn: func(t *testing.T, log string) {
 				t.Helper()
 
@@ -101,10 +101,10 @@ func TestOTelAccessLogWithBodyAndForcedLogging(t *testing.T) {
 			},
 		},
 		{
-			desc:     "JSON format with log body",
-			format:   JSONFormat,
-			filePath: "",
-			force:    false,
+			desc:       "JSON format with log body",
+			format:     JSONFormat,
+			filePath:   "",
+			dualOutput: false,
 			bodyCheckFn: func(t *testing.T, log string) {
 				t.Helper()
 
@@ -118,10 +118,10 @@ func TestOTelAccessLogWithBodyAndForcedLogging(t *testing.T) {
 			},
 		},
 		{
-			desc:     "Common format with log body and Forced Stdout",
-			format:   CommonFormat,
-			filePath: "",
-			force:    true,
+			desc:       "Common format with log body and Dual Output (STDOUT + OTEL)",
+			format:     CommonFormat,
+			filePath:   "",
+			dualOutput: true,
 			bodyCheckFn: func(t *testing.T, log string) {
 				t.Helper()
 
@@ -135,10 +135,10 @@ func TestOTelAccessLogWithBodyAndForcedLogging(t *testing.T) {
 			},
 		},
 		{
-			desc:     "Common format with log body and Forced File Logging",
-			format:   CommonFormat,
-			filePath: filepath.Join(t.TempDir(), "traefik.log"),
-			force:    true,
+			desc:       "Common format with log body and Dual Output (File logging + OTEL)",
+			format:     CommonFormat,
+			filePath:   filepath.Join(t.TempDir(), "traefik.log"),
+			dualOutput: true,
 			bodyCheckFn: func(t *testing.T, log string) {
 				t.Helper()
 
@@ -177,9 +177,9 @@ func TestOTelAccessLogWithBodyAndForcedLogging(t *testing.T) {
 			t.Cleanup(collector.Close)
 
 			config := &otypes.AccessLog{
-				Format:   test.format,
-				Force:    test.force,
-				FilePath: test.filePath,
+				Format:     test.format,
+				DualOutput: test.dualOutput,
+				FilePath:   test.filePath,
 				OTLP: &otypes.OTelLog{
 					ServiceName:        "test",
 					ResourceAttributes: map[string]string{"resource": "attribute"},

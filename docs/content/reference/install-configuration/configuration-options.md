@@ -10,6 +10,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | <a id="opt-accesslog" href="#opt-accesslog" title="#opt-accesslog">accesslog</a> | Access log settings. | false |
 | <a id="opt-accesslog-addinternals" href="#opt-accesslog-addinternals" title="#opt-accesslog-addinternals">accesslog.addinternals</a> | Enables access log for internal services (ping, dashboard, etc...). | false |
 | <a id="opt-accesslog-bufferingsize" href="#opt-accesslog-bufferingsize" title="#opt-accesslog-bufferingsize">accesslog.bufferingsize</a> | Number of access log lines to process in a buffered way. | 0 |
+| <a id="opt-accesslog-dualoutput" href="#opt-accesslog-dualoutput" title="#opt-accesslog-dualoutput">accesslog.dualoutput</a> | Enables access log output alongside OTLP. By default, this output is disabled when OTLP is configured. | false |
 | <a id="opt-accesslog-fields-defaultmode" href="#opt-accesslog-fields-defaultmode" title="#opt-accesslog-fields-defaultmode">accesslog.fields.defaultmode</a> | Default mode for fields: keep | drop | keep |
 | <a id="opt-accesslog-fields-headers-defaultmode" href="#opt-accesslog-fields-headers-defaultmode" title="#opt-accesslog-fields-headers-defaultmode">accesslog.fields.headers.defaultmode</a> | Default mode for fields: keep | drop | redact | drop |
 | <a id="opt-accesslog-fields-headers-names-name" href="#opt-accesslog-fields-headers-names-name" title="#opt-accesslog-fields-headers-names-name">accesslog.fields.headers.names._name_</a> | Override mode for headers | |

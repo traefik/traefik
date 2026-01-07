@@ -128,7 +128,7 @@ func NewHandler(ctx context.Context, config *otypes.AccessLog) (*Handler, error)
 		}
 
 		logger.Hooks.Add(otellogrus.NewHook("traefik", otellogrus.WithLoggerProvider(otelLoggerProvider)))
-		if !config.Force {
+		if !config.DualOutput {
 			logger.Out = io.Discard
 		}
 	}
