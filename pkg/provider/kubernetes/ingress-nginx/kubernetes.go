@@ -80,6 +80,9 @@ type Provider struct {
 	DefaultBackendService  string `description:"Service used to serve HTTP requests not matching any known server name (catch-all). Takes the form 'namespace/name'." json:"defaultBackendService,omitempty" toml:"defaultBackendService,omitempty" yaml:"defaultBackendService,omitempty" export:"true"`
 	DisableSvcExternalName bool   `description:"Disable support for Services of type ExternalName." json:"disableSvcExternalName,omitempty" toml:"disableSvcExternalName,omitempty" yaml:"disableSvcExternalName,omitempty" export:"true"`
 
+	// NonTLSEntryPoints contains the names of entrypoints that are configured without TLS.
+	NonTLSEntryPoints []string
+
 	defaultBackendServiceNamespace string
 	defaultBackendServiceName      string
 
@@ -798,7 +801,7 @@ func (p *Provider) applyMiddlewares(namespace, routerKey string, ingressConfig i
 
 	// Apply SSL redirect is mandatory to be applied after all other middlewares.
 	// TODO: check how to remove this, and create the HTTP router elsewhere.
-	applySSLRedirectConfiguration(routerKey, ingressConfig, hasTLS, rt, conf)
+	p.applySSLRedirectConfiguration(routerKey, ingressConfig, hasTLS, rt, conf)
 
 	return nil
 }
@@ -934,7 +937,7 @@ func applyCORSConfiguration(routerName string, ingressConfig ingressConfig, rt *
 	rt.Middlewares = append(rt.Middlewares, corsMiddlewareName)
 }
 
-func applySSLRedirectConfiguration(routerName string, ingressConfig ingressConfig, hasTLS bool, rt *dynamic.Router, conf *dynamic.Configuration) {
+func (p *Provider) applySSLRedirectConfiguration(routerName string, ingressConfig ingressConfig, hasTLS bool, rt *dynamic.Router, conf *dynamic.Configuration) {
 	var forceSSLRedirect bool
 	if ingressConfig.ForceSSLRedirect != nil {
 		forceSSLRedirect = *ingressConfig.ForceSSLRedirect
@@ -946,7 +949,9 @@ func applySSLRedirectConfiguration(routerName string, ingressConfig ingressConfi
 		// An Ingress with TLS configuration creates only a Traefik router with a TLS configuration,
 		// so no Non-TLS router exists to handle HTTP traffic, and we should create it.
 		httpRouter := &dynamic.Router{
-			Rule: rt.Rule,
+			// Only attach to entryPoint which do not activate TLS.
+			EntryPoints: p.NonTLSEntryPoints,
+			Rule:        rt.Rule,
 			// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
 			RuleSyntax:  "default",
 			Middlewares: rt.Middlewares,
