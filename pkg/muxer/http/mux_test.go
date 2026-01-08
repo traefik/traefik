@@ -9,6 +9,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/v3/pkg/canonicalpath"
 	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
 )
@@ -594,6 +595,166 @@ func TestRoutingPath(t *testing.T) {
 			gotRoutingPath := getRoutingPath(req)
 			assert.NotNil(t, gotRoutingPath)
 			assert.Equal(t, test.expectedRoutingPath, *gotRoutingPath)
+		})
+	}
+}
+
+// TestCWE436UnreservedCharacterBypass tests that encoding unreserved characters
+// cannot be used to bypass path-based routing rules (CWE-436 mitigation).
+//
+// Per RFC 3986, /%61dmin and /admin are semantically equivalent because 'a' (0x61)
+// is an unreserved character. Both MUST route to the same destination.
+//
+// Attack scenario: Attacker requests /%61dmin hoping to bypass /admin rules.
+// See: https://cwe.mitre.org/data/definitions/436.html
+// See: https://github.com/advisories/GHSA-gm3x-23wp-hc2c
+func TestCWE436UnreservedCharacterBypass(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		rule        string
+		requestPath string
+		shouldMatch bool
+	}{
+		{
+			desc:        "direct /admin matches PathPrefix /admin",
+			rule:        "PathPrefix(`/admin`)",
+			requestPath: "/admin",
+			shouldMatch: true,
+		},
+		{
+			desc:        "encoded /%61dmin (a=0x61) MUST also match PathPrefix /admin",
+			rule:        "PathPrefix(`/admin`)",
+			requestPath: "/%61dmin",
+			shouldMatch: true,
+		},
+		{
+			desc:        "fully encoded /%61%64%6D%69%6E MUST match PathPrefix /admin",
+			rule:        "PathPrefix(`/admin`)",
+			requestPath: "/%61%64%6D%69%6E",
+			shouldMatch: true,
+		},
+		{
+			desc:        "uppercase hex /%61%64%6d%69%6e also matches (hex case insensitive)",
+			rule:        "PathPrefix(`/admin`)",
+			requestPath: "/%61%64%6d%69%6e",
+			shouldMatch: true,
+		},
+		{
+			desc:        "encoded space in path /%61dmin%20panel matches /admin panel",
+			rule:        "PathPrefix(`/admin panel`)",
+			requestPath: "/%61dmin%20panel",
+			shouldMatch: true,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			parser, err := NewSyntaxParser()
+			require.NoError(t, err)
+			muxer := NewMuxer(parser)
+
+			handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+			})
+
+			err = muxer.AddRoute(test.rule, "v3", 0, handler)
+			require.NoError(t, err)
+
+			// Create request with the test path
+			req := httptest.NewRequest(http.MethodGet, "http://localhost"+test.requestPath, http.NoBody)
+
+			// Apply canonical path middleware (simulating what happens in production)
+			pr := canonicalpath.Canonicalize(req.URL.EscapedPath(), canonicalpath.StrategyPreserveReserved)
+			req = req.WithContext(canonicalpath.WithPathRepresentation(req.Context(), pr))
+
+			recorder := httptest.NewRecorder()
+			muxer.ServeHTTP(recorder, req)
+
+			if test.shouldMatch {
+				assert.Equal(t, http.StatusOK, recorder.Code,
+					"CWE-436 BYPASS: encoded unreserved character evaded routing rule")
+			} else {
+				assert.Equal(t, http.StatusNotFound, recorder.Code,
+					"request should not match the rule")
+			}
+		})
+	}
+}
+
+// TestCWE436ReservedCharacterSemantics tests that encoded reserved characters
+// preserve their semantic meaning (not decoded during routing).
+//
+// Per RFC 3986, /admin%2Fsecret (one segment with literal '/') is semantically
+// DIFFERENT from /admin/secret (two segments). They MUST be treated differently.
+//
+// This is NOT about security bypass - it's about semantic correctness.
+// Decoding %2F would break legitimate use cases like GitLab namespaces.
+func TestCWE436ReservedCharacterSemantics(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		rule        string
+		requestPath string
+		shouldMatch bool
+	}{
+		{
+			desc:        "/admin/secret (two segments) matches Path /admin/secret",
+			rule:        "Path(`/admin/secret`)",
+			requestPath: "/admin/secret",
+			shouldMatch: true,
+		},
+		{
+			desc:        "/admin%2Fsecret (one segment) does NOT match Path /admin/secret",
+			rule:        "Path(`/admin/secret`)",
+			requestPath: "/admin%2Fsecret",
+			shouldMatch: false,
+		},
+		{
+			desc:        "/admin%2Fsecret matches PathPrefix /admin (starts with /admin)",
+			rule:        "PathPrefix(`/admin`)",
+			requestPath: "/admin%2Fsecret",
+			shouldMatch: true,
+		},
+		{
+			desc:        "lowercase /admin%2fsecret also does NOT match Path /admin/secret",
+			rule:        "Path(`/admin/secret`)",
+			requestPath: "/admin%2fsecret",
+			shouldMatch: false,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			parser, err := NewSyntaxParser()
+			require.NoError(t, err)
+			muxer := NewMuxer(parser)
+
+			handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+			})
+
+			err = muxer.AddRoute(test.rule, "v3", 0, handler)
+			require.NoError(t, err)
+
+			req := httptest.NewRequest(http.MethodGet, "http://localhost"+test.requestPath, http.NoBody)
+
+			// Apply canonical path middleware
+			pr := canonicalpath.Canonicalize(req.URL.EscapedPath(), canonicalpath.StrategyPreserveReserved)
+			req = req.WithContext(canonicalpath.WithPathRepresentation(req.Context(), pr))
+
+			recorder := httptest.NewRecorder()
+			muxer.ServeHTTP(recorder, req)
+
+			if test.shouldMatch {
+				assert.Equal(t, http.StatusOK, recorder.Code,
+					"request should match the rule")
+			} else {
+				assert.Equal(t, http.StatusNotFound, recorder.Code,
+					"RFC 3986: /admin%%2Fsecret (one segment) must NOT equal /admin/secret (two segments)")
+			}
 		})
 	}
 }
