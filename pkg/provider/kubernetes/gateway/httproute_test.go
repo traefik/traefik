@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"k8s.io/utils/ptr"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
 )
@@ -331,4 +332,17 @@ func Test_convertSessionPersistence(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_applyStickyToServersLoadBalancer(t *testing.T) {
+	t.Parallel()
+
+	lb := &dynamic.ServersLoadBalancer{}
+	sticky := &dynamic.Sticky{
+		Cookie: &dynamic.Cookie{Name: "test-cookie"},
+	}
+
+	applyStickyToServersLoadBalancer(lb, sticky)
+
+	assert.Equal(t, sticky, lb.Sticky)
 }

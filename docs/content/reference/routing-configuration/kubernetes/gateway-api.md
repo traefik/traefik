@@ -403,6 +403,11 @@ Once everything is deployed, sending a `GET` request should return the following
 
 Traefik supports the Gateway API `sessionPersistence` field on `HTTPRoute` rules, enabling sticky sessions without requiring Traefik-specific CRDs.
 
+!!! note "TraefikService backends"
+    `sessionPersistence` is applied only when the `HTTPRoute` backend is a Kubernetes `Service`.
+    If the backend is a `TraefikService`, stickiness is controlled by the `TraefikService` configuration instead
+    (including multi-level stickiness), and the `HTTPRoute` `sessionPersistence` is ignored.
+
 Session persistence ensures that requests from the same client are consistently routed to the same backend server. Traefik supports both cookie-based and header-based session persistence:
 
 ```yaml tab="Cookie-based (default)"

@@ -185,10 +185,12 @@ func (p *Provider) loadWRRService(ctx context.Context, listener gatewayListener,
 		return name, nil
 	}
 
+	sticky := convertSessionPersistence(routeRule.SessionPersistence)
+
 	var wrr dynamic.WeightedRoundRobin
 	var condition *metav1.Condition
 	for _, backendRef := range routeRule.BackendRefs {
-		svcName, errCondition := p.loadService(ctx, listener, conf, route, backendRef)
+		svcName, errCondition := p.loadService(ctx, listener, conf, route, backendRef, sticky)
 		weight := ptr.To(int(ptr.Deref(backendRef.Weight, 1)))
 		if errCondition != nil {
 			log.Ctx(ctx).Error().
@@ -209,16 +211,13 @@ func (p *Provider) loadWRRService(ctx context.Context, listener gatewayListener,
 		})
 	}
 
-	// Convert Gateway API SessionPersistence to Traefik Sticky configuration.
-	wrr.Sticky = convertSessionPersistence(routeRule.SessionPersistence)
-
 	conf.HTTP.Services[name] = &dynamic.Service{Weighted: &wrr}
 	return name, condition
 }
 
 // loadService returns a dynamic.Service config corresponding to the given gatev1.HTTPBackendRef.
 // Note that the returned dynamic.Service config can be nil (for cross-provider, internal services, and backendFunc).
-func (p *Provider) loadService(ctx context.Context, listener gatewayListener, conf *dynamic.Configuration, route *gatev1.HTTPRoute, backendRef gatev1.HTTPBackendRef) (string, *metav1.Condition) {
+func (p *Provider) loadService(ctx context.Context, listener gatewayListener, conf *dynamic.Configuration, route *gatev1.HTTPRoute, backendRef gatev1.HTTPBackendRef, sticky *dynamic.Sticky) (string, *metav1.Condition) {
 	kind := ptr.Deref(backendRef.Kind, kindService)
 
 	group := groupCore
@@ -279,7 +278,7 @@ func (p *Provider) loadService(ctx context.Context, listener gatewayListener, co
 	portStr := strconv.FormatInt(int64(port), 10)
 	serviceName = provider.Normalize(serviceName + "-" + portStr)
 
-	lb, st, errCondition := p.loadHTTPServers(ctx, namespace, route, backendRef, listener)
+	lb, st, errCondition := p.loadHTTPServers(ctx, namespace, route, backendRef, listener, sticky)
 	if errCondition != nil {
 		return serviceName, errCondition
 	}
@@ -402,7 +401,7 @@ func (p *Provider) loadHTTPRouteFilterExtensionRef(namespace string, extensionRe
 	return filterFunc(string(extensionRef.Name), namespace)
 }
 
-func (p *Provider) loadHTTPServers(ctx context.Context, namespace string, route *gatev1.HTTPRoute, backendRef gatev1.HTTPBackendRef, listener gatewayListener) (*dynamic.ServersLoadBalancer, *dynamic.ServersTransport, *metav1.Condition) {
+func (p *Provider) loadHTTPServers(ctx context.Context, namespace string, route *gatev1.HTTPRoute, backendRef gatev1.HTTPBackendRef, listener gatewayListener, sticky *dynamic.Sticky) (*dynamic.ServersLoadBalancer, *dynamic.ServersTransport, *metav1.Condition) {
 	backendAddresses, svcPort, err := p.getBackendAddresses(namespace, backendRef.BackendRef)
 	if err != nil {
 		return nil, nil, &metav1.Condition{
@@ -529,6 +528,7 @@ func (p *Provider) loadHTTPServers(ctx context.Context, namespace string, route 
 
 	lb := &dynamic.ServersLoadBalancer{}
 	lb.SetDefaults()
+	applyStickyToServersLoadBalancer(lb, sticky)
 
 	// If a ServersTransport is set, it means a BackendTLSPolicy matched the service port, and we can safely assume the protocol is HTTPS.
 	// When no ServersTransport is set, we need to determine the protocol based on the service port.
@@ -980,4 +980,12 @@ func convertSessionPersistence(sp *gatev1.SessionPersistence) *dynamic.Sticky {
 	}
 
 	return &dynamic.Sticky{Cookie: cookie}
+}
+
+func applyStickyToServersLoadBalancer(lb *dynamic.ServersLoadBalancer, sticky *dynamic.Sticky) {
+	if lb == nil {
+		return
+	}
+
+	lb.Sticky = sticky
 }

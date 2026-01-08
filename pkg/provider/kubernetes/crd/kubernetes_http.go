@@ -306,24 +306,7 @@ func (c configBuilder) buildServicesLB(ctx context.Context, namespace string, tS
 		})
 	}
 
-	var sticky *dynamic.Sticky
-	if tService.Weighted.Sticky != nil && tService.Weighted.Sticky.Cookie != nil {
-		sticky = &dynamic.Sticky{
-			Cookie: &dynamic.Cookie{
-				Name:     tService.Weighted.Sticky.Cookie.Name,
-				Secure:   tService.Weighted.Sticky.Cookie.Secure,
-				HTTPOnly: tService.Weighted.Sticky.Cookie.HTTPOnly,
-				SameSite: tService.Weighted.Sticky.Cookie.SameSite,
-				MaxAge:   tService.Weighted.Sticky.Cookie.MaxAge,
-				Domain:   tService.Weighted.Sticky.Cookie.Domain,
-			},
-		}
-		sticky.Cookie.SetDefaults()
-
-		if tService.Weighted.Sticky.Cookie.Path != nil {
-			sticky.Cookie.Path = tService.Weighted.Sticky.Cookie.Path
-		}
-	}
+	sticky := buildStickyFromCRD(tService.Weighted.Sticky)
 
 	conf[id] = &dynamic.Service{
 		Weighted: &dynamic.WeightedRoundRobin{
@@ -476,23 +459,7 @@ func (c configBuilder) buildServersLB(namespace string, svc traefikv1alpha1.Load
 		}
 	}
 
-	if svc.Sticky != nil && svc.Sticky.Cookie != nil {
-		lb.Sticky = &dynamic.Sticky{
-			Cookie: &dynamic.Cookie{
-				Name:     svc.Sticky.Cookie.Name,
-				Secure:   svc.Sticky.Cookie.Secure,
-				HTTPOnly: svc.Sticky.Cookie.HTTPOnly,
-				SameSite: svc.Sticky.Cookie.SameSite,
-				MaxAge:   svc.Sticky.Cookie.MaxAge,
-				Domain:   svc.Sticky.Cookie.Domain,
-			},
-		}
-		lb.Sticky.Cookie.SetDefaults()
-
-		if svc.Sticky.Cookie.Path != nil {
-			lb.Sticky.Cookie.Path = svc.Sticky.Cookie.Path
-		}
-	}
+	lb.Sticky = buildStickyFromCRD(svc.Sticky)
 
 	lb.ServersTransport, err = c.makeServersTransportKey(namespace, svc.ServersTransport)
 	if err != nil {
@@ -519,6 +486,40 @@ func (c configBuilder) makeServersTransportKey(parentNamespace string, serversTr
 	}
 
 	return provider.Normalize(makeID(parentNamespace, serversTransportName)), nil
+}
+
+func buildStickyFromCRD(sticky *dynamic.Sticky) *dynamic.Sticky {
+	if sticky == nil {
+		return nil
+	}
+
+	if sticky.Cookie != nil {
+		cookie := &dynamic.Cookie{
+			Name:     sticky.Cookie.Name,
+			Secure:   sticky.Cookie.Secure,
+			HTTPOnly: sticky.Cookie.HTTPOnly,
+			SameSite: sticky.Cookie.SameSite,
+			MaxAge:   sticky.Cookie.MaxAge,
+			Domain:   sticky.Cookie.Domain,
+		}
+		cookie.SetDefaults()
+
+		if sticky.Cookie.Path != nil {
+			cookie.Path = sticky.Cookie.Path
+		}
+
+		return &dynamic.Sticky{Cookie: cookie}
+	}
+
+	if sticky.Header != nil {
+		header := &dynamic.Header{
+			Name: sticky.Header.Name,
+		}
+		header.SetDefaults()
+		return &dynamic.Sticky{Header: header}
+	}
+
+	return nil
 }
 
 func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.LoadBalancerSpec) ([]dynamic.Server, error) {
