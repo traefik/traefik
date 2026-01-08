@@ -1162,27 +1162,20 @@ func applyForwardAuthConfiguration(routerName string, ingressConfig ingressConfi
 	authResponseHeaders := strings.Split(ptr.Deref(ingressConfig.AuthResponseHeaders, ""), ",")
 
 	forwardMiddlewareName := routerName + "-forward-auth"
-	conf.HTTP.Middlewares[forwardMiddlewareName] = &dynamic.Middleware{
-		ForwardAuth: &dynamic.ForwardAuth{
-			Address:             *ingressConfig.AuthURL,
-			AuthResponseHeaders: authResponseHeaders,
-		},
+	forwardAuth := &dynamic.ForwardAuth{
+		Address:             *ingressConfig.AuthURL,
+		AuthResponseHeaders: authResponseHeaders,
 	}
 
-	// If auth-signin is set, inject it as a header so the auth service can use it for redirects
-	// The headers middleware adds X-Auth-Signin to the request, which ForwardAuth will forward
-	// to the auth service (ForwardAuth forwards all headers by default when AuthRequestHeaders is empty)
+	// If auth-signin is set, configure ForwardAuth to redirect on 401.
+	// This matches nginx ingress behavior where the auth-signin URL is used
+	// to redirect unauthenticated users to a login page.
 	if ingressConfig.AuthSignin != nil && *ingressConfig.AuthSignin != "" {
-		authSigninHeadersName := routerName + "-auth-signin-headers"
-		conf.HTTP.Middlewares[authSigninHeadersName] = &dynamic.Middleware{
-			Headers: &dynamic.Headers{
-				CustomRequestHeaders: map[string]string{
-					"X-Auth-Signin": *ingressConfig.AuthSignin,
-				},
-			},
-		}
-		// Add the headers middleware before the forward auth middleware
-		rt.Middlewares = append(rt.Middlewares, authSigninHeadersName)
+		forwardAuth.AuthSigninURL = *ingressConfig.AuthSignin
+	}
+
+	conf.HTTP.Middlewares[forwardMiddlewareName] = &dynamic.Middleware{
+		ForwardAuth: forwardAuth,
 	}
 
 	rt.Middlewares = append(rt.Middlewares, forwardMiddlewareName)

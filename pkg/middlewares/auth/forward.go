@@ -248,6 +248,18 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if forwardResponse.StatusCode < http.StatusOK || forwardResponse.StatusCode >= http.StatusMultipleChoices {
 		logger.Debug().Msgf("Remote error %s. StatusCode: %d", fa.address, forwardResponse.StatusCode)
 
+		// If auth server returns 401 and AuthSigninURL is configured, redirect to signin URL
+		// This matches nginx ingress auth-signin behavior
+		if forwardResponse.StatusCode == http.StatusUnauthorized && fa.authSigninURL != "" {
+			signinURL := fa.buildSigninURL(req)
+			logger.Debug().Msgf("Redirecting to signin URL: %s", signinURL)
+
+			tracer.CaptureResponse(forwardSpan, forwardResponse.Header, http.StatusFound, trace.SpanKindClient)
+			rw.Header().Set("Location", signinURL)
+			rw.WriteHeader(http.StatusFound)
+			return
+		}
+
 		utils.CopyHeaders(rw.Header(), forwardResponse.Header)
 		utils.RemoveHeaders(rw.Header(), hopHeaders...)
 
@@ -319,6 +331,33 @@ func (fa *forwardAuth) redirectURL(forwardResponse *http.Response) (*url.URL, er
 		return url.Parse(lv)
 	}
 	return nil, http.ErrNoLocation
+}
+
+// buildSigninURL constructs the signin URL by substituting nginx-compatible variables.
+// Supported variables: $scheme, $host, $request_uri, $escaped_request_uri
+func (fa *forwardAuth) buildSigninURL(req *http.Request) string {
+	signinURL := fa.authSigninURL
+
+	// Determine scheme: check TLS first, then X-Forwarded-Proto header
+	scheme := "http"
+	if req.TLS != nil {
+		scheme = "https"
+	} else if proto := req.Header.Get("X-Forwarded-Proto"); proto != "" {
+		scheme = proto
+	}
+	signinURL = strings.ReplaceAll(signinURL, "$scheme", scheme)
+
+	// $host - request host header
+	signinURL = strings.ReplaceAll(signinURL, "$host", req.Host)
+
+	// $request_uri - full request URI with query string
+	requestURI := req.URL.RequestURI()
+	signinURL = strings.ReplaceAll(signinURL, "$request_uri", requestURI)
+
+	// $escaped_request_uri - URL-encoded request URI (must be done after $request_uri to avoid double replacement)
+	signinURL = strings.ReplaceAll(signinURL, "$escaped_request_uri", url.QueryEscape(requestURI))
+
+	return signinURL
 }
 
 func (fa *forwardAuth) buildModifier(authCookies []*http.Cookie) func(res *http.Response) error {

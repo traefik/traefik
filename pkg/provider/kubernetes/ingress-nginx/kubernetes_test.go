@@ -294,22 +294,16 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-forwardauth-signin-rule-0-path-0": {
 							Rule:        "Host(`whoami.localhost`) && Path(`/forwardauth`)",
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-forwardauth-signin-rule-0-path-0-auth-signin-headers", "default-ingress-with-forwardauth-signin-rule-0-path-0-forward-auth"},
+							Middlewares: []string{"default-ingress-with-forwardauth-signin-rule-0-path-0-forward-auth"},
 							Service:     "default-ingress-with-forwardauth-signin-whoami-80",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-ingress-with-forwardauth-signin-rule-0-path-0-auth-signin-headers": {
-							Headers: &dynamic.Headers{
-								CustomRequestHeaders: map[string]string{
-									"X-Auth-Signin": "https://auth.example.com/oauth2/start?rd=$escaped_request_uri",
-								},
-							},
-						},
 						"default-ingress-with-forwardauth-signin-rule-0-path-0-forward-auth": {
 							ForwardAuth: &dynamic.ForwardAuth{
 								Address:             "http://whoami.default.svc/",
 								AuthResponseHeaders: []string{"X-Foo"},
+								AuthSigninURL:       "https://auth.example.com/oauth2/start?rd=$escaped_request_uri",
 							},
 						},
 					},
