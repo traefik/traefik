@@ -11,6 +11,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/canonicalpath"
 	"github.com/traefik/traefik/v3/pkg/rules"
 )
 
@@ -37,6 +38,10 @@ func NewMuxer(parser SyntaxParser) *Muxer {
 
 // ServeHTTP forwards the connection to the matching HTTP handler.
 // Serves 404 if no handler is found.
+//
+// Path matching uses the canonical path representation for security.
+// The canonical path is set by the CanonicalPath middleware earlier in the chain.
+// If not set, falls back to the legacy withRoutingPath behavior.
 func (m *Muxer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	logger := log.Ctx(req.Context())
 
@@ -114,8 +119,19 @@ var reservedCharacters = map[string]rune{
 }
 
 // getRoutingPath retrieves the routing path from the request context.
-// It returns nil if the routing path is not set in the context.
+// It prefers the canonical path (set by CanonicalPath middleware) for security.
+// Falls back to the legacy routing path if canonical path is not available.
+// Returns nil if no routing path is set in the context.
 func getRoutingPath(req *http.Request) *string {
+	// Prefer canonical path for security (addresses CWE-436)
+	// The canonical path ensures consistent path representation:
+	// - /%61dmin canonicalizes to /admin (unreserved chars decoded)
+	// - /admin%2Fsubpath stays as /admin%2Fsubpath (reserved chars preserved)
+	if cp, ok := canonicalpath.GetPathRepresentation(req.Context()); ok {
+		return &cp.Canonical
+	}
+
+	// Fallback to legacy routing path for backwards compatibility
 	routingPath := req.Context().Value(mux.RoutingPathKey)
 	if routingPath != nil {
 		rp := routingPath.(string)

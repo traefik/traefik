@@ -21,6 +21,7 @@ import (
 	"github.com/pires/go-proxyproto"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/canonicalpath"
 	"github.com/traefik/traefik/v3/pkg/config/static"
 	"github.com/traefik/traefik/v3/pkg/ip"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
@@ -683,6 +684,19 @@ func newHTTPServer(ctx context.Context, ln net.Listener, configuration *static.E
 	}
 
 	handler = normalizePath(handler)
+
+	// Canonical path middleware establishes a single source of truth for path-based
+	// routing and security decisions. This addresses CWE-436 (Interpretation Conflict)
+	// by ensuring all routing, middleware, and security decisions use the same
+	// canonical path representation.
+	//
+	// The canonical path preserves RFC 3986 semantics:
+	// - Unreserved characters are decoded: /%61dmin → /admin
+	// - Reserved characters stay encoded: /admin%2Fsecret stays as /admin%2Fsecret
+	//
+	// This is correct because /admin%2Fsecret (one segment) != /admin/secret (two segments).
+	// The original path is preserved for backend forwarding (HTTP transparency).
+	handler = canonicalpath.Middleware(canonicalpath.DefaultConfig())(handler)
 
 	serverHTTP := &http.Server{
 		Protocols:      &protocols,
