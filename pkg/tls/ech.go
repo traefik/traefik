@@ -2,14 +2,11 @@ package tls
 
 import (
 	"crypto/tls"
-	"encoding/base64"
 	"encoding/binary"
 	"encoding/pem"
+	"errors"
 	"fmt"
-	"io"
 	"math/rand/v2"
-	"net/http"
-	"net/url"
 
 	"github.com/cloudflare/circl/hpke"
 	"golang.org/x/crypto/cryptobyte"
@@ -39,7 +36,7 @@ func UnmarshalECHKey(data []byte) (*tls.EncryptedClientHelloKey, error) {
 	}
 
 	if len(k.Config) == 0 || len(k.PrivateKey) == 0 {
-		return nil, fmt.Errorf("missing ECH configuration or private key in PEM file")
+		return nil, errors.New("missing ECH configuration or private key in PEM file")
 	}
 
 	// go ecdh now only supports SHA-256 (32-byte private key)
@@ -56,11 +53,11 @@ func UnmarshalECHKey(data []byte) (*tls.EncryptedClientHelloKey, error) {
 
 func MarshalECHKey(k *tls.EncryptedClientHelloKey) ([]byte, error) {
 	if len(k.Config) == 0 || len(k.PrivateKey) == 0 {
-		return nil, fmt.Errorf("missing ECH configuration or private key")
+		return nil, errors.New("missing ECH configuration or private key")
 	}
-	lengthPrefix := make([]byte, 2)
-	binary.BigEndian.PutUint16(lengthPrefix, uint16(len(k.Config)))
-	configBytes := append(lengthPrefix, k.Config...)
+	configBytes := make([]byte, 2+len(k.Config))
+	binary.BigEndian.PutUint16(configBytes, uint16(len(k.Config)))
+	copy(configBytes[2:], k.Config)
 	var pemData []byte
 	pemData = append(pemData, pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: k.PrivateKey})...)
 	pemData = append(pemData, pem.EncodeToMemory(&pem.Block{Type: "ECHCONFIG", Bytes: configBytes})...)
@@ -79,8 +76,6 @@ type echExtension struct {
 }
 
 type echConfig struct {
-	raw []byte
-
 	Version uint16
 	Length  uint16
 
@@ -159,65 +154,6 @@ func NewECHKey(publicName string) (*tls.EncryptedClientHelloKey, error) {
 		PrivateKey:  privateKeyBytes,
 		SendAsRetry: true,
 	}, nil
-}
-
-type ECHRequestConfig[T []byte | string] struct {
-	URL      string `description:"The URL to request." json:"u" export:"true"`
-	Host     string `description:"The host/sni to request." json:"h" export:"true"`
-	ECH      T      `description:"Base64-encoded ECH public configuration list for client use." json:"ech" export:"true"`
-	Insecure bool   `description:"If true, skip TLS verification (for testing purposes)." json:"k" export:"true"`
-}
-
-// RequestWithECH sends a GET request to a server using the provided ECH configuration.
-func RequestWithECH[T []byte | string](c ECHRequestConfig[T]) (body []byte, err error) {
-	// Decode the ECH configuration from base64 if it's a string, otherwise use it directly.
-	var ech []byte
-	if s, ok := any(c.ECH).(string); ok {
-		ech, err = base64.StdEncoding.DecodeString(s)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		ech = []byte(c.ECH)
-	}
-
-	requestURL, err := url.Parse(c.URL)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse URL: %w", err)
-	}
-
-	if c.Host == "" {
-		c.Host = requestURL.Hostname()
-	}
-
-	client := &http.Client{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{
-				ServerName:                     c.Host,
-				EncryptedClientHelloConfigList: ech,
-				MinVersion:                     tls.VersionTLS13,
-				InsecureSkipVerify:             c.Insecure,
-			},
-		},
-	}
-
-	req := &http.Request{
-		Method: "GET",
-		URL:    requestURL,
-		Host:   c.Host,
-	}
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	body, err = io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
-	}
-
-	return body, nil
 }
 
 func ECHConfigToConfigList(echConfig []byte) ([]byte, error) {
