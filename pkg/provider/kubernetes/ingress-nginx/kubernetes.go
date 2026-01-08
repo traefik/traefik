@@ -22,7 +22,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/job"
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	"github.com/traefik/traefik/v3/pkg/provider"
-	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
@@ -646,7 +645,10 @@ func (p *Provider) getBackendAddresses(namespace string, backend netv1.IngressBa
 		}
 
 		for _, endpoint := range endpointSlice.Endpoints {
-			if !k8s.EndpointServing(endpoint) {
+			// The Serving condition allows to track if the Pod can receive traffic.
+			// It is set to true when the Pod is Ready or Terminating.
+			// From the go documentation, a nil value should be interpreted as "true".
+			if !ptr.Deref(endpoint.Conditions.Serving, true) {
 				continue
 			}
 
@@ -658,7 +660,7 @@ func (p *Provider) getBackendAddresses(namespace string, backend netv1.IngressBa
 				uniqAddresses[address] = struct{}{}
 				addresses = append(addresses, backendAddress{
 					Address: net.JoinHostPort(address, strconv.Itoa(int(port))),
-					Fenced:  ptr.Deref(endpoint.Conditions.Terminating, false) && ptr.Deref(endpoint.Conditions.Serving, false),
+					Fenced:  ptr.Deref(endpoint.Conditions.Terminating, false),
 				})
 			}
 		}
