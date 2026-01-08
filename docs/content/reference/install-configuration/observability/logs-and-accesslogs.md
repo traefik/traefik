@@ -198,7 +198,7 @@ accessLog:
 
 ```sh tab="CLI"
 --accesslog=true
---accesslog.dualOutput=true
+--accesslog.dualoutput=true
 --accesslog.format=json
 --accesslog.filters.statuscodes=200,300-302
 --accesslog.filters.retryattempts
