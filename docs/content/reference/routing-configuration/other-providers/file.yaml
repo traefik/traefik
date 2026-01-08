@@ -443,6 +443,11 @@ http:
           keyFile: foobar
         - certFile: foobar
           keyFile: foobar
+      cipherSuites:
+        - foobar
+        - foobar
+      minVersion: foobar
+      maxVersion: foobar
       maxIdleConnsPerHost: 42
       forwardingTimeouts:
         dialTimeout: 42s
@@ -468,6 +473,11 @@ http:
           keyFile: foobar
         - certFile: foobar
           keyFile: foobar
+      cipherSuites:
+        - foobar
+        - foobar
+      minVersion: foobar
+      maxVersion: foobar
       maxIdleConnsPerHost: 42
       forwardingTimeouts:
         dialTimeout: 42s
