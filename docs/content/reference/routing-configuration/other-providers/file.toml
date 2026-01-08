@@ -211,6 +211,7 @@
         maxBodySize = 42
         preserveLocationHeader = true
         preserveRequestMethod = true
+        authSigninURL = "foobar"
         [http.middlewares.Middleware10.forwardAuth.tls]
           ca = "foobar"
           cert = "foobar"
