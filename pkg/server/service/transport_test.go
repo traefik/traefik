@@ -317,7 +317,7 @@ func TestInvalidMaxTLSVersions(t *testing.T) {
 	// Set logs in variable as string
 	logged := logBuffer.String()
 	// Check logs content expected error message
-	assert.Contains(t, logged, "invalid TLS maximum version: VersionTLS16")
+	assert.Contains(t, logged, "Invalid TLS maximum version: VersionTLS16")
 }
 
 func TestInvalidMinTLSVersions(t *testing.T) {
@@ -373,7 +373,7 @@ func TestInvalidMinTLSVersions(t *testing.T) {
 	// Set logs in variable as string
 	logged := logBuffer.String()
 	// Check logs content expected error message
-	assert.Contains(t, logged, "invalid TLS minimum version: VersionTLS09")
+	assert.Contains(t, logged, "Invalid TLS minimum version: VersionTLS09")
 }
 
 func TestInvalidCipherSuites(t *testing.T) {
