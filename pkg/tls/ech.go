@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/binary"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"io"
 	"math/rand/v2"
@@ -39,7 +40,7 @@ func UnmarshalECHKey(data []byte) (*tls.EncryptedClientHelloKey, error) {
 	}
 
 	if len(k.Config) == 0 || len(k.PrivateKey) == 0 {
-		return nil, fmt.Errorf("missing ECH configuration or private key in PEM file")
+		return nil, errors.New("missing ECH configuration or private key in PEM file")
 	}
 
 	// go ecdh now only supports SHA-256 (32-byte private key)
@@ -56,11 +57,11 @@ func UnmarshalECHKey(data []byte) (*tls.EncryptedClientHelloKey, error) {
 
 func MarshalECHKey(k *tls.EncryptedClientHelloKey) ([]byte, error) {
 	if len(k.Config) == 0 || len(k.PrivateKey) == 0 {
-		return nil, fmt.Errorf("missing ECH configuration or private key")
+		return nil, errors.New("missing ECH configuration or private key")
 	}
-	lengthPrefix := make([]byte, 2)
-	binary.BigEndian.PutUint16(lengthPrefix, uint16(len(k.Config)))
-	configBytes := append(lengthPrefix, k.Config...)
+	configBytes := make([]byte, 2+len(k.Config))
+	binary.BigEndian.PutUint16(configBytes, uint16(len(k.Config)))
+	copy(configBytes[2:], k.Config)
 	var pemData []byte
 	pemData = append(pemData, pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: k.PrivateKey})...)
 	pemData = append(pemData, pem.EncodeToMemory(&pem.Block{Type: "ECHCONFIG", Bytes: configBytes})...)
@@ -79,8 +80,6 @@ type echExtension struct {
 }
 
 type echConfig struct {
-	raw []byte
-
 	Version uint16
 	Length  uint16
 
@@ -202,7 +201,7 @@ func RequestWithECH[T []byte | string](c ECHRequestConfig[T]) (body []byte, err 
 	}
 
 	req := &http.Request{
-		Method: "GET",
+		Method: http.MethodGet,
 		URL:    requestURL,
 		Host:   c.Host,
 	}
