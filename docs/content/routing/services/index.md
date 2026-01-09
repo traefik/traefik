@@ -1646,4 +1646,4 @@ udp:
         address = "private-ip-server-2:8080/"
 ```
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

@@ -412,4 +412,4 @@ serversTransport:
 --serversTransport.forwardingTimeouts.idleConnTimeout=1s
 ```
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

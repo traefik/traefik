@@ -39,6 +39,8 @@ plugins:
   - exclude:
       glob:
         - "**/include-*.md"
+  - include-markdown:
+      encoding: utf-8
 
 # https://squidfunk.github.io/mkdocs-material/extensions/admonition/
 # https://facelessuser.github.io/pymdown-extensions/
@@ -56,9 +58,6 @@ markdown_extensions:
   - pymdownx.tasklist
   - pymdownx.snippets:
       check_paths: true
-  - markdown_include.include:
-      base_path: content/includes/
-      encoding: utf-8
   - toc:
       permalink: true
 
