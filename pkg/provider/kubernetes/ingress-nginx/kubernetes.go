@@ -1060,7 +1060,7 @@ func buildRule(host string, pa netv1.HTTPIngressPath, config ingressConfig) stri
 			rules = append(rules, fmt.Sprintf("Path(`%s`)", pa.Path))
 		case netv1.PathTypePrefix:
 			if ptr.Deref(config.UseRegex, false) {
-				rules = append(rules, fmt.Sprintf("PathRegexp(`^%s`)", regexp.QuoteMeta(pa.Path)))
+				rules = append(rules, fmt.Sprintf("PathRegexp(`^%s`)", pa.Path))
 			} else {
 				rules = append(rules, buildPrefixRule(pa.Path))
 			}
