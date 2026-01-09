@@ -2,6 +2,7 @@ package canonicalpath
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -560,6 +561,170 @@ func TestAddPrefix(t *testing.T) {
 			pr := Canonicalize(tt.rawPath, StrategyPreserveReserved)
 			prefixed := pr.AddPrefix(tt.prefix)
 			assert.Equal(t, tt.wantCanonical, prefixed.Canonical)
+		})
+	}
+}
+
+// TestDoubleEncodingPreservation verifies that double-encoded characters
+// are preserved correctly and not decoded multiple times.
+// This is critical for security: %252F should stay as %252F, not become %2F or /.
+func TestDoubleEncodingPreservation(t *testing.T) {
+	tests := []struct {
+		name          string
+		rawPath       string
+		wantCanonical string
+		explanation   string
+	}{
+		{
+			name:          "double encoded slash (%252F) preserved",
+			rawPath:       "/admin%252Fpath",
+			wantCanonical: "/admin%252Fpath",
+			explanation:   "%25 is reserved (encoded %), so %252F stays as-is",
+		},
+		{
+			name:          "double encoded letter (%2561) preserved",
+			rawPath:       "/admin%2561",
+			wantCanonical: "/admin%2561",
+			explanation:   "%25 is reserved, so %2561 stays as-is (not decoded to %61 then 'a')",
+		},
+		{
+			name:          "triple encoded slash (%25252F) preserved",
+			rawPath:       "/admin%25252F",
+			wantCanonical: "/admin%25252F",
+			explanation:   "Each %25 layer is preserved",
+		},
+		{
+			name:          "mixed double encoding",
+			rawPath:       "/%2561dmin%252Fsecret",
+			wantCanonical: "/%2561dmin%252Fsecret",
+			explanation:   "Both double-encoded sequences preserved",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pr := Canonicalize(tt.rawPath, StrategyPreserveReserved)
+			assert.Equal(t, tt.wantCanonical, pr.Canonical, "Explanation: %s", tt.explanation)
+		})
+	}
+}
+
+// TestLongPathHandling verifies that very long paths are handled correctly
+// without causing performance issues or panics (DoS prevention).
+func TestLongPathHandling(t *testing.T) {
+	tests := []struct {
+		name        string
+		pathLength  int
+		shouldPanic bool
+	}{
+		{
+			name:        "normal path length (100 chars)",
+			pathLength:  100,
+			shouldPanic: false,
+		},
+		{
+			name:        "long path (10000 chars)",
+			pathLength:  10000,
+			shouldPanic: false,
+		},
+		{
+			name:        "very long path (100000 chars)",
+			pathLength:  100000,
+			shouldPanic: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Build a path with repeated segments
+			var pathBuilder strings.Builder
+			pathBuilder.WriteString("/")
+			for i := 0; i < tt.pathLength; i++ {
+				pathBuilder.WriteByte('a' + byte(i%26))
+			}
+			longPath := pathBuilder.String()
+
+			// Should not panic
+			assert.NotPanics(t, func() {
+				pr := Canonicalize(longPath, StrategyPreserveReserved)
+				// Verify the path is processed correctly
+				assert.True(t, len(pr.Canonical) > 0)
+				assert.Equal(t, longPath, pr.Canonical)
+			})
+		})
+	}
+}
+
+// TestLongPathWithEncoding tests long paths with percent-encoding.
+func TestLongPathWithEncoding(t *testing.T) {
+	// Create a path with many encoded characters
+	var pathBuilder strings.Builder
+	pathBuilder.WriteString("/")
+	for i := 0; i < 1000; i++ {
+		pathBuilder.WriteString("%61") // encoded 'a'
+	}
+	encodedPath := pathBuilder.String()
+
+	// Should decode all %61 to 'a'
+	pr := Canonicalize(encodedPath, StrategyPreserveReserved)
+
+	expectedPath := "/" + strings.Repeat("a", 1000)
+	assert.Equal(t, expectedPath, pr.Canonical)
+}
+
+// TestEdgeCaseEncodings tests various edge cases in percent-encoding.
+func TestEdgeCaseEncodings(t *testing.T) {
+	tests := []struct {
+		name          string
+		rawPath       string
+		wantCanonical string
+	}{
+		{
+			name:          "encoded percent at end",
+			rawPath:       "/path%25",
+			wantCanonical: "/path%25",
+		},
+		{
+			name:          "encoded null followed by valid char",
+			rawPath:       "/path%00test",
+			wantCanonical: "/path\x00test", // Null is decoded (caught by ContainsNullByte)
+		},
+		{
+			name:          "all uppercase hex",
+			rawPath:       "/PATH%2FTEST",
+			wantCanonical: "/PATH%2FTEST",
+		},
+		{
+			name:          "all lowercase hex normalized",
+			rawPath:       "/path%2ftest",
+			wantCanonical: "/path%2Ftest", // Normalized to uppercase
+		},
+		{
+			name:          "mixed case hex normalized",
+			rawPath:       "/path%2Ftest%2fmore",
+			wantCanonical: "/path%2Ftest%2Fmore",
+		},
+		{
+			name:          "consecutive encoded slashes",
+			rawPath:       "/path%2F%2F%2Ftest",
+			wantCanonical: "/path%2F%2F%2Ftest", // Preserved, not collapsed
+		},
+		{
+			name:          "encoded backslash decoded and normalized",
+			rawPath:       "/path%5Ctest",
+			wantCanonical: "/path/test", // %5C decodes to \, then \ is normalized to /
+		},
+		{
+			name:          "literal backslash normalized",
+			rawPath:       "/path\\test",
+			wantCanonical: "/path/test",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pr := Canonicalize(tt.rawPath, StrategyPreserveReserved)
+			assert.Equal(t, tt.wantCanonical, pr.Canonical)
 		})
 	}
 }
