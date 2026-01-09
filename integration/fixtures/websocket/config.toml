@@ -8,8 +8,6 @@
 [entryPoints]
   [entryPoints.web]
     address = ":8000"
-    [entryPoints.web.http.encodedCharacters]
-        allowEncodedSlash = true
 
 [api]
   insecure = true

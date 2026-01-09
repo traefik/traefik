@@ -910,13 +910,16 @@ func TestManager_BuildHandlers_Deny(t *testing.T) {
 		expectedStatusCode int
 	}{
 		{
-			desc:        "unallowed request with encoded slash",
+			desc:        "disallow request with encoded slash",
 			requestPath: "/foo%2F",
 			routers: map[string]*dynamic.Router{
 				"parent": {
 					EntryPoints: []string{"web"},
 					Rule:        "PathPrefix(`/`)",
 					Service:     "service",
+					DeniedEncodedPathCharacters: &dynamic.RouterDeniedEncodedPathCharacters{
+						AllowEncodedSlash: false,
+					},
 				},
 			},
 			services: map[string]*dynamic.Service{
@@ -936,9 +939,6 @@ func TestManager_BuildHandlers_Deny(t *testing.T) {
 					EntryPoints: []string{"web"},
 					Rule:        "PathPrefix(`/`)",
 					Service:     "service",
-					DeniedEncodedPathCharacters: dynamic.RouterDeniedEncodedPathCharacters{
-						AllowEncodedSlash: true,
-					},
 				},
 			},
 			services: map[string]*dynamic.Service{
