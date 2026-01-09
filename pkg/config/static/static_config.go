@@ -314,7 +314,7 @@ func (c *Configuration) SetEffectiveConfiguration() {
 		c.Providers.KubernetesGateway.EntryPoints = entryPoints
 	}
 
-	// Configure Ingress NGINX provider
+	// Configure Ingress NGINX provider.
 	if c.Providers.KubernetesIngressNGINX != nil {
 		var nonTLSEntryPoints []string
 		for epName, entryPoint := range c.EntryPoints {
