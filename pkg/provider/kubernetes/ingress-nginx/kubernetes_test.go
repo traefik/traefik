@@ -755,6 +755,59 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
+			desc: "Rewrite Target",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/11-ingress-with-rewrite-target.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-rewrite-target-rule-0-path-0": {
+							Rule:        "Host(`rewrite-target.localhost`) && PathRegexp(`^/something(/|$)(.*)`)",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-rewrite-target-whoami-80",
+							Middlewares: []string{"default-ingress-with-rewrite-target-rule-0-path-0-rewrite-target"},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-rewrite-target-rule-0-path-0-rewrite-target": {
+							ReplacePathRegex: &dynamic.ReplacePathRegex{
+								Regex:       "/something(/|$)(.*)",
+								Replacement: "/$2",
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-rewrite-target-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
 			desc:                           "Default Backend",
 			defaultBackendServiceName:      "whoami",
 			defaultBackendServiceNamespace: "default",
