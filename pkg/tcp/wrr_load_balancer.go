@@ -46,7 +46,7 @@ func NewWRRLoadBalancer(wantsHealthCheck bool) *WRRLoadBalancer {
 }
 
 // ServeTCP forwards the connection to the right service.
-func (b *WRRLoadBalancer) ServeTCP(conn WriteCloser) {
+func (b *WRRLoadBalancer) ServeTCP(ctx context.Context, conn WriteCloser) {
 	next, err := b.nextServer()
 	if err != nil {
 		if !errors.Is(err, errNoServersInPool) {
@@ -56,7 +56,7 @@ func (b *WRRLoadBalancer) ServeTCP(conn WriteCloser) {
 		return
 	}
 
-	next.ServeTCP(conn)
+	next.ServeTCP(ctx, conn)
 }
 
 // Add appends a server to the existing list with a name and weight.

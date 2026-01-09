@@ -37,8 +37,8 @@ func New(ctx context.Context, next tcp.Handler, config dynamic.TCPInFlightConn, 
 }
 
 // ServeTCP serves the given TCP connection.
-func (i *inFlightConn) ServeTCP(conn tcp.WriteCloser) {
-	logger := middlewares.GetLogger(context.Background(), i.name, typeName)
+func (i *inFlightConn) ServeTCP(ctx context.Context, conn tcp.WriteCloser) {
+	logger := middlewares.GetLogger(ctx, i.name, typeName)
 
 	ip, _, err := net.SplitHostPort(conn.RemoteAddr().String())
 	if err != nil {
@@ -55,7 +55,7 @@ func (i *inFlightConn) ServeTCP(conn tcp.WriteCloser) {
 
 	defer i.decrement(ip)
 
-	i.next.ServeTCP(conn)
+	i.next.ServeTCP(ctx, conn)
 }
 
 // increment increases the counter for the number of connections tracked for the
