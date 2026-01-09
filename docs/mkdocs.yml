@@ -166,7 +166,6 @@ nav:
           - 'Instana': 'observability/tracing/instana.md'
           - 'Haystack': 'observability/tracing/haystack.md'
           - 'Elastic': 'observability/tracing/elastic.md'
-          - 'OpenTelemetry': 'observability/tracing/opentelemetry.md'
   - 'Security':
         - 'Request Path': 'security/request-path.md'
         - 'Content-Length': 'security/content-length.md'
