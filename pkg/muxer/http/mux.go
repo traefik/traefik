@@ -131,9 +131,14 @@ func getRoutingPath(req *http.Request) *string {
 		return &cp.Canonical
 	}
 
-	// Fallback to legacy routing path for backwards compatibility
+	// Fallback to legacy routing path for backwards compatibility.
+	// WARNING: This fallback exists for transition period only.
+	// If you see this warning, ensure canonicalpath.Middleware is in the handler chain.
 	routingPath := req.Context().Value(mux.RoutingPathKey)
 	if routingPath != nil {
+		log.Warn().
+			Str("path", req.URL.Path).
+			Msg("Canonical path not in context - using legacy routing path. Ensure canonicalpath.Middleware is configured.")
 		rp := routingPath.(string)
 		return &rp
 	}
