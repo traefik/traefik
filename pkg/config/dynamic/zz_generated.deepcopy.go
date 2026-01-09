@@ -1611,6 +1611,11 @@ func (in *ServersTransport) DeepCopyInto(out *ServersTransport) {
 		*out = make(tls.Certificates, len(*in))
 		copy(*out, *in)
 	}
+	if in.CipherSuites != nil {
+		in, out := &in.CipherSuites, &out.CipherSuites
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	if in.ForwardingTimeouts != nil {
 		in, out := &in.ForwardingTimeouts, &out.ForwardingTimeouts
 		*out = new(ForwardingTimeouts)
