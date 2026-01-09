@@ -176,6 +176,11 @@ func preserveReservedCanonical(raw string) string {
 
 	normalized := result.String()
 
+	// Normalize any backslashes that resulted from decoding (e.g., %5C -> \)
+	// This is important for security: both raw \ and decoded %5C should
+	// result in the same canonical path to prevent bypass attacks.
+	normalized = strings.ReplaceAll(normalized, "\\", "/")
+
 	// Collapse multiple slashes
 	for strings.Contains(normalized, "//") {
 		normalized = strings.ReplaceAll(normalized, "//", "/")
