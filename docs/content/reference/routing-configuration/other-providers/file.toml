@@ -103,6 +103,8 @@
           timeout = "42s"
           hostname = "foobar"
           followRedirects = true
+          failsThreshold = 42
+          passesThreshold = 42
           [http.services.Service03.loadBalancer.healthCheck.headers]
             name0 = "foobar"
             name1 = "foobar"
@@ -487,6 +489,8 @@
           interval = "42s"
           unhealthyInterval = "42s"
           timeout = "42s"
+          failsThreshold = 42
+          passesThreshold = 42
     [tcp.services.TCPService02]
       [tcp.services.TCPService02.weighted]
 

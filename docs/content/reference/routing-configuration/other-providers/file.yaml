@@ -112,6 +112,8 @@ http:
           headers:
             name0: foobar
             name1: foobar
+          failsThreshold: 42
+          passesThreshold: 42
         passiveHealthCheck:
           failureWindow: 42s
           maxFailedAttempts: 42
@@ -551,6 +553,8 @@ tcp:
           interval: 42s
           unhealthyInterval: 42s
           timeout: 42s
+          failsThreshold: 42
+          passesThreshold: 42
     TCPService02:
       weighted:
         services:
