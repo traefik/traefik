@@ -263,36 +263,25 @@ func (shc *ServiceHealthChecker) updateTargetState(targetName string, checkPasse
 	}
 
 	if checkPassed {
-		if state.healthy {
-			// Already healthy, reset fail counter and stay healthy
-			state.consecutiveFails = 0
-			return true
-		}
-		// Currently unhealthy, increment pass counter
-		state.consecutivePasses++
 		state.consecutiveFails = 0
-		if state.consecutivePasses >= shc.passesThreshold {
-			// Transition to healthy
-			state.healthy = true
-			state.consecutivePasses = 0
+		if !state.healthy {
+			state.consecutivePasses++
+			if state.consecutivePasses >= shc.passesThreshold {
+				state.healthy = true
+				state.consecutivePasses = 0
+			}
 		}
-		return state.healthy
+	} else {
+		state.consecutivePasses = 0
+		if state.healthy {
+			state.consecutiveFails++
+			if state.consecutiveFails >= shc.failsThreshold {
+				state.healthy = false
+				state.consecutiveFails = 0
+			}
+		}
 	}
 
-	// Check failed
-	if !state.healthy {
-		// Already unhealthy, reset pass counter and stay unhealthy
-		state.consecutivePasses = 0
-		return false
-	}
-	// Currently healthy, increment fail counter
-	state.consecutiveFails++
-	state.consecutivePasses = 0
-	if state.consecutiveFails >= shc.failsThreshold {
-		// Transition to unhealthy
-		state.healthy = false
-		state.consecutiveFails = 0
-	}
 	return state.healthy
 }
 
