@@ -258,7 +258,7 @@ func (shc *ServiceHealthChecker) updateTargetState(targetName string, checkPasse
 	state, ok := shc.states[targetName]
 	if !ok {
 		// This shouldn't happen, but handle gracefully
-		state = &targetState{healthy: true}
+		state = &targetState{healthy: false}
 		shc.states[targetName] = state
 	}
 

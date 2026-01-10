@@ -209,7 +209,7 @@ func (thc *ServiceTCPHealthChecker) updateTargetState(targetAddress string, chec
 	state, ok := thc.states[targetAddress]
 	if !ok {
 		// This shouldn't happen, but handle gracefully
-		state = &targetState{healthy: true}
+		state = &targetState{healthy: false}
 		thc.states[targetAddress] = state
 	}
 
