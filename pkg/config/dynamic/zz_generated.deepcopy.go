@@ -4,7 +4,7 @@
 /*
 The MIT License (MIT)
 
-Copyright (c) 2016-2020 Containous SAS; 2020-2025 Traefik Labs
+Copyright (c) 2016-2020 Containous SAS; 2020-2026 Traefik Labs
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -1609,6 +1609,11 @@ func (in *ServersTransport) DeepCopyInto(out *ServersTransport) {
 	if in.Certificates != nil {
 		in, out := &in.Certificates, &out.Certificates
 		*out = make(tls.Certificates, len(*in))
+		copy(*out, *in)
+	}
+	if in.CipherSuites != nil {
+		in, out := &in.CipherSuites, &out.CipherSuites
+		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
 	if in.ForwardingTimeouts != nil {
