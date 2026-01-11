@@ -10,6 +10,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
@@ -208,8 +209,63 @@ func (p *Provider) loadWRRService(ctx context.Context, listener gatewayListener,
 		})
 	}
 
+	// Apply session persistence (sticky sessions) from HTTPRouteRule.
+	// This is an experimental Gateway API feature (GEP-1619).
+	if routeRule.SessionPersistence != nil {
+		wrr.Sticky = buildSticky(routeRule.SessionPersistence)
+	}
+
 	conf.HTTP.Services[name] = &dynamic.Service{Weighted: &wrr}
 	return name, condition
+}
+
+// buildSticky converts Gateway API SessionPersistence to Traefik's Sticky configuration.
+// This implements GEP-1619 (Session Persistence) for route-level sticky sessions.
+func buildSticky(sp *gatev1.SessionPersistence) *dynamic.Sticky {
+	if sp == nil {
+		return nil
+	}
+
+	// Only Cookie-based session persistence is supported.
+	// Header-based persistence is not currently supported by Traefik.
+	if sp.Type != nil && *sp.Type == gatev1.HeaderBasedSessionPersistence {
+		return nil
+	}
+
+	cookie := &dynamic.Cookie{}
+	cookie.SetDefaults()
+
+	// Set cookie name from SessionName if provided.
+	if sp.SessionName != nil && *sp.SessionName != "" {
+		cookie.Name = *sp.SessionName
+	}
+
+	// Handle cookie lifetime based on CookieConfig.LifetimeType.
+	// - Session (default): Cookie expires when the browser session ends (MaxAge = 0).
+	// - Permanent: Cookie persists with MaxAge set from AbsoluteTimeout.
+	if sp.CookieConfig != nil && sp.CookieConfig.LifetimeType != nil {
+		switch *sp.CookieConfig.LifetimeType {
+		case gatev1.PermanentCookieLifetimeType:
+			// For permanent cookies, use AbsoluteTimeout as MaxAge.
+			if sp.AbsoluteTimeout != nil {
+				if maxAge, err := parseDuration(*sp.AbsoluteTimeout); err == nil {
+					cookie.MaxAge = int(maxAge.Seconds())
+				}
+			}
+		case gatev1.SessionCookieLifetimeType:
+			// Session cookies: MaxAge = 0 (browser session lifetime).
+			cookie.MaxAge = 0
+		}
+	}
+
+	return &dynamic.Sticky{
+		Cookie: cookie,
+	}
+}
+
+// parseDuration parses a Gateway API Duration string (e.g., "10s", "1h") into time.Duration.
+func parseDuration(d gatev1.Duration) (time.Duration, error) {
+	return time.ParseDuration(string(d))
 }
 
 // loadService returns a dynamic.Service config corresponding to the given gatev1.HTTPBackendRef.
