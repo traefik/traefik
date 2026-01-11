@@ -408,6 +408,12 @@ Traefik supports the Gateway API `sessionPersistence` field on `HTTPRoute` rules
     If the backend is a `TraefikService`, stickiness is controlled by the `TraefikService` configuration instead
     (including multi-level stickiness), and the `HTTPRoute` `sessionPersistence` is ignored.
 
+!!! note "BackendLBPolicy (XBackendTrafficPolicy)"
+    Traefik also supports service-level session persistence via the experimental
+    `XBackendTrafficPolicy` resource (`gateway.networking.x-k8s.io/v1alpha1`), which supersedes `BackendLBPolicy`.
+    When both `HTTPRoute` `sessionPersistence` and `XBackendTrafficPolicy` `sessionPersistence` target the same Service,
+    `HTTPRoute` takes precedence. This requires `experimentalChannel` to be enabled.
+
 Session persistence ensures that requests from the same client are consistently routed to the same backend server. Traefik supports both cookie-based and header-based session persistence:
 
 ```yaml tab="Cookie-based (default)"
