@@ -536,8 +536,7 @@ func Test_writeHeader(t *testing.T) {
 			trustForwardHeader: false,
 			emptyHost:          true,
 			expectedHeaders: map[string]string{
-				"Accept":           "application/json",
-				"X-Forwarded-Host": "",
+				"Accept": "application/json",
 			},
 		},
 		{
@@ -610,6 +609,7 @@ func Test_writeHeader(t *testing.T) {
 				"X-Forwarded-Method":       "GET",
 				forward.ProxyAuthenticate:  "ProxyAuthenticate",
 				forward.ProxyAuthorization: "ProxyAuthorization",
+				"User-Agent":               "",
 			},
 			checkForUnexpectedHeaders: true,
 		},
@@ -652,6 +652,65 @@ func Test_writeHeader(t *testing.T) {
 			},
 			checkForUnexpectedHeaders: true,
 		},
+		{
+			name: "set empty User-Agent header if header is allowed but missing",
+			headers: map[string]string{
+				"X-CustomHeader": "CustomHeader",
+				"Accept":         "application/json",
+			},
+			authRequestHeaders: []string{
+				"X-CustomHeader",
+				"Accept",
+				"User-Agent",
+			},
+			expectedHeaders: map[string]string{
+				"X-CustomHeader":     "CustomHeader",
+				"Accept":             "application/json",
+				"X-Forwarded-Proto":  "http",
+				"X-Forwarded-Host":   "foo.bar",
+				"X-Forwarded-Uri":    "/path?q=1",
+				"X-Forwarded-Method": "GET",
+				"User-Agent":         "",
+			},
+			checkForUnexpectedHeaders: true,
+		},
+		{
+			name: "ignore User-Agent header if header is not allowed and missing",
+			headers: map[string]string{
+				"X-CustomHeader": "CustomHeader",
+				"Accept":         "application/json",
+			},
+			authRequestHeaders: []string{
+				"X-CustomHeader",
+				"Accept",
+			},
+			expectedHeaders: map[string]string{
+				"X-CustomHeader":     "CustomHeader",
+				"Accept":             "application/json",
+				"X-Forwarded-Proto":  "http",
+				"X-Forwarded-Host":   "foo.bar",
+				"X-Forwarded-Uri":    "/path?q=1",
+				"X-Forwarded-Method": "GET",
+			},
+			checkForUnexpectedHeaders: true,
+		},
+		{
+			name: "set empty User-Agent header if header is missing",
+			headers: map[string]string{
+				"X-CustomHeader": "CustomHeader",
+				"Accept":         "application/json",
+			},
+			expectedHeaders: map[string]string{
+				"X-CustomHeader":     "CustomHeader",
+				"Accept":             "application/json",
+				"X-Forwarded-Proto":  "http",
+				"X-Forwarded-Host":   "foo.bar",
+				"X-Forwarded-Uri":    "/path?q=1",
+				"X-Forwarded-Method": "GET",
+				"User-Agent":         "",
+			},
+			checkForUnexpectedHeaders: true,
+		},
 	}
 
 	for _, test := range testCases {
@@ -673,9 +732,14 @@ func Test_writeHeader(t *testing.T) {
 
 			expectedHeaders := test.expectedHeaders
 			for key, value := range expectedHeaders {
+				_, headerExists := actualHeaders[http.CanonicalHeaderKey(key)]
+
+				assert.True(t, headerExists, "Expected header %s not found", key)
 				assert.Equal(t, value, actualHeaders.Get(key))
+
 				actualHeaders.Del(key)
 			}
+
 			if test.checkForUnexpectedHeaders {
 				for key := range actualHeaders {
 					assert.Fail(t, "Unexpected header found", key)
