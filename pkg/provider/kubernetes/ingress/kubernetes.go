@@ -307,6 +307,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 			}
 
 			if rtConfig != nil && rtConfig.Router != nil {
+				rt.Router = rtConfig.Router.Router
 				rt.EntryPoints = rtConfig.Router.EntryPoints
 				rt.Middlewares = rtConfig.Router.Middlewares
 				rt.TLS = rtConfig.Router.TLS
