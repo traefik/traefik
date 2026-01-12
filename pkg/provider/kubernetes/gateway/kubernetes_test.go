@@ -111,13 +111,14 @@ func TestGatewayClassLabelSelector(t *testing.T) {
 
 func TestLoadHTTPRoutes(t *testing.T) {
 	testCases := []struct {
-		desc                string
-		ingressClass        string
-		paths               []string
-		expected            *dynamic.Configuration
-		entryPoints         map[string]Entrypoint
-		experimentalChannel bool
-		nativeLB            bool
+		desc                 string
+		ingressClass         string
+		paths                []string
+		expected             *dynamic.Configuration
+		entryPoints          map[string]Entrypoint
+		experimentalChannel  bool
+		nativeLB             bool
+		disableNodeResources bool
 	}{
 		{
 			desc: "Empty",
@@ -2478,6 +2479,109 @@ func TestLoadHTTPRoutes(t *testing.T) {
 			},
 		},
 		{
+			desc:  "Simple HTTPRoute with NodePortLB annotation",
+			paths: []string{"services.yml", "httproute/simple_nodeportlb.yml"},
+			entryPoints: map[string]Entrypoint{"web": {
+				Address: ":80",
+			}},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"httproute-default-http-app-nodeport-gw-default-my-nodeport-gateway-ep-web-0-1c0cf64bde37d9d0df06": {
+							EntryPoints: []string{"web"},
+							Service:     "httproute-default-http-app-nodeport-gw-default-my-nodeport-gateway-ep-web-0-1c0cf64bde37d9d0df06-wrr",
+							Rule:        "Host(`foo.com`) && Path(`/bar`)",
+							Priority:    100008,
+							RuleSyntax:  "default",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"httproute-default-http-app-nodeport-gw-default-my-nodeport-gateway-ep-web-0-1c0cf64bde37d9d0df06-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-whoami-nodeport-http-80",
+										Weight: ptr.To(1),
+									},
+								},
+							},
+						},
+						"default-whoami-nodeport-http-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{URL: "http://172.16.4.4:32456"},
+									{URL: "http://172.16.4.5:32456"},
+								},
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:                 "Simple HTTPRoute with NodePortLB annotation and cluster scope disabled",
+			paths:                []string{"services.yml", "httproute/simple_nodeportlb.yml"},
+			entryPoints:          map[string]Entrypoint{"web": {Address: ":80"}},
+			disableNodeResources: true,
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"httproute-default-http-app-nodeport-gw-default-my-nodeport-gateway-ep-web-0-1c0cf64bde37d9d0df06": {
+							EntryPoints: []string{"web"},
+							Service:     "httproute-default-http-app-nodeport-gw-default-my-nodeport-gateway-ep-web-0-1c0cf64bde37d9d0df06-wrr",
+							Rule:        "Host(`foo.com`) && Path(`/bar`)",
+							Priority:    100008,
+							RuleSyntax:  "default",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"httproute-default-http-app-nodeport-gw-default-my-nodeport-gateway-ep-web-0-1c0cf64bde37d9d0df06-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-whoami-nodeport-http-80",
+										Weight: ptr.To(1),
+										Status: ptr.To(500),
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
 			desc:     "Simple HTTPRoute with NativeLBByDefault enabled but service has disabled nativelb",
 			paths:    []string{"services.yml", "httproute/simple_nativelb_disabled.yml"},
 			nativeLB: true,
@@ -2557,6 +2661,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 
 			client := newClientImpl(kubeClient, gwClient)
 			client.experimentalChannel = test.experimentalChannel
+			client.disableNodeInformer = test.disableNodeResources
 
 			eventCh, err := client.WatchAll(nil, make(chan struct{}))
 			require.NoError(t, err)
@@ -2567,10 +2672,11 @@ func TestLoadHTTPRoutes(t *testing.T) {
 			}
 
 			p := Provider{
-				EntryPoints:         test.entryPoints,
-				ExperimentalChannel: test.experimentalChannel,
-				NativeLBByDefault:   test.nativeLB,
-				client:              client,
+				EntryPoints:          test.entryPoints,
+				ExperimentalChannel:  test.experimentalChannel,
+				NativeLBByDefault:    test.nativeLB,
+				DisableNodeResources: test.disableNodeResources,
+				client:               client,
 			}
 
 			conf := p.loadConfigurationFromGateways(t.Context())
@@ -3622,12 +3728,13 @@ func TestLoadGRPCRoutes_filterExtensionRef(t *testing.T) {
 
 func TestLoadTCPRoutes(t *testing.T) {
 	testCases := []struct {
-		desc         string
-		ingressClass string
-		paths        []string
-		expected     *dynamic.Configuration
-		entryPoints  map[string]Entrypoint
-		nativeLB     bool
+		desc                 string
+		ingressClass         string
+		paths                []string
+		expected             *dynamic.Configuration
+		entryPoints          map[string]Entrypoint
+		nativeLB             bool
+		disableNodeResources bool
 	}{
 		{
 			desc: "Empty",
@@ -4540,6 +4647,108 @@ func TestLoadTCPRoutes(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
+		{
+			desc:  "Simple TCPRoute with NodePortLB annotation",
+			paths: []string{"services.yml", "tcproute/simple_nodeportlb.yml"},
+			entryPoints: map[string]Entrypoint{
+				"tcp": {Address: ":9000"},
+			},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
+						"tcproute-default-tcp-app-nodeport-gw-default-my-nodeport-tcp-gateway-ep-tcp-0-e3b0c44298fc1c149afb": {
+							EntryPoints: []string{"tcp"},
+							Service:     "tcproute-default-tcp-app-nodeport-gw-default-my-nodeport-tcp-gateway-ep-tcp-0-e3b0c44298fc1c149afb-wrr",
+							Rule:        "HostSNI(`*`)",
+							RuleSyntax:  "default",
+						},
+					},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services: map[string]*dynamic.TCPService{
+						"tcproute-default-tcp-app-nodeport-gw-default-my-nodeport-tcp-gateway-ep-tcp-0-e3b0c44298fc1c149afb-wrr": {
+							Weighted: &dynamic.TCPWeightedRoundRobin{
+								Services: []dynamic.TCPWRRService{
+									{
+										Name:   "default-whoamitcp-nodeport-9000",
+										Weight: ptr.To(1),
+									},
+								},
+							},
+						},
+						"default-whoamitcp-nodeport-9000": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{Address: "172.16.4.4:32457"},
+									{Address: "172.16.4.5:32457"},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:                 "Simple TCPRoute with NodePortLB annotation and cluster scope disabled",
+			paths:                []string{"services.yml", "tcproute/simple_nodeportlb.yml"},
+			disableNodeResources: true,
+			entryPoints: map[string]Entrypoint{
+				"tcp": {Address: ":9000"},
+			},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
+						"tcproute-default-tcp-app-nodeport-gw-default-my-nodeport-tcp-gateway-ep-tcp-0-e3b0c44298fc1c149afb": {
+							EntryPoints: []string{"tcp"},
+							Service:     "tcproute-default-tcp-app-nodeport-gw-default-my-nodeport-tcp-gateway-ep-tcp-0-e3b0c44298fc1c149afb-wrr",
+							Rule:        "HostSNI(`*`)",
+							RuleSyntax:  "default",
+						},
+					},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services: map[string]*dynamic.TCPService{
+						"tcproute-default-tcp-app-nodeport-gw-default-my-nodeport-tcp-gateway-ep-tcp-0-e3b0c44298fc1c149afb-wrr": {
+							Weighted: &dynamic.TCPWeightedRoundRobin{
+								Services: []dynamic.TCPWRRService{
+									{
+										Name:   "tcproute-default-tcp-app-nodeport-gw-default-my-nodeport-tcp-gateway-ep-tcp-0-e3b0c44298fc1c149afb-err-lb",
+										Weight: ptr.To(1),
+									},
+								},
+							},
+						},
+						"tcproute-default-tcp-app-nodeport-gw-default-my-nodeport-tcp-gateway-ep-tcp-0-e3b0c44298fc1c149afb-err-lb": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -4557,6 +4766,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 
 			client := newClientImpl(kubeClient, gwClient)
 			client.experimentalChannel = true
+			client.disableNodeInformer = test.disableNodeResources
 
 			eventCh, err := client.WatchAll(nil, make(chan struct{}))
 			require.NoError(t, err)
@@ -4567,10 +4777,11 @@ func TestLoadTCPRoutes(t *testing.T) {
 			}
 
 			p := Provider{
-				EntryPoints:         test.entryPoints,
-				NativeLBByDefault:   test.nativeLB,
-				ExperimentalChannel: true,
-				client:              client,
+				EntryPoints:          test.entryPoints,
+				NativeLBByDefault:    test.nativeLB,
+				ExperimentalChannel:  true,
+				DisableNodeResources: test.disableNodeResources,
+				client:               client,
 			}
 
 			conf := p.loadConfigurationFromGateways(t.Context())
@@ -4581,12 +4792,13 @@ func TestLoadTCPRoutes(t *testing.T) {
 
 func TestLoadTLSRoutes(t *testing.T) {
 	testCases := []struct {
-		desc         string
-		ingressClass string
-		paths        []string
-		entryPoints  map[string]Entrypoint
-		nativeLB     bool
-		expected     *dynamic.Configuration
+		desc                 string
+		ingressClass         string
+		paths                []string
+		entryPoints          map[string]Entrypoint
+		nativeLB             bool
+		disableNodeResources bool
+		expected             *dynamic.Configuration
 	}{
 		{
 			desc: "Empty",
@@ -5819,6 +6031,116 @@ func TestLoadTLSRoutes(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
+		{
+			desc:  "Simple TLSRoute with NodePortLB annotation",
+			paths: []string{"services.yml", "tlsroute/simple_nodeportlb.yml"},
+			entryPoints: map[string]Entrypoint{
+				"tcp": {Address: ":443"},
+			},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
+						"tlsroute-default-tls-app-nodeport-gw-default-my-nodeport-tls-gateway-ep-tcp-0-e3b0c44298fc1c149afb": {
+							EntryPoints: []string{"tcp"},
+							Service:     "tlsroute-default-tls-app-nodeport-gw-default-my-nodeport-tls-gateway-ep-tcp-0-e3b0c44298fc1c149afb-wrr",
+							Priority:    15,
+							Rule:        "HostSNI(`foo.example.com`)",
+							RuleSyntax:  "default",
+							TLS: &dynamic.RouterTCPTLSConfig{
+								Passthrough: true,
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services: map[string]*dynamic.TCPService{
+						"tlsroute-default-tls-app-nodeport-gw-default-my-nodeport-tls-gateway-ep-tcp-0-e3b0c44298fc1c149afb-wrr": {
+							Weighted: &dynamic.TCPWeightedRoundRobin{
+								Services: []dynamic.TCPWRRService{
+									{
+										Name:   "default-whoamitls-nodeport-443",
+										Weight: ptr.To(1),
+									},
+								},
+							},
+						},
+						"default-whoamitls-nodeport-443": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{Address: "172.16.4.4:32458"},
+									{Address: "172.16.4.5:32458"},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:                 "Simple TLSRoute with NodePortLB annotation and cluster scope disabled",
+			paths:                []string{"services.yml", "tlsroute/simple_nodeportlb.yml"},
+			disableNodeResources: true,
+			entryPoints: map[string]Entrypoint{
+				"tcp": {Address: ":443"},
+			},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
+						"tlsroute-default-tls-app-nodeport-gw-default-my-nodeport-tls-gateway-ep-tcp-0-e3b0c44298fc1c149afb": {
+							EntryPoints: []string{"tcp"},
+							Service:     "tlsroute-default-tls-app-nodeport-gw-default-my-nodeport-tls-gateway-ep-tcp-0-e3b0c44298fc1c149afb-wrr",
+							Priority:    15,
+							Rule:        "HostSNI(`foo.example.com`)",
+							RuleSyntax:  "default",
+							TLS: &dynamic.RouterTCPTLSConfig{
+								Passthrough: true,
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services: map[string]*dynamic.TCPService{
+						"tlsroute-default-tls-app-nodeport-gw-default-my-nodeport-tls-gateway-ep-tcp-0-e3b0c44298fc1c149afb-wrr": {
+							Weighted: &dynamic.TCPWeightedRoundRobin{
+								Services: []dynamic.TCPWRRService{
+									{
+										Name:   "tlsroute-default-tls-app-nodeport-gw-default-my-nodeport-tls-gateway-ep-tcp-0-e3b0c44298fc1c149afb-err-lb",
+										Weight: ptr.To(1),
+									},
+								},
+							},
+						},
+						"tlsroute-default-tls-app-nodeport-gw-default-my-nodeport-tls-gateway-ep-tcp-0-e3b0c44298fc1c149afb-err-lb": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -5836,6 +6158,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 
 			client := newClientImpl(kubeClient, gwClient)
 			client.experimentalChannel = true
+			client.disableNodeInformer = test.disableNodeResources
 
 			eventCh, err := client.WatchAll(nil, make(chan struct{}))
 			require.NoError(t, err)
@@ -5846,10 +6169,11 @@ func TestLoadTLSRoutes(t *testing.T) {
 			}
 
 			p := Provider{
-				EntryPoints:         test.entryPoints,
-				NativeLBByDefault:   test.nativeLB,
-				ExperimentalChannel: true,
-				client:              client,
+				EntryPoints:          test.entryPoints,
+				NativeLBByDefault:    test.nativeLB,
+				ExperimentalChannel:  true,
+				DisableNodeResources: test.disableNodeResources,
+				client:               client,
 			}
 
 			conf := p.loadConfigurationFromGateways(t.Context())

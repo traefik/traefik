@@ -16,7 +16,8 @@ type ServiceConfig struct {
 
 // Service is the service's configuration from annotations.
 type Service struct {
-	NativeLB *bool `json:"nativeLB"`
+	NativeLB   *bool `json:"nativeLB"`
+	NodePortLB *bool `json:"nodePortLB"`
 }
 
 func parseServiceAnnotations(annotations map[string]string) (ServiceConfig, error) {

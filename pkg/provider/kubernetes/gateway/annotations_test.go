@@ -17,13 +17,15 @@ func Test_parseServiceConfig(t *testing.T) {
 		{
 			desc: "service annotations",
 			annotations: map[string]string{
-				"ingress.kubernetes.io/foo":   "bar",
-				"traefik.io/foo":              "bar",
-				"traefik.io/service.nativelb": "true",
+				"ingress.kubernetes.io/foo":     "bar",
+				"traefik.io/foo":                "bar",
+				"traefik.io/service.nativelb":   "true",
+				"traefik.io/service.nodeportlb": "true",
 			},
 			expected: ServiceConfig{
 				Service: Service{
-					NativeLB: ptr.To(true),
+					NativeLB:   ptr.To(true),
+					NodePortLB: ptr.To(true),
 				},
 			},
 		},
@@ -60,10 +62,12 @@ func Test_convertAnnotations(t *testing.T) {
 		{
 			desc: "service annotations",
 			annotations: map[string]string{
-				"traefik.io/service.nativelb": "true",
+				"traefik.io/service.nativelb":   "true",
+				"traefik.io/service.nodeportlb": "true",
 			},
 			expected: map[string]string{
-				"traefik.service.nativelb": "true",
+				"traefik.service.nativelb":   "true",
+				"traefik.service.nodeportlb": "true",
 			},
 		},
 		{
