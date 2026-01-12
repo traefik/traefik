@@ -1,9 +1,7 @@
 [
 	{
 		"address": ":82",
-		"http": {
-			"encodedCharacters": {}
-		},
+		"http": {},
 		"name": "web2"
 	}
 ]

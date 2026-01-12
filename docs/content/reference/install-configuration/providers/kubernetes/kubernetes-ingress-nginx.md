@@ -17,6 +17,21 @@ It also supports many of the [ingress-nginx](https://kubernetes.github.io/ingres
 
     For more information about the NGINX Ingress Controller retirement, see the [official Kubernetes blog announcement](https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement).
 
+## Requirements
+
+When you install Traefik without using the Helm Chart, 
+ensure that you add/update the [RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) for the Traefik Kubernetes Ingress NGINX provider. 
+
+!!! note "Additional RBAC for Namespace Selector"
+
+    When using the `watchNamespaceSelector` option, Traefik requires permissions to list and watch namespaces.
+    These permissions are included in the RBAC configuration below.
+
+```bash
+# Install RBAC for Traefik Ingress NGINX provider:
+kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.6/docs/content/reference/dynamic-configuration/kubernetes-ingress-nginx-rbac.yml
+```
+
 ## Ingress Discovery
 
 This provider discovers all Ingresses in the cluster by default, which may lead to duplicated routers if you are also using the standard Kubernetes Ingress provider.
