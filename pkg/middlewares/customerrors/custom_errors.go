@@ -214,6 +214,7 @@ func (cc *codeCatcher) WriteHeader(code int) {
 	// The copy is not appending the values,
 	// to not repeat them in case any informational status code has been written.
 	maps.Copy(cc.responseWriter.Header(), cc.Header())
+	
 	cc.responseWriter.WriteHeader(cc.code)
 	cc.headersSent = true
 }
