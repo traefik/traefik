@@ -921,11 +921,11 @@ func (p *Provider) renewCertificates(ctx context.Context, renewPeriod time.Durat
 	for _, cert := range certificates {
 		client, err := p.getClient()
 		if err != nil {
-			logger.Info().Err(err).Msgf("Error renewing certificate from LE : %+v", cert.Domain)
+			logger.Info().Err(err).Msgf("Error renewing ACME certificate: %+v", cert.Domain)
 			continue
 		}
 
-		logger.Info().Msgf("Renewing certificate from LE : %+v", cert.Domain)
+		logger.Info().Msgf("Renewing ACME certificate: %+v", cert.Domain)
 
 		res := certificate.Resource{
 			Domain:      cert.Domain.Main,
@@ -942,7 +942,7 @@ func (p *Provider) renewCertificates(ctx context.Context, renewPeriod time.Durat
 
 		renewedCert, err := client.Certificate.RenewWithOptions(res, opts)
 		if err != nil {
-			logger.Error().Err(err).Msgf("Error renewing certificate from LE: %v", cert.Domain)
+			logger.Error().Err(err).Msgf("Error renewing ACME certificate: %v", cert.Domain)
 			continue
 		}
 

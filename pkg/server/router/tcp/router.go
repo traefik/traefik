@@ -3,6 +3,7 @@ package tcp
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"crypto/tls"
 	"errors"
 	"io"
@@ -222,7 +223,17 @@ func (r *Router) acmeTLSALPNHandler() tcp.Handler {
 	}
 
 	return tcp.HandlerFunc(func(conn tcp.WriteCloser) {
-		_ = tls.Server(conn, r.httpsTLSConfig).Handshake()
+		tlsConn := tls.Server(conn, r.httpsTLSConfig)
+		defer tlsConn.Close()
+
+		// This avoids stale connections when validating the ACME challenge,
+		// as we expect a validation request to complete in a short period of time.
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+
+		if err := tlsConn.HandshakeContext(ctx); err != nil {
+			log.Debug().Err(err).Msg("Error during ACME-TLS/1 handshake")
+		}
 	})
 }
 

@@ -61,7 +61,7 @@ In the same directory, create `docker‑compose‑swarm.yaml`:
 ```yaml
 services:
   traefik:
-    image: traefik:v3.4
+    image: traefik:v3.6
     
     networks:
     # Connect to the 'traefik_proxy' overlay network for inter-container communication across nodes

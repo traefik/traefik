@@ -269,6 +269,17 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 				continue
 			}
 
+			if ingress.Spec.DefaultBackend.Resource != nil {
+				// https://kubernetes.io/docs/concepts/services-networking/ingress/#resource-backend
+				logger.Error().Msg("Resource is not supported for default backend")
+				continue
+			}
+
+			if ingress.Spec.DefaultBackend.Service == nil {
+				logger.Error().Msg("Default backend is missing service definition")
+				continue
+			}
+
 			service, err := p.loadService(client, ingress.Namespace, *ingress.Spec.DefaultBackend)
 			if err != nil {
 				logger.Error().
