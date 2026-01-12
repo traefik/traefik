@@ -442,8 +442,7 @@ func TestListenProvidersDoesNotSkipFlappingConfiguration(t *testing.T) {
 	}
 
 	pvd := &mockProvider{
-		wait:             5 * time.Millisecond, // The last message needs to be received before the second has been fully processed
-		throttleDuration: 15 * time.Millisecond,
+		wait: 5 * time.Millisecond, // The last message needs to be received before the second has been fully processed
 		messages: []dynamic.Message{
 			{ProviderName: "mock", Configuration: configuration},
 			{ProviderName: "mock", Configuration: transientConfiguration},
@@ -907,4 +906,158 @@ func TestPublishConfigUpdatedByConfigWatcherListener(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 
 	assert.Equal(t, 1, publishedConfigCount)
+}
+
+func TestConfigurationWatcher_MultipleTransformers(t *testing.T) {
+	routinesPool := safe.NewPool(t.Context())
+	t.Cleanup(routinesPool.Stop)
+
+	pvd := &mockProvider{
+		messages: []dynamic.Message{{
+			ProviderName: "mock",
+			Configuration: &dynamic.Configuration{
+				HTTP: th.BuildConfiguration(
+					th.WithRouters(
+						th.WithRouter("original",
+							th.WithEntryPoints("e"),
+							th.WithServiceName("scv"))),
+				),
+			},
+		}},
+	}
+
+	watcher := NewConfigurationWatcher(routinesPool, pvd, []string{}, "")
+
+	var callOrder []string
+
+	var callCount1, callCount2 int
+
+	watcher.AddTransformer(func(providerName string, configs dynamic.Configurations) dynamic.Configurations {
+		callCount1++
+
+		callOrder = append(callOrder, "transformer1")
+
+		if config := configs[providerName]; config != nil && config.HTTP != nil {
+			config.HTTP.Routers["from-transformer1"] = &dynamic.Router{
+				EntryPoints: []string{"e"},
+				Service:     "svc1",
+			}
+		}
+
+		return configs
+	})
+
+	watcher.AddTransformer(func(providerName string, configs dynamic.Configurations) dynamic.Configurations {
+		callCount2++
+
+		callOrder = append(callOrder, "transformer2")
+
+		// Verify that transformer1's changes are visible.
+		if config := configs[providerName]; config != nil && config.HTTP != nil {
+			assert.Contains(t, config.HTTP.Routers, "from-transformer1")
+			config.HTTP.Routers["from-transformer2"] = &dynamic.Router{
+				EntryPoints: []string{"e"},
+				Service:     "svc2",
+			}
+		}
+
+		return configs
+	})
+
+	run := make(chan struct{})
+
+	watcher.AddListener(func(conf dynamic.Configuration) {
+		assert.NotNil(t, conf.HTTP)
+		assert.Contains(t, conf.HTTP.Routers, "original@mock")
+		assert.Contains(t, conf.HTTP.Routers, "from-transformer1@mock")
+		assert.Contains(t, conf.HTTP.Routers, "from-transformer2@mock")
+		close(run)
+	})
+
+	watcher.Start()
+	t.Cleanup(watcher.Stop)
+
+	select {
+	case <-run:
+	case <-time.After(5 * time.Second):
+		t.Fatal("Timeout waiting for configuration")
+	}
+
+	assert.Equal(t, []string{"transformer1", "transformer2"}, callOrder)
+	assert.Equal(t, 1, callCount1)
+	assert.Equal(t, 1, callCount2)
+}
+
+func TestConfigurationWatcher_CrossProviderTransformer(t *testing.T) {
+	routinesPool := safe.NewPool(t.Context())
+	t.Cleanup(routinesPool.Stop)
+
+	watcher := NewConfigurationWatcher(routinesPool, &mockProvider{}, []string{}, "")
+	watcher.allProvidersConfigs = make(chan dynamic.Message)
+
+	// Transformer that adds a router to provider-a when provider-b triggers.
+	watcher.AddTransformer(func(providerName string, configs dynamic.Configurations) dynamic.Configurations {
+		if providerName == "provider-b" {
+			if configA := configs["provider-a"]; configA != nil && configA.HTTP != nil {
+				configA.HTTP.Routers["added-by-b"] = &dynamic.Router{
+					EntryPoints: []string{"ep"},
+					Service:     "svc",
+				}
+			}
+		}
+
+		return configs
+	})
+
+	var lastConfig dynamic.Configuration
+
+	configCount := 0
+	configReceived := make(chan struct{})
+
+	watcher.AddListener(func(conf dynamic.Configuration) {
+		lastConfig = conf
+
+		configCount++
+
+		if configCount == 2 {
+			close(configReceived)
+		}
+	})
+
+	watcher.Start()
+	t.Cleanup(watcher.Stop)
+
+	// Send provider-a config.
+	watcher.allProvidersConfigs <- dynamic.Message{
+		ProviderName: "provider-a",
+		Configuration: &dynamic.Configuration{
+			HTTP: th.BuildConfiguration(
+				th.WithRouters(th.WithRouter("original-a", th.WithEntryPoints("ep"))),
+			),
+		},
+	}
+
+	// Wait a bit for the first config to be processed.
+	time.Sleep(50 * time.Millisecond)
+
+	// Send provider-b config, which should trigger modification of provider-a.
+	watcher.allProvidersConfigs <- dynamic.Message{
+		ProviderName: "provider-b",
+		Configuration: &dynamic.Configuration{
+			HTTP: th.BuildConfiguration(
+				th.WithRouters(th.WithRouter("original-b", th.WithEntryPoints("ep"))),
+			),
+		},
+	}
+
+	select {
+	case <-configReceived:
+	case <-time.After(5 * time.Second):
+		t.Fatal("Timeout waiting for configurations")
+	}
+
+	// Verify that provider-a's config was modified by the transformer.
+	assert.Contains(t, lastConfig.HTTP.Routers, "original-a@provider-a")
+	assert.Contains(t, lastConfig.HTTP.Routers, "added-by-b@provider-a")
+	assert.Contains(t, lastConfig.HTTP.Routers, "original-b@provider-b")
 }

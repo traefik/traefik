@@ -28,6 +28,8 @@ type ConfigurationWatcher struct {
 	requiredProvider       string
 	configurationListeners []func(dynamic.Configuration)
 
+	configurationTransformers []func(string, dynamic.Configurations) dynamic.Configurations
+
 	routinesPool *safe.Pool
 }
 
@@ -63,10 +65,12 @@ func (c *ConfigurationWatcher) Stop() {
 
 // AddListener adds a new listener function used when new configuration is provided.
 func (c *ConfigurationWatcher) AddListener(listener func(dynamic.Configuration)) {
-	if c.configurationListeners == nil {
-		c.configurationListeners = make([]func(dynamic.Configuration), 0)
-	}
 	c.configurationListeners = append(c.configurationListeners, listener)
+}
+
+// AddTransformer registers a function to modify configurations before they are applied.
+func (c *ConfigurationWatcher) AddTransformer(transformer func(string, dynamic.Configurations) dynamic.Configurations) {
+	c.configurationTransformers = append(c.configurationTransformers, transformer)
 }
 
 func (c *ConfigurationWatcher) startProviderAggregator() {
@@ -81,21 +85,21 @@ func (c *ConfigurationWatcher) startProviderAggregator() {
 }
 
 // receiveConfigurations receives configuration changes from the providers.
-// The configuration message then gets passed along a series of check, notably
+// The configuration message then gets passed along a series of checks, notably
 // to verify that, for a given provider, the configuration that was just received
 // is at least different from the previously received one.
-// The full set of configurations is then sent to the throttling goroutine,
-// (throttleAndApplyConfigurations) via a RingChannel, which ensures that we can
-// constantly send in a non-blocking way to the throttling goroutine the last
-// global state we are aware of.
+// The full set of configurations is then sent to applyConfigurations
+// via a channel in a non-blocking manner, ensuring the latest global state
+// is always available for processing.
 func (c *ConfigurationWatcher) receiveConfigurations(ctx context.Context) {
 	newConfigurations := make(dynamic.Configurations)
 	var output chan dynamic.Configurations
+
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		// DeepCopy is necessary because newConfigurations gets modified later by the consumer of c.newConfigs
+		// DeepCopy is necessary because newConfigurations gets modified later by the consumer of c.newConfigs.
 		case output <- newConfigurations.DeepCopy():
 			output = nil
 
@@ -122,17 +126,32 @@ func (c *ConfigurationWatcher) receiveConfigurations(ctx context.Context) {
 
 				logConfiguration(logger, configMsg)
 
-				if reflect.DeepEqual(newConfigurations[configMsg.ProviderName], configMsg.Configuration) {
-					// no change, do nothing
-					logger.Debug().Msg("Skipping unchanged configuration")
-					continue
-				}
+				if len(c.configurationTransformers) > 0 {
+					oldConfigurations := newConfigurations.DeepCopy()
+					newConfigurations[configMsg.ProviderName] = configMsg.Configuration.DeepCopy()
 
-				newConfigurations[configMsg.ProviderName] = configMsg.Configuration.DeepCopy()
+					for _, transformer := range c.configurationTransformers {
+						newConfigurations = transformer(configMsg.ProviderName, newConfigurations)
+					}
+
+					if reflect.DeepEqual(oldConfigurations, newConfigurations) {
+						// no change, do nothing
+						logger.Debug().Msg("Skipping unchanged configuration")
+						continue
+					}
+				} else {
+					if reflect.DeepEqual(newConfigurations[configMsg.ProviderName], configMsg.Configuration) {
+						// no change, do nothing
+						logger.Debug().Msg("Skipping unchanged configuration")
+						continue
+					}
+
+					newConfigurations[configMsg.ProviderName] = configMsg.Configuration.DeepCopy()
+				}
 
 				output = c.newConfigs
 
-			// DeepCopy is necessary because newConfigurations gets modified later by the consumer of c.newConfigs
+			// DeepCopy is necessary because newConfigurations gets modified later by the consumer of c.newConfigs.
 			case output <- newConfigurations.DeepCopy():
 				output = nil
 			}
@@ -140,11 +159,9 @@ func (c *ConfigurationWatcher) receiveConfigurations(ctx context.Context) {
 	}
 }
 
-// applyConfigurations blocks on a RingChannel that receives the new
-// set of configurations that is compiled and sent by receiveConfigurations as soon
-// as a provider change occurs. If the new set is different from the previous set
-// that had been applied, the new set is applied, and we sleep for a while before
-// listening on the channel again.
+// applyConfigurations receives the full set of configurations from
+// receiveConfigurations and applies them if they differ from the previous set.
+// It waits for the required provider's configuration before applying any configs.
 func (c *ConfigurationWatcher) applyConfigurations(ctx context.Context) {
 	var lastConfigurations dynamic.Configurations
 	for {
