@@ -317,6 +317,18 @@ func (c *Configuration) SetEffectiveConfiguration() {
 		c.Providers.KubernetesGateway.EntryPoints = entryPoints
 	}
 
+	// Configure Ingress NGINX provider.
+	if c.Providers.KubernetesIngressNGINX != nil {
+		var nonTLSEntryPoints []string
+		for epName, entryPoint := range c.EntryPoints {
+			if entryPoint.HTTP.TLS == nil {
+				nonTLSEntryPoints = append(nonTLSEntryPoints, epName)
+			}
+		}
+
+		c.Providers.KubernetesIngressNGINX.NonTLSEntryPoints = nonTLSEntryPoints
+	}
+
 	// Defines the default rule syntax for the Kubernetes Ingress Provider.
 	// This allows the provider to adapt the matcher syntax to the desired rule syntax version.
 	if c.Core != nil && c.Providers.KubernetesIngress != nil {

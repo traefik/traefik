@@ -2,24 +2,27 @@ site_name: Traefik
 site_description: Traefik Documentation
 site_author: traefik.io
 site_url: https://doc.traefik.io/traefik
-dev_addr: 0.0.0.0:8000
+dev_addr: localhost:8000
 
 repo_name: 'GitHub'
 repo_url: 'https://github.com/traefik/traefik'
 
 docs_dir: 'content'
 
-product: proxy
 
-# https://squidfunk.github.io/mkdocs-material/
+# Use custom version of mkdocs-material
+# See https://github.com/traefik/mkdocs-material
 theme:
   name: 'traefik-labs'
+  product: proxy
   language: en
   include_sidebar: true
   favicon: assets/img/traefikproxy-icon-color.png
   logo: assets/img/traefikproxy-vertical-logo-color.svg
   feature:
     tabs: false
+  features:
+    - content.code.copy
   palette:
     primary: 'cyan'
     accent: 'cyan'
@@ -35,6 +38,7 @@ extra_javascript:
 
 extra_css:
   - assets/css/menu-icons.css
+  - assets/css/code-copy.css
 
 plugins:
   - search
@@ -185,6 +189,7 @@ markdown_extensions:
 # Page tree
 nav:
   - 'What is Traefik': 'index.md'
+  - 'Features': 'features/index.md'
   - 'Getting Started':
       - 'Overview': 'getting-started/index.md'
       - 'Configuration Introduction': 'getting-started/configuration-overview.md'
