@@ -5,6 +5,7 @@ import (
 	"time"
 
 	ptypes "github.com/traefik/paerser/types"
+	"github.com/traefik/traefik/dynamic/ext"
 	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
@@ -33,6 +34,8 @@ const (
 
 // HTTPConfiguration contains all the HTTP configuration parameters.
 type HTTPConfiguration struct {
+	ext.HTTP
+
 	Routers           map[string]*Router           `json:"routers,omitempty" toml:"routers,omitempty" yaml:"routers,omitempty" export:"true"`
 	Services          map[string]*Service          `json:"services,omitempty" toml:"services,omitempty" yaml:"services,omitempty" export:"true"`
 	Middlewares       map[string]*Middleware       `json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
@@ -67,6 +70,8 @@ type Service struct {
 
 // Router holds the router configuration.
 type Router struct {
+	ext.Router
+
 	EntryPoints []string `json:"entryPoints,omitempty" toml:"entryPoints,omitempty" yaml:"entryPoints,omitempty" export:"true"`
 	Middlewares []string `json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
 	Service     string   `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty" export:"true"`
