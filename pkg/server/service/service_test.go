@@ -117,7 +117,7 @@ func TestGetLoadBalancer(t *testing.T) {
 
 func TestGetLoadBalancerServiceHandler(t *testing.T) {
 	pb := httputil.NewProxyBuilder(&transportManagerMock{}, nil)
-	sm := NewManager(nil, nil, nil, transportManagerMock{}, pb, nil)
+	sm := NewManager(nil, nil, nil, transportManagerMock{}, pb)
 
 	server1 := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-From", "first")
@@ -403,7 +403,7 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 // This test is an adapted version of net/http/httputil.Test1xxResponses test.
 func Test1xxResponses(t *testing.T) {
 	pb := httputil.NewProxyBuilder(&transportManagerMock{}, nil)
-	sm := NewManager(nil, nil, nil, &transportManagerMock{}, pb, nil)
+	sm := NewManager(nil, nil, nil, &transportManagerMock{}, pb)
 
 	backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		h := w.Header()
@@ -580,7 +580,7 @@ func TestManager_Build(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			manager := NewManager(test.configs, nil, nil, &transportManagerMock{}, nil, nil)
+			manager := NewManager(test.configs, nil, nil, &transportManagerMock{}, nil)
 
 			ctx := t.Context()
 			if len(test.providerName) > 0 {
@@ -603,7 +603,7 @@ func TestMultipleTypeOnBuildHTTP(t *testing.T) {
 		},
 	}
 
-	manager := NewManager(services, nil, nil, &transportManagerMock{}, nil, nil)
+	manager := NewManager(services, nil, nil, &transportManagerMock{}, nil)
 
 	_, err := manager.BuildHTTP(t.Context(), "test@file")
 	assert.Error(t, err, "cannot create service: multi-types service not supported, consider declaring two different pieces of service instead")
@@ -700,7 +700,7 @@ func TestGetServiceHandler_Headers(t *testing.T) {
 			// Create a fresh manager for each test case
 			sm := NewManager(map[string]*runtime.ServiceInfo{
 				"target-service": targetServiceInfo,
-			}, nil, nil, &transportManagerMock{}, pb, nil)
+			}, nil, nil, &transportManagerMock{}, pb)
 
 			// Get the service handler
 			handler, err := sm.getServiceHandler(t.Context(), test.service)
