@@ -17,9 +17,7 @@ type contextKey int
 // SpanKindNoneEnum Span kind enum none.
 const SpanKindNoneEnum ext.SpanKindEnum = "none"
 
-const (
-	tracingKey contextKey = iota
-)
+const tracingKey contextKey = iota
 
 // WithTracing Adds Tracing into the context.
 func WithTracing(ctx context.Context, tracing *Tracing) context.Context {
