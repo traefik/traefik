@@ -337,6 +337,7 @@ func (r *codeModifierWithoutCloseNotify) WriteHeader(code int) {
 	}
 
 	maps.Copy(r.responseWriter.Header(), r.headerMap)
+	
 	r.responseWriter.WriteHeader(r.code)
 	r.headerSent = true
 }
