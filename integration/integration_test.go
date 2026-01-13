@@ -35,7 +35,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-var showLog = flag.Bool("tlog", true, "always show Traefik logs")
+var showLog = flag.Bool("tlog", false, "always show Traefik logs")
 
 const tailscaleSecretFilePath = "tailscale.secret"
 
