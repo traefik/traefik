@@ -1,0 +1,184 @@
+package encodedcharacters
+
+import (
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	"github.com/stretchr/testify/require"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+)
+
+func TestNewEncodedCharacters(t *testing.T) {
+	testCases := []struct {
+		desc               string
+		config             dynamic.EncodedCharacters
+		path               string
+		expectedStatusCode int
+	}{
+		{
+			desc:               "default config - all denied",
+			config:             dynamic.EncodedCharacters{},
+			path:               "/foo%2fbar%3fbaz",
+			expectedStatusCode: http.StatusBadRequest,
+		},
+		{
+			desc: "allow all encoded characters",
+			config: dynamic.EncodedCharacters{
+				AllowEncodedSlash:         true,
+				AllowEncodedBackSlash:     true,
+				AllowEncodedNullCharacter: true,
+				AllowEncodedSemicolon:     true,
+				AllowEncodedPercent:       true,
+				AllowEncodedQuestionMark:  true,
+				AllowEncodedHash:          true,
+			},
+			path:               "/foo%2fbar%3fbaz",
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			desc: "allow only encoded slash",
+			config: dynamic.EncodedCharacters{
+				AllowEncodedSlash: true,
+			},
+			path:               "/foo%2fbar%3fbaz",
+			expectedStatusCode: http.StatusBadRequest,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {})
+
+			handler, err := NewEncodedCharacters(t.Context(), next, test.config, "test-new-encoded-characters")
+			require.NoError(t, err)
+			require.NotNil(t, handler)
+
+			req := httptest.NewRequest(http.MethodGet, test.path, nil)
+			recorder := httptest.NewRecorder()
+			handler.ServeHTTP(recorder, req)
+			require.Equal(t, test.expectedStatusCode, recorder.Code)
+		})
+	}
+}
+
+func TestEncodedCharacters(t *testing.T) {
+	testCases := []struct {
+		desc               string
+		config             dynamic.EncodedCharacters
+		path               string
+		expectedStatusCode int
+	}{
+		{
+			desc:               "deny encoded slash",
+			config:             dynamic.EncodedCharacters{},
+			path:               "/foo%2fbar",
+			expectedStatusCode: http.StatusBadRequest,
+		},
+		{
+			desc: "allow encoded slash",
+			config: dynamic.EncodedCharacters{
+				AllowEncodedSlash: true,
+			},
+			path:               "/foo%2fbar",
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			desc:               "deny encoded backslash",
+			config:             dynamic.EncodedCharacters{},
+			path:               "/foo%5cbar",
+			expectedStatusCode: http.StatusBadRequest,
+		},
+		{
+			desc: "allow encoded backslash",
+			config: dynamic.EncodedCharacters{
+				AllowEncodedBackSlash: true,
+			},
+			path:               "/foo%5cbar",
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			desc:               "deny encoded null character",
+			config:             dynamic.EncodedCharacters{},
+			path:               "/foo%00bar",
+			expectedStatusCode: http.StatusBadRequest,
+		},
+		{
+			desc: "allow encoded null character",
+			config: dynamic.EncodedCharacters{
+				AllowEncodedNullCharacter: true,
+			},
+			path:               "/foo%00bar",
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			desc:               "deny encoded semi colon",
+			config:             dynamic.EncodedCharacters{},
+			path:               "/foo%3bbar",
+			expectedStatusCode: http.StatusBadRequest,
+		},
+		{
+			desc: "allow encoded semi colon",
+			config: dynamic.EncodedCharacters{
+				AllowEncodedSemicolon: true,
+			},
+			path:               "/foo%3bbar",
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			desc:               "deny encoded percent",
+			config:             dynamic.EncodedCharacters{},
+			path:               "/foo%25bar",
+			expectedStatusCode: http.StatusBadRequest,
+		},
+		{
+			desc: "allow encoded percent",
+			config: dynamic.EncodedCharacters{
+				AllowEncodedPercent: true,
+			},
+			path:               "/foo%25bar",
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			desc:               "deny encoded question mark",
+			config:             dynamic.EncodedCharacters{},
+			path:               "/foo%3fbar",
+			expectedStatusCode: http.StatusBadRequest,
+		},
+		{
+			desc: "allow encoded question mark",
+			config: dynamic.EncodedCharacters{
+				AllowEncodedQuestionMark: true,
+			},
+			path:               "/foo%3fbar",
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			desc:               "deny encoded hash",
+			config:             dynamic.EncodedCharacters{},
+			path:               "/foo%23bar",
+			expectedStatusCode: http.StatusBadRequest,
+		},
+		{
+			desc: "allow encoded hash",
+			config: dynamic.EncodedCharacters{
+				AllowEncodedHash: true,
+			},
+			path:               "/foo%23bar",
+			expectedStatusCode: http.StatusOK,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {})
+			handler, err := NewEncodedCharacters(t.Context(), next, test.config, "test-encoded-characters")
+			require.NoError(t, err)
+
+			req := httptest.NewRequest(http.MethodGet, test.path, nil)
+			recorder := httptest.NewRecorder()
+			handler.ServeHTTP(recorder, req)
+			require.Equal(t, test.expectedStatusCode, recorder.Code)
+		})
+	}
+}
