@@ -132,3 +132,4 @@ entryPoints:
 --entryPoints.websecure.http.encodedCharacters.allowEncodedPercent=false
 --entryPoints.websecure.http.encodedCharacters.allowEncodedQuestionMark=false
 --entryPoints.websecure.http.encodedCharacters.allowEncodedHash=false
+```
