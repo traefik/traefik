@@ -89,7 +89,7 @@ This filtering occurs before path sanitization and catches attack attempts that 
 
 All encoded character filtering is disabled by default (`true` means encoded characters are allowed).
 
-!!! info "Security consideration"
+!!! info "Security Considerations"
 
     When your backend is not fully compliant with [RFC 3986](https://datatracker.ietf.org/doc/html/rfc3986) and notably decode encoded reserved characters in the requets path,
     it is recommended to set these options to `false` to avoid split-view situation and helps prevent path traversal attacks or other malicious attempts to bypass security controls.

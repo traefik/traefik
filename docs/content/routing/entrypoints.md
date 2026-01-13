@@ -1028,6 +1028,11 @@ By default, Traefik do not reject requests with path containing certain encoded 
     This check is not done against the request query parameters,
     but only against the request path as defined in [RFC3986 section-3](https://datatracker.ietf.org/doc/html/rfc3986#section-3).
 
+!!! info "Security Considerations"
+
+    When your backend is not fully compliant with [RFC 3986](https://datatracker.ietf.org/doc/html/rfc3986) and notably decode encoded reserved characters in the requets path,
+    it is recommended to set these options to `false` to avoid split-view situation and helps prevent path traversal attacks or other malicious attempts to bypass security controls.
+
 ??? info "`encodedCharacters.allowEncodedSlash`"
 
     _Optional, Default=true_
