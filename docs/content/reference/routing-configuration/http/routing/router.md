@@ -118,4 +118,4 @@ labels:
 - The character `@` is not authorized in the router name
 - In provider-specific configurations (Docker, Kubernetes), router names are often auto-generated based on service names and rules
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}
