@@ -316,6 +316,7 @@ The following annotations are organized by category for easier navigation.
 | Annotation                                            | Limitations / Notes                                                                        |
 |-------------------------------------------------------|--------------------------------------------------------------------------------------------|
 | <a id="opt-nginx-ingress-kubernetes-iouse-regex" href="#opt-nginx-ingress-kubernetes-iouse-regex" title="#opt-nginx-ingress-kubernetes-iouse-regex">`nginx.ingress.kubernetes.io/use-regex`</a> |                                                                                            |
+| <a id="opt-nginx-ingress-kubernetes-iorewrite-target" href="#opt-nginx-ingress-kubernetes-iorewrite-target" title="#opt-nginx-ingress-kubernetes-iorewrite-target">`nginx.ingress.kubernetes.io/rewrite-target`</a> |                                                      |
 
 ### IP Whitelist
 
@@ -411,7 +412,6 @@ The following annotations are organized by category for easier navigation.
 | <a id="opt-nginx-ingress-kubernetes-ioproxy-ssl-verify-depth" href="#opt-nginx-ingress-kubernetes-ioproxy-ssl-verify-depth" title="#opt-nginx-ingress-kubernetes-ioproxy-ssl-verify-depth">`nginx.ingress.kubernetes.io/proxy-ssl-verify-depth`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-ioproxy-ssl-protocols" href="#opt-nginx-ingress-kubernetes-ioproxy-ssl-protocols" title="#opt-nginx-ingress-kubernetes-ioproxy-ssl-protocols">`nginx.ingress.kubernetes.io/proxy-ssl-protocols`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-ioenable-rewrite-log" href="#opt-nginx-ingress-kubernetes-ioenable-rewrite-log" title="#opt-nginx-ingress-kubernetes-ioenable-rewrite-log">`nginx.ingress.kubernetes.io/enable-rewrite-log`</a> |                                                      |
-| <a id="opt-nginx-ingress-kubernetes-iorewrite-target" href="#opt-nginx-ingress-kubernetes-iorewrite-target" title="#opt-nginx-ingress-kubernetes-iorewrite-target">`nginx.ingress.kubernetes.io/rewrite-target`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-iosatisfy" href="#opt-nginx-ingress-kubernetes-iosatisfy" title="#opt-nginx-ingress-kubernetes-iosatisfy">`nginx.ingress.kubernetes.io/satisfy`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-ioserver-alias" href="#opt-nginx-ingress-kubernetes-ioserver-alias" title="#opt-nginx-ingress-kubernetes-ioserver-alias">`nginx.ingress.kubernetes.io/server-alias`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-ioserver-snippet" href="#opt-nginx-ingress-kubernetes-ioserver-snippet" title="#opt-nginx-ingress-kubernetes-ioserver-snippet">`nginx.ingress.kubernetes.io/server-snippet`</a> |                                                      |

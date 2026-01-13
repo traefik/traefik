@@ -23,7 +23,8 @@ type ingressConfig struct {
 
 	SSLPassthrough *bool `annotation:"nginx.ingress.kubernetes.io/ssl-passthrough"`
 
-	UseRegex *bool `annotation:"nginx.ingress.kubernetes.io/use-regex"`
+	UseRegex      *bool   `annotation:"nginx.ingress.kubernetes.io/use-regex"`
+	RewriteTarget *string `annotation:"nginx.ingress.kubernetes.io/rewrite-target"`
 
 	Affinity              *string `annotation:"nginx.ingress.kubernetes.io/affinity"`
 	SessionCookieName     *string `annotation:"nginx.ingress.kubernetes.io/session-cookie-name"`
