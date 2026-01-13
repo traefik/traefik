@@ -127,4 +127,4 @@ http:
 
 Please take a look at the community-contributed plugins in the [plugin catalog](https://plugins.traefik.io/plugins).
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

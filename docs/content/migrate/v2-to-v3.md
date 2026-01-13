@@ -158,4 +158,4 @@ core:
 - ✅ All applications functioning correctly
 - ✅ Performance metrics stable
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

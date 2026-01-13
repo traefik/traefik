@@ -15,7 +15,7 @@ enabling seamless integration between Traefik's networking capabilities and Knat
 
 ## Requirements
 
-{!kubernetes-requirements.md!}
+{% include-markdown "includes/kubernetes-requirements.md" %}
 
 1. Install/update the Knative CRDs.
 
@@ -139,4 +139,4 @@ providers:
 
 See the dedicated section in [routing](../../../routing-configuration/kubernetes/knative.md).
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}
