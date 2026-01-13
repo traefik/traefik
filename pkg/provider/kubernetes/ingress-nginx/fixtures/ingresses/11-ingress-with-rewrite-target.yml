@@ -1,0 +1,23 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-with-rewrite-target
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: rewrite-target.localhost
+      http:
+        paths:
+          - path: /something(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: whoami
+                port:
+                  number: 80
