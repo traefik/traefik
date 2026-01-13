@@ -317,7 +317,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 				Service:    defaultBackendName,
 			}
 
-			if err := p.applyMiddlewares(ingress.Namespace, defaultBackendName, ingressConfig, hasTLS, rt, conf); err != nil {
+			if err := p.applyMiddlewares(ingress.Namespace, defaultBackendName, "", ingressConfig, hasTLS, rt, conf); err != nil {
 				logger.Error().Err(err).Msg("Error applying middlewares")
 			}
 
@@ -332,7 +332,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 				TLS:        &dynamic.RouterTLSConfig{},
 			}
 
-			if err := p.applyMiddlewares(ingress.Namespace, defaultBackendTLSName, ingressConfig, false, rtTLS, conf); err != nil {
+			if err := p.applyMiddlewares(ingress.Namespace, defaultBackendTLSName, "", ingressConfig, false, rtTLS, conf); err != nil {
 				logger.Error().Err(err).Msg("Error applying middlewares")
 			}
 
@@ -409,7 +409,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 					Service:    key,
 				}
 
-				if err := p.applyMiddlewares(ingress.Namespace, key, ingressConfig, hasTLS, rt, conf); err != nil {
+				if err := p.applyMiddlewares(ingress.Namespace, key, "", ingressConfig, hasTLS, rt, conf); err != nil {
 					logger.Error().Err(err).Msg("Error applying middlewares")
 				}
 
@@ -423,7 +423,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 					TLS:        &dynamic.RouterTLSConfig{},
 				}
 
-				if err := p.applyMiddlewares(ingress.Namespace, key+"-tls", ingressConfig, false, rtTLS, conf); err != nil {
+				if err := p.applyMiddlewares(ingress.Namespace, key+"-tls", "", ingressConfig, false, rtTLS, conf); err != nil {
 					logger.Error().Err(err).Msg("Error applying middlewares")
 				}
 
@@ -488,7 +488,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 					conf.HTTP.ServersTransports[namedServersTransport.Name] = namedServersTransport.ServersTransport
 				}
 
-				if err := p.applyMiddlewares(ingress.Namespace, routerKey, ingressConfig, hasTLS, rt, conf); err != nil {
+				if err := p.applyMiddlewares(ingress.Namespace, routerKey, pa.Path, ingressConfig, hasTLS, rt, conf); err != nil {
 					logger.Error().Err(err).Msg("Error applying middlewares")
 				}
 			}
@@ -788,7 +788,7 @@ func (p *Provider) loadCertificates(ctx context.Context, ingress *netv1.Ingress,
 	return nil
 }
 
-func (p *Provider) applyMiddlewares(namespace, routerKey string, ingressConfig ingressConfig, hasTLS bool, rt *dynamic.Router, conf *dynamic.Configuration) error {
+func (p *Provider) applyMiddlewares(namespace, routerKey, rulePath string, ingressConfig ingressConfig, hasTLS bool, rt *dynamic.Router, conf *dynamic.Configuration) error {
 	if err := p.applyBasicAuthConfiguration(namespace, routerKey, ingressConfig, rt, conf); err != nil {
 		return fmt.Errorf("applying basic auth configuration: %w", err)
 	}
@@ -800,6 +800,8 @@ func (p *Provider) applyMiddlewares(namespace, routerKey string, ingressConfig i
 	applyWhitelistSourceRangeConfiguration(routerKey, ingressConfig, rt, conf)
 
 	applyCORSConfiguration(routerKey, ingressConfig, rt, conf)
+
+	applyRewriteTargetConfiguration(rulePath, routerKey, ingressConfig, rt, conf)
 
 	// Apply SSL redirect is mandatory to be applied after all other middlewares.
 	// TODO: check how to remove this, and create the HTTP router elsewhere.
@@ -842,6 +844,22 @@ func (p *Provider) applyCustomHeaders(routerName string, ingressConfig ingressCo
 	rt.Middlewares = append(rt.Middlewares, customHeadersMiddlewareName)
 
 	return nil
+}
+
+func applyRewriteTargetConfiguration(rulePath, routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
+	if ingressConfig.RewriteTarget == nil || !ptr.Deref(ingressConfig.UseRegex, false) {
+		return
+	}
+
+	rewriteTargetMiddlewareName := routerName + "-rewrite-target"
+	conf.HTTP.Middlewares[rewriteTargetMiddlewareName] = &dynamic.Middleware{
+		ReplacePathRegex: &dynamic.ReplacePathRegex{
+			Regex:       rulePath,
+			Replacement: *ingressConfig.RewriteTarget,
+		},
+	}
+
+	rt.Middlewares = append(rt.Middlewares, rewriteTargetMiddlewareName)
 }
 
 func (p *Provider) applyBasicAuthConfiguration(namespace, routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
