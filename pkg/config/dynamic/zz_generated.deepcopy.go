@@ -1035,7 +1035,11 @@ func (in *Router) DeepCopyInto(out *Router) {
 		*out = new(RouterTLSConfig)
 		(*in).DeepCopyInto(*out)
 	}
-	out.DeniedEncodedPathCharacters = in.DeniedEncodedPathCharacters
+	if in.DeniedEncodedPathCharacters != nil {
+		in, out := &in.DeniedEncodedPathCharacters, &out.DeniedEncodedPathCharacters
+		*out = new(RouterDeniedEncodedPathCharacters)
+		**out = **in
+	}
 	return
 }
 

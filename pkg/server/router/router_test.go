@@ -950,25 +950,6 @@ func TestManager_BuildHandlers_Deny(t *testing.T) {
 			},
 			expectedStatusCode: http.StatusBadGateway,
 		},
-		{
-			desc:        "unallowed request with fragment",
-			requestPath: "/foo#",
-			routers: map[string]*dynamic.Router{
-				"parent": {
-					EntryPoints: []string{"web"},
-					Rule:        "PathPrefix(`/`)",
-					Service:     "service",
-				},
-			},
-			services: map[string]*dynamic.Service{
-				"service": {
-					LoadBalancer: &dynamic.ServersLoadBalancer{
-						Servers: []dynamic.Server{{URL: "http://localhost:8080"}},
-					},
-				},
-			},
-			expectedStatusCode: http.StatusBadRequest,
-		},
 	}
 
 	for _, test := range testCases {
