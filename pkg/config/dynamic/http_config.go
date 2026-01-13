@@ -195,9 +195,16 @@ func (m *Mirroring) SetDefaults() {
 
 // Failover holds the Failover configuration.
 type Failover struct {
-	Service     string       `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty" export:"true"`
-	Fallback    string       `json:"fallback,omitempty" toml:"fallback,omitempty" yaml:"fallback,omitempty" export:"true"`
-	HealthCheck *HealthCheck `json:"healthCheck,omitempty" toml:"healthCheck,omitempty" yaml:"healthCheck,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	Service     string         `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty" export:"true"`
+	Fallback    string         `json:"fallback,omitempty" toml:"fallback,omitempty" yaml:"fallback,omitempty" export:"true"`
+	HealthCheck *HealthCheck   `json:"healthCheck,omitempty" toml:"healthCheck,omitempty" yaml:"healthCheck,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	Errors      *FailoverError `json:"errors,omitempty" toml:"errors,omitempty" yaml:"errors,omitempty" export:"true"`
+}
+
+// FailoverError holds errors configuration.
+type FailoverError struct {
+	MaxBodySize int64    `json:"maxBodySize,omitempty" toml:"maxBodySize,omitempty" yaml:"maxBodySize,omitempty" export:"true"`
+	Status      []string `json:"status,omitempty" toml:"status,omitempty" yaml:"status,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true

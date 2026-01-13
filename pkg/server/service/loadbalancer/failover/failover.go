@@ -1,13 +1,16 @@
 package failover
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"io"
 	"net/http"
 	"sync"
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 // Failover is an http.Handler that can forward requests to the fallback handler
@@ -25,13 +28,27 @@ type Failover struct {
 
 	fallbackStatusMu sync.RWMutex
 	fallbackStatus   bool
+
+	statusCode  types.HTTPCodeRanges
+	maxBodySize int64
 }
 
 // New creates a new Failover handler.
-func New(hc *dynamic.HealthCheck) *Failover {
-	return &Failover{
-		wantsHealthCheck: hc != nil,
+func New(config *dynamic.Failover) (*Failover, error) {
+	f := &Failover{wantsHealthCheck: config.HealthCheck != nil}
+
+	if config.Errors != nil {
+		if len(config.Errors.Status) > 0 {
+			httpCodeRanges, err := types.NewHTTPCodeRanges(config.Errors.Status)
+			if err != nil {
+				return nil, err
+			}
+			f.statusCode = httpCodeRanges
+		}
+		f.maxBodySize = config.Errors.MaxBodySize
 	}
+
+	return f, nil
 }
 
 // RegisterStatusUpdater adds fn to the list of hooks that are run when the
@@ -53,8 +70,40 @@ func (f *Failover) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	f.handlerStatusMu.RUnlock()
 
 	if handlerStatus {
-		f.handler.ServeHTTP(w, req)
-		return
+		if len(f.statusCode) == 0 {
+			f.handler.ServeHTTP(w, req)
+
+			return
+		}
+
+		request := req.Clone(req.Context())
+		if req.Body != nil && req.Body != http.NoBody {
+			if f.maxBodySize > 0 && req.ContentLength > f.maxBodySize {
+				http.Error(w, "Request body too large", http.StatusRequestEntityTooLarge)
+				return
+			}
+
+			bodyBytes, err := io.ReadAll(req.Body)
+			if err != nil {
+				http.Error(w, "Error reading request body", http.StatusInternalServerError)
+				return
+			}
+			req.Body.Close()
+
+			req.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+
+			request = req.Clone(req.Context())
+			request.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+		}
+
+		rw := &responseWriter{ResponseWriter: w, statusCoderange: f.statusCode}
+		f.handler.ServeHTTP(rw, req)
+
+		if !rw.needFallback {
+			return
+		}
+
+		req = request
 	}
 
 	f.fallbackStatusMu.RLock()
