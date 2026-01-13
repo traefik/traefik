@@ -445,7 +445,6 @@ func (p *Provider) loadHTTPServers(ctx context.Context, namespace string, route 
 					Kind:        ptr.To(gatev1.Kind(kindGateway)),
 					Namespace:   ptr.To(gatev1.Namespace(namespace)),
 					Name:        gatev1.ObjectName(listener.GWName),
-					SectionName: ptr.To(gatev1.SectionName(listener.Name)),
 				},
 				ControllerName: controllerName,
 			}
