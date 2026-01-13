@@ -126,7 +126,7 @@ ingressRoute:
     middlewares:
       - name: dashboard-auth
 
-# Creates a BasiAuth Middleware and Secret for the Dashboard Security
+# Creates a BasicAuth Middleware and Secret for the Dashboard Security
 extraObjects:
   - apiVersion: v1
     kind: Secret
