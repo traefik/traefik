@@ -56,6 +56,9 @@
         service = "foobar"
         fallback = "foobar"
         [http.services.Service01.failover.healthCheck]
+        [http.services.Service01.failover.errors]
+          maxBodySize = 42
+          status = ["foobar", "foobar"]
     [http.services.Service02]
       [http.services.Service02.highestRandomWeight]
 

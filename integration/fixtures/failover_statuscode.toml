@@ -1,0 +1,47 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[api]
+  insecure = true
+
+[log]
+  level = "DEBUG"
+  noColor = true
+
+[entryPoints]
+  [entryPoints.web]
+    address = ":8000"
+
+[providers.file]
+  filename = "{{ .SelfFilename }}"
+
+## dynamic configuration ##
+
+[http.routers]
+  [http.routers.router1]
+    entrypoints = ["web"]
+    service = "failover-service"
+    rule = "PathPrefix(`/`)"
+
+[http.services]
+  # Failover service with error-based failover (status codes)
+  [http.services.failover-service]
+    [http.services.failover-service.failover]
+      service = "main-service"
+      fallback = "fallback-service"
+      [http.services.failover-service.failover.errors]
+        status = ["500-504"]
+        maxBodySize = 1048576  # 1MB
+
+  # Main service (no health check - failover based on status codes only)
+  [http.services.main-service]
+    [http.services.main-service.loadBalancer]
+      [[http.services.main-service.loadBalancer.servers]]
+        url = "{{ .MainServer }}"
+
+  # Fallback service
+  [http.services.fallback-service]
+    [http.services.fallback-service.loadBalancer]
+      [[http.services.fallback-service.loadBalancer.servers]]
+        url = "{{ .FallbackServer }}"
