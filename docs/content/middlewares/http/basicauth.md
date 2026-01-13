@@ -404,4 +404,4 @@ http:
   [http.middlewares.test-auth.basicAuth]
     removeHeader = true
 ```
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

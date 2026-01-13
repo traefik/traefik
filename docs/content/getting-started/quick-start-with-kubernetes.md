@@ -334,4 +334,4 @@ curl -v http://localhost/
     - Use [IngressRoute CRD](../providers/kubernetes-crd.md)
     - Protect [ingresses with TLS](../routing/providers/kubernetes-ingress.md#enabling-tls-via-annotations)
     
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

@@ -269,4 +269,4 @@ providers:
 --providers.kubernetesgateway.throttleDuration=10s
 ```
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

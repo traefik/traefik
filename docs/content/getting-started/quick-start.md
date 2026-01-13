@@ -121,4 +121,4 @@ IP: 172.27.0.4
 
     Now that you have a basic understanding of how Traefik can automatically create the routes to your services and load balance them, it is time to dive into [the user guides](../../user-guides/docker-compose/basic-example/ "Link to the user guides") and [the documentation](/ "Link to the docs landing page") and let Traefik work for you!
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

@@ -90,4 +90,4 @@ This allows the logs to be rotated and processed by an external program, such as
 !!! warning
     This does not work on Windows due to the lack of USR signals.
     
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}
