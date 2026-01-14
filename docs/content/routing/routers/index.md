@@ -1790,4 +1790,4 @@ Services are the target for the router.
 
 !!! important "UDP routers can only target UDP services (and not HTTP or TCP services)."
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

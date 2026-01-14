@@ -20,7 +20,7 @@ When Traefik receives an HTTP request, it processes the request path through sev
 
 Traefik inspects the path for potentially dangerous encoded characters and rejects requests containing them unless explicitly allowed.
 
-Here is the list of the encoded characters that are rejected by default:
+Here is the list of the encoded characters that are allowed by default:
 
 | Encoded Character | Character               |
 |-------------------|-------------------------|
@@ -87,7 +87,12 @@ Configure it in the [EntryPoints](../routing/entrypoints.md#encoded-characters) 
 
 This filtering occurs before path sanitization and catches attack attempts that use encoding to bypass other security controls.
 
-All encoded character filtering is enabled by default (`false` means encoded characters are rejected), providing maximum security:
+All encoded character filtering is disabled by default (`true` means encoded characters are allowed).
+
+!!! info "Security Considerations"
+
+    When your backend is not fully compliant with [RFC 3986](https://datatracker.ietf.org/doc/html/rfc3986) and notably decode encoded reserved characters in the requets path,
+    it is recommended to set these options to `false` to avoid split-view situation and helps prevent path traversal attacks or other malicious attempts to bypass security controls.
 
 ```yaml tab="File (YAML)"
 entryPoints:
@@ -95,13 +100,13 @@ entryPoints:
     address: ":443"
     http:
       encodedCharacters:
-        allowEncodedSlash: false          # %2F - Default: false (RECOMMENDED)
-        allowEncodedBackSlash: false      # %5C - Default: false (RECOMMENDED)
-        allowEncodedNullCharacter: false  # %00 - Default: false (RECOMMENDED)
-        allowEncodedSemicolon: false      # %3B - Default: false (RECOMMENDED)
-        allowEncodedPercent: false        # %25 - Default: false (RECOMMENDED)
-        allowEncodedQuestionMark: false   # %3F - Default: false (RECOMMENDED)
-        allowEncodedHash: false           # %23 - Default: false (RECOMMENDED)
+        allowEncodedSlash: false          # %2F - Default: true
+        allowEncodedBackSlash: false      # %5C - Default: true
+        allowEncodedNullCharacter: false  # %00 - Default: true
+        allowEncodedSemicolon: false      # %3B - Default: true
+        allowEncodedPercent: false        # %25 - Default: true
+        allowEncodedQuestionMark: false   # %3F - Default: true
+        allowEncodedHash: false           # %23 - Default: true
 ```
 
 ```toml tab="File (TOML)"

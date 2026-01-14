@@ -662,7 +662,10 @@ func (p *Provider) loadService(client Client, namespace string, backend netv1.In
 		protocol := getProtocol(portSpec, portName, svcConfig)
 
 		for _, endpoint := range endpointSlice.Endpoints {
-			if !k8s.EndpointServing(endpoint) {
+			// The Serving condition allows to track if the Pod can receive traffic.
+			// It is set to true when the Pod is Ready or Terminating.
+			// From the go documentation, a nil value should be interpreted as "true".
+			if !ptr.Deref(endpoint.Conditions.Serving, true) {
 				continue
 			}
 
@@ -674,7 +677,7 @@ func (p *Provider) loadService(client Client, namespace string, backend netv1.In
 				addresses[address] = struct{}{}
 				svc.LoadBalancer.Servers = append(svc.LoadBalancer.Servers, dynamic.Server{
 					URL:    fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(address, strconv.Itoa(int(port)))),
-					Fenced: ptr.Deref(endpoint.Conditions.Terminating, false) && ptr.Deref(endpoint.Conditions.Serving, false),
+					Fenced: ptr.Deref(endpoint.Conditions.Terminating, false),
 				})
 			}
 		}
