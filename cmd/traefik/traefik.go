@@ -87,10 +87,10 @@ Complete documentation is available at https://traefik.io`,
 func runCmd(staticConfiguration *static.Configuration) error {
 	configureLogging(staticConfiguration)
 
-	// Display warning to advertise for new behavior of rejecting encoded characters in the request path.
-	// Deprecated: this has to be removed in the next minor/major version.
-	log.WithoutContext().Warnf("Starting with v2.11.32, Traefik now rejects some encoded characters in the request path by default. " +
-		"Refer to the documentation for more details: https://doc.traefik.io/traefik/v2.11/migration/v2/#encoded-characters-in-request-path")
+	log.WithoutContext().Warn("Traefik can reject some encoded characters in the request path." +
+		"When your backend is not fully compliant with [RFC 3986](https://datatracker.ietf.org/doc/html/rfc3986)," +
+		"it is recommended to set these options to `false` to avoid split-view situation." +
+		"Refer to the documentation for more details: https://doc.traefik.io/traefik/v2.11/migration/v2/#encoded-characters-configuration-default-values")
 
 	http.DefaultTransport.(*http.Transport).Proxy = http.ProxyFromEnvironment
 

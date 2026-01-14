@@ -223,14 +223,11 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 		chain = chain.Append(denyrouterrecursion.WrapHandler(routerName))
 	}
 
-	// Here we are adding deny handlers for encoded path characters and fragment.
-	// Deny handler are only added for root routers, child routers are protected by their parent router deny handlers.
-	chain = chain.Append(func(next http.Handler) (http.Handler, error) {
-		return denyFragment(next), nil
-	})
-	chain = chain.Append(func(next http.Handler) (http.Handler, error) {
-		return denyEncodedPathCharacters(router.DeniedEncodedPathCharacters.Map(), next), nil
-	})
+	if router.DeniedEncodedPathCharacters != nil {
+		chain = chain.Append(func(next http.Handler) (http.Handler, error) {
+			return denyEncodedPathCharacters(router.DeniedEncodedPathCharacters.Map(), next), nil
+		})
+	}
 
 	return chain.Extend(*mHandler).Append(tHandler).Then(sHandler)
 }
