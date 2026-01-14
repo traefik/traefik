@@ -169,9 +169,48 @@ func (t *TransportManager) createTLSConfig(cfg *dynamic.ServersTransport) (*tls.
 		config = tlsconfig.MTLSClientConfig(t.spiffeX509Source, t.spiffeX509Source, spiffeAuthorizer)
 	}
 
-	if cfg.InsecureSkipVerify || len(cfg.RootCAs) > 0 || len(cfg.ServerName) > 0 || len(cfg.Certificates) > 0 || cfg.PeerCertURI != "" {
+	if cfg.InsecureSkipVerify || len(cfg.RootCAs) > 0 || len(cfg.ServerName) > 0 || len(cfg.Certificates) > 0 || cfg.PeerCertURI != "" || len(cfg.CipherSuites) > 0 || cfg.MaxVersion != "" || cfg.MinVersion != "" {
 		if config != nil {
 			return nil, errors.New("TLS and SPIFFE configuration cannot be defined at the same time")
+		}
+
+		cipherSuites := make([]uint16, 0)
+		if cfg.CipherSuites != nil {
+			for _, cipher := range cfg.CipherSuites {
+				if cipherID, exists := traefiktls.CipherSuites[cipher]; exists {
+					cipherSuites = append(cipherSuites, cipherID)
+				} else {
+					log.Error().Msgf("Invalid cipher: %v, falling back to default CipherSuite.", cipher)
+					cipherSuites = nil
+					break
+				}
+			}
+		}
+
+		var minVersion uint16
+		if cfg.MinVersion != "" {
+			if value, exists := traefiktls.MinVersion[cfg.MinVersion]; exists {
+				minVersion = value
+			} else {
+				log.Error().Msgf("Invalid TLS minimum version: %s", cfg.MinVersion)
+			}
+		}
+
+		var maxVersion uint16
+		if cfg.MaxVersion != "" {
+			if value, exists := traefiktls.MaxVersion[cfg.MaxVersion]; exists {
+				maxVersion = value
+			} else {
+				log.Error().Msgf("Invalid TLS maximum version: %s", cfg.MaxVersion)
+			}
+		}
+
+		if cfg.MinVersion != "" && cfg.MaxVersion != "" {
+			if minVersion >= maxVersion {
+				log.Error().Msgf("CipherSuite MinVersion, %s, above or equal to the MaxVersion, %s. Falling back to default MaxVersion and MinVersion", cfg.MinVersion, cfg.MaxVersion)
+				minVersion = tls.VersionTLS12
+				maxVersion = 0
+			}
 		}
 
 		config = &tls.Config{
@@ -179,6 +218,9 @@ func (t *TransportManager) createTLSConfig(cfg *dynamic.ServersTransport) (*tls.
 			InsecureSkipVerify: cfg.InsecureSkipVerify,
 			RootCAs:            createRootCACertPool(cfg.RootCAs),
 			Certificates:       cfg.Certificates.GetCertificates(),
+			CipherSuites:       cipherSuites,
+			MinVersion:         minVersion,
+			MaxVersion:         maxVersion,
 		}
 
 		if cfg.PeerCertURI != "" {

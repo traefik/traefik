@@ -23,7 +23,8 @@ type ingressConfig struct {
 
 	SSLPassthrough *bool `annotation:"nginx.ingress.kubernetes.io/ssl-passthrough"`
 
-	UseRegex *bool `annotation:"nginx.ingress.kubernetes.io/use-regex"`
+	UseRegex      *bool   `annotation:"nginx.ingress.kubernetes.io/use-regex"`
+	RewriteTarget *string `annotation:"nginx.ingress.kubernetes.io/rewrite-target"`
 
 	Affinity              *string `annotation:"nginx.ingress.kubernetes.io/affinity"`
 	SessionCookieName     *string `annotation:"nginx.ingress.kubernetes.io/session-cookie-name"`
@@ -49,6 +50,11 @@ type ingressConfig struct {
 	CORSAllowMethods           *[]string `annotation:"nginx.ingress.kubernetes.io/cors-allow-methods"`
 	CORSAllowOrigin            *[]string `annotation:"nginx.ingress.kubernetes.io/cors-allow-origin"`
 	CORSMaxAge                 *int      `annotation:"nginx.ingress.kubernetes.io/cors-max-age"`
+
+	WhitelistSourceRange *string `annotation:"nginx.ingress.kubernetes.io/whitelist-source-range"`
+
+	CustomHeaders *string `annotation:"nginx.ingress.kubernetes.io/custom-headers"`
+	UpstreamVhost *string `annotation:"nginx.ingress.kubernetes.io/upstream-vhost"`
 }
 
 // parseIngressConfig parses the annotations from an Ingress object into an ingressConfig struct.

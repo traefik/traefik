@@ -1,12 +1,12 @@
 import { Card, CSS, Flex, Grid, H2, Text } from '@traefiklabs/faency'
 import { ReactNode, useMemo } from 'react'
-import { Helmet } from 'react-helmet-async'
 import useSWR from 'swr'
 
 import ProviderIcon from 'components/icons/providers'
 import FeatureCard, { FeatureCardSkeleton } from 'components/resources/FeatureCard'
 import ResourceCard from 'components/resources/ResourceCard'
 import TraefikResourceStatsCard, { StatsCardSkeleton } from 'components/resources/TraefikResourceStatsCard'
+import PageTitle from 'layout/PageTitle'
 import { capitalizeFirstLetter } from 'utils/string'
 
 const RESOURCES = ['routers', 'services', 'middlewares']
@@ -77,9 +77,7 @@ export const Dashboard = () => {
 
   return (
     <Flex direction="column" gap={6}>
-      <Helmet>
-        <title>Dashboard - Traefik Proxy</title>
-      </Helmet>
+      <PageTitle title="Dashboard" />
       <SectionContainer title="Entrypoints" css={{ mt: 0 }}>
         {entrypoints?.map((i, idx) => (
           <ResourceCard

@@ -7,10 +7,11 @@ jobs:
 
   build-webui:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
       - name: Check out code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -18,7 +19,7 @@ jobs:
         run: corepack enable
 
       - name: Setup node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version-file: webui/.nvmrc
           cache: yarn
@@ -41,7 +42,7 @@ jobs:
           tar czvf webui.tar.gz ./webui/static/
 
       - name: Artifact webui
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: webui.tar.gz
           path: webui.tar.gz

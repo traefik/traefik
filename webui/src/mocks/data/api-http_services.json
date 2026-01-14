@@ -9,10 +9,7 @@
       "passHostHeader": true
     },
     "status": "enabled",
-    "usedBy": [
-      "server-redirect@docker",
-      "server-secured@docker"
-    ],
+    "usedBy": ["server-redirect@docker", "server-secured@docker"],
     "serverStatus": {
       "http://10.0.1.12:80": "UP"
     },
@@ -95,9 +92,7 @@
       }
     },
     "status": "enabled",
-    "usedBy": [
-      "server-mtls@docker"
-    ],
+    "usedBy": ["server-mtls@docker"],
     "serverStatus": {
       "http://10.0.1.20:80": "UP",
       "http://10.0.1.21:80": "UP",
@@ -107,8 +102,25 @@
       "http://10.0.1.25:80": "UP"
     },
     "name": "api3_v2-example-beta1@docker",
-    "type": "loadbalancer",
-    "provider": "docker"
+    "type": "mirroring",
+    "provider": "docker",
+    "mirroring": {
+      "mirrors": [
+        {
+          "name": "two@docker",
+          "percent": 10
+        },
+        {
+          "name": "three@docker",
+          "percent": 15
+        },
+        {
+          "name": "four@docker",
+          "percent": 80
+        }
+      ],
+      "service": "one@docker"
+    }
   },
   {
     "loadBalancer": {
@@ -120,9 +132,7 @@
       "passHostHeader": true
     },
     "status": "enabled",
-    "usedBy": [
-      "web@docker"
-    ],
+    "usedBy": ["web@docker"],
     "serverStatus": {
       "http://10.0.1.11:80": "UP"
     },
@@ -140,9 +150,7 @@
       "passHostHeader": true
     },
     "status": "enabled",
-    "usedBy": [
-      "jaeger_v2-example-beta1@docker"
-    ],
+    "usedBy": ["jaeger_v2-example-beta1@docker"],
     "serverStatus": {
       "http://10.0.1.20:5775": "UP"
     },
@@ -174,9 +182,7 @@
       "passHostHeader": true
     },
     "status": "enabled",
-    "usedBy": [
-      "traefik_v2-example-beta1@docker"
-    ],
+    "usedBy": ["traefik_v2-example-beta1@docker"],
     "serverStatus": {
       "http://10.0.1.10:80": "UP"
     },
@@ -189,9 +195,7 @@
     "provider": "docker",
     "status": "enabled",
     "type": "weighted",
-    "usedBy": [
-      "foo@docker"
-    ],
+    "usedBy": ["foo@docker"],
     "weighted": {
       "sticky": {
         "cookie": {
@@ -207,9 +211,7 @@
     "provider": "docker",
     "status": "enabled",
     "type": "weighted",
-    "usedBy": [
-      "fii@docker"
-    ],
+    "usedBy": ["fii@docker"],
     "weighted": {
       "sticky": {
         "cookie": {}
@@ -238,8 +240,6 @@
     "provider": "docker",
     "status": "enabled",
     "type": "mirroring",
-    "usedBy": [
-      "foo@docker"
-    ]
+    "usedBy": ["foo@docker"]
   }
 ]
