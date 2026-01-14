@@ -1105,6 +1105,39 @@ spec:
                       containing user credentials.
                     type: string
                 type: object
+              encodedCharacters:
+                description: EncodedCharacters configures which encoded characters
+                  are allowed in the request path.
+                properties:
+                  allowEncodedBackSlash:
+                    description: AllowEncodedBackSlash defines whether requests with
+                      encoded back slash characters in the path are allowed.
+                    type: boolean
+                  allowEncodedHash:
+                    description: AllowEncodedHash defines whether requests with encoded
+                      hash characters in the path are allowed.
+                    type: boolean
+                  allowEncodedNullCharacter:
+                    description: AllowEncodedNullCharacter defines whether requests
+                      with encoded null characters in the path are allowed.
+                    type: boolean
+                  allowEncodedPercent:
+                    description: AllowEncodedPercent defines whether requests with
+                      encoded percent characters in the path are allowed.
+                    type: boolean
+                  allowEncodedQuestionMark:
+                    description: AllowEncodedQuestionMark defines whether requests
+                      with encoded question mark characters in the path are allowed.
+                    type: boolean
+                  allowEncodedSemicolon:
+                    description: AllowEncodedSemicolon defines whether requests with
+                      encoded semicolon characters in the path are allowed.
+                    type: boolean
+                  allowEncodedSlash:
+                    description: AllowEncodedSlash defines whether requests with encoded
+                      slash characters in the path are allowed.
+                    type: boolean
+                type: object
               errors:
                 description: |-
                   ErrorPage holds the custom error middleware configuration.
