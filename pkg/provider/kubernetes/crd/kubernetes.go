@@ -312,6 +312,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			IPWhiteList:       middleware.Spec.IPWhiteList,
 			IPAllowList:       middleware.Spec.IPAllowList,
 			Headers:           middleware.Spec.Headers,
+			EncodedCharacters: middleware.Spec.EncodedCharacters,
 			Errors:            errorPage,
 			RateLimit:         rateLimit,
 			RedirectRegex:     middleware.Spec.RedirectRegex,

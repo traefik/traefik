@@ -36,6 +36,7 @@ type MiddlewareSpec struct {
 	IPWhiteList       *dynamic.IPWhiteList       `json:"ipWhiteList,omitempty"`
 	IPAllowList       *dynamic.IPAllowList       `json:"ipAllowList,omitempty"`
 	Headers           *dynamic.Headers           `json:"headers,omitempty"`
+	EncodedCharacters *dynamic.EncodedCharacters `json:"encodedCharacters,omitempty"`
 	Errors            *ErrorPage                 `json:"errors,omitempty"`
 	RateLimit         *RateLimit                 `json:"rateLimit,omitempty"`
 	RedirectRegex     *dynamic.RedirectRegex     `json:"redirectRegex,omitempty"`
