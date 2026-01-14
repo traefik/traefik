@@ -325,7 +325,7 @@ func lineCount(t *testing.T, fileName string) int {
 	}
 
 	count := 0
-	for _, line := range strings.Split(string(fileContents), "\n") {
+	for line := range strings.SplitSeq(string(fileContents), "\n") {
 		if strings.TrimSpace(line) == "" {
 			continue
 		}

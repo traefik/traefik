@@ -216,7 +216,7 @@ func (x *XForwarded) removeConnectionHeaders(req *http.Request) {
 
 	var connectionHopByHopHeaders []string
 	for _, f := range req.Header[connection] {
-		for _, sf := range strings.Split(f, ",") {
+		for sf := range strings.SplitSeq(f, ",") {
 			if sf = textproto.TrimString(sf); sf != "" {
 				// Connection header cannot dictate to remove X- headers managed by Traefik,
 				// as per rfc7230 https://datatracker.ietf.org/doc/html/rfc7230#section-6.1,

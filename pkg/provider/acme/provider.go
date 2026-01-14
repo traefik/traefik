@@ -1088,7 +1088,7 @@ func (p *Provider) certExists(validDomains []string) bool {
 
 func isDomainAlreadyChecked(domainToCheck string, existentDomains []string) bool {
 	for _, certDomains := range existentDomains {
-		for _, certDomain := range strings.Split(certDomains, ",") {
+		for certDomain := range strings.SplitSeq(certDomains, ",") {
 			if types.MatchDomain(domainToCheck, certDomain) {
 				return true
 			}

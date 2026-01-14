@@ -364,7 +364,7 @@ type fasthttpHeader interface {
 // See RFC 7230, section 6.1.
 func removeConnectionHeaders(h fasthttpHeader) {
 	f := h.Peek(fasthttp.HeaderConnection)
-	for _, sf := range bytes.Split(f, []byte{','}) {
+	for sf := range bytes.SplitSeq(f, []byte{','}) {
 		if sf = bytes.TrimSpace(sf); len(sf) > 0 {
 			h.DelBytes(sf)
 		}
