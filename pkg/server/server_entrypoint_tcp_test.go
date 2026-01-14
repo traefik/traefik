@@ -387,6 +387,42 @@ func TestKeepAliveH2c(t *testing.T) {
 	require.Contains(t, err.Error(), "use of closed network connection")
 }
 
+func Test_denyFragment(t *testing.T) {
+	tests := []struct {
+		name       string
+		url        string
+		wantStatus int
+	}{
+		{
+			name:       "Rejects fragment character",
+			url:        "http://example.com/#",
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name:       "Allows without fragment",
+			url:        "http://example.com/",
+			wantStatus: http.StatusOK,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			handler := denyFragment(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+			}))
+
+			req := httptest.NewRequest(http.MethodGet, test.url, nil)
+			res := httptest.NewRecorder()
+
+			handler.ServeHTTP(res, req)
+
+			assert.Equal(t, test.wantStatus, res.Code)
+		})
+	}
+}
+
 func TestSanitizePath(t *testing.T) {
 	tests := []struct {
 		path     string

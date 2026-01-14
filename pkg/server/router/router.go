@@ -274,10 +274,7 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 
 	// Here we are adding deny handlers for encoded path characters and fragment.
 	// Deny handler are only added for root routers, child routers are protected by their parent router deny handlers.
-	if len(router.ParentRefs) == 0 {
-		chain = chain.Append(func(next http.Handler) (http.Handler, error) {
-			return denyFragment(next), nil
-		})
+	if len(router.ParentRefs) == 0 && router.DeniedEncodedPathCharacters != nil {
 		chain = chain.Append(func(next http.Handler) (http.Handler, error) {
 			return denyEncodedPathCharacters(router.DeniedEncodedPathCharacters.Map(), next), nil
 		})

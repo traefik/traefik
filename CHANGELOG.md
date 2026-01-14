@@ -1,3 +1,10 @@
+## [v2.11.35](https://github.com/traefik/traefik/tree/v2.11.35) (2026-01-14)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.34...v2.11.35)
+
+**Bug fixes:**
+- **[acme]** Add timeout to ACME-TLS/1 challenge handshake ([#12516](https://github.com/traefik/traefik/pull/12516) by [LBF38](https://github.com/LBF38))
+- **[server]** Make encoded character options opt-in ([#12540](https://github.com/traefik/traefik/pull/12540) by [gndz07](https://github.com/gndz07))
+
 ## [v3.6.6](https://github.com/traefik/traefik/tree/v3.6.6) (2025-12-29)
 [All Commits](https://github.com/traefik/traefik/compare/v3.6.5...v3.6.6)
 
