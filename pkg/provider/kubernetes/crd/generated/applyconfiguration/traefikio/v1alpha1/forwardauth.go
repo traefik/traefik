@@ -41,7 +41,7 @@ type ForwardAuthApplyConfiguration struct {
 	MaxBodySize              *int64                                     `json:"maxBodySize,omitempty"`
 	PreserveLocationHeader   *bool                                      `json:"preserveLocationHeader,omitempty"`
 	PreserveRequestMethod    *bool                                      `json:"preserveRequestMethod,omitempty"`
-	UnauthenticatedAddress   *string                                    `json:"unauthenticatedAddress,omitempty"`
+	AuthSigninURL            *string                                    `json:"authSigninURL,omitempty"`
 }
 
 // ForwardAuthApplyConfiguration constructs a declarative configuration of the ForwardAuth type for use with
@@ -152,10 +152,10 @@ func (b *ForwardAuthApplyConfiguration) WithPreserveRequestMethod(value bool) *F
 	return b
 }
 
-// WithUnauthenticatedAddress sets the UnauthenticatedAddress field in the declarative configuration to the given value
+// WithAuthSigninURL sets the AuthSigninURL field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the UnauthenticatedAddress field is set to the value of the last call.
-func (b *ForwardAuthApplyConfiguration) WithUnauthenticatedAddress(value string) *ForwardAuthApplyConfiguration {
-	b.UnauthenticatedAddress = &value
+// If called multiple times, the AuthSigninURL field is set to the value of the last call.
+func (b *ForwardAuthApplyConfiguration) WithAuthSigninURL(value string) *ForwardAuthApplyConfiguration {
+	b.AuthSigninURL = &value
 	return b
 }

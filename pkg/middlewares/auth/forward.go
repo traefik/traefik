@@ -13,7 +13,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/rs/zerolog"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
@@ -60,7 +59,7 @@ type forwardAuth struct {
 	maxBodySize              int64
 	preserveLocationHeader   bool
 	preserveRequestMethod    bool
-	unauthenticatedAddress   string
+	authSigninURL            string
 }
 
 // NewForward creates a forward auth middleware.
@@ -86,7 +85,7 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 		maxBodySize:              dynamic.ForwardAuthDefaultMaxBodySize,
 		preserveLocationHeader:   config.PreserveLocationHeader,
 		preserveRequestMethod:    config.PreserveRequestMethod,
-		unauthenticatedAddress:   config.UnauthenticatedAddress,
+		authSigninURL:            config.AuthSigninURL,
 	}
 
 	if config.MaxBodySize != nil {
@@ -240,8 +239,13 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if forwardResponse.StatusCode < http.StatusOK || forwardResponse.StatusCode >= http.StatusMultipleChoices {
 		logger.Debug().Msgf("Remote error %s. StatusCode: %d", fa.address, forwardResponse.StatusCode)
 
-		if fa.unauthenticatedAddress != "" {
-			fa.handleUnauthenticated(rw, req, logger)
+		// If auth server returns 401 and AuthSigninURL is configured, redirect to signin URL.
+		if forwardResponse.StatusCode == http.StatusUnauthorized && fa.authSigninURL != "" {
+			logger.Debug().Msgf("Redirecting to signin URL: %s", fa.authSigninURL)
+
+			tracer.CaptureResponse(forwardSpan, forwardResponse.Header, http.StatusFound, trace.SpanKindClient)
+			rw.Header().Set("Location", fa.authSigninURL)
+			rw.WriteHeader(http.StatusFound)
 			return
 		}
 
@@ -358,30 +362,6 @@ func (fa *forwardAuth) readBodyBytes(req *http.Request) ([]byte, error) {
 		return body[:n], nil
 	}
 	return nil, errBodyTooLarge
-}
-
-func (fa *forwardAuth) handleUnauthenticated(rw http.ResponseWriter, req *http.Request, logger *zerolog.Logger) {
-	handlerReq, err := http.NewRequestWithContext(req.Context(), http.MethodGet, fa.unauthenticatedAddress, nil)
-	if err != nil {
-		logger.Debug().Err(err).Msgf("Error creating request for unauthenticated address %s", fa.unauthenticatedAddress)
-		return
-	}
-
-	writeHeader(req, handlerReq, fa.trustForwardHeader, fa.authRequestHeaders)
-
-	handlerResponse, err := fa.client.Do(handlerReq)
-	if err != nil {
-		logger.Debug().Err(err).Msgf("Error calling unauthenticated handler %s", fa.unauthenticatedAddress)
-		return
-	}
-	defer handlerResponse.Body.Close()
-	utils.CopyHeaders(rw.Header(), handlerResponse.Header)
-	utils.RemoveHeaders(rw.Header(), hopHeaders...)
-
-	rw.WriteHeader(handlerResponse.StatusCode)
-	if _, err := io.Copy(rw, handlerResponse.Body); err != nil {
-		logger.Error().Err(err).Msg("Error copying response body from unauthenticated handler")
-	}
 }
 
 func writeHeader(req, forwardReq *http.Request, trustForwardHeader bool, allowedHeaders []string) {
