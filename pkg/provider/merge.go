@@ -27,8 +27,18 @@ var resourceLogFields = map[reflect.Type]string{
 	reflect.TypeOf(dynamic.UDPService{}):          logs.ServiceName,
 }
 
+// ResourceStrategy defines how the merge should handle resources.
+type ResourceStrategy int
+
+const (
+	// ResourceStrategyMerge tries to call the Merge method on the resource.
+	ResourceStrategyMerge ResourceStrategy = iota
+	// ResourceStrategySkipDuplicates skips duplicate resources.
+	ResourceStrategySkipDuplicates
+)
+
 // Merge merges multiple configurations.
-func Merge(ctx context.Context, configurations map[string]*dynamic.Configuration) *dynamic.Configuration {
+func Merge(ctx context.Context, configurations map[string]*dynamic.Configuration, strategy ResourceStrategy) *dynamic.Configuration {
 	merged := &dynamic.Configuration{
 		HTTP: &dynamic.HTTPConfiguration{
 			Routers:           make(map[string]*dynamic.Router),
@@ -58,16 +68,18 @@ func Merge(ctx context.Context, configurations map[string]*dynamic.Configuration
 		conf := configurations[providerName]
 
 		if conf.HTTP != nil {
-			mergeResourceMaps(reflect.ValueOf(merged.HTTP).Elem(), reflect.ValueOf(conf.HTTP).Elem(), providerName, tracker)
+			mergeResourceMaps(ctx, reflect.ValueOf(merged.HTTP).Elem(), reflect.ValueOf(conf.HTTP).Elem(), providerName, tracker, strategy, resourceLogFields)
 		}
 		if conf.TCP != nil {
-			mergeResourceMaps(reflect.ValueOf(merged.TCP).Elem(), reflect.ValueOf(conf.TCP).Elem(), providerName, tracker)
+			mergeResourceMaps(ctx, reflect.ValueOf(merged.TCP).Elem(), reflect.ValueOf(conf.TCP).Elem(), providerName, tracker, strategy, resourceLogFields)
 		}
 		if conf.UDP != nil {
-			mergeResourceMaps(reflect.ValueOf(merged.UDP).Elem(), reflect.ValueOf(conf.UDP).Elem(), providerName, tracker)
+			mergeResourceMaps(ctx, reflect.ValueOf(merged.UDP).Elem(), reflect.ValueOf(conf.UDP).Elem(), providerName, tracker, strategy, resourceLogFields)
 		}
 		if conf.TLS != nil {
-			mergeResourceMaps(reflect.ValueOf(merged.TLS).Elem(), reflect.ValueOf(conf.TLS).Elem(), providerName, tracker)
+			mergeResourceMaps(ctx, reflect.ValueOf(merged.TLS).Elem(), reflect.ValueOf(conf.TLS).Elem(), providerName, tracker, strategy, resourceLogFields)
+
+			merged.TLS.Certificates = mergeCertificates(merged.TLS.Certificates, conf.TLS.Certificates, strategy)
 		}
 	}
 
@@ -78,7 +90,7 @@ func Merge(ctx context.Context, configurations map[string]*dynamic.Configuration
 
 // mergeResourceMaps merges all the resource maps defined in the provided struct.
 // Conflicts are recorded in the given merge tracker.
-func mergeResourceMaps(dst, src reflect.Value, providerName string, tracker *mergeTracker) {
+func mergeResourceMaps(ctx context.Context, dst, src reflect.Value, providerName string, tracker *mergeTracker, strategy ResourceStrategy, resourceLogFields map[reflect.Type]string) {
 	dstType := dst.Type()
 
 	for i := 0; i < dstType.NumField(); i++ {
@@ -92,12 +104,12 @@ func mergeResourceMaps(dst, src reflect.Value, providerName string, tracker *mer
 
 		// Merge the resource maps of embedded structs.
 		if field.Anonymous {
-			mergeResourceMaps(dstField, srcField, providerName, tracker)
+			mergeResourceMaps(ctx, dstField, srcField, providerName, tracker, strategy, resourceLogFields)
 			continue
 		}
 
 		if dstField.Kind() == reflect.Map {
-			mergeResourceMap(dstField, srcField, providerName, tracker)
+			mergeResourceMap(ctx, dstField, srcField, providerName, tracker, strategy, resourceLogFields)
 		}
 	}
 }
@@ -106,7 +118,7 @@ func mergeResourceMaps(dst, src reflect.Value, providerName string, tracker *mer
 // New keys from src are added to dst.
 // Duplicate keys are merged if the resource type implements a Merge method, otherwise
 // the values must be identical. Conflicts are recorded in the given merge tracker.
-func mergeResourceMap(dst, src reflect.Value, providerName string, tracker *mergeTracker) {
+func mergeResourceMap(ctx context.Context, dst, src reflect.Value, providerName string, tracker *mergeTracker, strategy ResourceStrategy, resourceLogFields map[reflect.Type]string) {
 	if src.IsNil() {
 		return
 	}
@@ -129,8 +141,13 @@ func mergeResourceMap(dst, src reflect.Value, providerName string, tracker *merg
 		}
 
 		// Key exists, need to merge or detect conflict.
-		if !tryMerge(dstValue, srcValue) {
-			tracker.markForDeletion(dst, keyStr, dst.Type().Elem())
+		switch strategy {
+		case ResourceStrategyMerge:
+			if !tryMerge(dstValue, srcValue) {
+				tracker.markForDeletion(dst, keyStr, dst.Type().Elem())
+			}
+		case ResourceStrategySkipDuplicates:
+			logSkippedDuplicate(ctx, dst.Type().Elem(), keyStr, resourceLogFields)
 		}
 	}
 }
@@ -180,32 +197,81 @@ func deleteConflicts(ctx context.Context, tracker *mergeTracker, resourceLogFiel
 	logger := log.Ctx(ctx)
 
 	for ck, info := range tracker.toDelete {
-		origins := tracker.origins[ck]
-		resourceType := typeName(info.elemType)
-		keyField, ok := resourceLogFields[info.elemType]
-		if !ok {
-			keyField = xstrings.ToCamelCase(resourceType) + "Name"
-		}
-
-		typeWords := strings.ReplaceAll(xstrings.ToKebabCase(resourceType), "-", " ")
-
+		keyField, typeWords := resourceLogMeta(info.elemType, resourceLogFields)
 		logger.Error().
 			Str(keyField, ck.key).
-			Interface("configuration", origins).
+			Interface("configuration", tracker.origins[ck]).
 			Msgf("%s defined multiple times with different configurations", xstrings.FirstRuneToUpper(typeWords))
 
-		mapKey := reflect.ValueOf(ck.key)
-		info.mapRef.SetMapIndex(mapKey, reflect.Value{})
+		info.mapRef.SetMapIndex(reflect.ValueOf(ck.key), reflect.Value{})
 	}
 }
 
-// typeName retrieves the type name.
-func typeName(elemType reflect.Type) string {
-	if elemType.Kind() == reflect.Ptr {
-		elemType = elemType.Elem()
+// mergeCertificates merges multiple certificates.
+func mergeCertificates(certificates []*tls.CertAndStores, newCertificates []*tls.CertAndStores, strategy ResourceStrategy) []*tls.CertAndStores {
+	for _, certificate := range newCertificates {
+		var found bool
+		for _, existingCertificate := range certificates {
+			if existingCertificate.Certificate == certificate.Certificate {
+				found = true
+
+				if strategy == ResourceStrategyMerge {
+					existingCertificate.Stores = mergeStores(existingCertificate.Stores, certificate.Stores)
+				}
+
+				break
+			}
+		}
+
+		if !found {
+			certificates = append(certificates, certificate)
+		}
 	}
 
-	return elemType.Name()
+	return certificates
+}
+
+// mergeStores merges two store slices, deduplicating entries while. Order is preserved.
+func mergeStores(existing, new []string) []string {
+	seen := make(map[string]struct{}, len(existing))
+	for _, s := range existing {
+		seen[s] = struct{}{}
+	}
+
+	for _, s := range new {
+		if _, ok := seen[s]; !ok {
+			existing = append(existing, s)
+			seen[s] = struct{}{}
+		}
+	}
+
+	return existing
+}
+
+// logSkippedDuplicate logs a warning when a duplicate resource is skipped.
+func logSkippedDuplicate(ctx context.Context, elemType reflect.Type, key string, resourceLogFields map[reflect.Type]string) {
+	keyField, typeWords := resourceLogMeta(elemType, resourceLogFields)
+	log.Ctx(ctx).Warn().
+		Str(keyField, key).
+		Msgf("%s already configured, skipping", xstrings.FirstRuneToUpper(typeWords))
+}
+
+// resourceLogMeta returns the log field name and human-readable type description for the given resource element type.
+func resourceLogMeta(resourceType reflect.Type, resourceLogFields map[reflect.Type]string) (keyField, typeWords string) {
+	if resourceType.Kind() == reflect.Ptr {
+		resourceType = resourceType.Elem()
+	}
+
+	resourceTypeName := resourceType.Name()
+
+	keyField, ok := resourceLogFields[resourceType]
+	if !ok {
+		keyField = xstrings.ToCamelCase(resourceTypeName) + "Name"
+	}
+
+	typeWords = strings.ReplaceAll(xstrings.ToKebabCase(resourceTypeName), "-", " ")
+
+	return keyField, typeWords
 }
 
 // mergeTracker tracks item origins and items marked for deletion during merge.
