@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"os"
 	"strconv"
 	"strings"
 
@@ -626,6 +627,25 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 		return nil, fmt.Errorf("getting endpointslices: %w", err)
 	}
 
+	// Determine local zone from node labels, to honor EndpointSlice topology hints.
+	preferredZone := ""
+	if !c.disableClusterScopeResources {
+		nodeName := firstNonEmpty(os.Getenv("KUBERNETES_NODE_NAME"), os.Getenv("NODE_NAME"))
+		if nodeName != "" {
+			nodes, nodesExists, nodesErr := c.client.GetNodes()
+			if nodesErr == nil && nodesExists {
+				for _, n := range nodes {
+					if n.Name == nodeName {
+						if z, ok := n.Labels[corev1.LabelTopologyZone]; ok {
+							preferredZone = z
+						}
+						break
+					}
+				}
+			}
+		}
+	}
+
 	addresses := map[string]struct{}{}
 	for _, endpointSlice := range endpointSlices {
 		var port int32
@@ -644,9 +664,25 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 			return nil, err
 		}
 
+		var (
+			weightPreferred = 85
+			weightOther     = 15
+		)
 		for _, endpoint := range endpointSlice.Endpoints {
 			if !k8s.EndpointServing(endpoint) {
 				continue
+			}
+
+			hasForZonesHint := false
+			matchPreferred := false
+			if preferredZone != "" && endpoint.Hints != nil && endpoint.Hints.ForZones != nil {
+				hasForZonesHint = true
+				for _, z := range endpoint.Hints.ForZones {
+					if z.Name == preferredZone {
+						matchPreferred = true
+						break
+					}
+				}
 			}
 
 			for _, address := range endpoint.Addresses {
@@ -655,10 +691,18 @@ func (c configBuilder) loadServers(parentNamespace string, svc traefikv1alpha1.L
 				}
 
 				addresses[address] = struct{}{}
-				servers = append(servers, dynamic.Server{
+				server := dynamic.Server{
 					URL:    fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(address, strconv.Itoa(int(port)))),
 					Fenced: ptr.Deref(endpoint.Conditions.Terminating, false) && ptr.Deref(endpoint.Conditions.Serving, false),
-				})
+				}
+				if hasForZonesHint {
+					if matchPreferred {
+						server.Weight = &weightPreferred
+					} else {
+						server.Weight = &weightOther
+					}
+				}
+				servers = append(servers, server)
 			}
 		}
 	}
@@ -700,6 +744,16 @@ func (c configBuilder) nameAndService(ctx context.Context, parentNamespace strin
 	default:
 		return "", nil, fmt.Errorf("unsupported service kind %s", service.Kind)
 	}
+}
+
+// firstNonEmpty returns the first non-empty string from the inputs.
+func firstNonEmpty(values ...string) string {
+	for _, v := range values {
+		if v != "" {
+			return v
+		}
+	}
+	return ""
 }
 
 func (c configBuilder) buildHRW(ctx context.Context, tService *traefikv1alpha1.TraefikService, id string, conf map[string]*dynamic.Service) error {
