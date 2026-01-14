@@ -218,6 +218,26 @@ type DigestAuth struct {
 
 // +k8s:deepcopy-gen=true
 
+// EncodedCharacters configures which encoded characters are allowed in the request path.
+type EncodedCharacters struct {
+	// AllowEncodedSlash defines whether requests with encoded slash characters in the path are allowed.
+	AllowEncodedSlash bool `json:"allowEncodedSlash,omitempty" toml:"allowEncodedSlash,omitempty" yaml:"allowEncodedSlash,omitempty" export:"true"`
+	// AllowEncodedBackSlash defines whether requests with encoded back slash characters in the path are allowed.
+	AllowEncodedBackSlash bool `json:"allowEncodedBackSlash,omitempty" toml:"allowEncodedBackSlash,omitempty" yaml:"allowEncodedBackSlash,omitempty" export:"true"`
+	// AllowEncodedNullCharacter defines whether requests with encoded null characters in the path are allowed.
+	AllowEncodedNullCharacter bool `json:"allowEncodedNullCharacter,omitempty" toml:"allowEncodedNullCharacter,omitempty" yaml:"allowEncodedNullCharacter,omitempty" export:"true"`
+	// AllowEncodedSemicolon defines whether requests with encoded semicolon characters in the path are allowed.
+	AllowEncodedSemicolon bool `json:"allowEncodedSemicolon,omitempty" toml:"allowEncodedSemicolon,omitempty" yaml:"allowEncodedSemicolon,omitempty" export:"true"`
+	// AllowEncodedPercent defines whether requests with encoded percent characters in the path are allowed.
+	AllowEncodedPercent bool `json:"allowEncodedPercent,omitempty" toml:"allowEncodedPercent,omitempty" yaml:"allowEncodedPercent,omitempty" export:"true"`
+	// AllowEncodedQuestionMark defines whether requests with encoded question mark characters in the path are allowed.
+	AllowEncodedQuestionMark bool `json:"allowEncodedQuestionMark,omitempty" toml:"allowEncodedQuestionMark,omitempty" yaml:"allowEncodedQuestionMark,omitempty" export:"true"`
+	// AllowEncodedHash defines whether requests with encoded hash characters in the path are allowed.
+	AllowEncodedHash bool `json:"allowEncodedHash,omitempty" toml:"allowEncodedHash,omitempty" yaml:"allowEncodedHash,omitempty" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
 // ErrorPage holds the custom error middleware configuration.
 // This middleware returns a custom page in lieu of the default, according to configured ranges of HTTP Status codes.
 type ErrorPage struct {
@@ -829,24 +849,4 @@ type URLRewrite struct {
 	Hostname   *string `json:"hostname,omitempty"`
 	Path       *string `json:"path,omitempty"`
 	PathPrefix *string `json:"pathPrefix,omitempty"`
-}
-
-// +k8s:deepcopy-gen=true
-
-// EncodedCharacters configures which encoded characters are allowed in the request path.
-type EncodedCharacters struct {
-	// AllowEncodedSlash defines whether requests with encoded slash characters in the path are allowed.
-	AllowEncodedSlash bool `json:"allowEncodedSlash,omitempty" toml:"allowEncodedSlash,omitempty" yaml:"allowEncodedSlash,omitempty" export:"true"`
-	// AllowEncodedBackSlash defines whether requests with encoded back slash characters in the path are allowed.
-	AllowEncodedBackSlash bool `json:"allowEncodedBackSlash,omitempty" toml:"allowEncodedBackSlash,omitempty" yaml:"allowEncodedBackSlash,omitempty" export:"true"`
-	// AllowEncodedNullCharacter defines whether requests with encoded null characters in the path are allowed.
-	AllowEncodedNullCharacter bool `json:"allowEncodedNullCharacter,omitempty" toml:"allowEncodedNullCharacter,omitempty" yaml:"allowEncodedNullCharacter,omitempty" export:"true"`
-	// AllowEncodedSemicolon defines whether requests with encoded semicolon characters in the path are allowed.
-	AllowEncodedSemicolon bool `json:"allowEncodedSemicolon,omitempty" toml:"allowEncodedSemicolon,omitempty" yaml:"allowEncodedSemicolon,omitempty" export:"true"`
-	// AllowEncodedPercent defines whether requests with encoded percent characters in the path are allowed.
-	AllowEncodedPercent bool `json:"allowEncodedPercent,omitempty" toml:"allowEncodedPercent,omitempty" yaml:"allowEncodedPercent,omitempty" export:"true"`
-	// AllowEncodedQuestionMark defines whether requests with encoded question mark characters in the path are allowed.
-	AllowEncodedQuestionMark bool `json:"allowEncodedQuestionMark,omitempty" toml:"allowEncodedQuestionMark,omitempty" yaml:"allowEncodedQuestionMark,omitempty" export:"true"`
-	// AllowEncodedHash defines whether requests with encoded hash characters in the path are allowed.
-	AllowEncodedHash bool `json:"allowEncodedHash,omitempty" toml:"allowEncodedHash,omitempty" yaml:"allowEncodedHash,omitempty" export:"true"`
 }
