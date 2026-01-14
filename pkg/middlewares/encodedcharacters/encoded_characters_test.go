@@ -182,3 +182,60 @@ func TestEncodedCharacters(t *testing.T) {
 		})
 	}
 }
+
+func TestMapDeniedCharacters(t *testing.T) {
+	testCases := []struct {
+		desc               string
+		config             dynamic.EncodedCharacters
+		expectedDeniedChar map[string]struct{}
+	}{
+		{
+			desc:   "deny all characters",
+			config: dynamic.EncodedCharacters{},
+			expectedDeniedChar: map[string]struct{}{
+				"%2F": {}, "%2f": {}, // slash
+				"%5C": {}, "%5c": {}, // backslash
+				"%00": {},            // null
+				"%3B": {}, "%3b": {}, // semicolon
+				"%25": {},            // percent
+				"%3F": {}, "%3f": {}, // question mark
+				"%23": {}, // hash
+			},
+		},
+		{
+			desc: "allow only encoded slash",
+			config: dynamic.EncodedCharacters{
+				AllowEncodedSlash: true,
+			},
+			expectedDeniedChar: map[string]struct{}{
+				"%5C": {}, "%5c": {}, // backslash
+				"%00": {},            // null
+				"%3B": {}, "%3b": {}, // semicolon
+				"%25": {},            // percent
+				"%3F": {}, "%3f": {}, // question mark
+				"%23": {}, // hash
+			},
+		},
+		{
+			desc: "allow all characters",
+			config: dynamic.EncodedCharacters{
+				AllowEncodedSlash:         true,
+				AllowEncodedBackSlash:     true,
+				AllowEncodedNullCharacter: true,
+				AllowEncodedSemicolon:     true,
+				AllowEncodedPercent:       true,
+				AllowEncodedQuestionMark:  true,
+				AllowEncodedHash:          true,
+			},
+			expectedDeniedChar: map[string]struct{}{},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			deniedMap := mapDeniedCharacters(test.config)
+			require.Equal(t, test.expectedDeniedChar, deniedMap)
+			require.Equal(t, len(test.expectedDeniedChar), len(deniedMap))
+		})
+	}
+}
