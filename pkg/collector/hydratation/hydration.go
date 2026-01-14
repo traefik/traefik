@@ -18,7 +18,7 @@ const (
 )
 
 // Hydrate hydrates a configuration.
-func Hydrate(element interface{}) error {
+func Hydrate(element any) error {
 	field := reflect.ValueOf(element)
 	return fill(field)
 }
@@ -55,7 +55,7 @@ func fill(field reflect.Value) error {
 		setTyped(field, int32(defaultNumber))
 	case reflect.Int64:
 		switch field.Type() {
-		case reflect.TypeOf(types.Duration(time.Second)):
+		case reflect.TypeFor[types.Duration]():
 			setTyped(field, types.Duration(defaultNumber*time.Second))
 		default:
 			setTyped(field, int64(defaultNumber))
@@ -81,7 +81,7 @@ func fill(field reflect.Value) error {
 	return nil
 }
 
-func setTyped(field reflect.Value, i interface{}) {
+func setTyped(field reflect.Value, i any) {
 	baseValue := reflect.ValueOf(i)
 	if field.Kind().String() == field.Type().String() {
 		field.Set(baseValue)

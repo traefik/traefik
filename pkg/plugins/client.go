@@ -245,35 +245,6 @@ func (c *Client) Unzip(pName, pVersion string) error {
 	return c.unzipArchive(pName, pVersion)
 }
 
-func (c *Client) unzipModule(pName, pVersion string) error {
-	src := c.buildArchivePath(pName, pVersion)
-	dest := filepath.Join(c.sources, filepath.FromSlash(pName))
-
-	return zip.Unzip(dest, module.Version{Path: pName, Version: pVersion}, src)
-}
-
-func (c *Client) unzipArchive(pName, pVersion string) error {
-	zipPath := c.buildArchivePath(pName, pVersion)
-
-	archive, err := zipa.OpenReader(zipPath)
-	if err != nil {
-		return err
-	}
-
-	defer func() { _ = archive.Close() }()
-
-	dest := filepath.Join(c.sources, filepath.FromSlash(pName))
-
-	for _, f := range archive.File {
-		err = unzipFile(f, dest)
-		if err != nil {
-			return fmt.Errorf("unable to unzip %s: %w", f.Name, err)
-		}
-	}
-
-	return nil
-}
-
 func unzipFile(f *zipa.File, dest string) error {
 	rc, err := f.Open()
 	if err != nil {
@@ -399,6 +370,35 @@ func (c *Client) ResetAll() error {
 	err = resetDirectory(c.archives)
 	if err != nil {
 		return fmt.Errorf("unable to reset plugins archives directory: %w", err)
+	}
+
+	return nil
+}
+
+func (c *Client) unzipModule(pName, pVersion string) error {
+	src := c.buildArchivePath(pName, pVersion)
+	dest := filepath.Join(c.sources, filepath.FromSlash(pName))
+
+	return zip.Unzip(dest, module.Version{Path: pName, Version: pVersion}, src)
+}
+
+func (c *Client) unzipArchive(pName, pVersion string) error {
+	zipPath := c.buildArchivePath(pName, pVersion)
+
+	archive, err := zipa.OpenReader(zipPath)
+	if err != nil {
+		return err
+	}
+
+	defer func() { _ = archive.Close() }()
+
+	dest := filepath.Join(c.sources, filepath.FromSlash(pName))
+
+	for _, f := range archive.File {
+		err = unzipFile(f, dest)
+		if err != nil {
+			return fmt.Errorf("unable to unzip %s: %w", f.Name, err)
+		}
 	}
 
 	return nil

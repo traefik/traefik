@@ -81,7 +81,7 @@ func (s *DockerSuite) TestDefaultDockerContainers() {
 	body, err := io.ReadAll(resp.Body)
 	require.NoError(s.T(), err)
 
-	var version map[string]interface{}
+	var version map[string]any
 
 	assert.NoError(s.T(), json.Unmarshal(body, &version))
 	assert.Equal(s.T(), "swarm/1.0.0", version["Version"])
@@ -145,7 +145,7 @@ func (s *DockerSuite) TestDockerContainersWithLabels() {
 	body, err := io.ReadAll(resp.Body)
 	require.NoError(s.T(), err)
 
-	var version map[string]interface{}
+	var version map[string]any
 
 	assert.NoError(s.T(), json.Unmarshal(body, &version))
 	assert.Equal(s.T(), "swarm/1.0.0", version["Version"])
@@ -203,7 +203,7 @@ func (s *DockerSuite) TestRestartDockerContainers() {
 	body, err := io.ReadAll(resp.Body)
 	require.NoError(s.T(), err)
 
-	var version map[string]interface{}
+	var version map[string]any
 
 	assert.NoError(s.T(), json.Unmarshal(body, &version))
 	assert.Equal(s.T(), "swarm/1.0.0", version["Version"])

@@ -40,7 +40,7 @@ type clientMock struct {
 	traefikServices  []*traefikv1alpha1.TraefikService
 	serversTransport []*traefikv1alpha1.ServersTransport
 
-	watchChan chan interface{}
+	watchChan chan any
 }
 
 func newClientMock(paths ...string) clientMock {
@@ -184,6 +184,6 @@ func (c clientMock) GetSecret(namespace, name string) (*corev1.Secret, bool, err
 	return nil, false, nil
 }
 
-func (c clientMock) WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error) {
+func (c clientMock) WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan any, error) {
 	return c.watchChan, nil
 }

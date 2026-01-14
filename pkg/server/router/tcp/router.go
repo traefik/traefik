@@ -200,27 +200,6 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 	conn.Close()
 }
 
-// acmeTLSALPNHandler returns a special handler to solve ACME-TLS/1 challenges.
-func (r *Router) acmeTLSALPNHandler() tcp.Handler {
-	if r.httpsTLSConfig == nil {
-		return &brokenTLSRouter{}
-	}
-
-	return tcp.HandlerFunc(func(conn tcp.WriteCloser) {
-		tlsConn := tls.Server(conn, r.httpsTLSConfig)
-		defer tlsConn.Close()
-
-		// This avoids stale connections when validating the ACME challenge,
-		// as we expect a validation request to complete in a short period of time.
-		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-		defer cancel()
-
-		if err := tlsConn.HandshakeContext(ctx); err != nil {
-			log.FromContext(ctx).WithError(err).Debug("Error during ACME-TLS/1 handshake")
-		}
-	})
-}
-
 // AddRoute defines a handler for the given rule.
 func (r *Router) AddRoute(rule string, priority int, target tcp.Handler) error {
 	return r.muxerTCP.AddRoute(rule, priority, target)
@@ -320,17 +299,38 @@ func (r *Router) EnableACMETLSPassthrough() {
 	r.acmeTLSPassthrough = true
 }
 
+// acmeTLSALPNHandler returns a special handler to solve ACME-TLS/1 challenges.
+func (r *Router) acmeTLSALPNHandler() tcp.Handler {
+	if r.httpsTLSConfig == nil {
+		return &brokenTLSRouter{}
+	}
+
+	return tcp.HandlerFunc(func(conn tcp.WriteCloser) {
+		tlsConn := tls.Server(conn, r.httpsTLSConfig)
+		defer tlsConn.Close()
+
+		// This avoids stale connections when validating the ACME challenge,
+		// as we expect a validation request to complete in a short period of time.
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+
+		if err := tlsConn.HandshakeContext(ctx); err != nil {
+			log.FromContext(ctx).WithError(err).Debug("Error during ACME-TLS/1 handshake")
+		}
+	})
+}
+
 // Conn is a connection proxy that handles Peeked bytes.
 type Conn struct {
-	// Peeked are the bytes that have been read from Conn for the purposes of route matching,
-	// but have not yet been consumed by Read calls.
-	// It set to nil by Read when fully consumed.
-	Peeked []byte
-
 	// Conn is the underlying connection.
 	// It can be type asserted against *net.TCPConn or other types as needed.
 	// It should not be read from directly unless Peeked is nil.
 	tcp.WriteCloser
+
+	// Peeked are the bytes that have been read from Conn for the purposes of route matching,
+	// but have not yet been consumed by Read calls.
+	// It set to nil by Read when fully consumed.
+	Peeked []byte
 }
 
 // Read reads bytes from the connection (using the buffer prior to actually reading).
@@ -439,8 +439,9 @@ func getPeeked(br *bufio.Reader) string {
 // helloSniffConn is a net.Conn that reads from r, fails on Writes,
 // and crashes otherwise.
 type helloSniffConn struct {
-	r        io.Reader
 	net.Conn // nil; crash on any unexpected use
+
+	r io.Reader
 }
 
 // Read reads from the underlying reader.

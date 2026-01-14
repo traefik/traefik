@@ -82,17 +82,6 @@ func (p *Provider) Init() error {
 	return nil
 }
 
-func (p *Provider) createClient(ctx context.Context) (rancher.Client, error) {
-	metadataServiceURL := fmt.Sprintf("http://rancher-metadata.rancher.internal/%s", p.Prefix)
-	client, err := rancher.NewClientAndWait(metadataServiceURL)
-	if err != nil {
-		log.FromContext(ctx).Errorf("Failed to create Rancher metadata service client: %v", err)
-		return nil, err
-	}
-
-	return client, nil
-}
-
 // Provide allows the rancher provider to provide configurations to traefik using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	pool.GoCtx(func(routineCtx context.Context) {
@@ -148,6 +137,17 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	})
 
 	return nil
+}
+
+func (p *Provider) createClient(ctx context.Context) (rancher.Client, error) {
+	metadataServiceURL := fmt.Sprintf("http://rancher-metadata.rancher.internal/%s", p.Prefix)
+	client, err := rancher.NewClientAndWait(metadataServiceURL)
+	if err != nil {
+		log.FromContext(ctx).Errorf("Failed to create Rancher metadata service client: %v", err)
+		return nil, err
+	}
+
+	return client, nil
 }
 
 func (p *Provider) intervalPoll(ctx context.Context, client rancher.Client, updateConfiguration func(string)) {

@@ -58,7 +58,7 @@ func RegisterDatadog(ctx context.Context, config *types.Datadog) Registry {
 		config.Prefix = defaultMetricsPrefix
 	}
 
-	datadogClient = dogstatsd.New(config.Prefix+".", kitlog.LoggerFunc(func(keyvals ...interface{}) error {
+	datadogClient = dogstatsd.New(config.Prefix+".", kitlog.LoggerFunc(func(keyvals ...any) error {
 		log.WithoutContext().WithField(log.MetricsProviderName, "datadog").Info(keyvals...)
 		return nil
 	}))

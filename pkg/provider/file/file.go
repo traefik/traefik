@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"os"
 	"path"
 	"path/filepath"
@@ -104,6 +105,51 @@ func (p *Provider) BuildConfiguration() (*dynamic.Configuration, error) {
 	}
 
 	return nil, errors.New("error using file configuration provider, neither filename or directory defined")
+}
+
+// CreateConfiguration creates a provider configuration from content using templating.
+func (p *Provider) CreateConfiguration(ctx context.Context, filename string, funcMap template.FuncMap, templateObjects any) (*dynamic.Configuration, error) {
+	tmplContent, err := readFile(filename)
+	if err != nil {
+		return nil, fmt.Errorf("error reading configuration file: %s - %w", filename, err)
+	}
+
+	defaultFuncMap := sprig.TxtFuncMap()
+	defaultFuncMap["normalize"] = provider.Normalize
+	defaultFuncMap["split"] = strings.Split
+	maps.Copy(defaultFuncMap, funcMap)
+
+	tmpl := template.New(p.Filename).Funcs(defaultFuncMap)
+
+	_, err = tmpl.Parse(tmplContent)
+	if err != nil {
+		return nil, err
+	}
+
+	var buffer bytes.Buffer
+	err = tmpl.Execute(&buffer, templateObjects)
+	if err != nil {
+		return nil, err
+	}
+
+	renderedTemplate := buffer.String()
+	if p.DebugLogGeneratedTemplate {
+		logger := log.FromContext(ctx)
+		logger.Debugf("Template content: %s", tmplContent)
+		logger.Debugf("Rendering results: %s", renderedTemplate)
+	}
+
+	return p.decodeConfiguration(filename, renderedTemplate)
+}
+
+// DecodeConfiguration Decodes a *types.Configuration from a content.
+func (p *Provider) DecodeConfiguration(filename string) (*dynamic.Configuration, error) {
+	content, err := readFile(filename)
+	if err != nil {
+		return nil, fmt.Errorf("error reading configuration file: %s - %w", filename, err)
+	}
+
+	return p.decodeConfiguration(filename, content)
 }
 
 func (p *Provider) addWatcher(pool *safe.Pool, items []string, configurationChan chan<- dynamic.Message, callback func(chan<- dynamic.Message, fsnotify.Event)) error {
@@ -468,53 +514,6 @@ func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory st
 	}
 
 	return configuration, nil
-}
-
-// CreateConfiguration creates a provider configuration from content using templating.
-func (p *Provider) CreateConfiguration(ctx context.Context, filename string, funcMap template.FuncMap, templateObjects interface{}) (*dynamic.Configuration, error) {
-	tmplContent, err := readFile(filename)
-	if err != nil {
-		return nil, fmt.Errorf("error reading configuration file: %s - %w", filename, err)
-	}
-
-	defaultFuncMap := sprig.TxtFuncMap()
-	defaultFuncMap["normalize"] = provider.Normalize
-	defaultFuncMap["split"] = strings.Split
-	for funcID, funcElement := range funcMap {
-		defaultFuncMap[funcID] = funcElement
-	}
-
-	tmpl := template.New(p.Filename).Funcs(defaultFuncMap)
-
-	_, err = tmpl.Parse(tmplContent)
-	if err != nil {
-		return nil, err
-	}
-
-	var buffer bytes.Buffer
-	err = tmpl.Execute(&buffer, templateObjects)
-	if err != nil {
-		return nil, err
-	}
-
-	renderedTemplate := buffer.String()
-	if p.DebugLogGeneratedTemplate {
-		logger := log.FromContext(ctx)
-		logger.Debugf("Template content: %s", tmplContent)
-		logger.Debugf("Rendering results: %s", renderedTemplate)
-	}
-
-	return p.decodeConfiguration(filename, renderedTemplate)
-}
-
-// DecodeConfiguration Decodes a *types.Configuration from a content.
-func (p *Provider) DecodeConfiguration(filename string) (*dynamic.Configuration, error) {
-	content, err := readFile(filename)
-	if err != nil {
-		return nil, fmt.Errorf("error reading configuration file: %s - %w", filename, err)
-	}
-
-	return p.decodeConfiguration(filename, content)
 }
 
 func (p *Provider) decodeConfiguration(filePath, content string) (*dynamic.Configuration, error) {

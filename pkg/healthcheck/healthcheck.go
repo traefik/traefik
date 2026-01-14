@@ -82,8 +82,17 @@ type backendURL struct {
 // BackendConfig HealthCheck configuration for a backend.
 type BackendConfig struct {
 	Options
+
 	name         string
 	disabledURLs []backendURL
+}
+
+// NewBackendConfig Instantiate a new BackendConfig.
+func NewBackendConfig(options Options, backendName string) *BackendConfig {
+	return &BackendConfig{
+		Options: options,
+		name:    backendName,
+	}
 }
 
 func (b *BackendConfig) newRequest(serverURL *url.URL) (*http.Request, error) {
@@ -236,14 +245,6 @@ func newHealthCheck(registry metrics.Registry) *HealthCheck {
 	}
 }
 
-// NewBackendConfig Instantiate a new BackendConfig.
-func NewBackendConfig(options Options, backendName string) *BackendConfig {
-	return &BackendConfig{
-		Options: options,
-		name:    backendName,
-	}
-}
-
 // checkHealth returns a nil error in case it was successful and otherwise
 // a non-nil error with a meaningful description why the health check failed.
 func checkHealth(serverURL *url.URL, backend *BackendConfig) error {
@@ -286,6 +287,16 @@ type StatusUpdater interface {
 	RegisterStatusUpdater(fn func(up bool)) error
 }
 
+// LbStatusUpdater wraps a BalancerHandler and a ServiceInfo,
+// so it can keep track of the status of a server in the ServiceInfo.
+type LbStatusUpdater struct {
+	BalancerHandler
+
+	serviceInfo      *runtime.ServiceInfo // can be nil
+	updaters         []func(up bool)
+	wantsHealthCheck bool
+}
+
 // NewLBStatusUpdater returns a new LbStatusUpdater.
 func NewLBStatusUpdater(bh BalancerHandler, info *runtime.ServiceInfo, hc *dynamic.ServerHealthCheck) *LbStatusUpdater {
 	return &LbStatusUpdater{
@@ -293,15 +304,6 @@ func NewLBStatusUpdater(bh BalancerHandler, info *runtime.ServiceInfo, hc *dynam
 		serviceInfo:      info,
 		wantsHealthCheck: hc != nil,
 	}
-}
-
-// LbStatusUpdater wraps a BalancerHandler and a ServiceInfo,
-// so it can keep track of the status of a server in the ServiceInfo.
-type LbStatusUpdater struct {
-	BalancerHandler
-	serviceInfo      *runtime.ServiceInfo // can be nil
-	updaters         []func(up bool)
-	wantsHealthCheck bool
 }
 
 // RegisterStatusUpdater adds fn to the list of hooks that are run when the

@@ -17,11 +17,11 @@ type LocalDescriptor struct {
 
 // Manifest The plugin manifest.
 type Manifest struct {
-	DisplayName   string                 `yaml:"displayName"`
-	Type          string                 `yaml:"type"`
-	Import        string                 `yaml:"import"`
-	BasePkg       string                 `yaml:"basePkg"`
-	Compatibility string                 `yaml:"compatibility"`
-	Summary       string                 `yaml:"summary"`
-	TestData      map[string]interface{} `yaml:"testData"`
+	DisplayName   string         `yaml:"displayName"`
+	Type          string         `yaml:"type"`
+	Import        string         `yaml:"import"`
+	BasePkg       string         `yaml:"basePkg"`
+	Compatibility string         `yaml:"compatibility"`
+	Summary       string         `yaml:"summary"`
+	TestData      map[string]any `yaml:"testData"`
 }

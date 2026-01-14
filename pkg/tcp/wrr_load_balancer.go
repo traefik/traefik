@@ -11,6 +11,7 @@ var errNoServersInPool = errors.New("no servers in the pool")
 
 type server struct {
 	Handler
+
 	weight int
 }
 

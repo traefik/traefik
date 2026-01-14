@@ -83,8 +83,7 @@ func (c *Certificates) String() string {
 // Set's argument is a string to be parsed to set the flag.
 // It's a comma-separated list, so we split it.
 func (c *Certificates) Set(value string) error {
-	certificates := strings.Split(value, ";")
-	for _, certificate := range certificates {
+	for certificate := range strings.SplitSeq(value, ";") {
 		files := strings.Split(certificate, ",")
 		if len(files) != 2 {
 			return fmt.Errorf("bad certificates format: %s", value)
@@ -162,9 +161,9 @@ func (c *Certificate) AppendCertificate(certs map[string]map[string]*tls.Certifi
 		}
 	}
 	if certExists {
-		log.Debugf("Skipping addition of certificate for domain(s) %q, to TLS Store %s, as it already exists for this store.", certKey, storeName)
+		log.WithoutContext().Debugf("Skipping addition of certificate for domain(s) %q, to TLS Store %s, as it already exists for this store.", certKey, storeName)
 	} else {
-		log.Debugf("Adding certificate for domain(s) %s", certKey)
+		log.WithoutContext().Debugf("Adding certificate for domain(s) %s", certKey)
 		certs[storeName][certKey] = &tlsCert
 	}
 

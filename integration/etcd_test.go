@@ -24,6 +24,7 @@ import (
 // etcd test suites.
 type EtcdSuite struct {
 	BaseSuite
+
 	kvClient store.Store
 	etcdAddr string
 }

@@ -101,43 +101,6 @@ func (p *Provider) Init() error {
 	return nil
 }
 
-func (p *Provider) createClient(ctx context.Context, logger log.Logger) (*awsClient, error) {
-	optFns := []func(*config.LoadOptions) error{
-		config.WithLogger(logging.LoggerFunc(func(_ logging.Classification, format string, args ...interface{}) {
-			logger.Debugf(format, args...)
-		})),
-	}
-	if p.Region != "" {
-		optFns = append(optFns, config.WithRegion(p.Region))
-	} else {
-		logger.Infoln("No region provided, will retrieve region from the EC2 Metadata service")
-		optFns = append(optFns, config.WithEC2IMDSRegion())
-	}
-
-	if p.AccessKeyID != "" && p.SecretAccessKey != "" {
-		// From https://docs.aws.amazon.com/sdk-for-go/v2/developer-guide/configure-gosdk.html#specify-credentials-programmatically:
-		//   "If you explicitly provide credentials, as in this example, the SDK uses only those credentials."
-		// this makes sure that user-defined credentials always have the highest priority
-		staticCreds := aws.NewCredentialsCache(credentials.NewStaticCredentialsProvider(p.AccessKeyID, p.SecretAccessKey, ""))
-		optFns = append(optFns, config.WithCredentialsProvider(staticCreds))
-
-		// If the access key and secret access key are not provided, config.LoadDefaultConfig
-		// will look for the credentials in the default credential chain.
-		// See https://docs.aws.amazon.com/sdk-for-go/v2/developer-guide/configure-gosdk.html#specifying-credentials.
-	}
-
-	cfg, err := config.LoadDefaultConfig(ctx, optFns...)
-	if err != nil {
-		return nil, err
-	}
-
-	return &awsClient{
-		ecs.NewFromConfig(cfg),
-		ec2.NewFromConfig(cfg),
-		ssm.NewFromConfig(cfg),
-	}, nil
-}
-
 // Provide configuration to traefik from ECS.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	pool.GoCtx(func(routineCtx context.Context) {
@@ -182,6 +145,43 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	})
 
 	return nil
+}
+
+func (p *Provider) createClient(ctx context.Context, logger log.Logger) (*awsClient, error) {
+	optFns := []func(*config.LoadOptions) error{
+		config.WithLogger(logging.LoggerFunc(func(_ logging.Classification, format string, args ...any) {
+			logger.Debugf(format, args...)
+		})),
+	}
+	if p.Region != "" {
+		optFns = append(optFns, config.WithRegion(p.Region))
+	} else {
+		logger.Infoln("No region provided, will retrieve region from the EC2 Metadata service")
+		optFns = append(optFns, config.WithEC2IMDSRegion())
+	}
+
+	if p.AccessKeyID != "" && p.SecretAccessKey != "" {
+		// From https://docs.aws.amazon.com/sdk-for-go/v2/developer-guide/configure-gosdk.html#specify-credentials-programmatically:
+		//   "If you explicitly provide credentials, as in this example, the SDK uses only those credentials."
+		// this makes sure that user-defined credentials always have the highest priority
+		staticCreds := aws.NewCredentialsCache(credentials.NewStaticCredentialsProvider(p.AccessKeyID, p.SecretAccessKey, ""))
+		optFns = append(optFns, config.WithCredentialsProvider(staticCreds))
+
+		// If the access key and secret access key are not provided, config.LoadDefaultConfig
+		// will look for the credentials in the default credential chain.
+		// See https://docs.aws.amazon.com/sdk-for-go/v2/developer-guide/configure-gosdk.html#specifying-credentials.
+	}
+
+	cfg, err := config.LoadDefaultConfig(ctx, optFns...)
+	if err != nil {
+		return nil, err
+	}
+
+	return &awsClient{
+		ecs.NewFromConfig(cfg),
+		ec2.NewFromConfig(cfg),
+		ssm.NewFromConfig(cfg),
+	}, nil
 }
 
 func (p *Provider) loadConfiguration(ctx context.Context, client *awsClient, configurationChan chan<- dynamic.Message) error {

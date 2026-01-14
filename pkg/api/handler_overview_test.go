@@ -243,7 +243,7 @@ func TestHandler_Overview(t *testing.T) {
 					Rest:              &rest.Provider{},
 					Rancher:           &rancher.Provider{},
 					Plugin: map[string]static.PluginConf{
-						"test": map[string]interface{}{},
+						"test": map[string]any{},
 					},
 				},
 			},
@@ -298,7 +298,7 @@ func TestHandler_Overview(t *testing.T) {
 			require.NoError(t, err)
 
 			if *updateExpected {
-				var results interface{}
+				var results any
 				err := json.Unmarshal(contents, &results)
 				require.NoError(t, err)
 

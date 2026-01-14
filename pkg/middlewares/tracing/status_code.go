@@ -22,6 +22,7 @@ func newStatusCodeRecoder(rw http.ResponseWriter, status int) statusCodeRecoder 
 
 type statusCodeWithoutCloseNotify struct {
 	http.ResponseWriter
+
 	status int
 }
 

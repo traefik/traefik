@@ -15,6 +15,7 @@ import (
 
 type namedHandler struct {
 	http.Handler
+
 	name     string
 	weight   float64
 	deadline float64
@@ -82,7 +83,7 @@ func (b *Balancer) Swap(i, j int) {
 }
 
 // Push implements heap.Interface for pushing an item into the heap.
-func (b *Balancer) Push(x interface{}) {
+func (b *Balancer) Push(x any) {
 	h, ok := x.(*namedHandler)
 	if !ok {
 		return
@@ -93,7 +94,7 @@ func (b *Balancer) Push(x interface{}) {
 
 // Pop implements heap.Interface for popping an item from the heap.
 // It panics if b.Len() < 1.
-func (b *Balancer) Pop() interface{} {
+func (b *Balancer) Pop() any {
 	h := b.handlers[len(b.handlers)-1]
 	b.handlers = b.handlers[0 : len(b.handlers)-1]
 	return h
@@ -150,36 +151,6 @@ func (b *Balancer) RegisterStatusUpdater(fn func(up bool)) error {
 }
 
 var errNoAvailableServer = errors.New("no available server")
-
-func (b *Balancer) nextServer() (*namedHandler, error) {
-	b.handlersMu.Lock()
-	defer b.handlersMu.Unlock()
-
-	if len(b.handlers) == 0 {
-		return nil, errors.New("no servers in the pool")
-	}
-	if len(b.status) == 0 {
-		return nil, errNoAvailableServer
-	}
-
-	var handler *namedHandler
-	for {
-		// Pick handler with closest deadline.
-		handler = heap.Pop(b).(*namedHandler)
-
-		// curDeadline should be handler's deadline so that new added entry would have a fair competition environment with the old ones.
-		b.curDeadline = handler.deadline
-		handler.deadline += 1 / handler.weight
-
-		heap.Push(b, handler)
-		if _, ok := b.status[handler.name]; ok {
-			break
-		}
-	}
-
-	log.WithoutContext().Debugf("Service selected by WRR: %s", handler.name)
-	return handler, nil
-}
 
 func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if b.stickyCookie != nil {
@@ -245,6 +216,36 @@ func (b *Balancer) AddService(name string, handler http.Handler, weight *int) {
 	b.handlerMap[name] = h
 	b.handlerMap[hash(name)] = h
 	b.handlersMu.Unlock()
+}
+
+func (b *Balancer) nextServer() (*namedHandler, error) {
+	b.handlersMu.Lock()
+	defer b.handlersMu.Unlock()
+
+	if len(b.handlers) == 0 {
+		return nil, errors.New("no servers in the pool")
+	}
+	if len(b.status) == 0 {
+		return nil, errNoAvailableServer
+	}
+
+	var handler *namedHandler
+	for {
+		// Pick handler with closest deadline.
+		handler = heap.Pop(b).(*namedHandler)
+
+		// curDeadline should be handler's deadline so that new added entry would have a fair competition environment with the old ones.
+		b.curDeadline = handler.deadline
+		handler.deadline += 1 / handler.weight
+
+		heap.Push(b, handler)
+		if _, ok := b.status[handler.name]; ok {
+			break
+		}
+	}
+
+	log.WithoutContext().Debugf("Service selected by WRR: %s", handler.name)
+	return handler, nil
 }
 
 func hash(input string) string {

@@ -87,8 +87,8 @@ type Basic struct {
 // Init the provider.
 func (p *Provider) Init() error {
 	fm := template.FuncMap{
-		"strsToItfs": func(values []string) []interface{} {
-			var r []interface{}
+		"strsToItfs": func(values []string) []any {
+			var r []any
 			for _, v := range values {
 				r = append(r, v)
 			}

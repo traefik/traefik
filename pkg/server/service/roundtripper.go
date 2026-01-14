@@ -29,19 +29,19 @@ func (t *h2cTransportWrapper) RoundTrip(req *http.Request) (*http.Response, erro
 	return t.Transport.RoundTrip(req)
 }
 
+// RoundTripperManager handles roundtripper for the reverse proxy.
+type RoundTripperManager struct {
+	rtLock        sync.RWMutex
+	roundTrippers map[string]http.RoundTripper
+	configs       map[string]*dynamic.ServersTransport
+}
+
 // NewRoundTripperManager creates a new RoundTripperManager.
 func NewRoundTripperManager() *RoundTripperManager {
 	return &RoundTripperManager{
 		roundTrippers: make(map[string]http.RoundTripper),
 		configs:       make(map[string]*dynamic.ServersTransport),
 	}
-}
-
-// RoundTripperManager handles roundtripper for the reverse proxy.
-type RoundTripperManager struct {
-	rtLock        sync.RWMutex
-	roundTrippers map[string]http.RoundTripper
-	configs       map[string]*dynamic.ServersTransport
 }
 
 // Update updates the roundtrippers configurations.

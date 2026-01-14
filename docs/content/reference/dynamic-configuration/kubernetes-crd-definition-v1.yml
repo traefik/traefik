@@ -1273,6 +1273,7 @@ spec:
                   IPWhiteList holds the IP whitelist middleware configuration.
                   This middleware limits allowed requests based on the client IP.
                   More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/ipwhitelist/
+
                   Deprecated: please use IPAllowList instead.
                 properties:
                   ipStrategy:
@@ -1663,8 +1664,9 @@ spec:
                 description: |-
                   IPWhiteList defines the IPWhiteList middleware configuration.
                   This middleware accepts/refuses connections based on the client IP.
-                  Deprecated: please use IPAllowList instead.
                   More info: https://doc.traefik.io/traefik/v2.11/middlewares/tcp/ipwhitelist/
+
+                  Deprecated: please use IPAllowList instead.
                 properties:
                   sourceRange:
                     description: SourceRange defines the allowed IPs (or ranges of
@@ -1907,6 +1909,7 @@ spec:
                 description: |-
                   PreferServerCipherSuites defines whether the server chooses a cipher suite among his own instead of among the client's.
                   It is enabled automatically when minVersion or maxVersion is set.
+
                   Deprecated: https://github.com/golang/go/issues/45430
                 type: boolean
               sniStrict:
@@ -3703,6 +3706,7 @@ spec:
                   IPWhiteList holds the IP whitelist middleware configuration.
                   This middleware limits allowed requests based on the client IP.
                   More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/ipwhitelist/
+
                   Deprecated: please use IPAllowList instead.
                 properties:
                   ipStrategy:
@@ -4093,8 +4097,9 @@ spec:
                 description: |-
                   IPWhiteList defines the IPWhiteList middleware configuration.
                   This middleware accepts/refuses connections based on the client IP.
-                  Deprecated: please use IPAllowList instead.
                   More info: https://doc.traefik.io/traefik/v2.11/middlewares/tcp/ipwhitelist/
+
+                  Deprecated: please use IPAllowList instead.
                 properties:
                   sourceRange:
                     description: SourceRange defines the allowed IPs (or ranges of
@@ -4337,6 +4342,7 @@ spec:
                 description: |-
                   PreferServerCipherSuites defines whether the server chooses a cipher suite among his own instead of among the client's.
                   It is enabled automatically when minVersion or maxVersion is set.
+
                   Deprecated: https://github.com/golang/go/issues/45430
                 type: boolean
               sniStrict:

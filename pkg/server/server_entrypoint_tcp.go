@@ -56,6 +56,7 @@ type connState struct {
 
 type httpForwarder struct {
 	net.Listener
+
 	connChan chan net.Conn
 	errChan  chan error
 }
@@ -369,6 +370,7 @@ func (e *TCPEntryPoint) SwitchRouter(rt *tcprouter.Router) {
 // connection type that was found to satisfy WriteCloser.
 type writeCloserWrapper struct {
 	net.Conn
+
 	writeCloser tcp.WriteCloser
 }
 
@@ -506,12 +508,6 @@ func (c *connectionTracker) RemoveConnection(conn net.Conn) {
 	delete(c.conns, conn)
 }
 
-func (c *connectionTracker) isEmpty() bool {
-	c.lock.RLock()
-	defer c.lock.RUnlock()
-	return len(c.conns) == 0
-}
-
 // Shutdown wait for the connection closing.
 func (c *connectionTracker) Shutdown(ctx context.Context) error {
 	ticker := time.NewTicker(500 * time.Millisecond)
@@ -538,6 +534,12 @@ func (c *connectionTracker) Close() {
 		}
 		delete(c.conns, conn)
 	}
+}
+
+func (c *connectionTracker) isEmpty() bool {
+	c.lock.RLock()
+	defer c.lock.RUnlock()
+	return len(c.conns) == 0
 }
 
 type stoppable interface {
@@ -678,8 +680,9 @@ func newTrackedConnection(conn tcp.WriteCloser, tracker *connectionTracker) *tra
 }
 
 type trackedConnection struct {
-	tracker *connectionTracker
 	tcp.WriteCloser
+
+	tracker *connectionTracker
 }
 
 func (t *trackedConnection) Close() error {

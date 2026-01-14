@@ -36,7 +36,7 @@ const (
 // WatchAll starts the watch of the Provider resources and updates the stores.
 // The stores can then be accessed via the Get* functions.
 type Client interface {
-	WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error)
+	WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan any, error)
 	GetIngresses() []*netv1.Ingress
 	GetIngressClasses() ([]*netv1.IngressClass, error)
 	GetService(namespace, name string) (*corev1.Service, bool, error)
@@ -132,7 +132,7 @@ func newClientImpl(clientset kclientset.Interface) *clientWrapper {
 }
 
 // WatchAll starts namespace-specific controllers for all relevant kinds.
-func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error) {
+func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan any, error) {
 	// Get and store the serverVersion for future use.
 	serverVersionInfo, err := c.clientset.Discovery().ServerVersion()
 	if err != nil {
@@ -146,7 +146,7 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 
 	c.serverVersion = serverVersion
 
-	eventCh := make(chan interface{}, 1)
+	eventCh := make(chan any, 1)
 	eventHandler := &k8s.ResourceEventHandler{Ev: eventCh}
 
 	if len(namespaces) == 0 {
@@ -376,43 +376,6 @@ func (c *clientWrapper) UpdateIngressStatus(src *netv1.Ingress, ingStatus []netv
 	return nil
 }
 
-func (c *clientWrapper) updateIngressStatusOld(src *netv1.Ingress, ingStatus []netv1.IngressLoadBalancerIngress) error {
-	ing, err := c.factoriesIngress[c.lookupNamespace(src.Namespace)].Networking().V1beta1().Ingresses().Lister().Ingresses(src.Namespace).Get(src.Name)
-	if err != nil {
-		return fmt.Errorf("failed to get ingress %s/%s: %w", src.Namespace, src.Name, err)
-	}
-
-	logger := log.WithoutContext().WithField("namespace", ing.Namespace).WithField("ingress", ing.Name)
-
-	ingresses, err := convertSlice[netv1.IngressLoadBalancerIngress](ing.Status.LoadBalancer.Ingress)
-	if err != nil {
-		return err
-	}
-
-	if isLoadBalancerIngressEquals(ingresses, ingStatus) {
-		logger.Debug("Skipping ingress status update")
-		return nil
-	}
-
-	ingressesBeta1, err := convertSlice[netv1beta1.IngressLoadBalancerIngress](ingStatus)
-	if err != nil {
-		return err
-	}
-
-	ingCopy := ing.DeepCopy()
-	ingCopy.Status = netv1beta1.IngressStatus{LoadBalancer: netv1beta1.IngressLoadBalancerStatus{Ingress: ingressesBeta1}}
-
-	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
-	defer cancel()
-
-	_, err = c.clientset.NetworkingV1beta1().Ingresses(ingCopy.Namespace).UpdateStatus(ctx, ingCopy, metav1.UpdateOptions{})
-	if err != nil {
-		return fmt.Errorf("failed to update ingress status %s/%s: %w", src.Namespace, src.Name, err)
-	}
-	logger.Info("Updated ingress status")
-	return nil
-}
-
 // isLoadBalancerIngressEquals returns true if the given slices are equal, false otherwise.
 func isLoadBalancerIngressEquals(aSlice, bSlice []netv1.IngressLoadBalancerIngress) bool {
 	if len(aSlice) != len(bSlice) {
@@ -506,6 +469,48 @@ func (c *clientWrapper) GetIngressClasses() ([]*netv1.IngressClass, error) {
 	return ics, nil
 }
 
+// GetServerVersion returns the cluster server version, or an error.
+func (c *clientWrapper) GetServerVersion() *version.Version {
+	return c.serverVersion
+}
+
+func (c *clientWrapper) updateIngressStatusOld(src *netv1.Ingress, ingStatus []netv1.IngressLoadBalancerIngress) error {
+	ing, err := c.factoriesIngress[c.lookupNamespace(src.Namespace)].Networking().V1beta1().Ingresses().Lister().Ingresses(src.Namespace).Get(src.Name)
+	if err != nil {
+		return fmt.Errorf("failed to get ingress %s/%s: %w", src.Namespace, src.Name, err)
+	}
+
+	logger := log.WithoutContext().WithField("namespace", ing.Namespace).WithField("ingress", ing.Name)
+
+	ingresses, err := convertSlice[netv1.IngressLoadBalancerIngress](ing.Status.LoadBalancer.Ingress)
+	if err != nil {
+		return err
+	}
+
+	if isLoadBalancerIngressEquals(ingresses, ingStatus) {
+		logger.Debug("Skipping ingress status update")
+		return nil
+	}
+
+	ingressesBeta1, err := convertSlice[netv1beta1.IngressLoadBalancerIngress](ingStatus)
+	if err != nil {
+		return err
+	}
+
+	ingCopy := ing.DeepCopy()
+	ingCopy.Status = netv1beta1.IngressStatus{LoadBalancer: netv1beta1.IngressLoadBalancerStatus{Ingress: ingressesBeta1}}
+
+	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
+	defer cancel()
+
+	_, err = c.clientset.NetworkingV1beta1().Ingresses(ingCopy.Namespace).UpdateStatus(ctx, ingCopy, metav1.UpdateOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to update ingress status %s/%s: %w", src.Namespace, src.Name, err)
+	}
+	logger.Info("Updated ingress status")
+	return nil
+}
+
 // lookupNamespace returns the lookup namespace key for the given namespace.
 // When listening on all namespaces, it returns the client-go identifier ("")
 // for all-namespaces. Otherwise, it returns the given namespace.
@@ -519,9 +524,14 @@ func (c *clientWrapper) lookupNamespace(ns string) string {
 	return ns
 }
 
-// GetServerVersion returns the cluster server version, or an error.
-func (c *clientWrapper) GetServerVersion() *version.Version {
-	return c.serverVersion
+// isWatchedNamespace checks to ensure that the namespace is being watched before we request
+// it to ensure we don't panic by requesting an out-of-watch object.
+func (c *clientWrapper) isWatchedNamespace(ns string) bool {
+	if c.isNamespaceAll {
+		return true
+	}
+
+	return slices.Contains(c.watchedNamespaces, ns)
 }
 
 // translateNotFoundError will translate a "not found" error to a boolean return
@@ -531,16 +541,6 @@ func translateNotFoundError(err error) (bool, error) {
 		return false, nil
 	}
 	return err == nil, err
-}
-
-// isWatchedNamespace checks to ensure that the namespace is being watched before we request
-// it to ensure we don't panic by requesting an out-of-watch object.
-func (c *clientWrapper) isWatchedNamespace(ns string) bool {
-	if c.isNamespaceAll {
-		return true
-	}
-
-	return slices.Contains(c.watchedNamespaces, ns)
 }
 
 // IngressClass objects are supported since Kubernetes v1.18.

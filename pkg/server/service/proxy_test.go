@@ -34,7 +34,7 @@ func BenchmarkProxy(b *testing.B) {
 	handler, _ := buildProxy(pointer(false), nil, &staticTransport{res}, pool)
 
 	b.ReportAllocs()
-	for range b.N {
+	for b.Loop() {
 		handler.ServeHTTP(w, req)
 	}
 }

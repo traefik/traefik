@@ -145,13 +145,6 @@ func NewProviderAggregator(conf static.Providers) *ProviderAggregator {
 	return p
 }
 
-func (p *ProviderAggregator) quietAddProvider(provider provider.Provider) {
-	err := p.AddProvider(provider)
-	if err != nil {
-		log.WithoutContext().Errorf("Error while initializing provider %T: %v", provider, err)
-	}
-}
-
 // AddProvider adds a provider in the providers map.
 func (p *ProviderAggregator) AddProvider(provider provider.Provider) error {
 	err := provider.Init()
@@ -195,6 +188,13 @@ func (p *ProviderAggregator) Provide(configurationChan chan<- dynamic.Message, p
 	}
 
 	return nil
+}
+
+func (p *ProviderAggregator) quietAddProvider(provider provider.Provider) {
+	err := p.AddProvider(provider)
+	if err != nil {
+		log.WithoutContext().Errorf("Error while initializing provider %T: %v", provider, err)
+	}
 }
 
 func (p *ProviderAggregator) launchProvider(configurationChan chan<- dynamic.Message, pool *safe.Pool, prd provider.Provider) {

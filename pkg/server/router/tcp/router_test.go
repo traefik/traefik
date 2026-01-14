@@ -31,6 +31,7 @@ type checkRouter func(addr string, timeout time.Duration) error
 
 type httpForwarder struct {
 	net.Listener
+
 	connChan chan net.Conn
 	errChan  chan error
 }

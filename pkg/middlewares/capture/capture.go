@@ -84,20 +84,6 @@ func (c *Capture) Reset(next http.Handler) http.Handler {
 	})
 }
 
-func (c *Capture) renew(rw http.ResponseWriter, req *http.Request) (http.ResponseWriter, *http.Request) {
-	ctx := context.WithValue(req.Context(), capturedData, c)
-	newReq := req.WithContext(ctx)
-
-	if newReq.Body != nil {
-		readCounter := &readCounter{source: newReq.Body}
-		c.rr = readCounter
-		newReq.Body = readCounter
-	}
-	c.rw = newResponseWriter(rw)
-
-	return c.rw, newReq
-}
-
 func (c *Capture) ResponseSize() int64 {
 	return c.rw.Size()
 }
@@ -113,6 +99,20 @@ func (c *Capture) RequestSize() int64 {
 		return 0
 	}
 	return c.rr.size
+}
+
+func (c *Capture) renew(rw http.ResponseWriter, req *http.Request) (http.ResponseWriter, *http.Request) {
+	ctx := context.WithValue(req.Context(), capturedData, c)
+	newReq := req.WithContext(ctx)
+
+	if newReq.Body != nil {
+		readCounter := &readCounter{source: newReq.Body}
+		c.rr = readCounter
+		newReq.Body = readCounter
+	}
+	c.rw = newResponseWriter(rw)
+
+	return c.rw, newReq
 }
 
 type readCounter struct {

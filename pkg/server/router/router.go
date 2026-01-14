@@ -64,14 +64,6 @@ func NewManager(conf *runtime.Configuration,
 	}
 }
 
-func (m *Manager) getHTTPRouters(ctx context.Context, entryPoints []string, tls bool) map[string]map[string]*runtime.RouterInfo {
-	if m.conf != nil {
-		return m.conf.GetRoutersByEntryPoints(ctx, entryPoints, tls)
-	}
-
-	return make(map[string]map[string]*runtime.RouterInfo)
-}
-
 // BuildHandlers Builds handler for all entry points.
 func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string, tls bool) map[string]http.Handler {
 	entryPointHandlers := make(map[string]http.Handler)
@@ -113,6 +105,14 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string, t
 	}
 
 	return entryPointHandlers
+}
+
+func (m *Manager) getHTTPRouters(ctx context.Context, entryPoints []string, tls bool) map[string]map[string]*runtime.RouterInfo {
+	if m.conf != nil {
+		return m.conf.GetRoutersByEntryPoints(ctx, entryPoints, tls)
+	}
+
+	return make(map[string]map[string]*runtime.RouterInfo)
 }
 
 func (m *Manager) buildEntryPointHandler(ctx context.Context, configs map[string]*runtime.RouterInfo) (http.Handler, error) {

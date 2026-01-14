@@ -456,6 +456,7 @@ type testLoadBalancer struct {
 	// RWMutex needed due to parallel test execution: Both the system-under-test
 	// and the test assertions reference the counters.
 	*sync.RWMutex
+
 	numRemovedServers  int
 	numUpsertedServers int
 	servers            []*url.URL
