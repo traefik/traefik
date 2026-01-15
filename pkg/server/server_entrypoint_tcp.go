@@ -21,6 +21,7 @@ import (
 	"github.com/pires/go-proxyproto"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"github.com/traefik/traefik/v3/pkg/canonicalpath"
 	"github.com/traefik/traefik/v3/pkg/config/static"
 	"github.com/traefik/traefik/v3/pkg/ip"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
@@ -684,6 +685,28 @@ func newHTTPServer(ctx context.Context, ln net.Listener, configuration *static.E
 
 	handler = normalizePath(handler)
 
+	// SECURITY CRITICAL: Canonical path middleware - CWE-436 mitigation
+	//
+	// This middleware MUST be the OUTERMOST handler (first to execute) to ensure
+	// it captures the raw request path BEFORE any other middleware modifies it.
+	// Moving this middleware or removing it will re-introduce path confusion
+	// vulnerabilities (CWE-436) that allow authentication/authorization bypass.
+	//
+	// The canonical path establishes a single source of truth for path-based
+	// routing and security decisions. This addresses CWE-436 (Interpretation Conflict)
+	// by ensuring all routing, middleware, and security decisions use the same
+	// canonical path representation.
+	//
+	// The canonical path preserves RFC 3986 semantics:
+	// - Unreserved characters are decoded: /%61dmin → /admin
+	// - Reserved characters stay encoded: /admin%2Fsecret stays as /admin%2Fsecret
+	//
+	// This is correct because /admin%2Fsecret (one segment) != /admin/secret (two segments).
+	// The original path is preserved for backend forwarding (HTTP transparency).
+	//
+	// WARNING: Do not move this line. Middleware wrapping order matters for security.
+	handler = canonicalpath.Middleware(canonicalpath.DefaultConfig())(handler)
+
 	serverHTTP := &http.Server{
 		Protocols:      &protocols,
 		Handler:        handler,
@@ -827,6 +850,17 @@ var unreservedCharacters = map[string]rune{
 // normalizePath removes from the RawPath unreserved percent-encoded characters as they are equivalent to their non-encoded
 // form according to https://datatracker.ietf.org/doc/html/rfc3986#section-2.3 and capitalizes percent-encoded characters
 // according to https://datatracker.ietf.org/doc/html/rfc3986#section-6.2.2.1.
+//
+// NOTE: This function modifies req.URL.RawPath for backwards compatibility with existing middlewares
+// that read from req.URL directly. The canonicalpath.Middleware (applied after this in the handler chain)
+// provides the authoritative path representation for routing decisions via context. Both perform similar
+// normalization but serve different purposes:
+//   - normalizePath: modifies req.URL for middleware compatibility
+//   - canonicalpath: provides context-based canonical path for secure routing (CWE-436 fix)
+//
+// The canonicalpath middleware captures the path BEFORE normalizePath runs, ensuring the canonical
+// representation is based on the original raw request. This is safe because canonicalpath is the
+// outermost handler wrapper.
 func normalizePath(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rawPath := req.URL.RawPath
