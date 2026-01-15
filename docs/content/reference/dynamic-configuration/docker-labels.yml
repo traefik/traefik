@@ -222,6 +222,7 @@
 - "traefik.http.services.service03.loadbalancer.sticky.cookie.domain=foobar"
 - "traefik.http.services.service03.loadbalancer.sticky.cookie.httponly=true"
 - "traefik.http.services.service03.loadbalancer.sticky.cookie.maxage=42"
+- "traefik.http.services.service03.loadbalancer.sticky.cookie.expires=10"
 - "traefik.http.services.service03.loadbalancer.sticky.cookie.name=foobar"
 - "traefik.http.services.service03.loadbalancer.sticky.cookie.path=foobar"
 - "traefik.http.services.service03.loadbalancer.sticky.cookie.samesite=foobar"
