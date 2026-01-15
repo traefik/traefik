@@ -69,7 +69,7 @@ spec:
 
 ??? info "`traefik.ingress.kubernetes.io/router.priority`"
 
-    See [priority](../http/router/rules-and-priority.md#priority-calculation) for more information.
+    See [priority](../http/routing/rules-and-priority.md#priority-calculation) for more information.
 
     ```yaml
     traefik.ingress.kubernetes.io/router.priority: "42"
@@ -82,7 +82,7 @@ spec:
         RuleSyntax option is deprecated and will be removed in the next major version.
         Please do not use this field and rewrite the router rules to use the v3 syntax.
 
-    See [rule syntax](../http/router/rules-and-priority.md#rulesyntax) for more information.
+    See [rule syntax](../http/routing/rules-and-priority.md#rulesyntax) for more information.
 
     ```yaml
     traefik.ingress.kubernetes.io/router.rulesyntax: "v2"
@@ -133,7 +133,7 @@ spec:
 
 ??? info "`traefik.ingress.kubernetes.io/router.tls.options`"
 
-    See [options](../kubernetes/crd/http/tlsoption.md) for more information.
+    See [options](../kubernetes/crd/tls/tlsoption.md) for more information.
 
     ```yaml
     traefik.ingress.kubernetes.io/router.tls.options: foobar@file
@@ -141,7 +141,7 @@ spec:
 
 ??? info "`traefik.ingress.kubernetes.io/router.observability.accesslogs`"
 
-    See [here](../http/router/observability.md) for more information.
+    See [here](../http/routing/observability.md) for more information.
 
     ```yaml
     traefik.ingress.kubernetes.io/router.observability.accesslogs: true
@@ -149,7 +149,7 @@ spec:
 
 ??? info "`traefik.ingress.kubernetes.io/router.observability.metrics`"
 
-    See [here](../http/router/observability.md) for more information.
+    See [here](../http/routing/observability.md) for more information.
 
     ```yaml
     traefik.ingress.kubernetes.io/router.observability.metrics: true
@@ -157,7 +157,7 @@ spec:
 
 ??? info "`traefik.ingress.kubernetes.io/router.observability.tracing`"
 
-    See [here](../http/router/observability.md) for more information.
+    See [here](../http/routing/observability.md) for more information.
 
     ```yaml
     traefik.ingress.kubernetes.io/router.observability.tracing: true
@@ -402,7 +402,7 @@ This way, any Ingress attached to this Entrypoint will have TLS termination by d
           serviceAccountName: traefik-ingress-controller
           containers:
             - name: traefik
-              image: traefik:v3.5
+              image: traefik:v3.6
               args:
                 - --entryPoints.websecure.address=:443
                 - --entryPoints.websecure.http.tls
@@ -589,7 +589,7 @@ and will connect via TLS automatically.
     Please note that by enabling TLS communication between traefik and your pods,
     you will have to have trusted certificates that have the proper trust chain and IP subject name.
     If this is not an option, you may need to skip TLS certificate verification.
-    See the [`insecureSkipVerify` TLSOption](../kubernetes/crd/http/tlsoption.md) setting for more details.
+    See the [`insecureSkipVerify` TLSOption](../kubernetes/crd/tls/tlsoption.md) setting for more details.
 
 ## Global Default Backend Ingresses
 

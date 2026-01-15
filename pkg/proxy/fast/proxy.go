@@ -212,18 +212,20 @@ func (p *ReverseProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	outReq.Header.SetMethod(req.Method)
 
-	if clientIP, _, err := net.SplitHostPort(req.RemoteAddr); err == nil {
-		// If we aren't the first proxy retain prior
-		// X-Forwarded-For information as a comma+space
-		// separated list and fold multiple headers into one.
-		prior, ok := req.Header["X-Forwarded-For"]
-		if len(prior) > 0 {
-			clientIP = strings.Join(prior, ", ") + ", " + clientIP
-		}
+	if !proxyhttputil.ShouldNotAppendXFF(req.Context()) {
+		if clientIP, _, err := net.SplitHostPort(req.RemoteAddr); err == nil {
+			// If we aren't the first proxy retain prior
+			// X-Forwarded-For information as a comma+space
+			// separated list and fold multiple headers into one.
+			prior, ok := req.Header["X-Forwarded-For"]
+			if len(prior) > 0 {
+				clientIP = strings.Join(prior, ", ") + ", " + clientIP
+			}
 
-		omit := ok && prior == nil // Go Issue 38079: nil now means don't populate the header
-		if !omit {
-			outReq.Header.Set("X-Forwarded-For", clientIP)
+			omit := ok && prior == nil // Go Issue 38079: nil now means don't populate the header
+			if !omit {
+				outReq.Header.Set("X-Forwarded-For", clientIP)
+			}
 		}
 	}
 
@@ -362,7 +364,7 @@ type fasthttpHeader interface {
 // See RFC 7230, section 6.1.
 func removeConnectionHeaders(h fasthttpHeader) {
 	f := h.Peek(fasthttp.HeaderConnection)
-	for _, sf := range bytes.Split(f, []byte{','}) {
+	for sf := range bytes.SplitSeq(f, []byte{','}) {
 		if sf = bytes.TrimSpace(sf); len(sf) > 0 {
 			h.DelBytes(sf)
 		}

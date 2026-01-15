@@ -188,17 +188,17 @@ Traefik supports mutual authentication, through the `clientAuth` section.
 
 For authentication policies that require verification of the client certificate, the certificate authority for the certificates should be set in `clientAuth.caFiles`.
 
-In Kubernetes environment, CA certificate can be set in `clientAuth.secretNames`. See [TLSOption resource](../../kubernetes/crd/http/tlsoption.md) for more details.
+In Kubernetes environment, CA certificate can be set in `clientAuth.secretNames`. See [TLSOption resource](../../kubernetes/crd/tls/tlsoption.md) for more details.
 
 The `clientAuth.clientAuthType` option governs the behaviour as follows:
 
 | Option    |  Operation | 
 | --------- | ----------- |
-| `NoClientCert` | Disregards any client certificate.| 
-| `RequestClientCert` | Asks for a certificate but proceeds anyway if none is provided. |
-| `RequireAnyClientCert` | Requires a certificate but does not verify if it is signed by a CA listed in `clientAuth.caFiles` or in `clientAuth.secretNames`. |
-| `VerifyClientCertIfGiven` | If a certificate is provided, verifies if it is signed by a CA listed in `clientAuth.caFiles` or in `clientAuth.secretNames`. Otherwise proceeds without any certificate. |
-| `RequireAndVerifyClientCert` |  requires a certificate, which must be signed by a CA listed in `clientAuth.caFiles` or in `clientAuth.secretNames`. |
+| <a id="opt-NoClientCert" href="#opt-NoClientCert" title="#opt-NoClientCert">`NoClientCert`</a> | Disregards any client certificate.| 
+| <a id="opt-RequestClientCert" href="#opt-RequestClientCert" title="#opt-RequestClientCert">`RequestClientCert`</a> | Asks for a certificate but proceeds anyway if none is provided. |
+| <a id="opt-RequireAnyClientCert" href="#opt-RequireAnyClientCert" title="#opt-RequireAnyClientCert">`RequireAnyClientCert`</a> | Requires a certificate but does not verify if it is signed by a CA listed in `clientAuth.caFiles` or in `clientAuth.secretNames`. |
+| <a id="opt-VerifyClientCertIfGiven" href="#opt-VerifyClientCertIfGiven" title="#opt-VerifyClientCertIfGiven">`VerifyClientCertIfGiven`</a> | If a certificate is provided, verifies if it is signed by a CA listed in `clientAuth.caFiles` or in `clientAuth.secretNames`. Otherwise proceeds without any certificate. |
+| <a id="opt-RequireAndVerifyClientCert" href="#opt-RequireAndVerifyClientCert" title="#opt-RequireAndVerifyClientCert">`RequireAndVerifyClientCert`</a> |  requires a certificate, which must be signed by a CA listed in `clientAuth.caFiles` or in `clientAuth.secretNames`. |
 
 ```yaml tab="Structured (YAML)"
 # Dynamic configuration

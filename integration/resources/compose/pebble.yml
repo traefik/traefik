@@ -1,8 +1,7 @@
 services:
   pebble:
-    image: letsencrypt/pebble:v2.3.1
+    image: ghcr.io/letsencrypt/pebble:2.8.0
     command:
-      - pebble
       - --dnsserver
       - host.docker.internal:5053
     environment:

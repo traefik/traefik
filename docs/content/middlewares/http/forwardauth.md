@@ -8,8 +8,6 @@ description: "In Traefik Proxy, the HTTP ForwardAuth middleware delegates authen
 Using an External Service to Forward Authentication
 {: .subtitle }
 
-![AuthForward](../../assets/img/middleware/authforward.png)
-
 The ForwardAuth middleware delegates authentication to an external service.
 If the service answers with a 2XX code, access is granted, and the original request is performed.
 Otherwise, the response from the authentication server is returned.
@@ -60,11 +58,11 @@ The following request properties are provided to the forward-auth target endpoin
 
 | Property          | Forward-Request Header |
 |-------------------|------------------------|
-| HTTP Method       | X-Forwarded-Method     |
-| Protocol          | X-Forwarded-Proto      |
-| Host              | X-Forwarded-Host       |
-| Request URI       | X-Forwarded-Uri        |
-| Source IP-Address | X-Forwarded-For        |
+| HTTP Method       | `X-Forwarded-Method`   |
+| Protocol          | `X-Forwarded-Proto`    |
+| Host              | `X-Forwarded-Host`     |
+| Request URI       | `X-Forwarded-Uri`      |
+| Source IP-Address | `X-Forwarded-For`      |
 
 ## Configuration Options
 

@@ -17,8 +17,8 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
+	"github.com/traefik/traefik/v3/pkg/observability/tracing"
 	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
-	"github.com/traefik/traefik/v3/pkg/tracing"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"github.com/vulcand/oxy/v2/forward"
 	"github.com/vulcand/oxy/v2/utils"
@@ -88,6 +88,8 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 
 	if config.MaxBodySize != nil {
 		fa.maxBodySize = *config.MaxBodySize
+	} else if fa.forwardBody {
+		logger.Warn().Msgf("ForwardAuth 'maxBodySize' is not configured with 'forwardBody: true', allowing unlimited request body size which can lead to DoS attacks and memory exhaustion. Please set an appropriate limit.")
 	}
 
 	// Ensure our request client does not follow redirects
@@ -193,7 +195,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	forwardResponse, forwardErr := fa.client.Do(forwardReq)
 	if forwardErr != nil {
-		logger.Debug().Err(forwardErr).Msgf("Error calling %s", fa.address)
+		logger.Error().Err(forwardErr).Msgf("Error calling %s", fa.address)
 		observability.SetStatusErrorf(req.Context(), "Error calling %s. Cause: %s", fa.address, forwardErr)
 
 		statusCode := http.StatusInternalServerError

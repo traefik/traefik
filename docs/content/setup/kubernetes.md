@@ -126,7 +126,7 @@ ingressRoute:
     middlewares:
       - name: dashboard-auth
 
-# Creates a BasiAuth Middleware and Secret for the Dashboard Security
+# Creates a BasicAuth Middleware and Secret for the Dashboard Security
 extraObjects:
   - apiVersion: v1
     kind: Secret
@@ -162,12 +162,14 @@ gateway:
     web:           # HTTP listener that matches entryPoint `web`
       port: 80
       protocol: HTTP
-      namespacePolicy: All
+      namespacePolicy:
+        from: All
 
     websecure:         # HTTPS listener that matches entryPoint `websecure`
       port: 443
       protocol: HTTPS  # TLS terminates inside Traefik
-      namespacePolicy: All
+      namespacePolicy:
+        from: All
       mode: Terminate
       certificateRefs:    
         - kind: Secret

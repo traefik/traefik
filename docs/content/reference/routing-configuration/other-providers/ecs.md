@@ -25,7 +25,7 @@ With ECS, Traefik can leverage labels attached to a container to generate routin
 
 ### General
 
-Traefik creates, for each elastic service, a corresponding [service](../http/load-balancing/service.md) and [router](../http/router/rules-and-priority.md).
+Traefik creates, for each elastic service, a corresponding [service](../http/load-balancing/service.md) and [router](../http/routing/rules-and-priority.md).
 
 The Service automatically gets a server per elastic container, and the router gets a default rule attached to it, based on the service name.
 
@@ -39,7 +39,7 @@ For example, to change the rule, you could add the label ```traefik.http.routers
 
 ??? info "`traefik.http.routers.<router_name>.rule`"
     
-    See [rule](../http/router/rules-and-priority.md#rules) for more information.
+    See [rule](../http/routing/rules-and-priority.md#rules) for more information.
     
     ```yaml
     traefik.http.routers.myrouter.rule=Host(`example.com`)
@@ -52,7 +52,7 @@ For example, to change the rule, you could add the label ```traefik.http.routers
         RuleSyntax option is deprecated and will be removed in the next major version.
         Please do not use this field and rewrite the router rules to use the v3 syntax.
 
-    See [ruleSyntax](../http/router/rules-and-priority.md#rulesyntax) for more information.
+    See [ruleSyntax](../http/routing/rules-and-priority.md#rulesyntax) for more information.
     
     ```yaml
     traefik.http.routers.myrouter.ruleSyntax=v3
@@ -146,7 +146,7 @@ For example, to change the rule, you could add the label ```traefik.http.routers
 
 ??? info "`traefik.http.routers.<router_name>.priority`"
 
-    See [priority](../http/router/rules-and-priority.md#priority-calculation) for more information.
+    See [priority](../http/routing/rules-and-priority.md#priority-calculation) for more information.
 
     ```yaml
     traefik.http.routers.myrouter.priority=42
@@ -454,7 +454,7 @@ You can declare TCP Routers and/or Services using labels.
 
 ??? info "`traefik.tcp.routers.<router_name>.tls.passthrough`"
     
-    See [Passthrough](../tcp/tls.md#passthrough) for more information.
+    See [Passthrough](../tcp/tls.md#opt-passthrough) for more information.
     
     ```yaml
     traefik.tcp.routers.mytcprouter.tls.passthrough=true
@@ -462,7 +462,7 @@ You can declare TCP Routers and/or Services using labels.
 
 ??? info "`traefik.tcp.routers.<router_name>.priority`"
 
-    See [priority](../tcp/router/rules-and-priority.md#priority) for more information.
+    See [priority](../tcp/routing/rules-and-priority.md#priority-calculation) for more information.
 
     ```yaml
     traefik.tcp.routers.mytcprouter.priority=42
@@ -492,14 +492,6 @@ You can declare TCP Routers and/or Services using labels.
     
     ```yaml
     traefik.http.services.myservice.loadbalancer.server.weight=42
-    ```
-
-??? info "`traefik.tcp.services.<service_name>.loadbalancer.proxyprotocol.version`"
-        
-    See [PROXY protocol](../tcp/service.md#proxy-protocol) for more information.
-    
-    ```yaml
-    traefik.tcp.services.mytcpservice.loadbalancer.proxyprotocol.version=1
     ```
 
 ??? info "`traefik.tcp.services.<service_name>.loadbalancer.serverstransport`"

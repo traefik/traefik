@@ -1,0 +1,16 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: test.route
+  namespace: default
+spec:
+  entryPoints:
+    - web
+  routes:
+  - match: Host(`foo.com`) && PathPrefix(`/leasttime`)
+    kind: Rule
+    priority: 12
+    services:
+    - name: whoami2
+      port: 8080
+      strategy: leasttime

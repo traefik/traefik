@@ -24,7 +24,7 @@ import (
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/job"
-	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	"github.com/traefik/traefik/v3/pkg/provider"
 	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/gateway"
@@ -57,7 +57,7 @@ type Provider struct {
 	AllowCrossNamespace          bool                `description:"Allow cross namespace resource reference." json:"allowCrossNamespace,omitempty" toml:"allowCrossNamespace,omitempty" yaml:"allowCrossNamespace,omitempty" export:"true"`
 	AllowExternalNameServices    bool                `description:"Allow ExternalName services." json:"allowExternalNameServices,omitempty" toml:"allowExternalNameServices,omitempty" yaml:"allowExternalNameServices,omitempty" export:"true"`
 	LabelSelector                string              `description:"Kubernetes label selector to use." json:"labelSelector,omitempty" toml:"labelSelector,omitempty" yaml:"labelSelector,omitempty" export:"true"`
-	IngressClass                 string              `description:"Value of kubernetes.io/ingress.class annotation to watch for." json:"ingressClass,omitempty" toml:"ingressClass,omitempty" yaml:"ingressClass,omitempty" export:"true"`
+	IngressClass                 string              `description:"Value of ingressClassName field or kubernetes.io/ingress.class annotation to watch for." json:"ingressClass,omitempty" toml:"ingressClass,omitempty" yaml:"ingressClass,omitempty" export:"true"`
 	ThrottleDuration             ptypes.Duration     `description:"Ingress refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
 	AllowEmptyServices           bool                `description:"Allow the creation of services without endpoints." json:"allowEmptyServices,omitempty" toml:"allowEmptyServices,omitempty" yaml:"allowEmptyServices,omitempty" export:"true"`
 	NativeLBByDefault            bool                `description:"Defines whether to use Native Kubernetes load-balancing mode by default." json:"nativeLBByDefault,omitempty" toml:"nativeLBByDefault,omitempty" yaml:"nativeLBByDefault,omitempty" export:"true"`
@@ -409,6 +409,49 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			})
 		}
 
+		var cipherSuites []string
+		if serversTransport.Spec.CipherSuites != nil {
+			for _, cipher := range serversTransport.Spec.CipherSuites {
+				if _, exists := tls.CipherSuites[cipher]; exists {
+					cipherSuites = append(cipherSuites, cipher)
+				} else {
+					logger.Error().Msgf("cipher suite not supported: %s, falling back to default CipherSuite.", cipher)
+					cipherSuites = nil
+					break
+				}
+			}
+		}
+
+		var minVersion string
+		var minVersionID uint16
+		if serversTransport.Spec.MinVersion != "" {
+			if id, exists := tls.MinVersion[serversTransport.Spec.MinVersion]; exists {
+				minVersion = serversTransport.Spec.MinVersion
+				minVersionID = id
+			} else {
+				logger.Error().Msgf("invalid TLS minimum version: %s", serversTransport.Spec.MinVersion)
+			}
+		}
+
+		var maxVersion string
+		var maxVersionID uint16
+		if serversTransport.Spec.MaxVersion != "" {
+			if id, exists := tls.MaxVersion[serversTransport.Spec.MaxVersion]; exists {
+				maxVersion = serversTransport.Spec.MaxVersion
+				maxVersionID = id
+			} else {
+				logger.Error().Msgf("invalid TLS maximum version: %s", serversTransport.Spec.MaxVersion)
+			}
+		}
+
+		if serversTransport.Spec.MinVersion != "" && serversTransport.Spec.MaxVersion != "" {
+			if minVersionID >= maxVersionID {
+				log.Error().Msgf("CipherSuite MinVersion, %s, above or equal to the MaxVersion, %s. Falling back to default MaxVersion and MinVersion", serversTransport.Spec.MinVersion, serversTransport.Spec.MaxVersion)
+				minVersion = "VersionTLS12"
+				maxVersion = ""
+			}
+		}
+
 		forwardingTimeout := &dynamic.ForwardingTimeouts{}
 		forwardingTimeout.SetDefaults()
 
@@ -455,6 +498,9 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			InsecureSkipVerify:  serversTransport.Spec.InsecureSkipVerify,
 			RootCAs:             rootCAs,
 			Certificates:        certs,
+			CipherSuites:        cipherSuites,
+			MinVersion:          minVersion,
+			MaxVersion:          maxVersion,
 			DisableHTTP2:        serversTransport.Spec.DisableHTTP2,
 			MaxIdleConnsPerHost: serversTransport.Spec.MaxIdleConnsPerHost,
 			ForwardingTimeouts:  forwardingTimeout,
@@ -488,6 +534,10 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			if err != nil {
 				logger.Error().Err(err).Msg("Error while reading TerminationDelay")
 			}
+		}
+
+		if serversTransportTCP.Spec.ProxyProtocol != nil {
+			tcpServerTransport.ProxyProtocol = serversTransportTCP.Spec.ProxyProtocol
 		}
 
 		if serversTransportTCP.Spec.TLS != nil {
@@ -1375,15 +1425,18 @@ func buildCertificates(client Client, tlsStore, namespace string, certificates [
 	return nil
 }
 
-func makeServiceKey(rule, ingressName string) (string, error) {
+func makeServiceKey(rule, ingressName string) string {
 	h := sha256.New()
+
+	// As explained in https://pkg.go.dev/hash#Hash,
+	// Write never returns an error.
 	if _, err := h.Write([]byte(rule)); err != nil {
-		return "", err
+		return ""
 	}
 
 	key := fmt.Sprintf("%s-%.10x", ingressName, h.Sum(nil))
 
-	return key, nil
+	return key
 }
 
 func makeID(namespace, name string) string {
@@ -1394,9 +1447,21 @@ func makeID(namespace, name string) string {
 	return namespace + "-" + name
 }
 
-func shouldProcessIngress(ingressClass, ingressClassAnnotation string) bool {
-	return ingressClass == ingressClassAnnotation ||
-		(len(ingressClass) == 0 && ingressClassAnnotation == traefikDefaultIngressClass)
+func shouldProcessIngress(ingressClass, ingressClassName string) bool {
+	return ingressClass == ingressClassName ||
+		(len(ingressClass) == 0 && ingressClassName == traefikDefaultIngressClass)
+}
+
+// getIngressClassName returns the ingress class name from the spec field or falls back to the
+// deprecated annotation. Returns the class name and whether the deprecated annotation was used.
+func getIngressClassName(specIngressClassName *string, annotations map[string]string) (string, bool) {
+	if specIngressClassName != nil {
+		return *specIngressClassName, false
+	}
+	if annotation, ok := annotations[annotationKubernetesIngressClass]; ok && annotation != "" {
+		return annotation, true
+	}
+	return "", false
 }
 
 func getTLS(k8sClient Client, secretName, namespace string) (*tls.CertAndStores, error) {

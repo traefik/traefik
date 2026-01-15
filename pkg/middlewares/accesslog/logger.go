@@ -19,9 +19,10 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/sirupsen/logrus"
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
+	"github.com/traefik/traefik/v3/pkg/observability/logs"
+	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"go.opentelemetry.io/contrib/bridges/otellogrus"
@@ -36,6 +37,9 @@ const (
 
 	// CommonFormat is the common logging format (CLF).
 	CommonFormat string = "common"
+
+	// GenericCLFFormat is the generic CLF format.
+	GenericCLFFormat string = "genericCLF"
 
 	// JSONFormat is the JSON logging format.
 	JSONFormat string = "json"
@@ -61,7 +65,7 @@ type handlerParams struct {
 
 // Handler will write each request and its response to the access log.
 type Handler struct {
-	config         *types.AccessLog
+	config         *otypes.AccessLog
 	logger         *logrus.Logger
 	file           io.WriteCloser
 	mu             sync.Mutex
@@ -85,7 +89,7 @@ func (h *Handler) AliceConstructor() alice.Constructor {
 }
 
 // NewHandler creates a new Handler.
-func NewHandler(ctx context.Context, config *types.AccessLog) (*Handler, error) {
+func NewHandler(ctx context.Context, config *otypes.AccessLog) (*Handler, error) {
 	var file io.WriteCloser = noopCloser{os.Stdout}
 	if len(config.FilePath) > 0 {
 		f, err := openAccessLogFile(config.FilePath)
@@ -101,6 +105,8 @@ func NewHandler(ctx context.Context, config *types.AccessLog) (*Handler, error) 
 	switch config.Format {
 	case CommonFormat:
 		formatter = new(CommonLogFormatter)
+	case GenericCLFFormat:
+		formatter = new(GenericCLFLogFormatter)
 	case JSONFormat:
 		formatter = new(logrus.JSONFormatter)
 	default:
@@ -122,7 +128,9 @@ func NewHandler(ctx context.Context, config *types.AccessLog) (*Handler, error) 
 		}
 
 		logger.Hooks.Add(otellogrus.NewHook("traefik", otellogrus.WithLoggerProvider(otelLoggerProvider)))
-		logger.Out = io.Discard
+		if !config.DualOutput {
+			logger.Out = io.Discard
+		}
 	}
 
 	// Transform header names to a canonical form, to be used as is without further transformations,
@@ -418,9 +426,9 @@ func (h *Handler) redactHeaders(headers http.Header, fields logrus.Fields, prefi
 	for k := range headers {
 		v := h.config.Fields.KeepHeader(k)
 		switch v {
-		case types.AccessLogKeep:
+		case otypes.AccessLogKeep:
 			fields[prefix+k] = strings.Join(headers.Values(k), ",")
-		case types.AccessLogRedact:
+		case otypes.AccessLogRedact:
 			fields[prefix+k] = "REDACTED"
 		}
 	}

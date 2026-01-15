@@ -8,8 +8,6 @@ description: "In Traefik Proxy, the Errors middleware returns custom pages accor
 It Has Never Been Easier to Say That Something Went Wrong
 {: .subtitle }
 
-![Errors](../../assets/img/middleware/errorpages.png)
-
 The Errors middleware returns a custom page in lieu of the default, according to configured ranges of HTTP Status codes.
 
 !!! important

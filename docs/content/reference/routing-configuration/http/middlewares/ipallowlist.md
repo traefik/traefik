@@ -56,10 +56,10 @@ spec:
 
 | Field      | Description     | Default | Required |
 |:-----------|:------------------------------|:--------|:---------|
-| `sourceRange` | List of allowed IPs (or ranges of allowed IPs by using CIDR notation). |      | Yes      |
-| `ipStrategy.depth` | Depth position of the IP to select in the `X-Forwarded-For` header (starting from the right).<br />0 means no depth.<br />If greater than the total number of IPs in `X-Forwarded-For`, then the client IP is empty<br /> If higher than 0, the `excludedIPs` options is not evaluated.<br /> More information about [`ipStrategy](#ipstrategy), and [`depth`](#example-of-depth--x-forwarded-for) below. | 0      | No      |
-| `ipStrategy.excludedIPs` | Allows Traefik to scan the `X-Forwarded-For` header and select the first IP not in the list.<br />If `depth` is specified, `excludedIPs` is ignored.<br /> More information about [`ipStrategy](#ipstrategy), and [`excludedIPs`](#example-of-excludedips--x-forwarded-for) below. |       | No      |
-| `ipStrategy.ipv6Subnet` |  If `ipv6Subnet` is provided and the selected IP is IPv6, the IP is transformed into the first IP of the subnet it belongs to. <br />More information about [`ipStrategy.ipv6Subnet`](#ipstrategyipv6subnet), and [`excludedIPs`](#example-of-excludedips--x-forwarded-for) below. |       | No      |
+| <a id="opt-sourceRange" href="#opt-sourceRange" title="#opt-sourceRange">`sourceRange`</a> | List of allowed IPs (or ranges of allowed IPs by using CIDR notation). |      | Yes      |
+| <a id="opt-ipStrategy-depth" href="#opt-ipStrategy-depth" title="#opt-ipStrategy-depth">`ipStrategy.depth`</a> | Depth position of the IP to select in the `X-Forwarded-For` header (starting from the right).<br />0 means no depth.<br />If greater than the total number of IPs in `X-Forwarded-For`, then the client IP is empty<br /> If higher than 0, the `excludedIPs` options is not evaluated.<br /> More information about [`ipStrategy](#ipstrategy), and [`depth`](#example-of-depth--x-forwarded-for) below. | 0      | No      |
+| <a id="opt-ipStrategy-excludedIPs" href="#opt-ipStrategy-excludedIPs" title="#opt-ipStrategy-excludedIPs">`ipStrategy.excludedIPs`</a> | Allows Traefik to scan the `X-Forwarded-For` header and select the first IP not in the list.<br />If `depth` is specified, `excludedIPs` is ignored.<br /> More information about [`ipStrategy](#ipstrategy), and [`excludedIPs`](#example-of-excludedips--x-forwarded-for) below. |       | No      |
+| <a id="opt-ipStrategy-ipv6Subnet" href="#opt-ipStrategy-ipv6Subnet" title="#opt-ipStrategy-ipv6Subnet">`ipStrategy.ipv6Subnet`</a> |  If `ipv6Subnet` is provided and the selected IP is IPv6, the IP is transformed into the first IP of the subnet it belongs to. <br />More information about [`ipStrategy.ipv6Subnet`](#ipstrategyipv6subnet), and [`excludedIPs`](#example-of-excludedips--x-forwarded-for) below. |       | No      |
 
 ### ipStrategy
 
@@ -95,26 +95,26 @@ If `ipv6Subnet` is provided, the IP is transformed in the following way.
 
 | IP                      | ipv6Subnet | clientIP              |
 |---------------------------|--------------|-----------------------|
-| `"::abcd:1111:2222:3333"` | `64`         | `"::0:0:0:0"`         |
-| `"::abcd:1111:2222:3333"` | `80`         | `"::abcd:0:0:0:0"`    |
-| `"::abcd:1111:2222:3333"` | `96`         | `"::abcd:1111:0:0:0"` |
+| <a id="opt-abcd111122223333" href="#opt-abcd111122223333" title="#opt-abcd111122223333">`"::abcd:1111:2222:3333"`</a> | `64`         | `"::0:0:0:0"`         |
+| <a id="opt-abcd111122223333-2" href="#opt-abcd111122223333-2" title="#opt-abcd111122223333-2">`"::abcd:1111:2222:3333"`</a> | `80`         | `"::abcd:0:0:0:0"`    |
+| <a id="opt-abcd111122223333-3" href="#opt-abcd111122223333-3" title="#opt-abcd111122223333-3">`"::abcd:1111:2222:3333"`</a> | `96`         | `"::abcd:1111:0:0:0"` |
 
-### Example of Depth & X-Forwarded-For
+### Example of Depth & `X-Forwarded-For`
 
 If `depth` is set to 2, and the request `X-Forwarded-For` header is `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` then the "real" client IP is `"10.0.0.1"` (at depth 4) but the IP used as the criterion is `"12.0.0.1"` (`depth=2`).
 
-| X-Forwarded-For                       | depth | clientIP     |
+| `X-Forwarded-For`                       | depth   | clientIP     |
 |-----------------------------------------|---------|--------------|
-| `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `1`     | `"13.0.0.1"` |
-| `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `3`     | `"11.0.0.1"` |
-| `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `5`     | `""`         |
+| <a id="opt-10-0-0-111-0-0-112-0-0-113-0-0-1" href="#opt-10-0-0-111-0-0-112-0-0-113-0-0-1" title="#opt-10-0-0-111-0-0-112-0-0-113-0-0-1">`"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"`</a> | `1`     | `"13.0.0.1"` |
+| <a id="opt-10-0-0-111-0-0-112-0-0-113-0-0-1-2" href="#opt-10-0-0-111-0-0-112-0-0-113-0-0-1-2" title="#opt-10-0-0-111-0-0-112-0-0-113-0-0-1-2">`"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"`</a> | `3`     | `"11.0.0.1"` |
+| <a id="opt-10-0-0-111-0-0-112-0-0-113-0-0-1-3" href="#opt-10-0-0-111-0-0-112-0-0-113-0-0-1-3" title="#opt-10-0-0-111-0-0-112-0-0-113-0-0-1-3">`"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"`</a> | `5`     | `""`         |
 
-### Example of ExcludedIPs & X-Forwarded-For
+### Example of ExcludedIPs & `X-Forwarded-For`
 
-| X-Forwarded-For                       | excludedIPs         | clientIP     |
+| `X-Forwarded-For`                       | excludedIPs           | clientIP     |
 |-----------------------------------------|-----------------------|--------------|
-| `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `"12.0.0.1,13.0.0.1"` | `"11.0.0.1"` |
-| `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `"15.0.0.1,13.0.0.1"` | `"12.0.0.1"` |
-| `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `"10.0.0.1,13.0.0.1"` | `"12.0.0.1"` |
-| `"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"` | `"15.0.0.1,16.0.0.1"` | `"13.0.0.1"` |
-| `"10.0.0.1,11.0.0.1"`                   | `"10.0.0.1,11.0.0.1"` | `""`         |
+| <a id="opt-10-0-0-111-0-0-112-0-0-113-0-0-1-4" href="#opt-10-0-0-111-0-0-112-0-0-113-0-0-1-4" title="#opt-10-0-0-111-0-0-112-0-0-113-0-0-1-4">`"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"`</a> | `"12.0.0.1,13.0.0.1"` | `"11.0.0.1"` |
+| <a id="opt-10-0-0-111-0-0-112-0-0-113-0-0-1-5" href="#opt-10-0-0-111-0-0-112-0-0-113-0-0-1-5" title="#opt-10-0-0-111-0-0-112-0-0-113-0-0-1-5">`"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"`</a> | `"15.0.0.1,13.0.0.1"` | `"12.0.0.1"` |
+| <a id="opt-10-0-0-111-0-0-112-0-0-113-0-0-1-6" href="#opt-10-0-0-111-0-0-112-0-0-113-0-0-1-6" title="#opt-10-0-0-111-0-0-112-0-0-113-0-0-1-6">`"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"`</a> | `"10.0.0.1,13.0.0.1"` | `"12.0.0.1"` |
+| <a id="opt-10-0-0-111-0-0-112-0-0-113-0-0-1-7" href="#opt-10-0-0-111-0-0-112-0-0-113-0-0-1-7" title="#opt-10-0-0-111-0-0-112-0-0-113-0-0-1-7">`"10.0.0.1,11.0.0.1,12.0.0.1,13.0.0.1"`</a> | `"15.0.0.1,16.0.0.1"` | `"13.0.0.1"` |
+| <a id="opt-10-0-0-111-0-0-1" href="#opt-10-0-0-111-0-0-1" title="#opt-10-0-0-111-0-0-1">`"10.0.0.1,11.0.0.1"`</a> | `"10.0.0.1,11.0.0.1"` | `""`         |

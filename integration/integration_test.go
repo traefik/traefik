@@ -37,12 +37,17 @@ import (
 
 var (
 	showLog                      = flag.Bool("tlog", false, "always show Traefik logs")
-	k8sConformance               = flag.Bool("k8sConformance", false, "run K8s Gateway API conformance test")
-	k8sConformanceRunTest        = flag.String("k8sConformanceRunTest", "", "run a specific K8s Gateway API conformance test")
-	k8sConformanceTraefikVersion = flag.String("k8sConformanceTraefikVersion", "dev", "specify the Traefik version for the K8s Gateway API conformance report")
+	gatewayAPIConformanceRunTest = flag.String("gatewayAPIConformanceRunTest", "", "runs a specific Gateway API conformance test")
+	traefikVersion               = flag.String("traefikVersion", "dev", "defines the Traefik version")
 )
 
-const tailscaleSecretFilePath = "tailscale.secret"
+const (
+	k3sImage                = "docker.io/rancher/k3s:v1.34.2-k3s1"
+	traefikImage            = "traefik/traefik:latest"
+	traefikDeployment       = "deployments/traefik"
+	traefikNamespace        = "traefik"
+	tailscaleSecretFilePath = "tailscale.secret"
+)
 
 type composeConfig struct {
 	Services map[string]composeService `yaml:"services"`
@@ -404,7 +409,7 @@ func (s *BaseSuite) displayTraefikLog(output *bytes.Buffer) {
 	if output == nil || output.Len() == 0 {
 		log.Info().Msg("No Traefik logs.")
 	} else {
-		for _, line := range strings.Split(output.String(), "\n") {
+		for line := range strings.SplitSeq(output.String(), "\n") {
 			log.Info().Msg(line)
 		}
 	}

@@ -135,6 +135,9 @@ Timeout for receiving the response headers when communicating with the ACME serv
 `--certificatesresolvers.<name>.acme.clienttimeout`:  
 Timeout for a complete HTTP transaction with the ACME server. (Default: ```120```)
 
+`--certificatesresolvers.<name>.acme.disablecommonname`:  
+Disable the common name in the CSR. (Default: ```false```)
+
 `--certificatesresolvers.<name>.acme.dnschallenge`:  
 Activate DNS-01 Challenge. (Default: ```false```)
 
@@ -199,7 +202,10 @@ Certificate profile to use.
 Storage to use. (Default: ```acme.json```)
 
 `--certificatesresolvers.<name>.acme.tlschallenge`:  
-Activate TLS-ALPN-01 Challenge. (Default: ```true```)
+Activate TLS-ALPN-01 Challenge. (Default: ```false```)
+
+`--certificatesresolvers.<name>.acme.tlschallenge.delay`:  
+Delay between the creation of the challenge and the validation. (Default: ```0```)
 
 `--certificatesresolvers.<name>.tailscale`:  
 Enables Tailscale certificate resolution. (Default: ```true```)
@@ -230,6 +236,27 @@ Trust only forwarded headers from selected IPs.
 
 `--entrypoints.<name>.http`:  
 HTTP configuration.
+
+`--entrypoints.<name>.http.encodedcharacters.allowencodedbackslash`:  
+Defines whether requests with encoded back slash characters in the path are allowed. (Default: ```false```)
+
+`--entrypoints.<name>.http.encodedcharacters.allowencodedhash`:  
+Defines whether requests with encoded hash characters in the path are allowed. (Default: ```false```)
+
+`--entrypoints.<name>.http.encodedcharacters.allowencodednullcharacter`:  
+Defines whether requests with encoded null characters in the path are allowed. (Default: ```false```)
+
+`--entrypoints.<name>.http.encodedcharacters.allowencodedpercent`:  
+Defines whether requests with encoded percent characters in the path are allowed. (Default: ```false```)
+
+`--entrypoints.<name>.http.encodedcharacters.allowencodedquestionmark`:  
+Defines whether requests with encoded question mark characters in the path are allowed. (Default: ```false```)
+
+`--entrypoints.<name>.http.encodedcharacters.allowencodedsemicolon`:  
+Defines whether requests with encoded semicolon characters in the path are allowed. (Default: ```false```)
+
+`--entrypoints.<name>.http.encodedcharacters.allowencodedslash`:  
+Defines whether requests with encoded slash characters in the path are allowed. (Default: ```false```)
 
 `--entrypoints.<name>.http.encodequerysemicolons`:  
 Defines whether request query semicolons should be URLEncoded. (Default: ```false```)
@@ -361,7 +388,7 @@ Environment variables to forward to the wasm guest.
 Directory to mount to the wasm guest.
 
 `--experimental.localplugins.<name>.settings.useunsafe`:  
-Allow the plugin to use unsafe package. (Default: ```false```)
+Allow the plugin to use unsafe and syscall packages. (Default: ```false```)
 
 `--experimental.otlplogs`:  
 Enables the OpenTelemetry logs integration. (Default: ```false```)
@@ -379,7 +406,7 @@ Environment variables to forward to the wasm guest.
 Directory to mount to the wasm guest.
 
 `--experimental.plugins.<name>.settings.useunsafe`:  
-Allow the plugin to use unsafe package. (Default: ```false```)
+Allow the plugin to use unsafe and syscall packages. (Default: ```false```)
 
 `--experimental.plugins.<name>.version`:  
 plugin's version.

@@ -3,7 +3,7 @@ title: "Kubernetes IngressRoute"
 description: "An IngressRoute is a Traefik CRD is in charge of connecting incoming requests to the Services that can handle them in HTTP."
 ---
 
-`IngressRoute` is the CRD implementation of a [Traefik HTTP router](../../../http/router/rules-and-priority.md).
+`IngressRoute` is the CRD implementation of a [Traefik HTTP router](../../../http/routing/rules-and-priority.md).
 
 Before creating `IngressRoute` objects, you need to apply the [Traefik Kubernetes CRDs](https://doc.traefik.io/traefik/reference/dynamic-configuration/kubernetes-crd/#definitions) to your Kubernetes cluster.
 
@@ -21,8 +21,12 @@ metadata:
   namespace: apps
 
 spec:
+  ingressClassName: traefik-lb
   entryPoints:
     - web
+  parentRefs:
+    - name: parent-gateway
+      namespace: default  # Optional - defaults to same namespace
   routes:
   - kind: Rule
     # Rule on the Host
@@ -36,7 +40,7 @@ spec:
       accessLogs: true
       metrics: true
       tracing: true
-    # Set a pirority
+    # Set a priority
     priority: 10
     services:
     # Target a Kubernetes Support
@@ -54,7 +58,7 @@ spec:
           httpOnly: true
           name: cookie
           secure: true
-      strategy: RoundRobin
+      strategy: wrr
       weight: 10
   tls:
     # Generate a TLS certificate using a certificate resolver
@@ -74,165 +78,33 @@ spec:
 
 ## Configuration Options
 
-| Field                                                                            | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | Default                                                              | Required |
-|:---------------------------------------------------------------------------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:---------------------------------------------------------------------|:---------|
-| `entryPoints`                                                                    | List of [entry points](../../../../install-configuration/entrypoints.md) names.<br />If not specified, HTTP routers will accept requests from all EntryPoints in the list of default EntryPoints.                                                                                                                                                                                                                                                                                                                                                                                                              |                                                                      | No       |
-| `routes`                                                                         | List of routes.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |                                                                      | Yes      |
-| `routes[n].kind`                                                                 | Kind of router matching, only `Rule` is allowed yet.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | "Rule"                                                               | No       |
-| `routes[n].match`                                                                | Defines the [rule](../../../http/router/rules-and-priority.md#rules) corresponding to an underlying router.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |                                                                      | Yes      |
-| `routes[n].priority`                                                             | Defines the [priority](../../../http/router/rules-and-priority.md#priority-calculation) to disambiguate rules of the same length, for route matching.<br />If not set, the priority is directly equal to the length of the rule, and so the longest length has the highest priority.<br />A value of `0` for the priority is ignored, the default rules length sorting is used.                                                                                                                                                                                                                                | 0                                                                    | No       |
-| `routes[n].middlewares`                                                          | List of middlewares to attach to the IngressRoute. <br />More information [here](#middleware).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | ""                                                                   | No       |
-| `routes[n].`<br />`middlewares[m].`<br />`name`                                  | Middleware name.<br />The character `@` is not authorized. <br />More information [here](#middleware).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |                                                                      | Yes      |
-| `routes[n].`<br />`middlewares[m].`<br />`namespace`                             | Middleware namespace.<br />Can be empty if the middleware belongs to the same namespace as the IngressRoute. <br />More information [here](#middleware).                                                                                                                                                                                                                                                                                                                                                                                                                                                       |                                                                      | No       |
-| `routes[n].`<br />`observability.`<br />`accesslogs`                             | Defines whether the route will produce [access-logs](../../../../install-configuration/observability/logs-and-accesslogs.md). See [here](../../../http/router/observability.md) for more information.                                                                                                                                                                                                                                                                                                                                                                                                          | false                                                                | No       |
-| `routes[n].`<br />`observability.`<br />`metrics`                                | Defines whether the route will produce [metrics](../../../../install-configuration/observability/metrics.md). See [here](../../../http/router/observability.md) for more information.                                                                                                                                                                                                                                                                                                                                                                                                                          | false                                                                | No       |
-| `routes[n].`<br />`observability.`<br />`tracing`                                | Defines whether the route will produce [traces](../../../../install-configuration/observability/tracing.md). See [here](../../../http/router/observability.md) for more information.                                                                                                                                                                                                                                                                                                                                                                                                                           | false                                                                | No       |
-| `routes[n].`<br />`services`                                                     | List of any combination of TraefikService and [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/). <br />More information [here](#externalname-service).                                                                                                                                                                                                                                                                                                                                                                                                                    |                                                                      | No       |
-| `routes[n].`<br />`services[m].`<br />`kind`                                     | Kind of the service targeted.<br />Two values allowed:<br />- **Service**: Kubernetes Service<br /> **TraefikService**: Traefik Service.<br />More information [here](#externalname-service).                                                                                                                                                                                                                                                                                                                                                                                                                  | "Service"                                                            | No       |
-| `routes[n].`<br />`services[m].`<br />`name`                                     | Service name.<br />The character `@` is not authorized. <br />More information [here](#middleware).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |                                                                      | Yes      |
-| `routes[n].`<br />`services[m].`<br />`namespace`                                | Service namespace.<br />Can be empty if the service belongs to the same namespace as the IngressRoute. <br />More information [here](#externalname-service).                                                                                                                                                                                                                                                                                                                                                                                                                                                   |                                                                      | No       |
-| `routes[n].`<br />`services[m].`<br />`port`                                     | Service port (number or port name).<br />Evaluated only if the kind is **Service**.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |                                                                      | No       |
-| `routes[n].`<br />`services[m].`<br />`responseForwarding.`<br />`flushInterval` | Interval, in milliseconds, in between flushes to the client while copying the response body.<br />A negative value means to flush immediately after each write to the client.<br />This configuration is ignored when a response is a streaming response; for such responses, writes are flushed to the client immediately.<br />Evaluated only if the kind is **Service**.                                                                                                                                                                                                                                    | 100ms                                                                | No       |
-| `routes[n].`<br />`services[m].`<br />`scheme`                                   | Scheme to use for the request to the upstream Kubernetes Service.<br />Evaluated only if the kind is **Service**.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | "http"<br />"https" if `port` is 443 or contains the string *https*. | No       |
-| `routes[n].`<br />`services[m].`<br />`serversTransport`                         | Name of ServersTransport resource to use to configure the transport between Traefik and your servers.<br />Evaluated only if the kind is **Service**.                                                                                                                                                                                                                                                                                                                                                                                                                                                          | ""                                                                   | No       |
-| `routes[n].`<br />`services[m].`<br />`passHostHeader`                           | Forward client Host header to server.<br />Evaluated only if the kind is **Service**.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | true                                                                 | No       |
-| `routes[n].`<br />`services[m].`<br />`healthCheck.scheme`                       | Server URL scheme for the health check endpoint.<br />Evaluated only if the kind is **Service**.<br />Only for [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) of type [ExternalName](#externalname-service).                                                                                                                                                                                                                                                                                                                                                           | ""                                                                   | No       |
-| `routes[n].`<br />`services[m].`<br />`healthCheck.mode`                         | Health check mode.<br /> If defined to grpc, will use the gRPC health check protocol to probe the server.<br />Evaluated only if the kind is **Service**.<br />Only for [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) of type [ExternalName](#externalname-service).                                                                                                                                                                                                                                                                                                  | "http"                                                               | No       |
-| `routes[n].`<br />`services[m].`<br />`healthCheck.path`                         | Server URL path for the health check endpoint.<br />Evaluated only if the kind is **Service**.<br />Only for [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) of type [ExternalName](#externalname-service).                                                                                                                                                                                                                                                                                                                                                             | ""                                                                   | No       |
-| `routes[n].`<br />`services[m].`<br />`healthCheck.interval`                     | Frequency of the health check calls for healthy targets.<br />Evaluated only if the kind is **Service**.<br />Only for [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) of type [ExternalName](#externalname-service).                                                                                                                                                                                                                                                                                                                                                   | "100ms"                                                              | No       |
-| `routes[n].`<br />`services[m].`<br />`healthCheck.unhealthyInterval`            | Frequency of the health check calls for unhealthy targets.<br />When not defined, it defaults to the `interval` value.<br />Evaluated only if the kind is **Service**.<br />Only for [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) of type [ExternalName](#externalname-service).                                                                                                                                                                                                                                                                                     | "100ms"                                                              | No       |
-| `routes[n].`<br />`services[m].`<br />`healthCheck.method`                       | HTTP method for the health check endpoint.<br />Evaluated only if the kind is **Service**.<br />Only for [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) of type [ExternalName](#externalname-service).                                                                                                                                                                                                                                                                                                                                                                 | "GET"                                                                | No       |
-| `routes[n].`<br />`services[m].`<br />`healthCheck.status`                       | Expected HTTP status code of the response to the health check request.<br />Only for [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) of type ExternalName.<br />If not set, expect a status between 200 and 399.<br />Evaluated only if the kind is **Service**.                                                                                                                                                                                                                                                                                                        |                                                                      | No       |
-| `routes[n].`<br />`services[m].`<br />`healthCheck.port`                         | URL port for the health check endpoint.<br />Evaluated only if the kind is **Service**.<br />Only for [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) of type [ExternalName](#externalname-service).                                                                                                                                                                                                                                                                                                                                                                    |                                                                      | No       |
-| `routes[n].`<br />`services[m].`<br />`healthCheck.timeout`                      | Maximum duration to wait before considering the server unhealthy.<br />Evaluated only if the kind is **Service**.<br />Only for [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) of type [ExternalName](#externalname-service).                                                                                                                                                                                                                                                                                                                                          | "5s"                                                                 | No       |
-| `routes[n].`<br />`services[m].`<br />`healthCheck.hostname`                     | Value in the Host header of the health check request.<br />Evaluated only if the kind is **Service**.<br />Only for [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) of type [ExternalName](#externalname-service).                                                                                                                                                                                                                                                                                                                                                      | ""                                                                   | No       |
-| `routes[n].`<br />`services[m].`<br />`healthCheck.`<br />`followRedirect`       | Follow the redirections during the healtchcheck.<br />Evaluated only if the kind is **Service**.<br />Only for [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) of type [ExternalName](#externalname-service).                                                                                                                                                                                                                                                                                                                                                           | true                                                                 | No       |
-| `routes[n].`<br />`services[m].`<br />`healthCheck.headers`                      | Map of header to send to the health check endpoint<br />Evaluated only if the kind is **Service**.<br />Only for [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) of type [ExternalName](#externalname-service)).                                                                                                                                                                                                                                                                                                                                                        |                                                                      | No       |
-| `routes[n].`<br />`services[m].`<br />`sticky.`<br />`cookie.name`               | Name of the cookie used for the stickiness.<br />When sticky sessions are enabled, a `Set-Cookie` header is set on the initial response to let the client know which server handles the first response.<br />On subsequent requests, to keep the session alive with the same server, the client should send the cookie with the value set.<br />If the server pecified in the cookie becomes unhealthy, the request will be forwarded to a new server (and the cookie will keep track of the new server).<br />Evaluated only if the kind is **Service**.                                                      | ""                                                                   | No       |
-| `routes[n].`<br />`services[m].`<br />`sticky.`<br />`cookie.httpOnly`           | Allow the cookie can be accessed by client-side APIs, such as JavaScript.<br />Evaluated only if the kind is **Service**.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | false                                                                | No       |
-| `routes[n].`<br />`services[m].`<br />`sticky.`<br />`cookie.secure`             | Allow the cookie can only be transmitted over an encrypted connection (i.e. HTTPS).<br />Evaluated only if the kind is **Service**.                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | false                                                                | No       |
-| `routes[n].`<br />`services[m].`<br />`sticky.`<br />`cookie.sameSite`           | [SameSite](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite) policy<br />Allowed values:<br />-`none`<br />-`lax`<br />`strict`<br />Evaluated only if the kind is **Service**.                                                                                                                                                                                                                                                                                                                                                                                                   | ""                                                                   | No       |
-| `routes[n].`<br />`services[m].`<br />`sticky.`<br />`cookie.maxAge`             | Number of seconds until the cookie expires.<br />Negative number, the cookie expires immediately.<br />0, the cookie never expires.<br />Evaluated only if the kind is **Service**.                                                                                                                                                                                                                                                                                                                                                                                                                            | 0                                                                    | No       |
-| `routes[n].`<br />`services[m].`<br />`strategy`                                 | Load balancing strategy between the servers.<br />RoundRobin is the only supported value yet.<br />Evaluated only if the kind is **Service**.                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | "RoundRobin"                                                         | No       |
-| `routes[n].`<br />`services[m].`<br />`weight`                                   | Service weight.<br />To use only to refer to WRR TraefikService                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | ""                                                                   | No       |
-| `routes[n].`<br />`services[m].`<br />`nativeLB`                                 | Allow using the Kubernetes Service load balancing between the pods instead of the one provided by Traefik.<br /> Evaluated only if the kind is **Service**.                                                                                                                                                                                                                                                                                                                                                                                                                                                    | false                                                                | No       |
-| `routes[n].`<br />`services[m].`<br />`nodePortLB`                               | Use the nodePort IP address when the service type is NodePort.<br />It allows services to be reachable when Traefik runs externally from the Kubernetes cluster but within the same network of the nodes.<br />Evaluated only if the kind is **Service**.                                                                                                                                                                                                                                                                                                                                                      | false                                                                | No       |
-| `tls`                                                                            | TLS configuration.<br />Can be an empty value(`{}`):<br />A self signed is generated in such a case<br />(or the [default certificate](tlsstore.md) is used if it is defined.)                                                                                                                                                                                                                                                                                                                                                                                                                                 |                                                                      | No       |
-| `tls.secretName`                                                                 | [Secret](https://kubernetes.io/docs/concepts/configuration/secret/) name used to store the certificate (in the same namesapce as the `IngressRoute`)                                                                                                                                                                                                                                                                                                                                                                                                                                                           | ""                                                                   | No       |
-| `tls.`<br />`options.name`                                                       | Name of the [`TLSOption`](tlsoption.md) to use.<br />More information [here](#tls-options).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | ""                                                                   | No       |
-| `tls.`<br />`options.namespace`                                                  | Namespace of the [`TLSOption`](tlsoption.md) to use.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | ""                                                                   | No       |
-| `tls.certResolver`                                                               | Name of the [Certificate Resolver](../../../../install-configuration/tls/certificate-resolvers/overview.md) to use to generate automatic TLS certificates.                                                                                                                                                                                                                                                                                                                                                                                                                                                     | ""                                                                   | No       |
-| `tls.domains`                                                                    | List of domains to serve using the certificates generates (one `tls.domain`= one certificate).<br />More information in the [dedicated section](../../../../install-configuration/tls/certificate-resolvers/acme.md#domain-definition).                                                                                                                                                                                                                                                                                                                                                                        |                                                                      | No       |
-| `tls.`<br />`domains[n].main`                                                    | Main domain name                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | ""                                                                   | Yes      |
-| `tls.`<br />`domains[n].sans`                                                    | List of alternative domains (SANs)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |                                                                      | No       |
+| Field                                                                                                                                                                                            | Description                                                                                                                                                                                                                                                                                                                                                                      | Default | Required |
+|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------|:---------|
+| <a id="opt-ingressClassName" href="#opt-ingressClassName" title="#opt-ingressClassName">`ingressClassName`</a> | Defines the [IngressClass](https://kubernetes.io/docs/concepts/services-networking/ingress/#ingress-class) cluster resource to use. It replaces the deprecated `kubernetes.io/ingress.class` annotation.<br />The spec field takes precedence over the annotation.                                                                                                               |         | No       |
+| <a id="opt-entryPoints" href="#opt-entryPoints" title="#opt-entryPoints">`entryPoints`</a> | List of [entry points](../../../../install-configuration/entrypoints.md) names.<br />If not specified, HTTP routers will accept requests from all EntryPoints in the list of default EntryPoints.                                                                                                                                                                                |         | No       |
+| <a id="opt-parentRefs" href="#opt-parentRefs" title="#opt-parentRefs">`parentRefs`</a> | List of references to parent IngressRoute resources for multi-layer routing. When specified, this IngressRoute's routers become children of the referenced parent IngressRoute's routers. See [Multi-Layer Routing](#multi-layer-routing-with-ingressroutes) section for details.                                                                                                |         | No       |
+| <a id="opt-parentRefsn-name" href="#opt-parentRefsn-name" title="#opt-parentRefsn-name">`parentRefs[n].name`</a> | Name of the referenced parent IngressRoute resource.                                                                                                                                                                                                                                                                                                                             |         | Yes      |
+| <a id="opt-parentRefsn-namespace" href="#opt-parentRefsn-namespace" title="#opt-parentRefsn-namespace">`parentRefs[n].namespace`</a> | Namespace of the referenced parent IngressRoute resource.<br />If not specified, defaults to the same namespace as the child IngressRoute.<br />Cross-namespace references require `allowCrossNamespace` provider option to be enabled.                                                                                                                                          |         | No       |
+| <a id="opt-routes" href="#opt-routes" title="#opt-routes">`routes`</a> | List of routes.                                                                                                                                                                                                                                                                                                                                                                  |         | Yes      |
+| <a id="opt-routesn-kind" href="#opt-routesn-kind" title="#opt-routesn-kind">`routes[n].kind`</a> | Kind of router matching, only `Rule` is allowed yet.                                                                                                                                                                                                                                                                                                                             | "Rule"  | No       |
+| <a id="opt-routesn-match" href="#opt-routesn-match" title="#opt-routesn-match">`routes[n].match`</a> | Defines the [rule](../../../http/routing/rules-and-priority.md#rules) corresponding to an underlying router.                                                                                                                                                                                                                                                                     |         | Yes      |
+| <a id="opt-routesn-priority" href="#opt-routesn-priority" title="#opt-routesn-priority">`routes[n].priority`</a> | Defines the [priority](../../../http/routing/rules-and-priority.md#priority-calculation) to disambiguate rules of the same length, for route matching.<br />If not set, the priority is directly equal to the length of the rule, and so the longest length has the highest priority.<br />A value of `0` for the priority is ignored, the default rules length sorting is used. | 0       | No       |
+| <a id="opt-routesn-middlewares" href="#opt-routesn-middlewares" title="#opt-routesn-middlewares">`routes[n].middlewares`</a> | List of middlewares to attach to the IngressRoute. <br />More information [here](#middleware).                                                                                                                                                                                                                                                                                   | ""      | No       |
+| <a id="opt-routesn-middlewaresm-name" href="#opt-routesn-middlewaresm-name" title="#opt-routesn-middlewaresm-name">`routes[n].`<br />`middlewares[m].`<br />`name`</a> | Middleware name.<br />The character `@` is not authorized. <br />More information [here](#middleware).                                                                                                                                                                                                                                                                           |         | Yes      |
+| <a id="opt-routesn-middlewaresm-namespace" href="#opt-routesn-middlewaresm-namespace" title="#opt-routesn-middlewaresm-namespace">`routes[n].`<br />`middlewares[m].`<br />`namespace`</a> | Middleware namespace.<br />Can be empty if the middleware belongs to the same namespace as the IngressRoute. <br />More information [here](#middleware).                                                                                                                                                                                                                         |         | No       |
+| <a id="opt-routesn-observability-accesslogs" href="#opt-routesn-observability-accesslogs" title="#opt-routesn-observability-accesslogs">`routes[n].`<br />`observability.`<br />`accesslogs`</a> | Defines whether the route will produce [access-logs](../../../../install-configuration/observability/logs-and-accesslogs.md). See [here](../../../http/routing/observability.md) for more information.                                                                                                                                                                           | false   | No       |
+| <a id="opt-routesn-observability-metrics" href="#opt-routesn-observability-metrics" title="#opt-routesn-observability-metrics">`routes[n].`<br />`observability.`<br />`metrics`</a> | Defines whether the route will produce [metrics](../../../../install-configuration/observability/metrics.md). See [here](../../../http/routing/observability.md) for more information.                                                                                                                                                                                           | false   | No       |
+| <a id="opt-routesn-observability-tracing" href="#opt-routesn-observability-tracing" title="#opt-routesn-observability-tracing">`routes[n].`<br />`observability.`<br />`tracing`</a> | Defines whether the route will produce [traces](../../../../install-configuration/observability/tracing.md). See [here](../../../http/routing/observability.md) for more information.                                                                                                                                                                                            | false   | No       |
+| <a id="opt-tls" href="#opt-tls" title="#opt-tls">`tls`</a> | TLS configuration.<br />Can be an empty value(`{}`):<br />A self signed is generated in such a case<br />(or the [default certificate](../tls/tlsstore.md) is used if it is defined.)                                                                                                                                                                                                   |         | No       |
+| <a id="opt-routesn-services" href="#opt-routesn-services" title="#opt-routesn-services">`routes[n].`<br />`services`</a> | List of any combination of [TraefikService](./traefikservice.md) and [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/). <br /> Exhaustive list of option in the [`Service`](./service.md#configuration-options) documentation.                                                                                                              |         | No       |
+| <a id="opt-tls-secretName" href="#opt-tls-secretName" title="#opt-tls-secretName">`tls.secretName`</a> | [Secret](https://kubernetes.io/docs/concepts/configuration/secret/) name used to store the certificate (in the same namesapce as the `IngressRoute`)                                                                                                                                                                                                                             | ""      | No       |
+| <a id="opt-tls-options-name" href="#opt-tls-options-name" title="#opt-tls-options-name">`tls.`<br />`options.name`</a> | Name of the [`TLSOption`](../tls/tlsoption.md) to use.<br />More information [here](#tls-options).                                                                                                                                                                                                                                                                                      | ""      | No       |
+| <a id="opt-tls-options-namespace" href="#opt-tls-options-namespace" title="#opt-tls-options-namespace">`tls.`<br />`options.namespace`</a> | Namespace of the [`TLSOption`](../tls/tlsoption.md) to use.                                                                                                                                                                                                                                                                                                                             | ""      | No       |
+| <a id="opt-tls-certResolver" href="#opt-tls-certResolver" title="#opt-tls-certResolver">`tls.certResolver`</a> | Name of the [Certificate Resolver](../../../../install-configuration/tls/certificate-resolvers/overview.md) to use to generate automatic TLS certificates.                                                                                                                                                                                                                       | ""      | No       |
+| <a id="opt-tls-domains" href="#opt-tls-domains" title="#opt-tls-domains">`tls.domains`</a> | List of domains to serve using the certificates generates (one `tls.domain`= one certificate).<br />More information in the [dedicated section](../../../../install-configuration/tls/certificate-resolvers/acme.md#domain-definition).                                                                                                                                          |         | No       |
+| <a id="opt-tls-domainsn-main" href="#opt-tls-domainsn-main" title="#opt-tls-domainsn-main">`tls.`<br />`domains[n].main`</a> | Main domain name                                                                                                                                                                                                                                                                                                                                                                 | ""      | Yes      |
+| <a id="opt-tls-domainsn-sans" href="#opt-tls-domainsn-sans" title="#opt-tls-domainsn-sans">`tls.`<br />`domains[n].sans`</a> | List of alternative domains (SANs)                                                                                                                                                                                                                                                                                                                                               |         | No       |
 
-### ExternalName Service
-
-Traefik backends creation needs a port to be set, however Kubernetes [ExternalName Service](https://kubernetes.io/docs/concepts/services-networking/service/#externalname) could be defined without any port. Accordingly, Traefik supports defining a port in two ways:
-
-- only on `IngressRoute` service
-- on both sides, you'll be warned if the ports don't match, and the `IngressRoute` service port is used
-
-Thus, in case of two sides port definition, Traefik expects a match between ports.
-
-=== "Ports defined on Resource"
-
-    ```yaml tab="IngressRoute"
-    apiVersion: traefik.io/v1alpha1
-    kind: IngressRoute
-    metadata:
-      name: test.route
-      namespace: apps
-
-    spec:
-      entryPoints:
-        - foo
-      routes:
-      - match: Host(`example.net`)
-        kind: Rule
-        services:
-        - name: external-svc
-          port: 80
-    ```
-
-    ```yaml tab="Service ExternalName"
-    apiVersion: v1
-    kind: Service
-    metadata:
-      name: external-svc
-      namespace: apps
-
-    spec:
-      externalName: external.domain
-      type: ExternalName
-    ```
-
-=== "Port defined on the Service"
-
-    ```yaml tab="IngressRoute"
-    apiVersion: traefik.io/v1alpha1
-    kind: IngressRoute
-    metadata:
-      name: test.route
-      namespace: apps
-
-    spec:
-      entryPoints:
-        - foo
-      routes:
-      - match: Host(`example.net`)
-        kind: Rule
-        services:
-        - name: external-svc
-    ```
-
-    ```yaml tab="Service ExternalName"
-    apiVersion: v1
-    kind: Service
-    metadata:
-      name: external-svc
-      namespace: apps
-
-    spec:
-      externalName: external.domain
-      type: ExternalName
-      ports:
-        - port: 80
-    ```
-
-=== "Port defined on both sides"
-
-    ```yaml tab="IngressRoute"
-    apiVersion: traefik.io/v1alpha1
-    kind: IngressRoute
-    metadata:
-      name: test.route
-      namespace: apps
-
-    spec:
-      entryPoints:
-        - foo
-      routes:
-      - match: Host(`example.net`)
-        kind: Rule
-        services:
-        - name: external-svc
-          port: 80
-    ```
-
-    ```yaml tab="Service ExternalName"
-    apiVersion: v1
-    kind: Service
-    metadata:
-      name: external-svc
-      namespace: apps
-
-    spec:
-      externalName: external.domain
-      type: ExternalName
-      ports:
-        - port: 80
-    ```
 
 ### Middleware
 
@@ -282,114 +154,11 @@ same namespace as the IngressRoute)
     - `Service` (default value): to reference a [Kubernetes Service](https://kubernetes.io/docs/concepts/services-networking/service/)
     - `TraefikService`: to reference an object [`TraefikService`](../http/traefikservice.md)
 
-### Port Definition
-
-Traefik backends creation needs a port to be set, however Kubernetes [ExternalName Service](https://kubernetes.io/docs/concepts/services-networking/service/#externalname) could be defined without any port. Accordingly, Traefik supports defining a port in two ways:
-
-- only on `IngressRoute` service
-- on both sides, you'll be warned if the ports don't match, and the `IngressRoute` service port is used
-
-Thus, in case of two sides port definition, Traefik expects a match between ports.
-
-??? example   
-
-    ```yaml tab="IngressRoute"
-    ---
-    apiVersion: traefik.io/v1alpha1
-    kind: IngressRoute
-    metadata:
-      name: test.route
-      namespace: default
-
-    spec:
-      entryPoints:
-        - foo
-
-      routes:
-      - match: Host(`example.net`)
-        kind: Rule
-        services:
-        - name: external-svc
-          port: 80
-
-    ---
-    apiVersion: v1
-    kind: Service
-    metadata:
-      name: external-svc
-      namespace: default
-    spec:
-      externalName: external.domain
-      type: ExternalName
-    ```
-
-    ```yaml tab="ExternalName Service"
-    ---
-    apiVersion: traefik.io/v1alpha1
-    kind: IngressRoute
-    metadata:
-      name: test.route
-      namespace: default
-
-    spec:
-      entryPoints:
-        - foo
-
-      routes:
-      - match: Host(`example.net`)
-        kind: Rule
-        services:
-        - name: external-svc
-
-    ---
-    apiVersion: v1
-    kind: Service
-    metadata:
-      name: external-svc
-      namespace: default
-    spec:
-      externalName: external.domain
-      type: ExternalName
-      ports:
-        - port: 80
-    ```
-
-    ```yaml tab="Both sides"
-    ---
-    apiVersion: traefik.io/v1alpha1
-    kind: IngressRoute
-    metadata:
-      name: test.route
-      namespace: default
-
-    spec:
-      entryPoints:
-        - foo
-
-      routes:
-      - match: Host(`example.net`)
-        kind: Rule
-        services:
-        - name: external-svc
-          port: 80
-
-    ---
-    apiVersion: v1
-    kind: Service
-    metadata:
-      name: external-svc
-      namespace: default
-    spec:
-      externalName: external.domain
-      type: ExternalName
-      ports:
-        - port: 80
-    ```
 
 ### TLS Options
 
 The `options` field enables fine-grained control of the TLS parameters.
-It refers to a [TLSOption](./tlsoption.md) and will be applied only if a `Host` 
+It refers to a [TLSOption](../tls/tlsoption.md) and will be applied only if a `Host` 
 rule is defined.
 
 #### Server Name Association
@@ -452,111 +221,162 @@ TLS options references, a conflict occurs, such as in the example below.
         ...
     ```
 
-If that happens, both mappings are discarded, and the host name 
+If that happens, both mappings are discarded, and the host name
 (`example.net` in the example) for these routers gets associated with
  the default TLS options instead.
 
-### Load Balancing
+### Multi-Layer Routing with IngressRoutes
 
-You can declare and use Kubernetes Service load balancing as detailed below:
+Multi-layer routing allows creating hierarchical relationships between IngressRoutes,
+where parent IngressRoutes can apply middleware before child IngressRoutes make routing decisions.
 
-```yaml tab="IngressRoute"
-apiVersion: traefik.io/v1alpha1
-kind: IngressRoute
-metadata:
-  name: ingressroutebar
-  namespace: default
+This is particularly useful for authentication-based routing,
+where a parent IngressRoute authenticates requests and adds context (e.g., user roles as headers),
+and child IngressRoutes route based on that context.
 
-spec:
-  entryPoints:
-    - web
-  routes:
-  - match: Host(`example.com`) && PathPrefix(`/foo`)
-    kind: Rule
-    services:
-    - name: svc1
+When a child IngressRoute references a parent IngressRoute with multiple routes,
+**all** parent routers then become parents of **all** child routers.
+
+!!! info "Comprehensive Multi-Layer Routing Documentation"
+
+    For detailed information about multi-layer routing concepts, validation rules, and use cases, see the dedicated [Multi-Layer Routing](../../../../routing-configuration/http/routing/multi-layer-routing.md) page.
+
+#### Configuration Requirements
+
+### Root IngressRoutes
+
+- Have no `parentRefs` (top of the hierarchy)
+- **Can** have `entryPoints`, `tls`, and `observability` configuration
+- Can be either parent IngressRoutes (with children) or standalone IngressRoutes (with service)
+
+### Intermediate IngressRoutes
+
+- Reference their parent IngressRoute(s) via `parentRefs`
+- Have one or more child IngressRoutes
+- **Must not** have a `service` defined
+- **Must not** have `entryPoints`, `tls`, or `observability` configuration
+
+### Leaf IngressRoutes
+
+- Reference their parent IngressRoute(s) via `parentRefs`
+- **Must** have a `service` defined
+- **Must not** have `entryPoints`, `tls`, or `observability` configuration
+
+!!! warning "Cross-Namespace References"
+
+    Cross-namespace parent references require the `allowCrossNamespace` provider option to be enabled. 
+    If disabled, child IngressRoute creation will be skipped with an error logged.
+
+#### Example: Authentication-Based Routing
+
+??? example "Parent IngressRoute with ForwardAuth and Child IngressRoutes"
+
+    ```yaml tab="Parent IngressRoute"
+    apiVersion: traefik.io/v1alpha1
+    kind: IngressRoute
+    metadata:
+      name: api-parent
       namespace: default
-    - name: svc2
+    spec:
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+      routes:
+        # Parent route with authentication - no services
+        - match: Host(`api.example.com`) && PathPrefix(`/api`)
+          kind: Rule
+          middlewares:
+            - name: auth-middleware
+              namespace: default
+    ---
+    apiVersion: traefik.io/v1alpha1
+    kind: Middleware
+    metadata:
+      name: auth-middleware
       namespace: default
-```
+    spec:
+      forwardAuth:
+        address: "http://auth-service.default.svc.cluster.local:8080/auth"
+        authResponseHeaders:
+          - X-User-Role
+          - X-User-Name
+    ```
 
-```yaml tab="K8s Service"
-apiVersion: v1
-kind: Service
-metadata:
-  name: svc1
-  namespace: default
-
-spec:
-  ports:
-    - name: http
-      port: 80
-  selector:
-    app: traefiklabs
-    task: app1
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: svc2
-  namespace: default
-
-spec:
-  ports:
-    - name: http
-      port: 80
-  selector:
-    app: traefiklabs
-    task: app2
-```
-
-!!! important "Kubernetes Service Native Load-Balancing"
-
-    To avoid creating the server load-balancer with the pod IPs and use Kubernetes Service clusterIP directly,
-    one should set the service `NativeLB` option to true.
-    Please note that, by default, Traefik reuses the established connections to the backends for performance purposes. This can prevent the requests load balancing between the replicas from behaving as one would expect when the option is set.
-    By default, `NativeLB` is false.
-
-    ??? example "Example"
-
-        ```yaml
-        ---
-        apiVersion: traefik.io/v1alpha1
-        kind: IngressRoute
-        metadata:
-          name: test.route
-          namespace: default
-
-        spec:
-          entryPoints:
-            - foo
-
-          routes:
-          - match: Host(`example.net`)
-            kind: Rule
-            services:
-            - name: svc
+    ```yaml tab="Child IngressRoutes"
+    # Child IngressRoute for admin users
+    apiVersion: traefik.io/v1alpha1
+    kind: IngressRoute
+    metadata:
+      name: api-admin
+      namespace: default
+    spec:
+      parentRefs:
+        - name: api-parent
+          namespace: default  # Optional - defaults to same namespace
+      routes:
+        - match: HeadersRegexp(`X-User-Role`, `admin`)
+          kind: Rule
+          services:
+            - name: admin-service
               port: 80
-              # Here, nativeLB instructs to build the server load-balancer with the Kubernetes Service clusterIP only.
-              nativeLB: true
+    ---
+    # Child IngressRoute for regular users
+    apiVersion: traefik.io/v1alpha1
+    kind: IngressRoute
+    metadata:
+      name: api-user
+      namespace: default
+    spec:
+      parentRefs:
+        - name: api-parent
+      routes:
+        - match: HeadersRegexp(`X-User-Role`, `user`)
+          kind: Rule
+          services:
+            - name: user-service
+              port: 80
+    ```
 
-        ---
-        apiVersion: v1
-        kind: Service
-        metadata:
-          name: svc
-          namespace: default
-        spec:
-          type: ClusterIP
-          ...
-        ```
+    ```yaml tab="Services"
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: auth-service
+      namespace: default
+    spec:
+      ports:
+        - port: 8080
+      selector:
+        app: auth-service
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: admin-service
+      namespace: default
+    spec:
+      ports:
+        - port: 80
+      selector:
+        app: admin-backend
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: user-service
+      namespace: default
+    spec:
+      ports:
+        - port: 80
+      selector:
+        app: user-backend
+    ```
 
-### Configuring Backend Protocol
+    **How it works:**
 
-There are 3 ways to configure the backend protocol for communication between Traefik and your pods:
-
-- Setting the scheme explicitly (http/https/h2c)
-- Configuring the name of the kubernetes service port to start with https (https)
-- Setting the kubernetes service port to use port 443 (https)
-
-If you do not configure the above, Traefik will assume an http connection.
+    1. Request to `https://api.example.com/api/endpoint` matches the parent router
+    2. `auth-middleware` (ForwardAuth) validates the request with `auth-service`
+    3. `auth-service` returns 200 OK with `X-User-Role` header (e.g., `admin` or `user`)
+    4. Child routers evaluate rules against the modified request (with `X-User-Role` header)
+    5. Request is routed to `admin-service` or `user-service` based on the role

@@ -43,11 +43,15 @@ spec:
                 description: |-
                   EntryPoints defines the list of entry point names to bind to.
                   Entry points have to be configured in the static configuration.
-                  More info: https://doc.traefik.io/traefik/v3.5/routing/entrypoints/
+                  More info: https://doc.traefik.io/traefik/v3.6/reference/install-configuration/entrypoints/
                   Default: all.
                 items:
                   type: string
                 type: array
+              ingressClassName:
+                description: IngressClassName defines the name of the IngressClass
+                  cluster resource.
+                type: string
               routes:
                 description: Routes defines the list of routes.
                 items:

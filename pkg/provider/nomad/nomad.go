@@ -15,7 +15,7 @@ import (
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/job"
-	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	"github.com/traefik/traefik/v3/pkg/provider"
 	"github.com/traefik/traefik/v3/pkg/provider/constraints"
 	"github.com/traefik/traefik/v3/pkg/safe"
@@ -570,4 +570,9 @@ func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *s
 	})
 
 	return eventsChanBuffered
+}
+
+// Namespace returns the namespace of the Nomad provider.
+func (p *Provider) Namespace() string {
+	return p.namespace
 }

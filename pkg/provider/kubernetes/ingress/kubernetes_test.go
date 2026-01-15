@@ -17,6 +17,7 @@ import (
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	traefikhttp "github.com/traefik/traefik/v3/pkg/muxer/http"
+	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	"github.com/traefik/traefik/v3/pkg/provider"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/tls"
@@ -127,7 +128,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 								AccessLogs:     pointer(true),
 								Tracing:        pointer(true),
 								Metrics:        pointer(true),
-								TraceVerbosity: types.MinimalVerbosity,
+								TraceVerbosity: otypes.MinimalVerbosity,
 							},
 						},
 					},
@@ -541,6 +542,26 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 		{
 			desc:               "Ingress without backend",
 			allowEmptyServices: true,
+			expected: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Routers:     map[string]*dynamic.Router{},
+					Services:    map[string]*dynamic.Service{},
+				},
+			},
+		},
+		{
+			desc: "Ingress with defaultbackend with resource",
+			expected: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Routers:     map[string]*dynamic.Router{},
+					Services:    map[string]*dynamic.Service{},
+				},
+			},
+		},
+		{
+			desc: "Ingress with empty defaultbackend",
 			expected: &dynamic.Configuration{
 				HTTP: &dynamic.HTTPConfiguration{
 					Middlewares: map[string]*dynamic.Middleware{},
@@ -2294,6 +2315,14 @@ func TestIngressEndpointPublishedService(t *testing.T) {
 						{Port: 9090, Protocol: "TCP"},
 						{Port: 9091, Protocol: "TCP"},
 					},
+				},
+			},
+		},
+		{
+			desc: "Published Service ExternalName",
+			expected: []netv1.IngressLoadBalancerIngress{
+				{
+					Hostname: "example.com",
 				},
 			},
 		},

@@ -56,7 +56,7 @@ spec:
 
 | Field                        | Description                                                                                                                                                                                                | Default | Required |
 |:-----------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------|:---------|
-| `regex` | List of regular expressions to match the path prefix from the request URL.<br /> For instance, `/products` also matches `/products/shoes` and `/products/shirts`.<br />More information [here](#regex). | | No |
+| <a id="opt-regex" href="#opt-regex" title="#opt-regex">`regex`</a> | List of regular expressions to match the path prefix from the request URL.<br /> For instance, `/products` also matches `/products/shoes` and `/products/shirts`.<br />More information [here](#regex). | | No |
 
 ### regex
 

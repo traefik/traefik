@@ -100,10 +100,10 @@ http:
 
 | Field | Description                                               | Default              | Required |
 |:------|:----------------------------------------------------------|:---------------------|:---------|
-| `providers.providersThrottleDuration` | Minimum amount of time to wait for, after a configuration reload, before taking into account any new configuration refresh event.<br />If multiple events occur within this time, only the most recent one is taken into account, and all others are discarded.<br />**This option cannot be set per provider, but the throttling algorithm applies to each of them independently.** | 2s  | No |
-| `providers.file.filename` | Defines the path to the configuration file.  |  ""    | Yes   |
-| `providers.file.directory` | Defines the path to the directory that contains the configuration files. The `filename` and `directory` options are mutually exclusive. It is recommended to use `directory`.  |  ""    | Yes   |
-| `providers.file.watch` | Set the `watch` option to `true` to allow Traefik to automatically watch for file changes. It works with both the `filename` and the `directory` options. | true | No |
+| <a id="opt-providers-providersThrottleDuration" href="#opt-providers-providersThrottleDuration" title="#opt-providers-providersThrottleDuration">`providers.providersThrottleDuration`</a> | Minimum amount of time to wait for, after a configuration reload, before taking into account any new configuration refresh event.<br />If multiple events occur within this time, only the most recent one is taken into account, and all others are discarded.<br />**This option cannot be set per provider, but the throttling algorithm applies to each of them independently.** | 2s  | No |
+| <a id="opt-providers-file-filename" href="#opt-providers-file-filename" title="#opt-providers-file-filename">`providers.file.filename`</a> | Defines the path to the configuration file.  |  ""    | Yes   |
+| <a id="opt-providers-file-directory" href="#opt-providers-file-directory" title="#opt-providers-file-directory">`providers.file.directory`</a> | Defines the path to the directory that contains the configuration files. The `filename` and `directory` options are mutually exclusive. It is recommended to use `directory`.  |  ""    | Yes   |
+| <a id="opt-providers-file-watch" href="#opt-providers-file-watch" title="#opt-providers-file-watch">`providers.file.watch`</a> | Set the `watch` option to `true` to allow Traefik to automatically watch for file changes. It works with both the `filename` and the `directory` options. | true | No |
 
 !!! warning "Limitations"
 

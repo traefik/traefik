@@ -1,0 +1,645 @@
+## CODE GENERATED AUTOMATICALLY
+## THIS FILE MUST NOT BE EDITED BY HAND
+[http]
+  [http.routers]
+    [http.routers.Router0]
+      entryPoints = ["foobar", "foobar"]
+      middlewares = ["foobar", "foobar"]
+      service = "foobar"
+      rule = "foobar"
+      parentRefs = ["foobar", "foobar"]
+      ruleSyntax = "foobar"
+      priority = 42
+      [http.routers.Router0.tls]
+        options = "foobar"
+        certResolver = "foobar"
+
+        [[http.routers.Router0.tls.domains]]
+          main = "foobar"
+          sans = ["foobar", "foobar"]
+
+        [[http.routers.Router0.tls.domains]]
+          main = "foobar"
+          sans = ["foobar", "foobar"]
+      [http.routers.Router0.observability]
+        accessLogs = true
+        metrics = true
+        tracing = true
+        traceVerbosity = "foobar"
+    [http.routers.Router1]
+      entryPoints = ["foobar", "foobar"]
+      middlewares = ["foobar", "foobar"]
+      service = "foobar"
+      rule = "foobar"
+      parentRefs = ["foobar", "foobar"]
+      ruleSyntax = "foobar"
+      priority = 42
+      [http.routers.Router1.tls]
+        options = "foobar"
+        certResolver = "foobar"
+
+        [[http.routers.Router1.tls.domains]]
+          main = "foobar"
+          sans = ["foobar", "foobar"]
+
+        [[http.routers.Router1.tls.domains]]
+          main = "foobar"
+          sans = ["foobar", "foobar"]
+      [http.routers.Router1.observability]
+        accessLogs = true
+        metrics = true
+        tracing = true
+        traceVerbosity = "foobar"
+  [http.services]
+    [http.services.Service01]
+      [http.services.Service01.failover]
+        service = "foobar"
+        fallback = "foobar"
+        [http.services.Service01.failover.healthCheck]
+    [http.services.Service02]
+      [http.services.Service02.highestRandomWeight]
+
+        [[http.services.Service02.highestRandomWeight.services]]
+          name = "foobar"
+          weight = 42
+
+        [[http.services.Service02.highestRandomWeight.services]]
+          name = "foobar"
+          weight = 42
+        [http.services.Service02.highestRandomWeight.healthCheck]
+    [http.services.Service03]
+      [http.services.Service03.loadBalancer]
+        strategy = "foobar"
+        passHostHeader = true
+        serversTransport = "foobar"
+        [http.services.Service03.loadBalancer.sticky]
+          [http.services.Service03.loadBalancer.sticky.cookie]
+            name = "foobar"
+            secure = true
+            httpOnly = true
+            sameSite = "foobar"
+            maxAge = 42
+            path = "foobar"
+            domain = "foobar"
+
+        [[http.services.Service03.loadBalancer.servers]]
+          url = "foobar"
+          weight = 42
+          preservePath = true
+
+        [[http.services.Service03.loadBalancer.servers]]
+          url = "foobar"
+          weight = 42
+          preservePath = true
+        [http.services.Service03.loadBalancer.healthCheck]
+          scheme = "foobar"
+          mode = "foobar"
+          path = "foobar"
+          method = "foobar"
+          status = 42
+          port = 42
+          interval = "42s"
+          unhealthyInterval = "42s"
+          timeout = "42s"
+          hostname = "foobar"
+          followRedirects = true
+          [http.services.Service03.loadBalancer.healthCheck.headers]
+            name0 = "foobar"
+            name1 = "foobar"
+        [http.services.Service03.loadBalancer.passiveHealthCheck]
+          failureWindow = "42s"
+          maxFailedAttempts = 42
+        [http.services.Service03.loadBalancer.responseForwarding]
+          flushInterval = "42s"
+    [http.services.Service04]
+      [http.services.Service04.mirroring]
+        service = "foobar"
+        mirrorBody = true
+        maxBodySize = 42
+
+        [[http.services.Service04.mirroring.mirrors]]
+          name = "foobar"
+          percent = 42
+
+        [[http.services.Service04.mirroring.mirrors]]
+          name = "foobar"
+          percent = 42
+        [http.services.Service04.mirroring.healthCheck]
+    [http.services.Service05]
+      [http.services.Service05.weighted]
+
+        [[http.services.Service05.weighted.services]]
+          name = "foobar"
+          weight = 42
+
+        [[http.services.Service05.weighted.services]]
+          name = "foobar"
+          weight = 42
+        [http.services.Service05.weighted.sticky]
+          [http.services.Service05.weighted.sticky.cookie]
+            name = "foobar"
+            secure = true
+            httpOnly = true
+            sameSite = "foobar"
+            maxAge = 42
+            path = "foobar"
+            domain = "foobar"
+        [http.services.Service05.weighted.healthCheck]
+  [http.middlewares]
+    [http.middlewares.Middleware01]
+      [http.middlewares.Middleware01.addPrefix]
+        prefix = "foobar"
+    [http.middlewares.Middleware02]
+      [http.middlewares.Middleware02.basicAuth]
+        users = ["foobar", "foobar"]
+        usersFile = "foobar"
+        realm = "foobar"
+        removeHeader = true
+        headerField = "foobar"
+    [http.middlewares.Middleware03]
+      [http.middlewares.Middleware03.buffering]
+        maxRequestBodyBytes = 42
+        memRequestBodyBytes = 42
+        maxResponseBodyBytes = 42
+        memResponseBodyBytes = 42
+        retryExpression = "foobar"
+    [http.middlewares.Middleware04]
+      [http.middlewares.Middleware04.chain]
+        middlewares = ["foobar", "foobar"]
+    [http.middlewares.Middleware05]
+      [http.middlewares.Middleware05.circuitBreaker]
+        expression = "foobar"
+        checkPeriod = "42s"
+        fallbackDuration = "42s"
+        recoveryDuration = "42s"
+        responseCode = 42
+    [http.middlewares.Middleware06]
+      [http.middlewares.Middleware06.compress]
+        excludedContentTypes = ["foobar", "foobar"]
+        includedContentTypes = ["foobar", "foobar"]
+        minResponseBodyBytes = 42
+        encodings = ["foobar", "foobar"]
+        defaultEncoding = "foobar"
+    [http.middlewares.Middleware07]
+      [http.middlewares.Middleware07.contentType]
+        autoDetect = true
+    [http.middlewares.Middleware08]
+      [http.middlewares.Middleware08.digestAuth]
+        users = ["foobar", "foobar"]
+        usersFile = "foobar"
+        removeHeader = true
+        realm = "foobar"
+        headerField = "foobar"
+    [http.middlewares.Middleware09]
+      [http.middlewares.Middleware09.errors]
+        status = ["foobar", "foobar"]
+        service = "foobar"
+        query = "foobar"
+        [http.middlewares.Middleware09.errors.statusRewrites]
+          name0 = 42
+          name1 = 42
+    [http.middlewares.Middleware10]
+      [http.middlewares.Middleware10.forwardAuth]
+        address = "foobar"
+        trustForwardHeader = true
+        authResponseHeaders = ["foobar", "foobar"]
+        authResponseHeadersRegex = "foobar"
+        authRequestHeaders = ["foobar", "foobar"]
+        addAuthCookiesToResponse = ["foobar", "foobar"]
+        headerField = "foobar"
+        forwardBody = true
+        maxBodySize = 42
+        preserveLocationHeader = true
+        preserveRequestMethod = true
+        [http.middlewares.Middleware10.forwardAuth.tls]
+          ca = "foobar"
+          cert = "foobar"
+          key = "foobar"
+          insecureSkipVerify = true
+          caOptional = true
+    [http.middlewares.Middleware11]
+      [http.middlewares.Middleware11.grpcWeb]
+        allowOrigins = ["foobar", "foobar"]
+    [http.middlewares.Middleware12]
+      [http.middlewares.Middleware12.headers]
+        accessControlAllowCredentials = true
+        accessControlAllowHeaders = ["foobar", "foobar"]
+        accessControlAllowMethods = ["foobar", "foobar"]
+        accessControlAllowOriginList = ["foobar", "foobar"]
+        accessControlAllowOriginListRegex = ["foobar", "foobar"]
+        accessControlExposeHeaders = ["foobar", "foobar"]
+        accessControlMaxAge = 42
+        addVaryHeader = true
+        allowedHosts = ["foobar", "foobar"]
+        hostsProxyHeaders = ["foobar", "foobar"]
+        stsSeconds = 42
+        stsIncludeSubdomains = true
+        stsPreload = true
+        forceSTSHeader = true
+        frameDeny = true
+        customFrameOptionsValue = "foobar"
+        contentTypeNosniff = true
+        browserXssFilter = true
+        customBrowserXSSValue = "foobar"
+        contentSecurityPolicy = "foobar"
+        contentSecurityPolicyReportOnly = "foobar"
+        publicKey = "foobar"
+        referrerPolicy = "foobar"
+        permissionsPolicy = "foobar"
+        isDevelopment = true
+        featurePolicy = "foobar"
+        sslRedirect = true
+        sslTemporaryRedirect = true
+        sslHost = "foobar"
+        sslForceHost = true
+        [http.middlewares.Middleware12.headers.customRequestHeaders]
+          name0 = "foobar"
+          name1 = "foobar"
+        [http.middlewares.Middleware12.headers.customResponseHeaders]
+          name0 = "foobar"
+          name1 = "foobar"
+        [http.middlewares.Middleware12.headers.sslProxyHeaders]
+          name0 = "foobar"
+          name1 = "foobar"
+    [http.middlewares.Middleware13]
+      [http.middlewares.Middleware13.ipAllowList]
+        sourceRange = ["foobar", "foobar"]
+        rejectStatusCode = 42
+        [http.middlewares.Middleware13.ipAllowList.ipStrategy]
+          depth = 42
+          excludedIPs = ["foobar", "foobar"]
+          ipv6Subnet = 42
+    [http.middlewares.Middleware14]
+      [http.middlewares.Middleware14.ipWhiteList]
+        sourceRange = ["foobar", "foobar"]
+        [http.middlewares.Middleware14.ipWhiteList.ipStrategy]
+          depth = 42
+          excludedIPs = ["foobar", "foobar"]
+          ipv6Subnet = 42
+    [http.middlewares.Middleware15]
+      [http.middlewares.Middleware15.inFlightReq]
+        amount = 42
+        [http.middlewares.Middleware15.inFlightReq.sourceCriterion]
+          requestHeaderName = "foobar"
+          requestHost = true
+          [http.middlewares.Middleware15.inFlightReq.sourceCriterion.ipStrategy]
+            depth = 42
+            excludedIPs = ["foobar", "foobar"]
+            ipv6Subnet = 42
+    [http.middlewares.Middleware16]
+      [http.middlewares.Middleware16.passTLSClientCert]
+        pem = true
+        [http.middlewares.Middleware16.passTLSClientCert.info]
+          notAfter = true
+          notBefore = true
+          sans = true
+          serialNumber = true
+          [http.middlewares.Middleware16.passTLSClientCert.info.subject]
+            country = true
+            province = true
+            locality = true
+            organization = true
+            organizationalUnit = true
+            commonName = true
+            serialNumber = true
+            domainComponent = true
+          [http.middlewares.Middleware16.passTLSClientCert.info.issuer]
+            country = true
+            province = true
+            locality = true
+            organization = true
+            commonName = true
+            serialNumber = true
+            domainComponent = true
+    [http.middlewares.Middleware17]
+      [http.middlewares.Middleware17.plugin]
+        [http.middlewares.Middleware17.plugin.PluginConf0]
+          name0 = "foobar"
+          name1 = "foobar"
+        [http.middlewares.Middleware17.plugin.PluginConf1]
+          name0 = "foobar"
+          name1 = "foobar"
+    [http.middlewares.Middleware18]
+      [http.middlewares.Middleware18.rateLimit]
+        average = 42
+        period = "42s"
+        burst = 42
+        [http.middlewares.Middleware18.rateLimit.sourceCriterion]
+          requestHeaderName = "foobar"
+          requestHost = true
+          [http.middlewares.Middleware18.rateLimit.sourceCriterion.ipStrategy]
+            depth = 42
+            excludedIPs = ["foobar", "foobar"]
+            ipv6Subnet = 42
+        [http.middlewares.Middleware18.rateLimit.redis]
+          endpoints = ["foobar", "foobar"]
+          username = "foobar"
+          password = "foobar"
+          db = 42
+          poolSize = 42
+          minIdleConns = 42
+          maxActiveConns = 42
+          readTimeout = "42s"
+          writeTimeout = "42s"
+          dialTimeout = "42s"
+          [http.middlewares.Middleware18.rateLimit.redis.tls]
+            ca = "foobar"
+            cert = "foobar"
+            key = "foobar"
+            insecureSkipVerify = true
+    [http.middlewares.Middleware19]
+      [http.middlewares.Middleware19.redirectRegex]
+        regex = "foobar"
+        replacement = "foobar"
+        permanent = true
+    [http.middlewares.Middleware20]
+      [http.middlewares.Middleware20.redirectScheme]
+        scheme = "foobar"
+        port = "foobar"
+        permanent = true
+    [http.middlewares.Middleware21]
+      [http.middlewares.Middleware21.replacePath]
+        path = "foobar"
+    [http.middlewares.Middleware22]
+      [http.middlewares.Middleware22.replacePathRegex]
+        regex = "foobar"
+        replacement = "foobar"
+    [http.middlewares.Middleware23]
+      [http.middlewares.Middleware23.retry]
+        attempts = 42
+        initialInterval = "42s"
+    [http.middlewares.Middleware24]
+      [http.middlewares.Middleware24.stripPrefix]
+        prefixes = ["foobar", "foobar"]
+        forceSlash = true
+    [http.middlewares.Middleware25]
+      [http.middlewares.Middleware25.stripPrefixRegex]
+        regex = ["foobar", "foobar"]
+  [http.serversTransports]
+    [http.serversTransports.ServersTransport0]
+      serverName = "foobar"
+      insecureSkipVerify = true
+      rootCAs = ["foobar", "foobar"]
+      cipherSuites = ["foobar", "foobar"]
+      minVersion = "foobar"
+      maxVersion = "foobar"
+      maxIdleConnsPerHost = 42
+      disableHTTP2 = true
+      peerCertURI = "foobar"
+
+      [[http.serversTransports.ServersTransport0.certificates]]
+        certFile = "foobar"
+        keyFile = "foobar"
+
+      [[http.serversTransports.ServersTransport0.certificates]]
+        certFile = "foobar"
+        keyFile = "foobar"
+      [http.serversTransports.ServersTransport0.forwardingTimeouts]
+        dialTimeout = "42s"
+        responseHeaderTimeout = "42s"
+        idleConnTimeout = "42s"
+        readIdleTimeout = "42s"
+        pingTimeout = "42s"
+      [http.serversTransports.ServersTransport0.spiffe]
+        ids = ["foobar", "foobar"]
+        trustDomain = "foobar"
+    [http.serversTransports.ServersTransport1]
+      serverName = "foobar"
+      insecureSkipVerify = true
+      rootCAs = ["foobar", "foobar"]
+      cipherSuites = ["foobar", "foobar"]
+      minVersion = "foobar"
+      maxVersion = "foobar"
+      maxIdleConnsPerHost = 42
+      disableHTTP2 = true
+      peerCertURI = "foobar"
+
+      [[http.serversTransports.ServersTransport1.certificates]]
+        certFile = "foobar"
+        keyFile = "foobar"
+
+      [[http.serversTransports.ServersTransport1.certificates]]
+        certFile = "foobar"
+        keyFile = "foobar"
+      [http.serversTransports.ServersTransport1.forwardingTimeouts]
+        dialTimeout = "42s"
+        responseHeaderTimeout = "42s"
+        idleConnTimeout = "42s"
+        readIdleTimeout = "42s"
+        pingTimeout = "42s"
+      [http.serversTransports.ServersTransport1.spiffe]
+        ids = ["foobar", "foobar"]
+        trustDomain = "foobar"
+
+[tcp]
+  [tcp.routers]
+    [tcp.routers.TCPRouter0]
+      entryPoints = ["foobar", "foobar"]
+      middlewares = ["foobar", "foobar"]
+      service = "foobar"
+      rule = "foobar"
+      ruleSyntax = "foobar"
+      priority = 42
+      [tcp.routers.TCPRouter0.tls]
+        passthrough = true
+        options = "foobar"
+        certResolver = "foobar"
+
+        [[tcp.routers.TCPRouter0.tls.domains]]
+          main = "foobar"
+          sans = ["foobar", "foobar"]
+
+        [[tcp.routers.TCPRouter0.tls.domains]]
+          main = "foobar"
+          sans = ["foobar", "foobar"]
+    [tcp.routers.TCPRouter1]
+      entryPoints = ["foobar", "foobar"]
+      middlewares = ["foobar", "foobar"]
+      service = "foobar"
+      rule = "foobar"
+      ruleSyntax = "foobar"
+      priority = 42
+      [tcp.routers.TCPRouter1.tls]
+        passthrough = true
+        options = "foobar"
+        certResolver = "foobar"
+
+        [[tcp.routers.TCPRouter1.tls.domains]]
+          main = "foobar"
+          sans = ["foobar", "foobar"]
+
+        [[tcp.routers.TCPRouter1.tls.domains]]
+          main = "foobar"
+          sans = ["foobar", "foobar"]
+  [tcp.services]
+    [tcp.services.TCPService01]
+      [tcp.services.TCPService01.loadBalancer]
+        serversTransport = "foobar"
+        terminationDelay = 42
+
+        [[tcp.services.TCPService01.loadBalancer.servers]]
+          address = "foobar"
+          tls = true
+
+        [[tcp.services.TCPService01.loadBalancer.servers]]
+          address = "foobar"
+          tls = true
+        [tcp.services.TCPService01.loadBalancer.proxyProtocol]
+          version = 42
+        [tcp.services.TCPService01.loadBalancer.healthCheck]
+          port = 42
+          send = "foobar"
+          expect = "foobar"
+          interval = "42s"
+          unhealthyInterval = "42s"
+          timeout = "42s"
+    [tcp.services.TCPService02]
+      [tcp.services.TCPService02.weighted]
+
+        [[tcp.services.TCPService02.weighted.services]]
+          name = "foobar"
+          weight = 42
+
+        [[tcp.services.TCPService02.weighted.services]]
+          name = "foobar"
+          weight = 42
+        [tcp.services.TCPService02.weighted.healthCheck]
+  [tcp.middlewares]
+    [tcp.middlewares.TCPMiddleware01]
+      [tcp.middlewares.TCPMiddleware01.ipAllowList]
+        sourceRange = ["foobar", "foobar"]
+    [tcp.middlewares.TCPMiddleware02]
+      [tcp.middlewares.TCPMiddleware02.ipWhiteList]
+        sourceRange = ["foobar", "foobar"]
+    [tcp.middlewares.TCPMiddleware03]
+      [tcp.middlewares.TCPMiddleware03.inFlightConn]
+        amount = 42
+  [tcp.serversTransports]
+    [tcp.serversTransports.TCPServersTransport0]
+      dialKeepAlive = "42s"
+      dialTimeout = "42s"
+      terminationDelay = "42s"
+      [tcp.serversTransports.TCPServersTransport0.proxyProtocol]
+        version = 42
+      [tcp.serversTransports.TCPServersTransport0.tls]
+        serverName = "foobar"
+        insecureSkipVerify = true
+        rootCAs = ["foobar", "foobar"]
+        peerCertURI = "foobar"
+
+        [[tcp.serversTransports.TCPServersTransport0.tls.certificates]]
+          certFile = "foobar"
+          keyFile = "foobar"
+
+        [[tcp.serversTransports.TCPServersTransport0.tls.certificates]]
+          certFile = "foobar"
+          keyFile = "foobar"
+        [tcp.serversTransports.TCPServersTransport0.tls.spiffe]
+          ids = ["foobar", "foobar"]
+          trustDomain = "foobar"
+    [tcp.serversTransports.TCPServersTransport1]
+      dialKeepAlive = "42s"
+      dialTimeout = "42s"
+      terminationDelay = "42s"
+      [tcp.serversTransports.TCPServersTransport1.proxyProtocol]
+        version = 42
+      [tcp.serversTransports.TCPServersTransport1.tls]
+        serverName = "foobar"
+        insecureSkipVerify = true
+        rootCAs = ["foobar", "foobar"]
+        peerCertURI = "foobar"
+
+        [[tcp.serversTransports.TCPServersTransport1.tls.certificates]]
+          certFile = "foobar"
+          keyFile = "foobar"
+
+        [[tcp.serversTransports.TCPServersTransport1.tls.certificates]]
+          certFile = "foobar"
+          keyFile = "foobar"
+        [tcp.serversTransports.TCPServersTransport1.tls.spiffe]
+          ids = ["foobar", "foobar"]
+          trustDomain = "foobar"
+
+[udp]
+  [udp.routers]
+    [udp.routers.UDPRouter0]
+      entryPoints = ["foobar", "foobar"]
+      service = "foobar"
+    [udp.routers.UDPRouter1]
+      entryPoints = ["foobar", "foobar"]
+      service = "foobar"
+  [udp.services]
+    [udp.services.UDPService01]
+      [udp.services.UDPService01.loadBalancer]
+
+        [[udp.services.UDPService01.loadBalancer.servers]]
+          address = "foobar"
+
+        [[udp.services.UDPService01.loadBalancer.servers]]
+          address = "foobar"
+    [udp.services.UDPService02]
+      [udp.services.UDPService02.weighted]
+
+        [[udp.services.UDPService02.weighted.services]]
+          name = "foobar"
+          weight = 42
+
+        [[udp.services.UDPService02.weighted.services]]
+          name = "foobar"
+          weight = 42
+
+[tls]
+
+  [[tls.certificates]]
+    certFile = "foobar"
+    keyFile = "foobar"
+    stores = ["foobar", "foobar"]
+
+  [[tls.certificates]]
+    certFile = "foobar"
+    keyFile = "foobar"
+    stores = ["foobar", "foobar"]
+  [tls.options]
+    [tls.options.Options0]
+      minVersion = "foobar"
+      maxVersion = "foobar"
+      cipherSuites = ["foobar", "foobar"]
+      curvePreferences = ["foobar", "foobar"]
+      sniStrict = true
+      alpnProtocols = ["foobar", "foobar"]
+      disableSessionTickets = true
+      preferServerCipherSuites = true
+      [tls.options.Options0.clientAuth]
+        caFiles = ["foobar", "foobar"]
+        clientAuthType = "foobar"
+    [tls.options.Options1]
+      minVersion = "foobar"
+      maxVersion = "foobar"
+      cipherSuites = ["foobar", "foobar"]
+      curvePreferences = ["foobar", "foobar"]
+      sniStrict = true
+      alpnProtocols = ["foobar", "foobar"]
+      disableSessionTickets = true
+      preferServerCipherSuites = true
+      [tls.options.Options1.clientAuth]
+        caFiles = ["foobar", "foobar"]
+        clientAuthType = "foobar"
+  [tls.stores]
+    [tls.stores.Store0]
+      [tls.stores.Store0.defaultCertificate]
+        certFile = "foobar"
+        keyFile = "foobar"
+      [tls.stores.Store0.defaultGeneratedCert]
+        resolver = "foobar"
+        [tls.stores.Store0.defaultGeneratedCert.domain]
+          main = "foobar"
+          sans = ["foobar", "foobar"]
+    [tls.stores.Store1]
+      [tls.stores.Store1.defaultCertificate]
+        certFile = "foobar"
+        keyFile = "foobar"
+      [tls.stores.Store1.defaultGeneratedCert]
+        resolver = "foobar"
+        [tls.stores.Store1.defaultGeneratedCert.domain]
+          main = "foobar"
+          sans = ["foobar", "foobar"]

@@ -7,10 +7,10 @@ import (
 	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/observability/logs"
+	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	"github.com/traefik/traefik/v3/pkg/server/provider"
 	"github.com/traefik/traefik/v3/pkg/tls"
-	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoints []string) dynamic.Configuration {
@@ -46,7 +46,9 @@ func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoint
 	for pvd, configuration := range configurations {
 		if configuration.HTTP != nil {
 			for routerName, router := range configuration.HTTP.Routers {
-				if len(router.EntryPoints) == 0 {
+				// If no entrypoint is defined, and the router has no parentRefs (i.e. is not a child router),
+				// we set the default entrypoints.
+				if len(router.EntryPoints) == 0 && router.ParentRefs == nil {
 					log.Debug().
 						Str(logs.RouterName, routerName).
 						Strs(logs.EntryPointName, defaultEntryPoints).
@@ -62,6 +64,16 @@ func mergeConfiguration(configurations dynamic.Configurations, defaultEntryPoint
 						Str(logs.RouterName, routerName).
 						Msg("Router's `ruleSyntax` option is deprecated, please remove any usage of this option.")
 				}
+
+				var qualifiedParentRefs []string
+				for _, parentRef := range router.ParentRefs {
+					if parts := strings.Split(parentRef, "@"); len(parts) == 1 {
+						parentRef = provider.MakeQualifiedName(pvd, parentRef)
+					}
+
+					qualifiedParentRefs = append(qualifiedParentRefs, parentRef)
+				}
+				router.ParentRefs = qualifiedParentRefs
 
 				conf.HTTP.Routers[provider.MakeQualifiedName(pvd, routerName)] = router
 			}
@@ -163,7 +175,14 @@ func applyModel(cfg dynamic.Configuration) dynamic.Configuration {
 	if cfg.HTTP != nil && len(cfg.HTTP.Models) > 0 {
 		rts := make(map[string]*dynamic.Router)
 
+		modelRouterNames := make(map[string][]string)
 		for name, rt := range cfg.HTTP.Routers {
+			// Only root routers can have models applied.
+			if rt.ParentRefs != nil {
+				rts[name] = rt
+				continue
+			}
+
 			router := rt.DeepCopy()
 
 			if !router.DefaultRule && router.RuleSyntax == "" {
@@ -193,6 +212,12 @@ func applyModel(cfg dynamic.Configuration) dynamic.Configuration {
 
 					cp.Middlewares = append(m.Middlewares, cp.Middlewares...)
 
+					if m.DeniedEncodedPathCharacters != nil {
+						// As the denied encoded path characters option is not configurable at the router level,
+						// we can simply copy the whole structure to override the router's default config.
+						cp.DeniedEncodedPathCharacters = *m.DeniedEncodedPathCharacters
+					}
+
 					if cp.Observability == nil {
 						cp.Observability = &dynamic.RouterObservabilityConfig{}
 					}
@@ -216,7 +241,9 @@ func applyModel(cfg dynamic.Configuration) dynamic.Configuration {
 					rtName := name
 					if len(eps) > 1 {
 						rtName = epName + "-" + name
+						modelRouterNames[name] = append(modelRouterNames[name], rtName)
 					}
+
 					rts[rtName] = cp
 				} else {
 					router.EntryPoints = append(router.EntryPoints, epName)
@@ -224,6 +251,26 @@ func applyModel(cfg dynamic.Configuration) dynamic.Configuration {
 					rts[name] = router
 				}
 			}
+		}
+
+		for _, rt := range rts {
+			if rt.ParentRefs == nil {
+				continue
+			}
+
+			var parentRefs []string
+			for _, ref := range rt.ParentRefs {
+				// Only add the initial parent ref if it still exists.
+				if _, ok := rts[ref]; ok {
+					parentRefs = append(parentRefs, ref)
+				}
+
+				if names, ok := modelRouterNames[ref]; ok {
+					parentRefs = append(parentRefs, names...)
+				}
+			}
+
+			rt.ParentRefs = parentRefs
 		}
 
 		cfg.HTTP.Routers = rts
@@ -265,12 +312,17 @@ func applyModel(cfg dynamic.Configuration) dynamic.Configuration {
 func applyDefaultObservabilityModel(cfg dynamic.Configuration) {
 	if cfg.HTTP != nil {
 		for _, router := range cfg.HTTP.Routers {
+			// Only root routers can have models applied.
+			if router.ParentRefs != nil {
+				continue
+			}
+
 			if router.Observability == nil {
 				router.Observability = &dynamic.RouterObservabilityConfig{
 					AccessLogs:     pointer(true),
 					Metrics:        pointer(true),
 					Tracing:        pointer(true),
-					TraceVerbosity: types.MinimalVerbosity,
+					TraceVerbosity: otypes.MinimalVerbosity,
 				}
 
 				continue
@@ -289,7 +341,7 @@ func applyDefaultObservabilityModel(cfg dynamic.Configuration) {
 			}
 
 			if router.Observability.TraceVerbosity == "" {
-				router.Observability.TraceVerbosity = types.MinimalVerbosity
+				router.Observability.TraceVerbosity = otypes.MinimalVerbosity
 			}
 		}
 	}

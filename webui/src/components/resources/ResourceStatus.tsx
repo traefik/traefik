@@ -1,25 +1,26 @@
-import { Flex, styled, Text } from '@traefiklabs/faency'
+import { Box, Flex, styled, Text } from '@traefiklabs/faency'
 import { ReactNode } from 'react'
 
-import { colorByStatus, iconByStatus, StatusType } from 'components/resources/Status'
+import { colorByStatus, iconByStatus } from 'components/resources/Status'
 
 export const StatusWrapper = styled(Flex, {
-  height: '32px',
-  width: '32px',
+  height: '24px',
+  width: '24px',
   padding: 0,
   borderRadius: '4px',
 })
 
 type Props = {
-  status: StatusType
+  status: Resource.Status
   label?: string
   withLabel?: boolean
+  size?: number
 }
 
 type Value = { color: string; icon: ReactNode; label: string }
 
-export const ResourceStatus = ({ status, withLabel = false }: Props) => {
-  const valuesByStatus: { [key in StatusType]: Value } = {
+export const ResourceStatus = ({ status, withLabel = false, size = 20 }: Props) => {
+  const valuesByStatus: { [key in Resource.Status]: Value } = {
     info: {
       color: colorByStatus.info,
       icon: iconByStatus.info,
@@ -50,6 +51,11 @@ export const ResourceStatus = ({ status, withLabel = false }: Props) => {
       icon: iconByStatus.disabled,
       label: 'Error',
     },
+    loading: {
+      color: colorByStatus.loading,
+      icon: iconByStatus.loading,
+      label: 'Loading...',
+    },
   }
 
   const values = valuesByStatus[status]
@@ -59,12 +65,12 @@ export const ResourceStatus = ({ status, withLabel = false }: Props) => {
   }
 
   return (
-    <Flex css={{ alignItems: 'center' }} data-testid={status}>
-      <StatusWrapper css={{ alignItems: 'center', justifyContent: 'center', backgroundColor: values.color }}>
-        {values.icon}
-      </StatusWrapper>
+    <Flex align="center" css={{ width: size, height: size }} data-testid={status}>
+      <Box css={{ color: values.color, width: size, height: size }}>{values.icon}</Box>
       {withLabel && values.label && (
-        <Text css={{ ml: '$2', color: values.color, fontWeight: 600 }}>{values.label}</Text>
+        <Text css={{ ml: '$2', color: values.color, fontWeight: 600, fontSize: 'inherit !important' }}>
+          {values.label}
+        </Text>
       )}
     </Flex>
   )

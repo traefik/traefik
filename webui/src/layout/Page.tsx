@@ -1,12 +1,13 @@
 import { Flex, globalCss, styled } from '@traefiklabs/faency'
-import { ReactNode, useState } from 'react'
-import { Helmet } from 'react-helmet-async'
+import { ReactNode, useMemo, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 
 import Container from './Container'
-import { LAPTOP_BP, SideBarPanel, SideNav, TopNav } from './Navigation'
+import PageTitle from './PageTitle'
 
 import { ToastPool } from 'components/ToastPool'
 import { ToastProvider } from 'contexts/toasts'
+import { LAPTOP_BP, SideBarPanel, SideNav, TopNav } from 'layout/navigation'
 
 export const LIGHT_PRIMARY_COLOR = '#217F97'
 export const DARK_PRIMARY_COLOR = '#2AA2C1'
@@ -40,15 +41,30 @@ export interface Props {
   children?: ReactNode
 }
 
-const Page = ({ children, title }: Props) => {
+const Page = ({ children }: Props) => {
+  const { pathname } = useLocation()
   const [isSideBarPanelOpen, setIsSideBarPanelOpen] = useState(false)
+  const location = useLocation()
+
+  const isDemoPage = useMemo(() => pathname.includes('hub-dashboard'), [pathname])
+
+  const renderedContent = useMemo(() => {
+    if (isDemoPage) {
+      return children
+    }
+
+    return (
+      <PageContainer data-testid={`${location.pathname} page`} direction="column">
+        <TopNav />
+        {children}
+      </PageContainer>
+    )
+  }, [children, isDemoPage, location.pathname])
 
   return (
     <ToastProvider>
       {globalStyles()}
-      <Helmet>
-        <title>{title ? `${title} - ` : ''}Traefik Proxy</title>
-      </Helmet>
+      <PageTitle />
       <Flex>
         <SideBarPanel isOpen={isSideBarPanelOpen} onOpenChange={setIsSideBarPanelOpen} />
         <SideNav isExpanded={isSideBarPanelOpen} onSidePanelToggle={() => setIsSideBarPanelOpen(true)} isResponsive />
@@ -56,10 +72,7 @@ const Page = ({ children, title }: Props) => {
           justify="center"
           css={{ flex: 1, margin: 'auto', ml: 264, [`@media (max-width:${LAPTOP_BP}px)`]: { ml: 60 } }}
         >
-          <PageContainer data-testid={`${title} page`} direction="column">
-            <TopNav />
-            {children}
-          </PageContainer>
+          {renderedContent}
         </Flex>
       </Flex>
       <ToastPool />

@@ -11,7 +11,7 @@ import (
 	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	"github.com/traefik/traefik/v3/pkg/provider"
 	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
@@ -37,8 +37,11 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 	for _, ingressRoute := range client.GetIngressRoutes() {
 		logger := log.Ctx(ctx).With().Str("ingress", ingressRoute.Name).Str("namespace", ingressRoute.Namespace).Logger()
 
-		// TODO keep the name ingressClass?
-		if !shouldProcessIngress(p.IngressClass, ingressRoute.Annotations[annotationKubernetesIngressClass]) {
+		ingressClassName, usingDeprecatedAnnotation := getIngressClassName(ingressRoute.Spec.IngressClassName, ingressRoute.Annotations)
+		if usingDeprecatedAnnotation {
+			logger.Warn().Msgf("'%s' is a deprecated annotation, please use spec.ingressClassName instead.", annotationKubernetesIngressClass)
+		}
+		if !shouldProcessIngress(p.IngressClass, ingressClassName) {
 			continue
 		}
 
@@ -61,6 +64,12 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 			disableClusterScopeResources: p.DisableClusterScopeResources,
 		}
 
+		parentRouterNames, err := resolveParentRouterNames(client, ingressRoute, p.AllowCrossNamespace)
+		if err != nil {
+			logger.Error().Err(err).Msg("Error resolving parent routers")
+			continue
+		}
+
 		for _, route := range ingressRoute.Spec.Routes {
 			if len(route.Kind) > 0 && route.Kind != "Rule" {
 				logger.Error().Msgf("Unsupported match kind: %s. Only \"Rule\" is supported for now.", route.Kind)
@@ -72,11 +81,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				continue
 			}
 
-			serviceKey, err := makeServiceKey(route.Match, ingressName)
-			if err != nil {
-				logger.Error().Err(err).Send()
-				continue
-			}
+			serviceKey := makeServiceKey(route.Match, ingressName)
 
 			mds, err := p.makeMiddlewareKeys(ctx, ingressRoute.Namespace, route.Middlewares)
 			if err != nil {
@@ -87,7 +92,8 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 			normalized := provider.Normalize(makeID(ingressRoute.Namespace, serviceKey))
 			serviceName := normalized
 
-			if len(route.Services) > 1 {
+			switch {
+			case len(route.Services) > 1:
 				spec := traefikv1alpha1.TraefikServiceSpec{
 					Weighted: &traefikv1alpha1.WeightedRoundRobin{
 						Services: route.Services,
@@ -99,7 +105,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 					logger.Error().Err(errBuild).Send()
 					continue
 				}
-			} else if len(route.Services) == 1 {
+			case len(route.Services) == 1:
 				fullName, serversLB, err := cb.nameAndService(ctx, ingressRoute.Namespace, route.Services[0].LoadBalancerSpec)
 				if err != nil {
 					logger.Error().Err(err).Send()
@@ -111,6 +117,9 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				} else {
 					serviceName = fullName
 				}
+			default:
+				// Routes without services leave serviceName empty.
+				serviceName = ""
 			}
 
 			r := &dynamic.Router{
@@ -121,6 +130,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 				Rule:          route.Match,
 				Service:       serviceName,
 				Observability: route.Observability,
+				ParentRefs:    parentRouterNames,
 			}
 
 			if ingressRoute.Spec.TLS != nil {
@@ -202,6 +212,50 @@ func (p *Provider) makeMiddlewareKeys(ctx context.Context, ingRouteNamespace str
 	return mds, nil
 }
 
+// resolveParentRouterNames resolves parent IngressRoute references to router names.
+// It returns the list of parent router names and an error if one occurred during processing.
+func resolveParentRouterNames(client Client, ingressRoute *traefikv1alpha1.IngressRoute, allowCrossNamespace bool) ([]string, error) {
+	// If no parent refs, return empty list (not an error).
+	if len(ingressRoute.Spec.ParentRefs) == 0 {
+		return nil, nil
+	}
+
+	var parentRouterNames []string
+	for _, parentRef := range ingressRoute.Spec.ParentRefs {
+		// Determine parent namespace (default to child namespace if not specified).
+		parentNamespace := parentRef.Namespace
+		if parentNamespace == "" {
+			parentNamespace = ingressRoute.Namespace
+		}
+
+		// Validate cross-namespace access.
+		if !isNamespaceAllowed(allowCrossNamespace, ingressRoute.Namespace, parentNamespace) {
+			return nil, fmt.Errorf("cross-namespace reference to parent IngressRoute %s/%s not allowed", parentNamespace, parentRef.Name)
+		}
+
+		var parentIngressRoute *traefikv1alpha1.IngressRoute
+		for _, ir := range client.GetIngressRoutes() {
+			if ir.Name == parentRef.Name && ir.Namespace == parentNamespace {
+				parentIngressRoute = ir
+				break
+			}
+		}
+
+		if parentIngressRoute == nil {
+			return nil, fmt.Errorf("parent IngressRoute %s/%s does not exist", parentNamespace, parentRef.Name)
+		}
+
+		// Compute router names for all routes in parent IngressRoute.
+		for _, route := range parentIngressRoute.Spec.Routes {
+			serviceKey := makeServiceKey(route.Match, parentIngressRoute.Name)
+			routerName := provider.Normalize(makeID(parentIngressRoute.Namespace, serviceKey))
+			parentRouterNames = append(parentRouterNames, routerName)
+		}
+	}
+
+	return parentRouterNames, nil
+}
+
 type configBuilder struct {
 	client                       Client
 	allowCrossNamespace          bool
@@ -216,13 +270,17 @@ type configBuilder struct {
 func (c configBuilder) buildTraefikService(ctx context.Context, tService *traefikv1alpha1.TraefikService, conf map[string]*dynamic.Service) error {
 	id := provider.Normalize(makeID(tService.Namespace, tService.Name))
 
-	if tService.Spec.Weighted != nil {
+	switch {
+	case tService.Spec.Weighted != nil:
 		return c.buildServicesLB(ctx, tService.Namespace, tService.Spec, id, conf)
-	} else if tService.Spec.Mirroring != nil {
+	case tService.Spec.Mirroring != nil:
 		return c.buildMirroring(ctx, tService, id, conf)
-	}
+	case tService.Spec.HighestRandomWeight != nil:
+		return c.buildHRW(ctx, tService, id, conf)
+	default:
 
-	return errors.New("unspecified service type")
+		return errors.New("unspecified service type")
+	}
 }
 
 // buildServicesLB creates the configuration for the load-balancer of services named id, and defined in tService.
@@ -329,7 +387,7 @@ func (c configBuilder) buildServersLB(namespace string, svc traefikv1alpha1.Load
 	// TODO: remove this when the fake client apply default values.
 	if svc.Strategy != "" {
 		switch svc.Strategy {
-		case dynamic.BalancerStrategyWRR, dynamic.BalancerStrategyP2C:
+		case dynamic.BalancerStrategyWRR, dynamic.BalancerStrategyP2C, dynamic.BalancerStrategyHRW, dynamic.BalancerStrategyLeastTime:
 			lb.Strategy = svc.Strategy
 
 		// Here we are just logging a warning as the default value is already applied.
@@ -642,6 +700,38 @@ func (c configBuilder) nameAndService(ctx context.Context, parentNamespace strin
 	default:
 		return "", nil, fmt.Errorf("unsupported service kind %s", service.Kind)
 	}
+}
+
+func (c configBuilder) buildHRW(ctx context.Context, tService *traefikv1alpha1.TraefikService, id string, conf map[string]*dynamic.Service) error {
+	var hrwServices []dynamic.HRWService
+	for _, hrwService := range tService.Spec.HighestRandomWeight.Services {
+		hrwServiceName, k8sService, err := c.nameAndService(ctx, tService.Namespace, hrwService.LoadBalancerSpec)
+		if err != nil {
+			return err
+		}
+
+		if k8sService != nil {
+			conf[hrwServiceName] = k8sService
+		}
+
+		weight := hrwService.Weight
+		if weight == nil {
+			weight = func(i int) *int { return &i }(1)
+		}
+
+		hrwServices = append(hrwServices, dynamic.HRWService{
+			Name:   hrwServiceName,
+			Weight: weight,
+		})
+	}
+
+	conf[id] = &dynamic.Service{
+		HighestRandomWeight: &dynamic.HighestRandomWeight{
+			Services: hrwServices,
+		},
+	}
+
+	return nil
 }
 
 func splitSvcNameProvider(name string) (string, string) {

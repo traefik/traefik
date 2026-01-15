@@ -10,7 +10,7 @@ The `RedirectScheme` middleware redirects the request if the request scheme is d
     When there is at least one other reverse-proxy between the client and Traefik, 
     the other reverse-proxy (i.e. the last hop) needs to be a [trusted](../../../install-configuration/entrypoints.md#configuration-options) one. 
     
-    Otherwise, Traefik would clean up the X-Forwarded headers coming from this last hop, 
+    Otherwise, Traefik would clean up the `X-Forwarded` headers coming from this last hop,
     and as the RedirectScheme middleware relies on them to determine the scheme used,
     it would not function as intended.
 
@@ -69,6 +69,6 @@ spec:
 
 | Field                        | Description                                             | Default | Required |
 |:-----------------------------|----------------------------------------------------------|:--------|:---------|
-| `scheme` | Scheme of the new URL. | "" | Yes |
-| `permanent` | Enable a permanent redirection. | false | No |
-| `port` | Port of the new URL.<br />Set a string, **not** a numeric value. | "" | No |
+| <a id="opt-scheme" href="#opt-scheme" title="#opt-scheme">`scheme`</a> | Scheme of the new URL. | "" | Yes |
+| <a id="opt-permanent" href="#opt-permanent" title="#opt-permanent">`permanent`</a> | Enable a permanent redirection. | false | No |
+| <a id="opt-port" href="#opt-port" title="#opt-port">`port`</a> | Port of the new URL.<br />Set a string, **not** a numeric value. | "" | No |

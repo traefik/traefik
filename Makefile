@@ -35,12 +35,15 @@ build-webui-image:
 .PHONY: clean-webui
 #? clean-webui: Clean WebUI static generated assets
 clean-webui:
-	rm -rf webui/static
+	rm -r webui/static
+	mkdir -p webui/static
+	printf 'For more information see `webui/readme.md`' > webui/static/DONT-EDIT-FILES-IN-THIS-DIRECTORY.md
 
 webui/static/index.html:
 	$(MAKE) build-webui-image
 	docker run --rm -v "$(PWD)/webui/static":'/src/webui/static' traefik-webui yarn build:prod
 	docker run --rm -v "$(PWD)/webui/static":'/src/webui/static' traefik-webui chown -R $(shell id -u):$(shell id -g) ./static
+	printf 'For more information see `webui/readme.md`' > webui/static/DONT-EDIT-FILES-IN-THIS-DIRECTORY.md
 
 .PHONY: generate-webui
 #? generate-webui: Generate WebUI
@@ -97,10 +100,15 @@ test-integration:
 	GOOS=$(GOOS) GOARCH=$(GOARCH) go test ./integration -test.timeout=20m -failfast -v $(TESTFLAGS)
 
 .PHONY: test-gateway-api-conformance
-#? test-gateway-api-conformance: Run the conformance tests
+#? test-gateway-api-conformance: Run the Gateway API conformance tests
 test-gateway-api-conformance: build-image-dirty
-	# In case of a new Minor/Major version, the k8sConformanceTraefikVersion needs to be updated.
-	GOOS=$(GOOS) GOARCH=$(GOARCH) go test ./integration -v -test.run K8sConformanceSuite -k8sConformance -k8sConformanceTraefikVersion="v3.5" $(TESTFLAGS)
+	# In case of a new Minor/Major version, the traefikVersion needs to be updated.
+	GOOS=$(GOOS) GOARCH=$(GOARCH) go test ./integration -v -tags gatewayAPIConformance -test.run GatewayAPIConformanceSuite -traefikVersion="v3.6" $(TESTFLAGS)
+
+.PHONY: test-knative-conformance
+#? test-knative-conformance: Run the Knative conformance tests
+test-knative-conformance: build-image-dirty
+	GOOS=$(GOOS) GOARCH=$(GOARCH) go test ./integration/integration_test.go ./integration/knative_conformance_test.go -v -tags knativeConformance -test.run KnativeConformanceSuite
 
 .PHONY: test-ui-unit
 #? test-ui-unit: Run the unit tests for the webui
@@ -180,11 +188,6 @@ generate-crd:
 #? generate-genconf: Generate code from dynamic configuration github.com/traefik/genconf
 generate-genconf:
 	go run ./cmd/internal/gen/
-
-.PHONY: release-packages
-#? release-packages: Create packages for the release
-release-packages: generate-webui
-	$(CURDIR)/script/release-packages.sh
 
 .PHONY: fmt
 #? fmt: Format the Code

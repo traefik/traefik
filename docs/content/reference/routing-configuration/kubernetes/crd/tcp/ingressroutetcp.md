@@ -3,7 +3,7 @@ title: "Kubernetes IngressRouteTCP"
 description: "An IngressRouteTCP is a Traefik CRD is in charge of connecting incoming TCP connections to the Services that can handle them."
 ---
 
-`IngressRouteTCP` is the CRD implementation of a [Traefik TCP router](../../../tcp/router/rules-and-priority.md).
+`IngressRouteTCP` is the CRD implementation of a [Traefik TCP router](../../../tcp/routing/rules-and-priority.md).
 
 Before creating `IngressRouteTCP` objects, you need to apply the [Traefik Kubernetes CRDs](https://doc.traefik.io/traefik/reference/dynamic-configuration/kubernetes-crd/#definitions) to your Kubernetes cluster.
 
@@ -16,7 +16,7 @@ This registers the `IngressRouteTCP` kind and other Traefik-specific resources.
 
 You can declare an `IngressRouteTCP` as detailed below:
 
-```yaml tab="IngressRoute"
+```yaml tab="IngressRouteTCP"
 apiVersion: traefik.io/v1alpha1
 kind: IngressRouteTCP
 metadata:
@@ -24,6 +24,7 @@ metadata:
   namespace: apps
 
 spec:
+  ingressClassName: traefik-lb
   entryPoints:
     - footcp
   routes:
@@ -36,12 +37,9 @@ spec:
     - name: foo
       port: 8080
       weight: 10
-      proxyProtocol:
-        version: 1
       serversTransport: transport
       nativeLB: true
       nodePortLB: true
-      tls: false
 
   tls:
     secretName: supersecret
@@ -59,33 +57,34 @@ spec:
 
 ## Configuration Options
 
-| Field                                |  Description                    | Default                                   | Required |
-|-------------------------------------|-----------------------------|-------------------------------------------|-----------------------|
-| `entryPoints`                       | List of entrypoints names. | | No |
-| `routes`                            | List of routes. | | Yes |
-| `routes[n].match`                   | Defines the [rule](../../../tcp/router/rules-and-priority.md#rules) of the underlying router. | | Yes |
-| `routes[n].priority`                | Defines the [priority](../../../tcp/router/rules-and-priority.md#priority) to disambiguate rules of the same length, for route matching. | | No |
-| `routes[n].middlewares[n].name`               | Defines the [MiddlewareTCP](./middlewaretcp.md) name. | | Yes |
-| `routes[n].middlewares[n].namespace`          | Defines the [MiddlewareTCP](./middlewaretcp.md) namespace. | ""| No|
-| `routes[n].services`                | List of [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) definitions. | | No |
-|  `routes[n].services[n].name`                  | Defines the name of a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/). | | Yes |
-| `routes[n].services[n].port`                  | Defines the port of a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/). This can be a reference to a named port.| | Yes |
-| `routes[n].services[n].weight`                | Defines the weight to apply to the server load balancing. | 1 | No |
-| `routes[n].services[n].proxyProtocol`         | Defines the [PROXY protocol](../../../../install-configuration/entrypoints.md#proxyprotocol-and-load-balancers) configuration. |  | No |
-| `routes[n].services[n].proxyProtocol.version` | Defines the [PROXY protocol](../../../../install-configuration/entrypoints.md#proxyprotocol-and-load-balancers) version. |  | No |
-| `routes[n].services[n].serversTransport`      | Defines the [ServersTransportTCP](./serverstransporttcp.md).<br />The `ServersTransport` namespace is assumed to be the [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) namespace. |  | No |
-| `routes[n].services[n].nativeLB`              | Controls, when creating the load-balancer, whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP. See [here](#nativelb) for more information. | false | No |
-| `routes[n].services[n].nodePortLB`            | Controls, when creating the load-balancer, whether the LB's children are directly the nodes internal IPs using the nodePort when the service type is `NodePort`. It allows services to be reachable when Traefik runs externally from the Kubernetes cluster but within the same network of the nodes. | false | No |
-| `tls`                               | Defines [TLS](../../../../install-configuration/tls/certificate-resolvers/overview.md) certificate configuration. |  | No |
-| `tls.secretName`                    | Defines the [secret](https://kubernetes.io/docs/concepts/configuration/secret/) name used to store the certificate (in the `IngressRoute` namespace). | "" | No |
-| `tls.options`                       | Defines the reference to a [TLSOption](../http/tlsoption.md). | "" | No |
-| `tls.options.name`                  | Defines the [TLSOption](../http/tlsoption.md) name. | "" | No |
-| `tls.options.namespace`             | Defines the [TLSOption](../http/tlsoption.md) namespace. | "" | No |
-| `tls.certResolver`                  | Defines the reference to a [CertResolver](../../../../install-configuration/tls/certificate-resolvers/overview.md). | "" | No |
-| `tls.domains`                       | List of domains. | "" | No |
-| `tls.domains[n].main`               | Defines the main domain name. | "" | No |
-| `tls.domains[n].sans`               | List of SANs (alternative domains).  | "" | No |
-| `tls.passthrough`                   | If `true`, delegates the TLS termination to the backend. | false | No |
+| Field                                | Description                                                                                                                                                                                                                                                                                  | Default                                   | Required |
+|-------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------|-----------------------|
+| <a id="opt-ingressClassName" href="#opt-ingressClassName" title="#opt-ingressClassName">`ingressClassName`</a> | Defines the [IngressClass](https://kubernetes.io/docs/concepts/services-networking/ingress/#ingress-class) cluster resource to use. It replaces the deprecated `kubernetes.io/ingress.class` annotation.<br />The spec field takes precedence over the annotation. | | No |
+| <a id="opt-entryPoints" href="#opt-entryPoints" title="#opt-entryPoints">`entryPoints`</a> | List of entrypoints names.                                                                                                                                                                                                                                                                   | | No |
+| <a id="opt-routes" href="#opt-routes" title="#opt-routes">`routes`</a> | List of routes.                                                                                                                                                                                                                                                                              | | Yes |
+| <a id="opt-routesn-match" href="#opt-routesn-match" title="#opt-routesn-match">`routes[n].match`</a> | Defines the [rule](../../../tcp/routing/rules-and-priority.md#rules) of the underlying router.                                                                                                                                                                                               | | Yes |
+| <a id="opt-routesn-priority" href="#opt-routesn-priority" title="#opt-routesn-priority">`routes[n].priority`</a> | Defines the [priority](../../../tcp/routing/rules-and-priority.md#priority-calculation) to disambiguate rules of the same length, for route matching.                                                                                                                                        | | No |
+| <a id="opt-routesn-middlewaresn-name" href="#opt-routesn-middlewaresn-name" title="#opt-routesn-middlewaresn-name">`routes[n].middlewares[n].name`</a> | Defines the [MiddlewareTCP](./middlewaretcp.md) name.                                                                                                                                                                                                                                        | | Yes |
+| <a id="opt-routesn-middlewaresn-namespace" href="#opt-routesn-middlewaresn-namespace" title="#opt-routesn-middlewaresn-namespace">`routes[n].middlewares[n].namespace`</a> | Defines the [MiddlewareTCP](./middlewaretcp.md) namespace.                                                                                                                                                                                                                                   | ""| No|
+| <a id="opt-routesn-services" href="#opt-routesn-services" title="#opt-routesn-services">`routes[n].services`</a> | List of [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) definitions.                                                                                                                                                                                  | | No |
+| <a id="opt-routesn-servicesn-name" href="#opt-routesn-servicesn-name" title="#opt-routesn-servicesn-name">`routes[n].services[n].name`</a> | Defines the name of a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/).                                                                                                                                                                                | | Yes |
+| <a id="opt-routesn-servicesn-port" href="#opt-routesn-servicesn-port" title="#opt-routesn-servicesn-port">`routes[n].services[n].port`</a> | Defines the port of a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/). This can be a reference to a named port.                                                                                                                                       | | Yes |
+| <a id="opt-routesn-servicesn-weight" href="#opt-routesn-servicesn-weight" title="#opt-routesn-servicesn-weight">`routes[n].services[n].weight`</a> | Defines the weight to apply to the server load balancing.                                                                                                                                                                                                                                    | 1 | No |
+| <a id="opt-routesn-servicesn-proxyProtocol" href="#opt-routesn-servicesn-proxyProtocol" title="#opt-routesn-servicesn-proxyProtocol">`routes[n].services[n].proxyProtocol`</a> | Defines the [PROXY protocol](../../../../install-configuration/entrypoints.md#proxyprotocol-and-load-balancers) configuration.                                                                                                                                                               |  | No |
+| <a id="opt-routesn-servicesn-proxyProtocol-version" href="#opt-routesn-servicesn-proxyProtocol-version" title="#opt-routesn-servicesn-proxyProtocol-version">`routes[n].services[n].proxyProtocol.version`</a> | Defines the [PROXY protocol](../../../../install-configuration/entrypoints.md#proxyprotocol-and-load-balancers) version.                                                                                                                                                                     |  | No |
+| <a id="opt-routesn-servicesn-serversTransport" href="#opt-routesn-servicesn-serversTransport" title="#opt-routesn-servicesn-serversTransport">`routes[n].services[n].serversTransport`</a> | Defines the [ServersTransportTCP](./serverstransporttcp.md).<br />The `ServersTransport` namespace is assumed to be the [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) namespace.                                                                    |  | No |
+| <a id="opt-routesn-servicesn-nativeLB" href="#opt-routesn-servicesn-nativeLB" title="#opt-routesn-servicesn-nativeLB">`routes[n].services[n].nativeLB`</a> | Controls, when creating the load-balancer, whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP. See [here](#nativelb) for more information.                                                                                         | false | No |
+| <a id="opt-routesn-servicesn-nodePortLB" href="#opt-routesn-servicesn-nodePortLB" title="#opt-routesn-servicesn-nodePortLB">`routes[n].services[n].nodePortLB`</a> | Controls, when creating the load-balancer, whether the LB's children are directly the nodes internal IPs using the nodePort when the service type is `NodePort`. It allows services to be reachable when Traefik runs externally from the Kubernetes cluster but within the same network of the nodes. | false | No |
+| <a id="opt-tls" href="#opt-tls" title="#opt-tls">`tls`</a> | Defines [TLS](../../../../install-configuration/tls/certificate-resolvers/overview.md) certificate configuration.                                                                                                                                                                            |  | No |
+| <a id="opt-tls-secretName" href="#opt-tls-secretName" title="#opt-tls-secretName">`tls.secretName`</a> | Defines the [secret](https://kubernetes.io/docs/concepts/configuration/secret/) name used to store the certificate (in the `IngressRoute` namespace).                                                                                                                                        | "" | No |
+| <a id="opt-tls-options" href="#opt-tls-options" title="#opt-tls-options">`tls.options`</a> | Defines the reference to a [TLSOption](../tls/tlsoption.md).                                                                                                                                                                                                                                        | "" | No |
+| <a id="opt-tls-options-name" href="#opt-tls-options-name" title="#opt-tls-options-name">`tls.options.name`</a> | Defines the [TLSOption](../tls/tlsoption.md) name.                                                                                                                                                                                                                                                  | "" | No |
+| <a id="opt-tls-options-namespace" href="#opt-tls-options-namespace" title="#opt-tls-options-namespace">`tls.options.namespace`</a> | Defines the [TLSOption](../tls/tlsoption.md) namespace.                                                                                                                                                                                                                                             | "" | No |
+| <a id="opt-tls-certResolver" href="#opt-tls-certResolver" title="#opt-tls-certResolver">`tls.certResolver`</a> | Defines the reference to a [CertResolver](../../../../install-configuration/tls/certificate-resolvers/overview.md).                                                                                                                                                                          | "" | No |
+| <a id="opt-tls-domains" href="#opt-tls-domains" title="#opt-tls-domains">`tls.domains`</a> | List of domains.                                                                                                                                                                                                                                                                             | "" | No |
+| <a id="opt-tls-domainsn-main" href="#opt-tls-domainsn-main" title="#opt-tls-domainsn-main">`tls.domains[n].main`</a> | Defines the main domain name.                                                                                                                                                                                                                                                                | "" | No |
+| <a id="opt-tls-domainsn-sans" href="#opt-tls-domainsn-sans" title="#opt-tls-domainsn-sans">`tls.domains[n].sans`</a> | List of SANs (alternative domains).                                                                                                                                                                                                                                                          | "" | No |
+| <a id="opt-tls-passthrough" href="#opt-tls-passthrough" title="#opt-tls-passthrough">`tls.passthrough`</a> | If `true`, delegates the TLS termination to the backend.                                                                                                                                                                                                                                     | false | No |
 
 ### ExternalName Service
 

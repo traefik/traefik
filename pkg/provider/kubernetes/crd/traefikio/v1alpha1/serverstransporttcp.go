@@ -13,7 +13,7 @@ import (
 // ServersTransportTCP is the CRD implementation of a TCPServersTransport.
 // If no tcpServersTransport is specified, a default one named default@internal will be used.
 // The default@internal tcpServersTransport can be configured in the static configuration.
-// More info: https://doc.traefik.io/traefik/v3.5/routing/services/#serverstransport_3
+// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/tcp/serverstransport/
 type ServersTransportTCP struct {
 	metav1.TypeMeta `json:",inline"`
 	// Standard object's metadata.
@@ -35,12 +35,14 @@ type ServersTransportTCPSpec struct {
 	// +kubebuilder:validation:Pattern="^([0-9]+(ns|us|µs|ms|s|m|h)?)+$"
 	// +kubebuilder:validation:XIntOrString
 	DialKeepAlive *intstr.IntOrString `json:"dialKeepAlive,omitempty"`
+	// ProxyProtocol holds the PROXY Protocol configuration.
+	ProxyProtocol *dynamic.ProxyProtocol `json:"proxyProtocol,omitempty"`
 	// TerminationDelay defines the delay to wait before fully terminating the connection, after one connected peer has closed its writing capability.
 	// +kubebuilder:validation:Pattern="^([0-9]+(ns|us|µs|ms|s|m|h)?)+$"
 	// +kubebuilder:validation:XIntOrString
 	TerminationDelay *intstr.IntOrString `json:"terminationDelay,omitempty"`
 	// TLS defines the TLS configuration
-	TLS *TLSClientConfig `description:"Defines the TLS configuration." json:"tls,omitempty"`
+	TLS *TLSClientConfig `json:"tls,omitempty"`
 }
 
 // TLSClientConfig defines the desired state of a TLSClientConfig.

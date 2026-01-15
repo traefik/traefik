@@ -325,11 +325,13 @@ kubectl create secret tls whoami-tls --cert=tls.crt --key=tls.key
         web:
           port: 80
           protocol: HTTP
-          namespacePolicy: All
+          namespacePolicy:
+            from: All
         websecure:
           port: 443
           protocol: HTTPS
-          namespacePolicy: All
+          namespacePolicy:
+            from: All
           mode: Terminate
           certificateRefs:
             - kind: Secret
@@ -1003,7 +1005,7 @@ These fundamental capabilities provide a solid foundation for exposing any appli
 
 Now that you understand the basics of exposing services with Traefik Proxy, you might want to explore:
 
-- [Advanced routing options](../reference/routing-configuration/http/router/rules-and-priority.md) like query parameter matching, header-based routing, and more
+- [Advanced routing options](../reference/routing-configuration/http/routing/rules-and-priority.md) like query parameter matching, header-based routing, and more
 - [Additional middlewares](../reference/routing-configuration/http/middlewares/overview.md) for authentication, rate limiting, and request modifications
 - [Observability features](../reference/install-configuration/observability/metrics.md) for monitoring and debugging your Traefik deployment
 - [TCP services](../reference/routing-configuration/tcp/service.md) for exposing TCP services

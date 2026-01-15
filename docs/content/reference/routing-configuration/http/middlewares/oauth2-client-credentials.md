@@ -49,32 +49,32 @@ stringData:
 
 | Field | Description                                                                                 | Default | Required |
 |:------|:--------------------------------------------------------------------------------------------|:--------|:---------|
-| `audience` | Defines the audience configured in your authorization server. <br /> The audience value is the base address of the resource being accessed, for example: https://api.example.com. | ""      | Yes      |
-| `claims` | Defines the claims to validate in order to authorize the request. <br /> The `claims` option can only be used with JWT-formatted token.  (More information [here](#claims)) | ""      | No       |
-| `clientConfig.tls.ca` | PEM-encoded certificate bundle or a URN referencing a secret containing the certificate bundle used to establish a TLS connection with the authorization server  (More information [here](#clientconfig)) | ""      | No       |
-| `clientConfig.tls.cert` | PEM-encoded certificate or a URN referencing a secret containing the certificate used to establish a TLS connection with the Vault server (More information [here](#clientconfig)) | ""      | No       |
-| `clientConfig.tls.key`  | PEM-encoded key or a URN referencing a secret containing the key used to establish a TLS connection with the Vault server. (More information [here](#clientconfig)) | ""      | No       |
-| `clientConfig.tls.insecureSkipVerify` | Disables TLS certificate verification when communicating with the authorization server. <br /> Useful for testing purposes but strongly discouraged for production. (More information [here](#clientconfig)) | ""      | No       |
-| `clientConfig.timeoutSeconds` | Defines the time before giving up requests to the authorization server.   | 5       | No       |
-| `clientConfig.maxRetries` | Defines the number of retries for requests to authorization server that fail. | 3       | No       |
-| `clientID`     | Defines the unique client identifier for an account on the OpenID Connect provider, must be set when the `clientSecret` option is set.<br />More information [here](#storing-secret-values-in-kubernetes-secrets). | ""      | Yes       |
-| `clientSecret` | Defines the unique client secret for an account on the OpenID Connect provider, must be set when the `clientID` option is set.<br />More information [here](#storing-secret-values-in-kubernetes-secrets). | ""      | Yes       |
-| `forwardHeaders` | Defines the HTTP headers to add to requests and populates them with values extracted from the access token claims returned by the authorization server. <br /> Claims to be forwarded that are not found in the JWT result in empty headers. <br /> The `forwardHeaders` option can only be used with JWT-formatted token. | []      | No       |
-| `store.keyPrefix` | Defines the prefix of the key for the entries that store the sessions. | ""      | No       |
-| `store.redis.endpoints`              | Endpoints of the Redis instances to connect to (example: `redis.traefik-hub.svc.cluster.local:6379`) | "" | Yes      |
-| `store.redis.username`               | The username Traefik Hub will use to connect to Redis          | "" | No       |
-| `store.redis.password`               | The password Traefik Hub will use to connect to Redis    | "" | No       |
-| `store.redis.database`               | The database Traefik Hub will use to sore information (default: `0`)                                 | "" | No       |
-| `store.redis.cluster`                | Enable Redis Cluster           | "" | No       |
-| `store.redis.tls.caBundle`           | Custom CA bundle    | "" | No       |
-| `store.redis.tls.cert`               | TLS certificate         | "" | No       |
-| `store.redis.tls.key`                | TLS   | "" | No       |
-| `store.redis.tls.insecureSkipVerify` | Allow skipping the TLS verification | "" | No       |
-| `store.redis.sentinel.masterSet`     | Name of the set of main nodes to use for main selection. Required when using Sentinel.               | "" | No       |
-| `store.redis.sentinel.username`      | Username to use for sentinel authentication (can be different from `username`)  | "" | No       |
-| `store.redis.sentinel.password`      | Password to use for sentinel authentication (can be different from `password`)        | "" | No       |
-| `url` | Defines the authorization server URL (for example: `https://tenant.auth0.com/oauth/token`). | ""      | Yes      |
-| `usernameClaim` | Defines the claim that will be evaluated to populate the `clientusername` in the access logs. <br /> The `usernameClaim` option can only be used with JWT-formatted token.| ""      | No       |
+| <a id="opt-audience" href="#opt-audience" title="#opt-audience">`audience`</a> | Defines the audience configured in your authorization server. <br /> The audience value is the base address of the resource being accessed, for example: https://api.example.com. | ""      | Yes      |
+| <a id="opt-claims" href="#opt-claims" title="#opt-claims">`claims`</a> | Defines the claims to validate in order to authorize the request. <br /> The `claims` option can only be used with JWT-formatted token.  (More information [here](#claims)) | ""      | No       |
+| <a id="opt-clientConfig-tls-ca" href="#opt-clientConfig-tls-ca" title="#opt-clientConfig-tls-ca">`clientConfig.tls.ca`</a> | PEM-encoded certificate bundle or a URN referencing a secret containing the certificate bundle used to establish a TLS connection with the authorization server  (More information [here](#clientconfig)) | ""      | No       |
+| <a id="opt-clientConfig-tls-cert" href="#opt-clientConfig-tls-cert" title="#opt-clientConfig-tls-cert">`clientConfig.tls.cert`</a> | PEM-encoded certificate or a URN referencing a secret containing the certificate used to establish a TLS connection with the Vault server (More information [here](#clientconfig)) | ""      | No       |
+| <a id="opt-clientConfig-tls-key" href="#opt-clientConfig-tls-key" title="#opt-clientConfig-tls-key">`clientConfig.tls.key`</a> | PEM-encoded key or a URN referencing a secret containing the key used to establish a TLS connection with the Vault server. (More information [here](#clientconfig)) | ""      | No       |
+| <a id="opt-clientConfig-tls-insecureSkipVerify" href="#opt-clientConfig-tls-insecureSkipVerify" title="#opt-clientConfig-tls-insecureSkipVerify">`clientConfig.tls.insecureSkipVerify`</a> | Disables TLS certificate verification when communicating with the authorization server. <br /> Useful for testing purposes but strongly discouraged for production. (More information [here](#clientconfig)) | ""      | No       |
+| <a id="opt-clientConfig-timeoutSeconds" href="#opt-clientConfig-timeoutSeconds" title="#opt-clientConfig-timeoutSeconds">`clientConfig.timeoutSeconds`</a> | Defines the time before giving up requests to the authorization server.   | 5       | No       |
+| <a id="opt-clientConfig-maxRetries" href="#opt-clientConfig-maxRetries" title="#opt-clientConfig-maxRetries">`clientConfig.maxRetries`</a> | Defines the number of retries for requests to authorization server that fail. | 3       | No       |
+| <a id="opt-clientID" href="#opt-clientID" title="#opt-clientID">`clientID`</a> | Defines the unique client identifier for an account on the OpenID Connect provider, must be set when the `clientSecret` option is set.<br />More information [here](#storing-secret-values-in-kubernetes-secrets). | ""      | Yes       |
+| <a id="opt-clientSecret" href="#opt-clientSecret" title="#opt-clientSecret">`clientSecret`</a> | Defines the unique client secret for an account on the OpenID Connect provider, must be set when the `clientID` option is set.<br />More information [here](#storing-secret-values-in-kubernetes-secrets). | ""      | Yes       |
+| <a id="opt-forwardHeaders" href="#opt-forwardHeaders" title="#opt-forwardHeaders">`forwardHeaders`</a> | Defines the HTTP headers to add to requests and populates them with values extracted from the access token claims returned by the authorization server. <br /> Claims to be forwarded that are not found in the JWT result in empty headers. <br /> The `forwardHeaders` option can only be used with JWT-formatted token. | []      | No       |
+| <a id="opt-store-keyPrefix" href="#opt-store-keyPrefix" title="#opt-store-keyPrefix">`store.keyPrefix`</a> | Defines the prefix of the key for the entries that store the sessions. | ""      | No       |
+| <a id="opt-store-redis-endpoints" href="#opt-store-redis-endpoints" title="#opt-store-redis-endpoints">`store.redis.endpoints`</a> | Endpoints of the Redis instances to connect to (example: `redis.traefik-hub.svc.cluster.local:6379`) | "" | Yes      |
+| <a id="opt-store-redis-username" href="#opt-store-redis-username" title="#opt-store-redis-username">`store.redis.username`</a> | The username Traefik Hub will use to connect to Redis          | "" | No       |
+| <a id="opt-store-redis-password" href="#opt-store-redis-password" title="#opt-store-redis-password">`store.redis.password`</a> | The password Traefik Hub will use to connect to Redis    | "" | No       |
+| <a id="opt-store-redis-database" href="#opt-store-redis-database" title="#opt-store-redis-database">`store.redis.database`</a> | The database Traefik Hub will use to sore information (default: `0`)                                 | "" | No       |
+| <a id="opt-store-redis-cluster" href="#opt-store-redis-cluster" title="#opt-store-redis-cluster">`store.redis.cluster`</a> | Enable Redis Cluster           | "" | No       |
+| <a id="opt-store-redis-tls-caBundle" href="#opt-store-redis-tls-caBundle" title="#opt-store-redis-tls-caBundle">`store.redis.tls.caBundle`</a> | Custom CA bundle    | "" | No       |
+| <a id="opt-store-redis-tls-cert" href="#opt-store-redis-tls-cert" title="#opt-store-redis-tls-cert">`store.redis.tls.cert`</a> | TLS certificate         | "" | No       |
+| <a id="opt-store-redis-tls-key" href="#opt-store-redis-tls-key" title="#opt-store-redis-tls-key">`store.redis.tls.key`</a> | TLS   | "" | No       |
+| <a id="opt-store-redis-tls-insecureSkipVerify" href="#opt-store-redis-tls-insecureSkipVerify" title="#opt-store-redis-tls-insecureSkipVerify">`store.redis.tls.insecureSkipVerify`</a> | Allow skipping the TLS verification | "" | No       |
+| <a id="opt-store-redis-sentinel-masterSet" href="#opt-store-redis-sentinel-masterSet" title="#opt-store-redis-sentinel-masterSet">`store.redis.sentinel.masterSet`</a> | Name of the set of main nodes to use for main selection. Required when using Sentinel.               | "" | No       |
+| <a id="opt-store-redis-sentinel-username" href="#opt-store-redis-sentinel-username" title="#opt-store-redis-sentinel-username">`store.redis.sentinel.username`</a> | Username to use for sentinel authentication (can be different from `username`)  | "" | No       |
+| <a id="opt-store-redis-sentinel-password" href="#opt-store-redis-sentinel-password" title="#opt-store-redis-sentinel-password">`store.redis.sentinel.password`</a> | Password to use for sentinel authentication (can be different from `password`)        | "" | No       |
+| <a id="opt-url" href="#opt-url" title="#opt-url">`url`</a> | Defines the authorization server URL (for example: `https://tenant.auth0.com/oauth/token`). | ""      | Yes      |
+| <a id="opt-usernameClaim" href="#opt-usernameClaim" title="#opt-usernameClaim">`usernameClaim`</a> | Defines the claim that will be evaluated to populate the `clientusername` in the access logs. <br /> The `usernameClaim` option can only be used with JWT-formatted token.| ""      | No       |
 
 ### Storing secret values in Kubernetes secrets
 
@@ -93,20 +93,20 @@ The following functions are supported in `claims`:
 
 | Function          | Description        | Example        |
 |-------------------|--------------------|-----------------|
-| Equals            | Validates the equality of the value in `key` with `value`.                     | Equals(\`grp\`, \`admin\`)                   |
-| Prefix            | Validates the value in `key` has the prefix of `value`.                        | Prefix(\`referrer\`, \`http://example.com\`) |
-| Contains (string) | Validates the value in `key` contains `value`.                                 | Contains(\`referrer\`, \`/foo/\`)            |
-| Contains (array)  | Validates the `key` array contains the `value`.                                | Contains(\`areas\`, \`home\`)                |
-| SplitContains     | Validates the value in `key` contains the `value` once split by the separator. | SplitContains(\`scope\`, \` \`, \`writer\`)  |
-| OneOf             | Validates the `key` array contains one of the `values`.                        | OneOf(\`areas\`, \`office\`, \`lab\`)        |
+| <a id="opt-Equals" href="#opt-Equals" title="#opt-Equals">Equals</a> | Validates the equality of the value in `key` with `value`.                     | Equals(\`grp\`, \`admin\`)                   |
+| <a id="opt-Prefix" href="#opt-Prefix" title="#opt-Prefix">Prefix</a> | Validates the value in `key` has the prefix of `value`.                        | Prefix(\`referrer\`, \`http://example.com\`) |
+| <a id="opt-Contains-string" href="#opt-Contains-string" title="#opt-Contains-string">Contains (string)</a> | Validates the value in `key` contains `value`.                                 | Contains(\`referrer\`, \`/foo/\`)            |
+| <a id="opt-Contains-array" href="#opt-Contains-array" title="#opt-Contains-array">Contains (array)</a> | Validates the `key` array contains the `value`.                                | Contains(\`areas\`, \`home\`)                |
+| <a id="opt-SplitContains" href="#opt-SplitContains" title="#opt-SplitContains">SplitContains</a> | Validates the value in `key` contains the `value` once split by the separator. | SplitContains(\`scope\`, \` \`, \`writer\`)  |
+| <a id="opt-OneOf" href="#opt-OneOf" title="#opt-OneOf">OneOf</a> | Validates the `key` array contains one of the `values`.                        | OneOf(\`areas\`, \`office\`, \`lab\`)        |
 
 All functions can be joined by boolean operands. The supported operands are:
 
 | Operand | Description        | Example        |
 |---------|--------------------|-----------------|
-| &&      | Compares two functions and returns true only if both evaluate to true. | Equals(\`grp\`, \`admin\`) && Equals(\`active\`, \`true\`)   |
-| \|\|    | Compares two functions and returns true if either evaluate to true.    | Equals(\`grp\`, \`admin\`) \|\| Equals(\`active\`, \`true\`) |
-| !       | Returns false if the function is true, otherwise returns true.         | !Equals(\`grp\`, \`testers\`)                                |
+| <a id="opt-row" href="#opt-row" title="#opt-row">&&</a> | Compares two functions and returns true only if both evaluate to true. | Equals(\`grp\`, \`admin\`) && Equals(\`active\`, \`true\`)   |
+| <a id="opt-row-2" href="#opt-row-2" title="#opt-row-2">\|\|</a> | Compares two functions and returns true if either evaluate to true.    | Equals(\`grp\`, \`admin\`) \|\| Equals(\`active\`, \`true\`) |
+| <a id="opt-row-3" href="#opt-row-3" title="#opt-row-3">!</a> | Returns false if the function is true, otherwise returns true.         | !Equals(\`grp\`, \`testers\`)                                |
 
 All examples will return true for the following data structure:
 

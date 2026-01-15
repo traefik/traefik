@@ -1,10 +1,11 @@
 import { cleanup, render } from '@testing-library/react'
 import { FaencyProvider } from '@traefiklabs/faency'
 import { HelmetProvider } from 'react-helmet-async'
-import { BrowserRouter } from 'react-router-dom'
+import { MemoryRouter } from 'react-router-dom'
 import { SWRConfig } from 'swr'
 import { afterEach } from 'vitest'
 
+import Page from '../layout/Page'
 import fetch from '../libs/fetch'
 
 afterEach(() => {
@@ -25,7 +26,7 @@ export { default as userEvent } from '@testing-library/user-event'
 // override render export
 export { customRender as render } // eslint-disable-line import/export
 
-export function renderWithProviders(ui: React.ReactElement) {
+export function renderWithProviders(ui: React.ReactElement, { route = '/', withPage = false } = {}) {
   return customRender(ui, {
     wrapper: ({ children }) => (
       <FaencyProvider>
@@ -36,7 +37,7 @@ export function renderWithProviders(ui: React.ReactElement) {
               fetcher: fetch,
             }}
           >
-            <BrowserRouter>{children}</BrowserRouter>
+            <MemoryRouter initialEntries={[route]}>{withPage ? <Page>{children}</Page> : children}</MemoryRouter>
           </SWRConfig>
         </HelmetProvider>
       </FaencyProvider>

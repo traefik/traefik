@@ -135,6 +135,9 @@ Timeout for receiving the response headers when communicating with the ACME serv
 `TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_CLIENTTIMEOUT`:  
 Timeout for a complete HTTP transaction with the ACME server. (Default: ```120```)
 
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_DISABLECOMMONNAME`:  
+Disable the common name in the CSR. (Default: ```false```)
+
 `TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_DNSCHALLENGE`:  
 Activate DNS-01 Challenge. (Default: ```false```)
 
@@ -199,7 +202,10 @@ Certificate profile to use.
 Storage to use. (Default: ```acme.json```)
 
 `TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_TLSCHALLENGE`:  
-Activate TLS-ALPN-01 Challenge. (Default: ```true```)
+Activate TLS-ALPN-01 Challenge. (Default: ```false```)
+
+`TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_ACME_TLSCHALLENGE_DELAY`:  
+Delay between the creation of the challenge and the validation. (Default: ```0```)
 
 `TRAEFIK_CERTIFICATESRESOLVERS_<NAME>_TAILSCALE`:  
 Enables Tailscale certificate resolution. (Default: ```true```)
@@ -239,6 +245,27 @@ HTTP/3 configuration. (Default: ```false```)
 
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP3_ADVERTISEDPORT`:  
 UDP port to advertise, on which HTTP/3 is available. (Default: ```0```)
+
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_ENCODEDCHARACTERS_ALLOWENCODEDBACKSLASH`:  
+Defines whether requests with encoded back slash characters in the path are allowed. (Default: ```false```)
+
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_ENCODEDCHARACTERS_ALLOWENCODEDHASH`:  
+Defines whether requests with encoded hash characters in the path are allowed. (Default: ```false```)
+
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_ENCODEDCHARACTERS_ALLOWENCODEDNULLCHARACTER`:  
+Defines whether requests with encoded null characters in the path are allowed. (Default: ```false```)
+
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_ENCODEDCHARACTERS_ALLOWENCODEDPERCENT`:  
+Defines whether requests with encoded percent characters in the path are allowed. (Default: ```false```)
+
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_ENCODEDCHARACTERS_ALLOWENCODEDQUESTIONMARK`:  
+Defines whether requests with encoded question mark characters in the path are allowed. (Default: ```false```)
+
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_ENCODEDCHARACTERS_ALLOWENCODEDSEMICOLON`:  
+Defines whether requests with encoded semicolon characters in the path are allowed. (Default: ```false```)
+
+`TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_ENCODEDCHARACTERS_ALLOWENCODEDSLASH`:  
+Defines whether requests with encoded slash characters in the path are allowed. (Default: ```false```)
 
 `TRAEFIK_ENTRYPOINTS_<NAME>_HTTP_ENCODEQUERYSEMICOLONS`:  
 Defines whether request query semicolons should be URLEncoded. (Default: ```false```)
@@ -361,7 +388,7 @@ Environment variables to forward to the wasm guest.
 Directory to mount to the wasm guest.
 
 `TRAEFIK_EXPERIMENTAL_LOCALPLUGINS_<NAME>_SETTINGS_USEUNSAFE`:  
-Allow the plugin to use unsafe package. (Default: ```false```)
+Allow the plugin to use unsafe and syscall packages. (Default: ```false```)
 
 `TRAEFIK_EXPERIMENTAL_OTLPLOGS`:  
 Enables the OpenTelemetry logs integration. (Default: ```false```)
@@ -379,7 +406,7 @@ Environment variables to forward to the wasm guest.
 Directory to mount to the wasm guest.
 
 `TRAEFIK_EXPERIMENTAL_PLUGINS_<NAME>_SETTINGS_USEUNSAFE`:  
-Allow the plugin to use unsafe package. (Default: ```false```)
+Allow the plugin to use unsafe and syscall packages. (Default: ```false```)
 
 `TRAEFIK_EXPERIMENTAL_PLUGINS_<NAME>_VERSION`:  
 plugin's version.

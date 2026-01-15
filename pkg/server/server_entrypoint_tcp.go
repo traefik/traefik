@@ -12,6 +12,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -22,12 +23,12 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/static"
 	"github.com/traefik/traefik/v3/pkg/ip"
-	"github.com/traefik/traefik/v3/pkg/logs"
-	"github.com/traefik/traefik/v3/pkg/metrics"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/middlewares/contenttype"
 	"github.com/traefik/traefik/v3/pkg/middlewares/forwardedheaders"
 	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
+	"github.com/traefik/traefik/v3/pkg/observability/logs"
+	"github.com/traefik/traefik/v3/pkg/observability/metrics"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	tcprouter "github.com/traefik/traefik/v3/pkg/server/router/tcp"
 	"github.com/traefik/traefik/v3/pkg/server/service"
@@ -56,15 +57,19 @@ type connState struct {
 
 type httpForwarder struct {
 	net.Listener
-	connChan chan net.Conn
-	errChan  chan error
+
+	connChan  chan net.Conn
+	errChan   chan error
+	closeChan chan struct{}
+	closeOnce sync.Once
 }
 
 func newHTTPForwarder(ln net.Listener) *httpForwarder {
 	return &httpForwarder{
-		Listener: ln,
-		connChan: make(chan net.Conn),
-		errChan:  make(chan error),
+		Listener:  ln,
+		connChan:  make(chan net.Conn),
+		errChan:   make(chan error),
+		closeChan: make(chan struct{}),
 	}
 }
 
@@ -76,11 +81,21 @@ func (h *httpForwarder) ServeTCP(conn tcp.WriteCloser) {
 // Accept retrieves a served connection in ServeTCP.
 func (h *httpForwarder) Accept() (net.Conn, error) {
 	select {
+	case <-h.closeChan:
+		return nil, errors.New("listener closed")
 	case conn := <-h.connChan:
 		return conn, nil
 	case err := <-h.errChan:
 		return nil, err
 	}
+}
+
+// Close closes the wrapped listener and unblocks Accept.
+func (h *httpForwarder) Close() error {
+	h.closeOnce.Do(func() {
+		close(h.closeChan)
+	})
+	return h.Listener.Close()
 }
 
 // TCPEntryPoints holds a map of TCPEntryPoint (the entrypoint names being the keys).
@@ -162,8 +177,9 @@ type TCPEntryPoint struct {
 	tracker                *connectionTracker
 	httpServer             *httpServer
 	httpsServer            *httpServer
-
-	http3Server *http3server
+	http3Server            *http3server
+	// inShutdown reports whether the Shutdown method has been called.
+	inShutdown atomic.Bool
 }
 
 // NewTCPEntryPoint creates a new TCPEntryPoint.
@@ -172,12 +188,12 @@ func NewTCPEntryPoint(ctx context.Context, name string, config *static.EntryPoin
 
 	listener, err := buildListener(ctx, name, config)
 	if err != nil {
-		return nil, fmt.Errorf("error preparing server: %w", err)
+		return nil, fmt.Errorf("building listener: %w", err)
 	}
 
 	rt, err := tcprouter.NewRouter()
 	if err != nil {
-		return nil, fmt.Errorf("error preparing tcp router: %w", err)
+		return nil, fmt.Errorf("creating TCP router: %w", err)
 	}
 
 	// Set the protocol based on entrypoint configuration
@@ -189,21 +205,21 @@ func NewTCPEntryPoint(ctx context.Context, name string, config *static.EntryPoin
 
 	reqDecorator := requestdecorator.New(hostResolverConfig)
 
-	httpServer, err := createHTTPServer(ctx, listener, config, true, reqDecorator)
+	httpServer, err := newHTTPServer(ctx, listener, config, true, reqDecorator)
 	if err != nil {
-		return nil, fmt.Errorf("error preparing http server: %w", err)
+		return nil, fmt.Errorf("creating HTTP server: %w", err)
 	}
 
 	rt.SetHTTPForwarder(httpServer.Forwarder)
 
-	httpsServer, err := createHTTPServer(ctx, listener, config, false, reqDecorator)
+	httpsServer, err := newHTTPServer(ctx, listener, config, false, reqDecorator)
 	if err != nil {
-		return nil, fmt.Errorf("error preparing https server: %w", err)
+		return nil, fmt.Errorf("creating HTTPS server: %w", err)
 	}
 
 	h3Server, err := newHTTP3Server(ctx, name, config, httpsServer)
 	if err != nil {
-		return nil, fmt.Errorf("error preparing http3 server: %w", err)
+		return nil, fmt.Errorf("creating HTTP3 server: %w", err)
 	}
 
 	rt.SetHTTPSForwarder(httpsServer.Forwarder)
@@ -233,6 +249,11 @@ func (e *TCPEntryPoint) Start(ctx context.Context) {
 
 	for {
 		conn, err := e.listener.Accept()
+		// As the Shutdown method has been called, an error is expected.
+		// Thus, it is not necessary to log it.
+		if err != nil && e.inShutdown.Load() {
+			return
+		}
 		if err != nil {
 			logger.Error().Err(err).Send()
 
@@ -283,6 +304,8 @@ func (e *TCPEntryPoint) Start(ctx context.Context) {
 // Shutdown stops the TCP connections.
 func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
 	logger := log.Ctx(ctx)
+
+	e.inShutdown.Store(true)
 
 	reqAcceptGraceTimeOut := time.Duration(e.transportConfiguration.LifeCycle.RequestAcceptGraceTimeout)
 	if reqAcceptGraceTimeOut > 0 {
@@ -468,6 +491,18 @@ func buildProxyProtocolListener(ctx context.Context, entryPoint *static.EntryPoi
 	return proxyListener, nil
 }
 
+type onceCloseListener struct {
+	net.Listener
+
+	once     sync.Once
+	closeErr error
+}
+
+func (oc *onceCloseListener) Close() error {
+	oc.once.Do(func() { oc.closeErr = oc.Listener.Close() })
+	return oc.closeErr
+}
+
 func buildListener(ctx context.Context, name string, config *static.EntryPoint) (net.Listener, error) {
 	var listener net.Listener
 	var err error
@@ -503,7 +538,7 @@ func buildListener(ctx context.Context, name string, config *static.EntryPoint) 
 			return nil, fmt.Errorf("error creating proxy protocol listener: %w", err)
 		}
 	}
-	return listener, nil
+	return &onceCloseListener{Listener: listener}, nil
 }
 
 func newConnectionTracker(openConnectionsGauge gokitmetrics.Gauge) *connectionTracker {
@@ -599,9 +634,15 @@ type httpServer struct {
 	Switcher  *middlewares.HTTPHandlerSwitcher
 }
 
-func createHTTPServer(ctx context.Context, ln net.Listener, configuration *static.EntryPoint, withH2c bool, reqDecorator *requestdecorator.RequestDecorator) (*httpServer, error) {
+func newHTTPServer(ctx context.Context, ln net.Listener, configuration *static.EntryPoint, withH2c bool, reqDecorator *requestdecorator.RequestDecorator) (*httpServer, error) {
 	if configuration.HTTP2.MaxConcurrentStreams < 0 {
 		return nil, errors.New("max concurrent streams value must be greater than or equal to zero")
+	}
+	if configuration.HTTP2.MaxDecoderHeaderTableSize < 0 {
+		return nil, errors.New("max decoder header table size value must be greater than or equal to zero")
+	}
+	if configuration.HTTP2.MaxEncoderHeaderTableSize < 0 {
+		return nil, errors.New("max encoder header table size value must be greater than or equal to zero")
 	}
 
 	httpSwitcher := middlewares.NewHandlerSwitcher(http.NotFoundHandler())
@@ -616,6 +657,7 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 		configuration.ForwardedHeaders.Insecure,
 		configuration.ForwardedHeaders.TrustedIPs,
 		configuration.ForwardedHeaders.Connection,
+		configuration.ForwardedHeaders.NotAppendXForwardedFor,
 		next)
 	if err != nil {
 		return nil, err
@@ -649,8 +691,6 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 
 	handler = normalizePath(handler)
 
-	handler = denyFragment(handler)
-
 	serverHTTP := &http.Server{
 		Protocols:      &protocols,
 		Handler:        handler,
@@ -660,7 +700,9 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 		IdleTimeout:    time.Duration(configuration.Transport.RespondingTimeouts.IdleTimeout),
 		MaxHeaderBytes: configuration.HTTP.MaxHeaderBytes,
 		HTTP2: &http.HTTP2Config{
-			MaxConcurrentStreams: int(configuration.HTTP2.MaxConcurrentStreams),
+			MaxConcurrentStreams:      int(configuration.HTTP2.MaxConcurrentStreams),
+			MaxDecoderHeaderTableSize: int(configuration.HTTP2.MaxDecoderHeaderTableSize),
+			MaxEncoderHeaderTableSize: int(configuration.HTTP2.MaxEncoderHeaderTableSize),
 		},
 	}
 	if debugConnection || (configuration.Transport != nil && (configuration.Transport.KeepAliveMaxTime > 0 || configuration.Transport.KeepAliveMaxRequests > 0)) {
@@ -699,7 +741,7 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 	go func() {
 		err := serverHTTP.Serve(listener)
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Ctx(ctx).Error().Err(err).Msg("Error while starting server")
+			log.Ctx(ctx).Error().Err(err).Msg("Error while running HTTP server")
 		}
 	}()
 	return &httpServer{
@@ -748,23 +790,6 @@ func encodeQuerySemicolons(h http.Handler) http.Handler {
 		} else {
 			h.ServeHTTP(rw, req)
 		}
-	})
-}
-
-// When go receives an HTTP request, it assumes the absence of fragment URL.
-// However, it is still possible to send a fragment in the request.
-// In this case, Traefik will encode the '#' character, altering the request's intended meaning.
-// To avoid this behavior, the following function rejects requests that include a fragment in the URL.
-func denyFragment(h http.Handler) http.Handler {
-	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		if strings.Contains(req.URL.RawPath, "#") {
-			log.Debug().Msgf("Rejecting request because it contains a fragment in the URL path: %s", req.URL.RawPath)
-			rw.WriteHeader(http.StatusBadRequest)
-
-			return
-		}
-
-		h.ServeHTTP(rw, req)
 	})
 }
 

@@ -8,7 +8,7 @@ import (
 	"github.com/containous/alice"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
-	"github.com/traefik/traefik/v3/pkg/tracing"
+	"github.com/traefik/traefik/v3/pkg/observability/tracing"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
@@ -55,7 +55,10 @@ func (e *entryPointTracing) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 
 	tracingCtx := tracing.ExtractCarrierIntoContext(req.Context(), req.Header)
 	start := time.Now()
-	tracingCtx, span := e.tracer.Start(tracingCtx, "EntryPoint", trace.WithSpanKind(trace.SpanKindServer), trace.WithTimestamp(start))
+
+	// Follow semantic conventions defined by OTEL: https://opentelemetry.io/docs/specs/semconv/http/http-spans/#name
+	// At the moment this implementation only gets the {method} as there is no guarantee {target} is low cardinality.
+	tracingCtx, span := e.tracer.Start(tracingCtx, req.Method, trace.WithSpanKind(trace.SpanKindServer), trace.WithTimestamp(start))
 
 	// Associate the request context with the logger.
 	// This allows the logger to be aware of the tracing context and log accordingly (TraceID, SpanID, etc.).

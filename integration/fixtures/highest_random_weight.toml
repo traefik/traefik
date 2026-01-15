@@ -1,0 +1,48 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[api]
+  insecure = true
+
+[log]
+  level = "DEBUG"
+  noColor = true
+
+[entryPoints]
+
+  [entryPoints.web]
+    address = ":8000"
+
+[providers.file]
+  filename = "{{ .SelfFilename }}"
+
+## dynamic configuration ##
+
+[http.routers]
+  [http.routers.router]
+    service = "hrw"
+    rule = "Path(`/whoami`)"
+
+
+[http.services]
+  [http.services.hrw.highestRandomWeight]
+  [[http.services.hrw.highestRandomWeight.services]]
+    name = "service1"
+    weight = 10
+  [[http.services.hrw.highestRandomWeight.services]]
+    name = "service2"
+    weight = 20
+  [[http.services.hrw.highestRandomWeight.services]]
+    name = "service3"
+    weight = 30
+
+  [http.services.service1.loadBalancer]
+    [[http.services.service1.loadBalancer.servers]]
+      url = "{{ .Service1Server }}"
+  [http.services.service2.loadBalancer]
+    [[http.services.service2.loadBalancer.servers]]
+      url = "{{ .Service2Server }}"
+  [http.services.service3.loadBalancer]
+    [[http.services.service3.loadBalancer.servers]]
+      url = "{{ .Service3Server }}"
