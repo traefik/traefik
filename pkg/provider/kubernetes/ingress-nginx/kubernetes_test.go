@@ -492,6 +492,7 @@ func TestLoadIngresses(t *testing.T) {
 										Domain:   "foo.localhost",
 										HTTPOnly: true,
 										MaxAge:   42,
+										Expires:  10,
 										Path:     ptr.To("/foobar"),
 										SameSite: "none",
 										Secure:   true,

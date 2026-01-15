@@ -317,6 +317,7 @@ func (c configBuilder) buildServicesLB(ctx context.Context, namespace string, tS
 				HTTPOnly: tService.Weighted.Sticky.Cookie.HTTPOnly,
 				SameSite: tService.Weighted.Sticky.Cookie.SameSite,
 				MaxAge:   tService.Weighted.Sticky.Cookie.MaxAge,
+				Expires:  tService.Weighted.Sticky.Cookie.Expires,
 				Domain:   tService.Weighted.Sticky.Cookie.Domain,
 			},
 		}
@@ -486,6 +487,7 @@ func (c configBuilder) buildServersLB(namespace string, svc traefikv1alpha1.Load
 				HTTPOnly: svc.Sticky.Cookie.HTTPOnly,
 				SameSite: svc.Sticky.Cookie.SameSite,
 				MaxAge:   svc.Sticky.Cookie.MaxAge,
+				Expires:  svc.Sticky.Cookie.Expires,
 				Domain:   svc.Sticky.Cookie.Domain,
 			},
 		}
