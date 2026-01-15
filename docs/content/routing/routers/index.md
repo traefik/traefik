@@ -442,6 +442,8 @@ The priority is directly equal to the length of the rule, and so the longest len
 
 A value of `0` for the priority is ignored: `priority = 0` means that the default rules length sorting is used.
 
+Negative priority values are supported.
+
 ??? warning "Maximum Value"
   
     Traefik reserves a range of priorities for its internal routers,
@@ -1266,6 +1268,8 @@ To avoid path overlap, routes are sorted, by default, in descending order using 
 The priority is directly equal to the length of the rule, and so the longest length has the highest priority.
 
 A value of `0` for the priority is ignored: `priority = 0` means that the default rules length sorting is used.
+
+Negative priority values are supported.
 
 ??? warning "Maximum Value"
 
