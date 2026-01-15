@@ -1,6 +1,6 @@
 ---
-title: "Traefik Headers Documentation"
-description: "In Traefik Proxy, the HTTP headers middleware manages the headers of requests and responses. Read the technical documentation."
+title: "Traefik EncodedCharacters Documentation"
+description: "In Traefik Proxy, the EncodedCharacters middleware controls which ambiguous reserved encoded characters are allowed in the request path. Read the technical documentation."
 ---
 
 The EncodedCharacters middleware controls which ambiguous reserved encoded characters are allowed in the request path.
