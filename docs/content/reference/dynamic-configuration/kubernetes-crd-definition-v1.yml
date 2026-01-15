@@ -315,6 +315,11 @@ spec:
                                       Domain defines the host to which the cookie will be sent.
                                       More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#domaindomain-value
                                     type: string
+                                  expires:
+                                    description: |-
+                                      Expires defines the number of seconds added to the current date.
+                                      This is the legacy version of the MaxAge directive for compatibility with older browsers.
+                                    type: integer
                                   httpOnly:
                                     description: HTTPOnly defines whether the cookie
                                       can be accessed by client-side APIs, such as
@@ -1287,6 +1292,11 @@ spec:
                                   Domain defines the host to which the cookie will be sent.
                                   More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#domaindomain-value
                                 type: string
+                              expires:
+                                description: |-
+                                  Expires defines the number of seconds added to the current date.
+                                  This is the legacy version of the MaxAge directive for compatibility with older browsers.
+                                type: integer
                               httpOnly:
                                 description: HTTPOnly defines whether the cookie can
                                   be accessed by client-side APIs, such as JavaScript.
@@ -3021,6 +3031,11 @@ spec:
                                     Domain defines the host to which the cookie will be sent.
                                     More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#domaindomain-value
                                   type: string
+                                expires:
+                                  description: |-
+                                    Expires defines the number of seconds added to the current date.
+                                    This is the legacy version of the MaxAge directive for compatibility with older browsers.
+                                  type: integer
                                 httpOnly:
                                   description: HTTPOnly defines whether the cookie
                                     can be accessed by client-side APIs, such as JavaScript.
@@ -3350,6 +3365,11 @@ spec:
                                     Domain defines the host to which the cookie will be sent.
                                     More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#domaindomain-value
                                   type: string
+                                expires:
+                                  description: |-
+                                    Expires defines the number of seconds added to the current date.
+                                    This is the legacy version of the MaxAge directive for compatibility with older browsers.
+                                  type: integer
                                 httpOnly:
                                   description: HTTPOnly defines whether the cookie
                                     can be accessed by client-side APIs, such as JavaScript.
@@ -3499,6 +3519,11 @@ spec:
                               Domain defines the host to which the cookie will be sent.
                               More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#domaindomain-value
                             type: string
+                          expires:
+                            description: |-
+                              Expires defines the number of seconds added to the current date.
+                              This is the legacy version of the MaxAge directive for compatibility with older browsers.
+                            type: integer
                           httpOnly:
                             description: HTTPOnly defines whether the cookie can be
                               accessed by client-side APIs, such as JavaScript.
@@ -3733,6 +3758,11 @@ spec:
                                     Domain defines the host to which the cookie will be sent.
                                     More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#domaindomain-value
                                   type: string
+                                expires:
+                                  description: |-
+                                    Expires defines the number of seconds added to the current date.
+                                    This is the legacy version of the MaxAge directive for compatibility with older browsers.
+                                  type: integer
                                 httpOnly:
                                   description: HTTPOnly defines whether the cookie
                                     can be accessed by client-side APIs, such as JavaScript.
@@ -3803,6 +3833,11 @@ spec:
                               Domain defines the host to which the cookie will be sent.
                               More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#domaindomain-value
                             type: string
+                          expires:
+                            description: |-
+                              Expires defines the number of seconds added to the current date.
+                              This is the legacy version of the MaxAge directive for compatibility with older browsers.
+                            type: integer
                           httpOnly:
                             description: HTTPOnly defines whether the cookie can be
                               accessed by client-side APIs, such as JavaScript.
