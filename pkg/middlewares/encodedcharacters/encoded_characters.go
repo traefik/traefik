@@ -16,7 +16,7 @@ type encodedCharacters struct {
 	name             string
 }
 
-// NewEncodedCharacters creates an Encoded Characters middleware
+// NewEncodedCharacters creates an Encoded Characters middleware.
 func NewEncodedCharacters(ctx context.Context, next http.Handler, config dynamic.EncodedCharacters, name string) (http.Handler, error) {
 	middlewares.GetLogger(ctx, name, typeName).Debug().Msg("Creating middleware")
 
