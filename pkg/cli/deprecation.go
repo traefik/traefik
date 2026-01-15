@@ -82,7 +82,7 @@ func logDeprecations(arguments []string) (bool, error) {
 	if filePath != "" {
 		// We don't rely on the Parser file loader here to avoid issues with unknown fields.
 		// Parse file content into a generic map.
-		var fileConfig map[string]interface{}
+		var fileConfig map[string]any
 		if err := file.Decode(filePath, &fileConfig); err != nil {
 			return false, fmt.Errorf("decoding configuration file %s: %w", filePath, err)
 		}
@@ -106,7 +106,7 @@ func logDeprecations(arguments []string) (bool, error) {
 	if len(vars) > 0 {
 		// We don't rely on the Parser env loader here to avoid issues with unknown fields.
 		// Decode environment variables to a generic map.
-		var envConfig map[string]interface{}
+		var envConfig map[string]any
 		if err := env.Decode(vars, env.DefaultNamePrefix, &envConfig); err != nil {
 			return false, fmt.Errorf("decoding environment variables: %w", err)
 		}
@@ -130,9 +130,9 @@ func logDeprecations(arguments []string) (bool, error) {
 
 // flattenToLabels recursively flattens a nested map into label key-value pairs.
 // Example: {"experimental": {"http3": true}} -> {"traefik.experimental.http3": "true"}.
-func flattenToLabels(config interface{}, currKey string, labels map[string]string) {
+func flattenToLabels(config any, currKey string, labels map[string]string) {
 	switch v := config.(type) {
-	case map[string]interface{}:
+	case map[string]any:
 		for key, value := range v {
 			newKey := key
 			if currKey != "" {
@@ -140,7 +140,7 @@ func flattenToLabels(config interface{}, currKey string, labels map[string]strin
 			}
 			flattenToLabels(value, newKey, labels)
 		}
-	case []interface{}:
+	case []any:
 		for i, item := range v {
 			newKey := currKey + "[" + strconv.Itoa(i) + "]"
 			flattenToLabels(item, newKey, labels)
@@ -168,7 +168,7 @@ func parseDeprecatedConfig(labels map[string]string) (*configuration, error) {
 
 	// Filter unknown nodes and check for deprecated options.
 	config := &configuration{}
-	filterUnknownNodes(reflect.TypeOf(config), node)
+	filterUnknownNodes(reflect.TypeFor[*configuration](), node)
 
 	// If no config remains we can return without error, to allow other loaders to proceed.
 	if node == nil || len(node.Children) == 0 {

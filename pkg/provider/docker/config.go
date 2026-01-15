@@ -20,6 +20,7 @@ import (
 
 type DynConfBuilder struct {
 	Shared
+
 	apiClient client.APIClient
 	swarm     bool
 }

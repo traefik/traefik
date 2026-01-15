@@ -69,8 +69,9 @@ spec:
                 description: |-
                   IPWhiteList defines the IPWhiteList middleware configuration.
                   This middleware accepts/refuses connections based on the client IP.
-                  Deprecated: please use IPAllowList instead.
                   More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/tcp/middlewares/ipwhitelist/
+
+                  Deprecated: please use IPAllowList instead.
                 properties:
                   sourceRange:
                     description: SourceRange defines the allowed IPs (or ranges of

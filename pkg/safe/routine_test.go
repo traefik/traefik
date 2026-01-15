@@ -29,6 +29,7 @@ func TestNewPoolContext(t *testing.T) {
 
 type fakeRoutine struct {
 	sync.Mutex
+
 	started  bool
 	startSig chan bool
 }
