@@ -77,6 +77,7 @@
             httpOnly = true
             sameSite = "foobar"
             maxAge = 42
+            expires = 10
             path = "foobar"
             domain = "foobar"
 
@@ -140,6 +141,7 @@
             httpOnly = true
             sameSite = "foobar"
             maxAge = 42
+            expires = 10
             path = "foobar"
             domain = "foobar"
         [http.services.Service05.weighted.healthCheck]
