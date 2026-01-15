@@ -42,7 +42,7 @@ metrics:
 
 _Required, Default=""_
 
-Token with which to connect to InfluxDB v2.
+Token with which to connect to InfluxDB v2. It accepts either a token value or a file path to the token.
 
 ```yaml tab="File (YAML)"
 metrics:
