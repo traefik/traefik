@@ -430,8 +430,11 @@ which in turn will create the resulting routers, services, handlers, etc.
 
 ## Stickiness and load-balancing
 
-When stickiness is enabled, Traefik uses Kubernetes [serving](https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/#serving) endpoints status to detect and mark servers as fenced.
-Fenced servers can still process requests tied to sticky cookies, while they are terminating.
+Traefik uses Kubernetes [serving](https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/#serving) endpoints status to detect and mark servers as fenced during graceful termination.
+
+**With stickiness enabled:** Fenced servers can process requests tied to sticky cookies while they are terminating.
+
+**Graceful termination fallback:** When no healthy non-terminating endpoints are available, Traefik will route new connections to terminating (fenced) endpoints as a fallback. This enables zero-downtime deployments with single replicas or Recreate deployment strategies, where all endpoints may be terminating simultaneously during pod replacement.
 
 ## Path Types on Kubernetes 1.18+
 
