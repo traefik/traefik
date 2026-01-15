@@ -235,7 +235,7 @@ func TestMapDeniedCharacters(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			deniedMap := mapDeniedCharacters(test.config)
 			require.Equal(t, test.expectedDeniedChar, deniedMap)
-			require.Equal(t, len(test.expectedDeniedChar), len(deniedMap))
+			require.Len(t, deniedMap, len(test.expectedDeniedChar))
 		})
 	}
 }
