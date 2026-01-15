@@ -93,13 +93,13 @@ Here is a comprehensive list of labels that are provided by the global metrics:
 
 ## OpenTelemetry Semantic Conventions
 
-Traefik Proxy follows [official OpenTelemetry semantic conventions v1.23.1](https://github.com/open-telemetry/semantic-conventions/blob/v1.23.1/docs/http/http-metrics.md).
+Traefik Proxy follows [official OpenTelemetry semantic conventions v1.37.0](https://github.com/open-telemetry/semantic-conventions/blob/v1.37.0/docs/http/http-metrics.md).
 
 ### HTTP Server
 
-| Metric                        | Type      | [Labels](#labels)                                                                                                                        | Description                       |
-|-------------------------------|-----------|------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------|
-| http.server.request.duration	 | Histogram | `error.type`, `http.request.method`, `http.response.status_code`, `network.protocol.name`, `server.address`, `server.port`, `url.scheme` | Duration of HTTP server requests  |
+| Metric                        | Type      | [Labels](#labels)                                                                                                                                     | Description                       |
+|-------------------------------|-----------|------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------|
+| http.server.request.duration	 | Histogram | `error.type`, `http.request.method`, `http.response.status_code`, `http.route`, `network.protocol.name`, `server.address`, `server.port`, `url.scheme` | Duration of HTTP server requests  |
 
 #### Labels
 
@@ -110,6 +110,7 @@ Here is a comprehensive list of labels that are provided by the metrics:
 | `error.type`                | Describes a class of error the operation ended with          | "500"         |
 | `http.request.method`       | HTTP request method                                          | "GET"         |
 | `http.response.status_code` | HTTP response status code                                    | "200"         |
+| `http.route`                | The matched route pattern (when available)                   | "/api/users"  |
 | `network.protocol.name`     | OSI application layer or non-OSI equivalent                  | "http/1.1"    |
 | `network.protocol.version`  | Version of the protocol specified in `network.protocol.name` | "1.1"         |
 | `server.address`            | Name of the local HTTP server that received the request      | "example.com" |
