@@ -241,7 +241,6 @@ func TestSticky(t *testing.T) {
 			SameSite: "none",
 			Domain:   "foo.com",
 			MaxAge:   42,
-			Expires:  10,
 			Path:     func(v string) *string { return &v }("/foo"),
 		},
 	}, false)
