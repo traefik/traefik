@@ -291,9 +291,6 @@ type Cookie struct {
 	// When set to a negative number, the cookie expires immediately.
 	// When set to zero, the cookie never expires.
 	MaxAge int `json:"maxAge,omitempty" toml:"maxAge,omitempty" yaml:"maxAge,omitempty" export:"true"`
-	// Expires defines the number of seconds added to the current date.
-	// This is the legacy version of the MaxAge directive for compatibility with older browsers.
-	Expires int `json:"expires,omitempty" toml:"expires,omitempty" yaml:"expires,omitempty" export:"true"`
 	// Path defines the path that must exist in the requested URL for the browser to send the Cookie header.
 	// When not provided the cookie will be sent on every request to the domain.
 	// More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#pathpath-value
@@ -301,6 +298,10 @@ type Cookie struct {
 	// Domain defines the host to which the cookie will be sent.
 	// More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie#domaindomain-value
 	Domain string `json:"domain,omitempty" toml:"domain,omitempty" yaml:"domain,omitempty"`
+
+	// Expires defines the number of seconds added to the current date.
+	// MaxAge takes precedence over Expires.
+	Expires int `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
 
 // SetDefaults set the default values for a Cookie.
