@@ -858,6 +858,11 @@ func (in *MiddlewareSpec) DeepCopyInto(out *MiddlewareSpec) {
 		*out = new(dynamic.Headers)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.EncodedCharacters != nil {
+		in, out := &in.EncodedCharacters, &out.EncodedCharacters
+		*out = new(dynamic.EncodedCharacters)
+		**out = **in
+	}
 	if in.Errors != nil {
 		in, out := &in.Errors, &out.Errors
 		*out = new(ErrorPage)

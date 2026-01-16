@@ -27,6 +27,7 @@ type Middleware struct {
 	IPWhiteList       *IPWhiteList       `json:"ipWhiteList,omitempty" toml:"ipWhiteList,omitempty" yaml:"ipWhiteList,omitempty" export:"true"`
 	IPAllowList       *IPAllowList       `json:"ipAllowList,omitempty" toml:"ipAllowList,omitempty" yaml:"ipAllowList,omitempty" export:"true"`
 	Headers           *Headers           `json:"headers,omitempty" toml:"headers,omitempty" yaml:"headers,omitempty" export:"true"`
+	EncodedCharacters *EncodedCharacters `json:"encodedCharacters,omitempty" toml:"encodedCharacters,omitempty" yaml:"encodedCharacters,omitempty" export:"true"`
 	Errors            *ErrorPage         `json:"errors,omitempty" toml:"errors,omitempty" yaml:"errors,omitempty" export:"true"`
 	RateLimit         *RateLimit         `json:"rateLimit,omitempty" toml:"rateLimit,omitempty" yaml:"rateLimit,omitempty" export:"true"`
 	RedirectRegex     *RedirectRegex     `json:"redirectRegex,omitempty" toml:"redirectRegex,omitempty" yaml:"redirectRegex,omitempty" export:"true"`
@@ -213,6 +214,26 @@ type DigestAuth struct {
 	// HeaderField defines a header field to store the authenticated user.
 	// More info: https://doc.traefik.io/traefik/v3.6/middlewares/http/basicauth/#headerfield
 	HeaderField string `json:"headerField,omitempty" toml:"headerField,omitempty" yaml:"headerField,omitempty" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// EncodedCharacters configures which encoded characters are allowed in the request path.
+type EncodedCharacters struct {
+	// AllowEncodedSlash defines whether requests with encoded slash characters in the path are allowed.
+	AllowEncodedSlash bool `json:"allowEncodedSlash,omitempty" toml:"allowEncodedSlash,omitempty" yaml:"allowEncodedSlash,omitempty" export:"true"`
+	// AllowEncodedBackSlash defines whether requests with encoded back slash characters in the path are allowed.
+	AllowEncodedBackSlash bool `json:"allowEncodedBackSlash,omitempty" toml:"allowEncodedBackSlash,omitempty" yaml:"allowEncodedBackSlash,omitempty" export:"true"`
+	// AllowEncodedNullCharacter defines whether requests with encoded null characters in the path are allowed.
+	AllowEncodedNullCharacter bool `json:"allowEncodedNullCharacter,omitempty" toml:"allowEncodedNullCharacter,omitempty" yaml:"allowEncodedNullCharacter,omitempty" export:"true"`
+	// AllowEncodedSemicolon defines whether requests with encoded semicolon characters in the path are allowed.
+	AllowEncodedSemicolon bool `json:"allowEncodedSemicolon,omitempty" toml:"allowEncodedSemicolon,omitempty" yaml:"allowEncodedSemicolon,omitempty" export:"true"`
+	// AllowEncodedPercent defines whether requests with encoded percent characters in the path are allowed.
+	AllowEncodedPercent bool `json:"allowEncodedPercent,omitempty" toml:"allowEncodedPercent,omitempty" yaml:"allowEncodedPercent,omitempty" export:"true"`
+	// AllowEncodedQuestionMark defines whether requests with encoded question mark characters in the path are allowed.
+	AllowEncodedQuestionMark bool `json:"allowEncodedQuestionMark,omitempty" toml:"allowEncodedQuestionMark,omitempty" yaml:"allowEncodedQuestionMark,omitempty" export:"true"`
+	// AllowEncodedHash defines whether requests with encoded hash characters in the path are allowed.
+	AllowEncodedHash bool `json:"allowEncodedHash,omitempty" toml:"allowEncodedHash,omitempty" yaml:"allowEncodedHash,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
