@@ -319,7 +319,7 @@ The following annotations are organized by category for easier navigation.
 | <a id="opt-nginx-ingress-kubernetes-iouse-regex" href="#opt-nginx-ingress-kubernetes-iouse-regex" title="#opt-nginx-ingress-kubernetes-iouse-regex">`nginx.ingress.kubernetes.io/use-regex`</a> |                                                                                            |
 | <a id="opt-nginx-ingress-kubernetes-iorewrite-target" href="#opt-nginx-ingress-kubernetes-iorewrite-target" title="#opt-nginx-ingress-kubernetes-iorewrite-target">`nginx.ingress.kubernetes.io/rewrite-target`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-iopermanent-redirect" href="#opt-nginx-ingress-kubernetes-iopermanent-redirect" title="#opt-nginx-ingress-kubernetes-iopermanent-redirect">`nginx.ingress.kubernetes.io/permanent-redirect`</a> |                                                      |
-| <a id="opt-nginx-ingress-kubernetes-iotemporal-redirect" href="#opt-nginx-ingress-kubernetes-iotemporal-redirect" title="#opt-nginx-ingress-kubernetes-iotemporal-redirect">`nginx.ingress.kubernetes.io/temporal-redirect`</a> |                                                      |
+| <a id="opt-nginx-ingress-kubernetes-iotemporal-redirect" href="#opt-nginx-ingress-kubernetes-iotemporal-redirect" title="#opt-nginx-ingress-kubernetes-iotemporal-redirect">`nginx.ingress.kubernetes.io/temporal-redirect`</a> |    Takes precedence over the `permanent-redirect` annotation                                                  |
 
 ### IP Whitelist
 
