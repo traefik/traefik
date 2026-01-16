@@ -15,16 +15,16 @@ import (
 )
 
 var resourceLogFields = map[reflect.Type]string{
-	reflect.TypeOf(dynamic.Router{}):              logs.RouterName,
-	reflect.TypeOf(dynamic.Service{}):             logs.ServiceName,
-	reflect.TypeOf(dynamic.Middleware{}):          logs.MiddlewareName,
-	reflect.TypeOf(dynamic.ServersTransport{}):    logs.ServersTransportName,
-	reflect.TypeOf(dynamic.TCPRouter{}):           logs.RouterName,
-	reflect.TypeOf(dynamic.TCPService{}):          logs.ServiceName,
-	reflect.TypeOf(dynamic.TCPMiddleware{}):       logs.MiddlewareName,
-	reflect.TypeOf(dynamic.TCPServersTransport{}): logs.ServersTransportName,
-	reflect.TypeOf(dynamic.UDPRouter{}):           logs.RouterName,
-	reflect.TypeOf(dynamic.UDPService{}):          logs.ServiceName,
+	reflect.TypeFor[dynamic.Router]():              logs.RouterName,
+	reflect.TypeFor[dynamic.Service]():             logs.ServiceName,
+	reflect.TypeFor[dynamic.Middleware]():          logs.MiddlewareName,
+	reflect.TypeFor[dynamic.ServersTransport]():    logs.ServersTransportName,
+	reflect.TypeFor[dynamic.TCPRouter]():           logs.RouterName,
+	reflect.TypeFor[dynamic.TCPService]():          logs.ServiceName,
+	reflect.TypeFor[dynamic.TCPMiddleware]():       logs.MiddlewareName,
+	reflect.TypeFor[dynamic.TCPServersTransport](): logs.ServersTransportName,
+	reflect.TypeFor[dynamic.UDPRouter]():           logs.RouterName,
+	reflect.TypeFor[dynamic.UDPService]():          logs.ServiceName,
 }
 
 // ResourceStrategy defines how the merge should handle resources.
@@ -57,8 +57,7 @@ func Merge(ctx context.Context, configurations map[string]*dynamic.Configuration
 			Services: make(map[string]*dynamic.UDPService),
 		},
 		TLS: &dynamic.TLSConfiguration{
-			Options: make(map[string]tls.Options),
-			Stores:  make(map[string]tls.Store),
+			Stores: make(map[string]tls.Store),
 		},
 	}
 
@@ -94,7 +93,7 @@ func Merge(ctx context.Context, configurations map[string]*dynamic.Configuration
 func mergeResourceMaps(ctx context.Context, dst, src reflect.Value, origin string, tracker *mergeTracker, strategy ResourceStrategy, resourceLogFields map[reflect.Type]string) {
 	dstType := dst.Type()
 
-	for i := 0; i < dstType.NumField(); i++ {
+	for i := range dstType.NumField() {
 		field := dstType.Field(i)
 		if !field.IsExported() {
 			continue
@@ -216,12 +215,13 @@ func mergeCertificates(ctx context.Context, certificates []*tls.CertAndStores, n
 			if existingCertificate.Certificate == certificate.Certificate {
 				found = true
 
-				if strategy == ResourceStrategySkipDuplicates {
+				switch strategy {
+				case ResourceStrategyMerge:
+					existingCertificate.Stores = mergeStores(existingCertificate.Stores, certificate.Stores)
+				case ResourceStrategySkipDuplicates:
 					log.Ctx(ctx).Warn().
 						Str("origin", origin).
 						Msgf("TLS certificate %v already configured, skipping", certificate.Certificate)
-				} else if strategy == ResourceStrategyMerge {
-					existingCertificate.Stores = mergeStores(existingCertificate.Stores, certificate.Stores)
 				}
 
 				break
@@ -237,13 +237,13 @@ func mergeCertificates(ctx context.Context, certificates []*tls.CertAndStores, n
 }
 
 // mergeStores merges two store slices, deduplicating entries while. Order is preserved.
-func mergeStores(existing, new []string) []string {
+func mergeStores(existing, other []string) []string {
 	seen := make(map[string]struct{}, len(existing))
 	for _, s := range existing {
 		seen[s] = struct{}{}
 	}
 
-	for _, s := range new {
+	for _, s := range other {
 		if _, ok := seen[s]; !ok {
 			existing = append(existing, s)
 			seen[s] = struct{}{}
