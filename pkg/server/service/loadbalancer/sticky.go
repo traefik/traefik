@@ -55,12 +55,14 @@ func NewSticky(cookieConfig dynamic.Cookie) *Sticky {
 		httpOnly: cookieConfig.HTTPOnly,
 		sameSite: convertSameSite(cookieConfig.SameSite),
 		maxAge:   cookieConfig.MaxAge,
-		expires:  time.Now().Add(time.Duration(cookieConfig.Expires) * time.Second),
 		path:     "/",
 		domain:   cookieConfig.Domain,
 	}
 	if cookieConfig.Path != nil {
 		cookie.path = *cookieConfig.Path
+	}
+	if cookieConfig.Expires > 0 {
+		cookie.expires = time.Now().Add(time.Duration(cookieConfig.Expires) * time.Second)
 	}
 
 	return &Sticky{
