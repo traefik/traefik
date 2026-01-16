@@ -57,7 +57,8 @@ func Merge(ctx context.Context, configurations map[string]*dynamic.Configuration
 			Services: make(map[string]*dynamic.UDPService),
 		},
 		TLS: &dynamic.TLSConfiguration{
-			Stores: make(map[string]tls.Store),
+			Options: make(map[string]tls.Options),
+			Stores:  make(map[string]tls.Store),
 		},
 	}
 
