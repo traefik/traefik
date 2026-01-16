@@ -821,9 +821,9 @@ func (p *Provider) applyMiddlewares(namespace, routerKey, rulePath string, ingre
 	return nil
 }
 
-func applyRedirect(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
+func applyRedirect(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
 	if ingressConfig.PermanentRedirect == nil && ingressConfig.TemporalRedirect == nil {
-		return nil
+		return
 	}
 	var redirect string
 	var permanent bool
@@ -845,7 +845,6 @@ func applyRedirect(routerName string, ingressConfig ingressConfig, rt *dynamic.R
 		},
 	}
 	rt.Middlewares = append(rt.Middlewares, redirectMiddlewareName)
-	return nil
 }
 
 func (p *Provider) applyCustomHeaders(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
