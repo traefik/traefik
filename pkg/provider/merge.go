@@ -63,23 +63,23 @@ func Merge(ctx context.Context, configurations map[string]*dynamic.Configuration
 
 	tracker := newMergeTracker()
 
-	providerNames := slices.Sorted(maps.Keys(configurations))
-	for _, providerName := range providerNames {
-		conf := configurations[providerName]
+	origins := slices.Sorted(maps.Keys(configurations))
+	for _, origin := range origins {
+		conf := configurations[origin]
 
 		if conf.HTTP != nil {
-			mergeResourceMaps(ctx, reflect.ValueOf(merged.HTTP).Elem(), reflect.ValueOf(conf.HTTP).Elem(), providerName, tracker, strategy, resourceLogFields)
+			mergeResourceMaps(ctx, reflect.ValueOf(merged.HTTP).Elem(), reflect.ValueOf(conf.HTTP).Elem(), origin, tracker, strategy, resourceLogFields)
 		}
 		if conf.TCP != nil {
-			mergeResourceMaps(ctx, reflect.ValueOf(merged.TCP).Elem(), reflect.ValueOf(conf.TCP).Elem(), providerName, tracker, strategy, resourceLogFields)
+			mergeResourceMaps(ctx, reflect.ValueOf(merged.TCP).Elem(), reflect.ValueOf(conf.TCP).Elem(), origin, tracker, strategy, resourceLogFields)
 		}
 		if conf.UDP != nil {
-			mergeResourceMaps(ctx, reflect.ValueOf(merged.UDP).Elem(), reflect.ValueOf(conf.UDP).Elem(), providerName, tracker, strategy, resourceLogFields)
+			mergeResourceMaps(ctx, reflect.ValueOf(merged.UDP).Elem(), reflect.ValueOf(conf.UDP).Elem(), origin, tracker, strategy, resourceLogFields)
 		}
 		if conf.TLS != nil {
-			mergeResourceMaps(ctx, reflect.ValueOf(merged.TLS).Elem(), reflect.ValueOf(conf.TLS).Elem(), providerName, tracker, strategy, resourceLogFields)
+			mergeResourceMaps(ctx, reflect.ValueOf(merged.TLS).Elem(), reflect.ValueOf(conf.TLS).Elem(), origin, tracker, strategy, resourceLogFields)
 
-			merged.TLS.Certificates = mergeCertificates(merged.TLS.Certificates, conf.TLS.Certificates, strategy)
+			merged.TLS.Certificates = mergeCertificates(ctx, merged.TLS.Certificates, conf.TLS.Certificates, origin, strategy)
 		}
 	}
 
@@ -90,7 +90,7 @@ func Merge(ctx context.Context, configurations map[string]*dynamic.Configuration
 
 // mergeResourceMaps merges all the resource maps defined in the provided struct.
 // Conflicts are recorded in the given merge tracker.
-func mergeResourceMaps(ctx context.Context, dst, src reflect.Value, providerName string, tracker *mergeTracker, strategy ResourceStrategy, resourceLogFields map[reflect.Type]string) {
+func mergeResourceMaps(ctx context.Context, dst, src reflect.Value, origin string, tracker *mergeTracker, strategy ResourceStrategy, resourceLogFields map[reflect.Type]string) {
 	dstType := dst.Type()
 
 	for i := 0; i < dstType.NumField(); i++ {
@@ -104,12 +104,12 @@ func mergeResourceMaps(ctx context.Context, dst, src reflect.Value, providerName
 
 		// Merge the resource maps of embedded structs.
 		if field.Anonymous {
-			mergeResourceMaps(ctx, dstField, srcField, providerName, tracker, strategy, resourceLogFields)
+			mergeResourceMaps(ctx, dstField, srcField, origin, tracker, strategy, resourceLogFields)
 			continue
 		}
 
 		if dstField.Kind() == reflect.Map {
-			mergeResourceMap(ctx, dstField, srcField, providerName, tracker, strategy, resourceLogFields)
+			mergeResourceMap(ctx, dstField, srcField, origin, tracker, strategy, resourceLogFields)
 		}
 	}
 }
@@ -118,7 +118,7 @@ func mergeResourceMaps(ctx context.Context, dst, src reflect.Value, providerName
 // New keys from src are added to dst.
 // Duplicate keys are merged if the resource type implements a Merge method, otherwise
 // the values must be identical. Conflicts are recorded in the given merge tracker.
-func mergeResourceMap(ctx context.Context, dst, src reflect.Value, providerName string, tracker *mergeTracker, strategy ResourceStrategy, resourceLogFields map[reflect.Type]string) {
+func mergeResourceMap(ctx context.Context, dst, src reflect.Value, origin string, tracker *mergeTracker, strategy ResourceStrategy, resourceLogFields map[reflect.Type]string) {
 	if src.IsNil() {
 		return
 	}
@@ -127,16 +127,16 @@ func mergeResourceMap(ctx context.Context, dst, src reflect.Value, providerName 
 		dst.Set(reflect.MakeMap(dst.Type()))
 	}
 
-	for _, key := range src.MapKeys() {
-		keyStr := key.String()
-		tracker.recordOrigin(dst, keyStr, providerName)
+	for _, resourceKey := range src.MapKeys() {
+		resourceKeyStr := resourceKey.String()
+		tracker.recordOrigin(dst, resourceKeyStr, origin)
 
-		srcValue := src.MapIndex(key)
-		dstValue := dst.MapIndex(key)
+		srcValue := src.MapIndex(resourceKey)
+		dstValue := dst.MapIndex(resourceKey)
 
 		// Key doesn't exist in dst, add it.
 		if !dstValue.IsValid() {
-			dst.SetMapIndex(key, srcValue)
+			dst.SetMapIndex(resourceKey, srcValue)
 			continue
 		}
 
@@ -144,10 +144,10 @@ func mergeResourceMap(ctx context.Context, dst, src reflect.Value, providerName 
 		switch strategy {
 		case ResourceStrategyMerge:
 			if !tryMerge(dstValue, srcValue) {
-				tracker.markForDeletion(dst, keyStr, dst.Type().Elem())
+				tracker.markForDeletion(dst, resourceKeyStr, dst.Type().Elem())
 			}
 		case ResourceStrategySkipDuplicates:
-			logSkippedDuplicate(ctx, dst.Type().Elem(), keyStr, resourceLogFields)
+			logSkippedDuplicate(ctx, dst.Type().Elem(), resourceKeyStr, origin, resourceLogFields)
 		}
 	}
 }
@@ -197,25 +197,29 @@ func deleteConflicts(ctx context.Context, tracker *mergeTracker, resourceLogFiel
 	logger := log.Ctx(ctx)
 
 	for ck, info := range tracker.toDelete {
-		keyField, typeWords := resourceLogMeta(info.elemType, resourceLogFields)
+		resourceNameField, resourceTypeWords := resourceLogMeta(info.resourceType, resourceLogFields)
 		logger.Error().
-			Str(keyField, ck.key).
+			Str(resourceNameField, ck.resourceKey).
 			Interface("configuration", tracker.origins[ck]).
-			Msgf("%s defined multiple times with different configurations", xstrings.FirstRuneToUpper(typeWords))
+			Msgf("%s defined multiple times with different configurations", xstrings.FirstRuneToUpper(resourceTypeWords))
 
-		info.mapRef.SetMapIndex(reflect.ValueOf(ck.key), reflect.Value{})
+		info.resourceMap.SetMapIndex(reflect.ValueOf(ck.resourceKey), reflect.Value{})
 	}
 }
 
 // mergeCertificates merges multiple certificates.
-func mergeCertificates(certificates []*tls.CertAndStores, newCertificates []*tls.CertAndStores, strategy ResourceStrategy) []*tls.CertAndStores {
+func mergeCertificates(ctx context.Context, certificates []*tls.CertAndStores, newCertificates []*tls.CertAndStores, origin string, strategy ResourceStrategy) []*tls.CertAndStores {
 	for _, certificate := range newCertificates {
 		var found bool
 		for _, existingCertificate := range certificates {
 			if existingCertificate.Certificate == certificate.Certificate {
 				found = true
 
-				if strategy == ResourceStrategyMerge {
+				if strategy == ResourceStrategySkipDuplicates {
+					log.Ctx(ctx).Warn().
+						Str("origin", origin).
+						Msgf("TLS certificate %v already configured, skipping", certificate.Certificate)
+				} else if strategy == ResourceStrategyMerge {
 					existingCertificate.Stores = mergeStores(existingCertificate.Stores, certificate.Stores)
 				}
 
@@ -249,29 +253,31 @@ func mergeStores(existing, new []string) []string {
 }
 
 // logSkippedDuplicate logs a warning when a duplicate resource is skipped.
-func logSkippedDuplicate(ctx context.Context, elemType reflect.Type, key string, resourceLogFields map[reflect.Type]string) {
-	keyField, typeWords := resourceLogMeta(elemType, resourceLogFields)
+func logSkippedDuplicate(ctx context.Context, resourceType reflect.Type, resourceKey, origin string, resourceLogFields map[reflect.Type]string) {
+	resourceNameField, resourceTypeWords := resourceLogMeta(resourceType, resourceLogFields)
+
 	log.Ctx(ctx).Warn().
-		Str(keyField, key).
-		Msgf("%s already configured, skipping", xstrings.FirstRuneToUpper(typeWords))
+		Str("origin", origin).
+		Str(resourceNameField, resourceKey).
+		Msgf("%s already configured, skipping", xstrings.FirstRuneToUpper(resourceTypeWords))
 }
 
 // resourceLogMeta returns the log field name and human-readable type description for the given resource element type.
-func resourceLogMeta(resourceType reflect.Type, resourceLogFields map[reflect.Type]string) (keyField, typeWords string) {
+func resourceLogMeta(resourceType reflect.Type, resourceLogFields map[reflect.Type]string) (resourceNameField, resourceTypeWords string) {
 	if resourceType.Kind() == reflect.Ptr {
 		resourceType = resourceType.Elem()
 	}
 
 	resourceTypeName := resourceType.Name()
 
-	keyField, ok := resourceLogFields[resourceType]
+	resourceNameField, ok := resourceLogFields[resourceType]
 	if !ok {
-		keyField = xstrings.ToCamelCase(resourceTypeName) + "Name"
+		resourceNameField = xstrings.ToCamelCase(resourceTypeName) + "Name"
 	}
 
-	typeWords = strings.ReplaceAll(xstrings.ToKebabCase(resourceTypeName), "-", " ")
+	resourceTypeWords = strings.ReplaceAll(xstrings.ToKebabCase(resourceTypeName), "-", " ")
 
-	return keyField, typeWords
+	return resourceNameField, resourceTypeWords
 }
 
 // mergeTracker tracks item origins and items marked for deletion during merge.
@@ -282,14 +288,14 @@ type mergeTracker struct {
 
 // conflictKey uniquely identifies an entry in a map.
 type conflictKey struct {
-	mapPtr uintptr
-	key    string
+	mapPtr      uintptr
+	resourceKey string
 }
 
 // conflictInfo stores information about a merge conflict.
 type conflictInfo struct {
-	mapRef   reflect.Value // The map to delete from.
-	elemType reflect.Type
+	resourceMap  reflect.Value // The map to delete from.
+	resourceType reflect.Type
 }
 
 func newMergeTracker() *mergeTracker {
@@ -299,15 +305,15 @@ func newMergeTracker() *mergeTracker {
 	}
 }
 
-func (t *mergeTracker) recordOrigin(mapRef reflect.Value, key, providerName string) {
-	ck := conflictKey{mapPtr: mapRef.Pointer(), key: key}
-	t.origins[ck] = append(t.origins[ck], providerName)
+func (t *mergeTracker) recordOrigin(resourceMap reflect.Value, resourceKey, origin string) {
+	ck := conflictKey{mapPtr: resourceMap.Pointer(), resourceKey: resourceKey}
+	t.origins[ck] = append(t.origins[ck], origin)
 }
 
-func (t *mergeTracker) markForDeletion(mapRef reflect.Value, key string, elemType reflect.Type) {
-	ck := conflictKey{mapPtr: mapRef.Pointer(), key: key}
+func (t *mergeTracker) markForDeletion(resourceMap reflect.Value, resourceKey string, resourceType reflect.Type) {
+	ck := conflictKey{mapPtr: resourceMap.Pointer(), resourceKey: resourceKey}
 	t.toDelete[ck] = conflictInfo{
-		mapRef:   mapRef,
-		elemType: elemType,
+		resourceMap:  resourceMap,
+		resourceType: resourceType,
 	}
 }
