@@ -43,7 +43,7 @@ func (ep *EntryPoint) GetProtocol() (string, error) {
 	}
 
 	protocol := strings.ToLower(splitN[1])
-	if protocol == "tcp" || protocol == "udp" {
+	if protocol == "tcp" || protocol == "udp" || protocol == "mysql" {
 		return protocol, nil
 	}
 
