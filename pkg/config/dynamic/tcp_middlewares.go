@@ -26,6 +26,7 @@ type TCPInFlightConn struct {
 // +k8s:deepcopy-gen=true
 
 // TCPIPWhiteList holds the TCP IPWhiteList middleware configuration.
+//
 // Deprecated: please use IPAllowList instead.
 type TCPIPWhiteList struct {
 	// SourceRange defines the allowed IPs (or ranges of allowed IPs by using CIDR notation).

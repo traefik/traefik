@@ -12,6 +12,7 @@ import (
 
 type fakeTasksClient struct {
 	dockerclient.APIClient
+
 	tasks     []swarmtypes.Task
 	container containertypes.InspectResponse
 	err       error
@@ -27,6 +28,7 @@ func (c *fakeTasksClient) ContainerInspect(ctx context.Context, container string
 
 type fakeServicesClient struct {
 	dockerclient.APIClient
+
 	dockerVersion string
 	networks      []networktypes.Summary
 	nodes         []swarmtypes.Node

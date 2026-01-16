@@ -27,6 +27,16 @@ type middlewareBuilder interface {
 	BuildChain(ctx context.Context, names []string) *tcp.Chain
 }
 
+// Manager is a route/router manager.
+type Manager struct {
+	serviceManager     *tcpservice.Manager
+	middlewaresBuilder middlewareBuilder
+	httpHandlers       map[string]http.Handler
+	httpsHandlers      map[string]http.Handler
+	tlsManager         *traefiktls.Manager
+	conf               *runtime.Configuration
+}
+
 // NewManager Creates a new Manager.
 func NewManager(conf *runtime.Configuration,
 	serviceManager *tcpservice.Manager,
@@ -43,32 +53,6 @@ func NewManager(conf *runtime.Configuration,
 		tlsManager:         tlsManager,
 		conf:               conf,
 	}
-}
-
-// Manager is a route/router manager.
-type Manager struct {
-	serviceManager     *tcpservice.Manager
-	middlewaresBuilder middlewareBuilder
-	httpHandlers       map[string]http.Handler
-	httpsHandlers      map[string]http.Handler
-	tlsManager         *traefiktls.Manager
-	conf               *runtime.Configuration
-}
-
-func (m *Manager) getTCPRouters(ctx context.Context, entryPoints []string) map[string]map[string]*runtime.TCPRouterInfo {
-	if m.conf != nil {
-		return m.conf.GetTCPRoutersByEntryPoints(ctx, entryPoints)
-	}
-
-	return make(map[string]map[string]*runtime.TCPRouterInfo)
-}
-
-func (m *Manager) getHTTPRouters(ctx context.Context, entryPoints []string, tls bool) map[string]map[string]*runtime.RouterInfo {
-	if m.conf != nil {
-		return m.conf.GetRoutersByEntryPoints(ctx, entryPoints, tls)
-	}
-
-	return make(map[string]map[string]*runtime.RouterInfo)
 }
 
 // BuildHandlers builds the handlers for the given entrypoints.
@@ -91,6 +75,22 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string) m
 		entryPointHandlers[entryPointName] = handler
 	}
 	return entryPointHandlers
+}
+
+func (m *Manager) getTCPRouters(ctx context.Context, entryPoints []string) map[string]map[string]*runtime.TCPRouterInfo {
+	if m.conf != nil {
+		return m.conf.GetTCPRoutersByEntryPoints(ctx, entryPoints)
+	}
+
+	return make(map[string]map[string]*runtime.TCPRouterInfo)
+}
+
+func (m *Manager) getHTTPRouters(ctx context.Context, entryPoints []string, tls bool) map[string]map[string]*runtime.RouterInfo {
+	if m.conf != nil {
+		return m.conf.GetRoutersByEntryPoints(ctx, entryPoints, tls)
+	}
+
+	return make(map[string]map[string]*runtime.RouterInfo)
 }
 
 type nameAndConfig struct {
