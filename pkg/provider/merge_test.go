@@ -536,8 +536,7 @@ func buildExpectedConfiguration(modifier func(*dynamic.Configuration)) *dynamic.
 			Services: make(map[string]*dynamic.UDPService),
 		},
 		TLS: &dynamic.TLSConfiguration{
-			Options: make(map[string]tls.Options),
-			Stores:  make(map[string]tls.Store),
+			Stores: make(map[string]tls.Store),
 		},
 	}
 	if modifier != nil {
