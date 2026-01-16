@@ -549,7 +549,7 @@ func buildExpectedConfiguration(modifier func(*dynamic.Configuration)) *dynamic.
 func assertMarkedForDeletion(t *testing.T, toDelete map[conflictKey]conflictInfo, key string) {
 	t.Helper()
 	for ck := range toDelete {
-		if ck.key == key {
+		if ck.resourceKey == key {
 			return
 		}
 	}
