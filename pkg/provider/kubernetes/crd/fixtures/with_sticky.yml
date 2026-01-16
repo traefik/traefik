@@ -13,7 +13,6 @@ spec:
         secure: true
         sameSite: none
         maxAge: 42
-        expires: 10
     services:
       - name: whoami3
         port: 8443
@@ -33,7 +32,6 @@ spec:
         secure: true
         sameSite: none
         maxAge: 42
-        expires: 10
         path: /foo
     services:
       - name: whoami3
@@ -71,7 +69,6 @@ spec:
               secure: true
               sameSite: none
               maxAge: 42
-              expires: 10
               path: /foo
         - name: whoami2
           port: 8080

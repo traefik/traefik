@@ -72,7 +72,6 @@ func TestSticky(t *testing.T) {
 			HTTPOnly: true,
 			SameSite: "none",
 			MaxAge:   42,
-			Expires:  10,
 			Path:     func(v string) *string { return &v }("/foo"),
 		},
 	}, false)
