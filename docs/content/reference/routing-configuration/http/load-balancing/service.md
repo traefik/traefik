@@ -44,7 +44,7 @@ http:
   [http.services.my-service.loadBalancer]
     [[http.services.my-service.loadBalancer.servers]]
       url = "http://private-ip-server-1/"
-
+    
     [http.services.my-service.loadBalancer.sticky.cookie]
       name = "sticky-cookie"
 
@@ -56,7 +56,7 @@ http:
     [http.services.my-service.loadBalancer.passiveHealthcheck]
       failureWindow = "3s"
       maxFailedAttempts = "3"
-
+    
     passHostHeader = true
     serversTransport = "customTransport@file"
 
@@ -101,8 +101,8 @@ labels:
 
 ### Configuration Options
 
-| Field                                                                                                                                                                          | Description                                                                                                                                                                                                                                                                                                                                                                                   | Required |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| Field                              | Description                                                                                                                                                                                                                                                                                                                                                                                   | Required |
+|------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------|
 | <a id="opt-servers" href="#opt-servers" title="#opt-servers">`servers`</a> | Represents individual backend instances for your service                                                                                                                                                                                                                                                                                                                                      | Yes      |
 | <a id="opt-sticky" href="#opt-sticky" title="#opt-sticky">`sticky`</a> | Defines a `Set-Cookie` header is set on the initial response to let the client know which server handles the first response.                                                                                                                                                                                                                                                                  | No       |
 | <a id="opt-healthcheck" href="#opt-healthcheck" title="#opt-healthcheck">`healthcheck`</a> | Configures health check to remove unhealthy servers from the load balancing rotation.                                                                                                                                                                                                                                                                                                         | No       |
@@ -118,8 +118,8 @@ Servers represent individual backend instances for your service. The [service lo
 
 ##### Configuration Options
 
-| Field                                                                                          | Description                                        | Required                                                                         |
-| ---------------------------------------------------------------------------------------------- | -------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Field          | Description                                        | Required                                                                         |
+|----------------|----------------------------------------------------|----------------------------------------------------------------------------------|
 | <a id="opt-url" href="#opt-url" title="#opt-url">`url`</a> | Points to a specific instance.                     | Yes for File provider, No for [Docker provider](../../other-providers/docker.md) |
 | <a id="opt-weight" href="#opt-weight" title="#opt-weight">`weight`</a> | Allows for weighted load balancing on the servers. | No                                                                               |
 | <a id="opt-preservePath" href="#opt-preservePath" title="#opt-preservePath">`preservePath`</a> | Allows to preserve the URL path.                   | No                                                                               |
@@ -134,8 +134,8 @@ To propagate status changes (e.g. all servers of this service are down) upwards,
 
 Below are the available options for the health check mechanism:
 
-| Field                                                                                                              | Description                                                                                                                   | Default | Required |
-| ------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- | ------- | -------- |
+| Field               | Description                                                                                                                   | Default | Required |
+|---------------------|-------------------------------------------------------------------------------------------------------------------------------|---------|----------|
 | <a id="opt-path" href="#opt-path" title="#opt-path">`path`</a> | Defines the server URL path for the health check endpoint.                                                                    | ""      | Yes      |
 | <a id="opt-scheme" href="#opt-scheme" title="#opt-scheme">`scheme`</a> | Replaces the server URL scheme for the health check endpoint.                                                                 |         | No       |
 | <a id="opt-mode" href="#opt-mode" title="#opt-mode">`mode`</a> | If defined to `grpc`, will use the gRPC health check protocol to probe the server.                                            | http    | No       |
@@ -174,12 +174,6 @@ By default, the affinity cookie will never expire as the `MaxAge` option is set 
 This option indicates the number of seconds until the cookie expires.  
 When set to a negative number, the cookie expires immediately.
 
-##### Expires
-
-The `Expires` cookie directive is a legacy version of the `MaxAge` cookie directive for compatibility with older browsers.
-
-This option indicates the number of seconds added to the current date.  
-
 ##### Secure & HTTPOnly & SameSite flags
 
 By default, the affinity cookie is created without those flags.
@@ -189,7 +183,7 @@ One however can change that through configuration.
 
 ##### Domain
 
-The Domain attribute of a cookie specifies the domain for which the cookie is valid.
+The Domain attribute of a cookie specifies the domain for which the cookie is valid. 
 
 By setting the Domain attribute, the cookie can be shared across subdomains (for example, a cookie set for example.com would be accessible to www.example.com, api.example.com, etc.). This is particularly useful in cases where sticky sessions span multiple subdomains, ensuring that the session is maintained even when the client interacts with different parts of the infrastructure.
 
@@ -327,8 +321,8 @@ A server will be considered healthy again after the configured failure window ha
 
 Below are the available options for the passive health check mechanism:
 
-| Field                                                                                                              | Description                                                                                                                                                                         | Default | Required |
-| ------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | -------- |
+| Field               | Description                                                                                                                                                                         | Default | Required |
+|---------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------|----------|
 | <a id="opt-failureWindow" href="#opt-failureWindow" title="#opt-failureWindow">`failureWindow`</a> | Defines the time window during which the failed attempts must occur for the server to be marked as unhealthy. It also defines for how long the server will be considered unhealthy. | 10s     | No       |
 | <a id="opt-maxFailedAttempts" href="#opt-maxFailedAttempts" title="#opt-maxFailedAttempts">`maxFailedAttempts`</a> | Defines the number of consecutive failed attempts allowed within the failure window before marking the server as unhealthy.                                                         | 1       | No       |
 
@@ -349,20 +343,20 @@ http:
     app:
       weighted:
         services:
-          - name: appv1
-            weight: 3
-          - name: appv2
-            weight: 1
+        - name: appv1
+          weight: 3
+        - name: appv2
+          weight: 1
 
     appv1:
       loadBalancer:
         servers:
-          - url: "http://private-ip-server-1/"
+        - url: "http://private-ip-server-1/"
 
     appv2:
       loadBalancer:
         servers:
-          - url: "http://private-ip-server-2/"
+        - url: "http://private-ip-server-2/"
 ```
 
 ```toml tab="Structured (TOML)"
@@ -395,7 +389,7 @@ HealthCheck enables automatic self-healthcheck for this service, i.e. whenever o
 
     If HealthCheck is enabled for a given service and any of its descendants does not have it enabled, the creation of the service will fail.
 
-    HealthCheck on Weighted services can be defined currently only with the [File provider](../../../install-configuration/providers/others/file.md).
+    HealthCheck on Weighted services can be defined currently only with the [File provider](../../../install-configuration/providers/others/file.md).  
 
 ```yaml tab="Structured (YAML)"
 ## Dynamic configuration
@@ -405,10 +399,10 @@ http:
       weighted:
         healthCheck: {}
         services:
-          - name: appv1
-            weight: 3
-          - name: appv2
-            weight: 1
+        - name: appv1
+          weight: 3
+        - name: appv2
+          weight: 1
 
     appv1:
       loadBalancer:
@@ -417,7 +411,7 @@ http:
           interval: 10s
           timeout: 3s
         servers:
-          - url: "http://private-ip-server-1/"
+        - url: "http://private-ip-server-1/"
 
     appv2:
       loadBalancer:
@@ -426,7 +420,7 @@ http:
           interval: 10s
           timeout: 3s
         servers:
-          - url: "http://private-ip-server-2/"
+        - url: "http://private-ip-server-2/"
 ```
 
 ```toml tab="Structured (TOML)"
@@ -487,7 +481,7 @@ Power of two choices algorithm is a load balancing strategy that selects two ser
         [[http.services.my-service.loadBalancer.servers]]
           url = "http://private-ip-server-1/"
         [[http.services.my-service.loadBalancer.servers]]
-          url = "http://private-ip-server-2/"
+          url = "http://private-ip-server-2/"       
         [[http.services.my-service.loadBalancer.servers]]
           url = "http://private-ip-server-3/"
     ```
@@ -541,11 +535,11 @@ The mirroring is able to mirror requests sent to a service to other services. Pl
 !!! warning "Default behavior of `percent`"
 
     When configuring a `mirror` service, if the `percent` field is not set, it defaults to `0`, meaning **no traffic will be sent to the mirror**.
-
+    
 !!! info "Supported Providers"
 
     This strategy can be defined currently with the [File](../../../install-configuration/providers/others/file.md) or [IngressRoute](../../../install-configuration/providers/kubernetes/kubernetes-crd.md) providers.
-
+    
 ```yaml tab="Structured (YAML)"
 ## Dynamic configuration
 http:
@@ -613,7 +607,7 @@ HealthCheck enables automatic self-healthcheck for this service, i.e. if the mai
 
     If HealthCheck is enabled for a given service and any of its descendants does not have it enabled, the creation of the service will fail.
 
-    HealthCheck on Mirroring services can be defined currently only with the [File provider](../../../install-configuration/providers/others/file.md).
+    HealthCheck on Mirroring services can be defined currently only with the [File provider](../../../install-configuration/providers/others/file.md).  
 
 ```yaml tab="Structured (YAML)"
 ## Dynamic configuration
@@ -624,8 +618,8 @@ http:
         healthCheck: {}
         service: appv1
         mirrors:
-          - name: appv2
-            percent: 10
+        - name: appv2
+          percent: 10
 
     appv1:
       loadBalancer:
@@ -634,12 +628,12 @@ http:
           interval: 10s
           timeout: 3s
         servers:
-          - url: "http://private-ip-server-1/"
+        - url: "http://private-ip-server-1/"
 
     appv2:
       loadBalancer:
         servers:
-          - url: "http://private-ip-server-2/"
+        - url: "http://private-ip-server-2/"
 ```
 
 ```toml tab="Structured (TOML)"
@@ -672,15 +666,15 @@ http:
         url = "http://private-ip-server-2/"
 ```
 
-## Failover
+## Failover 
 
 A failover service job is to forward all requests to a fallback service when the main service becomes unreachable.
 
 !!! info "Relation to HealthCheck"
-The failover service relies on the HealthCheck system to get notified when its main service becomes unreachable, which means HealthCheck needs to be enabled and functional on the main service. However, HealthCheck does not need to be enabled on the failover service itself for it to be functional. It is only required in order to propagate upwards the information when the failover itself becomes down (i.e. both its main and its fallback are down too).
+    The failover service relies on the HealthCheck system to get notified when its main service becomes unreachable, which means HealthCheck needs to be enabled and functional on the main service. However, HealthCheck does not need to be enabled on the failover service itself for it to be functional. It is only required in order to propagate upwards the information when the failover itself becomes down (i.e. both its main and its fallback are down too).
 
 !!! info "Supported Provider"
-This strategy can currently only be defined with the [File](../../../install-configuration/providers/others/file.md) provider.
+    This strategy can currently only be defined with the [File](../../../install-configuration/providers/others/file.md) provider.
 
 ### HealthCheck
 
@@ -690,7 +684,7 @@ HealthCheck enables automatic self-healthcheck for this service, i.e. if the mai
 
     If HealthCheck is enabled for a given service and any of its descendants does not have it enabled, the creation of the service will fail.
 
-    HealthCheck on a Failover service can be defined currently only with the [File provider](../../../install-configuration/providers/others/file.md).
+    HealthCheck on a Failover service can be defined currently only with the [File provider](../../../install-configuration/providers/others/file.md).  
 
 ```yaml tab="Structured (YAML)"
 ## Dynamic configuration
@@ -709,7 +703,7 @@ http:
           interval: 10s
           timeout: 3s
         servers:
-          - url: "http://private-ip-server-1/"
+        - url: "http://private-ip-server-1/"
 
     backup:
       loadBalancer:
@@ -718,7 +712,7 @@ http:
           interval: 10s
           timeout: 3s
         servers:
-          - url: "http://private-ip-server-2/"
+        - url: "http://private-ip-server-2/"
 ```
 
 ```toml tab="Structured (TOML)"
