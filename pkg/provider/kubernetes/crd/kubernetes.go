@@ -160,6 +160,24 @@ func (p *Provider) SetRouterTransform(routerTransform k8s.RouterTransform) {
 	p.routerTransform = routerTransform
 }
 
+func (p *Provider) FillExtensionBuilderRegistry(registry gateway.ExtensionBuilderRegistry) {
+	registry.RegisterFilterFuncs(traefikv1alpha1.GroupName, "Middleware", func(name, namespace string) (string, *dynamic.Middleware, error) {
+		if len(p.Namespaces) > 0 && !slices.Contains(p.Namespaces, namespace) {
+			return "", nil, fmt.Errorf("namespace %q is not allowed", namespace)
+		}
+
+		return makeID(namespace, name) + providerNamespaceSeparator + providerName, nil, nil
+	})
+
+	registry.RegisterBackendFuncs(traefikv1alpha1.GroupName, "TraefikService", func(name, namespace string) (string, *dynamic.Service, error) {
+		if len(p.Namespaces) > 0 && !slices.Contains(p.Namespaces, namespace) {
+			return "", nil, fmt.Errorf("namespace %q is not allowed", namespace)
+		}
+
+		return makeID(namespace, name) + providerNamespaceSeparator + providerName, nil, nil
+	})
+}
+
 func (p *Provider) applyRouterTransform(ctx context.Context, rt *dynamic.Router, ingress *traefikv1alpha1.IngressRoute) {
 	if p.routerTransform == nil {
 		return
@@ -972,24 +990,6 @@ func (p *Provider) createErrorPageMiddleware(ctx context.Context, client Client,
 	}
 
 	return errorPageMiddleware, balancerServerHTTP, nil
-}
-
-func (p *Provider) FillExtensionBuilderRegistry(registry gateway.ExtensionBuilderRegistry) {
-	registry.RegisterFilterFuncs(traefikv1alpha1.GroupName, "Middleware", func(name, namespace string) (string, *dynamic.Middleware, error) {
-		if len(p.Namespaces) > 0 && !slices.Contains(p.Namespaces, namespace) {
-			return "", nil, fmt.Errorf("namespace %q is not allowed", namespace)
-		}
-
-		return makeID(namespace, name) + providerNamespaceSeparator + providerName, nil, nil
-	})
-
-	registry.RegisterBackendFuncs(traefikv1alpha1.GroupName, "TraefikService", func(name, namespace string) (string, *dynamic.Service, error) {
-		if len(p.Namespaces) > 0 && !slices.Contains(p.Namespaces, namespace) {
-			return "", nil, fmt.Errorf("namespace %q is not allowed", namespace)
-		}
-
-		return makeID(namespace, name) + providerNamespaceSeparator + providerName, nil, nil
-	})
 }
 
 func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *traefikv1alpha1.ForwardAuth) (*dynamic.ForwardAuth, error) {
