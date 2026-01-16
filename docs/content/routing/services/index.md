@@ -271,6 +271,39 @@ HighestRandomWeight, also called RendezVous hashing allows to loadbalance client
           url = "http://private-ip-server-2/"
     ```
 
+##### EWMA
+
+The Exponentially Weighted Moving Average (EWMA) Power-of-Two-Choices algorithm is a load-balancing strategy that, for each server, maintains an EWMA of recent response latencies and, on each incoming request, randomly probes two servers and routes the request to the one with the lower EWMA score—thereby favoring servers that have been faster over time.
+
+
+??? example "EWMA Load Balancing -- Using the [File Provider](../../providers/file.md)"
+
+    ```yaml tab="YAML"
+    ## Dynamic configuration
+    http:
+      services:
+        my-service:
+          loadBalancer:
+            strategy: "ewma"
+            servers:
+            - url: "http://private-ip-server-1/"
+            - url: "http://private-ip-server-2/"
+            - url: "http://private-ip-server-3/"
+    ```
+
+    ```toml tab="TOML"
+    ## Dynamic configuration
+    [http.services]
+      [http.services.my-service.loadBalancer]
+        strategy = "ewma"
+        [[http.services.my-service.loadBalancer.servers]]
+          url = "http://private-ip-server-1/"
+        [[http.services.my-service.loadBalancer.servers]]
+          url = "http://private-ip-server-2/"
+        [[http.services.my-service.loadBalancer.servers]]
+          url = "http://private-ip-server-3/"
+    ```
+
 #### Sticky sessions
 
 When sticky sessions are enabled, a `Set-Cookie` header is set on the initial response to let the client know which server handles the first response.

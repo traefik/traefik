@@ -354,13 +354,15 @@ spec:
                           strategy:
                             description: |-
                               Strategy defines the load balancing strategy between the servers.
-                              Supported values are: wrr (Weighed round-robin), p2c (Power of two choices), hrw (Highest Random Weight), and leasttime (Least-Time).
+                              Supported values are: wrr (Weighed round-robin), p2c (Power of two choices),
+                              hrw (Highest Random Weight), leasttime (Least-Time) and ewma (Exponentially weighted moving average).
                               RoundRobin value is deprecated and supported for backward compatibility.
                             enum:
                             - wrr
                             - p2c
                             - hrw
                             - leasttime
+                            - ewma
                             - RoundRobin
                             type: string
                           weight:
@@ -1325,13 +1327,15 @@ spec:
                       strategy:
                         description: |-
                           Strategy defines the load balancing strategy between the servers.
-                          Supported values are: wrr (Weighed round-robin), p2c (Power of two choices), hrw (Highest Random Weight), and leasttime (Least-Time).
+                          Supported values are: wrr (Weighed round-robin), p2c (Power of two choices),
+                          hrw (Highest Random Weight), leasttime (Least-Time) and ewma (Exponentially weighted moving average).
                           RoundRobin value is deprecated and supported for backward compatibility.
                         enum:
                         - wrr
                         - p2c
                         - hrw
                         - leasttime
+                        - ewma
                         - RoundRobin
                         type: string
                       weight:
@@ -3059,13 +3063,15 @@ spec:
                         strategy:
                           description: |-
                             Strategy defines the load balancing strategy between the servers.
-                            Supported values are: wrr (Weighed round-robin), p2c (Power of two choices), hrw (Highest Random Weight), and leasttime (Least-Time).
+                            Supported values are: wrr (Weighed round-robin), p2c (Power of two choices),
+                            hrw (Highest Random Weight), leasttime (Least-Time) and ewma (Exponentially weighted moving average).
                             RoundRobin value is deprecated and supported for backward compatibility.
                           enum:
                           - wrr
                           - p2c
                           - hrw
                           - leasttime
+                          - ewma
                           - RoundRobin
                           type: string
                         weight:
@@ -3388,13 +3394,15 @@ spec:
                         strategy:
                           description: |-
                             Strategy defines the load balancing strategy between the servers.
-                            Supported values are: wrr (Weighed round-robin), p2c (Power of two choices), hrw (Highest Random Weight), and leasttime (Least-Time).
+                            Supported values are: wrr (Weighed round-robin), p2c (Power of two choices),
+                            hrw (Highest Random Weight), leasttime (Least-Time) and ewma (Exponentially weighted moving average).
                             RoundRobin value is deprecated and supported for backward compatibility.
                           enum:
                           - wrr
                           - p2c
                           - hrw
                           - leasttime
+                          - ewma
                           - RoundRobin
                           type: string
                         weight:
@@ -3536,13 +3544,15 @@ spec:
                   strategy:
                     description: |-
                       Strategy defines the load balancing strategy between the servers.
-                      Supported values are: wrr (Weighed round-robin), p2c (Power of two choices), hrw (Highest Random Weight), and leasttime (Least-Time).
+                      Supported values are: wrr (Weighed round-robin), p2c (Power of two choices),
+                      hrw (Highest Random Weight), leasttime (Least-Time) and ewma (Exponentially weighted moving average).
                       RoundRobin value is deprecated and supported for backward compatibility.
                     enum:
                     - wrr
                     - p2c
                     - hrw
                     - leasttime
+                    - ewma
                     - RoundRobin
                     type: string
                   weight:
@@ -3771,13 +3781,15 @@ spec:
                         strategy:
                           description: |-
                             Strategy defines the load balancing strategy between the servers.
-                            Supported values are: wrr (Weighed round-robin), p2c (Power of two choices), hrw (Highest Random Weight), and leasttime (Least-Time).
+                            Supported values are: wrr (Weighed round-robin), p2c (Power of two choices),
+                            hrw (Highest Random Weight), leasttime (Least-Time) and ewma (Exponentially weighted moving average).
                             RoundRobin value is deprecated and supported for backward compatibility.
                           enum:
                           - wrr
                           - p2c
                           - hrw
                           - leasttime
+                          - ewma
                           - RoundRobin
                           type: string
                         weight:
