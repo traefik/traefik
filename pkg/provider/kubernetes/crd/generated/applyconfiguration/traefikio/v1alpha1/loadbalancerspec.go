@@ -37,6 +37,7 @@ type LoadBalancerSpecApplyConfiguration struct {
 	Name               *string                                     `json:"name,omitempty"`
 	Kind               *string                                     `json:"kind,omitempty"`
 	Namespace          *string                                     `json:"namespace,omitempty"`
+	Middlewares        []MiddlewareRefApplyConfiguration           `json:"middlewares,omitempty"`
 	Sticky             *dynamic.Sticky                             `json:"sticky,omitempty"`
 	Port               *intstr.IntOrString                         `json:"port,omitempty"`
 	Scheme             *string                                     `json:"scheme,omitempty"`
@@ -78,6 +79,19 @@ func (b *LoadBalancerSpecApplyConfiguration) WithKind(value string) *LoadBalance
 // If called multiple times, the Namespace field is set to the value of the last call.
 func (b *LoadBalancerSpecApplyConfiguration) WithNamespace(value string) *LoadBalancerSpecApplyConfiguration {
 	b.Namespace = &value
+	return b
+}
+
+// WithMiddlewares adds the given value to the Middlewares field in the declarative configuration
+// and returns the receiver, so that objects can be build by chaining "With" function invocations.
+// If called multiple times, values provided by each call will be appended to the Middlewares field.
+func (b *LoadBalancerSpecApplyConfiguration) WithMiddlewares(values ...*MiddlewareRefApplyConfiguration) *LoadBalancerSpecApplyConfiguration {
+	for i := range values {
+		if values[i] == nil {
+			panic("nil value passed to WithMiddlewares")
+		}
+		b.Middlewares = append(b.Middlewares, *values[i])
+	}
 	return b
 }
 
