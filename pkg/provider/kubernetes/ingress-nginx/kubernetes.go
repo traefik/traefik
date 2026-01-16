@@ -828,7 +828,7 @@ func applyPermanentRedirect(routerName string, ingressConfig ingressConfig, rt *
 	permanentRedirectMiddlewareName := routerName + "-permanent-redirect"
 	conf.HTTP.Middlewares[permanentRedirectMiddlewareName] = &dynamic.Middleware{
 		RedirectRegex: &dynamic.RedirectRegex{
-			Regex:       "*",
+			Regex:       ".*",
 			Permanent:   true,
 			Replacement: *ingressConfig.PermanentRedirect,
 		},
