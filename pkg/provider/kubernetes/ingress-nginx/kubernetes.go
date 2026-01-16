@@ -555,6 +555,7 @@ func (p *Provider) buildService(namespace string, backend netv1.IngressBackend, 
 				HTTPOnly: true, // Default value in Nginx.
 				SameSite: strings.ToLower(ptr.Deref(cfg.SessionCookieSameSite, "")),
 				MaxAge:   ptr.Deref(cfg.SessionCookieMaxAge, 0),
+				Expires:  ptr.Deref(cfg.SessionCookieExpires, 0),
 				Path:     ptr.To(ptr.Deref(cfg.SessionCookiePath, "/")),
 				Domain:   ptr.Deref(cfg.SessionCookieDomain, ""),
 			},

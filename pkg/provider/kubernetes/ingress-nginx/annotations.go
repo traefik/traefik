@@ -33,6 +33,7 @@ type ingressConfig struct {
 	SessionCookieDomain   *string `annotation:"nginx.ingress.kubernetes.io/session-cookie-domain"`
 	SessionCookieSameSite *string `annotation:"nginx.ingress.kubernetes.io/session-cookie-samesite"`
 	SessionCookieMaxAge   *int    `annotation:"nginx.ingress.kubernetes.io/session-cookie-max-age"`
+	SessionCookieExpires  *int    `annotation:"nginx.ingress.kubernetes.io/session-cookie-expires"`
 
 	ServiceUpstream *bool `annotation:"nginx.ingress.kubernetes.io/service-upstream"`
 
