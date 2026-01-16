@@ -2540,6 +2540,75 @@ func TestLoadHTTPRoutes(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
+		{
+			desc:  "HTTPRoute with SessionPersistence",
+			paths: []string{"services.yml", "httproute/with_session_persistence.yml"},
+			entryPoints: map[string]Entrypoint{"web": {
+				Address: ":80",
+			}},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"httproute-default-http-app-sticky-gw-default-my-gateway-ep-web-0-1f905b31c04c531dd726": {
+							EntryPoints: []string{"web"},
+							Service:     "httproute-default-http-app-sticky-gw-default-my-gateway-ep-web-0-1f905b31c04c531dd726-wrr",
+							Rule:        "Host(`foo.com`) && Path(`/sticky`)",
+							Priority:    100008,
+							RuleSyntax:  "default",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"httproute-default-http-app-sticky-gw-default-my-gateway-ep-web-0-1f905b31c04c531dd726-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-whoami-http-80-sticky-SERVERID-3600",
+										Weight: ptr.To(1),
+									},
+								},
+							},
+						},
+						"default-whoami-http-80-sticky-SERVERID-3600": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Sticky: &dynamic.Sticky{
+									Cookie: &dynamic.Cookie{
+										Name:   "SERVERID",
+										MaxAge: 3600,
+										Path:   ptr.To("/"),
+									},
+								},
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
 	}
 
 	for _, test := range testCases {
