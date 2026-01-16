@@ -300,7 +300,7 @@ type Cookie struct {
 	Domain string `json:"domain,omitempty" toml:"domain,omitempty" yaml:"domain,omitempty"`
 
 	// Expires defines the number of seconds added to the current date.
-	// MaxAge takes precedence over Expires.
+	// This option is exposed only for the Ingress NGINX provider.
 	Expires int `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
 
