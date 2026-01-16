@@ -82,6 +82,7 @@ linters:
       toolchain-pattern: go1\.\d+\.\d+$
       tool-forbidden: true
       go-version-pattern: ^1\.\d+(\.0)?$
+      replace-local: true
       replace-allow-list:
         - github.com/abbot/go-http-auth
         - github.com/gorilla/mux
