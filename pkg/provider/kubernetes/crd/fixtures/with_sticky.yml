@@ -79,4 +79,3 @@ spec:
               secure: true
               sameSite: none
               maxAge: 42
-              expires: 10
