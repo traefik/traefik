@@ -409,7 +409,7 @@ func (s *BaseSuite) displayTraefikLog(output *bytes.Buffer) {
 	if output == nil || output.Len() == 0 {
 		log.Info().Msg("No Traefik logs.")
 	} else {
-		for _, line := range strings.Split(output.String(), "\n") {
+		for line := range strings.SplitSeq(output.String(), "\n") {
 			log.Info().Msg(line)
 		}
 	}

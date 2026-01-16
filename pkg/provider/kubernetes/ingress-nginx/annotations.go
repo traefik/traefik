@@ -23,7 +23,8 @@ type ingressConfig struct {
 
 	SSLPassthrough *bool `annotation:"nginx.ingress.kubernetes.io/ssl-passthrough"`
 
-	UseRegex *bool `annotation:"nginx.ingress.kubernetes.io/use-regex"`
+	UseRegex      *bool   `annotation:"nginx.ingress.kubernetes.io/use-regex"`
+	RewriteTarget *string `annotation:"nginx.ingress.kubernetes.io/rewrite-target"`
 
 	Affinity              *string `annotation:"nginx.ingress.kubernetes.io/affinity"`
 	SessionCookieName     *string `annotation:"nginx.ingress.kubernetes.io/session-cookie-name"`
@@ -91,8 +92,8 @@ func parseIngressConfig(ing *netv1.Ingress) (ingressConfig, error) {
 			if field.Type.Elem().Elem().Kind() == reflect.String {
 				// Handle slice of strings
 				var slice []string
-				elements := strings.Split(val, ",")
-				for _, elt := range elements {
+				elements := strings.SplitSeq(val, ",")
+				for elt := range elements {
 					slice = append(slice, strings.TrimSpace(elt))
 				}
 				cfgValue.Field(i).Set(reflect.ValueOf(&slice))

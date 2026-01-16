@@ -141,6 +141,9 @@ Traefik also supports the `OTEL_RESOURCE_ATTRIBUTES` env variable to set up the 
 
 Access logs concern everything that happens to the requests handled by Traefik.
 
+!!! note "Stdio logs are not enabled by default alongside OTLP exports"
+    If you would like Stdio access logs to be available, use [accessLog.dualOutput](#opt-accesslog-dualOutput) option.
+
 ### Configuration Example
 
 ```yaml tab="File (YAML)"
@@ -195,6 +198,7 @@ accessLog:
 
 ```sh tab="CLI"
 --accesslog=true
+--accesslog.dualoutput=true
 --accesslog.format=json
 --accesslog.filters.statuscodes=200,300-302
 --accesslog.filters.retryattempts
@@ -213,6 +217,7 @@ The section below describes how to configure Traefik access logs using the stati
 | Field      | Description    | Default | Required |
 |:-----------|:--------------------------|:--------|:---------|
 | <a id="opt-accesslog-filePath" href="#opt-accesslog-filePath" title="#opt-accesslog-filePath">`accesslog.filePath`</a> | By default, the access logs are written to the standard output.<br />You can configure a file path instead using the `filePath` option.|  | No      |
+| <a id="opt-accesslog-dualOutput" href="#opt-accesslog-dualOutput" title="#opt-accesslog-dualOutput">`accesslog.dualOutput`</a> | Force Stdio logging, even if OTLP is configured. By default, Stdio logging is disabled when OTLP is enabled for performance reasons. | false      | No      |
 | <a id="opt-accesslog-format" href="#opt-accesslog-format" title="#opt-accesslog-format">`accesslog.format`</a> | By default, logs are written using the Traefik Common Log Format (CLF).<br />Available formats: [`common`](#traefik-clf-format-fields) (Traefik extended CLF), [`genericCLF`](#generic-clf-format-fields) (standard CLF compatible with analyzers), or [`json`](#json-format-fields).<br />If the given format is unsupported, the default (`common`) is used instead. | "common" | No      |
 | <a id="opt-accesslog-bufferingSize" href="#opt-accesslog-bufferingSize" title="#opt-accesslog-bufferingSize">`accesslog.bufferingSize`</a> | To write the logs in an asynchronous fashion, specify a  `bufferingSize` option.<br />This option represents the number of log lines Traefik will keep in memory before writing them to the selected output.<br />In some cases, this option can greatly help performances.| 0 | No      |
 | <a id="opt-accesslog-addInternals" href="#opt-accesslog-addInternals" title="#opt-accesslog-addInternals">`accesslog.addInternals`</a> | Enables access logs for internal resources (e.g.: `ping@internal`). | false  | No      |
@@ -252,6 +257,8 @@ experimental:
   otlpLogs: true
 
 accesslog:
+  # Keep Stdio logs alongside OTEL logging
+  dualOutput: true
   otlp:
     http:
       endpoint: https://collector:4318/v1/logs
@@ -262,6 +269,9 @@ accesslog:
 ```toml tab="File (TOML)"
 [experimental]
   otlpLogs = true
+
+[accessLog]
+  dualOutput = true
 
 [accesslog.otlp]
   http.endpoint = "https://collector:4318/v1/logs"
