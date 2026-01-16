@@ -18,7 +18,7 @@ type pluginMiddleware interface {
 }
 
 type middlewareBuilder interface {
-	newMiddleware(config map[string]interface{}, middlewareName string) (pluginMiddleware, error)
+	newMiddleware(config map[string]any, middlewareName string) (pluginMiddleware, error)
 }
 
 // Builder is a plugin builder.
@@ -110,7 +110,7 @@ func NewBuilder(manager *Manager, plugins map[string]Descriptor, localPlugins ma
 }
 
 // Build builds a middleware plugin.
-func (b Builder) Build(pName string, config map[string]interface{}, middlewareName string) (Constructor, error) {
+func (b Builder) Build(pName string, config map[string]any, middlewareName string) (Constructor, error) {
 	if b.middlewareBuilders == nil {
 		return nil, fmt.Errorf("no plugin definitions in the static configuration: %s", pName)
 	}

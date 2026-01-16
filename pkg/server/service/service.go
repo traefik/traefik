@@ -171,6 +171,14 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string) (http.H
 	return lb, nil
 }
 
+// LaunchHealthCheck launches the health checks.
+func (m *Manager) LaunchHealthCheck(ctx context.Context) {
+	for serviceName, hc := range m.healthCheckers {
+		logger := log.Ctx(ctx).With().Str(logs.ServiceName, serviceName).Logger()
+		go hc.Launch(logger.WithContext(ctx))
+	}
+}
+
 func (m *Manager) getFailoverServiceHandler(ctx context.Context, serviceName string, config *dynamic.Failover) (http.Handler, error) {
 	f := failover.New(config.HealthCheck)
 
@@ -360,13 +368,6 @@ func (m *Manager) getHRWServiceHandler(ctx context.Context, serviceName string, 
 	return balancer, nil
 }
 
-type serverBalancer interface {
-	http.Handler
-	healthcheck.StatusSetter
-
-	AddServer(name string, handler http.Handler, server dynamic.Server)
-}
-
 func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName string, info *runtime.ServiceInfo) (http.Handler, error) {
 	service := info.LoadBalancer
 
@@ -494,12 +495,11 @@ func (m *Manager) getLoadBalancerServiceHandler(ctx context.Context, serviceName
 	return lb, nil
 }
 
-// LaunchHealthCheck launches the health checks.
-func (m *Manager) LaunchHealthCheck(ctx context.Context) {
-	for serviceName, hc := range m.healthCheckers {
-		logger := log.Ctx(ctx).With().Str(logs.ServiceName, serviceName).Logger()
-		go hc.Launch(logger.WithContext(ctx))
-	}
+type serverBalancer interface {
+	http.Handler
+	healthcheck.StatusSetter
+
+	AddServer(name string, handler http.Handler, server dynamic.Server)
 }
 
 func shuffle[T any](values []T, r *rand.Rand) []T {

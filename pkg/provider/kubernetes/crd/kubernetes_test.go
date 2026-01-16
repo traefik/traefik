@@ -4197,7 +4197,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-test-secret": {
 							Plugin: map[string]dynamic.PluginConf{
-								"test-secret": map[string]interface{}{
+								"test-secret": map[string]any{
 									"user":   "admin",
 									"secret": "this_is_the_secret",
 								},
@@ -4229,10 +4229,10 @@ func TestLoadIngressRoutes(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-test-secret": {
 							Plugin: map[string]dynamic.PluginConf{
-								"test-secret": map[string]interface{}{
-									"secret_0": map[string]interface{}{
-										"secret_1": map[string]interface{}{
-											"secret_2": map[string]interface{}{
+								"test-secret": map[string]any{
+									"secret_0": map[string]any{
+										"secret_1": map[string]any{
+											"secret_2": map[string]any{
 												"user":   "admin",
 												"secret": "this_is_the_very_deep_secret",
 											},
@@ -4267,8 +4267,8 @@ func TestLoadIngressRoutes(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-test-secret": {
 							Plugin: map[string]dynamic.PluginConf{
-								"test-secret": map[string]interface{}{
-									"secret": []interface{}{"secret_data1", "secret_data2"},
+								"test-secret": map[string]any{
+									"secret": []any{"secret_data1", "secret_data2"},
 								},
 							},
 						},
@@ -4298,13 +4298,13 @@ func TestLoadIngressRoutes(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-test-secret": {
 							Plugin: map[string]dynamic.PluginConf{
-								"test-secret": map[string]interface{}{
-									"users": []interface{}{
-										map[string]interface{}{
+								"test-secret": map[string]any{
+									"users": []any{
+										map[string]any{
 											"name":   "admin",
 											"secret": "admin_password",
 										},
-										map[string]interface{}{
+										map[string]any{
 											"name":   "user",
 											"secret": "user_password",
 										},

@@ -78,6 +78,7 @@ func (a *Configuration) SetDefaults() {
 // CertAndStore allows mapping a TLS certificate to a TLS store.
 type CertAndStore struct {
 	Certificate
+
 	Store string
 }
 
@@ -127,6 +128,7 @@ type TLSChallenge struct {
 // Provider holds configurations of the provider.
 type Provider struct {
 	*Configuration
+
 	ResolverName string
 	Store        Store `json:"store,omitempty" toml:"store,omitempty" yaml:"store,omitempty"`
 
@@ -1085,7 +1087,7 @@ func (p *Provider) certExists(validDomains []string) bool {
 
 func isDomainAlreadyChecked(domainToCheck string, existentDomains []string) bool {
 	for _, certDomains := range existentDomains {
-		for _, certDomain := range strings.Split(certDomains, ",") {
+		for certDomain := range strings.SplitSeq(certDomains, ",") {
 			if types.MatchDomain(domainToCheck, certDomain) {
 				return true
 			}

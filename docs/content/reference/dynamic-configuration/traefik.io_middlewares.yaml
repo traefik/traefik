@@ -231,6 +231,7 @@ spec:
                     description: |-
                       AutoDetect specifies whether to let the `Content-Type` header, if it has not been set by the backend,
                       be automatically set to a value derived from the contents of the response.
+
                       Deprecated: AutoDetect option is deprecated, Content-Type middleware is only meant to be used to enable the content-type detection, please remove any usage of this option.
                     type: boolean
                 type: object

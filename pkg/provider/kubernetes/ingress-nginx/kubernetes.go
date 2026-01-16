@@ -1039,8 +1039,7 @@ func basicAuthUsers(secret *corev1.Secret, authSecretType string) (dynamic.Users
 	}
 
 	// Trim lines and filter out blanks
-	rawLines := strings.Split(string(authFileContent), "\n")
-	for _, rawLine := range rawLines {
+	for rawLine := range strings.SplitSeq(string(authFileContent), "\n") {
 		line := strings.TrimSpace(rawLine)
 		if line != "" && !strings.HasPrefix(line, "#") {
 			users = append(users, line)
@@ -1101,13 +1100,13 @@ func buildPrefixRule(path string) string {
 	return fmt.Sprintf("(Path(`%[1]s`) || PathPrefix(`%[1]s/`))", path)
 }
 
-func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *safe.Pool, eventsChan <-chan interface{}) chan interface{} {
+func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *safe.Pool, eventsChan <-chan any) chan any {
 	if throttleDuration == 0 {
 		return nil
 	}
 
 	// Create a buffered channel to hold the pending event (if we're delaying processing the event due to throttling).
-	eventsChanBuffered := make(chan interface{}, 1)
+	eventsChanBuffered := make(chan any, 1)
 
 	// Run a goroutine that reads events from eventChan and does a
 	// non-blocking write to pendingEvent. This guarantees that writing to

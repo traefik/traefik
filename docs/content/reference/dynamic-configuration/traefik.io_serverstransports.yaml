@@ -139,6 +139,7 @@ spec:
               rootCAsSecrets:
                 description: |-
                   RootCAsSecrets defines a list of CA secret used to validate self-signed certificate.
+
                   Deprecated: RootCAsSecrets is deprecated, please use the RootCAs option instead.
                 items:
                   type: string

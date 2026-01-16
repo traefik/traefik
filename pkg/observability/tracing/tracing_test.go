@@ -492,6 +492,8 @@ func resourceAttributes(traces ptrace.Traces) map[string]string {
 }
 
 // mainSpan gets the main span from traces (assumes single span for testing).
+//
+//nolint:unqueryvet // False positive: This is OTel trace iteration, not SQLBoiler.
 func mainSpan(traces ptrace.Traces) ptrace.Span {
 	for _, resourceSpans := range traces.ResourceSpans().All() {
 		for _, scopeSpans := range resourceSpans.ScopeSpans().All() {

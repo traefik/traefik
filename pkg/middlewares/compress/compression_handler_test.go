@@ -874,10 +874,7 @@ func Test_FlushExcludedContentTypes(t *testing.T) {
 				for len(tb) > 0 {
 					// Write 100 bytes per run
 					// Detection should not be affected (we send 100 bytes)
-					toWrite := 100
-					if toWrite > len(tb) {
-						toWrite = len(tb)
-					}
+					toWrite := min(100, len(tb))
 
 					_, err := rw.Write(tb[:toWrite])
 					require.NoError(t, err)
@@ -998,10 +995,7 @@ func Test_FlushIncludedContentTypes(t *testing.T) {
 				for len(tb) > 0 {
 					// Write 100 bytes per run
 					// Detection should not be affected (we send 100 bytes)
-					toWrite := 100
-					if toWrite > len(tb) {
-						toWrite = len(tb)
-					}
+					toWrite := min(100, len(tb))
 
 					_, err := rw.Write(tb[:toWrite])
 					require.NoError(t, err)
