@@ -792,6 +792,8 @@ func (p *Provider) loadCertificates(ctx context.Context, ingress *netv1.Ingress,
 }
 
 func (p *Provider) applyMiddlewares(namespace, routerKey, rulePath string, ingressConfig ingressConfig, hasTLS bool, rt *dynamic.Router, conf *dynamic.Configuration) error {
+	applyPermanentRedirect(routerKey, ingressConfig, rt, conf)
+
 	if err := p.applyBasicAuthConfiguration(namespace, routerKey, ingressConfig, rt, conf); err != nil {
 		return fmt.Errorf("applying basic auth configuration: %w", err)
 	}
@@ -816,6 +818,23 @@ func (p *Provider) applyMiddlewares(namespace, routerKey, rulePath string, ingre
 		return fmt.Errorf("applying custom headers: %w", err)
 	}
 
+	return nil
+}
+
+func applyPermanentRedirect(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
+	if ingressConfig.PermanentRedirect == nil {
+		return nil
+	}
+
+	permanentRedirectMiddlewareName := routerName + "-permanent-redirect"
+	conf.HTTP.Middlewares[permanentRedirectMiddlewareName] = &dynamic.Middleware{
+		RedirectRegex: &dynamic.RedirectRegex{
+			Regex:       "*",
+			Permanent:   true,
+			Replacement: *ingressConfig.PermanentRedirect,
+		},
+	}
+	rt.Middlewares = append(rt.Middlewares, permanentRedirectMiddlewareName)
 	return nil
 }
 
