@@ -87,6 +87,7 @@ http:
             httpOnly: true
             sameSite: foobar
             maxAge: 42
+            expires: 42
             path: foobar
             domain: foobar
         servers:
@@ -144,6 +145,7 @@ http:
             httpOnly: true
             sameSite: foobar
             maxAge: 42
+            expires: 42
             path: foobar
             domain: foobar
         healthCheck: {}
