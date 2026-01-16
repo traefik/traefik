@@ -504,7 +504,12 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 func (p *Provider) buildServersTransport(namespace, name string, cfg ingressConfig) (*namedServersTransport, error) {
 	scheme := parseBackendProtocol(ptr.Deref(cfg.BackendProtocol, "HTTP"))
-	if scheme != "https" {
+
+	// TODO to complete with readTimeout and writeTimeout, or to refactor if we won't add the other two.
+	hasTimeouts := cfg.ProxyConnectTimeout != nil
+
+	// Only create ServersTransport for HTTPS backends OR when timeouts are configured.
+	if scheme != "https" && !hasTimeouts {
 		return nil, nil
 	}
 
@@ -514,6 +519,21 @@ func (p *Provider) buildServersTransport(namespace, name string, cfg ingressConf
 			ServerName:         ptr.Deref(cfg.ProxySSLName, ptr.Deref(cfg.ProxySSLServerName, "")),
 			InsecureSkipVerify: strings.ToLower(ptr.Deref(cfg.ProxySSLVerify, "off")) == "off",
 		},
+	}
+
+	if hasTimeouts {
+		forwardingTimeout := &dynamic.ForwardingTimeouts{}
+		// TODO nginx default timeout config is 60 seconds, confirm if we want to add the same.
+
+		if cfg.ProxyConnectTimeout != nil {
+			forwardingTimeout.DialTimeout = ptypes.Duration(time.Duration(*cfg.ProxyConnectTimeout) * time.Second)
+		}
+
+		nst.ServersTransport.ForwardingTimeouts = forwardingTimeout
+	}
+
+	if scheme != "https" {
+		return nst, nil
 	}
 
 	if sslSecret := ptr.Deref(cfg.ProxySSLSecret, ""); sslSecret != "" {
