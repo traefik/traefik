@@ -41,4 +41,4 @@ udp:
       address = "xx.xx.xx.xx:xx"
 ```
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

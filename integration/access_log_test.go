@@ -245,8 +245,7 @@ func digestParts(resp *http.Response) map[string]string {
 	result := map[string]string{}
 	if len(resp.Header["Www-Authenticate"]) > 0 {
 		wantedHeaders := []string{"nonce", "realm", "qop", "opaque"}
-		responseHeaders := strings.SplitSeq(resp.Header["Www-Authenticate"][0], ",")
-		for r := range responseHeaders {
+		for r := range strings.SplitSeq(resp.Header["Www-Authenticate"][0], ",") {
 			for _, w := range wantedHeaders {
 				if strings.Contains(r, w) {
 					result[w] = strings.Split(r, `"`)[1]

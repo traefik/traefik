@@ -68,55 +68,6 @@ type Provider struct {
 	routerTransform k8s.RouterTransform
 }
 
-func (p *Provider) SetRouterTransform(routerTransform k8s.RouterTransform) {
-	p.routerTransform = routerTransform
-}
-
-func (p *Provider) applyRouterTransform(ctx context.Context, rt *dynamic.Router, ingress *traefikv1alpha1.IngressRoute) {
-	if p.routerTransform == nil {
-		return
-	}
-
-	err := p.routerTransform.Apply(ctx, rt, ingress)
-	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Msg("Apply router transform")
-	}
-}
-
-func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
-	_, err := labels.Parse(p.LabelSelector)
-	if err != nil {
-		return nil, fmt.Errorf("invalid label selector: %q", p.LabelSelector)
-	}
-	log.Ctx(ctx).Info().Msgf("label selector is: %q", p.LabelSelector)
-
-	withEndpoint := ""
-	if p.Endpoint != "" {
-		withEndpoint = fmt.Sprintf(" with endpoint %s", p.Endpoint)
-	}
-
-	var client *clientWrapper
-	switch {
-	case os.Getenv("KUBERNETES_SERVICE_HOST") != "" && os.Getenv("KUBERNETES_SERVICE_PORT") != "":
-		log.Ctx(ctx).Info().Msgf("Creating in-cluster Provider client%s", withEndpoint)
-		client, err = newInClusterClient(p.Endpoint)
-	case os.Getenv("KUBECONFIG") != "":
-		log.Ctx(ctx).Info().Msgf("Creating cluster-external Provider client from KUBECONFIG %s", os.Getenv("KUBECONFIG"))
-		client, err = newExternalClusterClientFromFile(os.Getenv("KUBECONFIG"))
-	default:
-		log.Ctx(ctx).Info().Msgf("Creating cluster-external Provider client%s", withEndpoint)
-		client, err = newExternalClusterClient(p.Endpoint, p.CertAuthFilePath, p.Token)
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	client.labelSelector = p.LabelSelector
-	client.disableClusterScopeInformer = p.DisableClusterScopeResources
-	return client, nil
-}
-
 // Init the provider.
 func (p *Provider) Init() error {
 	return nil
@@ -203,6 +154,73 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	})
 
 	return nil
+}
+
+func (p *Provider) SetRouterTransform(routerTransform k8s.RouterTransform) {
+	p.routerTransform = routerTransform
+}
+
+func (p *Provider) FillExtensionBuilderRegistry(registry gateway.ExtensionBuilderRegistry) {
+	registry.RegisterFilterFuncs(traefikv1alpha1.GroupName, "Middleware", func(name, namespace string) (string, *dynamic.Middleware, error) {
+		if len(p.Namespaces) > 0 && !slices.Contains(p.Namespaces, namespace) {
+			return "", nil, fmt.Errorf("namespace %q is not allowed", namespace)
+		}
+
+		return makeID(namespace, name) + providerNamespaceSeparator + providerName, nil, nil
+	})
+
+	registry.RegisterBackendFuncs(traefikv1alpha1.GroupName, "TraefikService", func(name, namespace string) (string, *dynamic.Service, error) {
+		if len(p.Namespaces) > 0 && !slices.Contains(p.Namespaces, namespace) {
+			return "", nil, fmt.Errorf("namespace %q is not allowed", namespace)
+		}
+
+		return makeID(namespace, name) + providerNamespaceSeparator + providerName, nil, nil
+	})
+}
+
+func (p *Provider) applyRouterTransform(ctx context.Context, rt *dynamic.Router, ingress *traefikv1alpha1.IngressRoute) {
+	if p.routerTransform == nil {
+		return
+	}
+
+	err := p.routerTransform.Apply(ctx, rt, ingress)
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("Apply router transform")
+	}
+}
+
+func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
+	_, err := labels.Parse(p.LabelSelector)
+	if err != nil {
+		return nil, fmt.Errorf("invalid label selector: %q", p.LabelSelector)
+	}
+	log.Ctx(ctx).Info().Msgf("label selector is: %q", p.LabelSelector)
+
+	withEndpoint := ""
+	if p.Endpoint != "" {
+		withEndpoint = fmt.Sprintf(" with endpoint %s", p.Endpoint)
+	}
+
+	var client *clientWrapper
+	switch {
+	case os.Getenv("KUBERNETES_SERVICE_HOST") != "" && os.Getenv("KUBERNETES_SERVICE_PORT") != "":
+		log.Ctx(ctx).Info().Msgf("Creating in-cluster Provider client%s", withEndpoint)
+		client, err = newInClusterClient(p.Endpoint)
+	case os.Getenv("KUBECONFIG") != "":
+		log.Ctx(ctx).Info().Msgf("Creating cluster-external Provider client from KUBECONFIG %s", os.Getenv("KUBECONFIG"))
+		client, err = newExternalClusterClientFromFile(os.Getenv("KUBECONFIG"))
+	default:
+		log.Ctx(ctx).Info().Msgf("Creating cluster-external Provider client%s", withEndpoint)
+		client, err = newExternalClusterClient(p.Endpoint, p.CertAuthFilePath, p.Token)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	client.labelSelector = p.LabelSelector
+	client.disableClusterScopeInformer = p.DisableClusterScopeResources
+	return client, nil
 }
 
 func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) *dynamic.Configuration {
@@ -626,6 +644,32 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 	return conf
 }
 
+func (p *Provider) createErrorPageMiddleware(client Client, namespace string, errorPage *traefikv1alpha1.ErrorPage) (*dynamic.ErrorPage, *dynamic.Service, error) {
+	if errorPage == nil {
+		return nil, nil, nil
+	}
+
+	errorPageMiddleware := &dynamic.ErrorPage{
+		Status:         errorPage.Status,
+		StatusRewrites: errorPage.StatusRewrites,
+		Query:          errorPage.Query,
+	}
+
+	cb := configBuilder{
+		client:                    client,
+		allowCrossNamespace:       p.AllowCrossNamespace,
+		allowExternalNameServices: p.AllowExternalNameServices,
+		allowEmptyServices:        p.AllowEmptyServices,
+	}
+
+	balancerServerHTTP, err := cb.buildServersLB(namespace, errorPage.Service.LoadBalancerSpec)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return errorPageMiddleware, balancerServerHTTP, nil
+}
+
 // getServicePort always returns a valid port, an error otherwise.
 func getServicePort(svc *corev1.Service, port intstr.IntOrString) (*corev1.ServicePort, error) {
 	if svc == nil {
@@ -697,7 +741,7 @@ func createPluginMiddleware(k8sClient Client, ns string, plugins map[string]apie
 	return pcMap, nil
 }
 
-func loadSecretKeys(k8sClient Client, ns string, i interface{}) (interface{}, error) {
+func loadSecretKeys(k8sClient Client, ns string, i any) (any, error) {
 	var err error
 	switch iv := i.(type) {
 	case string:
@@ -707,14 +751,14 @@ func loadSecretKeys(k8sClient Client, ns string, i interface{}) (interface{}, er
 
 		return getSecretValue(k8sClient, ns, iv)
 
-	case []interface{}:
+	case []any:
 		for i := range iv {
 			if iv[i], err = loadSecretKeys(k8sClient, ns, iv[i]); err != nil {
 				return nil, err
 			}
 		}
 
-	case map[string]interface{}:
+	case map[string]any:
 		for k := range iv {
 			if iv[k], err = loadSecretKeys(k8sClient, ns, iv[k]); err != nil {
 				return nil, err
@@ -945,50 +989,6 @@ func createRetryMiddleware(retry *traefikv1alpha1.Retry) (*dynamic.Retry, error)
 	}
 
 	return r, nil
-}
-
-func (p *Provider) createErrorPageMiddleware(client Client, namespace string, errorPage *traefikv1alpha1.ErrorPage) (*dynamic.ErrorPage, *dynamic.Service, error) {
-	if errorPage == nil {
-		return nil, nil, nil
-	}
-
-	errorPageMiddleware := &dynamic.ErrorPage{
-		Status:         errorPage.Status,
-		StatusRewrites: errorPage.StatusRewrites,
-		Query:          errorPage.Query,
-	}
-
-	cb := configBuilder{
-		client:                    client,
-		allowCrossNamespace:       p.AllowCrossNamespace,
-		allowExternalNameServices: p.AllowExternalNameServices,
-		allowEmptyServices:        p.AllowEmptyServices,
-	}
-
-	balancerServerHTTP, err := cb.buildServersLB(namespace, errorPage.Service.LoadBalancerSpec)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return errorPageMiddleware, balancerServerHTTP, nil
-}
-
-func (p *Provider) FillExtensionBuilderRegistry(registry gateway.ExtensionBuilderRegistry) {
-	registry.RegisterFilterFuncs(traefikv1alpha1.GroupName, "Middleware", func(name, namespace string) (string, *dynamic.Middleware, error) {
-		if len(p.Namespaces) > 0 && !slices.Contains(p.Namespaces, namespace) {
-			return "", nil, fmt.Errorf("namespace %q is not allowed", namespace)
-		}
-
-		return makeID(namespace, name) + providerNamespaceSeparator + providerName, nil, nil
-	})
-
-	registry.RegisterBackendFuncs(traefikv1alpha1.GroupName, "TraefikService", func(name, namespace string) (string, *dynamic.Service, error) {
-		if len(p.Namespaces) > 0 && !slices.Contains(p.Namespaces, namespace) {
-			return "", nil, fmt.Errorf("namespace %q is not allowed", namespace)
-		}
-
-		return makeID(namespace, name) + providerNamespaceSeparator + providerName, nil, nil
-	})
 }
 
 func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *traefikv1alpha1.ForwardAuth) (*dynamic.ForwardAuth, error) {
@@ -1565,12 +1565,12 @@ func getCABlocksFromConfigMap(configMap *corev1.ConfigMap, namespace, name strin
 	return "", fmt.Errorf("config map %s/%s contains neither tls.ca nor ca.crt", namespace, name)
 }
 
-func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *safe.Pool, eventsChan <-chan interface{}) chan interface{} {
+func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *safe.Pool, eventsChan <-chan any) chan any {
 	if throttleDuration == 0 {
 		return nil
 	}
 	// Create a buffered channel to hold the pending event (if we're delaying processing the event due to throttling)
-	eventsChanBuffered := make(chan interface{}, 1)
+	eventsChanBuffered := make(chan any, 1)
 
 	// Run a goroutine that reads events from eventChan and does a non-blocking write to pendingEvent.
 	// This guarantees that writing to eventChan will never block,

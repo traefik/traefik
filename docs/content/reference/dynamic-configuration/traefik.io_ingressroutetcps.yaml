@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.16.1
+    controller-gen.kubebuilder.io/version: v0.19.0
   name: ingressroutetcps.traefik.io
 spec:
   group: traefik.io
@@ -127,6 +127,7 @@ spec:
                             description: |-
                               ProxyProtocol defines the PROXY protocol configuration.
                               More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/tcp/service/#proxy-protocol
+
                               Deprecated: ProxyProtocol will not be supported in future APIVersions, please use ServersTransport to configure ProxyProtocol instead.
                             properties:
                               version:
@@ -149,6 +150,7 @@ spec:
                               hence fully terminating the connection.
                               It is a duration in milliseconds, defaulting to 100.
                               A negative value means an infinite deadline (i.e. the reading capability is never closed).
+
                               Deprecated: TerminationDelay will not be supported in future APIVersions, please use ServersTransport to configure the TerminationDelay instead.
                             type: integer
                           tls:
@@ -169,6 +171,7 @@ spec:
                       description: |-
                         Syntax defines the router's rule syntax.
                         More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/tcp/routing/rules-and-priority/#rulesyntax
+
                         Deprecated: Please do not use this field and rewrite the router rules to use the v3 syntax.
                       enum:
                       - v3

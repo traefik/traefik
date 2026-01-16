@@ -22,7 +22,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/job"
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	"github.com/traefik/traefik/v3/pkg/provider"
-	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
@@ -646,7 +645,10 @@ func (p *Provider) getBackendAddresses(namespace string, backend netv1.IngressBa
 		}
 
 		for _, endpoint := range endpointSlice.Endpoints {
-			if !k8s.EndpointServing(endpoint) {
+			// The Serving condition allows to track if the Pod can receive traffic.
+			// It is set to true when the Pod is Ready or Terminating.
+			// From the go documentation, a nil value should be interpreted as "true".
+			if !ptr.Deref(endpoint.Conditions.Serving, true) {
 				continue
 			}
 
@@ -658,7 +660,7 @@ func (p *Provider) getBackendAddresses(namespace string, backend netv1.IngressBa
 				uniqAddresses[address] = struct{}{}
 				addresses = append(addresses, backendAddress{
 					Address: net.JoinHostPort(address, strconv.Itoa(int(port))),
-					Fenced:  ptr.Deref(endpoint.Conditions.Terminating, false) && ptr.Deref(endpoint.Conditions.Serving, false),
+					Fenced:  ptr.Deref(endpoint.Conditions.Terminating, false),
 				})
 			}
 		}
@@ -1128,8 +1130,7 @@ func basicAuthUsers(secret *corev1.Secret, authSecretType string) (dynamic.Users
 	}
 
 	// Trim lines and filter out blanks
-	rawLines := strings.SplitSeq(string(authFileContent), "\n")
-	for rawLine := range rawLines {
+	for rawLine := range strings.SplitSeq(string(authFileContent), "\n") {
 		line := strings.TrimSpace(rawLine)
 		if line != "" && !strings.HasPrefix(line, "#") {
 			users = append(users, line)
@@ -1190,13 +1191,13 @@ func buildPrefixRule(path string) string {
 	return fmt.Sprintf("(Path(`%[1]s`) || PathPrefix(`%[1]s/`))", path)
 }
 
-func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *safe.Pool, eventsChan <-chan interface{}) chan interface{} {
+func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *safe.Pool, eventsChan <-chan any) chan any {
 	if throttleDuration == 0 {
 		return nil
 	}
 
 	// Create a buffered channel to hold the pending event (if we're delaying processing the event due to throttling).
-	eventsChanBuffered := make(chan interface{}, 1)
+	eventsChanBuffered := make(chan any, 1)
 
 	// Run a goroutine that reads events from eventChan and does a
 	// non-blocking write to pendingEvent. This guarantees that writing to

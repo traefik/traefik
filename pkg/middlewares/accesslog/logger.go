@@ -74,20 +74,6 @@ type Handler struct {
 	wg             sync.WaitGroup
 }
 
-// AliceConstructor returns an alice.Constructor that wraps the Handler (conditionally) in a middleware chain.
-func (h *Handler) AliceConstructor() alice.Constructor {
-	return func(next http.Handler) (http.Handler, error) {
-		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-			if h == nil {
-				next.ServeHTTP(rw, req)
-				return
-			}
-
-			h.ServeHTTP(rw, req, next)
-		}), nil
-	}
-}
-
 // NewHandler creates a new Handler.
 func NewHandler(ctx context.Context, config *otypes.AccessLog) (*Handler, error) {
 	var file io.WriteCloser = noopCloser{os.Stdout}
@@ -185,28 +171,18 @@ func NewHandler(ctx context.Context, config *otypes.AccessLog) (*Handler, error)
 	return logHandler, nil
 }
 
-func openAccessLogFile(filePath string) (*os.File, error) {
-	dir := filepath.Dir(filePath)
+// AliceConstructor returns an alice.Constructor that wraps the Handler (conditionally) in a middleware chain.
+func (h *Handler) AliceConstructor() alice.Constructor {
+	return func(next http.Handler) (http.Handler, error) {
+		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			if h == nil {
+				next.ServeHTTP(rw, req)
+				return
+			}
 
-	if err := os.MkdirAll(dir, 0o755); err != nil {
-		return nil, fmt.Errorf("failed to create log path %s: %w", dir, err)
+			h.ServeHTTP(rw, req, next)
+		}), nil
 	}
-
-	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0o664)
-	if err != nil {
-		return nil, fmt.Errorf("error opening file %s: %w", filePath, err)
-	}
-
-	return file, nil
-}
-
-// GetLogData gets the request context object that contains logging data.
-// This creates data as the request passes through the middleware chain.
-func GetLogData(req *http.Request) *LogData {
-	if ld, ok := req.Context().Value(DataTableKey).(*LogData); ok {
-		return ld
-	}
-	return nil
 }
 
 func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http.Handler) {
@@ -337,23 +313,6 @@ func (h *Handler) Rotate() error {
 	return nil
 }
 
-func silentSplitHostPort(value string) (host, port string) {
-	host, port, err := net.SplitHostPort(value)
-	if err != nil {
-		return value, "-"
-	}
-	return host, port
-}
-
-func usernameIfPresent(theURL *url.URL) string {
-	if theURL.User != nil {
-		if name := theURL.User.Username(); name != "" {
-			return name
-		}
-	}
-	return "-"
-}
-
 // Logging handler to log frontend name, backend name, and elapsed time.
 func (h *Handler) logTheRoundTrip(ctx context.Context, logDataTable *LogData) {
 	core := logDataTable.Core
@@ -458,6 +417,47 @@ func (h *Handler) keepAccessLog(statusCode, retryAttempts int, duration time.Dur
 	}
 
 	return false
+}
+
+// GetLogData gets the request context object that contains logging data.
+// This creates data as the request passes through the middleware chain.
+func GetLogData(req *http.Request) *LogData {
+	if ld, ok := req.Context().Value(DataTableKey).(*LogData); ok {
+		return ld
+	}
+	return nil
+}
+
+func openAccessLogFile(filePath string) (*os.File, error) {
+	dir := filepath.Dir(filePath)
+
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return nil, fmt.Errorf("failed to create log path %s: %w", dir, err)
+	}
+
+	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0o664)
+	if err != nil {
+		return nil, fmt.Errorf("error opening file %s: %w", filePath, err)
+	}
+
+	return file, nil
+}
+
+func silentSplitHostPort(value string) (host, port string) {
+	host, port, err := net.SplitHostPort(value)
+	if err != nil {
+		return value, "-"
+	}
+	return host, port
+}
+
+func usernameIfPresent(theURL *url.URL) string {
+	if theURL.User != nil {
+		if name := theURL.User.Username(); name != "" {
+			return name
+		}
+	}
+	return "-"
 }
 
 var requestCounter uint64 // Request ID

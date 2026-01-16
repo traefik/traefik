@@ -2,7 +2,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.16.1
+    controller-gen.kubebuilder.io/version: v0.19.0
   name: ingressroutes.traefik.io
 spec:
   group: traefik.io
@@ -377,6 +377,7 @@ spec:
                       description: |-
                         Syntax defines the router's rule syntax.
                         More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/routing/rules-and-priority/#rulesyntax
+
                         Deprecated: Please do not use this field and rewrite the router rules to use the v3 syntax.
                       type: string
                   required:
@@ -468,7 +469,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.16.1
+    controller-gen.kubebuilder.io/version: v0.19.0
   name: ingressroutetcps.traefik.io
 spec:
   group: traefik.io
@@ -592,6 +593,7 @@ spec:
                             description: |-
                               ProxyProtocol defines the PROXY protocol configuration.
                               More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/tcp/service/#proxy-protocol
+
                               Deprecated: ProxyProtocol will not be supported in future APIVersions, please use ServersTransport to configure ProxyProtocol instead.
                             properties:
                               version:
@@ -614,6 +616,7 @@ spec:
                               hence fully terminating the connection.
                               It is a duration in milliseconds, defaulting to 100.
                               A negative value means an infinite deadline (i.e. the reading capability is never closed).
+
                               Deprecated: TerminationDelay will not be supported in future APIVersions, please use ServersTransport to configure the TerminationDelay instead.
                             type: integer
                           tls:
@@ -634,6 +637,7 @@ spec:
                       description: |-
                         Syntax defines the router's rule syntax.
                         More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/tcp/routing/rules-and-priority/#rulesyntax
+
                         Deprecated: Please do not use this field and rewrite the router rules to use the v3 syntax.
                       enum:
                       - v3
@@ -728,7 +732,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.16.1
+    controller-gen.kubebuilder.io/version: v0.19.0
   name: ingressrouteudps.traefik.io
 spec:
   group: traefik.io
@@ -844,7 +848,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.16.1
+    controller-gen.kubebuilder.io/version: v0.19.0
   name: middlewares.traefik.io
 spec:
   group: traefik.io
@@ -1072,6 +1076,7 @@ spec:
                     description: |-
                       AutoDetect specifies whether to let the `Content-Type` header, if it has not been set by the backend,
                       be automatically set to a value derived from the contents of the response.
+
                       Deprecated: AutoDetect option is deprecated, Content-Type middleware is only meant to be used to enable the content-type detection, please remove any usage of this option.
                     type: boolean
                 type: object
@@ -2158,7 +2163,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.16.1
+    controller-gen.kubebuilder.io/version: v0.19.0
   name: middlewaretcps.traefik.io
 spec:
   group: traefik.io
@@ -2224,8 +2229,9 @@ spec:
                 description: |-
                   IPWhiteList defines the IPWhiteList middleware configuration.
                   This middleware accepts/refuses connections based on the client IP.
-                  Deprecated: please use IPAllowList instead.
                   More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/tcp/middlewares/ipwhitelist/
+
+                  Deprecated: please use IPAllowList instead.
                 properties:
                   sourceRange:
                     description: SourceRange defines the allowed IPs (or ranges of
@@ -2246,7 +2252,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.16.1
+    controller-gen.kubebuilder.io/version: v0.19.0
   name: serverstransports.traefik.io
 spec:
   group: traefik.io
@@ -2396,6 +2402,7 @@ spec:
               rootCAsSecrets:
                 description: |-
                   RootCAsSecrets defines a list of CA secret used to validate self-signed certificate.
+
                   Deprecated: RootCAsSecrets is deprecated, please use the RootCAs option instead.
                 items:
                   type: string
@@ -2429,7 +2436,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.16.1
+    controller-gen.kubebuilder.io/version: v0.19.0
   name: serverstransporttcps.traefik.io
 spec:
   group: traefik.io
@@ -2550,6 +2557,7 @@ spec:
                   rootCAsSecrets:
                     description: |-
                       RootCAsSecrets defines a list of CA secret used to validate self-signed certificate.
+
                       Deprecated: RootCAsSecrets is deprecated, please use the RootCAs option instead.
                     items:
                       type: string
@@ -2585,7 +2593,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.16.1
+    controller-gen.kubebuilder.io/version: v0.19.0
   name: tlsoptions.traefik.io
 spec:
   group: traefik.io
@@ -2685,6 +2693,7 @@ spec:
                 description: |-
                   PreferServerCipherSuites defines whether the server chooses a cipher suite among his own instead of among the client's.
                   It is enabled automatically when minVersion or maxVersion is set.
+
                   Deprecated: https://github.com/golang/go/issues/45430
                 type: boolean
               sniStrict:
@@ -2703,7 +2712,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.16.1
+    controller-gen.kubebuilder.io/version: v0.19.0
   name: tlsstores.traefik.io
 spec:
   group: traefik.io
@@ -2800,7 +2809,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.16.1
+    controller-gen.kubebuilder.io/version: v0.19.0
   name: traefikservices.traefik.io
 spec:
   group: traefik.io

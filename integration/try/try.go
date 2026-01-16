@@ -19,6 +19,7 @@ const (
 type timedAction func(timeout time.Duration, operation DoCondition) error
 
 // Sleep pauses the current goroutine for at least the duration d.
+//
 // Deprecated: Use only when use another Try[...] functions is not possible.
 func Sleep(d time.Duration) {
 	d = applyCIMultiplier(d)
@@ -92,10 +93,7 @@ func Do(timeout time.Duration, operation DoCondition) error {
 		panic("timeout must be larger than zero")
 	}
 
-	interval := time.Duration(math.Ceil(float64(timeout) / 15.0))
-	if interval > maxInterval {
-		interval = maxInterval
-	}
+	interval := min(time.Duration(math.Ceil(float64(timeout)/15.0)), maxInterval)
 
 	timeout = applyCIMultiplier(timeout)
 

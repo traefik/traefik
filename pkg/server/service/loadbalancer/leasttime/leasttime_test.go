@@ -23,6 +23,7 @@ func pointer[T any](v T) *T { return &v }
 // responseRecorder tracks which servers handled requests.
 type responseRecorder struct {
 	*httptest.ResponseRecorder
+
 	save map[string]int
 }
 

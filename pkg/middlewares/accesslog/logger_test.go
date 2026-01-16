@@ -503,32 +503,32 @@ func TestLoggerGenericCLFWithBufferingSize(t *testing.T) {
 	assertValidGenericCLFLogData(t, expectedLog, logData)
 }
 
-func assertString(exp string) func(t *testing.T, actual interface{}) {
-	return func(t *testing.T, actual interface{}) {
+func assertString(exp string) func(t *testing.T, actual any) {
+	return func(t *testing.T, actual any) {
 		t.Helper()
 
 		assert.Equal(t, exp, actual)
 	}
 }
 
-func assertNotEmpty() func(t *testing.T, actual interface{}) {
-	return func(t *testing.T, actual interface{}) {
+func assertNotEmpty() func(t *testing.T, actual any) {
+	return func(t *testing.T, actual any) {
 		t.Helper()
 
 		assert.NotEmpty(t, actual)
 	}
 }
 
-func assertFloat64(exp float64) func(t *testing.T, actual interface{}) {
-	return func(t *testing.T, actual interface{}) {
+func assertFloat64(exp float64) func(t *testing.T, actual any) {
+	return func(t *testing.T, actual any) {
 		t.Helper()
 
 		assert.InDelta(t, exp, actual, delta)
 	}
 }
 
-func assertFloat64NotZero() func(t *testing.T, actual interface{}) {
-	return func(t *testing.T, actual interface{}) {
+func assertFloat64NotZero() func(t *testing.T, actual any) {
+	return func(t *testing.T, actual any) {
 		t.Helper()
 
 		assert.NotZero(t, actual)
@@ -541,7 +541,7 @@ func TestLoggerJSON(t *testing.T) {
 		config   *otypes.AccessLog
 		tls      bool
 		tracing  bool
-		expected map[string]func(t *testing.T, value interface{})
+		expected map[string]func(t *testing.T, value any)
 	}{
 		{
 			desc: "default config without tracing",
@@ -549,7 +549,7 @@ func TestLoggerJSON(t *testing.T) {
 				FilePath: "",
 				Format:   JSONFormat,
 			},
-			expected: map[string]func(t *testing.T, value interface{}){
+			expected: map[string]func(t *testing.T, value any){
 				RequestContentSize:        assertFloat64(0),
 				RequestHost:               assertString(testHostname),
 				RequestAddr:               assertString(testHostname),
@@ -589,7 +589,7 @@ func TestLoggerJSON(t *testing.T) {
 				Format:   JSONFormat,
 			},
 			tracing: true,
-			expected: map[string]func(t *testing.T, value interface{}){
+			expected: map[string]func(t *testing.T, value any){
 				RequestContentSize:        assertFloat64(0),
 				RequestHost:               assertString(testHostname),
 				RequestAddr:               assertString(testHostname),
@@ -631,7 +631,7 @@ func TestLoggerJSON(t *testing.T) {
 				Format:   JSONFormat,
 			},
 			tls: true,
-			expected: map[string]func(t *testing.T, value interface{}){
+			expected: map[string]func(t *testing.T, value any){
 				RequestContentSize:        assertFloat64(0),
 				RequestHost:               assertString(testHostname),
 				RequestAddr:               assertString(testHostname),
@@ -676,7 +676,7 @@ func TestLoggerJSON(t *testing.T) {
 					DefaultMode: "drop",
 				},
 			},
-			expected: map[string]func(t *testing.T, value interface{}){
+			expected: map[string]func(t *testing.T, value any){
 				"level":                   assertString("info"),
 				"msg":                     assertString(""),
 				"time":                    assertNotEmpty(),
@@ -697,7 +697,7 @@ func TestLoggerJSON(t *testing.T) {
 					},
 				},
 			},
-			expected: map[string]func(t *testing.T, value interface{}){
+			expected: map[string]func(t *testing.T, value any){
 				"level": assertString("info"),
 				"msg":   assertString(""),
 				"time":  assertNotEmpty(),
@@ -715,7 +715,7 @@ func TestLoggerJSON(t *testing.T) {
 					},
 				},
 			},
-			expected: map[string]func(t *testing.T, value interface{}){
+			expected: map[string]func(t *testing.T, value any){
 				"level":                   assertString("info"),
 				"msg":                     assertString(""),
 				"time":                    assertNotEmpty(),
@@ -742,7 +742,7 @@ func TestLoggerJSON(t *testing.T) {
 					},
 				},
 			},
-			expected: map[string]func(t *testing.T, value interface{}){
+			expected: map[string]func(t *testing.T, value any){
 				RequestHost:          assertString(testHostname),
 				"level":              assertString("info"),
 				"msg":                assertString(""),
@@ -768,7 +768,7 @@ func TestLoggerJSON(t *testing.T) {
 					},
 				},
 			},
-			expected: map[string]func(t *testing.T, value interface{}){
+			expected: map[string]func(t *testing.T, value any){
 				RequestHost:          assertString(testHostname),
 				"level":              assertString("info"),
 				"msg":                assertString(""),
@@ -794,7 +794,7 @@ func TestLoggerJSON(t *testing.T) {
 			logData, err := os.ReadFile(logFilePath)
 			require.NoError(t, err)
 
-			jsonData := make(map[string]interface{})
+			jsonData := make(map[string]any)
 			err = json.Unmarshal(logData, &jsonData)
 			require.NoError(t, err)
 
@@ -808,7 +808,7 @@ func TestLoggerJSON(t *testing.T) {
 }
 
 func TestLogger_AbortedRequest(t *testing.T) {
-	expected := map[string]func(t *testing.T, value interface{}){
+	expected := map[string]func(t *testing.T, value any){
 		RequestContentSize:             assertFloat64(0),
 		RequestHost:                    assertString(testHostname),
 		RequestAddr:                    assertString(testHostname),
@@ -851,7 +851,7 @@ func TestLogger_AbortedRequest(t *testing.T) {
 	logData, err := os.ReadFile(config.FilePath)
 	require.NoError(t, err)
 
-	jsonData := make(map[string]interface{})
+	jsonData := make(map[string]any)
 	err = json.Unmarshal(logData, &jsonData)
 	require.NoError(t, err)
 

@@ -71,43 +71,10 @@ type composeDeploy struct {
 
 type BaseSuite struct {
 	suite.Suite
+
 	containers map[string]testcontainers.Container
 	network    *testcontainers.DockerNetwork
 	hostIP     string
-}
-
-func (s *BaseSuite) waitForTraefik(containerName string) {
-	time.Sleep(1 * time.Second)
-
-	// Wait for Traefik to turn ready.
-	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8080/api/rawdata", nil)
-	require.NoError(s.T(), err)
-
-	err = try.Request(req, 2*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains(containerName))
-	require.NoError(s.T(), err)
-}
-
-func (s *BaseSuite) displayTraefikLogFile(path string) {
-	if s.T().Failed() {
-		if _, err := os.Stat(path); !os.IsNotExist(err) {
-			content, errRead := os.ReadFile(path)
-			// TODO TestName
-			// fmt.Printf("%s: Traefik logs: \n", c.TestName())
-			fmt.Print("Traefik logs: \n")
-			if errRead == nil {
-				fmt.Println(string(content))
-			} else {
-				fmt.Println(errRead)
-			}
-		} else {
-			// fmt.Printf("%s: No Traefik logs.\n", c.TestName())
-			fmt.Print("No Traefik logs.\n")
-		}
-		errRemove := os.Remove(path)
-		if errRemove != nil {
-			fmt.Println(errRemove)
-		}
-	}
 }
 
 func (s *BaseSuite) SetupSuite() {
@@ -425,7 +392,7 @@ func (s *BaseSuite) getDockerHost() string {
 	return dockerHost
 }
 
-func (s *BaseSuite) adaptFile(path string, tempObjects interface{}) string {
+func (s *BaseSuite) adaptFile(path string, tempObjects any) string {
 	// Load file
 	tmpl, err := template.ParseFiles(path)
 	require.NoError(s.T(), err)
@@ -512,4 +479,38 @@ func (s *BaseSuite) composeExec(service string, args ...string) string {
 	require.NoError(s.T(), err)
 
 	return string(content)
+}
+
+func (s *BaseSuite) waitForTraefik(containerName string) {
+	time.Sleep(1 * time.Second)
+
+	// Wait for Traefik to turn ready.
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8080/api/rawdata", nil)
+	require.NoError(s.T(), err)
+
+	err = try.Request(req, 2*time.Second, try.StatusCodeIs(http.StatusOK), try.BodyContains(containerName))
+	require.NoError(s.T(), err)
+}
+
+func (s *BaseSuite) displayTraefikLogFile(path string) {
+	if s.T().Failed() {
+		if _, err := os.Stat(path); !os.IsNotExist(err) {
+			content, errRead := os.ReadFile(path)
+			// TODO TestName
+			// fmt.Printf("%s: Traefik logs: \n", c.TestName())
+			fmt.Print("Traefik logs: \n")
+			if errRead == nil {
+				fmt.Println(string(content))
+			} else {
+				fmt.Println(errRead)
+			}
+		} else {
+			// fmt.Printf("%s: No Traefik logs.\n", c.TestName())
+			fmt.Print("No Traefik logs.\n")
+		}
+		errRemove := os.Remove(path)
+		if errRemove != nil {
+			fmt.Println(errRemove)
+		}
+	}
 }

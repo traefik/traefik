@@ -32,6 +32,7 @@ type checkRouter func(addr string, timeout time.Duration) error
 
 type httpForwarder struct {
 	net.Listener
+
 	connChan chan net.Conn
 	errChan  chan error
 }
@@ -1112,16 +1113,16 @@ func TestPostgres(t *testing.T) {
 	require.Equal(t, []byte("OK"), b)
 }
 
+type MockConn struct {
+	dataRead  chan []byte
+	dataWrite chan []byte
+}
+
 func NewMockConn() *MockConn {
 	return &MockConn{
 		dataRead:  make(chan []byte),
 		dataWrite: make(chan []byte),
 	}
-}
-
-type MockConn struct {
-	dataRead  chan []byte
-	dataWrite chan []byte
 }
 
 func (m *MockConn) Read(b []byte) (n int, err error) {

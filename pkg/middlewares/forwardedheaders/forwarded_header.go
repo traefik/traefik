@@ -84,18 +84,11 @@ func NewXForwarded(insecure bool, trustedIPs []string, connectionHeaders []strin
 	}, nil
 }
 
-func (x *XForwarded) isTrustedIP(ip string) bool {
-	if x.ipChecker == nil {
-		return false
-	}
-	return x.ipChecker.IsAuthorized(ip) == nil
-}
-
 // removeIPv6Zone removes the zone if the given IP is an ipv6 address and it has {zone} information in it,
 // like "[fe80::d806:a55d:eb1b:49cc%vEthernet (vmxnet3 Ethernet Adapter - Virtual Switch)]:64692".
 func removeIPv6Zone(clientIP string) string {
-	if idx := strings.Index(clientIP, "%"); idx != -1 {
-		return clientIP[:idx]
+	if before, _, found := strings.Cut(clientIP, "%"); found {
+		return before
 	}
 	return clientIP
 }
@@ -139,6 +132,32 @@ func forwardedPort(req *http.Request) string {
 	}
 
 	return "80"
+}
+
+// ServeHTTP implements http.Handler.
+func (x *XForwarded) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if !x.insecure && !x.isTrustedIP(r.RemoteAddr) {
+		for _, h := range xHeaders {
+			unsafeHeader(r.Header).Del(h)
+		}
+	}
+
+	x.rewrite(r)
+
+	x.removeConnectionHeaders(r)
+
+	if x.notAppendXForwardedFor {
+		r = r.WithContext(httputil.SetNotAppendXFF(r.Context()))
+	}
+
+	x.next.ServeHTTP(w, r)
+}
+
+func (x *XForwarded) isTrustedIP(ip string) bool {
+	if x.ipChecker == nil {
+		return false
+	}
+	return x.ipChecker.IsAuthorized(ip) == nil
 }
 
 func (x *XForwarded) rewrite(outreq *http.Request) {
@@ -187,25 +206,6 @@ func (x *XForwarded) rewrite(outreq *http.Request) {
 	if x.hostname != "" {
 		unsafeHeader(outreq.Header).Set(xForwardedServer, x.hostname)
 	}
-}
-
-// ServeHTTP implements http.Handler.
-func (x *XForwarded) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if !x.insecure && !x.isTrustedIP(r.RemoteAddr) {
-		for _, h := range xHeaders {
-			unsafeHeader(r.Header).Del(h)
-		}
-	}
-
-	x.rewrite(r)
-
-	x.removeConnectionHeaders(r)
-
-	if x.notAppendXForwardedFor {
-		r = r.WithContext(httputil.SetNotAppendXFF(r.Context()))
-	}
-
-	x.next.ServeHTTP(w, r)
 }
 
 func (x *XForwarded) removeConnectionHeaders(req *http.Request) {

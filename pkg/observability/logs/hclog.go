@@ -21,26 +21,26 @@ func NewRetryableHTTPLogger(logger zerolog.Logger) *RetryableHTTPLogger {
 }
 
 // Error starts a new message with error level.
-func (l RetryableHTTPLogger) Error(msg string, keysAndValues ...interface{}) {
+func (l RetryableHTTPLogger) Error(msg string, keysAndValues ...any) {
 	logWithLevel(l.logger.Error().CallerSkipFrame(2), msg, keysAndValues...)
 }
 
 // Info starts a new message with info level.
-func (l RetryableHTTPLogger) Info(msg string, keysAndValues ...interface{}) {
+func (l RetryableHTTPLogger) Info(msg string, keysAndValues ...any) {
 	logWithLevel(l.logger.Info().CallerSkipFrame(2), msg, keysAndValues...)
 }
 
 // Debug starts a new message with debug level.
-func (l RetryableHTTPLogger) Debug(msg string, keysAndValues ...interface{}) {
+func (l RetryableHTTPLogger) Debug(msg string, keysAndValues ...any) {
 	logWithLevel(l.logger.Debug().CallerSkipFrame(2), msg, keysAndValues...)
 }
 
 // Warn starts a new message with warn level.
-func (l RetryableHTTPLogger) Warn(msg string, keysAndValues ...interface{}) {
+func (l RetryableHTTPLogger) Warn(msg string, keysAndValues ...any) {
 	logWithLevel(l.logger.Warn().CallerSkipFrame(2), msg, keysAndValues...)
 }
 
-func logWithLevel(ev *zerolog.Event, msg string, kvs ...interface{}) {
+func logWithLevel(ev *zerolog.Event, msg string, kvs ...any) {
 	if len(kvs)%2 == 0 {
 		for i := 0; i < len(kvs)-1; i += 2 {
 			// The first item of the pair (the key) is supposed to be a string.
