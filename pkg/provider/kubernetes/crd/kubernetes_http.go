@@ -82,7 +82,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 
 			serviceKey := makeServiceKey(route.Match, ingressName)
 
-			mds, err := p.makeMiddlewareKeys(ctx, ingressRoute.Namespace, route.Middlewares)
+			mds, err := makeMiddlewareKeys(ctx, ingressRoute.Namespace, route.Middlewares, p.AllowCrossNamespace)
 			if err != nil {
 				logger.Error().Err(err).Msg("Failed to create middleware keys")
 				continue
@@ -172,13 +172,13 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 	return conf
 }
 
-func (p *Provider) makeMiddlewareKeys(ctx context.Context, ingRouteNamespace string, middlewares []traefikv1alpha1.MiddlewareRef) ([]string, error) {
+func makeMiddlewareKeys(ctx context.Context, namespace string, middlewares []traefikv1alpha1.MiddlewareRef, allowCrossNamespace bool) ([]string, error) {
 	var mds []string
 
 	for _, mi := range middlewares {
 		name := mi.Name
 
-		if !p.AllowCrossNamespace && strings.HasSuffix(mi.Name, providerNamespaceSeparator+providerName) {
+		if !allowCrossNamespace && strings.HasSuffix(mi.Name, providerNamespaceSeparator+providerName) {
 			// Since we are not able to know if another namespace is in the name (namespace-name@kubernetescrd),
 			// if the provider namespace kubernetescrd is used,
 			// we don't allow this format to avoid cross namespace references.
@@ -196,10 +196,10 @@ func (p *Provider) makeMiddlewareKeys(ctx context.Context, ingRouteNamespace str
 			continue
 		}
 
-		ns := ingRouteNamespace
+		ns := namespace
 		if len(mi.Namespace) > 0 {
-			if !isNamespaceAllowed(p.AllowCrossNamespace, ingRouteNamespace, mi.Namespace) {
-				return nil, fmt.Errorf("middleware %s/%s is not in the IngressRoute namespace %s", mi.Namespace, mi.Name, ingRouteNamespace)
+			if !isNamespaceAllowed(allowCrossNamespace, namespace, mi.Namespace) {
+				return nil, fmt.Errorf("middleware %s/%s is not in the parent namespace %s", mi.Namespace, mi.Name, namespace)
 			}
 
 			ns = mi.Namespace
@@ -333,6 +333,7 @@ func (c configBuilder) buildServicesLB(ctx context.Context, namespace string, tS
 			Sticky:   sticky,
 		},
 	}
+
 	return nil
 }
 
@@ -378,7 +379,7 @@ func (c configBuilder) buildMirroring(ctx context.Context, tService *traefikv1al
 }
 
 // buildServersLB creates the configuration for the load-balancer of servers defined by svc.
-func (c configBuilder) buildServersLB(namespace string, svc traefikv1alpha1.LoadBalancerSpec) (*dynamic.Service, error) {
+func (c configBuilder) buildServersLB(ctx context.Context, namespace string, svc traefikv1alpha1.LoadBalancerSpec) (*dynamic.Service, error) {
 	lb := &dynamic.ServersLoadBalancer{}
 	lb.SetDefaults()
 
@@ -501,7 +502,16 @@ func (c configBuilder) buildServersLB(namespace string, svc traefikv1alpha1.Load
 		return nil, err
 	}
 
-	return &dynamic.Service{LoadBalancer: lb}, nil
+	service := &dynamic.Service{LoadBalancer: lb}
+	if len(svc.Middlewares) > 0 {
+		mds, err := makeMiddlewareKeys(ctx, namespace, svc.Middlewares, c.allowCrossNamespace)
+		if err != nil {
+			return nil, err
+		}
+		service.Middlewares = mds
+	}
+
+	return service, nil
 }
 
 func (c configBuilder) makeServersTransportKey(parentNamespace string, serversTransportName string) (string, error) {
@@ -687,7 +697,7 @@ func (c configBuilder) nameAndService(ctx context.Context, parentNamespace strin
 
 	switch service.Kind {
 	case "", "Service":
-		serversLB, err := c.buildServersLB(namespace, service)
+		serversLB, err := c.buildServersLB(ctx, namespace, service)
 		if err != nil {
 			return "", nil, err
 		}
