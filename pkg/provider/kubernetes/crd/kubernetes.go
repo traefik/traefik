@@ -645,6 +645,32 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 	return conf
 }
 
+func (p *Provider) createErrorPageMiddleware(ctx context.Context, client Client, namespace string, errorPage *traefikv1alpha1.ErrorPage) (*dynamic.ErrorPage, *dynamic.Service, error) {
+	if errorPage == nil {
+		return nil, nil, nil
+	}
+
+	errorPageMiddleware := &dynamic.ErrorPage{
+		Status:         errorPage.Status,
+		StatusRewrites: errorPage.StatusRewrites,
+		Query:          errorPage.Query,
+	}
+
+	cb := configBuilder{
+		client:                    client,
+		allowCrossNamespace:       p.AllowCrossNamespace,
+		allowExternalNameServices: p.AllowExternalNameServices,
+		allowEmptyServices:        p.AllowEmptyServices,
+	}
+
+	balancerServerHTTP, err := cb.buildServersLB(ctx, namespace, errorPage.Service.LoadBalancerSpec)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return errorPageMiddleware, balancerServerHTTP, nil
+}
+
 // getServicePort always returns a valid port, an error otherwise.
 func getServicePort(svc *corev1.Service, port intstr.IntOrString) (*corev1.ServicePort, error) {
 	if svc == nil {
@@ -964,32 +990,6 @@ func createRetryMiddleware(retry *traefikv1alpha1.Retry) (*dynamic.Retry, error)
 	}
 
 	return r, nil
-}
-
-func (p *Provider) createErrorPageMiddleware(ctx context.Context, client Client, namespace string, errorPage *traefikv1alpha1.ErrorPage) (*dynamic.ErrorPage, *dynamic.Service, error) {
-	if errorPage == nil {
-		return nil, nil, nil
-	}
-
-	errorPageMiddleware := &dynamic.ErrorPage{
-		Status:         errorPage.Status,
-		StatusRewrites: errorPage.StatusRewrites,
-		Query:          errorPage.Query,
-	}
-
-	cb := configBuilder{
-		client:                    client,
-		allowCrossNamespace:       p.AllowCrossNamespace,
-		allowExternalNameServices: p.AllowExternalNameServices,
-		allowEmptyServices:        p.AllowEmptyServices,
-	}
-
-	balancerServerHTTP, err := cb.buildServersLB(ctx, namespace, errorPage.Service.LoadBalancerSpec)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return errorPageMiddleware, balancerServerHTTP, nil
 }
 
 func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *traefikv1alpha1.ForwardAuth) (*dynamic.ForwardAuth, error) {
