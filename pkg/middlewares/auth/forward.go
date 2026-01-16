@@ -244,8 +244,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			logger.Debug().Msgf("Redirecting to signin URL: %s", fa.authSigninURL)
 
 			tracer.CaptureResponse(forwardSpan, forwardResponse.Header, http.StatusFound, trace.SpanKindClient)
-			rw.Header().Set("Location", fa.authSigninURL)
-			rw.WriteHeader(http.StatusFound)
+			http.Redirect(rw, req, fa.authSigninURL, http.StatusFound)
 			return
 		}
 
