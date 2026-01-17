@@ -434,12 +434,10 @@ func TestServiceHealthChecker_Launch(t *testing.T) {
 			hc := NewServiceHealthChecker(ctx, &MetricsMock{gauge}, config, lb, serviceInfo, http.DefaultTransport, map[string]*url.URL{"test": targetURL}, "foobar")
 
 			wg := sync.WaitGroup{}
-			wg.Add(1)
 
-			go func() {
+			wg.Go(func() {
 				hc.Launch(ctx)
-				wg.Done()
-			}()
+			})
 
 			select {
 			case <-time.After(timeout):
@@ -491,12 +489,10 @@ func TestDifferentIntervals(t *testing.T) {
 	hc := NewServiceHealthChecker(ctx, &MetricsMock{gauge}, config, lb, serviceInfo, http.DefaultTransport, map[string]*url.URL{"healthy": healthyURL, "unhealthy": unhealthyURL}, "foobar")
 
 	wg := sync.WaitGroup{}
-	wg.Add(1)
 
-	go func() {
+	wg.Go(func() {
 		hc.Launch(ctx)
-		wg.Done()
-	}()
+	})
 
 	select {
 	case <-time.After(2 * time.Second):
