@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -56,10 +57,8 @@ func alpnV2(tree *matchersTree, protos ...string) error {
 
 	tree.matcher = func(meta ConnData) bool {
 		for _, proto := range meta.alpnProtos {
-			for _, filter := range protos {
-				if proto == filter {
-					return true
-				}
+			if slices.Contains(protos, proto) {
+				return true
 			}
 		}
 

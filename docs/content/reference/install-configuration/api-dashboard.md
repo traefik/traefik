@@ -255,4 +255,4 @@ rule = "PathPrefix(`/api`) || PathPrefix(`/dashboard`)"
 rule = "Host(`traefik.example.com`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
 ```
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

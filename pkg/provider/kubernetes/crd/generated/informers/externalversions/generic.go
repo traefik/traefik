@@ -27,7 +27,7 @@ THE SOFTWARE.
 package externalversions
 
 import (
-	"fmt"
+	fmt "fmt"
 
 	v1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"

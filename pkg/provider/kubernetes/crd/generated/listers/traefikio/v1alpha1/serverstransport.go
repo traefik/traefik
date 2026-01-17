@@ -27,10 +27,10 @@ THE SOFTWARE.
 package v1alpha1
 
 import (
-	v1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/tools/cache"
+	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	labels "k8s.io/apimachinery/pkg/labels"
+	listers "k8s.io/client-go/listers"
+	cache "k8s.io/client-go/tools/cache"
 )
 
 // ServersTransportLister helps list ServersTransports.
@@ -38,7 +38,7 @@ import (
 type ServersTransportLister interface {
 	// List lists all ServersTransports in the indexer.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1alpha1.ServersTransport, err error)
+	List(selector labels.Selector) (ret []*traefikiov1alpha1.ServersTransport, err error)
 	// ServersTransports returns an object that can list and get ServersTransports.
 	ServersTransports(namespace string) ServersTransportNamespaceLister
 	ServersTransportListerExpansion
@@ -46,25 +46,17 @@ type ServersTransportLister interface {
 
 // serversTransportLister implements the ServersTransportLister interface.
 type serversTransportLister struct {
-	indexer cache.Indexer
+	listers.ResourceIndexer[*traefikiov1alpha1.ServersTransport]
 }
 
 // NewServersTransportLister returns a new ServersTransportLister.
 func NewServersTransportLister(indexer cache.Indexer) ServersTransportLister {
-	return &serversTransportLister{indexer: indexer}
-}
-
-// List lists all ServersTransports in the indexer.
-func (s *serversTransportLister) List(selector labels.Selector) (ret []*v1alpha1.ServersTransport, err error) {
-	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1alpha1.ServersTransport))
-	})
-	return ret, err
+	return &serversTransportLister{listers.New[*traefikiov1alpha1.ServersTransport](indexer, traefikiov1alpha1.Resource("serverstransport"))}
 }
 
 // ServersTransports returns an object that can list and get ServersTransports.
 func (s *serversTransportLister) ServersTransports(namespace string) ServersTransportNamespaceLister {
-	return serversTransportNamespaceLister{indexer: s.indexer, namespace: namespace}
+	return serversTransportNamespaceLister{listers.NewNamespaced[*traefikiov1alpha1.ServersTransport](s.ResourceIndexer, namespace)}
 }
 
 // ServersTransportNamespaceLister helps list and get ServersTransports.
@@ -72,36 +64,15 @@ func (s *serversTransportLister) ServersTransports(namespace string) ServersTran
 type ServersTransportNamespaceLister interface {
 	// List lists all ServersTransports in the indexer for a given namespace.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1alpha1.ServersTransport, err error)
+	List(selector labels.Selector) (ret []*traefikiov1alpha1.ServersTransport, err error)
 	// Get retrieves the ServersTransport from the indexer for a given namespace and name.
 	// Objects returned here must be treated as read-only.
-	Get(name string) (*v1alpha1.ServersTransport, error)
+	Get(name string) (*traefikiov1alpha1.ServersTransport, error)
 	ServersTransportNamespaceListerExpansion
 }
 
 // serversTransportNamespaceLister implements the ServersTransportNamespaceLister
 // interface.
 type serversTransportNamespaceLister struct {
-	indexer   cache.Indexer
-	namespace string
-}
-
-// List lists all ServersTransports in the indexer for a given namespace.
-func (s serversTransportNamespaceLister) List(selector labels.Selector) (ret []*v1alpha1.ServersTransport, err error) {
-	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1alpha1.ServersTransport))
-	})
-	return ret, err
-}
-
-// Get retrieves the ServersTransport from the indexer for a given namespace and name.
-func (s serversTransportNamespaceLister) Get(name string) (*v1alpha1.ServersTransport, error) {
-	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, errors.NewNotFound(v1alpha1.Resource("serverstransport"), name)
-	}
-	return obj.(*v1alpha1.ServersTransport), nil
+	listers.ResourceIndexer[*traefikiov1alpha1.ServersTransport]
 }

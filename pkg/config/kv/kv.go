@@ -13,7 +13,7 @@ import (
 // KV pairs -> tree of untyped nodes
 // untyped nodes -> nodes augmented with metadata such as kind (inferred from element)
 // "typed" nodes -> typed element.
-func Decode(pairs []*store.KVPair, element interface{}, rootName string) error {
+func Decode(pairs []*store.KVPair, element any, rootName string) error {
 	if element == nil {
 		return nil
 	}
@@ -34,7 +34,7 @@ func Decode(pairs []*store.KVPair, element interface{}, rootName string) error {
 	return parser.Fill(element, node, parser.FillerOpts{AllowSliceAsStruct: false})
 }
 
-func getRootFieldNames(rootName string, element interface{}) []string {
+func getRootFieldNames(rootName string, element any) []string {
 	if element == nil {
 		return nil
 	}

@@ -333,6 +333,14 @@ func (m *Manager) GetServerCertificates() []*x509.Certificate {
 	return certificates
 }
 
+// GetStore gets the certificate store of a given name.
+func (m *Manager) GetStore(storeName string) *CertificateStore {
+	m.lock.RLock()
+	defer m.lock.RUnlock()
+
+	return m.getStore(storeName)
+}
+
 // getStore returns the store found for storeName, or nil otherwise.
 func (m *Manager) getStore(storeName string) *CertificateStore {
 	st, ok := m.stores[storeName]
@@ -340,14 +348,6 @@ func (m *Manager) getStore(storeName string) *CertificateStore {
 		return nil
 	}
 	return st
-}
-
-// GetStore gets the certificate store of a given name.
-func (m *Manager) GetStore(storeName string) *CertificateStore {
-	m.lock.RLock()
-	defer m.lock.RUnlock()
-
-	return m.getStore(storeName)
 }
 
 func (m *Manager) getDefaultCertificate(ctx context.Context, tlsStore Store, st *CertificateStore) (*CertificateData, error) {

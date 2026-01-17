@@ -331,4 +331,4 @@ If Let's Encrypt is not reachable, the following certificates will apply:
 !!! important
     For new (sub)domains which need Let's Encrypt authentication, the default Traefik certificate will be used until Traefik is restarted.
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

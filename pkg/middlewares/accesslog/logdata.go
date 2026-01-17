@@ -129,7 +129,7 @@ func init() {
 }
 
 // CoreLogData holds the fields computed from the request/response.
-type CoreLogData map[string]interface{}
+type CoreLogData map[string]any
 
 // LogData is the data captured by the middleware so that it can be logged.
 type LogData struct {

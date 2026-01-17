@@ -1784,7 +1784,7 @@ func TestLoadIngressRouteTCPs(t *testing.T) {
 			k8sObjects, crdObjects := readResources(t, test.paths)
 
 			kubeClient := kubefake.NewClientset(k8sObjects...)
-			crdClient := traefikcrdfake.NewSimpleClientset(crdObjects...)
+			crdClient := traefikcrdfake.NewClientset(crdObjects...)
 
 			client := newClientImpl(kubeClient, crdClient)
 
@@ -4473,7 +4473,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-test-secret": {
 							Plugin: map[string]dynamic.PluginConf{
-								"test-secret": map[string]interface{}{
+								"test-secret": map[string]any{
 									"user":   "admin",
 									"secret": "this_is_the_secret",
 								},
@@ -4505,10 +4505,10 @@ func TestLoadIngressRoutes(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-test-secret": {
 							Plugin: map[string]dynamic.PluginConf{
-								"test-secret": map[string]interface{}{
-									"secret_0": map[string]interface{}{
-										"secret_1": map[string]interface{}{
-											"secret_2": map[string]interface{}{
+								"test-secret": map[string]any{
+									"secret_0": map[string]any{
+										"secret_1": map[string]any{
+											"secret_2": map[string]any{
 												"user":   "admin",
 												"secret": "this_is_the_very_deep_secret",
 											},
@@ -4543,8 +4543,8 @@ func TestLoadIngressRoutes(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-test-secret": {
 							Plugin: map[string]dynamic.PluginConf{
-								"test-secret": map[string]interface{}{
-									"secret": []interface{}{"secret_data1", "secret_data2"},
+								"test-secret": map[string]any{
+									"secret": []any{"secret_data1", "secret_data2"},
 								},
 							},
 						},
@@ -4574,13 +4574,13 @@ func TestLoadIngressRoutes(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-test-secret": {
 							Plugin: map[string]dynamic.PluginConf{
-								"test-secret": map[string]interface{}{
-									"users": []interface{}{
-										map[string]interface{}{
+								"test-secret": map[string]any{
+									"users": []any{
+										map[string]any{
 											"name":   "admin",
 											"secret": "admin_password",
 										},
-										map[string]interface{}{
+										map[string]any{
 											"name":   "user",
 											"secret": "user_password",
 										},
@@ -6007,7 +6007,7 @@ func TestLoadIngressRoutes(t *testing.T) {
 			k8sObjects, crdObjects := readResources(t, test.paths)
 
 			kubeClient := kubefake.NewClientset(k8sObjects...)
-			crdClient := traefikcrdfake.NewSimpleClientset(crdObjects...)
+			crdClient := traefikcrdfake.NewClientset(crdObjects...)
 
 			client := newClientImpl(kubeClient, crdClient)
 
@@ -6089,7 +6089,7 @@ func TestLoadIngressRoutes_multipleEndpointAddresses(t *testing.T) {
 	k8sObjects, crdObjects := readResources(t, []string{"services.yml", "with_multiple_endpointslices.yml"})
 
 	kubeClient := kubefake.NewClientset(k8sObjects...)
-	crdClient := traefikcrdfake.NewSimpleClientset(crdObjects...)
+	crdClient := traefikcrdfake.NewClientset(crdObjects...)
 
 	client := newClientImpl(kubeClient, crdClient)
 
@@ -6724,7 +6724,7 @@ func TestLoadIngressRouteUDPs(t *testing.T) {
 			k8sObjects, crdObjects := readResources(t, test.paths)
 
 			kubeClient := kubefake.NewClientset(k8sObjects...)
-			crdClient := traefikcrdfake.NewSimpleClientset(crdObjects...)
+			crdClient := traefikcrdfake.NewClientset(crdObjects...)
 
 			client := newClientImpl(kubeClient, crdClient)
 
@@ -8227,7 +8227,7 @@ func TestCrossNamespace(t *testing.T) {
 			k8sObjects, crdObjects := readResources(t, test.paths)
 
 			kubeClient := kubefake.NewClientset(k8sObjects...)
-			crdClient := traefikcrdfake.NewSimpleClientset(crdObjects...)
+			crdClient := traefikcrdfake.NewClientset(crdObjects...)
 
 			client := newClientImpl(kubeClient, crdClient)
 
@@ -8497,7 +8497,7 @@ func TestExternalNameService(t *testing.T) {
 			k8sObjects, crdObjects := readResources(t, test.paths)
 
 			kubeClient := kubefake.NewClientset(k8sObjects...)
-			crdClient := traefikcrdfake.NewSimpleClientset(crdObjects...)
+			crdClient := traefikcrdfake.NewClientset(crdObjects...)
 
 			client := newClientImpl(kubeClient, crdClient)
 
@@ -8679,7 +8679,7 @@ func TestNativeLB(t *testing.T) {
 			k8sObjects, crdObjects := readResources(t, test.paths)
 
 			kubeClient := kubefake.NewClientset(k8sObjects...)
-			crdClient := traefikcrdfake.NewSimpleClientset(crdObjects...)
+			crdClient := traefikcrdfake.NewClientset(crdObjects...)
 
 			client := newClientImpl(kubeClient, crdClient)
 
@@ -8945,7 +8945,7 @@ func TestNodePortLB(t *testing.T) {
 			k8sObjects, crdObjects := readResources(t, test.paths)
 
 			kubeClient := kubefake.NewClientset(k8sObjects...)
-			crdClient := traefikcrdfake.NewSimpleClientset(crdObjects...)
+			crdClient := traefikcrdfake.NewClientset(crdObjects...)
 
 			client := newClientImpl(kubeClient, crdClient)
 
@@ -8986,7 +8986,7 @@ func TestCreateBasicAuthCredentials(t *testing.T) {
 	}
 
 	kubeClient := kubefake.NewClientset(k8sObjects...)
-	crdClient := traefikcrdfake.NewSimpleClientset()
+	crdClient := traefikcrdfake.NewClientset()
 
 	client := newClientImpl(kubeClient, crdClient)
 
@@ -9591,7 +9591,7 @@ func TestGlobalNativeLB(t *testing.T) {
 			}
 
 			kubeClient := kubefake.NewClientset(k8sObjects...)
-			crdClient := traefikcrdfake.NewSimpleClientset(crdObjects...)
+			crdClient := traefikcrdfake.NewClientset(crdObjects...)
 
 			client := newClientImpl(kubeClient, crdClient)
 
