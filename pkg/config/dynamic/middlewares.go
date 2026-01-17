@@ -302,6 +302,10 @@ type Headers struct {
 	CustomRequestHeaders map[string]string `json:"customRequestHeaders,omitempty" toml:"customRequestHeaders,omitempty" yaml:"customRequestHeaders,omitempty" export:"true"`
 	// CustomResponseHeaders defines the header names and values to apply to the response.
 	CustomResponseHeaders map[string]string `json:"customResponseHeaders,omitempty" toml:"customResponseHeaders,omitempty" yaml:"customResponseHeaders,omitempty" export:"true"`
+	// ReplaceRequestHeadersRegex replaces the header values to apply to the request.
+	ReplaceRequestHeadersRegex map[string]ReplaceHeaderRegex `json:"replaceRequestHeadersRegex,omitempty" toml:"replaceRequestHeadersRegex,omitempty" yaml:"replaceRequestHeadersRegex,omitempty" export:"true"`
+	// ReplaceResponseHeadersRegex replaces the header values to apply to the response.
+	ReplaceResponseHeadersRegex map[string]ReplaceHeaderRegex `json:"replaceResponseHeadersRegex,omitempty" toml:"replaceResponseHeadersRegex,omitempty" yaml:"replaceResponseHeadersRegex,omitempty" export:"true"`
 
 	// AccessControlAllowCredentials defines whether the request can include user credentials.
 	AccessControlAllowCredentials bool `json:"accessControlAllowCredentials,omitempty" toml:"accessControlAllowCredentials,omitempty" yaml:"accessControlAllowCredentials,omitempty" export:"true"`
@@ -381,7 +385,9 @@ type Headers struct {
 // HasCustomHeadersDefined checks to see if any of the custom header elements have been set.
 func (h *Headers) HasCustomHeadersDefined() bool {
 	return h != nil && (len(h.CustomResponseHeaders) != 0 ||
-		len(h.CustomRequestHeaders) != 0)
+		len(h.CustomRequestHeaders) != 0) ||
+		len(h.ReplaceRequestHeadersRegex) != 0 ||
+		len(h.ReplaceResponseHeadersRegex) != 0
 }
 
 // HasCorsHeadersDefined checks to see if any of the cors header elements have been set.
@@ -683,6 +689,17 @@ type ReplacePath struct {
 // More info: https://doc.traefik.io/traefik/v3.6/middlewares/http/replacepathregex/
 type ReplacePathRegex struct {
 	// Regex defines the regular expression used to match and capture the path from the request URL.
+	Regex string `json:"regex,omitempty" toml:"regex,omitempty" yaml:"regex,omitempty" export:"true"`
+	// Replacement defines the replacement path format, which can include captured variables.
+	Replacement string `json:"replacement,omitempty" toml:"replacement,omitempty" yaml:"replacement,omitempty" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// ReplaceHeaderRegex holds the header middleware configuration.
+// This middleware replaces header using regex matching and replacement.
+type ReplaceHeaderRegex struct {
+	// Regex defines the regular expression used to match and capture the path from the header.
 	Regex string `json:"regex,omitempty" toml:"regex,omitempty" yaml:"regex,omitempty" export:"true"`
 	// Replacement defines the replacement path format, which can include captured variables.
 	Replacement string `json:"replacement,omitempty" toml:"replacement,omitempty" yaml:"replacement,omitempty" export:"true"`
