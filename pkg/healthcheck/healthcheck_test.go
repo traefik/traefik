@@ -598,13 +598,11 @@ func TestNotFollowingRedirects(t *testing.T) {
 		metrics:  metricsHealthcheck{serverUpGauge: collectingMetrics},
 	}
 
-	wg := sync.WaitGroup{}
-	wg.Add(1)
+			wg := sync.WaitGroup{}
 
-	go func() {
-		check.execute(ctx, backend)
-		wg.Done()
-	}()
+	wg.Go(func() {
+				check.execute(ctx, backend)
+			})
 
 	timeout := time.Duration(int(healthCheckInterval) + 500)
 	select {
