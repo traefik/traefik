@@ -560,13 +560,11 @@ func TestConcurrentResponseTimeUpdates(t *testing.T) {
 	updatesPerGoroutine := 20
 
 	for i := range numGoroutines {
-		wg.Add(1)
-		go func(id int) {
-			defer wg.Done()
+		wg.Go(func() {
 			for range updatesPerGoroutine {
-				handler.updateResponseTime(time.Duration(id+1) * time.Millisecond)
+				handler.updateResponseTime(time.Duration(i+1) * time.Millisecond)
 			}
-		}(i)
+		})
 	}
 
 	wg.Wait()
