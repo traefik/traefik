@@ -69,3 +69,5 @@ profiles:
       Skipped: 0
   name: GATEWAY-TLS
   summary: Core tests succeeded.
+succeededProvisionalTests:
+- UDPRoute

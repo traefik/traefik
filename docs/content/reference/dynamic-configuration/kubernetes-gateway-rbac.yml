@@ -46,6 +46,7 @@ rules:
       - tlsroutes
       - referencegrants
       - backendtlspolicies
+      - udproutes
     verbs:
       - get
       - list
@@ -61,6 +62,7 @@ rules:
       - tlsroutes/status
       - referencegrants/status
       - backendtlspolicies/status
+      - udproutes/status
     verbs:
       - update
 

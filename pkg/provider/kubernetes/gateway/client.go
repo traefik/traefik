@@ -203,6 +203,10 @@ func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<
 			if err != nil {
 				return nil, err
 			}
+			_, err = factoryGateway.Gateway().V1alpha2().UDPRoutes().Informer().AddEventHandler(eventHandler)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		factorySecret := kinformers.NewSharedInformerFactoryWithOptions(c.csKube, resyncPeriod, kinformers.WithNamespace(ns), kinformers.WithTweakListOptions(notOwnedByHelm))
@@ -331,6 +335,20 @@ func (c *clientWrapper) ListTLSRoutes() ([]*gatev1alpha2.TLSRoute, error) {
 	}
 
 	return tlsRoutes, nil
+}
+
+func (c *clientWrapper) ListUDPRoutes() ([]*gatev1alpha2.UDPRoute, error) {
+	var udpRoutes []*gatev1alpha2.UDPRoute
+	for _, namespace := range c.watchedNamespaces {
+		routes, err := c.factoriesGateway[c.lookupNamespace(namespace)].Gateway().V1alpha2().UDPRoutes().Lister().UDPRoutes(namespace).List(labels.Everything())
+		if err != nil {
+			return nil, fmt.Errorf("listing UDP routes in namespace %s", namespace)
+		}
+
+		udpRoutes = append(udpRoutes, routes...)
+	}
+
+	return udpRoutes, nil
 }
 
 func (c *clientWrapper) ListReferenceGrants(namespace string) ([]*gatev1beta1.ReferenceGrant, error) {
@@ -645,6 +663,57 @@ func (c *clientWrapper) UpdateTCPRouteStatus(ctx context.Context, route ktypes.N
 	})
 	if err != nil {
 		return fmt.Errorf("failed to update TCPRoute %s/%s status: %w", route.Namespace, route.Name, err)
+	}
+
+	return nil
+}
+
+func (c *clientWrapper) UpdateUDPRouteStatus(ctx context.Context, route ktypes.NamespacedName, status gatev1alpha2.UDPRouteStatus) error {
+	if !c.isWatchedNamespace(route.Namespace) {
+		return fmt.Errorf("updating UDPRoute status %s/%s: namespace is not within watched namespaces", route.Namespace, route.Name)
+	}
+
+	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		currentRoute, err := c.factoriesGateway[c.lookupNamespace(route.Namespace)].Gateway().V1alpha2().UDPRoutes().Lister().UDPRoutes(route.Namespace).Get(route.Name)
+		if err != nil {
+			// We have to return err itself here (not wrapped inside another error)
+			// so that RetryOnConflict can identify it correctly.
+			return err
+		}
+
+		parentStatuses := make([]gatev1.RouteParentStatus, len(status.Parents))
+		copy(parentStatuses, status.Parents)
+
+		// keep statuses added by other gateway controllers.
+		// TODO: we should also keep statuses for gateways managed by other Traefik instances.
+		for _, parentStatus := range currentRoute.Status.Parents {
+			if parentStatus.ControllerName != controllerName {
+				parentStatuses = append(parentStatuses, parentStatus)
+			}
+		}
+
+		// do not update status when nothing has changed.
+		if routeParentStatusesEqual(currentRoute.Status.Parents, parentStatuses) {
+			return nil
+		}
+
+		currentRoute = currentRoute.DeepCopy()
+		currentRoute.Status = gatev1alpha2.UDPRouteStatus{
+			RouteStatus: gatev1.RouteStatus{
+				Parents: parentStatuses,
+			},
+		}
+
+		if _, err = c.csGateway.GatewayV1alpha2().UDPRoutes(route.Namespace).UpdateStatus(ctx, currentRoute, metav1.UpdateOptions{}); err != nil {
+			// We have to return err itself here (not wrapped inside another error)
+			// so that RetryOnConflict can identify it correctly.
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("failed to update UDPRoute %s/%s status: %w", route.Namespace, route.Name, err)
 	}
 
 	return nil
