@@ -13,6 +13,16 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 )
 
+// StickyMode defines the type of sticky session persistence.
+type StickyMode string
+
+const (
+	// StickyModeCookie uses cookies for session persistence.
+	StickyModeCookie StickyMode = "cookie"
+	// StickyModeHeader uses headers for session persistence.
+	StickyModeHeader StickyMode = "header"
+)
+
 // NamedHandler is a http.Handler with a name.
 type NamedHandler struct {
 	http.Handler
@@ -20,7 +30,7 @@ type NamedHandler struct {
 	Name string
 }
 
-// stickyCookie represents a sticky cookie.
+// stickyCookie represents a sticky cookie configuration.
 type stickyCookie struct {
 	name     string
 	secure   bool
@@ -31,12 +41,24 @@ type stickyCookie struct {
 	domain   string
 }
 
-// Sticky ensures that client consistently interacts with the same HTTP handler by adding a sticky cookie to the response.
-// This cookie allows subsequent requests from the same client to be routed to the same handler,
+// stickyHeader represents a sticky header configuration.
+type stickyHeader struct {
+	name string
+}
+
+// Sticky ensures that client consistently interacts with the same HTTP handler
+// by adding a sticky cookie or header to the response.
+// This allows subsequent requests from the same client to be routed to the same handler,
 // enabling session persistence across multiple requests.
 type Sticky struct {
-	// cookie is the sticky cookie configuration.
+	// mode defines whether to use cookie or header for sticky sessions.
+	mode StickyMode
+
+	// cookie is the sticky cookie configuration (used when mode is StickyModeCookie).
 	cookie *stickyCookie
+
+	// header is the sticky header configuration (used when mode is StickyModeHeader).
+	header *stickyHeader
 
 	// References all the handlers by name and also by the hashed value of the name.
 	handlersMu             sync.RWMutex
@@ -45,8 +67,26 @@ type Sticky struct {
 	compatibilityStickyMap map[string]*NamedHandler
 }
 
-// NewSticky creates a new Sticky instance.
-func NewSticky(cookieConfig dynamic.Cookie) *Sticky {
+// NewSticky creates a new Sticky instance from a dynamic.Sticky configuration.
+// It returns nil if the configuration is nil or has no cookie/header config.
+func NewSticky(cfg *dynamic.Sticky) *Sticky {
+	if cfg == nil {
+		return nil
+	}
+
+	if cfg.Cookie != nil {
+		return NewStickyCookie(*cfg.Cookie)
+	}
+
+	if cfg.Header != nil {
+		return NewStickyHeader(*cfg.Header)
+	}
+
+	return nil
+}
+
+// NewStickyCookie creates a new Sticky instance configured for cookie-based persistence.
+func NewStickyCookie(cookieConfig dynamic.Cookie) *Sticky {
 	cookie := &stickyCookie{
 		name:     cookieConfig.Name,
 		secure:   cookieConfig.Secure,
@@ -61,7 +101,26 @@ func NewSticky(cookieConfig dynamic.Cookie) *Sticky {
 	}
 
 	return &Sticky{
+		mode:                   StickyModeCookie,
 		cookie:                 cookie,
+		hashMap:                make(map[string]string),
+		stickyMap:              make(map[string]*NamedHandler),
+		compatibilityStickyMap: make(map[string]*NamedHandler),
+	}
+}
+
+// NewStickyHeader creates a new Sticky instance configured for header-based persistence.
+func NewStickyHeader(headerConfig dynamic.Header) *Sticky {
+	name := headerConfig.Name
+	if name == "" {
+		name = "X-Sticky-Session"
+	}
+
+	return &Sticky{
+		mode: StickyModeHeader,
+		header: &stickyHeader{
+			name: name,
+		},
 		hashMap:                make(map[string]string),
 		stickyMap:              make(map[string]*NamedHandler),
 		compatibilityStickyMap: make(map[string]*NamedHandler),
@@ -93,9 +152,20 @@ func (s *Sticky) AddHandler(name string, h http.Handler) {
 	s.compatibilityStickyMap[hashedName] = handler
 }
 
-// StickyHandler returns the NamedHandler corresponding to the sticky cookie if one.
-// It also returns a boolean which indicates if the sticky cookie has to be overwritten because it uses a deprecated hash algorithm.
+// StickyHandler returns the NamedHandler corresponding to the sticky cookie or header.
+// It also returns a boolean which indicates if the sticky value has to be overwritten
+// because it uses a deprecated hash algorithm.
 func (s *Sticky) StickyHandler(req *http.Request) (*NamedHandler, bool, error) {
+	switch s.mode {
+	case StickyModeHeader:
+		return s.stickyHandlerFromHeader(req)
+	default:
+		return s.stickyHandlerFromCookie(req)
+	}
+}
+
+// stickyHandlerFromCookie returns the handler based on the sticky cookie value.
+func (s *Sticky) stickyHandlerFromCookie(req *http.Request) (*NamedHandler, bool, error) {
 	cookie, err := req.Cookie(s.cookie.name)
 	if err != nil && errors.Is(err, http.ErrNoCookie) {
 		return nil, false, nil
@@ -104,8 +174,23 @@ func (s *Sticky) StickyHandler(req *http.Request) (*NamedHandler, bool, error) {
 		return nil, false, fmt.Errorf("reading cookie: %w", err)
 	}
 
+	return s.lookupHandler(cookie.Value)
+}
+
+// stickyHandlerFromHeader returns the handler based on the sticky header value.
+func (s *Sticky) stickyHandlerFromHeader(req *http.Request) (*NamedHandler, bool, error) {
+	value := req.Header.Get(s.header.name)
+	if value == "" {
+		return nil, false, nil
+	}
+
+	return s.lookupHandler(value)
+}
+
+// lookupHandler finds a handler by its sticky value (hash).
+func (s *Sticky) lookupHandler(value string) (*NamedHandler, bool, error) {
 	s.handlersMu.RLock()
-	handler, ok := s.stickyMap[cookie.Value]
+	handler, ok := s.stickyMap[value]
 	s.handlersMu.RUnlock()
 
 	if ok && handler != nil {
@@ -113,10 +198,20 @@ func (s *Sticky) StickyHandler(req *http.Request) (*NamedHandler, bool, error) {
 	}
 
 	s.handlersMu.RLock()
-	handler, ok = s.compatibilityStickyMap[cookie.Value]
+	handler, ok = s.compatibilityStickyMap[value]
 	s.handlersMu.RUnlock()
 
 	return handler, ok, nil
+}
+
+// WriteStickyResponse writes the sticky cookie or header to the response.
+func (s *Sticky) WriteStickyResponse(rw http.ResponseWriter, name string) error {
+	switch s.mode {
+	case StickyModeHeader:
+		return s.WriteStickyHeader(rw, name)
+	default:
+		return s.WriteStickyCookie(rw, name)
+	}
 }
 
 // WriteStickyCookie writes a sticky cookie to the response to stick the client to the given handler name.
@@ -143,6 +238,19 @@ func (s *Sticky) WriteStickyCookie(rw http.ResponseWriter, name string) error {
 	return nil
 }
 
+// WriteStickyHeader writes a sticky header to the response to stick the client to the given handler name.
+func (s *Sticky) WriteStickyHeader(rw http.ResponseWriter, name string) error {
+	s.handlersMu.RLock()
+	hash, ok := s.hashMap[name]
+	s.handlersMu.RUnlock()
+	if !ok {
+		return fmt.Errorf("no hash found for handler named %s", name)
+	}
+
+	rw.Header().Set(s.header.name, hash)
+	return nil
+}
+
 func convertSameSite(sameSite string) http.SameSite {
 	switch sameSite {
 	case "none":
@@ -165,7 +273,7 @@ func fnvHash(input string) string {
 	return strconv.FormatUint(hasher.Sum64(), 16)
 }
 
-// sha256 returns the SHA-256 hash, truncated to 16 characters, of the input string.
+// sha256Hash returns the SHA-256 hash, truncated to 16 characters, of the input string.
 func sha256Hash(input string) string {
 	hash := sha256.New()
 	// We purposely ignore the error because the implementation always returns nil.

@@ -399,6 +399,104 @@ Once everything is deployed, sending a `GET` request should return the following
     X-Real-Ip: 10.42.2.1
     ```
 
+#### Session Persistence (Sticky Sessions)
+
+Traefik supports the Gateway API `sessionPersistence` field on `HTTPRoute` rules, enabling sticky sessions without requiring Traefik-specific CRDs.
+
+!!! note "TraefikService backends"
+    `sessionPersistence` is applied only when the `HTTPRoute` backend is a Kubernetes `Service`.
+    If the backend is a `TraefikService`, stickiness is controlled by the `TraefikService` configuration instead
+    (including multi-level stickiness), and the `HTTPRoute` `sessionPersistence` is ignored.
+
+!!! note "BackendLBPolicy (XBackendTrafficPolicy)"
+    Traefik also supports service-level session persistence via the experimental
+    `XBackendTrafficPolicy` resource (`gateway.networking.x-k8s.io/v1alpha1`), which supersedes `BackendLBPolicy`.
+    When both `HTTPRoute` `sessionPersistence` and `XBackendTrafficPolicy` `sessionPersistence` target the same Service,
+    `HTTPRoute` takes precedence. This requires `experimentalChannel` to be enabled.
+
+Session persistence ensures that requests from the same client are consistently routed to the same backend server. Traefik supports both cookie-based and header-based session persistence:
+
+```yaml tab="Cookie-based (default)"
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: sticky-route
+  namespace: default
+spec:
+  parentRefs:
+    - name: traefik
+      namespace: default
+
+  hostnames:
+    - app.localhost
+
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+
+      backendRefs:
+        - name: whoami
+          namespace: default
+          port: 80
+
+      sessionPersistence:
+        sessionName: my-session-cookie
+        type: Cookie
+        absoluteTimeout: 1h
+        cookieConfig:
+          lifetimeType: Permanent
+```
+
+```yaml tab="Header-based"
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: sticky-route
+  namespace: default
+spec:
+  parentRefs:
+    - name: traefik
+      namespace: default
+
+  hostnames:
+    - api.localhost
+
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+
+      backendRefs:
+        - name: api-backend
+          namespace: default
+          port: 80
+
+      sessionPersistence:
+        sessionName: X-Session-ID
+        type: Header
+```
+
+| Field | Description |
+|-------|-------------|
+| `sessionName` | Name of the cookie or header used for session persistence |
+| `type` | `Cookie` (default) or `Header` |
+| `absoluteTimeout` | Maximum lifetime of the session (only applies to cookies with `lifetimeType: Permanent`) |
+| `cookieConfig.lifetimeType` | `Session` (browser session) or `Permanent` (uses `absoluteTimeout`) |
+
+!!! info "Header-based Session Persistence"
+
+    When using header-based session persistence, the client must:
+
+    1. Read the session header from the response
+    2. Include the header value in all subsequent requests
+
+    This is ideal for API clients, gRPC, or service mesh scenarios.
+
 ### GRPC
 
 The `GRPCRoute` is an extended resource in the Gateway API specification, designed to define how GRPC traffic should be routed within a Kubernetes cluster. 

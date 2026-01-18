@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"k8s.io/utils/ptr"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
 )
@@ -202,4 +203,146 @@ func Test_buildMatchRule(t *testing.T) {
 			assert.Equal(t, test.expectedPriority, priority)
 		})
 	}
+}
+
+func Test_convertSessionPersistence(t *testing.T) {
+	testCases := []struct {
+		desc           string
+		sessionPersist *gatev1.SessionPersistence
+		wantNil        bool
+		wantCookie     bool
+		wantHeader     bool
+		wantName       string
+		wantMaxAge     int
+	}{
+		{
+			desc:           "nil session persistence",
+			sessionPersist: nil,
+			wantNil:        true,
+		},
+		{
+			desc:           "default cookie type (nil Type)",
+			sessionPersist: &gatev1.SessionPersistence{},
+			wantNil:        false,
+			wantCookie:     true,
+			wantHeader:     false,
+		},
+		{
+			desc: "explicit cookie type",
+			sessionPersist: &gatev1.SessionPersistence{
+				Type: ptr.To(gatev1.CookieBasedSessionPersistence),
+			},
+			wantNil:    false,
+			wantCookie: true,
+			wantHeader: false,
+		},
+		{
+			desc: "header type",
+			sessionPersist: &gatev1.SessionPersistence{
+				Type: ptr.To(gatev1.HeaderBasedSessionPersistence),
+			},
+			wantNil:    false,
+			wantCookie: false,
+			wantHeader: true,
+		},
+		{
+			desc: "cookie with session name",
+			sessionPersist: &gatev1.SessionPersistence{
+				SessionName: ptr.To("my-session"),
+				Type:        ptr.To(gatev1.CookieBasedSessionPersistence),
+			},
+			wantNil:    false,
+			wantCookie: true,
+			wantHeader: false,
+			wantName:   "my-session",
+		},
+		{
+			desc: "header with session name",
+			sessionPersist: &gatev1.SessionPersistence{
+				SessionName: ptr.To("X-My-Session"),
+				Type:        ptr.To(gatev1.HeaderBasedSessionPersistence),
+			},
+			wantNil:    false,
+			wantCookie: false,
+			wantHeader: true,
+			wantName:   "X-My-Session",
+		},
+		{
+			desc: "cookie with permanent lifetime and timeout",
+			sessionPersist: &gatev1.SessionPersistence{
+				SessionName:     ptr.To("my-cookie"),
+				Type:            ptr.To(gatev1.CookieBasedSessionPersistence),
+				AbsoluteTimeout: ptr.To(gatev1.Duration("1h")),
+				CookieConfig: &gatev1.CookieConfig{
+					LifetimeType: ptr.To(gatev1.PermanentCookieLifetimeType),
+				},
+			},
+			wantNil:    false,
+			wantCookie: true,
+			wantHeader: false,
+			wantName:   "my-cookie",
+			wantMaxAge: 3600,
+		},
+		{
+			desc: "cookie with session lifetime ignores timeout",
+			sessionPersist: &gatev1.SessionPersistence{
+				SessionName:     ptr.To("my-cookie"),
+				Type:            ptr.To(gatev1.CookieBasedSessionPersistence),
+				AbsoluteTimeout: ptr.To(gatev1.Duration("1h")),
+				CookieConfig: &gatev1.CookieConfig{
+					LifetimeType: ptr.To(gatev1.SessionCookieLifetimeType),
+				},
+			},
+			wantNil:    false,
+			wantCookie: true,
+			wantHeader: false,
+			wantName:   "my-cookie",
+			wantMaxAge: 0, // Session cookie has no MaxAge
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			result := convertSessionPersistence(test.sessionPersist)
+
+			if test.wantNil {
+				assert.Nil(t, result)
+				return
+			}
+
+			assert.NotNil(t, result)
+
+			if test.wantCookie {
+				assert.NotNil(t, result.Cookie)
+				assert.Nil(t, result.Header)
+				if test.wantName != "" {
+					assert.Equal(t, test.wantName, result.Cookie.Name)
+				}
+				assert.Equal(t, test.wantMaxAge, result.Cookie.MaxAge)
+			}
+
+			if test.wantHeader {
+				assert.Nil(t, result.Cookie)
+				assert.NotNil(t, result.Header)
+				if test.wantName != "" {
+					assert.Equal(t, test.wantName, result.Header.Name)
+				}
+			}
+		})
+	}
+}
+
+func Test_applyStickyToServersLoadBalancer(t *testing.T) {
+	t.Parallel()
+
+	lb := &dynamic.ServersLoadBalancer{}
+	sticky := &dynamic.Sticky{
+		Cookie: &dynamic.Cookie{Name: "test-cookie"},
+	}
+
+	applyStickyToServersLoadBalancer(lb, sticky)
+
+	assert.Equal(t, sticky, lb.Sticky)
 }

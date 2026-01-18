@@ -11,6 +11,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
@@ -21,6 +22,7 @@ import (
 	ktypes "k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
 	gatev1 "sigs.k8s.io/gateway-api/apis/v1"
+	apisxv1alpha1 "sigs.k8s.io/gateway-api/apisx/v1alpha1"
 )
 
 func (p *Provider) loadHTTPRoutes(ctx context.Context, gatewayListeners []gatewayListener, conf *dynamic.Configuration) {
@@ -185,10 +187,12 @@ func (p *Provider) loadWRRService(ctx context.Context, listener gatewayListener,
 		return name, nil
 	}
 
+	routeSticky := convertSessionPersistence(routeRule.SessionPersistence)
+
 	var wrr dynamic.WeightedRoundRobin
 	var condition *metav1.Condition
 	for _, backendRef := range routeRule.BackendRefs {
-		svcName, errCondition := p.loadService(ctx, listener, conf, route, backendRef)
+		svcName, errCondition := p.loadService(ctx, listener, conf, route, backendRef, routeSticky)
 		weight := ptr.To(int(ptr.Deref(backendRef.Weight, 1)))
 		if errCondition != nil {
 			log.Ctx(ctx).Error().
@@ -215,7 +219,7 @@ func (p *Provider) loadWRRService(ctx context.Context, listener gatewayListener,
 
 // loadService returns a dynamic.Service config corresponding to the given gatev1.HTTPBackendRef.
 // Note that the returned dynamic.Service config can be nil (for cross-provider, internal services, and backendFunc).
-func (p *Provider) loadService(ctx context.Context, listener gatewayListener, conf *dynamic.Configuration, route *gatev1.HTTPRoute, backendRef gatev1.HTTPBackendRef) (string, *metav1.Condition) {
+func (p *Provider) loadService(ctx context.Context, listener gatewayListener, conf *dynamic.Configuration, route *gatev1.HTTPRoute, backendRef gatev1.HTTPBackendRef, routeSticky *dynamic.Sticky) (string, *metav1.Condition) {
 	kind := ptr.Deref(backendRef.Kind, kindService)
 
 	group := groupCore
@@ -276,7 +280,7 @@ func (p *Provider) loadService(ctx context.Context, listener gatewayListener, co
 	portStr := strconv.FormatInt(int64(port), 10)
 	serviceName = provider.Normalize(serviceName + "-" + portStr)
 
-	lb, st, errCondition := p.loadHTTPServers(ctx, namespace, route, backendRef, listener)
+	lb, st, errCondition := p.loadHTTPServers(ctx, namespace, route, backendRef, listener, routeSticky)
 	if errCondition != nil {
 		return serviceName, errCondition
 	}
@@ -399,7 +403,7 @@ func (p *Provider) loadHTTPRouteFilterExtensionRef(namespace string, extensionRe
 	return filterFunc(string(extensionRef.Name), namespace)
 }
 
-func (p *Provider) loadHTTPServers(ctx context.Context, namespace string, route *gatev1.HTTPRoute, backendRef gatev1.HTTPBackendRef, listener gatewayListener) (*dynamic.ServersLoadBalancer, *dynamic.ServersTransport, *metav1.Condition) {
+func (p *Provider) loadHTTPServers(ctx context.Context, namespace string, route *gatev1.HTTPRoute, backendRef gatev1.HTTPBackendRef, listener gatewayListener, routeSticky *dynamic.Sticky) (*dynamic.ServersLoadBalancer, *dynamic.ServersTransport, *metav1.Condition) {
 	backendAddresses, svcPort, err := p.getBackendAddresses(namespace, backendRef.BackendRef)
 	if err != nil {
 		return nil, nil, &metav1.Condition{
@@ -526,6 +530,11 @@ func (p *Provider) loadHTTPServers(ctx context.Context, namespace string, route 
 
 	lb := &dynamic.ServersLoadBalancer{}
 	lb.SetDefaults()
+	sticky, policyCondition := p.resolveSessionPersistence(ctx, namespace, backendRef, listener, route, routeSticky)
+	if policyCondition != nil {
+		return nil, nil, policyCondition
+	}
+	applyStickyToServersLoadBalancer(lb, sticky)
 
 	// If a ServersTransport is set, it means a BackendTLSPolicy matched the service port, and we can safely assume the protocol is HTTPS.
 	// When no ServersTransport is set, we need to determine the protocol based on the service port.
@@ -550,6 +559,101 @@ func (p *Provider) loadHTTPServers(ctx context.Context, namespace string, route 
 		})
 	}
 	return lb, serversTransport, nil
+}
+
+func (p *Provider) resolveSessionPersistence(ctx context.Context, namespace string, backendRef gatev1.HTTPBackendRef, listener gatewayListener, route *gatev1.HTTPRoute, routeSticky *dynamic.Sticky) (*dynamic.Sticky, *metav1.Condition) {
+	policySticky, policyCondition := p.loadBackendTrafficPolicySticky(ctx, namespace, backendRef, listener, route)
+	if policyCondition != nil {
+		return nil, policyCondition
+	}
+
+	if routeSticky != nil {
+		return routeSticky, nil
+	}
+
+	return policySticky, nil
+}
+
+func (p *Provider) loadBackendTrafficPolicySticky(ctx context.Context, namespace string, backendRef gatev1.HTTPBackendRef, listener gatewayListener, route *gatev1.HTTPRoute) (*dynamic.Sticky, *metav1.Condition) {
+	if !p.client.experimentalChannel {
+		return nil, nil
+	}
+
+	policies, err := p.client.ListXBackendTrafficPoliciesForService(namespace, string(backendRef.Name))
+	if err != nil {
+		return nil, &metav1.Condition{
+			Type:               string(gatev1.RouteConditionResolvedRefs),
+			Status:             metav1.ConditionFalse,
+			ObservedGeneration: route.Generation,
+			LastTransitionTime: metav1.Now(),
+			Reason:             string(gatev1.RouteReasonRefNotPermitted),
+			Message:            fmt.Sprintf("Cannot list XBackendTrafficPolicies for Service %s/%s: %s", namespace, string(backendRef.Name), err),
+		}
+	}
+
+	// Sort XBackendTrafficPolicies by creation timestamp, then by name to match the direct policy attachment requirements.
+	slices.SortStableFunc(policies, func(a, b *apisxv1alpha1.XBackendTrafficPolicy) int {
+		cmpTime := a.CreationTimestamp.Time.Compare(b.CreationTimestamp.Time)
+		if cmpTime == 0 {
+			return strings.Compare(a.Name, b.Name)
+		}
+		return cmpTime
+	})
+
+	var selected *apisxv1alpha1.XBackendTrafficPolicy
+	for _, policy := range policies {
+		policyAncestorStatus := gatev1.PolicyAncestorStatus{
+			AncestorRef: gatev1.ParentReference{
+				Group:       ptr.To(gatev1.Group(groupGateway)),
+				Kind:        ptr.To(gatev1.Kind(kindGateway)),
+				Namespace:   ptr.To(gatev1.Namespace(namespace)),
+				Name:        gatev1.ObjectName(listener.GWName),
+				SectionName: ptr.To(gatev1.SectionName(listener.Name)),
+			},
+			ControllerName: controllerName,
+		}
+
+		if selected != nil {
+			policyAncestorStatus.Conditions = append(policyAncestorStatus.Conditions,
+				metav1.Condition{
+					Type:               string(gatev1.PolicyConditionAccepted),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: policy.Generation,
+					LastTransitionTime: metav1.Now(),
+					Reason:             string(gatev1.PolicyReasonConflicted),
+				},
+			)
+
+			status := gatev1.PolicyStatus{Ancestors: []gatev1.PolicyAncestorStatus{policyAncestorStatus}}
+			if err := p.client.UpdateXBackendTrafficPolicyStatus(ctx, ktypes.NamespacedName{Namespace: policy.Namespace, Name: policy.Name}, status); err != nil {
+				log.Ctx(ctx).Warn().Err(err).Msg("Unable to update conflicting XBackendTrafficPolicy status")
+			}
+			continue
+		}
+
+		policyAncestorStatus.Conditions = append(policyAncestorStatus.Conditions,
+			metav1.Condition{
+				Type:               string(gatev1.PolicyConditionAccepted),
+				Status:             metav1.ConditionTrue,
+				ObservedGeneration: policy.Generation,
+				LastTransitionTime: metav1.Now(),
+				Reason:             string(gatev1.PolicyReasonAccepted),
+			},
+		)
+
+		status := gatev1.PolicyStatus{Ancestors: []gatev1.PolicyAncestorStatus{policyAncestorStatus}}
+		if err := p.client.UpdateXBackendTrafficPolicyStatus(ctx, ktypes.NamespacedName{Namespace: policy.Namespace, Name: policy.Name}, status); err != nil {
+			log.Ctx(ctx).Warn().Err(err).Msg("Unable to update XBackendTrafficPolicy status")
+		}
+
+		selected = policy
+	}
+
+	if selected == nil || selected.Spec.SessionPersistence == nil {
+		return nil, nil
+	}
+
+	return convertSessionPersistence(selected.Spec.SessionPersistence), nil
 }
 
 func (p *Provider) loadServersTransport(namespace string, policy *gatev1.BackendTLSPolicy) (*dynamic.ServersTransport, metav1.Condition) {
@@ -928,4 +1032,53 @@ func mergeHTTPConfiguration(from, to *dynamic.Configuration) {
 		to.HTTP.ServersTransports = map[string]*dynamic.ServersTransport{}
 	}
 	maps.Copy(to.HTTP.ServersTransports, from.HTTP.ServersTransports)
+}
+
+// convertSessionPersistence converts a Gateway API SessionPersistence to a Traefik Sticky configuration.
+func convertSessionPersistence(sp *gatev1.SessionPersistence) *dynamic.Sticky {
+	if sp == nil {
+		return nil
+	}
+
+	// Header-based session persistence.
+	if sp.Type != nil && *sp.Type == gatev1.HeaderBasedSessionPersistence {
+		header := &dynamic.Header{}
+		header.SetDefaults()
+
+		// SessionName maps to Header.Name
+		if sp.SessionName != nil {
+			header.Name = *sp.SessionName
+		}
+
+		return &dynamic.Sticky{Header: header}
+	}
+
+	// Cookie-based session persistence (default).
+	cookie := &dynamic.Cookie{}
+	cookie.SetDefaults()
+
+	// SessionName maps to Cookie.Name
+	if sp.SessionName != nil {
+		cookie.Name = *sp.SessionName
+	}
+
+	// AbsoluteTimeout maps to Cookie.MaxAge when lifetimeType is Permanent.
+	// When lifetimeType is Session (default), the cookie is a session cookie (MaxAge = 0).
+	if sp.AbsoluteTimeout != nil && sp.CookieConfig != nil &&
+		sp.CookieConfig.LifetimeType != nil && *sp.CookieConfig.LifetimeType == gatev1.PermanentCookieLifetimeType {
+		duration, err := time.ParseDuration(string(*sp.AbsoluteTimeout))
+		if err == nil {
+			cookie.MaxAge = int(duration.Seconds())
+		}
+	}
+
+	return &dynamic.Sticky{Cookie: cookie}
+}
+
+func applyStickyToServersLoadBalancer(lb *dynamic.ServersLoadBalancer, sticky *dynamic.Sticky) {
+	if lb == nil {
+		return
+	}
+
+	lb.Sticky = sticky
 }
