@@ -333,9 +333,9 @@ The following annotations are organized by category for easier navigation.
 
 ### Timeout
 
-| Annotation                                          | Limitations / Notes                                                                        |
-|-----------------------------------------------------|--------------------------------------------------------------------------------------------|
-| <a id="opt-nginx-ingress-kubernetes-ioproxy-connect-timeout" href="#opt-nginx-ingress-kubernetes-ioproxy-connect-timeout" title="#opt-nginx-ingress-kubernetes-ioproxy-connect-timeout">`nginx.ingress.kubernetes.io/proxy-connect-timeout`</a> |
+| Annotation                                          | Limitations / Notes                                                                                                                                                           |
+|-----------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| <a id="opt-nginx-ingress-kubernetes-ioproxy-connect-timeout" href="#opt-nginx-ingress-kubernetes-ioproxy-connect-timeout" title="#opt-nginx-ingress-kubernetes-ioproxy-connect-timeout">`nginx.ingress.kubernetes.io/proxy-connect-timeout`</a> | Timeout can be defined globally on the provider level using the [`proxyConnectTimeout` option](../../install-configuration/providers/kubernetes/kubernetes-ingress-nginx.md/#opt-providers-kubernetesIngressNGINX-proxyConnectTimeout). |
 
 ## Limitations
 
