@@ -7,6 +7,7 @@ import (
 	"maps"
 	"math"
 	"net"
+	"net/http"
 	"os"
 	"regexp"
 	"slices"
@@ -825,23 +826,29 @@ func applyRedirect(routerName string, ingressConfig ingressConfig, rt *dynamic.R
 	if ingressConfig.PermanentRedirect == nil && ingressConfig.TemporalRedirect == nil {
 		return
 	}
-	var redirect string
-	var permanent bool
+
+	var (
+		redirectURL string
+		code        int
+	)
+
 	if ingressConfig.PermanentRedirect != nil {
-		permanent = true
-		redirect = *ingressConfig.PermanentRedirect
+		redirectURL = *ingressConfig.PermanentRedirect
+		code = ptr.Deref(ingressConfig.PermanentRedirectCode, http.StatusMovedPermanently)
 	}
+
+	// TemporalRedirect takes precedence over the PermanentRedirect.
 	if ingressConfig.TemporalRedirect != nil {
-		permanent = false
-		redirect = *ingressConfig.TemporalRedirect
+		redirectURL = *ingressConfig.TemporalRedirect
+		code = ptr.Deref(ingressConfig.TemporalRedirectCode, http.StatusFound)
 	}
 
 	redirectMiddlewareName := routerName + "-redirect"
 	conf.HTTP.Middlewares[redirectMiddlewareName] = &dynamic.Middleware{
 		RedirectRegex: &dynamic.RedirectRegex{
 			Regex:       ".*",
-			Permanent:   permanent,
-			Replacement: redirect,
+			Replacement: redirectURL,
+			StatusCode:  &code,
 		},
 	}
 	rt.Middlewares = append(rt.Middlewares, redirectMiddlewareName)
