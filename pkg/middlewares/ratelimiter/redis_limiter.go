@@ -27,13 +27,16 @@ type redisLimiter struct {
 
 func newRedisLimiter(ctx context.Context, rate rate.Limit, burst int64, maxDelay time.Duration, ttl int, config dynamic.RateLimit, logger *zerolog.Logger) (limiter, error) {
 	options := &redis.UniversalOptions{
-		Addrs:          config.Redis.Endpoints,
-		Username:       config.Redis.Username,
-		Password:       config.Redis.Password,
-		DB:             config.Redis.DB,
-		PoolSize:       config.Redis.PoolSize,
-		MinIdleConns:   config.Redis.MinIdleConns,
-		MaxActiveConns: config.Redis.MaxActiveConns,
+		Addrs:            config.Redis.Endpoints,
+		Username:         config.Redis.Username,
+		Password:         config.Redis.Password,
+		DB:               config.Redis.DB,
+		PoolSize:         config.Redis.PoolSize,
+		MinIdleConns:     config.Redis.MinIdleConns,
+		MaxActiveConns:   config.Redis.MaxActiveConns,
+		MasterName:       config.Redis.MasterName,
+		SentinelUsername: config.Redis.SentinelUsername,
+		SentinelPassword: config.Redis.SentinelPassword,
 	}
 
 	if config.Redis.DialTimeout != nil && *config.Redis.DialTimeout > 0 {
