@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@quasar/extras": "^1.16.12",
-    "axios": "^1.7.4",
+    "axios": "1.13.2",
     "chart.js": "^4.4.1",
     "core-js": "^3.35.1",
     "dot-prop": "^8.0.2",
@@ -51,7 +51,8 @@
     "vitest": "^1.6.0"
   },
   "resolutions": {
-    "cookie": "^0.7.0"
+    "cookie": "^0.7.0",
+    "nanoid": "3.3.8"
   },
   "engines": {
     "node": "^24 || ^22",
