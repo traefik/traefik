@@ -646,7 +646,7 @@ type RedirectRegex struct {
 	// Permanent defines whether the redirection is permanent (308).
 	Permanent bool `json:"permanent,omitempty" toml:"permanent,omitempty" yaml:"permanent,omitempty" export:"true"`
 
-	// StatusCode is for supporting the NGINX annotations related to redirect
+	// StatusCode is for supporting the NGINX annotations related to redirect.
 	StatusCode *int `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
 

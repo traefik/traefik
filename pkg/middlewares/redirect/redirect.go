@@ -29,7 +29,7 @@ type redirect struct {
 }
 
 // New creates a Redirect middleware.
-func newRedirect(next http.Handler, regex, replacement string, permanent bool, code *int, rawURL func(*http.Request) string, name string) (http.Handler, error) {
+func newRedirect(next http.Handler, regex, replacement string, permanent bool, statusCode *int, rawURL func(*http.Request) string, name string) (http.Handler, error) {
 	re, err := regexp.Compile(regex)
 	if err != nil {
 		return nil, err
@@ -39,7 +39,7 @@ func newRedirect(next http.Handler, regex, replacement string, permanent bool, c
 		regex:       re,
 		replacement: replacement,
 		permanent:   permanent,
-		statusCode:  code,
+		statusCode:  statusCode,
 		errHandler:  utils.DefaultHandler,
 		next:        next,
 		name:        name,
