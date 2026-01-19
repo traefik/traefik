@@ -23,7 +23,8 @@ type ingressConfig struct {
 
 	SSLPassthrough *bool `annotation:"nginx.ingress.kubernetes.io/ssl-passthrough"`
 
-	UseRegex *bool `annotation:"nginx.ingress.kubernetes.io/use-regex"`
+	UseRegex      *bool   `annotation:"nginx.ingress.kubernetes.io/use-regex"`
+	RewriteTarget *string `annotation:"nginx.ingress.kubernetes.io/rewrite-target"`
 
 	Affinity              *string `annotation:"nginx.ingress.kubernetes.io/affinity"`
 	SessionCookieName     *string `annotation:"nginx.ingress.kubernetes.io/session-cookie-name"`
@@ -59,7 +60,7 @@ type ingressConfig struct {
 // parseIngressConfig parses the annotations from an Ingress object into an ingressConfig struct.
 func parseIngressConfig(ing *netv1.Ingress) (ingressConfig, error) {
 	cfg := ingressConfig{}
-	cfgType := reflect.TypeOf(cfg)
+	cfgType := reflect.TypeFor[ingressConfig]()
 	cfgValue := reflect.ValueOf(&cfg).Elem()
 
 	for i := range cfgType.NumField() {
@@ -91,8 +92,7 @@ func parseIngressConfig(ing *netv1.Ingress) (ingressConfig, error) {
 			if field.Type.Elem().Elem().Kind() == reflect.String {
 				// Handle slice of strings
 				var slice []string
-				elements := strings.Split(val, ",")
-				for _, elt := range elements {
+				for elt := range strings.SplitSeq(val, ",") {
 					slice = append(slice, strings.TrimSpace(elt))
 				}
 				cfgValue.Field(i).Set(reflect.ValueOf(&slice))

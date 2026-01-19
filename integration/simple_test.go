@@ -2323,6 +2323,12 @@ func (s *SimpleSuite) TestEncodedCharactersDifferentEntryPoints() {
 			expected: http.StatusOK,
 		},
 		{
+			desc:     "Encoded slash should be ALLOWED on permissive2 entry point",
+			request:  "GET /path%2Fwith%2Fslash HTTP/1.1\r\nHost: test.localhost\r\n\r\n",
+			target:   "127.0.0.1:8002", // permissive2 entry point
+			expected: http.StatusOK,
+		},
+		{
 			desc:     "Regular path should work on strict entry point",
 			request:  "GET /regular/path HTTP/1.1\r\nHost: test.localhost\r\n\r\n",
 			target:   "127.0.0.1:8000",
@@ -2332,6 +2338,12 @@ func (s *SimpleSuite) TestEncodedCharactersDifferentEntryPoints() {
 			desc:     "Regular path should work on permissive entry point",
 			request:  "GET /regular/path HTTP/1.1\r\nHost: test.localhost\r\n\r\n",
 			target:   "127.0.0.1:8001",
+			expected: http.StatusOK,
+		},
+		{
+			desc:     "Regular path should work on permissive2 entry point",
+			request:  "GET /regular/path HTTP/1.1\r\nHost: test.localhost\r\n\r\n",
+			target:   "127.0.0.1:8002",
 			expected: http.StatusOK,
 		},
 	}

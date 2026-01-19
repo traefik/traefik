@@ -54,8 +54,9 @@ func (c *Configuration) GetUDPRoutersByEntryPoints(ctx context.Context, entryPoi
 
 // UDPRouterInfo holds information about a currently running UDP router.
 type UDPRouterInfo struct {
-	*dynamic.UDPRouter          // dynamic configuration
-	Err                []string `json:"error,omitempty"` // initialization error
+	*dynamic.UDPRouter // dynamic configuration
+
+	Err []string `json:"error,omitempty"` // initialization error
 	// Status reports whether the router is disabled, in a warning state, or all good (enabled).
 	// If not in "enabled" state, the reason for it should be in the list of Err.
 	// It is the caller's responsibility to set the initial status.
@@ -66,10 +67,8 @@ type UDPRouterInfo struct {
 // AddError adds err to r.Err, if it does not already exist.
 // If critical is set, r is marked as disabled.
 func (r *UDPRouterInfo) AddError(err error, critical bool) {
-	for _, value := range r.Err {
-		if value == err.Error() {
-			return
-		}
+	if slices.Contains(r.Err, err.Error()) {
+		return
 	}
 
 	r.Err = append(r.Err, err.Error())
@@ -86,8 +85,9 @@ func (r *UDPRouterInfo) AddError(err error, critical bool) {
 
 // UDPServiceInfo holds information about a currently running UDP service.
 type UDPServiceInfo struct {
-	*dynamic.UDPService          // dynamic configuration
-	Err                 []string `json:"error,omitempty"` // initialization error
+	*dynamic.UDPService // dynamic configuration
+
+	Err []string `json:"error,omitempty"` // initialization error
 	// Status reports whether the service is disabled, in a warning state, or all good (enabled).
 	// If not in "enabled" state, the reason for it should be in the list of Err.
 	// It is the caller's responsibility to set the initial status.
@@ -98,10 +98,8 @@ type UDPServiceInfo struct {
 // AddError adds err to s.Err, if it does not already exist.
 // If critical is set, s is marked as disabled.
 func (s *UDPServiceInfo) AddError(err error, critical bool) {
-	for _, value := range s.Err {
-		if value == err.Error() {
-			return
-		}
+	if slices.Contains(s.Err, err.Error()) {
+		return
 	}
 
 	s.Err = append(s.Err, err.Error())

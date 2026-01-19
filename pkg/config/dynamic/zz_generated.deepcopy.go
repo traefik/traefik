@@ -1389,7 +1389,11 @@ func (in *Router) DeepCopyInto(out *Router) {
 		*out = new(RouterObservabilityConfig)
 		(*in).DeepCopyInto(*out)
 	}
-	out.DeniedEncodedPathCharacters = in.DeniedEncodedPathCharacters
+	if in.DeniedEncodedPathCharacters != nil {
+		in, out := &in.DeniedEncodedPathCharacters, &out.DeniedEncodedPathCharacters
+		*out = new(RouterDeniedEncodedPathCharacters)
+		**out = **in
+	}
 	return
 }
 
@@ -1609,6 +1613,11 @@ func (in *ServersTransport) DeepCopyInto(out *ServersTransport) {
 	if in.Certificates != nil {
 		in, out := &in.Certificates, &out.Certificates
 		*out = make(tls.Certificates, len(*in))
+		copy(*out, *in)
+	}
+	if in.CipherSuites != nil {
+		in, out := &in.CipherSuites, &out.CipherSuites
+		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
 	if in.ForwardingTimeouts != nil {

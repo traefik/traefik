@@ -34,7 +34,7 @@ const resyncPeriod = 10 * time.Minute
 // WatchAll starts the watch of the Provider resources and updates the stores.
 // The stores can then be accessed via the Get* functions.
 type Client interface {
-	WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error)
+	WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan any, error)
 	GetIngressRoutes() []*traefikv1alpha1.IngressRoute
 	GetIngressRouteTCPs() []*traefikv1alpha1.IngressRouteTCP
 	GetIngressRouteUDPs() []*traefikv1alpha1.IngressRouteUDP
@@ -157,8 +157,8 @@ func newExternalClusterClient(endpoint, caFilePath string, token types.FileOrCon
 }
 
 // WatchAll starts namespace-specific controllers for all relevant kinds.
-func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error) {
-	eventCh := make(chan interface{}, 1)
+func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan any, error) {
+	eventCh := make(chan any, 1)
 	eventHandler := &k8s.ResourceEventHandler{Ev: eventCh}
 
 	if len(namespaces) == 0 {

@@ -21,7 +21,7 @@ func TestDeepCopy(t *testing.T) {
 
 	cfgDeepCopy := cfg.DeepCopy()
 	assert.NotEqual(t, reflect.ValueOf(cfgDeepCopy), reflect.ValueOf(cfg))
-	assert.Equal(t, reflect.TypeOf(cfgDeepCopy), reflect.TypeOf(cfg))
+	assert.Equal(t, reflect.TypeOf(cfgDeepCopy), reflect.TypeOf(cfg)) //nolint:modernize // Comparing runtime types of two values.
 	assert.Equal(t, cfgDeepCopy, cfg)
 
 	// Update cfg
@@ -32,6 +32,6 @@ func TestDeepCopy(t *testing.T) {
 	assert.Equal(t, cfgCopy, cfg)
 
 	assert.NotEqual(t, reflect.ValueOf(cfgDeepCopy), reflect.ValueOf(cfg))
-	assert.Equal(t, reflect.TypeOf(cfgDeepCopy), reflect.TypeOf(cfg))
+	assert.Equal(t, reflect.TypeOf(cfgDeepCopy), reflect.TypeOf(cfg)) //nolint:modernize // Comparing runtime types of two values.
 	assert.NotEqual(t, cfgDeepCopy, cfg)
 }

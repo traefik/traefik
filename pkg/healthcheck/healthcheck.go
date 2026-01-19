@@ -391,7 +391,7 @@ func (p *PassiveServiceHealthChecker) WrapHandler(ctx context.Context, next http
 		}
 
 		// We need to guarantee that only one goroutine (request) will update the status and create a timer for the target.
-		_, _, _ = p.timersGroup.Do(targetURL, func() (interface{}, error) {
+		_, _, _ = p.timersGroup.Do(targetURL, func() (any, error) {
 			// A timer is already running for this target;
 			// it means that the target is already considered unhealthy.
 			if _, ok := p.timers.Load(targetURL); ok {

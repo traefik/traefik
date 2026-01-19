@@ -112,4 +112,4 @@ A list of HTTP middlewares can be found [here](http/overview.md).
 
 A list of TCP middlewares can be found [here](tcp/overview.md).
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

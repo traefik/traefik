@@ -30,11 +30,13 @@ func writeError(rw http.ResponseWriter, msg string, code int) {
 
 type serviceInfoRepresentation struct {
 	*runtime.ServiceInfo
+
 	ServerStatus map[string]string `json:"serverStatus,omitempty"`
 }
 
 type tcpServiceInfoRepresentation struct {
 	*runtime.TCPServiceInfo
+
 	ServerStatus map[string]string `json:"serverStatus,omitempty"`
 }
 
@@ -164,7 +166,7 @@ func getProviderName(id string) string {
 	return strings.SplitN(id, "@", 2)[1]
 }
 
-func extractType(element interface{}) string {
+func extractType(element any) string {
 	v := reflect.ValueOf(element).Elem()
 	for i := range v.NumField() {
 		field := v.Field(i)

@@ -22,7 +22,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/job"
 	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	"github.com/traefik/traefik/v3/pkg/provider"
-	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
@@ -79,6 +78,9 @@ type Provider struct {
 
 	DefaultBackendService  string `description:"Service used to serve HTTP requests not matching any known server name (catch-all). Takes the form 'namespace/name'." json:"defaultBackendService,omitempty" toml:"defaultBackendService,omitempty" yaml:"defaultBackendService,omitempty" export:"true"`
 	DisableSvcExternalName bool   `description:"Disable support for Services of type ExternalName." json:"disableSvcExternalName,omitempty" toml:"disableSvcExternalName,omitempty" yaml:"disableSvcExternalName,omitempty" export:"true"`
+
+	// NonTLSEntryPoints contains the names of entrypoints that are configured without TLS.
+	NonTLSEntryPoints []string `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
 
 	defaultBackendServiceNamespace string
 	defaultBackendServiceName      string
@@ -314,7 +316,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 				Service:    defaultBackendName,
 			}
 
-			if err := p.applyMiddlewares(ingress.Namespace, defaultBackendName, ingressConfig, hasTLS, rt, conf); err != nil {
+			if err := p.applyMiddlewares(ingress.Namespace, defaultBackendName, "", ingressConfig, hasTLS, rt, conf); err != nil {
 				logger.Error().Err(err).Msg("Error applying middlewares")
 			}
 
@@ -329,7 +331,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 				TLS:        &dynamic.RouterTLSConfig{},
 			}
 
-			if err := p.applyMiddlewares(ingress.Namespace, defaultBackendTLSName, ingressConfig, false, rtTLS, conf); err != nil {
+			if err := p.applyMiddlewares(ingress.Namespace, defaultBackendTLSName, "", ingressConfig, false, rtTLS, conf); err != nil {
 				logger.Error().Err(err).Msg("Error applying middlewares")
 			}
 
@@ -406,7 +408,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 					Service:    key,
 				}
 
-				if err := p.applyMiddlewares(ingress.Namespace, key, ingressConfig, hasTLS, rt, conf); err != nil {
+				if err := p.applyMiddlewares(ingress.Namespace, key, "", ingressConfig, hasTLS, rt, conf); err != nil {
 					logger.Error().Err(err).Msg("Error applying middlewares")
 				}
 
@@ -420,7 +422,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 					TLS:        &dynamic.RouterTLSConfig{},
 				}
 
-				if err := p.applyMiddlewares(ingress.Namespace, key+"-tls", ingressConfig, false, rtTLS, conf); err != nil {
+				if err := p.applyMiddlewares(ingress.Namespace, key+"-tls", "", ingressConfig, false, rtTLS, conf); err != nil {
 					logger.Error().Err(err).Msg("Error applying middlewares")
 				}
 
@@ -485,7 +487,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 					conf.HTTP.ServersTransports[namedServersTransport.Name] = namedServersTransport.ServersTransport
 				}
 
-				if err := p.applyMiddlewares(ingress.Namespace, routerKey, ingressConfig, hasTLS, rt, conf); err != nil {
+				if err := p.applyMiddlewares(ingress.Namespace, routerKey, pa.Path, ingressConfig, hasTLS, rt, conf); err != nil {
 					logger.Error().Err(err).Msg("Error applying middlewares")
 				}
 			}
@@ -643,7 +645,10 @@ func (p *Provider) getBackendAddresses(namespace string, backend netv1.IngressBa
 		}
 
 		for _, endpoint := range endpointSlice.Endpoints {
-			if !k8s.EndpointServing(endpoint) {
+			// The Serving condition allows to track if the Pod can receive traffic.
+			// It is set to true when the Pod is Ready or Terminating.
+			// From the go documentation, a nil value should be interpreted as "true".
+			if !ptr.Deref(endpoint.Conditions.Serving, true) {
 				continue
 			}
 
@@ -655,7 +660,7 @@ func (p *Provider) getBackendAddresses(namespace string, backend netv1.IngressBa
 				uniqAddresses[address] = struct{}{}
 				addresses = append(addresses, backendAddress{
 					Address: net.JoinHostPort(address, strconv.Itoa(int(port))),
-					Fenced:  ptr.Deref(endpoint.Conditions.Terminating, false) && ptr.Deref(endpoint.Conditions.Serving, false),
+					Fenced:  ptr.Deref(endpoint.Conditions.Terminating, false),
 				})
 			}
 		}
@@ -785,7 +790,7 @@ func (p *Provider) loadCertificates(ctx context.Context, ingress *netv1.Ingress,
 	return nil
 }
 
-func (p *Provider) applyMiddlewares(namespace, routerKey string, ingressConfig ingressConfig, hasTLS bool, rt *dynamic.Router, conf *dynamic.Configuration) error {
+func (p *Provider) applyMiddlewares(namespace, routerKey, rulePath string, ingressConfig ingressConfig, hasTLS bool, rt *dynamic.Router, conf *dynamic.Configuration) error {
 	if err := p.applyBasicAuthConfiguration(namespace, routerKey, ingressConfig, rt, conf); err != nil {
 		return fmt.Errorf("applying basic auth configuration: %w", err)
 	}
@@ -798,9 +803,11 @@ func (p *Provider) applyMiddlewares(namespace, routerKey string, ingressConfig i
 
 	applyCORSConfiguration(routerKey, ingressConfig, rt, conf)
 
+	applyRewriteTargetConfiguration(rulePath, routerKey, ingressConfig, rt, conf)
+
 	// Apply SSL redirect is mandatory to be applied after all other middlewares.
 	// TODO: check how to remove this, and create the HTTP router elsewhere.
-	applySSLRedirectConfiguration(routerKey, ingressConfig, hasTLS, rt, conf)
+	p.applySSLRedirectConfiguration(routerKey, ingressConfig, hasTLS, rt, conf)
 
 	applyUpstreamVhost(routerKey, ingressConfig, rt, conf)
 
@@ -839,6 +846,22 @@ func (p *Provider) applyCustomHeaders(routerName string, ingressConfig ingressCo
 	rt.Middlewares = append(rt.Middlewares, customHeadersMiddlewareName)
 
 	return nil
+}
+
+func applyRewriteTargetConfiguration(rulePath, routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
+	if ingressConfig.RewriteTarget == nil || !ptr.Deref(ingressConfig.UseRegex, false) {
+		return
+	}
+
+	rewriteTargetMiddlewareName := routerName + "-rewrite-target"
+	conf.HTTP.Middlewares[rewriteTargetMiddlewareName] = &dynamic.Middleware{
+		ReplacePathRegex: &dynamic.ReplacePathRegex{
+			Regex:       rulePath,
+			Replacement: *ingressConfig.RewriteTarget,
+		},
+	}
+
+	rt.Middlewares = append(rt.Middlewares, rewriteTargetMiddlewareName)
 }
 
 func (p *Provider) applyBasicAuthConfiguration(namespace, routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
@@ -1007,7 +1030,7 @@ func applyWhitelistSourceRangeConfiguration(routerName string, ingressConfig ing
 	rt.Middlewares = append(rt.Middlewares, whitelistSourceRangeMiddlewareName)
 }
 
-func applySSLRedirectConfiguration(routerName string, ingressConfig ingressConfig, hasTLS bool, rt *dynamic.Router, conf *dynamic.Configuration) {
+func (p *Provider) applySSLRedirectConfiguration(routerName string, ingressConfig ingressConfig, hasTLS bool, rt *dynamic.Router, conf *dynamic.Configuration) {
 	var forceSSLRedirect bool
 	if ingressConfig.ForceSSLRedirect != nil {
 		forceSSLRedirect = *ingressConfig.ForceSSLRedirect
@@ -1019,7 +1042,9 @@ func applySSLRedirectConfiguration(routerName string, ingressConfig ingressConfi
 		// An Ingress with TLS configuration creates only a Traefik router with a TLS configuration,
 		// so no Non-TLS router exists to handle HTTP traffic, and we should create it.
 		httpRouter := &dynamic.Router{
-			Rule: rt.Rule,
+			// Only attach to entryPoint which do not activate TLS.
+			EntryPoints: p.NonTLSEntryPoints,
+			Rule:        rt.Rule,
 			// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
 			RuleSyntax:  "default",
 			Middlewares: rt.Middlewares,
@@ -1105,8 +1130,7 @@ func basicAuthUsers(secret *corev1.Secret, authSecretType string) (dynamic.Users
 	}
 
 	// Trim lines and filter out blanks
-	rawLines := strings.Split(string(authFileContent), "\n")
-	for _, rawLine := range rawLines {
+	for rawLine := range strings.SplitSeq(string(authFileContent), "\n") {
 		line := strings.TrimSpace(rawLine)
 		if line != "" && !strings.HasPrefix(line, "#") {
 			users = append(users, line)
@@ -1133,7 +1157,7 @@ func buildRule(host string, pa netv1.HTTPIngressPath, config ingressConfig) stri
 			rules = append(rules, fmt.Sprintf("Path(`%s`)", pa.Path))
 		case netv1.PathTypePrefix:
 			if ptr.Deref(config.UseRegex, false) {
-				rules = append(rules, fmt.Sprintf("PathRegexp(`^%s`)", regexp.QuoteMeta(pa.Path)))
+				rules = append(rules, fmt.Sprintf("PathRegexp(`^%s`)", pa.Path))
 			} else {
 				rules = append(rules, buildPrefixRule(pa.Path))
 			}
@@ -1167,13 +1191,13 @@ func buildPrefixRule(path string) string {
 	return fmt.Sprintf("(Path(`%[1]s`) || PathPrefix(`%[1]s/`))", path)
 }
 
-func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *safe.Pool, eventsChan <-chan interface{}) chan interface{} {
+func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *safe.Pool, eventsChan <-chan any) chan any {
 	if throttleDuration == 0 {
 		return nil
 	}
 
 	// Create a buffered channel to hold the pending event (if we're delaying processing the event due to throttling).
-	eventsChanBuffered := make(chan interface{}, 1)
+	eventsChanBuffered := make(chan any, 1)
 
 	// Run a goroutine that reads events from eventChan and does a
 	// non-blocking write to pendingEvent. This guarantees that writing to

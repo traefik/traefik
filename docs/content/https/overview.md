@@ -20,4 +20,4 @@ That is to say, how to obtain [TLS certificates](./tls.md#certificates-definitio
 either through a definition in the dynamic configuration, or through [Let's Encrypt](./acme.md) (ACME).
 And how to configure [TLS options](./tls.md#tls-options), and [certificates stores](./tls.md#certificates-stores).
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}
