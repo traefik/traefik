@@ -636,6 +636,10 @@ The `Headers` and `HeadersRegexp` matchers have been renamed to `Header` and `He
 
 `PathPrefix` no longer uses regular expressions to match path prefixes.
 
+`Path` and `PathPrefix` no longer support path parameter placeholders (e.g., `{id}`, `{name}`).
+Routes using placeholders like `Path(`/route/{id}`)` will not match in v3 syntax.
+Use `PathRegexp` instead for dynamic path segments.
+
 `QueryRegexp` has been introduced to match query values using a regular expression.
 
 `HeaderRegexp`, `HostRegexp`, `PathRegexp`, `QueryRegexp`, and `HostSNIRegexp` matchers now uses the [Go regexp syntax](https://golang.org/pkg/regexp/syntax/).
@@ -715,6 +719,39 @@ http:
   [http.routers.test]
     ruleSyntax = "v2"
 ```
+
+##### Migrate Path Placeholders to PathRegexp
+
+In v2, `Path` and `PathPrefix` supported path parameter placeholders like `{id}` for matching dynamic path segments.
+In v3, this is no longer supported and `PathRegexp` should be used instead.
+
+??? example "Migrating a route with path placeholders"
+
+    v2 syntax (no longer works in v3):
+
+    ```yaml
+    match: Host(`example.com`) && Path(`/products/{id}`)
+    ```
+
+    v3 syntax using `PathRegexp`:
+
+    ```yaml
+    match: Host(`example.com`) && PathRegexp(`^/products/[^/]+$`)
+    ```
+
+    For more complex patterns with multiple placeholders:
+
+    v2 syntax:
+
+    ```yaml
+    match: Host(`example.com`) && Path(`/users/{userId}/orders/{orderId}`)
+    ```
+
+    v3 syntax:
+
+    ```yaml
+    match: Host(`example.com`) && PathRegexp(`^/users/[^/]+/orders/[^/]+$`)
+    ```
 
 ### IPWhiteList
 
