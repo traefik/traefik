@@ -33,6 +33,8 @@ import (
 
 // ServiceApplyConfiguration represents a declarative configuration of the Service type for use
 // with apply.
+//
+// Service defines an upstream HTTP service to proxy traffic to.
 type ServiceApplyConfiguration struct {
 	LoadBalancerSpecApplyConfiguration `json:",inline"`
 }
