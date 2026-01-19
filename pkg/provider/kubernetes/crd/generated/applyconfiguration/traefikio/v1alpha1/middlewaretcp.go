@@ -34,8 +34,13 @@ import (
 
 // MiddlewareTCPApplyConfiguration represents a declarative configuration of the MiddlewareTCP type for use
 // with apply.
+//
+// MiddlewareTCP is the CRD implementation of a Traefik TCP middleware.
+// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/tcp/middlewares/overview/
 type MiddlewareTCPApplyConfiguration struct {
-	v1.TypeMetaApplyConfiguration    `json:",inline"`
+	v1.TypeMetaApplyConfiguration `json:",inline"`
+	// Standard object's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	*v1.ObjectMetaApplyConfiguration `json:"metadata,omitempty"`
 	Spec                             *MiddlewareTCPSpecApplyConfiguration `json:"spec,omitempty"`
 }
@@ -50,6 +55,7 @@ func MiddlewareTCP(name, namespace string) *MiddlewareTCPApplyConfiguration {
 	b.WithAPIVersion("traefik.io/v1alpha1")
 	return b
 }
+
 func (b MiddlewareTCPApplyConfiguration) IsApplyConfiguration() {}
 
 // WithKind sets the Kind field in the declarative configuration to the given value

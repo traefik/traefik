@@ -32,13 +32,28 @@ import (
 
 // TLSTCPApplyConfiguration represents a declarative configuration of the TLSTCP type for use
 // with apply.
+//
+// TLSTCP holds the TLS configuration for an IngressRouteTCP.
+// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/tcp/tls/
 type TLSTCPApplyConfiguration struct {
-	SecretName   *string                            `json:"secretName,omitempty"`
-	Passthrough  *bool                              `json:"passthrough,omitempty"`
-	Options      *ObjectReferenceApplyConfiguration `json:"options,omitempty"`
-	Store        *ObjectReferenceApplyConfiguration `json:"store,omitempty"`
-	CertResolver *string                            `json:"certResolver,omitempty"`
-	Domains      []types.Domain                     `json:"domains,omitempty"`
+	// SecretName is the name of the referenced Kubernetes Secret to specify the certificate details.
+	SecretName *string `json:"secretName,omitempty"`
+	// Passthrough defines whether a TLS router will terminate the TLS connection.
+	Passthrough *bool `json:"passthrough,omitempty"`
+	// Options defines the reference to a TLSOption, that specifies the parameters of the TLS connection.
+	// If not defined, the `default` TLSOption is used.
+	// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/tcp/tls/#tls-options
+	Options *ObjectReferenceApplyConfiguration `json:"options,omitempty"`
+	// Store defines the reference to the TLSStore, that will be used to store certificates.
+	// Please note that only `default` TLSStore can be used.
+	Store *ObjectReferenceApplyConfiguration `json:"store,omitempty"`
+	// CertResolver defines the name of the certificate resolver to use.
+	// Cert resolvers have to be configured in the static configuration.
+	// More info: https://doc.traefik.io/traefik/v3.6/reference/install-configuration/tls/certificate-resolvers/acme/
+	CertResolver *string `json:"certResolver,omitempty"`
+	// Domains defines the list of domains that will be used to issue certificates.
+	// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/tcp/tls/#domains
+	Domains []types.Domain `json:"domains,omitempty"`
 }
 
 // TLSTCPApplyConfiguration constructs a declarative configuration of the TLSTCP type for use with

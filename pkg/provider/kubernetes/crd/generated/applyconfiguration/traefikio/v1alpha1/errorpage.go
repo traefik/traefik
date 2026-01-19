@@ -28,11 +28,28 @@ package v1alpha1
 
 // ErrorPageApplyConfiguration represents a declarative configuration of the ErrorPage type for use
 // with apply.
+//
+// ErrorPage holds the custom error middleware configuration.
+// This middleware returns a custom page in lieu of the default, according to configured ranges of HTTP Status codes.
+// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/middlewares/errorpages/
 type ErrorPageApplyConfiguration struct {
-	Status         []string                   `json:"status,omitempty"`
-	StatusRewrites map[string]int             `json:"statusRewrites,omitempty"`
-	Service        *ServiceApplyConfiguration `json:"service,omitempty"`
-	Query          *string                    `json:"query,omitempty"`
+	// Status defines which status or range of statuses should result in an error page.
+	// It can be either a status code as a number (500),
+	// as multiple comma-separated numbers (500,502),
+	// as ranges by separating two codes with a dash (500-599),
+	// or a combination of the two (404,418,500-599).
+	Status []string `json:"status,omitempty"`
+	// StatusRewrites defines a mapping of status codes that should be returned instead of the original error status codes.
+	// For example: "418": 404 or "410-418": 404
+	StatusRewrites map[string]int `json:"statusRewrites,omitempty"`
+	// Service defines the reference to a Kubernetes Service that will serve the error page.
+	// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/middlewares/errorpages/#service
+	Service *ServiceApplyConfiguration `json:"service,omitempty"`
+	// Query defines the URL for the error page (hosted by service).
+	// The {status} variable can be used in order to insert the status code in the URL.
+	// The {originalStatus} variable can be used in order to insert the upstream status code in the URL.
+	// The {url} variable can be used in order to insert the escaped request URL.
+	Query *string `json:"query,omitempty"`
 }
 
 // ErrorPageApplyConfiguration constructs a declarative configuration of the ErrorPage type for use with

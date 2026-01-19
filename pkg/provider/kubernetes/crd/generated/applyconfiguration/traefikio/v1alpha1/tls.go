@@ -32,12 +32,26 @@ import (
 
 // TLSApplyConfiguration represents a declarative configuration of the TLS type for use
 // with apply.
+//
+// TLS holds the TLS configuration.
+// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/tls/overview/
 type TLSApplyConfiguration struct {
-	SecretName   *string                         `json:"secretName,omitempty"`
-	Options      *TLSOptionRefApplyConfiguration `json:"options,omitempty"`
-	Store        *TLSStoreRefApplyConfiguration  `json:"store,omitempty"`
-	CertResolver *string                         `json:"certResolver,omitempty"`
-	Domains      []types.Domain                  `json:"domains,omitempty"`
+	// SecretName is the name of the referenced Kubernetes Secret to specify the certificate details.
+	SecretName *string `json:"secretName,omitempty"`
+	// Options defines the reference to a TLSOption, that specifies the parameters of the TLS connection.
+	// If not defined, the `default` TLSOption is used.
+	// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/tls/tls-options/
+	Options *TLSOptionRefApplyConfiguration `json:"options,omitempty"`
+	// Store defines the reference to the TLSStore, that will be used to store certificates.
+	// Please note that only `default` TLSStore can be used.
+	Store *TLSStoreRefApplyConfiguration `json:"store,omitempty"`
+	// CertResolver defines the name of the certificate resolver to use.
+	// Cert resolvers have to be configured in the static configuration.
+	// More info: https://doc.traefik.io/traefik/v3.6/reference/install-configuration/tls/certificate-resolvers/acme/
+	CertResolver *string `json:"certResolver,omitempty"`
+	// Domains defines the list of domains that will be used to issue certificates.
+	// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/tls/tls-certificates/#domains
+	Domains []types.Domain `json:"domains,omitempty"`
 }
 
 // TLSApplyConfiguration constructs a declarative configuration of the TLS type for use with
