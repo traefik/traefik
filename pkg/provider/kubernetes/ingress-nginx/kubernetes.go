@@ -835,12 +835,22 @@ func applyRedirect(routerName string, ingressConfig ingressConfig, rt *dynamic.R
 	if ingressConfig.PermanentRedirect != nil {
 		redirectURL = *ingressConfig.PermanentRedirect
 		code = ptr.Deref(ingressConfig.PermanentRedirectCode, http.StatusMovedPermanently)
+
+		// NGINX only accepts valid redirect codes.
+		if code < 300 || code > 308 {
+			code = http.StatusMovedPermanently
+		}
 	}
 
 	// TemporalRedirect takes precedence over the PermanentRedirect.
 	if ingressConfig.TemporalRedirect != nil {
 		redirectURL = *ingressConfig.TemporalRedirect
 		code = ptr.Deref(ingressConfig.TemporalRedirectCode, http.StatusFound)
+
+		// NGINX only accepts valid redirect codes.
+		if code < 300 || code > 308 {
+			code = http.StatusFound
+		}
 	}
 
 	redirectMiddlewareName := routerName + "-redirect"
