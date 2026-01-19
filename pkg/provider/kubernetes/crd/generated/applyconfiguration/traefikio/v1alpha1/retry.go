@@ -32,8 +32,19 @@ import (
 
 // RetryApplyConfiguration represents a declarative configuration of the Retry type for use
 // with apply.
+//
+// Retry holds the retry middleware configuration.
+// This middleware reissues requests a given number of times to a backend server if that server does not reply.
+// As soon as the server answers, the middleware stops retrying, regardless of the response status.
+// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/middlewares/retry/
 type RetryApplyConfiguration struct {
-	Attempts        *int                `json:"attempts,omitempty"`
+	// Attempts defines how many times the request should be retried.
+	Attempts *int `json:"attempts,omitempty"`
+	// InitialInterval defines the first wait time in the exponential backoff series.
+	// The maximum interval is calculated as twice the initialInterval.
+	// If unspecified, requests will be retried immediately.
+	// The value of initialInterval should be provided in seconds or as a valid duration format,
+	// see https://pkg.go.dev/time#ParseDuration.
 	InitialInterval *intstr.IntOrString `json:"initialInterval,omitempty"`
 }
 
