@@ -793,8 +793,6 @@ func (p *Provider) loadCertificates(ctx context.Context, ingress *netv1.Ingress,
 }
 
 func (p *Provider) applyMiddlewares(namespace, routerKey, rulePath string, ingressConfig ingressConfig, hasTLS bool, rt *dynamic.Router, conf *dynamic.Configuration) error {
-	applyRedirect(routerKey, ingressConfig, rt, conf)
-
 	if err := p.applyBasicAuthConfiguration(namespace, routerKey, ingressConfig, rt, conf); err != nil {
 		return fmt.Errorf("applying basic auth configuration: %w", err)
 	}
@@ -812,6 +810,8 @@ func (p *Provider) applyMiddlewares(namespace, routerKey, rulePath string, ingre
 	// Apply SSL redirect is mandatory to be applied after all other middlewares.
 	// TODO: check how to remove this, and create the HTTP router elsewhere.
 	p.applySSLRedirectConfiguration(routerKey, ingressConfig, hasTLS, rt, conf)
+
+	applyRedirect(routerKey, ingressConfig, rt, conf)
 
 	applyUpstreamVhost(routerKey, ingressConfig, rt, conf)
 
@@ -836,7 +836,7 @@ func applyRedirect(routerName string, ingressConfig ingressConfig, rt *dynamic.R
 		redirectURL = *ingressConfig.PermanentRedirect
 		code = ptr.Deref(ingressConfig.PermanentRedirectCode, http.StatusMovedPermanently)
 
-		// NGINX only accepts valid redirect codes.
+		// NGINX only accepts valid redirect codes and defaults to 301.
 		if code < 300 || code > 308 {
 			code = http.StatusMovedPermanently
 		}
@@ -847,7 +847,7 @@ func applyRedirect(routerName string, ingressConfig ingressConfig, rt *dynamic.R
 		redirectURL = *ingressConfig.TemporalRedirect
 		code = ptr.Deref(ingressConfig.TemporalRedirectCode, http.StatusFound)
 
-		// NGINX only accepts valid redirect codes.
+		// NGINX only accepts valid redirect codes and defaults to 302.
 		if code < 300 || code > 308 {
 			code = http.StatusFound
 		}
