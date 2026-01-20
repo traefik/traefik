@@ -17,14 +17,14 @@ type encodedCharacters struct {
 }
 
 // NewEncodedCharacters creates an Encoded Characters middleware.
-func NewEncodedCharacters(ctx context.Context, next http.Handler, config dynamic.EncodedCharacters, name string) (http.Handler, error) {
+func NewEncodedCharacters(ctx context.Context, next http.Handler, config dynamic.EncodedCharacters, name string) http.Handler {
 	middlewares.GetLogger(ctx, name, typeName).Debug().Msg("Creating middleware")
 
 	return &encodedCharacters{
 		next:             next,
 		deniedCharacters: mapDeniedCharacters(config),
 		name:             name,
-	}, nil
+	}
 }
 
 func (ec *encodedCharacters) GetTracingInformation() (string, string) {

@@ -10,13 +10,13 @@ When you use this middleware, by default, potentially dangerous encoded characte
 ## Configuration Examples
 
 ```yaml tab="Docker & Swarm"
-# Allow encoded slash in the request path
+# Allow encoded slash in the request path.
 labels:
   - "traefik.http.middlewares.test-encodedchars.encodedcharacters.allowencodedslash=true"
 ```
 
 ```yaml tab="Kubernetes"
-# Allow encoded slash in the request path
+# Allow encoded slash in the request path.
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
@@ -27,12 +27,12 @@ spec:
 ```
 
 ```yaml tab="Consul Catalog"
-# Allow encoded slash in the request path
+# Allow encoded slash in the request path.
 - "traefik.http.middlewares.test-encodedchars.encodedcharacters.allowencodedslash=true"
 ```
 
 ```yaml tab="File (YAML)"
-# Allow encoded slash in the request path
+# Allow encoded slash in the request path.
 http:
   middlewares:
     test-encodedchars:
@@ -41,10 +41,10 @@ http:
 ```
 
 ```toml tab="File (TOML)"
-# Allow encoded slash in the request path
+# Allow encoded slash in the request path.
 [http.middlewares]
   [http.middlewares.test-encodedchars.encodedCharacters]
-  allowEncodedSlash = true
+    allowEncodedSlash = true
 ```
 
 ## Configuration Options

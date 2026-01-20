@@ -118,9 +118,10 @@ func TestEncodedCharacters(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
 			next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {})
-			handler, err := NewEncodedCharacters(t.Context(), next, test.config, "test-encoded-characters")
-			require.NoError(t, err)
+			handler := NewEncodedCharacters(t.Context(), next, test.config, "test-encoded-characters")
 
 			req := httptest.NewRequest(http.MethodGet, test.path, nil)
 			recorder := httptest.NewRecorder()
@@ -180,6 +181,8 @@ func TestMapDeniedCharacters(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
 			deniedMap := mapDeniedCharacters(test.config)
 			require.Equal(t, test.expectedDeniedChar, deniedMap)
 			require.Len(t, deniedMap, len(test.expectedDeniedChar))
