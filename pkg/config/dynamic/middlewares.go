@@ -293,7 +293,6 @@ type ForwardAuth struct {
 	// PreserveRequestMethod defines whether to preserve the original request method while forwarding the request to the authentication server.
 	PreserveRequestMethod bool `json:"preserveRequestMethod,omitempty" toml:"preserveRequestMethod,omitempty" yaml:"preserveRequestMethod,omitempty" export:"true"`
 	// AuthSigninURL specifies the URL to redirect to when the authentication server returns 401 Unauthorized.
-	// Supports nginx-compatible variable substitution: $scheme, $host, $request_uri, $escaped_request_uri.
 	AuthSigninURL string `json:"authSigninURL,omitempty" toml:"authSigninURL,omitempty" yaml:"authSigninURL,omitempty" export:"true"`
 }
 
