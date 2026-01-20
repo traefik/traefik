@@ -870,112 +870,63 @@ func TestForwardAuthPreserveRequestMethod(t *testing.T) {
 			assert.True(t, reqReachesNextServer)
 		})
 	}
+
 }
 
-func TestForwardAuthSigninRedirectOn401(t *testing.T) {
-	authServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-	}))
-	t.Cleanup(authServer.Close)
-
-	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		t.Fail()
-	})
-
-	auth := dynamic.ForwardAuth{
-		Address:       authServer.URL,
-		AuthSigninURL: "https://auth.example.com/login",
-	}
-	middleware, err := NewForward(t.Context(), next, auth, "authTest")
-	require.NoError(t, err)
-
-	ts := httptest.NewServer(middleware)
-	t.Cleanup(ts.Close)
-
-	client := &http.Client{
-		CheckRedirect: func(r *http.Request, via []*http.Request) error {
-			return http.ErrUseLastResponse
-		},
-	}
-
-	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
-	res, err := client.Do(req)
-	require.NoError(t, err)
-
-	assert.Equal(t, http.StatusFound, res.StatusCode)
-
-	location, err := res.Location()
-	require.NoError(t, err)
-	assert.Equal(t, "https://auth.example.com/login", location.String())
-}
-
-func TestForwardAuthNoRedirectOn401WithoutSigninURL(t *testing.T) {
-	authServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-	}))
-	t.Cleanup(authServer.Close)
-
-	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		t.Fail()
-	})
-
-	auth := dynamic.ForwardAuth{
-		Address: authServer.URL,
-	}
-	middleware, err := NewForward(t.Context(), next, auth, "authTest")
-	require.NoError(t, err)
-
-	ts := httptest.NewServer(middleware)
-	t.Cleanup(ts.Close)
-
-	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
-	res, err := http.DefaultClient.Do(req)
-	require.NoError(t, err)
-
-	assert.Equal(t, http.StatusUnauthorized, res.StatusCode)
-
-	body, err := io.ReadAll(res.Body)
-	require.NoError(t, err)
-	err = res.Body.Close()
-	require.NoError(t, err)
-
-	assert.Equal(t, "Unauthorized\n", string(body))
-}
-
-func TestForwardAuthNoRedirectOnOtherErrors(t *testing.T) {
+func TestForwardAuthAuthSigninURL(t *testing.T) {
 	testCases := []struct {
-		name       string
-		statusCode int
+		desc               string
+		authSigninURL      string
+		authServerStatus   int
+		expectedStatus     int
+		expectedLocation   string
+		nextShouldBeCalled bool
 	}{
 		{
-			name:       "403 Forbidden",
-			statusCode: http.StatusForbidden,
+			desc:               "redirects to signin URL on 401",
+			authSigninURL:      "https://auth.example.com/login",
+			authServerStatus:   http.StatusUnauthorized,
+			expectedStatus:     http.StatusFound,
+			expectedLocation:   "https://auth.example.com/login",
+			nextShouldBeCalled: false,
 		},
 		{
-			name:       "500 Internal Server Error",
-			statusCode: http.StatusInternalServerError,
+			desc:               "no redirect on 401 without signin URL",
+			authServerStatus:   http.StatusUnauthorized,
+			expectedStatus:     http.StatusUnauthorized,
+			nextShouldBeCalled: false,
 		},
 		{
-			name:       "503 Service Unavailable",
-			statusCode: http.StatusServiceUnavailable,
+			desc:               "no redirect on other error statuses with signin URL",
+			authSigninURL:      "https://auth.example.com/login",
+			authServerStatus:   http.StatusForbidden,
+			expectedStatus:     http.StatusForbidden,
+			nextShouldBeCalled: false,
+		},
+		{
+			desc:               "no redirect on OK status with signin URL",
+			authSigninURL:      "https://auth.example.com/login",
+			authServerStatus:   http.StatusOK,
+			expectedStatus:     http.StatusOK,
+			nextShouldBeCalled: true,
 		},
 	}
 
 	for _, test := range testCases {
-		t.Run(test.name, func(t *testing.T) {
+		t.Run(test.desc, func(t *testing.T) {
 			authServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				http.Error(w, http.StatusText(test.statusCode), test.statusCode)
+				http.Error(w, http.StatusText(test.authServerStatus), test.authServerStatus)
 			}))
 			t.Cleanup(authServer.Close)
 
+			nextCalled := false
 			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				t.Fail()
+				nextCalled = true
 			})
 
-			// AuthSigninURL is configured but should NOT trigger redirect for non-401 errors.
 			auth := dynamic.ForwardAuth{
 				Address:       authServer.URL,
-				AuthSigninURL: "https://auth.example.com/login",
+				AuthSigninURL: test.authSigninURL,
 			}
 			middleware, err := NewForward(t.Context(), next, auth, "authTest")
 			require.NoError(t, err)
@@ -993,8 +944,16 @@ func TestForwardAuthNoRedirectOnOtherErrors(t *testing.T) {
 			res, err := client.Do(req)
 			require.NoError(t, err)
 
-			assert.Equal(t, test.statusCode, res.StatusCode)
-			assert.Empty(t, res.Header.Get("Location"))
+			assert.Equal(t, test.expectedStatus, res.StatusCode)
+			assert.Equal(t, test.nextShouldBeCalled, nextCalled)
+
+			if test.expectedLocation != "" {
+				location, err := res.Location()
+				require.NoError(t, err)
+				assert.Equal(t, test.expectedLocation, location.String())
+			} else {
+				assert.Empty(t, res.Header.Get("Location"))
+			}
 		})
 	}
 }

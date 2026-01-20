@@ -234,19 +234,19 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 	}
 
+	// If auth server returns 401 and AuthSigninURL is configured, redirect to signin URL.
+	if fa.authSigninURL != "" && forwardResponse.StatusCode == http.StatusUnauthorized {
+		logger.Debug().Msgf("Redirecting to signin URL: %s", fa.authSigninURL)
+
+		tracer.CaptureResponse(forwardSpan, forwardResponse.Header, http.StatusFound, trace.SpanKindClient)
+		http.Redirect(rw, req, fa.authSigninURL, http.StatusFound)
+		return
+	}
+
 	// Pass the forward response's body and selected headers if it
 	// didn't return a response within the range of [200, 300).
 	if forwardResponse.StatusCode < http.StatusOK || forwardResponse.StatusCode >= http.StatusMultipleChoices {
 		logger.Debug().Msgf("Remote error %s. StatusCode: %d", fa.address, forwardResponse.StatusCode)
-
-		// If auth server returns 401 and AuthSigninURL is configured, redirect to signin URL.
-		if forwardResponse.StatusCode == http.StatusUnauthorized && fa.authSigninURL != "" {
-			logger.Debug().Msgf("Redirecting to signin URL: %s", fa.authSigninURL)
-
-			tracer.CaptureResponse(forwardSpan, forwardResponse.Header, http.StatusFound, trace.SpanKindClient)
-			http.Redirect(rw, req, fa.authSigninURL, http.StatusFound)
-			return
-		}
 
 		utils.CopyHeaders(rw.Header(), forwardResponse.Header)
 		utils.RemoveHeaders(rw.Header(), hopHeaders...)
