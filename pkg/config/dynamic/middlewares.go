@@ -645,6 +645,9 @@ type RedirectRegex struct {
 	Replacement string `json:"replacement,omitempty" toml:"replacement,omitempty" yaml:"replacement,omitempty"`
 	// Permanent defines whether the redirection is permanent (308).
 	Permanent bool `json:"permanent,omitempty" toml:"permanent,omitempty" yaml:"permanent,omitempty" export:"true"`
+
+	// StatusCode is for supporting the NGINX annotations related to redirect.
+	StatusCode *int `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -663,7 +666,7 @@ type RedirectScheme struct {
 	// ForcePermanentRedirect is an internal field (not exposed in configuration).
 	// When set to true, this forces the use of permanent redirects 308, regardless of the request method.
 	// Used by the provider ingress-ngin.
-	ForcePermanentRedirect bool `json:"-" toml:"-" yaml:"-" label:"-"`
+	ForcePermanentRedirect bool `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true

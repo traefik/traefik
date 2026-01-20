@@ -871,7 +871,7 @@ func (in *MiddlewareSpec) DeepCopyInto(out *MiddlewareSpec) {
 	if in.RedirectRegex != nil {
 		in, out := &in.RedirectRegex, &out.RedirectRegex
 		*out = new(dynamic.RedirectRegex)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 	if in.RedirectScheme != nil {
 		in, out := &in.RedirectScheme, &out.RedirectScheme

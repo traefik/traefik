@@ -26,6 +26,11 @@ type ingressConfig struct {
 	UseRegex      *bool   `annotation:"nginx.ingress.kubernetes.io/use-regex"`
 	RewriteTarget *string `annotation:"nginx.ingress.kubernetes.io/rewrite-target"`
 
+	PermanentRedirect     *string `annotation:"nginx.ingress.kubernetes.io/permanent-redirect"`
+	PermanentRedirectCode *int    `annotation:"nginx.ingress.kubernetes.io/permanent-redirect-code"`
+	TemporalRedirect      *string `annotation:"nginx.ingress.kubernetes.io/temporal-redirect"`
+	TemporalRedirectCode  *int    `annotation:"nginx.ingress.kubernetes.io/temporal-redirect-code"`
+
 	Affinity              *string `annotation:"nginx.ingress.kubernetes.io/affinity"`
 	SessionCookieName     *string `annotation:"nginx.ingress.kubernetes.io/session-cookie-name"`
 	SessionCookieSecure   *bool   `annotation:"nginx.ingress.kubernetes.io/session-cookie-secure"`

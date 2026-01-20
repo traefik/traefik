@@ -7,6 +7,7 @@ import (
 	"maps"
 	"math"
 	"net"
+	"net/http"
 	"os"
 	"regexp"
 	"slices"
@@ -810,6 +811,8 @@ func (p *Provider) applyMiddlewares(namespace, routerKey, rulePath string, ingre
 	// TODO: check how to remove this, and create the HTTP router elsewhere.
 	p.applySSLRedirectConfiguration(routerKey, ingressConfig, hasTLS, rt, conf)
 
+	applyRedirect(routerKey, ingressConfig, rt, conf)
+
 	applyUpstreamVhost(routerKey, ingressConfig, rt, conf)
 
 	if err := p.applyCustomHeaders(routerKey, ingressConfig, rt, conf); err != nil {
@@ -817,6 +820,48 @@ func (p *Provider) applyMiddlewares(namespace, routerKey, rulePath string, ingre
 	}
 
 	return nil
+}
+
+func applyRedirect(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
+	if ingressConfig.PermanentRedirect == nil && ingressConfig.TemporalRedirect == nil {
+		return
+	}
+
+	var (
+		redirectURL string
+		code        int
+	)
+
+	if ingressConfig.PermanentRedirect != nil {
+		redirectURL = *ingressConfig.PermanentRedirect
+		code = ptr.Deref(ingressConfig.PermanentRedirectCode, http.StatusMovedPermanently)
+
+		// NGINX only accepts valid redirect codes and defaults to 301.
+		if code < 300 || code > 308 {
+			code = http.StatusMovedPermanently
+		}
+	}
+
+	// TemporalRedirect takes precedence over the PermanentRedirect.
+	if ingressConfig.TemporalRedirect != nil {
+		redirectURL = *ingressConfig.TemporalRedirect
+		code = ptr.Deref(ingressConfig.TemporalRedirectCode, http.StatusFound)
+
+		// NGINX only accepts valid redirect codes and defaults to 302.
+		if code < 300 || code > 308 {
+			code = http.StatusFound
+		}
+	}
+
+	redirectMiddlewareName := routerName + "-redirect"
+	conf.HTTP.Middlewares[redirectMiddlewareName] = &dynamic.Middleware{
+		RedirectRegex: &dynamic.RedirectRegex{
+			Regex:       ".*",
+			Replacement: redirectURL,
+			StatusCode:  &code,
+		},
+	}
+	rt.Middlewares = append(rt.Middlewares, redirectMiddlewareName)
 }
 
 func (p *Provider) applyCustomHeaders(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
