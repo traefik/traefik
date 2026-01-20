@@ -132,6 +132,7 @@ jobs:
             --exclude dist .
           
           chown -R "$(id -u)":"$(id -g)" dist/
-          gh release create ${VERSION} ./dist/**/traefik*.{zip,tar.gz} ./dist/traefik*.{tar.gz,txt} --repo traefik/traefik --title ${VERSION} --notes ${VERSION} --latest=false
+          tar cfz "dist/third_party_${VERSION}.tar.gz" third_party/
+          gh release create ${VERSION} ./dist/**/traefik*.{zip,tar.gz} ./dist/traefik*.{tar.gz,txt} ./dist/third_party_${VERSION}.tar.gz --repo traefik/traefik --title ${VERSION} --notes ${VERSION} --latest=false
           
           ./script/deploy.sh
