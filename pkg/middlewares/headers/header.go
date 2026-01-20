@@ -64,11 +64,11 @@ func NewHeader(next http.Handler, cfg dynamic.Headers) (*Header, error) {
 }
 
 func generateHeaderReplaceMap(cfg map[string]dynamic.ReplaceHeaderRegex) (rt map[string]regexHeader, err error) {
-	if l := len(cfg); l == 0 {
+	l := len(cfg)
+	if l == 0 {
 		return
-	} else {
-		rt = make(map[string]regexHeader, l)
 	}
+	rt = make(map[string]regexHeader, l)
 	for h, r := range cfg {
 		reg, err := regexp.Compile(r.Regex)
 		if err != nil {
@@ -113,10 +113,10 @@ func (s *Header) PostRequestModifyResponseHeaders(res *http.Response) error {
 		}
 	}
 	for header, rep := range s.replaceRespRegex {
-		old_value := res.Header.Get(header)
-		if old_value != "" && rep.regexp.MatchString(old_value) {
-			new_value := rep.regexp.ReplaceAllString(old_value, rep.replacement)
-			res.Header.Set(header, new_value)
+		oldValue := res.Header.Get(header)
+		if oldValue != "" && rep.regexp.MatchString(oldValue) {
+			newValue := rep.regexp.ReplaceAllString(oldValue, rep.replacement)
+			res.Header.Set(header, newValue)
 		}
 	}
 
@@ -176,10 +176,10 @@ func (s *Header) modifyCustomRequestHeaders(req *http.Request) {
 		}
 	}
 	for header, rep := range s.replaceReqRegex {
-		old_value := req.Header.Get(header)
-		if old_value != "" && rep.regexp.MatchString(old_value) {
-			new_value := rep.regexp.ReplaceAllString(old_value, rep.replacement)
-			req.Header.Set(header, new_value)
+		oldValue := req.Header.Get(header)
+		if oldValue != "" && rep.regexp.MatchString(oldValue) {
+			newValue := rep.regexp.ReplaceAllString(oldValue, rep.replacement)
+			req.Header.Set(header, newValue)
 		}
 	}
 }
