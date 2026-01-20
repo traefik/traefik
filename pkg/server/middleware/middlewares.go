@@ -199,7 +199,7 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 			return nil, badConf
 		}
 		middleware = func(next http.Handler) (http.Handler, error) {
-			return encodedcharacters.NewEncodedCharacters(ctx, next, *config.EncodedCharacters, middlewareName)
+			return encodedcharacters.NewEncodedCharacters(ctx, next, *config.EncodedCharacters, middlewareName), nil
 		}
 	}
 
