@@ -9,59 +9,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 )
 
-func TestNewEncodedCharacters(t *testing.T) {
-	testCases := []struct {
-		desc               string
-		config             dynamic.EncodedCharacters
-		path               string
-		expectedStatusCode int
-	}{
-		{
-			desc:               "default config - all denied",
-			config:             dynamic.EncodedCharacters{},
-			path:               "/foo%2fbar%3fbaz",
-			expectedStatusCode: http.StatusBadRequest,
-		},
-		{
-			desc: "allow all encoded characters",
-			config: dynamic.EncodedCharacters{
-				AllowEncodedSlash:         true,
-				AllowEncodedBackSlash:     true,
-				AllowEncodedNullCharacter: true,
-				AllowEncodedSemicolon:     true,
-				AllowEncodedPercent:       true,
-				AllowEncodedQuestionMark:  true,
-				AllowEncodedHash:          true,
-			},
-			path:               "/foo%2fbar%3fbaz",
-			expectedStatusCode: http.StatusOK,
-		},
-		{
-			desc: "allow only encoded slash",
-			config: dynamic.EncodedCharacters{
-				AllowEncodedSlash: true,
-			},
-			path:               "/foo%2fbar%3fbaz",
-			expectedStatusCode: http.StatusBadRequest,
-		},
-	}
-
-	for _, test := range testCases {
-		t.Run(test.desc, func(t *testing.T) {
-			next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {})
-
-			handler, err := NewEncodedCharacters(t.Context(), next, test.config, "test-new-encoded-characters")
-			require.NoError(t, err)
-			require.NotNil(t, handler)
-
-			req := httptest.NewRequest(http.MethodGet, test.path, nil)
-			recorder := httptest.NewRecorder()
-			handler.ServeHTTP(recorder, req)
-			require.Equal(t, test.expectedStatusCode, recorder.Code)
-		})
-	}
-}
-
 func TestEncodedCharacters(t *testing.T) {
 	testCases := []struct {
 		desc               string
