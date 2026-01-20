@@ -870,7 +870,6 @@ func TestForwardAuthPreserveRequestMethod(t *testing.T) {
 			assert.True(t, reqReachesNextServer)
 		})
 	}
-
 }
 
 func TestForwardAuthAuthSigninURL(t *testing.T) {
