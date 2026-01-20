@@ -399,6 +399,103 @@ Once everything is deployed, sending a `GET` request should return the following
     X-Real-Ip: 10.42.2.1
     ```
 
+#### Backend-Level Filters
+
+In addition to route-level filters, the Gateway API also supports applying filters directly to individual backends through the `backendRefs[].filters` field.
+This allows request modifications to be applied to specific backends, enabling the `HTTPRouteBackendRequestHeaderModification` extended feature.
+
+!!! info "Supported Filter Types"
+
+    Backend-level filters support the following filter types:
+
+    - `RequestHeaderModifier`: Add, set, or remove HTTP request headers before forwarding to the backend.
+    - `ExtensionRef`: Reference a Traefik [Middleware](../kubernetes/crd/http/middleware.md) resource.
+
+!!! info "Middlewares Execution Order"
+
+    When both route-level and backend-level filters are configured, route-level filters are applied first, followed by backend-level filters.
+
+For more information on service-level middlewares, see [service middlewares](../http/load-balancing/service.md#middlewares).
+
+??? example "Using RequestHeaderModifier on a Backend"
+
+    ```yaml tab="HTTPRoute"
+    ---
+    apiVersion: gateway.networking.k8s.io/v1
+    kind: HTTPRoute
+    metadata:
+      name: whoami-http
+      namespace: default
+    spec:
+      parentRefs:
+        - name: traefik
+          sectionName: http
+          kind: Gateway
+
+      hostnames:
+        - whoami.localhost
+
+      rules:
+        - matches:
+            - path:
+                type: PathPrefix
+                value: /
+
+          backendRefs:
+            - name: whoami
+              namespace: default
+              port: 80
+              filters:
+                - type: RequestHeaderModifier
+                  requestHeaderModifier:
+                    set:
+                      - name: X-Backend-Header
+                        value: "backend-filter"
+    ```
+
+??? example "Using ExtensionRef (Traefik Middleware) on a Backend"
+
+    ```yaml tab="HTTPRoute"
+    ---
+    apiVersion: gateway.networking.k8s.io/v1
+    kind: HTTPRoute
+    metadata:
+      name: whoami-http
+      namespace: default
+    spec:
+      parentRefs:
+        - name: traefik
+          sectionName: http
+          kind: Gateway
+
+      hostnames:
+        - whoami.localhost
+
+      rules:
+        - backendRefs:
+            - name: whoami
+              namespace: default
+              port: 80
+              filters:
+                - type: ExtensionRef
+                  extensionRef:
+                    group: traefik.io
+                    kind: Middleware
+                    name: add-prefix
+    ```
+
+    ```yaml tab="AddPrefix Middleware"
+    ---
+    apiVersion: traefik.io/v1alpha1
+    kind: Middleware
+    metadata:
+      name: add-prefix
+      namespace: default
+    spec:
+      addPrefix:
+        prefix: /api
+    ```
+
 ### GRPC
 
 The `GRPCRoute` is an extended resource in the Gateway API specification, designed to define how GRPC traffic should be routed within a Kubernetes cluster. 
