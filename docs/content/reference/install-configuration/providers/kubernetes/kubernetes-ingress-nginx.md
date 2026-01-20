@@ -176,4 +176,4 @@ providers:
 
 See the dedicated section in [routing](../../../routing-configuration/kubernetes/ingress-nginx.md).
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

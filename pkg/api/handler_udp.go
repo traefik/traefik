@@ -15,6 +15,7 @@ import (
 
 type udpRouterRepresentation struct {
 	*runtime.UDPRouterInfo
+
 	Name     string `json:"name,omitempty"`
 	Provider string `json:"provider,omitempty"`
 }
@@ -29,6 +30,7 @@ func newUDPRouterRepresentation(name string, rt *runtime.UDPRouterInfo) udpRoute
 
 type udpServiceRepresentation struct {
 	*runtime.UDPServiceInfo
+
 	Name     string `json:"name,omitempty"`
 	Provider string `json:"provider,omitempty"`
 	Type     string `json:"type,omitempty"`

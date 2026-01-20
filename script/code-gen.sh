@@ -4,11 +4,11 @@ set -e -o pipefail
 
 PROJECT_MODULE="github.com/traefik/traefik"
 MODULE_VERSION="v3"
-KUBE_VERSION=v0.30.10
+KUBE_VERSION=v0.34.3
 CURRENT_DIR="$(pwd)"
 
 go install "k8s.io/code-generator/cmd/deepcopy-gen@${KUBE_VERSION}"
-go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.16.1
+go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.19.0
 
 CODEGEN_PKG="$(go env GOPATH)/pkg/mod/k8s.io/code-generator@${KUBE_VERSION}"
 # shellcheck disable=SC1091 # Cannot check source of this file
@@ -20,6 +20,7 @@ kube::codegen::gen_helpers \
   "${CURRENT_DIR}"
 
 kube::codegen::gen_client \
+    --with-applyconfig \
     --with-watch \
     --output-dir "${CURRENT_DIR}/pkg/provider/kubernetes/crd/generated" \
     --output-pkg "${PROJECT_MODULE}/${MODULE_VERSION}/pkg/provider/kubernetes/crd/generated" \

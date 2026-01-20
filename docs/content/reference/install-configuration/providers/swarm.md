@@ -464,4 +464,4 @@ It allows different implementation levels of the [AAA (Authentication, Authoriza
 - [Letting Traefik run on Worker Nodes](https://blog.mikesir87.io/2018/07/letting-traefik-run-on-worker-nodes/)
 - [Docker Socket Proxy from Tecnativa](https://github.com/Tecnativa/docker-socket-proxy)
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

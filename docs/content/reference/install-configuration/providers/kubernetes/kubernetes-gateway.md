@@ -21,7 +21,7 @@ For more details, check out the conformance [report](https://github.com/kubernet
 
 ## Requirements
 
-{!kubernetes-requirements.md!}
+{% include-markdown "includes/kubernetes-requirements.md" %}
 
 1. Install/update the Kubernetes Gateway API CRDs.
 
@@ -137,4 +137,4 @@ See the dedicated section in [routing](../../../../routing/providers/kubernetes-
     and the dedicated [routing section](../../../../routing/providers/kubernetes-gateway.md)
     in the Traefik documentation.
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

@@ -327,4 +327,4 @@ command:
 
 You now have Traefik running on Docker Swarm with HTTPS, a secured dashboard, automatic HTTP → HTTPS redirects, and foundational observability. Expand this stack with Let’s Encrypt, additional middlewares, or multiple Traefik replicas as your Swarm grows.
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}
