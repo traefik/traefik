@@ -69,6 +69,7 @@ type GrpcWeb struct {
 type ContentType struct {
 	// AutoDetect specifies whether to let the `Content-Type` header, if it has not been set by the backend,
 	// be automatically set to a value derived from the contents of the response.
+	//
 	// Deprecated: AutoDetect option is deprecated, Content-Type middleware is only meant to be used to enable the content-type detection, please remove any usage of this option.
 	AutoDetect *bool `json:"autoDetect,omitempty" toml:"autoDetect,omitempty" yaml:"autoDetect,omitempty" export:"true"`
 }
@@ -481,6 +482,7 @@ func (s *IPStrategy) Get() (ip.Strategy, error) {
 // IPWhiteList holds the IP whitelist middleware configuration.
 // This middleware limits allowed requests based on the client IP.
 // More info: https://doc.traefik.io/traefik/v3.6/middlewares/http/ipwhitelist/
+//
 // Deprecated: please use IPAllowList instead.
 type IPWhiteList struct {
 	// SourceRange defines the set of allowed IPs (or ranges of allowed IPs by using CIDR notation). Required.
@@ -655,8 +657,13 @@ type RedirectScheme struct {
 	Scheme string `json:"scheme,omitempty" toml:"scheme,omitempty" yaml:"scheme,omitempty" export:"true"`
 	// Port defines the port of the new URL.
 	Port string `json:"port,omitempty" toml:"port,omitempty" yaml:"port,omitempty" export:"true"`
-	// Permanent defines whether the redirection is permanent (308).
+	// Permanent defines whether the redirection is permanent.
+	// For HTTP GET requests a 301 is returned, otherwise a 308 is returned.
 	Permanent bool `json:"permanent,omitempty" toml:"permanent,omitempty" yaml:"permanent,omitempty" export:"true"`
+	// ForcePermanentRedirect is an internal field (not exposed in configuration).
+	// When set to true, this forces the use of permanent redirects 308, regardless of the request method.
+	// Used by the provider ingress-ngin.
+	ForcePermanentRedirect bool `json:"-" toml:"-" yaml:"-" label:"-"`
 }
 
 // +k8s:deepcopy-gen=true

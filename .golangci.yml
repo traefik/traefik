@@ -36,6 +36,7 @@ linters:
     - nilnil # Not relevant
     - nlreturn # Not relevant
     - noctx # Too strict
+    - noinlineerr # Too strict
     - nonamedreturns # Too strict
     - paralleltest # Not relevant
     - prealloc # Too many false-positive.
@@ -47,6 +48,7 @@ linters:
     - varnamelen # Not relevant
     - wrapcheck # Too strict
     - wsl # Too strict
+    - wsl_v5 # Too strict
 
   settings:
     depguard:
@@ -295,15 +297,31 @@ linters:
         source: 'errors.New\("Nomad provider'
         text: 'ST1005: error strings should not be capitalized'
       - path: (.+)\.go
-        text: 'struct-tag: unknown option ''inline'' in JSON tag'
+        text: 'omitzero: Omitempty has no effect on nested struct field'
+        linters:
+          - modernize
+      - path: (.+)\.go
+        text: 'struct-tag: unknown option "inline" in json tag'
         linters:
           - revive
       - path: (.+)\.go
-        text: 'struct-tag: unknown option ''omitzero'' in TOML tag'
+        text: 'struct-tag: unknown option "omitzero" in toml tag'
+        linters:
+          - revive
+      - path: (pkg/types/.+|pkg/api/.+|pkg/observability/types/.+)\.go
+        text: 'var-naming: avoid meaningless package names'
+        linters:
+          - revive
+      - path: (pkg/muxer/http/.+|pkg/provider/http/.+)\.go
+        text: 'var-naming: avoid package names that conflict with Go standard library package names'
         linters:
           - revive
       - path: (.+)\.go$
         text: 'SA1019: http.CloseNotifier has been deprecated' # FIXME must be fixed
+      - path: (.+)\.go$
+        text: 'SA1019: dynamic.(TCPIPWhiteList|IPWhiteList) is deprecated: please use IPAllowList instead.'
+      - path: (.+)\.go$
+        text: 'SA1019: middlewareTCP.Spec.IPWhiteList is deprecated: please use IPAllowList instead.'
       - path: (.+)\.go$
         text: 'SA1019: cfg.(SSLRedirect|SSLTemporaryRedirect|SSLHost|SSLForceHost|FeaturePolicy) is deprecated'
       - path: (.+)\.go$

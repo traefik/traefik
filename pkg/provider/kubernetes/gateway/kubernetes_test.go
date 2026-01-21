@@ -71,7 +71,7 @@ NL0leX2m+k218i/LZbBq3k0SBdhMILLXjDpMRiikpQ77mg8KvKf6lftL
 func TestGatewayClassLabelSelector(t *testing.T) {
 	k8sObjects, gwObjects := readResources(t, []string{"gatewayclass_labelselector.yaml"})
 
-	kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+	kubeClient := kubefake.NewClientset(k8sObjects...)
 	gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
 	client := newClientImpl(kubeClient, gwClient)
@@ -2552,7 +2552,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 
 			k8sObjects, gwObjects := readResources(t, test.paths)
 
-			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+			kubeClient := kubefake.NewClientset(k8sObjects...)
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
 			client := newClientImpl(kubeClient, gwClient)
@@ -3013,7 +3013,7 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 
 			k8sObjects, gwObjects := readResources(t, test.paths)
 
-			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+			kubeClient := kubefake.NewClientset(k8sObjects...)
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
 			client := newClientImpl(kubeClient, gwClient)
@@ -3299,7 +3299,7 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 
 			k8sObjects, gwObjects := readResources(t, []string{"services.yml", "httproute/filter_extension_ref.yml"})
 
-			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+			kubeClient := kubefake.NewClientset(k8sObjects...)
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
 			client := newClientImpl(kubeClient, gwClient)
@@ -3591,7 +3591,7 @@ func TestLoadGRPCRoutes_filterExtensionRef(t *testing.T) {
 
 			k8sObjects, gwObjects := readResources(t, []string{"services.yml", "grpcroute/filter_extension_ref.yml"})
 
-			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+			kubeClient := kubefake.NewClientset(k8sObjects...)
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
 			client := newClientImpl(kubeClient, gwClient)
@@ -4552,7 +4552,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 
 			k8sObjects, gwObjects := readResources(t, test.paths)
 
-			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+			kubeClient := kubefake.NewClientset(k8sObjects...)
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
 			client := newClientImpl(kubeClient, gwClient)
@@ -5831,7 +5831,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 
 			k8sObjects, gwObjects := readResources(t, test.paths)
 
-			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+			kubeClient := kubefake.NewClientset(k8sObjects...)
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
 			client := newClientImpl(kubeClient, gwClient)
@@ -6888,7 +6888,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 
 			k8sObjects, gwObjects := readResources(t, test.paths)
 
-			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+			kubeClient := kubefake.NewClientset(k8sObjects...)
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
 			client := newClientImpl(kubeClient, gwClient)
@@ -7224,7 +7224,7 @@ func TestLoadRoutesWithReferenceGrants(t *testing.T) {
 
 			k8sObjects, gwObjects := readResources(t, test.paths)
 
-			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+			kubeClient := kubefake.NewClientset(k8sObjects...)
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
 			client := newClientImpl(kubeClient, gwClient)
@@ -8129,7 +8129,7 @@ func Test_gatewayAddresses(t *testing.T) {
 
 			k8sObjects, gwObjects := readResources(t, test.paths)
 
-			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+			kubeClient := kubefake.NewClientset(k8sObjects...)
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
 			client := newClientImpl(kubeClient, gwClient)
@@ -8285,7 +8285,7 @@ func Test_upsertRouteConditionResolvedRefs(t *testing.T) {
 	}
 }
 
-// We cannot use the gateway-api fake.NewSimpleClientset due to Gateway being pluralized as "gatewaies" instead of "gateways".
+// We cannot use the gateway-api fake.NewClientset due to Gateway being pluralized as "gatewaies" instead of "gateways".
 func newGatewaySimpleClientSet(t *testing.T, objects ...runtime.Object) *gatefake.Clientset {
 	t.Helper()
 

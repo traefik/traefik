@@ -36,7 +36,7 @@ const (
 // WatchAll starts the watch of the Provider resources and updates the stores.
 // The stores can then be accessed via the Get* functions.
 type Client interface {
-	WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error)
+	WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan any, error)
 	GetIngresses() []*netv1.Ingress
 	GetIngressClasses() ([]*netv1.IngressClass, error)
 	GetService(namespace, name string) (*corev1.Service, bool, error)
@@ -138,8 +138,8 @@ func newClientImpl(clientset kclientset.Interface) *clientWrapper {
 }
 
 // WatchAll starts namespace-specific controllers for all relevant kinds.
-func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error) {
-	eventCh := make(chan interface{}, 1)
+func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan any, error) {
+	eventCh := make(chan any, 1)
 	eventHandler := &k8s.ResourceEventHandler{Ev: eventCh}
 
 	if len(namespaces) == 0 {
