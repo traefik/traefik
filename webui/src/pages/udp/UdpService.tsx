@@ -60,7 +60,7 @@ export const UdpServiceRender = ({ data, error, name }: UdpServiceRenderProps) =
         <title>{data.name} - Traefik Proxy</title>
       </Helmet>
       <H1 css={{ mb: '$7' }}>{data.name}</H1>
-      <ServicePanels data={data} />
+      <ServicePanels data={data} protocol="udp" />
       <UsedByRoutersSection data={data} protocol="udp" />
     </>
   )
