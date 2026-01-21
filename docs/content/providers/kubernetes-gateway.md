@@ -16,7 +16,7 @@ For more details, check out the conformance [report](https://github.com/kubernet
 
 ## Requirements
 
-{!kubernetes-requirements.md!}
+{% include-markdown "includes/kubernetes-requirements.md" %}
 
 !!! info "Helm Chart"
 
@@ -357,4 +357,4 @@ providers:
 --providers.kubernetesgateway.throttleDuration=10s
 ```
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

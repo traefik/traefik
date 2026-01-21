@@ -51,7 +51,7 @@ func TestPluginManager_ReadManifest(t *testing.T) {
 		Type:        "middleware",
 		Import:      "github.com/test/plugin",
 		Summary:     "A test plugin",
-		TestData: map[string]interface{}{
+		TestData: map[string]any{
 			"test": "data",
 		},
 	}
