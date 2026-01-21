@@ -29,6 +29,15 @@ type Backend interface {
 	Setup(ctx context.Context, serviceName string, sampleRate float64, resourceAttributes map[string]string) (trace.Tracer, io.Closer, error)
 }
 
+// Tracer is trace.Tracer with additional properties.
+type Tracer struct {
+	trace.Tracer
+
+	safeQueryParams         []string
+	capturedRequestHeaders  []string
+	capturedResponseHeaders []string
+}
+
 // NewTracing Creates a Tracing.
 func NewTracing(ctx context.Context, conf *static.Tracing) (*Tracer, io.Closer, error) {
 	var backend Backend
@@ -55,76 +64,6 @@ func NewTracing(ctx context.Context, conf *static.Tracing) (*Tracer, io.Closer, 
 	}
 
 	return NewTracer(tr, conf.CapturedRequestHeaders, conf.CapturedResponseHeaders, conf.SafeQueryParams), closer, nil
-}
-
-// TracerFromContext extracts the trace.Tracer from the given context.
-func TracerFromContext(ctx context.Context) *Tracer {
-	// Prevent picking trace.noopSpan tracer.
-	if !trace.SpanContextFromContext(ctx).IsValid() {
-		return nil
-	}
-
-	span := trace.SpanFromContext(ctx)
-	if span != nil && span.TracerProvider() != nil {
-		tracer := span.TracerProvider().Tracer("github.com/traefik/traefik")
-		if tracer, ok := tracer.(*Tracer); ok {
-			return tracer
-		}
-
-		return nil
-	}
-
-	return nil
-}
-
-// ExtractCarrierIntoContext reads cross-cutting concerns from the carrier into a Context.
-func ExtractCarrierIntoContext(ctx context.Context, headers http.Header) context.Context {
-	propagator := otel.GetTextMapPropagator()
-	return propagator.Extract(ctx, propagation.HeaderCarrier(headers))
-}
-
-// InjectContextIntoCarrier sets cross-cutting concerns from the request context into the request headers.
-func InjectContextIntoCarrier(req *http.Request) {
-	propagator := otel.GetTextMapPropagator()
-	propagator.Inject(req.Context(), propagation.HeaderCarrier(req.Header))
-}
-
-// Span is trace.Span wrapping the Traefik TracerProvider.
-type Span struct {
-	trace.Span
-
-	tracerProvider *TracerProvider
-}
-
-// TracerProvider returns the span's TraceProvider.
-func (s Span) TracerProvider() trace.TracerProvider {
-	return s.tracerProvider
-}
-
-// TracerProvider is trace.TracerProvider wrapping the Traefik Tracer implementation.
-type TracerProvider struct {
-	trace.TracerProvider
-
-	tracer *Tracer
-}
-
-// Tracer returns the trace.Tracer for the given options.
-// It returns specifically the Traefik Tracer when requested.
-func (t TracerProvider) Tracer(name string, options ...trace.TracerOption) trace.Tracer {
-	if name == "github.com/traefik/traefik" {
-		return t.tracer
-	}
-
-	return t.TracerProvider.Tracer(name, options...)
-}
-
-// Tracer is trace.Tracer with additional properties.
-type Tracer struct {
-	trace.Tracer
-
-	safeQueryParams         []string
-	capturedRequestHeaders  []string
-	capturedResponseHeaders []string
 }
 
 // NewTracer builds and configures a new Tracer.
@@ -297,6 +236,67 @@ func (t *Tracer) safeURL(originalURL *url.URL) *url.URL {
 	redactedURL.RawQuery = query.Encode()
 
 	return &redactedURL
+}
+
+// Span is trace.Span wrapping the Traefik TracerProvider.
+type Span struct {
+	trace.Span
+
+	tracerProvider *TracerProvider
+}
+
+// TracerProvider returns the span's TraceProvider.
+func (s Span) TracerProvider() trace.TracerProvider {
+	return s.tracerProvider
+}
+
+// TracerProvider is trace.TracerProvider wrapping the Traefik Tracer implementation.
+type TracerProvider struct {
+	trace.TracerProvider
+
+	tracer *Tracer
+}
+
+// Tracer returns the trace.Tracer for the given options.
+// It returns specifically the Traefik Tracer when requested.
+func (t TracerProvider) Tracer(name string, options ...trace.TracerOption) trace.Tracer {
+	if name == "github.com/traefik/traefik" {
+		return t.tracer
+	}
+
+	return t.TracerProvider.Tracer(name, options...)
+}
+
+// TracerFromContext extracts the trace.Tracer from the given context.
+func TracerFromContext(ctx context.Context) *Tracer {
+	// Prevent picking trace.noopSpan tracer.
+	if !trace.SpanContextFromContext(ctx).IsValid() {
+		return nil
+	}
+
+	span := trace.SpanFromContext(ctx)
+	if span != nil && span.TracerProvider() != nil {
+		tracer := span.TracerProvider().Tracer("github.com/traefik/traefik")
+		if tracer, ok := tracer.(*Tracer); ok {
+			return tracer
+		}
+
+		return nil
+	}
+
+	return nil
+}
+
+// ExtractCarrierIntoContext reads cross-cutting concerns from the carrier into a Context.
+func ExtractCarrierIntoContext(ctx context.Context, headers http.Header) context.Context {
+	propagator := otel.GetTextMapPropagator()
+	return propagator.Extract(ctx, propagation.HeaderCarrier(headers))
+}
+
+// InjectContextIntoCarrier sets cross-cutting concerns from the request context into the request headers.
+func InjectContextIntoCarrier(req *http.Request) {
+	propagator := otel.GetTextMapPropagator()
+	propagator.Inject(req.Context(), propagation.HeaderCarrier(req.Header))
 }
 
 func proto(proto string) string {

@@ -4,7 +4,7 @@
 /*
 The MIT License (MIT)
 
-Copyright (c) 2016-2020 Containous SAS; 2020-2025 Traefik Labs
+Copyright (c) 2016-2020 Containous SAS; 2020-2026 Traefik Labs
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -1389,7 +1389,11 @@ func (in *Router) DeepCopyInto(out *Router) {
 		*out = new(RouterObservabilityConfig)
 		(*in).DeepCopyInto(*out)
 	}
-	out.DeniedEncodedPathCharacters = in.DeniedEncodedPathCharacters
+	if in.DeniedEncodedPathCharacters != nil {
+		in, out := &in.DeniedEncodedPathCharacters, &out.DeniedEncodedPathCharacters
+		*out = new(RouterDeniedEncodedPathCharacters)
+		**out = **in
+	}
 	return
 }
 

@@ -50,10 +50,6 @@ func (p *Provider) Init() error {
 	return nil
 }
 
-func (p *Provider) createClient(ctx context.Context) (*client.Client, error) {
-	return createClient(ctx, p.ClientConfig)
-}
-
 // Provide allows the docker provider to provide configurations to traefik using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	pool.GoCtx(func(routineCtx context.Context) {
@@ -158,6 +154,10 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	})
 
 	return nil
+}
+
+func (p *Provider) createClient(ctx context.Context) (*client.Client, error) {
+	return createClient(ctx, p.ClientConfig)
 }
 
 func (p *Provider) listContainers(ctx context.Context, dockerClient client.ContainerAPIClient) ([]dockerData, error) {

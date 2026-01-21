@@ -92,6 +92,16 @@ type EncodedCharacters struct {
 	AllowEncodedHash          bool `description:"Defines whether requests with encoded hash characters in the path are allowed." json:"allowEncodedHash,omitempty" toml:"allowEncodedHash,omitempty" yaml:"allowEncodedHash,omitempty" export:"true"`
 }
 
+func (ec *EncodedCharacters) SetDefaults() {
+	ec.AllowEncodedSlash = true
+	ec.AllowEncodedBackSlash = true
+	ec.AllowEncodedNullCharacter = true
+	ec.AllowEncodedSemicolon = true
+	ec.AllowEncodedPercent = true
+	ec.AllowEncodedQuestionMark = true
+	ec.AllowEncodedHash = true
+}
+
 // HTTP2Config is the HTTP2 configuration of an entry point.
 type HTTP2Config struct {
 	MaxConcurrentStreams      int32 `description:"Specifies the number of concurrent streams per connection that each client is allowed to initiate." json:"maxConcurrentStreams,omitempty" toml:"maxConcurrentStreams,omitempty" yaml:"maxConcurrentStreams,omitempty" export:"true"`

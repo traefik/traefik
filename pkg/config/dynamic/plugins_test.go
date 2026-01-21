@@ -44,11 +44,11 @@ func TestPluginConf_DeepCopy_mapOfStruct(t *testing.T) {
 }
 
 func TestPluginConf_DeepCopy_map(t *testing.T) {
-	m := map[string]interface{}{
+	m := map[string]any{
 		"name": "bar",
 	}
 	p := PluginConf{
-		"config": map[string]interface{}{
+		"config": map[string]any{
 			"foo": m,
 		},
 	}
@@ -64,7 +64,7 @@ func TestPluginConf_DeepCopy_map(t *testing.T) {
 
 func TestPluginConf_DeepCopy_panic(t *testing.T) {
 	p := &PluginConf{
-		"config": map[string]interface{}{
+		"config": map[string]any{
 			"foo": &Foo{Name: "gigi"},
 		},
 	}
