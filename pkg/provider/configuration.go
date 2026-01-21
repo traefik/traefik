@@ -401,9 +401,7 @@ func MakeDefaultRuleTemplate(defaultRule string, funcMap template.FuncMap) (*tem
 	defaultFuncMap := sprig.TxtFuncMap()
 	defaultFuncMap["normalize"] = Normalize
 
-	for k, fn := range funcMap {
-		defaultFuncMap[k] = fn
-	}
+	maps.Copy(defaultFuncMap, funcMap)
 
 	return template.New("defaultRule").Funcs(defaultFuncMap).Parse(defaultRule)
 }
@@ -458,7 +456,7 @@ func BuildUDPRouterConfiguration(ctx context.Context, configuration *dynamic.UDP
 }
 
 // BuildRouterConfiguration builds a router configuration.
-func BuildRouterConfiguration(ctx context.Context, configuration *dynamic.HTTPConfiguration, defaultRouterName string, defaultRuleTpl *template.Template, model interface{}) {
+func BuildRouterConfiguration(ctx context.Context, configuration *dynamic.HTTPConfiguration, defaultRouterName string, defaultRuleTpl *template.Template, model any) {
 	if len(configuration.Routers) == 0 {
 		if len(configuration.Services) > 1 {
 			log.Ctx(ctx).Info().Msg("Could not create a router for the container: too many services")

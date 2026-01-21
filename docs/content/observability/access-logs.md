@@ -780,4 +780,4 @@ accesslog:
 --accesslog.otlp.grpc.tls.insecureSkipVerify=true
 ```
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

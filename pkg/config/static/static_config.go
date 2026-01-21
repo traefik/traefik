@@ -314,6 +314,18 @@ func (c *Configuration) SetEffectiveConfiguration() {
 		c.Providers.KubernetesGateway.EntryPoints = entryPoints
 	}
 
+	// Configure Ingress NGINX provider.
+	if c.Providers.KubernetesIngressNGINX != nil {
+		var nonTLSEntryPoints []string
+		for epName, entryPoint := range c.EntryPoints {
+			if entryPoint.HTTP.TLS == nil {
+				nonTLSEntryPoints = append(nonTLSEntryPoints, epName)
+			}
+		}
+
+		c.Providers.KubernetesIngressNGINX.NonTLSEntryPoints = nonTLSEntryPoints
+	}
+
 	// Defines the default rule syntax for the Kubernetes Ingress Provider.
 	// This allows the provider to adapt the matcher syntax to the desired rule syntax version.
 	if c.Core != nil && c.Providers.KubernetesIngress != nil {
@@ -379,21 +391,6 @@ func (c *Configuration) SetEffectiveConfiguration() {
 	}
 
 	c.initACMEProvider()
-}
-
-func (c *Configuration) hasUserDefinedEntrypoint() bool {
-	return len(c.EntryPoints) != 0
-}
-
-func (c *Configuration) initACMEProvider() {
-	for _, resolver := range c.CertificatesResolvers {
-		if resolver.ACME != nil {
-			resolver.ACME.CAServer = getSafeACMECAServer(resolver.ACME.CAServer)
-		}
-	}
-
-	logger := logs.NoLevel(log.Logger, zerolog.DebugLevel).With().Str("lib", "lego").Logger()
-	legolog.Logger = logs.NewLogrusWrapper(logger)
 }
 
 // ValidateConfiguration validate that configuration is coherent.
@@ -480,6 +477,21 @@ func (c *Configuration) ValidateConfiguration() error {
 	}
 
 	return nil
+}
+
+func (c *Configuration) hasUserDefinedEntrypoint() bool {
+	return len(c.EntryPoints) != 0
+}
+
+func (c *Configuration) initACMEProvider() {
+	for _, resolver := range c.CertificatesResolvers {
+		if resolver.ACME != nil {
+			resolver.ACME.CAServer = getSafeACMECAServer(resolver.ACME.CAServer)
+		}
+	}
+
+	logger := logs.NoLevel(log.Logger, zerolog.DebugLevel).With().Str("lib", "lego").Logger()
+	legolog.Logger = logs.NewLogrusWrapper(logger)
 }
 
 func getSafeACMECAServer(caServerSrc string) string {

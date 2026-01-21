@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"os"
 	"os/signal"
 	"path"
@@ -112,6 +113,51 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	return nil
 }
 
+// CreateConfiguration creates a provider configuration from content using templating.
+func (p *Provider) CreateConfiguration(ctx context.Context, filename string, funcMap template.FuncMap, templateObjects any) (*dynamic.Configuration, error) {
+	tmplContent, err := readFile(filename)
+	if err != nil {
+		return nil, fmt.Errorf("error reading configuration file: %s - %w", filename, err)
+	}
+
+	defaultFuncMap := sprig.TxtFuncMap()
+	defaultFuncMap["normalize"] = provider.Normalize
+	defaultFuncMap["split"] = strings.Split
+	maps.Copy(defaultFuncMap, funcMap)
+
+	tmpl := template.New(p.Filename).Funcs(defaultFuncMap)
+
+	_, err = tmpl.Parse(tmplContent)
+	if err != nil {
+		return nil, err
+	}
+
+	var buffer bytes.Buffer
+	err = tmpl.Execute(&buffer, templateObjects)
+	if err != nil {
+		return nil, err
+	}
+
+	renderedTemplate := buffer.String()
+	if p.DebugLogGeneratedTemplate {
+		logger := log.Ctx(ctx)
+		logger.Debug().Msgf("Template content: %s", tmplContent)
+		logger.Debug().Msgf("Rendering results: %s", renderedTemplate)
+	}
+
+	return p.decodeConfiguration(filename, renderedTemplate)
+}
+
+// DecodeConfiguration Decodes a *types.Configuration from a content.
+func (p *Provider) DecodeConfiguration(filename string) (*dynamic.Configuration, error) {
+	content, err := readFile(filename)
+	if err != nil {
+		return nil, fmt.Errorf("error reading configuration file: %s - %w", filename, err)
+	}
+
+	return p.decodeConfiguration(filename, content)
+}
+
 func (p *Provider) addWatcher(pool *safe.Pool, items []string, configurationChan chan<- dynamic.Message, callback func(chan<- dynamic.Message) error) error {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -183,13 +229,6 @@ func (p *Provider) buildConfiguration() (*dynamic.Configuration, error) {
 	}
 
 	return nil, errors.New("error using file configuration provider, neither filename nor directory is defined")
-}
-
-func sendConfigToChannel(configurationChan chan<- dynamic.Message, configuration *dynamic.Configuration) {
-	configurationChan <- dynamic.Message{
-		ProviderName:  "file",
-		Configuration: configuration,
-	}
 }
 
 func (p *Provider) loadFileConfig(ctx context.Context, filename string, parseTemplate bool) (*dynamic.Configuration, error) {
@@ -335,29 +374,6 @@ func (p *Provider) loadFileConfig(ctx context.Context, filename string, parseTem
 	}
 
 	return configuration, nil
-}
-
-func flattenCertificates(ctx context.Context, tlsConfig *dynamic.TLSConfiguration) []*tls.CertAndStores {
-	var certs []*tls.CertAndStores
-	for _, cert := range tlsConfig.Certificates {
-		content, err := cert.Certificate.CertFile.Read()
-		if err != nil {
-			log.Ctx(ctx).Error().Err(err).Send()
-			continue
-		}
-		cert.Certificate.CertFile = types.FileOrContent(string(content))
-
-		content, err = cert.Certificate.KeyFile.Read()
-		if err != nil {
-			log.Ctx(ctx).Error().Err(err).Send()
-			continue
-		}
-		cert.Certificate.KeyFile = types.FileOrContent(string(content))
-
-		certs = append(certs, cert)
-	}
-
-	return certs
 }
 
 func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory string, configuration *dynamic.Configuration) (*dynamic.Configuration, error) {
@@ -539,53 +555,6 @@ func (p *Provider) loadFileConfigFromDirectory(ctx context.Context, directory st
 	return configuration, nil
 }
 
-// CreateConfiguration creates a provider configuration from content using templating.
-func (p *Provider) CreateConfiguration(ctx context.Context, filename string, funcMap template.FuncMap, templateObjects interface{}) (*dynamic.Configuration, error) {
-	tmplContent, err := readFile(filename)
-	if err != nil {
-		return nil, fmt.Errorf("error reading configuration file: %s - %w", filename, err)
-	}
-
-	defaultFuncMap := sprig.TxtFuncMap()
-	defaultFuncMap["normalize"] = provider.Normalize
-	defaultFuncMap["split"] = strings.Split
-	for funcID, funcElement := range funcMap {
-		defaultFuncMap[funcID] = funcElement
-	}
-
-	tmpl := template.New(p.Filename).Funcs(defaultFuncMap)
-
-	_, err = tmpl.Parse(tmplContent)
-	if err != nil {
-		return nil, err
-	}
-
-	var buffer bytes.Buffer
-	err = tmpl.Execute(&buffer, templateObjects)
-	if err != nil {
-		return nil, err
-	}
-
-	renderedTemplate := buffer.String()
-	if p.DebugLogGeneratedTemplate {
-		logger := log.Ctx(ctx)
-		logger.Debug().Msgf("Template content: %s", tmplContent)
-		logger.Debug().Msgf("Rendering results: %s", renderedTemplate)
-	}
-
-	return p.decodeConfiguration(filename, renderedTemplate)
-}
-
-// DecodeConfiguration Decodes a *types.Configuration from a content.
-func (p *Provider) DecodeConfiguration(filename string) (*dynamic.Configuration, error) {
-	content, err := readFile(filename)
-	if err != nil {
-		return nil, fmt.Errorf("error reading configuration file: %s - %w", filename, err)
-	}
-
-	return p.decodeConfiguration(filename, content)
-}
-
 func (p *Provider) decodeConfiguration(filePath, content string) (*dynamic.Configuration, error) {
 	configuration := &dynamic.Configuration{
 		HTTP: &dynamic.HTTPConfiguration{
@@ -616,6 +585,36 @@ func (p *Provider) decodeConfiguration(filePath, content string) (*dynamic.Confi
 	}
 
 	return configuration, nil
+}
+
+func sendConfigToChannel(configurationChan chan<- dynamic.Message, configuration *dynamic.Configuration) {
+	configurationChan <- dynamic.Message{
+		ProviderName:  "file",
+		Configuration: configuration,
+	}
+}
+
+func flattenCertificates(ctx context.Context, tlsConfig *dynamic.TLSConfiguration) []*tls.CertAndStores {
+	var certs []*tls.CertAndStores
+	for _, cert := range tlsConfig.Certificates {
+		content, err := cert.Certificate.CertFile.Read()
+		if err != nil {
+			log.Ctx(ctx).Error().Err(err).Send()
+			continue
+		}
+		cert.Certificate.CertFile = types.FileOrContent(string(content))
+
+		content, err = cert.Certificate.KeyFile.Read()
+		if err != nil {
+			log.Ctx(ctx).Error().Err(err).Send()
+			continue
+		}
+		cert.Certificate.KeyFile = types.FileOrContent(string(content))
+
+		certs = append(certs, cert)
+	}
+
+	return certs
 }
 
 func readFile(filename string) (string, error) {

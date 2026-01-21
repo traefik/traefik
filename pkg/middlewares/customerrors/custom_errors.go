@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"maps"
 	"net"
 	"net/http"
 	"net/url"
@@ -198,16 +199,6 @@ func (cc *codeCatcher) Header() http.Header {
 	return cc.headerMap
 }
 
-func (cc *codeCatcher) getCode() int {
-	return cc.code
-}
-
-// isFilteredCode returns whether the codeCatcher received a response code among the ones it is watching,
-// and for which the response should be deferred to the error handler.
-func (cc *codeCatcher) isFilteredCode() bool {
-	return cc.caughtFilteredCode
-}
-
 func (cc *codeCatcher) Write(buf []byte) (int, error) {
 	// If WriteHeader was already called from the caller, this is a NOOP.
 	// Otherwise, cc.code is actually a 200 here.
@@ -233,9 +224,7 @@ func (cc *codeCatcher) WriteHeader(code int) {
 	if code >= 100 && code <= 199 {
 		// Multiple informational status codes can be used,
 		// so here the copy is not appending the values to not repeat them.
-		for k, v := range cc.Header() {
-			cc.responseWriter.Header()[k] = v
-		}
+		maps.Copy(cc.responseWriter.Header(), cc.Header())
 
 		cc.responseWriter.WriteHeader(code)
 		return
@@ -253,9 +242,8 @@ func (cc *codeCatcher) WriteHeader(code int) {
 
 	// The copy is not appending the values,
 	// to not repeat them in case any informational status code has been written.
-	for k, v := range cc.Header() {
-		cc.responseWriter.Header()[k] = v
-	}
+	maps.Copy(cc.responseWriter.Header(), cc.Header())
+
 	cc.responseWriter.WriteHeader(cc.code)
 	cc.headersSent = true
 }
@@ -286,6 +274,16 @@ func (cc *codeCatcher) Flush() {
 	if flusher, ok := cc.responseWriter.(http.Flusher); ok {
 		flusher.Flush()
 	}
+}
+
+func (cc *codeCatcher) getCode() int {
+	return cc.code
+}
+
+// isFilteredCode returns whether the codeCatcher received a response code among the ones it is watching,
+// and for which the response should be deferred to the error handler.
+func (cc *codeCatcher) isFilteredCode() bool {
+	return cc.caughtFilteredCode
 }
 
 // codeModifier forwards a response back to the client,
@@ -343,17 +341,14 @@ func (r *codeModifier) WriteHeader(code int) {
 	if code >= 100 && code <= 199 {
 		// Multiple informational status codes can be used,
 		// so here the copy is not appending the values to not repeat them.
-		for k, v := range r.headerMap {
-			r.responseWriter.Header()[k] = v
-		}
+		maps.Copy(r.responseWriter.Header(), r.headerMap)
 
 		r.responseWriter.WriteHeader(code)
 		return
 	}
 
-	for k, v := range r.headerMap {
-		r.responseWriter.Header()[k] = v
-	}
+	maps.Copy(r.responseWriter.Header(), r.headerMap)
+
 	r.responseWriter.WriteHeader(r.code)
 	r.headerSent = true
 }

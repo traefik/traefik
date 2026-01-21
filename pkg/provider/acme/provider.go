@@ -78,6 +78,7 @@ func (a *Configuration) SetDefaults() {
 // CertAndStore allows mapping a TLS certificate to a TLS store.
 type CertAndStore struct {
 	Certificate
+
 	Store string
 }
 
@@ -127,6 +128,7 @@ type TLSChallenge struct {
 // Provider holds configurations of the provider.
 type Provider struct {
 	*Configuration
+
 	ResolverName string
 	Store        Store `json:"store,omitempty" toml:"store,omitempty" yaml:"store,omitempty"`
 
@@ -807,8 +809,8 @@ func getCertificateRenewDurations(certificatesDuration int) (time.Duration, time
 		return 30 * 24 * time.Hour, 24 * time.Hour // 30 days, 1 day
 	case certificatesDuration >= 30*24: // >= 30 days
 		return 10 * 24 * time.Hour, 12 * time.Hour // 10 days, 12 hours
-	case certificatesDuration >= 7*24: // >= 7 days
-		return 24 * time.Hour, time.Hour // 1 days, 1 hour
+	case certificatesDuration >= 6*24: // >= 6 days
+		return 2 * 24 * time.Hour, 2 * time.Hour // 2 days, 2 hours
 	case certificatesDuration >= 24: // >= 1 days
 		return 6 * time.Hour, 10 * time.Minute // 6 hours, 10 minutes
 	default:
@@ -921,11 +923,11 @@ func (p *Provider) renewCertificates(ctx context.Context, renewPeriod time.Durat
 	for _, cert := range certificates {
 		client, err := p.getClient()
 		if err != nil {
-			logger.Info().Err(err).Msgf("Error renewing certificate from LE : %+v", cert.Domain)
+			logger.Info().Err(err).Msgf("Error renewing ACME certificate: %+v", cert.Domain)
 			continue
 		}
 
-		logger.Info().Msgf("Renewing certificate from LE : %+v", cert.Domain)
+		logger.Info().Msgf("Renewing ACME certificate: %+v", cert.Domain)
 
 		res := certificate.Resource{
 			Domain:      cert.Domain.Main,
@@ -935,12 +937,14 @@ func (p *Provider) renewCertificates(ctx context.Context, renewPeriod time.Durat
 
 		opts := &certificate.RenewOptions{
 			Bundle:         true,
+			EmailAddresses: p.EmailAddresses,
+			Profile:        p.Profile,
 			PreferredChain: p.PreferredChain,
 		}
 
 		renewedCert, err := client.Certificate.RenewWithOptions(res, opts)
 		if err != nil {
-			logger.Error().Err(err).Msgf("Error renewing certificate from LE: %v", cert.Domain)
+			logger.Error().Err(err).Msgf("Error renewing ACME certificate: %v", cert.Domain)
 			continue
 		}
 
@@ -1083,7 +1087,7 @@ func (p *Provider) certExists(validDomains []string) bool {
 
 func isDomainAlreadyChecked(domainToCheck string, existentDomains []string) bool {
 	for _, certDomains := range existentDomains {
-		for _, certDomain := range strings.Split(certDomains, ",") {
+		for certDomain := range strings.SplitSeq(certDomains, ",") {
 			if types.MatchDomain(domainToCheck, certDomain) {
 				return true
 			}

@@ -93,4 +93,4 @@ Use the default URL to access percentage-based routing:
 
 Check out the Knative documentation for [HTTP/HTTPS configuration](https://knative.dev/docs/serving/encryption/external-domain-tls/#configure-external-domain-encryption).
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

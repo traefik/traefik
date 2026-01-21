@@ -167,6 +167,10 @@ func (c *compress) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	c.chooseHandler(c.getCompressionEncoding(acceptEncoding), rw, req)
 }
 
+func (c *compress) GetTracingInformation() (string, string) {
+	return c.name, typeName
+}
+
 func (c *compress) chooseHandler(typ string, rw http.ResponseWriter, req *http.Request) {
 	switch typ {
 	case zstdName:
@@ -178,10 +182,6 @@ func (c *compress) chooseHandler(typ string, rw http.ResponseWriter, req *http.R
 	default:
 		c.next.ServeHTTP(rw, req)
 	}
-}
-
-func (c *compress) GetTracingInformation() (string, string) {
-	return c.name, typeName
 }
 
 func (c *compress) newGzipHandler() (http.Handler, error) {

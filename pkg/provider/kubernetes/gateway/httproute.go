@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"net"
 	"net/http"
 	"regexp"
@@ -911,28 +912,20 @@ func mergeHTTPConfiguration(from, to *dynamic.Configuration) {
 	if to.HTTP.Routers == nil {
 		to.HTTP.Routers = map[string]*dynamic.Router{}
 	}
-	for routerName, router := range from.HTTP.Routers {
-		to.HTTP.Routers[routerName] = router
-	}
+	maps.Copy(to.HTTP.Routers, from.HTTP.Routers)
 
 	if to.HTTP.Middlewares == nil {
 		to.HTTP.Middlewares = map[string]*dynamic.Middleware{}
 	}
-	for middlewareName, middleware := range from.HTTP.Middlewares {
-		to.HTTP.Middlewares[middlewareName] = middleware
-	}
+	maps.Copy(to.HTTP.Middlewares, from.HTTP.Middlewares)
 
 	if to.HTTP.Services == nil {
 		to.HTTP.Services = map[string]*dynamic.Service{}
 	}
-	for serviceName, service := range from.HTTP.Services {
-		to.HTTP.Services[serviceName] = service
-	}
+	maps.Copy(to.HTTP.Services, from.HTTP.Services)
 
 	if to.HTTP.ServersTransports == nil {
 		to.HTTP.ServersTransports = map[string]*dynamic.ServersTransport{}
 	}
-	for name, serversTransport := range from.HTTP.ServersTransports {
-		to.HTTP.ServersTransports[name] = serversTransport
-	}
+	maps.Copy(to.HTTP.ServersTransports, from.HTTP.ServersTransports)
 }

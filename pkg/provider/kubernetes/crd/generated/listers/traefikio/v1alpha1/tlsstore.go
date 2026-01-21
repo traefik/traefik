@@ -27,10 +27,10 @@ THE SOFTWARE.
 package v1alpha1
 
 import (
-	v1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/tools/cache"
+	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	labels "k8s.io/apimachinery/pkg/labels"
+	listers "k8s.io/client-go/listers"
+	cache "k8s.io/client-go/tools/cache"
 )
 
 // TLSStoreLister helps list TLSStores.
@@ -38,7 +38,7 @@ import (
 type TLSStoreLister interface {
 	// List lists all TLSStores in the indexer.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1alpha1.TLSStore, err error)
+	List(selector labels.Selector) (ret []*traefikiov1alpha1.TLSStore, err error)
 	// TLSStores returns an object that can list and get TLSStores.
 	TLSStores(namespace string) TLSStoreNamespaceLister
 	TLSStoreListerExpansion
@@ -46,25 +46,17 @@ type TLSStoreLister interface {
 
 // tLSStoreLister implements the TLSStoreLister interface.
 type tLSStoreLister struct {
-	indexer cache.Indexer
+	listers.ResourceIndexer[*traefikiov1alpha1.TLSStore]
 }
 
 // NewTLSStoreLister returns a new TLSStoreLister.
 func NewTLSStoreLister(indexer cache.Indexer) TLSStoreLister {
-	return &tLSStoreLister{indexer: indexer}
-}
-
-// List lists all TLSStores in the indexer.
-func (s *tLSStoreLister) List(selector labels.Selector) (ret []*v1alpha1.TLSStore, err error) {
-	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1alpha1.TLSStore))
-	})
-	return ret, err
+	return &tLSStoreLister{listers.New[*traefikiov1alpha1.TLSStore](indexer, traefikiov1alpha1.Resource("tlsstore"))}
 }
 
 // TLSStores returns an object that can list and get TLSStores.
 func (s *tLSStoreLister) TLSStores(namespace string) TLSStoreNamespaceLister {
-	return tLSStoreNamespaceLister{indexer: s.indexer, namespace: namespace}
+	return tLSStoreNamespaceLister{listers.NewNamespaced[*traefikiov1alpha1.TLSStore](s.ResourceIndexer, namespace)}
 }
 
 // TLSStoreNamespaceLister helps list and get TLSStores.
@@ -72,36 +64,15 @@ func (s *tLSStoreLister) TLSStores(namespace string) TLSStoreNamespaceLister {
 type TLSStoreNamespaceLister interface {
 	// List lists all TLSStores in the indexer for a given namespace.
 	// Objects returned here must be treated as read-only.
-	List(selector labels.Selector) (ret []*v1alpha1.TLSStore, err error)
+	List(selector labels.Selector) (ret []*traefikiov1alpha1.TLSStore, err error)
 	// Get retrieves the TLSStore from the indexer for a given namespace and name.
 	// Objects returned here must be treated as read-only.
-	Get(name string) (*v1alpha1.TLSStore, error)
+	Get(name string) (*traefikiov1alpha1.TLSStore, error)
 	TLSStoreNamespaceListerExpansion
 }
 
 // tLSStoreNamespaceLister implements the TLSStoreNamespaceLister
 // interface.
 type tLSStoreNamespaceLister struct {
-	indexer   cache.Indexer
-	namespace string
-}
-
-// List lists all TLSStores in the indexer for a given namespace.
-func (s tLSStoreNamespaceLister) List(selector labels.Selector) (ret []*v1alpha1.TLSStore, err error) {
-	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v1alpha1.TLSStore))
-	})
-	return ret, err
-}
-
-// Get retrieves the TLSStore from the indexer for a given namespace and name.
-func (s tLSStoreNamespaceLister) Get(name string) (*v1alpha1.TLSStore, error) {
-	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, errors.NewNotFound(v1alpha1.Resource("tlsstore"), name)
-	}
-	return obj.(*v1alpha1.TLSStore), nil
+	listers.ResourceIndexer[*traefikiov1alpha1.TLSStore]
 }

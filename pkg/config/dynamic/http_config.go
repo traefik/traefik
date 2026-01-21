@@ -72,12 +72,12 @@ type Router struct {
 	Rule        string   `json:"rule,omitempty" toml:"rule,omitempty" yaml:"rule,omitempty"`
 	ParentRefs  []string `json:"parentRefs,omitempty" toml:"parentRefs,omitempty" yaml:"parentRefs,omitempty" label:"-" export:"true"`
 	// Deprecated: Please do not use this field and rewrite the router rules to use the v3 syntax.
-	RuleSyntax                  string                            `json:"ruleSyntax,omitempty" toml:"ruleSyntax,omitempty" yaml:"ruleSyntax,omitempty" export:"true"`
-	Priority                    int                               `json:"priority,omitempty" toml:"priority,omitempty,omitzero" yaml:"priority,omitempty" export:"true"`
-	TLS                         *RouterTLSConfig                  `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
-	Observability               *RouterObservabilityConfig        `json:"observability,omitempty" toml:"observability,omitempty" yaml:"observability,omitempty" export:"true"`
-	DefaultRule                 bool                              `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
-	DeniedEncodedPathCharacters RouterDeniedEncodedPathCharacters `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
+	RuleSyntax                  string                             `json:"ruleSyntax,omitempty" toml:"ruleSyntax,omitempty" yaml:"ruleSyntax,omitempty" export:"true"`
+	Priority                    int                                `json:"priority,omitempty" toml:"priority,omitempty,omitzero" yaml:"priority,omitempty" export:"true"`
+	TLS                         *RouterTLSConfig                   `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
+	Observability               *RouterObservabilityConfig         `json:"observability,omitempty" toml:"observability,omitempty" yaml:"observability,omitempty" export:"true"`
+	DefaultRule                 bool                               `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
+	DeniedEncodedPathCharacters *RouterDeniedEncodedPathCharacters `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-"`
 }
 
 // +k8s:deepcopy-gen=true

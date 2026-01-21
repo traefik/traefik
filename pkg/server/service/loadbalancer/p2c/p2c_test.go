@@ -246,6 +246,7 @@ func TestBalancerAllServersFenced(t *testing.T) {
 
 type responseRecorder struct {
 	*httptest.ResponseRecorder
+
 	save     map[string]int
 	sequence []string
 	status   []int

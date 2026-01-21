@@ -48,6 +48,7 @@ type TLSOptionSpec struct {
 	DisableSessionTickets bool `json:"disableSessionTickets,omitempty"`
 	// PreferServerCipherSuites defines whether the server chooses a cipher suite among his own instead of among the client's.
 	// It is enabled automatically when minVersion or maxVersion is set.
+	//
 	// Deprecated: https://github.com/golang/go/issues/45430
 	PreferServerCipherSuites *bool `json:"preferServerCipherSuites,omitempty"`
 }

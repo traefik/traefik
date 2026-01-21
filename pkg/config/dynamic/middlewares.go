@@ -69,6 +69,7 @@ type GrpcWeb struct {
 type ContentType struct {
 	// AutoDetect specifies whether to let the `Content-Type` header, if it has not been set by the backend,
 	// be automatically set to a value derived from the contents of the response.
+	//
 	// Deprecated: AutoDetect option is deprecated, Content-Type middleware is only meant to be used to enable the content-type detection, please remove any usage of this option.
 	AutoDetect *bool `json:"autoDetect,omitempty" toml:"autoDetect,omitempty" yaml:"autoDetect,omitempty" export:"true"`
 }
@@ -481,6 +482,7 @@ func (s *IPStrategy) Get() (ip.Strategy, error) {
 // IPWhiteList holds the IP whitelist middleware configuration.
 // This middleware limits allowed requests based on the client IP.
 // More info: https://doc.traefik.io/traefik/v3.6/middlewares/http/ipwhitelist/
+//
 // Deprecated: please use IPAllowList instead.
 type IPWhiteList struct {
 	// SourceRange defines the set of allowed IPs (or ranges of allowed IPs by using CIDR notation). Required.

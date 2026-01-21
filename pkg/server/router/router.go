@@ -67,12 +67,96 @@ func NewManager(conf *runtime.Configuration,
 	}
 }
 
-func (m *Manager) getHTTPRouters(ctx context.Context, entryPoints []string, tls bool) map[string]map[string]*runtime.RouterInfo {
-	if m.conf != nil {
-		return m.conf.GetRoutersByEntryPoints(ctx, entryPoints, tls)
+// ParseRouterTree sets up router tree and validates router configuration.
+// This function performs the following operations in order:
+//
+// 1. Populate ChildRefs: Uses ParentRefs to build the parent-child relationship graph
+// 2. Root-first traversal: Starting from root routers (no ParentRefs), traverses the tree
+// 3. Cycle detection: Detects circular dependencies and removes cyclic links
+// 4. Reachability check: Marks routers unreachable from any root as disabled
+// 5. Dead-end detection: Marks routers with no service and no children as disabled
+// 6. Validation: Checks for configuration errors
+//
+// Router status is set during this process:
+// - Enabled: Reachable routers with valid configuration
+// - Disabled: Unreachable, dead-end, or routers with critical errors
+// - Warning: Routers with non-critical errors (like cycles)
+//
+// The function modifies router.Status, router.ChildRefs, and adds errors to router.Err.
+func (m *Manager) ParseRouterTree() {
+	if m.conf == nil || m.conf.Routers == nil {
+		return
 	}
 
-	return make(map[string]map[string]*runtime.RouterInfo)
+	// Populate ChildRefs based on ParentRefs and find root routers.
+	var rootRouters []string
+	for routerName, router := range m.conf.Routers {
+		if len(router.ParentRefs) == 0 {
+			rootRouters = append(rootRouters, routerName)
+			continue
+		}
+
+		for _, parentName := range router.ParentRefs {
+			if parentRouter, exists := m.conf.Routers[parentName]; exists {
+				// Add this router as a child of its parent
+				if !slices.Contains(parentRouter.ChildRefs, routerName) {
+					parentRouter.ChildRefs = append(parentRouter.ChildRefs, routerName)
+				}
+			} else {
+				router.AddError(fmt.Errorf("parent router %q does not exist", parentName), true)
+			}
+		}
+
+		// Check for non-root router with TLS config.
+		if router.TLS != nil {
+			router.AddError(errors.New("non-root router cannot have TLS configuration"), true)
+			continue
+		}
+
+		// Check for non-root router with Observability config.
+		if router.Observability != nil {
+			router.AddError(errors.New("non-root router cannot have Observability configuration"), true)
+			continue
+		}
+
+		// Check for non-root router with Entrypoint config.
+		if len(router.EntryPoints) > 0 {
+			router.AddError(errors.New("non-root router cannot have Entrypoints configuration"), true)
+			continue
+		}
+	}
+	sort.Strings(rootRouters)
+
+	// Root-first traversal with cycle detection.
+	visited := make(map[string]bool)
+	currentPath := make(map[string]bool)
+	var path []string
+
+	for _, rootName := range rootRouters {
+		if !visited[rootName] {
+			m.traverse(rootName, visited, currentPath, path)
+		}
+	}
+
+	for routerName, router := range m.conf.Routers {
+		// Set status for all routers based on reachability.
+		if !visited[routerName] {
+			router.AddError(errors.New("router is not reachable"), true)
+			continue
+		}
+
+		// Detect dead-end routers (no service + no children) - AFTER cycle handling.
+		if router.Service == "" && len(router.ChildRefs) == 0 {
+			router.AddError(errors.New("router has no service and no child routers"), true)
+			continue
+		}
+
+		// Check for router with service that is referenced as a parent.
+		if router.Service != "" && len(router.ChildRefs) > 0 {
+			router.AddError(errors.New("router has both a service and is referenced as a parent by other routers"), true)
+			continue
+		}
+	}
 }
 
 // BuildHandlers Builds handler for all entry points.
@@ -130,6 +214,14 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string, t
 	}
 
 	return entryPointHandlers
+}
+
+func (m *Manager) getHTTPRouters(ctx context.Context, entryPoints []string, tls bool) map[string]map[string]*runtime.RouterInfo {
+	if m.conf != nil {
+		return m.conf.GetRoutersByEntryPoints(ctx, entryPoints, tls)
+	}
+
+	return make(map[string]map[string]*runtime.RouterInfo)
 }
 
 func (m *Manager) buildEntryPointHandler(ctx context.Context, entryPointName string, configs map[string]*runtime.RouterInfo, config dynamic.RouterObservabilityConfig) (http.Handler, error) {
@@ -274,10 +366,7 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 
 	// Here we are adding deny handlers for encoded path characters and fragment.
 	// Deny handler are only added for root routers, child routers are protected by their parent router deny handlers.
-	if len(router.ParentRefs) == 0 {
-		chain = chain.Append(func(next http.Handler) (http.Handler, error) {
-			return denyFragment(next), nil
-		})
+	if len(router.ParentRefs) == 0 && router.DeniedEncodedPathCharacters != nil {
 		chain = chain.Append(func(next http.Handler) (http.Handler, error) {
 			return denyEncodedPathCharacters(router.DeniedEncodedPathCharacters.Map(), next), nil
 		})
@@ -286,98 +375,6 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 	mHandler := m.middlewaresBuilder.BuildChain(ctx, router.Middlewares)
 
 	return chain.Extend(*mHandler).Then(nextHandler)
-}
-
-// ParseRouterTree sets up router tree and validates router configuration.
-// This function performs the following operations in order:
-//
-// 1. Populate ChildRefs: Uses ParentRefs to build the parent-child relationship graph
-// 2. Root-first traversal: Starting from root routers (no ParentRefs), traverses the tree
-// 3. Cycle detection: Detects circular dependencies and removes cyclic links
-// 4. Reachability check: Marks routers unreachable from any root as disabled
-// 5. Dead-end detection: Marks routers with no service and no children as disabled
-// 6. Validation: Checks for configuration errors
-//
-// Router status is set during this process:
-// - Enabled: Reachable routers with valid configuration
-// - Disabled: Unreachable, dead-end, or routers with critical errors
-// - Warning: Routers with non-critical errors (like cycles)
-//
-// The function modifies router.Status, router.ChildRefs, and adds errors to router.Err.
-func (m *Manager) ParseRouterTree() {
-	if m.conf == nil || m.conf.Routers == nil {
-		return
-	}
-
-	// Populate ChildRefs based on ParentRefs and find root routers.
-	var rootRouters []string
-	for routerName, router := range m.conf.Routers {
-		if len(router.ParentRefs) == 0 {
-			rootRouters = append(rootRouters, routerName)
-			continue
-		}
-
-		for _, parentName := range router.ParentRefs {
-			if parentRouter, exists := m.conf.Routers[parentName]; exists {
-				// Add this router as a child of its parent
-				if !slices.Contains(parentRouter.ChildRefs, routerName) {
-					parentRouter.ChildRefs = append(parentRouter.ChildRefs, routerName)
-				}
-			} else {
-				router.AddError(fmt.Errorf("parent router %q does not exist", parentName), true)
-			}
-		}
-
-		// Check for non-root router with TLS config.
-		if router.TLS != nil {
-			router.AddError(errors.New("non-root router cannot have TLS configuration"), true)
-			continue
-		}
-
-		// Check for non-root router with Observability config.
-		if router.Observability != nil {
-			router.AddError(errors.New("non-root router cannot have Observability configuration"), true)
-			continue
-		}
-
-		// Check for non-root router with Entrypoint config.
-		if len(router.EntryPoints) > 0 {
-			router.AddError(errors.New("non-root router cannot have Entrypoints configuration"), true)
-			continue
-		}
-	}
-	sort.Strings(rootRouters)
-
-	// Root-first traversal with cycle detection.
-	visited := make(map[string]bool)
-	currentPath := make(map[string]bool)
-	var path []string
-
-	for _, rootName := range rootRouters {
-		if !visited[rootName] {
-			m.traverse(rootName, visited, currentPath, path)
-		}
-	}
-
-	for routerName, router := range m.conf.Routers {
-		// Set status for all routers based on reachability.
-		if !visited[routerName] {
-			router.AddError(errors.New("router is not reachable"), true)
-			continue
-		}
-
-		// Detect dead-end routers (no service + no children) - AFTER cycle handling.
-		if router.Service == "" && len(router.ChildRefs) == 0 {
-			router.AddError(errors.New("router has no service and no child routers"), true)
-			continue
-		}
-
-		// Check for router with service that is referenced as a parent.
-		if router.Service != "" && len(router.ChildRefs) > 0 {
-			router.AddError(errors.New("router has both a service and is referenced as a parent by other routers"), true)
-			continue
-		}
-	}
 }
 
 // traverse performs a depth-first traversal starting from root routers,

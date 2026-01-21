@@ -22,7 +22,8 @@ type MatcherFunc func(*http.Request) bool
 
 // Muxer handles routing with rules.
 type Muxer struct {
-	routes         routes
+	routes routes
+
 	parser         SyntaxParser
 	defaultHandler http.Handler
 }

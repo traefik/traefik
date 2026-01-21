@@ -61,7 +61,7 @@ In the same directory, create `docker‑compose‑swarm.yaml`:
 ```yaml
 services:
   traefik:
-    image: traefik:v3.4
+    image: traefik:v3.6
     
     networks:
     # Connect to the 'traefik_proxy' overlay network for inter-container communication across nodes
@@ -327,4 +327,4 @@ command:
 
 You now have Traefik running on Docker Swarm with HTTPS, a secured dashboard, automatic HTTP → HTTPS redirects, and foundational observability. Expand this stack with Let’s Encrypt, additional middlewares, or multiple Traefik replicas as your Swarm grows.
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

@@ -134,50 +134,6 @@ func (b *Balancer) RegisterStatusUpdater(fn func(up bool)) error {
 	return nil
 }
 
-func (b *Balancer) nextServer() (*namedHandler, error) {
-	// We kept the same representation (map) as in the WRR strategy to improve maintainability.
-	// However, with the P2C strategy, we only need a slice of healthy servers.
-	b.handlersMu.RLock()
-	var healthy []*namedHandler
-	for _, h := range b.handlers {
-		if _, ok := b.status[h.name]; ok {
-			if _, fenced := b.fenced[h.name]; !fenced {
-				healthy = append(healthy, h)
-			}
-		}
-	}
-	b.handlersMu.RUnlock()
-
-	if len(healthy) == 0 {
-		return nil, errNoAvailableServer
-	}
-
-	// If there is only one healthy server, return it.
-	if len(healthy) == 1 {
-		return healthy[0], nil
-	}
-	// In order to not get the same backend twice, we make the second call to s.rand.Intn one fewer
-	// than the length of the slice. We then have to shift over the second index if it is equal or
-	// greater than the first index, wrapping round if needed.
-	b.randMu.Lock()
-	n1, n2 := b.rand.Intn(len(healthy)), b.rand.Intn(len(healthy))
-	b.randMu.Unlock()
-
-	if n2 == n1 {
-		n2 = (n2 + 1) % len(healthy)
-	}
-
-	h1, h2 := healthy[n1], healthy[n2]
-	// Ensure h1 has fewer inflight requests than h2.
-	if h2.inflight.Load() < h1.inflight.Load() {
-		log.Debug().Msgf("Service selected by P2C: %s", h2.name)
-		return h2, nil
-	}
-
-	log.Debug().Msgf("Service selected by P2C: %s", h1.name)
-	return h1, nil
-}
-
 func (b *Balancer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if b.sticky != nil {
 		h, rewrite, err := b.sticky.StickyHandler(req)
@@ -234,4 +190,48 @@ func (b *Balancer) AddServer(name string, handler http.Handler, server dynamic.S
 	if b.sticky != nil {
 		b.sticky.AddHandler(name, h)
 	}
+}
+
+func (b *Balancer) nextServer() (*namedHandler, error) {
+	// We kept the same representation (map) as in the WRR strategy to improve maintainability.
+	// However, with the P2C strategy, we only need a slice of healthy servers.
+	b.handlersMu.RLock()
+	var healthy []*namedHandler
+	for _, h := range b.handlers {
+		if _, ok := b.status[h.name]; ok {
+			if _, fenced := b.fenced[h.name]; !fenced {
+				healthy = append(healthy, h)
+			}
+		}
+	}
+	b.handlersMu.RUnlock()
+
+	if len(healthy) == 0 {
+		return nil, errNoAvailableServer
+	}
+
+	// If there is only one healthy server, return it.
+	if len(healthy) == 1 {
+		return healthy[0], nil
+	}
+	// In order to not get the same backend twice, we make the second call to s.rand.Intn one fewer
+	// than the length of the slice. We then have to shift over the second index if it is equal or
+	// greater than the first index, wrapping round if needed.
+	b.randMu.Lock()
+	n1, n2 := b.rand.Intn(len(healthy)), b.rand.Intn(len(healthy))
+	b.randMu.Unlock()
+
+	if n2 == n1 {
+		n2 = (n2 + 1) % len(healthy)
+	}
+
+	h1, h2 := healthy[n1], healthy[n2]
+	// Ensure h1 has fewer inflight requests than h2.
+	if h2.inflight.Load() < h1.inflight.Load() {
+		log.Debug().Msgf("Service selected by P2C: %s", h2.name)
+		return h2, nil
+	}
+
+	log.Debug().Msgf("Service selected by P2C: %s", h1.name)
+	return h1, nil
 }

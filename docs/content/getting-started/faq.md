@@ -252,4 +252,4 @@ In which case, you should make sure your infrastructure is properly set up for a
 LEGO_DISABLE_CNAME_SUPPORT=true
 ```
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

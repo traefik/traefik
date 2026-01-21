@@ -23,6 +23,7 @@ var errNoAvailableServer = errors.New("no available server")
 // Tracks response time (TTFB) and inflight request count for load balancing decisions.
 type namedHandler struct {
 	http.Handler
+
 	name   string
 	weight float64
 
@@ -180,98 +181,6 @@ func (b *Balancer) RegisterStatusUpdater(fn func(up bool)) error {
 	return nil
 }
 
-// getHealthyServers returns the list of healthy, non-fenced servers.
-func (b *Balancer) getHealthyServers() []*namedHandler {
-	b.handlersMu.RLock()
-	defer b.handlersMu.RUnlock()
-
-	var healthy []*namedHandler
-	for _, h := range b.handlers {
-		if _, ok := b.status[h.name]; ok {
-			if _, fenced := b.fenced[h.name]; !fenced {
-				healthy = append(healthy, h)
-			}
-		}
-	}
-	return healthy
-}
-
-// selectWRR selects a server from candidates using Weighted Round Robin (EDF scheduling).
-// This is used for tie-breaking when multiple servers have identical scores.
-func (b *Balancer) selectWRR(candidates []*namedHandler) *namedHandler {
-	if len(candidates) == 0 {
-		return nil
-	}
-
-	selected := candidates[0]
-	minDeadline := math.MaxFloat64
-
-	// Find handler with earliest deadline.
-	for _, h := range candidates {
-		handlerDeadline := h.getDeadline()
-		if handlerDeadline < minDeadline {
-			minDeadline = handlerDeadline
-			selected = h
-		}
-	}
-
-	// Update deadline based on when this server was selected (minDeadline),
-	// not the global curDeadline. This ensures proper weighted distribution.
-	newDeadline := minDeadline + 1/selected.weight
-	selected.setDeadline(newDeadline)
-
-	// Track the maximum deadline assigned for initializing new servers.
-	b.curDeadlineMu.Lock()
-	if newDeadline > b.curDeadline {
-		b.curDeadline = newDeadline
-	}
-	b.curDeadlineMu.Unlock()
-
-	return selected
-}
-
-// Score = (avgResponseTime × (1 + inflightCount)) / weight.
-func (b *Balancer) nextServer() (*namedHandler, error) {
-	healthy := b.getHealthyServers()
-
-	if len(healthy) == 0 {
-		return nil, errNoAvailableServer
-	}
-
-	if len(healthy) == 1 {
-		return healthy[0], nil
-	}
-
-	// Calculate scores and find minimum.
-	minScore := math.MaxFloat64
-	var candidates []*namedHandler
-
-	for _, h := range healthy {
-		avgRT := h.getAvgResponseTime()
-		inflight := float64(h.inflightCount.Load())
-		score := (avgRT * (1 + inflight)) / h.weight
-
-		if score < minScore {
-			minScore = score
-			candidates = []*namedHandler{h}
-		} else if score == minScore {
-			candidates = append(candidates, h)
-		}
-	}
-
-	if len(candidates) == 1 {
-		return candidates[0], nil
-	}
-
-	// Multiple servers with same score: use WRR (EDF) tie-breaking.
-	selected := b.selectWRR(candidates)
-	if selected == nil {
-		return nil, errNoAvailableServer
-	}
-
-	return selected, nil
-}
-
 func (b *Balancer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	// Handle sticky sessions first.
 	if b.sticky != nil {
@@ -370,4 +279,96 @@ func (b *Balancer) Add(name string, handler http.Handler, weight *int, fenced bo
 	if b.sticky != nil {
 		b.sticky.AddHandler(name, handler)
 	}
+}
+
+// getHealthyServers returns the list of healthy, non-fenced servers.
+func (b *Balancer) getHealthyServers() []*namedHandler {
+	b.handlersMu.RLock()
+	defer b.handlersMu.RUnlock()
+
+	var healthy []*namedHandler
+	for _, h := range b.handlers {
+		if _, ok := b.status[h.name]; ok {
+			if _, fenced := b.fenced[h.name]; !fenced {
+				healthy = append(healthy, h)
+			}
+		}
+	}
+	return healthy
+}
+
+// selectWRR selects a server from candidates using Weighted Round Robin (EDF scheduling).
+// This is used for tie-breaking when multiple servers have identical scores.
+func (b *Balancer) selectWRR(candidates []*namedHandler) *namedHandler {
+	if len(candidates) == 0 {
+		return nil
+	}
+
+	selected := candidates[0]
+	minDeadline := math.MaxFloat64
+
+	// Find handler with earliest deadline.
+	for _, h := range candidates {
+		handlerDeadline := h.getDeadline()
+		if handlerDeadline < minDeadline {
+			minDeadline = handlerDeadline
+			selected = h
+		}
+	}
+
+	// Update deadline based on when this server was selected (minDeadline),
+	// not the global curDeadline. This ensures proper weighted distribution.
+	newDeadline := minDeadline + 1/selected.weight
+	selected.setDeadline(newDeadline)
+
+	// Track the maximum deadline assigned for initializing new servers.
+	b.curDeadlineMu.Lock()
+	if newDeadline > b.curDeadline {
+		b.curDeadline = newDeadline
+	}
+	b.curDeadlineMu.Unlock()
+
+	return selected
+}
+
+// Score = (avgResponseTime × (1 + inflightCount)) / weight.
+func (b *Balancer) nextServer() (*namedHandler, error) {
+	healthy := b.getHealthyServers()
+
+	if len(healthy) == 0 {
+		return nil, errNoAvailableServer
+	}
+
+	if len(healthy) == 1 {
+		return healthy[0], nil
+	}
+
+	// Calculate scores and find minimum.
+	minScore := math.MaxFloat64
+	var candidates []*namedHandler
+
+	for _, h := range healthy {
+		avgRT := h.getAvgResponseTime()
+		inflight := float64(h.inflightCount.Load())
+		score := (avgRT * (1 + inflight)) / h.weight
+
+		if score < minScore {
+			minScore = score
+			candidates = []*namedHandler{h}
+		} else if score == minScore {
+			candidates = append(candidates, h)
+		}
+	}
+
+	if len(candidates) == 1 {
+		return candidates[0], nil
+	}
+
+	// Multiple servers with same score: use WRR (EDF) tie-breaking.
+	selected := b.selectWRR(candidates)
+	if selected == nil {
+		return nil, errNoAvailableServer
+	}
+
+	return selected, nil
 }

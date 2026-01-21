@@ -34,6 +34,7 @@ type ServersTransportSpec struct {
 	// RootCAs defines a list of CA certificate Secrets or ConfigMaps used to validate server certificates.
 	RootCAs []RootCA `json:"rootCAs,omitempty"`
 	// RootCAsSecrets defines a list of CA secret used to validate self-signed certificate.
+	//
 	// Deprecated: RootCAsSecrets is deprecated, please use the RootCAs option instead.
 	RootCAsSecrets []string `json:"rootCAsSecrets,omitempty"`
 	// CertificatesSecrets defines a list of secret storing client certificates for mTLS.

@@ -28,6 +28,7 @@ import (
 // Redis test suites.
 type RedisSentinelSuite struct {
 	BaseSuite
+
 	kvClient       store.Store
 	redisEndpoints []string
 }
@@ -72,36 +73,6 @@ func (s *RedisSentinelSuite) TearDownSuite() {
 
 	for _, filename := range []string{"sentinel1.conf", "sentinel2.conf", "sentinel3.conf"} {
 		_ = os.Remove(filepath.Join(".", "resources", "compose", "config", filename))
-	}
-}
-
-func (s *RedisSentinelSuite) setupSentinelConfiguration(ports []string) {
-	for i, port := range ports {
-		templateValue := struct{ SentinelPort string }{SentinelPort: port}
-
-		// Load file
-		templateFile := "resources/compose/config/sentinel_template.conf"
-		tmpl, err := template.ParseFiles(templateFile)
-		require.NoError(s.T(), err)
-
-		folder, prefix := filepath.Split(templateFile)
-
-		fileName := fmt.Sprintf("%s/sentinel%d.conf", folder, i+1)
-		tmpFile, err := os.Create(fileName)
-		require.NoError(s.T(), err)
-		defer tmpFile.Close()
-
-		err = tmpFile.Chmod(0o666)
-		require.NoError(s.T(), err)
-
-		model := structs.Map(templateValue)
-		model["SelfFilename"] = tmpFile.Name()
-
-		err = tmpl.ExecuteTemplate(tmpFile, prefix, model)
-		require.NoError(s.T(), err)
-
-		err = tmpFile.Sync()
-		require.NoError(s.T(), err)
 	}
 }
 
@@ -199,5 +170,35 @@ func (s *RedisSentinelSuite) TestSentinelConfiguration() {
 		text, err := difflib.GetUnifiedDiffString(diff)
 		require.NoError(s.T(), err)
 		log.Info().Msg(text)
+	}
+}
+
+func (s *RedisSentinelSuite) setupSentinelConfiguration(ports []string) {
+	for i, port := range ports {
+		templateValue := struct{ SentinelPort string }{SentinelPort: port}
+
+		// Load file
+		templateFile := "resources/compose/config/sentinel_template.conf"
+		tmpl, err := template.ParseFiles(templateFile)
+		require.NoError(s.T(), err)
+
+		folder, prefix := filepath.Split(templateFile)
+
+		fileName := fmt.Sprintf("%s/sentinel%d.conf", folder, i+1)
+		tmpFile, err := os.Create(fileName)
+		require.NoError(s.T(), err)
+		defer tmpFile.Close()
+
+		err = tmpFile.Chmod(0o666)
+		require.NoError(s.T(), err)
+
+		model := structs.Map(templateValue)
+		model["SelfFilename"] = tmpFile.Name()
+
+		err = tmpl.ExecuteTemplate(tmpFile, prefix, model)
+		require.NoError(s.T(), err)
+
+		err = tmpFile.Sync()
+		require.NoError(s.T(), err)
 	}
 }

@@ -296,6 +296,7 @@ func Int(v int) *int { return &v }
 
 type responseRecorder struct {
 	*httptest.ResponseRecorder
+
 	save     map[string]int
 	sequence []string
 	status   []int

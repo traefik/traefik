@@ -160,4 +160,4 @@ List of providers that support constraints:
 - [Consul Catalog](./hashicorp/consul-catalog.md#constraints)
 - [Nomad](./hashicorp/nomad.md#constraints)
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

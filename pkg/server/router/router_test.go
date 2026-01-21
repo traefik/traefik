@@ -865,7 +865,7 @@ func BenchmarkRouterServe(b *testing.B) {
 
 	reqHost := requestdecorator.New(nil)
 	b.ReportAllocs()
-	for range b.N {
+	for b.Loop() {
 		reqHost.ServeHTTP(w, req, handlers["web"].ServeHTTP)
 	}
 }
@@ -900,7 +900,7 @@ func BenchmarkService(b *testing.B) {
 
 	handler, _ := serviceManager.BuildHTTP(b.Context(), "foo-service")
 	b.ReportAllocs()
-	for range b.N {
+	for b.Loop() {
 		handler.ServeHTTP(w, req)
 	}
 }
@@ -1837,7 +1837,7 @@ func TestManager_BuildHandlers_Deny(t *testing.T) {
 					},
 				},
 			},
-			expectedStatusCode: http.StatusBadRequest,
+			expectedStatusCode: http.StatusOK,
 		},
 		{
 			desc:        "parent router with child routers, request with encoded slash",
@@ -1860,18 +1860,18 @@ func TestManager_BuildHandlers_Deny(t *testing.T) {
 					},
 				},
 			},
-			expectedStatusCode: http.StatusBadRequest,
+			expectedStatusCode: http.StatusOK,
 		},
 		{
-			desc:        "parent router allowing encoded slash without child router",
+			desc:        "parent router disallowing encoded slash without child router",
 			requestPath: "/foo%2F",
 			routers: map[string]*dynamic.Router{
 				"parent": {
 					EntryPoints: []string{"web"},
 					Rule:        "PathPrefix(`/`)",
 					Service:     "service",
-					DeniedEncodedPathCharacters: dynamic.RouterDeniedEncodedPathCharacters{
-						AllowEncodedSlash: true,
+					DeniedEncodedPathCharacters: &dynamic.RouterDeniedEncodedPathCharacters{
+						AllowEncodedSlash: false,
 					},
 				},
 			},
@@ -1882,63 +1882,21 @@ func TestManager_BuildHandlers_Deny(t *testing.T) {
 					},
 				},
 			},
-			expectedStatusCode: http.StatusOK,
+			expectedStatusCode: http.StatusBadRequest,
 		},
 		{
-			desc:        "parent router allowing encoded slash with child routers",
+			desc:        "parent router disallowing encoded slash with child routers",
 			requestPath: "/foo%2F",
 			routers: map[string]*dynamic.Router{
 				"parent": {
 					EntryPoints: []string{"web"},
 					Rule:        "PathPrefix(`/`)",
-					DeniedEncodedPathCharacters: dynamic.RouterDeniedEncodedPathCharacters{
-						AllowEncodedSlash: true,
+					DeniedEncodedPathCharacters: &dynamic.RouterDeniedEncodedPathCharacters{
+						AllowEncodedSlash: false,
 					},
 				},
 				"child1": {
 					Rule:       "PathPrefix(`/`)",
-					Service:    "child1-service",
-					ParentRefs: []string{"parent"},
-				},
-			},
-			services: map[string]*dynamic.Service{
-				"child1-service": {
-					LoadBalancer: &dynamic.ServersLoadBalancer{
-						Servers: []dynamic.Server{{URL: "http://localhost:8080"}},
-					},
-				},
-			},
-			expectedStatusCode: http.StatusOK,
-		},
-		{
-			desc:        "parent router without child routers, request with fragment",
-			requestPath: "/foo#",
-			routers: map[string]*dynamic.Router{
-				"parent": {
-					EntryPoints: []string{"web"},
-					Rule:        "PathPrefix(`/`)",
-					Service:     "service",
-				},
-			},
-			services: map[string]*dynamic.Service{
-				"service": {
-					LoadBalancer: &dynamic.ServersLoadBalancer{
-						Servers: []dynamic.Server{{URL: "http://localhost:8080"}},
-					},
-				},
-			},
-			expectedStatusCode: http.StatusBadRequest,
-		},
-		{
-			desc:        "parent router with child routers, request with fragment",
-			requestPath: "/foo#",
-			routers: map[string]*dynamic.Router{
-				"parent": {
-					EntryPoints: []string{"web"},
-					Rule:        "PathPrefix(`/`)",
-				},
-				"child1": {
-					Rule:       "Path(`/v1`)",
 					Service:    "child1-service",
 					ParentRefs: []string{"parent"},
 				},

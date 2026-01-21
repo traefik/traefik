@@ -204,4 +204,4 @@ Only SHA-256 and SHA-512 checksums are supported for checksum computation.
 
     To disable this feature and only perform authentication, set the `validateDigest` option to `false` in the middleware configuration.
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

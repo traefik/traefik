@@ -292,4 +292,4 @@ To illustrate, it is possible to easily define multiple routers, services, and T
     {{ end }}
     ```
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

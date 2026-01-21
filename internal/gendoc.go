@@ -196,7 +196,7 @@ type errWriter struct {
 	err error
 }
 
-func (ew *errWriter) writeln(a ...interface{}) {
+func (ew *errWriter) writeln(a ...any) {
 	if ew.err != nil {
 		return
 	}
