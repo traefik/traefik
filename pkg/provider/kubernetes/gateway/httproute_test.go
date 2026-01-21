@@ -203,3 +203,97 @@ func Test_buildMatchRule(t *testing.T) {
 		})
 	}
 }
+
+func Test_buildSticky(t *testing.T) {
+	testCases := []struct {
+		desc               string
+		sessionPersistence *gatev1.SessionPersistence
+		expectedNil        bool
+		expectedCookie     string
+		expectedMaxAge     int
+	}{
+		{
+			desc:               "Nil returns nil",
+			sessionPersistence: nil,
+			expectedNil:        true,
+		},
+		{
+			desc: "Header-based not supported",
+			sessionPersistence: &gatev1.SessionPersistence{
+				Type: ptr.To(gatev1.HeaderBasedSessionPersistence),
+			},
+			expectedNil: true,
+		},
+		{
+			desc: "Cookie with custom name",
+			sessionPersistence: &gatev1.SessionPersistence{
+				SessionName: ptr.To("CUSTOM"),
+			},
+			expectedCookie: "CUSTOM",
+		},
+		{
+			desc: "Permanent with timeout",
+			sessionPersistence: &gatev1.SessionPersistence{
+				SessionName: ptr.To("SESSION"),
+				CookieConfig: &gatev1.CookieConfig{
+					LifetimeType: ptr.To(gatev1.PermanentCookieLifetimeType),
+				},
+				AbsoluteTimeout: ptr.To(gatev1.Duration("1h")),
+			},
+			expectedCookie: "SESSION",
+			expectedMaxAge: 3600,
+		},
+		{
+			desc: "Session lifetime type (no MaxAge)",
+			sessionPersistence: &gatev1.SessionPersistence{
+				SessionName: ptr.To("SESSIONCOOKIE"),
+				CookieConfig: &gatev1.CookieConfig{
+					LifetimeType: ptr.To(gatev1.SessionCookieLifetimeType),
+				},
+			},
+			expectedCookie: "SESSIONCOOKIE",
+			expectedMaxAge: 0,
+		},
+		{
+			desc: "Default cookie type (Cookie)",
+			sessionPersistence: &gatev1.SessionPersistence{
+				Type:        ptr.To(gatev1.CookieBasedSessionPersistence),
+				SessionName: ptr.To("DEFAULTTYPE"),
+			},
+			expectedCookie: "DEFAULTTYPE",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			sticky := buildSticky(test.sessionPersistence)
+
+			if test.expectedNil {
+				assert.Nil(t, sticky)
+				return
+			}
+
+			assert.NotNil(t, sticky)
+			assert.NotNil(t, sticky.Cookie)
+
+			// Security flags use Traefik defaults (off by default).
+			assert.False(t, sticky.Cookie.HTTPOnly)
+			assert.False(t, sticky.Cookie.Secure)
+			assert.Empty(t, sticky.Cookie.SameSite)
+
+			assert.NotNil(t, sticky.Cookie.Path)
+			assert.Equal(t, "/", *sticky.Cookie.Path)
+
+			if test.expectedCookie != "" {
+				assert.Equal(t, test.expectedCookie, sticky.Cookie.Name)
+			}
+			if test.expectedMaxAge > 0 {
+				assert.Equal(t, test.expectedMaxAge, sticky.Cookie.MaxAge)
+			} else if test.expectedMaxAge == 0 && test.sessionPersistence != nil && test.sessionPersistence.CookieConfig != nil {
+				assert.Equal(t, 0, sticky.Cookie.MaxAge)
+			}
+		})
+	}
+}

@@ -11,6 +11,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
@@ -185,10 +186,15 @@ func (p *Provider) loadWRRService(ctx context.Context, listener gatewayListener,
 		return name, nil
 	}
 
+	var sticky *dynamic.Sticky
+	if routeRule.SessionPersistence != nil {
+		sticky = buildSticky(routeRule.SessionPersistence)
+	}
+
 	var wrr dynamic.WeightedRoundRobin
 	var condition *metav1.Condition
 	for _, backendRef := range routeRule.BackendRefs {
-		svcName, errCondition := p.loadService(ctx, listener, conf, route, backendRef)
+		svcName, errCondition := p.loadService(ctx, listener, conf, route, backendRef, sticky)
 		weight := ptr.To(int(ptr.Deref(backendRef.Weight, 1)))
 		if errCondition != nil {
 			log.Ctx(ctx).Error().
@@ -213,9 +219,51 @@ func (p *Provider) loadWRRService(ctx context.Context, listener gatewayListener,
 	return name, condition
 }
 
+// buildSticky converts Gateway API SessionPersistence to Traefik's Sticky configuration.
+func buildSticky(sp *gatev1.SessionPersistence) *dynamic.Sticky {
+	if sp == nil {
+		return nil
+	}
+
+	// Header-based persistence is not supported by Traefik.
+	if sp.Type != nil && *sp.Type == gatev1.HeaderBasedSessionPersistence {
+		return nil
+	}
+
+	cookie := &dynamic.Cookie{}
+	cookie.SetDefaults()
+
+	if sp.SessionName != nil && *sp.SessionName != "" {
+		cookie.Name = *sp.SessionName
+	}
+
+	// Handle cookie lifetime based on CookieConfig.LifetimeType.
+	if sp.CookieConfig != nil && sp.CookieConfig.LifetimeType != nil {
+		switch *sp.CookieConfig.LifetimeType {
+		case gatev1.PermanentCookieLifetimeType:
+			if sp.AbsoluteTimeout != nil {
+				if maxAge, err := parseDuration(*sp.AbsoluteTimeout); err == nil {
+					cookie.MaxAge = int(maxAge.Seconds())
+				}
+			}
+		case gatev1.SessionCookieLifetimeType:
+			cookie.MaxAge = 0
+		}
+	}
+
+	return &dynamic.Sticky{
+		Cookie: cookie,
+	}
+}
+
+// parseDuration parses a Gateway API Duration string (e.g., "10s", "1h") into time.Duration.
+func parseDuration(d gatev1.Duration) (time.Duration, error) {
+	return time.ParseDuration(string(d))
+}
+
 // loadService returns a dynamic.Service config corresponding to the given gatev1.HTTPBackendRef.
 // Note that the returned dynamic.Service config can be nil (for cross-provider, internal services, and backendFunc).
-func (p *Provider) loadService(ctx context.Context, listener gatewayListener, conf *dynamic.Configuration, route *gatev1.HTTPRoute, backendRef gatev1.HTTPBackendRef) (string, *metav1.Condition) {
+func (p *Provider) loadService(ctx context.Context, listener gatewayListener, conf *dynamic.Configuration, route *gatev1.HTTPRoute, backendRef gatev1.HTTPBackendRef, sticky *dynamic.Sticky) (string, *metav1.Condition) {
 	kind := ptr.Deref(backendRef.Kind, kindService)
 
 	group := groupCore
@@ -276,6 +324,11 @@ func (p *Provider) loadService(ctx context.Context, listener gatewayListener, co
 	portStr := strconv.FormatInt(int64(port), 10)
 	serviceName = provider.Normalize(serviceName + "-" + portStr)
 
+	if sticky != nil {
+		stickySuffix := fmt.Sprintf("-sticky-%s-%d", sticky.Cookie.Name, sticky.Cookie.MaxAge)
+		serviceName = provider.Normalize(serviceName + stickySuffix)
+	}
+
 	lb, st, errCondition := p.loadHTTPServers(ctx, namespace, route, backendRef, listener)
 	if errCondition != nil {
 		return serviceName, errCondition
@@ -284,6 +337,10 @@ func (p *Provider) loadService(ctx context.Context, listener gatewayListener, co
 	if st != nil {
 		lb.ServersTransport = serviceName
 		conf.HTTP.ServersTransports[serviceName] = st
+	}
+
+	if sticky != nil {
+		lb.Sticky = sticky
 	}
 
 	conf.HTTP.Services[serviceName] = &dynamic.Service{LoadBalancer: lb}
