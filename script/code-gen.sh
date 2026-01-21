@@ -37,4 +37,4 @@ cat "${CURRENT_DIR}"/docs/content/reference/dynamic-configuration/traefik.io_*.y
 cp -f "${CURRENT_DIR}"/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml "${CURRENT_DIR}"/integration/fixtures/k8s/01-traefik-crd.yml
 
 # Remove leading '---' from the concatenated file (files with multiple resources should not start with ---)
-sed -i '1{/^---$/d;}' "${CURRENT_DIR}"/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml
+sed -i '' '1{/^---$/d;}' "${CURRENT_DIR}"/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml
