@@ -233,7 +233,7 @@ Update your Traefik service in `docker-compose.yml`:
 ```yaml
 services:
   traefik:
-    image: "traefik:v3.4"
+    image: "traefik:latest"
     container_name: "traefik"
     restart: unless-stopped
     security_opt:
@@ -318,24 +318,34 @@ http:
 
     # Child router for admin users
     api-admin:
-      rule: "HeadersRegexp(`X-User-Role`, `admin`)"
+      rule: "HeadersRegexp(`X-Auth-User`, `admin`)"
       service: admin-backend@docker  # Reference Docker service
       parentRefs:
         - api-parent@file  # Explicit reference to parent in file provider
 
     # Child router for regular users
     api-user:
-      rule: "HeadersRegexp(`X-User-Role`, `user`)"
+      rule: "HeadersRegexp(`X-Auth-User`, `user`)"
       service: user-backend@docker  # Reference Docker service
       parentRefs:
         - api-parent@file  # Explicit reference to parent in file provider
 
   middlewares:
     auth-middleware:
-      headers:
-        customRequestHeaders:
-          X-User-Role: "admin"  # In production, use ForwardAuth middleware
+      basicAuth:
+        users:
+          - "admin:$apr1$DmXR3Add$wfdbGw6RWIhFb0ffXMM4d0"
+          - "user:$apr1$GJtcIY1o$mSLdsWYeXpPHVsxGDqadI."
+        headerField: X-Auth-User
 ```
+
+!!! note "Generating Password Hashes"
+    The password hashes above are generated using `htpasswd`. To create your own user credentials:
+
+    ```bash
+    # Using htpasswd (Apache utils)
+    htpasswd -nb admin yourpassword
+    ```
 
 !!! important "Cross-Provider References"
     Notice the `@docker` suffix on service names and the `@file` suffix in `parentRefs`. When using the File provider to orchestrate multi-layer routing with Docker services:
@@ -357,32 +367,18 @@ Test the routing behavior:
 
 ```bash
 # Request goes through parent router → auth middleware → admin child router
-curl -k -H "Host: api.docker.localhost" https://localhost/api
+curl -k -u admin:test -H "Host: api.docker.localhost" https://localhost/api
 ```
 
-You should see the response from the admin-backend service, as the auth middleware adds the `X-User-Role: admin` header.
+You should see the response from the admin-backend service when authenticating as `admin`. Try with `user:test` credentials to reach the user-backend service instead.
 
 ### How It Works
 
 1. **Request arrives** at `api.docker.localhost/api`
 2. **Parent router** (`api-parent`) matches based on host and path
-3. **Auth middleware** executes, adding `X-User-Role` header
+3. **BasicAuth middleware** authenticates the user and sets the `X-Auth-User` header with the username
 4. **Child router** (`api-admin` or `api-user`) matches based on the header value
 5. **Request forwarded** to the appropriate Docker service
-
-### Production Authentication
-
-In production, replace the simple header middleware with ForwardAuth:
-
-```yaml
-middlewares:
-  auth-middleware:
-    forwardAuth:
-      address: "http://auth-service:8080/auth"
-      authResponseHeaders:
-        - X-User-Role
-        - X-User-Name
-```
 
 For more details about multi-layer routing, see the [Multi-Layer Routing documentation](../../reference/routing-configuration/http/routing/multi-layer-routing.md).
 
