@@ -236,7 +236,7 @@ This involves setting up a router attached to the service `api@internal`, which 
 
 ### Dashboard Router Rule
 
-To ensure proper access to the dashboard, the [router rule](../../reference/routing-configuration/http/routing/router.md#rule) you define must match requests intended for the `/api` and `/dashboard` paths. 
+To ensure proper access to the dashboard, the [router rule](../../reference/routing-configuration/http/routing/rules-and-priority.md#rules) you define must match requests intended for the `/api` and `/dashboard` paths. 
 We recommend using either a *Host-based rule* to match all requests on the desired domain or explicitly defining a rule that includes both path prefixes. 
 Here are some examples:
 
