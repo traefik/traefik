@@ -506,7 +506,7 @@ func (c configBuilder) buildServersLB(ctx context.Context, namespace string, svc
 	if len(svc.Middlewares) > 0 {
 		mds, err := makeMiddlewareKeys(ctx, namespace, svc.Middlewares, c.allowCrossNamespace)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("could not create middleware keys: %w", err)
 		}
 		service.Middlewares = mds
 	}
