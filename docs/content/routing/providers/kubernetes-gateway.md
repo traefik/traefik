@@ -66,6 +66,8 @@ spec:
         certificateRefs:
           - name: secret-tls
             namespace: default
+          # Multiple certificates can be referenced for SNI-based routing.
+          # See "Multiple TLS Certificates" section for details.
 
       allowedRoutes:
         namespaces:
@@ -605,6 +607,43 @@ IP: ::1
 IP: 10.42.2.4
 IP: fe80::d873:20ff:fef5:be86
 ```
+
+#### Multiple TLS Certificates
+
+Traefik supports multiple `certificateRefs` per Gateway listener,
+enabling certificate management scenarios such as multi-domain hosting, certificate rotation, or SNI-based routing.
+
+The Gateway API specification allows up to 64 certificate references per listener.
+
+For example, the following `Gateway` listener references two different certificates:
+
+```yaml
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: multi-cert-gateway
+  namespace: default
+spec:
+  gatewayClassName: traefik
+  listeners:
+    - name: https
+      protocol: HTTPS
+      port: 443
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: example-com-tls
+          - name: example-org-tls
+      allowedRoutes:
+        namespaces:
+          from: Same
+```
+
+!!! info "Certificate Selection"
+
+    Traefik automatically selects the appropriate certificate based on the client's SNI (Server Name Indication).
+    If a certificate cannot be loaded, an error is logged and Traefik continues with the remaining valid certificates.
 
 ## Using Traefik middleware as HTTPRoute filter
 
