@@ -66,8 +66,6 @@ spec:
         certificateRefs:
           - name: secret-tls
             namespace: default
-          # Multiple certificates can be referenced for SNI-based routing.
-          # See "Multiple TLS Certificates" section for details.
 
       allowedRoutes:
         namespaces:
@@ -147,12 +145,12 @@ spec:
     - whoami.localhost
 
   rules:
-    - matches:
+     - matches:
         - path:
             type: PathPrefix
             value: /
 
-      backendRefs:
+       backendRefs:
         - name: whoami
           namespace: default
           port: 80
@@ -459,7 +457,7 @@ spec:
       kind: Gateway
 
   rules:
-    - backendRefs:
+     - backendRefs:
         - name: whoamitcp
           namespace: default
           port: 3000
@@ -550,6 +548,7 @@ spec:
         - name: whoamitcp
           namespace: default
           port: 3000
+
 ```
 
 ```yaml tab="Whoami deployment"
@@ -606,7 +605,6 @@ IP: ::1
 IP: 10.42.2.4
 IP: fe80::d873:20ff:fef5:be86
 ```
-
 #### Multiple TLS Certificates
 
 Traefik supports multiple `certificateRefs` per Gateway listener,
@@ -643,7 +641,6 @@ spec:
 
     Traefik automatically selects the appropriate certificate based on the client's SNI (Server Name Indication).
     If a certificate cannot be loaded, an error is logged and Traefik continues with the remaining valid certificates.
-
 ## Using Traefik middleware as HTTPRoute filter
 
 An HTTP [filter](https://gateway-api.sigs.k8s.io/api-types/httproute/#filters-optional) is an `HTTPRoute` component which enables the modification of HTTP requests and responses as they traverse the routing infrastructure.
