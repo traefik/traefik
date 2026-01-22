@@ -21,7 +21,7 @@ docs: docs-clean docs-image docs-lint docs-build docs-verify
 # Writer Mode: build and serve docs on http://localhost:8000 with livereload
 .PHONY: docs-serve
 docs-serve: docs-image
-	docker run  $(DOCKER_RUN_DOC_OPTS) $(TRAEFIK_DOCS_BUILD_IMAGE) mkdocs serve
+	docker run  $(DOCKER_RUN_DOC_OPTS) $(TRAEFIK_DOCS_BUILD_IMAGE) mkdocs serve -a 0.0.0.0:8000
 
 ## Pull image for doc building
 .PHONY: docs-pull-images
