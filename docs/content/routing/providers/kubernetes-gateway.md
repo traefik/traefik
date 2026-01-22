@@ -5,18 +5,18 @@ description: "The Kubernetes Gateway API can be used as a provider for routing a
 
 # Traefik & Kubernetes with Gateway API
 
-When using the Kubernetes Gateway API provider, Traefik leverages the Gateway API Custom Resource Definitions (CRDs) to obtain its routing configuration. 
+When using the Kubernetes Gateway API provider, Traefik leverages the Gateway API Custom Resource Definitions (CRDs) to obtain its routing configuration.
 For detailed information on the Gateway API concepts and resources, refer to the official [documentation](https://gateway-api.sigs.k8s.io/).
 
 The Kubernetes Gateway API provider supports version [v1.4.0](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.4.0) of the specification.
 
-It fully supports all `HTTPRoute` core and some extended features, like `GRPCRoute`, as well as the `TCPRoute` and `TLSRoute` resources from the [Experimental channel](https://gateway-api.sigs.k8s.io/concepts/versioning/?h=#release-channels). 
+It fully supports all `HTTPRoute` core and some extended features, like `GRPCRoute`, as well as the `TCPRoute` and `TLSRoute` resources from the [Experimental channel](https://gateway-api.sigs.k8s.io/concepts/versioning/?h=#release-channels).
 
 For more details, check out the conformance [report](https://github.com/kubernetes-sigs/gateway-api/tree/main/conformance/reports/v1.4.0/traefik-traefik).
 
 ## Deploying a Gateway
 
-A `Gateway` is a core resource in the Gateway API specification that defines the entry point for traffic into a Kubernetes cluster. 
+A `Gateway` is a core resource in the Gateway API specification that defines the entry point for traffic into a Kubernetes cluster.
 It is linked to a `GatewayClass`, which specifies the controller responsible for managing and handling the traffic, ensuring that it is directed to the appropriate Kubernetes backend services.
 
 The `GatewayClass` is a cluster-scoped resource typically defined by the infrastructure provider.
@@ -36,7 +36,7 @@ Next, the following `Gateway` manifest configures the running Traefik controller
 
 !!! info "Listener ports"
 
-    Please note that `Gateway` listener ports must match the configured [EntryPoint ports](../entrypoints.md) of the Traefik deployment. 
+    Please note that `Gateway` listener ports must match the configured [EntryPoint ports](../entrypoints.md) of the Traefik deployment.
     In case they do not match, an `ERROR` message is logged, and the resource status is updated accordingly.
 
 ```yaml tab="Gateway"
@@ -48,7 +48,7 @@ metadata:
   namespace: default
 spec:
   gatewayClassName: traefik
-  
+
   # Only Routes from the same namespace are allowed.
   listeners:
     - name: http
@@ -56,7 +56,7 @@ spec:
       port: 80
       allowedRoutes:
         namespaces:
-          from: Same 
+          from: Same
 
     - name: https
       protocol: HTTPS
@@ -66,6 +66,8 @@ spec:
         certificateRefs:
           - name: secret-tls
             namespace: default
+          # Multiple certificates can be referenced for SNI-based routing.
+          # See "Multiple TLS Certificates" section for details.
 
       allowedRoutes:
         namespaces:
@@ -86,7 +88,7 @@ spec:
         certificateRefs:
           - name: secret-tls
             namespace: default
-            
+
       allowedRoutes:
         namespaces:
           from: Same
@@ -111,7 +113,7 @@ data:
 
 ## Exposing a Route
 
-Once a `Gateway` is deployed (see [Deploying a Gateway](#deploying-a-gateway)) `HTTPRoute`, `TCPRoute`, 
+Once a `Gateway` is deployed (see [Deploying a Gateway](#deploying-a-gateway)) `HTTPRoute`, `TCPRoute`,
 and/or `TLSRoute` resources must be deployed to forward some traffic to Kubernetes backend [services](https://kubernetes.io/docs/concepts/services-networking/service/).
 
 !!! info "Attaching to Gateways"
@@ -120,12 +122,12 @@ and/or `TLSRoute` resources must be deployed to forward some traffic to Kubernet
 
 ### HTTP/HTTPS
 
-The `HTTPRoute` is a core resource in the Gateway API specification, designed to define how HTTP traffic should be routed within a Kubernetes cluster. 
-It allows the specification of routing rules that direct HTTP requests to the appropriate Kubernetes backend services. 
+The `HTTPRoute` is a core resource in the Gateway API specification, designed to define how HTTP traffic should be routed within a Kubernetes cluster.
+It allows the specification of routing rules that direct HTTP requests to the appropriate Kubernetes backend services.
 
 For more details on the resource and concepts, check out the Kubernetes Gateway API [documentation](https://gateway-api.sigs.k8s.io/api-types/httproute/).
 
-For example, the following manifests configure a whoami backend and its corresponding `HTTPRoute`, 
+For example, the following manifests configure a whoami backend and its corresponding `HTTPRoute`,
 reachable through the [deployed `Gateway`](#deploying-a-gateway) at the `http://whoami.localhost` address.
 
 ```yaml tab="HTTPRoute"
@@ -145,12 +147,12 @@ spec:
     - whoami.localhost
 
   rules:
-     - matches:
+    - matches:
         - path:
             type: PathPrefix
             value: /
 
-       backendRefs:
+      backendRefs:
         - name: whoami
           namespace: default
           port: 80
@@ -257,7 +259,7 @@ Date: Thu, 11 Jul 2024 15:11:31 GMT
 Content-Length: 5
 
 $ curl -k https://whoami.localhost
- 
+
 Hostname: whoami-697f8c6cbc-2krl7
 IP: 127.0.0.1
 IP: ::1
@@ -279,12 +281,12 @@ X-Real-Ip: 10.42.1.0
 
 ### GRPC
 
-The `GRPCRoute` is an extended resource in the Gateway API specification, designed to define how GRPC traffic should be routed within a Kubernetes cluster. 
-It allows the specification of routing rules that direct GRPC requests to the appropriate Kubernetes backend services. 
+The `GRPCRoute` is an extended resource in the Gateway API specification, designed to define how GRPC traffic should be routed within a Kubernetes cluster.
+It allows the specification of routing rules that direct GRPC requests to the appropriate Kubernetes backend services.
 
 For more details on the resource and concepts, check out the Kubernetes Gateway API [documentation](https://gateway-api.sigs.k8s.io/api-types/grpcroute/).
 
-For example, the following manifests configure an echo backend and its corresponding `GRPCRoute`, 
+For example, the following manifests configure an echo backend and its corresponding `GRPCRoute`,
 reachable through the [deployed `Gateway`](#deploying-a-gateway) at the `echo.localhost:80` address.
 
 ```yaml tab="GRPCRoute"
@@ -433,14 +435,14 @@ $ grpcurl -plaintext echo.localhost:80 gateway_api_conformance.echo_basic.grpcec
 
 !!! info "Experimental Channel"
 
-    The `TCPRoute` resource described below is currently available only in the Experimental channel of the Gateway API specification. 
+    The `TCPRoute` resource described below is currently available only in the Experimental channel of the Gateway API specification.
     To use this resource, the [experimentalChannel](../../providers/kubernetes-gateway.md#experimentalchannel) option must be enabled in the Traefik deployment.
 
-The `TCPRoute` is a resource in the Gateway API specification designed to define how TCP traffic should be routed within a Kubernetes cluster. 
+The `TCPRoute` is a resource in the Gateway API specification designed to define how TCP traffic should be routed within a Kubernetes cluster.
 
 For more details on the resource and concepts, check out the Kubernetes Gateway API [documentation](https://gateway-api.sigs.k8s.io/reference/spec/#gateway.networking.k8s.io/v1alpha2.TCPRoute).
 
-For example, the following manifests configure a whoami backend and its corresponding `TCPRoute`, 
+For example, the following manifests configure a whoami backend and its corresponding `TCPRoute`,
 reachable through the [deployed `Gateway`](#deploying-a-gateway) at the `localhost:3000` address.
 
 ```yaml tab="TCPRoute"
@@ -457,7 +459,7 @@ spec:
       kind: Gateway
 
   rules:
-     - backendRefs:
+    - backendRefs:
         - name: whoamitcp
           namespace: default
           port: 3000
@@ -516,15 +518,15 @@ IP: fe80::b89e:85ff:fec2:7d21
 
 !!! info "Experimental Channel"
 
-    The `TLSRoute` resource described below is currently available only in the Experimental channel of the Gateway API. 
+    The `TLSRoute` resource described below is currently available only in the Experimental channel of the Gateway API.
     Therefore, to use this resource, the [experimentalChannel](../../providers/kubernetes-gateway.md#experimentalchannel) option must be enabled.
 
-The `TLSRoute` is a resource in the Gateway API specification designed to define how TLS (Transport Layer Security) traffic should be routed within a Kubernetes cluster. 
+The `TLSRoute` is a resource in the Gateway API specification designed to define how TLS (Transport Layer Security) traffic should be routed within a Kubernetes cluster.
 It specifies routing rules for TLS connections, directing them to appropriate backend services based on the SNI (Server Name Indication) of the incoming connection.
 
 For more details on the resource and concepts, check out the Kubernetes Gateway API [documentation](https://gateway-api.sigs.k8s.io/reference/spec/#gateway.networking.k8s.io/v1alpha2.TLSRoute).
 
-For example, the following manifests configure a whoami backend and its corresponding `TLSRoute`, 
+For example, the following manifests configure a whoami backend and its corresponding `TLSRoute`,
 reachable through the [deployed `Gateway`](#deploying-a-gateway) at the `localhost:3443` address via a secure connection with the `whoami.localhost` SNI.
 
 ```yaml tab="TLSRoute"
@@ -548,7 +550,6 @@ spec:
         - name: whoamitcp
           namespace: default
           port: 3000
-
 ```
 
 ```yaml tab="Whoami deployment"
@@ -606,6 +607,43 @@ IP: 10.42.2.4
 IP: fe80::d873:20ff:fef5:be86
 ```
 
+#### Multiple TLS Certificates
+
+Traefik supports multiple `certificateRefs` per Gateway listener,
+enabling certificate management scenarios such as multi-domain hosting, certificate rotation, or SNI-based routing.
+
+The Gateway API specification allows up to 64 certificate references per listener.
+
+For example, the following `Gateway` listener references two different certificates:
+
+```yaml
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: multi-cert-gateway
+  namespace: default
+spec:
+  gatewayClassName: traefik
+  listeners:
+    - name: https
+      protocol: HTTPS
+      port: 443
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: example-com-tls
+          - name: example-org-tls
+      allowedRoutes:
+        namespaces:
+          from: Same
+```
+
+!!! info "Certificate Selection"
+
+    Traefik automatically selects the appropriate certificate based on the client's SNI (Server Name Indication).
+    If a certificate cannot be loaded, an error is logged and Traefik continues with the remaining valid certificates.
+
 ## Using Traefik middleware as HTTPRoute filter
 
 An HTTP [filter](https://gateway-api.sigs.k8s.io/api-types/httproute/#filters-optional) is an `HTTPRoute` component which enables the modification of HTTP requests and responses as they traverse the routing infrastructure.
@@ -618,9 +656,9 @@ There are three types of filters:
 
 !!! info "ExtensionRef Filters"
 
-    To use Traefik middlewares as `ExtensionRef` filters, the Kubernetes IngressRoute provider must be enabled in the static configuration, as detailed in the [documentation](../../providers/kubernetes-crd.md). 
+    To use Traefik middlewares as `ExtensionRef` filters, the Kubernetes IngressRoute provider must be enabled in the static configuration, as detailed in the [documentation](../../providers/kubernetes-crd.md).
 
-For example, the following manifests configure an `HTTPRoute` using the Traefik `AddPrefix` middleware, 
+For example, the following manifests configure an `HTTPRoute` using the Traefik `AddPrefix` middleware,
 reachable through the [deployed `Gateway`](#deploying-a-gateway) at the `http://whoami.localhost` address:
 
 ```yaml tab="HTTRoute"
@@ -703,7 +741,7 @@ Once everything is deployed, sending a `GET` request should return the following
 
 ```shell
 $ curl http://whoami.localhost
-                                                                                                    
+
 Hostname: whoami-697f8c6cbc-kw954
 IP: 127.0.0.1
 IP: ::1
@@ -735,7 +773,7 @@ By default, NativeLB is `false`.
 
 !!! info "Default value"
 
-    Note that it is possible to override the default value by using the option [`nativeLBByDefault`](../../providers/kubernetes-gateway.md#nativelbbydefault) at the provider level. 
+    Note that it is possible to override the default value by using the option [`nativeLBByDefault`](../../providers/kubernetes-gateway.md#nativelbbydefault) at the provider level.
 
 ```yaml
 ---
