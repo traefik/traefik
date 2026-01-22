@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@quasar/extras": "^1.16.12",
-    "axios": "^1.7.4",
+    "axios": "1.13.2",
     "chart.js": "^4.4.1",
     "core-js": "^3.35.1",
     "dot-prop": "^8.0.2",
@@ -48,10 +48,11 @@
     "eslint-plugin-promise": "^6.0.0",
     "eslint-plugin-vue": "^9.0.0",
     "postcss": "^8.4.14",
-    "vitest": "^1.6.0"
+    "vitest": "1.6.1"
   },
   "resolutions": {
-    "cookie": "^0.7.0"
+    "cookie": "^0.7.0",
+    "nanoid": "3.3.11"
   },
   "engines": {
     "node": "^24 || ^22",
