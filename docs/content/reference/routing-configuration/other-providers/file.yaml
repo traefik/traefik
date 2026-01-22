@@ -206,6 +206,15 @@ http:
         realm: foobar
         headerField: foobar
     Middleware09:
+      encodedCharacters:
+        allowEncodedSlash: true
+        allowEncodedBackSlash: true
+        allowEncodedNullCharacter: true
+        allowEncodedSemicolon: true
+        allowEncodedPercent: true
+        allowEncodedQuestionMark: true
+        allowEncodedHash: true
+    Middleware10:
       errors:
         status:
           - foobar
@@ -215,7 +224,7 @@ http:
           name1: 42
         service: foobar
         query: foobar
-    Middleware10:
+    Middleware11:
       forwardAuth:
         address: foobar
         tls:
@@ -240,12 +249,12 @@ http:
         maxBodySize: 42
         preserveLocationHeader: true
         preserveRequestMethod: true
-    Middleware11:
+    Middleware12:
       grpcWeb:
         allowOrigins:
           - foobar
           - foobar
-    Middleware12:
+    Middleware13:
       headers:
         customRequestHeaders:
           name0: foobar
@@ -300,7 +309,7 @@ http:
         sslTemporaryRedirect: true
         sslHost: foobar
         sslForceHost: true
-    Middleware13:
+    Middleware14:
       ipAllowList:
         sourceRange:
           - foobar
@@ -312,7 +321,7 @@ http:
             - foobar
           ipv6Subnet: 42
         rejectStatusCode: 42
-    Middleware14:
+    Middleware15:
       ipWhiteList:
         sourceRange:
           - foobar
@@ -323,7 +332,7 @@ http:
             - foobar
             - foobar
           ipv6Subnet: 42
-    Middleware15:
+    Middleware16:
       inFlightReq:
         amount: 42
         sourceCriterion:
@@ -335,7 +344,7 @@ http:
             ipv6Subnet: 42
           requestHeaderName: foobar
           requestHost: true
-    Middleware16:
+    Middleware17:
       passTLSClientCert:
         pem: true
         info:
@@ -360,7 +369,7 @@ http:
             commonName: true
             serialNumber: true
             domainComponent: true
-    Middleware17:
+    Middleware18:
       plugin:
         PluginConf0:
           name0: foobar
@@ -368,7 +377,7 @@ http:
         PluginConf1:
           name0: foobar
           name1: foobar
-    Middleware18:
+    Middleware19:
       rateLimit:
         average: 42
         period: 42s
@@ -400,34 +409,34 @@ http:
           readTimeout: 42s
           writeTimeout: 42s
           dialTimeout: 42s
-    Middleware19:
+    Middleware20:
       redirectRegex:
         regex: foobar
         replacement: foobar
         permanent: true
-    Middleware20:
+    Middleware21:
       redirectScheme:
         scheme: foobar
         port: foobar
         permanent: true
-    Middleware21:
+    Middleware22:
       replacePath:
         path: foobar
-    Middleware22:
+    Middleware23:
       replacePathRegex:
         regex: foobar
         replacement: foobar
-    Middleware23:
+    Middleware24:
       retry:
         attempts: 42
         initialInterval: 42s
-    Middleware24:
+    Middleware25:
       stripPrefix:
         prefixes:
           - foobar
           - foobar
         forceSlash: true
-    Middleware25:
+    Middleware26:
       stripPrefixRegex:
         regex:
           - foobar

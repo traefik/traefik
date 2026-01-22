@@ -858,6 +858,11 @@ func (in *MiddlewareSpec) DeepCopyInto(out *MiddlewareSpec) {
 		*out = new(dynamic.Headers)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.EncodedCharacters != nil {
+		in, out := &in.EncodedCharacters, &out.EncodedCharacters
+		*out = new(dynamic.EncodedCharacters)
+		**out = **in
+	}
 	if in.Errors != nil {
 		in, out := &in.Errors, &out.Errors
 		*out = new(ErrorPage)
@@ -871,7 +876,7 @@ func (in *MiddlewareSpec) DeepCopyInto(out *MiddlewareSpec) {
 	if in.RedirectRegex != nil {
 		in, out := &in.RedirectRegex, &out.RedirectRegex
 		*out = new(dynamic.RedirectRegex)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 	if in.RedirectScheme != nil {
 		in, out := &in.RedirectScheme, &out.RedirectScheme

@@ -43,6 +43,7 @@ type MiddlewareSpecApplyConfiguration struct {
 	IPWhiteList       *dynamic.IPWhiteList              `json:"ipWhiteList,omitempty"`
 	IPAllowList       *dynamic.IPAllowList              `json:"ipAllowList,omitempty"`
 	Headers           *dynamic.Headers                  `json:"headers,omitempty"`
+	EncodedCharacters *dynamic.EncodedCharacters        `json:"encodedCharacters,omitempty"`
 	Errors            *ErrorPageApplyConfiguration      `json:"errors,omitempty"`
 	RateLimit         *RateLimitApplyConfiguration      `json:"rateLimit,omitempty"`
 	RedirectRegex     *dynamic.RedirectRegex            `json:"redirectRegex,omitempty"`
@@ -136,6 +137,14 @@ func (b *MiddlewareSpecApplyConfiguration) WithIPAllowList(value dynamic.IPAllow
 // If called multiple times, the Headers field is set to the value of the last call.
 func (b *MiddlewareSpecApplyConfiguration) WithHeaders(value dynamic.Headers) *MiddlewareSpecApplyConfiguration {
 	b.Headers = &value
+	return b
+}
+
+// WithEncodedCharacters sets the EncodedCharacters field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the EncodedCharacters field is set to the value of the last call.
+func (b *MiddlewareSpecApplyConfiguration) WithEncodedCharacters(value dynamic.EncodedCharacters) *MiddlewareSpecApplyConfiguration {
+	b.EncodedCharacters = &value
 	return b
 }
 
