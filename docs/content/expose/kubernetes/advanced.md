@@ -649,15 +649,26 @@ Now create the middleware and IngressRoutes for multi-layer routing:
 
 ```yaml
 # mlr-ingressroute.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: auth-secret
+  namespace: default
+type: Opaque
+stringData:
+  users: |
+    admin:$apr1$DmXR3Add$wfdbGw6RWIhFb0ffXMM4d0
+    user:$apr1$GJtcIY1o$mSLdsWYeXpPHVsxGDqadI.
+---
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
-  name: auth-headers
+  name: auth-middleware
   namespace: default
 spec:
-  headers:
-    customRequestHeaders:
-      X-User-Role: "admin"  # In production, use ForwardAuth middleware
+  basicAuth:
+    secret: auth-secret
+    headerField: X-Auth-User
 ---
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
@@ -671,7 +682,7 @@ spec:
   - match: Host(`api.docker.localhost`) && PathPrefix(`/api`)
     kind: Rule
     middlewares:
-    - name: auth-headers
+    - name: auth-middleware
   # Note: No services and no TLS config - this is a parent IngressRoute
 ---
 apiVersion: traefik.io/v1alpha1
@@ -684,7 +695,7 @@ spec:
   - name: api-parent
     namespace: default  # Optional, defaults to same namespace
   routes:
-  - match: HeadersRegexp(`X-User-Role`, `admin`)
+  - match: HeadersRegexp(`X-Auth-User`, `admin`)
     kind: Rule
     services:
     - name: admin-backend
@@ -700,12 +711,20 @@ spec:
   - name: api-parent
     namespace: default  # Optional, defaults to same namespace
   routes:
-  - match: HeadersRegexp(`X-User-Role`, `user`)
+  - match: HeadersRegexp(`X-Auth-User`, `user`)
     kind: Rule
     services:
     - name: user-backend
       port: 80
 ```
+
+!!! note "Generating Password Hashes"
+    The password hashes above are generated using `htpasswd`. To create your own user credentials:
+
+    ```bash
+    # Using htpasswd (Apache utils)
+    htpasswd -nb admin yourpassword
+    ```
 
 Apply the multi-layer routing configuration:
 
@@ -719,36 +738,18 @@ Test the routing behavior:
 
 ```bash
 # Request goes through parent router → auth middleware → admin child router
-curl -k -H "Host: api.docker.localhost" https://localhost/api
+curl -k -u admin:test -H "Host: api.docker.localhost" https://localhost/api
 ```
 
-You should see the response from the admin-backend service, as the auth middleware adds the `X-User-Role: admin` header.
+You should see the response from the admin-backend service when authenticating as `admin`. Try with `user:test` credentials to reach the user-backend service instead.
 
 ### How It Works
 
 1. **Request arrives** at `api.docker.localhost/api`
 2. **Parent IngressRoute** (`api-parent`) matches based on host and path
-3. **Auth middleware** executes, adding `X-User-Role` header
+3. **BasicAuth middleware** authenticates the user and sets the `X-Auth-User` header with the username
 4. **Child IngressRoute** (`api-admin` or `api-user`) matches based on the header value
 5. **Request forwarded** to the appropriate Kubernetes service
-
-### Production Authentication
-
-In production, replace the simple header middleware with ForwardAuth:
-
-```yaml
-apiVersion: traefik.io/v1alpha1
-kind: Middleware
-metadata:
-  name: auth-middleware
-  namespace: default
-spec:
-  forwardAuth:
-    address: "http://auth-service.default.svc.cluster.local:8080/auth"
-    authResponseHeaders:
-      - X-User-Role
-      - X-User-Name
-```
 
 ### Cross-Namespace Parent References
 
