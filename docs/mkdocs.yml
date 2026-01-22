@@ -292,6 +292,7 @@ nav:
               - 'ContentType': 'reference/routing-configuration/http/middlewares/contenttype.md'
               - 'DigestAuth': 'reference/routing-configuration/http/middlewares/digestauth.md'
               - '<span class="nav-link-with-icon">Distributed RateLimit <img src="https://doc.traefik.io/traefik-hub/img/ps-traefik-hub-logo-light.svg" class="menu-icon" alt="Traefik Hub API Gateway"></span>' : 'reference/routing-configuration/http/middlewares/distributed-ratelimit.md'
+              - 'EncodedCharacters': 'reference/routing-configuration/http/middlewares/encodedcharacters.md'
               - 'Errors': 'reference/routing-configuration/http/middlewares/errorpages.md'
               - 'ForwardAuth': 'reference/routing-configuration/http/middlewares/forwardauth.md'
               - 'GrpcWeb': 'reference/routing-configuration/http/middlewares/grpcweb.md'
