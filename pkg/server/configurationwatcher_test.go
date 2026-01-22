@@ -86,7 +86,7 @@ func TestNewConfigurationWatcher(t *testing.T) {
 						th.WithEntryPoints("e"),
 						th.WithServiceName("scv"))),
 				th.WithMiddlewares(),
-				th.WithLoadBalancerServices(),
+				th.WithServices(),
 			),
 			TCP: &dynamic.TCPConfiguration{
 				Routers:     map[string]*dynamic.TCPRouter{},
@@ -123,7 +123,9 @@ func TestWaitForRequiredProvider(t *testing.T) {
 	config := &dynamic.Configuration{
 		HTTP: th.BuildConfiguration(
 			th.WithRouters(th.WithRouter("foo", th.WithEntryPoints("ep"))),
-			th.WithLoadBalancerServices(th.WithService("bar")),
+			th.WithServices(
+				th.WithService("bar", th.WithServiceServersLoadBalancer()),
+			),
 		),
 	}
 
@@ -167,14 +169,18 @@ func TestIgnoreTransientConfiguration(t *testing.T) {
 	config := &dynamic.Configuration{
 		HTTP: th.BuildConfiguration(
 			th.WithRouters(th.WithRouter("foo", th.WithEntryPoints("ep"))),
-			th.WithLoadBalancerServices(th.WithService("bar")),
+			th.WithServices(
+				th.WithService("bar", th.WithServiceServersLoadBalancer()),
+			),
 		),
 	}
 
 	expectedConfig := dynamic.Configuration{
 		HTTP: th.BuildConfiguration(
 			th.WithRouters(th.WithRouter("foo@mock", th.WithEntryPoints("ep"))),
-			th.WithLoadBalancerServices(th.WithService("bar@mock")),
+			th.WithServices(
+				th.WithService("bar@mock", th.WithServiceServersLoadBalancer()),
+			),
 			th.WithMiddlewares(),
 		),
 		TCP: &dynamic.TCPConfiguration{
@@ -197,7 +203,9 @@ func TestIgnoreTransientConfiguration(t *testing.T) {
 	expectedConfig3 := dynamic.Configuration{
 		HTTP: th.BuildConfiguration(
 			th.WithRouters(th.WithRouter("foo@mock", th.WithEntryPoints("ep"))),
-			th.WithLoadBalancerServices(th.WithService("bar-config3@mock")),
+			th.WithServices(
+				th.WithService("bar-config3@mock", th.WithServiceServersLoadBalancer()),
+			),
 			th.WithMiddlewares(),
 		),
 		TCP: &dynamic.TCPConfiguration{
@@ -220,14 +228,18 @@ func TestIgnoreTransientConfiguration(t *testing.T) {
 	config2 := &dynamic.Configuration{
 		HTTP: th.BuildConfiguration(
 			th.WithRouters(th.WithRouter("baz", th.WithEntryPoints("ep"))),
-			th.WithLoadBalancerServices(th.WithService("toto")),
+			th.WithServices(
+				th.WithService("toto", th.WithServiceServersLoadBalancer()),
+			),
 		),
 	}
 
 	config3 := &dynamic.Configuration{
 		HTTP: th.BuildConfiguration(
 			th.WithRouters(th.WithRouter("foo", th.WithEntryPoints("ep"))),
-			th.WithLoadBalancerServices(th.WithService("bar-config3")),
+			th.WithServices(
+				th.WithService("bar-config3", th.WithServiceServersLoadBalancer()),
+			),
 		),
 	}
 	watcher := NewConfigurationWatcher(routinesPool, &mockProvider{}, []string{}, "")
@@ -311,7 +323,9 @@ func TestListenProvidersThrottleProviderConfigReload(t *testing.T) {
 			Configuration: &dynamic.Configuration{
 				HTTP: th.BuildConfiguration(
 					th.WithRouters(th.WithRouter("foo"+strconv.Itoa(i), th.WithEntryPoints("ep"))),
-					th.WithLoadBalancerServices(th.WithService("bar")),
+					th.WithServices(
+						th.WithService("bar", th.WithServiceServersLoadBalancer()),
+					),
 				),
 			},
 		})
@@ -371,7 +385,9 @@ func TestListenProvidersSkipsSameConfigurationForProvider(t *testing.T) {
 		Configuration: &dynamic.Configuration{
 			HTTP: th.BuildConfiguration(
 				th.WithRouters(th.WithRouter("foo", th.WithEntryPoints("ep"))),
-				th.WithLoadBalancerServices(th.WithService("bar")),
+				th.WithServices(
+					th.WithService("bar", th.WithServiceServersLoadBalancer()),
+				),
 			),
 		},
 	}
@@ -403,14 +419,18 @@ func TestListenProvidersDoesNotSkipFlappingConfiguration(t *testing.T) {
 	configuration := &dynamic.Configuration{
 		HTTP: th.BuildConfiguration(
 			th.WithRouters(th.WithRouter("foo", th.WithEntryPoints("ep"))),
-			th.WithLoadBalancerServices(th.WithService("bar")),
+			th.WithServices(
+				th.WithService("bar", th.WithServiceServersLoadBalancer()),
+			),
 		),
 	}
 
 	transientConfiguration := &dynamic.Configuration{
 		HTTP: th.BuildConfiguration(
 			th.WithRouters(th.WithRouter("bad", th.WithEntryPoints("ep"))),
-			th.WithLoadBalancerServices(th.WithService("bad")),
+			th.WithServices(
+				th.WithService("bad", th.WithServiceServersLoadBalancer()),
+			),
 		),
 	}
 
@@ -442,7 +462,9 @@ func TestListenProvidersDoesNotSkipFlappingConfiguration(t *testing.T) {
 	expected := dynamic.Configuration{
 		HTTP: th.BuildConfiguration(
 			th.WithRouters(th.WithRouter("foo@mock", th.WithEntryPoints("ep"))),
-			th.WithLoadBalancerServices(th.WithService("bar@mock")),
+			th.WithServices(
+				th.WithService("bar@mock", th.WithServiceServersLoadBalancer()),
+			),
 			th.WithMiddlewares(),
 		),
 		TCP: &dynamic.TCPConfiguration{
@@ -471,14 +493,18 @@ func TestListenProvidersIgnoreSameConfig(t *testing.T) {
 	configuration := &dynamic.Configuration{
 		HTTP: th.BuildConfiguration(
 			th.WithRouters(th.WithRouter("foo", th.WithEntryPoints("ep"))),
-			th.WithLoadBalancerServices(th.WithService("bar")),
+			th.WithServices(
+				th.WithService("bar", th.WithServiceServersLoadBalancer()),
+			),
 		),
 	}
 
 	transientConfiguration := &dynamic.Configuration{
 		HTTP: th.BuildConfiguration(
 			th.WithRouters(th.WithRouter("bad", th.WithEntryPoints("ep"))),
-			th.WithLoadBalancerServices(th.WithService("bad")),
+			th.WithServices(
+				th.WithService("bad", th.WithServiceServersLoadBalancer()),
+			),
 		),
 	}
 
@@ -531,7 +557,9 @@ func TestListenProvidersIgnoreSameConfig(t *testing.T) {
 	expected := dynamic.Configuration{
 		HTTP: th.BuildConfiguration(
 			th.WithRouters(th.WithRouter("foo@mock", th.WithEntryPoints("ep"))),
-			th.WithLoadBalancerServices(th.WithService("bar@mock")),
+			th.WithServices(
+				th.WithService("bar@mock", th.WithServiceServersLoadBalancer()),
+			),
 			th.WithMiddlewares(),
 		),
 		TCP: &dynamic.TCPConfiguration{
@@ -570,7 +598,9 @@ func TestApplyConfigUnderStress(t *testing.T) {
 			case watcher.allProvidersConfigs <- dynamic.Message{ProviderName: "mock", Configuration: &dynamic.Configuration{
 				HTTP: th.BuildConfiguration(
 					th.WithRouters(th.WithRouter("foo"+strconv.Itoa(i), th.WithEntryPoints("ep"))),
-					th.WithLoadBalancerServices(th.WithService("bar")),
+					th.WithServices(
+						th.WithService("bar", th.WithServiceServersLoadBalancer()),
+					),
 				),
 			}}:
 			}
@@ -605,28 +635,36 @@ func TestListenProvidersIgnoreIntermediateConfigs(t *testing.T) {
 	configuration := &dynamic.Configuration{
 		HTTP: th.BuildConfiguration(
 			th.WithRouters(th.WithRouter("foo", th.WithEntryPoints("ep"))),
-			th.WithLoadBalancerServices(th.WithService("bar")),
+			th.WithServices(
+				th.WithService("bar", th.WithServiceServersLoadBalancer()),
+			),
 		),
 	}
 
 	transientConfiguration := &dynamic.Configuration{
 		HTTP: th.BuildConfiguration(
 			th.WithRouters(th.WithRouter("bad", th.WithEntryPoints("ep"))),
-			th.WithLoadBalancerServices(th.WithService("bad")),
+			th.WithServices(
+				th.WithService("bad", th.WithServiceServersLoadBalancer()),
+			),
 		),
 	}
 
 	transientConfiguration2 := &dynamic.Configuration{
 		HTTP: th.BuildConfiguration(
 			th.WithRouters(th.WithRouter("bad2", th.WithEntryPoints("ep"))),
-			th.WithLoadBalancerServices(th.WithService("bad2")),
+			th.WithServices(
+				th.WithService("bad2", th.WithServiceServersLoadBalancer()),
+			),
 		),
 	}
 
 	finalConfiguration := &dynamic.Configuration{
 		HTTP: th.BuildConfiguration(
 			th.WithRouters(th.WithRouter("final", th.WithEntryPoints("ep"))),
-			th.WithLoadBalancerServices(th.WithService("final")),
+			th.WithServices(
+				th.WithService("final", th.WithServiceServersLoadBalancer()),
+			),
 		),
 	}
 
@@ -665,7 +703,9 @@ func TestListenProvidersIgnoreIntermediateConfigs(t *testing.T) {
 	expected := dynamic.Configuration{
 		HTTP: th.BuildConfiguration(
 			th.WithRouters(th.WithRouter("final@mock", th.WithEntryPoints("ep"))),
-			th.WithLoadBalancerServices(th.WithService("final@mock")),
+			th.WithServices(
+				th.WithService("final@mock", th.WithServiceServersLoadBalancer()),
+			),
 			th.WithMiddlewares(),
 		),
 		TCP: &dynamic.TCPConfiguration{
@@ -696,7 +736,9 @@ func TestListenProvidersPublishesConfigForEachProvider(t *testing.T) {
 	configuration := &dynamic.Configuration{
 		HTTP: th.BuildConfiguration(
 			th.WithRouters(th.WithRouter("foo", th.WithEntryPoints("ep"))),
-			th.WithLoadBalancerServices(th.WithService("bar")),
+			th.WithServices(
+				th.WithService("bar", th.WithServiceServersLoadBalancer()),
+			),
 		),
 	}
 
@@ -729,9 +771,9 @@ func TestListenProvidersPublishesConfigForEachProvider(t *testing.T) {
 				th.WithRouter("foo@mock", th.WithEntryPoints("ep")),
 				th.WithRouter("foo@mock2", th.WithEntryPoints("ep")),
 			),
-			th.WithLoadBalancerServices(
-				th.WithService("bar@mock"),
-				th.WithService("bar@mock2"),
+			th.WithServices(
+				th.WithService("bar@mock", th.WithServiceServersLoadBalancer()),
+				th.WithService("bar@mock2", th.WithServiceServersLoadBalancer()),
 			),
 			th.WithMiddlewares(),
 		),
