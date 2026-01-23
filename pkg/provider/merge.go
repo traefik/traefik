@@ -155,27 +155,17 @@ func mergeResourceMap(ctx context.Context, dst, src reflect.Value, origin string
 // tryMerge attempts to merge two resources.
 // Returns true if the merge succeeds, false if values conflict.
 func tryMerge(dst, src reflect.Value) bool {
-	var dstActual, srcActual reflect.Value
+	if dst.Kind() != reflect.Ptr {
+		return reflect.DeepEqual(dst.Interface(), src.Interface())
+	}
 
-	if dst.Kind() == reflect.Ptr {
-		if dst.IsNil() || src.IsNil() {
-			return reflect.DeepEqual(dst.Interface(), src.Interface())
-		}
-
-		dstActual = dst.Elem()
-		srcActual = src.Elem()
-	} else {
-		dstActual = dst
-		srcActual = src
+	if dst.IsNil() || src.IsNil() {
+		return reflect.DeepEqual(dst.Interface(), src.Interface())
 	}
 
 	// Check if the struct has the method `func (* T) Merge(other T) bool`.
 	// We use reflection to detect this method because Go's type system doesn't allow type assertions
 	// on generic interfaces (Mergeable[T]) practically.
-	if dst.Kind() != reflect.Ptr {
-		return reflect.DeepEqual(dst.Interface(), src.Interface())
-	}
-
 	mergeMethod := dst.MethodByName("Merge")
 	if mergeMethod.IsValid() {
 		methodType := mergeMethod.Type()
@@ -189,7 +179,7 @@ func tryMerge(dst, src reflect.Value) bool {
 	}
 
 	// When Merge is not implemented, merge is not allowed; the values must be the same.
-	return reflect.DeepEqual(dstActual.Interface(), srcActual.Interface())
+	return reflect.DeepEqual(dst.Elem().Interface(), src.Elem().Interface())
 }
 
 // deleteConflicts removes conflicting items and logs errors.
