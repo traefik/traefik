@@ -16,7 +16,7 @@ jobs:
 
     steps:
       - name: Check out code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -54,7 +54,7 @@ jobs:
 
       # Comes from https://github.com/gjtorikian/html-proofer?tab=readme-ov-file#caching-with-continuous-integration
       - name: Cache HTMLProofer
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: tmp/.htmlproofer
           key: ${{ runner.os }}-htmlproofer

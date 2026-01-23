@@ -46,7 +46,7 @@ jobs:
           key: ${{ runner.os }}-go-build-cache-${{ env.GO_VERSION }}-${{ hashFiles('**/go.sum') }}
 
       - name: Artifact traefik binary
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: traefik
           path: ./dist/linux/amd64/traefik
