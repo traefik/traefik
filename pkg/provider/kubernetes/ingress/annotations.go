@@ -23,7 +23,7 @@ type RouterConfig struct {
 
 // RouterIng is the router's configuration from annotations.
 type RouterIng struct {
-	ext.Router
+	ext.RouterIng
 
 	PathMatcher   string                             `json:"pathMatcher,omitempty"`
 	EntryPoints   []string                           `json:"entryPoints,omitempty"`
