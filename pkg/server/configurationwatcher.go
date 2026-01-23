@@ -126,27 +126,11 @@ func (c *ConfigurationWatcher) receiveConfigurations(ctx context.Context) {
 
 				logConfiguration(logger, configMsg)
 
-				if len(c.configurationTransformers) > 0 {
-					oldConfigurations := newConfigurations.DeepCopy()
-					newConfigurations[configMsg.ProviderName] = configMsg.Configuration.DeepCopy()
-
-					for _, transformer := range c.configurationTransformers {
-						newConfigurations = transformer(configMsg.ProviderName, newConfigurations)
-					}
-
-					if reflect.DeepEqual(oldConfigurations, newConfigurations) {
-						// no change, do nothing
-						logger.Debug().Msg("Skipping unchanged configuration")
-						continue
-					}
-				} else {
-					if reflect.DeepEqual(newConfigurations[configMsg.ProviderName], configMsg.Configuration) {
-						// no change, do nothing
-						logger.Debug().Msg("Skipping unchanged configuration")
-						continue
-					}
-
-					newConfigurations[configMsg.ProviderName] = configMsg.Configuration.DeepCopy()
+				var changed bool
+				newConfigurations, changed = c.prepareConfiguration(configMsg, newConfigurations)
+				if !changed {
+					logger.Debug().Msg("Skipping unchanged configuration")
+					continue
 				}
 
 				output = c.newConfigs
@@ -157,6 +141,31 @@ func (c *ConfigurationWatcher) receiveConfigurations(ctx context.Context) {
 			}
 		}
 	}
+}
+
+// prepareConfiguration processes the incoming configuration and runs any transformers.
+// Returns the updated configurations and whether a change occurred.
+func (c *ConfigurationWatcher) prepareConfiguration(
+	configMsg dynamic.Message,
+	allConfigs dynamic.Configurations,
+) (dynamic.Configurations, bool) {
+	if len(c.configurationTransformers) > 0 {
+		oldConfigs := allConfigs.DeepCopy()
+		allConfigs[configMsg.ProviderName] = configMsg.Configuration.DeepCopy()
+
+		for _, transformer := range c.configurationTransformers {
+			allConfigs = transformer(configMsg.ProviderName, allConfigs)
+		}
+
+		return allConfigs, !reflect.DeepEqual(oldConfigs, allConfigs)
+	}
+
+	if reflect.DeepEqual(allConfigs[configMsg.ProviderName], configMsg.Configuration) {
+		return allConfigs, false
+	}
+
+	allConfigs[configMsg.ProviderName] = configMsg.Configuration.DeepCopy()
+	return allConfigs, true
 }
 
 // applyConfigurations receives the full set of configurations from
