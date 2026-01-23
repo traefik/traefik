@@ -637,7 +637,7 @@ The `Headers` and `HeadersRegexp` matchers have been renamed to `Header` and `He
 `PathPrefix` no longer uses regular expressions to match path prefixes.
 
 `Path` and `PathPrefix` no longer support path parameter placeholders (e.g., `{id}`, `{name}`).
-Routes using placeholders like `Path(`/route/{id}`)` will not match in v3 syntax.
+Routes using placeholders like ``Path(`/route/{id}`)`` will not match in v3 syntax.
 Use `PathRegexp` instead for dynamic path segments.
 
 `QueryRegexp` has been introduced to match query values using a regular expression.
