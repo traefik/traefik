@@ -267,6 +267,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 	ingresses := p.k8sClient.ListIngresses()
 
 	uniqCerts := make(map[string]*tls.CertAndStores)
+	tlsOptions := make(map[string]tls.Options)
 	for _, ingress := range ingresses {
 		logger := log.Ctx(ctx).With().Str("ingress", ingress.Name).Str("namespace", ingress.Namespace).Logger()
 		ctxIngress := logger.WithContext(ctx)
@@ -292,6 +293,23 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 				logger.Error().Err(err).Msg("Error configuring TLS")
 				continue
 			}
+		}
+
+		var clientAuthTlsOptionName string
+		if ingressConfig.AuthTLSSecret != nil {
+			tlsOptName := provider.Normalize(ingress.Namespace + "-" + ingress.Name + "-" + *ingressConfig.AuthTLSSecret)
+
+			if _, exists := tlsOptions[tlsOptName]; !exists {
+				tlsOpt, err := p.buildClientAuthTLSOption(ctxIngress, *ingressConfig.AuthTLSSecret, ingressConfig.AuthTLSVerifyClient)
+				if err != nil {
+					logger.Error().Err(err).Msg("Error configuring client auth TLS")
+					continue
+				}
+
+				tlsOptions[tlsOptName] = tlsOpt
+			}
+
+			clientAuthTlsOptionName = tlsOptName
 		}
 
 		namedServersTransport, err := p.buildServersTransport(ingress.Namespace, ingress.Name, ingressConfig)
@@ -481,6 +499,10 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 				}
 				if hasTLS {
 					rt.TLS = &dynamic.RouterTLSConfig{}
+
+					if clientAuthTlsOptionName != "" {
+						rt.TLS.Options = clientAuthTlsOptionName
+					}
 				}
 
 				routerKey := provider.Normalize(fmt.Sprintf("%s-%s-rule-%d-path-%d", ingress.Namespace, ingress.Name, ri, pi))
@@ -502,6 +524,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 	conf.TLS = &dynamic.TLSConfiguration{
 		Certificates: slices.Collect(maps.Values(uniqCerts)),
+		Options:      tlsOptions,
 	}
 
 	return conf
@@ -1297,4 +1320,60 @@ func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *s
 	})
 
 	return eventsChanBuffered
+}
+
+func (p *Provider) buildClientAuthTLSOption(ctx context.Context, secretRef string, verifyClient *string) (tls.Options, error) {
+	secretParts := strings.SplitN(secretRef, "/", 2)
+
+	if len(secretParts) != 2 {
+		return tls.Options{}, errors.New("auth-tls-secret is not in a correct namespace/name format")
+	}
+
+	// Expected format: namespace/name.
+	secretNamespace := secretParts[0]
+	secretName := secretParts[1]
+
+	if secretNamespace == "" {
+		return tls.Options{}, fmt.Errorf("auth-tls-secret has empty namespace")
+	}
+	if secretName == "" {
+		return tls.Options{}, fmt.Errorf("auth-tls-secret has empty name")
+	}
+
+	blocks, err := p.certificateBlocks(secretNamespace, secretName)
+	if err != nil {
+		return tls.Options{}, errors.New("error reading client certificate")
+	}
+
+	if blocks.CA == nil {
+		return tls.Options{}, errors.New("secret does not contain a CA certificate")
+	}
+
+	// Default verifyClient value is "on" on ingress-nginx.
+	// on means that client certificate is required and must be signed by a trusted CA certificate.
+	clientAuthType := "RequireAndVerifyClientCert"
+
+	if verifyClient != nil {
+		switch *verifyClient {
+		// off means that client certificate is not requested and no verification will be passed.
+		case "off":
+			clientAuthType = "NoClientCert"
+		// optional means that the client certificate is requested, but not required.
+		// If the certificate is present, it needs to be verified.
+		case "optional":
+			clientAuthType = "VerifyClientCertIfGiven"
+		// optional_no_ca means that the client certificate is requested, but does not require it to be signed by a trusted CA certificate.
+		case "optional_no_ca":
+			clientAuthType = "RequestClientCert"
+		}
+	}
+
+	tlsOpt := tls.Options{}
+	tlsOpt.SetDefaults()
+	tlsOpt.ClientAuth = tls.ClientAuth{
+		CAFiles:        []types.FileOrContent{*blocks.CA},
+		ClientAuthType: clientAuthType,
+	}
+
+	return tlsOpt, nil
 }
