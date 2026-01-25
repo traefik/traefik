@@ -97,6 +97,11 @@ func runCmd(staticConfiguration *static.Configuration) error {
 		return fmt.Errorf("setting up logger: %w", err)
 	}
 
+	log.Warn().Msg("Traefik can reject some encoded characters in the request path." +
+		"When your backend is not fully compliant with [RFC 3986](https://datatracker.ietf.org/doc/html/rfc3986)," +
+		"it is recommended to set these options to `false` to avoid split-view situation." +
+		"Refer to the documentation for more details: https://doc.traefik.io/traefik/v3.6/migrate/v3/#encoded-characters-configuration-default-values")
+
 	http.DefaultTransport.(*http.Transport).Proxy = http.ProxyFromEnvironment
 
 	staticConfiguration.SetEffectiveConfiguration()
@@ -114,9 +119,7 @@ func runCmd(staticConfiguration *static.Configuration) error {
 		log.Debug().RawJSON("staticConfiguration", []byte(redactedStaticConfiguration)).Msg("Static configuration loaded [json]")
 	}
 
-	if staticConfiguration.Global.CheckNewVersion {
-		checkNewVersion()
-	}
+	checkNewVersion(staticConfiguration)
 
 	stats(staticConfiguration)
 
@@ -228,6 +231,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 
 	if staticConfiguration.API != nil {
 		version.DisableDashboardAd = staticConfiguration.API.DisableDashboardAd
+		version.DashboardName = staticConfiguration.API.DashboardName
 	}
 
 	// Plugins
@@ -614,13 +618,28 @@ func setupTracing(ctx context.Context, conf *static.Tracing) (*tracing.Tracer, i
 	return tracer, closer
 }
 
-func checkNewVersion() {
-	ticker := time.Tick(24 * time.Hour)
-	safe.Go(func() {
-		for time.Sleep(10 * time.Minute); ; <-ticker {
-			version.CheckNewVersion()
-		}
-	})
+func checkNewVersion(staticConfiguration *static.Configuration) {
+	logger := log.With().Logger()
+
+	if staticConfiguration.Global.CheckNewVersion {
+		logger.Info().Msg(`Version check is enabled.`)
+		logger.Info().Msg(`Traefik checks for new releases to notify you if your version is out of date.`)
+		logger.Info().Msg(`It also collects usage data during this process.`)
+		logger.Info().Msg(`Check the documentation to get more info: https://doc.traefik.io/traefik/contributing/data-collection/`)
+
+		ticker := time.Tick(24 * time.Hour)
+		safe.Go(func() {
+			for time.Sleep(10 * time.Minute); ; <-ticker {
+				version.CheckNewVersion()
+			}
+		})
+	} else {
+		logger.Info().Msg(`
+Version check is disabled.
+You will not be notified if a new version is available.
+More details: https://doc.traefik.io/traefik/contributing/data-collection/
+`)
+	}
 }
 
 func stats(staticConfiguration *static.Configuration) {

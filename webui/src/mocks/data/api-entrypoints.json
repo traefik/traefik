@@ -64,6 +64,19 @@
     "forwardedHeaders": {},
     "name": "web-secured"
   },
+   {
+    "address": ":443",
+    "transport": {
+      "lifeCycle": {
+        "graceTimeOut": 10000000000
+      },
+      "respondingTimeouts": {
+        "idleTimeout": 180000000000
+      }
+    },
+    "forwardedHeaders": {},
+    "name": "web-secured-longer-name"
+  },
   {
     "address": ":8100",
     "transport": {

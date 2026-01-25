@@ -27,6 +27,7 @@ type Middleware struct {
 	IPWhiteList       *IPWhiteList       `json:"ipWhiteList,omitempty" toml:"ipWhiteList,omitempty" yaml:"ipWhiteList,omitempty" export:"true"`
 	IPAllowList       *IPAllowList       `json:"ipAllowList,omitempty" toml:"ipAllowList,omitempty" yaml:"ipAllowList,omitempty" export:"true"`
 	Headers           *Headers           `json:"headers,omitempty" toml:"headers,omitempty" yaml:"headers,omitempty" export:"true"`
+	EncodedCharacters *EncodedCharacters `json:"encodedCharacters,omitempty" toml:"encodedCharacters,omitempty" yaml:"encodedCharacters,omitempty" export:"true"`
 	Errors            *ErrorPage         `json:"errors,omitempty" toml:"errors,omitempty" yaml:"errors,omitempty" export:"true"`
 	RateLimit         *RateLimit         `json:"rateLimit,omitempty" toml:"rateLimit,omitempty" yaml:"rateLimit,omitempty" export:"true"`
 	RedirectRegex     *RedirectRegex     `json:"redirectRegex,omitempty" toml:"redirectRegex,omitempty" yaml:"redirectRegex,omitempty" export:"true"`
@@ -69,6 +70,7 @@ type GrpcWeb struct {
 type ContentType struct {
 	// AutoDetect specifies whether to let the `Content-Type` header, if it has not been set by the backend,
 	// be automatically set to a value derived from the contents of the response.
+	//
 	// Deprecated: AutoDetect option is deprecated, Content-Type middleware is only meant to be used to enable the content-type detection, please remove any usage of this option.
 	AutoDetect *bool `json:"autoDetect,omitempty" toml:"autoDetect,omitempty" yaml:"autoDetect,omitempty" export:"true"`
 }
@@ -212,6 +214,26 @@ type DigestAuth struct {
 	// HeaderField defines a header field to store the authenticated user.
 	// More info: https://doc.traefik.io/traefik/v3.6/middlewares/http/basicauth/#headerfield
 	HeaderField string `json:"headerField,omitempty" toml:"headerField,omitempty" yaml:"headerField,omitempty" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// EncodedCharacters configures which encoded characters are allowed in the request path.
+type EncodedCharacters struct {
+	// AllowEncodedSlash defines whether requests with encoded slash characters in the path are allowed.
+	AllowEncodedSlash bool `json:"allowEncodedSlash,omitempty" toml:"allowEncodedSlash,omitempty" yaml:"allowEncodedSlash,omitempty" export:"true"`
+	// AllowEncodedBackSlash defines whether requests with encoded back slash characters in the path are allowed.
+	AllowEncodedBackSlash bool `json:"allowEncodedBackSlash,omitempty" toml:"allowEncodedBackSlash,omitempty" yaml:"allowEncodedBackSlash,omitempty" export:"true"`
+	// AllowEncodedNullCharacter defines whether requests with encoded null characters in the path are allowed.
+	AllowEncodedNullCharacter bool `json:"allowEncodedNullCharacter,omitempty" toml:"allowEncodedNullCharacter,omitempty" yaml:"allowEncodedNullCharacter,omitempty" export:"true"`
+	// AllowEncodedSemicolon defines whether requests with encoded semicolon characters in the path are allowed.
+	AllowEncodedSemicolon bool `json:"allowEncodedSemicolon,omitempty" toml:"allowEncodedSemicolon,omitempty" yaml:"allowEncodedSemicolon,omitempty" export:"true"`
+	// AllowEncodedPercent defines whether requests with encoded percent characters in the path are allowed.
+	AllowEncodedPercent bool `json:"allowEncodedPercent,omitempty" toml:"allowEncodedPercent,omitempty" yaml:"allowEncodedPercent,omitempty" export:"true"`
+	// AllowEncodedQuestionMark defines whether requests with encoded question mark characters in the path are allowed.
+	AllowEncodedQuestionMark bool `json:"allowEncodedQuestionMark,omitempty" toml:"allowEncodedQuestionMark,omitempty" yaml:"allowEncodedQuestionMark,omitempty" export:"true"`
+	// AllowEncodedHash defines whether requests with encoded hash characters in the path are allowed.
+	AllowEncodedHash bool `json:"allowEncodedHash,omitempty" toml:"allowEncodedHash,omitempty" yaml:"allowEncodedHash,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -481,6 +503,7 @@ func (s *IPStrategy) Get() (ip.Strategy, error) {
 // IPWhiteList holds the IP whitelist middleware configuration.
 // This middleware limits allowed requests based on the client IP.
 // More info: https://doc.traefik.io/traefik/v3.6/middlewares/http/ipwhitelist/
+//
 // Deprecated: please use IPAllowList instead.
 type IPWhiteList struct {
 	// SourceRange defines the set of allowed IPs (or ranges of allowed IPs by using CIDR notation). Required.
@@ -643,6 +666,9 @@ type RedirectRegex struct {
 	Replacement string `json:"replacement,omitempty" toml:"replacement,omitempty" yaml:"replacement,omitempty"`
 	// Permanent defines whether the redirection is permanent (308).
 	Permanent bool `json:"permanent,omitempty" toml:"permanent,omitempty" yaml:"permanent,omitempty" export:"true"`
+
+	// StatusCode is for supporting the NGINX annotations related to redirect.
+	StatusCode *int `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -655,8 +681,13 @@ type RedirectScheme struct {
 	Scheme string `json:"scheme,omitempty" toml:"scheme,omitempty" yaml:"scheme,omitempty" export:"true"`
 	// Port defines the port of the new URL.
 	Port string `json:"port,omitempty" toml:"port,omitempty" yaml:"port,omitempty" export:"true"`
-	// Permanent defines whether the redirection is permanent (308).
+	// Permanent defines whether the redirection is permanent.
+	// For HTTP GET requests a 301 is returned, otherwise a 308 is returned.
 	Permanent bool `json:"permanent,omitempty" toml:"permanent,omitempty" yaml:"permanent,omitempty" export:"true"`
+	// ForcePermanentRedirect is an internal field (not exposed in configuration).
+	// When set to true, this forces the use of permanent redirects 308, regardless of the request method.
+	// Used by the provider ingress-ngin.
+	ForcePermanentRedirect bool `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true

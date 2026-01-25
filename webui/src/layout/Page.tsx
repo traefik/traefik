@@ -1,13 +1,13 @@
 import { Flex, globalCss, styled } from '@traefiklabs/faency'
 import { ReactNode, useMemo, useState } from 'react'
-import { Helmet } from 'react-helmet-async'
 import { useLocation } from 'react-router-dom'
 
 import Container from './Container'
-import { LAPTOP_BP, SideBarPanel, SideNav, TopNav } from './Navigation'
+import PageTitle from './PageTitle'
 
 import { ToastPool } from 'components/ToastPool'
 import { ToastProvider } from 'contexts/toasts'
+import { LAPTOP_BP, SideBarPanel, SideNav, TopNav } from 'layout/navigation'
 
 export const LIGHT_PRIMARY_COLOR = '#217F97'
 export const DARK_PRIMARY_COLOR = '#2AA2C1'
@@ -64,9 +64,7 @@ const Page = ({ children }: Props) => {
   return (
     <ToastProvider>
       {globalStyles()}
-      <Helmet>
-        <title>Traefik Proxy</title>
-      </Helmet>
+      <PageTitle />
       <Flex>
         <SideBarPanel isOpen={isSideBarPanelOpen} onOpenChange={setIsSideBarPanelOpen} />
         <SideNav isExpanded={isSideBarPanelOpen} onSidePanelToggle={() => setIsSideBarPanelOpen(true)} isResponsive />

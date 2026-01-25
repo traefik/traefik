@@ -58,7 +58,7 @@ func newYaegiMiddlewareBuilder(i *interp.Interpreter, basePkg, imp string) (*yae
 	}, nil
 }
 
-func (b yaegiMiddlewareBuilder) newMiddleware(config map[string]interface{}, middlewareName string) (pluginMiddleware, error) {
+func (b yaegiMiddlewareBuilder) newMiddleware(config map[string]any, middlewareName string) (pluginMiddleware, error) {
 	vConfig, err := b.createConfig(config)
 	if err != nil {
 		return nil, err

@@ -32,9 +32,6 @@ type Listener struct {
 	// timeout defines how long to wait on an idle session,
 	// before releasing its related resources.
 	timeout time.Duration
-
-	// readBufferPool is a pool of byte slices for UDP packet reading.
-	readBufferPool sync.Pool
 }
 
 // ListenPacketConn creates a new listener from PacketConn.
@@ -54,11 +51,6 @@ func ListenPacketConn(packetConn net.PacketConn, timeout time.Duration) (*Listen
 		conns:     make(map[string]*Conn),
 		accepting: true,
 		timeout:   timeout,
-		readBufferPool: sync.Pool{
-			New: func() interface{} {
-				return make([]byte, maxDatagramSize)
-			},
-		},
 	}
 
 	go l.readLoop()
@@ -106,19 +98,6 @@ func (l *Listener) Close() error {
 	return l.Shutdown(0)
 }
 
-// close should not be called more than once.
-func (l *Listener) close() error {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-	err := l.pConn.Close()
-	for k, v := range l.conns {
-		v.close()
-		delete(l.conns, k)
-	}
-	close(l.acceptCh)
-	return err
-}
-
 // Shutdown closes the listener.
 // It immediately stops accepting new sessions,
 // and it waits for all existing sessions to terminate,
@@ -133,10 +112,7 @@ func (l *Listener) Shutdown(graceTimeout time.Duration) error {
 	l.accepting = false
 	l.mu.Unlock()
 
-	retryInterval := closeRetryInterval
-	if retryInterval > graceTimeout {
-		retryInterval = graceTimeout
-	}
+	retryInterval := min(closeRetryInterval, graceTimeout)
 	start := time.Now()
 	end := start.Add(graceTimeout)
 	for !time.Now().After(end) {
@@ -152,6 +128,19 @@ func (l *Listener) Shutdown(graceTimeout time.Duration) error {
 	return l.close()
 }
 
+// close should not be called more than once.
+func (l *Listener) close() error {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	err := l.pConn.Close()
+	for k, v := range l.conns {
+		v.close()
+		delete(l.conns, k)
+	}
+	close(l.acceptCh)
+	return err
+}
+
 // readLoop receives all packets from all remotes.
 // If a packet comes from a remote that is already known to us (i.e. a "session"),
 // we find that session, and otherwise we create a new one.
@@ -160,26 +149,21 @@ func (l *Listener) readLoop() {
 	for {
 		// Allocating a new buffer for every read avoids
 		// overwriting data in c.msgs in case the next packet is received
-		// before c.msgs is emptied via Read().
-		// Reuses buffers via the readBufferPool sync.Pool.
-		buf := l.readBufferPool.Get().([]byte)
+		// before c.msgs is emptied via Read()
+		buf := make([]byte, maxDatagramSize)
 
 		n, raddr, err := l.pConn.ReadFrom(buf)
 		if err != nil {
-			l.readBufferPool.Put(buf)
 			return
 		}
 		conn, err := l.getConn(raddr)
 		if err != nil {
-			l.readBufferPool.Put(buf)
 			continue
 		}
 
 		select {
-		// Receiver must call releaseReadBuffer() when done reading the data.
 		case conn.receiveCh <- buf[:n]:
 		case <-conn.doneCh:
-			l.readBufferPool.Put(buf)
 			continue
 		}
 	}
@@ -224,17 +208,55 @@ type Conn struct {
 	listener *Listener
 	rAddr    net.Addr
 
-	receiveCh chan []byte // to receive the data from the listener's readLoop.
-	readCh    chan []byte // to receive the buffer into which we should Read.
-	sizeCh    chan int    // to synchronize with the end of a Read.
-	msgs      [][]byte    // to store data from listener, to be consumed by Reads.
+	receiveCh chan []byte // to receive the data from the listener's readLoop
+	readCh    chan []byte // to receive the buffer into which we should Read
+	sizeCh    chan int    // to synchronize with the end of a Read
+	msgs      [][]byte    // to store data from listener, to be consumed by Reads
 
 	muActivity   sync.RWMutex
-	lastActivity time.Time // the last time the session saw either read or write activity.
+	lastActivity time.Time // the last time the session saw either read or write activity
 
-	timeout  time.Duration // for timeouts.
+	timeout  time.Duration // for timeouts
 	doneOnce sync.Once
 	doneCh   chan struct{}
+}
+
+// Read reads up to len(p) bytes into p from the connection.
+// Each call corresponds to at most one datagram.
+// If p is smaller than the datagram, the extra bytes will be discarded.
+func (c *Conn) Read(p []byte) (int, error) {
+	select {
+	case c.readCh <- p:
+		n := <-c.sizeCh
+		c.muActivity.Lock()
+		c.lastActivity = time.Now()
+		c.muActivity.Unlock()
+		return n, nil
+
+	case <-c.doneCh:
+		return 0, io.EOF
+	}
+}
+
+// Write writes len(p) bytes from p to the underlying connection.
+// Each call sends at most one datagram.
+// It is an error to send a message larger than the system's max UDP datagram size.
+func (c *Conn) Write(p []byte) (n int, err error) {
+	c.muActivity.Lock()
+	c.lastActivity = time.Now()
+	c.muActivity.Unlock()
+
+	return c.listener.pConn.WriteTo(p, c.rAddr)
+}
+
+// Close releases resources related to the Conn.
+func (c *Conn) Close() error {
+	c.close()
+
+	c.listener.mu.Lock()
+	defer c.listener.mu.Unlock()
+	delete(c.listener.conns, c.rAddr.String())
+	return nil
 }
 
 // readLoop waits for data to come from the listener's readLoop.
@@ -267,8 +289,6 @@ func (c *Conn) readLoop() {
 			msg := c.msgs[0]
 			c.msgs = c.msgs[1:]
 			n := copy(cBuf, msg)
-			// Return buffer to sync.Pool once done reading from it.
-			c.listener.readBufferPool.Put(msg)
 			c.sizeCh <- n
 		case msg := <-c.receiveCh:
 			c.msgs = append(c.msgs, msg)
@@ -284,51 +304,8 @@ func (c *Conn) readLoop() {
 	}
 }
 
-// Read reads up to len(p) bytes into p from the connection.
-// Each call corresponds to at most one datagram.
-// If p is smaller than the datagram, the extra bytes will be discarded.
-func (c *Conn) Read(p []byte) (int, error) {
-	select {
-	case c.readCh <- p:
-		n := <-c.sizeCh
-		c.muActivity.Lock()
-		c.lastActivity = time.Now()
-		c.muActivity.Unlock()
-		return n, nil
-
-	case <-c.doneCh:
-		return 0, io.EOF
-	}
-}
-
-// Write writes len(p) bytes from p to the underlying connection.
-// Each call sends at most one datagram.
-// It is an error to send a message larger than the system's max UDP datagram size.
-func (c *Conn) Write(p []byte) (n int, err error) {
-	c.muActivity.Lock()
-	c.lastActivity = time.Now()
-	c.muActivity.Unlock()
-
-	return c.listener.pConn.WriteTo(p, c.rAddr)
-}
-
 func (c *Conn) close() {
 	c.doneOnce.Do(func() {
-		// Release any buffered data before closing.
-		for _, msg := range c.msgs {
-			c.listener.readBufferPool.Put(msg)
-		}
-		c.msgs = nil
 		close(c.doneCh)
 	})
-}
-
-// Close releases resources related to the Conn.
-func (c *Conn) Close() error {
-	c.close()
-
-	c.listener.mu.Lock()
-	defer c.listener.mu.Unlock()
-	delete(c.listener.conns, c.rAddr.String())
-	return nil
 }

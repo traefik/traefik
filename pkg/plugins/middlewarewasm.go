@@ -44,7 +44,7 @@ func newWasmMiddlewareBuilder(goPath, moduleName, wasmPath string, settings Sett
 	return &wasmMiddlewareBuilder{path: path, cache: cache, settings: settings}, nil
 }
 
-func (b wasmMiddlewareBuilder) newMiddleware(config map[string]interface{}, middlewareName string) (pluginMiddleware, error) {
+func (b wasmMiddlewareBuilder) newMiddleware(config map[string]any, middlewareName string) (pluginMiddleware, error) {
 	return &WasmMiddleware{
 		middlewareName: middlewareName,
 		config:         reflect.ValueOf(config),
@@ -116,7 +116,7 @@ func (b *wasmMiddlewareBuilder) buildMiddleware(ctx context.Context, next http.H
 
 	i := cfg.Interface()
 	if i != nil {
-		config, ok := i.(map[string]interface{})
+		config, ok := i.(map[string]any)
 		if !ok {
 			return nil, nil, fmt.Errorf("could not type assert config: %T", i)
 		}

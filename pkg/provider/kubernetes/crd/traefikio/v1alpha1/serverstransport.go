@@ -34,10 +34,17 @@ type ServersTransportSpec struct {
 	// RootCAs defines a list of CA certificate Secrets or ConfigMaps used to validate server certificates.
 	RootCAs []RootCA `json:"rootCAs,omitempty"`
 	// RootCAsSecrets defines a list of CA secret used to validate self-signed certificate.
+	//
 	// Deprecated: RootCAsSecrets is deprecated, please use the RootCAs option instead.
 	RootCAsSecrets []string `json:"rootCAsSecrets,omitempty"`
 	// CertificatesSecrets defines a list of secret storing client certificates for mTLS.
 	CertificatesSecrets []string `json:"certificatesSecrets,omitempty"`
+	// CipherSuites defines the cipher suites to use when contacting backend servers.
+	CipherSuites []string `json:"cipherSuites,omitempty"`
+	// MinVersion defines the minimum TLS version to use when contacting backend servers.
+	MinVersion string `json:"minVersion,omitempty"`
+	// MaxVersion defines the maximum TLS version to use when contacting backend servers.
+	MaxVersion string `json:"maxVersion,omitempty"`
 	// MaxIdleConnsPerHost controls the maximum idle (keep-alive) to keep per-host.
 	// +kubebuilder:validation:Minimum=-1
 	MaxIdleConnsPerHost int `json:"maxIdleConnsPerHost,omitempty"`

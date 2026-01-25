@@ -94,14 +94,14 @@ func (e *http3server) Switch(rt *tcprouter.Router) {
 	e.getter = rt.GetTLSGetClientInfo()
 }
 
+func (e *http3server) Shutdown(_ context.Context) error {
+	// TODO: use e.Server.CloseGracefully() when available.
+	return e.Server.Close()
+}
+
 func (e *http3server) getGetConfigForClient(info *tls.ClientHelloInfo) (*tls.Config, error) {
 	e.lock.RLock()
 	defer e.lock.RUnlock()
 
 	return e.getter(info)
-}
-
-func (e *http3server) Shutdown(_ context.Context) error {
-	// TODO: use e.Server.CloseGracefully() when available.
-	return e.Server.Close()
 }

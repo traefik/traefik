@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/traefik/traefik/v3/pkg/ip"
+	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
 	"golang.org/x/net/http/httpguts"
 )
 
@@ -47,16 +48,17 @@ var xHeaders = []string{
 // Unless insecure is set,
 // it first removes all the existing values for those headers if the remote address is not one of the trusted ones.
 type XForwarded struct {
-	insecure          bool
-	trustedIPs        []string
-	connectionHeaders []string
-	ipChecker         *ip.Checker
-	next              http.Handler
-	hostname          string
+	insecure               bool
+	trustedIPs             []string
+	connectionHeaders      []string
+	notAppendXForwardedFor bool
+	ipChecker              *ip.Checker
+	next                   http.Handler
+	hostname               string
 }
 
 // NewXForwarded creates a new XForwarded.
-func NewXForwarded(insecure bool, trustedIPs []string, connectionHeaders []string, next http.Handler) (*XForwarded, error) {
+func NewXForwarded(insecure bool, trustedIPs []string, connectionHeaders []string, notAppendXForwardedFor bool, next http.Handler) (*XForwarded, error) {
 	var ipChecker *ip.Checker
 	if len(trustedIPs) > 0 {
 		var err error
@@ -72,27 +74,21 @@ func NewXForwarded(insecure bool, trustedIPs []string, connectionHeaders []strin
 	}
 
 	return &XForwarded{
-		insecure:          insecure,
-		trustedIPs:        trustedIPs,
-		connectionHeaders: connectionHeaders,
-		ipChecker:         ipChecker,
-		next:              next,
-		hostname:          hostname,
+		insecure:               insecure,
+		trustedIPs:             trustedIPs,
+		connectionHeaders:      connectionHeaders,
+		notAppendXForwardedFor: notAppendXForwardedFor,
+		ipChecker:              ipChecker,
+		next:                   next,
+		hostname:               hostname,
 	}, nil
-}
-
-func (x *XForwarded) isTrustedIP(ip string) bool {
-	if x.ipChecker == nil {
-		return false
-	}
-	return x.ipChecker.IsAuthorized(ip) == nil
 }
 
 // removeIPv6Zone removes the zone if the given IP is an ipv6 address and it has {zone} information in it,
 // like "[fe80::d806:a55d:eb1b:49cc%vEthernet (vmxnet3 Ethernet Adapter - Virtual Switch)]:64692".
 func removeIPv6Zone(clientIP string) string {
-	if idx := strings.Index(clientIP, "%"); idx != -1 {
-		return clientIP[:idx]
+	if before, _, found := strings.Cut(clientIP, "%"); found {
+		return before
 	}
 	return clientIP
 }
@@ -136,6 +132,32 @@ func forwardedPort(req *http.Request) string {
 	}
 
 	return "80"
+}
+
+// ServeHTTP implements http.Handler.
+func (x *XForwarded) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if !x.insecure && !x.isTrustedIP(r.RemoteAddr) {
+		for _, h := range xHeaders {
+			unsafeHeader(r.Header).Del(h)
+		}
+	}
+
+	x.rewrite(r)
+
+	x.removeConnectionHeaders(r)
+
+	if x.notAppendXForwardedFor {
+		r = r.WithContext(httputil.SetNotAppendXFF(r.Context()))
+	}
+
+	x.next.ServeHTTP(w, r)
+}
+
+func (x *XForwarded) isTrustedIP(ip string) bool {
+	if x.ipChecker == nil {
+		return false
+	}
+	return x.ipChecker.IsAuthorized(ip) == nil
 }
 
 func (x *XForwarded) rewrite(outreq *http.Request) {
@@ -186,21 +208,6 @@ func (x *XForwarded) rewrite(outreq *http.Request) {
 	}
 }
 
-// ServeHTTP implements http.Handler.
-func (x *XForwarded) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if !x.insecure && !x.isTrustedIP(r.RemoteAddr) {
-		for _, h := range xHeaders {
-			unsafeHeader(r.Header).Del(h)
-		}
-	}
-
-	x.rewrite(r)
-
-	x.removeConnectionHeaders(r)
-
-	x.next.ServeHTTP(w, r)
-}
-
 func (x *XForwarded) removeConnectionHeaders(req *http.Request) {
 	var reqUpType string
 	if httpguts.HeaderValuesContainsToken(req.Header[connection], upgrade) {
@@ -209,7 +216,7 @@ func (x *XForwarded) removeConnectionHeaders(req *http.Request) {
 
 	var connectionHopByHopHeaders []string
 	for _, f := range req.Header[connection] {
-		for _, sf := range strings.Split(f, ",") {
+		for sf := range strings.SplitSeq(f, ",") {
 			if sf = textproto.TrimString(sf); sf != "" {
 				// Connection header cannot dictate to remove X- headers managed by Traefik,
 				// as per rfc7230 https://datatracker.ietf.org/doc/html/rfc7230#section-6.1,

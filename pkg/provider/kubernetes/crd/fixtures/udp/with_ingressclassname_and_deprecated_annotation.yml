@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: IngressClass
+metadata:
+  name: traefik-lb
+spec:
+  controller: traefik.io/ingress-controller
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRouteUDP
+metadata:
+  name: test.route
+  namespace: default
+  annotations:
+    kubernetes.io/ingress.class: traefik
+
+spec:
+  entryPoints:
+    - foo
+
+  ingressClassName: traefik-lb
+
+  routes:
+    - services:
+        - name: whoamiudp
+          port: 8000

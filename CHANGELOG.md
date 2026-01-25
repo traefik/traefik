@@ -1,3 +1,172 @@
+## [v3.6.7](https://github.com/traefik/traefik/tree/v3.6.7) (2026-01-14)
+[All Commits](https://github.com/traefik/traefik/compare/v3.6.6...v3.6.7)
+
+**Bug fixes:**
+- **[acme]** Bump github.com/go-acme/lego/v4 to v4.31.0 ([#12529](https://github.com/traefik/traefik/pull/12529) by [ldez](https://github.com/ldez))
+- **[acme]** Add missing renew options ([#12467](https://github.com/traefik/traefik/pull/12467) by [ldez](https://github.com/ldez))
+- **[acme]** Replace hardcoded references to LetsEncrypt in log messages ([#12464](https://github.com/traefik/traefik/pull/12464) by [schildbach](https://github.com/schildbach))
+- **[k8s/ingress-nginx]** Fix use-regex nginx annotation ([#12531](https://github.com/traefik/traefik/pull/12531) by [LBF38](https://github.com/LBF38))
+- **[k8s/ingress-nginx]** Prevent Ingress Nginx provider http router to attach to an entrypoint with TLS ([#12528](https://github.com/traefik/traefik/pull/12528) by [rtribotte](https://github.com/rtribotte))
+- **[k8s/ingress]** Fix panic for empty defaultBackend and defaultBackend without resources ([#12509](https://github.com/traefik/traefik/pull/12509) by [gndz07](https://github.com/gndz07))
+- **[k8s]** Fix condition used for serving and fenced endpoints ([#12521](https://github.com/traefik/traefik/pull/12521) by [LBF38](https://github.com/LBF38))
+- **[webui]** Validate X-Forwarded-Prefix value for dashboard redirect ([#12514](https://github.com/traefik/traefik/pull/12514) by [LBF38](https://github.com/LBF38))
+- **[acme]** Add timeout to ACME-TLS/1 challenge handshake ([#12516](https://github.com/traefik/traefik/pull/12516) by [LBF38](https://github.com/LBF38))
+- **[server]** Make encoded character options opt-in ([#12540](https://github.com/traefik/traefik/pull/12540) by [gndz07](https://github.com/gndz07))
+
+**Documentation:**
+- **[docker/swarm]** Update swarm.md traefik version ([#12508](https://github.com/traefik/traefik/pull/12508) by [DBouraoui](https://github.com/DBouraoui))
+- **[k8s/ingress-nginx]** Fix ingress-nginx annotations documentation ([#12510](https://github.com/traefik/traefik/pull/12510) by [nmengin](https://github.com/nmengin))
+- **[k8s]** Fix Kubernetes reference yml file ([#12406](https://github.com/traefik/traefik/pull/12406) by [mmatur](https://github.com/mmatur))
+- Fix code copy button positioning ([#12520](https://github.com/traefik/traefik/pull/12520) by [AnuragEkkati](https://github.com/AnuragEkkati))
+- Fix typo in kubernetes.md ([#12515](https://github.com/traefik/traefik/pull/12515) by [EdwardSalkeld](https://github.com/EdwardSalkeld))
+- Bring back security section on API &amp; Dashboard documentation page ([#12507](https://github.com/traefik/traefik/pull/12507) by [gndz07](https://github.com/gndz07))
+- Fix link description in Traefik Proxy documentation ([#12488](https://github.com/traefik/traefik/pull/12488) by [schaerfo](https://github.com/schaerfo))
+- Add product comparison matrix and features page ([#12037](https://github.com/traefik/traefik/pull/12037) by [sheddy-traefik](https://github.com/sheddy-traefik))
+
+**Misc:**
+- Merge branch v2.11 into v3.6 ([#12552](https://github.com/traefik/traefik/pull/12552) by [rtribotte](https://github.com/rtribotte))
+- Merge branch v2.11 into v3.6 ([#12533](https://github.com/traefik/traefik/pull/12533) by [mmatur](https://github.com/mmatur))
+- Merge branch v2.11 into v3.6 ([#12497](https://github.com/traefik/traefik/pull/12497) by [mmatur](https://github.com/mmatur))
+
+## [v2.11.35](https://github.com/traefik/traefik/tree/v2.11.35) (2026-01-14)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.34...v2.11.35)
+
+**Bug fixes:**
+- **[acme]** Add timeout to ACME-TLS/1 challenge handshake ([#12516](https://github.com/traefik/traefik/pull/12516) by [LBF38](https://github.com/LBF38))
+- **[server]** Make encoded character options opt-in ([#12540](https://github.com/traefik/traefik/pull/12540) by [gndz07](https://github.com/gndz07))
+
+## [v3.6.6](https://github.com/traefik/traefik/tree/v3.6.6) (2025-12-29)
+[All Commits](https://github.com/traefik/traefik/compare/v3.6.5...v3.6.6)
+
+**Bug fixes:**
+- **[acme]** Bump github.com/go-acme/lego/v4 to v4.30.1 ([#12432](https://github.com/traefik/traefik/pull/12432) by [ldez](https://github.com/ldez))
+- **[http3]** Bump github.com/quic-go/quic-go to v0.58.0 ([#12448](https://github.com/traefik/traefik/pull/12448) by [GreyXor](https://github.com/GreyXor))
+- **[redis]** Fix mutually exclusive verification for Redis ([#12442](https://github.com/traefik/traefik/pull/12442) by [juliens](https://github.com/juliens))
+- **[server]** Fix deny encoded characters ([#12454](https://github.com/traefik/traefik/pull/12454) by [rtribotte](https://github.com/rtribotte))
+
+**Documentation:**
+- **[k8s/ingress,k8s]** Fix Kubernetes Ingress provider documentation ([#12443](https://github.com/traefik/traefik/pull/12443) by [nmengin](https://github.com/nmengin))
+- **[k8s/ingress-nginx]** Add RBAC documentation for Ingress NGINX provider ([#12445](https://github.com/traefik/traefik/pull/12445) by [nmn3m](https://github.com/nmn3m))
+- **[k8s]** Improve the K8S multi-tenancy security note ([#12444](https://github.com/traefik/traefik/pull/12444) by [nmengin](https://github.com/nmengin))
+- Restore documentation on http.maxHeaderBytes ([#12440](https://github.com/traefik/traefik/pull/12440) by [mloiseleur](https://github.com/mloiseleur))
+- Fix Menu Item Naming ([#12431](https://github.com/traefik/traefik/pull/12431) by [sheddy-traefik](https://github.com/sheddy-traefik))
+
+**Misc:**
+- Merge branch v2.11 into v3.6 ([#12475](https://github.com/traefik/traefik/pull/12475) by [mmatur](https://github.com/mmatur))
+- Merge branch v2.11 into v3.6 ([#12438](https://github.com/traefik/traefik/pull/12438) by [kevinpollet](https://github.com/kevinpollet))
+
+## [v2.11.34](https://github.com/traefik/traefik/tree/v2.11.34) (2025-12-23)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.33...v2.11.34)
+
+**Bug fixes:**
+- **[server]** Fix deny encoded characters ([#12457](https://github.com/traefik/traefik/pull/12457) by [rtribotte](https://github.com/rtribotte))
+
+## [v2.11.33](https://github.com/traefik/traefik/tree/v2.11.33) (2025-12-17)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.32...v2.11.33)
+
+**Bug fixes:**
+- **[server]** Print access logs for rejected requests and warn about new behavior ([#12426](https://github.com/traefik/traefik/pull/12426) by [rtribotte](https://github.com/rtribotte))
+
+**Documentation:**
+- Clarify doc about encoded characters rejection ([#12391](https://github.com/traefik/traefik/pull/12391) by [rtribotte](https://github.com/rtribotte))
+- Fix encoded characters entryPoint option documentation ([#12384](https://github.com/traefik/traefik/pull/12384) by [rtribotte](https://github.com/rtribotte))
+- Fix encoded characters option documentation ([#12373](https://github.com/traefik/traefik/pull/12373) by [kevinpollet](https://github.com/kevinpollet))
+
+## [v3.6.5](https://github.com/traefik/traefik/tree/v3.6.5) (2025-12-16)
+[All Commits](https://github.com/traefik/traefik/compare/v3.6.4...v3.6.5)
+
+**Bug fixes:**
+- **[k8s/ingress-nginx]** Fix NGINX sslredirect annotation support ([#12387](https://github.com/traefik/traefik/pull/12387) by [rtribotte](https://github.com/rtribotte))
+- **[server]** Print access logs for rejected requests and warn about new behavior ([#12424](https://github.com/traefik/traefik/pull/12424) by [kevinpollet](https://github.com/kevinpollet))
+
+**Documentation:**
+- **[k8s/ingress-nginx]** Add auth-signin to unsupported nginx annotations list ([#12370](https://github.com/traefik/traefik/pull/12370) by [fibsifan](https://github.com/fibsifan))
+- Add a Breaking change note to the changelog ([#12398](https://github.com/traefik/traefik/pull/12398) by [nmengin](https://github.com/nmengin))
+- Fix encodedCharacters entryPoint option documentation ([#12385](https://github.com/traefik/traefik/pull/12385) by [rtribotte](https://github.com/rtribotte))
+
+## [v3.6.4](https://github.com/traefik/traefik/tree/v3.6.4) (2025-12-05)
+[All Commits](https://github.com/traefik/traefik/compare/v3.6.2...v3.6.4)
+
+**CVE's fixed:**
+- [CVE-2025-66490](https://nvd.nist.gov/vuln/detail/CVE-2025-66490) (Advisory [GHSA-gm3x-23wp-hc2c](https://github.com/traefik/traefik/security/advisories/GHSA-gm3x-23wp-hc2c)): **Breaking Change** please read the [migration guide](https://doc.traefik.io/traefik/v3.6/migrate/v3/#v364).
+- [CVE-2025-66491](https://nvd.nist.gov/vuln/detail/CVE-2025-66491) (Advisory [GHSA-7vww-mvcr-x6vj](https://github.com/traefik/traefik/security/advisories/GHSA-7vww-mvcr-x6vj))
+
+**Important:** Please read the [migration guide](https://doc.traefik.io/traefik/v3.6/migrate/v3/#v364).
+
+**Bug fixes:**
+- **[server]** Reject suspicious encoded characters ([#12360](https://github.com/traefik/traefik/pull/12360) by [rtribotte](https://github.com/rtribotte))
+- **[plugins]** Validate plugin module name ([#12291](https://github.com/traefik/traefik/pull/12291) by [kevinpollet](https://github.com/kevinpollet))
+- **[http3]** Bump github.com/quic-go/quic-go to v0.57.1 ([#12319](https://github.com/traefik/traefik/pull/12319) by [GreyXor](https://github.com/GreyXor))
+- **[http3]** Bump github.com/quic-go/quic-go to v0.57.0 ([#12308](https://github.com/traefik/traefik/pull/12308) by [GreyXor](https://github.com/GreyXor))
+- **[server]** Bump golang.org/x/crypto to v0.45.0 ([#12296](https://github.com/traefik/traefik/pull/12296) by [kevinpollet](https://github.com/kevinpollet))
+- **[acme]** Bump github.com/go-acme/lego/v4 to v4.29.0 ([#12333](https://github.com/traefik/traefik/pull/12333) by [ldez](https://github.com/ldez))
+- **[k8s/ingress-nginx]** Fix SSL redirect to match NGINX behavior ([#12361](https://github.com/traefik/traefik/pull/12361) by [mmatur](https://github.com/mmatur))
+- **[k8s/ingress-nginx]** Fix the service name for ingress-nginx provider ([#12352](https://github.com/traefik/traefik/pull/12352) by [mmatur](https://github.com/mmatur))
+- **[k8s/ingress-nginx]** Fix nginx.ingress.kubernetes.io/proxy-ssl-verify annotation support ([#12351](https://github.com/traefik/traefik/pull/12351) by [rtribotte](https://github.com/rtribotte))
+- **[middleware,authentication]** Change ForwardAuth error log level from DEBUG to ERROR ([#12324](https://github.com/traefik/traefik/pull/12324) by [murataslan1](https://github.com/murataslan1))
+
+**Documentation:**
+- **[api]** Fix typo in API dashboard configuration instructions ([#12335](https://github.com/traefik/traefik/pull/12335) by [NAICOLAS](https://github.com/NAICOLAS))
+- **[docker]** Add documentation for loadbalancer.server.url in Docker and Swarm providers ([#12289](https://github.com/traefik/traefik/pull/12289) by [webash](https://github.com/webash))
+- **[k8s/gatewayapi]** Fix links of Helm chart values reference to providers.kubernetesGateway.enabled ([#12315](https://github.com/traefik/traefik/pull/12315) by [shouhei](https://github.com/shouhei))
+- **[k8s/ingress-nginx]** Fix default value of ingress-nginx provider in documentation ([#12328](https://github.com/traefik/traefik/pull/12328) by [mloiseleur](https://github.com/mloiseleur))
+- **[k8s/ingress-nginx]** NGINX Ingress Controller to Traefik Migration Guide ([#12318](https://github.com/traefik/traefik/pull/12318) by [sheddy-traefik](https://github.com/sheddy-traefik))
+- **[k8s/ingress-nginx]** Improve the configuration options display of the Kubernetes ingress-nginx provider ([#12297](https://github.com/traefik/traefik/pull/12297) by [mloiseleur](https://github.com/mloiseleur))
+- **[k8s/ingress-nginx]** Improve ingress-nginx provider documentation ([#12288](https://github.com/traefik/traefik/pull/12288) by [sheddy-traefik](https://github.com/sheddy-traefik))
+- **[service]** Fix loadbalancer doc for highest random weight ([#12283](https://github.com/traefik/traefik/pull/12283) by [ozon2](https://github.com/ozon2))
+- Correctly Format the HTTP Service Documentation ([#12311](https://github.com/traefik/traefik/pull/12311) by [sheddy-traefik](https://github.com/sheddy-traefik))
+- Add documentation about checkNewVersion ([#12298](https://github.com/traefik/traefik/pull/12298) by [darkweaver87](https://github.com/darkweaver87))
+
+**Misc:**
+- Merge branch v2.11 into v3.6 ([#12364](https://github.com/traefik/traefik/pull/12364) by [kevinpollet](https://github.com/kevinpollet))
+- Merge branch v2.11 into v3.6 ([#12341](https://github.com/traefik/traefik/pull/12341) by [mmatur](https://github.com/mmatur))
+- Merge branch v2.11 into v3.6 ([#12368](https://github.com/traefik/traefik/pull/12368) by [mmatur](https://github.com/mmatur))
+
+## [v3.6.3](https://github.com/traefik/traefik/tree/v3.6.3) (2025-12-04)
+[All Commits](https://github.com/traefik/traefik/compare/v3.6.2...v3.6.3)
+
+Release canceled.
+
+## [v2.11.32](https://github.com/traefik/traefik/tree/v2.11.32) (2025-12-04)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.31...v2.11.32)
+
+**Bug fixes:**
+- **[server]** Reject suspicious encoded characters ([#12360](https://github.com/traefik/traefik/pull/12360) by [rtribotte](https://github.com/rtribotte))
+- **[plugins]** Validate plugin module name ([#12291](https://github.com/traefik/traefik/pull/12291) by [kevinpollet](https://github.com/kevinpollet))
+- **[http3]** Bump github.com/quic-go/quic-go to v0.57.1 ([#12319](https://github.com/traefik/traefik/pull/12319) by [GreyXor](https://github.com/GreyXor))
+- **[http3]** Bump github.com/quic-go/quic-go to v0.57.0 ([#12308](https://github.com/traefik/traefik/pull/12308) by [GreyXor](https://github.com/GreyXor))
+- **[server]** Bump golang.org/x/crypto to v0.45.0 ([#12296](https://github.com/traefik/traefik/pull/12296) by [kevinpollet](https://github.com/kevinpollet))
+
+**Documentation:**
+- Update SECURITY.md to streamline information ([#12310](https://github.com/traefik/traefik/pull/12310) by [emilevauge](https://github.com/emilevauge))
+- Update SECURITY.md ([#12304](https://github.com/traefik/traefik/pull/12304) by [cwayne18](https://github.com/cwayne18))
+
+## [v3.6.2](https://github.com/traefik/traefik/tree/v3.6.2) (2025-11-18)
+[All Commits](https://github.com/traefik/traefik/compare/v3.6.1...v3.6.2)
+
+**Bug fixes:**
+- **[k8s/ingress-nginx]** Deprecate Kubernetes Ingress NGINX provider experimental flag ([#12286](https://github.com/traefik/traefik/pull/12286) by [rtribotte](https://github.com/rtribotte))
+
+## [v3.6.1](https://github.com/traefik/traefik/tree/v3.6.1) (2025-11-13)
+[All Commits](https://github.com/traefik/traefik/compare/v3.6.0...v3.6.1)
+
+**Bug fixes:**
+- **[docker]** Auto-negotiate Docker API Version ([#12256](https://github.com/traefik/traefik/pull/12256) by [felixbuenemann](https://github.com/felixbuenemann))
+- **[server]** Fix multi-layer routing with models ([#12258](https://github.com/traefik/traefik/pull/12258) by [juliens](https://github.com/juliens))
+- **[udp]** Revert &#34;Avoid allocations in readLoop by using sync.Pool&#34; ([#12267](https://github.com/traefik/traefik/pull/12267) by [kevinpollet](https://github.com/kevinpollet))
+- **[webui]** Fix blocked navigation on Safari ([#12231](https://github.com/traefik/traefik/pull/12231) by [gndz07](https://github.com/gndz07))
+- **[webui]** Restore remote Upgrade to Hub button web component ([#12219](https://github.com/traefik/traefik/pull/12219) by [gndz07](https://github.com/gndz07))
+
+**Documentation:**
+- **[k8s]** Fix Nginx provider documentation ([#12266](https://github.com/traefik/traefik/pull/12266) by [nmengin](https://github.com/nmengin))
+- **[k8s]** Fix Gateway API version and the list of features supported ([#12254](https://github.com/traefik/traefik/pull/12254) by [nmengin](https://github.com/nmengin))
+
+## [v2.11.31](https://github.com/traefik/traefik/tree/v2.11.31) (2025-11-13)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.30...v2.11.31)
+
+**Bug fixes:**
+- **[docker,docker/swarm]** Auto-negotiate Docker API version ([#12262](https://github.com/traefik/traefik/pull/12262) by [kevinpollet](https://github.com/kevinpollet))
+
 ## [v3.6.0](https://github.com/traefik/traefik/tree/v3.6.0) (2025-11-07)
 [All Commits](https://github.com/traefik/traefik/compare/v3.5.0-rc1...v3.6.0)
 

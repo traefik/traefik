@@ -22,9 +22,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/safe"
 )
 
-// SwarmAPIVersion is a constant holding the version of the Provider API traefik will use.
-const SwarmAPIVersion = "1.24"
-
 const swarmName = "swarm"
 
 var _ provider.Provider = (*SwarmProvider)(nil)
@@ -55,11 +52,6 @@ func (p *SwarmProvider) Init() error {
 
 	p.defaultRuleTpl = defaultRuleTpl
 	return nil
-}
-
-func (p *SwarmProvider) createClient(ctx context.Context) (*client.Client, error) {
-	p.ClientConfig.apiVersion = SwarmAPIVersion
-	return createClient(ctx, p.ClientConfig)
 }
 
 // Provide allows the docker provider to provide configurations to traefik using the given configuration channel.
@@ -156,6 +148,10 @@ func (p *SwarmProvider) Provide(configurationChan chan<- dynamic.Message, pool *
 	})
 
 	return nil
+}
+
+func (p *SwarmProvider) createClient(ctx context.Context) (*client.Client, error) {
+	return createClient(ctx, p.ClientConfig)
 }
 
 func (p *SwarmProvider) listServices(ctx context.Context, dockerClient client.APIClient) ([]dockerData, error) {

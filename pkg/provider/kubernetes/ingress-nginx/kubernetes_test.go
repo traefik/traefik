@@ -2,6 +2,7 @@ package ingressnginx
 
 import (
 	"math"
+	"net/http"
 	"os"
 	"path/filepath"
 	"testing"
@@ -47,6 +48,128 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
+			desc: "Custom Headers",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/11-ingress-with-custom-headers.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-custom-headers-rule-0-path-0": {
+							Rule:        "Host(`whoami.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-custom-headers-rule-0-path-0-custom-headers"},
+							Service:     "default-ingress-with-custom-headers-whoami-80",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-custom-headers-rule-0-path-0-custom-headers": {
+							Headers: &dynamic.Headers{
+								CustomResponseHeaders: map[string]string{"X-Custom-Header": "some-random-string"},
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-custom-headers-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "No annotation",
+			paths: []string{
+				"ingresses/00-ingress-with-no-annotation.yml",
+				"ingressclasses.yml",
+				"services.yml",
+				"secrets.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-no-annotation-rule-0-path-0": {
+							Rule:       "Host(`whoami.localhost`) && PathPrefix(`/`)",
+							RuleSyntax: "default",
+							TLS:        &dynamic.RouterTLSConfig{},
+							Service:    "default-ingress-with-no-annotation-whoami-80",
+						},
+						"default-ingress-with-no-annotation-rule-0-path-0-http": {
+							EntryPoints: []string{"web"},
+							Rule:        "Host(`whoami.localhost`) && PathPrefix(`/`)",
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-no-annotation-rule-0-path-0-redirect-scheme"},
+							Service:     "noop@internal",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-no-annotation-rule-0-path-0-redirect-scheme": {
+							RedirectScheme: &dynamic.RedirectScheme{
+								Scheme:                 "https",
+								ForcePermanentRedirect: true,
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-no-annotation-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Certificates: []*tls.CertAndStores{
+						{
+							Certificate: tls.Certificate{
+								CertFile: "-----BEGIN CERTIFICATE-----",
+								KeyFile:  "-----BEGIN CERTIFICATE-----",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			desc: "Basic Auth",
 			paths: []string{
 				"services.yml",
@@ -64,7 +187,7 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        "Host(`whoami.localhost`) && Path(`/basicauth`)",
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-ingress-with-basicauth-rule-0-path-0-basic-auth"},
-							Service:     "default-whoami-80",
+							Service:     "default-ingress-with-basicauth-whoami-80",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -78,7 +201,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Services: map[string]*dynamic.Service{
-						"default-whoami-80": {
+						"default-ingress-with-basicauth-whoami-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
@@ -119,7 +242,7 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        "Host(`whoami.localhost`) && Path(`/forwardauth`)",
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-ingress-with-forwardauth-rule-0-path-0-forward-auth"},
-							Service:     "default-whoami-80",
+							Service:     "default-ingress-with-forwardauth-whoami-80",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -131,7 +254,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Services: map[string]*dynamic.Service{
-						"default-whoami-80": {
+						"default-ingress-with-forwardauth-whoami-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
@@ -173,53 +296,84 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:       "Host(`sslredirect.localhost`) && Path(`/`)",
 							RuleSyntax: "default",
 							TLS:        &dynamic.RouterTLSConfig{},
-							Service:    "default-whoami-80",
+							Service:    "default-ingress-with-ssl-redirect-whoami-80",
 						},
-						"default-ingress-with-ssl-redirect-rule-0-path-0-redirect": {
+						"default-ingress-with-ssl-redirect-rule-0-path-0-http": {
+							EntryPoints: []string{"web"},
 							Rule:        "Host(`sslredirect.localhost`) && Path(`/`)",
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-ingress-with-ssl-redirect-rule-0-path-0-redirect-scheme"},
 							Service:     "noop@internal",
 						},
 						"default-ingress-without-ssl-redirect-rule-0-path-0-http": {
-							Rule:       "Host(`withoutsslredirect.localhost`) && Path(`/`)",
-							RuleSyntax: "default",
-							Service:    "default-whoami-80",
+							EntryPoints: []string{"web"},
+							Rule:        "Host(`withoutsslredirect.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-without-ssl-redirect-whoami-80",
 						},
 						"default-ingress-without-ssl-redirect-rule-0-path-0": {
 							Rule:       "Host(`withoutsslredirect.localhost`) && Path(`/`)",
 							RuleSyntax: "default",
 							TLS:        &dynamic.RouterTLSConfig{},
-							Service:    "default-whoami-80",
+							Service:    "default-ingress-without-ssl-redirect-whoami-80",
 						},
 						"default-ingress-with-force-ssl-redirect-rule-0-path-0": {
-							Rule:       "Host(`forcesslredirect.localhost`) && Path(`/`)",
-							RuleSyntax: "default",
-							Service:    "default-whoami-80",
-						},
-						"default-ingress-with-force-ssl-redirect-rule-0-path-0-redirect": {
 							Rule:        "Host(`forcesslredirect.localhost`) && Path(`/`)",
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-ingress-with-force-ssl-redirect-rule-0-path-0-redirect-scheme"},
-							Service:     "noop@internal",
+							Service:     "default-ingress-with-force-ssl-redirect-whoami-80",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-ssl-redirect-rule-0-path-0-redirect-scheme": {
 							RedirectScheme: &dynamic.RedirectScheme{
-								Scheme:    "https",
-								Permanent: true,
+								Scheme:                 "https",
+								ForcePermanentRedirect: true,
 							},
 						},
 						"default-ingress-with-force-ssl-redirect-rule-0-path-0-redirect-scheme": {
 							RedirectScheme: &dynamic.RedirectScheme{
-								Scheme:    "https",
-								Permanent: true,
+								Scheme:                 "https",
+								ForcePermanentRedirect: true,
 							},
 						},
 					},
 					Services: map[string]*dynamic.Service{
-						"default-whoami-80": {
+						"default-ingress-with-ssl-redirect-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-ingress-without-ssl-redirect-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-ingress-with-force-ssl-redirect-whoami-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
@@ -313,12 +467,12 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-sticky-rule-0-path-0": {
 							Rule:       "Host(`sticky.localhost`) && Path(`/`)",
 							RuleSyntax: "default",
-							Service:    "default-whoami-80",
+							Service:    "default-ingress-with-sticky-whoami-80",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-whoami-80": {
+						"default-ingress-with-sticky-whoami-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
@@ -339,6 +493,7 @@ func TestLoadIngresses(t *testing.T) {
 										Domain:   "foo.localhost",
 										HTTPOnly: true,
 										MaxAge:   42,
+										Expires:  42,
 										Path:     ptr.To("/foobar"),
 										SameSite: "none",
 										Secure:   true,
@@ -370,12 +525,12 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-proxy-ssl-rule-0-path-0": {
 							Rule:       "Host(`proxy-ssl.localhost`) && Path(`/`)",
 							RuleSyntax: "default",
-							Service:    "default-whoami-tls-443",
+							Service:    "default-ingress-with-proxy-ssl-whoami-tls-443",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-whoami-tls-443": {
+						"default-ingress-with-proxy-ssl-whoami-tls-443": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
@@ -397,7 +552,7 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-proxy-ssl": {
 							ServerName:         "whoami.localhost",
-							InsecureSkipVerify: true,
+							InsecureSkipVerify: false,
 							RootCAs:            []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
 						},
 					},
@@ -423,7 +578,7 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        "Host(`cors.localhost`) && Path(`/`)",
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-ingress-with-cors-rule-0-path-0-cors"},
-							Service:     "default-whoami-80",
+							Service:     "default-ingress-with-cors-whoami-80",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -439,7 +594,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Services: map[string]*dynamic.Service{
-						"default-whoami-80": {
+						"default-ingress-with-cors-whoami-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
@@ -479,16 +634,166 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-service-upstream-rule-0-path-0": {
 							Rule:       "Host(`service-upstream.localhost`) && Path(`/`)",
 							RuleSyntax: "default",
-							Service:    "default-whoami-80",
+							Service:    "default-ingress-with-service-upstream-whoami-80",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
-						"default-whoami-80": {
+						"default-ingress-with-service-upstream-whoami-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
 										URL: "http://10.10.10.1:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "Upstream vhost",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/10-ingress-with-upstream-vhost.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-upstream-vhost-rule-0-path-0": {
+							Rule:        "Host(`upstream-vhost.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-upstream-vhost-rule-0-path-0-vhost"},
+							Service:     "default-ingress-with-upstream-vhost-whoami-80",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-upstream-vhost-rule-0-path-0-vhost": {
+							Headers: &dynamic.Headers{
+								CustomRequestHeaders: map[string]string{"Host": "upstream-host-header-value"},
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-upstream-vhost-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "Use Regex",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/10-ingress-with-use-regex.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-use-regex-rule-0-path-0": {
+							Rule:       "Host(`use-regex.localhost`) && PathRegexp(`^/test(.*)`)",
+							RuleSyntax: "default",
+							Service:    "default-ingress-with-use-regex-whoami-80",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-use-regex-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "Rewrite Target",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/11-ingress-with-rewrite-target.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-rewrite-target-rule-0-path-0": {
+							Rule:        "Host(`rewrite-target.localhost`) && PathRegexp(`^/something(/|$)(.*)`)",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-rewrite-target-whoami-80",
+							Middlewares: []string{"default-ingress-with-rewrite-target-rule-0-path-0-rewrite-target"},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-rewrite-target-rule-0-path-0-rewrite-target": {
+							ReplacePathRegex: &dynamic.ReplacePathRegex{
+								Regex:       "/something(/|$)(.*)",
+								Replacement: "/$2",
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-rewrite-target-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
 									},
 								},
 								Strategy:       "wrr",
@@ -557,6 +862,586 @@ func TestLoadIngresses(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
+		{
+			desc: "WhitelistSourceRange with single IP",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/10-ingress-with-whitelist-single-ip.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-whitelist-single-ip-rule-0-path-0": {
+							Rule:        "Host(`whitelist-source-range.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-whitelist-single-ip-rule-0-path-0-whitelist-source-range"},
+							Service:     "default-ingress-with-whitelist-single-ip-whoami-80",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-whitelist-single-ip-rule-0-path-0-whitelist-source-range": {
+							IPAllowList: &dynamic.IPAllowList{
+								SourceRange: []string{"192.168.20.1"},
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-whitelist-single-ip-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "WhitelistSourceRange with single CIDR",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/11-ingress-with-whitelist-single-cidr.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-whitelist-single-cidr-rule-0-path-0": {
+							Rule:        "Host(`whitelist-source-range.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-whitelist-single-cidr-rule-0-path-0-whitelist-source-range"},
+							Service:     "default-ingress-with-whitelist-single-cidr-whoami-80",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-whitelist-single-cidr-rule-0-path-0-whitelist-source-range": {
+							IPAllowList: &dynamic.IPAllowList{
+								SourceRange: []string{"192.168.1.0/24"},
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-whitelist-single-cidr-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "WhitelistSourceRange when specified multiple IP/CIDR",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/12-ingress-with-whitelist-multiple-ip-and-cidr.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-whitelist-multiple-ip-and-cidr-rule-0-path-0": {
+							Rule:        "Host(`whitelist-source-range.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-whitelist-multiple-ip-and-cidr-rule-0-path-0-whitelist-source-range"},
+							Service:     "default-ingress-with-whitelist-multiple-ip-and-cidr-whoami-80",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-whitelist-multiple-ip-and-cidr-rule-0-path-0-whitelist-source-range": {
+							IPAllowList: &dynamic.IPAllowList{
+								SourceRange: []string{"192.168.1.0/24", "10.0.0.0/8", "192.168.20.1"},
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-whitelist-multiple-ip-and-cidr-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "WhitelistSourceRange when empty ignored",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/13-ingress-with-whitelist-empty.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-whitelist-empty-rule-0-path-0": {
+							Rule:        "Host(`whitelist-source-range.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Middlewares: nil,
+							Service:     "default-ingress-with-whitelist-empty-whoami-80",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-whitelist-empty-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "Permanent Redirect",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/14-ingress-with-permanent-redirect.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-permanent-redirect-rule-0-path-0": {
+							Rule:        "Host(`permanent-redirect.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-permanent-redirect-whoami-80",
+							Middlewares: []string{"default-ingress-with-permanent-redirect-rule-0-path-0-redirect"},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-permanent-redirect-rule-0-path-0-redirect": {
+							RedirectRegex: &dynamic.RedirectRegex{
+								Regex:       ".*",
+								Replacement: "https://www.google.com",
+								StatusCode:  ptr.To(http.StatusMovedPermanently),
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-permanent-redirect-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "Permanent Redirect Code - wrong code",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/14-ingress-with-permanent-redirect-code-wrong-code.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-permanent-redirect-rule-0-path-0": {
+							Rule:        "Host(`permanent-redirect.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-permanent-redirect-whoami-80",
+							Middlewares: []string{"default-ingress-with-permanent-redirect-rule-0-path-0-redirect"},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-permanent-redirect-rule-0-path-0-redirect": {
+							RedirectRegex: &dynamic.RedirectRegex{
+								Regex:       ".*",
+								Replacement: "https://www.google.com",
+								StatusCode:  ptr.To(http.StatusMovedPermanently),
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-permanent-redirect-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "Permanent Redirect Code - correct code",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/14-ingress-with-permanent-redirect-code-correct-code.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-permanent-redirect-rule-0-path-0": {
+							Rule:        "Host(`permanent-redirect.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-permanent-redirect-whoami-80",
+							Middlewares: []string{"default-ingress-with-permanent-redirect-rule-0-path-0-redirect"},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-permanent-redirect-rule-0-path-0-redirect": {
+							RedirectRegex: &dynamic.RedirectRegex{
+								Regex:       ".*",
+								Replacement: "https://www.google.com",
+								StatusCode:  ptr.To(http.StatusMultipleChoices),
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-permanent-redirect-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "Temporal Redirect takes precedence over Permanent Redirect",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/16-ingress-with-temporal-and-permanent-redirect.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-redirect-rule-0-path-0": {
+							Rule:        "Host(`redirect.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-redirect-whoami-80",
+							Middlewares: []string{"default-ingress-with-redirect-rule-0-path-0-redirect"},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-redirect-rule-0-path-0-redirect": {
+							RedirectRegex: &dynamic.RedirectRegex{
+								Regex:       ".*",
+								Replacement: "https://www.google.com",
+								StatusCode:  ptr.To(http.StatusFound),
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-redirect-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "Temporal Redirect",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/15-ingress-with-temporal-redirect.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-temporal-redirect-rule-0-path-0": {
+							Rule:        "Host(`temporal-redirect.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-temporal-redirect-whoami-80",
+							Middlewares: []string{"default-ingress-with-temporal-redirect-rule-0-path-0-redirect"},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-temporal-redirect-rule-0-path-0-redirect": {
+							RedirectRegex: &dynamic.RedirectRegex{
+								Regex:       ".*",
+								Replacement: "https://www.google.com",
+								StatusCode:  ptr.To(http.StatusFound),
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-temporal-redirect-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "Temporal Redirect Code - wrong code",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/17-ingress-with-temporal-redirect-code-wrong-code.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-temporal-redirect-rule-0-path-0": {
+							Rule:        "Host(`temporal-redirect.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-temporal-redirect-whoami-80",
+							Middlewares: []string{"default-ingress-with-temporal-redirect-rule-0-path-0-redirect"},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-temporal-redirect-rule-0-path-0-redirect": {
+							RedirectRegex: &dynamic.RedirectRegex{
+								Regex:       ".*",
+								Replacement: "https://www.google.com",
+								StatusCode:  ptr.To(http.StatusFound),
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-temporal-redirect-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "Temporal Redirect Code - correct code",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/17-ingress-with-temporal-redirect-code-correct-code.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-temporal-redirect-rule-0-path-0": {
+							Rule:        "Host(`temporal-redirect.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-temporal-redirect-whoami-80",
+							Middlewares: []string{"default-ingress-with-temporal-redirect-rule-0-path-0-redirect"},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-temporal-redirect-rule-0-path-0-redirect": {
+							RedirectRegex: &dynamic.RedirectRegex{
+								Regex:       ".*",
+								Replacement: "https://www.google.com",
+								StatusCode:  ptr.To(http.StatusPermanentRedirect),
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-temporal-redirect-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -579,6 +1464,7 @@ func TestLoadIngresses(t *testing.T) {
 				k8sClient:                      client,
 				defaultBackendServiceName:      test.defaultBackendServiceName,
 				defaultBackendServiceNamespace: test.defaultBackendServiceNamespace,
+				NonTLSEntryPoints:              []string{"web"},
 			}
 			p.SetDefaults()
 

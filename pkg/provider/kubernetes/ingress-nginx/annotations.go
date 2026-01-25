@@ -23,7 +23,13 @@ type ingressConfig struct {
 
 	SSLPassthrough *bool `annotation:"nginx.ingress.kubernetes.io/ssl-passthrough"`
 
-	UseRegex *bool `annotation:"nginx.ingress.kubernetes.io/use-regex"`
+	UseRegex      *bool   `annotation:"nginx.ingress.kubernetes.io/use-regex"`
+	RewriteTarget *string `annotation:"nginx.ingress.kubernetes.io/rewrite-target"`
+
+	PermanentRedirect     *string `annotation:"nginx.ingress.kubernetes.io/permanent-redirect"`
+	PermanentRedirectCode *int    `annotation:"nginx.ingress.kubernetes.io/permanent-redirect-code"`
+	TemporalRedirect      *string `annotation:"nginx.ingress.kubernetes.io/temporal-redirect"`
+	TemporalRedirectCode  *int    `annotation:"nginx.ingress.kubernetes.io/temporal-redirect-code"`
 
 	Affinity              *string `annotation:"nginx.ingress.kubernetes.io/affinity"`
 	SessionCookieName     *string `annotation:"nginx.ingress.kubernetes.io/session-cookie-name"`
@@ -32,6 +38,7 @@ type ingressConfig struct {
 	SessionCookieDomain   *string `annotation:"nginx.ingress.kubernetes.io/session-cookie-domain"`
 	SessionCookieSameSite *string `annotation:"nginx.ingress.kubernetes.io/session-cookie-samesite"`
 	SessionCookieMaxAge   *int    `annotation:"nginx.ingress.kubernetes.io/session-cookie-max-age"`
+	SessionCookieExpires  *int    `annotation:"nginx.ingress.kubernetes.io/session-cookie-expires"`
 
 	ServiceUpstream *bool `annotation:"nginx.ingress.kubernetes.io/service-upstream"`
 
@@ -49,12 +56,17 @@ type ingressConfig struct {
 	CORSAllowMethods           *[]string `annotation:"nginx.ingress.kubernetes.io/cors-allow-methods"`
 	CORSAllowOrigin            *[]string `annotation:"nginx.ingress.kubernetes.io/cors-allow-origin"`
 	CORSMaxAge                 *int      `annotation:"nginx.ingress.kubernetes.io/cors-max-age"`
+
+	WhitelistSourceRange *string `annotation:"nginx.ingress.kubernetes.io/whitelist-source-range"`
+
+	CustomHeaders *string `annotation:"nginx.ingress.kubernetes.io/custom-headers"`
+	UpstreamVhost *string `annotation:"nginx.ingress.kubernetes.io/upstream-vhost"`
 }
 
 // parseIngressConfig parses the annotations from an Ingress object into an ingressConfig struct.
 func parseIngressConfig(ing *netv1.Ingress) (ingressConfig, error) {
 	cfg := ingressConfig{}
-	cfgType := reflect.TypeOf(cfg)
+	cfgType := reflect.TypeFor[ingressConfig]()
 	cfgValue := reflect.ValueOf(&cfg).Elem()
 
 	for i := range cfgType.NumField() {
@@ -86,8 +98,7 @@ func parseIngressConfig(ing *netv1.Ingress) (ingressConfig, error) {
 			if field.Type.Elem().Elem().Kind() == reflect.String {
 				// Handle slice of strings
 				var slice []string
-				elements := strings.Split(val, ",")
-				for _, elt := range elements {
+				for elt := range strings.SplitSeq(val, ",") {
 					slice = append(slice, strings.TrimSpace(elt))
 				}
 				cfgValue.Field(i).Set(reflect.ValueOf(&slice))

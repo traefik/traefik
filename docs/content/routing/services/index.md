@@ -255,7 +255,7 @@ HighestRandomWeight, also called RendezVous hashing allows to loadbalance client
       services:
         my-service:
           loadBalancer:
-            type: hrw
+            strategy: hrw
             servers:
             - url: "http://private-ip-server-1/"
             - url: "http://private-ip-server-2/"
@@ -800,6 +800,129 @@ data:
   ca.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
 ```
 
+#### `cipherSuites`
+
+_Optional_
+
+`cipherSuites` defines the cipher suites to use when contacting backend servers.
+
+This option allows you to control the cryptographic algorithms used for backend connections, which is useful for:
+
+- Connecting to legacy backends that only support specific cipher suites
+- Enforcing security policies (e.g., requiring Perfect Forward Secrecy)
+- Meeting compliance requirements
+
+If not specified, Go's default cipher suites are used.
+
+```yaml tab="File (YAML)"
+## Dynamic configuration
+http:
+  serversTransports:
+    mytransport:
+      cipherSuites: 
+        - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+        - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+```
+
+```toml tab="File (TOML)"
+## Dynamic configuration
+[http.serversTransports.mytransport]
+  cipherSuites = ["TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256","TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384"]
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: ServersTransport
+metadata:
+  name: mytransport
+  namespace: default
+spec:
+  cipherSuites: 
+    - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+    - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+```
+
+#### `minVersion`
+
+_Optional_
+
+`minVersion` defines the minimum TLS version to use when contacting backend servers.
+
+Use this option to enforce a minimum security level for backend connections.
+
+!!! info "Valid Values"
+    - `VersionTLS10` (discouraged - deprecated and insecure)
+    - `VersionTLS11` (discouraged - deprecated and insecure)
+    - `VersionTLS12` (recommended minimum)
+    - `VersionTLS13` (most secure)
+
+If not specified, Go's default minimum version is used.
+
+```yaml tab="File (YAML)"
+## Dynamic configuration
+http:
+  serversTransports:
+    mytransport:
+      minVersion: VersionTLS12
+```
+
+```toml tab="File (TOML)"
+## Dynamic configuration
+[http.serversTransports.mytransport]
+  minVersion = "VersionTLS12"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: ServersTransport
+metadata:
+  name: mytransport
+  namespace: default
+spec:
+  minVersion: VersionTLS12
+```
+
+#### `maxVersion`
+
+_Optional_
+
+`maxVersion` defines the maximum TLS version to use when contacting backend servers.
+
+!!! warning "Use with Caution"
+    We discourage using this option to disable TLS 1.3. It should only be used for connecting to legacy backends that don't support newer TLS versions.
+
+!!! info "Valid Values"
+    - `VersionTLS10`
+    - `VersionTLS11`
+    - `VersionTLS12`
+    - `VersionTLS13`
+
+If not specified, Go's default maximum version (latest) is used.
+
+```yaml tab="File (YAML)"
+## Dynamic configuration
+http:
+  serversTransports:
+    mytransport:
+      maxVersion: VersionTLS12
+```
+
+```toml tab="File (TOML)"
+## Dynamic configuration
+[http.serversTransports.mytransport]
+  maxVersion = "VersionTLS12"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: ServersTransport
+metadata:
+  name: mytransport
+  namespace: default
+spec:
+  maxVersion: VersionTLS12
+```
+
 #### `maxIdleConnsPerHost`
 
 _Optional, Default=2_
@@ -1306,13 +1429,13 @@ http:
 
     appv1:
       loadBalancer:
-        type: hrw
+        strategy: hrw
         servers:
         - url: "http://private-ip-server-1/"
 
     appv2:
       loadBalancer:
-        type: hrw
+        strategy: hrw
         servers:
         - url: "http://private-ip-server-2/"
 ```
@@ -1330,13 +1453,13 @@ http:
 
   [http.services.appv1]
     [http.services.appv1.loadBalancer]
-      type = "hrw"
+      strategy = "hrw"
       [[http.services.appv1.loadBalancer.servers]]
         url = "http://private-ip-server-1/"
 
   [http.services.appv2]
     [http.services.appv2.loadBalancer]
-      type = "hrw"
+      strategy = "hrw"
       [[http.services.appv2.loadBalancer.servers]]
         url = "http://private-ip-server-2/"
 ```
@@ -1371,7 +1494,7 @@ http:
 
     appv1:
       loadBalancer:
-        type: hrw
+        strategy: hrw
         healthCheck:
           path: /status
           interval: 10s
@@ -1381,7 +1504,7 @@ http:
 
     appv2:
       loadBalancer:
-        type: hrw
+        strategy: hrw
         healthCheck:
           path: /status
           interval: 10s
@@ -1404,7 +1527,7 @@ http:
 
   [http.services.appv1]
     [http.services.appv1.loadBalancer]
-      type="hrw"
+      strategy="hrw"
       [http.services.appv1.loadBalancer.healthCheck]
         path = "/health"
         interval = "10s"
@@ -1414,7 +1537,7 @@ http:
 
   [http.services.appv2]
     [http.services.appv2.loadBalancer]
-      type="hrw"
+      strategy="hrw"
       [http.services.appv2.loadBalancer.healthCheck]
         path = "/health"
         interval = "10s"
@@ -2395,4 +2518,4 @@ udp:
         address = "private-ip-server-2:8080/"
 ```
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

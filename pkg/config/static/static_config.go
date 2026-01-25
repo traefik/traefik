@@ -112,8 +112,9 @@ type CertificateResolver struct {
 
 // Global holds the global configuration.
 type Global struct {
-	CheckNewVersion    bool `description:"Periodically check if a new version has been released." json:"checkNewVersion,omitempty" toml:"checkNewVersion,omitempty" yaml:"checkNewVersion,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
-	SendAnonymousUsage bool `description:"Periodically send anonymous usage statistics. If the option is not specified, it will be disabled by default." json:"sendAnonymousUsage,omitempty" toml:"sendAnonymousUsage,omitempty" yaml:"sendAnonymousUsage,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	CheckNewVersion        bool `description:"Periodically check if a new version has been released." json:"checkNewVersion,omitempty" toml:"checkNewVersion,omitempty" yaml:"checkNewVersion,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	SendAnonymousUsage     bool `description:"Periodically send anonymous usage statistics. If the option is not specified, it will be disabled by default." json:"sendAnonymousUsage,omitempty" toml:"sendAnonymousUsage,omitempty" yaml:"sendAnonymousUsage,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	NotAppendXForwardedFor bool `description:"Disable appending RemoteAddr to X-Forwarded-For header. Defaults to false (appending is enabled)." json:"notAppendXForwardedFor,omitempty" toml:"notAppendXForwardedFor,omitempty" yaml:"notAppendXForwardedFor,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 }
 
 // ServersTransport options to configure communication between Traefik and the servers.
@@ -158,6 +159,7 @@ type API struct {
 	Dashboard          bool   `description:"Activate dashboard." json:"dashboard,omitempty" toml:"dashboard,omitempty" yaml:"dashboard,omitempty" export:"true"`
 	Debug              bool   `description:"Enable additional endpoints for debugging and profiling." json:"debug,omitempty" toml:"debug,omitempty" yaml:"debug,omitempty" export:"true"`
 	DisableDashboardAd bool   `description:"Disable ad in the dashboard." json:"disableDashboardAd,omitempty" toml:"disableDashboardAd,omitempty" yaml:"disableDashboardAd,omitempty" export:"true"`
+	DashboardName      string `description:"Custom name for the dashboard." json:"dashboardName,omitempty" toml:"dashboardName,omitempty" yaml:"dashboardName,omitempty" export:"true"`
 	// TODO: Re-enable statistics
 	// Statistics      *types.Statistics `description:"Enable more detailed statistics." json:"statistics,omitempty" toml:"statistics,omitempty" yaml:"statistics,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 }
@@ -166,6 +168,7 @@ type API struct {
 func (a *API) SetDefaults() {
 	a.BasePath = "/"
 	a.Dashboard = true
+	a.DashboardName = ""
 }
 
 // RespondingTimeouts contains timeout configurations for incoming requests to the Traefik instance.
@@ -314,6 +317,18 @@ func (c *Configuration) SetEffectiveConfiguration() {
 		c.Providers.KubernetesGateway.EntryPoints = entryPoints
 	}
 
+	// Configure Ingress NGINX provider.
+	if c.Providers.KubernetesIngressNGINX != nil {
+		var nonTLSEntryPoints []string
+		for epName, entryPoint := range c.EntryPoints {
+			if entryPoint.HTTP.TLS == nil {
+				nonTLSEntryPoints = append(nonTLSEntryPoints, epName)
+			}
+		}
+
+		c.Providers.KubernetesIngressNGINX.NonTLSEntryPoints = nonTLSEntryPoints
+	}
+
 	// Defines the default rule syntax for the Kubernetes Ingress Provider.
 	// This allows the provider to adapt the matcher syntax to the desired rule syntax version.
 	if c.Core != nil && c.Providers.KubernetesIngress != nil {
@@ -381,21 +396,6 @@ func (c *Configuration) SetEffectiveConfiguration() {
 	c.initACMEProvider()
 }
 
-func (c *Configuration) hasUserDefinedEntrypoint() bool {
-	return len(c.EntryPoints) != 0
-}
-
-func (c *Configuration) initACMEProvider() {
-	for _, resolver := range c.CertificatesResolvers {
-		if resolver.ACME != nil {
-			resolver.ACME.CAServer = getSafeACMECAServer(resolver.ACME.CAServer)
-		}
-	}
-
-	logger := logs.NoLevel(log.Logger, zerolog.DebugLevel).With().Str("lib", "lego").Logger()
-	legolog.Logger = logs.NewLogrusWrapper(logger)
-}
-
 // ValidateConfiguration validate that configuration is coherent.
 func (c *Configuration) ValidateConfiguration() error {
 	for name, resolver := range c.CertificatesResolvers {
@@ -424,10 +424,6 @@ func (c *Configuration) ValidateConfiguration() error {
 	}
 
 	if c.Providers != nil && c.Providers.KubernetesIngressNGINX != nil {
-		if c.Experimental == nil || !c.Experimental.KubernetesIngressNGINX {
-			return errors.New("the experimental KubernetesIngressNGINX feature must be enabled to use the KubernetesIngressNGINX provider")
-		}
-
 		if c.Providers.KubernetesIngressNGINX.WatchNamespace != "" && c.Providers.KubernetesIngressNGINX.WatchNamespaceSelector != "" {
 			return errors.New("watchNamespace and watchNamespaceSelector options are mutually exclusive")
 		}
@@ -484,6 +480,21 @@ func (c *Configuration) ValidateConfiguration() error {
 	}
 
 	return nil
+}
+
+func (c *Configuration) hasUserDefinedEntrypoint() bool {
+	return len(c.EntryPoints) != 0
+}
+
+func (c *Configuration) initACMEProvider() {
+	for _, resolver := range c.CertificatesResolvers {
+		if resolver.ACME != nil {
+			resolver.ACME.CAServer = getSafeACMECAServer(resolver.ACME.CAServer)
+		}
+	}
+
+	logger := logs.NoLevel(log.Logger, zerolog.DebugLevel).With().Str("lib", "lego").Logger()
+	legolog.Logger = logs.NewLogrusWrapper(logger)
 }
 
 func getSafeACMECAServer(caServerSrc string) string {

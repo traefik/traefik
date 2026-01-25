@@ -31,4 +31,4 @@ The experience of implementing a Traefik plugin is comparable to writing a web b
 
 To learn more about Traefik plugin creation, please refer to the [developer documentation](https://plugins.traefik.io/create).
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

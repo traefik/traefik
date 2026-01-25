@@ -9,13 +9,15 @@ import (
 
 // IngressRouteTCPSpec defines the desired state of IngressRouteTCP.
 type IngressRouteTCPSpec struct {
-	// Routes defines the list of routes.
-	Routes []RouteTCP `json:"routes"`
+	// IngressClassName defines the name of the IngressClass cluster resource.
+	IngressClassName *string `json:"ingressClassName,omitempty"`
 	// EntryPoints defines the list of entry point names to bind to.
 	// Entry points have to be configured in the static configuration.
 	// More info: https://doc.traefik.io/traefik/v3.6/reference/install-configuration/entrypoints/
 	// Default: all.
 	EntryPoints []string `json:"entryPoints,omitempty"`
+	// Routes defines the list of routes.
+	Routes []RouteTCP `json:"routes"`
 	// TLS defines the TLS configuration on a layer 4 / TCP Route.
 	// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/tcp/routing/router/#tls
 	TLS *TLSTCP `json:"tls,omitempty"`
@@ -33,6 +35,7 @@ type RouteTCP struct {
 	// Syntax defines the router's rule syntax.
 	// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/tcp/routing/rules-and-priority/#rulesyntax
 	// +kubebuilder:validation:Enum=v3;v2
+	//
 	// Deprecated: Please do not use this field and rewrite the router rules to use the v3 syntax.
 	Syntax string `json:"syntax,omitempty"`
 	// Services defines the list of TCP services.
@@ -82,10 +85,12 @@ type ServiceTCP struct {
 	// hence fully terminating the connection.
 	// It is a duration in milliseconds, defaulting to 100.
 	// A negative value means an infinite deadline (i.e. the reading capability is never closed).
+	//
 	// Deprecated: TerminationDelay will not be supported in future APIVersions, please use ServersTransport to configure the TerminationDelay instead.
 	TerminationDelay *int `json:"terminationDelay,omitempty"`
 	// ProxyProtocol defines the PROXY protocol configuration.
 	// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/tcp/service/#proxy-protocol
+	//
 	// Deprecated: ProxyProtocol will not be supported in future APIVersions, please use ServersTransport to configure ProxyProtocol instead.
 	ProxyProtocol *dynamic.ProxyProtocol `json:"proxyProtocol,omitempty"`
 	// ServersTransport defines the name of ServersTransportTCP resource to use.

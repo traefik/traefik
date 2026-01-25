@@ -417,6 +417,7 @@ func (e *TCPEntryPoint) SwitchRouter(rt *tcprouter.Router) {
 // connection type that was found to satisfy WriteCloser.
 type writeCloserWrapper struct {
 	net.Conn
+
 	writeCloser tcp.WriteCloser
 }
 
@@ -585,23 +586,6 @@ func (c *connectionTracker) RemoveConnection(conn net.Conn) {
 	c.connsMu.Unlock()
 }
 
-// syncOpenConnectionGauge updates openConnectionsGauge value with the conns map length.
-func (c *connectionTracker) syncOpenConnectionGauge() {
-	if c.openConnectionsGauge == nil {
-		return
-	}
-
-	c.connsMu.RLock()
-	c.openConnectionsGauge.Set(float64(len(c.conns)))
-	c.connsMu.RUnlock()
-}
-
-func (c *connectionTracker) isEmpty() bool {
-	c.connsMu.RLock()
-	defer c.connsMu.RUnlock()
-	return len(c.conns) == 0
-}
-
 // Shutdown wait for the connection closing.
 func (c *connectionTracker) Shutdown(ctx context.Context) error {
 	ticker := time.NewTicker(500 * time.Millisecond)
@@ -628,6 +612,23 @@ func (c *connectionTracker) Close() {
 		}
 		delete(c.conns, conn)
 	}
+}
+
+// syncOpenConnectionGauge updates openConnectionsGauge value with the conns map length.
+func (c *connectionTracker) syncOpenConnectionGauge() {
+	if c.openConnectionsGauge == nil {
+		return
+	}
+
+	c.connsMu.RLock()
+	c.openConnectionsGauge.Set(float64(len(c.conns)))
+	c.connsMu.RUnlock()
+}
+
+func (c *connectionTracker) isEmpty() bool {
+	c.connsMu.RLock()
+	defer c.connsMu.RUnlock()
+	return len(c.conns) == 0
 }
 
 type stoppable interface {
@@ -669,6 +670,7 @@ func newHTTPServer(ctx context.Context, ln net.Listener, configuration *static.E
 		configuration.ForwardedHeaders.Insecure,
 		configuration.ForwardedHeaders.TrustedIPs,
 		configuration.ForwardedHeaders.Connection,
+		configuration.ForwardedHeaders.NotAppendXForwardedFor,
 		next)
 	if err != nil {
 		return nil, err
@@ -777,13 +779,32 @@ func newTrackedConnection(conn tcp.WriteCloser, tracker *connectionTracker) *tra
 }
 
 type trackedConnection struct {
-	tracker *connectionTracker
 	tcp.WriteCloser
+
+	tracker *connectionTracker
 }
 
 func (t *trackedConnection) Close() error {
 	t.tracker.RemoveConnection(t.WriteCloser)
 	return t.WriteCloser.Close()
+}
+
+// denyFragment rejects the request if the URL path contains a fragment (hash character).
+// When go receives an HTTP request, it assumes the absence of fragment URL.
+// However, it is still possible to send a fragment in the request.
+// In this case, Traefik will encode the '#' character, altering the request's intended meaning.
+// To avoid this behavior, the following function rejects requests that include a fragment in the URL.
+func denyFragment(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		if strings.Contains(req.URL.RawPath, "#") {
+			log.Debug().Msgf("Rejecting request because it contains a fragment in the URL path: %s", req.URL.RawPath)
+			rw.WriteHeader(http.StatusBadRequest)
+
+			return
+		}
+
+		h.ServeHTTP(rw, req)
+	})
 }
 
 // contextualWriteCloser wraps a WriteCloser and cancels context on Close().
@@ -817,23 +838,6 @@ func encodeQuerySemicolons(h http.Handler) http.Handler {
 		} else {
 			h.ServeHTTP(rw, req)
 		}
-	})
-}
-
-// When go receives an HTTP request, it assumes the absence of fragment URL.
-// However, it is still possible to send a fragment in the request.
-// In this case, Traefik will encode the '#' character, altering the request's intended meaning.
-// To avoid this behavior, the following function rejects requests that include a fragment in the URL.
-func denyFragment(h http.Handler) http.Handler {
-	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		if strings.Contains(req.URL.RawPath, "#") {
-			log.Debug().Msgf("Rejecting request because it contains a fragment in the URL path: %s", req.URL.RawPath)
-			rw.WriteHeader(http.StatusBadRequest)
-
-			return
-		}
-
-		h.ServeHTTP(rw, req)
 	})
 }
 
