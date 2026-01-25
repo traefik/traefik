@@ -309,7 +309,7 @@ func (r *Router) acmeTLSALPNHandler() tcp.Handler {
 		return &brokenTLSRouter{}
 	}
 
-	return tcp.HandlerFunc(func(conn tcp.WriteCloser) {
+	return tcp.HandlerFunc(func(_ context.Context, conn tcp.WriteCloser) {
 		tlsConn := tls.Server(conn, r.httpsTLSConfig)
 		defer tlsConn.Close()
 
@@ -330,7 +330,7 @@ func (r *Router) acmeTLSALPNHandler() tcp.Handler {
 type brokenTLSRouter struct{}
 
 // ServeTCP instantly closes the connection.
-func (t *brokenTLSRouter) ServeTCP(conn tcp.WriteCloser) {
+func (t *brokenTLSRouter) ServeTCP(_ context.Context, conn tcp.WriteCloser) {
 	_ = conn.Close()
 }
 
