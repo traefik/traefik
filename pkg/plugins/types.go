@@ -42,17 +42,17 @@ type LocalDescriptor struct {
 
 // Manifest The plugin manifest.
 type Manifest struct {
-	DisplayName   string                 `yaml:"displayName"`
-	Type          string                 `yaml:"type"`
-	Runtime       string                 `yaml:"runtime"`
-	WasmPath      string                 `yaml:"wasmPath"`
-	Import        string                 `yaml:"import"`
-	BasePkg       string                 `yaml:"basePkg"`
-	Compatibility string                 `yaml:"compatibility"`
-	Summary       string                 `yaml:"summary"`
-	UseUnsafe     bool                   `yaml:"useUnsafe"`
-	TestData      map[string]interface{} `yaml:"testData"`
-	SupportsTCP   bool                   `yaml:"supportsTCP,omitempty"`
+	DisplayName   string         `yaml:"displayName"`
+	Type          string         `yaml:"type"`
+	Runtime       string         `yaml:"runtime"`
+	WasmPath      string         `yaml:"wasmPath"`
+	Import        string         `yaml:"import"`
+	BasePkg       string         `yaml:"basePkg"`
+	Compatibility string         `yaml:"compatibility"`
+	Summary       string         `yaml:"summary"`
+	UseUnsafe     bool           `yaml:"useUnsafe"`
+	TestData      map[string]any `yaml:"testData"`
+	SupportsTCP   bool           `yaml:"supportsTCP,omitempty"`
 }
 
 // IsYaegiPlugin returns true if the plugin is a Yaegi plugin.
