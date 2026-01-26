@@ -62,11 +62,11 @@ func Test_parseIngressConfig(t *testing.T) {
 			desc: "auth-signin annotation",
 			annotations: map[string]string{
 				"nginx.ingress.kubernetes.io/auth-url":    "http://auth.example.com/verify",
-				"nginx.ingress.kubernetes.io/auth-signin": "https://auth.example.com/oauth2/start?rd=$escaped_request_uri",
+				"nginx.ingress.kubernetes.io/auth-signin": "https://auth.example.com/oauth2/start?rd=foo",
 			},
 			expected: ingressConfig{
 				AuthURL:    ptr.To("http://auth.example.com/verify"),
-				AuthSignin: ptr.To("https://auth.example.com/oauth2/start?rd=$escaped_request_uri"),
+				AuthSignin: ptr.To("https://auth.example.com/oauth2/start?rd=foo"),
 			},
 		},
 	}

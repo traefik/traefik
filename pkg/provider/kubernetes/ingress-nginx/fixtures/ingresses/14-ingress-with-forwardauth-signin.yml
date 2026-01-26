@@ -6,7 +6,7 @@ metadata:
   namespace: default
   annotations:
     nginx.ingress.kubernetes.io/auth-url: "http://whoami.default.svc/"
-    nginx.ingress.kubernetes.io/auth-signin: "https://auth.example.com/oauth2/start?rd=$escaped_request_uri"
+    nginx.ingress.kubernetes.io/auth-signin: "https://auth.example.com/oauth2/start?rd=foo"
     nginx.ingress.kubernetes.io/auth-response-headers: "X-Foo"
 
 spec:
