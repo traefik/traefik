@@ -59,6 +59,7 @@ type forwardAuth struct {
 	maxBodySize              int64
 	preserveLocationHeader   bool
 	preserveRequestMethod    bool
+	authSigninURL            string
 }
 
 // NewForward creates a forward auth middleware.
@@ -84,6 +85,7 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 		maxBodySize:              dynamic.ForwardAuthDefaultMaxBodySize,
 		preserveLocationHeader:   config.PreserveLocationHeader,
 		preserveRequestMethod:    config.PreserveRequestMethod,
+		authSigninURL:            config.AuthSigninURL,
 	}
 
 	if config.MaxBodySize != nil {
@@ -230,6 +232,15 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 				logData.Core[accesslog.ClientUsername] = elems[0]
 			}
 		}
+	}
+
+	// If auth server returns 401 and AuthSigninURL is configured, redirect to signin URL.
+	if fa.authSigninURL != "" && forwardResponse.StatusCode == http.StatusUnauthorized {
+		logger.Debug().Msgf("Redirecting to signin URL: %s", fa.authSigninURL)
+
+		tracer.CaptureResponse(forwardSpan, forwardResponse.Header, http.StatusFound, trace.SpanKindClient)
+		http.Redirect(rw, req, fa.authSigninURL, http.StatusFound)
+		return
 	}
 
 	// Pass the forward response's body and selected headers if it
