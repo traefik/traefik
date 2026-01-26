@@ -913,15 +913,15 @@ func applyRewriteTargetConfiguration(rulePath, routerName string, ingressConfig 
 }
 
 func applyAppRootConfiguration(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
-	if ingressConfig.AppRoot == nil {
+	if ingressConfig.AppRoot == nil || !strings.HasPrefix(*ingressConfig.AppRoot, "/") {
 		return
 	}
 
 	appRootMiddlewareName := routerName + "-app-root"
 	conf.HTTP.Middlewares[appRootMiddlewareName] = &dynamic.Middleware{
 		RedirectRegex: &dynamic.RedirectRegex{
-			Regex:       `\/$`,
-			Replacement: *ingressConfig.AppRoot,
+			Regex:       `^(https?://[^/]+)(/)$`,
+			Replacement: "$1" + *ingressConfig.AppRoot,
 		},
 	}
 
