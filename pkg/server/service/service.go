@@ -25,6 +25,7 @@ import (
 	"github.com/traefik/traefik/v2/pkg/safe"
 	"github.com/traefik/traefik/v2/pkg/server/cookie"
 	"github.com/traefik/traefik/v2/pkg/server/provider"
+	"github.com/traefik/traefik/v2/pkg/server/recursion"
 	"github.com/traefik/traefik/v2/pkg/server/service/loadbalancer/failover"
 	"github.com/traefik/traefik/v2/pkg/server/service/loadbalancer/mirror"
 	"github.com/traefik/traefik/v2/pkg/server/service/loadbalancer/wrr"
@@ -114,6 +115,12 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string) (http.H
 		err := errors.New("cannot create service: multi-types service not supported, consider declaring two different pieces of service instead")
 		conf.AddError(err, true)
 		return nil, err
+	}
+
+	var errRecursion error
+	if ctx, errRecursion = recursion.CheckRecursion(ctx, "service", serviceName); errRecursion != nil {
+		conf.AddError(errRecursion, true)
+		return nil, errRecursion
 	}
 
 	var lb http.Handler

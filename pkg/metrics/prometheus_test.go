@@ -451,13 +451,13 @@ func TestPrometheusMetricRemoval(t *testing.T) {
 				th.WithRouter("foo@providerName", th.WithServiceName("bar")),
 				th.WithRouter("router2", th.WithServiceName("bar@providerName")),
 			),
-			th.WithLoadBalancerServices(
-				th.WithService("bar@providerName", th.WithServers(
+			th.WithServices(
+				th.WithService("bar@providerName", th.WithServiceServersLoadBalancer(th.WithServers(
 					th.WithServer("http://localhost:9000"),
 					th.WithServer("http://localhost:9999"),
 					th.WithServer("http://localhost:9998"),
-				)),
-				th.WithService("service1", th.WithServers(th.WithServer("http://localhost:9000"))),
+				))),
+				th.WithService("service1", th.WithServiceServersLoadBalancer(th.WithServers(th.WithServer("http://localhost:9000")))),
 			),
 		),
 	}
@@ -467,8 +467,8 @@ func TestPrometheusMetricRemoval(t *testing.T) {
 			th.WithRouters(
 				th.WithRouter("foo@providerName", th.WithServiceName("bar")),
 			),
-			th.WithLoadBalancerServices(
-				th.WithService("bar@providerName", th.WithServers(th.WithServer("http://localhost:9000"))),
+			th.WithServices(
+				th.WithService("bar@providerName", th.WithServiceServersLoadBalancer(th.WithServers(th.WithServer("http://localhost:9000")))),
 			),
 		),
 	}
@@ -538,8 +538,8 @@ func TestPrometheusMetricRemoveEndpointForRecoveredService(t *testing.T) {
 
 	conf1 := dynamic.Configuration{
 		HTTP: th.BuildConfiguration(
-			th.WithLoadBalancerServices(
-				th.WithService("service1", th.WithServers(th.WithServer("http://localhost:9000"))),
+			th.WithServices(
+				th.WithService("service1", th.WithServiceServersLoadBalancer(th.WithServers(th.WithServer("http://localhost:9000")))),
 			),
 		),
 	}
@@ -550,8 +550,8 @@ func TestPrometheusMetricRemoveEndpointForRecoveredService(t *testing.T) {
 
 	conf3 := dynamic.Configuration{
 		HTTP: th.BuildConfiguration(
-			th.WithLoadBalancerServices(
-				th.WithService("service1", th.WithServers(th.WithServer("http://localhost:9001"))),
+			th.WithServices(
+				th.WithService("service1", th.WithServiceServersLoadBalancer(th.WithServers(th.WithServer("http://localhost:9001")))),
 			),
 		),
 	}
@@ -577,8 +577,8 @@ func TestPrometheusRemovedMetricsReset(t *testing.T) {
 
 	conf1 := dynamic.Configuration{
 		HTTP: th.BuildConfiguration(
-			th.WithLoadBalancerServices(th.WithService("service",
-				th.WithServers(th.WithServer("http://localhost:9000"))),
+			th.WithServices(
+				th.WithService("service", th.WithServiceServersLoadBalancer(th.WithServers(th.WithServer("http://localhost:9000")))),
 			),
 		),
 	}
