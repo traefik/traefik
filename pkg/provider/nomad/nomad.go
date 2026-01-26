@@ -47,6 +47,7 @@ type item struct {
 	Tags       []string // service tags
 
 	ExtraConf configuration // global options
+	Healthy   bool
 }
 
 // configuration contains information from the service's tags that are globals
@@ -61,6 +62,12 @@ type ProviderBuilder struct {
 	Configuration `yaml:",inline" export:"true"`
 
 	Namespaces []string `description:"Sets the Nomad namespaces used to discover services." json:"namespaces,omitempty" toml:"namespaces,omitempty" yaml:"namespaces,omitempty"`
+}
+
+// serviceWithHealth holds a service registration along with its health status.
+type serviceWithHealth struct {
+	Service *api.ServiceRegistration
+	Healthy bool
 }
 
 // BuildProviders builds Nomad provider instances for the given namespaces configuration.
@@ -96,6 +103,7 @@ type Configuration struct {
 	AllowEmptyServices bool            `description:"Allow the creation of services without endpoints." json:"allowEmptyServices,omitempty" toml:"allowEmptyServices,omitempty" yaml:"allowEmptyServices,omitempty" export:"true"`
 	Watch              bool            `description:"Watch Nomad Service events." json:"watch,omitempty" toml:"watch,omitempty" yaml:"watch,omitempty" export:"true"`
 	ThrottleDuration   ptypes.Duration `description:"Watch throttle duration." json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
+	DisableHealthCheck bool            `description:"Disable health check filtering. Enable this for Nomad < 1.4 or for better performance." json:"disableHealthCheck,omitempty" toml:"disableHealthCheck,omitempty" yaml:"disableHealthCheck,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values for the Nomad Traefik Provider Configuration.
@@ -344,6 +352,13 @@ func (p *Provider) getNomadServiceData(ctx context.Context) ([]item, error) {
 		return nil, err
 	}
 
+	// Fetch all allocations once for health checking
+	allocMap, err := p.fetchAllAllocations(ctx)
+	if err != nil {
+		log.Ctx(ctx).Warn().Err(err).Msg("Failed to fetch allocations for health filtering, all services will be marked as healthy")
+		allocMap = nil // Will mark all services as healthy
+	}
+
 	var items []item
 
 	for _, stub := range stubs {
@@ -367,22 +382,23 @@ func (p *Provider) getNomadServiceData(ctx context.Context) ([]item, error) {
 				continue
 			}
 
-			instances, err := p.fetchService(ctx, service.ServiceName)
+			instances, err := p.fetchService(ctx, service.ServiceName, allocMap)
 			if err != nil {
 				return nil, err
 			}
 
 			for _, i := range instances {
 				items = append(items, item{
-					ID:         i.ID,
-					Name:       i.ServiceName,
-					Namespace:  i.Namespace,
-					Node:       i.NodeID,
-					Datacenter: i.Datacenter,
-					Address:    i.Address,
-					Port:       i.Port,
-					Tags:       i.Tags,
-					ExtraConf:  p.getExtraConf(i.Tags),
+					ID:         i.Service.ID,
+					Name:       i.Service.ServiceName,
+					Namespace:  i.Service.Namespace,
+					Node:       i.Service.NodeID,
+					Datacenter: i.Service.Datacenter,
+					Address:    i.Service.Address,
+					Port:       i.Service.Port,
+					Tags:       i.Service.Tags,
+					ExtraConf:  p.getExtraConf(i.Service.Tags),
+					Healthy:    i.Healthy,
 				})
 			}
 		}
@@ -398,6 +414,13 @@ func (p *Provider) getNomadServiceDataWithEmptyServices(ctx context.Context) ([]
 	jobStubs, _, err := p.client.Jobs().List(jobsOpts)
 	if err != nil {
 		return nil, err
+	}
+
+	// Fetch all allocations once for health checking
+	allocMap, err := p.fetchAllAllocations(ctx)
+	if err != nil {
+		log.Ctx(ctx).Warn().Err(err).Msg("Failed to fetch allocations for health filtering, all services will be marked as healthy")
+		allocMap = nil
 	}
 
 	var items []item
@@ -443,7 +466,6 @@ func (p *Provider) getNomadServiceDataWithEmptyServices(ctx context.Context) ([]
 				}
 
 				if nil != taskGroup.Scaling && *taskGroup.Scaling.Enabled && *taskGroup.Count == 0 {
-					// Add items without address
 					items = append(items, item{
 						// Create a unique id for non registered services
 						ID:         fmt.Sprintf("%s-%s-%s-%s-%s", *job.Namespace, *job.Name, *taskGroup.Name, service.TaskName, service.Name),
@@ -455,24 +477,26 @@ func (p *Provider) getNomadServiceDataWithEmptyServices(ctx context.Context) ([]
 						Port:       -1,
 						Tags:       service.Tags,
 						ExtraConf:  p.getExtraConf(service.Tags),
+						Healthy:    true,
 					})
 				} else {
-					instances, err := p.fetchService(ctx, service.Name)
+					instances, err := p.fetchService(ctx, service.Name, allocMap)
 					if err != nil {
 						return nil, err
 					}
 
 					for _, i := range instances {
 						items = append(items, item{
-							ID:         i.ID,
-							Name:       i.ServiceName,
-							Namespace:  i.Namespace,
-							Node:       i.NodeID,
-							Datacenter: i.Datacenter,
-							Address:    i.Address,
-							Port:       i.Port,
-							Tags:       i.Tags,
-							ExtraConf:  p.getExtraConf(i.Tags),
+							ID:         i.Service.ID,
+							Name:       i.Service.ServiceName,
+							Namespace:  i.Service.Namespace,
+							Node:       i.Service.NodeID,
+							Datacenter: i.Service.Datacenter,
+							Address:    i.Service.Address,
+							Port:       i.Service.Port,
+							Tags:       i.Service.Tags,
+							ExtraConf:  p.getExtraConf(i.Service.Tags),
+							Healthy:    i.Healthy,
 						})
 					}
 				}
@@ -481,6 +505,28 @@ func (p *Provider) getNomadServiceDataWithEmptyServices(ctx context.Context) ([]
 	}
 
 	return items, nil
+}
+
+// fetchAllAllocations fetches all allocations from Nomad API once.
+func (p *Provider) fetchAllAllocations(ctx context.Context) (map[string]*api.AllocationListStub, error) {
+	if p.DisableHealthCheck {
+		return nil, nil
+	}
+
+	opts := &api.QueryOptions{AllowStale: p.Stale}
+	opts = opts.WithContext(ctx)
+
+	allocs, _, err := p.client.Allocations().List(opts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch allocations: %w", err)
+	}
+
+	allocMap := make(map[string]*api.AllocationListStub, len(allocs))
+	for _, alloc := range allocs {
+		allocMap[alloc.ID] = alloc
+	}
+
+	return allocMap, nil
 }
 
 // getExtraConf returns a configuration with settings which are not part of the dynamic configuration (e.g. "<prefix>.enable").
@@ -502,15 +548,12 @@ func (p *Provider) getExtraConf(tags []string) configuration {
 
 // fetchService queries Nomad API for services matching name,
 // that also have the  <prefix>.enable=true set in its tags.
-func (p *Provider) fetchService(ctx context.Context, name string) ([]*api.ServiceRegistration, error) {
+func (p *Provider) fetchService(ctx context.Context, name string, allocMap map[string]*api.AllocationListStub) ([]serviceWithHealth, error) {
 	var tagFilter string
 	if !p.ExposedByDefault {
 		tagFilter = fmt.Sprintf(`Tags contains %q`, fmt.Sprintf("%s.enable=true", p.Prefix))
 	}
 
-	// TODO: Nomad currently (v1.3.0) does not support health checks,
-	//  and as such does not yet return health status information.
-	//  When it does, refactor this section to include health status.
 	opts := &api.QueryOptions{AllowStale: p.Stale, Filter: tagFilter}
 	opts = opts.WithContext(ctx)
 
@@ -519,40 +562,60 @@ func (p *Provider) fetchService(ctx context.Context, name string) ([]*api.Servic
 		return nil, fmt.Errorf("failed to fetch services: %w", err)
 	}
 
-	var healthyServices []*api.ServiceRegistration
-	for _, service := range services {
-		if service.AllocID == "" {
-			continue
+	// If health check is disabled or allocMap is nil, mark all services as healthy
+	if p.DisableHealthCheck || allocMap == nil {
+		result := make([]serviceWithHealth, 0, len(services))
+		for _, svc := range services {
+			result = append(result, serviceWithHealth{Service: svc, Healthy: true})
 		}
-		alloc, _, err := p.client.Allocations().Info(service.AllocID, &api.QueryOptions{AllowStale: true})
-		if err != nil {
-			continue
-		}
-		if alloc.ClientStatus != "running" {
-			continue
-		}
-		if alloc.DeploymentStatus != nil {
-			if alloc.DeploymentStatus.Healthy != nil && !*alloc.DeploymentStatus.Healthy {
-				continue
-			}
-		}
-
-		allTasksRunning := true
-		if alloc.TaskStates != nil {
-			for _, taskState := range alloc.TaskStates {
-				if taskState.State != "running" {
-					allTasksRunning = false
-					break
-				}
-			}
-		}
-
-		if !allTasksRunning {
-			continue
-		}
-		healthyServices = append(healthyServices, service)
+		return result, nil
 	}
-	return healthyServices, nil
+
+	result := make([]serviceWithHealth, 0, len(services))
+	for _, service := range services {
+		healthy := p.isServiceHealthy(ctx, service, allocMap, name)
+		result = append(result, serviceWithHealth{Service: service, Healthy: healthy})
+	}
+
+	return result, nil
+}
+
+func (p *Provider) isServiceHealthy(ctx context.Context, service *api.ServiceRegistration, allocMap map[string]*api.AllocationListStub, serviceName string) bool {
+	logger := log.Ctx(ctx)
+
+	if service.AllocID == "" {
+		logger.Warn().Str("serviceID", service.ID).Msg("Service has no allocation ID, marking as unhealthy")
+		return false
+	}
+
+	alloc, exists := allocMap[service.AllocID]
+	if !exists {
+		logger.Warn().Str("allocID", service.AllocID).Str("serviceName", serviceName).Msg("Allocation not found, marking as unhealthy")
+		return false
+	}
+
+	if alloc.ClientStatus != "running" {
+		logger.Debug().Str("allocID", service.AllocID).Str("clientStatus", alloc.ClientStatus).Msg("Allocation not running")
+		return false
+	}
+
+	if alloc.DeploymentStatus != nil {
+		if alloc.DeploymentStatus.Healthy != nil && !*alloc.DeploymentStatus.Healthy {
+			logger.Debug().Str("allocID", service.AllocID).Msg("Deployment marked unhealthy")
+			return false
+		}
+	}
+
+	if alloc.TaskStates != nil {
+		for taskName, taskState := range alloc.TaskStates {
+			if taskState.State != "running" {
+				logger.Debug().Str("allocID", service.AllocID).Str("task", taskName).Str("state", taskState.State).Msg("Task not running")
+				return false
+			}
+		}
+	}
+
+	return true
 }
 
 func createClient(namespace string, endpoint *EndpointConfig) (*api.Client, error) {

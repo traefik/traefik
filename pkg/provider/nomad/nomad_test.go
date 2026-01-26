@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/hashicorp/nomad/api"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/types"
@@ -490,26 +491,8 @@ func Test_fetchService_HealthChecks(t *testing.T) {
     ]`)
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch {
-		case strings.HasSuffix(r.RequestURI, "/v1/service/app"):
+		if strings.HasSuffix(r.RequestURI, "/v1/service/app") {
 			_, _ = w.Write(serviceListJSON)
-		case strings.Contains(r.RequestURI, "alloc-dead-client"):
-			_, _ = w.Write([]byte(`{"ClientStatus": "complete"}`))
-		case strings.Contains(r.RequestURI, "alloc-bad-deploy"):
-			_, _ = w.Write([]byte(`{
-                "ClientStatus": "running",
-                "DeploymentStatus": { "Healthy": false }
-            }`))
-		case strings.Contains(r.RequestURI, "alloc-dead-task"):
-			_, _ = w.Write([]byte(`{
-                "ClientStatus": "running",
-                "DeploymentStatus": { "Healthy": true },
-                "TaskStates": {
-                    "web-task": { "State": "dead", "Events": [{"Type": "Terminated"}] }
-                }
-            }`))
-		case strings.Contains(r.RequestURI, "alloc-ok"):
-			_, _ = w.Write(responses["alloc_healthy"])
 		}
 	}))
 	t.Cleanup(ts.Close)
@@ -518,11 +501,58 @@ func Test_fetchService_HealthChecks(t *testing.T) {
 	p.Endpoint.Address = ts.URL
 	p.client, _ = createClient(p.namespace, p.Endpoint)
 
-	services, err := p.fetchService(t.Context(), "app")
-	require.NoError(t, err)
-	assert.Len(t, services, 1, "Must filter out ClientDead, DeployBad, and TaskDead")
+	// Create allocation map with different health states
+	healthyPtr := true
+	unhealthyPtr := false
 
-	if len(services) > 0 {
-		assert.Equal(t, "alloc-ok", services[0].AllocID)
+	allocMap := map[string]*api.AllocationListStub{
+		"alloc-ok": {
+			ID:           "alloc-ok",
+			ClientStatus: "running",
+			DeploymentStatus: &api.AllocDeploymentStatus{
+				Healthy: &healthyPtr,
+			},
+			TaskStates: map[string]*api.TaskState{
+				"task1": {State: "running"},
+			},
+		},
+		"alloc-dead-client": {
+			ID:           "alloc-dead-client",
+			ClientStatus: "complete",
+		},
+		"alloc-bad-deploy": {
+			ID:           "alloc-bad-deploy",
+			ClientStatus: "running",
+			DeploymentStatus: &api.AllocDeploymentStatus{
+				Healthy: &unhealthyPtr,
+			},
+		},
+		"alloc-dead-task": {
+			ID:           "alloc-dead-task",
+			ClientStatus: "running",
+			DeploymentStatus: &api.AllocDeploymentStatus{
+				Healthy: &healthyPtr,
+			},
+			TaskStates: map[string]*api.TaskState{
+				"task1": {State: "dead"},
+			},
+		},
 	}
+
+	services, err := p.fetchService(t.Context(), "app", allocMap)
+	require.NoError(t, err)
+	assert.Len(t, services, 4, "Should return all services")
+
+	// Count healthy services
+	healthyCount := 0
+	var healthyAllocID string
+	for _, svc := range services {
+		if svc.Healthy {
+			healthyCount++
+			healthyAllocID = svc.Service.AllocID
+		}
+	}
+
+	assert.Equal(t, 1, healthyCount, "Must filter out ClientDead, DeployBad, and TaskDead")
+	assert.Equal(t, "alloc-ok", healthyAllocID)
 }
