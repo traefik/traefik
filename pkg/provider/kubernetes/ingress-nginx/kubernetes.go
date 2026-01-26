@@ -806,6 +806,7 @@ func (p *Provider) applyMiddlewares(namespace, routerKey, rulePath string, ingre
 	applyCORSConfiguration(routerKey, ingressConfig, rt, conf)
 
 	applyRewriteTargetConfiguration(rulePath, routerKey, ingressConfig, rt, conf)
+
 	applyAppRootConfiguration(routerKey, ingressConfig, rt, conf)
 
 	// Apply SSL redirect is mandatory to be applied after all other middlewares.
@@ -919,7 +920,7 @@ func applyAppRootConfiguration(routerName string, ingressConfig ingressConfig, r
 	appRootMiddlewareName := routerName + "-app-root"
 	conf.HTTP.Middlewares[appRootMiddlewareName] = &dynamic.Middleware{
 		RedirectRegex: &dynamic.RedirectRegex{
-			Regex:       `^\/$`,
+			Regex:       `\/$`,
 			Replacement: *ingressConfig.AppRoot,
 		},
 	}
@@ -1142,7 +1143,7 @@ func (p *Provider) applySSLRedirectConfiguration(routerName string, ingressConfi
 				ForcePermanentRedirect: true,
 			},
 		}
-		rt.Middlewares = append([]string{redirectMiddlewareName}, rt.Middlewares...)
+		rt.Middlewares = append(rt.Middlewares, redirectMiddlewareName)
 	}
 
 	// An Ingress that is not forcing sslRedirect and has no TLS configuration does not redirect,
