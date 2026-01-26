@@ -833,7 +833,7 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-app-root-rule-0-path-0-app-root": {
 							RedirectRegex: &dynamic.RedirectRegex{
-								Regex:       `^(https?://[^/]+)(/)$`,
+								Regex:       `^(https?://[^/]+)/$`,
 								Replacement: "$1/foo",
 							},
 						},
