@@ -172,7 +172,7 @@ func TestBuilder_BuildChainWithContext(t *testing.T) {
 					},
 				},
 			},
-			expectedError: errors.New("could not instantiate middleware m1: recursion detected in m1->m2->m3->m1"),
+			expectedError: errors.New("could not instantiate middleware m1: recursion detected in middleware:m1->middleware:m2->middleware:m3->middleware:m1"),
 		},
 		{
 			desc:       "Detects recursion in Middleware chain",
@@ -197,9 +197,10 @@ func TestBuilder_BuildChainWithContext(t *testing.T) {
 					},
 				},
 			},
-			expectedError: errors.New("could not instantiate middleware m1@provider: recursion detected in m1@provider->m2@provider2->m3@provider->m1@provider"),
+			expectedError: errors.New("could not instantiate middleware m1@provider: recursion detected in middleware:m1@provider->middleware:m2@provider2->middleware:m3@provider->middleware:m1@provider"),
 		},
 		{
+			desc:       "Detects recursion in Middleware chain",
 			buildChain: []string{"ok", "m0"},
 			configuration: map[string]*dynamic.Middleware{
 				"ok": {
@@ -211,7 +212,7 @@ func TestBuilder_BuildChainWithContext(t *testing.T) {
 					},
 				},
 			},
-			expectedError: errors.New("could not instantiate middleware m0: recursion detected in m0->m0"),
+			expectedError: errors.New("could not instantiate middleware m0: recursion detected in middleware:m0->middleware:m0"),
 		},
 		{
 			desc:       "Detects MiddlewareChain that references a Chain that references a Chain with a missing middleware",
@@ -238,7 +239,7 @@ func TestBuilder_BuildChainWithContext(t *testing.T) {
 					},
 				},
 			},
-			expectedError: errors.New("could not instantiate middleware m2: recursion detected in m0->m1->m2->m3->m2"),
+			expectedError: errors.New("could not instantiate middleware m2: recursion detected in middleware:m0->middleware:m1->middleware:m2->middleware:m3->middleware:m2"),
 		},
 		{
 			desc:       "--",
@@ -250,7 +251,7 @@ func TestBuilder_BuildChainWithContext(t *testing.T) {
 					},
 				},
 			},
-			expectedError: errors.New("could not instantiate middleware m0: recursion detected in m0->m0"),
+			expectedError: errors.New("could not instantiate middleware m0: recursion detected in middleware:m0->middleware:m0"),
 		},
 	}
 

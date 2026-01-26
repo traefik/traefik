@@ -18,18 +18,18 @@ jobs:
 
     steps:
       - name: Check out code
-        uses: actions/checkout@v6
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
         with:
           fetch-depth: 0
 
       - name: Set up Go ${{ env.GO_VERSION }}
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0
         with:
           go-version: ${{ env.GO_VERSION }}
           check-latest: true
 
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v7
+        uses: golangci/golangci-lint-action@9fae48acfc02a90574d7c304a1758ef9895495fa # v7.0.1
         with:
           version: "${{ env.GOLANGCI_LINT_VERSION }}"
 
@@ -39,12 +39,12 @@ jobs:
 
     steps:
       - name: Check out code
-        uses: actions/checkout@v6
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
         with:
           fetch-depth: 0
 
       - name: Set up Go ${{ env.GO_VERSION }}
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0
         with:
           go-version: ${{ env.GO_VERSION }}
           check-latest: true
@@ -61,12 +61,12 @@ jobs:
 
     steps:
       - name: Check out code
-        uses: actions/checkout@v6
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
         with:
           fetch-depth: 0
 
       - name: Set up Go ${{ env.GO_VERSION }}
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0
         with:
           go-version: ${{ env.GO_VERSION }}
           check-latest: true
