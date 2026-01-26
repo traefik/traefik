@@ -18,32 +18,32 @@ const typeName = "Redirect"
 var uriRegexp = regexp.MustCompile(`^(https?):\/\/(\[[\w:.]+\]|[\w\._-]+)?(:\d+)?(.*)$`)
 
 type redirect struct {
-	next                   http.Handler
-	regex                  *regexp.Regexp
-	replacement            string
-	permanent              bool
-	forcePermanentRedirect bool
-	errHandler             utils.ErrorHandler
-	name                   string
-	rawURL                 func(*http.Request) string
+	next        http.Handler
+	regex       *regexp.Regexp
+	replacement string
+	permanent   bool
+	statusCode  *int
+	errHandler  utils.ErrorHandler
+	name        string
+	rawURL      func(*http.Request) string
 }
 
 // New creates a Redirect middleware.
-func newRedirect(next http.Handler, regex, replacement string, permanent bool, forcePermanentRedirect bool, rawURL func(*http.Request) string, name string) (http.Handler, error) {
+func newRedirect(next http.Handler, regex, replacement string, permanent bool, statusCode *int, rawURL func(*http.Request) string, name string) (http.Handler, error) {
 	re, err := regexp.Compile(regex)
 	if err != nil {
 		return nil, err
 	}
 
 	return &redirect{
-		regex:                  re,
-		replacement:            replacement,
-		permanent:              permanent,
-		forcePermanentRedirect: forcePermanentRedirect,
-		errHandler:             utils.DefaultHandler,
-		next:                   next,
-		name:                   name,
-		rawURL:                 rawURL,
+		regex:       re,
+		replacement: replacement,
+		permanent:   permanent,
+		statusCode:  statusCode,
+		errHandler:  utils.DefaultHandler,
+		next:        next,
+		name:        name,
+		rawURL:      rawURL,
 	}, nil
 }
 
@@ -71,7 +71,7 @@ func (r *redirect) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	if newURL != oldURL {
-		handler := &moveHandler{location: parsedURL, permanent: r.permanent, forcePermanentRedirect: r.forcePermanentRedirect}
+		handler := &moveHandler{location: parsedURL, permanent: r.permanent, statusCode: r.statusCode}
 		handler.ServeHTTP(rw, req)
 		return
 	}
@@ -84,9 +84,9 @@ func (r *redirect) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 }
 
 type moveHandler struct {
-	location               *url.URL
-	permanent              bool
-	forcePermanentRedirect bool
+	location   *url.URL
+	permanent  bool
+	statusCode *int
 }
 
 func (m *moveHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
@@ -104,8 +104,8 @@ func (m *moveHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	if m.forcePermanentRedirect {
-		status = http.StatusPermanentRedirect
+	if m.statusCode != nil {
+		status = *m.statusCode
 	}
 
 	rw.WriteHeader(status)

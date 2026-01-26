@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/containous/alice"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
@@ -56,40 +57,98 @@ var (
 	testStart               = time.Now()
 )
 
-func TestOTelAccessLogWithBody(t *testing.T) {
+func TestOTelAccessLogWithBodyAndDualOutput(t *testing.T) {
 	testCases := []struct {
-		desc        string
-		format      string
-		bodyCheckFn func(*testing.T, string)
+		desc             string
+		format           string
+		filePath         string
+		dualOutput       bool
+		bodyCheckFn      func(*testing.T, string)
+		outLoggerCheckFn func(*testing.T, *logrus.Logger)
 	}{
 		{
-			desc:   "Common format with log body",
-			format: CommonFormat,
+			desc:       "Common format with log body",
+			format:     CommonFormat,
+			filePath:   "",
+			dualOutput: false,
 			bodyCheckFn: func(t *testing.T, log string) {
 				t.Helper()
 
 				// For common format, verify the body contains the Traefik common log formatted string
 				assert.Regexp(t, `"body":{"stringValue":".*- /health -.*200.*[0-9]+ms.*"}`, log)
 			},
+			outLoggerCheckFn: func(t *testing.T, l *logrus.Logger) {
+				t.Helper()
+
+				assert.Equal(t, l.Out, io.Discard)
+			},
 		},
 		{
-			desc:   "Generic CLF format with log body",
-			format: GenericCLFFormat,
+			desc:       "Generic CLF format with log body",
+			format:     GenericCLFFormat,
+			filePath:   "",
+			dualOutput: false,
 			bodyCheckFn: func(t *testing.T, log string) {
 				t.Helper()
 
 				// For generic CLF format, verify the body contains the CLF formatted string
 				assert.Regexp(t, `"body":{"stringValue":".*- /health -.*200.*"}`, log)
 			},
+			outLoggerCheckFn: func(t *testing.T, l *logrus.Logger) {
+				t.Helper()
+
+				assert.Equal(t, l.Out, io.Discard)
+			},
 		},
 		{
-			desc:   "JSON format with log body",
-			format: JSONFormat,
+			desc:       "JSON format with log body",
+			format:     JSONFormat,
+			filePath:   "",
+			dualOutput: false,
 			bodyCheckFn: func(t *testing.T, log string) {
 				t.Helper()
 
 				// For JSON format, verify the body contains the JSON formatted string
 				assert.Regexp(t, `"body":{"stringValue":".*DownstreamStatus.*:200.*"}`, log)
+			},
+			outLoggerCheckFn: func(t *testing.T, l *logrus.Logger) {
+				t.Helper()
+
+				assert.Equal(t, l.Out, io.Discard)
+			},
+		},
+		{
+			desc:       "Common format with log body and Dual Output (STDOUT + OTEL)",
+			format:     CommonFormat,
+			filePath:   "",
+			dualOutput: true,
+			bodyCheckFn: func(t *testing.T, log string) {
+				t.Helper()
+
+				// For common format, verify the body contains the Traefik common log formatted string
+				assert.Regexp(t, `"body":{"stringValue":".*- /health -.*200.*[0-9]+ms.*"}`, log)
+			},
+			outLoggerCheckFn: func(t *testing.T, l *logrus.Logger) {
+				t.Helper()
+
+				assert.NotEqual(t, l.Out, io.Discard)
+			},
+		},
+		{
+			desc:       "Common format with log body and Dual Output (File logging + OTEL)",
+			format:     CommonFormat,
+			filePath:   filepath.Join(t.TempDir(), "traefik.log"),
+			dualOutput: true,
+			bodyCheckFn: func(t *testing.T, log string) {
+				t.Helper()
+
+				// For common format, verify the body contains the Traefik common log formatted string
+				assert.Regexp(t, `"body":{"stringValue":".*- /health -.*200.*[0-9]+ms.*"}`, log)
+			},
+			outLoggerCheckFn: func(t *testing.T, l *logrus.Logger) {
+				t.Helper()
+
+				assert.NotEqual(t, l.Out, io.Discard)
 			},
 		},
 	}
@@ -118,7 +177,9 @@ func TestOTelAccessLogWithBody(t *testing.T) {
 			t.Cleanup(collector.Close)
 
 			config := &otypes.AccessLog{
-				Format: test.format,
+				Format:     test.format,
+				DualOutput: test.dualOutput,
+				FilePath:   test.filePath,
 				OTLP: &otypes.OTelLog{
 					ServiceName:        "test",
 					ResourceAttributes: map[string]string{"resource": "attribute"},
@@ -179,6 +240,9 @@ func TestOTelAccessLogWithBody(t *testing.T) {
 
 				// Run format-specific body checks
 				test.bodyCheckFn(t, log)
+
+				// Run OUT logger checks
+				test.outLoggerCheckFn(t, logHandler.logger)
 			}
 		})
 	}
@@ -261,7 +325,7 @@ func lineCount(t *testing.T, fileName string) int {
 	}
 
 	count := 0
-	for _, line := range strings.Split(string(fileContents), "\n") {
+	for line := range strings.SplitSeq(string(fileContents), "\n") {
 		if strings.TrimSpace(line) == "" {
 			continue
 		}
@@ -439,32 +503,32 @@ func TestLoggerGenericCLFWithBufferingSize(t *testing.T) {
 	assertValidGenericCLFLogData(t, expectedLog, logData)
 }
 
-func assertString(exp string) func(t *testing.T, actual interface{}) {
-	return func(t *testing.T, actual interface{}) {
+func assertString(exp string) func(t *testing.T, actual any) {
+	return func(t *testing.T, actual any) {
 		t.Helper()
 
 		assert.Equal(t, exp, actual)
 	}
 }
 
-func assertNotEmpty() func(t *testing.T, actual interface{}) {
-	return func(t *testing.T, actual interface{}) {
+func assertNotEmpty() func(t *testing.T, actual any) {
+	return func(t *testing.T, actual any) {
 		t.Helper()
 
 		assert.NotEmpty(t, actual)
 	}
 }
 
-func assertFloat64(exp float64) func(t *testing.T, actual interface{}) {
-	return func(t *testing.T, actual interface{}) {
+func assertFloat64(exp float64) func(t *testing.T, actual any) {
+	return func(t *testing.T, actual any) {
 		t.Helper()
 
 		assert.InDelta(t, exp, actual, delta)
 	}
 }
 
-func assertFloat64NotZero() func(t *testing.T, actual interface{}) {
-	return func(t *testing.T, actual interface{}) {
+func assertFloat64NotZero() func(t *testing.T, actual any) {
+	return func(t *testing.T, actual any) {
 		t.Helper()
 
 		assert.NotZero(t, actual)
@@ -477,7 +541,7 @@ func TestLoggerJSON(t *testing.T) {
 		config   *otypes.AccessLog
 		tls      bool
 		tracing  bool
-		expected map[string]func(t *testing.T, value interface{})
+		expected map[string]func(t *testing.T, value any)
 	}{
 		{
 			desc: "default config without tracing",
@@ -485,7 +549,7 @@ func TestLoggerJSON(t *testing.T) {
 				FilePath: "",
 				Format:   JSONFormat,
 			},
-			expected: map[string]func(t *testing.T, value interface{}){
+			expected: map[string]func(t *testing.T, value any){
 				RequestContentSize:        assertFloat64(0),
 				RequestHost:               assertString(testHostname),
 				RequestAddr:               assertString(testHostname),
@@ -525,7 +589,7 @@ func TestLoggerJSON(t *testing.T) {
 				Format:   JSONFormat,
 			},
 			tracing: true,
-			expected: map[string]func(t *testing.T, value interface{}){
+			expected: map[string]func(t *testing.T, value any){
 				RequestContentSize:        assertFloat64(0),
 				RequestHost:               assertString(testHostname),
 				RequestAddr:               assertString(testHostname),
@@ -567,7 +631,7 @@ func TestLoggerJSON(t *testing.T) {
 				Format:   JSONFormat,
 			},
 			tls: true,
-			expected: map[string]func(t *testing.T, value interface{}){
+			expected: map[string]func(t *testing.T, value any){
 				RequestContentSize:        assertFloat64(0),
 				RequestHost:               assertString(testHostname),
 				RequestAddr:               assertString(testHostname),
@@ -612,7 +676,7 @@ func TestLoggerJSON(t *testing.T) {
 					DefaultMode: "drop",
 				},
 			},
-			expected: map[string]func(t *testing.T, value interface{}){
+			expected: map[string]func(t *testing.T, value any){
 				"level":                   assertString("info"),
 				"msg":                     assertString(""),
 				"time":                    assertNotEmpty(),
@@ -633,7 +697,7 @@ func TestLoggerJSON(t *testing.T) {
 					},
 				},
 			},
-			expected: map[string]func(t *testing.T, value interface{}){
+			expected: map[string]func(t *testing.T, value any){
 				"level": assertString("info"),
 				"msg":   assertString(""),
 				"time":  assertNotEmpty(),
@@ -651,7 +715,7 @@ func TestLoggerJSON(t *testing.T) {
 					},
 				},
 			},
-			expected: map[string]func(t *testing.T, value interface{}){
+			expected: map[string]func(t *testing.T, value any){
 				"level":                   assertString("info"),
 				"msg":                     assertString(""),
 				"time":                    assertNotEmpty(),
@@ -678,7 +742,7 @@ func TestLoggerJSON(t *testing.T) {
 					},
 				},
 			},
-			expected: map[string]func(t *testing.T, value interface{}){
+			expected: map[string]func(t *testing.T, value any){
 				RequestHost:          assertString(testHostname),
 				"level":              assertString("info"),
 				"msg":                assertString(""),
@@ -704,7 +768,7 @@ func TestLoggerJSON(t *testing.T) {
 					},
 				},
 			},
-			expected: map[string]func(t *testing.T, value interface{}){
+			expected: map[string]func(t *testing.T, value any){
 				RequestHost:          assertString(testHostname),
 				"level":              assertString("info"),
 				"msg":                assertString(""),
@@ -730,7 +794,7 @@ func TestLoggerJSON(t *testing.T) {
 			logData, err := os.ReadFile(logFilePath)
 			require.NoError(t, err)
 
-			jsonData := make(map[string]interface{})
+			jsonData := make(map[string]any)
 			err = json.Unmarshal(logData, &jsonData)
 			require.NoError(t, err)
 
@@ -744,7 +808,7 @@ func TestLoggerJSON(t *testing.T) {
 }
 
 func TestLogger_AbortedRequest(t *testing.T) {
-	expected := map[string]func(t *testing.T, value interface{}){
+	expected := map[string]func(t *testing.T, value any){
 		RequestContentSize:             assertFloat64(0),
 		RequestHost:                    assertString(testHostname),
 		RequestAddr:                    assertString(testHostname),
@@ -787,7 +851,7 @@ func TestLogger_AbortedRequest(t *testing.T) {
 	logData, err := os.ReadFile(config.FilePath)
 	require.NoError(t, err)
 
-	jsonData := make(map[string]interface{})
+	jsonData := make(map[string]any)
 	err = json.Unmarshal(logData, &jsonData)
 	require.NoError(t, err)
 

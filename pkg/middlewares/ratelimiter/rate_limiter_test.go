@@ -300,11 +300,8 @@ func TestInMemoryRateLimit(t *testing.T) {
 			stop := time.Now()
 			elapsed := stop.Sub(start)
 
-			burst := test.config.Burst
-			if burst < 1 {
-				// actual default value
-				burst = 1
-			}
+			// actual default value if burst < 1
+			burst := max(test.config.Burst, 1)
 
 			period := time.Duration(test.config.Period)
 			if period == 0 {
@@ -510,11 +507,8 @@ func TestRedisRateLimit(t *testing.T) {
 			stop := time.Now()
 			elapsed := stop.Sub(start)
 
-			burst := test.config.Burst
-			if burst < 1 {
-				// actual default value
-				burst = 1
-			}
+			// actual default value
+			burst := max(test.config.Burst, 1)
 
 			period := time.Duration(test.config.Period)
 			if period == 0 {
@@ -570,7 +564,7 @@ func newMockRedisClient(ttl int) Rediser {
 	}
 }
 
-func (m *mockRedisClient) EvalSha(ctx context.Context, _ string, keys []string, args ...interface{}) *redis.Cmd {
+func (m *mockRedisClient) EvalSha(ctx context.Context, _ string, keys []string, args ...any) *redis.Cmd {
 	state := lua.NewState()
 	defer state.Close()
 
@@ -641,7 +635,7 @@ func (m *mockRedisClient) EvalSha(ctx context.Context, _ string, keys []string, 
 		return cmd
 	}
 
-	var resultSlice []interface{}
+	var resultSlice []any
 	resultTable.ForEach(func(_ lua.LValue, value lua.LValue) {
 		valueNbr, ok := value.(lua.LNumber)
 		if !ok {
@@ -661,7 +655,7 @@ func (m *mockRedisClient) EvalSha(ctx context.Context, _ string, keys []string, 
 	return cmd
 }
 
-func (m *mockRedisClient) Eval(ctx context.Context, script string, keys []string, args ...interface{}) *redis.Cmd {
+func (m *mockRedisClient) Eval(ctx context.Context, script string, keys []string, args ...any) *redis.Cmd {
 	return m.EvalSha(ctx, script, keys, args...)
 }
 
@@ -677,11 +671,11 @@ func (m *mockRedisClient) Del(ctx context.Context, keys ...string) *redis.IntCmd
 	return nil
 }
 
-func (m *mockRedisClient) EvalRO(ctx context.Context, script string, keys []string, args ...interface{}) *redis.Cmd {
+func (m *mockRedisClient) EvalRO(ctx context.Context, script string, keys []string, args ...any) *redis.Cmd {
 	return nil
 }
 
-func (m *mockRedisClient) EvalShaRO(ctx context.Context, sha1 string, keys []string, args ...interface{}) *redis.Cmd {
+func (m *mockRedisClient) EvalShaRO(ctx context.Context, sha1 string, keys []string, args ...any) *redis.Cmd {
 	return nil
 }
 

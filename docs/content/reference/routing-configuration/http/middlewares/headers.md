@@ -323,4 +323,4 @@ It allows all origins that contain any match of a regular expression in the `acc
 
     When defining a regular expression within YAML, any escaped character needs to be escaped twice: `example\.com` needs to be written as `example\\.com`.
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

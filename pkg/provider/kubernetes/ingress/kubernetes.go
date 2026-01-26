@@ -70,62 +70,6 @@ func (p *Provider) SetRouterTransform(routerTransform k8s.RouterTransform) {
 	p.routerTransform = routerTransform
 }
 
-func (p *Provider) applyRouterTransform(ctx context.Context, rt *dynamic.Router, ingress *netv1.Ingress) {
-	if p.routerTransform == nil {
-		return
-	}
-
-	err := p.routerTransform.Apply(ctx, rt, ingress)
-	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Msg("Apply router transform")
-	}
-}
-
-// EndpointIngress holds the endpoint information for the Kubernetes provider.
-type EndpointIngress struct {
-	IP               string `description:"IP used for Kubernetes Ingress endpoints." json:"ip,omitempty" toml:"ip,omitempty" yaml:"ip,omitempty"`
-	Hostname         string `description:"Hostname used for Kubernetes Ingress endpoints." json:"hostname,omitempty" toml:"hostname,omitempty" yaml:"hostname,omitempty"`
-	PublishedService string `description:"Published Kubernetes Service to copy status from." json:"publishedService,omitempty" toml:"publishedService,omitempty" yaml:"publishedService,omitempty"`
-}
-
-func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
-	_, err := labels.Parse(p.LabelSelector)
-	if err != nil {
-		return nil, fmt.Errorf("invalid ingress label selector: %q", p.LabelSelector)
-	}
-
-	logger := log.Ctx(ctx)
-
-	logger.Info().Msgf("ingress label selector is: %q", p.LabelSelector)
-
-	withEndpoint := ""
-	if p.Endpoint != "" {
-		withEndpoint = fmt.Sprintf(" with endpoint %v", p.Endpoint)
-	}
-
-	var cl *clientWrapper
-	switch {
-	case os.Getenv("KUBERNETES_SERVICE_HOST") != "" && os.Getenv("KUBERNETES_SERVICE_PORT") != "":
-		logger.Info().Msgf("Creating in-cluster Provider client%s", withEndpoint)
-		cl, err = newInClusterClient(p.Endpoint)
-	case os.Getenv("KUBECONFIG") != "":
-		logger.Info().Msgf("Creating cluster-external Provider client from KUBECONFIG %s", os.Getenv("KUBECONFIG"))
-		cl, err = newExternalClusterClientFromFile(os.Getenv("KUBECONFIG"))
-	default:
-		logger.Info().Msgf("Creating cluster-external Provider client%s", withEndpoint)
-		cl, err = newExternalClusterClient(p.Endpoint, p.CertAuthFilePath, p.Token)
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	cl.ingressLabelSelector = p.LabelSelector
-	cl.disableIngressClassInformer = p.DisableIngressClassLookup || p.DisableClusterScopeResources
-	cl.disableClusterScopeInformer = p.DisableClusterScopeResources
-	return cl, nil
-}
-
 // Init the provider.
 func (p *Provider) Init() error {
 	return nil
@@ -213,6 +157,62 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	return nil
 }
 
+func (p *Provider) applyRouterTransform(ctx context.Context, rt *dynamic.Router, ingress *netv1.Ingress) {
+	if p.routerTransform == nil {
+		return
+	}
+
+	err := p.routerTransform.Apply(ctx, rt, ingress)
+	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("Apply router transform")
+	}
+}
+
+// EndpointIngress holds the endpoint information for the Kubernetes provider.
+type EndpointIngress struct {
+	IP               string `description:"IP used for Kubernetes Ingress endpoints." json:"ip,omitempty" toml:"ip,omitempty" yaml:"ip,omitempty"`
+	Hostname         string `description:"Hostname used for Kubernetes Ingress endpoints." json:"hostname,omitempty" toml:"hostname,omitempty" yaml:"hostname,omitempty"`
+	PublishedService string `description:"Published Kubernetes Service to copy status from." json:"publishedService,omitempty" toml:"publishedService,omitempty" yaml:"publishedService,omitempty"`
+}
+
+func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
+	_, err := labels.Parse(p.LabelSelector)
+	if err != nil {
+		return nil, fmt.Errorf("invalid ingress label selector: %q", p.LabelSelector)
+	}
+
+	logger := log.Ctx(ctx)
+
+	logger.Info().Msgf("ingress label selector is: %q", p.LabelSelector)
+
+	withEndpoint := ""
+	if p.Endpoint != "" {
+		withEndpoint = fmt.Sprintf(" with endpoint %v", p.Endpoint)
+	}
+
+	var cl *clientWrapper
+	switch {
+	case os.Getenv("KUBERNETES_SERVICE_HOST") != "" && os.Getenv("KUBERNETES_SERVICE_PORT") != "":
+		logger.Info().Msgf("Creating in-cluster Provider client%s", withEndpoint)
+		cl, err = newInClusterClient(p.Endpoint)
+	case os.Getenv("KUBECONFIG") != "":
+		logger.Info().Msgf("Creating cluster-external Provider client from KUBECONFIG %s", os.Getenv("KUBECONFIG"))
+		cl, err = newExternalClusterClientFromFile(os.Getenv("KUBECONFIG"))
+	default:
+		logger.Info().Msgf("Creating cluster-external Provider client%s", withEndpoint)
+		cl, err = newExternalClusterClient(p.Endpoint, p.CertAuthFilePath, p.Token)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	cl.ingressLabelSelector = p.LabelSelector
+	cl.disableIngressClassInformer = p.DisableIngressClassLookup || p.DisableClusterScopeResources
+	cl.disableClusterScopeInformer = p.DisableClusterScopeResources
+	return cl, nil
+}
+
 func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Client) *dynamic.Configuration {
 	conf := &dynamic.Configuration{
 		HTTP: &dynamic.HTTPConfiguration{
@@ -266,6 +266,17 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 		if len(ingress.Spec.Rules) == 0 && ingress.Spec.DefaultBackend != nil {
 			if _, ok := conf.HTTP.Services["default-backend"]; ok {
 				logger.Error().Msg("The default backend already exists.")
+				continue
+			}
+
+			if ingress.Spec.DefaultBackend.Resource != nil {
+				// https://kubernetes.io/docs/concepts/services-networking/ingress/#resource-backend
+				logger.Error().Msg("Resource is not supported for default backend")
+				continue
+			}
+
+			if ingress.Spec.DefaultBackend.Service == nil {
+				logger.Error().Msg("Default backend is missing service definition")
 				continue
 			}
 
@@ -651,7 +662,10 @@ func (p *Provider) loadService(client Client, namespace string, backend netv1.In
 		protocol := getProtocol(portSpec, portName, svcConfig)
 
 		for _, endpoint := range endpointSlice.Endpoints {
-			if !k8s.EndpointServing(endpoint) {
+			// The Serving condition allows to track if the Pod can receive traffic.
+			// It is set to true when the Pod is Ready or Terminating.
+			// From the go documentation, a nil value should be interpreted as "true".
+			if !ptr.Deref(endpoint.Conditions.Serving, true) {
 				continue
 			}
 
@@ -663,7 +677,7 @@ func (p *Provider) loadService(client Client, namespace string, backend netv1.In
 				addresses[address] = struct{}{}
 				svc.LoadBalancer.Servers = append(svc.LoadBalancer.Servers, dynamic.Server{
 					URL:    fmt.Sprintf("%s://%s", protocol, net.JoinHostPort(address, strconv.Itoa(int(port)))),
-					Fenced: ptr.Deref(endpoint.Conditions.Terminating, false) && ptr.Deref(endpoint.Conditions.Serving, false),
+					Fenced: ptr.Deref(endpoint.Conditions.Terminating, false),
 				})
 			}
 		}
@@ -887,13 +901,13 @@ func buildStrictPrefixMatchingRule(path string) string {
 	return fmt.Sprintf("(Path(`%[1]s`) || PathPrefix(`%[1]s/`))", path)
 }
 
-func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *safe.Pool, eventsChan <-chan interface{}) chan interface{} {
+func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *safe.Pool, eventsChan <-chan any) chan any {
 	if throttleDuration == 0 {
 		return nil
 	}
 
 	// Create a buffered channel to hold the pending event (if we're delaying processing the event due to throttling).
-	eventsChanBuffered := make(chan interface{}, 1)
+	eventsChanBuffered := make(chan any, 1)
 
 	// Run a goroutine that reads events from eventChan and does a
 	// non-blocking write to pendingEvent. This guarantees that writing to

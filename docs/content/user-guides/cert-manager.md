@@ -180,4 +180,4 @@ There are multiple event sources available to investigate when using cert-manage
 
 cert-manager documentation provides a [detailed guide](https://cert-manager.io/docs/troubleshooting/) on how to troubleshoot a certificate request.
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

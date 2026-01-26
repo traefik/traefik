@@ -185,4 +185,4 @@ Request → EntryPoint → Parent Router → Middleware → Child Router A → S
     4. If `X-User-Role: admin`, `api-admin` router matches and forwards to `admin-service`
     5. If `X-User-Role: user`, `api-user` router matches and forwards to `user-service`
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

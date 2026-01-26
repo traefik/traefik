@@ -91,7 +91,7 @@ func (r *redisLimiter) evaluateScript(ctx context.Context, key string) (bool, *t
 		return true, nil, nil
 	}
 
-	params := []interface{}{
+	params := []any{
 		float64(r.rate / 1000000),
 		r.burst,
 		r.ttl,
@@ -103,7 +103,7 @@ func (r *redisLimiter) evaluateScript(ctx context.Context, key string) (bool, *t
 		return false, nil, fmt.Errorf("running script: %w", err)
 	}
 
-	values := v.([]interface{})
+	values := v.([]any)
 	ok, err := strconv.ParseBool(values[0].(string))
 	if err != nil {
 		return false, nil, fmt.Errorf("parsing ok value from redis rate lua script: %w", err)

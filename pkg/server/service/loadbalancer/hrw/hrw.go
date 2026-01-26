@@ -17,6 +17,7 @@ var errNoAvailableServer = errors.New("no available server")
 
 type namedHandler struct {
 	http.Handler
+
 	name   string
 	weight float64
 }
@@ -123,37 +124,6 @@ func (b *Balancer) RegisterStatusUpdater(fn func(up bool)) error {
 	return nil
 }
 
-func (b *Balancer) nextServer(ip string) (*namedHandler, error) {
-	b.handlersMu.RLock()
-	var healthy []*namedHandler
-	for _, h := range b.handlers {
-		if _, ok := b.status[h.name]; ok {
-			if _, fenced := b.fenced[h.name]; !fenced {
-				healthy = append(healthy, h)
-			}
-		}
-	}
-	b.handlersMu.RUnlock()
-
-	if len(healthy) == 0 {
-		return nil, errNoAvailableServer
-	}
-
-	var handler *namedHandler
-	score := 0.0
-	for _, h := range healthy {
-		s := getNodeScore(h, ip)
-		if s > score {
-			handler = h
-			score = s
-		}
-	}
-
-	log.Debug().Msgf("Service selected by HRW: %s", handler.name)
-
-	return handler, nil
-}
-
 func (b *Balancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	// give ip fetched to b.nextServer
 	clientIP := b.strategy.GetIP(req)
@@ -198,4 +168,35 @@ func (b *Balancer) Add(name string, handler http.Handler, weight *int, fenced bo
 		b.fenced[name] = struct{}{}
 	}
 	b.handlersMu.Unlock()
+}
+
+func (b *Balancer) nextServer(ip string) (*namedHandler, error) {
+	b.handlersMu.RLock()
+	var healthy []*namedHandler
+	for _, h := range b.handlers {
+		if _, ok := b.status[h.name]; ok {
+			if _, fenced := b.fenced[h.name]; !fenced {
+				healthy = append(healthy, h)
+			}
+		}
+	}
+	b.handlersMu.RUnlock()
+
+	if len(healthy) == 0 {
+		return nil, errNoAvailableServer
+	}
+
+	var handler *namedHandler
+	score := 0.0
+	for _, h := range healthy {
+		s := getNodeScore(h, ip)
+		if s > score {
+			handler = h
+			score = s
+		}
+	}
+
+	log.Debug().Msgf("Service selected by HRW: %s", handler.name)
+
+	return handler, nil
 }

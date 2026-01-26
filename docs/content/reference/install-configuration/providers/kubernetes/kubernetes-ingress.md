@@ -149,4 +149,4 @@ many examples of Ingresses definitions are located in the test
 [examples](https://github.com/traefik/traefik/tree/v3.1/pkg/provider/kubernetes/ingress/fixtures)
 of the Traefik repository.
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

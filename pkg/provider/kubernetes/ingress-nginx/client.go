@@ -125,9 +125,9 @@ func newClient(clientSet kclientset.Interface) *clientWrapper {
 }
 
 // WatchAll starts namespace-specific controllers for all relevant kinds.
-func (c *clientWrapper) WatchAll(ctx context.Context, namespace, namespaceSelector string) (<-chan interface{}, error) {
+func (c *clientWrapper) WatchAll(ctx context.Context, namespace, namespaceSelector string) (<-chan any, error) {
 	stopCh := ctx.Done()
-	eventCh := make(chan interface{}, 1)
+	eventCh := make(chan any, 1)
 	eventHandler := &k8s.ResourceEventHandler{Ev: eventCh}
 
 	c.ignoreIngressClasses = false

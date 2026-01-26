@@ -238,25 +238,25 @@ Trust only forwarded headers from selected IPs.
 HTTP configuration.
 
 `--entrypoints.<name>.http.encodedcharacters.allowencodedbackslash`:  
-Defines whether requests with encoded back slash characters in the path are allowed. (Default: ```false```)
+Defines whether requests with encoded back slash characters in the path are allowed. (Default: ```true```)
 
 `--entrypoints.<name>.http.encodedcharacters.allowencodedhash`:  
-Defines whether requests with encoded hash characters in the path are allowed. (Default: ```false```)
+Defines whether requests with encoded hash characters in the path are allowed. (Default: ```true```)
 
 `--entrypoints.<name>.http.encodedcharacters.allowencodednullcharacter`:  
-Defines whether requests with encoded null characters in the path are allowed. (Default: ```false```)
+Defines whether requests with encoded null characters in the path are allowed. (Default: ```true```)
 
 `--entrypoints.<name>.http.encodedcharacters.allowencodedpercent`:  
-Defines whether requests with encoded percent characters in the path are allowed. (Default: ```false```)
+Defines whether requests with encoded percent characters in the path are allowed. (Default: ```true```)
 
 `--entrypoints.<name>.http.encodedcharacters.allowencodedquestionmark`:  
-Defines whether requests with encoded question mark characters in the path are allowed. (Default: ```false```)
+Defines whether requests with encoded question mark characters in the path are allowed. (Default: ```true```)
 
 `--entrypoints.<name>.http.encodedcharacters.allowencodedsemicolon`:  
-Defines whether requests with encoded semicolon characters in the path are allowed. (Default: ```false```)
+Defines whether requests with encoded semicolon characters in the path are allowed. (Default: ```true```)
 
 `--entrypoints.<name>.http.encodedcharacters.allowencodedslash`:  
-Defines whether requests with encoded slash characters in the path are allowed. (Default: ```false```)
+Defines whether requests with encoded slash characters in the path are allowed. (Default: ```true```)
 
 `--entrypoints.<name>.http.encodequerysemicolons`:  
 Defines whether request query semicolons should be URLEncoded. (Default: ```false```)

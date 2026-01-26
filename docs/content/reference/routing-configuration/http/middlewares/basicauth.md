@@ -92,4 +92,4 @@ The option `users` supports Kubernetes secrets.
     Please note that these keys are not hashed or encrypted in any way, and therefore is less secure than other methods.
     You can find more information on the [Kubernetes Basic Authentication Secret Documentation](https://kubernetes.io/docs/concepts/configuration/secret/#basic-authentication-secret)
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

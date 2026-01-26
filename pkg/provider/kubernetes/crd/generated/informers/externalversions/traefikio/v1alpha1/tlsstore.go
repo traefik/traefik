@@ -27,13 +27,13 @@ THE SOFTWARE.
 package v1alpha1
 
 import (
-	"context"
+	context "context"
 	time "time"
 
 	versioned "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned"
 	internalinterfaces "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/informers/externalversions/internalinterfaces"
-	v1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/listers/traefikio/v1alpha1"
-	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/listers/traefikio/v1alpha1"
+	crdtraefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -44,7 +44,7 @@ import (
 // TLSStores.
 type TLSStoreInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1alpha1.TLSStoreLister
+	Lister() traefikiov1alpha1.TLSStoreLister
 }
 
 type tLSStoreInformer struct {
@@ -70,16 +70,28 @@ func NewFilteredTLSStoreInformer(client versioned.Interface, namespace string, r
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.TraefikV1alpha1().TLSStores(namespace).List(context.TODO(), options)
+				return client.TraefikV1alpha1().TLSStores(namespace).List(context.Background(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.TraefikV1alpha1().TLSStores(namespace).Watch(context.TODO(), options)
+				return client.TraefikV1alpha1().TLSStores(namespace).Watch(context.Background(), options)
+			},
+			ListWithContextFunc: func(ctx context.Context, options v1.ListOptions) (runtime.Object, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.TraefikV1alpha1().TLSStores(namespace).List(ctx, options)
+			},
+			WatchFuncWithContext: func(ctx context.Context, options v1.ListOptions) (watch.Interface, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.TraefikV1alpha1().TLSStores(namespace).Watch(ctx, options)
 			},
 		},
-		&traefikiov1alpha1.TLSStore{},
+		&crdtraefikiov1alpha1.TLSStore{},
 		resyncPeriod,
 		indexers,
 	)
@@ -90,9 +102,9 @@ func (f *tLSStoreInformer) defaultInformer(client versioned.Interface, resyncPer
 }
 
 func (f *tLSStoreInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&traefikiov1alpha1.TLSStore{}, f.defaultInformer)
+	return f.factory.InformerFor(&crdtraefikiov1alpha1.TLSStore{}, f.defaultInformer)
 }
 
-func (f *tLSStoreInformer) Lister() v1alpha1.TLSStoreLister {
-	return v1alpha1.NewTLSStoreLister(f.Informer().GetIndexer())
+func (f *tLSStoreInformer) Lister() traefikiov1alpha1.TLSStoreLister {
+	return traefikiov1alpha1.NewTLSStoreLister(f.Informer().GetIndexer())
 }

@@ -64,6 +64,7 @@ type AccessLog struct {
 	Fields        *AccessLogFields  `description:"AccessLogFields." json:"fields,omitempty" toml:"fields,omitempty" yaml:"fields,omitempty" export:"true"`
 	BufferingSize int64             `description:"Number of access log lines to process in a buffered way." json:"bufferingSize,omitempty" toml:"bufferingSize,omitempty" yaml:"bufferingSize,omitempty" export:"true"`
 	AddInternals  bool              `description:"Enables access log for internal services (ping, dashboard, etc...)." json:"addInternals,omitempty" toml:"addInternals,omitempty" yaml:"addInternals,omitempty" export:"true"`
+	DualOutput    bool              `description:"Enables access log output alongside OTLP. By default, this output is disabled when OTLP is configured." json:"dualOutput,omitempty" toml:"dualOutput,omitempty" yaml:"dualOutput,omitempty" export:"true"`
 
 	OTLP *OTelLog `description:"Settings for OpenTelemetry." json:"otlp,omitempty" toml:"otlp,omitempty" yaml:"otlp,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 }

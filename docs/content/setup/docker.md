@@ -296,4 +296,4 @@ This enables access logs to the container's standard output (viewable via `docke
 
 You now have a basic Traefik setup in Docker with secure dashboard access and HTTP-to-HTTPS redirection.
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

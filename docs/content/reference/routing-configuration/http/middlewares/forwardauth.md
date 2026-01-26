@@ -127,4 +127,4 @@ The following request properties are provided to the forward-auth target endpoin
 | <a id="opt-Request-URI" href="#opt-Request-URI" title="#opt-Request-URI">Request URI</a> | `X-Forwarded-Uri`        |
 | <a id="opt-Source-IP-Address" href="#opt-Source-IP-Address" title="#opt-Source-IP-Address">Source IP-Address</a> | `X-Forwarded-For`        |
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

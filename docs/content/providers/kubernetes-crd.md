@@ -16,7 +16,7 @@ the Traefik engineering team developed a [Custom Resource Definition](https://ku
 
 ## Requirements
 
-{!kubernetes-requirements.md!}
+{% include-markdown "includes/kubernetes-requirements.md" %}
 
 !!! tip "All Steps for a Successful Deployment"
 
@@ -365,4 +365,4 @@ providers:
 
 For additional information, refer to the [full example](../user-guides/crd-acme/index.md) with Let's Encrypt.
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

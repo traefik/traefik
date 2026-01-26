@@ -54,10 +54,6 @@ func (p *SwarmProvider) Init() error {
 	return nil
 }
 
-func (p *SwarmProvider) createClient(ctx context.Context) (*client.Client, error) {
-	return createClient(ctx, p.ClientConfig)
-}
-
 // Provide allows the docker provider to provide configurations to traefik using the given configuration channel.
 func (p *SwarmProvider) Provide(configurationChan chan<- dynamic.Message, pool *safe.Pool) error {
 	pool.GoCtx(func(routineCtx context.Context) {
@@ -152,6 +148,10 @@ func (p *SwarmProvider) Provide(configurationChan chan<- dynamic.Message, pool *
 	})
 
 	return nil
+}
+
+func (p *SwarmProvider) createClient(ctx context.Context) (*client.Client, error) {
+	return createClient(ctx, p.ClientConfig)
 }
 
 func (p *SwarmProvider) listServices(ctx context.Context, dockerClient client.APIClient) ([]dockerData, error) {

@@ -1,3 +1,40 @@
+## [v3.6.7](https://github.com/traefik/traefik/tree/v3.6.7) (2026-01-14)
+[All Commits](https://github.com/traefik/traefik/compare/v3.6.6...v3.6.7)
+
+**Bug fixes:**
+- **[acme]** Bump github.com/go-acme/lego/v4 to v4.31.0 ([#12529](https://github.com/traefik/traefik/pull/12529) by [ldez](https://github.com/ldez))
+- **[acme]** Add missing renew options ([#12467](https://github.com/traefik/traefik/pull/12467) by [ldez](https://github.com/ldez))
+- **[acme]** Replace hardcoded references to LetsEncrypt in log messages ([#12464](https://github.com/traefik/traefik/pull/12464) by [schildbach](https://github.com/schildbach))
+- **[k8s/ingress-nginx]** Fix use-regex nginx annotation ([#12531](https://github.com/traefik/traefik/pull/12531) by [LBF38](https://github.com/LBF38))
+- **[k8s/ingress-nginx]** Prevent Ingress Nginx provider http router to attach to an entrypoint with TLS ([#12528](https://github.com/traefik/traefik/pull/12528) by [rtribotte](https://github.com/rtribotte))
+- **[k8s/ingress]** Fix panic for empty defaultBackend and defaultBackend without resources ([#12509](https://github.com/traefik/traefik/pull/12509) by [gndz07](https://github.com/gndz07))
+- **[k8s]** Fix condition used for serving and fenced endpoints ([#12521](https://github.com/traefik/traefik/pull/12521) by [LBF38](https://github.com/LBF38))
+- **[webui]** Validate X-Forwarded-Prefix value for dashboard redirect ([#12514](https://github.com/traefik/traefik/pull/12514) by [LBF38](https://github.com/LBF38))
+- **[acme]** Add timeout to ACME-TLS/1 challenge handshake ([#12516](https://github.com/traefik/traefik/pull/12516) by [LBF38](https://github.com/LBF38))
+- **[server]** Make encoded character options opt-in ([#12540](https://github.com/traefik/traefik/pull/12540) by [gndz07](https://github.com/gndz07))
+
+**Documentation:**
+- **[docker/swarm]** Update swarm.md traefik version ([#12508](https://github.com/traefik/traefik/pull/12508) by [DBouraoui](https://github.com/DBouraoui))
+- **[k8s/ingress-nginx]** Fix ingress-nginx annotations documentation ([#12510](https://github.com/traefik/traefik/pull/12510) by [nmengin](https://github.com/nmengin))
+- **[k8s]** Fix Kubernetes reference yml file ([#12406](https://github.com/traefik/traefik/pull/12406) by [mmatur](https://github.com/mmatur))
+- Fix code copy button positioning ([#12520](https://github.com/traefik/traefik/pull/12520) by [AnuragEkkati](https://github.com/AnuragEkkati))
+- Fix typo in kubernetes.md ([#12515](https://github.com/traefik/traefik/pull/12515) by [EdwardSalkeld](https://github.com/EdwardSalkeld))
+- Bring back security section on API &amp; Dashboard documentation page ([#12507](https://github.com/traefik/traefik/pull/12507) by [gndz07](https://github.com/gndz07))
+- Fix link description in Traefik Proxy documentation ([#12488](https://github.com/traefik/traefik/pull/12488) by [schaerfo](https://github.com/schaerfo))
+- Add product comparison matrix and features page ([#12037](https://github.com/traefik/traefik/pull/12037) by [sheddy-traefik](https://github.com/sheddy-traefik))
+
+**Misc:**
+- Merge branch v2.11 into v3.6 ([#12552](https://github.com/traefik/traefik/pull/12552) by [rtribotte](https://github.com/rtribotte))
+- Merge branch v2.11 into v3.6 ([#12533](https://github.com/traefik/traefik/pull/12533) by [mmatur](https://github.com/mmatur))
+- Merge branch v2.11 into v3.6 ([#12497](https://github.com/traefik/traefik/pull/12497) by [mmatur](https://github.com/mmatur))
+
+## [v2.11.35](https://github.com/traefik/traefik/tree/v2.11.35) (2026-01-14)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.34...v2.11.35)
+
+**Bug fixes:**
+- **[acme]** Add timeout to ACME-TLS/1 challenge handshake ([#12516](https://github.com/traefik/traefik/pull/12516) by [LBF38](https://github.com/LBF38))
+- **[server]** Make encoded character options opt-in ([#12540](https://github.com/traefik/traefik/pull/12540) by [gndz07](https://github.com/gndz07))
+
 ## [v3.6.6](https://github.com/traefik/traefik/tree/v3.6.6) (2025-12-29)
 [All Commits](https://github.com/traefik/traefik/compare/v3.6.5...v3.6.6)
 

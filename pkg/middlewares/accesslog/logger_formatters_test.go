@@ -15,12 +15,12 @@ func TestCommonLogFormatter_Format(t *testing.T) {
 
 	testCases := []struct {
 		name        string
-		data        map[string]interface{}
+		data        map[string]any
 		expectedLog string
 	}{
 		{
 			name: "DownstreamStatus & DownstreamContentSize are nil",
-			data: map[string]interface{}{
+			data: map[string]any{
 				StartUTC:               time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 				Duration:               123 * time.Second,
 				ClientHost:             "10.0.0.1",
@@ -41,7 +41,7 @@ func TestCommonLogFormatter_Format(t *testing.T) {
 		},
 		{
 			name: "all data",
-			data: map[string]interface{}{
+			data: map[string]any{
 				StartUTC:               time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 				Duration:               123 * time.Second,
 				ClientHost:             "10.0.0.1",
@@ -62,7 +62,7 @@ func TestCommonLogFormatter_Format(t *testing.T) {
 		},
 		{
 			name: "all data with local time",
-			data: map[string]interface{}{
+			data: map[string]any{
 				StartLocal:             time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 				Duration:               123 * time.Second,
 				ClientHost:             "10.0.0.1",
@@ -106,12 +106,12 @@ func TestGenericCLFLogFormatter_Format(t *testing.T) {
 
 	testCases := []struct {
 		name        string
-		data        map[string]interface{}
+		data        map[string]any
 		expectedLog string
 	}{
 		{
 			name: "DownstreamStatus & DownstreamContentSize are nil",
-			data: map[string]interface{}{
+			data: map[string]any{
 				StartUTC:               time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 				Duration:               123 * time.Second,
 				ClientHost:             "10.0.0.1",
@@ -132,7 +132,7 @@ func TestGenericCLFLogFormatter_Format(t *testing.T) {
 		},
 		{
 			name: "all data",
-			data: map[string]interface{}{
+			data: map[string]any{
 				StartUTC:               time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 				Duration:               123 * time.Second,
 				ClientHost:             "10.0.0.1",
@@ -153,7 +153,7 @@ func TestGenericCLFLogFormatter_Format(t *testing.T) {
 		},
 		{
 			name: "all data with local time",
-			data: map[string]interface{}{
+			data: map[string]any{
 				StartLocal:             time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC),
 				Duration:               123 * time.Second,
 				ClientHost:             "10.0.0.1",
@@ -199,7 +199,7 @@ func Test_toLog(t *testing.T) {
 		fieldName    string
 		defaultValue string
 		quoted       bool
-		expectedLog  interface{}
+		expectedLog  any
 	}{
 		{
 			desc: "Should return int 1",

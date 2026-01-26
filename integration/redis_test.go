@@ -24,6 +24,7 @@ import (
 // Redis test suites.
 type RedisSuite struct {
 	BaseSuite
+
 	kvClient       store.Store
 	redisEndpoints []string
 }

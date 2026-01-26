@@ -81,7 +81,7 @@ func (f *GenericCLFLogFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	return b.Bytes(), err
 }
 
-func toLog(fields logrus.Fields, key, defaultValue string, quoted bool) interface{} {
+func toLog(fields logrus.Fields, key, defaultValue string, quoted bool) any {
 	if v, ok := fields[key]; ok {
 		if v == nil {
 			return defaultValue

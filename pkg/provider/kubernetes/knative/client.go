@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"slices"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -108,8 +109,8 @@ func newExternalClusterClient(endpoint, token, caFilePath string) (*clientWrappe
 }
 
 // WatchAll starts namespace-specific controllers for all relevant kinds.
-func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan interface{}, error) {
-	eventCh := make(chan interface{}, 1)
+func (c *clientWrapper) WatchAll(namespaces []string, stopCh <-chan struct{}) (<-chan any, error) {
+	eventCh := make(chan any, 1)
 	eventHandler := &k8s.ResourceEventHandler{Ev: eventCh}
 
 	if len(namespaces) == 0 {
@@ -210,12 +211,7 @@ func (c *clientWrapper) isWatchedNamespace(ns string) bool {
 	if c.isNamespaceAll {
 		return true
 	}
-	for _, watchedNamespace := range c.watchedNamespaces {
-		if watchedNamespace == ns {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(c.watchedNamespaces, ns)
 }
 
 // lookupNamespace returns the lookup namespace key for the given namespace.

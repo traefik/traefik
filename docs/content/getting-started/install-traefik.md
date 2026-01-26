@@ -144,4 +144,4 @@ And run it:
 
 All the details are available in the [Contributing Guide](../contributing/building-testing.md)
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

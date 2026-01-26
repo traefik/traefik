@@ -1869,6 +1869,11 @@ Register the `TLSStore` kind in the Kubernetes cluster before creating `TLSStore
         - spiffe://trust-domain/id1
         - spiffe://trust-domain/id2
         trustDomain: "spiffe://trust-domain"    # [14]
+      cipherSuites:                             # [15]
+        - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+        - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+      minVersion: VersionTLS11                  # [16]
+      maxVersion: VersionTLS12                  # [17]
     ```
 
 | Ref  | Attribute               | Purpose                                                                                                                                                                                         |
@@ -1887,6 +1892,9 @@ Register the `TLSStore` kind in the Kubernetes cluster before creating `TLSStore
 | [12] | `spiffe`                | The spiffe configuration.                                                                                                                                                                       |
 | [13] | `ids`                   | Defines the allowed SPIFFE IDs (takes precedence over the SPIFFE TrustDomain).                                                                                                                  |
 | [14] | `trustDomain`           | Defines the allowed SPIFFE trust domain.                                                                                                                                                        |
+| [15] | `cipherSuites`          | Defines the cipher suites to use when contacting backend servers.                                                                                                                               |
+| [16] | `minVersion`            | Defines the minimum TLS version to use when contacting backend servers.                                                                                                                         |
+| [17] | `maxVersion`            | Defines the maximum TLS version to use when contacting backend servers.                                                                                                                         |
 
 !!! info "CA Secret"
 
@@ -2039,4 +2047,4 @@ If the ServersTransportTCP CRD is defined in another provider the cross-provider
 
 Also see the [full example](../../user-guides/crd-acme/index.md) with Let's Encrypt.
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

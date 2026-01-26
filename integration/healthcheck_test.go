@@ -19,6 +19,7 @@ import (
 // HealthCheck test suites.
 type HealthCheckSuite struct {
 	BaseSuite
+
 	whoami1IP string
 	whoami2IP string
 	whoami3IP string

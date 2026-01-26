@@ -201,4 +201,4 @@ spec:
     For example, the metadata recovered from the Identity Provider can be used to restrict the access to the applications.
     To do so, you can use the `claims` option, more information in the [dedicated section](../reference/routing-configuration/http/middlewares/jwt.md#claims).
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

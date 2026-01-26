@@ -338,9 +338,7 @@ func (p *Provider) buildRouters(ctx context.Context, ingress *knativenetworkingv
 			}
 
 			conf.Services[routerKey+"-wrr"] = &dynamic.Service{Weighted: wrr}
-			for k, v := range services {
-				conf.Services[k] = v
-			}
+			maps.Copy(conf.Services, services)
 		}
 	}
 
@@ -485,27 +483,21 @@ func mergeHTTPConfigs(confs ...*dynamic.HTTPConfiguration) *dynamic.HTTPConfigur
 	}
 
 	for _, c := range confs {
-		for k, v := range c.Routers {
-			conf.Routers[k] = v
-		}
-		for k, v := range c.Middlewares {
-			conf.Middlewares[k] = v
-		}
-		for k, v := range c.Services {
-			conf.Services[k] = v
-		}
+		maps.Copy(conf.Routers, c.Routers)
+		maps.Copy(conf.Middlewares, c.Middlewares)
+		maps.Copy(conf.Services, c.Services)
 	}
 
 	return conf
 }
 
-func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *safe.Pool, eventsChan <-chan interface{}) chan interface{} {
+func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *safe.Pool, eventsChan <-chan any) chan any {
 	logger := log.Ctx(ctx).With().Logger()
 	if throttleDuration == 0 {
 		return nil
 	}
 	// Create a buffered channel to hold the pending event (if we're delaying processing the event due to throttling)
-	eventsChanBuffered := make(chan interface{}, 1)
+	eventsChanBuffered := make(chan any, 1)
 
 	// Run a goroutine that reads events from eventChan and does a non-blocking write to pendingEvent.
 	// This guarantees that writing to eventChan will never block,
