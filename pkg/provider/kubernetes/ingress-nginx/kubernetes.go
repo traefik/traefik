@@ -300,7 +300,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 			tlsOptName := provider.Normalize(ingress.Namespace + "-" + ingress.Name + "-" + *ingressConfig.AuthTLSSecret)
 
 			if _, exists := tlsOptions[tlsOptName]; !exists {
-				tlsOpt, err := p.buildClientAuthTLSOption(ctxIngress, *ingressConfig.AuthTLSSecret, ingressConfig.AuthTLSVerifyClient)
+				tlsOpt, err := p.buildClientAuthTLSOption(ctxIngress, ingressConfig)
 				if err != nil {
 					logger.Error().Err(err).Msg("Error configuring client auth TLS")
 					continue
@@ -1322,8 +1322,8 @@ func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *s
 	return eventsChanBuffered
 }
 
-func (p *Provider) buildClientAuthTLSOption(ctx context.Context, secretRef string, verifyClient *string) (tls.Options, error) {
-	secretParts := strings.SplitN(secretRef, "/", 2)
+func (p *Provider) buildClientAuthTLSOption(ctx context.Context, config ingressConfig) (tls.Options, error) {
+	secretParts := strings.SplitN(*config.AuthTLSSecret, "/", 2)
 
 	if len(secretParts) != 2 {
 		return tls.Options{}, errors.New("auth-tls-secret is not in a correct namespace/name format")
@@ -1351,20 +1351,20 @@ func (p *Provider) buildClientAuthTLSOption(ctx context.Context, secretRef strin
 
 	// Default verifyClient value is "on" on ingress-nginx.
 	// on means that client certificate is required and must be signed by a trusted CA certificate.
-	clientAuthType := "RequireAndVerifyClientCert"
+	clientAuthType := tls.RequireAndVerifyClientCert
 
-	if verifyClient != nil {
-		switch *verifyClient {
+	if config.AuthTLSVerifyClient != nil {
+		switch *config.AuthTLSVerifyClient {
 		// off means that client certificate is not requested and no verification will be passed.
 		case "off":
-			clientAuthType = "NoClientCert"
+			clientAuthType = tls.NoClientCert
 		// optional means that the client certificate is requested, but not required.
 		// If the certificate is present, it needs to be verified.
 		case "optional":
-			clientAuthType = "VerifyClientCertIfGiven"
+			clientAuthType = tls.VerifyClientCertIfGiven
 		// optional_no_ca means that the client certificate is requested, but does not require it to be signed by a trusted CA certificate.
 		case "optional_no_ca":
-			clientAuthType = "RequestClientCert"
+			clientAuthType = tls.RequestClientCert
 		}
 	}
 
