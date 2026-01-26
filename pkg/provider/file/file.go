@@ -10,6 +10,7 @@ import (
 	"os/signal"
 	"path"
 	"path/filepath"
+	"slices"
 	"strings"
 	"syscall"
 	"text/template"
@@ -226,7 +227,9 @@ func (p *Provider) buildConfiguration() (*dynamic.Configuration, error) {
 			return nil, err
 		}
 
-		return provider.Merge(ctx, configurations, provider.ResourceStrategySkipDuplicates), nil
+		sortedConfigurations := directorySortedConfigurations(configurations)
+
+		return provider.Merge(ctx, sortedConfigurations, provider.ResourceStrategySkipDuplicates), nil
 	}
 
 	if len(p.Filename) > 0 {
@@ -492,4 +495,28 @@ func readFile(filename string) (string, error) {
 		return string(buf), nil
 	}
 	return "", fmt.Errorf("invalid filename: %s", filename)
+}
+
+// directorySortedConfigurations sorts configurations to match the order of a depth-first directory walk.
+func directorySortedConfigurations(configurations map[string]*dynamic.Configuration) []provider.NamedConfiguration {
+	names := slices.SortedFunc(maps.Keys(configurations), func(a, b string) int {
+		partsA := strings.Split(a, string(filepath.Separator))
+		partsB := strings.Split(b, string(filepath.Separator))
+		for i := range min(len(partsA), len(partsB)) {
+			if c := strings.Compare(partsA[i], partsB[i]); c != 0 {
+				return c
+			}
+		}
+		return len(partsA) - len(partsB)
+	})
+
+	sorted := make([]provider.NamedConfiguration, 0, len(names))
+	for _, name := range names {
+		sorted = append(sorted, provider.NamedConfiguration{
+			Name:          name,
+			Configuration: configurations[name],
+		})
+	}
+
+	return sorted
 }

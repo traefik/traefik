@@ -86,7 +86,7 @@ func (p *Provider) buildConfiguration(ctx context.Context, instances []ecsInstan
 		configurations[instanceName] = confFromLabel
 	}
 
-	return provider.Merge(ctx, configurations, provider.ResourceStrategyMerge)
+	return provider.Merge(ctx, provider.NameSortedConfigurations(configurations), provider.ResourceStrategyMerge)
 }
 
 func (p *Provider) buildTCPServiceConfiguration(instance ecsInstance, configuration *dynamic.TCPConfiguration) error {
