@@ -806,6 +806,7 @@ func (p *Provider) applyMiddlewares(namespace, routerKey, rulePath string, ingre
 	applyCORSConfiguration(routerKey, ingressConfig, rt, conf)
 
 	applyRewriteTargetConfiguration(rulePath, routerKey, ingressConfig, rt, conf)
+	applyAppRootConfiguration(routerKey, ingressConfig, rt, conf)
 
 	// Apply SSL redirect is mandatory to be applied after all other middlewares.
 	// TODO: check how to remove this, and create the HTTP router elsewhere.
@@ -908,6 +909,22 @@ func applyRewriteTargetConfiguration(rulePath, routerName string, ingressConfig 
 	}
 
 	rt.Middlewares = append(rt.Middlewares, rewriteTargetMiddlewareName)
+}
+
+func applyAppRootConfiguration(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
+	if ingressConfig.AppRoot == nil {
+		return
+	}
+
+	appRootMiddlewareName := routerName + "-app-root"
+	conf.HTTP.Middlewares[appRootMiddlewareName] = &dynamic.Middleware{
+		ReplacePathRegex: &dynamic.ReplacePathRegex{
+			Regex:       `^\/$`,
+			Replacement: *ingressConfig.AppRoot,
+		},
+	}
+
+	rt.Middlewares = append(rt.Middlewares, appRootMiddlewareName)
 }
 
 func (p *Provider) applyBasicAuthConfiguration(namespace, routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
