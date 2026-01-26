@@ -316,6 +316,7 @@ The following annotations are organized by category for easier navigation.
 
 | Annotation                                            | Limitations / Notes                                                                        |
 |-------------------------------------------------------|--------------------------------------------------------------------------------------------|
+| <a id="opt-nginx-ingress-kubernetes-ioapp-root" href="#opt-nginx-ingress-kubernetes-ioapp-root" title="#opt-nginx-ingress-kubernetes-ioapp-root">`nginx.ingress.kubernetes.io/app-root`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-iouse-regex" href="#opt-nginx-ingress-kubernetes-iouse-regex" title="#opt-nginx-ingress-kubernetes-iouse-regex">`nginx.ingress.kubernetes.io/use-regex`</a> |                                                                                            |
 | <a id="opt-nginx-ingress-kubernetes-iorewrite-target" href="#opt-nginx-ingress-kubernetes-iorewrite-target" title="#opt-nginx-ingress-kubernetes-iorewrite-target">`nginx.ingress.kubernetes.io/rewrite-target`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-iopermanent-redirect" href="#opt-nginx-ingress-kubernetes-iopermanent-redirect" title="#opt-nginx-ingress-kubernetes-iopermanent-redirect">`nginx.ingress.kubernetes.io/permanent-redirect`</a> | Defaults to a 301 Moved Permanently status code.                                                     |
@@ -356,7 +357,6 @@ The following annotations are organized by category for easier navigation.
 
 | Annotation                                                                  | Notes                                                |
 |-----------------------------------------------------------------------------|------------------------------------------------------|
-| <a id="opt-nginx-ingress-kubernetes-ioapp-root" href="#opt-nginx-ingress-kubernetes-ioapp-root" title="#opt-nginx-ingress-kubernetes-ioapp-root">`nginx.ingress.kubernetes.io/app-root`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-ioaffinity-canary-behavior" href="#opt-nginx-ingress-kubernetes-ioaffinity-canary-behavior" title="#opt-nginx-ingress-kubernetes-ioaffinity-canary-behavior">`nginx.ingress.kubernetes.io/affinity-canary-behavior`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-ioauth-signin" href="#opt-nginx-ingress-kubernetes-ioauth-signin" title="#opt-nginx-ingress-kubernetes-ioauth-signin">`nginx.ingress.kubernetes.io/auth-signin`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-ioauth-tls-secret" href="#opt-nginx-ingress-kubernetes-ioauth-tls-secret" title="#opt-nginx-ingress-kubernetes-ioauth-tls-secret">`nginx.ingress.kubernetes.io/auth-tls-secret`</a> |                                                      |

@@ -793,6 +793,12 @@ func (p *Provider) loadCertificates(ctx context.Context, ingress *netv1.Ingress,
 }
 
 func (p *Provider) applyMiddlewares(namespace, routerKey, rulePath string, ingressConfig ingressConfig, hasTLS bool, rt *dynamic.Router, conf *dynamic.Configuration) error {
+	applyAppRootConfiguration(routerKey, ingressConfig, rt, conf)
+
+	// Apply SSL redirect is mandatory to be applied after all other middlewares.
+	// TODO: check how to remove this, and create the HTTP router elsewhere.
+	p.applySSLRedirectConfiguration(routerKey, ingressConfig, hasTLS, rt, conf)
+
 	if err := p.applyBasicAuthConfiguration(namespace, routerKey, ingressConfig, rt, conf); err != nil {
 		return fmt.Errorf("applying basic auth configuration: %w", err)
 	}
@@ -806,10 +812,6 @@ func (p *Provider) applyMiddlewares(namespace, routerKey, rulePath string, ingre
 	applyCORSConfiguration(routerKey, ingressConfig, rt, conf)
 
 	applyRewriteTargetConfiguration(rulePath, routerKey, ingressConfig, rt, conf)
-
-	// Apply SSL redirect is mandatory to be applied after all other middlewares.
-	// TODO: check how to remove this, and create the HTTP router elsewhere.
-	p.applySSLRedirectConfiguration(routerKey, ingressConfig, hasTLS, rt, conf)
 
 	applyRedirect(routerKey, ingressConfig, rt, conf)
 
@@ -908,6 +910,22 @@ func applyRewriteTargetConfiguration(rulePath, routerName string, ingressConfig 
 	}
 
 	rt.Middlewares = append(rt.Middlewares, rewriteTargetMiddlewareName)
+}
+
+func applyAppRootConfiguration(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
+	if ingressConfig.AppRoot == nil || !strings.HasPrefix(*ingressConfig.AppRoot, "/") {
+		return
+	}
+
+	appRootMiddlewareName := routerName + "-app-root"
+	conf.HTTP.Middlewares[appRootMiddlewareName] = &dynamic.Middleware{
+		RedirectRegex: &dynamic.RedirectRegex{
+			Regex:       `^(https?://[^/]+)/$`,
+			Replacement: "$1" + *ingressConfig.AppRoot,
+		},
+	}
+
+	rt.Middlewares = append(rt.Middlewares, appRootMiddlewareName)
 }
 
 func (p *Provider) applyBasicAuthConfiguration(namespace, routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
@@ -1125,7 +1143,7 @@ func (p *Provider) applySSLRedirectConfiguration(routerName string, ingressConfi
 				ForcePermanentRedirect: true,
 			},
 		}
-		rt.Middlewares = append([]string{redirectMiddlewareName}, rt.Middlewares...)
+		rt.Middlewares = append(rt.Middlewares, redirectMiddlewareName)
 	}
 
 	// An Ingress that is not forcing sslRedirect and has no TLS configuration does not redirect,
