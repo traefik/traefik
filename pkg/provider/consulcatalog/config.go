@@ -106,7 +106,7 @@ func (p *Provider) buildConfiguration(ctx context.Context, items []itemData, cer
 		configurations[svcName] = confFromLabel
 	}
 
-	return provider.Merge(ctx, configurations, provider.ResourceStrategyMerge)
+	return provider.Merge(ctx, provider.NameSortedConfigurations(configurations), provider.ResourceStrategyMerge)
 }
 
 func (p *Provider) keepContainer(ctx context.Context, item itemData) bool {

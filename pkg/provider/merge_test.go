@@ -510,7 +510,7 @@ func TestMerge(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			result := Merge(context.Background(), test.configurations, test.strategy)
+			result := Merge(context.Background(), NameSortedConfigurations(test.configurations), test.strategy)
 
 			assert.Equal(t, test.expected, result)
 		})

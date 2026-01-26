@@ -37,8 +37,26 @@ const (
 	ResourceStrategySkipDuplicates
 )
 
+// NamedConfiguration is a configuration with its name.
+type NamedConfiguration struct {
+	Name          string
+	Configuration *dynamic.Configuration
+}
+
+// NameSortedConfigurations returns the configurations sorted by name.
+func NameSortedConfigurations(configurations map[string]*dynamic.Configuration) []NamedConfiguration {
+	origins := slices.Sorted(maps.Keys(configurations))
+
+	sorted := make([]NamedConfiguration, 0, len(origins))
+	for _, origin := range origins {
+		sorted = append(sorted, NamedConfiguration{Name: origin, Configuration: configurations[origin]})
+	}
+
+	return sorted
+}
+
 // Merge merges multiple configurations.
-func Merge(ctx context.Context, configurations map[string]*dynamic.Configuration, strategy ResourceStrategy) *dynamic.Configuration {
+func Merge(ctx context.Context, configurations []NamedConfiguration, strategy ResourceStrategy) *dynamic.Configuration {
 	merged := &dynamic.Configuration{
 		HTTP: &dynamic.HTTPConfiguration{
 			Routers:           make(map[string]*dynamic.Router),
@@ -63,23 +81,20 @@ func Merge(ctx context.Context, configurations map[string]*dynamic.Configuration
 
 	tracker := newMergeTracker()
 
-	origins := slices.Sorted(maps.Keys(configurations))
-	for _, origin := range origins {
-		conf := configurations[origin]
+	for _, c := range configurations {
+		if c.Configuration.HTTP != nil {
+			mergeResourceMaps(ctx, reflect.ValueOf(merged.HTTP).Elem(), reflect.ValueOf(c.Configuration.HTTP).Elem(), c.Name, tracker, strategy, resourceLogFields)
+		}
+		if c.Configuration.TCP != nil {
+			mergeResourceMaps(ctx, reflect.ValueOf(merged.TCP).Elem(), reflect.ValueOf(c.Configuration.TCP).Elem(), c.Name, tracker, strategy, resourceLogFields)
+		}
+		if c.Configuration.UDP != nil {
+			mergeResourceMaps(ctx, reflect.ValueOf(merged.UDP).Elem(), reflect.ValueOf(c.Configuration.UDP).Elem(), c.Name, tracker, strategy, resourceLogFields)
+		}
+		if c.Configuration.TLS != nil {
+			mergeResourceMaps(ctx, reflect.ValueOf(merged.TLS).Elem(), reflect.ValueOf(c.Configuration.TLS).Elem(), c.Name, tracker, strategy, resourceLogFields)
 
-		if conf.HTTP != nil {
-			mergeResourceMaps(ctx, reflect.ValueOf(merged.HTTP).Elem(), reflect.ValueOf(conf.HTTP).Elem(), origin, tracker, strategy, resourceLogFields)
-		}
-		if conf.TCP != nil {
-			mergeResourceMaps(ctx, reflect.ValueOf(merged.TCP).Elem(), reflect.ValueOf(conf.TCP).Elem(), origin, tracker, strategy, resourceLogFields)
-		}
-		if conf.UDP != nil {
-			mergeResourceMaps(ctx, reflect.ValueOf(merged.UDP).Elem(), reflect.ValueOf(conf.UDP).Elem(), origin, tracker, strategy, resourceLogFields)
-		}
-		if conf.TLS != nil {
-			mergeResourceMaps(ctx, reflect.ValueOf(merged.TLS).Elem(), reflect.ValueOf(conf.TLS).Elem(), origin, tracker, strategy, resourceLogFields)
-
-			merged.TLS.Certificates = mergeCertificates(ctx, merged.TLS.Certificates, conf.TLS.Certificates, origin, strategy)
+			merged.TLS.Certificates = mergeCertificates(ctx, merged.TLS.Certificates, c.Configuration.TLS.Certificates, c.Name, strategy)
 		}
 	}
 

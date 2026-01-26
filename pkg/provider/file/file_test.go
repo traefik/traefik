@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/provider"
 	"github.com/traefik/traefik/v3/pkg/safe"
 )
 
@@ -355,4 +356,89 @@ func createTempFile(srcPath, tempDir string) (*os.File, error) {
 
 	_, err = io.Copy(file, src)
 	return file, err
+}
+
+func Test_directorySortedConfigurations(t *testing.T) {
+	tests := []struct {
+		desc     string
+		keys     []string
+		expected []string
+	}{
+		{
+			desc:     "simple flat files",
+			keys:     []string{"c.yml", "a.yml", "b.yml"},
+			expected: []string{"a.yml", "b.yml", "c.yml"},
+		},
+		{
+			desc:     "directory before same-prefix file",
+			keys:     []string{"foo.yml", "foo/bar.yml"},
+			expected: []string{"foo/bar.yml", "foo.yml"},
+		},
+		{
+			desc:     "hyphenated file vs directory",
+			keys:     []string{"foo-bar.yml", "foo/baz.yml"},
+			expected: []string{"foo/baz.yml", "foo-bar.yml"},
+		},
+		{
+			desc:     "nested directories",
+			keys:     []string{"a.yml", "a/d.yml", "a/b/c.yml"},
+			expected: []string{"a/b/c.yml", "a/d.yml", "a.yml"},
+		},
+		{
+			desc: "mixed depths full DFS ordering",
+			keys: []string{
+				"z.yml",
+				"a/x.yml",
+				"a.yml",
+				"a/b/c.yml",
+				"m.yml",
+				"a/b.yml",
+			},
+			expected: []string{
+				"a/b/c.yml",
+				"a/b.yml",
+				"a/x.yml",
+				"a.yml",
+				"m.yml",
+				"z.yml",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			configurations := make(map[string]*dynamic.Configuration, len(test.keys))
+			for _, key := range test.keys {
+				configurations[key] = &dynamic.Configuration{}
+			}
+
+			result := directorySortedConfigurations(configurations)
+
+			got := make([]string, 0, len(result))
+			for _, nc := range result {
+				got = append(got, nc.Name)
+			}
+
+			assert.Equal(t, test.expected, got)
+		})
+	}
+}
+
+func Test_directorySortedConfigurations_preservesConfigurations(t *testing.T) {
+	configurations := map[string]*dynamic.Configuration{
+		"a.yml": {HTTP: &dynamic.HTTPConfiguration{}},
+		"b.yml": {TCP: &dynamic.TCPConfiguration{}},
+	}
+
+	result := directorySortedConfigurations(configurations)
+
+	require.Len(t, result, 2)
+	assert.Equal(t, provider.NamedConfiguration{
+		Name:          "a.yml",
+		Configuration: configurations["a.yml"],
+	}, result[0])
+	assert.Equal(t, provider.NamedConfiguration{
+		Name:          "b.yml",
+		Configuration: configurations["b.yml"],
+	}, result[1])
 }
