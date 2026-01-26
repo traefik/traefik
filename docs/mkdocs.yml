@@ -274,6 +274,7 @@ nav:
           - 'Health Check (CLI & Ping)': 'reference/install-configuration/observability/healthcheck.md'
       - 'Experimental':
           - 'FastProxy': 'reference/install-configuration/experimental/fastproxy.md'
+          - 'Plugins': 'reference/install-configuration/experimental/plugins.md'
       - 'Options List': 'reference/install-configuration/configuration-options.md'
     - 'Routing Configuration':
         - 'Common Configuration' :

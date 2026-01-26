@@ -21,7 +21,9 @@ For detailed steps tailored to your environment, follow the guide for your platf
 - [Docker](./docker.md)
 - [Docker Swarm](./swarm.md)
 
-## Exposing gRPC Services
+## Advanced Use Cases
+
+### Exposing gRPC Services
 
 Traefik Proxy supports gRPC applications without requiring specific configuration. You can expose gRPC services using either HTTP (h2c) or HTTPS.
 
@@ -68,7 +70,7 @@ Traefik Proxy supports gRPC applications without requiring specific configuratio
 
     Traefik handles the protocol negotiation automatically. Configure TLS certificates for your backends using [ServersTransport](../reference/routing-configuration/http/load-balancing/serverstransport.md) if needed.
 
-## Exposing WebSocket Services
+### Exposing WebSocket Services
 
 Traefik Proxy supports WebSocket (WS) and WebSocket Secure (WSS) connections out of the box. No special configuration is required beyond standard HTTP routing.
 
