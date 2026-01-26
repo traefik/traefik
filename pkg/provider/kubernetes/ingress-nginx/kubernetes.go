@@ -354,6 +354,9 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 				Service:    defaultBackendName,
 				TLS:        &dynamic.RouterTLSConfig{},
 			}
+			if clientAuthTLSOptionName != "" {
+				rtTLS.TLS.Options = clientAuthTLSOptionName
+			}
 
 			if err := p.applyMiddlewares(ingress.Namespace, defaultBackendTLSName, "", ingressConfig, false, rtTLS, conf); err != nil {
 				logger.Error().Err(err).Msg("Error applying middlewares")
@@ -444,6 +447,9 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 					RuleSyntax: "default",
 					Service:    key,
 					TLS:        &dynamic.RouterTLSConfig{},
+				}
+				if clientAuthTLSOptionName != "" {
+					rtTLS.TLS.Options = clientAuthTLSOptionName
 				}
 
 				if err := p.applyMiddlewares(ingress.Namespace, key+"-tls", "", ingressConfig, false, rtTLS, conf); err != nil {
