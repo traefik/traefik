@@ -793,6 +793,12 @@ func (p *Provider) loadCertificates(ctx context.Context, ingress *netv1.Ingress,
 }
 
 func (p *Provider) applyMiddlewares(namespace, routerKey, rulePath string, ingressConfig ingressConfig, hasTLS bool, rt *dynamic.Router, conf *dynamic.Configuration) error {
+	applyAppRootConfiguration(routerKey, ingressConfig, rt, conf)
+
+	// Apply SSL redirect is mandatory to be applied after all other middlewares.
+	// TODO: check how to remove this, and create the HTTP router elsewhere.
+	p.applySSLRedirectConfiguration(routerKey, ingressConfig, hasTLS, rt, conf)
+
 	if err := p.applyBasicAuthConfiguration(namespace, routerKey, ingressConfig, rt, conf); err != nil {
 		return fmt.Errorf("applying basic auth configuration: %w", err)
 	}
@@ -806,12 +812,6 @@ func (p *Provider) applyMiddlewares(namespace, routerKey, rulePath string, ingre
 	applyCORSConfiguration(routerKey, ingressConfig, rt, conf)
 
 	applyRewriteTargetConfiguration(rulePath, routerKey, ingressConfig, rt, conf)
-
-	applyAppRootConfiguration(routerKey, ingressConfig, rt, conf)
-
-	// Apply SSL redirect is mandatory to be applied after all other middlewares.
-	// TODO: check how to remove this, and create the HTTP router elsewhere.
-	p.applySSLRedirectConfiguration(routerKey, ingressConfig, hasTLS, rt, conf)
 
 	applyRedirect(routerKey, ingressConfig, rt, conf)
 
