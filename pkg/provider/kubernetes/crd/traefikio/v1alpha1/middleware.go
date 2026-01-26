@@ -185,6 +185,8 @@ type ForwardAuth struct {
 	PreserveLocationHeader bool `json:"preserveLocationHeader,omitempty"`
 	// PreserveRequestMethod defines whether to preserve the original request method while forwarding the request to the authentication server.
 	PreserveRequestMethod bool `json:"preserveRequestMethod,omitempty"`
+	// AuthSigninURL specifies the URL to redirect to when the authentication server returns 401 Unauthorized.
+	AuthSigninURL string `json:"authSigninURL,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true

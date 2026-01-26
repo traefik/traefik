@@ -1435,6 +1435,10 @@ spec:
                       AuthResponseHeadersRegex defines the regex to match headers to copy from the authentication server response and set on forwarded request, after stripping all headers that match the regex.
                       More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/middlewares/forwardauth/#authresponseheadersregex
                     type: string
+                  authSigninURL:
+                    description: AuthSigninURL specifies the URL to redirect to when
+                      the authentication server returns 401 Unauthorized.
+                    type: string
                   forwardBody:
                     description: ForwardBody defines whether to send the request body
                       to the authentication server.

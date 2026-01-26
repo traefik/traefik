@@ -41,6 +41,7 @@ type ForwardAuthApplyConfiguration struct {
 	MaxBodySize              *int64                                     `json:"maxBodySize,omitempty"`
 	PreserveLocationHeader   *bool                                      `json:"preserveLocationHeader,omitempty"`
 	PreserveRequestMethod    *bool                                      `json:"preserveRequestMethod,omitempty"`
+	AuthSigninURL            *string                                    `json:"authSigninURL,omitempty"`
 }
 
 // ForwardAuthApplyConfiguration constructs a declarative configuration of the ForwardAuth type for use with
@@ -148,5 +149,13 @@ func (b *ForwardAuthApplyConfiguration) WithPreserveLocationHeader(value bool) *
 // If called multiple times, the PreserveRequestMethod field is set to the value of the last call.
 func (b *ForwardAuthApplyConfiguration) WithPreserveRequestMethod(value bool) *ForwardAuthApplyConfiguration {
 	b.PreserveRequestMethod = &value
+	return b
+}
+
+// WithAuthSigninURL sets the AuthSigninURL field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the AuthSigninURL field is set to the value of the last call.
+func (b *ForwardAuthApplyConfiguration) WithAuthSigninURL(value string) *ForwardAuthApplyConfiguration {
+	b.AuthSigninURL = &value
 	return b
 }
