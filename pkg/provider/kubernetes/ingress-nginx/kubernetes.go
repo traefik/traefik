@@ -295,12 +295,12 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 			}
 		}
 
-		var clientAuthTlsOptionName string
+		var clientAuthTLSOptionName string
 		if ingressConfig.AuthTLSSecret != nil {
 			tlsOptName := provider.Normalize(ingress.Namespace + "-" + ingress.Name + "-" + *ingressConfig.AuthTLSSecret)
 
 			if _, exists := tlsOptions[tlsOptName]; !exists {
-				tlsOpt, err := p.buildClientAuthTLSOption(ctxIngress, ingressConfig)
+				tlsOpt, err := p.buildClientAuthTLSOption(ingressConfig)
 				if err != nil {
 					logger.Error().Err(err).Msg("Error configuring client auth TLS")
 					continue
@@ -309,7 +309,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 				tlsOptions[tlsOptName] = tlsOpt
 			}
 
-			clientAuthTlsOptionName = tlsOptName
+			clientAuthTLSOptionName = tlsOptName
 		}
 
 		namedServersTransport, err := p.buildServersTransport(ingress.Namespace, ingress.Name, ingressConfig)
@@ -500,8 +500,8 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 				if hasTLS {
 					rt.TLS = &dynamic.RouterTLSConfig{}
 
-					if clientAuthTlsOptionName != "" {
-						rt.TLS.Options = clientAuthTlsOptionName
+					if clientAuthTLSOptionName != "" {
+						rt.TLS.Options = clientAuthTLSOptionName
 					}
 				}
 
@@ -1322,7 +1322,7 @@ func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *s
 	return eventsChanBuffered
 }
 
-func (p *Provider) buildClientAuthTLSOption(ctx context.Context, config ingressConfig) (tls.Options, error) {
+func (p *Provider) buildClientAuthTLSOption(config ingressConfig) (tls.Options, error) {
 	secretParts := strings.SplitN(*config.AuthTLSSecret, "/", 2)
 
 	if len(secretParts) != 2 {
@@ -1334,10 +1334,10 @@ func (p *Provider) buildClientAuthTLSOption(ctx context.Context, config ingressC
 	secretName := secretParts[1]
 
 	if secretNamespace == "" {
-		return tls.Options{}, fmt.Errorf("auth-tls-secret has empty namespace")
+		return tls.Options{}, errors.New("auth-tls-secret has empty namespace")
 	}
 	if secretName == "" {
-		return tls.Options{}, fmt.Errorf("auth-tls-secret has empty name")
+		return tls.Options{}, errors.New("auth-tls-secret has empty name")
 	}
 
 	blocks, err := p.certificateBlocks(secretNamespace, secretName)
