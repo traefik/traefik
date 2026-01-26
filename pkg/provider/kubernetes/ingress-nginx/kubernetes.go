@@ -918,7 +918,7 @@ func applyAppRootConfiguration(routerName string, ingressConfig ingressConfig, r
 
 	appRootMiddlewareName := routerName + "-app-root"
 	conf.HTTP.Middlewares[appRootMiddlewareName] = &dynamic.Middleware{
-		ReplacePathRegex: &dynamic.ReplacePathRegex{
+		RedirectRegex: &dynamic.RedirectRegex{
 			Regex:       `^\/$`,
 			Replacement: *ingressConfig.AppRoot,
 		},
