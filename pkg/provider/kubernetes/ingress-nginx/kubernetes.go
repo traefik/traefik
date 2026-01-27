@@ -1330,7 +1330,6 @@ func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *s
 
 func (p *Provider) buildClientAuthTLSOption(config ingressConfig) (tls.Options, error) {
 	secretParts := strings.SplitN(*config.AuthTLSSecret, "/", 2)
-
 	if len(secretParts) != 2 {
 		return tls.Options{}, errors.New("auth-tls-secret is not in a correct namespace/name format")
 	}
@@ -1348,7 +1347,7 @@ func (p *Provider) buildClientAuthTLSOption(config ingressConfig) (tls.Options, 
 
 	blocks, err := p.certificateBlocks(secretNamespace, secretName)
 	if err != nil {
-		return tls.Options{}, errors.New("error reading client certificate")
+		return tls.Options{}, fmt.Errorf("reading client certificate: %w", err)
 	}
 
 	if blocks.CA == nil {
@@ -1358,7 +1357,6 @@ func (p *Provider) buildClientAuthTLSOption(config ingressConfig) (tls.Options, 
 	// Default verifyClient value is "on" on ingress-nginx.
 	// on means that client certificate is required and must be signed by a trusted CA certificate.
 	clientAuthType := tls.RequireAndVerifyClientCert
-
 	if config.AuthTLSVerifyClient != nil {
 		switch *config.AuthTLSVerifyClient {
 		// off means that client certificate is not requested and no verification will be passed.
