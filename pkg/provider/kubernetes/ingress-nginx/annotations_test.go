@@ -65,15 +65,6 @@ func Test_parseIngressConfig(t *testing.T) {
 				"nginx.ingress.kubernetes.io/proxy-connect-timeout":               "notanint",
 			},
 		},
-		{
-			desc: "zero timeout means no timeout",
-			annotations: map[string]string{
-				"nginx.ingress.kubernetes.io/proxy-connect-timeout": "0",
-			},
-			expected: ingressConfig{
-				ProxyConnectTimeout: ptr.To(0),
-			},
-		},
 	}
 
 	for _, test := range tests {

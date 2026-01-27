@@ -42,7 +42,7 @@ const (
 	defaultBackendName    = "default-backend"
 	defaultBackendTLSName = "default-backend-tls"
 
-	defaultConnectTimeout = 60
+	defaultProxyConnectTimeout = 60
 )
 
 type backendAddress struct {
@@ -97,7 +97,7 @@ type Provider struct {
 func (p *Provider) SetDefaults() {
 	p.IngressClass = defaultAnnotationValue
 	p.ControllerClass = defaultControllerName
-	p.ProxyConnectTimeout = defaultConnectTimeout
+	p.ProxyConnectTimeout = defaultProxyConnectTimeout
 }
 
 // Init the provider.
@@ -508,18 +508,18 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 }
 
 func (p *Provider) buildServersTransport(namespace, name string, cfg ingressConfig) (*namedServersTransport, error) {
-	connectTimeout := ptr.Deref(cfg.ProxyConnectTimeout, p.ProxyConnectTimeout)
+	proxyConnectTimeout := ptr.Deref(cfg.ProxyConnectTimeout, p.ProxyConnectTimeout)
 	nst := &namedServersTransport{
 		Name: provider.Normalize(namespace + "-" + name),
 		ServersTransport: &dynamic.ServersTransport{
 			ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-				DialTimeout: ptypes.Duration(time.Duration(connectTimeout) * time.Second),
+				DialTimeout: ptypes.Duration(time.Duration(proxyConnectTimeout) * time.Second),
 			},
 		},
 	}
 
 	scheme := parseBackendProtocol(ptr.Deref(cfg.BackendProtocol, "HTTP"))
-	// Only create ServersTransport for HTTPS backends OR when timeouts are configured.
+
 	if scheme != "https" {
 		return nst, nil
 	}
