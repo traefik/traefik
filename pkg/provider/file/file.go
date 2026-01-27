@@ -10,7 +10,6 @@ import (
 	"os/signal"
 	"path"
 	"path/filepath"
-	"slices"
 	"strings"
 	"syscall"
 	"text/template"
@@ -222,14 +221,12 @@ func (p *Provider) buildConfiguration() (*dynamic.Configuration, error) {
 	ctx := log.With().Str(logs.ProviderName, providerName).Logger().WithContext(context.Background())
 
 	if len(p.Directory) > 0 {
-		configurations := make(map[string]*dynamic.Configuration)
-		if err := p.collectFileConfigs(ctx, p.Directory, "", configurations); err != nil {
+		configurations, err := p.collectFileConfigs(ctx, p.Directory, "")
+		if err != nil {
 			return nil, err
 		}
 
-		sortedConfigurations := directorySortedConfigurations(configurations)
-
-		return provider.Merge(ctx, sortedConfigurations, provider.ResourceStrategySkipDuplicates), nil
+		return provider.Merge(ctx, configurations, provider.ResourceStrategySkipDuplicates), nil
 	}
 
 	if len(p.Filename) > 0 {
@@ -385,10 +382,12 @@ func (p *Provider) loadFileConfig(ctx context.Context, filename string, parseTem
 }
 
 // collectFileConfigs recursively collects configurations from files in the given directory.
-func (p *Provider) collectFileConfigs(ctx context.Context, directory, prefix string, configurations map[string]*dynamic.Configuration) error {
+func (p *Provider) collectFileConfigs(ctx context.Context, directory, prefix string) ([]provider.NamedConfiguration, error) {
+	var configurations []provider.NamedConfiguration
+
 	fileList, err := os.ReadDir(directory)
 	if err != nil {
-		return fmt.Errorf("unable to read directory %s: %w", directory, err)
+		return nil, fmt.Errorf("unable to read directory %s: %w", directory, err)
 	}
 
 	for _, item := range fileList {
@@ -399,10 +398,11 @@ func (p *Provider) collectFileConfigs(ctx context.Context, directory, prefix str
 		}
 
 		if item.IsDir() {
-			err := p.collectFileConfigs(ctx, itemPath, filename, configurations)
+			sub, err := p.collectFileConfigs(ctx, itemPath, filename)
 			if err != nil {
-				return fmt.Errorf("unable to load content configuration from subdirectory %s: %w", item, err)
+				return nil, fmt.Errorf("unable to load content configuration from subdirectory %s: %w", item, err)
 			}
+			configurations = append(configurations, sub...)
 			continue
 		}
 
@@ -415,13 +415,16 @@ func (p *Provider) collectFileConfigs(ctx context.Context, directory, prefix str
 
 		c, err := p.loadFileConfig(ctx, itemPath, true)
 		if err != nil {
-			return fmt.Errorf("%s: %w", itemPath, err)
+			return nil, fmt.Errorf("%s: %w", itemPath, err)
 		}
 
-		configurations[filename] = c
+		configurations = append(configurations, provider.NamedConfiguration{
+			Name:          filename,
+			Configuration: c,
+		})
 	}
 
-	return nil
+	return configurations, nil
 }
 
 func (p *Provider) decodeConfiguration(filePath, content string) (*dynamic.Configuration, error) {
@@ -495,28 +498,4 @@ func readFile(filename string) (string, error) {
 		return string(buf), nil
 	}
 	return "", fmt.Errorf("invalid filename: %s", filename)
-}
-
-// directorySortedConfigurations sorts configurations to match the order of a depth-first directory walk.
-func directorySortedConfigurations(configurations map[string]*dynamic.Configuration) []provider.NamedConfiguration {
-	names := slices.SortedFunc(maps.Keys(configurations), func(a, b string) int {
-		partsA := strings.Split(a, string(filepath.Separator))
-		partsB := strings.Split(b, string(filepath.Separator))
-		for i := range min(len(partsA), len(partsB)) {
-			if c := strings.Compare(partsA[i], partsB[i]); c != 0 {
-				return c
-			}
-		}
-		return len(partsA) - len(partsB)
-	})
-
-	sorted := make([]provider.NamedConfiguration, 0, len(names))
-	for _, name := range names {
-		sorted = append(sorted, provider.NamedConfiguration{
-			Name:          name,
-			Configuration: configurations[name],
-		})
-	}
-
-	return sorted
 }
