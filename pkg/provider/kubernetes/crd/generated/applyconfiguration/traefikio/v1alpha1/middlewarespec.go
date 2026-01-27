@@ -33,13 +33,16 @@ import (
 
 // MiddlewareSpecApplyConfiguration represents a declarative configuration of the MiddlewareSpec type for use
 // with apply.
+//
+// MiddlewareSpec defines the desired state of a Middleware.
 type MiddlewareSpecApplyConfiguration struct {
-	AddPrefix         *dynamic.AddPrefix                `json:"addPrefix,omitempty"`
-	StripPrefix       *dynamic.StripPrefix              `json:"stripPrefix,omitempty"`
-	StripPrefixRegex  *dynamic.StripPrefixRegex         `json:"stripPrefixRegex,omitempty"`
-	ReplacePath       *dynamic.ReplacePath              `json:"replacePath,omitempty"`
-	ReplacePathRegex  *dynamic.ReplacePathRegex         `json:"replacePathRegex,omitempty"`
-	Chain             *ChainApplyConfiguration          `json:"chain,omitempty"`
+	AddPrefix        *dynamic.AddPrefix        `json:"addPrefix,omitempty"`
+	StripPrefix      *dynamic.StripPrefix      `json:"stripPrefix,omitempty"`
+	StripPrefixRegex *dynamic.StripPrefixRegex `json:"stripPrefixRegex,omitempty"`
+	ReplacePath      *dynamic.ReplacePath      `json:"replacePath,omitempty"`
+	ReplacePathRegex *dynamic.ReplacePathRegex `json:"replacePathRegex,omitempty"`
+	Chain            *ChainApplyConfiguration  `json:"chain,omitempty"`
+	// Deprecated: please use IPAllowList instead.
 	IPWhiteList       *dynamic.IPWhiteList              `json:"ipWhiteList,omitempty"`
 	IPAllowList       *dynamic.IPAllowList              `json:"ipAllowList,omitempty"`
 	Headers           *dynamic.Headers                  `json:"headers,omitempty"`
@@ -58,7 +61,9 @@ type MiddlewareSpecApplyConfiguration struct {
 	Retry             *RetryApplyConfiguration          `json:"retry,omitempty"`
 	ContentType       *dynamic.ContentType              `json:"contentType,omitempty"`
 	GrpcWeb           *dynamic.GrpcWeb                  `json:"grpcWeb,omitempty"`
-	Plugin            map[string]v1.JSON                `json:"plugin,omitempty"`
+	// Plugin defines the middleware plugin configuration.
+	// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/middlewares/overview/#community-middlewares
+	Plugin map[string]v1.JSON `json:"plugin,omitempty"`
 }
 
 // MiddlewareSpecApplyConfiguration constructs a declarative configuration of the MiddlewareSpec type for use with

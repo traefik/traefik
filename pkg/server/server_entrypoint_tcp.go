@@ -334,24 +334,19 @@ func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
 	}
 
 	if e.httpServer.Server != nil {
-		wg.Add(1)
-		go shutdownServer(e.httpServer.Server)
+		wg.Go(func() { shutdownServer(e.httpServer.Server) })
 	}
 
 	if e.httpsServer.Server != nil {
-		wg.Add(1)
-		go shutdownServer(e.httpsServer.Server)
+		wg.Go(func() { shutdownServer(e.httpsServer.Server) })
 
 		if e.http3Server != nil {
-			wg.Add(1)
-			go shutdownServer(e.http3Server)
+			wg.Go(func() { shutdownServer(e.http3Server) })
 		}
 	}
 
 	if e.tracker != nil {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			err := e.tracker.Shutdown(ctx)
 			if err == nil {
 				return
@@ -360,7 +355,7 @@ func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
 				logger.Debug().Err(err).Msg("Server failed to shutdown before deadline")
 			}
 			e.tracker.Close()
-		}()
+		})
 	}
 
 	wg.Wait()

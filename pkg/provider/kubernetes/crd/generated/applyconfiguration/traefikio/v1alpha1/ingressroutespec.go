@@ -28,11 +28,23 @@ package v1alpha1
 
 // IngressRouteSpecApplyConfiguration represents a declarative configuration of the IngressRouteSpec type for use
 // with apply.
+//
+// IngressRouteSpec defines the desired state of IngressRoute.
 type IngressRouteSpecApplyConfiguration struct {
-	Routes      []RouteApplyConfiguration           `json:"routes,omitempty"`
-	EntryPoints []string                            `json:"entryPoints,omitempty"`
-	TLS         *TLSApplyConfiguration              `json:"tls,omitempty"`
-	ParentRefs  []IngressRouteRefApplyConfiguration `json:"parentRefs,omitempty"`
+	// Routes defines the list of routes.
+	Routes []RouteApplyConfiguration `json:"routes,omitempty"`
+	// EntryPoints defines the list of entry point names to bind to.
+	// Entry points have to be configured in the static configuration.
+	// More info: https://doc.traefik.io/traefik/v3.6/reference/install-configuration/entrypoints/
+	// Default: all.
+	EntryPoints []string `json:"entryPoints,omitempty"`
+	// TLS defines the TLS configuration.
+	// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/routing/router/#tls
+	TLS *TLSApplyConfiguration `json:"tls,omitempty"`
+	// ParentRefs defines references to parent IngressRoute resources for multi-layer routing.
+	// When set, this IngressRoute's routers will be children of the referenced parent IngressRoute's routers.
+	// More info: https://doc.traefik.io/traefik/v3.6/routing/routers/#parentrefs
+	ParentRefs []IngressRouteRefApplyConfiguration `json:"parentRefs,omitempty"`
 }
 
 // IngressRouteSpecApplyConfiguration constructs a declarative configuration of the IngressRouteSpec type for use with
