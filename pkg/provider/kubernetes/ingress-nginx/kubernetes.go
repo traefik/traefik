@@ -52,7 +52,7 @@ const (
 	// https://nginx.org/en/docs/http/ngx_http_core_module.html#client_body_buffer_size
 	defaultClientBodyBufferSize = int64(16 * 1024) // 16KB
 	// https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffer_size
-	defaultProxyBuffersSize = int64(8 * 1024) // 8KB
+	defaultProxyBufferSize = int64(8 * 1024) // 8KB
 	// https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/nginx-configuration/annotations.md#proxy-buffers-number
 	defaultProxyBuffersNumber = 4
 	// https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_max_temp_file_size
@@ -122,7 +122,7 @@ func (p *Provider) SetDefaults() {
 	p.ProxyConnectTimeout = defaultProxyConnectTimeout
 	p.ClientBodyBufferSize = defaultClientBodyBufferSize
 	p.ProxyBodySize = defaultProxyBodySize
-	p.ProxyBufferSize = defaultProxyBuffersSize
+	p.ProxyBufferSize = defaultProxyBufferSize
 	p.ProxyBuffersNumber = defaultProxyBuffersNumber
 }
 
@@ -1258,8 +1258,7 @@ func (p *Provider) applyBufferingConfiguration(routerName string, ingressConfig 
 			bufferSize := p.ProxyBufferSize
 			if proxyBufferSize := ptr.Deref(ingressConfig.ProxyBufferSize, ""); proxyBufferSize != "" {
 				var err error
-				bufferSize, err = nginxSizeToBytes(proxyBufferSize)
-				if err != nil {
+				if bufferSize, err = nginxSizeToBytes(proxyBufferSize); err != nil {
 					return fmt.Errorf("proxy-buffer-size annotation has invalid value: %w", err)
 				}
 			}
@@ -1267,15 +1266,15 @@ func (p *Provider) applyBufferingConfiguration(routerName string, ingressConfig 
 			buffering.MemResponseBodyBytes = bufferSize * int64(ptr.Deref(ingressConfig.ProxyBuffersNumber, p.ProxyBuffersNumber))
 		}
 
+		proxyMaxTempFileSize := defaultProxyMaxTempFileSize
 		if ingressConfig.ProxyMaxTempFileSize != nil {
-			proxyMaxTempFileSize := defaultProxyMaxTempFileSize
-			proxyMaxTempFileSize, err := nginxSizeToBytes(*ingressConfig.ProxyMaxTempFileSize)
-			if err != nil {
+			var err error
+			if proxyMaxTempFileSize, err = nginxSizeToBytes(*ingressConfig.ProxyMaxTempFileSize); err != nil {
 				return fmt.Errorf("proxy-body-size annotation has invalid value: %w", err)
 			}
-
-			buffering.MaxResponseBodyBytes = buffering.MemResponseBodyBytes + proxyMaxTempFileSize
 		}
+
+		buffering.MaxResponseBodyBytes = buffering.MemResponseBodyBytes + proxyMaxTempFileSize
 	}
 
 	bufferingMiddlewareName := routerName + "-buffering"
