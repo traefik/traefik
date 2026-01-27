@@ -28,7 +28,7 @@ type ConfigurationWatcher struct {
 	requiredProvider       string
 	configurationListeners []func(dynamic.Configuration)
 
-	configurationTransformers []func(string, dynamic.Configurations) dynamic.Configurations
+	configurationTransformers []func(context.Context, dynamic.Configurations) dynamic.Configurations
 
 	routinesPool *safe.Pool
 }
@@ -69,7 +69,7 @@ func (c *ConfigurationWatcher) AddListener(listener func(dynamic.Configuration))
 }
 
 // AddTransformer registers a function to modify configurations before they are applied.
-func (c *ConfigurationWatcher) AddTransformer(transformer func(string, dynamic.Configurations) dynamic.Configurations) {
+func (c *ConfigurationWatcher) AddTransformer(transformer func(context.Context, dynamic.Configurations) dynamic.Configurations) {
 	c.configurationTransformers = append(c.configurationTransformers, transformer)
 }
 
@@ -93,14 +93,16 @@ func (c *ConfigurationWatcher) startProviderAggregator() {
 // is always available for processing.
 func (c *ConfigurationWatcher) receiveConfigurations(ctx context.Context) {
 	newConfigurations := make(dynamic.Configurations)
+	transformedConfigurations := make(dynamic.Configurations)
+
 	var output chan dynamic.Configurations
 
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		// DeepCopy is necessary because newConfigurations gets modified later by the consumer of c.newConfigs.
-		case output <- newConfigurations.DeepCopy():
+		// DeepCopy is necessary because transformedConfigurations gets modified later by the consumer of c.newConfigs.
+		case output <- transformedConfigurations.DeepCopy():
 			output = nil
 
 		default:
@@ -126,46 +128,27 @@ func (c *ConfigurationWatcher) receiveConfigurations(ctx context.Context) {
 
 				logConfiguration(logger, configMsg)
 
-				var changed bool
-				newConfigurations, changed = c.prepareConfiguration(configMsg, newConfigurations)
-				if !changed {
+				if reflect.DeepEqual(newConfigurations[configMsg.ProviderName], configMsg.Configuration) {
+					// no change, do nothing.
 					logger.Debug().Msg("Skipping unchanged configuration")
 					continue
+				}
+
+				newConfigurations[configMsg.ProviderName] = configMsg.Configuration.DeepCopy()
+
+				transformedConfigurations = newConfigurations
+				for _, transform := range c.configurationTransformers {
+					transformedConfigurations = transform(logger.WithContext(ctx), transformedConfigurations.DeepCopy())
 				}
 
 				output = c.newConfigs
 
 			// DeepCopy is necessary because newConfigurations gets modified later by the consumer of c.newConfigs.
-			case output <- newConfigurations.DeepCopy():
+			case output <- transformedConfigurations.DeepCopy():
 				output = nil
 			}
 		}
 	}
-}
-
-// prepareConfiguration processes the incoming configuration and runs any transformers.
-// Returns the updated configurations and whether a change occurred.
-func (c *ConfigurationWatcher) prepareConfiguration(
-	configMsg dynamic.Message,
-	allConfigs dynamic.Configurations,
-) (dynamic.Configurations, bool) {
-	if len(c.configurationTransformers) > 0 {
-		oldConfigs := allConfigs.DeepCopy()
-		allConfigs[configMsg.ProviderName] = configMsg.Configuration.DeepCopy()
-
-		for _, transformer := range c.configurationTransformers {
-			allConfigs = transformer(configMsg.ProviderName, allConfigs)
-		}
-
-		return allConfigs, !reflect.DeepEqual(oldConfigs, allConfigs)
-	}
-
-	if reflect.DeepEqual(allConfigs[configMsg.ProviderName], configMsg.Configuration) {
-		return allConfigs, false
-	}
-
-	allConfigs[configMsg.ProviderName] = configMsg.Configuration.DeepCopy()
-	return allConfigs, true
 }
 
 // applyConfigurations receives the full set of configurations from
