@@ -7,6 +7,7 @@ import (
 	"maps"
 	"math/rand"
 	"net"
+	"net/http"
 	"slices"
 	"time"
 
@@ -114,7 +115,8 @@ func (m *Manager) BuildTCP(rootCtx context.Context, serviceName string) (tcp.Han
 				loadBalancer,
 				conf,
 				slices.Collect(maps.Values(uniqHealthCheckTargets)),
-				serviceQualifiedName)
+				serviceQualifiedName,
+				&http.Client{Timeout: 10 * time.Second})
 		}
 
 		return loadBalancer, nil

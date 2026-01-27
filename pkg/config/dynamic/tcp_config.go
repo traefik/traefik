@@ -5,6 +5,7 @@ import (
 	"time"
 
 	ptypes "github.com/traefik/paerser/types"
+	"github.com/traefik/traefik/v3/pkg/healthcheck/tcphealthcheckmode"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 )
@@ -181,15 +182,26 @@ type TLSClientConfig struct {
 }
 
 // +k8s:deepcopy-gen=true
+// TCPHTTPHealthCheck holds the HTTP health check configuration for TCP services.
+type TCPHTTPHealthCheck struct {
+	Port   int    `json:"port,omitempty" toml:"port,omitempty,omitzero" yaml:"port,omitempty" export:"true"`
+	Path   string `json:"path,omitempty" toml:"path,omitempty" yaml:"path,omitempty" export:"true"`
+	Method string `json:"method,omitempty" toml:"method,omitempty" yaml:"method,omitempty" export:"true"`
+	Status int    `json:"status,omitempty" toml:"status,omitempty" yaml:"status,omitempty" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
 
 // TCPServerHealthCheck holds the HealthCheck configuration.
 type TCPServerHealthCheck struct {
-	Port              int              `json:"port,omitempty" toml:"port,omitempty,omitzero" yaml:"port,omitempty" export:"true"`
-	Send              string           `json:"send,omitempty" toml:"send,omitempty" yaml:"send,omitempty" export:"true"`
-	Expect            string           `json:"expect,omitempty" toml:"expect,omitempty" yaml:"expect,omitempty" export:"true"`
-	Interval          ptypes.Duration  `json:"interval,omitempty" toml:"interval,omitempty" yaml:"interval,omitempty" export:"true"`
-	UnhealthyInterval *ptypes.Duration `json:"unhealthyInterval,omitempty" toml:"unhealthyInterval,omitempty" yaml:"unhealthyInterval,omitempty" export:"true"`
-	Timeout           ptypes.Duration  `json:"timeout,omitempty" toml:"timeout,omitempty" yaml:"timeout,omitempty" export:"true"`
+	Port              int                                   `json:"port,omitempty" toml:"port,omitempty,omitzero" yaml:"port,omitempty" export:"true"`
+	Send              string                                `json:"send,omitempty" toml:"send,omitempty" yaml:"send,omitempty" export:"true"`
+	Expect            string                                `json:"expect,omitempty" toml:"expect,omitempty" yaml:"expect,omitempty" export:"true"`
+	Interval          ptypes.Duration                       `json:"interval,omitempty" toml:"interval,omitempty" yaml:"interval,omitempty" export:"true"`
+	UnhealthyInterval *ptypes.Duration                      `json:"unhealthyInterval,omitempty" toml:"unhealthyInterval,omitempty" yaml:"unhealthyInterval,omitempty" export:"true"`
+	Timeout           ptypes.Duration                       `json:"timeout,omitempty" toml:"timeout,omitempty" yaml:"timeout,omitempty" export:"true"`
+	HttpHealthCheck   *TCPHTTPHealthCheck                   `json:"httpHealthCheck,omitempty" toml:"httpHealthCheck,omitempty" yaml:"httpHealthCheck,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
+	Mode              tcphealthcheckmode.TCPHealthCheckMode `json:"mode,omitempty" toml:"mode,omitempty" yaml:"mode,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values for a TCPServerHealthCheck.
