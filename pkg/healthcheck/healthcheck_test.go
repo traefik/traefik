@@ -510,3 +510,160 @@ func TestDifferentIntervals(t *testing.T) {
 
 	assert.Greater(t, lb.numRemovedServers, lb.numUpsertedServers, "removed servers greater than upserted servers")
 }
+
+func TestServiceHealthChecker_FailsThreshold(t *testing.T) {
+	// Test that with failsThreshold=3, server stays healthy until 3 consecutive failures.
+	ctx, cancel := context.WithCancel(t.Context())
+	t.Cleanup(cancel)
+
+	// Create a counter to track request sequence
+	requestCount := 0
+	requestCountMu := sync.Mutex{}
+
+	// Server returns: OK, FAIL, OK, FAIL, FAIL, FAIL (should go down after 3rd consecutive fail)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		requestCountMu.Lock()
+		count := requestCount
+		requestCount++
+		requestCountMu.Unlock()
+
+		switch count {
+		case 0: // OK
+			w.WriteHeader(http.StatusOK)
+		case 1: // FAIL (1st fail, resets on next OK)
+			w.WriteHeader(http.StatusServiceUnavailable)
+		case 2: // OK (resets fail counter)
+			w.WriteHeader(http.StatusOK)
+		case 3, 4, 5: // FAIL x3 (consecutive, should trigger down)
+			w.WriteHeader(http.StatusServiceUnavailable)
+		default:
+			cancel()
+			time.Sleep(100 * time.Millisecond)
+		}
+	}))
+	t.Cleanup(server.Close)
+
+	serverURL := testhelpers.MustParseURL(server.URL)
+
+	lb := &testLoadBalancer{RWMutex: &sync.RWMutex{}}
+
+	config := &dynamic.ServerHealthCheck{
+		Mode:            "http",
+		Path:            "/path",
+		Interval:        ptypes.Duration(100 * time.Millisecond),
+		Timeout:         ptypes.Duration(99 * time.Millisecond),
+		FailsThreshold:  3,
+		PassesThreshold: 1,
+	}
+
+	gauge := &testhelpers.CollectingGauge{}
+	serviceInfo := &runtime.ServiceInfo{}
+	hc := NewServiceHealthChecker(ctx, &MetricsMock{gauge}, config, lb, serviceInfo, http.DefaultTransport, map[string]*url.URL{"test": serverURL}, "foobar")
+
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+
+	go func() {
+		hc.Launch(ctx)
+		wg.Done()
+	}()
+
+	select {
+	case <-time.After(2 * time.Second):
+		t.Fatal("test did not complete in time")
+	case <-ctx.Done():
+		wg.Wait()
+	}
+
+	lb.Lock()
+	defer lb.Unlock()
+
+	// With failsThreshold=3:
+	// - Request 0 (OK): healthy, upserted
+	// - Request 1 (FAIL): still healthy (only 1 fail), upserted
+	// - Request 2 (OK): healthy (fail counter reset), upserted
+	// - Request 3 (FAIL): still healthy (only 1 fail), upserted
+	// - Request 4 (FAIL): still healthy (only 2 fails), upserted
+	// - Request 5 (FAIL): NOW unhealthy (3 fails), removed
+	// So: 5 upserts, 1 remove
+	assert.Equal(t, 1, lb.numRemovedServers, "removed servers")
+	assert.Equal(t, 5, lb.numUpsertedServers, "upserted servers")
+}
+
+func TestServiceHealthChecker_PassesThreshold(t *testing.T) {
+	// Test that with passesThreshold=2, unhealthy server needs 2 consecutive successes to recover.
+	ctx, cancel := context.WithCancel(t.Context())
+	t.Cleanup(cancel)
+
+	requestCount := 0
+	requestCountMu := sync.Mutex{}
+
+	// Server returns: FAIL, OK, FAIL, OK, OK (should recover after 2nd consecutive OK)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		requestCountMu.Lock()
+		count := requestCount
+		requestCount++
+		requestCountMu.Unlock()
+
+		switch count {
+		case 0: // FAIL (goes down immediately with failsThreshold=1)
+			w.WriteHeader(http.StatusServiceUnavailable)
+		case 1: // OK (1st pass, not enough)
+			w.WriteHeader(http.StatusOK)
+		case 2: // FAIL (resets pass counter)
+			w.WriteHeader(http.StatusServiceUnavailable)
+		case 3, 4: // OK x2 (should recover)
+			w.WriteHeader(http.StatusOK)
+		default:
+			cancel()
+			time.Sleep(100 * time.Millisecond)
+		}
+	}))
+	t.Cleanup(server.Close)
+
+	serverURL := testhelpers.MustParseURL(server.URL)
+
+	lb := &testLoadBalancer{RWMutex: &sync.RWMutex{}}
+
+	config := &dynamic.ServerHealthCheck{
+		Mode:              "http",
+		Path:              "/path",
+		Interval:          ptypes.Duration(100 * time.Millisecond),
+		UnhealthyInterval: pointer(ptypes.Duration(100 * time.Millisecond)),
+		Timeout:           ptypes.Duration(99 * time.Millisecond),
+		FailsThreshold:    1,
+		PassesThreshold:   2,
+	}
+
+	gauge := &testhelpers.CollectingGauge{}
+	serviceInfo := &runtime.ServiceInfo{}
+	hc := NewServiceHealthChecker(ctx, &MetricsMock{gauge}, config, lb, serviceInfo, http.DefaultTransport, map[string]*url.URL{"test": serverURL}, "foobar")
+
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+
+	go func() {
+		hc.Launch(ctx)
+		wg.Done()
+	}()
+
+	select {
+	case <-time.After(2 * time.Second):
+		t.Fatal("test did not complete in time")
+	case <-ctx.Done():
+		wg.Wait()
+	}
+
+	lb.Lock()
+	defer lb.Unlock()
+
+	// With passesThreshold=2, failsThreshold=1:
+	// - Request 0 (FAIL): unhealthy, removed
+	// - Request 1 (OK): still unhealthy (only 1 pass), removed
+	// - Request 2 (FAIL): still unhealthy (pass counter reset), removed
+	// - Request 3 (OK): still unhealthy (only 1 pass), removed
+	// - Request 4 (OK): NOW healthy (2 passes), upserted
+	// So: 4 removes, 1 upsert
+	assert.Equal(t, 4, lb.numRemovedServers, "removed servers")
+	assert.Equal(t, 1, lb.numUpsertedServers, "upserted servers")
+}
