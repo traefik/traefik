@@ -248,16 +248,6 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if forwardResponse.StatusCode < http.StatusOK || forwardResponse.StatusCode >= http.StatusMultipleChoices {
 		logger.Debug().Msgf("Remote error %s. StatusCode: %d", fa.address, forwardResponse.StatusCode)
 
-		// If auth server returns 401 and AuthSigninURL is configured, redirect to signin URL
-		if forwardResponse.StatusCode == http.StatusUnauthorized && fa.authSigninURL != "" {
-			logger.Debug().Msgf("Redirecting to signin URL: %s", fa.authSigninURL)
-
-			tracer.CaptureResponse(forwardSpan, forwardResponse.Header, http.StatusFound, trace.SpanKindClient)
-			rw.Header().Set("Location", fa.authSigninURL)
-			rw.WriteHeader(http.StatusFound)
-			return
-		}
-
 		utils.CopyHeaders(rw.Header(), forwardResponse.Header)
 		utils.RemoveHeaders(rw.Header(), hopHeaders...)
 
