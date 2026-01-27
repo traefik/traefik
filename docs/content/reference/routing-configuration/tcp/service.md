@@ -73,6 +73,44 @@ labels:
 }
 ```
 
+#### HTTP Health Check Configuration Example
+
+You can also configure health checks using HTTP mode:
+
+```yaml tab="Structured (YAML)"
+tcp:
+  services:
+    my-service:
+      loadBalancer:
+        servers:
+        - address: "xx.xx.xx.xx:8080"
+        healthCheck:
+          mode: "HTTP"
+          httpHealthCheck:
+            path: "/health"
+            method: "GET"
+            status: 200
+          interval: "10s"
+          timeout: "3s"
+```
+
+```toml tab="Structured (TOML)"
+[tcp.services]
+  [tcp.services.my-service.loadBalancer]
+    [[tcp.services.my-service.loadBalancer.servers]]
+      address = "xx.xx.xx.xx:8080"
+
+    [tcp.services.my-service.loadBalancer.healthCheck]
+      mode = "HTTP"
+      interval = "10s"
+      timeout = "3s"
+
+      [tcp.services.my-service.loadBalancer.healthCheck.httpHealthCheck]
+        path = "/health"
+        method = "GET"
+        status = 200
+```
+
 ### Configuration Options
 
 | Field | Description                                 | Default |
@@ -101,6 +139,19 @@ Below are the available options for the health check mechanism:
 | <a id="opt-interval" href="#opt-interval" title="#opt-interval">`interval`</a> | Defines the frequency of the health check calls for healthy targets. | 30s | No |
 | <a id="opt-unhealthyInterval" href="#opt-unhealthyInterval" title="#opt-unhealthyInterval">`unhealthyInterval`</a> | Defines the frequency of the health check calls for unhealthy targets. When not defined, it defaults to the `interval` value. | 30s | No |
 | <a id="opt-timeout" href="#opt-timeout" title="#opt-timeout">`timeout`</a> | Defines the maximum duration Traefik will wait for a health check connection before considering the server unhealthy. | 5s | No |
+| <a id="opt-mode" href="#opt-mode" title="#opt-mode">`mode`</a> | Defines the health check mode. Can be `TCP` (default) for TCP payload exchange, or `HTTP` for HTTP health checks. | TCP | No |
+
+#### HTTP Mode
+
+When the health check `mode` is set to `HTTP`, you can configure HTTP-specific parameters using the `httpHealthCheck` field:
+
+| Field | Description | Default | Required |
+|-------|-------------|---------|----------|
+| <a id="opt-httpHealthCheck" href="#opt-httpHealthCheck" title="#opt-httpHealthCheck">`httpHealthCheck`</a> | Configures HTTP health check options. Required when mode is set to `http`. | | No |
+| <a id="opt-httpHealthCheck-path" href="#opt-httpHealthCheck-path" title="#opt-httpHealthCheck-path">`httpHealthCheck.path`</a> | Defines the HTTP request path for the health check. | / | No |
+| <a id="opt-httpHealthCheck-port" href="#opt-httpHealthCheck-port" title="#opt-httpHealthCheck-port">`httpHealthCheck.port`</a> | Overrides the server address port for the HTTP health check endpoint. | | No |
+| <a id="opt-httpHealthCheck-method" href="#opt-httpHealthCheck-method" title="#opt-httpHealthCheck-method">`httpHealthCheck.method`</a> | Defines the HTTP method used for the health check request. | GET | No |
+| <a id="opt-httpHealthCheck-status" href="#opt-httpHealthCheck-status" title="#opt-httpHealthCheck-status">`httpHealthCheck.status`</a> | Defines the expected HTTP status code for a successful health check. | 200 | No |
 
 ## Weighted Round Robin
 
