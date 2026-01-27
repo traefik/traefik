@@ -5,6 +5,8 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"net"
+	"net/http"
+	"net/url"
 	"strings"
 	"sync"
 	"testing"
@@ -16,6 +18,7 @@ import (
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	truntime "github.com/traefik/traefik/v3/pkg/config/runtime"
+	"github.com/traefik/traefik/v3/pkg/healthcheck/tcphealthcheckmode"
 	"github.com/traefik/traefik/v3/pkg/tcp"
 )
 
@@ -114,7 +117,7 @@ func TestNewServiceTCPHealthChecker(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			healthChecker := NewServiceTCPHealthChecker(t.Context(), test.config, nil, nil, nil, "")
+			healthChecker := NewServiceTCPHealthChecker(t.Context(), test.config, nil, nil, nil, "", &http.Client{})
 			assert.Equal(t, test.expectedInterval, healthChecker.interval)
 			assert.Equal(t, test.expectedTimeout, healthChecker.timeout)
 		})
@@ -152,6 +155,14 @@ func TestServiceTCPHealthChecker_executeHealthCheck_connection(t *testing.T) {
 			config:          &dynamic.TCPServerHealthCheck{Port: 0},
 			expectedAddress: "localhost:3306",
 		},
+		{
+			desc:    "successful connection with http healthcheck",
+			address: "localhost:3306",
+			config: &dynamic.TCPServerHealthCheck{
+				Mode: tcphealthcheckmode.ModeHttp,
+			},
+			expectedAddress: "localhost:3306",
+		},
 	}
 
 	for _, test := range testCases {
@@ -171,7 +182,7 @@ func TestServiceTCPHealthChecker_executeHealthCheck_connection(t *testing.T) {
 				Address: test.address,
 				Dialer:  mockDialer,
 			}}
-			healthChecker := NewServiceTCPHealthChecker(t.Context(), test.config, nil, nil, targets, "test")
+			healthChecker := NewServiceTCPHealthChecker(t.Context(), test.config, nil, nil, targets, "test", &http.Client{})
 
 			// Execute a health check to see what address it tries to connect to.
 			err := healthChecker.executeHealthCheck(t.Context(), test.config, &targets[0])
@@ -284,7 +295,7 @@ func TestServiceTCPHealthChecker_executeHealthCheck_payloadHandling(t *testing.T
 				Dialer:  mockDialer,
 			}}
 
-			healthChecker := NewServiceTCPHealthChecker(t.Context(), test.config, nil, nil, targets, "test")
+			healthChecker := NewServiceTCPHealthChecker(t.Context(), test.config, nil, nil, targets, "test", &http.Client{})
 
 			err := healthChecker.executeHealthCheck(t.Context(), test.config, &targets[0])
 
@@ -469,7 +480,7 @@ func TestServiceTCPHealthChecker_Launch(t *testing.T) {
 			lb := &testLoadBalancer{}
 			serviceInfo := &truntime.TCPServiceInfo{}
 
-			service := NewServiceTCPHealthChecker(ctx, test.config, lb, serviceInfo, targets, "serviceName")
+			service := NewServiceTCPHealthChecker(ctx, test.config, lb, serviceInfo, targets, "serviceName", &http.Client{})
 
 			go service.Launch(ctx)
 
@@ -558,7 +569,7 @@ func TestServiceTCPHealthChecker_differentIntervals(t *testing.T) {
 	}
 
 	serviceInfo := &truntime.TCPServiceInfo{}
-	hc := NewServiceTCPHealthChecker(ctx, config, lb, serviceInfo, targets, "test-service")
+	hc := NewServiceTCPHealthChecker(ctx, config, lb, serviceInfo, targets, "test-service", &http.Client{})
 
 	wg := sync.WaitGroup{}
 	wg.Add(1)
@@ -584,6 +595,243 @@ func TestServiceTCPHealthChecker_differentIntervals(t *testing.T) {
 	// compared to the healthy server (500ms interval), so we should see
 	// significantly more "removed" events than "upserted" events
 	assert.Greater(t, lb.numRemovedServers, lb.numUpsertedServers, "unhealthy servers checked more frequently")
+}
+
+func TestServiceTCPHealthChecker_executeHealthCheck_HTTP_MissingConfig(t *testing.T) {
+
+	testconfig := &dynamic.TCPServerHealthCheck{
+		Mode: tcphealthcheckmode.ModeHttp,
+	}
+
+	mockDialer := &dialerMock{}
+
+	targets := []TCPHealthCheckTarget{{
+		Address: "test",
+		Dialer:  mockDialer,
+	}}
+
+	url, _ := url.Parse("test")
+
+	healthChecker := NewServiceTCPHealthChecker(t.Context(), testconfig, nil, nil, targets, "test", &http.Client{})
+
+	// Execute a health check to get the config missing error.
+	err := healthChecker.CheckHealthHttp(t.Context(), url)
+	require.Contains(t, err.Error(), "HTTP health check configuration is missing")
+}
+
+func TestServiceTCPHealthChecker_executeHealthCheck_HTTP_failed(t *testing.T) {
+
+	testconfig := &dynamic.TCPServerHealthCheck{
+		Mode:            tcphealthcheckmode.ModeHttp,
+		HttpHealthCheck: &dynamic.TCPHTTPHealthCheck{},
+	}
+
+	mockDialer := &dialerMock{
+		onDial: func(network, addr string) (net.Conn, error) {
+			return &connMock{}, nil
+		},
+	}
+
+	targets := []TCPHealthCheckTarget{{
+		Address: "test",
+		Dialer:  mockDialer,
+	}}
+
+	url, _ := url.Parse("test")
+
+	healthChecker := NewServiceTCPHealthChecker(t.Context(), testconfig, nil, nil, targets, "test", &http.Client{})
+
+	// Execute a health check to see what address it tries to connect to.
+	err := healthChecker.CheckHealthHttp(t.Context(), url)
+	require.Error(t, err)
+
+	assert.Contains(t, err.Error(), "HTTP request failed")
+}
+
+func TestServiceTCPHealthChecker_executeHealthCheck_HTTP_success(t *testing.T) {
+
+	testconfig := &dynamic.TCPServerHealthCheck{
+		Mode:            tcphealthcheckmode.ModeHttp,
+		HttpHealthCheck: &dynamic.TCPHTTPHealthCheck{},
+	}
+
+	mockDialer := &dialerMock{
+		onDial: func(network, addr string) (net.Conn, error) {
+			return &connMock{}, nil
+		},
+	}
+
+	targets := []TCPHealthCheckTarget{{
+		Address: "example.com",
+		Dialer:  mockDialer,
+	}}
+
+	url, _ := url.Parse("example.com")
+	healthChecker := NewServiceTCPHealthChecker(t.Context(), testconfig, nil, nil, targets, "example.com", &http.Client{})
+
+	// Execute a health check to see what address it tries to connect to.
+	err := healthChecker.CheckHealthHttp(t.Context(), url)
+	require.NoError(t, err)
+}
+
+func TestServiceTCPHealthChecker_executeHealthCheck_launch_error(t *testing.T) {
+	ctx, cancel := context.WithCancel(log.Logger.WithContext(t.Context()))
+	defer cancel()
+
+	test := struct {
+		server *sequencedTCPServer
+		config *dynamic.TCPServerHealthCheck
+	}{
+		server: newTCPServer(t,
+			true,
+		),
+		config: &dynamic.TCPServerHealthCheck{
+			Mode:            tcphealthcheckmode.ModeHttp,
+			HttpHealthCheck: &dynamic.TCPHTTPHealthCheck{},
+			Interval:        ptypes.Duration(time.Millisecond * 500),
+			Timeout:         ptypes.Duration(time.Millisecond * 2000), // Even longer timeout for TLS handshake
+		},
+	}
+
+	test.server.Start(t)
+
+	dialerManager := tcp.NewDialerManager(nil)
+	dialerManager.Update(map[string]*dynamic.TCPServersTransport{"default@internal": {
+		TLS: &dynamic.TLSClientConfig{
+			InsecureSkipVerify: true,
+			ServerName:         "example.nonexistentdomain",
+		},
+	}})
+
+	dialer, err := dialerManager.Build(&dynamic.TCPServersLoadBalancer{}, test.server.TLS)
+	require.NoError(t, err)
+
+	targets := []TCPHealthCheckTarget{
+		{
+			Address: test.server.Addr.String(),
+			TLS:     test.server.TLS,
+			Dialer:  dialer,
+		},
+	}
+
+	lb := &testLoadBalancer{
+		RWMutex: &sync.RWMutex{},
+	}
+	serviceInfo := &truntime.TCPServiceInfo{}
+
+	service := NewServiceTCPHealthChecker(ctx, test.config, lb, serviceInfo, targets, "serviceName", &http.Client{})
+
+	go service.Launch(ctx)
+
+	// Verify that after some time, the health check has attempted to run and failed
+	deadline := time.Now().Add(3 * time.Second)
+	foundFailure := false
+
+	for time.Now().Before(deadline) {
+		time.Sleep(100 * time.Millisecond)
+		lb.Lock()
+		if lb.numRemovedServers > 0 {
+			foundFailure = true
+			lb.Unlock()
+			break
+		}
+		lb.Unlock()
+	}
+
+	assert.True(t, foundFailure, "Expected a health check failure")
+}
+
+func TestServiceTCPHealthChecker_executeHealthCheck_launch_success(t *testing.T) {
+	ctx, cancel := context.WithCancel(log.Logger.WithContext(t.Context()))
+	defer cancel()
+
+	test := struct {
+		server *sequencedTCPServer
+		config *dynamic.TCPServerHealthCheck
+	}{
+		server: newTCPServer(t,
+			true,
+		),
+		config: &dynamic.TCPServerHealthCheck{
+			Mode:            tcphealthcheckmode.ModeHttp,
+			HttpHealthCheck: &dynamic.TCPHTTPHealthCheck{},
+			Interval:        ptypes.Duration(time.Millisecond * 500),
+			Timeout:         ptypes.Duration(time.Millisecond * 2000), // Even longer timeout for TLS handshake
+		},
+	}
+
+	test.server.Start(t)
+
+	dialerManager := tcp.NewDialerManager(nil)
+	dialerManager.Update(map[string]*dynamic.TCPServersTransport{"default@internal": {
+		TLS: &dynamic.TLSClientConfig{
+			InsecureSkipVerify: true,
+			ServerName:         "example.com",
+		},
+	}})
+
+	dialer, err := dialerManager.Build(&dynamic.TCPServersLoadBalancer{}, test.server.TLS)
+	require.NoError(t, err)
+
+	targets := []TCPHealthCheckTarget{
+		{
+			Address: "example.com",
+			TLS:     test.server.TLS,
+			Dialer:  dialer,
+		},
+	}
+
+	lb := &testLoadBalancer{
+		RWMutex: &sync.RWMutex{},
+	}
+	serviceInfo := &truntime.TCPServiceInfo{}
+
+	service := NewServiceTCPHealthChecker(ctx, test.config, lb, serviceInfo, targets, "serviceName", &http.Client{})
+
+	go service.Launch(ctx)
+
+	// Verify that after some time, the health check has attempted to run and did not find a removed server.
+	deadline := time.Now().Add(3 * time.Second)
+	foundFailure := false
+
+	for time.Now().Before(deadline) {
+		time.Sleep(100 * time.Millisecond)
+		lb.Lock()
+		if lb.numRemovedServers > 0 {
+			foundFailure = true
+			lb.Unlock()
+			break
+		}
+		lb.Unlock()
+	}
+
+	assert.False(t, foundFailure, "Expected no health check failure")
+}
+
+func TestServiceTCPHealthChecker_executeHealthCheck_HTTP_unavailable(t *testing.T) {
+
+	testconfig := &dynamic.TCPServerHealthCheck{
+		Mode:            tcphealthcheckmode.ModeHttp,
+		HttpHealthCheck: &dynamic.TCPHTTPHealthCheck{},
+	}
+
+	mockDialer := &dialerMock{
+		onDial: func(network, addr string) (net.Conn, error) {
+			return &connMock{}, nil
+		},
+	}
+
+	targets := []TCPHealthCheckTarget{{
+		Address: "nonexistanthost.local",
+		Dialer:  mockDialer,
+	}}
+
+	url, _ := url.Parse("nonexistanthost.local")
+	healthChecker := NewServiceTCPHealthChecker(t.Context(), testconfig, nil, nil, targets, "nonexistanthost.local", &http.Client{})
+
+	// Execute a health check to see what address it tries to connect to.
+	err := healthChecker.CheckHealthHttp(t.Context(), url)
+	require.Contains(t, err.Error(), "HTTP request failed:")
 }
 
 type tcpMockSequence struct {
