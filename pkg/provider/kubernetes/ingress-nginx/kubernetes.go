@@ -300,7 +300,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 			tlsOptName := provider.Normalize(ingress.Namespace + "-" + ingress.Name + "-" + *ingressConfig.AuthTLSSecret)
 
 			if _, exists := tlsOptions[tlsOptName]; !exists {
-				tlsOpt, err := p.buildClientAuthTLSOption(ingressConfig)
+				tlsOpt, err := p.buildClientAuthTLSOption(ingress.Namespace, ingressConfig)
 				if err != nil {
 					logger.Error().Err(err).Msg("Error configuring client auth TLS")
 					continue
@@ -1328,7 +1328,7 @@ func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *s
 	return eventsChanBuffered
 }
 
-func (p *Provider) buildClientAuthTLSOption(config ingressConfig) (tls.Options, error) {
+func (p *Provider) buildClientAuthTLSOption(ingressNamespace string, config ingressConfig) (tls.Options, error) {
 	secretParts := strings.SplitN(*config.AuthTLSSecret, "/", 2)
 	if len(secretParts) != 2 {
 		return tls.Options{}, errors.New("auth-tls-secret is not in a correct namespace/name format")
@@ -1343,6 +1343,10 @@ func (p *Provider) buildClientAuthTLSOption(config ingressConfig) (tls.Options, 
 	}
 	if secretName == "" {
 		return tls.Options{}, errors.New("auth-tls-secret has empty name")
+	}
+	// Cross-namespace secrets are not supported.
+	if secretNamespace != ingressNamespace {
+		return tls.Options{}, fmt.Errorf("cross-namespace auth-tls-secret is not supported: secret namespace %q does not match ingress namespace %q", secretNamespace, ingressNamespace)
 	}
 
 	blocks, err := p.certificateBlocks(secretNamespace, secretName)
