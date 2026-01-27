@@ -321,7 +321,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			DigestAuth:        digestAuth,
 			ForwardAuth:       forwardAuth,
 			InFlightReq:       middleware.Spec.InFlightReq,
-			Buffering:         middleware.Spec.Buffering,
+			Buffering:         createBufferingMiddleware(middleware.Spec.Buffering),
 			CircuitBreaker:    circuitBreaker,
 			Compress:          createCompressMiddleware(middleware.Spec.Compress),
 			PassTLSClientCert: middleware.Spec.PassTLSClientCert,
@@ -1194,6 +1194,20 @@ func createDigestAuthMiddleware(client Client, namespace string, digestAuth *tra
 		RemoveHeader: digestAuth.RemoveHeader,
 		HeaderField:  digestAuth.HeaderField,
 	}, nil
+}
+
+func createBufferingMiddleware(buffering *traefikv1alpha1.Buffering) *dynamic.Buffering {
+	if buffering == nil {
+		return nil
+	}
+
+	return &dynamic.Buffering{
+		MemRequestBodyBytes:  buffering.MemRequestBodyBytes,
+		MaxRequestBodyBytes:  buffering.MaxRequestBodyBytes,
+		MemResponseBodyBytes: buffering.MemResponseBodyBytes,
+		MaxResponseBodyBytes: buffering.MaxResponseBodyBytes,
+		RetryExpression:      buffering.RetryExpression,
+	}
 }
 
 func loadBasicAuthCredentials(secret *corev1.Secret) ([]string, error) {

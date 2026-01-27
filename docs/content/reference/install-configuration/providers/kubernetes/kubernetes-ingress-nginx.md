@@ -59,6 +59,10 @@ providers:
     controllerClass: "k8s.io/ingress-nginx"
     watchIngressWithoutClass: false
     ingressClassByName: false
+    clientBodyBufferSize: "16384" # 16k
+    proxyBodySize: "1048576"      # 1m
+    proxyBufferSize: "8192"       # 8k
+    proxyBuffersNumber: 8
 ```
 
 ```toml tab="File (TOML)"
@@ -73,6 +77,10 @@ providers:
   controllerClass = "k8s.io/ingress-nginx"
   watchIngressWithoutClass = false
   ingressClassByName = false
+  clientBodyBufferSize = "16384" # 16k
+  proxyBodySize = "1048576"      # 1m
+  proxyBufferSize = "8192"       # 8k
+  proxyBuffersNumber = 8
 ```
 
 ```bash tab="CLI"
@@ -82,6 +90,10 @@ providers:
 --providers.kubernetesingressnginx.controllerclass=k8s.io/ingress-nginx
 --providers.kubernetesingressnginx.watchingresswithoutclass=false
 --providers.kubernetesingressnginx.ingressclassbyname=false
+--providers.kubernetesingressnginx.clientbodybuffersize=16384 # 16k
+--providers.kubernetesingressnginx.proxybodysize=1048576      # 1m
+--providers.kubernetesingressnginx.proxybuffersize=8192       # 8k
+--providers.kubernetesingressnginx.proxybuffersnumber=8
 ```
 
 ```yaml tab="Helm Chart Values"
@@ -132,6 +144,10 @@ This provider watches for incoming Ingress events and automatically translates N
 | <a id="opt-providers-kubernetesIngressNGINX-defaultBackendService" href="#opt-providers-kubernetesIngressNGINX-defaultBackendService" title="#opt-providers-kubernetesIngressNGINX-defaultBackendService">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`defaultBackendService`</a> | Service used to serve HTTP requests not matching any known server name (catch-all). Takes the form 'namespace/name'.                                                                                                                                                                                                                                                                                                                                        | ""      | No       |
 | <a id="opt-providers-kubernetesIngressNGINX-disableSvcExternalName" href="#opt-providers-kubernetesIngressNGINX-disableSvcExternalName" title="#opt-providers-kubernetesIngressNGINX-disableSvcExternalName">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`disableSvcExternalName`</a> | Disable support for Services of type ExternalName.                                                                                                                                                                                                                                                                                                                                                                                                          | false   | No       |
 | <a id="opt-providers-kubernetesIngressNGINX-proxyConnectTimeout" href="#opt-providers-kubernetesIngressNGINX-proxyConnectTimeout" title="#opt-providers-kubernetesIngressNGINX-proxyConnectTimeout">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`proxyConnectTimeout`</a> | Amount of time to wait until a connection to a server can be established. The value is unitless and in seconds. This is used as the global connection timeout when no ingress-specific timeout is configured. An ingress-specific timeout can be configured using [`nginx.ingress.kubernetes.io/proxy-connect-timeout`](../../../../routing-configuration/kubernetes/ingress-nginx/#opt-nginx-ingress-kubernetes-ioproxy-connect-timeout) annotation. | 60   | No       |
+| <a id="opt-providers-kubernetesIngressNGINX-clientBodyBufferSize" href="#opt-providers-kubernetesIngressNGINX-clientBodyBufferSize" title="#opt-providers-kubernetesIngressNGINX-clientBodyBufferSize">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`clientBodyBufferSize`</a> | Default buffer size for reading client request body in bytes.                                                                                                                                                                                                                                                                                                                        | 16384   | No       |
+| <a id="opt-providers-kubernetesIngressNGINX-proxyBodySize" href="#opt-providers-kubernetesIngressNGINX-proxyBodySize" title="#opt-providers-kubernetesIngressNGINX-proxyBodySize">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`proxyBodySize`</a> | Default maximum size of a client request body in bytes.                                                                                                                                                                                                                                                                                                                              | 1048576 | No       |
+| <a id="opt-providers-kubernetesIngressNGINX-proxyBufferSize" href="#opt-providers-kubernetesIngressNGINX-proxyBufferSize" title="#opt-providers-kubernetesIngressNGINX-proxyBufferSize">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`proxyBufferSize`</a> | Default buffer size for reading the response body in bytes.                                                                                                                                                                                                                                                                                                                                  | 8192    | No       |
+| <a id="opt-providers-kubernetesIngressNGINX-proxyBuffersNumber" href="#opt-providers-kubernetesIngressNGINX-proxyBuffersNumber" title="#opt-providers-kubernetesIngressNGINX-proxyBuffersNumber">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`proxyBuffersNumber`</a> | Default number of buffers for reading a response.                                                                                                                                                                                                                                                                                                                                    | 8       | No       |
 
 <!-- markdownlint-enable MD013 -->
 
