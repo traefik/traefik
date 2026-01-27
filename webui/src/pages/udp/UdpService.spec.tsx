@@ -91,6 +91,11 @@ describe('<UdpServicePage />', () => {
   it('should render the service servers from the serverStatus property', async () => {
     const mockData = {
       loadBalancer: {
+        servers: [
+          {
+            address: 'http://10.0.1.12:81',
+          },
+        ],
         terminationDelay: 10,
       },
       status: 'enabled',

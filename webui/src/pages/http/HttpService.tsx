@@ -78,35 +78,15 @@ type ServerInfo = {
 }
 
 export const ServicePanels = ({ data, protocol = '' }: DetailProps) => {
-  const serversList = useMemo<ServerInfo[]>(() => {
-    const serversMap = new Map<string, ServerInfo>()
-
-    // First, add servers from loadBalancer with their weights
-    data.loadBalancer?.servers?.forEach((server: Server) => {
-      const url = server.address || server.url
-      if (!url) return
-      serversMap.set(url, {
-        url,
-        status: data.serverStatus?.[url] || 'DOWN',
+  const serversList = useMemo<ServerInfo[]>(
+    () =>
+      data.loadBalancer?.servers?.map((server: Server) => ({
+        url: server.address || server.url,
+        status: data.serverStatus?.[server.address || server.url] || 'DOWN',
         weight: server.weight,
-      })
-    })
-
-    // Then, add servers from serverStatus that aren't already in the list
-    if (data.serverStatus) {
-      Object.entries(data.serverStatus).forEach(([url, status]) => {
-        if (!serversMap.has(url)) {
-          serversMap.set(url, {
-            url,
-            status,
-            weight: undefined,
-          })
-        }
-      })
-    }
-
-    return Array.from(serversMap.values())
-  }, [data.loadBalancer?.servers, data.serverStatus])
+      })) || [],
+    [data.loadBalancer?.servers, data.serverStatus],
+  )
   const getProviderFromName = (serviceName: string): string => {
     const [, provider] = serviceName.split('@')
     return provider || data.provider
