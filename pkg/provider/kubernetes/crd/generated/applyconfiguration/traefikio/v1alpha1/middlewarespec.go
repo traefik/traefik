@@ -52,7 +52,7 @@ type MiddlewareSpecApplyConfiguration struct {
 	DigestAuth        *DigestAuthApplyConfiguration     `json:"digestAuth,omitempty"`
 	ForwardAuth       *ForwardAuthApplyConfiguration    `json:"forwardAuth,omitempty"`
 	InFlightReq       *dynamic.InFlightReq              `json:"inFlightReq,omitempty"`
-	Buffering         *dynamic.Buffering                `json:"buffering,omitempty"`
+	Buffering         *BufferingApplyConfiguration      `json:"buffering,omitempty"`
 	CircuitBreaker    *CircuitBreakerApplyConfiguration `json:"circuitBreaker,omitempty"`
 	Compress          *CompressApplyConfiguration       `json:"compress,omitempty"`
 	PassTLSClientCert *dynamic.PassTLSClientCert        `json:"passTLSClientCert,omitempty"`
@@ -215,8 +215,8 @@ func (b *MiddlewareSpecApplyConfiguration) WithInFlightReq(value dynamic.InFligh
 // WithBuffering sets the Buffering field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Buffering field is set to the value of the last call.
-func (b *MiddlewareSpecApplyConfiguration) WithBuffering(value dynamic.Buffering) *MiddlewareSpecApplyConfiguration {
-	b.Buffering = &value
+func (b *MiddlewareSpecApplyConfiguration) WithBuffering(value *BufferingApplyConfiguration) *MiddlewareSpecApplyConfiguration {
+	b.Buffering = value
 	return b
 }
 

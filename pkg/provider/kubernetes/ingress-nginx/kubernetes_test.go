@@ -77,7 +77,7 @@ func TestLoadIngresses(t *testing.T) {
 							Buffering: &dynamic.Buffering{
 								MaxRequestBodyBytes:   defaultProxyBodySize,
 								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBuffersSize * int64(defaultProxyBuffersNumber),
+								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
 								DisableResponseBuffer: true,
 							},
 						},
@@ -146,7 +146,7 @@ func TestLoadIngresses(t *testing.T) {
 							Buffering: &dynamic.Buffering{
 								MaxRequestBodyBytes:   defaultProxyBodySize,
 								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBuffersSize * int64(defaultProxyBuffersNumber),
+								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
 								DisableResponseBuffer: true,
 							},
 						},
@@ -219,7 +219,7 @@ func TestLoadIngresses(t *testing.T) {
 							Buffering: &dynamic.Buffering{
 								MaxRequestBodyBytes:   defaultProxyBodySize,
 								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBuffersSize * int64(defaultProxyBuffersNumber),
+								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
 								DisableResponseBuffer: true,
 							},
 						},
@@ -285,7 +285,7 @@ func TestLoadIngresses(t *testing.T) {
 							Buffering: &dynamic.Buffering{
 								MaxRequestBodyBytes:   defaultProxyBodySize,
 								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBuffersSize * int64(defaultProxyBuffersNumber),
+								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
 								DisableResponseBuffer: true,
 							},
 						},
@@ -357,7 +357,6 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        "Host(`withoutsslredirect.localhost`) && Path(`/`)",
 							RuleSyntax:  "default",
 							Service:     "default-ingress-without-ssl-redirect-whoami-80",
-							Middlewares: []string{"default-ingress-without-ssl-redirect-rule-0-path-0-buffering"},
 						},
 						"default-ingress-without-ssl-redirect-rule-0-path-0": {
 							Rule:        "Host(`withoutsslredirect.localhost`) && Path(`/`)",
@@ -381,7 +380,7 @@ func TestLoadIngresses(t *testing.T) {
 							Buffering: &dynamic.Buffering{
 								MaxRequestBodyBytes:   defaultProxyBodySize,
 								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBuffersSize * int64(defaultProxyBuffersNumber),
+								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
 								DisableResponseBuffer: true,
 							},
 						},
@@ -389,7 +388,7 @@ func TestLoadIngresses(t *testing.T) {
 							Buffering: &dynamic.Buffering{
 								MaxRequestBodyBytes:   defaultProxyBodySize,
 								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBuffersSize * int64(defaultProxyBuffersNumber),
+								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
 								DisableResponseBuffer: true,
 							},
 						},
@@ -397,7 +396,7 @@ func TestLoadIngresses(t *testing.T) {
 							Buffering: &dynamic.Buffering{
 								MaxRequestBodyBytes:   defaultProxyBodySize,
 								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBuffersSize * int64(defaultProxyBuffersNumber),
+								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
 								DisableResponseBuffer: true,
 							},
 						},
@@ -552,7 +551,7 @@ func TestLoadIngresses(t *testing.T) {
 							Buffering: &dynamic.Buffering{
 								MaxRequestBodyBytes:   defaultProxyBodySize,
 								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBuffersSize * int64(defaultProxyBuffersNumber),
+								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
 								DisableResponseBuffer: true,
 							},
 						},
@@ -620,7 +619,7 @@ func TestLoadIngresses(t *testing.T) {
 							Buffering: &dynamic.Buffering{
 								MaxRequestBodyBytes:   defaultProxyBodySize,
 								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBuffersSize * int64(defaultProxyBuffersNumber),
+								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
 								DisableResponseBuffer: true,
 							},
 						},
@@ -685,7 +684,7 @@ func TestLoadIngresses(t *testing.T) {
 							Buffering: &dynamic.Buffering{
 								MaxRequestBodyBytes:   defaultProxyBodySize,
 								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBuffersSize * int64(defaultProxyBuffersNumber),
+								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
 								DisableResponseBuffer: true,
 							},
 						},
@@ -750,7 +749,7 @@ func TestLoadIngresses(t *testing.T) {
 							Buffering: &dynamic.Buffering{
 								MaxRequestBodyBytes:   defaultProxyBodySize,
 								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBuffersSize * int64(defaultProxyBuffersNumber),
+								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
 								DisableResponseBuffer: true,
 							},
 						},
@@ -805,7 +804,7 @@ func TestLoadIngresses(t *testing.T) {
 							Buffering: &dynamic.Buffering{
 								MaxRequestBodyBytes:   defaultProxyBodySize,
 								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBuffersSize * int64(defaultProxyBuffersNumber),
+								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
 								DisableResponseBuffer: true,
 							},
 						},
@@ -865,7 +864,7 @@ func TestLoadIngresses(t *testing.T) {
 							Buffering: &dynamic.Buffering{
 								MaxRequestBodyBytes:   defaultProxyBodySize,
 								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBuffersSize * int64(defaultProxyBuffersNumber),
+								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
 								DisableResponseBuffer: true,
 							},
 						},
@@ -923,7 +922,7 @@ func TestLoadIngresses(t *testing.T) {
 							Buffering: &dynamic.Buffering{
 								MaxRequestBodyBytes:   defaultProxyBodySize,
 								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBuffersSize * int64(defaultProxyBuffersNumber),
+								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
 								DisableResponseBuffer: true,
 							},
 						},
@@ -973,10 +972,13 @@ func TestLoadIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"default-ingress-with-app-root-rule-0-path-0": {
-							Rule:        "Host(`app-root.localhost`) && (Path(`/bar`) || PathPrefix(`/bar/`))",
-							RuleSyntax:  "default",
-							Service:     "default-ingress-with-app-root-whoami-80",
-							Middlewares: []string{"default-ingress-with-app-root-rule-0-path-0-app-root"},
+							Rule:       "Host(`app-root.localhost`) && (Path(`/bar`) || PathPrefix(`/bar/`))",
+							RuleSyntax: "default",
+							Service:    "default-ingress-with-app-root-whoami-80",
+							Middlewares: []string{
+								"default-ingress-with-app-root-rule-0-path-0-app-root",
+								"default-ingress-with-app-root-rule-0-path-0-buffering",
+							},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -984,6 +986,14 @@ func TestLoadIngresses(t *testing.T) {
 							RedirectRegex: &dynamic.RedirectRegex{
 								Regex:       `^(https?://[^/]+)/$`,
 								Replacement: "$1/foo",
+							},
+						},
+						"default-ingress-with-app-root-rule-0-path-0-buffering": {
+							Buffering: &dynamic.Buffering{
+								MaxRequestBodyBytes:   defaultProxyBodySize,
+								MemRequestBodyBytes:   defaultClientBodyBufferSize,
+								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
+								DisableResponseBuffer: true,
 							},
 						},
 					},
@@ -1026,12 +1036,22 @@ func TestLoadIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"default-ingress-with-app-root-rule-0-path-0": {
-							Rule:       "Host(`app-root.localhost`) && (Path(`/bar`) || PathPrefix(`/bar/`))",
-							RuleSyntax: "default",
-							Service:    "default-ingress-with-app-root-whoami-80",
+							Rule:        "Host(`app-root.localhost`) && (Path(`/bar`) || PathPrefix(`/bar/`))",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-app-root-whoami-80",
+							Middlewares: []string{"default-ingress-with-app-root-rule-0-path-0-buffering"},
 						},
 					},
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-app-root-rule-0-path-0-buffering": {
+							Buffering: &dynamic.Buffering{
+								MaxRequestBodyBytes:   defaultProxyBodySize,
+								MemRequestBodyBytes:   defaultClientBodyBufferSize,
+								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
+								DisableResponseBuffer: true,
+							},
+						},
+					},
 					Services: map[string]*dynamic.Service{
 						"default-ingress-with-app-root-whoami-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
@@ -1138,7 +1158,7 @@ func TestLoadIngresses(t *testing.T) {
 							Buffering: &dynamic.Buffering{
 								MaxRequestBodyBytes:   defaultProxyBodySize,
 								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBuffersSize * int64(defaultProxyBuffersNumber),
+								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
 								DisableResponseBuffer: true,
 							},
 						},
@@ -1201,7 +1221,7 @@ func TestLoadIngresses(t *testing.T) {
 							Buffering: &dynamic.Buffering{
 								MaxRequestBodyBytes:   defaultProxyBodySize,
 								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBuffersSize * int64(defaultProxyBuffersNumber),
+								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
 								DisableResponseBuffer: true,
 							},
 						},
@@ -1264,7 +1284,7 @@ func TestLoadIngresses(t *testing.T) {
 							Buffering: &dynamic.Buffering{
 								MaxRequestBodyBytes:   defaultProxyBodySize,
 								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBuffersSize * int64(defaultProxyBuffersNumber),
+								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
 								DisableResponseBuffer: true,
 							},
 						},
@@ -1324,7 +1344,7 @@ func TestLoadIngresses(t *testing.T) {
 							Buffering: &dynamic.Buffering{
 								MaxRequestBodyBytes:   defaultProxyBodySize,
 								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBuffersSize * int64(defaultProxyBuffersNumber),
+								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
 								DisableResponseBuffer: true,
 							},
 						},
@@ -1382,7 +1402,7 @@ func TestLoadIngresses(t *testing.T) {
 							Buffering: &dynamic.Buffering{
 								MaxRequestBodyBytes:   defaultProxyBodySize,
 								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBuffersSize * int64(defaultProxyBuffersNumber),
+								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
 								DisableResponseBuffer: true,
 							},
 						},
@@ -1447,7 +1467,7 @@ func TestLoadIngresses(t *testing.T) {
 							Buffering: &dynamic.Buffering{
 								MaxRequestBodyBytes:   defaultProxyBodySize,
 								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBuffersSize * int64(defaultProxyBuffersNumber),
+								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
 								DisableResponseBuffer: true,
 							},
 						},
@@ -1512,7 +1532,7 @@ func TestLoadIngresses(t *testing.T) {
 							Buffering: &dynamic.Buffering{
 								MaxRequestBodyBytes:   defaultProxyBodySize,
 								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBuffersSize * int64(defaultProxyBuffersNumber),
+								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
 								DisableResponseBuffer: true,
 							},
 						},
@@ -1577,7 +1597,7 @@ func TestLoadIngresses(t *testing.T) {
 							Buffering: &dynamic.Buffering{
 								MaxRequestBodyBytes:   defaultProxyBodySize,
 								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBuffersSize * int64(defaultProxyBuffersNumber),
+								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
 								DisableResponseBuffer: true,
 							},
 						},
@@ -1639,7 +1659,7 @@ func TestLoadIngresses(t *testing.T) {
 							Buffering: &dynamic.Buffering{
 								MaxRequestBodyBytes:   defaultProxyBodySize,
 								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBuffersSize * int64(defaultProxyBuffersNumber),
+								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
 								DisableResponseBuffer: true,
 							},
 						},
@@ -1701,7 +1721,7 @@ func TestLoadIngresses(t *testing.T) {
 							Buffering: &dynamic.Buffering{
 								MaxRequestBodyBytes:   defaultProxyBodySize,
 								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBuffersSize * int64(defaultProxyBuffersNumber),
+								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
 								DisableResponseBuffer: true,
 							},
 						},
@@ -1766,7 +1786,7 @@ func TestLoadIngresses(t *testing.T) {
 							Buffering: &dynamic.Buffering{
 								MaxRequestBodyBytes:   defaultProxyBodySize,
 								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBuffersSize * int64(defaultProxyBuffersNumber),
+								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
 								DisableResponseBuffer: true,
 							},
 						},
@@ -1828,7 +1848,7 @@ func TestLoadIngresses(t *testing.T) {
 							Buffering: &dynamic.Buffering{
 								MaxRequestBodyBytes:   10 * 1024 * 1024,
 								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBuffersSize * int64(defaultProxyBuffersNumber),
+								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
 								DisableResponseBuffer: true,
 							},
 						},
@@ -1883,7 +1903,7 @@ func TestLoadIngresses(t *testing.T) {
 							Buffering: &dynamic.Buffering{
 								MemRequestBodyBytes:   10 * 1024 * 1024,
 								MaxRequestBodyBytes:   defaultProxyBodySize,
-								MemResponseBodyBytes:  defaultProxyBuffersSize * int64(defaultProxyBuffersNumber),
+								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
 								DisableResponseBuffer: true,
 							},
 						},
@@ -1938,7 +1958,7 @@ func TestLoadIngresses(t *testing.T) {
 							Buffering: &dynamic.Buffering{
 								MaxRequestBodyBytes:   10 * 1024 * 1024,
 								MemRequestBodyBytes:   10 * 1024,
-								MemResponseBodyBytes:  defaultProxyBuffersSize * int64(defaultProxyBuffersNumber),
+								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
 								DisableResponseBuffer: true,
 							},
 						},
@@ -1994,6 +2014,7 @@ func TestLoadIngresses(t *testing.T) {
 								MaxRequestBodyBytes:  defaultProxyBodySize,
 								MemRequestBodyBytes:  defaultClientBodyBufferSize,
 								MemResponseBodyBytes: 16 * 1024 * int64(defaultProxyBuffersNumber),
+								MaxResponseBodyBytes: defaultProxyMaxTempFileSize + (defaultProxyBufferSize * 8),
 							},
 						},
 					},
@@ -2047,7 +2068,8 @@ func TestLoadIngresses(t *testing.T) {
 							Buffering: &dynamic.Buffering{
 								MaxRequestBodyBytes:  defaultProxyBodySize,
 								MemRequestBodyBytes:  defaultClientBodyBufferSize,
-								MemResponseBodyBytes: defaultProxyBuffersSize * 8,
+								MemResponseBodyBytes: defaultProxyBufferSize * 8,
+								MaxResponseBodyBytes: defaultProxyMaxTempFileSize + (defaultProxyBufferSize * 8),
 							},
 						},
 					},
@@ -2102,6 +2124,7 @@ func TestLoadIngresses(t *testing.T) {
 								MaxRequestBodyBytes:  defaultProxyBodySize,
 								MemRequestBodyBytes:  defaultClientBodyBufferSize,
 								MemResponseBodyBytes: 16 * 1024 * 8,
+								MaxResponseBodyBytes: defaultProxyMaxTempFileSize + (16 * 1024 * 8),
 							},
 						},
 					},
@@ -2155,8 +2178,8 @@ func TestLoadIngresses(t *testing.T) {
 							Buffering: &dynamic.Buffering{
 								MaxRequestBodyBytes:  defaultProxyBodySize,
 								MemRequestBodyBytes:  defaultClientBodyBufferSize,
-								MemResponseBodyBytes: defaultProxyBuffersSize * int64(defaultProxyBuffersNumber),
-								MaxResponseBodyBytes: (defaultProxyBuffersSize * int64(defaultProxyBuffersNumber)) + (100 * 1024 * 1024),
+								MemResponseBodyBytes: defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
+								MaxResponseBodyBytes: (defaultProxyBufferSize * int64(defaultProxyBuffersNumber)) + (100 * 1024 * 1024),
 							},
 						},
 					},
