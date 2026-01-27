@@ -8,6 +8,7 @@ metadata:
     nginx.ingress.kubernetes.io/auth-url: "http://whoami.default.svc/"
     nginx.ingress.kubernetes.io/auth-method: "GET"
     nginx.ingress.kubernetes.io/auth-response-headers: "X-Foo"
+    nginx.ingress.kubernetes.io/auth-signin: "https://auth.example.com/oauth2/start?rd=foo"
 
 spec:
   ingressClassName: nginx
