@@ -750,7 +750,8 @@ In v3, this is no longer supported and `PathRegexp` should be used instead.
     v3 syntax:
 
     ```yaml
-    match: Host(`example.com`) && PathRegexp(`^/users/[^/]+/orders/[^/]+$`)
+    match: Host(`example.com`) && PathRegexp(`^/users/[^/]+/orders/[^/]+$`) ## matches any non-slash characters
+    match: Host(`example.com`) && PathRegexp(`^/users/[a-zA-Z0-9_-]+/orders/[a-zA-Z0-9_-]+$`) ## restricts to alphanumeric, hyphens, and underscores
     ```
 
 ### IPWhiteList
