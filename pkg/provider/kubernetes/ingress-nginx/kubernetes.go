@@ -851,6 +851,8 @@ func (p *Provider) applyMiddlewares(namespace, routerKey, rulePath string, ingre
 
 	applyRewriteTargetConfiguration(rulePath, routerKey, ingressConfig, rt, conf)
 
+	applyFromToWwwRedirect(routerKey, ingressConfig, rt, conf)
+
 	applyRedirect(routerKey, ingressConfig, rt, conf)
 
 	applyUpstreamVhost(routerKey, ingressConfig, rt, conf)
@@ -964,6 +966,23 @@ func applyAppRootConfiguration(routerName string, ingressConfig ingressConfig, r
 	}
 
 	rt.Middlewares = append(rt.Middlewares, appRootMiddlewareName)
+}
+
+func applyFromToWwwRedirect(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
+	if ingressConfig.FromToWwwRedirect == nil {
+		return
+	}
+
+	fromToWwwRedirectMiddlewareName := routerName + "-from-to-www-redirect"
+	conf.HTTP.Middlewares[fromToWwwRedirectMiddlewareName] = &dynamic.Middleware{
+		RedirectRegex: &dynamic.RedirectRegex{
+			Regex:       "",
+			Replacement: "",
+			Permanent:   false,
+		},
+	}
+
+	rt.Middlewares = append(rt.Middlewares, fromToWwwRedirectMiddlewareName)
 }
 
 func (p *Provider) applyBasicAuthConfiguration(namespace, routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
