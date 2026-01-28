@@ -340,7 +340,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 				Service:    defaultBackendName,
 			}
 
-			if err := p.applyMiddlewares(ingress.Namespace, defaultBackendName, "", ingressConfig, hasTLS, rt, conf); err != nil {
+			if err := p.applyMiddlewares(ingress.Namespace, defaultBackendName, "", "", ingressConfig, hasTLS, rt, conf); err != nil {
 				logger.Error().Err(err).Msg("Error applying middlewares")
 			}
 
@@ -358,7 +358,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 				rtTLS.TLS.Options = clientAuthTLSOptionName
 			}
 
-			if err := p.applyMiddlewares(ingress.Namespace, defaultBackendTLSName, "", ingressConfig, false, rtTLS, conf); err != nil {
+			if err := p.applyMiddlewares(ingress.Namespace, defaultBackendTLSName, "", "", ingressConfig, false, rtTLS, conf); err != nil {
 				logger.Error().Err(err).Msg("Error applying middlewares")
 			}
 
@@ -435,7 +435,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 					Service:    key,
 				}
 
-				if err := p.applyMiddlewares(ingress.Namespace, key, "", ingressConfig, hasTLS, rt, conf); err != nil {
+				if err := p.applyMiddlewares(ingress.Namespace, key, "", "", ingressConfig, hasTLS, rt, conf); err != nil {
 					logger.Error().Err(err).Msg("Error applying middlewares")
 				}
 
@@ -452,7 +452,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 					rtTLS.TLS.Options = clientAuthTLSOptionName
 				}
 
-				if err := p.applyMiddlewares(ingress.Namespace, key+"-tls", "", ingressConfig, false, rtTLS, conf); err != nil {
+				if err := p.applyMiddlewares(ingress.Namespace, key+"-tls", "", "", ingressConfig, false, rtTLS, conf); err != nil {
 					logger.Error().Err(err).Msg("Error applying middlewares")
 				}
 
@@ -521,7 +521,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 					conf.HTTP.ServersTransports[namedServersTransport.Name] = namedServersTransport.ServersTransport
 				}
 
-				if err := p.applyMiddlewares(ingress.Namespace, routerKey, pa.Path, ingressConfig, hasTLS, rt, conf); err != nil {
+				if err := p.applyMiddlewares(ingress.Namespace, routerKey, pa.Path, rule.Host, ingressConfig, hasTLS, rt, conf); err != nil {
 					logger.Error().Err(err).Msg("Error applying middlewares")
 				}
 			}
@@ -830,7 +830,7 @@ func (p *Provider) loadCertificates(ctx context.Context, ingress *netv1.Ingress,
 	return nil
 }
 
-func (p *Provider) applyMiddlewares(namespace, routerKey, rulePath string, ingressConfig ingressConfig, hasTLS bool, rt *dynamic.Router, conf *dynamic.Configuration) error {
+func (p *Provider) applyMiddlewares(namespace, routerKey, rulePath, ruleHost string, ingressConfig ingressConfig, hasTLS bool, rt *dynamic.Router, conf *dynamic.Configuration) error {
 	applyAppRootConfiguration(routerKey, ingressConfig, rt, conf)
 
 	// Apply SSL redirect is mandatory to be applied after all other middlewares.
@@ -851,7 +851,7 @@ func (p *Provider) applyMiddlewares(namespace, routerKey, rulePath string, ingre
 
 	applyRewriteTargetConfiguration(rulePath, routerKey, ingressConfig, rt, conf)
 
-	applyFromToWwwRedirect(routerKey, ingressConfig, rt, conf)
+	applyFromToWwwRedirect(ruleHost, routerKey, ingressConfig, rt, conf)
 
 	applyRedirect(routerKey, ingressConfig, rt, conf)
 
@@ -968,21 +968,45 @@ func applyAppRootConfiguration(routerName string, ingressConfig ingressConfig, r
 	rt.Middlewares = append(rt.Middlewares, appRootMiddlewareName)
 }
 
-func applyFromToWwwRedirect(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
-	if ingressConfig.FromToWwwRedirect == nil {
+func applyFromToWwwRedirect(ruleHost, routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
+	if ingressConfig.FromToWwwRedirect == nil || !*ingressConfig.FromToWwwRedirect {
 		return
+	}
+
+	// TODO: validate that there is not already an ingress configured for those two hosts (www.host.com and host.com)
+	// if already configured, bypass this annotation.
+
+	var (
+		newRule     string = fmt.Sprintf("Host(`www.%s`)", ruleHost)
+		replacement string = fmt.Sprintf(`www.%s`, ruleHost)
+	)
+	wwwType := regexp.MustCompile(`www\.`).MatchString(ruleHost)
+	if wwwType {
+		// if current ingress host is www.example.com, redirect from example.com => www.example.com
+		host := strings.TrimPrefix(ruleHost, "www.")
+		newRule = fmt.Sprintf("Host(`%s`)", host)
+		replacement = host
 	}
 
 	fromToWwwRedirectMiddlewareName := routerName + "-from-to-www-redirect"
 	conf.HTTP.Middlewares[fromToWwwRedirectMiddlewareName] = &dynamic.Middleware{
 		RedirectRegex: &dynamic.RedirectRegex{
-			Regex:       "",
-			Replacement: "",
-			Permanent:   false,
+			Regex:       `(https?)://[^/]+:([0-9]+)/(.*)`,
+			Replacement: fmt.Sprintf("$1://%s:$2/$3", replacement),
+			Permanent:   true,
 		},
 	}
 
-	rt.Middlewares = append(rt.Middlewares, fromToWwwRedirectMiddlewareName)
+	wwwRedirectRouter := &dynamic.Router{
+		Rule:        newRule,
+		EntryPoints: rt.EntryPoints,
+		Priority:    rt.Priority,
+		// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
+		RuleSyntax:  "default",
+		Middlewares: []string{fromToWwwRedirectMiddlewareName},
+		Service:     rt.Service,
+	}
+	conf.HTTP.Routers[routerName+"-from-to-www-redirect"] = wwwRedirectRouter
 }
 
 func (p *Provider) applyBasicAuthConfiguration(namespace, routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
