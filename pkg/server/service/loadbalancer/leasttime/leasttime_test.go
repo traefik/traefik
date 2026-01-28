@@ -560,13 +560,11 @@ func TestConcurrentResponseTimeUpdates(t *testing.T) {
 	updatesPerGoroutine := 20
 
 	for i := range numGoroutines {
-		wg.Add(1)
-		go func(id int) {
-			defer wg.Done()
+		wg.Go(func() {
 			for range updatesPerGoroutine {
-				handler.updateResponseTime(time.Duration(id+1) * time.Millisecond)
+				handler.updateResponseTime(time.Duration(i+1) * time.Millisecond)
 			}
-		}(i)
+		})
 	}
 
 	wg.Wait()
@@ -592,9 +590,7 @@ func TestConcurrentInflightTracking(t *testing.T) {
 	numRequests := 50
 
 	for range numRequests {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			handler.inflightCount.Add(1)
 			defer handler.inflightCount.Add(-1)
 
@@ -608,7 +604,7 @@ func TestConcurrentInflightTracking(t *testing.T) {
 			}
 
 			time.Sleep(1 * time.Millisecond)
-		}()
+		})
 	}
 
 	wg.Wait()
@@ -661,12 +657,10 @@ func TestConcurrentRequestsRespectInflight(t *testing.T) {
 	inflightRequests := 5
 
 	for range inflightRequests {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			recorder := httptest.NewRecorder()
 			balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
-		}()
+		})
 	}
 
 	// Wait for goroutines to start and increment inflight counters.
@@ -687,9 +681,7 @@ func TestConcurrentRequestsRespectInflight(t *testing.T) {
 	// Launch new requests in background so they don't block.
 	var newWg sync.WaitGroup
 	for range newRequests {
-		newWg.Add(1)
-		go func() {
-			defer newWg.Done()
+		newWg.Go(func() {
 			rec := httptest.NewRecorder()
 			balancer.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/", nil))
 			server := rec.Header().Get("server")
@@ -698,7 +690,7 @@ func TestConcurrentRequestsRespectInflight(t *testing.T) {
 				save[server]++
 				saveMu.Unlock()
 			}
-		}()
+		})
 	}
 
 	// Wait for new requests to start and see the inflight counts.
