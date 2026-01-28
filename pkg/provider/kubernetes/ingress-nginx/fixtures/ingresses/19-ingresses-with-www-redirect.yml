@@ -37,6 +37,6 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: whoami2
+                name: whoami
                 port:
                   number: 80
