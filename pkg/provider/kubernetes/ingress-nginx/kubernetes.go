@@ -976,23 +976,23 @@ func applyFromToWwwRedirect(ruleHost, routerName string, ingressConfig ingressCo
 	// TODO: validate that there is not already an ingress configured for those two hosts (www.host.com and host.com)
 	// if already configured, bypass this annotation.
 
+	// TODO: for HTTPS to HTTPS, SSL Certificate MUST have both FQDN in common name.
+
 	var (
-		newRule     string = fmt.Sprintf("Host(`www.%s`)", ruleHost)
-		replacement string = fmt.Sprintf(`www.%s`, ruleHost)
+		newRule string = fmt.Sprintf("Host(`www.%s`)", ruleHost)
 	)
 	wwwType := regexp.MustCompile(`www\.`).MatchString(ruleHost)
 	if wwwType {
 		// if current ingress host is www.example.com, redirect from example.com => www.example.com
 		host := strings.TrimPrefix(ruleHost, "www.")
 		newRule = fmt.Sprintf("Host(`%s`)", host)
-		replacement = host
 	}
 
 	fromToWwwRedirectMiddlewareName := routerName + "-from-to-www-redirect"
 	conf.HTTP.Middlewares[fromToWwwRedirectMiddlewareName] = &dynamic.Middleware{
 		RedirectRegex: &dynamic.RedirectRegex{
 			Regex:       `(https?)://[^/]+:([0-9]+)/(.*)`,
-			Replacement: fmt.Sprintf("$1://%s:$2/$3", replacement),
+			Replacement: fmt.Sprintf("$1://%s:$2/$3", ruleHost),
 			Permanent:   true,
 		},
 	}
