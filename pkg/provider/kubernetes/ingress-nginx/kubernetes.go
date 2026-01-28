@@ -996,8 +996,6 @@ func applyFromToWwwRedirect(hosts map[string]bool, ruleHost, routerName string, 
 		return
 	}
 
-	// TODO: for HTTPS to HTTPS, SSL Certificate MUST have both FQDN in common name.
-
 	var (
 		newRule string = fmt.Sprintf("Host(`www.%s`)", ruleHost)
 	)
