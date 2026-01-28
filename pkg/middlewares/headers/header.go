@@ -106,7 +106,7 @@ func (s *Header) PostRequestModifyResponseHeaders(res *http.Response) error {
 	}
 
 	if varyHeader != "" {
-		varyHeader += ", "
+		varyHeader += ","
 	}
 	varyHeader += "Origin"
 
