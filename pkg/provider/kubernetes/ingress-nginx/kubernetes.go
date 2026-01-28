@@ -845,6 +845,8 @@ func (p *Provider) loadCertificates(ctx context.Context, ingress *netv1.Ingress,
 
 func (p *Provider) applyMiddlewares(namespace, routerKey, rulePath, ruleHost string, hosts map[string]bool, ingressConfig ingressConfig, hasTLS bool, rt *dynamic.Router, conf *dynamic.Configuration) error {
 	applyAppRootConfiguration(routerKey, ingressConfig, rt, conf)
+	applyFromToWwwRedirect(hosts, ruleHost, routerKey, ingressConfig, rt, conf)
+	applyRedirect(routerKey, ingressConfig, rt, conf)
 
 	// Apply SSL redirect is mandatory to be applied after all other middlewares.
 	// TODO: check how to remove this, and create the HTTP router elsewhere.
@@ -863,10 +865,6 @@ func (p *Provider) applyMiddlewares(namespace, routerKey, rulePath, ruleHost str
 	applyCORSConfiguration(routerKey, ingressConfig, rt, conf)
 
 	applyRewriteTargetConfiguration(rulePath, routerKey, ingressConfig, rt, conf)
-
-	applyFromToWwwRedirect(hosts, ruleHost, routerKey, ingressConfig, rt, conf)
-
-	applyRedirect(routerKey, ingressConfig, rt, conf)
 
 	applyUpstreamVhost(routerKey, ingressConfig, rt, conf)
 
