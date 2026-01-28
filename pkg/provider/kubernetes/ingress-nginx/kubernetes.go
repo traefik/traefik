@@ -41,6 +41,8 @@ const (
 
 	defaultBackendName    = "default-backend"
 	defaultBackendTLSName = "default-backend-tls"
+
+	defaultProxyConnectTimeout = 60
 )
 
 type backendAddress struct {
@@ -80,6 +82,8 @@ type Provider struct {
 	DefaultBackendService  string `description:"Service used to serve HTTP requests not matching any known server name (catch-all). Takes the form 'namespace/name'." json:"defaultBackendService,omitempty" toml:"defaultBackendService,omitempty" yaml:"defaultBackendService,omitempty" export:"true"`
 	DisableSvcExternalName bool   `description:"Disable support for Services of type ExternalName." json:"disableSvcExternalName,omitempty" toml:"disableSvcExternalName,omitempty" yaml:"disableSvcExternalName,omitempty" export:"true"`
 
+	ProxyConnectTimeout int `description:"Amount of time to wait until a connection to a server can be established. Timeout value is unitless and in seconds." json:"proxyConnectTimeout,omitempty" toml:"proxyConnectTimeout,omitempty" yaml:"proxyConnectTimeout,omitempty" export:"true"`
+
 	// NonTLSEntryPoints contains the names of entrypoints that are configured without TLS.
 	NonTLSEntryPoints []string `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
 
@@ -93,6 +97,7 @@ type Provider struct {
 func (p *Provider) SetDefaults() {
 	p.IngressClass = defaultAnnotationValue
 	p.ControllerClass = defaultControllerName
+	p.ProxyConnectTimeout = defaultProxyConnectTimeout
 }
 
 // Init the provider.
@@ -503,18 +508,22 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 }
 
 func (p *Provider) buildServersTransport(namespace, name string, cfg ingressConfig) (*namedServersTransport, error) {
-	scheme := parseBackendProtocol(ptr.Deref(cfg.BackendProtocol, "HTTP"))
-	if scheme != "https" {
-		return nil, nil
-	}
-
+	proxyConnectTimeout := ptr.Deref(cfg.ProxyConnectTimeout, p.ProxyConnectTimeout)
 	nst := &namedServersTransport{
 		Name: provider.Normalize(namespace + "-" + name),
 		ServersTransport: &dynamic.ServersTransport{
-			ServerName:         ptr.Deref(cfg.ProxySSLName, ptr.Deref(cfg.ProxySSLServerName, "")),
-			InsecureSkipVerify: strings.ToLower(ptr.Deref(cfg.ProxySSLVerify, "off")) == "off",
+			ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+				DialTimeout: ptypes.Duration(time.Duration(proxyConnectTimeout) * time.Second),
+			},
 		},
 	}
+
+	if scheme := parseBackendProtocol(ptr.Deref(cfg.BackendProtocol, "HTTP")); scheme != "https" {
+		return nst, nil
+	}
+
+	nst.ServersTransport.ServerName = ptr.Deref(cfg.ProxySSLName, ptr.Deref(cfg.ProxySSLServerName, ""))
+	nst.ServersTransport.InsecureSkipVerify = strings.ToLower(ptr.Deref(cfg.ProxySSLVerify, "off")) == "off"
 
 	if sslSecret := ptr.Deref(cfg.ProxySSLSecret, ""); sslSecret != "" {
 		parts := strings.Split(sslSecret, "/")
