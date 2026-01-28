@@ -2,13 +2,10 @@
 kind: Ingress
 apiVersion: networking.k8s.io/v1
 metadata:
-  name: ingress-with-forwardauth
+  name: ingress-with-proxy-timeout
   namespace: default
   annotations:
-    nginx.ingress.kubernetes.io/auth-url: "http://whoami.default.svc/"
-    nginx.ingress.kubernetes.io/auth-method: "GET"
-    nginx.ingress.kubernetes.io/auth-response-headers: "X-Foo"
-    nginx.ingress.kubernetes.io/auth-signin: "https://auth.example.com/oauth2/start?rd=foo"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "30"
 
 spec:
   ingressClassName: nginx
@@ -16,7 +13,7 @@ spec:
     - host: whoami.localhost
       http:
         paths:
-          - path: /forwardauth
+          - path: /
             pathType: Exact
             backend:
               service:

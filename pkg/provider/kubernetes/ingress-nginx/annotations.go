@@ -16,6 +16,7 @@ type ingressConfig struct {
 	AuthSecretType *string `annotation:"nginx.ingress.kubernetes.io/auth-secret-type"`
 
 	AuthURL             *string `annotation:"nginx.ingress.kubernetes.io/auth-url"`
+	AuthSignin          *string `annotation:"nginx.ingress.kubernetes.io/auth-signin"`
 	AuthResponseHeaders *string `annotation:"nginx.ingress.kubernetes.io/auth-response-headers"`
 
 	ForceSSLRedirect *bool `annotation:"nginx.ingress.kubernetes.io/force-ssl-redirect"`
@@ -25,6 +26,7 @@ type ingressConfig struct {
 
 	UseRegex      *bool   `annotation:"nginx.ingress.kubernetes.io/use-regex"`
 	RewriteTarget *string `annotation:"nginx.ingress.kubernetes.io/rewrite-target"`
+	AppRoot       *string `annotation:"nginx.ingress.kubernetes.io/app-root"`
 
 	PermanentRedirect     *string `annotation:"nginx.ingress.kubernetes.io/permanent-redirect"`
 	PermanentRedirectCode *int    `annotation:"nginx.ingress.kubernetes.io/permanent-redirect-code"`
@@ -44,10 +46,11 @@ type ingressConfig struct {
 
 	BackendProtocol *string `annotation:"nginx.ingress.kubernetes.io/backend-protocol"`
 
-	ProxySSLSecret     *string `annotation:"nginx.ingress.kubernetes.io/proxy-ssl-secret"`
-	ProxySSLVerify     *string `annotation:"nginx.ingress.kubernetes.io/proxy-ssl-verify"`
-	ProxySSLName       *string `annotation:"nginx.ingress.kubernetes.io/proxy-ssl-name"`
-	ProxySSLServerName *string `annotation:"nginx.ingress.kubernetes.io/proxy-ssl-server-name"`
+	ProxySSLSecret      *string `annotation:"nginx.ingress.kubernetes.io/proxy-ssl-secret"`
+	ProxySSLVerify      *string `annotation:"nginx.ingress.kubernetes.io/proxy-ssl-verify"`
+	ProxySSLName        *string `annotation:"nginx.ingress.kubernetes.io/proxy-ssl-name"`
+	ProxySSLServerName  *string `annotation:"nginx.ingress.kubernetes.io/proxy-ssl-server-name"`
+	ProxyConnectTimeout *int    `annotation:"nginx.ingress.kubernetes.io/proxy-connect-timeout"`
 
 	EnableCORS                 *bool     `annotation:"nginx.ingress.kubernetes.io/enable-cors"`
 	EnableCORSAllowCredentials *bool     `annotation:"nginx.ingress.kubernetes.io/cors-allow-credentials"`
