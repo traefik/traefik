@@ -202,7 +202,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 | <a id="opt-metrics-influxdb2-bucket" href="#opt-metrics-influxdb2-bucket" title="#opt-metrics-influxdb2-bucket">metrics.influxdb2.bucket</a> | InfluxDB v2 bucket ID. | |
 | <a id="opt-metrics-influxdb2-org" href="#opt-metrics-influxdb2-org" title="#opt-metrics-influxdb2-org">metrics.influxdb2.org</a> | InfluxDB v2 org ID. | |
 | <a id="opt-metrics-influxdb2-pushinterval" href="#opt-metrics-influxdb2-pushinterval" title="#opt-metrics-influxdb2-pushinterval">metrics.influxdb2.pushinterval</a> | InfluxDB v2 push interval. | 10 |
-| <a id="opt-metrics-influxdb2-token" href="#opt-metrics-influxdb2-token" title="#opt-metrics-influxdb2-token">metrics.influxdb2.token</a> | InfluxDB v2 access token. | |
+| <a id="opt-metrics-influxdb2-token" href="#opt-metrics-influxdb2-token" title="#opt-metrics-influxdb2-token">metrics.influxdb2.token</a> | InfluxDB v2 access token. It accepts either a token value or a file path to the token. | |
 | <a id="opt-metrics-otlp" href="#opt-metrics-otlp" title="#opt-metrics-otlp">metrics.otlp</a> | OpenTelemetry metrics exporter type. | false |
 | <a id="opt-metrics-otlp-addentrypointslabels" href="#opt-metrics-otlp-addentrypointslabels" title="#opt-metrics-otlp-addentrypointslabels">metrics.otlp.addentrypointslabels</a> | Enable metrics on entry points. | true |
 | <a id="opt-metrics-otlp-addrouterslabels" href="#opt-metrics-otlp-addrouterslabels" title="#opt-metrics-otlp-addrouterslabels">metrics.otlp.addrouterslabels</a> | Enable metrics on routers. | false |
