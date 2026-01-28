@@ -996,9 +996,7 @@ func applyFromToWwwRedirect(hosts map[string]bool, ruleHost, routerName string, 
 		return
 	}
 
-	var (
-		newRule string = fmt.Sprintf("Host(`www.%s`)", ruleHost)
-	)
+	newRule := fmt.Sprintf("Host(`www.%s`)", ruleHost)
 	if wwwType {
 		// if current ingress host is www.example.com, redirect from example.com => www.example.com
 		host := strings.TrimPrefix(ruleHost, "www.")
