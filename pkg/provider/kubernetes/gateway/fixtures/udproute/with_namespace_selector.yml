@@ -1,0 +1,69 @@
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: bar
+  labels:
+    foo: bar
+
+---
+kind: GatewayClass
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: my-gateway-class
+spec:
+  controllerName: traefik.io/gateway-controller
+
+---
+kind: Gateway
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: my-udp-gateway
+  namespace: default
+spec:
+  gatewayClassName: my-gateway-class
+  listeners:
+    - name: udp
+      protocol: UDP
+      port: 5300
+      allowedRoutes:
+        namespaces:
+          from: Selector
+          selector:
+            matchLabels:
+              foo: bar
+        kinds:
+          - kind: UDPRoute
+            group: gateway.networking.k8s.io
+
+---
+kind: UDPRoute
+apiVersion: gateway.networking.k8s.io/v1alpha2
+metadata:
+  name: udp-app-default
+  namespace: default
+spec:
+  parentRefs:
+    - name: my-udp-gateway
+      kind: Gateway
+      group: gateway.networking.k8s.io
+  rules:
+    - backendRefs:
+        - name: whoamiudp
+          port: 5300
+
+---
+kind: UDPRoute
+apiVersion: gateway.networking.k8s.io/v1alpha2
+metadata:
+  name: udp-app-bar
+  namespace: bar
+spec:
+  parentRefs:
+    - name: my-udp-gateway
+      namespace: default
+      kind: Gateway
+      group: gateway.networking.k8s.io
+  rules:
+    - backendRefs:
+        - name: whoamiudp-bar
+          port: 5300

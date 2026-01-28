@@ -5858,6 +5858,680 @@ func TestLoadTLSRoutes(t *testing.T) {
 	}
 }
 
+func TestLoadUDPRoutes(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		paths       []string
+		entryPoints map[string]Entrypoint
+		nativeLB    bool
+		expected    *dynamic.Configuration
+	}{
+		{
+			desc: "Empty",
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "Empty because missing entry point",
+			paths: []string{"services.yml", "udproute/simple.yml"},
+			entryPoints: map[string]Entrypoint{
+				"udp-missing": {Address: ":5310"},
+			},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "Empty because no UDPRoute defined",
+			paths: []string{"services.yml", "udproute/without_udproute.yml"},
+			entryPoints: map[string]Entrypoint{
+				"udp": {Address: ":5300"},
+			},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "Router with service in error caused by wrong protocol",
+			paths: []string{"services.yml", "udproute/with_wrong_service_port.yml"},
+			entryPoints: map[string]Entrypoint{
+				"udp": {Address: ":5300"},
+			},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers: map[string]*dynamic.UDPRouter{
+						"udproute-default-udp-app-err-gw-default-my-udp-gateway-ep-udp-0-e3b0c44298fc1c149afb": {
+							EntryPoints: []string{"udp"},
+							Service:     "udproute-default-udp-app-err-gw-default-my-udp-gateway-ep-udp-0-e3b0c44298fc1c149afb-wrr",
+						},
+					},
+					Services: map[string]*dynamic.UDPService{
+						"udproute-default-udp-app-err-gw-default-my-udp-gateway-ep-udp-0-e3b0c44298fc1c149afb-wrr": {
+							Weighted: &dynamic.UDPWeightedRoundRobin{
+								Services: []dynamic.UDPWRRService{{
+									Name:   "udproute-default-udp-app-err-gw-default-my-udp-gateway-ep-udp-0-e3b0c44298fc1c149afb-err-lb",
+									Weight: ptr.To(1),
+								}},
+							},
+						},
+						"udproute-default-udp-app-err-gw-default-my-udp-gateway-ep-udp-0-e3b0c44298fc1c149afb-err-lb": {
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{
+								Servers: []dynamic.UDPServer{},
+							},
+						},
+					},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "Simple UDPRoute",
+			paths: []string{"services.yml", "udproute/simple.yml"},
+			entryPoints: map[string]Entrypoint{
+				"udp": {Address: ":5300"},
+			},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers: map[string]*dynamic.UDPRouter{
+						"udproute-default-udp-app-1-gw-default-my-udp-gateway-ep-udp-0-e3b0c44298fc1c149afb": {
+							EntryPoints: []string{"udp"},
+							Service:     "udproute-default-udp-app-1-gw-default-my-udp-gateway-ep-udp-0-e3b0c44298fc1c149afb-wrr",
+						},
+					},
+					Services: map[string]*dynamic.UDPService{
+						"udproute-default-udp-app-1-gw-default-my-udp-gateway-ep-udp-0-e3b0c44298fc1c149afb-wrr": {
+							Weighted: &dynamic.UDPWeightedRoundRobin{
+								Services: []dynamic.UDPWRRService{{
+									Name:   "default-whoamiudp-5300",
+									Weight: ptr.To(1),
+								}},
+							},
+						},
+						"default-whoamiudp-5300": {
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{
+								Servers: []dynamic.UDPServer{
+									{Address: "10.10.0.40:5300"},
+									{Address: "10.10.0.41:5300"},
+								},
+							},
+						},
+					},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "Simple UDPRoute with NativeLBByDefault",
+			paths: []string{"services.yml", "udproute/simple.yml"},
+			entryPoints: map[string]Entrypoint{
+				"udp": {Address: ":5300"},
+			},
+			nativeLB: true,
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers: map[string]*dynamic.UDPRouter{
+						"udproute-default-udp-app-1-gw-default-my-udp-gateway-ep-udp-0-e3b0c44298fc1c149afb": {
+							EntryPoints: []string{"udp"},
+							Service:     "udproute-default-udp-app-1-gw-default-my-udp-gateway-ep-udp-0-e3b0c44298fc1c149afb-wrr",
+						},
+					},
+					Services: map[string]*dynamic.UDPService{
+						"udproute-default-udp-app-1-gw-default-my-udp-gateway-ep-udp-0-e3b0c44298fc1c149afb-wrr": {
+							Weighted: &dynamic.UDPWeightedRoundRobin{
+								Services: []dynamic.UDPWRRService{{
+									Name:   "default-whoamiudp-5300",
+									Weight: ptr.To(1),
+								}},
+							},
+						},
+						"default-whoamiudp-5300": {
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{
+								Servers: []dynamic.UDPServer{
+									{Address: "10.10.20.1:5300"},
+								},
+							},
+						},
+					},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "Simple UDPRoute with NativeLB annotation",
+			paths: []string{"services.yml", "udproute/simple_nativelb.yml"},
+			entryPoints: map[string]Entrypoint{
+				"udp": {Address: ":5310"},
+			},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers: map[string]*dynamic.UDPRouter{
+						"udproute-default-udp-app-nativelb-gw-default-my-udp-gateway-ep-udp-0-e3b0c44298fc1c149afb": {
+							EntryPoints: []string{"udp"},
+							Service:     "udproute-default-udp-app-nativelb-gw-default-my-udp-gateway-ep-udp-0-e3b0c44298fc1c149afb-wrr",
+						},
+					},
+					Services: map[string]*dynamic.UDPService{
+						"udproute-default-udp-app-nativelb-gw-default-my-udp-gateway-ep-udp-0-e3b0c44298fc1c149afb-wrr": {
+							Weighted: &dynamic.UDPWeightedRoundRobin{
+								Services: []dynamic.UDPWRRService{{
+									Name:   "default-whoamiudp-native-5310",
+									Weight: ptr.To(1),
+								}},
+							},
+						},
+						"default-whoamiudp-native-5310": {
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{
+								Servers: []dynamic.UDPServer{
+									{Address: "10.10.30.1:5310"},
+								},
+							},
+						},
+					},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "Simple UDPRoute with NativeLBByDefault enabled but service has disabled nativelb",
+			paths: []string{"services.yml", "udproute/simple_nativelb_disabled.yml"},
+			entryPoints: map[string]Entrypoint{
+				"udp": {Address: ":5320"},
+			},
+			nativeLB: true,
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers: map[string]*dynamic.UDPRouter{
+						"udproute-default-udp-app-nativelb-disabled-gw-default-my-udp-gateway-ep-udp-0-e3b0c44298fc1c149afb": {
+							EntryPoints: []string{"udp"},
+							Service:     "udproute-default-udp-app-nativelb-disabled-gw-default-my-udp-gateway-ep-udp-0-e3b0c44298fc1c149afb-wrr",
+						},
+					},
+					Services: map[string]*dynamic.UDPService{
+						"udproute-default-udp-app-nativelb-disabled-gw-default-my-udp-gateway-ep-udp-0-e3b0c44298fc1c149afb-wrr": {
+							Weighted: &dynamic.UDPWeightedRoundRobin{
+								Services: []dynamic.UDPWRRService{{
+									Name:   "default-whoamiudp-native-disabled-5320",
+									Weight: ptr.To(1),
+								}},
+							},
+						},
+						"default-whoamiudp-native-disabled-5320": {
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{
+								Servers: []dynamic.UDPServer{
+									{Address: "10.10.0.60:5320"},
+									{Address: "10.10.0.61:5320"},
+								},
+							},
+						},
+					},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "UDPRoute allowedRoutes namespaces Same",
+			paths: []string{"services.yml", "udproute/with_namespace_same.yml"},
+			entryPoints: map[string]Entrypoint{
+				"udp": {Address: ":5300"},
+			},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers: map[string]*dynamic.UDPRouter{
+						"udproute-default-udp-app-default-gw-default-my-udp-gateway-ep-udp-0-e3b0c44298fc1c149afb": {
+							EntryPoints: []string{"udp"},
+							Service:     "udproute-default-udp-app-default-gw-default-my-udp-gateway-ep-udp-0-e3b0c44298fc1c149afb-wrr",
+						},
+					},
+					Services: map[string]*dynamic.UDPService{
+						"udproute-default-udp-app-default-gw-default-my-udp-gateway-ep-udp-0-e3b0c44298fc1c149afb-wrr": {
+							Weighted: &dynamic.UDPWeightedRoundRobin{
+								Services: []dynamic.UDPWRRService{{
+									Name:   "default-whoamiudp-5300",
+									Weight: ptr.To(1),
+								}},
+							},
+						},
+						"default-whoamiudp-5300": {
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{
+								Servers: []dynamic.UDPServer{
+									{Address: "10.10.0.40:5300"},
+									{Address: "10.10.0.41:5300"},
+								},
+							},
+						},
+					},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "UDPRoute allowedRoutes namespaces All",
+			paths: []string{"services.yml", "udproute/with_namespace_all.yml"},
+			entryPoints: map[string]Entrypoint{
+				"udp": {Address: ":5300"},
+			},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers: map[string]*dynamic.UDPRouter{
+						"udproute-default-udp-app-default-gw-default-my-udp-gateway-ep-udp-0-e3b0c44298fc1c149afb": {
+							EntryPoints: []string{"udp"},
+							Service:     "udproute-default-udp-app-default-gw-default-my-udp-gateway-ep-udp-0-e3b0c44298fc1c149afb-wrr",
+						},
+						"udproute-bar-udp-app-bar-gw-default-my-udp-gateway-ep-udp-0-e3b0c44298fc1c149afb": {
+							EntryPoints: []string{"udp"},
+							Service:     "udproute-bar-udp-app-bar-gw-default-my-udp-gateway-ep-udp-0-e3b0c44298fc1c149afb-wrr",
+						},
+					},
+					Services: map[string]*dynamic.UDPService{
+						"udproute-default-udp-app-default-gw-default-my-udp-gateway-ep-udp-0-e3b0c44298fc1c149afb-wrr": {
+							Weighted: &dynamic.UDPWeightedRoundRobin{
+								Services: []dynamic.UDPWRRService{{
+									Name:   "default-whoamiudp-5300",
+									Weight: ptr.To(1),
+								}},
+							},
+						},
+						"udproute-bar-udp-app-bar-gw-default-my-udp-gateway-ep-udp-0-e3b0c44298fc1c149afb-wrr": {
+							Weighted: &dynamic.UDPWeightedRoundRobin{
+								Services: []dynamic.UDPWRRService{{
+									Name:   "bar-whoamiudp-bar-5300",
+									Weight: ptr.To(1),
+								}},
+							},
+						},
+						"default-whoamiudp-5300": {
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{
+								Servers: []dynamic.UDPServer{
+									{Address: "10.10.0.40:5300"},
+									{Address: "10.10.0.41:5300"},
+								},
+							},
+						},
+						"bar-whoamiudp-bar-5300": {
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{
+								Servers: []dynamic.UDPServer{
+									{Address: "10.10.0.70:5300"},
+									{Address: "10.10.0.71:5300"},
+								},
+							},
+						},
+					},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "UDPRoute allowedRoutes namespaces Selector",
+			paths: []string{"services.yml", "udproute/with_namespace_selector.yml"},
+			entryPoints: map[string]Entrypoint{
+				"udp": {Address: ":5300"},
+			},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers: map[string]*dynamic.UDPRouter{
+						"udproute-bar-udp-app-bar-gw-default-my-udp-gateway-ep-udp-0-e3b0c44298fc1c149afb": {
+							EntryPoints: []string{"udp"},
+							Service:     "udproute-bar-udp-app-bar-gw-default-my-udp-gateway-ep-udp-0-e3b0c44298fc1c149afb-wrr",
+						},
+					},
+					Services: map[string]*dynamic.UDPService{
+						"udproute-bar-udp-app-bar-gw-default-my-udp-gateway-ep-udp-0-e3b0c44298fc1c149afb-wrr": {
+							Weighted: &dynamic.UDPWeightedRoundRobin{
+								Services: []dynamic.UDPWRRService{{
+									Name:   "bar-whoamiudp-bar-5300",
+									Weight: ptr.To(1),
+								}},
+							},
+						},
+						"bar-whoamiudp-bar-5300": {
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{
+								Servers: []dynamic.UDPServer{
+									{Address: "10.10.0.70:5300"},
+									{Address: "10.10.0.71:5300"},
+								},
+							},
+						},
+					},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "UDPRoute with multiple rules",
+			paths: []string{"services.yml", "udproute/with_multiple_rules.yml"},
+			entryPoints: map[string]Entrypoint{
+				"udp": {Address: ":5300"},
+			},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers: map[string]*dynamic.UDPRouter{
+						"udproute-default-udp-app-multi-gw-default-my-udp-gateway-ep-udp-0-e3b0c44298fc1c149afb": {
+							EntryPoints: []string{"udp"},
+							Service:     "udproute-default-udp-app-multi-gw-default-my-udp-gateway-ep-udp-0-e3b0c44298fc1c149afb-wrr",
+						},
+						"udproute-default-udp-app-multi-gw-default-my-udp-gateway-ep-udp-1-e3b0c44298fc1c149afb": {
+							EntryPoints: []string{"udp"},
+							Service:     "udproute-default-udp-app-multi-gw-default-my-udp-gateway-ep-udp-1-e3b0c44298fc1c149afb-wrr",
+						},
+					},
+					Services: map[string]*dynamic.UDPService{
+						"udproute-default-udp-app-multi-gw-default-my-udp-gateway-ep-udp-0-e3b0c44298fc1c149afb-wrr": {
+							Weighted: &dynamic.UDPWeightedRoundRobin{
+								Services: []dynamic.UDPWRRService{{
+									Name:   "default-whoamiudp-5300",
+									Weight: ptr.To(1),
+								}},
+							},
+						},
+						"udproute-default-udp-app-multi-gw-default-my-udp-gateway-ep-udp-1-e3b0c44298fc1c149afb-wrr": {
+							Weighted: &dynamic.UDPWeightedRoundRobin{
+								Services: []dynamic.UDPWRRService{{
+									Name:   "default-whoamiudp-5300",
+									Weight: ptr.To(1),
+								}},
+							},
+						},
+						"default-whoamiudp-5300": {
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{
+								Servers: []dynamic.UDPServer{
+									{Address: "10.10.0.40:5300"},
+									{Address: "10.10.0.41:5300"},
+								},
+							},
+						},
+					},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "UDPRoute cross-namespace backendRef denied without ReferenceGrant",
+			paths: []string{"services.yml", "referencegrant/udproute_for_service_missing.yml"},
+			entryPoints: map[string]Entrypoint{
+				"udp": {Address: ":5300"},
+			},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers: map[string]*dynamic.UDPRouter{
+						"udproute-default-udp-app-1-gw-default-my-udp-gateway-ep-udp-0-e3b0c44298fc1c149afb": {
+							EntryPoints: []string{"udp"},
+							Service:     "udproute-default-udp-app-1-gw-default-my-udp-gateway-ep-udp-0-e3b0c44298fc1c149afb-wrr",
+						},
+					},
+					Services: map[string]*dynamic.UDPService{
+						"udproute-default-udp-app-1-gw-default-my-udp-gateway-ep-udp-0-e3b0c44298fc1c149afb-wrr": {
+							Weighted: &dynamic.UDPWeightedRoundRobin{
+								Services: []dynamic.UDPWRRService{{
+									Name:   "udproute-default-udp-app-1-gw-default-my-udp-gateway-ep-udp-0-e3b0c44298fc1c149afb-err-lb",
+									Weight: ptr.To(1),
+								}},
+							},
+						},
+						"udproute-default-udp-app-1-gw-default-my-udp-gateway-ep-udp-0-e3b0c44298fc1c149afb-err-lb": {
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{
+								Servers: []dynamic.UDPServer{},
+							},
+						},
+					},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc:  "UDPRoute cross-namespace backendRef allowed with ReferenceGrant",
+			paths: []string{"services.yml", "referencegrant/udproute_for_service.yml"},
+			entryPoints: map[string]Entrypoint{
+				"udp": {Address: ":5300"},
+			},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers: map[string]*dynamic.UDPRouter{
+						"udproute-default-udp-app-1-gw-default-my-udp-gateway-ep-udp-0-e3b0c44298fc1c149afb": {
+							EntryPoints: []string{"udp"},
+							Service:     "udproute-default-udp-app-1-gw-default-my-udp-gateway-ep-udp-0-e3b0c44298fc1c149afb-wrr",
+						},
+					},
+					Services: map[string]*dynamic.UDPService{
+						"udproute-default-udp-app-1-gw-default-my-udp-gateway-ep-udp-0-e3b0c44298fc1c149afb-wrr": {
+							Weighted: &dynamic.UDPWeightedRoundRobin{
+								Services: []dynamic.UDPWRRService{{
+									Name:   "bar-whoamiudp-bar-5300",
+									Weight: ptr.To(1),
+								}},
+							},
+						},
+						"bar-whoamiudp-bar-5300": {
+							LoadBalancer: &dynamic.UDPServersLoadBalancer{
+								Servers: []dynamic.UDPServer{
+									{Address: "10.10.0.70:5300"},
+									{Address: "10.10.0.71:5300"},
+								},
+							},
+						},
+					},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			if test.expected == nil {
+				return
+			}
+
+			k8sObjects, gwObjects := readResources(t, test.paths)
+
+			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
+
+			client := newClientImpl(kubeClient, gwClient)
+			client.experimentalChannel = true
+
+			eventCh, err := client.WatchAll(nil, make(chan struct{}))
+			require.NoError(t, err)
+
+			if len(k8sObjects) > 0 || len(gwObjects) > 0 {
+				<-eventCh
+			}
+
+			p := Provider{
+				EntryPoints:         test.entryPoints,
+				ExperimentalChannel: true,
+				NativeLBByDefault:   test.nativeLB,
+				client:              client,
+			}
+
+			conf := p.loadConfigurationFromGateways(t.Context())
+			assert.Equal(t, test.expected, conf)
+		})
+	}
+}
+
 func TestLoadMixedRoutes(t *testing.T) {
 	testCases := []struct {
 		desc                string

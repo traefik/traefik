@@ -50,6 +50,7 @@ spec:
             - --entrypoints.websecure.address=:443
             - --entrypoints.web8080.address=:8080
             - --entrypoints.traefik.address=:9000
+            - --entrypoints.coredns.address=:5300/udp
             - --providers.kubernetesgateway.experimentalChannel
             - --providers.kubernetesgateway.statusaddress.service.namespace=traefik
             - --providers.kubernetesgateway.statusaddress.service.name=traefik
@@ -62,6 +63,9 @@ spec:
               containerPort: 8080
             - name: traefik
               containerPort: 9000
+            - name: coredns
+              containerPort: 5300
+              protocol: UDP
 
 ---
 apiVersion: v1
@@ -86,3 +90,7 @@ spec:
     - port: 9000
       name: traefik
       targetPort: traefik
+    - port: 5300
+      name: coredns
+      targetPort: coredns
+      protocol: UDP

@@ -10,7 +10,7 @@ For detailed information on the Gateway API concepts and resources, refer to the
 
 The Kubernetes Gateway API provider supports version [v1.4.0](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.4.0) of the specification.
 
-It fully supports all `HTTPRoute` core and some extended features, like `BackendTLSPolicy`, and `GRPCRoute` resources from the [Standard channel](https://gateway-api.sigs.k8s.io/concepts/versioning/?h=#release-channels), as well as `TCPRoute`, and `TLSRoute` resources from the [Experimental channel](https://gateway-api.sigs.k8s.io/concepts/versioning/?h=#release-channels). 
+It fully supports all `HTTPRoute` core and some extended features, like `BackendTLSPolicy`, and `GRPCRoute` resources from the [Standard channel](https://gateway-api.sigs.k8s.io/concepts/versioning/?h=#release-channels), as well as `TCPRoute`, `TLSRoute`, and `UDPRoute` resources from the [Experimental channel](https://gateway-api.sigs.k8s.io/concepts/versioning/?h=#release-channels).
 
 For more details, check out the conformance [report](https://github.com/kubernetes-sigs/gateway-api/tree/main/conformance/reports/v1.4.0/traefik-traefik).
 
@@ -75,6 +75,13 @@ spec:
     - name: tcp
       protocol: TCP
       port: 3000
+      allowedRoutes:
+        namespaces:
+          from: Same
+
+    - name: udp
+      protocol: UDP
+      port: 5300
       allowedRoutes:
         namespaces:
           from: Same
@@ -636,6 +643,87 @@ Once everything is deployed, sending the WHO command should return the following
     IP: ::1
     IP: 10.42.1.4
     IP: fe80::b89e:85ff:fec2:7d21
+    ```
+
+### UDP
+
+!!! info "Experimental Channel"
+
+    The `UDPRoute` resource described below is currently available only in the Experimental channel of the Gateway API.
+    Therefore, to use this resource, the [experimentalChannel](../../install-configuration/providers/kubernetes/kubernetes-gateway.md) option must be enabled.
+
+The `UDPRoute` is a resource in the Gateway API specification designed to define how UDP traffic should be routed within a Kubernetes cluster.
+
+For more details on the resource and concepts, check out the Kubernetes Gateway API [documentation](https://gateway-api.sigs.k8s.io/reference/spec/#gateway.networking.k8s.io/v1alpha2.UDPRoute).
+
+For example, the following manifests configure a whoami UDP backend and its corresponding `UDPRoute`,
+reachable through the [deployed `Gateway`](#deploying-a-gateway) at the `localhost:5300` address.
+
+```yaml tab="UDPRoute"
+---
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: UDPRoute
+metadata:
+  name: whoami-udp
+  namespace: default
+spec:
+  parentRefs:
+    - name: traefik
+      sectionName: udp
+      kind: Gateway
+
+  rules:
+    - backendRefs:
+        - name: whoamiudp
+          namespace: default
+          port: 5300
+```
+
+```yaml tab="Whoami deployment"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: whoamiudp
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: whoamiudp
+
+  template:
+    metadata:
+      labels:
+        app: whoamiudp
+    spec:
+      containers:
+        - name: whoamiudp
+          image: traefik/whoamiudp:latest
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoamiudp
+  namespace: default
+spec:
+  selector:
+    app: whoamiudp
+  ports:
+    - protocol: UDP
+      port: 5300
+      targetPort: 5300
+```
+
+Once everything is deployed, sending a UDP datagram should return the following response:
+
+??? success "Response"
+
+    ```shell
+    $ echo "WHO" | nc -u -w1 localhost 5300
+
+    Hostname: whoamiudp-7d78c5c9b-xxxxx
+    IP: 10.42.x.x
     ```
 
 ### TLS
