@@ -42,6 +42,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 	// Group=traefik.io, Version=v1alpha1
 	case v1alpha1.SchemeGroupVersion.WithKind("BasicAuth"):
 		return &traefikiov1alpha1.BasicAuthApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("Buffering"):
+		return &traefikiov1alpha1.BufferingApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("Certificate"):
 		return &traefikiov1alpha1.CertificateApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("Chain"):
