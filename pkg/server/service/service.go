@@ -60,11 +60,11 @@ type Manager struct {
 	proxyBuilder     ProxyBuilder
 	serviceBuilders  []ServiceBuilder
 
-	services       map[string]http.Handler
-	configs        map[string]*runtime.ServiceInfo
-	healthCheckers map[string]*healthcheck.ServiceHealthChecker
-	rand           *rand.Rand // For the initial shuffling of load-balancers.
-	chainBuilder   middlewareChainBuilder
+	services               map[string]http.Handler
+	configs                map[string]*runtime.ServiceInfo
+	healthCheckers         map[string]*healthcheck.ServiceHealthChecker
+	rand                   *rand.Rand // For the initial shuffling of load-balancers.
+	middlewareChainBuilder middlewareChainBuilder
 }
 
 // NewManager creates a new Manager.
@@ -82,8 +82,9 @@ func NewManager(configs map[string]*runtime.ServiceInfo, observabilityMgr *middl
 	}
 }
 
-func (m *Manager) SetChainBuilder(chainBuilder middlewareChainBuilder) {
-	m.chainBuilder = chainBuilder
+// SetMiddlewareChainBuilder sets the MiddlewareChainBuilder.
+func (m *Manager) SetMiddlewareChainBuilder(middlewareChainBuilder middlewareChainBuilder) {
+	m.middlewareChainBuilder = middlewareChainBuilder
 }
 
 // BuildHTTP Creates a http.Handler for a service configuration.
@@ -183,11 +184,11 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string) (http.H
 	}
 
 	if len(conf.Middlewares) > 0 {
-		if m.chainBuilder == nil {
+		if m.middlewareChainBuilder == nil {
 			// This should happen only in tests.
 			return nil, errors.New("chain builder not defined")
 		}
-		chain := m.chainBuilder.BuildMiddlewareChain(ctx, conf.Middlewares)
+		chain := m.middlewareChainBuilder.BuildMiddlewareChain(ctx, conf.Middlewares)
 		var err error
 		lb, err = chain.Then(lb)
 		if err != nil {
