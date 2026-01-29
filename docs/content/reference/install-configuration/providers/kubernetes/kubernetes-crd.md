@@ -128,6 +128,6 @@ See the dedicated section in [routing](../../../../routing/providers/kubernetes-
 
 ## Full Example
 
-For additional information on exposing services with Kubernetes, refer to the [Kubernetes guide](../../../../expose/kubernetes.md).
+For additional information on exposing services with Kubernetes, refer to the [Kubernetes guide](../../../../expose/kubernetes/basic.md).
 
 {% include-markdown "includes/traefik-for-business-applications.md" %}
