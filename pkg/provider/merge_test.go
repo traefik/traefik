@@ -68,7 +68,7 @@ func TestMergeCollectionSet_BasicMapMerge(t *testing.T) {
 	}
 
 	tracker := newMergeTracker()
-	mergeResourceMaps(context.Background(), reflect.ValueOf(dst).Elem(), reflect.ValueOf(src).Elem(), "provider", tracker, ResourceStrategyMerge, nil)
+	mergeResourceMaps(context.Background(), reflect.ValueOf(dst).Elem(), reflect.ValueOf(src).Elem(), "provider", tracker, ResourceStrategyMerge)
 
 	assert.Empty(t, tracker.toDelete)
 	assert.Equal(t, &testCollectionSet{
@@ -102,7 +102,7 @@ func TestMergeCollectionSet_EmbeddedStruct(t *testing.T) {
 	}
 
 	tracker := newMergeTracker()
-	mergeResourceMaps(context.Background(), reflect.ValueOf(dst).Elem(), reflect.ValueOf(src).Elem(), "provider", tracker, ResourceStrategyMerge, nil)
+	mergeResourceMaps(context.Background(), reflect.ValueOf(dst).Elem(), reflect.ValueOf(src).Elem(), "provider", tracker, ResourceStrategyMerge)
 
 	assert.Empty(t, tracker.toDelete)
 	assert.Equal(t, &testCollectionSetWithEmbedded{
@@ -132,7 +132,7 @@ func TestMergeCollectionSet_MergeableInterface(t *testing.T) {
 	}
 
 	tracker := newMergeTracker()
-	mergeResourceMaps(context.Background(), reflect.ValueOf(dst).Elem(), reflect.ValueOf(src).Elem(), "provider", tracker, ResourceStrategyMerge, nil)
+	mergeResourceMaps(context.Background(), reflect.ValueOf(dst).Elem(), reflect.ValueOf(src).Elem(), "provider", tracker, ResourceStrategyMerge)
 
 	assert.Empty(t, tracker.toDelete)
 	assert.Equal(t, &testMergeableCollectionSet{
@@ -155,7 +155,7 @@ func TestMergeCollectionSet_MergeableConflict(t *testing.T) {
 	}
 
 	tracker := newMergeTracker()
-	mergeResourceMaps(context.Background(), reflect.ValueOf(dst).Elem(), reflect.ValueOf(src).Elem(), "provider1", tracker, ResourceStrategyMerge, nil)
+	mergeResourceMaps(context.Background(), reflect.ValueOf(dst).Elem(), reflect.ValueOf(src).Elem(), "provider1", tracker, ResourceStrategyMerge)
 
 	// Merge() returns false due to config mismatch -> marked for deletion.
 	assert.Len(t, tracker.toDelete, 1)
@@ -175,7 +175,7 @@ func TestMergeCollectionSet_DeepEqualFallback(t *testing.T) {
 	}
 
 	tracker := newMergeTracker()
-	mergeResourceMaps(context.Background(), reflect.ValueOf(dst).Elem(), reflect.ValueOf(src).Elem(), "provider1", tracker, ResourceStrategyMerge, nil)
+	mergeResourceMaps(context.Background(), reflect.ValueOf(dst).Elem(), reflect.ValueOf(src).Elem(), "provider1", tracker, ResourceStrategyMerge)
 
 	// Same values -> no conflict.
 	assert.Empty(t, tracker.toDelete)
@@ -199,7 +199,7 @@ func TestMergeCollectionSet_DeepEqualConflict(t *testing.T) {
 	}
 
 	tracker := newMergeTracker()
-	mergeResourceMaps(context.Background(), reflect.ValueOf(dst).Elem(), reflect.ValueOf(src).Elem(), "provider1", tracker, ResourceStrategyMerge, nil)
+	mergeResourceMaps(context.Background(), reflect.ValueOf(dst).Elem(), reflect.ValueOf(src).Elem(), "provider1", tracker, ResourceStrategyMerge)
 
 	// Different values, no Merge method -> conflict.
 	assert.Len(t, tracker.toDelete, 1)
