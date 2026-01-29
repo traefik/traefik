@@ -14,17 +14,22 @@ import (
 	"github.com/traefik/traefik/v3/pkg/tls"
 )
 
-var resourceLogFields = map[reflect.Type]string{
-	reflect.TypeFor[dynamic.Router]():              logs.RouterName,
-	reflect.TypeFor[dynamic.Service]():             logs.ServiceName,
-	reflect.TypeFor[dynamic.Middleware]():          logs.MiddlewareName,
-	reflect.TypeFor[dynamic.ServersTransport]():    logs.ServersTransportName,
-	reflect.TypeFor[dynamic.TCPRouter]():           logs.RouterName,
-	reflect.TypeFor[dynamic.TCPService]():          logs.ServiceName,
-	reflect.TypeFor[dynamic.TCPMiddleware]():       logs.MiddlewareName,
-	reflect.TypeFor[dynamic.TCPServersTransport](): logs.ServersTransportName,
-	reflect.TypeFor[dynamic.UDPRouter]():           logs.RouterName,
-	reflect.TypeFor[dynamic.UDPService]():          logs.ServiceName,
+type resourceMeta struct {
+	logField    string
+	displayName string
+}
+
+var resourceLogFields = map[reflect.Type]resourceMeta{
+	reflect.TypeFor[dynamic.Router]():              {logs.RouterName, "HTTP router"},
+	reflect.TypeFor[dynamic.Service]():             {logs.ServiceName, "HTTP service"},
+	reflect.TypeFor[dynamic.Middleware]():          {logs.MiddlewareName, "HTTP middleware"},
+	reflect.TypeFor[dynamic.ServersTransport]():    {logs.ServersTransportName, "HTTP servers transport"},
+	reflect.TypeFor[dynamic.TCPRouter]():           {logs.RouterName, "TCP router"},
+	reflect.TypeFor[dynamic.TCPService]():          {logs.ServiceName, "TCP service"},
+	reflect.TypeFor[dynamic.TCPMiddleware]():       {logs.MiddlewareName, "TCP middleware"},
+	reflect.TypeFor[dynamic.TCPServersTransport](): {logs.ServersTransportName, "TCP servers transport"},
+	reflect.TypeFor[dynamic.UDPRouter]():           {logs.RouterName, "UDP router"},
+	reflect.TypeFor[dynamic.UDPService]():          {logs.ServiceName, "UDP service"},
 }
 
 // ResourceStrategy defines how the merge should handle resources.
@@ -105,7 +110,7 @@ func Merge(ctx context.Context, configurations []NamedConfiguration, strategy Re
 
 // mergeResourceMaps merges all the resource maps defined in the provided struct.
 // Conflicts are recorded in the given merge tracker.
-func mergeResourceMaps(ctx context.Context, dst, src reflect.Value, origin string, tracker *mergeTracker, strategy ResourceStrategy, resourceLogFields map[reflect.Type]string) {
+func mergeResourceMaps(ctx context.Context, dst, src reflect.Value, origin string, tracker *mergeTracker, strategy ResourceStrategy, resourceLogFields map[reflect.Type]resourceMeta) {
 	dstType := dst.Type()
 
 	for i := range dstType.NumField() {
@@ -133,7 +138,7 @@ func mergeResourceMaps(ctx context.Context, dst, src reflect.Value, origin strin
 // New keys from src are added to dst.
 // Duplicate keys are merged if the resource type implements a Merge method, otherwise
 // the values must be identical. Conflicts are recorded in the given merge tracker.
-func mergeResourceMap(ctx context.Context, dst, src reflect.Value, origin string, tracker *mergeTracker, strategy ResourceStrategy, resourceLogFields map[reflect.Type]string) {
+func mergeResourceMap(ctx context.Context, dst, src reflect.Value, origin string, tracker *mergeTracker, strategy ResourceStrategy, resourceLogFields map[reflect.Type]resourceMeta) {
 	if src.IsNil() {
 		return
 	}
@@ -198,7 +203,7 @@ func tryMerge(dst, src reflect.Value) bool {
 }
 
 // deleteConflicts removes conflicting items and logs errors.
-func deleteConflicts(ctx context.Context, tracker *mergeTracker, resourceLogFields map[reflect.Type]string) {
+func deleteConflicts(ctx context.Context, tracker *mergeTracker, resourceLogFields map[reflect.Type]resourceMeta) {
 	logger := log.Ctx(ctx)
 
 	for ck, info := range tracker.toDelete {
@@ -206,7 +211,7 @@ func deleteConflicts(ctx context.Context, tracker *mergeTracker, resourceLogFiel
 		logger.Error().
 			Str(resourceNameField, ck.resourceKey).
 			Interface("configuration", tracker.origins[ck]).
-			Msgf("%s defined multiple times with different configurations", xstrings.FirstRuneToUpper(resourceTypeWords))
+			Msgf("%s defined multiple times with different configurations", resourceTypeWords)
 
 		info.resourceMap.SetMapIndex(reflect.ValueOf(ck.resourceKey), reflect.Value{})
 	}
@@ -259,28 +264,28 @@ func mergeStores(existing, other []string) []string {
 }
 
 // logSkippedDuplicate logs a warning when a duplicate resource is skipped.
-func logSkippedDuplicate(ctx context.Context, resourceType reflect.Type, resourceKey, origin string, resourceLogFields map[reflect.Type]string) {
+func logSkippedDuplicate(ctx context.Context, resourceType reflect.Type, resourceKey, origin string, resourceLogFields map[reflect.Type]resourceMeta) {
 	resourceNameField, resourceTypeWords := resourceLogMeta(resourceType, resourceLogFields)
 
 	log.Ctx(ctx).Warn().
 		Str("origin", origin).
 		Str(resourceNameField, resourceKey).
-		Msgf("%s already configured, skipping", xstrings.FirstRuneToUpper(resourceTypeWords))
+		Msgf("%s already configured, skipping", resourceTypeWords)
 }
 
 // resourceLogMeta returns the log field name and human-readable type description for the given resource element type.
-func resourceLogMeta(resourceType reflect.Type, resourceLogFields map[reflect.Type]string) (resourceNameField, resourceTypeWords string) {
+func resourceLogMeta(resourceType reflect.Type, resourceLogFields map[reflect.Type]resourceMeta) (resourceNameField, resourceTypeWords string) {
 	if resourceType.Kind() == reflect.Ptr {
 		resourceType = resourceType.Elem()
 	}
 
-	resourceTypeName := resourceType.Name()
-
-	resourceNameField, ok := resourceLogFields[resourceType]
-	if !ok {
-		resourceNameField = xstrings.ToCamelCase(resourceTypeName) + "Name"
+	meta, ok := resourceLogFields[resourceType]
+	if ok {
+		return meta.logField, meta.displayName
 	}
 
+	resourceTypeName := resourceType.Name()
+	resourceNameField = xstrings.ToCamelCase(resourceTypeName) + "Name"
 	resourceTypeWords = strings.ReplaceAll(xstrings.ToKebabCase(resourceTypeName), "-", " ")
 
 	return resourceNameField, resourceTypeWords
