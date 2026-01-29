@@ -1,4 +1,4 @@
-import { Badge, Box, Card, Flex, H2, styled, Text } from '@traefiklabs/faency'
+import { Badge, Box, Card, Flex, H2, styled, Text } from '@traefik-labs/faency'
 import { ReactNode } from 'react'
 import { FiArrowRight, FiToggleLeft, FiToggleRight } from 'react-icons/fi'
 import { useNavigate } from 'react-router-dom'

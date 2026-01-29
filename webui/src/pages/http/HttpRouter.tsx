@@ -1,4 +1,4 @@
-import { Flex, styled, Text } from '@traefiklabs/faency'
+import { Flex, styled, Text } from '@traefik-labs/faency'
 import { useContext, useEffect, useMemo } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { FiGlobe, FiLayers, FiLogIn, FiZap } from 'react-icons/fi'
