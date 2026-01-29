@@ -32,7 +32,7 @@
       fallback = "fallback-service"
       [http.services.failover-service.failover.errors]
         status = ["500-504"]
-        maxBodySize = 1048576  # 1MB
+        maxRequestBodyBytes = 1048576  # 1MB
 
   # Main service (no health check - failover based on status codes only)
   [http.services.main-service]
