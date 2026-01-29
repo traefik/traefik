@@ -4,7 +4,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/traefik/traefik/dynamic/ext"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/label"
 )
@@ -23,8 +22,6 @@ type RouterConfig struct {
 
 // RouterIng is the router's configuration from annotations.
 type RouterIng struct {
-	ext.RouterIng
-
 	PathMatcher   string                             `json:"pathMatcher,omitempty"`
 	EntryPoints   []string                           `json:"entryPoints,omitempty"`
 	Middlewares   []string                           `json:"middlewares,omitempty"`
