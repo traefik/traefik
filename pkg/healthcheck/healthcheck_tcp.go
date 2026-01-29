@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -35,6 +36,14 @@ type ServiceTCPHealthChecker struct {
 	unhealthyTargets chan *TCPHealthCheckTarget
 
 	serviceName string
+
+	// Threshold configuration
+	failsThreshold  int
+	passesThreshold int
+
+	// State tracking
+	stateMu sync.RWMutex
+	states  map[string]*targetState
 }
 
 func NewServiceTCPHealthChecker(ctx context.Context, config *dynamic.TCPServerHealthCheck, service StatusSetter, info *runtime.TCPServiceInfo, targets []TCPHealthCheckTarget, serviceName string) *ServiceTCPHealthChecker {
@@ -75,10 +84,23 @@ func NewServiceTCPHealthChecker(ctx context.Context, config *dynamic.TCPServerHe
 	}
 
 	healthyTargets := make(chan *TCPHealthCheckTarget, len(targets))
+	states := make(map[string]*targetState, len(targets))
 	for _, target := range targets {
 		healthyTargets <- &target
+		// All targets start as healthy
+		states[target.Address] = &targetState{healthy: true}
 	}
 	unhealthyTargets := make(chan *TCPHealthCheckTarget, len(targets))
+
+	// Use default thresholds if not configured (0 means use default of 1)
+	failsThreshold := config.FailsThreshold
+	if failsThreshold <= 0 {
+		failsThreshold = 1
+	}
+	passesThreshold := config.PassesThreshold
+	if passesThreshold <= 0 {
+		passesThreshold = 1
+	}
 
 	return &ServiceTCPHealthChecker{
 		balancer:          service,
@@ -90,6 +112,9 @@ func NewServiceTCPHealthChecker(ctx context.Context, config *dynamic.TCPServerHe
 		healthyTargets:    healthyTargets,
 		unhealthyTargets:  unhealthyTargets,
 		serviceName:       serviceName,
+		failsThreshold:    failsThreshold,
+		passesThreshold:   passesThreshold,
+		states:            states,
 	}
 }
 
@@ -132,7 +157,7 @@ func (thc *ServiceTCPHealthChecker) healthcheck(ctx context.Context, targets cha
 				default:
 				}
 
-				up := true
+				checkPassed := true
 
 				if err := thc.executeHealthCheck(ctx, thc.config, target); err != nil {
 					// The context is canceled when the dynamic configuration is refreshed.
@@ -145,26 +170,70 @@ func (thc *ServiceTCPHealthChecker) healthcheck(ctx context.Context, targets cha
 						Err(err).
 						Msg("Health check failed.")
 
-					up = false
+					checkPassed = false
 				}
 
-				thc.balancer.SetStatus(ctx, target.Address, up)
+				// Apply threshold logic and determine current perceived health status
+				nowHealthy := thc.updateTargetState(target.Address, checkPassed)
+
+				thc.balancer.SetStatus(ctx, target.Address, nowHealthy)
 
 				var statusStr string
-				if up {
+				if nowHealthy {
 					statusStr = runtime.StatusUp
-					thc.healthyTargets <- target
 				} else {
 					statusStr = runtime.StatusDown
-					thc.unhealthyTargets <- target
 				}
 
 				thc.info.UpdateServerStatus(target.Address, statusStr)
+
+				// Route target to appropriate channel based on current health status
+				if nowHealthy {
+					thc.healthyTargets <- target
+				} else {
+					thc.unhealthyTargets <- target
+				}
 
 				// TODO: add a TCP server up metric (like for HTTP).
 			}
 		}
 	}
+}
+
+// updateTargetState updates the target state based on the health check result and thresholds.
+// Returns the current perceived health status after applying threshold logic.
+func (thc *ServiceTCPHealthChecker) updateTargetState(targetAddress string, checkPassed bool) bool {
+	thc.stateMu.Lock()
+	defer thc.stateMu.Unlock()
+
+	state, ok := thc.states[targetAddress]
+	if !ok {
+		// This shouldn't happen, but handle gracefully
+		state = &targetState{healthy: false}
+		thc.states[targetAddress] = state
+	}
+
+	if checkPassed {
+		state.consecutiveFails = 0
+		if !state.healthy {
+			state.consecutivePasses++
+			if state.consecutivePasses >= thc.passesThreshold {
+				state.healthy = true
+				state.consecutivePasses = 0
+			}
+		}
+	} else {
+		state.consecutivePasses = 0
+		if state.healthy {
+			state.consecutiveFails++
+			if state.consecutiveFails >= thc.failsThreshold {
+				state.healthy = false
+				state.consecutiveFails = 0
+			}
+		}
+	}
+
+	return state.healthy
 }
 
 func (thc *ServiceTCPHealthChecker) executeHealthCheck(ctx context.Context, config *dynamic.TCPServerHealthCheck, target *TCPHealthCheckTarget) error {
