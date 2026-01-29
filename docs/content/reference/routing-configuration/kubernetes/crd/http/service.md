@@ -48,6 +48,10 @@ spec:
           name: cookie
           secure: true
       strategy: wrr
+      # Attach middlewares to this service
+      middlewares:
+        - name: my-middleware
+          namespace: apps
 ```
 
 ```yaml tab="TraefikService"
@@ -110,6 +114,9 @@ spec:
 | <a id="opt-strategy" href="#opt-strategy" title="#opt-strategy">`strategy`</a> | Strategy defines the load balancing strategy between the servers.<br />Supported values are: wrr (Weighed round-robin), p2c (Power of two choices), hrw (Highest Random Weight), and leasttime (Least-Time).<br />Evaluated only if the kind is **Service**.                                                                                                                                                                                                                                                                                                   | "RoundRobin"                                                         | No       |
 | <a id="opt-nativeLB" href="#opt-nativeLB" title="#opt-nativeLB">`nativeLB`</a> | Allow using the Kubernetes Service load balancing between the pods instead of the one provided by Traefik.<br /> Evaluated only if the kind is **Service**.                                                                                                                                                                                                                                                                                                                                                                                                    | false                                                                | No       |
 | <a id="opt-nodePortLB" href="#opt-nodePortLB" title="#opt-nodePortLB">`nodePortLB`</a> | Use the nodePort IP address when the service type is NodePort.<br />It allows services to be reachable when Traefik runs externally from the Kubernetes cluster but within the same network of the nodes.<br />Evaluated only if the kind is **Service**.                                                                                                                                                                                                                                                                                                      | false                                                                | No       |
+| <a id="opt-middlewares" href="#opt-middlewares" title="#opt-middlewares">`middlewares`</a> | List of references to [Middleware](./middleware.md) resources to apply to the service.<br />The middlewares will take effect for all requests handled by the service, regardless of which router forwards the request.<br />Evaluated only if the kind is **Service**.<br />More information [here](#middlewares).                                                                                                                                                                                                                                             |                                                                      | No       |
+| <a id="opt-middlewaresn-name" href="#opt-middlewaresn-name" title="#opt-middlewaresn-name">`middlewares[n].name`</a> | Middleware name.<br />The character `@` is not authorized.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |                                                                      | Yes      |
+| <a id="opt-middlewaresn-namespace" href="#opt-middlewaresn-namespace" title="#opt-middlewaresn-namespace">`middlewares[n].namespace`</a> | Middleware namespace.<br />Can be empty if the middleware belongs to the same namespace as the IngressRoute.                                                                                                                                                                                                                                                                                                                                                                                                                                                     |                                                                      | No       |
 
 
 ### ExternalName Service
@@ -418,6 +425,61 @@ spec:
           type: ClusterIP
           ...
         ```
+
+### Middlewares
+
+You can attach a list of [middlewares](./middleware.md) to each service.
+The middlewares will take effect for all requests handled by the service, regardless of which router forwards the request.
+
+For more information on service-level middlewares, see [service middlewares](../../../http/load-balancing/service.md#middlewares).
+
+??? example "Attaching Middlewares to a Service"
+
+    ```yaml tab="IngressRoute"
+    apiVersion: traefik.io/v1alpha1
+    kind: IngressRoute
+    metadata:
+      name: test-name
+      namespace: default
+    spec:
+      entryPoints:
+        - web
+      routes:
+        - kind: Rule
+          match: Host(`example.com`)
+          services:
+            - kind: Service
+              name: whoami
+              port: 80
+              middlewares:
+                - name: add-header
+                  namespace: default
+    ```
+
+    ```yaml tab="Middleware"
+    apiVersion: traefik.io/v1alpha1
+    kind: Middleware
+    metadata:
+      name: add-header
+      namespace: default
+    spec:
+      headers:
+        customRequestHeaders:
+          X-Custom-Header: "service-middleware"
+    ```
+
+    ```yaml tab="Whoami Service"
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: whoami
+      namespace: default
+    spec:
+      ports:
+        - port: 80
+      selector:
+        app: whoami
+    ```
 
 ### Configuring Backend Protocol
 
