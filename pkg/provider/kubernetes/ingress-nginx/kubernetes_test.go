@@ -1093,15 +1093,22 @@ func TestLoadIngresses(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								Strategy:         "wrr",
+								PassHostHeader:   ptr.To(true),
+								ServersTransport: "default-ingress-with-www-host",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
 							},
 						},
 					},
-					ServersTransports: map[string]*dynamic.ServersTransport{},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-www-host": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -1152,15 +1159,22 @@ func TestLoadIngresses(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								Strategy:         "wrr",
+								PassHostHeader:   ptr.To(true),
+								ServersTransport: "default-ingress-with-host",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
 							},
 						},
 					},
-					ServersTransports: map[string]*dynamic.ServersTransport{},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-host": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -1202,8 +1216,9 @@ func TestLoadIngresses(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								Strategy:         "wrr",
+								PassHostHeader:   ptr.To(true),
+								ServersTransport: "default-ingress-with-host",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -1219,15 +1234,27 @@ func TestLoadIngresses(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								Strategy:       "wrr",
-								PassHostHeader: ptr.To(true),
+								Strategy:         "wrr",
+								PassHostHeader:   ptr.To(true),
+								ServersTransport: "default-ingress-with-www-host",
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
 							},
 						},
 					},
-					ServersTransports: map[string]*dynamic.ServersTransport{},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-www-host": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+						"default-ingress-with-host": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
