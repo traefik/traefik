@@ -460,15 +460,15 @@ func buildTLSConfig(tlsOption Options) (*tls.Config, error) {
 		}
 
 		switch clientAuthType {
-		case "NoClientCert":
+		case NoClientCert:
 			conf.ClientAuth = tls.NoClientCert
-		case "RequestClientCert":
+		case RequestClientCert:
 			conf.ClientAuth = tls.RequestClientCert
-		case "RequireAnyClientCert":
+		case RequireAnyClientCert:
 			conf.ClientAuth = tls.RequireAnyClientCert
-		case "VerifyClientCertIfGiven":
+		case VerifyClientCertIfGiven:
 			conf.ClientAuth = tls.VerifyClientCertIfGiven
-		case "RequireAndVerifyClientCert":
+		case RequireAndVerifyClientCert:
 			conf.ClientAuth = tls.RequireAndVerifyClientCert
 		default:
 			return nil, fmt.Errorf("unknown client auth type %q", clientAuthType)
