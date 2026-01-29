@@ -36,6 +36,8 @@ type ingressConfig struct {
 	TemporalRedirect      *string `annotation:"nginx.ingress.kubernetes.io/temporal-redirect"`
 	TemporalRedirectCode  *int    `annotation:"nginx.ingress.kubernetes.io/temporal-redirect-code"`
 
+	FromToWwwRedirect *bool `annotation:"nginx.ingress.kubernetes.io/from-to-www-redirect"`
+
 	Affinity              *string `annotation:"nginx.ingress.kubernetes.io/affinity"`
 	SessionCookieName     *string `annotation:"nginx.ingress.kubernetes.io/session-cookie-name"`
 	SessionCookieSecure   *bool   `annotation:"nginx.ingress.kubernetes.io/session-cookie-secure"`
