@@ -48,6 +48,10 @@ type ServiceBuilder interface {
 	BuildHTTP(rootCtx context.Context, serviceName string) (http.Handler, error)
 }
 
+type middlewareChainBuilder interface {
+	BuildMiddlewareChain(ctx context.Context, middlewares []string) *alice.Chain
+}
+
 // Manager The service manager.
 type Manager struct {
 	routinePool      *safe.Pool
@@ -56,10 +60,11 @@ type Manager struct {
 	proxyBuilder     ProxyBuilder
 	serviceBuilders  []ServiceBuilder
 
-	services       map[string]http.Handler
-	configs        map[string]*runtime.ServiceInfo
-	healthCheckers map[string]*healthcheck.ServiceHealthChecker
-	rand           *rand.Rand // For the initial shuffling of load-balancers.
+	services               map[string]http.Handler
+	configs                map[string]*runtime.ServiceInfo
+	healthCheckers         map[string]*healthcheck.ServiceHealthChecker
+	rand                   *rand.Rand // For the initial shuffling of load-balancers.
+	middlewareChainBuilder middlewareChainBuilder
 }
 
 // NewManager creates a new Manager.
@@ -75,6 +80,11 @@ func NewManager(configs map[string]*runtime.ServiceInfo, observabilityMgr *middl
 		healthCheckers:   make(map[string]*healthcheck.ServiceHealthChecker),
 		rand:             rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
+}
+
+// SetMiddlewareChainBuilder sets the MiddlewareChainBuilder.
+func (m *Manager) SetMiddlewareChainBuilder(middlewareChainBuilder middlewareChainBuilder) {
+	m.middlewareChainBuilder = middlewareChainBuilder
 }
 
 // BuildHTTP Creates a http.Handler for a service configuration.
@@ -113,7 +123,7 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string) (http.H
 	value := reflect.ValueOf(*conf.Service)
 	var count int
 	for i := range value.NumField() {
-		if !value.Field(i).IsNil() {
+		if value.Type().Field(i).Name != "Middlewares" && !value.Field(i).IsNil() {
 			count++
 		}
 	}
@@ -173,9 +183,22 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string) (http.H
 		return nil, sErr
 	}
 
-	m.services[serviceName] = lb
+	if len(conf.Middlewares) > 0 {
+		if m.middlewareChainBuilder == nil {
+			// This should happen only in tests.
+			return nil, errors.New("chain builder not defined")
+		}
+		chain := m.middlewareChainBuilder.BuildMiddlewareChain(ctx, conf.Middlewares)
+		var err error
+		lb, err = chain.Then(lb)
+		if err != nil {
+			conf.AddError(err, true)
+			return nil, err
+		}
+	}
 
-	return lb, nil
+	m.services[serviceName] = lb
+	return m.services[serviceName], nil
 }
 
 // LaunchHealthCheck launches the health checks.
