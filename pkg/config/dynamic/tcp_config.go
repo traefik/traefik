@@ -35,6 +35,16 @@ type TCPService struct {
 	Weighted     *TCPWeightedRoundRobin  `json:"weighted,omitempty" toml:"weighted,omitempty" yaml:"weighted,omitempty" label:"-" export:"true"`
 }
 
+// Merge merges another TCPService into this one.
+// Returns true if the merge succeeds, false if configurations conflict.
+func (s *TCPService) Merge(other *TCPService) bool {
+	if s.LoadBalancer == nil || other.LoadBalancer == nil {
+		return reflect.DeepEqual(s, other)
+	}
+
+	return s.LoadBalancer.Merge(other.LoadBalancer)
+}
+
 // +k8s:deepcopy-gen=true
 
 // TCPWeightedRoundRobin is a weighted round robin tcp load-balancer of services.
@@ -102,8 +112,29 @@ type TCPServersLoadBalancer struct {
 	HealthCheck      *TCPServerHealthCheck `json:"healthCheck,omitempty" toml:"healthCheck,omitempty" yaml:"healthCheck,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
 }
 
-// Mergeable tells if the given service is mergeable.
-func (l *TCPServersLoadBalancer) Mergeable(loadBalancer *TCPServersLoadBalancer) bool {
+// Merge merges the other load balancer into this one.
+// Returns true if the merge succeeds, false if configurations conflict.
+func (l *TCPServersLoadBalancer) Merge(other *TCPServersLoadBalancer) bool {
+	if !l.mergeable(other) {
+		return false
+	}
+
+	// Deduplicate and append servers.
+	uniq := make(map[string]struct{}, len(l.Servers))
+	for _, server := range l.Servers {
+		uniq[server.Address] = struct{}{}
+	}
+	for _, server := range other.Servers {
+		if _, ok := uniq[server.Address]; !ok {
+			l.Servers = append(l.Servers, server)
+		}
+	}
+
+	return true
+}
+
+// mergeable tells if the given service is mergeable.
+func (l *TCPServersLoadBalancer) mergeable(loadBalancer *TCPServersLoadBalancer) bool {
 	savedServers := l.Servers
 	defer func() {
 		l.Servers = savedServers
