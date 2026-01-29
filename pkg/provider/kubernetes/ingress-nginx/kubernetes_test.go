@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ptypes "github.com/traefik/paerser/types"
@@ -46,7 +47,9 @@ func TestLoadIngresses(t *testing.T) {
 					Services:          map[string]*dynamic.Service{},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -105,7 +108,9 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -182,6 +187,7 @@ func TestLoadIngresses(t *testing.T) {
 							},
 						},
 					},
+					Options: map[string]tls.Options{},
 				},
 			},
 		},
@@ -244,7 +250,9 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -305,7 +313,9 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -452,6 +462,7 @@ func TestLoadIngresses(t *testing.T) {
 							},
 						},
 					},
+					Options: map[string]tls.Options{},
 				},
 			},
 		},
@@ -496,7 +507,9 @@ func TestLoadIngresses(t *testing.T) {
 					Services:          map[string]*dynamic.Service{},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -561,7 +574,9 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -617,7 +632,9 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -681,7 +698,9 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -730,7 +749,9 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -789,7 +810,9 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -841,7 +864,9 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -901,7 +926,9 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -961,7 +988,9 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -1013,7 +1042,9 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -1066,7 +1097,9 @@ func TestLoadIngresses(t *testing.T) {
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -1125,7 +1158,9 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -1184,7 +1219,9 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -1243,7 +1280,9 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -1296,7 +1335,9 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -1357,7 +1398,9 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -1418,7 +1461,9 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -1479,7 +1524,9 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -1540,7 +1587,9 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -1601,7 +1650,9 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -1662,7 +1713,9 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -1723,7 +1776,9 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
 			},
 		},
 		{
@@ -1771,7 +1826,216 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
+			},
+		},
+		{
+			desc: "Auth TLS secret",
+			paths: []string{
+				"services.yml",
+				"secrets.yml",
+				"ingressclasses.yml",
+				"ingresses/20-ingress-with-auth-tls-secret.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-auth-tls-secret-rule-0-path-0": {
+							Rule:       "Host(`auth-tls-secret.localhost`) && Path(`/`)",
+							RuleSyntax: "default",
+							Service:    "default-ingress-with-auth-tls-secret-whoami-80",
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "default-ingress-with-auth-tls-secret-default-ca-secret",
+							},
+						},
+						"default-ingress-with-auth-tls-secret-rule-0-path-0-http": {
+							EntryPoints: []string{"web"},
+							Rule:        "Host(`auth-tls-secret.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-auth-tls-secret-rule-0-path-0-redirect-scheme"},
+							Service:     "noop@internal",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-auth-tls-secret-rule-0-path-0-redirect-scheme": {
+							RedirectScheme: &dynamic.RedirectScheme{
+								Scheme:                 "https",
+								ForcePermanentRedirect: true,
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-auth-tls-secret-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-with-auth-tls-secret",
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-auth-tls-secret": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Certificates: []*tls.CertAndStores{
+						{
+							Certificate: tls.Certificate{
+								CertFile: "-----BEGIN CERTIFICATE-----",
+								KeyFile:  "-----BEGIN CERTIFICATE-----",
+							},
+						},
+					},
+					Options: map[string]tls.Options{
+						"default-ingress-with-auth-tls-secret-default-ca-secret": {
+							ClientAuth: tls.ClientAuth{
+								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
+								ClientAuthType: "RequireAndVerifyClientCert",
+							},
+							CipherSuites: []string{
+								"TLS_AES_128_GCM_SHA256",
+								"TLS_AES_256_GCM_SHA384",
+								"TLS_CHACHA20_POLY1305_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA",
+								"TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA",
+								"TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",
+								"TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
+								"TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+								"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+								"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+								"TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256",
+							},
+							ALPNProtocols: []string{"h2", "http/1.1", tlsalpn01.ACMETLS1Protocol},
+						},
+					},
+				},
+			},
+		},
+
+		{
+			desc: "Auth TLS verify client",
+			paths: []string{
+				"services.yml",
+				"secrets.yml",
+				"ingressclasses.yml",
+				"ingresses/21-ingress-with-auth-tls-verify-client.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-auth-tls-verify-client-rule-0-path-0": {
+							Rule:       "Host(`auth-tls-verify-client.localhost`) && Path(`/`)",
+							RuleSyntax: "default",
+							Service:    "default-ingress-with-auth-tls-verify-client-whoami-80",
+							TLS: &dynamic.RouterTLSConfig{
+								Options: "default-ingress-with-auth-tls-verify-client-default-ca-secret",
+							},
+						},
+						"default-ingress-with-auth-tls-verify-client-rule-0-path-0-http": {
+							EntryPoints: []string{"web"},
+							Rule:        "Host(`auth-tls-verify-client.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-auth-tls-verify-client-rule-0-path-0-redirect-scheme"},
+							Service:     "noop@internal",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-auth-tls-verify-client-rule-0-path-0-redirect-scheme": {
+							RedirectScheme: &dynamic.RedirectScheme{
+								Scheme:                 "https",
+								ForcePermanentRedirect: true,
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-auth-tls-verify-client-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-with-auth-tls-verify-client",
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-auth-tls-verify-client": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Certificates: []*tls.CertAndStores{
+						{
+							Certificate: tls.Certificate{
+								CertFile: "-----BEGIN CERTIFICATE-----",
+								KeyFile:  "-----BEGIN CERTIFICATE-----",
+							},
+						},
+					},
+					Options: map[string]tls.Options{
+						"default-ingress-with-auth-tls-verify-client-default-ca-secret": {
+							ClientAuth: tls.ClientAuth{
+								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
+								ClientAuthType: "VerifyClientCertIfGiven",
+							},
+							CipherSuites: []string{
+								"TLS_AES_128_GCM_SHA256",
+								"TLS_AES_256_GCM_SHA384",
+								"TLS_CHACHA20_POLY1305_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA",
+								"TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA",
+								"TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",
+								"TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
+								"TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+								"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+								"TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+								"TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
+								"TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256",
+							},
+							ALPNProtocols: []string{"h2", "http/1.1", tlsalpn01.ACMETLS1Protocol},
+						},
+					},
+				},
 			},
 		},
 	}
