@@ -223,7 +223,7 @@ func (p *Provider) buildConfiguration() (*dynamic.Configuration, error) {
 	if len(p.Directory) > 0 {
 		configurations, err := p.collectFileConfigs(ctx, p.Directory, "")
 		if err != nil {
-			return nil, fmt.Errorf("collecting file configs: %w")
+			return nil, fmt.Errorf("collecting file configs: %w", err)
 		}
 
 		return provider.Merge(ctx, configurations, provider.ResourceStrategySkipDuplicates), nil
