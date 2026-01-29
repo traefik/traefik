@@ -364,7 +364,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 				},
 				[]*traefiktls.CertAndStores{})
 
-			middlewaresBuilder := tcpmiddleware.NewBuilder(conf.TCPMiddlewares)
+			middlewaresBuilder := tcpmiddleware.NewBuilder(conf.TCPMiddlewares, nil)
 
 			routerManager := NewManager(conf, serviceManager, middlewaresBuilder,
 				nil, nil, tlsManager)
@@ -666,7 +666,7 @@ func TestDomainFronting(t *testing.T) {
 				"web": http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {}),
 			}
 
-			middlewaresBuilder := tcpmiddleware.NewBuilder(conf.TCPMiddlewares)
+			middlewaresBuilder := tcpmiddleware.NewBuilder(conf.TCPMiddlewares, nil)
 
 			routerManager := NewManager(conf, serviceManager, middlewaresBuilder, nil, httpsHandler, tlsManager)
 
