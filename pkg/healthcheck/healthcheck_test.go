@@ -418,7 +418,12 @@ func TestServiceHealthChecker_Launch(t *testing.T) {
 
 			targetURL, timeout := test.server.Start(t, cancel)
 
-			lb := &testLoadBalancer{RWMutex: &sync.RWMutex{}}
+			// Create load balancer with event channel for synchronization.
+			expectedEvents := test.expNumRemovedServers + test.expNumUpsertedServers
+			lb := &testLoadBalancer{
+				RWMutex: &sync.RWMutex{},
+				eventCh: make(chan struct{}, expectedEvents+5),
+			}
 
 			config := &dynamic.ServerHealthCheck{
 				Mode:              test.mode,
@@ -441,18 +446,30 @@ func TestServiceHealthChecker_Launch(t *testing.T) {
 				wg.Done()
 			}()
 
-			select {
-			case <-time.After(timeout):
-				t.Fatal("test did not complete in time")
-			case <-ctx.Done():
-				wg.Wait()
+			// Wait for expected health check events using channel synchronization.
+			for i := range expectedEvents {
+				select {
+				case <-lb.eventCh:
+					// Event received.
+					// On the last event, cancel to prevent extra health checks.
+					if i == expectedEvents-1 {
+						cancel()
+					}
+				case <-time.After(timeout):
+					t.Fatalf("timeout waiting for health check event %d/%d", i+1, expectedEvents)
+				}
 			}
 
-			lb.Lock()
-			defer lb.Unlock()
+			// Wait for the health checker goroutine to exit before making assertions.
+			wg.Wait()
 
-			assert.Equal(t, test.expNumRemovedServers, lb.numRemovedServers, "removed servers")
-			assert.Equal(t, test.expNumUpsertedServers, lb.numUpsertedServers, "upserted servers")
+			lb.RLock()
+			removedServers := lb.numRemovedServers
+			upsertedServers := lb.numUpsertedServers
+			lb.RUnlock()
+
+			assert.Equal(t, test.expNumRemovedServers, removedServers, "removed servers")
+			assert.Equal(t, test.expNumUpsertedServers, upsertedServers, "upserted servers")
 			assert.InDelta(t, test.expGaugeValue, gauge.GaugeValue, delta, "ServerUp Gauge")
 			assert.Equal(t, []string{"service", "foobar", "url", targetURL.String()}, gauge.LastLabelValues)
 			assert.Equal(t, map[string]string{targetURL.String(): test.targetStatus}, serviceInfo.GetAllStatus())
