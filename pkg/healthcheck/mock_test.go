@@ -168,13 +168,28 @@ type testLoadBalancer struct {
 
 	numRemovedServers  int
 	numUpsertedServers int
+
+	// eventCh is used to signal when a status change occurs, allowing tests
+	// to synchronize with health check events deterministically.
+	eventCh chan struct{}
 }
 
 func (lb *testLoadBalancer) SetStatus(ctx context.Context, childName string, up bool) {
+	lb.Lock()
 	if up {
 		lb.numUpsertedServers++
 	} else {
 		lb.numRemovedServers++
+	}
+	lb.Unlock()
+
+	// Signal the event if a listener is registered.
+	if lb.eventCh != nil {
+		select {
+		case lb.eventCh <- struct{}{}:
+		default:
+			// Don't block if channel is full or no listener.
+		}
 	}
 }
 
