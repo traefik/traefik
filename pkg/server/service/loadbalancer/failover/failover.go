@@ -29,8 +29,8 @@ type Failover struct {
 	fallbackStatusMu sync.RWMutex
 	fallbackStatus   bool
 
-	statusCode  types.HTTPCodeRanges
-	maxBodySize int64
+	statusCode          types.HTTPCodeRanges
+	maxRequestBodyBytes int64
 }
 
 // New creates a new Failover handler.
@@ -45,7 +45,7 @@ func New(config *dynamic.Failover) (*Failover, error) {
 			}
 			f.statusCode = httpCodeRanges
 		}
-		f.maxBodySize = config.Errors.MaxBodySize
+		f.maxRequestBodyBytes = config.Errors.MaxRequestBodyBytes
 	}
 
 	return f, nil
@@ -78,7 +78,7 @@ func (f *Failover) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 		request := req.Clone(req.Context())
 		if req.Body != nil && req.Body != http.NoBody {
-			if f.maxBodySize > 0 && req.ContentLength > f.maxBodySize {
+			if f.maxRequestBodyBytes > 0 && req.ContentLength > f.maxRequestBodyBytes {
 				http.Error(w, "Request body too large", http.StatusRequestEntityTooLarge)
 				return
 			}

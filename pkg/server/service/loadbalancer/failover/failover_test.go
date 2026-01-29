@@ -374,8 +374,8 @@ func TestFailoverStatusCodeMaxBodySize(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			failover, err := New(&dynamic.Failover{
 				Errors: &dynamic.FailoverError{
-					Status:      []string{"503"},
-					MaxBodySize: test.maxBodySize,
+					Status:              []string{"503"},
+					MaxRequestBodyBytes: test.maxBodySize,
 				},
 			})
 			require.NoError(t, err)

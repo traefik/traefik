@@ -71,7 +71,7 @@ http:
         fallback: foobar
         healthCheck: {}
         errors:
-          maxBodySize: 42
+          maxRequestBodyBytes: 42
           status:
             - foobar
             - foobar
