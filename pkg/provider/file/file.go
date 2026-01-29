@@ -223,7 +223,7 @@ func (p *Provider) buildConfiguration() (*dynamic.Configuration, error) {
 	if len(p.Directory) > 0 {
 		configurations, err := p.collectFileConfigs(ctx, p.Directory, "")
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("collecting file configs: %w")
 		}
 
 		return provider.Merge(ctx, configurations, provider.ResourceStrategySkipDuplicates), nil
@@ -387,7 +387,7 @@ func (p *Provider) collectFileConfigs(ctx context.Context, directory, prefix str
 
 	fileList, err := os.ReadDir(directory)
 	if err != nil {
-		return nil, fmt.Errorf("unable to read directory %s: %w", directory, err)
+		return nil, fmt.Errorf("reading directory %s: %w", directory, err)
 	}
 
 	for _, item := range fileList {
@@ -400,7 +400,7 @@ func (p *Provider) collectFileConfigs(ctx context.Context, directory, prefix str
 		if item.IsDir() {
 			sub, err := p.collectFileConfigs(ctx, itemPath, filename)
 			if err != nil {
-				return nil, fmt.Errorf("unable to load content configuration from subdirectory %s: %w", item, err)
+				return nil, fmt.Errorf("loading content configuration from subdirectory %s: %w", item, err)
 			}
 			configurations = append(configurations, sub...)
 			continue
