@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
-	"slices"
-	"strings"
 
 	"github.com/containous/alice"
 	"github.com/rs/zerolog/log"
@@ -39,12 +37,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/stripprefix"
 	"github.com/traefik/traefik/v3/pkg/middlewares/stripprefixregex"
 	"github.com/traefik/traefik/v3/pkg/server/provider"
-)
-
-type middlewareStackType int
-
-const (
-	middlewareStackKey middlewareStackType = iota
+	"github.com/traefik/traefik/v3/pkg/server/recursion"
 )
 
 // Builder the middleware builder.
@@ -63,8 +56,8 @@ func NewBuilder(configs map[string]*runtime.MiddlewareInfo, serviceBuilder servi
 	return &Builder{configs: configs, serviceBuilder: serviceBuilder, pluginBuilder: pluginBuilder}
 }
 
-// BuildChain creates a middleware chain.
-func (b *Builder) BuildChain(ctx context.Context, middlewares []string) *alice.Chain {
+// BuildMiddlewareChain creates a middleware chain.
+func (b *Builder) BuildMiddlewareChain(ctx context.Context, middlewares []string) *alice.Chain {
 	chain := alice.New()
 	for _, name := range middlewares {
 		middlewareName := provider.GetQualifiedName(ctx, name)
@@ -76,7 +69,7 @@ func (b *Builder) BuildChain(ctx context.Context, middlewares []string) *alice.C
 			}
 
 			var err error
-			if constructorContext, err = checkRecursion(constructorContext, middlewareName); err != nil {
+			if constructorContext, err = recursion.CheckRecursion(constructorContext, "middleware", middlewareName); err != nil {
 				b.configs[middlewareName].AddError(err, true)
 				return nil, err
 			}
@@ -97,17 +90,6 @@ func (b *Builder) BuildChain(ctx context.Context, middlewares []string) *alice.C
 		})
 	}
 	return &chain
-}
-
-func checkRecursion(ctx context.Context, middlewareName string) (context.Context, error) {
-	currentStack, ok := ctx.Value(middlewareStackKey).([]string)
-	if !ok {
-		currentStack = []string{}
-	}
-	if slices.Contains(currentStack, middlewareName) {
-		return ctx, fmt.Errorf("could not instantiate middleware %s: recursion detected in %s", middlewareName, strings.Join(append(currentStack, middlewareName), "->"))
-	}
-	return context.WithValue(ctx, middlewareStackKey, append(currentStack, middlewareName)), nil
 }
 
 // it is the responsibility of the caller to make sure that b.configs[middlewareName].Middleware exists.

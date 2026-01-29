@@ -58,7 +58,7 @@ func (a *Account) GetPrivateKey() crypto.PrivateKey {
 	privateKey, err := x509.ParsePKCS1PrivateKey(a.PrivateKey)
 	if err != nil {
 		log.Error().Str(logs.ProviderName, "acme").
-			Err(err).Msgf("Cannot unmarshal private key %+v", a.PrivateKey)
+			Err(err).Msg("Cannot unmarshal private key")
 		return nil
 	}
 

@@ -800,53 +800,47 @@ func TestScoreCalculationWithWeights(t *testing.T) {
 }
 
 // TestScoreCalculationWithInflight tests that inflight requests are considered in score calculation.
+// Uses direct manipulation of response times and nextServer() for deterministic results.
 func TestScoreCalculationWithInflight(t *testing.T) {
 	balancer := New(nil, false)
 
-	// We'll manually control the inflight counters to test the score calculation.
-	// Add two servers with same response time.
+	// Add two servers with dummy handlers (we test selection logic directly).
 	balancer.Add("server1", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		time.Sleep(10 * time.Millisecond)
-		rw.Header().Set("server", "server1")
 		rw.WriteHeader(http.StatusOK)
-		httptrace.ContextClientTrace(req.Context()).GotFirstResponseByte()
 	}), pointer(1), false)
 
 	balancer.Add("server2", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		time.Sleep(10 * time.Millisecond)
-		rw.Header().Set("server", "server2")
 		rw.WriteHeader(http.StatusOK)
-		httptrace.ContextClientTrace(req.Context()).GotFirstResponseByte()
 	}), pointer(1), false)
 
-	// Build up response time averages for both servers.
-	for range 2 {
-		recorder := httptest.NewRecorder()
-		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
+	// Pre-fill response times directly (10ms average for both servers).
+	for _, h := range balancer.handlers {
+		for i := range sampleSize {
+			h.responseTimes[i] = 10.0
+		}
+		h.responseTimeSum = 10.0 * sampleSize
+		h.sampleCount = sampleSize
 	}
 
-	// Now manually set server1 to have high inflight count.
+	// Set server1 to have high inflight count.
 	balancer.handlers[0].inflightCount.Store(5)
 
 	// Make requests - they should prefer server2 because:
 	// Score for server1: (10 × (1 + 5)) / 1 = 60
 	// Score for server2: (10 × (1 + 0)) / 1 = 10
-	recorder := &responseRecorder{save: map[string]int{}}
+	counts := map[string]int{"server1": 0, "server2": 0}
 	for range 5 {
-		// Manually increment to simulate the ServeHTTP behavior.
-		server, _ := balancer.nextServer()
+		server, err := balancer.nextServer()
+		assert.NoError(t, err)
+		counts[server.name]++
+		// Simulate ServeHTTP incrementing inflight count.
 		server.inflightCount.Add(1)
-
-		if server.name == "server1" {
-			recorder.save["server1"]++
-		} else {
-			recorder.save["server2"]++
-		}
 	}
 
-	// Server2 should get all requests
-	assert.Equal(t, 5, recorder.save["server2"])
-	assert.Zero(t, recorder.save["server1"])
+	// Server2 should get all requests since its score (10-50) is always less than server1's (60).
+	// After each selection, server2's inflight grows: scores are 10, 20, 30, 40, 50 vs 60.
+	assert.Equal(t, 5, counts["server2"])
+	assert.Zero(t, counts["server1"])
 }
 
 // TestScoreCalculationColdStart tests that new servers (0ms avg) get fair selection
@@ -930,28 +924,20 @@ func TestFastServerGetsMoreTraffic(t *testing.T) {
 // TestTrafficShiftsWhenPerformanceDegrades verifies that the load balancer
 // adapts to changing server performance by shifting traffic away from degraded servers.
 // This tests the adaptive behavior - the core value proposition of least-time load balancing.
+// Uses nextServer() directly to avoid timing variations and ensure deterministic results.
 func TestTrafficShiftsWhenPerformanceDegrades(t *testing.T) {
 	balancer := New(nil, false)
 
-	// Use atomic to dynamically control server1's response time.
-	server1Delay := atomic.Int64{}
-	server1Delay.Store(5) // Start with 5ms
-
+	// Add two servers with dummy handlers (we'll test selection logic directly).
 	balancer.Add("server1", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		time.Sleep(time.Duration(server1Delay.Load()) * time.Millisecond)
-		rw.Header().Set("server", "server1")
 		rw.WriteHeader(http.StatusOK)
-		httptrace.ContextClientTrace(req.Context()).GotFirstResponseByte()
 	}), pointer(1), false)
 
 	balancer.Add("server2", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		time.Sleep(5 * time.Millisecond) // Static 5ms
-		rw.Header().Set("server", "server2")
 		rw.WriteHeader(http.StatusOK)
-		httptrace.ContextClientTrace(req.Context()).GotFirstResponseByte()
 	}), pointer(1), false)
 
-	// Pre-fill ring buffers to eliminate cold start effects and ensure deterministic equal performance state.
+	// Pre-fill ring buffers with equal response times (5ms each).
 	for _, h := range balancer.handlers {
 		for i := range sampleSize {
 			h.responseTimes[i] = 5.0
@@ -960,35 +946,43 @@ func TestTrafficShiftsWhenPerformanceDegrades(t *testing.T) {
 		h.sampleCount = sampleSize
 	}
 
-	// Phase 1: Both servers perform equally (5ms each).
-	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
+	// Phase 1: Both servers have equal performance (5ms each).
+	// With WRR tie-breaking, traffic should be distributed evenly.
+	counts := map[string]int{"server1": 0, "server2": 0}
 	for range 50 {
-		balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
+		server, err := balancer.nextServer()
+		assert.NoError(t, err)
+		counts[server.name]++
 	}
 
-	// With equal performance and pre-filled buffers, distribution should be balanced via WRR tie-breaking.
-	total := recorder.save["server1"] + recorder.save["server2"]
+	total := counts["server1"] + counts["server2"]
 	assert.Equal(t, 50, total)
-	assert.InDelta(t, 25, recorder.save["server1"], 10) // 25 ± 10 requests
-	assert.InDelta(t, 25, recorder.save["server2"], 10) // 25 ± 10 requests
+	assert.InDelta(t, 25, counts["server1"], 1) // Deterministic WRR: 25 ± 1
+	assert.InDelta(t, 25, counts["server2"], 1) // Deterministic WRR: 25 ± 1
 
-	// Phase 2: server1 degrades (simulating GC pause, CPU spike, or network latency).
-	server1Delay.Store(50) // Now 50ms (10x slower) - dramatic degradation for reliable detection
-
-	// Make more requests to shift the moving average.
-	// Ring buffer has 100 samples, need significant new samples to shift average.
-	// server1's average will climb from ~5ms toward 50ms.
-	recorder2 := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
-	for range 60 {
-		balancer.ServeHTTP(recorder2, httptest.NewRequest(http.MethodGet, "/", nil))
+	// Phase 2: Simulate server1 degradation by directly updating its ring buffer.
+	// Set server1's average response time to 50ms (10x slower than server2's 5ms).
+	for _, h := range balancer.handlers {
+		if h.name == "server1" {
+			for i := range sampleSize {
+				h.responseTimes[i] = 50.0
+			}
+			h.responseTimeSum = 50.0 * sampleSize
+		}
 	}
 
-	// server2 should get significantly more traffic
-	// With 10x performance difference, server2 should dominate.
-	total2 := recorder2.save["server1"] + recorder2.save["server2"]
+	// With 10x performance difference, server2 should get significantly more traffic.
+	counts2 := map[string]int{"server1": 0, "server2": 0}
+	for range 60 {
+		server, err := balancer.nextServer()
+		assert.NoError(t, err)
+		counts2[server.name]++
+	}
+
+	total2 := counts2["server1"] + counts2["server2"]
 	assert.Equal(t, 60, total2)
-	assert.Greater(t, recorder2.save["server2"], 35) // At least ~60% (35/60)
-	assert.Less(t, recorder2.save["server1"], 25)    // At most ~40% (25/60)
+	assert.Greater(t, counts2["server2"], 35) // At least ~60% (35/60)
+	assert.Less(t, counts2["server1"], 25)    // At most ~40% (25/60)
 }
 
 // TestMultipleServersWithSameScore tests WRR tie-breaking when multiple servers have identical scores.

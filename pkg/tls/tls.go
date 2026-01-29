@@ -4,6 +4,30 @@ import "github.com/traefik/traefik/v3/pkg/types"
 
 const certificateHeader = "-----BEGIN CERTIFICATE-----\n"
 
+const (
+	// NoClientCert indicates that no client certificate should be requested
+	// during the handshake, and if any certificates are sent they will not
+	// be verified.
+	NoClientCert = "NoClientCert"
+	// RequestClientCert indicates that a client certificate should be requested
+	// during the handshake, but does not require that the client send any
+	// certificates.
+	RequestClientCert = "RequestClientCert"
+	// RequireAnyClientCert indicates that a client certificate should be requested
+	// during the handshake, and that at least one certificate is required to be
+	// sent by the client, but that certificate is not required to be valid.
+	RequireAnyClientCert = "RequireAnyClientCert"
+	// VerifyClientCertIfGiven indicates that a client certificate should be requested
+	// during the handshake, but does not require that the client sends a
+	// certificate. If the client does send a certificate it is required to be
+	// valid.
+	VerifyClientCertIfGiven = "VerifyClientCertIfGiven"
+	// RequireAndVerifyClientCert indicates that a client certificate should be requested
+	// during the handshake, and that at least one valid certificate is required
+	// to be sent by the client.
+	RequireAndVerifyClientCert = "RequireAndVerifyClientCert"
+)
+
 // +k8s:deepcopy-gen=true
 
 // ClientAuth defines the parameters of the client authentication part of the TLS connection, if any.

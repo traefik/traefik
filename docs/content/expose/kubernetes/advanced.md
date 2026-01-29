@@ -1,432 +1,25 @@
-# Exposing Services with Traefik on Kubernetes
+# Exposing Services with Traefik on Kubernetes - Advanced
 
-This guide will help you expose your services securely through Traefik Proxy on Kubernetes. We'll cover routing HTTP and HTTPS traffic, implementing TLS, adding security middleware, and configuring sticky sessions. For routing, this guide gives you two options:
+This guide builds on the concepts and setup from the [Basic Guide](basic.md). Make sure you've completed the basic guide and have a working Traefik setup with Kubernetes before proceeding.
 
-- [Gateway API](../reference/routing-configuration/kubernetes/gateway-api.md)
-- [IngressRoute](../reference/routing-configuration/kubernetes/crd/http/ingressroute.md)
+In this advanced guide, you'll learn how to enhance your Traefik deployment with:
 
-Feel free to choose the one that fits your needs best.
+- **Middlewares** for security headers and access control
+- **Let's Encrypt** for automated certificate management (IngressRoute)
+- **cert-manager** for automated certificate management (Gateway API)
+- **Sticky sessions** for stateful applications
+- **Multi-layer routing** for hierarchical routing with complex authentication scenarios (IngressRoute only)
 
 ## Prerequisites
 
+- Completed the [Basic Guide](basic.md)
 - A Kubernetes cluster with Traefik Proxy installed
 - `kubectl` configured to interact with your cluster
-- Traefik deployed using the Traefik Kubernetes Setup guide
-
-## Expose Your First HTTP Service
-
-Let's expose a simple HTTP service using the [whoami](https://github.com/traefik/whoami) application. This will demonstrate basic routing to a backend service.
-
-First, create the deployment and service:
-
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: whoami
-  namespace: default
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: whoami
-  template:
-    metadata:
-      labels:
-        app: whoami
-    spec:
-      containers:
-      - name: whoami
-        image: traefik/whoami
-        ports:
-        - containerPort: 80
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: whoami
-  namespace: default
-spec:
-  selector:
-    app: whoami
-  ports:
-  - port: 80
-```
-
-Save this as `whoami.yaml` and apply it:
-
-```bash
-kubectl apply -f whoami.yaml
-```
-
-Now, let's create routes using either Gateway API or IngressRoute.
-
-### Using Gateway API
-
-```yaml
-apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
-metadata:
-  name: whoami
-  namespace: default
-spec:
-  parentRefs:
-  - name: traefik-gateway  # This Gateway is automatically created by Traefik 
-  hostnames:
-  - "whoami.docker.localhost"
-  rules:
-  - matches:
-    - path:
-        type: PathPrefix
-        value: /
-    backendRefs:
-    - name: whoami
-      port: 80
-```
-
-Save this as `whoami-route.yaml` and apply it:
-
-```bash
-kubectl apply -f whoami-route.yaml
-```
-
-### Using IngressRoute
-
-```yaml
-apiVersion: traefik.io/v1alpha1
-kind: IngressRoute
-metadata:
-  name: whoami
-  namespace: default
-spec:
-  entryPoints:
-    - web
-  routes:
-  - match: Host(`whoami.docker.localhost`)
-    kind: Rule
-    services:
-    - name: whoami
-      port: 80
-```
-
-Save this as `whoami-ingressroute.yaml` and apply it:
-
-```bash
-kubectl apply -f whoami-ingressroute.yaml
-```
-
-### Verify Your Service
-
-Your service is now available at http://whoami.docker.localhost/. Test that it works:
-
-```bash
-curl -H "Host: whoami.docker.localhost" http://localhost/
-```
-
-!!! info
-    Make sure to remove the `ports.web.redirections` block from the `values.yaml` file if you followed the Kubernetes Setup Guide to install Traefik otherwise you will be redirected to the HTTPS entrypoint:
-
-    ```yaml
-    redirections:
-      entryPoint:
-        to: websecure
-    ```
-
-You should see output similar to:
-
-```bash
-Hostname: whoami-6d5d964cb-8pv4k
-IP: 127.0.0.1
-IP: ::1
-IP: 10.42.0.18
-IP: fe80::d4c0:3bff:fe20:b0a3
-RemoteAddr: 10.42.0.17:39872
-GET / HTTP/1.1
-Host: whoami.docker.localhost
-User-Agent: curl/7.68.0
-Accept: */*
-Accept-Encoding: gzip
-X-Forwarded-For: 10.42.0.1
-X-Forwarded-Host: whoami.docker.localhost
-X-Forwarded-Port: 80
-X-Forwarded-Proto: http
-X-Forwarded-Server: traefik-76cbd5b89c-rx5xn
-X-Real-Ip: 10.42.0.1
-```
-
-This confirms that Traefik is successfully routing requests to your whoami application.
-
-## Add Routing Rules
-
-Now we'll enhance our routing by directing traffic to different services based on URL paths. This is useful for API versioning, frontend/backend separation, or organizing microservices.
-
-First, deploy a second service to represent an API:
-
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: whoami-api
-  namespace: default
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: whoami-api
-  template:
-    metadata:
-      labels:
-        app: whoami-api
-    spec:
-      containers:
-      - name: whoami
-        image: traefik/whoami
-        env:
-        - name: WHOAMI_NAME
-          value: "API Service"
-        ports:
-        - containerPort: 80
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: whoami-api
-  namespace: default
-spec:
-  selector:
-    app: whoami-api
-  ports:
-  - port: 80
-```
-
-Save this as `whoami-api.yaml` and apply it:
-
-```bash
-kubectl apply -f whoami-api.yaml
-```
-
-Now set up path-based routing:
-
-### Gateway API with Path Rules
-
-Update your existing `HTTPRoute` to include path-based routing:
-
-```yaml
-apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
-metadata:
-  name: whoami
-  namespace: default
-spec:
-  parentRefs:
-  - name: traefik-gateway
-  hostnames:
-  - "whoami.docker.localhost"
-  rules:
-  - matches:
-    - path:
-        type: PathPrefix
-        value: /api
-    backendRefs:
-    - name: whoami-api
-      port: 80
-  - matches:
-    - path:
-        type: PathPrefix
-        value: /
-    backendRefs:
-    - name: whoami
-      port: 80
-```
-
-Update the file `whoami-route.yaml` and apply it:
-
-```bash
-kubectl apply -f whoami-route.yaml
-```
-
-### IngressRoute with Path Rules
-
-Update your existing IngressRoute to include path-based routing:
-
-```yaml
-apiVersion: traefik.io/v1alpha1
-kind: IngressRoute
-metadata:
-  name: whoami
-  namespace: default
-spec:
-  entryPoints:
-    - web
-  routes:
-  - match: Host(`whoami.docker.localhost`) && Path(`/api`)
-    kind: Rule
-    services:
-    - name: whoami-api
-      port: 80
-  - match: Host(`whoami.docker.localhost`)
-    kind: Rule
-    services:
-    - name: whoami
-      port: 80
-```
-
-Save this as `whoami-ingressroute.yaml` and apply it:
-
-```bash
-kubectl apply -f whoami-ingressroute.yaml
-```
-
-### Test the Path-Based Routing
-
-Verify that different paths route to different services:
-
-```bash
-# Root path should go to the main whoami service
-curl -H "Host: whoami.docker.localhost" http://localhost/
-
-# /api path should go to the whoami-api service
-curl -H "Host: whoami.docker.localhost" http://localhost/api
-```
-
-For the `/api` requests, you should see the response showing "API Service" in the environment variables section, confirming that your path-based routing is working correctly:
-
-```bash
-{"hostname":"whoami-api-67d97b4868-dvvll","ip":["127.0.0.1","::1","10.42.0.9","fe80::10aa:37ff:fe74:31f2"],"headers":{"Accept":["*/*"],"Accept-Encoding":["gzip"],"User-Agent":["curl/8.7.1"],"X-Forwarded-For":["10.42.0.1"],"X-Forwarded-Host":["whoami.docker.localhost"],"X-Forwarded-Port":["80"],"X-Forwarded-Proto":["http"],"X-Forwarded-Server":["traefik-669c479df8-vkj22"],"X-Real-Ip":["10.42.0.1"]},"url":"/api","host":"whoami.docker.localhost","method":"GET","name":"API Service","remoteAddr":"10.42.0.13:36592"}
-```
-
-## Enable TLS
-
-Let's secure our service with HTTPS by adding TLS. We'll start with a self-signed certificate for local development.
-
-### Create a Self-Signed Certificate
- 
-Generate a self-signed certificate:
-
-```bash
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-  -keyout tls.key -out tls.crt \
-  -subj "/CN=whoami.docker.localhost"
-```
-
-Create a TLS secret in Kubernetes:
-
-```bash
-kubectl create secret tls whoami-tls --cert=tls.crt --key=tls.key
-```
-
-!!! important "Prerequisite for Gateway API with TLS"
-    Before using the Gateway API with TLS, you must define the `websecure` listener in your Traefik installation. This is typically done in your Helm values.
-    
-    Example configuration in `values.yaml`:
-    ```yaml
-    gateway:
-      listeners:
-        web:
-          port: 80
-          protocol: HTTP
-          namespacePolicy:
-            from: All
-        websecure:
-          port: 443
-          protocol: HTTPS
-          namespacePolicy:
-            from: All
-          mode: Terminate
-          certificateRefs:
-            - kind: Secret
-              name: local-selfsigned-tls
-              group: ""
-    ```
-    
-    See the Traefik Kubernetes Setup Guide for complete installation details.
-
-### Gateway API with TLS
-
-Update your existing `HTTPRoute` to use the secured gateway listener:
-
-```yaml
-apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
-metadata:
-  name: whoami
-  namespace: default
-spec:
-  parentRefs:
-  - name: traefik-gateway
-    sectionName: websecure  # The HTTPS listener
-  hostnames:
-  - "whoami.docker.localhost"
-  rules:
-  - matches:
-    - path:
-        type: PathPrefix
-        value: /api
-    backendRefs:
-    - name: whoami-api
-      port: 80
-  - matches:
-    - path:
-        type: PathPrefix
-        value: /
-    backendRefs:
-    - name: whoami
-      port: 80
-```
-
-Update the file `whoami-route.yaml` and apply it:
-
-```bash
-kubectl apply -f whoami-route.yaml
-```
-
-### IngressRoute with TLS
-
-Update your existing IngressRoute to use TLS:
-
-```yaml
-apiVersion: traefik.io/v1alpha1
-kind: IngressRoute
-metadata:
-  name: whoami
-  namespace: default
-spec:
-  entryPoints:
-    - websecure  # Changed from 'web' to 'websecure'
-  routes:
-  - match: Host(`whoami.docker.localhost`) && Path(`/api`)
-    kind: Rule
-    services:
-    - name: whoami-api
-      port: 80
-  - match: Host(`whoami.docker.localhost`)
-    kind: Rule
-    services:
-    - name: whoami
-      port: 80
-  tls:
-    secretName: whoami-tls  # Added TLS configuration
-```
-
-Update the file `whoami-ingressroute.yaml` and apply it:
-
-```bash
-kubectl apply -f whoami-ingressroute.yaml
-```
-
-### Verify HTTPS Access
-
-Now you can access your service securely. Since we're using a self-signed certificate, you'll need to skip certificate verification:
-
-```bash
-curl -k -H "Host: whoami.docker.localhost" https://localhost/
-```
-
-Your browser can also access https://whoami.docker.localhost/ (you'll need to accept the security warning for the self-signed certificate).
+- Working Traefik setup from the basic guide
 
 ## Add Middlewares
 
-Middlewares allow you to modify requests or responses as they pass through Traefik. Let's add two useful middlewares: [Headers](../reference/routing-configuration/http/middlewares/headers.md) for security and [IP allowlisting](../reference/routing-configuration/http/middlewares/ipallowlist.md) for access control.
+Middlewares allow you to modify requests or responses as they pass through Traefik. Let's add two useful middlewares: [Headers](../../reference/routing-configuration/http/middlewares/headers.md) for security and [IP allowlisting](../../reference/routing-configuration/http/middlewares/ipallowlist.md) for access control.
 
 ### Create Middlewares
 
@@ -469,37 +62,6 @@ kubectl apply -f middlewares.yaml
 
 In Gateway API, you can apply middlewares using the `ExtensionRef` filter type. This is the preferred and standard way to use Traefik middlewares with Gateway API, as it integrates directly with the HTTPRoute specification.
 
-First, make sure you have the same middlewares defined:
-
-```yaml
-apiVersion: traefik.io/v1alpha1
-kind: Middleware
-metadata:
-  name: secure-headers
-  namespace: default
-spec:
-  headers:
-    frameDeny: true
-    sslRedirect: true
-    browserXssFilter: true
-    contentTypeNosniff: true
-    stsIncludeSubdomains: true
-    stsPreload: true
-    stsSeconds: 31536000
----
-apiVersion: traefik.io/v1alpha1
-kind: Middleware
-metadata:
-  name: ip-allowlist
-  namespace: default
-spec:
-  ipAllowList:
-    sourceRange:
-      - 127.0.0.1/32
-      - 10.0.0.0/8  # Typical cluster network range
-      - 192.168.0.0/16  # Common local network range
-```
-
 Now, update your `HTTPRoute` to reference these middlewares using the `ExtensionRef` filter:
 
 ```yaml
@@ -525,7 +87,7 @@ spec:
         group: traefik.io
         kind: Middleware
         name: secure-headers
-    - type: ExtensionRef 
+    - type: ExtensionRef
       extensionRef: # IP AllowList Middleware Definition
         group: traefik.io
         kind: Middleware
@@ -543,7 +105,7 @@ spec:
         group: traefik.io
         kind: Middleware
         name: secure-headers
-    - type: ExtensionRef 
+    - type: ExtensionRef
       extensionRef: # IP AllowList Middleware Definition
         group: traefik.io
         kind: Middleware
@@ -854,7 +416,7 @@ spec:
         group: traefik.io
         kind: Middleware
         name: secure-headers
-    - type: ExtensionRef 
+    - type: ExtensionRef
       extensionRef: # IP AllowList Middleware Definition
         group: traefik.io
         kind: Middleware
@@ -876,7 +438,7 @@ spec:
         group: traefik.io
         kind: Middleware
         name: secure-headers
-    - type: ExtensionRef 
+    - type: ExtensionRef
       extensionRef: # IP AllowList Middleware Definition
         group: traefik.io
         kind: Middleware
@@ -986,29 +548,283 @@ You should see different `Hostname` values in these responses, as each request i
 !!! important "Browser Testing"
     When testing in browsers, you need to use the same browser session to maintain the cookie. The cookie is set with `httpOnly` and `secure` flags for security, so it will only be sent over HTTPS connections and won't be accessible via JavaScript.
 
-For more advanced configuration options, see the [reference documentation](../reference/routing-configuration/http/load-balancing/service.md).
+For more advanced configuration options, see the [reference documentation](../../reference/routing-configuration/http/load-balancing/service.md).
+
+## Setup Multi-Layer Routing
+
+Multi-layer routing enables hierarchical relationships between routers, where parent routers can process requests through middleware before child routers make final routing decisions. This is particularly useful for authentication-based routing or staged middleware application.
+
+!!! info "IngressRoute Support"
+    Multi-layer routing is **natively supported** by Kubernetes IngressRoute (CRD) using the `spec.parentRefs` field. This feature is not available when using standard Kubernetes Ingress or Gateway API resources.
+
+### Authentication-Based Routing Example
+
+Let's create a multi-layer routing setup where a parent IngressRoute authenticates requests, and child IngressRoutes direct traffic based on user roles.
+
+!!! important "Parent Router Requirements"
+    Parent routers in multi-layer routing must not have a service defined. The child routers will handle the service selection based on their matching rules. Make sure all child IngressRoutes reference the parent correctly using `parentRefs`.
+
+First, deploy your backend services:
+
+```yaml
+# whoami-backends.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: admin-backend
+  namespace: default
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: admin-backend
+  template:
+    metadata:
+      labels:
+        app: admin-backend
+    spec:
+      containers:
+      - name: whoami
+        image: traefik/whoami
+        env:
+        - name: WHOAMI_NAME
+          value: "Admin Backend"
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: admin-backend
+  namespace: default
+spec:
+  selector:
+    app: admin-backend
+  ports:
+  - port: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-backend
+  namespace: default
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: user-backend
+  template:
+    metadata:
+      labels:
+        app: user-backend
+    spec:
+      containers:
+      - name: whoami
+        image: traefik/whoami
+        env:
+        - name: WHOAMI_NAME
+          value: "User Backend"
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-backend
+  namespace: default
+spec:
+  selector:
+    app: user-backend
+  ports:
+  - port: 80
+```
+
+Apply the backend services:
+
+```bash
+kubectl apply -f whoami-backends.yaml
+```
+
+Now create the middleware and IngressRoutes for multi-layer routing:
+
+```yaml
+# mlr-ingressroute.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: auth-secret
+  namespace: default
+type: Opaque
+stringData:
+  users: |
+    admin:$apr1$DmXR3Add$wfdbGw6RWIhFb0ffXMM4d0
+    user:$apr1$GJtcIY1o$mSLdsWYeXpPHVsxGDqadI.
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: auth-middleware
+  namespace: default
+spec:
+  basicAuth:
+    secret: auth-secret
+    headerField: X-Auth-User
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: api-parent
+  namespace: default
+spec:
+  entryPoints:
+    - websecure
+  routes:
+  - match: Host(`api.docker.localhost`) && PathPrefix(`/api`)
+    kind: Rule
+    middlewares:
+    - name: auth-middleware
+  # Note: No services and no TLS config - this is a parent IngressRoute
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: api-admin
+  namespace: default
+spec:
+  parentRefs:
+  - name: api-parent
+    namespace: default  # Optional, defaults to same namespace
+  routes:
+  - match: HeadersRegexp(`X-Auth-User`, `admin`)
+    kind: Rule
+    services:
+    - name: admin-backend
+      port: 80
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: api-user
+  namespace: default
+spec:
+  parentRefs:
+  - name: api-parent
+    namespace: default  # Optional, defaults to same namespace
+  routes:
+  - match: HeadersRegexp(`X-Auth-User`, `user`)
+    kind: Rule
+    services:
+    - name: user-backend
+      port: 80
+```
+
+!!! note "Generating Password Hashes"
+    The password hashes above are generated using `htpasswd`. To create your own user credentials:
+
+    ```bash
+    # Using htpasswd (Apache utils)
+    htpasswd -nb admin yourpassword
+    ```
+
+Apply the multi-layer routing configuration:
+
+```bash
+kubectl apply -f mlr-ingressroute.yaml
+```
+
+### Test Multi-Layer Routing
+
+Test the routing behavior:
+
+```bash
+# Request goes through parent router → auth middleware → admin child router
+curl -k -u admin:test -H "Host: api.docker.localhost" https://localhost/api
+```
+
+You should see the response from the admin-backend service when authenticating as `admin`. Try with `user:test` credentials to reach the user-backend service instead.
+
+### How It Works
+
+1. **Request arrives** at `api.docker.localhost/api`
+2. **Parent IngressRoute** (`api-parent`) matches based on host and path
+3. **BasicAuth middleware** authenticates the user and sets the `X-Auth-User` header with the username
+4. **Child IngressRoute** (`api-admin` or `api-user`) matches based on the header value
+5. **Request forwarded** to the appropriate Kubernetes service
+
+### Cross-Namespace Parent References
+
+You can reference parent IngressRoutes in different namespaces by specifying the `namespace` field:
+
+```yaml
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: api-child
+  namespace: app-namespace
+spec:
+  parentRefs:
+  - name: api-parent
+    namespace: shared-namespace  # Parent in different namespace
+  routes:
+  - match: Path(`/child`)
+    kind: Rule
+    services:
+    - name: child-service
+      port: 80
+```
+
+!!! important "Cross-Namespace Requirement"
+    To use cross-namespace parent references, you must enable the `allowCrossNamespace` option in your Traefik Helm values:
+
+    ```yaml
+    providers:
+      kubernetesCRD:
+        allowCrossNamespace: true
+    ```
+
+### Multiple Parent References
+
+Child IngressRoutes can reference multiple parent IngressRoutes:
+
+```yaml
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: api-child
+  namespace: default
+spec:
+  parentRefs:
+  - name: parent-one
+  - name: parent-two
+  routes:
+  - match: Path(`/api`)
+    kind: Rule
+    services:
+    - name: child-service
+      port: 80
+```
+
+For more details about multi-layer routing, see the [Multi-Layer Routing documentation](../../reference/routing-configuration/http/routing/multi-layer-routing.md).
 
 ## Conclusion
 
-In this guide, you've learned how to:
+In this advanced guide, you've learned how to:
 
-- Expose HTTP services through Traefik in Kubernetes using both Gateway API and IngressRoute
-- Set up path-based routing to direct traffic to different backend services
-- Secure your services with TLS using self-signed certificates
 - Add security with middlewares like secure headers and IP allow listing
-- Automate certificate management with Let's Encrypt
+- Automate certificate management with Let's Encrypt (IngressRoute) and cert-manager (Gateway API)
 - Implement sticky sessions for stateful applications
+- Setup multi-layer routing for authentication-based routing (IngressRoute only)
 
-These fundamental capabilities provide a solid foundation for exposing any application through Traefik Proxy in Kubernetes. Each of these can be further customized to meet your specific requirements.
+These advanced capabilities allow you to build production-ready Traefik deployments with Kubernetes. Each of these can be further customized to meet your specific requirements.
 
 ### Next Steps
 
-Now that you understand the basics of exposing services with Traefik Proxy, you might want to explore:
+Now that you've mastered both basic and advanced Traefik features with Kubernetes, you might want to explore:
 
-- [Advanced routing options](../reference/routing-configuration/http/routing/rules-and-priority.md) like query parameter matching, header-based routing, and more
-- [Additional middlewares](../reference/routing-configuration/http/middlewares/overview.md) for authentication, rate limiting, and request modifications
-- [Observability features](../reference/install-configuration/observability/metrics.md) for monitoring and debugging your Traefik deployment
-- [TCP services](../reference/routing-configuration/tcp/service.md) for exposing TCP services
-- [UDP services](../reference/routing-configuration/udp/service.md) for exposing UDP services
-- [Kubernetes Provider documentation](../reference/install-configuration/providers/kubernetes/kubernetes-crd.md) for more details about the Kubernetes integration.
-- [Gateway API provider documentation](../reference/install-configuration/providers/kubernetes/kubernetes-gateway.md) for more details about the Gateway API integration.
+- [Advanced routing options](../../reference/routing-configuration/http/routing/rules-and-priority.md) like query parameter matching, header-based routing, and more
+- [Additional middlewares](../../reference/routing-configuration/http/middlewares/overview.md) for authentication, rate limiting, and request modifications
+- [Observability features](../../reference/install-configuration/observability/metrics.md) for monitoring and debugging your Traefik deployment
+- [TCP services](../../reference/routing-configuration/tcp/service.md) for exposing TCP services
+- [UDP services](../../reference/routing-configuration/udp/service.md) for exposing UDP services
+- [Kubernetes Provider documentation](../../reference/install-configuration/providers/kubernetes/kubernetes-crd.md) for more details about the Kubernetes integration
+- [Gateway API provider documentation](../../reference/install-configuration/providers/kubernetes/kubernetes-gateway.md) for more details about the Gateway API integration

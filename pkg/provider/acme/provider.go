@@ -812,8 +812,8 @@ func getCertificateRenewDurations(certificatesDuration int) (time.Duration, time
 		return 30 * 24 * time.Hour, 24 * time.Hour // 30 days, 1 day
 	case certificatesDuration >= 30*24: // >= 30 days
 		return 10 * 24 * time.Hour, 12 * time.Hour // 10 days, 12 hours
-	case certificatesDuration >= 7*24: // >= 7 days
-		return 24 * time.Hour, time.Hour // 1 days, 1 hour
+	case certificatesDuration >= 6*24: // >= 6 days
+		return 2 * 24 * time.Hour, 2 * time.Hour // 2 days, 2 hours
 	case certificatesDuration >= 24: // >= 1 days
 		return 6 * time.Hour, 10 * time.Minute // 6 hours, 10 minutes
 	default:

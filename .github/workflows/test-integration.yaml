@@ -21,12 +21,12 @@ jobs:
 
     steps:
       - name: Check out code
-        uses: actions/checkout@v6
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           fetch-depth: 0
 
       - name: Set up Go ${{ env.GO_VERSION }}
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
         with:
           go-version: ${{ env.GO_VERSION }}
           check-latest: true
@@ -39,14 +39,14 @@ jobs:
         run: make binary-linux-amd64
 
       - name: Save go cache build
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@8b402f58fbc84540c8b491a91e594a4576fec3d7 # v5.0.2
         with:
           path: |
             ~/.cache/go-build
           key: ${{ runner.os }}-go-build-cache-${{ env.GO_VERSION }}-${{ hashFiles('**/go.sum') }}
 
       - name: Artifact traefik binary
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: traefik
           path: ./dist/linux/amd64/traefik
@@ -65,18 +65,18 @@ jobs:
 
     steps:
       - name: Check out code
-        uses: actions/checkout@v6
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           fetch-depth: 0
 
       - name: Set up Go ${{ env.GO_VERSION }}
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
         with:
           go-version: ${{ env.GO_VERSION }}
           check-latest: true
 
       - name: Download traefik binary
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: traefik
           path: ./dist/linux/amd64/
@@ -85,7 +85,7 @@ jobs:
         run: chmod +x ./dist/linux/amd64/traefik
 
       - name: Restore go cache build
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@8b402f58fbc84540c8b491a91e594a4576fec3d7 # v5.0.2
         with:
           path: |
             ~/.cache/go-build
@@ -93,7 +93,7 @@ jobs:
 
       - name: Generate go test Slice
         id: test_split
-        uses: hashicorp-forge/go-test-split-action@v2.0.0
+        uses: hashicorp-forge/go-test-split-action@ddb2685fb140c29505663b405af7eb2cd953dd13 # v2.0.1
         with:
           packages: ./integration
           total: ${{ matrix.parallel }}

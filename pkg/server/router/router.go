@@ -28,8 +28,8 @@ import (
 
 const maxUserPriority = math.MaxInt - 1000
 
-type middlewareBuilder interface {
-	BuildChain(ctx context.Context, names []string) *alice.Chain
+type middlewareChainBuilder interface {
+	BuildMiddlewareChain(ctx context.Context, names []string) *alice.Chain
 }
 
 type serviceManager interface {
@@ -42,7 +42,7 @@ type Manager struct {
 	routerHandlers     map[string]http.Handler
 	serviceManager     serviceManager
 	observabilityMgr   *middleware.ObservabilityMgr
-	middlewaresBuilder middlewareBuilder
+	middlewaresBuilder middlewareChainBuilder
 	conf               *runtime.Configuration
 	tlsManager         *tls.Manager
 	parser             httpmuxer.SyntaxParser
@@ -51,7 +51,7 @@ type Manager struct {
 // NewManager creates a new Manager.
 func NewManager(conf *runtime.Configuration,
 	serviceManager serviceManager,
-	middlewaresBuilder middlewareBuilder,
+	middlewaresBuilder middlewareChainBuilder,
 	observabilityMgr *middleware.ObservabilityMgr,
 	tlsManager *tls.Manager,
 	parser httpmuxer.SyntaxParser,
@@ -372,7 +372,7 @@ func (m *Manager) buildHTTPHandler(ctx context.Context, router *runtime.RouterIn
 		})
 	}
 
-	mHandler := m.middlewaresBuilder.BuildChain(ctx, router.Middlewares)
+	mHandler := m.middlewaresBuilder.BuildMiddlewareChain(ctx, router.Middlewares)
 
 	return chain.Extend(*mHandler).Then(nextHandler)
 }

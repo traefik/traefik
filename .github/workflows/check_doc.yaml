@@ -16,7 +16,7 @@ jobs:
 
     steps:
       - name: Check out code
-        uses: actions/checkout@v5
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           fetch-depth: 0
 
@@ -28,7 +28,7 @@ jobs:
         run: ./docs/scripts/lint.sh docs
 
       - name: Setup python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: '3.12'
           cache: 'pip'
@@ -41,7 +41,7 @@ jobs:
           mkdocs build --strict
 
       - name: Setup ruby
-        uses: ruby/setup-ruby@v1
+        uses: ruby/setup-ruby@90be1154f987f4dc0fe0dd0feedac9e473aa4ba8 # v1.286.0
         with:
           ruby-version: '3.4'
 
@@ -54,7 +54,7 @@ jobs:
 
       # Comes from https://github.com/gjtorikian/html-proofer?tab=readme-ov-file#caching-with-continuous-integration
       - name: Cache HTMLProofer
-        uses: actions/cache@v4
+        uses: actions/cache@8b402f58fbc84540c8b491a91e594a4576fec3d7 # v5.0.2
         with:
           path: tmp/.htmlproofer
           key: ${{ runner.os }}-htmlproofer

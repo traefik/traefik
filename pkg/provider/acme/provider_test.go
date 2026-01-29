@@ -613,16 +613,28 @@ func Test_getCertificateRenewDurations(t *testing.T) {
 			expectRenewInterval:   time.Hour * 24,
 		},
 		{
+			desc:                  "45 Days certificates (Let's Encrypt 2028 standard): 10 days renew period, 12 hour renew interval",
+			certificatesDurations: 24 * 45,
+			expectRenewPeriod:     time.Hour * 24 * 10,
+			expectRenewInterval:   time.Hour * 12,
+		},
+		{
 			desc:                  "30 Days certificates: 10 days renew period, 12 hour renew interval",
 			certificatesDurations: 24 * 30,
 			expectRenewPeriod:     time.Hour * 24 * 10,
 			expectRenewInterval:   time.Hour * 12,
 		},
 		{
-			desc:                  "7 Days certificates: 1 days renew period, 1 hour renew interval",
+			desc:                  "7 Days certificates: 2 days renew period, 2 hour renew interval",
 			certificatesDurations: 24 * 7,
-			expectRenewPeriod:     time.Hour * 24,
-			expectRenewInterval:   time.Hour,
+			expectRenewPeriod:     time.Hour * 24 * 2,
+			expectRenewInterval:   time.Hour * 2,
+		},
+		{
+			desc:                  "160 hour certificate (Let's Encrypt 'shortlived' profile): 2 days renew period, 2 hour renew interval",
+			certificatesDurations: 160,
+			expectRenewPeriod:     time.Hour * 24 * 2,
+			expectRenewInterval:   time.Hour * 2,
 		},
 		{
 			desc:                  "24 Hours certificates: 6 hours renew period, 10 minutes renew interval",

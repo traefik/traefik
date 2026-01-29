@@ -847,14 +847,14 @@ _Optional, Default=2160_
 
 It defaults to `2160` (90 days) to follow Let's Encrypt certificates' duration.
 
-| Certificate Duration | Renew Period      | Renew Interval          |
-|----------------------|-------------------|-------------------------|
-| >= 1 year            | 4 months          | 1 week                  |
-| >= 90 days           | 30 days           | 1 day                   |
-| >= 30 days           | 10 days           | 12 hours                |
-| >= 7 days            | 1 day             | 1 hour                  |
-| >= 24 hours          | 6 hours           | 10 min                  |
-| < 24 hours           | 20 min            | 1 min                   |
+| Certificate Duration | Renew Period | Renew Interval |
+|----------------------|--------------|----------------|
+| >= 1 year            | 4 months     | 1 week         |
+| >= 90 days           | 30 days      | 1 day          |
+| >= 30 days           | 10 days      | 12 hours       |
+| >= 6 days            | 2 days       | 2 hours        |
+| >= 24 hours          | 6 hours      | 10 min         |
+| < 24 hours           | 20 min       | 1 min          |
 
 !!! warning "Traefik cannot manage certificates with a duration lower than 1 hour."
 

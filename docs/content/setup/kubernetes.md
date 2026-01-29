@@ -101,11 +101,12 @@ ports:
     port: 80
     nodePort: 30000
     # Instructs this entry point to redirect all traffic to the 'websecure' entry point
-    redirections:
-      entryPoint:
-        to: websecure
-        scheme: https
-        permanent: true
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+          permanent: true
 
   # Defines the HTTPS entry point named 'websecure'
   websecure:

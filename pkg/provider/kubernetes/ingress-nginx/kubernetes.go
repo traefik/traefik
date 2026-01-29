@@ -41,6 +41,8 @@ const (
 
 	defaultBackendName    = "default-backend"
 	defaultBackendTLSName = "default-backend-tls"
+
+	defaultProxyConnectTimeout = 60
 )
 
 type backendAddress struct {
@@ -80,6 +82,8 @@ type Provider struct {
 	DefaultBackendService  string `description:"Service used to serve HTTP requests not matching any known server name (catch-all). Takes the form 'namespace/name'." json:"defaultBackendService,omitempty" toml:"defaultBackendService,omitempty" yaml:"defaultBackendService,omitempty" export:"true"`
 	DisableSvcExternalName bool   `description:"Disable support for Services of type ExternalName." json:"disableSvcExternalName,omitempty" toml:"disableSvcExternalName,omitempty" yaml:"disableSvcExternalName,omitempty" export:"true"`
 
+	ProxyConnectTimeout int `description:"Amount of time to wait until a connection to a server can be established. Timeout value is unitless and in seconds." json:"proxyConnectTimeout,omitempty" toml:"proxyConnectTimeout,omitempty" yaml:"proxyConnectTimeout,omitempty" export:"true"`
+
 	// NonTLSEntryPoints contains the names of entrypoints that are configured without TLS.
 	NonTLSEntryPoints []string `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
 
@@ -93,6 +97,7 @@ type Provider struct {
 func (p *Provider) SetDefaults() {
 	p.IngressClass = defaultAnnotationValue
 	p.ControllerClass = defaultControllerName
+	p.ProxyConnectTimeout = defaultProxyConnectTimeout
 }
 
 // Init the provider.
@@ -261,7 +266,21 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 	ingresses := p.k8sClient.ListIngresses()
 
+	hosts := make(map[string]bool)
+	for _, ing := range ingresses {
+		if !p.shouldProcessIngress(ing, ingressClasses) {
+			continue
+		}
+
+		for _, rule := range ing.Spec.Rules {
+			if !hosts[rule.Host] {
+				hosts[rule.Host] = true
+			}
+		}
+	}
+
 	uniqCerts := make(map[string]*tls.CertAndStores)
+	tlsOptions := make(map[string]tls.Options)
 	for _, ingress := range ingresses {
 		logger := log.Ctx(ctx).With().Str("ingress", ingress.Name).Str("namespace", ingress.Namespace).Logger()
 		ctxIngress := logger.WithContext(ctx)
@@ -287,6 +306,23 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 				logger.Error().Err(err).Msg("Error configuring TLS")
 				continue
 			}
+		}
+
+		var clientAuthTLSOptionName string
+		if ingressConfig.AuthTLSSecret != nil {
+			tlsOptName := provider.Normalize(ingress.Namespace + "-" + ingress.Name + "-" + *ingressConfig.AuthTLSSecret)
+
+			if _, exists := tlsOptions[tlsOptName]; !exists {
+				tlsOpt, err := p.buildClientAuthTLSOption(ingress.Namespace, ingressConfig)
+				if err != nil {
+					logger.Error().Err(err).Msg("Error configuring client auth TLS")
+					continue
+				}
+
+				tlsOptions[tlsOptName] = tlsOpt
+			}
+
+			clientAuthTLSOptionName = tlsOptName
 		}
 
 		namedServersTransport, err := p.buildServersTransport(ingress.Namespace, ingress.Name, ingressConfig)
@@ -317,7 +353,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 				Service:    defaultBackendName,
 			}
 
-			if err := p.applyMiddlewares(ingress.Namespace, defaultBackendName, "", ingressConfig, hasTLS, rt, conf); err != nil {
+			if err := p.applyMiddlewares(ingress.Namespace, defaultBackendName, "", "", hosts, ingressConfig, hasTLS, rt, conf); err != nil {
 				logger.Error().Err(err).Msg("Error applying middlewares")
 			}
 
@@ -331,8 +367,11 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 				Service:    defaultBackendName,
 				TLS:        &dynamic.RouterTLSConfig{},
 			}
+			if clientAuthTLSOptionName != "" {
+				rtTLS.TLS.Options = clientAuthTLSOptionName
+			}
 
-			if err := p.applyMiddlewares(ingress.Namespace, defaultBackendTLSName, "", ingressConfig, false, rtTLS, conf); err != nil {
+			if err := p.applyMiddlewares(ingress.Namespace, defaultBackendTLSName, "", "", hosts, ingressConfig, false, rtTLS, conf); err != nil {
 				logger.Error().Err(err).Msg("Error applying middlewares")
 			}
 
@@ -409,7 +448,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 					Service:    key,
 				}
 
-				if err := p.applyMiddlewares(ingress.Namespace, key, "", ingressConfig, hasTLS, rt, conf); err != nil {
+				if err := p.applyMiddlewares(ingress.Namespace, key, "", "", hosts, ingressConfig, hasTLS, rt, conf); err != nil {
 					logger.Error().Err(err).Msg("Error applying middlewares")
 				}
 
@@ -422,8 +461,11 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 					Service:    key,
 					TLS:        &dynamic.RouterTLSConfig{},
 				}
+				if clientAuthTLSOptionName != "" {
+					rtTLS.TLS.Options = clientAuthTLSOptionName
+				}
 
-				if err := p.applyMiddlewares(ingress.Namespace, key+"-tls", "", ingressConfig, false, rtTLS, conf); err != nil {
+				if err := p.applyMiddlewares(ingress.Namespace, key+"-tls", "", "", hosts, ingressConfig, false, rtTLS, conf); err != nil {
 					logger.Error().Err(err).Msg("Error applying middlewares")
 				}
 
@@ -476,6 +518,10 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 				}
 				if hasTLS {
 					rt.TLS = &dynamic.RouterTLSConfig{}
+
+					if clientAuthTLSOptionName != "" {
+						rt.TLS.Options = clientAuthTLSOptionName
+					}
 				}
 
 				routerKey := provider.Normalize(fmt.Sprintf("%s-%s-rule-%d-path-%d", ingress.Namespace, ingress.Name, ri, pi))
@@ -488,7 +534,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 					conf.HTTP.ServersTransports[namedServersTransport.Name] = namedServersTransport.ServersTransport
 				}
 
-				if err := p.applyMiddlewares(ingress.Namespace, routerKey, pa.Path, ingressConfig, hasTLS, rt, conf); err != nil {
+				if err := p.applyMiddlewares(ingress.Namespace, routerKey, pa.Path, rule.Host, hosts, ingressConfig, hasTLS, rt, conf); err != nil {
 					logger.Error().Err(err).Msg("Error applying middlewares")
 				}
 			}
@@ -497,24 +543,29 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 	conf.TLS = &dynamic.TLSConfiguration{
 		Certificates: slices.Collect(maps.Values(uniqCerts)),
+		Options:      tlsOptions,
 	}
 
 	return conf
 }
 
 func (p *Provider) buildServersTransport(namespace, name string, cfg ingressConfig) (*namedServersTransport, error) {
-	scheme := parseBackendProtocol(ptr.Deref(cfg.BackendProtocol, "HTTP"))
-	if scheme != "https" {
-		return nil, nil
-	}
-
+	proxyConnectTimeout := ptr.Deref(cfg.ProxyConnectTimeout, p.ProxyConnectTimeout)
 	nst := &namedServersTransport{
 		Name: provider.Normalize(namespace + "-" + name),
 		ServersTransport: &dynamic.ServersTransport{
-			ServerName:         ptr.Deref(cfg.ProxySSLName, ptr.Deref(cfg.ProxySSLServerName, "")),
-			InsecureSkipVerify: strings.ToLower(ptr.Deref(cfg.ProxySSLVerify, "off")) == "off",
+			ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+				DialTimeout: ptypes.Duration(time.Duration(proxyConnectTimeout) * time.Second),
+			},
 		},
 	}
+
+	if scheme := parseBackendProtocol(ptr.Deref(cfg.BackendProtocol, "HTTP")); scheme != "https" {
+		return nst, nil
+	}
+
+	nst.ServersTransport.ServerName = ptr.Deref(cfg.ProxySSLName, ptr.Deref(cfg.ProxySSLServerName, ""))
+	nst.ServersTransport.InsecureSkipVerify = strings.ToLower(ptr.Deref(cfg.ProxySSLVerify, "off")) == "off"
 
 	if sslSecret := ptr.Deref(cfg.ProxySSLSecret, ""); sslSecret != "" {
 		parts := strings.Split(sslSecret, "/")
@@ -792,7 +843,15 @@ func (p *Provider) loadCertificates(ctx context.Context, ingress *netv1.Ingress,
 	return nil
 }
 
-func (p *Provider) applyMiddlewares(namespace, routerKey, rulePath string, ingressConfig ingressConfig, hasTLS bool, rt *dynamic.Router, conf *dynamic.Configuration) error {
+func (p *Provider) applyMiddlewares(namespace, routerKey, rulePath, ruleHost string, hosts map[string]bool, ingressConfig ingressConfig, hasTLS bool, rt *dynamic.Router, conf *dynamic.Configuration) error {
+	applyAppRootConfiguration(routerKey, ingressConfig, rt, conf)
+	applyFromToWwwRedirect(hosts, ruleHost, routerKey, ingressConfig, rt, conf)
+	applyRedirect(routerKey, ingressConfig, rt, conf)
+
+	// Apply SSL redirect is mandatory to be applied after all other middlewares.
+	// TODO: check how to remove this, and create the HTTP router elsewhere.
+	p.applySSLRedirectConfiguration(routerKey, ingressConfig, hasTLS, rt, conf)
+
 	if err := p.applyBasicAuthConfiguration(namespace, routerKey, ingressConfig, rt, conf); err != nil {
 		return fmt.Errorf("applying basic auth configuration: %w", err)
 	}
@@ -806,12 +865,6 @@ func (p *Provider) applyMiddlewares(namespace, routerKey, rulePath string, ingre
 	applyCORSConfiguration(routerKey, ingressConfig, rt, conf)
 
 	applyRewriteTargetConfiguration(rulePath, routerKey, ingressConfig, rt, conf)
-
-	// Apply SSL redirect is mandatory to be applied after all other middlewares.
-	// TODO: check how to remove this, and create the HTTP router elsewhere.
-	p.applySSLRedirectConfiguration(routerKey, ingressConfig, hasTLS, rt, conf)
-
-	applyRedirect(routerKey, ingressConfig, rt, conf)
 
 	applyUpstreamVhost(routerKey, ingressConfig, rt, conf)
 
@@ -908,6 +961,65 @@ func applyRewriteTargetConfiguration(rulePath, routerName string, ingressConfig 
 	}
 
 	rt.Middlewares = append(rt.Middlewares, rewriteTargetMiddlewareName)
+}
+
+func applyAppRootConfiguration(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
+	if ingressConfig.AppRoot == nil || !strings.HasPrefix(*ingressConfig.AppRoot, "/") {
+		return
+	}
+
+	appRootMiddlewareName := routerName + "-app-root"
+	conf.HTTP.Middlewares[appRootMiddlewareName] = &dynamic.Middleware{
+		RedirectRegex: &dynamic.RedirectRegex{
+			Regex:       `^(https?://[^/]+)/$`,
+			Replacement: "$1" + *ingressConfig.AppRoot,
+		},
+	}
+
+	rt.Middlewares = append(rt.Middlewares, appRootMiddlewareName)
+}
+
+func applyFromToWwwRedirect(hosts map[string]bool, ruleHost, routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
+	if ingressConfig.FromToWwwRedirect == nil || !*ingressConfig.FromToWwwRedirect {
+		return
+	}
+
+	wwwType := strings.HasPrefix(ruleHost, "www.")
+	wildcardType := strings.HasPrefix(ruleHost, "*.")
+	bypass := wwwType && hosts[strings.TrimPrefix(ruleHost, "www.")] || !wwwType && hosts["www."+ruleHost] || wildcardType
+
+	if bypass {
+		// Wildcard host not compatible with this annotation. (limitation)
+		// hosts already configured for www. and normal hosts.
+		return
+	}
+
+	newRule := fmt.Sprintf("Host(`www.%s`)", ruleHost)
+	if wwwType {
+		// if current ingress host is www.example.com, redirect from example.com => www.example.com
+		host := strings.TrimPrefix(ruleHost, "www.")
+		newRule = fmt.Sprintf("Host(`%s`)", host)
+	}
+
+	fromToWwwRedirectMiddlewareName := routerName + "-from-to-www-redirect"
+	conf.HTTP.Middlewares[fromToWwwRedirectMiddlewareName] = &dynamic.Middleware{
+		RedirectRegex: &dynamic.RedirectRegex{
+			Regex:       `(https?)://[^/]+:([0-9]+)/(.*)`,
+			Replacement: fmt.Sprintf("$1://%s:$2/$3", ruleHost),
+			Permanent:   true,
+		},
+	}
+
+	wwwRedirectRouter := &dynamic.Router{
+		Rule:        newRule,
+		EntryPoints: rt.EntryPoints,
+		Priority:    rt.Priority,
+		// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
+		RuleSyntax:  "default",
+		Middlewares: []string{fromToWwwRedirectMiddlewareName},
+		Service:     rt.Service,
+	}
+	conf.HTTP.Routers[routerName+"-from-to-www-redirect"] = wwwRedirectRouter
 }
 
 func (p *Provider) applyBasicAuthConfiguration(namespace, routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
@@ -1125,7 +1237,7 @@ func (p *Provider) applySSLRedirectConfiguration(routerName string, ingressConfi
 				ForcePermanentRedirect: true,
 			},
 		}
-		rt.Middlewares = append([]string{redirectMiddlewareName}, rt.Middlewares...)
+		rt.Middlewares = append(rt.Middlewares, redirectMiddlewareName)
 	}
 
 	// An Ingress that is not forcing sslRedirect and has no TLS configuration does not redirect,
@@ -1148,6 +1260,7 @@ func applyForwardAuthConfiguration(routerName string, ingressConfig ingressConfi
 		ForwardAuth: &dynamic.ForwardAuth{
 			Address:             *ingressConfig.AuthURL,
 			AuthResponseHeaders: authResponseHeaders,
+			AuthSigninURL:       ptr.Deref(ingressConfig.AuthSignin, ""),
 		},
 	}
 	rt.Middlewares = append(rt.Middlewares, forwardMiddlewareName)
@@ -1269,4 +1382,62 @@ func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *s
 	})
 
 	return eventsChanBuffered
+}
+
+func (p *Provider) buildClientAuthTLSOption(ingressNamespace string, config ingressConfig) (tls.Options, error) {
+	secretParts := strings.SplitN(*config.AuthTLSSecret, "/", 2)
+	if len(secretParts) != 2 {
+		return tls.Options{}, errors.New("auth-tls-secret is not in a correct namespace/name format")
+	}
+
+	// Expected format: namespace/name.
+	secretNamespace := secretParts[0]
+	secretName := secretParts[1]
+
+	if secretNamespace == "" {
+		return tls.Options{}, errors.New("auth-tls-secret has empty namespace")
+	}
+	if secretName == "" {
+		return tls.Options{}, errors.New("auth-tls-secret has empty name")
+	}
+	// Cross-namespace secrets are not supported.
+	if secretNamespace != ingressNamespace {
+		return tls.Options{}, fmt.Errorf("cross-namespace auth-tls-secret is not supported: secret namespace %q does not match ingress namespace %q", secretNamespace, ingressNamespace)
+	}
+
+	blocks, err := p.certificateBlocks(secretNamespace, secretName)
+	if err != nil {
+		return tls.Options{}, fmt.Errorf("reading client certificate: %w", err)
+	}
+
+	if blocks.CA == nil {
+		return tls.Options{}, errors.New("secret does not contain a CA certificate")
+	}
+
+	// Default verifyClient value is "on" on ingress-nginx.
+	// on means that client certificate is required and must be signed by a trusted CA certificate.
+	clientAuthType := tls.RequireAndVerifyClientCert
+	if config.AuthTLSVerifyClient != nil {
+		switch *config.AuthTLSVerifyClient {
+		// off means that client certificate is not requested and no verification will be passed.
+		case "off":
+			clientAuthType = tls.NoClientCert
+		// optional means that the client certificate is requested, but not required.
+		// If the certificate is present, it needs to be verified.
+		case "optional":
+			clientAuthType = tls.VerifyClientCertIfGiven
+		// optional_no_ca means that the client certificate is requested, but does not require it to be signed by a trusted CA certificate.
+		case "optional_no_ca":
+			clientAuthType = tls.RequestClientCert
+		}
+	}
+
+	tlsOpt := tls.Options{}
+	tlsOpt.SetDefaults()
+	tlsOpt.ClientAuth = tls.ClientAuth{
+		CAFiles:        []types.FileOrContent{*blocks.CA},
+		ClientAuthType: clientAuthType,
+	}
+
+	return tlsOpt, nil
 }

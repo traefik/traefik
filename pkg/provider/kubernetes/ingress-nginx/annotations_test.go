@@ -28,6 +28,9 @@ func Test_parseIngressConfig(t *testing.T) {
 				"nginx.ingress.kubernetes.io/session-cookie-max-age":  "3600",
 				"nginx.ingress.kubernetes.io/backend-protocol":        "HTTPS",
 				"nginx.ingress.kubernetes.io/cors-expose-headers":     "foo, bar",
+				"nginx.ingress.kubernetes.io/auth-url":                "http://auth.example.com/verify",
+				"nginx.ingress.kubernetes.io/auth-signin":             "https://auth.example.com/oauth2/start?rd=foo",
+				"nginx.ingress.kubernetes.io/proxy-connect-timeout":   "30",
 			},
 			expected: ingressConfig{
 				SSLPassthrough:        ptr.To(true),
@@ -40,6 +43,9 @@ func Test_parseIngressConfig(t *testing.T) {
 				SessionCookieMaxAge:   ptr.To(3600),
 				BackendProtocol:       ptr.To("HTTPS"),
 				CORSExposeHeaders:     ptr.To([]string{"foo", "bar"}),
+				AuthURL:               ptr.To("http://auth.example.com/verify"),
+				AuthSignin:            ptr.To("https://auth.example.com/oauth2/start?rd=foo"),
+				ProxyConnectTimeout:   ptr.To(30),
 			},
 		},
 		{
@@ -56,6 +62,7 @@ func Test_parseIngressConfig(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.ingress.kubernetes.io/ssl-passthrough":                     "notabool",
 				"nginx.ingress.kubernetes.io/session-cookie-max-age (in seconds)": "notanint",
+				"nginx.ingress.kubernetes.io/proxy-connect-timeout":               "notanint",
 			},
 		},
 	}

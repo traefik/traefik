@@ -2000,7 +2000,7 @@ func (m *mockServiceManager) LaunchHealthCheck(_ context.Context) {}
 
 type mockMiddlewareBuilder struct{}
 
-func (m *mockMiddlewareBuilder) BuildChain(_ context.Context, _ []string) *alice.Chain {
+func (m *mockMiddlewareBuilder) BuildMiddlewareChain(_ context.Context, _ []string) *alice.Chain {
 	chain := alice.New()
 	return &chain
 }

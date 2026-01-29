@@ -162,6 +162,18 @@ func Test_parseServiceConfig(t *testing.T) {
 			},
 		},
 		{
+			desc: "service middlewares annotation",
+			annotations: map[string]string{
+				"traefik.ingress.kubernetes.io/service.middlewares": "middleware1,middleware2",
+			},
+			expected: &ServiceConfig{
+				Service: &ServiceIng{
+					Middlewares:    []string{"middleware1", "middleware2"},
+					PassHostHeader: pointer(true),
+				},
+			},
+		},
+		{
 			desc:        "empty map",
 			annotations: map[string]string{},
 			expected:    nil,
