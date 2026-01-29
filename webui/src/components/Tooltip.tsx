@@ -1,4 +1,4 @@
-import { Button, Flex, Text, Tooltip as FaencyTooltip } from '@traefiklabs/faency'
+import { Button, Flex, Text, Tooltip as FaencyTooltip } from '@traefik-labs/faency'
 import { MouseEvent, ReactNode, useMemo, useState } from 'react'
 import { FiCheck, FiCopy } from 'react-icons/fi'
 
