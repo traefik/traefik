@@ -19,7 +19,8 @@ Enable seamless migration from NGINX Ingress Controller to Traefik with NGINX an
 
 ## Ingress Discovery
 
-This provider discovers all Ingresses in the cluster by default, which may lead to duplicated routers if you are also using the standard Kubernetes Ingress provider.
+This provider discovers all Ingresses in the cluster by default,
+which may lead to duplicated routers if you are also using the standard Kubernetes Ingress provider.
 
 **Best Practices:**
 
@@ -29,7 +30,21 @@ This provider discovers all Ingresses in the cluster by default, which may lead 
 
 ## Routing Configuration
 
-This provider watches for incoming Ingress events and automatically translates NGINX annotations into Traefik's dynamic configuration, creating the corresponding routers, services, middlewares, and other components needed to handle your traffic.
+This provider watches for incoming Ingress events and automatically translates NGINX annotations into Traefik's dynamic configuration,
+creating the corresponding routers, services, middlewares, and other components needed to handle your traffic.
+
+!!! warning "ConfigMap Configuration and Default Behaviors"
+
+    Routing annotations take precedence over provider-level defaults,
+    but they don't control all behaviors that NGINX Ingress Controller's ConfigMap configuration would handle globally.
+
+    Important differences in default behaviors:
+    
+    - **Request buffering**: NGINX enables `proxy-request-buffering` by default, while Traefik requires explicit opt-in via the provider's `proxyRequestBuffering` option.
+
+    To ensure consistent behavior during migration,
+    review and configure Traefik's provider-level options to match your current NGINX ConfigMap settings.
+    See the [provider configuration options](../../install-configuration/providers/kubernetes/kubernetes-ingress-nginx.md) for available settings.
 
 ## Configuration Example
 
