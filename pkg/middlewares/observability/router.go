@@ -47,13 +47,14 @@ func newRouter(ctx context.Context, router, routerRule, service string, next htt
 func (f *routerTracing) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 
-	// Store the HTTP route pattern in context for semantic convention metrics.
+	// Store the HTTP route pattern for semantic convention metrics.
 	if f.routerRule != "" {
-		ctx = WithHTTPRoute(ctx, f.routerRule)
-		req = req.WithContext(ctx)
+		if ri := RouteInfoFromContext(ctx); ri != nil {
+			ri.SetRoute(f.routerRule)
+		}
 	}
 
-	if tracer := tracing.TracerFromContext(req.Context()); tracer != nil && DetailedTracingEnabled(req.Context()) {
+	if tracer := tracing.TracerFromContext(ctx); tracer != nil && DetailedTracingEnabled(ctx) {
 		tracingCtx, span := tracer.Start(req.Context(), "Router", trace.WithSpanKind(trace.SpanKindInternal))
 		defer span.End()
 
