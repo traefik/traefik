@@ -4,13 +4,22 @@ description: "A service is in charge of connecting incoming requests to the Serv
 ---
 
 Traefik services define how to distribute incoming traffic across your backend servers.
-Each service implements one of the load balancing strategies detailed on this page to ensure optimal traffic distribution and high availability.
+This page covers two main concepts:
+
+- **Service Load Balancer**: Routes traffic to backend servers using various load balancing strategies
+- **Advanced Service Types**: Compose multiple services together for weighted distribution, mirroring, or failover
 
 ## Service Load Balancer
 
-The load balancers are able to load balance the requests between multiple instances of your programs.
-
+The `loadBalancer` service type routes incoming requests to a list of backend servers.
 Each service has a load-balancer, even if there is only one server to forward traffic to.
+
+The load balancer supports multiple **strategies** for distributing traffic among servers:
+
+- `wrr` (Weighted Round Robin) - Default strategy, distributes requests evenly across servers in rotation
+- `p2c` (Power of Two Choices) - Selects two random servers and routes to the one with fewer active connections
+- `hrw` (Highest Random Weight) - Uses consistent hashing based on client IP for session affinity
+- `leasttime` - Routes to the server with lowest response time combined with fewest active connections
 
 ### Configuration Example
 
@@ -19,6 +28,7 @@ http:
   services:
     my-service:
       loadBalancer:
+        strategy: "wrr"
         servers:
           - url: "http://private-ip-server-1/"
             weight: 2
@@ -42,6 +52,7 @@ http:
 ```toml tab="Structured (TOML)"
 [http.services]
   [http.services.my-service.loadBalancer]
+    strategy = "wrr"
     [[http.services.my-service.loadBalancer.servers]]
       url = "http://private-ip-server-1/"
     
@@ -66,6 +77,7 @@ http:
 
 ```yaml tab="Labels"
 labels:
+  - "traefik.http.services.my-service.loadBalancer.strategy=wrr"
   - "traefik.http.services.my-service.loadBalancer.servers[0].url=http://private-ip-server-1/"
   - "traefik.http.services.my-service.loadBalancer.servers[0].weight=2"
   - "traefik.http.services.my-service.loadBalancer.servers[0].preservePath=true"
@@ -83,6 +95,7 @@ labels:
 ```json tab="Tags"
 {
   "Tags": [
+    "traefik.http.services.my-service.loadBalancer.strategy=wrr",
     "traefik.http.services.my-service.loadBalancer.servers[0].url=http://private-ip-server-1/",
     "traefik.http.services.my-service.loadBalancer.servers[0].weight=2",
     "traefik.http.services.my-service.loadBalancer.servers[0].preservePath=true",
@@ -104,6 +117,7 @@ labels:
 | Field                              | Description                                                                                                                                                                                                                                                                                                                                                                                   | Required |
 |------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------|
 | <a id="opt-servers" href="#opt-servers" title="#opt-servers">`servers`</a> | Represents individual backend instances for your service                                                                                                                                                                                                                                                                                                                                      | Yes      |
+| <a id="opt-strategy" href="#opt-strategy" title="#opt-strategy">`strategy`</a> | Load balancing strategy for distributing traffic among servers. Valid values: `wrr` (default), `p2c`, `hrw`, `leasttime`.                                                                                                                                                                                                                                                                     | No       |
 | <a id="opt-sticky" href="#opt-sticky" title="#opt-sticky">`sticky`</a> | Defines a `Set-Cookie` header is set on the initial response to let the client know which server handles the first response.                                                                                                                                                                                                                                                                  | No       |
 | <a id="opt-healthcheck" href="#opt-healthcheck" title="#opt-healthcheck">`healthcheck`</a> | Configures health check to remove unhealthy servers from the load balancing rotation.                                                                                                                                                                                                                                                                                                         | No       |
 | <a id="opt-passiveHealthcheck" href="#opt-passiveHealthcheck" title="#opt-passiveHealthcheck">`passiveHealthcheck`</a> | Configures the passive health check to remove unhealthy servers from the load balancing rotation.                                                                                                                                                                                                                                                                                             | No       |
@@ -124,7 +138,151 @@ Servers represent individual backend instances for your service. The [service lo
 | <a id="opt-weight" href="#opt-weight" title="#opt-weight">`weight`</a> | Allows for weighted load balancing on the servers. | No                                                                               |
 | <a id="opt-preservePath" href="#opt-preservePath" title="#opt-preservePath">`preservePath`</a> | Allows to preserve the URL path.                   | No                                                                               |
 
-#### Health Check
+### Load Balancing Strategies
+
+The `strategy` option on the load balancer determines how traffic is distributed among the backend servers.
+
+#### Weighted Round Robin (wrr)
+
+The default strategy. Distributes requests evenly across all servers in rotation, respecting server weights.
+This strategy uses Earliest Deadline First (EDF) scheduling to provide weighted round-robin behavior.
+
+??? example "WRR Load Balancing -- Using the [File Provider](../../../install-configuration/providers/others/file.md)"
+
+    ```yaml tab="Structured (YAML)"
+    ## Routing configuration
+    http:
+      services:
+        my-service:
+          loadBalancer:
+            strategy: "wrr"
+            servers:
+            - url: "http://private-ip-server-1/"
+              weight: 3
+            - url: "http://private-ip-server-2/"
+              weight: 1
+    ```
+
+    ```toml tab="Structured (TOML)"
+    ## Routing configuration
+    [http.services]
+      [http.services.my-service.loadBalancer]
+        strategy = "wrr"
+        [[http.services.my-service.loadBalancer.servers]]
+          url = "http://private-ip-server-1/"
+          weight = 3
+        [[http.services.my-service.loadBalancer.servers]]
+          url = "http://private-ip-server-2/"
+          weight = 1
+    ```
+
+#### Power of Two Choices (p2c)
+
+Selects two servers at random and routes the request to the one with the fewest active connections.
+This algorithm provides better load distribution when servers have varying response times.
+
+??? example "P2C Load Balancing -- Using the [File Provider](../../../install-configuration/providers/others/file.md)"
+
+    ```yaml tab="Structured (YAML)"
+    ## Routing configuration
+    http:
+      services:
+        my-service:
+          loadBalancer:
+            strategy: "p2c"
+            servers:
+            - url: "http://private-ip-server-1/"
+            - url: "http://private-ip-server-2/"
+            - url: "http://private-ip-server-3/"
+    ```
+
+    ```toml tab="Structured (TOML)"
+    ## Routing configuration
+    [http.services]
+      [http.services.my-service.loadBalancer]
+        strategy = "p2c"
+        [[http.services.my-service.loadBalancer.servers]]
+          url = "http://private-ip-server-1/"
+        [[http.services.my-service.loadBalancer.servers]]
+          url = "http://private-ip-server-2/"       
+        [[http.services.my-service.loadBalancer.servers]]
+          url = "http://private-ip-server-3/"
+    ```
+
+#### Highest Random Weight (hrw)
+
+Uses consistent hashing (Rendezvous Hashing) based on the client's IP address to ensure requests from the same client are consistently routed to the same server.
+This provides session affinity without requiring sticky cookies.
+
+The algorithm computes a score for each available backend using a hash of the client's source IP combined with the backend's identifier, and assigns the client to the backend with the highest score.
+
+??? example "HRW Load Balancing -- Using the [File Provider](../../../install-configuration/providers/others/file.md)"
+
+    ```yaml tab="Structured (YAML)"
+    ## Routing configuration
+    http:
+      services:
+        my-service:
+          loadBalancer:
+            strategy: "hrw"
+            servers:
+            - url: "http://private-ip-server-1/"
+            - url: "http://private-ip-server-2/"
+            - url: "http://private-ip-server-3/"
+    ```
+
+    ```toml tab="Structured (TOML)"
+    ## Routing configuration
+    [http.services]
+      [http.services.my-service.loadBalancer]
+        strategy = "hrw"
+        [[http.services.my-service.loadBalancer.servers]]
+          url = "http://private-ip-server-1/"
+        [[http.services.my-service.loadBalancer.servers]]
+          url = "http://private-ip-server-2/"       
+        [[http.services.my-service.loadBalancer.servers]]
+          url = "http://private-ip-server-3/"
+    ```
+
+#### Least-Time
+
+Selects the server with the lowest average response time (Time To First Byte - TTFB), combined with the fewest active connections, weighted by server capacity.
+This strategy is ideal for heterogeneous backend environments where servers have varying performance characteristics, different hardware capabilities, or varying network latency.
+
+The algorithm continuously measures each backend's response time and tracks active connection counts.
+When routing a request, it calculates a score for each healthy server using the formula: `(avg_response_time × (1 + active_connections)) / weight`.
+The server with the lowest score receives the request.
+When multiple servers have identical scores, Weighted Round Robin (WRR) with Earliest Deadline First (EDF) scheduling is used as a tie-breaker.
+
+??? example "Least-Time Load Balancing -- Using the [File Provider](../../../install-configuration/providers/others/file.md)"
+
+    ```yaml tab="Structured (YAML)"
+    ## Routing configuration
+    http:
+      services:
+        my-service:
+          loadBalancer:
+            strategy: "leasttime"
+            servers:
+            - url: "http://private-ip-server-1/"
+            - url: "http://private-ip-server-2/"
+            - url: "http://private-ip-server-3/"
+    ```
+
+    ```toml tab="Structured (TOML)"
+    ## Routing configuration
+    [http.services]
+      [http.services.my-service.loadBalancer]
+        strategy = "leasttime"
+        [[http.services.my-service.loadBalancer.servers]]
+          url = "http://private-ip-server-1/"
+        [[http.services.my-service.loadBalancer.servers]]
+          url = "http://private-ip-server-2/"
+        [[http.services.my-service.loadBalancer.servers]]
+          url = "http://private-ip-server-3/"
+    ```
+
+### Health Check
 
 The `healthcheck` option configures health check to remove unhealthy servers from the load balancing rotation.
 Traefik will consider HTTP(s) servers healthy as long as they return a status code to the health check request (carried out every interval) between `2XX` and `3XX`, or matching the configured status.
@@ -146,42 +304,41 @@ Below are the available options for the health check mechanism:
 | <a id="opt-timeout" href="#opt-timeout" title="#opt-timeout">`timeout`</a> | Defines the maximum duration Traefik will wait for a health check request before considering the server unhealthy.            | 5s      | No       |
 | <a id="opt-headers" href="#opt-headers" title="#opt-headers">`headers`</a> | Defines custom headers to be sent to the health check endpoint.                                                               |         | No       |
 | <a id="opt-followRedirects" href="#opt-followRedirects" title="#opt-followRedirects">`followRedirects`</a> | Defines whether redirects should be followed during the health check calls.                                                   | true    | No       |
-| <a id="opt-hostname-2" href="#opt-hostname-2" title="#opt-hostname-2">`hostname`</a> | Defines the value of hostname in the Host header of the health check request.                                                 | ""      | No       |
 | <a id="opt-method" href="#opt-method" title="#opt-method">`method`</a> | Defines the HTTP method that will be used while connecting to the endpoint.                                                   | GET     | No       |
 | <a id="opt-status" href="#opt-status" title="#opt-status">`status`</a> | Defines the expected HTTP status code of the response to the health check request.                                            |         | No       |
 
-#### Sticky sessions
+### Sticky Sessions
 
 When sticky sessions are enabled, a `Set-Cookie` header is set on the initial response to let the client know which server handles the first response.
 On subsequent requests, to keep the session alive with the same server, the client should send the cookie with the value set.
 
-##### Stickiness on multiple levels
+#### Stickiness on multiple levels
 
 When chaining or mixing load-balancers (e.g. a load-balancer of servers is one of the "children" of a load-balancer of services), for stickiness to work all the way, the option needs to be specified at all required levels. Which means the client needs to send a cookie with as many key/value pairs as there are sticky levels.
 
-##### Stickiness & Unhealthy Servers
+#### Stickiness & Unhealthy Servers
 
 If the server specified in the cookie becomes unhealthy, the request will be forwarded to a new server (and the cookie will keep track of the new server).
 
-##### Cookie Name
+#### Cookie Name
 
 The default cookie name is an abbreviation of a sha1 (ex: `_1d52e`).
 
-##### MaxAge
+#### MaxAge
 
 By default, the affinity cookie will never expire as the `MaxAge` option is set to zero.
 
 This option indicates the number of seconds until the cookie expires.  
 When set to a negative number, the cookie expires immediately.
 
-##### Secure & HTTPOnly & SameSite flags
+#### Secure & HTTPOnly & SameSite flags
 
 By default, the affinity cookie is created without those flags.
 One however can change that through configuration.
 
 `SameSite` can be `none`, `lax`, `strict` or empty.
 
-##### Domain
+#### Domain
 
 The Domain attribute of a cookie specifies the domain for which the cookie is valid. 
 
@@ -190,7 +347,7 @@ By setting the Domain attribute, the cookie can be shared across subdomains (for
 ??? example "Adding Stickiness -- Using the [File Provider](../../../install-configuration/providers/others/file.md)"
 
     ```yaml tab="Structured (YAML)"
-    ## Dynamic configuration
+    ## Routing configuration
     http:
       services:
         my-service:
@@ -200,7 +357,7 @@ By setting the Domain attribute, the cookie can be shared across subdomains (for
     ```
 
     ```toml tab="Structured (TOML)"
-    ## Dynamic configuration
+    ## Routing configuration
     [http.services]
       [http.services.my-service]
         [http.services.my-service.loadBalancer.sticky.cookie]
@@ -209,7 +366,7 @@ By setting the Domain attribute, the cookie can be shared across subdomains (for
 ??? example "Adding Stickiness with custom Options -- Using the [File Provider](../../../install-configuration/providers/others/file.md)"
 
     ```yaml tab="Structured (YAML)"
-    ## Dynamic configuration
+    ## Routing configuration
     http:
       services:
         my-service:
@@ -223,7 +380,7 @@ By setting the Domain attribute, the cookie can be shared across subdomains (for
     ```
 
     ```toml tab="Structured (TOML)"
-    ## Dynamic configuration
+    ## Routing configuration
     [http.services]
       [http.services.my-service]
         [http.services.my-service.loadBalancer.sticky.cookie]
@@ -237,7 +394,7 @@ By setting the Domain attribute, the cookie can be shared across subdomains (for
 ??? example "Setting Stickiness on all the required levels -- Using the [File Provider](../../../install-configuration/providers/others/file.md)"
 
     ```yaml tab="Structured (YAML)"
-    ## Dynamic configuration
+    ## Routing configuration
     http:
       services:
         wrr1:
@@ -271,7 +428,7 @@ By setting the Domain attribute, the cookie can be shared across subdomains (for
     ```
 
     ```toml tab="Structured (TOML)"
-    ## Dynamic configuration
+    ## Routing configuration
     [http.services]
       [http.services.wrr1]
         [http.services.wrr1.weighted.sticky.cookie]
@@ -308,7 +465,7 @@ To keep a session open with the same server, the client would then need to speci
 curl -b "lvl1=whoami1; lvl2=http://127.0.0.1:8081" http://localhost:8000
 ```
 
-#### Passive Health Check
+### Passive Health Check
 
 The `passiveHealthcheck` option configures passive health check to remove unhealthy servers from the load balancing rotation.
 
@@ -326,18 +483,27 @@ Below are the available options for the passive health check mechanism:
 | <a id="opt-failureWindow" href="#opt-failureWindow" title="#opt-failureWindow">`failureWindow`</a> | Defines the time window during which the failed attempts must occur for the server to be marked as unhealthy. It also defines for how long the server will be considered unhealthy. | 10s     | No       |
 | <a id="opt-maxFailedAttempts" href="#opt-maxFailedAttempts" title="#opt-maxFailedAttempts">`maxFailedAttempts`</a> | Defines the number of consecutive failed attempts allowed within the failure window before marking the server as unhealthy.                                                         | 1       | No       |
 
-## Weighted Round Robin (WRR)
+## Advanced Service Types
 
-The WRR is able to load balance the requests between multiple services based on weights.
+Advanced service types allow you to compose multiple services together for weighted distribution, consistent hashing, mirroring, or failover scenarios.
+These are distinct from load balancing strategies - they operate at the **service level** rather than the **server level**.
 
-This strategy is only available to load balance between services and not between servers.
+!!! info "Key Difference"
+
+    - **Load Balancing Strategies** (wrr, p2c, hrw, leasttime): Distribute traffic among **servers** within a single `loadBalancer` service
+    - **Advanced Service Types** (weighted, highestRandomWeight, mirroring, failover): Distribute or manage traffic among multiple **services**
+
+### Weighted Round robin
+
+The `weighted` service type load balances requests between multiple services based on weights.
+This is different from the `wrr` strategy - it operates on services, not servers.
 
 !!! info "Supported Providers"
 
-    This strategy can be defined currently with the [File](../../../install-configuration/providers/others/file.md) or [IngressRoute](../../../install-configuration/providers/kubernetes/kubernetes-crd.md) providers. To load balance between servers based on weights, the Load Balancer service should be used instead.
+    This service type can be defined currently with the [File](../../../install-configuration/providers/others/file.md) provider or [IngressRoute](../../../routing-configuration/kubernetes/crd/http/ingressroute.md).
 
 ```yaml tab="Structured (YAML)"
-## Dynamic configuration
+## Routing configuration
 http:
   services:
     app:
@@ -360,7 +526,7 @@ http:
 ```
 
 ```toml tab="Structured (TOML)"
-## Dynamic configuration
+## Routing configuration
 [http.services]
   [http.services.app]
     [[http.services.app.weighted.services]]
@@ -381,7 +547,7 @@ http:
         url = "http://private-ip-server-2/"
 ```
 
-### Health Check
+#### Health Check
 
 HealthCheck enables automatic self-healthcheck for this service, i.e. whenever one of its children is reported as down, this service becomes aware of it, and takes it into account (i.e. it ignores the down child) when running the load-balancing algorithm. In addition, if the parent of this service also has HealthCheck enabled, this service reports to its parent any status change.
 
@@ -392,7 +558,7 @@ HealthCheck enables automatic self-healthcheck for this service, i.e. whenever o
     HealthCheck on Weighted services can be defined currently only with the [File provider](../../../install-configuration/providers/others/file.md).  
 
 ```yaml tab="Structured (YAML)"
-## Dynamic configuration
+## Routing configuration
 http:
   services:
     app:
@@ -424,7 +590,7 @@ http:
 ```
 
 ```toml tab="Structured (TOML)"
-## Dynamic configuration
+## Routing configuration
 [http.services]
   [http.services.app]
     [http.services.app.weighted.healthCheck]
@@ -454,83 +620,138 @@ http:
         url = "http://private-ip-server-2/"
 ```
 
-## P2C
+### Highest Random Weight
 
-Power of two choices algorithm is a load balancing strategy that selects two servers at random and chooses the one with the least number of active requests.
+The `highestRandomWeight` service type uses consistent hashing (Rendezvous Hashing) to load balance requests between multiple services.
+This ensures that requests from the same client IP are consistently routed to the same service.
 
-??? example "P2C Load Balancing -- Using the [File Provider](../../../install-configuration/providers/others/file.md)"
+This is different from the `hrw` strategy on a loadBalancer - it operates on **services**, not servers.
 
-    ```yaml tab="Structured (YAML)"
-    ## Dynamic configuration
-    http:
-      services:
-        my-service:
-          loadBalancer:
-            strategy: "p2c"
-            servers:
-            - url: "http://private-ip-server-1/"
-            - url: "http://private-ip-server-2/"
-            - url: "http://private-ip-server-3/"
-    ```
+!!! info "Supported Providers"
 
-    ```toml tab="Structured (TOML) "
-    ## Dynamic configuration
-    [http.services]
-      [http.services.my-service.loadBalancer]
-        strategy = "p2c"
-        [[http.services.my-service.loadBalancer.servers]]
-          url = "http://private-ip-server-1/"
-        [[http.services.my-service.loadBalancer.servers]]
-          url = "http://private-ip-server-2/"       
-        [[http.services.my-service.loadBalancer.servers]]
-          url = "http://private-ip-server-3/"
-    ```
+    This service type can be defined currently only with the [File](../../../install-configuration/providers/others/file.md) provider.
 
-## Least-Time
+```yaml tab="Structured (YAML)"
+## Routing configuration
+http:
+  services:
+    app:
+      highestRandomWeight:
+        services:
+        - name: appv1
+          weight: 1
+        - name: appv2
+          weight: 1
 
-The Least-Time load balancing algorithm selects the server with the lowest average response time (Time To First Byte - TTFB),
-combined with the fewest active connections, weighted by server capacity.
-This strategy is ideal for heterogeneous backend environments where servers have varying performance characteristics,
-different hardware capabilities, or varying network latency.
+    appv1:
+      loadBalancer:
+        servers:
+        - url: "http://private-ip-server-1/"
 
-The algorithm continuously measures each backend's response time and tracks active connection counts.
-When routing a request,
-it calculates a score for each healthy server using the formula: `(avg_response_time × (1 + active_connections)) / weight`.
-The server with the lowest score receives the request.
-When multiple servers have identical scores,
-Weighted Round Robin (WRR) with Earliest Deadline First (EDF) scheduling is used as a tie-breaker to ensure fair distribution.
+    appv2:
+      loadBalancer:
+        servers:
+        - url: "http://private-ip-server-2/"
+```
 
-??? example "Basic Least-Time Load Balancing -- Using the [File Provider](../../../install-configuration/providers/others/file.md)"
+```toml tab="Structured (TOML)"
+## Routing configuration
+[http.services]
+  [http.services.app]
+    [[http.services.app.highestRandomWeight.services]]
+      name = "appv1"
+      weight = 1
+    [[http.services.app.highestRandomWeight.services]]
+      name = "appv2"
+      weight = 1
 
-    ```yaml tab="Structured (YAML)"
-    ## Dynamic configuration
-    http:
-      services:
-        my-service:
-          loadBalancer:
-            strategy: "leasttime"
-            servers:
-            - url: "http://private-ip-server-1/"
-            - url: "http://private-ip-server-2/"
-            - url: "http://private-ip-server-3/"
-    ```
+  [http.services.appv1]
+    [http.services.appv1.loadBalancer]
+      [[http.services.appv1.loadBalancer.servers]]
+        url = "http://private-ip-server-1/"
 
-    ```toml tab="Structured (TOML)"
-    ## Dynamic configuration
-    [http.services]
-      [http.services.my-service.loadBalancer]
-        strategy = "leasttime"
-        [[http.services.my-service.loadBalancer.servers]]
-          url = "http://private-ip-server-1/"
-        [[http.services.my-service.loadBalancer.servers]]
-          url = "http://private-ip-server-2/"
-        [[http.services.my-service.loadBalancer.servers]]
-          url = "http://private-ip-server-3/"
-    ```
+  [http.services.appv2]
+    [http.services.appv2.loadBalancer]
+      [[http.services.appv2.loadBalancer.servers]]
+        url = "http://private-ip-server-2/"
+```
 
-## Mirroring
+#### Health Check
 
-The mirroring is able to mirror requests sent to a service to other services. Please note that by default the whole request is buffered in memory while it is being mirrored. See the `maxBodySize` option in the example below for how to modify this behaviour. You can also omit the request body by setting the `mirrorBody` option to false.
+HealthCheck enables automatic self-healthcheck for this service, similar to the Weighted Round Robin service type.
+
+!!! note "Behavior"
+
+    If HealthCheck is enabled for a given service and any of its descendants does not have it enabled, the creation of the service will fail.
+
+    HealthCheck on Highest Random Weight services can be defined currently only with the [File provider](../../../install-configuration/providers/others/file.md).  
+
+```yaml tab="Structured (YAML)"
+## Routing configuration
+http:
+  services:
+    app:
+      highestRandomWeight:
+        healthCheck: {}
+        services:
+        - name: appv1
+          weight: 1
+        - name: appv2
+          weight: 1
+
+    appv1:
+      loadBalancer:
+        healthCheck:
+          path: /status
+          interval: 10s
+          timeout: 3s
+        servers:
+        - url: "http://private-ip-server-1/"
+
+    appv2:
+      loadBalancer:
+        healthCheck:
+          path: /status
+          interval: 10s
+          timeout: 3s
+        servers:
+        - url: "http://private-ip-server-2/"
+```
+
+```toml tab="Structured (TOML)"
+## Routing configuration
+[http.services]
+  [http.services.app]
+    [http.services.app.highestRandomWeight.healthCheck]
+    [[http.services.app.highestRandomWeight.services]]
+      name = "appv1"
+      weight = 1
+    [[http.services.app.highestRandomWeight.services]]
+      name = "appv2"
+      weight = 1
+
+  [http.services.appv1]
+    [http.services.appv1.loadBalancer]
+      [http.services.appv1.loadBalancer.healthCheck]
+        path = "/health"
+        interval = "10s"
+        timeout = "3s"
+      [[http.services.appv1.loadBalancer.servers]]
+        url = "http://private-ip-server-1/"
+
+  [http.services.appv2]
+    [http.services.appv2.loadBalancer]
+      [http.services.appv2.loadBalancer.healthCheck]
+        path = "/health"
+        interval = "10s"
+        timeout = "3s"
+      [[http.services.appv2.loadBalancer.servers]]
+        url = "http://private-ip-server-2/"
+```
+
+### Mirroring
+
+The `mirroring` service type mirrors requests sent to a service to other services. Please note that by default the whole request is buffered in memory while it is being mirrored. See the `maxBodySize` option in the example below for how to modify this behaviour. You can also omit the request body by setting the `mirrorBody` option to false.
 
 !!! warning "Default behavior of `percent`"
 
@@ -538,10 +759,10 @@ The mirroring is able to mirror requests sent to a service to other services. Pl
     
 !!! info "Supported Providers"
 
-    This strategy can be defined currently with the [File](../../../install-configuration/providers/others/file.md) or [IngressRoute](../../../install-configuration/providers/kubernetes/kubernetes-crd.md) providers.
+    This service type can be defined currently with the [File](../../../install-configuration/providers/others/file.md) provider or [IngressRoute](../../../routing-configuration/kubernetes/crd/http/ingressroute.md).
     
 ```yaml tab="Structured (YAML)"
-## Dynamic configuration
+## Routing configuration
 http:
   services:
     mirrored-api:
@@ -572,7 +793,7 @@ http:
 ```
 
 ```toml tab="Structured (TOML)"
-## Dynamic configuration
+## Routing configuration
 [http.services]
   [http.services.mirrored-api]
     [http.services.mirrored-api.mirroring]
@@ -599,7 +820,7 @@ http:
         url = "http://private-ip-server-2/"
 ```
 
-### Health Check
+#### Health Check
 
 HealthCheck enables automatic self-healthcheck for this service, i.e. if the main handler of the service becomes unreachable, the information is propagated upwards to its parent.
 
@@ -610,7 +831,7 @@ HealthCheck enables automatic self-healthcheck for this service, i.e. if the mai
     HealthCheck on Mirroring services can be defined currently only with the [File provider](../../../install-configuration/providers/others/file.md).  
 
 ```yaml tab="Structured (YAML)"
-## Dynamic configuration
+## Routing configuration
 http:
   services:
     mirrored-api:
@@ -637,7 +858,7 @@ http:
 ```
 
 ```toml tab="Structured (TOML)"
-## Dynamic configuration
+## Routing configuration
 [http.services]
   [http.services.mirrored-api]
     [http.services.mirrored-api.mirroring]
@@ -658,7 +879,7 @@ http:
 
   [http.services.appv2]
     [http.services.appv2.loadBalancer]
-      [http.services.appv1.loadBalancer.healthCheck]
+      [http.services.appv2.loadBalancer.healthCheck]
         path = "/health"
         interval = "10s"
         timeout = "3s"
@@ -666,17 +887,17 @@ http:
         url = "http://private-ip-server-2/"
 ```
 
-## Failover 
+### Failover 
 
-A failover service job is to forward all requests to a fallback service when the main service becomes unreachable.
+The `failover` service type forwards all requests to a fallback service when the main service becomes unreachable.
 
 !!! info "Relation to HealthCheck"
     The failover service relies on the HealthCheck system to get notified when its main service becomes unreachable, which means HealthCheck needs to be enabled and functional on the main service. However, HealthCheck does not need to be enabled on the failover service itself for it to be functional. It is only required in order to propagate upwards the information when the failover itself becomes down (i.e. both its main and its fallback are down too).
 
 !!! info "Supported Provider"
-    This strategy can currently only be defined with the [File](../../../install-configuration/providers/others/file.md) provider.
+    This service type can currently only be defined with the [File](../../../install-configuration/providers/others/file.md) provider.
 
-### HealthCheck
+#### HealthCheck
 
 HealthCheck enables automatic self-healthcheck for this service, i.e. if the main and the fallback services become unreachable, the information is propagated upwards to its parent.
 
@@ -687,7 +908,7 @@ HealthCheck enables automatic self-healthcheck for this service, i.e. if the mai
     HealthCheck on a Failover service can be defined currently only with the [File provider](../../../install-configuration/providers/others/file.md).  
 
 ```yaml tab="Structured (YAML)"
-## Dynamic configuration
+## Routing configuration
 http:
   services:
     app:
@@ -716,7 +937,7 @@ http:
 ```
 
 ```toml tab="Structured (TOML)"
-## Dynamic configuration
+## Routing configuration
 [http.services]
   [http.services.app]
     [http.services.app.failover.healthCheck]

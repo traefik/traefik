@@ -37,6 +37,7 @@ require (
 	github.com/hashicorp/go-version v1.8.0
 	github.com/hashicorp/nomad/api v0.0.0-20231213195942-64e3dca9274b // No tag on the repo.
 	github.com/http-wasm/http-wasm-host-go v0.7.0
+	github.com/huandu/xstrings v1.5.0
 	github.com/influxdata/influxdb-client-go/v2 v2.7.0
 	github.com/influxdata/influxdb1-client v0.0.0-20200827194710-b269163b24ab // No tag on the repo.
 	github.com/klauspost/compress v1.18.0
@@ -71,6 +72,7 @@ require (
 	github.com/tidwall/gjson v1.17.0
 	github.com/traefik/grpc-web v0.16.0
 	github.com/traefik/paerser v0.2.2
+	github.com/traefik/traefik/dynamic/ext v0.0.0-00010101000000-000000000000
 	github.com/traefik/yaegi v0.16.1
 	github.com/unrolled/render v1.0.2
 	github.com/unrolled/secure v1.0.9
@@ -180,7 +182,7 @@ require (
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/clbanning/mxj/v2 v2.7.0 // indirect
-	github.com/containerd/containerd v1.7.23 // indirect
+	github.com/containerd/containerd v1.7.29 // indirect
 	github.com/containerd/errdefs v1.0.0 // indirect
 	github.com/containerd/errdefs/pkg v0.3.0 // indirect
 	github.com/containerd/log v0.1.0 // indirect
@@ -253,7 +255,6 @@ require (
 	github.com/hashicorp/golang-lru v1.0.2 // indirect
 	github.com/hashicorp/hcl v1.0.1-vault-5 // indirect
 	github.com/hashicorp/serf v0.10.1 // indirect
-	github.com/huandu/xstrings v1.5.0 // indirect
 	github.com/huaweicloud/huaweicloud-sdk-go-v3 v0.1.182 // indirect
 	github.com/iij/doapi v0.0.0-20190504054126-0bbf12d6d7df // indirect
 	github.com/imdario/mergo v0.3.16 // indirect
@@ -410,6 +411,9 @@ require (
 	sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
 )
+
+// Dynamic config extension.
+replace github.com/traefik/traefik/dynamic/ext => ./pkg/config/dynamic/ext
 
 // Containous forks
 replace (

@@ -11,7 +11,7 @@ jobs:
 
     steps:
       - name: Check out code
-        uses: actions/checkout@v6
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           fetch-depth: 0
 
@@ -19,7 +19,7 @@ jobs:
         run: corepack enable
 
       - name: Setup node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
         with:
           node-version-file: webui/.nvmrc
           cache: yarn
@@ -42,7 +42,7 @@ jobs:
           tar czvf webui.tar.gz ./webui/static/
 
       - name: Artifact webui
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: webui.tar.gz
           path: webui.tar.gz

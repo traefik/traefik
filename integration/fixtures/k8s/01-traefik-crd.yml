@@ -223,6 +223,25 @@ spec:
                             - Service
                             - TraefikService
                             type: string
+                          middlewares:
+                            description: Middlewares defines the list of references
+                              to Middleware resources to apply to the service.
+                            items:
+                              description: MiddlewareRef is a reference to a Middleware
+                                resource.
+                              properties:
+                                name:
+                                  description: Name defines the name of the referenced
+                                    Middleware resource.
+                                  type: string
+                                namespace:
+                                  description: Namespace defines the namespace of
+                                    the referenced Middleware resource.
+                                  type: string
+                              required:
+                              - name
+                              type: object
+                            type: array
                           name:
                             description: |-
                               Name defines the name of the referenced Kubernetes Service or TraefikService.
@@ -1106,6 +1125,39 @@ spec:
                       containing user credentials.
                     type: string
                 type: object
+              encodedCharacters:
+                description: EncodedCharacters configures which encoded characters
+                  are allowed in the request path.
+                properties:
+                  allowEncodedBackSlash:
+                    description: AllowEncodedBackSlash defines whether requests with
+                      encoded back slash characters in the path are allowed.
+                    type: boolean
+                  allowEncodedHash:
+                    description: AllowEncodedHash defines whether requests with encoded
+                      hash characters in the path are allowed.
+                    type: boolean
+                  allowEncodedNullCharacter:
+                    description: AllowEncodedNullCharacter defines whether requests
+                      with encoded null characters in the path are allowed.
+                    type: boolean
+                  allowEncodedPercent:
+                    description: AllowEncodedPercent defines whether requests with
+                      encoded percent characters in the path are allowed.
+                    type: boolean
+                  allowEncodedQuestionMark:
+                    description: AllowEncodedQuestionMark defines whether requests
+                      with encoded question mark characters in the path are allowed.
+                    type: boolean
+                  allowEncodedSemicolon:
+                    description: AllowEncodedSemicolon defines whether requests with
+                      encoded semicolon characters in the path are allowed.
+                    type: boolean
+                  allowEncodedSlash:
+                    description: AllowEncodedSlash defines whether requests with encoded
+                      slash characters in the path are allowed.
+                    type: boolean
+                type: object
               errors:
                 description: |-
                   ErrorPage holds the custom error middleware configuration.
@@ -1200,6 +1252,25 @@ spec:
                         - Service
                         - TraefikService
                         type: string
+                      middlewares:
+                        description: Middlewares defines the list of references to
+                          Middleware resources to apply to the service.
+                        items:
+                          description: MiddlewareRef is a reference to a Middleware
+                            resource.
+                          properties:
+                            name:
+                              description: Name defines the name of the referenced
+                                Middleware resource.
+                              type: string
+                            namespace:
+                              description: Namespace defines the namespace of the
+                                referenced Middleware resource.
+                              type: string
+                          required:
+                          - name
+                          type: object
+                        type: array
                       name:
                         description: |-
                           Name defines the name of the referenced Kubernetes Service or TraefikService.
@@ -1401,6 +1472,10 @@ spec:
                     description: |-
                       AuthResponseHeadersRegex defines the regex to match headers to copy from the authentication server response and set on forwarded request, after stripping all headers that match the regex.
                       More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/middlewares/forwardauth/#authresponseheadersregex
+                    type: string
+                  authSigninURL:
+                    description: AuthSigninURL specifies the URL to redirect to when
+                      the authentication server returns 401 Unauthorized.
                     type: string
                   forwardBody:
                     description: ForwardBody defines whether to send the request body
@@ -2938,6 +3013,25 @@ spec:
                           - Service
                           - TraefikService
                           type: string
+                        middlewares:
+                          description: Middlewares defines the list of references
+                            to Middleware resources to apply to the service.
+                          items:
+                            description: MiddlewareRef is a reference to a Middleware
+                              resource.
+                            properties:
+                              name:
+                                description: Name defines the name of the referenced
+                                  Middleware resource.
+                                type: string
+                              namespace:
+                                description: Namespace defines the namespace of the
+                                  referenced Middleware resource.
+                                type: string
+                            required:
+                            - name
+                            type: object
+                          type: array
                         name:
                           description: |-
                             Name defines the name of the referenced Kubernetes Service or TraefikService.
@@ -3175,6 +3269,24 @@ spec:
                       Default value is -1, which means unlimited size.
                     format: int64
                     type: integer
+                  middlewares:
+                    description: Middlewares defines the list of references to Middleware
+                      resources to apply to the service.
+                    items:
+                      description: MiddlewareRef is a reference to a Middleware resource.
+                      properties:
+                        name:
+                          description: Name defines the name of the referenced Middleware
+                            resource.
+                          type: string
+                        namespace:
+                          description: Namespace defines the namespace of the referenced
+                            Middleware resource.
+                          type: string
+                      required:
+                      - name
+                      type: object
+                    type: array
                   mirrorBody:
                     description: |-
                       MirrorBody defines whether the body of the request should be mirrored.
@@ -3262,6 +3374,25 @@ spec:
                           - Service
                           - TraefikService
                           type: string
+                        middlewares:
+                          description: Middlewares defines the list of references
+                            to Middleware resources to apply to the service.
+                          items:
+                            description: MiddlewareRef is a reference to a Middleware
+                              resource.
+                            properties:
+                              name:
+                                description: Name defines the name of the referenced
+                                  Middleware resource.
+                                type: string
+                              namespace:
+                                description: Namespace defines the namespace of the
+                                  referenced Middleware resource.
+                                type: string
+                            required:
+                            - name
+                            type: object
+                          type: array
                         name:
                           description: |-
                             Name defines the name of the referenced Kubernetes Service or TraefikService.
@@ -3650,6 +3781,25 @@ spec:
                           - Service
                           - TraefikService
                           type: string
+                        middlewares:
+                          description: Middlewares defines the list of references
+                            to Middleware resources to apply to the service.
+                          items:
+                            description: MiddlewareRef is a reference to a Middleware
+                              resource.
+                            properties:
+                              name:
+                                description: Name defines the name of the referenced
+                                  Middleware resource.
+                                type: string
+                              namespace:
+                                description: Namespace defines the namespace of the
+                                  referenced Middleware resource.
+                                type: string
+                            required:
+                            - name
+                            type: object
+                          type: array
                         name:
                           description: |-
                             Name defines the name of the referenced Kubernetes Service or TraefikService.

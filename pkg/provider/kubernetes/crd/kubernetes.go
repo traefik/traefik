@@ -266,7 +266,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			continue
 		}
 
-		errorPage, errorPageService, err := p.createErrorPageMiddleware(client, middleware.Namespace, middleware.Spec.Errors)
+		errorPage, errorPageService, err := p.createErrorPageMiddleware(ctxMid, client, middleware.Namespace, middleware.Spec.Errors)
 		if err != nil {
 			logger.Error().Err(err).Msg("Error while reading error page middleware")
 			continue
@@ -312,6 +312,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			IPWhiteList:       middleware.Spec.IPWhiteList,
 			IPAllowList:       middleware.Spec.IPAllowList,
 			Headers:           middleware.Spec.Headers,
+			EncodedCharacters: middleware.Spec.EncodedCharacters,
 			Errors:            errorPage,
 			RateLimit:         rateLimit,
 			RedirectRegex:     middleware.Spec.RedirectRegex,
@@ -644,7 +645,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 	return conf
 }
 
-func (p *Provider) createErrorPageMiddleware(client Client, namespace string, errorPage *traefikv1alpha1.ErrorPage) (*dynamic.ErrorPage, *dynamic.Service, error) {
+func (p *Provider) createErrorPageMiddleware(ctx context.Context, client Client, namespace string, errorPage *traefikv1alpha1.ErrorPage) (*dynamic.ErrorPage, *dynamic.Service, error) {
 	if errorPage == nil {
 		return nil, nil, nil
 	}
@@ -662,7 +663,7 @@ func (p *Provider) createErrorPageMiddleware(client Client, namespace string, er
 		allowEmptyServices:        p.AllowEmptyServices,
 	}
 
-	balancerServerHTTP, err := cb.buildServersLB(namespace, errorPage.Service.LoadBalancerSpec)
+	balancerServerHTTP, err := cb.buildServersLB(ctx, namespace, errorPage.Service.LoadBalancerSpec)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -1010,6 +1011,7 @@ func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *traef
 		ForwardBody:              auth.ForwardBody,
 		PreserveLocationHeader:   auth.PreserveLocationHeader,
 		PreserveRequestMethod:    auth.PreserveRequestMethod,
+		AuthSigninURL:            auth.AuthSigninURL,
 	}
 	forwardAuth.SetDefaults()
 

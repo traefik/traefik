@@ -18,8 +18,8 @@ Middlewares that use the same protocol can be combined into chains to fit every 
 
 ## Available HTTP Middlewares
 
-| Middleware                                | Purpose                                           | Area                        |
-|-------------------------------------------|---------------------------------------------------|-----------------------------|
+| Middleware                                                                                                                               | Purpose                                           | Area                        |
+|------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------|-----------------------------|
 | <a id="opt-AddPrefix" href="#opt-AddPrefix" title="#opt-AddPrefix">[AddPrefix](addprefix.md)</a> | Adds a Path Prefix                                | Path Modifier               |
 | <a id="opt-BasicAuth" href="#opt-BasicAuth" title="#opt-BasicAuth">[BasicAuth](basicauth.md)</a> | Adds Basic Authentication                         | Security, Authentication    |
 | <a id="opt-Buffering" href="#opt-Buffering" title="#opt-Buffering">[Buffering](buffering.md)</a> | Buffers the request/response                      | Request Lifecycle           |
@@ -28,6 +28,7 @@ Middlewares that use the same protocol can be combined into chains to fit every 
 | <a id="opt-Compress" href="#opt-Compress" title="#opt-Compress">[Compress](compress.md)</a> | Compresses the response                           | Content Modifier            |
 | <a id="opt-ContentType" href="#opt-ContentType" title="#opt-ContentType">[ContentType](contenttype.md)</a> | Handles Content-Type auto-detection               | Misc                        |
 | <a id="opt-DigestAuth" href="#opt-DigestAuth" title="#opt-DigestAuth">[DigestAuth](digestauth.md)</a> | Adds Digest Authentication                        | Security, Authentication    |
+| <a id="opt-EncodedCharacters" href="#opt-EncodedCharacters" title="#opt-EncodedCharacters">[EncodedCharacters](encodedcharacters.md)</a> | Defines allowed reserved encoded characters in the request path | Security, Request Lifecycle           |
 | <a id="opt-Errors" href="#opt-Errors" title="#opt-Errors">[Errors](errorpages.md)</a> | Defines custom error pages                        | Request Lifecycle           |
 | <a id="opt-ForwardAuth" href="#opt-ForwardAuth" title="#opt-ForwardAuth">[ForwardAuth](forwardauth.md)</a> | Delegates Authentication                          | Security, Authentication    |
 | <a id="opt-GrpcWeb" href="#opt-GrpcWeb" title="#opt-GrpcWeb">[GrpcWeb](grpcweb.md)</a> | Converts gRPC Web requests to HTTP/2 gRPC requests.                           | Request                   |
