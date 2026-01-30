@@ -6,7 +6,7 @@ on:
       - 'v*.*.*'
 
 env:
-  GO_VERSION: '1.25'
+  GO_VERSION: '1.26.0-rc.2'
   CGO_ENABLED: 0
   VERSION: ${{ github.ref_name }}
   TRAEFIKER_EMAIL: "traefiker@traefik.io"
