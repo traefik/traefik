@@ -27,13 +27,13 @@ THE SOFTWARE.
 package v1alpha1
 
 import (
-	"context"
+	context "context"
 	time "time"
 
 	versioned "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned"
 	internalinterfaces "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/informers/externalversions/internalinterfaces"
-	v1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/listers/traefikio/v1alpha1"
-	traefikiov1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	traefikiov1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/listers/traefikio/v1alpha1"
+	crdtraefikiov1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -44,7 +44,7 @@ import (
 // MiddlewareTCPs.
 type MiddlewareTCPInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1alpha1.MiddlewareTCPLister
+	Lister() traefikiov1alpha1.MiddlewareTCPLister
 }
 
 type middlewareTCPInformer struct {
@@ -79,7 +79,7 @@ func NewFilteredMiddlewareTCPInformer(client versioned.Interface, namespace stri
 				return client.TraefikV1alpha1().MiddlewareTCPs(namespace).Watch(context.TODO(), options)
 			},
 		},
-		&traefikiov1alpha1.MiddlewareTCP{},
+		&crdtraefikiov1alpha1.MiddlewareTCP{},
 		resyncPeriod,
 		indexers,
 	)
@@ -90,9 +90,9 @@ func (f *middlewareTCPInformer) defaultInformer(client versioned.Interface, resy
 }
 
 func (f *middlewareTCPInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&traefikiov1alpha1.MiddlewareTCP{}, f.defaultInformer)
+	return f.factory.InformerFor(&crdtraefikiov1alpha1.MiddlewareTCP{}, f.defaultInformer)
 }
 
-func (f *middlewareTCPInformer) Lister() v1alpha1.MiddlewareTCPLister {
-	return v1alpha1.NewMiddlewareTCPLister(f.Informer().GetIndexer())
+func (f *middlewareTCPInformer) Lister() traefikiov1alpha1.MiddlewareTCPLister {
+	return traefikiov1alpha1.NewMiddlewareTCPLister(f.Informer().GetIndexer())
 }

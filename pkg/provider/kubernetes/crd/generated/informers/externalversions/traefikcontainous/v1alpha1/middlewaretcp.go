@@ -27,13 +27,13 @@ THE SOFTWARE.
 package v1alpha1
 
 import (
-	"context"
+	context "context"
 	time "time"
 
 	versioned "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned"
 	internalinterfaces "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/informers/externalversions/internalinterfaces"
-	v1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/listers/traefikcontainous/v1alpha1"
-	traefikcontainousv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefikcontainous/v1alpha1"
+	traefikcontainousv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/listers/traefikcontainous/v1alpha1"
+	crdtraefikcontainousv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefikcontainous/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -44,7 +44,7 @@ import (
 // MiddlewareTCPs.
 type MiddlewareTCPInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1alpha1.MiddlewareTCPLister
+	Lister() traefikcontainousv1alpha1.MiddlewareTCPLister
 }
 
 type middlewareTCPInformer struct {
@@ -79,7 +79,7 @@ func NewFilteredMiddlewareTCPInformer(client versioned.Interface, namespace stri
 				return client.TraefikContainousV1alpha1().MiddlewareTCPs(namespace).Watch(context.TODO(), options)
 			},
 		},
-		&traefikcontainousv1alpha1.MiddlewareTCP{},
+		&crdtraefikcontainousv1alpha1.MiddlewareTCP{},
 		resyncPeriod,
 		indexers,
 	)
@@ -90,9 +90,9 @@ func (f *middlewareTCPInformer) defaultInformer(client versioned.Interface, resy
 }
 
 func (f *middlewareTCPInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&traefikcontainousv1alpha1.MiddlewareTCP{}, f.defaultInformer)
+	return f.factory.InformerFor(&crdtraefikcontainousv1alpha1.MiddlewareTCP{}, f.defaultInformer)
 }
 
-func (f *middlewareTCPInformer) Lister() v1alpha1.MiddlewareTCPLister {
-	return v1alpha1.NewMiddlewareTCPLister(f.Informer().GetIndexer())
+func (f *middlewareTCPInformer) Lister() traefikcontainousv1alpha1.MiddlewareTCPLister {
+	return traefikcontainousv1alpha1.NewMiddlewareTCPLister(f.Informer().GetIndexer())
 }

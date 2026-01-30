@@ -27,13 +27,13 @@ THE SOFTWARE.
 package v1alpha1
 
 import (
-	"context"
+	context "context"
 	time "time"
 
 	versioned "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned"
 	internalinterfaces "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/informers/externalversions/internalinterfaces"
-	v1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/listers/traefikcontainous/v1alpha1"
-	traefikcontainousv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefikcontainous/v1alpha1"
+	traefikcontainousv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/listers/traefikcontainous/v1alpha1"
+	crdtraefikcontainousv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefikcontainous/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -44,7 +44,7 @@ import (
 // IngressRoutes.
 type IngressRouteInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1alpha1.IngressRouteLister
+	Lister() traefikcontainousv1alpha1.IngressRouteLister
 }
 
 type ingressRouteInformer struct {
@@ -79,7 +79,7 @@ func NewFilteredIngressRouteInformer(client versioned.Interface, namespace strin
 				return client.TraefikContainousV1alpha1().IngressRoutes(namespace).Watch(context.TODO(), options)
 			},
 		},
-		&traefikcontainousv1alpha1.IngressRoute{},
+		&crdtraefikcontainousv1alpha1.IngressRoute{},
 		resyncPeriod,
 		indexers,
 	)
@@ -90,9 +90,9 @@ func (f *ingressRouteInformer) defaultInformer(client versioned.Interface, resyn
 }
 
 func (f *ingressRouteInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&traefikcontainousv1alpha1.IngressRoute{}, f.defaultInformer)
+	return f.factory.InformerFor(&crdtraefikcontainousv1alpha1.IngressRoute{}, f.defaultInformer)
 }
 
-func (f *ingressRouteInformer) Lister() v1alpha1.IngressRouteLister {
-	return v1alpha1.NewIngressRouteLister(f.Informer().GetIndexer())
+func (f *ingressRouteInformer) Lister() traefikcontainousv1alpha1.IngressRouteLister {
+	return traefikcontainousv1alpha1.NewIngressRouteLister(f.Informer().GetIndexer())
 }
