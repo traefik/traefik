@@ -55,6 +55,14 @@ func (o *ObservabilityMgr) BuildEPChain(ctx context.Context, entryPointName stri
 		return o.observabilityContextHandler(next, internal, config), nil
 	})
 
+	// Inject RouteInfo pointer early so the router can set the route
+	// and semconv metrics can read it after the request completes.
+	chain = chain.Append(func(next http.Handler) (http.Handler, error) {
+		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			next.ServeHTTP(rw, req.WithContext(observability.WithRouteInfo(req.Context())))
+		}), nil
+	})
+
 	// Capture middleware for accessLogs or metrics.
 	if o.shouldAccessLog(internal, config) || o.shouldMeter(internal, config) || o.shouldMeterSemConv(internal, config) {
 		chain = chain.Append(capture.Wrap)

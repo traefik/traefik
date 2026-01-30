@@ -21,11 +21,14 @@ func TestSemConvServerMetrics(t *testing.T) {
 	tests := []struct {
 		desc           string
 		statusCode     int
+		host           string
+		httpRoute      string
 		wantAttributes attribute.Set
 	}{
 		{
 			desc:       "not found status",
 			statusCode: http.StatusNotFound,
+			host:       "www.test.com",
 			wantAttributes: attribute.NewSet(
 				attribute.Key("error.type").String("404"),
 				attribute.Key("http.request.method").String("GET"),
@@ -33,18 +36,37 @@ func TestSemConvServerMetrics(t *testing.T) {
 				attribute.Key("network.protocol.name").String("http/1.1"),
 				attribute.Key("network.protocol.version").String("1.1"),
 				attribute.Key("server.address").String("www.test.com"),
+				attribute.Key("server.port").Int(80),
 				attribute.Key("url.scheme").String("http"),
 			),
 		},
 		{
 			desc:       "created status",
 			statusCode: http.StatusCreated,
+			host:       "www.test.com",
 			wantAttributes: attribute.NewSet(
 				attribute.Key("http.request.method").String("GET"),
 				attribute.Key("http.response.status_code").Int(201),
 				attribute.Key("network.protocol.name").String("http/1.1"),
 				attribute.Key("network.protocol.version").String("1.1"),
 				attribute.Key("server.address").String("www.test.com"),
+				attribute.Key("server.port").Int(80),
+				attribute.Key("url.scheme").String("http"),
+			),
+		},
+		{
+			desc:       "with http.route and server.port",
+			statusCode: http.StatusOK,
+			host:       "example.com:443",
+			httpRoute:  "/api/banking",
+			wantAttributes: attribute.NewSet(
+				attribute.Key("http.request.method").String("GET"),
+				attribute.Key("http.response.status_code").Int(200),
+				attribute.Key("http.route").String("/api/banking"),
+				attribute.Key("network.protocol.name").String("http/1.1"),
+				attribute.Key("network.protocol.version").String("1.1"),
+				attribute.Key("server.address").String("example.com"),
+				attribute.Key("server.port").Int(443),
 				attribute.Key("url.scheme").String("http"),
 			),
 		},
@@ -68,23 +90,36 @@ func TestSemConvServerMetrics(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, semConvMetricRegistry)
 
-			req := httptest.NewRequest(http.MethodGet, "http://www.test.com/search?q=Opentelemetry", nil)
+			req := httptest.NewRequest(http.MethodGet, "http://"+test.host+"/search?q=Opentelemetry", nil)
 			rw := httptest.NewRecorder()
+			req.Host = test.host
 			req.RemoteAddr = "10.0.0.1:1234"
 			req.Header.Set("User-Agent", "entrypoint-test")
 			req.Header.Set("X-Forwarded-Proto", "http")
 
-			next := http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
+			httpRoute := test.httpRoute
+			next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				// Simulate the router setting the route via RouteInfo.
+				if httpRoute != "" {
+					if ri := RouteInfoFromContext(req.Context()); ri != nil {
+						ri.SetRoute(httpRoute)
+					}
+				}
 				rw.WriteHeader(test.statusCode)
 			})
 
-			handler := newServerMetricsSemConv(t.Context(), semConvMetricRegistry, next)
+			semConvHandler := newServerMetricsSemConv(t.Context(), semConvMetricRegistry, next)
 
-			handler, err = capture.Wrap(handler)
+			captureHandler, err := capture.Wrap(semConvHandler)
 			require.NoError(t, err)
 
+			// Inject RouteInfo pointer so the simulated router can set the route.
+			routeInfoHandler := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				captureHandler.ServeHTTP(rw, req.WithContext(WithRouteInfo(req.Context())))
+			})
+
 			// Injection of the observability variables in the request context.
-			handler = WithObservabilityHandler(handler, Observability{
+			handler := WithObservabilityHandler(routeInfoHandler, Observability{
 				SemConvMetricsEnabled: true,
 			})
 

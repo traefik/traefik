@@ -3,6 +3,7 @@ package observability
 import (
 	"context"
 	"fmt"
+	"net"
 	"net/http"
 	"strconv"
 	"strings"
@@ -37,7 +38,7 @@ func SemConvServerMetricsHandler(ctx context.Context, semConvMetricRegistry *met
 
 // newServerMetricsSemConv creates a new semConv server metrics middleware for incoming requests.
 func newServerMetricsSemConv(ctx context.Context, semConvMetricRegistry *metrics.SemConvMetricsRegistry, next http.Handler) http.Handler {
-	middlewares.GetLogger(ctx, "tracing", semConvServerMetricsTypeName).Debug().Msg("Creating middleware")
+	middlewares.GetLogger(ctx, "metrics", semConvServerMetricsTypeName).Debug().Msg("Creating middleware")
 
 	return &semConvServerMetrics{
 		semConvMetricRegistry: semConvMetricRegistry,
@@ -74,7 +75,27 @@ func (e *semConvServerMetrics) ServeHTTP(rw http.ResponseWriter, req *http.Reque
 	attrs = append(attrs, semconv.HTTPResponseStatusCode(capt.StatusCode()))
 	attrs = append(attrs, semconv.NetworkProtocolName(strings.ToLower(req.Proto)))
 	attrs = append(attrs, semconv.NetworkProtocolVersion(Proto(req.Proto)))
-	attrs = append(attrs, semconv.ServerAddress(req.Host))
+
+	// Add http.route attribute if available from router context.
+	if ri := RouteInfoFromContext(ctx); ri != nil && ri.Route() != "" {
+		attrs = append(attrs, semconv.HTTPRoute(ri.Route()))
+	}
+
+	host, port, err := net.SplitHostPort(req.URL.Host)
+	if err != nil {
+		attrs = append(attrs, semconv.ServerAddress(req.Host))
+		// No port in URL.Host - use default port based on scheme.
+		switch req.URL.Scheme {
+		case "http":
+			attrs = append(attrs, semconv.ServerPort(80))
+		case "https":
+			attrs = append(attrs, semconv.ServerPort(443))
+		}
+	} else {
+		intPort, _ := strconv.Atoi(port)
+		attrs = append(attrs, semconv.ServerAddress(host))
+		attrs = append(attrs, semconv.ServerPort(intPort))
+	}
 
 	e.semConvMetricRegistry.HTTPServerRequestDuration().Record(req.Context(), end.Sub(start).Seconds(),
 		httpconv.RequestMethodAttr(req.Method), req.Header.Get("X-Forwarded-Proto"), attrs...)
