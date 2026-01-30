@@ -129,16 +129,12 @@ func (eps TCPEntryPoints) Stop() {
 	var wg sync.WaitGroup
 
 	for epn, ep := range eps {
-		wg.Add(1)
+		wg.Go(func() {
+			ctx := log.With(context.Background(), log.Str(log.EntryPointName, epn))
+			ep.Shutdown(ctx)
 
-		go func(entryPointName string, entryPoint *TCPEntryPoint) {
-			defer wg.Done()
-
-			ctx := log.With(context.Background(), log.Str(log.EntryPointName, entryPointName))
-			entryPoint.Shutdown(ctx)
-
-			log.FromContext(ctx).Debugf("Entry point %s closed", entryPointName)
-		}(epn, ep)
+			log.FromContext(ctx).Debugf("Entry point %s closed", epn)
+		})
 	}
 
 	wg.Wait()

@@ -84,8 +84,8 @@ func NewXForwarded(insecure bool, trustedIPs []string, connectionHeaders []strin
 // removeIPv6Zone removes the zone if the given IP is an ipv6 address and it has {zone} information in it,
 // like "[fe80::d806:a55d:eb1b:49cc%vEthernet (vmxnet3 Ethernet Adapter - Virtual Switch)]:64692".
 func removeIPv6Zone(clientIP string) string {
-	if idx := strings.Index(clientIP, "%"); idx != -1 {
-		return clientIP[:idx]
+	if before, _, found := strings.Cut(clientIP, "%"); found {
+		return before
 	}
 	return clientIP
 }
@@ -95,16 +95,14 @@ func isWebsocketRequest(req *http.Request) bool {
 	containsHeader := func(name, value string) bool {
 		h := unsafeHeader(req.Header).Get(name)
 		for {
-			pos := strings.Index(h, ",")
-			if pos == -1 {
-				return strings.EqualFold(value, strings.TrimSpace(h))
-			}
-
-			if strings.EqualFold(value, strings.TrimSpace(h[:pos])) {
+			before, after, found := strings.Cut(h, ",")
+			if strings.EqualFold(value, strings.TrimSpace(before)) {
 				return true
 			}
-
-			h = h[pos+1:]
+			if !found {
+				return false
+			}
+			h = after
 		}
 	}
 
