@@ -1,7 +1,6 @@
 package ingressnginx
 
 import (
-	"errors"
 	"reflect"
 	"strconv"
 	"strings"
@@ -125,11 +124,9 @@ func parseIngressConfig(ing *netv1.Ingress) (ingressConfig, error) {
 					slice = append(slice, strings.TrimSpace(elt))
 				}
 				cfgValue.Field(i).Set(reflect.ValueOf(&slice))
-			} else {
-				return cfg, errors.New("unsupported slice type in annotations")
 			}
 		default:
-			return cfg, errors.New("unsupported kind")
+			continue
 		}
 	}
 
