@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/x509"
 	"encoding/pem"
+	"errors"
 	"net/http"
 	"net/url"
 	"strings"
@@ -13,38 +14,51 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 )
 
-const nginxTypeName = "PassTLSClientCertNginx"
+const typeName = "PassTLSClientCertNginx"
 
 // Nginx header names.
 const (
-	sslClientCert      = "ssl-client-cert"
-	sslClientVerify    = "ssl-client-verify"
-	sslClientSubjectDN = "ssl-client-subject-dn"
-	sslClientIssuerDN  = "ssl-client-issuer-dn"
+	sslClientCert      = "Ssl-Client-Cert"
+	sslClientVerify    = "Ssl-Client-Verify"
+	sslClientSubjectDN = "Ssl-Client-Subject-Dn"
+	sslClientIssuerDN  = "Ssl-Client-Issuer-Dn"
 )
 
 type passTLSClientCertNginx struct {
 	next         http.Handler
 	name         string
 	verifyClient string
+	caCertPool   *x509.CertPool
 }
 
 func NewPassTLSClientCertNginx(ctx context.Context, next http.Handler, config dynamic.PassTLSClientCertNginx, name string) (http.Handler, error) {
-	middlewares.GetLogger(ctx, name, nginxTypeName).Debug().Msg("Creating middleware")
+	middlewares.GetLogger(ctx, name, typeName).Debug().Msg("Creating middleware")
+
+	// caCertPool only needed to do internal validation if VerifyClient is optional_no_ca.
+	var caCertPool *x509.CertPool
+	if config.VerifyClient == "optional_no_ca" && len(config.CAFiles) > 0 {
+		caCertPool = x509.NewCertPool()
+		for _, ca := range config.CAFiles {
+			if !caCertPool.AppendCertsFromPEM([]byte(ca)) {
+				return nil, errors.New("failed to parse CA certificate")
+			}
+		}
+	}
 
 	return &passTLSClientCertNginx{
 		next:         next,
 		name:         name,
 		verifyClient: config.VerifyClient,
+		caCertPool:   caCertPool,
 	}, nil
 }
 
 func (p *passTLSClientCertNginx) GetTracingInformation() (string, string) {
-	return p.name, nginxTypeName
+	return p.name, typeName
 }
 
 func (p *passTLSClientCertNginx) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	logger := middlewares.GetLogger(req.Context(), p.name, nginxTypeName)
+	logger := middlewares.GetLogger(req.Context(), p.name, typeName)
 	ctx := logger.WithContext(req.Context())
 
 	if req.TLS == nil || len(req.TLS.PeerCertificates) == 0 {
@@ -57,12 +71,17 @@ func (p *passTLSClientCertNginx) ServeHTTP(rw http.ResponseWriter, req *http.Req
 	// Nginx only returns the leaf certificate.
 	cert := req.TLS.PeerCertificates[0]
 
-	// Go limitation, where TLS validation for RequestClientCert will not return VerifiedChains, so that we are not able to know whether the certificate is valid.
+	clientVerify := "SUCCESS"
+	// Go's RequestClientCert doesn't verify at TLS level, so we have to verify in the middleware to return the correct Ssl-Client-Verify header.
 	// For other cases, validation happens during the handshake, so if it reaches this middleware, it means that the certificate is valid.
-	if p.verifyClient != "optional_no_ca" {
-		req.Header.Set(sslClientVerify, "SUCCESS")
+	if p.verifyClient == "optional_no_ca" {
+		_, err := cert.Verify(x509.VerifyOptions{Roots: p.caCertPool})
+		if err != nil {
+			clientVerify = "FAILED:" + err.Error()
+		}
 	}
 
+	req.Header.Set(sslClientVerify, clientVerify)
 	req.Header.Set(sslClientSubjectDN, cert.Subject.String())
 	req.Header.Set(sslClientIssuerDN, cert.Issuer.String())
 	req.Header.Set(sslClientCert, extractCertificatePEM(ctx, cert))

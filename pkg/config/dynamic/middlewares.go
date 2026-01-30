@@ -40,7 +40,7 @@ type Middleware struct {
 	CircuitBreaker         *CircuitBreaker         `json:"circuitBreaker,omitempty" toml:"circuitBreaker,omitempty" yaml:"circuitBreaker,omitempty" export:"true"`
 	Compress               *Compress               `json:"compress,omitempty" toml:"compress,omitempty" yaml:"compress,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
 	PassTLSClientCert      *PassTLSClientCert      `json:"passTLSClientCert,omitempty" toml:"passTLSClientCert,omitempty" yaml:"passTLSClientCert,omitempty" export:"true"`
-	PassTLSClientCertNginx *PassTLSClientCertNginx `json:"passTLSClientCertNginx,omitempty" toml:"-" yaml:"-" file:"-" kv:"-" label:"-" export:"true"`
+	PassTLSClientCertNginx *PassTLSClientCertNginx `json:"passTLSClientCertNginx,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 	Retry                  *Retry                  `json:"retry,omitempty" toml:"retry,omitempty" yaml:"retry,omitempty" export:"true"`
 	ContentType            *ContentType            `json:"contentType,omitempty" toml:"contentType,omitempty" yaml:"contentType,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
 	GrpcWeb                *GrpcWeb                `json:"grpcWeb,omitempty" toml:"grpcWeb,omitempty" yaml:"grpcWeb,omitempty" export:"true"`
@@ -566,7 +566,8 @@ type PassTLSClientCert struct {
 
 // PassTLSClientCertNginx holds the pass TLS client cert middleware for ingress-nginx provider.
 type PassTLSClientCertNginx struct {
-	VerifyClient string `json:"verifyClient,omitempty" toml:"verifyClient,omitempty" yaml:"verifyClient,omitempty" export:"true"`
+	VerifyClient string                `json:"verifyClient,omitempty" toml:"verifyClient,omitempty" yaml:"verifyClient,omitempty" export:"true"`
+	CAFiles      []types.FileOrContent `json:"caFiles,omitempty" toml:"caFiles,omitempty" yaml:"caFiles,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true

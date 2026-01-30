@@ -2899,6 +2899,7 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-auth-tls-pass-certificate-to-upstream-rule-0-path-0-pass-certificate-to-upstream": {
 							PassTLSClientCertNginx: &dynamic.PassTLSClientCertNginx{
 								VerifyClient: "on",
+								CAFiles:      []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
 							},
 						},
 						"default-ingress-with-auth-tls-pass-certificate-to-upstream-rule-0-path-0-redirect-scheme": {

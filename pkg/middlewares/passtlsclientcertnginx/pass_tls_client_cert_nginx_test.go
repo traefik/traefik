@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
+	"github.com/traefik/traefik/v3/pkg/types"
 )
 
 const (
@@ -256,68 +257,69 @@ func getCertPEM(certContent string) string {
 
 func TestPassTLSClientCertNginx(t *testing.T) {
 	testCases := []struct {
-		desc              string
-		verifyClient      string
-		certContents      []string
-		expectedVerify    string
-		expectedSubjectDN string
-		expectedIssuerDN  string
-		expectedCert      string
+		desc                 string
+		verifyClient         string
+		caFiles              []types.FileOrContent
+		certContents         []string
+		expectedClientVerify string
+		expectedSubjectDN    string
+		expectedIssuerDN     string
+		expectedCert         string
 	}{
 		{
-			desc:           "No TLS",
-			verifyClient:   "on",
-			expectedVerify: "NONE",
+			desc:                 "No TLS",
+			verifyClient:         "on",
+			expectedClientVerify: "NONE",
 		},
 		{
-			desc:              "TLS with simple certificate",
-			verifyClient:      "on",
-			certContents:      []string{minimalCheeseCrt},
-			expectedVerify:    "SUCCESS",
-			expectedSubjectDN: getCertificate(minimalCheeseCrt).Subject.String(),
-			expectedIssuerDN:  getCertificate(minimalCheeseCrt).Issuer.String(),
-			expectedCert:      getCertPEM(minimalCheeseCrt),
+			desc:                 "TLS with simple certificate",
+			verifyClient:         "on",
+			certContents:         []string{minimalCheeseCrt},
+			expectedClientVerify: "SUCCESS",
+			expectedSubjectDN:    getCertificate(minimalCheeseCrt).Subject.String(),
+			expectedIssuerDN:     getCertificate(minimalCheeseCrt).Issuer.String(),
+			expectedCert:         getCertPEM(minimalCheeseCrt),
 		},
 		{
-			desc:              "TLS with complete certificate",
-			verifyClient:      "on",
-			certContents:      []string{completeCheeseCrt},
-			expectedVerify:    "SUCCESS",
-			expectedSubjectDN: getCertificate(completeCheeseCrt).Subject.String(),
-			expectedIssuerDN:  getCertificate(completeCheeseCrt).Issuer.String(),
-			expectedCert:      getCertPEM(completeCheeseCrt),
+			desc:                 "TLS with complete certificate",
+			verifyClient:         "on",
+			certContents:         []string{completeCheeseCrt},
+			expectedClientVerify: "SUCCESS",
+			expectedSubjectDN:    getCertificate(completeCheeseCrt).Subject.String(),
+			expectedIssuerDN:     getCertificate(completeCheeseCrt).Issuer.String(),
+			expectedCert:         getCertPEM(completeCheeseCrt),
 		},
 		{
-			desc:              "TLS with multiple certificates only uses leaf",
-			verifyClient:      "on",
-			certContents:      []string{minimalCheeseCrt, completeCheeseCrt},
-			expectedVerify:    "SUCCESS",
-			expectedSubjectDN: getCertificate(minimalCheeseCrt).Subject.String(),
-			expectedIssuerDN:  getCertificate(minimalCheeseCrt).Issuer.String(),
-			expectedCert:      getCertPEM(minimalCheeseCrt),
+			desc:                 "TLS with multiple certificates only uses leaf",
+			verifyClient:         "on",
+			certContents:         []string{minimalCheeseCrt, completeCheeseCrt},
+			expectedClientVerify: "SUCCESS",
+			expectedSubjectDN:    getCertificate(minimalCheeseCrt).Subject.String(),
+			expectedIssuerDN:     getCertificate(minimalCheeseCrt).Issuer.String(),
+			expectedCert:         getCertPEM(minimalCheeseCrt),
 		},
 		{
-			desc:              "TLS with optional verify client",
-			verifyClient:      "optional",
-			certContents:      []string{minimalCheeseCrt},
-			expectedVerify:    "SUCCESS",
-			expectedSubjectDN: getCertificate(minimalCheeseCrt).Subject.String(),
-			expectedIssuerDN:  getCertificate(minimalCheeseCrt).Issuer.String(),
-			expectedCert:      getCertPEM(minimalCheeseCrt),
+			desc:                 "TLS with optional verify client",
+			verifyClient:         "optional",
+			certContents:         []string{minimalCheeseCrt},
+			expectedClientVerify: "SUCCESS",
+			expectedSubjectDN:    getCertificate(minimalCheeseCrt).Subject.String(),
+			expectedIssuerDN:     getCertificate(minimalCheeseCrt).Issuer.String(),
+			expectedCert:         getCertPEM(minimalCheeseCrt),
 		},
 		{
-			desc:              "TLS with optional_no_ca does not set verify header",
-			verifyClient:      "optional_no_ca",
-			certContents:      []string{minimalCheeseCrt},
-			expectedVerify:    "",
-			expectedSubjectDN: getCertificate(minimalCheeseCrt).Subject.String(),
-			expectedIssuerDN:  getCertificate(minimalCheeseCrt).Issuer.String(),
-			expectedCert:      getCertPEM(minimalCheeseCrt),
+			desc:                 "TLS with optional_no_ca invalid cert (no matching CA)",
+			verifyClient:         "optional_no_ca",
+			certContents:         []string{minimalCheeseCrt},
+			expectedClientVerify: "FAILED:",
+			expectedSubjectDN:    getCertificate(minimalCheeseCrt).Subject.String(),
+			expectedIssuerDN:     getCertificate(minimalCheeseCrt).Issuer.String(),
+			expectedCert:         getCertPEM(minimalCheeseCrt),
 		},
 		{
-			desc:           "No TLS with optional_no_ca",
-			verifyClient:   "optional_no_ca",
-			expectedVerify: "NONE",
+			desc:                 "No TLS with optional_no_ca",
+			verifyClient:         "optional_no_ca",
+			expectedClientVerify: "NONE",
 		},
 	}
 
@@ -327,6 +329,7 @@ func TestPassTLSClientCertNginx(t *testing.T) {
 
 			config := dynamic.PassTLSClientCertNginx{
 				VerifyClient: test.verifyClient,
+				CAFiles:      test.caFiles,
 			}
 
 			handler, err := NewPassTLSClientCertNginx(t.Context(), next, config, "test")
@@ -344,7 +347,11 @@ func TestPassTLSClientCertNginx(t *testing.T) {
 			assert.Equal(t, http.StatusOK, res.Code)
 			assert.Equal(t, "bar", res.Body.String())
 
-			assert.Equal(t, test.expectedVerify, req.Header.Get(sslClientVerify))
+			if strings.HasSuffix(test.expectedClientVerify, ":") {
+				assert.Contains(t, req.Header.Get(sslClientVerify), test.expectedClientVerify)
+			} else {
+				assert.Equal(t, test.expectedClientVerify, req.Header.Get(sslClientVerify))
+			}
 			assert.Equal(t, test.expectedSubjectDN, req.Header.Get(sslClientSubjectDN))
 			assert.Equal(t, test.expectedIssuerDN, req.Header.Get(sslClientIssuerDN))
 			assert.Equal(t, test.expectedCert, req.Header.Get(sslClientCert))
