@@ -267,6 +267,18 @@ func (p *Provider) loadFileConfig(ctx context.Context, filename string, parseTem
 				}
 				options.ClientAuth.CAFiles = caCerts
 
+				var echKeyContents []types.FileOrContent
+				for _, echKey := range options.ECHKeys {
+					content, err := echKey.Read()
+					if err != nil {
+						log.Ctx(ctx).Error().Err(err).Send()
+						continue
+					}
+
+					echKeyContents = append(echKeyContents, types.FileOrContent(content))
+				}
+				options.ECHKeys = echKeyContents
+
 				configuration.TLS.Options[name] = options
 			}
 		}
