@@ -18,8 +18,9 @@ type ingressConfig struct {
 	AuthSignin          *string `annotation:"nginx.ingress.kubernetes.io/auth-signin"`
 	AuthResponseHeaders *string `annotation:"nginx.ingress.kubernetes.io/auth-response-headers"`
 
-	AuthTLSSecret       *string `annotation:"nginx.ingress.kubernetes.io/auth-tls-secret"`
-	AuthTLSVerifyClient *string `annotation:"nginx.ingress.kubernetes.io/auth-tls-verify-client"`
+	AuthTLSSecret                    *string `annotation:"nginx.ingress.kubernetes.io/auth-tls-secret"`
+	AuthTLSVerifyClient              *string `annotation:"nginx.ingress.kubernetes.io/auth-tls-verify-client"`
+	AuthTLSPassCertificateToUpstream *bool   `annotation:"nginx.ingress.kubernetes.io/auth-tls-pass-certificate-to-upstream"`
 
 	ForceSSLRedirect *bool `annotation:"nginx.ingress.kubernetes.io/force-ssl-redirect"`
 	SSLRedirect      *bool `annotation:"nginx.ingress.kubernetes.io/ssl-redirect"`
