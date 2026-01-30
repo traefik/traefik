@@ -41,7 +41,7 @@ tracing: {}
 | <a id="opt-tracing-addInternals" href="#opt-tracing-addInternals" title="#opt-tracing-addInternals">`tracing.addInternals`</a> | Enables tracing for internal resources (e.g.: `ping@internal`).                                                                                                             | false                               | No       |
 | <a id="opt-tracing-serviceName" href="#opt-tracing-serviceName" title="#opt-tracing-serviceName">`tracing.serviceName`</a> | Defines the service name resource attribute.                                                                                                                                | "traefik"                           | No       |
 | <a id="opt-tracing-resourceAttributes" href="#opt-tracing-resourceAttributes" title="#opt-tracing-resourceAttributes">`tracing.resourceAttributes`</a> | Defines additional resource attributes to be sent to the collector. See [resourceAttributes](#resourceattributes) for details.                                              | []                                  | No       |
-| <a id="opt-tracing-sampleRate" href="#opt-tracing-sampleRate" title="#opt-tracing-sampleRate">`tracing.sampleRate`</a> | The proportion of requests to trace, specified between 0.0 and 1.0.                                                                                                         | 1.0                                 | No       |
+| <a id="opt-tracing-sampleRate" href="#opt-tracing-sampleRate" title="#opt-tracing-sampleRate">`tracing.sampleRate`</a> | The proportion of requests to trace, specified between 0.0 and 1.0.<br />Uses `ParentBased(TraceIDRatioBased)` sampling: root spans are sampled according to this rate, while child spans inherit the parent's sampling decision. | 1.0                                 | No       |
 | <a id="opt-tracing-capturedRequestHeaders" href="#opt-tracing-capturedRequestHeaders" title="#opt-tracing-capturedRequestHeaders">`tracing.capturedRequestHeaders`</a> | Defines the list of request headers to add as attributes.<br />It applies to client and server kind spans.                                                                  | []                                  | No       |
 | <a id="opt-tracing-capturedResponseHeaders" href="#opt-tracing-capturedResponseHeaders" title="#opt-tracing-capturedResponseHeaders">`tracing.capturedResponseHeaders`</a> | Defines the list of response headers to add as attributes.<br />It applies to client and server kind spans.                                                                 | []                                  | False    |
 | <a id="opt-tracing-safeQueryParams" href="#opt-tracing-safeQueryParams" title="#opt-tracing-safeQueryParams">`tracing.safeQueryParams`</a> | By default, all query parameters are redacted.<br />Defines the list of query parameters to not redact.                                                                     | []                                  | No       |
@@ -60,6 +60,17 @@ tracing: {}
 | <a id="opt-tracing-otlp-grpc-tls-cert" href="#opt-tracing-otlp-grpc-tls-cert" title="#opt-tracing-otlp-grpc-tls-cert">`tracing.otlp.grpc.tls.cert`</a> | Path to the public certificate used for the secure connection to the OpenTelemetry Collector. When using this option, setting the `key` option is required.                 | ""                                  | No       |
 | <a id="opt-tracing-otlp-grpc-tls-key" href="#opt-tracing-otlp-grpc-tls-key" title="#opt-tracing-otlp-grpc-tls-key">`tracing.otlp.grpc.tls.key`</a> | This instructs the exporter to send the tracing to the OpenTelemetry Collector using HTTP.<br /> Setting the sub-options with their default values.                         | ""null/false ""                     | No       |
 | <a id="opt-tracing-otlp-grpc-tls-insecureskipverify" href="#opt-tracing-otlp-grpc-tls-insecureskipverify" title="#opt-tracing-otlp-grpc-tls-insecureskipverify">`tracing.otlp.grpc.tls.insecureskipverify`</a> | If `insecureSkipVerify` is `true`, the TLS connection to the OpenTelemetry Collector accepts any certificate presented by the server regardless of the hostnames it covers. | false                               | Yes      |
+
+## sampleRate
+
+The `sampleRate` option controls trace sampling using a `ParentBased(TraceIDRatioBased)` strategy.
+
+!!! info "Sampling Strategy Behavior"
+
+    - **Root spans** (requests originating at Traefik): Sampled according to the configured `sampleRate` using trace ID ratio-based sampling.
+    - **Child spans** (requests with existing trace context): Inherit the sampling decision from the parent span, regardless of the local `sampleRate`.
+
+    This ensures consistent sampling decisions across distributed traces: once a trace is sampled, all spans in that trace are sampled, providing complete end-to-end visibility.
 
 ## resourceAttributes
 

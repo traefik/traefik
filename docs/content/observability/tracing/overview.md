@@ -77,6 +77,7 @@ tracing:
 _Optional, Default=1.0_
 
 The proportion of requests to trace, specified between 0.0 and 1.0.
+Uses `ParentBased(TraceIDRatioBased)` sampling: root spans are sampled according to this rate, while child spans inherit the parent's sampling decision.
 
 ```yaml tab="File (YAML)"
 tracing:
