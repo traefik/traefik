@@ -896,6 +896,10 @@ func (p *Provider) applyMiddlewares(namespace, routerKey, rulePath, ruleHost str
 
 	applyUpstreamVhost(routerKey, ingressConfig, rt, conf)
 
+	if err := applyAuthTLSPassCertificateToUpstream(routerKey, ingressConfig, rt, conf); err != nil {
+		return fmt.Errorf("applying auth tls pass certificate to upstream: %w", err)
+	}
+
 	if err := p.applyCustomHeaders(routerKey, ingressConfig, rt, conf); err != nil {
 		return fmt.Errorf("applying custom headers: %w", err)
 	}
@@ -1371,6 +1375,25 @@ func applyForwardAuthConfiguration(routerName string, ingressConfig ingressConfi
 		},
 	}
 	rt.Middlewares = append(rt.Middlewares, forwardMiddlewareName)
+
+	return nil
+}
+
+func applyAuthTLSPassCertificateToUpstream(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
+	if !ptr.Deref(ingressConfig.AuthTLSPassCertificateToUpstream, false) {
+		return nil
+	}
+	if ingressConfig.AuthTLSSecret == nil {
+		return fmt.Errorf("auth-tls-pass-certificate-to-upstream requires auth-tls-secret to be configured")
+	}
+
+	passCertificateToUpstreamMiddlewareName := routerName + "-pass-certificate-to-upstream"
+	conf.HTTP.Middlewares[passCertificateToUpstreamMiddlewareName] = &dynamic.Middleware{
+		PassTLSClientCertNginx: &dynamic.PassTLSClientCertNginx{
+			VerifyClient: ptr.Deref(ingressConfig.AuthTLSVerifyClient, "on"),
+		},
+	}
+	rt.Middlewares = append(rt.Middlewares, passCertificateToUpstreamMiddlewareName)
 
 	return nil
 }

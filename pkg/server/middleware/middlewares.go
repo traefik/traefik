@@ -29,6 +29,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/ipwhitelist"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/middlewares/passtlsclientcert"
+	"github.com/traefik/traefik/v3/pkg/middlewares/passtlsclientcertnginx"
 	"github.com/traefik/traefik/v3/pkg/middlewares/ratelimiter"
 	"github.com/traefik/traefik/v3/pkg/middlewares/redirect"
 	"github.com/traefik/traefik/v3/pkg/middlewares/replacepath"
@@ -275,6 +276,16 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 		middleware = func(next http.Handler) (http.Handler, error) {
 			return passtlsclientcert.New(ctx, next, *config.PassTLSClientCert, middlewareName)
+		}
+	}
+
+	// PassTLSClientCertNginx
+	if config.PassTLSClientCertNginx != nil {
+		if middleware != nil {
+			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return passtlsclientcertnginx.NewPassTLSClientCertNginx(ctx, next, *config.PassTLSClientCertNginx, middlewareName)
 		}
 	}
 
