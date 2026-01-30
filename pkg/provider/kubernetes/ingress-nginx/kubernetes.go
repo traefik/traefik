@@ -98,10 +98,12 @@ type Provider struct {
 	ProxyConnectTimeout int `description:"Amount of time to wait until a connection to a server can be established. Timeout value is unitless and in seconds." json:"proxyConnectTimeout,omitempty" toml:"proxyConnectTimeout,omitempty" yaml:"proxyConnectTimeout,omitempty" export:"true"`
 
 	// Configuration options available within the NGINX Ingress Controller ConfigMap.
-	ClientBodyBufferSize int64 `description:"Default buffer size for reading client request body." json:"clientBodyBufferSize,omitempty" toml:"clientBodyBufferSize,omitempty" yaml:"clientBodyBufferSize,omitempty" export:"true"`
-	ProxyBodySize        int64 `description:"Default maximum size of a client request body in bytes." json:"proxyBodySize,omitempty" toml:"proxyBodySize,omitempty" yaml:"proxyBodySize,omitempty" export:"true"`
-	ProxyBufferSize      int64 `description:"Default buffer size for reading the response body." json:"proxyBufferSize,omitempty" toml:"proxyBufferSize,omitempty" yaml:"proxyBufferSize,omitempty" export:"true"`
-	ProxyBuffersNumber   int   `description:"Default number of buffers for reading a response." json:"proxyBuffersNumber,omitempty" toml:"proxyBuffersNumber,omitempty" yaml:"proxyBuffersNumber,omitempty" export:"true"`
+	ProxyRequestBuffering bool  `description:"Defines whether to enable request buffering." json:"proxyRequestBuffering,omitempty" toml:"proxyRequestBuffering,omitempty" yaml:"proxyRequestBuffering,omitempty" export:"true"`
+	ClientBodyBufferSize  int64 `description:"Default buffer size for reading client request body." json:"clientBodyBufferSize,omitempty" toml:"clientBodyBufferSize,omitempty" yaml:"clientBodyBufferSize,omitempty" export:"true"`
+	ProxyBodySize         int64 `description:"Default maximum size of a client request body in bytes." json:"proxyBodySize,omitempty" toml:"proxyBodySize,omitempty" yaml:"proxyBodySize,omitempty" export:"true"`
+	ProxyBuffering        bool  `description:"Defines whether to enable response buffering." json:"proxyBuffering,omitempty" toml:"proxyBuffering,omitempty" yaml:"proxyBuffering,omitempty" export:"true"`
+	ProxyBufferSize       int64 `description:"Default buffer size for reading the response body." json:"proxyBufferSize,omitempty" toml:"proxyBufferSize,omitempty" yaml:"proxyBufferSize,omitempty" export:"true"`
+	ProxyBuffersNumber    int   `description:"Default number of buffers for reading a response." json:"proxyBuffersNumber,omitempty" toml:"proxyBuffersNumber,omitempty" yaml:"proxyBuffersNumber,omitempty" export:"true"`
 
 	// NonTLSEntryPoints contains the names of entrypoints that are configured without TLS.
 	NonTLSEntryPoints []string `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
@@ -566,7 +568,10 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 	conf.TLS = &dynamic.TLSConfiguration{
 		Certificates: slices.Collect(maps.Values(uniqCerts)),
-		Options:      tlsOptions,
+	}
+
+	if len(tlsOptions) > 0 {
+		conf.TLS.Options = tlsOptions
 	}
 
 	return conf
@@ -1217,8 +1222,17 @@ func applyAllowedSourceRangeConfiguration(routerName string, ingressConfig ingre
 }
 
 func (p *Provider) applyBufferingConfiguration(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
-	disableRequestBuffering := ptr.Deref(ingressConfig.ProxyRequestBuffering, "on") == "off"
-	disableResponseBuffering := ptr.Deref(ingressConfig.ProxyBuffering, "off") == "off"
+	disableRequestBuffering := !p.ProxyRequestBuffering
+	if ingressConfig.ProxyRequestBuffering != nil {
+		// Without value validation, lean on disabling by checking for "on", which is more likely to satisfy user input.
+		disableRequestBuffering = *ingressConfig.ProxyRequestBuffering != "on"
+	}
+
+	disableResponseBuffering := !p.ProxyBuffering
+	if ingressConfig.ProxyBuffering != nil {
+		// Without value validation, lean on disabling by checking for "on", which is more likely to satisfy user input.
+		disableResponseBuffering = *ingressConfig.ProxyBuffering != "on"
+	}
 
 	if disableRequestBuffering && disableResponseBuffering {
 		return nil

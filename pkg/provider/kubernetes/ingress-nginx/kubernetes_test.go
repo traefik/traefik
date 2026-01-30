@@ -48,9 +48,7 @@ func TestLoadIngresses(t *testing.T) {
 					Services:          map[string]*dynamic.Service{},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
-				TLS: &dynamic.TLSConfiguration{
-					Options: map[string]tls.Options{},
-				},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{
@@ -68,24 +66,13 @@ func TestLoadIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"default-ingress-with-custom-headers-rule-0-path-0": {
-							Rule:       "Host(`whoami.localhost`) && Path(`/`)",
-							RuleSyntax: "default",
-							Middlewares: []string{
-								"default-ingress-with-custom-headers-rule-0-path-0-buffering",
-								"default-ingress-with-custom-headers-rule-0-path-0-custom-headers",
-							},
-							Service: "default-ingress-with-custom-headers-whoami-80",
+							Rule:        "Host(`whoami.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-custom-headers-rule-0-path-0-custom-headers"},
+							Service:     "default-ingress-with-custom-headers-whoami-80",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-ingress-with-custom-headers-rule-0-path-0-buffering": {
-							Buffering: &dynamic.Buffering{
-								MaxRequestBodyBytes:   defaultProxyBodySize,
-								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
-								DisableResponseBuffer: true,
-							},
-						},
 						"default-ingress-with-custom-headers-rule-0-path-0-custom-headers": {
 							Headers: &dynamic.Headers{
 								CustomResponseHeaders: map[string]string{"X-Custom-Header": "some-random-string"},
@@ -120,9 +107,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{
-					Options: map[string]tls.Options{},
-				},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{
@@ -141,11 +126,10 @@ func TestLoadIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"default-ingress-with-no-annotation-rule-0-path-0": {
-							Rule:        "Host(`whoami.localhost`) && PathPrefix(`/`)",
-							RuleSyntax:  "default",
-							TLS:         &dynamic.RouterTLSConfig{},
-							Service:     "default-ingress-with-no-annotation-whoami-80",
-							Middlewares: []string{"default-ingress-with-no-annotation-rule-0-path-0-buffering"},
+							Rule:       "Host(`whoami.localhost`) && PathPrefix(`/`)",
+							RuleSyntax: "default",
+							TLS:        &dynamic.RouterTLSConfig{},
+							Service:    "default-ingress-with-no-annotation-whoami-80",
 						},
 						"default-ingress-with-no-annotation-rule-0-path-0-http": {
 							EntryPoints: []string{"web"},
@@ -156,14 +140,6 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-ingress-with-no-annotation-rule-0-path-0-buffering": {
-							Buffering: &dynamic.Buffering{
-								MaxRequestBodyBytes:   defaultProxyBodySize,
-								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
-								DisableResponseBuffer: true,
-							},
-						},
 						"default-ingress-with-no-annotation-rule-0-path-0-redirect-scheme": {
 							RedirectScheme: &dynamic.RedirectScheme{
 								Scheme:                 "https",
@@ -208,7 +184,6 @@ func TestLoadIngresses(t *testing.T) {
 							},
 						},
 					},
-					Options: map[string]tls.Options{},
 				},
 			},
 		},
@@ -227,24 +202,13 @@ func TestLoadIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"default-ingress-with-basicauth-rule-0-path-0": {
-							Rule:       "Host(`whoami.localhost`) && Path(`/basicauth`)",
-							RuleSyntax: "default",
-							Middlewares: []string{
-								"default-ingress-with-basicauth-rule-0-path-0-basic-auth",
-								"default-ingress-with-basicauth-rule-0-path-0-buffering",
-							},
-							Service: "default-ingress-with-basicauth-whoami-80",
+							Rule:        "Host(`whoami.localhost`) && Path(`/basicauth`)",
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-basicauth-rule-0-path-0-basic-auth"},
+							Service:     "default-ingress-with-basicauth-whoami-80",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-ingress-with-basicauth-rule-0-path-0-buffering": {
-							Buffering: &dynamic.Buffering{
-								MaxRequestBodyBytes:   defaultProxyBodySize,
-								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
-								DisableResponseBuffer: true,
-							},
-						},
 						"default-ingress-with-basicauth-rule-0-path-0-basic-auth": {
 							BasicAuth: &dynamic.BasicAuth{
 								Users: dynamic.Users{
@@ -282,9 +246,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{
-					Options: map[string]tls.Options{},
-				},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{
@@ -302,24 +264,13 @@ func TestLoadIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"default-ingress-with-forwardauth-rule-0-path-0": {
-							Rule:       "Host(`whoami.localhost`) && Path(`/forwardauth`)",
-							RuleSyntax: "default",
-							Middlewares: []string{
-								"default-ingress-with-forwardauth-rule-0-path-0-buffering",
-								"default-ingress-with-forwardauth-rule-0-path-0-forward-auth",
-							},
-							Service: "default-ingress-with-forwardauth-whoami-80",
+							Rule:        "Host(`whoami.localhost`) && Path(`/forwardauth`)",
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-forwardauth-rule-0-path-0-forward-auth"},
+							Service:     "default-ingress-with-forwardauth-whoami-80",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-ingress-with-forwardauth-rule-0-path-0-buffering": {
-							Buffering: &dynamic.Buffering{
-								MaxRequestBodyBytes:   defaultProxyBodySize,
-								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
-								DisableResponseBuffer: true,
-							},
-						},
 						"default-ingress-with-forwardauth-rule-0-path-0-forward-auth": {
 							ForwardAuth: &dynamic.ForwardAuth{
 								Address:             "http://whoami.default.svc/",
@@ -357,9 +308,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{
-					Options: map[string]tls.Options{},
-				},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{
@@ -378,20 +327,17 @@ func TestLoadIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"default-ingress-with-ssl-redirect-rule-0-path-0": {
-							Rule:        "Host(`sslredirect.localhost`) && Path(`/`)",
-							RuleSyntax:  "default",
-							TLS:         &dynamic.RouterTLSConfig{},
-							Service:     "default-ingress-with-ssl-redirect-whoami-80",
-							Middlewares: []string{"default-ingress-with-ssl-redirect-rule-0-path-0-buffering"},
+							Rule:       "Host(`sslredirect.localhost`) && Path(`/`)",
+							RuleSyntax: "default",
+							TLS:        &dynamic.RouterTLSConfig{},
+							Service:    "default-ingress-with-ssl-redirect-whoami-80",
 						},
 						"default-ingress-with-ssl-redirect-rule-0-path-0-http": {
 							EntryPoints: []string{"web"},
 							Rule:        "Host(`sslredirect.localhost`) && Path(`/`)",
 							RuleSyntax:  "default",
-							Middlewares: []string{
-								"default-ingress-with-ssl-redirect-rule-0-path-0-redirect-scheme",
-							},
-							Service: "noop@internal",
+							Middlewares: []string{"default-ingress-with-ssl-redirect-rule-0-path-0-redirect-scheme"},
+							Service:     "noop@internal",
 						},
 						"default-ingress-without-ssl-redirect-rule-0-path-0-http": {
 							EntryPoints: []string{"web"},
@@ -400,47 +346,19 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-ingress-without-ssl-redirect-whoami-80",
 						},
 						"default-ingress-without-ssl-redirect-rule-0-path-0": {
-							Rule:        "Host(`withoutsslredirect.localhost`) && Path(`/`)",
-							RuleSyntax:  "default",
-							TLS:         &dynamic.RouterTLSConfig{},
-							Service:     "default-ingress-without-ssl-redirect-whoami-80",
-							Middlewares: []string{"default-ingress-without-ssl-redirect-rule-0-path-0-buffering"},
+							Rule:       "Host(`withoutsslredirect.localhost`) && Path(`/`)",
+							RuleSyntax: "default",
+							TLS:        &dynamic.RouterTLSConfig{},
+							Service:    "default-ingress-without-ssl-redirect-whoami-80",
 						},
 						"default-ingress-with-force-ssl-redirect-rule-0-path-0": {
-							Rule:       "Host(`forcesslredirect.localhost`) && Path(`/`)",
-							RuleSyntax: "default",
-							Middlewares: []string{
-								"default-ingress-with-force-ssl-redirect-rule-0-path-0-redirect-scheme",
-								"default-ingress-with-force-ssl-redirect-rule-0-path-0-buffering",
-							},
-							Service: "default-ingress-with-force-ssl-redirect-whoami-80",
+							Rule:        "Host(`forcesslredirect.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-force-ssl-redirect-rule-0-path-0-redirect-scheme"},
+							Service:     "default-ingress-with-force-ssl-redirect-whoami-80",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-ingress-with-ssl-redirect-rule-0-path-0-buffering": {
-							Buffering: &dynamic.Buffering{
-								MaxRequestBodyBytes:   defaultProxyBodySize,
-								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
-								DisableResponseBuffer: true,
-							},
-						},
-						"default-ingress-without-ssl-redirect-rule-0-path-0-buffering": {
-							Buffering: &dynamic.Buffering{
-								MaxRequestBodyBytes:   defaultProxyBodySize,
-								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
-								DisableResponseBuffer: true,
-							},
-						},
-						"default-ingress-with-force-ssl-redirect-rule-0-path-0-buffering": {
-							Buffering: &dynamic.Buffering{
-								MaxRequestBodyBytes:   defaultProxyBodySize,
-								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
-								DisableResponseBuffer: true,
-							},
-						},
 						"default-ingress-with-ssl-redirect-rule-0-path-0-redirect-scheme": {
 							RedirectScheme: &dynamic.RedirectScheme{
 								Scheme:                 "https",
@@ -537,7 +455,6 @@ func TestLoadIngresses(t *testing.T) {
 							},
 						},
 					},
-					Options: map[string]tls.Options{},
 				},
 			},
 		},
@@ -582,9 +499,7 @@ func TestLoadIngresses(t *testing.T) {
 					Services:          map[string]*dynamic.Service{},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
-				TLS: &dynamic.TLSConfiguration{
-					Options: map[string]tls.Options{},
-				},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{
@@ -603,22 +518,12 @@ func TestLoadIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"default-ingress-with-sticky-rule-0-path-0": {
-							Rule:        "Host(`sticky.localhost`) && Path(`/`)",
-							RuleSyntax:  "default",
-							Service:     "default-ingress-with-sticky-whoami-80",
-							Middlewares: []string{"default-ingress-with-sticky-rule-0-path-0-buffering"},
+							Rule:       "Host(`sticky.localhost`) && Path(`/`)",
+							RuleSyntax: "default",
+							Service:    "default-ingress-with-sticky-whoami-80",
 						},
 					},
-					Middlewares: map[string]*dynamic.Middleware{
-						"default-ingress-with-sticky-rule-0-path-0-buffering": {
-							Buffering: &dynamic.Buffering{
-								MaxRequestBodyBytes:   defaultProxyBodySize,
-								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
-								DisableResponseBuffer: true,
-							},
-						},
-					},
+					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"default-ingress-with-sticky-whoami-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
@@ -659,9 +564,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{
-					Options: map[string]tls.Options{},
-				},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{
@@ -680,22 +583,12 @@ func TestLoadIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"default-ingress-with-proxy-ssl-rule-0-path-0": {
-							Rule:        "Host(`proxy-ssl.localhost`) && Path(`/`)",
-							RuleSyntax:  "default",
-							Service:     "default-ingress-with-proxy-ssl-whoami-tls-443",
-							Middlewares: []string{"default-ingress-with-proxy-ssl-rule-0-path-0-buffering"},
+							Rule:       "Host(`proxy-ssl.localhost`) && Path(`/`)",
+							RuleSyntax: "default",
+							Service:    "default-ingress-with-proxy-ssl-whoami-tls-443",
 						},
 					},
-					Middlewares: map[string]*dynamic.Middleware{
-						"default-ingress-with-proxy-ssl-rule-0-path-0-buffering": {
-							Buffering: &dynamic.Buffering{
-								MaxRequestBodyBytes:   defaultProxyBodySize,
-								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
-								DisableResponseBuffer: true,
-							},
-						},
-					},
+					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"default-ingress-with-proxy-ssl-whoami-tls-443": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
@@ -727,9 +620,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{
-					Options: map[string]tls.Options{},
-				},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{
@@ -747,24 +638,13 @@ func TestLoadIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"default-ingress-with-cors-rule-0-path-0": {
-							Rule:       "Host(`cors.localhost`) && Path(`/`)",
-							RuleSyntax: "default",
-							Middlewares: []string{
-								"default-ingress-with-cors-rule-0-path-0-buffering",
-								"default-ingress-with-cors-rule-0-path-0-cors",
-							},
-							Service: "default-ingress-with-cors-whoami-80",
+							Rule:        "Host(`cors.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-cors-rule-0-path-0-cors"},
+							Service:     "default-ingress-with-cors-whoami-80",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-ingress-with-cors-rule-0-path-0-buffering": {
-							Buffering: &dynamic.Buffering{
-								MaxRequestBodyBytes:   defaultProxyBodySize,
-								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
-								DisableResponseBuffer: true,
-							},
-						},
 						"default-ingress-with-cors-rule-0-path-0-cors": {
 							Headers: &dynamic.Headers{
 								AccessControlAllowCredentials: true,
@@ -804,9 +684,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{
-					Options: map[string]tls.Options{},
-				},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{
@@ -824,22 +702,12 @@ func TestLoadIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"default-ingress-with-service-upstream-rule-0-path-0": {
-							Rule:        "Host(`service-upstream.localhost`) && Path(`/`)",
-							RuleSyntax:  "default",
-							Service:     "default-ingress-with-service-upstream-whoami-80",
-							Middlewares: []string{"default-ingress-with-service-upstream-rule-0-path-0-buffering"},
+							Rule:       "Host(`service-upstream.localhost`) && Path(`/`)",
+							RuleSyntax: "default",
+							Service:    "default-ingress-with-service-upstream-whoami-80",
 						},
 					},
-					Middlewares: map[string]*dynamic.Middleware{
-						"default-ingress-with-service-upstream-rule-0-path-0-buffering": {
-							Buffering: &dynamic.Buffering{
-								MaxRequestBodyBytes:   defaultProxyBodySize,
-								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
-								DisableResponseBuffer: true,
-							},
-						},
-					},
+					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"default-ingress-with-service-upstream-whoami-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
@@ -865,9 +733,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{
-					Options: map[string]tls.Options{},
-				},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{
@@ -885,24 +751,13 @@ func TestLoadIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"default-ingress-with-upstream-vhost-rule-0-path-0": {
-							Rule:       "Host(`upstream-vhost.localhost`) && Path(`/`)",
-							RuleSyntax: "default",
-							Middlewares: []string{
-								"default-ingress-with-upstream-vhost-rule-0-path-0-buffering",
-								"default-ingress-with-upstream-vhost-rule-0-path-0-vhost",
-							},
-							Service: "default-ingress-with-upstream-vhost-whoami-80",
+							Rule:        "Host(`upstream-vhost.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-upstream-vhost-rule-0-path-0-vhost"},
+							Service:     "default-ingress-with-upstream-vhost-whoami-80",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-ingress-with-upstream-vhost-rule-0-path-0-buffering": {
-							Buffering: &dynamic.Buffering{
-								MaxRequestBodyBytes:   defaultProxyBodySize,
-								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
-								DisableResponseBuffer: true,
-							},
-						},
 						"default-ingress-with-upstream-vhost-rule-0-path-0-vhost": {
 							Headers: &dynamic.Headers{
 								CustomRequestHeaders: map[string]string{"Host": "upstream-host-header-value"},
@@ -937,9 +792,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{
-					Options: map[string]tls.Options{},
-				},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{
@@ -957,22 +810,12 @@ func TestLoadIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"default-ingress-with-use-regex-rule-0-path-0": {
-							Rule:        "Host(`use-regex.localhost`) && PathRegexp(`^/test(.*)`)",
-							RuleSyntax:  "default",
-							Service:     "default-ingress-with-use-regex-whoami-80",
-							Middlewares: []string{"default-ingress-with-use-regex-rule-0-path-0-buffering"},
+							Rule:       "Host(`use-regex.localhost`) && PathRegexp(`^/test(.*)`)",
+							RuleSyntax: "default",
+							Service:    "default-ingress-with-use-regex-whoami-80",
 						},
 					},
-					Middlewares: map[string]*dynamic.Middleware{
-						"default-ingress-with-use-regex-rule-0-path-0-buffering": {
-							Buffering: &dynamic.Buffering{
-								MaxRequestBodyBytes:   defaultProxyBodySize,
-								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
-								DisableResponseBuffer: true,
-							},
-						},
-					},
+					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"default-ingress-with-use-regex-whoami-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
@@ -1001,9 +844,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{
-					Options: map[string]tls.Options{},
-				},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{
@@ -1021,24 +862,13 @@ func TestLoadIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"default-ingress-with-rewrite-target-rule-0-path-0": {
-							Rule:       "Host(`rewrite-target.localhost`) && PathRegexp(`^/something(/|$)(.*)`)",
-							RuleSyntax: "default",
-							Service:    "default-ingress-with-rewrite-target-whoami-80",
-							Middlewares: []string{
-								"default-ingress-with-rewrite-target-rule-0-path-0-buffering",
-								"default-ingress-with-rewrite-target-rule-0-path-0-rewrite-target",
-							},
+							Rule:        "Host(`rewrite-target.localhost`) && PathRegexp(`^/something(/|$)(.*)`)",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-rewrite-target-whoami-80",
+							Middlewares: []string{"default-ingress-with-rewrite-target-rule-0-path-0-rewrite-target"},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-ingress-with-rewrite-target-rule-0-path-0-buffering": {
-							Buffering: &dynamic.Buffering{
-								MaxRequestBodyBytes:   defaultProxyBodySize,
-								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
-								DisableResponseBuffer: true,
-							},
-						},
 						"default-ingress-with-rewrite-target-rule-0-path-0-rewrite-target": {
 							ReplacePathRegex: &dynamic.ReplacePathRegex{
 								Regex:       "/something(/|$)(.*)",
@@ -1074,9 +904,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{
-					Options: map[string]tls.Options{},
-				},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{
@@ -1094,13 +922,10 @@ func TestLoadIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"default-ingress-with-app-root-rule-0-path-0": {
-							Rule:       "Host(`app-root.localhost`) && (Path(`/bar`) || PathPrefix(`/bar/`))",
-							RuleSyntax: "default",
-							Service:    "default-ingress-with-app-root-whoami-80",
-							Middlewares: []string{
-								"default-ingress-with-app-root-rule-0-path-0-app-root",
-								"default-ingress-with-app-root-rule-0-path-0-buffering",
-							},
+							Rule:        "Host(`app-root.localhost`) && (Path(`/bar`) || PathPrefix(`/bar/`))",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-app-root-whoami-80",
+							Middlewares: []string{"default-ingress-with-app-root-rule-0-path-0-app-root"},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -1108,14 +933,6 @@ func TestLoadIngresses(t *testing.T) {
 							RedirectRegex: &dynamic.RedirectRegex{
 								Regex:       `^(https?://[^/]+)/$`,
 								Replacement: "$1/foo",
-							},
-						},
-						"default-ingress-with-app-root-rule-0-path-0-buffering": {
-							Buffering: &dynamic.Buffering{
-								MaxRequestBodyBytes:   defaultProxyBodySize,
-								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
-								DisableResponseBuffer: true,
 							},
 						},
 					},
@@ -1147,9 +964,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{
-					Options: map[string]tls.Options{},
-				},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{
@@ -1167,22 +982,12 @@ func TestLoadIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"default-ingress-with-app-root-rule-0-path-0": {
-							Rule:        "Host(`app-root.localhost`) && (Path(`/bar`) || PathPrefix(`/bar/`))",
-							RuleSyntax:  "default",
-							Service:     "default-ingress-with-app-root-whoami-80",
-							Middlewares: []string{"default-ingress-with-app-root-rule-0-path-0-buffering"},
+							Rule:       "Host(`app-root.localhost`) && (Path(`/bar`) || PathPrefix(`/bar/`))",
+							RuleSyntax: "default",
+							Service:    "default-ingress-with-app-root-whoami-80",
 						},
 					},
-					Middlewares: map[string]*dynamic.Middleware{
-						"default-ingress-with-app-root-rule-0-path-0-buffering": {
-							Buffering: &dynamic.Buffering{
-								MaxRequestBodyBytes:   defaultProxyBodySize,
-								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
-								DisableResponseBuffer: true,
-							},
-						},
-					},
+					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"default-ingress-with-app-root-whoami-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
@@ -1211,9 +1016,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{
-					Options: map[string]tls.Options{},
-				},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{
@@ -1279,9 +1082,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{
-					Options: map[string]tls.Options{},
-				},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{
@@ -1347,9 +1148,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{
-					Options: map[string]tls.Options{},
-				},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{
@@ -1429,9 +1228,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{
-					Options: map[string]tls.Options{},
-				},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{
@@ -1484,9 +1281,7 @@ func TestLoadIngresses(t *testing.T) {
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
-				TLS: &dynamic.TLSConfiguration{
-					Options: map[string]tls.Options{},
-				},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{
@@ -1504,24 +1299,13 @@ func TestLoadIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"default-ingress-with-whitelist-single-ip-rule-0-path-0": {
-							Rule:       "Host(`whitelist-source-range.localhost`) && Path(`/`)",
-							RuleSyntax: "default",
-							Middlewares: []string{
-								"default-ingress-with-whitelist-single-ip-rule-0-path-0-allowed-source-range",
-								"default-ingress-with-whitelist-single-ip-rule-0-path-0-buffering",
-							},
-							Service: "default-ingress-with-whitelist-single-ip-whoami-80",
+							Rule:        "Host(`whitelist-source-range.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-whitelist-single-ip-rule-0-path-0-allowed-source-range"},
+							Service:     "default-ingress-with-whitelist-single-ip-whoami-80",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-ingress-with-whitelist-single-ip-rule-0-path-0-buffering": {
-							Buffering: &dynamic.Buffering{
-								MaxRequestBodyBytes:   defaultProxyBodySize,
-								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
-								DisableResponseBuffer: true,
-							},
-						},
 						"default-ingress-with-whitelist-single-ip-rule-0-path-0-allowed-source-range": {
 							IPAllowList: &dynamic.IPAllowList{
 								SourceRange: []string{"192.168.20.1"},
@@ -1556,9 +1340,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{
-					Options: map[string]tls.Options{},
-				},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{
@@ -1576,24 +1358,13 @@ func TestLoadIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"default-ingress-with-whitelist-single-cidr-rule-0-path-0": {
-							Rule:       "Host(`whitelist-source-range.localhost`) && Path(`/`)",
-							RuleSyntax: "default",
-							Middlewares: []string{
-								"default-ingress-with-whitelist-single-cidr-rule-0-path-0-allowed-source-range",
-								"default-ingress-with-whitelist-single-cidr-rule-0-path-0-buffering",
-							},
-							Service: "default-ingress-with-whitelist-single-cidr-whoami-80",
+							Rule:        "Host(`whitelist-source-range.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-whitelist-single-cidr-rule-0-path-0-allowed-source-range"},
+							Service:     "default-ingress-with-whitelist-single-cidr-whoami-80",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-ingress-with-whitelist-single-cidr-rule-0-path-0-buffering": {
-							Buffering: &dynamic.Buffering{
-								MaxRequestBodyBytes:   defaultProxyBodySize,
-								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
-								DisableResponseBuffer: true,
-							},
-						},
 						"default-ingress-with-whitelist-single-cidr-rule-0-path-0-allowed-source-range": {
 							IPAllowList: &dynamic.IPAllowList{
 								SourceRange: []string{"192.168.1.0/24"},
@@ -1628,9 +1399,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{
-					Options: map[string]tls.Options{},
-				},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{
@@ -1648,24 +1417,13 @@ func TestLoadIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"default-ingress-with-whitelist-multiple-ip-and-cidr-rule-0-path-0": {
-							Rule:       "Host(`whitelist-source-range.localhost`) && Path(`/`)",
-							RuleSyntax: "default",
-							Middlewares: []string{
-								"default-ingress-with-whitelist-multiple-ip-and-cidr-rule-0-path-0-allowed-source-range",
-								"default-ingress-with-whitelist-multiple-ip-and-cidr-rule-0-path-0-buffering",
-							},
-							Service: "default-ingress-with-whitelist-multiple-ip-and-cidr-whoami-80",
+							Rule:        "Host(`whitelist-source-range.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-whitelist-multiple-ip-and-cidr-rule-0-path-0-allowed-source-range"},
+							Service:     "default-ingress-with-whitelist-multiple-ip-and-cidr-whoami-80",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-ingress-with-whitelist-multiple-ip-and-cidr-rule-0-path-0-buffering": {
-							Buffering: &dynamic.Buffering{
-								MaxRequestBodyBytes:   defaultProxyBodySize,
-								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
-								DisableResponseBuffer: true,
-							},
-						},
 						"default-ingress-with-whitelist-multiple-ip-and-cidr-rule-0-path-0-allowed-source-range": {
 							IPAllowList: &dynamic.IPAllowList{
 								SourceRange: []string{"192.168.1.0/24", "10.0.0.0/8", "192.168.20.1"},
@@ -1700,9 +1458,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{
-					Options: map[string]tls.Options{},
-				},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{
@@ -1722,20 +1478,11 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-whitelist-empty-rule-0-path-0": {
 							Rule:        "Host(`whitelist-source-range.localhost`) && Path(`/`)",
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-whitelist-empty-rule-0-path-0-buffering"},
+							Middlewares: nil,
 							Service:     "default-ingress-with-whitelist-empty-whoami-80",
 						},
 					},
-					Middlewares: map[string]*dynamic.Middleware{
-						"default-ingress-with-whitelist-empty-rule-0-path-0-buffering": {
-							Buffering: &dynamic.Buffering{
-								MaxRequestBodyBytes:   defaultProxyBodySize,
-								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
-								DisableResponseBuffer: true,
-							},
-						},
-					},
+					Middlewares: map[string]*dynamic.Middleware{},
 					Services: map[string]*dynamic.Service{
 						"default-ingress-with-whitelist-empty-whoami-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
@@ -2002,9 +1749,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{
-					Options: map[string]tls.Options{},
-				},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{
@@ -2022,24 +1767,13 @@ func TestLoadIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"default-ingress-with-permanent-redirect-rule-0-path-0": {
-							Rule:       "Host(`permanent-redirect.localhost`) && Path(`/`)",
-							RuleSyntax: "default",
-							Service:    "default-ingress-with-permanent-redirect-whoami-80",
-							Middlewares: []string{
-								"default-ingress-with-permanent-redirect-rule-0-path-0-buffering",
-								"default-ingress-with-permanent-redirect-rule-0-path-0-redirect",
-							},
+							Rule:        "Host(`permanent-redirect.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-permanent-redirect-whoami-80",
+							Middlewares: []string{"default-ingress-with-permanent-redirect-rule-0-path-0-redirect"},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-ingress-with-permanent-redirect-rule-0-path-0-buffering": {
-							Buffering: &dynamic.Buffering{
-								MaxRequestBodyBytes:   defaultProxyBodySize,
-								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
-								DisableResponseBuffer: true,
-							},
-						},
 						"default-ingress-with-permanent-redirect-rule-0-path-0-redirect": {
 							RedirectRegex: &dynamic.RedirectRegex{
 								Regex:       ".*",
@@ -2076,9 +1810,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{
-					Options: map[string]tls.Options{},
-				},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{
@@ -2096,24 +1828,13 @@ func TestLoadIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"default-ingress-with-permanent-redirect-rule-0-path-0": {
-							Rule:       "Host(`permanent-redirect.localhost`) && Path(`/`)",
-							RuleSyntax: "default",
-							Service:    "default-ingress-with-permanent-redirect-whoami-80",
-							Middlewares: []string{
-								"default-ingress-with-permanent-redirect-rule-0-path-0-buffering",
-								"default-ingress-with-permanent-redirect-rule-0-path-0-redirect",
-							},
+							Rule:        "Host(`permanent-redirect.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-permanent-redirect-whoami-80",
+							Middlewares: []string{"default-ingress-with-permanent-redirect-rule-0-path-0-redirect"},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-ingress-with-permanent-redirect-rule-0-path-0-buffering": {
-							Buffering: &dynamic.Buffering{
-								MaxRequestBodyBytes:   defaultProxyBodySize,
-								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
-								DisableResponseBuffer: true,
-							},
-						},
 						"default-ingress-with-permanent-redirect-rule-0-path-0-redirect": {
 							RedirectRegex: &dynamic.RedirectRegex{
 								Regex:       ".*",
@@ -2150,9 +1871,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{
-					Options: map[string]tls.Options{},
-				},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{
@@ -2170,24 +1889,13 @@ func TestLoadIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"default-ingress-with-permanent-redirect-rule-0-path-0": {
-							Rule:       "Host(`permanent-redirect.localhost`) && Path(`/`)",
-							RuleSyntax: "default",
-							Service:    "default-ingress-with-permanent-redirect-whoami-80",
-							Middlewares: []string{
-								"default-ingress-with-permanent-redirect-rule-0-path-0-buffering",
-								"default-ingress-with-permanent-redirect-rule-0-path-0-redirect",
-							},
+							Rule:        "Host(`permanent-redirect.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-permanent-redirect-whoami-80",
+							Middlewares: []string{"default-ingress-with-permanent-redirect-rule-0-path-0-redirect"},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-ingress-with-permanent-redirect-rule-0-path-0-buffering": {
-							Buffering: &dynamic.Buffering{
-								MaxRequestBodyBytes:   defaultProxyBodySize,
-								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
-								DisableResponseBuffer: true,
-							},
-						},
 						"default-ingress-with-permanent-redirect-rule-0-path-0-redirect": {
 							RedirectRegex: &dynamic.RedirectRegex{
 								Regex:       ".*",
@@ -2224,9 +1932,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{
-					Options: map[string]tls.Options{},
-				},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{
@@ -2244,24 +1950,13 @@ func TestLoadIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"default-ingress-with-redirect-rule-0-path-0": {
-							Rule:       "Host(`redirect.localhost`) && Path(`/`)",
-							RuleSyntax: "default",
-							Service:    "default-ingress-with-redirect-whoami-80",
-							Middlewares: []string{
-								"default-ingress-with-redirect-rule-0-path-0-buffering",
-								"default-ingress-with-redirect-rule-0-path-0-redirect",
-							},
+							Rule:        "Host(`redirect.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-redirect-whoami-80",
+							Middlewares: []string{"default-ingress-with-redirect-rule-0-path-0-redirect"},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-ingress-with-redirect-rule-0-path-0-buffering": {
-							Buffering: &dynamic.Buffering{
-								MaxRequestBodyBytes:   defaultProxyBodySize,
-								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
-								DisableResponseBuffer: true,
-							},
-						},
 						"default-ingress-with-redirect-rule-0-path-0-redirect": {
 							RedirectRegex: &dynamic.RedirectRegex{
 								Regex:       ".*",
@@ -2298,9 +1993,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{
-					Options: map[string]tls.Options{},
-				},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{
@@ -2321,18 +2014,10 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        "Host(`temporal-redirect.localhost`) && Path(`/`)",
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-temporal-redirect-whoami-80",
-							Middlewares: []string{"default-ingress-with-temporal-redirect-rule-0-path-0-buffering", "default-ingress-with-temporal-redirect-rule-0-path-0-redirect"},
+							Middlewares: []string{"default-ingress-with-temporal-redirect-rule-0-path-0-redirect"},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-ingress-with-temporal-redirect-rule-0-path-0-buffering": {
-							Buffering: &dynamic.Buffering{
-								MaxRequestBodyBytes:   defaultProxyBodySize,
-								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
-								DisableResponseBuffer: true,
-							},
-						},
 						"default-ingress-with-temporal-redirect-rule-0-path-0-redirect": {
 							RedirectRegex: &dynamic.RedirectRegex{
 								Regex:       ".*",
@@ -2369,9 +2054,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{
-					Options: map[string]tls.Options{},
-				},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{
@@ -2392,18 +2075,10 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        "Host(`temporal-redirect.localhost`) && Path(`/`)",
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-temporal-redirect-whoami-80",
-							Middlewares: []string{"default-ingress-with-temporal-redirect-rule-0-path-0-buffering", "default-ingress-with-temporal-redirect-rule-0-path-0-redirect"},
+							Middlewares: []string{"default-ingress-with-temporal-redirect-rule-0-path-0-redirect"},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-ingress-with-temporal-redirect-rule-0-path-0-buffering": {
-							Buffering: &dynamic.Buffering{
-								MaxRequestBodyBytes:   defaultProxyBodySize,
-								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
-								DisableResponseBuffer: true,
-							},
-						},
 						"default-ingress-with-temporal-redirect-rule-0-path-0-redirect": {
 							RedirectRegex: &dynamic.RedirectRegex{
 								Regex:       ".*",
@@ -2440,9 +2115,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{
-					Options: map[string]tls.Options{},
-				},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{
@@ -2460,24 +2133,13 @@ func TestLoadIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"default-ingress-with-temporal-redirect-rule-0-path-0": {
-							Rule:       "Host(`temporal-redirect.localhost`) && Path(`/`)",
-							RuleSyntax: "default",
-							Service:    "default-ingress-with-temporal-redirect-whoami-80",
-							Middlewares: []string{
-								"default-ingress-with-temporal-redirect-rule-0-path-0-buffering",
-								"default-ingress-with-temporal-redirect-rule-0-path-0-redirect",
-							},
+							Rule:        "Host(`temporal-redirect.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-temporal-redirect-whoami-80",
+							Middlewares: []string{"default-ingress-with-temporal-redirect-rule-0-path-0-redirect"},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-ingress-with-temporal-redirect-rule-0-path-0-buffering": {
-							Buffering: &dynamic.Buffering{
-								MaxRequestBodyBytes:   defaultProxyBodySize,
-								MemRequestBodyBytes:   defaultClientBodyBufferSize,
-								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
-								DisableResponseBuffer: true,
-							},
-						},
 						"default-ingress-with-temporal-redirect-rule-0-path-0-redirect": {
 							RedirectRegex: &dynamic.RedirectRegex{
 								Regex:       ".*",
@@ -2514,9 +2176,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{
-					Options: map[string]tls.Options{},
-				},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{
@@ -2564,9 +2224,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{
-					Options: map[string]tls.Options{},
-				},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{
@@ -2781,7 +2439,7 @@ func TestLoadIngresses(t *testing.T) {
 			paths: []string{
 				"services.yml",
 				"ingressclasses.yml",
-				"ingresses/18-ingress-with-proxy-body-size.yml",
+				"ingresses/ingress-with-proxy-body-size.yml",
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
@@ -2823,10 +2481,17 @@ func TestLoadIngresses(t *testing.T) {
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
+								ServersTransport: "default-ingress-with-proxy-body-size",
 							},
 						},
 					},
-					ServersTransports: map[string]*dynamic.ServersTransport{},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-proxy-body-size": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -2836,7 +2501,7 @@ func TestLoadIngresses(t *testing.T) {
 			paths: []string{
 				"services.yml",
 				"ingressclasses.yml",
-				"ingresses/19-ingress-with-client-body-buffer-size.yml",
+				"ingresses/ingress-with-client-body-buffer-size.yml",
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
@@ -2878,10 +2543,17 @@ func TestLoadIngresses(t *testing.T) {
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
+								ServersTransport: "default-ingress-with-client-body-buffer-size",
 							},
 						},
 					},
-					ServersTransports: map[string]*dynamic.ServersTransport{},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-client-body-buffer-size": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -2891,7 +2563,7 @@ func TestLoadIngresses(t *testing.T) {
 			paths: []string{
 				"services.yml",
 				"ingressclasses.yml",
-				"ingresses/20-ingress-with-proxy-body-size-and-client-body-buffer-size.yml",
+				"ingresses/ingress-with-proxy-body-size-and-client-body-buffer-size.yml",
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
@@ -2933,20 +2605,27 @@ func TestLoadIngresses(t *testing.T) {
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
+								ServersTransport: "default-ingress-with-proxy-body-size-and-client-body-buffer-size",
 							},
 						},
 					},
-					ServersTransports: map[string]*dynamic.ServersTransport{},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-proxy-body-size-and-client-body-buffer-size": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{
-			desc: "Buffering with proxy buffer size of 16KB",
+			desc: "Buffering with proxy buffer size",
 			paths: []string{
 				"services.yml",
 				"ingressclasses.yml",
-				"ingresses/21-ingress-with-proxy-buffer-size.yml",
+				"ingresses/ingress-with-proxy-buffer-size.yml",
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
@@ -2965,6 +2644,7 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-proxy-buffer-size-rule-0-path-0-buffering": {
 							Buffering: &dynamic.Buffering{
+								DisableRequestBuffer: true,
 								MaxRequestBodyBytes:  defaultProxyBodySize,
 								MemRequestBodyBytes:  defaultClientBodyBufferSize,
 								MemResponseBodyBytes: 16 * 1024 * int64(defaultProxyBuffersNumber),
@@ -2988,20 +2668,27 @@ func TestLoadIngresses(t *testing.T) {
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
+								ServersTransport: "default-ingress-with-proxy-buffer-size",
 							},
 						},
 					},
-					ServersTransports: map[string]*dynamic.ServersTransport{},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-proxy-buffer-size": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{
-			desc: "Buffering with proxy buffers number of 8",
+			desc: "Buffering with proxy buffers number",
 			paths: []string{
 				"services.yml",
 				"ingressclasses.yml",
-				"ingresses/22-ingress-with-proxy-buffers-number.yml",
+				"ingresses/ingress-with-proxy-buffers-number.yml",
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
@@ -3020,6 +2707,7 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-proxy-buffers-number-rule-0-path-0-buffering": {
 							Buffering: &dynamic.Buffering{
+								DisableRequestBuffer: true,
 								MaxRequestBodyBytes:  defaultProxyBodySize,
 								MemRequestBodyBytes:  defaultClientBodyBufferSize,
 								MemResponseBodyBytes: defaultProxyBufferSize * 8,
@@ -3043,10 +2731,17 @@ func TestLoadIngresses(t *testing.T) {
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
+								ServersTransport: "default-ingress-with-proxy-buffers-number",
 							},
 						},
 					},
-					ServersTransports: map[string]*dynamic.ServersTransport{},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-proxy-buffers-number": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -3056,7 +2751,7 @@ func TestLoadIngresses(t *testing.T) {
 			paths: []string{
 				"services.yml",
 				"ingressclasses.yml",
-				"ingresses/23-ingress-with-proxy-buffer-size-and-number.yml",
+				"ingresses/ingress-with-proxy-buffer-size-and-number.yml",
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
@@ -3075,6 +2770,7 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-proxy-buffer-size-and-number-rule-0-path-0-buffering": {
 							Buffering: &dynamic.Buffering{
+								DisableRequestBuffer: true,
 								MaxRequestBodyBytes:  defaultProxyBodySize,
 								MemRequestBodyBytes:  defaultClientBodyBufferSize,
 								MemResponseBodyBytes: 16 * 1024 * 8,
@@ -3098,10 +2794,17 @@ func TestLoadIngresses(t *testing.T) {
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
+								ServersTransport: "default-ingress-with-proxy-buffer-size-and-number",
 							},
 						},
 					},
-					ServersTransports: map[string]*dynamic.ServersTransport{},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-proxy-buffer-size-and-number": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},
@@ -3111,7 +2814,7 @@ func TestLoadIngresses(t *testing.T) {
 			paths: []string{
 				"services.yml",
 				"ingressclasses.yml",
-				"ingresses/24-ingress-with-proxy-max-temp-file-size.yml",
+				"ingresses/ingress-with-proxy-max-temp-file-size.yml",
 			},
 			expected: &dynamic.Configuration{
 				TCP: &dynamic.TCPConfiguration{
@@ -3130,6 +2833,7 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-proxy-max-temp-file-size-rule-0-path-0-buffering": {
 							Buffering: &dynamic.Buffering{
+								DisableRequestBuffer: true,
 								MaxRequestBodyBytes:  defaultProxyBodySize,
 								MemRequestBodyBytes:  defaultClientBodyBufferSize,
 								MemResponseBodyBytes: defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
@@ -3153,10 +2857,17 @@ func TestLoadIngresses(t *testing.T) {
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
+								ServersTransport: "default-ingress-with-proxy-max-temp-file-size",
 							},
 						},
 					},
-					ServersTransports: map[string]*dynamic.ServersTransport{},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-proxy-max-temp-file-size": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
 				},
 				TLS: &dynamic.TLSConfiguration{},
 			},

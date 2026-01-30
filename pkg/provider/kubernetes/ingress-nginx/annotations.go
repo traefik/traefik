@@ -110,10 +110,8 @@ func parseIngressConfig(ing *netv1.Ingress) (ingressConfig, error) {
 		case reflect.String:
 			cfgValue.Field(i).Set(reflect.ValueOf(&val))
 		case reflect.Bool:
-			parsed, err := strconv.ParseBool(val)
-			if err == nil {
-				cfgValue.Field(i).Set(reflect.ValueOf(&parsed))
-			}
+			b := val == "true"
+			cfgValue.Field(i).Set(reflect.ValueOf(&b))
 		case reflect.Int:
 			parsed, err := strconv.Atoi(val)
 			if err == nil {
