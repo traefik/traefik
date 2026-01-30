@@ -27,13 +27,13 @@ THE SOFTWARE.
 package v1alpha1
 
 import (
-	"context"
+	context "context"
 	time "time"
 
 	versioned "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned"
 	internalinterfaces "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/informers/externalversions/internalinterfaces"
-	v1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/listers/traefikio/v1alpha1"
-	traefikiov1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	traefikiov1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/listers/traefikio/v1alpha1"
+	crdtraefikiov1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -44,7 +44,7 @@ import (
 // IngressRouteUDPs.
 type IngressRouteUDPInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1alpha1.IngressRouteUDPLister
+	Lister() traefikiov1alpha1.IngressRouteUDPLister
 }
 
 type ingressRouteUDPInformer struct {
@@ -79,7 +79,7 @@ func NewFilteredIngressRouteUDPInformer(client versioned.Interface, namespace st
 				return client.TraefikV1alpha1().IngressRouteUDPs(namespace).Watch(context.TODO(), options)
 			},
 		},
-		&traefikiov1alpha1.IngressRouteUDP{},
+		&crdtraefikiov1alpha1.IngressRouteUDP{},
 		resyncPeriod,
 		indexers,
 	)
@@ -90,9 +90,9 @@ func (f *ingressRouteUDPInformer) defaultInformer(client versioned.Interface, re
 }
 
 func (f *ingressRouteUDPInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&traefikiov1alpha1.IngressRouteUDP{}, f.defaultInformer)
+	return f.factory.InformerFor(&crdtraefikiov1alpha1.IngressRouteUDP{}, f.defaultInformer)
 }
 
-func (f *ingressRouteUDPInformer) Lister() v1alpha1.IngressRouteUDPLister {
-	return v1alpha1.NewIngressRouteUDPLister(f.Informer().GetIndexer())
+func (f *ingressRouteUDPInformer) Lister() traefikiov1alpha1.IngressRouteUDPLister {
+	return traefikiov1alpha1.NewIngressRouteUDPLister(f.Informer().GetIndexer())
 }

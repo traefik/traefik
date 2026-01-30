@@ -27,7 +27,7 @@ THE SOFTWARE.
 package externalversions
 
 import (
-	"fmt"
+	fmt "fmt"
 
 	v1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefikcontainous/v1alpha1"
 	traefikiov1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefikio/v1alpha1"

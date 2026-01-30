@@ -27,13 +27,13 @@ THE SOFTWARE.
 package v1alpha1
 
 import (
-	"context"
+	context "context"
 	time "time"
 
 	versioned "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/clientset/versioned"
 	internalinterfaces "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/informers/externalversions/internalinterfaces"
-	v1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/listers/traefikcontainous/v1alpha1"
-	traefikcontainousv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefikcontainous/v1alpha1"
+	traefikcontainousv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/generated/listers/traefikcontainous/v1alpha1"
+	crdtraefikcontainousv1alpha1 "github.com/traefik/traefik/v2/pkg/provider/kubernetes/crd/traefikcontainous/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -44,7 +44,7 @@ import (
 // TLSOptions.
 type TLSOptionInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1alpha1.TLSOptionLister
+	Lister() traefikcontainousv1alpha1.TLSOptionLister
 }
 
 type tLSOptionInformer struct {
@@ -79,7 +79,7 @@ func NewFilteredTLSOptionInformer(client versioned.Interface, namespace string, 
 				return client.TraefikContainousV1alpha1().TLSOptions(namespace).Watch(context.TODO(), options)
 			},
 		},
-		&traefikcontainousv1alpha1.TLSOption{},
+		&crdtraefikcontainousv1alpha1.TLSOption{},
 		resyncPeriod,
 		indexers,
 	)
@@ -90,9 +90,9 @@ func (f *tLSOptionInformer) defaultInformer(client versioned.Interface, resyncPe
 }
 
 func (f *tLSOptionInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&traefikcontainousv1alpha1.TLSOption{}, f.defaultInformer)
+	return f.factory.InformerFor(&crdtraefikcontainousv1alpha1.TLSOption{}, f.defaultInformer)
 }
 
-func (f *tLSOptionInformer) Lister() v1alpha1.TLSOptionLister {
-	return v1alpha1.NewTLSOptionLister(f.Informer().GetIndexer())
+func (f *tLSOptionInformer) Lister() traefikcontainousv1alpha1.TLSOptionLister {
+	return traefikcontainousv1alpha1.NewTLSOptionLister(f.Informer().GetIndexer())
 }

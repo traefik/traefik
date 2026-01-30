@@ -128,12 +128,10 @@ func TestSetBackendsConfiguration(t *testing.T) {
 			}
 
 			wg := sync.WaitGroup{}
-			wg.Add(1)
 
-			go func() {
+			wg.Go(func() {
 				check.execute(ctx, backend)
-				wg.Done()
-			}()
+			})
 
 			// Make test timeout dependent on number of expected requests, health
 			// check interval, and a safety margin.
@@ -599,12 +597,9 @@ func TestNotFollowingRedirects(t *testing.T) {
 	}
 
 	wg := sync.WaitGroup{}
-	wg.Add(1)
-
-	go func() {
+	wg.Go(func() {
 		check.execute(ctx, backend)
-		wg.Done()
-	}()
+	})
 
 	timeout := time.Duration(int(healthCheckInterval) + 500)
 	select {

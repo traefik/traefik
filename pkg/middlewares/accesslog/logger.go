@@ -145,13 +145,11 @@ func NewHandler(config *types.AccessLog) (*Handler, error) {
 	}
 
 	if config.BufferingSize > 0 {
-		logHandler.wg.Add(1)
-		go func() {
-			defer logHandler.wg.Done()
+		logHandler.wg.Go(func() {
 			for handlerParams := range logHandler.logHandlerChan {
 				logHandler.logTheRoundTrip(handlerParams.logDataTable)
 			}
-		}()
+		})
 	}
 
 	return logHandler, nil
