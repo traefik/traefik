@@ -67,7 +67,7 @@ The `sampleRate` option controls trace sampling using a `ParentBased(TraceIDRati
 
 !!! info "Sampling Strategy Behavior"
 
-    - **Root spans** (requests originating at Traefik): Sampled according to the configured `sampleRate` using trace ID ratio-based sampling.
+    - **Root spans** (trace originating at Traefik): Sampled according to the configured `sampleRate` using trace ID ratio-based sampling.
     - **Child spans** (requests with existing trace context): Inherit the sampling decision from the parent span, regardless of the local `sampleRate`.
 
     This ensures consistent sampling decisions across distributed traces: once a trace is sampled, all spans in that trace are sampled, providing complete end-to-end visibility.
