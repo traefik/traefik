@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"sync"
@@ -78,17 +79,15 @@ func (f *Failover) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 		request := req.Clone(req.Context())
 		if req.Body != nil && req.Body != http.NoBody {
-			if f.maxRequestBodyBytes > 0 && req.ContentLength > f.maxRequestBodyBytes {
+			bodyBytes, err := f.readBodyBytes(req)
+			if errors.Is(err, errBodyTooLarge) {
 				http.Error(w, "Request body too large", http.StatusRequestEntityTooLarge)
 				return
 			}
-
-			bodyBytes, err := io.ReadAll(req.Body)
 			if err != nil {
 				http.Error(w, "Error reading request body", http.StatusInternalServerError)
 				return
 			}
-			req.Body.Close()
 
 			req.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 
@@ -186,4 +185,28 @@ func (f *Failover) SetFallbackHandlerStatus(ctx context.Context, up bool) {
 		// when main and fallback handlers have a DOWN status.
 		fn(f.handlerStatus || f.fallbackStatus)
 	}
+}
+
+var errBodyTooLarge = errors.New("request body too large")
+
+func (f *Failover) readBodyBytes(req *http.Request) ([]byte, error) {
+	defer req.Body.Close()
+
+	if f.maxRequestBodyBytes <= 0 {
+		return io.ReadAll(req.Body)
+	}
+
+	body := make([]byte, f.maxRequestBodyBytes+1)
+	n, err := io.ReadFull(req.Body, body)
+	if errors.Is(err, io.EOF) {
+		return nil, nil
+	}
+	if err != nil && !errors.Is(err, io.ErrUnexpectedEOF) {
+		return nil, fmt.Errorf("reading body bytes: %w", err)
+	}
+	if errors.Is(err, io.ErrUnexpectedEOF) {
+		return body[:n], nil
+	}
+
+	return nil, errBodyTooLarge
 }

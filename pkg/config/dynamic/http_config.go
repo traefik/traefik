@@ -201,6 +201,8 @@ type Failover struct {
 	Errors      *FailoverError `json:"errors,omitempty" toml:"errors,omitempty" yaml:"errors,omitempty" export:"true"`
 }
 
+// +k8s:deepcopy-gen=true
+
 // FailoverError holds errors configuration.
 type FailoverError struct {
 	MaxRequestBodyBytes int64    `json:"maxRequestBodyBytes,omitempty" toml:"maxRequestBodyBytes,omitempty" yaml:"maxRequestBodyBytes,omitempty" export:"true"`
