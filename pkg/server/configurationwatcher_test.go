@@ -908,3 +908,87 @@ func TestPublishConfigUpdatedByConfigWatcherListener(t *testing.T) {
 
 	assert.Equal(t, 1, publishedConfigCount)
 }
+
+func TestConfigurationWatcher_MultipleTransformers(t *testing.T) {
+	routinesPool := safe.NewPool(t.Context())
+	t.Cleanup(routinesPool.Stop)
+
+	pvd := &mockProvider{
+		messages: []dynamic.Message{{
+			ProviderName: "mock",
+			Configuration: &dynamic.Configuration{
+				HTTP: th.BuildConfiguration(
+					th.WithRouters(
+						th.WithRouter("original",
+							th.WithEntryPoints("e"),
+							th.WithServiceName("scv"))),
+				),
+			},
+		}},
+	}
+
+	watcher := NewConfigurationWatcher(routinesPool, pvd, []string{}, "")
+
+	var callOrder []string
+
+	var callCount1, callCount2 int
+
+	watcher.AddTransformer(func(_ context.Context, configs dynamic.Configurations) dynamic.Configurations {
+		callCount1++
+
+		callOrder = append(callOrder, "transformer1")
+
+		for _, config := range configs {
+			if config != nil && config.HTTP != nil {
+				config.HTTP.Routers["from-transformer1"] = &dynamic.Router{
+					EntryPoints: []string{"e"},
+					Service:     "svc1",
+				}
+			}
+		}
+
+		return configs
+	})
+
+	watcher.AddTransformer(func(_ context.Context, configs dynamic.Configurations) dynamic.Configurations {
+		callCount2++
+
+		callOrder = append(callOrder, "transformer2")
+
+		// Verify that transformer1's changes are visible.
+		for _, config := range configs {
+			if config != nil && config.HTTP != nil {
+				assert.Contains(t, config.HTTP.Routers, "from-transformer1")
+				config.HTTP.Routers["from-transformer2"] = &dynamic.Router{
+					EntryPoints: []string{"e"},
+					Service:     "svc2",
+				}
+			}
+		}
+
+		return configs
+	})
+
+	run := make(chan struct{})
+
+	watcher.AddListener(func(conf dynamic.Configuration) {
+		assert.NotNil(t, conf.HTTP)
+		assert.Contains(t, conf.HTTP.Routers, "original@mock")
+		assert.Contains(t, conf.HTTP.Routers, "from-transformer1@mock")
+		assert.Contains(t, conf.HTTP.Routers, "from-transformer2@mock")
+		close(run)
+	})
+
+	watcher.Start()
+	t.Cleanup(watcher.Stop)
+
+	select {
+	case <-run:
+	case <-time.After(5 * time.Second):
+		t.Fatal("Timeout waiting for configuration")
+	}
+
+	assert.Equal(t, []string{"transformer1", "transformer2"}, callOrder)
+	assert.Equal(t, 1, callCount1)
+	assert.Equal(t, 1, callCount2)
+}

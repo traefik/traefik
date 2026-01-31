@@ -56,8 +56,8 @@ func NewBuilder(configs map[string]*runtime.MiddlewareInfo, serviceBuilder servi
 	return &Builder{configs: configs, serviceBuilder: serviceBuilder, pluginBuilder: pluginBuilder}
 }
 
-// BuildChain creates a middleware chain.
-func (b *Builder) BuildChain(ctx context.Context, middlewares []string) *alice.Chain {
+// BuildMiddlewareChain creates a middleware chain.
+func (b *Builder) BuildMiddlewareChain(ctx context.Context, middlewares []string) *alice.Chain {
 	chain := alice.New()
 	for _, name := range middlewares {
 		middlewareName := provider.GetQualifiedName(ctx, name)

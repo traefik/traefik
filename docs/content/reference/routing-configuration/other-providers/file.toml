@@ -113,31 +113,33 @@
         [http.services.Service03.loadBalancer.responseForwarding]
           flushInterval = "42s"
     [http.services.Service04]
-      [http.services.Service04.mirroring]
+      middlewares = ["foobar", "foobar"]
+    [http.services.Service05]
+      [http.services.Service05.mirroring]
         service = "foobar"
         mirrorBody = true
         maxBodySize = 42
 
-        [[http.services.Service04.mirroring.mirrors]]
+        [[http.services.Service05.mirroring.mirrors]]
           name = "foobar"
           percent = 42
 
-        [[http.services.Service04.mirroring.mirrors]]
+        [[http.services.Service05.mirroring.mirrors]]
           name = "foobar"
           percent = 42
-        [http.services.Service04.mirroring.healthCheck]
-    [http.services.Service05]
-      [http.services.Service05.weighted]
+        [http.services.Service05.mirroring.healthCheck]
+    [http.services.Service06]
+      [http.services.Service06.weighted]
 
-        [[http.services.Service05.weighted.services]]
+        [[http.services.Service06.weighted.services]]
           name = "foobar"
           weight = 42
 
-        [[http.services.Service05.weighted.services]]
+        [[http.services.Service06.weighted.services]]
           name = "foobar"
           weight = 42
-        [http.services.Service05.weighted.sticky]
-          [http.services.Service05.weighted.sticky.cookie]
+        [http.services.Service06.weighted.sticky]
+          [http.services.Service06.weighted.sticky.cookie]
             name = "foobar"
             secure = true
             httpOnly = true
@@ -145,7 +147,7 @@
             maxAge = 42
             path = "foobar"
             domain = "foobar"
-        [http.services.Service05.weighted.healthCheck]
+        [http.services.Service06.weighted.healthCheck]
   [http.middlewares]
     [http.middlewares.Middleware01]
       [http.middlewares.Middleware01.addPrefix]

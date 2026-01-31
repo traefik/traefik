@@ -465,7 +465,7 @@ func (p *Provider) watchConnectTLS(ctx context.Context) error {
 	}
 	leafWatcher.HybridHandler = leafWatcherHandler(ctx, leafChan)
 
-	rootsChan := make(chan []string)
+	rootsChan := make(chan caRootList)
 	rootsWatcher, err := watch.Parse(map[string]any{
 		"type": "connect_roots",
 	})
@@ -497,9 +497,9 @@ func (p *Provider) watchConnectTLS(ctx context.Context) error {
 	}()
 
 	var (
-		certInfo  *connectCert
-		leafCerts keyPair
-		rootCerts []string
+		certInfo *connectCert
+		leafCert keyPair
+		caRoots  caRootList
 	)
 
 	for {
@@ -510,13 +510,14 @@ func (p *Provider) watchConnectTLS(ctx context.Context) error {
 		case err := <-errChan:
 			return fmt.Errorf("leaf or roots watcher terminated: %w", err)
 
-		case rootCerts = <-rootsChan:
-		case leafCerts = <-leafChan:
+		case caRoots = <-rootsChan:
+		case leafCert = <-leafChan:
 		}
 
 		newCertInfo := &connectCert{
-			root: rootCerts,
-			leaf: leafCerts,
+			trustDomain: caRoots.trustDomain,
+			root:        caRoots.roots,
+			leaf:        leafCert,
 		}
 		if newCertInfo.isReady() && !newCertInfo.equals(certInfo) {
 			log.Ctx(ctx).Debug().Msgf("Updating connect certs for service %s", p.ServiceName)
@@ -546,7 +547,12 @@ func (p *Provider) includesHealthStatus(status string) bool {
 	return false
 }
 
-func rootsWatchHandler(ctx context.Context, dest chan<- []string) func(watch.BlockingParamVal, any) {
+type caRootList struct {
+	trustDomain string
+	roots       []string
+}
+
+func rootsWatchHandler(ctx context.Context, dest chan<- caRootList) func(watch.BlockingParamVal, any) {
 	return func(_ watch.BlockingParamVal, raw any) {
 		if raw == nil {
 			log.Ctx(ctx).Error().Msg("Root certificate watcher called with nil")
@@ -566,7 +572,7 @@ func rootsWatchHandler(ctx context.Context, dest chan<- []string) func(watch.Blo
 
 		select {
 		case <-ctx.Done():
-		case dest <- roots:
+		case dest <- caRootList{trustDomain: v.TrustDomain, roots: roots}:
 		}
 	}
 }
