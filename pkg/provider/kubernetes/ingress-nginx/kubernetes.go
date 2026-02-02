@@ -313,12 +313,6 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 			continue
 		}
 
-		ingressConfig, err := parseIngressConfig(ingress)
-		if err != nil {
-			logger.Error().Err(err).Msg("Error parsing ingress configuration")
-			continue
-		}
-
 		if err := p.updateIngressStatus(ingress); err != nil {
 			logger.Error().Err(err).Msg("Error while updating ingress status")
 		}
@@ -331,6 +325,8 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 				continue
 			}
 		}
+
+		ingressConfig := parseIngressConfig(ingress)
 
 		var clientAuthTLSOptionName string
 		if ingressConfig.AuthTLSSecret != nil {
