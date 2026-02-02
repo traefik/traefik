@@ -95,16 +95,14 @@ func isWebsocketRequest(req *http.Request) bool {
 	containsHeader := func(name, value string) bool {
 		h := unsafeHeader(req.Header).Get(name)
 		for {
-			pos := strings.Index(h, ",")
-			if pos == -1 {
-				return strings.EqualFold(value, strings.TrimSpace(h))
-			}
-
-			if strings.EqualFold(value, strings.TrimSpace(h[:pos])) {
+			before, after, found := strings.Cut(h, ",")
+			if strings.EqualFold(value, strings.TrimSpace(before)) {
 				return true
 			}
-
-			h = h[pos+1:]
+			if !found {
+				return false
+			}
+			h = after
 		}
 	}
 

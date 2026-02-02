@@ -147,16 +147,12 @@ func (eps TCPEntryPoints) Stop() {
 	var wg sync.WaitGroup
 
 	for epn, ep := range eps {
-		wg.Add(1)
-
-		go func(entryPointName string, entryPoint *TCPEntryPoint) {
-			defer wg.Done()
-
-			logger := log.With().Str(logs.EntryPointName, entryPointName).Logger()
-			entryPoint.Shutdown(logger.WithContext(context.Background()))
+		wg.Go(func() {
+			logger := log.With().Str(logs.EntryPointName, epn).Logger()
+			ep.Shutdown(logger.WithContext(context.Background()))
 
 			logger.Debug().Msg("Entrypoint closed")
-		}(epn, ep)
+		})
 	}
 
 	wg.Wait()
@@ -313,7 +309,6 @@ func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
 	var wg sync.WaitGroup
 
 	shutdownServer := func(server stoppable) {
-		defer wg.Done()
 		err := server.Shutdown(ctx)
 		if err == nil {
 			return
@@ -334,24 +329,19 @@ func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
 	}
 
 	if e.httpServer.Server != nil {
-		wg.Add(1)
-		go shutdownServer(e.httpServer.Server)
+		wg.Go(func() { shutdownServer(e.httpServer.Server) })
 	}
 
 	if e.httpsServer.Server != nil {
-		wg.Add(1)
-		go shutdownServer(e.httpsServer.Server)
+		wg.Go(func() { shutdownServer(e.httpsServer.Server) })
 
 		if e.http3Server != nil {
-			wg.Add(1)
-			go shutdownServer(e.http3Server)
+			wg.Go(func() { shutdownServer(e.http3Server) })
 		}
 	}
 
 	if e.tracker != nil {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			err := e.tracker.Shutdown(ctx)
 			if err == nil {
 				return
@@ -360,7 +350,7 @@ func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
 				logger.Debug().Err(err).Msg("Server failed to shutdown before deadline")
 			}
 			e.tracker.Close()
-		}()
+		})
 	}
 
 	wg.Wait()
