@@ -1,3 +1,13 @@
+## [v2.11.36](https://github.com/traefik/traefik/tree/v2.11.36) (2026-02-02)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.35...v2.11.36)
+
+**Bug fixes:**
+- **[service]** Avoid recursion with services ([#12591](https://github.com/traefik/traefik/pull/12591) by [juliens](https://github.com/juliens))
+- **[webui]** Bump dependencies of documentation and webui ([#12581](https://github.com/traefik/traefik/pull/12581) by [gndz07](https://github.com/gndz07))
+
+**Documentation:**
+- Remove extra dots in migration guide ([#12573](https://github.com/traefik/traefik/pull/12573) by [rtribotte](https://github.com/rtribotte))
+
 ## [v2.11.35](https://github.com/traefik/traefik/tree/v2.11.35) (2026-01-14)
 [All Commits](https://github.com/traefik/traefik/compare/v2.11.34...v2.11.35)
 
