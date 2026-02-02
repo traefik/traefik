@@ -507,7 +507,6 @@ func TestDifferentIntervals(t *testing.T) {
 	wg := sync.WaitGroup{}
 	wg.Go(func() {
 		hc.Launch(ctx)
-		wg.Done()
 	})
 
 	select {
