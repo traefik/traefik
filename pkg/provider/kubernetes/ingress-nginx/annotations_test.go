@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	netv1 "k8s.io/api/networking/v1"
 	"k8s.io/utils/ptr"
 )
@@ -90,10 +89,7 @@ func Test_parseIngressConfig(t *testing.T) {
 			var ing netv1.Ingress
 			ing.SetAnnotations(test.annotations)
 
-			cfg, err := parseIngressConfig(&ing)
-			require.NoError(t, err)
-
-			assert.Equal(t, test.expected, cfg)
+			assert.Equal(t, test.expected, parseIngressConfig(&ing))
 		})
 	}
 }

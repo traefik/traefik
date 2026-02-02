@@ -88,7 +88,7 @@ type ingressConfig struct {
 }
 
 // parseIngressConfig parses the annotations from an Ingress object into an ingressConfig struct.
-func parseIngressConfig(ing *netv1.Ingress) (ingressConfig, error) {
+func parseIngressConfig(ing *netv1.Ingress) ingressConfig {
 	cfg := ingressConfig{}
 	cfgType := reflect.TypeFor[ingressConfig]()
 	cfgValue := reflect.ValueOf(&cfg).Elem()
@@ -130,7 +130,7 @@ func parseIngressConfig(ing *netv1.Ingress) (ingressConfig, error) {
 		}
 	}
 
-	return cfg, nil
+	return cfg
 }
 
 // parseBackendProtocol parses the backend protocol annotation and returns the corresponding protocol string.
