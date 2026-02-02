@@ -6,8 +6,6 @@ description: "Learn how to configure the transport layer security (TLS) connecti
 !!! info
     When a router has to handle HTTPS traffic, it should be specified with a `tls` field of the router definition.
 
-# TLS Certificates
-
 ## Certificates Definition
 
 ### Automated
@@ -46,48 +44,16 @@ tls:
 #### Certificate selection (SNI)
 
 Traefik selects the certificate to present during the TLS handshake, based on the Server Name Indication (SNI) sent by the client.
-As a consequence, HTTP router rules (for example `Host()`) are evaluated after TLS has been established and do not influence certificate selection.
 
-- Certificates declared under `tls.certificates` are matched against the requested server name (SNI).
-- If the client does not send SNI, or if no certificate matches the requested server name, Traefik falls back to the [default certificate](#default-certificate) from the TLS store (if configured).
+However, HTTP router rules (e.g., `Host()`) are evaluated after TLS has been established, so they do not influence certificate selection.
 
-!!! tip "Strict SNI Checking"
-    To reject connections without SNI (or with an unknown server name) instead of falling back to the default certificate, enable `sniStrict` in [TLS Options](./tls-options.md#strict-sni-checking).
+##### Strict SNI Checking
 
-#### Local development example (mkcert)
+By default, if the client does not send SNI, or if no certificate matches the requested server name,
+Traefik falls back to the [default certificate](#default-certificate) from the TLS store (if configured).
 
-[mkcert](https://mkcert.dev/) can generate **locally-trusted** certificates for development.
-The snippet below shows the minimal pieces needed to serve HTTPS with a custom certificate using the **file provider**.
-
-```bash
-# one-time per machine
-mkcert -install
-mkdir -p certs dynamic
-mkcert -cert-file certs/local.crt -key-file certs/local.key \
-  whoami.docker.localhost dashboard.docker.localhost
-```
-
-```yaml tab="Structured (YAML)"
-# dynamic/tls.yml (dynamic configuration)
-tls:
-  certificates:
-    - certFile: /certs/local.crt
-      keyFile:  /certs/local.key
-```
-
-```toml tab="Structured (TOML)"
-# dynamic/tls.toml (dynamic configuration)
-[[tls.certificates]]
-  certFile = "/certs/local.crt"
-  keyFile = "/certs/local.key"
-```
-
-!!! tip "Complete examples"
-    For end-to-end examples (entryPoints, dynamic TLS file, and router configuration), see:
-
-    - [Docker: Enable TLS](../../../../expose/docker.md#enable-tls)
-    - [Swarm: Enable TLS](../../../../expose/swarm.md#enable-tls)
-    - [Kubernetes: Enable TLS](../../../../expose/kubernetes.md#enable-tls)
+To reject connections without SNI (or with an unknown server name) instead of falling back to the default certificate,
+enable `sniStrict` in [TLS Options](./tls-options.md#strict-sni-checking).
 
 ## Certificates Stores
 
@@ -129,6 +95,12 @@ tls:
 !!! important "Restriction"
 
     The `stores` list will actually be ignored and automatically set to `["default"]`.
+
+!!! tip "Per provider examples"
+
+    - [Docker: Enable TLS](../../../../expose/docker/basic.md#enable-tls)
+    - [Swarm: Enable TLS](../../../../expose/swarm/basic.md#enable-tls)
+    - [Kubernetes: Enable TLS](../../../../expose/kubernetes/basic.md#enable-tls)
 
 ### Default Certificate
 
