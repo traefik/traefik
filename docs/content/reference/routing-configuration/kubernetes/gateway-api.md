@@ -406,9 +406,12 @@ This allows request modifications to be applied to specific backends, enabling t
 
 !!! info "Supported Filter Types"
 
-    Backend-level filters support the following filter types:
+    Backend-level filters support the same filter types as route-level filters:
 
     - `RequestHeaderModifier`: Add, set, or remove HTTP request headers before forwarding to the backend.
+    - `ResponseHeaderModifier`: Add, set, or remove HTTP response headers.
+    - `RequestRedirect`: Redirect the request to a different URL.
+    - `URLRewrite`: Rewrite the request URL path and/or hostname.
     - `ExtensionRef`: Reference a Traefik [Middleware](../kubernetes/crd/http/middleware.md) resource.
 
 !!! info "Middlewares Execution Order"
