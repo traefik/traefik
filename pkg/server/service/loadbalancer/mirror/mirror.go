@@ -201,7 +201,7 @@ type ReusableRequest struct {
 
 var ErrBodyTooLarge = errors.New("request body too large")
 
-// if the returned error is ErrBodyTooLarge, NewReusableRequest also returns the
+// NewReusableRequest returns a new reusable request. If the returned error is ErrBodyTooLarge, NewReusableRequest also returns the
 // bytes that were already consumed from the request's body.
 func NewReusableRequest(req *http.Request, mirrorBody bool, maxBodySize int64) (*ReusableRequest, []byte, error) {
 	if req == nil {
