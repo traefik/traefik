@@ -266,6 +266,19 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 	ingresses := p.k8sClient.ListIngresses()
 
+	hosts := make(map[string]bool)
+	for _, ing := range ingresses {
+		if !p.shouldProcessIngress(ing, ingressClasses) {
+			continue
+		}
+
+		for _, rule := range ing.Spec.Rules {
+			if !hosts[rule.Host] {
+				hosts[rule.Host] = true
+			}
+		}
+	}
+
 	uniqCerts := make(map[string]*tls.CertAndStores)
 	tlsOptions := make(map[string]tls.Options)
 	for _, ingress := range ingresses {
@@ -340,7 +353,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 				Service:    defaultBackendName,
 			}
 
-			if err := p.applyMiddlewares(ingress.Namespace, defaultBackendName, "", ingressConfig, hasTLS, rt, conf); err != nil {
+			if err := p.applyMiddlewares(ingress.Namespace, defaultBackendName, "", "", hosts, ingressConfig, hasTLS, rt, conf); err != nil {
 				logger.Error().Err(err).Msg("Error applying middlewares")
 			}
 
@@ -358,7 +371,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 				rtTLS.TLS.Options = clientAuthTLSOptionName
 			}
 
-			if err := p.applyMiddlewares(ingress.Namespace, defaultBackendTLSName, "", ingressConfig, false, rtTLS, conf); err != nil {
+			if err := p.applyMiddlewares(ingress.Namespace, defaultBackendTLSName, "", "", hosts, ingressConfig, false, rtTLS, conf); err != nil {
 				logger.Error().Err(err).Msg("Error applying middlewares")
 			}
 
@@ -435,7 +448,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 					Service:    key,
 				}
 
-				if err := p.applyMiddlewares(ingress.Namespace, key, "", ingressConfig, hasTLS, rt, conf); err != nil {
+				if err := p.applyMiddlewares(ingress.Namespace, key, "", "", hosts, ingressConfig, hasTLS, rt, conf); err != nil {
 					logger.Error().Err(err).Msg("Error applying middlewares")
 				}
 
@@ -452,7 +465,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 					rtTLS.TLS.Options = clientAuthTLSOptionName
 				}
 
-				if err := p.applyMiddlewares(ingress.Namespace, key+"-tls", "", ingressConfig, false, rtTLS, conf); err != nil {
+				if err := p.applyMiddlewares(ingress.Namespace, key+"-tls", "", "", hosts, ingressConfig, false, rtTLS, conf); err != nil {
 					logger.Error().Err(err).Msg("Error applying middlewares")
 				}
 
@@ -521,7 +534,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 					conf.HTTP.ServersTransports[namedServersTransport.Name] = namedServersTransport.ServersTransport
 				}
 
-				if err := p.applyMiddlewares(ingress.Namespace, routerKey, pa.Path, ingressConfig, hasTLS, rt, conf); err != nil {
+				if err := p.applyMiddlewares(ingress.Namespace, routerKey, pa.Path, rule.Host, hosts, ingressConfig, hasTLS, rt, conf); err != nil {
 					logger.Error().Err(err).Msg("Error applying middlewares")
 				}
 			}
@@ -830,8 +843,10 @@ func (p *Provider) loadCertificates(ctx context.Context, ingress *netv1.Ingress,
 	return nil
 }
 
-func (p *Provider) applyMiddlewares(namespace, routerKey, rulePath string, ingressConfig ingressConfig, hasTLS bool, rt *dynamic.Router, conf *dynamic.Configuration) error {
+func (p *Provider) applyMiddlewares(namespace, routerKey, rulePath, ruleHost string, hosts map[string]bool, ingressConfig ingressConfig, hasTLS bool, rt *dynamic.Router, conf *dynamic.Configuration) error {
 	applyAppRootConfiguration(routerKey, ingressConfig, rt, conf)
+	applyFromToWwwRedirect(hosts, ruleHost, routerKey, ingressConfig, rt, conf)
+	applyRedirect(routerKey, ingressConfig, rt, conf)
 
 	// Apply SSL redirect is mandatory to be applied after all other middlewares.
 	// TODO: check how to remove this, and create the HTTP router elsewhere.
@@ -850,8 +865,6 @@ func (p *Provider) applyMiddlewares(namespace, routerKey, rulePath string, ingre
 	applyCORSConfiguration(routerKey, ingressConfig, rt, conf)
 
 	applyRewriteTargetConfiguration(rulePath, routerKey, ingressConfig, rt, conf)
-
-	applyRedirect(routerKey, ingressConfig, rt, conf)
 
 	applyUpstreamVhost(routerKey, ingressConfig, rt, conf)
 
@@ -964,6 +977,49 @@ func applyAppRootConfiguration(routerName string, ingressConfig ingressConfig, r
 	}
 
 	rt.Middlewares = append(rt.Middlewares, appRootMiddlewareName)
+}
+
+func applyFromToWwwRedirect(hosts map[string]bool, ruleHost, routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
+	if ingressConfig.FromToWwwRedirect == nil || !*ingressConfig.FromToWwwRedirect {
+		return
+	}
+
+	wwwType := strings.HasPrefix(ruleHost, "www.")
+	wildcardType := strings.HasPrefix(ruleHost, "*.")
+	bypass := wwwType && hosts[strings.TrimPrefix(ruleHost, "www.")] || !wwwType && hosts["www."+ruleHost] || wildcardType
+
+	if bypass {
+		// Wildcard host not compatible with this annotation. (limitation)
+		// hosts already configured for www. and normal hosts.
+		return
+	}
+
+	newRule := fmt.Sprintf("Host(`www.%s`)", ruleHost)
+	if wwwType {
+		// if current ingress host is www.example.com, redirect from example.com => www.example.com
+		host := strings.TrimPrefix(ruleHost, "www.")
+		newRule = fmt.Sprintf("Host(`%s`)", host)
+	}
+
+	fromToWwwRedirectMiddlewareName := routerName + "-from-to-www-redirect"
+	conf.HTTP.Middlewares[fromToWwwRedirectMiddlewareName] = &dynamic.Middleware{
+		RedirectRegex: &dynamic.RedirectRegex{
+			Regex:       `(https?)://[^/]+:([0-9]+)/(.*)`,
+			Replacement: fmt.Sprintf("$1://%s:$2/$3", ruleHost),
+			Permanent:   true,
+		},
+	}
+
+	wwwRedirectRouter := &dynamic.Router{
+		Rule:        newRule,
+		EntryPoints: rt.EntryPoints,
+		Priority:    rt.Priority,
+		// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
+		RuleSyntax:  "default",
+		Middlewares: []string{fromToWwwRedirectMiddlewareName},
+		Service:     rt.Service,
+	}
+	conf.HTTP.Routers[routerName+"-from-to-www-redirect"] = wwwRedirectRouter
 }
 
 func (p *Provider) applyBasicAuthConfiguration(namespace, routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
