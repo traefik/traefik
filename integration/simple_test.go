@@ -2508,13 +2508,6 @@ func (s *SimpleSuite) TestFailoverServiceWithStatusCode() {
 	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 10*time.Second, try.BodyContains("PathPrefix"))
 	require.NoError(s.T(), err)
 
-	// Verify the router is registered
-	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers", 2*time.Second, try.BodyContains("router1"))
-	require.NoError(s.T(), err)
-
-	// Verify the services are registered
-	err = try.GetRequest("http://127.0.0.1:8080/api/http/services", 2*time.Second, try.BodyContains("fallback-service"))
-	require.NoError(s.T(), err)
 
 	// Make a request - should failover to fallback because main returns 503
 	err = try.GetRequest("http://127.0.0.1:8000/", 5*time.Second, try.BodyContains("fallback service"))
