@@ -10,6 +10,7 @@ type TotalsResult = {
   http: TotalsResultItem
   tcp: TotalsResultItem
   udp: TotalsResultItem
+  certificates: number
 }
 
 const useTotals = (): TotalsResult => {
@@ -30,6 +31,7 @@ const useTotals = (): TotalsResult => {
       routers: data?.udp?.routers?.total,
       services: data?.udp?.services?.total,
     },
+    certificates: data?.certificates?.total,
   }
 }
 

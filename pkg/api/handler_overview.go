@@ -8,6 +8,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
 	"github.com/traefik/traefik/v3/pkg/config/static"
+	"github.com/traefik/traefik/v3/pkg/tls"
 )
 
 type schemeOverview struct {
@@ -30,11 +31,12 @@ type features struct {
 }
 
 type overview struct {
-	HTTP      schemeOverview `json:"http"`
-	TCP       schemeOverview `json:"tcp"`
-	UDP       schemeOverview `json:"udp"`
-	Features  features       `json:"features,omitempty"`
-	Providers []string       `json:"providers,omitempty"`
+	HTTP         schemeOverview `json:"http"`
+	TCP          schemeOverview `json:"tcp"`
+	UDP          schemeOverview `json:"udp"`
+	Certificates *section       `json:"certificates,omitempty"`
+	Features     features       `json:"features,omitempty"`
+	Providers    []string       `json:"providers,omitempty"`
 }
 
 func (h Handler) getOverview(rw http.ResponseWriter, request *http.Request) {
@@ -53,8 +55,9 @@ func (h Handler) getOverview(rw http.ResponseWriter, request *http.Request) {
 			Routers:  getUDPRouterSection(h.runtimeConfiguration.UDPRouters),
 			Services: getUDPServiceSection(h.runtimeConfiguration.UDPServices),
 		},
-		Features:  getFeatures(h.staticConfig),
-		Providers: getProviders(h.staticConfig),
+		Certificates: getCertificates(h.tlsManager),
+		Features:     getFeatures(h.staticConfig),
+		Providers:    getProviders(h.staticConfig),
 	}
 
 	rw.Header().Set("Content-Type", "application/json")
@@ -284,4 +287,30 @@ func getTracing(conf static.Configuration) string {
 	}
 
 	return ""
+}
+
+func getCertificates(tlsManager *tls.Manager) *section {
+	if tlsManager == nil {
+		return nil
+	}
+
+	x509Certs := tlsManager.GetServerCertificates()
+	var countWarnings int
+	var countErrors int
+
+	for _, cert := range x509Certs {
+		status := getCertificateStatus(cert.NotAfter)
+		switch status {
+		case "disabled":
+			countErrors++
+		case "warning":
+			countWarnings++
+		}
+	}
+
+	return &section{
+		Total:    len(x509Certs),
+		Warnings: countWarnings,
+		Errors:   countErrors,
+	}
 }

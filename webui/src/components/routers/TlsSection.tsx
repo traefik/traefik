@@ -1,5 +1,8 @@
-import { Badge, Box, Card, Flex } from '@traefiklabs/faency'
+import { Badge, Box, Card, Flex, TabsContainer, TabsContent, TabsList, TabsTrigger, Text, Tooltip } from '@traefiklabs/faency'
 import { useMemo } from 'react'
+
+import { buildCertKey, useCertificate } from '../../hooks/use-certificates'
+import { CertificateDetails } from '../certificates/CertificateDetails'
 
 import TlsIcon from './TlsIcon'
 
@@ -9,46 +12,98 @@ import DetailsCard, { SectionTitle } from 'components/resources/DetailsCard'
 
 type Props = {
   data?: Router.TLS
+  rule?: string
 }
 
-const TlsSection = ({ data }: Props) => {
+// Extract domains from router rule (e.g., Host(`example.com`) || Host(`www.example.com`))
+const extractDomainsFromRule = (rule: string): string[] => {
+  const domains: string[] = []
+  const hostRegex = /Host(?:SNI|Regexp)?\(`([^`]+)`\)/g
+  let match
+  while ((match = hostRegex.exec(rule)) !== null) {
+    const domain = match[1]
+    // Filter out regex patterns and wildcards
+    if (!domain.includes('{') && !domain.includes('*') && !domain.includes('[')) {
+      domains.push(domain)
+    }
+  }
+  return domains
+}
+
+const TlsSection = ({ data, rule }: Props) => {
+  // Build display domains from explicit config or extract from rule if using certResolver
+  const displayDomains = useMemo(() => {
+    // 1. If explicit domains are configured, use those
+    if (data?.domains && data.domains.length > 0) {
+      return data.domains
+    }
+    
+    // 2. If certResolver is set but no explicit domains, extract from rule
+    if (data?.certResolver && rule) {
+      const extracted = extractDomainsFromRule(rule)
+      return extracted.map(domain => ({ main: domain, sans: [] as string[] }))
+    }
+    
+    return []
+  }, [data?.certResolver, data?.domains, rule])
+
   const items = useMemo(() => {
     if (data) {
       return [
         data?.options && { key: 'Options', val: data.options },
         { key: 'Passthrough', val: <BooleanState enabled={!!data.passthrough} /> },
         data?.certResolver && { key: 'Certificate resolver', val: data.certResolver },
-        data?.domains && {
-          stackVertical: true,
-          forceNewRow: true,
-          key: 'Domains',
-          val: (
-            <Flex css={{ flexDirection: 'column' }}>
-              {data.domains?.map((domain) => (
-                <Flex key={domain.main} css={{ flexWrap: 'wrap' }}>
-                  <a href={`//${domain.main}`}>
-                    <Badge variant="blue" css={{ mr: '$2', mb: '$2', color: '$primary', borderColor: '$primary' }}>
-                      {domain.main}
-                    </Badge>
-                  </a>
-                  {domain.sans?.map((sub) => (
-                    <a key={sub} href={`//${sub}`}>
-                      <Badge css={{ mr: '$2', mb: '$2' }}>{sub}</Badge>
-                    </a>
-                  ))}
-                </Flex>
-              ))}
-            </Flex>
-          ),
-        },
       ].filter(Boolean) as { key: string; val: string | React.ReactElement }[]
     }
   }, [data])
+
   return (
     <Flex direction="column" gap={2}>
       <SectionTitle icon={<TlsIcon />} title="TLS" />
-      {items?.length ? (
-        <DetailsCard items={items} />
+      {items?.length || displayDomains?.length ? (
+        <>
+          {items && items.length > 0 && <DetailsCard items={items} />}
+          
+          {displayDomains && displayDomains.length > 0 && (
+            <Card css={{ p: '$4' }}>
+              {displayDomains.length === 1 ? (
+                <DomainCertificate domain={displayDomains[0]} />
+              ) : (
+                <TabsContainer defaultValue={displayDomains[0].main}>
+                  <TabsList>
+                    {displayDomains.map((domain) => {
+                      const sansCount = domain.sans?.length || 0
+                      return (
+                        <TabsTrigger key={domain.main} value={domain.main}>
+                          <Flex align="center" gap={2}>
+                            <Text>{domain.main}</Text>
+                            {sansCount > 0 && (
+                              <Tooltip content={
+                                <Flex direction="column" gap={1}>
+                                  <Text css={{ color: 'currentColor', fontWeight: 600 }}>Subject Alternative Names:</Text>
+                                  {domain.sans?.map((san) => (
+                                    <Text key={san} css={{ color: 'currentColor', fontSize: '$1' }}>{san}</Text>
+                                  ))}
+                                </Flex>
+                              }>
+                                <Badge variant="gray">{sansCount}</Badge>
+                              </Tooltip>
+                            )}
+                          </Flex>
+                        </TabsTrigger>
+                      )
+                    })}
+                  </TabsList>
+                  {displayDomains.map((domain) => (
+                    <TabsContent key={domain.main} value={domain.main} css={{ pt: '$4' }}>
+                      <DomainCertificate domain={domain} />
+                    </TabsContent>
+                  ))}
+                </TabsContainer>
+              )}
+            </Card>
+          )}
+        </>
       ) : (
         <Card>
           <Flex direction="column" align="center" justify="center" css={{ flexGrow: 1, textAlign: 'center', py: '$4' }}>
@@ -73,6 +128,27 @@ const TlsSection = ({ data }: Props) => {
       )}
     </Flex>
   )
+}
+
+// Helper component for displaying certificate for a single domain
+const DomainCertificate = ({ domain }: { domain: Router.TlsDomain }) => {
+  const certKey = useMemo(() => buildCertKey(domain.main, domain.sans), [domain])
+  const { certificate, isLoading, error } = useCertificate(certKey)
+
+  if (isLoading) {
+    return <Text>Loading certificate...</Text>
+  }
+
+  if (error) {
+    console.error('[TlsSection] Error fetching certificate:', error)
+    return <Text variant="subtle">Error loading certificate for {domain.main}: {error.message || 'Unknown error'}</Text>
+  }
+
+  if (!certificate) {
+    return <Text variant="subtle">No certificate found for {domain.main}</Text>
+  }
+
+  return <CertificateDetails certificate={certificate} />
 }
 
 export default TlsSection

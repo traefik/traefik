@@ -307,27 +307,22 @@ func (m *Manager) GetServerCertificates() []*x509.Certificate {
 	// We iterate over all the certificates.
 	if defaultStore.DynamicCerts != nil && defaultStore.DynamicCerts.Get() != nil {
 		for _, cert := range defaultStore.DynamicCerts.Get().(map[string]*CertificateData) {
-			x509Cert, err := x509.ParseCertificate(cert.Certificate.Certificate[0])
-			if err != nil {
-				continue
+			// Use Leaf if available (it should always be populated by parseCertificate)
+			if cert.Certificate.Leaf != nil {
+				certificates = append(certificates, cert.Certificate.Leaf)
 			}
-
-			certificates = append(certificates, x509Cert)
 		}
 	}
 
 	if defaultStore.DefaultCertificate != nil {
-		x509Cert, err := x509.ParseCertificate(defaultStore.DefaultCertificate.Certificate.Certificate[0])
-		if err != nil {
-			return certificates
-		}
+		if defaultStore.DefaultCertificate.Certificate.Leaf != nil {
+			// Excluding the generated Traefik default certificate.
+			if defaultStore.DefaultCertificate.Certificate.Leaf.Subject.CommonName == generate.DefaultDomain {
+				return certificates
+			}
 
-		// Excluding the generated Traefik default certificate.
-		if x509Cert.Subject.CommonName == generate.DefaultDomain {
-			return certificates
+			certificates = append(certificates, defaultStore.DefaultCertificate.Certificate.Leaf)
 		}
-
-		certificates = append(certificates, x509Cert)
 	}
 
 	return certificates

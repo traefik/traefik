@@ -54,7 +54,7 @@ func TestReuseService(t *testing.T) {
 	transportManager := service.NewTransportManager(nil)
 	transportManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
 
-	managerFactory := service.NewManagerFactory(staticConfig, nil, nil, transportManager, proxyBuilderMock{}, nil)
+	managerFactory := service.NewManagerFactory(staticConfig, nil, nil, transportManager, proxyBuilderMock{}, nil, nil)
 	tlsManager := tls.NewManager(nil)
 
 	dialerManager := tcp.NewDialerManager(nil)
@@ -192,7 +192,7 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 			transportManager := service.NewTransportManager(nil)
 			transportManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
 
-			managerFactory := service.NewManagerFactory(staticConfig, nil, nil, transportManager, proxyBuilderMock{}, nil)
+			managerFactory := service.NewManagerFactory(staticConfig, nil, nil, transportManager, proxyBuilderMock{}, nil, nil)
 			tlsManager := tls.NewManager(nil)
 
 			dialerManager := tcp.NewDialerManager(nil)
@@ -238,7 +238,7 @@ func TestInternalServices(t *testing.T) {
 	transportManager := service.NewTransportManager(nil)
 	transportManager.Update(map[string]*dynamic.ServersTransport{"default@internal": {}})
 
-	managerFactory := service.NewManagerFactory(staticConfig, nil, nil, transportManager, nil, nil)
+	managerFactory := service.NewManagerFactory(staticConfig, nil, nil, transportManager, nil, nil, nil)
 	tlsManager := tls.NewManager(nil)
 
 	dialerManager := tcp.NewDialerManager(nil)

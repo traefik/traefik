@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"net/url"
 	"sort"
+	"time"
 )
 
 const (
@@ -29,6 +30,15 @@ type orderedRouter interface {
 	rule() string
 	service() string
 	entryPointsCount() int
+}
+
+type orderedCertificate interface {
+	orderedWithName
+
+	status() string
+	issuer() string
+	resolver() string
+	validUntil() time.Time
 }
 
 func sortRouters[T orderedRouter](values url.Values, routers []T) {
@@ -338,6 +348,59 @@ func (m tcpMiddlewareRepresentation) provider() string {
 
 func (m tcpMiddlewareRepresentation) status() string {
 	return m.Status
+}
+
+func sortCertificates[T orderedCertificate](values url.Values, certificates []T) {
+	sortBy := values.Get(sortByParam)
+
+	direction := values.Get(directionParam)
+	if direction == ""	{
+		direction = ascendantSorting
+	}
+
+	switch sortBy {
+	case "name", "cn":
+		sortByName(direction, certificates)
+
+	case "status":
+		sortByFunc(direction, certificates, func(i int) string { return certificates[i].status() })
+
+	case "issuer":
+		sortByFunc(direction, certificates, func(i int) string { return certificates[i].issuer() })
+
+	case "resolver":
+		sortByFunc(direction, certificates, func(i int) string { return certificates[i].resolver() })
+
+	case "validUntil":
+		sortByTime(direction, certificates, func(i int) time.Time { return certificates[i].validUntil() })
+
+	default:
+		sortByName(direction, certificates)
+	}
+}
+
+func sortByTime[T orderedWithName](direction string, results []T, fn func(int) time.Time) {
+	// Ascending
+	if direction == ascendantSorting {
+		sort.Slice(results, func(i, j int) bool {
+			ti, tj := fn(i), fn(j)
+			if ti.Equal(tj) {
+				return results[i].name() < results[j].name()
+			}
+			return ti.Before(tj)
+		})
+
+		return
+	}
+
+	// Descending
+	sort.Slice(results, func(i, j int) bool {
+		ti, tj := fn(i), fn(j)
+		if ti.Equal(tj) {
+			return results[i].name() > results[j].name()
+		}
+		return ti.After(tj)
+	})
 }
 
 func sortByName[T orderedWithName](direction string, results []T) {
