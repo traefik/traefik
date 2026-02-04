@@ -1,5 +1,5 @@
 import { ReactNode } from 'react'
-import { LiaProjectDiagramSolid, LiaServerSolid, LiaCogsSolid, LiaHomeSolid } from 'react-icons/lia'
+import { LiaProjectDiagramSolid, LiaServerSolid, LiaCogsSolid, LiaHomeSolid, LiaCertificateSolid } from 'react-icons/lia'
 
 export type Route = {
   path: string
@@ -22,6 +22,18 @@ export const ROUTES: RouteSections[] = [
         path: '/',
         label: 'Dashboard',
         icon: <LiaHomeSolid color="currentColor" size={20} />,
+      },
+    ],
+  },
+  {
+    section: 'certificates',
+    sectionLabel: 'Certificates',
+    items: [
+      {
+        path: '/certificates',
+        activeMatches: ['/certificates/:name'],
+        label: 'Certificates',
+        icon: <LiaCertificateSolid color="currentColor" size={20} />,
       },
     ],
   },

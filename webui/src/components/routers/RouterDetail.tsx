@@ -54,7 +54,7 @@ export const RouterDetail = ({ data, error, name, protocol }: RouterDetailProps)
       <Flex direction="column" gap={6}>
         <RouterFlowDiagram data={data} protocol={protocol} />
         {data?.error && <ResourceErrors errors={data.error} />}
-        {!isUdp && <TlsSection data={data?.tls} />}
+        {!isUdp && <TlsSection data={data?.tls} rule={data?.rule} />}
       </Flex>
     </>
   )
