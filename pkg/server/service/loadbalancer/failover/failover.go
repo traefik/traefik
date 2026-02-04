@@ -1,16 +1,15 @@
 package failover
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"sync"
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/mirror"
 	"github.com/traefik/traefik/v3/pkg/types"
 )
 
@@ -46,7 +45,13 @@ func New(config *dynamic.Failover) (*Failover, error) {
 			}
 			f.statusCode = httpCodeRanges
 		}
-		f.maxRequestBodyBytes = config.Errors.MaxRequestBodyBytes
+
+		maxRequestBodyBytes := dynamic.FailoverErrorsDefaultMaxRequestBodyBytes
+		if config.Errors.MaxRequestBodyBytes != nil {
+			maxRequestBodyBytes = *config.Errors.MaxRequestBodyBytes
+		}
+
+		f.maxRequestBodyBytes = maxRequestBodyBytes
 	}
 
 	return f, nil
@@ -77,32 +82,26 @@ func (f *Failover) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		request := req.Clone(req.Context())
-		if req.Body != nil && req.Body != http.NoBody {
-			bodyBytes, err := f.readBodyBytes(req)
-			if errors.Is(err, errBodyTooLarge) {
-				http.Error(w, "Request body too large", http.StatusRequestEntityTooLarge)
-				return
-			}
-			if err != nil {
-				http.Error(w, "Error reading request body", http.StatusInternalServerError)
-				return
-			}
+		rr, _, err := mirror.NewReusableRequest(req, true, f.maxRequestBodyBytes)
+		if err != nil && !errors.Is(err, mirror.ErrBodyTooLarge) {
+			http.Error(w, fmt.Sprintf("%s: creating reusable request: %v",
+				http.StatusText(http.StatusInternalServerError), err), http.StatusInternalServerError)
+			return
+		}
 
-			req.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
-
-			request = req.Clone(req.Context())
-			request.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+		if errors.Is(err, mirror.ErrBodyTooLarge) {
+			http.Error(w, "Request body too large", http.StatusRequestEntityTooLarge)
+			return
 		}
 
 		rw := &responseWriter{ResponseWriter: w, statusCoderange: f.statusCode}
-		f.handler.ServeHTTP(rw, req)
+		f.handler.ServeHTTP(rw, rr.Clone(req.Context()))
 
 		if !rw.needFallback {
 			return
 		}
 
-		req = request
+		req = rr.Clone(req.Context())
 	}
 
 	f.fallbackStatusMu.RLock()
@@ -185,28 +184,4 @@ func (f *Failover) SetFallbackHandlerStatus(ctx context.Context, up bool) {
 		// when main and fallback handlers have a DOWN status.
 		fn(f.handlerStatus || f.fallbackStatus)
 	}
-}
-
-var errBodyTooLarge = errors.New("request body too large")
-
-func (f *Failover) readBodyBytes(req *http.Request) ([]byte, error) {
-	defer req.Body.Close()
-
-	if f.maxRequestBodyBytes <= 0 {
-		return io.ReadAll(req.Body)
-	}
-
-	body := make([]byte, f.maxRequestBodyBytes+1)
-	n, err := io.ReadFull(req.Body, body)
-	if errors.Is(err, io.EOF) {
-		return nil, nil
-	}
-	if err != nil && !errors.Is(err, io.ErrUnexpectedEOF) {
-		return nil, fmt.Errorf("reading body bytes: %w", err)
-	}
-	if errors.Is(err, io.ErrUnexpectedEOF) {
-		return body[:n], nil
-	}
-
-	return nil, errBodyTooLarge
 }

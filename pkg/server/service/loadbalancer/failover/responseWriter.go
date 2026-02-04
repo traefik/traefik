@@ -37,6 +37,19 @@ func (r *responseWriter) Header() http.Header {
 }
 
 func (r *responseWriter) WriteHeader(statusCode int) {
+	if statusCode < 200 {
+		// forwarding informational status code.
+		for k, v := range r.header {
+			for _, vv := range v {
+				r.ResponseWriter.Header().Add(k, vv)
+			}
+		}
+
+		r.ResponseWriter.WriteHeader(statusCode)
+
+		return
+	}
+
 	if !r.written {
 		r.written = true
 		r.needFallback = r.statusCoderange.Contains(statusCode)

@@ -308,9 +308,11 @@ func TestFailoverStatusCodeWithRequestBody(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			var receivedBody string
 
+			maxBody := int64(-1)
 			failover, err := New(&dynamic.Failover{
 				Errors: &dynamic.FailoverError{
-					Status: test.statusCode,
+					Status:              test.statusCode,
+					MaxRequestBodyBytes: &maxBody,
 				},
 			})
 			require.NoError(t, err)
@@ -362,8 +364,15 @@ func TestFailoverStatusCodeMaxBodySize(t *testing.T) {
 			expectedMessage:    "Request body too large\n",
 		},
 		{
-			desc:               "no body size limit",
+			desc:               "zero body size limit",
 			maxBodySize:        0,
+			requestBody:        "any size body",
+			expectedStatusCode: http.StatusRequestEntityTooLarge,
+			expectedMessage:    "Request body too large\n",
+		},
+		{
+			desc:               "no body size limit",
+			maxBodySize:        -1,
 			requestBody:        "any size body should work",
 			expectedStatusCode: 200,
 			expectedMessage:    "",
@@ -372,10 +381,11 @@ func TestFailoverStatusCodeMaxBodySize(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
+			maxBody := test.maxBodySize
 			failover, err := New(&dynamic.Failover{
 				Errors: &dynamic.FailoverError{
 					Status:              []string{"503"},
-					MaxRequestBodyBytes: test.maxBodySize,
+					MaxRequestBodyBytes: &maxBody,
 				},
 			})
 			require.NoError(t, err)

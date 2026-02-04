@@ -28,6 +28,8 @@ const (
 	MirroringDefaultMirrorBody = true
 	// MirroringDefaultMaxBodySize is the Mirroring.MaxBodySize option default value.
 	MirroringDefaultMaxBodySize int64 = -1
+	// FailoverErrorsDefaultMaxRequestBodyBytes is the Failover.Errors.MaxBodySize option default value.
+	FailoverErrorsDefaultMaxRequestBodyBytes int64 = -1
 )
 
 // +k8s:deepcopy-gen=true
@@ -205,8 +207,14 @@ type Failover struct {
 
 // FailoverError holds errors configuration.
 type FailoverError struct {
-	MaxRequestBodyBytes int64    `json:"maxRequestBodyBytes,omitempty" toml:"maxRequestBodyBytes,omitempty" yaml:"maxRequestBodyBytes,omitempty" export:"true"`
+	MaxRequestBodyBytes *int64   `json:"maxRequestBodyBytes,omitempty" toml:"maxRequestBodyBytes,omitempty" yaml:"maxRequestBodyBytes,omitempty" export:"true"`
 	Status              []string `json:"status,omitempty" toml:"status,omitempty" yaml:"status,omitempty" export:"true"`
+}
+
+// SetDefaults Default values for a WRRService.
+func (m *FailoverError) SetDefaults() {
+	defaultMaxBodySize := FailoverErrorsDefaultMaxRequestBodyBytes
+	m.MaxRequestBodyBytes = &defaultMaxBodySize
 }
 
 // +k8s:deepcopy-gen=true
