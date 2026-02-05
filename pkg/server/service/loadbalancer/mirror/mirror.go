@@ -54,6 +54,10 @@ type mirrorHandler struct {
 	count uint64
 }
 
+type clonableRequest interface {
+	Clone(context.Context) *http.Request
+}
+
 func (m *Mirroring) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	mirrors := m.getActiveMirrors()
 	if len(mirrors) == 0 {
@@ -62,18 +66,25 @@ func (m *Mirroring) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	logger := log.Ctx(req.Context())
-	rr, bytesRead, err := NewReusableRequest(req, m.mirrorBody, m.maxBodySize)
-	if err != nil && !errors.Is(err, ErrBodyTooLarge) {
-		http.Error(rw, fmt.Sprintf("%s: creating reusable request: %v",
-			http.StatusText(http.StatusInternalServerError), err), http.StatusInternalServerError)
-		return
-	}
 
-	if errors.Is(err, ErrBodyTooLarge) {
-		req.Body = io.NopCloser(io.MultiReader(bytes.NewReader(bytesRead), req.Body))
-		m.handler.ServeHTTP(rw, req)
-		logger.Debug().Msg("No mirroring, request body larger than allowed size")
-		return
+	var rr clonableRequest = req
+
+	if m.mirrorBody {
+		var err error
+		var bytesRead []byte
+		rr, bytesRead, err = NewReusableRequest(req, m.maxBodySize)
+		if err != nil && !errors.Is(err, ErrBodyTooLarge) {
+			http.Error(rw, fmt.Sprintf("%s: creating reusable request: %v",
+				http.StatusText(http.StatusInternalServerError), err), http.StatusInternalServerError)
+			return
+		}
+
+		if errors.Is(err, ErrBodyTooLarge) {
+			req.Body = io.NopCloser(io.MultiReader(bytes.NewReader(bytesRead), req.Body))
+			m.handler.ServeHTTP(rw, req)
+			logger.Debug().Msg("No mirroring, request body larger than allowed size")
+			return
+		}
 	}
 
 	m.handler.ServeHTTP(rw, rr.Clone(req.Context()))
@@ -202,12 +213,12 @@ type ReusableRequest struct {
 var ErrBodyTooLarge = errors.New("request body too large")
 
 // NewReusableRequest returns a new reusable request. If the returned error is ErrBodyTooLarge, NewReusableRequest also returns the
-// bytes that were already consumed from the request's body.
-func NewReusableRequest(req *http.Request, mirrorBody bool, maxBodySize int64) (*ReusableRequest, []byte, error) {
+// bytes already consumed from the request's body.
+func NewReusableRequest(req *http.Request, maxBodySize int64) (*ReusableRequest, []byte, error) {
 	if req == nil {
 		return nil, nil, errors.New("nil input request")
 	}
-	if req.Body == nil || req.ContentLength == 0 || !mirrorBody {
+	if req.Body == nil || req.ContentLength == 0 {
 		return &ReusableRequest{req: req}, nil, nil
 	}
 

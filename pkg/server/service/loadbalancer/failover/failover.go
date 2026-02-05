@@ -82,7 +82,8 @@ func (f *Failover) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		rr, _, err := mirror.NewReusableRequest(req, true, f.maxRequestBodyBytes)
+		// TODO: move reusable request to a common package at some point.
+		rr, _, err := mirror.NewReusableRequest(req, f.maxRequestBodyBytes)
 		if err != nil && !errors.Is(err, mirror.ErrBodyTooLarge) {
 			http.Error(w, fmt.Sprintf("%s: creating reusable request: %v",
 				http.StatusText(http.StatusInternalServerError), err), http.StatusInternalServerError)
@@ -94,7 +95,7 @@ func (f *Failover) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		rw := &responseWriter{ResponseWriter: w, statusCoderange: f.statusCode}
+		rw := &responseWriter{ResponseWriter: w, statusCodeRange: f.statusCode}
 		f.handler.ServeHTTP(rw, rr.Clone(req.Context()))
 
 		if !rw.needFallback {

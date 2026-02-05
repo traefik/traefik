@@ -224,7 +224,7 @@ func TestCloneRequest(t *testing.T) {
 		assert.NoError(t, err)
 
 		ctx := req.Context()
-		rr, _, err := NewReusableRequest(req, true, defaultMaxBodySize)
+		rr, _, err := NewReusableRequest(req, defaultMaxBodySize)
 		assert.NoError(t, err)
 
 		// first call
@@ -249,7 +249,7 @@ func TestCloneRequest(t *testing.T) {
 		ctx := req.Context()
 		req.ContentLength = int64(contentLength)
 
-		rr, _, err := NewReusableRequest(req, true, defaultMaxBodySize)
+		rr, _, err := NewReusableRequest(req, defaultMaxBodySize)
 		assert.NoError(t, err)
 
 		// first call
@@ -272,7 +272,7 @@ func TestCloneRequest(t *testing.T) {
 		req, err := http.NewRequest(http.MethodPost, "/", buf)
 		assert.NoError(t, err)
 
-		_, expectedBytes, err := NewReusableRequest(req, true, 2)
+		_, expectedBytes, err := NewReusableRequest(req, 2)
 		assert.Error(t, err)
 		assert.Equal(t, expectedBytes, bb[:3])
 	})
@@ -284,7 +284,7 @@ func TestCloneRequest(t *testing.T) {
 		req, err := http.NewRequest(http.MethodPost, "/", buf)
 		assert.NoError(t, err)
 
-		rr, expectedBytes, err := NewReusableRequest(req, true, 20)
+		rr, expectedBytes, err := NewReusableRequest(req, 20)
 		assert.NoError(t, err)
 		assert.Nil(t, expectedBytes)
 		assert.Len(t, rr.body, 10)
@@ -296,14 +296,14 @@ func TestCloneRequest(t *testing.T) {
 		req, err := http.NewRequest(http.MethodGet, "/", buf)
 		assert.NoError(t, err)
 
-		rr, expectedBytes, err := NewReusableRequest(req, true, 20)
+		rr, expectedBytes, err := NewReusableRequest(req, 20)
 		assert.NoError(t, err)
 		assert.Nil(t, expectedBytes)
 		assert.Empty(t, rr.body)
 	})
 
 	t.Run("no request given", func(t *testing.T) {
-		_, _, err := NewReusableRequest(nil, true, defaultMaxBodySize)
+		_, _, err := NewReusableRequest(nil, defaultMaxBodySize)
 		assert.Error(t, err)
 	})
 }

@@ -1,6 +1,9 @@
 package failover
 
 import (
+	"bufio"
+	"fmt"
+	"net"
 	"net/http"
 
 	"github.com/traefik/traefik/v3/pkg/types"
@@ -12,7 +15,7 @@ type responseWriter struct {
 	needFallback    bool
 	written         bool
 	header          http.Header
-	statusCoderange types.HTTPCodeRanges
+	statusCodeRange types.HTTPCodeRanges
 }
 
 func (r *responseWriter) Write(b []byte) (int, error) {
@@ -37,22 +40,13 @@ func (r *responseWriter) Header() http.Header {
 }
 
 func (r *responseWriter) WriteHeader(statusCode int) {
-	if statusCode < 200 {
-		// forwarding informational status code.
-		for k, v := range r.header {
-			for _, vv := range v {
-				r.ResponseWriter.Header().Add(k, vv)
-			}
-		}
-
-		r.ResponseWriter.WriteHeader(statusCode)
-
+	if statusCode >= 100 && statusCode <= 199 && statusCode != http.StatusSwitchingProtocols {
 		return
 	}
 
 	if !r.written {
 		r.written = true
-		r.needFallback = r.statusCoderange.Contains(statusCode)
+		r.needFallback = r.statusCodeRange.Contains(statusCode)
 
 		if !r.needFallback {
 			for k, v := range r.header {
@@ -70,4 +64,12 @@ func (r *responseWriter) Flush() {
 	if flusher, ok := r.ResponseWriter.(http.Flusher); ok {
 		flusher.Flush()
 	}
+}
+
+func (r *responseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	if h, ok := r.ResponseWriter.(http.Hijacker); ok {
+		return h.Hijack()
+	}
+
+	return nil, nil, fmt.Errorf("not a hijacker: %T", r.ResponseWriter)
 }
