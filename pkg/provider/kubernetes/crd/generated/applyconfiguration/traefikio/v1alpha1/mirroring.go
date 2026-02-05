@@ -70,6 +70,19 @@ func (b *MirroringApplyConfiguration) WithNamespace(value string) *MirroringAppl
 	return b
 }
 
+// WithMiddlewares adds the given value to the Middlewares field in the declarative configuration
+// and returns the receiver, so that objects can be build by chaining "With" function invocations.
+// If called multiple times, values provided by each call will be appended to the Middlewares field.
+func (b *MirroringApplyConfiguration) WithMiddlewares(values ...*MiddlewareRefApplyConfiguration) *MirroringApplyConfiguration {
+	for i := range values {
+		if values[i] == nil {
+			panic("nil value passed to WithMiddlewares")
+		}
+		b.LoadBalancerSpecApplyConfiguration.Middlewares = append(b.LoadBalancerSpecApplyConfiguration.Middlewares, *values[i])
+	}
+	return b
+}
+
 // WithSticky sets the Sticky field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Sticky field is set to the value of the last call.

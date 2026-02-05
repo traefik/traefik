@@ -31,12 +31,12 @@ jobs:
 
     steps:
       - name: Check out code
-        uses: actions/checkout@v6
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           fetch-depth: 0
 
       - name: Set up Go ${{ env.GO_VERSION }}
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
         env:
           # Ensure cache consistency on Linux, see https://github.com/actions/setup-go/pull/383
           ImageOS: ${{ matrix.os }}
@@ -45,7 +45,7 @@ jobs:
           check-latest: true
 
       - name: Artifact webui
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: webui.tar.gz
 
@@ -64,7 +64,7 @@ jobs:
           echo "GORELEASER_CONFIG_FILE_PATH=$GORELEASER_CONFIG_FILE_PATH" >> $GITHUB_ENV
 
       - name: Build with goreleaser
-        uses: goreleaser/goreleaser-action@v6
+        uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a # v6.4.0
         with:
           distribution: goreleaser
           # 'latest', 'nightly', or a semver
@@ -72,7 +72,7 @@ jobs:
           args: release --clean --timeout="90m" --config "${{ env.GORELEASER_CONFIG_FILE_PATH }}"
 
       - name: Artifact binaries
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: ${{ matrix.os }}-binaries
           path: |
@@ -91,12 +91,12 @@ jobs:
 
     steps:
       - name: Check out code
-        uses: actions/checkout@v6
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           fetch-depth: 0
 
       - name: Artifact webui
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: webui.tar.gz
 
@@ -113,7 +113,7 @@ jobs:
           echo "${TRAEFIKER_RSA}" | base64 --decode > ~/.ssh/traefiker_rsa
 
       - name: Download All Artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           path: dist/
           pattern: "*-binaries"
