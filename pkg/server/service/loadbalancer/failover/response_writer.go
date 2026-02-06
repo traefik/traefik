@@ -41,6 +41,8 @@ func (r *responseWriter) Header() http.Header {
 
 func (r *responseWriter) WriteHeader(statusCode int) {
 	if statusCode >= 100 && statusCode <= 199 && statusCode != http.StatusSwitchingProtocols {
+		clear(r.header)
+
 		return
 	}
 
