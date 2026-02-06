@@ -55,7 +55,7 @@ type mirrorHandler struct {
 }
 
 type clonableRequest interface {
-	Clone(context.Context) *http.Request
+	Clone(ctx context.Context) *http.Request
 }
 
 func (m *Mirroring) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
