@@ -564,6 +564,8 @@ type PassTLSClientCert struct {
 	Info *TLSClientCertificateInfo `json:"info,omitempty" toml:"info,omitempty" yaml:"info,omitempty" export:"true"`
 }
 
+// +k8s:deepcopy-gen=true
+
 // PassTLSClientCertNginx holds the pass TLS client cert middleware for ingress-nginx provider.
 type PassTLSClientCertNginx struct {
 	VerifyClient string                `json:"verifyClient,omitempty" toml:"verifyClient,omitempty" yaml:"verifyClient,omitempty" export:"true"`
