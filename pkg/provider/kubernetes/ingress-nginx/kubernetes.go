@@ -309,7 +309,6 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 		}
 
 		var clientAuthTLSOptionName string
-		var clientAuthCAFiles []types.FileOrContent
 		if ingressConfig.AuthTLSSecret != nil {
 			tlsOptName := provider.Normalize(ingress.Namespace + "-" + ingress.Name + "-" + *ingressConfig.AuthTLSSecret)
 
@@ -324,7 +323,6 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 			}
 
 			clientAuthTLSOptionName = tlsOptName
-			clientAuthCAFiles = tlsOptions[tlsOptName].ClientAuth.CAFiles
 		}
 
 		namedServersTransport, err := p.buildServersTransport(ingress.Namespace, ingress.Name, ingressConfig)
@@ -355,7 +353,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 				Service:    defaultBackendName,
 			}
 
-			if err := p.applyMiddlewares(ingress.Namespace, defaultBackendName, "", "", hosts, ingressConfig, hasTLS, rt, conf, clientAuthCAFiles); err != nil {
+			if err := p.applyMiddlewares(ingress.Namespace, defaultBackendName, "", "", hosts, ingressConfig, hasTLS, rt, conf); err != nil {
 				logger.Error().Err(err).Msg("Error applying middlewares")
 			}
 
@@ -373,7 +371,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 				rtTLS.TLS.Options = clientAuthTLSOptionName
 			}
 
-			if err := p.applyMiddlewares(ingress.Namespace, defaultBackendTLSName, "", "", hosts, ingressConfig, false, rtTLS, conf, clientAuthCAFiles); err != nil {
+			if err := p.applyMiddlewares(ingress.Namespace, defaultBackendTLSName, "", "", hosts, ingressConfig, false, rtTLS, conf); err != nil {
 				logger.Error().Err(err).Msg("Error applying middlewares")
 			}
 
@@ -450,7 +448,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 					Service:    key,
 				}
 
-				if err := p.applyMiddlewares(ingress.Namespace, key, "", "", hosts, ingressConfig, hasTLS, rt, conf, clientAuthCAFiles); err != nil {
+				if err := p.applyMiddlewares(ingress.Namespace, key, "", "", hosts, ingressConfig, hasTLS, rt, conf); err != nil {
 					logger.Error().Err(err).Msg("Error applying middlewares")
 				}
 
@@ -467,7 +465,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 					rtTLS.TLS.Options = clientAuthTLSOptionName
 				}
 
-				if err := p.applyMiddlewares(ingress.Namespace, key+"-tls", "", "", hosts, ingressConfig, false, rtTLS, conf, clientAuthCAFiles); err != nil {
+				if err := p.applyMiddlewares(ingress.Namespace, key+"-tls", "", "", hosts, ingressConfig, false, rtTLS, conf); err != nil {
 					logger.Error().Err(err).Msg("Error applying middlewares")
 				}
 
@@ -536,7 +534,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 					conf.HTTP.ServersTransports[namedServersTransport.Name] = namedServersTransport.ServersTransport
 				}
 
-				if err := p.applyMiddlewares(ingress.Namespace, routerKey, pa.Path, rule.Host, hosts, ingressConfig, hasTLS, rt, conf, clientAuthCAFiles); err != nil {
+				if err := p.applyMiddlewares(ingress.Namespace, routerKey, pa.Path, rule.Host, hosts, ingressConfig, hasTLS, rt, conf); err != nil {
 					logger.Error().Err(err).Msg("Error applying middlewares")
 				}
 			}
@@ -845,7 +843,7 @@ func (p *Provider) loadCertificates(ctx context.Context, ingress *netv1.Ingress,
 	return nil
 }
 
-func (p *Provider) applyMiddlewares(namespace, routerKey, rulePath, ruleHost string, hosts map[string]bool, ingressConfig ingressConfig, hasTLS bool, rt *dynamic.Router, conf *dynamic.Configuration, clientAuthCAFiles []types.FileOrContent) error {
+func (p *Provider) applyMiddlewares(namespace, routerKey, rulePath, ruleHost string, hosts map[string]bool, ingressConfig ingressConfig, hasTLS bool, rt *dynamic.Router, conf *dynamic.Configuration) error {
 	applyAppRootConfiguration(routerKey, ingressConfig, rt, conf)
 	applyFromToWwwRedirect(hosts, ruleHost, routerKey, ingressConfig, rt, conf)
 	applyRedirect(routerKey, ingressConfig, rt, conf)
@@ -870,7 +868,7 @@ func (p *Provider) applyMiddlewares(namespace, routerKey, rulePath, ruleHost str
 
 	applyUpstreamVhost(routerKey, ingressConfig, rt, conf)
 
-	if err := applyAuthTLSPassCertificateToUpstream(routerKey, ingressConfig, rt, conf, clientAuthCAFiles); err != nil {
+	if err := p.applyAuthTLSPassCertificateToUpstream(namespace, routerKey, ingressConfig, rt, conf); err != nil {
 		return fmt.Errorf("applying auth tls pass certificate to upstream: %w", err)
 	}
 
@@ -1274,7 +1272,7 @@ func applyForwardAuthConfiguration(routerName string, ingressConfig ingressConfi
 	return nil
 }
 
-func applyAuthTLSPassCertificateToUpstream(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration, clientAuthCAFiles []types.FileOrContent) error {
+func (p *Provider) applyAuthTLSPassCertificateToUpstream(ingressNamespace string, routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
 	if !ptr.Deref(ingressConfig.AuthTLSPassCertificateToUpstream, false) {
 		return nil
 	}
@@ -1282,11 +1280,22 @@ func applyAuthTLSPassCertificateToUpstream(routerName string, ingressConfig ingr
 		return errors.New("auth-tls-pass-certificate-to-upstream requires auth-tls-secret to be configured")
 	}
 
+	verifyClient := ptr.Deref(ingressConfig.AuthTLSVerifyClient, "on")
+
+	var caFiles []types.FileOrContent
+	if verifyClient == "optional_no_ca" {
+		blocks, err := p.loadCertBlock(ingressNamespace, ingressConfig)
+		if err != nil {
+			return fmt.Errorf("reading client certificate: %w", err)
+		}
+		caFiles = []types.FileOrContent{*blocks.CA}
+	}
+
 	passCertificateToUpstreamMiddlewareName := routerName + "-pass-certificate-to-upstream"
 	conf.HTTP.Middlewares[passCertificateToUpstreamMiddlewareName] = &dynamic.Middleware{
 		PassTLSClientCertNginx: &dynamic.PassTLSClientCertNginx{
-			VerifyClient: ptr.Deref(ingressConfig.AuthTLSVerifyClient, "on"),
-			CAFiles:      clientAuthCAFiles,
+			VerifyClient: verifyClient,
+			CAFiles:      caFiles,
 		},
 	}
 	rt.Middlewares = append(rt.Middlewares, passCertificateToUpstreamMiddlewareName)
@@ -1410,10 +1419,10 @@ func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *s
 	return eventsChanBuffered
 }
 
-func (p *Provider) buildClientAuthTLSOption(ingressNamespace string, config ingressConfig) (tls.Options, error) {
+func (p *Provider) loadCertBlock(ingressNamespace string, config ingressConfig) (*certBlocks, error) {
 	secretParts := strings.SplitN(*config.AuthTLSSecret, "/", 2)
 	if len(secretParts) != 2 {
-		return tls.Options{}, errors.New("auth-tls-secret is not in a correct namespace/name format")
+		return nil, errors.New("auth-tls-secret is not in a correct namespace/name format")
 	}
 
 	// Expected format: namespace/name.
@@ -1421,23 +1430,32 @@ func (p *Provider) buildClientAuthTLSOption(ingressNamespace string, config ingr
 	secretName := secretParts[1]
 
 	if secretNamespace == "" {
-		return tls.Options{}, errors.New("auth-tls-secret has empty namespace")
+		return nil, errors.New("auth-tls-secret has empty namespace")
 	}
 	if secretName == "" {
-		return tls.Options{}, errors.New("auth-tls-secret has empty name")
+		return nil, errors.New("auth-tls-secret has empty name")
 	}
 	// Cross-namespace secrets are not supported.
 	if secretNamespace != ingressNamespace {
-		return tls.Options{}, fmt.Errorf("cross-namespace auth-tls-secret is not supported: secret namespace %q does not match ingress namespace %q", secretNamespace, ingressNamespace)
+		return nil, fmt.Errorf("cross-namespace auth-tls-secret is not supported: secret namespace %q does not match ingress namespace %q", secretNamespace, ingressNamespace)
 	}
 
 	blocks, err := p.certificateBlocks(secretNamespace, secretName)
 	if err != nil {
-		return tls.Options{}, fmt.Errorf("reading client certificate: %w", err)
+		return nil, fmt.Errorf("reading client certificate: %w", err)
 	}
 
 	if blocks.CA == nil {
-		return tls.Options{}, errors.New("secret does not contain a CA certificate")
+		return nil, errors.New("secret does not contain a CA certificate")
+	}
+
+	return blocks, nil
+}
+
+func (p *Provider) buildClientAuthTLSOption(ingressNamespace string, config ingressConfig) (tls.Options, error) {
+	blocks, err := p.loadCertBlock(ingressNamespace, config)
+	if err != nil {
+		return tls.Options{}, fmt.Errorf("reading client certificate: %w", err)
 	}
 
 	// Default verifyClient value is "on" on ingress-nginx.
