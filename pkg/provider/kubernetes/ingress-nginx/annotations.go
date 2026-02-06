@@ -56,6 +56,8 @@ type ingressConfig struct {
 	ProxySSLName        *string `annotation:"nginx.ingress.kubernetes.io/proxy-ssl-name"`
 	ProxySSLServerName  *string `annotation:"nginx.ingress.kubernetes.io/proxy-ssl-server-name"`
 	ProxyConnectTimeout *int    `annotation:"nginx.ingress.kubernetes.io/proxy-connect-timeout"`
+	ProxyReadTimeout    *int    `annotation:"nginx.ingress.kubernetes.io/proxy-read-timeout"`
+	ProxySendTimeout    *int    `annotation:"nginx.ingress.kubernetes.io/proxy-send-timeout"`
 
 	EnableCORS                 *bool     `annotation:"nginx.ingress.kubernetes.io/enable-cors"`
 	EnableCORSAllowCredentials *bool     `annotation:"nginx.ingress.kubernetes.io/cors-allow-credentials"`
