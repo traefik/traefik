@@ -395,6 +395,18 @@ func clientHelloInfo(br *bufio.Reader) (*clientHello, error) {
 
 	recLen := int(hdr[3])<<8 | int(hdr[4]) // ignoring version in hdr[1:3]
 
+	// Per RFC 8446 Section 5.1, the maximum TLS record payload length is 2^14 (16384) bytes.
+	// A ClientHello is always a plaintext record, so any value exceeding this limit is invalid
+	// and likely indicates an attack attempting to force oversized per-connection buffer allocations.
+	const maxTLSRecordLen = 16384
+	if recLen > maxTLSRecordLen {
+		log.WithoutContext().Debugf("Discarding TLS record with oversized length advertisement: %d", recLen)
+		return &clientHello{
+			isTLS:  true,
+			peeked: getPeeked(br),
+		}, nil
+	}
+
 	if recordHeaderLen+recLen > defaultBufSize {
 		br = bufio.NewReaderSize(br, recordHeaderLen+recLen)
 	}
