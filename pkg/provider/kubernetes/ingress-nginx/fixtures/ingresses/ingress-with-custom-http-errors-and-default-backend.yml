@@ -1,0 +1,23 @@
+---
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: ingress-with-custom-http-errors-and-default-backend
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/default-backend: whoami_b
+    nginx.ingress.kubernetes.io/custom-http-errors: "404,415"
+
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: whoami.localhost
+      http:
+        paths:
+          - path: /
+            pathType: Exact
+            backend:
+              service:
+                name: whoami
+                port:
+                  number: 80

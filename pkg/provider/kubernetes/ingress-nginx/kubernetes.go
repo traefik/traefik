@@ -374,7 +374,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 				Service:    defaultBackendName,
 			}
 
-			if err := p.applyMiddlewares(ingress.Namespace, defaultBackendName, "", "", hosts, ingressConfig, hasTLS, rt, conf); err != nil {
+			if err := p.applyMiddlewares(ingress.Namespace, ingress.Name, defaultBackendName, "", "", ingress.Spec.DefaultBackend, hosts, ingressConfig, hasTLS, rt, conf); err != nil {
 				logger.Error().Err(err).Msg("Error applying middlewares")
 			}
 
@@ -392,7 +392,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 				rtTLS.TLS.Options = clientAuthTLSOptionName
 			}
 
-			if err := p.applyMiddlewares(ingress.Namespace, defaultBackendTLSName, "", "", hosts, ingressConfig, false, rtTLS, conf); err != nil {
+			if err := p.applyMiddlewares(ingress.Namespace, ingress.Name, defaultBackendTLSName, "", "", ingress.Spec.DefaultBackend, hosts, ingressConfig, false, rtTLS, conf); err != nil {
 				logger.Error().Err(err).Msg("Error applying middlewares")
 			}
 
@@ -469,7 +469,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 					Service:    key,
 				}
 
-				if err := p.applyMiddlewares(ingress.Namespace, key, "", "", hosts, ingressConfig, hasTLS, rt, conf); err != nil {
+				if err := p.applyMiddlewares(ingress.Namespace, ingress.Name, key, "", "", ingress.Spec.DefaultBackend, hosts, ingressConfig, hasTLS, rt, conf); err != nil {
 					logger.Error().Err(err).Msg("Error applying middlewares")
 				}
 
@@ -486,7 +486,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 					rtTLS.TLS.Options = clientAuthTLSOptionName
 				}
 
-				if err := p.applyMiddlewares(ingress.Namespace, key+"-tls", "", "", hosts, ingressConfig, false, rtTLS, conf); err != nil {
+				if err := p.applyMiddlewares(ingress.Namespace, ingress.Name, key+"-tls", "", "", ingress.Spec.DefaultBackend, hosts, ingressConfig, false, rtTLS, conf); err != nil {
 					logger.Error().Err(err).Msg("Error applying middlewares")
 				}
 
@@ -555,7 +555,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 					conf.HTTP.ServersTransports[namedServersTransport.Name] = namedServersTransport.ServersTransport
 				}
 
-				if err := p.applyMiddlewares(ingress.Namespace, routerKey, pa.Path, rule.Host, hosts, ingressConfig, hasTLS, rt, conf); err != nil {
+				if err := p.applyMiddlewares(ingress.Namespace, ingress.Name, routerKey, pa.Path, rule.Host, &pa.Backend, hosts, ingressConfig, hasTLS, rt, conf); err != nil {
 					logger.Error().Err(err).Msg("Error applying middlewares")
 				}
 			}
@@ -666,6 +666,18 @@ func (p *Provider) buildPassthroughService(namespace string, backend netv1.Ingre
 	return &dynamic.TCPService{LoadBalancer: lb}, nil
 }
 
+func getPort(service *corev1.Service, backend netv1.IngressBackend) (string, corev1.ServicePort, bool) {
+	for _, p := range service.Spec.Ports {
+		// A port with number 0 or an empty name is not allowed, this case is there for the default backend service.
+		if (backend.Service.Port.Number == 0 && backend.Service.Port.Name == "") ||
+			(backend.Service.Port.Number == p.Port || (backend.Service.Port.Name == p.Name && len(p.Name) > 0)) {
+			return p.Name, p, true
+		}
+	}
+
+	return "", corev1.ServicePort{}, false
+}
+
 func (p *Provider) getBackendAddresses(namespace string, backend netv1.IngressBackend, cfg ingressConfig) ([]backendAddress, error) {
 	service, err := p.k8sClient.GetService(namespace, backend.Service.Name)
 	if err != nil {
@@ -676,19 +688,7 @@ func (p *Provider) getBackendAddresses(namespace string, backend netv1.IngressBa
 		return nil, errors.New("externalName services not allowed")
 	}
 
-	var portName string
-	var portSpec corev1.ServicePort
-	var match bool
-	for _, p := range service.Spec.Ports {
-		// A port with number 0 or an empty name is not allowed, this case is there for the default backend service.
-		if (backend.Service.Port.Number == 0 && backend.Service.Port.Name == "") ||
-			(backend.Service.Port.Number == p.Port || (backend.Service.Port.Name == p.Name && len(p.Name) > 0)) {
-			portName = p.Name
-			portSpec = p
-			match = true
-			break
-		}
-	}
+	portName, portSpec, match := getPort(service, backend)
 	if !match {
 		return nil, errors.New("service port not found")
 	}
@@ -702,7 +702,35 @@ func (p *Provider) getBackendAddresses(namespace string, backend netv1.IngressBa
 		return []backendAddress{{Address: net.JoinHostPort(service.Spec.ClusterIP, strconv.Itoa(int(portSpec.Port)))}}, nil
 	}
 
-	endpointSlices, err := p.k8sClient.GetEndpointSlicesForService(namespace, backend.Service.Name)
+	addresses, err := p.getBackendAddressesFromEndpointSlices(namespace, backend.Service.Name, portName)
+	if err != nil {
+		return nil, fmt.Errorf("getting backend addresses: %w", err)
+	}
+
+	defaultBackend := ptr.Deref(cfg.DefaultBackend, "")
+	if defaultBackend == "" || defaultBackend == backend.Service.Name || len(addresses) > 0 {
+		return addresses, nil
+	}
+
+	serviceDefaultBackend, err := p.k8sClient.GetService(namespace, defaultBackend)
+	if err != nil {
+		return nil, fmt.Errorf("getting service: %w", err)
+	}
+
+	if p.DisableSvcExternalName && serviceDefaultBackend.Spec.Type == corev1.ServiceTypeExternalName {
+		return nil, errors.New("externalName services not allowed")
+	}
+
+	portName, _, match = getPort(serviceDefaultBackend, netv1.IngressBackend{Service: &netv1.IngressServiceBackend{Name: defaultBackend}})
+	if !match {
+		return nil, errors.New("service port not found")
+	}
+
+	return p.getBackendAddressesFromEndpointSlices(namespace, defaultBackend, portName)
+}
+
+func (p *Provider) getBackendAddressesFromEndpointSlices(namespace, name, portName string) ([]backendAddress, error) {
+	endpointSlices, err := p.k8sClient.GetEndpointSlicesForService(namespace, name)
 	if err != nil {
 		return nil, fmt.Errorf("getting endpointslices: %w", err)
 	}
@@ -867,7 +895,12 @@ func (p *Provider) loadCertificates(ctx context.Context, ingress *netv1.Ingress,
 	return nil
 }
 
-func (p *Provider) applyMiddlewares(namespace, routerKey, rulePath, ruleHost string, hosts map[string]bool, ingressConfig ingressConfig, hasTLS bool, rt *dynamic.Router, conf *dynamic.Configuration) error {
+func (p *Provider) applyMiddlewares(namespace, ingressName, routerKey, rulePath, ruleHost string, backend *netv1.IngressBackend, hosts map[string]bool, ingressConfig ingressConfig, hasTLS bool, rt *dynamic.Router, conf *dynamic.Configuration) error {
+	err := p.applyCustomHTTPErrors(namespace, ingressName, routerKey, backend, ingressConfig, rt, conf)
+	if err != nil {
+		return err
+	}
+
 	applyAppRootConfiguration(routerKey, ingressConfig, rt, conf)
 	applyFromToWwwRedirect(hosts, ruleHost, routerKey, ingressConfig, rt, conf)
 	applyRedirect(routerKey, ingressConfig, rt, conf)
@@ -899,7 +932,55 @@ func (p *Provider) applyMiddlewares(namespace, routerKey, rulePath, ruleHost str
 	if err := p.applyCustomHeaders(routerKey, ingressConfig, rt, conf); err != nil {
 		return fmt.Errorf("applying custom headers: %w", err)
 	}
+	return nil
+}
 
+func (p *Provider) applyCustomHTTPErrors(namespace, ingressName, routerName string, targetedService *netv1.IngressBackend, config ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
+	customHTTPErrors := ptr.Deref(config.CustomHTTPErrors, []string{})
+	if len(customHTTPErrors) == 0 {
+		return nil
+	}
+
+	serviceName := defaultBackendName
+	if defaultBackend := ptr.Deref(config.DefaultBackend, ""); defaultBackend != "" {
+		backend := netv1.IngressBackend{Service: &netv1.IngressServiceBackend{Name: defaultBackend}}
+		service, err := p.buildService(namespace, backend, config)
+		if err != nil {
+			return err
+		}
+
+		serviceName = fmt.Sprintf("default-backend-%s", routerName)
+		conf.HTTP.Services[serviceName] = service
+	}
+
+	if targetedService == nil {
+		return errors.New("targeted ingress backend is nil")
+	}
+	k8sServiceName := targetedService.Service.Name
+	serviceK8s, err := p.k8sClient.GetService(namespace, k8sServiceName)
+	if err != nil {
+		return fmt.Errorf("getting service: %w", err)
+	}
+
+	_, portSpec, _ := getPort(serviceK8s, *targetedService)
+
+	customErrorMiddlewareName := routerName + "-custom-http-errors"
+	headers := http.Header(map[string][]string{
+		"X-Namespaces":   {namespace},
+		"X-Ingress-Name": {ingressName},
+		"X-Service-Name": {k8sServiceName},
+		"X-Service-Port": {strconv.Itoa(int(portSpec.Port))},
+	})
+
+	conf.HTTP.Middlewares[customErrorMiddlewareName] = &dynamic.Middleware{
+		Errors: &dynamic.ErrorPage{
+			Status:       customHTTPErrors,
+			Service:      serviceName,
+			NGinXHeaders: &headers,
+		},
+	}
+
+	rt.Middlewares = append(rt.Middlewares, customErrorMiddlewareName)
 	return nil
 }
 
