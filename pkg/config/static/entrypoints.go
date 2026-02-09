@@ -9,6 +9,7 @@ import (
 	ptypes "github.com/traefik/paerser/types"
 	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	"github.com/traefik/traefik/v3/pkg/types"
+	"knative.dev/pkg/ptr"
 )
 
 // EntryPoint holds the entry point configuration.
@@ -200,9 +201,8 @@ type ObservabilityConfig struct {
 
 // SetDefaults sets the default values.
 func (o *ObservabilityConfig) SetDefaults() {
-	defaultValue := true
-	o.AccessLogs = &defaultValue
-	o.Metrics = &defaultValue
-	o.Tracing = &defaultValue
+	o.AccessLogs = ptr.Bool(true)
+	o.Metrics = ptr.Bool(true)
+	o.Tracing = ptr.Bool(true)
 	o.TraceVerbosity = otypes.MinimalVerbosity
 }
