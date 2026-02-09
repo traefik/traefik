@@ -2472,6 +2472,21 @@ func (s *SimpleSuite) TestFailoverService() {
 	// Traffic should return to the main service
 	assert.Equal(s.T(), 5, primaryCount, "Expected all requests to return to main service when back up")
 	assert.Equal(s.T(), 0, fallbackCount, "Expected no requests to go to fallback service")
+
+	// Test 4: Stop both services and verify we get 503
+	s.composeStop("whoami1")
+	s.composeStop("whoami2")
+
+	// Wait for health checks to detect both services are down
+	time.Sleep(3 * time.Second)
+
+	// Request should return 503 Service Unavailable when both services are down
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/whoami", nil)
+	require.NoError(s.T(), err)
+
+	response, err := http.DefaultClient.Do(req)
+	require.NoError(s.T(), err)
+	assert.Equal(s.T(), http.StatusServiceUnavailable, response.StatusCode)
 }
 
 func (s *SimpleSuite) TestFailoverServiceWithStatusCode() {
@@ -2515,45 +2530,6 @@ func (s *SimpleSuite) TestFailoverServiceWithStatusCode() {
 	// Main was called but returned 503, triggering failover to fallback
 	assert.GreaterOrEqual(s.T(), mainCallCount.Load(), int32(1), "Main service should have been called at least once")
 	assert.GreaterOrEqual(s.T(), fallbackCallCount.Load(), int32(1), "Fallback service should have been called at least once")
-}
-
-func (s *SimpleSuite) TestFailoverServiceBothDown() {
-	s.createComposeProject("base")
-
-	s.composeUp()
-	defer s.composeDown()
-
-	whoami1IP := s.getComposeServiceIP("whoami1")
-	whoami2IP := s.getComposeServiceIP("whoami2")
-
-	file := s.adaptFile("fixtures/failover.toml", struct {
-		MainServer     string
-		FallbackServer string
-	}{
-		MainServer:     whoami1IP,
-		FallbackServer: whoami2IP,
-	})
-
-	s.traefikCmd(withConfigFile(file))
-
-	// Wait for Traefik to be ready
-	err := try.GetRequest("http://127.0.0.1:8080/api/http/services", 2*time.Second, try.BodyContains("failover-service"))
-	require.NoError(s.T(), err)
-
-	// Stop both services
-	s.composeStop("whoami1")
-	s.composeStop("whoami2")
-
-	// Wait for health checks to detect both services are down
-	time.Sleep(3 * time.Second)
-
-	// Request should return 503 Service Unavailable when both services are down
-	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/whoami", nil)
-	require.NoError(s.T(), err)
-
-	response, err := http.DefaultClient.Do(req)
-	require.NoError(s.T(), err)
-	assert.Equal(s.T(), http.StatusServiceUnavailable, response.StatusCode)
 }
 
 func (s *SimpleSuite) TestServiceMiddleware() {

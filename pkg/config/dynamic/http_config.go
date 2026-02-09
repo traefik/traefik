@@ -10,6 +10,7 @@ import (
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"google.golang.org/grpc/codes"
+	"k8s.io/utils/ptr"
 )
 
 const (
@@ -213,8 +214,7 @@ type FailoverError struct {
 
 // SetDefaults Default values for a WRRService.
 func (m *FailoverError) SetDefaults() {
-	defaultMaxBodySize := FailoverErrorsDefaultMaxRequestBodyBytes
-	m.MaxRequestBodyBytes = &defaultMaxBodySize
+	m.MaxRequestBodyBytes = ptr.To(FailoverErrorsDefaultMaxRequestBodyBytes)
 }
 
 // +k8s:deepcopy-gen=true
