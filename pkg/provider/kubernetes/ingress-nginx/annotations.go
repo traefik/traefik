@@ -73,6 +73,9 @@ type ingressConfig struct {
 	CustomHeaders *string `annotation:"nginx.ingress.kubernetes.io/custom-headers"`
 	UpstreamVhost *string `annotation:"nginx.ingress.kubernetes.io/upstream-vhost"`
 
+	CustomHTTPErrors *[]string `annotation:"nginx.ingress.kubernetes.io/custom-http-errors"`
+	DefaultBackend   *string   `annotation:"nginx.ingress.kubernetes.io/default-backend"`
+
 	// ProxyRequestBuffering controls whether request buffering is enabled.
 	ProxyRequestBuffering *string `annotation:"nginx.ingress.kubernetes.io/proxy-request-buffering"`
 	// ClientBodyBufferSize sets the size of the buffer used for reading request body.
