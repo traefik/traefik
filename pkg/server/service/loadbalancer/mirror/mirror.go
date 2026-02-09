@@ -74,8 +74,8 @@ func (m *Mirroring) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		var bytesRead []byte
 		rr, bytesRead, err = NewReusableRequest(req, m.maxBodySize)
 		if err != nil && !errors.Is(err, ErrBodyTooLarge) {
-			http.Error(rw, fmt.Sprintf("%s: creating reusable request: %v",
-				http.StatusText(http.StatusInternalServerError), err), http.StatusInternalServerError)
+			logger.Debug().Err(err).Msg("Error while creating reusable request for mirroring")
+			http.Error(rw, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
 

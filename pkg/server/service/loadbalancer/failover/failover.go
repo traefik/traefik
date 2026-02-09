@@ -41,7 +41,7 @@ func New(config *dynamic.Failover) (*Failover, error) {
 		if len(config.Errors.Status) > 0 {
 			httpCodeRanges, err := types.NewHTTPCodeRanges(config.Errors.Status)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("creating HTTP code ranges: %w", err)
 			}
 			f.statusCode = httpCodeRanges
 		}
@@ -85,8 +85,8 @@ func (f *Failover) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		// TODO: move reusable request to a common package at some point.
 		rr, _, err := mirror.NewReusableRequest(req, f.maxRequestBodyBytes)
 		if err != nil && !errors.Is(err, mirror.ErrBodyTooLarge) {
-			http.Error(w, fmt.Sprintf("%s: creating reusable request: %v",
-				http.StatusText(http.StatusInternalServerError), err), http.StatusInternalServerError)
+			log.Ctx(req.Context()).Debug().Err(err).Msg("Error while creating reusable request for failover")
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
 
