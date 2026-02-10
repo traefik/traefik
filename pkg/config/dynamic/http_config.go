@@ -398,8 +398,7 @@ func (l *ServersLoadBalancer) Merge(other *ServersLoadBalancer) bool {
 
 // SetDefaults Default values for a ServersLoadBalancer.
 func (l *ServersLoadBalancer) SetDefaults() {
-	defaultPassHostHeader := DefaultPassHostHeader
-	l.PassHostHeader = &defaultPassHostHeader
+	l.PassHostHeader = ptr.To(DefaultPassHostHeader)
 
 	l.Strategy = BalancerStrategyWRR
 	l.ResponseForwarding = &ResponseForwarding{}
@@ -473,8 +472,7 @@ type ServerHealthCheck struct {
 
 // SetDefaults Default values for a HealthCheck.
 func (h *ServerHealthCheck) SetDefaults() {
-	fr := true
-	h.FollowRedirects = &fr
+	h.FollowRedirects = ptr.To(true)
 	h.Mode = "http"
 	h.Interval = DefaultHealthCheckInterval
 	h.Timeout = DefaultHealthCheckTimeout
