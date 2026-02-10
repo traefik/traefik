@@ -9,11 +9,13 @@ import (
 	"net/textproto"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v2/pkg/config/dynamic"
 	"github.com/traefik/traefik/v2/pkg/config/runtime"
+	"github.com/traefik/traefik/v2/pkg/healthcheck"
 	"github.com/traefik/traefik/v2/pkg/server/provider"
 	"github.com/traefik/traefik/v2/pkg/testhelpers"
 )
@@ -600,4 +602,134 @@ func TestMultipleTypeOnBuildHTTP(t *testing.T) {
 
 	_, err := manager.BuildHTTP(t.Context(), "test@file")
 	assert.Error(t, err, "cannot create service: multi-types service not supported, consider declaring two different pieces of service instead")
+}
+
+func TestBuildHealthCheckOptions(t *testing.T) {
+	ctx := context.Background()
+	backend := "test-backend"
+
+	testCases := []struct {
+		desc     string
+		hc       *dynamic.ServerHealthCheck
+		expected *healthcheck.Options
+	}{
+		{
+			desc:     "nil health check config",
+			hc:       nil,
+			expected: nil,
+		},
+		{
+			desc: "empty path returns nil",
+			hc: &dynamic.ServerHealthCheck{
+				Path: "",
+			},
+			expected: nil,
+		},
+		{
+			desc: "absolute URL path returns nil",
+			hc: &dynamic.ServerHealthCheck{
+				Path: "http://example.com/health",
+			},
+			expected: nil,
+		},
+		{
+			desc: "path with scheme returns nil",
+			hc: &dynamic.ServerHealthCheck{
+				Path: "https://health",
+			},
+			expected: nil,
+		},
+		{
+			desc: "path with host returns nil",
+			hc: &dynamic.ServerHealthCheck{
+				Path: "//example.com/health",
+			},
+			expected: nil,
+		},
+		{
+			desc: "full valid config",
+			hc: &dynamic.ServerHealthCheck{
+				Scheme:   "https",
+				Path:     "/health",
+				Method:   "GET",
+				Port:     8080,
+				Interval: "10s",
+				Timeout:  "2s",
+				Hostname: "health.example.com",
+				Headers:  map[string]string{"Authorization": "Bearer token"},
+			},
+			expected: &healthcheck.Options{
+				Scheme:          "https",
+				Path:            "/health",
+				Method:          "GET",
+				Port:            8080,
+				Interval:        10 * time.Second,
+				Timeout:         2 * time.Second,
+				Hostname:        "health.example.com",
+				Headers:         map[string]string{"Authorization": "Bearer token"},
+				FollowRedirects: true,
+			},
+		},
+		{
+			desc: "invalid interval uses default",
+			hc: &dynamic.ServerHealthCheck{
+				Path:     "/health",
+				Interval: "invalid",
+			},
+			expected: &healthcheck.Options{
+				Path:            "/health",
+				Interval:        defaultHealthCheckInterval,
+				Timeout:         defaultHealthCheckTimeout,
+				FollowRedirects: true,
+			},
+		},
+		{
+			desc: "negative interval uses default",
+			hc: &dynamic.ServerHealthCheck{
+				Path:     "/health",
+				Interval: "-10s",
+			},
+			expected: &healthcheck.Options{
+				Path:            "/health",
+				Interval:        defaultHealthCheckInterval,
+				Timeout:         defaultHealthCheckTimeout,
+				FollowRedirects: true,
+			},
+		},
+		{
+			desc: "invalid timeout uses default",
+			hc: &dynamic.ServerHealthCheck{
+				Path:    "/health",
+				Timeout: "invalid",
+			},
+			expected: &healthcheck.Options{
+				Path:            "/health",
+				Interval:        defaultHealthCheckInterval,
+				Timeout:         defaultHealthCheckTimeout,
+				FollowRedirects: true,
+			},
+		},
+		{
+			desc: "negative timeout uses default",
+			hc: &dynamic.ServerHealthCheck{
+				Path:    "/health",
+				Timeout: "-5s",
+			},
+			expected: &healthcheck.Options{
+				Path:            "/health",
+				Interval:        defaultHealthCheckInterval,
+				Timeout:         defaultHealthCheckTimeout,
+				FollowRedirects: true,
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			result := buildHealthCheckOptions(ctx, nil, backend, test.hc)
+			assert.Equal(t, test.expected, result)
+		})
+	}
 }
