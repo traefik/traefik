@@ -322,7 +322,7 @@ To propagate status changes (e.g. all servers of this service are down) upwards,
 
 Below are the available options for the health check mechanism:
 
-- `path` (required), defines the server URL path for the health check endpoint .
+- `path` (required), defines the server URL path for the health check endpoint (must be a relative URL).
 - `scheme` (optional), replaces the server URL `scheme` for the health check endpoint.
 - `hostname` (optional), sets the value of `hostname` in the `Host` header of the health check request.
 - `port` (optional), replaces the server URL `port` for the health check endpoint.

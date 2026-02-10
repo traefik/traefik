@@ -356,6 +356,11 @@ func buildHealthCheckOptions(ctx context.Context, lb healthcheck.Balancer, backe
 		return nil
 	}
 
+	if u, err := url.Parse(hc.Path); err != nil || u.Scheme != "" || u.Host != "" {
+		logger.Errorf("Ignoring heath check configuration for '%s': path must not be an absolute URL, got %s", backend, hc.Path)
+		return nil
+	}
+
 	interval := defaultHealthCheckInterval
 	if hc.Interval != "" {
 		intervalOverride, err := time.ParseDuration(hc.Interval)
