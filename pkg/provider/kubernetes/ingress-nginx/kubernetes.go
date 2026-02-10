@@ -55,7 +55,8 @@ const (
 	// https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/nginx-configuration/annotations.md#proxy-buffers-number
 	defaultProxyBuffersNumber = 4
 	// https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_max_temp_file_size
-	defaultProxyMaxTempFileSize = int64(1024 * 1024 * 1024) // 1GB
+	defaultProxyMaxTempFileSize   = int64(1024 * 1024 * 1024) // 1GB
+	defaultProxyNextUpstreamTries = 3
 )
 
 var nginxSizeRegexp = regexp.MustCompile(`^(?i)\s*([0-9]+)\s*([bkmg]?)\s*$`)
@@ -107,6 +108,7 @@ type Provider struct {
 	ProxyConnectTimeout   int      `description:"Amount of time to wait until a connection to a server can be established. Timeout value is unitless and in seconds." json:"proxyConnectTimeout,omitempty" toml:"proxyConnectTimeout,omitempty" yaml:"proxyConnectTimeout,omitempty" export:"true"`
 	ProxyReadTimeout      int      `description:"Amount of time between two successive read operations. Timeout value is unitless and in seconds." json:"proxyReadTimeout,omitempty" toml:"proxyReadTimeout,omitempty" yaml:"proxyReadTimeout,omitempty" export:"true"`
 	ProxySendTimeout      int      `description:"Amount of time between two successive write operations. Timeout value is unitless and in seconds." json:"proxySendTimeout,omitempty" toml:"proxySendTimeout,omitempty" yaml:"proxySendTimeout,omitempty" export:"true"`
+	ProxyNextUpstreamTries int `description:"Limits the number of possible tries if the backend server does not reply." json:"proxyNextUpstreamTries,omitempty" toml:"proxyNextUpstreamTries,omitempty" yaml:"proxyNextUpstreamTries,omitempty" export:"true"`
 	CustomHTTPErrors      []string `description:"Defines which status should result in calling the default backend to return an error page." json:"customHTTPErrors,omitempty" toml:"customHTTPErrors,omitempty" yaml:"customHTTPErrors,omitempty" export:"true"`
 
 	// NonTLSEntryPoints contains the names of entrypoints that are configured without TLS.
@@ -129,6 +131,7 @@ func (p *Provider) SetDefaults() {
 	p.ProxyBodySize = defaultProxyBodySize
 	p.ProxyBufferSize = defaultProxyBufferSize
 	p.ProxyBuffersNumber = defaultProxyBuffersNumber
+	p.ProxyNextUpstreamTries = defaultProxyNextUpstreamTries
 }
 
 // Init the provider.
@@ -951,6 +954,9 @@ func (p *Provider) applyMiddlewares(namespace, ingressName, routerKey, rulePath,
 	if err := p.applyCustomHeaders(routerKey, ingressConfig, rt, conf); err != nil {
 		return fmt.Errorf("applying custom headers: %w", err)
 	}
+
+	p.applyRetry(routerKey, ingressConfig, rt, conf)
+
 	return nil
 }
 
@@ -1514,6 +1520,35 @@ func (p *Provider) applyAuthTLSPassCertificateToUpstream(ingressNamespace string
 	rt.Middlewares = append(rt.Middlewares, passCertificateToUpstreamMiddlewareName)
 
 	return nil
+}
+
+func (p *Provider) applyRetry(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
+	attempts := ptr.Deref(ingressConfig.ProxyNextUpstreamTries, p.ProxyNextUpstreamTries)
+	// Safeguard to deactivate retry when the value is less than 0.
+	if attempts < 0 {
+		return
+	}
+
+	// Count the available servers, to be able to limit the attempts count.
+	svc, ok := conf.HTTP.Services[rt.Service]
+	if !ok || svc.LoadBalancer == nil {
+		return
+	}
+
+	serverCount := len(svc.LoadBalancer.Servers)
+	// proxy-next-upstream-tries = 0 on NGINX means unlimited tries, which maps to try every available server.
+	// To avoid infinite retries, put the number of servers as the attempts limit.
+	if attempts == 0 {
+		attempts = serverCount
+	}
+
+	retryMiddlewareName := routerName + "-retry"
+	conf.HTTP.Middlewares[retryMiddlewareName] = &dynamic.Middleware{
+		Retry: &dynamic.Retry{
+			Attempts: attempts,
+		},
+	}
+	rt.Middlewares = append(rt.Middlewares, retryMiddlewareName)
 }
 
 func basicAuthUsers(secret *corev1.Secret, authSecretType string) (dynamic.Users, error) {
