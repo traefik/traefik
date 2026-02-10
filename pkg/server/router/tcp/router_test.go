@@ -1084,8 +1084,8 @@ func Test_clientHelloInfo_oversizedRecordLength(t *testing.T) {
 			recLen: 0xFFFF,
 		},
 		{
-			desc:   "just above TLS maximum (16385)",
-			recLen: 16385,
+			desc:   "just above TLS maximum (18433)",
+			recLen: 18433,
 		},
 	}
 
