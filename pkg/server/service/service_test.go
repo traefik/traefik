@@ -605,9 +605,6 @@ func TestMultipleTypeOnBuildHTTP(t *testing.T) {
 }
 
 func TestBuildHealthCheckOptions(t *testing.T) {
-	ctx := context.Background()
-	backend := "test-backend"
-
 	testCases := []struct {
 		desc     string
 		hc       *dynamic.ServerHealthCheck
@@ -728,7 +725,7 @@ func TestBuildHealthCheckOptions(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			result := buildHealthCheckOptions(ctx, nil, backend, test.hc)
+			result := buildHealthCheckOptions(t.Context(), nil, "test-backend", test.hc)
 			assert.Equal(t, test.expected, result)
 		})
 	}
