@@ -2864,6 +2864,93 @@ func TestLoadIngresses(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
+		{
+			desc: "Proxy next upstream tries",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-proxy-next-upstream-tries.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-proxy-next-upstream-tries-unlimited-rule-0-path-0": {
+							Rule:        "Host(`whoami.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-proxy-next-upstream-tries-unlimited-whoami-80",
+							Middlewares: []string{"default-ingress-with-proxy-next-upstream-tries-unlimited-rule-0-path-0-retry"},
+						},
+						"default-ingress-with-proxy-next-upstream-tries-rule-0-path-0": {
+							Rule:        "Host(`whoami.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-proxy-next-upstream-tries-whoami-80",
+							Middlewares: []string{"default-ingress-with-proxy-next-upstream-tries-rule-0-path-0-retry"},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-proxy-next-upstream-tries-unlimited-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 2,
+							},
+						},
+						"default-ingress-with-proxy-next-upstream-tries-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 5,
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-proxy-next-upstream-tries-unlimited-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-with-proxy-next-upstream-tries-unlimited",
+							},
+						},
+						"default-ingress-with-proxy-next-upstream-tries-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-with-proxy-next-upstream-tries",
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-proxy-next-upstream-tries-unlimited": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+						"default-ingress-with-proxy-next-upstream-tries": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
+			},
+		},
 	}
 
 	for _, test := range testCases {
