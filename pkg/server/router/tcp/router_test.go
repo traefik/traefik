@@ -631,6 +631,7 @@ func Test_Routing(t *testing.T) {
 				_ = serverHTTPS.Serve(httpsForwarder)
 			}()
 
+			// The HTTPS forwarder will be added as tcp.TLSHandler (to handle TLS).
 			router.SetHTTPSForwarder(httpsForwarder)
 
 			stoppedTCP := make(chan struct{})

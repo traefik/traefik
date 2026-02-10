@@ -18,7 +18,15 @@ import (
 	"github.com/traefik/traefik/v2/pkg/tcp"
 )
 
-const defaultBufSize = 4096
+const (
+	defaultBufSize = 4096
+	// Per RFC 8446 Section 5.1, the maximum TLS record payload length is 2^14 (16384) bytes.
+	// A ClientHello is always a plaintext record, so any value exceeding this limit is invalid
+	// and likely indicates an attack attempting to force oversized per-connection buffer allocations.
+	// However, in practice the go server handshake can read up to 16384 + 2048 bytes,
+	// so we need to allow for some extra bytes to avoid rejecting valid handshakes.
+	maxTLSRecordLen = 16384 + 2048
+)
 
 // Router is a TCP router.
 type Router struct {
@@ -395,12 +403,8 @@ func clientHelloInfo(br *bufio.Reader) (*clientHello, error) {
 
 	recLen := int(hdr[3])<<8 | int(hdr[4]) // ignoring version in hdr[1:3]
 
-	// Per RFC 8446 Section 5.1, the maximum TLS record payload length is 2^14 (16384) bytes.
-	// A ClientHello is always a plaintext record, so any value exceeding this limit is invalid
-	// and likely indicates an attack attempting to force oversized per-connection buffer allocations.
-	const maxTLSRecordLen = 16384
 	if recLen > maxTLSRecordLen {
-		log.WithoutContext().Debugf("Discarding TLS record with oversized length advertisement: %d", recLen)
+		log.WithoutContext().Debugf("Error while peeking client hello bytes, oversized record: %d", recLen)
 		return &clientHello{
 			isTLS:  true,
 			peeked: getPeeked(br),
