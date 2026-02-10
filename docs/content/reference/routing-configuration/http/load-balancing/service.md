@@ -821,7 +821,7 @@ The `mirroring` service type mirrors requests sent to a service to other service
 !!! info "Supported Providers"
 
     This service type can be defined currently with the [File](../../../install-configuration/providers/others/file.md) provider or [IngressRoute](../../../routing-configuration/kubernetes/crd/http/ingressroute.md).
-    
+
 ```yaml tab="Structured (YAML)"
 ## Routing configuration
 http:
@@ -948,9 +948,13 @@ http:
         url = "http://private-ip-server-2/"
 ```
 
-### Failover 
+### Failover
 
-The `failover` service type forwards all requests to a fallback service when the main service becomes unreachable.
+The `failover` service type forwards requests to a fallback service when the main service is unavailable.
+Failover can be triggered in two ways:
+
+- **Health check-based**: When the main service becomes unreachable based on [health checks](#health-check).
+- **Status code-based**: When the main service responds with specific HTTP status codes defined in the [errors](#errors) configuration.
 
 !!! info "Relation to HealthCheck"
     The failover service relies on the HealthCheck system to get notified when its main service becomes unreachable, which means HealthCheck needs to be enabled and functional on the main service. However, HealthCheck does not need to be enabled on the failover service itself for it to be functional. It is only required in order to propagate upwards the information when the failover itself becomes down (i.e. both its main and its fallback are down too).
@@ -1001,15 +1005,15 @@ http:
 ## Routing configuration
 [http.services]
   [http.services.app]
-    [http.services.app.failover.healthCheck]
     [http.services.app.failover]
       service = "main"
       fallback = "backup"
+      [http.services.app.failover.healthCheck]
 
   [http.services.main]
     [http.services.main.loadBalancer]
       [http.services.main.loadBalancer.healthCheck]
-        path = "/health"
+        path = "/status"
         interval = "10s"
         timeout = "3s"
       [[http.services.main.loadBalancer.servers]]
@@ -1018,9 +1022,163 @@ http:
   [http.services.backup]
     [http.services.backup.loadBalancer]
       [http.services.backup.loadBalancer.healthCheck]
-        path = "/health"
+        path = "/status"
         interval = "10s"
         timeout = "3s"
       [[http.services.backup.loadBalancer.servers]]
         url = "http://private-ip-server-2/"
+```
+
+#### Errors
+
+The `errors` option enables status code-based failover.
+When the main service responds with an HTTP status code matching one of the configured ranges, Traefik automatically retries the request on the fallback service.
+
+To support request replay, the request body is buffered up to `maxRequestBodyBytes`.
+Requests with bodies larger than this limit receive a `413 Request Entity Too Large` response.
+
+Below is a list of options available for the `errors` option and an example of how to configure it for a failover service:
+
+| Field                 | Description                                                                                                       | Default |
+|-----------------------|-------------------------------------------------------------------------------------------------------------------|---------|
+| <a id="opt-status-2" href="#opt-status-2" title="#opt-status-2">`status`</a> | List of HTTP status code ranges that trigger failover. Supports single codes (`"500"`) and ranges (`"500-504"`).  | None    |
+| <a id="opt-maxRequestBodyBytes" href="#opt-maxRequestBodyBytes" title="#opt-maxRequestBodyBytes">`maxRequestBodyBytes`</a> | Maximum request body size (in bytes) to buffer for replay to the fallback service. Set to `-1` for no limit.      | `-1`    |
+
+```yaml tab="Structured (YAML)"
+## Routing configuration
+http:
+  services:
+    app:
+      failover:
+        service: main
+        fallback: backup
+        errors:
+          status:
+            - "500-504"
+          maxRequestBodyBytes: 1048576
+
+    main:
+      loadBalancer:
+        servers:
+          - url: "http://private-ip-server-1/"
+
+    backup:
+      loadBalancer:
+        servers:
+          - url: "http://private-ip-server-2/"
+```
+
+```toml tab="Structured (TOML)"
+## Routing configuration
+[http.services]
+  [http.services.app]
+    [http.services.app.failover]
+      service = "main"
+      fallback = "backup"
+      [http.services.app.failover.errors]
+        status = ["500-504"]
+        maxRequestBodyBytes = 1048576
+
+  [http.services.main]
+    [http.services.main.loadBalancer]
+      [[http.services.main.loadBalancer.servers]]
+        url = "http://private-ip-server-1/"
+
+  [http.services.backup]
+    [http.services.backup.loadBalancer]
+      [[http.services.backup.loadBalancer.servers]]
+        url = "http://private-ip-server-2/"
+```
+
+#### Chaining Failover Services
+
+Failover services can be chained together for multi-level redundancy.
+In the following example, if the primary service fails, traffic goes to the secondary service.
+If both primary and secondary fail, traffic goes to the tertiary service.
+
+```yaml tab="Structured (YAML)"
+## Routing configuration
+http:
+  services:
+    app:
+      failover:
+        healthCheck: {}
+        service: primary-failover
+        fallback: tertiary
+
+    primary-failover:
+      failover:
+        healthCheck: {}
+        service: primary
+        fallback: secondary
+
+    primary:
+      loadBalancer:
+        healthCheck:
+          path: /health
+          interval: 10s
+          timeout: 3s
+        servers:
+          - url: "http://primary-server/"
+
+    secondary:
+      loadBalancer:
+        healthCheck:
+          path: /health
+          interval: 10s
+          timeout: 3s
+        servers:
+          - url: "http://secondary-server/"
+
+    tertiary:
+      loadBalancer:
+        healthCheck:
+          path: /health
+          interval: 10s
+          timeout: 3s
+        servers:
+          - url: "http://tertiary-server/"
+```
+
+```toml tab="Structured (TOML)"
+## Routing configuration
+[http.services]
+  [http.services.app]
+    [http.services.app.failover]
+      service = "primary-failover"
+      fallback = "tertiary"
+      [http.services.app.failover.healthCheck]
+
+  [http.services.primary-failover]
+    [http.services.primary-failover.failover]
+      service = "primary"
+      fallback = "secondary"
+      [http.services.primary-failover.failover.healthCheck]
+
+  [http.services.primary]
+    [http.services.primary.loadBalancer]
+      [http.services.primary.loadBalancer.healthCheck]
+        path = "/health"
+        interval = "10s"
+        timeout = "3s"
+      [[http.services.primary.loadBalancer.servers]]
+        url = "http://primary-server/"
+
+  [http.services.secondary]
+    [http.services.secondary.loadBalancer]
+      [http.services.secondary.loadBalancer.healthCheck]
+        path = "/health"
+        interval = "10s"
+        timeout = "3s"
+      [[http.services.secondary.loadBalancer.servers]]
+        url = "http://secondary-server/"
+
+  [http.services.tertiary]
+    [http.services.tertiary.loadBalancer]
+      [http.services.tertiary.loadBalancer.healthCheck]
+        path = "/health"
+        interval = "10s"
+        timeout = "3s"
+      [[http.services.tertiary.loadBalancer.servers]]
+        url = "http://tertiary-server/"
 ```

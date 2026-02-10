@@ -97,7 +97,7 @@ func (c *OTelTracing) Setup(ctx context.Context, serviceName string, sampleRate 
 	// span processor to aggregate spans before export.
 	bsp := sdktrace.NewBatchSpanProcessor(exporter)
 	tracerProvider := sdktrace.NewTracerProvider(
-		sdktrace.WithSampler(sdktrace.TraceIDRatioBased(sampleRate)),
+		sdktrace.WithSampler(sdktrace.ParentBased(sdktrace.TraceIDRatioBased(sampleRate))),
 		sdktrace.WithResource(res),
 		sdktrace.WithSpanProcessor(bsp),
 	)
