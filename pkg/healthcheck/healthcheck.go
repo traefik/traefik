@@ -255,7 +255,7 @@ func (shc *ServiceHealthChecker) newRequest(ctx context.Context, target *url.URL
 		return nil, fmt.Errorf("health check path must be a relative URL, got: %q", shc.config.Path)
 	}
 
-	u, err := target.Parse(pathUrl.Path)
+	u, err := target.Parse(shc.config.Path)
 	if err != nil {
 		return nil, err
 	}
