@@ -947,7 +947,7 @@ func (in *MiddlewareSpec) DeepCopyInto(out *MiddlewareSpec) {
 	if in.Retry != nil {
 		in, out := &in.Retry, &out.Retry
 		*out = new(Retry)
-		**out = **in
+		(*in).DeepCopyInto(*out)
 	}
 	if in.ContentType != nil {
 		in, out := &in.ContentType, &out.ContentType
@@ -1265,6 +1265,16 @@ func (in *ResponseForwarding) DeepCopy() *ResponseForwarding {
 func (in *Retry) DeepCopyInto(out *Retry) {
 	*out = *in
 	out.InitialInterval = in.InitialInterval
+	if in.MaxRequestBodyBytes != nil {
+		in, out := &in.MaxRequestBodyBytes, &out.MaxRequestBodyBytes
+		*out = new(int64)
+		**out = **in
+	}
+	if in.Status != nil {
+		in, out := &in.Status, &out.Status
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 

@@ -17,6 +17,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/observability/tracing"
+	"github.com/traefik/traefik/v3/pkg/types"
 	"go.opentelemetry.io/otel/attribute"
 	semconv "go.opentelemetry.io/otel/semconv/v1.37.0"
 	"go.opentelemetry.io/otel/trace"
@@ -25,7 +26,10 @@ import (
 // Compile time validation that the response writer implements http interfaces correctly.
 var _ middlewares.Stateful = &responseWriter{}
 
-const typeName = "Retry"
+const (
+	typeName                        = "Retry"
+	defaultMaxRequestBodySize int64 = -1
+)
 
 // Listener is used to inform about retry attempts.
 type Listener interface {
@@ -87,23 +91,47 @@ type retry struct {
 	next            http.Handler
 	listener        Listener
 	name            string
+
+	statusCode                 types.HTTPCodeRanges
+	maxRequestBodyBytes        int64
+	disableRetryOnNetworkError bool
 }
 
 // New returns a new retry middleware.
 func New(ctx context.Context, next http.Handler, config dynamic.Retry, listener Listener, name string) (http.Handler, error) {
 	middlewares.GetLogger(ctx, name, typeName).Debug().Msg("Creating middleware")
 
+	if len(config.Status) == 0 && config.DisableRetryOnNetworkError {
+		return nil, fmt.Errorf("retry middleware requires at least HTTP status codes or retry on TCP.")
+	}
+
 	if config.Attempts <= 0 {
 		return nil, fmt.Errorf("incorrect (or empty) value for attempt (%d)", config.Attempts)
 	}
 
-	return &retry{
-		attempts:        config.Attempts,
-		initialInterval: time.Duration(config.InitialInterval),
-		next:            next,
-		listener:        listener,
-		name:            name,
-	}, nil
+	retryCfg := &retry{
+		attempts:                   config.Attempts,
+		initialInterval:            time.Duration(config.InitialInterval),
+		next:                       next,
+		listener:                   listener,
+		name:                       name,
+		maxRequestBodyBytes:        defaultMaxRequestBodySize,
+		disableRetryOnNetworkError: config.DisableRetryOnNetworkError,
+	}
+
+	if len(config.Status) > 0 {
+		httpCodeRanges, err := types.NewHTTPCodeRanges(config.Status)
+		if err != nil {
+			return nil, fmt.Errorf("creating HTTP code ranges: %w", err)
+		}
+		retryCfg.statusCode = httpCodeRanges
+	}
+
+	if config.MaxRequestBodyBytes != nil {
+		retryCfg.maxRequestBodyBytes = *config.MaxRequestBodyBytes
+	}
+
+	return retryCfg, nil
 }
 
 func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {

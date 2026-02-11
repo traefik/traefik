@@ -2181,6 +2181,10 @@ spec:
                       be retried.
                     minimum: 0
                     type: integer
+                  disableRetryOnNetworkError:
+                    description: DisableRetryOnNetworkError defines whether to disable
+                      the retries on the TCP layer.
+                    type: boolean
                   initialInterval:
                     anyOf:
                     - type: integer
@@ -2193,6 +2197,24 @@ spec:
                       see https://pkg.go.dev/time#ParseDuration.
                     pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
                     x-kubernetes-int-or-string: true
+                  maxRequestBodyBytes:
+                    description: MaxRequestBodyBytes defines the maximum size for
+                      the request body.
+                    format: int64
+                    minimum: -1
+                    type: integer
+                  status:
+                    description: Status defines the range of HTTP status codes to
+                      retry on.
+                    items:
+                      pattern: ^([1-5][0-9]{2}[,-]?)+$
+                      type: string
+                    type: array
+                  timeout:
+                    description: Timeout defines how much time the middleware is allowed
+                      to retry the request.
+                    minimum: 0
+                    type: integer
                 type: object
               stripPrefix:
                 description: |-

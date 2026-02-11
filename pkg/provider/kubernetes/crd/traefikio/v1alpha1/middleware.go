@@ -342,6 +342,9 @@ type Retry struct {
 	// Attempts defines how many times the request should be retried.
 	// +kubebuilder:validation:Minimum=0
 	Attempts int `json:"attempts,omitempty"`
+	// Timeout defines how much time the middleware is allowed to retry the request.
+	// +kubebuilder:validation:Minimum=0
+	Timeout int `json:"timeout,omitempty"`
 	// InitialInterval defines the first wait time in the exponential backoff series.
 	// The maximum interval is calculated as twice the initialInterval.
 	// If unspecified, requests will be retried immediately.
@@ -350,6 +353,14 @@ type Retry struct {
 	// +kubebuilder:validation:Pattern="^([0-9]+(ns|us|µs|ms|s|m|h)?)+$"
 	// +kubebuilder:validation:XIntOrString
 	InitialInterval intstr.IntOrString `json:"initialInterval,omitempty"`
+	// MaxRequestBodyBytes defines the maximum size for the request body.
+	// +kubebuilder:validation:Minimum=-1
+	MaxRequestBodyBytes *int64 `json:"maxRequestBodyBytes,omitempty"`
+	// Status defines the range of HTTP status codes to retry on.
+	// +kubebuilder:validation:items:Pattern=`^([1-5][0-9]{2}[,-]?)+$`
+	Status []string `json:"status,omitempty"`
+	// DisableRetryOnNetworkError defines whether to disable the retries on the TCP layer.
+	DisableRetryOnNetworkError bool `json:"disableRetryOnNetworkError,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
