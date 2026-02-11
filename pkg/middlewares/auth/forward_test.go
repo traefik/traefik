@@ -983,6 +983,15 @@ func TestForwardAuthAuthSigninURL(t *testing.T) {
 			nextShouldBeCalled: false,
 			interpolate:        true,
 		},
+		{
+			desc:               "redirects to signin URL on 401 - Variable Interpolation - invalid variable",
+			authSigninURL:      "https://$host/login?redirect=$invalid",
+			authServerStatus:   http.StatusUnauthorized,
+			expectedStatus:     http.StatusFound,
+			expectedLocation:   "https://auth.example.com/login?redirect=$invalid",
+			nextShouldBeCalled: false,
+			interpolate:        true,
+		},
 	}
 
 	for _, test := range testCases {
