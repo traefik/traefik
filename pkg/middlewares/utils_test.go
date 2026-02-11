@@ -19,7 +19,7 @@ func TestReplaceNginxVariables(t *testing.T) {
 			desc: "$host && $escaped_request_uri",
 			src:  "http://bar.foo.com/external-auth/start?rd=https://$host$escaped_request_uri",
 			req: &http.Request{
-				Method:     "GET",
+				Method:     http.MethodGet,
 				Host:       "baz.com",
 				RequestURI: "/foo/bar?key=value&other=test",
 			},
@@ -30,7 +30,7 @@ func TestReplaceNginxVariables(t *testing.T) {
 			src:  "$scheme://bar.foo.com/external-auth/start?rd=$scheme://$host$request_uri",
 			req: &http.Request{
 				URL:    &url.URL{Scheme: "http", Path: "/foo/bar", RawQuery: "key=value&other=test"},
-				Method: "GET",
+				Method: http.MethodGet,
 				Host:   "baz.com",
 			},
 			expected: `http://bar.foo.com/external-auth/start?rd=http://baz.com/foo/bar?key=value&other=test`,
@@ -40,7 +40,7 @@ func TestReplaceNginxVariables(t *testing.T) {
 			src:  "https://bar.foo.com/external-auth/start?rd=$invalid://$foo$bar",
 			req: &http.Request{
 				URL:        &url.URL{Scheme: "http"},
-				Method:     "GET",
+				Method:     http.MethodGet,
 				Host:       "baz.com",
 				RequestURI: "/foo/bar?key=value&other=test",
 			},
@@ -53,7 +53,5 @@ func TestReplaceNginxVariables(t *testing.T) {
 			result := ReplaceNginxVariables(tc.src, tc.req)
 			require.Equal(t, tc.expected, result)
 		})
-
 	}
-
 }

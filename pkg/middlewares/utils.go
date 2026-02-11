@@ -10,17 +10,14 @@ const (
 	scheme            = "$scheme"
 	host              = "$host"
 	hostname          = "$hostname"
-	requestUri        = "$request_uri"
-	escapedRequestUri = "$escaped_request_uri"
+	requestURI        = "$request_uri"
+	escapedRequestURI = "$escaped_request_uri"
 	path              = "$path"
 	args              = "$args"
 	remoteAddress     = "$remote_addr"
-	// requestMethod     = "$request_method"
-	// uri               = "$uri"
-	// httpHost          = "$http_host"
 )
 
-var nginxVariables = []string{scheme, host, hostname, requestUri, escapedRequestUri, path, args, remoteAddress}
+var nginxVariables = []string{scheme, host, hostname, requestURI, escapedRequestURI, path, args, remoteAddress}
 
 func ReplaceNginxVariables(src string, req *http.Request) string {
 	for _, variable := range nginxVariables {
@@ -37,12 +34,12 @@ func getNginxVariableValue(variable string, req *http.Request) string {
 	switch variable {
 	case host:
 		return req.Host
-	case requestUri:
+	case requestURI:
 		if req.URL != nil {
 			return req.URL.RequestURI()
 		}
 		return req.RequestURI
-	case escapedRequestUri:
+	case escapedRequestURI:
 		if req.URL != nil {
 			return regexp.QuoteMeta(req.URL.RequestURI())
 		}
