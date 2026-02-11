@@ -3,6 +3,7 @@ package retry
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"maps"
@@ -13,10 +14,12 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/observability/tracing"
+	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/mirror"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"go.opentelemetry.io/otel/attribute"
 	semconv "go.opentelemetry.io/otel/semconv/v1.37.0"
@@ -140,6 +143,22 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	if len(r.statusCode) > 0 {
+		rr, _, err := mirror.NewReusableRequest(req, r.maxRequestBodyBytes)
+		if err != nil && !errors.Is(err, mirror.ErrBodyTooLarge) {
+			log.Ctx(req.Context()).Debug().Err(err).Msg("Error while creating reusable request for failover")
+			http.Error(rw, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+
+		if errors.Is(err, mirror.ErrBodyTooLarge) {
+			http.Error(rw, "Request body too large", http.StatusRequestEntityTooLarge)
+			return
+		}
+
+		req = rr.Clone(req.Context())
+	}
+
 	closableBody := req.Body
 	defer closableBody.Close()
 
@@ -174,14 +193,17 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 
 		remainAttempts := attempts < r.attempts
-		retryResponseWriter := newResponseWriter(rw)
+		retryResponseWriter := newResponseWriter(rw, r.statusCode)
 
-		var shouldRetry ShouldRetry = func(shouldRetry bool) {
-			retryResponseWriter.SetShouldRetry(remainAttempts && shouldRetry)
+		retryReq := req
+		if !r.disableRetryOnNetworkError {
+			var shouldRetry ShouldRetry = func(shouldRetry bool) {
+				retryResponseWriter.SetShouldRetry(remainAttempts && shouldRetry)
+			}
+			retryReq = req.Clone(context.WithValue(req.Context(), shouldRetryContextKey{}, shouldRetry))
 		}
-		newCtx := context.WithValue(req.Context(), shouldRetryContextKey{}, shouldRetry)
 
-		r.next.ServeHTTP(retryResponseWriter, req.Clone(newCtx))
+		r.next.ServeHTTP(retryResponseWriter, retryReq)
 
 		if !retryResponseWriter.ShouldRetry() {
 			return nil
@@ -230,18 +252,20 @@ func (r *retry) newBackOff() backoff.BackOff {
 	return b
 }
 
-func newResponseWriter(rw http.ResponseWriter) *responseWriter {
+func newResponseWriter(rw http.ResponseWriter, statusCodeRanges types.HTTPCodeRanges) *responseWriter {
 	return &responseWriter{
-		responseWriter: rw,
-		headers:        make(http.Header),
+		responseWriter:  rw,
+		headers:         make(http.Header),
+		statusCodeRange: statusCodeRanges,
 	}
 }
 
 type responseWriter struct {
-	responseWriter http.ResponseWriter
-	headers        http.Header
-	shouldRetry    bool
-	written        bool
+	responseWriter  http.ResponseWriter
+	headers         http.Header
+	shouldRetry     bool
+	written         bool
+	statusCodeRange types.HTTPCodeRanges
 }
 
 func (r *responseWriter) ShouldRetry() bool {
@@ -253,19 +277,22 @@ func (r *responseWriter) SetShouldRetry(shouldRetry bool) {
 }
 
 func (r *responseWriter) Header() http.Header {
-	if r.written {
+	if r.written && !r.shouldRetry {
 		return r.responseWriter.Header()
 	}
+
 	return r.headers
 }
 
 func (r *responseWriter) Write(buf []byte) (int, error) {
-	if r.ShouldRetry() {
+	if r.shouldRetry {
 		return len(buf), nil
 	}
+
 	if !r.written {
 		r.WriteHeader(http.StatusOK)
 	}
+
 	return r.responseWriter.Write(buf)
 }
 
@@ -274,18 +301,23 @@ func (r *responseWriter) WriteHeader(code int) {
 		return
 	}
 
-	// In that case retry case is set to false which means we at least managed
-	// to write headers to the backend : we are not going to perform any further retry.
-	// So it is now safe to alter current response headers with headers collected during
-	// the latest try before writing headers to client.
-	maps.Copy(r.responseWriter.Header(), r.headers)
+	if code >= 100 && code <= 199 && code != http.StatusSwitchingProtocols {
+		clear(r.headers)
 
-	r.responseWriter.WriteHeader(code)
-
-	// Handling informational headers.
-	// This allows to keep writing to r.headers map until a final status code is written.
-	if code >= 100 && code <= 199 {
 		return
+	}
+
+	r.written = true
+	r.shouldRetry = r.statusCodeRange.Contains(code)
+
+	if !r.shouldRetry {
+		// In that case retry case is set to false which means we at least managed
+		// to write headers to the backend : we are not going to perform any further retry.
+		// So it is now safe to alter current response headers with headers collected during
+		// the latest try before writing headers to client.
+		maps.Copy(r.responseWriter.Header(), r.headers)
+
+		r.responseWriter.WriteHeader(code)
 	}
 
 	r.written = true
