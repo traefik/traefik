@@ -1,3 +1,10 @@
+## [v2.11.37](https://github.com/traefik/traefik/tree/v2.11.37) (2026-02-11)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.36...v2.11.37)
+
+**Bug fixes:**
+- **[healthcheck]** Validate healthcheck path configuration (#12642 by @rtribotte)
+- **[tls, server]** Cap TLS record length to RFC 8446 limit in ClientHello peeking (#12638 by @mmatur)
+
 ## [v2.11.36](https://github.com/traefik/traefik/tree/v2.11.36) (2026-02-02)
 [All Commits](https://github.com/traefik/traefik/compare/v2.11.35...v2.11.36)
 
