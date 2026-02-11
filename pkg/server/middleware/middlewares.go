@@ -25,6 +25,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/grpcweb"
 	"github.com/traefik/traefik/v3/pkg/middlewares/headers"
 	"github.com/traefik/traefik/v3/pkg/middlewares/inflightreq"
+	"github.com/traefik/traefik/v3/pkg/middlewares/ingressnginx/snippet"
 	"github.com/traefik/traefik/v3/pkg/middlewares/ingressnginx/authtlspasscertificatetoupstream"
 	"github.com/traefik/traefik/v3/pkg/middlewares/ingressnginx/snippet"
 	"github.com/traefik/traefik/v3/pkg/middlewares/ipallowlist"
