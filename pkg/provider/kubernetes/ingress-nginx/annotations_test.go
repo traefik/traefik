@@ -31,6 +31,7 @@ func Test_parseIngressConfig(t *testing.T) {
 				"nginx.ingress.kubernetes.io/auth-url":                "http://auth.example.com/verify",
 				"nginx.ingress.kubernetes.io/auth-signin":             "https://auth.example.com/oauth2/start?rd=foo",
 				"nginx.ingress.kubernetes.io/proxy-connect-timeout":   "30",
+				"traefik.ingress.kubernetes.io/router.entrypoints":    "web,websecure",
 			},
 			expected: ingressConfig{
 				SSLPassthrough:        ptr.To(true),
@@ -46,6 +47,7 @@ func Test_parseIngressConfig(t *testing.T) {
 				AuthURL:               ptr.To("http://auth.example.com/verify"),
 				AuthSignin:            ptr.To("https://auth.example.com/oauth2/start?rd=foo"),
 				ProxyConnectTimeout:   ptr.To(30),
+				Entrypoints:           ptr.To([]string{"web", "websecure"}),
 			},
 		},
 		{

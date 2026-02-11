@@ -2257,6 +2257,156 @@ func TestLoadIngresses(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "Entry Points annotation",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"secrets.yml",
+				"ingresses/ingress-with-entrypoints.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-tls-with-entrypoints-rule-0-path-0": {
+							EntryPoints: []string{"web", "websecure"},
+							Rule:        "Host(`whoami.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							TLS:         &dynamic.RouterTLSConfig{},
+							Service:     "default-ingress-tls-with-entrypoints-whoami-80",
+						},
+						"default-ingress-tls-with-entrypoints-rule-0-path-0-http": {
+							EntryPoints: []string{"web", "websecure"},
+							Rule:        "Host(`whoami.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-tls-with-entrypoints-rule-0-path-0-redirect-scheme"},
+							Service:     "noop@internal",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-tls-with-entrypoints-rule-0-path-0-redirect-scheme": {
+							RedirectScheme: &dynamic.RedirectScheme{
+								Scheme:                 "https",
+								ForcePermanentRedirect: true,
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-tls-with-entrypoints-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-tls-with-entrypoints",
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-tls-with-entrypoints": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Certificates: []*tls.CertAndStores{
+						{
+							Certificate: tls.Certificate{
+								CertFile: "-----BEGIN CERTIFICATE-----",
+								KeyFile:  "-----BEGIN CERTIFICATE-----",
+							},
+						},
+					},
+					Options: map[string]tls.Options{},
+				},
+			},
+		},
+		{
+			desc: "Entry Points annotation with www-redirect",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"secrets.yml",
+				"ingresses/ingress-with-entrypoints-www-redirect.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-tls-with-entrypoints-rule-0-path-0": {
+							EntryPoints: []string{"web", "websecure"},
+							Rule:        "Host(`whoami.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-tls-with-entrypoints-whoami-80",
+						},
+						"default-ingress-tls-with-entrypoints-rule-0-path-0-from-to-www-redirect": {
+							EntryPoints: []string{"web", "websecure"},
+							Rule:        "Host(`www.whoami.localhost`)",
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-tls-with-entrypoints-rule-0-path-0-from-to-www-redirect"},
+							Service:     "default-ingress-tls-with-entrypoints-whoami-80",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-tls-with-entrypoints-rule-0-path-0-from-to-www-redirect": {
+							RedirectRegex: &dynamic.RedirectRegex{
+								Regex:       "(https?)://[^/]+:([0-9]+)/(.*)",
+								Replacement: "$1://whoami.localhost:$2/$3",
+								Permanent:   true,
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-tls-with-entrypoints-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-tls-with-entrypoints",
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-tls-with-entrypoints": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
+			},
+		},
 	}
 
 	for _, test := range testCases {

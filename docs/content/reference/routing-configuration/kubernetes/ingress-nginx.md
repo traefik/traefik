@@ -340,6 +340,11 @@ The following annotations are organized by category for easier navigation.
 |-----------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | <a id="opt-nginx-ingress-kubernetes-ioproxy-connect-timeout" href="#opt-nginx-ingress-kubernetes-ioproxy-connect-timeout" title="#opt-nginx-ingress-kubernetes-ioproxy-connect-timeout">`nginx.ingress.kubernetes.io/proxy-connect-timeout`</a> | Timeout can be defined globally at the provider level using the [`proxyConnectTimeout` option](../../../install-configuration/providers/kubernetes/kubernetes-ingress-nginx/#opt-providers-kubernetesIngressNGINX-proxyConnectTimeout). |
 
+### Other Annotations
+| Annotation | Notes |
+| ---------- | ----- |
+| <a id="opt-traefik-ingress-kubernetes-iorouter-entrypoints" href="#opt-traefik-ingress-kubernetes-iorouter-entrypoints" title="#opt-traefik-ingress-kubernetes-iorouter-entrypoints">`traefik.ingress.kubernetes.io/router.entrypoints`</a> | Traefik-specific annotation to limit ingress to specific entrypoints. Comma-separated list of entrypoint names. |
+
 ## Limitations
 
 ### Caveats and Key Behavioral Differences

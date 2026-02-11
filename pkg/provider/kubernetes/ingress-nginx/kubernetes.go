@@ -516,6 +516,11 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 					RuleSyntax: "default",
 					Service:    serviceName,
 				}
+
+				if ingressConfig.Entrypoints != nil {
+					rt.EntryPoints = *ingressConfig.Entrypoints
+				}
+
 				if hasTLS {
 					rt.TLS = &dynamic.RouterTLSConfig{}
 
@@ -1199,9 +1204,15 @@ func (p *Provider) applySSLRedirectConfiguration(routerName string, ingressConfi
 	if hasTLS {
 		// An Ingress with TLS configuration creates only a Traefik router with a TLS configuration,
 		// so no Non-TLS router exists to handle HTTP traffic, and we should create it.
+		httpEntryPoints := p.NonTLSEntryPoints
+		if ingressConfig.Entrypoints != nil {
+			httpEntryPoints = *ingressConfig.Entrypoints
+		}
+
 		httpRouter := &dynamic.Router{
-			// Only attach to entryPoint which do not activate TLS.
-			EntryPoints: p.NonTLSEntryPoints,
+			// Only attach to entryPoints which do not activate TLS,
+			// unless the user has explicitly specified entrypoints via annotation.
+			EntryPoints: httpEntryPoints,
 			Rule:        rt.Rule,
 			// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
 			RuleSyntax:  "default",
