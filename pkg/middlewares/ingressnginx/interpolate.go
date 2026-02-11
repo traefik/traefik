@@ -84,7 +84,7 @@ func getNginxVariableValue(variable string, req *http.Request) string {
 	}
 }
 
-// for NGINX compatibility on auth-signin
+// UpdateAuthSigninURL adds an `rd=` arg to the `auth-signin` url if not present. This is for NGINX compatibility.
 func UpdateAuthSigninURL(src string) string {
 	if strings.Contains(src, "rd=") {
 		return src
