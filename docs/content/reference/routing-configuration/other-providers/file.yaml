@@ -258,6 +258,7 @@ http:
         preserveLocationHeader: true
         preserveRequestMethod: true
         authSigninURL: foobar
+        interpolate: true
     Middleware12:
       grpcWeb:
         allowOrigins:
