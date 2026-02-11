@@ -17,6 +17,7 @@ import (
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
+	"k8s.io/utils/ptr"
 )
 
 func TestRetry(t *testing.T) {
@@ -419,13 +420,13 @@ func (l *countingRetryListener) Retried(req *http.Request, attempt int) {
 
 func TestRetryHTTPStatusCodes(t *testing.T) {
 	testCases := []struct {
-		desc                  string
-		config                dynamic.Retry
-		responseStatusCodes   []int
-		wantRetryAttempts     int
-		wantResponseStatus    int
-		requestBody           string
-		expectMinDuration     time.Duration
+		desc                string
+		config              dynamic.Retry
+		responseStatusCodes []int
+		wantRetryAttempts   int
+		wantResponseStatus  int
+		requestBody         string
+		expectMinDuration   time.Duration
 	}{
 		{
 			desc: "retry on single 503 status code",
@@ -686,7 +687,7 @@ func TestRetryHTTPStatusCodesLargeBodyError(t *testing.T) {
 	config := dynamic.Retry{
 		Attempts:            3,
 		Status:              []string{"503"},
-		MaxRequestBodyBytes: func() *int64 { v := int64(100); return &v }(), // Smaller than body
+		MaxRequestBodyBytes: ptr.To(int64(100)), // Smaller than body
 	}
 
 	next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -704,5 +705,5 @@ func TestRetryHTTPStatusCodesLargeBodyError(t *testing.T) {
 
 	// Should return 413 Request Entity Too Large when body is too large
 	assert.Equal(t, http.StatusRequestEntityTooLarge, recorder.Code)
-	assert.Equal(t, 0, retryListener.timesCalled) // No retries should happen
+	assert.Equal(t, 0, retryListener.timesCalled)
 }
