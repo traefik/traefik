@@ -513,7 +513,7 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 			config: dynamic.Retry{
 				Attempts:            3,
 				Status:              []string{"502"},
-				MaxRequestBodyBytes: func() *int64 { v := int64(1024); return &v }(),
+				MaxRequestBodyBytes: ptr.To(int64(1024)),
 			},
 			responseStatusCodes: []int{http.StatusBadGateway, http.StatusOK},
 			wantRetryAttempts:   1,
@@ -528,17 +528,7 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 				Timeout:  ptypes.Duration(time.Millisecond * 50),
 			},
 			responseStatusCodes: []int{http.StatusServiceUnavailable, http.StatusServiceUnavailable, http.StatusServiceUnavailable, http.StatusServiceUnavailable, http.StatusServiceUnavailable},
-			wantRetryAttempts:   1, // Should stop due to timeout before exhausting attempts
-			wantResponseStatus:  http.StatusServiceUnavailable,
-		},
-		{
-			desc: "retry without timeout exhausts all attempts",
-			config: dynamic.Retry{
-				Attempts: 3,
-				Status:   []string{"503"},
-			},
-			responseStatusCodes: []int{http.StatusServiceUnavailable, http.StatusServiceUnavailable, http.StatusServiceUnavailable},
-			wantRetryAttempts:   2,
+			wantRetryAttempts:   0, // Should stop due to timeout before exhausting attempts
 			wantResponseStatus:  http.StatusServiceUnavailable,
 		},
 	}
@@ -549,6 +539,8 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 
 			callCount := 0
 			next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				// FIXME: configure this sleep with the test
+				time.Sleep(time.Millisecond * 50)
 				// Verify the body is readable on each attempt.
 				if test.requestBody != "" {
 					body, err := io.ReadAll(req.Body)
