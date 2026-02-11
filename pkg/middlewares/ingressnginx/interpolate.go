@@ -16,6 +16,7 @@ const (
 	requestURI        = "$request_uri"
 	escapedRequestURI = "$escaped_request_uri"
 	path              = "$path"
+	queryString       = "$query_string"
 	args              = "$args"
 	arg               = "$arg_"
 	remoteAddress     = "$remote_addr"
@@ -71,7 +72,7 @@ func getNginxVariableValue(variable string, req *http.Request) string {
 			return ""
 		}
 		return req.URL.Path
-	case args:
+	case args, queryString:
 		if req.URL == nil {
 			return ""
 		}

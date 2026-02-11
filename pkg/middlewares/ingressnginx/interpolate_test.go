@@ -127,6 +127,16 @@ func TestReplaceNginxVariables(t *testing.T) {
 			expected: `http://bar.foo.com/external-auth/start?rd=https://baz.com/?q=test&test=1&test=2&token=token_1234&val=foo%2Cbar%2Cbaz`,
 		},
 		{
+			desc: "$query_string",
+			src:  "http://bar.foo.com/external-auth/start?rd=https://baz.com/?$query_string",
+			req: &http.Request{
+				URL:    reqURL,
+				Method: http.MethodGet,
+				Host:   "baz.com",
+			},
+			expected: `http://bar.foo.com/external-auth/start?rd=https://baz.com/?q=test&test=1&test=2&token=token_1234&val=foo%2Cbar%2Cbaz`,
+		},
+		{
 			desc: "$host && $escaped_request_uri",
 			src:  "http://bar.foo.com/external-auth/start?rd=https://$host$escaped_request_uri",
 			req: &http.Request{
