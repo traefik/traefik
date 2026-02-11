@@ -1,4 +1,4 @@
-package middlewares
+package ingressnginx
 
 import (
 	"net/http"
