@@ -295,6 +295,7 @@ type ForwardAuth struct {
 	// AuthSigninURL specifies the URL to redirect to when the authentication server returns 401 Unauthorized.
 	AuthSigninURL string `json:"authSigninURL,omitempty" toml:"authSigninURL,omitempty" yaml:"authSigninURL,omitempty" export:"true"`
 	// Interpolate activates the variable interpolation in the middleware. Currently, this is used in the NGINX provider.
+	// Supports nginx-compatible variable substitution: $scheme, $host, $request_uri, $escaped_request_uri.
 	Interpolate bool `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
 

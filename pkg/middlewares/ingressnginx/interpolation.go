@@ -9,6 +9,7 @@ import (
 const (
 	scheme            = "$scheme"
 	host              = "$host"
+	bestHttpHost      = "$best_http_host"
 	hostname          = "$hostname"
 	requestURI        = "$request_uri"
 	escapedRequestURI = "$escaped_request_uri"
@@ -32,7 +33,7 @@ func ReplaceNginxVariables(src string, req *http.Request) string {
 
 func getNginxVariableValue(variable string, req *http.Request) string {
 	switch variable {
-	case host:
+	case host, hostname, bestHttpHost:
 		return req.Host
 	case requestURI:
 		if req.URL != nil {
@@ -45,10 +46,14 @@ func getNginxVariableValue(variable string, req *http.Request) string {
 		}
 		return url.QueryEscape(req.RequestURI)
 	case scheme:
-		if req.URL == nil {
-			return ""
+		// Determine scheme: check TLS first, then X-Forwarded-Proto header
+		scheme := "http"
+		if req.TLS != nil {
+			scheme = "https"
+		} else if proto := req.Header.Get("X-Forwarded-Proto"); proto != "" {
+			scheme = proto
 		}
-		return req.URL.Scheme
+		return scheme
 	case path:
 		if req.URL == nil {
 			return ""
