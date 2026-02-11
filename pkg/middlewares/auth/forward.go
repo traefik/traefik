@@ -157,7 +157,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	address := fa.address
 	if fa.interpolate {
-		address = ingressnginx.ReplaceVariables(address, req)
+		address = ingressnginx.ReplaceVariables(address, req, nil)
 	}
 
 	forwardReqMethod := http.MethodGet
@@ -276,7 +276,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 				}
 			}
 
-			signinURL = ingressnginx.ReplaceVariables(signinURL, req)
+			signinURL = ingressnginx.ReplaceVariables(signinURL, req, nil)
 		}
 
 		tracer.CaptureResponse(forwardSpan, forwardResponse.Header, http.StatusFound, trace.SpanKindClient)

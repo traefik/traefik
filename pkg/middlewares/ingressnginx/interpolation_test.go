@@ -1,6 +1,7 @@
 package ingressnginx
 
 import (
+	"crypto/tls"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -13,6 +14,7 @@ func Test_ReplaceVariables(t *testing.T) {
 		desc     string
 		src      string
 		req      *http.Request
+		vars     map[string]string
 		expected string
 	}{
 		{
@@ -85,13 +87,44 @@ func Test_ReplaceVariables(t *testing.T) {
 			req:      httptest.NewRequest(http.MethodGet, "http://baz.com/foo/bar?key=value&other=test", http.NoBody),
 			expected: "val=${invalid}",
 		},
+		{
+			desc:     "$scheme http",
+			src:      "val=$scheme",
+			req:      httptest.NewRequest(http.MethodGet, "http://baz.com/foo/bar", http.NoBody),
+			expected: "val=http",
+		},
+		{
+			desc:     "$scheme https",
+			src:      "val=$scheme",
+			req:      mustNewRequestWithTLS(t, http.MethodGet, "https://baz.com/foo/bar"),
+			expected: "val=https",
+		},
+		{
+			desc:     "$request_uri",
+			src:      "val=$request_uri",
+			req:      httptest.NewRequest(http.MethodGet, "http://baz.com/foo/bar?key=value&other=test", http.NoBody),
+			expected: "val=/foo/bar?key=value&other=test",
+		},
+		{
+			desc:     "$remote_addr",
+			src:      "val=$remote_addr",
+			req:      mustNewRequestWithRemoteAddr(t, http.MethodGet, "http://baz.com/foo/bar", "192.168.1.1:12345"),
+			expected: "val=192.168.1.1:12345",
+		},
+		{
+			desc:     "custom vars",
+			src:      "val=$custom_var",
+			req:      httptest.NewRequest(http.MethodGet, "http://baz.com/foo/bar", http.NoBody),
+			vars:     map[string]string{"$custom_var": "custom_value"},
+			expected: "val=custom_value",
+		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.desc, func(t *testing.T) {
 			t.Parallel()
 
-			got := ReplaceVariables(testCase.src, testCase.req)
+			got := ReplaceVariables(testCase.src, testCase.req, testCase.vars)
 			require.Equal(t, testCase.expected, got)
 		})
 	}
@@ -102,6 +135,24 @@ func mustNewRequestWithHeaders(t *testing.T, method, target string, headers map[
 
 	req := httptest.NewRequest(method, target, http.NoBody)
 	req.Header = headers
+
+	return req
+}
+
+func mustNewRequestWithTLS(t *testing.T, method, target string) *http.Request {
+	t.Helper()
+
+	req := httptest.NewRequest(method, target, http.NoBody)
+	req.TLS = &tls.ConnectionState{}
+
+	return req
+}
+
+func mustNewRequestWithRemoteAddr(t *testing.T, method, target, remoteAddr string) *http.Request {
+	t.Helper()
+
+	req := httptest.NewRequest(method, target, http.NoBody)
+	req.RemoteAddr = remoteAddr
 
 	return req
 }
