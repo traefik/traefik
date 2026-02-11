@@ -21,11 +21,7 @@ const (
 	remoteAddress     = "$remote_addr"
 )
 
-// var nginxVariables = []string{scheme, host, hostname, requestURI, escapedRequestURI, path, args, remoteAddress, bestHttpHost}
-
 func ReplaceNginxVariables(src string, req *http.Request) string {
-	// Need to update the function to add more variables support
-	// => change to a parser/regexp based solution for easier matching.
 	varsRegexp := regexp.MustCompile(`\$[a-zA-Z_][a-zA-Z0-9_]*`)
 	results := varsRegexp.FindAllString(src, -1)
 

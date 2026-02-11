@@ -61,7 +61,7 @@ func TestReplaceNginxVariables(t *testing.T) {
 			expected: `http://bar.foo.com/external-auth/start?rd=https://foo.com`,
 		},
 		{
-			desc: "$http_x_api_key",
+			desc: "Single Header value in $http_x_api_key",
 			src:  "http://bar.foo.com/external-auth/start?rd=https://baz.com/?api=$http_x_api_key",
 			req: &http.Request{
 				Method:     http.MethodGet,
@@ -74,7 +74,7 @@ func TestReplaceNginxVariables(t *testing.T) {
 			expected: `http://bar.foo.com/external-auth/start?rd=https://baz.com/?api=key`,
 		},
 		{
-			desc: "$http_foo",
+			desc: "Multiple Header value in $http_foo",
 			src:  "$http_foo",
 			req: &http.Request{
 				Method:     http.MethodGet,
@@ -87,7 +87,7 @@ func TestReplaceNginxVariables(t *testing.T) {
 			expected: `bar,baz`,
 		},
 		{
-			desc: "$arg_token",
+			desc: "Single arg value in $arg_token",
 			src:  "$arg_token",
 			req: &http.Request{
 				URL:    reqURL,
@@ -107,7 +107,7 @@ func TestReplaceNginxVariables(t *testing.T) {
 			expected: `foo,bar,baz`,
 		},
 		{
-			desc: "$arg_test",
+			desc: "Multiple arg value in $arg_test",
 			src:  "$arg_test",
 			req: &http.Request{
 				URL:    reqURL,
