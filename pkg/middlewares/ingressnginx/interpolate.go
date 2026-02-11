@@ -82,3 +82,17 @@ func getNginxVariableValue(variable string, req *http.Request) string {
 		return ""
 	}
 }
+
+// for NGINX compatibility on auth-signin
+func UpdateAuthSigninURL(src string) string {
+	if strings.Contains(src, "rd=") {
+		return src
+	}
+	suffix := "rd=$scheme://$host$escaped_request_uri"
+	if !strings.Contains(src, "?") {
+		suffix = "?" + suffix
+	} else {
+		suffix = "&" + suffix
+	}
+	return src + suffix
+}

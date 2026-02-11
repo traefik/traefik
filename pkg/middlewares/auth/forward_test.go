@@ -493,7 +493,7 @@ func TestForwardAuthSigninRedirectWithVariables(t *testing.T) {
 			signinURL:        "$scheme://auth.example.com/login",
 			requestURL:       "http://app.example.com/protected",
 			xForwardedProto:  "https",
-			expectedLocation: "https://auth.example.com/login",
+			expectedLocation: "https://auth.example.com/login?rd=https://app.example.com%2Fprotected",
 		},
 		{
 			name:             "host variable",
@@ -519,6 +519,13 @@ func TestForwardAuthSigninRedirectWithVariables(t *testing.T) {
 			requestURL:       "http://app.example.com/admin/dashboard?tab=1",
 			xForwardedProto:  "https",
 			expectedLocation: "https://app.example.com/oauth2/start?rd=%2Fadmin%2Fdashboard%3Ftab%3D1",
+		},
+		{
+			name:             "arg without rd= defined",
+			signinURL:        "$scheme://$host/oauth2/start?next=$request_uri",
+			requestURL:       "http://app.example.com/admin/dashboard?tab=1",
+			xForwardedProto:  "https",
+			expectedLocation: "https://app.example.com/oauth2/start?next=/admin/dashboard?tab=1&rd=https://app.example.com%2Fadmin%2Fdashboard%3Ftab%3D1",
 		},
 	}
 

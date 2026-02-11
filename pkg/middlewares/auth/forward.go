@@ -249,7 +249,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		logger.Debug().Msgf("Redirecting to signin URL: %s", fa.authSigninURL)
 
 		if fa.interpolate {
-			fa.authSigninURL = ingressnginx.ReplaceNginxVariables(fa.authSigninURL, req)
+			fa.authSigninURL = ingressnginx.ReplaceNginxVariables(ingressnginx.UpdateAuthSigninURL(fa.authSigninURL), req)
 			logger.Debug().Msgf("Interpolating NGINX variables in the auth signing URL: %s", fa.authSigninURL)
 		}
 
