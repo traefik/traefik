@@ -89,15 +89,16 @@ func WrapHandler(next http.Handler) http.Handler {
 
 // retry is a middleware that retries requests.
 type retry struct {
-	attempts        int
-	initialInterval time.Duration
-	next            http.Handler
-	listener        Listener
-	name            string
-
+	attempts                   int
 	statusCode                 types.HTTPCodeRanges
 	maxRequestBodyBytes        int64
 	disableRetryOnNetworkError bool
+	initialInterval            time.Duration
+	timeout                    time.Duration
+
+	next     http.Handler
+	listener Listener
+	name     string
 }
 
 // New returns a new retry middleware.
@@ -114,12 +115,13 @@ func New(ctx context.Context, next http.Handler, config dynamic.Retry, listener 
 
 	retryCfg := &retry{
 		attempts:                   config.Attempts,
-		initialInterval:            time.Duration(config.InitialInterval),
-		next:                       next,
-		listener:                   listener,
-		name:                       name,
 		maxRequestBodyBytes:        defaultMaxRequestBodySize,
 		disableRetryOnNetworkError: config.DisableRetryOnNetworkError,
+		initialInterval:            time.Duration(config.InitialInterval),
+		timeout:                    time.Duration(config.Timeout),
+		name:                       name,
+		listener:                   listener,
+		next:                       next,
 	}
 
 	if len(config.Status) > 0 {
@@ -143,10 +145,12 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	var reusableReq *mirror.ReusableRequest
 	if len(r.statusCode) > 0 {
-		rr, _, err := mirror.NewReusableRequest(req, r.maxRequestBodyBytes)
+		var err error
+		reusableReq, _, err = mirror.NewReusableRequest(req, r.maxRequestBodyBytes)
 		if err != nil && !errors.Is(err, mirror.ErrBodyTooLarge) {
-			log.Ctx(req.Context()).Debug().Err(err).Msg("Error while creating reusable request for failover")
+			log.Ctx(req.Context()).Debug().Err(err).Msg("Error while creating reusable request for retry middleware")
 			http.Error(rw, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
@@ -155,16 +159,16 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			http.Error(rw, "Request body too large", http.StatusRequestEntityTooLarge)
 			return
 		}
+	} else {
+		closableBody := req.Body
+		defer closableBody.Close()
 
-		req = rr.Clone(req.Context())
+		// if we might make multiple attempts, swap the body for an io.NopCloser
+		// cf https://github.com/traefik/traefik/issues/1008
+		req.Body = io.NopCloser(closableBody)
 	}
 
-	closableBody := req.Body
-	defer closableBody.Close()
-
-	// if we might make multiple attempts, swap the body for an io.NopCloser
-	// cf https://github.com/traefik/traefik/issues/1008
-	req.Body = io.NopCloser(closableBody)
+	start := time.Now()
 
 	attempts := 1
 
@@ -179,7 +183,7 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			}
 			// Because multiple tracing spans may need to be created,
 			// the Retry middleware does not implement trace.Traceable,
-			// and creates directly a new span for each retry operation.
+			// and directly creates a new span for each retry operation.
 			var tracingCtx context.Context
 			tracingCtx, currentSpan = tracer.Start(initialCtx, typeName, trace.WithSpanKind(trace.SpanKindInternal))
 
@@ -193,19 +197,24 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 
 		remainAttempts := attempts < r.attempts
-		retryResponseWriter := newResponseWriter(rw, r.statusCode)
+		retryResponseWriter := newResponseWriter(rw, r.statusCode, remainAttempts, start, r.timeout)
+
+		if reusableReq != nil {
+			req = reusableReq.Clone(req.Context())
+		}
 
 		retryReq := req
 		if !r.disableRetryOnNetworkError {
 			var shouldRetry ShouldRetry = func(shouldRetry bool) {
-				retryResponseWriter.SetShouldRetry(remainAttempts && shouldRetry)
+				timedOut := r.timeout > 0 && time.Since(start) >= r.timeout
+				retryResponseWriter.SetShouldRetry(shouldRetry && remainAttempts && !timedOut)
 			}
 			retryReq = req.Clone(context.WithValue(req.Context(), shouldRetryContextKey{}, shouldRetry))
 		}
 
 		r.next.ServeHTTP(retryResponseWriter, retryReq)
 
-		if !retryResponseWriter.ShouldRetry() {
+		if !retryResponseWriter.ShouldRetry() || !remainAttempts || (r.timeout > 0 && time.Since(start) >= r.timeout) {
 			return nil
 		}
 
@@ -252,11 +261,14 @@ func (r *retry) newBackOff() backoff.BackOff {
 	return b
 }
 
-func newResponseWriter(rw http.ResponseWriter, statusCodeRanges types.HTTPCodeRanges) *responseWriter {
+func newResponseWriter(rw http.ResponseWriter, statusCodeRanges types.HTTPCodeRanges, remainAttempts bool, start time.Time, timeout time.Duration) *responseWriter {
 	return &responseWriter{
 		responseWriter:  rw,
 		headers:         make(http.Header),
 		statusCodeRange: statusCodeRanges,
+		remainAttempts:  remainAttempts,
+		start:           start,
+		timeout:         timeout,
 	}
 }
 
@@ -266,6 +278,9 @@ type responseWriter struct {
 	shouldRetry     bool
 	written         bool
 	statusCodeRange types.HTTPCodeRanges
+	remainAttempts  bool
+	start           time.Time
+	timeout         time.Duration
 }
 
 func (r *responseWriter) ShouldRetry() bool {
@@ -307,18 +322,22 @@ func (r *responseWriter) WriteHeader(code int) {
 		return
 	}
 
-	r.written = true
-	r.shouldRetry = r.statusCodeRange.Contains(code)
-
-	if !r.shouldRetry {
-		// In that case retry case is set to false which means we at least managed
-		// to write headers to the backend : we are not going to perform any further retry.
-		// So it is now safe to alter current response headers with headers collected during
-		// the latest try before writing headers to client.
-		maps.Copy(r.responseWriter.Header(), r.headers)
-
-		r.responseWriter.WriteHeader(code)
+	if r.statusCodeRange != nil {
+		timedOut := r.timeout > 0 && time.Since(r.start) >= r.timeout
+		r.shouldRetry = r.statusCodeRange.Contains(code) && r.remainAttempts && !timedOut
 	}
+
+	if r.shouldRetry {
+		return
+	}
+
+	// In that case retry case is set to false which means we at least managed
+	// to write headers to the backend : we are not going to perform any further retry.
+	// So it is now safe to alter current response headers with headers collected during
+	// the latest try before writing headers to client.
+	maps.Copy(r.responseWriter.Header(), r.headers)
+
+	r.responseWriter.WriteHeader(code)
 
 	r.written = true
 }

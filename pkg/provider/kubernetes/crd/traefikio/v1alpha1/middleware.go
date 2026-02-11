@@ -343,8 +343,11 @@ type Retry struct {
 	// +kubebuilder:validation:Minimum=0
 	Attempts int `json:"attempts,omitempty"`
 	// Timeout defines how much time the middleware is allowed to retry the request.
-	// +kubebuilder:validation:Minimum=0
-	Timeout int `json:"timeout,omitempty"`
+	// The value of timeout should be provided in seconds or as a valid duration format,
+	// see https://pkg.go.dev/time#ParseDuration.
+	// +kubebuilder:validation:Pattern="^([0-9]+(ns|us|µs|ms|s|m|h)?)+$"
+	// +kubebuilder:validation:XIntOrString
+	Timeout intstr.IntOrString `json:"timeout,omitempty"`
 	// InitialInterval defines the first wait time in the exponential backoff series.
 	// The maximum interval is calculated as twice the initialInterval.
 	// If unspecified, requests will be retried immediately.

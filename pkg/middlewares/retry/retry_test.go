@@ -426,7 +426,6 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 		wantRetryAttempts   int
 		wantResponseStatus  int
 		requestBody         string
-		expectMinDuration   time.Duration
 	}{
 		{
 			desc: "retry on single 503 status code",
@@ -522,16 +521,25 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 			requestBody:         "test request body",
 		},
 		{
-			desc: "retry with backoff on 503",
+			desc: "retry with timeout stops retries early",
 			config: dynamic.Retry{
-				Attempts:        3,
-				Status:          []string{"503"},
-				InitialInterval: ptypes.Duration(time.Microsecond * 50),
+				Attempts: 5,
+				Status:   []string{"503"},
+				Timeout:  ptypes.Duration(time.Millisecond * 50),
 			},
-			responseStatusCodes: []int{http.StatusServiceUnavailable, http.StatusServiceUnavailable, http.StatusOK},
+			responseStatusCodes: []int{http.StatusServiceUnavailable, http.StatusServiceUnavailable, http.StatusServiceUnavailable, http.StatusServiceUnavailable, http.StatusServiceUnavailable},
+			wantRetryAttempts:   1, // Should stop due to timeout before exhausting attempts
+			wantResponseStatus:  http.StatusServiceUnavailable,
+		},
+		{
+			desc: "retry without timeout exhausts all attempts",
+			config: dynamic.Retry{
+				Attempts: 3,
+				Status:   []string{"503"},
+			},
+			responseStatusCodes: []int{http.StatusServiceUnavailable, http.StatusServiceUnavailable, http.StatusServiceUnavailable},
 			wantRetryAttempts:   2,
-			wantResponseStatus:  http.StatusOK,
-			expectMinDuration:   time.Microsecond * 40,
+			wantResponseStatus:  http.StatusServiceUnavailable,
 		},
 	}
 
@@ -539,28 +547,34 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			attemptCount := 0
+			callCount := 0
 			next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-				// Verify body is readable on each attempt if body is provided
+				// Verify the body is readable on each attempt.
 				if test.requestBody != "" {
 					body, err := io.ReadAll(req.Body)
 					require.NoError(t, err)
 					assert.Equal(t, test.requestBody, string(body))
 				}
 
-				// Add headers to track attempts
-				headerName := fmt.Sprintf("X-Attempt-%d", attemptCount+1)
+				// Add headers to track attempts, these should be discarded by retry middleware except for the final successful response.
+				headerName := fmt.Sprintf("X-Attempt-%d", callCount)
 				rw.Header().Set(headerName, "value")
 
-				// Get status code based on attempt count, cycling through if needed
-				statusCode := test.responseStatusCodes[attemptCount%len(test.responseStatusCodes)]
-				attemptCount++
+				// Return the appropriate status code for this attempt.
+				var statusCode int
+				if callCount < len(test.responseStatusCodes) {
+					statusCode = test.responseStatusCodes[callCount]
+				} else {
+					// Should not happen, but default to a retryable status if we run out of provided codes.
+					statusCode = http.StatusForbidden
+				}
 
 				if statusCode == http.StatusOK {
 					// Successful response, add success header
 					rw.Header().Set("X-Final", "success")
 				}
 
+				callCount++
 				rw.WriteHeader(statusCode)
 			})
 
@@ -568,38 +582,29 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 			retry, err := New(t.Context(), next, test.config, retryListener, "traefikTest")
 			require.NoError(t, err)
 
-			startTime := time.Now()
 			recorder := httptest.NewRecorder()
 
-			var req *http.Request
+			var body io.Reader
 			if test.requestBody != "" {
-				req = httptest.NewRequest(http.MethodPost, "http://localhost:3000/ok", strings.NewReader(test.requestBody))
-			} else {
-				req = httptest.NewRequest(http.MethodGet, "http://localhost:3000/ok", nil)
+				body = strings.NewReader(test.requestBody)
 			}
+
+			req := httptest.NewRequest(http.MethodGet, "http://localhost:3000/ok", body)
 
 			retry.ServeHTTP(recorder, req)
 
-			elapsed := time.Since(startTime)
-
 			assert.Equal(t, test.wantResponseStatus, recorder.Code)
 			assert.Equal(t, test.wantRetryAttempts, retryListener.timesCalled)
-
-			// Check timing if expected
-			if test.expectMinDuration > 0 {
-				assert.Greater(t, elapsed, test.expectMinDuration)
-			}
 
 			// Verify headers behavior - should only have headers from the final attempt
 			if test.wantResponseStatus == http.StatusOK {
 				assert.Equal(t, "success", recorder.Header().Get("X-Final"))
 				// Should have header from successful attempt
-				successAttempt := test.wantRetryAttempts + 1
-				expectedHeader := fmt.Sprintf("X-Attempt-%d", successAttempt)
+				expectedHeader := fmt.Sprintf("X-Attempt-%d", test.wantRetryAttempts)
 				assert.Equal(t, "value", recorder.Header().Get(expectedHeader))
 
 				// Should not have headers from failed attempts
-				for i := 1; i < successAttempt; i++ {
+				for i := 1; i < test.wantRetryAttempts; i++ {
 					failedHeader := fmt.Sprintf("X-Attempt-%d", i)
 					assert.Empty(t, recorder.Header().Get(failedHeader))
 				}

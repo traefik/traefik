@@ -731,7 +731,7 @@ type Retry struct {
 	// Attempts defines how many times the request should be retried.
 	Attempts int `json:"attempts,omitempty" toml:"attempts,omitempty" yaml:"attempts,omitempty" export:"true"`
 	// Timeout defines how much time the middleware is allowed to retry the request.
-	Timeout int `json:"timeout,omitempty" toml:"timeout,omitempty" yaml:"timeout,omitempty" export:"true"`
+	Timeout ptypes.Duration `json:"timeout,omitempty" toml:"timeout,omitempty" yaml:"timeout,omitempty" export:"true"`
 	// InitialInterval defines the first wait time in the exponential backoff series.
 	// The maximum interval is calculated as twice the initialInterval.
 	// If unspecified, requests will be retried immediately.
