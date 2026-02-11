@@ -16,6 +16,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
+	"github.com/traefik/traefik/v3/pkg/middlewares/ingressnginx"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/observability/tracing"
 	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
@@ -151,6 +152,12 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		forwardReqMethod = req.Method
 	}
 
+	address := fa.address
+	if fa.interpolate {
+		address = ingressnginx.ReplaceNginxVariables(address, req)
+		logger.Debug().Msgf("Interpolating NGINX variables in the auth URL: %s", address)
+	}
+
 	forwardReq, err := http.NewRequestWithContext(req.Context(), forwardReqMethod, fa.address, nil)
 	if err != nil {
 		logger.Debug().Err(err).Msgf("Error calling %s", fa.address)
@@ -244,8 +251,8 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 		authSigninURL := fa.authSigninURL
 		if fa.interpolate {
-			authSigninURL = middlewares.ReplaceNginxVariables(fa.authSigninURL, req)
-			logger.Debug().Msgf("Interpolating NGINX variables in the signing URL: %s", authSigninURL)
+			authSigninURL = ingressnginx.ReplaceNginxVariables(fa.authSigninURL, req)
+			logger.Debug().Msgf("Interpolating NGINX variables in the auth signing URL: %s", authSigninURL)
 		}
 
 		tracer.CaptureResponse(forwardSpan, forwardResponse.Header, http.StatusFound, trace.SpanKindClient)
