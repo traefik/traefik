@@ -152,10 +152,9 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		forwardReqMethod = req.Method
 	}
 
-	address := fa.address
 	if fa.interpolate {
-		address = ingressnginx.ReplaceNginxVariables(address, req)
-		logger.Debug().Msgf("Interpolating NGINX variables in the auth URL: %s", address)
+		fa.address = ingressnginx.ReplaceNginxVariables(fa.address, req)
+		logger.Debug().Msgf("Interpolating NGINX variables in the auth URL: %s", fa.address)
 	}
 
 	forwardReq, err := http.NewRequestWithContext(req.Context(), forwardReqMethod, fa.address, nil)
@@ -249,14 +248,13 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if fa.authSigninURL != "" && forwardResponse.StatusCode == http.StatusUnauthorized {
 		logger.Debug().Msgf("Redirecting to signin URL: %s", fa.authSigninURL)
 
-		authSigninURL := fa.authSigninURL
 		if fa.interpolate {
-			authSigninURL = ingressnginx.ReplaceNginxVariables(fa.authSigninURL, req)
-			logger.Debug().Msgf("Interpolating NGINX variables in the auth signing URL: %s", authSigninURL)
+			fa.authSigninURL = ingressnginx.ReplaceNginxVariables(fa.authSigninURL, req)
+			logger.Debug().Msgf("Interpolating NGINX variables in the auth signing URL: %s", fa.authSigninURL)
 		}
 
 		tracer.CaptureResponse(forwardSpan, forwardResponse.Header, http.StatusFound, trace.SpanKindClient)
-		http.Redirect(rw, req, authSigninURL, http.StatusFound)
+		http.Redirect(rw, req, fa.authSigninURL, http.StatusFound)
 		return
 	}
 
