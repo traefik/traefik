@@ -7,6 +7,7 @@ import (
 	"io"
 	"net"
 	"sync"
+	"time"
 
 	"github.com/rs/zerolog/log"
 	tcpmuxer "github.com/traefik/traefik/v3/pkg/muxer/tcp"
@@ -46,7 +47,7 @@ func isPostgres(br *bufio.Reader) (bool, error) {
 func (r *Router) servePostgres(conn tcp.WriteCloser) {
 	_, err := conn.Write(PostgresStartTLSReply)
 	if err != nil {
-		conn.Close()
+		_ = conn.Close()
 		return
 	}
 
@@ -55,32 +56,39 @@ func (r *Router) servePostgres(conn tcp.WriteCloser) {
 	b := make([]byte, len(PostgresStartTLSMsg))
 	_, err = br.Read(b)
 	if err != nil {
-		conn.Close()
+		_ = conn.Close()
 		return
 	}
 
 	hello, err := clientHelloInfo(br)
 	if err != nil {
-		conn.Close()
+		_ = conn.Close()
 		return
 	}
 
 	if !hello.isTLS {
-		conn.Close()
+		_ = conn.Close()
 		return
+	}
+
+	// The deadline was there to prevent hanging connections while waiting for the client,
+	// now that the STARTTLS message and Client Hello have been read,
+	// we can remove it and leave its handling to the TCP reverse proxy eventually.
+	if err := conn.SetDeadline(time.Time{}); err != nil {
+		log.Error().Err(err).Msg("Error while setting deadline")
 	}
 
 	connData, err := tcpmuxer.NewConnData(hello.serverName, conn, hello.protos)
 	if err != nil {
 		log.Error().Err(err).Msg("Error while reading TCP connection data")
-		conn.Close()
+		_ = conn.Close()
 		return
 	}
 
 	// Contains also TCP TLS passthrough routes.
 	handlerTCPTLS, _ := r.muxerTCPTLS.Match(connData)
 	if handlerTCPTLS == nil {
-		conn.Close()
+		_ = conn.Close()
 		return
 	}
 
