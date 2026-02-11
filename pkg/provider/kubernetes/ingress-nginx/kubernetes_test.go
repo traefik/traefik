@@ -282,6 +282,7 @@ func TestLoadIngresses(t *testing.T) {
 								Address:             "http://whoami.default.svc/",
 								AuthResponseHeaders: []string{"X-Foo"},
 								AuthSigninURL:       "https://auth.example.com/oauth2/start?rd=foo",
+								Interpolate:         true,
 							},
 						},
 					},
