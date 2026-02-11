@@ -3,25 +3,33 @@ package ingressnginx
 import (
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 )
 
 const (
 	scheme            = "$scheme"
 	host              = "$host"
+	httpHeaders       = "$http_"
 	bestHttpHost      = "$best_http_host"
 	hostname          = "$hostname"
 	requestURI        = "$request_uri"
 	escapedRequestURI = "$escaped_request_uri"
 	path              = "$path"
 	args              = "$args"
+	arg               = "$arg_"
 	remoteAddress     = "$remote_addr"
 )
 
-var nginxVariables = []string{scheme, host, hostname, requestURI, escapedRequestURI, path, args, remoteAddress}
+// var nginxVariables = []string{scheme, host, hostname, requestURI, escapedRequestURI, path, args, remoteAddress, bestHttpHost}
 
 func ReplaceNginxVariables(src string, req *http.Request) string {
-	for _, variable := range nginxVariables {
+	// Need to update the function to add more variables support
+	// => change to a parser/regexp based solution for easier matching.
+	varsRegexp := regexp.MustCompile(`\$[a-zA-Z_][a-zA-Z0-9_]*`)
+	results := varsRegexp.FindAllString(src, -1)
+
+	for _, variable := range results {
 		val := getNginxVariableValue(variable, req)
 		if val != "" {
 			src = strings.ReplaceAll(src, variable, val)
@@ -32,6 +40,14 @@ func ReplaceNginxVariables(src string, req *http.Request) string {
 }
 
 func getNginxVariableValue(variable string, req *http.Request) string {
+	if header, ok := strings.CutPrefix(variable, httpHeaders); ok {
+		return strings.Join(req.Header.Values(strings.ReplaceAll(header, "_", "-")), ",")
+	}
+
+	if arg, ok := strings.CutPrefix(variable, arg); ok {
+		return req.URL.Query().Get(arg)
+	}
+
 	switch variable {
 	case host, hostname, bestHttpHost:
 		return req.Host
@@ -63,7 +79,7 @@ func getNginxVariableValue(variable string, req *http.Request) string {
 		if req.URL == nil {
 			return ""
 		}
-		return req.URL.RawQuery
+		return req.URL.Query().Encode()
 	case remoteAddress:
 		return req.RemoteAddr
 	default:
