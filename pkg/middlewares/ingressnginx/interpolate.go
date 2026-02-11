@@ -11,7 +11,7 @@ const (
 	scheme            = "$scheme"
 	host              = "$host"
 	httpHeaders       = "$http_"
-	bestHttpHost      = "$best_http_host"
+	bestHTTPHost      = "$best_http_host"
 	hostname          = "$hostname"
 	requestURI        = "$request_uri"
 	escapedRequestURI = "$escaped_request_uri"
@@ -49,7 +49,7 @@ func getNginxVariableValue(variable string, req *http.Request) string {
 	}
 
 	switch variable {
-	case host, hostname, bestHttpHost:
+	case host, hostname, bestHTTPHost:
 		return req.Host
 	case requestURI:
 		if req.URL != nil {
