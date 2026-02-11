@@ -480,6 +480,51 @@ func TestForwardAuthForwardError(t *testing.T) {
 	assert.Equal(t, http.StatusInternalServerError, recorder.Result().StatusCode)
 }
 
+func TestForwardAuthInterpolation(t *testing.T) {
+	responseComplete := make(chan struct{})
+
+	expected := url.URL{
+		Path: "/auth/login",
+	}
+	authTs := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, expected.Host, r.Host)
+		assert.Equal(t, expected.Path, r.RequestURI)
+		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+	}))
+	t.Cleanup(authTs.Close)
+	authURL, err := url.Parse(authTs.URL)
+	require.NoError(t, err)
+	expected.Host = authURL.Host
+
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// next should not be called.
+		t.Fail()
+	})
+
+	auth := dynamic.ForwardAuth{
+		Address:     "http://$host/auth$request_uri",
+		Interpolate: true,
+	}
+	authMiddleware, err := NewForward(t.Context(), next, auth, "authTest")
+	require.NoError(t, err)
+
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+	req := httptest.NewRequestWithContext(ctx, "GET", authTs.URL, http.NoBody)
+	req.Host = authURL.Host
+	req.URL.Path = "/login"
+
+	recorder := httptest.NewRecorder()
+	go func() {
+		authMiddleware.ServeHTTP(recorder, req)
+		close(responseComplete)
+	}()
+
+	<-responseComplete
+
+	assert.Equal(t, http.StatusUnauthorized, recorder.Result().StatusCode)
+}
+
 func Test_writeHeader(t *testing.T) {
 	testCases := []struct {
 		name                      string
