@@ -4,16 +4,20 @@
 **Bug fixes:**
 - **[acme]** Remove invalid private key in log ([#12574](https://github.com/traefik/traefik/pull/12574) by [juliens](https://github.com/juliens))
 - **[acme]** Alter TLS renewal period ([#12479](https://github.com/traefik/traefik/pull/12479) by [LtHummus](https://github.com/LtHummus))
-- **[healthcheck,k8s]** Reject absolute URL in healthcheck path configuration ([#12653](https://github.com/traefik/traefik/pull/12653) by [rtribotte](https://github.com/rtribotte))
+- **[healthcheck]** Reject absolute URL in healthcheck path configuration ([#12653](https://github.com/traefik/traefik/pull/12653) by [rtribotte](https://github.com/rtribotte))
 - **[http3]** Bump github.com/quic-go/quic-go to v0.59.0 ([#12553](https://github.com/traefik/traefik/pull/12553) by [jnoordsij](https://github.com/jnoordsij))
-- **[k8s]** Fix kubernetes.md with correct http redirections ([#12603](https://github.com/traefik/traefik/pull/12603) by [MartenM](https://github.com/MartenM))
+- **[metrics,tracing,accesslogs]** Fix ObservabilityConfig SetDefaults  ([#12636](https://github.com/traefik/traefik/pull/12636) by [mmatur](https://github.com/mmatur))
 - **[server]** Remove conn deadline after STARTTLS negociation ([#12639](https://github.com/traefik/traefik/pull/12639) by [rtribotte](https://github.com/rtribotte))
 - **[tls]** Fix verifyServerCertMatchesURI function behavior ([#12575](https://github.com/traefik/traefik/pull/12575) by [kevinpollet](https://github.com/kevinpollet))
 - **[tracing,otel]** Use ParentBased sampler to respect parent span sampling decision ([#12403](https://github.com/traefik/traefik/pull/12403) by [xe-leon](https://github.com/xe-leon))
 - **[webui]** Use url.Parse to validate X-Forwarded-Prefix value ([#12643](https://github.com/traefik/traefik/pull/12643) by [kevinpollet](https://github.com/kevinpollet))
-- Fix ObservabilityConfig SetDefaults  ([#12636](https://github.com/traefik/traefik/pull/12636) by [mmatur](https://github.com/mmatur))
+- **[healthcheck]** Validate healthcheck path configuration (#12642 by @rtribotte)
+- **[tls, server]** Cap TLS record length to RFC 8446 limit in ClientHello peeking (#12638 by @mmatur)
+- **[service]** Avoid recursion with services ([#12591](https://github.com/traefik/traefik/pull/12591) by [juliens](https://github.com/juliens))
+- **[webui]** Bump dependencies of documentation and webui ([#12581](https://github.com/traefik/traefik/pull/12581) by [gndz07](https://github.com/gndz07))
 
 **Documentation:**
+- **[k8s]** Fix kubernetes.md with correct http redirections ([#12603](https://github.com/traefik/traefik/pull/12603) by [MartenM](https://github.com/MartenM))
 - **[middleware,k8s/crd]** Fix the errors middleware&#39;s document for Kubernetes CRD ([#12600](https://github.com/traefik/traefik/pull/12600) by [yuito-it](https://github.com/yuito-it))
 - **[tls]** Clarify SNI selection ([#12482](https://github.com/traefik/traefik/pull/12482) by [AnuragEkkati](https://github.com/AnuragEkkati))
 - Fix typo on JWT documentation ([#12616](https://github.com/traefik/traefik/pull/12616) by [mdevino](https://github.com/mdevino))
@@ -25,6 +29,7 @@
 - Improve the structure of the routing reference pages ([#12429](https://github.com/traefik/traefik/pull/12429) by [sheddy-traefik](https://github.com/sheddy-traefik))
 - Clean Up Menu Entries &amp; Update Expose Overview ([#12405](https://github.com/traefik/traefik/pull/12405) by [sheddy-traefik](https://github.com/sheddy-traefik))
 - Split Expose User Guides &amp; Add Multi-Layer Routing Section ([#12238](https://github.com/traefik/traefik/pull/12238) by [sheddy-traefik](https://github.com/sheddy-traefik))
+- Remove extra dots in migration guide ([#12573](https://github.com/traefik/traefik/pull/12573) by [rtribotte](https://github.com/rtribotte))
 
 **Misc:**
 - Merge v2.11 into v3.6 ([#12652](https://github.com/traefik/traefik/pull/12652) by [mmatur](https://github.com/mmatur))
