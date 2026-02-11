@@ -226,7 +226,6 @@
         preserveLocationHeader = true
         preserveRequestMethod = true
         authSigninURL = "foobar"
-        Interpolate = true
         [http.middlewares.Middleware11.forwardAuth.tls]
           ca = "foobar"
           cert = "foobar"
