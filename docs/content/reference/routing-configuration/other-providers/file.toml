@@ -382,7 +382,11 @@
     [http.middlewares.Middleware24]
       [http.middlewares.Middleware24.retry]
         attempts = 42
+        timeout = 42
         initialInterval = "42s"
+        maxRequestBodyBytes = 42
+        status = ["foobar", "foobar"]
+        disableRetryOnNetworkError = true
     [http.middlewares.Middleware25]
       [http.middlewares.Middleware25.stripPrefix]
         prefixes = ["foobar", "foobar"]
