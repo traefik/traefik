@@ -29,6 +29,7 @@ jobs:
         uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
         with:
           go-version-file: 'go.mod'
+          check-latest: true
 
       - name: Set up KO
         uses: ko-build/setup-ko@ace48d793556083a76f1e3e6068850c1f4a369aa # v0.6

@@ -35,6 +35,7 @@ jobs:
       if: ${{ matrix.language == 'go' }}
       with:
         go-version-file: 'go.mod'
+        check-latest: true
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
