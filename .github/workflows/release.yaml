@@ -6,7 +6,7 @@ on:
       - 'v*.*.*'
 
 env:
-  GO_VERSION: '1.25'
+  GO_VERSION: '1.26'
   CGO_ENABLED: 0
   VERSION: ${{ github.ref_name }}
   TRAEFIKER_EMAIL: "traefiker@traefik.io"
@@ -133,4 +133,3 @@ jobs:
           gh release create ${VERSION} ./dist/**/traefik*.{zip,tar.gz} ./dist/traefik*.{tar.gz,txt} --repo traefik/traefik --title ${VERSION} --notes ${VERSION} --latest=false
 
           ./script/deploy.sh
-
