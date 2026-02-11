@@ -2,7 +2,7 @@ package middlewares
 
 import (
 	"net/http"
-	"regexp"
+	"net/url"
 	"strings"
 )
 
@@ -41,9 +41,9 @@ func getNginxVariableValue(variable string, req *http.Request) string {
 		return req.RequestURI
 	case escapedRequestURI:
 		if req.URL != nil {
-			return regexp.QuoteMeta(req.URL.RequestURI())
+			return url.QueryEscape(req.URL.RequestURI())
 		}
-		return regexp.QuoteMeta(req.RequestURI)
+		return url.QueryEscape(req.RequestURI)
 	case scheme:
 		if req.URL == nil {
 			return ""

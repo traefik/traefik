@@ -23,7 +23,7 @@ func TestReplaceNginxVariables(t *testing.T) {
 				Host:       "baz.com",
 				RequestURI: "/foo/bar?key=value&other=test",
 			},
-			expected: `http://bar.foo.com/external-auth/start?rd=https://baz.com/foo/bar\?key=value&other=test`,
+			expected: `http://bar.foo.com/external-auth/start?rd=https://baz.com%2Ffoo%2Fbar%3Fkey%3Dvalue%26other%3Dtest`,
 		},
 		{
 			desc: "$host, $scheme, $request_uri",
