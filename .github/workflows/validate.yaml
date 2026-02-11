@@ -6,7 +6,6 @@ on:
       - '*'
 
 env:
-  GO_VERSION: '1.25'
   GOLANGCI_LINT_VERSION: v2.10.1
   MISSPELL_VERSION: v0.7.0
 
@@ -21,10 +20,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up Go ${{ env.GO_VERSION }}
+      - name: Set up Go
         uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
         with:
-          go-version: ${{ env.GO_VERSION }}
+          go-version-file: 'go.mod'
           check-latest: true
 
       - name: golangci-lint
@@ -41,10 +40,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up Go ${{ env.GO_VERSION }}
+      - name: Set up Go
         uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
         with:
-          go-version: ${{ env.GO_VERSION }}
+          go-version-file: 'go.mod'
           check-latest: true
 
       - name: Install misspell ${{ env.MISSPELL_VERSION }}
@@ -65,10 +64,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up Go ${{ env.GO_VERSION }}
+      - name: Set up Go
         uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
         with:
-          go-version: ${{ env.GO_VERSION }}
+          go-version-file: 'go.mod'
           check-latest: true
 
       - name: go generate
