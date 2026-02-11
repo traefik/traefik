@@ -294,8 +294,8 @@ type ForwardAuth struct {
 	PreserveRequestMethod bool `json:"preserveRequestMethod,omitempty" toml:"preserveRequestMethod,omitempty" yaml:"preserveRequestMethod,omitempty" export:"true"`
 	// AuthSigninURL specifies the URL to redirect to when the authentication server returns 401 Unauthorized.
 	AuthSigninURL string `json:"authSigninURL,omitempty" toml:"authSigninURL,omitempty" yaml:"authSigninURL,omitempty" export:"true"`
-	// nginxProvider
-	NginxProvider bool `json="nginxProvider,omitempty" toml:"-" yaml:"-" export:"true"`
+	// Interpolate activates the variable interpolation in the middleware. Currently, this is used in the NGINX provider.
+	Interpolate bool `json="-" toml:"-" yaml:"-" export:"true"`
 }
 
 func (f *ForwardAuth) SetDefaults() {

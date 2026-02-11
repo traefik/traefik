@@ -944,7 +944,7 @@ func TestForwardAuthAuthSigninURL(t *testing.T) {
 		expectedStatus     int
 		expectedLocation   string
 		nextShouldBeCalled bool
-		nginx              bool
+		interpolate        bool
 	}{
 		{
 			desc:               "redirects to signin URL on 401",
@@ -975,13 +975,13 @@ func TestForwardAuthAuthSigninURL(t *testing.T) {
 			nextShouldBeCalled: true,
 		},
 		{
-			desc:               "redirects to signin URL on 401 - NGINX Provider",
-			authSigninURL:      "https://auth.example.com/login?rd=$scheme://$host$request_uri",
+			desc:               "redirects to signin URL on 401 - Variable Interpolation",
+			authSigninURL:      "https://$host/login?redirect=$request_uri",
 			authServerStatus:   http.StatusUnauthorized,
 			expectedStatus:     http.StatusFound,
-			expectedLocation:   "https://auth.example.com/login",
+			expectedLocation:   "https://auth.example.com/login?redirect=/foo",
 			nextShouldBeCalled: false,
-			nginx:              true,
+			interpolate:        true,
 		},
 	}
 
@@ -1000,7 +1000,7 @@ func TestForwardAuthAuthSigninURL(t *testing.T) {
 			auth := dynamic.ForwardAuth{
 				Address:       authServer.URL,
 				AuthSigninURL: test.authSigninURL,
-				NginxProvider: test.nginx,
+				Interpolate:   test.interpolate,
 			}
 			middleware, err := NewForward(t.Context(), next, auth, "authTest")
 			require.NoError(t, err)
@@ -1015,6 +1015,9 @@ func TestForwardAuthAuthSigninURL(t *testing.T) {
 			}
 
 			req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
+			// for variable interpolation
+			req.Host = "auth.example.com"
+			req.URL.Path = "/foo"
 			res, err := client.Do(req)
 			require.NoError(t, err)
 

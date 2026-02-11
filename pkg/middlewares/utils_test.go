@@ -1,4 +1,4 @@
-package ingressnginx
+package middlewares
 
 import (
 	"net/http"
@@ -14,7 +14,6 @@ func TestReplaceNginxVariables(t *testing.T) {
 		src      string
 		req      *http.Request
 		expected string
-		// hasError bool
 	}{
 		{
 			desc: "$host && $escaped_request_uri",
@@ -30,10 +29,9 @@ func TestReplaceNginxVariables(t *testing.T) {
 			desc: "$host, $scheme, $request_uri",
 			src:  "$scheme://bar.foo.com/external-auth/start?rd=$scheme://$host$request_uri",
 			req: &http.Request{
-				URL:        &url.URL{Scheme: "http"},
-				Method:     "GET",
-				Host:       "baz.com",
-				RequestURI: "/foo/bar?key=value&other=test",
+				URL:    &url.URL{Scheme: "http", Path: "/foo/bar", RawQuery: "key=value&other=test"},
+				Method: "GET",
+				Host:   "baz.com",
 			},
 			expected: `http://bar.foo.com/external-auth/start?rd=http://baz.com/foo/bar?key=value&other=test`,
 		},
