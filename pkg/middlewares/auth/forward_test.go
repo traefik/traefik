@@ -944,6 +944,7 @@ func TestForwardAuthAuthSigninURL(t *testing.T) {
 		expectedStatus     int
 		expectedLocation   string
 		nextShouldBeCalled bool
+		nginx              bool
 	}{
 		{
 			desc:               "redirects to signin URL on 401",
@@ -973,6 +974,15 @@ func TestForwardAuthAuthSigninURL(t *testing.T) {
 			expectedStatus:     http.StatusOK,
 			nextShouldBeCalled: true,
 		},
+		{
+			desc:               "redirects to signin URL on 401 - NGINX Provider",
+			authSigninURL:      "https://auth.example.com/login?rd=$scheme://$host$request_uri",
+			authServerStatus:   http.StatusUnauthorized,
+			expectedStatus:     http.StatusFound,
+			expectedLocation:   "https://auth.example.com/login",
+			nextShouldBeCalled: false,
+			nginx:              true,
+		},
 	}
 
 	for _, test := range testCases {
@@ -990,6 +1000,7 @@ func TestForwardAuthAuthSigninURL(t *testing.T) {
 			auth := dynamic.ForwardAuth{
 				Address:       authServer.URL,
 				AuthSigninURL: test.authSigninURL,
+				NginxProvider: test.nginx,
 			}
 			middleware, err := NewForward(t.Context(), next, auth, "authTest")
 			require.NoError(t, err)

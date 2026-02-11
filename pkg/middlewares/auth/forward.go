@@ -18,6 +18,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/observability/tracing"
+	ingressnginx "github.com/traefik/traefik/v3/pkg/provider/kubernetes/ingress-nginx"
 	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"github.com/vulcand/oxy/v2/forward"
@@ -62,6 +63,7 @@ type forwardAuth struct {
 	preserveLocationHeader   bool
 	preserveRequestMethod    bool
 	authSigninURL            string
+	nginxProvider            bool
 }
 
 // NewForward creates a forward auth middleware.
@@ -88,6 +90,7 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 		preserveLocationHeader:   config.PreserveLocationHeader,
 		preserveRequestMethod:    config.PreserveRequestMethod,
 		authSigninURL:            config.AuthSigninURL,
+		nginxProvider:            config.NginxProvider,
 	}
 
 	if config.MaxBodySize != nil {
@@ -240,8 +243,15 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if fa.authSigninURL != "" && forwardResponse.StatusCode == http.StatusUnauthorized {
 		logger.Debug().Msgf("Redirecting to signin URL: %s", fa.authSigninURL)
 
+		// TODO: variable interpolation
+		authSigninURL := fa.authSigninURL
+		if fa.nginxProvider {
+			authSigninURL = ingressnginx.ReplaceNginxVariables(fa.authSigninURL, req)
+			logger.Debug().Msgf("Interpolating NGINX variables in the signing URL: %s", authSigninURL)
+		}
+
 		tracer.CaptureResponse(forwardSpan, forwardResponse.Header, http.StatusFound, trace.SpanKindClient)
-		http.Redirect(rw, req, fa.authSigninURL, http.StatusFound)
+		http.Redirect(rw, req, authSigninURL, http.StatusFound)
 		return
 	}
 
