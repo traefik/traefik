@@ -2,16 +2,13 @@ package ingressnginx
 
 import (
 	"net/http"
-	"net/url"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
 
 func Test_ReplaceVariables(t *testing.T) {
-	reqURL, err := url.Parse("http://baz.com/auth?q=test&val=foo,bar,baz&token=token_1234&test=1&test=2")
-	require.NoError(t, err)
-
 	testCases := []struct {
 		desc     string
 		src      string
@@ -19,176 +16,74 @@ func Test_ReplaceVariables(t *testing.T) {
 		expected string
 	}{
 		{
-			desc: "$host",
-			src:  "http://bar.foo.com/external-auth/start?rd=https://$host",
-			req: &http.Request{
-				Method:     http.MethodGet,
-				Host:       "baz.com",
-				RequestURI: "/foo/bar?key=value&other=test",
-			},
-			expected: `http://bar.foo.com/external-auth/start?rd=https://baz.com`,
+			desc:     "$host",
+			src:      "val=$host",
+			req:      httptest.NewRequest(http.MethodGet, "http://baz.com/foo/bar?key=value&other=test", http.NoBody),
+			expected: `val=baz.com`,
 		},
 		{
-			desc: "$best_http_host",
-			src:  "http://bar.foo.com/external-auth/start?rd=https://$best_http_host",
-			req: &http.Request{
-				Method:     http.MethodGet,
-				Host:       "baz.com",
-				RequestURI: "/foo/bar?key=value&other=test",
-			},
-			expected: `http://bar.foo.com/external-auth/start?rd=https://baz.com`,
+			desc:     "$best_http_host",
+			src:      "val=$best_http_host",
+			req:      httptest.NewRequest(http.MethodGet, "http://baz.com/foo/bar?key=value&other=test", http.NoBody),
+			expected: `val=baz.com`,
 		},
 		{
-			desc: "$hostname",
-			src:  "http://bar.foo.com/external-auth/start?rd=https://$hostname",
-			req: &http.Request{
-				Method:     http.MethodGet,
-				Host:       "baz.com",
-				RequestURI: "/foo/bar?key=value&other=test",
-			},
-			expected: `http://bar.foo.com/external-auth/start?rd=https://baz.com`,
+			desc:     "$hostname",
+			src:      "val=$hostname",
+			req:      httptest.NewRequest(http.MethodGet, "http://baz.com/foo/bar?key=value&other=test", http.NoBody),
+			expected: `val=baz.com`,
 		},
 		{
-			desc: "$http_host",
-			src:  "http://bar.foo.com/external-auth/start?rd=https://$http_host",
-			req: &http.Request{
-				Method:     http.MethodGet,
-				Host:       "baz.com",
-				RequestURI: "/foo/bar?key=value&other=test",
-				Header: map[string][]string{
-					"Host": {"foo.com"},
-				},
-			},
-			expected: `http://bar.foo.com/external-auth/start?rd=https://foo.com`,
+			desc: "$http_*",
+			src:  "val=$http_x_api_key",
+			req: mustNewRequestWithHeaders(t, http.MethodGet, "http://baz.com/foo/bar?key=value&other=test", map[string][]string{
+				"X-Api-Key": {"key"},
+			}),
+			expected: `val=key`,
 		},
 		{
-			desc: "Single Header value in $http_x_api_key",
-			src:  "http://bar.foo.com/external-auth/start?rd=https://baz.com/?api=$http_x_api_key",
-			req: &http.Request{
-				Method:     http.MethodGet,
-				Host:       "baz.com",
-				RequestURI: "/foo/bar?key=value&other=test",
-				Header: map[string][]string{
-					"X-Api-Key": {"key"},
-				},
-			},
-			expected: `http://bar.foo.com/external-auth/start?rd=https://baz.com/?api=key`,
+			desc: "Multiple Header value in $http_*",
+			src:  "val=$http_foo",
+			req: mustNewRequestWithHeaders(t, http.MethodGet, "http://baz.com/foo/bar?key=value&other=test", map[string][]string{
+				"Foo": {"bar", "baz"},
+			}),
+			expected: `val=bar,baz`,
 		},
 		{
-			desc: "Multiple Header value in $http_foo",
-			src:  "$http_foo",
-			req: &http.Request{
-				Method:     http.MethodGet,
-				Host:       "baz.com",
-				RequestURI: "/foo/bar?key=value&other=test",
-				Header: map[string][]string{
-					"Foo": {"bar", "baz"},
-				},
-			},
-			expected: `bar,baz`,
+			desc:     "$arg_*",
+			src:      "val=$arg_token",
+			req:      httptest.NewRequest(http.MethodGet, "http://baz.com?token=token_1234", http.NoBody),
+			expected: `val=token_1234`,
 		},
 		{
-			desc: "Single arg value in $arg_token",
-			src:  "$arg_token",
-			req: &http.Request{
-				URL:    reqURL,
-				Method: http.MethodGet,
-				Host:   "baz.com",
-			},
-			expected: `token_1234`,
+			desc:     "$args",
+			src:      "val=$args",
+			req:      httptest.NewRequest(http.MethodGet, "http://baz.com?q=test&test=1&test=2&token=token_1234&val=foo,bar,baz", http.NoBody),
+			expected: `val=q=test&test=1&test=2&token=token_1234&val=foo%2Cbar%2Cbaz`,
 		},
 		{
-			desc: "$arg_val",
-			src:  "$arg_val",
-			req: &http.Request{
-				URL:    reqURL,
-				Method: http.MethodGet,
-				Host:   "baz.com",
-			},
-			expected: `foo,bar,baz`,
+			desc:     "$query_string",
+			src:      "val=$query_string",
+			req:      httptest.NewRequest(http.MethodGet, "http://baz.com?q=test&test=1&test=2&token=token_1234&val=foo,bar,baz", http.NoBody),
+			expected: `val=q=test&test=1&test=2&token=token_1234&val=foo%2Cbar%2Cbaz`,
 		},
 		{
-			desc: "Multiple arg value in $arg_test",
-			src:  "$arg_test",
-			req: &http.Request{
-				URL:    reqURL,
-				Method: http.MethodGet,
-				Host:   "baz.com",
-			},
-			expected: `1`,
+			desc:     "$host && $escaped_request_uri",
+			src:      "val=$host$escaped_request_uri",
+			req:      httptest.NewRequest(http.MethodGet, "http://baz.com/foo/bar?key=value&other=test", http.NoBody),
+			expected: `val=baz.com%2Ffoo%2Fbar%3Fkey%3Dvalue%26other%3Dtest`,
 		},
 		{
-			desc: "$args",
-			src:  "http://bar.foo.com/external-auth/start?rd=https://baz.com/?$args",
-			req: &http.Request{
-				URL:    reqURL,
-				Method: http.MethodGet,
-				Host:   "baz.com",
-			},
-			expected: `http://bar.foo.com/external-auth/start?rd=https://baz.com/?q=test&test=1&test=2&token=token_1234&val=foo%2Cbar%2Cbaz`,
+			desc:     "non existing variable",
+			src:      "val=$invalid",
+			req:      httptest.NewRequest(http.MethodGet, "http://baz.com/foo/bar?key=value&other=test", http.NoBody),
+			expected: "val=$invalid",
 		},
 		{
-			desc: "$query_string",
-			src:  "http://bar.foo.com/external-auth/start?rd=https://baz.com/?$query_string",
-			req: &http.Request{
-				URL:    reqURL,
-				Method: http.MethodGet,
-				Host:   "baz.com",
-			},
-			expected: `http://bar.foo.com/external-auth/start?rd=https://baz.com/?q=test&test=1&test=2&token=token_1234&val=foo%2Cbar%2Cbaz`,
-		},
-		{
-			desc: "$host && $escaped_request_uri",
-			src:  "http://bar.foo.com/external-auth/start?rd=https://$host$escaped_request_uri",
-			req: &http.Request{
-				Method:     http.MethodGet,
-				Host:       "baz.com",
-				RequestURI: "/foo/bar?key=value&other=test",
-			},
-			expected: `http://bar.foo.com/external-auth/start?rd=https://baz.com%2Ffoo%2Fbar%3Fkey%3Dvalue%26other%3Dtest`,
-		},
-		{
-			desc: "$host, $scheme, $request_uri",
-			src:  "$scheme://bar.foo.com/external-auth/start?rd=$scheme://$host$request_uri",
-			req: &http.Request{
-				URL:    &url.URL{Scheme: "http", Path: "/foo/bar", RawQuery: "key=value&other=test"},
-				Method: http.MethodGet,
-				Host:   "baz.com",
-			},
-			expected: `http://bar.foo.com/external-auth/start?rd=http://baz.com/foo/bar?key=value&other=test`,
-		},
-		{
-			desc: "invalid variable",
-			src:  "https://bar.foo.com/external-auth/start?rd=$invalid://$foo$bar",
-			req: &http.Request{
-				URL:        &url.URL{Scheme: "http"},
-				Method:     http.MethodGet,
-				Host:       "baz.com",
-				RequestURI: "/foo/bar?key=value&other=test",
-			},
-			expected: "https://bar.foo.com/external-auth/start?rd=$invalid://$foo$bar",
-		},
-		{
-			desc: "invalid variable format",
-			src:  "https://bar.foo.com/external-auth/start?rd=${invalid}://${foo}${bar}",
-			req: &http.Request{
-				URL:        &url.URL{Scheme: "http"},
-				Method:     http.MethodGet,
-				Host:       "baz.com",
-				RequestURI: "/foo/bar?key=value&other=test",
-			},
-			expected: "https://bar.foo.com/external-auth/start?rd=${invalid}://${foo}${bar}",
-		},
-		{
-			desc: "wrong variable", // TODO: should we provide an error ?
-			src:  "https://bar.foo.com/external-auth/start?rd=http://$hostpath/foo",
-			req: &http.Request{
-				URL:        &url.URL{Scheme: "http"},
-				Method:     http.MethodGet,
-				Host:       "baz.com",
-				RequestURI: "/foo/bar?key=value&other=test",
-			},
-			expected: "https://bar.foo.com/external-auth/start?rd=http://$hostpath/foo",
+			desc:     "invalid variable format",
+			src:      "val=${invalid}",
+			req:      httptest.NewRequest(http.MethodGet, "http://baz.com/foo/bar?key=value&other=test", http.NoBody),
+			expected: "val=${invalid}",
 		},
 	}
 
@@ -200,4 +95,13 @@ func Test_ReplaceVariables(t *testing.T) {
 			require.Equal(t, testCase.expected, got)
 		})
 	}
+}
+
+func mustNewRequestWithHeaders(t *testing.T, method, target string, headers map[string][]string) *http.Request {
+	t.Helper()
+
+	req := httptest.NewRequest(method, target, http.NoBody)
+	req.Header = headers
+
+	return req
 }
