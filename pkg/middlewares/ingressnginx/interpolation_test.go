@@ -8,9 +8,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestReplaceNginxVariables(t *testing.T) {
+func Test_ReplaceVariables(t *testing.T) {
 	reqURL, err := url.Parse("http://baz.com/auth?q=test&val=foo,bar,baz&token=token_1234&test=1&test=2")
 	require.NoError(t, err)
+
 	testCases := []struct {
 		desc     string
 		src      string
@@ -191,10 +192,12 @@ func TestReplaceNginxVariables(t *testing.T) {
 		},
 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.desc, func(t *testing.T) {
-			result := ReplaceNginxVariables(tc.src, tc.req)
-			require.Equal(t, tc.expected, result)
+	for _, testCase := range testCases {
+		t.Run(testCase.desc, func(t *testing.T) {
+			t.Parallel()
+
+			got := ReplaceVariables(testCase.src, testCase.req)
+			require.Equal(t, testCase.expected, got)
 		})
 	}
 }

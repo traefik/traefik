@@ -611,6 +611,7 @@ func TestForwardAuthInterpolation(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
+
 	req := httptest.NewRequestWithContext(ctx, "GET", authTs.URL, http.NoBody)
 	req.Host = authURL.Host
 	req.URL.Path = "/login"
