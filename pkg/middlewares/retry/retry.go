@@ -106,7 +106,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.Retry, listener 
 	middlewares.GetLogger(ctx, name, typeName).Debug().Msg("Creating middleware")
 
 	if len(config.Status) == 0 && config.DisableRetryOnNetworkError {
-		return nil, fmt.Errorf("retry middleware requires at least HTTP status codes or retry on TCP.")
+		return nil, errors.New("retry middleware requires at least HTTP status codes or retry on TCP")
 	}
 
 	if config.Attempts <= 0 {
