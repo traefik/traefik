@@ -34,11 +34,12 @@ import (
 // with apply.
 type RetryApplyConfiguration struct {
 	Attempts                   *int                `json:"attempts,omitempty"`
-	Timeout                    *int                `json:"timeout,omitempty"`
+	Timeout                    *intstr.IntOrString `json:"timeout,omitempty"`
 	InitialInterval            *intstr.IntOrString `json:"initialInterval,omitempty"`
 	MaxRequestBodyBytes        *int64              `json:"maxRequestBodyBytes,omitempty"`
 	Status                     []string            `json:"status,omitempty"`
 	DisableRetryOnNetworkError *bool               `json:"disableRetryOnNetworkError,omitempty"`
+	RetryNonIdempotentMethod   *bool               `json:"retryNonIdempotentMethod,omitempty"`
 }
 
 // RetryApplyConfiguration constructs a declarative configuration of the Retry type for use with
@@ -58,7 +59,7 @@ func (b *RetryApplyConfiguration) WithAttempts(value int) *RetryApplyConfigurati
 // WithTimeout sets the Timeout field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Timeout field is set to the value of the last call.
-func (b *RetryApplyConfiguration) WithTimeout(value int) *RetryApplyConfiguration {
+func (b *RetryApplyConfiguration) WithTimeout(value intstr.IntOrString) *RetryApplyConfiguration {
 	b.Timeout = &value
 	return b
 }
@@ -94,5 +95,13 @@ func (b *RetryApplyConfiguration) WithStatus(values ...string) *RetryApplyConfig
 // If called multiple times, the DisableRetryOnNetworkError field is set to the value of the last call.
 func (b *RetryApplyConfiguration) WithDisableRetryOnNetworkError(value bool) *RetryApplyConfiguration {
 	b.DisableRetryOnNetworkError = &value
+	return b
+}
+
+// WithRetryNonIdempotentMethod sets the RetryNonIdempotentMethod field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the RetryNonIdempotentMethod field is set to the value of the last call.
+func (b *RetryApplyConfiguration) WithRetryNonIdempotentMethod(value bool) *RetryApplyConfiguration {
+	b.RetryNonIdempotentMethod = &value
 	return b
 }
