@@ -1319,7 +1319,8 @@ spec:
                     type: integer
                   disableRetryOnNetworkError:
                     description: DisableRetryOnNetworkError defines whether to disable
-                      the retries on the TCP layer.
+                      the retry if an error occurs when transmitting the request to
+                      the server.
                     type: boolean
                   initialInterval:
                     anyOf:
@@ -1334,8 +1335,9 @@ spec:
                     pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
                     x-kubernetes-int-or-string: true
                   maxRequestBodyBytes:
-                    description: MaxRequestBodyBytes defines the maximum size for
-                      the request body.
+                    description: |-
+                      MaxRequestBodyBytes defines the maximum size for the request body.
+                      Default is `-1`, which means no limit.
                     format: int64
                     minimum: -1
                     type: integer

@@ -357,12 +357,13 @@ type Retry struct {
 	// +kubebuilder:validation:XIntOrString
 	InitialInterval intstr.IntOrString `json:"initialInterval,omitempty"`
 	// MaxRequestBodyBytes defines the maximum size for the request body.
+	// Default is `-1`, which means no limit.
 	// +kubebuilder:validation:Minimum=-1
 	MaxRequestBodyBytes *int64 `json:"maxRequestBodyBytes,omitempty"`
 	// Status defines the range of HTTP status codes to retry on.
 	// +kubebuilder:validation:items:Pattern=`^([1-5][0-9]{2}[,-]?)+$`
 	Status []string `json:"status,omitempty"`
-	// DisableRetryOnNetworkError defines whether to disable the retries on the TCP layer.
+	// DisableRetryOnNetworkError defines whether to disable the retry if an error occurs when transmitting the request to the server.
 	DisableRetryOnNetworkError bool `json:"disableRetryOnNetworkError,omitempty"`
 	// RetryNonIdempotentMethod activates the retry for non-idempotent methods (POST, LOCK, PATCH)
 	RetryNonIdempotentMethod bool `json:"retryNonIdempotentMethod,omitempty"`

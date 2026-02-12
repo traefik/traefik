@@ -30,8 +30,7 @@ import (
 var _ middlewares.Stateful = &responseWriter{}
 
 const (
-	typeName                        = "Retry"
-	defaultMaxRequestBodySize int64 = -1
+	typeName = "Retry"
 )
 
 // Listener is used to inform about retry attempts.
@@ -116,7 +115,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.Retry, listener 
 
 	retryCfg := &retry{
 		attempts:                   config.Attempts,
-		maxRequestBodyBytes:        defaultMaxRequestBodySize,
+		maxRequestBodyBytes:        config.MaxRequestBodyBytes,
 		disableRetryOnNetworkError: config.DisableRetryOnNetworkError,
 		initialInterval:            time.Duration(config.InitialInterval),
 		timeout:                    time.Duration(config.Timeout),
@@ -131,10 +130,6 @@ func New(ctx context.Context, next http.Handler, config dynamic.Retry, listener 
 			return nil, fmt.Errorf("creating HTTP code ranges: %w", err)
 		}
 		retryCfg.statusCode = httpCodeRanges
-	}
-
-	if config.MaxRequestBodyBytes != nil {
-		retryCfg.maxRequestBodyBytes = *config.MaxRequestBodyBytes
 	}
 
 	return retryCfg, nil

@@ -10,8 +10,11 @@ import (
 	"github.com/traefik/traefik/v3/pkg/types"
 )
 
-// ForwardAuthDefaultMaxBodySize is the ForwardAuth.MaxBodySize option default value.
-const ForwardAuthDefaultMaxBodySize int64 = -1
+const (
+	// ForwardAuthDefaultMaxBodySize is the ForwardAuth.MaxBodySize option default value.
+	ForwardAuthDefaultMaxBodySize  int64 = -1
+	RetryDefaultMaxRequestBodySize int64 = -1
+)
 
 // +k8s:deepcopy-gen=true
 
@@ -739,13 +742,17 @@ type Retry struct {
 	// see https://pkg.go.dev/time#ParseDuration.
 	InitialInterval ptypes.Duration `json:"initialInterval,omitempty" toml:"initialInterval,omitempty" yaml:"initialInterval,omitempty" export:"true"`
 	// MaxRequestBodyBytes defines the maximum size for the request body.
-	MaxRequestBodyBytes *int64 `json:"maxRequestBodyBytes,omitempty" toml:"maxRequestBodyBytes,omitempty" yaml:"maxRequestBodyBytes,omitempty" export:"true"`
+	MaxRequestBodyBytes int64 `json:"maxRequestBodyBytes,omitempty" toml:"maxRequestBodyBytes,omitempty" yaml:"maxRequestBodyBytes,omitempty" export:"true"`
 	// Status defines the range of HTTP status codes to retry on.
 	Status []string `json:"status,omitempty" toml:"status,omitempty" yaml:"status,omitempty" export:"true"`
-	// DisableRetryOnNetworkError defines whether to disable the retries on the TCP layer.
+	// DisableRetryOnNetworkError defines whether to disable the retry if an error occurs when transmitting the request to the server.
 	DisableRetryOnNetworkError bool `json:"disableRetryOnNetworkError,omitempty" toml:"disableRetryOnNetworkError,omitempty" yaml:"disableRetryOnNetworkError,omitempty" export:"true"`
 	// RetryNonIdempotentMethod activates the retry for non-idempotent methods (POST, LOCK, PATCH)
 	RetryNonIdempotentMethod bool `json:"retryNonIdempotentMethod,omitempty" toml:"retryNonIdempotentMethod,omitempty" yaml:"retryNonIdempotentMethod,omitempty" export:"true"`
+}
+
+func (r *Retry) SetDefaults() {
+	r.MaxRequestBodyBytes = RetryDefaultMaxRequestBodySize
 }
 
 // +k8s:deepcopy-gen=true
