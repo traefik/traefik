@@ -61,6 +61,8 @@ type Provider struct {
 	ThrottleDuration             ptypes.Duration     `description:"Ingress refresh throttle duration" json:"throttleDuration,omitempty" toml:"throttleDuration,omitempty" yaml:"throttleDuration,omitempty" export:"true"`
 	AllowEmptyServices           bool                `description:"Allow the creation of services without endpoints." json:"allowEmptyServices,omitempty" toml:"allowEmptyServices,omitempty" yaml:"allowEmptyServices,omitempty" export:"true"`
 	NativeLBByDefault            bool                `description:"Defines whether to use Native Kubernetes load-balancing mode by default." json:"nativeLBByDefault,omitempty" toml:"nativeLBByDefault,omitempty" yaml:"nativeLBByDefault,omitempty" export:"true"`
+	KubernetesQPS                float32             `description:"Kubernetes client QPS." json:"kubernetesQPS,omitempty" toml:"kubernetesQPS,omitempty" yaml:"kubernetesQPS,omitempty" export:"true"`
+	KubernetesBurst              int                 `description:"Kubernetes client burst." json:"kubernetesBurst,omitempty" toml:"kubernetesBurst,omitempty" yaml:"kubernetesBurst,omitempty" export:"true"`
 	DisableClusterScopeResources bool                `description:"Disables the lookup of cluster scope resources (incompatible with IngressClasses and NodePortLB enabled services)." json:"disableClusterScopeResources,omitempty" toml:"disableClusterScopeResources,omitempty" yaml:"disableClusterScopeResources,omitempty" export:"true"`
 
 	lastConfiguration safe.Safe
@@ -205,13 +207,13 @@ func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
 	switch {
 	case os.Getenv("KUBERNETES_SERVICE_HOST") != "" && os.Getenv("KUBERNETES_SERVICE_PORT") != "":
 		log.Ctx(ctx).Info().Msgf("Creating in-cluster Provider client%s", withEndpoint)
-		client, err = newInClusterClient(p.Endpoint)
+		client, err = newInClusterClient(p.Endpoint, p.KubernetesQPS, p.KubernetesBurst)
 	case os.Getenv("KUBECONFIG") != "":
 		log.Ctx(ctx).Info().Msgf("Creating cluster-external Provider client from KUBECONFIG %s", os.Getenv("KUBECONFIG"))
-		client, err = newExternalClusterClientFromFile(os.Getenv("KUBECONFIG"))
+		client, err = newExternalClusterClientFromFile(os.Getenv("KUBECONFIG"), p.KubernetesQPS, p.KubernetesBurst)
 	default:
 		log.Ctx(ctx).Info().Msgf("Creating cluster-external Provider client%s", withEndpoint)
-		client, err = newExternalClusterClient(p.Endpoint, p.CertAuthFilePath, p.Token)
+		client, err = newExternalClusterClient(p.Endpoint, p.CertAuthFilePath, p.Token, p.KubernetesQPS, p.KubernetesBurst)
 	}
 
 	if err != nil {
