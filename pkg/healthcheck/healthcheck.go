@@ -246,6 +246,15 @@ func (shc *ServiceHealthChecker) checkHealthHTTP(ctx context.Context, target *ur
 }
 
 func (shc *ServiceHealthChecker) newRequest(ctx context.Context, target *url.URL) (*http.Request, error) {
+	pathURL, err := url.Parse(shc.config.Path)
+	if err != nil {
+		return nil, fmt.Errorf("parsing health check path: %w", err)
+	}
+
+	if pathURL.Host != "" || pathURL.Scheme != "" {
+		return nil, fmt.Errorf("health check path must be a relative URL, got: %q", shc.config.Path)
+	}
+
 	u, err := target.Parse(shc.config.Path)
 	if err != nil {
 		return nil, err
