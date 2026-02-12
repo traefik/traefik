@@ -744,6 +744,8 @@ type Retry struct {
 	Status []string `json:"status,omitempty" toml:"status,omitempty" yaml:"status,omitempty" export:"true"`
 	// DisableRetryOnNetworkError defines whether to disable the retries on the TCP layer.
 	DisableRetryOnNetworkError bool `json:"disableRetryOnNetworkError,omitempty" toml:"disableRetryOnNetworkError,omitempty" yaml:"disableRetryOnNetworkError,omitempty" export:"true"`
+	// RetryNonIdempotentMethod activates the retry for non-idempotent methods (POST, LOCK, PATCH)
+	RetryNonIdempotentMethod bool `json:"retryNonIdempotentMethod,omitempty" toml:"retryNonIdempotentMethod,omitempty" yaml:"retryNonIdempotentMethod,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true

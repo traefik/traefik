@@ -364,6 +364,8 @@ type Retry struct {
 	Status []string `json:"status,omitempty"`
 	// DisableRetryOnNetworkError defines whether to disable the retries on the TCP layer.
 	DisableRetryOnNetworkError bool `json:"disableRetryOnNetworkError,omitempty"`
+	// RetryNonIdempotentMethod activates the retry for non-idempotent methods (POST, LOCK, PATCH)
+	RetryNonIdempotentMethod bool `json:"retryNonIdempotentMethod,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

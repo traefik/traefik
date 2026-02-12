@@ -95,6 +95,7 @@ type retry struct {
 	disableRetryOnNetworkError bool
 	initialInterval            time.Duration
 	timeout                    time.Duration
+	retryNonIdempotentMethod   bool
 
 	next     http.Handler
 	listener Listener

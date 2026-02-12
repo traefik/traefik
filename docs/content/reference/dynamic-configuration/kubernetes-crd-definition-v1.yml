@@ -2203,6 +2203,10 @@ spec:
                     format: int64
                     minimum: -1
                     type: integer
+                  retryNonIdempotentMethod:
+                    description: RetryNonIdempotentMethod activates the retry for
+                      non-idempotent methods (POST, LOCK, PATCH)
+                    type: boolean
                   status:
                     description: Status defines the range of HTTP status codes to
                       retry on.
@@ -2211,10 +2215,15 @@ spec:
                       type: string
                     type: array
                   timeout:
-                    description: Timeout defines how much time the middleware is allowed
-                      to retry the request.
-                    minimum: 0
-                    type: integer
+                    anyOf:
+                    - type: integer
+                    - type: string
+                    description: |-
+                      Timeout defines how much time the middleware is allowed to retry the request.
+                      The value of timeout should be provided in seconds or as a valid duration format,
+                      see https://pkg.go.dev/time#ParseDuration.
+                    pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
+                    x-kubernetes-int-or-string: true
                 type: object
               stripPrefix:
                 description: |-
