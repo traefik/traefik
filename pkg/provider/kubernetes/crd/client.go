@@ -105,7 +105,7 @@ func newClientImpl(csKube kclientset.Interface, csCrd traefikclientset.Interface
 
 // newInClusterClient returns a new Provider client that is expected to run
 // inside the cluster.
-func newInClusterClient(endpoint string) (*clientWrapper, error) {
+func newInClusterClient(endpoint string, qps float32, burst int) (*clientWrapper, error) {
 	config, err := rest.InClusterConfig()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create in-cluster configuration: %w", err)
@@ -115,21 +115,28 @@ func newInClusterClient(endpoint string) (*clientWrapper, error) {
 		config.Host = endpoint
 	}
 
+	config.QPS = qps
+	config.Burst = burst
+
 	return createClientFromConfig(config)
 }
 
-func newExternalClusterClientFromFile(file string) (*clientWrapper, error) {
+func newExternalClusterClientFromFile(file string, qps float32, burst int) (*clientWrapper, error) {
 	configFromFlags, err := clientcmd.BuildConfigFromFlags("", file)
 	if err != nil {
 		return nil, err
 	}
+
+	configFromFlags.QPS = qps
+	configFromFlags.Burst = burst
+
 	return createClientFromConfig(configFromFlags)
 }
 
 // newExternalClusterClient returns a new Provider client that may run outside
 // of the cluster.
 // The endpoint parameter must not be empty.
-func newExternalClusterClient(endpoint, caFilePath string, token types.FileOrContent) (*clientWrapper, error) {
+func newExternalClusterClient(endpoint, caFilePath string, token types.FileOrContent, qps float32, burst int) (*clientWrapper, error) {
 	if endpoint == "" {
 		return nil, errors.New("endpoint missing for external cluster client")
 	}
@@ -142,6 +149,8 @@ func newExternalClusterClient(endpoint, caFilePath string, token types.FileOrCon
 	config := &rest.Config{
 		Host:        endpoint,
 		BearerToken: string(tokenData),
+		QPS:         qps,
+		Burst:       burst,
 	}
 
 	if caFilePath != "" {
