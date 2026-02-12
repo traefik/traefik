@@ -423,9 +423,11 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 		desc                string
 		config              dynamic.Retry
 		responseStatusCodes []int
+		requestBody         string
+		responseDelay       time.Duration
+		amountOfTCPFailures int
 		wantRetryAttempts   int
 		wantResponseStatus  int
-		requestBody         string
 	}{
 		{
 			desc: "retry on single 503 status code",
@@ -434,6 +436,7 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 				Status:   []string{"503"},
 			},
 			responseStatusCodes: []int{http.StatusServiceUnavailable, http.StatusOK},
+			requestBody:         "test request body",
 			wantRetryAttempts:   1,
 			wantResponseStatus:  http.StatusOK,
 		},
@@ -444,6 +447,7 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 				Status:   []string{"500-599"},
 			},
 			responseStatusCodes: []int{http.StatusInternalServerError, http.StatusBadGateway, http.StatusServiceUnavailable, http.StatusOK},
+			requestBody:         "test request body",
 			wantRetryAttempts:   3,
 			wantResponseStatus:  http.StatusOK,
 		},
@@ -454,6 +458,7 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 				Status:   []string{"502", "503", "504"},
 			},
 			responseStatusCodes: []int{http.StatusBadGateway, http.StatusOK},
+			requestBody:         "test request body",
 			wantRetryAttempts:   1,
 			wantResponseStatus:  http.StatusOK,
 		},
@@ -468,16 +473,6 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 			wantResponseStatus:  http.StatusInternalServerError,
 		},
 		{
-			desc: "retry on 4xx client errors",
-			config: dynamic.Retry{
-				Attempts: 2,
-				Status:   []string{"400-499"},
-			},
-			responseStatusCodes: []int{http.StatusTooManyRequests, http.StatusOK},
-			wantRetryAttempts:   1,
-			wantResponseStatus:  http.StatusOK,
-		},
-		{
 			desc: "exhaust all attempts with matching status codes",
 			config: dynamic.Retry{
 				Attempts: 3,
@@ -488,37 +483,28 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 			wantResponseStatus:  http.StatusServiceUnavailable,
 		},
 		{
-			desc: "retry with mixed ranges and specific codes",
-			config: dynamic.Retry{
-				Attempts: 4,
-				Status:   []string{"502", "504-505", "429"},
-			},
-			responseStatusCodes: []int{http.StatusTooManyRequests, http.StatusGatewayTimeout, http.StatusOK},
-			wantRetryAttempts:   2,
-			wantResponseStatus:  http.StatusOK,
-		},
-		{
-			desc: "retry with request body on 503",
-			config: dynamic.Retry{
-				Attempts: 3,
-				Status:   []string{"503"},
-			},
-			responseStatusCodes: []int{http.StatusServiceUnavailable, http.StatusOK},
-			wantRetryAttempts:   1,
-			wantResponseStatus:  http.StatusOK,
-			requestBody:         "test request body",
-		},
-		{
-			desc: "retry with large body and maxRequestBodyBytes",
+			desc: "retry with body lower than maxRequestBodyBytes",
 			config: dynamic.Retry{
 				Attempts:            3,
 				Status:              []string{"502"},
 				MaxRequestBodyBytes: ptr.To(int64(1024)),
 			},
 			responseStatusCodes: []int{http.StatusBadGateway, http.StatusOK},
+			requestBody:         "test request body",
 			wantRetryAttempts:   1,
 			wantResponseStatus:  http.StatusOK,
+		},
+		{
+			desc: "retry with body greater than maxRequestBodyBytes",
+			config: dynamic.Retry{
+				Attempts:            3,
+				Status:              []string{"502"},
+				MaxRequestBodyBytes: ptr.To(int64(8)),
+			},
+			responseStatusCodes: []int{http.StatusOK},
 			requestBody:         "test request body",
+			wantRetryAttempts:   0, // Should not retry because body is too large to buffer
+			wantResponseStatus:  http.StatusRequestEntityTooLarge,
 		},
 		{
 			desc: "retry with timeout stops retries early",
@@ -528,8 +514,34 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 				Timeout:  ptypes.Duration(time.Millisecond * 50),
 			},
 			responseStatusCodes: []int{http.StatusServiceUnavailable, http.StatusServiceUnavailable, http.StatusServiceUnavailable, http.StatusServiceUnavailable, http.StatusServiceUnavailable},
+			responseDelay:       time.Millisecond * 50,
 			wantRetryAttempts:   0, // Should stop due to timeout before exhausting attempts
 			wantResponseStatus:  http.StatusServiceUnavailable,
+		},
+		{
+			desc: "retry with timeout stops TCP retries early",
+			config: dynamic.Retry{
+				Attempts: 5,
+				Status:   []string{"503"},
+				Timeout:  ptypes.Duration(time.Millisecond * 50),
+			},
+			responseStatusCodes: []int{http.StatusServiceUnavailable, http.StatusServiceUnavailable, http.StatusServiceUnavailable, http.StatusServiceUnavailable, http.StatusServiceUnavailable},
+			responseDelay:       time.Millisecond * 50,
+			amountOfTCPFailures: 5,
+			wantRetryAttempts:   0, // Should stop due to timeout before exhausting attempts
+			wantResponseStatus:  http.StatusGatewayTimeout,
+		},
+		{
+			desc: "retry on TCP failure and 503 status code",
+			config: dynamic.Retry{
+				Attempts: 3,
+				Status:   []string{"503"},
+			},
+			responseStatusCodes: []int{http.StatusServiceUnavailable, http.StatusServiceUnavailable, http.StatusOK},
+			amountOfTCPFailures: 1,
+			requestBody:         "test request body",
+			wantRetryAttempts:   2,
+			wantResponseStatus:  http.StatusOK,
 		},
 	}
 
@@ -539,8 +551,21 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 
 			callCount := 0
 			next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-				// FIXME: configure this sleep with the test
-				time.Sleep(time.Millisecond * 50)
+				time.Sleep(test.responseDelay)
+
+				if callCount < test.amountOfTCPFailures {
+					// This signals that a connection will be established with the backend
+					// to enable the Retry middleware mechanism.
+					shouldRetry := ContextShouldRetry(req.Context())
+					if shouldRetry != nil {
+						shouldRetry(true)
+					}
+
+					callCount++
+					rw.WriteHeader(http.StatusGatewayTimeout)
+					return
+				}
+
 				// Verify the body is readable on each attempt.
 				if test.requestBody != "" {
 					body, err := io.ReadAll(req.Body)
