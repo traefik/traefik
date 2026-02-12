@@ -198,7 +198,16 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 
 		remainAttempts := attempts < r.attempts
-		retryResponseWriter := newResponseWriter(rw, r.statusCode, remainAttempts, start, r.timeout)
+
+		var statusCodes types.HTTPCodeRanges
+		nonIdempotent := req.Method != http.MethodPost && req.Method != http.MethodPatch && req.Method != "LOCK"
+		if r.retryNonIdempotentMethod || nonIdempotent {
+			// statusCode controls whether the request is retried.
+			// A nil value bypass the retry.
+			statusCodes = r.statusCode
+		}
+
+		retryResponseWriter := newResponseWriter(rw, statusCodes, remainAttempts, start, r.timeout)
 
 		if reusableReq != nil {
 			req = reusableReq.Clone(req.Context())

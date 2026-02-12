@@ -423,6 +423,7 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 		desc                string
 		config              dynamic.Retry
 		responseStatusCodes []int
+		requestMethod       string
 		requestBody         string
 		responseDelay       time.Duration
 		amountOfTCPFailures int
@@ -543,6 +544,30 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 			wantRetryAttempts:   2,
 			wantResponseStatus:  http.StatusOK,
 		},
+		{
+			desc: "retry failure on 503 status code with method POST",
+			config: dynamic.Retry{
+				Attempts: 3,
+				Status:   []string{"503"},
+			},
+			responseStatusCodes: []int{http.StatusServiceUnavailable, http.StatusOK},
+			requestMethod:       http.MethodPost,
+			requestBody:         "test request body",
+			wantResponseStatus:  http.StatusServiceUnavailable,
+		},
+		{
+			desc: "retry failure on 503 status code with method POST",
+			config: dynamic.Retry{
+				Attempts:                 3,
+				Status:                   []string{"503"},
+				RetryNonIdempotentMethod: true,
+			},
+			responseStatusCodes: []int{http.StatusServiceUnavailable, http.StatusOK},
+			requestMethod:       http.MethodPost,
+			requestBody:         "test request body",
+			wantRetryAttempts:   1,
+			wantResponseStatus:  http.StatusOK,
+		},
 	}
 
 	for _, test := range testCases {
@@ -606,7 +631,11 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 				body = strings.NewReader(test.requestBody)
 			}
 
-			req := httptest.NewRequest(http.MethodGet, "http://localhost:3000/ok", body)
+			method := http.MethodGet
+			if test.requestMethod != "" {
+				method = test.requestMethod
+			}
+			req := httptest.NewRequest(method, "http://localhost:3000/ok", body)
 
 			retry.ServeHTTP(recorder, req)
 
