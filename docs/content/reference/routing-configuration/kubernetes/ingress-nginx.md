@@ -330,9 +330,10 @@ The following annotations are organized by category for easier navigation.
 
 ### IP Whitelist
 
-| Annotation                                            | Limitations / Notes                                                                        |
-|-------------------------------------------------------|--------------------------------------------------------------------------------------------|
+| Annotation                                                                                                                                                                                                                                          | Limitations / Notes                                                                        |
+|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------|
 | <a id="opt-nginx-ingress-kubernetes-iowhitelist-source-range" href="#opt-nginx-ingress-kubernetes-iowhitelist-source-range" title="#opt-nginx-ingress-kubernetes-iowhitelist-source-range">`nginx.ingress.kubernetes.io/whitelist-source-range`</a> |                                                      |
+| <a id="opt-nginx-ingress-kubernetes-ioallowlist-source-range" href="#opt-nginx-ingress-kubernetes-ioallowlist-source-range" title="#opt-nginx-ingress-kubernetes-ioallowlist-source-range">`nginx.ingress.kubernetes.io/allowlist-source-range`</a> |                                                      |
 
 ### Timeout
 
