@@ -39,6 +39,7 @@ extra_javascript:
 extra_css:
   - assets/css/menu-icons.css
   - assets/css/code-copy.css
+  - assets/css/content-width.css
 
 plugins:
   - search
