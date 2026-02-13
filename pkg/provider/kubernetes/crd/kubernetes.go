@@ -982,11 +982,26 @@ func createRetryMiddleware(retry *traefikv1alpha1.Retry) (*dynamic.Retry, error)
 		return nil, nil
 	}
 
-	r := &dynamic.Retry{Attempts: retry.Attempts}
+	r := &dynamic.Retry{
+		Attempts:                   retry.Attempts,
+		MaxRequestBodyBytes:        dynamic.RetryDefaultMaxRequestBodySize,
+		Status:                     retry.Status,
+		DisableRetryOnNetworkError: retry.DisableRetryOnNetworkError,
+		RetryNonIdempotentMethod:   retry.RetryNonIdempotentMethod,
+	}
 
 	err := r.InitialInterval.Set(retry.InitialInterval.String())
 	if err != nil {
 		return nil, err
+	}
+
+	err = r.Timeout.Set(retry.Timeout.String())
+	if err != nil {
+		return nil, err
+	}
+
+	if retry.MaxRequestBodyBytes != nil {
+		r.MaxRequestBodyBytes = *retry.MaxRequestBodyBytes
 	}
 
 	return r, nil

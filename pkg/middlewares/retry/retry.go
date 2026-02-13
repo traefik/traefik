@@ -3,6 +3,7 @@ package retry
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"maps"
@@ -13,10 +14,13 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
+	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/observability/tracing"
+	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer/mirror"
+	"github.com/traefik/traefik/v3/pkg/types"
 	"go.opentelemetry.io/otel/attribute"
 	semconv "go.opentelemetry.io/otel/semconv/v1.37.0"
 	"go.opentelemetry.io/otel/trace"
@@ -25,7 +29,9 @@ import (
 // Compile time validation that the response writer implements http interfaces correctly.
 var _ middlewares.Stateful = &responseWriter{}
 
-const typeName = "Retry"
+const (
+	typeName = "Retry"
+)
 
 // Listener is used to inform about retry attempts.
 type Listener interface {
@@ -82,28 +88,51 @@ func WrapHandler(next http.Handler) http.Handler {
 
 // retry is a middleware that retries requests.
 type retry struct {
-	attempts        int
-	initialInterval time.Duration
-	next            http.Handler
-	listener        Listener
-	name            string
+	attempts                   int
+	statusCode                 types.HTTPCodeRanges
+	maxRequestBodyBytes        int64
+	disableRetryOnNetworkError bool
+	initialInterval            time.Duration
+	timeout                    time.Duration
+	retryNonIdempotentMethod   bool
+
+	next     http.Handler
+	listener Listener
+	name     string
 }
 
 // New returns a new retry middleware.
 func New(ctx context.Context, next http.Handler, config dynamic.Retry, listener Listener, name string) (http.Handler, error) {
 	middlewares.GetLogger(ctx, name, typeName).Debug().Msg("Creating middleware")
 
+	if len(config.Status) == 0 && config.DisableRetryOnNetworkError {
+		return nil, errors.New("retry middleware requires at least HTTP status codes or retry on TCP")
+	}
+
 	if config.Attempts <= 0 {
 		return nil, fmt.Errorf("incorrect (or empty) value for attempt (%d)", config.Attempts)
 	}
 
-	return &retry{
-		attempts:        config.Attempts,
-		initialInterval: time.Duration(config.InitialInterval),
-		next:            next,
-		listener:        listener,
-		name:            name,
-	}, nil
+	retryCfg := &retry{
+		attempts:                   config.Attempts,
+		maxRequestBodyBytes:        config.MaxRequestBodyBytes,
+		disableRetryOnNetworkError: config.DisableRetryOnNetworkError,
+		initialInterval:            time.Duration(config.InitialInterval),
+		timeout:                    time.Duration(config.Timeout),
+		name:                       name,
+		listener:                   listener,
+		next:                       next,
+	}
+
+	if len(config.Status) > 0 {
+		httpCodeRanges, err := types.NewHTTPCodeRanges(config.Status)
+		if err != nil {
+			return nil, fmt.Errorf("creating HTTP code ranges: %w", err)
+		}
+		retryCfg.statusCode = httpCodeRanges
+	}
+
+	return retryCfg, nil
 }
 
 func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
@@ -112,12 +141,30 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	closableBody := req.Body
-	defer closableBody.Close()
+	var reusableReq *mirror.ReusableRequest
+	if len(r.statusCode) > 0 {
+		var err error
+		reusableReq, _, err = mirror.NewReusableRequest(req, r.maxRequestBodyBytes)
+		if err != nil && !errors.Is(err, mirror.ErrBodyTooLarge) {
+			log.Ctx(req.Context()).Debug().Err(err).Msg("Error while creating reusable request for retry middleware")
+			http.Error(rw, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
 
-	// if we might make multiple attempts, swap the body for an io.NopCloser
-	// cf https://github.com/traefik/traefik/issues/1008
-	req.Body = io.NopCloser(closableBody)
+		if errors.Is(err, mirror.ErrBodyTooLarge) {
+			http.Error(rw, "Request body too large", http.StatusRequestEntityTooLarge)
+			return
+		}
+	} else {
+		closableBody := req.Body
+		defer closableBody.Close()
+
+		// if we might make multiple attempts, swap the body for an io.NopCloser
+		// cf https://github.com/traefik/traefik/issues/1008
+		req.Body = io.NopCloser(closableBody)
+	}
+
+	start := time.Now()
 
 	attempts := 1
 
@@ -132,7 +179,7 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			}
 			// Because multiple tracing spans may need to be created,
 			// the Retry middleware does not implement trace.Traceable,
-			// and creates directly a new span for each retry operation.
+			// and directly creates a new span for each retry operation.
 			var tracingCtx context.Context
 			tracingCtx, currentSpan = tracer.Start(initialCtx, typeName, trace.WithSpanKind(trace.SpanKindInternal))
 
@@ -146,16 +193,33 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 
 		remainAttempts := attempts < r.attempts
-		retryResponseWriter := newResponseWriter(rw)
 
-		var shouldRetry ShouldRetry = func(shouldRetry bool) {
-			retryResponseWriter.SetShouldRetry(remainAttempts && shouldRetry)
+		var statusCodes types.HTTPCodeRanges
+		nonIdempotent := req.Method != http.MethodPost && req.Method != http.MethodPatch && req.Method != "LOCK"
+		if r.retryNonIdempotentMethod || nonIdempotent {
+			// statusCode controls whether the request is retried.
+			// A nil value bypass the retry.
+			statusCodes = r.statusCode
 		}
-		newCtx := context.WithValue(req.Context(), shouldRetryContextKey{}, shouldRetry)
 
-		r.next.ServeHTTP(retryResponseWriter, req.Clone(newCtx))
+		retryResponseWriter := newResponseWriter(rw, statusCodes, remainAttempts, start, r.timeout)
 
-		if !retryResponseWriter.ShouldRetry() {
+		if reusableReq != nil {
+			req = reusableReq.Clone(req.Context())
+		}
+
+		retryReq := req
+		if !r.disableRetryOnNetworkError {
+			var shouldRetry ShouldRetry = func(shouldRetry bool) {
+				timedOut := r.timeout > 0 && time.Since(start) >= r.timeout
+				retryResponseWriter.SetShouldRetry(shouldRetry && remainAttempts && !timedOut)
+			}
+			retryReq = req.Clone(context.WithValue(req.Context(), shouldRetryContextKey{}, shouldRetry))
+		}
+
+		r.next.ServeHTTP(retryResponseWriter, retryReq)
+
+		if !retryResponseWriter.ShouldRetry() || !remainAttempts || (r.timeout > 0 && time.Since(start) >= r.timeout) {
 			return nil
 		}
 
@@ -202,18 +266,26 @@ func (r *retry) newBackOff() backoff.BackOff {
 	return b
 }
 
-func newResponseWriter(rw http.ResponseWriter) *responseWriter {
+func newResponseWriter(rw http.ResponseWriter, statusCodeRanges types.HTTPCodeRanges, remainAttempts bool, start time.Time, timeout time.Duration) *responseWriter {
 	return &responseWriter{
-		responseWriter: rw,
-		headers:        make(http.Header),
+		responseWriter:  rw,
+		headers:         make(http.Header),
+		statusCodeRange: statusCodeRanges,
+		remainAttempts:  remainAttempts,
+		start:           start,
+		timeout:         timeout,
 	}
 }
 
 type responseWriter struct {
-	responseWriter http.ResponseWriter
-	headers        http.Header
-	shouldRetry    bool
-	written        bool
+	responseWriter  http.ResponseWriter
+	headers         http.Header
+	shouldRetry     bool
+	written         bool
+	statusCodeRange types.HTTPCodeRanges
+	remainAttempts  bool
+	start           time.Time
+	timeout         time.Duration
 }
 
 func (r *responseWriter) ShouldRetry() bool {
@@ -225,24 +297,42 @@ func (r *responseWriter) SetShouldRetry(shouldRetry bool) {
 }
 
 func (r *responseWriter) Header() http.Header {
-	if r.written {
+	if r.written && !r.shouldRetry {
 		return r.responseWriter.Header()
 	}
+
 	return r.headers
 }
 
 func (r *responseWriter) Write(buf []byte) (int, error) {
-	if r.ShouldRetry() {
+	if r.shouldRetry {
 		return len(buf), nil
 	}
+
 	if !r.written {
 		r.WriteHeader(http.StatusOK)
 	}
+
 	return r.responseWriter.Write(buf)
 }
 
 func (r *responseWriter) WriteHeader(code int) {
 	if r.shouldRetry || r.written {
+		return
+	}
+
+	if code >= 100 && code <= 199 && code != http.StatusSwitchingProtocols {
+		clear(r.headers)
+
+		return
+	}
+
+	if r.statusCodeRange != nil {
+		timedOut := r.timeout > 0 && time.Since(r.start) >= r.timeout
+		r.shouldRetry = r.statusCodeRange.Contains(code) && r.remainAttempts && !timedOut
+	}
+
+	if r.shouldRetry {
 		return
 	}
 
@@ -253,12 +343,6 @@ func (r *responseWriter) WriteHeader(code int) {
 	maps.Copy(r.responseWriter.Header(), r.headers)
 
 	r.responseWriter.WriteHeader(code)
-
-	// Handling informational headers.
-	// This allows to keep writing to r.headers map until a final status code is written.
-	if code >= 100 && code <= 199 {
-		return
-	}
 
 	r.written = true
 }
