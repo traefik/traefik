@@ -28,6 +28,8 @@ func TestLoadIngresses(t *testing.T) {
 		ingressClass                   string
 		defaultBackendServiceName      string
 		defaultBackendServiceNamespace string
+		allowCrossNamespaceResources   bool
+		globalAllowedResponseHeaders   []string
 		paths                          []string
 		expected                       *dynamic.Configuration
 	}{
@@ -52,7 +54,9 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc: "Custom Headers",
+			desc:                         "Custom Headers",
+			allowCrossNamespaceResources: true,
+			globalAllowedResponseHeaders: []string{"X-Custom-Header", "X-Cross-Header"},
 			paths: []string{
 				"services.yml",
 				"ingressclasses.yml",
@@ -70,6 +74,107 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-ingress-with-custom-headers-rule-0-path-0-custom-headers"},
 							Service:     "default-ingress-with-custom-headers-whoami-80",
+						},
+						"default-ingress-with-cross-namespace-headers-rule-0-path-0": {
+							Rule:        "Host(`cross-namespace.localhost`) && Path(`/`)",
+							Middlewares: []string{"default-ingress-with-cross-namespace-headers-rule-0-path-0-custom-headers"},
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-cross-namespace-headers-whoami-80",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-custom-headers-rule-0-path-0-custom-headers": {
+							Headers: &dynamic.Headers{
+								CustomResponseHeaders: map[string]string{"X-Custom-Header": "some-random-string"},
+							},
+						},
+						"default-ingress-with-cross-namespace-headers-rule-0-path-0-custom-headers": {
+							Headers: &dynamic.Headers{
+								CustomResponseHeaders: map[string]string{"X-Cross-Header": "cross-value"},
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-custom-headers-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   ptr.To(true),
+								ServersTransport: "default-ingress-with-custom-headers",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-ingress-with-cross-namespace-headers-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   ptr.To(true),
+								ServersTransport: "default-ingress-with-cross-namespace-headers",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-custom-headers": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+						"default-ingress-with-cross-namespace-headers": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
+			},
+		},
+		{
+			desc:                         "Custom Headers cross namespace not allowed",
+			globalAllowedResponseHeaders: []string{"X-Custom-Header", "X-Cross-Header"},
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-custom-headers.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-custom-headers-rule-0-path-0": {
+							Rule:        "Host(`whoami.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-custom-headers-rule-0-path-0-custom-headers"},
+							Service:     "default-ingress-with-custom-headers-whoami-80",
+						},
+						"default-ingress-with-cross-namespace-headers-rule-0-path-0": {
+							Rule:       "Host(`cross-namespace.localhost`) && Path(`/`)",
+							RuleSyntax: "default",
+							Service:    "default-ingress-with-cross-namespace-headers-whoami-80",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -98,9 +203,123 @@ func TestLoadIngresses(t *testing.T) {
 								},
 							},
 						},
+						"default-ingress-with-cross-namespace-headers-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   ptr.To(true),
+								ServersTransport: "default-ingress-with-cross-namespace-headers",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-custom-headers": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+						"default-ingress-with-cross-namespace-headers": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{
+					Options: map[string]tls.Options{},
+				},
+			},
+		},
+		{
+			desc:                         "Custom Headers cross namespace configMap header not allowed",
+			globalAllowedResponseHeaders: []string{"X-Custom-Header"},
+			allowCrossNamespaceResources: true,
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-custom-headers.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-custom-headers-rule-0-path-0": {
+							Rule:        "Host(`whoami.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-custom-headers-rule-0-path-0-custom-headers"},
+							Service:     "default-ingress-with-custom-headers-whoami-80",
+						},
+						"default-ingress-with-cross-namespace-headers-rule-0-path-0": {
+							Rule:       "Host(`cross-namespace.localhost`) && Path(`/`)",
+							RuleSyntax: "default",
+							Service:    "default-ingress-with-cross-namespace-headers-whoami-80",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-custom-headers-rule-0-path-0-custom-headers": {
+							Headers: &dynamic.Headers{
+								CustomResponseHeaders: map[string]string{"X-Custom-Header": "some-random-string"},
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-custom-headers-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   ptr.To(true),
+								ServersTransport: "default-ingress-with-custom-headers",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-ingress-with-cross-namespace-headers-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   ptr.To(true),
+								ServersTransport: "default-ingress-with-cross-namespace-headers",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-custom-headers": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+						"default-ingress-with-cross-namespace-headers": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
 								DialTimeout: ptypes.Duration(60 * time.Second),
 							},
@@ -2887,6 +3106,8 @@ func TestLoadIngresses(t *testing.T) {
 				defaultBackendServiceName:      test.defaultBackendServiceName,
 				defaultBackendServiceNamespace: test.defaultBackendServiceNamespace,
 				NonTLSEntryPoints:              []string{"web"},
+				allowedHeaders:                 test.globalAllowedResponseHeaders,
+				AllowCrossNamespaceResources:   test.allowCrossNamespaceResources,
 			}
 			p.SetDefaults()
 
@@ -2992,4 +3213,153 @@ func readResources(t *testing.T, paths []string) []runtime.Object {
 	}
 
 	return k8sObjects
+}
+
+func TestProvider_validateConfiguration(t *testing.T) {
+	testCases := []struct {
+		desc                         string
+		globalAllowedResponseHeaders []string
+		expectedAllowedHeaders       []string
+	}{
+		{
+			desc:                         "Valid headers only",
+			globalAllowedResponseHeaders: []string{"X-Custom-Header", "X-Another-Header", "Content-Type"},
+			expectedAllowedHeaders:       []string{"X-Custom-Header", "X-Another-Header", "Content-Type"},
+		},
+		{
+			desc:                         "Mixed valid and invalid headers",
+			globalAllowedResponseHeaders: []string{"X-Custom-Header", "Invalid Header With Spaces", "X-Valid_Header-123"},
+			expectedAllowedHeaders:       []string{"X-Custom-Header", "X-Valid_Header-123"},
+		},
+		{
+			desc:                         "All invalid headers",
+			globalAllowedResponseHeaders: []string{"Invalid Header", "Another Bad Header!", "@#$%"},
+			expectedAllowedHeaders:       nil,
+		},
+		{
+			desc:                         "Empty list",
+			globalAllowedResponseHeaders: []string{},
+			expectedAllowedHeaders:       nil,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			provider := &Provider{
+				GlobalAllowedResponseHeaders: test.globalAllowedResponseHeaders,
+			}
+
+			err := provider.validateConfiguration()
+			require.NoError(t, err)
+
+			assert.Equal(t, test.expectedAllowedHeaders, provider.allowedHeaders)
+		})
+	}
+}
+
+func TestHeaderRegexp(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		header   string
+		expected bool
+	}{
+		{
+			desc:     "Valid header with alphanumeric characters",
+			header:   "X-Custom-Header",
+			expected: true,
+		},
+		{
+			desc:     "Valid header with underscores",
+			header:   "X_Custom_Header",
+			expected: true,
+		},
+		{
+			desc:     "Valid header with numbers",
+			header:   "Header123",
+			expected: true,
+		},
+		{
+			desc:     "Valid header with mixed case",
+			header:   "Content-Type",
+			expected: true,
+		},
+		{
+			desc:     "Invalid header with spaces",
+			header:   "Invalid Header",
+			expected: false,
+		},
+		{
+			desc:     "Invalid header with special characters",
+			header:   "Header@#$",
+			expected: false,
+		},
+		{
+			desc:     "Invalid header with dots",
+			header:   "Header.Name",
+			expected: false,
+		},
+		{
+			desc:     "Empty header",
+			header:   "",
+			expected: false,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			result := headerRegexp.MatchString(test.header)
+			assert.Equal(t, test.expected, result, "Header: %q", test.header)
+		})
+	}
+}
+
+func TestValueRegexp(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		value    string
+		expected bool
+	}{
+		{
+			desc:     "Simple string value",
+			value:    "simple-value",
+			expected: true,
+		},
+		{
+			desc:     "Value with spaces",
+			value:    "value with spaces",
+			expected: true,
+		},
+		{
+			desc:     "Value with various allowed characters",
+			value:    "value:with;various,allowed.characters/and\\backslash\"quotes'single?!(){}[]@<>=+-*#$&`|~^%",
+			expected: true,
+		},
+		{
+			desc:     "Value with newline",
+			value:    "value\nwith\nnewline",
+			expected: false,
+		},
+		{
+			desc:     "Value with tab",
+			value:    "value\twith\ttab",
+			expected: false,
+		},
+		{
+			desc:     "Empty value",
+			value:    "",
+			expected: false,
+		},
+		{
+			desc:     "Value with unicode",
+			value:    "value-with-unicode-€",
+			expected: false,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			result := valueRegexp.MatchString(test.value)
+			assert.Equal(t, test.expected, result, "Value: %q", test.value)
+		})
+	}
 }
