@@ -70,6 +70,11 @@ http:
         service: foobar
         fallback: foobar
         healthCheck: {}
+        errors:
+          maxRequestBodyBytes: 42
+          status:
+            - foobar
+            - foobar
     Service02:
       highestRandomWeight:
         services:
@@ -120,6 +125,10 @@ http:
           flushInterval: 42s
         serversTransport: foobar
     Service04:
+      middlewares:
+        - foobar
+        - foobar
+    Service05:
       mirroring:
         service: foobar
         mirrorBody: true
@@ -130,7 +139,7 @@ http:
           - name: foobar
             percent: 42
         healthCheck: {}
-    Service05:
+    Service06:
       weighted:
         services:
           - name: foobar
@@ -248,6 +257,7 @@ http:
         maxBodySize: 42
         preserveLocationHeader: true
         preserveRequestMethod: true
+        authSigninURL: foobar
     Middleware12:
       grpcWeb:
         allowOrigins:

@@ -466,42 +466,52 @@ func TestServiceTCPHealthChecker_Launch(t *testing.T) {
 				},
 			}
 
-			lb := &testLoadBalancer{}
+			// Create load balancer with event channel for synchronization.
+			lb := &testLoadBalancer{
+				RWMutex: &sync.RWMutex{},
+				eventCh: make(chan struct{}, len(test.server.StatusSequence)+5),
+			}
 			serviceInfo := &truntime.TCPServiceInfo{}
 
 			service := NewServiceTCPHealthChecker(ctx, test.config, lb, serviceInfo, targets, "serviceName")
 
 			go service.Launch(ctx)
 
-			// How much time to wait for the health check to actually complete.
-			deadline := time.Now().Add(200 * time.Millisecond)
-			// TLS handshake can take much longer.
+			// Timeout for each event - TLS handshake can take longer.
+			eventTimeout := 500 * time.Millisecond
 			if test.server.TLS {
-				deadline = time.Now().Add(1000 * time.Millisecond)
+				eventTimeout = 2 * time.Second
 			}
 
-			// Wait for all health checks to complete deterministically
+			// Wait for health check events using channel synchronization.
+			// Iterate over StatusSequence to release each connection via Next().
 			for i := range test.server.StatusSequence {
 				test.server.Next()
 
-				initialUpserted := lb.numUpsertedServers
-				initialRemoved := lb.numRemovedServers
-
-				for time.Now().Before(deadline) {
-					time.Sleep(5 * time.Millisecond)
-					if lb.numUpsertedServers > initialUpserted || lb.numRemovedServers > initialRemoved {
-						// Stop the health checker immediately after the last expected sequence completes
-						// to prevent extra health checks from firing and modifying the counters.
-						if i == len(test.server.StatusSequence)-1 {
-							cancel()
-						}
-						break
+				select {
+				case <-lb.eventCh:
+					// Event received
+					// On the last iteration, stop the health checker immediately
+					// to prevent extra checks from modifying the counters.
+					if i == len(test.server.StatusSequence)-1 {
+						test.server.Close()
+						cancel()
 					}
+				case <-time.After(eventTimeout):
+					t.Fatalf("timeout waiting for health check event %d/%d", i+1, len(test.server.StatusSequence))
 				}
 			}
 
-			assert.Equal(t, test.expNumRemovedServers, lb.numRemovedServers, "removed servers")
-			assert.Equal(t, test.expNumUpsertedServers, lb.numUpsertedServers, "upserted servers")
+			// Small delay to let goroutines clean up.
+			time.Sleep(10 * time.Millisecond)
+
+			lb.RLock()
+			removedServers := lb.numRemovedServers
+			upsertedServers := lb.numUpsertedServers
+			lb.RUnlock()
+
+			assert.Equal(t, test.expNumRemovedServers, removedServers, "removed servers")
+			assert.Equal(t, test.expNumUpsertedServers, upsertedServers, "upserted servers")
 			assert.Equal(t, map[string]string{test.server.Addr.String(): test.targetStatus}, serviceInfo.GetAllStatus())
 		})
 	}
@@ -561,12 +571,9 @@ func TestServiceTCPHealthChecker_differentIntervals(t *testing.T) {
 	hc := NewServiceTCPHealthChecker(ctx, config, lb, serviceInfo, targets, "test-service")
 
 	wg := sync.WaitGroup{}
-	wg.Add(1)
-
-	go func() {
+	wg.Go(func() {
 		hc.Launch(ctx)
-		wg.Done()
-	}()
+	})
 
 	// Let it run for 2 seconds to see the different check frequencies
 	select {
@@ -597,6 +604,8 @@ type sequencedTCPServer struct {
 	StatusSequence []tcpMockSequence
 	TLS            bool
 	release        chan struct{}
+	mu             sync.Mutex
+	listener       net.Listener
 }
 
 func newTCPServer(t *testing.T, tlsEnabled bool, statusSequence ...tcpMockSequence) *sequencedTCPServer {
@@ -624,17 +633,28 @@ func (s *sequencedTCPServer) Next() {
 	s.release <- struct{}{}
 }
 
+func (s *sequencedTCPServer) Close() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.listener != nil {
+		s.listener.Close()
+		s.listener = nil
+	}
+}
+
 func (s *sequencedTCPServer) Start(t *testing.T) {
 	t.Helper()
 
 	go func() {
-		var listener net.Listener
-
 		for _, seq := range s.StatusSequence {
 			<-s.release
-			if listener != nil {
-				listener.Close()
+
+			s.mu.Lock()
+			if s.listener != nil {
+				s.listener.Close()
+				s.listener = nil
 			}
+			s.mu.Unlock()
 
 			if !seq.accept {
 				continue
@@ -643,7 +663,7 @@ func (s *sequencedTCPServer) Start(t *testing.T) {
 			lis, err := net.ListenTCP("tcp", s.Addr)
 			require.NoError(t, err)
 
-			listener = lis
+			var listener net.Listener = lis
 
 			if s.TLS {
 				cert, err := tls.X509KeyPair(localhostCert, localhostKey)
@@ -670,8 +690,18 @@ func (s *sequencedTCPServer) Start(t *testing.T) {
 				)
 			}
 
+			s.mu.Lock()
+			s.listener = listener
+			s.mu.Unlock()
+
 			conn, err := listener.Accept()
-			require.NoError(t, err)
+			if err != nil {
+				// Listener was closed during shutdown - this is expected behavior.
+				if strings.Contains(err.Error(), "use of closed network connection") {
+					return
+				}
+				require.NoError(t, err)
+			}
 			t.Cleanup(func() {
 				_ = conn.Close()
 			})

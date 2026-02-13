@@ -5,10 +5,12 @@ import (
 	"time"
 
 	ptypes "github.com/traefik/paerser/types"
+	"github.com/traefik/traefik/dynamic/ext"
 	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"google.golang.org/grpc/codes"
+	"k8s.io/utils/ptr"
 )
 
 const (
@@ -27,12 +29,16 @@ const (
 	MirroringDefaultMirrorBody = true
 	// MirroringDefaultMaxBodySize is the Mirroring.MaxBodySize option default value.
 	MirroringDefaultMaxBodySize int64 = -1
+	// FailoverErrorsDefaultMaxRequestBodyBytes is the Failover.Errors.MaxBodySize option default value.
+	FailoverErrorsDefaultMaxRequestBodyBytes int64 = -1
 )
 
 // +k8s:deepcopy-gen=true
 
 // HTTPConfiguration contains all the HTTP configuration parameters.
 type HTTPConfiguration struct {
+	ext.HTTP `yaml:",inline"`
+
 	Routers           map[string]*Router           `json:"routers,omitempty" toml:"routers,omitempty" yaml:"routers,omitempty" export:"true"`
 	Services          map[string]*Service          `json:"services,omitempty" toml:"services,omitempty" yaml:"services,omitempty" export:"true"`
 	Middlewares       map[string]*Middleware       `json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
@@ -55,6 +61,7 @@ type Model struct {
 
 // Service holds a service configuration (can only be of one type at the same time).
 type Service struct {
+	Middlewares         []string             `json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
 	LoadBalancer        *ServersLoadBalancer `json:"loadBalancer,omitempty" toml:"loadBalancer,omitempty" yaml:"loadBalancer,omitempty" export:"true"`
 	HighestRandomWeight *HighestRandomWeight `json:"highestRandomWeight,omitempty" toml:"highestRandomWeight,omitempty" yaml:"highestRandomWeight,omitempty" label:"-" export:"true"`
 	Weighted            *WeightedRoundRobin  `json:"weighted,omitempty" toml:"weighted,omitempty" yaml:"weighted,omitempty" label:"-" export:"true"`
@@ -62,10 +69,22 @@ type Service struct {
 	Failover            *Failover            `json:"failover,omitempty" toml:"failover,omitempty" yaml:"failover,omitempty" label:"-" export:"true"`
 }
 
+// Merge merges another Service into this one.
+// Returns true if the merge succeeds, false if configurations conflict.
+func (s *Service) Merge(other *Service) bool {
+	if s.LoadBalancer == nil || other.LoadBalancer == nil {
+		return reflect.DeepEqual(s, other)
+	}
+
+	return s.LoadBalancer.Merge(other.LoadBalancer)
+}
+
 // +k8s:deepcopy-gen=true
 
 // Router holds the router configuration.
 type Router struct {
+	ext.Router `yaml:",inline"`
+
 	EntryPoints []string `json:"entryPoints,omitempty" toml:"entryPoints,omitempty" yaml:"entryPoints,omitempty" export:"true"`
 	Middlewares []string `json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
 	Service     string   `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty" export:"true"`
@@ -179,9 +198,23 @@ func (m *Mirroring) SetDefaults() {
 
 // Failover holds the Failover configuration.
 type Failover struct {
-	Service     string       `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty" export:"true"`
-	Fallback    string       `json:"fallback,omitempty" toml:"fallback,omitempty" yaml:"fallback,omitempty" export:"true"`
-	HealthCheck *HealthCheck `json:"healthCheck,omitempty" toml:"healthCheck,omitempty" yaml:"healthCheck,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	Service     string         `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty" export:"true"`
+	Fallback    string         `json:"fallback,omitempty" toml:"fallback,omitempty" yaml:"fallback,omitempty" export:"true"`
+	HealthCheck *HealthCheck   `json:"healthCheck,omitempty" toml:"healthCheck,omitempty" yaml:"healthCheck,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	Errors      *FailoverError `json:"errors,omitempty" toml:"errors,omitempty" yaml:"errors,omitempty" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// FailoverError holds errors configuration.
+type FailoverError struct {
+	MaxRequestBodyBytes *int64   `json:"maxRequestBodyBytes,omitempty" toml:"maxRequestBodyBytes,omitempty" yaml:"maxRequestBodyBytes,omitempty" export:"true"`
+	Status              []string `json:"status,omitempty" toml:"status,omitempty" yaml:"status,omitempty" export:"true"`
+}
+
+// SetDefaults Default values for a WRRService.
+func (m *FailoverError) SetDefaults() {
+	m.MaxRequestBodyBytes = ptr.To(FailoverErrorsDefaultMaxRequestBodyBytes)
 }
 
 // +k8s:deepcopy-gen=true
@@ -342,8 +375,38 @@ type ServersLoadBalancer struct {
 	ServersTransport   string                    `json:"serversTransport,omitempty" toml:"serversTransport,omitempty" yaml:"serversTransport,omitempty" export:"true"`
 }
 
-// Mergeable tells if the given service is mergeable.
-func (l *ServersLoadBalancer) Mergeable(loadBalancer *ServersLoadBalancer) bool {
+// Merge merges the other load balancer into this one.
+// Returns true if merge succeeded, false if configurations conflict.
+func (l *ServersLoadBalancer) Merge(other *ServersLoadBalancer) bool {
+	if !l.mergeable(other) {
+		return false
+	}
+
+	// Deduplicate and append servers.
+	uniq := make(map[string]struct{}, len(l.Servers))
+	for _, server := range l.Servers {
+		uniq[server.URL] = struct{}{}
+	}
+	for _, server := range other.Servers {
+		if _, ok := uniq[server.URL]; !ok {
+			l.Servers = append(l.Servers, server)
+		}
+	}
+
+	return true
+}
+
+// SetDefaults Default values for a ServersLoadBalancer.
+func (l *ServersLoadBalancer) SetDefaults() {
+	l.PassHostHeader = ptr.To(DefaultPassHostHeader)
+
+	l.Strategy = BalancerStrategyWRR
+	l.ResponseForwarding = &ResponseForwarding{}
+	l.ResponseForwarding.SetDefaults()
+}
+
+// mergeable tells if the given service is mergeable.
+func (l *ServersLoadBalancer) mergeable(loadBalancer *ServersLoadBalancer) bool {
 	savedServers := l.Servers
 	defer func() {
 		l.Servers = savedServers
@@ -357,16 +420,6 @@ func (l *ServersLoadBalancer) Mergeable(loadBalancer *ServersLoadBalancer) bool 
 	loadBalancer.Servers = nil
 
 	return reflect.DeepEqual(l, loadBalancer)
-}
-
-// SetDefaults Default values for a ServersLoadBalancer.
-func (l *ServersLoadBalancer) SetDefaults() {
-	defaultPassHostHeader := DefaultPassHostHeader
-	l.PassHostHeader = &defaultPassHostHeader
-
-	l.Strategy = BalancerStrategyWRR
-	l.ResponseForwarding = &ResponseForwarding{}
-	l.ResponseForwarding.SetDefaults()
 }
 
 // +k8s:deepcopy-gen=true
@@ -419,8 +472,7 @@ type ServerHealthCheck struct {
 
 // SetDefaults Default values for a HealthCheck.
 func (h *ServerHealthCheck) SetDefaults() {
-	fr := true
-	h.FollowRedirects = &fr
+	h.FollowRedirects = ptr.To(true)
 	h.Mode = "http"
 	h.Interval = DefaultHealthCheckInterval
 	h.Timeout = DefaultHealthCheckTimeout

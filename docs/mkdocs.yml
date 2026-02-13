@@ -136,12 +136,15 @@ plugins:
         'middlewares/tcp/ipwhitelist.md': 'reference/routing-configuration/tcp/middlewares/ipallowlist.md'
         'middlewares/tcp/ipallowlist.md': 'reference/routing-configuration/tcp/middlewares/ipallowlist.md'
         ## User Guides
-        'user-guides/crd-acme/index.md': 'expose/kubernetes.md'
-        'user-guides/cert-manager.md': 'expose/kubernetes.md'
-        'user-guides/docker-compose/basic-example/index.md': 'expose/docker.md'
-        'user-guides/docker-compose/acme-tls/index.md': 'expose/docker.md'
-        'user-guides/docker-compose/acme-http/index.md': 'expose/docker.md'
-        'user-guides/docker-compose/acme-dns/index.md': 'expose/docker.md'
+        'user-guides/crd-acme/index.md': 'expose/kubernetes/basic.md'
+        'user-guides/cert-manager.md': 'expose/kubernetes/advanced.md'
+        'user-guides/docker-compose/basic-example/index.md': 'expose/docker/basic.md'
+        'user-guides/docker-compose/acme-tls/index.md': 'expose/docker/basic.md'
+        'user-guides/docker-compose/acme-http/index.md': 'expose/docker/basic.md'
+        'user-guides/docker-compose/acme-dns/index.md': 'expose/docker/basic.md'
+        'user-guides/fastproxy.md': 'reference/install-configuration/experimental/fastproxy.md'
+        'user-guides/grpc.md': 'expose/overview.md#exposing-grpc-services'
+        'user-guides/websocket.md': 'expose/overview.md#exposing-websocket-services'
         # References
         # Static Configuration
         'reference/static-configuration/overview.md': 'reference/install-configuration/configuration-options.md'
@@ -201,9 +204,15 @@ nav:
       - 'Swarm': 'setup/swarm.md'
   - 'Expose':
       - 'Overview': 'expose/overview.md'
-      - 'Kubernetes': 'expose/kubernetes.md'
-      - 'Docker': 'expose/docker.md'
-      - 'Swarm': 'expose/swarm.md'
+      - 'Kubernetes':
+        - 'Basic': 'expose/kubernetes/basic.md'
+        - 'Advanced': 'expose/kubernetes/advanced.md'
+      - 'Docker':
+        - 'Basic': 'expose/docker/basic.md'
+        - 'Advanced': 'expose/docker/advanced.md'
+      - 'Swarm':
+        - 'Basic': 'expose/swarm/basic.md'
+        - 'Advanced': 'expose/swarm/advanced.md'
   - 'Secure':
       - '<span class="nav-link-with-icon">Secure Access with JWT <img src="https://doc.traefik.io/traefik-hub/img/ps-traefik-hub-logo-light.svg" class="menu-icon" alt="Traefik Hub API Gateway"></span>': 'secure/secure-api-access-with-jwt.md'
       - '<span class="nav-link-with-icon">Secure Access with OIDC <img src="https://doc.traefik.io/traefik-hub/img/ps-traefik-hub-logo-light.svg" class="menu-icon" alt="Traefik Hub API Gateway"></span>': 'secure/secure-api-access-with-oidc.md'
@@ -263,6 +272,9 @@ nav:
           - 'Tracing': 'reference/install-configuration/observability/tracing.md'
           - 'Logs & AccessLogs': 'reference/install-configuration/observability/logs-and-accesslogs.md'
           - 'Health Check (CLI & Ping)': 'reference/install-configuration/observability/healthcheck.md'
+      - 'Experimental':
+          - 'FastProxy': 'reference/install-configuration/experimental/fastproxy.md'
+          - 'Plugins': 'reference/install-configuration/experimental/plugins.md'
       - 'Options List': 'reference/install-configuration/configuration-options.md'
     - 'Routing Configuration':
         - 'Common Configuration' :
@@ -369,12 +381,6 @@ nav:
     - 'Deprecation Notices':
         - 'Releases': 'deprecation/releases.md'
         - 'Features': 'deprecation/features.md'
-  - 'User Guides':
-      - 'FastProxy': 'user-guides/fastproxy.md'
-      - 'Kubernetes and Let''s Encrypt': 'user-guides/crd-acme/index.md'
-      - 'Kubernetes and cert-manager': 'user-guides/cert-manager.md'
-      - 'gRPC Examples': 'user-guides/grpc.md'
-      - 'WebSocket Examples': 'user-guides/websocket.md'
   - 'Contributing':
       - 'Thank You!': 'contributing/thank-you.md'
       - 'Submitting Issues': 'contributing/submitting-issues.md'

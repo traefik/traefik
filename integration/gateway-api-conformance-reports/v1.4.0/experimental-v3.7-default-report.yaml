@@ -8,7 +8,7 @@ implementation:
   organization: traefik
   project: traefik
   url: https://traefik.io/
-  version: v3.6
+  version: v3.7
 kind: ConformanceReport
 mode: default
 profiles:
@@ -30,12 +30,13 @@ profiles:
     result: success
     statistics:
       Failed: 0
-      Passed: 13
+      Passed: 15
       Skipped: 0
     supportedFeatures:
     - GatewayPort8080
     - HTTPRouteBackendProtocolH2C
     - HTTPRouteBackendProtocolWebSocket
+    - HTTPRouteBackendRequestHeaderModification
     - HTTPRouteDestinationPortMatching
     - HTTPRouteHostRewrite
     - HTTPRouteMethodMatching
@@ -50,7 +51,6 @@ profiles:
     - GatewayHTTPListenerIsolation
     - GatewayInfrastructurePropagation
     - GatewayStaticAddresses
-    - HTTPRouteBackendRequestHeaderModification
     - HTTPRouteBackendTimeout
     - HTTPRouteCORS
     - HTTPRouteNamedRouteRule
