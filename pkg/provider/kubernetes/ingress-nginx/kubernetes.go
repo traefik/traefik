@@ -190,6 +190,8 @@ type Provider struct {
 	DefaultBackendService  string `description:"Service used to serve HTTP requests not matching any known server name (catch-all). Takes the form 'namespace/name'." json:"defaultBackendService,omitempty" toml:"defaultBackendService,omitempty" yaml:"defaultBackendService,omitempty" export:"true"`
 	DisableSvcExternalName bool   `description:"Disable support for Services of type ExternalName." json:"disableSvcExternalName,omitempty" toml:"disableSvcExternalName,omitempty" yaml:"disableSvcExternalName,omitempty" export:"true"`
 
+	KubernetesObservabilityFields bool `description:"Append Kubernetes Namespace, Kind and Name fields." json:"kubernetesObservabilityFields,omitempty" toml:"kubernetesObservabilityFields,omitempty" yaml:"kubernetesObservabilityFields,omitempty" export:"true"`
+
 	// Configuration options available within the NGINX Ingress Controller ConfigMap.
 	ProxyRequestBuffering    bool     `description:"Defines whether to enable request buffering." json:"proxyRequestBuffering,omitempty" toml:"proxyRequestBuffering,omitempty" yaml:"proxyRequestBuffering,omitempty" export:"true"`
 	ClientBodyBufferSize     int64    `description:"Default buffer size for reading client request body." json:"clientBodyBufferSize,omitempty" toml:"clientBodyBufferSize,omitempty" yaml:"clientBodyBufferSize,omitempty" export:"true"`
@@ -535,6 +537,17 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 		if err := p.updateIngressStatus(ingress.Ingress); err != nil {
 			logger.Error().Err(err).Msg("Error while updating ingress status")
+		}
+
+		if p.KubernetesObservabilityFields {
+			kubernetesFieldsMiddlewareName := provider.Normalize(ingress.Namespace + "-" + ingress.Name + "-kubernetes-fields")
+			conf.HTTP.Middlewares[kubernetesFieldsMiddlewareName] = &dynamic.Middleware{
+				KubernetesFields: &dynamic.KubernetesFields{
+					Namespace: ingress.Namespace,
+					Kind:      "Ingress",
+					Name:      ingress.Name,
+				},
+			}
 		}
 
 		var hasTLS bool
@@ -1200,16 +1213,18 @@ func (p *Provider) loadCertificates(ctx context.Context, ingress *netv1.Ingress,
 }
 
 func (p *Provider) applyMiddlewares(namespace, ingressName, routerKey, rulePath, ruleHost string, backend *netv1.IngressBackend, hosts map[string]bool, ingressConfig IngressConfig, hasTLS bool, rt *dynamic.Router, conf *dynamic.Configuration, serverSnippet string) error {
+	p.applyKubernetesFields(namespace, ingressName, rt)
+
 	if err := p.applyCustomHTTPErrors(namespace, ingressName, routerKey, backend, ingressConfig, rt, conf); err != nil {
 		return fmt.Errorf("applying custom HTTP errors: %w", err)
 	}
 	applyAppRootConfiguration(routerKey, ingressConfig, rt, conf)
-	applyFromToWwwRedirect(hosts, ruleHost, routerKey, ingressConfig, rt, conf)
+	p.applyFromToWwwRedirect(hosts, ruleHost, namespace, ingressName, routerKey, ingressConfig, rt, conf)
 	applyRedirect(routerKey, ingressConfig, rt, conf)
 
 	// Apply SSL redirect is mandatory to be applied after all other middlewares.
 	// TODO: check how to remove this, and create the HTTP router elsewhere.
-	p.applySSLRedirectConfiguration(routerKey, ingressConfig, hasTLS, rt, conf)
+	p.applySSLRedirectConfiguration(namespace, ingressName, routerKey, ingressConfig, hasTLS, rt, conf)
 
 	if err := p.applyBasicAuthConfiguration(namespace, routerKey, ingressConfig, rt, conf); err != nil {
 		return fmt.Errorf("applying basic auth: %w", err)
@@ -1514,6 +1529,17 @@ func applyRewriteTargetConfiguration(rulePath, routerName string, ingressConfig 
 	rt.Middlewares = append(rt.Middlewares, rewriteTargetMiddlewareName)
 }
 
+func (p *Provider) applyKubernetesFields(namespace, ingressName string, rt *dynamic.Router) {
+	if !p.KubernetesObservabilityFields {
+		return
+	}
+	kubernetesFieldsMiddlewareName := provider.Normalize(namespace + "-" + ingressName + "-kubernetes-fields")
+	if !slices.Contains(rt.Middlewares, kubernetesFieldsMiddlewareName) {
+		// prepend
+		rt.Middlewares = append([]string{kubernetesFieldsMiddlewareName}, rt.Middlewares...)
+	}
+}
+
 func applyAppRootConfiguration(routerName string, ingressConfig IngressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
 	if ingressConfig.AppRoot == nil || !strings.HasPrefix(*ingressConfig.AppRoot, "/") {
 		return
@@ -1530,7 +1556,7 @@ func applyAppRootConfiguration(routerName string, ingressConfig IngressConfig, r
 	rt.Middlewares = append(rt.Middlewares, appRootMiddlewareName)
 }
 
-func applyFromToWwwRedirect(hosts map[string]bool, ruleHost, routerName string, ingressConfig IngressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
+func (p *Provider) applyFromToWwwRedirect(hosts map[string]bool, ruleHost, namespace, ingressName, routerName string, ingressConfig IngressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
 	if ingressConfig.FromToWwwRedirect == nil || !*ingressConfig.FromToWwwRedirect {
 		return
 	}
@@ -1570,6 +1596,8 @@ func applyFromToWwwRedirect(hosts map[string]bool, ruleHost, routerName string, 
 		Middlewares: []string{fromToWwwRedirectMiddlewareName},
 		Service:     rt.Service,
 	}
+
+	p.applyKubernetesFields(namespace, ingressName, wwwRedirectRouter)
 	conf.HTTP.Routers[routerName+"-from-to-www-redirect"] = wwwRedirectRouter
 }
 
@@ -1821,7 +1849,7 @@ func (p *Provider) applyBufferingConfiguration(routerName string, ingressConfig 
 	return nil
 }
 
-func (p *Provider) applySSLRedirectConfiguration(routerName string, ingressConfig IngressConfig, hasTLS bool, rt *dynamic.Router, conf *dynamic.Configuration) {
+func (p *Provider) applySSLRedirectConfiguration(namespace, ingressName, routerName string, ingressConfig IngressConfig, hasTLS bool, rt *dynamic.Router, conf *dynamic.Configuration) {
 	var forceSSLRedirect bool
 	if ingressConfig.ForceSSLRedirect != nil {
 		forceSSLRedirect = *ingressConfig.ForceSSLRedirect
@@ -1856,6 +1884,8 @@ func (p *Provider) applySSLRedirectConfiguration(routerName string, ingressConfi
 			httpRouter.Middlewares = []string{redirectMiddlewareName}
 			httpRouter.Service = "noop@internal"
 		}
+
+		p.applyKubernetesFields(namespace, ingressName, httpRouter)
 
 		return
 	}
