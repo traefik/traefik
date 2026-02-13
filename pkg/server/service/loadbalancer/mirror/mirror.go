@@ -54,6 +54,10 @@ type mirrorHandler struct {
 	count uint64
 }
 
+type clonableRequest interface {
+	Clone(ctx context.Context) *http.Request
+}
+
 func (m *Mirroring) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	mirrors := m.getActiveMirrors()
 	if len(mirrors) == 0 {
@@ -62,21 +66,28 @@ func (m *Mirroring) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	logger := log.Ctx(req.Context())
-	rr, bytesRead, err := newReusableRequest(req, m.mirrorBody, m.maxBodySize)
-	if err != nil && !errors.Is(err, errBodyTooLarge) {
-		http.Error(rw, fmt.Sprintf("%s: creating reusable request: %v",
-			http.StatusText(http.StatusInternalServerError), err), http.StatusInternalServerError)
-		return
+
+	var rr clonableRequest = req
+
+	if m.mirrorBody {
+		var err error
+		var bytesRead []byte
+		rr, bytesRead, err = NewReusableRequest(req, m.maxBodySize)
+		if err != nil && !errors.Is(err, ErrBodyTooLarge) {
+			logger.Debug().Err(err).Msg("Error while creating reusable request for mirroring")
+			http.Error(rw, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+
+		if errors.Is(err, ErrBodyTooLarge) {
+			req.Body = io.NopCloser(io.MultiReader(bytes.NewReader(bytesRead), req.Body))
+			m.handler.ServeHTTP(rw, req)
+			logger.Debug().Msg("No mirroring, request body larger than allowed size")
+			return
+		}
 	}
 
-	if errors.Is(err, errBodyTooLarge) {
-		req.Body = io.NopCloser(io.MultiReader(bytes.NewReader(bytesRead), req.Body))
-		m.handler.ServeHTTP(rw, req)
-		logger.Debug().Msg("No mirroring, request body larger than allowed size")
-		return
-	}
-
-	m.handler.ServeHTTP(rw, rr.clone(req.Context()))
+	m.handler.ServeHTTP(rw, rr.Clone(req.Context()))
 
 	select {
 	case <-req.Context().Done():
@@ -89,7 +100,7 @@ func (m *Mirroring) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	m.routinePool.GoCtx(func(_ context.Context) {
 		for _, handler := range mirrors {
 			// prepare request, update body from buffer
-			r := rr.clone(req.Context())
+			r := rr.Clone(req.Context())
 
 			// In ServeHTTP, we rely on the presence of the accessLog datatable found in the request's context
 			// to know whether we should mutate said datatable (and contribute some fields to the log).
@@ -192,23 +203,23 @@ func (c contextStopPropagation) Done() <-chan struct{} {
 	return make(chan struct{})
 }
 
-// reusableRequest keeps in memory the body of the given request,
+// ReusableRequest keeps in memory the body of the given request,
 // so that the request can be fully cloned by each mirror.
-type reusableRequest struct {
+type ReusableRequest struct {
 	req  *http.Request
 	body []byte
 }
 
-var errBodyTooLarge = errors.New("request body too large")
+var ErrBodyTooLarge = errors.New("request body too large")
 
-// if the returned error is errBodyTooLarge, newReusableRequest also returns the
-// bytes that were already consumed from the request's body.
-func newReusableRequest(req *http.Request, mirrorBody bool, maxBodySize int64) (*reusableRequest, []byte, error) {
+// NewReusableRequest returns a new reusable request. If the returned error is ErrBodyTooLarge, NewReusableRequest also returns the
+// bytes already consumed from the request's body.
+func NewReusableRequest(req *http.Request, maxBodySize int64) (*ReusableRequest, []byte, error) {
 	if req == nil {
 		return nil, nil, errors.New("nil input request")
 	}
-	if req.Body == nil || req.ContentLength == 0 || !mirrorBody {
-		return &reusableRequest{req: req}, nil, nil
+	if req.Body == nil || req.ContentLength == 0 {
+		return &ReusableRequest{req: req}, nil, nil
 	}
 
 	// unbounded body size
@@ -217,7 +228,7 @@ func newReusableRequest(req *http.Request, mirrorBody bool, maxBodySize int64) (
 		if err != nil {
 			return nil, nil, err
 		}
-		return &reusableRequest{
+		return &ReusableRequest{
 			req:  req,
 			body: body,
 		}, nil, nil
@@ -234,17 +245,18 @@ func newReusableRequest(req *http.Request, mirrorBody bool, maxBodySize int64) (
 	// we got an ErrUnexpectedEOF, which means there was less than maxBodySize data to read,
 	// which permits us sending also to all the mirrors later.
 	if errors.Is(err, io.ErrUnexpectedEOF) {
-		return &reusableRequest{
+		return &ReusableRequest{
 			req:  req,
 			body: body[:n],
 		}, nil, nil
 	}
 
 	// err == nil , which means data size > maxBodySize
-	return nil, body[:n], errBodyTooLarge
+	return nil, body[:n], ErrBodyTooLarge
 }
 
-func (rr reusableRequest) clone(ctx context.Context) *http.Request {
+// Clone clones the request.
+func (rr ReusableRequest) Clone(ctx context.Context) *http.Request {
 	req := rr.req.Clone(ctx)
 
 	if rr.body != nil {
