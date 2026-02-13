@@ -1,15 +1,18 @@
 package ecs
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"net"
+	"slices"
 	"strconv"
 
 	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	ecstypes "github.com/aws/aws-sdk-go-v2/service/ecs/types"
-	"github.com/docker/go-connections/nat"
+	networktypes "github.com/moby/moby/api/types/network"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/label"
@@ -309,26 +312,31 @@ func getPort(instance ecsInstance, serverPort string) string {
 		return serverPort
 	}
 
-	var ports []nat.Port
+	var ports []networktypes.Port
 	for _, port := range instance.machine.ports {
-		natPort, err := nat.NewPort(string(port.protocol), strconv.FormatInt(int64(port.hostPort), 10))
-		if err != nil {
+		if port.hostPort < 0 || port.hostPort > math.MaxUint16 {
+			// port out of range
 			continue
 		}
-
+		if port.protocol == "" {
+			port.protocol = ecstypes.TransportProtocolTcp
+		}
+		natPort, ok := networktypes.PortFrom(uint16(port.hostPort), networktypes.IPProtocol(port.protocol))
+		if !ok {
+			continue
+		}
 		ports = append(ports, natPort)
 	}
 
-	less := func(i, j nat.Port) bool {
-		return i.Int() < j.Int()
-	}
-	nat.Sort(ports, less)
-
-	if len(ports) > 0 {
-		return ports[0].Port()
+	if len(ports) == 0 {
+		return ""
 	}
 
-	return ""
+	slices.SortFunc(ports, func(a, b networktypes.Port) int {
+		return cmp.Compare(a.Num(), b.Num())
+	})
+
+	return strconv.Itoa(int(ports[0].Num()))
 }
 
 func getServiceName(instance ecsInstance) string {
