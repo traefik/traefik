@@ -65,6 +65,11 @@ const (
 
 var nginxSizeRegexp = regexp.MustCompile(`^(?i)\s*([0-9]+)\s*([bkmg]?)\s*$`)
 
+var (
+	headerRegexp = regexp.MustCompile(`^[a-zA-Z\d\-_]+$`)
+	valueRegexp  = regexp.MustCompile(`^[a-zA-Z\d_ :;.,\\/"'?!(){}\[\]@<>=\-+*#$&\x60|~^%]+$`)
+)
+
 type backendAddress struct {
 	Address string
 	Fenced  bool
@@ -117,9 +122,13 @@ type Provider struct {
 	ProxyNextUpstreamTimeout int      `description:"Limits the total elapsed time to retry the request if the backend server does not reply. Timeout value is unitless and in seconds." json:"proxyNextUpstreamTimeout,omitempty" toml:"proxyNextUpstreamTimeout,omitempty" yaml:"proxyNextUpstreamTimeout,omitempty" export:"true"`
 	CustomHTTPErrors         []string `description:"Defines which status should result in calling the default backend to return an error page." json:"customHTTPErrors,omitempty" toml:"customHTTPErrors,omitempty" yaml:"customHTTPErrors,omitempty" export:"true"`
 
+	AllowCrossNamespaceResources bool     `description:"Allow Ingress to reference resources (e.g. ConfigMaps, Secrets) in different namespaces." json:"allowCrossNamespaceResources,omitempty" toml:"allowCrossNamespaceResources,omitempty" yaml:"allowCrossNamespaceResources,omitempty" export:"true"`
+	GlobalAllowedResponseHeaders []string `description:"List of allowed response headers inside the custom headers annotations." json:"globalAllowedResponseHeaders,omitempty" toml:"globalAllowedResponseHeaders,omitempty" yaml:"globalAllowedResponseHeaders,omitempty" export:"true"`
+
 	// NonTLSEntryPoints contains the names of entrypoints that are configured without TLS.
 	NonTLSEntryPoints []string `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
 
+	allowedHeaders                 []string
 	defaultBackendServiceNamespace string
 	defaultBackendServiceName      string
 
@@ -143,14 +152,8 @@ func (p *Provider) SetDefaults() {
 
 // Init the provider.
 func (p *Provider) Init() error {
-	// Validates and parses the default backend configuration.
-	if p.DefaultBackendService != "" {
-		parts := strings.Split(p.DefaultBackendService, "/")
-		if len(parts) != 2 {
-			return fmt.Errorf("invalid default backend service format: %s, expected 'namespace/name'", p.DefaultBackendService)
-		}
-		p.defaultBackendServiceNamespace = parts[0]
-		p.defaultBackendServiceName = parts[1]
+	if err := p.validateConfiguration(); err != nil {
+		return fmt.Errorf("validating kubernetesingressnginx provider configuration: %w", err)
 	}
 
 	// Initializes Kubernetes client.
@@ -232,6 +235,31 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 		}
 	})
 
+	return nil
+}
+
+func (p *Provider) validateConfiguration() error {
+	// Validates and parses the default backend configuration.
+	if p.DefaultBackendService != "" {
+		parts := strings.Split(p.DefaultBackendService, "/")
+		if len(parts) != 2 {
+			return fmt.Errorf("invalid default backend service format: %s, expected 'namespace/name'", p.DefaultBackendService)
+		}
+		p.defaultBackendServiceNamespace = parts[0]
+		p.defaultBackendServiceName = parts[1]
+	}
+
+	var allowedHeaders []string
+	for _, header := range p.GlobalAllowedResponseHeaders {
+		if !headerRegexp.MatchString(header) {
+			log.Warn().Msgf("GlobalAllowedResponseHeaders header value %q is invalid and will be ignored. Only alphanumeric characters, dashes and underscores are allowed.", header)
+			continue
+		}
+
+		allowedHeaders = append(allowedHeaders, header)
+	}
+
+	p.allowedHeaders = allowedHeaders
 	return nil
 }
 
@@ -958,7 +986,7 @@ func (p *Provider) applyMiddlewares(namespace, ingressName, routerKey, rulePath,
 		return fmt.Errorf("applying auth tls pass certificate to upstream: %w", err)
 	}
 
-	if err := p.applyCustomHeaders(routerKey, ingressConfig, rt, conf); err != nil {
+	if err := p.applyCustomHeaders(namespace, routerKey, ingressConfig, rt, conf); err != nil {
 		return fmt.Errorf("applying custom headers: %w", err)
 	}
 
@@ -1068,7 +1096,7 @@ func applyRedirect(routerName string, ingressConfig ingressConfig, rt *dynamic.R
 	rt.Middlewares = append(rt.Middlewares, redirectMiddlewareName)
 }
 
-func (p *Provider) applyCustomHeaders(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
+func (p *Provider) applyCustomHeaders(ingressNamespace, routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
 	customHeaders := ptr.Deref(ingressConfig.CustomHeaders, "")
 	if customHeaders == "" {
 		return nil
@@ -1079,18 +1107,34 @@ func (p *Provider) applyCustomHeaders(routerName string, ingressConfig ingressCo
 		return fmt.Errorf("invalid custom headers config map %q", customHeaders)
 	}
 
-	configMapNamespace := customHeadersParts[0]
 	configMapName := customHeadersParts[1]
+	configMapNamespace := customHeadersParts[0]
+	if !p.AllowCrossNamespaceResources && configMapNamespace != ingressNamespace {
+		return fmt.Errorf("cross-namespace custom headers is not allowed: config map %s/%s is not from ingress namespace %q", configMapName, configMapNamespace, ingressNamespace)
+	}
 
 	configMap, err := p.k8sClient.GetConfigMap(configMapNamespace, configMapName)
 	if err != nil {
 		return fmt.Errorf("getting configMap %s: %w", customHeaders, err)
 	}
 
+	customResponseHeaders := make(map[string]string)
+	for key, value := range configMap.Data {
+		if !slices.Contains(p.allowedHeaders, key) {
+			return fmt.Errorf("header %q is not allowed in the GlobalAllowedResponseHeaders list", key)
+		}
+
+		if !valueRegexp.MatchString(value) {
+			return fmt.Errorf("invalid value for custom header %q: %q", key, value)
+		}
+
+		customResponseHeaders[key] = value
+	}
+
 	customHeadersMiddlewareName := routerName + "-custom-headers"
 	conf.HTTP.Middlewares[customHeadersMiddlewareName] = &dynamic.Middleware{
 		Headers: &dynamic.Headers{
-			CustomResponseHeaders: configMap.Data,
+			CustomResponseHeaders: customResponseHeaders,
 		},
 	}
 	rt.Middlewares = append(rt.Middlewares, customHeadersMiddlewareName)
