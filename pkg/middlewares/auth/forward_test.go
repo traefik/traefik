@@ -1004,9 +1004,6 @@ func TestForwardAuthAuthSigninURL(t *testing.T) {
 			}
 
 			req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
-			// for variable interpolation
-			req.Host = "auth.example.com"
-			req.URL.Path = "/foo"
 			res, err := client.Do(req)
 			require.NoError(t, err)
 
