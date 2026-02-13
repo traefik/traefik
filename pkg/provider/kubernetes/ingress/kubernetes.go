@@ -280,7 +280,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 				continue
 			}
 
-			service, err := p.loadService(client, ingress.Namespace, *ingress.Spec.DefaultBackend)
+			service, err := p.loadService(client, ingress.Namespace, ingress.Name, *ingress.Spec.DefaultBackend)
 			if err != nil {
 				logger.Error().
 					Str("serviceName", ingress.Spec.DefaultBackend.Service.Name).
@@ -338,7 +338,7 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 					continue
 				}
 
-				service, err := p.loadService(client, ingress.Namespace, pa.Backend)
+				service, err := p.loadService(client, ingress.Namespace, ingress.Name, pa.Backend)
 				if err != nil {
 					logger.Error().
 						Str("serviceName", pa.Backend.Service.Name).
@@ -519,7 +519,7 @@ func (p *Provider) shouldProcessIngress(ingress *netv1.Ingress, ingressClasses [
 		len(p.IngressClass) == 0 && ingress.Annotations[annotationKubernetesIngressClass] == traefikDefaultIngressClass
 }
 
-func (p *Provider) loadService(client Client, namespace string, backend netv1.IngressBackend) (*dynamic.Service, error) {
+func (p *Provider) loadService(client Client, namespace, ingress_name string, backend netv1.IngressBackend) (*dynamic.Service, error) {
 	service, exists, err := client.GetService(namespace, backend.Service.Name)
 	if err != nil {
 		return nil, err
@@ -552,7 +552,13 @@ func (p *Provider) loadService(client Client, namespace string, backend netv1.In
 	lb := &dynamic.ServersLoadBalancer{}
 	lb.SetDefaults()
 
-	svc := &dynamic.Service{LoadBalancer: lb}
+	svc := &dynamic.Service{
+		Labels: map[string]string{
+			"namespace": namespace,
+			"resource":  ingress_name,
+		},
+		LoadBalancer: lb,
+	}
 
 	svcConfig, err := parseServiceConfig(service.Annotations)
 	if err != nil {

@@ -99,7 +99,7 @@ func (p *Provider) loadIngressRouteConfiguration(ctx context.Context, client Cli
 					},
 				}
 
-				errBuild := cb.buildServicesLB(ctx, ingressRoute.Namespace, spec, serviceName, conf.Services)
+				errBuild := cb.buildServicesLB(ctx, ingressRoute.Namespace, ingressRoute.Name, spec, serviceName, conf.Services)
 				if errBuild != nil {
 					logger.Error().Err(errBuild).Send()
 					continue
@@ -271,7 +271,7 @@ func (c configBuilder) buildTraefikService(ctx context.Context, tService *traefi
 
 	switch {
 	case tService.Spec.Weighted != nil:
-		return c.buildServicesLB(ctx, tService.Namespace, tService.Spec, id, conf)
+		return c.buildServicesLB(ctx, tService.Namespace, tService.Name, tService.Spec, id, conf)
 	case tService.Spec.Mirroring != nil:
 		return c.buildMirroring(ctx, tService, id, conf)
 	case tService.Spec.HighestRandomWeight != nil:
@@ -284,7 +284,7 @@ func (c configBuilder) buildTraefikService(ctx context.Context, tService *traefi
 
 // buildServicesLB creates the configuration for the load-balancer of services named id, and defined in tService.
 // It adds it to the given conf map.
-func (c configBuilder) buildServicesLB(ctx context.Context, namespace string, tService traefikv1alpha1.TraefikServiceSpec, id string, conf map[string]*dynamic.Service) error {
+func (c configBuilder) buildServicesLB(ctx context.Context, namespace, name string, tService traefikv1alpha1.TraefikServiceSpec, id string, conf map[string]*dynamic.Service) error {
 	var wrrServices []dynamic.WRRService
 
 	for _, service := range tService.Weighted.Services {
@@ -379,7 +379,7 @@ func (c configBuilder) buildMirroring(ctx context.Context, tService *traefikv1al
 }
 
 // buildServersLB creates the configuration for the load-balancer of servers defined by svc.
-func (c configBuilder) buildServersLB(ctx context.Context, namespace string, svc traefikv1alpha1.LoadBalancerSpec) (*dynamic.Service, error) {
+func (c configBuilder) buildServersLB(ctx context.Context, namespace, name string, svc traefikv1alpha1.LoadBalancerSpec) (*dynamic.Service, error) {
 	lb := &dynamic.ServersLoadBalancer{}
 	lb.SetDefaults()
 
@@ -502,7 +502,13 @@ func (c configBuilder) buildServersLB(ctx context.Context, namespace string, svc
 		return nil, err
 	}
 
-	service := &dynamic.Service{LoadBalancer: lb}
+	service := &dynamic.Service{
+		Labels: map[string]string{
+			"namespace": namespace,
+			"resource":  name,
+		},
+		LoadBalancer: lb,
+	}
 	if len(svc.Middlewares) > 0 {
 		mds, err := makeMiddlewareKeys(ctx, namespace, svc.Middlewares, c.allowCrossNamespace)
 		if err != nil {
@@ -697,7 +703,7 @@ func (c configBuilder) nameAndService(ctx context.Context, parentNamespace strin
 
 	switch service.Kind {
 	case "", "Service":
-		serversLB, err := c.buildServersLB(ctx, namespace, service)
+		serversLB, err := c.buildServersLB(ctx, namespace, service.Name, service)
 		if err != nil {
 			return "", nil, err
 		}
