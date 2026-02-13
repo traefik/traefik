@@ -143,6 +143,11 @@ http:
     trustForwardHeader = true
 ```
 
+!!! warning
+
+    The `trustForwardHeader` option only affects the `X-Forwarded-*` headers listed above.
+    It does not apply to the RFC7239 `Forwarded` header.
+
 ### `authResponseHeaders`
 
 The `authResponseHeaders` option is the list of headers to copy from the authentication server response and set on
@@ -242,6 +247,23 @@ http:
 The `authRequestHeaders` option is the list of the headers to copy from the request to the authentication server.
 It allows filtering headers that should not be passed to the authentication server.
 If not set or empty then all request headers are passed.
+
+!!! warning "security note"
+
+    By default (`authRequestHeaders` not set or empty), all request headers are passed to the authentication server.
+    This includes the RFC7239 `Forwarded` header, which is currently forwarded unchanged.
+    If your authentication service uses `Forwarded` for origin reconstruction or policy decisions, consider stripping it before `ForwardAuth` (e.g., with the [Headers middleware](../headers.md)) or explicitly allowlisting the required headers via `authRequestHeaders`.
+
+    Example: stripping the `Forwarded` header with the Headers middleware:
+
+    ```yaml tab="File (YAML)"
+    http:
+      middlewares:
+        strip-forwarded:
+          headers:
+            customRequestHeaders:
+              Forwarded: ""
+    ```
 
 ```yaml tab="Docker & Swarm"
 labels:
