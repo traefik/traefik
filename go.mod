@@ -18,9 +18,9 @@ require (
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/containous/alice v0.0.0-20181107144136-d83ebdd94cbd // No tag on the repo.
 	github.com/coreos/go-systemd/v22 v22.5.0
-	github.com/docker/cli v28.3.3+incompatible
-	github.com/docker/docker v28.3.3+incompatible
-	github.com/docker/go-connections v0.5.0
+	github.com/docker/cli v29.2.1+incompatible
+	github.com/docker/docker v28.5.1+incompatible // used in integration test (for testcontainers-go)
+	github.com/docker/go-connections v0.6.0
 	github.com/fatih/structs v1.1.0
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/go-acme/lego/v4 v4.31.0
@@ -40,7 +40,7 @@ require (
 	github.com/huandu/xstrings v1.5.0
 	github.com/influxdata/influxdb-client-go/v2 v2.7.0
 	github.com/influxdata/influxdb1-client v0.0.0-20200827194710-b269163b24ab // No tag on the repo.
-	github.com/klauspost/compress v1.18.0
+	github.com/klauspost/compress v1.18.4
 	github.com/kvtools/consul v1.0.2
 	github.com/kvtools/etcdv3 v1.0.3
 	github.com/kvtools/redis v1.2.0
@@ -51,6 +51,8 @@ require (
 	github.com/mitchellh/copystructure v1.2.0
 	github.com/mitchellh/hashstructure v1.0.0
 	github.com/mitchellh/mapstructure v1.5.1-0.20231216201459-8508981c8b6c // No tag on the repo.
+	github.com/moby/moby/api v1.53.0
+	github.com/moby/moby/client v0.2.2
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pires/go-proxyproto v0.8.1
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // No tag on the repo.
