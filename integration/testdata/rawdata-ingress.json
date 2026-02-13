@@ -46,6 +46,9 @@
 			"entryPoints": [
 				"web"
 			],
+			"middlewares": [
+				"default-test-ingress-https-whoami-test-https-whoami-kubernetes-fields@kubernetes"
+			],
 			"service": "default-whoami-http",
 			"rule": "Host(`whoami.test.https`) \u0026\u0026 PathPrefix(`/whoami`)",
 			"priority": 50,
@@ -63,6 +66,9 @@
 		"default-test-ingress-whoami-test-whoami@kubernetes": {
 			"entryPoints": [
 				"web"
+			],
+			"middlewares": [
+				"default-test-ingress-whoami-test-whoami-kubernetes-fields@kubernetes"
 			],
 			"service": "default-whoami-http",
 			"rule": "Host(`whoami.test`) \u0026\u0026 PathPrefix(`/whoami`)",
@@ -82,6 +88,9 @@
 			"entryPoints": [
 				"web"
 			],
+			"middlewares": [
+				"default-whoami-drop-route-whoami-test-drop-drop-kubernetes-fields@kubernetes"
+			],
 			"service": "default-whoami-80",
 			"rule": "Host(`whoami.test.drop`) \u0026\u0026 PathPrefix(`/drop`)",
 			"priority": 47,
@@ -99,6 +108,9 @@
 		"default-whoami-keep-route-whoami-test-keep-keep@kubernetes": {
 			"entryPoints": [
 				"web"
+			],
+			"middlewares": [
+				"default-whoami-keep-route-whoami-test-keep-keep-kubernetes-fields@kubernetes"
 			],
 			"service": "default-whoami-80",
 			"rule": "Host(`whoami.test.keep`) \u0026\u0026 PathPrefix(`/keep`)",
@@ -137,6 +149,50 @@
 			"status": "enabled",
 			"usedBy": [
 				"dashboard@internal"
+			]
+		},
+		"default-test-ingress-https-whoami-test-https-whoami-kubernetes-fields@kubernetes": {
+			"KubernetesFields": {
+				"XXXX": ,
+				"XXXX": ,
+				"XXXX": 
+			},
+			"XXXX": ,
+			"usedBy": [
+				"default-test-ingress-https-whoami-test-https-whoami@kubernetes"
+			]
+		},
+		"default-test-ingress-whoami-test-whoami-kubernetes-fields@kubernetes": {
+			"KubernetesFields": {
+				"XXXX": ,
+				"XXXX": ,
+				"XXXX": 
+			},
+			"XXXX": ,
+			"usedBy": [
+				"default-test-ingress-whoami-test-whoami@kubernetes"
+			]
+		},
+		"default-whoami-drop-route-whoami-test-drop-drop-kubernetes-fields@kubernetes": {
+			"KubernetesFields": {
+				"XXXX": ,
+				"XXXX": ,
+				"XXXX": 
+			},
+			"XXXX": ,
+			"usedBy": [
+				"default-whoami-drop-route-whoami-test-drop-drop@kubernetes"
+			]
+		},
+		"default-whoami-keep-route-whoami-test-keep-keep-kubernetes-fields@kubernetes": {
+			"KubernetesFields": {
+				"XXXX": ,
+				"XXXX": ,
+				"XXXX": 
+			},
+			"XXXX": ,
+			"usedBy": [
+				"default-whoami-keep-route-whoami-test-keep-keep@kubernetes"
 			]
 		}
 	},

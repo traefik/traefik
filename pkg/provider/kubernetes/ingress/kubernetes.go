@@ -61,6 +61,8 @@ type Provider struct {
 	// The default rule syntax is initialized with the configuration defined by the user with the core.DefaultRuleSyntax option.
 	DefaultRuleSyntax string `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
 
+	KubernetesObservabilityFields bool `description:"Append Kubernetes Namespace, Kind and Name fields." json:"kubernetesObservabilityFields,omitempty" toml:"kubernetesObservabilityFields,omitempty" yaml:"kubernetesObservabilityFields,omitempty" export:"true"`
+
 	lastConfiguration safe.Safe
 
 	routerTransform k8s.RouterTransform
@@ -315,6 +317,8 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 
 			p.applyRouterTransform(ctxIngress, rt, ingress)
 
+			p.applyKubernetesFields(ingress.Namespace, ingress.Name, "default", rt, conf)
+
 			conf.HTTP.Routers["default-router"] = rt
 			conf.HTTP.Services["default-backend"] = service
 		}
@@ -370,6 +374,8 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 				p.applyRouterTransform(ctxIngress, rt, ingress)
 
 				routerKey := strings.TrimPrefix(provider.Normalize(ingress.Namespace+"-"+ingress.Name+"-"+rule.Host+pa.Path), "-")
+
+				p.applyKubernetesFields(ingress.Namespace, ingress.Name, routerKey, rt, conf)
 
 				routers[routerKey] = append(routers[routerKey], rt)
 			}
@@ -517,6 +523,23 @@ func (p *Provider) shouldProcessIngress(ingress *netv1.Ingress, ingressClasses [
 
 	return p.IngressClass == ingress.Annotations[annotationKubernetesIngressClass] ||
 		len(p.IngressClass) == 0 && ingress.Annotations[annotationKubernetesIngressClass] == traefikDefaultIngressClass
+}
+
+func (p *Provider) applyKubernetesFields(namespace, inrgessName, routerName string, rt *dynamic.Router, conf *dynamic.Configuration) {
+	if !p.KubernetesObservabilityFields {
+		return
+	}
+	kubernetesFieldsMiddlewareName := routerName + "-kubernetes-fields"
+	conf.HTTP.Middlewares[kubernetesFieldsMiddlewareName] = &dynamic.Middleware{
+		KubernetesFields: &dynamic.KubernetesFields{
+			Namespace: namespace,
+			Kind:      "Ingress",
+			Name:      inrgessName,
+		},
+	}
+
+	// prepend
+	rt.Middlewares = append([]string{kubernetesFieldsMiddlewareName}, rt.Middlewares...)
 }
 
 func (p *Provider) loadService(client Client, namespace string, backend netv1.IngressBackend) (*dynamic.Service, error) {

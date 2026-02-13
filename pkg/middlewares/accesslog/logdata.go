@@ -82,6 +82,13 @@ const (
 	TraceID = "TraceId"
 	// SpanID is the unique identifier for Traefik’s root span (EntryPoint) within a request trace, formatted as a 16-hex digit string.
 	SpanID = "SpanId"
+
+	// KubernetesNamespace is the Kubernetes namespace.
+	KubernetesNamespace = "KubernetesNamespace"
+	// KubernetesKind is the Kubernetes resource kind.
+	KubernetesKind = "KubernetesKind"
+	// KubernetesName is the Kubernetes resource name.
+	KubernetesName = "KubernetesName"
 )
 
 // These are written out in the default case when no config is provided to specify keys of interest.
@@ -126,6 +133,9 @@ func init() {
 	allCoreKeys[TLSVersion] = struct{}{}
 	allCoreKeys[TLSCipher] = struct{}{}
 	allCoreKeys[TLSClientSubject] = struct{}{}
+	allCoreKeys[KubernetesNamespace] = struct{}{}
+	allCoreKeys[KubernetesKind] = struct{}{}
+	allCoreKeys[KubernetesName] = struct{}{}
 }
 
 // CoreLogData holds the fields computed from the request/response.
