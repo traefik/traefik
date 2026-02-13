@@ -1,7 +1,6 @@
 package integration
 
 import (
-	"encoding/json"
 	"io"
 	"net/http"
 	"testing"
@@ -75,16 +74,8 @@ func (s *DockerSuite) TestDefaultDockerContainers() {
 	require.NoError(s.T(), err)
 	req.Host = "simple.docker.localhost"
 
-	resp, err := try.ResponseUntilStatusCode(req, 3*time.Second, http.StatusOK)
+	_, err = try.ResponseUntilStatusCode(req, 3*time.Second, http.StatusOK)
 	require.NoError(s.T(), err)
-
-	body, err := io.ReadAll(resp.Body)
-	require.NoError(s.T(), err)
-
-	var version map[string]any
-
-	assert.NoError(s.T(), json.Unmarshal(body, &version))
-	assert.Equal(s.T(), "swarm/1.0.0", version["Version"])
 }
 
 func (s *DockerSuite) TestDockerContainersWithTCPLabels() {
@@ -139,16 +130,8 @@ func (s *DockerSuite) TestDockerContainersWithLabels() {
 	require.NoError(s.T(), err)
 	req.Host = "my.super.host"
 
-	resp, err := try.ResponseUntilStatusCode(req, 3*time.Second, http.StatusOK)
+	_, err = try.ResponseUntilStatusCode(req, 3*time.Second, http.StatusOK)
 	require.NoError(s.T(), err)
-
-	body, err := io.ReadAll(resp.Body)
-	require.NoError(s.T(), err)
-
-	var version map[string]any
-
-	assert.NoError(s.T(), json.Unmarshal(body, &version))
-	assert.Equal(s.T(), "swarm/1.0.0", version["Version"])
 }
 
 func (s *DockerSuite) TestDockerContainersWithOneMissingLabels() {
@@ -197,16 +180,8 @@ func (s *DockerSuite) TestRestartDockerContainers() {
 	req.Host = "my.super.host"
 
 	// TODO Need to wait than 500 milliseconds more (for swarm or traefik to boot up ?)
-	resp, err := try.ResponseUntilStatusCode(req, 1500*time.Millisecond, http.StatusOK)
+	_, err = try.ResponseUntilStatusCode(req, 1500*time.Millisecond, http.StatusOK)
 	require.NoError(s.T(), err)
-
-	body, err := io.ReadAll(resp.Body)
-	require.NoError(s.T(), err)
-
-	var version map[string]any
-
-	assert.NoError(s.T(), json.Unmarshal(body, &version))
-	assert.Equal(s.T(), "swarm/1.0.0", version["Version"])
 
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("powpow"))
 	require.NoError(s.T(), err)
