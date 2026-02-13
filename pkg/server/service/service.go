@@ -123,7 +123,8 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string) (http.H
 	value := reflect.ValueOf(*conf.Service)
 	var count int
 	for i := range value.NumField() {
-		if value.Type().Field(i).Name != "Middlewares" && !value.Field(i).IsNil() {
+		fieldName := value.Type().Field(i).Name
+		if fieldName != "Middlewares" && fieldName != "Labels" && !value.Field(i).IsNil() {
 			count++
 		}
 	}
@@ -197,8 +198,29 @@ func (m *Manager) BuildHTTP(rootCtx context.Context, serviceName string) (http.H
 		}
 	}
 
+	if len(conf.Labels) != 0 {
+		var err error
+		lb, err = m.getLabelsHandler(lb, conf.Labels)
+		if err != nil {
+			conf.AddError(err, true)
+			return nil, err
+		}
+	}
+
 	m.services[serviceName] = lb
 	return m.services[serviceName], nil
+}
+
+func (m *Manager) getLabelsHandler(next http.Handler, labels map[string]string) (http.Handler, error) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		logData := accesslog.GetLogData(r)
+		if logData != nil {
+			for k, v := range labels {
+				logData.Core[k] = v
+			}
+		}
+		next.ServeHTTP(w, r)
+	}), nil
 }
 
 // LaunchHealthCheck launches the health checks.

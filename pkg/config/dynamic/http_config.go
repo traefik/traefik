@@ -67,6 +67,7 @@ type Service struct {
 	Weighted            *WeightedRoundRobin  `json:"weighted,omitempty" toml:"weighted,omitempty" yaml:"weighted,omitempty" label:"-" export:"true"`
 	Mirroring           *Mirroring           `json:"mirroring,omitempty" toml:"mirroring,omitempty" yaml:"mirroring,omitempty" label:"-" export:"true"`
 	Failover            *Failover            `json:"failover,omitempty" toml:"failover,omitempty" yaml:"failover,omitempty" label:"-" export:"true"`
+	Labels              map[string]string    `json:"labels,omitempty" toml:"labels,omitempty" yaml:"labels,omitempty" export:"true"`
 }
 
 // Merge merges another Service into this one.
