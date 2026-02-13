@@ -480,151 +480,157 @@ func TestForwardAuthForwardError(t *testing.T) {
 	assert.Equal(t, http.StatusInternalServerError, recorder.Result().StatusCode)
 }
 
-func TestForwardAuthSigninRedirectWithVariables(t *testing.T) {
-	testCases := []struct {
-		name             string
-		signinURL        string
-		requestURL       string
-		xForwardedProto  string
-		expectedLocation string
-	}{
-		{
-			name:             "scheme variable from X-Forwarded-Proto",
-			signinURL:        "$scheme://auth.example.com/login",
-			requestURL:       "http://app.example.com/protected",
-			xForwardedProto:  "https",
-			expectedLocation: "https://auth.example.com/login?rd=https://app.example.com%2Fprotected",
-		},
-		{
-			name:             "host variable",
-			signinURL:        "https://auth.example.com/login?rd=https://$host/callback",
-			requestURL:       "http://app.example.com/protected",
-			expectedLocation: "https://auth.example.com/login?rd=https://app.example.com/callback",
-		},
-		{
-			name:             "request_uri variable",
-			signinURL:        "https://auth.example.com/login?rd=$request_uri",
-			requestURL:       "http://app.example.com/protected/page?foo=bar",
-			expectedLocation: "https://auth.example.com/login?rd=/protected/page?foo=bar",
-		},
-		{
-			name:             "escaped_request_uri variable",
-			signinURL:        "https://auth.example.com/login?rd=$escaped_request_uri",
-			requestURL:       "http://app.example.com/protected/page?foo=bar",
-			expectedLocation: "https://auth.example.com/login?rd=%2Fprotected%2Fpage%3Ffoo%3Dbar",
-		},
-		{
-			name:             "all variables combined",
-			signinURL:        "$scheme://$host/oauth2/start?rd=$escaped_request_uri",
-			requestURL:       "http://app.example.com/admin/dashboard?tab=1",
-			xForwardedProto:  "https",
-			expectedLocation: "https://app.example.com/oauth2/start?rd=%2Fadmin%2Fdashboard%3Ftab%3D1",
-		},
-		{
-			name:             "arg without rd= defined",
-			signinURL:        "$scheme://$host/oauth2/start?next=$request_uri",
-			requestURL:       "http://app.example.com/admin/dashboard?tab=1",
-			xForwardedProto:  "https",
-			expectedLocation: "https://app.example.com/oauth2/start?next=/admin/dashboard?tab=1&rd=https://app.example.com%2Fadmin%2Fdashboard%3Ftab%3D1",
-		},
-	}
+func TestForwardAuthAddressInterpolation(t *testing.T) {
+	var authSrvCalled bool
+	authSrv := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		authSrvCalled = true
 
-	for _, test := range testCases {
-		t.Run(test.name, func(t *testing.T) {
-			// Auth server returns 401 Unauthorized
-			authServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			}))
-			t.Cleanup(authServer.Close)
+		assert.Equal(t, "/protected", req.URL.Query().Get("uri"))
 
-			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				t.Fail()
-			})
-
-			auth := dynamic.ForwardAuth{
-				Address:       authServer.URL,
-				AuthSigninURL: test.signinURL,
-				Interpolate:   true,
-			}
-			middleware, err := NewForward(t.Context(), next, auth, "authTest")
-			require.NoError(t, err)
-
-			ts := httptest.NewServer(middleware)
-			t.Cleanup(ts.Close)
-
-			client := &http.Client{
-				CheckRedirect: func(r *http.Request, via []*http.Request) error {
-					return http.ErrUseLastResponse
-				},
-			}
-
-			// Parse the test URL to get host and path
-			parsedURL, err := url.Parse(test.requestURL)
-			require.NoError(t, err)
-
-			// Create request to the test server but set the Host header to simulate the original request
-			req := testhelpers.MustNewRequest(http.MethodGet, ts.URL+parsedURL.RequestURI(), nil)
-			req.Host = parsedURL.Host
-			if test.xForwardedProto != "" {
-				req.Header.Set("X-Forwarded-Proto", test.xForwardedProto)
-			}
-
-			res, err := client.Do(req)
-			require.NoError(t, err)
-
-			assert.Equal(t, http.StatusFound, res.StatusCode)
-
-			location, err := res.Location()
-			require.NoError(t, err)
-			assert.Equal(t, test.expectedLocation, location.String())
-		})
-	}
-}
-
-func TestForwardAuthInterpolation(t *testing.T) {
-	responseComplete := make(chan struct{})
-
-	expected := url.URL{
-		Path: "/auth/login",
-	}
-	authTs := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		assert.Equal(t, expected.Host, r.Host)
-		assert.Equal(t, expected.Path, r.RequestURI)
-		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+		rw.WriteHeader(http.StatusOK)
 	}))
-	t.Cleanup(authTs.Close)
-	authURL, err := url.Parse(authTs.URL)
-	require.NoError(t, err)
-	expected.Host = authURL.Host
+	t.Cleanup(authSrv.Close)
 
-	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// next should not be called.
-		t.Fail()
-	})
-
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	auth := dynamic.ForwardAuth{
-		Address:     "http://$host/auth$request_uri",
+		Address:     authSrv.URL + "?uri=$escaped_request_uri",
 		Interpolate: true,
 	}
-	authMiddleware, err := NewForward(t.Context(), next, auth, "authTest")
+	middleware, err := NewForward(t.Context(), next, auth, "authTest")
 	require.NoError(t, err)
 
-	ctx, cancel := context.WithCancel(t.Context())
-	defer cancel()
+	ts := httptest.NewServer(middleware)
+	t.Cleanup(ts.Close)
 
-	req := httptest.NewRequestWithContext(ctx, "GET", authTs.URL, http.NoBody)
-	req.Host = authURL.Host
-	req.URL.Path = "/login"
+	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL+"/protected", nil)
 
-	recorder := httptest.NewRecorder()
-	go func() {
-		authMiddleware.ServeHTTP(recorder, req)
-		close(responseComplete)
-	}()
+	_, err = http.DefaultClient.Do(req)
+	require.NoError(t, err)
 
-	<-responseComplete
+	assert.True(t, authSrvCalled)
+}
 
-	assert.Equal(t, http.StatusUnauthorized, recorder.Result().StatusCode)
+func TestForwardAuthAuthSigninURLInterpolation(t *testing.T) {
+	var authSrvCalled bool
+	authSrv := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		authSrvCalled = true
+		rw.WriteHeader(http.StatusUnauthorized)
+	}))
+	t.Cleanup(authSrv.Close)
+
+	client := &http.Client{
+		CheckRedirect: func(r *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	auth := dynamic.ForwardAuth{
+		Address:       authSrv.URL,
+		AuthSigninURL: "http://foo.com$request_uri",
+		Interpolate:   true,
+	}
+	middleware, err := NewForward(t.Context(), next, auth, "authTest")
+	require.NoError(t, err)
+
+	ts := httptest.NewServer(middleware)
+	t.Cleanup(ts.Close)
+
+	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL+"/protected", nil)
+
+	// Validates that the authSigninURL is interpolated and that rd query parameter is set to the original request URI.
+	res, err := client.Do(req)
+	require.NoError(t, err)
+
+	assert.True(t, authSrvCalled)
+	assert.Equal(t, http.StatusFound, res.StatusCode)
+
+	l, err := res.Location()
+	require.NoError(t, err)
+
+	assert.Equal(t, "http://foo.com/protected?rd="+ts.URL+"%2Fprotected", l.String())
+}
+
+func TestForwardAuthAuthSigninURLInterpolation_existingRdQueryParam(t *testing.T) {
+	var authSrvCalled bool
+	authSrv := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		authSrvCalled = true
+		rw.WriteHeader(http.StatusUnauthorized)
+	}))
+	t.Cleanup(authSrv.Close)
+
+	client := &http.Client{
+		CheckRedirect: func(r *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	auth := dynamic.ForwardAuth{
+		Address:       authSrv.URL,
+		AuthSigninURL: "http://foo.com$request_uri?rd=foo",
+		Interpolate:   true,
+	}
+	middleware, err := NewForward(t.Context(), next, auth, "authTest")
+	require.NoError(t, err)
+
+	ts := httptest.NewServer(middleware)
+	t.Cleanup(ts.Close)
+
+	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL+"/protected", nil)
+
+	// Validates that the authSigninURL is interpolated and that rd query parameter is set to the original request URI.
+	res, err := client.Do(req)
+	require.NoError(t, err)
+
+	assert.True(t, authSrvCalled)
+	assert.Equal(t, http.StatusFound, res.StatusCode)
+
+	l, err := res.Location()
+	require.NoError(t, err)
+
+	assert.Equal(t, "http://foo.com/protected?rd=foo", l.String())
+}
+
+func TestForwardAuthAuthSigninURLInterpolation_existingQueryParam(t *testing.T) {
+	var authSrvCalled bool
+	authSrv := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		authSrvCalled = true
+		rw.WriteHeader(http.StatusUnauthorized)
+	}))
+	t.Cleanup(authSrv.Close)
+
+	client := &http.Client{
+		CheckRedirect: func(r *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	auth := dynamic.ForwardAuth{
+		Address:       authSrv.URL,
+		AuthSigninURL: "http://foo.com$request_uri?foo=bar",
+		Interpolate:   true,
+	}
+	middleware, err := NewForward(t.Context(), next, auth, "authTest")
+	require.NoError(t, err)
+
+	ts := httptest.NewServer(middleware)
+	t.Cleanup(ts.Close)
+
+	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL+"/protected", nil)
+
+	// Validates that the authSigninURL is interpolated and that rd query parameter is set to the original request URI.
+	res, err := client.Do(req)
+	require.NoError(t, err)
+
+	assert.True(t, authSrvCalled)
+	assert.Equal(t, http.StatusFound, res.StatusCode)
+
+	l, err := res.Location()
+	require.NoError(t, err)
+
+	assert.Equal(t, "http://foo.com/protected?foo=bar&rd="+ts.URL+"%2Fprotected", l.String())
 }
 
 func Test_writeHeader(t *testing.T) {

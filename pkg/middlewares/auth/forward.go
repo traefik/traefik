@@ -255,9 +255,9 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			if !strings.Contains(signinURL, "rd=") {
 				suffix := "rd=$scheme://$host$escaped_request_uri"
 				if !strings.Contains(signinURL, "?") {
-					signinURL = "?" + suffix
+					signinURL += "?" + suffix
 				} else {
-					signinURL = "&" + suffix
+					signinURL += "&" + suffix
 				}
 			}
 
