@@ -1,0 +1,129 @@
+name: Third Party
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * *" # Run every day
+
+env:
+  ASSIMILIS_VERSION: v1.0.0
+  AIKIDO_REPO_CODE: "1232941"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v6
+
+      - name: Setup go
+        uses: actions/setup-go@v6
+        with:
+          go-version: "1.25"
+
+      - name: Get Aikido credentials
+        id: aikido_token
+        env:
+          AIK_CLIENT: ${{ secrets.AIK_CLIENT }}
+          AIK_SECRET: ${{ secrets.AIK_SECRET }}
+        run: |
+          set -euo pipefail
+          resp="$(curl -sS -u "$AIK_CLIENT:$AIK_SECRET" --request POST \
+            --url https://app.aikido.dev/api/oauth/token \
+            --header 'accept: application/json' \
+            --header 'content-type: application/json' \
+            --data '{"grant_type": "client_credentials"}')"
+          token="$(echo "$resp" | jq -r '.access_token')"
+          if [ -z "$token" ] || [ "$token" == "null" ]; then
+            echo "Failed to get access token from Aikido"
+            exit 1
+          fi
+          echo "AIKIDO_TOKEN=$token" >> $GITHUB_ENV
+
+      - name: Get SBOM
+        id: get_sbom
+        env:
+          AIKIDO_TOKEN: ${{ env.AIKIDO_TOKEN }}
+        run: |
+          set -euo pipefail
+          mkdir -p third_party/sbom
+          curl -sS --request GET \
+            --url "https://app.aikido.dev/api/public/v1/repositories/code/${{ env.AIKIDO_REPO_CODE }}/licenses/export?format=sbom" \
+            --header 'accept: application/json' \
+            --header "authorization: Bearer $AIKIDO_TOKEN" \
+            -o third_party/sbom/traefik.cdx.json
+
+          unixtime=$(curl -sS --request GET \
+            --url https://app.aikido.dev/api/public/v1/repositories/code/${{ env.AIKIDO_REPO_CODE }} \
+            --header 'accept: application/json' \
+            --header "authorization: Bearer $AIKIDO_TOKEN" | jq -r '.last_scanned_at')
+          last_updated=$(date -d @$unixtime +'%Y-%m-%d %H:%M:%S')
+          echo "last_updated=$last_updated" >> $GITHUB_OUTPUT
+
+      - name: Install Assimilis ${{ env.ASSIMILIS_VERSION }}
+        run: |
+          mkdir -p $HOME/bin
+          GOBIN=/tmp/assimilis go install github.com/traefik/assimilis/cmd@${{ env.ASSIMILIS_VERSION }} && \
+            mv /tmp/assimilis/cmd $HOME/bin/assimilis
+
+      - name: Generate attributions
+        id: generate_attributions
+        continue-on-error: true
+        run: |
+          set +e
+          $HOME/bin/assimilis --repo-name ${{ github.event.repository.name }} 2>&1 | tee third_party/assimilis.log
+          exit_code=${PIPESTATUS[0]}
+          set -e
+          echo "exit_code=$exit_code" >> $GITHUB_OUTPUT
+
+      - name: Prepare PR body
+        id: pr_body
+        run: |
+          set -euo pipefail
+          BODY_FILE=$(mktemp)
+          if [ "${{ steps.generate_attributions.outputs.exit_code }}" == "0" ]; then
+            cat > $BODY_FILE << EOF
+          Updates SBOM & third-party attribution files using [Assimilis](https://github.com/traefik/assimilis) \`${{ env.ASSIMILIS_VERSION }}\` :ant:
+
+          SBOM last updated at: \`${{ steps.get_sbom.outputs.last_updated }} WET\`
+          EOF
+          else
+            log_content=$(cat third_party/assimilis.log | sed 's/\x1B\[[0-9;]*[a-zA-Z]//g')
+            cat > $BODY_FILE << EOF
+          Updates SBOM & third-party attribution files using [Assimilis](https://github.com/traefik/assimilis) \`${{ env.ASSIMILIS_VERSION }}\` :ant:
+
+          SBOM last updated at: \`${{ steps.get_sbom.outputs.last_updated }} WET\`
+
+          > [!WARNING]
+          > Assimilis failed. Please fix the issues below and re-run the workflow.
+
+          <details><summary>Details</summary>
+
+          \`\`\`shell
+
+          $log_content
+          \`\`\`
+          EOF
+          fi
+
+          echo "body_file=$BODY_FILE" >> $GITHUB_OUTPUT
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: third-party-attributions
+          path: third_party/
+
+      - name: create PR
+        uses: peter-evans/create-pull-request@v8
+        with:
+          token: ${{ secrets.TRAEFIKER_GITHUB_TOKEN }}
+          add-paths: "third_party/"
+          commit-message: "chore(deps): update sbom and third-party attributions"
+          committer: "Traefiker <traefiker@github.com>"
+          branch: third-party-${{ github.ref_name }}
+          delete-branch: true
+          title: "chore(deps): update sbom and third-party attributions"
+          labels: kind/enhancement,status/2-needs-review
+          body-path: ${{ steps.pr_body.outputs.body_file }}
