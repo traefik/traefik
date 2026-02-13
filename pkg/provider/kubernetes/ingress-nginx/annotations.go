@@ -69,6 +69,9 @@ type ingressConfig struct {
 
 	CustomHeaders *string `annotation:"nginx.ingress.kubernetes.io/custom-headers"`
 	UpstreamVhost *string `annotation:"nginx.ingress.kubernetes.io/upstream-vhost"`
+
+	CustomHTTPErrors *[]string `annotation:"nginx.ingress.kubernetes.io/custom-http-errors"`
+	DefaultBackend   *string   `annotation:"nginx.ingress.kubernetes.io/default-backend"`
 }
 
 // parseIngressConfig parses the annotations from an Ingress object into an ingressConfig struct.
