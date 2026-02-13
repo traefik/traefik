@@ -33,11 +33,13 @@ func TestLoadIngresses(t *testing.T) {
 		allowSnippetAnnotations        bool
 		globalAuthURL                  string
 		strictValidatePathType         *bool
+		kubernetesObservabilityFields  bool
 		paths                          []string
 		expected                       *dynamic.Configuration
 	}{
 		{
-			desc: "Empty, no IngressClass",
+			desc:                          "Empty, no IngressClass",
+			kubernetesObservabilityFields: true,
 			paths: []string{
 				"services.yml",
 				"ingresses/ingress-with-basicauth.yml",
@@ -57,9 +59,10 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc:                         "Custom Headers",
-			allowCrossNamespaceResources: true,
-			globalAllowedResponseHeaders: []string{"X-Custom-Header", "X-Cross-Header"},
+			desc:                          "Custom Headers",
+			allowCrossNamespaceResources:  true,
+			globalAllowedResponseHeaders:  []string{"X-Custom-Header", "X-Cross-Header"},
+			kubernetesObservabilityFields: true,
 			paths: []string{
 				"services.yml",
 				"ingressclasses.yml",
@@ -76,13 +79,13 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("whoami.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-custom-headers-rule-0-path-0-custom-headers", "default-ingress-with-custom-headers-rule-0-path-0-retry"},
+							Middlewares: []string{"default-ingress-with-custom-headers-kubernetes-fields", "default-ingress-with-custom-headers-rule-0-path-0-custom-headers", "default-ingress-with-custom-headers-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-custom-headers-whoami-80",
 						},
 						"default-ingress-with-cross-namespace-headers-rule-0-path-0": {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("cross-namespace.localhost") && Path("/")`,
-							Middlewares: []string{"default-ingress-with-cross-namespace-headers-rule-0-path-0-custom-headers", "default-ingress-with-cross-namespace-headers-rule-0-path-0-retry"},
+							Middlewares: []string{"default-ingress-with-cross-namespace-headers-kubernetes-fields", "default-ingress-with-cross-namespace-headers-rule-0-path-0-custom-headers", "default-ingress-with-cross-namespace-headers-rule-0-path-0-retry"},
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-cross-namespace-headers-whoami-80",
 						},
@@ -90,20 +93,27 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("whoami.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-custom-headers-rule-0-path-0-tls-custom-headers", "default-ingress-with-custom-headers-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-ingress-with-custom-headers-kubernetes-fields", "default-ingress-with-custom-headers-rule-0-path-0-tls-custom-headers", "default-ingress-with-custom-headers-rule-0-path-0-tls-retry"},
 							Service:     "default-ingress-with-custom-headers-whoami-80",
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
 						"default-ingress-with-cross-namespace-headers-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("cross-namespace.localhost") && Path("/")`,
-							Middlewares: []string{"default-ingress-with-cross-namespace-headers-rule-0-path-0-tls-custom-headers", "default-ingress-with-cross-namespace-headers-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-ingress-with-cross-namespace-headers-kubernetes-fields", "default-ingress-with-cross-namespace-headers-rule-0-path-0-tls-custom-headers", "default-ingress-with-cross-namespace-headers-rule-0-path-0-tls-retry"},
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-cross-namespace-headers-whoami-80",
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-custom-headers-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "default",
+								Kind:      "Ingress",
+								Name:      "ingress-with-custom-headers",
+							},
+						},
 						"default-ingress-with-custom-headers-rule-0-path-0-custom-headers": {
 							Headers: &dynamic.Headers{
 								CustomResponseHeaders: map[string]string{"X-Custom-Header": "some-random-string"},
@@ -112,6 +122,13 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-custom-headers-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
 								Attempts: 3,
+							},
+						},
+						"default-ingress-with-cross-namespace-headers-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "default",
+								Kind:      "Ingress",
+								Name:      "ingress-with-cross-namespace-headers",
 							},
 						},
 						"default-ingress-with-cross-namespace-headers-rule-0-path-0-custom-headers": {
@@ -206,8 +223,9 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc:                         "Custom Headers with cross namespace not allowed",
-			globalAllowedResponseHeaders: []string{"X-Custom-Header", "X-Cross-Header"},
+			desc:                          "Custom Headers with cross namespace not allowed",
+			globalAllowedResponseHeaders:  []string{"X-Custom-Header", "X-Cross-Header"},
+			kubernetesObservabilityFields: true,
 			paths: []string{
 				"services.yml",
 				"ingressclasses.yml",
@@ -224,21 +242,21 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("whoami.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-custom-headers-rule-0-path-0-custom-headers", "default-ingress-with-custom-headers-rule-0-path-0-retry"},
+							Middlewares: []string{"default-ingress-with-custom-headers-kubernetes-fields", "default-ingress-with-custom-headers-rule-0-path-0-custom-headers", "default-ingress-with-custom-headers-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-custom-headers-whoami-80",
 						},
 						"default-ingress-with-cross-namespace-headers-rule-0-path-0": {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("cross-namespace.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-cross-namespace-headers-rule-0-path-0-custom-headers", "default-ingress-with-cross-namespace-headers-rule-0-path-0-retry"},
+							Middlewares: []string{"default-ingress-with-cross-namespace-headers-kubernetes-fields", "default-ingress-with-cross-namespace-headers-rule-0-path-0-custom-headers", "default-ingress-with-cross-namespace-headers-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-cross-namespace-headers-whoami-80",
 						},
 						"default-ingress-with-custom-headers-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("whoami.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-custom-headers-rule-0-path-0-tls-custom-headers", "default-ingress-with-custom-headers-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-ingress-with-custom-headers-kubernetes-fields", "default-ingress-with-custom-headers-rule-0-path-0-tls-custom-headers", "default-ingress-with-custom-headers-rule-0-path-0-tls-retry"},
 							Service:     "default-ingress-with-custom-headers-whoami-80",
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
@@ -246,12 +264,19 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("cross-namespace.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-cross-namespace-headers-rule-0-path-0-tls-custom-headers", "default-ingress-with-cross-namespace-headers-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-ingress-with-cross-namespace-headers-kubernetes-fields", "default-ingress-with-cross-namespace-headers-rule-0-path-0-tls-custom-headers", "default-ingress-with-cross-namespace-headers-rule-0-path-0-tls-retry"},
 							Service:     "default-ingress-with-cross-namespace-headers-whoami-80",
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-custom-headers-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "default",
+								Kind:      "Ingress",
+								Name:      "ingress-with-custom-headers",
+							},
+						},
 						"default-ingress-with-custom-headers-rule-0-path-0-custom-headers": {
 							Headers: &dynamic.Headers{
 								CustomResponseHeaders: map[string]string{"X-Custom-Header": "some-random-string"},
@@ -270,6 +295,13 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-custom-headers-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
 								Attempts: 3,
+							},
+						},
+						"default-ingress-with-cross-namespace-headers-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "default",
+								Kind:      "Ingress",
+								Name:      "ingress-with-cross-namespace-headers",
 							},
 						},
 						"default-ingress-with-cross-namespace-headers-rule-0-path-0-custom-headers": {
@@ -354,9 +386,10 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc:                         "Custom Headers cross namespace with cross namespace allowed",
-			globalAllowedResponseHeaders: []string{"X-Custom-Header"},
-			allowCrossNamespaceResources: true,
+			desc:                          "Custom Headers cross namespace with cross namespace allowed",
+			globalAllowedResponseHeaders:  []string{"X-Custom-Header"},
+			allowCrossNamespaceResources:  true,
+			kubernetesObservabilityFields: true,
 			paths: []string{
 				"services.yml",
 				"ingressclasses.yml",
@@ -373,20 +406,21 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("whoami.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-custom-headers-rule-0-path-0-custom-headers", "default-ingress-with-custom-headers-rule-0-path-0-retry"},
+							Middlewares: []string{"default-ingress-with-custom-headers-kubernetes-fields", "default-ingress-with-custom-headers-rule-0-path-0-custom-headers", "default-ingress-with-custom-headers-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-custom-headers-whoami-80",
 						},
 						"default-ingress-with-cross-namespace-headers-rule-0-path-0": {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("cross-namespace.localhost") && Path("/")`,
 							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-cross-namespace-headers-kubernetes-fields"},
 							Service:     "default-ingress-with-cross-namespace-headers-whoami-80",
 						},
 						"default-ingress-with-custom-headers-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("whoami.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-custom-headers-rule-0-path-0-tls-custom-headers", "default-ingress-with-custom-headers-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-ingress-with-custom-headers-kubernetes-fields", "default-ingress-with-custom-headers-rule-0-path-0-tls-custom-headers", "default-ingress-with-custom-headers-rule-0-path-0-tls-retry"},
 							Service:     "default-ingress-with-custom-headers-whoami-80",
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
@@ -394,11 +428,19 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("cross-namespace.localhost") && Path("/")`,
 							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-cross-namespace-headers-kubernetes-fields"},
 							Service:     "default-ingress-with-cross-namespace-headers-whoami-80",
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-custom-headers-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "default",
+								Kind:      "Ingress",
+								Name:      "ingress-with-custom-headers",
+							},
+						},
 						"default-ingress-with-custom-headers-rule-0-path-0-custom-headers": {
 							Headers: &dynamic.Headers{
 								CustomResponseHeaders: map[string]string{"X-Custom-Header": "some-random-string"},
@@ -417,6 +459,13 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-custom-headers-rule-0-path-0-tls-retry": {
 							Retry: &dynamic.Retry{
 								Attempts: 3,
+							},
+						},
+						"default-ingress-with-cross-namespace-headers-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "default",
+								Kind:      "Ingress",
+								Name:      "ingress-with-cross-namespace-headers",
 							},
 						},
 					},
@@ -481,7 +530,8 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc: "No annotation",
+			desc:                          "No annotation",
+			kubernetesObservabilityFields: true,
 			paths: []string{
 				"ingresses/ingress-with-no-annotation.yml",
 				"ingressclasses.yml",
@@ -500,18 +550,25 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        `Host("whoami.localhost") && PathPrefix("/")`,
 							RuleSyntax:  "default",
 							TLS:         &dynamic.RouterTLSConfig{},
-							Middlewares: []string{"default-ingress-with-no-annotation-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-ingress-with-no-annotation-kubernetes-fields", "default-ingress-with-no-annotation-rule-0-path-0-tls-retry"},
 							Service:     "default-ingress-with-no-annotation-whoami-80",
 						},
 						"default-ingress-with-no-annotation-rule-0-path-0": {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("whoami.localhost") && PathPrefix("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-no-annotation-rule-0-path-0-retry"},
+							Middlewares: []string{"default-ingress-with-no-annotation-kubernetes-fields", "default-ingress-with-no-annotation-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-no-annotation-whoami-80",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-no-annotation-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "default",
+								Kind:      "Ingress",
+								Name:      "ingress-with-no-annotation",
+							},
+						},
 						"default-ingress-with-no-annotation-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
 								Attempts: 3,
@@ -567,7 +624,8 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc: "Basic Auth",
+			desc:                          "Basic Auth",
+			kubernetesObservabilityFields: true,
 			paths: []string{
 				"services.yml",
 				"ingressclasses.yml",
@@ -584,19 +642,26 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("whoami.localhost") && Path("/basicauth")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-basicauth-rule-0-path-0-basic-auth", "default-ingress-with-basicauth-rule-0-path-0-retry"},
+							Middlewares: []string{"default-ingress-with-basicauth-kubernetes-fields", "default-ingress-with-basicauth-rule-0-path-0-basic-auth", "default-ingress-with-basicauth-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-basicauth-whoami-80",
 						},
 						"default-ingress-with-basicauth-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("whoami.localhost") && Path("/basicauth")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-basicauth-rule-0-path-0-tls-basic-auth", "default-ingress-with-basicauth-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-ingress-with-basicauth-kubernetes-fields", "default-ingress-with-basicauth-rule-0-path-0-tls-basic-auth", "default-ingress-with-basicauth-rule-0-path-0-tls-retry"},
 							Service:     "default-ingress-with-basicauth-whoami-80",
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-basicauth-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "default",
+								Kind:      "Ingress",
+								Name:      "ingress-with-basicauth",
+							},
+						},
 						"default-ingress-with-basicauth-rule-0-path-0-basic-auth": {
 							BasicAuth: &dynamic.BasicAuth{
 								Users: dynamic.Users{
@@ -659,7 +724,8 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc: "Forward Auth",
+			desc:                          "Forward Auth",
+			kubernetesObservabilityFields: true,
 			paths: []string{
 				"services.yml",
 				"ingressclasses.yml",
@@ -676,19 +742,26 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("whoami.localhost") && Path("/forwardauth")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-forwardauth-rule-0-path-0-snippet", "default-ingress-with-forwardauth-rule-0-path-0-retry"},
+							Middlewares: []string{"default-ingress-with-forwardauth-kubernetes-fields", "default-ingress-with-forwardauth-rule-0-path-0-snippet", "default-ingress-with-forwardauth-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-forwardauth-whoami-80",
 						},
 						"default-ingress-with-forwardauth-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("whoami.localhost") && Path("/forwardauth")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-forwardauth-rule-0-path-0-tls-snippet", "default-ingress-with-forwardauth-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-ingress-with-forwardauth-kubernetes-fields", "default-ingress-with-forwardauth-rule-0-path-0-tls-snippet", "default-ingress-with-forwardauth-rule-0-path-0-tls-retry"},
 							Service:     "default-ingress-with-forwardauth-whoami-80",
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-forwardauth-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "default",
+								Kind:      "Ingress",
+								Name:      "ingress-with-forwardauth",
+							},
+						},
 						"default-ingress-with-forwardauth-rule-0-path-0-snippet": {
 							Snippet: &dynamic.Snippet{
 								Auth: &dynamic.Auth{
@@ -1185,7 +1258,8 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc: "SSL Redirect",
+			desc:                          "SSL Redirect",
+			kubernetesObservabilityFields: true,
 			paths: []string{
 				"services.yml",
 				"secrets.yml",
@@ -1204,21 +1278,21 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        `Host("sslredirect.localhost") && Path("/")`,
 							RuleSyntax:  "default",
 							TLS:         &dynamic.RouterTLSConfig{},
-							Middlewares: []string{"default-ingress-with-ssl-redirect-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-ingress-with-ssl-redirect-kubernetes-fields", "default-ingress-with-ssl-redirect-rule-0-path-0-tls-retry"},
 							Service:     "default-ingress-with-ssl-redirect-whoami-80",
 						},
 						"default-ingress-with-ssl-redirect-rule-0-path-0": {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("sslredirect.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-ssl-redirect-rule-0-path-0-retry"},
+							Middlewares: []string{"default-ingress-with-ssl-redirect-kubernetes-fields", "default-ingress-with-ssl-redirect-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-ssl-redirect-whoami-80",
 						},
 						"default-ingress-without-ssl-redirect-rule-0-path-0": {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("withoutsslredirect.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-without-ssl-redirect-rule-0-path-0-retry"},
+							Middlewares: []string{"default-ingress-without-ssl-redirect-kubernetes-fields", "default-ingress-without-ssl-redirect-rule-0-path-0-retry"},
 							Service:     "default-ingress-without-ssl-redirect-whoami-80",
 						},
 						"default-ingress-without-ssl-redirect-rule-0-path-0-tls": {
@@ -1226,26 +1300,47 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        `Host("withoutsslredirect.localhost") && Path("/")`,
 							RuleSyntax:  "default",
 							TLS:         &dynamic.RouterTLSConfig{},
-							Middlewares: []string{"default-ingress-without-ssl-redirect-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-ingress-without-ssl-redirect-kubernetes-fields", "default-ingress-without-ssl-redirect-rule-0-path-0-tls-retry"},
 							Service:     "default-ingress-without-ssl-redirect-whoami-80",
 						},
 						"default-ingress-with-force-ssl-redirect-rule-0-path-0": {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("forcesslredirect.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-force-ssl-redirect-rule-0-path-0-retry"},
+							Middlewares: []string{"default-ingress-with-force-ssl-redirect-kubernetes-fields", "default-ingress-with-force-ssl-redirect-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-force-ssl-redirect-whoami-80",
 						},
 						"default-ingress-with-force-ssl-redirect-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("forcesslredirect.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-force-ssl-redirect-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-ingress-with-force-ssl-redirect-kubernetes-fields", "default-ingress-with-force-ssl-redirect-rule-0-path-0-tls-retry"},
 							Service:     "default-ingress-with-force-ssl-redirect-whoami-80",
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-ssl-redirect-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "default",
+								Kind:      "Ingress",
+								Name:      "ingress-with-ssl-redirect",
+							},
+						},
+						"default-ingress-without-ssl-redirect-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "default",
+								Kind:      "Ingress",
+								Name:      "ingress-without-ssl-redirect",
+							},
+						},
+						"default-ingress-with-force-ssl-redirect-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "default",
+								Kind:      "Ingress",
+								Name:      "ingress-with-force-ssl-redirect",
+							},
+						},
 						"default-ingress-with-ssl-redirect-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
 								Attempts: 3,
@@ -1418,7 +1513,8 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc: "Sticky Sessions",
+			desc:                          "Sticky Sessions",
+			kubernetesObservabilityFields: true,
 			paths: []string{
 				"services.yml",
 				"secrets.yml",
@@ -1436,19 +1532,26 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("sticky.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-sticky-rule-0-path-0-retry"},
+							Middlewares: []string{"default-ingress-with-sticky-kubernetes-fields", "default-ingress-with-sticky-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-sticky-whoami-80",
 						},
 						"default-ingress-with-sticky-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("sticky.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-sticky-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-ingress-with-sticky-kubernetes-fields", "default-ingress-with-sticky-rule-0-path-0-tls-retry"},
 							Service:     "default-ingress-with-sticky-whoami-80",
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-sticky-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "default",
+								Kind:      "Ingress",
+								Name:      "ingress-with-sticky",
+							},
+						},
 						"default-ingress-with-sticky-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
 								Attempts: 3,
@@ -1756,7 +1859,8 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc: "Upstream vhost",
+			desc:                          "Upstream vhost",
+			kubernetesObservabilityFields: true,
 			paths: []string{
 				"services.yml",
 				"ingressclasses.yml",
@@ -1773,19 +1877,26 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("upstream-vhost.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-upstream-vhost-rule-0-path-0-vhost", "default-ingress-with-upstream-vhost-rule-0-path-0-retry"},
+							Middlewares: []string{"default-ingress-with-upstream-vhost-kubernetes-fields", "default-ingress-with-upstream-vhost-rule-0-path-0-vhost", "default-ingress-with-upstream-vhost-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-upstream-vhost-whoami-80",
 						},
 						"default-ingress-with-upstream-vhost-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("upstream-vhost.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-upstream-vhost-rule-0-path-0-tls-vhost", "default-ingress-with-upstream-vhost-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-ingress-with-upstream-vhost-kubernetes-fields", "default-ingress-with-upstream-vhost-rule-0-path-0-tls-vhost", "default-ingress-with-upstream-vhost-rule-0-path-0-tls-retry"},
 							Service:     "default-ingress-with-upstream-vhost-whoami-80",
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-upstream-vhost-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "default",
+								Kind:      "Ingress",
+								Name:      "ingress-with-upstream-vhost",
+							},
+						},
 						"default-ingress-with-upstream-vhost-rule-0-path-0-vhost": {
 							Headers: &dynamic.Headers{
 								CustomRequestHeaders: map[string]string{"Host": "upstream-host-header-value"},
@@ -2138,7 +2249,8 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc: "Use Regex",
+			desc:                          "Use Regex",
+			kubernetesObservabilityFields: true,
 			paths: []string{
 				"services.yml",
 				"ingressclasses.yml",
@@ -2155,19 +2267,26 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("use-regex.localhost") && PathRegexp("(?i)^/test(.*)")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-use-regex-rule-0-path-0-retry"},
+							Middlewares: []string{"default-ingress-with-use-regex-kubernetes-fields", "default-ingress-with-use-regex-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-use-regex-whoami-80",
 						},
 						"default-ingress-with-use-regex-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("use-regex.localhost") && PathRegexp("(?i)^/test(.*)")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-use-regex-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-ingress-with-use-regex-kubernetes-fields", "default-ingress-with-use-regex-rule-0-path-0-tls-retry"},
 							Service:     "default-ingress-with-use-regex-whoami-80",
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-use-regex-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "default",
+								Kind:      "Ingress",
+								Name:      "ingress-with-use-regex",
+							},
+						},
 						"default-ingress-with-use-regex-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
 								Attempts: 3,
@@ -2468,7 +2587,8 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc: "Rewrite Target",
+			desc:                          "Rewrite Target",
+			kubernetesObservabilityFields: true,
 			paths: []string{
 				"services.yml",
 				"ingressclasses.yml",
@@ -2486,14 +2606,14 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        `Host("rewrite-target.localhost") && PathRegexp("(?i)^/something(/|$)(.*)")`,
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-rewrite-target-whoami-80",
-							Middlewares: []string{"default-ingress-with-rewrite-target-rule-0-path-0-rewrite-target", "default-ingress-with-rewrite-target-rule-0-path-0-retry"},
+							Middlewares: []string{"default-ingress-with-rewrite-target-kubernetes-fields", "default-ingress-with-rewrite-target-rule-0-path-0-rewrite-target", "default-ingress-with-rewrite-target-rule-0-path-0-retry"},
 						},
 						"default-ingress-with-rewrite-target-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("rewrite-target.localhost") && PathRegexp("(?i)^/something(/|$)(.*)")`,
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-rewrite-target-whoami-80",
-							Middlewares: []string{"default-ingress-with-rewrite-target-rule-0-path-0-tls-rewrite-target", "default-ingress-with-rewrite-target-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-ingress-with-rewrite-target-kubernetes-fields", "default-ingress-with-rewrite-target-rule-0-path-0-tls-rewrite-target", "default-ingress-with-rewrite-target-rule-0-path-0-tls-retry"},
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
 						"default-ingress-with-rewrite-target-no-regex-rule-0-path-0": {
@@ -2501,18 +2621,32 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        `Host("rewrite-target-no-regex.localhost") && (Path("/something") || PathPrefix("/something/"))`,
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-rewrite-target-no-regex-whoami-80",
-							Middlewares: []string{"default-ingress-with-rewrite-target-no-regex-rule-0-path-0-retry"},
+							Middlewares: []string{"default-ingress-with-rewrite-target-no-regex-kubernetes-fields", "default-ingress-with-rewrite-target-no-regex-rule-0-path-0-retry"},
 						},
 						"default-ingress-with-rewrite-target-no-regex-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("rewrite-target-no-regex.localhost") && (Path("/something") || PathPrefix("/something/"))`,
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-rewrite-target-no-regex-whoami-80",
-							Middlewares: []string{"default-ingress-with-rewrite-target-no-regex-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-ingress-with-rewrite-target-no-regex-kubernetes-fields", "default-ingress-with-rewrite-target-no-regex-rule-0-path-0-tls-retry"},
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-rewrite-target-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "default",
+								Kind:      "Ingress",
+								Name:      "ingress-with-rewrite-target",
+							},
+						},
+						"default-ingress-with-rewrite-target-no-regex-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "default",
+								Kind:      "Ingress",
+								Name:      "ingress-with-rewrite-target-no-regex",
+							},
+						},
 						"default-ingress-with-rewrite-target-rule-0-path-0-rewrite-target": {
 							RewriteTarget: &dynamic.RewriteTarget{
 								Regex:       "(?i)/something(/|$)(.*)",
@@ -2607,7 +2741,8 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc: "Rewrite Target without use-regex",
+			desc:                          "Rewrite Target without use-regex",
+			kubernetesObservabilityFields: true,
 			paths: []string{
 				"services.yml",
 				"ingressclasses.yml",
@@ -2626,6 +2761,7 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-rewrite-target-no-regex-whoami-80",
 							Middlewares: []string{
+								"default-ingress-with-rewrite-target-no-regex-kubernetes-fields",
 								"default-ingress-with-rewrite-target-no-regex-rule-0-path-0-rewrite-target",
 								"default-ingress-with-rewrite-target-no-regex-rule-0-path-0-retry",
 							},
@@ -2636,6 +2772,7 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-rewrite-target-no-regex-whoami-80",
 							Middlewares: []string{
+								"default-ingress-with-rewrite-target-no-regex-kubernetes-fields",
 								"default-ingress-with-rewrite-target-no-regex-rule-0-path-0-tls-rewrite-target",
 								"default-ingress-with-rewrite-target-no-regex-rule-0-path-0-tls-retry",
 							},
@@ -2643,6 +2780,13 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-rewrite-target-no-regex-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "default",
+								Kind:      "Ingress",
+								Name:      "ingress-with-rewrite-target-no-regex",
+							},
+						},
 						"default-ingress-with-rewrite-target-no-regex-rule-0-path-0-rewrite-target": {
 							RewriteTarget: &dynamic.RewriteTarget{
 								Regex:       "(?i)/original",
@@ -3027,7 +3171,8 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc: "App Root",
+			desc:                          "App Root",
+			kubernetesObservabilityFields: true,
 			paths: []string{
 				"services.yml",
 				"ingressclasses.yml",
@@ -3045,18 +3190,25 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        `Host("app-root.localhost") && (Path("/bar") || PathPrefix("/bar/"))`,
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-app-root-whoami-80",
-							Middlewares: []string{"default-ingress-with-app-root-rule-0-path-0-app-root", "default-ingress-with-app-root-rule-0-path-0-retry"},
+							Middlewares: []string{"default-ingress-with-app-root-kubernetes-fields", "default-ingress-with-app-root-rule-0-path-0-app-root", "default-ingress-with-app-root-rule-0-path-0-retry"},
 						},
 						"default-ingress-with-app-root-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("app-root.localhost") && (Path("/bar") || PathPrefix("/bar/"))`,
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-app-root-whoami-80",
-							Middlewares: []string{"default-ingress-with-app-root-rule-0-path-0-tls-app-root", "default-ingress-with-app-root-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-ingress-with-app-root-kubernetes-fields", "default-ingress-with-app-root-rule-0-path-0-tls-app-root", "default-ingress-with-app-root-rule-0-path-0-tls-retry"},
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-app-root-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "default",
+								Kind:      "Ingress",
+								Name:      "ingress-with-app-root",
+							},
+						},
 						"default-ingress-with-app-root-rule-0-path-0-app-root": {
 							RedirectRegex: &dynamic.RedirectRegex{
 								Regex:       `^(https?://[^/]+)/$`,
@@ -3115,7 +3267,8 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc: "App Root - no prefix slash",
+			desc:                          "App Root - no prefix slash",
+			kubernetesObservabilityFields: true,
 			paths: []string{
 				"services.yml",
 				"ingressclasses.yml",
@@ -3132,19 +3285,26 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("app-root.localhost") && (Path("/bar") || PathPrefix("/bar/"))`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-app-root-rule-0-path-0-retry"},
+							Middlewares: []string{"default-ingress-with-app-root-kubernetes-fields", "default-ingress-with-app-root-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-app-root-whoami-80",
 						},
 						"default-ingress-with-app-root-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("app-root.localhost") && (Path("/bar") || PathPrefix("/bar/"))`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-app-root-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-ingress-with-app-root-kubernetes-fields", "default-ingress-with-app-root-rule-0-path-0-tls-retry"},
 							Service:     "default-ingress-with-app-root-whoami-80",
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-app-root-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "default",
+								Kind:      "Ingress",
+								Name:      "ingress-with-app-root",
+							},
+						},
 						"default-ingress-with-app-root-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
 								Attempts: 3,
@@ -3191,7 +3351,8 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc: "From To WWW Redirect - www host",
+			desc:                          "From To WWW Redirect - www host",
+			kubernetesObservabilityFields: true,
 			paths: []string{
 				"services.yml",
 				"ingressclasses.yml",
@@ -3208,7 +3369,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("www.host.localhost") && PathPrefix("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-www-host-rule-0-path-0-retry"},
+							Middlewares: []string{"default-ingress-with-www-host-kubernetes-fields", "default-ingress-with-www-host-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-www-host-whoami-80",
 						},
 						"default-ingress-with-www-host-rule-0-path-0-from-to-www-redirect": {
@@ -3216,13 +3377,13 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        `Host("host.localhost")`,
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-www-host-whoami-80",
-							Middlewares: []string{"default-ingress-with-www-host-rule-0-path-0-from-to-www-redirect"},
+							Middlewares: []string{"default-ingress-with-www-host-kubernetes-fields", "default-ingress-with-www-host-rule-0-path-0-from-to-www-redirect"},
 						},
 						"default-ingress-with-www-host-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("www.host.localhost") && PathPrefix("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-www-host-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-ingress-with-www-host-kubernetes-fields", "default-ingress-with-www-host-rule-0-path-0-tls-retry"},
 							Service:     "default-ingress-with-www-host-whoami-80",
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
@@ -3231,11 +3392,18 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        `Host("host.localhost")`,
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-www-host-whoami-80",
-							Middlewares: []string{"default-ingress-with-www-host-rule-0-path-0-tls-from-to-www-redirect"},
+							Middlewares: []string{"default-ingress-with-www-host-kubernetes-fields", "default-ingress-with-www-host-rule-0-path-0-tls-from-to-www-redirect"},
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-www-host-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "default",
+								Kind:      "Ingress",
+								Name:      "ingress-with-www-host",
+							},
+						},
 						"default-ingress-with-www-host-rule-0-path-0-from-to-www-redirect": {
 							RedirectRegex: &dynamic.RedirectRegex{
 								Regex:       `(https?)://[^/:]+(:[0-9]+)?/(.*)`,
@@ -3296,7 +3464,8 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc: "From To WWW Redirect - host",
+			desc:                          "From To WWW Redirect - host",
+			kubernetesObservabilityFields: true,
 			paths: []string{
 				"services.yml",
 				"ingressclasses.yml",
@@ -3313,7 +3482,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("host.localhost") && PathPrefix("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-host-rule-0-path-0-retry"},
+							Middlewares: []string{"default-ingress-with-host-kubernetes-fields", "default-ingress-with-host-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-host-whoami-80",
 						},
 						"default-ingress-with-host-rule-0-path-0-from-to-www-redirect": {
@@ -3321,13 +3490,13 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        `Host("www.host.localhost")`,
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-host-whoami-80",
-							Middlewares: []string{"default-ingress-with-host-rule-0-path-0-from-to-www-redirect"},
+							Middlewares: []string{"default-ingress-with-host-kubernetes-fields", "default-ingress-with-host-rule-0-path-0-from-to-www-redirect"},
 						},
 						"default-ingress-with-host-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("host.localhost") && PathPrefix("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-host-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-ingress-with-host-kubernetes-fields", "default-ingress-with-host-rule-0-path-0-tls-retry"},
 							Service:     "default-ingress-with-host-whoami-80",
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
@@ -3336,11 +3505,18 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        `Host("www.host.localhost")`,
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-host-whoami-80",
-							Middlewares: []string{"default-ingress-with-host-rule-0-path-0-tls-from-to-www-redirect"},
+							Middlewares: []string{"default-ingress-with-host-kubernetes-fields", "default-ingress-with-host-rule-0-path-0-tls-from-to-www-redirect"},
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-host-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "default",
+								Kind:      "Ingress",
+								Name:      "ingress-with-host",
+							},
+						},
 						"default-ingress-with-host-rule-0-path-0-from-to-www-redirect": {
 							RedirectRegex: &dynamic.RedirectRegex{
 								Regex:       `(https?)://[^/:]+(:[0-9]+)?/(.*)`,
@@ -3401,7 +3577,8 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc: "From To WWW Redirect - multiple ingresses",
+			desc:                          "From To WWW Redirect - multiple ingresses",
+			kubernetesObservabilityFields: true,
 			paths: []string{
 				"services.yml",
 				"ingressclasses.yml",
@@ -3418,21 +3595,21 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("host.localhost") && PathPrefix("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-host-rule-0-path-0-retry"},
+							Middlewares: []string{"default-ingress-with-host-kubernetes-fields", "default-ingress-with-host-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-host-whoami-80",
 						},
 						"default-ingress-with-www-host-rule-0-path-0": {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("www.host.localhost") && PathPrefix("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-www-host-rule-0-path-0-retry"},
+							Middlewares: []string{"default-ingress-with-www-host-kubernetes-fields", "default-ingress-with-www-host-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-www-host-whoami-80",
 						},
 						"default-ingress-with-host-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("host.localhost") && PathPrefix("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-host-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-ingress-with-host-kubernetes-fields", "default-ingress-with-host-rule-0-path-0-tls-retry"},
 							Service:     "default-ingress-with-host-whoami-80",
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
@@ -3440,15 +3617,29 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("www.host.localhost") && PathPrefix("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-www-host-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-ingress-with-www-host-kubernetes-fields", "default-ingress-with-www-host-rule-0-path-0-tls-retry"},
 							Service:     "default-ingress-with-www-host-whoami-80",
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-host-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "default",
+								Kind:      "Ingress",
+								Name:      "ingress-with-host",
+							},
+						},
 						"default-ingress-with-host-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
 								Attempts: 3,
+							},
+						},
+						"default-ingress-with-www-host-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "default",
+								Kind:      "Ingress",
+								Name:      "ingress-with-www-host",
 							},
 						},
 						"default-ingress-with-host-rule-0-path-0-tls-retry": {
@@ -3583,7 +3774,8 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc: "WhitelistSourceRange with single IP",
+			desc:                          "WhitelistSourceRange with single IP",
+			kubernetesObservabilityFields: true,
 			paths: []string{
 				"services.yml",
 				"ingressclasses.yml",
@@ -3600,19 +3792,26 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("whitelist-source-range.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-whitelist-single-ip-rule-0-path-0-allowed-source-range", "default-ingress-with-whitelist-single-ip-rule-0-path-0-retry"},
+							Middlewares: []string{"default-ingress-with-whitelist-single-ip-kubernetes-fields", "default-ingress-with-whitelist-single-ip-rule-0-path-0-allowed-source-range", "default-ingress-with-whitelist-single-ip-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-whitelist-single-ip-whoami-80",
 						},
 						"default-ingress-with-whitelist-single-ip-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("whitelist-source-range.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-whitelist-single-ip-rule-0-path-0-tls-allowed-source-range", "default-ingress-with-whitelist-single-ip-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-ingress-with-whitelist-single-ip-kubernetes-fields", "default-ingress-with-whitelist-single-ip-rule-0-path-0-tls-allowed-source-range", "default-ingress-with-whitelist-single-ip-rule-0-path-0-tls-retry"},
 							Service:     "default-ingress-with-whitelist-single-ip-whoami-80",
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-whitelist-single-ip-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "default",
+								Kind:      "Ingress",
+								Name:      "ingress-with-whitelist-single-ip",
+							},
+						},
 						"default-ingress-with-whitelist-single-ip-rule-0-path-0-allowed-source-range": {
 							IPAllowList: &dynamic.IPAllowList{
 								SourceRange: []string{"192.168.20.1"},
@@ -3669,7 +3868,8 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc: "WhitelistSourceRange with single CIDR",
+			desc:                          "WhitelistSourceRange with single CIDR",
+			kubernetesObservabilityFields: true,
 			paths: []string{
 				"services.yml",
 				"ingressclasses.yml",
@@ -3686,19 +3886,26 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("whitelist-source-range.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-whitelist-single-cidr-rule-0-path-0-allowed-source-range", "default-ingress-with-whitelist-single-cidr-rule-0-path-0-retry"},
+							Middlewares: []string{"default-ingress-with-whitelist-single-cidr-kubernetes-fields", "default-ingress-with-whitelist-single-cidr-rule-0-path-0-allowed-source-range", "default-ingress-with-whitelist-single-cidr-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-whitelist-single-cidr-whoami-80",
 						},
 						"default-ingress-with-whitelist-single-cidr-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("whitelist-source-range.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-whitelist-single-cidr-rule-0-path-0-tls-allowed-source-range", "default-ingress-with-whitelist-single-cidr-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-ingress-with-whitelist-single-cidr-kubernetes-fields", "default-ingress-with-whitelist-single-cidr-rule-0-path-0-tls-allowed-source-range", "default-ingress-with-whitelist-single-cidr-rule-0-path-0-tls-retry"},
 							Service:     "default-ingress-with-whitelist-single-cidr-whoami-80",
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-whitelist-single-cidr-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "default",
+								Kind:      "Ingress",
+								Name:      "ingress-with-whitelist-single-cidr",
+							},
+						},
 						"default-ingress-with-whitelist-single-cidr-rule-0-path-0-allowed-source-range": {
 							IPAllowList: &dynamic.IPAllowList{
 								SourceRange: []string{"192.168.1.0/24"},
@@ -3755,7 +3962,8 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc: "WhitelistSourceRange when specified multiple IP/CIDR",
+			desc:                          "WhitelistSourceRange when specified multiple IP/CIDR",
+			kubernetesObservabilityFields: true,
 			paths: []string{
 				"services.yml",
 				"ingressclasses.yml",
@@ -3772,19 +3980,26 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("whitelist-source-range.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-whitelist-multiple-ip-and-cidr-rule-0-path-0-allowed-source-range", "default-ingress-with-whitelist-multiple-ip-and-cidr-rule-0-path-0-retry"},
+							Middlewares: []string{"default-ingress-with-whitelist-multiple-ip-and-cidr-kubernetes-fields", "default-ingress-with-whitelist-multiple-ip-and-cidr-rule-0-path-0-allowed-source-range", "default-ingress-with-whitelist-multiple-ip-and-cidr-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-whitelist-multiple-ip-and-cidr-whoami-80",
 						},
 						"default-ingress-with-whitelist-multiple-ip-and-cidr-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("whitelist-source-range.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-whitelist-multiple-ip-and-cidr-rule-0-path-0-tls-allowed-source-range", "default-ingress-with-whitelist-multiple-ip-and-cidr-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-ingress-with-whitelist-multiple-ip-and-cidr-kubernetes-fields", "default-ingress-with-whitelist-multiple-ip-and-cidr-rule-0-path-0-tls-allowed-source-range", "default-ingress-with-whitelist-multiple-ip-and-cidr-rule-0-path-0-tls-retry"},
 							Service:     "default-ingress-with-whitelist-multiple-ip-and-cidr-whoami-80",
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-whitelist-multiple-ip-and-cidr-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "default",
+								Kind:      "Ingress",
+								Name:      "ingress-with-whitelist-multiple-ip-and-cidr",
+							},
+						},
 						"default-ingress-with-whitelist-multiple-ip-and-cidr-rule-0-path-0-allowed-source-range": {
 							IPAllowList: &dynamic.IPAllowList{
 								SourceRange: []string{"192.168.1.0/24", "10.0.0.0/8", "192.168.20.1"},
@@ -3841,7 +4056,8 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc: "WhitelistSourceRange when empty ignored",
+			desc:                          "WhitelistSourceRange when empty ignored",
+			kubernetesObservabilityFields: true,
 			paths: []string{
 				"services.yml",
 				"ingressclasses.yml",
@@ -3858,19 +4074,26 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("whitelist-source-range.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-whitelist-empty-rule-0-path-0-retry"},
+							Middlewares: []string{"default-ingress-with-whitelist-empty-kubernetes-fields", "default-ingress-with-whitelist-empty-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-whitelist-empty-whoami-80",
 						},
 						"default-ingress-with-whitelist-empty-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("whitelist-source-range.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-whitelist-empty-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-ingress-with-whitelist-empty-kubernetes-fields", "default-ingress-with-whitelist-empty-rule-0-path-0-tls-retry"},
 							Service:     "default-ingress-with-whitelist-empty-whoami-80",
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-whitelist-empty-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "default",
+								Kind:      "Ingress",
+								Name:      "ingress-with-whitelist-empty",
+							},
+						},
 						"default-ingress-with-whitelist-empty-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
 								Attempts: 3,
@@ -3917,7 +4140,8 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc: "AllowlistSourceRange when empty ignored",
+			desc:                          "AllowlistSourceRange when empty ignored",
+			kubernetesObservabilityFields: true,
 			paths: []string{
 				"services.yml",
 				"ingressclasses.yml",
@@ -3934,19 +4158,26 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("allowlist-source-range.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-allowlist-empty-rule-0-path-0-retry"},
+							Middlewares: []string{"default-ingress-with-allowlist-empty-kubernetes-fields", "default-ingress-with-allowlist-empty-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-allowlist-empty-whoami-80",
 						},
 						"default-ingress-with-allowlist-empty-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("allowlist-source-range.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-allowlist-empty-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-ingress-with-allowlist-empty-kubernetes-fields", "default-ingress-with-allowlist-empty-rule-0-path-0-tls-retry"},
 							Service:     "default-ingress-with-allowlist-empty-whoami-80",
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-allowlist-empty-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "default",
+								Kind:      "Ingress",
+								Name:      "ingress-with-allowlist-empty",
+							},
+						},
 						"default-ingress-with-allowlist-empty-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
 								Attempts: 3,
@@ -3993,7 +4224,8 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc: "AllowlistSourceRange with single IP",
+			desc:                          "AllowlistSourceRange with single IP",
+			kubernetesObservabilityFields: true,
 			paths: []string{
 				"services.yml",
 				"ingressclasses.yml",
@@ -4010,19 +4242,26 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("allowlist-source-range.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-allowlist-single-ip-rule-0-path-0-allowed-source-range", "default-ingress-with-allowlist-single-ip-rule-0-path-0-retry"},
+							Middlewares: []string{"default-ingress-with-allowlist-single-ip-kubernetes-fields", "default-ingress-with-allowlist-single-ip-rule-0-path-0-allowed-source-range", "default-ingress-with-allowlist-single-ip-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-allowlist-single-ip-whoami-80",
 						},
 						"default-ingress-with-allowlist-single-ip-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("allowlist-source-range.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-allowlist-single-ip-rule-0-path-0-tls-allowed-source-range", "default-ingress-with-allowlist-single-ip-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-ingress-with-allowlist-single-ip-kubernetes-fields", "default-ingress-with-allowlist-single-ip-rule-0-path-0-tls-allowed-source-range", "default-ingress-with-allowlist-single-ip-rule-0-path-0-tls-retry"},
 							Service:     "default-ingress-with-allowlist-single-ip-whoami-80",
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-allowlist-single-ip-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "default",
+								Kind:      "Ingress",
+								Name:      "ingress-with-allowlist-single-ip",
+							},
+						},
 						"default-ingress-with-allowlist-single-ip-rule-0-path-0-allowed-source-range": {
 							IPAllowList: &dynamic.IPAllowList{
 								SourceRange: []string{"192.168.20.1"},
@@ -4079,7 +4318,8 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc: "AllowlistSourceRange with single CIDR",
+			desc:                          "AllowlistSourceRange with single CIDR",
+			kubernetesObservabilityFields: true,
 			paths: []string{
 				"services.yml",
 				"ingressclasses.yml",
@@ -4096,19 +4336,26 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("allowlist-source-range.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-allowlist-single-cidr-rule-0-path-0-allowed-source-range", "default-ingress-with-allowlist-single-cidr-rule-0-path-0-retry"},
+							Middlewares: []string{"default-ingress-with-allowlist-single-cidr-kubernetes-fields", "default-ingress-with-allowlist-single-cidr-rule-0-path-0-allowed-source-range", "default-ingress-with-allowlist-single-cidr-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-allowlist-single-cidr-whoami-80",
 						},
 						"default-ingress-with-allowlist-single-cidr-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("allowlist-source-range.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-allowlist-single-cidr-rule-0-path-0-tls-allowed-source-range", "default-ingress-with-allowlist-single-cidr-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-ingress-with-allowlist-single-cidr-kubernetes-fields", "default-ingress-with-allowlist-single-cidr-rule-0-path-0-tls-allowed-source-range", "default-ingress-with-allowlist-single-cidr-rule-0-path-0-tls-retry"},
 							Service:     "default-ingress-with-allowlist-single-cidr-whoami-80",
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-allowlist-single-cidr-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "default",
+								Kind:      "Ingress",
+								Name:      "ingress-with-allowlist-single-cidr",
+							},
+						},
 						"default-ingress-with-allowlist-single-cidr-rule-0-path-0-allowed-source-range": {
 							IPAllowList: &dynamic.IPAllowList{
 								SourceRange: []string{"192.168.1.0/24"},
@@ -4165,7 +4412,8 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc: "AllowlistSourceRange when specified multiple IP/CIDR",
+			desc:                          "AllowlistSourceRange when specified multiple IP/CIDR",
+			kubernetesObservabilityFields: true,
 			paths: []string{
 				"services.yml",
 				"ingressclasses.yml",
@@ -4182,19 +4430,26 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("allowlist-source-range.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-allowlist-multiple-ip-and-cidr-rule-0-path-0-allowed-source-range", "default-ingress-with-allowlist-multiple-ip-and-cidr-rule-0-path-0-retry"},
+							Middlewares: []string{"default-ingress-with-allowlist-multiple-ip-and-cidr-kubernetes-fields", "default-ingress-with-allowlist-multiple-ip-and-cidr-rule-0-path-0-allowed-source-range", "default-ingress-with-allowlist-multiple-ip-and-cidr-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-allowlist-multiple-ip-and-cidr-whoami-80",
 						},
 						"default-ingress-with-allowlist-multiple-ip-and-cidr-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("allowlist-source-range.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-allowlist-multiple-ip-and-cidr-rule-0-path-0-tls-allowed-source-range", "default-ingress-with-allowlist-multiple-ip-and-cidr-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-ingress-with-allowlist-multiple-ip-and-cidr-kubernetes-fields", "default-ingress-with-allowlist-multiple-ip-and-cidr-rule-0-path-0-tls-allowed-source-range", "default-ingress-with-allowlist-multiple-ip-and-cidr-rule-0-path-0-tls-retry"},
 							Service:     "default-ingress-with-allowlist-multiple-ip-and-cidr-whoami-80",
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-allowlist-multiple-ip-and-cidr-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "default",
+								Kind:      "Ingress",
+								Name:      "ingress-with-allowlist-multiple-ip-and-cidr",
+							},
+						},
 						"default-ingress-with-allowlist-multiple-ip-and-cidr-rule-0-path-0-allowed-source-range": {
 							IPAllowList: &dynamic.IPAllowList{
 								SourceRange: []string{"192.168.1.0/24", "10.0.0.0/8", "192.168.20.1"},
@@ -4611,7 +4866,8 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc: "Temporal Redirect",
+			desc:                          "Temporal Redirect",
+			kubernetesObservabilityFields: true,
 			paths: []string{
 				"services.yml",
 				"ingressclasses.yml",
@@ -4629,18 +4885,25 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        `Host("temporal-redirect.localhost") && Path("/")`,
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-temporal-redirect-whoami-80",
-							Middlewares: []string{"default-ingress-with-temporal-redirect-rule-0-path-0-redirect", "default-ingress-with-temporal-redirect-rule-0-path-0-retry"},
+							Middlewares: []string{"default-ingress-with-temporal-redirect-kubernetes-fields", "default-ingress-with-temporal-redirect-rule-0-path-0-redirect", "default-ingress-with-temporal-redirect-rule-0-path-0-retry"},
 						},
 						"default-ingress-with-temporal-redirect-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("temporal-redirect.localhost") && Path("/")`,
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-temporal-redirect-whoami-80",
-							Middlewares: []string{"default-ingress-with-temporal-redirect-rule-0-path-0-tls-redirect", "default-ingress-with-temporal-redirect-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-ingress-with-temporal-redirect-kubernetes-fields", "default-ingress-with-temporal-redirect-rule-0-path-0-tls-redirect", "default-ingress-with-temporal-redirect-rule-0-path-0-tls-retry"},
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-temporal-redirect-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "default",
+								Kind:      "Ingress",
+								Name:      "ingress-with-temporal-redirect",
+							},
+						},
 						"default-ingress-with-temporal-redirect-rule-0-path-0-redirect": {
 							RedirectRegex: &dynamic.RedirectRegex{
 								Regex:       ".*",
@@ -5097,7 +5360,8 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc: "Auth TLS secret",
+			desc:                          "Auth TLS secret",
+			kubernetesObservabilityFields: true,
 			paths: []string{
 				"services.yml",
 				"secrets.yml",
@@ -5115,7 +5379,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("auth-tls-secret.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-auth-tls-secret-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-ingress-with-auth-tls-secret-kubernetes-fields", "default-ingress-with-auth-tls-secret-rule-0-path-0-tls-retry"},
 							Service:     "default-ingress-with-auth-tls-secret-whoami-80",
 							TLS: &dynamic.RouterTLSConfig{
 								Options: "default-ingress-with-auth-tls-secret-default-ca-secret",
@@ -5125,11 +5389,18 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("auth-tls-secret.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-auth-tls-secret-rule-0-path-0-retry"},
+							Middlewares: []string{"default-ingress-with-auth-tls-secret-kubernetes-fields", "default-ingress-with-auth-tls-secret-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-auth-tls-secret-whoami-80",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-auth-tls-secret-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "default",
+								Kind:      "Ingress",
+								Name:      "ingress-with-auth-tls-secret",
+							},
+						},
 						"default-ingress-with-auth-tls-secret-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
 								Attempts: 3,
@@ -5321,7 +5592,8 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc: "Custom HTTP Errors and Default backend annotation",
+			desc:                          "Custom HTTP Errors and Default backend annotation",
+			kubernetesObservabilityFields: true,
 			paths: []string{
 				"services.yml",
 				"ingressclasses.yml",
@@ -5339,18 +5611,29 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        `Host("whoami.localhost") && Path("/")`,
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-custom-http-errors-and-default-backend-whoami-80",
-							Middlewares: []string{"default-ingress-with-custom-http-errors-and-default-backend-rule-0-path-0-custom-http-errors", "default-ingress-with-custom-http-errors-and-default-backend-rule-0-path-0-retry"},
+							Middlewares: []string{
+								"default-ingress-with-custom-http-errors-and-default-backend-kubernetes-fields",
+								"default-ingress-with-custom-http-errors-and-default-backend-rule-0-path-0-custom-http-errors",
+								"default-ingress-with-custom-http-errors-and-default-backend-rule-0-path-0-retry",
+							},
 						},
 						"default-ingress-with-custom-http-errors-and-default-backend-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("whoami.localhost") && Path("/")`,
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-custom-http-errors-and-default-backend-whoami-80",
-							Middlewares: []string{"default-ingress-with-custom-http-errors-and-default-backend-rule-0-path-0-tls-custom-http-errors", "default-ingress-with-custom-http-errors-and-default-backend-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-ingress-with-custom-http-errors-and-default-backend-kubernetes-fields", "default-ingress-with-custom-http-errors-and-default-backend-rule-0-path-0-tls-custom-http-errors", "default-ingress-with-custom-http-errors-and-default-backend-rule-0-path-0-tls-retry"},
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-custom-http-errors-and-default-backend-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "default",
+								Kind:      "Ingress",
+								Name:      "ingress-with-custom-http-errors-and-default-backend",
+							},
+						},
 						"default-ingress-with-custom-http-errors-and-default-backend-rule-0-path-0-custom-http-errors": {
 							Errors: &dynamic.ErrorPage{
 								Status:  []string{"404", "415"},
@@ -5453,6 +5736,7 @@ func TestLoadIngresses(t *testing.T) {
 			desc:                           "Custom HTTP Errors",
 			defaultBackendServiceName:      "whoami-b",
 			defaultBackendServiceNamespace: "default",
+			kubernetesObservabilityFields:  true,
 			paths: []string{
 				"services.yml",
 				"ingressclasses.yml",
@@ -5471,6 +5755,7 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-custom-http-errors-whoami-80",
 							Middlewares: []string{
+								"default-ingress-with-custom-http-errors-kubernetes-fields",
 								"default-ingress-with-custom-http-errors-rule-0-path-0-custom-http-errors",
 								"default-ingress-with-custom-http-errors-rule-0-path-0-retry",
 							},
@@ -5481,6 +5766,7 @@ func TestLoadIngresses(t *testing.T) {
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-custom-http-errors-whoami-80",
 							Middlewares: []string{
+								"default-ingress-with-custom-http-errors-kubernetes-fields",
 								"default-ingress-with-custom-http-errors-rule-0-path-0-tls-custom-http-errors",
 								"default-ingress-with-custom-http-errors-rule-0-path-0-tls-retry",
 							},
@@ -5503,6 +5789,13 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-custom-http-errors-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "default",
+								Kind:      "Ingress",
+								Name:      "ingress-with-custom-http-errors",
+							},
+						},
 						"default-ingress-with-custom-http-errors-rule-0-path-0-custom-http-errors": {
 							Errors: &dynamic.ErrorPage{
 								Status:  []string{"404", "415"},
@@ -5662,7 +5955,8 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc: "Default backend annotation",
+			desc:                          "Default backend annotation",
+			kubernetesObservabilityFields: true,
 			paths: []string{
 				"services.yml",
 				"ingressclasses.yml",
@@ -5680,18 +5974,25 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        `Host("whoami.localhost") && Path("/")`,
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-default-backend-annotation-empty-80",
-							Middlewares: []string{"default-ingress-with-default-backend-annotation-rule-0-path-0-retry"},
+							Middlewares: []string{"default-ingress-with-default-backend-annotation-kubernetes-fields", "default-ingress-with-default-backend-annotation-rule-0-path-0-retry"},
 						},
 						"default-ingress-with-default-backend-annotation-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("whoami.localhost") && Path("/")`,
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-default-backend-annotation-empty-80",
-							Middlewares: []string{"default-ingress-with-default-backend-annotation-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-ingress-with-default-backend-annotation-kubernetes-fields", "default-ingress-with-default-backend-annotation-rule-0-path-0-tls-retry"},
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-default-backend-annotation-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "default",
+								Kind:      "Ingress",
+								Name:      "ingress-with-default-backend-annotation",
+							},
+						},
 						"default-ingress-with-default-backend-annotation-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
 								Attempts: 3,
@@ -5738,7 +6039,8 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc: "Buffering with proxy body size of 10MB",
+			desc:                          "Buffering with proxy body size of 10MB",
+			kubernetesObservabilityFields: true,
 			paths: []string{
 				"services.yml",
 				"ingressclasses.yml",
@@ -5755,19 +6057,26 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("hostname.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-proxy-body-size-rule-0-path-0-buffering", "default-ingress-with-proxy-body-size-rule-0-path-0-retry"},
+							Middlewares: []string{"default-ingress-with-proxy-body-size-kubernetes-fields", "default-ingress-with-proxy-body-size-rule-0-path-0-buffering", "default-ingress-with-proxy-body-size-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-proxy-body-size-whoami-80",
 						},
 						"default-ingress-with-proxy-body-size-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("hostname.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-proxy-body-size-rule-0-path-0-tls-buffering", "default-ingress-with-proxy-body-size-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-ingress-with-proxy-body-size-kubernetes-fields", "default-ingress-with-proxy-body-size-rule-0-path-0-tls-buffering", "default-ingress-with-proxy-body-size-rule-0-path-0-tls-retry"},
 							Service:     "default-ingress-with-proxy-body-size-whoami-80",
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-proxy-body-size-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "default",
+								Kind:      "Ingress",
+								Name:      "ingress-with-proxy-body-size",
+							},
+						},
 						"default-ingress-with-proxy-body-size-rule-0-path-0-buffering": {
 							Buffering: &dynamic.Buffering{
 								MaxRequestBodyBytes:   10 * 1024 * 1024,
@@ -5830,7 +6139,8 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc: "Buffering with client body buffer size of 10MB",
+			desc:                          "Buffering with client body buffer size of 10MB",
+			kubernetesObservabilityFields: true,
 			paths: []string{
 				"services.yml",
 				"ingressclasses.yml",
@@ -5847,14 +6157,14 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("hostname.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-client-body-buffer-size-rule-0-path-0-buffering", "default-ingress-with-client-body-buffer-size-rule-0-path-0-retry"},
+							Middlewares: []string{"default-ingress-with-client-body-buffer-size-kubernetes-fields", "default-ingress-with-client-body-buffer-size-rule-0-path-0-buffering", "default-ingress-with-client-body-buffer-size-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-client-body-buffer-size-whoami-80",
 						},
 						"default-ingress-with-client-body-buffer-size-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("hostname.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-client-body-buffer-size-rule-0-path-0-tls-buffering", "default-ingress-with-client-body-buffer-size-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-ingress-with-client-body-buffer-size-kubernetes-fields", "default-ingress-with-client-body-buffer-size-rule-0-path-0-tls-buffering", "default-ingress-with-client-body-buffer-size-rule-0-path-0-tls-retry"},
 							Service:     "default-ingress-with-client-body-buffer-size-whoami-80",
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
@@ -5866,6 +6176,13 @@ func TestLoadIngresses(t *testing.T) {
 								MaxRequestBodyBytes:   defaultProxyBodySize,
 								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
 								DisableResponseBuffer: true,
+							},
+						},
+						"default-ingress-with-client-body-buffer-size-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "default",
+								Kind:      "Ingress",
+								Name:      "ingress-with-client-body-buffer-size",
 							},
 						},
 						"default-ingress-with-client-body-buffer-size-rule-0-path-0-tls-buffering": {
@@ -5922,7 +6239,8 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc: "Buffering with proxy body size and client body buffer",
+			desc:                          "Buffering with proxy body size and client body buffer",
+			kubernetesObservabilityFields: true,
 			paths: []string{
 				"services.yml",
 				"ingressclasses.yml",
@@ -5939,19 +6257,26 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("hostname.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-proxy-body-size-and-client-body-buffer-size-rule-0-path-0-buffering", "default-ingress-with-proxy-body-size-and-client-body-buffer-size-rule-0-path-0-retry"},
+							Middlewares: []string{"default-ingress-with-proxy-body-size-and-client-body-buffer-size-kubernetes-fields", "default-ingress-with-proxy-body-size-and-client-body-buffer-size-rule-0-path-0-buffering", "default-ingress-with-proxy-body-size-and-client-body-buffer-size-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-proxy-body-size-and-client-body-buffer-size-whoami-80",
 						},
 						"default-ingress-with-proxy-body-size-and-client-body-buffer-size-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("hostname.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-proxy-body-size-and-client-body-buffer-size-rule-0-path-0-tls-buffering", "default-ingress-with-proxy-body-size-and-client-body-buffer-size-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-ingress-with-proxy-body-size-and-client-body-buffer-size-kubernetes-fields", "default-ingress-with-proxy-body-size-and-client-body-buffer-size-rule-0-path-0-tls-buffering", "default-ingress-with-proxy-body-size-and-client-body-buffer-size-rule-0-path-0-tls-retry"},
 							Service:     "default-ingress-with-proxy-body-size-and-client-body-buffer-size-whoami-80",
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-proxy-body-size-and-client-body-buffer-size-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "default",
+								Kind:      "Ingress",
+								Name:      "ingress-with-proxy-body-size-and-client-body-buffer-size",
+							},
+						},
 						"default-ingress-with-proxy-body-size-and-client-body-buffer-size-rule-0-path-0-buffering": {
 							Buffering: &dynamic.Buffering{
 								MaxRequestBodyBytes:   10 * 1024 * 1024,
@@ -6014,7 +6339,8 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc: "Buffering with proxy buffer size",
+			desc:                          "Buffering with proxy buffer size",
+			kubernetesObservabilityFields: true,
 			paths: []string{
 				"services.yml",
 				"ingressclasses.yml",
@@ -6031,19 +6357,26 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("hostname.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-proxy-buffer-size-rule-0-path-0-buffering", "default-ingress-with-proxy-buffer-size-rule-0-path-0-retry"},
+							Middlewares: []string{"default-ingress-with-proxy-buffer-size-kubernetes-fields", "default-ingress-with-proxy-buffer-size-rule-0-path-0-buffering", "default-ingress-with-proxy-buffer-size-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-proxy-buffer-size-whoami-80",
 						},
 						"default-ingress-with-proxy-buffer-size-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("hostname.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-proxy-buffer-size-rule-0-path-0-tls-buffering", "default-ingress-with-proxy-buffer-size-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-ingress-with-proxy-buffer-size-kubernetes-fields", "default-ingress-with-proxy-buffer-size-rule-0-path-0-tls-buffering", "default-ingress-with-proxy-buffer-size-rule-0-path-0-tls-retry"},
 							Service:     "default-ingress-with-proxy-buffer-size-whoami-80",
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-proxy-buffer-size-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "default",
+								Kind:      "Ingress",
+								Name:      "ingress-with-proxy-buffer-size",
+							},
+						},
 						"default-ingress-with-proxy-buffer-size-rule-0-path-0-buffering": {
 							Buffering: &dynamic.Buffering{
 								DisableRequestBuffer: true,
@@ -6108,7 +6441,8 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc: "Buffering with proxy buffers number",
+			desc:                          "Buffering with proxy buffers number",
+			kubernetesObservabilityFields: true,
 			paths: []string{
 				"services.yml",
 				"ingressclasses.yml",
@@ -6125,19 +6459,26 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("hostname.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-proxy-buffers-number-rule-0-path-0-buffering", "default-ingress-with-proxy-buffers-number-rule-0-path-0-retry"},
+							Middlewares: []string{"default-ingress-with-proxy-buffers-number-kubernetes-fields", "default-ingress-with-proxy-buffers-number-rule-0-path-0-buffering", "default-ingress-with-proxy-buffers-number-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-proxy-buffers-number-whoami-80",
 						},
 						"default-ingress-with-proxy-buffers-number-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("hostname.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-proxy-buffers-number-rule-0-path-0-tls-buffering", "default-ingress-with-proxy-buffers-number-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-ingress-with-proxy-buffers-number-kubernetes-fields", "default-ingress-with-proxy-buffers-number-rule-0-path-0-tls-buffering", "default-ingress-with-proxy-buffers-number-rule-0-path-0-tls-retry"},
 							Service:     "default-ingress-with-proxy-buffers-number-whoami-80",
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-proxy-buffers-number-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "default",
+								Kind:      "Ingress",
+								Name:      "ingress-with-proxy-buffers-number",
+							},
+						},
 						"default-ingress-with-proxy-buffers-number-rule-0-path-0-buffering": {
 							Buffering: &dynamic.Buffering{
 								DisableRequestBuffer: true,
@@ -6202,7 +6543,8 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc: "Buffering with proxy buffer size and proxy buffers number",
+			desc:                          "Buffering with proxy buffer size and proxy buffers number",
+			kubernetesObservabilityFields: true,
 			paths: []string{
 				"services.yml",
 				"ingressclasses.yml",
@@ -6219,19 +6561,26 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("hostname.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-proxy-buffer-size-and-number-rule-0-path-0-buffering", "default-ingress-with-proxy-buffer-size-and-number-rule-0-path-0-retry"},
+							Middlewares: []string{"default-ingress-with-proxy-buffer-size-and-number-kubernetes-fields", "default-ingress-with-proxy-buffer-size-and-number-rule-0-path-0-buffering", "default-ingress-with-proxy-buffer-size-and-number-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-proxy-buffer-size-and-number-whoami-80",
 						},
 						"default-ingress-with-proxy-buffer-size-and-number-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("hostname.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-proxy-buffer-size-and-number-rule-0-path-0-tls-buffering", "default-ingress-with-proxy-buffer-size-and-number-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-ingress-with-proxy-buffer-size-and-number-kubernetes-fields", "default-ingress-with-proxy-buffer-size-and-number-rule-0-path-0-tls-buffering", "default-ingress-with-proxy-buffer-size-and-number-rule-0-path-0-tls-retry"},
 							Service:     "default-ingress-with-proxy-buffer-size-and-number-whoami-80",
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-proxy-buffer-size-and-number-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "default",
+								Kind:      "Ingress",
+								Name:      "ingress-with-proxy-buffer-size-and-number",
+							},
+						},
 						"default-ingress-with-proxy-buffer-size-and-number-rule-0-path-0-buffering": {
 							Buffering: &dynamic.Buffering{
 								DisableRequestBuffer: true,
@@ -6976,7 +7325,8 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc: "Auth TLS pass certificate to upstream",
+			desc:                          "Auth TLS pass certificate to upstream",
+			kubernetesObservabilityFields: true,
 			paths: []string{
 				"services.yml",
 				"secrets.yml",
@@ -6994,7 +7344,7 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("auth-tls-pass-certificate-to-upstream.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-auth-tls-pass-certificate-to-upstream-rule-0-path-0-tls-pass-certificate-to-upstream", "default-ingress-with-auth-tls-pass-certificate-to-upstream-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-ingress-with-auth-tls-pass-certificate-to-upstream-kubernetes-fields", "default-ingress-with-auth-tls-pass-certificate-to-upstream-rule-0-path-0-tls-pass-certificate-to-upstream", "default-ingress-with-auth-tls-pass-certificate-to-upstream-rule-0-path-0-tls-retry"},
 							Service:     "default-ingress-with-auth-tls-pass-certificate-to-upstream-whoami-80",
 							TLS: &dynamic.RouterTLSConfig{
 								Options: "default-ingress-with-auth-tls-pass-certificate-to-upstream-default-ca-secret",
@@ -7004,11 +7354,18 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("auth-tls-pass-certificate-to-upstream.localhost") && Path("/")`,
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-auth-tls-pass-certificate-to-upstream-rule-0-path-0-retry"},
+							Middlewares: []string{"default-ingress-with-auth-tls-pass-certificate-to-upstream-kubernetes-fields", "default-ingress-with-auth-tls-pass-certificate-to-upstream-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-auth-tls-pass-certificate-to-upstream-whoami-80",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-auth-tls-pass-certificate-to-upstream-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "default",
+								Kind:      "Ingress",
+								Name:      "ingress-with-auth-tls-pass-certificate-to-upstream",
+							},
+						},
 						"default-ingress-with-auth-tls-pass-certificate-to-upstream-rule-0-path-0-tls-pass-certificate-to-upstream": {
 							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
 								ClientAuthType: tls.RequireAndVerifyClientCert,
@@ -7206,7 +7563,8 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc: "Proxy next upstream tries",
+			desc:                          "Proxy next upstream tries",
+			kubernetesObservabilityFields: true,
 			paths: []string{
 				"services.yml",
 				"ingressclasses.yml",
@@ -7224,21 +7582,21 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        `Host("whoami.localhost") && Path("/")`,
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-proxy-next-upstream-tries-unlimited-whoami-80",
-							Middlewares: []string{"default-ingress-with-proxy-next-upstream-tries-unlimited-rule-0-path-0-retry"},
+							Middlewares: []string{"default-ingress-with-proxy-next-upstream-tries-unlimited-kubernetes-fields", "default-ingress-with-proxy-next-upstream-tries-unlimited-rule-0-path-0-retry"},
 						},
 						"default-ingress-with-proxy-next-upstream-tries-rule-0-path-0": {
 							EntryPoints: []string{"http"},
 							Rule:        `Host("whoami.localhost") && Path("/")`,
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-proxy-next-upstream-tries-whoami-80",
-							Middlewares: []string{"default-ingress-with-proxy-next-upstream-tries-rule-0-path-0-retry"},
+							Middlewares: []string{"default-ingress-with-proxy-next-upstream-tries-kubernetes-fields", "default-ingress-with-proxy-next-upstream-tries-rule-0-path-0-retry"},
 						},
 						"default-ingress-with-proxy-next-upstream-tries-unlimited-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("whoami.localhost") && Path("/")`,
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-proxy-next-upstream-tries-unlimited-whoami-80",
-							Middlewares: []string{"default-ingress-with-proxy-next-upstream-tries-unlimited-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-ingress-with-proxy-next-upstream-tries-unlimited-kubernetes-fields", "default-ingress-with-proxy-next-upstream-tries-unlimited-rule-0-path-0-tls-retry"},
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
 						"default-ingress-with-proxy-next-upstream-tries-rule-0-path-0-tls": {
@@ -7246,14 +7604,28 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        `Host("whoami.localhost") && Path("/")`,
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-proxy-next-upstream-tries-whoami-80",
-							Middlewares: []string{"default-ingress-with-proxy-next-upstream-tries-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-ingress-with-proxy-next-upstream-tries-kubernetes-fields", "default-ingress-with-proxy-next-upstream-tries-rule-0-path-0-tls-retry"},
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-proxy-next-upstream-tries-unlimited-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "default",
+								Kind:      "Ingress",
+								Name:      "ingress-with-proxy-next-upstream-tries-unlimited",
+							},
+						},
 						"default-ingress-with-proxy-next-upstream-tries-unlimited-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
 								Attempts: 2,
+							},
+						},
+						"default-ingress-with-proxy-next-upstream-tries-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "default",
+								Kind:      "Ingress",
+								Name:      "ingress-with-proxy-next-upstream-tries",
 							},
 						},
 						"default-ingress-with-proxy-next-upstream-tries-unlimited-rule-0-path-0-tls-retry": {
@@ -7325,7 +7697,8 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc: "Proxy next upstream timeout",
+			desc:                          "Proxy next upstream timeout",
+			kubernetesObservabilityFields: true,
 			paths: []string{
 				"services.yml",
 				"ingressclasses.yml",
@@ -7343,18 +7716,25 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        `Host("whoami.localhost") && Path("/")`,
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-proxy-next-upstream-timeout-whoami-80",
-							Middlewares: []string{"default-ingress-with-proxy-next-upstream-timeout-rule-0-path-0-retry"},
+							Middlewares: []string{"default-ingress-with-proxy-next-upstream-timeout-kubernetes-fields", "default-ingress-with-proxy-next-upstream-timeout-rule-0-path-0-retry"},
 						},
 						"default-ingress-with-proxy-next-upstream-timeout-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("whoami.localhost") && Path("/")`,
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-proxy-next-upstream-timeout-whoami-80",
-							Middlewares: []string{"default-ingress-with-proxy-next-upstream-timeout-rule-0-path-0-tls-retry"},
+							Middlewares: []string{"default-ingress-with-proxy-next-upstream-timeout-kubernetes-fields", "default-ingress-with-proxy-next-upstream-timeout-rule-0-path-0-tls-retry"},
 							TLS:         &dynamic.RouterTLSConfig{},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-proxy-next-upstream-timeout-kubernetes-fields": {
+							KubernetesFields: &dynamic.KubernetesFields{
+								Namespace: "default",
+								Kind:      "Ingress",
+								Name:      "ingress-with-proxy-next-upstream-timeout",
+							},
+						},
 						"default-ingress-with-proxy-next-upstream-timeout-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
 								Attempts: 3,
@@ -8193,13 +8573,6 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-ingress-with-canary-by-header-whoami-80-wrr",
 							Middlewares: []string{"default-ingress-with-canary-by-header-rule-0-path-0-retry"},
 						},
-						"default-ingress-with-canary-by-header-rule-0-path-0-canary": {
-							EntryPoints: []string{"http"},
-							Rule:        `(Host("production.localhost") && PathPrefix("/")) && (Header("Foo", "always"))`,
-							RuleSyntax:  "default",
-							Service:     "default-ingress-with-canary-by-header-whoami-80-canary",
-							Middlewares: []string{"default-ingress-with-canary-by-header-rule-0-path-0-canary-retry"},
-						},
 						"default-ingress-with-canary-by-header-rule-0-path-0-tls": {
 							EntryPoints: []string{"https"},
 							Rule:        `Host("production.localhost") && PathPrefix("/")`,
@@ -8207,6 +8580,13 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-ingress-with-canary-by-header-whoami-80-wrr",
 							Middlewares: []string{"default-ingress-with-canary-by-header-rule-0-path-0-tls-retry"},
 							TLS:         &dynamic.RouterTLSConfig{},
+						},
+						"default-ingress-with-canary-by-header-rule-0-path-0-canary": {
+							EntryPoints: []string{"http"},
+							Rule:        `(Host("production.localhost") && PathPrefix("/")) && (Header("Foo", "always"))`,
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-canary-by-header-whoami-80-canary",
+							Middlewares: []string{"default-ingress-with-canary-by-header-rule-0-path-0-canary-retry"},
 						},
 						"default-ingress-with-canary-by-header-rule-0-path-0-canary-tls": {
 							EntryPoints: []string{"https"},
@@ -9779,6 +10159,7 @@ func TestLoadIngresses(t *testing.T) {
 				allowedHeaders:                 test.globalAllowedResponseHeaders,
 				AllowCrossNamespaceResources:   test.allowCrossNamespaceResources,
 				GlobalAuthURL:                  test.globalAuthURL,
+				KubernetesObservabilityFields:  test.kubernetesObservabilityFields,
 			}
 			p.SetDefaults()
 			if test.strictValidatePathType != nil {
