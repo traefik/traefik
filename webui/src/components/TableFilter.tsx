@@ -1,4 +1,4 @@
-import { Box, Button, Flex, TextField, InputHandle } from '@traefiklabs/faency'
+import { Box, Button, Flex, TextField, InputHandle } from '@traefik-labs/faency'
 import { isUndefined, omitBy } from 'lodash'
 import { useCallback, useRef, useState } from 'react'
 import { FiSearch, FiXCircle } from 'react-icons/fi'
