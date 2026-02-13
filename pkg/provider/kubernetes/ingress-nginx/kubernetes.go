@@ -1261,6 +1261,7 @@ func applyForwardAuthConfiguration(routerName string, ingressConfig ingressConfi
 			Address:             *ingressConfig.AuthURL,
 			AuthResponseHeaders: authResponseHeaders,
 			AuthSigninURL:       ptr.Deref(ingressConfig.AuthSignin, ""),
+			Interpolate:         true,
 		},
 	}
 	rt.Middlewares = append(rt.Middlewares, forwardMiddlewareName)
