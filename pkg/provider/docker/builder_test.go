@@ -1,19 +1,18 @@
 package docker
 
 import (
-	containertypes "github.com/docker/docker/api/types/container"
-	networktypes "github.com/docker/docker/api/types/network"
-	swarmtypes "github.com/docker/docker/api/types/swarm"
-	"github.com/docker/go-connections/nat"
+	"net/netip"
+
+	containertypes "github.com/moby/moby/api/types/container"
+	networktypes "github.com/moby/moby/api/types/network"
+	swarmtypes "github.com/moby/moby/api/types/swarm"
 )
 
 func containerJSON(ops ...func(*containertypes.InspectResponse)) containertypes.InspectResponse {
 	c := &containertypes.InspectResponse{
-		ContainerJSONBase: &containertypes.ContainerJSONBase{
-			Name:       "fake",
-			HostConfig: &containertypes.HostConfig{},
-			State:      &containertypes.State{},
-		},
+		Name:            "fake",
+		HostConfig:      &containertypes.HostConfig{},
+		State:           &containertypes.State{},
 		Config:          &containertypes.Config{},
 		NetworkSettings: &containertypes.NetworkSettings{},
 	}
@@ -27,17 +26,17 @@ func containerJSON(ops ...func(*containertypes.InspectResponse)) containertypes.
 
 func name(name string) func(*containertypes.InspectResponse) {
 	return func(c *containertypes.InspectResponse) {
-		c.ContainerJSONBase.Name = name
+		c.Name = name
 	}
 }
 
 func networkMode(mode string) func(*containertypes.InspectResponse) {
 	return func(c *containertypes.InspectResponse) {
-		c.ContainerJSONBase.HostConfig.NetworkMode = containertypes.NetworkMode(mode)
+		c.HostConfig.NetworkMode = containertypes.NetworkMode(mode)
 	}
 }
 
-func ports(portMap nat.PortMap) func(*containertypes.InspectResponse) {
+func ports(portMap networktypes.PortMap) func(*containertypes.InspectResponse) {
 	return func(c *containertypes.InspectResponse) {
 		c.NetworkSettings.Ports = portMap
 	}
@@ -57,13 +56,13 @@ func withNetwork(name string, ops ...func(*networktypes.EndpointSettings)) func(
 
 func ipv4(ip string) func(*networktypes.EndpointSettings) {
 	return func(s *networktypes.EndpointSettings) {
-		s.IPAddress = ip
+		s.IPAddress = netip.MustParseAddr(ip).Unmap()
 	}
 }
 
 func ipv6(ip string) func(*networktypes.EndpointSettings) {
 	return func(s *networktypes.EndpointSettings) {
-		s.GlobalIPv6Address = ip
+		s.GlobalIPv6Address = netip.MustParseAddr(ip)
 	}
 }
 
@@ -92,20 +91,20 @@ func taskNodeID(id string) func(*swarmtypes.Task) {
 }
 
 func taskNetworkAttachment(id, name, driver string, addresses []string) func(*swarmtypes.Task) {
+	prefixes := make([]netip.Prefix, len(addresses))
+	for i, s := range addresses {
+		prefixes[i] = mustParseAddrOrPrefix(s)
+	}
 	return func(task *swarmtypes.Task) {
 		task.NetworksAttachments = append(task.NetworksAttachments, swarmtypes.NetworkAttachment{
 			Network: swarmtypes.Network{
 				ID: id,
 				Spec: swarmtypes.NetworkSpec{
-					Annotations: swarmtypes.Annotations{
-						Name: name,
-					},
-					DriverConfiguration: &swarmtypes.Driver{
-						Name: driver,
-					},
+					Annotations:         swarmtypes.Annotations{Name: name},
+					DriverConfiguration: &swarmtypes.Driver{Name: driver},
 				},
 			},
-			Addresses: addresses,
+			Addresses: prefixes,
 		})
 	}
 }
@@ -184,7 +183,7 @@ func virtualIP(networkID, addr string) func(*swarmtypes.Endpoint) {
 		}
 		endpoint.VirtualIPs = append(endpoint.VirtualIPs, swarmtypes.EndpointVirtualIP{
 			NetworkID: networkID,
-			Addr:      addr,
+			Addr:      mustParseAddrOrPrefix(addr),
 		})
 	}
 }
@@ -207,4 +206,22 @@ func modeDNSRR(spec *swarmtypes.EndpointSpec) {
 
 func modeVIP(spec *swarmtypes.EndpointSpec) {
 	spec.Mode = swarmtypes.ResolutionModeVIP
+}
+
+// mustParseAddrOrPrefix parses addrOrPrefix into a [netip.Prefix].
+//
+// We should expect only IP-addresses, but for backwards-compatibility,
+// the Addresses field on [swarmtypes.NetworkAttachment] accepts a prefix.
+func mustParseAddrOrPrefix(addrOrPrefix string) netip.Prefix {
+	if addrOrPrefix == "" {
+		return netip.Prefix{}
+	}
+	if p, err := netip.ParsePrefix(addrOrPrefix); err == nil {
+		return p
+	}
+	a := netip.MustParseAddr(addrOrPrefix)
+	if a.Is4() {
+		return netip.PrefixFrom(a, 32)
+	}
+	return netip.PrefixFrom(a, 128)
 }

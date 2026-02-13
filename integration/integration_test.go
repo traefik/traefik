@@ -22,6 +22,7 @@ import (
 	"text/template"
 	"time"
 
+	// TODO(thaJeztah) Using legacy docker/docker types until testcontainers-go is updated.
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
 	dockernetwork "github.com/docker/docker/api/types/network"
@@ -195,24 +196,28 @@ func (s *BaseSuite) createComposeProject(name string) {
 	for id, containerConfig := range composeConfigData.Services {
 		var mounts []mount.Mount
 		for _, volume := range containerConfig.Volumes {
-			split := strings.Split(volume, ":")
-			if len(split) != 2 {
+			src, dst, ok := strings.Cut(volume, ":")
+			if !ok {
 				continue
 			}
 
-			if strings.HasPrefix(split[0], "./") {
-				path, err := os.Getwd()
+			if strings.HasPrefix(src, "./") {
+				wd, err := os.Getwd()
 				if err != nil {
 					log.Err(err).Msg("can't determine current directory")
 					continue
 				}
-				split[0] = strings.Replace(split[0], "./", path+"/", 1)
+				src = wd + "/" + strings.TrimPrefix(src, "./")
 			}
 
-			abs, err := filepath.Abs(split[0])
+			abs, err := filepath.Abs(src)
 			require.NoError(s.T(), err)
 
-			mounts = append(mounts, mount.Mount{Source: abs, Target: split[1], Type: mount.TypeBind})
+			mounts = append(mounts, mount.Mount{
+				Source: abs,
+				Target: dst,
+				Type:   mount.TypeBind,
+			})
 		}
 
 		if containerConfig.Deploy.Replicas > 0 {
