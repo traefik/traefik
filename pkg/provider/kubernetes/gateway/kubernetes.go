@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	"github.com/hashicorp/go-multierror"
 	"github.com/mitchellh/hashstructure"
 	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
@@ -409,7 +408,7 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) *dynamic.C
 			}
 			var conditionsErr error
 			for message := range messages {
-				conditionsErr = multierror.Append(conditionsErr, errors.New(message))
+				conditionsErr = errors.Join(conditionsErr, errors.New(message))
 			}
 			logger.Error().
 				Err(conditionsErr).
