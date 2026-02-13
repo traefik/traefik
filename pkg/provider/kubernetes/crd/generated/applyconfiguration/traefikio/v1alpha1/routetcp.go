@@ -28,11 +28,23 @@ package v1alpha1
 
 // RouteTCPApplyConfiguration represents a declarative configuration of the RouteTCP type for use
 // with apply.
+//
+// RouteTCP holds the TCP route configuration.
 type RouteTCPApplyConfiguration struct {
-	Match       *string                             `json:"match,omitempty"`
-	Priority    *int                                `json:"priority,omitempty"`
-	Syntax      *string                             `json:"syntax,omitempty"`
-	Services    []ServiceTCPApplyConfiguration      `json:"services,omitempty"`
+	// Match defines the router's rule.
+	// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/tcp/routing/rules-and-priority/
+	Match *string `json:"match,omitempty"`
+	// Priority defines the router's priority.
+	// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/tcp/routing/rules-and-priority/#priority
+	Priority *int `json:"priority,omitempty"`
+	// Syntax defines the router's rule syntax.
+	// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/tcp/routing/rules-and-priority/#rulesyntax
+	//
+	// Deprecated: Please do not use this field and rewrite the router rules to use the v3 syntax.
+	Syntax *string `json:"syntax,omitempty"`
+	// Services defines the list of TCP services.
+	Services []ServiceTCPApplyConfiguration `json:"services,omitempty"`
+	// Middlewares defines the list of references to MiddlewareTCP resources.
 	Middlewares []ObjectReferenceApplyConfiguration `json:"middlewares,omitempty"`
 }
 
