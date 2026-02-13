@@ -625,7 +625,12 @@ func (p *Provider) buildServersTransport(namespace, name string, cfg ingressConf
 			return nil, fmt.Errorf("malformed proxy SSL secret: %s, expected namespace/name", sslSecret)
 		}
 
-		blocks, err := p.certificateBlocks(parts[0], parts[1])
+		secretNamespace, secretName := parts[0], parts[1]
+		if !p.AllowCrossNamespaceResources && secretNamespace != namespace {
+			return nil, fmt.Errorf("cross-namespace proxy ssl secret is not allowed: secret %s/%s is not from ingress namespace %q", secretName, secretNamespace, namespace)
+		}
+
+		blocks, err := p.certificateBlocks(secretNamespace, secretName)
 		if err != nil {
 			return nil, fmt.Errorf("getting certificate blocks: %w", err)
 		}
@@ -1121,6 +1126,10 @@ func (p *Provider) applyBasicAuthConfiguration(namespace, routerName string, ing
 		secretName = authSecretParts[1]
 	}
 
+	if !p.AllowCrossNamespaceResources && secretNamespace != namespace {
+		return fmt.Errorf("cross-namespace auth secret is not allowed: secret %s/%s is not from ingress namespace %q", secretName, secretNamespace, namespace)
+	}
+
 	secret, err := p.k8sClient.GetSecret(secretNamespace, secretName)
 	if err != nil {
 		return fmt.Errorf("getting secret %s: %w", authSecret, err)
@@ -1551,8 +1560,9 @@ func (p *Provider) buildClientAuthTLSOption(ingressNamespace string, config ingr
 	if secretName == "" {
 		return tls.Options{}, errors.New("auth-tls-secret has empty name")
 	}
+
 	// Cross-namespace secrets are not supported.
-	if secretNamespace != ingressNamespace {
+	if !p.AllowCrossNamespaceResources && secretNamespace != ingressNamespace {
 		return tls.Options{}, fmt.Errorf("cross-namespace auth-tls-secret is not supported: secret namespace %q does not match ingress namespace %q", secretNamespace, ingressNamespace)
 	}
 
