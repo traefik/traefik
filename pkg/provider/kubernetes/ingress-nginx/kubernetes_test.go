@@ -3217,9 +3217,13 @@ func readResources(t *testing.T, paths []string) []runtime.Object {
 
 func TestProvider_validateConfiguration(t *testing.T) {
 	testCases := []struct {
-		desc                         string
-		globalAllowedResponseHeaders []string
-		expectedAllowedHeaders       []string
+		desc                            string
+		globalAllowedResponseHeaders    []string
+		expectedAllowedHeaders          []string
+		defaultBackendService           string
+		expectedBackendServiceName      string
+		expectedBackendServiceNamespace string
+		expectError                     bool
 	}{
 		{
 			desc:                         "Valid headers only",
@@ -3241,18 +3245,38 @@ func TestProvider_validateConfiguration(t *testing.T) {
 			globalAllowedResponseHeaders: []string{},
 			expectedAllowedHeaders:       nil,
 		},
+		{
+			desc:                            "Valid default backend service",
+			defaultBackendService:           "namespace/name",
+			expectedBackendServiceName:      "name",
+			expectedBackendServiceNamespace: "namespace",
+		},
+		{
+			desc:                  "Invalid default backend service",
+			defaultBackendService: "namespace",
+			expectError:           true,
+		},
 	}
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
 			provider := &Provider{
 				GlobalAllowedResponseHeaders: test.globalAllowedResponseHeaders,
+				DefaultBackendService:        test.defaultBackendService,
 			}
 
 			err := provider.validateConfiguration()
-			require.NoError(t, err)
+			if test.expectError {
+				require.Error(t, err)
+				return
+			}
 
+			require.NoError(t, err)
 			assert.Equal(t, test.expectedAllowedHeaders, provider.allowedHeaders)
+			assert.Equal(t, test.expectedBackendServiceName, provider.defaultBackendServiceName)
+			assert.Equal(t, test.expectedBackendServiceNamespace, provider.defaultBackendServiceNamespace)
 		})
 	}
 }
@@ -3307,6 +3331,8 @@ func TestHeaderRegexp(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
 			result := headerRegexp.MatchString(test.header)
 			assert.Equal(t, test.expected, result, "Header: %q", test.header)
 		})
@@ -3358,6 +3384,8 @@ func TestValueRegexp(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
 			result := valueRegexp.MatchString(test.value)
 			assert.Equal(t, test.expected, result, "Value: %q", test.value)
 		})
