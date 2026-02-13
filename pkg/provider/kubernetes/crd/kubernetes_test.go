@@ -8485,6 +8485,59 @@ func TestExternalNameService(t *testing.T) {
 			},
 		},
 		{
+			desc:                     "TCP ExternalName services healthcheck",
+			paths:                    []string{"tcp/services.yml", "tcp/with_externalname_with_healthcheck.yml"},
+			allowExternalNameService: true,
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
+						"default-test.route-fdd3e9338e47a45efefc": {
+							EntryPoints: []string{"foo"},
+							Service:     "default-test.route-fdd3e9338e47a45efefc",
+							Rule:        "HostSNI(`foo.com`)",
+						},
+					},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services: map[string]*dynamic.TCPService{
+						"default-test.route-fdd3e9338e47a45efefc": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "external.domain:80",
+										Port:    "",
+									},
+								},
+								HealthCheck: &dynamic.TCPServerHealthCheck{
+									Port:              80,
+									Interval:          ptypes.Duration(10 * time.Second),
+									Timeout:           ptypes.Duration(5 * time.Second),
+									UnhealthyInterval: pointer(ptypes.Duration(10 * time.Second)),
+									Send:              "PING\r\n",
+									Expect:            "PONG\r\n",
+								},
+								PassiveHealthCheck: &dynamic.PassiveServerHealthCheck{
+									FailureWindow:     ptypes.Duration(10 * time.Second),
+									MaxFailedAttempts: 3,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
 			desc:                     "UDP ExternalName services allowed",
 			paths:                    []string{"udp/services.yml", "udp/with_externalname_service.yml"},
 			allowExternalNameService: true,
