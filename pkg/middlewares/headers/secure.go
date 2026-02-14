@@ -33,7 +33,7 @@ func newSecure(next http.Handler, cfg dynamic.Headers, contextKey string) *secur
 		AllowedHosts:                    cfg.AllowedHosts,
 		HostsProxyHeaders:               cfg.HostsProxyHeaders,
 		SSLProxyHeaders:                 cfg.SSLProxyHeaders,
-		STSSeconds:                      cfg.STSSeconds,
+		STSSeconds:                      derefInt64(cfg.STSSeconds),
 		PermissionsPolicy:               cfg.PermissionsPolicy,
 		SecureContextKey:                contextKey,
 	}
@@ -49,4 +49,11 @@ func (s secureHeader) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	s.secure.HandlerFuncWithNextForRequestOnly(rw, req, func(writer http.ResponseWriter, request *http.Request) {
 		s.next.ServeHTTP(middlewares.NewResponseModifier(writer, request, s.secure.ModifyResponseHeaders), request)
 	})
+}
+
+func derefInt64(p *int64) int64 {
+	if p == nil {
+		return 0
+	}
+	return *p
 }
