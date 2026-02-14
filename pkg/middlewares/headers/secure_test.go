@@ -11,6 +11,8 @@ import (
 
 // Middleware tests based on https://github.com/unrolled/secure
 
+func ptrInt64(v int64) *int64 { return &v }
+
 func Test_newSecure_modifyResponse(t *testing.T) {
 	testCases := []struct {
 		desc     string
@@ -27,7 +29,7 @@ func Test_newSecure_modifyResponse(t *testing.T) {
 		{
 			desc: "STSSeconds",
 			cfg: dynamic.Headers{
-				STSSeconds:     1,
+				STSSeconds:     ptrInt64(1),
 				ForceSTSHeader: true,
 			},
 			expected: http.Header{"Strict-Transport-Security": []string{"max-age=1"}},
@@ -35,7 +37,7 @@ func Test_newSecure_modifyResponse(t *testing.T) {
 		{
 			desc: "STSSeconds and STSPreload",
 			cfg: dynamic.Headers{
-				STSSeconds:     1,
+				STSSeconds:     ptrInt64(1),
 				ForceSTSHeader: true,
 				STSPreload:     true,
 			},
