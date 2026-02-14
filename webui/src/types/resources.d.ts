@@ -19,10 +19,10 @@ declare namespace Router {
   }
 
   type TLS = {
-    options: string
+    options?: string
     certResolver: string
     domains: TlsDomain[]
-    passthrough: boolean
+    passthrough?: boolean
   }
 
   type Details = {
@@ -119,5 +119,38 @@ declare namespace Middleware {
 
   type DetailsData = Details & {
     routers?: Router.Details[]
+  }
+}
+
+declare namespace Certificate {
+  /** Raw API response shape */
+  type Raw = {
+    name?: string
+    commonName: string
+    sans: string[]
+    issuer?: string
+    issuerOrg?: string
+    issuerCN?: string
+    issuerCountry?: string
+    organization?: string
+    country?: string
+    subject?: string
+    serialNumber?: string
+    notBefore: string
+    notAfter: string
+    version?: string
+    keyType?: string
+    keySize?: number
+    signatureAlgorithm?: string
+    certFingerprint?: string
+    publicKeyFingerprint?: string
+    status?: 'enabled' | 'disabled' | 'warning'
+    resolver?: string
+    usedBy?: string[]
+  }
+
+  /** Enriched certificate with computed fields */
+  type Info = Raw & {
+    daysLeft: number
   }
 }
