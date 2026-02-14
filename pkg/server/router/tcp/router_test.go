@@ -159,7 +159,7 @@ func Test_Routing(t *testing.T) {
 	middlewaresBuilder := tcpmiddleware.NewBuilder(conf.TCPMiddlewares)
 
 	manager := NewManager(conf, serviceManager, middlewaresBuilder,
-		nil, nil, tlsManager, nil)
+		nil, nil, tlsManager, nil, nil)
 
 	type checkCase struct {
 		checkRouter
