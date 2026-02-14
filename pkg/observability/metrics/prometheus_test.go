@@ -151,6 +151,10 @@ func TestPrometheus(t *testing.T) {
 		RouterReqsBytesCounter().
 		With("router", "demo", "service", "service1", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet, "protocol", "http").
 		Add(1)
+	prometheusRegistry.
+		RouterOpenConnectionsGauge().
+		With("router", "demo", "service", "service1").
+		Set(1)
 
 	prometheusRegistry.
 		ServiceReqsCounter().
@@ -310,6 +314,14 @@ func TestPrometheus(t *testing.T) {
 				"router":   "demo",
 			},
 			assert: buildCounterAssert(t, routerRespsBytesTotalName, 1),
+		},
+		{
+			name: routerOpenConnectionsName,
+			labels: map[string]string{
+				"router":  "demo",
+				"service": "service1",
+			},
+			assert: buildGaugeAssert(t, routerOpenConnectionsName, 1),
 		},
 		{
 			name: serviceReqsTotalName,

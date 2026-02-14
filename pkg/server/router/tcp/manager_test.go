@@ -367,7 +367,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 			middlewaresBuilder := tcpmiddleware.NewBuilder(conf.TCPMiddlewares)
 
 			routerManager := NewManager(conf, serviceManager, middlewaresBuilder,
-				nil, nil, tlsManager)
+				nil, nil, tlsManager, nil)
 
 			_ = routerManager.BuildHandlers(t.Context(), entryPoints)
 
@@ -668,7 +668,7 @@ func TestDomainFronting(t *testing.T) {
 
 			middlewaresBuilder := tcpmiddleware.NewBuilder(conf.TCPMiddlewares)
 
-			routerManager := NewManager(conf, serviceManager, middlewaresBuilder, nil, httpsHandler, tlsManager)
+			routerManager := NewManager(conf, serviceManager, middlewaresBuilder, nil, httpsHandler, tlsManager, nil)
 
 			routers := routerManager.BuildHandlers(t.Context(), entryPoints)
 
