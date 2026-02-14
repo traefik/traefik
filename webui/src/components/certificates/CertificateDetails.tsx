@@ -1,150 +1,115 @@
-import { Badge, Box, Flex, Grid, Text } from '@traefiklabs/faency'
+import { Badge, Box, Flex, Link, Text } from '@traefiklabs/faency'
+import { useMemo } from 'react'
 
-// Matches the API response structure exactly
-export interface CertificateInfo {
-  commonName: string
-  sans: string[]
-  issuerOrg?: string
-  issuerCN?: string
-  issuerCountry?: string
-  organization?: string
-  country?: string
-  serialNumber?: string
-  notBefore: string
-  notAfter: string
-  daysLeft: number
-  version?: string
-  keyType?: string
-  keySize?: number
-  signatureAlgorithm?: string
-  certFingerprint?: string
-  publicKeyFingerprint?: string
-  status?: string
-  resolver?: string
-}
+import CertExpiryBadge, { getCertExpiryStatus } from 'components/certificates/CertExpiryBadge'
+import DetailsCard, { SectionTitle, ValText } from 'components/resources/DetailsCard'
 
-interface CertificateDetailsProps {
-  certificate: CertificateInfo
-}
-
-const getCertStatusColor = (daysLeft: number) => {
-  if (daysLeft < 0) return { variant: 'red' as const, label: 'EXPIRED' }
-  if (daysLeft < 30) return { variant: 'orange' as const, label: 'Expiring Soon' }
-  return { variant: 'green' as const, label: 'Valid' }
-}
-
-export const CertificateDetails = ({ certificate }: CertificateDetailsProps) => {
+export const CertificateDetails = ({ certificate }: { certificate: Certificate.Info }) => {
   const validFrom = new Date(certificate.notBefore)
   const validUntil = new Date(certificate.notAfter)
+  const certStatus = useMemo(() => getCertExpiryStatus(certificate.daysLeft), [certificate.daysLeft])
+
+  const issuedToItems = [
+    {
+      key: 'Common Name',
+      val: (
+        <Link variant="blue" href={`//${certificate.commonName}`} target="_blank" rel="noopener noreferrer" css={{ fontSize: 'inherit' }}>
+          {certificate.commonName}
+        </Link>
+      ),
+    },
+    {
+      key: 'Status',
+      val: (
+        <Badge size="large" variant={certStatus.variant}>
+          {certStatus.label}
+        </Badge>
+      ),
+    },
+    {
+      key: 'Subject Alternative Names',
+      val: (
+        <Box>
+          {certificate.sans.map((san, idx) => (
+            <Box key={idx}>
+              {san.startsWith('*.') ? (
+                <ValText>{san}</ValText>
+              ) : (
+                <Link variant="blue" href={`//${san}`} target="_blank" rel="noopener noreferrer">
+                  {san}
+                </Link>
+              )}
+            </Box>
+          ))}
+        </Box>
+      ),
+    },
+    { key: 'Organization', val: certificate.organization || '-' },
+    { key: 'Country', val: certificate.country || '-' },
+  ]
+
+  const issuedByItems = [
+    { key: 'Common Name', val: certificate.issuerCN || '-' },
+    { key: 'Organization', val: certificate.issuerOrg || '-' },
+    { key: 'Country', val: certificate.issuerCountry || '-' },
+  ]
+
+  const validityItems = [
+    { key: 'Valid From', val: validFrom.toLocaleString() },
+    { key: 'Valid Until', val: validUntil.toLocaleString() },
+    {
+      key: 'Expiry',
+      val: <CertExpiryBadge daysLeft={certificate.daysLeft} />,
+    },
+  ]
+
+  const technicalItems = [
+    certificate.version && { key: 'Version', val: certificate.version },
+    { key: 'Serial Number', val: certificate.serialNumber || 'N/A' },
+    { key: 'Key Type', val: certificate.keyType || 'Unknown' },
+    { key: 'Key Size', val: `${certificate.keySize || 0} bits` },
+    { key: 'Signature Algorithm', val: certificate.signatureAlgorithm || 'Unknown' },
+  ].filter(Boolean) as { key: string; val: string | React.ReactElement }[]
+
+  const fingerprintItems = [
+    { key: 'Certificate', val: certificate.certFingerprint || 'N/A' },
+    { key: 'Public Key', val: certificate.publicKeyFingerprint || 'N/A' },
+  ]
+
+  const allItems = [
+    ...issuedToItems,
+    { key: 'Issuer CN', val: certificate.issuerCN || '-' },
+    { key: 'Issuer Organization', val: certificate.issuerOrg || '-' },
+    { key: 'Issuer Country', val: certificate.issuerCountry || '-' },
+    ...validityItems,
+    ...technicalItems,
+    { key: 'Certificate Fingerprint', val: certificate.certFingerprint || 'N/A' },
+    { key: 'Public Key Fingerprint', val: certificate.publicKeyFingerprint || 'N/A' },
+  ] as { key: string; val: string | React.ReactElement }[]
 
   return (
-    <Flex direction="column" gap={4}>
-      <Box>
-        <Text css={{ fontWeight: 600, mb: '$3' }}>Issued To</Text>
-        <Grid css={{ gridTemplateColumns: '200px 1fr', gap: '$3' }}>
-          <Text variant="subtle">Common Name:</Text>
-          <div>
-            <a href={`//${certificate.commonName}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', display: 'inline' }}>
-              <Text css={{ color: '$primary', fontWeight: 600, '&:hover': { textDecoration: 'underline' } }}>{certificate.commonName}</Text>
-            </a>
-          </div>
-          
-          <Text variant="subtle">Status:</Text>
-          <div>
-            <Badge size="small" variant={getCertStatusColor(certificate.daysLeft).variant}>
-              {getCertStatusColor(certificate.daysLeft).label}
-            </Badge>
-          </div>
-          
-          <Text variant="subtle">Subject Alternative Names:</Text>
-          <div>
-            {certificate.sans.map((san, idx) => (
-              <div key={idx}>
-                {san.startsWith('*.') ? (
-                  <Text>{san}</Text>
-                ) : (
-                  <a href={`//${san}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', display: 'inline-block' }}>
-                    <Text css={{ color: '$primary', '&:hover': { textDecoration: 'underline' } }}>{san}</Text>
-                  </a>
-                )}
-              </div>
-            ))}
-          </div>
-          
-          <Text variant="subtle">Organization:</Text>
-          <Text>{certificate.organization || '-'}</Text>
-          
-          <Text variant="subtle">Country:</Text>
-          <Text>{certificate.country || '-'}</Text>
-        </Grid>
-      </Box>
+    <Flex direction="column" gap={2}>
+      {/* Variant 1: Single DetailsCard with all items */}
+      {/*<DetailsCard title="Certificate" items={allItems} keyColumns={1} />*/}
 
-      <Box>
-        <Text css={{ fontWeight: 600, mb: '$3' }}>Issued By</Text>
-        <Grid css={{ gridTemplateColumns: '200px 1fr', gap: '$3' }}>
-          <Text variant="subtle">Common Name:</Text>
-          <Text>{certificate.issuerCN || '-'}</Text>
-          
-          <Text variant="subtle">Organization:</Text>
-          <Text>{certificate.issuerOrg || '-'}</Text>
-          
-          <Text variant="subtle">Country:</Text>
-          <Text>{certificate.issuerCountry || '-'}</Text>
-        </Grid>
-      </Box>
+      {/* Variant 2: SectionTitle + DetailsCard (like TlsSection) */}
+      {/* <SectionTitle title="Issued To" />
+      <DetailsCard items={issuedToItems} keyColumns={1} />
+      <SectionTitle title="Issued By" />
+      <DetailsCard items={issuedByItems} keyColumns={1} />
+      <SectionTitle title="Validity" />
+      <DetailsCard items={validityItems} keyColumns={1} />
+      <SectionTitle title="Technical Details" />
+      <DetailsCard items={technicalItems} keyColumns={1} />
+      <SectionTitle title="SHA-256 Fingerprints" />
+      <DetailsCard items={fingerprintItems} keyColumns={1} /> */}
 
-      <Box>
-        <Text css={{ fontWeight: 600, mb: '$3' }}>Validity</Text>
-        <Grid css={{ gridTemplateColumns: '200px 1fr', gap: '$3' }}>
-          <Text variant="subtle">Valid From:</Text>
-          <Text>{validFrom.toLocaleString()}</Text>
-          
-          <Text variant="subtle">Valid Until:</Text>
-          <Text>{validUntil.toLocaleString()}</Text>
-          
-          <Text variant="subtle">Expiry:</Text>
-          <div>
-            <Badge size="small" variant={getCertStatusColor(certificate.daysLeft).variant}>
-              {certificate.daysLeft < 0 ? 'EXPIRED' : `${certificate.daysLeft} days left`}
-            </Badge>
-          </div>
-        </Grid>
-      </Box>
-
-      <Box>
-        <Text css={{ fontWeight: 600, mb: '$3' }}>Technical Details</Text>
-        <Grid css={{ gridTemplateColumns: '200px 1fr', gap: '$3' }}>
-          {certificate.version && (
-            <>
-              <Text variant="subtle">Version:</Text>
-              <Text>{certificate.version}</Text>
-            </>
-          )}
-          
-          <Text variant="subtle">Serial Number:</Text>
-          <Text css={{ fontFamily: 'monospace', fontSize: '$2' }}>{certificate.serialNumber || 'N/A'}</Text>
-          
-          <Text variant="subtle">Key Type:</Text>
-          <Text>{certificate.keyType || 'Unknown'}</Text>
-          
-          <Text variant="subtle">Key Size:</Text>
-          <Text>{certificate.keySize || 0} bits</Text>
-          
-          <Text variant="subtle">Signature Algorithm:</Text>
-          <Text>{certificate.signatureAlgorithm || 'Unknown'}</Text>
-        </Grid>
-      </Box>
-
-      <Box>
-        <Text css={{ fontWeight: 600, mb: '$3' }}>SHA-256 Fingerprints</Text>
-        <Grid css={{ gridTemplateColumns: '200px 1fr', gap: '$3' }}>
-          <Text variant="subtle">Certificate:</Text>
-          <Text css={{ fontFamily: 'monospace', fontSize: '$2' }}>{certificate.certFingerprint || 'N/A'}</Text>
-          
-          <Text variant="subtle">Public Key:</Text>
-          <Text css={{ fontFamily: 'monospace', fontSize: '$2' }}>{certificate.publicKeyFingerprint || 'N/A'}</Text>
-        </Grid>
-      </Box>
+      {/* Variant 3: DetailsCard with title prop and minKeyWidth */}
+      <DetailsCard title="Issued To" items={issuedToItems} keyColumns={1} minKeyWidth="200px" />
+      <DetailsCard title="Issued By" items={issuedByItems} keyColumns={1} minKeyWidth="200px" />
+      <DetailsCard title="Validity" items={validityItems} keyColumns={1} minKeyWidth="200px" />
+      <DetailsCard title="Technical Details" items={technicalItems} keyColumns={1} minKeyWidth="200px" />
+      <DetailsCard title="SHA-256 Fingerprints" items={fingerprintItems} keyColumns={1} minKeyWidth="200px" />
     </Flex>
   )
 }

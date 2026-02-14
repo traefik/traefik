@@ -1,9 +1,10 @@
-import { AriaTable, AriaTbody, AriaTd, AriaTfoot, AriaThead, AriaTr, Flex, Text, Badge } from '@traefiklabs/faency'
+import { AriaTable, AriaTbody, AriaTd, AriaTfoot, AriaThead, AriaTr, Flex, Text } from '@traefiklabs/faency'
 import { useMemo } from 'react'
 import useInfiniteScroll from 'react-infinite-scroll-hook'
 import { useSearchParams } from 'react-router-dom'
 
 import { ScrollTopButton } from 'components/buttons/ScrollTopButton'
+import CertExpiryBadge from 'components/certificates/CertExpiryBadge'
 import { ResourceStatus } from 'components/resources/ResourceStatus'
 import { SpinnerLoader } from 'components/SpinnerLoader'
 import ClickableRow from 'components/tables/ClickableRow'
@@ -13,12 +14,6 @@ import TooltipText from 'components/TooltipText'
 import useFetchWithPagination, { pagesResponseInterface, RenderRowType } from 'hooks/use-fetch-with-pagination'
 import { EmptyPlaceholderTd } from 'layout/EmptyPlaceholder'
 import PageTitle from 'layout/PageTitle'
-
-const getExpiryColor = (daysLeft: number) => {
-  if (daysLeft < 0) return 'red'
-  if (daysLeft < 14) return 'orange'
-  return 'green'
-}
 
 export const CertificateRenderRow: RenderRowType = (row: unknown) => {
   const cert = row as {
@@ -32,7 +27,6 @@ export const CertificateRenderRow: RenderRowType = (row: unknown) => {
   const daysLeft = cert.notAfter
     ? Math.floor((new Date(cert.notAfter).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
     : 0
-  const colors = getExpiryColor(daysLeft)
   const validUntil = cert.notAfter ? new Date(cert.notAfter).toLocaleDateString() : 'Unknown'
   const certKey = cert.name || cert.commonName // Use name (certKey) if available, fallback to commonName
 
@@ -51,9 +45,7 @@ export const CertificateRenderRow: RenderRowType = (row: unknown) => {
         <Text>{validUntil}</Text>
       </AriaTd>
       <AriaTd>
-        <Badge size="small" variant={colors}>
-          {daysLeft < 0 ? 'EXPIRED' : `${daysLeft} days`}
-        </Badge>
+        <CertExpiryBadge daysLeft={daysLeft} size="small" />
       </AriaTd>
     </ClickableRow>
   )
@@ -80,8 +72,8 @@ export const CertificatesRender = ({
         <AriaThead>
           <AriaTr>
             <SortableTh label="Status" isSortable sortByValue="status" css={{ width: '36px' }} />
-            <SortableTh label="Common Name" isSortable sortByValue="cn" />
-            <SortableTh label="Issuer" isSortable sortByValue="issuer" css={{ width: '120px' }} />
+            <SortableTh label="Common Name" isSortable sortByValue="cn" css={{ width: '45%' }} />
+            <SortableTh label="Issuer" isSortable sortByValue="issuer" css={{ width: '30%' }} />
             <SortableTh label="Valid Until" isSortable sortByValue="validUntil" css={{ width: '100px' }} />
             <SortableTh label="Expiry" css={{ width: '100px' }} />
           </AriaTr>

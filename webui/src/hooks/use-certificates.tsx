@@ -1,31 +1,6 @@
 import { useMemo } from 'react'
 import useSWR from 'swr'
 
-export interface Certificate {
-  name?: string // certKey (sorted SANs joined with comma)
-  sans: string[]
-  notAfter: string
-  notBefore: string
-  serialNumber?: string
-  commonName: string
-  issuer?: string
-  issuerOrg?: string
-  issuerCN?: string
-  issuerCountry?: string
-  organization?: string
-  country?: string
-  subject?: string
-  version?: string
-  keyType?: string
-  keySize?: number
-  signatureAlgorithm?: string
-  certFingerprint?: string
-  publicKeyFingerprint?: string
-  status?: 'enabled' | 'disabled' | 'warning'
-  resolver?: string
-  usedBy?: string[]
-}
-
 /**
  * Build a certificate key from domains (main + SANs)
  * Returns base64-encoded string of sorted, comma-separated domains
@@ -39,14 +14,13 @@ export const buildCertKey = (main: string, sans?: string[]): string => {
 }
 
 export const useCertificates = () => {
-  const { data, error } = useSWR<Certificate[]>('/certificates')
+  const { data, error } = useSWR<Certificate.Raw[]>('/certificates')
 
-  const certificates = useMemo(() => {
+  const certificates: Certificate.Info[] = useMemo(() => {
     if (!data) return []
-    
+
     return data.map(cert => ({
       ...cert,
-      // Calculate days left from notAfter
       daysLeft: cert.notAfter
         ? Math.floor((new Date(cert.notAfter).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
         : 0,
@@ -61,11 +35,11 @@ export const useCertificates = () => {
 }
 
 export const useCertificate = (certKey: string) => {
-  const { data, error } = useSWR<Certificate>(
+  const { data, error } = useSWR<Certificate.Raw>(
     certKey ? `/certificates/${encodeURIComponent(certKey)}` : null
   )
 
-  const certificate = useMemo(() => {
+  const certificate: Certificate.Info | null = useMemo(() => {
     if (!data) return null
 
     return {

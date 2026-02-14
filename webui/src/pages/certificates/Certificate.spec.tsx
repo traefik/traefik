@@ -10,12 +10,12 @@ describe('<CertificatePage />', () => {
       isLoading: true,
     }))
 
-    const { getByText } = renderWithProviders(<Certificate />, {
+    const { getByTestId } = renderWithProviders(<Certificate />, {
       route: '/certificates/dW5rbm93bi1jZXJ0LWtleQ==',
       withPage: true,
     })
-    
-    expect(getByText('Loading certificate...')).toBeInTheDocument()
+
+    expect(getByTestId('skeleton')).toBeInTheDocument()
   })
 
   it('should render error message when API returns error', () => {
@@ -25,27 +25,27 @@ describe('<CertificatePage />', () => {
       isLoading: false,
     }))
 
-    const { getByText } = renderWithProviders(<Certificate />, {
+    const { getByTestId } = renderWithProviders(<Certificate />, {
       route: '/certificates/c29tZS1jZXJ0',
       withPage: true,
     })
 
-    expect(getByText('Error loading certificate: Internal Server Error')).toBeInTheDocument()
+    expect(getByTestId('error-text')).toBeInTheDocument()
   })
 
-  it('should render "Certificate not found" when certificate is null', () => {
+  it('should render not found page when certificate is null', () => {
     vi.spyOn(useCertificates, 'useCertificate').mockImplementation(() => ({
       certificate: null,
       error: null,
       isLoading: false,
     }))
 
-    const { getByText } = renderWithProviders(<Certificate />, {
+    const { getByTestId } = renderWithProviders(<Certificate />, {
       route: '/certificates/bm90Zm91bmQ=',
       withPage: true,
     })
 
-    expect(getByText('Certificate not found')).toBeInTheDocument()
+    expect(getByTestId('Not found page')).toBeInTheDocument()
   })
 
   it('should render certificate details successfully', () => {
