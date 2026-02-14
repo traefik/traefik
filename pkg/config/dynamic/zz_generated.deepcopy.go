@@ -680,6 +680,11 @@ func (in *Headers) DeepCopyInto(out *Headers) {
 		*out = new(bool)
 		**out = **in
 	}
+	if in.STSSeconds != nil {
+		in, out := &in.STSSeconds, &out.STSSeconds
+		*out = new(int64)
+		**out = **in
+	}
 	return
 }
 

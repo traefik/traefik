@@ -24,6 +24,14 @@ func TestNew_withoutOptions(t *testing.T) {
 	assert.Nil(t, mid)
 }
 
+func TestNew_withSTSSecondsZero(t *testing.T) {
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) })
+
+	mid, err := New(t.Context(), next, dynamic.Headers{STSSeconds: ptrInt64(0)}, "testing")
+	require.NoError(t, err)
+	assert.NotNil(t, mid)
+}
+
 func TestNew_allowedHosts(t *testing.T) {
 	testCases := []struct {
 		desc     string

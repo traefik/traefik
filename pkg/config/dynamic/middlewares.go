@@ -329,7 +329,7 @@ type Headers struct {
 	// STSSeconds defines the max-age of the Strict-Transport-Security header.
 	// If set to 0, the header is not set.
 	// +kubebuilder:validation:Minimum=0
-	STSSeconds int64 `json:"stsSeconds,omitempty" toml:"stsSeconds,omitempty" yaml:"stsSeconds,omitempty" export:"true"`
+	STSSeconds *int64 `json:"stsSeconds,omitempty" toml:"stsSeconds,omitempty" yaml:"stsSeconds,omitempty" export:"true"`
 	// STSIncludeSubdomains defines whether the includeSubDomains directive is appended to the Strict-Transport-Security header.
 	STSIncludeSubdomains bool `json:"stsIncludeSubdomains,omitempty" toml:"stsIncludeSubdomains,omitempty" yaml:"stsIncludeSubdomains,omitempty" export:"true"`
 	// STSPreload defines whether the preload flag is appended to the Strict-Transport-Security header.
@@ -405,7 +405,7 @@ func (h *Headers) HasSecureHeadersDefined() bool {
 		(h.SSLForceHost != nil && *h.SSLForceHost) ||
 		(h.SSLHost != nil && *h.SSLHost != "") ||
 		len(h.SSLProxyHeaders) != 0 ||
-		h.STSSeconds != 0 ||
+		h.STSSeconds != nil ||
 		h.STSIncludeSubdomains ||
 		h.STSPreload ||
 		h.ForceSTSHeader ||
