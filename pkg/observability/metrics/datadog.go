@@ -45,6 +45,7 @@ const (
 	ddRouterReqsDurationName = "router.request.duration"
 	ddRouterReqsBytesName    = "router.requests.bytes.total"
 	ddRouterRespsBytesName   = "router.responses.bytes.total"
+	ddRouterOpenConnsName    = "router.open.connections"
 
 	ddServiceReqsName         = "service.request.total"
 	ddServiceReqsTLSName      = "service.request.tls.total"
@@ -93,6 +94,7 @@ func RegisterDatadog(ctx context.Context, config *otypes.Datadog) Registry {
 		registry.routerReqDurationHistogram, _ = NewHistogramWithScale(datadogClient.NewHistogram(ddRouterReqsDurationName, 1.0), time.Second)
 		registry.routerReqsBytesCounter = datadogClient.NewCounter(ddRouterReqsBytesName, 1.0)
 		registry.routerRespsBytesCounter = datadogClient.NewCounter(ddRouterRespsBytesName, 1.0)
+		registry.routerOpenConnectionsGauge = datadogClient.NewGauge(ddRouterOpenConnsName)
 	}
 
 	if config.AddServicesLabels {
