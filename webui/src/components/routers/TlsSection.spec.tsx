@@ -4,10 +4,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import TlsSection from './TlsSection'
 
 import * as useCertificates from '../../hooks/use-certificates'
-import { CertificateInfo } from '../certificates/CertificateDetails'
 import { renderWithProviders } from 'utils/test'
 
-const mockCertificate: CertificateInfo = {
+const mockCertificate: Certificate.Info = {
   commonName: 'example.com',
   sans: ['www.example.com'],
   notAfter: '2025-12-31T23:59:59Z',

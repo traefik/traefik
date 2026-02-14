@@ -16,19 +16,10 @@ type Props = {
 }
 
 // Extract domains from router rule (e.g., Host(`example.com`) || Host(`www.example.com`))
-const extractDomainsFromRule = (rule: string): string[] => {
-  const domains: string[] = []
-  const hostRegex = /Host(?:SNI|Regexp)?\(`([^`]+)`\)/g
-  let match
-  while ((match = hostRegex.exec(rule)) !== null) {
-    const domain = match[1]
-    // Filter out regex patterns and wildcards
-    if (!domain.includes('{') && !domain.includes('*') && !domain.includes('[')) {
-      domains.push(domain)
-    }
-  }
-  return domains
-}
+const extractDomainsFromRule = (rule: string): string[] =>
+  [...rule.matchAll(/Host(?:SNI|Regexp)?\(`([^`]+)`\)/g)]
+    .map(([, domain]) => domain)
+    .filter((domain) => !/[{*[]/.test(domain))
 
 const TlsSection = ({ data, rule }: Props) => {
   // Build display domains from explicit config or extract from rule if using certResolver
@@ -37,13 +28,13 @@ const TlsSection = ({ data, rule }: Props) => {
     if (data?.domains && data.domains.length > 0) {
       return data.domains
     }
-    
+
     // 2. If certResolver is set but no explicit domains, extract from rule
     if (data?.certResolver && rule) {
       const extracted = extractDomainsFromRule(rule)
       return extracted.map(domain => ({ main: domain, sans: [] as string[] }))
     }
-    
+
     return []
   }, [data?.certResolver, data?.domains, rule])
 
@@ -63,7 +54,7 @@ const TlsSection = ({ data, rule }: Props) => {
       {items?.length || displayDomains?.length ? (
         <>
           {items && items.length > 0 && <DetailsCard items={items} />}
-          
+
           {displayDomains && displayDomains.length > 0 && (
             <Card css={{ p: '$4' }}>
               {displayDomains.length === 1 ? (

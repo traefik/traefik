@@ -1,35 +1,55 @@
-import { Card, H2 } from '@traefiklabs/faency'
+import { Box, Card, Flex, H1, Skeleton, Text } from '@traefiklabs/faency'
 import { useParams } from 'react-router-dom'
 
 import { CertificateDetails } from '../../components/certificates/CertificateDetails'
 import { useCertificate } from '../../hooks/use-certificates'
 
+import { DetailsCardSkeleton } from 'components/resources/DetailsCard'
+import { ResourceStatus } from 'components/resources/ResourceStatus'
 import PageTitle from 'layout/PageTitle'
+import { NotFound } from 'pages/NotFound'
 
 export const Certificate = () => {
   const { name } = useParams<{ name: string }>()
   const { certificate, isLoading, error } = useCertificate(name || '')
 
   if (isLoading) {
-    return <div>Loading certificate...</div>
+    return (
+      <Box>
+        <PageTitle title={name || ''} />
+        <Skeleton css={{ height: '$7', width: '320px', mb: '$7' }} data-testid="skeleton" />
+        <Flex direction="column" gap={6}>
+          <DetailsCardSkeleton />
+        </Flex>
+      </Box>
+    )
   }
 
   if (error) {
-    return <div>Error loading certificate: {error.message}</div>
+    return (
+      <>
+        <PageTitle title={certificate?.commonName || name || ''} />
+        <Text data-testid="error-text">
+          Sorry, we could not fetch detail information for this Certificate right now. Please, try again later.
+        </Text>
+      </>
+    )
   }
 
   if (!certificate) {
-    return <div>Certificate not found</div>
+    return <NotFound />
   }
 
   return (
-    <div>
+    <>
       <PageTitle title={`Certificate: ${certificate.commonName}`} />
-      
+      <Flex gap={2} align="center"  css={{ mb: '$4' }}>
+        <H1>{certificate.commonName}</H1>
+        <ResourceStatus status={certificate.status || 'disabled'} />
+      </Flex>
       <Card css={{ p: '$4' }}>
-        <H2 css={{ mb: '$4' }}>Certificate</H2>
         <CertificateDetails certificate={certificate} />
       </Card>
-    </div>
+    </>
   )
 }
