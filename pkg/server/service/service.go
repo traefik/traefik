@@ -210,24 +210,29 @@ func (m *Manager) LaunchHealthCheck(ctx context.Context) {
 }
 
 func (m *Manager) getFailoverServiceHandler(ctx context.Context, serviceName string, config *dynamic.Failover) (http.Handler, error) {
-	f := failover.New(config.HealthCheck)
-
 	serviceHandler, err := m.BuildHTTP(ctx, config.Service)
 	if err != nil {
 		return nil, err
 	}
 
-	f.SetHandler(serviceHandler)
-
-	updater, ok := serviceHandler.(healthcheck.StatusUpdater)
-	if !ok {
+	updater, implementUpdater := serviceHandler.(healthcheck.StatusUpdater)
+	isErrorDefined := config.Errors != nil && len(config.Errors.Status) > 0
+	if !implementUpdater && !isErrorDefined {
 		return nil, fmt.Errorf("child service %v of %v not a healthcheck.StatusUpdater (%T)", config.Service, serviceName, serviceHandler)
 	}
 
-	if err := updater.RegisterStatusUpdater(func(up bool) {
-		f.SetHandlerStatus(ctx, up)
-	}); err != nil {
-		return nil, fmt.Errorf("cannot register %v as updater for %v: %w", config.Service, serviceName, err)
+	f, err := failover.New(config)
+	if err != nil {
+		return nil, fmt.Errorf("error creating failover service %v: %w", serviceName, err)
+	}
+	f.SetHandler(serviceHandler)
+
+	if implementUpdater {
+		if err := updater.RegisterStatusUpdater(func(up bool) {
+			f.SetHandlerStatus(ctx, up)
+		}); err != nil && !isErrorDefined {
+			return nil, fmt.Errorf("cannot register %v as updater for %v: %w", config.Service, serviceName, err)
+		}
 	}
 
 	fallbackHandler, err := m.BuildHTTP(ctx, config.Fallback)
@@ -242,8 +247,8 @@ func (m *Manager) getFailoverServiceHandler(ctx context.Context, serviceName str
 		return f, nil
 	}
 
-	fallbackUpdater, ok := fallbackHandler.(healthcheck.StatusUpdater)
-	if !ok {
+	fallbackUpdater, implementUpdater := fallbackHandler.(healthcheck.StatusUpdater)
+	if !implementUpdater {
 		return nil, fmt.Errorf("child service %v of %v not a healthcheck.StatusUpdater (%T)", config.Fallback, serviceName, fallbackHandler)
 	}
 

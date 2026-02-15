@@ -41,6 +41,20 @@ tls:
     It is the only available method to configure the certificates (as well as the options and the stores).
     However, in [Kubernetes](../../../install-configuration/providers/kubernetes/kubernetes-crd.md), the certificates can and must be provided by [secrets](https://kubernetes.io/docs/concepts/configuration/secret/).
 
+#### Certificate selection (SNI)
+
+Traefik selects the certificate to present during the TLS handshake, based on the Server Name Indication (SNI) sent by the client.
+
+However, HTTP router rules (e.g., `Host()`) are evaluated after TLS has been established, so they do not influence certificate selection.
+
+##### Strict SNI Checking
+
+By default, if the client does not send SNI, or if no certificate matches the requested server name,
+Traefik falls back to the [default certificate](#default-certificate) from the TLS store (if configured).
+
+To reject connections without SNI (or with an unknown server name) instead of falling back to the default certificate,
+enable `sniStrict` in [TLS Options](./tls-options.md#strict-sni-checking).
+
 ## Certificates Stores
 
 In Traefik, certificates are grouped together in certificates stores.
@@ -81,6 +95,12 @@ tls:
 !!! important "Restriction"
 
     The `stores` list will actually be ignored and automatically set to `["default"]`.
+
+!!! tip "Per provider examples"
+
+    - [Docker: Enable TLS](../../../../expose/docker/basic.md#enable-tls)
+    - [Swarm: Enable TLS](../../../../expose/swarm/basic.md#enable-tls)
+    - [Kubernetes: Enable TLS](../../../../expose/kubernetes/basic.md#enable-tls)
 
 ### Default Certificate
 
