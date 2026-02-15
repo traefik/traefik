@@ -1,12 +1,15 @@
 package compress
 
 import (
+	"bufio"
 	"context"
 	"errors"
 	"fmt"
 	"mime"
+	"net"
 	"net/http"
 	"slices"
+	"strings"
 
 	"github.com/andybalholm/brotli"
 	"github.com/klauspost/compress/gzhttp"
@@ -178,9 +181,80 @@ func (c *compress) chooseHandler(typ string, rw http.ResponseWriter, req *http.R
 	case brotliName:
 		c.brotliHandler.ServeHTTP(rw, req)
 	case gzipName:
-		c.gzipHandler.ServeHTTP(rw, req)
+		c.gzipHandler.ServeHTTP(&deduplicateVaryWriter{ResponseWriter: rw}, req)
 	default:
 		c.next.ServeHTTP(rw, req)
+	}
+}
+
+// deduplicateVaryWriter is a ResponseWriter wrapper that deduplicates
+// the Vary header values before they are sent.
+// This is needed because the gzhttp library unconditionally adds
+// "Vary: Accept-Encoding", which causes duplicates when the backend
+// has already set it.
+type deduplicateVaryWriter struct {
+	http.ResponseWriter
+	headersSent bool
+}
+
+func (w *deduplicateVaryWriter) WriteHeader(statusCode int) {
+	if !w.headersSent {
+		w.headersSent = true
+		deduplicateVary(w.ResponseWriter.Header())
+	}
+	w.ResponseWriter.WriteHeader(statusCode)
+}
+
+func (w *deduplicateVaryWriter) Write(p []byte) (int, error) {
+	if !w.headersSent {
+		w.headersSent = true
+		deduplicateVary(w.ResponseWriter.Header())
+	}
+	return w.ResponseWriter.Write(p)
+}
+
+// Flush implements http.Flusher.
+func (w *deduplicateVaryWriter) Flush() {
+	if f, ok := w.ResponseWriter.(http.Flusher); ok {
+		if !w.headersSent {
+			w.headersSent = true
+			deduplicateVary(w.ResponseWriter.Header())
+		}
+		f.Flush()
+	}
+}
+
+// Hijack implements http.Hijacker.
+func (w *deduplicateVaryWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	if h, ok := w.ResponseWriter.(http.Hijacker); ok {
+		return h.Hijack()
+	}
+	return nil, nil, fmt.Errorf("%T is not a http.Hijacker", w.ResponseWriter)
+}
+
+// deduplicateVary removes duplicate values from the Vary header.
+func deduplicateVary(h http.Header) {
+	varyValues := h.Values("Vary")
+	if len(varyValues) <= 1 {
+		return
+	}
+
+	seen := make(map[string]struct{})
+	var unique []string
+	for _, v := range varyValues {
+		for _, item := range strings.Split(v, ",") {
+			normalized := strings.TrimSpace(item)
+			lower := strings.ToLower(normalized)
+			if _, ok := seen[lower]; !ok {
+				seen[lower] = struct{}{}
+				unique = append(unique, normalized)
+			}
+		}
+	}
+
+	h.Del("Vary")
+	for _, v := range unique {
+		h.Add("Vary", v)
 	}
 }
 
