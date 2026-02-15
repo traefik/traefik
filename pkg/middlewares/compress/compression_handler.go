@@ -8,6 +8,7 @@ import (
 	"mime"
 	"net"
 	"net/http"
+	"strings"
 	"sync"
 
 	"github.com/traefik/traefik/v3/pkg/middlewares"
@@ -111,7 +112,6 @@ func NewCompressionHandler(cfg Config, newWriter NewCompressionWriter, next http
 }
 
 func (c *CompressionHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	rw.Header().Add(vary, acceptEncoding)
 
 	compressionWriter, err := c.getCompressionWriter(rw)
 	if err != nil {
@@ -227,6 +227,7 @@ func (r *responseWriter) Write(p []byte) (int, error) {
 	// If we detect a contentEncoding, we know we are never going to compress.
 	if r.rw.Header().Get(contentEncoding) != "" {
 		r.compressionDisabled = true
+		r.ensureVaryHeader()
 		r.rw.WriteHeader(r.statusCode)
 		return r.rw.Write(p)
 	}
@@ -238,6 +239,7 @@ func (r *responseWriter) Write(p []byte) (int, error) {
 		// if the MIME type is not parsable the compression is disabled.
 		if err != nil {
 			r.compressionDisabled = true
+			r.ensureVaryHeader()
 			r.rw.WriteHeader(r.statusCode)
 			return r.rw.Write(p)
 		}
@@ -252,6 +254,7 @@ func (r *responseWriter) Write(p []byte) (int, error) {
 			}
 			if !found {
 				r.compressionDisabled = true
+				r.ensureVaryHeader()
 				r.rw.WriteHeader(r.statusCode)
 				return r.rw.Write(p)
 			}
@@ -260,6 +263,7 @@ func (r *responseWriter) Write(p []byte) (int, error) {
 		for _, excludedContentType := range r.excludedContentTypes {
 			if excludedContentType.equals(mediaType, params) {
 				r.compressionDisabled = true
+				r.ensureVaryHeader()
 				r.rw.WriteHeader(r.statusCode)
 				return r.rw.Write(p)
 			}
@@ -280,6 +284,7 @@ func (r *responseWriter) Write(p []byte) (int, error) {
 	r.rw.Header().Del(contentLength)
 
 	r.rw.Header().Set(contentEncoding, r.compressionWriter.ContentEncoding())
+	r.ensureVaryHeader()
 	r.rw.WriteHeader(r.statusCode)
 	r.headersSent = true
 
@@ -335,6 +340,7 @@ func (r *responseWriter) Flush() {
 		r.rw.Header().Del(contentLength)
 
 		r.rw.Header().Set(contentEncoding, r.compressionWriter.ContentEncoding())
+		r.ensureVaryHeader()
 		r.rw.WriteHeader(r.statusCode)
 		r.headersSent = true
 
@@ -393,6 +399,7 @@ func (r *responseWriter) close() error {
 	// We have to take care of statusCode ourselves (in case there was never any
 	// call to Write or WriteHeader before us) as it's the only header we buffer.
 	if !r.headersSent {
+		r.ensureVaryHeader()
 		r.rw.WriteHeader(r.statusCode)
 		r.headersSent = true
 	}
@@ -438,6 +445,21 @@ func (r *responseWriter) close() error {
 		return io.ErrShortWrite
 	}
 	return r.compressionWriter.Close()
+}
+
+// ensureVaryHeader adds "Accept-Encoding" to the Vary header
+// if it is not already present, to avoid duplicates when
+// the backend has already set it.
+func (r *responseWriter) ensureVaryHeader() {
+	values := r.rw.Header().Values(vary)
+	for _, v := range values {
+		for _, item := range strings.Split(v, ",") {
+			if strings.EqualFold(strings.TrimSpace(item), acceptEncoding) {
+				return
+			}
+		}
+	}
+	r.rw.Header().Add(vary, acceptEncoding)
 }
 
 // parsedContentType is the parsed representation of one of the inputs to ContentTypes.

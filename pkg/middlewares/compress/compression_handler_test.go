@@ -123,6 +123,54 @@ func Test_AlreadyCompressed(t *testing.T) {
 	}
 }
 
+
+func Test_AlreadyCompressedNoDuplicateVary(t *testing.T) {
+	testCases := []struct {
+		desc           string
+		acceptEncoding string
+		algo           string
+	}{
+		{
+			desc:           "brotli",
+			acceptEncoding: "br",
+			algo:           brotliName,
+		},
+		{
+			desc:           "zstd",
+			acceptEncoding: "zstd",
+			algo:           zstdName,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				rw.Header().Set("Content-Encoding", test.algo)
+				rw.Header().Set("Vary", "Accept-Encoding")
+				rw.WriteHeader(http.StatusAccepted)
+				_, err := rw.Write(bigTestBody)
+				require.NoError(t, err)
+			})
+
+			h := mustNewCompressionHandler(t, Config{MinSize: 1024, MiddlewareName: "Compress"}, test.algo, next)
+
+			req, _ := http.NewRequest(http.MethodGet, "/compressed", nil)
+			req.Header.Set(acceptEncoding, test.acceptEncoding)
+
+			rw := httptest.NewRecorder()
+			h.ServeHTTP(rw, req)
+
+			assert.Equal(t, http.StatusAccepted, rw.Code)
+			// The Vary header should not be duplicated when the backend already sets it.
+			varyValues := rw.Header().Values("Vary")
+			assert.Len(t, varyValues, 1, "Vary header should not be duplicated")
+			assert.Equal(t, "Accept-Encoding", varyValues[0])
+		})
+	}
+}
+
 func Test_NoBody(t *testing.T) {
 	testCases := []struct {
 		desc       string
