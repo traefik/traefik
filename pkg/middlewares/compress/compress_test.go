@@ -178,6 +178,56 @@ func TestShouldNotCompressWhenContentEncodingHeader(t *testing.T) {
 	assert.Equal(t, rw.Body.Bytes(), fakeCompressedBody)
 }
 
+
+func TestShouldNotDuplicateVaryHeader(t *testing.T) {
+	testCases := []struct {
+		desc           string
+		acceptEncoding string
+	}{
+		{
+			desc:           "gzip",
+			acceptEncoding: gzipName,
+		},
+		{
+			desc:           "br",
+			acceptEncoding: "br",
+		},
+		{
+			desc:           "zstd",
+			acceptEncoding: "zstd",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			fakeCompressedBody := generateBytes(gzhttp.DefaultMinSize)
+			next := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+				rw.Header().Set(contentEncodingHeader, gzipName)
+				rw.Header().Set(varyHeader, acceptEncodingHeader)
+				_, err := rw.Write(fakeCompressedBody)
+				if err != nil {
+					http.Error(rw, err.Error(), http.StatusInternalServerError)
+				}
+			})
+			handler, err := New(t.Context(), next, dynamic.Compress{Encodings: defaultSupportedEncodings}, "testing")
+			require.NoError(t, err)
+
+			req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
+			req.Header.Set(acceptEncodingHeader, test.acceptEncoding)
+
+			rw := httptest.NewRecorder()
+			handler.ServeHTTP(rw, req)
+
+			// The Vary header should not be duplicated when the backend already sets it.
+			varyValues := rw.Header().Values(varyHeader)
+			assert.Len(t, varyValues, 1, "Vary header should not be duplicated")
+			assert.Equal(t, acceptEncodingHeader, varyValues[0])
+		})
+	}
+}
+
 func TestShouldNotCompressWhenNoAcceptEncodingHeader(t *testing.T) {
 	req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
 
