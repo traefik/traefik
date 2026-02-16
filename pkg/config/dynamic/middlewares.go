@@ -755,7 +755,6 @@ type Retry struct {
 func (r *Retry) SetDefaults() {
 	defaultMaxRequestBodyBytes := RetryDefaultMaxRequestBodyBytes
 	r.MaxRequestBodyBytes = &defaultMaxRequestBodyBytes
-
 }
 
 // +k8s:deepcopy-gen=true
