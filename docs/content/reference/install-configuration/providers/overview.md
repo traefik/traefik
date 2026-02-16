@@ -141,10 +141,11 @@ If you want to limit the scope of the Traefik service discovery,
 i.e. disallow route creation for some containers,
 you can do so in two different ways:
 
-1. With [Docker](./docker.md#opt-providers-docker-exposedByDefault),
- [Swarm](./swarm.md#opt-providers-swarm-exposedByDefault),
- [ECS](./others/ecs.md#opt-providers-ecs-exposedByDefault) and
- [Consul Catalog](./hashicorp/consul-catalog.md#opt-providers-consulCatalog-exposedByDefault)
+1. With [Consul Catalog](./hashicorp/consul-catalog.md#opt-providers-consulCatalog-exposedByDefault),
+ [Docker](./docker.md#opt-providers-docker-exposedByDefault),
+ [ECS](./others/ecs.md#opt-providers-ecs-exposedByDefault),
+ [Nomad](./hashicorp/nomad.md#opt-providers-nomad-exposedByDefault) and
+ [Swarm](./swarm.md#opt-providers-swarm-exposedByDefault)
  providers, you can set `exposedByDefault` to `false` and add a label `traefik.enable=true`
  on containers you want to expose
 
@@ -152,15 +153,16 @@ you can do so in two different ways:
 
 !!! info "The following providers support constraints"
 
+    - [Consul Catalog](./hashicorp/consul-catalog.md#constraints)
     - [Docker](./docker.md#constraints)
     - [ECS](./others/ecs.md#constraints)
-    - [Consul Catalog](./hashicorp/consul-catalog.md#constraints)
     - [Nomad](./hashicorp/nomad.md#constraints)
+    - [Swarm](./swarm.md#constraints)
 
 !!! info "The following providers support label selectors"
 
     - [Kubernetes CRD](./kubernetes/kubernetes-crd.md#opt-providers-kubernetesCRD-labelselector)
-    - [Kubernetes Ingress](./kubernetes/kubernetes-ingress.md#opt-providers-kubernetesIngress-labelselector)
     - [Kubernetes Gateway API](./kubernetes/kubernetes-gateway.md#opt-providers-kubernetesGateway-labelselector)
+    - [Kubernetes Ingress](./kubernetes/kubernetes-ingress.md#opt-providers-kubernetesIngress-labelselector)
 
 {% include-markdown "includes/traefik-for-business-applications.md" %}
