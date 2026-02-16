@@ -145,10 +145,10 @@ you can do so in two different ways:
  [Swarm](./swarm.md#opt-providers-swarm-exposedByDefault),
  [ECS](./others/ecs.md#opt-providers-ecs-exposedByDefault) and
  [Consul Catalog](./hashicorp/consul-catalog.md#opt-providers-consulCatalog-exposedByDefault)
- providers, you can set `exposedByDefault` to false and add a label `traefik.enable=true`
+ providers, you can set `exposedByDefault` to `false` and add a label `traefik.enable=true`
  on containers you want to expose
 
-2. Use a finer granularity mechanism based on label selector or constraints.
+2. Use a finer-grained mechanism based on label selector or constraints.
 
 !!! info "The following providers support constraints"
 
@@ -157,7 +157,7 @@ you can do so in two different ways:
     - [Consul Catalog](./hashicorp/consul-catalog.md#constraints)
     - [Nomad](./hashicorp/nomad.md#constraints)
 
-!!! info "The following providers support label selector"
+!!! info "The following providers support label selectors"
 
     - [Kubernetes CRD](./kubernetes/kubernetes-crd.md#opt-providers-kubernetesCRD-labelselector)
     - [Kubernetes Ingress](./kubernetes/kubernetes-ingress.md#opt-providers-kubernetesIngress-labelselector)
