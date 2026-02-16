@@ -1,3 +1,61 @@
+## [v3.6.8](https://github.com/traefik/traefik/tree/v3.6.8) (2026-02-11)
+[All Commits](https://github.com/traefik/traefik/compare/v3.6.7...v3.6.8)
+
+**Bug fixes:**
+- **[acme]** Remove invalid private key in log ([#12574](https://github.com/traefik/traefik/pull/12574) by [juliens](https://github.com/juliens))
+- **[acme]** Alter TLS renewal period ([#12479](https://github.com/traefik/traefik/pull/12479) by [LtHummus](https://github.com/LtHummus))
+- **[healthcheck]** Reject absolute URL in healthcheck path configuration ([#12653](https://github.com/traefik/traefik/pull/12653) by [rtribotte](https://github.com/rtribotte))
+- **[http3]** Bump github.com/quic-go/quic-go to v0.59.0 ([#12553](https://github.com/traefik/traefik/pull/12553) by [jnoordsij](https://github.com/jnoordsij))
+- **[metrics,tracing,accesslogs]** Fix ObservabilityConfig SetDefaults  ([#12636](https://github.com/traefik/traefik/pull/12636) by [mmatur](https://github.com/mmatur))
+- **[server]** Remove conn deadline after STARTTLS negociation ([#12639](https://github.com/traefik/traefik/pull/12639) by [rtribotte](https://github.com/rtribotte))
+- **[tls]** Fix verifyServerCertMatchesURI function behavior ([#12575](https://github.com/traefik/traefik/pull/12575) by [kevinpollet](https://github.com/kevinpollet))
+- **[tracing,otel]** Use ParentBased sampler to respect parent span sampling decision ([#12403](https://github.com/traefik/traefik/pull/12403) by [xe-leon](https://github.com/xe-leon))
+- **[webui]** Use url.Parse to validate X-Forwarded-Prefix value ([#12643](https://github.com/traefik/traefik/pull/12643) by [kevinpollet](https://github.com/kevinpollet))
+- **[healthcheck]** Validate healthcheck path configuration (#12642 by @rtribotte)
+- **[tls, server]** Cap TLS record length to RFC 8446 limit in ClientHello peeking (#12638 by @mmatur)
+- **[service]** Avoid recursion with services ([#12591](https://github.com/traefik/traefik/pull/12591) by [juliens](https://github.com/juliens))
+- **[webui]** Bump dependencies of documentation and webui ([#12581](https://github.com/traefik/traefik/pull/12581) by [gndz07](https://github.com/gndz07))
+
+**Documentation:**
+- **[k8s]** Fix kubernetes.md with correct http redirections ([#12603](https://github.com/traefik/traefik/pull/12603) by [MartenM](https://github.com/MartenM))
+- **[middleware,k8s/crd]** Fix the errors middleware&#39;s document for Kubernetes CRD ([#12600](https://github.com/traefik/traefik/pull/12600) by [yuito-it](https://github.com/yuito-it))
+- **[tls]** Clarify SNI selection ([#12482](https://github.com/traefik/traefik/pull/12482) by [AnuragEkkati](https://github.com/AnuragEkkati))
+- Fix typo on JWT documentation ([#12616](https://github.com/traefik/traefik/pull/12616) by [mdevino](https://github.com/mdevino))
+- Add @gndz07 as a current maintainer ([#12594](https://github.com/traefik/traefik/pull/12594) by [emilevauge](https://github.com/emilevauge))
+- Remove extraneous dots in migration guide ([#12571](https://github.com/traefik/traefik/pull/12571) by [dathbe](https://github.com/dathbe))
+- Document Path matcher placeholder removal in v3 migration guide ([#12570](https://github.com/traefik/traefik/pull/12570) by [sheddy-traefik](https://github.com/sheddy-traefik))
+- Improve Service Reference page ([#12541](https://github.com/traefik/traefik/pull/12541) by [sheddy-traefik](https://github.com/sheddy-traefik))
+- Document negative priority support for routers ([#12505](https://github.com/traefik/traefik/pull/12505) by [understood-the-assignment](https://github.com/understood-the-assignment))
+- Improve the structure of the routing reference pages ([#12429](https://github.com/traefik/traefik/pull/12429) by [sheddy-traefik](https://github.com/sheddy-traefik))
+- Clean Up Menu Entries &amp; Update Expose Overview ([#12405](https://github.com/traefik/traefik/pull/12405) by [sheddy-traefik](https://github.com/sheddy-traefik))
+- Split Expose User Guides &amp; Add Multi-Layer Routing Section ([#12238](https://github.com/traefik/traefik/pull/12238) by [sheddy-traefik](https://github.com/sheddy-traefik))
+- Remove extra dots in migration guide ([#12573](https://github.com/traefik/traefik/pull/12573) by [rtribotte](https://github.com/rtribotte))
+
+**Misc:**
+- Merge v2.11 into v3.6 ([#12652](https://github.com/traefik/traefik/pull/12652) by [mmatur](https://github.com/mmatur))
+- Merge v2.11 into v3.6 ([#12644](https://github.com/traefik/traefik/pull/12644) by [mmatur](https://github.com/mmatur))
+- Merge branch v2.11 into v3.6 ([#12617](https://github.com/traefik/traefik/pull/12617) by [mmatur](https://github.com/mmatur))
+- Merge v2.11 into v3.6 ([#12605](https://github.com/traefik/traefik/pull/12605) by [mmatur](https://github.com/mmatur))
+- Merge v2.11 into v3.6 ([#12601](https://github.com/traefik/traefik/pull/12601) by [mmatur](https://github.com/mmatur))
+- Merge branch v2.11 into v3.6 ([#12556](https://github.com/traefik/traefik/pull/12556) by [mmatur](https://github.com/mmatur))
+
+## [v2.11.37](https://github.com/traefik/traefik/tree/v2.11.37) (2026-02-11)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.36...v2.11.37)
+
+**Bug fixes:**
+- **[healthcheck]** Validate healthcheck path configuration (#12642 by @rtribotte)
+- **[tls, server]** Cap TLS record length to RFC 8446 limit in ClientHello peeking (#12638 by @mmatur)
+
+## [v2.11.36](https://github.com/traefik/traefik/tree/v2.11.36) (2026-02-02)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.35...v2.11.36)
+
+**Bug fixes:**
+- **[service]** Avoid recursion with services ([#12591](https://github.com/traefik/traefik/pull/12591) by [juliens](https://github.com/juliens))
+- **[webui]** Bump dependencies of documentation and webui ([#12581](https://github.com/traefik/traefik/pull/12581) by [gndz07](https://github.com/gndz07))
+
+**Documentation:**
+- Remove extra dots in migration guide ([#12573](https://github.com/traefik/traefik/pull/12573) by [rtribotte](https://github.com/rtribotte))
+
 ## [v3.6.7](https://github.com/traefik/traefik/tree/v3.6.7) (2026-01-14)
 [All Commits](https://github.com/traefik/traefik/compare/v3.6.6...v3.6.7)
 

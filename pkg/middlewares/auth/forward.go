@@ -44,6 +44,8 @@ var hopHeaders = []string{
 	forward.Upgrade,
 }
 
+var userAgentHeader = http.CanonicalHeaderKey("User-Agent")
+
 type forwardAuth struct {
 	address                  string
 	authResponseHeaders      []string
@@ -357,6 +359,12 @@ func writeHeader(req, forwardReq *http.Request, trustForwardHeader bool, allowed
 
 	RemoveConnectionHeaders(forwardReq)
 	utils.RemoveHeaders(forwardReq.Header, hopHeaders...)
+
+	if _, ok := req.Header[userAgentHeader]; !ok {
+		// If the incoming request doesn't have a User-Agent header set,
+		// don't send the default Go HTTP client User-Agent for the forwarded request.
+		forwardReq.Header.Set(userAgentHeader, "")
+	}
 
 	forwardReq.Header = filterForwardRequestHeaders(forwardReq.Header, allowedHeaders)
 
