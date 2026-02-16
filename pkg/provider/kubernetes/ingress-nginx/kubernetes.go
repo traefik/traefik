@@ -860,9 +860,7 @@ func (p *Provider) applyMiddlewares(namespace, routerKey, rulePath, ruleHost str
 		return fmt.Errorf("applying forward auth configuration: %w", err)
 	}
 
-	applyWhitelistSourceRangeConfiguration(routerKey, ingressConfig, rt, conf)
-
-	applyAllowlistSourceRangeConfiguration(routerKey, ingressConfig, rt, conf)
+	applyAllowedSourceRangeConfiguration(routerKey, ingressConfig, rt, conf)
 
 	applyCORSConfiguration(routerKey, ingressConfig, rt, conf)
 
@@ -1170,44 +1168,25 @@ func applyUpstreamVhost(routerName string, ingressConfig ingressConfig, rt *dyna
 	rt.Middlewares = append(rt.Middlewares, vHostMiddlewareName)
 }
 
-func applyWhitelistSourceRangeConfiguration(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
-	whitelistSourceRange := ptr.Deref(ingressConfig.WhitelistSourceRange, "")
-	if whitelistSourceRange == "" {
+func applyAllowedSourceRangeConfiguration(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
+	allowedSourceRange := ptr.Deref(ingressConfig.AllowlistSourceRange, ptr.Deref(ingressConfig.WhitelistSourceRange, ""))
+	if allowedSourceRange == "" {
 		return
 	}
 
-	sourceRanges := strings.Split(whitelistSourceRange, ",")
+	sourceRanges := strings.Split(allowedSourceRange, ",")
 	for i := range sourceRanges {
 		sourceRanges[i] = strings.TrimSpace(sourceRanges[i])
 	}
 
-	whitelistSourceRangeMiddlewareName := routerName + "-whitelist-source-range"
-	conf.HTTP.Middlewares[whitelistSourceRangeMiddlewareName] = &dynamic.Middleware{
+	allowedSourceRangeMiddlewareName := routerName + "-allowed-source-range"
+	conf.HTTP.Middlewares[allowedSourceRangeMiddlewareName] = &dynamic.Middleware{
 		IPAllowList: &dynamic.IPAllowList{
 			SourceRange: sourceRanges,
 		},
 	}
-	rt.Middlewares = append(rt.Middlewares, whitelistSourceRangeMiddlewareName)
-}
 
-func applyAllowlistSourceRangeConfiguration(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
-	allowListSourceRange := ptr.Deref(ingressConfig.AllowlistSourceRange, "")
-	if allowListSourceRange == "" {
-		return
-	}
-
-	sourceRanges := strings.Split(allowListSourceRange, ",")
-	for i := range sourceRanges {
-		sourceRanges[i] = strings.TrimSpace(sourceRanges[i])
-	}
-
-	allowListSourceRangeMiddlewareName := routerName + "-allowlist-source-range"
-	conf.HTTP.Middlewares[allowListSourceRangeMiddlewareName] = &dynamic.Middleware{
-		IPAllowList: &dynamic.IPAllowList{
-			SourceRange: sourceRanges,
-		},
-	}
-	rt.Middlewares = append(rt.Middlewares, allowListSourceRangeMiddlewareName)
+	rt.Middlewares = append(rt.Middlewares, allowedSourceRangeMiddlewareName)
 }
 
 func (p *Provider) applySSLRedirectConfiguration(routerName string, ingressConfig ingressConfig, hasTLS bool, rt *dynamic.Router, conf *dynamic.Configuration) {
