@@ -1338,12 +1338,12 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-whitelist-single-ip-rule-0-path-0": {
 							Rule:        "Host(`whitelist-source-range.localhost`) && Path(`/`)",
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-whitelist-single-ip-rule-0-path-0-whitelist-source-range"},
+							Middlewares: []string{"default-ingress-with-whitelist-single-ip-rule-0-path-0-allowed-source-range"},
 							Service:     "default-ingress-with-whitelist-single-ip-whoami-80",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-ingress-with-whitelist-single-ip-rule-0-path-0-whitelist-source-range": {
+						"default-ingress-with-whitelist-single-ip-rule-0-path-0-allowed-source-range": {
 							IPAllowList: &dynamic.IPAllowList{
 								SourceRange: []string{"192.168.20.1"},
 							},
@@ -1399,12 +1399,12 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-whitelist-single-cidr-rule-0-path-0": {
 							Rule:        "Host(`whitelist-source-range.localhost`) && Path(`/`)",
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-whitelist-single-cidr-rule-0-path-0-whitelist-source-range"},
+							Middlewares: []string{"default-ingress-with-whitelist-single-cidr-rule-0-path-0-allowed-source-range"},
 							Service:     "default-ingress-with-whitelist-single-cidr-whoami-80",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-ingress-with-whitelist-single-cidr-rule-0-path-0-whitelist-source-range": {
+						"default-ingress-with-whitelist-single-cidr-rule-0-path-0-allowed-source-range": {
 							IPAllowList: &dynamic.IPAllowList{
 								SourceRange: []string{"192.168.1.0/24"},
 							},
@@ -1460,12 +1460,12 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-whitelist-multiple-ip-and-cidr-rule-0-path-0": {
 							Rule:        "Host(`whitelist-source-range.localhost`) && Path(`/`)",
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-whitelist-multiple-ip-and-cidr-rule-0-path-0-whitelist-source-range"},
+							Middlewares: []string{"default-ingress-with-whitelist-multiple-ip-and-cidr-rule-0-path-0-allowed-source-range"},
 							Service:     "default-ingress-with-whitelist-multiple-ip-and-cidr-whoami-80",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-ingress-with-whitelist-multiple-ip-and-cidr-rule-0-path-0-whitelist-source-range": {
+						"default-ingress-with-whitelist-multiple-ip-and-cidr-rule-0-path-0-allowed-source-range": {
 							IPAllowList: &dynamic.IPAllowList{
 								SourceRange: []string{"192.168.1.0/24", "10.0.0.0/8", "192.168.20.1"},
 							},
@@ -1631,12 +1631,12 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-allowlist-single-ip-rule-0-path-0": {
 							Rule:        "Host(`allowlist-source-range.localhost`) && Path(`/`)",
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-allowlist-single-ip-rule-0-path-0-allowlist-source-range"},
+							Middlewares: []string{"default-ingress-with-allowlist-single-ip-rule-0-path-0-allowed-source-range"},
 							Service:     "default-ingress-with-allowlist-single-ip-whoami-80",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-ingress-with-allowlist-single-ip-rule-0-path-0-allowlist-source-range": {
+						"default-ingress-with-allowlist-single-ip-rule-0-path-0-allowed-source-range": {
 							IPAllowList: &dynamic.IPAllowList{
 								SourceRange: []string{"192.168.20.1"},
 							},
@@ -1692,12 +1692,12 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-allowlist-single-cidr-rule-0-path-0": {
 							Rule:        "Host(`allowlist-source-range.localhost`) && Path(`/`)",
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-allowlist-single-cidr-rule-0-path-0-allowlist-source-range"},
+							Middlewares: []string{"default-ingress-with-allowlist-single-cidr-rule-0-path-0-allowed-source-range"},
 							Service:     "default-ingress-with-allowlist-single-cidr-whoami-80",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-ingress-with-allowlist-single-cidr-rule-0-path-0-allowlist-source-range": {
+						"default-ingress-with-allowlist-single-cidr-rule-0-path-0-allowed-source-range": {
 							IPAllowList: &dynamic.IPAllowList{
 								SourceRange: []string{"192.168.1.0/24"},
 							},
@@ -1753,12 +1753,12 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-allowlist-multiple-ip-and-cidr-rule-0-path-0": {
 							Rule:        "Host(`allowlist-source-range.localhost`) && Path(`/`)",
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-allowlist-multiple-ip-and-cidr-rule-0-path-0-allowlist-source-range"},
+							Middlewares: []string{"default-ingress-with-allowlist-multiple-ip-and-cidr-rule-0-path-0-allowed-source-range"},
 							Service:     "default-ingress-with-allowlist-multiple-ip-and-cidr-whoami-80",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-ingress-with-allowlist-multiple-ip-and-cidr-rule-0-path-0-allowlist-source-range": {
+						"default-ingress-with-allowlist-multiple-ip-and-cidr-rule-0-path-0-allowed-source-range": {
 							IPAllowList: &dynamic.IPAllowList{
 								SourceRange: []string{"192.168.1.0/24", "10.0.0.0/8", "192.168.20.1"},
 							},
