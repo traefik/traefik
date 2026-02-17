@@ -155,7 +155,7 @@ type ForwardAuth struct {
 	AuthRequestHeaders []string `json:"authRequestHeaders,omitempty"`
 	// TLS defines the configuration used to secure the connection to the authentication server.
 	TLS *ClientTLS `json:"tls,omitempty"`
-	// MaxResponseBodySize defines the maximum response body size in bytes allowed to be forwarded to the authentication server.
+	// MaxResponseBodySize defines the maximum body size in bytes allowed in the response from the authentication server.
 	MaxResponseBodySize *int64 `json:"maxResponseBodySize,omitempty"`
 }
 
