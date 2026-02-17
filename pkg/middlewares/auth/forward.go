@@ -206,7 +206,6 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	req.RequestURI = req.URL.RequestURI()
-
 	fa.next.ServeHTTP(rw, req)
 }
 
