@@ -1219,6 +1219,10 @@ func (p *Provider) applyMiddlewares(namespace, ingressName, routerKey, rulePath,
 		return fmt.Errorf("applying snippets: %w", err)
 	}
 
+	if err := applyXForwardedPrefix(routerKey, ingressConfig, rt, conf); err != nil {
+		return fmt.Errorf("applying x-forwarded-prefix: %w", err)
+	}
+
 	p.applyRetry(routerKey, ingressConfig, rt, conf)
 
 	return nil
@@ -1385,6 +1389,32 @@ func applyRedirect(routerName string, ingressConfig ingressConfig, rt *dynamic.R
 		},
 	}
 	rt.Middlewares = append(rt.Middlewares, redirectMiddlewareName)
+}
+
+const (
+	alphaNumericChars = `\-\.\_\~a-zA-Z0-9\/:`
+)
+
+var pegexPathWithCapture = regexp.MustCompile(`^/?[` + alphaNumericChars + `\/\$]*$`)
+
+func applyXForwardedPrefix(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
+	xForwardedPrefix := ptr.Deref(ingressConfig.XForwardedPrefix, "")
+	if xForwardedPrefix == "" {
+		return nil
+	}
+	if !pegexPathWithCapture.MatchString(xForwardedPrefix) {
+		return fmt.Errorf("invalid x-forwarded-prefix: %s", xForwardedPrefix)
+	}
+
+	customHeadersMiddlewareName := routerName + "-x-forwarded-prefix"
+	conf.HTTP.Middlewares[customHeadersMiddlewareName] = &dynamic.Middleware{
+		Headers: &dynamic.Headers{
+			CustomRequestHeaders: map[string]string{"x-forwarded-prefix": xForwardedPrefix},
+		},
+	}
+	rt.Middlewares = append(rt.Middlewares, customHeadersMiddlewareName)
+
+	return nil
 }
 
 func (p *Provider) applyCustomHeaders(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
