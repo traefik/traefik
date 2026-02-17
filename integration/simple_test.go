@@ -1596,6 +1596,8 @@ func (s *SimpleSuite) TestDDOS() {
 }
 
 func waitForWritePartial(t *testing.T, conn net.Conn) {
+	t.Helper()
+
 	end := make(chan struct{})
 	go func() {
 		if _, err := conn.Write([]byte{0x16, 0x03, 0x03, 0x00, 0x10}); err != nil {
@@ -1613,5 +1615,4 @@ func waitForWritePartial(t *testing.T, conn net.Conn) {
 	case <-time.After(500 * time.Millisecond):
 		t.Fatalf("timeout waiting for connection timeout")
 	}
-
 }
