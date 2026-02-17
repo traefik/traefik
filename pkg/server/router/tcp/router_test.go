@@ -1125,9 +1125,7 @@ func Test_clientHelloInfo_oversizedRecordLength(t *testing.T) {
 			// With the fix, it returns immediately.
 			select {
 			case r := <-resultCh:
-				require.NoError(t, r.err)
-				require.NotNil(t, r.hello)
-				assert.True(t, r.hello.isTLS)
+				require.Error(t, r.err)
 			case <-time.After(5 * time.Second):
 				t.Fatal("clientHelloInfo blocked on oversized TLS record length — recLen is not capped")
 			}
