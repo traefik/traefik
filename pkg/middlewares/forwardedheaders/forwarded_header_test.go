@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -444,6 +445,47 @@ func TestServeHTTP(t *testing.T) {
 					xForwardedTLSClientCertInfo,
 					xForwardedPrefix,
 					xRealIP,
+				},
+				xForwardedProto:             {"foo"},
+				xForwardedFor:               {"foo"},
+				xForwardedURI:               {"foo"},
+				xForwardedMethod:            {"foo"},
+				xForwardedHost:              {"foo"},
+				xForwardedPort:              {"foo"},
+				xForwardedTLSClientCert:     {"foo"},
+				xForwardedTLSClientCertInfo: {"foo"},
+				xForwardedPrefix:            {"foo"},
+				xRealIP:                     {"foo"},
+			},
+			expectedHeaders: map[string]string{
+				xForwardedProto:             "foo",
+				xForwardedFor:               "foo",
+				xForwardedURI:               "foo",
+				xForwardedMethod:            "foo",
+				xForwardedHost:              "foo",
+				xForwardedPort:              "foo",
+				xForwardedTLSClientCert:     "foo",
+				xForwardedTLSClientCertInfo: "foo",
+				xForwardedPrefix:            "foo",
+				xRealIP:                     "foo",
+				connection:                  "",
+			},
+		},
+		{
+			desc:     "Trusted (insecure) and Connection: Testing case sensitivity on X- forwarded headers",
+			insecure: true,
+			incomingHeaders: map[string][]string{
+				connection: {
+					strings.ToLower(xForwardedProto),
+					strings.ToLower(xForwardedFor),
+					strings.ToLower(xForwardedURI),
+					strings.ToLower(xForwardedMethod),
+					strings.ToLower(xForwardedHost),
+					strings.ToLower(xForwardedPort),
+					strings.ToLower(xForwardedTLSClientCert),
+					strings.ToLower(xForwardedTLSClientCertInfo),
+					strings.ToLower(xForwardedPrefix),
+					strings.ToLower(xRealIP),
 				},
 				xForwardedProto:             {"foo"},
 				xForwardedFor:               {"foo"},

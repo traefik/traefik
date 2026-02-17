@@ -213,12 +213,12 @@ func (x *XForwarded) removeConnectionHeaders(req *http.Request) {
 				// as per rfc7230 https://datatracker.ietf.org/doc/html/rfc7230#section-6.1,
 				// A proxy or gateway MUST ... and then remove the Connection header field itself
 				// (or replace it with the intermediary's own connection options for the forwarded message).
-				if slices.Contains(xHeaders, sf) {
+				if slices.Contains(xHeaders, http.CanonicalHeaderKey(sf)) {
 					continue
 				}
 
 				// Keep headers allowed through the middleware chain.
-				if slices.Contains(x.connectionHeaders, sf) {
+				if slices.Contains(x.connectionHeaders, http.CanonicalHeaderKey(sf)) {
 					connectionHopByHopHeaders = append(connectionHopByHopHeaders, sf)
 					continue
 				}
