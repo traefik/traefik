@@ -6,6 +6,7 @@ import (
 	"context"
 	"crypto/tls"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -395,20 +396,18 @@ func clientHelloInfo(br *bufio.Reader) (*clientHello, error) {
 	const recordHeaderLen = 5
 	hdr, err = br.Peek(recordHeaderLen)
 	if err != nil {
-		log.WithoutContext().Errorf("Error while peeking client hello headers: %s", err)
-		return &clientHello{
-			peeked: getPeeked(br),
-		}, nil
+		var opErr *net.OpError
+		if !errors.Is(err, io.EOF) && (!errors.As(err, &opErr) || !opErr.Timeout()) {
+			log.WithoutContext().Debugf("Error while peeking hello headers: %s", err)
+		}
+		return nil, err
 	}
 
 	recLen := int(hdr[3])<<8 | int(hdr[4]) // ignoring version in hdr[1:3]
 
 	if recLen > maxTLSRecordLen {
-		log.WithoutContext().Debugf("Error while peeking client hello bytes, oversized record: %d", recLen)
-		return &clientHello{
-			isTLS:  true,
-			peeked: getPeeked(br),
-		}, nil
+		log.WithoutContext().Errorf("Error while peeking client hello bytes, too long: %d", recLen)
+		return nil, fmt.Errorf("Error while peeking client hello bytes, oversized record: %d", recLen)
 	}
 
 	if recordHeaderLen+recLen > defaultBufSize {
@@ -417,11 +416,11 @@ func clientHelloInfo(br *bufio.Reader) (*clientHello, error) {
 
 	helloBytes, err := br.Peek(recordHeaderLen + recLen)
 	if err != nil {
-		log.WithoutContext().Errorf("Error while peeking client hello bytes: %s", err)
-		return &clientHello{
-			isTLS:  true,
-			peeked: getPeeked(br),
-		}, nil
+		var opErr *net.OpError
+		if !errors.Is(err, io.EOF) && (!errors.As(err, &opErr) || !opErr.Timeout()) {
+			log.WithoutContext().Errorf("Error while peeking client hello bytes: %s", err)
+		}
+		return nil, err
 	}
 
 	sni := ""
