@@ -81,6 +81,7 @@ providers:
   watchIngressWithoutClass = false
   ingressClassByName = false
   proxyConnectTimeout = 60
+  proxyRequestBuffering = false
   clientBodyBufferSize = "16384" # 16k
   proxyBuffering = false
   proxyBodySize = "1048576"      # 1m

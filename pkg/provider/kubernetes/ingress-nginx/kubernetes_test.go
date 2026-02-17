@@ -1511,9 +1511,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{
-					Options: map[string]tls.Options{},
-				},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{
@@ -1566,9 +1564,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{
-					Options: map[string]tls.Options{},
-				},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{
@@ -1627,9 +1623,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{
-					Options: map[string]tls.Options{},
-				},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{
@@ -1688,9 +1682,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{
-					Options: map[string]tls.Options{},
-				},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{
@@ -2966,6 +2958,12 @@ func TestNginxSizeToBytes(t *testing.T) {
 			expected: 0,
 			value:    "100A",
 			err:      errors.New("unable to parse number 100A"),
+		},
+		{
+			desc:     "Testing pipe character is invalid",
+			expected: 0,
+			value:    "100|",
+			err:      errors.New("unable to parse number 100|"),
 		},
 	}
 

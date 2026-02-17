@@ -56,7 +56,7 @@ const (
 	defaultProxyMaxTempFileSize = int64(1024 * 1024 * 1024) // 1GB
 )
 
-var nginxSizeRegexp = regexp.MustCompile(`^(?i)\s*([0-9]+)\s*([b|k|m|g]?)\s*$`)
+var nginxSizeRegexp = regexp.MustCompile(`^(?i)\s*([0-9]+)\s*([bkmg]?)\s*$`)
 
 type backendAddress struct {
 	Address string
@@ -1278,7 +1278,7 @@ func (p *Provider) applyBufferingConfiguration(routerName string, ingressConfig 
 		if ingressConfig.ProxyMaxTempFileSize != nil {
 			var err error
 			if proxyMaxTempFileSize, err = nginxSizeToBytes(*ingressConfig.ProxyMaxTempFileSize); err != nil {
-				return fmt.Errorf("proxy-body-size annotation has invalid value: %w", err)
+				return fmt.Errorf("proxy-max-temp-file-size annotation has invalid value: %w", err)
 			}
 		}
 

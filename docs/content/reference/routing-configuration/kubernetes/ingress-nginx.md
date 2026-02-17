@@ -468,7 +468,7 @@ The following annotations are organized by category for easier navigation.
 | <a id="opt-nginx-ingress-kubernetes-iox-forwarded-prefix" href="#opt-nginx-ingress-kubernetes-iox-forwarded-prefix" title="#opt-nginx-ingress-kubernetes-iox-forwarded-prefix">`nginx.ingress.kubernetes.io/x-forwarded-prefix`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-ioupstream-hash-by" href="#opt-nginx-ingress-kubernetes-ioupstream-hash-by" title="#opt-nginx-ingress-kubernetes-ioupstream-hash-by">`nginx.ingress.kubernetes.io/upstream-hash-by`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-iodenylist-source-range" href="#opt-nginx-ingress-kubernetes-iodenylist-source-range" title="#opt-nginx-ingress-kubernetes-iodenylist-source-range">`nginx.ingress.kubernetes.io/denylist-source-range`</a> |                                                      |
- <a id="opt-nginx-ingress-kubernetes-iostream-snippet" href="#opt-nginx-ingress-kubernetes-iostream-snippet" title="#opt-nginx-ingress-kubernetes-iostream-snippet">`nginx.ingress.kubernetes.io/stream-snippet`</a> |                                                      |
+| <a id="opt-nginx-ingress-kubernetes-iostream-snippet" href="#opt-nginx-ingress-kubernetes-iostream-snippet" title="#opt-nginx-ingress-kubernetes-iostream-snippet">`nginx.ingress.kubernetes.io/stream-snippet`</a> |                                                      |
 
 ### Global Configuration
 
