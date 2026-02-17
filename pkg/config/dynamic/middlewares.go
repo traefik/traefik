@@ -8,9 +8,6 @@ import (
 	"github.com/traefik/traefik/v2/pkg/types"
 )
 
-// ForwardAuthDefaultMaxResponseBodySize is the ForwardAuth.MaxResponseBodySize option default value.
-const ForwardAuthDefaultMaxResponseBodySize int64 = -1
-
 // +k8s:deepcopy-gen=true
 
 // Middleware holds the Middleware configuration.
@@ -221,11 +218,6 @@ type ForwardAuth struct {
 	AuthRequestHeaders []string `json:"authRequestHeaders,omitempty" toml:"authRequestHeaders,omitempty" yaml:"authRequestHeaders,omitempty" export:"true"`
 	// MaxResponseBodySize defines the maximum body size in bytes allowed in the response from the authentication server.
 	MaxResponseBodySize *int64 `json:"maxResponseBodySize,omitempty" toml:"maxResponseBodySize,omitempty" yaml:"maxResponseBodySize,omitempty" export:"true"`
-}
-
-func (f *ForwardAuth) SetDefaults() {
-	defaultMaxResponseBodySize := ForwardAuthDefaultMaxResponseBodySize
-	f.MaxResponseBodySize = &defaultMaxResponseBodySize
 }
 
 // +k8s:deepcopy-gen=true

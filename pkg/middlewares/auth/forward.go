@@ -62,12 +62,12 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 		name:                name,
 		trustForwardHeader:  config.TrustForwardHeader,
 		authRequestHeaders:  config.AuthRequestHeaders,
-		maxResponseBodySize: dynamic.ForwardAuthDefaultMaxResponseBodySize,
 	}
 
 	if config.MaxResponseBodySize != nil {
 		fa.maxResponseBodySize = *config.MaxResponseBodySize
 	} else {
+		fa.maxResponseBodySize = -1
 		logger.Warn("ForwardAuth 'maxResponseBodySize' is not configured, allowing unlimited response body size which can lead to DoS attacks and memory exhaustion. Please set an appropriate limit.")
 	}
 
