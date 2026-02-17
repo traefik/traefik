@@ -644,7 +644,7 @@ _Optional, Default=-1_
 
 The `maxResponseBodySize` option defines the maximum allowed response body size in bytes from the authentication server.
 If the response body exceeds the configured limit, the request is rejected with a 401 (Unauthorized) status.
-If left unset, the request body size is unrestricted which can have performance or security implications
+If left unset, the request body size is unrestricted which can have performance or security implications.
 
 ```yaml tab="Docker"
 labels:
