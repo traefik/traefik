@@ -678,6 +678,10 @@ func createForwardAuthMiddleware(k8sClient Client, namespace string, auth *traef
 		forwardAuth.TLS.Key = authSecretKey
 	}
 
+	if auth.MaxResponseBodySize != nil {
+		forwardAuth.MaxResponseBodySize = auth.MaxResponseBodySize
+	}
+
 	return forwardAuth, nil
 }
 
