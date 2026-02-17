@@ -50,6 +50,7 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.middlewares.Middleware7.forwardauth.tls.insecureskipverify":                  "true",
 		"traefik.http.middlewares.Middleware7.forwardauth.tls.key":                                 "foobar",
 		"traefik.http.middlewares.Middleware7.forwardauth.trustforwardheader":                      "true",
+		"traefik.http.middlewares.Middleware7.forwardauth.maxresponsebodysize":                     "42",
 		"traefik.http.middlewares.Middleware8.headers.accesscontrolallowcredentials":               "true",
 		"traefik.http.middlewares.Middleware8.headers.allowedhosts":                                "foobar, fiibar",
 		"traefik.http.middlewares.Middleware8.headers.accesscontrolallowheaders":                   "X-foobar, X-fiibar",
