@@ -482,6 +482,89 @@ func TestForwardAuthUsesTracing(t *testing.T) {
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 }
 
+func Test_ForwardAuthMaxResponseBodySize(t *testing.T) {
+	testCases := []struct {
+		name                string
+		maxResponseBodySize int64
+		status              int
+		body                string
+		expectedStatus      int
+		expectedBody        string
+	}{
+		{
+			name:                "auth failure, unlimited response body",
+			maxResponseBodySize: -1,
+			status:              http.StatusForbidden,
+			body:                "Forbidden",
+			expectedStatus:      http.StatusForbidden,
+			expectedBody:        "Forbidden",
+		},
+		{
+			name:                "auth failure, response body exceeds the limit",
+			maxResponseBodySize: 1,
+			status:              http.StatusForbidden,
+			body:                "Forbidden",
+			expectedStatus:      http.StatusUnauthorized,
+			expectedBody:        "",
+		},
+		{
+			name:                "auth success within limit",
+			maxResponseBodySize: 100,
+			status:              http.StatusOK,
+			body:                "ok",
+			expectedStatus:      http.StatusOK,
+			expectedBody:        "traefik\n",
+		},
+		{
+			name:                "auth success body exceeds limit",
+			maxResponseBodySize: 1,
+			status:              http.StatusOK,
+			body:                "large auth response",
+			expectedStatus:      http.StatusUnauthorized,
+			expectedBody:        "",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(test.status)
+				fmt.Fprint(w, test.body)
+			}))
+			t.Cleanup(server.Close)
+
+			next := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				fmt.Fprintln(w, "traefik")
+			}))
+
+			maxResponseBodySize := test.maxResponseBodySize
+			auth := dynamic.ForwardAuth{
+				Address:             server.URL,
+				MaxResponseBodySize: &maxResponseBodySize,
+			}
+
+			middleware, err := NewForward(t.Context(), next, auth, "maxResponseBodySizeTest")
+			require.NoError(t, err)
+
+			ts := httptest.NewServer(middleware)
+			t.Cleanup(ts.Close)
+
+			req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
+			res, err := http.DefaultClient.Do(req)
+			require.NoError(t, err)
+
+			assert.Equal(t, test.expectedStatus, res.StatusCode)
+
+			body, err := io.ReadAll(res.Body)
+			require.NoError(t, err)
+			err = res.Body.Close()
+			require.NoError(t, err)
+
+			assert.Equal(t, test.expectedBody, string(body))
+		})
+	}
+}
+
 type mockBackend struct {
 	opentracing.Tracer
 }
