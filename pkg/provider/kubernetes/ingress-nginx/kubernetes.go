@@ -627,7 +627,7 @@ func (p *Provider) buildServersTransport(namespace, name string, cfg ingressConf
 
 		secretNamespace, secretName := parts[0], parts[1]
 		if !p.AllowCrossNamespaceResources && secretNamespace != namespace {
-			return nil, fmt.Errorf("cross-namespace proxy ssl secret is not allowed: secret %s/%s is not from ingress namespace %q", secretName, secretNamespace, namespace)
+			return nil, fmt.Errorf("cross-namespace proxy ssl secret is not allowed: secret %s/%s is not from ingress namespace %q", secretNamespace, secretName, namespace)
 		}
 
 		blocks, err := p.certificateBlocks(secretNamespace, secretName)
@@ -992,7 +992,7 @@ func (p *Provider) applyCustomHeaders(ingressNamespace, routerName string, ingre
 	configMapName := customHeadersParts[1]
 	configMapNamespace := customHeadersParts[0]
 	if !p.AllowCrossNamespaceResources && configMapNamespace != ingressNamespace {
-		return fmt.Errorf("cross-namespace custom headers is not allowed: config map %s/%s is not from ingress namespace %q", configMapName, configMapNamespace, ingressNamespace)
+		return fmt.Errorf("cross-namespace custom headers is not allowed: config map %s/%s is not from ingress namespace %q", configMapNamespace, configMapName, ingressNamespace)
 	}
 
 	configMap, err := p.k8sClient.GetConfigMap(configMapNamespace, configMapName)
@@ -1127,7 +1127,7 @@ func (p *Provider) applyBasicAuthConfiguration(namespace, routerName string, ing
 	}
 
 	if !p.AllowCrossNamespaceResources && secretNamespace != namespace {
-		return fmt.Errorf("cross-namespace auth secret is not allowed: secret %s/%s is not from ingress namespace %q", secretName, secretNamespace, namespace)
+		return fmt.Errorf("cross-namespace auth secret is not allowed: secret %s/%s is not from ingress namespace %q", secretNamespace, secretName, namespace)
 	}
 
 	secret, err := p.k8sClient.GetSecret(secretNamespace, secretName)
