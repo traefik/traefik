@@ -176,6 +176,7 @@ http:
         authRequestHeaders:
           - foobar
           - foobar
+        maxResponseBodySize: 42
     Middleware11:
       headers:
         customRequestHeaders:

@@ -155,6 +155,7 @@
         authResponseHeaders = ["foobar", "foobar"]
         authResponseHeadersRegex = "foobar"
         authRequestHeaders = ["foobar", "foobar"]
+        maxResponseBodySize = 42
         [http.middlewares.Middleware10.forwardAuth.tls]
           ca = "foobar"
           caOptional = true
