@@ -526,6 +526,7 @@ func TestServeHTTP(t *testing.T) {
 			},
 			expectedHeaders: map[string]string{
 				"Bar": "foo",
+				"Foo": "",
 			},
 		},
 	}
