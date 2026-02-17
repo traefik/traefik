@@ -70,6 +70,8 @@ type ingressConfig struct {
 
 	CustomHeaders *string `annotation:"nginx.ingress.kubernetes.io/custom-headers"`
 	UpstreamVhost *string `annotation:"nginx.ingress.kubernetes.io/upstream-vhost"`
+
+	Entrypoints *[]string `annotation:"traefik.ingress.kubernetes.io/router.entrypoints"`
 }
 
 // parseIngressConfig parses the annotations from an Ingress object into an ingressConfig struct.
