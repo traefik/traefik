@@ -67,8 +67,9 @@ type ingressConfig struct {
 	WhitelistSourceRange *string `annotation:"nginx.ingress.kubernetes.io/whitelist-source-range"`
 	AllowlistSourceRange *string `annotation:"nginx.ingress.kubernetes.io/allowlist-source-range"`
 
-	CustomHeaders *string `annotation:"nginx.ingress.kubernetes.io/custom-headers"`
-	UpstreamVhost *string `annotation:"nginx.ingress.kubernetes.io/upstream-vhost"`
+	CustomHeaders    *string `annotation:"nginx.ingress.kubernetes.io/custom-headers"`
+	UpstreamVhost    *string `annotation:"nginx.ingress.kubernetes.io/upstream-vhost"`
+	XForwardedPrefix *string `annotation:"nginx.ingress.kubernetes.io/x-forwarded-prefix"`
 
 	// ProxyRequestBuffering controls whether request buffering is enabled.
 	ProxyRequestBuffering *string `annotation:"nginx.ingress.kubernetes.io/proxy-request-buffering"`
