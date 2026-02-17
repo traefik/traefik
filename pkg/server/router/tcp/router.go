@@ -407,7 +407,7 @@ func clientHelloInfo(br *bufio.Reader) (*clientHello, error) {
 
 	if recLen > maxTLSRecordLen {
 		log.WithoutContext().Errorf("Error while peeking client hello bytes, too long: %d", recLen)
-		return nil, fmt.Errorf("Error while peeking client hello bytes, oversized record: %d", recLen)
+		return nil, fmt.Errorf("error while peeking client hello bytes, oversized record: %d", recLen)
 	}
 
 	if recordHeaderLen+recLen > defaultBufSize {
