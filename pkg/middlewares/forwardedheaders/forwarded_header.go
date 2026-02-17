@@ -71,10 +71,15 @@ func NewXForwarded(insecure bool, trustedIPs []string, connectionHeaders []strin
 		hostname = "localhost"
 	}
 
+	canonicalConnectionHeaders := make([]string, len(connectionHeaders))
+	for i, header := range connectionHeaders {
+		canonicalConnectionHeaders[i] = http.CanonicalHeaderKey(header)
+	}
+
 	return &XForwarded{
 		insecure:          insecure,
 		trustedIPs:        trustedIPs,
-		connectionHeaders: connectionHeaders,
+		connectionHeaders: canonicalConnectionHeaders,
 		ipChecker:         ipChecker,
 		next:              next,
 		hostname:          hostname,
@@ -209,22 +214,23 @@ func (x *XForwarded) removeConnectionHeaders(req *http.Request) {
 	for _, f := range req.Header[connection] {
 		for sf := range strings.SplitSeq(f, ",") {
 			if sf = textproto.TrimString(sf); sf != "" {
+				key := http.CanonicalHeaderKey(sf)
 				// Connection header cannot dictate to remove X- headers managed by Traefik,
 				// as per rfc7230 https://datatracker.ietf.org/doc/html/rfc7230#section-6.1,
 				// A proxy or gateway MUST ... and then remove the Connection header field itself
 				// (or replace it with the intermediary's own connection options for the forwarded message).
-				if slices.Contains(xHeaders, sf) {
+				if slices.Contains(xHeaders, key) {
 					continue
 				}
 
 				// Keep headers allowed through the middleware chain.
-				if slices.Contains(x.connectionHeaders, sf) {
-					connectionHopByHopHeaders = append(connectionHopByHopHeaders, sf)
+				if slices.Contains(x.connectionHeaders, key) {
+					connectionHopByHopHeaders = append(connectionHopByHopHeaders, key)
 					continue
 				}
 
 				// Apply Connection header option.
-				req.Header.Del(sf)
+				delete(req.Header, key)
 			}
 		}
 	}

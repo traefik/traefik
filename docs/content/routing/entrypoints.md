@@ -127,6 +127,9 @@ They can be defined by using a file (YAML or TOML) or CLI arguments.
           trustedIPs:
             - "127.0.0.1"
             - "192.168.0.1"
+          connection:
+            - X-Foo
+            - foobar
         http:
           encodedCharacters:
             allowEncodedSlash: false
@@ -161,6 +164,7 @@ They can be defined by using a file (YAML or TOML) or CLI arguments.
         [entryPoints.name.forwardedHeaders]
           insecure = true
           trustedIPs = ["127.0.0.1", "192.168.0.1"]
+          connection = ["X-Foo", "foobar"]
         [entryPoints.name.http.encodedCharacters]
           allowEncodedSlash = false
           allowEncodedBackSlash = false
@@ -185,6 +189,7 @@ They can be defined by using a file (YAML or TOML) or CLI arguments.
     --entryPoints.name.proxyProtocol.trustedIPs=127.0.0.1,192.168.0.1
     --entryPoints.name.forwardedHeaders.insecure=true
     --entryPoints.name.forwardedHeaders.trustedIPs=127.0.0.1,192.168.0.1
+    --entryPoints.name.forwardedHeaders.connection=X-Foo,foobar
     --entryPoints.name.http.encodedCharacters.allowEncodedSlash=false
     --entryPoints.name.http.encodedCharacters.allowEncodedBackSlash=false
     --entryPoints.name.http.encodedCharacters.allowEncodedNullCharacter=false
@@ -452,6 +457,7 @@ You can configure Traefik to trust the forwarded headers information (`X-Forward
     The removal happens as soon as the request is handled by Traefik,
     thus the removed headers are not available when the request passes through the middleware chain.
     The `connection` option lists the Connection headers allowed to passthrough the middleware chain before their removal.
+    The headers defined by this option are not case-sensitive. The middleware will automatically canonicalize them.
 
     ```yaml tab="File (YAML)"
     ## Static configuration
@@ -460,6 +466,7 @@ You can configure Traefik to trust the forwarded headers information (`X-Forward
         address: ":80"
         forwardedHeaders:
           connection:
+            - X-Foo
             - foobar
     ```
 
@@ -470,13 +477,13 @@ You can configure Traefik to trust the forwarded headers information (`X-Forward
         address = ":80"
 
         [entryPoints.web.forwardedHeaders]
-          connection = ["foobar"]
+          connection = ["X-Foo", "foobar"]
     ```
 
     ```bash tab="CLI"
     ## Static configuration
     --entryPoints.web.address=:80
-    --entryPoints.web.forwardedHeaders.connection=foobar
+    --entryPoints.web.forwardedHeaders.connection=X-Foo,foobar
     ```
 
 ### Transport
