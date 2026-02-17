@@ -19,7 +19,8 @@ Enable seamless migration from NGINX Ingress Controller to Traefik with NGINX an
 
 ## Ingress Discovery
 
-This provider discovers all Ingresses in the cluster by default, which may lead to duplicated routers if you are also using the standard Kubernetes Ingress provider.
+This provider discovers all Ingresses in the cluster by default,
+which may lead to duplicated routers if you are also using the standard Kubernetes Ingress provider.
 
 **Best Practices:**
 
@@ -29,7 +30,21 @@ This provider discovers all Ingresses in the cluster by default, which may lead 
 
 ## Routing Configuration
 
-This provider watches for incoming Ingress events and automatically translates NGINX annotations into Traefik's dynamic configuration, creating the corresponding routers, services, middlewares, and other components needed to handle your traffic.
+This provider watches for incoming Ingress events and automatically translates NGINX annotations into Traefik's dynamic configuration,
+creating the corresponding routers, services, middlewares, and other components needed to handle your traffic.
+
+!!! warning "ConfigMap Configuration and Default Behaviors"
+
+    Routing annotations take precedence over provider-level defaults,
+    but they don't control all behaviors that NGINX Ingress Controller's ConfigMap configuration would handle globally.
+
+    Important differences in default behaviors:
+    
+    - **Request buffering**: NGINX enables `proxy-request-buffering` by default, while Traefik requires explicit opt-in via the provider's `proxyRequestBuffering` option.
+
+    To ensure consistent behavior during migration,
+    review and configure Traefik's provider-level options to match your current NGINX ConfigMap settings.
+    See the [provider configuration options](../../install-configuration/providers/kubernetes/kubernetes-ingress-nginx.md) for available settings.
 
 ## Configuration Example
 
@@ -335,6 +350,18 @@ The following annotations are organized by category for easier navigation.
 | <a id="opt-nginx-ingress-kubernetes-iowhitelist-source-range" href="#opt-nginx-ingress-kubernetes-iowhitelist-source-range" title="#opt-nginx-ingress-kubernetes-iowhitelist-source-range">`nginx.ingress.kubernetes.io/whitelist-source-range`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-ioallowlist-source-range" href="#opt-nginx-ingress-kubernetes-ioallowlist-source-range" title="#opt-nginx-ingress-kubernetes-ioallowlist-source-range">`nginx.ingress.kubernetes.io/allowlist-source-range`</a> |                                                      |
 
+### Buffering
+
+| Annotation                                                                                                                                                                                                                                                  | Limitations / Notes                                                                                           |
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------|
+| <a id="opt-nginx-ingress-kubernetes-ioproxy-request-buffering" href="#opt-nginx-ingress-kubernetes-ioproxy-request-buffering" title="#opt-nginx-ingress-kubernetes-ioproxy-request-buffering">`nginx.ingress.kubernetes.io/proxy-request-buffering`</a> |                                                                                                               |
+| <a id="opt-nginx-ingress-kubernetes-ioproxy-body-size" href="#opt-nginx-ingress-kubernetes-ioproxy-body-size" title="#opt-nginx-ingress-kubernetes-ioproxy-body-size">`nginx.ingress.kubernetes.io/proxy-body-size`</a> |                                                                                                               |
+| <a id="opt-nginx-ingress-kubernetes-ioclient-body-buffer-size" href="#opt-nginx-ingress-kubernetes-ioclient-body-buffer-size" title="#opt-nginx-ingress-kubernetes-ioclient-body-buffer-size">`nginx.ingress.kubernetes.io/client-body-buffer-size`</a> |                                                                                                               |
+| <a id="opt-nginx-ingress-kubernetes-ioproxy-buffering" href="#opt-nginx-ingress-kubernetes-ioproxy-buffering" title="#opt-nginx-ingress-kubernetes-ioproxy-buffering">`nginx.ingress.kubernetes.io/proxy-buffering`</a> |                                                                                                               |
+| <a id="opt-nginx-ingress-kubernetes-ioproxy-buffer-size" href="#opt-nginx-ingress-kubernetes-ioproxy-buffer-size" title="#opt-nginx-ingress-kubernetes-ioproxy-buffer-size">`nginx.ingress.kubernetes.io/proxy-buffer-size`</a> |                                                                                                               |
+| <a id="opt-nginx-ingress-kubernetes-ioproxy-buffers-number" href="#opt-nginx-ingress-kubernetes-ioproxy-buffers-number" title="#opt-nginx-ingress-kubernetes-ioproxy-buffers-number">`nginx.ingress.kubernetes.io/proxy-buffers-number`</a> | With Traefik, `proxy-buffer-numbers` is actually used to compute the size of a single buffer (size * number). |
+| <a id="opt-nginx-ingress-kubernetes-ioproxy-max-temp-file-size" href="#opt-nginx-ingress-kubernetes-ioproxy-max-temp-file-size" title="#opt-nginx-ingress-kubernetes-ioproxy-max-temp-file-size">`nginx.ingress.kubernetes.io/proxy-max-temp-file-size`</a> |                                                                                                               |
+
 ### Timeout
 
 | Annotation                                          | Limitations / Notes                                                                                                                                                                                                                     |
@@ -388,7 +415,6 @@ The following annotations are organized by category for easier navigation.
 | <a id="opt-nginx-ingress-kubernetes-iocanary-by-cookie" href="#opt-nginx-ingress-kubernetes-iocanary-by-cookie" title="#opt-nginx-ingress-kubernetes-iocanary-by-cookie">`nginx.ingress.kubernetes.io/canary-by-cookie`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-iocanary-weight" href="#opt-nginx-ingress-kubernetes-iocanary-weight" title="#opt-nginx-ingress-kubernetes-iocanary-weight">`nginx.ingress.kubernetes.io/canary-weight`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-iocanary-weight-total" href="#opt-nginx-ingress-kubernetes-iocanary-weight-total" title="#opt-nginx-ingress-kubernetes-iocanary-weight-total">`nginx.ingress.kubernetes.io/canary-weight-total`</a> |                                                      |
-| <a id="opt-nginx-ingress-kubernetes-ioclient-body-buffer-size" href="#opt-nginx-ingress-kubernetes-ioclient-body-buffer-size" title="#opt-nginx-ingress-kubernetes-ioclient-body-buffer-size">`nginx.ingress.kubernetes.io/client-body-buffer-size`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-ioconfiguration-snippet" href="#opt-nginx-ingress-kubernetes-ioconfiguration-snippet" title="#opt-nginx-ingress-kubernetes-ioconfiguration-snippet">`nginx.ingress.kubernetes.io/configuration-snippet`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-iocustom-http-errors" href="#opt-nginx-ingress-kubernetes-iocustom-http-errors" title="#opt-nginx-ingress-kubernetes-iocustom-http-errors">`nginx.ingress.kubernetes.io/custom-http-errors`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-iodisable-proxy-intercept-errors" href="#opt-nginx-ingress-kubernetes-iodisable-proxy-intercept-errors" title="#opt-nginx-ingress-kubernetes-iodisable-proxy-intercept-errors">`nginx.ingress.kubernetes.io/disable-proxy-intercept-errors`</a> |                                                      |
@@ -412,7 +438,6 @@ The following annotations are organized by category for easier navigation.
 | <a id="opt-nginx-ingress-kubernetes-ioproxy-next-upstream" href="#opt-nginx-ingress-kubernetes-ioproxy-next-upstream" title="#opt-nginx-ingress-kubernetes-ioproxy-next-upstream">`nginx.ingress.kubernetes.io/proxy-next-upstream`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-ioproxy-next-upstream-timeout" href="#opt-nginx-ingress-kubernetes-ioproxy-next-upstream-timeout" title="#opt-nginx-ingress-kubernetes-ioproxy-next-upstream-timeout">`nginx.ingress.kubernetes.io/proxy-next-upstream-timeout`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-ioproxy-next-upstream-tries" href="#opt-nginx-ingress-kubernetes-ioproxy-next-upstream-tries" title="#opt-nginx-ingress-kubernetes-ioproxy-next-upstream-tries">`nginx.ingress.kubernetes.io/proxy-next-upstream-tries`</a> |                                                      |
-| <a id="opt-nginx-ingress-kubernetes-ioproxy-request-buffering" href="#opt-nginx-ingress-kubernetes-ioproxy-request-buffering" title="#opt-nginx-ingress-kubernetes-ioproxy-request-buffering">`nginx.ingress.kubernetes.io/proxy-request-buffering`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-ioproxy-redirect-from" href="#opt-nginx-ingress-kubernetes-ioproxy-redirect-from" title="#opt-nginx-ingress-kubernetes-ioproxy-redirect-from">`nginx.ingress.kubernetes.io/proxy-redirect-from`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-ioproxy-redirect-to" href="#opt-nginx-ingress-kubernetes-ioproxy-redirect-to" title="#opt-nginx-ingress-kubernetes-ioproxy-redirect-to">`nginx.ingress.kubernetes.io/proxy-redirect-to`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-ioproxy-http-version" href="#opt-nginx-ingress-kubernetes-ioproxy-http-version" title="#opt-nginx-ingress-kubernetes-ioproxy-http-version">`nginx.ingress.kubernetes.io/proxy-http-version`</a> |                                                      |
@@ -443,10 +468,6 @@ The following annotations are organized by category for easier navigation.
 | <a id="opt-nginx-ingress-kubernetes-iox-forwarded-prefix" href="#opt-nginx-ingress-kubernetes-iox-forwarded-prefix" title="#opt-nginx-ingress-kubernetes-iox-forwarded-prefix">`nginx.ingress.kubernetes.io/x-forwarded-prefix`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-ioupstream-hash-by" href="#opt-nginx-ingress-kubernetes-ioupstream-hash-by" title="#opt-nginx-ingress-kubernetes-ioupstream-hash-by">`nginx.ingress.kubernetes.io/upstream-hash-by`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-iodenylist-source-range" href="#opt-nginx-ingress-kubernetes-iodenylist-source-range" title="#opt-nginx-ingress-kubernetes-iodenylist-source-range">`nginx.ingress.kubernetes.io/denylist-source-range`</a> |                                                      |
-| <a id="opt-nginx-ingress-kubernetes-ioproxy-buffering" href="#opt-nginx-ingress-kubernetes-ioproxy-buffering" title="#opt-nginx-ingress-kubernetes-ioproxy-buffering">`nginx.ingress.kubernetes.io/proxy-buffering`</a> |                                                      |
-| <a id="opt-nginx-ingress-kubernetes-ioproxy-buffers-number" href="#opt-nginx-ingress-kubernetes-ioproxy-buffers-number" title="#opt-nginx-ingress-kubernetes-ioproxy-buffers-number">`nginx.ingress.kubernetes.io/proxy-buffers-number`</a> |                                                      |
-| <a id="opt-nginx-ingress-kubernetes-ioproxy-buffer-size" href="#opt-nginx-ingress-kubernetes-ioproxy-buffer-size" title="#opt-nginx-ingress-kubernetes-ioproxy-buffer-size">`nginx.ingress.kubernetes.io/proxy-buffer-size`</a> |                                                      |
-| <a id="opt-nginx-ingress-kubernetes-ioproxy-max-temp-file-size" href="#opt-nginx-ingress-kubernetes-ioproxy-max-temp-file-size" title="#opt-nginx-ingress-kubernetes-ioproxy-max-temp-file-size">`nginx.ingress.kubernetes.io/proxy-max-temp-file-size`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-iostream-snippet" href="#opt-nginx-ingress-kubernetes-iostream-snippet" title="#opt-nginx-ingress-kubernetes-iostream-snippet">`nginx.ingress.kubernetes.io/stream-snippet`</a> |                                                      |
 
 ### Global Configuration

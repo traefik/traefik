@@ -34,6 +34,7 @@ import (
 const (
 	providerName = "kubernetesingressnginx"
 
+	// NGINX default values.
 	annotationIngressClass = "kubernetes.io/ingress.class"
 
 	defaultControllerName  = "k8s.io/ingress-nginx"
@@ -43,7 +44,19 @@ const (
 	defaultBackendTLSName = "default-backend-tls"
 
 	defaultProxyConnectTimeout = 60
+	// https://nginx.org/en/docs/http/ngx_http_core_module.html#client_max_body_size
+	defaultProxyBodySize = int64(1024 * 1024) // 1MB
+	// https://nginx.org/en/docs/http/ngx_http_core_module.html#client_body_buffer_size
+	defaultClientBodyBufferSize = int64(16 * 1024) // 16KB
+	// https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffer_size
+	defaultProxyBufferSize = int64(8 * 1024) // 8KB
+	// https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/nginx-configuration/annotations.md#proxy-buffers-number
+	defaultProxyBuffersNumber = 4
+	// https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_max_temp_file_size
+	defaultProxyMaxTempFileSize = int64(1024 * 1024 * 1024) // 1GB
 )
+
+var nginxSizeRegexp = regexp.MustCompile(`^(?i)\s*([0-9]+)\s*([bkmg]?)\s*$`)
 
 type backendAddress struct {
 	Address string
@@ -84,6 +97,14 @@ type Provider struct {
 
 	ProxyConnectTimeout int `description:"Amount of time to wait until a connection to a server can be established. Timeout value is unitless and in seconds." json:"proxyConnectTimeout,omitempty" toml:"proxyConnectTimeout,omitempty" yaml:"proxyConnectTimeout,omitempty" export:"true"`
 
+	// Configuration options available within the NGINX Ingress Controller ConfigMap.
+	ProxyRequestBuffering bool  `description:"Defines whether to enable request buffering." json:"proxyRequestBuffering,omitempty" toml:"proxyRequestBuffering,omitempty" yaml:"proxyRequestBuffering,omitempty" export:"true"`
+	ClientBodyBufferSize  int64 `description:"Default buffer size for reading client request body." json:"clientBodyBufferSize,omitempty" toml:"clientBodyBufferSize,omitempty" yaml:"clientBodyBufferSize,omitempty" export:"true"`
+	ProxyBodySize         int64 `description:"Default maximum size of a client request body in bytes." json:"proxyBodySize,omitempty" toml:"proxyBodySize,omitempty" yaml:"proxyBodySize,omitempty" export:"true"`
+	ProxyBuffering        bool  `description:"Defines whether to enable response buffering." json:"proxyBuffering,omitempty" toml:"proxyBuffering,omitempty" yaml:"proxyBuffering,omitempty" export:"true"`
+	ProxyBufferSize       int64 `description:"Default buffer size for reading the response body." json:"proxyBufferSize,omitempty" toml:"proxyBufferSize,omitempty" yaml:"proxyBufferSize,omitempty" export:"true"`
+	ProxyBuffersNumber    int   `description:"Default number of buffers for reading a response." json:"proxyBuffersNumber,omitempty" toml:"proxyBuffersNumber,omitempty" yaml:"proxyBuffersNumber,omitempty" export:"true"`
+
 	// NonTLSEntryPoints contains the names of entrypoints that are configured without TLS.
 	NonTLSEntryPoints []string `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
 
@@ -98,6 +119,10 @@ func (p *Provider) SetDefaults() {
 	p.IngressClass = defaultAnnotationValue
 	p.ControllerClass = defaultControllerName
 	p.ProxyConnectTimeout = defaultProxyConnectTimeout
+	p.ClientBodyBufferSize = defaultClientBodyBufferSize
+	p.ProxyBodySize = defaultProxyBodySize
+	p.ProxyBufferSize = defaultProxyBufferSize
+	p.ProxyBuffersNumber = defaultProxyBuffersNumber
 }
 
 // Init the provider.
@@ -289,12 +314,6 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 			continue
 		}
 
-		ingressConfig, err := parseIngressConfig(ingress)
-		if err != nil {
-			logger.Error().Err(err).Msg("Error parsing ingress configuration")
-			continue
-		}
-
 		if err := p.updateIngressStatus(ingress); err != nil {
 			logger.Error().Err(err).Msg("Error while updating ingress status")
 		}
@@ -307,6 +326,8 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 				continue
 			}
 		}
+
+		ingressConfig := parseIngressConfig(ingress)
 
 		var clientAuthTLSOptionName string
 		if ingressConfig.AuthTLSSecret != nil {
@@ -543,7 +564,10 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 	conf.TLS = &dynamic.TLSConfiguration{
 		Certificates: slices.Collect(maps.Values(uniqCerts)),
-		Options:      tlsOptions,
+	}
+
+	if len(tlsOptions) > 0 {
+		conf.TLS.Options = tlsOptions
 	}
 
 	return conf
@@ -854,6 +878,10 @@ func (p *Provider) applyMiddlewares(namespace, routerKey, rulePath, ruleHost str
 
 	if err := p.applyBasicAuthConfiguration(namespace, routerKey, ingressConfig, rt, conf); err != nil {
 		return fmt.Errorf("applying basic auth configuration: %w", err)
+	}
+
+	if err := p.applyBufferingConfiguration(routerKey, ingressConfig, rt, conf); err != nil {
+		return fmt.Errorf("applying buffering: %w", err)
 	}
 
 	if err := applyForwardAuthConfiguration(routerKey, ingressConfig, rt, conf); err != nil {
@@ -1189,6 +1217,83 @@ func applyAllowedSourceRangeConfiguration(routerName string, ingressConfig ingre
 	rt.Middlewares = append(rt.Middlewares, allowedSourceRangeMiddlewareName)
 }
 
+func (p *Provider) applyBufferingConfiguration(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
+	disableRequestBuffering := !p.ProxyRequestBuffering
+	if ingressConfig.ProxyRequestBuffering != nil {
+		// Without value validation, lean on disabling by checking for "on", which is more likely to satisfy user input.
+		disableRequestBuffering = *ingressConfig.ProxyRequestBuffering != "on"
+	}
+
+	disableResponseBuffering := !p.ProxyBuffering
+	if ingressConfig.ProxyBuffering != nil {
+		// Without value validation, lean on disabling by checking for "on", which is more likely to satisfy user input.
+		disableResponseBuffering = *ingressConfig.ProxyBuffering != "on"
+	}
+
+	if disableRequestBuffering && disableResponseBuffering {
+		return nil
+	}
+
+	buffering := &dynamic.Buffering{
+		DisableRequestBuffer:  disableRequestBuffering,
+		DisableResponseBuffer: disableResponseBuffering,
+		MemRequestBodyBytes:   p.ClientBodyBufferSize,
+		MaxRequestBodyBytes:   p.ProxyBodySize,
+		MemResponseBodyBytes:  p.ProxyBufferSize * int64(p.ProxyBuffersNumber),
+	}
+
+	if !disableRequestBuffering {
+		if clientBodyBufferSize := ptr.Deref(ingressConfig.ClientBodyBufferSize, ""); clientBodyBufferSize != "" {
+			memRequestBodySize, err := nginxSizeToBytes(clientBodyBufferSize)
+			if err != nil {
+				return fmt.Errorf("client-body-buffer-size annotation has invalid value: %w", err)
+			}
+			buffering.MemRequestBodyBytes = memRequestBodySize
+		}
+
+		if proxyBodySize := ptr.Deref(ingressConfig.ProxyBodySize, ""); proxyBodySize != "" {
+			maxRequestBody, err := nginxSizeToBytes(proxyBodySize)
+			if err != nil {
+				return fmt.Errorf("proxy-body-size annotation has invalid value: %w", err)
+			}
+
+			buffering.MaxRequestBodyBytes = maxRequestBody
+		}
+	}
+
+	if !disableResponseBuffering {
+		if ingressConfig.ProxyBufferSize != nil || ingressConfig.ProxyBuffersNumber != nil {
+			bufferSize := p.ProxyBufferSize
+			if proxyBufferSize := ptr.Deref(ingressConfig.ProxyBufferSize, ""); proxyBufferSize != "" {
+				var err error
+				if bufferSize, err = nginxSizeToBytes(proxyBufferSize); err != nil {
+					return fmt.Errorf("proxy-buffer-size annotation has invalid value: %w", err)
+				}
+			}
+
+			buffering.MemResponseBodyBytes = bufferSize * int64(ptr.Deref(ingressConfig.ProxyBuffersNumber, p.ProxyBuffersNumber))
+		}
+
+		proxyMaxTempFileSize := defaultProxyMaxTempFileSize
+		if ingressConfig.ProxyMaxTempFileSize != nil {
+			var err error
+			if proxyMaxTempFileSize, err = nginxSizeToBytes(*ingressConfig.ProxyMaxTempFileSize); err != nil {
+				return fmt.Errorf("proxy-max-temp-file-size annotation has invalid value: %w", err)
+			}
+		}
+
+		buffering.MaxResponseBodyBytes = buffering.MemResponseBodyBytes + proxyMaxTempFileSize
+	}
+
+	bufferingMiddlewareName := routerName + "-buffering"
+	conf.HTTP.Middlewares[bufferingMiddlewareName] = &dynamic.Middleware{
+		Buffering: buffering,
+	}
+	rt.Middlewares = append(rt.Middlewares, bufferingMiddlewareName)
+
+	return nil
+}
+
 func (p *Provider) applySSLRedirectConfiguration(routerName string, ingressConfig ingressConfig, hasTLS bool, rt *dynamic.Router, conf *dynamic.Configuration) {
 	var forceSSLRedirect bool
 	if ingressConfig.ForceSSLRedirect != nil {
@@ -1442,4 +1547,25 @@ func (p *Provider) buildClientAuthTLSOption(ingressNamespace string, config ingr
 	}
 
 	return tlsOpt, nil
+}
+
+// nginxSizeToBytes convert nginx size to memory bytes as defined in https://nginx.org/en/docs/syntax.html.
+func nginxSizeToBytes(nginxSize string) (int64, error) {
+	units := map[string]int64{
+		"g": 1024 * 1024 * 1024,
+		"m": 1024 * 1024,
+		"k": 1024,
+		"b": 1,
+		"":  1,
+	}
+
+	if !nginxSizeRegexp.MatchString(nginxSize) {
+		return 0, fmt.Errorf("unable to parse number %s", nginxSize)
+	}
+	size := nginxSizeRegexp.FindStringSubmatch(nginxSize)
+	bytes, err := strconv.ParseInt(size[1], 10, 64)
+	if err != nil {
+		return 0, err
+	}
+	return bytes * units[strings.ToLower(size[2])], nil
 }
