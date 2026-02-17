@@ -47,11 +47,13 @@ type forwardAuth struct {
 	client                   http.Client
 	trustForwardHeader       bool
 	authRequestHeaders       []string
+	maxResponseBodySize      int64
 }
 
 // NewForward creates a forward auth middleware.
 func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAuth, name string) (http.Handler, error) {
-	log.FromContext(middlewares.GetLoggerCtx(ctx, name, forwardedTypeName)).Debug("Creating middleware")
+	logger := log.FromContext(middlewares.GetLoggerCtx(ctx, name, forwardedTypeName))
+	logger.Debug("Creating middleware")
 
 	fa := &forwardAuth{
 		address:             config.Address,
@@ -60,6 +62,13 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 		name:                name,
 		trustForwardHeader:  config.TrustForwardHeader,
 		authRequestHeaders:  config.AuthRequestHeaders,
+	}
+
+	if config.MaxResponseBodySize != nil {
+		fa.maxResponseBodySize = *config.MaxResponseBodySize
+	} else {
+		fa.maxResponseBodySize = -1
+		logger.Warn("ForwardAuth 'maxResponseBodySize' is not configured, allowing unlimited response body size which can lead to DoS attacks and memory exhaustion. Please set an appropriate limit.")
 	}
 
 	// Ensure our request client does not follow redirects
@@ -125,9 +134,16 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 	defer forwardResponse.Body.Close()
 
-	body, readError := io.ReadAll(forwardResponse.Body)
+	body, readError := fa.readResponseBodyBytes(forwardResponse)
 	if readError != nil {
-		logger.Debugf("Error reading body %s. Cause: %s", fa.address, readError)
+		if errors.Is(readError, errResponseBodyTooLarge) {
+			logger.Debugf("Response body is too large, maxResponseBodySize: %d", fa.maxResponseBodySize)
+
+			tracing.SetErrorWithEvent(req, "Response body is too large, maxResponseBodySize: %d", fa.maxResponseBodySize)
+			rw.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		logger.Debugf("Error reading body %s", fa.address)
 		tracing.SetErrorWithEvent(req, "Error reading body %s. Cause: %s", fa.address, readError)
 
 		rw.WriteHeader(http.StatusInternalServerError)
@@ -191,6 +207,27 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	req.RequestURI = req.URL.RequestURI()
 	fa.next.ServeHTTP(rw, req)
+}
+
+var errResponseBodyTooLarge = errors.New("response body too large")
+
+func (fa *forwardAuth) readResponseBodyBytes(res *http.Response) ([]byte, error) {
+	if fa.maxResponseBodySize < 0 {
+		return io.ReadAll(res.Body)
+	}
+
+	body := make([]byte, fa.maxResponseBodySize+1)
+	n, err := io.ReadFull(res.Body, body)
+	if errors.Is(err, io.EOF) {
+		return nil, nil
+	}
+	if err != nil && !errors.Is(err, io.ErrUnexpectedEOF) {
+		return nil, fmt.Errorf("reading response body bytes: %w", err)
+	}
+	if errors.Is(err, io.ErrUnexpectedEOF) {
+		return body[:n], nil
+	}
+	return nil, errResponseBodyTooLarge
 }
 
 func writeHeader(req, forwardReq *http.Request, trustForwardHeader bool, allowedHeaders []string) {

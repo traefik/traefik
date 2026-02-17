@@ -50,6 +50,7 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.middlewares.Middleware7.forwardauth.tls.insecureskipverify":                  "true",
 		"traefik.http.middlewares.Middleware7.forwardauth.tls.key":                                 "foobar",
 		"traefik.http.middlewares.Middleware7.forwardauth.trustforwardheader":                      "true",
+		"traefik.http.middlewares.Middleware7.forwardauth.maxresponsebodysize":                     "42",
 		"traefik.http.middlewares.Middleware8.headers.accesscontrolallowcredentials":               "true",
 		"traefik.http.middlewares.Middleware8.headers.allowedhosts":                                "foobar, fiibar",
 		"traefik.http.middlewares.Middleware8.headers.accesscontrolallowheaders":                   "X-foobar, X-fiibar",
@@ -547,6 +548,7 @@ func TestDecodeConfiguration(t *testing.T) {
 							"foobar",
 							"fiibar",
 						},
+						MaxResponseBodySize: pointer[int64](42),
 					},
 				},
 				"Middleware8": {
@@ -1060,6 +1062,7 @@ func TestEncodeConfiguration(t *testing.T) {
 							"foobar",
 							"fiibar",
 						},
+						MaxResponseBodySize: pointer[int64](42),
 					},
 				},
 				"Middleware8": {
@@ -1259,6 +1262,7 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Middlewares.Middleware7.ForwardAuth.TLS.InsecureSkipVerify":                  "true",
 		"traefik.HTTP.Middlewares.Middleware7.ForwardAuth.TLS.Key":                                 "foobar",
 		"traefik.HTTP.Middlewares.Middleware7.ForwardAuth.TrustForwardHeader":                      "true",
+		"traefik.HTTP.Middlewares.Middleware7.ForwardAuth.MaxResponseBodySize":                     "42",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.AccessControlAllowCredentials":               "true",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.AccessControlAllowHeaders":                   "X-foobar, X-fiibar",
 		"traefik.HTTP.Middlewares.Middleware8.Headers.AccessControlAllowMethods":                   "GET, PUT",

@@ -386,6 +386,11 @@ spec:
                       AuthResponseHeadersRegex defines the regex to match headers to copy from the authentication server response and set on forwarded request, after stripping all headers that match the regex.
                       More info: https://doc.traefik.io/traefik/v2.11/middlewares/http/forwardauth/#authresponseheadersregex
                     type: string
+                  maxResponseBodySize:
+                    description: MaxResponseBodySize defines the maximum body size
+                      in bytes allowed in the response from the authentication server.
+                    format: int64
+                    type: integer
                   tls:
                     description: TLS defines the configuration used to secure the
                       connection to the authentication server.
