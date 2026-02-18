@@ -20,7 +20,9 @@ http:
         initialInterval: 100ms
         timeout: 60s
         maxRequestBodyBytes: 1024
-        status: ["400","500-599"]
+        status: 
+          - "400"
+          - "500-599"
         disableRetryOnNetworkError: true
         retryNonIdempotentMethod: true
 ```
@@ -80,7 +82,9 @@ spec:
     initialInterval: 100ms
     timeout: 60s
     maxRequestBodyBytes: 1024
-    status: ["400","500-599"]
+    status: 
+      - "400"
+      - "500-599"
     disableRetryOnNetworkError: true
     retryNonIdempotentMethod: true
 ```
@@ -93,7 +97,7 @@ spec:
 | <a id="opt-initialInterval" href="#opt-initialInterval" title="#opt-initialInterval">`initialInterval`</a> | First wait time in the exponential backoff series. <br />The maximum interval is calculated as twice the `initialInterval`. <br /> If unspecified, requests will be retried immediately.<br /> Defined in seconds or as a valid duration format, see [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration). | 0 | No |
 | <a id="opt-timeout" href="#opt-timeout" title="#opt-timeout">`timeout`</a> | How much time the middleware is allowed to retry the request. <br /> Defined in seconds or as a valid duration format, see [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration). | 0 | No |
 | <a id="opt-maxRequestBodyBytes" href="#opt-maxRequestBodyBytes" title="#opt-maxRequestBodyBytes">`maxRequestBodyBytes`</a> | Defines the maximum size for the request body. Default is `-1`, which means no limit. <br/>More information [here](#maxrequestbodybytes). | -1 | No |
-| <a id="opt-status" href="#opt-status" title="#opt-status">`status`</a> | Defines the range of HTTP status codes to retry on. <br/>More information [here](#disableretryonnetworkerror-and-status). | "" | No |
+| <a id="opt-status" href="#opt-status" title="#opt-status">`status`</a> | Defines the range of HTTP status codes to retry on. <br/>More information [here](#disableretryonnetworkerror-and-status). | [] | No |
 | <a id="opt-disableRetryOnNetworkError" href="#opt-disableRetryOnNetworkError" title="#opt-disableRetryOnNetworkError">`disableRetryOnNetworkError`</a> | This option disables the retry if an error occurs when transmitting the request to the server. <br/>More information [here](#disableretryonnetworkerror-and-status).  | false | No |
 | <a id="opt-retryNonIdempotentMethod" href="#opt-retryNonIdempotentMethod" title="#opt-retryNonIdempotentMethod">`retryNonIdempotentMethod`</a> | Activates the retry for non-idempotent methods (`POST`, `LOCK`, `PATCH`) | false | No |
 
