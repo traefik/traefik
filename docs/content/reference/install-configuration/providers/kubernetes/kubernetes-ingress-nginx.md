@@ -65,7 +65,7 @@ providers:
     proxyBuffering: false
     proxyBodySize: "1048576"      # 1m
     proxyBufferSize: "8192"       # 8k
-    proxyBuffersNumber: 8
+    proxyBuffersNumber: 4
 ```
 
 ```toml tab="File (TOML)"
@@ -86,7 +86,7 @@ providers:
   proxyBuffering = false
   proxyBodySize = "1048576"      # 1m
   proxyBufferSize = "8192"       # 8k
-  proxyBuffersNumber = 8
+  proxyBuffersNumber = 4
 ```
 
 ```bash tab="CLI"
@@ -102,7 +102,7 @@ providers:
 --providers.kubernetesingressnginx.proxybuffering=false
 --providers.kubernetesingressnginx.proxybodysize=1048576      # 1m
 --providers.kubernetesingressnginx.proxybuffersize=8192       # 8k
---providers.kubernetesingressnginx.proxybuffersnumber=8
+--providers.kubernetesingressnginx.proxybuffersnumber=4
 ```
 
 ```yaml tab="Helm Chart Values"
@@ -158,7 +158,7 @@ This provider watches for incoming Ingress events and automatically translates N
 | <a id="opt-providers-kubernetesIngressNGINX-proxybuffering" href="#opt-providers-kubernetesIngressNGINX-proxybuffering" title="#opt-providers-kubernetesIngressNGINX-proxybuffering">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`proxybuffering`</a> | Defines whether response buffering is enabled by default for all ingresses.                                                                                                                                                                                                                                                                                                                                                                           | false   | No       |
 | <a id="opt-providers-kubernetesIngressNGINX-proxyBodySize" href="#opt-providers-kubernetesIngressNGINX-proxyBodySize" title="#opt-providers-kubernetesIngressNGINX-proxyBodySize">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`proxyBodySize`</a> | Default maximum size of a client request body in bytes.                                                                                                                                                                                                                                                                                                                                                                                               | 1048576 | No       |
 | <a id="opt-providers-kubernetesIngressNGINX-proxyBufferSize" href="#opt-providers-kubernetesIngressNGINX-proxyBufferSize" title="#opt-providers-kubernetesIngressNGINX-proxyBufferSize">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`proxyBufferSize`</a> | Default buffer size for reading the response body in bytes.                                                                                                                                                                                                                                                                                                                                                                                           | 8192    | No       |
-| <a id="opt-providers-kubernetesIngressNGINX-proxyBuffersNumber" href="#opt-providers-kubernetesIngressNGINX-proxyBuffersNumber" title="#opt-providers-kubernetesIngressNGINX-proxyBuffersNumber">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`proxyBuffersNumber`</a> | Default number of buffers for reading a response.                                                                                                                                                                                                                                                                                                                                                                                                     | 8       | No       |
+| <a id="opt-providers-kubernetesIngressNGINX-proxyBuffersNumber" href="#opt-providers-kubernetesIngressNGINX-proxyBuffersNumber" title="#opt-providers-kubernetesIngressNGINX-proxyBuffersNumber">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`proxyBuffersNumber`</a> | Default number of buffers for reading a response.                                                                                                                                                                                                                                                                                                                                                                                                     | 4       | No       |
 
 <!-- markdownlint-enable MD013 -->
 

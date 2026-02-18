@@ -2627,7 +2627,7 @@ func TestLoadIngresses(t *testing.T) {
 							Errors: &dynamic.ErrorPage{
 								Status:  []string{"404", "415"},
 								Service: "default-backend-default-ingress-with-custom-http-errors-and-default-backend-rule-0-path-0",
-								NGinXHeaders: &http.Header{
+								NginxHeaders: &http.Header{
 									"X-Namespaces":   {"default"},
 									"X-Ingress-Name": {"ingress-with-custom-http-errors-and-default-backend"},
 									"X-Service-Name": {"whoami"},
@@ -2725,7 +2725,7 @@ func TestLoadIngresses(t *testing.T) {
 							Errors: &dynamic.ErrorPage{
 								Status:  []string{"404", "415"},
 								Service: "default-backend",
-								NGinXHeaders: &http.Header{
+								NginxHeaders: &http.Header{
 									"X-Namespaces":   {"default"},
 									"X-Ingress-Name": {"ingress-with-custom-http-errors"},
 									"X-Service-Name": {"whoami"},
