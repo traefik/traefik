@@ -12,8 +12,9 @@ import (
 
 const (
 	// ForwardAuthDefaultMaxBodySize is the ForwardAuth.MaxBodySize option default value.
-	ForwardAuthDefaultMaxBodySize  int64 = -1
-	RetryDefaultMaxRequestBodySize int64 = -1
+	ForwardAuthDefaultMaxBodySize int64 = -1
+	// RetryDefaultMaxRequestBodyBytes is the Retry.MaxRequestBodyBytes option default value.
+	RetryDefaultMaxRequestBodyBytes int64 = -1
 )
 
 // +k8s:deepcopy-gen=true
@@ -752,7 +753,7 @@ type Retry struct {
 }
 
 func (r *Retry) SetDefaults() {
-	r.MaxRequestBodyBytes = RetryDefaultMaxRequestBodySize
+	r.MaxRequestBodyBytes = RetryDefaultMaxRequestBodyBytes
 }
 
 // +k8s:deepcopy-gen=true

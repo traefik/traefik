@@ -117,6 +117,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.Retry, listener 
 		attempts:                   config.Attempts,
 		maxRequestBodyBytes:        config.MaxRequestBodyBytes,
 		disableRetryOnNetworkError: config.DisableRetryOnNetworkError,
+		retryNonIdempotentMethod:   config.RetryNonIdempotentMethod,
 		initialInterval:            time.Duration(config.InitialInterval),
 		timeout:                    time.Duration(config.Timeout),
 		name:                       name,

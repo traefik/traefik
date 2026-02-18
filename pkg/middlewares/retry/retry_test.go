@@ -432,8 +432,9 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 		{
 			desc: "retry on single 503 status code",
 			config: dynamic.Retry{
-				Attempts: 3,
-				Status:   []string{"503"},
+				Attempts:            3,
+				Status:              []string{"503"},
+				MaxRequestBodyBytes: 1024,
 			},
 			responseStatusCodes: []int{http.StatusServiceUnavailable, http.StatusOK},
 			requestBody:         "test request body",
@@ -443,8 +444,9 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 		{
 			desc: "retry on range of 5xx status codes",
 			config: dynamic.Retry{
-				Attempts: 4,
-				Status:   []string{"500-599"},
+				Attempts:            4,
+				Status:              []string{"500-599"},
+				MaxRequestBodyBytes: 1024,
 			},
 			responseStatusCodes: []int{http.StatusInternalServerError, http.StatusBadGateway, http.StatusServiceUnavailable, http.StatusOK},
 			requestBody:         "test request body",
@@ -454,8 +456,9 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 		{
 			desc: "retry on multiple specific status codes",
 			config: dynamic.Retry{
-				Attempts: 3,
-				Status:   []string{"502", "503", "504"},
+				Attempts:            3,
+				Status:              []string{"502", "503", "504"},
+				MaxRequestBodyBytes: 1024,
 			},
 			responseStatusCodes: []int{http.StatusBadGateway, http.StatusOK},
 			requestBody:         "test request body",
@@ -465,8 +468,9 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 		{
 			desc: "no retry on non-matching status code",
 			config: dynamic.Retry{
-				Attempts: 3,
-				Status:   []string{"503"},
+				Attempts:            3,
+				Status:              []string{"503"},
+				MaxRequestBodyBytes: 1024,
 			},
 			responseStatusCodes: []int{http.StatusInternalServerError},
 			wantRetryAttempts:   0,
@@ -534,8 +538,9 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 		{
 			desc: "retry on TCP failure and 503 status code",
 			config: dynamic.Retry{
-				Attempts: 3,
-				Status:   []string{"503"},
+				Attempts:            3,
+				Status:              []string{"503"},
+				MaxRequestBodyBytes: 1024,
 			},
 			responseStatusCodes: []int{http.StatusServiceUnavailable, http.StatusServiceUnavailable, http.StatusOK},
 			amountOfTCPFailures: 1,
@@ -546,8 +551,9 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 		{
 			desc: "retry failure on 503 status code with method POST",
 			config: dynamic.Retry{
-				Attempts: 3,
-				Status:   []string{"503"},
+				Attempts:            3,
+				Status:              []string{"503"},
+				MaxRequestBodyBytes: 1024,
 			},
 			responseStatusCodes: []int{http.StatusServiceUnavailable, http.StatusOK},
 			requestMethod:       http.MethodPost,
@@ -555,11 +561,12 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 			wantResponseStatus:  http.StatusServiceUnavailable,
 		},
 		{
-			desc: "retry failure on 503 status code with method POST",
+			desc: "retry success on 503 status code with method POST",
 			config: dynamic.Retry{
 				Attempts:                 3,
 				Status:                   []string{"503"},
 				RetryNonIdempotentMethod: true,
+				MaxRequestBodyBytes:      1024,
 			},
 			responseStatusCodes: []int{http.StatusServiceUnavailable, http.StatusOK},
 			requestMethod:       http.MethodPost,

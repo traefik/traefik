@@ -984,7 +984,7 @@ func createRetryMiddleware(retry *traefikv1alpha1.Retry) (*dynamic.Retry, error)
 
 	r := &dynamic.Retry{
 		Attempts:                   retry.Attempts,
-		MaxRequestBodyBytes:        dynamic.RetryDefaultMaxRequestBodySize,
+		MaxRequestBodyBytes:        dynamic.RetryDefaultMaxRequestBodyBytes,
 		Status:                     retry.Status,
 		DisableRetryOnNetworkError: retry.DisableRetryOnNetworkError,
 		RetryNonIdempotentMethod:   retry.RetryNonIdempotentMethod,
