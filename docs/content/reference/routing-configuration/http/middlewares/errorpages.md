@@ -19,8 +19,8 @@ http:
           - "503"
           - "505-599"
         statusRewrites:
-          "418": "404"
-          "502-504": "500"
+          "418": 404
+          "502-504": 500
         service: error-handler-service
         query: "/{status}.html"
 

@@ -134,6 +134,10 @@ type Buffering struct {
 	// It is a logical combination of functions with operators AND (&&) and OR (||).
 	// More info: https://doc.traefik.io/traefik/v3.6/middlewares/http/buffering/#retryexpression
 	RetryExpression string `json:"retryExpression,omitempty" toml:"retryExpression,omitempty" yaml:"retryExpression,omitempty" export:"true"`
+
+	// Only configurable via code, not via configuration files.
+	DisableRequestBuffer  bool `json:"disableRequestBuffer,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
+	DisableResponseBuffer bool `json:"disableResponseBuffer,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -294,6 +298,9 @@ type ForwardAuth struct {
 	PreserveRequestMethod bool `json:"preserveRequestMethod,omitempty" toml:"preserveRequestMethod,omitempty" yaml:"preserveRequestMethod,omitempty" export:"true"`
 	// AuthSigninURL specifies the URL to redirect to when the authentication server returns 401 Unauthorized.
 	AuthSigninURL string `json:"authSigninURL,omitempty" toml:"authSigninURL,omitempty" yaml:"authSigninURL,omitempty" export:"true"`
+	// Interpolate activates variable interpolation for Address and AuthSigninURL config options.
+	// Currently, this is only used by the NGINX provider to support variable substitution.
+	Interpolate bool `json:"interpolate,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
 
 func (f *ForwardAuth) SetDefaults() {

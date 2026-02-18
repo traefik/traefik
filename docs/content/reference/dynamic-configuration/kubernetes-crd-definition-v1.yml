@@ -222,6 +222,25 @@ spec:
                             - Service
                             - TraefikService
                             type: string
+                          middlewares:
+                            description: Middlewares defines the list of references
+                              to Middleware resources to apply to the service.
+                            items:
+                              description: MiddlewareRef is a reference to a Middleware
+                                resource.
+                              properties:
+                                name:
+                                  description: Name defines the name of the referenced
+                                    Middleware resource.
+                                  type: string
+                                namespace:
+                                  description: Namespace defines the namespace of
+                                    the referenced Middleware resource.
+                                  type: string
+                              required:
+                              - name
+                              type: object
+                            type: array
                           name:
                             description: |-
                               Name defines the name of the referenced Kubernetes Service or TraefikService.
@@ -1232,6 +1251,25 @@ spec:
                         - Service
                         - TraefikService
                         type: string
+                      middlewares:
+                        description: Middlewares defines the list of references to
+                          Middleware resources to apply to the service.
+                        items:
+                          description: MiddlewareRef is a reference to a Middleware
+                            resource.
+                          properties:
+                            name:
+                              description: Name defines the name of the referenced
+                                Middleware resource.
+                              type: string
+                            namespace:
+                              description: Namespace defines the namespace of the
+                                referenced Middleware resource.
+                              type: string
+                          required:
+                          - name
+                          type: object
+                        type: array
                       name:
                         description: |-
                           Name defines the name of the referenced Kubernetes Service or TraefikService.
@@ -2974,6 +3012,25 @@ spec:
                           - Service
                           - TraefikService
                           type: string
+                        middlewares:
+                          description: Middlewares defines the list of references
+                            to Middleware resources to apply to the service.
+                          items:
+                            description: MiddlewareRef is a reference to a Middleware
+                              resource.
+                            properties:
+                              name:
+                                description: Name defines the name of the referenced
+                                  Middleware resource.
+                                type: string
+                              namespace:
+                                description: Namespace defines the namespace of the
+                                  referenced Middleware resource.
+                                type: string
+                            required:
+                            - name
+                            type: object
+                          type: array
                         name:
                           description: |-
                             Name defines the name of the referenced Kubernetes Service or TraefikService.
@@ -3211,6 +3268,24 @@ spec:
                       Default value is -1, which means unlimited size.
                     format: int64
                     type: integer
+                  middlewares:
+                    description: Middlewares defines the list of references to Middleware
+                      resources to apply to the service.
+                    items:
+                      description: MiddlewareRef is a reference to a Middleware resource.
+                      properties:
+                        name:
+                          description: Name defines the name of the referenced Middleware
+                            resource.
+                          type: string
+                        namespace:
+                          description: Namespace defines the namespace of the referenced
+                            Middleware resource.
+                          type: string
+                      required:
+                      - name
+                      type: object
+                    type: array
                   mirrorBody:
                     description: |-
                       MirrorBody defines whether the body of the request should be mirrored.
@@ -3298,6 +3373,25 @@ spec:
                           - Service
                           - TraefikService
                           type: string
+                        middlewares:
+                          description: Middlewares defines the list of references
+                            to Middleware resources to apply to the service.
+                          items:
+                            description: MiddlewareRef is a reference to a Middleware
+                              resource.
+                            properties:
+                              name:
+                                description: Name defines the name of the referenced
+                                  Middleware resource.
+                                type: string
+                              namespace:
+                                description: Namespace defines the namespace of the
+                                  referenced Middleware resource.
+                                type: string
+                            required:
+                            - name
+                            type: object
+                          type: array
                         name:
                           description: |-
                             Name defines the name of the referenced Kubernetes Service or TraefikService.
@@ -3686,6 +3780,25 @@ spec:
                           - Service
                           - TraefikService
                           type: string
+                        middlewares:
+                          description: Middlewares defines the list of references
+                            to Middleware resources to apply to the service.
+                          items:
+                            description: MiddlewareRef is a reference to a Middleware
+                              resource.
+                            properties:
+                              name:
+                                description: Name defines the name of the referenced
+                                  Middleware resource.
+                                type: string
+                              namespace:
+                                description: Namespace defines the namespace of the
+                                  referenced Middleware resource.
+                                type: string
+                            required:
+                            - name
+                            type: object
+                          type: array
                         name:
                           description: |-
                             Name defines the name of the referenced Kubernetes Service or TraefikService.

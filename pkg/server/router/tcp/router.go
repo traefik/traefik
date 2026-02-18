@@ -18,7 +18,15 @@ import (
 	"github.com/traefik/traefik/v3/pkg/tcp"
 )
 
-const defaultBufSize = 4096
+const (
+	defaultBufSize = 4096
+	// Per RFC 8446 Section 5.1, the maximum TLS record payload length is 2^14 (16384) bytes.
+	// A ClientHello is always a plaintext record, so any value exceeding this limit is invalid
+	// and likely indicates an attack attempting to force oversized per-connection buffer allocations.
+	// However, in practice the go server handshake can read up to 16384 + 2048 bytes,
+	// so we need to allow for some extra bytes to avoid rejecting valid handshakes.
+	maxTLSRecordLen = 16384 + 2048
+)
 
 // Router is a TCP router.
 type Router struct {
@@ -126,11 +134,6 @@ func (r *Router) ServeTCP(ctx context.Context, conn tcp.WriteCloser) {
 	}
 
 	if postgres {
-		// Remove read/write deadline and delegate this to underlying TCP server.
-		if err := conn.SetDeadline(time.Time{}); err != nil {
-			log.Error().Err(err).Msg("Error while setting deadline")
-		}
-
 		r.servePostgres(r.GetConn(conn, getPeeked(br)))
 		return
 	}
@@ -141,7 +144,9 @@ func (r *Router) ServeTCP(ctx context.Context, conn tcp.WriteCloser) {
 		return
 	}
 
-	// Remove read/write deadline and delegate this to underlying TCP server (for now only handled by HTTP Server)
+	// The deadline was set to avoid blocking on the initial read of the ClientHello,
+	// but now that we have it, we can remove it,
+	// and delegate this to underlying TCP server (for now only handled by HTTP Server).
 	if err := conn.SetDeadline(time.Time{}); err != nil {
 		log.Error().Err(err).Msg("Error while setting deadline")
 	}
@@ -408,6 +413,14 @@ func clientHelloInfo(br *bufio.Reader) (*clientHello, error) {
 	}
 
 	recLen := int(hdr[3])<<8 | int(hdr[4]) // ignoring version in hdr[1:3]
+
+	if recLen > maxTLSRecordLen {
+		log.Debug().Msgf("Error while peeking client hello bytes, oversized record: %d", recLen)
+		return &clientHello{
+			isTLS:  true,
+			peeked: getPeeked(br),
+		}, nil
+	}
 
 	if recordHeaderLen+recLen > defaultBufSize {
 		br = bufio.NewReaderSize(br, recordHeaderLen+recLen)

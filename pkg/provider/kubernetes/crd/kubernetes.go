@@ -266,7 +266,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			continue
 		}
 
-		errorPage, errorPageService, err := p.createErrorPageMiddleware(client, middleware.Namespace, middleware.Spec.Errors)
+		errorPage, errorPageService, err := p.createErrorPageMiddleware(ctxMid, client, middleware.Namespace, middleware.Spec.Errors)
 		if err != nil {
 			logger.Error().Err(err).Msg("Error while reading error page middleware")
 			continue
@@ -321,7 +321,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 			DigestAuth:        digestAuth,
 			ForwardAuth:       forwardAuth,
 			InFlightReq:       middleware.Spec.InFlightReq,
-			Buffering:         middleware.Spec.Buffering,
+			Buffering:         createBufferingMiddleware(middleware.Spec.Buffering),
 			CircuitBreaker:    circuitBreaker,
 			Compress:          createCompressMiddleware(middleware.Spec.Compress),
 			PassTLSClientCert: middleware.Spec.PassTLSClientCert,
@@ -645,7 +645,7 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 	return conf
 }
 
-func (p *Provider) createErrorPageMiddleware(client Client, namespace string, errorPage *traefikv1alpha1.ErrorPage) (*dynamic.ErrorPage, *dynamic.Service, error) {
+func (p *Provider) createErrorPageMiddleware(ctx context.Context, client Client, namespace string, errorPage *traefikv1alpha1.ErrorPage) (*dynamic.ErrorPage, *dynamic.Service, error) {
 	if errorPage == nil {
 		return nil, nil, nil
 	}
@@ -663,7 +663,7 @@ func (p *Provider) createErrorPageMiddleware(client Client, namespace string, er
 		allowEmptyServices:        p.AllowEmptyServices,
 	}
 
-	balancerServerHTTP, err := cb.buildServersLB(namespace, errorPage.Service.LoadBalancerSpec)
+	balancerServerHTTP, err := cb.buildServersLB(ctx, namespace, errorPage.Service.LoadBalancerSpec)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -1194,6 +1194,20 @@ func createDigestAuthMiddleware(client Client, namespace string, digestAuth *tra
 		RemoveHeader: digestAuth.RemoveHeader,
 		HeaderField:  digestAuth.HeaderField,
 	}, nil
+}
+
+func createBufferingMiddleware(buffering *traefikv1alpha1.Buffering) *dynamic.Buffering {
+	if buffering == nil {
+		return nil
+	}
+
+	return &dynamic.Buffering{
+		MemRequestBodyBytes:  buffering.MemRequestBodyBytes,
+		MaxRequestBodyBytes:  buffering.MaxRequestBodyBytes,
+		MemResponseBodyBytes: buffering.MemResponseBodyBytes,
+		MaxResponseBodyBytes: buffering.MaxResponseBodyBytes,
+		RetryExpression:      buffering.RetryExpression,
+	}
 }
 
 func loadBasicAuthCredentials(secret *corev1.Secret) ([]string, error) {
