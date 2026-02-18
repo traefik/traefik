@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
@@ -142,12 +141,14 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	logger := middlewares.GetLogger(req.Context(), r.name, typeName)
+
 	var reusableReq *mirror.ReusableRequest
 	if len(r.statusCode) > 0 {
 		var err error
 		reusableReq, _, err = mirror.NewReusableRequest(req, r.maxRequestBodyBytes)
 		if err != nil && !errors.Is(err, mirror.ErrBodyTooLarge) {
-			log.Ctx(req.Context()).Debug().Err(err).Msg("Error while creating reusable request for retry middleware")
+			logger.Debug().Err(err).Msg("Error while creating reusable request for retry middleware")
 			http.Error(rw, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
@@ -228,8 +229,6 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 		return fmt.Errorf("attempt %d failed", attempts-1)
 	}
-
-	logger := middlewares.GetLogger(req.Context(), r.name, typeName)
 
 	backOff := backoff.WithContext(r.newBackOff(), req.Context())
 
