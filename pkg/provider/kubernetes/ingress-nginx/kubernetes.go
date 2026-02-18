@@ -1400,7 +1400,7 @@ func (p *Provider) applyAuthTLSPassCertificateToUpstream(ingressNamespace string
 
 	passCertificateToUpstreamMiddlewareName := routerName + "-pass-certificate-to-upstream"
 	conf.HTTP.Middlewares[passCertificateToUpstreamMiddlewareName] = &dynamic.Middleware{
-		PassTLSClientCertNginx: &dynamic.PassTLSClientCertNginx{
+		AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
 			VerifyClient: verifyClient,
 			CAFiles:      caFiles,
 		},

@@ -1,4 +1,4 @@
-package passtlsclientcertnginx
+package ingressnginx
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 )
 
-const typeName = "PassTLSClientCertNginx"
+const typeName = "AuthTLSPassCertificateToUpstream"
 
 // Nginx header names.
 const (
@@ -24,14 +24,14 @@ const (
 	sslClientIssuerDN  = "Ssl-Client-Issuer-Dn"
 )
 
-type passTLSClientCertNginx struct {
+type authTLSPassCertificateToUpstream struct {
 	next         http.Handler
 	name         string
 	verifyClient string
 	caCertPool   *x509.CertPool
 }
 
-func NewPassTLSClientCertNginx(ctx context.Context, next http.Handler, config dynamic.PassTLSClientCertNginx, name string) (http.Handler, error) {
+func NewAuthTLSPassCertificateToUpstream(ctx context.Context, next http.Handler, config dynamic.AuthTLSPassCertificateToUpstream, name string) (http.Handler, error) {
 	middlewares.GetLogger(ctx, name, typeName).Debug().Msg("Creating middleware")
 
 	// caCertPool only needed to do internal validation if VerifyClient is optional_no_ca.
@@ -45,7 +45,7 @@ func NewPassTLSClientCertNginx(ctx context.Context, next http.Handler, config dy
 		}
 	}
 
-	return &passTLSClientCertNginx{
+	return &authTLSPassCertificateToUpstream{
 		next:         next,
 		name:         name,
 		verifyClient: config.VerifyClient,
@@ -53,11 +53,11 @@ func NewPassTLSClientCertNginx(ctx context.Context, next http.Handler, config dy
 	}, nil
 }
 
-func (p *passTLSClientCertNginx) GetTracingInformation() (string, string) {
+func (p *authTLSPassCertificateToUpstream) GetTracingInformation() (string, string) {
 	return p.name, typeName
 }
 
-func (p *passTLSClientCertNginx) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+func (p *authTLSPassCertificateToUpstream) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	logger := middlewares.GetLogger(req.Context(), p.name, typeName)
 	ctx := logger.WithContext(req.Context())
 

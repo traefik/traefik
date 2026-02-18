@@ -1,4 +1,4 @@
-package passtlsclientcertnginx
+package ingressnginx
 
 import (
 	"crypto/tls"
@@ -255,7 +255,7 @@ func getCertPEM(certContent string) string {
 	return strings.ReplaceAll(url.QueryEscape(string(certPEM)), "+", "%20")
 }
 
-func TestPassTLSClientCertNginx(t *testing.T) {
+func TestAuthTLSPassCertificateToUpstream(t *testing.T) {
 	testCases := []struct {
 		desc                 string
 		verifyClient         string
@@ -327,12 +327,12 @@ func TestPassTLSClientCertNginx(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			config := dynamic.PassTLSClientCertNginx{
+			config := dynamic.AuthTLSPassCertificateToUpstream{
 				VerifyClient: test.verifyClient,
 				CAFiles:      test.caFiles,
 			}
 
-			handler, err := NewPassTLSClientCertNginx(t.Context(), next, config, "test")
+			handler, err := NewAuthTLSPassCertificateToUpstream(t.Context(), next, config, "test")
 			require.NoError(t, err)
 
 			res := httptest.NewRecorder()
