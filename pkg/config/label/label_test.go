@@ -139,6 +139,11 @@ func TestDecodeConfiguration(t *testing.T) {
 		"traefik.http.middlewares.Middleware15.replacepathregex.replacement":                       "foobar",
 		"traefik.http.middlewares.Middleware16.retry.attempts":                                     "42",
 		"traefik.http.middlewares.Middleware16.retry.initialinterval":                              "1s",
+		"traefik.http.middlewares.Middleware16.retry.timeout":                                      "1s",
+		"traefik.http.middlewares.Middleware16.retry.maxRequestBodyBytes":                          "42",
+		"traefik.http.middlewares.Middleware16.retry.status":                                       "foobar, foobar",
+		"traefik.http.middlewares.Middleware16.retry.disableRetryOnNetworkError":                   "true",
+		"traefik.http.middlewares.Middleware16.retry.retryNonIdempotentMethod":                     "true",
 		"traefik.http.middlewares.Middleware17.stripprefix.prefixes":                               "foobar, fiibar",
 		"traefik.http.middlewares.Middleware17.stripprefix.forceslash":                             "true",
 		"traefik.http.middlewares.Middleware18.stripprefixregex.regex":                             "foobar, fiibar",
@@ -487,8 +492,13 @@ func TestDecodeConfiguration(t *testing.T) {
 				},
 				"Middleware16": {
 					Retry: &dynamic.Retry{
-						Attempts:        42,
-						InitialInterval: ptypes.Duration(time.Second),
+						Attempts:                   42,
+						InitialInterval:            ptypes.Duration(time.Second),
+						Timeout:                    ptypes.Duration(time.Second),
+						MaxRequestBodyBytes:        42,
+						Status:                     []string{"foobar", "foobar"},
+						DisableRetryOnNetworkError: true,
+						RetryNonIdempotentMethod:   true,
 					},
 				},
 				"Middleware17": {
