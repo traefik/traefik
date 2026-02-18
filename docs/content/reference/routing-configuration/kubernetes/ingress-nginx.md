@@ -252,6 +252,15 @@ This provider watches for incoming Ingress events and automatically translates N
 This section lists all known NGINX Ingress annotations.
 The following annotations are organized by category for easier navigation.
 
+### Coming Soon: More Annotations in Active Development
+
+ Several annotations currently listed as unsupported are actively being implemented and will become available in upcoming release.
+
+!!! tip "Preview upcoming annotation support"
+    You can follow the progress and explore annotations that are already available in the next version of Traefik by visiting the **[experimental documentation (master branch)](https://doc.traefik.io/traefik/master/reference/routing-configuration/kubernetes/ingress-nginx/)**.
+
+    The experimental page reflects the state of the `master` branch and may include annotations not yet available in the current stable release. Features shown there are subject to change before the final release.
+
 ### Authentication
 
 | Annotation                                            | Limitations / Notes                                                                        |
