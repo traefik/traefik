@@ -1043,8 +1043,13 @@ func TestEncodeConfiguration(t *testing.T) {
 				},
 				"Middleware16": {
 					Retry: &dynamic.Retry{
-						Attempts:        42,
-						InitialInterval: ptypes.Duration(time.Second),
+						Attempts:                   42,
+						InitialInterval:            ptypes.Duration(time.Second),
+						Timeout:                    ptypes.Duration(time.Second),
+						MaxRequestBodyBytes:        42,
+						Status:                     []string{"foobar", "foobar"},
+						DisableRetryOnNetworkError: true,
+						RetryNonIdempotentMethod:   true,
 					},
 				},
 				"Middleware17": {
@@ -1457,6 +1462,11 @@ func TestEncodeConfiguration(t *testing.T) {
 		"traefik.HTTP.Middlewares.Middleware15.ReplacePathRegex.Replacement":                       "foobar",
 		"traefik.HTTP.Middlewares.Middleware16.Retry.Attempts":                                     "42",
 		"traefik.HTTP.Middlewares.Middleware16.Retry.InitialInterval":                              "1000000000",
+		"traefik.HTTP.Middlewares.Middleware16.Retry.Timeout":                                      "1000000000",
+		"traefik.HTTP.Middlewares.Middleware16.Retry.MaxRequestBodyBytes":                          "42",
+		"traefik.HTTP.Middlewares.Middleware16.Retry.Status":                                       "foobar, foobar",
+		"traefik.HTTP.Middlewares.Middleware16.Retry.DisableRetryOnNetworkError":                   "true",
+		"traefik.HTTP.Middlewares.Middleware16.Retry.RetryNonIdempotentMethod":                     "true",
 		"traefik.HTTP.Middlewares.Middleware17.StripPrefix.Prefixes":                               "foobar, fiibar",
 		"traefik.HTTP.Middlewares.Middleware17.StripPrefix.ForceSlash":                             "true",
 		"traefik.HTTP.Middlewares.Middleware18.StripPrefixRegex.Regex":                             "foobar, fiibar",
