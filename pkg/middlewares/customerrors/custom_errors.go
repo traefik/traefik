@@ -39,7 +39,7 @@ type customErrors struct {
 	httpCodeRanges      types.HTTPCodeRanges
 	backendQuery        string
 	statusRewrites      []statusRewrite
-	forwardNGinXHeaders http.Header
+	forwardNginxHeaders http.Header
 }
 
 type statusRewrite struct {
@@ -82,7 +82,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.ErrorPage, servi
 		httpCodeRanges:      httpCodeRanges,
 		backendQuery:        config.Query,
 		statusRewrites:      statusRewrites,
-		forwardNGinXHeaders: ptr.Deref(config.NGinXHeaders, http.Header{}),
+		forwardNginxHeaders: ptr.Deref(config.NginxHeaders, http.Header{}),
 	}, nil
 }
 
@@ -148,8 +148,8 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if len(c.forwardNGinXHeaders) > 0 {
-		utils.CopyHeaders(pageReq.Header, c.forwardNGinXHeaders)
+	if len(c.forwardNginxHeaders) > 0 {
+		utils.CopyHeaders(pageReq.Header, c.forwardNginxHeaders)
 		pageReq.Header.Set("X-Code", strconv.Itoa(code))
 		pageReq.Header.Set("X-Format", req.Header.Get("Accept"))
 		pageReq.Header.Set("X-Original-Uri", req.URL.RequestURI())

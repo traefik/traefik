@@ -339,8 +339,8 @@ func (in *ErrorPage) DeepCopyInto(out *ErrorPage) {
 			(*out)[key] = val
 		}
 	}
-	if in.NGinXHeaders != nil {
-		in, out := &in.NGinXHeaders, &out.NGinXHeaders
+	if in.NginxHeaders != nil {
+		in, out := &in.NginxHeaders, &out.NginxHeaders
 		*out = new(http.Header)
 		if **in != nil {
 			in, out := *in, *out

@@ -956,13 +956,19 @@ func (p *Provider) applyCustomHTTPErrors(namespace, ingressName, routerName stri
 	if targetedService == nil {
 		return errors.New("targeted ingress backend is nil")
 	}
+	if targetedService.Service == nil {
+		return errors.New("targeted ingress backend has no service")
+	}
 	k8sServiceName := targetedService.Service.Name
 	serviceK8s, err := p.k8sClient.GetService(namespace, k8sServiceName)
 	if err != nil {
 		return fmt.Errorf("getting service: %w", err)
 	}
 
-	_, portSpec, _ := getPort(serviceK8s, *targetedService)
+	_, portSpec, ok := getPort(serviceK8s, *targetedService)
+	if !ok {
+		return fmt.Errorf("port not found for service %s", k8sServiceName)
+	}
 
 	customErrorMiddlewareName := routerName + "-custom-http-errors"
 	headers := http.Header(map[string][]string{
@@ -976,7 +982,7 @@ func (p *Provider) applyCustomHTTPErrors(namespace, ingressName, routerName stri
 		Errors: &dynamic.ErrorPage{
 			Status:       customHTTPErrors,
 			Service:      serviceName,
-			NGinXHeaders: &headers,
+			NginxHeaders: &headers,
 		},
 	}
 
@@ -1301,14 +1307,14 @@ func applyAllowedSourceRangeConfiguration(routerName string, ingressConfig ingre
 func (p *Provider) applyBufferingConfiguration(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
 	disableRequestBuffering := !p.ProxyRequestBuffering
 	if ingressConfig.ProxyRequestBuffering != nil {
-		// Without value validation, lean on disabling by checking for "on", which is more likely to satisfy user input.
-		disableRequestBuffering = *ingressConfig.ProxyRequestBuffering != "on"
+		// NGINX only accepts "on" and "off". Any unrecognized value defaults to disabling buffering (conservative).
+		disableRequestBuffering = !strings.EqualFold(*ingressConfig.ProxyRequestBuffering, "on")
 	}
 
 	disableResponseBuffering := !p.ProxyBuffering
 	if ingressConfig.ProxyBuffering != nil {
-		// Without value validation, lean on disabling by checking for "on", which is more likely to satisfy user input.
-		disableResponseBuffering = *ingressConfig.ProxyBuffering != "on"
+		// NGINX only accepts "on" and "off". Any unrecognized value defaults to disabling buffering (conservative).
+		disableResponseBuffering = !strings.EqualFold(*ingressConfig.ProxyBuffering, "on")
 	}
 
 	if disableRequestBuffering && disableResponseBuffering {
