@@ -2897,7 +2897,7 @@ func TestLoadIngresses(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-auth-tls-pass-certificate-to-upstream-rule-0-path-0-pass-certificate-to-upstream": {
-							PassTLSClientCertNginx: &dynamic.PassTLSClientCertNginx{
+							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
 								VerifyClient: "on",
 								CAFiles:      nil,
 							},
