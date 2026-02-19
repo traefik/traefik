@@ -19,7 +19,7 @@ export const Certificate = () => {
         <PageTitle title={name || ''} />
         <Skeleton css={{ height: '$7', width: '320px', mb: '$7' }} data-testid="skeleton" />
         <Flex direction="column" gap={6}>
-          <DetailsCardSkeleton />
+          <DetailsCardSkeleton keyColumns={1} rows={5} />
         </Flex>
       </Box>
     )
@@ -47,9 +47,7 @@ export const Certificate = () => {
         <H1>{certificate.commonName}</H1>
         <ResourceStatus status={certificate.status || 'disabled'} />
       </Flex>
-      <Card css={{ p: '$4' }}>
-        <CertificateDetails certificate={certificate} />
-      </Card>
+      <CertificateDetails certificate={certificate} />
     </>
   )
 }

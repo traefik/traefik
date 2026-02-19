@@ -72,8 +72,8 @@ export const CertificatesRender = ({
         <AriaThead>
           <AriaTr>
             <SortableTh label="Status" isSortable sortByValue="status" css={{ width: '36px' }} />
-            <SortableTh label="Common Name" isSortable sortByValue="cn" css={{ width: '45%' }} />
-            <SortableTh label="Issuer" isSortable sortByValue="issuer" css={{ width: '30%' }} />
+            <SortableTh label="Common Name" isSortable sortByValue="cn" />
+            <SortableTh label="Issuer" isSortable sortByValue="issuer" />
             <SortableTh label="Valid Until" isSortable sortByValue="validUntil" css={{ width: '100px' }} />
             <SortableTh label="Expiry" css={{ width: '100px' }} />
           </AriaTr>

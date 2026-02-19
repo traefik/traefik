@@ -1,8 +1,8 @@
-import { Badge, Box, Flex, Link, Text } from '@traefiklabs/faency'
+import { Badge, Box, Flex, Link } from '@traefiklabs/faency'
 import { useMemo } from 'react'
 
 import CertExpiryBadge, { getCertExpiryStatus } from 'components/certificates/CertExpiryBadge'
-import DetailsCard, { SectionTitle, ValText } from 'components/resources/DetailsCard'
+import DetailsCard, { ValText } from 'components/resources/DetailsCard'
 
 export const CertificateDetails = ({ certificate }: { certificate: Certificate.Info }) => {
   const validFrom = new Date(certificate.notBefore)
@@ -76,35 +76,8 @@ export const CertificateDetails = ({ certificate }: { certificate: Certificate.I
     { key: 'Public Key', val: certificate.publicKeyFingerprint || 'N/A' },
   ]
 
-  const allItems = [
-    ...issuedToItems,
-    { key: 'Issuer CN', val: certificate.issuerCN || '-' },
-    { key: 'Issuer Organization', val: certificate.issuerOrg || '-' },
-    { key: 'Issuer Country', val: certificate.issuerCountry || '-' },
-    ...validityItems,
-    ...technicalItems,
-    { key: 'Certificate Fingerprint', val: certificate.certFingerprint || 'N/A' },
-    { key: 'Public Key Fingerprint', val: certificate.publicKeyFingerprint || 'N/A' },
-  ] as { key: string; val: string | React.ReactElement }[]
-
   return (
     <Flex direction="column" gap={2}>
-      {/* Variant 1: Single DetailsCard with all items */}
-      {/*<DetailsCard title="Certificate" items={allItems} keyColumns={1} />*/}
-
-      {/* Variant 2: SectionTitle + DetailsCard (like TlsSection) */}
-      {/* <SectionTitle title="Issued To" />
-      <DetailsCard items={issuedToItems} keyColumns={1} />
-      <SectionTitle title="Issued By" />
-      <DetailsCard items={issuedByItems} keyColumns={1} />
-      <SectionTitle title="Validity" />
-      <DetailsCard items={validityItems} keyColumns={1} />
-      <SectionTitle title="Technical Details" />
-      <DetailsCard items={technicalItems} keyColumns={1} />
-      <SectionTitle title="SHA-256 Fingerprints" />
-      <DetailsCard items={fingerprintItems} keyColumns={1} /> */}
-
-      {/* Variant 3: DetailsCard with title prop and minKeyWidth */}
       <DetailsCard title="Issued To" items={issuedToItems} keyColumns={1} minKeyWidth="200px" />
       <DetailsCard title="Issued By" items={issuedByItems} keyColumns={1} minKeyWidth="200px" />
       <DetailsCard title="Validity" items={validityItems} keyColumns={1} minKeyWidth="200px" />
