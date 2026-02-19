@@ -619,7 +619,7 @@ func Test_buildConfiguration(t *testing.T) {
 							"name0": "foobar",
 						},
 						SSLForceHost:                    pointer(true),
-						STSSeconds:                      42,
+						STSSeconds:                      pointer(int64(42)),
 						STSIncludeSubdomains:            true,
 						STSPreload:                      true,
 						ForceSTSHeader:                  true,

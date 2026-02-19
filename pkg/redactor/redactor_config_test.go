@@ -209,7 +209,7 @@ func init() {
 					AllowedHosts:                      []string{"foo"},
 					HostsProxyHeaders:                 []string{"foo"},
 					SSLProxyHeaders:                   map[string]string{"foo": "bar"},
-					STSSeconds:                        42,
+					STSSeconds:                        pointer(int64(42)),
 					STSIncludeSubdomains:              true,
 					STSPreload:                        true,
 					ForceSTSHeader:                    true,
