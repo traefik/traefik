@@ -90,6 +90,7 @@ linters:
         - github.com/mailgun/multibuf
         - github.com/jaguilar/vt100
         - github.com/cucumber/godog
+        - github.com/vulcand/oxy/v2
     govet:
       enable-all: true
       disable:
