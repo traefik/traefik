@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	"k8s.io/utils/ptr"
 )
 
 func TestNew_withoutOptions(t *testing.T) {
@@ -27,7 +28,7 @@ func TestNew_withoutOptions(t *testing.T) {
 func TestNew_withSTSSecondsZero(t *testing.T) {
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) })
 
-	mid, err := New(t.Context(), next, dynamic.Headers{STSSeconds: ptrInt64(0)}, "testing")
+	mid, err := New(t.Context(), next, dynamic.Headers{STSSeconds: ptr.To(int64(0))}, "testing")
 	require.NoError(t, err)
 	assert.NotNil(t, mid)
 }

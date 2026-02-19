@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"k8s.io/utils/ptr"
 )
 
 func Test_GetStrategy_ipv6Subnet(t *testing.T) {
@@ -19,16 +20,16 @@ func Test_GetStrategy_ipv6Subnet(t *testing.T) {
 		{
 			desc:        "Zero subnet",
 			expectError: true,
-			ipv6Subnet:  intPtr(0),
+			ipv6Subnet:  ptr.To(0),
 		},
 		{
 			desc:        "Subnet greater that 128",
 			expectError: true,
-			ipv6Subnet:  intPtr(129),
+			ipv6Subnet:  ptr.To(129),
 		},
 		{
 			desc:       "Valid subnet",
-			ipv6Subnet: intPtr(128),
+			ipv6Subnet: ptr.To(128),
 		},
 	}
 
@@ -52,14 +53,6 @@ func Test_GetStrategy_ipv6Subnet(t *testing.T) {
 	}
 }
 
-func intPtr(value int) *int {
-	return &value
-}
-
-func int64Ptr(value int64) *int64 {
-	return &value
-}
-
 func TestHasSecureHeadersDefined(t *testing.T) {
 	testCases := []struct {
 		desc     string
@@ -79,14 +72,14 @@ func TestHasSecureHeadersDefined(t *testing.T) {
 		{
 			desc: "STSSeconds set to non-zero",
 			headers: &Headers{
-				STSSeconds: int64Ptr(42),
+				STSSeconds: ptr.To(int64(42)),
 			},
 			expected: true,
 		},
 		{
 			desc: "STSSeconds set to zero",
 			headers: &Headers{
-				STSSeconds: int64Ptr(0),
+				STSSeconds: ptr.To(int64(0)),
 			},
 			expected: true,
 		},

@@ -655,6 +655,11 @@ func (in *Headers) DeepCopyInto(out *Headers) {
 			(*out)[key] = val
 		}
 	}
+	if in.STSSeconds != nil {
+		in, out := &in.STSSeconds, &out.STSSeconds
+		*out = new(int64)
+		**out = **in
+	}
 	if in.FeaturePolicy != nil {
 		in, out := &in.FeaturePolicy, &out.FeaturePolicy
 		*out = new(string)
@@ -678,11 +683,6 @@ func (in *Headers) DeepCopyInto(out *Headers) {
 	if in.SSLForceHost != nil {
 		in, out := &in.SSLForceHost, &out.SSLForceHost
 		*out = new(bool)
-		**out = **in
-	}
-	if in.STSSeconds != nil {
-		in, out := &in.STSSeconds, &out.STSSeconds
-		*out = new(int64)
 		**out = **in
 	}
 	return
