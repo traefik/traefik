@@ -330,6 +330,12 @@ The following annotations are organized by category for easier navigation.
 | <a id="opt-nginx-ingress-kubernetes-iocors-expose-headers" href="#opt-nginx-ingress-kubernetes-iocors-expose-headers" title="#opt-nginx-ingress-kubernetes-iocors-expose-headers">`nginx.ingress.kubernetes.io/cors-expose-headers`</a> |                                                                                            |
 | <a id="opt-nginx-ingress-kubernetes-iocors-max-age" href="#opt-nginx-ingress-kubernetes-iocors-max-age" title="#opt-nginx-ingress-kubernetes-iocors-max-age">`nginx.ingress.kubernetes.io/cors-max-age`</a> |                                                                                            |
 
+### Rate Limiting
+
+| Annotation                                            | Limitations / Notes                                                                        |
+|-------------------------------------------------------|--------------------------------------------------------------------------------------------|
+| <a id="opt-nginx-ingress-kubernetes-iolimit-rpm" href="#opt-nginx-ingress-kubernetes-iolimit-rpm" title="#opt-nginx-ingress-kubernetes-iolimit-rpm">`nginx.ingress.kubernetes.io/limit-rpm`</a> | Maps to Traefik `rateLimit` middleware with `average=<value>` and `period=1m`. |
+
 ### Routing
 
 | Annotation                                            | Limitations / Notes                                                                        |
@@ -423,7 +429,6 @@ The following annotations are organized by category for easier navigation.
 | <a id="opt-nginx-ingress-kubernetes-iolimit-rate" href="#opt-nginx-ingress-kubernetes-iolimit-rate" title="#opt-nginx-ingress-kubernetes-iolimit-rate">`nginx.ingress.kubernetes.io/limit-rate`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-iolimit-whitelist" href="#opt-nginx-ingress-kubernetes-iolimit-whitelist" title="#opt-nginx-ingress-kubernetes-iolimit-whitelist">`nginx.ingress.kubernetes.io/limit-whitelist`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-iolimit-rps" href="#opt-nginx-ingress-kubernetes-iolimit-rps" title="#opt-nginx-ingress-kubernetes-iolimit-rps">`nginx.ingress.kubernetes.io/limit-rps`</a> |                                                      |
-| <a id="opt-nginx-ingress-kubernetes-iolimit-rpm" href="#opt-nginx-ingress-kubernetes-iolimit-rpm" title="#opt-nginx-ingress-kubernetes-iolimit-rpm">`nginx.ingress.kubernetes.io/limit-rpm`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-iolimit-burst-multiplier" href="#opt-nginx-ingress-kubernetes-iolimit-burst-multiplier" title="#opt-nginx-ingress-kubernetes-iolimit-burst-multiplier">`nginx.ingress.kubernetes.io/limit-burst-multiplier`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-iolimit-connections" href="#opt-nginx-ingress-kubernetes-iolimit-connections" title="#opt-nginx-ingress-kubernetes-iolimit-connections">`nginx.ingress.kubernetes.io/limit-connections`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-ioglobal-rate-limit" href="#opt-nginx-ingress-kubernetes-ioglobal-rate-limit" title="#opt-nginx-ingress-kubernetes-ioglobal-rate-limit">`nginx.ingress.kubernetes.io/global-rate-limit`</a> |                                                      |
