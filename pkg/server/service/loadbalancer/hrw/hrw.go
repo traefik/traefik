@@ -3,7 +3,6 @@ package hrw
 import (
 	"context"
 	"errors"
-	"hash/fnv"
 	"math"
 	"net/http"
 	"sync"
@@ -15,11 +14,18 @@ import (
 
 var errNoAvailableServer = errors.New("no available server")
 
+const (
+	fnv64Offset = 14695981039346656037
+	fnv64Prime  = 1099511628211
+	fnv64Range  = 18446744073709551616.0
+)
+
 type namedHandler struct {
 	http.Handler
 
-	name   string
-	weight float64
+	name      string
+	nameBytes []byte
+	weight    float64
 }
 
 // Balancer implements the Rendezvous Hashing algorithm for load balancing.
@@ -61,14 +67,31 @@ func New(wantHealthCheck bool) *Balancer {
 }
 
 // getNodeScore calculates the score of the couple of src and handler name.
-func getNodeScore(handler *namedHandler, src string) float64 {
-	h := fnv.New64a()
-	h.Write([]byte(src + handler.name))
-	sum := h.Sum64()
-	score := float64(sum) / math.Pow(2, 64)
+func getNodeScore(handler *namedHandler, srcHash uint64) float64 {
+	sum := appendFNV1a64(srcHash, handler.nameBytes)
+	score := float64(sum) / fnv64Range
 	logScore := 1.0 / -math.Log(score)
 
 	return logScore * handler.weight
+}
+
+func hashFNV1a64(value string) uint64 {
+	hash := uint64(fnv64Offset)
+	for i := range len(value) {
+		hash ^= uint64(value[i])
+		hash *= fnv64Prime
+	}
+
+	return hash
+}
+
+func appendFNV1a64(hash uint64, value []byte) uint64 {
+	for _, b := range value {
+		hash ^= uint64(b)
+		hash *= fnv64Prime
+	}
+
+	return hash
 }
 
 // SetStatus sets on the balancer that its given child is now of the given
@@ -159,7 +182,7 @@ func (b *Balancer) Add(name string, handler http.Handler, weight *int, fenced bo
 		return
 	}
 
-	h := &namedHandler{Handler: handler, name: name, weight: float64(w)}
+	h := &namedHandler{Handler: handler, name: name, nameBytes: []byte(name), weight: float64(w)}
 
 	b.handlersMu.Lock()
 	b.handlers = append(b.handlers, h)
@@ -186,10 +209,12 @@ func (b *Balancer) nextServer(ip string) (*namedHandler, error) {
 		return nil, errNoAvailableServer
 	}
 
+	srcHash := hashFNV1a64(ip)
+
 	var handler *namedHandler
 	score := 0.0
 	for _, h := range healthy {
-		s := getNodeScore(h, ip)
+		s := getNodeScore(h, srcHash)
 		if s > score {
 			handler = h
 			score = s
