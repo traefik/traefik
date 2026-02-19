@@ -268,12 +268,16 @@ func customDialContext(d *net.Dialer, cfg *dynamic.ForwardingTimeouts) func(ctx 
 	return func(ctx context.Context, network, address string) (net.Conn, error) {
 		conn, err := d.DialContext(ctx, network, address)
 
-		custom := &connWithTimeouts{
-			Conn:         conn,
-			readTimeout:  time.Duration(cfg.ReadTimeout),
-			writeTimeout: time.Duration(cfg.WriteTimeout),
+		if cfg.ReadTimeout > 0 && cfg.WriteTimeout > 0 {
+			custom := &connWithTimeouts{
+				Conn:         conn,
+				readTimeout:  time.Duration(cfg.ReadTimeout),
+				writeTimeout: time.Duration(cfg.WriteTimeout),
+			}
+			return custom, err
 		}
-		return custom, err
+
+		return conn, err
 	}
 }
 
