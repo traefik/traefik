@@ -235,6 +235,7 @@ func (t *TransportManager) createTLSConfig(cfg *dynamic.ServersTransport) (*tls.
 
 type connWithTimeouts struct {
 	net.Conn
+
 	readTimeout  time.Duration
 	writeTimeout time.Duration
 }
@@ -242,7 +243,7 @@ type connWithTimeouts struct {
 func (c connWithTimeouts) Read(b []byte) (n int, err error) {
 	// Reset deadline before after each successive read.
 	_ = c.Conn.SetReadDeadline(time.Now().Add(c.readTimeout))
-	defer c.Conn.SetReadDeadline(time.Time{})
+	defer c.Conn.SetReadDeadline(time.Time{}) //nolint:errcheck
 	n, err = c.Conn.Read(b)
 	if err != nil {
 		return n, err
@@ -254,7 +255,7 @@ func (c connWithTimeouts) Read(b []byte) (n int, err error) {
 func (c connWithTimeouts) Write(b []byte) (n int, err error) {
 	// Reset deadline before after each successive write.
 	_ = c.Conn.SetWriteDeadline(time.Now().Add(c.writeTimeout))
-	defer c.Conn.SetWriteDeadline(time.Time{})
+	defer c.Conn.SetWriteDeadline(time.Time{}) //nolint:errcheck
 	n, err = c.Conn.Write(b)
 	if err != nil {
 		return n, err
