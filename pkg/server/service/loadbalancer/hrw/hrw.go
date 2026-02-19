@@ -70,6 +70,15 @@ func New(wantHealthCheck bool) *Balancer {
 func getNodeScore(handler *namedHandler, srcHash uint64) float64 {
 	sum := appendFNV1a64(srcHash, handler.nameBytes)
 	score := float64(sum) / fnv64Range
+
+	// When sum is close to math.MaxUint64, float64(sum) rounds up to 2^64,
+	// making score exactly 1.0. This causes math.Log(1.0) = 0, leading to
+	// division by zero (-Inf), which would incorrectly prevent the handler
+	// from ever being selected. Clamp to the largest float64 less than 1.0.
+	if score >= 1.0 {
+		score = math.Nextafter(1.0, 0)
+	}
+
 	logScore := 1.0 / -math.Log(score)
 
 	return logScore * handler.weight
