@@ -44,6 +44,8 @@ const (
 	defaultBackendTLSName = "default-backend-tls"
 
 	defaultProxyConnectTimeout = 60
+	defaultProxyReadTimeout    = 60
+	defaultProxySendTimeout    = 60
 	// https://nginx.org/en/docs/http/ngx_http_core_module.html#client_max_body_size
 	defaultProxyBodySize = int64(1024 * 1024) // 1MB
 	// https://nginx.org/en/docs/http/ngx_http_core_module.html#client_body_buffer_size
@@ -96,6 +98,8 @@ type Provider struct {
 	DisableSvcExternalName bool   `description:"Disable support for Services of type ExternalName." json:"disableSvcExternalName,omitempty" toml:"disableSvcExternalName,omitempty" yaml:"disableSvcExternalName,omitempty" export:"true"`
 
 	ProxyConnectTimeout int `description:"Amount of time to wait until a connection to a server can be established. Timeout value is unitless and in seconds." json:"proxyConnectTimeout,omitempty" toml:"proxyConnectTimeout,omitempty" yaml:"proxyConnectTimeout,omitempty" export:"true"`
+	ProxyReadTimeout    int `description:"Amount of time between two successive read operations. Timeout value is unitless and in seconds." json:"proxyReadTimeout,omitempty" toml:"proxyReadTimeout,omitempty" yaml:"proxyReadTimeout,omitempty" export:"true"`
+	ProxySendTimeout    int `description:"Amount of time between two successive write operations. Timeout value is unitless and in seconds." json:"proxySendTimeout,omitempty" toml:"proxySendTimeout,omitempty" yaml:"proxySendTimeout,omitempty" export:"true"`
 
 	// Configuration options available within the NGINX Ingress Controller ConfigMap.
 	ProxyRequestBuffering bool  `description:"Defines whether to enable request buffering." json:"proxyRequestBuffering,omitempty" toml:"proxyRequestBuffering,omitempty" yaml:"proxyRequestBuffering,omitempty" export:"true"`
@@ -119,6 +123,8 @@ func (p *Provider) SetDefaults() {
 	p.IngressClass = defaultAnnotationValue
 	p.ControllerClass = defaultControllerName
 	p.ProxyConnectTimeout = defaultProxyConnectTimeout
+	p.ProxyReadTimeout = defaultProxyReadTimeout
+	p.ProxySendTimeout = defaultProxySendTimeout
 	p.ClientBodyBufferSize = defaultClientBodyBufferSize
 	p.ProxyBodySize = defaultProxyBodySize
 	p.ProxyBufferSize = defaultProxyBufferSize
@@ -575,11 +581,15 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 func (p *Provider) buildServersTransport(namespace, name string, cfg ingressConfig) (*namedServersTransport, error) {
 	proxyConnectTimeout := ptr.Deref(cfg.ProxyConnectTimeout, p.ProxyConnectTimeout)
+	proxyReadTimeout := ptr.Deref(cfg.ProxyReadTimeout, p.ProxyReadTimeout)
+	proxySendTimeout := ptr.Deref(cfg.ProxySendTimeout, p.ProxySendTimeout)
 	nst := &namedServersTransport{
 		Name: provider.Normalize(namespace + "-" + name),
 		ServersTransport: &dynamic.ServersTransport{
 			ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-				DialTimeout: ptypes.Duration(time.Duration(proxyConnectTimeout) * time.Second),
+				DialTimeout:  ptypes.Duration(time.Duration(proxyConnectTimeout) * time.Second),
+				ReadTimeout:  ptypes.Duration(time.Duration(proxyReadTimeout) * time.Second),
+				WriteTimeout: ptypes.Duration(time.Duration(proxySendTimeout) * time.Second),
 			},
 		},
 	}
