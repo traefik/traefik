@@ -1195,6 +1195,8 @@ func (p *Provider) applyMiddlewares(namespace, ingressName, routerKey, rulePath,
 		return fmt.Errorf("applying forward auth: %w", err)
 	}
 
+	applyRateLimitConfiguration(routerKey, ingressConfig, rt, conf)
+
 	applyAllowedSourceRangeConfiguration(routerKey, ingressConfig, rt, conf)
 
 	applyCORSConfiguration(routerKey, ingressConfig, rt, conf)
@@ -1666,6 +1668,23 @@ func applyAllowedSourceRangeConfiguration(routerName string, ingressConfig ingre
 	}
 
 	rt.Middlewares = append(rt.Middlewares, allowedSourceRangeMiddlewareName)
+}
+
+func applyRateLimitConfiguration(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
+	limitRPM := ptr.Deref(ingressConfig.LimitRPM, 0)
+	if limitRPM <= 0 {
+		return
+	}
+
+	rateLimitMiddlewareName := routerName + "-rate-limit"
+	conf.HTTP.Middlewares[rateLimitMiddlewareName] = &dynamic.Middleware{
+		RateLimit: &dynamic.RateLimit{
+			Average: int64(limitRPM),
+			Period:  ptypes.Duration(time.Minute),
+		},
+	}
+
+	rt.Middlewares = append(rt.Middlewares, rateLimitMiddlewareName)
 }
 
 func (p *Provider) applyBufferingConfiguration(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
