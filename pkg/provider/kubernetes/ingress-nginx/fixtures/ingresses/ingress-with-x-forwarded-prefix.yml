@@ -1,0 +1,22 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-with-x-forwarded-prefix
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/x-forwarded-prefix: "x-forwarded-prefix-header-value"
+
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: x-forwarded-prefix.localhost
+      http:
+        paths:
+          - path: /
+            pathType: Exact
+            backend:
+              service:
+                name: whoami
+                port:
+                  number: 80

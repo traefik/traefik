@@ -796,6 +796,65 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
+			desc: "Upstream x-forwarded-prefix",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-x-forwarded-prefix.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-x-forwarded-prefix-rule-0-path-0": {
+							Rule:        "Host(`x-forwarded-prefix.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-x-forwarded-prefix-rule-0-path-0-x-forwarded-prefix"},
+							Service:     "default-ingress-with-x-forwarded-prefix-whoami-80",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-x-forwarded-prefix-rule-0-path-0-x-forwarded-prefix": {
+							Headers: &dynamic.Headers{
+								CustomRequestHeaders: map[string]string{"x-forwarded-prefix": "x-forwarded-prefix-header-value"},
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-x-forwarded-prefix-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-with-x-forwarded-prefix",
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-x-forwarded-prefix": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
 			desc: "Use Regex",
 			paths: []string{
 				"services.yml",
