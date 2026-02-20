@@ -1,18 +1,21 @@
 package docker
 
 import (
+	"cmp"
 	"context"
 	"encoding/base64"
 	"fmt"
 	"net/http"
+	"slices"
+	"strconv"
 	"text/template"
 	"time"
 
 	"github.com/docker/cli/cli/connhelper"
-	containertypes "github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/client"
-	"github.com/docker/go-connections/nat"
 	"github.com/docker/go-connections/sockets"
+	containertypes "github.com/moby/moby/api/types/container"
+	networktypes "github.com/moby/moby/api/types/network"
+	"github.com/moby/moby/client"
 	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/provider"
@@ -37,7 +40,7 @@ type Shared struct {
 }
 
 func inspectContainers(ctx context.Context, dockerClient client.ContainerAPIClient, containerID string) dockerData {
-	containerInspected, err := dockerClient.ContainerInspect(ctx, containerID)
+	res, err := dockerClient.ContainerInspect(ctx, containerID, client.ContainerInspectOptions{})
 	if err != nil {
 		log.Ctx(ctx).Warn().Err(err).Msgf("Failed to inspect container %s", containerID)
 		return dockerData{}
@@ -45,8 +48,8 @@ func inspectContainers(ctx context.Context, dockerClient client.ContainerAPIClie
 
 	// Always parse all containers (running and stopped)
 	// The allowNonRunning filtering will be applied later in service configuration
-	if containerInspected.ContainerJSONBase != nil && containerInspected.ContainerJSONBase.State != nil {
-		return parseContainer(containerInspected)
+	if res.Container.State != nil {
+		return parseContainer(res.Container)
 	}
 
 	return dockerData{}
@@ -54,22 +57,19 @@ func inspectContainers(ctx context.Context, dockerClient client.ContainerAPIClie
 
 func parseContainer(container containertypes.InspectResponse) dockerData {
 	dData := dockerData{
+		ID:              container.ID,
+		ServiceName:     container.Name, // Default ServiceName to be the container's Name.
+		Name:            container.Name,
+		Status:          container.State.Status,
 		NetworkSettings: networkSettings{},
 	}
 
-	if container.ContainerJSONBase != nil {
-		dData.ID = container.ContainerJSONBase.ID
-		dData.Name = container.ContainerJSONBase.Name
-		dData.ServiceName = dData.Name // Default ServiceName to be the container's Name.
-		dData.Status = container.ContainerJSONBase.State.Status
+	if container.HostConfig != nil {
+		dData.NetworkSettings.NetworkMode = container.HostConfig.NetworkMode
+	}
 
-		if container.ContainerJSONBase.HostConfig != nil {
-			dData.NetworkSettings.NetworkMode = container.ContainerJSONBase.HostConfig.NetworkMode
-		}
-
-		if container.State != nil && container.State.Health != nil {
-			dData.Health = container.State.Health.Status
-		}
+	if container.State != nil && container.State.Health != nil {
+		dData.Health = container.State.Health.Status
 	}
 
 	if container.Config != nil && container.Config.Labels != nil {
@@ -83,11 +83,12 @@ func parseContainer(container containertypes.InspectResponse) dockerData {
 		if container.NetworkSettings.Networks != nil {
 			dData.NetworkSettings.Networks = make(map[string]*networkData)
 			for name, containerNetwork := range container.NetworkSettings.Networks {
-				addr := containerNetwork.IPAddress
-				if addr == "" {
-					addr = containerNetwork.GlobalIPv6Address
+				var addr string
+				if containerNetwork.IPAddress.IsValid() {
+					addr = containerNetwork.IPAddress.String()
+				} else if containerNetwork.GlobalIPv6Address.IsValid() {
+					addr = containerNetwork.GlobalIPv6Address.String()
 				}
-
 				dData.NetworkSettings.Networks[name] = &networkData{
 					ID:   containerNetwork.NetworkID,
 					Name: name,
@@ -122,10 +123,9 @@ func createClient(ctx context.Context, cfg ClientConfig) (*client.Client, error)
 
 	opts = append(opts,
 		client.FromEnv,
-		client.WithAPIVersionNegotiation(),
 		client.WithHTTPHeaders(httpHeaders))
 
-	return client.NewClientWithOpts(opts...)
+	return client.New(opts...)
 }
 
 func getClientOpts(ctx context.Context, cfg ClientConfig) ([]client.Opt, error) {
@@ -186,22 +186,20 @@ func getPort(container dockerData, serverPort string) string {
 	if len(serverPort) > 0 {
 		return serverPort
 	}
+	if len(container.NetworkSettings.Ports) == 0 {
+		return ""
+	}
 
-	var ports []nat.Port
+	var ports []networktypes.Port
 	for port := range container.NetworkSettings.Ports {
 		ports = append(ports, port)
 	}
 
-	less := func(i, j nat.Port) bool {
-		return i.Int() < j.Int()
-	}
-	nat.Sort(ports, less)
+	slices.SortFunc(ports, func(a, b networktypes.Port) int {
+		return cmp.Compare(a.Num(), b.Num())
+	})
 
-	if len(ports) > 0 {
-		return ports[0].Port()
-	}
-
-	return ""
+	return strconv.Itoa(int(ports[0].Num()))
 }
 
 func getServiceName(container dockerData) string {
