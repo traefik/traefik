@@ -264,7 +264,8 @@ type ErrorPage struct {
 	// The {status} variable can be used in order to insert the status code in the URL.
 	// The {originalStatus} variable can be used in order to insert the upstream status code in the URL.
 	// The {url} variable can be used in order to insert the escaped request URL.
-	Query string `json:"query,omitempty" toml:"query,omitempty" yaml:"query,omitempty" export:"true"`
+	Query        string       `json:"query,omitempty" toml:"query,omitempty" yaml:"query,omitempty" export:"true"`
+	NginxHeaders *http.Header `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
