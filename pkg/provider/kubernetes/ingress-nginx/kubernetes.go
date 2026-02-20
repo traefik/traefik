@@ -584,6 +584,10 @@ func (p *Provider) buildServersTransport(namespace, name string, cfg ingressConf
 		},
 	}
 
+	if cfg.UpstreamKeepaliveTimeout != nil {
+		nst.ServersTransport.ForwardingTimeouts.IdleConnTimeout = ptypes.Duration(time.Duration(*cfg.UpstreamKeepaliveTimeout) * time.Second)
+	}
+
 	if scheme := parseBackendProtocol(ptr.Deref(cfg.BackendProtocol, "HTTP")); scheme != "https" {
 		return nst, nil
 	}
