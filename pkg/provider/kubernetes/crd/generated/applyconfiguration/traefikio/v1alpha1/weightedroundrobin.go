@@ -32,9 +32,15 @@ import (
 
 // WeightedRoundRobinApplyConfiguration represents a declarative configuration of the WeightedRoundRobin type for use
 // with apply.
+//
+// WeightedRoundRobin holds the weighted round-robin configuration.
+// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/load-balancing/service/#weighted-round-robin-wrr
 type WeightedRoundRobinApplyConfiguration struct {
+	// Services defines the list of Kubernetes Service and/or TraefikService to load-balance, with weight.
 	Services []ServiceApplyConfiguration `json:"services,omitempty"`
-	Sticky   *dynamic.Sticky             `json:"sticky,omitempty"`
+	// Sticky defines whether sticky sessions are enabled.
+	// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/kubernetes/crd/http/traefikservice/#stickiness-and-load-balancing
+	Sticky *dynamic.Sticky `json:"sticky,omitempty"`
 }
 
 // WeightedRoundRobinApplyConfiguration constructs a declarative configuration of the WeightedRoundRobin type for use with

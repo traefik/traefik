@@ -28,7 +28,10 @@ package v1alpha1
 
 // RouteUDPApplyConfiguration represents a declarative configuration of the RouteUDP type for use
 // with apply.
+//
+// RouteUDP holds the UDP route configuration.
 type RouteUDPApplyConfiguration struct {
+	// Services defines the list of UDP services.
 	Services []ServiceUDPApplyConfiguration `json:"services,omitempty"`
 }
 

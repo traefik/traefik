@@ -34,8 +34,13 @@ import (
 
 // TLSOptionApplyConfiguration represents a declarative configuration of the TLSOption type for use
 // with apply.
+//
+// TLSOption is the CRD implementation of a Traefik TLS Option, allowing to configure some parameters of the TLS connection.
+// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/tls/tls-certificates/#certificates-stores#tls-options
 type TLSOptionApplyConfiguration struct {
-	v1.TypeMetaApplyConfiguration    `json:",inline"`
+	v1.TypeMetaApplyConfiguration `json:",inline"`
+	// Standard object's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	*v1.ObjectMetaApplyConfiguration `json:"metadata,omitempty"`
 	Spec                             *TLSOptionSpecApplyConfiguration `json:"spec,omitempty"`
 }
@@ -50,6 +55,7 @@ func TLSOption(name, namespace string) *TLSOptionApplyConfiguration {
 	b.WithAPIVersion("traefik.io/v1alpha1")
 	return b
 }
+
 func (b TLSOptionApplyConfiguration) IsApplyConfiguration() {}
 
 // WithKind sets the Kind field in the declarative configuration to the given value

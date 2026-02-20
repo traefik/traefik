@@ -28,11 +28,21 @@ package v1alpha1
 
 // DigestAuthApplyConfiguration represents a declarative configuration of the DigestAuth type for use
 // with apply.
+//
+// DigestAuth holds the digest auth middleware configuration.
+// This middleware restricts access to your services to known users.
+// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/middlewares/digestauth/
 type DigestAuthApplyConfiguration struct {
-	Secret       *string `json:"secret,omitempty"`
-	RemoveHeader *bool   `json:"removeHeader,omitempty"`
-	Realm        *string `json:"realm,omitempty"`
-	HeaderField  *string `json:"headerField,omitempty"`
+	// Secret is the name of the referenced Kubernetes Secret containing user credentials.
+	Secret *string `json:"secret,omitempty"`
+	// RemoveHeader defines whether to remove the authorization header before forwarding the request to the backend.
+	RemoveHeader *bool `json:"removeHeader,omitempty"`
+	// Realm allows the protected resources on a server to be partitioned into a set of protection spaces, each with its own authentication scheme.
+	// Default: traefik.
+	Realm *string `json:"realm,omitempty"`
+	// HeaderField defines a header field to store the authenticated user.
+	// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/middlewares/digestauth/#headerfield
+	HeaderField *string `json:"headerField,omitempty"`
 }
 
 // DigestAuthApplyConfiguration constructs a declarative configuration of the DigestAuth type for use with

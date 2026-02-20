@@ -33,17 +33,47 @@ import (
 
 // ServiceTCPApplyConfiguration represents a declarative configuration of the ServiceTCP type for use
 // with apply.
+//
+// ServiceTCP defines an upstream TCP service to proxy traffic to.
 type ServiceTCPApplyConfiguration struct {
-	Name             *string                `json:"name,omitempty"`
-	Namespace        *string                `json:"namespace,omitempty"`
-	Port             *intstr.IntOrString    `json:"port,omitempty"`
-	Weight           *int                   `json:"weight,omitempty"`
-	TerminationDelay *int                   `json:"terminationDelay,omitempty"`
-	ProxyProtocol    *dynamic.ProxyProtocol `json:"proxyProtocol,omitempty"`
-	ServersTransport *string                `json:"serversTransport,omitempty"`
-	TLS              *bool                  `json:"tls,omitempty"`
-	NativeLB         *bool                  `json:"nativeLB,omitempty"`
-	NodePortLB       *bool                  `json:"nodePortLB,omitempty"`
+	// Name defines the name of the referenced Kubernetes Service.
+	Name *string `json:"name,omitempty"`
+	// Namespace defines the namespace of the referenced Kubernetes Service.
+	Namespace *string `json:"namespace,omitempty"`
+	// Port defines the port of a Kubernetes Service.
+	// This can be a reference to a named port.
+	Port *intstr.IntOrString `json:"port,omitempty"`
+	// Weight defines the weight used when balancing requests between multiple Kubernetes Service.
+	Weight *int `json:"weight,omitempty"`
+	// TerminationDelay defines the deadline that the proxy sets, after one of its connected peers indicates
+	// it has closed the writing capability of its connection, to close the reading capability as well,
+	// hence fully terminating the connection.
+	// It is a duration in milliseconds, defaulting to 100.
+	// A negative value means an infinite deadline (i.e. the reading capability is never closed).
+	//
+	// Deprecated: TerminationDelay will not be supported in future APIVersions, please use ServersTransport to configure the TerminationDelay instead.
+	TerminationDelay *int `json:"terminationDelay,omitempty"`
+	// ProxyProtocol defines the PROXY protocol configuration.
+	// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/tcp/service/#proxy-protocol
+	//
+	// Deprecated: ProxyProtocol will not be supported in future APIVersions, please use ServersTransport to configure ProxyProtocol instead.
+	ProxyProtocol *dynamic.ProxyProtocol `json:"proxyProtocol,omitempty"`
+	// ServersTransport defines the name of ServersTransportTCP resource to use.
+	// It allows to configure the transport between Traefik and your servers.
+	// Can only be used on a Kubernetes Service.
+	ServersTransport *string `json:"serversTransport,omitempty"`
+	// TLS determines whether to use TLS when dialing with the backend.
+	TLS *bool `json:"tls,omitempty"`
+	// NativeLB controls, when creating the load-balancer,
+	// whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP.
+	// The Kubernetes Service itself does load-balance to the pods.
+	// By default, NativeLB is false.
+	NativeLB *bool `json:"nativeLB,omitempty"`
+	// NodePortLB controls, when creating the load-balancer,
+	// whether the LB's children are directly the nodes internal IPs using the nodePort when the service type is NodePort.
+	// It allows services to be reachable when Traefik runs externally from the Kubernetes cluster but within the same network of the nodes.
+	// By default, NodePortLB is false.
+	NodePortLB *bool `json:"nodePortLB,omitempty"`
 }
 
 // ServiceTCPApplyConfiguration constructs a declarative configuration of the ServiceTCP type for use with

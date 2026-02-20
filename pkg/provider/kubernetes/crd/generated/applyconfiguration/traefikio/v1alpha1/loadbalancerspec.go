@@ -33,21 +33,57 @@ import (
 
 // LoadBalancerSpecApplyConfiguration represents a declarative configuration of the LoadBalancerSpec type for use
 // with apply.
+//
+// LoadBalancerSpec defines the desired state of LoadBalancer.
+// It can reference either a Kubernetes Service object (a load-balancer of servers),
+// or a TraefikService object (a load-balancer of Traefik services).
 type LoadBalancerSpecApplyConfiguration struct {
-	Name               *string                                     `json:"name,omitempty"`
-	Kind               *string                                     `json:"kind,omitempty"`
-	Namespace          *string                                     `json:"namespace,omitempty"`
-	Sticky             *dynamic.Sticky                             `json:"sticky,omitempty"`
-	Port               *intstr.IntOrString                         `json:"port,omitempty"`
-	Scheme             *string                                     `json:"scheme,omitempty"`
-	Strategy           *dynamic.BalancerStrategy                   `json:"strategy,omitempty"`
-	PassHostHeader     *bool                                       `json:"passHostHeader,omitempty"`
-	ResponseForwarding *ResponseForwardingApplyConfiguration       `json:"responseForwarding,omitempty"`
-	ServersTransport   *string                                     `json:"serversTransport,omitempty"`
-	Weight             *int                                        `json:"weight,omitempty"`
-	NativeLB           *bool                                       `json:"nativeLB,omitempty"`
-	NodePortLB         *bool                                       `json:"nodePortLB,omitempty"`
-	HealthCheck        *ServerHealthCheckApplyConfiguration        `json:"healthCheck,omitempty"`
+	// Name defines the name of the referenced Kubernetes Service or TraefikService.
+	// The differentiation between the two is specified in the Kind field.
+	Name *string `json:"name,omitempty"`
+	// Kind defines the kind of the Service.
+	Kind *string `json:"kind,omitempty"`
+	// Namespace defines the namespace of the referenced Kubernetes Service or TraefikService.
+	Namespace *string `json:"namespace,omitempty"`
+	// Sticky defines the sticky sessions configuration.
+	// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/load-balancing/service/#sticky-sessions
+	Sticky *dynamic.Sticky `json:"sticky,omitempty"`
+	// Port defines the port of a Kubernetes Service.
+	// This can be a reference to a named port.
+	Port *intstr.IntOrString `json:"port,omitempty"`
+	// Scheme defines the scheme to use for the request to the upstream Kubernetes Service.
+	// It defaults to https when Kubernetes Service port is 443, http otherwise.
+	Scheme *string `json:"scheme,omitempty"`
+	// Strategy defines the load balancing strategy between the servers.
+	// Supported values are: wrr (Weighed round-robin), p2c (Power of two choices), hrw (Highest Random Weight), and leasttime (Least-Time).
+	// RoundRobin value is deprecated and supported for backward compatibility.
+	// TODO: when the deprecated RoundRobin value will be removed, set the default kubebuilder value to wrr.
+	Strategy *dynamic.BalancerStrategy `json:"strategy,omitempty"`
+	// PassHostHeader defines whether the client Host header is forwarded to the upstream Kubernetes Service.
+	// By default, passHostHeader is true.
+	PassHostHeader *bool `json:"passHostHeader,omitempty"`
+	// ResponseForwarding defines how Traefik forwards the response from the upstream Kubernetes Service to the client.
+	ResponseForwarding *ResponseForwardingApplyConfiguration `json:"responseForwarding,omitempty"`
+	// ServersTransport defines the name of ServersTransport resource to use.
+	// It allows to configure the transport between Traefik and your servers.
+	// Can only be used on a Kubernetes Service.
+	ServersTransport *string `json:"serversTransport,omitempty"`
+	// Weight defines the weight and should only be specified when Name references a TraefikService object
+	// (and to be precise, one that embeds a Weighted Round Robin).
+	Weight *int `json:"weight,omitempty"`
+	// NativeLB controls, when creating the load-balancer,
+	// whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP.
+	// The Kubernetes Service itself does load-balance to the pods.
+	// By default, NativeLB is false.
+	NativeLB *bool `json:"nativeLB,omitempty"`
+	// NodePortLB controls, when creating the load-balancer,
+	// whether the LB's children are directly the nodes internal IPs using the nodePort when the service type is NodePort.
+	// It allows services to be reachable when Traefik runs externally from the Kubernetes cluster but within the same network of the nodes.
+	// By default, NodePortLB is false.
+	NodePortLB *bool `json:"nodePortLB,omitempty"`
+	// Healthcheck defines health checks for ExternalName services.
+	HealthCheck *ServerHealthCheckApplyConfiguration `json:"healthCheck,omitempty"`
+	// PassiveHealthCheck defines passive health checks for ExternalName services.
 	PassiveHealthCheck *PassiveServerHealthCheckApplyConfiguration `json:"passiveHealthCheck,omitempty"`
 }
 

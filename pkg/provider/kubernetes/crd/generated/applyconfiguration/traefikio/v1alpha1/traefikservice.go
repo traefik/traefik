@@ -34,8 +34,16 @@ import (
 
 // TraefikServiceApplyConfiguration represents a declarative configuration of the TraefikService type for use
 // with apply.
+//
+// TraefikService is the CRD implementation of a Traefik Service.
+// TraefikService object allows to:
+// - Apply weight to Services on load-balancing
+// - Mirror traffic on services
+// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/kubernetes/crd/http/traefikservice/
 type TraefikServiceApplyConfiguration struct {
-	v1.TypeMetaApplyConfiguration    `json:",inline"`
+	v1.TypeMetaApplyConfiguration `json:",inline"`
+	// Standard object's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	*v1.ObjectMetaApplyConfiguration `json:"metadata,omitempty"`
 	Spec                             *TraefikServiceSpecApplyConfiguration `json:"spec,omitempty"`
 }
@@ -50,6 +58,7 @@ func TraefikService(name, namespace string) *TraefikServiceApplyConfiguration {
 	b.WithAPIVersion("traefik.io/v1alpha1")
 	return b
 }
+
 func (b TraefikServiceApplyConfiguration) IsApplyConfiguration() {}
 
 // WithKind sets the Kind field in the declarative configuration to the given value

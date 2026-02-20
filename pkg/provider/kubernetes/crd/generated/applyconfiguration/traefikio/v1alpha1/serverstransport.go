@@ -34,8 +34,15 @@ import (
 
 // ServersTransportApplyConfiguration represents a declarative configuration of the ServersTransport type for use
 // with apply.
+//
+// ServersTransport is the CRD implementation of a ServersTransport.
+// If no serversTransport is specified, the default@internal will be used.
+// The default@internal serversTransport is created from the static configuration.
+// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/load-balancing/serverstransport/
 type ServersTransportApplyConfiguration struct {
-	v1.TypeMetaApplyConfiguration    `json:",inline"`
+	v1.TypeMetaApplyConfiguration `json:",inline"`
+	// Standard object's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	*v1.ObjectMetaApplyConfiguration `json:"metadata,omitempty"`
 	Spec                             *ServersTransportSpecApplyConfiguration `json:"spec,omitempty"`
 }
@@ -50,6 +57,7 @@ func ServersTransport(name, namespace string) *ServersTransportApplyConfiguratio
 	b.WithAPIVersion("traefik.io/v1alpha1")
 	return b
 }
+
 func (b ServersTransportApplyConfiguration) IsApplyConfiguration() {}
 
 // WithKind sets the Kind field in the declarative configuration to the given value

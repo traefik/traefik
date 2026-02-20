@@ -33,11 +33,20 @@ import (
 
 // MirroringApplyConfiguration represents a declarative configuration of the Mirroring type for use
 // with apply.
+//
+// Mirroring holds the mirroring service configuration.
+// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/load-balancing/service/#mirroring
 type MirroringApplyConfiguration struct {
 	LoadBalancerSpecApplyConfiguration `json:",inline"`
-	MirrorBody                         *bool                             `json:"mirrorBody,omitempty"`
-	MaxBodySize                        *int64                            `json:"maxBodySize,omitempty"`
-	Mirrors                            []MirrorServiceApplyConfiguration `json:"mirrors,omitempty"`
+	// MirrorBody defines whether the body of the request should be mirrored.
+	// Default value is true.
+	MirrorBody *bool `json:"mirrorBody,omitempty"`
+	// MaxBodySize defines the maximum size allowed for the body of the request.
+	// If the body is larger, the request is not mirrored.
+	// Default value is -1, which means unlimited size.
+	MaxBodySize *int64 `json:"maxBodySize,omitempty"`
+	// Mirrors defines the list of mirrors where Traefik will duplicate the traffic.
+	Mirrors []MirrorServiceApplyConfiguration `json:"mirrors,omitempty"`
 }
 
 // MirroringApplyConfiguration constructs a declarative configuration of the Mirroring type for use with

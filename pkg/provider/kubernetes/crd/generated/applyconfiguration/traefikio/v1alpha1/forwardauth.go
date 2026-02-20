@@ -28,19 +28,38 @@ package v1alpha1
 
 // ForwardAuthApplyConfiguration represents a declarative configuration of the ForwardAuth type for use
 // with apply.
+//
+// ForwardAuth holds the forward auth middleware configuration.
+// This middleware delegates the request authentication to a Service.
+// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/middlewares/forwardauth/
 type ForwardAuthApplyConfiguration struct {
-	Address                  *string                                    `json:"address,omitempty"`
-	TrustForwardHeader       *bool                                      `json:"trustForwardHeader,omitempty"`
-	AuthResponseHeaders      []string                                   `json:"authResponseHeaders,omitempty"`
-	AuthResponseHeadersRegex *string                                    `json:"authResponseHeadersRegex,omitempty"`
-	AuthRequestHeaders       []string                                   `json:"authRequestHeaders,omitempty"`
-	TLS                      *ClientTLSWithCAOptionalApplyConfiguration `json:"tls,omitempty"`
-	AddAuthCookiesToResponse []string                                   `json:"addAuthCookiesToResponse,omitempty"`
-	HeaderField              *string                                    `json:"headerField,omitempty"`
-	ForwardBody              *bool                                      `json:"forwardBody,omitempty"`
-	MaxBodySize              *int64                                     `json:"maxBodySize,omitempty"`
-	PreserveLocationHeader   *bool                                      `json:"preserveLocationHeader,omitempty"`
-	PreserveRequestMethod    *bool                                      `json:"preserveRequestMethod,omitempty"`
+	// Address defines the authentication server address.
+	Address *string `json:"address,omitempty"`
+	// TrustForwardHeader defines whether to trust (ie: forward) all X-Forwarded-* headers.
+	TrustForwardHeader *bool `json:"trustForwardHeader,omitempty"`
+	// AuthResponseHeaders defines the list of headers to copy from the authentication server response and set on forwarded request, replacing any existing conflicting headers.
+	AuthResponseHeaders []string `json:"authResponseHeaders,omitempty"`
+	// AuthResponseHeadersRegex defines the regex to match headers to copy from the authentication server response and set on forwarded request, after stripping all headers that match the regex.
+	// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/middlewares/forwardauth/#authresponseheadersregex
+	AuthResponseHeadersRegex *string `json:"authResponseHeadersRegex,omitempty"`
+	// AuthRequestHeaders defines the list of the headers to copy from the request to the authentication server.
+	// If not set or empty then all request headers are passed.
+	AuthRequestHeaders []string `json:"authRequestHeaders,omitempty"`
+	// TLS defines the configuration used to secure the connection to the authentication server.
+	TLS *ClientTLSWithCAOptionalApplyConfiguration `json:"tls,omitempty"`
+	// AddAuthCookiesToResponse defines the list of cookies to copy from the authentication server response to the response.
+	AddAuthCookiesToResponse []string `json:"addAuthCookiesToResponse,omitempty"`
+	// HeaderField defines a header field to store the authenticated user.
+	// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/middlewares/forwardauth/#headerfield
+	HeaderField *string `json:"headerField,omitempty"`
+	// ForwardBody defines whether to send the request body to the authentication server.
+	ForwardBody *bool `json:"forwardBody,omitempty"`
+	// MaxBodySize defines the maximum body size in bytes allowed to be forwarded to the authentication server.
+	MaxBodySize *int64 `json:"maxBodySize,omitempty"`
+	// PreserveLocationHeader defines whether to forward the Location header to the client as is or prefix it with the domain name of the authentication server.
+	PreserveLocationHeader *bool `json:"preserveLocationHeader,omitempty"`
+	// PreserveRequestMethod defines whether to preserve the original request method while forwarding the request to the authentication server.
+	PreserveRequestMethod *bool `json:"preserveRequestMethod,omitempty"`
 }
 
 // ForwardAuthApplyConfiguration constructs a declarative configuration of the ForwardAuth type for use with

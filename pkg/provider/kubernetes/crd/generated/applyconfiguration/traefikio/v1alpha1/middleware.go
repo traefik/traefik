@@ -34,8 +34,13 @@ import (
 
 // MiddlewareApplyConfiguration represents a declarative configuration of the Middleware type for use
 // with apply.
+//
+// Middleware is the CRD implementation of a Traefik Middleware.
+// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/middlewares/overview/
 type MiddlewareApplyConfiguration struct {
-	v1.TypeMetaApplyConfiguration    `json:",inline"`
+	v1.TypeMetaApplyConfiguration `json:",inline"`
+	// Standard object's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	*v1.ObjectMetaApplyConfiguration `json:"metadata,omitempty"`
 	Spec                             *MiddlewareSpecApplyConfiguration `json:"spec,omitempty"`
 }
@@ -50,6 +55,7 @@ func Middleware(name, namespace string) *MiddlewareApplyConfiguration {
 	b.WithAPIVersion("traefik.io/v1alpha1")
 	return b
 }
+
 func (b MiddlewareApplyConfiguration) IsApplyConfiguration() {}
 
 // WithKind sets the Kind field in the declarative configuration to the given value

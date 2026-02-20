@@ -28,8 +28,12 @@ package v1alpha1
 
 // IngressRouteRefApplyConfiguration represents a declarative configuration of the IngressRouteRef type for use
 // with apply.
+//
+// IngressRouteRef is a reference to an IngressRoute resource.
 type IngressRouteRefApplyConfiguration struct {
-	Name      *string `json:"name,omitempty"`
+	// Name defines the name of the referenced IngressRoute resource.
+	Name *string `json:"name,omitempty"`
+	// Namespace defines the namespace of the referenced IngressRoute resource.
 	Namespace *string `json:"namespace,omitempty"`
 }
 
