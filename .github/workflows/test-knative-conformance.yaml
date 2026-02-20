@@ -12,7 +12,7 @@ on:
       - 'integration/integration_test.go'
 
 env:
-  GO_VERSION: '1.25'
+  GO_VERSION: '1.26'
   CGO_ENABLED: 0
 
 jobs:
