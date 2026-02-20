@@ -1439,7 +1439,7 @@ func buildTLSStores(ctx context.Context, client Client) (map[string]tls.Store, m
 
 // buildCertificates loads TLSStore certificates from secrets and sets them into tlsConfigs.
 // It continues processing other certificates even if one fails, making the TLS store resilient
-// to missing or invalid secrets. Missing secrets are logged as warnings but don't prevent
+// to missing or invalid secrets. Missing secrets are logged as errors but don't prevent
 // the TLS store from being created with the certificates that are available.
 func buildCertificates(ctx context.Context, client Client, tlsStore, namespace string, certificates []traefikv1alpha1.Certificate, tlsConfigs map[string]*tls.CertAndStores) {
 	logger := log.Ctx(ctx).With().Str("TLSStore", tlsStore).Str("namespace", namespace).Logger()
