@@ -37,8 +37,8 @@ entryPoints:
   [entryPoints.web]
     address = ":80"
     [entryPoints.web.http]
-      [entryPoints.web.http.redirections]
-        entryPoint = "websecure"
+      [entryPoints.web.http.redirections.entryPoint]
+        to = "websecure"
         scheme = "https"
         permanent = true
     [entryPoints.web.observability]
@@ -48,10 +48,9 @@ entryPoints:
       
   [entryPoints.websecure]
     address = ":443"
-    [entryPoints.websecure.tls]
-    [entryPoints.websecure.middlewares]
-      - auth@kubernetescrd
-      - strip@kubernetescrd
+    [entryPoints.websecure.http]
+      middlewares = ["auth@kubernetescrd", "strip@kubernetescrd"]
+      [entryPoints.websecure.http.tls]
 ```
 
 ```yaml tab="Helm Chart Values"
