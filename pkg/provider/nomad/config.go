@@ -172,7 +172,10 @@ func (p *Provider) keepItem(ctx context.Context, i item) bool {
 		return false
 	}
 
-	// TODO: filter on health when that information exists (nomad 1.4+)
+	if !i.Healthy {
+		logger.Debug().Msgf("Filtering unhealthy item: %q", i.Name)
+		return false
+	}
 
 	return true
 }
