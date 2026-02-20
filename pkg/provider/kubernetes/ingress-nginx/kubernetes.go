@@ -57,7 +57,7 @@ const (
 	// https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#proxy-next-upstream
 	defaultProxyNextUpstream = "error timeout"
 	// https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#proxy-next-upstream-tries
-	// ingress-nginx override nginx's default value
+	// ingress-nginx uses 3 as default value.
 	defaultProxyNextUpstreamTries = 3
 )
 
