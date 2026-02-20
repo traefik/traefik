@@ -135,7 +135,7 @@ export const SideNav = ({
   const windowSize = useWindowSize()
   const { version } = useContext(VersionContext)
 
-  const { http, tcp, udp } = useTotals()
+  const { http, tcp, udp, certificates } = useTotals()
 
   const [isSmallScreen, setIsSmallScreen] = useState(false)
 
@@ -155,8 +155,9 @@ export const SideNav = ({
       '/tcp/middlewares': tcp?.middlewares as number,
       '/udp/routers': udp?.routers,
       '/udp/services': udp?.services,
+      '/certificates': certificates,
     }),
-    [http, tcp, udp],
+    [http, tcp, udp, certificates],
   )
 
   return (

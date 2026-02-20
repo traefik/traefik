@@ -11,6 +11,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
 	"github.com/traefik/traefik/v3/pkg/config/static"
+	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/version"
 )
 
@@ -58,18 +59,20 @@ type Handler struct {
 
 	// runtimeConfiguration is the data set used to create all the data representations exposed by the API.
 	runtimeConfiguration *runtime.Configuration
+
+	tlsManager *tls.Manager
 }
 
 // NewBuilder returns a http.Handler builder based on runtime.Configuration.
-func NewBuilder(staticConfig static.Configuration) func(*runtime.Configuration) http.Handler {
+func NewBuilder(staticConfig static.Configuration, tlsManager *tls.Manager) func(*runtime.Configuration) http.Handler {
 	return func(configuration *runtime.Configuration) http.Handler {
-		return New(staticConfig, configuration).createRouter()
+		return New(staticConfig, configuration, tlsManager).createRouter()
 	}
 }
 
 // New returns a Handler defined by staticConfig, and if provided, by runtimeConfig.
 // It finishes populating the information provided in the runtimeConfig.
-func New(staticConfig static.Configuration, runtimeConfig *runtime.Configuration) *Handler {
+func New(staticConfig static.Configuration, runtimeConfig *runtime.Configuration, tlsManager *tls.Manager) *Handler {
 	rConfig := runtimeConfig
 	if rConfig == nil {
 		rConfig = &runtime.Configuration{}
@@ -78,6 +81,7 @@ func New(staticConfig static.Configuration, runtimeConfig *runtime.Configuration
 	return &Handler{
 		runtimeConfiguration: rConfig,
 		staticConfig:         staticConfig,
+		tlsManager:           tlsManager,
 	}
 }
 
@@ -119,6 +123,9 @@ func (h Handler) createRouter() *mux.Router {
 	apiRouter.Methods(http.MethodGet).Path("/api/udp/routers/{routerID}").HandlerFunc(h.getUDPRouter)
 	apiRouter.Methods(http.MethodGet).Path("/api/udp/services").HandlerFunc(h.getUDPServices)
 	apiRouter.Methods(http.MethodGet).Path("/api/udp/services/{serviceID}").HandlerFunc(h.getUDPService)
+
+	apiRouter.Methods(http.MethodGet).Path("/api/certificates").HandlerFunc(h.getCertificates)
+	apiRouter.Methods(http.MethodGet).Path("/api/certificates/{certKey}").HandlerFunc(h.getCertificate)
 
 	version.Handler{}.Append(apiRouter)
 
