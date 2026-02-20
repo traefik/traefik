@@ -54,6 +54,11 @@ const (
 	defaultProxyBuffersNumber = 4
 	// https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_max_temp_file_size
 	defaultProxyMaxTempFileSize = int64(1024 * 1024 * 1024) // 1GB
+	// https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#proxy-next-upstream
+	defaultProxyNextUpstream = "error timeout"
+	// https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#proxy-next-upstream-tries
+	// ingress-nginx uses 3 as default value.
+	defaultProxyNextUpstreamTries = 3
 )
 
 var nginxSizeRegexp = regexp.MustCompile(`^(?i)\s*([0-9]+)\s*([bkmg]?)\s*$`)
@@ -95,7 +100,10 @@ type Provider struct {
 	DefaultBackendService  string `description:"Service used to serve HTTP requests not matching any known server name (catch-all). Takes the form 'namespace/name'." json:"defaultBackendService,omitempty" toml:"defaultBackendService,omitempty" yaml:"defaultBackendService,omitempty" export:"true"`
 	DisableSvcExternalName bool   `description:"Disable support for Services of type ExternalName." json:"disableSvcExternalName,omitempty" toml:"disableSvcExternalName,omitempty" yaml:"disableSvcExternalName,omitempty" export:"true"`
 
-	ProxyConnectTimeout int `description:"Amount of time to wait until a connection to a server can be established. Timeout value is unitless and in seconds." json:"proxyConnectTimeout,omitempty" toml:"proxyConnectTimeout,omitempty" yaml:"proxyConnectTimeout,omitempty" export:"true"`
+	ProxyConnectTimeout      int    `description:"Amount of time to wait until a connection to a server can be established. Timeout value is unitless and in seconds." json:"proxyConnectTimeout,omitempty" toml:"proxyConnectTimeout,omitempty" yaml:"proxyConnectTimeout,omitempty" export:"true"`
+	ProxyNextUpstream        string `description:"Defines in which cases a request should be retried." json:"proxyNextUpstream,omitempty" toml:"proxyNextUpstream,omitempty" yaml:"proxyNextUpstream,omitempty" export:"true"`
+	ProxyNextUpstreamTries   int    `description:"Limits the number of possible tries if the backend server does not reply." json:"proxyNextUpstreamTries,omitempty" toml:"proxyNextUpstreamTries,omitempty" yaml:"proxyNextUpstreamTries,omitempty" export:"true"`
+	ProxyNextUpstreamTimeout int    `description:"Limits the total elapsed time to retry the request if the backend server does not reply. Timeout value is unitless and in seconds." json:"proxyNextUpstreamTimeout,omitempty" toml:"proxyNextUpstreamTimeout,omitempty" yaml:"proxyNextUpstreamTimeout,omitempty" export:"true"`
 
 	// Configuration options available within the NGINX Ingress Controller ConfigMap.
 	ProxyRequestBuffering bool  `description:"Defines whether to enable request buffering." json:"proxyRequestBuffering,omitempty" toml:"proxyRequestBuffering,omitempty" yaml:"proxyRequestBuffering,omitempty" export:"true"`
@@ -123,6 +131,8 @@ func (p *Provider) SetDefaults() {
 	p.ProxyBodySize = defaultProxyBodySize
 	p.ProxyBufferSize = defaultProxyBufferSize
 	p.ProxyBuffersNumber = defaultProxyBuffersNumber
+	p.ProxyNextUpstream = defaultProxyNextUpstream
+	p.ProxyNextUpstreamTries = defaultProxyNextUpstreamTries
 }
 
 // Init the provider.
@@ -900,6 +910,8 @@ func (p *Provider) applyMiddlewares(namespace, routerKey, rulePath, ruleHost str
 		return fmt.Errorf("applying custom headers: %w", err)
 	}
 
+	p.applyRetry(routerKey, ingressConfig, rt, conf)
+
 	return nil
 }
 
@@ -1373,6 +1385,75 @@ func applyForwardAuthConfiguration(routerName string, ingressConfig ingressConfi
 	rt.Middlewares = append(rt.Middlewares, forwardMiddlewareName)
 
 	return nil
+}
+
+func (p *Provider) applyRetry(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
+	attempts := ptr.Deref(ingressConfig.ProxyNextUpstreamTries, p.ProxyNextUpstreamTries)
+	// Safeguard to deactivate retry when the value is less than 0.
+	if attempts < 0 {
+		return
+	}
+
+	proxyNextUpstream := ptr.Deref(ingressConfig.ProxyNextUpstream, p.ProxyNextUpstream)
+	if proxyNextUpstream == "" {
+		return
+	}
+
+	retryConditions := strings.Fields(proxyNextUpstream)
+	// "off" disables the retry entirely.
+	if slices.Contains(retryConditions, "off") {
+		return
+	}
+
+	// proxy-next-upstream-tries = 0 on NGINX means unlimited tries, which maps to try every available server.
+	// To avoid infinite retries, put the number of servers as the attempts limit.
+	if attempts == 0 {
+		svc, ok := conf.HTTP.Services[rt.Service]
+		if !ok || svc.LoadBalancer == nil {
+			return
+		}
+		serverCount := len(svc.LoadBalancer.Servers)
+		attempts = serverCount
+	}
+
+	retryConfig := &dynamic.Retry{
+		Attempts: attempts,
+	}
+
+	// Disable network error retry if no error nor timeout present on the configuration.
+	hasError := slices.Contains(retryConditions, "error")
+	hasTimeout := slices.Contains(retryConditions, "timeout")
+	if !hasError && !hasTimeout {
+		retryConfig.DisableRetryOnNetworkError = true
+	}
+
+	// HTTP status codes condition.
+	var statusCodes []string
+	for _, statusCode := range retryConditions {
+		if code, ok := strings.CutPrefix(statusCode, "http_"); ok {
+			statusCodes = append(statusCodes, code)
+		}
+	}
+	if len(statusCodes) > 0 {
+		retryConfig.Status = statusCodes
+	}
+
+	// Non-idempotent configuration.
+	if slices.Contains(retryConditions, "non_idempotent") {
+		retryConfig.RetryNonIdempotentMethod = true
+	}
+
+	// Timeout configuration.
+	timeout := ptr.Deref(ingressConfig.ProxyNextUpstreamTimeout, p.ProxyNextUpstreamTimeout)
+	if timeout > 0 {
+		retryConfig.Timeout = ptypes.Duration(time.Duration(timeout) * time.Second)
+	}
+
+	retryMiddlewareName := routerName + "-retry"
+	conf.HTTP.Middlewares[retryMiddlewareName] = &dynamic.Middleware{
+		Retry: retryConfig,
+	}
+	rt.Middlewares = append(rt.Middlewares, retryMiddlewareName)
 }
 
 func basicAuthUsers(secret *corev1.Secret, authSecretType string) (dynamic.Users, error) {
