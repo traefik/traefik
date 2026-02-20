@@ -6,10 +6,13 @@ import (
 	"context"
 	"crypto/tls"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
+	"regexp"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
@@ -277,6 +280,10 @@ func (r *Router) SetHTTPSForwarder(handler tcp.Handler) {
 		}
 
 		rule := "HostSNI(`" + sniHost + "`)"
+		if sniHost != "*" && strings.Count(sniHost, "*") > 0 {
+			sniHost = strings.Replace(regexp.QuoteMeta(sniHost), `\*\.`, `[a-z0-9-\.]+\.`, 1)
+			rule = fmt.Sprintf("HostSNIRegexp(`^%s$`)", sniHost)
+		}
 		if err := r.muxerHTTPS.AddRoute(rule, "", tcpmuxer.GetRulePriority(rule), tcpHandler); err != nil {
 			log.Error().Err(err).Msg("Error while adding route for host")
 		}

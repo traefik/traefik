@@ -300,7 +300,11 @@ func (m *Manager) buildRouterHandler(ctx context.Context, entryPointName, router
 		if len(routerConfig.TLS.Options) > 0 && routerConfig.TLS.Options != tls.DefaultTLSConfigName {
 			tlsOptionsName = provider.GetQualifiedName(ctx, routerConfig.TLS.Options)
 		}
-		if _, err := m.tlsManager.Get(tls.DefaultTLSStoreName, tlsOptionsName); err != nil {
+		tlsStoreName := tls.DefaultTLSStoreName
+		if len(routerConfig.TLS.Store) > 0 && routerConfig.TLS.Store != tls.DefaultTLSStoreName {
+			tlsStoreName = routerConfig.TLS.Store
+		}
+		if _, err := m.tlsManager.Get(tlsStoreName, tlsOptionsName); err != nil {
 			return nil, fmt.Errorf("building router handler: %w", err)
 		}
 	}
