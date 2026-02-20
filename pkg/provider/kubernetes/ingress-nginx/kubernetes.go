@@ -641,6 +641,10 @@ func (p *Provider) buildServersTransport(ctx context.Context, namespace, name st
 		}
 	}
 
+	if cfg.UpstreamKeepaliveTimeout != nil {
+		nst.ServersTransport.ForwardingTimeouts.IdleConnTimeout = ptypes.Duration(time.Duration(*cfg.UpstreamKeepaliveTimeout) * time.Second)
+	}
+
 	if scheme := parseBackendProtocol(ptr.Deref(cfg.BackendProtocol, "HTTP")); scheme != "https" {
 		return nst, nil
 	}
