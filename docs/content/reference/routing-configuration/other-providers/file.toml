@@ -513,6 +513,9 @@
           interval = "42s"
           unhealthyInterval = "42s"
           timeout = "42s"
+        [tcp.services.TCPService01.loadBalancer.passiveHealthCheck]
+          failureWindow = "42s"
+          maxFailedAttempts = 42
     [tcp.services.TCPService02]
       [tcp.services.TCPService02.weighted]
 

@@ -587,6 +587,9 @@ tcp:
           interval: 42s
           unhealthyInterval: 42s
           timeout: 42s
+        passiveHealthCheck:
+          failureWindow: 42s
+          maxFailedAttempts: 42
     TCPService02:
       weighted:
         services:
