@@ -17,7 +17,6 @@ spec:
       targetPort: web
   selector:
     app: whoami
-    task: whoami
 
 ---
 kind: EndpointSlice
@@ -49,6 +48,7 @@ metadata:
   namespace: default
 
 spec:
+  clusterIP: 10.10.10.2
   ports:
     - name: websecure
       protocol: TCP
@@ -57,7 +57,6 @@ spec:
       targetPort: websecure
   selector:
     app: whoami-tls
-    task: whoami
 
 ---
 kind: EndpointSlice
@@ -74,8 +73,8 @@ ports:
     port: 8443
 endpoints:
   - addresses:
-      - 10.10.0.5
-      - 10.10.0.6
+      - 10.10.0.3
+      - 10.10.0.4
     conditions:
       ready: true
 
@@ -83,11 +82,11 @@ endpoints:
 kind: Service
 apiVersion: v1
 metadata:
-  name: whoami_b
+  name: whoami-b
   namespace: default
 
 spec:
-  clusterIP: 10.10.10.2
+  clusterIP: 10.10.10.3
   ports:
     - name: web2
       protocol: TCP
@@ -99,16 +98,15 @@ spec:
       targetPort: web
   selector:
     app: whoami_b
-    task: whoami_b
 
 ---
 kind: EndpointSlice
 apiVersion: discovery.k8s.io/v1
 metadata:
-  name: whoami_b
+  name: whoami-b
   namespace: default
   labels:
-    kubernetes.io/service-name: whoami_b
+    kubernetes.io/service-name: whoami-b
 
 addressType: IPv4
 ports:
@@ -118,11 +116,11 @@ ports:
     port: 8000
 endpoints:
   - addresses:
-      - 10.10.0.7
-      - 10.10.0.8
+      - 10.10.0.5
+      - 10.10.0.6
     conditions:
       ready: true
----
+
 ---
 kind: Service
 apiVersion: v1
@@ -131,7 +129,7 @@ metadata:
   namespace: default
 
 spec:
-  clusterIP: 10.10.10.3
+  clusterIP: 10.10.10.4
   ports:
     - name: web2
       protocol: TCP
@@ -162,5 +160,48 @@ ports:
     port: 8000
 endpoints:
   - addresses: []
+    conditions:
+      ready: true
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: canary
+  namespace: default
+
+spec:
+  clusterIP: 10.10.10.5
+  ports:
+    - name: web2
+      protocol: TCP
+      port: 8000
+      targetPort: web2
+    - name: web
+      protocol: TCP
+      port: 80
+      targetPort: web
+  selector:
+    app: whoami
+
+---
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
+metadata:
+  name: canary
+  namespace: default
+  labels:
+    kubernetes.io/service-name: canary
+
+addressType: IPv4
+ports:
+  - name: web
+    port: 80
+  - name: web2
+    port: 8000
+endpoints:
+  - addresses:
+      - 10.10.0.7
+      - 10.10.0.8
     conditions:
       ready: true
