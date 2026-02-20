@@ -112,6 +112,7 @@ http:
           interval: 42s
           unhealthyInterval: 42s
           timeout: 42s
+          maxConcurrency: 42
           hostname: foobar
           followRedirects: true
           headers:
