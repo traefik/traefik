@@ -607,6 +607,18 @@ type RateLimit struct {
 	// Redis stores the configuration for using Redis as a bucket in the rate-limiting algorithm.
 	// If not specified, Traefik will default to an in-memory bucket for the algorithm.
 	Redis *Redis `json:"redis,omitempty" toml:"redis,omitempty" yaml:"redis,omitempty" export:"true"`
+
+	// UnhealthyLimiterBackoffTimeout is the duration for which the rate limiter will be disabled
+	// after detecting unhealthy conditions. Defaults to 30 seconds.
+	UnhealthyLimiterBackoffTimeout *ptypes.Duration `json:"unhealthyLimiterBackoffTimeout,omitempty" toml:"unhealthyLimiterBackoffTimeout,omitempty" yaml:"unhealthyLimiterBackoffTimeout,omitempty" export:"true"`
+
+	// UnhealthyLimiterBackoffDuration is the time window during which failures are counted
+	// to determine if the limiter should be shut down. Defaults to 10 seconds.
+	UnhealthyLimiterBackoffDuration *ptypes.Duration `json:"unhealthyLimiterBackoffDuration,omitempty" toml:"unhealthyLimiterBackoffDuration,omitempty" yaml:"unhealthyLimiterBackoffDuration,omitempty" export:"true"`
+
+	// UnhealthyLimiterBackoffThreshold is the number of failures within the backoff duration
+	// that will trigger the limiter to be shut down. Defaults to 5.
+	UnhealthyLimiterBackoffThreshold *int `json:"unhealthyLimiterBackoffThreshold,omitempty" toml:"unhealthyLimiterBackoffThreshold,omitempty" yaml:"unhealthyLimiterBackoffThreshold,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values on a RateLimit.
