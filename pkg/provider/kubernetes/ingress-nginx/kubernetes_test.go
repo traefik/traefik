@@ -1459,7 +1459,7 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-whitelist-single-ip-rule-0-path-0": {
 							Rule:        "Host(`whitelist-source-range.localhost`) && Path(`/`)",
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-whitelist-single-ip-rule-0-path-0-whitelist-source-range", "default-ingress-with-whitelist-single-ip-rule-0-path-0-retry"},
+							Middlewares: []string{"default-ingress-with-whitelist-single-ip-rule-0-path-0-allowed-source-range", "default-ingress-with-whitelist-single-ip-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-whitelist-single-ip-whoami-80",
 						},
 					},
@@ -1525,7 +1525,7 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-whitelist-single-cidr-rule-0-path-0": {
 							Rule:        "Host(`whitelist-source-range.localhost`) && Path(`/`)",
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-whitelist-single-cidr-rule-0-path-0-whitelist-source-range", "default-ingress-with-whitelist-single-cidr-rule-0-path-0-retry"},
+							Middlewares: []string{"default-ingress-with-whitelist-single-cidr-rule-0-path-0-allowed-source-range", "default-ingress-with-whitelist-single-cidr-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-whitelist-single-cidr-whoami-80",
 						},
 					},
@@ -1591,7 +1591,7 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-whitelist-multiple-ip-and-cidr-rule-0-path-0": {
 							Rule:        "Host(`whitelist-source-range.localhost`) && Path(`/`)",
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-whitelist-multiple-ip-and-cidr-rule-0-path-0-whitelist-source-range", "default-ingress-with-whitelist-multiple-ip-and-cidr-rule-0-path-0-retry"},
+							Middlewares: []string{"default-ingress-with-whitelist-multiple-ip-and-cidr-rule-0-path-0-allowed-source-range", "default-ingress-with-whitelist-multiple-ip-and-cidr-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-whitelist-multiple-ip-and-cidr-whoami-80",
 						},
 					},
@@ -1718,11 +1718,17 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-allowlist-empty-rule-0-path-0": {
 							Rule:        "Host(`allowlist-source-range.localhost`) && Path(`/`)",
 							RuleSyntax:  "default",
-							Middlewares: nil,
+							Middlewares: []string{"default-ingress-with-allowlist-empty-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-allowlist-empty-whoami-80",
 						},
 					},
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-allowlist-empty-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+					},
 					Services: map[string]*dynamic.Service{
 						"default-ingress-with-allowlist-empty-whoami-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
@@ -1773,7 +1779,7 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-allowlist-single-ip-rule-0-path-0": {
 							Rule:        "Host(`allowlist-source-range.localhost`) && Path(`/`)",
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-allowlist-single-ip-rule-0-path-0-allowed-source-range"},
+							Middlewares: []string{"default-ingress-with-allowlist-single-ip-rule-0-path-0-allowed-source-range", "default-ingress-with-allowlist-single-ip-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-allowlist-single-ip-whoami-80",
 						},
 					},
@@ -1781,6 +1787,11 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-allowlist-single-ip-rule-0-path-0-allowed-source-range": {
 							IPAllowList: &dynamic.IPAllowList{
 								SourceRange: []string{"192.168.20.1"},
+							},
+						},
+						"default-ingress-with-allowlist-single-ip-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
 							},
 						},
 					},
@@ -1834,7 +1845,7 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-allowlist-single-cidr-rule-0-path-0": {
 							Rule:        "Host(`allowlist-source-range.localhost`) && Path(`/`)",
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-allowlist-single-cidr-rule-0-path-0-allowed-source-range"},
+							Middlewares: []string{"default-ingress-with-allowlist-single-cidr-rule-0-path-0-allowed-source-range", "default-ingress-with-allowlist-single-cidr-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-allowlist-single-cidr-whoami-80",
 						},
 					},
@@ -1842,6 +1853,11 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-allowlist-single-cidr-rule-0-path-0-allowed-source-range": {
 							IPAllowList: &dynamic.IPAllowList{
 								SourceRange: []string{"192.168.1.0/24"},
+							},
+						},
+						"default-ingress-with-allowlist-single-cidr-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
 							},
 						},
 					},
@@ -1895,7 +1911,7 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-allowlist-multiple-ip-and-cidr-rule-0-path-0": {
 							Rule:        "Host(`allowlist-source-range.localhost`) && Path(`/`)",
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-allowlist-multiple-ip-and-cidr-rule-0-path-0-allowed-source-range"},
+							Middlewares: []string{"default-ingress-with-allowlist-multiple-ip-and-cidr-rule-0-path-0-allowed-source-range", "default-ingress-with-allowlist-multiple-ip-and-cidr-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-allowlist-multiple-ip-and-cidr-whoami-80",
 						},
 					},
@@ -1903,6 +1919,11 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-allowlist-multiple-ip-and-cidr-rule-0-path-0-allowed-source-range": {
 							IPAllowList: &dynamic.IPAllowList{
 								SourceRange: []string{"192.168.1.0/24", "10.0.0.0/8", "192.168.20.1"},
+							},
+						},
+						"default-ingress-with-allowlist-multiple-ip-and-cidr-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
 							},
 						},
 					},
@@ -3050,7 +3071,7 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-proxy-body-size-rule-0-path-0": {
 							Rule:        "Host(`hostname.localhost`) && Path(`/`)",
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-proxy-body-size-rule-0-path-0-buffering"},
+							Middlewares: []string{"default-ingress-with-proxy-body-size-rule-0-path-0-buffering", "default-ingress-with-proxy-body-size-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-proxy-body-size-whoami-80",
 						},
 					},
@@ -3061,6 +3082,11 @@ func TestLoadIngresses(t *testing.T) {
 								MemRequestBodyBytes:   defaultClientBodyBufferSize,
 								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
 								DisableResponseBuffer: true,
+							},
+						},
+						"default-ingress-with-proxy-body-size-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
 							},
 						},
 					},
@@ -3114,7 +3140,7 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-client-body-buffer-size-rule-0-path-0": {
 							Rule:        "Host(`hostname.localhost`) && Path(`/`)",
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-client-body-buffer-size-rule-0-path-0-buffering"},
+							Middlewares: []string{"default-ingress-with-client-body-buffer-size-rule-0-path-0-buffering", "default-ingress-with-client-body-buffer-size-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-client-body-buffer-size-whoami-80",
 						},
 					},
@@ -3125,6 +3151,11 @@ func TestLoadIngresses(t *testing.T) {
 								MaxRequestBodyBytes:   defaultProxyBodySize,
 								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
 								DisableResponseBuffer: true,
+							},
+						},
+						"default-ingress-with-client-body-buffer-size-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
 							},
 						},
 					},
@@ -3178,7 +3209,7 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-proxy-body-size-and-client-body-buffer-size-rule-0-path-0": {
 							Rule:        "Host(`hostname.localhost`) && Path(`/`)",
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-proxy-body-size-and-client-body-buffer-size-rule-0-path-0-buffering"},
+							Middlewares: []string{"default-ingress-with-proxy-body-size-and-client-body-buffer-size-rule-0-path-0-buffering", "default-ingress-with-proxy-body-size-and-client-body-buffer-size-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-proxy-body-size-and-client-body-buffer-size-whoami-80",
 						},
 					},
@@ -3189,6 +3220,11 @@ func TestLoadIngresses(t *testing.T) {
 								MemRequestBodyBytes:   10 * 1024,
 								MemResponseBodyBytes:  defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
 								DisableResponseBuffer: true,
+							},
+						},
+						"default-ingress-with-proxy-body-size-and-client-body-buffer-size-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
 							},
 						},
 					},
@@ -3242,7 +3278,7 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-proxy-buffer-size-rule-0-path-0": {
 							Rule:        "Host(`hostname.localhost`) && Path(`/`)",
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-proxy-buffer-size-rule-0-path-0-buffering"},
+							Middlewares: []string{"default-ingress-with-proxy-buffer-size-rule-0-path-0-buffering", "default-ingress-with-proxy-buffer-size-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-proxy-buffer-size-whoami-80",
 						},
 					},
@@ -3254,6 +3290,11 @@ func TestLoadIngresses(t *testing.T) {
 								MemRequestBodyBytes:  defaultClientBodyBufferSize,
 								MemResponseBodyBytes: 16 * 1024 * int64(defaultProxyBuffersNumber),
 								MaxResponseBodyBytes: defaultProxyMaxTempFileSize + (defaultProxyBufferSize * 8),
+							},
+						},
+						"default-ingress-with-proxy-buffer-size-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
 							},
 						},
 					},
@@ -3307,7 +3348,7 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-proxy-buffers-number-rule-0-path-0": {
 							Rule:        "Host(`hostname.localhost`) && Path(`/`)",
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-proxy-buffers-number-rule-0-path-0-buffering"},
+							Middlewares: []string{"default-ingress-with-proxy-buffers-number-rule-0-path-0-buffering", "default-ingress-with-proxy-buffers-number-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-proxy-buffers-number-whoami-80",
 						},
 					},
@@ -3319,6 +3360,11 @@ func TestLoadIngresses(t *testing.T) {
 								MemRequestBodyBytes:  defaultClientBodyBufferSize,
 								MemResponseBodyBytes: defaultProxyBufferSize * 8,
 								MaxResponseBodyBytes: defaultProxyMaxTempFileSize + (defaultProxyBufferSize * 8),
+							},
+						},
+						"default-ingress-with-proxy-buffers-number-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
 							},
 						},
 					},
@@ -3372,7 +3418,7 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-proxy-buffer-size-and-number-rule-0-path-0": {
 							Rule:        "Host(`hostname.localhost`) && Path(`/`)",
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-proxy-buffer-size-and-number-rule-0-path-0-buffering"},
+							Middlewares: []string{"default-ingress-with-proxy-buffer-size-and-number-rule-0-path-0-buffering", "default-ingress-with-proxy-buffer-size-and-number-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-proxy-buffer-size-and-number-whoami-80",
 						},
 					},
@@ -3384,6 +3430,11 @@ func TestLoadIngresses(t *testing.T) {
 								MemRequestBodyBytes:  defaultClientBodyBufferSize,
 								MemResponseBodyBytes: 16 * 1024 * 8,
 								MaxResponseBodyBytes: defaultProxyMaxTempFileSize + (16 * 1024 * 8),
+							},
+						},
+						"default-ingress-with-proxy-buffer-size-and-number-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
 							},
 						},
 					},
@@ -3437,7 +3488,7 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-proxy-max-temp-file-size-rule-0-path-0": {
 							Rule:        "Host(`hostname.localhost`) && Path(`/`)",
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-proxy-max-temp-file-size-rule-0-path-0-buffering"},
+							Middlewares: []string{"default-ingress-with-proxy-max-temp-file-size-rule-0-path-0-buffering", "default-ingress-with-proxy-max-temp-file-size-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-proxy-max-temp-file-size-whoami-80",
 						},
 					},
@@ -3449,6 +3500,11 @@ func TestLoadIngresses(t *testing.T) {
 								MemRequestBodyBytes:  defaultClientBodyBufferSize,
 								MemResponseBodyBytes: defaultProxyBufferSize * int64(defaultProxyBuffersNumber),
 								MaxResponseBodyBytes: (defaultProxyBufferSize * int64(defaultProxyBuffersNumber)) + (100 * 1024 * 1024),
+							},
+						},
+						"default-ingress-with-proxy-max-temp-file-size-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
 							},
 						},
 					},
