@@ -117,6 +117,7 @@ http:
           headers:
             name0: foobar
             name1: foobar
+          body: foobar
         passiveHealthCheck:
           failureWindow: 42s
           maxFailedAttempts: 42

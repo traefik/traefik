@@ -106,6 +106,7 @@
           timeout = "42s"
           hostname = "foobar"
           followRedirects = true
+          body = "foobar"
           [http.services.Service03.loadBalancer.healthCheck.headers]
             name0 = "foobar"
             name1 = "foobar"
