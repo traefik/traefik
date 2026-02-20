@@ -1,4 +1,4 @@
-import { Box, Flex, Image, Link, Text } from '@traefiklabs/faency'
+import { Box, Flex, Image, Link, Text } from '@traefik-labs/faency'
 import { useMemo, useEffect, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useParams } from 'react-router-dom'

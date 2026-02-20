@@ -1,4 +1,4 @@
-import { styled, Flex, Label } from '@traefiklabs/faency'
+import { styled, Flex, Label } from '@traefik-labs/faency'
 import { ComponentProps } from 'react'
 
 import SortIcon from 'components/icons/SortIcon'
