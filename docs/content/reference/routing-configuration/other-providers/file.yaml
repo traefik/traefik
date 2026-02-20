@@ -574,8 +574,10 @@ tcp:
         servers:
           - address: foobar
             tls: true
+            weight: 42
           - address: foobar
             tls: true
+            weight: 42
         serversTransport: foobar
         proxyProtocol:
           version: 42
