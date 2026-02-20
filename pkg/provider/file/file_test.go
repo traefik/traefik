@@ -197,6 +197,38 @@ func TestProvideWithWatch(t *testing.T) {
 	}
 }
 
+func TestProvideWatchWithNonConfigDanglingSymlink(t *testing.T) {
+	tempDir := t.TempDir()
+
+	err := copyFile("./fixtures/yaml/simple_file_01.yml", filepath.Join(tempDir, "simple_file_01.yml"))
+	require.NoError(t, err)
+
+	err = os.Symlink(filepath.Join(tempDir, "non_existent_file.txt"), filepath.Join(tempDir, "dangling_symlink.txt"))
+	require.NoError(t, err)
+
+	provider := &Provider{
+		Directory: tempDir,
+		Watch:     true,
+	}
+	configChan := make(chan dynamic.Message)
+	go func() {
+		err := provider.Provide(configChan, safe.NewPool(t.Context()))
+		assert.NoError(t, err)
+	}()
+
+	timeout := time.After(time.Second)
+	select {
+	case conf := <-configChan:
+		require.NotNil(t, conf.Configuration.HTTP)
+		numServices := len(conf.Configuration.HTTP.Services) + len(conf.Configuration.TCP.Services) + len(conf.Configuration.UDP.Services)
+		numRouters := len(conf.Configuration.HTTP.Routers) + len(conf.Configuration.TCP.Routers) + len(conf.Configuration.UDP.Routers)
+		assert.Equal(t, 6, numServices)
+		assert.Equal(t, 3, numRouters)
+	case <-timeout:
+		t.Errorf("timeout while waiting for config")
+	}
+}
+
 func getTestCases() []ProvideTestCase {
 	return []ProvideTestCase{
 		{
