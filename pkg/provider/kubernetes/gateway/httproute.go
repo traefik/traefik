@@ -585,38 +585,59 @@ func (p *Provider) loadServersTransport(namespace string, policy *gatev1.Backend
 	}
 
 	for _, caCertRef := range policy.Spec.Validation.CACertificateRefs {
-		if (caCertRef.Group != "" && caCertRef.Group != groupCore) || caCertRef.Kind != "ConfigMap" {
+		if (caCertRef.Group != "" && caCertRef.Group != groupCore) || (caCertRef.Kind != "ConfigMap" && caCertRef.Kind != "Secret") {
 			return nil, metav1.Condition{
 				Type:               string(gatev1.BackendTLSPolicyConditionResolvedRefs),
 				Status:             metav1.ConditionFalse,
 				ObservedGeneration: policy.Generation,
 				LastTransitionTime: metav1.Now(),
 				Reason:             string(gatev1.BackendTLSPolicyReasonInvalidKind),
-				Message:            "Only ConfigMaps are supported",
+				Message:            "Only ConfigMaps and Secrets are supported",
 			}
 		}
 
-		configMap, err := p.client.GetConfigMap(namespace, string(caCertRef.Name))
-		if err != nil {
+		caCRT := ""
+		var crtMissing bool
+
+		switch caCertRef.Kind {
+		case "ConfigMap":
+			configmap, err := p.client.GetConfigMap(namespace, string(caCertRef.Name))
+			if err != nil {
+				return nil, metav1.Condition{
+					Type:               string(gatev1.BackendTLSPolicyConditionResolvedRefs),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: policy.Generation,
+					LastTransitionTime: metav1.Now(),
+					Reason:             string(gatev1.BackendTLSPolicyReasonInvalidCACertificateRef),
+					Message:            fmt.Sprintf("getting configmap %s/%s: %s", namespace, string(caCertRef.Name), err),
+				}
+			}
+			caCRT, crtMissing = configmap.Data["ca.crt"]
+		case "Secret":
+			secret, err := p.client.GetSecret(namespace, string(caCertRef.Name))
+			if err != nil {
+				return nil, metav1.Condition{
+					Type:               string(gatev1.BackendTLSPolicyConditionResolvedRefs),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: policy.Generation,
+					LastTransitionTime: metav1.Now(),
+					Reason:             string(gatev1.BackendTLSPolicyReasonInvalidCACertificateRef),
+					Message:            fmt.Sprintf("getting secret %s/%s: %s", namespace, string(caCertRef.Name), err),
+				}
+			}
+			var crt []byte
+			crt, crtMissing = secret.Data["ca.crt"]
+			caCRT = string(crt)
+		}
+
+		if !crtMissing {
 			return nil, metav1.Condition{
 				Type:               string(gatev1.BackendTLSPolicyConditionResolvedRefs),
 				Status:             metav1.ConditionFalse,
 				ObservedGeneration: policy.Generation,
 				LastTransitionTime: metav1.Now(),
 				Reason:             string(gatev1.BackendTLSPolicyReasonInvalidCACertificateRef),
-				Message:            fmt.Sprintf("getting configmap %s/%s: %s", namespace, string(caCertRef.Name), err),
-			}
-		}
-
-		caCRT, ok := configMap.Data["ca.crt"]
-		if !ok {
-			return nil, metav1.Condition{
-				Type:               string(gatev1.BackendTLSPolicyConditionResolvedRefs),
-				Status:             metav1.ConditionFalse,
-				ObservedGeneration: policy.Generation,
-				LastTransitionTime: metav1.Now(),
-				Reason:             string(gatev1.BackendTLSPolicyReasonInvalidCACertificateRef),
-				Message:            fmt.Sprintf("configmap %s/%s does not have a ca.crt", namespace, string(caCertRef.Name)),
+				Message:            fmt.Sprintf("%s %s/%s does not have a ca.crt", caCertRef.Kind, namespace, string(caCertRef.Name)),
 			}
 		}
 
