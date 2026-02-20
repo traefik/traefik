@@ -55,7 +55,7 @@ func TestShutdownTCP(t *testing.T) {
 	router, err := tcprouter.NewRouter()
 	require.NoError(t, err)
 
-	err = router.AddTCPRoute("HostSNI(`*`)", 0, tcp.HandlerFunc(func(conn tcp.WriteCloser) {
+	err = router.AddTCPRoute("HostSNI(`*`)", 0, tcp.HandlerFunc(func(ctx context.Context, conn tcp.WriteCloser) {
 		_, err := http.ReadRequest(bufio.NewReader(conn))
 		if err != nil {
 			return

@@ -1,6 +1,7 @@
 package tcp
 
 import (
+	"context"
 	"net"
 	"testing"
 	"time"
@@ -267,7 +268,7 @@ func Test_addTCPRoute(t *testing.T) {
 			t.Parallel()
 
 			msg := "BYTES"
-			handler := tcp.HandlerFunc(func(conn tcp.WriteCloser) {
+			handler := tcp.HandlerFunc(func(ctx context.Context, conn tcp.WriteCloser) {
 				_, err := conn.Write([]byte(msg))
 				require.NoError(t, err)
 			})
@@ -304,7 +305,7 @@ func Test_addTCPRoute(t *testing.T) {
 
 			require.NotNil(t, matchingHandler)
 
-			matchingHandler.ServeTCP(conn)
+			matchingHandler.ServeTCP(t.Context(), conn)
 
 			n, ok := conn.call[msg]
 			assert.Equal(t, 1, n)
@@ -441,7 +442,7 @@ func Test_Priority(t *testing.T) {
 
 			matchedRule := ""
 			for rule, priority := range test.rules {
-				err := muxer.AddRoute(rule, "", priority, tcp.HandlerFunc(func(conn tcp.WriteCloser) {
+				err := muxer.AddRoute(rule, "", priority, tcp.HandlerFunc(func(ctx context.Context, conn tcp.WriteCloser) {
 					matchedRule = rule
 				}))
 				require.NoError(t, err)
@@ -452,7 +453,7 @@ func Test_Priority(t *testing.T) {
 			})
 			require.NotNil(t, handler)
 
-			handler.ServeTCP(nil)
+			handler.ServeTCP(t.Context(), nil)
 			assert.Equal(t, test.expectedRule, matchedRule)
 		})
 	}

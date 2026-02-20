@@ -93,7 +93,7 @@ func (r *Router) GetTLSGetClientInfo() func(info *tls.ClientHelloInfo) (*tls.Con
 }
 
 // ServeTCP forwards the connection to the right TCP/HTTP handler.
-func (r *Router) ServeTCP(conn tcp.WriteCloser) {
+func (r *Router) ServeTCP(ctx context.Context, conn tcp.WriteCloser) {
 	// Handling Non-TLS TCP connection early if there is neither HTTP(S) nor TLS routers on the entryPoint,
 	// and if there is at least one non-TLS TCP router.
 	// In the case of a non-TLS TCP client (that does not "send" first),
@@ -116,7 +116,7 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 				log.Error().Err(err).Msg("Error while setting deadline")
 			}
 
-			handler.ServeTCP(conn)
+			handler.ServeTCP(ctx, conn)
 			return
 		}
 		// Otherwise, we keep going because:
@@ -162,9 +162,9 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 		handler, _ := r.muxerTCP.Match(connData)
 		switch {
 		case handler != nil:
-			handler.ServeTCP(r.GetConn(conn, hello.peeked))
+			handler.ServeTCP(ctx, r.GetConn(conn, hello.peeked))
 		case r.httpForwarder != nil:
-			r.httpForwarder.ServeTCP(r.GetConn(conn, hello.peeked))
+			r.httpForwarder.ServeTCP(ctx, r.GetConn(conn, hello.peeked))
 		default:
 			conn.Close()
 		}
@@ -173,7 +173,7 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 
 	// Handling ACME-TLS/1 challenges.
 	if !r.acmeTLSPassthrough && slices.Contains(hello.protos, tlsalpn01.ACMETLS1Protocol) {
-		r.acmeTLSALPNHandler().ServeTCP(r.GetConn(conn, hello.peeked))
+		r.acmeTLSALPNHandler().ServeTCP(ctx, r.GetConn(conn, hello.peeked))
 		return
 	}
 
@@ -187,14 +187,14 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 		// In order not to depart from the behavior in 2.6,
 		// we only allow an HTTPS router to take precedence over a TCP-TLS router if it is _not_ an HostSNI(*) router
 		// (so basically any router that has a specific HostSNI based rule).
-		handlerHTTPS.ServeTCP(r.GetConn(conn, hello.peeked))
+		handlerHTTPS.ServeTCP(ctx, r.GetConn(conn, hello.peeked))
 		return
 	}
 
 	// Contains also TCP TLS passthrough routes.
 	handlerTCPTLS, catchAllTCPTLS := r.muxerTCPTLS.Match(connData)
 	if handlerTCPTLS != nil && !catchAllTCPTLS {
-		handlerTCPTLS.ServeTCP(r.GetConn(conn, hello.peeked))
+		handlerTCPTLS.ServeTCP(ctx, r.GetConn(conn, hello.peeked))
 		return
 	}
 
@@ -202,19 +202,19 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 	// We end up here for e.g. an HTTPS router that only has a PathPrefix rule,
 	// which under the scenes is counted as an HostSNI(*) rule.
 	if handlerHTTPS != nil {
-		handlerHTTPS.ServeTCP(r.GetConn(conn, hello.peeked))
+		handlerHTTPS.ServeTCP(ctx, r.GetConn(conn, hello.peeked))
 		return
 	}
 
 	// Fallback on TCP TLS catchAll.
 	if handlerTCPTLS != nil {
-		handlerTCPTLS.ServeTCP(r.GetConn(conn, hello.peeked))
+		handlerTCPTLS.ServeTCP(ctx, r.GetConn(conn, hello.peeked))
 		return
 	}
 
 	// To handle 404s for HTTPS.
 	if r.httpsForwarder != nil {
-		r.httpsForwarder.ServeTCP(r.GetConn(conn, hello.peeked))
+		r.httpsForwarder.ServeTCP(ctx, r.GetConn(conn, hello.peeked))
 		return
 	}
 
@@ -314,7 +314,7 @@ func (r *Router) acmeTLSALPNHandler() tcp.Handler {
 		return &brokenTLSRouter{}
 	}
 
-	return tcp.HandlerFunc(func(conn tcp.WriteCloser) {
+	return tcp.HandlerFunc(func(_ context.Context, conn tcp.WriteCloser) {
 		tlsConn := tls.Server(conn, r.httpsTLSConfig)
 		defer tlsConn.Close()
 
@@ -335,7 +335,7 @@ func (r *Router) acmeTLSALPNHandler() tcp.Handler {
 type brokenTLSRouter struct{}
 
 // ServeTCP instantly closes the connection.
-func (t *brokenTLSRouter) ServeTCP(conn tcp.WriteCloser) {
+func (t *brokenTLSRouter) ServeTCP(_ context.Context, conn tcp.WriteCloser) {
 	_ = conn.Close()
 }
 

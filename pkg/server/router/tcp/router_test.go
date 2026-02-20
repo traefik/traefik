@@ -3,6 +3,7 @@ package tcp
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"crypto/tls"
 	"errors"
 	"fmt"
@@ -54,7 +55,7 @@ func (h *httpForwarder) Close() error {
 }
 
 // ServeTCP uses the connection to serve it later in "Accept".
-func (h *httpForwarder) ServeTCP(conn tcp2.WriteCloser) {
+func (h *httpForwarder) ServeTCP(ctx context.Context, conn tcp2.WriteCloser) {
 	h.connChan <- conn
 }
 
@@ -199,7 +200,7 @@ func Test_Routing(t *testing.T) {
 			Stores:      []string{tlsalpn01.ACMETLS1Protocol},
 		}})
 
-	middlewaresBuilder := tcpmiddleware.NewBuilder(conf.TCPMiddlewares)
+	middlewaresBuilder := tcpmiddleware.NewBuilder(conf.TCPMiddlewares, nil)
 
 	manager := NewManager(conf, serviceManager, middlewaresBuilder,
 		nil, nil, tlsManager)
@@ -666,7 +667,7 @@ func Test_Routing(t *testing.T) {
 						t.Error("not a write closer")
 					}
 
-					router.ServeTCP(tcpConn)
+					router.ServeTCP(t.Context(), tcpConn)
 				}
 			}()
 
@@ -1206,21 +1207,21 @@ func TestPostgres(t *testing.T) {
 	err = router.muxerTCPTLS.AddRoute("HostSNI(`test.localhost`)", "", 0, nil)
 	require.NoError(t, err)
 
-	err = router.muxerTCP.AddRoute("HostSNI(`*`)", "", 0, tcp2.HandlerFunc(func(conn tcp2.WriteCloser) {
+	err = router.muxerTCP.AddRoute("HostSNI(`*`)", "", 0, tcp2.HandlerFunc(func(ctx context.Context, conn tcp2.WriteCloser) {
 		_, _ = conn.Write([]byte("OK"))
 		_ = conn.Close()
 	}))
 	require.NoError(t, err)
 
 	mockConn := NewMockConn()
-	go router.ServeTCP(mockConn)
+	go router.ServeTCP(t.Context(), mockConn)
 
 	mockConn.dataRead <- PostgresStartTLSMsg
 	b := <-mockConn.dataWrite
 	require.Equal(t, PostgresStartTLSReply, b)
 
 	mockConn = NewMockConn()
-	go router.ServeTCP(mockConn)
+	go router.ServeTCP(t.Context(), mockConn)
 
 	mockConn.dataRead <- []byte("HTTP")
 	b = <-mockConn.dataWrite
