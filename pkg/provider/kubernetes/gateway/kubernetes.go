@@ -1103,15 +1103,8 @@ func findMatchingHostname(h1, h2 gatev1.Hostname) gatev1.Hostname {
 		return ""
 	}
 
-	return lessWildcards(h1, h2)
-}
-
-func lessWildcards(h1, h2 gatev1.Hostname) gatev1.Hostname {
-	if strings.Count(string(h1), "*") > strings.Count(string(h2), "*") {
-		return h2
-	}
-
-	return h1
+	// since h1 is a suffix of h2, we know h2 is the more specific host
+	return h2
 }
 
 func allowRoute(listener gatewayListener, routeNamespace, routeKind string) bool {
