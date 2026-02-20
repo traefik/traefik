@@ -474,7 +474,7 @@ func Test_buildConfiguration(t *testing.T) {
 						Attempts:                   42,
 						Timeout:                    ptypes.Duration(time.Second),
 						InitialInterval:            ptypes.Duration(time.Second),
-						MaxRequestBodyBytes:        42,
+						MaxRequestBodyBytes:        pointer[int64](42),
 						Status:                     []string{"400", "500-599"},
 						DisableRetryOnNetworkError: true,
 						RetryNonIdempotentMethod:   true,

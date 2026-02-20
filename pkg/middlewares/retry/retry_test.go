@@ -17,6 +17,7 @@ import (
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
+	"k8s.io/utils/ptr"
 )
 
 func TestRetry(t *testing.T) {
@@ -434,7 +435,7 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 			config: dynamic.Retry{
 				Attempts:            3,
 				Status:              []string{"503"},
-				MaxRequestBodyBytes: 1024,
+				MaxRequestBodyBytes: ptr.To[int64](1024),
 			},
 			responseStatusCodes: []int{http.StatusServiceUnavailable, http.StatusOK},
 			requestBody:         "test request body",
@@ -446,7 +447,7 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 			config: dynamic.Retry{
 				Attempts:            4,
 				Status:              []string{"500-599"},
-				MaxRequestBodyBytes: 1024,
+				MaxRequestBodyBytes: ptr.To[int64](1024),
 			},
 			responseStatusCodes: []int{http.StatusInternalServerError, http.StatusBadGateway, http.StatusServiceUnavailable, http.StatusOK},
 			requestBody:         "test request body",
@@ -458,7 +459,7 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 			config: dynamic.Retry{
 				Attempts:            3,
 				Status:              []string{"502", "503", "504"},
-				MaxRequestBodyBytes: 1024,
+				MaxRequestBodyBytes: ptr.To[int64](1024),
 			},
 			responseStatusCodes: []int{http.StatusBadGateway, http.StatusOK},
 			requestBody:         "test request body",
@@ -470,7 +471,7 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 			config: dynamic.Retry{
 				Attempts:            3,
 				Status:              []string{"503"},
-				MaxRequestBodyBytes: 1024,
+				MaxRequestBodyBytes: ptr.To[int64](1024),
 			},
 			responseStatusCodes: []int{http.StatusInternalServerError},
 			wantRetryAttempts:   0,
@@ -491,7 +492,7 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 			config: dynamic.Retry{
 				Attempts:            3,
 				Status:              []string{"502"},
-				MaxRequestBodyBytes: 1024,
+				MaxRequestBodyBytes: ptr.To[int64](1024),
 			},
 			responseStatusCodes: []int{http.StatusBadGateway, http.StatusOK},
 			requestBody:         "test request body",
@@ -503,7 +504,7 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 			config: dynamic.Retry{
 				Attempts:            3,
 				Status:              []string{"502"},
-				MaxRequestBodyBytes: 8,
+				MaxRequestBodyBytes: ptr.To[int64](8),
 			},
 			responseStatusCodes: []int{http.StatusOK},
 			requestBody:         "test request body",
@@ -540,7 +541,7 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 			config: dynamic.Retry{
 				Attempts:            3,
 				Status:              []string{"503"},
-				MaxRequestBodyBytes: 1024,
+				MaxRequestBodyBytes: ptr.To[int64](1024),
 			},
 			responseStatusCodes: []int{http.StatusServiceUnavailable, http.StatusServiceUnavailable, http.StatusOK},
 			amountOfTCPFailures: 1,
@@ -553,7 +554,7 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 			config: dynamic.Retry{
 				Attempts:            3,
 				Status:              []string{"503"},
-				MaxRequestBodyBytes: 1024,
+				MaxRequestBodyBytes: ptr.To[int64](1024),
 			},
 			responseStatusCodes: []int{http.StatusServiceUnavailable, http.StatusOK},
 			requestMethod:       http.MethodPost,
@@ -566,7 +567,7 @@ func TestRetryHTTPStatusCodes(t *testing.T) {
 				Attempts:                 3,
 				Status:                   []string{"503"},
 				RetryNonIdempotentMethod: true,
-				MaxRequestBodyBytes:      1024,
+				MaxRequestBodyBytes:      ptr.To[int64](1024),
 			},
 			responseStatusCodes: []int{http.StatusServiceUnavailable, http.StatusOK},
 			requestMethod:       http.MethodPost,
@@ -744,7 +745,7 @@ func TestRetryHTTPStatusCodesLargeBodyError(t *testing.T) {
 	config := dynamic.Retry{
 		Attempts:            3,
 		Status:              []string{"503"},
-		MaxRequestBodyBytes: 100, // Smaller than body
+		MaxRequestBodyBytes: ptr.To[int64](100), // Smaller than body
 	}
 
 	next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {

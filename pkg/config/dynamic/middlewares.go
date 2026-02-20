@@ -743,7 +743,7 @@ type Retry struct {
 	// see https://pkg.go.dev/time#ParseDuration.
 	InitialInterval ptypes.Duration `json:"initialInterval,omitempty" toml:"initialInterval,omitempty" yaml:"initialInterval,omitempty" export:"true"`
 	// MaxRequestBodyBytes defines the maximum size for the request body.
-	MaxRequestBodyBytes int64 `json:"maxRequestBodyBytes,omitempty" toml:"maxRequestBodyBytes,omitempty" yaml:"maxRequestBodyBytes,omitempty" export:"true"`
+	MaxRequestBodyBytes *int64 `json:"maxRequestBodyBytes,omitempty" toml:"maxRequestBodyBytes,omitempty" yaml:"maxRequestBodyBytes,omitempty" export:"true"`
 	// Status defines the range of HTTP status codes to retry on.
 	Status []string `json:"status,omitempty" toml:"status,omitempty" yaml:"status,omitempty" export:"true"`
 	// DisableRetryOnNetworkError defines whether to disable the retry if an error occurs when transmitting the request to the server.
@@ -753,7 +753,8 @@ type Retry struct {
 }
 
 func (r *Retry) SetDefaults() {
-	r.MaxRequestBodyBytes = RetryDefaultMaxRequestBodyBytes
+	defaultMaxRequestBodyBytes := RetryDefaultMaxRequestBodyBytes
+	r.MaxRequestBodyBytes = &defaultMaxRequestBodyBytes
 }
 
 // +k8s:deepcopy-gen=true

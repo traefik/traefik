@@ -28,9 +28,7 @@ import (
 // Compile time validation that the response writer implements http interfaces correctly.
 var _ middlewares.Stateful = &responseWriter{}
 
-const (
-	typeName = "Retry"
-)
+const typeName = "Retry"
 
 // Listener is used to inform about retry attempts.
 type Listener interface {
@@ -112,9 +110,14 @@ func New(ctx context.Context, next http.Handler, config dynamic.Retry, listener 
 		return nil, fmt.Errorf("incorrect (or empty) value for attempt (%d)", config.Attempts)
 	}
 
+	maxRequestBodyBytes := dynamic.RetryDefaultMaxRequestBodyBytes
+	if config.MaxRequestBodyBytes != nil {
+		maxRequestBodyBytes = *config.MaxRequestBodyBytes
+	}
+
 	retryCfg := &retry{
 		attempts:                   config.Attempts,
-		maxRequestBodyBytes:        config.MaxRequestBodyBytes,
+		maxRequestBodyBytes:        maxRequestBodyBytes,
 		disableRetryOnNetworkError: config.DisableRetryOnNetworkError,
 		retryNonIdempotentMethod:   config.RetryNonIdempotentMethod,
 		initialInterval:            time.Duration(config.InitialInterval),
@@ -197,8 +200,8 @@ func (r *retry) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		remainAttempts := attempts < r.attempts
 
 		var statusCodes types.HTTPCodeRanges
-		nonIdempotent := req.Method != http.MethodPost && req.Method != http.MethodPatch && req.Method != "LOCK"
-		if r.retryNonIdempotentMethod || nonIdempotent {
+		isIdempotent := req.Method != http.MethodPost && req.Method != http.MethodPatch && req.Method != "LOCK"
+		if r.retryNonIdempotentMethod || isIdempotent {
 			// statusCode controls whether the request is retried.
 			// A nil value bypass the retry.
 			statusCodes = r.statusCode
@@ -297,6 +300,10 @@ func (r *responseWriter) SetShouldRetry(shouldRetry bool) {
 }
 
 func (r *responseWriter) Header() http.Header {
+	// After headers have been written to the downstream client and no retry is pending,
+	// return the real response writer's headers. During a retry (shouldRetry=true),
+	// even after written=true, return the internal headers map so that failed-attempt
+	// headers are discarded and not leaked to the client.
 	if r.written && !r.shouldRetry {
 		return r.responseWriter.Header()
 	}
@@ -321,6 +328,11 @@ func (r *responseWriter) WriteHeader(code int) {
 		return
 	}
 
+	// Handle 1xx informational responses, except 101 Switching Protocols which
+	// is a final response (e.g. WebSocket upgrade) and should flow through to
+	// the status-code retry logic below.
+	// Accumulated headers are cleared to avoid leaking headers from informational
+	// responses into the final response.
 	if code >= 100 && code <= 199 && code != http.StatusSwitchingProtocols {
 		clear(r.headers)
 
