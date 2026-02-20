@@ -44,6 +44,7 @@ type Registry interface {
 	RouterReqDurationHistogram() ScalableHistogram
 	RouterReqsBytesCounter() metrics.Counter
 	RouterRespsBytesCounter() metrics.Counter
+	RouterOpenConnectionsGauge() metrics.Gauge
 
 	// service metrics
 
@@ -80,6 +81,7 @@ func NewMultiRegistry(registries []Registry) Registry {
 	var routerReqDurationHistogram []ScalableHistogram
 	var routerReqsBytesCounter []metrics.Counter
 	var routerRespsBytesCounter []metrics.Counter
+	var routerOpenConnectionsGauge []metrics.Gauge
 	var serviceReqsCounter []CounterWithHeaders
 	var serviceReqsTLSCounter []metrics.Counter
 	var serviceReqDurationHistogram []ScalableHistogram
@@ -131,6 +133,9 @@ func NewMultiRegistry(registries []Registry) Registry {
 		if r.RouterRespsBytesCounter() != nil {
 			routerRespsBytesCounter = append(routerRespsBytesCounter, r.RouterRespsBytesCounter())
 		}
+		if r.RouterOpenConnectionsGauge() != nil {
+			routerOpenConnectionsGauge = append(routerOpenConnectionsGauge, r.RouterOpenConnectionsGauge())
+		}
 		if r.ServiceReqsCounter() != nil {
 			serviceReqsCounter = append(serviceReqsCounter, r.ServiceReqsCounter())
 		}
@@ -172,6 +177,7 @@ func NewMultiRegistry(registries []Registry) Registry {
 		routerReqDurationHistogram:     MultiHistogram(routerReqDurationHistogram),
 		routerReqsBytesCounter:         multi.NewCounter(routerReqsBytesCounter...),
 		routerRespsBytesCounter:        multi.NewCounter(routerRespsBytesCounter...),
+		routerOpenConnectionsGauge:     multi.NewGauge(routerOpenConnectionsGauge...),
 		serviceReqsCounter:             NewMultiCounterWithHeaders(serviceReqsCounter...),
 		serviceReqsTLSCounter:          multi.NewCounter(serviceReqsTLSCounter...),
 		serviceReqDurationHistogram:    MultiHistogram(serviceReqDurationHistogram),
@@ -200,6 +206,7 @@ type standardRegistry struct {
 	routerReqDurationHistogram     ScalableHistogram
 	routerReqsBytesCounter         metrics.Counter
 	routerRespsBytesCounter        metrics.Counter
+	routerOpenConnectionsGauge     metrics.Gauge
 	serviceReqsCounter             CounterWithHeaders
 	serviceReqsTLSCounter          metrics.Counter
 	serviceReqDurationHistogram    ScalableHistogram
@@ -275,6 +282,10 @@ func (r *standardRegistry) RouterReqsBytesCounter() metrics.Counter {
 
 func (r *standardRegistry) RouterRespsBytesCounter() metrics.Counter {
 	return r.routerRespsBytesCounter
+}
+
+func (r *standardRegistry) RouterOpenConnectionsGauge() metrics.Gauge {
+	return r.routerOpenConnectionsGauge
 }
 
 func (r *standardRegistry) ServiceReqsCounter() CounterWithHeaders {
