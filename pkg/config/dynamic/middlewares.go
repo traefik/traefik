@@ -651,6 +651,13 @@ type Redis struct {
 	// DialTimeout sets the timeout for establishing new connections.
 	// Default value is 5 seconds.
 	DialTimeout *ptypes.Duration `json:"dialTimeout,omitempty" toml:"dialTimeout,omitempty" yaml:"dialTimeout,omitempty" export:"true"`
+	// MasterName defines the name of the Redis master.
+	// Default value is the first endpoint.
+	MasterName string `json:"masterName,omitempty" toml:"masterName,omitempty" yaml:"masterName,omitempty" export:"true"`
+	// SentinelUsername defines the username for Sentinel authentication.
+	SentinelUsername string `json:"sentinelUsername,omitempty" toml:"sentinelUsername,omitempty" yaml:"sentinelUsername,omitempty" export:"true"`
+	// SentinelPassword defines the password for Sentinel authentication.
+	SentinelPassword string `json:"sentinelPassword,omitempty" toml:"sentinelPassword,omitempty" yaml:"sentinelPassword,omitempty" export:"true"`
 }
 
 // SetDefaults sets the default values on a RateLimit.
