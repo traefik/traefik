@@ -468,6 +468,12 @@ type ServerHealthCheck struct {
 	Hostname          string            `json:"hostname,omitempty" toml:"hostname,omitempty" yaml:"hostname,omitempty"`
 	FollowRedirects   *bool             `json:"followRedirects,omitempty" toml:"followRedirects,omitempty" yaml:"followRedirects,omitempty" export:"true"`
 	Headers           map[string]string `json:"headers,omitempty" toml:"headers,omitempty" yaml:"headers,omitempty" export:"true"`
+	// FailsThreshold defines the number of consecutive failed health checks required before marking the backend as unavailable.
+	// Default: 1 (a single failure marks the backend as unhealthy).
+	FailsThreshold int `json:"failsThreshold,omitempty" toml:"failsThreshold,omitempty" yaml:"failsThreshold,omitempty" export:"true"`
+	// PassesThreshold defines the number of consecutive successful health checks required before marking an unavailable backend as available again.
+	// Default: 1 (a single success marks the backend as healthy).
+	PassesThreshold int `json:"passesThreshold,omitempty" toml:"passesThreshold,omitempty" yaml:"passesThreshold,omitempty" export:"true"`
 }
 
 // SetDefaults Default values for a HealthCheck.
@@ -476,6 +482,8 @@ func (h *ServerHealthCheck) SetDefaults() {
 	h.Mode = "http"
 	h.Interval = DefaultHealthCheckInterval
 	h.Timeout = DefaultHealthCheckTimeout
+	h.FailsThreshold = 1
+	h.PassesThreshold = 1
 }
 
 // +k8s:deepcopy-gen=true
