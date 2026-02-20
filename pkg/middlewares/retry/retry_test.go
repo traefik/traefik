@@ -17,6 +17,7 @@ import (
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
+	"k8s.io/utils/ptr"
 )
 
 func TestRetry(t *testing.T) {
@@ -415,4 +416,352 @@ type countingRetryListener struct {
 
 func (l *countingRetryListener) Retried(req *http.Request, attempt int) {
 	l.timesCalled++
+}
+
+func TestRetryHTTPStatusCodes(t *testing.T) {
+	testCases := []struct {
+		desc                string
+		config              dynamic.Retry
+		responseStatusCodes []int
+		requestMethod       string
+		requestBody         string
+		responseDelay       time.Duration
+		amountOfTCPFailures int
+		wantRetryAttempts   int
+		wantResponseStatus  int
+	}{
+		{
+			desc: "retry on single 503 status code",
+			config: dynamic.Retry{
+				Attempts:            3,
+				Status:              []string{"503"},
+				MaxRequestBodyBytes: ptr.To[int64](1024),
+			},
+			responseStatusCodes: []int{http.StatusServiceUnavailable, http.StatusOK},
+			requestBody:         "test request body",
+			wantRetryAttempts:   1,
+			wantResponseStatus:  http.StatusOK,
+		},
+		{
+			desc: "retry on range of 5xx status codes",
+			config: dynamic.Retry{
+				Attempts:            4,
+				Status:              []string{"500-599"},
+				MaxRequestBodyBytes: ptr.To[int64](1024),
+			},
+			responseStatusCodes: []int{http.StatusInternalServerError, http.StatusBadGateway, http.StatusServiceUnavailable, http.StatusOK},
+			requestBody:         "test request body",
+			wantRetryAttempts:   3,
+			wantResponseStatus:  http.StatusOK,
+		},
+		{
+			desc: "retry on multiple specific status codes",
+			config: dynamic.Retry{
+				Attempts:            3,
+				Status:              []string{"502", "503", "504"},
+				MaxRequestBodyBytes: ptr.To[int64](1024),
+			},
+			responseStatusCodes: []int{http.StatusBadGateway, http.StatusOK},
+			requestBody:         "test request body",
+			wantRetryAttempts:   1,
+			wantResponseStatus:  http.StatusOK,
+		},
+		{
+			desc: "no retry on non-matching status code",
+			config: dynamic.Retry{
+				Attempts:            3,
+				Status:              []string{"503"},
+				MaxRequestBodyBytes: ptr.To[int64](1024),
+			},
+			responseStatusCodes: []int{http.StatusInternalServerError},
+			wantRetryAttempts:   0,
+			wantResponseStatus:  http.StatusInternalServerError,
+		},
+		{
+			desc: "exhaust all attempts with matching status codes",
+			config: dynamic.Retry{
+				Attempts: 3,
+				Status:   []string{"503"},
+			},
+			responseStatusCodes: []int{http.StatusServiceUnavailable, http.StatusServiceUnavailable, http.StatusServiceUnavailable},
+			wantRetryAttempts:   2,
+			wantResponseStatus:  http.StatusServiceUnavailable,
+		},
+		{
+			desc: "retry with body lower than maxRequestBodyBytes",
+			config: dynamic.Retry{
+				Attempts:            3,
+				Status:              []string{"502"},
+				MaxRequestBodyBytes: ptr.To[int64](1024),
+			},
+			responseStatusCodes: []int{http.StatusBadGateway, http.StatusOK},
+			requestBody:         "test request body",
+			wantRetryAttempts:   1,
+			wantResponseStatus:  http.StatusOK,
+		},
+		{
+			desc: "retry with body greater than maxRequestBodyBytes",
+			config: dynamic.Retry{
+				Attempts:            3,
+				Status:              []string{"502"},
+				MaxRequestBodyBytes: ptr.To[int64](8),
+			},
+			responseStatusCodes: []int{http.StatusOK},
+			requestBody:         "test request body",
+			wantRetryAttempts:   0, // Should not retry because body is too large to buffer
+			wantResponseStatus:  http.StatusRequestEntityTooLarge,
+		},
+		{
+			desc: "retry with timeout stops retries early",
+			config: dynamic.Retry{
+				Attempts: 5,
+				Status:   []string{"503"},
+				Timeout:  ptypes.Duration(time.Millisecond * 50),
+			},
+			responseStatusCodes: []int{http.StatusServiceUnavailable, http.StatusServiceUnavailable, http.StatusServiceUnavailable, http.StatusServiceUnavailable, http.StatusServiceUnavailable},
+			responseDelay:       time.Millisecond * 50,
+			wantRetryAttempts:   0, // Should stop due to timeout before exhausting attempts
+			wantResponseStatus:  http.StatusServiceUnavailable,
+		},
+		{
+			desc: "retry with timeout stops TCP retries early",
+			config: dynamic.Retry{
+				Attempts: 5,
+				Status:   []string{"503"},
+				Timeout:  ptypes.Duration(time.Millisecond * 50),
+			},
+			responseStatusCodes: []int{http.StatusServiceUnavailable, http.StatusServiceUnavailable, http.StatusServiceUnavailable, http.StatusServiceUnavailable, http.StatusServiceUnavailable},
+			responseDelay:       time.Millisecond * 50,
+			amountOfTCPFailures: 5,
+			wantRetryAttempts:   0, // Should stop due to timeout before exhausting attempts
+			wantResponseStatus:  http.StatusGatewayTimeout,
+		},
+		{
+			desc: "retry on TCP failure and 503 status code",
+			config: dynamic.Retry{
+				Attempts:            3,
+				Status:              []string{"503"},
+				MaxRequestBodyBytes: ptr.To[int64](1024),
+			},
+			responseStatusCodes: []int{http.StatusServiceUnavailable, http.StatusServiceUnavailable, http.StatusOK},
+			amountOfTCPFailures: 1,
+			requestBody:         "test request body",
+			wantRetryAttempts:   2,
+			wantResponseStatus:  http.StatusOK,
+		},
+		{
+			desc: "retry failure on 503 status code with method POST",
+			config: dynamic.Retry{
+				Attempts:            3,
+				Status:              []string{"503"},
+				MaxRequestBodyBytes: ptr.To[int64](1024),
+			},
+			responseStatusCodes: []int{http.StatusServiceUnavailable, http.StatusOK},
+			requestMethod:       http.MethodPost,
+			requestBody:         "test request body",
+			wantResponseStatus:  http.StatusServiceUnavailable,
+		},
+		{
+			desc: "retry success on 503 status code with method POST",
+			config: dynamic.Retry{
+				Attempts:                 3,
+				Status:                   []string{"503"},
+				RetryNonIdempotentMethod: true,
+				MaxRequestBodyBytes:      ptr.To[int64](1024),
+			},
+			responseStatusCodes: []int{http.StatusServiceUnavailable, http.StatusOK},
+			requestMethod:       http.MethodPost,
+			requestBody:         "test request body",
+			wantRetryAttempts:   1,
+			wantResponseStatus:  http.StatusOK,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			callCount := 0
+			next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				time.Sleep(test.responseDelay)
+
+				if callCount < test.amountOfTCPFailures {
+					// This signals that a connection will be established with the backend
+					// to enable the Retry middleware mechanism.
+					shouldRetry := ContextShouldRetry(req.Context())
+					if shouldRetry != nil {
+						shouldRetry(true)
+					}
+
+					callCount++
+					rw.WriteHeader(http.StatusGatewayTimeout)
+					return
+				}
+
+				// Verify the body is readable on each attempt.
+				if test.requestBody != "" {
+					body, err := io.ReadAll(req.Body)
+					require.NoError(t, err)
+					assert.Equal(t, test.requestBody, string(body))
+				}
+
+				// Add headers to track attempts, these should be discarded by retry middleware except for the final successful response.
+				headerName := fmt.Sprintf("X-Attempt-%d", callCount)
+				rw.Header().Set(headerName, "value")
+
+				// Return the appropriate status code for this attempt.
+				var statusCode int
+				if callCount < len(test.responseStatusCodes) {
+					statusCode = test.responseStatusCodes[callCount]
+				} else {
+					// Should not happen, but default to a retryable status if we run out of provided codes.
+					statusCode = http.StatusForbidden
+				}
+
+				if statusCode == http.StatusOK {
+					// Successful response, add success header
+					rw.Header().Set("X-Final", "success")
+				}
+
+				callCount++
+				rw.WriteHeader(statusCode)
+			})
+
+			retryListener := &countingRetryListener{}
+			retry, err := New(t.Context(), next, test.config, retryListener, "traefikTest")
+			require.NoError(t, err)
+
+			recorder := httptest.NewRecorder()
+
+			var body io.Reader
+			if test.requestBody != "" {
+				body = strings.NewReader(test.requestBody)
+			}
+
+			method := http.MethodGet
+			if test.requestMethod != "" {
+				method = test.requestMethod
+			}
+			req := httptest.NewRequest(method, "http://localhost:3000/ok", body)
+
+			retry.ServeHTTP(recorder, req)
+
+			assert.Equal(t, test.wantResponseStatus, recorder.Code)
+			assert.Equal(t, test.wantRetryAttempts, retryListener.timesCalled)
+
+			// Verify headers behavior - should only have headers from the final attempt
+			if test.wantResponseStatus == http.StatusOK {
+				assert.Equal(t, "success", recorder.Header().Get("X-Final"))
+				// Should have header from successful attempt
+				expectedHeader := fmt.Sprintf("X-Attempt-%d", test.wantRetryAttempts)
+				assert.Equal(t, "value", recorder.Header().Get(expectedHeader))
+
+				// Should not have headers from failed attempts
+				for i := 1; i < test.wantRetryAttempts; i++ {
+					failedHeader := fmt.Sprintf("X-Attempt-%d", i)
+					assert.Empty(t, recorder.Header().Get(failedHeader))
+				}
+			}
+		})
+	}
+}
+
+func TestRetryHTTPStatusCodesConfigValidation(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		config      dynamic.Retry
+		expectError bool
+		errorMsg    string
+	}{
+		{
+			desc: "valid single status code",
+			config: dynamic.Retry{
+				Attempts: 2,
+				Status:   []string{"503"},
+			},
+			expectError: false,
+		},
+		{
+			desc: "valid status code range",
+			config: dynamic.Retry{
+				Attempts: 2,
+				Status:   []string{"500-599"},
+			},
+			expectError: false,
+		},
+		{
+			desc: "invalid status code",
+			config: dynamic.Retry{
+				Attempts: 2,
+				Status:   []string{"abc"},
+			},
+			expectError: true,
+			errorMsg:    "creating HTTP code ranges",
+		},
+		{
+			desc: "empty status and disableRetryOnNetworkError true should fail",
+			config: dynamic.Retry{
+				Attempts:                   2,
+				Status:                     []string{},
+				DisableRetryOnNetworkError: true,
+			},
+			expectError: true,
+			errorMsg:    "retry middleware requires at least HTTP status codes or retry on TCP",
+		},
+		{
+			desc: "zero attempts should fail",
+			config: dynamic.Retry{
+				Attempts: 0,
+				Status:   []string{"503"},
+			},
+			expectError: true,
+			errorMsg:    "incorrect (or empty) value for attempt",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				rw.WriteHeader(http.StatusOK)
+			})
+
+			_, err := New(t.Context(), next, test.config, &countingRetryListener{}, "traefikTest")
+
+			if test.expectError {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), test.errorMsg)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestRetryHTTPStatusCodesLargeBodyError(t *testing.T) {
+	largeBody := strings.Repeat("a", 1000)
+
+	config := dynamic.Retry{
+		Attempts:            3,
+		Status:              []string{"503"},
+		MaxRequestBodyBytes: ptr.To[int64](100), // Smaller than body
+	}
+
+	next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusServiceUnavailable)
+	})
+
+	retryListener := &countingRetryListener{}
+	retry, err := New(t.Context(), next, config, retryListener, "traefikTest")
+	require.NoError(t, err)
+
+	recorder := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "http://localhost:3000/ok", strings.NewReader(largeBody))
+
+	retry.ServeHTTP(recorder, req)
+
+	// Should return 413 Request Entity Too Large when body is too large
+	assert.Equal(t, http.StatusRequestEntityTooLarge, recorder.Code)
+	assert.Equal(t, 0, retryListener.timesCalled)
 }

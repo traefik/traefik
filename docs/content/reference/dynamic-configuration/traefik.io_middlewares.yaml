@@ -1317,6 +1317,11 @@ spec:
                       be retried.
                     minimum: 0
                     type: integer
+                  disableRetryOnNetworkError:
+                    description: DisableRetryOnNetworkError defines whether to disable
+                      the retry if an error occurs when transmitting the request to
+                      the server.
+                    type: boolean
                   initialInterval:
                     anyOf:
                     - type: integer
@@ -1326,6 +1331,34 @@ spec:
                       The maximum interval is calculated as twice the initialInterval.
                       If unspecified, requests will be retried immediately.
                       The value of initialInterval should be provided in seconds or as a valid duration format,
+                      see https://pkg.go.dev/time#ParseDuration.
+                    pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
+                    x-kubernetes-int-or-string: true
+                  maxRequestBodyBytes:
+                    description: |-
+                      MaxRequestBodyBytes defines the maximum size for the request body.
+                      Default is `-1`, which means no limit.
+                    format: int64
+                    minimum: -1
+                    type: integer
+                  retryNonIdempotentMethod:
+                    description: RetryNonIdempotentMethod activates the retry for
+                      non-idempotent methods (POST, LOCK, PATCH)
+                    type: boolean
+                  status:
+                    description: Status defines the range of HTTP status codes to
+                      retry on.
+                    items:
+                      pattern: ^([1-5][0-9]{2}[,-]?)+$
+                      type: string
+                    type: array
+                  timeout:
+                    anyOf:
+                    - type: integer
+                    - type: string
+                    description: |-
+                      Timeout defines how much time the middleware is allowed to retry the request.
+                      The value of timeout should be provided in seconds or as a valid duration format,
                       see https://pkg.go.dev/time#ParseDuration.
                     pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
                     x-kubernetes-int-or-string: true

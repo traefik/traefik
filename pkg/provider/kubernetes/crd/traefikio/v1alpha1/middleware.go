@@ -342,6 +342,12 @@ type Retry struct {
 	// Attempts defines how many times the request should be retried.
 	// +kubebuilder:validation:Minimum=0
 	Attempts int `json:"attempts,omitempty"`
+	// Timeout defines how much time the middleware is allowed to retry the request.
+	// The value of timeout should be provided in seconds or as a valid duration format,
+	// see https://pkg.go.dev/time#ParseDuration.
+	// +kubebuilder:validation:Pattern="^([0-9]+(ns|us|µs|ms|s|m|h)?)+$"
+	// +kubebuilder:validation:XIntOrString
+	Timeout intstr.IntOrString `json:"timeout,omitempty"`
 	// InitialInterval defines the first wait time in the exponential backoff series.
 	// The maximum interval is calculated as twice the initialInterval.
 	// If unspecified, requests will be retried immediately.
@@ -350,6 +356,17 @@ type Retry struct {
 	// +kubebuilder:validation:Pattern="^([0-9]+(ns|us|µs|ms|s|m|h)?)+$"
 	// +kubebuilder:validation:XIntOrString
 	InitialInterval intstr.IntOrString `json:"initialInterval,omitempty"`
+	// MaxRequestBodyBytes defines the maximum size for the request body.
+	// Default is `-1`, which means no limit.
+	// +kubebuilder:validation:Minimum=-1
+	MaxRequestBodyBytes *int64 `json:"maxRequestBodyBytes,omitempty"`
+	// Status defines the range of HTTP status codes to retry on.
+	// +kubebuilder:validation:items:Pattern=`^([1-5][0-9]{2}[,-]?)+$`
+	Status []string `json:"status,omitempty"`
+	// DisableRetryOnNetworkError defines whether to disable the retry if an error occurs when transmitting the request to the server.
+	DisableRetryOnNetworkError bool `json:"disableRetryOnNetworkError,omitempty"`
+	// RetryNonIdempotentMethod activates the retry for non-idempotent methods (POST, LOCK, PATCH)
+	RetryNonIdempotentMethod bool `json:"retryNonIdempotentMethod,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
