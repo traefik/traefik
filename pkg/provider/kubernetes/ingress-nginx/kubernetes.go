@@ -53,8 +53,11 @@ const (
 	// https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/nginx-configuration/annotations.md#proxy-buffers-number
 	defaultProxyBuffersNumber = 4
 	// https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_max_temp_file_size
-	defaultProxyMaxTempFileSize   = int64(1024 * 1024 * 1024) // 1GB
-	defaultProxyNextUpstream      = "error timeout"
+	defaultProxyMaxTempFileSize = int64(1024 * 1024 * 1024) // 1GB
+	// https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#proxy-next-upstream
+	defaultProxyNextUpstream = "error timeout"
+	// https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#proxy-next-upstream-tries
+	// ingress-nginx override nginx's default value
 	defaultProxyNextUpstreamTries = 3
 )
 
