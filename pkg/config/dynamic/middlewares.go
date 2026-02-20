@@ -10,8 +10,12 @@ import (
 	"github.com/traefik/traefik/v3/pkg/types"
 )
 
-// ForwardAuthDefaultMaxBodySize is the ForwardAuth.MaxBodySize option default value.
-const ForwardAuthDefaultMaxBodySize int64 = -1
+const (
+	// ForwardAuthDefaultMaxBodySize is the ForwardAuth.MaxBodySize option default value.
+	ForwardAuthDefaultMaxBodySize int64 = -1
+	// RetryDefaultMaxRequestBodyBytes is the Retry.MaxRequestBodyBytes option default value.
+	RetryDefaultMaxRequestBodyBytes int64 = -1
+)
 
 // +k8s:deepcopy-gen=true
 
@@ -730,12 +734,27 @@ type ReplacePathRegex struct {
 type Retry struct {
 	// Attempts defines how many times the request should be retried.
 	Attempts int `json:"attempts,omitempty" toml:"attempts,omitempty" yaml:"attempts,omitempty" export:"true"`
+	// Timeout defines how much time the middleware is allowed to retry the request.
+	Timeout ptypes.Duration `json:"timeout,omitempty" toml:"timeout,omitempty" yaml:"timeout,omitempty" export:"true"`
 	// InitialInterval defines the first wait time in the exponential backoff series.
 	// The maximum interval is calculated as twice the initialInterval.
 	// If unspecified, requests will be retried immediately.
 	// The value of initialInterval should be provided in seconds or as a valid duration format,
 	// see https://pkg.go.dev/time#ParseDuration.
 	InitialInterval ptypes.Duration `json:"initialInterval,omitempty" toml:"initialInterval,omitempty" yaml:"initialInterval,omitempty" export:"true"`
+	// MaxRequestBodyBytes defines the maximum size for the request body.
+	MaxRequestBodyBytes *int64 `json:"maxRequestBodyBytes,omitempty" toml:"maxRequestBodyBytes,omitempty" yaml:"maxRequestBodyBytes,omitempty" export:"true"`
+	// Status defines the range of HTTP status codes to retry on.
+	Status []string `json:"status,omitempty" toml:"status,omitempty" yaml:"status,omitempty" export:"true"`
+	// DisableRetryOnNetworkError defines whether to disable the retry if an error occurs when transmitting the request to the server.
+	DisableRetryOnNetworkError bool `json:"disableRetryOnNetworkError,omitempty" toml:"disableRetryOnNetworkError,omitempty" yaml:"disableRetryOnNetworkError,omitempty" export:"true"`
+	// RetryNonIdempotentMethod activates the retry for non-idempotent methods (POST, LOCK, PATCH)
+	RetryNonIdempotentMethod bool `json:"retryNonIdempotentMethod,omitempty" toml:"retryNonIdempotentMethod,omitempty" yaml:"retryNonIdempotentMethod,omitempty" export:"true"`
+}
+
+func (r *Retry) SetDefaults() {
+	defaultMaxRequestBodyBytes := RetryDefaultMaxRequestBodyBytes
+	r.MaxRequestBodyBytes = &defaultMaxRequestBodyBytes
 }
 
 // +k8s:deepcopy-gen=true

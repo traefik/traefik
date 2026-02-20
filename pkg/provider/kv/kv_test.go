@@ -217,6 +217,12 @@ func Test_buildConfiguration(t *testing.T) {
 		"traefik/http/middlewares/Middleware05/compress/encodings":                                   "foobar, foobar",
 		"traefik/http/middlewares/Middleware05/compress/minResponseBodyBytes":                        "42",
 		"traefik/http/middlewares/Middleware18/retry/attempts":                                       "42",
+		"traefik/http/middlewares/Middleware18/retry/timeout":                                        "1s",
+		"traefik/http/middlewares/Middleware18/retry/initialInterval":                                "1s",
+		"traefik/http/middlewares/Middleware18/retry/maxRequestBodyBytes":                            "42",
+		"traefik/http/middlewares/Middleware18/retry/status":                                         "400,500-599",
+		"traefik/http/middlewares/Middleware18/retry/disableRetryOnNetworkError":                     "true",
+		"traefik/http/middlewares/Middleware18/retry/retryNonIdempotentMethod":                       "true",
 		"traefik/http/middlewares/Middleware19/stripPrefix/prefixes/0":                               "foobar",
 		"traefik/http/middlewares/Middleware19/stripPrefix/prefixes/1":                               "foobar",
 		"traefik/http/middlewares/Middleware19/stripPrefix/forceSlash":                               "true",
@@ -465,7 +471,13 @@ func Test_buildConfiguration(t *testing.T) {
 				},
 				"Middleware18": {
 					Retry: &dynamic.Retry{
-						Attempts: 42,
+						Attempts:                   42,
+						Timeout:                    ptypes.Duration(time.Second),
+						InitialInterval:            ptypes.Duration(time.Second),
+						MaxRequestBodyBytes:        pointer[int64](42),
+						Status:                     []string{"400", "500-599"},
+						DisableRetryOnNetworkError: true,
+						RetryNonIdempotentMethod:   true,
 					},
 				},
 				"Middleware16": {

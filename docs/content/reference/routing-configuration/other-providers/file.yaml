@@ -438,7 +438,14 @@ http:
     Middleware24:
       retry:
         attempts: 42
+        timeout: 42s
         initialInterval: 42s
+        maxRequestBodyBytes: 42
+        status:
+          - foobar
+          - foobar
+        disableRetryOnNetworkError: true
+        retryNonIdempotentMethod: true
     Middleware25:
       stripPrefix:
         prefixes:
