@@ -29,6 +29,7 @@ type ingressConfig struct {
 	UseRegex      *bool   `annotation:"nginx.ingress.kubernetes.io/use-regex"`
 	RewriteTarget *string `annotation:"nginx.ingress.kubernetes.io/rewrite-target"`
 	AppRoot       *string `annotation:"nginx.ingress.kubernetes.io/app-root"`
+	LimitRPM      *int    `annotation:"nginx.ingress.kubernetes.io/limit-rpm"`
 
 	PermanentRedirect     *string `annotation:"nginx.ingress.kubernetes.io/permanent-redirect"`
 	PermanentRedirectCode *int    `annotation:"nginx.ingress.kubernetes.io/permanent-redirect-code"`
