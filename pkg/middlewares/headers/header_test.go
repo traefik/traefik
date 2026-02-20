@@ -47,6 +47,42 @@ func TestNewHeader_customRequestHeader(t *testing.T) {
 			},
 			expected: http.Header{"Foo": []string{"test"}},
 		},
+		{
+			desc: "replace a header",
+			cfg: dynamic.Headers{
+				ReplaceRequestHeadersRegex: map[string]dynamic.ReplaceHeaderRegex{
+					"Foo": {
+						Regex:       "^b(.{2})$",
+						Replacement: "f$1",
+					},
+				},
+			},
+			expected: http.Header{"Foo": []string{"far"}},
+		},
+		{
+			desc: "try to replace a header but not match",
+			cfg: dynamic.Headers{
+				ReplaceRequestHeadersRegex: map[string]dynamic.ReplaceHeaderRegex{
+					"Foo": {
+						Regex:       "^b(.{3})$",
+						Replacement: "f$1",
+					},
+				},
+			},
+			expected: http.Header{"Foo": []string{"bar"}},
+		},
+		{
+			desc: "try to replace a header that not exists",
+			cfg: dynamic.Headers{
+				ReplaceRequestHeadersRegex: map[string]dynamic.ReplaceHeaderRegex{
+					"Too": {
+						Regex:       "^b(.{2})$",
+						Replacement: "f$1",
+					},
+				},
+			},
+			expected: http.Header{"Foo": []string{"bar"}},
+		},
 	}
 
 	emptyHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
@@ -500,6 +536,7 @@ func TestNewHeader_customResponseHeaders(t *testing.T) {
 		desc     string
 		config   map[string]string
 		expected http.Header
+		replace  map[string]dynamic.ReplaceHeaderRegex
 	}{
 		{
 			desc: "Test Simple Response",
@@ -534,6 +571,42 @@ func TestNewHeader_customResponseHeaders(t *testing.T) {
 				"Testing": {"foo"},
 			},
 		},
+		{
+			desc: "Replace A Header",
+			replace: map[string]dynamic.ReplaceHeaderRegex{
+				"Foo": {
+					Regex:       "^b(.{2})$",
+					Replacement: "f$1",
+				},
+			},
+			expected: map[string][]string{
+				"Foo": {"far"},
+			},
+		},
+		{
+			desc: "Try To Replace A Header But Not Match",
+			replace: map[string]dynamic.ReplaceHeaderRegex{
+				"Foo": {
+					Regex:       "^b(.{3})$",
+					Replacement: "f$1",
+				},
+			},
+			expected: map[string][]string{
+				"Foo": {"bar"},
+			},
+		},
+		{
+			desc: "Try To Replace A Header That Not Exists",
+			replace: map[string]dynamic.ReplaceHeaderRegex{
+				"Too": {
+					Regex:       "^b(.{3})$",
+					Replacement: "f$1",
+				},
+			},
+			expected: map[string][]string{
+				"Foo": {"bar"},
+			},
+		},
 	}
 
 	emptyHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -543,7 +616,7 @@ func TestNewHeader_customResponseHeaders(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			mid, err := NewHeader(emptyHandler, dynamic.Headers{CustomResponseHeaders: test.config})
+			mid, err := NewHeader(emptyHandler, dynamic.Headers{CustomResponseHeaders: test.config, ReplaceResponseHeadersRegex: test.replace})
 			require.NoError(t, err)
 
 			req := httptest.NewRequest(http.MethodGet, "/foo", nil)

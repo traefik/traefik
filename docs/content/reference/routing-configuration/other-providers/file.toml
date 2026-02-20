@@ -273,6 +273,20 @@
         [http.middlewares.Middleware13.headers.customResponseHeaders]
           name0 = "foobar"
           name1 = "foobar"
+        [http.middlewares.Middleware13.headers.replaceRequestHeadersRegex]
+          [http.middlewares.Middleware13.headers.replaceRequestHeadersRegex.ReplaceHeaderRegex0]
+            regex = "foobar"
+            replacement = "foobar"
+          [http.middlewares.Middleware13.headers.replaceRequestHeadersRegex.ReplaceHeaderRegex1]
+            regex = "foobar"
+            replacement = "foobar"
+        [http.middlewares.Middleware13.headers.replaceResponseHeadersRegex]
+          [http.middlewares.Middleware13.headers.replaceResponseHeadersRegex.ReplaceHeaderRegex0]
+            regex = "foobar"
+            replacement = "foobar"
+          [http.middlewares.Middleware13.headers.replaceResponseHeadersRegex.ReplaceHeaderRegex1]
+            regex = "foobar"
+            replacement = "foobar"
         [http.middlewares.Middleware13.headers.sslProxyHeaders]
           name0 = "foobar"
           name1 = "foobar"

@@ -1674,6 +1674,42 @@ spec:
                       ReferrerPolicy defines the Referrer-Policy header value.
                       This allows sites to control whether browsers forward the Referer header to other sites.
                     type: string
+                  replaceRequestHeadersRegex:
+                    additionalProperties:
+                      description: |-
+                        ReplaceHeaderRegex holds the header middleware configuration.
+                        This middleware replaces header using regex matching and replacement.
+                      properties:
+                        regex:
+                          description: Regex defines the regular expression used to
+                            match and capture the path from the header.
+                          type: string
+                        replacement:
+                          description: Replacement defines the replacement path format,
+                            which can include captured variables.
+                          type: string
+                      type: object
+                    description: ReplaceRequestHeadersRegex replaces the header values
+                      to apply to the request.
+                    type: object
+                  replaceResponseHeadersRegex:
+                    additionalProperties:
+                      description: |-
+                        ReplaceHeaderRegex holds the header middleware configuration.
+                        This middleware replaces header using regex matching and replacement.
+                      properties:
+                        regex:
+                          description: Regex defines the regular expression used to
+                            match and capture the path from the header.
+                          type: string
+                        replacement:
+                          description: Replacement defines the replacement path format,
+                            which can include captured variables.
+                          type: string
+                      type: object
+                    description: ReplaceResponseHeadersRegex replaces the header values
+                      to apply to the response.
+                    type: object
                   sslForceHost:
                     description: 'Deprecated: SSLForceHost option is deprecated, please
                       use RedirectRegex instead.'
