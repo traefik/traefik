@@ -654,6 +654,9 @@ EntryPoint (Default: ```traefik```)
 `--metrics.prometheus.headerlabels.<name>`:  
 Defines the extra labels for the requests_total metrics, and for each of them, the request header containing the value for this label.
 
+`--metrics.prometheus.responseheaderlabels.<name>`:  
+Defines the extra labels for the requests_total metrics, and for each of them, the response header containing the value for this label.
+
 `--metrics.prometheus.manualrouting`:  
 Manual routing (Default: ```false```)
 
