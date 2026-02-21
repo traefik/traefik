@@ -1409,7 +1409,21 @@ func basicAuthUsers(secret *corev1.Secret, authSecretType string) (dynamic.Users
 func buildRule(host string, pa netv1.HTTPIngressPath, config ingressConfig) string {
 	var rules []string
 	if len(host) > 0 {
-		rules = append(rules, buildHostRule(host))
+		hosts := []string{host}
+		if config.ServerAlias != nil {
+			hosts = append(hosts, *config.ServerAlias...)
+		}
+
+		var hostRules []string
+		for _, h := range hosts {
+			hostRules = append(hostRules, buildHostRule(h))
+		}
+
+		if len(hostRules) > 1 {
+			rules = append(rules, "("+strings.Join(hostRules, " || ")+")")
+		} else {
+			rules = append(rules, hostRules[0])
+		}
 	}
 
 	if len(pa.Path) > 0 {

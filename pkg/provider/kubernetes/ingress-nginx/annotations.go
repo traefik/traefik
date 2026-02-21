@@ -37,6 +37,8 @@ type ingressConfig struct {
 
 	FromToWwwRedirect *bool `annotation:"nginx.ingress.kubernetes.io/from-to-www-redirect"`
 
+	ServerAlias  *[]string `annotation:"nginx.ingress.kubernetes.io/server-alias"`
+
 	Affinity              *string `annotation:"nginx.ingress.kubernetes.io/affinity"`
 	SessionCookieName     *string `annotation:"nginx.ingress.kubernetes.io/session-cookie-name"`
 	SessionCookieSecure   *bool   `annotation:"nginx.ingress.kubernetes.io/session-cookie-secure"`
