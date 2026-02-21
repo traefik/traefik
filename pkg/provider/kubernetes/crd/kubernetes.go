@@ -1422,10 +1422,9 @@ func buildTLSStores(ctx context.Context, client Client) (map[string]tls.Store, m
 			}
 		}
 
-		if err := buildCertificates(client, id, t.Namespace, t.Spec.Certificates, tlsConfigs); err != nil {
-			logger.Error().Err(err).Msg("Failed to load certificates")
-			continue
-		}
+		// buildCertificates now handles missing secrets gracefully and continues processing
+		// other certificates, so we don't fail the entire TLS store if one certificate is missing
+		buildCertificates(ctx, client, id, t.Namespace, t.Spec.Certificates, tlsConfigs)
 
 		tlsStores[id] = tlsStore
 	}
@@ -1439,21 +1438,25 @@ func buildTLSStores(ctx context.Context, client Client) (map[string]tls.Store, m
 }
 
 // buildCertificates loads TLSStore certificates from secrets and sets them into tlsConfigs.
-func buildCertificates(client Client, tlsStore, namespace string, certificates []traefikv1alpha1.Certificate, tlsConfigs map[string]*tls.CertAndStores) error {
+// It continues processing other certificates even if one fails, making the TLS store resilient
+// to missing or invalid secrets. Missing secrets are logged as errors but don't prevent
+// the TLS store from being created with the certificates that are available.
+func buildCertificates(ctx context.Context, client Client, tlsStore, namespace string, certificates []traefikv1alpha1.Certificate, tlsConfigs map[string]*tls.CertAndStores) {
+	logger := log.Ctx(ctx).With().Str("TLSStore", tlsStore).Str("namespace", namespace).Logger()
+
 	for _, c := range certificates {
 		configKey := namespace + "/" + c.SecretName
 		if _, tlsExists := tlsConfigs[configKey]; !tlsExists {
 			certAndStores, err := getTLS(client, c.SecretName, namespace)
 			if err != nil {
-				return fmt.Errorf("unable to read secret %s: %w", configKey, err)
+				logger.Error().Err(err).Msgf("Unable to read certificate secret %s/%s, skipping (will retry on next configuration refresh)", namespace, c.SecretName)
+				continue
 			}
 
 			certAndStores.Stores = []string{tlsStore}
 			tlsConfigs[configKey] = certAndStores
 		}
 	}
-
-	return nil
 }
 
 func makeServiceKey(rule, ingressName string) string {
