@@ -900,7 +900,27 @@ func (p *Provider) applyMiddlewares(namespace, routerKey, rulePath, ruleHost str
 		return fmt.Errorf("applying custom headers: %w", err)
 	}
 
+	applyRateLimitConfiguration(routerKey, ingressConfig, rt, conf)
+
 	return nil
+}
+
+func applyRateLimitConfiguration(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
+	if ingressConfig.LimitRPS == nil {
+		return
+	}
+
+	rateLimit := &dynamic.RateLimit{
+		Average: int64(*ingressConfig.LimitRPS),
+		Period:  ptypes.Duration(time.Second),
+		Burst:   1, // Set default Burst to 1, similar to NGINX behavior
+	}
+
+	rateLimitMiddlewareName := routerName + "-ratelimit"
+	conf.HTTP.Middlewares[rateLimitMiddlewareName] = &dynamic.Middleware{
+		RateLimit: rateLimit,
+	}
+	rt.Middlewares = append(rt.Middlewares, rateLimitMiddlewareName)
 }
 
 func applyRedirect(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
