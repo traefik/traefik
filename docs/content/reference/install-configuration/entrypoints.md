@@ -48,10 +48,11 @@ entryPoints:
       
   [entryPoints.websecure]
     address = ":443"
-    [entryPoints.websecure.tls]
-    [entryPoints.websecure.middlewares]
-      - auth@kubernetescrd
-      - strip@kubernetescrd
+    [entryPoints.websecure.http]
+      [entryPoints.websecure.http.tls]
+      [entryPoints.websecure.http.middlewares]
+        - auth@kubernetescrd
+        - strip@kubernetescrd
 ```
 
 ```yaml tab="Helm Chart Values"
