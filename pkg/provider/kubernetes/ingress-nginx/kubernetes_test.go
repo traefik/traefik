@@ -145,13 +145,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{
-					Options: map[string]tls.Options{},
-				},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{
-			desc:                         "Custom Headers cross namespace not allowed",
+			desc:                         "Custom Headers with cross namespace not allowed",
 			globalAllowedResponseHeaders: []string{"X-Custom-Header", "X-Cross-Header"},
 			paths: []string{
 				"services.yml",
@@ -172,9 +170,10 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-ingress-with-custom-headers-whoami-80",
 						},
 						"default-ingress-with-cross-namespace-headers-rule-0-path-0": {
-							Rule:       "Host(`cross-namespace.localhost`) && Path(`/`)",
-							RuleSyntax: "default",
-							Service:    "default-ingress-with-cross-namespace-headers-whoami-80",
+							Rule:        "Host(`cross-namespace.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-cross-namespace-headers-rule-0-path-0-custom-headers"},
+							Service:     "default-ingress-with-cross-namespace-headers-whoami-80",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -186,6 +185,11 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-custom-headers-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
 								Attempts: 3,
+							},
+						},
+						"default-ingress-with-cross-namespace-headers-rule-0-path-0-custom-headers": {
+							Headers: &dynamic.Headers{
+								CustomResponseHeaders: map[string]string{"X-Cross-Header": "cross-value"},
 							},
 						},
 					},
@@ -240,13 +244,11 @@ func TestLoadIngresses(t *testing.T) {
 						},
 					},
 				},
-				TLS: &dynamic.TLSConfiguration{
-					Options: map[string]tls.Options{},
-				},
+				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
 		{
-			desc:                         "Custom Headers cross namespace configMap header not allowed",
+			desc:                         "Custom Headers cross namespace with cross namespace allowed",
 			globalAllowedResponseHeaders: []string{"X-Custom-Header"},
 			allowCrossNamespaceResources: true,
 			paths: []string{
