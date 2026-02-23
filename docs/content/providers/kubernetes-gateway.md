@@ -290,13 +290,13 @@ See [label-selectors](https://kubernetes.io/docs/concepts/overview/working-with-
 ```yaml tab="File (YAML)"
 providers:
   kubernetesGateway:
-    labelselector: "app=traefik"
+    labelSelector: "app=traefik"
     # ...
 ```
 
 ```toml tab="File (TOML)"
 [providers.kubernetesGateway]
-  labelselector = "app=traefik"
+  labelSelector = "app=traefik"
   # ...
 ```
 

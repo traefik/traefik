@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/fs"
 	"net/http"
+	"net/url"
 	"strings"
 	"text/template"
 
@@ -80,7 +81,9 @@ func Append(router *mux.Router, basePath string, customAssets fs.FS) error {
 		Path(basePath).
 		HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 			xfPrefix := req.Header.Get("X-Forwarded-Prefix")
-			if strings.Contains(xfPrefix, "//") {
+
+			// Validates that the X-Forwarded-Prefix value contains a relative URL.
+			if u, err := url.Parse(xfPrefix); err != nil || u.Host != "" || u.Scheme != "" {
 				log.Error().Msgf("X-Forwarded-Prefix contains an invalid value: %s, defaulting to empty prefix", xfPrefix)
 				xfPrefix = ""
 			}

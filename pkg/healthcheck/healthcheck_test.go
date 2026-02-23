@@ -148,6 +148,14 @@ func TestServiceHealthChecker_newRequest(t *testing.T) {
 			expMethod:   http.MethodGet,
 		},
 		{
+			desc:      "path is an ablsolute URL",
+			targetURL: "http://backend1:80",
+			config: dynamic.ServerHealthCheck{
+				Path: "http://backend2/health?powpow=do",
+			},
+			expError: true,
+		},
+		{
 			desc:      "path with param",
 			targetURL: "http://backend1:80",
 			config: dynamic.ServerHealthCheck{
