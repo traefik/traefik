@@ -25,6 +25,7 @@ const (
 	xForwardedTLSClientCert     = "X-Forwarded-Tls-Client-Cert"
 	xForwardedTLSClientCertInfo = "X-Forwarded-Tls-Client-Cert-Info"
 	xRealIP                     = "X-Real-Ip"
+	forwarded                   = "Forwarded"
 	connection                  = "Connection"
 	upgrade                     = "Upgrade"
 )
@@ -41,6 +42,7 @@ var xHeaders = []string{
 	xForwardedTLSClientCert,
 	xForwardedTLSClientCertInfo,
 	xRealIP,
+	forwarded,
 }
 
 // XForwarded is an HTTP handler wrapper that sets the X-Forwarded headers,
@@ -203,6 +205,50 @@ func (x *XForwarded) rewrite(outreq *http.Request) {
 
 	if x.hostname != "" {
 		unsafeHeader(outreq.Header).Set(xForwardedServer, x.hostname)
+	}
+
+	// Build the RFC 7239 Forwarded header.
+	// See https://datatracker.ietf.org/doc/html/rfc7239 for the full specification.
+	var forwardedParts []string
+
+	// Add "for=" directive with the client IP.
+	// IPv6 addresses must be quoted and bracketed per RFC 7239 Section 6.
+	if outreq.RemoteAddr != "" {
+		if clientIP, _, err := net.SplitHostPort(outreq.RemoteAddr); err == nil {
+			clientIP = removeIPv6Zone(clientIP)
+			if strings.Contains(clientIP, ":") {
+				forwardedParts = append(forwardedParts, `for="[`+clientIP+`]"`)
+			} else {
+				forwardedParts = append(forwardedParts, "for="+clientIP)
+			}
+		}
+	}
+
+	// Add "proto=" directive from the already-determined forwarded protocol.
+	// Validate against known values to prevent injection via insecure mode.
+	if proto := unsafeHeader(outreq.Header).Get(xForwardedProto); proto != "" {
+		switch strings.ToLower(proto) {
+		case "http", "https", "ws", "wss":
+			forwardedParts = append(forwardedParts, "proto="+proto)
+		}
+	}
+
+	// Add "host=" directive from the already-determined forwarded host.
+	// Escape backslashes and quotes to prevent header injection in quoted-string.
+	if host := unsafeHeader(outreq.Header).Get(xForwardedHost); host != "" {
+		escapedHost := strings.ReplaceAll(host, `\`, `\\`)
+		escapedHost = strings.ReplaceAll(escapedHost, `"`, `\"`)
+		forwardedParts = append(forwardedParts, `host="`+escapedHost+`"`)
+	}
+
+	if len(forwardedParts) > 0 {
+		forwardedValue := strings.Join(forwardedParts, ";")
+		// Append to existing trusted Forwarded values, or set a new one.
+		if forwardeds := unsafeHeader(outreq.Header).Values(forwarded); len(forwardeds) > 0 {
+			unsafeHeader(outreq.Header).Set(forwarded, strings.Join(forwardeds, ", ")+", "+forwardedValue)
+		} else {
+			unsafeHeader(outreq.Header).Set(forwarded, forwardedValue)
+		}
 	}
 }
 
