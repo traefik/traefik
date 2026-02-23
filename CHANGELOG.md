@@ -1,3 +1,11 @@
+## [v2.11.38](https://github.com/traefik/traefik/tree/v2.11.38) (2026-02-23)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.37...v2.11.38)
+
+**Bug fixes:**
+- **[middleware]** Fix case sensitivity on x-forwarded headers for Connection ([#12690](https://github.com/traefik/traefik/pull/12690) by [LBF38](https://github.com/LBF38))
+- **[middleware, authentication]** Add maxResponseBodySize configuration to forwardAuth middleware ([#12694](https://github.com/traefik/traefik/pull/12694) by [gndz07](https://github.com/gndz07))
+- **[server]** Fix TLS handshake error handling ([#12692](https://github.com/traefik/traefik/pull/12692) by [juliens](https://github.com/juliens))
+
 ## [v2.11.37](https://github.com/traefik/traefik/tree/v2.11.37) (2026-02-11)
 [All Commits](https://github.com/traefik/traefik/compare/v2.11.36...v2.11.37)
 
