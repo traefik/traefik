@@ -33,8 +33,13 @@ import (
 // RetryApplyConfiguration represents a declarative configuration of the Retry type for use
 // with apply.
 type RetryApplyConfiguration struct {
-	Attempts        *int                `json:"attempts,omitempty"`
-	InitialInterval *intstr.IntOrString `json:"initialInterval,omitempty"`
+	Attempts                   *int                `json:"attempts,omitempty"`
+	Timeout                    *intstr.IntOrString `json:"timeout,omitempty"`
+	InitialInterval            *intstr.IntOrString `json:"initialInterval,omitempty"`
+	MaxRequestBodyBytes        *int64              `json:"maxRequestBodyBytes,omitempty"`
+	Status                     []string            `json:"status,omitempty"`
+	DisableRetryOnNetworkError *bool               `json:"disableRetryOnNetworkError,omitempty"`
+	RetryNonIdempotentMethod   *bool               `json:"retryNonIdempotentMethod,omitempty"`
 }
 
 // RetryApplyConfiguration constructs a declarative configuration of the Retry type for use with
@@ -51,10 +56,52 @@ func (b *RetryApplyConfiguration) WithAttempts(value int) *RetryApplyConfigurati
 	return b
 }
 
+// WithTimeout sets the Timeout field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Timeout field is set to the value of the last call.
+func (b *RetryApplyConfiguration) WithTimeout(value intstr.IntOrString) *RetryApplyConfiguration {
+	b.Timeout = &value
+	return b
+}
+
 // WithInitialInterval sets the InitialInterval field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the InitialInterval field is set to the value of the last call.
 func (b *RetryApplyConfiguration) WithInitialInterval(value intstr.IntOrString) *RetryApplyConfiguration {
 	b.InitialInterval = &value
+	return b
+}
+
+// WithMaxRequestBodyBytes sets the MaxRequestBodyBytes field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the MaxRequestBodyBytes field is set to the value of the last call.
+func (b *RetryApplyConfiguration) WithMaxRequestBodyBytes(value int64) *RetryApplyConfiguration {
+	b.MaxRequestBodyBytes = &value
+	return b
+}
+
+// WithStatus adds the given value to the Status field in the declarative configuration
+// and returns the receiver, so that objects can be build by chaining "With" function invocations.
+// If called multiple times, values provided by each call will be appended to the Status field.
+func (b *RetryApplyConfiguration) WithStatus(values ...string) *RetryApplyConfiguration {
+	for i := range values {
+		b.Status = append(b.Status, values[i])
+	}
+	return b
+}
+
+// WithDisableRetryOnNetworkError sets the DisableRetryOnNetworkError field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the DisableRetryOnNetworkError field is set to the value of the last call.
+func (b *RetryApplyConfiguration) WithDisableRetryOnNetworkError(value bool) *RetryApplyConfiguration {
+	b.DisableRetryOnNetworkError = &value
+	return b
+}
+
+// WithRetryNonIdempotentMethod sets the RetryNonIdempotentMethod field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the RetryNonIdempotentMethod field is set to the value of the last call.
+func (b *RetryApplyConfiguration) WithRetryNonIdempotentMethod(value bool) *RetryApplyConfiguration {
+	b.RetryNonIdempotentMethod = &value
 	return b
 }

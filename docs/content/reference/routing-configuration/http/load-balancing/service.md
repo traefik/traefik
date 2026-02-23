@@ -292,9 +292,9 @@ To propagate status changes (e.g. all servers of this service are down) upwards,
 
 Below are the available options for the health check mechanism:
 
-| Field               | Description                                                                                                                   | Default | Required |
-|---------------------|-------------------------------------------------------------------------------------------------------------------------------|---------|----------|
-| <a id="opt-path" href="#opt-path" title="#opt-path">`path`</a> | Defines the server URL path for the health check endpoint.                                                                    | ""      | Yes      |
+| Field                                                                                                              | Description                                                                                                                   | Default | Required |
+|--------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------|---------|----------|
+| <a id="opt-path" href="#opt-path" title="#opt-path">`path`</a> | Defines the server URL path for the health check endpoint. The configured path must be relative URL.                          | ""      | Yes      |
 | <a id="opt-scheme" href="#opt-scheme" title="#opt-scheme">`scheme`</a> | Replaces the server URL scheme for the health check endpoint.                                                                 |         | No       |
 | <a id="opt-mode" href="#opt-mode" title="#opt-mode">`mode`</a> | If defined to `grpc`, will use the gRPC health check protocol to probe the server.                                            | http    | No       |
 | <a id="opt-hostname" href="#opt-hostname" title="#opt-hostname">`hostname`</a> | Defines the value of hostname in the Host header of the health check request.                                                 | ""      | No       |
