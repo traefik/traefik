@@ -7,7 +7,7 @@ on:
 
 env:
   ASSIMILIS_VERSION: v1.0.0
-  AIKIDO_REPO_CODE: "1232941"
+  AIKIDO_REPO_CODE: "1325139"
 
 jobs:
   build:
