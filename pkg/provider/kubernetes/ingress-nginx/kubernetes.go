@@ -1112,11 +1112,11 @@ func (p *Provider) applyCustomHeaders(ingressNamespace, routerName string, ingre
 		return fmt.Errorf("invalid custom headers config map %q", customHeaders)
 	}
 
-	configMapName := customHeadersParts[1]
+	// We purposely allow cross-namespace for custom headers config maps,
+	// because Ingress-Nginx does not have this limitation,
+	// even if allCrossNamespaceResources is supposed to have the same behavior for all cross-namespace resources.
 	configMapNamespace := customHeadersParts[0]
-	if !p.AllowCrossNamespaceResources && configMapNamespace != ingressNamespace {
-		return fmt.Errorf("cross-namespace custom headers is not allowed: config map %s/%s is not from ingress namespace %q", configMapName, configMapNamespace, ingressNamespace)
-	}
+	configMapName := customHeadersParts[1]
 
 	configMap, err := p.k8sClient.GetConfigMap(configMapNamespace, configMapName)
 	if err != nil {
