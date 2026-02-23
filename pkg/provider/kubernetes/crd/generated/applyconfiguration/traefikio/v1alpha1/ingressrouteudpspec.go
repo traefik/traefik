@@ -28,9 +28,16 @@ package v1alpha1
 
 // IngressRouteUDPSpecApplyConfiguration represents a declarative configuration of the IngressRouteUDPSpec type for use
 // with apply.
+//
+// IngressRouteUDPSpec defines the desired state of a IngressRouteUDP.
 type IngressRouteUDPSpecApplyConfiguration struct {
-	Routes      []RouteUDPApplyConfiguration `json:"routes,omitempty"`
-	EntryPoints []string                     `json:"entryPoints,omitempty"`
+	// Routes defines the list of routes.
+	Routes []RouteUDPApplyConfiguration `json:"routes,omitempty"`
+	// EntryPoints defines the list of entry point names to bind to.
+	// Entry points have to be configured in the static configuration.
+	// More info: https://doc.traefik.io/traefik/v3.6/reference/install-configuration/entrypoints/
+	// Default: all.
+	EntryPoints []string `json:"entryPoints,omitempty"`
 }
 
 // IngressRouteUDPSpecApplyConfiguration constructs a declarative configuration of the IngressRouteUDPSpec type for use with

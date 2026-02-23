@@ -34,8 +34,12 @@ import (
 
 // IngressRouteUDPApplyConfiguration represents a declarative configuration of the IngressRouteUDP type for use
 // with apply.
+//
+// IngressRouteUDP is a CRD implementation of a Traefik UDP Router.
 type IngressRouteUDPApplyConfiguration struct {
-	v1.TypeMetaApplyConfiguration    `json:",inline"`
+	v1.TypeMetaApplyConfiguration `json:",inline"`
+	// Standard object's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	*v1.ObjectMetaApplyConfiguration `json:"metadata,omitempty"`
 	Spec                             *IngressRouteUDPSpecApplyConfiguration `json:"spec,omitempty"`
 }
@@ -50,6 +54,7 @@ func IngressRouteUDP(name, namespace string) *IngressRouteUDPApplyConfiguration 
 	b.WithAPIVersion("traefik.io/v1alpha1")
 	return b
 }
+
 func (b IngressRouteUDPApplyConfiguration) IsApplyConfiguration() {}
 
 // WithKind sets the Kind field in the declarative configuration to the given value

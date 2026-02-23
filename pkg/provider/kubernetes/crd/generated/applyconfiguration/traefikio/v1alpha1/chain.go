@@ -28,7 +28,12 @@ package v1alpha1
 
 // ChainApplyConfiguration represents a declarative configuration of the Chain type for use
 // with apply.
+//
+// Chain holds the configuration of the chain middleware.
+// This middleware enables to define reusable combinations of other pieces of middleware.
+// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/middlewares/chain/
 type ChainApplyConfiguration struct {
+	// Middlewares is the list of MiddlewareRef which composes the chain.
 	Middlewares []MiddlewareRefApplyConfiguration `json:"middlewares,omitempty"`
 }
 

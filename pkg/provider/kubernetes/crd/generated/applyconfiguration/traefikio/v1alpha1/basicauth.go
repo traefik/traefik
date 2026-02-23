@@ -28,11 +28,22 @@ package v1alpha1
 
 // BasicAuthApplyConfiguration represents a declarative configuration of the BasicAuth type for use
 // with apply.
+//
+// BasicAuth holds the basic auth middleware configuration.
+// This middleware restricts access to your services to known users.
+// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/middlewares/basicauth/
 type BasicAuthApplyConfiguration struct {
-	Secret       *string `json:"secret,omitempty"`
-	Realm        *string `json:"realm,omitempty"`
-	RemoveHeader *bool   `json:"removeHeader,omitempty"`
-	HeaderField  *string `json:"headerField,omitempty"`
+	// Secret is the name of the referenced Kubernetes Secret containing user credentials.
+	Secret *string `json:"secret,omitempty"`
+	// Realm allows the protected resources on a server to be partitioned into a set of protection spaces, each with its own authentication scheme.
+	// Default: traefik.
+	Realm *string `json:"realm,omitempty"`
+	// RemoveHeader sets the removeHeader option to true to remove the authorization header before forwarding the request to your service.
+	// Default: false.
+	RemoveHeader *bool `json:"removeHeader,omitempty"`
+	// HeaderField defines a header field to store the authenticated user.
+	// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/middlewares/basicauth/#headerfield
+	HeaderField *string `json:"headerField,omitempty"`
 }
 
 // BasicAuthApplyConfiguration constructs a declarative configuration of the BasicAuth type for use with

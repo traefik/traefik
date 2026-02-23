@@ -32,17 +32,31 @@ import (
 
 // ServersTransportSpecApplyConfiguration represents a declarative configuration of the ServersTransportSpec type for use
 // with apply.
+//
+// ServersTransportSpec defines the desired state of a ServersTransport.
 type ServersTransportSpecApplyConfiguration struct {
-	ServerName          *string                               `json:"serverName,omitempty"`
-	InsecureSkipVerify  *bool                                 `json:"insecureSkipVerify,omitempty"`
-	RootCAs             []RootCAApplyConfiguration            `json:"rootCAs,omitempty"`
-	RootCAsSecrets      []string                              `json:"rootCAsSecrets,omitempty"`
-	CertificatesSecrets []string                              `json:"certificatesSecrets,omitempty"`
-	MaxIdleConnsPerHost *int                                  `json:"maxIdleConnsPerHost,omitempty"`
-	ForwardingTimeouts  *ForwardingTimeoutsApplyConfiguration `json:"forwardingTimeouts,omitempty"`
-	DisableHTTP2        *bool                                 `json:"disableHTTP2,omitempty"`
-	PeerCertURI         *string                               `json:"peerCertURI,omitempty"`
-	Spiffe              *dynamic.Spiffe                       `json:"spiffe,omitempty"`
+	// ServerName defines the server name used to contact the server.
+	ServerName *string `json:"serverName,omitempty"`
+	// InsecureSkipVerify disables SSL certificate verification.
+	InsecureSkipVerify *bool `json:"insecureSkipVerify,omitempty"`
+	// RootCAs defines a list of CA certificate Secrets or ConfigMaps used to validate server certificates.
+	RootCAs []RootCAApplyConfiguration `json:"rootCAs,omitempty"`
+	// RootCAsSecrets defines a list of CA secret used to validate self-signed certificate.
+	//
+	// Deprecated: RootCAsSecrets is deprecated, please use the RootCAs option instead.
+	RootCAsSecrets []string `json:"rootCAsSecrets,omitempty"`
+	// CertificatesSecrets defines a list of secret storing client certificates for mTLS.
+	CertificatesSecrets []string `json:"certificatesSecrets,omitempty"`
+	// MaxIdleConnsPerHost controls the maximum idle (keep-alive) to keep per-host.
+	MaxIdleConnsPerHost *int `json:"maxIdleConnsPerHost,omitempty"`
+	// ForwardingTimeouts defines the timeouts for requests forwarded to the backend servers.
+	ForwardingTimeouts *ForwardingTimeoutsApplyConfiguration `json:"forwardingTimeouts,omitempty"`
+	// DisableHTTP2 disables HTTP/2 for connections with backend servers.
+	DisableHTTP2 *bool `json:"disableHTTP2,omitempty"`
+	// PeerCertURI defines the peer cert URI used to match against SAN URI during the peer certificate verification.
+	PeerCertURI *string `json:"peerCertURI,omitempty"`
+	// Spiffe defines the SPIFFE configuration.
+	Spiffe *dynamic.Spiffe `json:"spiffe,omitempty"`
 }
 
 // ServersTransportSpecApplyConfiguration constructs a declarative configuration of the ServersTransportSpec type for use with
