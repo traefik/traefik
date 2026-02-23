@@ -309,7 +309,7 @@ linters:
         text: 'var-naming: avoid meaningless package names'
         linters:
           - revive
-      - path: (cmd/.+|pkg/.+)\.go
+      - path: ((cmd|pkg)/version/.*|pkg/config/runtime/.*|pkg/log/.*|pkg/(middlewares/)?metrics/.*|pkg/muxer/http/.+|pkg/provider/http/.+|pkg/tls/.+)\.go
         text: 'var-naming: avoid package names that conflict with Go standard library package names'
         linters:
           - revive
