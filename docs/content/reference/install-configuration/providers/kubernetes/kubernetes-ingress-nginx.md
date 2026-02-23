@@ -69,6 +69,10 @@ providers:
     customHTTPErrors:
       - "404"
       - "503"
+    allowCrossNamespaceResources: true
+    globalAllowedResponseHeaders:
+      - "X-Custom-Header1"
+      - "X-Custom-Header2"
 ```
 
 ```toml tab="File (TOML)"
@@ -91,6 +95,8 @@ providers:
   proxyBufferSize = "8192"       # 8k
   proxyBuffersNumber = 4
   customHTTPErrors = ["404", "503"]
+  allowCrossNamespaceResources = true
+  globalAllowedResponseHeaders = ["X-Custom-Header1", "X-Custom-Header2"]
 ```
 
 ```bash tab="CLI"
@@ -108,6 +114,8 @@ providers:
 --providers.kubernetesingressnginx.proxybuffersize=8192       # 8k
 --providers.kubernetesingressnginx.proxybuffersnumber=4
 --providers.kubernetesingressnginx.customhttperrors=404,503
+--providers.kubernetesingressnginx.allowCrossNamespaceResources=true
+--providers.kubernetesingressnginx.globalAllowedResponseHeaders=X-Custom-Header1,X-Custom-Header2
 ```
 
 ```yaml tab="Helm Chart Values"
