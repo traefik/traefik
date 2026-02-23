@@ -130,6 +130,11 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 	br := bufio.NewReader(conn)
 	hello, err := clientHelloInfo(br)
 	if err != nil {
+		var opErr *net.OpError
+		if !errors.Is(err, io.EOF) && (!errors.As(err, &opErr) || !opErr.Timeout()) {
+			log.WithoutContext().Debugf("Error while reading client hello: %s", err)
+		}
+
 		conn.Close()
 		return
 	}
@@ -368,11 +373,7 @@ type clientHello struct {
 func clientHelloInfo(br *bufio.Reader) (*clientHello, error) {
 	hdr, err := br.Peek(1)
 	if err != nil {
-		var opErr *net.OpError
-		if !errors.Is(err, io.EOF) && (!errors.As(err, &opErr) || !opErr.Timeout()) {
-			log.WithoutContext().Debugf("Error while peeking first byte: %s", err)
-		}
-		return nil, err
+		return nil, fmt.Errorf("peeking first byte: %w", err)
 	}
 
 	// No valid TLS record has a type of 0x80, however SSLv2 handshakes start with an uint16 length
@@ -396,18 +397,13 @@ func clientHelloInfo(br *bufio.Reader) (*clientHello, error) {
 	const recordHeaderLen = 5
 	hdr, err = br.Peek(recordHeaderLen)
 	if err != nil {
-		var opErr *net.OpError
-		if !errors.Is(err, io.EOF) && (!errors.As(err, &opErr) || !opErr.Timeout()) {
-			log.WithoutContext().Debugf("Error while peeking hello headers: %s", err)
-		}
-		return nil, err
+		return nil, fmt.Errorf("peeking client hello headers: %w", err)
 	}
 
 	recLen := int(hdr[3])<<8 | int(hdr[4]) // ignoring version in hdr[1:3]
 
 	if recLen > maxTLSRecordLen {
-		log.WithoutContext().Errorf("Error while peeking client hello bytes, too long: %d", recLen)
-		return nil, fmt.Errorf("error while peeking client hello bytes, oversized record: %d", recLen)
+		return nil, fmt.Errorf("peeking client hello bytes, oversized record: %d", recLen)
 	}
 
 	if recordHeaderLen+recLen > defaultBufSize {
@@ -416,11 +412,7 @@ func clientHelloInfo(br *bufio.Reader) (*clientHello, error) {
 
 	helloBytes, err := br.Peek(recordHeaderLen + recLen)
 	if err != nil {
-		var opErr *net.OpError
-		if !errors.Is(err, io.EOF) && (!errors.As(err, &opErr) || !opErr.Timeout()) {
-			log.WithoutContext().Errorf("Error while peeking client hello bytes: %s", err)
-		}
-		return nil, err
+		return nil, fmt.Errorf("peeking client hello bytes: %w", err)
 	}
 
 	sni := ""
