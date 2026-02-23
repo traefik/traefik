@@ -300,7 +300,7 @@ THIS FILE MUST NOT BE EDITED BY HAND
 	}
 
 	if w.err != nil {
-		logger.Fatal(err)
+		logger.Fatal(w.err)
 	}
 }
 
