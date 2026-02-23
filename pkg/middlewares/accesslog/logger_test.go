@@ -661,7 +661,8 @@ func TestLoggerJSON(t *testing.T) {
 				RetryAttempts:             assertFloat64(float64(testRetryAttempts)),
 				TLSClientSubject:          assertString("CN=foobar"),
 				TLSVersion:                assertString("1.3"),
-				TLSCipher:                 assertString("TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256"),
+				TLSCipher:                 assertString("TLS_AES_128_GCM_SHA256"),
+				TLSKeyExchange:            assertString("X25519"),
 				"time":                    assertNotEmpty(),
 				StartLocal:                assertNotEmpty(),
 				StartUTC:                  assertNotEmpty(),
@@ -1180,7 +1181,8 @@ func doLoggingTLSOpt(t *testing.T, config *otypes.AccessLog, enableTLS, tracing 
 	if enableTLS {
 		req.TLS = &tls.ConnectionState{
 			Version:     tls.VersionTLS13,
-			CipherSuite: tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+			CipherSuite: tls.TLS_AES_128_GCM_SHA256,
+			CurveID:     tls.X25519,
 			PeerCertificates: []*x509.Certificate{{
 				Subject: pkix.Name{CommonName: "foobar"},
 			}},

@@ -77,6 +77,9 @@ const (
 	TLSCipher = "TLSCipher"
 	// TLSClientSubject is the string representation of the TLS client certificate's Subject.
 	TLSClientSubject = "TLSClientSubject"
+	// TLSKeyExchange is the key exchange mechanism used in the TLS handshake (e.g. X25519, CurveP256).
+	// The key exchange is decoupled from the cipher suite beginning in TLS 1.3.
+	TLSKeyExchange = "TLSKeyExchange"
 
 	// TraceID is the consistent identifier for tracking requests across services, including upstream ones managed by Traefik, shown as a 32-hex digit string.
 	TraceID = "TraceId"
@@ -126,6 +129,7 @@ func init() {
 	allCoreKeys[TLSVersion] = struct{}{}
 	allCoreKeys[TLSCipher] = struct{}{}
 	allCoreKeys[TLSClientSubject] = struct{}{}
+	allCoreKeys[TLSKeyExchange] = struct{}{}
 }
 
 // CoreLogData holds the fields computed from the request/response.

@@ -240,6 +240,9 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http
 		if len(req.TLS.PeerCertificates) > 0 && req.TLS.PeerCertificates[0] != nil {
 			core[TLSClientSubject] = req.TLS.PeerCertificates[0].Subject.String()
 		}
+		if keyExchange := traefiktls.GetKeyExchangeName(req.TLS); keyExchange != "" {
+			core[TLSKeyExchange] = keyExchange
+		}
 	}
 
 	core[ClientAddr] = req.RemoteAddr
