@@ -59,7 +59,7 @@ jobs:
         env:
           ImageOS: ${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.goarm }}
         with:
-          go-version-file: 'go.mod'
+          go-version-file: '.go-version'
           check-latest: true
 
       - name: Artifact webui

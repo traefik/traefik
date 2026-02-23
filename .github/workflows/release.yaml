@@ -39,7 +39,7 @@ jobs:
           # Ensure cache consistency on Linux, see https://github.com/actions/setup-go/pull/383
           ImageOS: ${{ matrix.os }}
         with:
-          go-version-file: 'go.mod'
+          go-version-file: '.go-version'
           check-latest: true
 
       - name: Artifact webui

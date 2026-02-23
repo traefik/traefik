@@ -26,7 +26,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
         with:
-          go-version-file: 'go.mod'
+          go-version-file: '.go-version'
           check-latest: true
 
       - name: Avoid generating webui
@@ -68,7 +68,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
         with:
-          go-version-file: 'go.mod'
+          go-version-file: '.go-version'
           check-latest: true
 
       - name: Avoid generating webui
