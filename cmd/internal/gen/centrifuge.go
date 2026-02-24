@@ -158,7 +158,7 @@ func (c Centrifuge) run(sc *types.Scope, rootPkg string, pkgName string) map[str
 
 func (c Centrifuge) writeStruct(name string, obj *types.Struct, rootPkg string, elt *File) string {
 	b := strings.Builder{}
-	b.WriteString(fmt.Sprintf("type %s struct {\n", name))
+	fmt.Fprintf(&b, "type %s struct {\n", name)
 
 	for i := range obj.NumFields() {
 		field := obj.Field(i)
@@ -175,7 +175,7 @@ func (c Centrifuge) writeStruct(name string, obj *types.Struct, rootPkg string, 
 		fType := c.TypeCleaner(field.Type(), rootPkg)
 
 		if field.Embedded() {
-			b.WriteString(fmt.Sprintf("\t%s\n", fType))
+			fmt.Fprintf(&b, "\t%s\n", fType)
 			continue
 		}
 
@@ -184,10 +184,10 @@ func (c Centrifuge) writeStruct(name string, obj *types.Struct, rootPkg string, 
 			continue
 		}
 
-		b.WriteString(fmt.Sprintf("\t%s %s", field.Name(), fType))
+		fmt.Fprintf(&b, "\t%s %s", field.Name(), fType)
 
 		if ok {
-			b.WriteString(fmt.Sprintf(" `json:\"%s\"`", strings.Join(values, ",")))
+			fmt.Fprintf(&b, " `json:\"%s\"`", strings.Join(values, ","))
 		}
 
 		b.WriteString("\n")

@@ -279,6 +279,7 @@ func init() {
 					AuthResponseHeaders:      []string{"foo"},
 					AuthResponseHeadersRegex: "foo",
 					AuthRequestHeaders:       []string{"foo"},
+					MaxResponseBodySize:      pointer[int64](42),
 				},
 				InFlightReq: &dynamic.InFlightReq{
 					Amount: 42,

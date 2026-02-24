@@ -231,6 +231,7 @@ http:
         headerField: foobar
         forwardBody: true
         maxBodySize: 42
+        maxResponseBodySize: 42
         preserveLocationHeader: true
         preserveRequestMethod: true
     Middleware11:
