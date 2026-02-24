@@ -6989,6 +6989,52 @@ func TestLoadIngresses(t *testing.T) {
 	}
 }
 
+func TestHTTPEntryPoints(t *testing.T) {
+	testCases := []struct {
+		desc string
+		// Inputs
+		nonTLSEntryPoints []string
+		tlsEntryPoints    []string
+		// Outputs
+		expectedHTTP  []string
+		expectedHTTPS []string
+	}{
+		{
+			desc:              "HTTP and HTTPS entrypoints set",
+			nonTLSEntryPoints: []string{"web"},
+			tlsEntryPoints:    []string{"websecure"},
+			expectedHTTP:      []string{"web"},
+			expectedHTTPS:     []string{"websecure"},
+		},
+		{
+			desc:              "Multiple HTTP and HTTPS entrypoints",
+			nonTLSEntryPoints: []string{"web", "http"},
+			tlsEntryPoints:    []string{"websecure", "tls"},
+			expectedHTTP:      []string{"web", "http"},
+			expectedHTTPS:     []string{"websecure", "tls"},
+		},
+		{
+			desc:              "Empty entrypoints",
+			nonTLSEntryPoints: []string{},
+			tlsEntryPoints:    []string{},
+			expectedHTTP:      []string{},
+			expectedHTTPS:     []string{},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			p := &Provider{
+				NonTLSEntryPointss: test.nonTLSEntryPoints,
+				TLSEntryPoints:     test.tlsEntryPoints,
+			}
+
+			assert.Equal(t, test.expectedHTTP, p.NonTLSEntryPointss, "NonTLSEntryPointss mismatch")
+			assert.Equal(t, test.expectedHTTPS, p.TLSEntryPoints, "TLSEntryPoints mismatch")
+		})
+	}
+}
+
 func TestNginxSizeToBytes(t *testing.T) {
 	testCases := []struct {
 		desc     string
