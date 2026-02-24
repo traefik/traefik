@@ -3559,7 +3559,7 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-auth-tls-pass-certificate-to-upstream-rule-0-path-0": {
 							Rule:        "Host(`auth-tls-pass-certificate-to-upstream.localhost`) && Path(`/`)",
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-auth-tls-pass-certificate-to-upstream-rule-0-path-0-pass-certificate-to-upstream"},
+							Middlewares: []string{"default-ingress-with-auth-tls-pass-certificate-to-upstream-rule-0-path-0-pass-certificate-to-upstream", "default-ingress-with-auth-tls-pass-certificate-to-upstream-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-auth-tls-pass-certificate-to-upstream-whoami-80",
 							TLS: &dynamic.RouterTLSConfig{
 								Options: "default-ingress-with-auth-tls-pass-certificate-to-upstream-default-ca-secret",
@@ -3584,6 +3584,11 @@ func TestLoadIngresses(t *testing.T) {
 							RedirectScheme: &dynamic.RedirectScheme{
 								Scheme:                 "https",
 								ForcePermanentRedirect: true,
+							},
+						},
+						"default-ingress-with-auth-tls-pass-certificate-to-upstream-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
 							},
 						},
 					},
