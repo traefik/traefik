@@ -1044,11 +1044,6 @@ func (in *Middleware) DeepCopyInto(out *Middleware) {
 		*out = new(PassTLSClientCert)
 		(*in).DeepCopyInto(*out)
 	}
-	if in.AuthTLSPassCertificateToUpstream != nil {
-		in, out := &in.AuthTLSPassCertificateToUpstream, &out.AuthTLSPassCertificateToUpstream
-		*out = new(AuthTLSPassCertificateToUpstream)
-		(*in).DeepCopyInto(*out)
-	}
 	if in.Retry != nil {
 		in, out := &in.Retry, &out.Retry
 		*out = new(Retry)
@@ -1089,6 +1084,11 @@ func (in *Middleware) DeepCopyInto(out *Middleware) {
 	if in.URLRewrite != nil {
 		in, out := &in.URLRewrite, &out.URLRewrite
 		*out = new(URLRewrite)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.AuthTLSPassCertificateToUpstream != nil {
+		in, out := &in.AuthTLSPassCertificateToUpstream, &out.AuthTLSPassCertificateToUpstream
+		*out = new(AuthTLSPassCertificateToUpstream)
 		(*in).DeepCopyInto(*out)
 	}
 	return
