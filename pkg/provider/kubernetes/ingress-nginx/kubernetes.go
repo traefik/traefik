@@ -991,7 +991,7 @@ func (p *Provider) applyMiddlewares(namespace, ingressName, routerKey, rulePath,
 		return fmt.Errorf("applying auth tls pass certificate to upstream: %w", err)
 	}
 
-	if err := p.applyCustomHeaders(namespace, routerKey, ingressConfig, rt, conf); err != nil {
+	if err := p.applyCustomHeaders(routerKey, ingressConfig, rt, conf); err != nil {
 		return fmt.Errorf("applying custom headers: %w", err)
 	}
 
@@ -1101,7 +1101,7 @@ func applyRedirect(routerName string, ingressConfig ingressConfig, rt *dynamic.R
 	rt.Middlewares = append(rt.Middlewares, redirectMiddlewareName)
 }
 
-func (p *Provider) applyCustomHeaders(ingressNamespace, routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
+func (p *Provider) applyCustomHeaders(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
 	customHeaders := ptr.Deref(ingressConfig.CustomHeaders, "")
 	if customHeaders == "" {
 		return nil
@@ -1114,7 +1114,7 @@ func (p *Provider) applyCustomHeaders(ingressNamespace, routerName string, ingre
 
 	// We purposely allow cross-namespace for custom headers config maps,
 	// because Ingress-Nginx does not have this limitation,
-	// even if allCrossNamespaceResources is supposed to have the same behavior for all cross-namespace resources.
+	// even if allowCrossNamespaceResources is supposed to have the same behavior for all cross-namespace resources.
 	configMapNamespace := customHeadersParts[0]
 	configMapName := customHeadersParts[1]
 
@@ -1793,9 +1793,9 @@ func (p *Provider) loadCertBlock(ingressNamespace string, config ingressConfig) 
 		return nil, errors.New("auth-tls-secret has empty name")
 	}
 
-	// Cross-namespace secrets are not supported.
+	// Verify when cross-namespace secrets are not allowed.
 	if !p.AllowCrossNamespaceResources && secretNamespace != ingressNamespace {
-		return tls.Options{}, fmt.Errorf("cross-namespace auth-tls-secret is not supported: secret namespace %q does not match ingress namespace %q", secretNamespace, ingressNamespace)
+		return nil, fmt.Errorf("cross-namespace auth-tls-secret is not supported: secret namespace %q does not match ingress namespace %q", secretNamespace, ingressNamespace)
 	}
 
 	blocks, err := p.certificateBlocks(secretNamespace, secretName)
