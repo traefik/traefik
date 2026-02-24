@@ -135,12 +135,16 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-custom-headers": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:  ptypes.Duration(60 * time.Second),
+								ReadTimeout:  ptypes.Duration(60 * time.Second),
+								WriteTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 						"default-ingress-with-cross-namespace-headers": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:  ptypes.Duration(60 * time.Second),
+								ReadTimeout:  ptypes.Duration(60 * time.Second),
+								WriteTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -234,12 +238,16 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-custom-headers": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:  ptypes.Duration(60 * time.Second),
+								ReadTimeout:  ptypes.Duration(60 * time.Second),
+								WriteTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 						"default-ingress-with-cross-namespace-headers": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:  ptypes.Duration(60 * time.Second),
+								ReadTimeout:  ptypes.Duration(60 * time.Second),
+								WriteTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -330,7 +338,9 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-cross-namespace-headers": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:  ptypes.Duration(60 * time.Second),
+								ReadTimeout:  ptypes.Duration(60 * time.Second),
+								WriteTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
