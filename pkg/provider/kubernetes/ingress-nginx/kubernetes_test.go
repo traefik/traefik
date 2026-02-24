@@ -2299,7 +2299,7 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-auth-tls-secret-default-ca-secret": {
 							ClientAuth: tls.ClientAuth{
 								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
-								ClientAuthType: "RequireAndVerifyClientCert",
+								ClientAuthType: tls.RequireAndVerifyClientCert,
 							},
 							CipherSuites: []string{
 								"TLS_AES_128_GCM_SHA256",
@@ -2402,7 +2402,7 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-auth-tls-verify-client-default-ca-secret": {
 							ClientAuth: tls.ClientAuth{
 								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
-								ClientAuthType: "VerifyClientCertIfGiven",
+								ClientAuthType: tls.VerifyClientCertIfGiven,
 							},
 							CipherSuites: []string{
 								"TLS_AES_128_GCM_SHA256",
@@ -2898,8 +2898,8 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-auth-tls-pass-certificate-to-upstream-rule-0-path-0-pass-certificate-to-upstream": {
 							AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
-								VerifyClient: "on",
-								CAFiles:      nil,
+								ClientAuthType: tls.RequireAndVerifyClientCert,
+								CAFiles:        nil,
 							},
 						},
 						"default-ingress-with-auth-tls-pass-certificate-to-upstream-rule-0-path-0-redirect-scheme": {
@@ -2950,7 +2950,7 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-auth-tls-pass-certificate-to-upstream-default-ca-secret": {
 							ClientAuth: tls.ClientAuth{
 								CAFiles:        []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
-								ClientAuthType: "RequireAndVerifyClientCert",
+								ClientAuthType: tls.RequireAndVerifyClientCert,
 							},
 							CipherSuites: []string{
 								"TLS_AES_128_GCM_SHA256",

@@ -12,6 +12,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
+	"github.com/traefik/traefik/v3/pkg/tls"
 )
 
 const typeName = "AuthTLSPassCertificateToUpstream"
@@ -25,10 +26,10 @@ const (
 )
 
 type authTLSPassCertificateToUpstream struct {
-	next         http.Handler
-	name         string
-	verifyClient string
-	caCertPool   *x509.CertPool
+	next           http.Handler
+	name           string
+	clientAuthType string
+	caCertPool     *x509.CertPool
 }
 
 func NewAuthTLSPassCertificateToUpstream(ctx context.Context, next http.Handler, config dynamic.AuthTLSPassCertificateToUpstream, name string) (http.Handler, error) {
@@ -36,7 +37,7 @@ func NewAuthTLSPassCertificateToUpstream(ctx context.Context, next http.Handler,
 
 	// caCertPool only needed to do internal validation if VerifyClient is optional_no_ca.
 	var caCertPool *x509.CertPool
-	if config.VerifyClient == "optional_no_ca" && len(config.CAFiles) > 0 {
+	if config.ClientAuthType == tls.RequestClientCert && len(config.CAFiles) > 0 {
 		caCertPool = x509.NewCertPool()
 		for _, ca := range config.CAFiles {
 			if !caCertPool.AppendCertsFromPEM([]byte(ca)) {
@@ -46,10 +47,10 @@ func NewAuthTLSPassCertificateToUpstream(ctx context.Context, next http.Handler,
 	}
 
 	return &authTLSPassCertificateToUpstream{
-		next:         next,
-		name:         name,
-		verifyClient: config.VerifyClient,
-		caCertPool:   caCertPool,
+		next:           next,
+		name:           name,
+		clientAuthType: config.ClientAuthType,
+		caCertPool:     caCertPool,
 	}, nil
 }
 
@@ -74,7 +75,7 @@ func (p *authTLSPassCertificateToUpstream) ServeHTTP(rw http.ResponseWriter, req
 	clientVerify := "SUCCESS"
 	// Go's RequestClientCert doesn't verify at TLS level, so we have to verify in the middleware to return the correct Ssl-Client-Verify header.
 	// For other cases, validation happens during the handshake, so if it reaches this middleware, it means that the certificate is valid.
-	if p.verifyClient == "optional_no_ca" {
+	if p.clientAuthType == tls.RequestClientCert {
 		_, err := cert.Verify(x509.VerifyOptions{Roots: p.caCertPool})
 		if err != nil {
 			clientVerify = "FAILED:" + err.Error()

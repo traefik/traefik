@@ -576,8 +576,8 @@ type PassTLSClientCert struct {
 
 // AuthTLSPassCertificateToUpstream holds the pass TLS client cert middleware for ingress-nginx provider.
 type AuthTLSPassCertificateToUpstream struct {
-	VerifyClient string                `json:"verifyClient,omitempty" toml:"verifyClient,omitempty" yaml:"verifyClient,omitempty" export:"true"`
-	CAFiles      []types.FileOrContent `json:"caFiles,omitempty" toml:"caFiles,omitempty" yaml:"caFiles,omitempty" export:"true"`
+	ClientAuthType string                `json:"clientAuthType,omitempty" toml:"clientAuthType,omitempty" yaml:"clientAuthType,omitempty" export:"true"`
+	CAFiles        []types.FileOrContent `json:"caFiles,omitempty" toml:"caFiles,omitempty" yaml:"caFiles,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true

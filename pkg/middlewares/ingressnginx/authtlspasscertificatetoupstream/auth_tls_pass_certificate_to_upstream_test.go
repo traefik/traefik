@@ -1,7 +1,7 @@
 package authtlspasscertificatetoupstream
 
 import (
-	"crypto/tls"
+	cryptoTLS "crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
 	"net/http"
@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
+	"github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 )
 
@@ -258,7 +259,7 @@ func getCertPEM(certContent string) string {
 func TestAuthTLSPassCertificateToUpstream(t *testing.T) {
 	testCases := []struct {
 		desc                 string
-		verifyClient         string
+		clientAuthType       string
 		caFiles              []types.FileOrContent
 		certContents         []string
 		expectedClientVerify string
@@ -268,12 +269,12 @@ func TestAuthTLSPassCertificateToUpstream(t *testing.T) {
 	}{
 		{
 			desc:                 "No TLS",
-			verifyClient:         "on",
+			clientAuthType:       tls.RequireAndVerifyClientCert,
 			expectedClientVerify: "NONE",
 		},
 		{
 			desc:                 "TLS with simple certificate",
-			verifyClient:         "on",
+			clientAuthType:       tls.RequireAndVerifyClientCert,
 			certContents:         []string{minimalCheeseCrt},
 			expectedClientVerify: "SUCCESS",
 			expectedSubjectDN:    getCertificate(minimalCheeseCrt).Subject.String(),
@@ -282,7 +283,7 @@ func TestAuthTLSPassCertificateToUpstream(t *testing.T) {
 		},
 		{
 			desc:                 "TLS with complete certificate",
-			verifyClient:         "on",
+			clientAuthType:       tls.RequireAndVerifyClientCert,
 			certContents:         []string{completeCheeseCrt},
 			expectedClientVerify: "SUCCESS",
 			expectedSubjectDN:    getCertificate(completeCheeseCrt).Subject.String(),
@@ -291,7 +292,7 @@ func TestAuthTLSPassCertificateToUpstream(t *testing.T) {
 		},
 		{
 			desc:                 "TLS with multiple certificates only uses leaf",
-			verifyClient:         "on",
+			clientAuthType:       tls.RequireAndVerifyClientCert,
 			certContents:         []string{minimalCheeseCrt, completeCheeseCrt},
 			expectedClientVerify: "SUCCESS",
 			expectedSubjectDN:    getCertificate(minimalCheeseCrt).Subject.String(),
@@ -300,7 +301,7 @@ func TestAuthTLSPassCertificateToUpstream(t *testing.T) {
 		},
 		{
 			desc:                 "TLS with optional verify client",
-			verifyClient:         "optional",
+			clientAuthType:       tls.VerifyClientCertIfGiven,
 			certContents:         []string{minimalCheeseCrt},
 			expectedClientVerify: "SUCCESS",
 			expectedSubjectDN:    getCertificate(minimalCheeseCrt).Subject.String(),
@@ -309,7 +310,7 @@ func TestAuthTLSPassCertificateToUpstream(t *testing.T) {
 		},
 		{
 			desc:                 "TLS with optional_no_ca invalid cert (no matching CA)",
-			verifyClient:         "optional_no_ca",
+			clientAuthType:       tls.RequestClientCert,
 			certContents:         []string{minimalCheeseCrt},
 			expectedClientVerify: "FAILED:",
 			expectedSubjectDN:    getCertificate(minimalCheeseCrt).Subject.String(),
@@ -318,7 +319,7 @@ func TestAuthTLSPassCertificateToUpstream(t *testing.T) {
 		},
 		{
 			desc:                 "No TLS with optional_no_ca",
-			verifyClient:         "optional_no_ca",
+			clientAuthType:       tls.RequestClientCert,
 			expectedClientVerify: "NONE",
 		},
 	}
@@ -328,8 +329,8 @@ func TestAuthTLSPassCertificateToUpstream(t *testing.T) {
 			t.Parallel()
 
 			config := dynamic.AuthTLSPassCertificateToUpstream{
-				VerifyClient: test.verifyClient,
-				CAFiles:      test.caFiles,
+				ClientAuthType: test.clientAuthType,
+				CAFiles:        test.caFiles,
 			}
 
 			handler, err := NewAuthTLSPassCertificateToUpstream(t.Context(), next, config, "test")
@@ -359,14 +360,14 @@ func TestAuthTLSPassCertificateToUpstream(t *testing.T) {
 	}
 }
 
-func buildTLSWith(certContents []string) *tls.ConnectionState {
+func buildTLSWith(certContents []string) *cryptoTLS.ConnectionState {
 	var peerCertificates []*x509.Certificate
 
 	for _, certContent := range certContents {
 		peerCertificates = append(peerCertificates, getCertificate(certContent))
 	}
 
-	return &tls.ConnectionState{PeerCertificates: peerCertificates}
+	return &cryptoTLS.ConnectionState{PeerCertificates: peerCertificates}
 }
 
 func getCertificate(certContent string) *x509.Certificate {

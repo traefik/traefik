@@ -1387,10 +1387,10 @@ func (p *Provider) applyAuthTLSPassCertificateToUpstream(ingressNamespace string
 		return errors.New("auth-tls-pass-certificate-to-upstream requires auth-tls-secret to be configured")
 	}
 
-	verifyClient := ptr.Deref(ingressConfig.AuthTLSVerifyClient, "on")
+	verifyClient := clientAuthTypeFromString(ingressConfig.AuthTLSVerifyClient)
 
 	var caFiles []types.FileOrContent
-	if verifyClient == "optional_no_ca" {
+	if verifyClient == tls.RequestClientCert {
 		blocks, err := p.loadCertBlock(ingressNamespace, ingressConfig)
 		if err != nil {
 			return fmt.Errorf("reading client certificate: %w", err)
@@ -1401,8 +1401,8 @@ func (p *Provider) applyAuthTLSPassCertificateToUpstream(ingressNamespace string
 	passCertificateToUpstreamMiddlewareName := routerName + "-pass-certificate-to-upstream"
 	conf.HTTP.Middlewares[passCertificateToUpstreamMiddlewareName] = &dynamic.Middleware{
 		AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
-			VerifyClient: verifyClient,
-			CAFiles:      caFiles,
+			ClientAuthType: verifyClient,
+			CAFiles:        caFiles,
 		},
 	}
 	rt.Middlewares = append(rt.Middlewares, passCertificateToUpstreamMiddlewareName)
@@ -1559,29 +1559,35 @@ func (p *Provider) loadCertBlock(ingressNamespace string, config ingressConfig) 
 	return blocks, nil
 }
 
+// clientAuthTypeFromString maps an ingress-nginx auth-tls-verify-client value to the corresponding ClientAuthType.
+// Default is "on" (RequireAndVerifyClientCert) when verifyClient is nil.
+func clientAuthTypeFromString(verifyClient *string) string {
+	if verifyClient == nil {
+		return tls.RequireAndVerifyClientCert
+	}
+	switch *verifyClient {
+	// off means that client certificate is not requested and no verification will be passed.
+	case "off":
+		return tls.NoClientCert
+	// optional means that the client certificate is requested, but not required.
+	// If the certificate is present, it needs to be verified.
+	case "optional":
+		return tls.VerifyClientCertIfGiven
+	// optional_no_ca means that the client certificate is requested, but does not require it to be signed by a trusted CA certificate.
+	case "optional_no_ca":
+		return tls.RequestClientCert
+	default:
+		return tls.RequireAndVerifyClientCert
+	}
+}
+
 func (p *Provider) buildClientAuthTLSOption(ingressNamespace string, config ingressConfig) (tls.Options, error) {
 	blocks, err := p.loadCertBlock(ingressNamespace, config)
 	if err != nil {
 		return tls.Options{}, fmt.Errorf("reading client certificate: %w", err)
 	}
 
-	// Default verifyClient value is "on" on ingress-nginx.
-	// on means that client certificate is required and must be signed by a trusted CA certificate.
-	clientAuthType := tls.RequireAndVerifyClientCert
-	if config.AuthTLSVerifyClient != nil {
-		switch *config.AuthTLSVerifyClient {
-		// off means that client certificate is not requested and no verification will be passed.
-		case "off":
-			clientAuthType = tls.NoClientCert
-		// optional means that the client certificate is requested, but not required.
-		// If the certificate is present, it needs to be verified.
-		case "optional":
-			clientAuthType = tls.VerifyClientCertIfGiven
-		// optional_no_ca means that the client certificate is requested, but does not require it to be signed by a trusted CA certificate.
-		case "optional_no_ca":
-			clientAuthType = tls.RequestClientCert
-		}
-	}
+	clientAuthType := clientAuthTypeFromString(config.AuthTLSVerifyClient)
 
 	tlsOpt := tls.Options{}
 	tlsOpt.SetDefaults()
