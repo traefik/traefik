@@ -2508,12 +2508,19 @@ func TestLoadIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"default-ingress-with-proxy-timeout-rule-0-path-0": {
-							Rule:       "Host(`whoami.localhost`) && Path(`/`)",
-							RuleSyntax: "default",
-							Service:    "default-ingress-with-proxy-timeout-whoami-80",
+							Rule:        "Host(`whoami.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-proxy-timeout-rule-0-path-0-retry"},
+							Service:     "default-ingress-with-proxy-timeout-whoami-80",
 						},
 					},
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-proxy-timeout-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+					},
 					Services: map[string]*dynamic.Service{
 						"default-ingress-with-proxy-timeout-whoami-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
@@ -2558,12 +2565,19 @@ func TestLoadIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"default-ingress-with-proxy-timeout-rule-0-path-0": {
-							Rule:       "Host(`whoami.localhost`) && Path(`/`)",
-							RuleSyntax: "default",
-							Service:    "default-ingress-with-proxy-timeout-whoami-80",
+							Rule:        "Host(`whoami.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-proxy-timeout-rule-0-path-0-retry"},
+							Service:     "default-ingress-with-proxy-timeout-whoami-80",
 						},
 					},
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-proxy-timeout-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+					},
 					Services: map[string]*dynamic.Service{
 						"default-ingress-with-proxy-timeout-whoami-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
@@ -3726,12 +3740,16 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-proxy-next-upstream": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:  ptypes.Duration(60 * time.Second),
+								ReadTimeout:  ptypes.Duration(60 * time.Second),
+								WriteTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 						"default-ingress-with-proxy-next-upstream-off": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:  ptypes.Duration(60 * time.Second),
+								ReadTimeout:  ptypes.Duration(60 * time.Second),
+								WriteTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -3811,12 +3829,16 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-proxy-next-upstream-tries-unlimited": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:  ptypes.Duration(60 * time.Second),
+								ReadTimeout:  ptypes.Duration(60 * time.Second),
+								WriteTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 						"default-ingress-with-proxy-next-upstream-tries": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:  ptypes.Duration(60 * time.Second),
+								ReadTimeout:  ptypes.Duration(60 * time.Second),
+								WriteTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -3872,7 +3894,9 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-proxy-next-upstream-timeout": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:  ptypes.Duration(60 * time.Second),
+								ReadTimeout:  ptypes.Duration(60 * time.Second),
+								WriteTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
