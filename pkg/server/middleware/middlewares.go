@@ -25,7 +25,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/grpcweb"
 	"github.com/traefik/traefik/v3/pkg/middlewares/headers"
 	"github.com/traefik/traefik/v3/pkg/middlewares/inflightreq"
-	"github.com/traefik/traefik/v3/pkg/middlewares/ingressnginx"
+	"github.com/traefik/traefik/v3/pkg/middlewares/ingressnginx/authtlspasscertificatetoupstream"
 	"github.com/traefik/traefik/v3/pkg/middlewares/ipallowlist"
 	"github.com/traefik/traefik/v3/pkg/middlewares/ipwhitelist"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
@@ -285,7 +285,7 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 			return nil, badConf
 		}
 		middleware = func(next http.Handler) (http.Handler, error) {
-			return ingressnginx.NewAuthTLSPassCertificateToUpstream(ctx, next, *config.AuthTLSPassCertificateToUpstream, middlewareName)
+			return authtlspasscertificatetoupstream.NewAuthTLSPassCertificateToUpstream(ctx, next, *config.AuthTLSPassCertificateToUpstream, middlewareName)
 		}
 	}
 
