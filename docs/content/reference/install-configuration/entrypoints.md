@@ -48,10 +48,11 @@ entryPoints:
       
   [entryPoints.websecure]
     address = ":443"
-    [entryPoints.websecure.tls]
-    [entryPoints.websecure.middlewares]
-      - auth@kubernetescrd
-      - strip@kubernetescrd
+    [entryPoints.websecure.http]
+      [entryPoints.websecure.http.tls]
+      [entryPoints.websecure.http.middlewares]
+        - auth@kubernetescrd
+        - strip@kubernetescrd
 ```
 
 ```yaml tab="Helm Chart Values"
@@ -233,7 +234,7 @@ By default, Traefik do not reject requests with path containing certain encoded 
     When your backend is not fully compliant with [RFC 3986](https://datatracker.ietf.org/doc/html/rfc3986) and notably decode encoded reserved characters in the requets path,
     it is recommended to set these options to `false` to avoid split-view situation and helps prevent path traversal attacks or other malicious attempts to bypass security controls.
 
-Here is the list of the encoded characters that are rejected by default:
+Here is the list of the encoded characters that are allowed by default:
 
 | Encoded Character                                                                  | Character               |
 |------------------------------------------------------------------------------------|-------------------------|

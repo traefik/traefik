@@ -626,6 +626,11 @@ spec:
                       allowed to be forwarded to the authentication server.
                     format: int64
                     type: integer
+                  maxResponseBodySize:
+                    description: MaxResponseBodySize defines the maximum body size
+                      in bytes allowed in the response from the authentication server.
+                    format: int64
+                    type: integer
                   preserveLocationHeader:
                     description: PreserveLocationHeader defines whether to forward
                       the Location header to the client as is or prefix it with the

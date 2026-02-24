@@ -55,6 +55,9 @@ type Middleware struct {
 	ResponseHeaderModifier *HeaderModifier  `json:"responseHeaderModifier,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 	RequestRedirect        *RequestRedirect `json:"requestRedirect,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 	URLRewrite             *URLRewrite      `json:"URLRewrite,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
+
+	// ingress-nginx middlewares.
+	AuthTLSPassCertificateToUpstream *AuthTLSPassCertificateToUpstream `json:"authTLSPassCertificateToUpstream,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -287,6 +290,8 @@ type ForwardAuth struct {
 	// AuthRequestHeaders defines the list of the headers to copy from the request to the authentication server.
 	// If not set or empty then all request headers are passed.
 	AuthRequestHeaders []string `json:"authRequestHeaders,omitempty" toml:"authRequestHeaders,omitempty" yaml:"authRequestHeaders,omitempty" export:"true"`
+	// MaxResponseBodySize defines the maximum body size in bytes allowed in the response from the authentication server.
+	MaxResponseBodySize *int64 `json:"maxResponseBodySize,omitempty" toml:"maxResponseBodySize,omitempty" yaml:"maxResponseBodySize,omitempty" export:"true"`
 	// AddAuthCookiesToResponse defines the list of cookies to copy from the authentication server response to the response.
 	AddAuthCookiesToResponse []string `json:"addAuthCookiesToResponse,omitempty" toml:"addAuthCookiesToResponse,omitempty" yaml:"addAuthCookiesToResponse,omitempty" export:"true"`
 	// HeaderField defines a header field to store the authenticated user.
@@ -565,6 +570,14 @@ type PassTLSClientCert struct {
 	PEM bool `json:"pem,omitempty" toml:"pem,omitempty" yaml:"pem,omitempty" export:"true"`
 	// Info selects the specific client certificate details you want to add to the X-Forwarded-Tls-Client-Cert-Info header.
 	Info *TLSClientCertificateInfo `json:"info,omitempty" toml:"info,omitempty" yaml:"info,omitempty" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// AuthTLSPassCertificateToUpstream holds the pass TLS client cert middleware for ingress-nginx provider.
+type AuthTLSPassCertificateToUpstream struct {
+	ClientAuthType string                `json:"clientAuthType,omitempty" toml:"clientAuthType,omitempty" yaml:"clientAuthType,omitempty" export:"true"`
+	CAFiles        []types.FileOrContent `json:"caFiles,omitempty" toml:"caFiles,omitempty" yaml:"caFiles,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true

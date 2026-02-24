@@ -314,7 +314,7 @@ linters:
         text: 'var-naming: avoid meaningless package names'
         linters:
           - revive
-      - path: (pkg/muxer/http/.+|pkg/provider/http/.+)\.go
+      - path: ((cmd|pkg)/version/.*|pkg/config/runtime/.*|pkg/log/.*|pkg/(middlewares/)?metrics/.*|pkg/muxer/http/.+|pkg/provider/http/.+|pkg/tls/.+|pkg/proxy/httputil/.+|pkg/observability/metrics/.+)\.go
         text: 'var-naming: avoid package names that conflict with Go standard library package names'
         linters:
           - revive

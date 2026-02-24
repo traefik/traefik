@@ -44,6 +44,8 @@ const (
 	defaultBackendTLSName = "default-backend-tls"
 
 	defaultProxyConnectTimeout = 60
+	defaultProxyReadTimeout    = 60
+	defaultProxySendTimeout    = 60
 	// https://nginx.org/en/docs/http/ngx_http_core_module.html#client_max_body_size
 	defaultProxyBodySize = int64(1024 * 1024) // 1MB
 	// https://nginx.org/en/docs/http/ngx_http_core_module.html#client_body_buffer_size
@@ -96,6 +98,8 @@ type Provider struct {
 	DisableSvcExternalName bool   `description:"Disable support for Services of type ExternalName." json:"disableSvcExternalName,omitempty" toml:"disableSvcExternalName,omitempty" yaml:"disableSvcExternalName,omitempty" export:"true"`
 
 	ProxyConnectTimeout int `description:"Amount of time to wait until a connection to a server can be established. Timeout value is unitless and in seconds." json:"proxyConnectTimeout,omitempty" toml:"proxyConnectTimeout,omitempty" yaml:"proxyConnectTimeout,omitempty" export:"true"`
+	ProxyReadTimeout    int `description:"Amount of time between two successive read operations. Timeout value is unitless and in seconds." json:"proxyReadTimeout,omitempty" toml:"proxyReadTimeout,omitempty" yaml:"proxyReadTimeout,omitempty" export:"true"`
+	ProxySendTimeout    int `description:"Amount of time between two successive write operations. Timeout value is unitless and in seconds." json:"proxySendTimeout,omitempty" toml:"proxySendTimeout,omitempty" yaml:"proxySendTimeout,omitempty" export:"true"`
 
 	// Configuration options available within the NGINX Ingress Controller ConfigMap.
 	ProxyRequestBuffering bool  `description:"Defines whether to enable request buffering." json:"proxyRequestBuffering,omitempty" toml:"proxyRequestBuffering,omitempty" yaml:"proxyRequestBuffering,omitempty" export:"true"`
@@ -119,6 +123,8 @@ func (p *Provider) SetDefaults() {
 	p.IngressClass = defaultAnnotationValue
 	p.ControllerClass = defaultControllerName
 	p.ProxyConnectTimeout = defaultProxyConnectTimeout
+	p.ProxyReadTimeout = defaultProxyReadTimeout
+	p.ProxySendTimeout = defaultProxySendTimeout
 	p.ClientBodyBufferSize = defaultClientBodyBufferSize
 	p.ProxyBodySize = defaultProxyBodySize
 	p.ProxyBufferSize = defaultProxyBufferSize
@@ -575,11 +581,15 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 func (p *Provider) buildServersTransport(namespace, name string, cfg ingressConfig) (*namedServersTransport, error) {
 	proxyConnectTimeout := ptr.Deref(cfg.ProxyConnectTimeout, p.ProxyConnectTimeout)
+	proxyReadTimeout := ptr.Deref(cfg.ProxyReadTimeout, p.ProxyReadTimeout)
+	proxySendTimeout := ptr.Deref(cfg.ProxySendTimeout, p.ProxySendTimeout)
 	nst := &namedServersTransport{
 		Name: provider.Normalize(namespace + "-" + name),
 		ServersTransport: &dynamic.ServersTransport{
 			ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-				DialTimeout: ptypes.Duration(time.Duration(proxyConnectTimeout) * time.Second),
+				DialTimeout:  ptypes.Duration(time.Duration(proxyConnectTimeout) * time.Second),
+				ReadTimeout:  ptypes.Duration(time.Duration(proxyReadTimeout) * time.Second),
+				WriteTimeout: ptypes.Duration(time.Duration(proxySendTimeout) * time.Second),
 			},
 		},
 	}
@@ -895,6 +905,10 @@ func (p *Provider) applyMiddlewares(namespace, routerKey, rulePath, ruleHost str
 	applyRewriteTargetConfiguration(rulePath, routerKey, ingressConfig, rt, conf)
 
 	applyUpstreamVhost(routerKey, ingressConfig, rt, conf)
+
+	if err := p.applyAuthTLSPassCertificateToUpstream(namespace, routerKey, ingressConfig, rt, conf); err != nil {
+		return fmt.Errorf("applying auth tls pass certificate to upstream: %w", err)
+	}
 
 	if err := p.applyCustomHeaders(routerKey, ingressConfig, rt, conf); err != nil {
 		return fmt.Errorf("applying custom headers: %w", err)
@@ -1375,6 +1389,37 @@ func applyForwardAuthConfiguration(routerName string, ingressConfig ingressConfi
 	return nil
 }
 
+func (p *Provider) applyAuthTLSPassCertificateToUpstream(ingressNamespace string, routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
+	if !ptr.Deref(ingressConfig.AuthTLSPassCertificateToUpstream, false) {
+		return nil
+	}
+	if ingressConfig.AuthTLSSecret == nil {
+		return errors.New("auth-tls-pass-certificate-to-upstream requires auth-tls-secret to be configured")
+	}
+
+	verifyClient := clientAuthTypeFromString(ingressConfig.AuthTLSVerifyClient)
+
+	var caFiles []types.FileOrContent
+	if verifyClient == tls.RequestClientCert {
+		blocks, err := p.loadCertBlock(ingressNamespace, ingressConfig)
+		if err != nil {
+			return fmt.Errorf("reading client certificate: %w", err)
+		}
+		caFiles = []types.FileOrContent{*blocks.CA}
+	}
+
+	passCertificateToUpstreamMiddlewareName := routerName + "-pass-certificate-to-upstream"
+	conf.HTTP.Middlewares[passCertificateToUpstreamMiddlewareName] = &dynamic.Middleware{
+		AuthTLSPassCertificateToUpstream: &dynamic.AuthTLSPassCertificateToUpstream{
+			ClientAuthType: verifyClient,
+			CAFiles:        caFiles,
+		},
+	}
+	rt.Middlewares = append(rt.Middlewares, passCertificateToUpstreamMiddlewareName)
+
+	return nil
+}
+
 func basicAuthUsers(secret *corev1.Secret, authSecretType string) (dynamic.Users, error) {
 	var users dynamic.Users
 	if authSecretType == "auth-map" {
@@ -1491,10 +1536,10 @@ func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *s
 	return eventsChanBuffered
 }
 
-func (p *Provider) buildClientAuthTLSOption(ingressNamespace string, config ingressConfig) (tls.Options, error) {
+func (p *Provider) loadCertBlock(ingressNamespace string, config ingressConfig) (*certBlocks, error) {
 	secretParts := strings.SplitN(*config.AuthTLSSecret, "/", 2)
 	if len(secretParts) != 2 {
-		return tls.Options{}, errors.New("auth-tls-secret is not in a correct namespace/name format")
+		return nil, errors.New("auth-tls-secret is not in a correct namespace/name format")
 	}
 
 	// Expected format: namespace/name.
@@ -1502,42 +1547,57 @@ func (p *Provider) buildClientAuthTLSOption(ingressNamespace string, config ingr
 	secretName := secretParts[1]
 
 	if secretNamespace == "" {
-		return tls.Options{}, errors.New("auth-tls-secret has empty namespace")
+		return nil, errors.New("auth-tls-secret has empty namespace")
 	}
 	if secretName == "" {
-		return tls.Options{}, errors.New("auth-tls-secret has empty name")
+		return nil, errors.New("auth-tls-secret has empty name")
 	}
 	// Cross-namespace secrets are not supported.
 	if secretNamespace != ingressNamespace {
-		return tls.Options{}, fmt.Errorf("cross-namespace auth-tls-secret is not supported: secret namespace %q does not match ingress namespace %q", secretNamespace, ingressNamespace)
+		return nil, fmt.Errorf("cross-namespace auth-tls-secret is not supported: secret namespace %q does not match ingress namespace %q", secretNamespace, ingressNamespace)
 	}
 
 	blocks, err := p.certificateBlocks(secretNamespace, secretName)
 	if err != nil {
-		return tls.Options{}, fmt.Errorf("reading client certificate: %w", err)
+		return nil, fmt.Errorf("reading client certificate: %w", err)
 	}
 
 	if blocks.CA == nil {
-		return tls.Options{}, errors.New("secret does not contain a CA certificate")
+		return nil, errors.New("secret does not contain a CA certificate")
 	}
 
-	// Default verifyClient value is "on" on ingress-nginx.
-	// on means that client certificate is required and must be signed by a trusted CA certificate.
-	clientAuthType := tls.RequireAndVerifyClientCert
-	if config.AuthTLSVerifyClient != nil {
-		switch *config.AuthTLSVerifyClient {
-		// off means that client certificate is not requested and no verification will be passed.
-		case "off":
-			clientAuthType = tls.NoClientCert
-		// optional means that the client certificate is requested, but not required.
-		// If the certificate is present, it needs to be verified.
-		case "optional":
-			clientAuthType = tls.VerifyClientCertIfGiven
-		// optional_no_ca means that the client certificate is requested, but does not require it to be signed by a trusted CA certificate.
-		case "optional_no_ca":
-			clientAuthType = tls.RequestClientCert
-		}
+	return blocks, nil
+}
+
+// clientAuthTypeFromString maps an ingress-nginx auth-tls-verify-client value to the corresponding ClientAuthType.
+// Default is "on" (RequireAndVerifyClientCert) when verifyClient is nil.
+func clientAuthTypeFromString(verifyClient *string) string {
+	if verifyClient == nil {
+		return tls.RequireAndVerifyClientCert
 	}
+	switch *verifyClient {
+	// off means that client certificate is not requested and no verification will be passed.
+	case "off":
+		return tls.NoClientCert
+	// optional means that the client certificate is requested, but not required.
+	// If the certificate is present, it needs to be verified.
+	case "optional":
+		return tls.VerifyClientCertIfGiven
+	// optional_no_ca means that the client certificate is requested, but does not require it to be signed by a trusted CA certificate.
+	case "optional_no_ca":
+		return tls.RequestClientCert
+	default:
+		return tls.RequireAndVerifyClientCert
+	}
+}
+
+func (p *Provider) buildClientAuthTLSOption(ingressNamespace string, config ingressConfig) (tls.Options, error) {
+	blocks, err := p.loadCertBlock(ingressNamespace, config)
+	if err != nil {
+		return tls.Options{}, fmt.Errorf("reading client certificate: %w", err)
+	}
+
+	clientAuthType := clientAuthTypeFromString(config.AuthTLSVerifyClient)
 
 	tlsOpt := tls.Options{}
 	tlsOpt.SetDefaults()

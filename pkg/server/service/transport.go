@@ -233,6 +233,60 @@ func (t *TransportManager) createTLSConfig(cfg *dynamic.ServersTransport) (*tls.
 	return config, nil
 }
 
+type connWithTimeouts struct {
+	net.Conn
+
+	readTimeout  time.Duration
+	writeTimeout time.Duration
+}
+
+func (c connWithTimeouts) Read(b []byte) (n int, err error) {
+	if c.readTimeout > 0 {
+		// Reset deadline before after each successive read.
+		_ = c.Conn.SetReadDeadline(time.Now().Add(c.readTimeout))
+		defer c.Conn.SetReadDeadline(time.Time{}) //nolint:errcheck
+	}
+
+	n, err = c.Conn.Read(b)
+	if err != nil {
+		return n, err
+	}
+
+	return n, nil
+}
+
+func (c connWithTimeouts) Write(b []byte) (n int, err error) {
+	if c.writeTimeout > 0 {
+		// Reset deadline before after each successive write.
+		_ = c.Conn.SetWriteDeadline(time.Now().Add(c.writeTimeout))
+		defer c.Conn.SetWriteDeadline(time.Time{}) //nolint:errcheck
+	}
+
+	n, err = c.Conn.Write(b)
+	if err != nil {
+		return n, err
+	}
+
+	return n, nil
+}
+
+func customDialContext(d *net.Dialer, cfg *dynamic.ForwardingTimeouts) func(ctx context.Context, network string, address string) (net.Conn, error) {
+	return func(ctx context.Context, network, address string) (net.Conn, error) {
+		conn, err := d.DialContext(ctx, network, address)
+
+		if cfg.ReadTimeout <= 0 && cfg.WriteTimeout <= 0 {
+			return conn, err
+		}
+
+		custom := &connWithTimeouts{
+			Conn:         conn,
+			readTimeout:  time.Duration(cfg.ReadTimeout),
+			writeTimeout: time.Duration(cfg.WriteTimeout),
+		}
+		return custom, err
+	}
+}
+
 // createRoundTripper creates an http.RoundTripper configured with the Transport configuration settings.
 // For the settings that can't be configured in Traefik it uses the default http.Transport settings.
 // An exception to this is the MaxIdleConns setting as we only provide the option MaxIdleConnsPerHost in Traefik at this point in time.
@@ -266,6 +320,7 @@ func (t *TransportManager) createRoundTripper(cfg *dynamic.ServersTransport, tls
 	if cfg.ForwardingTimeouts != nil {
 		transport.ResponseHeaderTimeout = time.Duration(cfg.ForwardingTimeouts.ResponseHeaderTimeout)
 		transport.IdleConnTimeout = time.Duration(cfg.ForwardingTimeouts.IdleConnTimeout)
+		transport.DialContext = customDialContext(dialer, cfg.ForwardingTimeouts)
 	}
 
 	// Return directly HTTP/1.1 transport when HTTP/2 is disabled
