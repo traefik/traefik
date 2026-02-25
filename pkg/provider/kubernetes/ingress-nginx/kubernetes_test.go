@@ -2676,7 +2676,9 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-custom-http-errors-and-default-backend": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:  ptypes.Duration(60 * time.Second),
+								ReadTimeout:  ptypes.Duration(60 * time.Second),
+								WriteTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -2774,7 +2776,9 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-custom-http-errors": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:  ptypes.Duration(60 * time.Second),
+								ReadTimeout:  ptypes.Duration(60 * time.Second),
+								WriteTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -2826,7 +2830,9 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-default-backend-annotation": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:  ptypes.Duration(60 * time.Second),
+								ReadTimeout:  ptypes.Duration(60 * time.Second),
+								WriteTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -3355,7 +3361,9 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-auth-tls-pass-certificate-to-upstream": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:  ptypes.Duration(60 * time.Second),
+								ReadTimeout:  ptypes.Duration(60 * time.Second),
+								WriteTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
