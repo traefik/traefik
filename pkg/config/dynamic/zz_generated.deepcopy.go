@@ -30,6 +30,8 @@ THE SOFTWARE.
 package dynamic
 
 import (
+	http "net/http"
+
 	paersertypes "github.com/traefik/paerser/types"
 	tls "github.com/traefik/traefik/v3/pkg/tls"
 	types "github.com/traefik/traefik/v3/pkg/types"
@@ -356,6 +358,25 @@ func (in *ErrorPage) DeepCopyInto(out *ErrorPage) {
 		*out = make(map[string]int, len(*in))
 		for key, val := range *in {
 			(*out)[key] = val
+		}
+	}
+	if in.NginxHeaders != nil {
+		in, out := &in.NginxHeaders, &out.NginxHeaders
+		*out = new(http.Header)
+		if **in != nil {
+			in, out := *in, *out
+			*out = make(map[string][]string, len(*in))
+			for key, val := range *in {
+				var outVal []string
+				if val == nil {
+					(*out)[key] = nil
+				} else {
+					in, out := &val, &outVal
+					*out = make([]string, len(*in))
+					copy(*out, *in)
+				}
+				(*out)[key] = outVal
+			}
 		}
 	}
 	return

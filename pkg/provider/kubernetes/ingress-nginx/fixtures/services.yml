@@ -78,3 +78,89 @@ endpoints:
       - 10.10.0.6
     conditions:
       ready: true
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: whoami_b
+  namespace: default
+
+spec:
+  clusterIP: 10.10.10.2
+  ports:
+    - name: web2
+      protocol: TCP
+      port: 8000
+      targetPort: web2
+    - name: web
+      protocol: TCP
+      port: 80
+      targetPort: web
+  selector:
+    app: whoami_b
+    task: whoami_b
+
+---
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
+metadata:
+  name: whoami_b
+  namespace: default
+  labels:
+    kubernetes.io/service-name: whoami_b
+
+addressType: IPv4
+ports:
+  - name: web
+    port: 80
+  - name: web2
+    port: 8000
+endpoints:
+  - addresses:
+      - 10.10.0.7
+      - 10.10.0.8
+    conditions:
+      ready: true
+---
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: empty
+  namespace: default
+
+spec:
+  clusterIP: 10.10.10.3
+  ports:
+    - name: web2
+      protocol: TCP
+      port: 8000
+      targetPort: web2
+    - name: web
+      protocol: TCP
+      port: 80
+      targetPort: web
+  selector:
+    app: empty
+    task: empty
+
+---
+kind: EndpointSlice
+apiVersion: discovery.k8s.io/v1
+metadata:
+  name: empty
+  namespace: default
+  labels:
+    kubernetes.io/service-name: empty
+
+addressType: IPv4
+ports:
+  - name: web
+    port: 80
+  - name: web2
+    port: 8000
+endpoints:
+  - addresses: []
+    conditions:
+      ready: true

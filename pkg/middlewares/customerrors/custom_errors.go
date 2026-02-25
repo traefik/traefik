@@ -16,6 +16,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"github.com/vulcand/oxy/v2/utils"
+	"k8s.io/utils/ptr"
 )
 
 // Compile time validation that the response recorder implements http interfaces correctly.
@@ -32,12 +33,13 @@ type serviceBuilder interface {
 
 // customErrors is a middleware that provides the custom error pages.
 type customErrors struct {
-	name           string
-	next           http.Handler
-	backendHandler http.Handler
-	httpCodeRanges types.HTTPCodeRanges
-	backendQuery   string
-	statusRewrites []statusRewrite
+	name                string
+	next                http.Handler
+	backendHandler      http.Handler
+	httpCodeRanges      types.HTTPCodeRanges
+	backendQuery        string
+	statusRewrites      []statusRewrite
+	forwardNginxHeaders http.Header
 }
 
 type statusRewrite struct {
@@ -74,12 +76,13 @@ func New(ctx context.Context, next http.Handler, config dynamic.ErrorPage, servi
 	}
 
 	return &customErrors{
-		name:           name,
-		next:           next,
-		backendHandler: backend,
-		httpCodeRanges: httpCodeRanges,
-		backendQuery:   config.Query,
-		statusRewrites: statusRewrites,
+		name:                name,
+		next:                next,
+		backendHandler:      backend,
+		httpCodeRanges:      httpCodeRanges,
+		backendQuery:        config.Query,
+		statusRewrites:      statusRewrites,
+		forwardNginxHeaders: ptr.Deref(config.NginxHeaders, nil),
 	}, nil
 }
 
@@ -145,7 +148,18 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	utils.CopyHeaders(pageReq.Header, req.Header)
+	if len(c.forwardNginxHeaders) > 0 {
+		utils.CopyHeaders(pageReq.Header, c.forwardNginxHeaders)
+		pageReq.Header.Set("X-Code", strconv.Itoa(code))
+		pageReq.Header.Set("X-Format", req.Header.Get("Accept"))
+		pageReq.Header.Set("X-Original-Uri", req.URL.RequestURI())
+		if requestID := req.Header.Get("X-Request-ID"); requestID != "" {
+			pageReq.Header.Set("X-Request-ID", requestID)
+		}
+	} else {
+		utils.CopyHeaders(pageReq.Header, req.Header)
+	}
+
 	c.backendHandler.ServeHTTP(newCodeModifier(rw, code),
 		pageReq.WithContext(req.Context()))
 }
