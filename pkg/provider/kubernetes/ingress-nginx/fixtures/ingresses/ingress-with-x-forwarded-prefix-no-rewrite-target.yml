@@ -6,7 +6,6 @@ metadata:
   namespace: default
   annotations:
     nginx.ingress.kubernetes.io/x-forwarded-prefix: "x-forwarded-prefix-header-value"
-    nginx.ingress.kubernetes.io/rewrite-target: "/path"
 
 spec:
   ingressClassName: nginx

@@ -1399,7 +1399,9 @@ var pegexPathWithCapture = regexp.MustCompile(`^/?[` + alphaNumericChars + `\/\$
 
 func applyXForwardedPrefix(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
 	xForwardedPrefix := ptr.Deref(ingressConfig.XForwardedPrefix, "")
-	if xForwardedPrefix == "" {
+	rewriteTarget := ptr.Deref(ingressConfig.RewriteTarget, "")
+
+	if xForwardedPrefix == "" || rewriteTarget == "" {
 		return nil
 	}
 	if !pegexPathWithCapture.MatchString(xForwardedPrefix) {
