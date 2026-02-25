@@ -4017,13 +4017,18 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        "Host(`snippet.localhost`) && Path(`/`)",
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-server-snippet-whoami-80",
-							Middlewares: []string{"default-ingress-with-server-snippet-rule-0-path-0-snippet"},
+							Middlewares: []string{"default-ingress-with-server-snippet-rule-0-path-0-snippet", "default-ingress-with-server-snippet-rule-0-path-0-retry"},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-server-snippet-rule-0-path-0-snippet": {
 							Snippet: &dynamic.Snippet{
 								ServerSnippet: "add_header X-Server-Snippet \"server-value\";\n",
+							},
+						},
+						"default-ingress-with-server-snippet-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
 							},
 						},
 					},
@@ -4046,7 +4051,9 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-server-snippet": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:  ptypes.Duration(60 * time.Second),
+								ReadTimeout:  ptypes.Duration(60 * time.Second),
+								WriteTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -4073,13 +4080,18 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        "Host(`snippet.localhost`) && Path(`/`)",
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-configuration-snippet-whoami-80",
-							Middlewares: []string{"default-ingress-with-configuration-snippet-rule-0-path-0-snippet"},
+							Middlewares: []string{"default-ingress-with-configuration-snippet-rule-0-path-0-snippet", "default-ingress-with-configuration-snippet-rule-0-path-0-retry"},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-configuration-snippet-rule-0-path-0-snippet": {
 							Snippet: &dynamic.Snippet{
 								ConfigurationSnippet: "add_header X-Configuration-Snippet \"configuration-value\";\n",
+							},
+						},
+						"default-ingress-with-configuration-snippet-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
 							},
 						},
 					},
@@ -4102,7 +4114,9 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-configuration-snippet": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:  ptypes.Duration(60 * time.Second),
+								ReadTimeout:  ptypes.Duration(60 * time.Second),
+								WriteTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -4129,7 +4143,7 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        "Host(`snippet.localhost`) && Path(`/`)",
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-both-snippets-whoami-80",
-							Middlewares: []string{"default-ingress-with-both-snippets-rule-0-path-0-snippet"},
+							Middlewares: []string{"default-ingress-with-both-snippets-rule-0-path-0-snippet", "default-ingress-with-both-snippets-rule-0-path-0-retry"},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -4137,6 +4151,11 @@ func TestLoadIngresses(t *testing.T) {
 							Snippet: &dynamic.Snippet{
 								ServerSnippet:        "add_header X-Server-Snippet \"server-value\";\n",
 								ConfigurationSnippet: "add_header X-Configuration-Snippet \"configuration-value\";\n",
+							},
+						},
+						"default-ingress-with-both-snippets-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
 							},
 						},
 					},
@@ -4159,7 +4178,9 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-both-snippets": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:  ptypes.Duration(60 * time.Second),
+								ReadTimeout:  ptypes.Duration(60 * time.Second),
+								WriteTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -4208,7 +4229,9 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-server-snippet": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:  ptypes.Duration(60 * time.Second),
+								ReadTimeout:  ptypes.Duration(60 * time.Second),
+								WriteTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -4257,7 +4280,9 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-configuration-snippet": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:  ptypes.Duration(60 * time.Second),
+								ReadTimeout:  ptypes.Duration(60 * time.Second),
+								WriteTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -4306,7 +4331,9 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-both-snippets": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:  ptypes.Duration(60 * time.Second),
+								ReadTimeout:  ptypes.Duration(60 * time.Second),
+								WriteTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
