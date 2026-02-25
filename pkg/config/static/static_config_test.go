@@ -324,6 +324,31 @@ func TestValidateConfiguration_BasePath(t *testing.T) {
 			basePath:  "/path/<evil>",
 			expectErr: true,
 		},
+		{
+			desc:      "path with query string",
+			basePath:  "/api?foo=bar",
+			expectErr: true,
+		},
+		{
+			desc:      "path with fragment",
+			basePath:  "/api#section",
+			expectErr: true,
+		},
+		{
+			desc:      "valid root path",
+			basePath:  "/",
+			expectErr: false,
+		},
+		{
+			desc:      "path with quote",
+			basePath:  "/api/'onclick=alert(1)",
+			expectErr: true,
+		},
+		{
+			desc:      "path with encoded character",
+			basePath:  "/api%2Ftoto",
+			expectErr: true,
+		},
 	}
 
 	for _, test := range tests {
