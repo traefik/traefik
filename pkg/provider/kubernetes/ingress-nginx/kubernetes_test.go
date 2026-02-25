@@ -1017,6 +1017,67 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
+			desc: "Rewrite Target without use-regex",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-rewrite-target-no-regex.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-rewrite-target-no-regex-rule-0-path-0": {
+							Rule:        "Host(`rewrite-target-no-regex.localhost`) && Path(`/original`)",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-rewrite-target-no-regex-whoami-80",
+							Middlewares: []string{"default-ingress-with-rewrite-target-no-regex-rule-0-path-0-rewrite-target"},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-rewrite-target-no-regex-rule-0-path-0-rewrite-target": {
+							ReplacePath: &dynamic.ReplacePath{
+								Path: "/rewritten",
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-rewrite-target-no-regex-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-with-rewrite-target-no-regex",
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-rewrite-target-no-regex": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:  ptypes.Duration(60 * time.Second),
+								ReadTimeout:  ptypes.Duration(60 * time.Second),
+								WriteTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
 			desc: "App Root",
 			paths: []string{
 				"services.yml",

@@ -1099,16 +1099,25 @@ func (p *Provider) applyCustomHeaders(routerName string, ingressConfig ingressCo
 }
 
 func applyRewriteTargetConfiguration(rulePath, routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
-	if ingressConfig.RewriteTarget == nil || !ptr.Deref(ingressConfig.UseRegex, false) {
+	if ingressConfig.RewriteTarget == nil {
 		return
 	}
 
 	rewriteTargetMiddlewareName := routerName + "-rewrite-target"
-	conf.HTTP.Middlewares[rewriteTargetMiddlewareName] = &dynamic.Middleware{
-		ReplacePathRegex: &dynamic.ReplacePathRegex{
-			Regex:       rulePath,
-			Replacement: *ingressConfig.RewriteTarget,
-		},
+
+	if ptr.Deref(ingressConfig.UseRegex, false) {
+		conf.HTTP.Middlewares[rewriteTargetMiddlewareName] = &dynamic.Middleware{
+			ReplacePathRegex: &dynamic.ReplacePathRegex{
+				Regex:       rulePath,
+				Replacement: *ingressConfig.RewriteTarget,
+			},
+		}
+	} else {
+		conf.HTTP.Middlewares[rewriteTargetMiddlewareName] = &dynamic.Middleware{
+			ReplacePath: &dynamic.ReplacePath{
+				Path: *ingressConfig.RewriteTarget,
+			},
+		}
 	}
 
 	rt.Middlewares = append(rt.Middlewares, rewriteTargetMiddlewareName)
