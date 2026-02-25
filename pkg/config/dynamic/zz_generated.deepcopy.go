@@ -373,6 +373,11 @@ func (in *ForwardAuth) DeepCopyInto(out *ForwardAuth) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.MaxResponseBodySize != nil {
+		in, out := &in.MaxResponseBodySize, &out.MaxResponseBodySize
+		*out = new(int64)
+		**out = **in
+	}
 	if in.AddAuthCookiesToResponse != nil {
 		in, out := &in.AddAuthCookiesToResponse, &out.AddAuthCookiesToResponse
 		*out = make([]string, len(*in))

@@ -55,6 +55,7 @@ type forwardAuth struct {
 	client                   http.Client
 	trustForwardHeader       bool
 	authRequestHeaders       []string
+	maxResponseBodySize      int64
 	addAuthCookiesToResponse map[string]struct{}
 	headerField              string
 	forwardBody              bool
@@ -92,6 +93,13 @@ func NewForward(ctx context.Context, next http.Handler, config dynamic.ForwardAu
 		fa.maxBodySize = *config.MaxBodySize
 	} else if fa.forwardBody {
 		logger.Warn().Msgf("ForwardAuth 'maxBodySize' is not configured with 'forwardBody: true', allowing unlimited request body size which can lead to DoS attacks and memory exhaustion. Please set an appropriate limit.")
+	}
+
+	if config.MaxResponseBodySize != nil {
+		fa.maxResponseBodySize = *config.MaxResponseBodySize
+	} else {
+		fa.maxResponseBodySize = -1
+		logger.Warn().Msg("ForwardAuth 'maxResponseBodySize' is not configured, allowing unlimited response body size which can lead to DoS attacks and memory exhaustion. Please set an appropriate limit.")
 	}
 
 	// Ensure our request client does not follow redirects
@@ -210,8 +218,15 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 	defer forwardResponse.Body.Close()
 
-	body, readError := io.ReadAll(forwardResponse.Body)
+	body, readError := fa.readResponseBodyBytes(forwardResponse)
 	if readError != nil {
+		if errors.Is(readError, errResponseBodyTooLarge) {
+			logger.Debug().Msgf("Response body is too large, maxResponseBodySize: %d", fa.maxResponseBodySize)
+
+			observability.SetStatusErrorf(req.Context(), "Response body is too large, maxResponseBodySize: %d", fa.maxResponseBodySize)
+			rw.WriteHeader(http.StatusUnauthorized)
+			return
+		}
 		logger.Debug().Err(readError).Msgf("Error reading body %s", fa.address)
 		observability.SetStatusErrorf(req.Context(), "Error reading body %s. Cause: %s", fa.address, readError)
 
@@ -352,6 +367,27 @@ func (fa *forwardAuth) readBodyBytes(req *http.Request) ([]byte, error) {
 		return body[:n], nil
 	}
 	return nil, errBodyTooLarge
+}
+
+var errResponseBodyTooLarge = errors.New("response body too large")
+
+func (fa *forwardAuth) readResponseBodyBytes(res *http.Response) ([]byte, error) {
+	if fa.maxResponseBodySize < 0 {
+		return io.ReadAll(res.Body)
+	}
+
+	body := make([]byte, fa.maxResponseBodySize+1)
+	n, err := io.ReadFull(res.Body, body)
+	if errors.Is(err, io.EOF) {
+		return nil, nil
+	}
+	if err != nil && !errors.Is(err, io.ErrUnexpectedEOF) {
+		return nil, fmt.Errorf("reading response body bytes: %w", err)
+	}
+	if errors.Is(err, io.ErrUnexpectedEOF) {
+		return body[:n], nil
+	}
+	return nil, errResponseBodyTooLarge
 }
 
 func writeHeader(req, forwardReq *http.Request, trustForwardHeader bool, allowedHeaders []string) {

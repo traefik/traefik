@@ -2173,3 +2173,57 @@ func (s *SimpleSuite) TestEncodedCharactersDifferentEntryPoints() {
 		require.NoError(s.T(), err)
 	}
 }
+
+func (s *SimpleSuite) TestDDOS() {
+	s.createComposeProject("base")
+
+	s.composeUp()
+	defer s.composeDown()
+
+	file := s.adaptFile("fixtures/simple_ddos.toml", struct{}{})
+
+	_, output := s.cmdTraefik(withConfigFile(file))
+
+	defer func() {
+		if s.T().Failed() {
+			s.T().Log("---- Traefik Logs ----")
+			s.T().Log(output)
+		}
+	}()
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 1*time.Second, try.BodyContains("HostSNI(`*`)"))
+	require.NoError(s.T(), err)
+
+	// Try with an http router.
+	conn, err := net.Dial("tcp", "127.0.0.1:8000")
+	require.NoError(s.T(), err)
+
+	waitForWritePartial(s.T(), conn)
+
+	// Try with a tcp router only.
+	conn, err = net.Dial("tcp", "127.0.0.1:8001")
+	require.NoError(s.T(), err)
+
+	waitForWritePartial(s.T(), conn)
+}
+
+func waitForWritePartial(t *testing.T, conn net.Conn) {
+	t.Helper()
+
+	end := make(chan struct{})
+	go func() {
+		if _, err := conn.Write([]byte{0x16, 0x03, 0x03, 0x00, 0x10}); err != nil {
+			require.NoError(t, err)
+		}
+
+		_, err := conn.Read(make([]byte, 1))
+		require.ErrorIs(t, err, io.EOF)
+
+		close(end)
+	}()
+
+	select {
+	case <-end:
+	case <-time.After(500 * time.Millisecond):
+		t.Fatalf("timeout waiting for connection timeout")
+	}
+}

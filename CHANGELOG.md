@@ -1,3 +1,28 @@
+## [v3.6.9](https://github.com/traefik/traefik/tree/v3.6.9) (2026-02-23)
+[All Commits](https://github.com/traefik/traefik/compare/v3.6.8...v3.6.9)
+
+**Bug fixes:**
+- **[acme]** Bump github.com/go-acme/lego/v4 to v4.32.0 ([#12702](https://github.com/traefik/traefik/pull/12702) by [ldez](https://github.com/ldez))
+- **[middleware]** Fix case sensitivity on x-forwarded headers for Connection ([#12690](https://github.com/traefik/traefik/pull/12690) by [LBF38](https://github.com/LBF38))
+- **[middleware, authentication]** Handle empty/missing User-Agent header ([#12545](https://github.com/traefik/traefik/pull/12545) by [a-stangl](https://github.com/a-stangl))
+- **[middleware, authentication]** Add maxResponseBodySize configuration to forwardAuth middleware ([#12694](https://github.com/traefik/traefik/pull/12694) by [gndz07](https://github.com/gndz07))
+- **[server]** Fix TLS handshake error handling ([#12692](https://github.com/traefik/traefik/pull/12692) by [juliens](https://github.com/juliens))
+
+**Documentation:**
+- **[docker]** Update docker in-depth setup guide ([#12682](https://github.com/traefik/traefik/pull/12682) by [mdevino](https://github.com/mdevino))
+- **[k8s]** Make labelSelector option casing more consistent ([#12658](https://github.com/traefik/traefik/pull/12658) by [holysoles](https://github.com/holysoles))
+- **[k8s/ingress-nginx]** Add temporary note to advertise the incoming NGINX annotations ([#12699](https://github.com/traefik/traefik/pull/12699) by [nmengin](https://github.com/nmengin))
+- Increased content width in documentation ([#12632](https://github.com/traefik/traefik/pull/12632) by [tobiasge](https://github.com/tobiasge))
+- Correct encoded characters allowance in entrypoints.md ([#12679](https://github.com/traefik/traefik/pull/12679) by [Apflkuacha](https://github.com/Apflkuacha))
+
+## [v2.11.38](https://github.com/traefik/traefik/tree/v2.11.38) (2026-02-23)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.37...v2.11.38)
+
+**Bug fixes:**
+- **[middleware]** Fix case sensitivity on x-forwarded headers for Connection ([#12690](https://github.com/traefik/traefik/pull/12690) by [LBF38](https://github.com/LBF38))
+- **[middleware, authentication]** Add maxResponseBodySize configuration to forwardAuth middleware ([#12694](https://github.com/traefik/traefik/pull/12694) by [gndz07](https://github.com/gndz07))
+- **[server]** Fix TLS handshake error handling ([#12692](https://github.com/traefik/traefik/pull/12692) by [juliens](https://github.com/juliens))
+
 ## [v3.6.8](https://github.com/traefik/traefik/tree/v3.6.8) (2026-02-11)
 [All Commits](https://github.com/traefik/traefik/compare/v3.6.7...v3.6.8)
 

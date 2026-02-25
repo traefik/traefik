@@ -6,6 +6,7 @@ import (
 	"context"
 	"crypto/tls"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -140,6 +141,11 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 
 	hello, err := clientHelloInfo(br)
 	if err != nil {
+		var opErr *net.OpError
+		if !errors.Is(err, io.EOF) && (!errors.As(err, &opErr) || !opErr.Timeout()) {
+			log.Debug().Err(err).Msg("Error while reading client hello")
+		}
+
 		conn.Close()
 		return
 	}
@@ -378,11 +384,7 @@ type clientHello struct {
 func clientHelloInfo(br *bufio.Reader) (*clientHello, error) {
 	hdr, err := br.Peek(1)
 	if err != nil {
-		var opErr *net.OpError
-		if !errors.Is(err, io.EOF) && (!errors.As(err, &opErr) || !opErr.Timeout()) {
-			log.Debug().Err(err).Msg("Error while peeking first byte")
-		}
-		return nil, err
+		return nil, fmt.Errorf("peeking first byte: %w", err)
 	}
 
 	// No valid TLS record has a type of 0x80, however SSLv2 handshakes start with an uint16 length
@@ -406,20 +408,13 @@ func clientHelloInfo(br *bufio.Reader) (*clientHello, error) {
 	const recordHeaderLen = 5
 	hdr, err = br.Peek(recordHeaderLen)
 	if err != nil {
-		log.Error().Err(err).Msg("Error while peeking client hello header")
-		return &clientHello{
-			peeked: getPeeked(br),
-		}, nil
+		return nil, fmt.Errorf("peeking client hello headers: %w", err)
 	}
 
 	recLen := int(hdr[3])<<8 | int(hdr[4]) // ignoring version in hdr[1:3]
 
 	if recLen > maxTLSRecordLen {
-		log.Debug().Msgf("Error while peeking client hello bytes, oversized record: %d", recLen)
-		return &clientHello{
-			isTLS:  true,
-			peeked: getPeeked(br),
-		}, nil
+		return nil, fmt.Errorf("peeking client hello bytes, oversized record: %d", recLen)
 	}
 
 	if recordHeaderLen+recLen > defaultBufSize {
@@ -428,11 +423,7 @@ func clientHelloInfo(br *bufio.Reader) (*clientHello, error) {
 
 	helloBytes, err := br.Peek(recordHeaderLen + recLen)
 	if err != nil {
-		log.Error().Err(err).Msg("Error while peeking client hello bytes")
-		return &clientHello{
-			isTLS:  true,
-			peeked: getPeeked(br),
-		}, nil
+		return nil, fmt.Errorf("peeking client hello bytes: %w", err)
 	}
 
 	sni := ""

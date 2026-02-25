@@ -63,6 +63,7 @@ spec:
 | <a id="opt-addAuthCookiesToResponse" href="#opt-addAuthCookiesToResponse" title="#opt-addAuthCookiesToResponse">`addAuthCookiesToResponse`</a> | List of cookies to copy from the authentication server to the response, replacing any existing conflicting cookie from the forwarded response.<br /> Please note that all backend cookies matching the configured list will not be added to the response. | [] | No      |
 | <a id="opt-forwardBody" href="#opt-forwardBody" title="#opt-forwardBody">`forwardBody`</a> | Sets the `forwardBody` option to `true` to send the Body. As body is read inside Traefik before forwarding, this breaks streaming. | false | No      |
 | <a id="opt-maxBodySize" href="#opt-maxBodySize" title="#opt-maxBodySize">`maxBodySize`</a> | Set the `maxBodySize` to limit the body size in bytes. If body is bigger than this, it returns a 401 (unauthorized). If left unset, the request body size is unrestricted which can have performance or security implications. < br/>More information [here](#maxbodysize).| -1 | No      |
+| <a id="opt-maxResponseBodySize" href="#opt-maxResponseBodySize" title="#opt-maxResponseBodySize">`maxResponseBodySize`</a> | Set the `maxResponseBodySize` to limit the response body size from the authentication server in bytes. If the response body exceeds this limit, it returns a 401 (unauthorized). If left unset, the response body size is unrestricted which can have performance or security implications. <br/>More information [here](#maxresponsebodysize).| -1 | No      |
 | <a id="opt-headerField" href="#opt-headerField" title="#opt-headerField">`headerField`</a> | Defines a header field to store the authenticated user. | "" | No      |
 | <a id="opt-preserveLocationHeader" href="#opt-preserveLocationHeader" title="#opt-preserveLocationHeader">`preserveLocationHeader`</a> | Defines whether to forward the Location header to the client as is or prefix it with the domain name of the authentication server. | false | No      |
 | <a id="opt-preserveRequestMethod" href="#opt-preserveRequestMethod" title="#opt-preserveRequestMethod">`preserveRequestMethod`</a> | Defines whether to preserve the original request method while forwarding the request to the authentication server. | false | No      |
@@ -114,6 +115,17 @@ maxBodySize: 104857600  # 100MB in bytes
 - **API Endpoints**: Consider your largest expected JSON/XML payload + buffer
 - **File Uploads**: Set based on your maximum expected file size
 - **High-Traffic Services**: Use smaller limits to prevent resource exhaustion
+
+### maxResponseBodySize
+
+The `maxResponseBodySize` option defines the maximum allowed response body size in bytes from the authentication server.
+If the response body exceeds the configured limit, the request is rejected with a 401 (Unauthorized) status.
+If left unset, the request body size is unrestricted which can have performance or security implications.
+
+!!! warning
+
+    It is strongly recommended to set this option to a suitable value.
+    Not setting it (or setting it to `-1`) allows unlimited response body sizes which can lead to DoS attacks and memory exhaustion.
 
 ## Forward-Request Headers
 
