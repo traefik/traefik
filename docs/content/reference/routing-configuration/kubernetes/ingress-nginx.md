@@ -390,7 +390,6 @@ The following annotations are organized by category for easier navigation.
 - **Authentication**: Forward auth behaves differently and session caching is not supported. NGINX supports sub-request based auth, while Traefik forwards the original request.
 - **Session Affinity**: Only persistent mode is supported.
 - **Leader Election**: Not supported; no cluster mode with leader election.
-- **Default Backend**: The `default-backend` annotation is supported for specifying a per-ingress fallback service. The `defaultBackend` in the Ingress spec is also supported.
 - **Load Balancing**: Only round_robin is supported; EWMA and IP hash are not supported.
 - **CORS**: NGINX responds with all configured headers unconditionally; Traefik handles headers differently between pre-flight and regular requests.
 - **TLS/Backend Protocols**: AUTO_HTTP, FCGI and some TLS options are not supported in Traefik.
@@ -430,7 +429,6 @@ The following annotations are organized by category for easier navigation.
 | <a id="opt-nginx-ingress-kubernetes-iocanary-weight-total" href="#opt-nginx-ingress-kubernetes-iocanary-weight-total" title="#opt-nginx-ingress-kubernetes-iocanary-weight-total">`nginx.ingress.kubernetes.io/canary-weight-total`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-ioconfiguration-snippet" href="#opt-nginx-ingress-kubernetes-ioconfiguration-snippet" title="#opt-nginx-ingress-kubernetes-ioconfiguration-snippet">`nginx.ingress.kubernetes.io/configuration-snippet`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-iodisable-proxy-intercept-errors" href="#opt-nginx-ingress-kubernetes-iodisable-proxy-intercept-errors" title="#opt-nginx-ingress-kubernetes-iodisable-proxy-intercept-errors">`nginx.ingress.kubernetes.io/disable-proxy-intercept-errors`</a> |                                                      |
-| <a id="opt-nginx-ingress-kubernetes-iodefault-backend-2" href="#opt-nginx-ingress-kubernetes-iodefault-backend-2" title="#opt-nginx-ingress-kubernetes-iodefault-backend-2">`nginx.ingress.kubernetes.io/default-backend`</a> | Use `defaultBackend` in Ingress spec. |
 | <a id="opt-nginx-ingress-kubernetes-iolimit-rate-after" href="#opt-nginx-ingress-kubernetes-iolimit-rate-after" title="#opt-nginx-ingress-kubernetes-iolimit-rate-after">`nginx.ingress.kubernetes.io/limit-rate-after`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-iolimit-rate" href="#opt-nginx-ingress-kubernetes-iolimit-rate" title="#opt-nginx-ingress-kubernetes-iolimit-rate">`nginx.ingress.kubernetes.io/limit-rate`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-iolimit-whitelist" href="#opt-nginx-ingress-kubernetes-iolimit-whitelist" title="#opt-nginx-ingress-kubernetes-iolimit-whitelist">`nginx.ingress.kubernetes.io/limit-whitelist`</a> |                                                      |

@@ -82,7 +82,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.ErrorPage, servi
 		httpCodeRanges:      httpCodeRanges,
 		backendQuery:        config.Query,
 		statusRewrites:      statusRewrites,
-		forwardNginxHeaders: ptr.Deref(config.NginxHeaders, http.Header{}),
+		forwardNginxHeaders: ptr.Deref(config.NginxHeaders, nil),
 	}, nil
 }
 

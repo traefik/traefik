@@ -66,6 +66,9 @@ providers:
     proxyBodySize: "1048576"      # 1m
     proxyBufferSize: "8192"       # 8k
     proxyBuffersNumber: 4
+    customHTTPErrors:
+      - "404"
+      - "503"
 ```
 
 ```toml tab="File (TOML)"
@@ -87,6 +90,7 @@ providers:
   proxyBodySize = "1048576"      # 1m
   proxyBufferSize = "8192"       # 8k
   proxyBuffersNumber = 4
+  customHTTPErrors = ["404", "503"]
 ```
 
 ```bash tab="CLI"
@@ -103,6 +107,7 @@ providers:
 --providers.kubernetesingressnginx.proxybodysize=1048576      # 1m
 --providers.kubernetesingressnginx.proxybuffersize=8192       # 8k
 --providers.kubernetesingressnginx.proxybuffersnumber=4
+--providers.kubernetesingressnginx.customhttperrors=404,503
 ```
 
 ```yaml tab="Helm Chart Values"
@@ -159,6 +164,7 @@ This provider watches for incoming Ingress events and automatically translates N
 | <a id="opt-providers-kubernetesIngressNGINX-proxyBodySize" href="#opt-providers-kubernetesIngressNGINX-proxyBodySize" title="#opt-providers-kubernetesIngressNGINX-proxyBodySize">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`proxyBodySize`</a> | Default maximum size of a client request body in bytes.                                                                                                                                                                                                                                                                                                                                                                                               | 1048576 | No       |
 | <a id="opt-providers-kubernetesIngressNGINX-proxyBufferSize" href="#opt-providers-kubernetesIngressNGINX-proxyBufferSize" title="#opt-providers-kubernetesIngressNGINX-proxyBufferSize">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`proxyBufferSize`</a> | Default buffer size for reading the response body in bytes.                                                                                                                                                                                                                                                                                                                                                                                           | 8192    | No       |
 | <a id="opt-providers-kubernetesIngressNGINX-proxyBuffersNumber" href="#opt-providers-kubernetesIngressNGINX-proxyBuffersNumber" title="#opt-providers-kubernetesIngressNGINX-proxyBuffersNumber">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`proxyBuffersNumber`</a> | Default number of buffers for reading a response.                                                                                                                                                                                                                                                                                                                                                                                                     | 4       | No       |
+| <a id="opt-providers-kubernetesIngressNGINX-customHTTPErrors" href="#opt-providers-kubernetesIngressNGINX-customHTTPErrors" title="#opt-providers-kubernetesIngressNGINX-customHTTPErrors">`providers.`<br/>`kubernetesIngressNGINX.`<br/>`customHTTPErrors`<br/></a> | Defines which status should result in calling the default backend to return an error page.                                                                                                                                                                                                                                                                                                                                                            | []      | No       |
 
 <!-- markdownlint-enable MD013 -->
 

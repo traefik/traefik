@@ -97,17 +97,17 @@ type Provider struct {
 	DefaultBackendService  string `description:"Service used to serve HTTP requests not matching any known server name (catch-all). Takes the form 'namespace/name'." json:"defaultBackendService,omitempty" toml:"defaultBackendService,omitempty" yaml:"defaultBackendService,omitempty" export:"true"`
 	DisableSvcExternalName bool   `description:"Disable support for Services of type ExternalName." json:"disableSvcExternalName,omitempty" toml:"disableSvcExternalName,omitempty" yaml:"disableSvcExternalName,omitempty" export:"true"`
 
-	ProxyConnectTimeout int `description:"Amount of time to wait until a connection to a server can be established. Timeout value is unitless and in seconds." json:"proxyConnectTimeout,omitempty" toml:"proxyConnectTimeout,omitempty" yaml:"proxyConnectTimeout,omitempty" export:"true"`
+	// Configuration options available within the NGINX Ingress Controller ConfigMap.
+	ProxyRequestBuffering bool     `description:"Defines whether to enable request buffering." json:"proxyRequestBuffering,omitempty" toml:"proxyRequestBuffering,omitempty" yaml:"proxyRequestBuffering,omitempty" export:"true"`
+	ClientBodyBufferSize  int64    `description:"Default buffer size for reading client request body." json:"clientBodyBufferSize,omitempty" toml:"clientBodyBufferSize,omitempty" yaml:"clientBodyBufferSize,omitempty" export:"true"`
+	ProxyBodySize         int64    `description:"Default maximum size of a client request body in bytes." json:"proxyBodySize,omitempty" toml:"proxyBodySize,omitempty" yaml:"proxyBodySize,omitempty" export:"true"`
+	ProxyBuffering        bool     `description:"Defines whether to enable response buffering." json:"proxyBuffering,omitempty" toml:"proxyBuffering,omitempty" yaml:"proxyBuffering,omitempty" export:"true"`
+	ProxyBufferSize       int64    `description:"Default buffer size for reading the response body." json:"proxyBufferSize,omitempty" toml:"proxyBufferSize,omitempty" yaml:"proxyBufferSize,omitempty" export:"true"`
+	ProxyBuffersNumber    int      `description:"Default number of buffers for reading a response." json:"proxyBuffersNumber,omitempty" toml:"proxyBuffersNumber,omitempty" yaml:"proxyBuffersNumber,omitempty" export:"true"`
+	ProxyConnectTimeout  int `description:"Amount of time to wait until a connection to a server can be established. Timeout value is unitless and in seconds." json:"proxyConnectTimeout,omitempty" toml:"proxyConnectTimeout,omitempty" yaml:"proxyConnectTimeout,omitempty" export:"true"`
 	ProxyReadTimeout    int `description:"Amount of time between two successive read operations. Timeout value is unitless and in seconds." json:"proxyReadTimeout,omitempty" toml:"proxyReadTimeout,omitempty" yaml:"proxyReadTimeout,omitempty" export:"true"`
 	ProxySendTimeout    int `description:"Amount of time between two successive write operations. Timeout value is unitless and in seconds." json:"proxySendTimeout,omitempty" toml:"proxySendTimeout,omitempty" yaml:"proxySendTimeout,omitempty" export:"true"`
-
-	// Configuration options available within the NGINX Ingress Controller ConfigMap.
-	ProxyRequestBuffering bool  `description:"Defines whether to enable request buffering." json:"proxyRequestBuffering,omitempty" toml:"proxyRequestBuffering,omitempty" yaml:"proxyRequestBuffering,omitempty" export:"true"`
-	ClientBodyBufferSize  int64 `description:"Default buffer size for reading client request body." json:"clientBodyBufferSize,omitempty" toml:"clientBodyBufferSize,omitempty" yaml:"clientBodyBufferSize,omitempty" export:"true"`
-	ProxyBodySize         int64 `description:"Default maximum size of a client request body in bytes." json:"proxyBodySize,omitempty" toml:"proxyBodySize,omitempty" yaml:"proxyBodySize,omitempty" export:"true"`
-	ProxyBuffering        bool  `description:"Defines whether to enable response buffering." json:"proxyBuffering,omitempty" toml:"proxyBuffering,omitempty" yaml:"proxyBuffering,omitempty" export:"true"`
-	ProxyBufferSize       int64 `description:"Default buffer size for reading the response body." json:"proxyBufferSize,omitempty" toml:"proxyBufferSize,omitempty" yaml:"proxyBufferSize,omitempty" export:"true"`
-	ProxyBuffersNumber    int   `description:"Default number of buffers for reading a response." json:"proxyBuffersNumber,omitempty" toml:"proxyBuffersNumber,omitempty" yaml:"proxyBuffersNumber,omitempty" export:"true"`
+	CustomHTTPErrors      []string `description:"Defines which status should result in calling the default backend to return an error page." json:"customHTTPErrors,omitempty" toml:"customHTTPErrors,omitempty" yaml:"customHTTPErrors,omitempty" export:"true"`
 
 	// NonTLSEntryPoints contains the names of entrypoints that are configured without TLS.
 	NonTLSEntryPoints []string `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
@@ -630,6 +630,21 @@ func (p *Provider) buildService(namespace string, backend netv1.IngressBackend, 
 		return nil, fmt.Errorf("getting backend addresses: %w", err)
 	}
 
+	if backendAddresses == nil {
+		// Return an empty service to serve a 503, as NGINX does when no endpoints.
+		return &dynamic.Service{
+			Weighted: &dynamic.WeightedRoundRobin{
+				Services: []dynamic.WRRService{
+					{
+						Name:   "invalid-httproute-filter",
+						Status: ptr.To(500),
+						Weight: ptr.To(1),
+					},
+				},
+			},
+		}, nil
+	}
+
 	lb := &dynamic.ServersLoadBalancer{}
 	lb.SetDefaults()
 
@@ -736,6 +751,11 @@ func (p *Provider) getBackendAddresses(namespace string, backend netv1.IngressBa
 		return nil, errors.New("service port not found")
 	}
 
+	// If the default backend has no endpoints,
+	// and if there is no default-backend-service configured,
+	// the fallback with Ingress NGINX is to serve a 404,
+	// but here, we will later build an empty server load-balancer which serves a 503.
+	// TODO: make the built service return a 404.
 	return p.getBackendAddressesFromEndpointSlices(namespace, defaultBackend, portName)
 }
 
@@ -950,11 +970,21 @@ func (p *Provider) applyMiddlewares(namespace, ingressName, routerKey, rulePath,
 }
 
 func (p *Provider) applyCustomHTTPErrors(namespace, ingressName, routerName string, targetedService *netv1.IngressBackend, config ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
-	customHTTPErrors := ptr.Deref(config.CustomHTTPErrors, []string{})
+	customHTTPErrors := ptr.Deref(config.CustomHTTPErrors, p.CustomHTTPErrors)
 	if len(customHTTPErrors) == 0 {
 		return nil
 	}
 
+	if targetedService == nil {
+		return errors.New("targeted ingress backend is nil")
+	}
+
+	if targetedService.Service == nil {
+		return errors.New("targeted ingress backend has no service")
+	}
+
+	// TODO: here we always use the default backend as a fallback, but it is not guaranteed to be created,
+	// so we should check if it exists before and create a dummy service if not, which is too complicated to check without pre computed model.
 	serviceName := defaultBackendName
 	if defaultBackend := ptr.Deref(config.DefaultBackend, ""); defaultBackend != "" {
 		backend := netv1.IngressBackend{Service: &netv1.IngressServiceBackend{Name: defaultBackend}}
@@ -967,12 +997,6 @@ func (p *Provider) applyCustomHTTPErrors(namespace, ingressName, routerName stri
 		conf.HTTP.Services[serviceName] = service
 	}
 
-	if targetedService == nil {
-		return errors.New("targeted ingress backend is nil")
-	}
-	if targetedService.Service == nil {
-		return errors.New("targeted ingress backend has no service")
-	}
 	k8sServiceName := targetedService.Service.Name
 	serviceK8s, err := p.k8sClient.GetService(namespace, k8sServiceName)
 	if err != nil {
