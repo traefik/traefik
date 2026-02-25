@@ -630,21 +630,6 @@ func (p *Provider) buildService(namespace string, backend netv1.IngressBackend, 
 		return nil, fmt.Errorf("getting backend addresses: %w", err)
 	}
 
-	if backendAddresses == nil {
-		// Return an empty service to serve a 503, as NGINX does when no endpoints.
-		return &dynamic.Service{
-			Weighted: &dynamic.WeightedRoundRobin{
-				Services: []dynamic.WRRService{
-					{
-						Name:   "invalid-httproute-filter",
-						Status: ptr.To(500),
-						Weight: ptr.To(1),
-					},
-				},
-			},
-		}, nil
-	}
-
 	lb := &dynamic.ServersLoadBalancer{}
 	lb.SetDefaults()
 
