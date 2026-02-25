@@ -212,10 +212,10 @@ type Provider struct {
 	AllowSnippetAnnotations bool `description:"Enables to parse and add -snippet annotations/directives." json:"allowSnippetAnnotations,omitempty" toml:"allowSnippetAnnotations,omitempty" yaml:"allowSnippetAnnotations,omitempty" export:"true"`
 
 	// NonTLSEntryPoints contains the names of entrypoints that are configured without TLS.
-	NonTLSEntryPoints []string `description:"EntryPoint(s) (separated by comma) used for HTTP request."  json:"httpEntryPoint,omitempty" toml:"httpEntryPoint,omitempty" yaml:"httpEntryPoint,omitempty" export:"true"`
+	NonTLSEntryPoints []string `description:"EntryPoint(s) (separated by comma) used for HTTP requests."  json:"nonTlsEntryPoints,omitempty" toml:"nonTlsEntryPoints,omitempty" yaml:"nonTlsEntryPoints,omitempty" export:"true"`
 
 	// TLSEntryPoints contains the names of entrypoints that are configured with TLS.
-	TLSEntryPoints []string `description:"EntryPoint(s) (separated by comma) used for HTTPS requests."  json:"httpsEntryPoint,omitempty" toml:"httpsEntryPoint,omitempty" yaml:"httpsEntryPoint,omitempty" export:"true"`
+	TLSEntryPoints []string `description:"EntryPoint(s) (separated by comma) used for HTTPS requests."  json:"tlsEntryPoints,omitempty" toml:"tlsEntryPoints,omitempty" yaml:"tlsEntryPoints,omitempty" export:"true"`
 
 	allowedHeaders                 []string
 	defaultBackendServiceNamespace string
