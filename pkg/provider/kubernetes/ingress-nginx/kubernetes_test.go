@@ -1044,9 +1044,7 @@ func TestLoadIngresses(t *testing.T) {
 							},
 						},
 						"default-ingress-with-rewrite-target-no-regex-rule-0-path-0-retry": {
-							Retry: &dynamic.Retry{
-								Attempts: 3,
-							},
+							Retry: &dynamic.Retry{Attempts: 3},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -2930,9 +2928,7 @@ func TestLoadIngresses(t *testing.T) {
 							},
 						},
 						"default-ingress-with-custom-http-errors-and-default-backend-rule-0-path-0-retry": {
-							Retry: &dynamic.Retry{
-								Attempts: 3,
-							},
+							Retry: &dynamic.Retry{Attempts: 3},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -3035,9 +3031,7 @@ func TestLoadIngresses(t *testing.T) {
 							},
 						},
 						"default-ingress-with-custom-http-errors-rule-0-path-0-retry": {
-							Retry: &dynamic.Retry{
-								Attempts: 3,
-							},
+							Retry: &dynamic.Retry{Attempts: 3},
 						},
 					},
 					Services: map[string]*dynamic.Service{
@@ -3113,9 +3107,7 @@ func TestLoadIngresses(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-default-backend-annotation-rule-0-path-0-retry": {
-							Retry: &dynamic.Retry{
-								Attempts: 3,
-							},
+							Retry: &dynamic.Retry{Attempts: 3},
 						},
 					},
 					Services: map[string]*dynamic.Service{
