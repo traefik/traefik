@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"text/template"
+	"html/template"
 
 	"github.com/gorilla/mux"
 	"github.com/rs/zerolog/log"
