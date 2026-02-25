@@ -1034,13 +1034,18 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        "Host(`rewrite-target-no-regex.localhost`) && Path(`/original`)",
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-rewrite-target-no-regex-whoami-80",
-							Middlewares: []string{"default-ingress-with-rewrite-target-no-regex-rule-0-path-0-rewrite-target"},
+							Middlewares: []string{"default-ingress-with-rewrite-target-no-regex-rule-0-path-0-rewrite-target", "default-ingress-with-rewrite-target-no-regex-rule-0-path-0-retry"},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-rewrite-target-no-regex-rule-0-path-0-rewrite-target": {
 							ReplacePath: &dynamic.ReplacePath{
 								Path: "/rewritten",
+							},
+						},
+						"default-ingress-with-rewrite-target-no-regex-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
 							},
 						},
 					},
@@ -2908,7 +2913,7 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        "Host(`whoami.localhost`) && Path(`/`)",
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-custom-http-errors-and-default-backend-whoami-80",
-							Middlewares: []string{"default-ingress-with-custom-http-errors-and-default-backend-rule-0-path-0-custom-http-errors"},
+							Middlewares: []string{"default-ingress-with-custom-http-errors-and-default-backend-rule-0-path-0-custom-http-errors", "default-ingress-with-custom-http-errors-and-default-backend-rule-0-path-0-retry"},
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
@@ -2922,6 +2927,11 @@ func TestLoadIngresses(t *testing.T) {
 									"X-Service-Name": {"whoami"},
 									"X-Service-Port": {"80"},
 								},
+							},
+						},
+						"default-ingress-with-custom-http-errors-and-default-backend-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
 							},
 						},
 					},
@@ -2995,7 +3005,7 @@ func TestLoadIngresses(t *testing.T) {
 							Rule:        "Host(`whoami.localhost`) && Path(`/`)",
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-custom-http-errors-whoami-80",
-							Middlewares: []string{"default-ingress-with-custom-http-errors-rule-0-path-0-custom-http-errors"},
+							Middlewares: []string{"default-ingress-with-custom-http-errors-rule-0-path-0-custom-http-errors", "default-ingress-with-custom-http-errors-rule-0-path-0-retry"},
 						},
 						"default-backend": {
 							Rule:       "PathPrefix(`/`)",
@@ -3022,6 +3032,11 @@ func TestLoadIngresses(t *testing.T) {
 									"X-Service-Name": {"whoami"},
 									"X-Service-Port": {"80"},
 								},
+							},
+						},
+						"default-ingress-with-custom-http-errors-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
 							},
 						},
 					},
@@ -3090,12 +3105,19 @@ func TestLoadIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"default-ingress-with-default-backend-annotation-rule-0-path-0": {
-							Rule:       "Host(`whoami.localhost`) && Path(`/`)",
-							RuleSyntax: "default",
-							Service:    "default-ingress-with-default-backend-annotation-empty-80",
+							Rule:        "Host(`whoami.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-default-backend-annotation-empty-80",
+							Middlewares: []string{"default-ingress-with-default-backend-annotation-rule-0-path-0-retry"},
 						},
 					},
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-default-backend-annotation-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+					},
 					Services: map[string]*dynamic.Service{
 						"default-ingress-with-default-backend-annotation-empty-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
