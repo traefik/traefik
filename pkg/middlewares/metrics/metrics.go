@@ -13,6 +13,7 @@ import (
 	gokitmetrics "github.com/go-kit/kit/metrics"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
+	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
 	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
 	"github.com/traefik/traefik/v3/pkg/middlewares/retry"
@@ -34,14 +35,15 @@ const (
 )
 
 type metricsMiddleware struct {
-	next                 http.Handler
-	reqsCounter          metrics.CounterWithHeaders
-	reqsTLSCounter       gokitmetrics.Counter
-	reqDurationHistogram metrics.ScalableHistogram
-	reqsBytesCounter     gokitmetrics.Counter
-	respsBytesCounter    gokitmetrics.Counter
-	baseLabels           []string
-	name                 string
+	next                  http.Handler
+	needsKubernetesLabels bool
+	reqsCounter           metrics.CounterWithHeaders
+	reqsTLSCounter        gokitmetrics.Counter
+	reqDurationHistogram  metrics.ScalableHistogram
+	reqsBytesCounter      gokitmetrics.Counter
+	respsBytesCounter     gokitmetrics.Counter
+	baseLabels            []string
+	name                  string
 }
 
 // NewEntryPointMiddleware creates a new metrics middleware for an Entrypoint.
@@ -49,14 +51,15 @@ func NewEntryPointMiddleware(ctx context.Context, next http.Handler, registry me
 	middlewares.GetLogger(ctx, nameEntrypoint, typeName).Debug().Msg("Creating middleware")
 
 	return &metricsMiddleware{
-		next:                 next,
-		reqsCounter:          registry.EntryPointReqsCounter(),
-		reqsTLSCounter:       registry.EntryPointReqsTLSCounter(),
-		reqDurationHistogram: registry.EntryPointReqDurationHistogram(),
-		reqsBytesCounter:     registry.EntryPointReqsBytesCounter(),
-		respsBytesCounter:    registry.EntryPointRespsBytesCounter(),
-		baseLabels:           []string{"entrypoint", entryPointName},
-		name:                 nameEntrypoint,
+		next:                  next,
+		needsKubernetesLabels: registry.NeedsKubernetesLabels(),
+		reqsCounter:           registry.EntryPointReqsCounter(),
+		reqsTLSCounter:        registry.EntryPointReqsTLSCounter(),
+		reqDurationHistogram:  registry.EntryPointReqDurationHistogram(),
+		reqsBytesCounter:      registry.EntryPointReqsBytesCounter(),
+		respsBytesCounter:     registry.EntryPointRespsBytesCounter(),
+		baseLabels:            []string{"entrypoint", entryPointName},
+		name:                  nameEntrypoint,
 	}
 }
 
@@ -65,14 +68,15 @@ func NewRouterMiddleware(ctx context.Context, next http.Handler, registry metric
 	middlewares.GetLogger(ctx, nameRouter, typeName).Debug().Msg("Creating middleware")
 
 	return &metricsMiddleware{
-		next:                 next,
-		reqsCounter:          registry.RouterReqsCounter(),
-		reqsTLSCounter:       registry.RouterReqsTLSCounter(),
-		reqDurationHistogram: registry.RouterReqDurationHistogram(),
-		reqsBytesCounter:     registry.RouterReqsBytesCounter(),
-		respsBytesCounter:    registry.RouterRespsBytesCounter(),
-		baseLabels:           []string{"router", routerName, "service", serviceName},
-		name:                 nameRouter,
+		next:                  next,
+		needsKubernetesLabels: registry.NeedsKubernetesLabels(),
+		reqsCounter:           registry.RouterReqsCounter(),
+		reqsTLSCounter:        registry.RouterReqsTLSCounter(),
+		reqDurationHistogram:  registry.RouterReqDurationHistogram(),
+		reqsBytesCounter:      registry.RouterReqsBytesCounter(),
+		respsBytesCounter:     registry.RouterRespsBytesCounter(),
+		baseLabels:            []string{"router", routerName, "service", serviceName},
+		name:                  nameRouter,
 	}
 }
 
@@ -81,14 +85,15 @@ func NewServiceMiddleware(ctx context.Context, next http.Handler, registry metri
 	middlewares.GetLogger(ctx, nameService, typeName).Debug().Msg("Creating middleware")
 
 	return &metricsMiddleware{
-		next:                 next,
-		reqsCounter:          registry.ServiceReqsCounter(),
-		reqsTLSCounter:       registry.ServiceReqsTLSCounter(),
-		reqDurationHistogram: registry.ServiceReqDurationHistogram(),
-		reqsBytesCounter:     registry.ServiceReqsBytesCounter(),
-		respsBytesCounter:    registry.ServiceRespsBytesCounter(),
-		baseLabels:           []string{"service", serviceName},
-		name:                 nameService,
+		next:                  next,
+		needsKubernetesLabels: registry.NeedsKubernetesLabels(),
+		reqsCounter:           registry.ServiceReqsCounter(),
+		reqsTLSCounter:        registry.ServiceReqsTLSCounter(),
+		reqDurationHistogram:  registry.ServiceReqDurationHistogram(),
+		reqsBytesCounter:      registry.ServiceReqsBytesCounter(),
+		respsBytesCounter:     registry.ServiceRespsBytesCounter(),
+		baseLabels:            []string{"service", serviceName},
+		name:                  nameService,
 	}
 }
 
@@ -179,6 +184,29 @@ func (m *metricsMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request)
 	}
 
 	labels = append(labels, "code", strconv.Itoa(code))
+
+	if m.needsKubernetesLabels {
+		var core accesslog.CoreLogData
+		if logDataTable, ok := req.Context().Value(accesslog.DataTableKey).(*accesslog.LogData); ok && logDataTable != nil {
+			core = logDataTable.Core
+		}
+		if v, ok := core[accesslog.KubernetesNamespace]; ok {
+			labels = append(labels, "namespace", v.(string))
+		} else {
+			labels = append(labels, "namespace", "none")
+		}
+		if v, ok := core[accesslog.KubernetesKind]; ok {
+			labels = append(labels, "kind", v.(string))
+		} else {
+			labels = append(labels, "kind", "none")
+		}
+		if v, ok := core[accesslog.KubernetesName]; ok {
+			labels = append(labels, "name", v.(string))
+		} else {
+			labels = append(labels, "name", "none")
+		}
+	}
+
 	m.reqDurationHistogram.With(labels...).ObserveFromStart(start)
 	m.reqsCounter.With(req.Header, labels...).Add(1)
 	m.respsBytesCounter.With(labels...).Add(float64(capt.ResponseSize()))
