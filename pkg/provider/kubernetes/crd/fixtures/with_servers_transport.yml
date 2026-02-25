@@ -164,12 +164,14 @@ spec:
     idleConnTimeout: 42ms
     readIdleTimeout: 42s
     pingTimeout: 42s
+    readTimeout: 42s
+    writeTimeout: 42s
   spiffe:
     ids:
       - spiffe://foo/buz
       - spiffe://bar/biz
     trustDomain: spiffe://lol
-  cipherSuites: 
+  cipherSuites:
     - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
     - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
   minVersion: VersionTLS11
