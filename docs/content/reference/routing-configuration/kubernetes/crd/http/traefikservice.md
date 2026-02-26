@@ -3,13 +3,14 @@ title: "Traefik Kubernetes Services Documentation"
 description: "Learn how to configure routing and load balancing in Traefik Proxy to reach Services, which handle incoming requests. Read the technical documentation."
 --- 
 
-A `TraefikService` is a custom resource that sits on top of the Kubernetes Services. It enables advanced load-balancing features such as a [Weighted Round Robin](#weighted-round-robin) load balancing, a [Highest Random Weight](#highest-random-weight) load balancing, or a [Mirroring](#mirroring) between your Kubernetes Services.
+A `TraefikService` is a custom resource that sits on top of the Kubernetes Services. It enables advanced load-balancing features such as a [Weighted Round Robin](#weighted-round-robin) load balancing, a [Highest Random Weight](#highest-random-weight) load balancing, a [Mirroring](#mirroring), or a [Failover](#failover) between your Kubernetes Services.
 
 Services configure how to reach the actual endpoints that will eventually handle incoming requests. In Traefik, the target service can be either a standard [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/)—which exposes a pod—or a TraefikService. The latter allows you to combine advanced load-balancing options like:
 
 - [Weighted Round Robin load balancing](#weighted-round-robin).
 - [Highest Random Weight load balancing](#highest-random-weight).
-- [Mirroring](#mirroring). 
+- [Mirroring](#mirroring).
+- [Failover](#failover).
 
 ## Weighted Round Robin
 
@@ -507,3 +508,139 @@ The mirrorerd service dedicated option are described below.
 | Field                                                         | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | Default                                                              | Required |
 |:--------------------------------------------------------------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:---------------------------------------------------------------------|:---------|
 | <a id="opt-mirrorsm-percent" href="#opt-mirrorsm-percent" title="#opt-mirrorsm-percent">`mirrors[m].percent`</a> | Traffic percentage to route to the service.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | 0                                                                   | No       |
+
+## Failover
+
+The failover service forwards all requests to a fallback service when the main service responds with specific HTTP status codes defined in the `errors` configuration.
+
+### Configuration Example
+
+```yaml tab="IngressRoute"
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: test-name
+  namespace: apps
+
+spec:
+  entryPoints:
+  - websecure
+  routes:
+  - match: Host(`example.com`) && PathPrefix(`/foo`)
+    kind: Rule
+    services:
+    # Set a Failover TraefikService
+    - name: failover1
+      namespace: apps
+      kind: TraefikService
+```
+
+```yaml tab="Failover from Kubernetes Services"
+apiVersion: traefik.io/v1alpha1
+kind: TraefikService
+metadata:
+  name: failover1
+  namespace: apps
+
+spec:
+  failover:
+    service:
+      name: svc1
+      port: 80
+    fallback:
+      name: svc2
+      port: 80
+    errors:
+      status:
+        - "500-503"
+        - "429"
+```
+
+```yaml tab="Failover from TraefikService (WRR)"
+apiVersion: traefik.io/v1alpha1
+kind: TraefikService
+metadata:
+  name: failover1
+  namespace: apps
+
+spec:
+  failover:
+    service:
+      name: wrr1
+      kind: TraefikService
+    fallback:
+      name: wrr2
+      kind: TraefikService
+    errors:
+      status:
+        - "500-503"
+```
+
+```yaml tab="Failover with maxRequestBodyBytes"
+apiVersion: traefik.io/v1alpha1
+kind: TraefikService
+metadata:
+  name: failover1
+  namespace: apps
+
+spec:
+  failover:
+    service:
+      name: svc1
+      port: 80
+    fallback:
+      name: svc2
+      port: 80
+    errors:
+      status:
+        - "500-503"
+        - "429"
+      maxRequestBodyBytes: 1048576
+```
+
+```yaml tab="Kubernetes Services"
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc1
+  namespace: apps
+
+spec:
+  ports:
+  - name: http
+    port: 80
+  selector:
+    app: traefiklabs
+    task: app1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc2
+  namespace: apps
+
+spec:
+  ports:
+  - name: http
+    port: 80
+  selector:
+    app: traefiklabs
+    task: app2
+```
+
+### Configuration Options
+
+#### Main Service and Fallback Options
+
+The `service` and `fallback` fields each define a target service using the same options as a [`Service`](./service.md).
+
+The exhaustive list of the service options is described in the [`Service`](./service.md#configuration-options) documentation.
+
+#### Failover Dedicated Options
+
+| Field                                                          | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | Default                                                              | Required |
+|:---------------------------------------------------------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:---------------------------------------------------------------------|:---------|
+| <a id="opt-failover-service" href="#opt-failover-service" title="#opt-failover-service">`service`</a> | Main service to forward requests to. Provides the same options as a [`Service`](./service.md).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |                                                                      | Yes      |
+| <a id="opt-failover-fallback" href="#opt-failover-fallback" title="#opt-failover-fallback">`fallback`</a> | Fallback service to use when the main service becomes unhealthy or returns matching error status codes. Provides the same options as a [`Service`](./service.md).                                                                                                                                                                                                                                                                                                                                                                                                                                                   |                                                                      | Yes      |
+| <a id="opt-failover-errors-status" href="#opt-failover-errors-status" title="#opt-failover-errors-status">`errors.status`</a> | List of HTTP status code ranges for which the fallback service should be used.<br />Each entry can be a single code (e.g. `"429"`) or a range (e.g. `"500-503"`).                                                                                                                                                                                                                                                                                                                                                                                                                                                  |                                                                      | No       |
+| <a id="opt-failover-errors-maxRequestBodyBytes" href="#opt-failover-errors-maxRequestBodyBytes" title="#opt-failover-errors-maxRequestBodyBytes">`errors.`<br />`maxRequestBodyBytes`</a> | Maximum size allowed for the body of the request.<br />If the body is larger, the request is not replayed to the fallback service.<br />-1 means unlimited size.                                                                                                                                                                                                                                                                                                                                                                                                                                                     | -1                                                                   | No       |
