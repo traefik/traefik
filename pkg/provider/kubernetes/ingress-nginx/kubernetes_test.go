@@ -77,7 +77,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-cross-namespace-headers-rule-0-path-0": {
 							Rule:        "Host(`cross-namespace.localhost`) && Path(`/`)",
-							Middlewares: []string{"default-ingress-with-cross-namespace-headers-rule-0-path-0-custom-headers"},
+							Middlewares: []string{"default-ingress-with-cross-namespace-headers-rule-0-path-0-custom-headers", "default-ingress-with-cross-namespace-headers-rule-0-path-0-retry"},
 							RuleSyntax:  "default",
 							Service:     "default-ingress-with-cross-namespace-headers-whoami-80",
 						},
@@ -88,9 +88,19 @@ func TestLoadIngresses(t *testing.T) {
 								CustomResponseHeaders: map[string]string{"X-Custom-Header": "some-random-string"},
 							},
 						},
+						"default-ingress-with-custom-headers-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
 						"default-ingress-with-cross-namespace-headers-rule-0-path-0-custom-headers": {
 							Headers: &dynamic.Headers{
 								CustomResponseHeaders: map[string]string{"X-Cross-Header": "cross-value"},
+							},
+						},
+						"default-ingress-with-cross-namespace-headers-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
 							},
 						},
 					},
@@ -170,13 +180,13 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-custom-headers-rule-0-path-0": {
 							Rule:        "Host(`whoami.localhost`) && Path(`/`)",
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-custom-headers-rule-0-path-0-custom-headers"},
+							Middlewares: []string{"default-ingress-with-custom-headers-rule-0-path-0-custom-headers", "default-ingress-with-custom-headers-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-custom-headers-whoami-80",
 						},
 						"default-ingress-with-cross-namespace-headers-rule-0-path-0": {
 							Rule:        "Host(`cross-namespace.localhost`) && Path(`/`)",
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-cross-namespace-headers-rule-0-path-0-custom-headers"},
+							Middlewares: []string{"default-ingress-with-cross-namespace-headers-rule-0-path-0-custom-headers", "default-ingress-with-cross-namespace-headers-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-cross-namespace-headers-whoami-80",
 						},
 					},
@@ -194,6 +204,11 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-cross-namespace-headers-rule-0-path-0-custom-headers": {
 							Headers: &dynamic.Headers{
 								CustomResponseHeaders: map[string]string{"X-Cross-Header": "cross-value"},
+							},
+						},
+						"default-ingress-with-cross-namespace-headers-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
 							},
 						},
 					},
@@ -274,7 +289,7 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-custom-headers-rule-0-path-0": {
 							Rule:        "Host(`whoami.localhost`) && Path(`/`)",
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-custom-headers-rule-0-path-0-custom-headers"},
+							Middlewares: []string{"default-ingress-with-custom-headers-rule-0-path-0-custom-headers", "default-ingress-with-custom-headers-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-custom-headers-whoami-80",
 						},
 						"default-ingress-with-cross-namespace-headers-rule-0-path-0": {
@@ -287,6 +302,11 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-custom-headers-rule-0-path-0-custom-headers": {
 							Headers: &dynamic.Headers{
 								CustomResponseHeaders: map[string]string{"X-Custom-Header": "some-random-string"},
+							},
+						},
+						"default-ingress-with-custom-headers-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
 							},
 						},
 					},
