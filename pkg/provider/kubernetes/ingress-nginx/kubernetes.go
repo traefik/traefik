@@ -1051,6 +1051,7 @@ func (p *Provider) applySnippets(routerName, serverSnippet string, ingressConfig
 			ConfigurationSnippet: configurationSnippet,
 		},
 	}
+
 	rt.Middlewares = append(rt.Middlewares, snippetMiddlewareName)
 
 	return nil
