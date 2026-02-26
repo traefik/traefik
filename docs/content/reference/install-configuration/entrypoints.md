@@ -166,13 +166,13 @@ for example when using a dedicated service to solve HTTP-01 or TLS-ALPN-01 chall
     When no TLS challenge resolver is configured, `allowACMEByPass` is implicitly enabled
     for TLS passthrough on all entrypoints.
 
-!!! warning
+!!! note
 
-    `allowACMEByPass` only affects the **internal ACME router** priority.
-    It does **not** change the priority of the entrypoint redirect router
-    (configured via `http.redirections.entryPoint`).
-    If you have both a redirect and a custom ACME challenge router on the same entrypoint,
-    you must also set an explicit `priority` on the redirect to allow the challenge router to take precedence.
+    When `allowACMEByPass` is enabled and the entrypoint has an HTTP redirect configured
+    (via `http.redirections.entryPoint`), the redirect router automatically excludes
+    the ACME challenge path (`/.well-known/acme-challenge/`).
+    This allows user-defined ACME challenge routers to handle challenge requests
+    without being overridden by the redirect.
 
 ```yaml tab="File (YAML)"
 entryPoints:
