@@ -1025,11 +1025,11 @@ func (p *Provider) applyMiddlewares(namespace, ingressName, routerKey, rulePath,
 		return fmt.Errorf("applying custom headers: %w", err)
 	}
 
-	p.applyRetry(routerKey, ingressConfig, rt, conf)
-
 	if err := p.applySnippets(routerKey, serverSnippet, ingressConfig, rt, conf); err != nil {
 		return fmt.Errorf("applying snippets: %w", err)
 	}
+
+	p.applyRetry(routerKey, ingressConfig, rt, conf)
 
 	return nil
 }
