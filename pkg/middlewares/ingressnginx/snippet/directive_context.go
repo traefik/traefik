@@ -15,14 +15,21 @@ const (
 )
 
 var directiveContexts = map[string][]string{
-	"add_header":             {contextServer, contextLocation, contextIfInLocation},
-	"more_set_headers":       {contextServer, contextLocation, contextIf},
-	"proxy_set_header":       {contextServer, contextLocation},
-	"more_set_input_headers": {contextServer, contextLocation, contextIf},
-	"if":                     {contextServer, contextLocation},
-	"set":                    {contextServer, contextLocation, contextIf},
-	"return":                 {contextServer, contextLocation, contextIf},
-	"location":               {contextServer},
+	"add_header":               {contextServer, contextLocation, contextIfInLocation},
+	"more_set_headers":         {contextServer, contextLocation, contextIf},
+	"more_clear_headers":       {contextServer, contextLocation, contextIf},
+	"proxy_set_header":         {contextServer, contextLocation},
+	"more_set_input_headers":   {contextServer, contextLocation, contextIf},
+	"more_clear_input_headers": {contextServer, contextLocation, contextIf},
+	"if":                       {contextServer, contextLocation},
+	"set":                      {contextServer, contextLocation, contextIf},
+	"return":                   {contextServer, contextLocation, contextIf},
+	"rewrite":                  {contextServer, contextLocation, contextIf},
+	"location":                 {contextServer},
+	"allow":                    {contextServer, contextLocation, contextIf},
+	"deny":                     {contextServer, contextLocation, contextIf},
+	"proxy_hide_header":        {contextServer, contextLocation},
+	"expires":                  {contextServer, contextLocation, contextIfInLocation},
 }
 
 // isAllowedInContext checks if the directive is allowed in the context of its parent directive.

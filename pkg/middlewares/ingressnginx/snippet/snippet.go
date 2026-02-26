@@ -40,7 +40,7 @@ func New(ctx context.Context, next http.Handler, config *dynamic.Snippet, name s
 
 	parserOptions := []parser.Option{
 		parser.WithSkipComments(),
-		parser.WithCustomDirectives("more_set_headers", "more_set_input_headers"),
+		parser.WithCustomDirectives("more_set_headers", "more_set_input_headers", "more_clear_headers", "more_clear_input_headers", "proxy_hide_header"),
 	}
 
 	var serverActions *actions
@@ -91,28 +91,25 @@ func (s *Snippet) GetTracingInformation() (string, string) {
 }
 
 func (s *Snippet) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	wrappedRW := &snippetResponseWriter{ResponseWriter: rw}
+
 	ctx := &actionContext{
 		vars:                    make(map[string]string),
 		nonMergeablePostActions: make(map[string][]action),
 	}
 
-	stop, err := s.serverActions.Execute(rw, req, ctx)
+	stop, err := s.serverActions.Execute(wrappedRW, req, ctx)
 	if err != nil {
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		http.Error(wrappedRW, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	if stop {
-		if err = executePostActions(rw, req, ctx); err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
+		if err = executePostActions(wrappedRW, req, ctx); err != nil {
+			http.Error(wrappedRW, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		if ctx.statusCode != 0 {
-			rw.WriteHeader(ctx.statusCode)
-			if ctx.body != "" {
-				_, _ = rw.Write([]byte(ctx.body))
-			}
-		}
+		writeResponse(wrappedRW, req, ctx)
 		return
 	}
 
@@ -120,28 +117,83 @@ func (s *Snippet) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	// because the generated location block always contains proxy_set_header directives that override them.
 	ctx.nonMergeablePostActions["proxy_set_header"] = nil
 
-	stop, err = s.configurationActions.Execute(rw, req, ctx)
-	if err != nil {
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
-		return
+	// rewrite...break in the server snippet stops all directive processing,
+	// but post-actions (headers, etc.) and upstream forwarding still proceed.
+	if !ctx.stopAllDirectives {
+		ctx.stopCurrentBlock = false
+
+		stop, err = s.configurationActions.Execute(wrappedRW, req, ctx)
+		if err != nil {
+			http.Error(wrappedRW, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 
-	if err = executePostActions(rw, req, ctx); err != nil {
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
+	if err = executePostActions(wrappedRW, req, ctx); err != nil {
+		http.Error(wrappedRW, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	if stop {
-		if ctx.statusCode != 0 {
-			rw.WriteHeader(ctx.statusCode)
-			if ctx.body != "" {
-				_, _ = rw.Write([]byte(ctx.body))
-			}
-		}
+		writeResponse(wrappedRW, req, ctx)
 		return
 	}
 
-	s.next.ServeHTTP(rw, req)
+	s.next.ServeHTTP(wrappedRW, req)
+}
+
+// snippetResponseWriter wraps http.ResponseWriter to intercept WriteHeader calls.
+// This allows deferred response header operations (e.g., proxy_hide_header, conditional
+// header setting with -s/-t flags) to be applied based on the actual response status
+// code and content type set by the upstream.
+type snippetResponseWriter struct {
+	http.ResponseWriter
+
+	headerWritten bool
+	onWriteHeader []func(code int, h http.Header)
+}
+
+func (w *snippetResponseWriter) WriteHeader(code int) {
+	if w.headerWritten {
+		return
+	}
+	w.headerWritten = true
+	for _, fn := range w.onWriteHeader {
+		fn(code, w.Header())
+	}
+	w.ResponseWriter.WriteHeader(code)
+}
+
+func (w *snippetResponseWriter) Write(b []byte) (int, error) {
+	if !w.headerWritten {
+		w.WriteHeader(http.StatusOK)
+	}
+	return w.ResponseWriter.Write(b)
+}
+
+// Unwrap returns the underlying ResponseWriter, enabling http.ResponseController
+// to discover the underlying writer's capabilities (Flusher, Hijacker, etc.).
+func (w *snippetResponseWriter) Unwrap() http.ResponseWriter {
+	return w.ResponseWriter
+}
+
+// writeResponse writes the final response based on the action context.
+// For redirect status codes (301, 302, 303, 307, 308) with a URL, it performs an HTTP redirect.
+// For other status codes, it writes the status code and optional body text.
+func writeResponse(rw http.ResponseWriter, req *http.Request, ctx *actionContext) {
+	if ctx.statusCode == 0 {
+		return
+	}
+
+	if ctx.redirectURL != "" {
+		http.Redirect(rw, req, ctx.redirectURL, ctx.statusCode)
+		return
+	}
+
+	rw.WriteHeader(ctx.statusCode)
+	if ctx.body != "" {
+		_, _ = rw.Write([]byte(ctx.body))
+	}
 }
 
 func executePostActions(rw http.ResponseWriter, req *http.Request, ctx *actionContext) error {
