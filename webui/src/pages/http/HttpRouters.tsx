@@ -59,7 +59,7 @@ export const makeRowRender = (protocol = 'http'): RenderRowType => {
         </Tooltip>
       </AriaTd>
       <AriaTd>
-        <TooltipText text={row.priority} isTruncated />
+        <TooltipText text={row.priorityStr ?? row.priority} isTruncated />
       </AriaTd>
     </ClickableRow>
   )

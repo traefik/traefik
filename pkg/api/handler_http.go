@@ -17,8 +17,9 @@ import (
 type routerRepresentation struct {
 	*runtime.RouterInfo
 
-	Name     string `json:"name,omitempty"`
-	Provider string `json:"provider,omitempty"`
+	Name        string `json:"name,omitempty"`
+	Provider    string `json:"provider,omitempty"`
+	PriorityStr string `json:"priorityStr,omitempty"`
 }
 
 func newRouterRepresentation(name string, rt *runtime.RouterInfo) routerRepresentation {
@@ -26,11 +27,17 @@ func newRouterRepresentation(name string, rt *runtime.RouterInfo) routerRepresen
 		rt.TLS.Options = tls.DefaultTLSConfigName
 	}
 
-	return routerRepresentation{
+	rep := routerRepresentation{
 		RouterInfo: rt,
 		Name:       name,
 		Provider:   getProviderName(name),
 	}
+
+	if rt.Priority != 0 {
+		rep.PriorityStr = strconv.FormatInt(int64(rt.Priority), 10)
+	}
+
+	return rep
 }
 
 type serviceRepresentation struct {

@@ -55,7 +55,7 @@ export const makeRowRender = (): RenderRowType => {
         </Tooltip>
       </AriaTd>
       <AriaTd>
-        <TooltipText text={row.priority} isTruncated />
+        <TooltipText text={row.priorityStr ?? row.priority} isTruncated />
       </AriaTd>
     </ClickableRow>
   )

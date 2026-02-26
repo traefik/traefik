@@ -109,6 +109,7 @@
       "web-redirect"
     ],
     "priority": 9223372036854776000,
+    "priorityStr": "9223372036854776000",
     "provider": "docker"
   },
   {

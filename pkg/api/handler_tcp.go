@@ -16,16 +16,23 @@ import (
 type tcpRouterRepresentation struct {
 	*runtime.TCPRouterInfo
 
-	Name     string `json:"name,omitempty"`
-	Provider string `json:"provider,omitempty"`
+	Name        string `json:"name,omitempty"`
+	Provider    string `json:"provider,omitempty"`
+	PriorityStr string `json:"priorityStr,omitempty"`
 }
 
 func newTCPRouterRepresentation(name string, rt *runtime.TCPRouterInfo) tcpRouterRepresentation {
-	return tcpRouterRepresentation{
+	rep := tcpRouterRepresentation{
 		TCPRouterInfo: rt,
 		Name:          name,
 		Provider:      getProviderName(name),
 	}
+
+	if rt.Priority != 0 {
+		rep.PriorityStr = strconv.FormatInt(int64(rt.Priority), 10)
+	}
+
+	return rep
 }
 
 type tcpServiceRepresentation struct {
