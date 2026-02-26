@@ -1164,9 +1164,9 @@ func applyFromToWwwRedirect(hosts map[string]bool, ruleHost, routerName string, 
 	fromToWwwRedirectMiddlewareName := routerName + "-from-to-www-redirect"
 	conf.HTTP.Middlewares[fromToWwwRedirectMiddlewareName] = &dynamic.Middleware{
 		RedirectRegex: &dynamic.RedirectRegex{
-			Regex:       `(https?)://[^/]+:([0-9]+)/(.*)`,
-			Replacement: fmt.Sprintf("$1://%s:$2/$3", ruleHost),
-			Permanent:   true,
+			Regex:       `(https?)://[^/:]+(:[0-9]+)?/(.*)`,
+			Replacement: fmt.Sprintf("$1://%s$2/$3", ruleHost),
+			StatusCode:  ptr.To(http.StatusPermanentRedirect),
 		},
 	}
 

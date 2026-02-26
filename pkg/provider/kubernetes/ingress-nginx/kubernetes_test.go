@@ -1238,9 +1238,9 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-www-host-rule-0-path-0-from-to-www-redirect": {
 							RedirectRegex: &dynamic.RedirectRegex{
-								Regex:       `(https?)://[^/]+:([0-9]+)/(.*)`,
-								Replacement: "$1://www.host.localhost:$2/$3",
-								Permanent:   true,
+								Regex:       `(https?)://[^/:]+(:[0-9]+)?/(.*)`,
+								Replacement: "$1://www.host.localhost$2/$3",
+								StatusCode:  ptr.To(http.StatusPermanentRedirect),
 							},
 						},
 						"default-ingress-with-www-host-rule-0-path-0-retry": {
@@ -1312,9 +1312,9 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-host-rule-0-path-0-from-to-www-redirect": {
 							RedirectRegex: &dynamic.RedirectRegex{
-								Regex:       `(https?)://[^/]+:([0-9]+)/(.*)`,
-								Replacement: "$1://host.localhost:$2/$3",
-								Permanent:   true,
+								Regex:       `(https?)://[^/:]+(:[0-9]+)?/(.*)`,
+								Replacement: "$1://host.localhost$2/$3",
+								StatusCode:  ptr.To(http.StatusPermanentRedirect),
 							},
 						},
 						"default-ingress-with-host-rule-0-path-0-retry": {
