@@ -1174,11 +1174,17 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-x-forwarded-prefix-rule-0-path-0": {
 							Rule:        "Host(`x-forwarded-prefix.localhost`) && Path(`/`)",
 							RuleSyntax:  "default",
-							Middlewares: nil,
+							Middlewares: []string{"default-ingress-with-x-forwarded-prefix-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-x-forwarded-prefix-whoami-80",
 						},
 					},
-					Middlewares: map[string]*dynamic.Middleware{},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-x-forwarded-prefix-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+					},
 					Services: map[string]*dynamic.Service{
 						"default-ingress-with-x-forwarded-prefix-whoami-80": {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
@@ -1202,7 +1208,9 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-x-forwarded-prefix": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:  ptypes.Duration(60 * time.Second),
+								ReadTimeout:  ptypes.Duration(60 * time.Second),
+								WriteTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -1227,14 +1235,24 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-x-forwarded-prefix-rule-0-path-0": {
 							Rule:        "Host(`x-forwarded-prefix.localhost`) && Path(`/`)",
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-x-forwarded-prefix-rule-0-path-0-x-forwarded-prefix"},
+							Middlewares: []string{"default-ingress-with-x-forwarded-prefix-rule-0-path-0-rewrite-target", "default-ingress-with-x-forwarded-prefix-rule-0-path-0-x-forwarded-prefix", "default-ingress-with-x-forwarded-prefix-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-x-forwarded-prefix-whoami-80",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-x-forwarded-prefix-rule-0-path-0-rewrite-target": {
+							ReplacePath: &dynamic.ReplacePath{
+								Path: "/path",
+							},
+						},
 						"default-ingress-with-x-forwarded-prefix-rule-0-path-0-x-forwarded-prefix": {
 							Headers: &dynamic.Headers{
 								CustomRequestHeaders: map[string]string{"x-forwarded-prefix": "x-forwarded-prefix-header-value"},
+							},
+						},
+						"default-ingress-with-x-forwarded-prefix-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
 							},
 						},
 					},
@@ -1261,7 +1279,9 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-x-forwarded-prefix": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:  ptypes.Duration(60 * time.Second),
+								ReadTimeout:  ptypes.Duration(60 * time.Second),
+								WriteTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
