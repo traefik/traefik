@@ -898,8 +898,8 @@ Failover can be triggered in two ways:
 !!! info "Relation to HealthCheck"
     The failover service relies on the HealthCheck system to get notified when its main service becomes unreachable, which means HealthCheck needs to be enabled and functional on the main service. However, HealthCheck does not need to be enabled on the failover service itself for it to be functional. It is only required in order to propagate upwards the information when the failover itself becomes down (i.e. both its main and its fallback are down too).
 
-!!! info "Supported Provider"
-    This service type can currently only be defined with the [File](../../../install-configuration/providers/others/file.md) provider.
+!!! info "Supported Providers"
+    This service type can be defined with the [File](../../../install-configuration/providers/others/file.md) and [Kubernetes CRD](../../../install-configuration/providers/kubernetes/kubernetes-crd.md) providers.
 
 #### HealthCheck
 
@@ -909,7 +909,7 @@ HealthCheck enables automatic self-healthcheck for this service, i.e. if the mai
 
     If HealthCheck is enabled for a given service and any of its descendants does not have it enabled, the creation of the service will fail.
 
-    HealthCheck on a Failover service can be defined currently only with the [File provider](../../../install-configuration/providers/others/file.md).  
+    HealthCheck on a Failover service can be defined with the [File](../../../install-configuration/providers/others/file.md) and [Kubernetes CRD](../../../install-configuration/providers/kubernetes/kubernetes-crd.md) providers.
 
 ```yaml tab="Structured (YAML)"
 ## Routing configuration
