@@ -3,7 +3,7 @@ package static
 import (
 	"errors"
 	"fmt"
-	"path"
+	"regexp"
 	"strings"
 	"time"
 
@@ -56,6 +56,9 @@ const (
 	// before releasing all resources related to that session.
 	DefaultUDPTimeout = 3 * time.Second
 )
+
+// Allowed characters in URL following RFC 3986 (https://www.rfc-editor.org/rfc/rfc3986#section-2)
+var validBasePath = regexp.MustCompile(`^/[a-zA-Z0-9/_.-]*$`)
 
 // Configuration is the static configuration.
 type Configuration struct {
@@ -464,8 +467,8 @@ func (c *Configuration) ValidateConfiguration() error {
 		}
 	}
 
-	if c.API != nil && !path.IsAbs(c.API.BasePath) {
-		return errors.New("API basePath must be a valid absolute path")
+	if c.API != nil && !validBasePath.MatchString(c.API.BasePath) {
+		return errors.New("API basePath must be a valid absolute URL path")
 	}
 
 	if c.OCSP != nil {

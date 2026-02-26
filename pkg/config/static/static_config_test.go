@@ -282,3 +282,89 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateConfiguration_BasePath(t *testing.T) {
+	tests := []struct {
+		desc      string
+		basePath  string
+		expectErr bool
+	}{
+		{
+			desc:      "valid simple path",
+			basePath:  "/api",
+			expectErr: false,
+		},
+		{
+			desc:      "valid path with segments",
+			basePath:  "/my/base/path",
+			expectErr: false,
+		},
+		{
+			desc:      "valid path with allowed special chars",
+			basePath:  "/valid/path-123",
+			expectErr: false,
+		},
+		{
+			desc:      "relative path",
+			basePath:  "api/path",
+			expectErr: true,
+		},
+		{
+			desc:      "XSS payload",
+			basePath:  `/api/"></script><script>alert("XSS")</script>`,
+			expectErr: true,
+		},
+		{
+			desc:      "path with spaces",
+			basePath:  "/path with spaces",
+			expectErr: true,
+		},
+		{
+			desc:      "path with angle brackets",
+			basePath:  "/path/<evil>",
+			expectErr: true,
+		},
+		{
+			desc:      "path with query string",
+			basePath:  "/api?foo=bar",
+			expectErr: true,
+		},
+		{
+			desc:      "path with fragment",
+			basePath:  "/api#section",
+			expectErr: true,
+		},
+		{
+			desc:      "valid root path",
+			basePath:  "/",
+			expectErr: false,
+		},
+		{
+			desc:      "path with quote",
+			basePath:  "/api/'onclick=alert(1)",
+			expectErr: true,
+		},
+		{
+			desc:      "path with encoded character",
+			basePath:  "/api%2Ftoto",
+			expectErr: true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := &Configuration{
+				API: &API{BasePath: test.basePath},
+			}
+
+			err := cfg.ValidateConfiguration()
+			if test.expectErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
