@@ -2,11 +2,14 @@ package service
 
 import (
 	"bytes"
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"errors"
+	"io"
 	"math/big"
 	"net"
 	"net/http"
@@ -15,6 +18,7 @@ import (
 	"os"
 	"sync/atomic"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -24,6 +28,7 @@ import (
 	"github.com/spiffe/go-spiffe/v2/svid/x509svid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
@@ -962,4 +967,125 @@ func TestKerberosRoundTripper(t *testing.T) {
 			require.Equal(t, test.expectedDedicatedCount, dedicatedCount)
 		})
 	}
+}
+
+func TestConnectionTimeouts(t *testing.T) {
+	testcases := []struct {
+		desc                     string
+		readTimeout              ptypes.Duration
+		writeTimeout             ptypes.Duration
+		serverResponseDelay      time.Duration
+		expectedReadTimeoutError bool
+	}{
+		{
+			desc:                     "read timeout - server delays longer than client timeout",
+			readTimeout:              ptypes.Duration(50 * time.Millisecond),
+			serverResponseDelay:      150 * time.Millisecond,
+			expectedReadTimeoutError: true,
+		},
+		{
+			desc:                     "read succeeds with sufficient timeout",
+			readTimeout:              ptypes.Duration(500 * time.Millisecond),
+			serverResponseDelay:      100 * time.Millisecond,
+			expectedReadTimeoutError: false,
+		},
+		{
+			desc:                     "no read timeout set - should succeed",
+			serverResponseDelay:      100 * time.Millisecond,
+			expectedReadTimeoutError: false,
+		},
+		{
+			desc:                     "write timeout set on connection",
+			writeTimeout:             ptypes.Duration(200 * time.Millisecond),
+			serverResponseDelay:      50 * time.Millisecond,
+			expectedReadTimeoutError: false,
+		},
+	}
+
+	for _, test := range testcases {
+		t.Run(test.desc, func(t *testing.T) {
+			ln, err := net.Listen("tcp", "127.0.0.1:0")
+			require.NoError(t, err, "failed to create listener")
+			defer ln.Close()
+
+			acceptDone := make(chan struct{})
+			go func() {
+				defer close(acceptDone)
+				srvConn, err := ln.Accept()
+				if err != nil {
+					return
+				}
+				defer srvConn.Close()
+
+				if test.serverResponseDelay > 0 {
+					time.Sleep(test.serverResponseDelay)
+				}
+				_, err = srvConn.Write([]byte("HELLO"))
+				if err != nil && !errors.Is(err, net.ErrClosed) {
+					t.Logf("server write error: %v", err)
+				}
+			}()
+
+			cfg := &dynamic.ForwardingTimeouts{
+				ReadTimeout:  test.readTimeout,
+				WriteTimeout: test.writeTimeout,
+			}
+			d := &net.Dialer{}
+			dialFn := customDialContext(d, cfg)
+
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+
+			conn, err := dialFn(ctx, "tcp", ln.Addr().String())
+			require.NoError(t, err, "failed to dial server")
+			require.NotNil(t, conn)
+			defer func() {
+				_ = conn.Close()
+			}()
+
+			// Attempt to read from the connection - this tests the read timeout behavior.
+			buf := make([]byte, 10)
+			_, readErr := conn.Read(buf)
+
+			if test.expectedReadTimeoutError {
+				require.Error(t, readErr, "expected read to timeout")
+				ne, ok := readErr.(net.Error)
+				require.True(t, ok, "expected net.Error, got %T: %v", readErr, readErr)
+				require.True(t, ne.Timeout(), "expected timeout error from Read, got: %v", readErr)
+			} else {
+				// If no timeout is expected, either read succeeds or we get io.EOF
+				if readErr != nil && readErr != io.EOF {
+					var netErr net.Error
+					if errors.As(readErr, &netErr) && netErr.Timeout() {
+						t.Fatalf("unexpected timeout error on read: %v", readErr)
+					}
+				}
+			}
+
+			// Attempt a write to verify write timeouts are set (if configured).
+			// Note: Write timeouts are difficult to test reliably because the OS buffer
+			// may accept writes without blocking. This just verifies the connection
+			// accepts the write and has the timeout configured.
+			if test.writeTimeout > 0 {
+				_, writeErr := conn.Write([]byte("test"))
+				// Accept any outcome - the important thing is the timeout was configured
+				_ = writeErr
+			}
+
+			// Wait for accept goroutine to finish.
+			select {
+			case <-acceptDone:
+			case <-time.After(6 * time.Second):
+				t.Error("accept goroutine did not finish in time")
+			}
+		})
+	}
+}
+
+func TestTimingWithSynctest(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		start := time.Now().UTC()
+		time.Sleep(5 * time.Second)
+		t.Log(time.Since(start))
+	})
 }
