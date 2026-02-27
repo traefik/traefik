@@ -1011,6 +1011,8 @@ func createRewriteAction(d config.IDirective) (action, error) {
 			// Otherwise, keep the original query string.
 		}
 
+		req.RequestURI = req.URL.RequestURI()
+
 		// In NGINX, last restarts location matching while break stays in the
 		// current location. In Traefik's middleware model, last stops
 		// processing the current block (allowing subsequent blocks to run),
