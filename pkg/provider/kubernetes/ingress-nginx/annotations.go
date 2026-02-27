@@ -8,8 +8,9 @@ import (
 	netv1 "k8s.io/api/networking/v1"
 )
 
+// IngressConfig holds the parsed annotations.
 // TODO: when implementing load-balance the corresponding behavior should be implemented for canaries.
-type ingressConfig struct {
+type IngressConfig struct {
 	AuthType       *string `annotation:"nginx.ingress.kubernetes.io/auth-type"`
 	AuthSecret     *string `annotation:"nginx.ingress.kubernetes.io/auth-secret"`
 	AuthRealm      *string `annotation:"nginx.ingress.kubernetes.io/auth-realm"`
@@ -116,12 +117,17 @@ type ingressConfig struct {
 	CanaryHeaderPattern *string `annotation:"nginx.ingress.kubernetes.io/canary-by-header-pattern"`
 	CanaryWeight        *int    `annotation:"nginx.ingress.kubernetes.io/canary-weight"`
 	CanaryWeightTotal   *int    `annotation:"nginx.ingress.kubernetes.io/canary-weight-total"`
+
+	EnableModSecurity        *bool   `annotation:"nginx.ingress.kubernetes.io/enable-modsecurity"`
+	EnableOWASPCoreRules     *bool   `annotation:"nginx.ingress.kubernetes.io/enable-owasp-core-rules"`
+	ModSecurityTransactionID *string `annotation:"nginx.ingress.kubernetes.io/modsecurity-transaction-id"`
+	ModSecuritySnippet       *string `annotation:"nginx.ingress.kubernetes.io/modsecurity-snippet"`
 }
 
-// parseIngressConfig parses the annotations from an Ingress object into an ingressConfig struct.
-func parseIngressConfig(ing *netv1.Ingress) ingressConfig {
-	cfg := ingressConfig{}
-	cfgType := reflect.TypeFor[ingressConfig]()
+// parseIngressConfig parses the annotations from an Ingress object into an IngressConfig struct.
+func parseIngressConfig(ing *netv1.Ingress) IngressConfig {
+	cfg := IngressConfig{}
+	cfgType := reflect.TypeFor[IngressConfig]()
 	cfgValue := reflect.ValueOf(&cfg).Elem()
 
 	for i := range cfgType.NumField() {
