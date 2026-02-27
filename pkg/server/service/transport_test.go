@@ -1049,16 +1049,14 @@ func TestConnectionTimeouts(t *testing.T) {
 
 			if test.expectedReadTimeoutError {
 				require.Error(t, readErr, "expected read to timeout")
-				ne, ok := readErr.(net.Error)
+				var netErr net.Error
+				ok := errors.As(readErr, &netErr)
 				require.True(t, ok, "expected net.Error, got %T: %v", readErr, readErr)
-				require.True(t, ne.Timeout(), "expected timeout error from Read, got: %v", readErr)
-			} else {
-				// If no timeout is expected, either read succeeds or we get io.EOF
-				if readErr != nil && readErr != io.EOF {
-					var netErr net.Error
-					if errors.As(readErr, &netErr) && netErr.Timeout() {
-						t.Fatalf("unexpected timeout error on read: %v", readErr)
-					}
+				require.True(t, netErr.Timeout(), "expected timeout error from Read, got: %v", readErr)
+			} else if readErr != nil && !errors.Is(readErr, io.EOF) {
+				var netErr net.Error
+				if errors.As(readErr, &netErr) && netErr.Timeout() {
+					t.Fatalf("unexpected timeout error on read: %v", readErr)
 				}
 			}
 
