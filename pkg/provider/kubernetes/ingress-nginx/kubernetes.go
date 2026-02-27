@@ -630,6 +630,18 @@ func (p *Provider) buildServersTransport(namespace, name string, cfg ingressConf
 		},
 	}
 
+	proxyHTTPVersion := ptr.Deref(cfg.ProxyHTTPVersion, "")
+	if proxyHTTPVersion != "" {
+		switch proxyHTTPVersion {
+		case "1.1":
+			nst.ServersTransport.DisableHTTP2 = true
+		case "1.0":
+			log.Warn().Str("ingress", namespace+"/"+name).Msg("proxy-http-version '1.0' is not supported, ignoring annotation")
+		default:
+			log.Warn().Str("ingress", namespace+"/"+name).Str("value", proxyHTTPVersion).Msg("Invalid proxy-http-version value, ignoring annotation")
+		}
+	}
+
 	if scheme := parseBackendProtocol(ptr.Deref(cfg.BackendProtocol, "HTTP")); scheme != "https" {
 		return nst, nil
 	}

@@ -4440,6 +4440,121 @@ func TestLoadIngresses(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
+		{
+			desc: "Proxy HTTP version 1.1",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-proxy-http-version.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-proxy-http-version-rule-0-path-0": {
+							Rule:        "Host(`proxy-http-version.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-proxy-http-version-whoami-80",
+							Middlewares: []string{"default-ingress-with-proxy-http-version-rule-0-path-0-retry"},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-proxy-http-version-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-proxy-http-version-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-with-proxy-http-version",
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-proxy-http-version": {
+							DisableHTTP2: true,
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:  ptypes.Duration(60 * time.Second),
+								ReadTimeout:  ptypes.Duration(60 * time.Second),
+								WriteTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "Proxy HTTP version 1.0 (unsupported)",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-proxy-http-version-unsupported.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-proxy-http-version-unsupported-rule-0-path-0": {
+							Rule:        "Host(`proxy-http-version-unsupported.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-proxy-http-version-unsupported-whoami-80",
+							Middlewares: []string{"default-ingress-with-proxy-http-version-unsupported-rule-0-path-0-retry"},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-proxy-http-version-unsupported-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-proxy-http-version-unsupported-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-with-proxy-http-version-unsupported",
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-proxy-http-version-unsupported": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:  ptypes.Duration(60 * time.Second),
+								ReadTimeout:  ptypes.Duration(60 * time.Second),
+								WriteTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
 	}
 
 	for _, test := range testCases {
