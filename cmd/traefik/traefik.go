@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"crypto/x509"
-	"encoding/json"
 	"fmt"
 	"io"
 	stdlog "log"
@@ -31,23 +30,24 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
 	"github.com/traefik/traefik/v3/pkg/config/static"
-	"github.com/traefik/traefik/v3/pkg/logs"
-	"github.com/traefik/traefik/v3/pkg/metrics"
 	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
+	"github.com/traefik/traefik/v3/pkg/observability/logs"
+	"github.com/traefik/traefik/v3/pkg/observability/metrics"
+	"github.com/traefik/traefik/v3/pkg/observability/tracing"
+	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	"github.com/traefik/traefik/v3/pkg/provider/acme"
 	"github.com/traefik/traefik/v3/pkg/provider/aggregator"
 	"github.com/traefik/traefik/v3/pkg/provider/tailscale"
 	"github.com/traefik/traefik/v3/pkg/provider/traefik"
 	"github.com/traefik/traefik/v3/pkg/proxy"
 	"github.com/traefik/traefik/v3/pkg/proxy/httputil"
+	"github.com/traefik/traefik/v3/pkg/redactor"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/server"
 	"github.com/traefik/traefik/v3/pkg/server/middleware"
 	"github.com/traefik/traefik/v3/pkg/server/service"
 	"github.com/traefik/traefik/v3/pkg/tcp"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
-	"github.com/traefik/traefik/v3/pkg/tracing"
-	"github.com/traefik/traefik/v3/pkg/types"
 	"github.com/traefik/traefik/v3/pkg/version"
 	wsvc "golang.org/x/sys/windows/svc"
 	"github.com/traefik/traefik/v3/pkg/winsvc"
@@ -93,9 +93,20 @@ Complete documentation is available at https://traefik.io`,
 }
 
 func runCmd(staticConfiguration *static.Configuration) error {
-	if err := setupLogger(staticConfiguration); err != nil {
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer cancel()	
+	
+	ctx, cancelWinSVC := setupWindowsServiceCancellation(ctx)
+	defer cancelWinSVC()
+
+	if err := setupLogger(ctx, staticConfiguration); err != nil {
 		return fmt.Errorf("setting up logger: %w", err)
 	}
+
+	log.Warn().Msg("Traefik can reject some encoded characters in the request path." +
+		"When your backend is not fully compliant with [RFC 3986](https://datatracker.ietf.org/doc/html/rfc3986)," +
+		"it is recommended to set these options to `false` to avoid split-view situation." +
+		"Refer to the documentation for more details: https://doc.traefik.io/traefik/v3.6/migrate/v3/#encoded-characters-configuration-default-values")
 
 	http.DefaultTransport.(*http.Transport).Proxy = http.ProxyFromEnvironment
 
@@ -107,17 +118,14 @@ func runCmd(staticConfiguration *static.Configuration) error {
 	log.Info().Str("version", version.Version).
 		Msgf("Traefik version %s built on %s", version.Version, version.BuildDate)
 
-	jsonConf, err := json.Marshal(staticConfiguration)
+	redactedStaticConfiguration, err := redactor.RemoveCredentials(staticConfiguration)
 	if err != nil {
-		log.Error().Err(err).Msg("Could not marshal static configuration")
-		log.Debug().Interface("staticConfiguration", staticConfiguration).Msg("Static configuration loaded [struct]")
+		log.Error().Err(err).Msg("Could not redact static configuration")
 	} else {
-		log.Debug().RawJSON("staticConfiguration", jsonConf).Msg("Static configuration loaded [json]")
+		log.Debug().RawJSON("staticConfiguration", []byte(redactedStaticConfiguration)).Msg("Static configuration loaded [json]")
 	}
 
-	if staticConfiguration.Global.CheckNewVersion {
-		checkNewVersion()
-	}
+	checkNewVersion(staticConfiguration)
 
 	stats(staticConfiguration)
 
@@ -125,11 +133,6 @@ func runCmd(staticConfiguration *static.Configuration) error {
 	if err != nil {
 		return err
 	}
-
-	ctx, _ := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-	
-	ctx, cancel := setupWindowsServiceCancellation(ctx)
-	defer cancel()
 
 	if staticConfiguration.Ping != nil {
 		staticConfiguration.Ping.WithContext(ctx)
@@ -219,7 +222,9 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 
 	// ACME
 
-	tlsManager := traefiktls.NewManager()
+	tlsManager := traefiktls.NewManager(staticConfiguration.OCSP)
+	routinesPool.GoCtx(tlsManager.Run)
+
 	httpChallengeProvider := acme.NewChallengeHTTP()
 
 	tlsChallengeProvider := acme.NewChallengeTLSALPN()
@@ -245,8 +250,8 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 		}
 	}
 	metricsRegistry := metrics.NewMultiRegistry(metricRegistries)
-	accessLog := setupAccessLog(staticConfiguration.AccessLog)
-	tracer, tracerCloser := setupTracing(staticConfiguration.Tracing)
+	accessLog := setupAccessLog(ctx, staticConfiguration.AccessLog)
+	tracer, tracerCloser := setupTracing(ctx, staticConfiguration.Tracing)
 	observabilityMgr := middleware.NewObservabilityMgr(*staticConfiguration, metricsRegistry, semConvMetricRegistry, accessLog, tracer, tracerCloser)
 
 	// Entrypoints
@@ -263,6 +268,7 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 
 	if staticConfiguration.API != nil {
 		version.DisableDashboardAd = staticConfiguration.API.DisableDashboardAd
+		version.DashboardName = staticConfiguration.API.DashboardName
 	}
 
 	// Plugins
@@ -338,7 +344,10 @@ func setupServer(staticConfiguration *static.Configuration) (*server.Server, err
 
 	// Router factory
 
-	routerFactory := server.NewRouterFactory(*staticConfiguration, managerFactory, tlsManager, observabilityMgr, pluginBuilder, dialerManager)
+	routerFactory, err := server.NewRouterFactory(*staticConfiguration, managerFactory, tlsManager, observabilityMgr, pluginBuilder, dialerManager)
+	if err != nil {
+		return nil, fmt.Errorf("creating router factory: %w", err)
+	}
 
 	// Watcher
 
@@ -537,7 +546,7 @@ func initTailscaleProviders(cfg *static.Configuration, providerAggregator *aggre
 	return providers
 }
 
-func registerMetricClients(metricsConfig *types.Metrics) []metrics.Registry {
+func registerMetricClients(metricsConfig *otypes.Metrics) []metrics.Registry {
 	if metricsConfig == nil {
 		return nil
 	}
@@ -618,12 +627,12 @@ func appendCertMetric(gauge gokitmetrics.Gauge, certificate *x509.Certificate) {
 	gauge.With(labels...).Set(notAfter)
 }
 
-func setupAccessLog(conf *types.AccessLog) *accesslog.Handler {
+func setupAccessLog(ctx context.Context, conf *otypes.AccessLog) *accesslog.Handler {
 	if conf == nil {
 		return nil
 	}
 
-	accessLoggerMiddleware, err := accesslog.NewHandler(conf)
+	accessLoggerMiddleware, err := accesslog.NewHandler(ctx, conf)
 	if err != nil {
 		log.Warn().Err(err).Msg("Unable to create access logger")
 		return nil
@@ -632,12 +641,12 @@ func setupAccessLog(conf *types.AccessLog) *accesslog.Handler {
 	return accessLoggerMiddleware
 }
 
-func setupTracing(conf *static.Tracing) (*tracing.Tracer, io.Closer) {
+func setupTracing(ctx context.Context, conf *static.Tracing) (*tracing.Tracer, io.Closer) {
 	if conf == nil {
 		return nil, nil
 	}
 
-	tracer, closer, err := tracing.NewTracing(conf)
+	tracer, closer, err := tracing.NewTracing(ctx, conf)
 	if err != nil {
 		log.Warn().Err(err).Msg("Unable to create tracer")
 		return nil, nil
@@ -646,13 +655,28 @@ func setupTracing(conf *static.Tracing) (*tracing.Tracer, io.Closer) {
 	return tracer, closer
 }
 
-func checkNewVersion() {
-	ticker := time.Tick(24 * time.Hour)
-	safe.Go(func() {
-		for time.Sleep(10 * time.Minute); ; <-ticker {
-			version.CheckNewVersion()
-		}
-	})
+func checkNewVersion(staticConfiguration *static.Configuration) {
+	logger := log.With().Logger()
+
+	if staticConfiguration.Global.CheckNewVersion {
+		logger.Info().Msg(`Version check is enabled.`)
+		logger.Info().Msg(`Traefik checks for new releases to notify you if your version is out of date.`)
+		logger.Info().Msg(`It also collects usage data during this process.`)
+		logger.Info().Msg(`Check the documentation to get more info: https://doc.traefik.io/traefik/contributing/data-collection/`)
+
+		ticker := time.Tick(24 * time.Hour)
+		safe.Go(func() {
+			for time.Sleep(10 * time.Minute); ; <-ticker {
+				version.CheckNewVersion()
+			}
+		})
+	} else {
+		logger.Info().Msg(`
+Version check is disabled.
+You will not be notified if a new version is available.
+More details: https://doc.traefik.io/traefik/contributing/data-collection/
+`)
+	}
 }
 
 func stats(staticConfiguration *static.Configuration) {

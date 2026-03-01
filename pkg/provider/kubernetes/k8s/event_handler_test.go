@@ -14,8 +14,8 @@ func Test_detectChanges(t *testing.T) {
 	portB := int32(8080)
 	tests := []struct {
 		name   string
-		oldObj interface{}
-		newObj interface{}
+		oldObj any
+		newObj any
 		want   bool
 	}{
 		{

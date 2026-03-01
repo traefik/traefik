@@ -1,0 +1,44 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[entryPoints]
+  [entryPoints.web]
+    address = ":8000"
+  [entryPoints.web2]
+    address = ":8001"
+    [entryPoints.web2.http]
+      sanitizePath = false
+
+[log]
+  level = "DEBUG"
+
+[api]
+  insecure = true
+
+[providers.file]
+  filename = "{{ .SelfFilename }}"
+
+[core]
+  defaultRuleSyntax = "{{ .DefaultRuleSyntax }}"
+
+# dynamic configuration
+[http.routers]
+  [http.routers.without]
+    rule = "PathPrefix(`/without`)"
+    service = "whoami"
+
+  [http.routers.with]
+    rule = "PathPrefix(`/with`)"
+    middlewares = ["test-redirectscheme"]
+    service = "whoami"
+
+[http.middlewares]
+  [http.middlewares.test-redirectscheme.redirectScheme]
+    scheme = "https"
+    permanent = false
+
+[http.services]
+  [http.services.whoami.loadBalancer]
+    [[http.services.whoami.loadBalancer.servers]]
+      url = "{{ .Server1 }}"

@@ -1,7 +1,6 @@
 package observability
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -27,7 +26,7 @@ func TestNewService(t *testing.T) {
 			service: "myService",
 			expected: []expected{
 				{
-					name: "EntryPoint",
+					name: "GET",
 					attributes: []attribute.KeyValue{
 						attribute.String("span.kind", "server"),
 					},
@@ -58,7 +57,7 @@ func TestNewService(t *testing.T) {
 			req.Header.Set("User-Agent", "service-test")
 
 			tracer := &mockTracer{}
-			tracingCtx, entryPointSpan := tracer.Start(req.Context(), "EntryPoint", trace.WithSpanKind(trace.SpanKindServer))
+			tracingCtx, entryPointSpan := tracer.Start(req.Context(), http.MethodGet, trace.WithSpanKind(trace.SpanKindServer))
 			defer entryPointSpan.End()
 
 			req = req.WithContext(tracingCtx)
@@ -68,7 +67,7 @@ func TestNewService(t *testing.T) {
 				rw.WriteHeader(http.StatusNotFound)
 			})
 
-			handler := NewService(context.Background(), test.service, next)
+			handler := NewService(t.Context(), test.service, next)
 			handler.ServeHTTP(rw, req)
 
 			for i, span := range tracer.spans {

@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.16.1
+    controller-gen.kubebuilder.io/version: v0.19.0
   name: serverstransporttcps.traefik.io
 spec:
   group: traefik.io
@@ -21,7 +21,7 @@ spec:
           ServersTransportTCP is the CRD implementation of a TCPServersTransport.
           If no tcpServersTransport is specified, a default one named default@internal will be used.
           The default@internal tcpServersTransport can be configured in the static configuration.
-          More info: https://doc.traefik.io/traefik/v3.4/routing/services/#serverstransport_3
+          More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/tcp/serverstransport/
         properties:
           apiVersion:
             description: |-
@@ -63,6 +63,15 @@ spec:
                   to a backend server can be established.
                 pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
                 x-kubernetes-int-or-string: true
+              proxyProtocol:
+                description: ProxyProtocol holds the PROXY Protocol configuration.
+                properties:
+                  version:
+                    description: Version defines the PROXY Protocol version to use.
+                    maximum: 2
+                    minimum: 1
+                    type: integer
+                type: object
               terminationDelay:
                 anyOf:
                 - type: integer
@@ -110,11 +119,12 @@ spec:
                       type: object
                       x-kubernetes-validations:
                       - message: RootCA cannot have both Secret and ConfigMap defined.
-                        rule: has(self.secret) && has(self.configMap)
+                        rule: '!has(self.secret) || !has(self.configMap)'
                     type: array
                   rootCAsSecrets:
                     description: |-
                       RootCAsSecrets defines a list of CA secret used to validate self-signed certificate.
+
                       Deprecated: RootCAsSecrets is deprecated, please use the RootCAs option instead.
                     items:
                       type: string

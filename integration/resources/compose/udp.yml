@@ -1,4 +1,3 @@
-version: "3.8"
 services:
   whoami-a:
     image: traefik/whoamiudp:latest

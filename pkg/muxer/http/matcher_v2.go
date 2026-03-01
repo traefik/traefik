@@ -11,7 +11,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
 )
 
-var httpFuncsV2 = map[string]func(*matchersTree, ...string) error{
+var httpFuncsV2 = matcherBuilderFuncs{
 	"Host":          hostV2,
 	"HostHeader":    hostV2,
 	"HostRegexp":    hostRegexpV2,
@@ -28,7 +28,7 @@ func pathV2(tree *matchersTree, paths ...string) error {
 	var routes []*mux.Route
 
 	for _, path := range paths {
-		route := mux.NewRouter().NewRoute()
+		route := mux.NewRouter().UseRoutingPath().NewRoute()
 
 		if err := route.Path(path).GetError(); err != nil {
 			return err
@@ -54,7 +54,7 @@ func pathPrefixV2(tree *matchersTree, paths ...string) error {
 	var routes []*mux.Route
 
 	for _, path := range paths {
-		route := mux.NewRouter().NewRoute()
+		route := mux.NewRouter().UseRoutingPath().NewRoute()
 
 		if err := route.PathPrefix(path).GetError(); err != nil {
 			return err

@@ -1,7 +1,6 @@
 package plugins
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -21,19 +20,19 @@ func TestSettingsWithoutSocket(t *testing.T) {
 
 	zerolog.SetGlobalLevel(zerolog.DebugLevel)
 
-	ctx := log.Logger.WithContext(context.Background())
+	ctx := log.Logger.WithContext(t.Context())
 
 	t.Setenv("PLUGIN_TEST", "MY-TEST")
 	t.Setenv("PLUGIN_TEST_B", "MY-TEST_B")
 
 	testCases := []struct {
 		desc        string
-		getSettings func(t *testing.T) (Settings, map[string]interface{})
+		getSettings func(t *testing.T) (Settings, map[string]any)
 		expected    string
 	}{
 		{
 			desc: "mounts path",
-			getSettings: func(t *testing.T) (Settings, map[string]interface{}) {
+			getSettings: func(t *testing.T) (Settings, map[string]any) {
 				t.Helper()
 
 				tempDir := t.TempDir()
@@ -43,7 +42,7 @@ func TestSettingsWithoutSocket(t *testing.T) {
 
 				return Settings{Mounts: []string{
 						tempDir,
-					}}, map[string]interface{}{
+					}}, map[string]any{
 						"file": filePath,
 					}
 			},
@@ -51,7 +50,7 @@ func TestSettingsWithoutSocket(t *testing.T) {
 		},
 		{
 			desc: "mounts src to dest",
-			getSettings: func(t *testing.T) (Settings, map[string]interface{}) {
+			getSettings: func(t *testing.T) (Settings, map[string]any) {
 				t.Helper()
 
 				tempDir := t.TempDir()
@@ -61,7 +60,7 @@ func TestSettingsWithoutSocket(t *testing.T) {
 
 				return Settings{Mounts: []string{
 						tempDir + ":/tmp",
-					}}, map[string]interface{}{
+					}}, map[string]any{
 						"file": "/tmp/hello.txt",
 					}
 			},
@@ -69,11 +68,11 @@ func TestSettingsWithoutSocket(t *testing.T) {
 		},
 		{
 			desc: "one env",
-			getSettings: func(t *testing.T) (Settings, map[string]interface{}) {
+			getSettings: func(t *testing.T) (Settings, map[string]any) {
 				t.Helper()
 
 				envs := []string{"PLUGIN_TEST"}
-				return Settings{Envs: envs}, map[string]interface{}{
+				return Settings{Envs: envs}, map[string]any{
 					"envs": envs,
 				}
 			},
@@ -81,11 +80,11 @@ func TestSettingsWithoutSocket(t *testing.T) {
 		},
 		{
 			desc: "two env",
-			getSettings: func(t *testing.T) (Settings, map[string]interface{}) {
+			getSettings: func(t *testing.T) (Settings, map[string]any) {
 				t.Helper()
 
 				envs := []string{"PLUGIN_TEST", "PLUGIN_TEST_B"}
-				return Settings{Envs: envs}, map[string]interface{}{
+				return Settings{Envs: envs}, map[string]any{
 					"envs": envs,
 				}
 			},

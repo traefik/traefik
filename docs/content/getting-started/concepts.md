@@ -57,4 +57,4 @@ You no longer need to create and synchronize configuration files cluttered with 
     Traefik is able to use your cluster API to discover the services and read the attached information.
     In Traefik, these connectors are called [providers](../providers/overview.md "Link to overview about Traefik providers") because they *provide* the configuration to Traefik.
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"os"
 	"reflect"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -21,15 +22,16 @@ import (
 	"github.com/go-acme/lego/v4/challenge"
 	"github.com/go-acme/lego/v4/challenge/dns01"
 	"github.com/go-acme/lego/v4/challenge/http01"
+	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
 	"github.com/go-acme/lego/v4/lego"
 	"github.com/go-acme/lego/v4/providers/dns"
 	"github.com/go-acme/lego/v4/registration"
 	"github.com/rs/zerolog/log"
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/logs"
 	httpmuxer "github.com/traefik/traefik/v3/pkg/muxer/http"
 	tcpmuxer "github.com/traefik/traefik/v3/pkg/muxer/tcp"
+	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
@@ -45,6 +47,7 @@ type Configuration struct {
 	PreferredChain       string   `description:"Preferred chain to use." json:"preferredChain,omitempty" toml:"preferredChain,omitempty" yaml:"preferredChain,omitempty" export:"true"`
 	Profile              string   `description:"Certificate profile to use." json:"profile,omitempty" toml:"profile,omitempty" yaml:"profile,omitempty" export:"true"`
 	EmailAddresses       []string `description:"CSR email addresses to use." json:"emailAddresses,omitempty" toml:"emailAddresses,omitempty" yaml:"emailAddresses,omitempty"`
+	DisableCommonName    bool     `description:"Disable the common name in the CSR." json:"disableCommonName,omitempty" toml:"disableCommonName,omitempty" yaml:"disableCommonName,omitempty" export:"true"`
 	Storage              string   `description:"Storage to use." json:"storage,omitempty" toml:"storage,omitempty" yaml:"storage,omitempty" export:"true"`
 	KeyType              string   `description:"KeyType used for generating certificate private key. Allow value 'EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192'." json:"keyType,omitempty" toml:"keyType,omitempty" yaml:"keyType,omitempty" export:"true"`
 	EAB                  *EAB     `description:"External Account Binding to use." json:"eab,omitempty" toml:"eab,omitempty" yaml:"eab,omitempty"`
@@ -52,6 +55,7 @@ type Configuration struct {
 
 	ClientTimeout               ptypes.Duration `description:"Timeout for a complete HTTP transaction with the ACME server." json:"clientTimeout,omitempty" toml:"clientTimeout,omitempty" yaml:"clientTimeout,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 	ClientResponseHeaderTimeout ptypes.Duration `description:"Timeout for receiving the response headers when communicating with the ACME server." json:"clientResponseHeaderTimeout,omitempty" toml:"clientResponseHeaderTimeout,omitempty" yaml:"clientResponseHeaderTimeout,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	CertificateTimeout          ptypes.Duration `description:"Timeout for obtaining the certificate during the finalization request." json:"certificateTimeout,omitempty" toml:"certificateTimeout,omitempty" yaml:"certificateTimeout,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
 
 	CACertificates   []string `description:"Specify the paths to PEM encoded CA Certificates that can be used to authenticate an ACME server with an HTTPS certificate not issued by a CA in the system-wide trusted root list." json:"caCertificates,omitempty" toml:"caCertificates,omitempty" yaml:"caCertificates,omitempty"`
 	CASystemCertPool bool     `description:"Define if the certificates pool must use a copy of the system cert pool." json:"caSystemCertPool,omitempty" toml:"caSystemCertPool,omitempty" yaml:"caSystemCertPool,omitempty" export:"true"`
@@ -70,11 +74,13 @@ func (a *Configuration) SetDefaults() {
 	a.CertificatesDuration = 3 * 30 * 24 // 90 Days
 	a.ClientTimeout = ptypes.Duration(2 * time.Minute)
 	a.ClientResponseHeaderTimeout = ptypes.Duration(30 * time.Second)
+	a.CertificateTimeout = ptypes.Duration(30 * time.Second)
 }
 
 // CertAndStore allows mapping a TLS certificate to a TLS store.
 type CertAndStore struct {
 	Certificate
+
 	Store string
 }
 
@@ -117,11 +123,14 @@ type HTTPChallenge struct {
 }
 
 // TLSChallenge contains TLS challenge configuration.
-type TLSChallenge struct{}
+type TLSChallenge struct {
+	Delay ptypes.Duration `description:"Delay between the creation of the challenge and the validation." json:"delay,omitempty" toml:"delay,omitempty" yaml:"delay,omitempty" export:"true"`
+}
 
 // Provider holds configurations of the provider.
 type Provider struct {
 	*Configuration
+
 	ResolverName string
 	Store        Store `json:"store,omitempty" toml:"store,omitempty" yaml:"store,omitempty"`
 
@@ -292,6 +301,8 @@ func (p *Provider) getClient() (*lego.Client, error) {
 	config.CADirURL = caServer
 	config.Certificate.KeyType = GetKeyType(ctx, p.KeyType)
 	config.UserAgent = fmt.Sprintf("containous-traefik/%s", version.Version)
+	config.Certificate.DisableCommonName = p.DisableCommonName
+	config.Certificate.Timeout = time.Duration(p.CertificateTimeout)
 
 	config.HTTPClient, err = p.createHTTPClient()
 	if err != nil {
@@ -371,7 +382,7 @@ func (p *Provider) getClient() (*lego.Client, error) {
 	if p.TLSChallenge != nil {
 		logger.Debug().Msg("Using TLS Challenge provider.")
 
-		err = client.Challenge.SetTLSALPN01Provider(p.TLSChallengeProvider)
+		err = client.Challenge.SetTLSALPN01Provider(p.TLSChallengeProvider, tlsalpn01.SetDelay(time.Duration(p.TLSChallenge.Delay)))
 		if err != nil {
 			return nil, err
 		}
@@ -651,9 +662,8 @@ func (p *Provider) resolveDefaultCertificate(ctx context.Context, domains []stri
 
 	p.resolvingDomainsMutex.Lock()
 
-	sortedDomains := make([]string, len(domains))
-	copy(sortedDomains, domains)
-	sort.Strings(sortedDomains)
+	sortedDomains := slices.Clone(domains)
+	slices.Sort(sortedDomains)
 
 	domainKey := strings.Join(sortedDomains, ",")
 
@@ -802,8 +812,8 @@ func getCertificateRenewDurations(certificatesDuration int) (time.Duration, time
 		return 30 * 24 * time.Hour, 24 * time.Hour // 30 days, 1 day
 	case certificatesDuration >= 30*24: // >= 30 days
 		return 10 * 24 * time.Hour, 12 * time.Hour // 10 days, 12 hours
-	case certificatesDuration >= 7*24: // >= 7 days
-		return 24 * time.Hour, time.Hour // 1 days, 1 hour
+	case certificatesDuration >= 6*24: // >= 6 days
+		return 2 * 24 * time.Hour, 2 * time.Hour // 2 days, 2 hours
 	case certificatesDuration >= 24: // >= 1 days
 		return 6 * time.Hour, 10 * time.Minute // 6 hours, 10 minutes
 	default:
@@ -916,11 +926,11 @@ func (p *Provider) renewCertificates(ctx context.Context, renewPeriod time.Durat
 	for _, cert := range certificates {
 		client, err := p.getClient()
 		if err != nil {
-			logger.Info().Err(err).Msgf("Error renewing certificate from LE : %+v", cert.Domain)
+			logger.Info().Err(err).Msgf("Error renewing ACME certificate: %+v", cert.Domain)
 			continue
 		}
 
-		logger.Info().Msgf("Renewing certificate from LE : %+v", cert.Domain)
+		logger.Info().Msgf("Renewing ACME certificate: %+v", cert.Domain)
 
 		res := certificate.Resource{
 			Domain:      cert.Domain.Main,
@@ -930,12 +940,14 @@ func (p *Provider) renewCertificates(ctx context.Context, renewPeriod time.Durat
 
 		opts := &certificate.RenewOptions{
 			Bundle:         true,
+			EmailAddresses: p.EmailAddresses,
+			Profile:        p.Profile,
 			PreferredChain: p.PreferredChain,
 		}
 
 		renewedCert, err := client.Certificate.RenewWithOptions(res, opts)
 		if err != nil {
-			logger.Error().Err(err).Msgf("Error renewing certificate from LE: %v", cert.Domain)
+			logger.Error().Err(err).Msgf("Error renewing ACME certificate: %v", cert.Domain)
 			continue
 		}
 
@@ -1078,7 +1090,7 @@ func (p *Provider) certExists(validDomains []string) bool {
 
 func isDomainAlreadyChecked(domainToCheck string, existentDomains []string) bool {
 	for _, certDomains := range existentDomains {
-		for _, certDomain := range strings.Split(certDomains, ",") {
+		for certDomain := range strings.SplitSeq(certDomains, ",") {
 			if types.MatchDomain(domainToCheck, certDomain) {
 				return true
 			}

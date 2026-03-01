@@ -8,6 +8,9 @@
 	},
 	"name": "bar@myprovider",
 	"provider": "myprovider",
+	"serverStatus": {
+		"127.0.0.1:2345": "UP"
+	},
 	"status": "enabled",
 	"type": "loadbalancer",
 	"usedBy": [

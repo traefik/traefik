@@ -31,7 +31,7 @@ traefik [--flag=flag_argument] [-f [flag_argument]]
 traefik [--flag[=true|false| ]] [-f [true|false| ]]
 ```
 
-All flags are documented in the [(static configuration) CLI reference](../reference/static-configuration/cli.md).
+All flags are documented in the [(static configuration) CLI reference](../reference/install-configuration/configuration-options.md).
 
 !!! info "Flags are case-insensitive."
 

@@ -12,7 +12,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/middlewares/accesslog"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
-	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/singleflight"
 )
 
@@ -61,8 +60,8 @@ func NewBasic(ctx context.Context, next http.Handler, authConfig dynamic.BasicAu
 	return ba, nil
 }
 
-func (b *basicAuth) GetTracingInformation() (string, string, trace.SpanKind) {
-	return b.name, typeNameBasic, trace.SpanKindInternal
+func (b *basicAuth) GetTracingInformation() (string, string) {
+	return b.name, typeNameBasic
 }
 
 func (b *basicAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {

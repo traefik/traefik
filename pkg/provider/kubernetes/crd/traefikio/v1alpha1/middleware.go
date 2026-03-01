@@ -12,7 +12,7 @@ import (
 // +kubebuilder:storageversion
 
 // Middleware is the CRD implementation of a Traefik Middleware.
-// More info: https://doc.traefik.io/traefik/v3.4/middlewares/http/overview/
+// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/middlewares/overview/
 type Middleware struct {
 	metav1.TypeMeta `json:",inline"`
 	// Standard object's metadata.
@@ -36,6 +36,7 @@ type MiddlewareSpec struct {
 	IPWhiteList       *dynamic.IPWhiteList       `json:"ipWhiteList,omitempty"`
 	IPAllowList       *dynamic.IPAllowList       `json:"ipAllowList,omitempty"`
 	Headers           *dynamic.Headers           `json:"headers,omitempty"`
+	EncodedCharacters *dynamic.EncodedCharacters `json:"encodedCharacters,omitempty"`
 	Errors            *ErrorPage                 `json:"errors,omitempty"`
 	RateLimit         *RateLimit                 `json:"rateLimit,omitempty"`
 	RedirectRegex     *dynamic.RedirectRegex     `json:"redirectRegex,omitempty"`
@@ -44,7 +45,7 @@ type MiddlewareSpec struct {
 	DigestAuth        *DigestAuth                `json:"digestAuth,omitempty"`
 	ForwardAuth       *ForwardAuth               `json:"forwardAuth,omitempty"`
 	InFlightReq       *dynamic.InFlightReq       `json:"inFlightReq,omitempty"`
-	Buffering         *dynamic.Buffering         `json:"buffering,omitempty"`
+	Buffering         *Buffering                 `json:"buffering,omitempty"`
 	CircuitBreaker    *CircuitBreaker            `json:"circuitBreaker,omitempty"`
 	Compress          *Compress                  `json:"compress,omitempty"`
 	PassTLSClientCert *dynamic.PassTLSClientCert `json:"passTLSClientCert,omitempty"`
@@ -52,15 +53,41 @@ type MiddlewareSpec struct {
 	ContentType       *dynamic.ContentType       `json:"contentType,omitempty"`
 	GrpcWeb           *dynamic.GrpcWeb           `json:"grpcWeb,omitempty"`
 	// Plugin defines the middleware plugin configuration.
-	// More info: https://doc.traefik.io/traefik/plugins/
+	// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/middlewares/overview/#community-middlewares
 	Plugin map[string]apiextensionv1.JSON `json:"plugin,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// Buffering holds the buffering middleware configuration.
+// This middleware retries or limits the size of requests that can be forwarded to backends.
+// More info: https://doc.traefik.io/traefik/v3.6/middlewares/http/buffering/#maxrequestbodybytes
+type Buffering struct {
+	// MaxRequestBodyBytes defines the maximum allowed body size for the request (in bytes).
+	// If the request exceeds the allowed size, it is not forwarded to the service, and the client gets a 413 (Request Entity Too Large) response.
+	// Default: 0 (no maximum).
+	MaxRequestBodyBytes int64 `json:"maxRequestBodyBytes,omitempty" toml:"maxRequestBodyBytes,omitempty" yaml:"maxRequestBodyBytes,omitempty" export:"true"`
+	// MemRequestBodyBytes defines the threshold (in bytes) from which the request will be buffered on disk instead of in memory.
+	// Default: 1048576 (1Mi).
+	MemRequestBodyBytes int64 `json:"memRequestBodyBytes,omitempty" toml:"memRequestBodyBytes,omitempty" yaml:"memRequestBodyBytes,omitempty" export:"true"`
+	// MaxResponseBodyBytes defines the maximum allowed response size from the service (in bytes).
+	// If the response exceeds the allowed size, it is not forwarded to the client. The client gets a 500 (Internal Server Error) response instead.
+	// Default: 0 (no maximum).
+	MaxResponseBodyBytes int64 `json:"maxResponseBodyBytes,omitempty" toml:"maxResponseBodyBytes,omitempty" yaml:"maxResponseBodyBytes,omitempty" export:"true"`
+	// MemResponseBodyBytes defines the threshold (in bytes) from which the response will be buffered on disk instead of in memory.
+	// Default: 1048576 (1Mi).
+	MemResponseBodyBytes int64 `json:"memResponseBodyBytes,omitempty" toml:"memResponseBodyBytes,omitempty" yaml:"memResponseBodyBytes,omitempty" export:"true"`
+	// RetryExpression defines the retry conditions.
+	// It is a logical combination of functions with operators AND (&&) and OR (||).
+	// More info: https://doc.traefik.io/traefik/v3.6/middlewares/http/buffering/#retryexpression
+	RetryExpression string `json:"retryExpression,omitempty" toml:"retryExpression,omitempty" yaml:"retryExpression,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
 
 // ErrorPage holds the custom error middleware configuration.
 // This middleware returns a custom page in lieu of the default, according to configured ranges of HTTP Status codes.
-// More info: https://doc.traefik.io/traefik/v3.4/middlewares/http/errorpages/
+// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/middlewares/errorpages/
 type ErrorPage struct {
 	// Status defines which status or range of statuses should result in an error page.
 	// It can be either a status code as a number (500),
@@ -73,7 +100,7 @@ type ErrorPage struct {
 	// For example: "418": 404 or "410-418": 404
 	StatusRewrites map[string]int `json:"statusRewrites,omitempty"`
 	// Service defines the reference to a Kubernetes Service that will serve the error page.
-	// More info: https://doc.traefik.io/traefik/v3.4/middlewares/http/errorpages/#service
+	// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/middlewares/errorpages/#service
 	Service Service `json:"service,omitempty"`
 	// Query defines the URL for the error page (hosted by service).
 	// The {status} variable can be used in order to insert the status code in the URL.
@@ -108,7 +135,7 @@ type CircuitBreaker struct {
 
 // Chain holds the configuration of the chain middleware.
 // This middleware enables to define reusable combinations of other pieces of middleware.
-// More info: https://doc.traefik.io/traefik/v3.4/middlewares/http/chain/
+// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/middlewares/chain/
 type Chain struct {
 	// Middlewares is the list of MiddlewareRef which composes the chain.
 	Middlewares []MiddlewareRef `json:"middlewares,omitempty"`
@@ -118,7 +145,7 @@ type Chain struct {
 
 // BasicAuth holds the basic auth middleware configuration.
 // This middleware restricts access to your services to known users.
-// More info: https://doc.traefik.io/traefik/v3.4/middlewares/http/basicauth/
+// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/middlewares/basicauth/
 type BasicAuth struct {
 	// Secret is the name of the referenced Kubernetes Secret containing user credentials.
 	Secret string `json:"secret,omitempty"`
@@ -129,7 +156,7 @@ type BasicAuth struct {
 	// Default: false.
 	RemoveHeader bool `json:"removeHeader,omitempty"`
 	// HeaderField defines a header field to store the authenticated user.
-	// More info: https://doc.traefik.io/traefik/v3.4/middlewares/http/basicauth/#headerfield
+	// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/middlewares/basicauth/#headerfield
 	HeaderField string `json:"headerField,omitempty"`
 }
 
@@ -137,7 +164,7 @@ type BasicAuth struct {
 
 // DigestAuth holds the digest auth middleware configuration.
 // This middleware restricts access to your services to known users.
-// More info: https://doc.traefik.io/traefik/v3.4/middlewares/http/digestauth/
+// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/middlewares/digestauth/
 type DigestAuth struct {
 	// Secret is the name of the referenced Kubernetes Secret containing user credentials.
 	Secret string `json:"secret,omitempty"`
@@ -147,7 +174,7 @@ type DigestAuth struct {
 	// Default: traefik.
 	Realm string `json:"realm,omitempty"`
 	// HeaderField defines a header field to store the authenticated user.
-	// More info: https://doc.traefik.io/traefik/v3.4/middlewares/http/basicauth/#headerfield
+	// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/middlewares/digestauth/#headerfield
 	HeaderField string `json:"headerField,omitempty"`
 }
 
@@ -155,7 +182,7 @@ type DigestAuth struct {
 
 // ForwardAuth holds the forward auth middleware configuration.
 // This middleware delegates the request authentication to a Service.
-// More info: https://doc.traefik.io/traefik/v3.4/middlewares/http/forwardauth/
+// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/middlewares/forwardauth/
 type ForwardAuth struct {
 	// Address defines the authentication server address.
 	Address string `json:"address,omitempty"`
@@ -164,17 +191,19 @@ type ForwardAuth struct {
 	// AuthResponseHeaders defines the list of headers to copy from the authentication server response and set on forwarded request, replacing any existing conflicting headers.
 	AuthResponseHeaders []string `json:"authResponseHeaders,omitempty"`
 	// AuthResponseHeadersRegex defines the regex to match headers to copy from the authentication server response and set on forwarded request, after stripping all headers that match the regex.
-	// More info: https://doc.traefik.io/traefik/v3.4/middlewares/http/forwardauth/#authresponseheadersregex
+	// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/middlewares/forwardauth/#authresponseheadersregex
 	AuthResponseHeadersRegex string `json:"authResponseHeadersRegex,omitempty"`
 	// AuthRequestHeaders defines the list of the headers to copy from the request to the authentication server.
 	// If not set or empty then all request headers are passed.
 	AuthRequestHeaders []string `json:"authRequestHeaders,omitempty"`
 	// TLS defines the configuration used to secure the connection to the authentication server.
 	TLS *ClientTLSWithCAOptional `json:"tls,omitempty"`
+	// MaxResponseBodySize defines the maximum body size in bytes allowed in the response from the authentication server.
+	MaxResponseBodySize *int64 `json:"maxResponseBodySize,omitempty"`
 	// AddAuthCookiesToResponse defines the list of cookies to copy from the authentication server response to the response.
 	AddAuthCookiesToResponse []string `json:"addAuthCookiesToResponse,omitempty"`
 	// HeaderField defines a header field to store the authenticated user.
-	// More info: https://doc.traefik.io/traefik/v3.4/middlewares/http/forwardauth/#headerfield
+	// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/middlewares/forwardauth/#headerfield
 	HeaderField string `json:"headerField,omitempty"`
 	// ForwardBody defines whether to send the request body to the authentication server.
 	ForwardBody bool `json:"forwardBody,omitempty"`
@@ -184,6 +213,8 @@ type ForwardAuth struct {
 	PreserveLocationHeader bool `json:"preserveLocationHeader,omitempty"`
 	// PreserveRequestMethod defines whether to preserve the original request method while forwarding the request to the authentication server.
 	PreserveRequestMethod bool `json:"preserveRequestMethod,omitempty"`
+	// AuthSigninURL specifies the URL to redirect to when the authentication server returns 401 Unauthorized.
+	AuthSigninURL string `json:"authSigninURL,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -201,7 +232,7 @@ type ClientTLSWithCAOptional struct {
 
 // RateLimit holds the rate limit configuration.
 // This middleware ensures that services will receive a fair amount of requests, and allows one to define what fair is.
-// More info: https://doc.traefik.io/traefik/v3.4/middlewares/http/ratelimit/
+// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/middlewares/ratelimit/
 type RateLimit struct {
 	// Average is the maximum rate, by default in requests/s, allowed for the given source.
 	// It defaults to 0, which means no rate limiting.
@@ -286,7 +317,7 @@ type ClientTLS struct {
 
 // Compress holds the compress middleware configuration.
 // This middleware compresses responses before sending them to the client, using gzip, brotli, or zstd compression.
-// More info: https://doc.traefik.io/traefik/v3.4/middlewares/http/compress/
+// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/middlewares/compress/
 type Compress struct {
 	// ExcludedContentTypes defines the list of content types to compare the Content-Type header of the incoming requests and responses before compressing.
 	// `application/grpc` is always excluded.
@@ -308,11 +339,17 @@ type Compress struct {
 // Retry holds the retry middleware configuration.
 // This middleware reissues requests a given number of times to a backend server if that server does not reply.
 // As soon as the server answers, the middleware stops retrying, regardless of the response status.
-// More info: https://doc.traefik.io/traefik/v3.4/middlewares/http/retry/
+// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/middlewares/retry/
 type Retry struct {
 	// Attempts defines how many times the request should be retried.
 	// +kubebuilder:validation:Minimum=0
 	Attempts int `json:"attempts,omitempty"`
+	// Timeout defines how much time the middleware is allowed to retry the request.
+	// The value of timeout should be provided in seconds or as a valid duration format,
+	// see https://pkg.go.dev/time#ParseDuration.
+	// +kubebuilder:validation:Pattern="^([0-9]+(ns|us|µs|ms|s|m|h)?)+$"
+	// +kubebuilder:validation:XIntOrString
+	Timeout intstr.IntOrString `json:"timeout,omitempty"`
 	// InitialInterval defines the first wait time in the exponential backoff series.
 	// The maximum interval is calculated as twice the initialInterval.
 	// If unspecified, requests will be retried immediately.
@@ -321,6 +358,17 @@ type Retry struct {
 	// +kubebuilder:validation:Pattern="^([0-9]+(ns|us|µs|ms|s|m|h)?)+$"
 	// +kubebuilder:validation:XIntOrString
 	InitialInterval intstr.IntOrString `json:"initialInterval,omitempty"`
+	// MaxRequestBodyBytes defines the maximum size for the request body.
+	// Default is `-1`, which means no limit.
+	// +kubebuilder:validation:Minimum=-1
+	MaxRequestBodyBytes *int64 `json:"maxRequestBodyBytes,omitempty"`
+	// Status defines the range of HTTP status codes to retry on.
+	// +kubebuilder:validation:items:Pattern=`^([1-5][0-9]{2}[,-]?)+$`
+	Status []string `json:"status,omitempty"`
+	// DisableRetryOnNetworkError defines whether to disable the retry if an error occurs when transmitting the request to the server.
+	DisableRetryOnNetworkError bool `json:"disableRetryOnNetworkError,omitempty"`
+	// RetryNonIdempotentMethod activates the retry for non-idempotent methods (POST, LOCK, PATCH)
+	RetryNonIdempotentMethod bool `json:"retryNonIdempotentMethod,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

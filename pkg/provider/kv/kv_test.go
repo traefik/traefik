@@ -1,7 +1,6 @@
 package kv
 
 import (
-	"context"
 	"errors"
 	"testing"
 	"time"
@@ -94,6 +93,7 @@ func Test_buildConfiguration(t *testing.T) {
 		"traefik/http/middlewares/Middleware08/forwardAuth/maxBodySize":                              "42",
 		"traefik/http/middlewares/Middleware08/forwardAuth/preserveLocationHeader":                   "true",
 		"traefik/http/middlewares/Middleware08/forwardAuth/preserveRequestMethod":                    "true",
+		"traefik/http/middlewares/Middleware08/forwardAuth/maxResponseBodySize":                      "42",
 		"traefik/http/middlewares/Middleware15/redirectScheme/scheme":                                "foobar",
 		"traefik/http/middlewares/Middleware15/redirectScheme/port":                                  "foobar",
 		"traefik/http/middlewares/Middleware15/redirectScheme/permanent":                             "true",
@@ -218,6 +218,12 @@ func Test_buildConfiguration(t *testing.T) {
 		"traefik/http/middlewares/Middleware05/compress/encodings":                                   "foobar, foobar",
 		"traefik/http/middlewares/Middleware05/compress/minResponseBodyBytes":                        "42",
 		"traefik/http/middlewares/Middleware18/retry/attempts":                                       "42",
+		"traefik/http/middlewares/Middleware18/retry/timeout":                                        "1s",
+		"traefik/http/middlewares/Middleware18/retry/initialInterval":                                "1s",
+		"traefik/http/middlewares/Middleware18/retry/maxRequestBodyBytes":                            "42",
+		"traefik/http/middlewares/Middleware18/retry/status":                                         "400,500-599",
+		"traefik/http/middlewares/Middleware18/retry/disableRetryOnNetworkError":                     "true",
+		"traefik/http/middlewares/Middleware18/retry/retryNonIdempotentMethod":                       "true",
 		"traefik/http/middlewares/Middleware19/stripPrefix/prefixes/0":                               "foobar",
 		"traefik/http/middlewares/Middleware19/stripPrefix/prefixes/1":                               "foobar",
 		"traefik/http/middlewares/Middleware19/stripPrefix/forceSlash":                               "true",
@@ -298,7 +304,7 @@ func Test_buildConfiguration(t *testing.T) {
 		"traefik/tls/certificates/1/stores/1":                                                        "foobar",
 	}))
 
-	cfg, err := provider.buildConfiguration(context.Background())
+	cfg, err := provider.buildConfiguration(t.Context())
 	require.NoError(t, err)
 
 	expected := &dynamic.Configuration{
@@ -446,6 +452,7 @@ func Test_buildConfiguration(t *testing.T) {
 							"foobar",
 							"foobar",
 						},
+						MaxResponseBodySize:    pointer[int64](42),
 						ForwardBody:            true,
 						MaxBodySize:            pointer(int64(42)),
 						PreserveLocationHeader: true,
@@ -466,7 +473,13 @@ func Test_buildConfiguration(t *testing.T) {
 				},
 				"Middleware18": {
 					Retry: &dynamic.Retry{
-						Attempts: 42,
+						Attempts:                   42,
+						Timeout:                    ptypes.Duration(time.Second),
+						InitialInterval:            ptypes.Duration(time.Second),
+						MaxRequestBodyBytes:        pointer[int64](42),
+						Status:                     []string{"400", "500-599"},
+						DisableRetryOnNetworkError: true,
+						RetryNonIdempotentMethod:   true,
 					},
 				},
 				"Middleware16": {
@@ -958,7 +971,7 @@ func Test_buildConfiguration_KV_error(t *testing.T) {
 		},
 	}
 
-	cfg, err := provider.buildConfiguration(context.Background())
+	cfg, err := provider.buildConfiguration(t.Context())
 	require.Error(t, err)
 	assert.Nil(t, cfg)
 }
@@ -977,7 +990,7 @@ func TestKvWatchTree(t *testing.T) {
 
 	configChan := make(chan dynamic.Message)
 	go func() {
-		err := provider.watchKv(context.Background(), configChan)
+		err := provider.watchKv(t.Context(), configChan)
 		require.NoError(t, err)
 	}()
 

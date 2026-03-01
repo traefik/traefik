@@ -225,8 +225,10 @@ func TestMuxer(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			muxer, err := NewMuxer()
+			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
+
+			muxer := NewMuxer(parser)
 
 			handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 			err = muxer.AddRoute(test.rule, "", 0, handler)
@@ -378,8 +380,10 @@ func Test_addRoutePriority(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
-			muxer, err := NewMuxer()
+			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
+
+			muxer := NewMuxer(parser)
 
 			for _, route := range test.cases {
 				handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -510,8 +514,10 @@ func TestEmptyHost(t *testing.T) {
 			t.Parallel()
 
 			handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-			muxer, err := NewMuxer()
+			parser, err := NewSyntaxParser()
 			require.NoError(t, err)
+
+			muxer := NewMuxer(parser)
 
 			err = muxer.AddRoute(test.rule, "", 0, handler)
 			require.NoError(t, err)
@@ -548,6 +554,46 @@ func TestGetRulePriority(t *testing.T) {
 			t.Parallel()
 
 			assert.Equal(t, test.expected, GetRulePriority(test.rule))
+		})
+	}
+}
+
+func TestRoutingPath(t *testing.T) {
+	tests := []struct {
+		desc                string
+		path                string
+		expectedRoutingPath string
+	}{
+		{
+			desc:                "unallowed percent-encoded character is decoded",
+			path:                "/foo%20bar",
+			expectedRoutingPath: "/foo bar",
+		},
+		{
+			desc:                "reserved percent-encoded character is kept encoded",
+			path:                "/foo%2Fbar",
+			expectedRoutingPath: "/foo%2Fbar",
+		},
+		{
+			desc:                "multiple mixed characters",
+			path:                "/foo%20bar%2Fbaz%23qux",
+			expectedRoutingPath: "/foo bar%2Fbaz%23qux",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			req := httptest.NewRequest(http.MethodGet, "http://foo"+test.path, http.NoBody)
+
+			var err error
+			req, err = withRoutingPath(req)
+			require.NoError(t, err)
+
+			gotRoutingPath := getRoutingPath(req)
+			assert.NotNil(t, gotRoutingPath)
+			assert.Equal(t, test.expectedRoutingPath, *gotRoutingPath)
 		})
 	}
 }

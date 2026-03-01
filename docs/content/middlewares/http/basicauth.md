@@ -8,8 +8,6 @@ description: "The HTTP basic authentication (BasicAuth) middleware in Traefik Pr
 Adding Basic Authentication
 {: .subtitle }
 
-![BasicAuth](../../assets/img/middleware/basicauth.png)
-
 The BasicAuth middleware grants access to services to authorized users only.
 
 ## Configuration Examples
@@ -342,4 +340,4 @@ http:
     removeHeader = true
 ```
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

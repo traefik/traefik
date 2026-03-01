@@ -1,7 +1,6 @@
 package replacepathregex
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -150,7 +149,7 @@ func TestReplacePathRegex(t *testing.T) {
 				requestURI = r.RequestURI
 			})
 
-			handler, err := New(context.Background(), next, test.config, "foo-replace-path-regexp")
+			handler, err := New(t.Context(), next, test.config, "foo-replace-path-regexp")
 			if test.expectsError {
 				require.Error(t, err)
 				return

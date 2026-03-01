@@ -36,6 +36,7 @@ linters:
     - nilnil # Not relevant
     - nlreturn # Not relevant
     - noctx # Too strict
+    - noinlineerr # Too strict
     - nonamedreturns # Too strict
     - paralleltest # Not relevant
     - prealloc # Too many false-positive.
@@ -47,6 +48,7 @@ linters:
     - varnamelen # Not relevant
     - wrapcheck # Too strict
     - wsl # Too strict
+    - wsl_v5 # Too strict
 
   settings:
     depguard:
@@ -80,6 +82,7 @@ linters:
       toolchain-pattern: go1\.\d+\.\d+$
       tool-forbidden: true
       go-version-pattern: ^1\.\d+(\.0)?$
+      replace-local: true
       replace-allow-list:
         - github.com/abbot/go-http-auth
         - github.com/gorilla/mux
@@ -87,6 +90,7 @@ linters:
         - github.com/mailgun/multibuf
         - github.com/jaguilar/vt100
         - github.com/cucumber/godog
+        - github.com/vulcand/oxy/v2
     govet:
       enable-all: true
       disable:
@@ -245,6 +249,10 @@ linters:
         text: Function 'buildConstructor' has too many statements
         linters:
           - funlen
+      - path: pkg/provider/kubernetes/ingress-nginx/kubernetes.go
+        text: Function 'loadConfiguration' has too many statements
+        linters:
+          - funlen
       - path: pkg/tracing/haystack/logger.go
         linters:
           - goprintffuncname
@@ -259,7 +267,7 @@ linters:
       - path: pkg/provider/kubernetes/(crd|gateway)/client.go
         linters:
           - interfacebloat
-      - path: pkg/metrics/metrics.go
+      - path: pkg/observability/metrics/metrics.go
         linters:
           - interfacebloat
       - path: integration/healthcheck_test.go
@@ -291,21 +299,35 @@ linters:
         source: 'errors.New\("Nomad provider'
         text: 'ST1005: error strings should not be capitalized'
       - path: (.+)\.go
-        text: 'struct-tag: unknown option ''inline'' in JSON tag'
+        text: 'omitzero: Omitempty has no effect on nested struct field'
+        linters:
+          - modernize
+      - path: (.+)\.go
+        text: 'struct-tag: unknown option "inline" in json tag'
         linters:
           - revive
       - path: (.+)\.go
-        text: 'struct-tag: unknown option ''omitzero'' in TOML tag'
+        text: 'struct-tag: unknown option "omitzero" in toml tag'
+        linters:
+          - revive
+      - path: (pkg/types/.+|pkg/api/.+|pkg/observability/types/.+)\.go
+        text: 'var-naming: avoid meaningless package names'
+        linters:
+          - revive
+      - path: ((cmd|pkg)/version/.*|pkg/config/runtime/.*|pkg/log/.*|pkg/(middlewares/)?metrics/.*|pkg/muxer/http/.+|pkg/provider/http/.+|pkg/tls/.+|pkg/proxy/httputil/.+|pkg/observability/metrics/.+)\.go
+        text: 'var-naming: avoid package names that conflict with Go standard library package names'
         linters:
           - revive
       - path: (.+)\.go$
         text: 'SA1019: http.CloseNotifier has been deprecated' # FIXME must be fixed
       - path: (.+)\.go$
+        text: 'SA1019: dynamic.(TCPIPWhiteList|IPWhiteList) is deprecated: please use IPAllowList instead.'
+      - path: (.+)\.go$
+        text: 'SA1019: middlewareTCP.Spec.IPWhiteList is deprecated: please use IPAllowList instead.'
+      - path: (.+)\.go$
         text: 'SA1019: cfg.(SSLRedirect|SSLTemporaryRedirect|SSLHost|SSLForceHost|FeaturePolicy) is deprecated'
       - path: (.+)\.go$
         text: 'SA1019: c.Providers.(ConsulCatalog|Consul|Nomad).Namespace is deprecated'
-      - path: (.+)\.go$
-        text: 'SA1019: dockertypes.ContainerNode is deprecated'
       - path: pkg/provider/kubernetes/crd/kubernetes.go
         text: "Function 'loadConfigurationFromCRD' has too many statements"
         linters:
@@ -316,6 +338,12 @@ linters:
           - recvcheck
       - path: pkg/proxy/httputil/bufferpool.go
         text: 'SA6002: argument should be pointer-like to avoid allocations'
+      - path: integration/integration_test.go
+        text: 'var (gatewayAPIConformanceRunTest|traefikVersion) is unused'
+      - path: pkg/server/router/router.go
+        text: 'appendAssign: append result not assigned to the same slice'
+        linters:
+          - gocritic
     paths:
       - pkg/provider/kubernetes/crd/generated/
 

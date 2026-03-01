@@ -1,7 +1,7 @@
 /*
 The MIT License (MIT)
 
-Copyright (c) 2016-2020 Containous SAS; 2020-2025 Traefik Labs
+Copyright (c) 2016-2020 Containous SAS; 2020-2026 Traefik Labs
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -27,13 +27,13 @@ THE SOFTWARE.
 package v1alpha1
 
 import (
-	"context"
+	context "context"
 	time "time"
 
 	versioned "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/clientset/versioned"
 	internalinterfaces "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/informers/externalversions/internalinterfaces"
-	v1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/listers/traefikio/v1alpha1"
-	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
+	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/generated/listers/traefikio/v1alpha1"
+	crdtraefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
@@ -44,7 +44,7 @@ import (
 // Middlewares.
 type MiddlewareInformer interface {
 	Informer() cache.SharedIndexInformer
-	Lister() v1alpha1.MiddlewareLister
+	Lister() traefikiov1alpha1.MiddlewareLister
 }
 
 type middlewareInformer struct {
@@ -70,16 +70,28 @@ func NewFilteredMiddlewareInformer(client versioned.Interface, namespace string,
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.TraefikV1alpha1().Middlewares(namespace).List(context.TODO(), options)
+				return client.TraefikV1alpha1().Middlewares(namespace).List(context.Background(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.TraefikV1alpha1().Middlewares(namespace).Watch(context.TODO(), options)
+				return client.TraefikV1alpha1().Middlewares(namespace).Watch(context.Background(), options)
+			},
+			ListWithContextFunc: func(ctx context.Context, options v1.ListOptions) (runtime.Object, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.TraefikV1alpha1().Middlewares(namespace).List(ctx, options)
+			},
+			WatchFuncWithContext: func(ctx context.Context, options v1.ListOptions) (watch.Interface, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.TraefikV1alpha1().Middlewares(namespace).Watch(ctx, options)
 			},
 		},
-		&traefikiov1alpha1.Middleware{},
+		&crdtraefikiov1alpha1.Middleware{},
 		resyncPeriod,
 		indexers,
 	)
@@ -90,9 +102,9 @@ func (f *middlewareInformer) defaultInformer(client versioned.Interface, resyncP
 }
 
 func (f *middlewareInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&traefikiov1alpha1.Middleware{}, f.defaultInformer)
+	return f.factory.InformerFor(&crdtraefikiov1alpha1.Middleware{}, f.defaultInformer)
 }
 
-func (f *middlewareInformer) Lister() v1alpha1.MiddlewareLister {
-	return v1alpha1.NewMiddlewareLister(f.Informer().GetIndexer())
+func (f *middlewareInformer) Lister() traefikiov1alpha1.MiddlewareLister {
+	return traefikiov1alpha1.NewMiddlewareLister(f.Informer().GetIndexer())
 }

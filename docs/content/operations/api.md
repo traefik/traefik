@@ -46,7 +46,7 @@ And then define a routing configuration on Traefik itself with the
 
 --8<-- "content/operations/include-api-examples.md"
 
-??? warning "The router's [rule](../../routing/routers#rule) must catch requests for the URI path `/api`"
+??? warning "The router's [rule](../routing/routers/index.md#rule) must catch requests for the URI path `/api`"
     Using an "Host" rule is recommended, by catching all the incoming traffic on this host domain to the API.
     However, you can also use "path prefix" rule or any combination or rules.
 
@@ -109,7 +109,7 @@ api:
 --api.dashboard=true
 ```
 
-!!! warning "With Dashboard enabled, the router [rule](../../routing/routers#rule) must catch requests for both `/api` and `/dashboard`"
+!!! warning "With Dashboard enabled, the router [rule](../routing/routers/index.md#rule) must catch requests for both `/api` and `/dashboard`"
     Please check the [Dashboard documentation](./dashboard.md#dashboard-router-rule) to learn more about this and to get examples.
 
 ### `debug`
@@ -176,4 +176,4 @@ All the following endpoints must be accessed with a `GET` HTTP request.
 | `/debug/pprof/symbol`          | See the [pprof Symbol](https://golang.org/pkg/net/http/pprof/#Symbol) Go documentation.             |
 | `/debug/pprof/trace`           | See the [pprof Trace](https://golang.org/pkg/net/http/pprof/#Trace) Go documentation.               |
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

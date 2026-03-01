@@ -13,7 +13,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
 )
 
-var httpFuncs = map[string]func(*matchersTree, ...string) error{
+var httpFuncs = matcherBuilderFuncs{
 	"ClientIP":     expectNParameters(clientIP, 1),
 	"Method":       expectNParameters(method, 1),
 	"Host":         expectNParameters(host, 1),
@@ -142,7 +142,8 @@ func path(tree *matchersTree, paths ...string) error {
 	}
 
 	tree.matcher = func(req *http.Request) bool {
-		return req.URL.Path == path
+		routingPath := getRoutingPath(req)
+		return routingPath != nil && *routingPath == path
 	}
 
 	return nil
@@ -157,7 +158,8 @@ func pathRegexp(tree *matchersTree, paths ...string) error {
 	}
 
 	tree.matcher = func(req *http.Request) bool {
-		return re.MatchString(req.URL.Path)
+		routingPath := getRoutingPath(req)
+		return routingPath != nil && re.MatchString(*routingPath)
 	}
 
 	return nil
@@ -171,7 +173,8 @@ func pathPrefix(tree *matchersTree, paths ...string) error {
 	}
 
 	tree.matcher = func(req *http.Request) bool {
-		return strings.HasPrefix(req.URL.Path, path)
+		routingPath := getRoutingPath(req)
+		return routingPath != nil && strings.HasPrefix(*routingPath, path)
 	}
 
 	return nil
@@ -181,13 +184,7 @@ func header(tree *matchersTree, headers ...string) error {
 	key, value := http.CanonicalHeaderKey(headers[0]), headers[1]
 
 	tree.matcher = func(req *http.Request) bool {
-		for _, headerValue := range req.Header[key] {
-			if headerValue == value {
-				return true
-			}
-		}
-
-		return false
+		return slices.Contains(req.Header[key], value)
 	}
 
 	return nil
@@ -202,13 +199,7 @@ func headerRegexp(tree *matchersTree, headers ...string) error {
 	}
 
 	tree.matcher = func(req *http.Request) bool {
-		for _, headerValue := range req.Header[key] {
-			if re.MatchString(headerValue) {
-				return true
-			}
-		}
-
-		return false
+		return slices.ContainsFunc(req.Header[key], re.MatchString)
 	}
 
 	return nil

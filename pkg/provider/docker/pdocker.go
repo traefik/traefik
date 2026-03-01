@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	dockertypes "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	eventtypes "github.com/docker/docker/api/types/events"
 	"github.com/docker/docker/api/types/filters"
@@ -17,13 +16,10 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/job"
-	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	"github.com/traefik/traefik/v3/pkg/provider"
 	"github.com/traefik/traefik/v3/pkg/safe"
 )
-
-// DockerAPIVersion is a constant holding the version of the Provider API traefik will use.
-const DockerAPIVersion = "1.24"
 
 const dockerName = "docker"
 
@@ -52,11 +48,6 @@ func (p *Provider) Init() error {
 
 	p.defaultRuleTpl = defaultRuleTpl
 	return nil
-}
-
-func (p *Provider) createClient(ctx context.Context) (*client.Client, error) {
-	p.ClientConfig.apiVersion = DockerAPIVersion
-	return createClient(ctx, p.ClientConfig)
 }
 
 // Provide allows the docker provider to provide configurations to traefik using the given configuration channel.
@@ -104,7 +95,7 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 			if p.Watch {
 				f := filters.NewArgs()
 				f.Add("type", "container")
-				options := dockertypes.EventsOptions{
+				options := eventtypes.ListOptions{
 					Filters: f,
 				}
 
@@ -165,8 +156,14 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	return nil
 }
 
+func (p *Provider) createClient(ctx context.Context) (*client.Client, error) {
+	return createClient(ctx, p.ClientConfig)
+}
+
 func (p *Provider) listContainers(ctx context.Context, dockerClient client.ContainerAPIClient) ([]dockerData, error) {
-	containerList, err := dockerClient.ContainerList(ctx, container.ListOptions{})
+	containerList, err := dockerClient.ContainerList(ctx, container.ListOptions{
+		All: true,
+	})
 	if err != nil {
 		return nil, err
 	}

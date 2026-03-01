@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -20,7 +19,7 @@ func TestBuilder_BuildChainNilConfig(t *testing.T) {
 	}
 	middlewaresBuilder := NewBuilder(testConfig, nil, nil)
 
-	chain := middlewaresBuilder.BuildChain(context.Background(), []string{"empty"})
+	chain := middlewaresBuilder.BuildMiddlewareChain(t.Context(), []string{"empty"})
 	_, err := chain.Then(nil)
 	require.Error(t, err)
 }
@@ -31,7 +30,7 @@ func TestBuilder_BuildChainNonExistentChain(t *testing.T) {
 	}
 	middlewaresBuilder := NewBuilder(testConfig, nil, nil)
 
-	chain := middlewaresBuilder.BuildChain(context.Background(), []string{"empty"})
+	chain := middlewaresBuilder.BuildMiddlewareChain(t.Context(), []string{"empty"})
 	_, err := chain.Then(nil)
 	require.Error(t, err)
 }
@@ -173,7 +172,7 @@ func TestBuilder_BuildChainWithContext(t *testing.T) {
 					},
 				},
 			},
-			expectedError: errors.New("could not instantiate middleware m1: recursion detected in m1->m2->m3->m1"),
+			expectedError: errors.New("could not instantiate middleware m1: recursion detected in middleware:m1->middleware:m2->middleware:m3->middleware:m1"),
 		},
 		{
 			desc:       "Detects recursion in Middleware chain",
@@ -198,9 +197,10 @@ func TestBuilder_BuildChainWithContext(t *testing.T) {
 					},
 				},
 			},
-			expectedError: errors.New("could not instantiate middleware m1@provider: recursion detected in m1@provider->m2@provider2->m3@provider->m1@provider"),
+			expectedError: errors.New("could not instantiate middleware m1@provider: recursion detected in middleware:m1@provider->middleware:m2@provider2->middleware:m3@provider->middleware:m1@provider"),
 		},
 		{
+			desc:       "Detects recursion in Middleware chain",
 			buildChain: []string{"ok", "m0"},
 			configuration: map[string]*dynamic.Middleware{
 				"ok": {
@@ -212,7 +212,7 @@ func TestBuilder_BuildChainWithContext(t *testing.T) {
 					},
 				},
 			},
-			expectedError: errors.New("could not instantiate middleware m0: recursion detected in m0->m0"),
+			expectedError: errors.New("could not instantiate middleware m0: recursion detected in middleware:m0->middleware:m0"),
 		},
 		{
 			desc:       "Detects MiddlewareChain that references a Chain that references a Chain with a missing middleware",
@@ -239,7 +239,7 @@ func TestBuilder_BuildChainWithContext(t *testing.T) {
 					},
 				},
 			},
-			expectedError: errors.New("could not instantiate middleware m2: recursion detected in m0->m1->m2->m3->m2"),
+			expectedError: errors.New("could not instantiate middleware m2: recursion detected in middleware:m0->middleware:m1->middleware:m2->middleware:m3->middleware:m2"),
 		},
 		{
 			desc:       "--",
@@ -251,7 +251,7 @@ func TestBuilder_BuildChainWithContext(t *testing.T) {
 					},
 				},
 			},
-			expectedError: errors.New("could not instantiate middleware m0: recursion detected in m0->m0"),
+			expectedError: errors.New("could not instantiate middleware m0: recursion detected in middleware:m0->middleware:m0"),
 		},
 	}
 
@@ -259,7 +259,7 @@ func TestBuilder_BuildChainWithContext(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			ctx := context.Background()
+			ctx := t.Context()
 			if len(test.contextProvider) > 0 {
 				ctx = provider.AddInContext(ctx, "foobar@"+test.contextProvider)
 			}
@@ -271,7 +271,7 @@ func TestBuilder_BuildChainWithContext(t *testing.T) {
 			})
 			builder := NewBuilder(rtConf.Middlewares, nil, nil)
 
-			result := builder.BuildChain(ctx, test.buildChain)
+			result := builder.BuildMiddlewareChain(ctx, test.buildChain)
 
 			handlers, err := result.Then(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) }))
 			if test.expectedError != nil {
@@ -366,7 +366,7 @@ func TestBuilder_buildConstructor(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			constructor, err := middlewaresBuilder.buildConstructor(context.Background(), test.middlewareID)
+			constructor, err := middlewaresBuilder.buildConstructor(t.Context(), test.middlewareID)
 			require.NoError(t, err)
 
 			middleware, err2 := constructor(http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {}))

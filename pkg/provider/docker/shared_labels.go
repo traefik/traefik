@@ -16,15 +16,22 @@ const (
 // configuration contains information from the labels that are globals (not related to the dynamic configuration)
 // or specific to the provider.
 type configuration struct {
-	Enable  bool
-	Network string
-	LBSwarm bool
+	Enable          bool
+	Network         string
+	LBSwarm         bool
+	AllowNonRunning bool
 }
 
 type labelConfiguration struct {
 	Enable bool
-	Docker *specificConfiguration
+	Docker *dockerSpecificConfiguration
 	Swarm  *specificConfiguration
+}
+
+type dockerSpecificConfiguration struct {
+	Network         *string
+	LBSwarm         bool
+	AllowNonRunning bool
 }
 
 type specificConfiguration struct {
@@ -43,9 +50,15 @@ func (p *Shared) extractDockerLabels(container dockerData) (configuration, error
 		network = *conf.Docker.Network
 	}
 
+	var allowNonRunning bool
+	if conf.Docker != nil {
+		allowNonRunning = conf.Docker.AllowNonRunning
+	}
+
 	return configuration{
-		Enable:  conf.Enable,
-		Network: network,
+		Enable:          conf.Enable,
+		Network:         network,
+		AllowNonRunning: allowNonRunning,
 	}, nil
 }
 

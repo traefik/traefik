@@ -16,6 +16,7 @@ import (
 
 type routerRepresentation struct {
 	*runtime.RouterInfo
+
 	Name     string `json:"name,omitempty"`
 	Provider string `json:"provider,omitempty"`
 }
@@ -34,10 +35,11 @@ func newRouterRepresentation(name string, rt *runtime.RouterInfo) routerRepresen
 
 type serviceRepresentation struct {
 	*runtime.ServiceInfo
-	ServerStatus map[string]string `json:"serverStatus,omitempty"`
+
 	Name         string            `json:"name,omitempty"`
 	Provider     string            `json:"provider,omitempty"`
 	Type         string            `json:"type,omitempty"`
+	ServerStatus map[string]string `json:"serverStatus,omitempty"`
 }
 
 func newServiceRepresentation(name string, si *runtime.ServiceInfo) serviceRepresentation {
@@ -45,13 +47,14 @@ func newServiceRepresentation(name string, si *runtime.ServiceInfo) serviceRepre
 		ServiceInfo:  si,
 		Name:         name,
 		Provider:     getProviderName(name),
-		ServerStatus: si.GetAllStatus(),
 		Type:         strings.ToLower(extractType(si.Service)),
+		ServerStatus: si.GetAllStatus(),
 	}
 }
 
 type middlewareRepresentation struct {
 	*runtime.MiddlewareInfo
+
 	Name     string `json:"name,omitempty"`
 	Provider string `json:"provider,omitempty"`
 	Type     string `json:"type,omitempty"`

@@ -1,4 +1,3 @@
-version: "3.8"
 services:
   noOverrideWhitelist:
     image: traefik/whoami

@@ -12,8 +12,11 @@ import (
 	"github.com/traefik/traefik/v3/pkg/server/service/loadbalancer"
 )
 
+var errNoAvailableServer = errors.New("no available server")
+
 type namedHandler struct {
 	http.Handler
+
 	name     string
 	weight   float64
 	deadline float64
@@ -27,6 +30,7 @@ type namedHandler struct {
 type Balancer struct {
 	wantsHealthCheck bool
 
+	// handlersMu is a mutex to protect the handlers slice, the status and the fenced maps.
 	handlersMu sync.RWMutex
 	handlers   []*namedHandler
 	// status is a record of which child services of the Balancer are healthy, keyed
@@ -34,11 +38,13 @@ type Balancer struct {
 	// created via Add, and it is later removed or added to the map as needed,
 	// through the SetStatus method.
 	status map[string]struct{}
-	// updaters is the list of hooks that are run (to update the Balancer
-	// parent(s)), whenever the Balancer status changes.
-	updaters []func(bool)
 	// fenced is the list of terminating yet still serving child services.
 	fenced map[string]struct{}
+
+	// updaters is the list of hooks that are run (to update the Balancer
+	// parent(s)), whenever the Balancer status changes.
+	// No mutex is needed, as it is modified only during the configuration build.
+	updaters []func(bool)
 
 	sticky *loadbalancer.Sticky
 
@@ -73,7 +79,7 @@ func (b *Balancer) Swap(i, j int) {
 }
 
 // Push implements heap.Interface for pushing an item into the heap.
-func (b *Balancer) Push(x interface{}) {
+func (b *Balancer) Push(x any) {
 	h, ok := x.(*namedHandler)
 	if !ok {
 		return
@@ -84,14 +90,14 @@ func (b *Balancer) Push(x interface{}) {
 
 // Pop implements heap.Interface for popping an item from the heap.
 // It panics if b.Len() < 1.
-func (b *Balancer) Pop() interface{} {
+func (b *Balancer) Pop() any {
 	h := b.handlers[len(b.handlers)-1]
 	b.handlers = b.handlers[0 : len(b.handlers)-1]
 	return h
 }
 
 // SetStatus sets on the balancer that its given child is now of the given
-// status. balancerName is only needed for logging purposes.
+// status. childName is only needed for logging purposes.
 func (b *Balancer) SetStatus(ctx context.Context, childName string, up bool) {
 	b.handlersMu.Lock()
 	defer b.handlersMu.Unlock()
@@ -136,42 +142,10 @@ func (b *Balancer) SetStatus(ctx context.Context, childName string, up bool) {
 // Not thread safe.
 func (b *Balancer) RegisterStatusUpdater(fn func(up bool)) error {
 	if !b.wantsHealthCheck {
-		return errors.New("healthCheck not enabled in config for this weighted service")
+		return errors.New("healthCheck not enabled in config for this WRR service")
 	}
 	b.updaters = append(b.updaters, fn)
 	return nil
-}
-
-var errNoAvailableServer = errors.New("no available server")
-
-func (b *Balancer) nextServer() (*namedHandler, error) {
-	b.handlersMu.Lock()
-	defer b.handlersMu.Unlock()
-
-	if len(b.handlers) == 0 || len(b.status) == 0 || len(b.fenced) == len(b.handlers) {
-		return nil, errNoAvailableServer
-	}
-
-	var handler *namedHandler
-	for {
-		// Pick handler with closest deadline.
-		handler = heap.Pop(b).(*namedHandler)
-
-		// curDeadline should be handler's deadline so that new added entry would have a fair competition environment with the old ones.
-		b.curDeadline = handler.deadline
-		handler.deadline += 1 / handler.weight
-
-		heap.Push(b, handler)
-		if _, ok := b.status[handler.name]; ok {
-			if _, ok := b.fenced[handler.name]; !ok {
-				// do not select a fenced handler.
-				break
-			}
-		}
-	}
-
-	log.Debug().Msgf("Service selected by WRR: %s", handler.name)
-	return handler, nil
 }
 
 func (b *Balancer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
@@ -180,7 +154,10 @@ func (b *Balancer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			log.Error().Err(err).Msg("Error while getting sticky handler")
 		} else if h != nil {
-			if _, ok := b.status[h.Name]; ok {
+			b.handlersMu.RLock()
+			_, ok := b.status[h.Name]
+			b.handlersMu.RUnlock()
+			if ok {
 				if rewrite {
 					if err := b.sticky.WriteStickyCookie(rw, h.Name); err != nil {
 						log.Error().Err(err).Msg("Writing sticky cookie")
@@ -243,4 +220,34 @@ func (b *Balancer) Add(name string, handler http.Handler, weight *int, fenced bo
 	if b.sticky != nil {
 		b.sticky.AddHandler(name, handler)
 	}
+}
+
+func (b *Balancer) nextServer() (*namedHandler, error) {
+	b.handlersMu.Lock()
+	defer b.handlersMu.Unlock()
+
+	if len(b.handlers) == 0 || len(b.status) == 0 || len(b.fenced) == len(b.handlers) {
+		return nil, errNoAvailableServer
+	}
+
+	var handler *namedHandler
+	for {
+		// Pick handler with closest deadline.
+		handler = heap.Pop(b).(*namedHandler)
+
+		// curDeadline should be handler's deadline so that new added entry would have a fair competition environment with the old ones.
+		b.curDeadline = handler.deadline
+		handler.deadline += 1 / handler.weight
+
+		heap.Push(b, handler)
+		if _, ok := b.status[handler.name]; ok {
+			if _, ok := b.fenced[handler.name]; !ok {
+				// do not select a fenced handler.
+				break
+			}
+		}
+	}
+
+	log.Debug().Msgf("Service selected by WRR: %s", handler.name)
+	return handler, nil
 }

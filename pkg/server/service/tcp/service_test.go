@@ -1,7 +1,6 @@
 package tcp
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -232,7 +231,50 @@ func TestManager_BuildTCP(t *testing.T) {
 				},
 			},
 			providerName:  "provider-1",
-			expectedError: "TCP dialer not found myServersTransport@provider-1",
+			expectedError: "no transport configuration found for \"myServersTransport@provider-1\"",
+		},
+		{
+			desc:        "WRR with healthcheck enabled",
+			stConfigs:   map[string]*dynamic.TCPServersTransport{"default@internal": {}},
+			serviceName: "serviceName",
+			configs: map[string]*runtime.TCPServiceInfo{
+				"serviceName@provider-1": {
+					TCPService: &dynamic.TCPService{
+						Weighted: &dynamic.TCPWeightedRoundRobin{
+							Services: []dynamic.TCPWRRService{
+								{Name: "foobar@provider-1", Weight: new(int)},
+								{Name: "foobar2@provider-1", Weight: new(int)},
+							},
+							HealthCheck: &dynamic.HealthCheck{},
+						},
+					},
+				},
+				"foobar@provider-1": {
+					TCPService: &dynamic.TCPService{
+						LoadBalancer: &dynamic.TCPServersLoadBalancer{
+							Servers: []dynamic.TCPServer{
+								{
+									Address: "192.168.0.12:80",
+								},
+							},
+							HealthCheck: &dynamic.TCPServerHealthCheck{},
+						},
+					},
+				},
+				"foobar2@provider-1": {
+					TCPService: &dynamic.TCPService{
+						LoadBalancer: &dynamic.TCPServersLoadBalancer{
+							Servers: []dynamic.TCPServer{
+								{
+									Address: "192.168.0.13:80",
+								},
+							},
+							HealthCheck: &dynamic.TCPServerHealthCheck{},
+						},
+					},
+				},
+			},
+			providerName: "provider-1",
 		},
 	}
 
@@ -249,7 +291,7 @@ func TestManager_BuildTCP(t *testing.T) {
 				TCPServices: test.configs,
 			}, dialerManager)
 
-			ctx := context.Background()
+			ctx := t.Context()
 			if len(test.providerName) > 0 {
 				ctx = provider.AddInContext(ctx, "foobar@"+test.providerName)
 			}

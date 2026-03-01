@@ -106,7 +106,7 @@ tls:
 
 ### Curve Preferences
 
-This option allows to set the preferred elliptic curves in a specific order.
+This option allows to set the preferred elliptic curves.
 
 The names of the curves defined by [`crypto`](https://godoc.org/crypto/tls#CurveID) (e.g. `CurveP521`) and the [RFC defined names](https://tools.ietf.org/html/rfc8446#section-4.2.7) (e. g. `secp521r1`) can be used.
 
@@ -188,17 +188,17 @@ Traefik supports mutual authentication, through the `clientAuth` section.
 
 For authentication policies that require verification of the client certificate, the certificate authority for the certificates should be set in `clientAuth.caFiles`.
 
-In Kubernetes environment, CA certificate can be set in `clientAuth.secretNames`. See [TLSOption resource](../../kubernetes/crd/http/tlsoption.md) for more details.
+In Kubernetes environment, CA certificate can be set in `clientAuth.secretNames`. See [TLSOption resource](../../kubernetes/crd/tls/tlsoption.md) for more details.
 
 The `clientAuth.clientAuthType` option governs the behaviour as follows:
 
 | Option    |  Operation | 
 | --------- | ----------- |
-| `NoClientCert` | Disregards any client certificate.| 
-| `RequestClientCert` | Asks for a certificate but proceeds anyway if none is provided. |
-| `RequireAnyClientCert` | Requires a certificate but does not verify if it is signed by a CA listed in `clientAuth.caFiles` or in `clientAuth.secretNames`. |
-| `VerifyClientCertIfGiven` | If a certificate is provided, verifies if it is signed by a CA listed in `clientAuth.caFiles` or in `clientAuth.secretNames`. Otherwise proceeds without any certificate. |
-| `RequireAndVerifyClientCert` |  requires a certificate, which must be signed by a CA listed in `clientAuth.caFiles` or in `clientAuth.secretNames`. |
+| <a id="opt-NoClientCert" href="#opt-NoClientCert" title="#opt-NoClientCert">`NoClientCert`</a> | Disregards any client certificate.| 
+| <a id="opt-RequestClientCert" href="#opt-RequestClientCert" title="#opt-RequestClientCert">`RequestClientCert`</a> | Asks for a certificate but proceeds anyway if none is provided. |
+| <a id="opt-RequireAnyClientCert" href="#opt-RequireAnyClientCert" title="#opt-RequireAnyClientCert">`RequireAnyClientCert`</a> | Requires a certificate but does not verify if it is signed by a CA listed in `clientAuth.caFiles` or in `clientAuth.secretNames`. |
+| <a id="opt-VerifyClientCertIfGiven" href="#opt-VerifyClientCertIfGiven" title="#opt-VerifyClientCertIfGiven">`VerifyClientCertIfGiven`</a> | If a certificate is provided, verifies if it is signed by a CA listed in `clientAuth.caFiles` or in `clientAuth.secretNames`. Otherwise proceeds without any certificate. |
+| <a id="opt-RequireAndVerifyClientCert" href="#opt-RequireAndVerifyClientCert" title="#opt-RequireAndVerifyClientCert">`RequireAndVerifyClientCert`</a> |  requires a certificate, which must be signed by a CA listed in `clientAuth.caFiles` or in `clientAuth.secretNames`. |
 
 ```yaml tab="Structured (YAML)"
 # Dynamic configuration
@@ -259,4 +259,4 @@ spec:
   disableSessionTickets: true
 ```
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

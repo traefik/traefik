@@ -10,8 +10,9 @@
 			"priority": 9223372036854775806,
 			"observability": {
 				"accessLogs": true,
+				"metrics": true,
 				"tracing": true,
-				"metrics": true
+				"traceVerbosity": "minimal"
 			},
 			"status": "enabled",
 			"using": [
@@ -32,8 +33,9 @@
 			"priority": 9223372036854775805,
 			"observability": {
 				"accessLogs": true,
+				"metrics": true,
 				"tracing": true,
-				"metrics": true
+				"traceVerbosity": "minimal"
 			},
 			"status": "enabled",
 			"using": [
@@ -49,8 +51,9 @@
 			"priority": 50,
 			"observability": {
 				"accessLogs": true,
+				"metrics": true,
 				"tracing": true,
-				"metrics": true
+				"traceVerbosity": "minimal"
 			},
 			"status": "enabled",
 			"using": [
@@ -66,8 +69,9 @@
 			"priority": 44,
 			"observability": {
 				"accessLogs": true,
+				"metrics": true,
 				"tracing": true,
-				"metrics": true
+				"traceVerbosity": "minimal"
 			},
 			"status": "enabled",
 			"using": [
@@ -83,8 +87,9 @@
 			"priority": 47,
 			"observability": {
 				"accessLogs": true,
+				"metrics": true,
 				"tracing": true,
-				"metrics": true
+				"traceVerbosity": "minimal"
 			},
 			"status": "enabled",
 			"using": [
@@ -100,8 +105,9 @@
 			"priority": 47,
 			"observability": {
 				"accessLogs": true,
+				"metrics": true,
 				"tracing": true,
-				"metrics": true
+				"traceVerbosity": "minimal"
 			},
 			"status": "enabled",
 			"using": [

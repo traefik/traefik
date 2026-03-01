@@ -1,7 +1,6 @@
 package server
 
 import (
-	"context"
 	"io"
 	"net"
 	"testing"
@@ -27,7 +26,7 @@ func TestShutdownUDPConn(t *testing.T) {
 	entryPoint, err := NewUDPEntryPoint(&ep, "")
 	require.NoError(t, err)
 
-	go entryPoint.Start(context.Background())
+	go entryPoint.Start(t.Context())
 	entryPoint.Switch(udp.HandlerFunc(func(conn *udp.Conn) {
 		for {
 			b := make([]byte, 1024*1024)
@@ -54,11 +53,17 @@ func TestShutdownUDPConn(t *testing.T) {
 	// Start sending packets, to create a "session" with the server.
 	requireEcho(t, "TEST", conn, time.Second)
 
+	shutdownStartedChan := make(chan struct{})
 	doneChan := make(chan struct{})
 	go func() {
-		entryPoint.Shutdown(context.Background())
+		close(shutdownStartedChan)
+		entryPoint.Shutdown(t.Context())
 		close(doneChan)
 	}()
+
+	// Wait until shutdown has started, and hopefully after 100 ms the listener has stopped accepting new sessions.
+	<-shutdownStartedChan
+	time.Sleep(100 * time.Millisecond)
 
 	// Make sure that our session is still live even after the shutdown.
 	requireEcho(t, "TEST2", conn, time.Second)

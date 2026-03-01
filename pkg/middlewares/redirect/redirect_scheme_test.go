@@ -1,7 +1,6 @@
 package redirect
 
 import (
-	"context"
 	"crypto/tls"
 	"net/http"
 	"net/http/httptest"
@@ -167,6 +166,27 @@ func TestRedirectSchemeHandler(t *testing.T) {
 			expectedStatus: http.StatusMovedPermanently,
 		},
 		{
+			desc: "HTTP to HTTPS with explicit 308 status code",
+			config: dynamic.RedirectScheme{
+				Scheme:                 "https",
+				ForcePermanentRedirect: true,
+			},
+			url:            "http://foo",
+			expectedURL:    "https://foo",
+			expectedStatus: http.StatusPermanentRedirect,
+		},
+		{
+			desc:   "HTTP to HTTPS with explicit 308 status code for GET request",
+			method: http.MethodGet,
+			config: dynamic.RedirectScheme{
+				Scheme:                 "https",
+				ForcePermanentRedirect: true,
+			},
+			url:            "http://foo",
+			expectedURL:    "https://foo",
+			expectedStatus: http.StatusPermanentRedirect,
+		},
+		{
 			desc: "to HTTP 80",
 			config: dynamic.RedirectScheme{
 				Scheme: "http",
@@ -287,7 +307,7 @@ func TestRedirectSchemeHandler(t *testing.T) {
 			t.Parallel()
 
 			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-			handler, err := NewRedirectScheme(context.Background(), next, test.config, "traefikTest")
+			handler, err := NewRedirectScheme(t.Context(), next, test.config, "traefikTest")
 
 			if test.errorExpected {
 				require.Error(t, err)

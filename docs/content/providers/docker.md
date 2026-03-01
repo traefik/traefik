@@ -40,7 +40,6 @@ This provider works with [Docker (standalone) Engine](https://docs.docker.com/en
     Attaching labels to containers (in your docker compose file)
 
     ```yaml
-    version: "3"
     services:
       my-container:
         # ...
@@ -162,11 +161,9 @@ See the [Docker API Access](#docker-api-access) section for more information.
     The docker-compose file shares the docker sock with the Traefik container
 
     ```yaml
-    version: '3'
-
     services:
       traefik:
-         image: traefik:v3.4 # The official v3 Traefik docker image
+         image: traefik:v3.6 # The official v3 Traefik docker image
          ports:
            - "80:80"
          volumes:
@@ -383,7 +380,7 @@ _Optional, Default=true_
 Expose containers by default through Traefik.
 If set to `false`, containers that do not have a `traefik.enable=true` label are ignored from the resulting routing configuration.
 
-For additional information, refer to [Restrict the Scope of Service Discovery](./overview.md#restrict-the-scope-of-service-discovery).
+For additional information, refer to [Restrict the Scope of Service Discovery](./overview.md#exposedbydefault-and-traefikenable).
 
 ```yaml tab="File (YAML)"
 providers:
@@ -557,7 +554,7 @@ as well as the usual boolean logic, as shown in examples below.
     constraints = "LabelRegex(`a.label.name`, `a.+`)"
     ```
 
-For additional information, refer to [Restrict the Scope of Service Discovery](./overview.md#restrict-the-scope-of-service-discovery).
+For additional information, refer to [Restrict the Scope of Service Discovery](./overview.md#exposedbydefault-and-traefikenable).
 
 ```yaml tab="File (YAML)"
 providers:
@@ -705,4 +702,4 @@ providers:
 --providers.docker.allowEmptyServices=true
 ```
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

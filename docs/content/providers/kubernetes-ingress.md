@@ -13,7 +13,7 @@ it manages access to cluster services by supporting the [Ingress](https://kubern
 
 ## Requirements
 
-{!kubernetes-requirements.md!}
+{% include-markdown "includes/kubernetes-requirements.md" %}
 
 ## Routing Configuration
 
@@ -555,6 +555,6 @@ providers:
 ### Further
 
 To learn more about the various aspects of the Ingress specification that Traefik supports,
-many examples of Ingresses definitions are located in the test [examples](https://github.com/traefik/traefik/tree/v3.4/pkg/provider/kubernetes/ingress/fixtures) of the Traefik repository.
+many examples of Ingresses definitions are located in the test [examples](https://github.com/traefik/traefik/tree/v3.6/pkg/provider/kubernetes/ingress/fixtures) of the Traefik repository.
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

@@ -1,0 +1,27 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[entryPoints]
+  [entryPoints.web]
+    address = ":8000"
+
+[providers.file]
+  filename = "{{ .SelfFilename }}"
+
+[ocsp.responderOverrides]
+  ocsp.example.com = "{{ .ResponderURL }}"
+
+[log]
+  level="debug"
+
+## dynamic configuration ##
+
+[[tls.certificates]]
+  certFile = "fixtures/ocsp/server.crt"
+  keyFile = "fixtures/ocsp/server.key"
+
+[tls.stores]
+  [tls.stores.default.defaultCertificate]
+    certFile = "fixtures/ocsp/default.crt"
+    keyFile = "fixtures/ocsp/default.key"

@@ -1,0 +1,133 @@
+import { AriaTable, AriaTbody, AriaTd, AriaTfoot, AriaThead, AriaTr, Box, Flex } from '@traefiklabs/faency'
+import { useMemo } from 'react'
+import useInfiniteScroll from 'react-infinite-scroll-hook'
+import { useSearchParams } from 'react-router-dom'
+
+import { ScrollTopButton } from 'components/buttons/ScrollTopButton'
+import { ProviderIconWithTooltip } from 'components/icons/providers'
+import { Chips } from 'components/resources/DetailItemComponents'
+import { ResourceStatus } from 'components/resources/ResourceStatus'
+import TlsIcon from 'components/routers/TlsIcon'
+import { SpinnerLoader } from 'components/SpinnerLoader'
+import ClickableRow from 'components/tables/ClickableRow'
+import SortableTh from 'components/tables/SortableTh'
+import { searchParamsToState, TableFilter } from 'components/tables/TableFilter'
+import Tooltip from 'components/Tooltip'
+import TooltipText from 'components/TooltipText'
+import useFetchWithPagination, { pagesResponseInterface, RenderRowType } from 'hooks/use-fetch-with-pagination'
+import { EmptyPlaceholderTd } from 'layout/EmptyPlaceholder'
+import PageTitle from 'layout/PageTitle'
+
+export const makeRowRender = (): RenderRowType => {
+  const TcpRoutersRenderRow = (row) => (
+    <ClickableRow key={row.name} to={`/tcp/routers/${row.name}`}>
+      <AriaTd>
+        <ResourceStatus status={row.status} />
+      </AriaTd>
+      <AriaTd>
+        {row.tls && (
+          <Tooltip label="TLS ON">
+            <Box css={{ width: 24, height: 24 }} data-testid="tls-on">
+              <TlsIcon />
+            </Box>
+          </Tooltip>
+        )}
+      </AriaTd>
+      <AriaTd>
+        <TooltipText text={row.rule} isTruncated />
+      </AriaTd>
+      <AriaTd>{row.entryPoints && row.entryPoints.length > 0 && <Chips items={row.entryPoints} />}</AriaTd>
+      <AriaTd>
+        <TooltipText text={row.name} isTruncated />
+      </AriaTd>
+      <AriaTd>
+        <TooltipText text={row.service} isTruncated />
+      </AriaTd>
+      <AriaTd>
+        <ProviderIconWithTooltip provider={row.provider} />
+      </AriaTd>
+      <AriaTd>
+        <TooltipText text={row.priority} isTruncated />
+      </AriaTd>
+    </ClickableRow>
+  )
+  return TcpRoutersRenderRow
+}
+
+export const TcpRoutersRender = ({
+  error,
+  isEmpty,
+  isLoadingMore,
+  isReachingEnd,
+  loadMore,
+  pageCount,
+  pages,
+}: pagesResponseInterface) => {
+  const [infiniteRef] = useInfiniteScroll({
+    loading: isLoadingMore,
+    hasNextPage: !isReachingEnd && !error,
+    onLoadMore: loadMore,
+  })
+
+  return (
+    <>
+      <AriaTable>
+        <AriaThead>
+          <AriaTr>
+            <SortableTh label="Status" css={{ width: '36px' }} isSortable sortByValue="status" />
+            <SortableTh label="TLS" css={{ width: '40px' }} />
+            <SortableTh label="Rule" isSortable sortByValue="rule" />
+            <SortableTh label="Entrypoints" isSortable sortByValue="entryPoints" />
+            <SortableTh label="Name" isSortable sortByValue="name" />
+            <SortableTh label="Service" isSortable sortByValue="service" />
+            <SortableTh label="Provider" isSortable sortByValue="provider" />
+            <SortableTh label="Priority" isSortable sortByValue="priority" />
+          </AriaTr>
+        </AriaThead>
+        <AriaTbody>{pages}</AriaTbody>
+        {(isEmpty || !!error) && (
+          <AriaTfoot>
+            <AriaTr>
+              <EmptyPlaceholderTd message={error ? 'Failed to fetch data' : 'No data available'} />
+            </AriaTr>
+          </AriaTfoot>
+        )}
+      </AriaTable>
+      <Flex css={{ height: 60, alignItems: 'center', justifyContent: 'center' }} ref={infiniteRef}>
+        {isLoadingMore ? <SpinnerLoader /> : isReachingEnd && pageCount > 1 && <ScrollTopButton />}
+      </Flex>
+    </>
+  )
+}
+
+export const TcpRouters = () => {
+  const renderRow = makeRowRender()
+  const [searchParams] = useSearchParams()
+
+  const query = useMemo(() => searchParamsToState(searchParams), [searchParams])
+  const { pages, pageCount, isLoadingMore, isReachingEnd, loadMore, error, isEmpty } = useFetchWithPagination(
+    '/tcp/routers',
+    {
+      listContextKey: JSON.stringify(query),
+      renderRow,
+      renderLoader: () => null,
+      query,
+    },
+  )
+
+  return (
+    <>
+      <PageTitle title="TCP Routers" />
+      <TableFilter />
+      <TcpRoutersRender
+        error={error}
+        isEmpty={isEmpty}
+        isLoadingMore={isLoadingMore}
+        isReachingEnd={isReachingEnd}
+        loadMore={loadMore}
+        pageCount={pageCount}
+        pages={pages}
+      />
+    </>
+  )
+}

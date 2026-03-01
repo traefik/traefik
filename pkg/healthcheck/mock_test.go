@@ -64,6 +64,10 @@ func newGRPCServer(healthSequence ...healthpb.HealthCheckResponse_ServingStatus)
 	return gRPCService
 }
 
+func (s *GRPCServer) List(_ context.Context, _ *healthpb.HealthListRequest) (*healthpb.HealthListResponse, error) {
+	return nil, nil
+}
+
 func (s *GRPCServer) Check(_ context.Context, _ *healthpb.HealthCheckRequest) (*healthpb.HealthCheckResponse, error) {
 	if s.status.IsEmpty() {
 		s.done()
@@ -161,15 +165,31 @@ type testLoadBalancer struct {
 	// RWMutex needed due to parallel test execution: Both the system-under-test
 	// and the test assertions reference the counters.
 	*sync.RWMutex
+
 	numRemovedServers  int
 	numUpsertedServers int
+
+	// eventCh is used to signal when a status change occurs, allowing tests
+	// to synchronize with health check events deterministically.
+	eventCh chan struct{}
 }
 
 func (lb *testLoadBalancer) SetStatus(ctx context.Context, childName string, up bool) {
+	lb.Lock()
 	if up {
 		lb.numUpsertedServers++
 	} else {
 		lb.numRemovedServers++
+	}
+	lb.Unlock()
+
+	// Signal the event if a listener is registered.
+	if lb.eventCh != nil {
+		select {
+		case lb.eventCh <- struct{}{}:
+		default:
+			// Don't block if channel is full or no listener.
+		}
 	}
 }
 

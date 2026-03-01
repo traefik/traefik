@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -471,6 +472,100 @@ func TestServeHTTP(t *testing.T) {
 			},
 		},
 		{
+			desc:     "Trusted (insecure) and Connection: Testing case sensitivity on connection Headers param",
+			insecure: true,
+			connectionHeaders: []string{
+				strings.ToLower(xForwardedProto),
+				strings.ToLower(xForwardedFor),
+				strings.ToLower(xForwardedURI),
+				strings.ToLower(xForwardedMethod),
+				strings.ToLower(xForwardedHost),
+				strings.ToLower(xForwardedPort),
+				strings.ToLower(xForwardedTLSClientCert),
+				strings.ToLower(xForwardedTLSClientCertInfo),
+				strings.ToLower(xForwardedPrefix),
+				strings.ToLower(xRealIP),
+			},
+			incomingHeaders: map[string][]string{
+				connection: {
+					xForwardedProto,
+					xForwardedFor,
+					xForwardedURI,
+					xForwardedMethod,
+					xForwardedHost,
+					xForwardedPort,
+					xForwardedTLSClientCert,
+					xForwardedTLSClientCertInfo,
+					xForwardedPrefix,
+					xRealIP,
+				},
+				xForwardedProto:             {"foo"},
+				xForwardedFor:               {"foo"},
+				xForwardedURI:               {"foo"},
+				xForwardedMethod:            {"foo"},
+				xForwardedHost:              {"foo"},
+				xForwardedPort:              {"foo"},
+				xForwardedTLSClientCert:     {"foo"},
+				xForwardedTLSClientCertInfo: {"foo"},
+				xForwardedPrefix:            {"foo"},
+				xRealIP:                     {"foo"},
+			},
+			expectedHeaders: map[string]string{
+				xForwardedProto:             "foo",
+				xForwardedFor:               "foo",
+				xForwardedURI:               "foo",
+				xForwardedMethod:            "foo",
+				xForwardedHost:              "foo",
+				xForwardedPort:              "foo",
+				xForwardedTLSClientCert:     "foo",
+				xForwardedTLSClientCertInfo: "foo",
+				xForwardedPrefix:            "foo",
+				xRealIP:                     "foo",
+				connection:                  "",
+			},
+		},
+		{
+			desc:     "Trusted (insecure) and Connection: Testing case sensitivity on X- forwarded headers",
+			insecure: true,
+			incomingHeaders: map[string][]string{
+				connection: {
+					strings.ToLower(xForwardedProto),
+					strings.ToLower(xForwardedFor),
+					strings.ToLower(xForwardedURI),
+					strings.ToLower(xForwardedMethod),
+					strings.ToLower(xForwardedHost),
+					strings.ToLower(xForwardedPort),
+					strings.ToLower(xForwardedTLSClientCert),
+					strings.ToLower(xForwardedTLSClientCertInfo),
+					strings.ToLower(xForwardedPrefix),
+					strings.ToLower(xRealIP),
+				},
+				xForwardedProto:             {"foo"},
+				xForwardedFor:               {"foo"},
+				xForwardedURI:               {"foo"},
+				xForwardedMethod:            {"foo"},
+				xForwardedHost:              {"foo"},
+				xForwardedPort:              {"foo"},
+				xForwardedTLSClientCert:     {"foo"},
+				xForwardedTLSClientCertInfo: {"foo"},
+				xForwardedPrefix:            {"foo"},
+				xRealIP:                     {"foo"},
+			},
+			expectedHeaders: map[string]string{
+				xForwardedProto:             "foo",
+				xForwardedFor:               "foo",
+				xForwardedURI:               "foo",
+				xForwardedMethod:            "foo",
+				xForwardedHost:              "foo",
+				xForwardedPort:              "foo",
+				xForwardedTLSClientCert:     "foo",
+				xForwardedTLSClientCertInfo: "foo",
+				xForwardedPrefix:            "foo",
+				xRealIP:                     "foo",
+				connection:                  "",
+			},
+		},
+		{
 			desc: "Connection: one remove, and one passthrough header",
 			connectionHeaders: []string{
 				"foo",
@@ -478,12 +573,14 @@ func TestServeHTTP(t *testing.T) {
 			incomingHeaders: map[string][]string{
 				connection: {
 					"foo",
+					"bar",
 				},
 				"Foo": {"bar"},
 				"Bar": {"foo"},
 			},
 			expectedHeaders: map[string]string{
-				"Bar": "foo",
+				"Bar": "",
+				"Foo": "bar",
 			},
 		},
 	}
@@ -516,7 +613,7 @@ func TestServeHTTP(t *testing.T) {
 				}
 			}
 
-			m, err := NewXForwarded(test.insecure, test.trustedIps, test.connectionHeaders,
+			m, err := NewXForwarded(test.insecure, test.trustedIps, test.connectionHeaders, false,
 				http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {}))
 			require.NoError(t, err)
 
@@ -655,7 +752,7 @@ func TestConnection(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			forwarded, err := NewXForwarded(true, nil, test.connectionHeaders, nil)
+			forwarded, err := NewXForwarded(true, nil, test.connectionHeaders, false, nil)
 			require.NoError(t, err)
 
 			req := httptest.NewRequest(http.MethodGet, "https://localhost", nil)

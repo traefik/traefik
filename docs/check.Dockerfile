@@ -1,4 +1,4 @@
-FROM alpine:3.21
+FROM alpine:3.23
 
 RUN apk --no-cache --no-progress add \
     build-base \
@@ -9,9 +9,7 @@ RUN apk --no-cache --no-progress add \
     ruby \
     ruby-bigdecimal \
     ruby-dev \
-    ruby-etc \
     ruby-ffi \
-    ruby-json \
     zlib-dev
 
 RUN gem install nokogiri --version 1.18.6 --no-document -- --use-system-libraries
@@ -36,6 +34,7 @@ RUN apk --no-cache --no-progress add \
 
 COPY ./scripts/verify.sh /verify.sh
 COPY ./scripts/lint.sh /lint.sh
+COPY ./scripts/lint-yaml.sh /lint-yaml.sh
 
 WORKDIR /app
 VOLUME ["/tmp","/app"]

@@ -2,7 +2,6 @@ package integration
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -26,6 +25,7 @@ import (
 // Consul test suites.
 type ConsulSuite struct {
 	BaseSuite
+
 	kvClient  store.Store
 	consulURL string
 }
@@ -43,7 +43,7 @@ func (s *ConsulSuite) SetupSuite() {
 	s.consulURL = fmt.Sprintf("http://%s", consulAddr)
 
 	kv, err := valkeyrie.NewStore(
-		context.Background(),
+		s.T().Context(),
 		consul.StoreName,
 		[]string{consulAddr},
 		&consul.Config{
@@ -63,7 +63,7 @@ func (s *ConsulSuite) TearDownSuite() {
 }
 
 func (s *ConsulSuite) TearDownTest() {
-	err := s.kvClient.DeleteTree(context.Background(), "traefik")
+	err := s.kvClient.DeleteTree(s.T().Context(), "traefik")
 	if err != nil && !errors.Is(err, store.ErrKeyNotFound) {
 		require.ErrorIs(s.T(), err, store.ErrKeyNotFound)
 	}
@@ -118,7 +118,7 @@ func (s *ConsulSuite) TestSimpleConfiguration() {
 	}
 
 	for k, v := range data {
-		err := s.kvClient.Put(context.Background(), k, []byte(v), nil)
+		err := s.kvClient.Put(s.T().Context(), k, []byte(v), nil)
 		require.NoError(s.T(), err)
 	}
 
@@ -163,22 +163,12 @@ func (s *ConsulSuite) TestSimpleConfiguration() {
 	}
 }
 
-func (s *ConsulSuite) assertWhoami(host string, expectedStatusCode int) {
-	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000", nil)
-	require.NoError(s.T(), err)
-	req.Host = host
-
-	resp, err := try.ResponseUntilStatusCode(req, 15*time.Second, expectedStatusCode)
-	require.NoError(s.T(), err)
-	resp.Body.Close()
-}
-
 func (s *ConsulSuite) TestDeleteRootKey() {
 	// This test case reproduce the issue: https://github.com/traefik/traefik/issues/8092
 
 	file := s.adaptFile("fixtures/consul/simple.toml", struct{ ConsulAddress string }{s.consulURL})
 
-	ctx := context.Background()
+	ctx := s.T().Context()
 	svcaddr := net.JoinHostPort(s.getComposeServiceIP("whoami"), "80")
 
 	data := map[string]string{
@@ -220,4 +210,14 @@ func (s *ConsulSuite) TestDeleteRootKey() {
 	require.NoError(s.T(), err)
 	s.assertWhoami("kv1.localhost", http.StatusNotFound)
 	s.assertWhoami("kv2.localhost", http.StatusNotFound)
+}
+
+func (s *ConsulSuite) assertWhoami(host string, expectedStatusCode int) {
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000", nil)
+	require.NoError(s.T(), err)
+	req.Host = host
+
+	resp, err := try.ResponseUntilStatusCode(req, 15*time.Second, expectedStatusCode)
+	require.NoError(s.T(), err)
+	resp.Body.Close()
 }

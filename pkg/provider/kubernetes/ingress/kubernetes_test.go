@@ -1,7 +1,6 @@
 package ingress
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"math"
@@ -18,6 +17,7 @@ import (
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	traefikhttp "github.com/traefik/traefik/v3/pkg/muxer/http"
+	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	"github.com/traefik/traefik/v3/pkg/provider"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/tls"
@@ -125,9 +125,10 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 								Options: "foobar",
 							},
 							Observability: &dynamic.RouterObservabilityConfig{
-								AccessLogs: pointer(true),
-								Tracing:    pointer(true),
-								Metrics:    pointer(true),
+								AccessLogs:     pointer(true),
+								Tracing:        pointer(true),
+								Metrics:        pointer(true),
+								TraceVerbosity: otypes.MinimalVerbosity,
 							},
 						},
 					},
@@ -524,6 +525,48 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 							},
 						},
 					},
+				},
+			},
+		},
+		{
+			desc:               "Ingress with backend resource",
+			allowEmptyServices: true,
+			expected: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Routers:     map[string]*dynamic.Router{},
+					Services:    map[string]*dynamic.Service{},
+				},
+			},
+		},
+		{
+			desc:               "Ingress without backend",
+			allowEmptyServices: true,
+			expected: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Routers:     map[string]*dynamic.Router{},
+					Services:    map[string]*dynamic.Service{},
+				},
+			},
+		},
+		{
+			desc: "Ingress with defaultbackend with resource",
+			expected: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Routers:     map[string]*dynamic.Router{},
+					Services:    map[string]*dynamic.Service{},
+				},
+			},
+		},
+		{
+			desc: "Ingress with empty defaultbackend",
+			expected: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Routers:     map[string]*dynamic.Router{},
+					Services:    map[string]*dynamic.Service{},
 				},
 			},
 		},
@@ -1675,7 +1718,7 @@ func TestLoadConfigurationFromIngresses(t *testing.T) {
 				DefaultRuleSyntax:            test.defaultRuleSyntax,
 				StrictPrefixMatching:         test.strictPrefixMatching,
 			}
-			conf := p.loadConfigurationFromIngresses(context.Background(), clientMock)
+			conf := p.loadConfigurationFromIngresses(t.Context(), clientMock)
 
 			assert.Equal(t, test.expected, conf)
 		})
@@ -1801,7 +1844,7 @@ func TestLoadConfigurationFromIngressesWithExternalNameServices(t *testing.T) {
 
 			p := Provider{IngressClass: test.ingressClass}
 			p.AllowExternalNameServices = test.allowExternalNameServices
-			conf := p.loadConfigurationFromIngresses(context.Background(), clientMock)
+			conf := p.loadConfigurationFromIngresses(t.Context(), clientMock)
 
 			assert.Equal(t, test.expected, conf)
 		})
@@ -1851,7 +1894,7 @@ func TestLoadConfigurationFromIngressesWithNativeLB(t *testing.T) {
 			clientMock := newClientMock(generateTestFilename(test.desc))
 
 			p := Provider{IngressClass: test.ingressClass}
-			conf := p.loadConfigurationFromIngresses(context.Background(), clientMock)
+			conf := p.loadConfigurationFromIngresses(t.Context(), clientMock)
 
 			assert.Equal(t, test.expected, conf)
 		})
@@ -1912,7 +1955,7 @@ func TestLoadConfigurationFromIngressesWithNodePortLB(t *testing.T) {
 			clientMock := newClientMock(generateTestFilename(test.desc))
 
 			p := Provider{DisableClusterScopeResources: test.clusterScopeDisabled}
-			conf := p.loadConfigurationFromIngresses(context.Background(), clientMock)
+			conf := p.loadConfigurationFromIngresses(t.Context(), clientMock)
 
 			assert.Equal(t, test.expected, conf)
 		})
@@ -2084,7 +2127,7 @@ func TestGetCertificates(t *testing.T) {
 			t.Parallel()
 
 			tlsConfigs := map[string]*tls.CertAndStores{}
-			err := getCertificates(context.Background(), test.ingress, test.client, tlsConfigs)
+			err := getCertificates(t.Context(), test.ingress, test.client, tlsConfigs)
 
 			if test.errResult != "" {
 				assert.EqualError(t, err, test.errResult)
@@ -2158,6 +2201,37 @@ func TestLoadConfigurationFromIngressesWithNativeLBByDefault(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "Ingress with native lb by default but service has disabled nativelb",
+			expected: &dynamic.Configuration{
+				HTTP: &dynamic.HTTPConfiguration{
+					Middlewares: map[string]*dynamic.Middleware{},
+					Routers: map[string]*dynamic.Router{
+						"default-global-native-lb-traefik-tchouk-bar": {
+							Rule:    "Host(`traefik.tchouk`) && PathPrefix(`/bar`)",
+							Service: "default-native-disabled-svc-web",
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-native-disabled-svc-web": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy:           dynamic.BalancerStrategyWRR,
+								ResponseForwarding: &dynamic.ResponseForwarding{FlushInterval: dynamic.DefaultFlushInterval},
+								PassHostHeader:     pointer(true),
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.20:8080",
+									},
+									{
+										URL: "http://10.10.0.21:8080",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -2170,7 +2244,7 @@ func TestLoadConfigurationFromIngressesWithNativeLBByDefault(t *testing.T) {
 				IngressClass:      test.ingressClass,
 				NativeLBByDefault: true,
 			}
-			conf := p.loadConfigurationFromIngresses(context.Background(), clientMock)
+			conf := p.loadConfigurationFromIngresses(t.Context(), clientMock)
 
 			assert.Equal(t, test.expected, conf)
 		})
@@ -2244,6 +2318,14 @@ func TestIngressEndpointPublishedService(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "Published Service ExternalName",
+			expected: []netv1.IngressLoadBalancerIngress{
+				{
+					Hostname: "example.com",
+				},
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -2270,12 +2352,12 @@ func TestIngressEndpointPublishedService(t *testing.T) {
 					PublishedService: "default/published-service",
 				},
 			}
-			p.loadConfigurationFromIngresses(context.Background(), client)
+			p.loadConfigurationFromIngresses(t.Context(), client)
 
-			ingress, err := kubeClient.NetworkingV1().Ingresses(metav1.NamespaceDefault).Get(context.Background(), "foo", metav1.GetOptions{})
+			ingress, err := kubeClient.NetworkingV1().Ingresses(metav1.NamespaceDefault).Get(t.Context(), "foo", metav1.GetOptions{})
 			require.NoError(t, err)
 
-			assert.Equal(t, test.expected, ingress.Status.LoadBalancer.Ingress)
+			assert.ElementsMatch(t, test.expected, ingress.Status.LoadBalancer.Ingress)
 		})
 	}
 }
@@ -2380,8 +2462,10 @@ func TestStrictPrefixMatchingRule(t *testing.T) {
 			t.Parallel()
 
 			handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-			muxer, err := traefikhttp.NewMuxer()
+			parser, err := traefikhttp.NewSyntaxParser()
 			require.NoError(t, err)
+
+			muxer := traefikhttp.NewMuxer(parser)
 
 			rule := buildStrictPrefixMatchingRule(tt.path)
 			err = muxer.AddRoute(rule, "", 0, handler)

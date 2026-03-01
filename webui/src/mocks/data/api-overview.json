@@ -1,0 +1,73 @@
+{
+  "http": {
+    "routers": {
+      "total": 126,
+      "warnings": 42,
+      "errors": 42
+    },
+    "services": {
+      "total": 126,
+      "warnings": 38,
+      "errors": 5
+    },
+    "middlewares": {
+      "total": 126,
+      "warnings": 10,
+      "errors": 15
+    }
+  },
+  "tcp": {
+    "routers": {
+      "total": 126,
+      "warnings": 20,
+      "errors": 32
+    },
+    "services": {
+      "total": 126,
+      "warnings": 8,
+      "errors": 7
+    },
+    "middlewares": {
+      "total": 126,
+      "warnings": 23,
+      "errors": 11
+    }
+  },
+  "udp": {
+    "routers": {
+      "total": 0,
+      "warnings": 0,
+      "errors": 0
+    },
+    "services": {
+      "total": 0,
+      "warnings": 0,
+      "errors": 0
+    }
+  },
+  "features": {
+    "tracing": "Prometheus",
+    "metrics": "",
+    "accessLog": true
+  },
+  "providers": [
+    "Consul",
+    "ConsulCatalog",
+    "Docker",
+    "ECS",
+    "etcd",
+    "File",
+    "Http",
+    "Hub",
+    "Internal",
+    "Kubernetes",
+    "KubernetesCRD",
+    "KubernetesGateway",
+    "KubernetesIngress",
+    "Nomad",
+    "Plugin",
+    "Redis",
+    "Swarm",
+    "ZooKeeper"
+  ]
+}

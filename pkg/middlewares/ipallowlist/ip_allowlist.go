@@ -11,7 +11,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/ip"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
-	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -65,8 +64,8 @@ func New(ctx context.Context, next http.Handler, config dynamic.IPAllowList, nam
 	}, nil
 }
 
-func (al *ipAllowLister) GetTracingInformation() (string, string, trace.SpanKind) {
-	return al.name, typeName, trace.SpanKindInternal
+func (al *ipAllowLister) GetTracingInformation() (string, string) {
+	return al.name, typeName
 }
 
 func (al *ipAllowLister) ServeHTTP(rw http.ResponseWriter, req *http.Request) {

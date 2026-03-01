@@ -19,8 +19,10 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/sirupsen/logrus"
 	ptypes "github.com/traefik/paerser/types"
-	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/middlewares/capture"
+	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
+	"github.com/traefik/traefik/v3/pkg/observability/logs"
+	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"go.opentelemetry.io/contrib/bridges/otellogrus"
@@ -35,6 +37,9 @@ const (
 
 	// CommonFormat is the common logging format (CLF).
 	CommonFormat string = "common"
+
+	// GenericCLFFormat is the generic CLF format.
+	GenericCLFFormat string = "genericCLF"
 
 	// JSONFormat is the JSON logging format.
 	JSONFormat string = "json"
@@ -60,7 +65,7 @@ type handlerParams struct {
 
 // Handler will write each request and its response to the access log.
 type Handler struct {
-	config         *types.AccessLog
+	config         *otypes.AccessLog
 	logger         *logrus.Logger
 	file           io.WriteCloser
 	mu             sync.Mutex
@@ -69,17 +74,8 @@ type Handler struct {
 	wg             sync.WaitGroup
 }
 
-// WrapHandler Wraps access log handler into an Alice Constructor.
-func WrapHandler(handler *Handler) alice.Constructor {
-	return func(next http.Handler) (http.Handler, error) {
-		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-			handler.ServeHTTP(rw, req, next)
-		}), nil
-	}
-}
-
 // NewHandler creates a new Handler.
-func NewHandler(config *types.AccessLog) (*Handler, error) {
+func NewHandler(ctx context.Context, config *otypes.AccessLog) (*Handler, error) {
 	var file io.WriteCloser = noopCloser{os.Stdout}
 	if len(config.FilePath) > 0 {
 		f, err := openAccessLogFile(config.FilePath)
@@ -95,6 +91,8 @@ func NewHandler(config *types.AccessLog) (*Handler, error) {
 	switch config.Format {
 	case CommonFormat:
 		formatter = new(CommonLogFormatter)
+	case GenericCLFFormat:
+		formatter = new(GenericCLFLogFormatter)
 	case JSONFormat:
 		formatter = new(logrus.JSONFormatter)
 	default:
@@ -110,13 +108,15 @@ func NewHandler(config *types.AccessLog) (*Handler, error) {
 	}
 
 	if config.OTLP != nil {
-		otelLoggerProvider, err := config.OTLP.NewLoggerProvider()
+		otelLoggerProvider, err := config.OTLP.NewLoggerProvider(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("setting up OpenTelemetry logger provider: %w", err)
 		}
 
 		logger.Hooks.Add(otellogrus.NewHook("traefik", otellogrus.WithLoggerProvider(otelLoggerProvider)))
-		logger.Out = io.Discard
+		if !config.DualOutput {
+			logger.Out = io.Discard
+		}
 	}
 
 	// Transform header names to a canonical form, to be used as is without further transformations,
@@ -159,43 +159,37 @@ func NewHandler(config *types.AccessLog) (*Handler, error) {
 	}
 
 	if config.BufferingSize > 0 {
-		logHandler.wg.Add(1)
-		go func() {
-			defer logHandler.wg.Done()
+		logHandler.wg.Go(func() {
 			for handlerParams := range logHandler.logHandlerChan {
 				logHandler.logTheRoundTrip(handlerParams.ctx, handlerParams.logDataTable)
 			}
-		}()
+		})
 	}
 
 	return logHandler, nil
 }
 
-func openAccessLogFile(filePath string) (*os.File, error) {
-	dir := filepath.Dir(filePath)
+// AliceConstructor returns an alice.Constructor that wraps the Handler (conditionally) in a middleware chain.
+func (h *Handler) AliceConstructor() alice.Constructor {
+	return func(next http.Handler) (http.Handler, error) {
+		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			if h == nil {
+				next.ServeHTTP(rw, req)
+				return
+			}
 
-	if err := os.MkdirAll(dir, 0o755); err != nil {
-		return nil, fmt.Errorf("failed to create log path %s: %w", dir, err)
+			h.ServeHTTP(rw, req, next)
+		}), nil
 	}
-
-	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0o664)
-	if err != nil {
-		return nil, fmt.Errorf("error opening file %s: %w", filePath, err)
-	}
-
-	return file, nil
-}
-
-// GetLogData gets the request context object that contains logging data.
-// This creates data as the request passes through the middleware chain.
-func GetLogData(req *http.Request) *LogData {
-	if ld, ok := req.Context().Value(DataTableKey).(*LogData); ok {
-		return ld
-	}
-	return nil
 }
 
 func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http.Handler) {
+	if !observability.AccessLogsEnabled(req.Context()) {
+		next.ServeHTTP(rw, req)
+
+		return
+	}
+
 	now := time.Now().UTC()
 
 	core := CoreLogData{
@@ -317,23 +311,6 @@ func (h *Handler) Rotate() error {
 	return nil
 }
 
-func silentSplitHostPort(value string) (host, port string) {
-	host, port, err := net.SplitHostPort(value)
-	if err != nil {
-		return value, "-"
-	}
-	return host, port
-}
-
-func usernameIfPresent(theURL *url.URL) string {
-	if theURL.User != nil {
-		if name := theURL.User.Username(); name != "" {
-			return name
-		}
-	}
-	return "-"
-}
-
 // Logging handler to log frontend name, backend name, and elapsed time.
 func (h *Handler) logTheRoundTrip(ctx context.Context, logDataTable *LogData) {
 	core := logDataTable.Core
@@ -352,46 +329,63 @@ func (h *Handler) logTheRoundTrip(ctx context.Context, logDataTable *LogData) {
 	totalDuration := time.Now().UTC().Sub(core[StartUTC].(time.Time))
 	core[Duration] = totalDuration
 
-	if h.keepAccessLog(status, retryAttempts, totalDuration) {
-		size := logDataTable.DownstreamResponse.size
-		core[DownstreamContentSize] = size
-		if original, ok := core[OriginContentSize]; ok {
-			o64 := original.(int64)
-			if size != o64 && size != 0 {
-				core[GzipRatio] = float64(o64) / float64(size)
-			}
-		}
-
-		core[Overhead] = totalDuration
-		if origin, ok := core[OriginDuration]; ok {
-			core[Overhead] = totalDuration - origin.(time.Duration)
-		}
-
-		fields := logrus.Fields{}
-
-		for k, v := range logDataTable.Core {
-			if h.config.Fields.Keep(strings.ToLower(k)) {
-				fields[k] = v
-			}
-		}
-
-		h.redactHeaders(logDataTable.Request.headers, fields, "request_")
-		h.redactHeaders(logDataTable.OriginResponse, fields, "origin_")
-		h.redactHeaders(logDataTable.DownstreamResponse.headers, fields, "downstream_")
-
-		h.mu.Lock()
-		defer h.mu.Unlock()
-		h.logger.WithContext(ctx).WithFields(fields).Println()
+	if !h.keepAccessLog(status, retryAttempts, totalDuration) {
+		return
 	}
+
+	size := logDataTable.DownstreamResponse.size
+	core[DownstreamContentSize] = size
+	if original, ok := core[OriginContentSize]; ok {
+		o64 := original.(int64)
+		if size != o64 && size != 0 {
+			core[GzipRatio] = float64(o64) / float64(size)
+		}
+	}
+
+	core[Overhead] = totalDuration
+	if origin, ok := core[OriginDuration]; ok {
+		core[Overhead] = totalDuration - origin.(time.Duration)
+	}
+
+	fields := logrus.Fields{}
+
+	for k, v := range logDataTable.Core {
+		if h.config.Fields.Keep(strings.ToLower(k)) {
+			fields[k] = v
+		}
+	}
+
+	h.redactHeaders(logDataTable.Request.headers, fields, "request_")
+	h.redactHeaders(logDataTable.OriginResponse, fields, "origin_")
+	h.redactHeaders(logDataTable.DownstreamResponse.headers, fields, "downstream_")
+
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	entry := h.logger.WithContext(ctx).WithFields(fields)
+
+	var message string
+	if h.config.OTLP != nil {
+		// If the logger is configured to use OpenTelemetry,
+		// we compute the log body with the formatter.
+		mBytes, err := h.logger.Formatter.Format(entry)
+		if err != nil {
+			message = fmt.Sprintf("Failed to format access log entry: %v", err)
+		} else {
+			message = string(mBytes)
+		}
+	}
+
+	entry.Println(message)
 }
 
 func (h *Handler) redactHeaders(headers http.Header, fields logrus.Fields, prefix string) {
 	for k := range headers {
 		v := h.config.Fields.KeepHeader(k)
 		switch v {
-		case types.AccessLogKeep:
+		case otypes.AccessLogKeep:
 			fields[prefix+k] = strings.Join(headers.Values(k), ",")
-		case types.AccessLogRedact:
+		case otypes.AccessLogRedact:
 			fields[prefix+k] = "REDACTED"
 		}
 	}
@@ -421,6 +415,47 @@ func (h *Handler) keepAccessLog(statusCode, retryAttempts int, duration time.Dur
 	}
 
 	return false
+}
+
+// GetLogData gets the request context object that contains logging data.
+// This creates data as the request passes through the middleware chain.
+func GetLogData(req *http.Request) *LogData {
+	if ld, ok := req.Context().Value(DataTableKey).(*LogData); ok {
+		return ld
+	}
+	return nil
+}
+
+func openAccessLogFile(filePath string) (*os.File, error) {
+	dir := filepath.Dir(filePath)
+
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return nil, fmt.Errorf("failed to create log path %s: %w", dir, err)
+	}
+
+	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0o664)
+	if err != nil {
+		return nil, fmt.Errorf("error opening file %s: %w", filePath, err)
+	}
+
+	return file, nil
+}
+
+func silentSplitHostPort(value string) (host, port string) {
+	host, port, err := net.SplitHostPort(value)
+	if err != nil {
+		return value, "-"
+	}
+	return host, port
+}
+
+func usernameIfPresent(theURL *url.URL) string {
+	if theURL.User != nil {
+		if name := theURL.User.Username(); name != "" {
+			return name
+		}
+	}
+	return "-"
 }
 
 var requestCounter uint64 // Request ID

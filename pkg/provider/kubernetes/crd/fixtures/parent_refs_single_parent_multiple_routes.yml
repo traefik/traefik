@@ -1,0 +1,30 @@
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: parent-multi
+  namespace: default
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`api.example.com`) && PathPrefix(`/v1`)
+      kind: Rule
+    - match: Host(`api.example.com`) && PathPrefix(`/v2`)
+      kind: Rule
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: child-multi-routes
+  namespace: default
+spec:
+  parentRefs:
+    - name: parent-multi
+      namespace: default
+  routes:
+    - match: Path(`/users`)
+      kind: Rule
+      services:
+        - name: users-service
+          port: 9000

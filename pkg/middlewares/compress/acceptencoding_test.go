@@ -1,7 +1,6 @@
 package compress
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -153,7 +152,7 @@ func Test_getCompressionEncoding(t *testing.T) {
 				DefaultEncoding: test.defaultEncoding,
 			}
 
-			h, err := New(context.Background(), nil, conf, "test")
+			h, err := New(t.Context(), nil, conf, "test")
 			require.NoError(t, err)
 
 			c, ok := h.(*compress)

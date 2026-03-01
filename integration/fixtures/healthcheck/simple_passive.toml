@@ -1,0 +1,31 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+  noColor = true
+
+[entryPoints]
+  [entryPoints.web]
+    address = ":8000"
+
+[api]
+  insecure = true
+
+[providers.file]
+  filename = "{{ .SelfFilename }}"
+
+## dynamic configuration ##
+
+[http.routers]
+  [http.routers.router1]
+    service = "service1"
+    rule = "Host(`test.localhost`)"
+
+[http.services]
+  [http.services.service1.loadBalancer]
+    [http.services.service1.loadBalancer.passiveHealthCheck]
+      failureWindow = "2s"
+    [[http.services.service1.loadBalancer.servers]]
+      url = "http://{{.Server1}}:80"

@@ -1,0 +1,19 @@
+[
+  {
+    "loadBalancer": {
+      "terminationDelay": 10,
+      "servers": [
+        {
+          "address": "10.0.1.14:8080"
+        }
+      ]
+    },
+    "status": "enabled",
+    "usedBy": [
+      "tcp-all@docker"
+    ],
+    "name": "tcp-all@docker",
+    "type": "loadbalancer",
+    "provider": "docker"
+  }
+]

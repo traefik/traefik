@@ -1,0 +1,23 @@
+[
+  {
+    "status": "error",
+    "protocol": "tcp",
+    "type": "service",
+    "name": "service-one",
+    "message": "Error message"
+  },
+  {
+    "status": "warning",
+    "protocol": "tcp",
+    "type": "service",
+    "name": "service-two",
+    "message": "Warning message"
+  },
+  {
+    "status": "error",
+    "protocol": "http",
+    "type": "service",
+    "name": "service-three",
+    "message": "Error message"
+  }
+]

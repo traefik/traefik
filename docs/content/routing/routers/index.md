@@ -442,6 +442,8 @@ The priority is directly equal to the length of the rule, and so the longest len
 
 A value of `0` for the priority is ignored: `priority = 0` means that the default rules length sorting is used.
 
+Negative priority values are supported.
+
 ??? warning "Maximum Value"
   
     Traefik reserves a range of priorities for its internal routers,
@@ -527,7 +529,7 @@ A value of `0` for the priority is ignored: `priority = 0` means that the defaul
 
 _Optional, Default=""_
 
-In Traefik v3 a new rule syntax has been introduced ([migration guide](../../migration/v2-to-v3.md#router-rule-matchers)).
+In Traefik v3 a new rule syntax has been introduced ([migration guide](../../migrate/v2-to-v3.md#router-rule-matchers)).
 `ruleSyntax` option allows to configure the rule syntax to be used for parsing the rule on a per-router basis.
 This allows to have heterogeneous router configurations and ease migration.
 
@@ -1267,6 +1269,8 @@ The priority is directly equal to the length of the rule, and so the longest len
 
 A value of `0` for the priority is ignored: `priority = 0` means that the default rules length sorting is used.
 
+Negative priority values are supported.
+
 ??? warning "Maximum Value"
 
     Traefik reserves a range of priorities for its internal routers,
@@ -1351,7 +1355,7 @@ A value of `0` for the priority is ignored: `priority = 0` means that the defaul
 
 _Optional, Default=""_
 
-In Traefik v3 a new rule syntax has been introduced ([migration guide](../../migration/v2-to-v3.md#router-rule-matchers)).
+In Traefik v3 a new rule syntax has been introduced ([migration guide](../../migrate/v2-to-v3.md#router-rule-matchers)).
 `ruleSyntax` option allows to configure the rule syntax to be used for parsing the rule on a per-router basis.
 This allows to have heterogeneous router configurations and ease migration.
 
@@ -1790,4 +1794,4 @@ Services are the target for the router.
 
 !!! important "UDP routers can only target UDP services (and not HTTP or TCP services)."
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

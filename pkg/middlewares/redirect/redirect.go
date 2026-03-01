@@ -6,7 +6,6 @@ import (
 	"regexp"
 
 	"github.com/vulcand/oxy/v2/utils"
-	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -23,13 +22,14 @@ type redirect struct {
 	regex       *regexp.Regexp
 	replacement string
 	permanent   bool
+	statusCode  *int
 	errHandler  utils.ErrorHandler
 	name        string
 	rawURL      func(*http.Request) string
 }
 
 // New creates a Redirect middleware.
-func newRedirect(next http.Handler, regex, replacement string, permanent bool, rawURL func(*http.Request) string, name string) (http.Handler, error) {
+func newRedirect(next http.Handler, regex, replacement string, permanent bool, statusCode *int, rawURL func(*http.Request) string, name string) (http.Handler, error) {
 	re, err := regexp.Compile(regex)
 	if err != nil {
 		return nil, err
@@ -39,6 +39,7 @@ func newRedirect(next http.Handler, regex, replacement string, permanent bool, r
 		regex:       re,
 		replacement: replacement,
 		permanent:   permanent,
+		statusCode:  statusCode,
 		errHandler:  utils.DefaultHandler,
 		next:        next,
 		name:        name,
@@ -46,8 +47,8 @@ func newRedirect(next http.Handler, regex, replacement string, permanent bool, r
 	}, nil
 }
 
-func (r *redirect) GetTracingInformation() (string, string, trace.SpanKind) {
-	return r.name, typeName, trace.SpanKindInternal
+func (r *redirect) GetTracingInformation() (string, string) {
+	return r.name, typeName
 }
 
 func (r *redirect) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
@@ -70,7 +71,7 @@ func (r *redirect) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	if newURL != oldURL {
-		handler := &moveHandler{location: parsedURL, permanent: r.permanent}
+		handler := &moveHandler{location: parsedURL, permanent: r.permanent, statusCode: r.statusCode}
 		handler.ServeHTTP(rw, req)
 		return
 	}
@@ -83,8 +84,9 @@ func (r *redirect) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 }
 
 type moveHandler struct {
-	location  *url.URL
-	permanent bool
+	location   *url.URL
+	permanent  bool
+	statusCode *int
 }
 
 func (m *moveHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
@@ -101,6 +103,11 @@ func (m *moveHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			status = http.StatusPermanentRedirect
 		}
 	}
+
+	if m.statusCode != nil {
+		status = *m.statusCode
+	}
+
 	rw.WriteHeader(status)
 	_, err := rw.Write([]byte(http.StatusText(status)))
 	if err != nil {

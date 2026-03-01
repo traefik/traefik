@@ -1,7 +1,6 @@
 package nomad
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -170,7 +169,7 @@ func Test_getNomadServiceDataWithEmptyServices_GroupService_Scaling1(t *testing.
 	require.NoError(t, err)
 
 	// make the query for services
-	items, err := p.getNomadServiceDataWithEmptyServices(context.TODO())
+	items, err := p.getNomadServiceDataWithEmptyServices(t.Context())
 	require.NoError(t, err)
 	require.Len(t, items, 1)
 }
@@ -200,7 +199,7 @@ func Test_getNomadServiceDataWithEmptyServices_GroupService_Scaling0(t *testing.
 	require.NoError(t, err)
 
 	// make the query for services
-	items, err := p.getNomadServiceDataWithEmptyServices(context.TODO())
+	items, err := p.getNomadServiceDataWithEmptyServices(t.Context())
 	require.NoError(t, err)
 	require.Len(t, items, 1)
 }
@@ -230,7 +229,7 @@ func Test_getNomadServiceDataWithEmptyServices_GroupService_ScalingDisabled(t *t
 	require.NoError(t, err)
 
 	// make the query for services
-	items, err := p.getNomadServiceDataWithEmptyServices(context.TODO())
+	items, err := p.getNomadServiceDataWithEmptyServices(t.Context())
 	require.NoError(t, err)
 	require.Len(t, items, 1)
 }
@@ -260,7 +259,7 @@ func Test_getNomadServiceDataWithEmptyServices_GroupService_ScalingDisabled_Stop
 	require.NoError(t, err)
 
 	// make the query for services
-	items, err := p.getNomadServiceDataWithEmptyServices(context.TODO())
+	items, err := p.getNomadServiceDataWithEmptyServices(t.Context())
 	require.NoError(t, err)
 
 	// Should not be listed as job is stopped
@@ -294,7 +293,7 @@ func Test_getNomadServiceDataWithEmptyServices_GroupTaskService_Scaling1(t *test
 	require.NoError(t, err)
 
 	// make the query for services
-	items, err := p.getNomadServiceDataWithEmptyServices(context.TODO())
+	items, err := p.getNomadServiceDataWithEmptyServices(t.Context())
 	require.NoError(t, err)
 	require.Len(t, items, 2)
 }
@@ -326,7 +325,7 @@ func Test_getNomadServiceDataWithEmptyServices_GroupTaskService_Scaling0(t *test
 	require.NoError(t, err)
 
 	// make the query for services
-	items, err := p.getNomadServiceDataWithEmptyServices(context.TODO())
+	items, err := p.getNomadServiceDataWithEmptyServices(t.Context())
 	require.NoError(t, err)
 	require.Len(t, items, 2)
 }
@@ -356,7 +355,7 @@ func Test_getNomadServiceDataWithEmptyServices_TCP(t *testing.T) {
 	require.NoError(t, err)
 
 	// make the query for services
-	items, err := p.getNomadServiceDataWithEmptyServices(context.TODO())
+	items, err := p.getNomadServiceDataWithEmptyServices(t.Context())
 	require.NoError(t, err)
 	require.Len(t, items, 1)
 }
@@ -386,7 +385,7 @@ func Test_getNomadServiceDataWithEmptyServices_UDP(t *testing.T) {
 	require.NoError(t, err)
 
 	// make the query for services
-	items, err := p.getNomadServiceDataWithEmptyServices(context.TODO())
+	items, err := p.getNomadServiceDataWithEmptyServices(t.Context())
 	require.NoError(t, err)
 	require.Len(t, items, 1)
 }
@@ -416,7 +415,7 @@ func Test_getNomadServiceDataWithEmptyServices_ScalingEnabled_Stopped(t *testing
 	require.NoError(t, err)
 
 	// make the query for services
-	items, err := p.getNomadServiceDataWithEmptyServices(context.TODO())
+	items, err := p.getNomadServiceDataWithEmptyServices(t.Context())
 	require.NoError(t, err)
 
 	// Should not be listed as job is stopped
@@ -465,7 +464,7 @@ func Test_getNomadServiceData(t *testing.T) {
 	require.NoError(t, err)
 
 	// make the query for services
-	items, err := p.getNomadServiceData(context.TODO())
+	items, err := p.getNomadServiceData(t.Context())
 	require.NoError(t, err)
 	require.Len(t, items, 2)
 }

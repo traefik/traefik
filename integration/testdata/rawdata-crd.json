@@ -9,8 +9,9 @@
 			"priority": 18,
 			"observability": {
 				"accessLogs": true,
+				"metrics": true,
 				"tracing": true,
-				"metrics": true
+				"traceVerbosity": "minimal"
 			},
 			"status": "enabled",
 			"using": [
@@ -29,8 +30,9 @@
 			},
 			"observability": {
 				"accessLogs": true,
+				"metrics": true,
 				"tracing": true,
-				"metrics": true
+				"traceVerbosity": "minimal"
 			},
 			"status": "enabled",
 			"using": [
@@ -49,8 +51,9 @@
 			"priority": 46,
 			"observability": {
 				"accessLogs": true,
+				"metrics": true,
 				"tracing": true,
-				"metrics": true
+				"traceVerbosity": "minimal"
 			},
 			"status": "enabled",
 			"using": [
@@ -66,8 +69,27 @@
 			"priority": 38,
 			"observability": {
 				"accessLogs": true,
+				"metrics": true,
 				"tracing": true,
-				"metrics": true
+				"traceVerbosity": "minimal"
+			},
+			"status": "enabled",
+			"using": [
+				"web"
+			]
+		},
+		"default-test4-route-466d8d3a547de55dfe8a@kubernetescrd": {
+			"entryPoints": [
+				"web"
+			],
+			"service": "default-hrw1",
+			"rule": "Host(`foo.com`) \u0026\u0026 PathPrefix(`/hrw1`)",
+			"priority": 38,
+			"observability": {
+				"accessLogs": true,
+				"metrics": true,
+				"tracing": true,
+				"traceVerbosity": "minimal"
 			},
 			"status": "enabled",
 			"using": [
@@ -83,8 +105,9 @@
 			"priority": 50,
 			"observability": {
 				"accessLogs": true,
+				"metrics": true,
 				"tracing": true,
-				"metrics": true
+				"traceVerbosity": "minimal"
 			},
 			"status": "enabled",
 			"using": [
@@ -100,8 +123,9 @@
 			"priority": 35,
 			"observability": {
 				"accessLogs": true,
+				"metrics": true,
 				"tracing": true,
-				"metrics": true
+				"traceVerbosity": "minimal"
 			},
 			"error": [
 				"the service \"other-ns-wrr3@kubernetescrd\" does not exist"
@@ -150,6 +174,24 @@
 		},
 		"dashboard@internal": {
 			"status": "enabled"
+		},
+		"default-hrw1@kubernetescrd": {
+			"highestRandomWeight": {
+				"services": [
+					{
+						"name": "default-whoami-80",
+						"weight": 10
+					},
+					{
+						"name": "default-whoami-80",
+						"weight": 20
+					}
+				]
+			},
+			"status": "enabled",
+			"usedBy": [
+				"default-test4-route-466d8d3a547de55dfe8a@kubernetescrd"
+			]
 		},
 		"default-mirror1@kubernetescrd": {
 			"mirroring": {
@@ -320,7 +362,10 @@
 					}
 				]
 			},
-			"status": "enabled"
+			"status": "enabled",
+			"serverStatus": {
+				"domain.com:9090": "UP"
+			}
 		},
 		"default-test3.route-673acf455cb2dab0b43a-whoamitcp-8080@kubernetescrd": {
 			"loadBalancer": {
@@ -333,7 +378,11 @@
 					}
 				]
 			},
-			"status": "enabled"
+			"status": "enabled",
+			"serverStatus": {
+				"10.42.0.2:8080": "UP",
+				"10.42.0.6:8080": "UP"
+			}
 		},
 		"default-test3.route-673acf455cb2dab0b43a@kubernetescrd": {
 			"weighted": {

@@ -1,0 +1,37 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-with-proxy-ssl
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS" # HTTP, HTTPS, AUTO_HTTP, GRPC, GRPCS and FCGI
+    nginx.ingress.kubernetes.io/proxy-ssl-secret: "default/ingress-with-proxy-ssl"
+    nginx.ingress.kubernetes.io/proxy-ssl-verify: "on"
+    nginx.ingress.kubernetes.io/proxy-ssl-verify-depth: "1"
+    nginx.ingress.kubernetes.io/proxy-ssl-server-name: "whoami.localhost"
+    nginx.ingress.kubernetes.io/proxy-ssl-name: "whoami.localhost"
+
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: proxy-ssl.localhost
+      http:
+        paths:
+          - path: /
+            pathType: Exact
+            backend:
+              service:
+                name: whoami-tls
+                port:
+                  number: 443
+
+---
+kind: Secret
+apiVersion: v1
+metadata:
+  namespace: default
+  name: ingress-with-proxy-ssl
+
+data:
+  ca.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0t

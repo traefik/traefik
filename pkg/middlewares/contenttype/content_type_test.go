@@ -1,7 +1,6 @@
 package contenttype
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -60,7 +59,7 @@ func TestAutoDetection(t *testing.T) {
 
 			if test.autoDetect {
 				var err error
-				next, err = New(context.Background(), next, dynamic.ContentType{}, "foo-content-type")
+				next, err = New(t.Context(), next, dynamic.ContentType{}, "foo-content-type")
 				require.NoError(t, err)
 			}
 

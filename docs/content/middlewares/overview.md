@@ -8,8 +8,6 @@ description: "There are several available middleware in Traefik Proxy used to mo
 Tweaking the Request
 {: .subtitle }
 
-![Overview](../assets/img/middleware/overview.png)
-
 Attached to the routers, pieces of middleware are a means of tweaking the requests before they are sent to your [service](../routing/services/index.md) (or before the answer from the services are sent to the clients).
 
 There are several available middleware in Traefik, some can modify the request, the headers, some are in charge of redirections, some add authentication, and so on.
@@ -114,4 +112,4 @@ A list of HTTP middlewares can be found [here](http/overview.md).
 
 A list of TCP middlewares can be found [here](tcp/overview.md).
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

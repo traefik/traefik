@@ -1,7 +1,6 @@
 package redirect
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -185,7 +184,7 @@ func TestRequestRedirectHandler(t *testing.T) {
 
 			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
-			handler, err := NewRequestRedirect(context.Background(), next, test.config, "traefikTest")
+			handler, err := NewRequestRedirect(t.Context(), next, test.config, "traefikTest")
 			if test.wantErr {
 				require.Error(t, err)
 				require.Nil(t, handler)

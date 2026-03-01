@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -13,7 +14,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/sirupsen/logrus"
 	"github.com/traefik/traefik/v3/pkg/config/static"
-	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
@@ -22,7 +23,7 @@ func init() {
 	zerolog.SetGlobalLevel(zerolog.ErrorLevel)
 }
 
-func setupLogger(staticConfiguration *static.Configuration) error {
+func setupLogger(ctx context.Context, staticConfiguration *static.Configuration) error {
 	// Validate that the experimental flag is set up at this point,
 	// rather than validating the static configuration before the setupLogger call.
 	// This ensures that validation messages are not logged using an un-configured logger.
@@ -39,16 +40,16 @@ func setupLogger(staticConfiguration *static.Configuration) error {
 	zerolog.SetGlobalLevel(logLevel)
 
 	// create logger
-	logCtx := zerolog.New(w).With().Timestamp()
+	logger := zerolog.New(w).With().Timestamp()
 	if logLevel <= zerolog.DebugLevel {
-		logCtx = logCtx.Caller()
+		logger = logger.Caller()
 	}
 
-	log.Logger = logCtx.Logger().Level(logLevel)
+	log.Logger = logger.Logger().Level(logLevel)
 
 	if staticConfiguration.Log != nil && staticConfiguration.Log.OTLP != nil {
 		var err error
-		log.Logger, err = logs.SetupOTelLogger(log.Logger, staticConfiguration.Log.OTLP)
+		log.Logger, err = logs.SetupOTelLogger(ctx, log.Logger, staticConfiguration.Log.OTLP)
 		if err != nil {
 			return fmt.Errorf("setting up OpenTelemetry logger: %w", err)
 		}
@@ -67,10 +68,6 @@ func setupLogger(staticConfiguration *static.Configuration) error {
 }
 
 func getLogWriter(staticConfiguration *static.Configuration) io.Writer {
-	if staticConfiguration.Log != nil && staticConfiguration.Log.OTLP != nil {
-		return io.Discard
-	}
-
 	var w io.Writer = os.Stdout
 	if staticConfiguration.Log != nil && len(staticConfiguration.Log.FilePath) > 0 {
 		_, _ = os.OpenFile(staticConfiguration.Log.FilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0o666)

@@ -1,0 +1,5 @@
+export { default as ApiIcon } from './api'
+export { default as DashboardIcon } from './dashboard'
+export { default as GatewayIcon } from './gateway'
+export { default as HubIcon } from './hub'
+export { default as PortalIcon } from './portal'

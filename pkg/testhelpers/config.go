@@ -2,6 +2,7 @@ package testhelpers
 
 import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
+	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 )
 
 // BuildConfiguration is a helper to create a configuration.
@@ -57,36 +58,80 @@ func WithServiceName(serviceName string) func(*dynamic.Router) {
 func WithObservability() func(*dynamic.Router) {
 	return func(r *dynamic.Router) {
 		r.Observability = &dynamic.RouterObservabilityConfig{
-			AccessLogs: pointer(true),
-			Metrics:    pointer(true),
-			Tracing:    pointer(true),
+			AccessLogs:     pointer(true),
+			Metrics:        pointer(true),
+			Tracing:        pointer(true),
+			TraceVerbosity: otypes.MinimalVerbosity,
 		}
 	}
 }
 
-// WithLoadBalancerServices is a helper to create a configuration.
-func WithLoadBalancerServices(opts ...func(service *dynamic.ServersLoadBalancer) string) func(*dynamic.HTTPConfiguration) {
+// WithServices is a helper to create a configuration.
+func WithServices(opts ...func(service *dynamic.Service) string) func(*dynamic.HTTPConfiguration) {
 	return func(c *dynamic.HTTPConfiguration) {
 		c.Services = make(map[string]*dynamic.Service)
 		for _, opt := range opts {
-			b := &dynamic.ServersLoadBalancer{}
-			b.SetDefaults()
-
+			b := &dynamic.Service{}
 			name := opt(b)
-			c.Services[name] = &dynamic.Service{
-				LoadBalancer: b,
-			}
+			c.Services[name] = b
 		}
 	}
 }
 
 // WithService is a helper to create a configuration.
-func WithService(name string, opts ...func(*dynamic.ServersLoadBalancer)) func(*dynamic.ServersLoadBalancer) string {
-	return func(r *dynamic.ServersLoadBalancer) string {
+func WithService(name string, opts ...func(*dynamic.Service)) func(*dynamic.Service) string {
+	return func(s *dynamic.Service) string {
 		for _, opt := range opts {
-			opt(r)
+			opt(s)
 		}
+
 		return name
+	}
+}
+
+func WithServiceServersLoadBalancer(opts ...func(*dynamic.ServersLoadBalancer)) func(*dynamic.Service) {
+	return func(s *dynamic.Service) {
+		b := &dynamic.ServersLoadBalancer{}
+		b.SetDefaults()
+
+		for _, opt := range opts {
+			opt(b)
+		}
+
+		s.LoadBalancer = b
+	}
+}
+
+func WithServiceWRR(opts ...func(*dynamic.WeightedRoundRobin)) func(*dynamic.Service) {
+	return func(s *dynamic.Service) {
+		b := &dynamic.WeightedRoundRobin{}
+
+		for _, opt := range opts {
+			opt(b)
+		}
+
+		s.Weighted = b
+	}
+}
+
+// WithWRRServices is a helper to create a configuration.
+func WithWRRServices(opts ...func(*dynamic.WRRService)) func(*dynamic.WeightedRoundRobin) {
+	return func(b *dynamic.WeightedRoundRobin) {
+		for _, opt := range opts {
+			service := dynamic.WRRService{}
+			opt(&service)
+			b.Services = append(b.Services, service)
+		}
+	}
+}
+
+// WithWRRService is a helper to create a configuration.
+func WithWRRService(name string, opts ...func(*dynamic.WRRService)) func(*dynamic.WRRService) {
+	return func(s *dynamic.WRRService) {
+		for _, opt := range opts {
+			opt(s)
+		}
+		s.Name = name
 	}
 }
 
@@ -116,6 +161,13 @@ func WithMiddleware(name string, opts ...func(*dynamic.Middleware)) func(*dynami
 func WithBasicAuth(auth *dynamic.BasicAuth) func(*dynamic.Middleware) {
 	return func(r *dynamic.Middleware) {
 		r.BasicAuth = auth
+	}
+}
+
+// WithErrorPage is a helper to create a configuration.
+func WithErrorPage(errorPage *dynamic.ErrorPage) func(*dynamic.Middleware) {
+	return func(r *dynamic.Middleware) {
+		r.Errors = errorPage
 	}
 }
 

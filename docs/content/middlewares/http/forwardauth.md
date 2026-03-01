@@ -8,8 +8,6 @@ description: "In Traefik Proxy, the HTTP ForwardAuth middleware delegates authen
 Using an External Service to Forward Authentication
 {: .subtitle }
 
-![AuthForward](../../assets/img/middleware/authforward.png)
-
 The ForwardAuth middleware delegates authentication to an external service.
 If the service answers with a 2XX code, access is granted, and the original request is performed.
 Otherwise, the response from the authentication server is returned.
@@ -60,11 +58,11 @@ The following request properties are provided to the forward-auth target endpoin
 
 | Property          | Forward-Request Header |
 |-------------------|------------------------|
-| HTTP Method       | X-Forwarded-Method     |
-| Protocol          | X-Forwarded-Proto      |
-| Host              | X-Forwarded-Host       |
-| Request URI       | X-Forwarded-Uri        |
-| Source IP-Address | X-Forwarded-For        |
+| HTTP Method       | `X-Forwarded-Method`   |
+| Protocol          | `X-Forwarded-Proto`    |
+| Host              | `X-Forwarded-Host`     |
+| Request URI       | `X-Forwarded-Uri`      |
+| Source IP-Address | `X-Forwarded-For`      |
 
 ## Configuration Options
 
@@ -787,4 +785,54 @@ http:
   preserveRequestMethod = true
 ```
 
-{!traefik-for-business-applications.md!}
+
+### `maxResponseBodySize`
+
+_Optional, Default=-1_
+
+The `maxResponseBodySize` option defines the maximum allowed response body size in bytes from the authentication server.
+If the response body exceeds the configured limit, the request is rejected with a 401 (Unauthorized) status.
+If left unset, the request body size is unrestricted which can have performance or security implications.
+
+```yaml tab="Docker"
+labels:
+  - "traefik.http.middlewares.test-auth.forwardauth.maxResponseBodySize=10000"
+```
+
+```yaml tab="Kubernetes"
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-auth
+spec:
+  forwardAuth:
+    address: https://example.com/auth
+    maxResponseBodySize: 10000
+```
+
+```yaml tab="Consul Catalog"
+- "traefik.http.middlewares.test-auth.forwardauth.maxResponseBodySize=10000"
+```
+
+```yaml tab="File (YAML)"
+http:
+  middlewares:
+    test-auth:
+      forwardAuth:
+        address: "https://example.com/auth"
+        maxResponseBodySize: 10000
+```
+
+```toml tab="File (TOML)"
+[http.middlewares]
+  [http.middlewares.test-auth.forwardAuth]
+    address = "https://example.com/auth"
+    maxResponseBodySize = 10000
+```
+
+!!! warning
+
+    It is strongly recommended to set this option to a suitable value.
+    Not setting it (or setting it to `-1`) allows unlimited response body sizes which can lead to DoS attacks and memory exhaustion.
+
+{% include-markdown "includes/traefik-for-business-applications.md" %}

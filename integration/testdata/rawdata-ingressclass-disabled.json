@@ -10,8 +10,9 @@
 			"priority": 9223372036854775806,
 			"observability": {
 				"accessLogs": true,
+				"metrics": true,
 				"tracing": true,
-				"metrics": true
+				"traceVerbosity": "minimal"
 			},
 			"status": "enabled",
 			"using": [
@@ -32,8 +33,9 @@
 			"priority": 9223372036854775805,
 			"observability": {
 				"accessLogs": true,
+				"metrics": true,
 				"tracing": true,
-				"metrics": true
+				"traceVerbosity": "minimal"
 			},
 			"status": "enabled",
 			"using": [

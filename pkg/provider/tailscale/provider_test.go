@@ -1,7 +1,6 @@
 package tailscale
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -125,7 +124,7 @@ func TestProvider_findDomains(t *testing.T) {
 
 			p := Provider{ResolverName: "foo"}
 
-			got := p.findDomains(context.TODO(), test.config)
+			got := p.findDomains(t.Context(), test.config)
 			assert.Equal(t, test.want, got)
 		})
 	}
@@ -230,7 +229,7 @@ func Test_sanitizeDomains(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			got := sanitizeDomains(context.TODO(), test.domains)
+			got := sanitizeDomains(t.Context(), test.domains)
 			assert.Equal(t, test.want, got)
 		})
 	}

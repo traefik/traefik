@@ -13,7 +13,7 @@ You can configure Traefik to use an ACME provider (like Let's Encrypt) for autom
 !!! warning "Let's Encrypt and Rate Limiting"
     Note that Let's Encrypt API has [rate limiting](https://letsencrypt.org/docs/rate-limits). These last up to **one week**, and cannot be overridden.
     
-    When running Traefik in a container this file should be persisted across restarts. 
+    When running Traefik in a container the `acme.json` file should be persisted across restarts. 
     If Traefik requests new certificates each time it starts up, a crash-looping container can quickly reach Let's Encrypt's ratelimits.
     To configure where certificates are stored, please take a look at the [storage](#storage) configuration.
 
@@ -201,6 +201,36 @@ when using the `TLS-ALPN-01` challenge, Traefik must be reachable by Let's Encry
     --certificatesresolvers.myresolver.acme.tlschallenge=true
     ```
 
+#### `Delay`
+
+_Optional, Default=0_
+
+The delay between the creation of the challenge and the validation.
+A value lower than or equal to zero means no delay.
+
+```yaml tab="File (YAML)"
+certificatesResolvers:
+  myresolver:
+    acme:
+      # ...
+      tlsChallenge:
+        # ...
+        delay: 12
+```
+
+```toml tab="File (TOML)"
+[certificatesResolvers.myresolver.acme]
+  # ...
+  [certificatesResolvers.myresolver.acme.tlsChallenge]
+    # ...
+    delay = 12
+```
+
+```bash tab="CLI"
+# ...
+--certificatesresolvers.myresolver.acme.tlschallenge.delay=12
+```
+
 ### `httpChallenge`
 
 Use the `HTTP-01` challenge to generate and renew ACME certificates by provisioning an HTTP resource under a well-known URI.
@@ -251,6 +281,8 @@ when using the `HTTP-01` challenge, `certificatesresolvers.myresolver.acme.httpc
     Redirection is fully compatible with the `HTTP-01` challenge.
 
 #### `Delay`
+
+_Optional, Default=0_
 
 The delay between the creation of the challenge and the validation.
 A value lower than or equal to zero means no delay.
@@ -314,7 +346,7 @@ Use the `DNS-01` challenge to generate and renew ACME certificates by provisioni
 !!! warning "`CNAME` support"
 
     `CNAME` are supported (and sometimes even [encouraged](https://letsencrypt.org/2019/10/09/onboarding-your-customers-with-lets-encrypt-and-acme.html#the-advantages-of-a-cname)),
-    but there are a few cases where they can be [problematic](../../getting-started/faq/#why-does-lets-encrypt-wildcard-certificate-renewalgeneration-with-dns-challenge-fail).
+    but there are a few cases where they can be [problematic](../getting-started/faq.md#why-does-lets-encrypt-wildcard-certificate-renewalgeneration-with-dns-challenge-fail).
 
     If needed, `CNAME` support can be disabled with the following environment variable:
 
@@ -352,13 +384,16 @@ For complete details, refer to your provider's _Additional configuration_ link.
 | [Auroradns](https://www.pcextreme.com/dns-health-checks)               | `auroradns`        | `AURORA_USER_ID`, `AURORA_KEY`, `AURORA_ENDPOINT`                                                                                                                                | [Additional configuration](https://go-acme.github.io/lego/dns/auroradns)        |
 | [Autodns](https://www.internetx.com/domains/autodns/)                  | `autodns`          | `AUTODNS_API_USER`, `AUTODNS_API_PASSWORD`                                                                                                                                       | [Additional configuration](https://go-acme.github.io/lego/dns/autodns)          |
 | [Axelname](https://axelname.ru)                                        | `axelname`         | `AXELNAME_NICKNAME`, `AXELNAME_TOKEN`                                                                                                                                            | [Additional configuration](https://go-acme.github.io/lego/dns/axelname)         |
-| [Azure](https://azure.microsoft.com/services/dns/) (DEPRECATED)        | `azure`            | `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `AZURE_SUBSCRIPTION_ID`, `AZURE_TENANT_ID`, `AZURE_RESOURCE_GROUP`, `[AZURE_METADATA_ENDPOINT]`                                        | [Additional configuration](https://go-acme.github.io/lego/dns/azure)            |
+| [Azion](https://www.azion.com/en/products/edge-dns/)                   | `azion`            | `AZION_PERSONAL_TOKEN`                                                                                                                                                           | [Additional configuration](https://go-acme.github.io/lego/dns/azion)            |
+| [Azure](https://azure.microsoft.com/services/dns/) (DEPRECATED)        | `azure`            | DEPRECATED use `azuredns` instead.                                                                                                                                               | [Additional configuration](https://go-acme.github.io/lego/dns/azure)            |
 | [AzureDNS](https://azure.microsoft.com/services/dns/)                  | `azuredns`         | `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `AZURE_RESOURCE_GROUP`, `[AZURE_ENVIRONMENT]`, `[AZURE_PRIVATE_ZONE]`, `[AZURE_ZONE_NAME]` | [Additional configuration](https://go-acme.github.io/lego/dns/azuredns)         |
 | [Baidu Cloud](https://cloud.baidu.com)                                 | `baiducloud`       | `BAIDUCLOUD_ACCESS_KEY_ID`, `BAIDUCLOUD_SECRET_ACCESS_KEY`                                                                                                                       | [Additional configuration](https://go-acme.github.io/lego/dns/baiducloud)       |
+| [Beget](https://beget.com/)                                            | `beget`            | `BEGET_USERNAME`, `BEGET_PASSWORD`                                                                                                                                               | [Additional configuration](https://go-acme.github.io/lego/dns/beget)            |
+| [Binary Lane](https://www.binarylane.com.au/)                          | `binarylane`       | `BINARYLANE_API_TOKEN`                                                                                                                                                           | [Additional configuration](https://go-acme.github.io/lego/dns/binarylane)       |
 | [Bindman](https://github.com/labbsr0x/bindman-dns-webhook)             | `bindman`          | `BINDMAN_MANAGER_ADDRESS`                                                                                                                                                        | [Additional configuration](https://go-acme.github.io/lego/dns/bindman)          |
 | [Blue Cat](https://www.bluecatnetworks.com/)                           | `bluecat`          | `BLUECAT_SERVER_URL`, `BLUECAT_USER_NAME`, `BLUECAT_PASSWORD`, `BLUECAT_CONFIG_NAME`, `BLUECAT_DNS_VIEW`                                                                         | [Additional configuration](https://go-acme.github.io/lego/dns/bluecat)          |
 | [BookMyName](https://www.bookmyname.com)                               | `bookmyname`       | `BOOKMYNAME_USERNAME`, `BOOKMYNAME_PASSWORD`                                                                                                                                     | [Additional configuration](https://go-acme.github.io/lego/dns/bookmyname)       |
-| [Brandit](https://www.brandit.com) (DEPRECATED)                        | `brandit`          | `BRANDIT_API_USERNAME`, `BRANDIT_API_KEY`                                                                                                                                        | [Additional configuration](https://go-acme.github.io/lego/dns/brandit)          |
+| [Brandit](https://www.brandit.com) (DEPRECATED)                        | `brandit`          | DEPRECATED                                                                                                                                                                       | [Additional configuration](https://go-acme.github.io/lego/dns/brandit)          |
 | [Bunny](https://bunny.net)                                             | `bunny`            | `BUNNY_API_KEY`                                                                                                                                                                  | [Additional configuration](https://go-acme.github.io/lego/dns/bunny)            |
 | [Checkdomain](https://www.checkdomain.de/)                             | `checkdomain`      | `CHECKDOMAIN_TOKEN`,                                                                                                                                                             | [Additional configuration](https://go-acme.github.io/lego/dns/checkdomain/)     |
 | [Civo](https://www.civo.com/)                                          | `civo`             | `CIVO_TOKEN`                                                                                                                                                                     | [Additional configuration](https://go-acme.github.io/lego/dns/civo)             |
@@ -366,7 +401,8 @@ For complete details, refer to your provider's _Additional configuration_ link.
 | [CloudDNS](https://vshosting.eu/)                                      | `clouddns`         | `CLOUDDNS_CLIENT_ID`, `CLOUDDNS_EMAIL`, `CLOUDDNS_PASSWORD`                                                                                                                      | [Additional configuration](https://go-acme.github.io/lego/dns/clouddns)         |
 | [Cloudflare](https://www.cloudflare.com)                               | `cloudflare`       | `CF_API_EMAIL`, `CF_API_KEY` [^5] or `CF_DNS_API_TOKEN`, `[CF_ZONE_API_TOKEN]`                                                                                                   | [Additional configuration](https://go-acme.github.io/lego/dns/cloudflare)       |
 | [ClouDNS](https://www.cloudns.net/)                                    | `cloudns`          | `CLOUDNS_AUTH_ID`, `CLOUDNS_AUTH_PASSWORD`                                                                                                                                       | [Additional configuration](https://go-acme.github.io/lego/dns/cloudns)          |
-| [CloudXNS](https://www.cloudxns.net) (DEPRECATED)                      | `cloudxns`         | `CLOUDXNS_API_KEY`, `CLOUDXNS_SECRET_KEY`                                                                                                                                        | [Additional configuration](https://go-acme.github.io/lego/dns/cloudxns)         |
+| [CloudXNS](https://www.cloudxns.net) (DEPRECATED)                      | `cloudxns`         | DEPRECATED                                                                                                                                                                       | [Additional configuration](https://go-acme.github.io/lego/dns/cloudxns)         |
+| [ConoHa v3](https://www.conoha.jp/)                                    | `conohav3`         | `CONOHAV3_TENANT_ID`, `CONOHAV3_API_USER_ID`, `CONOHAV3_API_PASSWORD`                                                                                                            | [Additional configuration](https://go-acme.github.io/lego/dns/conohav3)         |
 | [ConoHa](https://www.conoha.jp)                                        | `conoha`           | `CONOHA_TENANT_ID`, `CONOHA_API_USERNAME`, `CONOHA_API_PASSWORD`                                                                                                                 | [Additional configuration](https://go-acme.github.io/lego/dns/conoha)           |
 | [Constellix](https://constellix.com)                                   | `constellix`       | `CONSTELLIX_API_KEY`, `CONSTELLIX_SECRET_KEY`                                                                                                                                    | [Additional configuration](https://go-acme.github.io/lego/dns/constellix)       |
 | [Core-Networks](https://www.core-networks.de)                          | `corenetworks`     | `CORENETWORKS_LOGIN`, `CORENETWORKS_PASSWORD`                                                                                                                                    | [Additional configuration](https://go-acme.github.io/lego/dns/corenetworks)     |
@@ -378,12 +414,13 @@ For complete details, refer to your provider's _Additional configuration_ link.
 | [DNS Made Easy](https://dnsmadeeasy.com)                               | `dnsmadeeasy`      | `DNSMADEEASY_API_KEY`, `DNSMADEEASY_API_SECRET`, `DNSMADEEASY_SANDBOX`                                                                                                           | [Additional configuration](https://go-acme.github.io/lego/dns/dnsmadeeasy)      |
 | [dnsHome.de](https://www.dnshome.de)                                   | `dnsHomede`        | `DNSHOMEDE_CREDENTIALS`                                                                                                                                                          | [Additional configuration](https://go-acme.github.io/lego/dns/dnshomede)        |
 | [DNSimple](https://dnsimple.com)                                       | `dnsimple`         | `DNSIMPLE_OAUTH_TOKEN`, `DNSIMPLE_BASE_URL`                                                                                                                                      | [Additional configuration](https://go-acme.github.io/lego/dns/dnsimple)         |
-| [DNSPod](https://www.dnspod.com/)                                      | `dnspod`           | `DNSPOD_API_KEY`                                                                                                                                                                 | [Additional configuration](https://go-acme.github.io/lego/dns/dnspod)           |
+| [DNSPod](https://www.dnspod.com/) (DEPRECATED)                         | `dnspod`           | DEPRECATED  use `tencentcloud` instead.                                                                                                                                          | [Additional configuration](https://go-acme.github.io/lego/dns/dnspod)           |
 | [Domain Offensive (do.de)](https://www.do.de/)                         | `dode`             | `DODE_TOKEN`                                                                                                                                                                     | [Additional configuration](https://go-acme.github.io/lego/dns/dode)             |
 | [Domeneshop](https://domene.shop)                                      | `domeneshop`       | `DOMENESHOP_API_TOKEN`, `DOMENESHOP_API_SECRET`                                                                                                                                  | [Additional configuration](https://go-acme.github.io/lego/dns/domeneshop)       |
 | [DreamHost](https://www.dreamhost.com/)                                | `dreamhost`        | `DREAMHOST_API_KEY`                                                                                                                                                              | [Additional configuration](https://go-acme.github.io/lego/dns/dreamhost)        |
 | [Duck DNS](https://www.duckdns.org/)                                   | `duckdns`          | `DUCKDNS_TOKEN`                                                                                                                                                                  | [Additional configuration](https://go-acme.github.io/lego/dns/duckdns)          |
 | [Dyn](https://dyn.com)                                                 | `dyn`              | `DYN_CUSTOMER_NAME`, `DYN_USER_NAME`, `DYN_PASSWORD`                                                                                                                             | [Additional configuration](https://go-acme.github.io/lego/dns/dyn)              |
+| [DynDnsFree.de](https://www.dyndnsfree.de)                             | `dyndnsfree`       | `DYNDNSFREE_USERNAME`, `DYNDNSFREE_PASSWORD`                                                                                                                                     | [Additional configuration](https://go-acme.github.io/lego/dns/dyndnsfree)       |
 | [Dynu](https://www.dynu.com)                                           | `dynu`             | `DYNU_API_KEY`                                                                                                                                                                   | [Additional configuration](https://go-acme.github.io/lego/dns/dynu)             |
 | [EasyDNS](https://easydns.com/)                                        | `easydns`          | `EASYDNS_TOKEN`, `EASYDNS_KEY`                                                                                                                                                   | [Additional configuration](https://go-acme.github.io/lego/dns/easydns)          |
 | [EdgeDNS](https://www.akamai.com/)                                     | `edgedns`          | `AKAMAI_CLIENT_TOKEN`,  `AKAMAI_CLIENT_SECRET`,  `AKAMAI_ACCESS_TOKEN`                                                                                                           | [Additional configuration](https://go-acme.github.io/lego/dns/edgedns)          |
@@ -399,9 +436,10 @@ For complete details, refer to your provider's _Additional configuration_ link.
 | [Glesys](https://glesys.com/)                                          | `glesys`           | `GLESYS_API_USER`, `GLESYS_API_KEY`, `GLESYS_DOMAIN`                                                                                                                             | [Additional configuration](https://go-acme.github.io/lego/dns/glesys)           |
 | [GoDaddy](https://www.godaddy.com)                                     | `godaddy`          | `GODADDY_API_KEY`, `GODADDY_API_SECRET`                                                                                                                                          | [Additional configuration](https://go-acme.github.io/lego/dns/godaddy)          |
 | [Google Cloud DNS](https://cloud.google.com/dns/docs/)                 | `gcloud`           | `GCE_PROJECT`, Application Default Credentials [^2] [^3], [`GCE_SERVICE_ACCOUNT_FILE`]                                                                                           | [Additional configuration](https://go-acme.github.io/lego/dns/gcloud)           |
-| [Google Domains](https://domains.google)                               | `googledomains`    | `GOOGLE_DOMAINS_ACCESS_TOKEN`                                                                                                                                                    | [Additional configuration](https://go-acme.github.io/lego/dns/googledomains)    |
-| [Hetzner](https://hetzner.com)                                         | `hetzner`          | `HETZNER_API_KEY`                                                                                                                                                                | [Additional configuration](https://go-acme.github.io/lego/dns/hetzner)          |
+| [Google Domains](https://domains.google) (DEPRECATED)                  | `googledomains`    | DEPRECATED                                                                                                                                                                       | [Additional configuration](https://go-acme.github.io/lego/dns/googledomains)    |
+| [Hetzner](https://hetzner.com)                                         | `hetzner`          | `HETZNER_API_TOKEN`                                                                                                                                                              | [Additional configuration](https://go-acme.github.io/lego/dns/hetzner)          |
 | [hosting.de](https://www.hosting.de)                                   | `hostingde`        | `HOSTINGDE_API_KEY`, `HOSTINGDE_ZONE_NAME`                                                                                                                                       | [Additional configuration](https://go-acme.github.io/lego/dns/hostingde)        |
+| [Hostinger](https://www.hostinger.com/)                                | `hostinger`        | `HOSTINGER_API_TOKEN`                                                                                                                                                            | [Additional configuration](https://go-acme.github.io/lego/dns/hostinger)        |
 | [Hosttech](https://www.hosttech.eu)                                    | `hosttech`         | `HOSTTECH_API_KEY`                                                                                                                                                               | [Additional configuration](https://go-acme.github.io/lego/dns/hosttech)         |
 | [http.net](https://www.http.net/)                                      | `httpnet`          | `HTTPNET_API_KEY`                                                                                                                                                                | [Additional configuration](https://go-acme.github.io/lego/dns/httpnet)          |
 | [Huawei Cloud](https://huaweicloud.com)                                | `huaweicloud`      | `HUAWEICLOUD_ACCESS_KEY_ID`, `HUAWEICLOUD_SECRET_ACCESS_KEY`, `HUAWEICLOUD_REGION`                                                                                               | [Additional configuration](https://go-acme.github.io/lego/dns/huaweicloud)      |
@@ -418,6 +456,7 @@ For complete details, refer to your provider's _Additional configuration_ link.
 | [IPv64](https://ipv64.net)                                             | `ipv64`            | `IPV64_API_KEY`                                                                                                                                                                  | [Additional configuration](https://go-acme.github.io/lego/dns/ipv64)            |
 | [iwantmyname](https://iwantmyname.com)                                 | `iwantmyname`      | `IWANTMYNAME_USERNAME` , `IWANTMYNAME_PASSWORD`                                                                                                                                  | [Additional configuration](https://go-acme.github.io/lego/dns/iwantmyname)      |
 | [Joker.com](https://joker.com)                                         | `joker`            | `JOKER_API_MODE` with `JOKER_API_KEY` or `JOKER_USERNAME`, `JOKER_PASSWORD`                                                                                                      | [Additional configuration](https://go-acme.github.io/lego/dns/joker)            |
+| [KeyHelp](https://www.keyweb.de/en/keyhelp/keyhelp/)                   | `keyhelp`          | `KEYHELP_API_KEY`, `KEYHELP_BASE_URL`                                                                                                                                            | [Additional configuration](https://go-acme.github.io/lego/dns/keyhelp)          |
 | [Liara](https://liara.ir)                                              | `liara`            | `LIARA_API_KEY`                                                                                                                                                                  | [Additional configuration](https://go-acme.github.io/lego/dns/liara)            |
 | [Lightsail](https://aws.amazon.com/lightsail/)                         | `lightsail`        | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `DNS_ZONE`                                                                                                                         | [Additional configuration](https://go-acme.github.io/lego/dns/lightsail)        |
 | [Lima-City](https://www.lima-city.de)                                  | `limacity`         | `LIMACITY_API_KEY`                                                                                                                                                               | [Additional configuration](https://go-acme.github.io/lego/dns/limacity)         |
@@ -445,6 +484,7 @@ For complete details, refer to your provider's _Additional configuration_ link.
 | [Njalla](https://njal.la)                                              | `njalla`           | `NJALLA_TOKEN`                                                                                                                                                                   | [Additional configuration](https://go-acme.github.io/lego/dns/njalla)           |
 | [Nodion](https://www.nodion.com)                                       | `nodion`           | `NODION_API_TOKEN`                                                                                                                                                               | [Additional configuration](https://go-acme.github.io/lego/dns/nodion)           |
 | [NS1](https://ns1.com/)                                                | `ns1`              | `NS1_API_KEY`                                                                                                                                                                    | [Additional configuration](https://go-acme.github.io/lego/dns/ns1)              |
+| [Octenium](https://octenium.com/)                                      | `octenium`         | `OCTENIUM_API_KEY`                                                                                                                                                               | [Additional configuration](https://go-acme.github.io/lego/dns/octenium)         |
 | [Open Telekom Cloud](https://cloud.telekom.de)                         | `otc`              | `OTC_DOMAIN_NAME`, `OTC_USER_NAME`, `OTC_PASSWORD`, `OTC_PROJECT_NAME`, `OTC_IDENTITY_ENDPOINT`                                                                                  | [Additional configuration](https://go-acme.github.io/lego/dns/otc)              |
 | [Openstack Designate](https://docs.openstack.org/designate)            | `designate`        | `OS_AUTH_URL`, `OS_USERNAME`, `OS_PASSWORD`, `OS_TENANT_NAME`, `OS_REGION_NAME`                                                                                                  | [Additional configuration](https://go-acme.github.io/lego/dns/designate)        |
 | [Oracle Cloud](https://cloud.oracle.com/home)                          | `oraclecloud`      | `OCI_COMPARTMENT_OCID`, `OCI_PRIVKEY_FILE`, `OCI_PRIVKEY_PASS`, `OCI_PUBKEY_FINGERPRINT`, `OCI_REGION`, `OCI_TENANCY_OCID`, `OCI_USER_OCID`                                      | [Additional configuration](https://go-acme.github.io/lego/dns/oraclecloud)      |
@@ -460,6 +500,7 @@ For complete details, refer to your provider's _Additional configuration_ link.
 | [RFC2136](https://tools.ietf.org/html/rfc2136)                         | `rfc2136`          | `RFC2136_TSIG_KEY`, `RFC2136_TSIG_SECRET`, `RFC2136_TSIG_ALGORITHM`, `RFC2136_NAMESERVER`                                                                                        | [Additional configuration](https://go-acme.github.io/lego/dns/rfc2136)          |
 | [RimuHosting](https://rimuhosting.com)                                 | `rimuhosting`      | `RIMUHOSTING_API_KEY`                                                                                                                                                            | [Additional configuration](https://go-acme.github.io/lego/dns/rimuhosting)      |
 | [Route 53](https://aws.amazon.com/route53/)                            | `route53`          | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `[AWS_REGION]`, `[AWS_HOSTED_ZONE_ID]` or a configured user/instance IAM profile.                                                  | [Additional configuration](https://go-acme.github.io/lego/dns/route53)          |
+| [RU Center](https://nic.ru/)                                           | `nicru`            | `NICRU_USER`, `NICRU_PASSWORD`, `NICRU_SERVICE_ID`, `NICRU_SECRET`, `NICRU_SERVICE_NAME`                                                                                         | [Additional configuration](https://go-acme.github.io/lego/dns/nicru)            |
 | [Sakura Cloud](https://cloud.sakura.ad.jp/)                            | `sakuracloud`      | `SAKURACLOUD_ACCESS_TOKEN`, `SAKURACLOUD_ACCESS_TOKEN_SECRET`                                                                                                                    | [Additional configuration](https://go-acme.github.io/lego/dns/sakuracloud)      |
 | [Scaleway](https://www.scaleway.com)                                   | `scaleway`         | `SCW_API_TOKEN`                                                                                                                                                                  | [Additional configuration](https://go-acme.github.io/lego/dns/scaleway)         |
 | [Selectel v2](https://selectel.ru/en/)                                 | `selectelv2`       | `SELECTELV2_ACCOUNT_ID`, `SELECTELV2_PASSWORD`, `SELECTELV2_PROJECT_ID`, `SELECTELV2_USERNAME`                                                                                   | [Additional configuration](https://go-acme.github.io/lego/dns/selectelv2)       |
@@ -473,6 +514,7 @@ For complete details, refer to your provider's _Additional configuration_ link.
 | [Stackpath](https://www.stackpath.com/)                                | `stackpath`        | `STACKPATH_CLIENT_ID`, `STACKPATH_CLIENT_SECRET`, `STACKPATH_STACK_ID`                                                                                                           | [Additional configuration](https://go-acme.github.io/lego/dns/stackpath)        |
 | [Technitium](https://technitium.com)                                   | `technitium`       | `TECHNITIUM_SERVER_BASE_URL`, `TECHNITIUM_API_TOKEN`                                                                                                                             | [Additional configuration](https://go-acme.github.io/lego/dns/technitium)       |
 | [Tencent Cloud DNS](https://cloud.tencent.com/product/cns)             | `tencentcloud`     | `TENCENTCLOUD_SECRET_ID`, `TENCENTCLOUD_SECRET_KEY`                                                                                                                              | [Additional configuration](https://go-acme.github.io/lego/dns/tencentcloud)     |
+| [Tencent EdgeOne](https://edgeone.ai/)                                 | `edgeone`          | `EDGEONE_SECRET_ID`, `EDGEONE_SECRET_KEY`                                                                                                                                        | [Additional configuration](https://go-acme.github.io/lego/dns/edgeone)          |
 | [Timeweb Cloud](https://timeweb.cloud)                                 | `timewebcloud`     | `TIMEWEBCLOUD_AUTH_TOKEN`                                                                                                                                                        | [Additional configuration](https://go-acme.github.io/lego/dns/timewebcloud)     |
 | [TransIP](https://www.transip.nl/)                                     | `transip`          | `TRANSIP_ACCOUNT_NAME`, `TRANSIP_PRIVATE_KEY_PATH`                                                                                                                               | [Additional configuration](https://go-acme.github.io/lego/dns/transip)          |
 | [UKFast SafeDNS](https://docs.ukfast.co.uk/domains/safedns/index.html) | `safedns`          | `SAFEDNS_AUTH_TOKEN`                                                                                                                                                             | [Additional configuration](https://go-acme.github.io/lego/dns/safedns)          |
@@ -494,6 +536,7 @@ For complete details, refer to your provider's _Additional configuration_ link.
 | [Yandex Cloud](https://cloud.yandex.com/en/)                           | `yandexcloud`      | `YANDEX_CLOUD_FOLDER_ID`, `YANDEX_CLOUD_IAM_TOKEN`                                                                                                                               | [Additional configuration](https://go-acme.github.io/lego/dns/yandexcloud)      |
 | [Yandex](https://yandex.com)                                           | `yandex`           | `YANDEX_PDD_TOKEN`                                                                                                                                                               | [Additional configuration](https://go-acme.github.io/lego/dns/yandex)           |
 | [Zone.ee](https://www.zone.ee)                                         | `zoneee`           | `ZONEEE_API_USER`, `ZONEEE_API_KEY`                                                                                                                                              | [Additional configuration](https://go-acme.github.io/lego/dns/zoneee)           |
+| [ZoneEdit](https://www.zoneedit.com)                                   | `zoneedit`         | `ZONEEDIT_USER`, `ZONEEDIT_AUTH_TOKEN`                                                                                                                                           | [Additional configuration](https://go-acme.github.io/lego/dns/zoneedit)         |
 | [Zonomi](https://zonomi.com)                                           | `zonomi`           | `ZONOMI_API_KEY`                                                                                                                                                                 | [Additional configuration](https://go-acme.github.io/lego/dns/zonomi)           |
 | External Program                                                       | `exec`             | `EXEC_PATH`                                                                                                                                                                      | [Additional configuration](https://go-acme.github.io/lego/dns/exec)             |
 | HTTP request                                                           | `httpreq`          | `HTTPREQ_ENDPOINT`, `HTTPREQ_MODE`, `HTTPREQ_USERNAME`, `HTTPREQ_PASSWORD` [^1]                                                                                                  | [Additional configuration](https://go-acme.github.io/lego/dns/httpreq)          |
@@ -795,6 +838,8 @@ docker run -v "/my/host/acme:/etc/traefik/acme" traefik
 
 _Optional, Default=2160_
 
+`certificatesDuration` specifies the duration (in hours) of the certificates issued by the CA server. It is used to determine when to renew the certificate, but it **doesn't** define the duration of the certificates, that is up to the CA server. 
+
 `certificatesDuration` is used to calculate two durations:
 
 - `Renew Period`: the period before the end of the certificate duration, during which the certificate should be renewed.
@@ -802,14 +847,14 @@ _Optional, Default=2160_
 
 It defaults to `2160` (90 days) to follow Let's Encrypt certificates' duration.
 
-| Certificate Duration | Renew Period      | Renew Interval          |
-|----------------------|-------------------|-------------------------|
-| >= 1 year            | 4 months          | 1 week                  |
-| >= 90 days           | 30 days           | 1 day                   |
-| >= 30 days           | 10 days           | 12 hours                |
-| >= 7 days            | 1 day             | 1 hour                  |
-| >= 24 hours          | 6 hours           | 10 min                  |
-| < 24 hours           | 20 min            | 1 min                   |
+| Certificate Duration | Renew Period | Renew Interval |
+|----------------------|--------------|----------------|
+| >= 1 year            | 4 months     | 1 week         |
+| >= 90 days           | 30 days      | 1 day          |
+| >= 30 days           | 10 days      | 12 hours       |
+| >= 6 days            | 2 days       | 2 hours        |
+| >= 24 hours          | 6 hours      | 10 min         |
+| < 24 hours           | 20 min       | 1 min          |
 
 !!! warning "Traefik cannot manage certificates with a duration lower than 1 hour."
 
@@ -991,6 +1036,39 @@ certificatesResolvers:
 # ...
 ```
 
+### `disableCommonName`
+
+_Optional, Default=false_
+
+Disable common name inside CSR and certificates.
+
+It's recommended to disable the common name and required to get a certificate for IP.
+
+- https://letsencrypt.org/docs/profiles/#certificate-common-name
+- https://community.letsencrypt.org/t/ip-san-error-csr-contains-ip-address-in-common-name/239012/7
+
+```yaml tab="File (YAML)"
+certificatesResolvers:
+  myresolver:
+    acme:
+      # ...
+      disableCommonName: true
+      # ...
+```
+
+```toml tab="File (TOML)"
+[certificatesResolvers.myresolver.acme]
+  # ...
+  disableCommonName = true
+  # ...
+```
+
+```bash tab="CLI"
+# ...
+--certificatesresolvers.myresolver.acme.disableCommonName=true
+# ...
+```
+
 ### `keyType`
 
 _Optional, Default="RSA4096"_
@@ -1133,4 +1211,4 @@ If Let's Encrypt is not reachable, the following certificates will apply:
 !!! important
     For new (sub)domains which need Let's Encrypt authentication, the default Traefik certificate will be used until Traefik is restarted.
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

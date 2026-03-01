@@ -1,10 +1,8 @@
 package integration
 
 import (
-	"encoding/json"
 	"io"
 	"net/http"
-	"strings"
 	"testing"
 	"time"
 
@@ -33,7 +31,7 @@ func (s *DockerSuite) TearDownSuite() {
 }
 
 func (s *DockerSuite) TearDownTest() {
-	s.composeStop("simple", "withtcplabels", "withlabels1", "withlabels2", "withonelabelmissing", "powpow")
+	s.composeStop("simple", "withtcplabels", "withlabels1", "withlabels2", "withonelabelmissing", "powpow", "nonRunning")
 }
 
 func (s *DockerSuite) TestSimpleConfiguration() {
@@ -56,56 +54,6 @@ func (s *DockerSuite) TestSimpleConfiguration() {
 	require.NoError(s.T(), err)
 }
 
-func (s *DockerSuite) TestWRRServer() {
-	tempObjects := struct {
-		DockerHost  string
-		DefaultRule string
-	}{
-		DockerHost:  s.getDockerHost(),
-		DefaultRule: "Host(`{{ normalize .Name }}.docker.localhost`)",
-	}
-
-	file := s.adaptFile("fixtures/docker/simple.toml", tempObjects)
-
-	s.composeUp()
-
-	s.traefikCmd(withConfigFile(file))
-
-	whoami1IP := s.getComposeServiceIP("wrr-server")
-	whoami2IP := s.getComposeServiceIP("wrr-server2")
-
-	// Expected a 404 as we did not configure anything
-	err := try.GetRequest("http://127.0.0.1:8000/", 500*time.Millisecond, try.StatusCodeIs(http.StatusNotFound))
-	require.NoError(s.T(), err)
-
-	err = try.GetRequest("http://127.0.0.1:8080/api/http/services", 1000*time.Millisecond, try.BodyContains("wrr-server"))
-	require.NoError(s.T(), err)
-
-	repartition := map[string]int{}
-	for range 4 {
-		req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/whoami", nil)
-		req.Host = "my.wrr.host"
-		require.NoError(s.T(), err)
-
-		response, err := http.DefaultClient.Do(req)
-		require.NoError(s.T(), err)
-		assert.Equal(s.T(), http.StatusOK, response.StatusCode)
-
-		body, err := io.ReadAll(response.Body)
-		require.NoError(s.T(), err)
-
-		if strings.Contains(string(body), whoami1IP) {
-			repartition[whoami1IP]++
-		}
-		if strings.Contains(string(body), whoami2IP) {
-			repartition[whoami2IP]++
-		}
-	}
-
-	assert.Equal(s.T(), 3, repartition[whoami1IP])
-	assert.Equal(s.T(), 1, repartition[whoami2IP])
-}
-
 func (s *DockerSuite) TestDefaultDockerContainers() {
 	tempObjects := struct {
 		DockerHost  string
@@ -126,16 +74,8 @@ func (s *DockerSuite) TestDefaultDockerContainers() {
 	require.NoError(s.T(), err)
 	req.Host = "simple.docker.localhost"
 
-	resp, err := try.ResponseUntilStatusCode(req, 3*time.Second, http.StatusOK)
+	_, err = try.ResponseUntilStatusCode(req, 3*time.Second, http.StatusOK)
 	require.NoError(s.T(), err)
-
-	body, err := io.ReadAll(resp.Body)
-	require.NoError(s.T(), err)
-
-	var version map[string]interface{}
-
-	assert.NoError(s.T(), json.Unmarshal(body, &version))
-	assert.Equal(s.T(), "swarm/1.0.0", version["Version"])
 }
 
 func (s *DockerSuite) TestDockerContainersWithTCPLabels() {
@@ -190,16 +130,8 @@ func (s *DockerSuite) TestDockerContainersWithLabels() {
 	require.NoError(s.T(), err)
 	req.Host = "my.super.host"
 
-	resp, err := try.ResponseUntilStatusCode(req, 3*time.Second, http.StatusOK)
+	_, err = try.ResponseUntilStatusCode(req, 3*time.Second, http.StatusOK)
 	require.NoError(s.T(), err)
-
-	body, err := io.ReadAll(resp.Body)
-	require.NoError(s.T(), err)
-
-	var version map[string]interface{}
-
-	assert.NoError(s.T(), json.Unmarshal(body, &version))
-	assert.Equal(s.T(), "swarm/1.0.0", version["Version"])
 }
 
 func (s *DockerSuite) TestDockerContainersWithOneMissingLabels() {
@@ -248,16 +180,8 @@ func (s *DockerSuite) TestRestartDockerContainers() {
 	req.Host = "my.super.host"
 
 	// TODO Need to wait than 500 milliseconds more (for swarm or traefik to boot up ?)
-	resp, err := try.ResponseUntilStatusCode(req, 1500*time.Millisecond, http.StatusOK)
+	_, err = try.ResponseUntilStatusCode(req, 1500*time.Millisecond, http.StatusOK)
 	require.NoError(s.T(), err)
-
-	body, err := io.ReadAll(resp.Body)
-	require.NoError(s.T(), err)
-
-	var version map[string]interface{}
-
-	assert.NoError(s.T(), json.Unmarshal(body, &version))
-	assert.Equal(s.T(), "swarm/1.0.0", version["Version"])
 
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("powpow"))
 	require.NoError(s.T(), err)
@@ -271,5 +195,61 @@ func (s *DockerSuite) TestRestartDockerContainers() {
 
 	s.composeUp("powpow")
 	err = try.GetRequest("http://127.0.0.1:8080/api/rawdata", 60*time.Second, try.BodyContains("powpow"))
+	require.NoError(s.T(), err)
+}
+
+func (s *DockerSuite) TestDockerAllowNonRunning() {
+	tempObjects := struct {
+		DockerHost  string
+		DefaultRule string
+	}{
+		DockerHost:  s.getDockerHost(),
+		DefaultRule: "Host(`{{ normalize .Name }}.docker.localhost`)",
+	}
+
+	file := s.adaptFile("fixtures/docker/simple.toml", tempObjects)
+
+	s.composeUp("nonRunning")
+
+	// Start traefik
+	s.traefikCmd(withConfigFile(file))
+
+	// Verify the container is working when running
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
+	require.NoError(s.T(), err)
+	req.Host = "non.running.host"
+
+	resp, err := try.ResponseUntilStatusCode(req, 3*time.Second, http.StatusOK)
+	require.NoError(s.T(), err)
+
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(s.T(), err)
+	assert.Contains(s.T(), string(body), "Hostname:")
+
+	// Verify the router exists in Traefik configuration
+	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers", 1*time.Second, try.BodyContains("NonRunning"))
+	require.NoError(s.T(), err)
+
+	// Stop the container
+	s.composeStop("nonRunning")
+
+	// Wait a bit for container stop to be detected
+	time.Sleep(2 * time.Second)
+
+	// Verify the router still exists in configuration even though container is stopped
+	// This is the key test - the router should persist due to allowNonRunning=true
+	err = try.GetRequest("http://127.0.0.1:8080/api/http/routers", 10*time.Second, try.BodyContains("NonRunning"))
+	require.NoError(s.T(), err)
+
+	// Verify the service still exists in configuration
+	err = try.GetRequest("http://127.0.0.1:8080/api/http/services", 1*time.Second, try.BodyContains("nonRunning"))
+	require.NoError(s.T(), err)
+
+	// HTTP requests should fail (502 Bad Gateway) since container is stopped but router exists
+	req, err = http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
+	require.NoError(s.T(), err)
+	req.Host = "non.running.host"
+
+	err = try.Request(req, 3*time.Second, try.StatusCodeIs(http.StatusServiceUnavailable))
 	require.NoError(s.T(), err)
 }

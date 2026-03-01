@@ -2,7 +2,6 @@ package mirror
 
 import (
 	"bytes"
-	"context"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -20,7 +19,7 @@ func TestMirroringOn100(t *testing.T) {
 	handler := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 	})
-	pool := safe.NewPool(context.Background())
+	pool := safe.NewPool(t.Context())
 	mirror := New(handler, pool, true, defaultMaxBodySize, nil)
 	err := mirror.AddMirror(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		atomic.AddInt32(&countMirror1, 1)
@@ -49,7 +48,7 @@ func TestMirroringOn10(t *testing.T) {
 	handler := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 	})
-	pool := safe.NewPool(context.Background())
+	pool := safe.NewPool(t.Context())
 	mirror := New(handler, pool, true, defaultMaxBodySize, nil)
 	err := mirror.AddMirror(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		atomic.AddInt32(&countMirror1, 1)
@@ -74,7 +73,7 @@ func TestMirroringOn10(t *testing.T) {
 }
 
 func TestInvalidPercent(t *testing.T) {
-	mirror := New(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), safe.NewPool(context.Background()), true, defaultMaxBodySize, nil)
+	mirror := New(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), safe.NewPool(t.Context()), true, defaultMaxBodySize, nil)
 	err := mirror.AddMirror(nil, -1)
 	assert.Error(t, err)
 
@@ -92,7 +91,7 @@ func TestHijack(t *testing.T) {
 	handler := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 	})
-	pool := safe.NewPool(context.Background())
+	pool := safe.NewPool(t.Context())
 	mirror := New(handler, pool, true, defaultMaxBodySize, nil)
 
 	var mirrorRequest bool
@@ -116,7 +115,7 @@ func TestFlush(t *testing.T) {
 	handler := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 	})
-	pool := safe.NewPool(context.Background())
+	pool := safe.NewPool(t.Context())
 	mirror := New(handler, pool, true, defaultMaxBodySize, nil)
 
 	var mirrorRequest bool
@@ -144,7 +143,7 @@ func TestMirroringWithBody(t *testing.T) {
 		body        = []byte(`body`)
 	)
 
-	pool := safe.NewPool(context.Background())
+	pool := safe.NewPool(t.Context())
 
 	handler := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		assert.NotNil(t, r.Body)
@@ -186,7 +185,7 @@ func TestMirroringWithIgnoredBody(t *testing.T) {
 		emptyBody   = []byte(``)
 	)
 
-	pool := safe.NewPool(context.Background())
+	pool := safe.NewPool(t.Context())
 
 	handler := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		assert.NotNil(t, r.Body)
@@ -225,16 +224,16 @@ func TestCloneRequest(t *testing.T) {
 		assert.NoError(t, err)
 
 		ctx := req.Context()
-		rr, _, err := newReusableRequest(req, true, defaultMaxBodySize)
+		rr, _, err := NewReusableRequest(req, defaultMaxBodySize)
 		assert.NoError(t, err)
 
 		// first call
-		cloned := rr.clone(ctx)
+		cloned := rr.Clone(ctx)
 		assert.Equal(t, cloned, req)
 		assert.Nil(t, cloned.Body)
 
 		// second call
-		cloned = rr.clone(ctx)
+		cloned = rr.Clone(ctx)
 		assert.Equal(t, cloned, req)
 		assert.Nil(t, cloned.Body)
 	})
@@ -250,17 +249,17 @@ func TestCloneRequest(t *testing.T) {
 		ctx := req.Context()
 		req.ContentLength = int64(contentLength)
 
-		rr, _, err := newReusableRequest(req, true, defaultMaxBodySize)
+		rr, _, err := NewReusableRequest(req, defaultMaxBodySize)
 		assert.NoError(t, err)
 
 		// first call
-		cloned := rr.clone(ctx)
+		cloned := rr.Clone(ctx)
 		body, err := io.ReadAll(cloned.Body)
 		assert.NoError(t, err)
 		assert.Equal(t, bb, body)
 
 		// second call
-		cloned = rr.clone(ctx)
+		cloned = rr.Clone(ctx)
 		body, err = io.ReadAll(cloned.Body)
 		assert.NoError(t, err)
 		assert.Equal(t, bb, body)
@@ -273,7 +272,7 @@ func TestCloneRequest(t *testing.T) {
 		req, err := http.NewRequest(http.MethodPost, "/", buf)
 		assert.NoError(t, err)
 
-		_, expectedBytes, err := newReusableRequest(req, true, 2)
+		_, expectedBytes, err := NewReusableRequest(req, 2)
 		assert.Error(t, err)
 		assert.Equal(t, expectedBytes, bb[:3])
 	})
@@ -285,7 +284,7 @@ func TestCloneRequest(t *testing.T) {
 		req, err := http.NewRequest(http.MethodPost, "/", buf)
 		assert.NoError(t, err)
 
-		rr, expectedBytes, err := newReusableRequest(req, true, 20)
+		rr, expectedBytes, err := NewReusableRequest(req, 20)
 		assert.NoError(t, err)
 		assert.Nil(t, expectedBytes)
 		assert.Len(t, rr.body, 10)
@@ -297,14 +296,14 @@ func TestCloneRequest(t *testing.T) {
 		req, err := http.NewRequest(http.MethodGet, "/", buf)
 		assert.NoError(t, err)
 
-		rr, expectedBytes, err := newReusableRequest(req, true, 20)
+		rr, expectedBytes, err := NewReusableRequest(req, 20)
 		assert.NoError(t, err)
 		assert.Nil(t, expectedBytes)
 		assert.Empty(t, rr.body)
 	})
 
 	t.Run("no request given", func(t *testing.T) {
-		_, _, err := newReusableRequest(nil, true, defaultMaxBodySize)
+		_, _, err := NewReusableRequest(nil, defaultMaxBodySize)
 		assert.Error(t, err)
 	})
 }

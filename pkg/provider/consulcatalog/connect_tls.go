@@ -10,8 +10,9 @@ import (
 
 // connectCert holds our certificates as a client of the Consul Connect protocol.
 type connectCert struct {
-	root []string
-	leaf keyPair
+	trustDomain string
+	root        []string
+	leaf        keyPair
 }
 
 func (c *connectCert) getRoot() []types.FileOrContent {
@@ -52,7 +53,8 @@ func (c *connectCert) equals(other *connectCert) bool {
 }
 
 func (c *connectCert) serversTransport(item itemData) *dynamic.ServersTransport {
-	spiffeID := fmt.Sprintf("spiffe:///ns/%s/dc/%s/svc/%s",
+	spiffeID := fmt.Sprintf("spiffe://%s/ns/%s/dc/%s/svc/%s",
+		c.trustDomain,
 		item.Namespace,
 		item.Datacenter,
 		item.Name,
@@ -72,7 +74,8 @@ func (c *connectCert) serversTransport(item itemData) *dynamic.ServersTransport 
 }
 
 func (c *connectCert) tcpServersTransport(item itemData) *dynamic.TCPServersTransport {
-	spiffeID := fmt.Sprintf("spiffe:///ns/%s/dc/%s/svc/%s",
+	spiffeID := fmt.Sprintf("spiffe://%s/ns/%s/dc/%s/svc/%s",
+		c.trustDomain,
 		item.Namespace,
 		item.Datacenter,
 		item.Name,

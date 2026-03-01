@@ -1,0 +1,15 @@
+[
+  {
+    "entryPoints": [
+      "udp"
+    ],
+    "service": "whoami",
+    "status": "enabled",
+    "using": [
+      "udp"
+    ],
+    "name": "to-whoami-a@file",
+    "priority": 10,
+    "provider": "file"
+  }
+]

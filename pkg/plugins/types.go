@@ -13,7 +13,7 @@ const (
 type Settings struct {
 	Envs      []string `description:"Environment variables to forward to the wasm guest." json:"envs,omitempty" toml:"envs,omitempty" yaml:"envs,omitempty"`
 	Mounts    []string `description:"Directory to mount to the wasm guest." json:"mounts,omitempty" toml:"mounts,omitempty" yaml:"mounts,omitempty"`
-	UseUnsafe bool     `description:"Allow the plugin to use unsafe package." json:"useUnsafe,omitempty" toml:"useUnsafe,omitempty" yaml:"useUnsafe,omitempty"`
+	UseUnsafe bool     `description:"Allow the plugin to use unsafe and syscall packages." json:"useUnsafe,omitempty" toml:"useUnsafe,omitempty" yaml:"useUnsafe,omitempty"`
 }
 
 // Descriptor The static part of a plugin configuration.
@@ -23,6 +23,9 @@ type Descriptor struct {
 
 	// Version (required)
 	Version string `description:"plugin's version." json:"version,omitempty" toml:"version,omitempty" yaml:"version,omitempty" export:"true"`
+
+	// Hash (optional)
+	Hash string `description:"plugin's hash to validate'" json:"hash,omitempty" toml:"hash,omitempty" yaml:"hash,omitempty" export:"true"`
 
 	// Settings (optional)
 	Settings Settings `description:"Plugin's settings (works only for wasm plugins)." json:"settings,omitempty" toml:"settings,omitempty" yaml:"settings,omitempty" export:"true"`
@@ -39,16 +42,16 @@ type LocalDescriptor struct {
 
 // Manifest The plugin manifest.
 type Manifest struct {
-	DisplayName   string                 `yaml:"displayName"`
-	Type          string                 `yaml:"type"`
-	Runtime       string                 `yaml:"runtime"`
-	WasmPath      string                 `yaml:"wasmPath"`
-	Import        string                 `yaml:"import"`
-	BasePkg       string                 `yaml:"basePkg"`
-	Compatibility string                 `yaml:"compatibility"`
-	Summary       string                 `yaml:"summary"`
-	UseUnsafe     bool                   `yaml:"useUnsafe"`
-	TestData      map[string]interface{} `yaml:"testData"`
+	DisplayName   string         `yaml:"displayName"`
+	Type          string         `yaml:"type"`
+	Runtime       string         `yaml:"runtime"`
+	WasmPath      string         `yaml:"wasmPath"`
+	Import        string         `yaml:"import"`
+	BasePkg       string         `yaml:"basePkg"`
+	Compatibility string         `yaml:"compatibility"`
+	Summary       string         `yaml:"summary"`
+	UseUnsafe     bool           `yaml:"useUnsafe"`
+	TestData      map[string]any `yaml:"testData"`
 }
 
 // IsYaegiPlugin returns true if the plugin is a Yaegi plugin.

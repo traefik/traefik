@@ -3,8 +3,10 @@ package tcp
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"crypto/tls"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -17,7 +19,15 @@ import (
 	"github.com/traefik/traefik/v3/pkg/tcp"
 )
 
-const defaultBufSize = 4096
+const (
+	defaultBufSize = 4096
+	// Per RFC 8446 Section 5.1, the maximum TLS record payload length is 2^14 (16384) bytes.
+	// A ClientHello is always a plaintext record, so any value exceeding this limit is invalid
+	// and likely indicates an attack attempting to force oversized per-connection buffer allocations.
+	// However, in practice the go server handshake can read up to 16384 + 2048 bytes,
+	// so we need to allow for some extra bytes to avoid rejecting valid handshakes.
+	maxTLSRecordLen = 16384 + 2048
+)
 
 // Router is a TCP router.
 type Router struct {
@@ -125,22 +135,24 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 	}
 
 	if postgres {
-		// Remove read/write deadline and delegate this to underlying TCP server.
-		if err := conn.SetDeadline(time.Time{}); err != nil {
-			log.Error().Err(err).Msg("Error while setting deadline")
-		}
-
 		r.servePostgres(r.GetConn(conn, getPeeked(br)))
 		return
 	}
 
 	hello, err := clientHelloInfo(br)
 	if err != nil {
+		var opErr *net.OpError
+		if !errors.Is(err, io.EOF) && (!errors.As(err, &opErr) || !opErr.Timeout()) {
+			log.Debug().Err(err).Msg("Error while reading client hello")
+		}
+
 		conn.Close()
 		return
 	}
 
-	// Remove read/write deadline and delegate this to underlying TCP server (for now only handled by HTTP Server)
+	// The deadline was set to avoid blocking on the initial read of the ClientHello,
+	// but now that we have it, we can remove it,
+	// and delegate this to underlying TCP server (for now only handled by HTTP Server).
 	if err := conn.SetDeadline(time.Time{}); err != nil {
 		log.Error().Err(err).Msg("Error while setting deadline")
 	}
@@ -215,17 +227,6 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 	conn.Close()
 }
 
-// acmeTLSALPNHandler returns a special handler to solve ACME-TLS/1 challenges.
-func (r *Router) acmeTLSALPNHandler() tcp.Handler {
-	if r.httpsTLSConfig == nil {
-		return &brokenTLSRouter{}
-	}
-
-	return tcp.HandlerFunc(func(conn tcp.WriteCloser) {
-		_ = tls.Server(conn, r.httpsTLSConfig).Handshake()
-	})
-}
-
 // AddTCPRoute defines a handler for the given rule.
 func (r *Router) AddTCPRoute(rule string, priority int, target tcp.Handler) error {
 	return r.muxerTCP.AddRoute(rule, "", priority, target)
@@ -264,16 +265,6 @@ func (r *Router) GetHTTPSHandler() http.Handler {
 // SetHTTPForwarder sets the tcp handler that will forward the connections to an http handler.
 func (r *Router) SetHTTPForwarder(handler tcp.Handler) {
 	r.httpForwarder = handler
-}
-
-// brokenTLSRouter is associated to a Host(SNI) rule for which we know the TLS conf is broken.
-// It is used to make sure any attempt to connect to that hostname is closed,
-// since we cannot proceed with the intended TLS conf.
-type brokenTLSRouter struct{}
-
-// ServeTCP instantly closes the connection.
-func (t *brokenTLSRouter) ServeTCP(conn tcp.WriteCloser) {
-	_ = conn.Close()
 }
 
 // SetHTTPSForwarder sets the tcp handler that will forward the TLS connections to an HTTP handler.
@@ -323,17 +314,48 @@ func (r *Router) EnableACMETLSPassthrough() {
 	r.acmeTLSPassthrough = true
 }
 
+// acmeTLSALPNHandler returns a special handler to solve ACME-TLS/1 challenges.
+func (r *Router) acmeTLSALPNHandler() tcp.Handler {
+	if r.httpsTLSConfig == nil {
+		return &brokenTLSRouter{}
+	}
+
+	return tcp.HandlerFunc(func(conn tcp.WriteCloser) {
+		tlsConn := tls.Server(conn, r.httpsTLSConfig)
+		defer tlsConn.Close()
+
+		// This avoids stale connections when validating the ACME challenge,
+		// as we expect a validation request to complete in a short period of time.
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+
+		if err := tlsConn.HandshakeContext(ctx); err != nil {
+			log.Debug().Err(err).Msg("Error during ACME-TLS/1 handshake")
+		}
+	})
+}
+
+// brokenTLSRouter is associated to a Host(SNI) rule for which we know the TLS conf is broken.
+// It is used to make sure any attempt to connect to that hostname is closed,
+// since we cannot proceed with the intended TLS conf.
+type brokenTLSRouter struct{}
+
+// ServeTCP instantly closes the connection.
+func (t *brokenTLSRouter) ServeTCP(conn tcp.WriteCloser) {
+	_ = conn.Close()
+}
+
 // Conn is a connection proxy that handles Peeked bytes.
 type Conn struct {
-	// Peeked are the bytes that have been read from Conn for the purposes of route matching,
-	// but have not yet been consumed by Read calls.
-	// It set to nil by Read when fully consumed.
-	Peeked []byte
-
 	// Conn is the underlying connection.
 	// It can be type asserted against *net.TCPConn or other types as needed.
 	// It should not be read from directly unless Peeked is nil.
 	tcp.WriteCloser
+
+	// Peeked are the bytes that have been read from Conn for the purposes of route matching,
+	// but have not yet been consumed by Read calls.
+	// It set to nil by Read when fully consumed.
+	Peeked []byte
 }
 
 // Read reads bytes from the connection (using the buffer prior to actually reading).
@@ -362,11 +384,7 @@ type clientHello struct {
 func clientHelloInfo(br *bufio.Reader) (*clientHello, error) {
 	hdr, err := br.Peek(1)
 	if err != nil {
-		var opErr *net.OpError
-		if !errors.Is(err, io.EOF) && (!errors.As(err, &opErr) || !opErr.Timeout()) {
-			log.Debug().Err(err).Msg("Error while peeking first byte")
-		}
-		return nil, err
+		return nil, fmt.Errorf("peeking first byte: %w", err)
 	}
 
 	// No valid TLS record has a type of 0x80, however SSLv2 handshakes start with an uint16 length
@@ -390,13 +408,14 @@ func clientHelloInfo(br *bufio.Reader) (*clientHello, error) {
 	const recordHeaderLen = 5
 	hdr, err = br.Peek(recordHeaderLen)
 	if err != nil {
-		log.Error().Err(err).Msg("Error while peeking client hello header")
-		return &clientHello{
-			peeked: getPeeked(br),
-		}, nil
+		return nil, fmt.Errorf("peeking client hello headers: %w", err)
 	}
 
 	recLen := int(hdr[3])<<8 | int(hdr[4]) // ignoring version in hdr[1:3]
+
+	if recLen > maxTLSRecordLen {
+		return nil, fmt.Errorf("peeking client hello bytes, oversized record: %d", recLen)
+	}
 
 	if recordHeaderLen+recLen > defaultBufSize {
 		br = bufio.NewReaderSize(br, recordHeaderLen+recLen)
@@ -404,11 +423,7 @@ func clientHelloInfo(br *bufio.Reader) (*clientHello, error) {
 
 	helloBytes, err := br.Peek(recordHeaderLen + recLen)
 	if err != nil {
-		log.Error().Err(err).Msg("Error while peeking client hello bytes")
-		return &clientHello{
-			isTLS:  true,
-			peeked: getPeeked(br),
-		}, nil
+		return nil, fmt.Errorf("peeking client hello bytes: %w", err)
 	}
 
 	sni := ""
@@ -442,8 +457,9 @@ func getPeeked(br *bufio.Reader) string {
 // helloSniffConn is a net.Conn that reads from r, fails on Writes,
 // and crashes otherwise.
 type helloSniffConn struct {
-	r        io.Reader
 	net.Conn // nil; crash on any unexpected use
+
+	r io.Reader
 }
 
 // Read reads from the underlying reader.

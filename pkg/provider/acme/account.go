@@ -10,7 +10,7 @@ import (
 	"github.com/go-acme/lego/v4/certcrypto"
 	"github.com/go-acme/lego/v4/registration"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/observability/logs"
 )
 
 // Account is used to store lets encrypt registration info.
@@ -58,7 +58,7 @@ func (a *Account) GetPrivateKey() crypto.PrivateKey {
 	privateKey, err := x509.ParsePKCS1PrivateKey(a.PrivateKey)
 	if err != nil {
 		log.Error().Str(logs.ProviderName, "acme").
-			Err(err).Msgf("Cannot unmarshal private key %+v", a.PrivateKey)
+			Err(err).Msg("Cannot unmarshal private key")
 		return nil
 	}
 

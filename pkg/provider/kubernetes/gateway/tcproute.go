@@ -3,6 +3,7 @@ package gateway
 import (
 	"context"
 	"fmt"
+	"maps"
 	"net"
 	"strconv"
 	"strings"
@@ -318,21 +319,15 @@ func mergeTCPConfiguration(from, to *dynamic.Configuration) {
 	if to.TCP.Routers == nil {
 		to.TCP.Routers = map[string]*dynamic.TCPRouter{}
 	}
-	for routerName, router := range from.TCP.Routers {
-		to.TCP.Routers[routerName] = router
-	}
+	maps.Copy(to.TCP.Routers, from.TCP.Routers)
 
 	if to.TCP.Middlewares == nil {
 		to.TCP.Middlewares = map[string]*dynamic.TCPMiddleware{}
 	}
-	for middlewareName, middleware := range from.TCP.Middlewares {
-		to.TCP.Middlewares[middlewareName] = middleware
-	}
+	maps.Copy(to.TCP.Middlewares, from.TCP.Middlewares)
 
 	if to.TCP.Services == nil {
 		to.TCP.Services = map[string]*dynamic.TCPService{}
 	}
-	for serviceName, service := range from.TCP.Services {
-		to.TCP.Services[serviceName] = service
-	}
+	maps.Copy(to.TCP.Services, from.TCP.Services)
 }

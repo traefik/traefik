@@ -58,12 +58,12 @@ func TestGetBestCertificate(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
-			dynamicMap := map[string]*tls.Certificate{}
+			dynamicMap := map[string]*CertificateData{}
 
 			if test.dynamicCert != "" {
 				cert, err := loadTestCert(test.dynamicCert, test.uppercase)
 				require.NoError(t, err)
-				dynamicMap[strings.ToLower(test.dynamicCert)] = cert
+				dynamicMap[strings.ToLower(test.dynamicCert)] = &CertificateData{Certificate: cert}
 			}
 
 			store := &CertificateStore{

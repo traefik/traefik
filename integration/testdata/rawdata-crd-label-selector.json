@@ -9,8 +9,9 @@
 			"priority": 18,
 			"observability": {
 				"accessLogs": true,
+				"metrics": true,
 				"tracing": true,
-				"metrics": true
+				"traceVerbosity": "minimal"
 			},
 			"status": "enabled",
 			"using": [
@@ -29,8 +30,9 @@
 			},
 			"observability": {
 				"accessLogs": true,
+				"metrics": true,
 				"tracing": true,
-				"metrics": true
+				"traceVerbosity": "minimal"
 			},
 			"status": "enabled",
 			"using": [

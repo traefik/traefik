@@ -19,7 +19,7 @@ import (
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/job"
-	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	traefikv1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	"github.com/traefik/traefik/v3/pkg/provider/kubernetes/k8s"
 	"github.com/traefik/traefik/v3/pkg/safe"
@@ -121,7 +121,7 @@ type gatewayListener struct {
 
 	Port              gatev1.PortNumber
 	Protocol          gatev1.ProtocolType
-	TLS               *gatev1.GatewayTLSConfig
+	TLS               *gatev1.ListenerTLSConfig
 	Hostname          *gatev1.Hostname
 	Status            *gatev1.ListenerStatus
 	AllowedNamespaces []string
@@ -163,49 +163,6 @@ func (p *Provider) RegisterBackendFuncs(group, kind string, builderFunc BuildBac
 
 func (p *Provider) SetRouterTransform(routerTransform k8s.RouterTransform) {
 	p.routerTransform = routerTransform
-}
-
-func (p *Provider) applyRouterTransform(ctx context.Context, rt *dynamic.Router, route *gatev1.HTTPRoute) {
-	if p.routerTransform == nil {
-		return
-	}
-
-	if err := p.routerTransform.Apply(ctx, rt, route); err != nil {
-		log.Ctx(ctx).Error().Err(err).Msg("Apply router transform")
-	}
-}
-
-func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
-	// Label selector validation
-	_, err := labels.Parse(p.LabelSelector)
-	if err != nil {
-		return nil, fmt.Errorf("invalid label selector: %q", p.LabelSelector)
-	}
-
-	logger := log.Ctx(ctx)
-	logger.Info().Msgf("Label selector is: %q", p.LabelSelector)
-
-	var client *clientWrapper
-	switch {
-	case os.Getenv("KUBERNETES_SERVICE_HOST") != "" && os.Getenv("KUBERNETES_SERVICE_PORT") != "":
-		logger.Info().Str("endpoint", p.Endpoint).Msg("Creating in-cluster Provider client")
-		client, err = newInClusterClient(p.Endpoint)
-	case os.Getenv("KUBECONFIG") != "":
-		logger.Info().Msgf("Creating cluster-external Provider client from KUBECONFIG %s", os.Getenv("KUBECONFIG"))
-		client, err = newExternalClusterClientFromFile(os.Getenv("KUBECONFIG"))
-	default:
-		logger.Info().Str("endpoint", p.Endpoint).Msg("Creating cluster-external Provider client")
-		client, err = newExternalClusterClient(p.Endpoint, p.CertAuthFilePath, p.Token)
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	client.labelSelector = p.LabelSelector
-	client.experimentalChannel = p.ExperimentalChannel
-
-	return client, nil
 }
 
 // Init the provider.
@@ -290,6 +247,49 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	return nil
 }
 
+func (p *Provider) applyRouterTransform(ctx context.Context, rt *dynamic.Router, route *gatev1.HTTPRoute) {
+	if p.routerTransform == nil {
+		return
+	}
+
+	if err := p.routerTransform.Apply(ctx, rt, route); err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("Apply router transform")
+	}
+}
+
+func (p *Provider) newK8sClient(ctx context.Context) (*clientWrapper, error) {
+	// Label selector validation
+	_, err := labels.Parse(p.LabelSelector)
+	if err != nil {
+		return nil, fmt.Errorf("invalid label selector: %q", p.LabelSelector)
+	}
+
+	logger := log.Ctx(ctx)
+	logger.Info().Msgf("Label selector is: %q", p.LabelSelector)
+
+	var client *clientWrapper
+	switch {
+	case os.Getenv("KUBERNETES_SERVICE_HOST") != "" && os.Getenv("KUBERNETES_SERVICE_PORT") != "":
+		logger.Info().Str("endpoint", p.Endpoint).Msg("Creating in-cluster Provider client")
+		client, err = newInClusterClient(p.Endpoint)
+	case os.Getenv("KUBECONFIG") != "":
+		logger.Info().Msgf("Creating cluster-external Provider client from KUBECONFIG %s", os.Getenv("KUBECONFIG"))
+		client, err = newExternalClusterClientFromFile(os.Getenv("KUBECONFIG"))
+	default:
+		logger.Info().Str("endpoint", p.Endpoint).Msg("Creating cluster-external Provider client")
+		client, err = newExternalClusterClient(p.Endpoint, p.CertAuthFilePath, p.Token)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	client.labelSelector = p.LabelSelector
+	client.experimentalChannel = p.ExperimentalChannel
+
+	return client, nil
+}
+
 // TODO Handle errors and update resources statuses (gatewayClass, gateway).
 func (p *Provider) loadConfigurationFromGateways(ctx context.Context) *dynamic.Configuration {
 	conf := &dynamic.Configuration{
@@ -325,14 +325,12 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) *dynamic.C
 	}
 
 	var supportedFeatures []gatev1.SupportedFeature
-	if p.ExperimentalChannel {
-		for _, feature := range SupportedFeatures() {
-			supportedFeatures = append(supportedFeatures, gatev1.SupportedFeature{Name: gatev1.FeatureName(feature)})
-		}
-		slices.SortFunc(supportedFeatures, func(a, b gatev1.SupportedFeature) int {
-			return strings.Compare(string(a.Name), string(b.Name))
-		})
+	for _, feature := range SupportedFeatures() {
+		supportedFeatures = append(supportedFeatures, gatev1.SupportedFeature{Name: gatev1.FeatureName(feature)})
 	}
+	slices.SortFunc(supportedFeatures, func(a, b gatev1.SupportedFeature) int {
+		return strings.Compare(string(a.Name), string(b.Name))
+	})
 
 	gatewayClassNames := map[string]struct{}{}
 	for _, gatewayClass := range gatewayClasses {
@@ -768,12 +766,9 @@ func (p *Provider) gatewayAddresses() ([]gatev1.GatewayStatusAddress, error) {
 
 	svcRef := p.StatusAddress.Service
 	if svcRef.Name != "" && svcRef.Namespace != "" {
-		svc, exists, err := p.client.GetService(svcRef.Namespace, svcRef.Name)
+		svc, err := p.client.GetService(svcRef.Namespace, svcRef.Name)
 		if err != nil {
-			return nil, fmt.Errorf("unable to get service: %w", err)
-		}
-		if !exists {
-			return nil, fmt.Errorf("could not find a service with name %s in namespace %s", svcRef.Name, svcRef.Namespace)
+			return nil, fmt.Errorf("getting service: %w", err)
 		}
 
 		var addresses []gatev1.GatewayStatusAddress
@@ -836,25 +831,27 @@ func (p *Provider) isReferenceGranted(fromKind, fromNamespace, toGroup, toKind, 
 }
 
 func (p *Provider) getTLS(secretName gatev1.ObjectName, namespace string) (*tls.CertAndStores, error) {
-	secret, exists, err := p.client.GetSecret(namespace, string(secretName))
+	secret, err := p.client.GetSecret(namespace, string(secretName))
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch secret %s/%s: %w", namespace, secretName, err)
-	}
-	if !exists {
-		return nil, fmt.Errorf("secret %s/%s does not exist", namespace, secretName)
+		return nil, fmt.Errorf("getting secret: %w", err)
 	}
 
 	cert, key, err := getCertificateBlocks(secret, namespace, string(secretName))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getting certificate blocks: %w", err)
 	}
 
-	return &tls.CertAndStores{
+	certAndStore := &tls.CertAndStores{
 		Certificate: tls.Certificate{
 			CertFile: types.FileOrContent(cert),
 			KeyFile:  types.FileOrContent(key),
 		},
-	}, nil
+	}
+	if _, err := certAndStore.GetCertificate(); err != nil {
+		return nil, fmt.Errorf("validating certificate: %w", err)
+	}
+
+	return certAndStore, nil
 }
 
 func (p *Provider) allowedNamespaces(gatewayNamespace string, routeNamespaces *gatev1.RouteNamespaces) ([]string, error) {
@@ -891,12 +888,9 @@ func (p *Provider) getBackendAddresses(namespace string, ref gatev1.BackendRef) 
 		return nil, corev1.ServicePort{}, errors.New("port is required for Kubernetes Service reference")
 	}
 
-	service, exists, err := p.client.GetService(namespace, string(ref.Name))
+	service, err := p.client.GetService(namespace, string(ref.Name))
 	if err != nil {
 		return nil, corev1.ServicePort{}, fmt.Errorf("getting service: %w", err)
-	}
-	if !exists {
-		return nil, corev1.ServicePort{}, errors.New("service not found")
 	}
 	if service.Spec.Type == corev1.ServiceTypeExternalName {
 		return nil, corev1.ServicePort{}, errors.New("type ExternalName is not supported for Kubernetes Service reference")
@@ -904,7 +898,7 @@ func (p *Provider) getBackendAddresses(namespace string, ref gatev1.BackendRef) 
 
 	var svcPort *corev1.ServicePort
 	for _, p := range service.Spec.Ports {
-		if p.Port == int32(*ref.Port) {
+		if p.Port == *ref.Port {
 			svcPort = &p
 			break
 		}
@@ -918,7 +912,12 @@ func (p *Provider) getBackendAddresses(namespace string, ref gatev1.BackendRef) 
 		return nil, corev1.ServicePort{}, fmt.Errorf("parsing service annotations config: %w", err)
 	}
 
-	if p.NativeLBByDefault || annotationsConfig.Service.NativeLB {
+	nativeLB := p.NativeLBByDefault
+	if annotationsConfig.Service.NativeLB != nil {
+		nativeLB = *annotationsConfig.Service.NativeLB
+	}
+
+	if nativeLB {
 		if service.Spec.ClusterIP == "" || service.Spec.ClusterIP == "None" {
 			return nil, corev1.ServicePort{}, fmt.Errorf("no clusterIP found for service: %s/%s", service.Namespace, service.Name)
 		}
@@ -1228,12 +1227,12 @@ func getCertificateBlocks(secret *corev1.Secret, namespace, secretName string) (
 	return cert, key, nil
 }
 
-func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *safe.Pool, eventsChan <-chan interface{}) chan interface{} {
+func throttleEvents(ctx context.Context, throttleDuration time.Duration, pool *safe.Pool, eventsChan <-chan any) chan any {
 	if throttleDuration == 0 {
 		return nil
 	}
 	// Create a buffered channel to hold the pending event (if we're delaying processing the event due to throttling)
-	eventsChanBuffered := make(chan interface{}, 1)
+	eventsChanBuffered := make(chan any, 1)
 
 	// Run a goroutine that reads events from eventChan and does a non-blocking write to pendingEvent.
 	// This guarantees that writing to eventChan will never block,

@@ -6,10 +6,9 @@ import (
 
 	"github.com/rs/zerolog"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
+	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	oxybuffer "github.com/vulcand/oxy/v2/buffer"
-	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -28,8 +27,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.Buffering, name 
 	logger.Debug().Msgf("Setting up buffering: request limits: %d (mem), %d (max), response limits: %d (mem), %d (max) with retry: '%s'",
 		config.MemRequestBodyBytes, config.MaxRequestBodyBytes, config.MemResponseBodyBytes, config.MaxResponseBodyBytes, config.RetryExpression)
 
-	oxyBuffer, err := oxybuffer.New(
-		next,
+	options := []oxybuffer.Option{
 		oxybuffer.MemRequestBodyBytes(config.MemRequestBodyBytes),
 		oxybuffer.MaxRequestBodyBytes(config.MaxRequestBodyBytes),
 		oxybuffer.MemResponseBodyBytes(config.MemResponseBodyBytes),
@@ -37,6 +35,19 @@ func New(ctx context.Context, next http.Handler, config dynamic.Buffering, name 
 		oxybuffer.Logger(logs.NewOxyWrapper(*logger)),
 		oxybuffer.Verbose(logger.GetLevel() == zerolog.TraceLevel),
 		oxybuffer.Cond(len(config.RetryExpression) > 0, oxybuffer.Retry(config.RetryExpression)),
+	}
+
+	if config.DisableRequestBuffer {
+		options = append(options, oxybuffer.DisableRequestBuffer())
+	}
+
+	if config.DisableResponseBuffer {
+		options = append(options, oxybuffer.DisableResponseBuffer())
+	}
+
+	oxyBuffer, err := oxybuffer.New(
+		next,
+		options...,
 	)
 	if err != nil {
 		return nil, err
@@ -48,8 +59,8 @@ func New(ctx context.Context, next http.Handler, config dynamic.Buffering, name 
 	}, nil
 }
 
-func (b *buffer) GetTracingInformation() (string, string, trace.SpanKind) {
-	return b.name, typeName, trace.SpanKindInternal
+func (b *buffer) GetTracingInformation() (string, string) {
+	return b.name, typeName
 }
 
 func (b *buffer) ServeHTTP(rw http.ResponseWriter, req *http.Request) {

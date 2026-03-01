@@ -72,8 +72,6 @@ When using Docker or Amazon ECS, you can define routing configuration using cont
     When deploying a Docker container, you can specify labels to define routing rules and services:
 
     ```yaml
-    version: '3'
-
     services:
       my-service:
         image: my-image

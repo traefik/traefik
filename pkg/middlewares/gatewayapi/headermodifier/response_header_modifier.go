@@ -6,7 +6,6 @@ import (
 
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
-	"go.opentelemetry.io/otel/trace"
 )
 
 const responseHeaderModifierTypeName = "ResponseHeaderModifier"
@@ -35,8 +34,8 @@ func NewResponseHeaderModifier(ctx context.Context, next http.Handler, config dy
 	}
 }
 
-func (r *responseHeaderModifier) GetTracingInformation() (string, string, trace.SpanKind) {
-	return r.name, responseHeaderModifierTypeName, trace.SpanKindUnspecified
+func (r *responseHeaderModifier) GetTracingInformation() (string, string) {
+	return r.name, responseHeaderModifierTypeName
 }
 
 func (r *responseHeaderModifier) ServeHTTP(rw http.ResponseWriter, req *http.Request) {

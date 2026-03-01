@@ -18,7 +18,7 @@ type pluginMiddleware interface {
 }
 
 type middlewareBuilder interface {
-	newMiddleware(config map[string]interface{}, middlewareName string) (pluginMiddleware, error)
+	newMiddleware(config map[string]any, middlewareName string) (pluginMiddleware, error)
 }
 
 // Builder is a plugin builder.
@@ -28,7 +28,7 @@ type Builder struct {
 }
 
 // NewBuilder creates a new Builder.
-func NewBuilder(client *Client, plugins map[string]Descriptor, localPlugins map[string]LocalDescriptor) (*Builder, error) {
+func NewBuilder(manager *Manager, plugins map[string]Descriptor, localPlugins map[string]LocalDescriptor) (*Builder, error) {
 	ctx := context.Background()
 
 	pb := &Builder{
@@ -37,9 +37,9 @@ func NewBuilder(client *Client, plugins map[string]Descriptor, localPlugins map[
 	}
 
 	for pName, desc := range plugins {
-		manifest, err := client.ReadManifest(desc.ModuleName)
+		manifest, err := manager.ReadManifest(desc.ModuleName)
 		if err != nil {
-			_ = client.ResetAll()
+			_ = manager.ResetAll()
 			return nil, fmt.Errorf("%s: failed to read manifest: %w", desc.ModuleName, err)
 		}
 
@@ -52,7 +52,7 @@ func NewBuilder(client *Client, plugins map[string]Descriptor, localPlugins map[
 
 		switch manifest.Type {
 		case typeMiddleware:
-			middleware, err := newMiddlewareBuilder(logCtx, client.GoPath(), manifest, desc.ModuleName, desc.Settings)
+			middleware, err := newMiddlewareBuilder(logCtx, manager.GoPath(), manifest, desc.ModuleName, desc.Settings)
 			if err != nil {
 				return nil, err
 			}
@@ -60,7 +60,7 @@ func NewBuilder(client *Client, plugins map[string]Descriptor, localPlugins map[
 			pb.middlewareBuilders[pName] = middleware
 
 		case typeProvider:
-			pBuilder, err := newProviderBuilder(logCtx, manifest, client.GoPath(), desc.Settings)
+			pBuilder, err := newProviderBuilder(logCtx, manifest, manager.GoPath(), desc.Settings)
 			if err != nil {
 				return nil, fmt.Errorf("%s: %w", desc.ModuleName, err)
 			}
@@ -110,7 +110,7 @@ func NewBuilder(client *Client, plugins map[string]Descriptor, localPlugins map[
 }
 
 // Build builds a middleware plugin.
-func (b Builder) Build(pName string, config map[string]interface{}, middlewareName string) (Constructor, error) {
+func (b Builder) Build(pName string, config map[string]any, middlewareName string) (Constructor, error) {
 	if b.middlewareBuilders == nil {
 		return nil, fmt.Errorf("no plugin definitions in the static configuration: %s", pName)
 	}

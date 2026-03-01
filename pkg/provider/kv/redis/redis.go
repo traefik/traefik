@@ -21,14 +21,14 @@ type Provider struct {
 	Username string           `description:"Username for authentication." json:"username,omitempty" toml:"username,omitempty" yaml:"username,omitempty" loggable:"false"`
 	Password string           `description:"Password for authentication." json:"password,omitempty" toml:"password,omitempty" yaml:"password,omitempty" loggable:"false"`
 	DB       int              `description:"Database to be selected after connecting to the server." json:"db,omitempty" toml:"db,omitempty" yaml:"db,omitempty"`
-	Sentinel *Sentinel        `description:"Enable Sentinel support." json:"sentinel,omitempty" toml:"sentinel,omitempty" yaml:"sentinel,omitempty"`
+	Sentinel *Sentinel        `description:"Enable Sentinel support." json:"sentinel,omitempty" toml:"sentinel,omitempty" yaml:"sentinel,omitempty" export:"true"`
 }
 
 // Sentinel holds the Redis Sentinel configuration.
 type Sentinel struct {
 	MasterName string `description:"Name of the master." json:"masterName,omitempty" toml:"masterName,omitempty" yaml:"masterName,omitempty" export:"true"`
-	Username   string `description:"Username for Sentinel authentication." json:"username,omitempty" toml:"username,omitempty" yaml:"username,omitempty" export:"true"`
-	Password   string `description:"Password for Sentinel authentication." json:"password,omitempty" toml:"password,omitempty" yaml:"password,omitempty" export:"true"`
+	Username   string `description:"Username for Sentinel authentication." json:"username,omitempty" toml:"username,omitempty" yaml:"username,omitempty" loggable:"false"`
+	Password   string `description:"Password for Sentinel authentication." json:"password,omitempty" toml:"password,omitempty" yaml:"password,omitempty" loggable:"false"`
 
 	LatencyStrategy bool `description:"Defines whether to route commands to the closest master or replica nodes (mutually exclusive with RandomStrategy and ReplicaStrategy)." json:"latencyStrategy,omitempty" toml:"latencyStrategy,omitempty" yaml:"latencyStrategy,omitempty" export:"true"`
 	RandomStrategy  bool `description:"Defines whether to route commands randomly to master or replica nodes (mutually exclusive with LatencyStrategy and ReplicaStrategy)." json:"randomStrategy,omitempty" toml:"randomStrategy,omitempty" yaml:"randomStrategy,omitempty" export:"true"`
@@ -60,10 +60,20 @@ func (p *Provider) Init() error {
 	}
 
 	if p.Sentinel != nil {
-		switch {
-		case p.Sentinel.LatencyStrategy && !(p.Sentinel.RandomStrategy || p.Sentinel.ReplicaStrategy):
-		case p.Sentinel.RandomStrategy && !(p.Sentinel.LatencyStrategy || p.Sentinel.ReplicaStrategy):
-		case p.Sentinel.ReplicaStrategy && !(p.Sentinel.RandomStrategy || p.Sentinel.LatencyStrategy):
+		count := 0
+		if p.Sentinel.LatencyStrategy {
+			count++
+		}
+
+		if p.Sentinel.ReplicaStrategy {
+			count++
+		}
+
+		if p.Sentinel.RandomStrategy {
+			count++
+		}
+
+		if count > 1 {
 			return errors.New("latencyStrategy, randomStrategy and replicaStrategy options are mutually exclusive, please use only one of those options")
 		}
 

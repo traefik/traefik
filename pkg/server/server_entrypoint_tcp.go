@@ -12,6 +12,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -22,20 +23,17 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/static"
 	"github.com/traefik/traefik/v3/pkg/ip"
-	"github.com/traefik/traefik/v3/pkg/logs"
-	"github.com/traefik/traefik/v3/pkg/metrics"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/middlewares/contenttype"
 	"github.com/traefik/traefik/v3/pkg/middlewares/forwardedheaders"
 	"github.com/traefik/traefik/v3/pkg/middlewares/requestdecorator"
+	"github.com/traefik/traefik/v3/pkg/observability/logs"
+	"github.com/traefik/traefik/v3/pkg/observability/metrics"
 	"github.com/traefik/traefik/v3/pkg/safe"
-	"github.com/traefik/traefik/v3/pkg/server/router"
 	tcprouter "github.com/traefik/traefik/v3/pkg/server/router/tcp"
 	"github.com/traefik/traefik/v3/pkg/server/service"
 	"github.com/traefik/traefik/v3/pkg/tcp"
 	"github.com/traefik/traefik/v3/pkg/types"
-	"golang.org/x/net/http2"
-	"golang.org/x/net/http2/h2c"
 )
 
 type key string
@@ -59,15 +57,19 @@ type connState struct {
 
 type httpForwarder struct {
 	net.Listener
-	connChan chan net.Conn
-	errChan  chan error
+
+	connChan  chan net.Conn
+	errChan   chan error
+	closeChan chan struct{}
+	closeOnce sync.Once
 }
 
 func newHTTPForwarder(ln net.Listener) *httpForwarder {
 	return &httpForwarder{
-		Listener: ln,
-		connChan: make(chan net.Conn),
-		errChan:  make(chan error),
+		Listener:  ln,
+		connChan:  make(chan net.Conn),
+		errChan:   make(chan error),
+		closeChan: make(chan struct{}),
 	}
 }
 
@@ -79,11 +81,21 @@ func (h *httpForwarder) ServeTCP(conn tcp.WriteCloser) {
 // Accept retrieves a served connection in ServeTCP.
 func (h *httpForwarder) Accept() (net.Conn, error) {
 	select {
+	case <-h.closeChan:
+		return nil, errors.New("listener closed")
 	case conn := <-h.connChan:
 		return conn, nil
 	case err := <-h.errChan:
 		return nil, err
 	}
+}
+
+// Close closes the wrapped listener and unblocks Accept.
+func (h *httpForwarder) Close() error {
+	h.closeOnce.Do(func() {
+		close(h.closeChan)
+	})
+	return h.Listener.Close()
 }
 
 // TCPEntryPoints holds a map of TCPEntryPoint (the entrypoint names being the keys).
@@ -135,16 +147,12 @@ func (eps TCPEntryPoints) Stop() {
 	var wg sync.WaitGroup
 
 	for epn, ep := range eps {
-		wg.Add(1)
-
-		go func(entryPointName string, entryPoint *TCPEntryPoint) {
-			defer wg.Done()
-
-			logger := log.With().Str(logs.EntryPointName, entryPointName).Logger()
-			entryPoint.Shutdown(logger.WithContext(context.Background()))
+		wg.Go(func() {
+			logger := log.With().Str(logs.EntryPointName, epn).Logger()
+			ep.Shutdown(logger.WithContext(context.Background()))
 
 			logger.Debug().Msg("Entrypoint closed")
-		}(epn, ep)
+		})
 	}
 
 	wg.Wait()
@@ -165,8 +173,9 @@ type TCPEntryPoint struct {
 	tracker                *connectionTracker
 	httpServer             *httpServer
 	httpsServer            *httpServer
-
-	http3Server *http3server
+	http3Server            *http3server
+	// inShutdown reports whether the Shutdown method has been called.
+	inShutdown atomic.Bool
 }
 
 // NewTCPEntryPoint creates a new TCPEntryPoint.
@@ -175,31 +184,31 @@ func NewTCPEntryPoint(ctx context.Context, name string, config *static.EntryPoin
 
 	listener, err := buildListener(ctx, name, config)
 	if err != nil {
-		return nil, fmt.Errorf("error preparing server: %w", err)
+		return nil, fmt.Errorf("building listener: %w", err)
 	}
 
 	rt, err := tcprouter.NewRouter()
 	if err != nil {
-		return nil, fmt.Errorf("error preparing tcp router: %w", err)
+		return nil, fmt.Errorf("creating TCP router: %w", err)
 	}
 
 	reqDecorator := requestdecorator.New(hostResolverConfig)
 
-	httpServer, err := createHTTPServer(ctx, listener, config, true, reqDecorator)
+	httpServer, err := newHTTPServer(ctx, listener, config, true, reqDecorator)
 	if err != nil {
-		return nil, fmt.Errorf("error preparing http server: %w", err)
+		return nil, fmt.Errorf("creating HTTP server: %w", err)
 	}
 
 	rt.SetHTTPForwarder(httpServer.Forwarder)
 
-	httpsServer, err := createHTTPServer(ctx, listener, config, false, reqDecorator)
+	httpsServer, err := newHTTPServer(ctx, listener, config, false, reqDecorator)
 	if err != nil {
-		return nil, fmt.Errorf("error preparing https server: %w", err)
+		return nil, fmt.Errorf("creating HTTPS server: %w", err)
 	}
 
 	h3Server, err := newHTTP3Server(ctx, name, config, httpsServer)
 	if err != nil {
-		return nil, fmt.Errorf("error preparing http3 server: %w", err)
+		return nil, fmt.Errorf("creating HTTP3 server: %w", err)
 	}
 
 	rt.SetHTTPSForwarder(httpsServer.Forwarder)
@@ -229,6 +238,11 @@ func (e *TCPEntryPoint) Start(ctx context.Context) {
 
 	for {
 		conn, err := e.listener.Accept()
+		// As the Shutdown method has been called, an error is expected.
+		// Thus, it is not necessary to log it.
+		if err != nil && e.inShutdown.Load() {
+			return
+		}
 		if err != nil {
 			logger.Error().Err(err).Send()
 
@@ -280,6 +294,8 @@ func (e *TCPEntryPoint) Start(ctx context.Context) {
 func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
 	logger := log.Ctx(ctx)
 
+	e.inShutdown.Store(true)
+
 	reqAcceptGraceTimeOut := time.Duration(e.transportConfiguration.LifeCycle.RequestAcceptGraceTimeout)
 	if reqAcceptGraceTimeOut > 0 {
 		logger.Info().Msgf("Waiting %s for incoming requests to cease", reqAcceptGraceTimeOut)
@@ -293,7 +309,6 @@ func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
 	var wg sync.WaitGroup
 
 	shutdownServer := func(server stoppable) {
-		defer wg.Done()
 		err := server.Shutdown(ctx)
 		if err == nil {
 			return
@@ -314,24 +329,19 @@ func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
 	}
 
 	if e.httpServer.Server != nil {
-		wg.Add(1)
-		go shutdownServer(e.httpServer.Server)
+		wg.Go(func() { shutdownServer(e.httpServer.Server) })
 	}
 
 	if e.httpsServer.Server != nil {
-		wg.Add(1)
-		go shutdownServer(e.httpsServer.Server)
+		wg.Go(func() { shutdownServer(e.httpsServer.Server) })
 
 		if e.http3Server != nil {
-			wg.Add(1)
-			go shutdownServer(e.http3Server)
+			wg.Go(func() { shutdownServer(e.http3Server) })
 		}
 	}
 
 	if e.tracker != nil {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			err := e.tracker.Shutdown(ctx)
 			if err == nil {
 				return
@@ -340,7 +350,7 @@ func (e *TCPEntryPoint) Shutdown(ctx context.Context) {
 				logger.Debug().Err(err).Msg("Server failed to shutdown before deadline")
 			}
 			e.tracker.Close()
-		}()
+		})
 	}
 
 	wg.Wait()
@@ -353,7 +363,7 @@ func (e *TCPEntryPoint) SwitchRouter(rt *tcprouter.Router) {
 
 	httpHandler := rt.GetHTTPHandler()
 	if httpHandler == nil {
-		httpHandler = router.BuildDefaultHTTPRouter()
+		httpHandler = http.NotFoundHandler()
 	}
 
 	e.httpServer.Switcher.UpdateHandler(httpHandler)
@@ -362,7 +372,7 @@ func (e *TCPEntryPoint) SwitchRouter(rt *tcprouter.Router) {
 
 	httpsHandler := rt.GetHTTPSHandler()
 	if httpsHandler == nil {
-		httpsHandler = router.BuildDefaultHTTPRouter()
+		httpsHandler = http.NotFoundHandler()
 	}
 
 	e.httpsServer.Switcher.UpdateHandler(httpsHandler)
@@ -378,6 +388,7 @@ func (e *TCPEntryPoint) SwitchRouter(rt *tcprouter.Router) {
 // connection type that was found to satisfy WriteCloser.
 type writeCloserWrapper struct {
 	net.Conn
+
 	writeCloser tcp.WriteCloser
 }
 
@@ -464,6 +475,18 @@ func buildProxyProtocolListener(ctx context.Context, entryPoint *static.EntryPoi
 	return proxyListener, nil
 }
 
+type onceCloseListener struct {
+	net.Listener
+
+	once     sync.Once
+	closeErr error
+}
+
+func (oc *onceCloseListener) Close() error {
+	oc.once.Do(func() { oc.closeErr = oc.Listener.Close() })
+	return oc.closeErr
+}
+
 func buildListener(ctx context.Context, name string, config *static.EntryPoint) (net.Listener, error) {
 	var listener net.Listener
 	var err error
@@ -478,6 +501,13 @@ func buildListener(ctx context.Context, name string, config *static.EntryPoint) 
 
 	if listener == nil {
 		listenConfig := newListenConfig(config)
+
+		// TODO: Look into configuring keepAlive period through listenConfig instead of our custom tcpKeepAliveListener, to reactivate MultipathTCP?
+		// MultipathTCP is not supported on all platforms, and is notably unsupported in combination with TCP keep-alive.
+		if !strings.Contains(os.Getenv("GODEBUG"), "multipathtcp") {
+			listenConfig.SetMultipathTCP(false)
+		}
+
 		listener, err = listenConfig.Listen(ctx, "tcp", config.GetAddress())
 		if err != nil {
 			return nil, fmt.Errorf("error opening listener: %w", err)
@@ -492,7 +522,7 @@ func buildListener(ctx context.Context, name string, config *static.EntryPoint) 
 			return nil, fmt.Errorf("error creating proxy protocol listener: %w", err)
 		}
 	}
-	return listener, nil
+	return &onceCloseListener{Listener: listener}, nil
 }
 
 func newConnectionTracker(openConnectionsGauge gokitmetrics.Gauge) *connectionTracker {
@@ -527,23 +557,6 @@ func (c *connectionTracker) RemoveConnection(conn net.Conn) {
 	c.connsMu.Unlock()
 }
 
-// syncOpenConnectionGauge updates openConnectionsGauge value with the conns map length.
-func (c *connectionTracker) syncOpenConnectionGauge() {
-	if c.openConnectionsGauge == nil {
-		return
-	}
-
-	c.connsMu.RLock()
-	c.openConnectionsGauge.Set(float64(len(c.conns)))
-	c.connsMu.RUnlock()
-}
-
-func (c *connectionTracker) isEmpty() bool {
-	c.connsMu.RLock()
-	defer c.connsMu.RUnlock()
-	return len(c.conns) == 0
-}
-
 // Shutdown wait for the connection closing.
 func (c *connectionTracker) Shutdown(ctx context.Context) error {
 	ticker := time.NewTicker(500 * time.Millisecond)
@@ -572,6 +585,23 @@ func (c *connectionTracker) Close() {
 	}
 }
 
+// syncOpenConnectionGauge updates openConnectionsGauge value with the conns map length.
+func (c *connectionTracker) syncOpenConnectionGauge() {
+	if c.openConnectionsGauge == nil {
+		return
+	}
+
+	c.connsMu.RLock()
+	c.openConnectionsGauge.Set(float64(len(c.conns)))
+	c.connsMu.RUnlock()
+}
+
+func (c *connectionTracker) isEmpty() bool {
+	c.connsMu.RLock()
+	defer c.connsMu.RUnlock()
+	return len(c.conns) == 0
+}
+
 type stoppable interface {
 	Shutdown(ctx context.Context) error
 	Close() error
@@ -588,12 +618,18 @@ type httpServer struct {
 	Switcher  *middlewares.HTTPHandlerSwitcher
 }
 
-func createHTTPServer(ctx context.Context, ln net.Listener, configuration *static.EntryPoint, withH2c bool, reqDecorator *requestdecorator.RequestDecorator) (*httpServer, error) {
+func newHTTPServer(ctx context.Context, ln net.Listener, configuration *static.EntryPoint, withH2c bool, reqDecorator *requestdecorator.RequestDecorator) (*httpServer, error) {
 	if configuration.HTTP2.MaxConcurrentStreams < 0 {
 		return nil, errors.New("max concurrent streams value must be greater than or equal to zero")
 	}
+	if configuration.HTTP2.MaxDecoderHeaderTableSize < 0 {
+		return nil, errors.New("max decoder header table size value must be greater than or equal to zero")
+	}
+	if configuration.HTTP2.MaxEncoderHeaderTableSize < 0 {
+		return nil, errors.New("max encoder header table size value must be greater than or equal to zero")
+	}
 
-	httpSwitcher := middlewares.NewHandlerSwitcher(router.BuildDefaultHTTPRouter())
+	httpSwitcher := middlewares.NewHandlerSwitcher(http.NotFoundHandler())
 
 	next, err := alice.New(requestdecorator.WrapHandler(reqDecorator)).Then(httpSwitcher)
 	if err != nil {
@@ -605,16 +641,25 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 		configuration.ForwardedHeaders.Insecure,
 		configuration.ForwardedHeaders.TrustedIPs,
 		configuration.ForwardedHeaders.Connection,
+		configuration.ForwardedHeaders.NotAppendXForwardedFor,
 		next)
 	if err != nil {
 		return nil, err
 	}
 
-	if configuration.HTTP.SanitizePath != nil && *configuration.HTTP.SanitizePath {
-		// sanitizePath is used to clean the URL path by removing /../, /./ and duplicate slash sequences,
-		// to make sure the path is interpreted by the backends as it is evaluated inside rule matchers.
-		handler = sanitizePath(handler)
+	debugConnection := os.Getenv(debugConnectionEnv) != ""
+	if debugConnection || (configuration.Transport != nil && (configuration.Transport.KeepAliveMaxTime > 0 || configuration.Transport.KeepAliveMaxRequests > 0)) {
+		handler = newKeepAliveMiddleware(handler, configuration.Transport.KeepAliveMaxRequests, configuration.Transport.KeepAliveMaxTime)
 	}
+
+	var protocols http.Protocols
+	protocols.SetHTTP1(true)
+	protocols.SetHTTP2(true)
+
+	// With the addition of UnencryptedHTTP2 in http.Server#Protocols in go1.24 setting the h2c handler is not necessary anymore.
+	protocols.SetUnencryptedHTTP2(withH2c)
+
+	handler = contenttype.DisableAutoDetection(handler)
 
 	if configuration.HTTP.EncodeQuerySemicolons {
 		handler = encodeQuerySemicolons(handler)
@@ -622,28 +667,29 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 		handler = http.AllowQuerySemicolons(handler)
 	}
 
-	handler = contenttype.DisableAutoDetection(handler)
-
-	debugConnection := os.Getenv(debugConnectionEnv) != ""
-	if debugConnection || (configuration.Transport != nil && (configuration.Transport.KeepAliveMaxTime > 0 || configuration.Transport.KeepAliveMaxRequests > 0)) {
-		handler = newKeepAliveMiddleware(handler, configuration.Transport.KeepAliveMaxRequests, configuration.Transport.KeepAliveMaxTime)
+	// Note that the Path sanitization has to be done after the path normalization,
+	// hence the wrapping has to be done before the normalize path wrapping.
+	if configuration.HTTP.SanitizePath != nil && *configuration.HTTP.SanitizePath {
+		handler = sanitizePath(handler)
 	}
 
-	if withH2c {
-		handler = h2c.NewHandler(handler, &http2.Server{
-			MaxConcurrentStreams: uint32(configuration.HTTP2.MaxConcurrentStreams),
-		})
-	}
+	handler = normalizePath(handler)
 
 	handler = denyFragment(handler)
 
 	serverHTTP := &http.Server{
+		Protocols:      &protocols,
 		Handler:        handler,
 		ErrorLog:       stdlog.New(logs.NoLevel(log.Logger, zerolog.DebugLevel), "", 0),
 		ReadTimeout:    time.Duration(configuration.Transport.RespondingTimeouts.ReadTimeout),
 		WriteTimeout:   time.Duration(configuration.Transport.RespondingTimeouts.WriteTimeout),
 		IdleTimeout:    time.Duration(configuration.Transport.RespondingTimeouts.IdleTimeout),
 		MaxHeaderBytes: configuration.HTTP.MaxHeaderBytes,
+		HTTP2: &http.HTTP2Config{
+			MaxConcurrentStreams:      int(configuration.HTTP2.MaxConcurrentStreams),
+			MaxDecoderHeaderTableSize: int(configuration.HTTP2.MaxDecoderHeaderTableSize),
+			MaxEncoderHeaderTableSize: int(configuration.HTTP2.MaxEncoderHeaderTableSize),
+		},
 	}
 	if debugConnection || (configuration.Transport != nil && (configuration.Transport.KeepAliveMaxTime > 0 || configuration.Transport.KeepAliveMaxRequests > 0)) {
 		serverHTTP.ConnContext = func(ctx context.Context, c net.Conn) context.Context {
@@ -677,24 +723,11 @@ func createHTTPServer(ctx context.Context, ln net.Listener, configuration *stati
 		return ctx
 	}
 
-	// ConfigureServer configures HTTP/2 with the MaxConcurrentStreams option for the given server.
-	// Also keeping behavior the same as
-	// https://cs.opensource.google/go/go/+/refs/tags/go1.17.7:src/net/http/server.go;l=3262
-	if !strings.Contains(os.Getenv("GODEBUG"), "http2server=0") {
-		err = http2.ConfigureServer(serverHTTP, &http2.Server{
-			MaxConcurrentStreams: uint32(configuration.HTTP2.MaxConcurrentStreams),
-			NewWriteScheduler:    func() http2.WriteScheduler { return http2.NewPriorityWriteScheduler(nil) },
-		})
-		if err != nil {
-			return nil, fmt.Errorf("configure HTTP/2 server: %w", err)
-		}
-	}
-
 	listener := newHTTPForwarder(ln)
 	go func() {
 		err := serverHTTP.Serve(listener)
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Ctx(ctx).Error().Err(err).Msg("Error while starting server")
+			log.Ctx(ctx).Error().Err(err).Msg("Error while running HTTP server")
 		}
 	}()
 	return &httpServer{
@@ -717,13 +750,32 @@ func newTrackedConnection(conn tcp.WriteCloser, tracker *connectionTracker) *tra
 }
 
 type trackedConnection struct {
-	tracker *connectionTracker
 	tcp.WriteCloser
+
+	tracker *connectionTracker
 }
 
 func (t *trackedConnection) Close() error {
 	t.tracker.RemoveConnection(t.WriteCloser)
 	return t.WriteCloser.Close()
+}
+
+// denyFragment rejects the request if the URL path contains a fragment (hash character).
+// When go receives an HTTP request, it assumes the absence of fragment URL.
+// However, it is still possible to send a fragment in the request.
+// In this case, Traefik will encode the '#' character, altering the request's intended meaning.
+// To avoid this behavior, the following function rejects requests that include a fragment in the URL.
+func denyFragment(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		if strings.Contains(req.URL.RawPath, "#") {
+			log.Debug().Msgf("Rejecting request because it contains a fragment in the URL path: %s", req.URL.RawPath)
+			rw.WriteHeader(http.StatusBadRequest)
+
+			return
+		}
+
+		h.ServeHTTP(rw, req)
+	})
 }
 
 // This function is inspired by http.AllowQuerySemicolons.
@@ -746,24 +798,7 @@ func encodeQuerySemicolons(h http.Handler) http.Handler {
 	})
 }
 
-// When go receives an HTTP request, it assumes the absence of fragment URL.
-// However, it is still possible to send a fragment in the request.
-// In this case, Traefik will encode the '#' character, altering the request's intended meaning.
-// To avoid this behavior, the following function rejects requests that include a fragment in the URL.
-func denyFragment(h http.Handler) http.Handler {
-	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		if strings.Contains(req.URL.RawPath, "#") {
-			log.Debug().Msgf("Rejecting request because it contains a fragment in the URL path: %s", req.URL.RawPath)
-			rw.WriteHeader(http.StatusBadRequest)
-
-			return
-		}
-
-		h.ServeHTTP(rw, req)
-	})
-}
-
-// sanitizePath removes the "..", "." and duplicate slash segments from the URL.
+// sanitizePath removes the "..", "." and duplicate slash segments from the URL according to https://datatracker.ietf.org/doc/html/rfc3986#section-6.2.2.3.
 // It cleans the request URL Path and RawPath, and updates the request URI.
 func sanitizePath(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -774,6 +809,88 @@ func sanitizePath(h http.Handler) http.Handler {
 		r2.URL = r2.URL.JoinPath()
 
 		// Because the reverse proxy director is building query params from requestURI it needs to be updated as well.
+		r2.RequestURI = r2.URL.RequestURI()
+
+		h.ServeHTTP(rw, r2)
+	})
+}
+
+// unreservedCharacters contains the mapping of the percent-encoded form to the ASCII form
+// of the unreserved characters according to https://datatracker.ietf.org/doc/html/rfc3986#section-2.3.
+var unreservedCharacters = map[string]rune{
+	"%41": 'A', "%42": 'B', "%43": 'C', "%44": 'D', "%45": 'E', "%46": 'F',
+	"%47": 'G', "%48": 'H', "%49": 'I', "%4A": 'J', "%4B": 'K', "%4C": 'L',
+	"%4D": 'M', "%4E": 'N', "%4F": 'O', "%50": 'P', "%51": 'Q', "%52": 'R',
+	"%53": 'S', "%54": 'T', "%55": 'U', "%56": 'V', "%57": 'W', "%58": 'X',
+	"%59": 'Y', "%5A": 'Z',
+
+	"%61": 'a', "%62": 'b', "%63": 'c', "%64": 'd', "%65": 'e', "%66": 'f',
+	"%67": 'g', "%68": 'h', "%69": 'i', "%6A": 'j', "%6B": 'k', "%6C": 'l',
+	"%6D": 'm', "%6E": 'n', "%6F": 'o', "%70": 'p', "%71": 'q', "%72": 'r',
+	"%73": 's', "%74": 't', "%75": 'u', "%76": 'v', "%77": 'w', "%78": 'x',
+	"%79": 'y', "%7A": 'z',
+
+	"%30": '0', "%31": '1', "%32": '2', "%33": '3', "%34": '4',
+	"%35": '5', "%36": '6', "%37": '7', "%38": '8', "%39": '9',
+
+	"%2D": '-', "%2E": '.', "%5F": '_', "%7E": '~',
+}
+
+// normalizePath removes from the RawPath unreserved percent-encoded characters as they are equivalent to their non-encoded
+// form according to https://datatracker.ietf.org/doc/html/rfc3986#section-2.3 and capitalizes percent-encoded characters
+// according to https://datatracker.ietf.org/doc/html/rfc3986#section-6.2.2.1.
+func normalizePath(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rawPath := req.URL.RawPath
+
+		// When the RawPath is empty the encoded form of the Path is equivalent to the original request Path.
+		// Thus, the normalization is not needed as no unreserved characters were encoded and the encoded version
+		// of Path obtained with URL.EscapedPath contains only percent-encoded characters in upper case.
+		if rawPath == "" {
+			h.ServeHTTP(rw, req)
+			return
+		}
+
+		var normalizedRawPathBuilder strings.Builder
+		for i := 0; i < len(rawPath); i++ {
+			if rawPath[i] != '%' {
+				normalizedRawPathBuilder.WriteString(string(rawPath[i]))
+				continue
+			}
+
+			// This should never happen as the standard library will reject requests containing invalid percent-encodings.
+			// This discards URLs with a percent character at the end.
+			if i+2 >= len(rawPath) {
+				rw.WriteHeader(http.StatusBadRequest)
+				return
+			}
+
+			encodedCharacter := strings.ToUpper(rawPath[i : i+3])
+			if r, unreserved := unreservedCharacters[encodedCharacter]; unreserved {
+				normalizedRawPathBuilder.WriteRune(r)
+			} else {
+				normalizedRawPathBuilder.WriteString(encodedCharacter)
+			}
+
+			i += 2
+		}
+
+		normalizedRawPath := normalizedRawPathBuilder.String()
+
+		// We do not have to alter the request URL as the original RawPath is already normalized.
+		if normalizedRawPath == rawPath {
+			h.ServeHTTP(rw, req)
+			return
+		}
+
+		r2 := new(http.Request)
+		*r2 = *req
+
+		// Decoding unreserved characters only alter the RAW version of the URL,
+		// as unreserved percent-encoded characters are equivalent to their non encoded form.
+		r2.URL.RawPath = normalizedRawPath
+
+		// Because the reverse proxy director is building query params from RequestURI it needs to be updated as well.
 		r2.RequestURI = r2.URL.RequestURI()
 
 		h.ServeHTTP(rw, r2)

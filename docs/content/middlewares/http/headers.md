@@ -8,8 +8,6 @@ description: "In Traefik Proxy, the HTTP headers middleware manages the headers 
 Managing Request/Response headers
 {: .subtitle }
 
-![Headers](../../assets/img/middleware/headers.png)
-
 The Headers middleware manages the headers of requests and responses.
 
 A set of forwarded headers are automatically added by default. See the [FAQ](../../getting-started/faq.md#what-are-the-forwarded-headers-when-proxying-http-requests) for more information.
@@ -424,4 +422,4 @@ Set `isDevelopment` to `true` when developing to mitigate the unwanted effects o
 Usually testing takes place using HTTP, not HTTPS, and on `localhost`, not your production domain.
 If you would like your development environment to mimic production with complete Host blocking, SSL redirects, and STS headers, leave this as `false`.
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

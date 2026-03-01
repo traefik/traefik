@@ -11,10 +11,10 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/runtime"
-	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/middlewares/snicheck"
 	httpmuxer "github.com/traefik/traefik/v3/pkg/muxer/http"
 	tcpmuxer "github.com/traefik/traefik/v3/pkg/muxer/tcp"
+	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	"github.com/traefik/traefik/v3/pkg/server/provider"
 	tcpservice "github.com/traefik/traefik/v3/pkg/server/service/tcp"
 	"github.com/traefik/traefik/v3/pkg/tcp"
@@ -25,6 +25,16 @@ const maxUserPriority = math.MaxInt - 1000
 
 type middlewareBuilder interface {
 	BuildChain(ctx context.Context, names []string) *tcp.Chain
+}
+
+// Manager is a route/router manager.
+type Manager struct {
+	serviceManager     *tcpservice.Manager
+	middlewaresBuilder middlewareBuilder
+	httpHandlers       map[string]http.Handler
+	httpsHandlers      map[string]http.Handler
+	tlsManager         *traefiktls.Manager
+	conf               *runtime.Configuration
 }
 
 // NewManager Creates a new Manager.
@@ -43,32 +53,6 @@ func NewManager(conf *runtime.Configuration,
 		tlsManager:         tlsManager,
 		conf:               conf,
 	}
-}
-
-// Manager is a route/router manager.
-type Manager struct {
-	serviceManager     *tcpservice.Manager
-	middlewaresBuilder middlewareBuilder
-	httpHandlers       map[string]http.Handler
-	httpsHandlers      map[string]http.Handler
-	tlsManager         *traefiktls.Manager
-	conf               *runtime.Configuration
-}
-
-func (m *Manager) getTCPRouters(ctx context.Context, entryPoints []string) map[string]map[string]*runtime.TCPRouterInfo {
-	if m.conf != nil {
-		return m.conf.GetTCPRoutersByEntryPoints(ctx, entryPoints)
-	}
-
-	return make(map[string]map[string]*runtime.TCPRouterInfo)
-}
-
-func (m *Manager) getHTTPRouters(ctx context.Context, entryPoints []string, tls bool) map[string]map[string]*runtime.RouterInfo {
-	if m.conf != nil {
-		return m.conf.GetRoutersByEntryPoints(ctx, entryPoints, tls)
-	}
-
-	return make(map[string]map[string]*runtime.RouterInfo)
 }
 
 // BuildHandlers builds the handlers for the given entrypoints.
@@ -91,6 +75,22 @@ func (m *Manager) BuildHandlers(rootCtx context.Context, entryPoints []string) m
 		entryPointHandlers[entryPointName] = handler
 	}
 	return entryPointHandlers
+}
+
+func (m *Manager) getTCPRouters(ctx context.Context, entryPoints []string) map[string]map[string]*runtime.TCPRouterInfo {
+	if m.conf != nil {
+		return m.conf.GetTCPRoutersByEntryPoints(ctx, entryPoints)
+	}
+
+	return make(map[string]map[string]*runtime.TCPRouterInfo)
+}
+
+func (m *Manager) getHTTPRouters(ctx context.Context, entryPoints []string, tls bool) map[string]map[string]*runtime.RouterInfo {
+	if m.conf != nil {
+		return m.conf.GetRoutersByEntryPoints(ctx, entryPoints, tls)
+	}
+
+	return make(map[string]map[string]*runtime.RouterInfo)
 }
 
 type nameAndConfig struct {

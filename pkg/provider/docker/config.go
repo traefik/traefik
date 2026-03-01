@@ -7,19 +7,20 @@ import (
 	"net"
 	"strings"
 
-	dockertypes "github.com/docker/docker/api/types"
+	containertypes "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/label"
-	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	"github.com/traefik/traefik/v3/pkg/provider"
 	"github.com/traefik/traefik/v3/pkg/provider/constraints"
 )
 
 type DynConfBuilder struct {
 	Shared
+
 	apiClient client.APIClient
 	swarm     bool
 }
@@ -100,7 +101,7 @@ func (p *DynConfBuilder) build(ctx context.Context, containersInspected []docker
 		configurations[containerName] = confFromLabel
 	}
 
-	return provider.Merge(ctx, configurations)
+	return provider.Merge(ctx, provider.NameSortedConfigurations(configurations), provider.ResourceStrategyMerge)
 }
 
 func (p *DynConfBuilder) buildTCPServiceConfiguration(ctx context.Context, container dockerData, configuration *dynamic.TCPConfiguration) error {
@@ -114,7 +115,12 @@ func (p *DynConfBuilder) buildTCPServiceConfiguration(ctx context.Context, conta
 		}
 	}
 
-	if container.Health != "" && container.Health != dockertypes.Healthy {
+	// Keep an empty server load-balancer for non-running containers.
+	if container.Status != "" && container.Status != containertypes.StateRunning {
+		return nil
+	}
+	// Keep an empty server load-balancer for unhealthy containers.
+	if container.Health != "" && container.Health != containertypes.Healthy {
 		return nil
 	}
 
@@ -138,7 +144,12 @@ func (p *DynConfBuilder) buildUDPServiceConfiguration(ctx context.Context, conta
 		}
 	}
 
-	if container.Health != "" && container.Health != dockertypes.Healthy {
+	// Keep an empty server load-balancer for non-running containers.
+	if container.Status != "" && container.Status != containertypes.StateRunning {
+		return nil
+	}
+	// Keep an empty server load-balancer for unhealthy containers.
+	if container.Health != "" && container.Health != containertypes.Healthy {
 		return nil
 	}
 
@@ -164,7 +175,12 @@ func (p *DynConfBuilder) buildServiceConfiguration(ctx context.Context, containe
 		}
 	}
 
-	if container.Health != "" && container.Health != dockertypes.Healthy {
+	// Keep an empty server load-balancer for non-running containers.
+	if container.Status != "" && container.Status != containertypes.StateRunning {
+		return nil
+	}
+	// Keep an empty server load-balancer for unhealthy containers.
+	if container.Health != "" && container.Health != containertypes.Healthy {
 		return nil
 	}
 
@@ -196,7 +212,20 @@ func (p *DynConfBuilder) keepContainer(ctx context.Context, container dockerData
 		return false
 	}
 
-	if !p.AllowEmptyServices && container.Health != "" && container.Health != dockertypes.Healthy {
+	// AllowNonRunning has precedence over AllowEmptyServices.
+	// If AllowNonRunning is true, we don't care about the container health/status,
+	// and we need to quit before checking it.
+	// Only configurable with the Docker provider.
+	if container.ExtraConf.AllowNonRunning {
+		return true
+	}
+
+	if container.Status != "" && container.Status != containertypes.StateRunning {
+		logger.Debug().Msg("Filtering non running container")
+		return false
+	}
+
+	if !p.AllowEmptyServices && container.Health != "" && container.Health != containertypes.Healthy {
 		logger.Debug().Msg("Filtering unhealthy or starting container")
 		return false
 	}
@@ -340,13 +369,12 @@ func (p *DynConfBuilder) getIPAddress(ctx context.Context, container dockerData)
 			}
 
 			netNotFound = true
-			logger.Warn().Msgf("Could not find network named %q for container %q. Maybe you're missing the project's prefix in the label?", container.ExtraConf.Network, container.Name)
 		}
 	}
 
 	if container.NetworkSettings.NetworkMode.IsHost() {
-		if container.Node != nil && container.Node.IPAddress != "" {
-			return container.Node.IPAddress
+		if container.NodeIP != "" {
+			return container.NodeIP
 		}
 		if host, err := net.LookupHost("host.docker.internal"); err == nil {
 			return host[0]
@@ -382,6 +410,9 @@ func (p *DynConfBuilder) getIPAddress(ctx context.Context, container dockerData)
 		return p.getIPAddress(ctx, containerParsed)
 	}
 
+	if netNotFound {
+		logger.Warn().Msgf("Could not find network named %q for container %q. Maybe you're missing the project's prefix in the label?", container.ExtraConf.Network, container.Name)
+	}
 	for _, network := range container.NetworkSettings.Networks {
 		if netNotFound {
 			logger.Warn().Msgf("Defaulting to first available network (%q) for container %q.", network, container.Name)

@@ -27,8 +27,9 @@ http:
               - foobar
       observability:
         accessLogs: true
-        tracing: true
         metrics: true
+        tracing: true
+        traceVerbosity: foobar
     Router1:
       entryPoints:
         - foobar
@@ -54,8 +55,9 @@ http:
               - foobar
       observability:
         accessLogs: true
-        tracing: true
         metrics: true
+        tracing: true
+        traceVerbosity: foobar
   services:
     Service01:
       failover:
@@ -63,6 +65,14 @@ http:
         fallback: foobar
         healthCheck: {}
     Service02:
+      highestRandomWeight:
+        services:
+          - name: foobar
+            weight: 42
+          - name: foobar
+            weight: 42
+        healthCheck: {}
+    Service03:
       loadBalancer:
         sticky:
           cookie:
@@ -96,11 +106,14 @@ http:
           headers:
             name0: foobar
             name1: foobar
+        passiveHealthCheck:
+          failureWindow: 42s
+          maxFailedAttempts: 42
         passHostHeader: true
         responseForwarding:
           flushInterval: 42s
         serversTransport: foobar
-    Service03:
+    Service04:
       mirroring:
         service: foobar
         mirrorBody: true
@@ -111,7 +124,7 @@ http:
           - name: foobar
             percent: 42
         healthCheck: {}
-    Service04:
+    Service05:
       weighted:
         services:
           - name: foobar
@@ -218,6 +231,7 @@ http:
         headerField: foobar
         forwardBody: true
         maxBodySize: 42
+        maxResponseBodySize: 42
         preserveLocationHeader: true
         preserveRequestMethod: true
     Middleware11:
@@ -424,6 +438,11 @@ http:
           keyFile: foobar
         - certFile: foobar
           keyFile: foobar
+      cipherSuites:
+        - foobar
+        - foobar
+      minVersion: foobar
+      maxVersion: foobar
       maxIdleConnsPerHost: 42
       forwardingTimeouts:
         dialTimeout: 42s
@@ -449,6 +468,11 @@ http:
           keyFile: foobar
         - certFile: foobar
           keyFile: foobar
+      cipherSuites:
+        - foobar
+        - foobar
+      minVersion: foobar
+      maxVersion: foobar
       maxIdleConnsPerHost: 42
       forwardingTimeouts:
         dialTimeout: 42s
@@ -516,14 +540,14 @@ tcp:
   services:
     TCPService01:
       loadBalancer:
-        proxyProtocol:
-          version: 42
         servers:
           - address: foobar
             tls: true
           - address: foobar
             tls: true
         serversTransport: foobar
+        proxyProtocol:
+          version: 42
         terminationDelay: 42
     TCPService02:
       weighted:
@@ -550,6 +574,8 @@ tcp:
     TCPServersTransport0:
       dialKeepAlive: 42s
       dialTimeout: 42s
+      proxyProtocol:
+        version: 42
       terminationDelay: 42s
       tls:
         serverName: foobar
@@ -571,6 +597,8 @@ tcp:
     TCPServersTransport1:
       dialKeepAlive: 42s
       dialTimeout: 42s
+      proxyProtocol:
+        version: 42
       terminationDelay: 42s
       tls:
         serverName: foobar

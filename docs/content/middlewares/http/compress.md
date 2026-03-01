@@ -8,8 +8,6 @@ description: "Traefik Proxy's HTTP middleware lets you compress responses before
 Compress Allows Compressing Responses before Sending them to the Client
 {: .subtitle }
 
-![Compress](../../assets/img/middleware/compress.png)
-
 The Compress middleware supports Gzip, Brotli and Zstandard compression.
 The activation of compression, and the compression method choice rely (among other things) on the request's `Accept-Encoding` header.
 

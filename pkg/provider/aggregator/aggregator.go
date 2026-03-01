@@ -2,6 +2,7 @@ package aggregator
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -92,8 +93,16 @@ func NewProviderAggregator(conf static.Providers) *ProviderAggregator {
 		p.quietAddProvider(conf.KubernetesIngress)
 	}
 
+	if conf.KubernetesIngressNGINX != nil {
+		p.quietAddProvider(conf.KubernetesIngressNGINX)
+	}
+
 	if conf.KubernetesCRD != nil {
 		p.quietAddProvider(conf.KubernetesCRD)
+	}
+
+	if conf.Knative != nil {
+		p.quietAddProvider(conf.Knative)
 	}
 
 	if conf.KubernetesGateway != nil {
@@ -141,13 +150,6 @@ func NewProviderAggregator(conf static.Providers) *ProviderAggregator {
 	return p
 }
 
-func (p *ProviderAggregator) quietAddProvider(provider provider.Provider) {
-	err := p.AddProvider(provider)
-	if err != nil {
-		log.Error().Err(err).Msgf("Error while initializing provider %T", provider)
-	}
-}
-
 // AddProvider adds a provider in the providers map.
 func (p *ProviderAggregator) AddProvider(provider provider.Provider) error {
 	err := provider.Init()
@@ -193,14 +195,29 @@ func (p *ProviderAggregator) Provide(configurationChan chan<- dynamic.Message, p
 	return nil
 }
 
+func (p *ProviderAggregator) quietAddProvider(provider provider.Provider) {
+	err := p.AddProvider(provider)
+	if err != nil {
+		log.Error().Err(err).Msgf("Error while initializing provider %T", provider)
+	}
+}
+
 func (p *ProviderAggregator) launchProvider(configurationChan chan<- dynamic.Message, pool *safe.Pool, prd provider.Provider) {
 	jsonConf, err := redactor.RemoveCredentials(prd)
 	if err != nil {
 		log.Debug().Err(err).Msgf("Cannot marshal the provider configuration %T", prd)
 	}
 
-	log.Info().Msgf("Starting provider %T", prd)
-	log.Debug().RawJSON("config", []byte(jsonConf)).Msgf("%T provider configuration", prd)
+	// Check if provider has namespace information.
+	var namespaceInfo string
+	if namespaceProvider, ok := prd.(provider.NamespacedProvider); ok {
+		if namespace := namespaceProvider.Namespace(); namespace != "" {
+			namespaceInfo = fmt.Sprintf(" (namespace: %s)", namespace)
+		}
+	}
+
+	log.Info().Msgf("Starting provider %T%s", prd, namespaceInfo)
+	log.Debug().RawJSON("config", []byte(jsonConf)).Msgf("%T provider configuration%s", prd, namespaceInfo)
 
 	if err := maybeThrottledProvide(prd, p.providersThrottleDuration)(configurationChan, pool); err != nil {
 		log.Error().Err(err).Msgf("Cannot start the provider %T", prd)

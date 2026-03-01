@@ -8,7 +8,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
-	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -35,8 +34,8 @@ func New(ctx context.Context, next http.Handler, config dynamic.ReplacePath, nam
 	}, nil
 }
 
-func (r *replacePath) GetTracingInformation() (string, string, trace.SpanKind) {
-	return r.name, typeName, trace.SpanKindInternal
+func (r *replacePath) GetTracingInformation() (string, string) {
+	return r.name, typeName
 }
 
 func (r *replacePath) ServeHTTP(rw http.ResponseWriter, req *http.Request) {

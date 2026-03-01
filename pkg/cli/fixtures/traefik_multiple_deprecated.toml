@@ -6,3 +6,6 @@
 
 [pilot]
   token="xxx"
+
+[experimental]
+  futureUnknownFlag = true

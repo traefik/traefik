@@ -3,7 +3,7 @@ title: "IngressRouteUDP"
 description: "Understand the routing configuration for the Kubernetes IngressRouteUDP & Traefik CRD"
 ---
 
-`IngressRouteUDP` is the CRD implementation of a [Traefik UDP router](../../../udp/router/rules-priority.md).
+`IngressRouteUDP` is the CRD implementation of a [Traefik UDP router](../../../udp/routing/rules-priority.md).
 
 Before creating `IngressRouteUDP` objects, you need to apply the [Traefik Kubernetes CRDs](https://doc.traefik.io/traefik/reference/dynamic-configuration/kubernetes-crd/#definitions) to your Kubernetes cluster.
 
@@ -18,6 +18,7 @@ metadata:
   name: ingressrouteudpfoo
   namespace: apps
 spec:
+  ingressClassName: traefik-lb
   entryPoints:
     - fooudp  # The entry point where Traefik listens for incoming traffic.
   routes:
@@ -32,14 +33,15 @@ spec:
 
 | Field  |  Description | Default  | Required |
 |------------------------------------|-----------------------------|-------------------------------------------|-----------------------|
-|   `entryPoints`                     | List of entrypoints names.  | | No |
-|   ` routes `                        | List of routes.  | | Yes |
-| `routes[n].services`                | List of [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) definitions. See [here](#externalname-service) for `ExternalName Service` setup. | | No |
-| `services[n].name`                  | Defines the name of a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/). |  | Yes |
-| `routes[n].services[n].port`        | Defines the port of a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/). This can be a reference to a named port.|  | Yes |
-| `routes[n].services[n].weight`      | Defines the weight to apply to the server load balancing. | 1 | No |
-| `routes[n].services[n].nativeLB`    | Controls, when creating the load-balancer, whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP. | false | No |
-| `routes[n].services[n].nodePortLB`  | Controls, when creating the load-balancer, whether the LB's children are directly the nodes internal IPs using the nodePort when the service type is NodePort. It allows services to be reachable when Traefik runs externally from the Kubernetes cluster but within the same network of the nodes. See [here](#nativelb) for more information. | false | No  |
+| <a id="opt-ingressClassName" href="#opt-ingressClassName" title="#opt-ingressClassName">`ingressClassName`</a> | Defines the [IngressClass](https://kubernetes.io/docs/concepts/services-networking/ingress/#ingress-class) cluster resource to use. It replaces the deprecated `kubernetes.io/ingress.class` annotation.<br />The spec field takes precedence over the annotation. | | No |
+| <a id="opt-entryPoints" href="#opt-entryPoints" title="#opt-entryPoints">`entryPoints`</a> | List of entrypoints names.  | | No |
+| <a id="opt-routes" href="#opt-routes" title="#opt-routes">` routes `</a> | List of routes.  | | Yes |
+| <a id="opt-routesn-services" href="#opt-routesn-services" title="#opt-routesn-services">`routes[n].services`</a> | List of [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/) definitions. See [here](#externalname-service) for `ExternalName Service` setup. | | No |
+| <a id="opt-servicesn-name" href="#opt-servicesn-name" title="#opt-servicesn-name">`services[n].name`</a> | Defines the name of a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/). |  | Yes |
+| <a id="opt-routesn-servicesn-port" href="#opt-routesn-servicesn-port" title="#opt-routesn-servicesn-port">`routes[n].services[n].port`</a> | Defines the port of a [Kubernetes service](https://kubernetes.io/docs/concepts/services-networking/service/). This can be a reference to a named port.|  | Yes |
+| <a id="opt-routesn-servicesn-weight" href="#opt-routesn-servicesn-weight" title="#opt-routesn-servicesn-weight">`routes[n].services[n].weight`</a> | Defines the weight to apply to the server load balancing. | 1 | No |
+| <a id="opt-routesn-servicesn-nativeLB" href="#opt-routesn-servicesn-nativeLB" title="#opt-routesn-servicesn-nativeLB">`routes[n].services[n].nativeLB`</a> | Controls, when creating the load-balancer, whether the LB's children are directly the pods IPs or if the only child is the Kubernetes Service clusterIP. | false | No |
+| <a id="opt-routesn-servicesn-nodePortLB" href="#opt-routesn-servicesn-nodePortLB" title="#opt-routesn-servicesn-nodePortLB">`routes[n].services[n].nodePortLB`</a> | Controls, when creating the load-balancer, whether the LB's children are directly the nodes internal IPs using the nodePort when the service type is NodePort. It allows services to be reachable when Traefik runs externally from the Kubernetes cluster but within the same network of the nodes. See [here](#nativelb) for more information. | false | No  |
 
 ### ExternalName Service
 

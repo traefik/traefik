@@ -1,3 +1,6 @@
 [accesslog]
 
 [entrypoints.test.http.tls]
+
+[experimental]
+  futureUnknownFlag = true

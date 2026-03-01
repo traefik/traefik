@@ -13,9 +13,10 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	"github.com/traefik/yaegi/interp"
 	"github.com/traefik/yaegi/stdlib"
+	"github.com/traefik/yaegi/stdlib/syscall"
 	"github.com/traefik/yaegi/stdlib/unsafe"
 )
 
@@ -45,7 +46,7 @@ func newYaegiMiddlewareBuilder(i *interp.Interpreter, basePkg, imp string) (*yae
 	}, nil
 }
 
-func (b yaegiMiddlewareBuilder) newMiddleware(config map[string]interface{}, middlewareName string) (pluginMiddleware, error) {
+func (b yaegiMiddlewareBuilder) newMiddleware(config map[string]any, middlewareName string) (pluginMiddleware, error) {
 	vConfig, err := b.createConfig(config)
 	if err != nil {
 		return nil, err
@@ -79,7 +80,7 @@ func (b yaegiMiddlewareBuilder) newHandler(ctx context.Context, next http.Handle
 	return handler, nil
 }
 
-func (b yaegiMiddlewareBuilder) createConfig(config map[string]interface{}) (reflect.Value, error) {
+func (b yaegiMiddlewareBuilder) createConfig(config map[string]any) (reflect.Value, error) {
 	results := b.fnCreateConfig.Call(nil)
 	if len(results) != 1 {
 		return reflect.Value{}, fmt.Errorf("invalid number of return for the CreateConfig function: %d", len(results))
@@ -135,13 +136,18 @@ func newInterpreter(ctx context.Context, goPath string, manifest *Manifest, sett
 	}
 
 	if manifest.UseUnsafe && !settings.UseUnsafe {
-		return nil, errors.New("this plugin uses unsafe import. If you want to use it, you need to allow useUnsafe in the settings")
+		return nil, errors.New("this plugin uses restricted imports. If you want to use it, you need to allow useUnsafe in the settings")
 	}
 
 	if settings.UseUnsafe && manifest.UseUnsafe {
 		err := i.Use(unsafe.Symbols)
 		if err != nil {
 			return nil, fmt.Errorf("failed to load unsafe symbols: %w", err)
+		}
+
+		err = i.Use(syscall.Symbols)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load syscall symbols: %w", err)
 		}
 	}
 

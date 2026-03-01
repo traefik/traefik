@@ -15,7 +15,7 @@ import (
 	ptypes "github.com/traefik/paerser/types"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/job"
-	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	"github.com/traefik/traefik/v3/pkg/provider"
 	"github.com/traefik/traefik/v3/pkg/provider/constraints"
 	"github.com/traefik/traefik/v3/pkg/safe"
@@ -261,6 +261,11 @@ func (p *Provider) Provide(configurationChan chan<- dynamic.Message, pool *safe.
 	})
 
 	return nil
+}
+
+// Namespace returns the namespace of the Nomad provider.
+func (p *Provider) Namespace() string {
+	return p.namespace
 }
 
 func (p *Provider) pollOrWatch(ctx context.Context) (<-chan *api.Events, error) {

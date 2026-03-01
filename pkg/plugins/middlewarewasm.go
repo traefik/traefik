@@ -14,8 +14,8 @@ import (
 	"github.com/http-wasm/http-wasm-host-go/handler"
 	wasm "github.com/http-wasm/http-wasm-host-go/handler/nethttp"
 	"github.com/tetratelabs/wazero"
-	"github.com/traefik/traefik/v3/pkg/logs"
 	"github.com/traefik/traefik/v3/pkg/middlewares"
+	"github.com/traefik/traefik/v3/pkg/observability/logs"
 )
 
 type wasmMiddlewareBuilder struct {
@@ -42,7 +42,7 @@ func newWasmMiddlewareBuilder(goPath, moduleName, wasmPath string, settings Sett
 	return &wasmMiddlewareBuilder{path: path, cache: cache, settings: settings}, nil
 }
 
-func (b wasmMiddlewareBuilder) newMiddleware(config map[string]interface{}, middlewareName string) (pluginMiddleware, error) {
+func (b wasmMiddlewareBuilder) newMiddleware(config map[string]any, middlewareName string) (pluginMiddleware, error) {
 	return &WasmMiddleware{
 		middlewareName: middlewareName,
 		config:         reflect.ValueOf(config),
@@ -114,7 +114,7 @@ func (b *wasmMiddlewareBuilder) buildMiddleware(ctx context.Context, next http.H
 
 	i := cfg.Interface()
 	if i != nil {
-		config, ok := i.(map[string]interface{})
+		config, ok := i.(map[string]any)
 		if !ok {
 			return nil, nil, fmt.Errorf("could not type assert config: %T", i)
 		}

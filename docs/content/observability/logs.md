@@ -20,6 +20,7 @@ Traefik logs concern everything that happens to Traefik itself (startup, configu
 
 By default, the logs are written to the standard output.
 You can configure a file path instead using the `filePath` option.
+When `filePath` is specified, Traefik will write logs only to that file (not to standard output).
 
 ```yaml tab="File (YAML)"
 # Writing Logs to a File
@@ -218,6 +219,54 @@ log:
 !!! info "Default protocol"
 
     The OpenTelemetry Logger exporter will export logs to the collector using HTTPS by default to https://localhost:4318/v1/logs, see the [gRPC Section](#grpc-configuration) to use gRPC.
+
+### `serviceName`
+
+_Optional, Default="traefik"_
+
+Defines the service name resource attribute.
+
+```yaml tab="File (YAML)"
+log:
+  otlp:
+    serviceName: name
+```
+
+```toml tab="File (TOML)"
+[log]
+  [log.otlp]
+    serviceName = "name"
+```
+
+```bash tab="CLI"
+--log.otlp.serviceName=name
+```
+
+### `resourceAttributes`
+
+_Optional, Default=empty_
+
+Defines additional resource attributes to be sent to the collector.
+
+```yaml tab="File (YAML)"
+log:
+  otlp:
+    resourceAttributes:
+      attr1: foo
+      attr2: bar
+```
+
+```toml tab="File (TOML)"
+[log]
+  [log.otlp.resourceAttributes]
+    attr1 = "foo"
+    attr2 = "bar"
+```
+
+```bash tab="CLI"
+--log.otlp.resourceAttributes.attr1=foo
+--log.otlp.resourceAttributes.attr2=bar
+```
 
 ### HTTP configuration
 
@@ -595,4 +644,4 @@ log:
 --log.otlp.grpc.tls.insecureSkipVerify=true
 ```
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

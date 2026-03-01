@@ -1,7 +1,6 @@
 package udp
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -118,7 +117,7 @@ func TestRuntimeConfiguration(t *testing.T) {
 			serviceManager := udp.NewManager(conf)
 			routerManager := NewManager(conf, serviceManager)
 
-			_ = routerManager.BuildHandlers(context.Background(), entryPoints)
+			_ = routerManager.BuildHandlers(t.Context(), entryPoints)
 
 			// even though conf was passed by argument to the manager builders above,
 			// it's ok to use it as the result we check, because everything worth checking

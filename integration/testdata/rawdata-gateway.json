@@ -10,8 +10,9 @@
 			"priority": 9223372036854775806,
 			"observability": {
 				"accessLogs": true,
+				"metrics": true,
 				"tracing": true,
-				"metrics": true
+				"traceVerbosity": "minimal"
 			},
 			"status": "enabled",
 			"using": [
@@ -32,8 +33,9 @@
 			"priority": 9223372036854775805,
 			"observability": {
 				"accessLogs": true,
+				"metrics": true,
 				"tracing": true,
-				"metrics": true
+				"traceVerbosity": "minimal"
 			},
 			"status": "enabled",
 			"using": [
@@ -50,8 +52,9 @@
 			"priority": 100008,
 			"observability": {
 				"accessLogs": true,
+				"metrics": true,
 				"tracing": true,
-				"metrics": true
+				"traceVerbosity": "minimal"
 			},
 			"status": "enabled",
 			"using": [
@@ -69,8 +72,9 @@
 			"tls": {},
 			"observability": {
 				"accessLogs": true,
+				"metrics": true,
 				"tracing": true,
-				"metrics": true
+				"traceVerbosity": "minimal"
 			},
 			"status": "enabled",
 			"using": [
@@ -229,7 +233,11 @@
 					}
 				]
 			},
-			"status": "enabled"
+			"status": "enabled",
+			"serverStatus": {
+				"10.42.0.2:8080": "UP",
+				"10.42.0.6:8080": "UP"
+			}
 		},
 		"tcproute-default-tcp-app-1-gw-default-my-tcp-gateway-ep-footcp-0-e3b0c44298fc1c149afb-wrr@kubernetesgateway": {
 			"weighted": {

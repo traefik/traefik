@@ -1,7 +1,6 @@
 package recovery
 
 import (
-	"context"
 	"errors"
 	"io"
 	"net/http"
@@ -47,7 +46,7 @@ func TestRecoverHandler(t *testing.T) {
 				}
 				panic(test.panicErr)
 			}
-			recovery, err := New(context.Background(), http.HandlerFunc(fn))
+			recovery, err := New(t.Context(), http.HandlerFunc(fn))
 			require.NoError(t, err)
 
 			server := httptest.NewServer(recovery)

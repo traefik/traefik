@@ -301,7 +301,7 @@ func TestWebSocketRequestWithHeadersInResponseWriter(t *testing.T) {
 		},
 	}
 
-	p, err := NewProxyBuilder(transportManager, nil).Build("default@internal", testhelpers.MustParseURL(srv.URL), false, true, false, 0)
+	p, err := NewProxyBuilder(transportManager, nil).Build("default@internal", testhelpers.MustParseURL(srv.URL), true, false, 0)
 	require.NoError(t, err)
 	proxy := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		req.URL = testhelpers.MustParseURL(srv.URL)
@@ -357,7 +357,7 @@ func TestWebSocketUpgradeFailed(t *testing.T) {
 		},
 	}
 
-	p, err := NewProxyBuilder(transportManager, nil).Build("default@internal", testhelpers.MustParseURL(srv.URL), false, true, false, 0)
+	p, err := NewProxyBuilder(transportManager, nil).Build("default@internal", testhelpers.MustParseURL(srv.URL), true, false, 0)
 	require.NoError(t, err)
 	proxy := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		path := req.URL.Path // keep the original path
@@ -618,7 +618,7 @@ func createProxyWithForwarder(t *testing.T, uri string, transport http.RoundTrip
 		roundTrippers: map[string]http.RoundTripper{"fwd": transport},
 	}
 
-	p, err := NewProxyBuilder(transportManager, nil).Build("fwd", u, false, true, false, 0)
+	p, err := NewProxyBuilder(transportManager, nil).Build("fwd", u, true, false, 0)
 	require.NoError(t, err)
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {

@@ -1,7 +1,6 @@
 package gateway
 
 import (
-	"context"
 	"errors"
 	"net/http"
 	"os"
@@ -50,10 +49,29 @@ func init() {
 	}
 }
 
+const (
+	listenerCert string = `-----BEGIN CERTIFICATE-----
+MIIBqDCCAU6gAwIBAgIUYOsr0QgHOBq4kYRCL5+TDdVt6bQwCgYIKoZIzj0EAwIw
+FjEUMBIGA1UEAwwLZXhhbXBsZS5jb20wHhcNMjUxMDEwMDcxNzMwWhcNMzUxMDA4
+MDcxNzMwWjAWMRQwEgYDVQQDDAtleGFtcGxlLmNvbTBZMBMGByqGSM49AgEGCCqG
+SM49AwEHA0IABDOriw3ZQ7wIhWrbPS6JFQT3bToNCF00vSV5fab6TbXyL8tlsGre
+TRIF2EwgsteMOkxGKKSlDvuaDwq8p/qV+0ujejB4MB0GA1UdDgQWBBRMEkuexXQh
+UtDgRg1KBv72CDq+EzAfBgNVHSMEGDAWgBRMEkuexXQhUtDgRg1KBv72CDq+EzAP
+BgNVHRMBAf8EBTADAQH/MCUGA1UdEQQeMByCC2V4YW1wbGUuY29tgg0qLmV4YW1w
+bGUuY29tMAoGCCqGSM49BAMCA0gAMEUCIQDs87Vk0swA6HgOJjROye1mxD83qcGy
+peFgoxV93Dy+cwIgV0MMEJJbVsTyZK3EQ++Xc5rEL78nrJ+YIEV+rCUWj5U=
+-----END CERTIFICATE-----`
+	listenerKey string = `-----BEGIN PRIVATE KEY-----
+MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgnwgL5DY4UB14sM6f
+DikQdtqh2QW1ArfF4fc1UFzifdGhRANCAAQzq4sN2UO8CIVq2z0uiRUE9206DQhd
+NL0leX2m+k218i/LZbBq3k0SBdhMILLXjDpMRiikpQ77mg8KvKf6lftL
+-----END PRIVATE KEY-----`
+)
+
 func TestGatewayClassLabelSelector(t *testing.T) {
 	k8sObjects, gwObjects := readResources(t, []string{"gatewayclass_labelselector.yaml"})
 
-	kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+	kubeClient := kubefake.NewClientset(k8sObjects...)
 	gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
 	client := newClientImpl(kubeClient, gwClient)
@@ -75,14 +93,14 @@ func TestGatewayClassLabelSelector(t *testing.T) {
 		client:        client,
 	}
 
-	_ = p.loadConfigurationFromGateways(context.Background())
+	_ = p.loadConfigurationFromGateways(t.Context())
 
-	gw, err := gwClient.GatewayV1().Gateways("default").Get(context.Background(), "traefik-external", metav1.GetOptions{})
+	gw, err := gwClient.GatewayV1().Gateways("default").Get(t.Context(), "traefik-external", metav1.GetOptions{})
 	require.NoError(t, err)
 
 	assert.Empty(t, gw.Status.Addresses)
 
-	gw, err = gwClient.GatewayV1().Gateways("default").Get(context.Background(), "traefik-internal", metav1.GetOptions{})
+	gw, err = gwClient.GatewayV1().Gateways("default").Get(t.Context(), "traefik-internal", metav1.GetOptions{})
 	require.NoError(t, err)
 	require.Len(t, gw.Status.Addresses, 1)
 	require.NotNil(t, gw.Status.Addresses[0].Type)
@@ -562,8 +580,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 					Certificates: []*tls.CertAndStores{
 						{
 							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-								KeyFile:  types.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
+								CertFile: types.FileOrContent(listenerCert),
+								KeyFile:  types.FileOrContent(listenerKey),
 							},
 						},
 					},
@@ -756,8 +774,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 					Certificates: []*tls.CertAndStores{
 						{
 							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-								KeyFile:  types.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
+								CertFile: types.FileOrContent(listenerCert),
+								KeyFile:  types.FileOrContent(listenerKey),
 							},
 						},
 					},
@@ -1215,8 +1233,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 					Certificates: []*tls.CertAndStores{
 						{
 							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-								KeyFile:  types.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
+								CertFile: types.FileOrContent(listenerCert),
+								KeyFile:  types.FileOrContent(listenerKey),
 							},
 						},
 					},
@@ -1309,8 +1327,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 					Certificates: []*tls.CertAndStores{
 						{
 							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-								KeyFile:  types.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
+								CertFile: types.FileOrContent(listenerCert),
+								KeyFile:  types.FileOrContent(listenerKey),
 							},
 						},
 					},
@@ -1900,6 +1918,77 @@ func TestLoadHTTPRoutes(t *testing.T) {
 			},
 		},
 		{
+			desc:  "Simple HTTPRoute, backend filter request header modifier",
+			paths: []string{"services.yml", "httproute/backend_filter_request_header_modifier.yml"},
+			entryPoints: map[string]Entrypoint{"web": {
+				Address: ":80",
+			}},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-99f4d29346f69ccb6fc3": {
+							EntryPoints: []string{"web"},
+							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-99f4d29346f69ccb6fc3-wrr",
+							Rule:        "Host(`foo.com`) && (Path(`/bar`) || PathPrefix(`/bar/`))",
+							Priority:    10408,
+							RuleSyntax:  "default",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-whoami-http-requestheadermodifier-0": {
+							RequestHeaderModifier: &dynamic.HeaderModifier{
+								Set:    map[string]string{"X-Foo": "Bar"},
+								Add:    map[string]string{"X-Bar": "Foo"},
+								Remove: []string{"X-Baz"},
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-99f4d29346f69ccb6fc3-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-whoami-http-80",
+										Weight: ptr.To(1),
+									},
+								},
+							},
+						},
+						"default-whoami-http-80": {
+							Middlewares: []string{"default-whoami-http-requestheadermodifier-0"},
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
 			desc:  "Simple HTTPRoute, redirect HTTP to HTTPS",
 			paths: []string{"services.yml", "httproute/filter_http_to_https.yml"},
 			entryPoints: map[string]Entrypoint{"web": {
@@ -1936,6 +2025,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 							},
 						},
 					},
+
 					Services: map[string]*dynamic.Service{
 						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-364ce6ec04c3d49b19c4-wrr": {
 							Weighted: &dynamic.WeightedRoundRobin{},
@@ -2203,74 +2293,11 @@ func TestLoadHTTPRoutes(t *testing.T) {
 			},
 		},
 		{
-			desc:  "Simple HTTPRoute and BackendTLSPolicy, experimental channel disabled",
+			desc:  "Simple HTTPRoute and BackendTLSPolicy with CA certificate",
 			paths: []string{"services.yml", "httproute/with_backend_tls_policy.yml"},
 			entryPoints: map[string]Entrypoint{"web": {
 				Address: ":80",
 			}},
-			expected: &dynamic.Configuration{
-				UDP: &dynamic.UDPConfiguration{
-					Routers:  map[string]*dynamic.UDPRouter{},
-					Services: map[string]*dynamic.UDPService{},
-				},
-				TCP: &dynamic.TCPConfiguration{
-					Routers:           map[string]*dynamic.TCPRouter{},
-					Middlewares:       map[string]*dynamic.TCPMiddleware{},
-					Services:          map[string]*dynamic.TCPService{},
-					ServersTransports: map[string]*dynamic.TCPServersTransport{},
-				},
-				HTTP: &dynamic.HTTPConfiguration{
-					Routers: map[string]*dynamic.Router{
-						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-1c0cf64bde37d9d0df06": {
-							EntryPoints: []string{"web"},
-							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-1c0cf64bde37d9d0df06-wrr",
-							Rule:        "Host(`foo.com`) && Path(`/bar`)",
-							Priority:    100008,
-							RuleSyntax:  "default",
-						},
-					},
-					Middlewares: map[string]*dynamic.Middleware{},
-					Services: map[string]*dynamic.Service{
-						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-1c0cf64bde37d9d0df06-wrr": {
-							Weighted: &dynamic.WeightedRoundRobin{
-								Services: []dynamic.WRRService{
-									{
-										Name:   "default-whoami-http-80",
-										Weight: ptr.To(1),
-									},
-								},
-							},
-						},
-						"default-whoami-http-80": {
-							LoadBalancer: &dynamic.ServersLoadBalancer{
-								Strategy: dynamic.BalancerStrategyWRR,
-								Servers: []dynamic.Server{
-									{
-										URL: "http://10.10.0.1:80",
-									},
-									{
-										URL: "http://10.10.0.2:80",
-									},
-								},
-								PassHostHeader: ptr.To(true),
-								ResponseForwarding: &dynamic.ResponseForwarding{
-									FlushInterval: ptypes.Duration(100 * time.Millisecond),
-								},
-							},
-						},
-					},
-					ServersTransports: map[string]*dynamic.ServersTransport{},
-				},
-				TLS: &dynamic.TLSConfiguration{},
-			},
-		},
-		{
-			desc:  "Simple HTTPRoute and BackendTLSPolicy with CA certificate, experimental channel enabled",
-			paths: []string{"services.yml", "httproute/with_backend_tls_policy.yml"},
-			entryPoints: map[string]Entrypoint{"web": {
-				Address: ":80",
-			}},
-			experimentalChannel: true,
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -2327,8 +2354,8 @@ func TestLoadHTTPRoutes(t *testing.T) {
 						"default-whoami-http-80": {
 							ServerName: "whoami",
 							RootCAs: []types.FileOrContent{
-								"LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=",
-								"LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=",
+								"CA1",
+								"CA2",
 							},
 						},
 					},
@@ -2337,12 +2364,11 @@ func TestLoadHTTPRoutes(t *testing.T) {
 			},
 		},
 		{
-			desc:  "Simple HTTPRoute and BackendTLSPolicy with System CA, experimental channel enabled",
+			desc:  "Simple HTTPRoute and BackendTLSPolicy with System CA",
 			paths: []string{"services.yml", "httproute/with_backend_tls_policy_system.yml"},
 			entryPoints: map[string]Entrypoint{"web": {
 				Address: ":80",
 			}},
-			experimentalChannel: true,
 			expected: &dynamic.Configuration{
 				UDP: &dynamic.UDPConfiguration{
 					Routers:  map[string]*dynamic.UDPRouter{},
@@ -2523,6 +2549,69 @@ func TestLoadHTTPRoutes(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
+		{
+			desc:     "Simple HTTPRoute with NativeLBByDefault enabled but service has disabled nativelb",
+			paths:    []string{"services.yml", "httproute/simple_nativelb_disabled.yml"},
+			nativeLB: true,
+			entryPoints: map[string]Entrypoint{"web": {
+				Address: ":80",
+			}},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers:           map[string]*dynamic.TCPRouter{},
+					Middlewares:       map[string]*dynamic.TCPMiddleware{},
+					Services:          map[string]*dynamic.TCPService{},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-1c0cf64bde37d9d0df06": {
+							EntryPoints: []string{"web"},
+							Service:     "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-1c0cf64bde37d9d0df06-wrr",
+							Rule:        "Host(`foo.com`) && Path(`/bar`)",
+							Priority:    100008,
+							RuleSyntax:  "default",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{},
+					Services: map[string]*dynamic.Service{
+						"httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-1c0cf64bde37d9d0df06-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-whoami-native-disabled-http-80",
+										Weight: ptr.To(1),
+									},
+								},
+							},
+						},
+						"default-whoami-native-disabled-http-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.20:80",
+									},
+									{
+										URL: "http://10.10.0.21:80",
+									},
+								},
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -2535,7 +2624,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 
 			k8sObjects, gwObjects := readResources(t, test.paths)
 
-			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+			kubeClient := kubefake.NewClientset(k8sObjects...)
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
 			client := newClientImpl(kubeClient, gwClient)
@@ -2556,7 +2645,7 @@ func TestLoadHTTPRoutes(t *testing.T) {
 				client:              client,
 			}
 
-			conf := p.loadConfigurationFromGateways(context.Background())
+			conf := p.loadConfigurationFromGateways(t.Context())
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -2897,6 +2986,14 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 										Name:   "default-whoami-wss-http-80",
 										Weight: ptr.To(1),
 									},
+									{
+										Name:   "default-whoami-HTTP-http-80",
+										Weight: ptr.To(1),
+									},
+									{
+										Name:   "default-whoami-HTTPS-http-443",
+										Weight: ptr.To(1),
+									},
 								},
 							},
 						},
@@ -2942,6 +3039,34 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 								},
 							},
 						},
+						"default-whoami-HTTPS-http-443": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "https://10.10.0.16:8443",
+									},
+								},
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
+						"default-whoami-HTTP-http-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Strategy: dynamic.BalancerStrategyWRR,
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.17:8080",
+									},
+								},
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: ptypes.Duration(100 * time.Millisecond),
+								},
+							},
+						},
 					},
 					ServersTransports: map[string]*dynamic.ServersTransport{},
 				},
@@ -2960,7 +3085,7 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 
 			k8sObjects, gwObjects := readResources(t, test.paths)
 
-			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+			kubeClient := kubefake.NewClientset(k8sObjects...)
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
 			client := newClientImpl(kubeClient, gwClient)
@@ -2983,7 +3108,7 @@ func TestLoadHTTPRoutes_backendExtensionRef(t *testing.T) {
 					p.RegisterBackendFuncs(group, kind, backendFunc)
 				}
 			}
-			conf := p.loadConfigurationFromGateways(context.Background())
+			conf := p.loadConfigurationFromGateways(t.Context())
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -3246,7 +3371,7 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 
 			k8sObjects, gwObjects := readResources(t, []string{"services.yml", "httproute/filter_extension_ref.yml"})
 
-			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+			kubeClient := kubefake.NewClientset(k8sObjects...)
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
 			client := newClientImpl(kubeClient, gwClient)
@@ -3269,7 +3394,7 @@ func TestLoadHTTPRoutes_filterExtensionRef(t *testing.T) {
 					p.RegisterFilterFuncs(group, kind, filterFunc)
 				}
 			}
-			conf := p.loadConfigurationFromGateways(context.Background())
+			conf := p.loadConfigurationFromGateways(t.Context())
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -3538,7 +3663,7 @@ func TestLoadGRPCRoutes_filterExtensionRef(t *testing.T) {
 
 			k8sObjects, gwObjects := readResources(t, []string{"services.yml", "grpcroute/filter_extension_ref.yml"})
 
-			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+			kubeClient := kubefake.NewClientset(k8sObjects...)
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
 			client := newClientImpl(kubeClient, gwClient)
@@ -3561,7 +3686,7 @@ func TestLoadGRPCRoutes_filterExtensionRef(t *testing.T) {
 					p.RegisterFilterFuncs(group, kind, filterFunc)
 				}
 			}
-			conf := p.loadConfigurationFromGateways(context.Background())
+			conf := p.loadConfigurationFromGateways(t.Context())
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -4119,8 +4244,8 @@ func TestLoadTCPRoutes(t *testing.T) {
 					Certificates: []*tls.CertAndStores{
 						{
 							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-								KeyFile:  types.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
+								CertFile: types.FileOrContent(listenerCert),
+								KeyFile:  types.FileOrContent(listenerKey),
 							},
 						},
 					},
@@ -4430,6 +4555,63 @@ func TestLoadTCPRoutes(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
+		{
+			desc:     "Simple TCPRoute with NativeLBByDefault enabled but service has disabled nativelb",
+			paths:    []string{"services.yml", "tcproute/simple_nativelb_disabled.yml"},
+			nativeLB: true,
+			entryPoints: map[string]Entrypoint{
+				"tcp": {Address: ":9000"},
+			},
+			expected: &dynamic.Configuration{
+				UDP: &dynamic.UDPConfiguration{
+					Routers:  map[string]*dynamic.UDPRouter{},
+					Services: map[string]*dynamic.UDPService{},
+				},
+				TCP: &dynamic.TCPConfiguration{
+					Routers: map[string]*dynamic.TCPRouter{
+						"tcproute-default-tcp-app-1-gw-default-my-tcp-gateway-ep-tcp-0-e3b0c44298fc1c149afb": {
+							EntryPoints: []string{"tcp"},
+							Service:     "tcproute-default-tcp-app-1-gw-default-my-tcp-gateway-ep-tcp-0-e3b0c44298fc1c149afb-wrr",
+							Rule:        "HostSNI(`*`)",
+							RuleSyntax:  "default",
+						},
+					},
+					Middlewares: map[string]*dynamic.TCPMiddleware{},
+					Services: map[string]*dynamic.TCPService{
+						"tcproute-default-tcp-app-1-gw-default-my-tcp-gateway-ep-tcp-0-e3b0c44298fc1c149afb-wrr": {
+							Weighted: &dynamic.TCPWeightedRoundRobin{
+								Services: []dynamic.TCPWRRService{
+									{
+										Name:   "default-whoamitcp-native-disabled-9000",
+										Weight: ptr.To(1),
+									},
+								},
+							},
+						},
+						"default-whoamitcp-native-disabled-9000": {
+							LoadBalancer: &dynamic.TCPServersLoadBalancer{
+								Servers: []dynamic.TCPServer{
+									{
+										Address: "10.10.0.30:9000",
+									},
+									{
+										Address: "10.10.0.31:9000",
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.TCPServersTransport{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -4442,7 +4624,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 
 			k8sObjects, gwObjects := readResources(t, test.paths)
 
-			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+			kubeClient := kubefake.NewClientset(k8sObjects...)
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
 			client := newClientImpl(kubeClient, gwClient)
@@ -4463,7 +4645,7 @@ func TestLoadTCPRoutes(t *testing.T) {
 				client:              client,
 			}
 
-			conf := p.loadConfigurationFromGateways(context.Background())
+			conf := p.loadConfigurationFromGateways(t.Context())
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -4654,8 +4836,8 @@ func TestLoadTLSRoutes(t *testing.T) {
 					Certificates: []*tls.CertAndStores{
 						{
 							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-								KeyFile:  types.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
+								CertFile: types.FileOrContent(listenerCert),
+								KeyFile:  types.FileOrContent(listenerKey),
 							},
 						},
 					},
@@ -4754,8 +4936,8 @@ func TestLoadTLSRoutes(t *testing.T) {
 					Certificates: []*tls.CertAndStores{
 						{
 							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-								KeyFile:  types.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
+								CertFile: types.FileOrContent(listenerCert),
+								KeyFile:  types.FileOrContent(listenerKey),
 							},
 						},
 					},
@@ -4972,8 +5154,8 @@ func TestLoadTLSRoutes(t *testing.T) {
 					Certificates: []*tls.CertAndStores{
 						{
 							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-								KeyFile:  types.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
+								CertFile: types.FileOrContent(listenerCert),
+								KeyFile:  types.FileOrContent(listenerKey),
 							},
 						},
 					},
@@ -5042,8 +5224,8 @@ func TestLoadTLSRoutes(t *testing.T) {
 					Certificates: []*tls.CertAndStores{
 						{
 							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-								KeyFile:  types.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
+								CertFile: types.FileOrContent(listenerCert),
+								KeyFile:  types.FileOrContent(listenerKey),
 							},
 						},
 					},
@@ -5721,7 +5903,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 
 			k8sObjects, gwObjects := readResources(t, test.paths)
 
-			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+			kubeClient := kubefake.NewClientset(k8sObjects...)
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
 			client := newClientImpl(kubeClient, gwClient)
@@ -5742,7 +5924,7 @@ func TestLoadTLSRoutes(t *testing.T) {
 				client:              client,
 			}
 
-			conf := p.loadConfigurationFromGateways(context.Background())
+			conf := p.loadConfigurationFromGateways(t.Context())
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -6010,8 +6192,8 @@ func TestLoadMixedRoutes(t *testing.T) {
 					Certificates: []*tls.CertAndStores{
 						{
 							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-								KeyFile:  types.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
+								CertFile: types.FileOrContent(listenerCert),
+								KeyFile:  types.FileOrContent(listenerKey),
 							},
 						},
 					},
@@ -6199,8 +6381,8 @@ func TestLoadMixedRoutes(t *testing.T) {
 					Certificates: []*tls.CertAndStores{
 						{
 							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-								KeyFile:  types.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
+								CertFile: types.FileOrContent(listenerCert),
+								KeyFile:  types.FileOrContent(listenerKey),
 							},
 						},
 					},
@@ -6457,8 +6639,8 @@ func TestLoadMixedRoutes(t *testing.T) {
 					Certificates: []*tls.CertAndStores{
 						{
 							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-								KeyFile:  types.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
+								CertFile: types.FileOrContent(listenerCert),
+								KeyFile:  types.FileOrContent(listenerKey),
 							},
 						},
 					},
@@ -6618,8 +6800,8 @@ func TestLoadMixedRoutes(t *testing.T) {
 					Certificates: []*tls.CertAndStores{
 						{
 							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-								KeyFile:  types.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
+								CertFile: types.FileOrContent(listenerCert),
+								KeyFile:  types.FileOrContent(listenerKey),
 							},
 						},
 					},
@@ -6758,8 +6940,8 @@ func TestLoadMixedRoutes(t *testing.T) {
 					Certificates: []*tls.CertAndStores{
 						{
 							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-								KeyFile:  types.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
+								CertFile: types.FileOrContent(listenerCert),
+								KeyFile:  types.FileOrContent(listenerKey),
 							},
 						},
 					},
@@ -6778,7 +6960,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 
 			k8sObjects, gwObjects := readResources(t, test.paths)
 
-			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+			kubeClient := kubefake.NewClientset(k8sObjects...)
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
 			client := newClientImpl(kubeClient, gwClient)
@@ -6798,7 +6980,7 @@ func TestLoadMixedRoutes(t *testing.T) {
 				client:              client,
 			}
 
-			conf := p.loadConfigurationFromGateways(context.Background())
+			conf := p.loadConfigurationFromGateways(t.Context())
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -6970,8 +7152,8 @@ func TestLoadRoutesWithReferenceGrants(t *testing.T) {
 					Certificates: []*tls.CertAndStores{
 						{
 							Certificate: tls.Certificate{
-								CertFile: types.FileOrContent("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
-								KeyFile:  types.FileOrContent("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
+								CertFile: types.FileOrContent(listenerCert),
+								KeyFile:  types.FileOrContent(listenerKey),
 							},
 						},
 					},
@@ -7114,7 +7296,7 @@ func TestLoadRoutesWithReferenceGrants(t *testing.T) {
 
 			k8sObjects, gwObjects := readResources(t, test.paths)
 
-			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+			kubeClient := kubefake.NewClientset(k8sObjects...)
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
 			client := newClientImpl(kubeClient, gwClient)
@@ -7134,7 +7316,7 @@ func TestLoadRoutesWithReferenceGrants(t *testing.T) {
 				client:              client,
 			}
 
-			conf := p.loadConfigurationFromGateways(context.Background())
+			conf := p.loadConfigurationFromGateways(t.Context())
 			assert.Equal(t, test.expected, conf)
 		})
 	}
@@ -8019,7 +8201,7 @@ func Test_gatewayAddresses(t *testing.T) {
 
 			k8sObjects, gwObjects := readResources(t, test.paths)
 
-			kubeClient := kubefake.NewSimpleClientset(k8sObjects...)
+			kubeClient := kubefake.NewClientset(k8sObjects...)
 			gwClient := newGatewaySimpleClientSet(t, gwObjects...)
 
 			client := newClientImpl(kubeClient, gwClient)
@@ -8175,7 +8357,7 @@ func Test_upsertRouteConditionResolvedRefs(t *testing.T) {
 	}
 }
 
-// We cannot use the gateway-api fake.NewSimpleClientset due to Gateway being pluralized as "gatewaies" instead of "gateways".
+// We cannot use the gateway-api fake.NewClientset due to Gateway being pluralized as "gatewaies" instead of "gateways".
 func newGatewaySimpleClientSet(t *testing.T, objects ...runtime.Object) *gatefake.Clientset {
 	t.Helper()
 
@@ -8186,7 +8368,7 @@ func newGatewaySimpleClientSet(t *testing.T, objects ...runtime.Object) *gatefak
 			continue
 		}
 
-		_, err := client.GatewayV1().Gateways(gateway.Namespace).Create(context.Background(), gateway, metav1.CreateOptions{})
+		_, err := client.GatewayV1().Gateways(gateway.Namespace).Create(t.Context(), gateway, metav1.CreateOptions{})
 		require.NoError(t, err)
 	}
 

@@ -13,7 +13,7 @@ import (
 // ServersTransport is the CRD implementation of a ServersTransport.
 // If no serversTransport is specified, the default@internal will be used.
 // The default@internal serversTransport is created from the static configuration.
-// More info: https://doc.traefik.io/traefik/v3.4/routing/services/#serverstransport_1
+// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/load-balancing/serverstransport/
 type ServersTransport struct {
 	metav1.TypeMeta `json:",inline"`
 	// Standard object's metadata.
@@ -34,12 +34,19 @@ type ServersTransportSpec struct {
 	// RootCAs defines a list of CA certificate Secrets or ConfigMaps used to validate server certificates.
 	RootCAs []RootCA `json:"rootCAs,omitempty"`
 	// RootCAsSecrets defines a list of CA secret used to validate self-signed certificate.
+	//
 	// Deprecated: RootCAsSecrets is deprecated, please use the RootCAs option instead.
 	RootCAsSecrets []string `json:"rootCAsSecrets,omitempty"`
 	// CertificatesSecrets defines a list of secret storing client certificates for mTLS.
 	CertificatesSecrets []string `json:"certificatesSecrets,omitempty"`
+	// CipherSuites defines the cipher suites to use when contacting backend servers.
+	CipherSuites []string `json:"cipherSuites,omitempty"`
+	// MinVersion defines the minimum TLS version to use when contacting backend servers.
+	MinVersion string `json:"minVersion,omitempty"`
+	// MaxVersion defines the maximum TLS version to use when contacting backend servers.
+	MaxVersion string `json:"maxVersion,omitempty"`
 	// MaxIdleConnsPerHost controls the maximum idle (keep-alive) to keep per-host.
-	// +kubebuilder:validation:Minimum=0
+	// +kubebuilder:validation:Minimum=-1
 	MaxIdleConnsPerHost int `json:"maxIdleConnsPerHost,omitempty"`
 	// ForwardingTimeouts defines the timeouts for requests forwarded to the backend servers.
 	ForwardingTimeouts *ForwardingTimeouts `json:"forwardingTimeouts,omitempty"`
@@ -81,7 +88,7 @@ type ForwardingTimeouts struct {
 
 // RootCA defines a reference to a Secret or a ConfigMap that holds a CA certificate.
 // If both a Secret and a ConfigMap reference are defined, the Secret reference takes precedence.
-// +kubebuilder:validation:XValidation:rule="has(self.secret) && has(self.configMap)",message="RootCA cannot have both Secret and ConfigMap defined."
+// +kubebuilder:validation:XValidation:rule="!has(self.secret) || !has(self.configMap)",message="RootCA cannot have both Secret and ConfigMap defined."
 type RootCA struct {
 	// Secret defines the name of a Secret that holds a CA certificate.
 	// The referenced Secret must contain a certificate under either a tls.ca or a ca.crt key.

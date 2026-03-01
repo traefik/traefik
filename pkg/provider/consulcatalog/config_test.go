@@ -1,7 +1,6 @@
 package consulcatalog
 
 import (
-	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -323,7 +322,7 @@ func TestDefaultRule(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			configuration := p.buildConfiguration(context.Background(), test.items, nil)
+			configuration := p.buildConfiguration(t.Context(), test.items, nil)
 
 			assert.Equal(t, test.expected, configuration)
 		})
@@ -3602,7 +3601,7 @@ func Test_buildConfiguration(t *testing.T) {
 				test.items[i].Tags = tags
 			}
 
-			configuration := p.buildConfiguration(context.Background(), test.items, &connectCert{
+			configuration := p.buildConfiguration(t.Context(), test.items, &connectCert{
 				root: []string{"root"},
 				leaf: keyPair{
 					cert: "cert",
@@ -4120,7 +4119,7 @@ func TestFilterHealthStatuses(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			configuration := p.buildConfiguration(context.Background(), test.items, nil)
+			configuration := p.buildConfiguration(t.Context(), test.items, nil)
 
 			assert.Equal(t, test.expected, configuration)
 		})

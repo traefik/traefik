@@ -1,0 +1,52 @@
+name: Test Knative conformance
+
+on:
+  pull_request:
+    branches:
+      - '*'
+    paths:
+      - '.github/workflows/test-knative-conformance.yaml'
+      - 'pkg/provider/kubernetes/knative/**'
+      - 'integration/fixtures/knative/**'
+      - 'integration/knative_conformance_test.go'
+      - 'integration/integration_test.go'
+
+env:
+  CGO_ENABLED: 0
+
+jobs:
+
+  test-knative-conformance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
+        with:
+          go-version-file: '.go-version'
+          check-latest: true
+
+      - name: Set up KO
+        uses: ko-build/setup-ko@ace48d793556083a76f1e3e6068850c1f4a369aa # v0.6
+        env:
+          KO_DOCKER_REPO: ko.local
+
+      - name: Upload Test Images
+        run: |
+          # Download the test image templates.
+          go mod vendor
+          ./integration/fixtures/knative/upload-test-images.sh
+
+      - name: Avoid generating webui
+        run: |
+          touch webui/static/index.html
+
+      - name: Knative conformance test
+        run: |
+          make test-knative-conformance

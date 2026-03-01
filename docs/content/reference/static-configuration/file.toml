@@ -72,6 +72,14 @@
         [[entryPoints.EntryPoint0.http.tls.domains]]
           main = "foobar"
           sans = ["foobar", "foobar"]
+      [entryPoints.EntryPoint0.http.encodedCharacters]
+        allowEncodedSlash = true
+        allowEncodedBackSlash = true
+        allowEncodedNullCharacter = true
+        allowEncodedSemicolon = true
+        allowEncodedPercent = true
+        allowEncodedQuestionMark = true
+        allowEncodedHash = true
     [entryPoints.EntryPoint0.http2]
       maxConcurrentStreams = 42
     [entryPoints.EntryPoint0.http3]
@@ -80,8 +88,9 @@
       timeout = "42s"
     [entryPoints.EntryPoint0.observability]
       accessLogs = true
-      tracing = true
       metrics = true
+      tracing = true
+      traceVerbosity = "foobar"
 
 [providers]
   providersThrottleDuration = "42s"
@@ -143,6 +152,21 @@
       ip = "foobar"
       hostname = "foobar"
       publishedService = "foobar"
+  [providers.kubernetesIngressNGINX]
+    endpoint = "foobar"
+    token = "foobar"
+    certAuthFilePath = "foobar"
+    throttleDuration = "42s"
+    watchNamespace = "foobar"
+    watchNamespaceSelector = "foobar"
+    ingressClass = "foobar"
+    controllerClass = "foobar"
+    watchIngressWithoutClass = true
+    ingressClassByName = true
+    publishService = "foobar"
+    publishStatusAddress = ["foobar", "foobar"]
+    defaultBackendService = "foobar"
+    disableSvcExternalName = true
   [providers.kubernetesCRD]
     endpoint = "foobar"
     token = "foobar"
@@ -372,6 +396,9 @@
       [metrics.otlp.http.headers]
         name0 = "foobar"
         name1 = "foobar"
+    [metrics.otlp.resourceAttributes]
+      name0 = "foobar"
+      name1 = "foobar"
 
 [ping]
   entryPoint = "foobar"
@@ -509,6 +536,7 @@
       preferredChain = "foobar"
       profile = "foobar"
       emailAddresses = ["foobar", "foobar"]
+      disableCommonName = true
       storage = "foobar"
       keyType = "foobar"
       certificatesDuration = 42
@@ -534,6 +562,7 @@
         entryPoint = "foobar"
         delay = "42s"
       [certificatesResolvers.CertificateResolver0.acme.tlsChallenge]
+        delay = "42s"
     [certificatesResolvers.CertificateResolver0.tailscale]
   [certificatesResolvers.CertificateResolver1]
     [certificatesResolvers.CertificateResolver1.acme]
@@ -542,6 +571,7 @@
       preferredChain = "foobar"
       profile = "foobar"
       emailAddresses = ["foobar", "foobar"]
+      disableCommonName = true
       storage = "foobar"
       keyType = "foobar"
       certificatesDuration = 42
@@ -567,11 +597,13 @@
         entryPoint = "foobar"
         delay = "42s"
       [certificatesResolvers.CertificateResolver1.acme.tlsChallenge]
+        delay = "42s"
     [certificatesResolvers.CertificateResolver1.tailscale]
 
 [experimental]
   abortOnPluginFailure = true
   otlplogs = true
+  kubernetesIngressNGINX = true
   kubernetesGateway = true
   [experimental.plugins]
     [experimental.plugins.Descriptor0]
@@ -609,3 +641,8 @@
 
 [spiffe]
   workloadAPIAddr = "foobar"
+
+[ocsp]
+  [ocsp.responderOverrides]
+    name0 = "foobar"
+    name1 = "foobar"

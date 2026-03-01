@@ -19,8 +19,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/static"
+	proxyhttputil "github.com/traefik/traefik/v3/pkg/proxy/httputil"
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
-	"github.com/traefik/traefik/v3/pkg/tls/generate"
 )
 
 const (
@@ -125,9 +125,17 @@ func TestProxyFromEnvironment(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			backendURL, backendCert := newBackendServer(t, test.tls, http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-				_, _ = rw.Write([]byte("backend"))
-			}))
+			var backendServer *httptest.Server
+			if test.tls {
+				backendServer = httptest.NewTLSServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+					_, _ = rw.Write([]byte("backendTLS"))
+				}))
+			} else {
+				backendServer = httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+					_, _ = rw.Write([]byte("backend"))
+				}))
+			}
+			t.Cleanup(backendServer.Close)
 
 			var proxyCalled bool
 			proxyHandler := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
@@ -155,8 +163,21 @@ func TestProxyFromEnvironment(t *testing.T) {
 				connHj, _, err := hj.Hijack()
 				require.NoError(t, err)
 
-				go func() { _, _ = io.Copy(connHj, conn) }()
-				_, _ = io.Copy(conn, connHj)
+				defer func() {
+					_ = connHj.Close()
+					_ = conn.Close()
+				}()
+
+				errCh := make(chan error, 1)
+				go func() {
+					_, err = io.Copy(connHj, conn)
+					errCh <- err
+				}()
+				go func() {
+					_, err = io.Copy(conn, connHj)
+					errCh <- err
+				}()
+				<-errCh // Wait for one of the copy operations to finish
 			})
 
 			var proxyURL string
@@ -198,7 +219,7 @@ func TestProxyFromEnvironment(t *testing.T) {
 				proxyURL = proxyServer.URL
 
 			case proxyHTTPS:
-				proxyServer := httptest.NewServer(proxyHandler)
+				proxyServer := httptest.NewTLSServer(proxyHandler)
 				t.Cleanup(proxyServer.Close)
 
 				proxyURL = proxyServer.URL
@@ -209,11 +230,8 @@ func TestProxyFromEnvironment(t *testing.T) {
 			if proxyCert != nil {
 				certPool.AddCert(proxyCert)
 			}
-			if backendCert != nil {
-				cert, err := x509.ParseCertificate(backendCert.Certificate[0])
-				require.NoError(t, err)
-
-				certPool.AddCert(cert)
+			if backendServer.Certificate() != nil {
+				certPool.AddCert(backendServer.Certificate())
 			}
 
 			builder := NewProxyBuilder(&transportManagerMock{tlsConfig: &tls.Config{RootCAs: certPool}}, static.FastProxyConfig{})
@@ -230,7 +248,7 @@ func TestProxyFromEnvironment(t *testing.T) {
 				return u, nil
 			}
 
-			reverseProxy, err := builder.Build("foo", testhelpers.MustParseURL(backendURL), false, false)
+			reverseProxy, err := builder.Build("foo", testhelpers.MustParseURL(backendServer.URL), false, false)
 			require.NoError(t, err)
 
 			reverseProxyServer := httptest.NewServer(reverseProxy)
@@ -246,7 +264,11 @@ func TestProxyFromEnvironment(t *testing.T) {
 			body, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
 
-			assert.Equal(t, "backend", string(body))
+			if test.tls {
+				assert.Equal(t, "backendTLS", string(body))
+			} else {
+				assert.Equal(t, "backend", string(body))
+			}
 			assert.True(t, proxyCalled)
 		})
 	}
@@ -385,50 +407,88 @@ func TestTransferEncodingChunked(t *testing.T) {
 	assert.Equal(t, "chunk 0\nchunk 1\nchunk 2\n", string(body))
 }
 
-func newCertificate(t *testing.T, domain string) *tls.Certificate {
-	t.Helper()
-
-	certPEM, keyPEM, err := generate.KeyPair(domain, time.Time{})
-	require.NoError(t, err)
-
-	certificate, err := tls.X509KeyPair(certPEM, keyPEM)
-	require.NoError(t, err)
-
-	return &certificate
-}
-
-func newBackendServer(t *testing.T, isTLS bool, handler http.Handler) (string, *tls.Certificate) {
-	t.Helper()
-
-	var ln net.Listener
-	var err error
-	var cert *tls.Certificate
-
-	scheme := "http"
-	domain := "backend.localhost"
-	if isTLS {
-		scheme = "https"
-
-		cert = newCertificate(t, domain)
-
-		ln, err = tls.Listen("tcp", ":0", &tls.Config{Certificates: []tls.Certificate{*cert}})
-		require.NoError(t, err)
-	} else {
-		ln, err = net.Listen("tcp", ":0")
-		require.NoError(t, err)
+func TestXForwardedFor(t *testing.T) {
+	testCases := []struct {
+		desc                  string
+		notAppendXFF          bool
+		incomingXFF           string
+		expectedXFF           string
+		expectedXFFNotPresent bool
+	}{
+		{
+			desc:         "appends RemoteAddr when notAppendXFF is false",
+			notAppendXFF: false,
+			incomingXFF:  "",
+			expectedXFF:  "192.0.2.1",
+		},
+		{
+			desc:         "appends RemoteAddr to existing XFF when notAppendXFF is false",
+			notAppendXFF: false,
+			incomingXFF:  "203.0.113.1",
+			expectedXFF:  "203.0.113.1, 192.0.2.1",
+		},
+		{
+			desc:                  "does not append RemoteAddr when notAppendXFF is true and no incoming XFF",
+			notAppendXFF:          true,
+			incomingXFF:           "",
+			expectedXFFNotPresent: true,
+		},
+		{
+			desc:         "preserves existing XFF when notAppendXFF is true",
+			notAppendXFF: true,
+			incomingXFF:  "203.0.113.1",
+			expectedXFF:  "203.0.113.1",
+		},
+		{
+			desc:         "preserves multiple XFF values when notAppendXFF is true",
+			notAppendXFF: true,
+			incomingXFF:  "203.0.113.1, 198.51.100.1",
+			expectedXFF:  "203.0.113.1, 198.51.100.1",
+		},
 	}
 
-	srv := &http.Server{Handler: handler}
-	go func() { _ = srv.Serve(ln) }()
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			var receivedXFF string
+			var xffPresent bool
 
-	t.Cleanup(func() { _ = srv.Close() })
+			server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				receivedXFF = req.Header.Get("X-Forwarded-For")
+				xffPresent = req.Header.Get("X-Forwarded-For") != "" || len(req.Header["X-Forwarded-For"]) > 0
+				rw.WriteHeader(http.StatusOK)
+			}))
+			t.Cleanup(server.Close)
 
-	_, port, err := net.SplitHostPort(ln.Addr().String())
-	require.NoError(t, err)
+			builder := NewProxyBuilder(&transportManagerMock{}, static.FastProxyConfig{})
 
-	backendURL := fmt.Sprintf("%s://%s:%s", scheme, domain, port)
+			proxyHandler, err := builder.Build("", testhelpers.MustParseURL(server.URL), true, false)
+			require.NoError(t, err)
 
-	return backendURL, cert
+			ctx := t.Context()
+			if test.notAppendXFF {
+				ctx = proxyhttputil.SetNotAppendXFF(ctx)
+			}
+
+			req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
+			req = req.WithContext(ctx)
+			req.RemoteAddr = "192.0.2.1:12345"
+
+			if test.incomingXFF != "" {
+				req.Header.Set("X-Forwarded-For", test.incomingXFF)
+			}
+
+			res := httptest.NewRecorder()
+			proxyHandler.ServeHTTP(res, req)
+
+			assert.Equal(t, http.StatusOK, res.Code)
+
+			if test.expectedXFFNotPresent {
+				assert.False(t, xffPresent, "X-Forwarded-For header should not be present")
+			} else {
+				assert.Equal(t, test.expectedXFF, receivedXFF)
+			}
+		})
+	}
 }
 
 type transportManagerMock struct {

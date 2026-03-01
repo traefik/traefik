@@ -8,8 +8,6 @@ description: "Read the official Traefik Proxy documentation for an overview of t
 Controlling connections
 {: .subtitle }
 
-![Overview](../../assets/img/middleware/overview.png)
-
 ## Configuration Example
 
 ```yaml tab="Docker & Swarm"
@@ -129,4 +127,4 @@ http:
 
 Please take a look at the community-contributed plugins in the [plugin catalog](https://plugins.traefik.io/plugins).
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

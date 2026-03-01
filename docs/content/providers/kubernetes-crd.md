@@ -16,7 +16,7 @@ the Traefik engineering team developed a [Custom Resource Definition](https://ku
 
 ## Requirements
 
-{!kubernetes-requirements.md!}
+{% include-markdown "includes/kubernetes-requirements.md" %}
 
 !!! tip "All Steps for a Successful Deployment"
 
@@ -31,10 +31,10 @@ the Traefik engineering team developed a [Custom Resource Definition](https://ku
 
     ```bash
     # Install Traefik Resource Definitions:
-    kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.4/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml
+    kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.6/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml
     
     # Install RBAC for Traefik:
-    kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.4/docs/content/reference/dynamic-configuration/kubernetes-crd-rbac.yml
+    kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.6/docs/content/reference/dynamic-configuration/kubernetes-crd-rbac.yml
     ```
 
 ## Resource Configuration
@@ -363,6 +363,6 @@ providers:
 
 ## Full Example
 
-For additional information, refer to the [full example](../user-guides/crd-acme/index.md) with Let's Encrypt.
+For additional information on exposing services with Kubernetes, refer to the [Kubernetes guide](../expose/kubernetes/basic.md).
 
-{!traefik-for-business-applications.md!}
+{% include-markdown "includes/traefik-for-business-applications.md" %}

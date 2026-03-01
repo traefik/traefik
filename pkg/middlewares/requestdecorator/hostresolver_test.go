@@ -1,7 +1,6 @@
 package requestdecorator
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -43,7 +42,7 @@ func TestCNAMEFlatten(t *testing.T) {
 				ResolvDepth:  5,
 			}
 
-			flatH := hostResolver.CNAMEFlatten(context.Background(), test.domain)
+			flatH := hostResolver.CNAMEFlatten(t.Context(), test.domain)
 			assert.Equal(t, test.expectedDomain, flatH)
 		})
 	}

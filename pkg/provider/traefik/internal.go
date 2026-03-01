@@ -11,7 +11,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	"github.com/traefik/traefik/v3/pkg/config/static"
-	"github.com/traefik/traefik/v3/pkg/logs"
+	"github.com/traefik/traefik/v3/pkg/observability/logs"
 	"github.com/traefik/traefik/v3/pkg/provider"
 	"github.com/traefik/traefik/v3/pkg/safe"
 	"github.com/traefik/traefik/v3/pkg/tls"
@@ -231,7 +231,7 @@ func (i *Provider) entryPointModels(cfg *dynamic.Configuration) {
 			}
 		}
 
-		if len(ep.HTTP.Middlewares) == 0 && ep.HTTP.TLS == nil && defaultRuleSyntax == "" && ep.Observability == nil {
+		if len(ep.HTTP.Middlewares) == 0 && ep.HTTP.TLS == nil && defaultRuleSyntax == "" && ep.Observability == nil && ep.HTTP.EncodedCharacters == nil {
 			continue
 		}
 
@@ -240,11 +240,24 @@ func (i *Provider) entryPointModels(cfg *dynamic.Configuration) {
 			Middlewares:       ep.HTTP.Middlewares,
 		}
 
+		if ep.HTTP.EncodedCharacters != nil {
+			httpModel.DeniedEncodedPathCharacters = &dynamic.RouterDeniedEncodedPathCharacters{
+				AllowEncodedSlash:         ep.HTTP.EncodedCharacters.AllowEncodedSlash,
+				AllowEncodedBackSlash:     ep.HTTP.EncodedCharacters.AllowEncodedBackSlash,
+				AllowEncodedPercent:       ep.HTTP.EncodedCharacters.AllowEncodedPercent,
+				AllowEncodedQuestionMark:  ep.HTTP.EncodedCharacters.AllowEncodedQuestionMark,
+				AllowEncodedSemicolon:     ep.HTTP.EncodedCharacters.AllowEncodedSemicolon,
+				AllowEncodedHash:          ep.HTTP.EncodedCharacters.AllowEncodedHash,
+				AllowEncodedNullCharacter: ep.HTTP.EncodedCharacters.AllowEncodedNullCharacter,
+			}
+		}
+
 		if ep.Observability != nil {
 			httpModel.Observability = dynamic.RouterObservabilityConfig{
-				AccessLogs: ep.Observability.AccessLogs,
-				Tracing:    ep.Observability.Tracing,
-				Metrics:    ep.Observability.Metrics,
+				AccessLogs:     ep.Observability.AccessLogs,
+				Metrics:        ep.Observability.Metrics,
+				Tracing:        ep.Observability.Tracing,
+				TraceVerbosity: ep.Observability.TraceVerbosity,
 			}
 		}
 
