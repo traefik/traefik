@@ -1764,7 +1764,7 @@ the information is propagated upwards to its parent.
     If HealthCheck is enabled for a given service, but any of its descendants does
     not have it enabled, the creation of the service will fail.
 
-    HealthCheck on a Failover service can be defined currently only with the [File provider](../../../install-configuration/providers/others/file.md). 
+    HealthCheck on a Failover service can currently only be defined with the [File](../../providers/file.md) provider.
 
 ```yaml tab="YAML"
 ## Dynamic configuration
