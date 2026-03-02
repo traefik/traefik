@@ -288,11 +288,7 @@ func (in *Failover) DeepCopyInto(out *Failover) {
 	*out = *in
 	in.Service.DeepCopyInto(&out.Service)
 	in.Fallback.DeepCopyInto(&out.Fallback)
-	if in.Errors != nil {
-		in, out := &in.Errors, &out.Errors
-		*out = new(FailoverError)
-		(*in).DeepCopyInto(*out)
-	}
+	in.Errors.DeepCopyInto(&out.Errors)
 	return
 }
 

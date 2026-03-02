@@ -109,7 +109,7 @@ type Failover struct {
 	// Fallback defines the fallback service to use when the main service becomes unhealthy.
 	Fallback LoadBalancerSpec `json:"fallback"`
 	// Errors defines the configuration for handling errors.
-	Errors *FailoverError `json:"errors,omitempty"`
+	Errors FailoverError `json:"errors"`
 }
 
 // +k8s:deepcopy-gen=true

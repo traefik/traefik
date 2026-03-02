@@ -3479,6 +3479,7 @@ spec:
                     - name
                     type: object
                 required:
+                - errors
                 - fallback
                 - service
                 type: object
