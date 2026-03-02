@@ -1764,7 +1764,7 @@ the information is propagated upwards to its parent.
     If HealthCheck is enabled for a given service, but any of its descendants does
     not have it enabled, the creation of the service will fail.
 
-    HealthCheck on a Failover service can be defined with the [File](../../providers/file.md) and [Kubernetes CRD](../../providers/kubernetes-crd.md) providers.
+    HealthCheck on a Failover service can be defined currently only with the [File provider](../../../install-configuration/providers/others/file.md). 
 
 ```yaml tab="YAML"
 ## Dynamic configuration

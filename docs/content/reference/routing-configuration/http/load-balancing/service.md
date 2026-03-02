@@ -909,7 +909,7 @@ HealthCheck enables automatic self-healthcheck for this service, i.e. if the mai
 
     If HealthCheck is enabled for a given service and any of its descendants does not have it enabled, the creation of the service will fail.
 
-    HealthCheck on a Failover service can be defined with the [File](../../../install-configuration/providers/others/file.md) and [Kubernetes CRD](../../../install-configuration/providers/kubernetes/kubernetes-crd.md) providers.
+    HealthCheck on a Failover service can be defined currently only with the [File provider](../../../install-configuration/providers/others/file.md). 
 
 ```yaml tab="Structured (YAML)"
 ## Routing configuration
