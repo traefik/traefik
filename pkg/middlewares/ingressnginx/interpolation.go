@@ -15,16 +15,16 @@ import (
 // This the list of supported NGINX variables for interpolation.
 // It is not exhaustive, but covers the most commonly used ones in Ingress NGINX annotations.
 const (
-	scheme        = "$scheme"
-	host          = "$host"
-	httpHeaders   = "$http_"
-	hostname      = "$hostname"
-	requestURI    = "$request_uri"
+	scheme        = "scheme"
+	host          = "host"
+	httpHeaders   = "http_"
+	hostname      = "hostname"
+	requestURI    = "request_uri"
 	requestMethod = "$request_method"
-	queryString   = "$query_string"
-	args          = "$args"
-	arg           = "$arg_"
-	remoteAddress = "$remote_addr"
+	queryString   = "query_string"
+	args          = "args"
+	arg           = "arg_"
+	remoteAddress = "remote_addr"
 	uri           = "$uri"
 	documentURI   = "$document_uri"
 	serverName    = "$server_name"
@@ -35,14 +35,14 @@ const (
 	isArgs        = "$is_args"
 
 	// Variables set by ingress-nginx template.
-	bestHTTPHost          = "$best_http_host"
-	escapedRequestURI     = "$escaped_request_uri"
+	bestHTTPHost          = "best_http_host"
+	escapedRequestURI     = "escaped_request_uri"
 	proxyAddXForwardedFor = "$proxy_add_x_forwarded_for"
 )
 
-// varRegexp is a regular expression to match NGINX variables in the form of $variable, $variable_name,
+// varRegexp is a regular expression to match NGINX variables in the form of $variable or $variable_name,
 // or capture group references $1-$9.
-var varRegexp = regexp.MustCompile(`\$[a-zA-Z_][a-zA-Z0-9_]*|\$[1-9]`)
+var varRegexp = regexp.MustCompile(`\$\{?([a-zA-Z_][a-zA-Z0-9_]*)}?|\$[1-9]`)
 
 // ReplaceVariables replaces NGINX variables in the given string with their corresponding values from the HTTP request.
 // Today this supports the `$scheme`, `$host`, `$http_*`, `$best_http_host`, `$hostname`, `$request_uri`,
@@ -52,7 +52,8 @@ var varRegexp = regexp.MustCompile(`\$[a-zA-Z_][a-zA-Z0-9_]*|\$[1-9]`)
 // Custom variables can be passed through the vars param.
 func ReplaceVariables(str string, req *http.Request, vars map[string]string) string {
 	return varRegexp.ReplaceAllStringFunc(str, func(variable string) string {
-		val, err := variableValue(variable, req, vars)
+		groups := varRegexp.FindStringSubmatch(variable)
+		val, err := variableValue(groups[1], req, vars)
 		if err != nil {
 			log.Ctx(req.Context()).Debug().Err(err).Msgf("Error replacing variable: %s", variable)
 			return variable
