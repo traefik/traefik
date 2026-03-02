@@ -359,13 +359,13 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 		ingressConfig := parseIngressConfig(ing)
 
 		for _, rule := range ing.Spec.Rules {
-			hosts[strings.ToLower(rule.Host)] = true
+			hosts[rule.Host] = true
 
 			if srvSnippet := ptr.Deref(ingressConfig.ServerSnippet, ""); srvSnippet != "" {
-				if serverSnippets[strings.ToLower(rule.Host)] != "" {
+				if serverSnippets[rule.Host] != "" {
 					logger.Debug().Msgf("Ignoring Server snippet because it is already defined for Host: %s", rule.Host)
 				} else {
-					serverSnippets[strings.ToLower(rule.Host)] = srvSnippet
+					serverSnippets[rule.Host] = srvSnippet
 				}
 			}
 		}
@@ -409,7 +409,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 			clientAuthTLSOptionName = tlsOptName
 		}
 
-		namedServersTransport, err := p.buildServersTransport(ingress.Namespace, ingress.Name, ingressConfig)
+		namedServersTransport, err := p.buildServersTransport(ctxIngress, ingress.Namespace, ingress.Name, ingress.IngressConfig)
 		if err != nil {
 			logger.Error().Err(err).Msg("Ignoring Ingress cannot create proxy SSL configuration")
 			continue
@@ -595,7 +595,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 				}
 
 				rt := &dynamic.Router{
-					Rule: buildRule(rule.Host, pa, ingressConfig),
+					Rule: buildRule(ctxIngress, rule.Host, pa, ingress.IngressConfig, hosts),
 					// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
 					RuleSyntax: "default",
 					Service:    serviceName,
@@ -618,7 +618,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 					conf.HTTP.ServersTransports[namedServersTransport.Name] = namedServersTransport.ServersTransport
 				}
 
-				if err := p.applyMiddlewares(ingress.Namespace, ingress.Name, routerKey, pa.Path, rule.Host, &pa.Backend, hosts, ingress.IngressConfig, hasTLS, rt, conf, serverSnippets[strings.ToLower(rule.Host)]); err != nil {
+				if err := p.applyMiddlewares(ingress.Namespace, ingress.Name, routerKey, pa.Path, rule.Host, &pa.Backend, hosts, ingress.IngressConfig, hasTLS, rt, conf, serverSnippets[rule.Host]); err != nil {
 					logger.Error().Err(err).Msg("Error applying middlewares")
 				}
 			}
@@ -1252,7 +1252,6 @@ func applyFromToWwwRedirect(hosts map[string]bool, ruleHost, routerName string, 
 		return
 	}
 
-	ruleHost = strings.ToLower(ruleHost)
 	wwwType := strings.HasPrefix(ruleHost, "www.")
 	wildcardType := strings.HasPrefix(ruleHost, "*.")
 	bypass := wwwType && hosts[strings.TrimPrefix(ruleHost, "www.")] || !wwwType && hosts["www."+ruleHost] || wildcardType
