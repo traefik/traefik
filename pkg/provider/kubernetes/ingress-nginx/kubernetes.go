@@ -388,7 +388,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 			clientAuthTLSOptionName = tlsOptName
 		}
 
-		namedServersTransport, err := p.buildServersTransport(ingress.Namespace, ingress.Name, ingressConfig)
+		namedServersTransport, err := p.buildServersTransport(ctxIngress, ingress.Namespace, ingress.Name, ingressConfig)
 		if err != nil {
 			logger.Error().Err(err).Msg("Ignoring Ingress cannot create proxy SSL configuration")
 			continue
@@ -615,7 +615,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 	return conf
 }
 
-func (p *Provider) buildServersTransport(namespace, name string, cfg ingressConfig) (*namedServersTransport, error) {
+func (p *Provider) buildServersTransport(ctx context.Context, namespace, name string, cfg ingressConfig) (*namedServersTransport, error) {
 	proxyConnectTimeout := ptr.Deref(cfg.ProxyConnectTimeout, p.ProxyConnectTimeout)
 	proxyReadTimeout := ptr.Deref(cfg.ProxyReadTimeout, p.ProxyReadTimeout)
 	proxySendTimeout := ptr.Deref(cfg.ProxySendTimeout, p.ProxySendTimeout)
@@ -628,6 +628,17 @@ func (p *Provider) buildServersTransport(namespace, name string, cfg ingressConf
 				WriteTimeout: ptypes.Duration(time.Duration(proxySendTimeout) * time.Second),
 			},
 		},
+	}
+
+	if proxyHTTPVersion := ptr.Deref(cfg.ProxyHTTPVersion, ""); proxyHTTPVersion != "" {
+		switch proxyHTTPVersion {
+		case "1.1":
+			nst.ServersTransport.DisableHTTP2 = true
+		case "1.0":
+			log.Ctx(ctx).Warn().Msg("Value '1.0' is not supported with proxy-http-version, ignoring annotation")
+		default:
+			log.Ctx(ctx).Warn().Msgf("Invalid proxy-http-version value: %q, ignoring annotation", proxyHTTPVersion)
+		}
 	}
 
 	if scheme := parseBackendProtocol(ptr.Deref(cfg.BackendProtocol, "HTTP")); scheme != "https" {
