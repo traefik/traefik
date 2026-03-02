@@ -3336,6 +3336,65 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
+			desc: "Custom HTTP Errors without default backend",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-custom-http-errors.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-custom-http-errors-rule-0-path-0": {
+							Rule:        "Host(`whoami.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-custom-http-errors-whoami-80",
+							Middlewares: []string{"default-ingress-with-custom-http-errors-rule-0-path-0-retry"},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-custom-http-errors-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{Attempts: 3},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-custom-http-errors-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-with-custom-http-errors",
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-custom-http-errors": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:  ptypes.Duration(60 * time.Second),
+								ReadTimeout:  ptypes.Duration(60 * time.Second),
+								WriteTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
 			desc: "Default backend annotation",
 			paths: []string{
 				"services.yml",

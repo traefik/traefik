@@ -1014,8 +1014,6 @@ func (p *Provider) applyCustomHTTPErrors(namespace, ingressName, routerName stri
 		return errors.New("targeted ingress backend has no service")
 	}
 
-	// TODO: here we always use the default backend as a fallback, but it is not guaranteed to be created,
-	// so we should check if it exists before and create a dummy service if not, which is too complicated to check without pre computed model.
 	serviceName := defaultBackendName
 	if defaultBackend := ptr.Deref(config.DefaultBackend, ""); defaultBackend != "" {
 		backend := netv1.IngressBackend{Service: &netv1.IngressServiceBackend{Name: defaultBackend}}
@@ -1026,6 +1024,10 @@ func (p *Provider) applyCustomHTTPErrors(namespace, ingressName, routerName stri
 
 		serviceName = fmt.Sprintf("default-backend-%s", routerName)
 		conf.HTTP.Services[serviceName] = service
+	} else if _, ok := conf.HTTP.Services[defaultBackendName]; !ok {
+		// No default backend available (no annotation and no global default).
+		// Skip the middleware — matches nginx behavior where errors pass through.
+		return nil
 	}
 
 	k8sServiceName := targetedService.Service.Name
