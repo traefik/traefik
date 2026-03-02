@@ -359,13 +359,13 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 		ingressConfig := parseIngressConfig(ing)
 
 		for _, rule := range ing.Spec.Rules {
-			hosts[rule.Host] = true
+			hosts[strings.ToLower(rule.Host)] = true
 
 			if srvSnippet := ptr.Deref(ingressConfig.ServerSnippet, ""); srvSnippet != "" {
-				if serverSnippets[rule.Host] != "" {
+				if serverSnippets[strings.ToLower(rule.Host)] != "" {
 					logger.Debug().Msgf("Ignoring Server snippet because it is already defined for Host: %s", rule.Host)
 				} else {
-					serverSnippets[rule.Host] = srvSnippet
+					serverSnippets[strings.ToLower(rule.Host)] = srvSnippet
 				}
 			}
 		}
@@ -618,7 +618,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 					conf.HTTP.ServersTransports[namedServersTransport.Name] = namedServersTransport.ServersTransport
 				}
 
-				if err := p.applyMiddlewares(ingress.Namespace, ingress.Name, routerKey, pa.Path, rule.Host, &pa.Backend, hosts, ingress.IngressConfig, hasTLS, rt, conf, serverSnippets[rule.Host]); err != nil {
+				if err := p.applyMiddlewares(ingress.Namespace, ingress.Name, routerKey, pa.Path, rule.Host, &pa.Backend, hosts, ingress.IngressConfig, hasTLS, rt, conf, serverSnippets[strings.ToLower(rule.Host)]); err != nil {
 					logger.Error().Err(err).Msg("Error applying middlewares")
 				}
 			}

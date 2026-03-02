@@ -29,6 +29,13 @@ func Test_New(t *testing.T) {
 			expectError: false,
 		},
 		{
+			desc: "succeeds with valid always server snippet",
+			config: dynamic.Snippet{
+				ServerSnippet: `add_header X-Test "value" always;`,
+			},
+			expectError: false,
+		},
+		{
 			desc: "succeeds with valid configuration snippet",
 			config: dynamic.Snippet{
 				ConfigurationSnippet: `add_header X-Test "value";`,
@@ -415,8 +422,8 @@ proxy_set_header Accept-Encoding "";
 			requestHeaders: map[string]string{
 				"Accept-Encoding": "gzip, deflate",
 			},
-			expectedRequestHeaders: map[string]string{
-				"Accept-Encoding": "",
+			unexpectedResponseHeaders: []string{
+				"Accept-Encoding",
 			},
 		},
 		{
@@ -461,8 +468,10 @@ add_header X-Always "present";
 `,
 			method: http.MethodGet,
 			expectedResponseHeaders: map[string]string{
-				"X-Is-Post": "",
-				"X-Always":  "present",
+				"X-Always": "present",
+			},
+			unexpectedResponseHeaders: []string{
+				"X-Is-Post",
 			},
 		},
 		{
@@ -517,8 +526,10 @@ add_header X-Always "present";
 				"X-Custom": "other-value",
 			},
 			expectedResponseHeaders: map[string]string{
-				"X-Matched": "",
-				"X-Always":  "present",
+				"X-Always": "present",
+			},
+			unexpectedResponseHeaders: []string{
+				"X-Matched",
 			},
 		},
 		{
@@ -547,8 +558,10 @@ add_header X-Processed "yes";
 				"X-Custom": "ADMIN-request",
 			},
 			expectedResponseHeaders: map[string]string{
-				"X-Not-Admin": "",
 				"X-Processed": "yes",
+			},
+			unexpectedResponseHeaders: []string{
+				"X-Not-Admin",
 			},
 		},
 		{
@@ -593,8 +606,10 @@ set $shared "from-server";
 add_header X-Config "config-value";
 `,
 			expectedResponseHeaders: map[string]string{
-				"X-Server": "",
 				"X-Config": "config-value",
+			},
+			unexpectedResponseHeaders: []string{
+				"X-Server",
 			},
 		},
 		{
@@ -891,8 +906,8 @@ more_set_headers "X-Foo: server-value";
 			configurationSnippet: `
 more_set_headers "X-Foo:";
 `,
-			expectedResponseHeaders: map[string]string{
-				"X-Foo": "",
+			unexpectedResponseHeaders: []string{
+				"X-Foo",
 			},
 		},
 		{
@@ -903,8 +918,8 @@ more_set_headers "X-Foo: server-value";
 			configurationSnippet: `
 more_set_headers "X-Foo";
 `,
-			expectedResponseHeaders: map[string]string{
-				"X-Foo": "",
+			unexpectedResponseHeaders: []string{
+				"X-Foo",
 			},
 		},
 		{
@@ -925,8 +940,8 @@ more_set_input_headers "X-Foo";
 			requestHeaders: map[string]string{
 				"X-Foo": "original-value",
 			},
-			expectedRequestHeaders: map[string]string{
-				"X-Foo": "",
+			unexpectedResponseHeaders: []string{
+				"X-Foo",
 			},
 		},
 		{
@@ -935,8 +950,8 @@ more_set_input_headers "X-Foo";
 more_set_headers "X-Remove-Me: some-value";
 more_clear_headers "X-Remove-Me";
 `,
-			expectedResponseHeaders: map[string]string{
-				"X-Remove-Me": "",
+			unexpectedResponseHeaders: []string{
+				"X-Remove-Me",
 			},
 		},
 		{
@@ -976,9 +991,11 @@ more_set_headers "X-Visible: visible";
 more_clear_headers "X-Hidden-*";
 `,
 			expectedResponseHeaders: map[string]string{
-				"X-Hidden-One": "",
-				"X-Hidden-Two": "",
-				"X-Visible":    "visible",
+				"X-Visible": "visible",
+			},
+			unexpectedResponseHeaders: []string{
+				"X-Hidden-One",
+				"X-Hidden-Two",
 			},
 		},
 		{
@@ -989,8 +1006,8 @@ more_clear_input_headers "X-Secret";
 			requestHeaders: map[string]string{
 				"X-Secret": "secret-value",
 			},
-			expectedRequestHeaders: map[string]string{
-				"X-Secret": "",
+			unexpectedResponseHeaders: []string{
+				"X-Secret",
 			},
 		},
 		{
@@ -1004,9 +1021,11 @@ more_clear_input_headers "X-Custom-*";
 				"X-Other":      "other",
 			},
 			expectedRequestHeaders: map[string]string{
-				"X-Custom-One": "",
-				"X-Custom-Two": "",
-				"X-Other":      "other",
+				"X-Other": "other",
+			},
+			unexpectedResponseHeaders: []string{
+				"X-Custom-One",
+				"X-Custom-Two",
 			},
 		},
 		{
@@ -1017,8 +1036,8 @@ more_set_headers "X-Server-Header: server-value";
 			configurationSnippet: `
 more_clear_headers "X-Server-Header";
 `,
-			expectedResponseHeaders: map[string]string{
-				"X-Server-Header": "",
+			unexpectedResponseHeaders: []string{
+				"X-Server-Header",
 			},
 		},
 		{
@@ -1317,8 +1336,8 @@ more_set_input_headers -r "X-Existing: new-value";
 			configurationSnippet: `
 more_set_input_headers -r "X-Missing: new-value";
 `,
-			expectedRequestHeaders: map[string]string{
-				"X-Missing": "",
+			unexpectedResponseHeaders: []string{
+				"X-Missing",
 			},
 		},
 		// --- more_set_headers with multiple headers per directive ---
@@ -1341,8 +1360,8 @@ more_clear_input_headers "X-Remove";
 			requestHeaders: map[string]string{
 				"X-Remove": "should-be-removed",
 			},
-			expectedRequestHeaders: map[string]string{
-				"X-Remove": "",
+			unexpectedResponseHeaders: []string{
+				"X-Remove",
 			},
 		},
 		// --- rewrite last/break forwards to upstream ---
