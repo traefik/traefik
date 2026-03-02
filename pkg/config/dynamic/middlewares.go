@@ -59,6 +59,7 @@ type Middleware struct {
 	// ingress-nginx middlewares.
 	AuthTLSPassCertificateToUpstream *AuthTLSPassCertificateToUpstream `json:"authTLSPassCertificateToUpstream,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 	Snippet                          *Snippet                          `json:"snippet,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
+	RewriteTarget                    *RewriteTarget                    `json:"rewriteTarget,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -741,6 +742,19 @@ type ReplacePathRegex struct {
 	Regex string `json:"regex,omitempty" toml:"regex,omitempty" yaml:"regex,omitempty" export:"true"`
 	// Replacement defines the replacement path format, which can include captured variables.
 	Replacement string `json:"replacement,omitempty" toml:"replacement,omitempty" yaml:"replacement,omitempty" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// RewriteTarget holds the rewrite target middleware configuration used by ingress-nginx provider.
+// This middleware replaces the path of a URL.
+type RewriteTarget struct {
+	// Regex defines the regular expression used to match and capture the path from the request URL.
+	Regex string `json:"regex,omitempty" toml:"regex,omitempty" yaml:"regex,omitempty" export:"true"`
+	// Replacement defines the replacement path format, which can include captured variables.
+	Replacement string `json:"replacement,omitempty" toml:"replacement,omitempty" yaml:"replacement,omitempty" export:"true"`
+	// XForwardedPrefix defines the value of the X-Forwarded-Prefix header.
+	XForwardedPrefix string `json:"xForwardedPrefix,omitempty" toml:"xForwardedPrefix,omitempty" yaml:"xForwardedPrefix,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
