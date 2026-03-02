@@ -512,7 +512,8 @@ The mirrorerd service dedicated option are described below.
 ## Failover
 
 The failover service forwards all requests to a fallback service when the main service responds with specific HTTP status codes defined in the `errors` configuration.
-
+!!! Failover on Heathcheck Status
+  HealthCheck on a Failover service can be defined currently only with the [File provider](../../../install-configuration/providers/others/file.md).
 ### Configuration Example
 
 ```yaml tab="IngressRoute"
