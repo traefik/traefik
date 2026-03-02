@@ -342,9 +342,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 		}
 
 		for _, rule := range ing.Spec.Rules {
-			if !hosts[rule.Host] {
-				hosts[rule.Host] = true
-			}
+			hosts[strings.ToLower(rule.Host)] = true
 		}
 	}
 
@@ -576,7 +574,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 				}
 
 				rt := &dynamic.Router{
-					Rule: buildRule(rule.Host, pa, ingressConfig),
+					Rule: buildRule(ctxIngress, rule.Host, pa, ingressConfig, hosts),
 					// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
 					RuleSyntax: "default",
 					Service:    serviceName,
@@ -1195,6 +1193,7 @@ func applyFromToWwwRedirect(hosts map[string]bool, ruleHost, routerName string, 
 		return
 	}
 
+	ruleHost = strings.ToLower(ruleHost)
 	wwwType := strings.HasPrefix(ruleHost, "www.")
 	wildcardType := strings.HasPrefix(ruleHost, "*.")
 	bypass := wwwType && hosts[strings.TrimPrefix(ruleHost, "www.")] || !wwwType && hosts["www."+ruleHost] || wildcardType
@@ -1693,10 +1692,32 @@ func basicAuthUsers(secret *corev1.Secret, authSecretType string) (dynamic.Users
 	return users, nil
 }
 
-func buildRule(host string, pa netv1.HTTPIngressPath, config ingressConfig) string {
+func buildRule(ctx context.Context, host string, pa netv1.HTTPIngressPath, config ingressConfig, allHosts map[string]bool) string {
 	var rules []string
-	if len(host) > 0 {
-		rules = append(rules, buildHostRule(host))
+	if host != "" {
+		hosts := []string{host}
+		if config.ServerAlias != nil {
+			for _, alias := range *config.ServerAlias {
+				if _, ok := allHosts[strings.ToLower(alias)]; ok {
+					log.Ctx(ctx).Debug().
+						Str("alias", alias).
+						Msg("Skipping server-alias because it is already defined as a host in another Ingress")
+					continue
+				}
+				hosts = append(hosts, alias)
+			}
+		}
+
+		var hostRules []string
+		for _, h := range hosts {
+			hostRules = append(hostRules, buildHostRule(h))
+		}
+
+		if len(hostRules) > 1 {
+			rules = append(rules, "("+strings.Join(hostRules, " || ")+")")
+		} else {
+			rules = append(rules, hostRules[0])
+		}
 	}
 
 	if len(pa.Path) > 0 {
