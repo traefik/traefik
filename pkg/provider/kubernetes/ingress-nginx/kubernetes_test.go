@@ -4329,8 +4329,8 @@ func TestLoadIngresses(t *testing.T) {
 										URL: "http://10.10.0.2:80",
 									},
 								},
-								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -4397,8 +4397,8 @@ func TestLoadIngresses(t *testing.T) {
 									{URL: "http://10.10.0.1:80"},
 									{URL: "http://10.10.0.2:80"},
 								},
-								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
@@ -4411,8 +4411,8 @@ func TestLoadIngresses(t *testing.T) {
 									{URL: "http://10.10.0.1:80"},
 									{URL: "http://10.10.0.2:80"},
 								},
-								Strategy:         "wrr",
-								PassHostHeader:   ptr.To(true),
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
 								},
