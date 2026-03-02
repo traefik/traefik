@@ -1,9 +1,11 @@
 package snippet
 
 import (
+	"bufio"
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
@@ -175,6 +177,21 @@ func (w *snippetResponseWriter) Write(b []byte) (int, error) {
 // to discover the underlying writer's capabilities (Flusher, Hijacker, etc.).
 func (w *snippetResponseWriter) Unwrap() http.ResponseWriter {
 	return w.ResponseWriter
+}
+
+// Flush implements http.Flusher.
+func (w *snippetResponseWriter) Flush() {
+	if f, ok := w.ResponseWriter.(http.Flusher); ok {
+		f.Flush()
+	}
+}
+
+// Hijack implements http.Hijacker.
+func (w *snippetResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	if h, ok := w.ResponseWriter.(http.Hijacker); ok {
+		return h.Hijack()
+	}
+	return nil, nil, fmt.Errorf("not a hijacker: %T", w.ResponseWriter)
 }
 
 // writeResponse writes the final response based on the action context.
