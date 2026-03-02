@@ -43,7 +43,7 @@ func initStatusArray(size int, value int) []int {
 
 func TestBalancer(t *testing.T) {
 	rng := newTestRand()
-	balancer := New(false)
+	balancer := New(false, "")
 
 	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "first")
@@ -66,7 +66,7 @@ func TestBalancer(t *testing.T) {
 }
 
 func TestBalancerNoService(t *testing.T) {
-	balancer := New(false)
+	balancer := New(false, "")
 
 	recorder := httptest.NewRecorder()
 	balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
@@ -75,7 +75,7 @@ func TestBalancerNoService(t *testing.T) {
 }
 
 func TestBalancerOneServerZeroWeight(t *testing.T) {
-	balancer := New(false)
+	balancer := New(false, "")
 
 	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "first")
@@ -97,7 +97,7 @@ type key string
 const serviceName key = "serviceName"
 
 func TestBalancerNoServiceUp(t *testing.T) {
-	balancer := New(false)
+	balancer := New(false, "")
 
 	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusInternalServerError)
@@ -117,7 +117,7 @@ func TestBalancerNoServiceUp(t *testing.T) {
 }
 
 func TestBalancerOneServerDown(t *testing.T) {
-	balancer := New(false)
+	balancer := New(false, "")
 
 	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "first")
@@ -139,7 +139,7 @@ func TestBalancerOneServerDown(t *testing.T) {
 
 func TestBalancerDownThenUp(t *testing.T) {
 	rng := newTestRand()
-	balancer := New(false)
+	balancer := New(false, "")
 
 	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "first")
@@ -171,7 +171,7 @@ func TestBalancerDownThenUp(t *testing.T) {
 
 func TestBalancerPropagate(t *testing.T) {
 	rng := newTestRand()
-	balancer1 := New(true)
+	balancer1 := New(true, "")
 
 	balancer1.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "first")
@@ -182,7 +182,7 @@ func TestBalancerPropagate(t *testing.T) {
 		rw.WriteHeader(http.StatusOK)
 	}), Int(1), false)
 
-	balancer2 := New(true)
+	balancer2 := New(true, "")
 	balancer2.Add("third", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "third")
 		rw.WriteHeader(http.StatusOK)
@@ -192,7 +192,7 @@ func TestBalancerPropagate(t *testing.T) {
 		rw.WriteHeader(http.StatusOK)
 	}), Int(1), false)
 
-	topBalancer := New(true)
+	topBalancer := New(true, "")
 	topBalancer.Add("balancer1", balancer1, Int(1), false)
 	_ = balancer1.RegisterStatusUpdater(func(up bool) {
 		topBalancer.SetStatus(context.WithValue(t.Context(), serviceName, "top"), "balancer1", up)
@@ -248,7 +248,7 @@ func TestBalancerPropagate(t *testing.T) {
 }
 
 func TestBalancerAllServersZeroWeight(t *testing.T) {
-	balancer := New(false)
+	balancer := New(false, "")
 
 	balancer.Add("test", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), Int(0), false)
 	balancer.Add("test2", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), Int(0), false)
@@ -261,7 +261,7 @@ func TestBalancerAllServersZeroWeight(t *testing.T) {
 
 func TestSticky(t *testing.T) {
 	rng := newTestRand()
-	balancer := New(false)
+	balancer := New(false, "")
 
 	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "first")
@@ -290,6 +290,71 @@ func TestSticky(t *testing.T) {
 	assert.True(t, recorder.save["second"] == 0 || recorder.save["second"] == 10)
 	// from one IP, the choice between server must be the same for the 10 requests
 	// weight does not impose what would be chosen from 1 client
+}
+
+func TestCustomSticky(t *testing.T) {
+	testCases := []struct {
+		desc string
+		key  string
+	}{
+		{
+			desc: "variable interpolation",
+			key:  "$request_uri",
+		},
+		{
+			desc: "multiple variables",
+			key:  "$request_uri$host",
+		},
+		// {
+		// 	desc: "variable + text",
+		// 	key:  "${request_uri}-text-value", // TODO: to be tested using e2e and confirm nginx behavior
+		// },
+		{
+			desc: "variable + text",
+			key:  "$request_uri-text-value", // TODO: to be tested using e2e and confirm nginx behavior
+		},
+		{
+			desc: "no key configured - fallback to ip",
+			key:  "",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			rng := newTestRand()
+			balancer := New(false, test.key)
+
+			balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				rw.Header().Set("server", "first")
+				rw.WriteHeader(http.StatusOK)
+			}), Int(1), false)
+
+			balancer.Add("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				rw.Header().Set("server", "second")
+				rw.WriteHeader(http.StatusOK)
+			}), Int(2), false)
+
+			recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
+
+			req := httptest.NewRequest(http.MethodGet, "/", nil)
+			req.RemoteAddr = genIPAddress(rng)
+			for range 10 {
+				for _, cookie := range recorder.Result().Cookies() {
+					req.AddCookie(cookie)
+				}
+				recorder.ResponseRecorder = httptest.NewRecorder()
+
+				balancer.ServeHTTP(recorder, req)
+			}
+
+			assert.True(t, recorder.save["first"] == 0 || recorder.save["first"] == 10)
+			assert.True(t, recorder.save["second"] == 0 || recorder.save["second"] == 10)
+			// from one IP, the choice between server must be the same for the 10 requests
+			// weight does not impose what would be chosen from 1 client
+		})
+	}
 }
 
 func Int(v int) *int { return &v }

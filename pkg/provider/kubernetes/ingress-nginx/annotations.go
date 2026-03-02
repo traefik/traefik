@@ -51,6 +51,8 @@ type ingressConfig struct {
 
 	ServiceUpstream *bool `annotation:"nginx.ingress.kubernetes.io/service-upstream"`
 
+	UpstreamHashBy *string `annotation:"nginx.ingress.kubernetes.io/upstream-hash-by"`
+
 	BackendProtocol *string `annotation:"nginx.ingress.kubernetes.io/backend-protocol"`
 
 	ProxySSLSecret           *string `annotation:"nginx.ingress.kubernetes.io/proxy-ssl-secret"`

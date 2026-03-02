@@ -722,6 +722,11 @@ func (p *Provider) buildService(namespace string, backend netv1.IngressBackend, 
 		}
 	}
 
+	if ptr.Deref(cfg.UpstreamHashBy, "") != "" {
+		lb.Strategy = dynamic.BalancerStrategyHRW
+		lb.NginxUpstreamHashBy = cfg.UpstreamHashBy
+	}
+
 	scheme := parseBackendProtocol(ptr.Deref(cfg.BackendProtocol, "HTTP"))
 
 	svc := &dynamic.Service{LoadBalancer: lb}
