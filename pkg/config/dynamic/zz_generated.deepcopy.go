@@ -814,6 +814,11 @@ func (in *HighestRandomWeight) DeepCopyInto(out *HighestRandomWeight) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
+	if in.NginxUpstreamHashBy != nil {
+		in, out := &in.NginxUpstreamHashBy, &out.NginxUpstreamHashBy
+		*out = new(string)
+		**out = **in
+	}
 	if in.HealthCheck != nil {
 		in, out := &in.HealthCheck, &out.HealthCheck
 		*out = new(HealthCheck)
@@ -1694,6 +1699,11 @@ func (in *ServersLoadBalancer) DeepCopyInto(out *ServersLoadBalancer) {
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
+	}
+	if in.NginxUpstreamHashBy != nil {
+		in, out := &in.NginxUpstreamHashBy, &out.NginxUpstreamHashBy
+		*out = new(string)
+		**out = **in
 	}
 	if in.HealthCheck != nil {
 		in, out := &in.HealthCheck, &out.HealthCheck
