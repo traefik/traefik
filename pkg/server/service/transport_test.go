@@ -971,34 +971,36 @@ func TestKerberosRoundTripper(t *testing.T) {
 
 func TestConnectionTimeouts(t *testing.T) {
 	testcases := []struct {
-		desc                     string
-		readTimeout              ptypes.Duration
-		writeTimeout             ptypes.Duration
-		serverResponseDelay      time.Duration
-		expectedReadTimeoutError bool
+		desc                      string
+		readTimeout               ptypes.Duration
+		writeTimeout              ptypes.Duration
+		serverWriteDelay          time.Duration
+		serverReadDelay           time.Duration
+		expectedReadTimeoutError  bool
+		expectedWriteTimeoutError bool
 	}{
 		{
 			desc:                     "read timeout - server delays longer than client timeout",
 			readTimeout:              ptypes.Duration(50 * time.Millisecond),
-			serverResponseDelay:      150 * time.Millisecond,
+			serverWriteDelay:         150 * time.Millisecond,
 			expectedReadTimeoutError: true,
 		},
 		{
 			desc:                     "read succeeds with sufficient timeout",
 			readTimeout:              ptypes.Duration(500 * time.Millisecond),
-			serverResponseDelay:      100 * time.Millisecond,
+			serverWriteDelay:         100 * time.Millisecond,
 			expectedReadTimeoutError: false,
 		},
 		{
 			desc:                     "no read timeout set - should succeed",
-			serverResponseDelay:      100 * time.Millisecond,
+			serverWriteDelay:         100 * time.Millisecond,
 			expectedReadTimeoutError: false,
 		},
 		{
-			desc:                     "write timeout set on connection",
-			writeTimeout:             ptypes.Duration(200 * time.Millisecond),
-			serverResponseDelay:      50 * time.Millisecond,
-			expectedReadTimeoutError: false,
+			desc:                      "write timeout set on connection",
+			writeTimeout:              ptypes.Duration(10 * time.Millisecond),
+			serverReadDelay:           50 * time.Millisecond,
+			expectedWriteTimeoutError: true,
 		},
 	}
 
@@ -1017,12 +1019,26 @@ func TestConnectionTimeouts(t *testing.T) {
 				}
 				defer srvConn.Close()
 
-				if test.serverResponseDelay > 0 {
-					time.Sleep(test.serverResponseDelay)
+				_, err = srvConn.Write([]byte("HELLO1"))
+				require.NoError(t, err)
+				if test.serverWriteDelay > 0 {
+					time.Sleep(test.serverWriteDelay)
 				}
-				_, err = srvConn.Write([]byte("HELLO"))
+				_, err = srvConn.Write([]byte("HELLO2"))
 				if err != nil && !errors.Is(err, net.ErrClosed) {
 					t.Logf("server write error: %v", err)
+				}
+
+				buf := make([]byte, 6)
+				_, err = srvConn.Read(buf)
+				require.NoError(t, err)
+				require.Equal(t, "HELLO3", string(buf))
+				if test.serverReadDelay > 0 {
+					time.Sleep(test.serverReadDelay)
+				}
+				_, err = srvConn.Read(buf)
+				if err != nil && !errors.Is(err, net.ErrClosed) {
+					t.Logf("server read error: %v", err)
 				}
 			}()
 
@@ -1044,7 +1060,10 @@ func TestConnectionTimeouts(t *testing.T) {
 			}()
 
 			// Attempt to read from the connection - this tests the read timeout behavior.
-			buf := make([]byte, 10)
+			buf := make([]byte, 6)
+			_, err = conn.Read(buf)
+			require.NoError(t, err)
+			require.Equal(t, "HELLO1", string(buf))
 			_, readErr := conn.Read(buf)
 
 			if test.expectedReadTimeoutError {
@@ -1060,17 +1079,23 @@ func TestConnectionTimeouts(t *testing.T) {
 				}
 			}
 
-			// Attempt a write to verify write timeouts are set (if configured).
-			// Note: Write timeouts are difficult to test reliably because the OS buffer
-			// may accept writes without blocking. This just verifies the connection
-			// accepts the write and has the timeout configured.
-			if test.writeTimeout > 0 {
-				_, writeErr := conn.Write([]byte("test"))
-				// Accept any outcome - the important thing is the timeout was configured
-				_ = writeErr
+			_, err = conn.Write([]byte("HELLO3"))
+			require.NoError(t, err)
+			_, writeErr := conn.Write([]byte("HELLO4"))
+
+			if test.expectedWriteTimeoutError {
+				require.Error(t, writeErr, "expected write to timeout")
+				var netErr net.Error
+				ok := errors.As(writeErr, &netErr)
+				require.True(t, ok, "expected net.Error, got %T: %v", writeErr, writeErr)
+				require.True(t, netErr.Timeout(), "expected timeout error from Write, got: %v", writeErr)
+			} else if writeErr != nil && !errors.Is(writeErr, io.EOF) {
+				var netErr net.Error
+				if errors.As(writeErr, &netErr) && netErr.Timeout() {
+					t.Fatalf("unexpected timeout error on write: %v", writeErr)
+				}
 			}
 
-			// Wait for accept goroutine to finish.
 			select {
 			case <-acceptDone:
 			case <-time.After(6 * time.Second):
