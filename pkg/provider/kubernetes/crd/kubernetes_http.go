@@ -768,16 +768,12 @@ func (c configBuilder) buildFailover(ctx context.Context, tService *traefikv1alp
 	}
 
 	failover := &dynamic.Failover{
-		Service:     fullNameMain,
-		Fallback:    fullNameFallback,
-		HealthCheck: &dynamic.HealthCheck{},
-	}
-
-	if tService.Spec.Failover.Errors != nil {
-		failover.Errors = &dynamic.FailoverError{
+		Service:  fullNameMain,
+		Fallback: fullNameFallback,
+		Errors: &dynamic.FailoverError{
 			Status:              tService.Spec.Failover.Errors.Status,
 			MaxRequestBodyBytes: tService.Spec.Failover.Errors.MaxRequestBodyBytes,
-		}
+		},
 	}
 
 	conf[id] = &dynamic.Service{
