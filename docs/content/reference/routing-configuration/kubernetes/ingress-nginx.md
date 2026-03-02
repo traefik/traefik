@@ -329,6 +329,7 @@ The following annotations are organized by category for easier navigation.
 | <a id="opt-nginx-ingress-kubernetes-ioupstream-vhost" href="#opt-nginx-ingress-kubernetes-ioupstream-vhost" title="#opt-nginx-ingress-kubernetes-ioupstream-vhost">`nginx.ingress.kubernetes.io/upstream-vhost`</a> |                                                                                                  |
 | <a id="opt-nginx-ingress-kubernetes-iocustom-headers" href="#opt-nginx-ingress-kubernetes-iocustom-headers" title="#opt-nginx-ingress-kubernetes-iocustom-headers">`nginx.ingress.kubernetes.io/custom-headers`</a> | Header whitelisting, similar to `global-allowed-response-headers` NGINX config is not supported. |
 | <a id="opt-nginx-ingress-kubernetes-iodefault-backend" href="#opt-nginx-ingress-kubernetes-iodefault-backend" title="#opt-nginx-ingress-kubernetes-iodefault-backend">`nginx.ingress.kubernetes.io/default-backend`</a> | Specifies a fallback service within the same namespace as the Ingress resource used to handle requests when the primary backend service has no active endpoints. If the specified service exposes multiple ports, the first port will receive the traffic.                      |
+| <a id="opt-nginx-ingress-kubernetes-ioproxy-http-version" href="#opt-nginx-ingress-kubernetes-ioproxy-http-version" title="#opt-nginx-ingress-kubernetes-ioproxy-http-version">`nginx.ingress.kubernetes.io/proxy-http-version`</a> | Controls HTTP protocol version for backend communication. Supported value: `"1.1"` (disables HTTP/2 to backend). Value `"1.0"` is not supported and will log a warning. |
 
 ### CORS
 
@@ -383,12 +384,6 @@ The following annotations are organized by category for easier navigation.
 | <a id="opt-nginx-ingress-kubernetes-ioproxy-connect-timeout" href="#opt-nginx-ingress-kubernetes-ioproxy-connect-timeout" title="#opt-nginx-ingress-kubernetes-ioproxy-connect-timeout">`nginx.ingress.kubernetes.io/proxy-connect-timeout`</a> | Timeout can be defined globally at the provider level using the [`proxyConnectTimeout` option](../../../install-configuration/providers/kubernetes/kubernetes-ingress-nginx/#opt-providers-kubernetesIngressNGINX-proxyConnectTimeout). |
 | <a id="opt-nginx-ingress-kubernetes-ioproxy-send-timeout" href="#opt-nginx-ingress-kubernetes-ioproxy-send-timeout" title="#opt-nginx-ingress-kubernetes-ioproxy-send-timeout">`nginx.ingress.kubernetes.io/proxy-send-timeout`</a> | Timeout can be defined globally at the provider level using the [`proxySendTimeout` option](../../../install-configuration/providers/kubernetes/kubernetes-ingress-nginx/#opt-providers-kubernetesIngressNGINX-proxySendTimeout).  |
 | <a id="opt-nginx-ingress-kubernetes-ioproxy-read-timeout" href="#opt-nginx-ingress-kubernetes-ioproxy-read-timeout" title="#opt-nginx-ingress-kubernetes-ioproxy-read-timeout">`nginx.ingress.kubernetes.io/proxy-read-timeout`</a> | Timeout can be defined globally at the provider level using the [`proxyReadTimeout` option](../../../install-configuration/providers/kubernetes/kubernetes-ingress-nginx/#opt-providers-kubernetesIngressNGINX-proxyReadTimeout). |
-
-### Backend Protocol
-
-| Annotation                                          | Limitations / Notes                                                                                                                                                                                                                     |
-|-----------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| <a id="opt-nginx-ingress-kubernetes-ioproxy-http-version" href="#opt-nginx-ingress-kubernetes-ioproxy-http-version" title="#opt-nginx-ingress-kubernetes-ioproxy-http-version">`nginx.ingress.kubernetes.io/proxy-http-version`</a> | Controls HTTP protocol version for backend communication. Supported value: `"1.1"` (disables HTTP/2 to backend). Value `"1.0"` is not supported and will log a warning. |
 
 ### Retry
 
