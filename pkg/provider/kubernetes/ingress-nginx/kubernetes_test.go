@@ -1158,7 +1158,7 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc: "Upstream x-forwarded-prefix with missing rewrite-target",
+			desc: "X-forwarded-prefix with missing rewrite-target",
 			paths: []string{
 				"services.yml",
 				"ingressclasses.yml",
@@ -1208,9 +1208,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-x-forwarded-prefix-no-rewrite-target": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -1219,7 +1220,7 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			desc: "Upstream x-forwarded-prefix",
+			desc: "X-forwarded-prefix",
 			paths: []string{
 				"services.yml",
 				"ingressclasses.yml",
@@ -1311,16 +1312,18 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-x-forwarded-prefix": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 						"default-ingress-with-x-forwarded-prefix-regex": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
