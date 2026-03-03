@@ -371,23 +371,16 @@ The following annotations are organized by category for easier navigation.
 
 ### IP Whitelist
 
-| Annotation                                                                                                                                                                                                                                          | Limitations / Notes |
-| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
-| <a id="opt-nginx-ingress-kubernetes-iowhitelist-source-range" href="#opt-nginx-ingress-kubernetes-iowhitelist-source-range" title="#opt-nginx-ingress-kubernetes-iowhitelist-source-range">`nginx.ingress.kubernetes.io/whitelist-source-range`</a> |                     |
-| <a id="opt-nginx-ingress-kubernetes-ioallowlist-source-range" href="#opt-nginx-ingress-kubernetes-ioallowlist-source-range" title="#opt-nginx-ingress-kubernetes-ioallowlist-source-range">`nginx.ingress.kubernetes.io/allowlist-source-range`</a> |                     |
-
-### Rate Limiting
-
-| Annotation                                                                                                                                                                                      | Limitations / Notes                                                                             |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| <a id="opt-nginx-ingress-kubernetes-iolimit-rps" href="#opt-nginx-ingress-kubernetes-iolimit-rps" title="#opt-nginx-ingress-kubernetes-iolimit-rps">`nginx.ingress.kubernetes.io/limit-rps`</a> | Configures RateLimit middleware with a default burst of 5x `limit-rps` for NGINX compatibility. |
-
-### IP Whitelist
-
 | Annotation                                                                                                                                                                                                                                          | Limitations / Notes                                                                        |
 |-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------|
 | <a id="opt-nginx-ingress-kubernetes-iowhitelist-source-range" href="#opt-nginx-ingress-kubernetes-iowhitelist-source-range" title="#opt-nginx-ingress-kubernetes-iowhitelist-source-range">`nginx.ingress.kubernetes.io/whitelist-source-range`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-ioallowlist-source-range" href="#opt-nginx-ingress-kubernetes-ioallowlist-source-range" title="#opt-nginx-ingress-kubernetes-ioallowlist-source-range">`nginx.ingress.kubernetes.io/allowlist-source-range`</a> |                                                      |
+
+### Rate Limiting
+
+| Annotation                                                                                                                                                                                      | Limitations / Notes                                                                                       |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |-----------------------------------------------------------------------------------------------------------|
+| <a id="opt-nginx-ingress-kubernetes-iolimit-rps" href="#opt-nginx-ingress-kubernetes-iolimit-rps" title="#opt-nginx-ingress-kubernetes-iolimit-rps">`nginx.ingress.kubernetes.io/limit-rps`</a> | Exceeding the limit returns `429 Too Many Requests` instead of NGINX's default `503 Service Unavailable`. |
 
 ### Buffering
 
@@ -429,7 +422,9 @@ The following annotations are organized by category for easier navigation.
 - **TLS/Backend Protocols**: AUTO_HTTP, FCGI and some TLS options are not supported in Traefik.
 - **Path Handling**: Traefik preserves trailing slashes by default; NGINX removes them unless configured otherwise.
 - **Retry**: NGINX guarantee that the next retry will be passed to the next server, while on Traefik there is a possibility that the retry would be passed to the same server.
-- **Rate Limiting**: NGINX uses the Leaky Bucket algorithm (GCRA), while Traefik uses the Token Bucket algorithm. By mapping `limit-rps` to Traefik's `Average` and defaulting `Burst` to 5x that value, Traefik achieves a traffic-shaping effect similar to NGINX's default behavior.
+- **Rate Limiting**: NGINX uses the **Leaky Bucket** algorithm, where requests are queued and drained at a fixed rate. Once the queue (burst) is full, excess requests are rejected immediately with `503`.
+Traefik uses the **Token Bucket** algorithm, where the bucket starts full at `burst` tokens, each request consumes one token, and tokens refill at the `limit-rps` rate. When the bucket is empty, the request is either delayed until more tokens are available or rejected with `429` if the delay would be too long.
+In practice, Traefik is slightly more lenient under bursty load, as it smooths out burst traffic rather than dropping it, but the steady-state throughput cap is similar.
 
 ### Unsupported Annotations
 

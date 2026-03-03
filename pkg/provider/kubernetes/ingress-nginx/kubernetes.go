@@ -62,6 +62,9 @@ const (
 	// ingress-nginx uses 3 as default value.
 	defaultProxyNextUpstreamTries = 3
 
+	// https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/nginx-configuration/annotations.md#rate-limiting
+	defaultLimitBurstMultiplier = 5
+
 	// https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#upstream-keepalive-timeout
 	defaultUpstreamKeepaliveTimeout = 60
 )
@@ -1200,7 +1203,7 @@ func (p *Provider) applyMiddlewares(namespace, ingressName, routerKey, rulePath,
 
 	applyUpstreamVhost(routerKey, ingressConfig, rt, conf)
 
-	applyRateLimitConfiguration(routerKey, ingressConfig, rt, conf)
+	applyLimitRPSConfiguration(routerKey, ingressConfig, rt, conf)
 
 	if err := p.applyAuthTLSPassCertificateToUpstream(namespace, routerKey, ingressConfig, rt, conf); err != nil {
 		return fmt.Errorf("applying auth tls pass certificate to upstream: %w", err)
@@ -1304,18 +1307,18 @@ func (p *Provider) applyCustomHTTPErrors(namespace, ingressName, routerName stri
 	return nil
 }
 
-func applyRateLimitConfiguration(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
-	if ingressConfig.LimitRPS == nil {
+func applyLimitRPSConfiguration(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
+	if ingressConfig.LimitRPS == nil || *ingressConfig.LimitRPS <= 0 {
 		return
 	}
 
 	rateLimit := &dynamic.RateLimit{
 		Average: int64(*ingressConfig.LimitRPS),
 		Period:  ptypes.Duration(time.Second),
-		Burst:   int64(*ingressConfig.LimitRPS) * 5, // Default Burst is 5x limit-rps for NGINX compatibility
+		Burst:   int64(*ingressConfig.LimitRPS) * defaultLimitBurstMultiplier,
 	}
 
-	rateLimitMiddlewareName := routerName + "-ratelimit"
+	rateLimitMiddlewareName := routerName + "-limit-rps"
 	conf.HTTP.Middlewares[rateLimitMiddlewareName] = &dynamic.Middleware{
 		RateLimit: rateLimit,
 	}
