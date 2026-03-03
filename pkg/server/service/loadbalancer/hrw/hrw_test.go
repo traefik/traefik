@@ -7,8 +7,10 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -290,6 +292,49 @@ func TestSticky(t *testing.T) {
 	assert.True(t, recorder.save["second"] == 0 || recorder.save["second"] == 10)
 	// from one IP, the choice between server must be the same for the 10 requests
 	// weight does not impose what would be chosen from 1 client
+}
+
+func BenchmarkNextServer(b *testing.B) {
+	const ipPoolSize = 1024
+
+	testCases := []int{2, 8, 32, 128}
+	previousLogLevel := zerolog.GlobalLevel()
+	zerolog.SetGlobalLevel(zerolog.Disabled)
+	b.Cleanup(func() {
+		zerolog.SetGlobalLevel(previousLogLevel)
+	})
+
+	for _, serversCount := range testCases {
+		b.Run(strconv.Itoa(serversCount)+"_servers", func(b *testing.B) {
+			balancer := New(false)
+
+			for i := range serversCount {
+				name := "server-" + strconv.Itoa(i)
+				balancer.Add(name, http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), Int(1), false)
+			}
+
+			rng := rand.New(rand.NewSource(42))
+			ips := make([]string, ipPoolSize)
+			for i := range ips {
+				ips[i] = genIPAddress(rng)
+			}
+
+			index := 0
+			b.ReportAllocs()
+			b.ResetTimer()
+			for b.Loop() {
+				_, err := balancer.nextServer(ips[index])
+				if err != nil {
+					b.Fatal(err)
+				}
+
+				index++
+				if index == len(ips) {
+					index = 0
+				}
+			}
+		})
+	}
 }
 
 func Int(v int) *int { return &v }
