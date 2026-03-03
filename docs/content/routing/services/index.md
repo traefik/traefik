@@ -1559,7 +1559,7 @@ You can also omit the request body by setting the mirrorBody option to `false`.
 
 !!! info "Supported Providers"
 
-    This strategy can be defined currently with the [File](../../providers/file.md) or [IngressRoute](../../providers/kubernetes-crd.md) providers.
+    This strategy can be defined currently with the [File](../../providers/file.md), [IngressRoute](../../providers/kubernetes-crd.md), or [Docker](../../providers/docker.md) providers.
 
 ```yaml tab="YAML"
 ## Dynamic configuration

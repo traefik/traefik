@@ -88,6 +88,26 @@ With Docker, Traefik can leverage labels attached to a container to generate rou
           - traefik.http.services.admin-service.loadbalancer.server.port=9000
     ```
 
+??? example "Configuring Mirroring with Docker Labels"
+
+    In this example, traffic is routed to `appv1` on port `8080`, while 10% of requests are mirrored to `appv2` on port `8081`:
+
+    ```yaml
+    services:
+      my-container:
+        # ...
+        labels:
+          - traefik.http.routers.my-router.rule=Host(`example.com`)
+          - traefik.http.routers.my-router.service=mirrored-api
+          - traefik.http.services.mirrored-api.mirroring.service=appv1
+          - traefik.http.services.mirrored-api.mirroring.mirrors[0].name=appv2
+          - traefik.http.services.mirrored-api.mirroring.mirrors[0].percent=10
+          - traefik.http.services.appv1.loadbalancer.server.port=8080
+          - traefik.http.services.appv2.loadbalancer.server.port=8081
+    ```
+
+    See [mirroring](../services/index.md#mirroring-service) for more information.
+
 ## Routing Configuration
 
 !!! info "Labels"
@@ -472,6 +492,57 @@ you'd add the label `traefik.http.services.<name-of-your-choice>.loadbalancer.pa
 
     ```yaml
     - "traefik.http.services.myservice.loadbalancer.strategy=p2c"
+    ```
+
+#### Mirroring
+
+To configure a mirroring service via labels,
+add labels starting with `traefik.http.services.<name-of-your-choice>.mirroring.`.
+
+See [mirroring](../services/index.md#mirroring-service) for more information.
+
+??? info "`traefik.http.services.<service_name>.mirroring.service`"
+
+    Sets the main service that receives the original traffic.
+
+    ```yaml
+    - "traefik.http.services.myservice.mirroring.service=appv1"
+    ```
+
+??? info "`traefik.http.services.<service_name>.mirroring.mirrors[n].name`"
+
+    Sets the name of the nth mirror service.
+
+    ```yaml
+    - "traefik.http.services.myservice.mirroring.mirrors[0].name=appv2"
+    ```
+
+??? info "`traefik.http.services.<service_name>.mirroring.mirrors[n].percent`"
+
+    Sets the percentage of requests to mirror to the nth mirror service.
+    Default value is `0`.
+
+    ```yaml
+    - "traefik.http.services.myservice.mirroring.mirrors[0].percent=10"
+    ```
+
+??? info "`traefik.http.services.<service_name>.mirroring.mirrorbody`"
+
+    Sets whether the request body should be mirrored.
+    Default value is `true`.
+
+    ```yaml
+    - "traefik.http.services.myservice.mirroring.mirrorbody=false"
+    ```
+
+??? info "`traefik.http.services.<service_name>.mirroring.maxbodysize`"
+
+    Sets the maximum size allowed for the body of the request.
+    If the body is larger, the request is not mirrored.
+    Default value is `-1` (unlimited).
+
+    ```yaml
+    - "traefik.http.services.myservice.mirroring.maxbodysize=1024"
     ```
 
 ### Middleware
