@@ -145,16 +145,18 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-custom-headers": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 						"default-ingress-with-cross-namespace-headers": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -253,16 +255,18 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-custom-headers": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 						"default-ingress-with-cross-namespace-headers": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -351,16 +355,18 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-custom-headers": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 						"default-ingress-with-cross-namespace-headers": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -434,9 +440,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-no-annotation": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -512,9 +519,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-basicauth": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -581,9 +589,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-forwardauth": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -728,23 +737,26 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-ssl-redirect": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 						"default-ingress-without-ssl-redirect": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 						"default-ingress-with-force-ssl-redirect": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -869,9 +881,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-sticky": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -934,9 +947,10 @@ func TestLoadIngresses(t *testing.T) {
 							InsecureSkipVerify: false,
 							RootCAs:            []types.FileOrContent{"-----BEGIN CERTIFICATE-----"},
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -1005,9 +1019,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-cors": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -1063,9 +1078,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-service-upstream": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -1129,9 +1145,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-upstream-vhost": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -1190,9 +1207,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-use-regex": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -1257,9 +1275,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-rewrite-target": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -1321,9 +1340,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-rewrite-target-no-regex": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -1388,9 +1408,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-app-root": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -1449,9 +1470,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-app-root": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -1523,9 +1545,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-www-host": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -1597,9 +1620,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-host": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -1687,16 +1711,18 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-www-host": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 						"default-ingress-with-host": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -1813,9 +1839,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-whitelist-single-ip": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -1879,9 +1906,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-whitelist-single-cidr": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -1945,9 +1973,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-whitelist-multiple-ip-and-cidr": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -2006,9 +2035,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-whitelist-empty": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -2067,9 +2097,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-allowlist-empty": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -2133,9 +2164,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-allowlist-single-ip": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -2199,9 +2231,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-allowlist-single-cidr": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -2265,9 +2298,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-allowlist-multiple-ip-and-cidr": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -2333,9 +2367,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-permanent-redirect": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -2401,9 +2436,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-permanent-redirect": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -2469,9 +2505,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-permanent-redirect": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -2537,9 +2574,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-redirect": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -2605,9 +2643,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-temporal-redirect": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -2673,9 +2712,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-temporal-redirect": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -2741,9 +2781,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-temporal-redirect": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -2798,9 +2839,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-proxy-timeout": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(30 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(30 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -2855,9 +2897,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-proxy-timeout": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(30 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(30 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -2912,9 +2955,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-proxy-timeout": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(30 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(30 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -2990,9 +3034,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-auth-tls-secret": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -3101,9 +3146,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-auth-tls-verify-client": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -3222,9 +3268,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-custom-http-errors-and-default-backend": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -3325,9 +3372,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-custom-http-errors": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -3384,9 +3432,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-custom-http-errors": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -3443,9 +3492,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-default-backend-annotation": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -3512,9 +3562,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-proxy-body-size": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -3581,9 +3632,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-client-body-buffer-size": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -3650,9 +3702,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-proxy-body-size-and-client-body-buffer-size": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -3720,9 +3773,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-proxy-buffer-size": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -3790,9 +3844,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-proxy-buffers-number": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -3860,9 +3915,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-proxy-buffer-size-and-number": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -3930,9 +3986,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-proxy-max-temp-file-size": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -4014,9 +4071,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-auth-tls-pass-certificate-to-upstream": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -4125,16 +4183,18 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-proxy-next-upstream": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 						"default-ingress-with-proxy-next-upstream-off": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -4214,16 +4274,18 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-proxy-next-upstream-tries-unlimited": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 						"default-ingress-with-proxy-next-upstream-tries": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -4279,9 +4341,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-proxy-next-upstream-timeout": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -4341,9 +4404,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-server-alias": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -4423,16 +4487,18 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-primary-ingress": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 						"default-alias-ingress": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -4488,9 +4554,10 @@ func TestLoadIngresses(t *testing.T) {
 						"default-ingress-with-proxy-http-version": {
 							DisableHTTP2: true,
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -4545,9 +4612,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-proxy-http-version-unsupported": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
