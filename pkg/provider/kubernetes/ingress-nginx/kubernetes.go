@@ -1308,20 +1308,20 @@ func (p *Provider) applyCustomHTTPErrors(namespace, ingressName, routerName stri
 }
 
 func applyLimitRPSConfiguration(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
-	if ingressConfig.LimitRPS == nil || *ingressConfig.LimitRPS <= 0 {
+	limitRPS := ptr.Deref(ingressConfig.LimitRPS, 0)
+	if limitRPS <= 0 {
 		return
-	}
-
-	rateLimit := &dynamic.RateLimit{
-		Average: int64(*ingressConfig.LimitRPS),
-		Period:  ptypes.Duration(time.Second),
-		Burst:   int64(*ingressConfig.LimitRPS) * defaultLimitBurstMultiplier,
 	}
 
 	rateLimitMiddlewareName := routerName + "-limit-rps"
 	conf.HTTP.Middlewares[rateLimitMiddlewareName] = &dynamic.Middleware{
-		RateLimit: rateLimit,
+		RateLimit: &dynamic.RateLimit{
+			Average: int64(limitRPS),
+			Period:  ptypes.Duration(time.Second),
+			Burst:   int64(limitRPS) * defaultLimitBurstMultiplier,
+		},
 	}
+
 	rt.Middlewares = append(rt.Middlewares, rateLimitMiddlewareName)
 }
 
