@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -r \"fastProxy\\\\|FastProxy\\\\|fastproxy\" /c/Users/ginad/OneDrive/Documents/Traefik/traefik/ --include=*.go --include=*.yaml --include=*.yml --include=*.toml)"
+    ]
+  }
+}

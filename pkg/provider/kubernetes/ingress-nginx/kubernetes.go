@@ -1219,10 +1219,6 @@ func (p *Provider) applyMiddlewares(namespace, ingressName, routerKey, rulePath,
 		return fmt.Errorf("applying buffering: %w", err)
 	}
 
-	if err := applyForwardAuthConfiguration(routerKey, ingressConfig, rt, conf); err != nil {
-		return fmt.Errorf("applying forward auth: %w", err)
-	}
-
 	applyAllowedSourceRangeConfiguration(routerKey, ingressConfig, rt, conf)
 
 	applyCORSConfiguration(routerKey, ingressConfig, rt, conf)
@@ -1243,7 +1239,7 @@ func (p *Provider) applyMiddlewares(namespace, ingressName, routerKey, rulePath,
 		return fmt.Errorf("applying custom headers: %w", err)
 	}
 
-	if err := p.applySnippets(routerKey, serverSnippet, ingressConfig, rt, conf); err != nil {
+	if err := p.applySnippetsAndAuth(routerKey, serverSnippet, ingressConfig, rt, conf); err != nil {
 		return fmt.Errorf("applying snippets: %w", err)
 	}
 
@@ -1267,13 +1263,13 @@ func (p *Provider) applyMiddlewares(namespace, ingressName, routerKey, rulePath,
 	return nil
 }
 
-func (p *Provider) applySnippets(routerName, serverSnippet string, ingressConfig IngressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
+func (p *Provider) applySnippetsAndAuth(routerName, serverSnippet string, ingressConfig IngressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
 	configurationSnippet := ptr.Deref(ingressConfig.ConfigurationSnippet, "")
-	if serverSnippet == "" && configurationSnippet == "" {
+	if serverSnippet == "" && configurationSnippet == "" && ingressConfig.AuthURL == nil {
 		return nil
 	}
 
-	if !p.AllowSnippetAnnotations {
+	if (serverSnippet != "" || configurationSnippet != "") && !p.AllowSnippetAnnotations {
 		return errors.New("snippet annotations are not allowed")
 	}
 
@@ -1283,6 +1279,22 @@ func (p *Provider) applySnippets(routerName, serverSnippet string, ingressConfig
 			ServerSnippet:        serverSnippet,
 			ConfigurationSnippet: configurationSnippet,
 		},
+	}
+
+	if ingressConfig.AuthURL != nil {
+		if *ingressConfig.AuthURL == "" {
+			return errors.New("empty auth-url found in ingress annotations")
+		}
+
+		authResponseHeaders := strings.Split(ptr.Deref(ingressConfig.AuthResponseHeaders, ""), ",")
+
+		conf.HTTP.Middlewares[snippetMiddlewareName].Snippet.Auth = &dynamic.Auth{
+			Address:             *ingressConfig.AuthURL,
+			AuthResponseHeaders: authResponseHeaders,
+			AuthSigninURL:       ptr.Deref(ingressConfig.AuthSignin, ""),
+			Snippet:             ptr.Deref(ingressConfig.AuthSnippet, ""),
+			Method:              ptr.Deref(ingressConfig.AuthMethod, ""),
+		}
 	}
 
 	rt.Middlewares = append(rt.Middlewares, snippetMiddlewareName)
@@ -1875,31 +1887,6 @@ func (p *Provider) applySSLRedirectConfiguration(routerName string, ingressConfi
 
 	// An Ingress that is not forcing sslRedirect and has no TLS configuration does not redirect,
 	// even if sslRedirect is enabled.
-}
-
-func applyForwardAuthConfiguration(routerName string, ingressConfig IngressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
-	if ingressConfig.AuthURL == nil {
-		return nil
-	}
-
-	if *ingressConfig.AuthURL == "" {
-		return errors.New("empty auth-url found in ingress annotations")
-	}
-
-	authResponseHeaders := strings.Split(ptr.Deref(ingressConfig.AuthResponseHeaders, ""), ",")
-
-	forwardMiddlewareName := routerName + "-forward-auth"
-	conf.HTTP.Middlewares[forwardMiddlewareName] = &dynamic.Middleware{
-		ForwardAuth: &dynamic.ForwardAuth{
-			Address:             *ingressConfig.AuthURL,
-			AuthResponseHeaders: authResponseHeaders,
-			AuthSigninURL:       ptr.Deref(ingressConfig.AuthSignin, ""),
-			Interpolate:         true,
-		},
-	}
-	rt.Middlewares = append(rt.Middlewares, forwardMiddlewareName)
-
-	return nil
 }
 
 // discoverCanaryBackends checks if the canary ingress is matching any of the existing ingress rules,
