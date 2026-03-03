@@ -76,8 +76,6 @@ type ingressConfig struct {
 	WhitelistSourceRange *string `annotation:"nginx.ingress.kubernetes.io/whitelist-source-range"`
 	AllowlistSourceRange *string `annotation:"nginx.ingress.kubernetes.io/allowlist-source-range"`
 
-	UpstreamKeepaliveTimeout *int `annotation:"nginx.ingress.kubernetes.io/upstream-keepalive-timeout"`
-
 	CustomHeaders *string `annotation:"nginx.ingress.kubernetes.io/custom-headers"`
 	UpstreamVhost *string `annotation:"nginx.ingress.kubernetes.io/upstream-vhost"`
 

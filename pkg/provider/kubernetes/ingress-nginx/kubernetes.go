@@ -61,6 +61,9 @@ const (
 	// https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#proxy-next-upstream-tries
 	// ingress-nginx uses 3 as default value.
 	defaultProxyNextUpstreamTries = 3
+
+	// https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#upstream-keepalive-timeout
+	defaultUpstreamKeepaliveTimeout = 60
 )
 
 var nginxSizeRegexp = regexp.MustCompile(`^(?i)\s*([0-9]+)\s*([bkmg]?)\s*$`)
@@ -121,6 +124,7 @@ type Provider struct {
 	ProxyNextUpstreamTries   int      `description:"Limits the number of possible tries if the backend server does not reply." json:"proxyNextUpstreamTries,omitempty" toml:"proxyNextUpstreamTries,omitempty" yaml:"proxyNextUpstreamTries,omitempty" export:"true"`
 	ProxyNextUpstreamTimeout int      `description:"Limits the total elapsed time to retry the request if the backend server does not reply. Timeout value is unitless and in seconds." json:"proxyNextUpstreamTimeout,omitempty" toml:"proxyNextUpstreamTimeout,omitempty" yaml:"proxyNextUpstreamTimeout,omitempty" export:"true"`
 	CustomHTTPErrors         []string `description:"Defines which status should result in calling the default backend to return an error page." json:"customHTTPErrors,omitempty" toml:"customHTTPErrors,omitempty" yaml:"customHTTPErrors,omitempty" export:"true"`
+	UpstreamKeepaliveTimeout int      `description:"Defines the idle timeout for keep-alive connections to upstream servers. Timeout value is unitless and in seconds." json:"upstreamKeepaliveTimeout,omitempty" toml:"upstreamKeepaliveTimeout,omitempty" yaml:"upstreamKeepaliveTimeout,omitempty" export:"true"`
 
 	AllowCrossNamespaceResources bool     `description:"Allow Ingress to reference resources (e.g. ConfigMaps, Secrets) in different namespaces." json:"allowCrossNamespaceResources,omitempty" toml:"allowCrossNamespaceResources,omitempty" yaml:"allowCrossNamespaceResources,omitempty" export:"true"`
 	GlobalAllowedResponseHeaders []string `description:"List of allowed response headers inside the custom headers annotations." json:"globalAllowedResponseHeaders,omitempty" toml:"globalAllowedResponseHeaders,omitempty" yaml:"globalAllowedResponseHeaders,omitempty" export:"true"`
@@ -148,6 +152,7 @@ func (p *Provider) SetDefaults() {
 	p.ProxyBuffersNumber = defaultProxyBuffersNumber
 	p.ProxyNextUpstream = defaultProxyNextUpstream
 	p.ProxyNextUpstreamTries = defaultProxyNextUpstreamTries
+	p.UpstreamKeepaliveTimeout = defaultUpstreamKeepaliveTimeout
 }
 
 // Init the provider.
@@ -623,9 +628,10 @@ func (p *Provider) buildServersTransport(ctx context.Context, namespace, name st
 		Name: provider.Normalize(namespace + "-" + name),
 		ServersTransport: &dynamic.ServersTransport{
 			ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-				DialTimeout:  ptypes.Duration(time.Duration(proxyConnectTimeout) * time.Second),
-				ReadTimeout:  ptypes.Duration(time.Duration(proxyReadTimeout) * time.Second),
-				WriteTimeout: ptypes.Duration(time.Duration(proxySendTimeout) * time.Second),
+				DialTimeout:     ptypes.Duration(time.Duration(proxyConnectTimeout) * time.Second),
+				ReadTimeout:     ptypes.Duration(time.Duration(proxyReadTimeout) * time.Second),
+				WriteTimeout:    ptypes.Duration(time.Duration(proxySendTimeout) * time.Second),
+				IdleConnTimeout: ptypes.Duration(time.Duration(p.UpstreamKeepaliveTimeout) * time.Second),
 			},
 		},
 	}
@@ -639,10 +645,6 @@ func (p *Provider) buildServersTransport(ctx context.Context, namespace, name st
 		default:
 			log.Ctx(ctx).Warn().Msgf("Invalid proxy-http-version value: %q, ignoring annotation", proxyHTTPVersion)
 		}
-	}
-
-	if cfg.UpstreamKeepaliveTimeout != nil {
-		nst.ServersTransport.ForwardingTimeouts.IdleConnTimeout = ptypes.Duration(time.Duration(*cfg.UpstreamKeepaliveTimeout) * time.Second)
 	}
 
 	if scheme := parseBackendProtocol(ptr.Deref(cfg.BackendProtocol, "HTTP")); scheme != "https" {
