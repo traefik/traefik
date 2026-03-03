@@ -254,115 +254,6 @@ func Test_New(t *testing.T) {
 	}
 }
 
-func Test_ServeHTTP_responseHeaders(t *testing.T) {
-	testCases := []struct {
-		desc                 string
-		serverSnippet        string
-		configurationSnippet string
-		expectedHeaders      map[string]string
-	}{
-		{
-			desc:            "add_header server snippet adds simple header",
-			serverSnippet:   `add_header X-Custom "custom-value";`,
-			expectedHeaders: map[string]string{"X-Custom": "custom-value"},
-		},
-		{
-			desc:            "add_header server snippet adds header without quotes",
-			serverSnippet:   `add_header X-Simple simple;`,
-			expectedHeaders: map[string]string{"X-Simple": "simple"},
-		},
-		{
-			desc:                 "add_header configuration snippet adds simple header",
-			configurationSnippet: `add_header X-Custom "custom-value";`,
-			expectedHeaders:      map[string]string{"X-Custom": "custom-value"},
-		},
-		{
-			desc:                 "add_header configuration snippet adds header without quotes",
-			configurationSnippet: `add_header X-Simple simple;`,
-			expectedHeaders:      map[string]string{"X-Simple": "simple"},
-		},
-		{
-			desc:                 "add_header configuration snippet overrides server snippet",
-			serverSnippet:        `add_header X-Server server-value;`,
-			configurationSnippet: `add_header X-Config config-value;`,
-			expectedHeaders: map[string]string{
-				"X-Server": "",
-				"X-Config": "config-value",
-			},
-		},
-		{
-			desc:            "more_set_headers server snippet sets header",
-			serverSnippet:   `more_set_headers "X-Custom:custom-value";`,
-			expectedHeaders: map[string]string{"X-Custom": "custom-value"},
-		},
-		{
-			desc:                 "more_set_headers configuration snippet sets header",
-			configurationSnippet: `more_set_headers "X-Custom:custom-value";`,
-			expectedHeaders:      map[string]string{"X-Custom": "custom-value"},
-		},
-		{
-			desc:                 "more_set_headers both snippets set headers",
-			serverSnippet:        `more_set_headers "X-Server:server-value";`,
-			configurationSnippet: `more_set_headers "X-Config:config-value";`,
-			expectedHeaders: map[string]string{
-				"X-Server": "server-value",
-				"X-Config": "config-value",
-			},
-		},
-		{
-			desc:                 "more_set_headers both snippets override same header",
-			serverSnippet:        `more_set_headers "X-Header:server-value";`,
-			configurationSnippet: `more_set_headers "X-Header:config-value";`,
-			expectedHeaders: map[string]string{
-				"X-Header": "config-value",
-			},
-		},
-		{
-			desc:                 "more_set_headers with spaces",
-			configurationSnippet: `more_set_headers "X-Header: config-value ";`,
-			expectedHeaders: map[string]string{
-				"X-Header": "config-value",
-			},
-		},
-		{
-			desc:                 "more_set_headers with multiple headers in one directive",
-			configurationSnippet: `more_set_headers "X-First: first-value" "X-Second: second-value";`,
-			expectedHeaders: map[string]string{
-				"X-First":  "first-value",
-				"X-Second": "second-value",
-			},
-		},
-	}
-
-	for _, test := range testCases {
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusOK)
-			})
-
-			config := &dynamic.Snippet{
-				ServerSnippet:        test.serverSnippet,
-				ConfigurationSnippet: test.configurationSnippet,
-			}
-
-			handler, err := New(t.Context(), next, config, "test-snippet")
-			require.NoError(t, err)
-
-			req := httptest.NewRequest(http.MethodGet, "/test", nil)
-			rw := httptest.NewRecorder()
-
-			handler.ServeHTTP(rw, req)
-
-			assert.Equal(t, http.StatusOK, rw.Code)
-			for header, value := range test.expectedHeaders {
-				assert.Equal(t, value, rw.Header().Get(header))
-			}
-		})
-	}
-}
-
 func Test_Directives(t *testing.T) {
 	testCases := []struct {
 		desc                      string
@@ -381,6 +272,77 @@ func Test_Directives(t *testing.T) {
 		expectedQuery             string
 		expectedRedirectURL       string
 	}{
+		{
+			desc:                    "add_header server snippet adds simple header",
+			serverSnippet:           `add_header X-Custom "custom-value";`,
+			expectedResponseHeaders: map[string]string{"X-Custom": "custom-value"},
+		},
+		{
+			desc:                    "add_header server snippet adds header without quotes",
+			serverSnippet:           `add_header X-Simple simple;`,
+			expectedResponseHeaders: map[string]string{"X-Simple": "simple"},
+		},
+		{
+			desc:                    "add_header configuration snippet adds simple header",
+			configurationSnippet:    `add_header X-Custom "custom-value";`,
+			expectedResponseHeaders: map[string]string{"X-Custom": "custom-value"},
+		},
+		{
+			desc:                    "add_header configuration snippet adds header without quotes",
+			configurationSnippet:    `add_header X-Simple simple;`,
+			expectedResponseHeaders: map[string]string{"X-Simple": "simple"},
+		},
+		{
+			desc:                 "add_header configuration snippet overrides server snippet",
+			serverSnippet:        `add_header X-Server server-value;`,
+			configurationSnippet: `add_header X-Config config-value;`,
+			expectedResponseHeaders: map[string]string{
+				"X-Config": "config-value",
+			},
+			unexpectedResponseHeaders: []string{"X-Server"},
+		},
+		{
+			desc:                    "more_set_headers server snippet sets header",
+			serverSnippet:           `more_set_headers "X-Custom:custom-value";`,
+			expectedResponseHeaders: map[string]string{"X-Custom": "custom-value"},
+		},
+		{
+			desc:                    "more_set_headers configuration snippet sets header",
+			configurationSnippet:    `more_set_headers "X-Custom:custom-value";`,
+			expectedResponseHeaders: map[string]string{"X-Custom": "custom-value"},
+		},
+		{
+			desc:                 "more_set_headers both snippets set headers",
+			serverSnippet:        `more_set_headers "X-Server:server-value";`,
+			configurationSnippet: `more_set_headers "X-Config:config-value";`,
+			expectedResponseHeaders: map[string]string{
+				"X-Server": "server-value",
+				"X-Config": "config-value",
+			},
+		},
+		{
+			desc:                 "more_set_headers both snippets override same header",
+			serverSnippet:        `more_set_headers "X-Header:server-value";`,
+			configurationSnippet: `more_set_headers "X-Header:config-value";`,
+			expectedResponseHeaders: map[string]string{
+				"X-Header": "config-value",
+			},
+		},
+		{
+			desc:                 "more_set_headers with spaces",
+			configurationSnippet: `more_set_headers "X-Header: config-value ";`,
+			expectedResponseHeaders: map[string]string{
+				"X-Header": "config-value",
+			},
+		},
+		{
+			desc:                 "more_set_headers with multiple headers in one directive",
+			configurationSnippet: `more_set_headers "X-First: first-value" "X-Second: second-value";`,
+			expectedResponseHeaders: map[string]string{
+				"X-First":  "first-value",
+				"X-Second": "second-value",
+			},
+		},
 		{
 			desc: "add_header with variable interpolation",
 			configurationSnippet: `
