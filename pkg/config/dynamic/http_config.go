@@ -244,15 +244,16 @@ type WeightedRoundRobin struct {
 // HighestRandomWeight is a weighted sticky load-balancer of services.
 type HighestRandomWeight struct {
 	Services []HRWService `json:"services,omitempty" toml:"services,omitempty" yaml:"services,omitempty" export:"true"`
-	// NginxUpstreamHashBy enables the customization of the hashing key.
-	// It can be set to a specific text value, a nginx variable or a combination of both.
-	NginxUpstreamHashBy *string `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-"`
 	// HealthCheck enables automatic self-healthcheck for this service, i.e.
 	// whenever one of its children is reported as down, this service becomes aware of it,
 	// and takes it into account (i.e. it ignores the down child) when running the
 	// load-balancing algorithm. In addition, if the parent of this service also has
 	// HealthCheck enabled, this service reports to its parent any status change.
 	HealthCheck *HealthCheck `json:"healthCheck,omitempty" toml:"healthCheck,omitempty" yaml:"healthCheck,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
+
+	// NginxUpstreamHashBy enables the customization of the hashing key.
+	// It can be set to a specific text value, a nginx variable or a combination of both.
+	NginxUpstreamHashBy string `json:"nginxUpstreamHashBy,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -366,9 +367,6 @@ type ServersLoadBalancer struct {
 	Sticky   *Sticky          `json:"sticky,omitempty" toml:"sticky,omitempty" yaml:"sticky,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
 	Servers  []Server         `json:"servers,omitempty" toml:"servers,omitempty" yaml:"servers,omitempty" label-slice-as-struct:"server" export:"true"`
 	Strategy BalancerStrategy `json:"strategy,omitempty" toml:"strategy,omitempty" yaml:"strategy,omitempty" export:"true"`
-	// NginxUpstreamHashBy enables the customization of the hashing key.
-	// It can be set to a specific text value, a nginx variable or a combination of both.
-	NginxUpstreamHashBy *string `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-"`
 	// HealthCheck enables regular active checks of the responsiveness of the
 	// children servers of this load-balancer. To propagate status changes (e.g. all
 	// servers of this service are down) upwards, HealthCheck must also be enabled on
@@ -379,6 +377,10 @@ type ServersLoadBalancer struct {
 	PassHostHeader     *bool                     `json:"passHostHeader" toml:"passHostHeader" yaml:"passHostHeader" export:"true"`
 	ResponseForwarding *ResponseForwarding       `json:"responseForwarding,omitempty" toml:"responseForwarding,omitempty" yaml:"responseForwarding,omitempty" export:"true"`
 	ServersTransport   string                    `json:"serversTransport,omitempty" toml:"serversTransport,omitempty" yaml:"serversTransport,omitempty" export:"true"`
+
+	// NginxUpstreamHashBy enables the customization of the hashing key.
+	// It can be set to a specific text value, a nginx variable or a combination of both.
+	NginxUpstreamHashBy string `json:"nginxUpstreamHashBy,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
 
 // Merge merges the other load balancer into this one.

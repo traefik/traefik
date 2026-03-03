@@ -305,13 +305,13 @@ func TestCustomSticky(t *testing.T) {
 			desc: "multiple variables",
 			key:  "$request_uri$host",
 		},
-		// {
-		// 	desc: "variable + text",
-		// 	key:  "${request_uri}-text-value", // TODO: to be tested using e2e and confirm nginx behavior
-		// },
 		{
 			desc: "variable + text",
-			key:  "$request_uri-text-value", // TODO: to be tested using e2e and confirm nginx behavior
+			key:  "${request_uri}-text-value",
+		},
+		{
+			desc: "variable + text",
+			key:  "$request_uri-text-value",
 		},
 		{
 			desc: "no key configured - fallback to ip",

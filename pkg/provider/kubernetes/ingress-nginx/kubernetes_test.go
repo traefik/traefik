@@ -5384,7 +5384,7 @@ func TestLoadIngresses(t *testing.T) {
 									{URL: "http://10.10.0.2:80"},
 								},
 								Strategy:            "hrw",
-								NginxUpstreamHashBy: ptr.To("$request_uri"),
+								NginxUpstreamHashBy: "$request_uri",
 								PassHostHeader:      ptr.To(true),
 								ResponseForwarding: &dynamic.ResponseForwarding{
 									FlushInterval: dynamic.DefaultFlushInterval,
