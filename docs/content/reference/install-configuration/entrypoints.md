@@ -37,8 +37,8 @@ entryPoints:
   [entryPoints.web]
     address = ":80"
     [entryPoints.web.http]
-      [entryPoints.web.http.redirections]
-        entryPoint = "websecure"
+      [entryPoints.web.http.redirections.entryPoint]
+        to = "websecure"
         scheme = "https"
         permanent = true
     [entryPoints.web.observability]
@@ -48,10 +48,9 @@ entryPoints:
       
   [entryPoints.websecure]
     address = ":443"
-    [entryPoints.websecure.tls]
-    [entryPoints.websecure.middlewares]
-      - auth@kubernetescrd
-      - strip@kubernetescrd
+    [entryPoints.websecure.http]
+      middlewares = ["auth@kubernetescrd", "strip@kubernetescrd"]
+      [entryPoints.websecure.http.tls]
 ```
 
 ```yaml tab="Helm Chart Values"
@@ -67,9 +66,9 @@ ports:
       - auth@kubernetescrd
       - strip@kubernetescrd
 additionalArguments:
-  - --entryPoints.web.http.redirections.to=websecure
-  - --entryPoints.web.http.redirections.scheme=https
-  - --entryPoints.web.http.redirections.permanent=true
+  - --entryPoints.web.http.redirections.entryPoint.to=websecure
+  - --entryPoints.web.http.redirections.entryPoint.scheme=https
+  - --entryPoints.web.http.redirections.entryPoint.permanent=true
   - --entryPoints.web.observability.accessLogs=false
   - --entryPoints.web.observability.metrics=false
   - --entryPoints.web.observability.tracing=false
@@ -232,7 +231,7 @@ By default, Traefik do not reject requests with path containing certain encoded 
     When your backend is not fully compliant with [RFC 3986](https://datatracker.ietf.org/doc/html/rfc3986) and notably decode encoded reserved characters in the requets path,
     it is recommended to set these options to `false` to avoid split-view situation and helps prevent path traversal attacks or other malicious attempts to bypass security controls.
 
-Here is the list of the encoded characters that are rejected by default:
+Here is the list of the encoded characters that are allowed by default:
 
 | Encoded Character                                                                  | Character               |
 |------------------------------------------------------------------------------------|-------------------------|
