@@ -25,7 +25,7 @@ func Test_buildHostRule(t *testing.T) {
 			hostnames: []gatev1.Hostname{
 				"Foo",
 			},
-			expectedRule:     "Host(`Foo`)",
+			expectedRule:     `Host("Foo")`,
 			expectedPriority: 3,
 		},
 		{
@@ -35,7 +35,7 @@ func Test_buildHostRule(t *testing.T) {
 				"Bar",
 				"Bir",
 			},
-			expectedRule:     "(Host(`Foo`) || Host(`Bar`) || Host(`Bir`))",
+			expectedRule:     `(Host("Foo") || Host("Bar") || Host("Bir"))`,
 			expectedPriority: 3,
 		},
 		{
@@ -45,7 +45,7 @@ func Test_buildHostRule(t *testing.T) {
 				"bar.foo",
 				"foo.foo",
 			},
-			expectedRule:     "(HostRegexp(`^[a-z0-9-\\.]+\\.bar\\.foo$`) || Host(`bar.foo`) || Host(`foo.foo`))",
+			expectedRule:     `(HostRegexp("^[a-z0-9-\\.]+\\.bar\\.foo$") || Host("bar.foo") || Host("foo.foo"))`,
 			expectedPriority: 9,
 		},
 		{
@@ -53,7 +53,7 @@ func Test_buildHostRule(t *testing.T) {
 			hostnames: []gatev1.Hostname{
 				"*.bar.foo",
 			},
-			expectedRule:     "HostRegexp(`^[a-z0-9-\\.]+\\.bar\\.foo$`)",
+			expectedRule:     `HostRegexp("^[a-z0-9-\\.]+\\.bar\\.foo$")`,
 			expectedPriority: 9,
 		},
 	}
@@ -80,13 +80,13 @@ func Test_buildMatchRule(t *testing.T) {
 	}{
 		{
 			desc:             "Empty rule and matches",
-			expectedRule:     "PathPrefix(`/`)",
+			expectedRule:     `PathPrefix("/")`,
 			expectedPriority: 1,
 		},
 		{
 			desc:             "One Host rule without match",
 			hostnames:        []gatev1.Hostname{"foo.com"},
-			expectedRule:     "Host(`foo.com`) && PathPrefix(`/`)",
+			expectedRule:     `Host("foo.com") && PathPrefix("/")`,
 			expectedPriority: 8,
 		},
 		{
@@ -98,7 +98,7 @@ func Test_buildMatchRule(t *testing.T) {
 				}),
 				Headers: nil,
 			},
-			expectedRule:     "PathPrefix(`/`)",
+			expectedRule:     `PathPrefix("/")`,
 			expectedPriority: 1,
 		},
 		{
@@ -112,13 +112,13 @@ func Test_buildMatchRule(t *testing.T) {
 					{Name: "foo", Value: "bar"},
 				},
 			},
-			expectedRule:     "PathPrefix(`/`) && Header(`foo`,`bar`)",
+			expectedRule:     `PathPrefix("/") && Header("foo","bar")`,
 			expectedPriority: 101,
 		},
 		{
 			desc:             "One HTTPRouteMatch with nil HTTPPathMatch",
 			match:            gatev1.HTTPRouteMatch{Path: nil},
-			expectedRule:     "PathPrefix(`/`)",
+			expectedRule:     `PathPrefix("/")`,
 			expectedPriority: 1,
 		},
 		{
@@ -129,7 +129,7 @@ func Test_buildMatchRule(t *testing.T) {
 					Value: ptr.To("/foo/"),
 				},
 			},
-			expectedRule:     "(Path(`/foo`) || PathPrefix(`/foo/`))",
+			expectedRule:     `(Path("/foo") || PathPrefix("/foo/"))`,
 			expectedPriority: 10500,
 		},
 		{
@@ -140,7 +140,7 @@ func Test_buildMatchRule(t *testing.T) {
 					Value: nil,
 				},
 			},
-			expectedRule:     "Path(`/`)",
+			expectedRule:     `Path("/")`,
 			expectedPriority: 100000,
 		},
 		{
@@ -151,7 +151,7 @@ func Test_buildMatchRule(t *testing.T) {
 					Value: ptr.To("/foo/"),
 				},
 			},
-			expectedRule:     "Path(`/foo/`)",
+			expectedRule:     `Path("/foo/")`,
 			expectedPriority: 100000,
 		},
 		{
@@ -169,7 +169,7 @@ func Test_buildMatchRule(t *testing.T) {
 					},
 				},
 			},
-			expectedRule:     "Path(`/foo/`) && Header(`my-header`,`foo`)",
+			expectedRule:     `Path("/foo/") && Header("my-header","foo")`,
 			expectedPriority: 100100,
 		},
 		{
@@ -188,7 +188,7 @@ func Test_buildMatchRule(t *testing.T) {
 					},
 				},
 			},
-			expectedRule:     "Host(`foo.com`) && Path(`/foo/`) && Header(`my-header`,`foo`)",
+			expectedRule:     `Host("foo.com") && Path("/foo/") && Header("my-header","foo")`,
 			expectedPriority: 100107,
 		},
 	}

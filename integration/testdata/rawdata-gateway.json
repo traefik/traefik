@@ -5,7 +5,7 @@
 				"traefik"
 			],
 			"service": "api@internal",
-			"rule": "PathPrefix(`/api`)",
+			"rule": "PathPrefix(\"/api\")",
 			"ruleSyntax": "default",
 			"priority": 9223372036854775806,
 			"observability": {
@@ -28,7 +28,7 @@
 				"dashboard_stripprefix@internal"
 			],
 			"service": "dashboard@internal",
-			"rule": "PathPrefix(`/`)",
+			"rule": "PathPrefix(\"/\")",
 			"ruleSyntax": "default",
 			"priority": 9223372036854775805,
 			"observability": {
@@ -47,7 +47,7 @@
 				"web"
 			],
 			"service": "httproute-default-http-app-1-gw-default-my-gateway-ep-web-0-1c0cf64bde37d9d0df06-wrr",
-			"rule": "Host(`foo.com`) \u0026\u0026 Path(`/bar`)",
+			"rule": "Host(\"foo.com\") \u0026\u0026 Path(\"/bar\")",
 			"ruleSyntax": "default",
 			"priority": 100008,
 			"observability": {
@@ -66,7 +66,7 @@
 				"websecure"
 			],
 			"service": "httproute-default-http-app-1-gw-default-my-https-gateway-ep-websecure-0-1c0cf64bde37d9d0df06-wrr",
-			"rule": "Host(`foo.com`) \u0026\u0026 Path(`/bar`)",
+			"rule": "Host(\"foo.com\") \u0026\u0026 Path(\"/bar\")",
 			"ruleSyntax": "default",
 			"priority": 100008,
 			"tls": {},
@@ -180,7 +180,7 @@
 				"footcp"
 			],
 			"service": "tcproute-default-tcp-app-1-gw-default-my-tcp-gateway-ep-footcp-0-e3b0c44298fc1c149afb-wrr",
-			"rule": "HostSNI(`*`)",
+			"rule": "HostSNI(\"*\")",
 			"ruleSyntax": "default",
 			"priority": -1,
 			"status": "enabled",
@@ -193,7 +193,7 @@
 				"footlsterminate"
 			],
 			"service": "tcproute-default-tcp-app-1-gw-default-my-tls-gateway-ep-footlsterminate-0-e3b0c44298fc1c149afb-wrr",
-			"rule": "HostSNI(`*`)",
+			"rule": "HostSNI(\"*\")",
 			"ruleSyntax": "default",
 			"priority": -1,
 			"tls": {
@@ -209,7 +209,7 @@
 				"footlspassthrough"
 			],
 			"service": "tlsroute-default-tls-app-1-gw-default-my-tls-gateway-ep-footlspassthrough-0-e3b0c44298fc1c149afb-wrr",
-			"rule": "HostSNI(`foo.bar`)",
+			"rule": "HostSNI(\"foo.bar\")",
 			"ruleSyntax": "default",
 			"priority": 7,
 			"tls": {
