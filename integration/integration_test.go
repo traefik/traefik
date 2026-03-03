@@ -232,15 +232,17 @@ func (s *BaseSuite) createComposeProject(name string) {
 
 func (s *BaseSuite) createContainer(ctx context.Context, containerConfig composeService, id string, mounts []mount.Mount) (testcontainers.Container, error) {
 	req := testcontainers.ContainerRequest{
-		Image:      containerConfig.Image,
-		Env:        containerConfig.Environment,
-		Cmd:        containerConfig.Command,
-		Labels:     containerConfig.Labels,
-		Name:       id,
-		Hostname:   containerConfig.Hostname,
-		Privileged: containerConfig.Privileged,
-		Networks:   []string{s.network.Name},
+		Image:    containerConfig.Image,
+		Env:      containerConfig.Environment,
+		Cmd:      containerConfig.Command,
+		Labels:   containerConfig.Labels,
+		Name:     id,
+		Networks: []string{s.network.Name},
+		ConfigModifier: func(config *container.Config) {
+			config.Hostname = containerConfig.Hostname
+		},
 		HostConfigModifier: func(config *container.HostConfig) {
+			config.Privileged = containerConfig.Privileged
 			if containerConfig.CapAdd != nil {
 				config.CapAdd = containerConfig.CapAdd
 			}
