@@ -356,7 +356,7 @@ The following annotations are organized by category for easier navigation.
 
 | Annotation                                            | Limitations / Notes                                                                        |
 |-------------------------------------------------------|--------------------------------------------------------------------------------------------|
-| <a id="opt-nginx-ingress-kubernetes-iolimit-rpm" href="#opt-nginx-ingress-kubernetes-iolimit-rpm" title="#opt-nginx-ingress-kubernetes-iolimit-rpm">`nginx.ingress.kubernetes.io/limit-rpm`</a> | Maps to Traefik `rateLimit` middleware with `average=<value>` and `period=1m`. |
+| <a id="opt-nginx-ingress-kubernetes-iolimit-rpm" href="#opt-nginx-ingress-kubernetes-iolimit-rpm" title="#opt-nginx-ingress-kubernetes-iolimit-rpm">`nginx.ingress.kubernetes.io/limit-rpm`</a> | Exceeding the limit returns `429 Too Many Requests` instead of NGINX's default `503 Service Unavailable`. |
 
 ### Routing
 
