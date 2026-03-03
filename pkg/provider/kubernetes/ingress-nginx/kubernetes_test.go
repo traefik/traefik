@@ -558,17 +558,19 @@ func TestLoadIngresses(t *testing.T) {
 							EntryPoints: []string{"http"},
 							Rule:        "Host(`whoami.localhost`) && Path(`/forwardauth`)",
 							RuleSyntax:  "default",
-							Middlewares: []string{"default-ingress-with-forwardauth-rule-0-path-0-forward-auth", "default-ingress-with-forwardauth-rule-0-path-0-retry"},
+							Middlewares: []string{"default-ingress-with-forwardauth-rule-0-path-0-snippet", "default-ingress-with-forwardauth-rule-0-path-0-retry"},
 							Service:     "default-ingress-with-forwardauth-whoami-80",
 						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
-						"default-ingress-with-forwardauth-rule-0-path-0-forward-auth": {
-							ForwardAuth: &dynamic.ForwardAuth{
-								Address:             "http://whoami.default.svc/",
-								AuthResponseHeaders: []string{"X-Foo"},
-								AuthSigninURL:       "https://auth.example.com/oauth2/start?rd=foo",
-								Interpolate:         true,
+						"default-ingress-with-forwardauth-rule-0-path-0-snippet": {
+							Snippet: &dynamic.Snippet{
+								Auth: &dynamic.Auth{
+									Address:             "http://whoami.default.svc/",
+									AuthResponseHeaders: []string{"X-Foo"},
+									AuthSigninURL:       "https://auth.example.com/oauth2/start?rd=foo",
+									Method:              http.MethodGet,
+								},
 							},
 						},
 						"default-ingress-with-forwardauth-rule-0-path-0-retry": {
