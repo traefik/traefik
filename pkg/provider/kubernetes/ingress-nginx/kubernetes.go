@@ -2206,11 +2206,11 @@ func buildSticky(cfg ingressConfig, nameSuffix string) *dynamic.Sticky {
 
 func ingressPathKey(namespace, host string, pa netv1.HTTPIngressPath) string {
 	pathType := ptr.Deref(pa.PathType, netv1.PathTypePrefix)
-	return namespace + host + pa.Path + string(pathType)
+	return namespace + "/" + host + pa.Path + "/" + string(pathType)
 }
 
 func canaryBackendKey(namespace string, backend netv1.IngressServiceBackend) string {
-	return namespace + backend.Name + portString(backend.Port)
+	return namespace + "/" + backend.Name + "/" + portString(backend.Port)
 }
 
 func portString(port netv1.ServiceBackendPort) string {

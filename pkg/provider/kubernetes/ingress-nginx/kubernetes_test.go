@@ -5490,9 +5490,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-canary": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -5619,9 +5620,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-canary-and-sticky": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -5712,9 +5714,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-canary-weight": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -5827,9 +5830,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-canary-by-header": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -5931,9 +5935,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-canary-by-header-value": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -6035,9 +6040,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-canary-by-header-pattern": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -6128,9 +6134,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-canary-by-header-misconfigured": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -6243,9 +6250,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-canary-by-cookie": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -6385,9 +6393,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-canary-middlewares": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
@@ -6446,9 +6455,10 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-non-matching-canary": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
