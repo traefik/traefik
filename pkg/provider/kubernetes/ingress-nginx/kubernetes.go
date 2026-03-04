@@ -1829,12 +1829,12 @@ func (p *Provider) discoverCanaryBackends(namespace string, canaryIngressRule ne
 
 		canaryPaths[pathKey] = struct{}{}
 
-		weight := ptr.Deref(canaryIngressConfig.CanaryWeight, 0)
-		weightTotal := ptr.Deref(canaryIngressConfig.CanaryWeightTotal, 100)
+		weightTotal := max(ptr.Deref(canaryIngressConfig.CanaryWeightTotal, 0), 100)       // the minimum value in NGINX is 100.
+		weight := min(max(ptr.Deref(canaryIngressConfig.CanaryWeight, 0), 0), weightTotal) // weight cannot be negative, and cannot be greater than weightTotal.
 		canaryBackends[canaryBackendKey(namespace, *ingressPath.Backend.Service)] = &canaryBackend{
 			IngressBackend: &pa.Backend,
-			Weight:         min(max(weight, 0), weightTotal),
-			WeightTotal:    max(weightTotal, 0),
+			Weight:         weight,
+			WeightTotal:    weightTotal,
 			Header:         ptr.Deref(canaryIngressConfig.CanaryHeader, ""),
 			HeaderValue:    ptr.Deref(canaryIngressConfig.CanaryHeaderValue, ""),
 			HeaderPattern:  ptr.Deref(canaryIngressConfig.CanaryHeaderPattern, ""),

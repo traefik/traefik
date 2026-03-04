@@ -8,7 +8,7 @@ import (
 	netv1 "k8s.io/api/networking/v1"
 )
 
-// TODO: when implementing load-balance and upstream-hash-by annotations the corresponding behavior should be implemented for canaries.
+// TODO: when implementing load-balance the corresponding behavior should be implemented for canaries.
 type ingressConfig struct {
 	AuthType       *string `annotation:"nginx.ingress.kubernetes.io/auth-type"`
 	AuthSecret     *string `annotation:"nginx.ingress.kubernetes.io/auth-secret"`
