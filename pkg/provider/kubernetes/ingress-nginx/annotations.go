@@ -97,6 +97,9 @@ type ingressConfig struct {
 	ProxyBuffersNumber *int `annotation:"nginx.ingress.kubernetes.io/proxy-buffers-number"`
 	// ProxyMaxTempFileSize sets the maximum size of a temporary file used to buffer responses.
 	ProxyMaxTempFileSize *string `annotation:"nginx.ingress.kubernetes.io/proxy-max-temp-file-size"`
+
+	ConfigurationSnippet *string `annotation:"nginx.ingress.kubernetes.io/configuration-snippet"`
+	ServerSnippet        *string `annotation:"nginx.ingress.kubernetes.io/server-snippet"`
 }
 
 // parseIngressConfig parses the annotations from an Ingress object into an ingressConfig struct.

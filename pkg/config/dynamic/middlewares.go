@@ -58,6 +58,7 @@ type Middleware struct {
 
 	// ingress-nginx middlewares.
 	AuthTLSPassCertificateToUpstream *AuthTLSPassCertificateToUpstream `json:"authTLSPassCertificateToUpstream,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
+	Snippet                          *Snippet                          `json:"snippet,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -894,4 +895,12 @@ type URLRewrite struct {
 	Hostname   *string `json:"hostname,omitempty"`
 	Path       *string `json:"path,omitempty"`
 	PathPrefix *string `json:"pathPrefix,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// Snippet holds the NGINX snippet configuration.
+type Snippet struct {
+	ServerSnippet        string `json:"serverSnippet,omitempty"`
+	ConfigurationSnippet string `json:"configurationSnippet,omitempty"`
 }

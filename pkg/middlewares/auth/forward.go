@@ -157,7 +157,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	address := fa.address
 	if fa.interpolate {
-		address = ingressnginx.ReplaceVariables(address, req)
+		address = ingressnginx.ReplaceVariables(address, req, nil)
 	}
 
 	forwardReqMethod := http.MethodGet
@@ -268,7 +268,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			// If the signin URL doesn't contain "rd=" parameter,
 			// add it with the original request URL to match the NGINX behavior.
 			if !strings.Contains(signinURL, "rd=") {
-				suffix := "rd=$scheme://$host$escaped_request_uri"
+				suffix := "rd=$scheme://$best_http_host$escaped_request_uri"
 				if !strings.Contains(signinURL, "?") {
 					signinURL += "?" + suffix
 				} else {
@@ -276,7 +276,7 @@ func (fa *forwardAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 				}
 			}
 
-			signinURL = ingressnginx.ReplaceVariables(signinURL, req)
+			signinURL = ingressnginx.ReplaceVariables(signinURL, req, nil)
 		}
 
 		tracer.CaptureResponse(forwardSpan, forwardResponse.Header, http.StatusFound, trace.SpanKindClient)
