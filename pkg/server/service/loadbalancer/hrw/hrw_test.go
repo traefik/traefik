@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"k8s.io/utils/ptr"
 )
 
 // newTestRand creates a deterministic random source for reproducible tests.
@@ -48,12 +49,12 @@ func TestBalancer(t *testing.T) {
 	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "first")
 		rw.WriteHeader(http.StatusOK)
-	}), Int(4), false)
+	}), ptr.To(4), false)
 
 	balancer.Add("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "second")
 		rw.WriteHeader(http.StatusOK)
-	}), Int(1), false)
+	}), ptr.To(1), false)
 
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -80,9 +81,9 @@ func TestBalancerOneServerZeroWeight(t *testing.T) {
 	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "first")
 		rw.WriteHeader(http.StatusOK)
-	}), Int(1), false)
+	}), ptr.To(1), false)
 
-	balancer.Add("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), Int(0), false)
+	balancer.Add("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), ptr.To(0), false)
 
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
 	for range 3 {
@@ -101,11 +102,11 @@ func TestBalancerNoServiceUp(t *testing.T) {
 
 	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusInternalServerError)
-	}), Int(1), false)
+	}), ptr.To(1), false)
 
 	balancer.Add("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusInternalServerError)
-	}), Int(1), false)
+	}), ptr.To(1), false)
 
 	balancer.SetStatus(context.WithValue(t.Context(), serviceName, "parent"), "first", false)
 	balancer.SetStatus(context.WithValue(t.Context(), serviceName, "parent"), "second", false)
@@ -122,11 +123,11 @@ func TestBalancerOneServerDown(t *testing.T) {
 	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "first")
 		rw.WriteHeader(http.StatusOK)
-	}), Int(1), false)
+	}), ptr.To(1), false)
 
 	balancer.Add("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusInternalServerError)
-	}), Int(1), false)
+	}), ptr.To(1), false)
 	balancer.SetStatus(context.WithValue(t.Context(), serviceName, "parent"), "second", false)
 
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
@@ -144,12 +145,12 @@ func TestBalancerDownThenUp(t *testing.T) {
 	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "first")
 		rw.WriteHeader(http.StatusOK)
-	}), Int(1), false)
+	}), ptr.To(1), false)
 
 	balancer.Add("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "second")
 		rw.WriteHeader(http.StatusOK)
-	}), Int(1), false)
+	}), ptr.To(1), false)
 	balancer.SetStatus(context.WithValue(t.Context(), serviceName, "parent"), "second", false)
 
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
@@ -176,28 +177,28 @@ func TestBalancerPropagate(t *testing.T) {
 	balancer1.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "first")
 		rw.WriteHeader(http.StatusOK)
-	}), Int(1), false)
+	}), ptr.To(1), false)
 	balancer1.Add("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "second")
 		rw.WriteHeader(http.StatusOK)
-	}), Int(1), false)
+	}), ptr.To(1), false)
 
 	balancer2 := New(true, "")
 	balancer2.Add("third", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "third")
 		rw.WriteHeader(http.StatusOK)
-	}), Int(1), false)
+	}), ptr.To(1), false)
 	balancer2.Add("fourth", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "fourth")
 		rw.WriteHeader(http.StatusOK)
-	}), Int(1), false)
+	}), ptr.To(1), false)
 
 	topBalancer := New(true, "")
-	topBalancer.Add("balancer1", balancer1, Int(1), false)
+	topBalancer.Add("balancer1", balancer1, ptr.To(1), false)
 	_ = balancer1.RegisterStatusUpdater(func(up bool) {
 		topBalancer.SetStatus(context.WithValue(t.Context(), serviceName, "top"), "balancer1", up)
 	})
-	topBalancer.Add("balancer2", balancer2, Int(1), false)
+	topBalancer.Add("balancer2", balancer2, ptr.To(1), false)
 	_ = balancer2.RegisterStatusUpdater(func(up bool) {
 		topBalancer.SetStatus(context.WithValue(t.Context(), serviceName, "top"), "balancer2", up)
 	})
@@ -250,8 +251,8 @@ func TestBalancerPropagate(t *testing.T) {
 func TestBalancerAllServersZeroWeight(t *testing.T) {
 	balancer := New(false, "")
 
-	balancer.Add("test", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), Int(0), false)
-	balancer.Add("test2", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), Int(0), false)
+	balancer.Add("test", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), ptr.To(0), false)
+	balancer.Add("test2", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {}), ptr.To(0), false)
 
 	recorder := httptest.NewRecorder()
 	balancer.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
@@ -266,21 +267,18 @@ func TestSticky(t *testing.T) {
 	balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "first")
 		rw.WriteHeader(http.StatusOK)
-	}), Int(1), false)
+	}), ptr.To(1), false)
 
 	balancer.Add("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("server", "second")
 		rw.WriteHeader(http.StatusOK)
-	}), Int(2), false)
+	}), ptr.To(2), false)
 
 	recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	req.RemoteAddr = genIPAddress(rng)
 	for range 10 {
-		for _, cookie := range recorder.Result().Cookies() {
-			req.AddCookie(cookie)
-		}
 		recorder.ResponseRecorder = httptest.NewRecorder()
 
 		balancer.ServeHTTP(recorder, req)
@@ -292,30 +290,30 @@ func TestSticky(t *testing.T) {
 	// weight does not impose what would be chosen from 1 client
 }
 
-func TestCustomSticky(t *testing.T) {
+func TestSticky_nginxUpstreamHashBy(t *testing.T) {
 	testCases := []struct {
-		desc string
-		key  string
+		desc                string
+		nginxUpstreamHashBy string
 	}{
 		{
-			desc: "variable interpolation",
-			key:  "$request_uri",
+			desc:                "variable interpolation",
+			nginxUpstreamHashBy: "$request_uri",
 		},
 		{
-			desc: "multiple variables",
-			key:  "$request_uri$host",
+			desc:                "multiple variables",
+			nginxUpstreamHashBy: "$request_uri$host",
 		},
 		{
-			desc: "variable + text",
-			key:  "${request_uri}-text-value",
+			desc:                "variable + text",
+			nginxUpstreamHashBy: "${request_uri}-text-value",
 		},
 		{
-			desc: "variable + text",
-			key:  "$request_uri-text-value",
+			desc:                "variable + text",
+			nginxUpstreamHashBy: "$request_uri-text-value",
 		},
 		{
-			desc: "no key configured - fallback to ip",
-			key:  "",
+			desc:                "no key configured - fallback to ip",
+			nginxUpstreamHashBy: "",
 		},
 	}
 
@@ -324,26 +322,23 @@ func TestCustomSticky(t *testing.T) {
 			t.Parallel()
 
 			rng := newTestRand()
-			balancer := New(false, test.key)
+			balancer := New(false, test.nginxUpstreamHashBy)
 
 			balancer.Add("first", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				rw.Header().Set("server", "first")
 				rw.WriteHeader(http.StatusOK)
-			}), Int(1), false)
+			}), ptr.To(1), false)
 
 			balancer.Add("second", http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 				rw.Header().Set("server", "second")
 				rw.WriteHeader(http.StatusOK)
-			}), Int(2), false)
+			}), ptr.To(2), false)
 
 			recorder := &responseRecorder{ResponseRecorder: httptest.NewRecorder(), save: map[string]int{}}
 
 			req := httptest.NewRequest(http.MethodGet, "/", nil)
 			req.RemoteAddr = genIPAddress(rng)
 			for range 10 {
-				for _, cookie := range recorder.Result().Cookies() {
-					req.AddCookie(cookie)
-				}
 				recorder.ResponseRecorder = httptest.NewRecorder()
 
 				balancer.ServeHTTP(recorder, req)
@@ -356,8 +351,6 @@ func TestCustomSticky(t *testing.T) {
 		})
 	}
 }
-
-func Int(v int) *int { return &v }
 
 type responseRecorder struct {
 	*httptest.ResponseRecorder

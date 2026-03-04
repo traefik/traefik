@@ -250,10 +250,6 @@ type HighestRandomWeight struct {
 	// load-balancing algorithm. In addition, if the parent of this service also has
 	// HealthCheck enabled, this service reports to its parent any status change.
 	HealthCheck *HealthCheck `json:"healthCheck,omitempty" toml:"healthCheck,omitempty" yaml:"healthCheck,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
-
-	// NginxUpstreamHashBy enables the customization of the hashing key.
-	// It can be set to a specific text value, a nginx variable or a combination of both.
-	NginxUpstreamHashBy string `json:"nginxUpstreamHashBy,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -379,7 +375,7 @@ type ServersLoadBalancer struct {
 	ServersTransport   string                    `json:"serversTransport,omitempty" toml:"serversTransport,omitempty" yaml:"serversTransport,omitempty" export:"true"`
 
 	// NginxUpstreamHashBy enables the customization of the hashing key.
-	// It can be set to a specific text value, a nginx variable or a combination of both.
+	// It can be set to a specific text value, a NGINX variable or a combination of both.
 	NginxUpstreamHashBy string `json:"nginxUpstreamHashBy,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
 

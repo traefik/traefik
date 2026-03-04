@@ -372,7 +372,7 @@ func (m *Manager) getServiceHandler(ctx context.Context, service dynamic.WRRServ
 
 func (m *Manager) getHRWServiceHandler(ctx context.Context, serviceName string, config *dynamic.HighestRandomWeight) (http.Handler, error) {
 	// TODO Handle accesslog and metrics with multiple service name
-	balancer := hrw.New(config.HealthCheck != nil, config.NginxUpstreamHashBy)
+	balancer := hrw.New(config.HealthCheck != nil, "")
 	for _, service := range shuffle(config.Services, m.rand) {
 		serviceHandler, err := m.BuildHTTP(ctx, service.Name)
 		if err != nil {
