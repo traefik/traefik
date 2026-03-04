@@ -51,6 +51,8 @@ type ingressConfig struct {
 
 	ServiceUpstream *bool `annotation:"nginx.ingress.kubernetes.io/service-upstream"`
 
+	UpstreamHashBy *string `annotation:"nginx.ingress.kubernetes.io/upstream-hash-by"`
+
 	BackendProtocol *string `annotation:"nginx.ingress.kubernetes.io/backend-protocol"`
 
 	ProxySSLSecret           *string `annotation:"nginx.ingress.kubernetes.io/proxy-ssl-secret"`
@@ -97,6 +99,9 @@ type ingressConfig struct {
 	ProxyBuffersNumber *int `annotation:"nginx.ingress.kubernetes.io/proxy-buffers-number"`
 	// ProxyMaxTempFileSize sets the maximum size of a temporary file used to buffer responses.
 	ProxyMaxTempFileSize *string `annotation:"nginx.ingress.kubernetes.io/proxy-max-temp-file-size"`
+
+	ConfigurationSnippet *string `annotation:"nginx.ingress.kubernetes.io/configuration-snippet"`
+	ServerSnippet        *string `annotation:"nginx.ingress.kubernetes.io/server-snippet"`
 }
 
 // parseIngressConfig parses the annotations from an Ingress object into an ingressConfig struct.
