@@ -5348,6 +5348,65 @@ func TestLoadIngresses(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
+		{
+			desc: "Upstream Hash By",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-upstream-hash-by.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-upstream-hash-by-rule-0-path-0": {
+							Rule:        "Host(`whoami.localhost`) && PathPrefix(`/`)",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-upstream-hash-by-whoami-80",
+							Middlewares: []string{"default-ingress-with-upstream-hash-by-rule-0-path-0-retry"},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-upstream-hash-by-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-upstream-hash-by-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								Strategy:            "hrw",
+								NginxUpstreamHashBy: "$request_uri",
+								PassHostHeader:      ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-with-upstream-hash-by",
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-upstream-hash-by": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
 	}
 
 	for _, test := range testCases {

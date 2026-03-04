@@ -78,6 +78,24 @@ func Test_ReplaceVariables(t *testing.T) {
 			expected: `val=baz.com%2Ffoo%2Fbar%3Fkey%3Dvalue%26other%3Dtest`,
 		},
 		{
+			desc:     "variable + text",
+			src:      "val=${host}-text",
+			req:      httptest.NewRequest(http.MethodGet, "http://baz.com/foo/bar?key=value&other=test", http.NoBody),
+			expected: "val=baz.com-text",
+		},
+		{
+			desc:     "variable + text (alternative)",
+			src:      "val=$host-text",
+			req:      httptest.NewRequest(http.MethodGet, "http://baz.com/foo/bar?key=value&other=test", http.NoBody),
+			expected: "val=baz.com-text",
+		},
+		{
+			desc:     "variable + text (alternative 2)",
+			src:      "val=${host}test",
+			req:      httptest.NewRequest(http.MethodGet, "http://baz.com/foo/bar?key=value&other=test", http.NoBody),
+			expected: "val=baz.comtest",
+		},
+		{
 			desc:     "non existing variable",
 			src:      "val=$invalid",
 			req:      httptest.NewRequest(http.MethodGet, "http://baz.com/foo/bar?key=value&other=test", http.NoBody),
@@ -85,9 +103,21 @@ func Test_ReplaceVariables(t *testing.T) {
 		},
 		{
 			desc:     "invalid variable format",
-			src:      "val=${invalid}",
+			src:      "val=${invalid-text",
 			req:      httptest.NewRequest(http.MethodGet, "http://baz.com/foo/bar?key=value&other=test", http.NoBody),
-			expected: "val=${invalid}",
+			expected: "val=${invalid-text",
+		},
+		{
+			desc:     "invalid variable format 2",
+			src:      "val=$invalid}-text",
+			req:      httptest.NewRequest(http.MethodGet, "http://baz.com/foo/bar?key=value&other=test", http.NoBody),
+			expected: "val=$invalid}-text",
+		},
+		{
+			desc:     "invalid variable format 3",
+			src:      "val=$hosttext",
+			req:      httptest.NewRequest(http.MethodGet, "http://baz.com/foo/bar?key=value&other=test", http.NoBody),
+			expected: "val=$hosttext",
 		},
 		{
 			desc:     "$scheme http",

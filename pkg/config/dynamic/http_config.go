@@ -373,6 +373,10 @@ type ServersLoadBalancer struct {
 	PassHostHeader     *bool                     `json:"passHostHeader" toml:"passHostHeader" yaml:"passHostHeader" export:"true"`
 	ResponseForwarding *ResponseForwarding       `json:"responseForwarding,omitempty" toml:"responseForwarding,omitempty" yaml:"responseForwarding,omitempty" export:"true"`
 	ServersTransport   string                    `json:"serversTransport,omitempty" toml:"serversTransport,omitempty" yaml:"serversTransport,omitempty" export:"true"`
+
+	// NginxUpstreamHashBy enables the customization of the hashing key.
+	// It can be set to a specific text value, a NGINX variable or a combination of both.
+	NginxUpstreamHashBy string `json:"nginxUpstreamHashBy,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
 
 // Merge merges the other load balancer into this one.
