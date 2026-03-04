@@ -22,17 +22,12 @@ type tcpRouterRepresentation struct {
 }
 
 func newTCPRouterRepresentation(name string, rt *runtime.TCPRouterInfo) tcpRouterRepresentation {
-	rep := tcpRouterRepresentation{
+	return tcpRouterRepresentation{
 		TCPRouterInfo: rt,
 		Name:          name,
 		Provider:      getProviderName(name),
+		PriorityStr:   strconv.FormatInt(int64(rt.Priority), 10),
 	}
-
-	if rt.Priority != 0 {
-		rep.PriorityStr = strconv.FormatInt(int64(rt.Priority), 10)
-	}
-
-	return rep
 }
 
 type tcpServiceRepresentation struct {

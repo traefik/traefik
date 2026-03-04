@@ -27,17 +27,12 @@ func newRouterRepresentation(name string, rt *runtime.RouterInfo) routerRepresen
 		rt.TLS.Options = tls.DefaultTLSConfigName
 	}
 
-	rep := routerRepresentation{
-		RouterInfo: rt,
-		Name:       name,
-		Provider:   getProviderName(name),
+	return routerRepresentation{
+		RouterInfo:  rt,
+		Name:        name,
+		Provider:    getProviderName(name),
+		PriorityStr: strconv.FormatInt(int64(rt.Priority), 10),
 	}
-
-	if rt.Priority != 0 {
-		rep.PriorityStr = strconv.FormatInt(int64(rt.Priority), 10)
-	}
-
-	return rep
 }
 
 type serviceRepresentation struct {
