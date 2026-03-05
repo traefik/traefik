@@ -799,10 +799,10 @@ func TestLoadIngresses(t *testing.T) {
 							LoadBalancer: &dynamic.TCPServersLoadBalancer{
 								Servers: []dynamic.TCPServer{
 									{
-										Address: "10.10.0.5:8443",
+										Address: "10.10.0.3:8443",
 									},
 									{
-										Address: "10.10.0.6:8443",
+										Address: "10.10.0.4:8443",
 									},
 								},
 							},
@@ -927,10 +927,10 @@ func TestLoadIngresses(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
-										URL: "https://10.10.0.5:8443",
+										URL: "https://10.10.0.3:8443",
 									},
 									{
-										URL: "https://10.10.0.6:8443",
+										URL: "https://10.10.0.4:8443",
 									},
 								},
 								Strategy:       "wrr",
@@ -3262,10 +3262,10 @@ func TestLoadIngresses(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
-										URL: "http://10.10.0.7:8000",
+										URL: "http://10.10.0.5:8000",
 									},
 									{
-										URL: "http://10.10.0.8:8000",
+										URL: "http://10.10.0.6:8000",
 									},
 								},
 								Strategy:       "wrr",
@@ -3292,7 +3292,7 @@ func TestLoadIngresses(t *testing.T) {
 		},
 		{
 			desc:                           "Custom HTTP Errors",
-			defaultBackendServiceName:      "whoami_b",
+			defaultBackendServiceName:      "whoami-b",
 			defaultBackendServiceNamespace: "default",
 			paths: []string{
 				"services.yml",
@@ -3371,10 +3371,10 @@ func TestLoadIngresses(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
-										URL: "http://10.10.0.7:8000",
+										URL: "http://10.10.0.5:8000",
 									},
 									{
-										URL: "http://10.10.0.8:8000",
+										URL: "http://10.10.0.6:8000",
 									},
 								},
 								Strategy:       "wrr",
@@ -3492,10 +3492,10 @@ func TestLoadIngresses(t *testing.T) {
 							LoadBalancer: &dynamic.ServersLoadBalancer{
 								Servers: []dynamic.Server{
 									{
-										URL: "http://10.10.0.7:8000",
+										URL: "http://10.10.0.5:8000",
 									},
 									{
-										URL: "http://10.10.0.8:8000",
+										URL: "http://10.10.0.6:8000",
 									},
 								},
 								Strategy:       "wrr",
@@ -5407,6 +5407,1139 @@ func TestLoadIngresses(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
+		{
+			desc: "Canary",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingresses-with-canary.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-canary-rule-0-path-0": {
+							Rule:        "Host(`production.localhost`) && PathPrefix(`/`)",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-canary-whoami-80-wrr",
+							Middlewares: []string{"default-ingress-with-canary-rule-0-path-0-retry"},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-canary-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-canary-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   ptr.To(true),
+								ServersTransport: "default-ingress-with-canary",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-ingress-with-canary-whoami-80-canary": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.7:80",
+									},
+									{
+										URL: "http://10.10.0.8:80",
+									},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   ptr.To(true),
+								ServersTransport: "default-ingress-with-canary",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-ingress-with-canary-whoami-80-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-ingress-with-canary-whoami-80",
+										Weight: ptr.To(100),
+									},
+									{
+										Name:   "default-ingress-with-canary-whoami-80-canary",
+										Weight: ptr.To(0),
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-canary": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "Canary with sticky",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingresses-with-canary-and-sticky.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-canary-and-sticky-rule-0-path-0": {
+							Rule:        "Host(`production.localhost`) && PathPrefix(`/`)",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-canary-and-sticky-whoami-80-wrr",
+							Middlewares: []string{"default-ingress-with-canary-and-sticky-rule-0-path-0-retry"},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-canary-and-sticky-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-canary-and-sticky-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Sticky: &dynamic.Sticky{
+									Cookie: &dynamic.Cookie{
+										Name:     "foobar",
+										Domain:   "foo.localhost",
+										HTTPOnly: true,
+										MaxAge:   42,
+										Expires:  42,
+										Path:     ptr.To("/foobar"),
+										SameSite: "none",
+										Secure:   true,
+									},
+								},
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   ptr.To(true),
+								ServersTransport: "default-ingress-with-canary-and-sticky",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-ingress-with-canary-and-sticky-whoami-80-canary": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Sticky: &dynamic.Sticky{
+									Cookie: &dynamic.Cookie{
+										Name:     "foobar",
+										Domain:   "foo.localhost",
+										HTTPOnly: true,
+										MaxAge:   42,
+										Expires:  42,
+										Path:     ptr.To("/foobar"),
+										SameSite: "none",
+										Secure:   true,
+									},
+								},
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.7:80",
+									},
+									{
+										URL: "http://10.10.0.8:80",
+									},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   ptr.To(true),
+								ServersTransport: "default-ingress-with-canary-and-sticky",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-ingress-with-canary-and-sticky-whoami-80-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Sticky: &dynamic.Sticky{
+									Cookie: &dynamic.Cookie{
+										Name:     "foobar-wrr",
+										Domain:   "foo.localhost",
+										HTTPOnly: true,
+										MaxAge:   42,
+										Expires:  42,
+										Path:     ptr.To("/foobar"),
+										SameSite: "none",
+										Secure:   true,
+									},
+								},
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-ingress-with-canary-and-sticky-whoami-80",
+										Weight: ptr.To(100),
+									},
+									{
+										Name:   "default-ingress-with-canary-and-sticky-whoami-80-canary",
+										Weight: ptr.To(0),
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-canary-and-sticky": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "Canary with weight",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingresses-with-canary-weight.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-canary-weight-rule-0-path-0": {
+							Rule:        "Host(`production.localhost`) && PathPrefix(`/`)",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-canary-weight-whoami-80-wrr",
+							Middlewares: []string{"default-ingress-with-canary-weight-rule-0-path-0-retry"},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-canary-weight-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-canary-weight-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   ptr.To(true),
+								ServersTransport: "default-ingress-with-canary-weight",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-ingress-with-canary-weight-whoami-80-canary": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.7:80",
+									},
+									{
+										URL: "http://10.10.0.8:80",
+									},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   ptr.To(true),
+								ServersTransport: "default-ingress-with-canary-weight",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-ingress-with-canary-weight-whoami-80-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-ingress-with-canary-weight-whoami-80",
+										Weight: ptr.To(110),
+									},
+									{
+										Name:   "default-ingress-with-canary-weight-whoami-80-canary",
+										Weight: ptr.To(10),
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-canary-weight": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "Canary with header",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingresses-with-canary-by-header.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-canary-by-header-rule-0-path-0": {
+							Rule:        "Host(`production.localhost`) && PathPrefix(`/`)",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-canary-by-header-whoami-80-wrr",
+							Middlewares: []string{"default-ingress-with-canary-by-header-rule-0-path-0-retry"},
+						},
+						"default-ingress-with-canary-by-header-rule-0-path-0-canary": {
+							Rule:        "(Host(`production.localhost`) && PathPrefix(`/`)) && (Header(`Foo`, `always`))",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-canary-by-header-whoami-80-canary",
+							Middlewares: []string{"default-ingress-with-canary-by-header-rule-0-path-0-canary-retry"},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-canary-by-header-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+						"default-ingress-with-canary-by-header-rule-0-path-0-canary-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-canary-by-header-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   ptr.To(true),
+								ServersTransport: "default-ingress-with-canary-by-header",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-ingress-with-canary-by-header-whoami-80-canary": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.7:80",
+									},
+									{
+										URL: "http://10.10.0.8:80",
+									},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   ptr.To(true),
+								ServersTransport: "default-ingress-with-canary-by-header",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-ingress-with-canary-by-header-whoami-80-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-ingress-with-canary-by-header-whoami-80",
+										Weight: ptr.To(100),
+									},
+									{
+										Name:   "default-ingress-with-canary-by-header-whoami-80-canary",
+										Weight: ptr.To(0),
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-canary-by-header": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "Canary with header value",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingresses-with-canary-by-header-value.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-canary-by-header-value-rule-0-path-0": {
+							Rule:        "Host(`production.localhost`) && PathPrefix(`/`)",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-canary-by-header-value-whoami-80-wrr",
+							Middlewares: []string{"default-ingress-with-canary-by-header-value-rule-0-path-0-retry"},
+						},
+						"default-ingress-with-canary-by-header-value-rule-0-path-0-canary": {
+							Rule:        "(Host(`production.localhost`) && PathPrefix(`/`)) && (Header(`Foo`, `bar`))",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-canary-by-header-value-whoami-80-canary",
+							Middlewares: []string{"default-ingress-with-canary-by-header-value-rule-0-path-0-canary-retry"},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-canary-by-header-value-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+						"default-ingress-with-canary-by-header-value-rule-0-path-0-canary-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-canary-by-header-value-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   ptr.To(true),
+								ServersTransport: "default-ingress-with-canary-by-header-value",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-ingress-with-canary-by-header-value-whoami-80-canary": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.7:80",
+									},
+									{
+										URL: "http://10.10.0.8:80",
+									},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   ptr.To(true),
+								ServersTransport: "default-ingress-with-canary-by-header-value",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-ingress-with-canary-by-header-value-whoami-80-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-ingress-with-canary-by-header-value-whoami-80",
+										Weight: ptr.To(100),
+									},
+									{
+										Name:   "default-ingress-with-canary-by-header-value-whoami-80-canary",
+										Weight: ptr.To(0),
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-canary-by-header-value": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "Canary with header pattern",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingresses-with-canary-by-header-pattern.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-canary-by-header-pattern-rule-0-path-0": {
+							Rule:        "Host(`production.localhost`) && PathPrefix(`/`)",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-canary-by-header-pattern-whoami-80-wrr",
+							Middlewares: []string{"default-ingress-with-canary-by-header-pattern-rule-0-path-0-retry"},
+						},
+						"default-ingress-with-canary-by-header-pattern-rule-0-path-0-canary": {
+							Rule:        "(Host(`production.localhost`) && PathPrefix(`/`)) && (HeaderRegexp(`Foo`, `bar(.*)`))",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-canary-by-header-pattern-whoami-80-canary",
+							Middlewares: []string{"default-ingress-with-canary-by-header-pattern-rule-0-path-0-canary-retry"},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-canary-by-header-pattern-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+						"default-ingress-with-canary-by-header-pattern-rule-0-path-0-canary-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-canary-by-header-pattern-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   ptr.To(true),
+								ServersTransport: "default-ingress-with-canary-by-header-pattern",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-ingress-with-canary-by-header-pattern-whoami-80-canary": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.7:80",
+									},
+									{
+										URL: "http://10.10.0.8:80",
+									},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   ptr.To(true),
+								ServersTransport: "default-ingress-with-canary-by-header-pattern",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-ingress-with-canary-by-header-pattern-whoami-80-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-ingress-with-canary-by-header-pattern-whoami-80",
+										Weight: ptr.To(100),
+									},
+									{
+										Name:   "default-ingress-with-canary-by-header-pattern-whoami-80-canary",
+										Weight: ptr.To(0),
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-canary-by-header-pattern": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "Canary with header misconfigured",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingresses-with-canary-by-header-misconfigured.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-canary-by-header-misconfigured-rule-0-path-0": {
+							Rule:        "Host(`production.localhost`) && PathPrefix(`/`)",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-canary-by-header-misconfigured-whoami-80-wrr",
+							Middlewares: []string{"default-ingress-with-canary-by-header-misconfigured-rule-0-path-0-retry"},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-canary-by-header-misconfigured-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-canary-by-header-misconfigured-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   ptr.To(true),
+								ServersTransport: "default-ingress-with-canary-by-header-misconfigured",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-ingress-with-canary-by-header-misconfigured-whoami-80-canary": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.7:80",
+									},
+									{
+										URL: "http://10.10.0.8:80",
+									},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   ptr.To(true),
+								ServersTransport: "default-ingress-with-canary-by-header-misconfigured",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-ingress-with-canary-by-header-misconfigured-whoami-80-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-ingress-with-canary-by-header-misconfigured-whoami-80",
+										Weight: ptr.To(100),
+									},
+									{
+										Name:   "default-ingress-with-canary-by-header-misconfigured-whoami-80-canary",
+										Weight: ptr.To(0),
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-canary-by-header-misconfigured": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "Canary with cookie",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingresses-with-canary-by-cookie.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-canary-by-cookie-rule-0-path-0": {
+							Rule:        "Host(`production.localhost`) && PathPrefix(`/`)",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-canary-by-cookie-whoami-80-wrr",
+							Middlewares: []string{"default-ingress-with-canary-by-cookie-rule-0-path-0-retry"},
+						},
+						"default-ingress-with-canary-by-cookie-rule-0-path-0-canary": {
+							Rule:        "(Host(`production.localhost`) && PathPrefix(`/`)) && (HeaderRegexp(`Cookie`, `(^|;\\s*)foo=always(;|$)`))",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-canary-by-cookie-whoami-80-canary",
+							Middlewares: []string{"default-ingress-with-canary-by-cookie-rule-0-path-0-canary-retry"},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-canary-by-cookie-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+						"default-ingress-with-canary-by-cookie-rule-0-path-0-canary-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-canary-by-cookie-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   ptr.To(true),
+								ServersTransport: "default-ingress-with-canary-by-cookie",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-ingress-with-canary-by-cookie-whoami-80-canary": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.7:80",
+									},
+									{
+										URL: "http://10.10.0.8:80",
+									},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   ptr.To(true),
+								ServersTransport: "default-ingress-with-canary-by-cookie",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-ingress-with-canary-by-cookie-whoami-80-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-ingress-with-canary-by-cookie-whoami-80",
+										Weight: ptr.To(100),
+									},
+									{
+										Name:   "default-ingress-with-canary-by-cookie-whoami-80-canary",
+										Weight: ptr.To(0),
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-canary-by-cookie": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "Canary with header, cookie, and weight",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingresses-with-canary-by-header-and-cookie-and-weight.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-canary-by-header-and-cookie-and-weight-rule-0-path-0": {
+							Rule:        "Host(`production.localhost`) && PathPrefix(`/`)",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-canary-by-header-and-cookie-and-weight-whoami-80-wrr",
+							Middlewares: []string{"default-ingress-with-canary-by-header-and-cookie-and-weight-rule-0-path-0-retry"},
+						},
+						"default-ingress-with-canary-by-header-and-cookie-and-weight-rule-0-path-0-canary": {
+							Rule:        "(Host(`production.localhost`) && PathPrefix(`/`)) && (Header(`Foo`, `always`) || (HeaderRegexp(`Cookie`, `(^|;\\s*)foo=always(;|$)`) && !Header(`Foo`, `never`)))",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-canary-by-header-and-cookie-and-weight-whoami-80-canary",
+							Middlewares: []string{"default-ingress-with-canary-by-header-and-cookie-and-weight-rule-0-path-0-canary-retry"},
+						},
+						"default-ingress-with-canary-by-header-and-cookie-and-weight-rule-0-path-0-non-canary": {
+							Rule:        "(Host(`production.localhost`) && PathPrefix(`/`)) && (Header(`Foo`, `never`) || HeaderRegexp(`Cookie`, `(^|;\\s*)foo=never(;|$)`))",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-canary-by-header-and-cookie-and-weight-whoami-80",
+							Middlewares: []string{"default-ingress-with-canary-by-header-and-cookie-and-weight-rule-0-path-0-non-canary-retry"},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-canary-by-header-and-cookie-and-weight-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+						"default-ingress-with-canary-by-header-and-cookie-and-weight-rule-0-path-0-canary-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+						"default-ingress-with-canary-by-header-and-cookie-and-weight-rule-0-path-0-non-canary-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-canary-by-header-and-cookie-and-weight-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   ptr.To(true),
+								ServersTransport: "default-ingress-with-canary-by-header-and-cookie-and-weight",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-ingress-with-canary-by-header-and-cookie-and-weight-whoami-80-canary": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.7:80",
+									},
+									{
+										URL: "http://10.10.0.8:80",
+									},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   ptr.To(true),
+								ServersTransport: "default-ingress-with-canary-by-header-and-cookie-and-weight",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-ingress-with-canary-by-header-and-cookie-and-weight-whoami-80-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-ingress-with-canary-by-header-and-cookie-and-weight-whoami-80",
+										Weight: ptr.To(90),
+									},
+									{
+										Name:   "default-ingress-with-canary-by-header-and-cookie-and-weight-whoami-80-canary",
+										Weight: ptr.To(10),
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-canary-by-header-and-cookie-and-weight": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "Canary with middlewares on production Ingress",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingresses-with-canary-middlewares.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-canary-middlewares-rule-0-path-0": {
+							Rule:       "Host(`production.localhost`) && PathPrefix(`/`)",
+							RuleSyntax: "default",
+							Service:    "default-ingress-with-canary-middlewares-whoami-80-wrr",
+							Middlewares: []string{
+								"default-ingress-with-canary-middlewares-rule-0-path-0-app-root",
+								"default-ingress-with-canary-middlewares-rule-0-path-0-retry",
+							},
+						},
+						"default-ingress-with-canary-middlewares-rule-0-path-0-canary": {
+							Rule:       "(Host(`production.localhost`) && PathPrefix(`/`)) && (Header(`Foo`, `always`))",
+							RuleSyntax: "default",
+							Service:    "default-ingress-with-canary-middlewares-whoami-80-canary",
+							Middlewares: []string{
+								"default-ingress-with-canary-middlewares-rule-0-path-0-canary-app-root",
+								"default-ingress-with-canary-middlewares-rule-0-path-0-canary-retry",
+							},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-canary-middlewares-rule-0-path-0-app-root": {
+							RedirectRegex: &dynamic.RedirectRegex{
+								Regex:       `^(https?://[^/]+)/$`,
+								Replacement: "$1/foo",
+							},
+						},
+						"default-ingress-with-canary-middlewares-rule-0-path-0-canary-app-root": {
+							RedirectRegex: &dynamic.RedirectRegex{
+								Regex:       `^(https?://[^/]+)/$`,
+								Replacement: "$1/foo",
+							},
+						},
+						"default-ingress-with-canary-middlewares-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+						"default-ingress-with-canary-middlewares-rule-0-path-0-canary-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-canary-middlewares-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   ptr.To(true),
+								ServersTransport: "default-ingress-with-canary-middlewares",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-ingress-with-canary-middlewares-whoami-80-canary": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.7:80",
+									},
+									{
+										URL: "http://10.10.0.8:80",
+									},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   ptr.To(true),
+								ServersTransport: "default-ingress-with-canary-middlewares",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-ingress-with-canary-middlewares-whoami-80-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-ingress-with-canary-middlewares-whoami-80",
+										Weight: ptr.To(100),
+									},
+									{
+										Name:   "default-ingress-with-canary-middlewares-whoami-80-canary",
+										Weight: ptr.To(0),
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-canary-middlewares": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "Canary with non matching canaries",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingresses-with-non-matching-canary.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-non-matching-canary-rule-0-path-0": {
+							Rule:        "Host(`production.localhost`) && PathPrefix(`/`)",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-non-matching-canary-whoami-80",
+							Middlewares: []string{"default-ingress-with-non-matching-canary-rule-0-path-0-retry"},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-non-matching-canary-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-non-matching-canary-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   ptr.To(true),
+								ServersTransport: "default-ingress-with-non-matching-canary",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-non-matching-canary": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -5522,22 +6655,6 @@ func TestNginxSizeToBytes(t *testing.T) {
 			assert.Equal(t, test.expected, size)
 		})
 	}
-}
-
-func readResources(t *testing.T, paths []string) []runtime.Object {
-	t.Helper()
-
-	var k8sObjects []runtime.Object
-	for _, path := range paths {
-		yamlContent, err := os.ReadFile(filepath.FromSlash("./fixtures/" + path))
-		if err != nil {
-			panic(err)
-		}
-
-		k8sObjects = append(k8sObjects, k8s.MustParseYaml(yamlContent)...)
-	}
-
-	return k8sObjects
 }
 
 func TestProvider_validateConfiguration(t *testing.T) {
@@ -5664,7 +6781,7 @@ func TestHeaderRegexp(t *testing.T) {
 	}
 }
 
-func TestValueRegexp(t *testing.T) {
+func TestHeaderValueRegexp(t *testing.T) {
 	testCases := []struct {
 		desc     string
 		value    string
@@ -5711,8 +6828,24 @@ func TestValueRegexp(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			result := valueRegexp.MatchString(test.value)
+			result := headerValueRegexp.MatchString(test.value)
 			assert.Equal(t, test.expected, result, "Value: %q", test.value)
 		})
 	}
+}
+
+func readResources(t *testing.T, paths []string) []runtime.Object {
+	t.Helper()
+
+	var k8sObjects []runtime.Object
+	for _, path := range paths {
+		yamlContent, err := os.ReadFile(filepath.FromSlash("./fixtures/" + path))
+		if err != nil {
+			panic(err)
+		}
+
+		k8sObjects = append(k8sObjects, k8s.MustParseYaml(yamlContent)...)
+	}
+
+	return k8sObjects
 }
