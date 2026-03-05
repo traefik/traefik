@@ -8,6 +8,7 @@ import (
 	netv1 "k8s.io/api/networking/v1"
 )
 
+// TODO: when implementing load-balance the corresponding behavior should be implemented for canaries.
 type ingressConfig struct {
 	AuthType       *string `annotation:"nginx.ingress.kubernetes.io/auth-type"`
 	AuthSecret     *string `annotation:"nginx.ingress.kubernetes.io/auth-secret"`
@@ -40,14 +41,15 @@ type ingressConfig struct {
 
 	ServerAlias *[]string `annotation:"nginx.ingress.kubernetes.io/server-alias"`
 
-	Affinity              *string `annotation:"nginx.ingress.kubernetes.io/affinity"`
-	SessionCookieName     *string `annotation:"nginx.ingress.kubernetes.io/session-cookie-name"`
-	SessionCookieSecure   *bool   `annotation:"nginx.ingress.kubernetes.io/session-cookie-secure"`
-	SessionCookiePath     *string `annotation:"nginx.ingress.kubernetes.io/session-cookie-path"`
-	SessionCookieDomain   *string `annotation:"nginx.ingress.kubernetes.io/session-cookie-domain"`
-	SessionCookieSameSite *string `annotation:"nginx.ingress.kubernetes.io/session-cookie-samesite"`
-	SessionCookieMaxAge   *int    `annotation:"nginx.ingress.kubernetes.io/session-cookie-max-age"`
-	SessionCookieExpires  *int    `annotation:"nginx.ingress.kubernetes.io/session-cookie-expires"`
+	Affinity               *string `annotation:"nginx.ingress.kubernetes.io/affinity"`
+	AffinityCanaryBehavior *string `annotation:"nginx.ingress.kubernetes.io/affinity-canary-behavior"`
+	SessionCookieName      *string `annotation:"nginx.ingress.kubernetes.io/session-cookie-name"`
+	SessionCookieSecure    *bool   `annotation:"nginx.ingress.kubernetes.io/session-cookie-secure"`
+	SessionCookiePath      *string `annotation:"nginx.ingress.kubernetes.io/session-cookie-path"`
+	SessionCookieDomain    *string `annotation:"nginx.ingress.kubernetes.io/session-cookie-domain"`
+	SessionCookieSameSite  *string `annotation:"nginx.ingress.kubernetes.io/session-cookie-samesite"`
+	SessionCookieMaxAge    *int    `annotation:"nginx.ingress.kubernetes.io/session-cookie-max-age"`
+	SessionCookieExpires   *int    `annotation:"nginx.ingress.kubernetes.io/session-cookie-expires"`
 
 	ServiceUpstream *bool `annotation:"nginx.ingress.kubernetes.io/service-upstream"`
 
@@ -102,6 +104,14 @@ type ingressConfig struct {
 
 	ConfigurationSnippet *string `annotation:"nginx.ingress.kubernetes.io/configuration-snippet"`
 	ServerSnippet        *string `annotation:"nginx.ingress.kubernetes.io/server-snippet"`
+
+	Canary              *bool   `annotation:"nginx.ingress.kubernetes.io/canary"`
+	CanaryCookie        *string `annotation:"nginx.ingress.kubernetes.io/canary-by-cookie"`
+	CanaryHeader        *string `annotation:"nginx.ingress.kubernetes.io/canary-by-header"`
+	CanaryHeaderValue   *string `annotation:"nginx.ingress.kubernetes.io/canary-by-header-value"`
+	CanaryHeaderPattern *string `annotation:"nginx.ingress.kubernetes.io/canary-by-header-pattern"`
+	CanaryWeight        *int    `annotation:"nginx.ingress.kubernetes.io/canary-weight"`
+	CanaryWeightTotal   *int    `annotation:"nginx.ingress.kubernetes.io/canary-weight-total"`
 }
 
 // parseIngressConfig parses the annotations from an Ingress object into an ingressConfig struct.

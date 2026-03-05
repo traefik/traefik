@@ -5,7 +5,7 @@ metadata:
   name: ingress-with-custom-http-errors-and-default-backend
   namespace: default
   annotations:
-    nginx.ingress.kubernetes.io/default-backend: whoami_b
+    nginx.ingress.kubernetes.io/default-backend: whoami-b
     nginx.ingress.kubernetes.io/custom-http-errors: "404,415"
 
 spec:
