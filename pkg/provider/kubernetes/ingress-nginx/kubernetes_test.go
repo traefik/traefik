@@ -6619,16 +6619,18 @@ func TestLoadIngresses(t *testing.T) {
 					ServersTransports: map[string]*dynamic.ServersTransport{
 						"default-ingress-with-limit-rps": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 						"default-ingress-with-limit-rps-zero": {
 							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
-								DialTimeout:  ptypes.Duration(60 * time.Second),
-								ReadTimeout:  ptypes.Duration(60 * time.Second),
-								WriteTimeout: ptypes.Duration(60 * time.Second),
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
 							},
 						},
 					},
