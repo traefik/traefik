@@ -7,7 +7,7 @@ on:
 
 env:
   ASSIMILIS_VERSION: v1.0.0
-  AIKIDO_REPO_CODE: "1325139"
+  AIKIDO_REPO_CODE: "1325139" # traefik v2.11
 
 jobs:
   build:
