@@ -382,9 +382,10 @@ func (p *Provider) loadConfigurationFromGateways(ctx context.Context) *dynamic.C
 
 	p.loadGRPCRoutes(ctx, gatewayListeners, conf)
 
+	p.loadTLSRoutes(ctx, gatewayListeners, conf)
+
 	if p.ExperimentalChannel {
 		p.loadTCPRoutes(ctx, gatewayListeners, conf)
-		p.loadTLSRoutes(ctx, gatewayListeners, conf)
 	}
 
 	for _, gateway := range gateways {
@@ -995,20 +996,13 @@ func supportedRouteKinds(protocol gatev1.ProtocolType, experimentalChannel bool)
 		}, nil
 
 	case gatev1.TLSProtocolType:
-		if experimentalChannel {
-			return []gatev1.RouteGroupKind{
-				{Kind: kindTCPRoute, Group: &group},
-				{Kind: kindTLSRoute, Group: &group},
-			}, nil
+		kinds := []gatev1.RouteGroupKind{
+			{Kind: kindTLSRoute, Group: &group},
 		}
-
-		return nil, []metav1.Condition{{
-			Type:               string(gatev1.ListenerConditionConflicted),
-			Status:             metav1.ConditionTrue,
-			LastTransitionTime: metav1.Now(),
-			Reason:             string(gatev1.ListenerReasonInvalidRouteKinds),
-			Message:            fmt.Sprintf("Protocol %q requires the experimental channel support to be enabled, please use the `experimentalChannel` option", protocol),
-		}}
+		if experimentalChannel {
+			kinds = append(kinds, gatev1.RouteGroupKind{Kind: kindTCPRoute, Group: &group})
+		}
+		return kinds, nil
 	}
 
 	return nil, []metav1.Condition{{
