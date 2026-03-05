@@ -3445,9 +3445,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"default-failover1": {
 							Failover: &dynamic.Failover{
-								Service:     "default-whoami5-8080",
-								Fallback:    "default-whoami4-8080",
-								HealthCheck: &dynamic.HealthCheck{},
+								Service:  "default-whoami5-8080",
+								Fallback: "default-whoami4-8080",
+								Errors:   &dynamic.FailoverError{},
 							},
 						},
 						"default-whoami4-8080": {
@@ -3517,9 +3517,9 @@ func TestLoadIngressRoutes(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"default-failover1": {
 							Failover: &dynamic.Failover{
-								Service:     "default-wrr1",
-								Fallback:    "default-wrr2",
-								HealthCheck: &dynamic.HealthCheck{},
+								Service:  "default-wrr1",
+								Fallback: "default-wrr2",
+								Errors:   &dynamic.FailoverError{},
 							},
 						},
 						"default-wrr1": {
@@ -3609,9 +3609,8 @@ func TestLoadIngressRoutes(t *testing.T) {
 					Services: map[string]*dynamic.Service{
 						"default-failover1": {
 							Failover: &dynamic.Failover{
-								Service:     "default-whoami5-8080",
-								Fallback:    "default-whoami4-8080",
-								HealthCheck: &dynamic.HealthCheck{},
+								Service:  "default-whoami5-8080",
+								Fallback: "default-whoami4-8080",
 								Errors: &dynamic.FailoverError{
 									Status:              []string{"500-504", "404"},
 									MaxRequestBodyBytes: pointer[int64](1048576),
