@@ -2,6 +2,7 @@ package rewritetarget
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -31,6 +32,10 @@ type rewriteTarget struct {
 func New(ctx context.Context, next http.Handler, config dynamic.RewriteTarget, name string) (http.Handler, error) {
 	middlewares.GetLogger(ctx, name, typeName).Debug().Msg("Creating middleware")
 
+	if config.Replacement == "" {
+		return nil, errors.New("replacement cannot be empty")
+	}
+
 	mw := &rewriteTarget{
 		next:             next,
 		replacement:      strings.TrimSpace(config.Replacement),
@@ -41,7 +46,7 @@ func New(ctx context.Context, next http.Handler, config dynamic.RewriteTarget, n
 	if config.Regex != "" {
 		exp, err := regexp.Compile(strings.TrimSpace(config.Regex))
 		if err != nil {
-			return nil, fmt.Errorf("error compiling regular expression %s: %w", config.Regex, err)
+			return nil, fmt.Errorf("compiling regular expression %s: %w", config.Regex, err)
 		}
 		mw.regexp = exp
 	}

@@ -746,19 +746,6 @@ type ReplacePathRegex struct {
 
 // +k8s:deepcopy-gen=true
 
-// RewriteTarget holds the rewrite target middleware configuration used by ingress-nginx provider.
-// This middleware replaces the path of a URL.
-type RewriteTarget struct {
-	// Regex defines the regular expression used to match and capture the path from the request URL.
-	Regex string `json:"regex,omitempty" toml:"regex,omitempty" yaml:"regex,omitempty" export:"true"`
-	// Replacement defines the replacement path format, which can include captured variables.
-	Replacement string `json:"replacement,omitempty" toml:"replacement,omitempty" yaml:"replacement,omitempty" export:"true"`
-	// XForwardedPrefix defines the value of the X-Forwarded-Prefix header.
-	XForwardedPrefix string `json:"xForwardedPrefix,omitempty" toml:"xForwardedPrefix,omitempty" yaml:"xForwardedPrefix,omitempty" export:"true"`
-}
-
-// +k8s:deepcopy-gen=true
-
 // Retry holds the retry middleware configuration.
 // This middleware reissues requests a given number of times to a backend server if that server does not reply.
 // As soon as the server answers, the middleware stops retrying, regardless of the response status.
@@ -917,4 +904,17 @@ type URLRewrite struct {
 type Snippet struct {
 	ServerSnippet        string `json:"serverSnippet,omitempty"`
 	ConfigurationSnippet string `json:"configurationSnippet,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// RewriteTarget holds the rewrite target middleware configuration used by ingress-nginx provider.
+// This middleware replaces the path of a URL.
+type RewriteTarget struct {
+	// Regex defines the regular expression used to match and capture the path from the request URL.
+	Regex string `json:"regex,omitempty"`
+	// Replacement defines the replacement path format, which can include captured variables.
+	Replacement string `json:"replacement,omitempty"`
+	// XForwardedPrefix defines the value of the X-Forwarded-Prefix header.
+	XForwardedPrefix string `json:"xForwardedPrefix,omitempty"`
 }

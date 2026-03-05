@@ -21,6 +21,13 @@ func TestRewriteTarget(t *testing.T) {
 		expectsError             bool
 	}{
 		{
+			desc: "empty replacement",
+			config: dynamic.RewriteTarget{
+				Replacement: "",
+			},
+			expectsError: true,
+		},
+		{
 			desc: "plain replacement",
 			path: "/foo/bar",
 			config: dynamic.RewriteTarget{
@@ -108,6 +115,18 @@ func TestRewriteTarget(t *testing.T) {
 			expectedPath:             "/bar",
 			expectedRawPath:          "/bar",
 			expectedXForwardedPrefix: "/foo",
+		},
+		{
+			desc: "regex with x-forwarded-prefix using third capture group",
+			path: "/prefix/sub/endpoint",
+			config: dynamic.RewriteTarget{
+				Regex:            `^/(prefix)/(sub)/(.*)`,
+				Replacement:      "/$3",
+				XForwardedPrefix: "/$1/$2",
+			},
+			expectedPath:             "/endpoint",
+			expectedRawPath:          "/endpoint",
+			expectedXForwardedPrefix: "/prefix/sub",
 		},
 		{
 			desc: "x-forwarded-prefix not set when regex does not match",
