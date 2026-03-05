@@ -5751,12 +5751,6 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-ingress-with-canary-by-header-whoami-80-canary",
 							Middlewares: []string{"default-ingress-with-canary-by-header-rule-0-path-0-canary-retry"},
 						},
-						"default-ingress-with-canary-by-header-rule-0-path-0-non-canary": {
-							Rule:        "(Host(`production.localhost`) && PathPrefix(`/`)) && (Header(`Foo`, `never`))",
-							RuleSyntax:  "default",
-							Service:     "default-ingress-with-canary-by-header-whoami-80",
-							Middlewares: []string{"default-ingress-with-canary-by-header-rule-0-path-0-non-canary-retry"},
-						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-canary-by-header-rule-0-path-0-retry": {
@@ -5765,11 +5759,6 @@ func TestLoadIngresses(t *testing.T) {
 							},
 						},
 						"default-ingress-with-canary-by-header-rule-0-path-0-canary-retry": {
-							Retry: &dynamic.Retry{
-								Attempts: 3,
-							},
-						},
-						"default-ingress-with-canary-by-header-rule-0-path-0-non-canary-retry": {
 							Retry: &dynamic.Retry{
 								Attempts: 3,
 							},
@@ -6171,12 +6160,6 @@ func TestLoadIngresses(t *testing.T) {
 							Service:     "default-ingress-with-canary-by-cookie-whoami-80-canary",
 							Middlewares: []string{"default-ingress-with-canary-by-cookie-rule-0-path-0-canary-retry"},
 						},
-						"default-ingress-with-canary-by-cookie-rule-0-path-0-non-canary": {
-							Rule:        "(Host(`production.localhost`) && PathPrefix(`/`)) && (HeaderRegexp(`Cookie`, `(^|;\\s*)foo=never(;|$)`))",
-							RuleSyntax:  "default",
-							Service:     "default-ingress-with-canary-by-cookie-whoami-80",
-							Middlewares: []string{"default-ingress-with-canary-by-cookie-rule-0-path-0-non-canary-retry"},
-						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-canary-by-cookie-rule-0-path-0-retry": {
@@ -6185,11 +6168,6 @@ func TestLoadIngresses(t *testing.T) {
 							},
 						},
 						"default-ingress-with-canary-by-cookie-rule-0-path-0-canary-retry": {
-							Retry: &dynamic.Retry{
-								Attempts: 3,
-							},
-						},
-						"default-ingress-with-canary-by-cookie-rule-0-path-0-non-canary-retry": {
 							Retry: &dynamic.Retry{
 								Attempts: 3,
 							},
@@ -6262,6 +6240,122 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
+			desc: "Canary with header, cookie, and weight",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingresses-with-canary-by-header-and-cookie-and-weight.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-canary-by-header-and-cookie-and-weight-rule-0-path-0": {
+							Rule:        "Host(`production.localhost`) && PathPrefix(`/`)",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-canary-by-header-and-cookie-and-weight-whoami-80-wrr",
+							Middlewares: []string{"default-ingress-with-canary-by-header-and-cookie-and-weight-rule-0-path-0-retry"},
+						},
+						"default-ingress-with-canary-by-header-and-cookie-and-weight-rule-0-path-0-canary": {
+							Rule:        "(Host(`production.localhost`) && PathPrefix(`/`)) && (Header(`Foo`, `always`) || (HeaderRegexp(`Cookie`, `(^|;\\s*)foo=always(;|$)`) && !Header(`Foo`, `never`)))",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-canary-by-header-and-cookie-and-weight-whoami-80-canary",
+							Middlewares: []string{"default-ingress-with-canary-by-header-and-cookie-and-weight-rule-0-path-0-canary-retry"},
+						},
+						"default-ingress-with-canary-by-header-and-cookie-and-weight-rule-0-path-0-non-canary": {
+							Rule:        "(Host(`production.localhost`) && PathPrefix(`/`)) && (Header(`Foo`, `never`) || HeaderRegexp(`Cookie`, `(^|;\\s*)foo=never(;|$)`))",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-canary-by-header-and-cookie-and-weight-whoami-80",
+							Middlewares: []string{"default-ingress-with-canary-by-header-and-cookie-and-weight-rule-0-path-0-non-canary-retry"},
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-canary-by-header-and-cookie-and-weight-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+						"default-ingress-with-canary-by-header-and-cookie-and-weight-rule-0-path-0-canary-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+						"default-ingress-with-canary-by-header-and-cookie-and-weight-rule-0-path-0-non-canary-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-canary-by-header-and-cookie-and-weight-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   ptr.To(true),
+								ServersTransport: "default-ingress-with-canary-by-header-and-cookie-and-weight",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-ingress-with-canary-by-header-and-cookie-and-weight-whoami-80-canary": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.7:80",
+									},
+									{
+										URL: "http://10.10.0.8:80",
+									},
+								},
+								Strategy:         "wrr",
+								PassHostHeader:   ptr.To(true),
+								ServersTransport: "default-ingress-with-canary-by-header-and-cookie-and-weight",
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+							},
+						},
+						"default-ingress-with-canary-by-header-and-cookie-and-weight-whoami-80-wrr": {
+							Weighted: &dynamic.WeightedRoundRobin{
+								Services: []dynamic.WRRService{
+									{
+										Name:   "default-ingress-with-canary-by-header-and-cookie-and-weight-whoami-80",
+										Weight: ptr.To(90),
+									},
+									{
+										Name:   "default-ingress-with-canary-by-header-and-cookie-and-weight-whoami-80-canary",
+										Weight: ptr.To(10),
+									},
+								},
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-canary-by-header-and-cookie-and-weight": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
 			desc: "Canary with middlewares on production Ingress",
 			paths: []string{
 				"services.yml",
@@ -6293,15 +6387,6 @@ func TestLoadIngresses(t *testing.T) {
 								"default-ingress-with-canary-middlewares-rule-0-path-0-canary-retry",
 							},
 						},
-						"default-ingress-with-canary-middlewares-rule-0-path-0-non-canary": {
-							Rule:       "(Host(`production.localhost`) && PathPrefix(`/`)) && (Header(`Foo`, `never`))",
-							RuleSyntax: "default",
-							Service:    "default-ingress-with-canary-middlewares-whoami-80",
-							Middlewares: []string{
-								"default-ingress-with-canary-middlewares-rule-0-path-0-non-canary-app-root",
-								"default-ingress-with-canary-middlewares-rule-0-path-0-non-canary-retry",
-							},
-						},
 					},
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-canary-middlewares-rule-0-path-0-app-root": {
@@ -6316,23 +6401,12 @@ func TestLoadIngresses(t *testing.T) {
 								Replacement: "$1/foo",
 							},
 						},
-						"default-ingress-with-canary-middlewares-rule-0-path-0-non-canary-app-root": {
-							RedirectRegex: &dynamic.RedirectRegex{
-								Regex:       `^(https?://[^/]+)/$`,
-								Replacement: "$1/foo",
-							},
-						},
 						"default-ingress-with-canary-middlewares-rule-0-path-0-retry": {
 							Retry: &dynamic.Retry{
 								Attempts: 3,
 							},
 						},
 						"default-ingress-with-canary-middlewares-rule-0-path-0-canary-retry": {
-							Retry: &dynamic.Retry{
-								Attempts: 3,
-							},
-						},
-						"default-ingress-with-canary-middlewares-rule-0-path-0-non-canary-retry": {
 							Retry: &dynamic.Retry{
 								Attempts: 3,
 							},

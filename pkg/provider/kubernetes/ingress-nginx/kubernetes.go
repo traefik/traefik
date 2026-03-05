@@ -119,8 +119,9 @@ func (c canaryBackend) RequiresCanaryRouter() bool {
 
 // RequiresNonCanaryRouter returns true if the canary backend requires a non-canary router configuration for Cookie or Header routing.
 // This is the case when only the Header/Cookie options are configured, as a "never" value should forward the request to the production service.
+// When the canary weight is 0, no canary router should be created as all the traffic will be handled by the non-canary router based on the weight configuration.
 func (c canaryBackend) RequiresNonCanaryRouter() bool {
-	return (c.Header != "" && c.HeaderValue == "" && c.HeaderPattern == "") || c.Cookie != ""
+	return c.Weight > 0 && ((c.Header != "" && c.HeaderValue == "" && c.HeaderPattern == "") || c.Cookie != "")
 }
 
 // AppendCanaryRule appends the canary condition to the given rule based on the canary configuration for Cookie or Header routing.
@@ -135,11 +136,17 @@ func (c canaryBackend) AppendCanaryRule(rule string) string {
 			rules = append(rules, fmt.Sprintf("Header(`%s`, `%s`)", c.Header, c.HeaderValue))
 
 		default:
-			rules = append(rules, fmt.Sprintf("Header(`%s`, `%s`)", c.Header, "always"))
+			rules = append(rules, fmt.Sprintf("Header(`%s`, `always`)", c.Header))
 		}
 	}
+
 	if c.Cookie != "" {
-		rules = append(rules, fmt.Sprintf("HeaderRegexp(`Cookie`, `%s`)", fmt.Sprintf("(^|;\\s*)%s=always(;|$)", c.Cookie)))
+		cookieRule := fmt.Sprintf("HeaderRegexp(`Cookie`, `%s`)", fmt.Sprintf("(^|;\\s*)%s=always(;|$)", c.Cookie))
+		if c.Header != "" && c.HeaderValue == "" && c.HeaderPattern == "" {
+			cookieRule = fmt.Sprintf("(%s && !%s)", cookieRule, fmt.Sprintf("Header(`%s`, `never`)", c.Header))
+		}
+
+		rules = append(rules, cookieRule)
 	}
 
 	return fmt.Sprintf("(%s) && (%s)", rule, strings.Join(rules, " || "))
