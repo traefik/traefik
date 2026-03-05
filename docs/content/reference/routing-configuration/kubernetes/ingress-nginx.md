@@ -376,6 +376,12 @@ The following annotations are organized by category for easier navigation.
 | <a id="opt-nginx-ingress-kubernetes-iowhitelist-source-range" href="#opt-nginx-ingress-kubernetes-iowhitelist-source-range" title="#opt-nginx-ingress-kubernetes-iowhitelist-source-range">`nginx.ingress.kubernetes.io/whitelist-source-range`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-ioallowlist-source-range" href="#opt-nginx-ingress-kubernetes-ioallowlist-source-range" title="#opt-nginx-ingress-kubernetes-ioallowlist-source-range">`nginx.ingress.kubernetes.io/allowlist-source-range`</a> |                                                      |
 
+### Rate Limiting
+
+| Annotation                                                                                                                                                                                      | Limitations / Notes                                                                                       |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |-----------------------------------------------------------------------------------------------------------|
+| <a id="opt-nginx-ingress-kubernetes-iolimit-rps" href="#opt-nginx-ingress-kubernetes-iolimit-rps" title="#opt-nginx-ingress-kubernetes-iolimit-rps">`nginx.ingress.kubernetes.io/limit-rps`</a> | Exceeding the limit returns `429 Too Many Requests` instead of NGINX's default `503 Service Unavailable`. |
+
 ### Buffering
 
 | Annotation                                                                                                                                                                                                                                                  | Limitations / Notes                                                                                           |
@@ -416,6 +422,9 @@ The following annotations are organized by category for easier navigation.
 - **TLS/Backend Protocols**: AUTO_HTTP, FCGI and some TLS options are not supported in Traefik.
 - **Path Handling**: Traefik preserves trailing slashes by default; NGINX removes them unless configured otherwise.
 - **Retry**: NGINX guarantee that the next retry will be passed to the next server, while on Traefik there is a possibility that the retry would be passed to the same server.
+- **Rate Limiting**: NGINX uses the **Leaky Bucket** algorithm, where requests are queued and drained at a fixed rate. Once the queue (burst) is full, excess requests are rejected immediately with `503`.
+Traefik uses the **Token Bucket** algorithm, where the bucket starts full at `burst` tokens, each request consumes one token, and tokens refill at the `limit-rps` rate. When the bucket is empty, the request is either delayed until more tokens are available or rejected with `429` if the delay would be too long.
+In practice, Traefik is slightly more lenient under bursty load, as it smooths out burst traffic rather than dropping it, but the steady-state throughput cap is similar.
 
 ### Unsupported Annotations
 
@@ -444,8 +453,7 @@ The following annotations are organized by category for easier navigation.
 | <a id="opt-nginx-ingress-kubernetes-iodisable-proxy-intercept-errors" href="#opt-nginx-ingress-kubernetes-iodisable-proxy-intercept-errors" title="#opt-nginx-ingress-kubernetes-iodisable-proxy-intercept-errors">`nginx.ingress.kubernetes.io/disable-proxy-intercept-errors`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-iolimit-rate-after" href="#opt-nginx-ingress-kubernetes-iolimit-rate-after" title="#opt-nginx-ingress-kubernetes-iolimit-rate-after">`nginx.ingress.kubernetes.io/limit-rate-after`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-iolimit-rate" href="#opt-nginx-ingress-kubernetes-iolimit-rate" title="#opt-nginx-ingress-kubernetes-iolimit-rate">`nginx.ingress.kubernetes.io/limit-rate`</a> |                                                      |
-| <a id="opt-nginx-ingress-kubernetes-iolimit-whitelist" href="#opt-nginx-ingress-kubernetes-iolimit-whitelist" title="#opt-nginx-ingress-kubernetes-iolimit-whitelist">`nginx.ingress.kubernetes.io/limit-whitelist`</a> |                                                      |
-| <a id="opt-nginx-ingress-kubernetes-iolimit-rps" href="#opt-nginx-ingress-kubernetes-iolimit-rps" title="#opt-nginx-ingress-kubernetes-iolimit-rps">`nginx.ingress.kubernetes.io/limit-rps`</a> |                                                      |
+| <a id="opt-nginx-ingress-kubernetes-iolimit-whitelist" href="#opt-nginx-ingress-kubernetes-iolimit-whitelist" title="#opt-nginx-ingress-kubernetes-iolimit-whitelist">`nginx.ingress.kubernetes.io/limit-whitelist`</a> |                                                      |                                                   |
 | <a id="opt-nginx-ingress-kubernetes-iolimit-rpm" href="#opt-nginx-ingress-kubernetes-iolimit-rpm" title="#opt-nginx-ingress-kubernetes-iolimit-rpm">`nginx.ingress.kubernetes.io/limit-rpm`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-iolimit-burst-multiplier" href="#opt-nginx-ingress-kubernetes-iolimit-burst-multiplier" title="#opt-nginx-ingress-kubernetes-iolimit-burst-multiplier">`nginx.ingress.kubernetes.io/limit-burst-multiplier`</a> |                                                      |
 | <a id="opt-nginx-ingress-kubernetes-iolimit-connections" href="#opt-nginx-ingress-kubernetes-iolimit-connections" title="#opt-nginx-ingress-kubernetes-iolimit-connections">`nginx.ingress.kubernetes.io/limit-connections`</a> |                                                      |
