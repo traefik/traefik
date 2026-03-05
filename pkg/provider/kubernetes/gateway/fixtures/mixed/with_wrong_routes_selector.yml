@@ -50,7 +50,7 @@ spec:
 
 ---
 kind: TLSRoute
-apiVersion: gateway.networking.k8s.io/v1alpha2
+apiVersion: gateway.networking.k8s.io/v1
 metadata:
   name: tls-app-1
   namespace: default
