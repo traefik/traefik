@@ -13,10 +13,8 @@ func containerJSON(ops ...func(*dockercontainertypes.InspectResponse)) dockercon
 			Name:       "fake",
 			HostConfig: &dockercontainertypes.HostConfig{},
 		},
-		Config: &dockercontainertypes.Config{},
-		NetworkSettings: &dockercontainertypes.NetworkSettings{
-			NetworkSettingsBase: dockercontainertypes.NetworkSettingsBase{},
-		},
+		Config:          &dockercontainertypes.Config{},
+		NetworkSettings: &dockercontainertypes.NetworkSettings{},
 	}
 
 	for _, op := range ops {
@@ -40,7 +38,7 @@ func networkMode(mode string) func(*dockercontainertypes.InspectResponse) {
 
 func ports(portMap nat.PortMap) func(*dockercontainertypes.InspectResponse) {
 	return func(c *dockercontainertypes.InspectResponse) {
-		c.NetworkSettings.NetworkSettingsBase.Ports = portMap
+		c.NetworkSettings.Ports = portMap
 	}
 }
 
