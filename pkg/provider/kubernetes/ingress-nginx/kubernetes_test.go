@@ -1322,9 +1322,9 @@ func TestLoadIngresses(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"default-ingress-with-rewrite-target-no-regex-rule-0-path-0": {
 							EntryPoints: []string{"web"},
-							Rule:       "Host(`rewrite-target-no-regex.localhost`) && Path(`/original`)",
-							RuleSyntax: "default",
-							Service:    "default-ingress-with-rewrite-target-no-regex-whoami-80",
+							Rule:        "Host(`rewrite-target-no-regex.localhost`) && Path(`/original`)",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-rewrite-target-no-regex-whoami-80",
 							Middlewares: []string{
 								"default-ingress-with-rewrite-target-no-regex-rule-0-path-0-rewrite-target",
 								"default-ingress-with-rewrite-target-no-regex-rule-0-path-0-retry",
@@ -3262,9 +3262,9 @@ func TestLoadIngresses(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"default-ingress-with-custom-http-errors-and-default-backend-rule-0-path-0": {
 							EntryPoints: []string{"web"},
-							Rule:       "Host(`whoami.localhost`) && Path(`/`)",
-							RuleSyntax: "default",
-							Service:    "default-ingress-with-custom-http-errors-and-default-backend-whoami-80",
+							Rule:        "Host(`whoami.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-custom-http-errors-and-default-backend-whoami-80",
 							Middlewares: []string{
 								"default-ingress-with-custom-http-errors-and-default-backend-rule-0-path-0-custom-http-errors",
 								"default-ingress-with-custom-http-errors-and-default-backend-rule-0-path-0-retry",
@@ -3359,9 +3359,9 @@ func TestLoadIngresses(t *testing.T) {
 					Routers: map[string]*dynamic.Router{
 						"default-ingress-with-custom-http-errors-rule-0-path-0": {
 							EntryPoints: []string{"web"},
-							Rule:       "Host(`whoami.localhost`) && Path(`/`)",
-							RuleSyntax: "default",
-							Service:    "default-ingress-with-custom-http-errors-whoami-80",
+							Rule:        "Host(`whoami.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Service:     "default-ingress-with-custom-http-errors-whoami-80",
 							Middlewares: []string{
 								"default-ingress-with-custom-http-errors-rule-0-path-0-custom-http-errors",
 								"default-ingress-with-custom-http-errors-rule-0-path-0-retry",
@@ -6729,8 +6729,8 @@ func TestLoadIngresses(t *testing.T) {
 				defaultBackendServiceName:      test.defaultBackendServiceName,
 				defaultBackendServiceNamespace: test.defaultBackendServiceNamespace,
 				AllowSnippetAnnotations:        test.allowSnippetAnnotations,
-				NonTLSEntryPoints:              []string{"web"},
-				TLSEntryPoints:                 []string{"websecure"},
+				HTTPEntryPoints:                []string{"web"},
+				HTTPSEntryPoints:               []string{"websecure"},
 				allowedHeaders:                 test.globalAllowedResponseHeaders,
 				AllowCrossNamespaceResources:   test.allowCrossNamespaceResources,
 			}

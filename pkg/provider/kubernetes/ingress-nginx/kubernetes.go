@@ -211,11 +211,8 @@ type Provider struct {
 
 	AllowSnippetAnnotations bool `description:"Enables to parse and add -snippet annotations/directives." json:"allowSnippetAnnotations,omitempty" toml:"allowSnippetAnnotations,omitempty" yaml:"allowSnippetAnnotations,omitempty" export:"true"`
 
-	// NonTLSEntryPoints contains the names of entrypoints that are configured without TLS.
-	NonTLSEntryPoints []string `description:"EntryPoint(s) (separated by comma) used for HTTP requests."  json:"nonTlsEntryPoints,omitempty" toml:"nonTlsEntryPoints,omitempty" yaml:"nonTlsEntryPoints,omitempty" export:"true"`
-
-	// TLSEntryPoints contains the names of entrypoints that are configured with TLS.
-	TLSEntryPoints []string `description:"EntryPoint(s) (separated by comma) used for HTTPS requests."  json:"tlsEntryPoints,omitempty" toml:"tlsEntryPoints,omitempty" yaml:"tlsEntryPoints,omitempty" export:"true"`
+	HTTPEntryPoints  []string `description:"EntryPoint(s) (separated by comma) used for HTTP requests." json:"httpEntryPoints,omitempty" toml:"httpEntryPoints,omitempty" yaml:"httpEntryPoints,omitempty" export:"true"`
+	HTTPSEntryPoints []string `description:"EntryPoint(s) (separated by comma) used for HTTPS requests." json:"httpsEntryPoints,omitempty" toml:"httpsEntryPoints,omitempty" yaml:"httpsEntryPoints,omitempty" export:"true"`
 
 	allowedHeaders                 []string
 	defaultBackendServiceNamespace string
@@ -397,7 +394,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 		// Add the default backend service router to the configuration.
 		conf.HTTP.Routers[defaultBackendName] = &dynamic.Router{
-			EntryPoints: p.NonTLSEntryPoints,
+			EntryPoints: p.HTTPEntryPoints,
 			Rule:        "PathPrefix(`/`)",
 			// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
 			RuleSyntax: "default",
@@ -406,7 +403,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 		}
 
 		conf.HTTP.Routers[defaultBackendTLSName] = &dynamic.Router{
-			EntryPoints: p.TLSEntryPoints,
+			EntryPoints: p.HTTPSEntryPoints,
 			Rule:        "PathPrefix(`/`)",
 			// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
 			RuleSyntax: "default",
@@ -569,7 +566,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 		if defaultBackendService != nil && len(ingress.Spec.Rules) == 0 {
 			rt := &dynamic.Router{
-				EntryPoints: p.NonTLSEntryPoints,
+				EntryPoints: p.HTTPEntryPoints,
 				Rule:        "PathPrefix(`/`)",
 				// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
 				RuleSyntax: "default",
@@ -584,7 +581,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 			conf.HTTP.Routers[defaultBackendName] = rt
 
 			rtTLS := &dynamic.Router{
-				EntryPoints: p.TLSEntryPoints,
+				EntryPoints: p.HTTPSEntryPoints,
 				Rule:        "PathPrefix(`/`)",
 				// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
 				RuleSyntax: "default",
@@ -661,7 +658,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 				key := provider.Normalize(ingress.Namespace + "-" + ingress.Name + "-default-backend")
 
 				rt := &dynamic.Router{
-					EntryPoints: p.NonTLSEntryPoints,
+					EntryPoints: p.HTTPEntryPoints,
 					Rule:        buildHostRule(rule.Host),
 					// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
 					RuleSyntax: "default",
@@ -675,7 +672,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 				conf.HTTP.Routers[key] = rt
 
 				rtTLS := &dynamic.Router{
-					EntryPoints: p.TLSEntryPoints,
+					EntryPoints: p.HTTPSEntryPoints,
 					Rule:        buildHostRule(rule.Host),
 					// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
 					RuleSyntax: "default",
@@ -770,13 +767,13 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 				if hasTLS {
 					rt.TLS = &dynamic.RouterTLSConfig{}
-					rt.EntryPoints = p.TLSEntryPoints
+					rt.EntryPoints = p.HTTPSEntryPoints
 
 					if clientAuthTLSOptionName != "" {
 						rt.TLS.Options = clientAuthTLSOptionName
 					}
 				} else {
-					rt.EntryPoints = p.NonTLSEntryPoints
+					rt.EntryPoints = p.HTTPEntryPoints
 				}
 				routerKey := provider.Normalize(fmt.Sprintf("%s-%s-rule-%d-path-%d", ingress.Namespace, ingress.Name, ri, pi))
 				conf.HTTP.Routers[routerKey] = rt
@@ -1771,7 +1768,7 @@ func (p *Provider) applySSLRedirectConfiguration(routerName string, ingressConfi
 		// so no Non-TLS router exists to handle HTTP traffic, and we should create it.
 		httpRouter := &dynamic.Router{
 			// Only attach to entryPoint which do not activate TLS.
-			EntryPoints: p.NonTLSEntryPoints,
+			EntryPoints: p.HTTPEntryPoints,
 			Rule:        rt.Rule,
 			// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
 			RuleSyntax:  "default",
