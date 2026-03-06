@@ -1,3 +1,10 @@
+## [v2.11.39](https://github.com/traefik/traefik/tree/v2.11.39) (2026-03-06)
+[All Commits](https://github.com/traefik/traefik/compare/v2.11.38...v2.11.39)
+
+**Bug fixes:**
+- **[docker]** Bump Docker and OpenTelemetry dependencies ([#12761](https://github.com/traefik/traefik/pull/12761) by [mmatur](https://github.com/mmatur))
+- **[server]** Bump golang.org/x/net to v0.51.0 ([#12756](https://github.com/traefik/traefik/pull/12756) by [kevinpollet](https://github.com/kevinpollet))
+
 ## [v3.6.9](https://github.com/traefik/traefik/tree/v3.6.9) (2026-02-23)
 [All Commits](https://github.com/traefik/traefik/compare/v3.6.8...v3.6.9)
 
