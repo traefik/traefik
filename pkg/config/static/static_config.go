@@ -322,18 +322,18 @@ func (c *Configuration) SetEffectiveConfiguration() {
 
 	// Configure Ingress NGINX provider.
 	if c.Providers.KubernetesIngressNGINX != nil {
-		if len(c.Providers.KubernetesIngressNGINX.NonTLSEntryPoints) == 0 {
+		if len(c.Providers.KubernetesIngressNGINX.HTTPEntryPoints) == 0 {
 			for epName, entryPoint := range c.EntryPoints {
 				if entryPoint.HTTP.TLS == nil {
-					c.Providers.KubernetesIngressNGINX.NonTLSEntryPoints = append(c.Providers.KubernetesIngressNGINX.NonTLSEntryPoints, epName)
+					c.Providers.KubernetesIngressNGINX.HTTPEntryPoints = append(c.Providers.KubernetesIngressNGINX.HTTPEntryPoints, epName)
 				}
 			}
 		}
 
-		if len(c.Providers.KubernetesIngressNGINX.TLSEntryPoints) == 0 {
+		if len(c.Providers.KubernetesIngressNGINX.HTTPSEntryPoints) == 0 {
 			for epName, entryPoint := range c.EntryPoints {
 				if entryPoint.HTTP.TLS != nil {
-					c.Providers.KubernetesIngressNGINX.TLSEntryPoints = append(c.Providers.KubernetesIngressNGINX.TLSEntryPoints, epName)
+					c.Providers.KubernetesIngressNGINX.HTTPSEntryPoints = append(c.Providers.KubernetesIngressNGINX.HTTPSEntryPoints, epName)
 				}
 			}
 		}

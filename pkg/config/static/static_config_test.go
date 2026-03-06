@@ -289,8 +289,8 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 				},
 				Providers: &Providers{
 					KubernetesIngressNGINX: &ingressnginx.Provider{
-						NonTLSEntryPoints: []string{"web"},
-						TLSEntryPoints:    []string{"websecure"},
+						HTTPEntryPoints:  []string{"web"},
+						HTTPSEntryPoints: []string{"websecure"},
 					},
 				},
 			},
@@ -300,8 +300,8 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 			conf: &Configuration{
 				Providers: &Providers{
 					KubernetesIngressNGINX: &ingressnginx.Provider{
-						NonTLSEntryPoints: []string{"http"},
-						TLSEntryPoints:    []string{"https"},
+						HTTPEntryPoints:  []string{"http"},
+						HTTPSEntryPoints: []string{"https"},
 					},
 				},
 				EntryPoints: EntryPoints{
@@ -316,8 +316,8 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 				},
 				Providers: &Providers{
 					KubernetesIngressNGINX: &ingressnginx.Provider{
-						NonTLSEntryPoints: []string{"http"},
-						TLSEntryPoints:    []string{"https"},
+						HTTPEntryPoints:  []string{"http"},
+						HTTPSEntryPoints: []string{"https"},
 					},
 				},
 			},
