@@ -37,8 +37,8 @@ entryPoints:
   [entryPoints.web]
     address = ":80"
     [entryPoints.web.http]
-      [entryPoints.web.http.redirections]
-        entryPoint = "websecure"
+      [entryPoints.web.http.redirections.entryPoint]
+        to = "websecure"
         scheme = "https"
         permanent = true
     [entryPoints.web.observability]
@@ -49,10 +49,8 @@ entryPoints:
   [entryPoints.websecure]
     address = ":443"
     [entryPoints.websecure.http]
+      middlewares = ["auth@kubernetescrd", "strip@kubernetescrd"]
       [entryPoints.websecure.http.tls]
-      [entryPoints.websecure.http.middlewares]
-        - auth@kubernetescrd
-        - strip@kubernetescrd
 ```
 
 ```yaml tab="Helm Chart Values"
@@ -68,9 +66,9 @@ ports:
       - auth@kubernetescrd
       - strip@kubernetescrd
 additionalArguments:
-  - --entryPoints.web.http.redirections.to=websecure
-  - --entryPoints.web.http.redirections.scheme=https
-  - --entryPoints.web.http.redirections.permanent=true
+  - --entryPoints.web.http.redirections.entryPoint.to=websecure
+  - --entryPoints.web.http.redirections.entryPoint.scheme=https
+  - --entryPoints.web.http.redirections.entryPoint.permanent=true
   - --entryPoints.web.observability.accessLogs=false
   - --entryPoints.web.observability.metrics=false
   - --entryPoints.web.observability.tracing=false
@@ -89,13 +87,14 @@ additionalArguments:
 |:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:------------------------|:---------|
 | <a id="opt-address" href="#opt-address" title="#opt-address">`address`</a> | Define the port, and optionally the hostname, on which to listen for incoming connections and packets.<br /> It also defines the protocol to use (TCP or UDP).<br /> If no protocol is specified, the default is TCP. The format is:`[host]:port[/tcp\|/udp]                                                                                                                                                                                                                                                                                                                                                                                                                        | -                       | Yes      |
 | <a id="opt-asDefault" href="#opt-asDefault" title="#opt-asDefault">`asDefault`</a> | Mark the `entryPoint` to be in the list of default `entryPoints`.<br /> `entryPoints`in this list are used (by default) on HTTP and TCP routers that do not define their own `entryPoints` option.<br /> More information [here](#asdefault).                                                                                                                                                                                                                                                                                                                                                                                                                                       | false                   | No       |
+| <a id="opt-allowACMEByPass" href="#opt-allowACMEByPass" title="#opt-allowACMEByPass">`allowACMEByPass`</a> | Enables handling of ACME TLS and HTTP challenges with custom routers instead of the internal ACME router.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | false                   | No       |
 | <a id="opt-forwardedHeaders-trustedIPs" href="#opt-forwardedHeaders-trustedIPs" title="#opt-forwardedHeaders-trustedIPs">`forwardedHeaders.trustedIPs`</a> | Set the IPs or CIDR from where Traefik trusts the forwarded headers information (`X-Forwarded-*`).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | -                       | No       |
 | <a id="opt-forwardedHeaders-insecure" href="#opt-forwardedHeaders-insecure" title="#opt-forwardedHeaders-insecure">`forwardedHeaders.insecure`</a> | Set the insecure mode to always trust the forwarded headers information (`X-Forwarded-*`).<br />We recommend to use this option only for tests purposes, not in production.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | false                   | No       |
 | <a id="opt-forwardedHeaders-notAppendXForwardedFor" href="#opt-forwardedHeaders-notAppendXForwardedFor" title="#opt-forwardedHeaders-notAppendXForwardedFor">`forwardedHeaders.`<br />`notAppendXForwardedFor`</a> | When set to `true`, Traefik will not append the client's `RemoteAddr` to the `X-Forwarded-For` header. The existing header is preserved as-is. If no `X-Forwarded-For` header exists, none will be added.                                                                                                                                                                                                                                                                                                                                    | false                   | No       |
 | <a id="opt-http-redirections-entryPoint-to" href="#opt-http-redirections-entryPoint-to" title="#opt-http-redirections-entryPoint-to">`http.redirections.`<br />`entryPoint.to`</a> | The target element to enable (permanent) redirecting of all incoming requests on an entry point to another one. <br /> The target element can be an entry point name (ex: `websecure`), or a port (`:443`).                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | -                       | Yes      |
 | <a id="opt-http-redirections-entryPoint-scheme" href="#opt-http-redirections-entryPoint-scheme" title="#opt-http-redirections-entryPoint-scheme">`http.redirections.`<br />`entryPoint.scheme`</a> | The target scheme to use for (permanent) redirection of all incoming requests.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | https                   | No       |
 | <a id="opt-http-redirections-entryPoint-permanent" href="#opt-http-redirections-entryPoint-permanent" title="#opt-http-redirections-entryPoint-permanent">`http.redirections.`<br />`entryPoint.permanent`</a> | Enable permanent redirecting of all incoming requests on an entry point to another one changing the scheme. <br /> The target element, it can be an entry point name (ex: `websecure`), or a port (`:443`).                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | false                   | No       |
-| <a id="opt-http-redirections-entryPoint-priority" href="#opt-http-redirections-entryPoint-priority" title="#opt-http-redirections-entryPoint-priority">`http.redirections.`<br />`entryPoint.priority`</a> | Default priority applied to the routers attached to the `entryPoint`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | MaxInt32-1 (2147483646) | No       |
+| <a id="opt-http-redirections-entryPoint-priority" href="#opt-http-redirections-entryPoint-priority" title="#opt-http-redirections-entryPoint-priority">`http.redirections.`<br />`entryPoint.priority`</a> | Default priority applied to the routers attached to the `entryPoint`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | MaxInt-1 (`2147483646` on 32-bit, `9223372036854775806` on 64-bit) | No       |
 | <a id="opt-http-encodedCharacters" href="#opt-http-encodedCharacters" title="#opt-http-encodedCharacters">`http.encodedCharacters`</a> | Defines which encoded characters are allowed in the request path. More information [here](#encoded-characters).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | false                   | No       |
 | <a id="opt-http-encodedCharacters-allowEncodedSlash" href="#opt-http-encodedCharacters-allowEncodedSlash" title="#opt-http-encodedCharacters-allowEncodedSlash">`http.encodedCharacters.`<br />`allowEncodedSlash`</a> | Defines whether requests with encoded slash characters in the path are allowed.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | true                    | No       |
 | <a id="opt-http-encodedCharacters-allowEncodedBackSlash" href="#opt-http-encodedCharacters-allowEncodedBackSlash" title="#opt-http-encodedCharacters-allowEncodedBackSlash">`http.encodedCharacters.`<br />`allowEncodedBackSlash`</a> | Defines whether requests with encoded back slash characters in the path are allowed.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | true                    | No       |
@@ -146,6 +145,53 @@ Some built-in entryPoints are always excluded from the list, namely: `traefik`.
 The `asDefault` option has no effect on UDP entryPoints.
 When a UDP router does not define the entryPoints option, it is attached to all
 available UDP entryPoints.
+
+### allowACMEByPass
+
+By default, Traefik creates an internal router with the highest possible priority (`MaxInt`) to handle
+ACME HTTP and TLS challenges. This ensures that certificate challenges always succeed,
+but it also prevents any user-defined router from intercepting challenge requests on the same entrypoint.
+
+When `allowACMEByPass` is set to `true` on an entrypoint:
+
+- The internal ACME HTTP challenge router is created **without** an explicit high priority,
+  allowing user-defined routers to handle challenge requests instead.
+- The TLS-ALPN challenge passthrough is enabled on the entrypoint,
+  allowing user-defined TLS routers to handle TLS challenges.
+
+This is useful when you need custom handling of ACME challenges,
+for example when using a dedicated service to solve HTTP-01 or TLS-ALPN-01 challenges.
+
+!!! note
+
+    When no TLS challenge resolver is configured, `allowACMEByPass` is implicitly enabled
+    for TLS passthrough on all entrypoints.
+
+!!! note
+
+    When `allowACMEByPass` is enabled and the entrypoint has an HTTP redirect configured
+    (via `http.redirections.entryPoint`), the redirect router automatically excludes
+    the ACME challenge path (`/.well-known/acme-challenge/`).
+    This allows user-defined ACME challenge routers to handle challenge requests
+    without being overridden by the redirect.
+
+```yaml tab="File (YAML)"
+entryPoints:
+  web:
+    address: ":80"
+    allowACMEByPass: true
+```
+
+```toml tab="File (TOML)"
+[entryPoints.web]
+  address = ":80"
+  allowACMEByPass = true
+```
+
+```bash tab="CLI"
+--entryPoints.web.address=:80
+--entryPoints.web.allowACMEByPass=true
+```
 
 ### http.middlewares
 

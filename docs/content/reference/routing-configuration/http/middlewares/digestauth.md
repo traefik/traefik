@@ -67,8 +67,7 @@ spec:
 
 ### Passwords format
 
-Passwords must be hashed using MD5, SHA1, or BCrypt.
-Use `htpasswd` to generate the passwords.
+Use `htdigest` to generate the passwords.
 
 ### users & usersFile
 

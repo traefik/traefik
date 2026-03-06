@@ -1,0 +1,31 @@
+{
+  "http": {
+    "routers": {
+      "web-to-websecure": {
+        "entryPoints": [
+          "web"
+        ],
+        "middlewares": [
+          "redirect-web-to-websecure"
+        ],
+        "service": "noop@internal",
+        "rule": "HostRegexp(`^.+$`) \u0026\u0026 !PathPrefix(`/.well-known/acme-challenge/`)",
+        "ruleSyntax": "default"
+      }
+    },
+    "services": {
+      "noop": {}
+    },
+    "middlewares": {
+      "redirect-web-to-websecure": {
+        "redirectScheme": {
+          "scheme": "https",
+          "port": "443",
+          "permanent": true
+        }
+      }
+    }
+  },
+  "tcp": {},
+  "tls": {}
+}
