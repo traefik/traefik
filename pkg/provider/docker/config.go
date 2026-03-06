@@ -185,6 +185,11 @@ func (p *DynConfBuilder) buildServiceConfiguration(ctx context.Context, containe
 	}
 
 	for name, service := range configuration.Services {
+		// Mirroring services don't need a server URL, so we can skip them.
+		if service.Mirroring != nil {
+			log.Ctx(ctx).Debug().Msgf("service %q mirroring enabled skipping addServer", name)
+			continue
+		}
 		ctx := log.Ctx(ctx).With().Str(logs.ServiceName, name).Logger().WithContext(ctx)
 		if err := p.addServer(ctx, container, service.LoadBalancer); err != nil {
 			return fmt.Errorf("service %q error: %w", name, err)

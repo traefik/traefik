@@ -78,7 +78,7 @@ func BuildUDPRouterConfiguration(ctx context.Context, configuration *dynamic.UDP
 func BuildRouterConfiguration(ctx context.Context, configuration *dynamic.HTTPConfiguration, defaultRouterName string, defaultRuleTpl *template.Template, model any) {
 	if len(configuration.Routers) == 0 {
 		if len(configuration.Services) > 1 {
-			log.Ctx(ctx).Info().Msg("Could not create a router for the container: too many services")
+			log.Ctx(ctx).Debug().Msg("Could not create a router for the container: too many services")
 		} else {
 			configuration.Routers = make(map[string]*dynamic.Router)
 			configuration.Routers[defaultRouterName] = &dynamic.Router{}
