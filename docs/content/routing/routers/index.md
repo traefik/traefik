@@ -1004,16 +1004,50 @@ If no matching route is found for the TCP routers, then the HTTP routers will ta
 If not specified, TCP routers will accept requests from all EntryPoints in the [list of default EntryPoints](../entrypoints.md#asdefault).
 If you want to limit the router scope to a set of entry points, set the entry points option.
 
-??? info "How to handle Server First protocols?"
+??? info "How Traefik Handles Server-First Protocols"
 
-    To correctly handle a request, Traefik needs to wait for the first few bytes to arrive before it can decide what to do with it.
+    Traefik normally waits for the first bytes from a client connection in order to classify the protocol
+    (e.g. TLS vs non-TLS) and select the appropriate router.
 
-    For protocols where the server is expected to send first, such as SMTP, if no specific setup is in place,
-    we could end up in a situation where both sides are waiting for data and the connection appears to have hanged.
+    For *server-first* protocols such as SMTP, the backend server sends data immediately after the TCP
+    connection is established. If Traefik delays routing until client data is received, this can lead
+    to a deadlock where the client waits for the server greeting and Traefik waits for client bytes.
 
-    The only way that Traefik can deal with such a case, is to make sure that on the concerned entry point,
-    there is no TLS router whatsoever (neither TCP nor HTTP),
-    and there is at least one non-TLS TCP router that leads to the server in question.
+    To avoid this, Traefik contains a fast-path that forwards traffic immediately **without inspecting
+    client data**, but this path is only taken when **all** of the following conditions are met for the
+    entryPoint handling the connection:
+
+    * At least one **non-TLS TCP router** exists on the entryPoint.
+    * **No TLS TCP routers** exist on the entryPoint.
+    * **No HTTPS routers** exist on the entryPoint.
+
+    If any TLS TCP or HTTPS router is associated with the entryPoint, Traefik must inspect the client
+    stream to determine protocol type, and server-first traffic will not be forwarded until the client
+    sends data.
+
+    *Interaction with `asDefault`*
+
+    EntryPoint defaults play a critical role in this behavior.
+
+    If **no entryPoints are explicitly marked with `asDefault=true`**, Traefik treats **all entryPoints**
+    as default entryPoints. In this case, HTTPS routers that do not explicitly declare their `entryPoints`
+    may attach implicitly to non-HTTP ports (such as SMTP ports), causing Traefik to classify the
+    entryPoint as having HTTPS routers.
+
+    Once this occurs, the server-first fast-path is disabled and Traefik will wait for client bytes
+    before routing traffic.
+
+    To ensure correct handling of server-first protocols:
+
+    * Explicitly set `asDefault=true` only on entryPoints intended for HTTP/HTTPS traffic (e.g. `web`,
+      `websecure`).
+    * Ensure that entryPoints used for server-first protocols (e.g. SMTP on ports 25 or 587) have:
+        * no TLS TCP routers,
+        * no HTTPS routers,
+        * and at least one non-TLS TCP router.
+
+    See the `asDefault` entryPoint configuration reference for details:
+    https://doc.traefik.io/traefik/reference/install-configuration/entrypoints/#asdefault
 
 ??? example "Listens to Every Entry Point"
 
