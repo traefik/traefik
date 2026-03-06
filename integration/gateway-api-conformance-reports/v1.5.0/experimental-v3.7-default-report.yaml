@@ -1,7 +1,7 @@
 apiVersion: gateway.networking.k8s.io/v1
 date: '-'
 gatewayAPIChannel: experimental
-gatewayAPIVersion: v1.4.0
+gatewayAPIVersion: v1.5.0
 implementation:
   contact:
   - '@traefik/maintainers'
@@ -30,9 +30,10 @@ profiles:
     result: success
     statistics:
       Failed: 0
-      Passed: 15
+      Passed: 20
       Skipped: 0
     supportedFeatures:
+    - BackendTLSPolicy
     - GatewayPort8080
     - HTTPRouteBackendProtocolH2C
     - HTTPRouteBackendProtocolWebSocket
@@ -47,10 +48,18 @@ profiles:
     - HTTPRouteResponseHeaderModification
     - HTTPRouteSchemeRedirect
     unsupportedFeatures:
+    - BackendTLSPolicySANValidation
     - GatewayAddressEmpty
+    - GatewayBackendClientCertificate
+    - GatewayFrontendClientCertificateValidation
+    - GatewayFrontendClientCertificateValidationInsecureFallback
     - GatewayHTTPListenerIsolation
+    - GatewayHTTPSListenerDetectMisdirectedRequests
     - GatewayInfrastructurePropagation
     - GatewayStaticAddresses
+    - HTTPRoute303RedirectStatusCode
+    - HTTPRoute307RedirectStatusCode
+    - HTTPRoute308RedirectStatusCode
     - HTTPRouteBackendTimeout
     - HTTPRouteCORS
     - HTTPRouteNamedRouteRule
@@ -59,13 +68,40 @@ profiles:
     - HTTPRouteRequestMultipleMirrors
     - HTTPRouteRequestPercentageMirror
     - HTTPRouteRequestTimeout
+    - ListenerSet
   name: GATEWAY-HTTP
   summary: Core tests succeeded. Extended tests succeeded.
 - core:
+    failedTests:
+    - TLSRouteHostnameIntersection
+    - TLSRouteInvalidBackendRefNonexistent
+    - TLSRouteInvalidBackendRefUnknownKind
+    result: failure
+    statistics:
+      Failed: 3
+      Passed: 15
+      Skipped: 0
+  extended:
     result: success
     statistics:
       Failed: 0
-      Passed: 11
+      Passed: 3
       Skipped: 0
+    supportedFeatures:
+    - GatewayPort8080
+    - TLSRouteModeTerminate
+    unsupportedFeatures:
+    - GatewayAddressEmpty
+    - GatewayBackendClientCertificate
+    - GatewayFrontendClientCertificateValidation
+    - GatewayFrontendClientCertificateValidationInsecureFallback
+    - GatewayHTTPListenerIsolation
+    - GatewayHTTPSListenerDetectMisdirectedRequests
+    - GatewayInfrastructurePropagation
+    - GatewayStaticAddresses
+    - ListenerSet
+    - TLSRouteModeMixed
   name: GATEWAY-TLS
-  summary: Core tests succeeded.
+  summary: Core tests failed with 3 test failures. Extended tests succeeded.
+succeededProvisionalTests:
+- TLSRouteTerminateSimpleSameNamespace
