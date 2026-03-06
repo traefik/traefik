@@ -446,6 +446,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 	)
 
 	hosts := make(map[string]bool)
+	hostsWithUseRegex := make(map[string]bool)
 	serverSnippets := make(map[string]string)
 	ingressPaths := make(map[string]ingressPath) // indexed by namespace+host+path+pathType.
 	for _, ing := range p.k8sClient.ListIngresses() {
@@ -472,6 +473,11 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 		for _, rule := range ing.Spec.Rules {
 			hosts[rule.Host] = true
+
+			// If any ingress in this host enable use-regex, all paths on that host must use regex matching.
+			if ptr.Deref(i.IngressConfig.UseRegex, false) {
+				hostsWithUseRegex[rule.Host] = true
+			}
 
 			if srvSnippet := ptr.Deref(i.IngressConfig.ServerSnippet, ""); srvSnippet != "" {
 				if serverSnippets[rule.Host] != "" {
@@ -779,7 +785,7 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 
 				rt := &dynamic.Router{
 					EntryPoints: p.NonTLSEntryPoints,
-					Rule:        buildRule(ctxIngress, rule.Host, pa, ingress.IngressConfig, hosts),
+					Rule:        buildRule(ctxIngress, rule.Host, pa, ingress.IngressConfig, hosts, hostsWithUseRegex),
 					// "default" stands for the default rule syntax in Traefik v3, i.e. the v3 syntax.
 					RuleSyntax: "default",
 					Service:    serviceName,
@@ -2083,7 +2089,7 @@ func basicAuthUsers(secret *corev1.Secret, authSecretType string) (dynamic.Users
 	return users, nil
 }
 
-func buildRule(ctx context.Context, host string, pa netv1.HTTPIngressPath, config IngressConfig, allHosts map[string]bool) string {
+func buildRule(ctx context.Context, host string, pa netv1.HTTPIngressPath, config IngressConfig, allHosts map[string]bool, hostsWithUseRegex map[string]bool) string {
 	var rules []string
 	if host != "" {
 		hosts := []string{host}
@@ -2117,11 +2123,13 @@ func buildRule(ctx context.Context, host string, pa netv1.HTTPIngressPath, confi
 			pathType = netv1.PathTypePrefix
 		}
 
+		useRegex := hostsWithUseRegex[host]
+
 		switch pathType {
 		case netv1.PathTypeExact:
 			rules = append(rules, fmt.Sprintf("Path(`%s`)", pa.Path))
 		case netv1.PathTypePrefix:
-			if ptr.Deref(config.UseRegex, false) {
+			if useRegex {
 				rules = append(rules, fmt.Sprintf("PathRegexp(`^%s`)", pa.Path))
 			} else {
 				rules = append(rules, buildPrefixRule(pa.Path))
