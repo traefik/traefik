@@ -46,6 +46,8 @@ type TraefikServiceSpec struct {
 	Mirroring *Mirroring `json:"mirroring,omitempty"`
 	// HighestRandomWeight defines the highest random weight service configuration.
 	HighestRandomWeight *HighestRandomWeight `json:"highestRandomWeight,omitempty"`
+	// Failover defines the Failover service configuration.
+	Failover *Failover `json:"failover,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -96,4 +98,27 @@ type WeightedRoundRobin struct {
 type HighestRandomWeight struct {
 	// Services defines the list of Kubernetes Service and/or TraefikService to load-balance, with weight.
 	Services []Service `json:"services,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// Failover holds the Failover configuration.
+type Failover struct {
+	// Service defines the main service to use.
+	Service LoadBalancerSpec `json:"service"`
+	// Fallback defines the fallback service to use when the main service becomes unhealthy.
+	Fallback LoadBalancerSpec `json:"fallback"`
+	// Errors defines the configuration for handling errors.
+	Errors FailoverError `json:"errors"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// FailoverError holds errors configuration for a Failover service.
+type FailoverError struct {
+	// Status defines the list of status code ranges for which the fallback service should be used.
+	Status []string `json:"status,omitempty"`
+	// MaxRequestBodyBytes defines the maximum size allowed for the body of the request.
+	// Default value is -1, which means unlimited size.
+	MaxRequestBodyBytes *int64 `json:"maxRequestBodyBytes,omitempty"`
 }
