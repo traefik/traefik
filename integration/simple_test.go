@@ -2227,3 +2227,40 @@ func waitForWritePartial(t *testing.T, conn net.Conn) {
 		t.Fatalf("timeout waiting for connection timeout")
 	}
 }
+
+func (s *SimpleSuite) TestAllowACMEByPassRedirect() {
+	// Start a local server that simulates an ACME challenge solver.
+	acmeSolver := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+		_, _ = rw.Write([]byte("acme-challenge-token"))
+	}))
+	defer acmeSolver.Close()
+
+	file := s.adaptFile("fixtures/simple_acme_bypass_redirect.toml", struct {
+		AcmeSolverURL string
+	}{
+		AcmeSolverURL: acmeSolver.URL,
+	})
+
+	s.traefikCmd(withConfigFile(file))
+
+	// Wait for Traefik to be ready with the user-defined ACME challenge router.
+	err := try.GetRequest("http://127.0.0.1:8080/api/rawdata", 5*time.Second, try.BodyContains("acme-challenge@file"))
+	require.NoError(s.T(), err)
+
+	noRedirectClient := &http.Client{
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+
+	// ACME challenge path should NOT be redirected — it should reach the solver.
+	resp, err := noRedirectClient.Get("http://127.0.0.1:8888/.well-known/acme-challenge/test-token")
+	require.NoError(s.T(), err)
+	assert.Equal(s.T(), http.StatusOK, resp.StatusCode)
+
+	// Normal path should be redirected to HTTPS.
+	resp, err = noRedirectClient.Get("http://127.0.0.1:8888/other-path")
+	require.NoError(s.T(), err)
+	assert.Equal(s.T(), http.StatusMovedPermanently, resp.StatusCode)
+}
