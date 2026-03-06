@@ -22,8 +22,9 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/mount"
+	// TODO(thaJeztah) Using legacy docker/docker types until testcontainers-go is updated.
+	dockercontainer "github.com/docker/docker/api/types/container"
+	dockermount "github.com/docker/docker/api/types/mount"
 	dockernetwork "github.com/docker/docker/api/types/network"
 	"github.com/fatih/structs"
 	"github.com/rs/zerolog/log"
@@ -116,7 +117,7 @@ func getDockerDesktopHostIP(t *testing.T) string {
 
 	req := testcontainers.ContainerRequest{
 		Image: "alpine",
-		HostConfigModifier: func(config *container.HostConfig) {
+		HostConfigModifier: func(config *dockercontainer.HostConfig) {
 			config.AutoRemove = true
 		},
 		Cmd: []string{"getent", "hosts", "host.docker.internal"},
@@ -192,26 +193,30 @@ func (s *BaseSuite) createComposeProject(name string) {
 	ctx := s.T().Context()
 
 	for id, containerConfig := range composeConfigData.Services {
-		var mounts []mount.Mount
+		var mounts []dockermount.Mount
 		for _, volume := range containerConfig.Volumes {
-			split := strings.Split(volume, ":")
-			if len(split) != 2 {
+			src, dst, ok := strings.Cut(volume, ":")
+			if !ok {
 				continue
 			}
 
-			if strings.HasPrefix(split[0], "./") {
-				path, err := os.Getwd()
+			if strings.HasPrefix(src, "./") {
+				wd, err := os.Getwd()
 				if err != nil {
 					log.Err(err).Msg("can't determine current directory")
 					continue
 				}
-				split[0] = strings.Replace(split[0], "./", path+"/", 1)
+				src = wd + "/" + strings.TrimPrefix(src, "./")
 			}
 
-			abs, err := filepath.Abs(split[0])
+			abs, err := filepath.Abs(src)
 			require.NoError(s.T(), err)
 
-			mounts = append(mounts, mount.Mount{Source: abs, Target: split[1], Type: mount.TypeBind})
+			mounts = append(mounts, dockermount.Mount{
+				Source: abs,
+				Target: dst,
+				Type:   dockermount.TypeBind,
+			})
 		}
 
 		if containerConfig.Deploy.Replicas > 0 {
@@ -230,7 +235,7 @@ func (s *BaseSuite) createComposeProject(name string) {
 	}
 }
 
-func (s *BaseSuite) createContainer(ctx context.Context, containerConfig composeService, id string, mounts []mount.Mount) (testcontainers.Container, error) {
+func (s *BaseSuite) createContainer(ctx context.Context, containerConfig composeService, id string, mounts []dockermount.Mount) (testcontainers.Container, error) {
 	req := testcontainers.ContainerRequest{
 		Image:      containerConfig.Image,
 		Env:        containerConfig.Environment,
@@ -240,7 +245,7 @@ func (s *BaseSuite) createContainer(ctx context.Context, containerConfig compose
 		Hostname:   containerConfig.Hostname,
 		Privileged: containerConfig.Privileged,
 		Networks:   []string{s.network.Name},
-		HostConfigModifier: func(config *container.HostConfig) {
+		HostConfigModifier: func(config *dockercontainer.HostConfig) {
 			if containerConfig.CapAdd != nil {
 				config.CapAdd = containerConfig.CapAdd
 			}
