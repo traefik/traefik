@@ -413,8 +413,6 @@ require (
 	sigs.k8s.io/randfill v1.0.0 // indirect
 )
 
-replace github.com/shoenig/go-m1cpu v0.1.6 => github.com/shoenig/go-m1cpu v0.1.7
-
 // Dynamic config extension.
 replace github.com/traefik/traefik/dynamic/ext => ./pkg/config/dynamic/ext
 

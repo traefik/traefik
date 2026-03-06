@@ -557,8 +557,8 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 			}
 
 			// Allowed configurations:
-			// Protocol TLS -> Passthrough -> TLSRoute/TCPRoute
-			// Protocol TLS -> Terminate -> TLSRoute/TCPRoute
+			// Protocol TLS -> Passthrough -> TLSRoute
+			// Protocol TLS -> Terminate -> TLSRoute
 			// Protocol HTTPS -> Terminate -> HTTPRoute
 			if listener.Protocol == gatev1.HTTPSProtocolType && isTLSPassthrough {
 				gatewayListeners[i].Status.Conditions = append(gatewayListeners[i].Status.Conditions, metav1.Condition{
@@ -657,6 +657,47 @@ func (p *Provider) loadGatewayListeners(ctx context.Context, gateway *gatev1.Gat
 		}
 
 		gatewayListeners[i].Attached = true
+	}
+
+	// Detect mixed TLS mode conflicts on the same port.
+	// When two TLS listeners on the same port have different modes
+	// (e.g., one Terminate, one Passthrough) and mixed mode is not supported,
+	// both must be rejected with ProtocolConflict.
+	tlsModes := map[gatev1.PortNumber]map[gatev1.TLSModeType][]int{}
+	for i, listener := range gateway.Spec.Listeners {
+		if listener.Protocol != gatev1.TLSProtocolType || listener.TLS == nil {
+			continue
+		}
+		if !gatewayListeners[i].Attached {
+			continue
+		}
+		mode := gatev1.TLSModePassthrough
+		if listener.TLS.Mode != nil {
+			mode = *listener.TLS.Mode
+		}
+		if tlsModes[listener.Port] == nil {
+			tlsModes[listener.Port] = map[gatev1.TLSModeType][]int{}
+		}
+		tlsModes[listener.Port][mode] = append(tlsModes[listener.Port][mode], i)
+	}
+	for port, modes := range tlsModes {
+		if len(modes) <= 1 {
+			continue
+		}
+		for _, indices := range modes {
+			for _, idx := range indices {
+				gatewayListeners[idx].Status.Conditions = []metav1.Condition{{
+					Type:               string(gatev1.ListenerConditionAccepted),
+					Status:             metav1.ConditionFalse,
+					ObservedGeneration: gateway.Generation,
+					LastTransitionTime: metav1.Now(),
+					Reason:             string(gatev1.ListenerReasonProtocolConflict),
+					Message:            fmt.Sprintf("Mixed TLS modes on port %d are not supported", port),
+				}}
+				gatewayListeners[idx].Status.SupportedKinds = nil
+				gatewayListeners[idx].Attached = false
+			}
+		}
 	}
 
 	if len(tlsConfigs) > 0 {
@@ -997,13 +1038,9 @@ func supportedRouteKinds(protocol gatev1.ProtocolType, experimentalChannel bool)
 		}, nil
 
 	case gatev1.TLSProtocolType:
-		kinds := []gatev1.RouteGroupKind{
+		return []gatev1.RouteGroupKind{
 			{Kind: kindTLSRoute, Group: &group},
-		}
-		if experimentalChannel {
-			kinds = append(kinds, gatev1.RouteGroupKind{Kind: kindTCPRoute, Group: &group})
-		}
-		return kinds, nil
+		}, nil
 	}
 
 	return nil, []metav1.Condition{{
@@ -1097,15 +1134,9 @@ func findMatchingHostname(h1, h2 gatev1.Hostname) gatev1.Hostname {
 		return ""
 	}
 
-	return lessWildcards(h1, h2)
-}
-
-func lessWildcards(h1, h2 gatev1.Hostname) gatev1.Hostname {
-	if strings.Count(string(h1), "*") > strings.Count(string(h2), "*") {
-		return h2
-	}
-
-	return h1
+	// h1 is a wildcard that encompasses h2, so h2 is always
+	// the more specific hostname (the correct intersection).
+	return h2
 }
 
 func allowRoute(listener gatewayListener, routeNamespace, routeKind string) bool {
