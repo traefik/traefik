@@ -2459,6 +2459,16 @@ spec:
                       on the HTTP/2 connection.
                     pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
                     x-kubernetes-int-or-string: true
+                  readTimeout:
+                    anyOf:
+                    - type: integer
+                    - type: string
+                    description: ReadTimeout is the timeout for reading a response
+                      from the proxied server. The timeout between two successive
+                      read operations. The connection is closed if nothing is transmitted
+                      within this time.
+                    pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
+                    x-kubernetes-int-or-string: true
                   responseHeaderTimeout:
                     anyOf:
                     - type: integer
@@ -2466,6 +2476,16 @@ spec:
                     description: ResponseHeaderTimeout is the amount of time to wait
                       for a server's response headers after fully writing the request
                       (including its body, if any).
+                    pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
+                    x-kubernetes-int-or-string: true
+                  writeTimeout:
+                    anyOf:
+                    - type: integer
+                    - type: string
+                    description: WriteTimeout is the timeout for transmitting a request
+                      to the proxied server. The timeout between two successive write
+                      operations. The connection is closed if nothing is transmitted
+                      within this time.
                     pattern: ^([0-9]+(ns|us|µs|ms|s|m|h)?)+$
                     x-kubernetes-int-or-string: true
                 type: object

@@ -509,6 +509,20 @@ func (p *Provider) loadConfigurationFromCRD(ctx context.Context, client Client) 
 					logger.Error().Err(err).Msg("Error while reading PingTimeout")
 				}
 			}
+
+			if serversTransport.Spec.ForwardingTimeouts.ReadTimeout != nil {
+				err := forwardingTimeout.ReadTimeout.Set(serversTransport.Spec.ForwardingTimeouts.ReadTimeout.String())
+				if err != nil {
+					logger.Error().Err(err).Msg("Error while reading ReadTimeout")
+				}
+			}
+
+			if serversTransport.Spec.ForwardingTimeouts.WriteTimeout != nil {
+				err := forwardingTimeout.WriteTimeout.Set(serversTransport.Spec.ForwardingTimeouts.WriteTimeout.String())
+				if err != nil {
+					logger.Error().Err(err).Msg("Error while reading WriteTimeout")
+				}
+			}
 		}
 
 		id := provider.Normalize(makeID(serversTransport.Namespace, serversTransport.Name))

@@ -38,6 +38,8 @@ type ForwardingTimeoutsApplyConfiguration struct {
 	IdleConnTimeout       *intstr.IntOrString `json:"idleConnTimeout,omitempty"`
 	ReadIdleTimeout       *intstr.IntOrString `json:"readIdleTimeout,omitempty"`
 	PingTimeout           *intstr.IntOrString `json:"pingTimeout,omitempty"`
+	ReadTimeout           *intstr.IntOrString `json:"readTimeout,omitempty"`
+	WriteTimeout          *intstr.IntOrString `json:"writeTimeout,omitempty"`
 }
 
 // ForwardingTimeoutsApplyConfiguration constructs a declarative configuration of the ForwardingTimeouts type for use with
@@ -83,5 +85,21 @@ func (b *ForwardingTimeoutsApplyConfiguration) WithReadIdleTimeout(value intstr.
 // If called multiple times, the PingTimeout field is set to the value of the last call.
 func (b *ForwardingTimeoutsApplyConfiguration) WithPingTimeout(value intstr.IntOrString) *ForwardingTimeoutsApplyConfiguration {
 	b.PingTimeout = &value
+	return b
+}
+
+// WithReadTimeout sets the ReadTimeout field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the ReadTimeout field is set to the value of the last call.
+func (b *ForwardingTimeoutsApplyConfiguration) WithReadTimeout(value intstr.IntOrString) *ForwardingTimeoutsApplyConfiguration {
+	b.ReadTimeout = &value
+	return b
+}
+
+// WithWriteTimeout sets the WriteTimeout field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the WriteTimeout field is set to the value of the last call.
+func (b *ForwardingTimeoutsApplyConfiguration) WithWriteTimeout(value intstr.IntOrString) *ForwardingTimeoutsApplyConfiguration {
+	b.WriteTimeout = &value
 	return b
 }
