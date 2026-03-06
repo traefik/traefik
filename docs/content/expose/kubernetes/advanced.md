@@ -9,6 +9,7 @@ In this advanced guide, you'll learn how to enhance your Traefik deployment with
 - **cert-manager** for automated certificate management (Gateway API)
 - **Sticky sessions** for stateful applications
 - **Multi-layer routing** for hierarchical routing with complex authentication scenarios (IngressRoute only)
+- **Service middlewares** for applying middleware at the service level
 
 ## Prerequisites
 
@@ -806,6 +807,182 @@ spec:
 
 For more details about multi-layer routing, see the [Multi-Layer Routing documentation](../../reference/routing-configuration/http/routing/multi-layer-routing.md).
 
+## Service Middlewares
+
+Service middlewares allow you to apply middleware to a service rather than to individual routers. This means the middleware takes effect for all requests handled by the service, regardless of which router forwards the request.
+
+This is useful when you want to apply the same middleware (like headers, rate limiting, or authentication) to all traffic reaching a service without having to configure it on each router.
+
+### When to Use Service Middlewares
+
+Use service middlewares when:
+
+- Multiple routers forward traffic to the same service, and all should have the same middleware applied
+- You want to ensure a middleware is always applied to a service regardless of how traffic reaches it
+- You're centralizing middleware configuration at the service level for easier management
+
+!!! info "Service-Level vs Router-Level Middlewares"
+
+    - **Router-level middleware**: Applied only when traffic matches that specific router's rule
+    - **Service-level middleware**: Applied to all traffic reaching the service, regardless of which router forwarded it
+
+    When both are configured, router middlewares execute first, followed by service middlewares.
+
+### Using IngressRoute with Service Middlewares
+
+With IngressRoute, you can attach middlewares directly to a service reference within a route:
+
+```yaml
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: service-headers
+  namespace: default
+spec:
+  headers:
+    customRequestHeaders:
+      X-Service-Middleware: "applied"
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: whoami
+  namespace: default
+spec:
+  entryPoints:
+    - websecure
+  routes:
+  - match: Host(`whoami.docker.localhost`)
+    kind: Rule
+    services:
+    - name: whoami
+      port: 80
+      middlewares:
+        - name: service-headers
+  tls: {}
+```
+
+Save this as `service-middleware-ingressroute.yaml` and apply it:
+
+```bash
+kubectl apply -f service-middleware-ingressroute.yaml
+```
+
+### Using Gateway API with Backend Filters
+
+Gateway API supports applying filters directly to individual backends through the `backendRefs[].filters` field. This enables backend-level request modifications.
+
+```yaml
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: service-headers
+  namespace: default
+spec:
+  headers:
+    customRequestHeaders:
+      X-Service-Middleware: "applied"
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: whoami
+  namespace: default
+spec:
+  parentRefs:
+  - name: traefik-gateway
+    sectionName: websecure
+  hostnames:
+  - "whoami.docker.localhost"
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: whoami
+      port: 80
+      filters:
+      - type: ExtensionRef
+        extensionRef:
+          group: traefik.io
+          kind: Middleware
+          name: service-headers
+```
+
+Gateway API also supports the native `RequestHeaderModifier` filter type for simpler header modifications:
+
+```yaml
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: whoami
+  namespace: default
+spec:
+  parentRefs:
+  - name: traefik-gateway
+    sectionName: websecure
+  hostnames:
+  - "whoami.docker.localhost"
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: whoami
+      port: 80
+      filters:
+      - type: RequestHeaderModifier
+        requestHeaderModifier:
+          add:
+          - name: X-Backend-Header
+            value: "gateway-api-filter"
+```
+
+Save and apply:
+
+```bash
+kubectl apply -f service-middleware-gateway.yaml
+```
+
+### Using Kubernetes Ingress with Service Annotation
+
+For standard Kubernetes Ingress, you can apply middlewares to a service using annotations:
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoami
+  namespace: default
+  annotations:
+    traefik.ingress.kubernetes.io/service.middlewares: default-service-headers@kubernetescrd
+spec:
+  selector:
+    app: whoami
+  ports:
+    - port: 80
+```
+
+The annotation value follows the format `<namespace>-<middleware-name>@kubernetescrd`.
+
+### Test Service Middleware
+
+Verify the service middleware is working:
+
+```bash
+curl -k -H "Host: whoami.docker.localhost" https://localhost/
+```
+
+In the response from whoami, you should see the custom header that was added by the service middleware:
+
+```text
+X-Service-Middleware: applied
+```
+
+For more details on service middlewares, see the [reference documentation](../../reference/routing-configuration/http/load-balancing/service.md#middlewares).
+
 ## Conclusion
 
 In this advanced guide, you've learned how to:
@@ -814,6 +991,7 @@ In this advanced guide, you've learned how to:
 - Automate certificate management with Let's Encrypt (IngressRoute) and cert-manager (Gateway API)
 - Implement sticky sessions for stateful applications
 - Setup multi-layer routing for authentication-based routing (IngressRoute only)
+- Apply middlewares at the service level for centralized middleware management
 
 These advanced capabilities allow you to build production-ready Traefik deployments with Kubernetes. Each of these can be further customized to meet your specific requirements.
 
