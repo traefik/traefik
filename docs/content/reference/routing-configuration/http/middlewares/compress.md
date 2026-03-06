@@ -57,6 +57,22 @@ spec:
 | <a id="opt-includedContentTypes" href="#opt-includedContentTypes" title="#opt-includedContentTypes">`includedContentTypes`</a> | List of content types to compare the `Content-Type` header of the responses before compressing. <br /> The responses with content types defined in `includedContentTypes` are compressed. <br /> Content types are compared in a case-insensitive, whitespace-ignored manner.<br /> **The `excludedContentTypes` and `includedContentTypes` options are mutually exclusive.** | "" | No |
 | <a id="opt-minResponseBodyBytes" href="#opt-minResponseBodyBytes" title="#opt-minResponseBodyBytes">`minResponseBodyBytes`</a> | `Minimum amount of bytes a response body must have to be compressed. <br />Responses smaller than the specified values will **not** be compressed. | 1024 | No |
 
+## Server-Sent Events (SSE) and streaming
+
+When using Server-Sent Events (SSE) with `text/event-stream`, or when data is sent to the client in **chunked responses** (using `Transfer-Encoding: chunked`), the `minResponseBodyBytes` setting is **bypassed** and the data will be compressed immediately upon flush.
+
+To avoid breaking real-time streams, it is recommended to exclude SSE content types from compression:
+
+```yaml
+http:
+  middlewares:
+    compress-no-sse:
+      compress:
+        excludedContentTypes:
+          - text/event-stream
+```
+> Note: This behavior applies to Traefik 3.X versions. Without excluding text/event-stream, compressed SSE streams may not work correctly in clients.
+
 ## Compression activation
 
 The activation of compression, and the compression method choice rely (among other things) on the request's `Accept-Encoding` header.
