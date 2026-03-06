@@ -74,6 +74,8 @@ var (
 
 	headerRegexp      = regexp.MustCompile(`^[a-zA-Z\d\-_]+$`)
 	headerValueRegexp = regexp.MustCompile(`^[a-zA-Z\d_ :;.,\\/"'?!(){}\[\]@<>=\-+*#$&\x60|~^%]+$`)
+	// The same regexp used in ingress-nginx:https://github.com/kubernetes/ingress-nginx/blob/main/internal/ingress/inspector/rules.go.
+	strictPathTypeRegexp = regexp.MustCompile(`(?i)^/[[:alnum:]._\-/]*$`)
 )
 
 type backendAddress struct {
@@ -219,6 +221,8 @@ type Provider struct {
 	// Its value is set to the HTTPEntryPoint value if it is set, otherwise it is computed in SetEffectiveConfiguration.
 	NonTLSEntryPoints []string `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
 
+	StrictValidatePathType bool `description:"Reject ingress paths containing regex characters when pathType is Prefix or Exact." json:"strictValidatePathType,omitempty" toml:"strictValidatePathType,omitempty" yaml:"strictValidatePathType,omitempty" export:"true"`
+
 	allowedHeaders                 []string
 	defaultBackendServiceNamespace string
 	defaultBackendServiceName      string
@@ -246,6 +250,7 @@ func (p *Provider) SetDefaults() {
 	p.ProxyNextUpstream = defaultProxyNextUpstream
 	p.ProxyNextUpstreamTries = defaultProxyNextUpstreamTries
 	p.UpstreamKeepaliveTimeout = defaultUpstreamKeepaliveTimeout
+	p.StrictValidatePathType = true
 }
 
 // Init the provider.
@@ -736,6 +741,15 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 						Msg("Ignoring path with no service backend")
 
 					continue
+				}
+
+				// If strictValidatePathType is enabled, regex characters are not allowed when pathType is Prefix or Exact.
+				pathType := ptr.Deref(pa.PathType, netv1.PathTypePrefix)
+				if p.StrictValidatePathType && len(pa.Path) > 0 {
+					if pathType != netv1.PathTypeImplementationSpecific && !strictPathTypeRegexp.MatchString(pa.Path) {
+						logger.Error().Str("path", pa.Path).Msgf("Ignoring path: regex characters are not allowed for pathType %s when strictValidatePathType is enabled", pathType)
+						continue
+					}
 				}
 
 				// TODO: if no service, do not add middlewares and 503.

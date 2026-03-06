@@ -31,6 +31,7 @@ func TestLoadIngresses(t *testing.T) {
 		allowCrossNamespaceResources   bool
 		globalAllowedResponseHeaders   []string
 		allowSnippetAnnotations        bool
+		strictValidatePathType         *bool
 		paths                          []string
 		expected                       *dynamic.Configuration
 	}{
@@ -7263,6 +7264,84 @@ func TestLoadIngresses(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
+		{
+			desc: "Use Regex with Prefix pathType and StrictValidatePathType enabled",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-use-regex-prefix-pathtype.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers:           map[string]*dynamic.Router{},
+					Middlewares:       map[string]*dynamic.Middleware{},
+					Services:          map[string]*dynamic.Service{},
+					ServersTransports: map[string]*dynamic.ServersTransport{},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "Use Regex with Prefix pathType and StrictValidatePathType disabled",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-use-regex-prefix-pathtype.yml",
+			},
+			strictValidatePathType: ptr.To(false),
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-use-regex-rule-0-path-0": {
+							Rule:        "Host(`use-regex.localhost`) && PathRegexp(`^/test(.*)`)",
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-use-regex-rule-0-path-0-retry"},
+							Service:     "default-ingress-with-use-regex-whoami-80",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-use-regex-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{Attempts: 3},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-use-regex-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-with-use-regex",
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-use-regex": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
 	}
 
 	for _, test := range testCases {
@@ -7292,6 +7371,9 @@ func TestLoadIngresses(t *testing.T) {
 				AllowCrossNamespaceResources:   test.allowCrossNamespaceResources,
 			}
 			p.SetDefaults()
+			if test.strictValidatePathType != nil {
+				p.StrictValidatePathType = *test.strictValidatePathType
+			}
 
 			conf := p.loadConfiguration(t.Context())
 			assert.Equal(t, test.expected, conf)
