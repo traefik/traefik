@@ -32,8 +32,6 @@ type ingressConfig struct {
 	RewriteTarget *string `annotation:"nginx.ingress.kubernetes.io/rewrite-target"`
 	AppRoot       *string `annotation:"nginx.ingress.kubernetes.io/app-root"`
 
-	LimitRPM *int `annotation:"nginx.ingress.kubernetes.io/limit-rpm"`
-
 	PermanentRedirect     *string `annotation:"nginx.ingress.kubernetes.io/permanent-redirect"`
 	PermanentRedirectCode *int    `annotation:"nginx.ingress.kubernetes.io/permanent-redirect-code"`
 	TemporalRedirect      *string `annotation:"nginx.ingress.kubernetes.io/temporal-redirect"`
@@ -82,6 +80,7 @@ type ingressConfig struct {
 	WhitelistSourceRange *string `annotation:"nginx.ingress.kubernetes.io/whitelist-source-range"`
 	AllowlistSourceRange *string `annotation:"nginx.ingress.kubernetes.io/allowlist-source-range"`
 
+	LimitRPM *int `annotation:"nginx.ingress.kubernetes.io/limit-rpm"`
 	LimitRPS *int `annotation:"nginx.ingress.kubernetes.io/limit-rps"`
 
 	CustomHeaders *string `annotation:"nginx.ingress.kubernetes.io/custom-headers"`

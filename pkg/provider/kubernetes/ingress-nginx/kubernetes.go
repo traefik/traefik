@@ -67,8 +67,6 @@ const (
 
 	// https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#upstream-keepalive-timeout
 	defaultUpstreamKeepaliveTimeout = 60
-	// https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/nginx-configuration/annotations.md#rate-limiting
-	defaultLimitBurstMultiplier = 5
 )
 
 var (
@@ -1197,8 +1195,6 @@ func (p *Provider) applyMiddlewares(namespace, ingressName, routerKey, rulePath,
 		return fmt.Errorf("applying forward auth: %w", err)
 	}
 
-	applyLimitRPMConfiguration(routerKey, ingressConfig, rt, conf)
-
 	applyAllowedSourceRangeConfiguration(routerKey, ingressConfig, rt, conf)
 
 	applyCORSConfiguration(routerKey, ingressConfig, rt, conf)
@@ -1206,6 +1202,8 @@ func (p *Provider) applyMiddlewares(namespace, ingressName, routerKey, rulePath,
 	applyRewriteTargetConfiguration(rulePath, routerKey, ingressConfig, rt, conf)
 
 	applyUpstreamVhost(routerKey, ingressConfig, rt, conf)
+
+	applyLimitRPMConfiguration(routerKey, ingressConfig, rt, conf)
 
 	applyLimitRPSConfiguration(routerKey, ingressConfig, rt, conf)
 
@@ -1309,6 +1307,24 @@ func (p *Provider) applyCustomHTTPErrors(namespace, ingressName, routerName stri
 	rt.Middlewares = append(rt.Middlewares, customErrorMiddlewareName)
 
 	return nil
+}
+
+func applyLimitRPMConfiguration(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
+	limitRPM := ptr.Deref(ingressConfig.LimitRPM, 0)
+	if limitRPM <= 0 {
+		return
+	}
+
+	rateLimitMiddlewareName := routerName + "-limit-rpm"
+	conf.HTTP.Middlewares[rateLimitMiddlewareName] = &dynamic.Middleware{
+		RateLimit: &dynamic.RateLimit{
+			Average: int64(limitRPM),
+			Period:  ptypes.Duration(time.Minute),
+			Burst:   int64(limitRPM) * defaultLimitBurstMultiplier,
+		},
+	}
+
+	rt.Middlewares = append(rt.Middlewares, rateLimitMiddlewareName)
 }
 
 func applyLimitRPSConfiguration(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
@@ -1670,24 +1686,6 @@ func applyAllowedSourceRangeConfiguration(routerName string, ingressConfig ingre
 	}
 
 	rt.Middlewares = append(rt.Middlewares, allowedSourceRangeMiddlewareName)
-}
-
-func applyLimitRPMConfiguration(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
-	limitRPM := ptr.Deref(ingressConfig.LimitRPM, 0)
-	if limitRPM <= 0 {
-		return
-	}
-
-	rateLimitMiddlewareName := routerName + "-limit-rpm"
-	conf.HTTP.Middlewares[rateLimitMiddlewareName] = &dynamic.Middleware{
-		RateLimit: &dynamic.RateLimit{
-			Average: int64(limitRPM),
-			Period:  ptypes.Duration(time.Minute),
-			Burst:   int64(limitRPM) * defaultLimitBurstMultiplier,
-		},
-	}
-
-	rt.Middlewares = append(rt.Middlewares, rateLimitMiddlewareName)
 }
 
 func (p *Provider) applyBufferingConfiguration(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) error {
