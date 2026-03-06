@@ -447,9 +447,9 @@ kubectl get svc -n ingress-nginx ingress-nginx-controller -o go-template='{{ $in
 
     OVHcloud supports static IP on OVHcloud Public Load Balancer, it is based on Openstack Octavia which allocates floating IPs to LoadBalancer services. This requires the [Openstack Cloud Controller Manager](https://github.com/kubernetes/cloud-provider-openstack/blob/master/docs/openstack-cloud-controller-manager/using-openstack-cloud-controller-manager.md) to be installed in your cluster. If you are using OVHcloud Managed Kubernetes Service (MKS), the Openstack Cloud Controller Manager is already installed and managed for you.
     
-    To retain your existing Floating IP when migrating from NGINX to Traefik:
+    To retain your existing floating IP when migrating from NGINX to Traefik:
 
-    **Identify existing public IP:**
+    **Identify the existing public IP:**
     
     ```bash
     NGINX_IP=$(kubectl get svc -n ingress-nginx ingress-nginx-controller \
@@ -457,7 +457,7 @@ kubectl get svc -n ingress-nginx ingress-nginx-controller -o go-template='{{ $in
     echo "NGINX IP: $NGINX_IP"
     ```
     
-    **Edit and update your existing NGINX LoadBalancer service to make sure that the Floating IP will not be released at service/loadbalancer deletion:**
+    **Edit and update your existing NGINX LoadBalancer service to ensure that the floating IP is not released when the loadbalancer service is deleted:**
     
     ```yaml
     service:
@@ -466,10 +466,10 @@ kubectl get svc -n ingress-nginx ingress-nginx-controller -o go-template='{{ $in
         loadbalancer.openstack.org/keep-floatingip: "true"
     ```
     
-    The `keep-floatingip` annotation prevents the Floating IP from being released when the service is deleted or modified.
+    The `keep-floatingip` annotation prevents the floating IP from being released when the service is deleted or modified.
 
     
-    **Delete the NGINX LoadBalancer service to release the Floating IP**
+    **Delete the NGINX LoadBalancer service to release the floating IP**
 
     **Update `traefik-values.yaml`:**
     
@@ -480,7 +480,7 @@ kubectl get svc -n ingress-nginx ingress-nginx-controller -o go-template='{{ $in
         loadBalancerIP: "<your-existing-floating-ip>" 
     ```
 
-    For more details, see the [OVHcloud MKS Public Load Balancer annotations documentation](https://help.ovhcloud.com/csm/en-public-cloud-kubernetes-expose-applications-using-load-balancer?id=kb_article_view&sysparm_article=KB0062878#supported-annotations-features).
+    To learn more, see the [OVHcloud MKS Public Load Balancer annotations documentation](https://help.ovhcloud.com/csm/en-public-cloud-kubernetes-expose-applications-using-load-balancer?id=kb_article_view&sysparm_article=KB0062878#supported-annotations-features).
 
 ??? note "Other Cloud Providers"
 
