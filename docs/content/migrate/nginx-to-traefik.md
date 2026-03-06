@@ -445,7 +445,7 @@ kubectl get svc -n ingress-nginx ingress-nginx-controller -o go-template='{{ $in
 
 ??? note "OVHcloud"
 
-    OVHcloud supports static IP on OVHcloud Public Load Balancer, it is based on Openstack Octavia which allocates Floating IPs to LoadBalancer services. This requires the [Openstack Cloud Controller Manager](https://github.com/kubernetes/cloud-provider-openstack/blob/master/docs/openstack-cloud-controller-manager/using-openstack-cloud-controller-manager.md) to be installed in your cluster. Note that if you are using OVHcloud Managed Kubernetes Service (MKS), the Openstack Cloud Controller Manager is already installed and managed for you.
+    OVHcloud supports static IP on OVHcloud Public Load Balancer, it is based on Openstack Octavia which allocates floating IPs to LoadBalancer services. This requires the [Openstack Cloud Controller Manager](https://github.com/kubernetes/cloud-provider-openstack/blob/master/docs/openstack-cloud-controller-manager/using-openstack-cloud-controller-manager.md) to be installed in your cluster. If you are using OVHcloud Managed Kubernetes Service (MKS), the Openstack Cloud Controller Manager is already installed and managed for you.
     
     To retain your existing Floating IP when migrating from NGINX to Traefik:
 
