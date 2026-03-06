@@ -83,8 +83,9 @@ type ingressConfig struct {
 	LimitRPM *int `annotation:"nginx.ingress.kubernetes.io/limit-rpm"`
 	LimitRPS *int `annotation:"nginx.ingress.kubernetes.io/limit-rps"`
 
-	CustomHeaders *string `annotation:"nginx.ingress.kubernetes.io/custom-headers"`
-	UpstreamVhost *string `annotation:"nginx.ingress.kubernetes.io/upstream-vhost"`
+	CustomHeaders    *string `annotation:"nginx.ingress.kubernetes.io/custom-headers"`
+	UpstreamVhost    *string `annotation:"nginx.ingress.kubernetes.io/upstream-vhost"`
+	XForwardedPrefix *string `annotation:"nginx.ingress.kubernetes.io/x-forwarded-prefix"`
 
 	CustomHTTPErrors *[]string `annotation:"nginx.ingress.kubernetes.io/custom-http-errors"`
 	DefaultBackend   *string   `annotation:"nginx.ingress.kubernetes.io/default-backend"`
