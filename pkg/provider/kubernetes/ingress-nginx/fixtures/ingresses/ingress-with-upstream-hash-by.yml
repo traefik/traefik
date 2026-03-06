@@ -1,12 +1,11 @@
 ---
-kind: Ingress
 apiVersion: networking.k8s.io/v1
+kind: Ingress
 metadata:
-  name: ingress-with-custom-http-errors-and-default-backend
+  name: ingress-with-upstream-hash-by
   namespace: default
   annotations:
-    nginx.ingress.kubernetes.io/default-backend: whoami-b
-    nginx.ingress.kubernetes.io/custom-http-errors: "404,415"
+    nginx.ingress.kubernetes.io/upstream-hash-by: "$request_uri"
 
 spec:
   ingressClassName: nginx
@@ -15,7 +14,7 @@ spec:
       http:
         paths:
           - path: /
-            pathType: Exact
+            pathType: Prefix
             backend:
               service:
                 name: whoami

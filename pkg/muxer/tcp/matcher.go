@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"slices"
 	"strings"
-	"unicode/utf8"
+	"unicode"
 
 	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
 	"github.com/rs/zerolog/log"
@@ -120,7 +120,7 @@ func hostSNIRegexp(tree *matchersTree, templates ...string) error {
 // isASCII checks if the given string contains only ASCII characters.
 func isASCII(s string) bool {
 	for i := range len(s) {
-		if s[i] >= utf8.RuneSelf {
+		if s[i] > unicode.MaxASCII {
 			return false
 		}
 	}

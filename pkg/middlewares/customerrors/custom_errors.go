@@ -160,8 +160,12 @@ func (c *customErrors) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		utils.CopyHeaders(pageReq.Header, req.Header)
 	}
 
-	c.backendHandler.ServeHTTP(newCodeModifier(rw, code),
-		pageReq.WithContext(req.Context()))
+	if len(c.forwardNginxHeaders) > 0 {
+		c.backendHandler.ServeHTTP(rw, pageReq.WithContext(req.Context()))
+	} else {
+		c.backendHandler.ServeHTTP(newCodeModifier(rw, code),
+			pageReq.WithContext(req.Context()))
+	}
 }
 
 func newRequest(baseURL string) (*http.Request, error) {

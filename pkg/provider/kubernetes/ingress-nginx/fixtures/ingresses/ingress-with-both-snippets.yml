@@ -2,16 +2,18 @@
 kind: Ingress
 apiVersion: networking.k8s.io/v1
 metadata:
-  name: ingress-with-custom-http-errors-and-default-backend
+  name: ingress-with-both-snippets
   namespace: default
   annotations:
-    nginx.ingress.kubernetes.io/default-backend: whoami-b
-    nginx.ingress.kubernetes.io/custom-http-errors: "404,415"
+    nginx.ingress.kubernetes.io/server-snippet: |
+      add_header X-Server-Snippet "server-value";
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      add_header X-Configuration-Snippet "configuration-value";
 
 spec:
   ingressClassName: nginx
   rules:
-    - host: whoami.localhost
+    - host: snippet.localhost
       http:
         paths:
           - path: /
