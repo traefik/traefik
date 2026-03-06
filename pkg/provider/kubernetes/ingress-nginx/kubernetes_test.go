@@ -6638,6 +6638,104 @@ func TestLoadIngresses(t *testing.T) {
 				TLS: &dynamic.TLSConfiguration{},
 			},
 		},
+		{
+			desc: "Limit RPM",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-limit-rpm.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-limit-rpm-rule-0-path-0": {
+							Rule:        "Host(`whoami.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-limit-rpm-rule-0-path-0-limit-rpm", "default-ingress-with-limit-rpm-rule-0-path-0-retry"},
+							Service:     "default-ingress-with-limit-rpm-whoami-80",
+						},
+						"default-ingress-with-limit-rpm-zero-rule-0-path-0": {
+							Rule:        "Host(`whoami-zero.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-limit-rpm-zero-rule-0-path-0-retry"},
+							Service:     "default-ingress-with-limit-rpm-zero-whoami-80",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-limit-rpm-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+						"default-ingress-with-limit-rpm-rule-0-path-0-limit-rpm": {
+							RateLimit: &dynamic.RateLimit{
+								Average: 10,
+								Burst:   50,
+								Period:  ptypes.Duration(time.Minute),
+							},
+						},
+						"default-ingress-with-limit-rpm-zero-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-limit-rpm-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-with-limit-rpm",
+							},
+						},
+						"default-ingress-with-limit-rpm-zero-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{URL: "http://10.10.0.1:80"},
+									{URL: "http://10.10.0.2:80"},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-with-limit-rpm-zero",
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-limit-rpm": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+						"default-ingress-with-limit-rpm-zero": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
 	}
 
 	for _, test := range testCases {

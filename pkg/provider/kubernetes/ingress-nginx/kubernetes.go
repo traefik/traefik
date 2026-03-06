@@ -1203,6 +1203,8 @@ func (p *Provider) applyMiddlewares(namespace, ingressName, routerKey, rulePath,
 
 	applyUpstreamVhost(routerKey, ingressConfig, rt, conf)
 
+	applyLimitRPMConfiguration(routerKey, ingressConfig, rt, conf)
+
 	applyLimitRPSConfiguration(routerKey, ingressConfig, rt, conf)
 
 	if err := p.applyAuthTLSPassCertificateToUpstream(namespace, routerKey, ingressConfig, rt, conf); err != nil {
@@ -1305,6 +1307,24 @@ func (p *Provider) applyCustomHTTPErrors(namespace, ingressName, routerName stri
 	rt.Middlewares = append(rt.Middlewares, customErrorMiddlewareName)
 
 	return nil
+}
+
+func applyLimitRPMConfiguration(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
+	limitRPM := ptr.Deref(ingressConfig.LimitRPM, 0)
+	if limitRPM <= 0 {
+		return
+	}
+
+	rateLimitMiddlewareName := routerName + "-limit-rpm"
+	conf.HTTP.Middlewares[rateLimitMiddlewareName] = &dynamic.Middleware{
+		RateLimit: &dynamic.RateLimit{
+			Average: int64(limitRPM),
+			Period:  ptypes.Duration(time.Minute),
+			Burst:   int64(limitRPM) * defaultLimitBurstMultiplier,
+		},
+	}
+
+	rt.Middlewares = append(rt.Middlewares, rateLimitMiddlewareName)
 }
 
 func applyLimitRPSConfiguration(routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {

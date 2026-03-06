@@ -37,6 +37,7 @@ func Test_parseIngressConfig(t *testing.T) {
 				"nginx.ingress.kubernetes.io/proxy-buffer-size":        "16k",
 				"nginx.ingress.kubernetes.io/proxy-buffers-number":     "8",
 				"nginx.ingress.kubernetes.io/proxy-max-temp-file-size": "100m",
+				"nginx.ingress.kubernetes.io/limit-rpm":                "120",
 			},
 			expected: ingressConfig{
 				SSLPassthrough:        ptr.To(true),
@@ -59,6 +60,7 @@ func Test_parseIngressConfig(t *testing.T) {
 				ProxyBufferSize:       ptr.To("16k"),
 				ProxyBuffersNumber:    ptr.To(8),
 				ProxyMaxTempFileSize:  ptr.To("100m"),
+				LimitRPM:              ptr.To(120),
 			},
 		},
 		{
