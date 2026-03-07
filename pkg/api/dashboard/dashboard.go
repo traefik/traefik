@@ -2,11 +2,11 @@ package dashboard
 
 import (
 	"fmt"
+	"html/template"
 	"io/fs"
 	"net/http"
 	"net/url"
 	"strings"
-	"text/template"
 
 	"github.com/gorilla/mux"
 	"github.com/rs/zerolog/log"

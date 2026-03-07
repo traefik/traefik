@@ -19,13 +19,13 @@ func Test_buildGRPCMatchRule(t *testing.T) {
 	}{
 		{
 			desc:             "Empty rule and matches",
-			expectedRule:     "PathPrefix(`/`)",
+			expectedRule:     `PathPrefix("/")`,
 			expectedPriority: 15,
 		},
 		{
 			desc:             "One Host rule without match",
 			hostnames:        []gatev1.Hostname{"foo.com"},
-			expectedRule:     "Host(`foo.com`) && PathPrefix(`/`)",
+			expectedRule:     `Host("foo.com") && PathPrefix("/")`,
 			expectedPriority: 22,
 		},
 		{
@@ -37,7 +37,7 @@ func Test_buildGRPCMatchRule(t *testing.T) {
 					Method:  ptr.To("bar"),
 				},
 			},
-			expectedRule:     "PathRegexp(`/foo/bar`)",
+			expectedRule:     `PathRegexp("/foo/bar")`,
 			expectedPriority: 22,
 		},
 		{
@@ -56,7 +56,7 @@ func Test_buildGRPCMatchRule(t *testing.T) {
 					},
 				},
 			},
-			expectedRule:     "PathRegexp(`/foo/bar`) && Header(`foo`,`bar`)",
+			expectedRule:     `PathRegexp("/foo/bar") && Header("foo","bar")`,
 			expectedPriority: 45,
 		},
 		{
@@ -76,7 +76,7 @@ func Test_buildGRPCMatchRule(t *testing.T) {
 					},
 				},
 			},
-			expectedRule:     "Host(`foo.com`) && PathRegexp(`/foo/bar`) && Header(`foo`,`bar`)",
+			expectedRule:     `Host("foo.com") && PathRegexp("/foo/bar") && Header("foo","bar")`,
 			expectedPriority: 52,
 		},
 	}
@@ -100,7 +100,7 @@ func Test_buildGRPCMethodRule(t *testing.T) {
 	}{
 		{
 			desc:         "Empty",
-			expectedRule: "PathPrefix(`/`)",
+			expectedRule: `PathPrefix("/")`,
 		},
 		{
 			desc: "Exact service matching",
@@ -108,7 +108,7 @@ func Test_buildGRPCMethodRule(t *testing.T) {
 				Type:    ptr.To(gatev1.GRPCMethodMatchExact),
 				Service: ptr.To("foo"),
 			},
-			expectedRule: "PathRegexp(`/foo/[^/]+`)",
+			expectedRule: `PathRegexp("/foo/[^/]+")`,
 		},
 		{
 			desc: "Exact method matching",
@@ -116,7 +116,7 @@ func Test_buildGRPCMethodRule(t *testing.T) {
 				Type:   ptr.To(gatev1.GRPCMethodMatchExact),
 				Method: ptr.To("bar"),
 			},
-			expectedRule: "PathRegexp(`/[^/]+/bar`)",
+			expectedRule: `PathRegexp("/[^/]+/bar")`,
 		},
 		{
 			desc: "Exact service and method matching",
@@ -125,7 +125,7 @@ func Test_buildGRPCMethodRule(t *testing.T) {
 				Service: ptr.To("foo"),
 				Method:  ptr.To("bar"),
 			},
-			expectedRule: "PathRegexp(`/foo/bar`)",
+			expectedRule: `PathRegexp("/foo/bar")`,
 		},
 		{
 			desc: "Regexp service matching",
@@ -133,7 +133,7 @@ func Test_buildGRPCMethodRule(t *testing.T) {
 				Type:    ptr.To(gatev1.GRPCMethodMatchRegularExpression),
 				Service: ptr.To("[^1-9/]"),
 			},
-			expectedRule: "PathRegexp(`/[^1-9/]/[^/]+`)",
+			expectedRule: `PathRegexp("/[^1-9/]/[^/]+")`,
 		},
 		{
 			desc: "Regexp method matching",
@@ -141,7 +141,7 @@ func Test_buildGRPCMethodRule(t *testing.T) {
 				Type:   ptr.To(gatev1.GRPCMethodMatchRegularExpression),
 				Method: ptr.To("[^1-9/]"),
 			},
-			expectedRule: "PathRegexp(`/[^/]+/[^1-9/]`)",
+			expectedRule: `PathRegexp("/[^/]+/[^1-9/]")`,
 		},
 		{
 			desc: "Regexp service and method matching",
@@ -150,7 +150,7 @@ func Test_buildGRPCMethodRule(t *testing.T) {
 				Service: ptr.To("[^1-9/]"),
 				Method:  ptr.To("[^1-9/]"),
 			},
-			expectedRule: "PathRegexp(`/[^1-9/]/[^1-9/]`)",
+			expectedRule: `PathRegexp("/[^1-9/]/[^1-9/]")`,
 		},
 	}
 
@@ -182,7 +182,7 @@ func Test_buildGRPCHeaderRules(t *testing.T) {
 					Value: "bar",
 				},
 			},
-			expectedRules: []string{"Header(`foo`,`bar`)"},
+			expectedRules: []string{`Header("foo","bar")`},
 		},
 		{
 			desc: "One regexp match type",
@@ -193,7 +193,7 @@ func Test_buildGRPCHeaderRules(t *testing.T) {
 					Value: ".*",
 				},
 			},
-			expectedRules: []string{"HeaderRegexp(`foo`,`.*`)"},
+			expectedRules: []string{`HeaderRegexp("foo",".*")`},
 		},
 		{
 			desc: "One exact and regexp match type",
@@ -210,8 +210,8 @@ func Test_buildGRPCHeaderRules(t *testing.T) {
 				},
 			},
 			expectedRules: []string{
-				"Header(`foo`,`bar`)",
-				"HeaderRegexp(`foo`,`.*`)",
+				`Header("foo","bar")`,
+				`HeaderRegexp("foo",".*")`,
 			},
 		},
 	}

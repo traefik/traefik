@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/hashicorp/go-multierror"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/mod/module"
 )
@@ -84,29 +83,30 @@ func SetupLocalPlugins(plugins map[string]LocalDescriptor) error {
 
 	uniq := make(map[string]struct{})
 
-	var errs *multierror.Error
+	var errs []error
 	for pAlias, descriptor := range plugins {
 		if descriptor.ModuleName == "" {
-			errs = multierror.Append(errs, fmt.Errorf("%s: plugin name is missing", pAlias))
+			errs = append(errs, fmt.Errorf("%s: plugin name is missing", pAlias))
 		}
 
 		if strings.HasPrefix(descriptor.ModuleName, "/") || strings.HasSuffix(descriptor.ModuleName, "/") {
-			errs = multierror.Append(errs, fmt.Errorf("%s: plugin name should not start or end with a /", pAlias))
+			errs = append(errs, fmt.Errorf("%s: plugin name should not start or end with a /", pAlias))
 			continue
 		}
 
 		if _, ok := uniq[descriptor.ModuleName]; ok {
-			errs = multierror.Append(errs, fmt.Errorf("only one version of a plugin is allowed, there is a duplicate of %s", descriptor.ModuleName))
+			errs = append(errs, fmt.Errorf("only one version of a plugin is allowed, there is a duplicate of %s", descriptor.ModuleName))
 			continue
 		}
 
 		uniq[descriptor.ModuleName] = struct{}{}
 
-		err := checkLocalPluginManifest(descriptor)
-		errs = multierror.Append(errs, err)
+		if err := checkLocalPluginManifest(descriptor); err != nil {
+			errs = append(errs, err)
+		}
 	}
 
-	return errs.ErrorOrNil()
+	return errors.Join(errs...)
 }
 
 func checkLocalPluginManifest(descriptor LocalDescriptor) error {
@@ -115,44 +115,44 @@ func checkLocalPluginManifest(descriptor LocalDescriptor) error {
 		return err
 	}
 
-	var errs *multierror.Error
+	var errs []error
 
 	switch m.Type {
 	case typeMiddleware:
 		if m.Runtime != runtimeYaegi && m.Runtime != runtimeWasm && m.Runtime != "" {
-			errs = multierror.Append(errs, fmt.Errorf("%s: unsupported runtime '%q'", descriptor.ModuleName, m.Runtime))
+			errs = append(errs, fmt.Errorf("%s: unsupported runtime '%q'", descriptor.ModuleName, m.Runtime))
 		}
 
 	case typeProvider:
 		if m.Runtime != runtimeYaegi && m.Runtime != "" {
-			errs = multierror.Append(errs, fmt.Errorf("%s: unsupported runtime '%q'", descriptor.ModuleName, m.Runtime))
+			errs = append(errs, fmt.Errorf("%s: unsupported runtime '%q'", descriptor.ModuleName, m.Runtime))
 		}
 
 	default:
-		errs = multierror.Append(errs, fmt.Errorf("%s: unsupported type %q", descriptor.ModuleName, m.Type))
+		errs = append(errs, fmt.Errorf("%s: unsupported type %q", descriptor.ModuleName, m.Type))
 	}
 
 	if m.IsYaegiPlugin() {
 		if m.Import == "" {
-			errs = multierror.Append(errs, fmt.Errorf("%s: missing import", descriptor.ModuleName))
+			errs = append(errs, fmt.Errorf("%s: missing import", descriptor.ModuleName))
 		}
 
 		if !strings.HasPrefix(m.Import, descriptor.ModuleName) {
-			errs = multierror.Append(errs, fmt.Errorf("the import %q must be related to the module name %q", m.Import, descriptor.ModuleName))
+			errs = append(errs, fmt.Errorf("the import %q must be related to the module name %q", m.Import, descriptor.ModuleName))
 		}
 	}
 
 	if m.DisplayName == "" {
-		errs = multierror.Append(errs, fmt.Errorf("%s: missing DisplayName", descriptor.ModuleName))
+		errs = append(errs, fmt.Errorf("%s: missing DisplayName", descriptor.ModuleName))
 	}
 
 	if m.Summary == "" {
-		errs = multierror.Append(errs, fmt.Errorf("%s: missing Summary", descriptor.ModuleName))
+		errs = append(errs, fmt.Errorf("%s: missing Summary", descriptor.ModuleName))
 	}
 
 	if m.TestData == nil {
-		errs = multierror.Append(errs, fmt.Errorf("%s: missing TestData", descriptor.ModuleName))
+		errs = append(errs, fmt.Errorf("%s: missing TestData", descriptor.ModuleName))
 	}
 
-	return errs.ErrorOrNil()
+	return errors.Join(errs...)
 }

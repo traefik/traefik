@@ -1433,26 +1433,39 @@ func (p *Provider) applyCustomHeaders(routerName string, ingressConfig ingressCo
 	return nil
 }
 
+// Validation identical to ingress-nginx.
+var regexPathWithCapture = regexp.MustCompile(`^/?[-._~a-zA-Z0-9/$:]*$`)
+
 func applyRewriteTargetConfiguration(rulePath, routerName string, ingressConfig ingressConfig, rt *dynamic.Router, conf *dynamic.Configuration) {
 	if ingressConfig.RewriteTarget == nil {
 		return
 	}
 
+	// Skip rewrite if the path is equal to the target.
+	if *ingressConfig.RewriteTarget == rulePath {
+		return
+	}
+
 	rewriteTargetMiddlewareName := routerName + "-rewrite-target"
 
+	rewriteTarget := &dynamic.RewriteTarget{
+		Replacement: *ingressConfig.RewriteTarget,
+	}
+
 	if ptr.Deref(ingressConfig.UseRegex, false) {
-		conf.HTTP.Middlewares[rewriteTargetMiddlewareName] = &dynamic.Middleware{
-			ReplacePathRegex: &dynamic.ReplacePathRegex{
-				Regex:       rulePath,
-				Replacement: *ingressConfig.RewriteTarget,
-			},
+		rewriteTarget.Regex = rulePath
+	}
+
+	if ingressConfig.XForwardedPrefix != nil {
+		if !regexPathWithCapture.MatchString(*ingressConfig.XForwardedPrefix) {
+			log.Error().Msgf("Invalid x-forwarded-prefix value %q for router %q, skipping x-forwarded-prefix configuration", *ingressConfig.XForwardedPrefix, routerName)
+		} else {
+			rewriteTarget.XForwardedPrefix = *ingressConfig.XForwardedPrefix
 		}
-	} else {
-		conf.HTTP.Middlewares[rewriteTargetMiddlewareName] = &dynamic.Middleware{
-			ReplacePath: &dynamic.ReplacePath{
-				Path: *ingressConfig.RewriteTarget,
-			},
-		}
+	}
+
+	conf.HTTP.Middlewares[rewriteTargetMiddlewareName] = &dynamic.Middleware{
+		RewriteTarget: rewriteTarget,
 	}
 
 	rt.Middlewares = append(rt.Middlewares, rewriteTargetMiddlewareName)

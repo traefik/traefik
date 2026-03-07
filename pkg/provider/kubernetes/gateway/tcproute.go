@@ -119,7 +119,7 @@ func (p *Provider) loadTCPRoute(listener gatewayListener, route *gatev1alpha2.TC
 		}
 
 		router := dynamic.TCPRouter{
-			Rule:        "HostSNI(`*`)",
+			Rule:        `HostSNI("*")`,
 			EntryPoints: []string{listener.EPName},
 			RuleSyntax:  "default",
 		}

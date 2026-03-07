@@ -1158,6 +1158,224 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
+			desc: "X-forwarded-prefix with missing rewrite-target",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-x-forwarded-prefix-no-rewrite-target.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-x-forwarded-prefix-no-rewrite-target-rule-0-path-0": {
+							Rule:        "Host(`x-forwarded-prefix.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-x-forwarded-prefix-no-rewrite-target-rule-0-path-0-retry"},
+							Service:     "default-ingress-with-x-forwarded-prefix-no-rewrite-target-whoami-80",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-x-forwarded-prefix-no-rewrite-target-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-x-forwarded-prefix-no-rewrite-target-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-with-x-forwarded-prefix-no-rewrite-target",
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-x-forwarded-prefix-no-rewrite-target": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
+			desc: "X-forwarded-prefix",
+			paths: []string{
+				"services.yml",
+				"ingressclasses.yml",
+				"ingresses/ingress-with-x-forwarded-prefix.yml",
+			},
+			expected: &dynamic.Configuration{
+				TCP: &dynamic.TCPConfiguration{
+					Routers:  map[string]*dynamic.TCPRouter{},
+					Services: map[string]*dynamic.TCPService{},
+				},
+				HTTP: &dynamic.HTTPConfiguration{
+					Routers: map[string]*dynamic.Router{
+						"default-ingress-with-x-forwarded-prefix-rule-0-path-0": {
+							Rule:        "Host(`x-forwarded-prefix.localhost`) && Path(`/`)",
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-x-forwarded-prefix-rule-0-path-0-rewrite-target", "default-ingress-with-x-forwarded-prefix-rule-0-path-0-retry"},
+							Service:     "default-ingress-with-x-forwarded-prefix-whoami-80",
+						},
+						"default-ingress-with-x-forwarded-prefix-regex-rule-0-path-0": {
+							Rule:        "Host(`x-forwarded-prefix-regex.localhost`) && PathRegexp(`^(/something)(/.+)`)",
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-x-forwarded-prefix-regex-rule-0-path-0-rewrite-target", "default-ingress-with-x-forwarded-prefix-regex-rule-0-path-0-retry"},
+							Service:     "default-ingress-with-x-forwarded-prefix-regex-whoami-80",
+						},
+						"default-ingress-with-x-forwarded-prefix-three-groups-rule-0-path-0": {
+							Rule:        "Host(`x-forwarded-prefix-three-groups.localhost`) && PathRegexp(`^/(prefix)/(sub)/(.*)`)",
+							RuleSyntax:  "default",
+							Middlewares: []string{"default-ingress-with-x-forwarded-prefix-three-groups-rule-0-path-0-rewrite-target", "default-ingress-with-x-forwarded-prefix-three-groups-rule-0-path-0-retry"},
+							Service:     "default-ingress-with-x-forwarded-prefix-three-groups-whoami-80",
+						},
+					},
+					Middlewares: map[string]*dynamic.Middleware{
+						"default-ingress-with-x-forwarded-prefix-three-groups-rule-0-path-0-rewrite-target": {
+							RewriteTarget: &dynamic.RewriteTarget{
+								Regex:            "/(prefix)/(sub)/(.*)",
+								Replacement:      "/$3",
+								XForwardedPrefix: "/$1/$2",
+							},
+						},
+						"default-ingress-with-x-forwarded-prefix-three-groups-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+						"default-ingress-with-x-forwarded-prefix-rule-0-path-0-rewrite-target": {
+							RewriteTarget: &dynamic.RewriteTarget{
+								Replacement:      "/path",
+								XForwardedPrefix: "x-forwarded-prefix-header-value",
+							},
+						},
+						"default-ingress-with-x-forwarded-prefix-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+						"default-ingress-with-x-forwarded-prefix-regex-rule-0-path-0-rewrite-target": {
+							RewriteTarget: &dynamic.RewriteTarget{
+								Regex:            "(/something)(/.+)",
+								Replacement:      "$2",
+								XForwardedPrefix: "$1",
+							},
+						},
+						"default-ingress-with-x-forwarded-prefix-regex-rule-0-path-0-retry": {
+							Retry: &dynamic.Retry{
+								Attempts: 3,
+							},
+						},
+					},
+					Services: map[string]*dynamic.Service{
+						"default-ingress-with-x-forwarded-prefix-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-with-x-forwarded-prefix",
+							},
+						},
+						"default-ingress-with-x-forwarded-prefix-three-groups-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-with-x-forwarded-prefix-three-groups",
+							},
+						},
+						"default-ingress-with-x-forwarded-prefix-regex-whoami-80": {
+							LoadBalancer: &dynamic.ServersLoadBalancer{
+								Servers: []dynamic.Server{
+									{
+										URL: "http://10.10.0.1:80",
+									},
+									{
+										URL: "http://10.10.0.2:80",
+									},
+								},
+								Strategy:       "wrr",
+								PassHostHeader: ptr.To(true),
+								ResponseForwarding: &dynamic.ResponseForwarding{
+									FlushInterval: dynamic.DefaultFlushInterval,
+								},
+								ServersTransport: "default-ingress-with-x-forwarded-prefix-regex",
+							},
+						},
+					},
+					ServersTransports: map[string]*dynamic.ServersTransport{
+						"default-ingress-with-x-forwarded-prefix": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+						"default-ingress-with-x-forwarded-prefix-three-groups": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+						"default-ingress-with-x-forwarded-prefix-regex": {
+							ForwardingTimeouts: &dynamic.ForwardingTimeouts{
+								DialTimeout:     ptypes.Duration(60 * time.Second),
+								ReadTimeout:     ptypes.Duration(60 * time.Second),
+								WriteTimeout:    ptypes.Duration(60 * time.Second),
+								IdleConnTimeout: ptypes.Duration(60 * time.Second),
+							},
+						},
+					},
+				},
+				TLS: &dynamic.TLSConfiguration{},
+			},
+		},
+		{
 			desc: "Use Regex",
 			paths: []string{
 				"services.yml",
@@ -1242,7 +1460,7 @@ func TestLoadIngresses(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-rewrite-target-rule-0-path-0-rewrite-target": {
-							ReplacePathRegex: &dynamic.ReplacePathRegex{
+							RewriteTarget: &dynamic.RewriteTarget{
 								Regex:       "/something(/|$)(.*)",
 								Replacement: "/$2",
 							},
@@ -1313,8 +1531,8 @@ func TestLoadIngresses(t *testing.T) {
 					},
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-rewrite-target-no-regex-rule-0-path-0-rewrite-target": {
-							ReplacePath: &dynamic.ReplacePath{
-								Path: "/rewritten",
+							RewriteTarget: &dynamic.RewriteTarget{
+								Replacement: "/rewritten",
 							},
 						},
 						"default-ingress-with-rewrite-target-no-regex-rule-0-path-0-retry": {
