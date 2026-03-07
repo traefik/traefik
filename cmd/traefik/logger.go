@@ -23,17 +23,17 @@ func init() {
 	zerolog.SetGlobalLevel(zerolog.ErrorLevel)
 }
 
-func setupLogger(ctx context.Context, staticConfiguration *static.Configuration) error {
+func setupLogger(ctx context.Context, staticConfiguration *static.Configuration) (func() error, error) {
 	// Validate that the experimental flag is set up at this point,
 	// rather than validating the static configuration before the setupLogger call.
 	// This ensures that validation messages are not logged using an un-configured logger.
 	if staticConfiguration.Log != nil && staticConfiguration.Log.OTLP != nil &&
 		(staticConfiguration.Experimental == nil || !staticConfiguration.Experimental.OTLPLogs) {
-		return errors.New("the experimental OTLPLogs feature must be enabled to use OTLP logging")
+		return nil, errors.New("the experimental OTLPLogs feature must be enabled to use OTLP logging")
 	}
 
 	// configure log format
-	w := getLogWriter(staticConfiguration)
+	w, rotateFn := getLogWriter(staticConfiguration)
 
 	// configure log level
 	logLevel := getLogLevel(staticConfiguration)
@@ -51,7 +51,7 @@ func setupLogger(ctx context.Context, staticConfiguration *static.Configuration)
 		var err error
 		log.Logger, err = logs.SetupOTelLogger(ctx, log.Logger, staticConfiguration.Log.OTLP)
 		if err != nil {
-			return fmt.Errorf("setting up OpenTelemetry logger: %w", err)
+			return nil, fmt.Errorf("setting up OpenTelemetry logger: %w", err)
 		}
 	}
 
@@ -64,20 +64,23 @@ func setupLogger(ctx context.Context, staticConfiguration *static.Configuration)
 	stdlog.SetFlags(stdlog.Lshortfile | stdlog.LstdFlags)
 	stdlog.SetOutput(logs.NoLevel(log.Logger, zerolog.DebugLevel))
 
-	return nil
+	return rotateFn, nil
 }
 
-func getLogWriter(staticConfiguration *static.Configuration) io.Writer {
+func getLogWriter(staticConfiguration *static.Configuration) (io.Writer, func() error) {
 	var w io.Writer = os.Stdout
+	var rotateFn func() error
 	if staticConfiguration.Log != nil && len(staticConfiguration.Log.FilePath) > 0 {
 		_, _ = os.OpenFile(staticConfiguration.Log.FilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0o666)
-		w = &lumberjack.Logger{
+		lj := &lumberjack.Logger{
 			Filename:   staticConfiguration.Log.FilePath,
 			MaxSize:    staticConfiguration.Log.MaxSize,
 			MaxBackups: staticConfiguration.Log.MaxBackups,
 			MaxAge:     staticConfiguration.Log.MaxAge,
-			Compress:   true,
+			Compress:   staticConfiguration.Log.Compress,
 		}
+		w = lj
+		rotateFn = lj.Rotate
 	}
 
 	if staticConfiguration.Log == nil || staticConfiguration.Log.Format != "json" {
@@ -88,7 +91,7 @@ func getLogWriter(staticConfiguration *static.Configuration) io.Writer {
 		}
 	}
 
-	return w
+	return w, rotateFn
 }
 
 func getLogLevel(staticConfiguration *static.Configuration) zerolog.Level {
