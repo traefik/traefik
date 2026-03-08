@@ -30,8 +30,9 @@ type Shared struct {
 	Network            string `description:"Default Docker network used." json:"network,omitempty" toml:"network,omitempty" yaml:"network,omitempty" export:"true"`
 	UseBindPortIP      bool   `description:"Use the ip address from the bound port, rather than from the inner network." json:"useBindPortIP,omitempty" toml:"useBindPortIP,omitempty" yaml:"useBindPortIP,omitempty" export:"true"`
 
-	Watch       bool   `description:"Watch Docker events." json:"watch,omitempty" toml:"watch,omitempty" yaml:"watch,omitempty" export:"true"`
-	DefaultRule string `description:"Default rule." json:"defaultRule,omitempty" toml:"defaultRule,omitempty" yaml:"defaultRule,omitempty"`
+	Watch          bool            `description:"Watch Docker events." json:"watch,omitempty" toml:"watch,omitempty" yaml:"watch,omitempty" export:"true"`
+	RefreshSeconds ptypes.Duration `description:"Polling interval." json:"refreshSeconds,omitempty" toml:"refreshSeconds,omitempty" yaml:"refreshSeconds,omitempty" export:"true"`
+	DefaultRule    string          `description:"Default rule." json:"defaultRule,omitempty" toml:"defaultRule,omitempty" yaml:"defaultRule,omitempty"`
 
 	defaultRuleTpl *template.Template
 }
