@@ -1,21 +1,22 @@
 package tcp
 
 import (
+	"context"
 	"net"
 )
 
 // Handler is the TCP Handlers interface.
 type Handler interface {
-	ServeTCP(conn WriteCloser)
+	ServeTCP(ctx context.Context, conn WriteCloser)
 }
 
 // The HandlerFunc type is an adapter to allow the use of
 // ordinary functions as handlers.
-type HandlerFunc func(conn WriteCloser)
+type HandlerFunc func(ctx context.Context, conn WriteCloser)
 
 // ServeTCP serves tcp.
-func (f HandlerFunc) ServeTCP(conn WriteCloser) {
-	f(conn)
+func (f HandlerFunc) ServeTCP(ctx context.Context, conn WriteCloser) {
+	f(ctx, conn)
 }
 
 // WriteCloser describes a net.Conn with a CloseWrite method.

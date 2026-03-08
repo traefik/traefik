@@ -1,6 +1,7 @@
 package tcp
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -465,7 +466,7 @@ func Test_addTCPRouteV2(t *testing.T) {
 			t.Parallel()
 
 			msg := "BYTES"
-			handler := tcp.HandlerFunc(func(conn tcp.WriteCloser) {
+			handler := tcp.HandlerFunc(func(ctx context.Context, conn tcp.WriteCloser) {
 				_, err := conn.Write([]byte(msg))
 				require.NoError(t, err)
 			})
@@ -502,7 +503,7 @@ func Test_addTCPRouteV2(t *testing.T) {
 
 			require.NotNil(t, matchingHandler)
 
-			matchingHandler.ServeTCP(conn)
+			matchingHandler.ServeTCP(t.Context(), conn)
 
 			n, ok := conn.call[msg]
 			assert.Equal(t, 1, n)
@@ -609,7 +610,7 @@ func Test_HostSNICatchAllV2(t *testing.T) {
 			muxer, err := NewMuxer()
 			require.NoError(t, err)
 
-			err = muxer.AddRoute(test.rule, "v2", 0, tcp.HandlerFunc(func(conn tcp.WriteCloser) {}))
+			err = muxer.AddRoute(test.rule, "v2", 0, tcp.HandlerFunc(func(ctx context.Context, conn tcp.WriteCloser) {}))
 			require.NoError(t, err)
 
 			handler, catchAll := muxer.Match(ConnData{

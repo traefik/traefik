@@ -3,6 +3,7 @@ package tcp
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"errors"
 	"io"
 	"net"
@@ -98,7 +99,12 @@ func (r *Router) servePostgres(conn tcp.WriteCloser) {
 		proxiedConn = &postgresConn{WriteCloser: proxiedConn}
 	}
 
-	handlerTCPTLS.ServeTCP(proxiedConn)
+	// Create context for postgres connection
+	type metadataKey string
+	metadata := make(map[string]string)
+	ctx := context.WithValue(context.Background(), metadataKey("metadata"), metadata)
+
+	handlerTCPTLS.ServeTCP(ctx, proxiedConn)
 }
 
 // postgresConn is a tcp.WriteCloser that will negotiate a TLS session (STARTTLS),

@@ -43,6 +43,8 @@ const (
 	debugConnectionEnv string = "DEBUG_CONNECTION"
 )
 
+type contextKey string
+
 var (
 	clientConnectionStates   = map[string]*connState{}
 	clientConnectionStatesMu = sync.RWMutex{}
@@ -74,7 +76,7 @@ func newHTTPForwarder(ln net.Listener) *httpForwarder {
 }
 
 // ServeTCP uses the connection to serve it later in "Accept".
-func (h *httpForwarder) ServeTCP(conn tcp.WriteCloser) {
+func (h *httpForwarder) ServeTCP(ctx context.Context, conn tcp.WriteCloser) {
 	h.connChan <- conn
 }
 
@@ -285,7 +287,24 @@ func (e *TCPEntryPoint) Start(ctx context.Context) {
 				}
 			}
 
-			e.switcher.ServeTCP(newTrackedConnection(writeCloser, e.tracker))
+			// Create connection-scoped context with metadata map for middleware chain
+			// Use server context as parent so connection context is canceled on shutdown
+			connCtx, cancel := context.WithCancel(ctx)
+
+			metadata := make(map[string]string)
+			connCtx = context.WithValue(connCtx, contextKey("metadata"), metadata)
+
+			// Wrap connection to cancel context when connection closes
+			trackedConn := newTrackedConnection(writeCloser, e.tracker)
+			contextAwareConn := &contextualWriteCloser{
+				WriteCloser: trackedConn,
+				cancel:      cancel,
+			}
+
+			// Cancel context when goroutine exits OR when connection closes
+			defer cancel()
+
+			e.switcher.ServeTCP(connCtx, contextAwareConn)
 		})
 	}
 }
@@ -776,6 +795,20 @@ func denyFragment(h http.Handler) http.Handler {
 
 		h.ServeHTTP(rw, req)
 	})
+}
+
+// contextualWriteCloser wraps a WriteCloser and cancels context on Close().
+type contextualWriteCloser struct {
+	tcp.WriteCloser
+	cancel context.CancelFunc
+}
+
+func (c *contextualWriteCloser) Close() error {
+	// Cancel context when connection closes
+	if c.cancel != nil {
+		c.cancel()
+	}
+	return c.WriteCloser.Close()
 }
 
 // This function is inspired by http.AllowQuerySemicolons.
