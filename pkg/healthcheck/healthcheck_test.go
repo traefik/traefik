@@ -148,6 +148,14 @@ func TestServiceHealthChecker_newRequest(t *testing.T) {
 			expMethod:   http.MethodGet,
 		},
 		{
+			desc:      "path is an ablsolute URL",
+			targetURL: "http://backend1:80",
+			config: dynamic.ServerHealthCheck{
+				Path: "http://backend2/health?powpow=do",
+			},
+			expError: true,
+		},
+		{
 			desc:      "path with param",
 			targetURL: "http://backend1:80",
 			config: dynamic.ServerHealthCheck{
@@ -439,12 +447,9 @@ func TestServiceHealthChecker_Launch(t *testing.T) {
 			hc := NewServiceHealthChecker(ctx, &MetricsMock{gauge}, config, lb, serviceInfo, http.DefaultTransport, map[string]*url.URL{"test": targetURL}, "foobar")
 
 			wg := sync.WaitGroup{}
-			wg.Add(1)
-
-			go func() {
+			wg.Go(func() {
 				hc.Launch(ctx)
-				wg.Done()
-			}()
+			})
 
 			// Wait for expected health check events using channel synchronization.
 			for i := range expectedEvents {
@@ -508,12 +513,9 @@ func TestDifferentIntervals(t *testing.T) {
 	hc := NewServiceHealthChecker(ctx, &MetricsMock{gauge}, config, lb, serviceInfo, http.DefaultTransport, map[string]*url.URL{"healthy": healthyURL, "unhealthy": unhealthyURL}, "foobar")
 
 	wg := sync.WaitGroup{}
-	wg.Add(1)
-
-	go func() {
+	wg.Go(func() {
 		hc.Launch(ctx)
-		wg.Done()
-	}()
+	})
 
 	select {
 	case <-time.After(2 * time.Second):

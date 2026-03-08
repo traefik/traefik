@@ -34,6 +34,8 @@ export const useResourceDetail = (name: string, resource: string, protocol = 'ht
         status: routeDetail.status,
         provider: routeDetail.provider,
         rule: routeDetail.rule,
+        priority: routeDetail.priority,
+        priorityStr: routeDetail.priorityStr,
         tls: routeDetail.tls,
         error: routeDetail.error,
         middlewares: validMiddlewares,

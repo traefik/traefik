@@ -10,8 +10,12 @@ import (
 	"github.com/traefik/traefik/v3/pkg/types"
 )
 
-// ForwardAuthDefaultMaxBodySize is the ForwardAuth.MaxBodySize option default value.
-const ForwardAuthDefaultMaxBodySize int64 = -1
+const (
+	// ForwardAuthDefaultMaxBodySize is the ForwardAuth.MaxBodySize option default value.
+	ForwardAuthDefaultMaxBodySize int64 = -1
+	// RetryDefaultMaxRequestBodyBytes is the Retry.MaxRequestBodyBytes option default value.
+	RetryDefaultMaxRequestBodyBytes int64 = -1
+)
 
 // +k8s:deepcopy-gen=true
 
@@ -51,6 +55,11 @@ type Middleware struct {
 	ResponseHeaderModifier *HeaderModifier  `json:"responseHeaderModifier,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 	RequestRedirect        *RequestRedirect `json:"requestRedirect,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 	URLRewrite             *URLRewrite      `json:"URLRewrite,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
+
+	// ingress-nginx middlewares.
+	AuthTLSPassCertificateToUpstream *AuthTLSPassCertificateToUpstream `json:"authTLSPassCertificateToUpstream,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
+	Snippet                          *Snippet                          `json:"snippet,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
+	RewriteTarget                    *RewriteTarget                    `json:"rewriteTarget,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -134,6 +143,10 @@ type Buffering struct {
 	// It is a logical combination of functions with operators AND (&&) and OR (||).
 	// More info: https://doc.traefik.io/traefik/v3.6/middlewares/http/buffering/#retryexpression
 	RetryExpression string `json:"retryExpression,omitempty" toml:"retryExpression,omitempty" yaml:"retryExpression,omitempty" export:"true"`
+
+	// Only configurable via code, not via configuration files.
+	DisableRequestBuffer  bool `json:"disableRequestBuffer,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
+	DisableResponseBuffer bool `json:"disableResponseBuffer,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -257,6 +270,10 @@ type ErrorPage struct {
 	// The {originalStatus} variable can be used in order to insert the upstream status code in the URL.
 	// The {url} variable can be used in order to insert the escaped request URL.
 	Query string `json:"query,omitempty" toml:"query,omitempty" yaml:"query,omitempty" export:"true"`
+
+	// NginxHeaders defines the headers to forward to the Error page service.
+	// NginxHeaders option is unexposed to other providers than the IngressNGINX one.
+	NginxHeaders *http.Header `json:"nginxHeaders,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -279,6 +296,8 @@ type ForwardAuth struct {
 	// AuthRequestHeaders defines the list of the headers to copy from the request to the authentication server.
 	// If not set or empty then all request headers are passed.
 	AuthRequestHeaders []string `json:"authRequestHeaders,omitempty" toml:"authRequestHeaders,omitempty" yaml:"authRequestHeaders,omitempty" export:"true"`
+	// MaxResponseBodySize defines the maximum body size in bytes allowed in the response from the authentication server.
+	MaxResponseBodySize *int64 `json:"maxResponseBodySize,omitempty" toml:"maxResponseBodySize,omitempty" yaml:"maxResponseBodySize,omitempty" export:"true"`
 	// AddAuthCookiesToResponse defines the list of cookies to copy from the authentication server response to the response.
 	AddAuthCookiesToResponse []string `json:"addAuthCookiesToResponse,omitempty" toml:"addAuthCookiesToResponse,omitempty" yaml:"addAuthCookiesToResponse,omitempty" export:"true"`
 	// HeaderField defines a header field to store the authenticated user.
@@ -294,6 +313,9 @@ type ForwardAuth struct {
 	PreserveRequestMethod bool `json:"preserveRequestMethod,omitempty" toml:"preserveRequestMethod,omitempty" yaml:"preserveRequestMethod,omitempty" export:"true"`
 	// AuthSigninURL specifies the URL to redirect to when the authentication server returns 401 Unauthorized.
 	AuthSigninURL string `json:"authSigninURL,omitempty" toml:"authSigninURL,omitempty" yaml:"authSigninURL,omitempty" export:"true"`
+	// Interpolate activates variable interpolation for Address and AuthSigninURL config options.
+	// Currently, this is only used by the NGINX provider to support variable substitution.
+	Interpolate bool `json:"interpolate,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
 
 func (f *ForwardAuth) SetDefaults() {
@@ -352,7 +374,7 @@ type Headers struct {
 	// STSSeconds defines the max-age of the Strict-Transport-Security header.
 	// If set to 0, the header is not set.
 	// +kubebuilder:validation:Minimum=0
-	STSSeconds int64 `json:"stsSeconds,omitempty" toml:"stsSeconds,omitempty" yaml:"stsSeconds,omitempty" export:"true"`
+	STSSeconds *int64 `json:"stsSeconds,omitempty" toml:"stsSeconds,omitempty" yaml:"stsSeconds,omitempty" export:"true"`
 	// STSIncludeSubdomains defines whether the includeSubDomains directive is appended to the Strict-Transport-Security header.
 	STSIncludeSubdomains bool `json:"stsIncludeSubdomains,omitempty" toml:"stsIncludeSubdomains,omitempty" yaml:"stsIncludeSubdomains,omitempty" export:"true"`
 	// STSPreload defines whether the preload flag is appended to the Strict-Transport-Security header.
@@ -428,7 +450,7 @@ func (h *Headers) HasSecureHeadersDefined() bool {
 		(h.SSLForceHost != nil && *h.SSLForceHost) ||
 		(h.SSLHost != nil && *h.SSLHost != "") ||
 		len(h.SSLProxyHeaders) != 0 ||
-		h.STSSeconds != 0 ||
+		h.STSSeconds != nil ||
 		h.STSIncludeSubdomains ||
 		h.STSPreload ||
 		h.ForceSTSHeader ||
@@ -554,6 +576,14 @@ type PassTLSClientCert struct {
 	PEM bool `json:"pem,omitempty" toml:"pem,omitempty" yaml:"pem,omitempty" export:"true"`
 	// Info selects the specific client certificate details you want to add to the X-Forwarded-Tls-Client-Cert-Info header.
 	Info *TLSClientCertificateInfo `json:"info,omitempty" toml:"info,omitempty" yaml:"info,omitempty" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// AuthTLSPassCertificateToUpstream holds the pass TLS client cert middleware for ingress-nginx provider.
+type AuthTLSPassCertificateToUpstream struct {
+	ClientAuthType string                `json:"clientAuthType,omitempty" toml:"clientAuthType,omitempty" yaml:"clientAuthType,omitempty" export:"true"`
+	CAFiles        []types.FileOrContent `json:"caFiles,omitempty" toml:"caFiles,omitempty" yaml:"caFiles,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -723,12 +753,27 @@ type ReplacePathRegex struct {
 type Retry struct {
 	// Attempts defines how many times the request should be retried.
 	Attempts int `json:"attempts,omitempty" toml:"attempts,omitempty" yaml:"attempts,omitempty" export:"true"`
+	// Timeout defines how much time the middleware is allowed to retry the request.
+	Timeout ptypes.Duration `json:"timeout,omitempty" toml:"timeout,omitempty" yaml:"timeout,omitempty" export:"true"`
 	// InitialInterval defines the first wait time in the exponential backoff series.
 	// The maximum interval is calculated as twice the initialInterval.
 	// If unspecified, requests will be retried immediately.
 	// The value of initialInterval should be provided in seconds or as a valid duration format,
 	// see https://pkg.go.dev/time#ParseDuration.
 	InitialInterval ptypes.Duration `json:"initialInterval,omitempty" toml:"initialInterval,omitempty" yaml:"initialInterval,omitempty" export:"true"`
+	// MaxRequestBodyBytes defines the maximum size for the request body.
+	MaxRequestBodyBytes *int64 `json:"maxRequestBodyBytes,omitempty" toml:"maxRequestBodyBytes,omitempty" yaml:"maxRequestBodyBytes,omitempty" export:"true"`
+	// Status defines the range of HTTP status codes to retry on.
+	Status []string `json:"status,omitempty" toml:"status,omitempty" yaml:"status,omitempty" export:"true"`
+	// DisableRetryOnNetworkError defines whether to disable the retry if an error occurs when transmitting the request to the server.
+	DisableRetryOnNetworkError bool `json:"disableRetryOnNetworkError,omitempty" toml:"disableRetryOnNetworkError,omitempty" yaml:"disableRetryOnNetworkError,omitempty" export:"true"`
+	// RetryNonIdempotentMethod activates the retry for non-idempotent methods (POST, LOCK, PATCH)
+	RetryNonIdempotentMethod bool `json:"retryNonIdempotentMethod,omitempty" toml:"retryNonIdempotentMethod,omitempty" yaml:"retryNonIdempotentMethod,omitempty" export:"true"`
+}
+
+func (r *Retry) SetDefaults() {
+	defaultMaxRequestBodyBytes := RetryDefaultMaxRequestBodyBytes
+	r.MaxRequestBodyBytes = &defaultMaxRequestBodyBytes
 }
 
 // +k8s:deepcopy-gen=true
@@ -851,4 +896,25 @@ type URLRewrite struct {
 	Hostname   *string `json:"hostname,omitempty"`
 	Path       *string `json:"path,omitempty"`
 	PathPrefix *string `json:"pathPrefix,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// Snippet holds the NGINX snippet configuration.
+type Snippet struct {
+	ServerSnippet        string `json:"serverSnippet,omitempty"`
+	ConfigurationSnippet string `json:"configurationSnippet,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// RewriteTarget holds the rewrite target middleware configuration used by ingress-nginx provider.
+// This middleware replaces the path of a URL.
+type RewriteTarget struct {
+	// Regex defines the regular expression used to match and capture the path from the request URL.
+	Regex string `json:"regex,omitempty"`
+	// Replacement defines the replacement path format, which can include captured variables.
+	Replacement string `json:"replacement,omitempty"`
+	// XForwardedPrefix defines the value of the X-Forwarded-Prefix header.
+	XForwardedPrefix string `json:"xForwardedPrefix,omitempty"`
 }

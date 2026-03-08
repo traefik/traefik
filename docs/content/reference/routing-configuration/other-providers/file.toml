@@ -56,6 +56,9 @@
         service = "foobar"
         fallback = "foobar"
         [http.services.Service01.failover.healthCheck]
+        [http.services.Service01.failover.errors]
+          maxRequestBodyBytes = 42
+          status = ["foobar", "foobar"]
     [http.services.Service02]
       [http.services.Service02.highestRandomWeight]
 
@@ -217,6 +220,7 @@
         authResponseHeaders = ["foobar", "foobar"]
         authResponseHeadersRegex = "foobar"
         authRequestHeaders = ["foobar", "foobar"]
+        maxResponseBodySize = 42
         addAuthCookiesToResponse = ["foobar", "foobar"]
         headerField = "foobar"
         forwardBody = true
@@ -380,7 +384,12 @@
     [http.middlewares.Middleware24]
       [http.middlewares.Middleware24.retry]
         attempts = 42
+        timeout = "42s"
         initialInterval = "42s"
+        maxRequestBodyBytes = 42
+        status = ["foobar", "foobar"]
+        disableRetryOnNetworkError = true
+        retryNonIdempotentMethod = true
     [http.middlewares.Middleware25]
       [http.middlewares.Middleware25.stripPrefix]
         prefixes = ["foobar", "foobar"]

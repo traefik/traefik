@@ -10,6 +10,7 @@ import (
 	traefiktls "github.com/traefik/traefik/v3/pkg/tls"
 	"github.com/traefik/traefik/v3/pkg/types"
 	"google.golang.org/grpc/codes"
+	"k8s.io/utils/ptr"
 )
 
 const (
@@ -28,6 +29,8 @@ const (
 	MirroringDefaultMirrorBody = true
 	// MirroringDefaultMaxBodySize is the Mirroring.MaxBodySize option default value.
 	MirroringDefaultMaxBodySize int64 = -1
+	// FailoverErrorsDefaultMaxRequestBodyBytes is the Failover.Errors.MaxBodySize option default value.
+	FailoverErrorsDefaultMaxRequestBodyBytes int64 = -1
 )
 
 // +k8s:deepcopy-gen=true
@@ -195,9 +198,23 @@ func (m *Mirroring) SetDefaults() {
 
 // Failover holds the Failover configuration.
 type Failover struct {
-	Service     string       `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty" export:"true"`
-	Fallback    string       `json:"fallback,omitempty" toml:"fallback,omitempty" yaml:"fallback,omitempty" export:"true"`
-	HealthCheck *HealthCheck `json:"healthCheck,omitempty" toml:"healthCheck,omitempty" yaml:"healthCheck,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	Service     string         `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty" export:"true"`
+	Fallback    string         `json:"fallback,omitempty" toml:"fallback,omitempty" yaml:"fallback,omitempty" export:"true"`
+	HealthCheck *HealthCheck   `json:"healthCheck,omitempty" toml:"healthCheck,omitempty" yaml:"healthCheck,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	Errors      *FailoverError `json:"errors,omitempty" toml:"errors,omitempty" yaml:"errors,omitempty" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// FailoverError holds errors configuration.
+type FailoverError struct {
+	MaxRequestBodyBytes *int64   `json:"maxRequestBodyBytes,omitempty" toml:"maxRequestBodyBytes,omitempty" yaml:"maxRequestBodyBytes,omitempty" export:"true"`
+	Status              []string `json:"status,omitempty" toml:"status,omitempty" yaml:"status,omitempty" export:"true"`
+}
+
+// SetDefaults Default values for a WRRService.
+func (m *FailoverError) SetDefaults() {
+	m.MaxRequestBodyBytes = ptr.To(FailoverErrorsDefaultMaxRequestBodyBytes)
 }
 
 // +k8s:deepcopy-gen=true
@@ -356,6 +373,10 @@ type ServersLoadBalancer struct {
 	PassHostHeader     *bool                     `json:"passHostHeader" toml:"passHostHeader" yaml:"passHostHeader" export:"true"`
 	ResponseForwarding *ResponseForwarding       `json:"responseForwarding,omitempty" toml:"responseForwarding,omitempty" yaml:"responseForwarding,omitempty" export:"true"`
 	ServersTransport   string                    `json:"serversTransport,omitempty" toml:"serversTransport,omitempty" yaml:"serversTransport,omitempty" export:"true"`
+
+	// NginxUpstreamHashBy enables the customization of the hashing key.
+	// It can be set to a specific text value, a NGINX variable or a combination of both.
+	NginxUpstreamHashBy string `json:"nginxUpstreamHashBy,omitempty" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
 
 // Merge merges the other load balancer into this one.
@@ -381,8 +402,7 @@ func (l *ServersLoadBalancer) Merge(other *ServersLoadBalancer) bool {
 
 // SetDefaults Default values for a ServersLoadBalancer.
 func (l *ServersLoadBalancer) SetDefaults() {
-	defaultPassHostHeader := DefaultPassHostHeader
-	l.PassHostHeader = &defaultPassHostHeader
+	l.PassHostHeader = ptr.To(DefaultPassHostHeader)
 
 	l.Strategy = BalancerStrategyWRR
 	l.ResponseForwarding = &ResponseForwarding{}
@@ -457,8 +477,7 @@ type ServerHealthCheck struct {
 
 // SetDefaults Default values for a HealthCheck.
 func (h *ServerHealthCheck) SetDefaults() {
-	fr := true
-	h.FollowRedirects = &fr
+	h.FollowRedirects = ptr.To(true)
 	h.Mode = "http"
 	h.Interval = DefaultHealthCheckInterval
 	h.Timeout = DefaultHealthCheckTimeout
@@ -520,6 +539,10 @@ type ForwardingTimeouts struct {
 	IdleConnTimeout       ptypes.Duration `description:"The maximum period for which an idle HTTP keep-alive connection will remain open before closing itself." json:"idleConnTimeout,omitempty" toml:"idleConnTimeout,omitempty" yaml:"idleConnTimeout,omitempty" export:"true"`
 	ReadIdleTimeout       ptypes.Duration `description:"The timeout after which a health check using ping frame will be carried out if no frame is received on the HTTP/2 connection. If zero, no health check is performed." json:"readIdleTimeout,omitempty" toml:"readIdleTimeout,omitempty" yaml:"readIdleTimeout,omitempty" export:"true"`
 	PingTimeout           ptypes.Duration `description:"The timeout after which the HTTP/2 connection will be closed if a response to ping is not received." json:"pingTimeout,omitempty" toml:"pingTimeout,omitempty" yaml:"pingTimeout,omitempty" export:"true"`
+
+	// related to NGINX provider
+	ReadTimeout  ptypes.Duration `description:"Defines a timeout for reading a response from the proxied server. The timeout between two successive read operations. The connection is closed if nothing is transmitted within this time." json:"-" toml:"-" yaml:"-" export:"true"`
+	WriteTimeout ptypes.Duration `description:"Defines a timeout for transmitting a request to the proxied server. The timeout between two successive write operations. The connection is closed if nothing is transmitted within this time." json:"-" toml:"-" yaml:"-" export:"true"`
 }
 
 // SetDefaults sets the default values.

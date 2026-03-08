@@ -571,12 +571,9 @@ func TestServiceTCPHealthChecker_differentIntervals(t *testing.T) {
 	hc := NewServiceTCPHealthChecker(ctx, config, lb, serviceInfo, targets, "test-service")
 
 	wg := sync.WaitGroup{}
-	wg.Add(1)
-
-	go func() {
+	wg.Go(func() {
 		hc.Launch(ctx)
-		wg.Done()
-	}()
+	})
 
 	// Let it run for 2 seconds to see the different check frequencies
 	select {

@@ -6,6 +6,7 @@ import (
 	"context"
 	"crypto/tls"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -18,7 +19,15 @@ import (
 	"github.com/traefik/traefik/v3/pkg/tcp"
 )
 
-const defaultBufSize = 4096
+const (
+	defaultBufSize = 4096
+	// Per RFC 8446 Section 5.1, the maximum TLS record payload length is 2^14 (16384) bytes.
+	// A ClientHello is always a plaintext record, so any value exceeding this limit is invalid
+	// and likely indicates an attack attempting to force oversized per-connection buffer allocations.
+	// However, in practice the go server handshake can read up to 16384 + 2048 bytes,
+	// so we need to allow for some extra bytes to avoid rejecting valid handshakes.
+	maxTLSRecordLen = 16384 + 2048
+)
 
 // Router is a TCP router.
 type Router struct {
@@ -126,22 +135,24 @@ func (r *Router) ServeTCP(conn tcp.WriteCloser) {
 	}
 
 	if postgres {
-		// Remove read/write deadline and delegate this to underlying TCP server.
-		if err := conn.SetDeadline(time.Time{}); err != nil {
-			log.Error().Err(err).Msg("Error while setting deadline")
-		}
-
 		r.servePostgres(r.GetConn(conn, getPeeked(br)))
 		return
 	}
 
 	hello, err := clientHelloInfo(br)
 	if err != nil {
+		var opErr *net.OpError
+		if !errors.Is(err, io.EOF) && (!errors.As(err, &opErr) || !opErr.Timeout()) {
+			log.Debug().Err(err).Msg("Error while reading client hello")
+		}
+
 		conn.Close()
 		return
 	}
 
-	// Remove read/write deadline and delegate this to underlying TCP server (for now only handled by HTTP Server)
+	// The deadline was set to avoid blocking on the initial read of the ClientHello,
+	// but now that we have it, we can remove it,
+	// and delegate this to underlying TCP server (for now only handled by HTTP Server).
 	if err := conn.SetDeadline(time.Time{}); err != nil {
 		log.Error().Err(err).Msg("Error while setting deadline")
 	}
@@ -373,11 +384,7 @@ type clientHello struct {
 func clientHelloInfo(br *bufio.Reader) (*clientHello, error) {
 	hdr, err := br.Peek(1)
 	if err != nil {
-		var opErr *net.OpError
-		if !errors.Is(err, io.EOF) && (!errors.As(err, &opErr) || !opErr.Timeout()) {
-			log.Debug().Err(err).Msg("Error while peeking first byte")
-		}
-		return nil, err
+		return nil, fmt.Errorf("peeking first byte: %w", err)
 	}
 
 	// No valid TLS record has a type of 0x80, however SSLv2 handshakes start with an uint16 length
@@ -401,13 +408,14 @@ func clientHelloInfo(br *bufio.Reader) (*clientHello, error) {
 	const recordHeaderLen = 5
 	hdr, err = br.Peek(recordHeaderLen)
 	if err != nil {
-		log.Error().Err(err).Msg("Error while peeking client hello header")
-		return &clientHello{
-			peeked: getPeeked(br),
-		}, nil
+		return nil, fmt.Errorf("peeking client hello headers: %w", err)
 	}
 
 	recLen := int(hdr[3])<<8 | int(hdr[4]) // ignoring version in hdr[1:3]
+
+	if recLen > maxTLSRecordLen {
+		return nil, fmt.Errorf("peeking client hello bytes, oversized record: %d", recLen)
+	}
 
 	if recordHeaderLen+recLen > defaultBufSize {
 		br = bufio.NewReaderSize(br, recordHeaderLen+recLen)
@@ -415,11 +423,7 @@ func clientHelloInfo(br *bufio.Reader) (*clientHello, error) {
 
 	helloBytes, err := br.Peek(recordHeaderLen + recLen)
 	if err != nil {
-		log.Error().Err(err).Msg("Error while peeking client hello bytes")
-		return &clientHello{
-			isTLS:  true,
-			peeked: getPeeked(br),
-		}, nil
+		return nil, fmt.Errorf("peeking client hello bytes: %w", err)
 	}
 
 	sni := ""

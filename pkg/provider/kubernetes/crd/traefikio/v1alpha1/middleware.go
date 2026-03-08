@@ -45,7 +45,7 @@ type MiddlewareSpec struct {
 	DigestAuth        *DigestAuth                `json:"digestAuth,omitempty"`
 	ForwardAuth       *ForwardAuth               `json:"forwardAuth,omitempty"`
 	InFlightReq       *dynamic.InFlightReq       `json:"inFlightReq,omitempty"`
-	Buffering         *dynamic.Buffering         `json:"buffering,omitempty"`
+	Buffering         *Buffering                 `json:"buffering,omitempty"`
 	CircuitBreaker    *CircuitBreaker            `json:"circuitBreaker,omitempty"`
 	Compress          *Compress                  `json:"compress,omitempty"`
 	PassTLSClientCert *dynamic.PassTLSClientCert `json:"passTLSClientCert,omitempty"`
@@ -55,6 +55,32 @@ type MiddlewareSpec struct {
 	// Plugin defines the middleware plugin configuration.
 	// More info: https://doc.traefik.io/traefik/v3.6/reference/routing-configuration/http/middlewares/overview/#community-middlewares
 	Plugin map[string]apiextensionv1.JSON `json:"plugin,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// Buffering holds the buffering middleware configuration.
+// This middleware retries or limits the size of requests that can be forwarded to backends.
+// More info: https://doc.traefik.io/traefik/v3.6/middlewares/http/buffering/#maxrequestbodybytes
+type Buffering struct {
+	// MaxRequestBodyBytes defines the maximum allowed body size for the request (in bytes).
+	// If the request exceeds the allowed size, it is not forwarded to the service, and the client gets a 413 (Request Entity Too Large) response.
+	// Default: 0 (no maximum).
+	MaxRequestBodyBytes int64 `json:"maxRequestBodyBytes,omitempty" toml:"maxRequestBodyBytes,omitempty" yaml:"maxRequestBodyBytes,omitempty" export:"true"`
+	// MemRequestBodyBytes defines the threshold (in bytes) from which the request will be buffered on disk instead of in memory.
+	// Default: 1048576 (1Mi).
+	MemRequestBodyBytes int64 `json:"memRequestBodyBytes,omitempty" toml:"memRequestBodyBytes,omitempty" yaml:"memRequestBodyBytes,omitempty" export:"true"`
+	// MaxResponseBodyBytes defines the maximum allowed response size from the service (in bytes).
+	// If the response exceeds the allowed size, it is not forwarded to the client. The client gets a 500 (Internal Server Error) response instead.
+	// Default: 0 (no maximum).
+	MaxResponseBodyBytes int64 `json:"maxResponseBodyBytes,omitempty" toml:"maxResponseBodyBytes,omitempty" yaml:"maxResponseBodyBytes,omitempty" export:"true"`
+	// MemResponseBodyBytes defines the threshold (in bytes) from which the response will be buffered on disk instead of in memory.
+	// Default: 1048576 (1Mi).
+	MemResponseBodyBytes int64 `json:"memResponseBodyBytes,omitempty" toml:"memResponseBodyBytes,omitempty" yaml:"memResponseBodyBytes,omitempty" export:"true"`
+	// RetryExpression defines the retry conditions.
+	// It is a logical combination of functions with operators AND (&&) and OR (||).
+	// More info: https://doc.traefik.io/traefik/v3.6/middlewares/http/buffering/#retryexpression
+	RetryExpression string `json:"retryExpression,omitempty" toml:"retryExpression,omitempty" yaml:"retryExpression,omitempty" export:"true"`
 }
 
 // +k8s:deepcopy-gen=true
@@ -172,6 +198,8 @@ type ForwardAuth struct {
 	AuthRequestHeaders []string `json:"authRequestHeaders,omitempty"`
 	// TLS defines the configuration used to secure the connection to the authentication server.
 	TLS *ClientTLSWithCAOptional `json:"tls,omitempty"`
+	// MaxResponseBodySize defines the maximum body size in bytes allowed in the response from the authentication server.
+	MaxResponseBodySize *int64 `json:"maxResponseBodySize,omitempty"`
 	// AddAuthCookiesToResponse defines the list of cookies to copy from the authentication server response to the response.
 	AddAuthCookiesToResponse []string `json:"addAuthCookiesToResponse,omitempty"`
 	// HeaderField defines a header field to store the authenticated user.
@@ -316,6 +344,12 @@ type Retry struct {
 	// Attempts defines how many times the request should be retried.
 	// +kubebuilder:validation:Minimum=0
 	Attempts int `json:"attempts,omitempty"`
+	// Timeout defines how much time the middleware is allowed to retry the request.
+	// The value of timeout should be provided in seconds or as a valid duration format,
+	// see https://pkg.go.dev/time#ParseDuration.
+	// +kubebuilder:validation:Pattern="^([0-9]+(ns|us|µs|ms|s|m|h)?)+$"
+	// +kubebuilder:validation:XIntOrString
+	Timeout intstr.IntOrString `json:"timeout,omitempty"`
 	// InitialInterval defines the first wait time in the exponential backoff series.
 	// The maximum interval is calculated as twice the initialInterval.
 	// If unspecified, requests will be retried immediately.
@@ -324,6 +358,17 @@ type Retry struct {
 	// +kubebuilder:validation:Pattern="^([0-9]+(ns|us|µs|ms|s|m|h)?)+$"
 	// +kubebuilder:validation:XIntOrString
 	InitialInterval intstr.IntOrString `json:"initialInterval,omitempty"`
+	// MaxRequestBodyBytes defines the maximum size for the request body.
+	// Default is `-1`, which means no limit.
+	// +kubebuilder:validation:Minimum=-1
+	MaxRequestBodyBytes *int64 `json:"maxRequestBodyBytes,omitempty"`
+	// Status defines the range of HTTP status codes to retry on.
+	// +kubebuilder:validation:items:Pattern=`^([1-5][0-9]{2}[,-]?)+$`
+	Status []string `json:"status,omitempty"`
+	// DisableRetryOnNetworkError defines whether to disable the retry if an error occurs when transmitting the request to the server.
+	DisableRetryOnNetworkError bool `json:"disableRetryOnNetworkError,omitempty"`
+	// RetryNonIdempotentMethod activates the retry for non-idempotent methods (POST, LOCK, PATCH)
+	RetryNonIdempotentMethod bool `json:"retryNonIdempotentMethod,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

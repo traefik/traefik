@@ -215,10 +215,18 @@ func (shc *ServiceHealthChecker) executeHealthCheck(ctx context.Context, config 
 	ctx, cancel := context.WithDeadline(ctx, time.Now().Add(shc.timeout))
 	defer cancel()
 
-	if config.Mode == modeGRPC {
-		return shc.checkHealthGRPC(ctx, target)
+	switch config.Mode {
+	case modeGRPC:
+		if err := shc.checkHealthGRPC(ctx, target); err != nil {
+			return fmt.Errorf("checking gRPC health: %w", err)
+		}
+	default:
+		if err := shc.checkHealthHTTP(ctx, target); err != nil {
+			return fmt.Errorf("checking HTTP health: %w", err)
+		}
 	}
-	return shc.checkHealthHTTP(ctx, target)
+
+	return nil
 }
 
 // checkHealthHTTP returns an error with a meaningful description if the health check failed.
@@ -248,6 +256,15 @@ func (shc *ServiceHealthChecker) checkHealthHTTP(ctx context.Context, target *ur
 }
 
 func (shc *ServiceHealthChecker) newRequest(ctx context.Context, target *url.URL) (*http.Request, error) {
+	pathURL, err := url.Parse(shc.config.Path)
+	if err != nil {
+		return nil, fmt.Errorf("parsing health check path: %w", err)
+	}
+
+	if pathURL.Host != "" || pathURL.Scheme != "" {
+		return nil, fmt.Errorf("health check path must be a relative URL, got: %q", shc.config.Path)
+	}
+
 	u, err := target.Parse(shc.config.Path)
 	if err != nil {
 		return nil, err
@@ -285,17 +302,12 @@ func (shc *ServiceHealthChecker) newRequest(ctx context.Context, target *url.URL
 // checkHealthGRPC returns an error with a meaningful description if the health check failed.
 // Dedicated to gRPC servers implementing gRPC Health Checking Protocol v1.
 func (shc *ServiceHealthChecker) checkHealthGRPC(ctx context.Context, serverURL *url.URL) error {
-	u, err := serverURL.Parse(shc.config.Path)
-	if err != nil {
-		return fmt.Errorf("failed to parse server URL: %w", err)
-	}
-
-	port := u.Port()
+	port := serverURL.Port()
 	if shc.config.Port != 0 {
 		port = strconv.Itoa(shc.config.Port)
 	}
 
-	serverAddr := net.JoinHostPort(u.Hostname(), port)
+	serverAddr := net.JoinHostPort(serverURL.Hostname(), port)
 
 	var opts []grpc.DialOption
 	switch shc.config.Scheme {

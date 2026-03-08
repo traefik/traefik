@@ -25,6 +25,9 @@ import (
 	"github.com/traefik/traefik/v3/pkg/middlewares/grpcweb"
 	"github.com/traefik/traefik/v3/pkg/middlewares/headers"
 	"github.com/traefik/traefik/v3/pkg/middlewares/inflightreq"
+	"github.com/traefik/traefik/v3/pkg/middlewares/ingressnginx/authtlspasscertificatetoupstream"
+	"github.com/traefik/traefik/v3/pkg/middlewares/ingressnginx/rewritetarget"
+	"github.com/traefik/traefik/v3/pkg/middlewares/ingressnginx/snippet"
 	"github.com/traefik/traefik/v3/pkg/middlewares/ipallowlist"
 	"github.com/traefik/traefik/v3/pkg/middlewares/ipwhitelist"
 	"github.com/traefik/traefik/v3/pkg/middlewares/observability"
@@ -278,6 +281,16 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 	}
 
+	// AuthTLSPassCertificateToUpstream
+	if config.AuthTLSPassCertificateToUpstream != nil {
+		if middleware != nil {
+			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return authtlspasscertificatetoupstream.NewAuthTLSPassCertificateToUpstream(ctx, next, *config.AuthTLSPassCertificateToUpstream, middlewareName)
+		}
+	}
+
 	// RateLimit
 	if config.RateLimit != nil {
 		if middleware != nil {
@@ -325,6 +338,16 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 		middleware = func(next http.Handler) (http.Handler, error) {
 			return replacepathregex.New(ctx, next, *config.ReplacePathRegex, middlewareName)
+		}
+	}
+
+	// RewriteTarget
+	if config.RewriteTarget != nil {
+		if middleware != nil {
+			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return rewritetarget.New(ctx, next, *config.RewriteTarget, middlewareName)
 		}
 	}
 
@@ -414,6 +437,16 @@ func (b *Builder) buildConstructor(ctx context.Context, middlewareName string) (
 		}
 		middleware = func(next http.Handler) (http.Handler, error) {
 			return urlrewrite.NewURLRewrite(ctx, next, *config.URLRewrite, middlewareName), nil
+		}
+	}
+
+	// ingress-nginx middlewares.
+	if config.Snippet != nil {
+		if middleware != nil {
+			return nil, badConf
+		}
+		middleware = func(next http.Handler) (http.Handler, error) {
+			return snippet.New(ctx, next, config.Snippet, middlewareName)
 		}
 	}
 

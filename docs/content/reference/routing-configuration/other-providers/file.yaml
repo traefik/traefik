@@ -70,6 +70,11 @@ http:
         service: foobar
         fallback: foobar
         healthCheck: {}
+        errors:
+          maxRequestBodyBytes: 42
+          status:
+            - foobar
+            - foobar
     Service02:
       highestRandomWeight:
         services:
@@ -245,6 +250,7 @@ http:
         authRequestHeaders:
           - foobar
           - foobar
+        maxResponseBodySize: 42
         addAuthCookiesToResponse:
           - foobar
           - foobar
@@ -434,7 +440,14 @@ http:
     Middleware24:
       retry:
         attempts: 42
+        timeout: 42s
         initialInterval: 42s
+        maxRequestBodyBytes: 42
+        status:
+          - foobar
+          - foobar
+        disableRetryOnNetworkError: true
+        retryNonIdempotentMethod: true
     Middleware25:
       stripPrefix:
         prefixes:
