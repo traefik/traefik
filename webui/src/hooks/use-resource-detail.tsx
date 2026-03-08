@@ -81,7 +81,7 @@ export type ServiceDetailType = {
     mirrors?: Mirror[]
   }
   loadBalancer?: {
-    servers?: { url: string }[]
+    servers?: { url: string; address?: string; weight?: number }[]
     passHostHeader?: boolean
     terminationDelay?: number
     healthCheck?: {

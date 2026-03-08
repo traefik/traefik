@@ -1,4 +1,4 @@
-import { Box, Flex, H1, Skeleton, styled, Text } from '@traefiklabs/faency'
+import { Box, Flex, H1, Skeleton, styled, Text } from '@traefik-labs/faency'
 import { useMemo } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { FiGlobe, FiInfo, FiShield } from 'react-icons/fi'
@@ -52,10 +52,14 @@ const GridTitle = styled(Text, {
 
 type TcpServer = {
   address: string
+  url?: string
+  weight?: number
 }
 
-type ServerStatus = {
-  [server: string]: string
+type ServerInfo = {
+  address: string
+  status: string
+  weight?: number
 }
 
 type TcpHealthCheck = {
@@ -67,28 +71,19 @@ type TcpHealthCheck = {
   timeout?: string
 }
 
-function getTcpServerStatusList(data: ServiceDetailType): ServerStatus {
-  const serversList: ServerStatus = {}
-
-  data.loadBalancer?.servers?.forEach((server: any) => {
-    // TCP servers should have address, but handle both url and address for compatibility
-    const serverKey = (server as TcpServer).address || (server as any).url
-    if (serverKey) {
-      serversList[serverKey] = 'DOWN'
-    }
-  })
-
-  if (data.serverStatus) {
-    Object.entries(data.serverStatus).forEach(([server, status]) => {
-      serversList[server] = status
-    })
-  }
-
-  return serversList
-}
-
 export const TcpServicePanels = ({ data }: TcpDetailProps) => {
-  const serversList = getTcpServerStatusList(data)
+  const serversList = useMemo<ServerInfo[]>(
+    () =>
+      data.loadBalancer?.servers?.map((server: TcpServer) => {
+        const address = server.address || server.url
+        return {
+          address: address!,
+          status: (address && data.serverStatus?.[address]) || 'DOWN',
+          weight: server.weight,
+        }
+      }) || [],
+    [data.loadBalancer?.servers, data.serverStatus],
+  )
   const getProviderFromName = (serviceName: string): string => {
     const [, provider] = serviceName.split('@')
     return provider || data.provider
@@ -203,22 +198,24 @@ export const TcpServicePanels = ({ data }: TcpDetailProps) => {
           </>
         </DetailSection>
       )}
-      {Object.keys(serversList).length > 0 && (
+      {serversList.length > 0 && (
         <DetailSection narrow icon={<FiGlobe size={20} />} title="Servers" noPadding>
           <>
-            <ServersGrid css={{ gridTemplateColumns: '25% auto', mt: '$2' }}>
+            <ServersGrid css={{ gridTemplateColumns: '20% 60% 20%', mt: '$2' }}>
               <ItemTitle css={{ mb: 0 }}>Status</ItemTitle>
               <ItemTitle css={{ mb: 0 }}>Address</ItemTitle>
+              <ItemTitle css={{ mb: 0, textAlign: 'center' }}>Weight</ItemTitle>
             </ServersGrid>
             <Box data-testid="tcp-servers-list">
-              {Object.entries(serversList).map(([server, status]) => (
-                <ServersGrid key={server} css={{ gridTemplateColumns: '25% auto' }}>
-                  <ResourceStatus status={status === 'UP' ? 'enabled' : 'disabled'} />
+              {serversList.map((server) => (
+                <ServersGrid key={server.address} css={{ gridTemplateColumns: '20% 60% 20%' }}>
+                  <ResourceStatus status={server.status === 'UP' ? 'enabled' : 'disabled'} />
                   <Box>
-                    <Tooltip label={server} action="copy">
-                      <Text>{server}</Text>
+                    <Tooltip label={server.address} action="copy">
+                      <Text>{server.address}</Text>
                     </Tooltip>
                   </Box>
+                  <Text css={{ textAlign: 'center' }}>{server.weight ?? 1}</Text>
                 </ServersGrid>
               ))}
             </Box>
