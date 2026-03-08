@@ -148,7 +148,7 @@ func initStandardRegistry(config *otypes.Prometheus) Registry {
 		entryPointReqs := newCounterWithHeadersFrom(stdprometheus.CounterOpts{
 			Name: entryPointReqsTotalName,
 			Help: "How many HTTP requests processed on an entrypoint, partitioned by status code, protocol, and method.",
-		}, config.HeaderLabels, []string{"code", "method", "protocol", "entrypoint"})
+		}, config.HeaderLabels, config.ResponseHeaderLabels, []string{"code", "method", "protocol", "entrypoint"})
 		entryPointReqsTLS := newCounterFrom(stdprometheus.CounterOpts{
 			Name: entryPointReqsTLSTotalName,
 			Help: "How many HTTP requests with TLS processed on an entrypoint, partitioned by TLS Version and TLS cipher Used.",
@@ -186,7 +186,7 @@ func initStandardRegistry(config *otypes.Prometheus) Registry {
 		routerReqs := newCounterWithHeadersFrom(stdprometheus.CounterOpts{
 			Name: routerReqsTotalName,
 			Help: "How many HTTP requests are processed on a router, partitioned by service, status code, protocol, and method.",
-		}, config.HeaderLabels, []string{"code", "method", "protocol", "router", "service"})
+		}, config.HeaderLabels, config.ResponseHeaderLabels, []string{"code", "method", "protocol", "router", "service"})
 		routerReqsTLS := newCounterFrom(stdprometheus.CounterOpts{
 			Name: routerReqsTLSTotalName,
 			Help: "How many HTTP requests with TLS are processed on a router, partitioned by service, TLS Version, and TLS cipher Used.",
@@ -223,7 +223,7 @@ func initStandardRegistry(config *otypes.Prometheus) Registry {
 		serviceReqs := newCounterWithHeadersFrom(stdprometheus.CounterOpts{
 			Name: serviceReqsTotalName,
 			Help: "How many HTTP requests processed on a service, partitioned by status code, protocol, and method.",
-		}, config.HeaderLabels, []string{"code", "method", "protocol", "service"})
+		}, config.HeaderLabels, config.ResponseHeaderLabels, []string{"code", "method", "protocol", "service"})
 		serviceReqsTLS := newCounterFrom(stdprometheus.CounterOpts{
 			Name: serviceReqsTLSTotalName,
 			Help: "How many HTTP requests with TLS processed on a service, partitioned by TLS version and TLS cipher.",
@@ -480,17 +480,21 @@ func (d *dynamicConfig) hasServerURL(serviceName, serverURL string) bool {
 	return false
 }
 
-func newCounterWithHeadersFrom(opts stdprometheus.CounterOpts, headers map[string]string, labelNames []string) *counterWithHeaders {
+func newCounterWithHeadersFrom(opts stdprometheus.CounterOpts, reqHeaders, respHeaders map[string]string, labelNames []string) *counterWithHeaders {
 	var headerLabels []string
-	for k := range headers {
+	for k := range reqHeaders {
+		headerLabels = append(headerLabels, k)
+	}
+	for k := range respHeaders {
 		headerLabels = append(headerLabels, k)
 	}
 
 	cv := stdprometheus.NewCounterVec(opts, append(labelNames, headerLabels...))
 	c := &counterWithHeaders{
-		name:    opts.Name,
-		headers: headers,
-		cv:      cv,
+		name:            opts.Name,
+		requestHeaders:  reqHeaders,
+		responseHeaders: respHeaders,
+		cv:              cv,
 	}
 	if len(labelNames) == 0 && len(headerLabels) == 0 {
 		c.collector = cv.WithLabelValues()
@@ -503,18 +507,23 @@ type counterWithHeaders struct {
 	name             string
 	cv               *stdprometheus.CounterVec
 	labelNamesValues labelNamesValues
-	headers          map[string]string
+	requestHeaders   map[string]string
+	responseHeaders  map[string]string
 	collector        stdprometheus.Counter
 }
 
-func (c *counterWithHeaders) With(headers http.Header, labelValues ...string) CounterWithHeaders {
-	for headerLabel, headerKey := range c.headers {
-		labelValues = append(labelValues, headerLabel, headers.Get(headerKey))
+func (c *counterWithHeaders) With(reqHeaders, respHeaders http.Header, labelValues ...string) CounterWithHeaders {
+	for headerLabel, headerKey := range c.requestHeaders {
+		labelValues = append(labelValues, headerLabel, reqHeaders.Get(headerKey))
+	}
+	for headerLabel, headerKey := range c.responseHeaders {
+		labelValues = append(labelValues, headerLabel, respHeaders.Get(headerKey))
 	}
 	lnv := c.labelNamesValues.With(labelValues...)
 	return &counterWithHeaders{
 		name:             c.name,
-		headers:          c.headers,
+		requestHeaders:   c.requestHeaders,
+		responseHeaders:  c.responseHeaders,
 		cv:               c.cv,
 		labelNamesValues: lnv,
 		collector:        c.cv.With(lnv.ToLabels()),

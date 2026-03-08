@@ -1,0 +1,81 @@
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+[log]
+  level = "DEBUG"
+  noColor = true
+
+[serversTransport]
+  rootCAs = [ """-----BEGIN CERTIFICATE-----
+MIICEjCCAXugAwIBAgIRAKdsOQKo42YbSWoXHFxiMBwwDQYJKoZIhvcNAQELBQAw
+EjEQMA4GA1UEChMHQWNtZSBDbzAgFw03MDAxMDEwMDAwMDBaGA8yMDg0MDEyOTE2
+MDAwMFowEjEQMA4GA1UEChMHQWNtZSBDbzCBnzANBgkqhkiG9w0BAQEFAAOBjQAw
+gYkCgYEA1YHPs3TZnMcIOManaIsv1qZ2I9FhbxOwP88tBH751IcYSwF5Qm40MOUq
+sWvCMEFa+Bv5ke8E0ybX/za7eWz/hNg+FvTLbi+7c2fSkv+79w9554pzD22fb/mQ
+LuYz/r/RpQguJSRh9cgpdRFY/zgzMWCqRGCC+MOin9D25pCAUJ8CAwEAAaNmMGQw
+DgYDVR0PAQH/BAQDAgKkMBMGA1UdJQQMMAoGCCsGAQUFBwMBMA8GA1UdEwEB/wQF
+MAMBAf8wLAYDVR0RBCUwI4IJbG9jYWxob3N0hwR/AAABhxAAAAAAAAAAAAAAAAAA
+AAABMA0GCSqGSIb3DQEBCwUAA4GBAEw7efpVsoNmJFc3tQAjHw3GW/N7co9iP/nY
+g8gBYtbqQQapFCQ7/dPCNm+fZWjx05S9i/4c/c6sl2dR5lJLPtjG/2AY/LPNq7/N
+/BU4KPVF+yi21SoK6GG09hnfbeT5xcvQxa+LNFiTNMHwzolgNhxxabxYPaOQZvyD
+wZ6WZa5z
+-----END CERTIFICATE-----
+""" ]
+
+[entryPoints]
+  [entryPoints.websecure]
+    address = ":4443"
+
+[api]
+  insecure = true
+
+[providers.file]
+  filename = "fixtures/grpc/config_1598140383.toml"
+
+## dynamic configuration ##
+
+[http.routers]
+  [http.routers.router1]
+    rule = "Host(`127.0.0.1`)"
+    service = "service1"
+    [http.routers.router1.tls]
+
+[http.services]
+  [http.services.service1.loadBalancer]
+    [[http.services.service1.loadBalancer.servers]]
+      url = "https://127.0.0.1:59241"
+
+[tls.stores]
+  [tls.stores.default.defaultCertificate]
+    certFile = """-----BEGIN CERTIFICATE-----
+MIICEjCCAXugAwIBAgIRAKdsOQKo42YbSWoXHFxiMBwwDQYJKoZIhvcNAQELBQAw
+EjEQMA4GA1UEChMHQWNtZSBDbzAgFw03MDAxMDEwMDAwMDBaGA8yMDg0MDEyOTE2
+MDAwMFowEjEQMA4GA1UEChMHQWNtZSBDbzCBnzANBgkqhkiG9w0BAQEFAAOBjQAw
+gYkCgYEA1YHPs3TZnMcIOManaIsv1qZ2I9FhbxOwP88tBH751IcYSwF5Qm40MOUq
+sWvCMEFa+Bv5ke8E0ybX/za7eWz/hNg+FvTLbi+7c2fSkv+79w9554pzD22fb/mQ
+LuYz/r/RpQguJSRh9cgpdRFY/zgzMWCqRGCC+MOin9D25pCAUJ8CAwEAAaNmMGQw
+DgYDVR0PAQH/BAQDAgKkMBMGA1UdJQQMMAoGCCsGAQUFBwMBMA8GA1UdEwEB/wQF
+MAMBAf8wLAYDVR0RBCUwI4IJbG9jYWxob3N0hwR/AAABhxAAAAAAAAAAAAAAAAAA
+AAABMA0GCSqGSIb3DQEBCwUAA4GBAEw7efpVsoNmJFc3tQAjHw3GW/N7co9iP/nY
+g8gBYtbqQQapFCQ7/dPCNm+fZWjx05S9i/4c/c6sl2dR5lJLPtjG/2AY/LPNq7/N
+/BU4KPVF+yi21SoK6GG09hnfbeT5xcvQxa+LNFiTNMHwzolgNhxxabxYPaOQZvyD
+wZ6WZa5z
+-----END CERTIFICATE-----
+"""
+    keyFile  = """-----BEGIN RSA PRIVATE KEY-----
+MIICXAIBAAKBgQDVgc+zdNmcxwg4xqdoiy/WpnYj0WFvE7A/zy0EfvnUhxhLAXlC
+bjQw5Sqxa8IwQVr4G/mR7wTTJtf/Nrt5bP+E2D4W9MtuL7tzZ9KS/7v3D3nninMP
+bZ9v+ZAu5jP+v9GlCC4lJGH1yCl1EVj/ODMxYKpEYIL4w6Kf0PbmkIBQnwIDAQAB
+AoGAPkAO8t/K4u8U8pjZDp4mYItAPsk5g01WQgSBt6Hd7Z1F8/iGBlxjUy49+GTW
+xYMIpvZhGa961KWqrHqkxo6FIQmhiuMRfk8JGH0c9ibe7rGP05EsJOWz/X2k//4A
+xfl6P5POMNAbyS18dONQSzMYdMgYkuoiGH/A0tXMFRrRNgECQQDWOMXJiNJEHG0J
+2ro+S2Mp0KTBMiVWh+Ee/yTgNIkpDXy45mCBx52vBm7/9sIDkol/XWGn/6cYD6bd
+eRJIdkNBAkEA/yVbZYHvI4YO6XGdAUBFph+E5yklcXyWEQjKiFGdAEg+M1YRgZVX
+0C3DdV34x3gW9wot3xWVtHPNSy3w6cv73wJAWaQoH81BL381oYoFpUumkzjbuHxj
+Y3I4od/ibm+NdcBPEJBWkfgV48etay62wQfwwXsyAjrYkRj7mnGvVOMoAQJBAKFm
+Dz/SBuVw2yP/E7OD5cslaxwTYjU8+20BI6VCA0/3Yyl0S5SuVSNCn78x17rOk7Bo
+RwY0kEPbcUUaZahvuf8CQAQtu9hkyRo8jaEr+XLT3uhyBpon34nrbcSwK11lf7S6
+ZQ60JoL3T0iridIinjDx/yL1A7anOfpSIiilNMFTfPQ=
+-----END RSA PRIVATE KEY-----
+"""
