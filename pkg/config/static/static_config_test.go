@@ -5,7 +5,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/traefik/traefik/v3/pkg/provider/acme"
-	ingressnginx "github.com/traefik/traefik/v3/pkg/provider/kubernetes/ingress-nginx"
 )
 
 func pointer[T any](v T) *T { return &v }
@@ -267,57 +266,6 @@ func TestConfiguration_SetEffectiveConfiguration(t *testing.T) {
 								},
 							},
 						},
-					},
-				},
-			},
-		},
-		{
-			desc: "KubernetesIngressNGINX auto-populates entrypoints",
-			conf: &Configuration{
-				Providers: &Providers{
-					KubernetesIngressNGINX: &ingressnginx.Provider{},
-				},
-				EntryPoints: EntryPoints{
-					"web":       {},
-					"websecure": {HTTP: HTTPConfig{TLS: &TLSConfig{}}},
-				},
-			},
-			expected: &Configuration{
-				EntryPoints: EntryPoints{
-					"web":       {},
-					"websecure": {HTTP: HTTPConfig{TLS: &TLSConfig{}}},
-				},
-				Providers: &Providers{
-					KubernetesIngressNGINX: &ingressnginx.Provider{
-						HTTPEntryPoints:  []string{"web"},
-						HTTPSEntryPoints: []string{"websecure"},
-					},
-				},
-			},
-		},
-		{
-			desc: "KubernetesIngressNGINX preserves explicit entrypoints",
-			conf: &Configuration{
-				Providers: &Providers{
-					KubernetesIngressNGINX: &ingressnginx.Provider{
-						HTTPEntryPoints:  []string{"http"},
-						HTTPSEntryPoints: []string{"https"},
-					},
-				},
-				EntryPoints: EntryPoints{
-					"web":       {},
-					"websecure": {HTTP: HTTPConfig{TLS: &TLSConfig{}}},
-				},
-			},
-			expected: &Configuration{
-				EntryPoints: EntryPoints{
-					"web":       {},
-					"websecure": {HTTP: HTTPConfig{TLS: &TLSConfig{}}},
-				},
-				Providers: &Providers{
-					KubernetesIngressNGINX: &ingressnginx.Provider{
-						HTTPEntryPoints:  []string{"http"},
-						HTTPSEntryPoints: []string{"https"},
 					},
 				},
 			},
