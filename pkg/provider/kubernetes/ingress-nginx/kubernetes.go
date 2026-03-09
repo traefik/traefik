@@ -480,7 +480,8 @@ func (p *Provider) loadConfiguration(ctx context.Context) *dynamic.Configuration
 			hosts[rule.Host] = true
 
 			// If any ingress in this host enable use-regex, all paths on that host must use regex matching.
-			if ptr.Deref(i.IngressConfig.UseRegex, false) {
+			// Using rewrite-target annotation also implies that use-regex is true.
+			if ptr.Deref(i.IngressConfig.UseRegex, false) || i.IngressConfig.RewriteTarget != nil {
 				hostsWithUseRegex[rule.Host] = true
 			}
 
@@ -1511,12 +1512,10 @@ func applyRewriteTargetConfiguration(rulePath, routerName string, ingressConfig 
 
 	rewriteTargetMiddlewareName := routerName + "-rewrite-target"
 
+	// The usage of rewrite-target annotation implies the usage of regex.
 	rewriteTarget := &dynamic.RewriteTarget{
+		Regex:       rulePath,
 		Replacement: *ingressConfig.RewriteTarget,
-	}
-
-	if ptr.Deref(ingressConfig.UseRegex, false) {
-		rewriteTarget.Regex = rulePath
 	}
 
 	if ingressConfig.XForwardedPrefix != nil {
