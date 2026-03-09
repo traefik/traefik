@@ -1514,7 +1514,8 @@ func applyRewriteTargetConfiguration(rulePath, routerName string, ingressConfig 
 
 	// The usage of rewrite-target annotation implies the usage of regex.
 	rewriteTarget := &dynamic.RewriteTarget{
-		Regex:       rulePath,
+		// Location modifier regex on ingress-nginx is case insensitive.
+		Regex:       "(?i)" + rulePath,
 		Replacement: *ingressConfig.RewriteTarget,
 	}
 
@@ -2143,7 +2144,7 @@ func buildRule(ctx context.Context, host string, pa netv1.HTTPIngressPath, confi
 			rules = append(rules, fmt.Sprintf("Path(`%s`)", pa.Path))
 		case netv1.PathTypePrefix:
 			if useRegex {
-				rules = append(rules, fmt.Sprintf("PathRegexp(`^%s`)", pa.Path))
+				rules = append(rules, fmt.Sprintf("PathRegexp(`(?i)^%s`)", pa.Path))
 			} else {
 				rules = append(rules, buildPrefixRule(pa.Path))
 			}
