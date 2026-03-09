@@ -42,6 +42,7 @@ export const useResourceDetail = (name: string, resource: string, protocol = 'ht
         hasValidMiddlewares: hasMiddlewares,
         entryPointsData: entryPoints,
         using: routeDetail.using,
+        type: routeDetail.type,
       },
       error: firstError,
     } as ResourceDetailType
