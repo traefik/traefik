@@ -8,6 +8,7 @@ import (
 	netv1 "k8s.io/api/networking/v1"
 )
 
+// TODO: when implementing load-balance the corresponding behavior should be implemented for canaries.
 type ingressConfig struct {
 	AuthType       *string `annotation:"nginx.ingress.kubernetes.io/auth-type"`
 	AuthSecret     *string `annotation:"nginx.ingress.kubernetes.io/auth-secret"`
@@ -38,26 +39,35 @@ type ingressConfig struct {
 
 	FromToWwwRedirect *bool `annotation:"nginx.ingress.kubernetes.io/from-to-www-redirect"`
 
-	Affinity              *string `annotation:"nginx.ingress.kubernetes.io/affinity"`
-	SessionCookieName     *string `annotation:"nginx.ingress.kubernetes.io/session-cookie-name"`
-	SessionCookieSecure   *bool   `annotation:"nginx.ingress.kubernetes.io/session-cookie-secure"`
-	SessionCookiePath     *string `annotation:"nginx.ingress.kubernetes.io/session-cookie-path"`
-	SessionCookieDomain   *string `annotation:"nginx.ingress.kubernetes.io/session-cookie-domain"`
-	SessionCookieSameSite *string `annotation:"nginx.ingress.kubernetes.io/session-cookie-samesite"`
-	SessionCookieMaxAge   *int    `annotation:"nginx.ingress.kubernetes.io/session-cookie-max-age"`
-	SessionCookieExpires  *int    `annotation:"nginx.ingress.kubernetes.io/session-cookie-expires"`
+	ServerAlias *[]string `annotation:"nginx.ingress.kubernetes.io/server-alias"`
+
+	Affinity               *string `annotation:"nginx.ingress.kubernetes.io/affinity"`
+	AffinityCanaryBehavior *string `annotation:"nginx.ingress.kubernetes.io/affinity-canary-behavior"`
+	SessionCookieName      *string `annotation:"nginx.ingress.kubernetes.io/session-cookie-name"`
+	SessionCookieSecure    *bool   `annotation:"nginx.ingress.kubernetes.io/session-cookie-secure"`
+	SessionCookiePath      *string `annotation:"nginx.ingress.kubernetes.io/session-cookie-path"`
+	SessionCookieDomain    *string `annotation:"nginx.ingress.kubernetes.io/session-cookie-domain"`
+	SessionCookieSameSite  *string `annotation:"nginx.ingress.kubernetes.io/session-cookie-samesite"`
+	SessionCookieMaxAge    *int    `annotation:"nginx.ingress.kubernetes.io/session-cookie-max-age"`
+	SessionCookieExpires   *int    `annotation:"nginx.ingress.kubernetes.io/session-cookie-expires"`
 
 	ServiceUpstream *bool `annotation:"nginx.ingress.kubernetes.io/service-upstream"`
 
+	UpstreamHashBy *string `annotation:"nginx.ingress.kubernetes.io/upstream-hash-by"`
+
 	BackendProtocol *string `annotation:"nginx.ingress.kubernetes.io/backend-protocol"`
 
-	ProxySSLSecret      *string `annotation:"nginx.ingress.kubernetes.io/proxy-ssl-secret"`
-	ProxySSLVerify      *string `annotation:"nginx.ingress.kubernetes.io/proxy-ssl-verify"`
-	ProxySSLName        *string `annotation:"nginx.ingress.kubernetes.io/proxy-ssl-name"`
-	ProxySSLServerName  *string `annotation:"nginx.ingress.kubernetes.io/proxy-ssl-server-name"`
-	ProxyConnectTimeout *int    `annotation:"nginx.ingress.kubernetes.io/proxy-connect-timeout"`
-	ProxyReadTimeout    *int    `annotation:"nginx.ingress.kubernetes.io/proxy-read-timeout"`
-	ProxySendTimeout    *int    `annotation:"nginx.ingress.kubernetes.io/proxy-send-timeout"`
+	ProxySSLSecret           *string `annotation:"nginx.ingress.kubernetes.io/proxy-ssl-secret"`
+	ProxySSLVerify           *string `annotation:"nginx.ingress.kubernetes.io/proxy-ssl-verify"`
+	ProxySSLName             *string `annotation:"nginx.ingress.kubernetes.io/proxy-ssl-name"`
+	ProxySSLServerName       *string `annotation:"nginx.ingress.kubernetes.io/proxy-ssl-server-name"`
+	ProxyConnectTimeout      *int    `annotation:"nginx.ingress.kubernetes.io/proxy-connect-timeout"`
+	ProxyReadTimeout         *int    `annotation:"nginx.ingress.kubernetes.io/proxy-read-timeout"`
+	ProxySendTimeout         *int    `annotation:"nginx.ingress.kubernetes.io/proxy-send-timeout"`
+	ProxyNextUpstream        *string `annotation:"nginx.ingress.kubernetes.io/proxy-next-upstream"`
+	ProxyNextUpstreamTries   *int    `annotation:"nginx.ingress.kubernetes.io/proxy-next-upstream-tries"`
+	ProxyNextUpstreamTimeout *int    `annotation:"nginx.ingress.kubernetes.io/proxy-next-upstream-timeout"`
+	ProxyHTTPVersion         *string `annotation:"nginx.ingress.kubernetes.io/proxy-http-version"`
 
 	EnableCORS                 *bool     `annotation:"nginx.ingress.kubernetes.io/enable-cors"`
 	EnableCORSAllowCredentials *bool     `annotation:"nginx.ingress.kubernetes.io/cors-allow-credentials"`
@@ -70,8 +80,15 @@ type ingressConfig struct {
 	WhitelistSourceRange *string `annotation:"nginx.ingress.kubernetes.io/whitelist-source-range"`
 	AllowlistSourceRange *string `annotation:"nginx.ingress.kubernetes.io/allowlist-source-range"`
 
-	CustomHeaders *string `annotation:"nginx.ingress.kubernetes.io/custom-headers"`
-	UpstreamVhost *string `annotation:"nginx.ingress.kubernetes.io/upstream-vhost"`
+	LimitRPM *int `annotation:"nginx.ingress.kubernetes.io/limit-rpm"`
+	LimitRPS *int `annotation:"nginx.ingress.kubernetes.io/limit-rps"`
+
+	CustomHeaders    *string `annotation:"nginx.ingress.kubernetes.io/custom-headers"`
+	UpstreamVhost    *string `annotation:"nginx.ingress.kubernetes.io/upstream-vhost"`
+	XForwardedPrefix *string `annotation:"nginx.ingress.kubernetes.io/x-forwarded-prefix"`
+
+	CustomHTTPErrors *[]string `annotation:"nginx.ingress.kubernetes.io/custom-http-errors"`
+	DefaultBackend   *string   `annotation:"nginx.ingress.kubernetes.io/default-backend"`
 
 	// ProxyRequestBuffering controls whether request buffering is enabled.
 	ProxyRequestBuffering *string `annotation:"nginx.ingress.kubernetes.io/proxy-request-buffering"`
@@ -88,6 +105,17 @@ type ingressConfig struct {
 	ProxyBuffersNumber *int `annotation:"nginx.ingress.kubernetes.io/proxy-buffers-number"`
 	// ProxyMaxTempFileSize sets the maximum size of a temporary file used to buffer responses.
 	ProxyMaxTempFileSize *string `annotation:"nginx.ingress.kubernetes.io/proxy-max-temp-file-size"`
+
+	ConfigurationSnippet *string `annotation:"nginx.ingress.kubernetes.io/configuration-snippet"`
+	ServerSnippet        *string `annotation:"nginx.ingress.kubernetes.io/server-snippet"`
+
+	Canary              *bool   `annotation:"nginx.ingress.kubernetes.io/canary"`
+	CanaryCookie        *string `annotation:"nginx.ingress.kubernetes.io/canary-by-cookie"`
+	CanaryHeader        *string `annotation:"nginx.ingress.kubernetes.io/canary-by-header"`
+	CanaryHeaderValue   *string `annotation:"nginx.ingress.kubernetes.io/canary-by-header-value"`
+	CanaryHeaderPattern *string `annotation:"nginx.ingress.kubernetes.io/canary-by-header-pattern"`
+	CanaryWeight        *int    `annotation:"nginx.ingress.kubernetes.io/canary-weight"`
+	CanaryWeightTotal   *int    `annotation:"nginx.ingress.kubernetes.io/canary-weight-total"`
 }
 
 // parseIngressConfig parses the annotations from an Ingress object into an ingressConfig struct.
