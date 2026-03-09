@@ -48,7 +48,8 @@ spec:
                 description: Failover defines the Failover service configuration.
                 properties:
                   errors:
-                    description: Errors defines the configuration for handling errors.
+                    description: Errors defines which errors should trigger the use
+                      of the fallback service.
                     properties:
                       maxRequestBodyBytes:
                         description: |-
@@ -65,7 +66,7 @@ spec:
                     type: object
                   fallback:
                     description: Fallback defines the fallback service to use when
-                      the main service becomes unhealthy.
+                      the main service returns an error.
                     properties:
                       healthCheck:
                         description: Healthcheck defines health checks for ExternalName

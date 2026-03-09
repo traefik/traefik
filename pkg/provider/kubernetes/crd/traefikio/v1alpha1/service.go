@@ -106,9 +106,9 @@ type HighestRandomWeight struct {
 type Failover struct {
 	// Service defines the main service to use.
 	Service LoadBalancerSpec `json:"service"`
-	// Fallback defines the fallback service to use when the main service becomes unhealthy.
+	// Fallback defines the fallback service to use when the main service returns an error.
 	Fallback LoadBalancerSpec `json:"fallback"`
-	// Errors defines the configuration for handling errors.
+	// Errors defines which errors should trigger the use of the fallback service.
 	Errors FailoverError `json:"errors"`
 }
 

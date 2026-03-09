@@ -749,36 +749,28 @@ func (c configBuilder) buildHRW(ctx context.Context, tService *traefikv1alpha1.T
 }
 
 func (c configBuilder) buildFailover(ctx context.Context, tService *traefikv1alpha1.TraefikService, id string, conf map[string]*dynamic.Service) error {
-	fullNameMain, k8sService, err := c.nameAndService(ctx, tService.Namespace, tService.Spec.Failover.Service)
+	serviceName, service, err := c.nameAndService(ctx, tService.Namespace, tService.Spec.Failover.Service)
 	if err != nil {
-		return err
+		return fmt.Errorf("getting service: %w", err)
 	}
 
-	if k8sService != nil {
-		conf[fullNameMain] = k8sService
-	}
-
-	fullNameFallback, k8sFallback, err := c.nameAndService(ctx, tService.Namespace, tService.Spec.Failover.Fallback)
+	fallbackName, fallback, err := c.nameAndService(ctx, tService.Namespace, tService.Spec.Failover.Fallback)
 	if err != nil {
-		return err
-	}
-
-	if k8sFallback != nil {
-		conf[fullNameFallback] = k8sFallback
+		return fmt.Errorf("getting fallback service: %w", err)
 	}
 
 	failover := &dynamic.Failover{
-		Service:  fullNameMain,
-		Fallback: fullNameFallback,
+		Service:  serviceName,
+		Fallback: fallbackName,
 		Errors: &dynamic.FailoverError{
 			Status:              tService.Spec.Failover.Errors.Status,
 			MaxRequestBodyBytes: tService.Spec.Failover.Errors.MaxRequestBodyBytes,
 		},
 	}
 
-	conf[id] = &dynamic.Service{
-		Failover: failover,
-	}
+	conf[id] = &dynamic.Service{Failover: failover}
+	conf[serviceName] = service
+	conf[fallbackName] = fallback
 
 	return nil
 }
