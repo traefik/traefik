@@ -22,7 +22,7 @@ import (
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
 )
 
-func pointer[T any](v T) *T { return &v }
+func pointer[T any](v T) *T { return new(v) }
 
 func TestGetLoadBalancer(t *testing.T) {
 	sm := Manager{
@@ -174,7 +174,7 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 			serviceName: "test",
 			service: &dynamic.ServersLoadBalancer{
 				Strategy:       dynamic.BalancerStrategyWRR,
-				PassHostHeader: pointer(true),
+				PassHostHeader: new(true),
 				Servers: []dynamic.Server{
 					{
 						URL: server1.URL,
@@ -276,7 +276,7 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 			service: &dynamic.ServersLoadBalancer{
 				Strategy:       dynamic.BalancerStrategyWRR,
 				Sticky:         &dynamic.Sticky{Cookie: &dynamic.Cookie{}},
-				PassHostHeader: pointer(true),
+				PassHostHeader: new(true),
 				Servers: []dynamic.Server{
 					{
 						URL: serverPassHost.URL,
@@ -295,7 +295,7 @@ func TestGetLoadBalancerServiceHandler(t *testing.T) {
 			serviceName: "test",
 			service: &dynamic.ServersLoadBalancer{
 				Strategy:       dynamic.BalancerStrategyWRR,
-				PassHostHeader: pointer(false),
+				PassHostHeader: new(false),
 				Sticky:         &dynamic.Sticky{Cookie: &dynamic.Cookie{}},
 				Servers: []dynamic.Server{
 					{

@@ -20,7 +20,7 @@ import (
 
 const delta float64 = 1e-10
 
-func pointer[T any](v T) *T { return &v }
+func pointer[T any](v T) *T { return new(v) }
 
 func TestNewServiceHealthChecker_durations(t *testing.T) {
 	testCases := []struct {
@@ -297,7 +297,7 @@ func TestServiceHealthChecker_checkHealthHTTP_NotFollowingRedirects(t *testing.T
 
 	config := &dynamic.ServerHealthCheck{
 		Path:            "/path",
-		FollowRedirects: pointer(false),
+		FollowRedirects: new(false),
 		Interval:        dynamic.DefaultHealthCheckInterval,
 		Timeout:         dynamic.DefaultHealthCheckTimeout,
 	}

@@ -10,8 +10,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 )
 
-func pointer[T any](v T) *T { return &v }
-
 func TestSticky_StickyHandler(t *testing.T) {
 	testCases := []struct {
 		desc        string
@@ -109,7 +107,7 @@ func TestSticky_WriteStickyCookie(t *testing.T) {
 		HTTPOnly: true,
 		SameSite: "none",
 		MaxAge:   42,
-		Path:     pointer("/foo"),
+		Path:     new("/foo"),
 		Domain:   "foo.com",
 	})
 

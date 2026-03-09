@@ -9,7 +9,6 @@ import (
 	ptypes "github.com/traefik/paerser/types"
 	otypes "github.com/traefik/traefik/v3/pkg/observability/types"
 	"github.com/traefik/traefik/v3/pkg/types"
-	"k8s.io/utils/ptr"
 )
 
 // EntryPoint holds the entry point configuration.
@@ -77,7 +76,7 @@ type HTTPConfig struct {
 
 // SetDefaults sets the default values.
 func (c *HTTPConfig) SetDefaults() {
-	c.SanitizePath = ptr.To(true)
+	c.SanitizePath = new(true)
 	c.MaxHeaderBytes = http.DefaultMaxHeaderBytes
 }
 
@@ -200,8 +199,8 @@ type ObservabilityConfig struct {
 
 // SetDefaults sets the default values.
 func (o *ObservabilityConfig) SetDefaults() {
-	o.AccessLogs = ptr.To(true)
-	o.Metrics = ptr.To(true)
-	o.Tracing = ptr.To(true)
+	o.AccessLogs = new(true)
+	o.Metrics = new(true)
+	o.Tracing = new(true)
 	o.TraceVerbosity = otypes.MinimalVerbosity
 }
