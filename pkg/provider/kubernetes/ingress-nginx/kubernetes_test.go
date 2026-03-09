@@ -1290,6 +1290,7 @@ func TestLoadIngresses(t *testing.T) {
 						},
 						"default-ingress-with-x-forwarded-prefix-rule-0-path-0-rewrite-target": {
 							RewriteTarget: &dynamic.RewriteTarget{
+								Regex:            "/",
 								Replacement:      "/path",
 								XForwardedPrefix: "x-forwarded-prefix-header-value",
 							},
@@ -1476,12 +1477,14 @@ func TestLoadIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"default-ingress-a-with-use-regex-rule-0-path-0": {
+							EntryPoints: []string{"http"},
 							Rule:        "Host(`shared.localhost`) && PathRegexp(`^/test(.*)`)",
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-ingress-a-with-use-regex-rule-0-path-0-retry"},
 							Service:     "default-ingress-a-with-use-regex-whoami-80",
 						},
 						"default-ingress-b-without-use-regex-rule-0-path-0": {
+							EntryPoints: []string{"http"},
 							Rule:        "Host(`shared.localhost`) && PathRegexp(`^/static`)",
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-ingress-b-without-use-regex-rule-0-path-0-retry"},
@@ -1575,12 +1578,14 @@ func TestLoadIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"default-ingress-a-with-use-regex-rule-0-path-0": {
+							EntryPoints: []string{"http"},
 							Rule:        "Host(`regex.localhost`) && PathRegexp(`^/test(.*)`)",
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-ingress-a-with-use-regex-rule-0-path-0-retry"},
 							Service:     "default-ingress-a-with-use-regex-whoami-80",
 						},
 						"default-ingress-b-without-use-regex-rule-0-path-0": {
+							EntryPoints: []string{"http"},
 							Rule:        "Host(`no-regex.localhost`) && (Path(`/static`) || PathPrefix(`/static/`))",
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-ingress-b-without-use-regex-rule-0-path-0-retry"},
@@ -1756,6 +1761,7 @@ func TestLoadIngresses(t *testing.T) {
 					Middlewares: map[string]*dynamic.Middleware{
 						"default-ingress-with-rewrite-target-no-regex-rule-0-path-0-rewrite-target": {
 							RewriteTarget: &dynamic.RewriteTarget{
+								Regex:       "/original",
 								Replacement: "/rewritten",
 							},
 						},
@@ -7301,6 +7307,7 @@ func TestLoadIngresses(t *testing.T) {
 				HTTP: &dynamic.HTTPConfiguration{
 					Routers: map[string]*dynamic.Router{
 						"default-ingress-with-use-regex-rule-0-path-0": {
+							EntryPoints: []string{"http"},
 							Rule:        "Host(`use-regex.localhost`) && PathRegexp(`^/test(.*)`)",
 							RuleSyntax:  "default",
 							Middlewares: []string{"default-ingress-with-use-regex-rule-0-path-0-retry"},
