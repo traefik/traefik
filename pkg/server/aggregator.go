@@ -319,9 +319,9 @@ func applyDefaultObservabilityModel(cfg dynamic.Configuration) {
 
 			if router.Observability == nil {
 				router.Observability = &dynamic.RouterObservabilityConfig{
-					AccessLogs:     pointer(true),
-					Metrics:        pointer(true),
-					Tracing:        pointer(true),
+					AccessLogs:     new(true),
+					Metrics:        new(true),
+					Tracing:        new(true),
 					TraceVerbosity: otypes.MinimalVerbosity,
 				}
 
@@ -329,15 +329,15 @@ func applyDefaultObservabilityModel(cfg dynamic.Configuration) {
 			}
 
 			if router.Observability.AccessLogs == nil {
-				router.Observability.AccessLogs = pointer(true)
+				router.Observability.AccessLogs = new(true)
 			}
 
 			if router.Observability.Metrics == nil {
-				router.Observability.Metrics = pointer(true)
+				router.Observability.Metrics = new(true)
 			}
 
 			if router.Observability.Tracing == nil {
-				router.Observability.Tracing = pointer(true)
+				router.Observability.Tracing = new(true)
 			}
 
 			if router.Observability.TraceVerbosity == "" {
@@ -346,5 +346,3 @@ func applyDefaultObservabilityModel(cfg dynamic.Configuration) {
 		}
 	}
 }
-
-func pointer[T any](v T) *T { return &v }

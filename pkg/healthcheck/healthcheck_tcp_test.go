@@ -545,7 +545,7 @@ func TestServiceTCPHealthChecker_differentIntervals(t *testing.T) {
 	// This means unhealthy servers should be checked 10x more frequently
 	config := &dynamic.TCPServerHealthCheck{
 		Interval:          ptypes.Duration(500 * time.Millisecond),
-		UnhealthyInterval: pointer(ptypes.Duration(50 * time.Millisecond)),
+		UnhealthyInterval: new(ptypes.Duration(50 * time.Millisecond)),
 		Timeout:           ptypes.Duration(100 * time.Millisecond),
 	}
 

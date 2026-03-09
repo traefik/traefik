@@ -11,10 +11,6 @@ import (
 	"github.com/traefik/traefik/v3/pkg/testhelpers"
 )
 
-func boolPtr(b bool) *bool {
-	return &b
-}
-
 func Test_New(t *testing.T) {
 	testCases := []struct {
 		desc        string
@@ -1460,7 +1456,7 @@ proxy_method $request_method;
 				}
 			},
 			expectedStatusCode: http.StatusOK,
-			expectNextCalled:   boolPtr(true),
+			expectNextCalled:   new(true),
 		},
 		{
 			desc: "forward auth fails with 401 response",
@@ -1474,7 +1470,7 @@ proxy_method $request_method;
 			},
 			expectedStatusCode: http.StatusUnauthorized,
 			expectedBody:       "Unauthorized",
-			expectNextCalled:   boolPtr(false),
+			expectNextCalled:   new(false),
 		},
 		{
 			desc: "forward auth fails with 403 response",
@@ -1488,7 +1484,7 @@ proxy_method $request_method;
 			},
 			expectedStatusCode: http.StatusForbidden,
 			expectedBody:       "Forbidden",
-			expectNextCalled:   boolPtr(false),
+			expectNextCalled:   new(false),
 		},
 		{
 			desc:          "forward auth with signin URL redirects on 401",
@@ -1502,7 +1498,7 @@ proxy_method $request_method;
 			},
 			expectedStatusCode:  http.StatusFound,
 			expectedRedirectURL: "https://login.example.com/signin",
-			expectNextCalled:    boolPtr(false),
+			expectNextCalled:    new(false),
 		},
 		{
 			desc:                "forward auth copies response headers to original request",
@@ -1521,7 +1517,7 @@ proxy_method $request_method;
 				"X-Auth-Role": "admin",
 			},
 			expectedStatusCode: http.StatusOK,
-			expectNextCalled:   boolPtr(true),
+			expectNextCalled:   new(true),
 		},
 		{
 			desc:        "auth-snippet proxy_set_header modifies auth request",
@@ -1535,7 +1531,7 @@ proxy_method $request_method;
 				}
 			},
 			expectedStatusCode: http.StatusOK,
-			expectNextCalled:   boolPtr(true),
+			expectNextCalled:   new(true),
 		},
 		{
 			desc:        "auth-snippet proxy_set_header with variable",
@@ -1549,7 +1545,7 @@ proxy_method $request_method;
 				}
 			},
 			expectedStatusCode: http.StatusOK,
-			expectNextCalled:   boolPtr(true),
+			expectNextCalled:   new(true),
 		},
 		{
 			desc: "auth-snippet set directive creates variable for proxy_set_header",
@@ -1566,7 +1562,7 @@ proxy_set_header Authorization $auth_token;
 				}
 			},
 			expectedStatusCode: http.StatusOK,
-			expectNextCalled:   boolPtr(true),
+			expectNextCalled:   new(true),
 		},
 		{
 			desc:        "auth-snippet more_set_input_headers modifies auth request",
@@ -1580,7 +1576,7 @@ proxy_set_header Authorization $auth_token;
 				}
 			},
 			expectedStatusCode: http.StatusOK,
-			expectNextCalled:   boolPtr(true),
+			expectNextCalled:   new(true),
 		},
 		{
 			desc:        "auth-snippet more_clear_input_headers removes header from auth request",
@@ -1597,7 +1593,7 @@ proxy_set_header Authorization $auth_token;
 				}
 			},
 			expectedStatusCode: http.StatusOK,
-			expectNextCalled:   boolPtr(true),
+			expectNextCalled:   new(true),
 		},
 		{
 			desc: "auth-snippet with multiple proxy_set_header directives",
@@ -1617,7 +1613,7 @@ proxy_set_header X-Header-Three $request_method;
 				}
 			},
 			expectedStatusCode: http.StatusOK,
-			expectNextCalled:   boolPtr(true),
+			expectNextCalled:   new(true),
 		},
 		{
 			desc:        "auth-snippet with return directive terminates",
@@ -1632,7 +1628,7 @@ proxy_set_header X-Header-Three $request_method;
 			},
 			expectedStatusCode: http.StatusForbidden,
 			expectedBody:       "Auth blocked",
-			expectNextCalled:   boolPtr(false),
+			expectNextCalled:   new(false),
 		},
 		{
 			desc: "auth-snippet with conditional return",
@@ -1654,7 +1650,7 @@ if ($http_x_block_auth = "yes") {
 			},
 			expectedStatusCode: http.StatusForbidden,
 			expectedBody:       "Blocked by auth-snippet",
-			expectNextCalled:   boolPtr(false),
+			expectNextCalled:   new(false),
 		},
 		{
 			desc: "forward auth error response includes body",
@@ -1669,7 +1665,7 @@ if ($http_x_block_auth = "yes") {
 			},
 			expectedStatusCode: http.StatusBadRequest,
 			expectedBody:       `{"error":"invalid request"}`,
-			expectNextCalled:   boolPtr(false),
+			expectNextCalled:   new(false),
 		},
 		{
 			desc: "forward auth preserves error response headers",
@@ -1687,7 +1683,7 @@ if ($http_x_block_auth = "yes") {
 				"X-Error-Code":  "ERR001",
 				"X-Retry-After": "60",
 			},
-			expectNextCalled: boolPtr(false),
+			expectNextCalled: new(false),
 		},
 		{
 			desc:                 "forward auth with configuration snippet applies headers on success",
@@ -1703,7 +1699,7 @@ if ($http_x_block_auth = "yes") {
 			expectedResponseHeaders: map[string]string{
 				"X-Authenticated": "true",
 			},
-			expectNextCalled: boolPtr(true),
+			expectNextCalled: new(true),
 		},
 		{
 			desc:        "auth-snippet with more_set_input_headers variable interpolation",
@@ -1718,7 +1714,7 @@ if ($http_x_block_auth = "yes") {
 				}
 			},
 			expectedStatusCode: http.StatusOK,
-			expectNextCalled:   boolPtr(true),
+			expectNextCalled:   new(true),
 		},
 		{
 			desc:        "auth-snippet proxy_set_header removes header with empty value",
@@ -1735,7 +1731,7 @@ if ($http_x_block_auth = "yes") {
 				}
 			},
 			expectedStatusCode: http.StatusOK,
-			expectNextCalled:   boolPtr(true),
+			expectNextCalled:   new(true),
 		},
 		{
 			desc: "forward auth with redirect from auth server",
@@ -1749,7 +1745,7 @@ if ($http_x_block_auth = "yes") {
 			},
 			expectedStatusCode:  http.StatusTemporaryRedirect,
 			expectedRedirectURL: "https://redirect.example.com/path",
-			expectNextCalled:    boolPtr(false),
+			expectNextCalled:    new(false),
 		},
 		{
 			desc:                "auth-snippet combined with auth response headers",
@@ -1768,7 +1764,7 @@ if ($http_x_block_auth = "yes") {
 				"X-User-Id": "user-123",
 			},
 			expectedStatusCode: http.StatusOK,
-			expectNextCalled:   boolPtr(true),
+			expectNextCalled:   new(true),
 		},
 	}
 
