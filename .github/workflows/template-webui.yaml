@@ -35,6 +35,8 @@ jobs:
         working-directory: ./webui
         run: |
           yarn install
+          yarn tsc
+          yarn lint
           yarn build
 
       - name: Package webui
